@@ -5447,13 +5447,13 @@ if test "$window_system" != "none"; then
 fi
 case "$window_system" in
     x11)
-        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"x11\", "
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-x11\", "
     ;;
     nextstep)
-	CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"nextstep\", "
+	CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-nextstep\", "
     ;;
     w32)
-        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"w32\", "
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-w32\", "
     ;;
 esac
 AC_SUBST(CARGO_DEFAULT_FEATURES)

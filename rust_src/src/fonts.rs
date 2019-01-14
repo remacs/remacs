@@ -123,11 +123,11 @@ impl LispFontObjectRef {
             }
             #[cfg(feature = "window-system")]
             {
-                #[cfg(feature = "x11")]
+                #[cfg(feature = "window-system-x11")]
                 let mut display_info = &mut *(*_frame.output_data.x).display_info;
-                #[cfg(feature = "nextstep")]
+                #[cfg(feature = "window-system-nextstep")]
                 let mut display_info = &mut *(*_frame.output_data.ns).display_info;
-                #[cfg(feature = "w32")]
+                #[cfg(feature = "window-system-w32")]
                 let mut display_info = &mut *(*_frame.output_data.w32).display_info;
                 debug_assert!(display_info.n_fonts > 0);
                 display_info.n_fonts -= 1;
@@ -144,30 +144,19 @@ impl From<LispFontObjectRef> for LispObject {
 
 impl From<LispObject> for LispFontObjectRef {
     fn from(o: LispObject) -> Self {
-        o.as_font_object_or_error()
+        Option::<LispFontObjectRef>::from(o).unwrap_or_else(|| wrong_type!(Qfont_object, o))
     }
 }
 
 impl From<LispObject> for Option<LispFontObjectRef> {
     fn from(o: LispObject) -> Self {
-        o.as_font_object()
-    }
-}
-
-impl LispObject {
-    pub fn as_font_object(self) -> Option<LispFontObjectRef> {
-        self.as_vectorlike().and_then(|v| {
-            if v.is_pseudovector(pvec_type::PVEC_FONT) && self.is_font_object() {
-                Some(unsafe { mem::transmute(self) })
+        o.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_object() {
+                Some(unsafe { mem::transmute(o) })
             } else {
                 None
             }
         })
-    }
-
-    pub fn as_font_object_or_error(self) -> LispFontObjectRef {
-        self.as_font_object()
-            .unwrap_or_else(|| wrong_type!(Qfont_object, self))
     }
 }
 

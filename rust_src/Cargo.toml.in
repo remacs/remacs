@@ -57,11 +57,11 @@ use-xml2 = []
 # Use a window system
 window-system = []
 # Use the x11 window system
-x11 = []
+window-system-x11 = []
 # Use the nextstep window system
-nextstep = []
+window-system-nextstep = []
 # Use the w32 window system
-w32 = []
+window-system-w32 = []
 compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []
