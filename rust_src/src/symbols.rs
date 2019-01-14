@@ -158,12 +158,12 @@ impl LispSymbolRef {
 impl LispStructuralEqual for LispSymbolRef {
     fn equal(
         &self,
-        _other: Self,
+        other: Self,
         _equal_kind: equal_kind::Type,
         _depth: i32,
         _ht: &mut LispHashTableRef,
     ) -> bool {
-        false
+        self.symbol_name().eq(other.symbol_name())
     }
 }
 
