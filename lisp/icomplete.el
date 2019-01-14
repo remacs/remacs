@@ -162,6 +162,9 @@ the default otherwise."
       (minibuffer-force-complete-and-exit)
     (minibuffer-complete-and-exit)))
 
+(defvar icomplete--filtered-completions nil
+  "If non-nil completions as filtered by `icomplete-completions'")
+
 (defun icomplete-forward-completions ()
   "Step forward completions by one entry.
 Second entry becomes the first and can be selected with
@@ -169,7 +172,8 @@ Second entry becomes the first and can be selected with
   (interactive)
   (let* ((beg (icomplete--field-beg))
          (end (icomplete--field-end))
-         (comps (completion-all-sorted-completions beg end))
+         (comps (or icomplete--filtered-completions
+                    (completion-all-sorted-completions beg end)))
 	 (last (last comps)))
     (when comps
       (setcdr last (cons (car comps) (cdr last)))
@@ -182,7 +186,8 @@ Last entry becomes the first and can be selected with
   (interactive)
   (let* ((beg (icomplete--field-beg))
          (end (icomplete--field-end))
-         (comps (completion-all-sorted-completions beg end))
+         (comps (or icomplete--filtered-completions
+                    (completion-all-sorted-completions beg end)))
 	 (last-but-one (last comps 2))
 	 (last (cdr last-but-one)))
     (when (consp last)		      ; At least two elements in comps
@@ -382,9 +387,11 @@ matches exist."
 	(progn ;;(debug (format "Candidates=%S field=%S" candidates name))
 	       (format " %sNo matches%s" open-bracket close-bracket))
       (if last (setcdr last nil))
-      (when (and minibuffer-completing-file-name
-                 icomplete-with-completion-tables)
-        (setq comps (completion-pcm--filename-try-filter comps)))
+      (if (and minibuffer-completing-file-name
+               icomplete-with-completion-tables)
+          (setq comps (completion-pcm--filename-try-filter comps)
+                icomplete--filtered-completions comps)
+        (setq icomplete--filtered-completions nil))
       (let* ((most-try
               (if (and base-size (> base-size 0))
                   (completion-try-completion
