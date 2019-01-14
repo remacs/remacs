@@ -176,6 +176,11 @@ uniscribe_otf_capability (struct font *font)
   Lisp_Object features;
 
   f = XFRAME (selected_frame);
+  /* Prevent quitting while we cons the lists in otf_features.
+     That's because get_frame_dc acquires the critical section, so we
+     cannot quit before we release it in release_frame_dc.  */
+  Lisp_Object prev_quit = Vinhibit_quit;
+  Vinhibit_quit = Qt;
   context = get_frame_dc (f);
   old_font = SelectObject (context, FONT_HANDLE (font));
 
@@ -186,6 +191,7 @@ uniscribe_otf_capability (struct font *font)
 
   SelectObject (context, old_font);
   release_frame_dc (f, context);
+  Vinhibit_quit = prev_quit;
 
   return capability;
 }
