@@ -231,8 +231,7 @@ pub fn function(args: LispCons) -> LispObject {
                         // Handle the special (:documentation <form>) to build the docstring
                         // dynamically.
 
-                        let docstring = unsafe { eval_sub(car(tail)) };
-                        LispStringRef::from(docstring);
+                        let docstring: LispStringRef = unsafe { eval_sub(car(tail)) }.into();
                         let (a, b) = cdr.into();
                         let (_, bd) = b.into();
                         cdr = (a, (docstring, bd)).into();
