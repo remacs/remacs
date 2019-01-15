@@ -144,7 +144,10 @@ impl From<LispFontObjectRef> for LispObject {
 
 impl From<LispObject> for LispFontObjectRef {
     fn from(o: LispObject) -> Self {
-        Option::<LispFontObjectRef>::from(o).unwrap_or_else(|| wrong_type!(Qfont_object, o))
+        match o.into() {
+            Some(font) => font,
+            None => wrong_type!(Qfont_object, o),
+        }
     }
 }
 
