@@ -1,6 +1,5 @@
 //* Random utility Lisp functions.
 
-use std::convert::TryFrom;
 use std::{cmp, ptr};
 
 use libc;
@@ -13,7 +12,7 @@ use crate::{
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
-    multibyte::LispStringRef,
+    multibyte::{raw_byte_from_codepoint, Codepoint, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -414,6 +413,26 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
         .collect()
 }
 
+/// Compare the contents of two strings, converting to multibyte if needed.
+/// The arguments START1, END1, START2, and END2, if non-nil, are
+/// positions specifying which parts of STR1 or STR2 to compare.  In
+/// string STR1, compare the part between START1 (inclusive) and END1
+/// \(exclusive).  If START1 is nil, it defaults to 0, the beginning of
+/// the string; if END1 is nil, it defaults to the length of the string.
+/// Likewise, in string STR2, compare the part between START2 and END2.
+/// Like in `substring', negative values are counted from the end.
+///
+/// The strings are compared by the numeric values of their characters.
+/// For instance, STR1 is "less than" STR2 if its first differing
+/// character has a smaller numeric value.  If IGNORE-CASE is non-nil,
+/// characters are converted to upper-case before comparing them.  Unibyte
+/// strings are converted to multibyte for comparison.
+///
+/// The value is t if the strings (or specified portions) match.
+/// If string STR1 is less, the value is a negative number N;
+/// - 1 - N is the number of characters that match at the beginning.
+/// If string STR1 is greater, the value is a positive number N;
+/// N - 1 is the number of characters that match at the beginning.
 #[lisp_fn(min = "6")]
 pub fn compare_strings(
     str1: LispStringRef,
@@ -438,21 +457,29 @@ pub fn compare_strings(
     let (from1, to1) = validate_subarray_rust(str1.into(), start1.into(), end1.into(), len1);
     let (from2, to2) = validate_subarray_rust(str2.into(), start2.into(), end2.into(), len2);
 
-    let iter1 = str1.char_indices().skip_while(|(i, _)| *i < from1 as usize);
-    let iter2 = str2.char_indices().skip_while(|(i, _)| *i < from2 as usize);
+    let iter1 = str1
+        .char_indices_multibyte()
+        .skip_while(|(i, _)| *i < from1 as usize);
+    let iter2 = str2
+        .char_indices_multibyte()
+        .skip_while(|(i, _)| *i < from2 as usize);
     let (mut index1, mut index2) = (0, 0);
     for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
         let i1 = i1 as isize;
         let i2 = i2 as isize;
         index1 = i1;
         index2 = i2;
+
+        let to_lowercase = |c: Codepoint| {
+            char::from(raw_byte_from_codepoint(c))
+                .to_lowercase()
+                .to_string()
+        };
+
         if c1 == c2 {
             continue;
         }
-        if ignore_case
-            && char::try_from(c1).unwrap().to_lowercase().to_string()
-                == char::try_from(c2).unwrap().to_lowercase().to_string()
-        {
+        if ignore_case && to_lowercase(c1) == to_lowercase(c2) {
             continue;
         }
         if c1 < c2 {

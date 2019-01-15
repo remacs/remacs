@@ -19,7 +19,6 @@
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
-#![feature(try_from)]
 #![feature(untagged_unions)]
 
 extern crate errno;
