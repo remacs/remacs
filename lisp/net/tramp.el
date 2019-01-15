@@ -3977,6 +3977,8 @@ The terminal type can be configured with `tramp-terminal-type'."
 (defun tramp-action-out-of-band (proc vec)
   "Check, whether an out-of-band copy has finished."
   ;; There might be pending output for the exit status.
+  ;; FIXME: Either remove " 0.1", or comment why it's needed.
+  ;; FIXME: Shouldn't the following line be wrapped inside (while ...)?
   (tramp-accept-process-output proc 0.1)
   (cond ((and (not (process-live-p proc))
 	      (zerop (process-exit-status proc)))
@@ -4821,9 +4823,10 @@ Only works for Bourne-like shells."
 	;; Wait, until the process has disappeared.  If it doesn't,
 	;; fall back to the default implementation.
 	(with-timeout (1 (ignore))
-	  (while (process-live-p proc)
-	    ;; We cannot run `tramp-accept-process-output', it blocks timers.
-	    (accept-process-output proc 0.1))
+	  ;; We cannot run `tramp-accept-process-output', it blocks timers.
+	  ;; FIXME: Either remove " 0.1", or comment why it's needed.
+	  (while (or (accept-process-output proc 0.1)
+		     (process-live-p proc)))
 	  ;; Report success.
 	  proc)))))
 

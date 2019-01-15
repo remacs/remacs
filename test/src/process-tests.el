@@ -207,8 +207,8 @@
                     :sentinel #'ignore
                     :noquery t
                     :connection-type 'pipe)))
-      (while (process-live-p process)
-        (accept-process-output process))
+      (while (or (accept-process-output process)
+		 (process-live-p process)))
       (should (eq (process-status process) 'exit))
       (should (eq (process-exit-status process) 0))
       (should (process-tests--mixable (string-to-list (buffer-string))

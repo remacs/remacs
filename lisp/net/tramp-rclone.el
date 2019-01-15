@@ -183,9 +183,9 @@ pass to the OPERATION."
 	  (tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
 	  (process-put p 'adjust-window-size-function 'ignore)
 	  (set-process-query-on-exit-flag p nil)
-	  (while (process-live-p p)
-	    (accept-process-output p 0.1))
-	  (accept-process-output p 0.1)
+	  ;; FIXME: Either remove " 0.1", or comment why it's needed.
+	  (while (or (accept-process-output p 0.1)
+	             (process-live-p p)))
 	  (tramp-message v 6 "\n%s" (buffer-string))
 	  (goto-char (point-min))
 	  (while (search-forward-regexp "^\\(\\S-+\\):$" nil t)

@@ -2038,10 +2038,10 @@ Returns nil if an error message has appeared."
       ;; Algorithm: get waiting output.  See if last line contains
       ;; `tramp-smb-prompt' sentinel or `tramp-smb-errors' strings.
       ;; If not, wait a bit and again get waiting output.
-      (while (and (not found) (not err) (process-live-p p))
-
-	;; Accept pending output.
-	(tramp-accept-process-output p 0.1)
+      ;; FIXME: Either remove " 0.1", or comment why it's needed.
+      (while (and (not found) (not err)
+		  (or (tramp-accept-process-output p 0.1)
+		      (process-live-p p)))
 
 	;; Search for prompt.
 	(goto-char (point-min))
@@ -2052,10 +2052,13 @@ Returns nil if an error message has appeared."
 	(setq err (re-search-forward tramp-smb-errors nil t)))
 
       ;; When the process is still alive, read pending output.
-      (while (and (not found) (process-live-p p))
-
-	;; Accept pending output.
-	(tramp-accept-process-output p 0.1)
+      ;; FIXME: This loop should be folded into the previous loop.
+      ;; Also, ERR should be set just once, after the combined
+      ;; loop has finished.
+      ;; FIXME: Either remove " 0.1", or comment why it's needed.
+      (while (and (not found)
+		  (or (tramp-accept-process-output p 0.1)
+		      (process-live-p p)))
 
 	;; Search for prompt.
 	(goto-char (point-min))
