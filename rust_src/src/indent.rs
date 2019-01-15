@@ -132,7 +132,8 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
         last_known_column_point = buffer.pt;
         last_known_column_modified = buffer.modifications();
     }
-    col.into()
+
+    col
 }
 
 // Cancel any recorded value of the horizontal position.

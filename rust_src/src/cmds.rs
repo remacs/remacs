@@ -519,7 +519,7 @@ pub extern "C" fn keys_of_cmds() {
 pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     def_lisp_sym!(Qundo_auto__this_command_amalgamating, "undo-auto--this-command-amalgamating");
     def_lisp_sym!(Qkill_forward_chars, "kill-forward-chars");
     // A possible value for a buffer's overwrite-mode variable.
