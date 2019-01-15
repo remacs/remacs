@@ -410,6 +410,10 @@ impl LispStructuralEqual for LispCons {
             }
         }
 
+        // The two iterators contain what is left of the lists after the loop exits.
+        // If the loop completely consumes the lists this will end being nil `equal` nil.
+        // Either iterator could also still have data if the list is "improper" (a . b)
+        // style. Or as the comment above says, the two lists might be a different length.
         it1.rest().equal_internal(it2.rest(), kind, depth + 1, ht)
     }
 }
