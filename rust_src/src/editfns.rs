@@ -420,7 +420,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     // the unwrap call is safe, the number of args has already been checked
     let first = it.next().unwrap();
-    let orig_string = first.as_string_or_error();
+    let orig_string = LispStringRef::from(*first);
 
     let copy = unsafe { Fcopy_sequence(*first) };
 

@@ -93,7 +93,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
 
         if obj.is_nil() {
             obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
-                || error!("Process {} does not exist", name.as_string_or_error()),
+                || error!("Process {} does not exist", name),
                 LispObject::from,
             );
         }
@@ -134,7 +134,7 @@ pub fn get_process_lisp(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
-        name.as_string_or_error();
+        LispStringRef::from(name);
         cdr(assoc(name, unsafe { Vprocess_alist }, Qnil))
     }
 }
@@ -501,16 +501,10 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     let mut proc_ref = process.as_process_or_error();
 
     if !proc_ref.ptype().eq(Qreal) {
-        error!(
-            "Process {} is not a subprocess.",
-            proc_ref.name.as_string_or_error()
-        );
+        error!("Process {} is not a subprocess.", proc_ref.name);
     }
     if proc_ref.infd < 0 {
-        error!(
-            "Process {} is not active.",
-            proc_ref.name.as_string_or_error()
-        );
+        error!("Process {} is not active.", proc_ref.name);
     }
 
     let gid = unsafe { emacs_get_tty_pgrp(proc_ref.as_mut()) };

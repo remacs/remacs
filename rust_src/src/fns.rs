@@ -166,7 +166,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if unsafe { globals.Vpurify_flag.is_not_nil() } {
         error!(
             "(require {}) while preparing to dump",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -181,7 +181,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if nesting > 3 {
         error!(
             "Recursive `require' for feature `{}'",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -218,16 +218,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
-            error!(
-                "Required feature `{}' was not provided",
-                feature.as_string_or_error()
-            );
+            error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
             error!(
                 "Loading file {} failed to provide feature `{}'",
-                tem3.as_string_or_error(),
-                feature.as_string_or_error()
+                tem3, feature
             );
         }
     }
