@@ -17,7 +17,6 @@ use crate::{
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::args_out_of_range_3,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
@@ -55,13 +54,13 @@ pub fn validate_subarray_rust(
         Some(f) => f as isize,
     };
     let t = match to {
-        None => 0,
+        None => size,
         Some(t) if t < 0 => t as isize + size,
         Some(t) => t as isize,
     };
 
     if !(0 <= f && f <= t && t <= size) {
-        unsafe { args_out_of_range_3(array, from.into(), to.into()) };
+        args_out_of_range!(array, LispObject::from(from), LispObject::from(to))
     }
     (f, t)
 }
@@ -439,14 +438,8 @@ pub fn compare_strings(
     let (from1, to1) = validate_subarray_rust(str1.into(), start1.into(), end1.into(), len1);
     let (from2, to2) = validate_subarray_rust(str2.into(), start2.into(), end2.into(), len2);
 
-    let iter1 = str1
-        .chars()
-        .enumerate()
-        .skip_while(|(i, _)| *i < from1 as usize);
-    let iter2 = str2
-        .chars()
-        .enumerate()
-        .skip_while(|(i, _)| *i < from2 as usize);
+    let iter1 = str1.char_indices().skip_while(|(i, _)| *i < from1 as usize);
+    let iter2 = str2.char_indices().skip_while(|(i, _)| *i < from2 as usize);
     let (mut index1, mut index2) = (0, 0);
     for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
         let i1 = i1 as isize;
