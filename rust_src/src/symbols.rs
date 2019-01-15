@@ -163,7 +163,7 @@ impl LispStructuralEqual for LispSymbolRef {
         _depth: i32,
         _ht: &mut LispHashTableRef,
     ) -> bool {
-        self.symbol_name().eq(other.symbol_name())
+        LispObject::from(self).eq(LispObject::from(other))
     }
 }
 
