@@ -59,6 +59,11 @@ option '--enable-check-lisp-object-type' is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
+** Emacs by default uses a "portable dumper" instead of unexec,
+improving compatibility with modern systems and supporting ASLR.
+Emacs now needs an "emacs.pdmp" file, generated during the built, in
+its data directory at runtime.
+
 ** Ibuffer
 
 ---
