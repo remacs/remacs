@@ -2179,15 +2179,29 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
   int event_basep, error_basep;
   if (picture && XRenderQueryExtension (display, &event_basep, &error_basep))
     {
-      XRenderPictFormat *format;
-      XRenderPictureAttributes attr;
+      if (depth == 32 || depth == 24 || depth == 8)
+        {
+          XRenderPictFormat *format;
+          XRenderPictureAttributes attr;
 
-      /* FIXME: Do we need to handle all possible bit depths?  */
-      format = XRenderFindStandardFormat (display,
-                                          depth > 24 ? PictStandardARGB32
-                                          : depth > 8 ? PictStandardRGB24
-                                          : PictStandardA8);
-      *picture = XRenderCreatePicture (display, *pixmap, format, 0, &attr);
+          /* FIXME: Do we need to handle all possible bit depths?
+             XRenderFindStandardFormat supports PictStandardARGB32,
+             PictStandardRGB24, PictStandardA8, PictStandardA4,
+             PictStandardA1, and PictStandardNUM (what is this?!).
+
+             XRenderFindFormat may support more, but I don't
+             understand the documentation.  */
+          format = XRenderFindStandardFormat (display,
+                                              depth == 32 ? PictStandardARGB32
+                                              : depth == 24 ? PictStandardRGB24
+                                              : PictStandardA8);
+          *picture = XRenderCreatePicture (display, *pixmap, format, 0, &attr);
+        }
+      else
+        {
+          image_error ("Specified image bit depth is not supported by XRender");
+          *picture = NULL;
+        }
     }
 # endif
 
