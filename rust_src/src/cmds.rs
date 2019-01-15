@@ -13,7 +13,6 @@ use crate::{
     editfns::{line_beginning_position, line_end_position, preceding_char},
     frames::selected_frame,
     keymap::{current_global_map, Ctl},
-    lisp::defsubr,
     lisp::LispObject,
     lists::get,
     multibyte::{

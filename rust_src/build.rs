@@ -326,7 +326,7 @@ fn handle_file(mod_path: &PathBuf) -> Result<Option<ModuleData>, BuildError> {
                     e.kind(),
                     format!("Failed to open {}: {}", mod_info.path.to_string_lossy(), e),
                 )
-                .into())
+                .into());
             }
         };
 

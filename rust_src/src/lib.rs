@@ -15,7 +15,6 @@
 #![feature(const_fn_union)]
 #![feature(never_type)]
 #![feature(ptr_offset_from)]
-#![feature(self_struct_ctor)]
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]

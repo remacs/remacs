@@ -7,7 +7,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,

@@ -9,7 +9,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{LispObject, LispStructuralEqual},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},

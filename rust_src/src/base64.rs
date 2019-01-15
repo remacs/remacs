@@ -9,7 +9,6 @@ use remacs_macros::lisp_fn;
 use crate::{
     base64_crate,
     buffers::validate_region,
-    lisp::defsubr,
     lisp::LispObject,
     marker::buf_charpos_to_bytepos,
     multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},

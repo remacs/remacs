@@ -7,7 +7,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::aref,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{list, put},
     remacs_sys::{

@@ -7,7 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{insert_char, point, point_min},
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     multibyte::Codepoint,
     remacs_sys::globals,
     remacs_sys::EmacsUint,

@@ -7,7 +7,6 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     multibyte,
     multibyte::LispStringRef,

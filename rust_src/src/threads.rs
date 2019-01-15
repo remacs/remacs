@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::LispBufferRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qthreadp,
     remacs_sys::{

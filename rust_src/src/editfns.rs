@@ -16,7 +16,7 @@ use crate::{
     character::{char_head_p, dec_pos},
     eval::{progn, record_unwind_protect, unbind_to},
     indent::invalidate_current_column,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
         set_point_from_marker,

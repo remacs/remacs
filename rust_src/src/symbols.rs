@@ -10,7 +10,6 @@ use crate::{
     data::Lisp_Fwd,
     data::{indirect_function, set},
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},

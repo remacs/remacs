@@ -7,7 +7,7 @@ use crate::{
     coding::encode_file_name,
     eval::{record_unwind_protect_int, unbind_to},
     fileio::expand_file_name,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::Fdelete_region,
     remacs_sys::NULL_DEVICE,

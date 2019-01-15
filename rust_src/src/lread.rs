@@ -14,7 +14,7 @@ use crate::{
         Lisp_Objfwd,
     },
     eval::unbind_to,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     obarray::{intern, intern_c_string_1},
     remacs_sys,
     remacs_sys::{

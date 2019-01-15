@@ -11,7 +11,6 @@ use crate::{
     editfns::{goto_char, point},
     frames::{LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
