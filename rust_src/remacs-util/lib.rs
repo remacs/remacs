@@ -3,7 +3,6 @@
 extern crate darling;
 extern crate errno;
 extern crate libc;
-extern crate rand;
 extern crate syn;
 
 mod attributes;
