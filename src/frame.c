@@ -53,6 +53,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef USE_X_TOOLKIT
 #include "widget.h"
 #endif
+#include "pdumper.h"
 
 /* The currently selected frame.  */
 Lisp_Object selected_frame;
@@ -1051,10 +1052,7 @@ make_initial_frame (void)
   Lisp_Object frame;
 
   eassert (initial_kboard);
-
-  /* The first call must initialize Vframe_list.  */
-  if (! (NILP (Vframe_list) || CONSP (Vframe_list)))
-    Vframe_list = Qnil;
+  eassert (NILP (Vframe_list) || CONSP (Vframe_list));
 
   terminal = init_initial_terminal ();
 
@@ -5626,6 +5624,26 @@ make_monitor_attribute_list (struct MonitorInfo *monitors,
 				Initialization
  ***********************************************************************/
 
+static void init_frame_once_for_pdumper (void);
+
+void
+init_frame_once (void)
+{
+  staticpro (&Vframe_list);
+  staticpro (&selected_frame);
+  PDUMPER_IGNORE (last_nonminibuf_frame);
+  Vframe_list = Qnil;
+  selected_frame = Qnil;
+  pdumper_do_now_and_after_load (init_frame_once_for_pdumper);
+}
+
+static void
+init_frame_once_for_pdumper (void)
+{
+  PDUMPER_RESET_LV (Vframe_list, Qnil);
+  PDUMPER_RESET_LV (selected_frame, Qnil);
+}
+
 void
 syms_of_frame (void)
 {
@@ -6106,8 +6124,6 @@ attempt is not honored by all window managers and may even lead to
 making the child frame unresponsive to user actions, the default is to
 iconify the top level frame instead.  */);
   iconify_child_frame = Qiconify_top_level;
-
-  staticpro (&Vframe_list);
 
   defsubr (&Sframep);
   defsubr (&Sframe_live_p);

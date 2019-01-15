@@ -804,7 +804,7 @@ The return value is undefined.  */)
 
   {
     bool autoload = AUTOLOADP (definition);
-    if (NILP (Vpurify_flag) || !autoload)
+    if (!will_dump_p () || !autoload)
       { /* Only add autoload entries after dumping, because the ones before are
 	   not useful and else we get loads of them from the loaddefs.el.  */
 
@@ -1826,7 +1826,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
 {
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
-  union Lisp_Val_Fwd valcontents;
+  union Lisp_Val_Fwd valcontents UNINIT;
   bool forwarded UNINIT;
 
   CHECK_SYMBOL (variable);
@@ -1893,7 +1893,7 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
 {
   Lisp_Object tem;
   bool forwarded UNINIT;
-  union Lisp_Val_Fwd valcontents;
+  union Lisp_Val_Fwd valcontents UNINIT;
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
 
@@ -2958,7 +2958,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 	/* Set ACCUM to the next operation's result if it fits,
 	   else exit the loop.  */
 	bool overflow = false;
-	intmax_t a;
+	intmax_t a UNINIT;
 	switch (code)
 	  {
 	  case Aadd : overflow = INT_ADD_WRAPV (accum, next, &a); break;

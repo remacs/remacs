@@ -3454,7 +3454,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
 		  bool format_as_long_double = false;
 		  double darg;
-		  long double ldarg;
+		  long double ldarg UNINIT;
 
 		  if (FLOATP (arg))
 		    darg = XFLOAT_DATA (arg);

@@ -1831,6 +1831,8 @@ be called when the D-Bus reply message arrives.  */);
   xd_registered_buses = Qnil;
   staticpro (&xd_registered_buses);
 
+  // TODO: reset buses on dump load
+
   Fprovide (intern_c_string ("dbusbind"), Qnil);
 
 }

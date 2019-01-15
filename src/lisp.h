@@ -527,6 +527,7 @@ enum Lisp_Type
     /* Cons.  XCONS (object) points to a struct Lisp_Cons.  */
     Lisp_Cons = USE_LSB_TAG ? 3 : 6,
 
+    /* Must be last entry in Lisp_Type enumeration.  */
     Lisp_Float = 7
   };
 
@@ -623,15 +624,109 @@ extern void char_table_set (Lisp_Object, int, Lisp_Object);
 extern _Noreturn void wrong_type_argument (Lisp_Object, Lisp_Object);
 
 
-#ifdef CANNOT_DUMP
-enum { might_dump = false };
-#elif defined DOUG_LEA_MALLOC
 /* Defined in emacs.c.  */
-extern bool might_dump;
-#endif
-/* True means Emacs has already been initialized.
-   Used during startup to detect startup of dumped Emacs.  */
+
+/* Set after Emacs has started up the first time.
+   Prevents reinitialization of the Lisp world and keymaps on
+   subsequent starts.  */
 extern bool initialized;
+
+extern struct gflags {
+  /* True means this Emacs instance was born to dump.  */
+#if defined (HAVE_PDUMPER) || !defined (CANNOT_DUMP)
+  bool will_dump_ : 1;
+  bool will_bootstrap_ : 1;
+#endif
+#if defined (HAVE_PDUMPER)
+  /* Set in an Emacs process that will likely dump with pdumper; all
+     Emacs processes may dump with pdumper, however.  */
+  bool will_dump_with_pdumper_ : 1;
+  /* Set in an Emacs process that has been restored from a portable
+     dump.  */
+  bool dumped_with_pdumper_ : 1;
+#endif
+#ifndef CANNOT_DUMP
+  bool will_dump_with_unexec_ : 1;
+  /* Set in an Emacs process that has been restored from an unexec
+     dump.  */
+  bool dumped_with_unexec_ : 1;
+  /* We promise not to unexec: useful for hybrid malloc.  */
+  bool will_not_unexec_ : 1;
+#endif
+} gflags;
+
+INLINE bool
+will_dump_p (void)
+{
+#if HAVE_PDUMPER || !defined (CANNOT_DUMP)
+  return gflags.will_dump_;
+#else
+  return false;
+#endif
+}
+
+INLINE bool
+will_bootstrap_p (void)
+{
+#if HAVE_PDUMPER || !defined (CANNOT_DUMP)
+  return gflags.will_bootstrap_;
+#else
+  return false;
+#endif
+}
+
+INLINE bool
+will_dump_with_pdumper_p (void)
+{
+#if HAVE_PDUMPER
+  return gflags.will_dump_with_pdumper_;
+#else
+  return false;
+#endif
+}
+
+INLINE bool
+dumped_with_pdumper_p (void)
+{
+#if HAVE_PDUMPER
+  return gflags.dumped_with_pdumper_;
+#else
+  return false;
+#endif
+}
+
+INLINE bool
+will_dump_with_unexec_p (void)
+{
+#ifdef CANNOT_DUMP
+  return false;
+#else
+  return gflags.will_dump_with_unexec_;
+#endif
+}
+
+INLINE bool
+dumped_with_unexec_p (void)
+{
+#ifdef CANNOT_DUMP
+  return false;
+#else
+  return gflags.dumped_with_unexec_;
+#endif
+}
+
+/* This function is the opposite of will_dump_with_unexec_p(), except
+   that it returns false before main runs.  It's important to use
+   gmalloc for any pre-main allocations if we're going to unexec.  */
+INLINE bool
+definitely_will_not_unexec_p (void)
+{
+#ifdef CANNOT_DUMP
+  return true;
+#else
+  return gflags.will_not_unexec_;
+#endif
+}
 
 /* Defined in floatfns.c.  */
 extern double extract_float (Lisp_Object);
@@ -861,6 +956,19 @@ typedef EMACS_UINT Lisp_Word_tag;
 #ifndef DEFINE_NON_NIL_Q_SYMBOL_MACROS
 # define DEFINE_NON_NIL_Q_SYMBOL_MACROS true
 #endif
+
+/* True if N is a power of 2.  N should be positive.  */
+
+#define POWER_OF_2(n) (((n) & ((n) - 1)) == 0)
+
+/* Return X rounded to the next multiple of Y.  Y should be positive,
+   and Y - 1 + X should not overflow.  Arguments should not have side
+   effects, as they are evaluated more than once.  Tune for Y being a
+   power of 2.  */
+
+#define ROUNDUP(x, y) (POWER_OF_2 (y)					\
+                       ? ((y) - 1 + (x)) & ~ ((y) - 1)			\
+                       : ((y) - 1 + (x)) - ((y) - 1 + (x)) % (y))
 
 #include "globals.h"
 
@@ -1568,7 +1676,7 @@ CHECK_VECTOR (Lisp_Object x)
 /* A pseudovector is like a vector, but has other non-Lisp components.  */
 
 INLINE enum pvec_type
-PSEUDOVECTOR_TYPE (struct Lisp_Vector *v)
+PSEUDOVECTOR_TYPE (const struct Lisp_Vector *v)
 {
   ptrdiff_t size = v->header.size;
   return (size & PSEUDOVECTOR_FLAG
@@ -1578,7 +1686,7 @@ PSEUDOVECTOR_TYPE (struct Lisp_Vector *v)
 
 /* Can't be used with PVEC_NORMAL_VECTOR.  */
 INLINE bool
-PSEUDOVECTOR_TYPEP (union vectorlike_header *a, enum pvec_type code)
+PSEUDOVECTOR_TYPEP (const union vectorlike_header *a, enum pvec_type code)
 {
   /* We don't use PSEUDOVECTOR_TYPE here so as to avoid a shift
    * operation when `code' is known.  */
@@ -2168,6 +2276,12 @@ struct hash_table_test
 
 struct Lisp_Hash_Table
 {
+  /* Change pdumper.c if you change the fields here.
+
+     IMPORTANT!!!!!!!
+
+     Call hash_rehash_if_needed() before accessing.  */
+
   /* This is for Lisp; the hash table code does not refer to it.  */
   union vectorlike_header header;
 
@@ -2224,8 +2338,9 @@ struct Lisp_Hash_Table
   /* The comparison and hash functions.  */
   struct hash_table_test test;
 
-  /* Next weak hash table if this is a weak hash table.  The head
-     of the list is in weak_hash_tables.  */
+  /* Next weak hash table if this is a weak hash table.  The head of
+     the list is in weak_hash_tables.  Used only during garbage
+     collection --- at other times, it is NULL.  */
   struct Lisp_Hash_Table *next_weak;
 } GCALIGNED_STRUCT;
 
@@ -2250,30 +2365,45 @@ XHASH_TABLE (Lisp_Object a)
 
 /* Value is the key part of entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_KEY (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_KEY (const struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
   return AREF (h->key_and_value, 2 * idx);
 }
 
 /* Value is the value part of entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_VALUE (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_VALUE (const struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
   return AREF (h->key_and_value, 2 * idx + 1);
 }
 
 /* Value is the hash code computed for entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_HASH (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_HASH (const struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
   return AREF (h->hash, idx);
 }
 
 /* Value is the size of hash table H.  */
 INLINE ptrdiff_t
-HASH_TABLE_SIZE (struct Lisp_Hash_Table *h)
+HASH_TABLE_SIZE (const struct Lisp_Hash_Table *h)
 {
   return ASIZE (h->next);
+}
+
+void hash_table_rehash (struct Lisp_Hash_Table *h);
+
+INLINE bool
+hash_rehash_needed_p (const struct Lisp_Hash_Table *h)
+{
+  return h->count < 0;
+}
+
+INLINE void
+hash_rehash_if_needed (struct Lisp_Hash_Table *h)
+{
+  if (hash_rehash_needed_p (h))
+    hash_table_rehash (h);
 }
 
 /* Default size for hash tables if not specified.  */
@@ -2440,6 +2570,9 @@ struct Lisp_Finalizer
     struct Lisp_Finalizer *prev;
     struct Lisp_Finalizer *next;
   } GCALIGNED_STRUCT;
+
+extern struct Lisp_Finalizer finalizers;
+extern struct Lisp_Finalizer doomed_finalizers;
 
 INLINE bool
 FINALIZERP (Lisp_Object x)
@@ -2895,6 +3028,20 @@ CHECK_INTEGER (Lisp_Object x)
       CHECK_TYPE (INTEGERP (x), Qnumber_or_marker_p, x);		\
   } while (false)
 
+
+/* If we're not dumping using the legacy dumper and we might be using
+   the portable dumper, try to bunch all the subr structures together
+   for more efficient dump loading.  */
+#ifdef CANNOT_DUMP
+# ifdef DARWIN_OS
+#  define SUBR_SECTION_ATTRIBUTE ATTRIBUTE_SECTION ("__DATA,subrs")
+# else
+#  define SUBR_SECTION_ATTRIBUTE ATTRIBUTE_SECTION (".subrs")
+# endif
+#else
+# define SUBR_SECTION_ATTRIBUTE
+#endif
+
 /* Define a built-in function for calling from Lisp.
  `lname' should be the name to give the function in Lisp,
     as a null-terminated C string.
@@ -2923,7 +3070,8 @@ CHECK_INTEGER (Lisp_Object x)
 /* This version of DEFUN declares a function prototype with the right
    arguments, so we can catch errors with maxargs at compile-time.  */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   static union Aligned_Lisp_Subr sname =				\
+  SUBR_SECTION_ATTRIBUTE                                                \
+  static union Aligned_Lisp_Subr sname =                                \
      {{{ PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0}};				\
@@ -3169,6 +3317,11 @@ extern Lisp_Object Vascii_canon_table;
 /* Call staticpro (&var) to protect static variable `var'.  */
 
 void staticpro (Lisp_Object *);
+
+enum { NSTATICS = 2048 };
+extern Lisp_Object *staticvec[NSTATICS];
+extern int staticidx;
+
 
 /* Forward declarations for prototypes.  */
 struct window;
@@ -3416,12 +3569,14 @@ enum { NEXT_ALMOST_PRIME_LIMIT = 11 };
 extern ptrdiff_t list_length (Lisp_Object);
 extern EMACS_INT next_almost_prime (EMACS_INT) ATTRIBUTE_CONST;
 extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
-extern void sweep_weak_hash_tables (void);
+extern bool sweep_weak_table (struct Lisp_Hash_Table *, bool);
 extern char *extract_data_from_object (Lisp_Object, ptrdiff_t *, ptrdiff_t *);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
+EMACS_UINT hashfn_eql (struct hash_table_test *ht, Lisp_Object key);
+EMACS_UINT hashfn_equal (struct hash_table_test *ht, Lisp_Object key);
 Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
-			     Lisp_Object, bool);
+                             Lisp_Object, bool);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
 		    EMACS_UINT);
@@ -3592,6 +3747,12 @@ typedef uintptr_t byte_ct;  /* System byte counts reported by GC.  */
 extern byte_ct consing_since_gc;
 extern byte_ct gc_relative_threshold;
 extern byte_ct memory_full_cons_threshold;
+#ifdef HAVE_PDUMPER
+extern int number_finalizers_run;
+#endif
+#ifdef ENABLE_CHECKING
+extern Lisp_Object Vdead;
+#endif
 extern Lisp_Object list1 (Lisp_Object);
 extern Lisp_Object list2 (Lisp_Object, Lisp_Object);
 extern Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -3600,6 +3761,21 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
+
+enum gc_root_type {
+  GC_ROOT_STATICPRO,
+  GC_ROOT_BUFFER_LOCAL_DEFAULT,
+  GC_ROOT_BUFFER_LOCAL_NAME,
+  GC_ROOT_C_SYMBOL
+};
+
+struct gc_root_visitor {
+  void (*visit)(Lisp_Object *root_ptr,
+                enum gc_root_type type,
+                void *data);
+  void *data;
+};
+extern void visit_static_gc_roots (struct gc_root_visitor visitor);
 
 /* Build a frequently used 2/3/4-integer lists.  */
 
@@ -3629,6 +3805,13 @@ extern Lisp_Object make_string (const char *, ptrdiff_t);
 extern Lisp_Object make_formatted_string (char *, const char *, ...)
   ATTRIBUTE_FORMAT_PRINTF (2, 3);
 extern Lisp_Object make_unibyte_string (const char *, ptrdiff_t);
+extern ptrdiff_t vectorlike_nbytes (const union vectorlike_header *hdr);
+
+INLINE ptrdiff_t
+vector_nbytes (const struct Lisp_Vector *v)
+{
+  return vectorlike_nbytes (&v->header);
+}
 
 /* Make unibyte string from C string when the length isn't known.  */
 
@@ -3824,7 +4007,7 @@ extern Lisp_Object string_to_number (char const *, int, ptrdiff_t *);
 extern void map_obarray (Lisp_Object, void (*) (Lisp_Object, Lisp_Object),
                          Lisp_Object);
 extern void dir_warning (const char *, Lisp_Object);
-extern void init_obarray (void);
+extern void init_obarray_once (void);
 extern void init_lread (void);
 extern void syms_of_lread (void);
 
@@ -3989,6 +4172,7 @@ extern void syms_of_module (void);
 #endif
 
 /* Defined in thread.c.  */
+extern struct thread_state primary_thread;
 extern void mark_threads (void);
 extern void unmark_main_thread (void);
 
@@ -4017,7 +4201,7 @@ extern bool overlay_touches_p (ptrdiff_t);
 extern Lisp_Object other_buffer_safely (Lisp_Object);
 extern Lisp_Object get_truename_buffer (Lisp_Object);
 extern void init_buffer_once (void);
-extern void init_buffer (int);
+extern void init_buffer (void);
 extern void syms_of_buffer (void);
 extern void keys_of_buffer (void);
 
@@ -4160,6 +4344,7 @@ extern void store_in_alist (Lisp_Object *, Lisp_Object, Lisp_Object);
 extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 extern void frames_discard_buffer (Lisp_Object);
+extern void init_frame_once (void);
 extern void syms_of_frame (void);
 
 /* Defined in emacs.c.  */

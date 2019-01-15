@@ -38,6 +38,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "fontset.h"
 #include "font.h"
 #include "termhooks.h"
+#include "pdumper.h"
 
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
@@ -5309,9 +5310,10 @@ syms_of_font (void)
   sort_shift_bits[FONT_SIZE_INDEX] = 16;
   sort_shift_bits[FONT_WIDTH_INDEX] = 23;
   /* Note that the other elements in sort_shift_bits are not used.  */
+  PDUMPER_REMEMBER_SCALAR (sort_shift_bits);
 
-  staticpro (&font_charset_alist);
   font_charset_alist = Qnil;
+  staticpro (&font_charset_alist);
 
   DEFSYM (Qopentype, "opentype");
 
@@ -5349,13 +5351,13 @@ syms_of_font (void)
 
   DEFSYM (QCuser_spec, ":user-spec");
 
-  staticpro (&scratch_font_spec);
   scratch_font_spec = Ffont_spec (0, NULL);
-  staticpro (&scratch_font_prefer);
+  staticpro (&scratch_font_spec);
   scratch_font_prefer = Ffont_spec (0, NULL);
+  staticpro (&scratch_font_prefer);
 
-  staticpro (&Vfont_log_deferred);
   Vfont_log_deferred = make_nil_vector (3);
+  staticpro (&Vfont_log_deferred);
 
 #if 0
 #ifdef HAVE_LIBOTF

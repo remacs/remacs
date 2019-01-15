@@ -3730,9 +3730,6 @@ syms_of_syntax (void)
   staticpro (&gl_state.current_syntax_table);
   staticpro (&gl_state.old_prop);
 
-  /* Defined in regex-emacs.c.  */
-  staticpro (&re_match_object);
-
   DEFSYM (Qscan_error, "scan-error");
   Fput (Qscan_error, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qscan_error, Qerror));

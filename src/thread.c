@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "coding.h"
 #include "syssignal.h"
+#include "pdumper.h"
 #include "keyboard.h"
 
 union aligned_thread_state
@@ -1064,7 +1065,7 @@ init_main_thread (void)
 }
 
 bool
-main_thread_p (void *ptr)
+main_thread_p (const void *ptr)
 {
   return ptr == &main_thread.s;
 }

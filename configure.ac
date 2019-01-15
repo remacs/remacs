@@ -311,6 +311,87 @@ this option's value should be 'yes', 'no', 'alsa', 'oss', or 'bsd-ossaudio'.])
   ],
   [with_sound=$with_features])
 
+AC_ARG_WITH([pdumper],
+  AS_HELP_STRING(
+    [--with-pdumper=VALUE],
+    [enable pdumper support unconditionally
+      ('yes', 'no', or 'auto': default 'auto')]),
+    [ case "${withval}" in
+        yes|no|auto) val=$withval ;;
+        *) AC_MSG_ERROR(
+           ['--with-pdumper=$withval' is invalid;
+this option's value should be 'yes' or 'no'.]) ;;
+      esac
+      with_pdumper=$val
+    ],
+    [with_pdumper=auto])
+
+AC_ARG_WITH([unexec],
+  AS_HELP_STRING(
+    [--with-unexec=VALUE],
+    [enable unexec support unconditionally
+      ('yes', 'no', or 'auto': default 'auto')]),
+    [ case "${withval}" in
+        yes|no|auto) val=$withval ;;
+        *) AC_MSG_ERROR(
+           ['--with-unexec=$withval' is invalid;
+this option's value should be 'yes' or 'no'.]) ;;
+      esac
+      with_unexec=$val
+    ],
+    [with_unexec=auto])
+
+AC_ARG_WITH([dumping],[AS_HELP_STRING([--with-dumping=VALUE],
+    [kind of dumping to use for initial Emacs build
+(VALUE one of: pdumper, unexec, none; default pdumper)])],
+    [ case "${withval}" in
+        pdumper|unexec|none) val=$withval ;;
+        *) AC_MSG_ERROR(['--with-dumping=$withval is invalid;
+this option's value should be 'pdumper', 'unexec', or 'none'.])
+        ;;
+      esac
+      with_dumping=$val
+    ],
+    [with_dumping=pdumper])
+
+if test "$with_pdumper" = "auto"; then
+  if test "$with_dumping" = "pdumper"; then
+    with_pdumper=yes
+  else
+    with_pdumper=no
+  fi
+fi
+
+if test "$with_unexec" = "auto"; then
+  if test "$with_dumping" = "unexec"; then
+    with_unexec=yes
+  else
+    with_unexec=no
+  fi
+fi
+
+if test "$with_dumping" = "pdumper" && test "$with_pdumper" = "no"; then
+  AC_MSG_ERROR(['--with-dumping=pdumper' requires pdumper support])
+fi
+
+if test "$with_dumping" = "unexec" && test "$with_unexec" = "no"; then
+  AC_MSG_ERROR(['--with-dumping=unexec' requires unexec support])
+fi
+
+if test "$with_pdumper" = "yes"; then
+    AC_DEFINE(HAVE_PDUMPER, 1, [Define to build with portable dumper support])
+fi
+
+if test "$with_unexec" = "yes"; then
+  CANNOT_DUMP=no
+else
+  CANNOT_DUMP=yes
+fi
+
+DUMPING=$with_dumping
+AC_SUBST(DUMPING)
+AC_SUBST(CANNOT_DUMP)
+
 dnl FIXME currently it is not the last.
 dnl This should be the last --with option, because --with-x is
 dnl added later on when we find the file name of X, and it's best to
@@ -1215,6 +1296,10 @@ AC_PATH_PROG(GZIP_PROG, gzip)
 test $with_compress_install != yes && test -n "$GZIP_PROG" && \
    GZIP_PROG=" # $GZIP_PROG # (disabled by configure --without-compress-install)"
 
+if test "$with_dumping" = "unexec" && test "$opsys" = "nacl"; then
+  AC_MSG_ERROR([nacl is not compatible with --with-dumping=unexec])
+fi
+
 AC_CACHE_CHECK([for 'find' args to delete a file],
   [emacs_cv_find_delete],
   [if touch conftest.tmp && find conftest.tmp -delete 2>/dev/null &&
@@ -1227,25 +1312,21 @@ AC_SUBST([FIND_DELETE])
 
 PAXCTL_dumped=
 PAXCTL_notdumped=
-if test "$CANNOT_DUMP" != yes; then
-  if test $opsys = gnu-linux; then
-    if test "${SETFATTR+set}" != set; then
-      AC_CACHE_CHECK([for setfattr],
-	[emacs_cv_prog_setfattr],
-	[touch conftest.tmp
-	 if (setfattr -n user.pax.flags conftest.tmp) >/dev/null 2>&1; then
-	   emacs_cv_prog_setfattr=yes
-	 else
-	   emacs_cv_prog_setfattr=no
-	 fi])
-      if test "$emacs_cv_prog_setfattr" = yes; then
-	PAXCTL_notdumped='$(SETFATTR) -n user.pax.flags -v er'
-	SETFATTR=setfattr
-      else
-	SETFATTR=
-      fi
-      rm -f conftest.tmp
-      AC_SUBST([SETFATTR])
+if test "$CANNOT_DUMP" = "no" && test $opsys = gnu-linux; then
+  if test "${SETFATTR+set}" != set; then
+    AC_CACHE_CHECK([for setfattr],
+      [emacs_cv_prog_setfattr],
+      [touch conftest.tmp
+       if (setfattr -n user.pax.flags conftest.tmp) >/dev/null 2>&1; then
+	 emacs_cv_prog_setfattr=yes
+       else
+	 emacs_cv_prog_setfattr=no
+       fi])
+    if test "$emacs_cv_prog_setfattr" = yes; then
+      PAXCTL_notdumped='$(SETFATTR) -n user.pax.flags -v er'
+      SETFATTR=setfattr
+    else
+      SETFATTR=
     fi
   fi
   case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
@@ -1382,21 +1463,11 @@ AC_CACHE_CHECK([whether addresses are sanitized],
      [emacs_cv_sanitize_address=yes],
      [emacs_cv_sanitize_address=no])])
 
-dnl The function dump-emacs will not be defined and temacs will do
-dnl (load "loadup") automatically unless told otherwise.
-test "x$CANNOT_DUMP" = "x" && CANNOT_DUMP=no
-case "$opsys" in
-  nacl) CANNOT_DUMP=yes ;;
-esac
-
 if test "$CANNOT_DUMP" = "yes"; then
-  AC_DEFINE(CANNOT_DUMP, 1, [Define if Emacs cannot be dumped on your system.])
+  AC_DEFINE(CANNOT_DUMP, 1, [Define if Emacs should not support unexec.])
 elif test "$emacs_cv_sanitize_address" = yes; then
   AC_MSG_WARN([[Addresses are sanitized; suggest CANNOT_DUMP=yes]])
 fi
-
-AC_SUBST(CANNOT_DUMP)
-
 
 UNEXEC_OBJ=unexelf.o
 case "$opsys" in
@@ -1476,8 +1547,9 @@ case "$opsys" in
    LD_SWITCH_SYSTEM="\$(LD_SWITCH_X_SITE_RPATH) $LD_SWITCH_SYSTEM" ;;
 esac
 
-
 C_SWITCH_MACHINE=
+
+test "$CANNOT_DUMP" = yes ||
 case $canonical in
  alpha*)
   AC_CHECK_DECL([__ELF__])
@@ -4064,6 +4136,9 @@ dnl No need to check for posix_memalign if aligned_alloc works.
 AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
 AC_CHECK_DECLS([aligned_alloc], [], [], [[#include <stdlib.h>]])
 
+# Dump loading
+AC_CHECK_FUNCS([posix_madvise])
+
 dnl Cannot use AC_CHECK_FUNCS
 AC_CACHE_CHECK([for __builtin_frame_address],
   [emacs_cv_func___builtin_frame_address],
@@ -5540,6 +5615,9 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}
+  Does Emacs support the portable dumper?                 ${with_pdumper}
+  Does Emacs support legacy unexec dumping?               ${with_unexec}
+  Which dumping strategy does Emacs use?                  ${with_dumping}
 "])
 
 if test -n "${EMACSDATA}"; then
