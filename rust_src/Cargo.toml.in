@@ -54,6 +54,14 @@ unexecmacosx = ["alloc_unexecmacosx"]
 unexec = []
 # Compile with C xml2 library support.
 use-xml2 = []
+# Use a window system
+window-system = []
+# Use the x11 window system
+window-system-x11 = []
+# Use the nextstep window system
+window-system-nextstep = []
+# Use the w32 window system
+window-system-w32 = []
 compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []
