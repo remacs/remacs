@@ -1042,12 +1042,7 @@ See `find-file-noselect' for the arguments."
 ;; When changing this function, consider changing `pop3-accept-process-output'
 ;; as well.
 (defun nnheader-accept-process-output (process)
-  (accept-process-output
-   process
-   (truncate nnheader-read-timeout)
-   (truncate (* (- nnheader-read-timeout
-		   (truncate nnheader-read-timeout))
-		1000))))
+  (accept-process-output process nnheader-read-timeout))
 
 (defun nnheader-update-marks-actions (backend-marks actions)
   (dolist (action actions)

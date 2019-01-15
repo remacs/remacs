@@ -165,12 +165,7 @@ Used for APOP authentication.")
       "How long pop3 should wait between checking for the end of output.
 Shorter values mean quicker response, but are more CPU intensive.")
     (defun pop3-accept-process-output (process)
-      (accept-process-output
-       process
-       (truncate pop3-read-timeout)
-       (truncate (* (- pop3-read-timeout
-		       (truncate pop3-read-timeout))
-		    1000))))))
+      (accept-process-output process pop3-read-timeout))))
 
 (defvar pop3-uidl)
 ;; List of UIDLs of existing messages at present in the server:

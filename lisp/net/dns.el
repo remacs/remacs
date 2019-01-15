@@ -432,8 +432,9 @@ If REVERSEP, look up an IP address."
                       tcp-p))
           (while (and (zerop (buffer-size))
                       (> times 0))
-            (sit-for (/ step 1000.0))
-            (accept-process-output process 0 step)
+	    (let ((step-sec (/ step 1000.0)))
+	      (sit-for step-sec)
+	      (accept-process-output process step-sec))
             (setq times (- times step)))
           (condition-case nil
               (delete-process process)
