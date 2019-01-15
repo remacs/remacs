@@ -488,8 +488,9 @@ lost after dumping")))
       ;; same as invocation-directory.
       (let (success)
         (unwind-protect
-             (progn
-               (if (member dump-mode '("pdump" "pbootstrap"))
+             (let ((tmp-dump-mode dump-mode)
+                   (dump-mode nil))
+               (if (member tmp-dump-mode '("pdump" "pbootstrap"))
                    (dump-emacs-portable (expand-file-name output invocation-directory))
                  (dump-emacs output "temacs")
                  (message "%d pure bytes used" pure-bytes-used))
