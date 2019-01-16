@@ -7488,7 +7488,6 @@ returns non-`nil'.  */);
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
-  DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);

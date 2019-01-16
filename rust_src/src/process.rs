@@ -546,5 +546,6 @@ pub fn list_system_processes_lisp() -> LispObject {
 pub fn interrupt_process(process: LispObject, current_group: LispObject) -> LispObject {
     run_hook_with_args_until_success(&mut [Qinterrupt_process_functions, process, current_group])
 }
+def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
