@@ -1870,13 +1870,13 @@ process has exited.  Therefore, although the following loop:
 @end example
 
 @noindent
-will often work, it has a race condition and can miss some output if
-@code{process-live-p} returns @code{nil} while the connection still
-contains data.  Better is to write the loop like this:
+will often read all output from @var{process}, it has a race condition
+and can miss some output if @code{process-live-p} returns @code{nil}
+while the connection still contains data.  Better is to write the loop
+like this:
 
 @example
-(while (or (accept-process-output process)
-           (process-live-p process)))
+(while (accept-process-output process))
 @end example
 
 @node Processes and Threads
