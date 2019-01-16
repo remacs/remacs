@@ -10774,6 +10774,8 @@ init_coding_once (void)
   PDUMPER_REMEMBER_SCALAR (emacs_mule_bytes);
 }
 
+static void reset_coding_after_pdumper_load (void);
+
 void
 syms_of_coding (void)
 {
@@ -11316,4 +11318,27 @@ internal character representation.  */);
   system_eol_type = Qunix;
 #endif
   staticpro (&system_eol_type);
+
+  pdumper_do_now_and_after_load_impl (reset_coding_after_pdumper_load);
+}
+
+static void
+reset_coding_after_pdumper_load (void)
+{
+  if (!dumped_with_pdumper_p ())
+    return;
+  for (struct coding_system *this = &coding_categories[0];
+       this < &coding_categories[coding_category_max];
+       ++this)
+    {
+      int id = this->id;
+      if (id >= 0)
+        {
+          /* Need to rebuild the coding system object because we
+             persisted it as a scalar and it's full of gunk that's now
+             invalid.  */
+          memset (this, 0, sizeof (*this));
+          setup_coding_system (CODING_ID_NAME (id), this);
+        }
+    }
 }
