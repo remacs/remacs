@@ -145,6 +145,13 @@ EMACS_SOCKET_NAME environment variable to an appropriate value.
 *** When run by root, emacsclient no longer connects to non-root sockets.
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
 
+---
+** Control of the threshold for using the 'distant-foreground' color.
+The threshold for color distance below which the 'distant-foreground'
+color of the face will be used instead of the foreground color can now
+be controlled via the new variable 'face-near-same-color-threshold'.
+The default value is 30000, as the previously hard-coded threshold.
+
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
 
