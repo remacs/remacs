@@ -733,8 +733,8 @@ If OP is anything else, produce a greedy regexp if `rx-greedy-flag'
 is non-nil."
   (rx-check form)
   (setq form (rx-trans-forms form))
-  (let ((suffix (cond ((memq (car form) '(* + ?\s)) "")
-		      ((memq (car form) '(*? +? ??)) "?")
+  (let ((suffix (cond ((memq (car form) '(* + \? ?\s)) "")
+		      ((memq (car form) '(*? +? \?? ??)) "?")
 		      (rx-greedy-flag "")
 		      (t "?")))
 	(op (cond ((memq (car form) '(* *? 0+ zero-or-more)) "*")

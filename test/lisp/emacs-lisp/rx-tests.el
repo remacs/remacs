@@ -65,5 +65,28 @@
                     (list u v)))
                  '("1" "3"))))
 
+(ert-deftest rx-kleene ()
+  "Test greedy and non-greedy repetition operators."
+  (should (equal (rx (* "a") (+ "b") (\? "c") (?\s "d")
+                     (*? "e") (+? "f") (\?? "g") (?? "h"))
+                 "a*b+c?d?e*?f+?g??h??"))
+  (should (equal (rx (zero-or-more "a") (0+ "b")
+                     (one-or-more "c") (1+ "d")
+                     (zero-or-one "e") (optional "f") (opt "g"))
+                 "a*b*c+d+e?f?g?"))
+  (should (equal (rx (minimal-match
+                      (seq (* "a") (+ "b") (\? "c") (?\s "d")
+                           (*? "e") (+? "f") (\?? "g") (?? "h"))))
+                 "a*b+c?d?e*?f+?g??h??"))
+  (should (equal (rx (minimal-match
+                      (seq (zero-or-more "a") (0+ "b")
+                           (one-or-more "c") (1+ "d")
+                           (zero-or-one "e") (optional "f") (opt "g"))))
+                 "a*?b*?c+?d+?e??f??g??"))
+  (should (equal (rx (maximal-match
+                      (seq (* "a") (+ "b") (\? "c") (?\s "d")
+                         (*? "e") (+? "f") (\?? "g") (?? "h"))))
+                 "a*b+c?d?e*?f+?g??h??")))
+
 (provide 'rx-tests)
 ;; rx-tests.el ends here.
