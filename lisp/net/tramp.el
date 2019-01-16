@@ -3457,7 +3457,7 @@ User is always nil."
 	       start
 	       (or (text-property-any start (point-at-eol) 'dired-filename t)
 		   (point-at-eol)))
-	      (if (=  (point-at-bol) (point-at-eol))
+	      (if (= (point-at-bol) (point-at-eol))
 		  ;; Empty line.
 		  (delete-region (point) (progn (forward-line) (point)))
 		(forward-line)))))))))
@@ -3977,9 +3977,7 @@ The terminal type can be configured with `tramp-terminal-type'."
 (defun tramp-action-out-of-band (proc vec)
   "Check, whether an out-of-band copy has finished."
   ;; There might be pending output for the exit status.
-  ;; FIXME: Either remove " 0.1", or comment why it's needed.
-  ;; FIXME: Shouldn't the following line be wrapped inside (while ...)?
-  (tramp-accept-process-output proc 0.1)
+  (while (tramp-accept-process-output proc 0.1))
   (cond ((and (not (process-live-p proc))
 	      (zerop (process-exit-status proc)))
 	 (tramp-message	vec 3 "Process has finished.")
@@ -4087,7 +4085,8 @@ for process communication also."
   (with-current-buffer (process-buffer proc)
     (let (buffer-read-only last-coding-system-used
 	  ;; We do not want to run timers.
-	  timer-list timer-idle-list)
+	  timer-list timer-idle-list
+	  result)
       ;; Under Windows XP, `accept-process-output' doesn't return
       ;; sometimes.  So we add an additional timeout.  JUST-THIS-ONE
       ;; is set due to Bug#12145.  It is an integer, in order to avoid
@@ -4095,9 +4094,10 @@ for process communication also."
       (tramp-message
        proc 10 "%s %s %s\n%s"
        proc (process-status proc)
-       (with-timeout (timeout)
-	 (accept-process-output proc timeout nil 0))
-       (buffer-string)))))
+       (setq result (with-timeout (timeout)
+		      (accept-process-output proc timeout nil 0)))
+       (buffer-string))
+      result)))
 
 (defun tramp-check-for-regexp (proc regexp)
   "Check, whether REGEXP is contained in process buffer of PROC.
@@ -4641,7 +4641,7 @@ are written with verbosity of 6."
 It always returns a return code.  The Lisp error raised when
 PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
-  (let ((default-directory  (tramp-compat-temporary-file-directory))
+  (let ((default-directory (tramp-compat-temporary-file-directory))
 	(buffer (if (eq buffer t) (current-buffer) buffer))
 	result)
     (tramp-message
@@ -4812,7 +4812,7 @@ Only works for Bourne-like shells."
 	pid)
     ;; If it's a Tramp process, send the INT signal remotely.
     (when (and (processp proc) (setq pid (process-get proc 'remote-pid)))
-      (if (not  (process-live-p proc))
+      (if (not (process-live-p proc))
 	  (tramp-error proc 'error "Process %s is not active" proc)
 	(tramp-message proc 5 "Interrupt process %s with pid %s" proc pid)
 	;; This is for tramp-sh.el.  Other backends do not support this (yet).
@@ -4824,7 +4824,6 @@ Only works for Bourne-like shells."
 	;; fall back to the default implementation.
 	(with-timeout (1 (ignore))
 	  ;; We cannot run `tramp-accept-process-output', it blocks timers.
-	  ;; FIXME: Either remove " 0.1", or comment why it's needed.
 	  (while (or (accept-process-output proc 0.1)
 		     (process-live-p proc)))
 	  ;; Report success.

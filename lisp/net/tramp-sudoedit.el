@@ -744,11 +744,10 @@ ID-FORMAT valid values are `string' and `integer'."
 
 ;; Used in `tramp-sudoedit-sudo-actions'.
 (defun tramp-sudoedit-action-sudo (proc vec)
-  "Check, whether a sudo process copy has finished."
+  "Check, whether a sudo process has finished.
+Remove unneeded output."
   ;; There might be pending output for the exit status.
-  ;; FIXME: Either remove " 0.1", or comment why it's needed.
-  ;; FIXME: There's a race here.  Shouldn't the next two lines be interchanged?
-  (tramp-accept-process-output proc 0.1)
+  (while (tramp-accept-process-output proc 0.1))
   (when (not (process-live-p proc))
     ;; Delete narrowed region, it would be in the way reading a Lisp form.
     (goto-char (point-min))

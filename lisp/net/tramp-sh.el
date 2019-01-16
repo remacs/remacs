@@ -4340,7 +4340,7 @@ Each item is a list that looks like this:
 
 \(FORMAT ENCODING DECODING)
 
-FORMAT is  symbol describing the encoding/decoding format.  It can be
+FORMAT is a symbol describing the encoding/decoding format.  It can be
 `b64' for base64 encoding, `uu' for uu encoding, or `pack' for simple packing.
 
 ENCODING and DECODING can be strings, giving commands, or symbols,
@@ -4722,7 +4722,7 @@ Goes through the list `tramp-inline-compress-commands'."
 	(ignore-errors
 	  (when (executable-find "ssh")
 	    (with-tramp-progress-reporter
-		vec 4  "Computing ControlMaster options"
+		vec 4 "Computing ControlMaster options"
 	      (with-temp-buffer
 		(tramp-call-process vec "ssh" nil t nil "-o" "ControlMaster")
 		(goto-char (point-min))
@@ -5933,5 +5933,9 @@ function cell is returned to be applied on a buffer."
 ;;   which could immediately be passed on to the remote side, and
 ;;   later on checks the return value of those calls as and when
 ;;   needed.  (Stefan Monnier)
+;;
+;; * Implement detaching/re-attaching remote sessions.  By this, a
+;;   session could be reused after a connection loss.  Use dtach, or
+;;   screen, or tmux, or mosh.
 
 ;;; tramp-sh.el ends here

@@ -1087,7 +1087,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 			   ;; Half a year.
 			   (time-since (nth 3 x)) (days-to-time 183))
 			  "%b %e %R"
-			"%b %e  %Y")
+			"%b %e %Y")
 		      (nth 3 x))))) ; date
 
 		 ;; We mark the file name.  The inserted name could be
@@ -2026,54 +2026,25 @@ If ARGUMENT is non-nil, use it as argument for
 ;; We don't use timeouts.  If needed, the caller shall wrap around.
 (defun tramp-smb-wait-for-output (vec)
   "Wait for output from smbclient command.
-Returns nil if an error message has appeared."
+Removes smb prompt.  Returns nil if an error message has appeared."
   (with-current-buffer (tramp-get-connection-buffer vec)
     (let ((p (get-buffer-process (current-buffer)))
-	  (found (progn (goto-char (point-min))
-			(re-search-forward tramp-smb-prompt nil t)))
-	  (err   (progn (goto-char (point-min))
-			(re-search-forward tramp-smb-errors nil t)))
 	  buffer-read-only)
 
-      ;; Algorithm: get waiting output.  See if last line contains
-      ;; `tramp-smb-prompt' sentinel or `tramp-smb-errors' strings.
-      ;; If not, wait a bit and again get waiting output.
-      ;; FIXME: Either remove " 0.1", or comment why it's needed.
-      (while (and (not found) (not err)
-		  (or (tramp-accept-process-output p 0.1)
-		      (process-live-p p)))
-
-	;; Search for prompt.
-	(goto-char (point-min))
-	(setq found (re-search-forward tramp-smb-prompt nil t))
-
-	;; Search for errors.
-	(goto-char (point-min))
-	(setq err (re-search-forward tramp-smb-errors nil t)))
-
-      ;; When the process is still alive, read pending output.
-      ;; FIXME: This loop should be folded into the previous loop.
-      ;; Also, ERR should be set just once, after the combined
-      ;; loop has finished.
-      ;; FIXME: Either remove " 0.1", or comment why it's needed.
-      (while (and (not found)
-		  (or (tramp-accept-process-output p 0.1)
-		      (process-live-p p)))
-
-	;; Search for prompt.
-	(goto-char (point-min))
-	(setq found (re-search-forward tramp-smb-prompt nil t)))
-
+      ;; Read pending output.
+      (while (tramp-accept-process-output p 0.1))
       (tramp-message vec 6 "\n%s" (buffer-string))
 
       ;; Remove prompt.
-      (when found
+      (goto-char (point-min))
+      (when (re-search-forward tramp-smb-prompt nil t)
 	(goto-char (point-max))
 	(re-search-backward tramp-smb-prompt nil t)
 	(delete-region (point) (point-max)))
 
       ;; Return value is whether no error message has appeared.
-      (not err))))
+      (goto-char (point-min))
+      (not (re-search-forward tramp-smb-errors nil t)))))
 
 (defun tramp-smb-kill-winexe-function ()
   "Send SIGKILL to the winexe process."
