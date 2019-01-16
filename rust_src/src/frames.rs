@@ -11,7 +11,9 @@ use crate::{
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
-    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    remacs_sys::{
+        vertical_scroll_bar_type, Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx,
+    },
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
 
@@ -34,6 +36,32 @@ impl LispFrameRef {
     pub fn total_fringe_width(self) -> i32 {
         self.left_fringe_width + self.right_fringe_width
     }
+
+    pub fn scroll_bar_area_width(self) -> i32 {
+        if cfg!(feature = "window-system") {
+            match self.vertical_scroll_bar_type() {
+                vertical_scroll_bar_type::vertical_scroll_bar_left
+                | vertical_scroll_bar_type::vertical_scroll_bar_right => {
+                    self.config_scroll_bar_width
+                }
+                _ => 0,
+            }
+        } else {
+            0
+        }
+    }
+
+    pub fn horizontal_scroll_bar_height(self) -> i32 {
+        if cfg!(feature = "window-system") {
+            if self.horizontal_scroll_bars() {
+                self.config_scroll_bar_height
+            } else {
+                0
+            }
+        } else {
+            0
+        }
+    }
 }
 
 impl From<LispObject> for LispFrameRef {
@@ -44,7 +72,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -408,6 +436,20 @@ pub fn frame_right_divider_width(frame: LispFrameOrSelected) -> i32 {
 pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
     let frame: LispFrameRef = frame.into();
     frame.bottom_divider_width
+}
+
+/// Return scroll bar width of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_scroll_bar_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.scroll_bar_area_width()
+}
+
+/// Return scroll bar height of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_scroll_bar_height(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.horizontal_scroll_bar_height()
 }
 
 /// Delete FRAME, permanently eliminating it from use.

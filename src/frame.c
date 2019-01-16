@@ -3036,19 +3036,6 @@ is used.  */)
   return make_number (0);
 }
 
-DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
-       doc: /* Return scroll bar width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-scroll-bar-height", Fscroll_bar_height, Sscroll_bar_height, 0, 1, 0,
-       doc: /* Return scroll bar height of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_HEIGHT (decode_any_frame (frame)));
-}
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
@@ -5706,8 +5693,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
-  defsubr (&Sscroll_bar_width);
-  defsubr (&Sscroll_bar_height);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);
