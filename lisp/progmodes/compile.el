@@ -2056,8 +2056,7 @@ by replacing the first word, e.g., `compilation-scroll-output' from
 			    (if (boundp 'byte-compile-bound-variables)
 				(memq (cdr v) byte-compile-bound-variables)))
 			`(set (make-local-variable ',(car v)) ,(cdr v))))
-		 '(compilation-buffer-name-function
-		   compilation-directory-matcher
+		 '(compilation-directory-matcher
 		   compilation-error
 		   compilation-error-regexp-alist
 		   compilation-error-regexp-alist-alist
