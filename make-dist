@@ -472,7 +472,7 @@ echo "Making links to 'src'"
 (cd src &&
  ln [a-zA-Z]*.[chm] ../${tempdir}/src &&
  ln [a-zA-Z]*.in ../${tempdir}/src &&
- ln deps.mk ../${tempdir}/src &&
+ ln deps.mk dmpstruct.awk ../${tempdir}/src &&
  ln README ChangeLog.*[0-9] ../${tempdir}/src &&
  ln .gdbinit .dbxinit ../${tempdir}/src &&
  cd ../${tempdir}/src &&
