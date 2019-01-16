@@ -383,6 +383,17 @@ verify that their module conforms to the module API requirements.  The
 option makes Emacs abort if a module-related assertion triggers.
 @xref{Writing Dynamic Modules,, Writing Dynamically-Loaded Modules,
 elisp, The GNU Emacs Lisp Reference Manual}.
+
+@item --dump-file=@var{file}
+@opindex --dump-file
+@cindex specify dump file
+Load the dumped Emacs state from the named @var{file}.  By default,
+Emacs will look for its dump state in a file named
+@file{@var{emacs}.pdmp} in the directory of the executable, where
+@var{emacs} is the name of the Emacs executable file, normally just
+@file{emacs}.  However, if you rename or move the dump file to a
+different place, you can use this option to tell Emacs where to find
+that file.
 @end table
 
 @node Command Example

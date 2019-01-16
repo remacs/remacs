@@ -231,6 +231,11 @@ Initialization options:\n\
 --module-assertions         assert behavior of dynamic modules\n\
 ",
 #endif
+#ifdef HAVE_PDUMPER
+    "\
+--dump-file FILE            read dumped state from FILE\n\
+",
+#endif
     "\
 --no-build-details          do not add build details such as time stamps\n\
 --no-desktop                do not load a saved desktop\n\
@@ -650,43 +655,6 @@ argmatch (char **argv, int argc, const char *sstr, const char *lstr,
     }
 }
 
-static bool
-string_starts_with_p (const char* string, const char* prefix)
-{
-    return strncmp (string, prefix, strlen (prefix)) == 0;
-}
-
-/* Return the value of GNU-style long argument ARGUMENT if given on
-   command line. ARGUMENT must begin with "-". If ARGUMENT is not
-   given, return NULL.  */
-static char *
-find_argument (const char *argument, int argc, char **argv)
-{
-  char *found = NULL;
-  int i;
-
-  eassert (argument[0] == '-');
-
-  for (i = 1; i < argc; ++i)
-    if (string_starts_with_p (argv[i], argument) &&
-        ((argv[i] + strlen (argument))[0] == '=' ||
-         (argv[i] + strlen (argument))[0] == '\0'))
-      {
-        int j = i;
-        found = argv[j++] + strlen (argument);
-        if (*found == '=')
-          ++found;
-        else if (i < argc)
-          found = argv[j++];
-        else
-          fatal ("no argument given for %s", argument);
-        break;
-      }
-    else if (strcmp (argv[i], "--") == 0)
-      break;
-  return found;
-}
-
 /* Close standard output and standard error, reporting any write
    errors as best we can.  This is intended for use with atexit.  */
 static void
@@ -731,8 +699,6 @@ dump_error_to_string (enum pdumper_load_result result)
     }
 }
 
-#define PDUMP_FILE_ARG "--dump-file"
-
 static enum pdumper_load_result
 load_pdump (int argc, char **argv)
 {
@@ -753,7 +719,16 @@ load_pdump (int argc, char **argv)
 
   /* Look for an explicitly-specified dump file.  */
   const char *path_exec = PATH_EXEC;
-  char *dump_file = find_argument (PDUMP_FILE_ARG, argc, argv);
+  char *dump_file = NULL;
+  int skip_args = 0;
+  while (skip_args < argc - 1)
+    {
+      if (argmatch (argv, argc, "-dump-file", "--dump-file", 6,
+		    &dump_file, &skip_args)
+	  || argmatch (argv, argc, "--", NULL, 2, NULL, &skip_args))
+	break;
+      skip_args++;
+    }
 
   result = PDUMPER_NOT_LOADED;
   if (dump_file)
@@ -822,7 +797,6 @@ main (int argc, char **argv)
   void *stack_bottom_variable;
 
   bool do_initial_setlocale;
-  int skip_args = 0;
   bool no_loadup = false;
   char *junk = 0;
   char *dname_arg = 0;
@@ -838,7 +812,15 @@ main (int argc, char **argv)
   stack_bottom = (char *) &stack_bottom_variable;
 
   const char *dump_mode = NULL;
-  const char *temacs = find_argument ("--temacs", argc, argv);
+  int skip_args = 0;
+  char *temacs = NULL;
+  while (skip_args < argc - 1)
+    {
+      if (argmatch (argv, argc, "-temacs", "--temacs", 8, &temacs, &skip_args)
+	  || argmatch (argv, argc, "--", NULL, 2, NULL, &skip_args))
+	break;
+      skip_args++;
+    }
 #ifdef HAVE_PDUMPER
   bool attempt_load_pdump = false;
 #endif
@@ -874,18 +856,11 @@ main (int argc, char **argv)
     {
       fatal ("--temacs not supported for unexeced emacs");
     }
-  else if (initialized)
-    {
-#ifdef HAVE_PDUMPER
-      if (find_argument (PDUMP_FILE_ARG, argc, argv))
-        fatal ("%s not supported in unexeced emacs", PDUMP_FILE_ARG);
-#endif
-    }
   else
     {
       eassert (!initialized);
       eassert (!temacs);
-#ifdef PDUMP_FILE_ARG
+#ifdef HAVE_PDUMPER
       attempt_load_pdump = true;
 #endif
     }
@@ -948,6 +923,7 @@ main (int argc, char **argv)
   argc = 0;
   while (argv[argc]) argc++;
 
+  skip_args = 0;
   if (argmatch (argv, argc, "-version", "--version", 3, NULL, &skip_args))
     {
       const char *version, *copyright;
@@ -1992,6 +1968,12 @@ static const struct standard_args standard_args[] =
   { "-color", "--color", 5, 0},
   { "-no-splash", "--no-splash", 3, 0 },
   { "-no-desktop", "--no-desktop", 3, 0 },
+  /* The following two must be just above the file-name args, to get
+     them out of our way, but without mixing them with file names.  */
+  { "-temacs", "--temacs", 1, 1 },
+#ifdef HAVE_PDUMPER
+  { "-dump-file", "--dump-file", 1, 1 },
+#endif
 #ifdef HAVE_NS
   { "-NSAutoLaunch", 0, 5, 1 },
   { "-NXAutoLaunch", 0, 5, 1 },

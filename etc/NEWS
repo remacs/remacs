@@ -59,10 +59,24 @@ option '--enable-check-lisp-object-type' is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
-** Emacs by default uses a "portable dumper" instead of unexec,
-improving compatibility with modern systems and supporting ASLR.
-Emacs now needs an "emacs.pdmp" file, generated during the built, in
-its data directory at runtime.
++++
+** Emacs now uses a "portable dumper" instead of unexec.
+This improves compatibility with memory allocation on modern systems,
+and in particular better supports the Address Space Layout
+Randomization (ASLR) feature, a security technique used by most modern
+operating systems.
+
+Portable dumping can be disabled at configure time via the configure
+option '--with-pdumper=no' (but we don't recommend that, unless the
+portable dumping doesn't work on your system for some reason---please
+report such systems to the Emacs developers as bugs).
+
+When built with the portable dumping support (which is the default),
+Emacs looks for the 'emacs.pdmp' file, generated during the build, in
+its data directory at startup, and loads the dumped state from there.
+The new command-line argument '--dump-file=FILE' allows to specify a
+non-default '.pdmp' file to load the state from; see the node "Initial
+Options" in the Emacs manual for more information.
 
 ** Ibuffer
 
