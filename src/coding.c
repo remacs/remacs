@@ -11319,7 +11319,7 @@ internal character representation.  */);
 #endif
   staticpro (&system_eol_type);
 
-  pdumper_do_now_and_after_load_impl (reset_coding_after_pdumper_load);
+  pdumper_do_now_and_after_load (reset_coding_after_pdumper_load);
 }
 
 static void
