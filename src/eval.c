@@ -267,8 +267,6 @@ restore_stack_limits (Lisp_Object data)
   max_lisp_eval_depth = XINT (XCDR (data));
 }
 
-static void grow_specpdl (void);
-
 /* Call the Lisp debugger, giving it argument ARG.  */
 
 Lisp_Object
@@ -1373,7 +1371,7 @@ error (const char *m, ...)
    never-used entry just before the bottom of the stack; sometimes its
    address is taken.  */
 
-static void
+void
 grow_specpdl (void)
 {
   specpdl_ptr++;
@@ -2397,41 +2395,6 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 }
 
 /* Push unwind-protect entries of various types.  */
-
-void
-record_unwind_protect (void (*function) (Lisp_Object), Lisp_Object arg)
-{
-  specpdl_ptr->unwind.kind = SPECPDL_UNWIND;
-  specpdl_ptr->unwind.func = function;
-  specpdl_ptr->unwind.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_ptr (void (*function) (void *), void *arg)
-{
-  specpdl_ptr->unwind_ptr.kind = SPECPDL_UNWIND_PTR;
-  specpdl_ptr->unwind_ptr.func = function;
-  specpdl_ptr->unwind_ptr.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_int (void (*function) (int), int arg)
-{
-  specpdl_ptr->unwind_int.kind = SPECPDL_UNWIND_INT;
-  specpdl_ptr->unwind_int.func = function;
-  specpdl_ptr->unwind_int.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_void (void (*function) (void))
-{
-  specpdl_ptr->unwind_void.kind = SPECPDL_UNWIND_VOID;
-  specpdl_ptr->unwind_void.func = function;
-  grow_specpdl ();
-}
 
 void
 rebind_for_thread_switch (void)
