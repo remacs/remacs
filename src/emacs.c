@@ -749,7 +749,7 @@ load_pdump (int argc, char **argv)
   /* Remove the .exe extension if present.  */
   argv0_len = strlen (argv[0]);
   if (argv0_len >= 4 && c_strcasecmp (argv[0] + argv0_len - 4, ".exe") == 0)
-    sprintf (dump_file, "%.*s%s", argv0_len - 4, argv[0], suffix);
+    sprintf (dump_file, "%.*s%s", (int)(argv0_len - 4), argv[0], suffix);
   else
 #endif
   sprintf (dump_file, "%s%s", argv[0], suffix);

@@ -3442,7 +3442,7 @@ dump_cold_bignum (struct dump_context *ctx, Lisp_Object object)
     dump_off_to_lisp ((mpz_sgn (bignum->value) < 0
                        ? -nlimbs : nlimbs)));
   Fputhash (object, descriptor, ctx->bignum_data);
-  for (size_t i = 0; i < nlimbs; ++i)
+  for (mp_size_t i = 0; i < nlimbs; ++i)
     {
       mp_limb_t limb = mpz_getlimbn (bignum->value, i);
       dump_write (ctx, &limb, sizeof (limb));
