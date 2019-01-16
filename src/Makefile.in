@@ -564,7 +564,7 @@ ifeq ($(DUMPING),unexec)
   endif
 	cp -f $@ bootstrap-emacs$(EXEEXT)
 else
-	cp -f temacs$(EXEEXT) emacs$(EXEEXT)
+	rm -f $@ && cp -f temacs$(EXEEXT) $@
 endif
 
 ifeq ($(DUMPING),pdumper)
