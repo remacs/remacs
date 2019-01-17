@@ -887,7 +887,7 @@ can also be executed interactively independently of
 (defun flymake-proc--delete-temp-directory (dir-name)
   "Attempt to delete temp dir created by `flymake-proc-create-temp-with-folder-structure', do not fail on error."
   (let* ((temp-dir    temporary-file-directory)
-	 (suffix      (substring dir-name (1+ (length temp-dir)))))
+	 (suffix      (substring dir-name (1+ (length (directory-file-name temp-dir))))))
 
     (while (> (length suffix) 0)
       (setq suffix (directory-file-name suffix))
