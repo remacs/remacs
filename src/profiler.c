@@ -627,12 +627,16 @@ syms_of_profiler_for_pdumper (void)
 {
   if (dumped_with_pdumper_p ())
     {
+#ifdef PROFILER_CPU_SUPPORT
       cpu_log = Qnil;
+#endif
       memory_log = Qnil;
     }
   else
     {
+#ifdef PROFILER_CPU_SUPPORT
       eassert (NILP (cpu_log));
+#endif
       eassert (NILP (memory_log));
     }
 
