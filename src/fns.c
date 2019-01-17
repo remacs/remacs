@@ -2084,7 +2084,7 @@ the second.  */)
   else if (VECTORP (seq))
     sort_vector (seq, predicate);
   else if (!NILP (seq))
-    wrong_type_argument (Qsequencep, seq);
+    wrong_type_argument (Qlist_or_vector_p, seq);
   return seq;
 }
 
@@ -5358,6 +5358,7 @@ Used by `featurep' and `require', and altered by `provide'.  */);
   DEFSYM (Qsubfeatures, "subfeatures");
   DEFSYM (Qfuncall, "funcall");
   DEFSYM (Qplistp, "plistp");
+  DEFSYM (Qlist_or_vector_p, "list-or-vector-p");
 
 #ifdef HAVE_LANGINFO_CODESET
   DEFSYM (Qcodeset, "codeset");

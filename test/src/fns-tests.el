@@ -161,7 +161,10 @@
 	     '(9 . "ppp") '(8 . "ttt") '(8 . "eee") '(9 . "fff"))
 	    (lambda (x y) (< (car x) (car y))))
 	   [(8 . "xxx") (8 . "bbb") (8 . "ttt") (8 . "eee")
-	    (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")])))
+	    (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")]))
+  ;; Bug#34104
+  (should (equal (should-error (sort "cba" #'<) :type 'wrong-type-argument)
+                 '(wrong-type-argument list-or-vector-p "cba"))))
 
 (ert-deftest fns-tests-collate-sort ()
   (skip-unless (fns-tests--collate-enabled-p))
