@@ -12,8 +12,8 @@ use crate::{
     multibyte::LispStringRef,
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        get_process as cget_process, list_system_processes, send_process,
-        setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES,
+        list_system_processes, send_process, setup_process_coding_systems, update_status, Fmapcar,
+        STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -265,15 +265,11 @@ pub fn set_process_plist(mut process: LispProcessRef, plist: LispObject) -> Lisp
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_status(process: LispObject) -> LispObject {
-    let p = if process.is_string() {
-        get_process(process)
-    } else {
-        unsafe { cget_process(process) }
+    let mut process = match get_process(process) {
+        Qnil => return process,
+        p => LispProcessRef::from(p),
     };
-    if p.is_nil() {
-        return p;
-    }
-    let mut process = p.as_process_or_error();
+
     if process.raw_status_new() {
         unsafe { update_status(process.as_mut()) };
     }
@@ -437,7 +433,7 @@ fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> LispObject {
 pub fn process_send_string(process: LispObject, mut string: LispStringRef) {
     unsafe {
         send_process(
-            cget_process(process),
+            get_process(process),
             string.u.s.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
             string.into(),
