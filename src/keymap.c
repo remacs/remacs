@@ -93,12 +93,6 @@ static Lisp_Object get_keyelt (Lisp_Object, bool);
 
 void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
 void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
-
-static void
-CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
-{
-  CHECK_TYPE (VECTORP (x) || CHAR_TABLE_P (x), Qvector_or_char_table_p, x);
-}
 
 
 /* This function is used for installing the standard key bindings

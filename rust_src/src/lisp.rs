@@ -3,7 +3,8 @@
 
 use std::convert::From;
 use std::ffi::CString;
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt;
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::mem;
 use std::ops::{Deref, DerefMut};
 
@@ -13,6 +14,7 @@ use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
     lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     process::LispProcessRef,
     remacs_sys::{build_string, internal_equal, make_float},
     remacs_sys::{
@@ -607,6 +609,12 @@ impl LispObject {
 /// Used to denote functions that have no limit on the maximum number
 /// of arguments.
 pub const MANY: i16 = -2;
+
+impl Display for LispObject {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", LispStringRef::from(*self))
+    }
+}
 
 impl Debug for LispObject {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {

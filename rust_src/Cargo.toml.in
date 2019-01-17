@@ -12,11 +12,12 @@ edition = "2018"
 [dependencies]
 remacs-lib = { version = "0.1.0", path = "remacs-lib" }
 remacs-macros = { version = "0.1.0", path = "remacs-macros" }
-base64 = "0.9"
+base64 = "0.10.0"
 clippy = { version = "*", optional = true }
 errno = "0.2.3"
 lazy_static = "0.2.2"
 libc = "0.2"
+line-wrap = "0.1.1"
 md5 = "0.3.5"
 rand = "0.4.3"
 sha1 = "0.2.0"
@@ -54,6 +55,14 @@ unexecmacosx = ["alloc_unexecmacosx"]
 unexec = []
 # Compile with C xml2 library support.
 use-xml2 = []
+# Use a window system
+window-system = []
+# Use the x11 window system
+window-system-x11 = []
+# Use the nextstep window system
+window-system-nextstep = []
+# Use the w32 window system
+window-system-w32 = []
 compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []

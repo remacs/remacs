@@ -136,5 +136,15 @@
   ;; Defined in Rust
   (should (consp (find-definition-noselect 'post-self-insert-hook 'defvar))))
 
+(ert-deftest test-string-to-number ()
+  (should (= (string-to-number "aaa1") 0))
+  (should (= (string-to-number "1aaa1") 1))
+  (should (= (string-to-number "1") 1))
+  (should (= (string-to-number "-1") -1))
+  (should (= (string-to-number "0.1") 0.1))
+  (should (= (string-to-number "-0.1") -0.1))
+  (should (= (string-to-number "1111" 2) 15))
+  (should (= (string-to-number "FF" 16) 255)))
+
 (provide 'data-tests)
 ;;; data-tests.el ends here

@@ -12,6 +12,7 @@ use dired_windows::{file_attributes_intro, get_users};
 use crate::{
     lisp::{defsubr, LispObject},
     lists::car,
+    multibyte::LispStringRef,
     strings::string_lessp,
 };
 
@@ -25,7 +26,7 @@ use crate::{
 ///  NOSORT is useful if you plan to sort the result yourself.
 #[lisp_fn(min = "1")]
 pub fn directory_files(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
@@ -46,7 +47,7 @@ pub fn directory_files(
 /// which see.
 #[lisp_fn(min = "1")]
 pub fn directory_files_and_attributes(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
@@ -105,7 +106,7 @@ pub fn directory_files_and_attributes(
 /// On some FAT-based filesystems, only the date of last access is recorded,
 /// so last access time will always be midnight of that day.
 #[lisp_fn(min = "1")]
-pub fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
+pub fn file_attributes(filename: LispStringRef, id_format: LispObject) -> LispObject {
     file_attributes_intro(filename, id_format)
 }
 

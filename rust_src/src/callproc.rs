@@ -1,9 +1,12 @@
 //! Synchronous subprocess invocation for GNU Emacs.
 
+use libc::O_RDONLY;
+
 use crate::{
     buffers,
+    coding::encode_file_name,
     eval::{record_unwind_protect_int, unbind_to},
-    libc::O_RDONLY,
+    fileio::expand_file_name,
     lisp::{defsubr, LispObject},
     multibyte::LispStringRef,
     remacs_macros::lisp_fn,
@@ -52,23 +55,31 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     let count = c_specpdl_index();
 
     let infile = if args.len() >= 2 && args[1].is_not_nil() {
-        unsafe { Fexpand_file_name(args[1], ThreadState::current_buffer_unchecked().directory_) }
+        expand_file_name(
+            args[1].into(),
+            ThreadState::current_buffer_unchecked().directory_.into(),
+        )
     } else {
-        unsafe { build_string(NULL_DEVICE.as_ptr() as *const i8) }
+        unsafe { build_string(NULL_DEVICE.as_ptr() as *const i8) }.into()
     };
 
-    let encoded_file = unsafe { encode_file_name(infile) };
+    let encoded_file = encode_file_name(infile);
 
     let filefd = unsafe {
         emacs_open(
-            encoded_file.as_string_or_error().const_data_ptr() as *const i8,
+            encoded_file.const_data_ptr() as *const i8,
             libc::O_RDONLY,
             0,
         )
     };
 
     if filefd < 0 {
-        unsafe { report_file_error("Opening process input file".as_ptr() as *const i8, infile) };
+        unsafe {
+            report_file_error(
+                "Opening process input file".as_ptr() as *const i8,
+                infile.into(),
+            )
+        };
     }
 
     unsafe { record_unwind_protect_int(Some(close_file_unwind), filefd) };
