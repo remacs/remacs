@@ -453,7 +453,7 @@ impl From<LispObject> for LispBufferRef {
 
 impl From<LispBufferRef> for LispObject {
     fn from(b: LispBufferRef) -> Self {
-        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -486,7 +486,7 @@ impl From<LispObject> for LispOverlayRef {
 
 impl From<LispOverlayRef> for LispObject {
     fn from(o: LispOverlayRef) -> Self {
-        LispObject::tag_ptr(o, Lisp_Type::Lisp_Misc)
+        Self::tag_ptr(o, Lisp_Type::Lisp_Misc)
     }
 }
 
@@ -577,7 +577,7 @@ impl LispBufferOrName {
 }
 
 impl From<LispBufferOrName> for LispObject {
-    fn from(buffer_or_name: LispBufferOrName) -> LispObject {
+    fn from(buffer_or_name: LispBufferOrName) -> Self {
         match buffer_or_name {
             LispBufferOrName::Buffer(b) => b,
             LispBufferOrName::Name(n) => n,
@@ -586,7 +586,7 @@ impl From<LispBufferOrName> for LispObject {
 }
 
 impl From<LispObject> for LispBufferOrName {
-    fn from(v: LispObject) -> LispBufferOrName {
+    fn from(v: LispObject) -> Self {
         if v.is_string() {
             LispBufferOrName::Name(v)
         } else {
@@ -597,7 +597,7 @@ impl From<LispObject> for LispBufferOrName {
 }
 
 impl From<LispObject> for Option<LispBufferOrName> {
-    fn from(v: LispObject) -> Option<LispBufferOrName> {
+    fn from(v: LispObject) -> Self {
         if v.is_nil() {
             None
         } else if v.is_string() {
@@ -611,7 +611,7 @@ impl From<LispObject> for Option<LispBufferOrName> {
 }
 
 impl From<LispBufferOrName> for Option<LispBufferRef> {
-    fn from(v: LispBufferOrName) -> Option<LispBufferRef> {
+    fn from(v: LispBufferOrName) -> Self {
         let buffer = match v {
             LispBufferOrName::Buffer(b) => b,
             LispBufferOrName::Name(name) => {
@@ -627,7 +627,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
 }
 
 impl From<LispBufferOrName> for LispBufferRef {
-    fn from(v: LispBufferOrName) -> LispBufferRef {
+    fn from(v: LispBufferOrName) -> Self {
         Option::<LispBufferRef>::from(v).unwrap_or_else(|| nsberror(v.into()))
     }
 }
@@ -638,7 +638,7 @@ pub enum LispBufferOrCurrent {
 }
 
 impl From<LispObject> for LispBufferOrCurrent {
-    fn from(obj: LispObject) -> LispBufferOrCurrent {
+    fn from(obj: LispObject) -> Self {
         match obj.as_buffer() {
             None => LispBufferOrCurrent::Current,
             Some(buf) => LispBufferOrCurrent::Buffer(buf),
@@ -647,7 +647,7 @@ impl From<LispObject> for LispBufferOrCurrent {
 }
 
 impl From<LispBufferOrCurrent> for LispObject {
-    fn from(buffer: LispBufferOrCurrent) -> LispObject {
+    fn from(buffer: LispBufferOrCurrent) -> Self {
         match buffer {
             LispBufferOrCurrent::Current => Qnil,
             LispBufferOrCurrent::Buffer(buf) => buf.into(),
@@ -656,7 +656,7 @@ impl From<LispBufferOrCurrent> for LispObject {
 }
 
 impl From<LispBufferOrCurrent> for LispBufferRef {
-    fn from(buffer: LispBufferOrCurrent) -> LispBufferRef {
+    fn from(buffer: LispBufferOrCurrent) -> Self {
         match buffer {
             LispBufferOrCurrent::Buffer(buf) => buf,
             LispBufferOrCurrent::Current => ThreadState::current_buffer_unchecked(),

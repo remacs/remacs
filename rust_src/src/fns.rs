@@ -7,7 +7,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::{un_autoload, unbind_to},
+    eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
@@ -17,7 +17,7 @@ use crate::{
     objects::equal,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{concat as lisp_concat, globals},
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
@@ -165,7 +165,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if unsafe { globals.Vpurify_flag.is_not_nil() } {
         error!(
             "(require {}) while preparing to dump",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -180,7 +180,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if nesting > 3 {
         error!(
             "Recursive `require' for feature `{}'",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -217,16 +217,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
-            error!(
-                "Required feature `{}' was not provided",
-                feature.as_string_or_error()
-            );
+            error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
             error!(
                 "Loading file {} failed to provide feature `{}'",
-                tem3.as_string_or_error(),
-                feature.as_string_or_error()
+                tem3, feature
             );
         }
     }
