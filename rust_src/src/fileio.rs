@@ -13,8 +13,8 @@ use crate::{
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
     remacs_sys::{
-        check_executable, check_existing, encode_file_name, file_name_absolute_p,
-        file_name_case_insensitive_p, report_file_errno,
+        check_executable, check_existing, file_name_absolute_p, file_name_case_insensitive_p,
+        report_file_errno,
     },
     remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
     remacs_sys::{Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p},

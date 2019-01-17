@@ -8,15 +8,14 @@ use crate::{
     eval::{record_unwind_protect_int, unbind_to},
     fileio::expand_file_name,
     lisp::{defsubr, LispObject},
-    multibyte::LispStringRef,
     remacs_macros::lisp_fn,
+    remacs_sys::Fdelete_region,
     remacs_sys::NULL_DEVICE,
     remacs_sys::{
         build_string, call_process, close_file_unwind, create_temp_file, emacs_open,
-        encode_file_name, report_file_error,
+        report_file_error,
     },
     remacs_sys::{EmacsInt, Qnil},
-    remacs_sys::{Fdelete_region, Fexpand_file_name},
     threads::{c_specpdl_index, ThreadState},
 };
 

@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
-    libc::c_void,
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
     lists::{assq, car, cdr, get, memq, nth, put},
