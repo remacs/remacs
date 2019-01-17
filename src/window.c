@@ -3799,7 +3799,7 @@ run_window_change_functions (void)
 	    run_window_change_functions_1
 	      (Qwindow_size_change_functions, buffer, window);
 
-	  /* This window's selection has changed when it it was
+	  /* This window's selection has changed when it was
 	     (de-)selected as its frame's or the globally selected
 	     window.  */
 	  if (((frame_selected_change
@@ -3811,6 +3811,21 @@ run_window_change_functions (void)
 	      && WINDOW_LIVE_P (window))
 	    run_window_change_functions_1
 	      (Qwindow_selection_change_functions, buffer, window);
+
+	  /* This window's state has changed when its buffer or size
+	     changed or it was (de-)selected as its frame's or the
+	     globally selected window.  */
+	  if ((window_buffer_change
+	       || window_size_change
+	       || ((frame_selected_change
+		    && (EQ (window, old_selected_window)
+			|| EQ (window, selected_window)))
+		   || (frame_selected_window_change
+		       && (EQ (window, FRAME_OLD_SELECTED_WINDOW (f))
+			   || EQ (window, FRAME_SELECTED_WINDOW (f))))))
+	      && WINDOW_LIVE_P (window))
+	    run_window_change_functions_1
+	      (Qwindow_state_change_functions, buffer, window);
 	}
 
       /* When the number of windows on a frame has decreased, at least
@@ -3839,6 +3854,15 @@ run_window_change_functions (void)
 	  && FRAME_LIVE_P (f))
 	run_window_change_functions_1
 	  (Qwindow_selection_change_functions, Qnil, frame);
+
+      /* A frame has changed state when a size or buffer change
+	 occurrd or its selected window has changed or when it was
+	 (de-)selected.  */
+      if ((frame_selected_change || frame_selected_window_change
+	   || frame_buffer_change || window_deleted || frame_size_change)
+	  && FRAME_LIVE_P (f))
+	run_window_change_functions_1
+	  (Qwindow_state_change_functions, Qnil, frame);
 
       /* A frame's configuration changed when one of its windows has
 	 changed buffer or size or at least one window was deleted.  */
@@ -4650,16 +4674,26 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
     /* For a leaf root window just set the size.  */
     if (horflag)
       {
+	bool changed = r->pixel_width != new_pixel_size;
+
 	r->total_cols = new_size;
 	r->pixel_width = new_pixel_size;
+
+	if (changed && !WINDOW_PSEUDO_P (r))
+	  FRAME_WINDOW_CHANGE (f) = true;
       }
     else
       {
+	bool changed = r->pixel_height != new_pixel_size;
+
 	r->top_line = FRAME_TOP_MARGIN (f);
 	r->pixel_top = FRAME_TOP_MARGIN_HEIGHT (f);
 
 	r->total_lines = new_size;
 	r->pixel_height = new_pixel_size;
+
+	if (changed && !WINDOW_PSEUDO_P (r))
+	  FRAME_WINDOW_CHANGE (f) = true;
       }
   else
     {
@@ -7953,6 +7987,7 @@ syms_of_window (void)
   Fput (Qscroll_down, Qscroll_command, Qt);
 
   DEFSYM (Qwindow_configuration_change_hook, "window-configuration-change-hook");
+  DEFSYM (Qwindow_state_change_functions, "window-state-change-functions");
   DEFSYM (Qwindow_size_change_functions, "window-size-change-functions");
   DEFSYM (Qwindow_buffer_change_functions, "window-buffer-change-functions");
   DEFSYM (Qwindow_selection_change_functions, "window-selection-change-functions");
@@ -8072,6 +8107,22 @@ passed as argument.
 Functions specified by the default value are called for each frame if
 the frame's selected window has changed since the last redisplay.  In
 this case the frame is passed as argument.  */);
+  Vwindow_selection_change_functions = Qnil;
+
+  DEFVAR_LISP ("window-state-change-functions", Vwindow_state_change_functions,
+	       doc: /* Functions called during redisplay when the window state changed.
+The value should be a list of functions that take one argument.
+
+Functions specified buffer-locally are called for each window showing
+the corresponding buffer if and only if that window has been added,
+resized, changed its buffer or has been (de-)selected since the last
+redisplay.  In this case the window is passed as argument.
+
+Functions specified by the default value are called for each frame if
+at least one window on that frame has been added, deleted, changed its
+buffer or its total or body size or the frame has been (de-)selected
+or its selected window has changed since the last redisplay.  In this
+case the frame is passed as argument.  */);
   Vwindow_selection_change_functions = Qnil;
 
   DEFVAR_LISP ("window-configuration-change-hook", Vwindow_configuration_change_hook,

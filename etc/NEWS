@@ -1303,14 +1303,17 @@ of the Emacs Lisp Reference manual for more detail.
 
 +++
 ** Window change functions have been redesigned completely.
+
 Hooks reacting to window changes run now only when redisplay detects
-that a change has actually occurred.  The four hooks provided are:
+that a change has actually occurred.  The five hooks provided are:
 'window-buffer-change-functions' (run after window buffers have
 changed), 'window-size-change-functions' (run after a window was
 assigned a new buffer or size), 'window-configuration-change-hook'
-(like the former but run also when a window was deleted) and
+(like the former but run also when a window was deleted),
 'window-selection-change-functions' (run when the selected window
-changed).  'window-scroll-functions' are unaffected by these changes.
+changed) and 'window-state-change-functions' (run when any of the
+preceding ones is run).  'window-scroll-functions' are unaffected by
+these changes.
 
 In addition, a number of functions now allow the caller to detect what
 has changed since last redisplay: 'window-old-buffer' returns for any
