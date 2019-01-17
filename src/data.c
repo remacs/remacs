@@ -1260,41 +1260,6 @@ NUMBER may be an integer or a floating point number.  */)
   return make_unibyte_string (buffer, len);
 }
 
-DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 2, 0,
-       doc: /* Parse STRING as a decimal number and return the number.
-Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
-STRING cannot be parsed as an integer or floating point number.
-
-If BASE, interpret STRING as a number in that base.  If BASE isn't
-present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
-If the base used is not 10, STRING is always parsed as an integer.  */)
-  (register Lisp_Object string, Lisp_Object base)
-{
-  register char *p;
-  register int b;
-  Lisp_Object val;
-
-  CHECK_STRING (string);
-
-  if (NILP (base))
-    b = 10;
-  else
-    {
-      CHECK_NUMBER (base);
-      if (! (XINT (base) >= 2 && XINT (base) <= 16))
-	xsignal1 (Qargs_out_of_range, base);
-      b = XINT (base);
-    }
-
-  p = SSDATA (string);
-  while (*p == ' ' || *p == '\t')
-    p++;
-
-  val = string_to_number (p, b, true);
-  return NILP (val) ? make_number (0) : val;
-}
-
-
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -1817,7 +1782,6 @@ syms_of_data (void)
   defsubr (&Sset_terminal_local_value);
 #endif
   defsubr (&Snumber_to_string);
-  defsubr (&Sstring_to_number);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES
