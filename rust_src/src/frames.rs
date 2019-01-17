@@ -38,17 +38,17 @@ impl LispFrameRef {
     }
 
     pub fn scroll_bar_area_width(self) -> i32 {
-        if cfg!(feature = "window-system") {
+        #[cfg(feature = "window-system")]
+        {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    self.config_scroll_bar_width
+                    return self.config_scroll_bar_width
                 }
-                _ => 0,
+                _ => return 0,
             }
-        } else {
-            0
         }
+        0
     }
 
     pub fn horizontal_scroll_bar_height(self) -> i32 {
