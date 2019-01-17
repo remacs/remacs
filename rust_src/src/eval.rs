@@ -2,6 +2,8 @@
 
 use std::ptr;
 
+use libc::c_void;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -13,10 +15,13 @@ use crate::{
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys::specbind_tag::{
+        SPECPDL_UNWIND, SPECPDL_UNWIND_INT, SPECPDL_UNWIND_PTR, SPECPDL_UNWIND_VOID,
+    },
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
-        internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+        grow_specpdl, internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace,
         record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
@@ -36,6 +41,58 @@ use crate::{
  *   NOTE!!! Every function that can call EVAL must protect its args   *
  *   and temporaries from garbage collection while it needs them.      *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect(
+    function: Option<unsafe extern "C" fn(LispObject)>,
+    arg: LispObject,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_ptr(
+    function: Option<unsafe extern "C" fn(*mut c_void)>,
+    arg: *mut c_void,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_ptr
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_PTR);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_int(
+    function: Option<unsafe extern "C" fn(i32)>,
+    arg: i32,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_int
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_INT);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_void(function: Option<unsafe extern "C" fn()>) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_void
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_VOID);
+    unwind.func = function;
+    grow_specpdl();
+}
 
 /// Eval args until one of them yields non-nil, then return that value.
 /// The remaining args are not evalled at all.
