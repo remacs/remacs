@@ -454,8 +454,8 @@ pub fn compare_strings(
         Some(end) => Some(cmp::min(end, len2 as EmacsInt)),
     };
 
-    let (from1, to1) = validate_subarray_rust(str1.into(), start1.into(), end1.into(), len1);
-    let (from2, to2) = validate_subarray_rust(str2.into(), start2.into(), end2.into(), len2);
+    let (from1, to1) = validate_subarray_rust(str1.into(), start1, end1, len1);
+    let (from2, to2) = validate_subarray_rust(str2.into(), start2, end2, len2);
 
     let iter1 = str1
         .char_indices_multibyte()
