@@ -11,11 +11,12 @@ use crate::{
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
-    remacs_sys::{
-        vertical_scroll_bar_type, Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx,
-    },
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
+
+#[cfg(feature = "window-system")]
+use crate::remacs_sys::vertical_scroll_bar_type;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -48,18 +49,24 @@ impl LispFrameRef {
                 _ => return 0,
             }
         }
-        0
+        #[cfg(not(feature = "window-system"))]
+        {
+            return 0;
+        }
     }
 
     pub fn horizontal_scroll_bar_height(self) -> i32 {
-        if cfg!(feature = "window-system") {
+        #[cfg(feature = "window-system")]
+        {
             if self.horizontal_scroll_bars() {
                 self.config_scroll_bar_height
             } else {
                 0
             }
-        } else {
-            0
+        }
+        #[cfg(not(feature = "window-system"))]
+        {
+            return 0;
         }
     }
 }
