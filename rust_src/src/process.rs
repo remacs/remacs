@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
+    eval::run_hook_with_args_until_success,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
@@ -17,8 +18,8 @@ use crate::{
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
         QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
-        Qinternal_default_process_sentinel, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe,
-        Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
+        Qinternal_default_process_sentinel, Qinterrupt_process_functions, Qlisten, Qlistp,
+        Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
     },
 };
 
@@ -526,5 +527,25 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
 pub fn list_system_processes_lisp() -> LispObject {
     unsafe { list_system_processes() }
 }
+
+/// Interrupt process PROCESS
+/// PROCESS may be a process, a buffer, or the name of a process or buffer.
+/// No arg or nil means current buffer's process.
+/// Second arg CURRENT-GROUP non-nil means send signal to
+/// the current process-group of the process's controlling terminal
+/// rather than to the process's own process group.
+/// If the process is a shell, this means interrupt current subjob
+/// rather than the shell.
+///
+/// If CURRENT-GROUP is `lambda', and if the shell owns the terminal,
+/// don't send the signal.
+///
+/// This function calls the functions of `interrupt-process-functions' in
+/// the order of the list, until one of them returns non-`nil'.
+#[lisp_fn(min = "0")]
+pub fn interrupt_process(process: LispObject, current_group: LispObject) -> LispObject {
+    run_hook_with_args_until_success(&mut [Qinterrupt_process_functions, process, current_group])
+}
+def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

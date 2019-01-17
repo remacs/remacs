@@ -6293,27 +6293,6 @@ See function `interrupt-process' for more details on usage.  */)
   return process;
 }
 
-DEFUN ("interrupt-process", Finterrupt_process, Sinterrupt_process, 0, 2, 0,
-       doc: /* Interrupt process PROCESS.
-PROCESS may be a process, a buffer, or the name of a process or buffer.
-No arg or nil means current buffer's process.
-Second arg CURRENT-GROUP non-nil means send signal to
-the current process-group of the process's controlling terminal
-rather than to the process's own process group.
-If the process is a shell, this means interrupt current subjob
-rather than the shell.
-
-If CURRENT-GROUP is `lambda', and if the shell owns the terminal,
-don't send the signal.
-
-This function calls the functions of `interrupt-process-functions' in
-the order of the list, until one of them returns non-`nil'.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  return CALLN (Frun_hook_with_args_until_success, Qinterrupt_process_functions,
-		process, current_group);
-}
-
 DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
        doc: /* Kill process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.  */)
@@ -7509,7 +7488,6 @@ returns non-`nil'.  */);
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
-  DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
@@ -7532,7 +7510,6 @@ returns non-`nil'.  */);
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
   defsubr (&Sinternal_default_interrupt_process);
-  defsubr (&Sinterrupt_process);
   defsubr (&Skill_process);
   defsubr (&Squit_process);
   defsubr (&Sstop_process);
