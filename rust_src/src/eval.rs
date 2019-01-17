@@ -1,8 +1,8 @@
 //! Generic Lisp eval functions
 
-use libc::c_void;
-
 use std::ptr;
+
+use libc::c_void;
 
 use remacs_macros::lisp_fn;
 
