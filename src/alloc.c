@@ -103,24 +103,12 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "w32heap.h"	/* for sbrk */
 #endif
 
-#if defined GNU_LINUX && !defined CANNOT_DUMP
-/* The address where the heap starts.  */
-void *
-my_heap_start (void)
-{
-  static void *start;
-  if (! start)
-    start = sbrk (0);
-  return start;
-}
-#endif
-
 #ifdef DOUG_LEA_MALLOC
 
 /* Specify maximum number of areas to mmap.  It would be nice to use a
    value that explicitly means "no limit".  */
 
-#define MMAP_MAX_AREAS 100000000
+# define MMAP_MAX_AREAS 100000000
 
 /* A pointer to the memory allocated that copies that static data
    inside glibc's malloc.  */
@@ -136,9 +124,9 @@ malloc_initialize_hook (void)
 
   if (! initialized)
     {
-#ifdef GNU_LINUX
+# ifdef GNU_LINUX
       my_heap_start ();
-#endif
+# endif
       malloc_using_checking = getenv ("MALLOC_CHECK_") != NULL;
     }
   else
@@ -201,6 +189,20 @@ alloc_unexec_post (void)
   free (malloc_state_ptr);
 # endif
 }
+
+# ifdef GNU_LINUX
+
+/* The address where the heap starts.  */
+void *
+my_heap_start (void)
+{
+  static void *start;
+  if (! start)
+    start = sbrk (0);
+  return start;
+}
+# endif
+
 #endif
 
 /* Mark, unmark, query mark bit of a Lisp string.  S must be a pointer
