@@ -6085,13 +6085,15 @@ functions that take one argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if that window has been added or assigned
-another buffer, total or body size since the last time window change
-functions were run.  In this case the window is passed as argument.
+another buffer or changed its total or body size since the last time
+window change functions were run.  In this case the window is passed
+as argument.
 
 Functions specified by the default value are called for a frame if at
 least one window on that frame has been added or assigned another
-buffer, total or body size since the last time window change functions
-were run.  In this case the frame is passed as argument.
+buffer or changed its total or body size since the last time window
+change functions were run.  In this case the frame is passed as
+argument.
 @end defvar
 
 @cindex window selection change
@@ -6128,17 +6130,17 @@ functions that take one argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if that window has been added or assigned
-another buffer, total or body size or has been selected or deselected
-(among all windows or among all windows on its frame) since the last
-time window change functions were run.  In this case the window is
-passed as argument.
+another buffer, changed its total or body size or has been selected or
+deselected (among all windows or among all windows on its frame) since
+the last time window change functions were run.  In this case the
+window is passed as argument.
 
 Functions specified by the default value are called for a frame if at
 least one window on that frame has been added, deleted or assigned
-another buffer, total or body size or that frame has been selected or
-deselected or the frame's selected window has changed since the last
-time window change functions were run.  In this case the frame is
-passed as argument.
+another buffer, changed its total or body size or that frame has been
+selected or deselected or the frame's selected window has changed
+since the last time window change functions were run.  In this case
+the frame is passed as argument.
 @end defvar
 
 @cindex window configuration change
@@ -6154,25 +6156,26 @@ should be a list of functions that take no argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if at least one window on that frame has been
-added, deleted or assigned another buffer, total or body size since
-the last time window change functions were run.  Each call is
-performed with the window showing the buffer temporarily selected and
-its buffer current.
+added, deleted or assigned another buffer or changed its total or
+body size since the last time window change functions were run.  Each
+call is performed with the window showing the buffer temporarily
+selected and its buffer current.
 
 Functions specified by the default value are called for each frame if
 at least one window on that frame has been added, deleted or assigned
-another buffer, total or body size since the last time window change
-functions were run.  Each call is performed with the frame temporarily
-selected and the selected window's buffer current.
+another buffer or changed its total or body size since the last time
+window change functions were run.  Each call is performed with the
+frame temporarily selected and the selected window's buffer current.
 @end defvar
 
 Window change functions are called at the end of redisplay for each
 frame as follows: First, any buffer-local window buffer change
-function, window size change function and selected window change
-functions are called in this order.  Next, the default values for
-these functions are called in the same order.  Then any buffer-local
-window configuration change functions are called followed by functions
-specified by the default value of those functions.
+function, window size change function, selected window change and
+window state change functions are called in this order.  Next, the
+default values for these functions are called in the same order.  Then
+any buffer-local window configuration change functions are called
+followed by functions specified by the default value of those
+functions.
 
    Window change functions are run for a specific frame only if a
 corresponding change was registered for that frame earlier.  Such
