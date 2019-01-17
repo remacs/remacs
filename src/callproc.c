@@ -38,7 +38,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define _P_NOWAIT 1	/* from process.h */
 #endif
 
-#include "callproc.h"
 #include "commands.h"
 #include "buffer.h"
 #include "coding.h"

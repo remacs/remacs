@@ -6,7 +6,6 @@
 #include "atimer.h"
 #include "blockinput.h"
 #include "buffer.h"
-#include "callproc.h"
 #include "category.h"
 #include "ccl.h"
 #include "character.h"
