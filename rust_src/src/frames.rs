@@ -44,7 +44,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

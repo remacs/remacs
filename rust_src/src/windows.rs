@@ -237,7 +237,7 @@ impl From<LispObject> for LispWindowRef {
 
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
-        LispObject::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -307,19 +307,19 @@ impl LispGlyphMatrixRef {
 pub struct LispWindowOrSelected(LispObject);
 
 impl From<LispObject> for LispWindowOrSelected {
-    fn from(obj: LispObject) -> LispWindowOrSelected {
-        LispWindowOrSelected(obj.map_or_else(selected_window, |w| w))
+    fn from(obj: LispObject) -> Self {
+        Self(obj.map_or_else(selected_window, |w| w))
     }
 }
 
 impl From<LispWindowOrSelected> for LispObject {
-    fn from(w: LispWindowOrSelected) -> LispObject {
+    fn from(w: LispWindowOrSelected) -> Self {
         w.0
     }
 }
 
 impl From<LispWindowOrSelected> for LispWindowRef {
-    fn from(w: LispWindowOrSelected) -> LispWindowRef {
+    fn from(w: LispWindowOrSelected) -> Self {
         w.0.as_window_or_error()
     }
 }
@@ -328,8 +328,8 @@ pub struct LispWindowLiveOrSelected(LispWindowRef);
 
 impl From<LispObject> for LispWindowLiveOrSelected {
     /// Same as the `decode_live_window` function
-    fn from(obj: LispObject) -> LispWindowLiveOrSelected {
-        LispWindowLiveOrSelected(obj.map_or_else(
+    fn from(obj: LispObject) -> Self {
+        Self(obj.map_or_else(
             || selected_window().as_window_or_error(),
             |w| w.as_live_window_or_error(),
         ))
@@ -337,7 +337,7 @@ impl From<LispObject> for LispWindowLiveOrSelected {
 }
 
 impl From<LispWindowLiveOrSelected> for LispWindowRef {
-    fn from(w: LispWindowLiveOrSelected) -> LispWindowRef {
+    fn from(w: LispWindowLiveOrSelected) -> Self {
         w.0
     }
 }
@@ -346,8 +346,8 @@ pub struct LispWindowValidOrSelected(LispWindowRef);
 
 impl From<LispObject> for LispWindowValidOrSelected {
     /// Same as the `decode_valid_window` function
-    fn from(obj: LispObject) -> LispWindowValidOrSelected {
-        LispWindowValidOrSelected(obj.map_or_else(
+    fn from(obj: LispObject) -> Self {
+        Self(obj.map_or_else(
             || selected_window().as_window_or_error(),
             |w| w.as_valid_window_or_error(),
         ))
@@ -355,7 +355,7 @@ impl From<LispObject> for LispWindowValidOrSelected {
 }
 
 impl From<LispWindowValidOrSelected> for LispWindowRef {
-    fn from(w: LispWindowValidOrSelected) -> LispWindowRef {
+    fn from(w: LispWindowValidOrSelected) -> Self {
         w.0
     }
 }
