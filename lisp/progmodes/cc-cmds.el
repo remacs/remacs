@@ -485,6 +485,20 @@ function to control that."
       (c-hungry-delete-forward)
     (c-hungry-delete-backwards)))
 
+(defvar c--disable-fix-of-bug-33794 nil
+  "If non-nil disable alans controversional fix of 33794.
+This fix breaks most features of `electric-pair-mode' by
+incompletely reimplementing in in this mode.")
+
+(defmacro c--with-post-self-insert-hook-maybe (&rest body)
+  `(let ((post-self-insert-hook
+	  (if c--disable-fix-of-bug-33794
+	      post-self-insert-hook
+	    ;; Acording to AM: Disable random functionality to get
+	    ;; defined functionality from `self-insert-command'
+	    nil)))
+     ,@body))
+
 (defun c-electric-pound (arg)
   "Insert a \"#\".
 If `c-electric-flag' is set, handle it specially according to the variable
@@ -504,7 +518,7 @@ inside a literal or a macro, nothing special happens."
 			  (eq (char-before) ?\\))))
 	    (c-in-literal)))
       ;; do nothing special
-      (let (post-self-insert-hook)	; Disable random functionality.
+      (c--with-post-self-insert-hook-maybe
 	(self-insert-command (prefix-numeric-value arg)))
     ;; place the pound character at the left edge
     (let ((pos (- (point-max) (point)))
@@ -857,36 +871,38 @@ settings of `c-cleanup-list' are done."
 
     ;; Insert the brace.  Note that expand-abbrev might reindent
     ;; the line here if there's a preceding "else" or something.
-    (let (post-self-insert-hook) ; the only way to get defined functionality
-				 ; from `self-insert-command'.
-      (self-insert-command (prefix-numeric-value arg)))
+    (c--with-post-self-insert-hook-maybe
+     (self-insert-command (prefix-numeric-value arg)))
 
     ;; Emulate `electric-pair-mode'.
-    (when (and (boundp 'electric-pair-mode)
-	       electric-pair-mode)
-      (let ((size (buffer-size))
-	    (c-in-electric-pair-functionality t)
-	    post-self-insert-hook)
-	(electric-pair-post-self-insert-function)
-	(setq got-pair-} (and at-eol
-			      (eq (c-last-command-char) ?{)
-			      (eq (char-after) ?}))
-	      electric-pair-deletion (< (buffer-size) size))))
+    (unless c--disable-fix-of-bug-33794
+      (when (and (boundp 'electric-pair-mode)
+		 electric-pair-mode)
+	(let ((size (buffer-size))
+	      (c-in-electric-pair-functionality t)
+	      post-self-insert-hook)
+	  (electric-pair-post-self-insert-function)
+	  (setq got-pair-} (and at-eol
+				(eq (c-last-command-char) ?{)
+				(eq (char-after) ?}))
+		electric-pair-deletion (< (buffer-size) size))))
 
-    ;; Perform any required CC Mode electric actions.
-    (cond
-     ((or literal arg (not c-electric-flag) active-region))
-     ((not at-eol)
-      (c-indent-line))
-     (electric-pair-deletion
-      (c-indent-line)
-      (c-do-brace-electrics 'ignore nil))
-     (t (c-do-brace-electrics nil nil)
-	(when got-pair-}
-	  (save-excursion
-	    (forward-char)
-	    (c-do-brace-electrics 'assume 'ignore))
-	  (c-indent-line))))
+      ;; Perform any required CC Mode electric actions.
+      (cond
+       ((or literal arg (not c-electric-flag) active-region))
+       ((not at-eol)
+	(c-indent-line))
+       (electric-pair-deletion
+	(c-indent-line)
+	(c-do-brace-electrics 'ignore nil))
+       (t (c-do-brace-electrics nil nil)
+	  (when got-pair-}
+	    (save-excursion
+	      (forward-char)
+	      (c-do-brace-electrics 'assume 'ignore))
+	    (c-indent-line)))))
+
+
 
     ;; blink the paren
     (and (eq (c-last-command-char) ?\})
@@ -944,7 +960,7 @@ is inhibited."
 		       c-electric-flag
 		       (eq (c-last-command-char) ?/)
 		       (eq (char-before) (if literal ?* ?/))))
-    (let (post-self-insert-hook)	; Disable random functionality.
+    (c--with-post-self-insert-hook-maybe
       (self-insert-command (prefix-numeric-value arg)))
     (if indentp
 	(indent-according-to-mode))))
@@ -958,7 +974,7 @@ supplied, point is inside a literal, or `c-syntactic-indentation' is nil,
 this indentation is inhibited."
 
   (interactive "*P")
-  (let (post-self-insert-hook)		; Disable random functionality.
+  (c--with-post-self-insert-hook-maybe
     (self-insert-command (prefix-numeric-value arg)))
   ;; if we are in a literal, or if arg is given do not reindent the
   ;; current line, unless this star introduces a comment-only line.
@@ -1006,7 +1022,7 @@ settings of `c-cleanup-list'."
       (setq lim (c-most-enclosing-brace (c-parse-state))
 	    literal (c-in-literal lim)))
 
-    (let (post-self-insert-hook)	; Disable random functionality.
+    (c--with-post-self-insert-hook-maybe
       (self-insert-command (prefix-numeric-value arg)))
 
     (if (and c-electric-flag (not literal) (not arg))
@@ -1076,7 +1092,7 @@ reindented unless `c-syntactic-indentation' is nil.
 	 newlines is-scope-op
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
-    (let (post-self-insert-hook)	; Disable random functionality.
+    (c--with-post-self-insert-hook-maybe
       (self-insert-command (prefix-numeric-value arg)))
     ;; Any electric action?
     (if (and c-electric-flag (not literal) (not arg))
@@ -1170,7 +1186,7 @@ numeric argument is supplied, or the point is inside a literal."
   (let ((c-echo-syntactic-information-p nil)
 	final-pos found-delim case-fold-search)
 
-    (let (post-self-insert-hook)	; Disable random functionality.
+    (c--with-post-self-insert-hook-maybe
       (self-insert-command (prefix-numeric-value arg)))
     (setq final-pos (point))
 
@@ -1236,8 +1252,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 	;; shut this up
 	(c-echo-syntactic-information-p nil)
 	case-fold-search)
-    (let (post-self-insert-hook) ; The only way to get defined functionality
-				 ; from `self-insert-command'.
+    (c--with-post-self-insert-hook-maybe
       (self-insert-command (prefix-numeric-value arg)))
 
     (if (and (not arg) (not literal))
@@ -1288,10 +1303,11 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 	      (insert-and-inherit "} catch (")))
 
 	  ;; Apply `electric-pair-mode' stuff.
-	  (when (and (boundp 'electric-pair-mode)
-		     electric-pair-mode)
-	    (let (post-self-insert-hook)
-	      (electric-pair-post-self-insert-function)))
+	  (unless c--disable-fix-of-bug-33794
+	    (when (and (boundp 'electric-pair-mode)
+		       electric-pair-mode)
+	      (let (post-self-insert-hook)
+		(electric-pair-post-self-insert-function))))
 
 	  ;; Check for clean-ups at function calls.  These two DON'T need
 	  ;; `c-electric-flag' or `c-syntactic-indentation' set.
