@@ -468,10 +468,6 @@ impl LispObject {
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.into()
     }
-
-    pub fn as_overlay_or_error(self) -> LispOverlayRef {
-        self.into()
-    }
 }
 
 impl From<LispObject> for LispOverlayRef {
@@ -1013,7 +1009,7 @@ pub extern "C" fn build_overlay(
 ) -> LispObject {
     unsafe {
         let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
-        let mut overlay = obj.as_overlay_or_error();
+        let mut overlay: LispOverlayRef = obj.into();
         overlay.start = start;
         overlay.end = end;
         overlay.plist = plist;
@@ -1191,8 +1187,8 @@ pub unsafe extern "C" fn copy_overlays(
         let start = duplicate_marker(overlay.start);
         let end = duplicate_marker(overlay.end);
 
-        let mut overlay_new =
-            build_overlay(start, end, Fcopy_sequence(overlay.plist)).as_overlay_or_error();
+        let mut overlay_new: LispOverlayRef =
+            build_overlay(start, end, Fcopy_sequence(overlay.plist)).into();
 
         match tail {
             Some(mut tail_ref) => tail_ref.next = overlay_new.as_mut(),
