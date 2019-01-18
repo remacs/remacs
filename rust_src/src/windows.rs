@@ -7,6 +7,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    buffers::LispBufferRef,
     editfns::{goto_char, point},
     frames::{LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
@@ -166,6 +167,10 @@ impl LispWindowRef {
         y + self.top_edge_y()
     }
 
+    pub fn contents_as_buffer(self) -> LispBufferRef {
+        self.contents.into()
+    }
+
     /// True if window wants a mode line and is high enough to
     /// accommodate it, false otherwise.
     ///
@@ -182,11 +187,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
             && (window_mode_line_format.is_not_nil()
-                || self
-                    .contents
-                    .as_buffer_or_error()
-                    .mode_line_format_
-                    .is_not_nil())
+                || self.contents_as_buffer().mode_line_format_.is_not_nil())
             && self.pixel_height > self.get_frame().line_height
     }
 
@@ -212,7 +213,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
-                || (self.contents.as_buffer_or_error().header_line_format_).is_not_nil())
+                || (self.contents_as_buffer().header_line_format_).is_not_nil())
             && self.pixel_height > height
     }
 
@@ -925,7 +926,7 @@ pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> Li
             // ... but here we want to catch type error before buffer change.
             pos.as_number_coerce_marker_or_error();
             unsafe {
-                set_buffer_internal(win.contents.as_buffer_or_error().as_mut());
+                set_buffer_internal(win.contents_as_buffer().as_mut());
             }
             goto_char(pos);
             unsafe {

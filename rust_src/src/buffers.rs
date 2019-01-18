@@ -439,10 +439,6 @@ impl LispObject {
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
         self.as_buffer().and_then(|b| b.as_live())
     }
-
-    pub fn as_buffer_or_error(self) -> LispBufferRef {
-        self.into()
-    }
 }
 
 impl From<LispObject> for LispBufferRef {
@@ -590,7 +586,7 @@ impl From<LispObject> for LispBufferOrName {
         if v.is_string() {
             LispBufferOrName::Name(v)
         } else {
-            v.as_buffer_or_error();
+            LispBufferRef::from(v);
             LispBufferOrName::Buffer(v)
         }
     }
