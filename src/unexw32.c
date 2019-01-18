@@ -45,9 +45,6 @@ extern char *my_begbss_static;
 
 #include "w32heap.h"
 
-/* Basically, our "initialized" flag.  */
-BOOL using_dynamic_heap = FALSE;
-
 void get_section_info (file_data *p_file);
 void copy_executable_and_dump_data (file_data *, file_data *);
 void dump_bss_and_heap (file_data *p_infile, file_data *p_outfile);
@@ -649,14 +646,7 @@ unexec (const char *new_name, const char *old_name)
       exit (1);
     }
 
-  /* Set the flag (before dumping).  */
-  using_dynamic_heap = TRUE;
-
   copy_executable_and_dump_data (&in_file, &out_file);
-
-  /* Unset it because it is plain wrong to keep it after dumping.
-     Malloc can still occur!  */
-  using_dynamic_heap = FALSE;
 
   /* Patch up header fields; profiler is picky about this. */
   {

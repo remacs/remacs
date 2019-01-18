@@ -31,7 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 extern unsigned char *get_data_start (void);
 extern unsigned char *get_data_end (void);
 extern size_t         reserved_heap_size;
-extern BOOL           using_dynamic_heap;
 
 extern void *mmap_realloc (void **, size_t);
 extern void  mmap_free (void **);
@@ -43,7 +42,7 @@ extern void report_temacs_memory_usage (void);
 extern void *sbrk (ptrdiff_t size);
 
 /* Initialize heap structures for sbrk on startup.  */
-extern void init_heap (void);
+extern void init_heap (bool);
 
 /* ----------------------------------------------------------------- */
 /* Useful routines for manipulating memory-mapped files.  */

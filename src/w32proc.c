@@ -81,6 +81,36 @@ static sigset_t sig_mask;
 
 static CRITICAL_SECTION crit_sig;
 
+/* Catch memory allocation before the heap allocation scheme is set
+   up.  These functions should never be called, unless code is added
+   early on in 'main' that runs before init_heap is called.  */
+_Noreturn void * malloc_before_init (size_t);
+_Noreturn void * realloc_before_init (void *, size_t);
+_Noreturn void   free_before_init (void *);
+
+_Noreturn void *
+malloc_before_init (size_t size)
+{
+  fprintf (stderr,
+	   "error: 'malloc' called before setting up heap allocation; exiting.\n");
+  exit (-1);
+}
+
+_Noreturn void *
+realloc_before_init (void *ptr, size_t size)
+{
+  fprintf (stderr,
+	   "error: 'realloc' called before setting up heap allocation; exiting.\n");
+  exit (-1);
+}
+
+_Noreturn void
+free_before_init (void *ptr)
+{
+  fprintf (stderr,
+	   "error: 'free' called before setting up heap allocation; exiting.\n");
+  exit (-1);
+}
 
 extern BOOL ctrl_c_handler (unsigned long type);
 
@@ -110,11 +140,12 @@ _start (void)
     DebugBreak ();
 #endif
 
+  the_malloc_fn = malloc_before_init;
+  the_realloc_fn = realloc_before_init;
+  the_free_fn = free_before_init;
+
   /* Cache system info, e.g., the NT page size.  */
   cache_system_info ();
-
-  /* Grab our malloc arena space now, before CRT starts up. */
-  init_heap ();
 
   /* This prevents ctrl-c's in shells running while we're suspended from
      having us exit.  */
