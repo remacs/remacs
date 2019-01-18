@@ -394,28 +394,23 @@ If multiple rules match, only first one is executed.")
 
 ;; for edebug's sake, a separate function
 (defun electric-layout-post-self-insert-function-1 ()
-  (let* (pos
+  (let* ((pos (electric--after-char-pos))
          probe
          (rules electric-layout-rules)
          (rule
           (catch 'done
-            (while (setq probe (pop rules))
-              (cond ((and (consp probe)
-                          (eq (car probe) last-command-event))
-                     (throw 'done (cdr probe)))
-                    ((functionp probe)
-                     (let ((res
-                            (save-excursion
-                              (goto-char
-                               (or pos (setq pos (electric--after-char-pos))))
-                              ;; Ensure probe is called at the
-                              ;; promised place. FIXME: maybe warn if
-                              ;; it isn't
-                              (when (eq (char-before) last-command-event)
-                                (funcall probe last-command-event)))))
-                       (when res (throw 'done res)))))))))
+            (when pos
+              (while (setq probe (pop rules))
+                (cond ((and (consp probe)
+                            (eq (car probe) last-command-event))
+                       (throw 'done (cdr probe)))
+                      ((functionp probe)
+                       (let ((res
+                              (save-excursion
+                                (goto-char pos)
+                                (funcall probe last-command-event))))
+                         (when res (throw 'done res))))))))))
     (when (and rule
-               (or pos (setq pos (electric--after-char-pos)))
                ;; Not in a string or comment.
                (not (nth 8 (save-excursion (syntax-ppss pos)))))
       (goto-char pos)
