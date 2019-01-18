@@ -177,6 +177,10 @@ impl LispBufferRef {
         self.case_fold_search_
     }
 
+    pub fn tab_width(self) -> LispObject {
+        self.tab_width_
+    }
+
     // Check if buffer is live
     pub fn is_live(self) -> bool {
         self.name_.is_not_nil()

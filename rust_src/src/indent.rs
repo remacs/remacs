@@ -1,6 +1,6 @@
 //! Indentation functions
 
-use std::ptr;
+use std::{cmp::max, ptr};
 
 use remacs_macros::lisp_fn;
 
@@ -8,10 +8,16 @@ use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{point, point_min},
     lisp::{defsubr, LispObject},
+    remacs_sys::globals,
     remacs_sys::EmacsUint,
-    remacs_sys::{self, find_newline, position_indentation, scan_for_column, set_point, EmacsInt},
-    remacs_sys::{del_range, last_known_column, Findent_to, Finsert_char, Qnil, Qt},
-    remacs_sys::{last_known_column_modified, last_known_column_point, set_point_both},
+    remacs_sys::{
+        self, find_newline, position_indentation, sanitize_tab_width, scan_for_column, set_point,
+        EmacsInt,
+    },
+    remacs_sys::{del_range, Finsert_char, Qnil, Qt},
+    remacs_sys::{
+        last_known_column, last_known_column_modified, last_known_column_point, set_point_both,
+    },
     threads::ThreadState,
 };
 
@@ -117,7 +123,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     // If line ends prematurely, add space to the end.
     if col < goal && force == Qt {
         col = goal;
-        unsafe { Findent_to(col.into(), Qnil) };
+        Findent_to(col.into(), Qnil);
     }
 
     unsafe {
@@ -132,6 +138,48 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
 #[no_mangle]
 pub extern "C" fn invalidate_current_column() {
     unsafe { last_known_column_point = 0 };
+}
+
+/// Indent from point with tabs and spaces until COLUMN is
+/// reached. Optional second argument MINIMUM says always do at least
+/// MINIMUM spaces even if that goes past COLUMN; by default, MINIMUM
+/// is zero.
+///
+/// The return value is the column where the insertion ends.
+#[lisp_fn(min = "1")]
+pub fn indent_to(column: EmacsInt, minimum: LispObject) -> EmacsInt {
+    let buffer = ThreadState::current_buffer_unchecked();
+    let tab_width = unsafe { sanitize_tab_width(buffer.tab_width().force_fixnum()) } as EmacsInt;
+    let arg_minimum = if minimum.is_nil() {
+        0
+    } else {
+        minimum.as_fixnum_or_error()
+    };
+    let mut fromcol = current_column();
+    let mincol = max(fromcol + arg_minimum, column);
+
+    if fromcol == mincol {
+        return mincol;
+    }
+
+    if unsafe { globals.indent_tabs_mode } {
+        let n = mincol / tab_width - fromcol / tab_width;
+        if n != 0 {
+            unsafe { Finsert_char(b'\t'.into(), n.into(), Qt) };
+            fromcol = (mincol / tab_width) * tab_width;
+        }
+    }
+
+    let missing = mincol - fromcol;
+
+    unsafe {
+        Finsert_char(b' '.into(), missing.into(), Qt);
+        last_known_column = mincol as isize;
+        last_known_column_point = buffer.pt;
+        last_known_column_modified = buffer.modifications();
+    }
+
+    mincol
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));
