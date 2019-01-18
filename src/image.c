@@ -2200,7 +2200,7 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
       else
         {
           image_error ("Specified image bit depth is not supported by XRender");
-          *picture = NULL;
+          *picture = 0;
         }
     }
 # endif
