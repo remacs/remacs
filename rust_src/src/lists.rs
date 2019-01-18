@@ -324,16 +324,16 @@ impl LispCons {
     }
 
     /// Set the car of the cons cell.
-    pub fn set_car(self, n: LispObject) {
+    pub fn set_car<T: Into<LispObject>>(self, n: T) {
         unsafe {
-            (*self._extract()).u.s.as_mut().car = n;
+            (*self._extract()).u.s.as_mut().car = n.into();
         }
     }
 
     /// Set the car of the cons cell.
-    pub fn set_cdr(self, n: LispObject) {
+    pub fn set_cdr<T: Into<LispObject>>(self, n: T) {
         unsafe {
-            (*self._extract()).u.s.as_mut().u.cdr = n;
+            (*self._extract()).u.s.as_mut().u.cdr = n.into();
         }
     }
 
@@ -753,7 +753,7 @@ where
             let (_, last_cons_cdr) = last_cons.into();
             let last_cons_cdr = LispCons::from(last_cons_cdr);
             let (_, lcc_cdr) = last_cons_cdr.into();
-            last_cons_cdr.set_cdr((prop, (val, lcc_cdr)).into());
+            last_cons_cdr.set_cdr((prop, (val, lcc_cdr)));
             plist
         }
     }
