@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     casefiddle::downcase,
     dispnew::{ding, sleep_for},
-    eval::{un_autoload, unbind_to},
+    eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
@@ -20,10 +20,7 @@ use crate::{
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{
-        concat as lisp_concat, globals, message1, record_unwind_protect,
-        redisplay_preserve_echo_area,
-    },
+    remacs_sys::{concat as lisp_concat, globals, message1, redisplay_preserve_echo_area},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
     remacs_sys::{
@@ -171,10 +168,10 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.Vpurify_flag != Qnil } {
+    if unsafe { globals.Vpurify_flag.is_not_nil() } {
         error!(
             "(require {}) while preparing to dump",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -189,7 +186,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if nesting > 3 {
         error!(
             "Recursive `require' for feature `{}'",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -212,11 +209,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             noerror,
             Qt,
             Qnil,
-            if filename.is_nil() { Qt } else { Qnil },
+            filename.is_nil().into(),
         );
 
         // If load failed entirely, return nil.
-        if tem == Qnil {
+        if tem.is_nil() {
             return unbind_to(count, Qnil);
         }
     }
@@ -226,16 +223,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
-            error!(
-                "Required feature `{}' was not provided",
-                feature.as_string_or_error()
-            );
+            error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
             error!(
                 "Loading file {} failed to provide feature `{}'",
-                tem3.as_string_or_error(),
-                feature.as_string_or_error()
+                tem3, feature
             );
         }
     }

@@ -2946,25 +2946,6 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 
-/* Close FONT_OBJECT that is opened on frame F.  */
-
-static void
-font_close_object (struct frame *f, Lisp_Object font_object)
-{
-  struct font *font = XFONT_OBJECT (font_object);
-
-  if (NILP (AREF (font_object, FONT_TYPE_INDEX)))
-    /* Already closed.  */
-    return;
-  FONT_ADD_LOG ("close", font_object, Qnil);
-  font->driver->close (font);
-#ifdef HAVE_WINDOW_SYSTEM
-  eassert (FRAME_DISPLAY_INFO (f)->n_fonts);
-  FRAME_DISPLAY_INFO (f)->n_fonts--;
-#endif
-}
-
-
 /* Return 1 if FONT on F has a glyph for character C, 0 if not, -1 if
    FONT is a font-entity and it must be opened to check.  */
 
@@ -3703,7 +3684,7 @@ font_filter_properties (Lisp_Object font,
    at index POS.  If C is negative, get C from the current buffer or
    STRING.  */
 
-static Lisp_Object
+Lisp_Object
 font_at (int c, ptrdiff_t pos, struct face *face, struct window *w,
 	 Lisp_Object string)
 {
@@ -4724,15 +4705,6 @@ DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
   return font_open_entity (f, font_entity, isize);
 }
 
-DEFUN ("close-font", Fclose_font, Sclose_font, 1, 2, 0,
-       doc: /* Close FONT-OBJECT.  */)
-  (Lisp_Object font_object, Lisp_Object frame)
-{
-  CHECK_FONT_OBJECT (font_object);
-  font_close_object (decode_live_frame (frame), font_object);
-  return Qnil;
-}
-
 DEFUN ("query-font", Fquery_font, Squery_font, 1, 1, 0,
        doc: /* Return information about FONT-OBJECT.
 The value is a vector:
@@ -4918,35 +4890,6 @@ the corresponding element is nil.  */)
   if (! VECTORP (object))
     SAFE_FREE ();
   return vec;
-}
-
-DEFUN ("font-at", Ffont_at, Sfont_at, 1, 3, 0,
-       doc: /* Return a font-object for displaying a character at POSITION.
-Optional second arg WINDOW, if non-nil, is a window displaying
-the current buffer.  It defaults to the currently selected window.
-Optional third arg STRING, if non-nil, is a string containing the target
-character at index specified by POSITION.  */)
-  (Lisp_Object position, Lisp_Object window, Lisp_Object string)
-{
-  struct window *w = decode_live_window (window);
-
-  if (NILP (string))
-    {
-      if (XBUFFER (w->contents) != current_buffer)
-	error ("Specified window is not displaying the current buffer");
-      CHECK_NUMBER_COERCE_MARKER (position);
-      if (! (BEGV <= XINT (position) && XINT (position) < ZV))
-	args_out_of_range_3 (position, make_number (BEGV), make_number (ZV));
-    }
-  else
-    {
-      CHECK_NUMBER (position);
-      CHECK_STRING (string);
-      if (! (0 <= XINT (position) && XINT (position) < SCHARS (string)))
-	args_out_of_range (string, position);
-    }
-
-  return font_at (-1, XINT (position), NULL, w, string);
 }
 
 #if 0
@@ -5339,10 +5282,8 @@ syms_of_font (void)
 
 #ifdef FONT_DEBUG
   defsubr (&Sopen_font);
-  defsubr (&Sclose_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
-  defsubr (&Sfont_at);
 #if 0
   defsubr (&Sdraw_string);
 #endif

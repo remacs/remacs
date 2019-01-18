@@ -57,7 +57,7 @@ fn hash_alg(algorithm: LispSymbolRef) -> HashAlg {
         Qsha384 => HashAlg::SHA384,
         Qsha512 => HashAlg::SHA512,
         _ => {
-            let name = symbol_name(algorithm).as_string_or_error();
+            let name: LispStringRef = symbol_name(algorithm).into();
             error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
         }
     }

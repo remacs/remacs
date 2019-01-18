@@ -12,7 +12,7 @@ use crate::{
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
-    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
     threads::ThreadState,
     util::clip_to_bounds,
 };
@@ -109,7 +109,7 @@ impl From<LispObject> for LispMarkerRef {
 
 impl From<LispMarkerRef> for LispObject {
     fn from(m: LispMarkerRef) -> Self {
-        LispObject::tag_ptr(m, Lisp_Type::Lisp_Misc)
+        Self::tag_ptr(m, Lisp_Type::Lisp_Misc)
     }
 }
 
@@ -299,12 +299,9 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         marker.as_fixnum_coerce_marker_or_error();
     }
     let new = unsafe { Fmake_marker() };
-    let buffer_or_nil = marker
-        .as_marker()
-        .and_then(|m| m.buffer())
-        .map_or(Qnil, LispObject::from);
+    let buffer_or_nil = marker.as_marker().and_then(|m| m.buffer());
 
-    set_marker(new.into(), marker, buffer_or_nil);
+    set_marker(new.into(), marker, buffer_or_nil.into());
 
     if let Some(mut m) = new.as_marker() {
         m.set_insertion_type(itype.is_not_nil())
@@ -319,14 +316,11 @@ pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
 
-    if let Some(marker) = cur_buf.markers() {
-        for m in marker.iter() {
-            if m.charpos().map_or(false, |p| p == position) {
-                return true;
-            }
-        }
-    }
-    false
+    cur_buf.markers().map_or(false, |marker| {
+        marker
+            .iter()
+            .any(|m| m.charpos().map_or(false, |p| p == position))
+    })
 }
 
 /// Change M so it points to B at CHARPOS and BYTEPOS.

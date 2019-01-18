@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::current_buffer,
-    eval::unbind_to,
+    eval::{record_unwind_protect, unbind_to},
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
@@ -15,8 +15,7 @@ use crate::{
         recursive_edit_1, recursive_edit_unwind, update_mode_lines,
     },
     remacs_sys::{
-        make_lispy_position, record_unwind_protect, temporarily_switch_to_single_kboard,
-        window_box_left_offset,
+        make_lispy_position, temporarily_switch_to_single_kboard, window_box_left_offset,
     },
     remacs_sys::{Fpos_visible_in_window_p, Fthrow},
     remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line},

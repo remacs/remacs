@@ -928,6 +928,8 @@ extern void syms_of_ftcrfont (void);
 
 extern void font_add_log (const char *, Lisp_Object, Lisp_Object);
 extern void font_deferred_log (const char *, Lisp_Object, Lisp_Object);
+extern Lisp_Object font_at (int c, ptrdiff_t pos, struct face *face,
+                            struct window *w, Lisp_Object string);
 
 #define FONT_ADD_LOG(ACTION, ARG, RESULT)	\
   do {						\
