@@ -239,10 +239,6 @@ impl LispObject {
     pub fn as_subr(self) -> Option<LispSubrRef> {
         self.into()
     }
-
-    pub fn as_subr_or_error(self) -> LispSubrRef {
-        self.into()
-    }
 }
 
 impl From<LispObject> for LispSubrRef {
