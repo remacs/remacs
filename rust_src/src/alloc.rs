@@ -1,7 +1,5 @@
 //! Storage allocation and gc
 
-use std::ptr;
-
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
