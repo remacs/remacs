@@ -6,15 +6,16 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{point_byte, point_min_byte},
-    editfns::{point, point_min},
+    editfns::{insert_char, point, point_min},
     lisp::{defsubr, LispObject},
+    multibyte::Codepoint,
     remacs_sys::globals,
     remacs_sys::EmacsUint,
     remacs_sys::{
         self, find_newline, position_indentation, sanitize_tab_width, scan_for_column, set_point,
         EmacsInt,
     },
-    remacs_sys::{del_range, Finsert_char, Qnil, Qt},
+    remacs_sys::{del_range, Qnil, Qt},
     remacs_sys::{
         last_known_column, last_known_column_modified, last_known_column_point, set_point_both,
     },
@@ -105,7 +106,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
-                Finsert_char(b' '.into(), (goal - prev_col).into(), Qt);
+                insert_char(' ' as Codepoint, Some((goal - prev_col) as EmacsInt), true);
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
@@ -165,15 +166,15 @@ pub fn indent_to(column: EmacsInt, minimum: LispObject) -> EmacsInt {
     if unsafe { globals.indent_tabs_mode } {
         let n = mincol / tab_width - fromcol / tab_width;
         if n != 0 {
-            unsafe { Finsert_char(b'\t'.into(), n.into(), Qt) };
+            insert_char('\t' as Codepoint, Some(n), true);
             fromcol = (mincol / tab_width) * tab_width;
         }
     }
 
     let missing = mincol - fromcol;
+    insert_char(' ' as Codepoint, Some(missing), true);
 
     unsafe {
-        Finsert_char(b' '.into(), missing.into(), Qt);
         last_known_column = mincol as isize;
         last_known_column_point = buffer.pt;
         last_known_column_modified = buffer.modifications();
