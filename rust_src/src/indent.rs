@@ -111,7 +111,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
                 del_range(buffer.pt, buffer.pt + 1);
                 let goal_pt = buffer.pt;
                 let goal_pt_byte = buffer.pt_byte;
-                Findent_to(col.into(), Qnil);
+                indent_to(col as EmacsInt, Qnil);
                 set_point_both(goal_pt, goal_pt_byte);
             }
 
@@ -123,7 +123,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     // If line ends prematurely, add space to the end.
     if col < goal && force == Qt {
         col = goal;
-        Findent_to(col.into(), Qnil);
+        indent_to(col as EmacsInt, Qnil);
     }
 
     unsafe {
