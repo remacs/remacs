@@ -4033,7 +4033,7 @@ dump_drain_deferred_symbols (struct dump_context *ctx)
 DEFUN ("dump-emacs-portable",
        Fdump_emacs_portable, Sdump_emacs_portable,
        1, 2, 0,
-       doc: /* Dump current state of Emacs into dump file FILENAME.
+       doc: /* Dump current state of Emacs into portable dump file FILENAME.
 If TRACK-REFERRERS is non-nil, keep additional debugging information
 that can help track down the provenance of unsupported object
 types.  */)
@@ -4048,10 +4048,10 @@ types.  */)
            "unexpected results.");
 
   if (!main_thread_p (current_thread))
-    error ("Function can be called only on main thread");
+    error ("This function can be called only in the main thread");
 
   if (!NILP (XCDR (Fall_threads ())))
-    error ("No other threads can be running");
+    error ("No other Lisp threads can be running when this function is called");
 
   /* Clear out any detritus in memory.  */
   do {

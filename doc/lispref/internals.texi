@@ -48,24 +48,63 @@ environment.  After this step, the Emacs executable is no longer
 @dfn{bare}.
 
 @cindex dumping Emacs
+@cindex @option{--temacs} option, and dumping method
   Because it takes some time to load the standard Lisp files, the
 @file{temacs} executable usually isn't run directly by users.
-Instead, as one of the last steps of building Emacs, the command
-@samp{temacs -batch -l loadup dump} is run.  The special @samp{dump}
-argument causes @command{temacs} to dump out an executable program,
-called @file{emacs}, which has all the standard Lisp files preloaded.
-(The @samp{-batch} argument prevents @file{temacs} from trying to
-initialize any of its data on the terminal, so that the tables of
-terminal information are empty in the dumped Emacs.)
+Instead, one of the last steps of building Emacs runs the command
+@w{@samp{temacs -batch -l loadup --temacs=@var{dump-method}}}.  The
+special option @option{--temacs} tells @command{temacs} how to record
+all the standard preloaded Lisp functions and variables, so that when
+you subsequently run Emacs, it will start much faster.  The
+@option{--temacs} option requires an argument @var{dump-method}, which
+can be one of the following:
+
+@table @samp
+@item pdump
+@cindex portable dump file
+Record the preloaded Lisp data in a @dfn{portable dump} file.  This
+method produces an additional data file which Emacs will load at
+startup.  The portable dump file is usually called @file{emacs.pdmp},
+and is installed in the Emacs @code{data-directory} (@pxref{Help
+Functions}).  This method is the most preferred one, as it does not
+require Emacs to employ any special techniques of memory allocation,
+which might get in the way of various memory-layout techniques used by
+modern systems to enhance security and privacy.
+
+@item pbootstrap
+@cindex bootstrapping Emacs
+Like @samp{pdump}, but used while @dfn{bootstrapping} Emacs, when no
+previous Emacs binary and no @file{*.elc} byte-compiled Lisp files are
+available.  The produced portable dump file is usually named
+@file{bootstrap-emacs.pdmp} in this case.
+
+@item dump
+@cindex unexec
+This method causes @command{temacs} to dump out an executable program,
+called @file{emacs}, which has all the standard Lisp files already
+preloaded into it.  (The @samp{-batch} argument prevents
+@command{temacs} from trying to initialize any of its data on the
+terminal, so that the tables of terminal information are empty in the
+dumped Emacs.)  This method is also known as @dfn{unexec}, because it
+produces a program file from a running process, and thus is in some
+sense the opposite of executing a program to start a process.
+
+@item bootstrap
+Like @samp{dump}, but used when bootstrapping Emacs with the
+@code{unexec} method.
+@end table
 
 @cindex preloaded Lisp files
 @vindex preloaded-file-list
   The dumped @file{emacs} executable (also called a @dfn{pure} Emacs)
-is the one which is installed.  The variable
-@code{preloaded-file-list} stores a list of the Lisp files preloaded
-into the dumped Emacs.  If you port Emacs to a new operating system,
-and are not able to implement dumping, then Emacs must load
-@file{loadup.el} each time it starts.
+is the one which is installed.  If the portable dumping was used to
+build Emacs, the @file{emacs} executable is actually an exact copy of
+@file{temacs}, and the corresponding @file{emacs.pdmp} file is
+installed as well.  The variable @code{preloaded-file-list} stores a
+list of the preloaded Lisp files recorded in the portable dump file or
+in the dumped Emacs executable.  If you port Emacs to a new operating
+system, and are not able to implement dumping of any kind, then Emacs
+must load @file{loadup.el} each time it starts.
 
 @cindex build details
 @cindex deterministic build
@@ -161,14 +200,29 @@ In the unlikely event that you need a more general functionality than
 @code{custom-initialize-delay} provides, you can use
 @code{before-init-hook} (@pxref{Startup Summary}).
 
+@defun dump-emacs-portable to-file &optional track-referrers
+This function dumps the current state of Emacs into a portable dump
+file @var{to-file}, using the @code{pdump} method.  Normally, the
+portable dump file is called @file{@var{emacs-name}.dmp}, where
+@var{emacs-name} is the name of the Emacs executable file.  The
+optional argument @var{track-referrers}, if non-@code{nil}, causes the
+portable dumping process keep additional information to help track
+down the provenance of object types that are not yet supported by the
+@code{pdump} method.
+
+If you want to use this function in an Emacs that was already dumped,
+you must run Emacs with the @samp{-batch} option.
+@end defun
+
 @defun dump-emacs to-file from-file
 @cindex unexec
 This function dumps the current state of Emacs into an executable file
-@var{to-file}.  It takes symbols from @var{from-file} (this is normally
-the executable file @file{temacs}).
+@var{to-file}, using the @code{unexec} method.  It takes symbols from
+@var{from-file} (this is normally the executable file @file{temacs}).
 
-If you want to use this function in an Emacs that was already dumped,
-you must run Emacs with @samp{-batch}.
+This function cannot be used in an Emacs that was already dumped.  If
+Emacs was built without @code{unexec} support, this function will not
+be available.
 @end defun
 
 @node Pure Storage
