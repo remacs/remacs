@@ -1,12 +1,20 @@
 //! Storage allocation and gc
 
+use std::ptr;
+
+use libc::c_void;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{defsubr, LispObject},
     remacs_sys::globals,
-    remacs_sys::EmacsInt,
-    remacs_sys::{bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector},
+    remacs_sys::Lisp_Type::Lisp_Vectorlike,
+    remacs_sys::{
+        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_lisp_ptr,
+        make_uninit_bool_vector,
+    },
+    remacs_sys::{EmacsInt, EmacsUint},
 };
 
 /// Return a list of counters that measure how much consing there has been.
@@ -55,6 +63,29 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     }
 
     vector
+}
+
+#[lisp_fn]
+pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> LispObject {
+    let size = slots + 1;
+    unsafe {
+        let ptr = allocate_record(size as i64);
+        let contents = (*ptr).contents.as_mut_slice(size as usize);
+        contents[0] = r#type;
+        for rec in contents.iter_mut().skip(1) {
+            *rec = init;
+        }
+        make_lisp_ptr(ptr as *mut c_void, Lisp_Vectorlike)
+    }
+}
+
+#[lisp_fn]
+pub fn record(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        let ptr = allocate_record(args.len() as i64);
+        ptr::copy_nonoverlapping(args.as_mut_ptr(), (*ptr).contents.as_mut_ptr(), args.len());
+        make_lisp_ptr(ptr as *mut c_void, Lisp_Vectorlike)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));

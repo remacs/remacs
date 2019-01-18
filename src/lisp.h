@@ -3783,6 +3783,7 @@ build_string (const char *str)
 extern Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
 extern void make_byte_code (struct Lisp_Vector *);
 extern struct Lisp_Vector *allocate_vector (EMACS_INT);
+extern struct Lisp_Vector *allocate_record (EMACS_INT);
 
 /* Make an uninitialized vector for SIZE objects.  NOTE: you must
    be sure that GC cannot happen until the vector is completely
