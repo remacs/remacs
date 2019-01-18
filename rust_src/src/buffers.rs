@@ -581,9 +581,10 @@ impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
         if v.is_string() {
             LispBufferOrName::Name(v)
-        } else {
-            LispBufferRef::from(v);
+        } else if v.is_buffer() {
             LispBufferOrName::Buffer(v)
+        } else {
+            wrong_type!(Qbufferp, v);
         }
     }
 }
