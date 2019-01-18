@@ -1747,7 +1747,7 @@ Do so according to the former subdir alist OLD-SUBDIR-ALIST."
 
     ;; Make menu bar items.
 
-    ;; No need to fo this, now that top-level items are fewer.
+    ;; No need to do this, now that top-level items are fewer.
     ;;;;
     ;; Get rid of the Edit menu bar item to save space.
     ;(define-key map [menu-bar edit] 'undefined)
