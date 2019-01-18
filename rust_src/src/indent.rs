@@ -15,7 +15,7 @@ use crate::{
         self, find_newline, position_indentation, sanitize_tab_width, scan_for_column, set_point,
         EmacsInt,
     },
-    remacs_sys::{del_range, Qnil, Qt},
+    remacs_sys::{del_range, Qt},
     remacs_sys::{
         last_known_column, last_known_column_modified, last_known_column_point, set_point_both,
     },
@@ -112,7 +112,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
                 del_range(buffer.pt, buffer.pt + 1);
                 let goal_pt = buffer.pt;
                 let goal_pt_byte = buffer.pt_byte;
-                indent_to(col as EmacsInt, Qnil);
+                indent_to(col as EmacsInt, None);
                 set_point_both(goal_pt, goal_pt_byte);
             }
 
@@ -124,7 +124,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     // If line ends prematurely, add space to the end.
     if col < goal && force == Qt {
         col = goal;
-        indent_to(col as EmacsInt, Qnil);
+        indent_to(col as EmacsInt, None);
     }
 
     unsafe {
@@ -141,21 +141,16 @@ pub extern "C" fn invalidate_current_column() {
     unsafe { last_known_column_point = 0 };
 }
 
-/// Indent from point with tabs and spaces until COLUMN is
-/// reached. Optional second argument MINIMUM says always do at least
-/// MINIMUM spaces even if that goes past COLUMN; by default, MINIMUM
-/// is zero.
+/// Indent from point with tabs and spaces until COLUMN is reached.
+/// Optional second argument MINIMUM says always do at least MINIMUM
+/// spaces even if that goes past COLUMN; by default, MINIMUM is zero.
 ///
 /// The return value is the column where the insertion ends.
-#[lisp_fn(min = "1")]
-pub fn indent_to(column: EmacsInt, minimum: LispObject) -> EmacsInt {
+#[lisp_fn(min = "1", intspec = "NIndent to column: ")]
+pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
     let buffer = ThreadState::current_buffer_unchecked();
-    let tab_width = unsafe { sanitize_tab_width(buffer.tab_width().force_fixnum()) } as EmacsInt;
-    let arg_minimum = if minimum.is_nil() {
-        0
-    } else {
-        minimum.as_fixnum_or_error()
-    };
+    let tab_width = unsafe { sanitize_tab_width(buffer.tab_width_.force_fixnum()) } as EmacsInt;
+    let arg_minimum = minimum.unwrap_or(0);
     let mut fromcol = current_column();
     let mincol = max(fromcol + arg_minimum, column);
 
