@@ -4387,6 +4387,7 @@ extern void init_callproc (void);
 extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
 extern Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
+extern int create_temp_file (ptrdiff_t, Lisp_Object *, Lisp_Object *);
 
 /* Defined in doc.c.  */
 enum text_quoting_style

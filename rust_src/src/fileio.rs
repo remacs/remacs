@@ -7,18 +7,28 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     coding::encode_file_name,
-    lisp::defsubr,
-    lisp::LispObject,
+    errno::errno,
+    lisp::{defsubr, LispObject},
     lists::LispCons,
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
     remacs_sys::{
         check_executable, check_existing, file_name_absolute_p, file_name_case_insensitive_p,
+        report_file_errno,
     },
     remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
     remacs_sys::{Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p},
     threads::ThreadState,
 };
+
+/// Signal a file-access failure that set errno.  STRING describes the
+/// failure, NAME the file involved.  When invoking this function, take
+/// care to not use arguments such as build_string ("foo") that involve
+/// side effects that may set errno.
+#[no_mangle]
+pub unsafe extern "C" fn report_file_error(string: *const i8, name: LispObject) {
+    report_file_errno(string, name, errno().0);
+}
 
 /// Return t if (car A) is numerically less than (car B).
 #[lisp_fn]
