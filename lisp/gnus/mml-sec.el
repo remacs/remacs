@@ -658,6 +658,8 @@ The passphrase is read and cached."
     (catch 'break
       (dolist (uid uids nil)
 	(if (and (stringp (epg-user-id-string uid))
+                 (car (mail-header-parse-address
+                       (epg-user-id-string uid)))
 		 (equal (downcase (car (mail-header-parse-address
 					(epg-user-id-string uid))))
 			(downcase (car (mail-header-parse-address
