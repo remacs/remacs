@@ -64,14 +64,6 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn from_bool(v: bool) -> Self {
-        if v {
-            Qt
-        } else {
-            Qnil
-        }
-    }
-
     pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
     }
