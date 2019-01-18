@@ -415,7 +415,6 @@ If multiple rules match, only first one is executed.")
                ;; Not in a string or comment.
                (not (nth 8 (save-excursion (syntax-ppss pos)))))
       (goto-char pos)
-      (when (functionp rule) (setq rule (funcall rule)))
       (dolist (sym (if (symbolp rule) (list rule) rule))
         (let* ((nl-after
                 (lambda ()
