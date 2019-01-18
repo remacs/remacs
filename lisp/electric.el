@@ -383,8 +383,8 @@ in the same place.
 
 Instead of the (CHAR . WHERE) form, a rule can also be just a
 function of a single argument, the character just inserted.  It
-should return a value compatible with WHERE if the rule matches,
-or nil if it doesn't match.
+is called at that position, and should return a value compatible with
+WHERE if the rule matches, or nil if it doesn't match.
 
 If multiple rules match, only first one is executed.")
 
@@ -408,7 +408,11 @@ If multiple rules match, only first one is executed.")
                             (save-excursion
                               (goto-char
                                (or pos (setq pos (electric--after-char-pos))))
-                              (funcall probe last-command-event))))
+                              ;; Ensure probe is called at the
+                              ;; promised place. FIXME: maybe warn if
+                              ;; it isn't
+                              (when (eq (char-before) last-command-event)
+                                (funcall probe last-command-event)))))
                        (when res (throw 'done res)))))))))
     (when (and rule
                (or pos (setq pos (electric--after-char-pos)))
