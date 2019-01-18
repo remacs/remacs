@@ -90,7 +90,7 @@ post_acquire_global_lock (struct thread_state *self)
 
       current_thread->error_symbol = Qnil;
       current_thread->error_data = Qnil;
-      Fsignal (sym, data);
+      xsignal (sym, data);
     }
 }
 
@@ -849,7 +849,7 @@ or `thread-join' in the target thread.  */)
   tstate = XTHREAD (thread);
 
   if (tstate == current_thread)
-    Fsignal (error_symbol, data);
+    xsignal (error_symbol, data);
 
   /* What to do if thread is already signaled?  */
   /* What if error_symbol is Qnil?  */

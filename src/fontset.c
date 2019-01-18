@@ -1503,7 +1503,7 @@ appended.  By default, FONT-SPEC overrides the previous settings.  */)
   else if (FONT_SPEC_P (font_spec))
     fontname = Ffont_xlfd_name (font_spec, Qnil);
   else if (! NILP (font_spec))
-    Fsignal (Qfont, list2 (build_string ("Invalid font-spec"), font_spec));
+    xsignal2 (Qfont, build_string ("Invalid font-spec"), font_spec);
 
   if (! NILP (font_spec))
     {

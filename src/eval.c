@@ -897,7 +897,7 @@ internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
       eassert (handlerlist == c);
       Lisp_Object val = c->val;
       handlerlist = c->next;
-      Fsignal (Qno_catch, val);
+      xsignal (Qno_catch, val);
     }
 }
 
