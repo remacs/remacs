@@ -67,9 +67,9 @@ Randomization (ASLR) feature, a security technique used by most modern
 operating systems.
 
 Portable dumping can be disabled at configure time via the configure
-option '--with-pdumper=no' (but we don't recommend that, unless the
-portable dumping doesn't work on your system for some reason---please
-report such systems to the Emacs developers as bugs).
+option '--with-dumping=unexec' (but we don't recommend that, unless
+the portable dumping doesn't work on your system for some
+reason---please report such systems to the Emacs developers as bugs).
 
 When built with the portable dumping support (which is the default),
 Emacs looks for the 'emacs.pdmp' file, generated during the build, in
