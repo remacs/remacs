@@ -65,6 +65,10 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     vector
 }
 
+/// Create a new record.
+/// TYPE is its type as returned by `type-of'; it should be either a
+/// symbol or a type descriptor.  SLOTS is the number of non-type slots,
+/// each initialized to INIT.
 #[lisp_fn]
 pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> LispObject {
     let size = slots + 1;
@@ -79,6 +83,11 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
     }
 }
 
+/// Create a new record.
+/// TYPE is its type as returned by `type-of'; it should be either a
+/// symbol or a type descriptor.  SLOTS is used to initialize the record
+/// slots with shallow copies of the arguments.
+/// usage: (record TYPE &rest SLOTS)
 #[lisp_fn]
 pub fn record(args: &mut [LispObject]) -> LispObject {
     unsafe {
