@@ -92,7 +92,10 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
 pub fn record(args: &mut [LispObject]) -> LispObject {
     unsafe {
         let ptr = allocate_record(args.len() as i64);
-        ptr::copy_nonoverlapping(args.as_mut_ptr(), (*ptr).contents.as_mut_ptr(), args.len());
+        (*ptr)
+            .contents
+            .as_mut_slice(args.len())
+            .copy_from_slice(args);
         make_lisp_ptr(ptr as *mut c_void, Lisp_Vectorlike)
     }
 }
