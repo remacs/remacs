@@ -46,7 +46,7 @@ use crate::{
     threads::{c_specpdl_index, ThreadState},
     time::{lisp_time_struct, time_overflow, LispTime},
     util::clip_to_bounds,
-    windows::selected_window,
+    windows::{selected_window, LispWindowRef},
 };
 
 /// Return value of point, as an integer.
@@ -1113,7 +1113,7 @@ pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) 
 // offload some work from GC.
 #[no_mangle]
 pub extern "C" fn save_excursion_save() -> LispObject {
-    let window = selected_window().as_window_or_error();
+    let window: LispWindowRef = selected_window().into();
 
     unsafe {
         make_save_obj_obj_obj_obj(
