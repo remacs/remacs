@@ -5581,18 +5581,21 @@ Value is nil if this session was not started using a portable dump file.*/)
 #ifdef WINDOWSNT
   char dump_fn_utf8[MAX_UTF8_PATH];
   if (filename_from_ansi (dump_private.dump_filename, dump_fn_utf8) == 0)
-    dump_fn = DECODE_FILE (build_unibyte_string (dump_fn_utf8));
+    {
+      dostounix_filename (dump_fn_utf8);
+      dump_fn = DECODE_FILE (build_unibyte_string (dump_fn_utf8));
+    }
   else
     dump_fn = build_unibyte_string (dump_private.dump_filename);
 #else
   dump_fn = DECODE_FILE (build_unibyte_string (dump_private.dump_filename));
 #endif
 
-  dump_fn = Fexpand_file_name (dump_fn, Qnil);
-
   return CALLN (Flist,
 		Fcons (Qdumped_with_pdumper, Qt),
 		Fcons (Qload_time, make_float (dump_private.load_time)),
+		/* FIXME: dump_fn should be expanded relative to the
+		   original pwd where Emacs started.  */
 		Fcons (Qdump_file_name, dump_fn));
 }
 
