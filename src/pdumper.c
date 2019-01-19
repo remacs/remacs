@@ -5568,23 +5568,38 @@ pdumper_load (const char *dump_filename)
   return err;
 }
 
-DEFUN ("pdumper-stats",
-       Fpdumper_stats, Spdumper_stats,
-       0, 0, 0,
-       doc: /* Return an alist of statistics about dump file that
-               started this Emacs, if any.  Nil if this Emacs was not
-               started using a portable dumper dump file.*/)
+DEFUN ("pdumper-stats", Fpdumper_stats, Spdumper_stats, 0, 0, 0,
+       doc: /* Return statistics about portable dumping used by this session.
+If this Emacs sesion was started from a portable dump file,
+the return value is an alist of the form:
+
+  ((dumped-with-pdumper . t) (load-time . TIME) (dump-file-name . FILE))
+
+where TIME is the time in milliseconds it took to restore Emacs state
+from the dump file, and FILE is the name of the dump file.
+Value is nil if this session was not started using a portable dump file.*/)
      (void)
 {
   if (!dumped_with_pdumper_p ())
     return Qnil;
 
-  return CALLN (
-    Flist,
-    Fcons (Qdumped_with_pdumper, Qt),
-    Fcons (Qload_time, make_float (dump_private.load_time)),
-    Fcons (Qdump_file_name,
-           build_unibyte_string (dump_private.dump_filename)));
+  Lisp_Object dump_fn;
+#ifdef WINDOWSNT
+  char dump_fn_utf8[MAX_UTF8_PATH];
+  if (filename_from_ansi (dump_private.dump_filename, dump_fn_utf8) == 0)
+    dump_fn = DECODE_FILE (build_unibyte_string (dump_fn_utf8));
+  else
+    dump_fn = build_unibyte_string (dump_private.dump_filename);
+#else
+  dump_fn = DECODE_FILE (build_unibyte_string (dump_private.dump_filename));
+#endif
+
+  dump_fn = Fexpand_file_name (dump_fn, Qnil);
+
+  return CALLN (Flist,
+		Fcons (Qdumped_with_pdumper, Qt),
+		Fcons (Qload_time, make_float (dump_private.load_time)),
+		Fcons (Qdump_file_name, dump_fn));
 }
 
 #endif /* HAVE_PDUMPER */
