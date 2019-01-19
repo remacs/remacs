@@ -11,6 +11,7 @@ use crate::{
     buffers::current_buffer,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
+    indent::indent_to,
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
     lists::{nth, setcdr},
@@ -23,8 +24,8 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcopy_sequence, Fevent_convert_list, Findent_to, Fmake_char_table, Fpurecopy,
-        Fset_char_table_range, Fterpri,
+        Fcopy_sequence, Fevent_convert_list, Fmake_char_table, Fpurecopy, Fset_char_table_range,
+        Fterpri,
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
@@ -575,7 +576,7 @@ pub fn make_sparse_keymap(string: LispObject) -> LispObject {
 
 #[no_mangle]
 pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
-    unsafe { Findent_to(LispObject::from_fixnum(16), LispObject::from_fixnum(1)) };
+    indent_to(16, 1.into());
     call!(fun, elt);
     unsafe { Fterpri(Qnil, Qnil) };
 }
