@@ -45,17 +45,15 @@
 ;;
 ;; Commands:
 ;;
-;; `project-find-regexp' and `project-or-external-find-regexp' use the
-;; current API, and thus will work in any project that has an adapter.
+;; `project-find-file', `project-find-regexp' and
+;; `project-or-external-find-regexp' use the current API, and thus
+;; will work in any project that has an adapter.
 
 ;;; TODO:
 
 ;; * Reliably cache the list of files in the project, probably using
 ;;   filenotify.el (if supported) to invalidate.  And avoiding caching
 ;;   if it's not available (manual cache invalidation is not nice).
-;;
-;; * Allow the backend to override the file-listing logic?  Maybe also
-;;   to delegate file name completion to an external tool.
 ;;
 ;; * Build tool related functionality.  Start with a `project-build'
 ;;   command, which should provide completions on tasks to run, and
