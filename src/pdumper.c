@@ -5388,15 +5388,6 @@ enum dump_section
    NUMBER_DUMP_SECTIONS,
   };
 
-/* Subtract two timespecs, yielding a difference in milliseconds. */
-static double
-subtract_timespec (struct timespec minuend, struct timespec subtrahend)
-{
-  return
-    1000.0 * (double)(minuend.tv_sec - subtrahend.tv_sec)
-    + (double)(minuend.tv_nsec - subtrahend.tv_nsec) / 1.0e6;
-}
-
 /* Load a dump from DUMP_FILENAME.  Return an error code.
 
    N.B. We run very early in initialization, so we can't use lisp,
@@ -5552,8 +5543,11 @@ pdumper_load (const char *dump_filename)
     dump_hooks[i] ();
   initialized = true;
 
-  dump_private.load_time = subtract_timespec (
-    current_timespec (), start_time);
+  struct timespec load_timespec =
+    timespec_sub (current_timespec (), start_time);
+  dump_private.load_time =
+    (double) load_timespec.tv_sec * 1000.0
+    + (double) load_timespec.tv_nsec * 0.000001;
   dump_private.dump_filename = dump_filename_copy;
   dump_filename_copy = NULL;
 
