@@ -5545,9 +5545,10 @@ pdumper_load (const char *dump_filename)
 
   struct timespec load_timespec =
     timespec_sub (current_timespec (), start_time);
-  dump_private.load_time =
-    (double) load_timespec.tv_sec * 1000.0
-    + (double) load_timespec.tv_nsec * 0.000001;
+  ALLOW_IMPLICIT_CONVERSION;
+  double s = load_timespec.tv_sec, ns = load_timespec.tv_nsec;
+  DISALLOW_IMPLICIT_CONVERSION;
+  dump_private.load_time = (s * 1e9 + ns) / 1e9;
   dump_private.dump_filename = dump_filename_copy;
   dump_filename_copy = NULL;
 
@@ -5569,7 +5570,7 @@ the return value is an alist of the form:
 
   ((dumped-with-pdumper . t) (load-time . TIME) (dump-file-name . FILE))
 
-where TIME is the time in milliseconds it took to restore Emacs state
+where TIME is the time in seconds it took to restore Emacs state
 from the dump file, and FILE is the name of the dump file.
 Value is nil if this session was not started using a portable dump file.*/)
      (void)
