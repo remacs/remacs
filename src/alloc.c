@@ -5568,7 +5568,7 @@ purecopy (Lisp_Object obj)
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
-      Fsignal (Qerror, list1 (CALLN (Fformat, fmt, obj)));
+      xsignal1 (Qerror, CALLN (Fformat, fmt, obj));
     }
 
   if (HASH_TABLE_P (Vpurify_flag)) /* Hash consing.  */

@@ -10560,9 +10560,9 @@ usage: (define-coding-system-internal ...)  */)
   return Qnil;
 
  short_args:
-  Fsignal (Qwrong_number_of_arguments,
-	   Fcons (intern ("define-coding-system-internal"),
-		  make_number (nargs)));
+  xsignal2(Qwrong_number_of_arguments,
+           intern ("define-coding-system-internal"),
+           make_number (nargs));
 }
 
 

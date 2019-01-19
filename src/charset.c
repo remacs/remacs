@@ -843,9 +843,9 @@ usage: (define-charset-internal ...)  */)
   int nchars;
 
   if (nargs != charset_arg_max)
-    Fsignal (Qwrong_number_of_arguments,
-	     Fcons (intern ("define-charset-internal"),
-		    make_number (nargs)));
+    xsignal2 (Qwrong_number_of_arguments,
+              intern ("define-charset-internal"),
+              make_number (nargs));
 
   attrs = Fmake_vector (make_number (charset_attr_max), Qnil);
 

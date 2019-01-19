@@ -48,7 +48,6 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
-    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn memory_full(nbytes: libc::size_t) -> !;
     pub fn wrong_choice(choice: LispObject, wrong: LispObject) -> !;
     pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
