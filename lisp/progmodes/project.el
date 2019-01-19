@@ -184,7 +184,8 @@ to find the list of ignores for each directory."
   (require 'xref)
   (cl-mapcan
    (lambda (dir)
-     (project--files-in-directory dir (project-ignores project dir)))
+     (project--files-in-directory dir
+                                  (project--dir-ignores project dir)))
    (or dirs (project-roots project))))
 
 (defun project--files-in-directory (dir ignores &optional files)
@@ -283,7 +284,10 @@ backend implementation of `project-external-roots'.")
             entry))
         (vc-call-backend backend 'ignore-completion-table root)))
      (project--value-in-dir 'project-vc-ignores root)
-     (cl-call-next-method))))
+     (mapcar
+      (lambda (dir)
+        (concat dir "/"))
+      vc-directory-exclusion-list))))
 
 (defun project-combine-directories (&rest lists-of-dirs)
   "Return a sorted and culled list of directory names.
@@ -346,7 +350,8 @@ requires quoting, e.g. `\\[quoted-insert]<space>'."
 (defun project--dir-ignores (project dir)
   (let* ((roots (project-roots project))
          (root (cl-find dir roots :test #'file-in-directory-p)))
-    (when root
+    (if (not root)
+        (project-ignores nil nil)       ;The defaults.
       (let ((ignores (project-ignores project root)))
         (if (file-equal-p root dir)
             ignores
