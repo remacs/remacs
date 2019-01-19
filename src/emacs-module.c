@@ -209,6 +209,8 @@ static void module_non_local_exit_throw_1 (emacs_env *,
 					   Lisp_Object, Lisp_Object);
 static void module_out_of_memory (emacs_env *);
 static void module_reset_handlerlist (struct handler **);
+static bool value_storage_contains_p (const struct emacs_value_storage *,
+                                      emacs_value, ptrdiff_t *);
 
 static bool module_assertions = false;
 
@@ -403,16 +405,8 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   if (module_assertions)
     {
       ptrdiff_t count = 0;
-      for (struct emacs_value_frame *frame = &global_storage.initial;
-           frame != NULL; frame = frame->next)
-        {
-          for (int i = 0; i < frame->offset; ++i)
-            {
-              if (&frame->objects[i] == ref)
-                return;
-              ++count;
-            }
-        }
+      if (value_storage_contains_p (&global_storage, ref, &count))
+        return;
       module_abort ("Global value was not found in list of %"pD"d globals",
                     count);
     }
@@ -978,29 +972,13 @@ value_to_lisp (emacs_value v)
           if (&priv->non_local_exit_symbol == v
               || &priv->non_local_exit_data == v)
             goto ok;
-          for (struct emacs_value_frame *frame = &priv->storage.initial;
-               frame != NULL; frame = frame->next)
-            {
-              for (int i = 0; i < frame->offset; ++i)
-                {
-                  if (&frame->objects[i] == v)
-                    goto ok;
-                  ++num_values;
-                }
-            }
+          if (value_storage_contains_p (&priv->storage, v, &num_values))
+            goto ok;
           ++num_environments;
         }
       /* Also check global values.  */
-      for (struct emacs_value_frame *frame = &global_storage.initial;
-           frame != NULL; frame = frame->next)
-        {
-          for (int i = 0; i < frame->offset; ++i)
-            {
-              if (&frame->objects[i] == v)
-                goto ok;
-              ++num_values;
-            }
-        }
+      if (value_storage_contains_p (&global_storage, v, &num_values))
+        goto ok;
       module_abort (("Emacs value not found in %"pD"d values "
 		     "of %"pD"d environments"),
                     num_values, num_environments);
@@ -1213,6 +1191,26 @@ init_module_assertions (bool enable)
      storing the globals.  This environment is never freed.  */
   module_assertions = enable;
   initialize_storage (&global_storage);
+}
+
+/* Return whether STORAGE contains VALUE.  Used to check module
+   assertions.  Increment *COUNT by the number of values searched.  */
+
+static bool
+value_storage_contains_p (const struct emacs_value_storage *storage,
+                          emacs_value value, ptrdiff_t *count)
+{
+  for (const struct emacs_value_frame *frame = &storage->initial; frame != NULL;
+       frame = frame->next)
+    {
+      for (int i = 0; i < frame->offset; ++i)
+        {
+          if (&frame->objects[i] == value)
+            return true;
+          ++count;
+        }
+    }
+  return false;
 }
 
 static AVOID ATTRIBUTE_FORMAT_PRINTF (1, 2)
