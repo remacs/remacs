@@ -2478,16 +2478,6 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
 }
 
 
-DEFUN ("frame-focus", Fframe_focus, Sframe_focus, 0, 1, 0,
-       doc: /* Return the frame to which FRAME's keystrokes are currently being sent.
-If FRAME is omitted or nil, the selected frame is used.
-Return nil if FRAME's focus is not redirected.
-See `redirect-frame-focus'.  */)
-  (Lisp_Object frame)
-{
-  return FRAME_FOCUS_FRAME (decode_live_frame (frame));
-}
-
 DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
        doc: /* Set the input focus to FRAME.
 FRAME nil means use the selected frame.  Optional argument NOACTIVATE
@@ -5685,7 +5675,6 @@ iconify the top level frame instead.  */);
   defsubr (&Slower_frame);
   defsubr (&Sx_focus_frame);
   defsubr (&Sredirect_frame_focus);
-  defsubr (&Sframe_focus);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);

@@ -583,4 +583,14 @@ pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> L
     made
 }
 
+/// Return the frame to which FRAME's keystrokes are currently being sent.
+/// If FRAME is omitted or nil, the selected frame is used.
+/// Return nil if FRAME's focus is not redirected.
+/// See `redirect-frame-focus'.
+#[lisp_fn(min = "0")]
+pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.focus_frame
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
