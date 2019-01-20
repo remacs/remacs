@@ -1,16 +1,13 @@
 //! Storage allocation and gc
 
-use libc::c_void;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::{defsubr, ExternalPtr, LispObject},
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_lisp_ptr,
-        make_uninit_bool_vector,
+        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector,
     },
     remacs_sys::{EmacsInt, EmacsUint},
 };
@@ -77,7 +74,7 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
         for rec in contents.iter_mut().skip(1) {
             *rec = init;
         }
-        make_lisp_ptr(ptr as *mut c_void, Lisp_Vectorlike)
+        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
     }
 }
 
@@ -94,7 +91,7 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
             .contents
             .as_mut_slice(args.len())
             .copy_from_slice(args);
-        make_lisp_ptr(ptr as *mut c_void, Lisp_Vectorlike)
+        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
     }
 }
 
