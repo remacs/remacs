@@ -544,12 +544,10 @@ impl<'a> Iterator for LispBoolVecIterator<'a> {
             if self.cur % BITS_PER_BITS_WORD as usize == 0 {
                 self.limb = self.bvec_slice[self.cur / BITS_PER_BITS_WORD as usize];
             }
-            let res = LispObject::from_bool(
-                self.limb & (1 << (self.cur % BITS_PER_BITS_WORD as usize)) != 0,
-            );
+            let res = self.limb & (1 << (self.cur % BITS_PER_BITS_WORD as usize)) != 0;
 
             self.cur += 1;
-            Some(res)
+            Some(res.into())
         }
     }
 

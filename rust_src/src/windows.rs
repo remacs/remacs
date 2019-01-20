@@ -7,6 +7,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    buffers::LispBufferRef,
     editfns::{goto_char, point},
     frames::{LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
@@ -69,7 +70,7 @@ impl LispWindowRef {
             matrix_mode_line_height
         } else {
             let mut frame = self.get_frame();
-            let window = selected_window().as_window_or_error();
+            let window: LispWindowRef = selected_window().into();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
@@ -166,6 +167,10 @@ impl LispWindowRef {
         y + self.top_edge_y()
     }
 
+    pub fn contents_as_buffer(self) -> LispBufferRef {
+        self.contents.into()
+    }
+
     /// True if window wants a mode line and is high enough to
     /// accommodate it, false otherwise.
     ///
@@ -182,11 +187,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
             && (window_mode_line_format.is_not_nil()
-                || self
-                    .contents
-                    .as_buffer_or_error()
-                    .mode_line_format_
-                    .is_not_nil())
+                || self.contents_as_buffer().mode_line_format_.is_not_nil())
             && self.pixel_height > self.get_frame().line_height
     }
 
@@ -212,7 +213,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
-                || (self.contents.as_buffer_or_error().header_line_format_).is_not_nil())
+                || (self.contents_as_buffer().header_line_format_).is_not_nil())
             && self.pixel_height > height
     }
 
@@ -254,10 +255,6 @@ impl LispObject {
     }
 
     pub fn as_window(self) -> Option<LispWindowRef> {
-        self.into()
-    }
-
-    pub fn as_window_or_error(self) -> LispWindowRef {
         self.into()
     }
 
@@ -320,7 +317,7 @@ impl From<LispWindowOrSelected> for LispObject {
 
 impl From<LispWindowOrSelected> for LispWindowRef {
     fn from(w: LispWindowOrSelected) -> Self {
-        w.0.as_window_or_error()
+        w.0.into()
     }
 }
 
@@ -330,7 +327,7 @@ impl From<LispObject> for LispWindowLiveOrSelected {
     /// Same as the `decode_live_window` function
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(
-            || selected_window().as_window_or_error(),
+            || LispWindowRef::from(selected_window()),
             |w| w.as_live_window_or_error(),
         ))
     }
@@ -348,7 +345,7 @@ impl From<LispObject> for LispWindowValidOrSelected {
     /// Same as the `decode_valid_window` function
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(
-            || selected_window().as_window_or_error(),
+            || LispWindowRef::from(selected_window()),
             |w| w.as_valid_window_or_error(),
         ))
     }
@@ -393,7 +390,7 @@ pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
 #[lisp_fn(min = "0")]
 pub fn window_point(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
     let win: LispWindowRef = window.into();
-    if win == selected_window().as_window_or_error() {
+    if win == LispWindowRef::from(selected_window()) {
         Some(point())
     } else {
         marker_position_lisp(win.pointm.into())
@@ -532,7 +529,7 @@ pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
     let current_minibuf = unsafe { current_minibuf_window };
     if level > 0
-        && selected_window().as_window_or_error().is_minibuffer()
+        && LispWindowRef::from(selected_window()).is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf
@@ -912,7 +909,7 @@ pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> Li
     let mut win: LispWindowRef = window.into();
 
     // Type of POS is checked by Fgoto_char or set_marker_restricted ...
-    if win == selected_window().as_window_or_error() {
+    if win == LispWindowRef::from(selected_window()) {
         let mut current_buffer = ThreadState::current_buffer_unchecked();
 
         if win
@@ -925,7 +922,7 @@ pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> Li
             // ... but here we want to catch type error before buffer change.
             pos.as_number_coerce_marker_or_error();
             unsafe {
-                set_buffer_internal(win.contents.as_buffer_or_error().as_mut());
+                set_buffer_internal(win.contents_as_buffer().as_mut());
             }
             goto_char(pos);
             unsafe {
@@ -983,7 +980,7 @@ pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowR
 }
 
 pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
-    let mut w = selected_window().as_window_or_error();
+    let mut w: LispWindowRef = selected_window().into();
     let requested_arg = if arg.is_nil() {
         unsafe { EmacsInt::from(window_body_width(w.as_mut(), false)) - 2 }
     } else if left {

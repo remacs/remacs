@@ -366,7 +366,7 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 /// the first window of that frame.
 #[lisp_fn(min = "0")]
 pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
-    let mut window = frame_root_window(frame_or_window).as_window_or_error();
+    let mut window: LispWindowRef = frame_root_window(frame_or_window).into();
 
     while let Some(win) = window.contents.as_window() {
         window = win;

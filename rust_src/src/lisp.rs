@@ -64,14 +64,6 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn from_bool(v: bool) -> Self {
-        if v {
-            Qt
-        } else {
-            Qnil
-        }
-    }
-
     pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
     }
@@ -245,10 +237,6 @@ impl LispObject {
     }
 
     pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.into()
-    }
-
-    pub fn as_subr_or_error(self) -> LispSubrRef {
         self.into()
     }
 }

@@ -439,10 +439,6 @@ impl LispObject {
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
         self.as_buffer().and_then(|b| b.as_live())
     }
-
-    pub fn as_buffer_or_error(self) -> LispBufferRef {
-        self.into()
-    }
 }
 
 impl From<LispObject> for LispBufferRef {
@@ -470,10 +466,6 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.into()
-    }
-
-    pub fn as_overlay_or_error(self) -> LispOverlayRef {
         self.into()
     }
 }
@@ -589,9 +581,10 @@ impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
         if v.is_string() {
             LispBufferOrName::Name(v)
-        } else {
-            v.as_buffer_or_error();
+        } else if v.is_buffer() {
             LispBufferOrName::Buffer(v)
+        } else {
+            wrong_type!(Qbufferp, v);
         }
     }
 }
@@ -1017,7 +1010,7 @@ pub extern "C" fn build_overlay(
 ) -> LispObject {
     unsafe {
         let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
-        let mut overlay = obj.as_overlay_or_error();
+        let mut overlay: LispOverlayRef = obj.into();
         overlay.start = start;
         overlay.end = end;
         overlay.plist = plist;
@@ -1195,8 +1188,8 @@ pub unsafe extern "C" fn copy_overlays(
         let start = duplicate_marker(overlay.start);
         let end = duplicate_marker(overlay.end);
 
-        let mut overlay_new =
-            build_overlay(start, end, Fcopy_sequence(overlay.plist)).as_overlay_or_error();
+        let mut overlay_new: LispOverlayRef =
+            build_overlay(start, end, Fcopy_sequence(overlay.plist)).into();
 
         match tail {
             Some(mut tail_ref) => tail_ref.next = overlay_new.as_mut(),

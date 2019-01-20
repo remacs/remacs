@@ -125,7 +125,7 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
 pub fn quit_recursive_edit(val: bool) -> ! {
     unsafe {
         if command_loop_level > 0 || minibuf_level > 0 {
-            Fthrow(Qexit, LispObject::from_bool(val));
+            Fthrow(Qexit, val.into());
         }
 
         user_error!("No recursive edit is in progress");
