@@ -3817,22 +3817,26 @@ file-notify events."
 	(tramp-message v 5 "file system info: %s" localname)
 	(tramp-send-command
 	 v (format
-	    "%s --block-size=1 --output=size,used,avail %s"
+	    "%s %s"
 	    (tramp-get-remote-df v) (tramp-shell-quote-argument localname)))
 	(with-current-buffer (tramp-get-connection-buffer v)
 	  (goto-char (point-min))
 	  (forward-line)
 	  (when (looking-at
 		 (eval-when-compile
-		   (concat "[[:space:]]*\\([[:digit:]]+\\)"
+		   (concat "\\(?:^/[^[:space:]]*[[:space:]]\\)?"
+			   "[[:space:]]*\\([[:digit:]]+\\)"
 			   "[[:space:]]+\\([[:digit:]]+\\)"
 			   "[[:space:]]+\\([[:digit:]]+\\)")))
-	    (list (string-to-number (match-string 1))
-		  ;; The second value is the used size.  We need the
-		  ;; free size.
-		  (- (string-to-number (match-string 1))
-		     (string-to-number (match-string 2)))
-		  (string-to-number (match-string 3)))))))))
+	    (mapcar
+	     (lambda (d)
+	       (* d (tramp-get-connection-property v "df-blocksize" 0)))
+	     (list (string-to-number (match-string 1))
+		   ;; The second value is the used size.  We need the
+		   ;; free size.
+		   (- (string-to-number (match-string 1))
+		      (string-to-number (match-string 2)))
+		   (string-to-number (match-string 3))))))))))
 
 ;;; Internal Functions:
 
@@ -5578,12 +5582,24 @@ This command is returned only if `delete-by-moving-to-trash' is non-nil."
   "Determine remote `df' command."
   (with-tramp-connection-property vec "df"
     (tramp-message vec 5 "Finding a suitable `df' command")
-    (let ((result (tramp-find-executable vec "df" (tramp-get-remote-path vec))))
-      (and
-       result
-       (tramp-send-command-and-check
-	vec (format "%s --block-size=1 --output=size,used,avail /" result))
-       result))))
+    (let ((df (tramp-find-executable vec "df" (tramp-get-remote-path vec)))
+	  result)
+      (when df
+	(cond
+	 ;; coreutils.
+	 ((tramp-send-command-and-check
+	   vec
+	   (format
+	    "%s /"
+	    (setq result
+		  (format "%s --block-size=1 --output=size,used,avail" df))))
+	  (tramp-set-connection-property vec "df-blocksize" 1)
+	  result)
+	 ;; POSIX.1
+	 ((tramp-send-command-and-check
+	   vec (format "%s /" (setq result (format "%s -k" df))))
+	  (tramp-set-connection-property vec "df-blocksize" 1024)
+	  result))))))
 
 (defun tramp-get-remote-gio-monitor (vec)
   "Determine remote `gio-monitor' command."
