@@ -1900,6 +1900,12 @@ x_set_image_size (struct frame *f, struct image *img)
       img->height = height;
     }
 # endif
+# ifdef HAVE_NTGUI
+  /* Under HAVE_NTGUI, we will scale the image on the fly, when we
+     draw it.  See w32term.c:x_draw_image_foreground.  */
+  img->width = width;
+  img->height = height;
+# endif
 #endif
 }
 
@@ -9915,7 +9921,7 @@ DEFUN ("image-scaling-p", Fimage_scaling_p, Simage_scaling_p, 0, 1, 0,
 Return t if FRAME supports native scaling, nil otherwise.  */)
      (Lisp_Object frame)
 {
-#ifdef HAVE_NS
+#if defined (HAVE_NS) || defined (HAVE_NTGUI)
   return Qt;
 #elif defined (HAVE_X_WINDOWS) && defined (HAVE_XRENDER)
   int event_basep, error_basep;

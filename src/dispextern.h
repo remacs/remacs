@@ -2938,7 +2938,7 @@ struct redisplay_interface
 
 #ifdef HAVE_WINDOW_SYSTEM
 
-# if defined HAVE_XRENDER || defined HAVE_NS
+# if defined HAVE_XRENDER || defined HAVE_NS || defined HAVE_NTGUI
 #  define HAVE_NATIVE_SCALING
 # endif
 

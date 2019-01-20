@@ -1874,9 +1874,24 @@ x_draw_image_foreground (struct glyph_string *s)
       HBRUSH fg_brush = CreateSolidBrush (s->gc->foreground);
       HBRUSH orig_brush = SelectObject (s->hdc, fg_brush);
       HGDIOBJ orig_obj = SelectObject (compat_hdc, s->img->pixmap);
+      LONG orig_width, orig_height;
+      DIBSECTION dib;
       SetBkColor (compat_hdc, RGB (255, 255, 255));
       SetTextColor (s->hdc, RGB (0, 0, 0));
       x_set_glyph_string_clipping (s);
+      /* Extract the original dimensions of the bitmap.  */
+      if (GetObject (s->img->pixmap, sizeof (dib), &dib) > 0)
+	{
+	  BITMAP bmp = dib.dsBm;
+	  orig_width = bmp.bmWidth;
+	  orig_height = bmp.bmHeight;
+	}
+      else
+	{
+	  DebPrint (("x_draw_image_foreground: GetObject failed!\n"));
+	  orig_width = s->slice.width;
+	  orig_height = s->slice.height;
+	}
 
       if (s->img->mask)
 	{
@@ -1885,14 +1900,36 @@ x_draw_image_foreground (struct glyph_string *s)
 
 	  SetTextColor (s->hdc, RGB (255, 255, 255));
 	  SetBkColor (s->hdc, RGB (0, 0, 0));
-
-	  BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
-		  compat_hdc, s->slice.x, s->slice.y, SRCINVERT);
-	  BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
-		  mask_dc, s->slice.x, s->slice.y, SRCAND);
-	  BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
-		  compat_hdc, s->slice.x, s->slice.y, SRCINVERT);
-
+	  if (s->slice.width == orig_width && s->slice.height == orig_height)
+	    {
+	      BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+		      compat_hdc, s->slice.x, s->slice.y, SRCINVERT);
+	      BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+		      mask_dc, s->slice.x, s->slice.y, SRCAND);
+	      BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+		      compat_hdc, s->slice.x, s->slice.y, SRCINVERT);
+	    }
+	  else
+	    {
+	      int pmode = 0;
+	      /* HALFTONE produces better results, especially when
+		 scaling to a larger size, but Windows 9X doesn't
+		 support HALFTONE.  */
+	      if (os_subtype == OS_NT
+		  && (pmode = SetStretchBltMode (s->hdc, HALFTONE)) != 0)
+		SetBrushOrgEx (s->hdc, 0, 0, NULL);
+	      StretchBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+			  compat_hdc, s->slice.x, s->slice.y,
+			  orig_width, orig_height, SRCINVERT);
+	      StretchBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+			  mask_dc, s->slice.x, s->slice.y,
+			  orig_width, orig_height, SRCAND);
+	      StretchBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+			  compat_hdc, s->slice.x, s->slice.y,
+			  orig_width, orig_height, SRCINVERT);
+	      if (pmode)
+		SetStretchBltMode (s->hdc, pmode);
+	    }
 	  SelectObject (mask_dc, mask_orig_obj);
 	  DeleteDC (mask_dc);
 	}
@@ -1900,9 +1937,22 @@ x_draw_image_foreground (struct glyph_string *s)
 	{
 	  SetTextColor (s->hdc, s->gc->foreground);
 	  SetBkColor (s->hdc, s->gc->background);
-
-          BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
-                  compat_hdc, s->slice.x, s->slice.y, SRCCOPY);
+	  if (s->slice.width == orig_width && s->slice.height == orig_height)
+	    BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+		    compat_hdc, s->slice.x, s->slice.y, SRCCOPY);
+	  else
+	    {
+	      int pmode = 0;
+	      /* Windows 9X doesn't support HALFTONE.  */
+	      if (os_subtype == OS_NT
+		  && (pmode = SetStretchBltMode (s->hdc, HALFTONE)) != 0)
+		SetBrushOrgEx (s->hdc, 0, 0, NULL);
+	      StretchBlt (s->hdc, x, y, s->slice.width, s->slice.height,
+			  compat_hdc, s->slice.x, s->slice.y,
+			  orig_width, orig_height, SRCCOPY);
+	      if (pmode)
+		SetStretchBltMode (s->hdc, pmode);
+	    }
 
 	  /* When the image has a mask, we can expect that at
 	     least part of a mouse highlight or a block cursor will
@@ -2031,6 +2081,10 @@ w32_draw_image_foreground_1 (struct glyph_string *s, HBITMAP pixmap)
   if (s->slice.y == 0)
     y += s->img->vmargin;
 
+  /* FIXME (maybe): The below doesn't support image scaling.  But it
+     seems to never be called, because the conditions for its call in
+     x_draw_image_glyph_string are never fulfilled (they will be if
+     the #ifdef'ed away part of that function is ever activated).  */
   if (s->img->pixmap)
     {
       HDC compat_hdc = CreateCompatibleDC (hdc);
