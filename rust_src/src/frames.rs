@@ -539,8 +539,8 @@ pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> L
 /// Return nil if FRAME's focus is not redirected.
 /// See `redirect-frame-focus'.
 #[lisp_fn(min = "0")]
-pub fn frame_focus(frame: LispFrameOrSelected) -> LispObject {
-    let frame_ref = frame.live_or_error();
+pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
     frame_ref.focus_frame
 }
 
