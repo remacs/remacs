@@ -99,7 +99,7 @@ fn chartab_idx(c: isize, depth: i32, min_char: i32) -> usize {
 /// starting with '\001' nor '\002'.
 fn uniprop_compressed_form_p(obj: LispObject) -> bool {
     match obj.as_string() {
-        Some(s) => s.len_bytes() > 0 && (s.byte_at(0) == 1 || s.byte_at(0) == 2),
+        Some(s) => !s.is_empty() && (s.byte_at(0) == 1 || s.byte_at(0) == 2),
         None => false,
     }
 }

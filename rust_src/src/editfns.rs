@@ -462,7 +462,7 @@ pub fn byte_to_string(byte: EmacsInt) -> LispObject {
 /// Return the first character in STRING.
 #[lisp_fn]
 pub fn string_to_char(string: LispStringRef) -> EmacsInt {
-    if string.len_chars() > 0 {
+    if !string.is_empty() {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
             EmacsInt::from(cp)
