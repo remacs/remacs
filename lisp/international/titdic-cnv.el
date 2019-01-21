@@ -1,4 +1,4 @@
-;;; titdic-cnv.el --- convert cxterm dictionary (TIT format) to Quail package -*- coding:utf-8-emacs -*-
+;;; titdic-cnv.el --- convert cxterm dictionary (TIT format) to Quail package -*- coding: utf-8-emacs; lexical-binding:t -*-
 
 ;; Copyright (C) 1997-1998, 2000-2019 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
@@ -417,9 +417,7 @@ SPC, 6, 3, 4, or 7 specifying a tone (SPC:陰平, 6:陽平, 3:上聲, 4:去聲,
 ;; function call.
 (defun tit-process-body ()
   (message "Formatting translation rules...")
-  (let* ((template (list nil nil))
-	 (second (cdr template))
-	 (prev-key "")
+  (let* ((prev-key "")
 	 ch key translations pos)
     (princ "(quail-define-rules\n")
     (while (null (eobp))
@@ -735,7 +733,7 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\"."
 ;; input method is for inputting Big5 characters.  Otherwise the input
 ;; method is for inputting CNS characters.
 
-(defun tsang-quick-converter (dicbuf name title tsang-p big5-p)
+(defun tsang-quick-converter (dicbuf tsang-p big5-p)
   (let ((fulltitle (if tsang-p (if big5-p "倉頡" "倉頡")
 		     (if big5-p "簡易" "簡易")))
 	dic)
@@ -780,7 +778,7 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\"."
 	(while (not (eobp))
 	  (forward-char 5)
 	  (let ((trans (char-to-string (following-char)))
-		key slot)
+		key)
 	    (re-search-forward "\\([A-Z]+\\)\r*$" nil t)
 	    (setq key (downcase
 		       (if (or tsang-p
@@ -831,23 +829,23 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\"."
 		      (if big5-p (nth 1 elt) (nth 2 elt))))))
     (insert ")\n")))
 
-(defun tsang-b5-converter (dicbuf name title)
-  (tsang-quick-converter dicbuf name title t t))
+(defun tsang-b5-converter (dicbuf)
+  (tsang-quick-converter dicbuf t t))
 
-(defun quick-b5-converter (dicbuf name title)
-  (tsang-quick-converter dicbuf name title nil t))
+(defun quick-b5-converter (dicbuf)
+  (tsang-quick-converter dicbuf nil t))
 
-(defun tsang-cns-converter (dicbuf name title)
-  (tsang-quick-converter dicbuf name title t nil))
+(defun tsang-cns-converter (dicbuf)
+  (tsang-quick-converter dicbuf t nil))
 
-(defun quick-cns-converter (dicbuf name title)
-  (tsang-quick-converter dicbuf name title nil nil))
+(defun quick-cns-converter (dicbuf)
+  (tsang-quick-converter dicbuf nil nil))
 
 ;; Generate a code of a Quail package in the current buffer from
 ;; Pinyin dictionary in the buffer DICBUF.  The input method name of
 ;; the Quail package is NAME, and the title string is TITLE.
 
-(defun py-converter (dicbuf name title)
+(defun py-converter (dicbuf)
   (goto-char (point-max))
   (insert (format "%S\n" "汉字输入∷拼音∷
 
@@ -922,14 +920,14 @@ method `chinese-tonepy' with which you must specify tones by digits
 ;; Ziranma dictionary in the buffer DICBUF.  The input method name of
 ;; the Quail package is NAME, and the title string is TITLE.
 
-(defun ziranma-converter (dicbuf name title)
+(defun ziranma-converter (dicbuf)
   (let (dic)
     (with-current-buffer dicbuf
       (goto-char (point-min))
       (search-forward "\n%keyname end")
       (forward-line 1)
       (let ((table (make-hash-table :test 'equal))
-	    elt pos key trans val)
+	    pos key trans val)
 	(while (not (eobp))
 	  (setq pos (point))
 	  (skip-chars-forward "^ \t")
@@ -1031,7 +1029,7 @@ To input symbols and punctuation, type `/' followed by one of `a' to
 ;; method name of the Quail package is NAME, and the title string is
 ;; TITLE.  DESCRIPTION is the string shown by describe-input-method.
 
-(defun ctlau-converter (dicbuf name title description)
+(defun ctlau-converter (dicbuf description)
   (goto-char (point-max))
   (insert (format "%S\n" description))
   (insert "  '((\"\C-?\" . quail-delete-last-char)
@@ -1041,7 +1039,7 @@ To input symbols and punctuation, type `/' followed by one of `a' to
    (\"<\" . quail-prev-translation))
   nil nil nil nil)\n\n")
   (insert "(quail-define-rules\n")
-  (let (dicbuf-start dicbuf-end key-start key (pos (point)))
+  (let (dicbuf-start dicbuf-end key-start (pos (point)))
     ;; Find the dictionary, which starts below a horizontal rule and
     ;; ends at the second to last line in the HTML file.
     (with-current-buffer dicbuf
@@ -1080,8 +1078,8 @@ To input symbols and punctuation, type `/' followed by one of `a' to
       (forward-line 1)))
   (insert ")\n"))
 
-(defun ctlau-gb-converter (dicbuf name title)
-  (ctlau-converter dicbuf name title
+(defun ctlau-gb-converter (dicbuf)
+  (ctlau-converter dicbuf
 "汉字输入∷刘锡祥式粤音∷
 
  刘锡祥式粤语注音方案
@@ -1094,8 +1092,8 @@ To input symbols and punctuation, type `/' followed by one of `a' to
  Some infrequent GB characters are accessed by typing \\, followed by
  the Cantonese romanization of the respective radical (部首)."))
 
-(defun ctlau-b5-converter (dicbuf name title)
-  (ctlau-converter dicbuf name title
+(defun ctlau-b5-converter (dicbuf)
+  (ctlau-converter dicbuf
 "漢字輸入：劉錫祥式粵音：
 
  劉錫祥式粵語注音方案
@@ -1120,8 +1118,7 @@ the generated Quail package is saved."
   (let ((tail quail-misc-package-ext-info)
 	coding-system-for-write
 	slot
-	name title dicfile coding quailfile converter copyright
-	dicbuf)
+	name title dicfile coding quailfile converter copyright)
     (while tail
       (setq slot (car tail)
 	    dicfile (nth 2 slot)
@@ -1171,7 +1168,7 @@ the generated Quail package is saved."
               (insert-file-contents filename)
               (let ((dicbuf (current-buffer)))
                 (with-current-buffer dstbuf
-                  (funcall converter dicbuf name title)))))
+                  (funcall converter dicbuf)))))
 	  (insert ";; Local Variables:\n"
 		  ";; version-control: never\n"
 		  ";; no-update-autoloads: t\n"
