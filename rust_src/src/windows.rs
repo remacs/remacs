@@ -22,16 +22,21 @@ use crate::{
         estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
         selected_window as current_window, set_buffer_internal, set_window_hscroll,
-        update_mode_lines, window_body_width, window_list_1, window_menu_bar_p, window_tool_bar_p,
-        wset_redisplay,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p, wset_redisplay,
     },
-    remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{
-        Qbottom, Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone, Qt,
+        face_id, glyph_matrix, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type,
+        Lisp_Window,
+    },
+    remacs_sys::{
+        Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::ThreadState,
 };
+
+#[allow(unused_imports)]
+use crate::remacs_sys::Qbottom;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -50,6 +55,12 @@ impl LispWindowRef {
     /// contents slot is non-nil.
     pub fn is_valid(self) -> bool {
         self.contents.is_not_nil()
+    }
+
+    // Equivalent to WINDOW_RIGHTMOST_P
+    /// True if window W has no other windows to its right on its frame.
+    pub fn is_rightmost(self) -> bool {
+        self.right_pixel_edge() == self.get_frame().root_window().right_pixel_edge()
     }
 
     // Equivalent to WINDOW_BOTTOMMOST_P
@@ -180,7 +191,6 @@ impl LispWindowRef {
         }
     }
 
-    // Equivalent to window_body_height
     /// Return the number of lines/pixels of W's body. Don't count any mode
     /// or header line or horizontal divider of W. Rounds down to nearest
     /// integer when not working pixelwise.
@@ -199,6 +209,38 @@ impl LispWindowRef {
             cmp::max(height, 0)
         } else {
             cmp::max(height / self.get_frame().line_height, 0)
+        }
+    }
+
+    /// Return the number of columns/pixels of W's body.  Don't count columns
+    /// occupied by the scroll bar or the divider/vertical bar separating W
+    /// from its right sibling or margins.  On window-systems don't count
+    /// fringes either.  Round down to nearest integer when not working
+    /// pixelwise.
+    pub fn body_width(self, pixelwise: bool) -> i32 {
+        let width = self.pixel_width
+            - self.right_divider_width()
+            - self.margins_width()
+            - if self.has_vertical_scroll_bar() {
+                self.scroll_bar_area_width()
+            } else if !self.get_frame().is_gui_window()
+                && !self.is_rightmost()
+                && self.right_divider_width() == 0
+            {
+                1
+            } else {
+                0
+            }
+            - if self.get_frame().is_gui_window() {
+                self.fringes_width()
+            } else {
+                0
+            };
+
+        if pixelwise {
+            cmp::max(width, 0)
+        } else {
+            cmp::max(width / self.get_frame().column_width, 0)
         }
     }
 
@@ -233,6 +275,12 @@ impl LispWindowRef {
     /// This includes a mode line, if any.
     pub fn bottom_pixel_edge(self) -> i32 {
         self.top_pixel_edge() + self.pixel_height
+    }
+
+    /// Return the right pixel edge before which window W ends.
+    /// This includes a right-hand scroll bar, if any.
+    pub fn right_pixel_edge(self) -> i32 {
+        self.left_pixel_edge() + self.pixel_width
     }
 
     /// Convert window relative pixel Y to frame pixel coordinates.
@@ -315,6 +363,38 @@ impl LispWindowRef {
         }
     }
 
+    pub fn left_fringe_width(self) -> i32 {
+        if self.left_fringe_width >= 0 {
+            self.left_fringe_width
+        } else {
+            self.get_frame().left_fringe_width
+        }
+    }
+
+    pub fn right_fringe_width(self) -> i32 {
+        if self.right_fringe_width >= 0 {
+            self.right_fringe_width
+        } else {
+            self.get_frame().left_fringe_width
+        }
+    }
+
+    pub fn fringes_width(self) -> i32 {
+        self.left_fringe_width() + self.right_fringe_width()
+    }
+
+    pub fn left_margin_width(self) -> i32 {
+        self.left_margin_cols * self.get_frame().column_width
+    }
+
+    pub fn right_margin_width(self) -> i32 {
+        self.right_margin_cols * self.get_frame().column_width
+    }
+
+    pub fn margins_width(self) -> i32 {
+        self.left_margin_width() + self.right_margin_width()
+    }
+
     /// True if window W is a vertical combination of windows.
     pub fn is_vertical_combination(self) -> bool {
         self.is_internal() && !self.horizontal()
@@ -325,6 +405,32 @@ impl LispWindowRef {
             Some((_, cdr)) => cdr,
             None => Qnil,
         }
+    }
+
+    pub fn vertical_scroll_bar_type(self) -> u32 {
+        use crate::remacs_sys::vertical_scroll_bar_type as scroll;
+        if self.is_pseudo() {
+            scroll::vertical_scroll_bar_none
+        } else {
+            match self.vertical_scroll_bar_type {
+                Qt => self.get_frame().vertical_scroll_bar_type(),
+                Qleft => scroll::vertical_scroll_bar_left,
+                Qright => scroll::vertical_scroll_bar_right,
+                _ => scroll::vertical_scroll_bar_none,
+            }
+        }
+    }
+
+    pub fn has_vertical_scroll_bar_left(self) -> bool {
+        self.vertical_scroll_bar_type() == vertical_scroll_bar_type::vertical_scroll_bar_left
+    }
+
+    pub fn has_vertical_scroll_bar_right(self) -> bool {
+        self.vertical_scroll_bar_type() == vertical_scroll_bar_type::vertical_scroll_bar_right
+    }
+
+    pub fn has_vertical_scroll_bar(self) -> bool {
+        self.has_vertical_scroll_bar_left() || self.has_vertical_scroll_bar_right()
     }
 
     // Equivalent to WINDOW_HAS_HORIZONTAL_SCROLL_BAR
@@ -347,10 +453,28 @@ impl LispWindowRef {
         false
     }
 
+    /// Width of the scroll bar area of the window, measured in pixels.
+    pub fn scroll_bar_area_width(self) -> i32 {
+        if self.has_vertical_scroll_bar() {
+            self.config_scroll_bar_width()
+        } else {
+            0
+        }
+    }
+
     /// Height of scroll bar area in the window, measured in pixels.
     pub fn scroll_bar_area_height(self) -> i32 {
         if self.has_horizontal_scroll_bar() {
             self.config_scroll_bar_height()
+        } else {
+            0
+        }
+    }
+
+    /// Width of the bottom divider of the window
+    pub fn right_divider_width(self) -> i32 {
+        if !self.is_rightmost() {
+            self.get_frame().right_divider_width
         } else {
             0
         }
@@ -365,6 +489,17 @@ impl LispWindowRef {
             0
         } else {
             self.get_frame().bottom_divider_width
+        }
+    }
+
+    /// Width that a scroll bar in window W should have, if there is one.
+    /// Measured in pixels.  If scroll bars are turned off, this is still
+    /// nonzero.
+    pub fn config_scroll_bar_width(self) -> i32 {
+        if self.scroll_bar_width >= 0 {
+            self.scroll_bar_width
+        } else {
+            self.get_frame().config_scroll_bar_width
         }
     }
 
@@ -511,6 +646,17 @@ impl From<LispObject> for LispWindowValidOrSelected {
 impl From<LispWindowValidOrSelected> for LispWindowRef {
     fn from(w: LispWindowValidOrSelected) -> Self {
         w.0
+    }
+}
+
+// Avoid name conflicts
+mod sys {
+    use super::LispWindowRef;
+    use crate::remacs_sys::Lisp_Window;
+
+    #[no_mangle]
+    pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
+        LispWindowRef::new(window).body_width(pixelwise)
     }
 }
 
@@ -1139,7 +1285,7 @@ pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowR
 pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
     let mut w: LispWindowRef = selected_window().into();
     let requested_arg = if arg.is_nil() {
-        unsafe { EmacsInt::from(window_body_width(w.as_mut(), false)) - 2 }
+        EmacsInt::from(w.body_width(false)) - 2
     } else if left {
         prefix_numeric_value(arg)
     } else {
@@ -1376,6 +1522,24 @@ pub fn set_window_redisplay_end_trigger(
 #[lisp_fn]
 pub fn window_body_height(window: LispWindowRef, pixelwise: bool) -> EmacsInt {
     window.body_height(pixelwise).into()
+}
+
+/// Return the width of WINDOW's text area.
+/// WINDOW must be a live window and defaults to the selected one.  Optional
+/// argument PIXELWISE non-nil means return the width in pixels.  The return
+/// value does not include any vertical dividers, fringes or marginal areas,
+/// or scroll bars.
+///
+/// If PIXELWISE is nil, return the largest integer smaller than WINDOW's
+/// pixel width divided by the character width of WINDOW's frame.  This
+/// means that if a column at the right of the text area is only partially
+/// visible, that column is not counted.
+///
+/// Note that the returned value includes the column reserved for the
+/// continuation glyph.
+#[lisp_fn]
+pub fn window_body_width(window: LispWindowRef, pixelwise: bool) -> EmacsInt {
+    window.body_width(pixelwise).into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

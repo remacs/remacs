@@ -28,6 +28,11 @@ impl LispFrameRef {
         !self.terminal.is_null()
     }
 
+    // Awaiting Wilfred#1264
+    pub fn is_gui_window(self) -> bool {
+        cfg!(feature = "window_system")
+    }
+
     // Pixel-width of internal border lines.
     pub fn internal_border_width(self) -> i32 {
         unsafe { frame_dimension(self.internal_border_width) }
