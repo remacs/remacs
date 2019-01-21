@@ -4074,7 +4074,7 @@ connection buffer."
 	    (t "Login failed")))))
       (when (numberp pos)
 	(with-current-buffer (tramp-get-connection-buffer vec)
-	  (let (buffer-read-only) (delete-region pos (point))))))))
+	  (let ((inhibit-read-only t)) (delete-region pos (point))))))))
 
 ;;; Utility functions:
 
@@ -4083,7 +4083,8 @@ connection buffer."
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
   (with-current-buffer (process-buffer proc)
-    (let (buffer-read-only last-coding-system-used
+    (let ((inhibit-read-only t)
+	  last-coding-system-used
 	  ;; We do not want to run timers.
 	  timer-list timer-idle-list
 	  result)
@@ -4186,7 +4187,7 @@ the remote host use line-endings as defined in the variable
     (with-current-buffer (tramp-get-connection-buffer vec)
       ;; Clean up the buffer.  We cannot call `erase-buffer' because
       ;; narrowing might be in effect.
-      (let (buffer-read-only) (delete-region (point-min) (point-max)))
+      (let ((inhibit-read-only t)) (delete-region (point-min) (point-max)))
       ;; Replace "\n" by `tramp-rsh-end-of-line'.
       (setq string
 	    (mapconcat

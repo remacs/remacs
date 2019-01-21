@@ -2906,7 +2906,7 @@ the result will be a local, non-Tramp, file name."
 		    ;; otherwise we might be interrupted by
 		    ;; `verify-visited-file-modtime'.
 		    (let ((buffer-undo-list t)
-			  (buffer-read-only nil)
+			  (inhibit-read-only t)
 			  (mark (point-max)))
 		      (clear-visited-file-modtime)
 		      (narrow-to-region (point-max) (point-max))
@@ -5081,7 +5081,7 @@ function waits for output unless NOOUTPUT is set."
 	   (regexp1 (format "\\(^\\|\000\\)%s" regexp))
 	   (found (tramp-wait-for-regexp proc timeout regexp1)))
       (if found
-	  (let (buffer-read-only)
+	  (let ((inhibit-read-only t))
 	    ;; A simple-minded busybox has sent " ^H" sequences.
 	    ;; Delete them.
 	    (goto-char (point-min))
@@ -5128,7 +5128,7 @@ DONT-SUPPRESS-ERR is non-nil, stderr won't be sent to /dev/null."
     (skip-chars-forward "^ ")
     (prog1
 	(zerop (read (current-buffer)))
-      (let (buffer-read-only)
+      (let ((inhibit-read-only t))
 	(delete-region (match-beginning 0) (point-max))))))
 
 (defun tramp-barf-unless-okay (vec command fmt &rest args)

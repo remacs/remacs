@@ -2029,7 +2029,7 @@ If ARGUMENT is non-nil, use it as argument for
 Removes smb prompt.  Returns nil if an error message has appeared."
   (with-current-buffer (tramp-get-connection-buffer vec)
     (let ((p (get-buffer-process (current-buffer)))
-	  buffer-read-only)
+	  (inhibit-read-only t))
 
       ;; Read pending output.
       (while (tramp-accept-process-output p 0.1))
