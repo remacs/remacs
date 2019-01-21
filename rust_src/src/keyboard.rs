@@ -236,7 +236,7 @@ pub fn command_error_default_function(
     data: LispObject,
     context: LispStringRef,
     signal: LispObject,
-) -> LispObject {
+) {
     // If the window system or terminal frame hasn't been initialized
     // yet, or we're not interactive, write the message to stderr and
     // exit.
@@ -272,7 +272,6 @@ pub fn command_error_default_function(
             print_error_message(data, Qt, context.const_sdata_ptr(), signal);
         }
     }
-    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));
