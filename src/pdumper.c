@@ -5545,10 +5545,7 @@ pdumper_load (const char *dump_filename)
 
   struct timespec load_timespec =
     timespec_sub (current_timespec (), start_time);
-  ALLOW_IMPLICIT_CONVERSION;
-  double s = load_timespec.tv_sec, ns = load_timespec.tv_nsec;
-  DISALLOW_IMPLICIT_CONVERSION;
-  dump_private.load_time = (s * 1e9 + ns) / 1e9;
+  dump_private.load_time = timespectod (load_timespec);
   dump_private.dump_filename = dump_filename_copy;
   dump_filename_copy = NULL;
 
