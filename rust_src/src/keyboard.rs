@@ -14,14 +14,11 @@ use crate::{
     multibyte::LispStringRef,
     numbers::IsLispNatnum,
     remacs_sys::globals,
-    remacs_sys::{clear_message, message_log_maybe_newline, print_error_message},
     remacs_sys::{
-        command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
-        recursive_edit_1, recursive_edit_unwind, update_mode_lines,
-    },
-    remacs_sys::{
-        make_lispy_position, output_method, temporarily_switch_to_single_kboard,
-        window_box_left_offset,
+        clear_message, command_loop_level, glyph_row_area, interrupt_input_blocked,
+        make_lispy_position, message_log_maybe_newline, minibuf_level, output_method,
+        print_error_message, recursive_edit_1, recursive_edit_unwind,
+        temporarily_switch_to_single_kboard, update_mode_lines, window_box_left_offset,
     },
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
