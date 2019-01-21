@@ -2111,7 +2111,7 @@ dump_interval_tree (struct dump_context *ctx,
 static dump_off
 dump_string (struct dump_context *ctx, const struct Lisp_String *string)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Symbol_60EA1E748E)
+#if CHECK_STRUCTS && !defined (HASH_Lisp_String_86FEA6EC7C)
 # error "Lisp_String changed. See CHECK_STRUCTS comment."
 #endif
   /* If we have text properties, write them _after_ the string so that
