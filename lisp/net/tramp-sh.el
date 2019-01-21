@@ -3973,9 +3973,11 @@ variable PATH."
     (if (< (length command) pipe-buf)
 	(tramp-send-command vec command)
       ;; Use a temporary file.
-      (setq tmpfile (tramp-make-tramp-temp-file vec))
+      (setq tmpfile
+	    (tramp-make-tramp-file-name vec (tramp-make-tramp-temp-file vec)))
       (write-region command nil tmpfile)
-      (tramp-send-command vec (format ". %s" tmpfile))
+      (tramp-send-command
+       vec (format ". %s" (tramp-compat-file-local-name tmpfile)))
       (delete-file tmpfile))))
 
 ;; ------------------------------------------------------------
