@@ -1520,7 +1520,8 @@ pub fn set_window_redisplay_end_trigger(
 /// means that if a line at the bottom of the text area is only partially
 /// visible, that line is not counted.
 #[lisp_fn]
-pub fn window_body_height(window: LispWindowRef, pixelwise: bool) -> EmacsInt {
+pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+    let window: LispWindowRef = window.into();
     window.body_height(pixelwise).into()
 }
 
@@ -1538,7 +1539,8 @@ pub fn window_body_height(window: LispWindowRef, pixelwise: bool) -> EmacsInt {
 /// Note that the returned value includes the column reserved for the
 /// continuation glyph.
 #[lisp_fn]
-pub fn window_body_width(window: LispWindowRef, pixelwise: bool) -> EmacsInt {
+pub fn window_body_width(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+    let window: LispWindowRef = window.into();
     window.body_width(pixelwise).into()
 }
 
