@@ -4738,7 +4738,6 @@ AH_TEMPLATE(DOS_NT, [Define if the system is MS DOS or MS Windows.])
 AH_TEMPLATE(USG, [Define if the system is compatible with System III.])
 AH_TEMPLATE(USG5_4, [Define if the system is compatible with System V Release 4.])
 
-CARGO_DEFAULT_FEATURES=""
 case $opsys in
   aix4-2)
     AC_DEFINE(USG, [])
@@ -4774,7 +4773,6 @@ case $opsys in
   mingw32)
     AC_DEFINE(DOS_NT, [])
     AC_DEFINE(WINDOWSNT, 1, [Define if compiling for native MS Windows.])
-    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"windowsnt\", "
     if test "x$ac_enable_checking" != "x" ; then
       AC_DEFINE(EMACSDEBUG, 1, [Define to 1 to enable w32 debug facilities.])
     fi
@@ -5456,6 +5454,7 @@ fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
 
 
+CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
 fi
