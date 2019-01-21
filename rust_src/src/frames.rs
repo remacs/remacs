@@ -21,6 +21,9 @@ use crate::remacs_sys::vertical_scroll_bar_type;
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    pub fn root_window(self) -> LispWindowRef {
+        self.root_window.into()
+    }
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
