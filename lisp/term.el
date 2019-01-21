@@ -545,6 +545,9 @@ This means text can automatically reflow if the window is resized."
   :version "24.4"
   :type 'boolean
   :group 'term)
+(make-obsolete-variable 'term-suppress-hard-newline nil
+                        "27.1"
+                        'set)
 
 ;; Where gud-display-frame should put the debugging arrow.  This is
 ;; set by the marker-filter, which scans the debugger's output for
@@ -1117,6 +1120,9 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (set (make-local-variable 'font-lock-defaults) '(nil t))
 
   (add-function :filter-return
+                (local 'filter-buffer-substring-function)
+                #'term--filter-buffer-substring)
+  (add-function :filter-return
                 (local 'window-adjust-process-window-size-function)
                 (lambda (size)
                   (when size
@@ -1132,9 +1138,51 @@ Entry to this mode runs the hooks on `term-mode-hook'."
       (setq term-input-ring (make-ring term-input-ring-size)))
   (term-update-mode-line))
 
+(defun term--remove-fake-newlines ()
+  (goto-char (point-min))
+  (let (fake-newline)
+    (while (setq fake-newline (next-single-property-change (point)
+                                                           'term-line-wrap))
+      (goto-char fake-newline)
+      (assert (eq ?\n (char-after)))
+      (let ((inhibit-read-only t))
+        (delete-char 1)))))
+
+(defun term--filter-buffer-substring (content)
+  (with-temp-buffer
+    (insert content)
+    (term--remove-fake-newlines)
+    (buffer-string)))
+
+(defun term--unwrap-visible-long-lines (width)
+  ;; Unwrap lines longer than width using fake newlines.  Only do it
+  ;; for lines that are currently visible (i.e. following the home
+  ;; marker).  Invisible lines don't have to be unwrapped since they
+  ;; are unreachable using the cursor movement anyway.  Not having to
+  ;; unwrap the entire buffer means the runtime of this function is
+  ;; bounded by the size of the screen instead of the buffer size.
+
+  (save-excursion
+    ;; We will just assume that our accounting for the home marker is
+    ;; correct, i.e. programs will not try to reach any position
+    ;; earlier than this marker.
+    (goto-char term-home-marker)
+
+    (move-to-column width)
+    (while (not (eobp))
+      (if (eolp)
+          (forward-char)
+        (let ((inhibit-read-only t))
+          (term-unwrap-line)))
+      (move-to-column width))))
+
 (defun term-reset-size (height width)
   (when (or (/= height term-height)
             (/= width term-width))
+    ;; Delete all newlines used for wrapping
+    (when (/= width term-width)
+      (save-excursion
+        (term--remove-fake-newlines)))
     (let ((point (point)))
       (setq term-height height)
       (setq term-width width)
@@ -1147,7 +1195,8 @@ Entry to this mode runs the hooks on `term-mode-hook'."
       (setq term-start-line-column nil)
       (setq term-current-row nil)
       (setq term-current-column nil)
-      (goto-char point))))
+      (goto-char point))
+    (term--unwrap-visible-long-lines width)))
 
 ;; Recursive routine used to check if any string in term-kill-echo-list
 ;; matches part of the buffer before point.
@@ -3719,7 +3768,10 @@ all pending output has been dealt with."))
 ;; if the line above point wraps around, add a ?\n to undo the wrapping.
 ;; FIXME:  Probably should be called more than it is.
 (defun term-unwrap-line ()
-  (when (not (bolp)) (insert-before-markers ?\n)))
+  (when (not (bolp))
+    (let ((old-point (point)))
+      (insert-before-markers ?\n)
+      (put-text-property old-point (point) 'term-line-wrap t))))
 
 (defun term-erase-in-line (kind)
   (when (= kind 1) ;; erase left of point
