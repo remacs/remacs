@@ -198,8 +198,8 @@ relative order must be maintained within it."
   (setq-default post-self-insert-hook
                 (sort (default-value 'post-self-insert-hook)
                       #'(lambda (fn1 fn2)
-                          (< (or (get fn1 'priority) 0)
-                             (or (get fn2 'priority) 0))))))
+                          (< (or (if (symbol fn1) (get fn1 'priority)) 0)
+                             (or (if (symbol fn2) (get fn2 'priority)) 0))))))
 
 ;;; Electric indentation.
 
