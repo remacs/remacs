@@ -131,7 +131,7 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
     let spec = c_specpdl_index();
 
     let empty_input = if let Some(string) = start.as_string() {
-        string.len_chars() == 0
+        string.is_empty()
     } else if start.is_nil() {
         let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()
