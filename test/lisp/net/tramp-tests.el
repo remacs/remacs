@@ -2251,6 +2251,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `copy-file'."
   (skip-unless (tramp--test-enabled))
 
+  (tramp--test-instrument-test-case (if (getenv "EMACS_EMBA_CI") 10 0)
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
   (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
@@ -2357,7 +2358,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 
 	    ;; Cleanup.
 	    (ignore-errors (delete-directory source 'recursive))
-	    (ignore-errors (delete-directory target 'recursive))))))))
+	    (ignore-errors (delete-directory target 'recursive)))))))))
 
 (ert-deftest tramp-test12-rename-file ()
   "Check `rename-file'."
