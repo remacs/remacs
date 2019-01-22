@@ -487,7 +487,7 @@ This is, approximately, the inverse of `version-to-list'.
                 str-list))))
       (if (equal "." (car str-list))
           (pop str-list))
-      (apply 'concat (nreverse str-list)))))
+      (apply #'concat (nreverse str-list)))))
 
 (defun package-desc-full-name (pkg-desc)
   (format "%s-%s"
@@ -608,6 +608,12 @@ updates `package-alist'."
           (let ((pkg-dir (expand-file-name subdir dir)))
             (when (file-directory-p pkg-dir)
               (package-load-descriptor pkg-dir))))))))
+
+(defun package--alist ()
+  "Return `package-alist', after computing it if needed."
+  (or package-alist
+      (progn (package-load-all-descriptors)
+             package-alist)))
 
 (defun define-package (_name-string _version-string
                                     &optional _docstring _requirements
@@ -837,7 +843,7 @@ untar into a directory named DIR; otherwise, signal an error."
   (tar-untar-buffer))
 
 (defun package--alist-to-plist-args (alist)
-  (mapcar 'macroexp-quote
+  (mapcar #'macroexp-quote
           (apply #'nconc
                  (mapcar (lambda (pair) (list (car pair) (cdr pair))) alist))))
 (defun package-unpack (pkg-desc)
@@ -1492,9 +1498,7 @@ The variable `package-load-list' controls which packages to load."
       ;; any decoding).
       (let ((load-source-file-function nil))
         (load package-quickstart-file nil 'nomessage))
-    (unless package--initialized
-      (package-initialize t))
-    (dolist (elt package-alist)
+    (dolist (elt (package--alist))
       (condition-case err
           (package-activate (car elt))
         ;; Don't let failure of activation of a package arbitrarily stop
@@ -1903,10 +1907,9 @@ If PACKAGE is a `package-desc' object, MIN-VERSION is ignored."
     ;; We used the quickstart: make it possible to use package-installed-p
     ;; even before package is fully initialized.
     (memq package package-activated-list))
-   ((not package--initialized) (error "package.el is not yet initialized!"))
    (t
     (or
-     (let ((pkg-descs (cdr (assq package package-alist))))
+     (let ((pkg-descs (cdr (assq package (package--alist)))))
        (and pkg-descs
             (version-list-<= min-version
                              (package-desc-version (car pkg-descs)))))
@@ -2079,16 +2082,12 @@ If NOSAVE is non-nil, the package is not removed from
 `package-selected-packages'."
   (interactive
    (progn
-     ;; Initialize the package system to get the list of package
-     ;; symbols for completion.
-     (unless package--initialized
-       (package-initialize t))
      (let* ((package-table
              (mapcar
               (lambda (p) (cons (package-desc-full-name p) p))
               (delq nil
                     (mapcar (lambda (p) (unless (package-built-in-p p) p))
-                            (apply #'append (mapcar #'cdr package-alist))))))
+                            (apply #'append (mapcar #'cdr (package--alist)))))))
             (package-name (completing-read "Delete package: "
                                            (mapcar #'car package-table)
                                            nil t)))
@@ -2196,12 +2195,12 @@ will be deleted."
      ;; Load the package list if necessary (but don't activate them).
      (unless package--initialized
        (package-initialize t))
-     (let ((packages (append (mapcar 'car package-alist)
-                             (mapcar 'car package-archive-contents)
-                             (mapcar 'car package--builtins))))
+     (let ((packages (append (mapcar #'car package-alist)
+                             (mapcar #'car package-archive-contents)
+                             (mapcar #'car package--builtins))))
        (unless (memq guess packages)
          (setq guess nil))
-       (setq packages (mapcar 'symbol-name packages))
+       (setq packages (mapcar #'symbol-name packages))
        (let ((val
               (completing-read (if guess
                                    (format "Describe package (default %s): "
@@ -2507,7 +2506,7 @@ The description is read from the installed package files."
                                 :background "light grey"
                                 :foreground "black")
                        'link)))
-    (apply 'insert-text-button button-text 'face button-face 'follow-link t
+    (apply #'insert-text-button button-text 'face button-face 'follow-link t
            props)))
 
 
@@ -2588,7 +2587,7 @@ Letters do not insert themselves; instead, they are commands.
           ("Description" 0 nil)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
-  (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
   (tabulated-list-init-header))
 
 (defmacro package--push (pkg-desc status listname)
@@ -2859,7 +2858,7 @@ shown."
   (package-menu--refresh packages keywords)
   (setf (car (aref tabulated-list-format 0))
         (if keywords
-            (let ((filters (mapconcat 'identity keywords ",")))
+            (let ((filters (mapconcat #'identity keywords ",")))
               (concat "Package[" filters "]"))
           "Package"))
   (if keywords
