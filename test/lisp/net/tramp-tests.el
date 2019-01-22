@@ -2067,7 +2067,8 @@ This checks also `file-name-as-directory', `file-name-directory',
       ;; We must clear `tramp-default-method'.  On hydra, it is "ftp",
       ;; which ruins the tests.
       (let ((non-essential n-e)
-	    tramp-default-method)
+	    (tramp-default-method
+	     (file-remote-p tramp-test-temporary-file-directory 'method)))
 	(dolist
 	    (file
 	     `(,(format
@@ -2964,6 +2965,13 @@ This tests also `file-readable-p', `file-regular-p' and
 	(ignore-errors (delete-file tmp-name1))
 	(ignore-errors (delete-file tmp-name2))))))
 
+(defsubst tramp--test-file-attributes-equal-p (attr1 attr2)
+  "Check, whether file attributes ATTR1 and ATTR2 are equal.
+They might differ only in access time."
+  (setcar (nthcdr 4 attr1) tramp-time-dont-know)
+  (setcar (nthcdr 4 attr2) tramp-time-dont-know)
+  (equal attr1 attr2))
+
 (ert-deftest tramp-test19-directory-files-and-attributes ()
   "Check `directory-files-and-attributes'."
   (skip-unless (tramp--test-enabled))
@@ -2995,14 +3003,16 @@ This tests also `file-readable-p', `file-regular-p' and
 		    5 (file-attributes (expand-file-name (car elt) tmp-name2)))
 		   tramp-time-dont-know)
 		(should
-		 (equal (file-attributes (expand-file-name (car elt) tmp-name2))
-			(cdr elt)))))
+		 (tramp--test-file-attributes-equal-p
+		  (file-attributes (expand-file-name (car elt) tmp-name2))
+		  (cdr elt)))))
 	    (setq attr (directory-files-and-attributes tmp-name2 'full))
 	    (dolist (elt attr)
 	      (unless (tramp-compat-time-equal-p
 		       (nth 5 (file-attributes (car elt))) tramp-time-dont-know)
 		(should
-		 (equal (file-attributes (car elt)) (cdr elt)))))
+		 (tramp--test-file-attributes-equal-p
+		  (file-attributes (car elt)) (cdr elt)))))
 	    (setq attr (directory-files-and-attributes tmp-name2 nil "^b"))
 	    (should (equal (mapcar 'car attr) '("bar" "boz"))))
 
@@ -5564,6 +5574,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * file-equal-p (partly done in `tramp-test21-file-links')
 ;; * file-in-directory-p
 ;; * file-name-case-insensitive-p
+;; * tramp-set-file-uid-gid
 
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
 ;; * Revisit expensive tests, once problems in `tramp-error' are solved.
