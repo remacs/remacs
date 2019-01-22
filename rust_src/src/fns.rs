@@ -1,4 +1,4 @@
-//* Random utility Lisp functions.
+//! Random utility Lisp functions.
 
 use std::ptr;
 
@@ -12,14 +12,13 @@ use crate::{
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
-    multibyte::LispStringRef,
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals},
-    remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
+    remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
@@ -270,60 +269,12 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+// Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+// Use this only on arguments that are cycle-free and not too large and
+// are not window configurations.
 #[no_mangle]
-pub extern "C" fn internal_equal_cons(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_cons(), o2.as_cons()) {
-        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_string(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    let s1: LispStringRef = o1.into();
-    let s2: LispStringRef = o2.into();
-
-    s1.equal(s2, kind, depth, ht)
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_misc(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_misc(), o2.as_misc()) {
-        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_vectorlike(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_vectorlike(), o2.as_vectorlike()) {
-        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
-        _ => false,
-    }
+pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
+    o1.equal_no_quit(o2)
 }
 
 #[cfg(windows)]

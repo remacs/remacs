@@ -17,8 +17,9 @@ use crate::{
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
+    hashtable::LispHashTableRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
@@ -27,17 +28,16 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
-        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
-    remacs_sys::{
-        windows_or_buffers_changed, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse,
-    },
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
         Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
@@ -504,19 +504,19 @@ impl LispOverlayRef {
             current: Some(self),
         }
     }
+}
 
-    pub fn equal(
-        self,
-        other: LispOverlayRef,
+impl LispStructuralEqual for LispOverlayRef {
+    fn equal(
+        &self,
+        other: Self,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool {
-        unsafe {
-            let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
-                && internal_equal(self.end, other.end, kind, depth + 1, ht);
-            overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
-        }
+        let overlays_equal = self.start.equal_internal(other.start, kind, depth + 1, ht)
+            && self.end.equal_internal(other.end, kind, depth + 1, ht);
+        overlays_equal && self.plist.equal_internal(other.plist, kind, depth + 1, ht)
     }
 }
 

@@ -9,15 +9,16 @@ use crate::{
     buffers::LispBufferLocalValueRef,
     data::Lisp_Fwd,
     data::{indirect_function, set},
+    hashtable::LispHashTableRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
+    remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
         find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
         set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
-    remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsymbolp, Qunbound},
 };
 
@@ -151,6 +152,18 @@ impl LispSymbolRef {
 
     pub fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+}
+
+impl LispStructuralEqual for LispSymbolRef {
+    fn equal(
+        &self,
+        other: Self,
+        _equal_kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
+        LispObject::from(*self).eq(LispObject::from(other))
     }
 }
 

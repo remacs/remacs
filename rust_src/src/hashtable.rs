@@ -30,6 +30,10 @@ pub enum HashLookupResult {
 use self::HashLookupResult::{Found, Missing};
 
 impl LispHashTableRef {
+    pub fn empty() -> Self {
+        Self::new(ptr::null_mut())
+    }
+
     pub fn allocate() -> LispHashTableRef {
         let vec_ptr = allocate_pseudovector!(Lisp_Hash_Table, count, pvec_type::PVEC_HASH_TABLE);
         LispHashTableRef::new(vec_ptr)

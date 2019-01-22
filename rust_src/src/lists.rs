@@ -8,11 +8,12 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    hashtable::LispHashTableRef,
     lisp::defsubr,
-    lisp::LispObject,
+    lisp::{LispObject, LispStructuralEqual},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
-    remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
+    remacs_sys::{Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
     symbols::LispSymbolRef,
 };
@@ -344,40 +345,6 @@ impl LispCons {
         }
     }
 
-    pub fn equal(
-        self,
-        other: LispCons,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: LispObject,
-    ) -> bool {
-        let (circular_checks, item_depth, item_ht) = if kind == equal_kind::EQUAL_NO_QUIT {
-            (LispConsCircularChecks::off, 0, Qnil)
-        } else {
-            (LispConsCircularChecks::on, depth + 1, ht)
-        };
-
-        let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
-        let mut it2 = other.iter_tails(LispConsEndChecks::off, circular_checks);
-        loop {
-            match (it1.next(), it2.next()) {
-                (Some(cons1), Some(cons2)) => {
-                    let (item1, tail1) = cons1.into();
-                    let (item2, tail2) = cons2.into();
-                    if !unsafe { internal_equal(item1, item2, kind, item_depth, item_ht) } {
-                        return false;
-                    } else if tail1.eq(tail2) {
-                        return true;
-                    }
-                }
-                (None, None) => break,
-                _ => return false,
-            }
-        }
-
-        unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
-    }
-
     pub fn length(self) -> usize {
         let len = self
             .0
@@ -403,6 +370,51 @@ impl LispCons {
         circular_checks: LispConsCircularChecks,
     ) -> CarIter {
         CarIter::new(TailsIter::new(self.0, Qlistp, end_checks, circular_checks))
+    }
+}
+
+impl LispStructuralEqual for LispCons {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
+        let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
+            (LispConsCircularChecks::off, 0)
+        } else {
+            (LispConsCircularChecks::on, depth + 1)
+        };
+
+        // This is essentially a zip. However, one cons can end earlier than the other.
+        // Which requires that the iterators are available to call `rest()` on.
+        // Had `.zip()` been used this would not be possible as it consumes them.
+        let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
+        let mut it2 = other.iter_tails(LispConsEndChecks::off, circular_checks);
+        loop {
+            match (it1.next(), it2.next()) {
+                (Some(cons1), Some(cons2)) => {
+                    let (item1, tail1) = cons1.into();
+                    let (item2, tail2) = cons2.into();
+                    if item1.equal_internal(item2, kind, item_depth, ht) {
+                        if tail1.eq(tail2) {
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+                (None, None) => break,
+                _ => return false,
+            }
+        }
+
+        // The two iterators contain what is left of the lists after the loop exits.
+        // If the loop completely consumes the lists this will end being nil `equal` nil.
+        // Either iterator could also still have data if the list is "improper" (a . b)
+        // style. Or as the comment above says, the two lists might be a different length.
+        it1.rest().equal_internal(it2.rest(), kind, depth + 1, ht)
     }
 }
 
