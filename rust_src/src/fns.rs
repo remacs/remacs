@@ -398,19 +398,15 @@ pub fn compare_strings(
         Some(end) => Some(cmp::min(end, len1 as EmacsInt)),
     };
     let end2 = match end2 {
-        None => end1,
+        None => end2,
         Some(end) => Some(cmp::min(end, len2 as EmacsInt)),
     };
 
     let (from1, to1) = validate_subarray_rust(str1.into(), start1, end1, len1);
     let (from2, to2) = validate_subarray_rust(str2.into(), start2, end2, len2);
 
-    let iter1 = str1
-        .char_indices_multibyte()
-        .skip_while(|(i, _)| *i < from1 as usize);
-    let iter2 = str2
-        .char_indices_multibyte()
-        .skip_while(|(i, _)| *i < from2 as usize);
+    let iter1 = str1.char_indices_multibyte().skip(from1 as usize);
+    let iter2 = str2.char_indices_multibyte().skip(from2 as usize);
     let (mut index1, mut index2) = (0, 0);
     for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
         let i1 = i1 as isize;
@@ -437,10 +433,11 @@ pub fn compare_strings(
         }
     }
 
-    if index1 < to1 {
+    // To is exclusive, so add 1.
+    if index1 + 1 < to1 {
         return (index1 - from1 + 1).into();
     }
-    if index2 < to2 {
+    if index2 + 1 < to2 {
         return (from1 - index1 - 1).into();
     }
 
