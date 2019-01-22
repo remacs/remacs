@@ -126,10 +126,7 @@ impl<'a> ModuleParser<'a> {
         }
     }
 
-    pub fn run<R>(&mut self, in_file: R) -> Result<ModuleData, BuildError>
-    where
-        R: BufRead,
-    {
+    pub fn run(&mut self, in_file: impl BufRead) -> Result<ModuleData, BuildError> {
         let mut mod_data = ModuleData::new(self.info.clone());
         let mut reader = in_file.lines();
         let mut has_include = false;

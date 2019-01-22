@@ -205,10 +205,7 @@ fn sha1_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 }
 
 /// Given an instance of `Digest`, and `buffer` write its hash to `dest_buf`.
-fn sha2_hash_buffer<D>(hasher: D, buffer: &[u8], dest_buf: &mut [u8])
-where
-    D: Digest,
-{
+fn sha2_hash_buffer(hasher: impl Digest, buffer: &[u8], dest_buf: &mut [u8]) {
     let mut hasher = hasher;
     hasher.input(buffer);
     let output = hasher.result();

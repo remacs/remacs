@@ -114,10 +114,11 @@ pub fn and(args: LispObject) -> LispObject {
 
 /// Eval each item in ARGS and then compare it using CMP.
 /// INITIAL is returned if the list has no cons cells.
-fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
-where
-    CmpFunc: Fn(LispObject, LispObject) -> bool,
-{
+fn eval_and_compare_all(
+    args: LispObject,
+    initial: LispObject,
+    cmp: impl Fn(LispObject, LispObject) -> bool,
+) -> LispObject {
     let mut val = initial;
 
     for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {

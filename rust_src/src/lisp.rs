@@ -558,17 +558,11 @@ impl LispObject {
 
     // The three Emacs Lisp comparison functions.
 
-    pub fn eq<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn eq(self, other: impl Into<LispObject>) -> bool {
         self == other.into()
     }
 
-    pub fn eql<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn eql(self, other: impl Into<LispObject>) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)
         } else {
@@ -576,10 +570,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn equal(self, other: impl Into<LispObject>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
@@ -671,10 +662,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal_no_quit<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn equal_no_quit(self, other: impl Into<LispObject>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
@@ -683,7 +671,7 @@ impl LispObject {
         FUNCTIONP(self)
     }
 
-    pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
+    pub fn map_or<T>(self, default: T, action: impl FnOnce(LispObject) -> T) -> T {
         if self.is_nil() {
             default
         } else {
@@ -691,10 +679,10 @@ impl LispObject {
         }
     }
 
-    pub fn map_or_else<T, F: FnOnce() -> T, F1: FnOnce(LispObject) -> T>(
+    pub fn map_or_else<T>(
         self,
-        default: F,
-        action: F1,
+        default: impl FnOnce() -> T,
+        action: impl FnOnce(LispObject) -> T,
     ) -> T {
         if self.is_nil() {
             default()
