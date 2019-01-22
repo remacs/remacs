@@ -157,7 +157,7 @@ The buffer's contents should %s:
           expected-string
           expected-point
           bindings
-          (modes '(quote (ruby-mode c++-mode)))
+          (modes '(quote (ruby-mode js-mode)))
           (test-in-comments t)
           (test-in-strings t)
           (test-in-code t)
@@ -391,10 +391,16 @@ baz\"\""
   :bindings '((electric-pair-skip-whitespace . chomp))
   :test-in-comments nil)
 
-
-;; A test failure introduced by some changes in CC mode.  Hopefully CC
-;; mode will sort this out eventually, using some new e-p-m machinery.
-;; See
+(define-electric-pair-test whitespace-chomping-2
+  " ( \n\t\t\n  )  " "--)------" :expected-string " ()  " :expected-point 4
+  :bindings '((electric-pair-skip-whitespace . chomp))
+  :modes '(c++-mode)
+  :test-in-comments nil)
+;; A test failure introduced by:
+;;
+;;    bb591f139f: Enhance CC Mode's fontification, etc., of unterminated strings.
+;;
+;; Hopefully CC mode will sort this out eventually.  See
 ;; https://lists.gnu.org/archive/html/emacs-devel/2018-06/msg00535.html
 (setf
  (ert-test-expected-result-type
@@ -817,7 +823,7 @@ baz\"\""
 
 (ert-deftest electric-layout-int-main-kernel-style ()
   (ert-with-test-buffer ()
-    (c-mode)
+    (plainer-c-mode)
     (electric-layout-local-mode 1)
     (electric-pair-local-mode 1)
     (electric-indent-local-mode 1)
@@ -828,19 +834,6 @@ baz\"\""
       (call-interactively (key-binding `[,last-command-event])))
     (should (equal (buffer-string) "int main () {\n  \n}"))))
 
-(ert-deftest electric-layout-int-main-allman-style ()
-  (ert-with-test-buffer ()
-    (c-mode)
-    (electric-layout-local-mode 1)
-    (electric-pair-local-mode 1)
-    (electric-indent-local-mode 1)
-    (setq-local electric-layout-rules
-                '((?\{ . (before after-stay after))))
-    (insert "int main () ")
-    (let ((last-command-event ?\{))
-      (call-interactively (key-binding `[,last-command-event])))
-    (should (equal (buffer-string) "int main ()\n{\n  \n}"))))
-
 (define-derived-mode plainer-c-mode c-mode "pC"
   "A plainer/saner C-mode with no internal electric machinery."
   (c-toggle-electric-state -1)
@@ -850,7 +843,7 @@ baz\"\""
   (dolist (key '(?\" ?\' ?\{ ?\} ?\( ?\) ?\[ ?\]))
     (local-set-key (vector key) 'self-insert-command)))
 
-(ert-deftest electric-modes-in-c-mode-with-self-insert-command ()
+(ert-deftest electric-modes-int-main-allman-style ()
   (ert-with-test-buffer ()
     (plainer-c-mode)
     (electric-layout-local-mode 1)
