@@ -3,7 +3,8 @@
 
 use std::convert::From;
 use std::ffi::CString;
-use std::fmt::{Debug, Error, Formatter};
+use std::fmt;
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::mem;
 use std::ops::{Deref, DerefMut};
 
@@ -12,14 +13,20 @@ use libc::{c_char, c_void, intptr_t, uintptr_t};
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    hashtable::{
+        HashLookupResult::{Found, Missing},
+        LispHashTableRef,
+    },
+    lists::{list, memq, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     process::LispProcessRef,
-    remacs_sys::{build_string, internal_equal, make_float},
+    remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
-    remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
+    remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
+    remacs_sys::{Vbuffer_alist, Vprocess_alist},
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -60,14 +67,6 @@ impl LispObject {
 
     pub fn to_C_unsigned(self) -> EmacsUint {
         self.0 as EmacsUint
-    }
-
-    pub fn from_bool(v: bool) -> Self {
-        if v {
-            Qt
-        } else {
-            Qnil
-        }
     }
 
     pub fn from_float(v: EmacsDouble) -> Self {
@@ -121,6 +120,10 @@ impl<T> ExternalPtr<T> {
     pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
+
+    pub fn replace_ptr(&mut self, ptr: *mut T) {
+        self.0 = ptr;
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
@@ -156,13 +159,15 @@ impl LispMiscRef {
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
     }
+}
 
-    pub fn equal(
-        self,
-        other: LispMiscRef,
+impl LispStructuralEqual for LispMiscRef {
+    fn equal(
+        &self,
+        other: Self,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool {
         if self.get_type() != other.get_type() {
             false
@@ -243,10 +248,6 @@ impl LispObject {
     }
 
     pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.into()
-    }
-
-    pub fn as_subr_or_error(self) -> LispSubrRef {
         self.into()
     }
 }
@@ -532,6 +533,16 @@ pub fn is_autoload(function: LispObject) -> bool {
     }
 }
 
+pub trait LispStructuralEqual {
+    fn equal(
+        &self,
+        other: Self,
+        equal_kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool;
+}
+
 impl LispObject {
     pub fn is_nil(self) -> bool {
         self == Qnil
@@ -549,14 +560,14 @@ impl LispObject {
 
     pub fn eq<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Into<LispObject>,
     {
         self == other.into()
     }
 
     pub fn eql<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Into<LispObject>,
     {
         if self.is_float() {
             self.equal_no_quit(other)
@@ -567,16 +578,105 @@ impl LispObject {
 
     pub fn equal<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Into<LispObject>,
     {
-        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil) }
+        let mut ht = LispHashTableRef::empty();
+        self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
+    }
+
+    // Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
+    // of equality test to use: if it is EQUAL_NO_QUIT, do not check for
+    // cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
+    // Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
+    // equal-including-properties.
+    //
+    // If DEPTH is the current depth of recursion; signal an error if it
+    // gets too deep.  HT is a hash table used to detect cycles; if nil,
+    // it has not been allocated yet.  But ignore the last two arguments
+    // if EQUAL_KIND == EQUAL_NO_QUIT.
+    //
+    pub fn equal_internal(
+        self,
+        other: Self,
+        equal_kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
+        if depth > 10 {
+            assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
+            if depth > 200 {
+                error!("Stack overflow in equal");
+            }
+            if ht.is_null() {
+                let mut new_ht: LispHashTableRef = callN_raw!(Fmake_hash_table, QCtest, Qeq).into();
+                ht.replace_ptr(new_ht.as_mut());
+            }
+            match self.get_type() {
+                Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
+                    match ht.lookup(self) {
+                        Found(idx) => {
+                            // `self' was seen already.
+                            let o2s = ht.get_hash_value(idx);
+                            if memq(other, o2s).is_nil() {
+                                ht.set_hash_value(idx, LispObject::cons(other, o2s));
+                            } else {
+                                return true;
+                            }
+                        }
+                        Missing(hash) => {
+                            ht.put(self, LispObject::cons(other, Qnil), hash);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if self.eq(other) {
+            return true;
+        }
+        if self.get_type() != other.get_type() {
+            return false;
+        }
+
+        match self.get_type() {
+            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => {
+                self.force_fixnum()
+                    .equal(other.force_fixnum(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Symbol => {
+                self.force_symbol()
+                    .equal(other.force_symbol(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Cons => {
+                self.force_cons()
+                    .equal(other.force_cons(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Float => {
+                self.force_floatref()
+                    .equal(other.force_floatref(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Misc => {
+                self.force_misc()
+                    .equal(other.force_misc(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_String => {
+                self.force_string()
+                    .equal(other.force_string(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Vectorlike => {
+                self.force_vectorlike()
+                    .equal(other.force_vectorlike(), equal_kind, depth, ht)
+            }
+        }
     }
 
     pub fn equal_no_quit<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Into<LispObject>,
     {
-        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
+        let mut ht = LispHashTableRef::empty();
+        self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
 
     pub fn is_function(self) -> bool {
@@ -607,6 +707,12 @@ impl LispObject {
 /// Used to denote functions that have no limit on the maximum number
 /// of arguments.
 pub const MANY: i16 = -2;
+
+impl Display for LispObject {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", LispStringRef::from(*self))
+    }
+}
 
 impl Debug for LispObject {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {

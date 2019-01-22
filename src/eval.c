@@ -267,8 +267,6 @@ restore_stack_limits (Lisp_Object data)
   max_lisp_eval_depth = XINT (XCDR (data));
 }
 
-static void grow_specpdl (void);
-
 /* Call the Lisp debugger, giving it argument ARG.  */
 
 Lisp_Object
@@ -899,7 +897,7 @@ internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
       eassert (handlerlist == c);
       Lisp_Object val = c->val;
       handlerlist = c->next;
-      Fsignal (Qno_catch, val);
+      xsignal (Qno_catch, val);
     }
 }
 
@@ -967,7 +965,6 @@ push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
 }
 
 
-static Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
 static Lisp_Object find_handler_clause (Lisp_Object, Lisp_Object);
 static bool maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
 				 Lisp_Object data);
@@ -1009,27 +1006,6 @@ maybe_quit (void)
     process_pending_signals ();
 }
 
-DEFUN ("signal", Fsignal, Ssignal, 2, 2, 0,
-       doc: /* Signal an error.  Args are ERROR-SYMBOL and associated DATA.
-This function does not return.
-
-An error symbol is a symbol with an `error-conditions' property
-that is a list of condition names.
-A handler for any of those names will get to handle this signal.
-The symbol `error' should normally be one of them.
-
-DATA should be a list.  Its elements are printed as part of the error message.
-See Info anchor `(elisp)Definition of signal' for some details on how this
-error message is constructed.
-If the signal is handled, DATA is made available to the handler.
-See also the function `condition-case'.  */
-       attributes: noreturn)
-  (Lisp_Object error_symbol, Lisp_Object data)
-{
-  signal_or_quit (error_symbol, data, false);
-  eassume (false);
-}
-
 /* Quit, in response to a keyboard quit request.  */
 Lisp_Object
 quit (void)
@@ -1042,7 +1018,7 @@ quit (void)
    Qquit and DATA should be Qnil, and this function may return.
    Otherwise this function is like Fsignal and does not return.  */
 
-static Lisp_Object
+Lisp_Object
 signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
 {
   /* When memory is full, ERROR-SYMBOL is nil,
@@ -1373,7 +1349,7 @@ error (const char *m, ...)
    never-used entry just before the bottom of the stack; sometimes its
    address is taken.  */
 
-static void
+void
 grow_specpdl (void)
 {
   specpdl_ptr++;
@@ -2399,41 +2375,6 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 /* Push unwind-protect entries of various types.  */
 
 void
-record_unwind_protect (void (*function) (Lisp_Object), Lisp_Object arg)
-{
-  specpdl_ptr->unwind.kind = SPECPDL_UNWIND;
-  specpdl_ptr->unwind.func = function;
-  specpdl_ptr->unwind.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_ptr (void (*function) (void *), void *arg)
-{
-  specpdl_ptr->unwind_ptr.kind = SPECPDL_UNWIND_PTR;
-  specpdl_ptr->unwind_ptr.func = function;
-  specpdl_ptr->unwind_ptr.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_int (void (*function) (int), int arg)
-{
-  specpdl_ptr->unwind_int.kind = SPECPDL_UNWIND_INT;
-  specpdl_ptr->unwind_int.func = function;
-  specpdl_ptr->unwind_int.arg = arg;
-  grow_specpdl ();
-}
-
-void
-record_unwind_protect_void (void (*function) (void))
-{
-  specpdl_ptr->unwind_void.kind = SPECPDL_UNWIND_VOID;
-  specpdl_ptr->unwind_void.func = function;
-  grow_specpdl ();
-}
-
-void
 rebind_for_thread_switch (void)
 {
   union specbinding *bind;
@@ -3097,7 +3038,6 @@ alist of active lexical bindings.  */);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Sthrow);
   defsubr (&Scondition_case);
-  defsubr (&Ssignal);
   defsubr (&Sapply);
   defsubr (&Sfunc_arity);
   defsubr (&Sfetch_bytecode);

@@ -2,6 +2,8 @@
 use std::{cmp::max, slice};
 
 use libc::{c_char, c_uchar};
+use line_wrap::LineEnding;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -20,19 +22,9 @@ use crate::{
 };
 
 fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
-    let config = if line_break {
-        // base64_crate::MIME, but with LF instead of CRLF
-        base64_crate::Config::new(
-            base64_crate::CharacterSet::Standard,
-            true, // pad
-            true, // strip whitespace
-            base64_crate::LineWrap::Wrap(76, base64_crate::LineEnding::LF),
-        )
-    } else {
-        base64_crate::STANDARD
-    };
+    let config = base64_crate::STANDARD;
 
-    let encoded_string = if multibyte {
+    let mut encoded_string = if multibyte {
         // Transform non-ASCII characters in multibyte string to Latin1,
         // erroring out for non-Latin1 codepoints, and resolve raw 8-bit bytes.
         let mut input = Vec::with_capacity(bytes.len());
@@ -54,14 +46,39 @@ fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<St
         base64_crate::encode_config(bytes, config)
     };
 
+    if line_break {
+        line_wrap(&mut encoded_string, 76, &line_wrap::lf());
+    }
+
     Ok(encoded_string)
+}
+
+/// Insert LINE_ENDING into the STRING per LINE_LEN bytes.
+fn line_wrap<L: LineEnding>(string: &mut String, line_len: usize, line_ending: &L) {
+    let capacity = string.capacity();
+    let input_len = string.len();
+    // This overestimating of the number of lines with ending possibly result in allocating
+    // `line_ending.len()` bytes more than needed, but leave it as is for now.
+    let lines_with_ending = input_len / line_len + 1;
+
+    let mut raw_vec = unsafe { string.as_mut_vec() };
+
+    if let Some(adding) = (lines_with_ending * (line_len + line_ending.len())).checked_sub(capacity)
+    {
+        raw_vec.resize(input_len + adding, 0);
+    }
+    let added = line_wrap::line_wrap(&mut raw_vec, input_len, line_len, line_ending);
+    raw_vec.truncate(input_len + added);
 }
 
 /// Base64-decode the data in ENCODED. If MULTIBYTE, the decoded result should be in multibyte
 /// form. It returns the decoded data and the number of bytes in the original decoded string.
 fn base64_decode_1(encoded: &[u8], multibyte: bool) -> Result<(Vec<u8>, usize), ()> {
-    // Use the MIME config to allow embedded newlines.
-    match base64_crate::decode_config(encoded, base64_crate::MIME) {
+    // Input string is allowed to have emmbed newlines, delete before decoding.
+    let mut buf: Vec<u8> = Vec::with_capacity(encoded.len());
+    buf.extend(encoded.iter().filter(|b| !b"\n\t\r\x0b\x0c".contains(b)));
+
+    match base64_crate::decode_config(&buf, base64_crate::STANDARD) {
         Ok(decoded) => {
             if multibyte {
                 // Decode non-ASCII bytes into UTF-8 pairs.

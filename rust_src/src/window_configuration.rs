@@ -9,6 +9,7 @@ use crate::{
     objects::equal,
     remacs_sys::Qwindow_configuration_p,
     remacs_sys::{save_window_data, saved_window},
+    windows::LispWindowRef,
 };
 
 pub type SaveWindowDataRef = ExternalPtr<save_window_data>;
@@ -127,7 +128,7 @@ pub fn window_configuration_frame(config: SaveWindowDataRef) -> LispFrameRef {
     let saved_windows = config.saved_windows.as_vector().unwrap();
     let obj = saved_windows.get(0);
     let saved = SavedWindowRef::new(obj.as_vector().unwrap().as_mut() as *mut saved_window);
-    saved.window.as_window_or_error().frame.into()
+    LispWindowRef::from(saved.window).frame.into()
 }
 
 // Return true if window configurations CONFIGURATION1 and CONFIGURATION2

@@ -2478,16 +2478,6 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
 }
 
 
-DEFUN ("frame-focus", Fframe_focus, Sframe_focus, 0, 1, 0,
-       doc: /* Return the frame to which FRAME's keystrokes are currently being sent.
-If FRAME is omitted or nil, the selected frame is used.
-Return nil if FRAME's focus is not redirected.
-See `redirect-frame-focus'.  */)
-  (Lisp_Object frame)
-{
-  return FRAME_FOCUS_FRAME (decode_live_frame (frame));
-}
-
 DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
        doc: /* Set the input focus to FRAME.
 FRAME nil means use the selected frame.  Optional argument NOACTIVATE
@@ -3036,19 +3026,6 @@ is used.  */)
   return make_number (0);
 }
 
-DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
-       doc: /* Return scroll bar width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-scroll-bar-height", Fscroll_bar_height, Sscroll_bar_height, 0, 1, 0,
-       doc: /* Return scroll bar height of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_HEIGHT (decode_any_frame (frame)));
-}
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
@@ -5698,7 +5675,6 @@ iconify the top level frame instead.  */);
   defsubr (&Slower_frame);
   defsubr (&Sx_focus_frame);
   defsubr (&Sredirect_frame_focus);
-  defsubr (&Sframe_focus);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);
@@ -5706,8 +5682,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
-  defsubr (&Sscroll_bar_width);
-  defsubr (&Sscroll_bar_height);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);

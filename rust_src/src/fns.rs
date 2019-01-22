@@ -1,4 +1,4 @@
-//* Random utility Lisp functions.
+//! Random utility Lisp functions.
 
 use std::{cmp, ptr};
 
@@ -7,7 +7,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::{un_autoload, unbind_to},
+    eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
@@ -18,8 +18,8 @@ use crate::{
     objects::equal,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
-    remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
+    remacs_sys::{concat as lisp_concat, globals},
+    remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
@@ -201,10 +201,10 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.Vpurify_flag != Qnil } {
+    if unsafe { globals.Vpurify_flag.is_not_nil() } {
         error!(
             "(require {}) while preparing to dump",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -219,7 +219,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if nesting > 3 {
         error!(
             "Recursive `require' for feature `{}'",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -242,11 +242,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             noerror,
             Qt,
             Qnil,
-            if filename.is_nil() { Qt } else { Qnil },
+            filename.is_nil().into(),
         );
 
         // If load failed entirely, return nil.
-        if tem == Qnil {
+        if tem.is_nil() {
             return unbind_to(count, Qnil);
         }
     }
@@ -256,16 +256,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
-            error!(
-                "Required feature `{}' was not provided",
-                feature.as_string_or_error()
-            );
+            error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
             error!(
                 "Loading file {} failed to provide feature `{}'",
-                tem3.as_string_or_error(),
-                feature.as_string_or_error()
+                tem3, feature
             );
         }
     }
@@ -312,60 +308,12 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+// Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+// Use this only on arguments that are cycle-free and not too large and
+// are not window configurations.
 #[no_mangle]
-pub extern "C" fn internal_equal_cons(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_cons(), o2.as_cons()) {
-        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_string(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    let s1: LispStringRef = o1.into();
-    let s2: LispStringRef = o2.into();
-
-    s1.equal(s2, kind, depth, ht)
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_misc(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_misc(), o2.as_misc()) {
-        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_vectorlike(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_vectorlike(), o2.as_vectorlike()) {
-        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
-        _ => false,
-    }
+pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
+    o1.equal_no_quit(o2)
 }
 
 #[cfg(windows)]

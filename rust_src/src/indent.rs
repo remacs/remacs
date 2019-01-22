@@ -1,17 +1,24 @@
 //! Indentation functions
 
-use std::ptr;
+use std::{cmp::max, ptr};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{point_byte, point_min_byte},
-    editfns::{point, point_min},
+    editfns::{insert_char, point, point_min},
     lisp::{defsubr, LispObject},
+    multibyte::Codepoint,
+    remacs_sys::globals,
     remacs_sys::EmacsUint,
-    remacs_sys::{self, find_newline, position_indentation, scan_for_column, set_point, EmacsInt},
-    remacs_sys::{del_range, last_known_column, Findent_to, Finsert_char, Qnil, Qt},
-    remacs_sys::{last_known_column_modified, last_known_column_point, set_point_both},
+    remacs_sys::{
+        self, find_newline, position_indentation, sanitize_tab_width, scan_for_column, set_point,
+        EmacsInt,
+    },
+    remacs_sys::{del_range, Qt},
+    remacs_sys::{
+        last_known_column, last_known_column_modified, last_known_column_point, set_point_both,
+    },
     threads::ThreadState,
 };
 
@@ -99,13 +106,13 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
-                Finsert_char(b' '.into(), (goal - prev_col).into(), Qt);
+                insert_char(' ' as Codepoint, Some((goal - prev_col) as EmacsInt), true);
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
                 let goal_pt = buffer.pt;
                 let goal_pt_byte = buffer.pt_byte;
-                Findent_to(col.into(), Qnil);
+                indent_to(col as EmacsInt, None);
                 set_point_both(goal_pt, goal_pt_byte);
             }
 
@@ -117,7 +124,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     // If line ends prematurely, add space to the end.
     if col < goal && force == Qt {
         col = goal;
-        unsafe { Findent_to(col.into(), Qnil) };
+        indent_to(col as EmacsInt, None);
     }
 
     unsafe {
@@ -132,6 +139,43 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
 #[no_mangle]
 pub extern "C" fn invalidate_current_column() {
     unsafe { last_known_column_point = 0 };
+}
+
+/// Indent from point with tabs and spaces until COLUMN is reached.
+/// Optional second argument MINIMUM says always do at least MINIMUM
+/// spaces even if that goes past COLUMN; by default, MINIMUM is zero.
+///
+/// The return value is the column where the insertion ends.
+#[lisp_fn(min = "1", intspec = "NIndent to column: ")]
+pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
+    let buffer = ThreadState::current_buffer_unchecked();
+    let tab_width = unsafe { sanitize_tab_width(buffer.tab_width_.force_fixnum()) } as EmacsInt;
+    let arg_minimum = minimum.unwrap_or(0);
+    let mut fromcol = current_column();
+    let mincol = max(fromcol + arg_minimum, column);
+
+    if fromcol == mincol {
+        return mincol;
+    }
+
+    if unsafe { globals.indent_tabs_mode } {
+        let n = mincol / tab_width - fromcol / tab_width;
+        if n != 0 {
+            insert_char('\t' as Codepoint, Some(n), true);
+            fromcol = (mincol / tab_width) * tab_width;
+        }
+    }
+
+    let missing = mincol - fromcol;
+    insert_char(' ' as Codepoint, Some(missing), true);
+
+    unsafe {
+        last_known_column = mincol as isize;
+        last_known_column_point = buffer.pt;
+        last_known_column_modified = buffer.modifications();
+    }
+
+    mincol
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

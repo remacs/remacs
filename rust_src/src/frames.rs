@@ -15,6 +15,9 @@ use crate::{
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
 
+#[cfg(feature = "window-system")]
+use crate::remacs_sys::vertical_scroll_bar_type;
+
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
@@ -34,6 +37,38 @@ impl LispFrameRef {
     pub fn total_fringe_width(self) -> i32 {
         self.left_fringe_width + self.right_fringe_width
     }
+
+    pub fn scroll_bar_area_width(self) -> i32 {
+        #[cfg(feature = "window-system")]
+        {
+            match self.vertical_scroll_bar_type() {
+                vertical_scroll_bar_type::vertical_scroll_bar_left
+                | vertical_scroll_bar_type::vertical_scroll_bar_right => {
+                    return self.config_scroll_bar_width
+                }
+                _ => return 0,
+            }
+        }
+        #[cfg(not(feature = "window-system"))]
+        {
+            return 0;
+        }
+    }
+
+    pub fn horizontal_scroll_bar_height(self) -> i32 {
+        #[cfg(feature = "window-system")]
+        {
+            if self.horizontal_scroll_bars() {
+                self.config_scroll_bar_height
+            } else {
+                0
+            }
+        }
+        #[cfg(not(feature = "window-system"))]
+        {
+            return 0;
+        }
+    }
 }
 
 impl From<LispObject> for LispFrameRef {
@@ -44,7 +79,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -122,6 +157,21 @@ impl LispFrameOrSelected {
         } else {
             wrong_type!(Qframe_live_p, self);
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct LispFrameLiveOrSelected(LispFrameRef);
+
+impl From<LispObject> for LispFrameLiveOrSelected {
+    fn from(obj: LispObject) -> Self {
+        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, |f| f.as_live_frame_or_error()))
+    }
+}
+
+impl From<LispFrameLiveOrSelected> for LispFrameRef {
+    fn from(f: LispFrameLiveOrSelected) -> Self {
+        f.0
     }
 }
 
@@ -316,7 +366,7 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 /// the first window of that frame.
 #[lisp_fn(min = "0")]
 pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
-    let mut window = frame_root_window(frame_or_window).as_window_or_error();
+    let mut window: LispWindowRef = frame_root_window(frame_or_window).into();
 
     while let Some(win) = window.contents.as_window() {
         window = win;
@@ -393,6 +443,20 @@ pub fn frame_right_divider_width(frame: LispFrameOrSelected) -> i32 {
 pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
     let frame: LispFrameRef = frame.into();
     frame.bottom_divider_width
+}
+
+/// Return scroll bar width of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_scroll_bar_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.scroll_bar_area_width()
+}
+
+/// Return scroll bar height of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_scroll_bar_height(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.horizontal_scroll_bar_height()
 }
 
 /// Delete FRAME, permanently eliminating it from use.
@@ -517,6 +581,16 @@ pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> L
     frame_ref.set_inhibit_horizontal_resize(false);
     frame_ref.set_inhibit_vertical_resize(false);
     made
+}
+
+/// Return the frame to which FRAME's keystrokes are currently being sent.
+/// If FRAME is omitted or nil, the selected frame is used.
+/// Return nil if FRAME's focus is not redirected.
+/// See `redirect-frame-focus'.
+#[lisp_fn(min = "0")]
+pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.focus_frame
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

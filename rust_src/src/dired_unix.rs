@@ -12,13 +12,14 @@ use std::ptr::null_mut;
 use std::slice;
 
 use crate::{
+    fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
+    multibyte::LispStringRef,
     remacs_sys::{
         build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
         filemode_string, globals, re_pattern_buffer, re_search,
     },
-    remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
     remacs_sys::{
         Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes, Qfile_missing, Qnil,
         Qt,
@@ -316,20 +317,27 @@ fn directory_files_core(dr: &DirReq, dd: &mut DirData) -> LispObject {
 }
 
 pub fn directory_files_intro(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
 ) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+    let dnexp = expand_file_name(directory, None);
 
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files) };
+    let handler = find_file_name_handler(dnexp, Qdirectory_files);
     if handler.is_not_nil() {
-        return call!(handler, Qdirectory_files, dnexp, full, match_re, nosort);
+        return call!(
+            handler,
+            Qdirectory_files,
+            dnexp.into(),
+            full,
+            match_re,
+            nosort
+        );
     }
 
     let dr = DirReq::new(
-        dnexp.to_stdstring(),
+        LispObject::from(dnexp).to_stdstring(),
         if full.is_nil() {
             FullPath::No
         } else {
@@ -353,20 +361,20 @@ pub fn directory_files_intro(
 }
 
 pub fn directory_files_and_attributes_intro(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
     id_format: LispObject,
 ) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+    let dnexp = expand_file_name(directory, None);
 
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files_and_attributes) };
+    let handler = find_file_name_handler(dnexp, Qdirectory_files_and_attributes);
     if handler.is_not_nil() {
         return call!(
             handler,
             Qdirectory_files_and_attributes,
-            dnexp,
+            dnexp.into(),
             full,
             match_re,
             nosort,
@@ -375,7 +383,7 @@ pub fn directory_files_and_attributes_intro(
     }
 
     let dr = DirReq::new(
-        dnexp.to_stdstring(),
+        LispObject::from(dnexp).to_stdstring(),
         if full.is_nil() {
             FullPath::No
         } else {
@@ -689,18 +697,18 @@ impl FileAttrs {
     }
 }
 
-pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
-    let fnexp = unsafe { Fexpand_file_name(filename, Qnil) };
-    let handler = unsafe { Ffind_file_name_handler(fnexp, Qfile_attributes) };
+pub fn file_attributes_intro(filename: LispStringRef, id_format: LispObject) -> LispObject {
+    let fnexp = expand_file_name(filename, None);
+    let handler = find_file_name_handler(fnexp, Qfile_attributes);
     if handler.is_not_nil() {
         if id_format.is_not_nil() {
-            return call!(handler, Qfile_attributes, fnexp, id_format);
+            return call!(handler, Qfile_attributes, fnexp.into(), id_format);
         } else {
-            return call!(handler, Qfile_attributes, fnexp);
+            return call!(handler, Qfile_attributes, fnexp.into());
         }
     }
 
-    file_attributes_core(fnexp, id_format)
+    file_attributes_core(fnexp.into(), id_format)
 }
 
 // Used by directory-files-and-attributes

@@ -335,7 +335,7 @@ pub fn read_string(
     );
 
     if let Some(s) = val.as_string() {
-        if s.len_chars() == 0 && default_value.is_not_nil() {
+        if s.is_empty() && default_value.is_not_nil() {
             val = match default_value.into() {
                 None => default_value,
                 Some((a, _)) => a,

@@ -67,10 +67,6 @@ impl LispObject {
     pub fn as_thread(self) -> Option<ThreadStateRef> {
         self.as_vectorlike().and_then(|v| v.as_thread())
     }
-
-    pub fn as_thread_or_error(self) -> ThreadStateRef {
-        self.into()
-    }
 }
 
 // FIXME: The right thing to do is start indexing thread.m_specpdl as
