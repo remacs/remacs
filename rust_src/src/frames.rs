@@ -43,14 +43,14 @@ impl LispFrameRef {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    return self.config_scroll_bar_width;
+                    self.config_scroll_bar_width
                 }
-                _ => return 0,
+                _ => 0,
             }
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 
@@ -65,7 +65,7 @@ impl LispFrameRef {
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 }
