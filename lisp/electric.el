@@ -270,28 +270,29 @@ or comment."
         ;; hence copied).
         (let ((at-newline (<= pos (line-beginning-position))))
           (when at-newline
-            (let ((before (copy-marker (1- pos) t)))
+            (let ((before (copy-marker (1- pos) t))
+                  inhibit-reindentation)
               (save-excursion
-                (unless (or (memq indent-line-function
-                                  electric-indent-functions-without-reindent)
-                            electric-indent-inhibit)
+                (unless
+                    (setq inhibit-reindentation
+                          (or (memq indent-line-function
+                                    electric-indent-functions-without-reindent)
+                              electric-indent-inhibit))
                   ;; Don't reindent the previous line if the
                   ;; indentation function is not a real one.
                   (goto-char before)
                   (condition-case-unless-debug ()
                       (indent-according-to-mode)
-                    (error (throw 'indent-error nil))))
-                ;; We are at EOL before the call to
-                ;; `indent-according-to-mode', and after it we usually
-                ;; are as well, but not always.  We tried to address
-                ;; it with `save-excursion' but that uses a normal
-                ;; marker whereas we need `move after insertion', so
-                ;; we do the save/restore by hand.
-                (goto-char before)
-                (when (eolp)
-                  ;; Remove the trailing whitespace after indentation because
-                  ;; indentation may (re)introduce the whitespace.
-                  (delete-horizontal-space t)))))
+                    (error (throw 'indent-error nil)))
+                  ;; The goal here will be to remove the trailing
+                  ;; whitespace after reindentation of the previous line
+                  ;; because that may have (re)introduced it.
+                  (goto-char before)
+                  ;; We were at EOL in marker `before' before the call
+                  ;; to `indent-according-to-mode' but after we may
+                  ;; not be (Bug#15767).
+                  (when (and (eolp))
+                    (delete-horizontal-space t))))))
           (unless (and electric-indent-inhibit
                        (not at-newline))
             (condition-case-unless-debug ()
@@ -388,6 +389,10 @@ WHERE if the rule matches, or nil if it doesn't match.
 
 If multiple rules match, only first one is executed.")
 
+;; TODO: Make this a defcustom?
+(defvar electric-layout-allow-duplicate-newlines nil
+  "If non-nil, allow duplication of `before' newlines.")
+
 (defun electric-layout-post-self-insert-function ()
   (when electric-layout-mode
     (electric-layout-post-self-insert-function-1)))
@@ -420,11 +425,14 @@ If multiple rules match, only first one is executed.")
                 (lambda ()
                   ;; FIXME: we use `newline', which calls
                   ;; `self-insert-command' and ran
-                  ;; `post-self-insert-hook' recursively.  It
-                  ;; happened to make `electric-indent-mode' work
-                  ;; automatically with `electric-layout-mode' (at
-                  ;; the cost of re-indenting lines multiple times),
-                  ;; but I'm not sure it's what we want.
+                  ;; `post-self-insert-hook' recursively.  It happened
+                  ;; to make `electric-indent-mode' work automatically
+                  ;; with `electric-layout-mode' (at the cost of
+                  ;; re-indenting lines multiple times), but I'm not
+                  ;; sure it's what we want.
+                  ;;
+                  ;; JT@19/02/22: Indeed in the case of `before'
+                  ;; newlines, re-indentation is prevented.
                   ;;
                   ;; FIXME: when `newline'ing, we exceptionally
                   ;; prevent a specific behaviour of
@@ -438,10 +446,28 @@ If multiple rules match, only first one is executed.")
                   (let ((electric-layout-mode nil)
                         (electric-pair-open-newline-between-pairs nil))
                     (newline 1 t))))
-                 (nl-before (lambda ()
-                              (save-excursion
-                                (goto-char (1- pos)) (skip-chars-backward " \t")
-                                (unless (bolp) (funcall nl-after))))))
+               (nl-before
+                (lambda ()
+                  (save-excursion
+                    (goto-char (1- pos))
+                    ;; Normally, we don't duplicate newlines, but when
+                    ;; we're being called for i.e. a closer brace for
+                    ;; `electric-pair-mode' generally make sense.  So
+                    ;; consult `electric-layout-allow-duplicate-newlines'
+                    (unless (and (not electric-layout-allow-duplicate-newlines)
+                                 (progn (skip-chars-backward " \t")
+                                        (bolp)))
+                      ;; FIXME: JT@19/03/22: Make sure the `before'
+                      ;; newline being inserted here does not trigger
+                      ;; reindentation.  It doesn't seem to be our job
+                      ;; to do so and it break with `cc-mode's
+                      ;; indentation function.  Later on we can add a
+                      ;; before-and-maybe-indent, or if the user
+                      ;; really wants to reindent, then
+                      ;; `last-command-event' should be in
+                      ;; `electric-indent-chars'.
+                      (let ((electric-indent-inhibit t))
+                        (funcall nl-after)))))))
             (pcase sym
               ('before (funcall nl-before))
               ('after  (funcall nl-after))

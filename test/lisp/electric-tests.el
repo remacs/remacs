@@ -391,11 +391,12 @@ baz\"\""
   :bindings '((electric-pair-skip-whitespace . chomp))
   :test-in-comments nil)
 
-(define-electric-pair-test whitespace-chomping-2
-  " ( \n\t\t\n  )  " "--)------" :expected-string " ()  " :expected-point 4
-  :bindings '((electric-pair-skip-whitespace . chomp))
-  :modes '(c++-mode)
-  :test-in-comments nil)
+(ert-deftest electric-pair-whitespace-chomping-2-at-point-4-in-c++-mode-in-strings nil
+  "Check if whitespace chomping works in `c++' unterminated strings."
+  (electric-pair-test-for
+   "\" ( \n		\n  )  \"" 4 41 "\" ()  \"" 5 'c++-mode
+   '((electric-pair-skip-whitespace . chomp))
+   (lambda () (electric-pair-mode 1))))
 ;; A test failure introduced by:
 ;;
 ;;    bb591f139f: Enhance CC Mode's fontification, etc., of unterminated strings.
@@ -513,6 +514,7 @@ baz\"\""
   :fixture-fn #'(lambda ()
                   (electric-pair-mode 1)))
 
+
 (define-electric-pair-test js-mode-braces-with-layout
   "" "{" :expected-string "{\n\n}" :expected-point 3
   :modes '(js-mode)
@@ -521,6 +523,16 @@ baz\"\""
   :fixture-fn #'(lambda ()
                   (electric-layout-mode 1)
                   (electric-pair-mode 1)))
+
+(define-electric-pair-test js-mode-braces-with-layout-and-indent
+  "" "{" :expected-string "{\n    \n}" :expected-point 7
+  :modes '(js-mode)
+  :test-in-comments nil
+  :test-in-strings nil
+  :fixture-fn #'(lambda ()
+                  (electric-pair-mode 1)
+                  (electric-indent-mode 1)
+                  (electric-layout-mode 1)))
 
 (define-electric-pair-test js-mode-braces-with-layout-and-indent
   "" "{" :expected-string "{\n    \n}" :expected-point 7
@@ -821,6 +833,35 @@ baz\"\""
 
 ;;; tests for `electric-layout-mode'
 
+(define-derived-mode plainer-c-mode c-mode "pC"
+  "A plainer/saner C-mode with no internal electric machinery."
+  (c-toggle-electric-state -1)
+  (setq-local electric-indent-local-mode-hook nil)
+  (setq-local electric-indent-mode-hook nil)
+  (electric-indent-local-mode 1)
+  (dolist (key '(?\" ?\' ?\{ ?\} ?\( ?\) ?\[ ?\]))
+    (local-set-key (vector key) 'self-insert-command)))
+
+(defun electric-layout-for-c-style-du-jour (inserted)
+  "A function to use in `electric-layout-rules'"
+  (when (memq inserted '(?{ ?}))
+    (save-excursion
+      (backward-char 2) (c-point-syntax) (forward-char) ; silly, but needed
+      (c-brace-newlines (c-point-syntax)))))
+
+(ert-deftest electric-layout-plainer-c-mode-use-c-style ()
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode 1)
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '(electric-layout-for-c-style-du-jour))
+    (insert "int main () ")
+    (let ((last-command-event ?\{))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main ()\n{\n  \n}\n"))))
+
 (ert-deftest electric-layout-int-main-kernel-style ()
   (ert-with-test-buffer ()
     (plainer-c-mode)
@@ -828,7 +869,8 @@ baz\"\""
     (electric-pair-local-mode 1)
     (electric-indent-local-mode 1)
     (setq-local electric-layout-rules
-                '((?\{ . (after-stay after))))
+                '((?\{ . (after))
+                  (?\} . (before))))
     (insert "int main () ")
     (let ((last-command-event ?\{))
       (call-interactively (key-binding `[,last-command-event])))
@@ -850,7 +892,8 @@ baz\"\""
     (electric-pair-local-mode 1)
     (electric-indent-local-mode 1)
     (setq-local electric-layout-rules
-                '((?\{ . (before after-stay after))))
+                '((?\{ . (before after))
+                  (?\} . (before))))
     (insert "int main () ")
     (let ((last-command-event ?\{))
       (call-interactively (key-binding `[,last-command-event])))

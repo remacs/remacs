@@ -227,7 +227,8 @@ inside a comment or string."
 (defun electric-pair--insert (char)
   (let ((last-command-event char)
 	(blink-matching-paren nil)
-	(electric-pair-mode nil))
+	(electric-pair-mode nil)
+        (electric-layout-allow-duplicate-newlines t))
     (self-insert-command 1)))
 
 (cl-defmacro electric-pair--with-uncached-syntax ((table &optional start) &rest body)
@@ -426,11 +427,10 @@ happened."
                            (eq (cdr outermost) pair)))))
                  ((eq syntax ?\")
                   (electric-pair--unbalanced-strings-p char))))
-       (insert-char char)))))
+       (insert-before-markers char)))))
 
 (defun electric-pair-skip-if-helps-balance (char)
   "Return non-nil if skipping CHAR would benefit parentheses' balance.
-
 Works by first removing the character from the buffer, then doing
 some list calculations, finally restoring the situation as if nothing
 happened."
@@ -452,7 +452,7 @@ happened."
                             (not (eq (cdr outermost) pair)))))))
                  ((eq syntax ?\")
                   (electric-pair--inside-string-p char))))
-       (insert-char char)))))
+       (insert-before-markers char)))))
 
 (defun electric-pair-default-skip-self (char)
   (if electric-pair-preserve-balance
@@ -498,7 +498,9 @@ happened."
         ((and (memq syntax '(?\) ?\" ?\$))
               (and (or unconditional
                        (if (functionp electric-pair-skip-self)
-                           (funcall electric-pair-skip-self last-command-event)
+                           (save-excursion
+                             (goto-char pos)
+                             (funcall electric-pair-skip-self last-command-event))
                          electric-pair-skip-self))
                    (save-excursion
                      (when (and (not (and unconditional
@@ -525,8 +527,10 @@ happened."
         ((and (memq syntax '(?\( ?\" ?\$))
               (not overwrite-mode)
               (or unconditional
-                  (not (funcall electric-pair-inhibit-predicate
-                                last-command-event))))
+                  (not (save-excursion
+                         (goto-char pos)
+                         (funcall electric-pair-inhibit-predicate
+                                  last-command-event)))))
          (save-excursion (electric-pair--insert pair)))))
       (_
        (when (and (if (functionp electric-pair-open-newline-between-pairs)
@@ -540,7 +544,7 @@ happened."
                       (matching-paren (char-after))))
          (save-excursion (newline 1 t)))))))
 
-(put 'electric-pair-post-self-insert-function   'priority  20)
+(put 'electric-pair-post-self-insert-function   'priority  50)
 
 (defun electric-pair-will-use-region ()
   (and (use-region-p)
