@@ -46,20 +46,29 @@ impl LispFrameRef {
         self.left_fringe_width + self.right_fringe_width
     }
 
+    pub fn vertical_scroll_bar_type(self) -> u32 {
+        #[cfg(feature = "window-system")]
+        {
+            (*self).vertical_scroll_bar_type()
+        }
+        #[cfg(not(feature = "window-system"))]
+        0
+    }
+
     pub fn scroll_bar_area_width(self) -> i32 {
         #[cfg(feature = "window-system")]
         {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    return self.config_scroll_bar_width
+                    self.config_scroll_bar_width
                 }
-                _ => return 0,
+                _ => 0,
             }
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 
