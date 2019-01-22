@@ -35,9 +35,6 @@ use crate::{
     threads::ThreadState,
 };
 
-#[allow(unused_imports)]
-use crate::remacs_sys::Qbottom;
-
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
@@ -436,20 +433,21 @@ impl LispWindowRef {
     // Equivalent to WINDOW_HAS_HORIZONTAL_SCROLL_BAR
     /// True if horizontal scroll bars are currently enabled for the window.
     /// Horizontal scrollbars only exist when a toolkit is enabled.
+    #[cfg(feature = "window-system")]
     pub fn has_horizontal_scroll_bar(self) -> bool {
-        #[cfg(feature = "window-system")]
-        {
-            if self.is_pseudo() || self.is_minibuffer_non_only() {
-                false
-            } else if self.horizontal_scroll_bar_type == Qt {
-                self.get_frame().horizontal_scroll_bars()
-            } else if self.horizontal_scroll_bar_type == Qbottom {
-                true
-            } else {
-                false
+        use crate::remacs_sys::Qbottom;
+        if self.is_pseudo() || self.is_minibuffer_non_only() {
+            false
+        } else {
+            match self.horizontal_scroll_bar_type {
+                Qt => self.get_frame().horizontal_scroll_bars(),
+                Qbottom => true,
+                _ => false,
             }
         }
-        #[cfg(not(feature = "window-system"))]
+    }
+    #[cfg(not(feature = "window-system"))]
+    pub fn has_horizontal_scroll_bar(self) -> bool {
         false
     }
 
@@ -649,15 +647,9 @@ impl From<LispWindowValidOrSelected> for LispWindowRef {
     }
 }
 
-// Avoid name conflicts
-mod sys {
-    use super::LispWindowRef;
-    use crate::remacs_sys::Lisp_Window;
-
-    #[no_mangle]
-    pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
-        LispWindowRef::new(window).body_width(pixelwise)
-    }
+#[no_mangle]
+pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
+    LispWindowRef::new(window).body_width(pixelwise)
 }
 
 #[no_mangle]
@@ -1519,7 +1511,7 @@ pub fn set_window_redisplay_end_trigger(
 /// pixel height divided by the character height of WINDOW's frame.  This
 /// means that if a line at the bottom of the text area is only partially
 /// visible, that line is not counted.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
     let window: LispWindowRef = window.into();
     window.body_height(pixelwise).into()
@@ -1538,8 +1530,8 @@ pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> 
 ///
 /// Note that the returned value includes the column reserved for the
 /// continuation glyph.
-#[lisp_fn]
-pub fn window_body_width(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+#[lisp_fn(name = "window-body-width", c_name = "window_body_width", min = "0")]
+pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
     let window: LispWindowRef = window.into();
     window.body_width(pixelwise).into()
 }
