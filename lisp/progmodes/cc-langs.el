@@ -927,6 +927,19 @@ file name in angle brackets or quotes."
 	   '("include"))
   objc '("include" "import"))
 
+(c-lang-defconst c-cpp-include-key
+  ;; Matches an include directive anchored at BOL including any trailing
+  ;; whitespace, e.g. " # include  "
+  t (if (and (c-lang-const c-anchored-cpp-prefix)
+	     (c-lang-const c-cpp-include-directives))
+	(concat
+	 (c-lang-const c-anchored-cpp-prefix)
+	 (c-make-keywords-re 'appendable
+	   (c-lang-const c-cpp-include-directives))
+	 "[ \t]*")
+      "a\\`"))				; Doesn't match anything
+(c-lang-defvar c-cpp-include-key (c-lang-const c-cpp-include-key))
+
 (c-lang-defconst c-opt-cpp-macro-define
   "Cpp directive (without the prefix) that is followed by a macro
 definition, or nil if the language doesn't have any."

@@ -1167,7 +1167,9 @@ finishes a C++ style stream operator in C++ mode.  Exceptions are when a
 numeric argument is supplied, or the point is inside a literal."
 
   (interactive "*P")
-  (let ((c-echo-syntactic-information-p nil)
+  (let ((literal (c-save-buffer-state () (c-in-literal)))
+	template-delim include-delim
+	(c-echo-syntactic-information-p nil)
 	final-pos found-delim case-fold-search)
 
     (let (post-self-insert-hook)	; Disable random functionality.
@@ -1178,39 +1180,63 @@ numeric argument is supplied, or the point is inside a literal."
 ;;;; property on the new < or > and its mate (if any) when they are template
 ;;;; parens.  This is now done in an after-change function.
 
-    ;; Indent the line if appropriate.
-    (when (and c-electric-flag c-syntactic-indentation c-recognize-<>-arglists)
-      (setq found-delim
-	    (if (eq (c-last-command-char) ?<)
-		;; If a <, basically see if it's got "template" before it .....
-		(or (and (progn
-			   (backward-char)
-			   (= (point)
-			      (progn (c-beginning-of-current-token) (point))))
-			 (progn
-			   (c-backward-token-2)
-			   (looking-at c-opt-<>-sexp-key)))
-		    ;; ..... or is a C++ << operator.
+    (when (and (not arg) (not literal))
+      ;; Have we got a delimiter on a #include directive?
+      (beginning-of-line)
+      (setq include-delim
+	    (and
+	     (looking-at c-cpp-include-key)
+	     (if (eq (c-last-command-char) ?<)
+		 (eq (match-end 0) (1- final-pos))
+	       (goto-char (1- final-pos))
+	       (skip-chars-backward "^<>" (c-point 'bol))
+	       (eq (char-before) ?<))))
+      (goto-char final-pos)
+
+      ;; Indent the line if appropriate.
+      (when (and c-electric-flag c-syntactic-indentation c-recognize-<>-arglists)
+	(setq found-delim
+	      (if (eq (c-last-command-char) ?<)
+		  ;; If a <, basically see if it's got "template" before it .....
+		  (or (and (progn
+			     (backward-char)
+			     (= (point)
+				(progn (c-beginning-of-current-token) (point))))
+			   (progn
+			     (c-backward-token-2)
+			     (looking-at c-opt-<>-sexp-key))
+			   (setq template-delim t))
+		      ;; ..... or is a C++ << operator.
+		      (and (c-major-mode-is 'c++-mode)
+			   (progn
+			     (goto-char (1- final-pos))
+			     (c-beginning-of-current-token)
+			     (looking-at "<<"))
+			   (>= (match-end 0) final-pos)))
+
+		;; It's a >.  Either a template/generic terminator ...
+		(or (and (c-get-char-property (1- final-pos) 'syntax-table)
+			 (setq template-delim t))
+		    ;; or a C++ >> operator.
 		    (and (c-major-mode-is 'c++-mode)
 			 (progn
 			   (goto-char (1- final-pos))
 			   (c-beginning-of-current-token)
-			   (looking-at "<<"))
-			 (>= (match-end 0) final-pos)))
+			   (looking-at ">>"))
+			 (>= (match-end 0) final-pos)))))
+	(goto-char final-pos)
 
-	      ;; It's a >.  Either a template/generic terminator ...
-	      (or (c-get-char-property (1- final-pos) 'syntax-table)
-		  ;; or a C++ >> operator.
-		  (and (c-major-mode-is 'c++-mode)
-		       (progn
-			 (goto-char (1- final-pos))
-			 (c-beginning-of-current-token)
-			 (looking-at ">>"))
-		       (>= (match-end 0) final-pos))))))
+	(when found-delim
+	  (indent-according-to-mode)))
 
-    (goto-char final-pos)
+      ;; On the off chance that < and > are configured as pairs in
+      ;; electric-pair-mode.
+      (when (and (boundp 'electric-pair-mode) electric-pair-mode
+		 (or template-delim include-delim))
+	(let (post-self-insert-hook)
+	  (electric-pair-post-self-insert-function))))
+
     (when found-delim
-      (indent-according-to-mode)
       (when (and (eq (char-before) ?>)
 		 (not executing-kbd-macro)
 		 blink-paren-function)
@@ -1241,7 +1267,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
       (self-insert-command (prefix-numeric-value arg)))
 
     (if (and (not arg) (not literal))
-	(let* (	;; We want to inhibit blinking the paren since this will
+	(let* (;; We want to inhibit blinking the paren since this will
 	       ;; be most disruptive.  We'll blink it ourselves
 	       ;; afterwards.
 	       (old-blink-paren blink-paren-function)
@@ -1317,21 +1343,26 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 		(insert ?\ )))
 
 	     ;; compact-empty-funcall clean-up?
-		  ((c-save-buffer-state ()
-		     (and (memq 'compact-empty-funcall c-cleanup-list)
-			  (eq (c-last-command-char) ?\))
-			  (save-excursion
-			    (c-safe (backward-char 2))
-			    (when (looking-at "()")
-			      (setq end (point))
-			      (skip-chars-backward " \t")
-			      (setq beg (point))
-			      (c-on-identifier)))))
-		   (delete-region beg end))))
+	     ((c-save-buffer-state ()
+		(and (memq 'compact-empty-funcall c-cleanup-list)
+		     (eq (c-last-command-char) ?\))
+		     (save-excursion
+		       (c-safe (backward-char 2))
+		       (when (looking-at "()")
+			 (setq end (point))
+			 (skip-chars-backward " \t")
+			 (setq beg (point))
+			 (c-on-identifier)))))
+	      (delete-region beg end))))
 	  (and (eq last-input-event ?\))
 	       (not executing-kbd-macro)
 	       old-blink-paren
-	       (funcall old-blink-paren))))))
+	       (funcall old-blink-paren)))
+
+      ;; Apply `electric-pair-mode' stuff inside a string or comment.
+      (when (and (boundp 'electric-pair-mode) electric-pair-mode)
+	(let (post-self-insert-hook)
+	  (electric-pair-post-self-insert-function))))))
 
 (defun c-electric-continued-statement ()
   "Reindent the current line if appropriate.
