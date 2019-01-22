@@ -31,7 +31,7 @@
 ;; aclocal.m4; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.4.1"
+(defconst tramp-version "2.4.2-pre"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
@@ -65,7 +65,7 @@
 ;; Check for Emacs version.
 (let ((x   (if (not (string-lessp emacs-version "24.1"))
       "ok"
-    (format "Tramp 2.4.1 is not fit for %s"
+    (format "Tramp 2.4.2-pre is not fit for %s"
             (replace-regexp-in-string "\n" "" (emacs-version))))))
   (unless (string-equal "ok" x) (error "%s" x)))
 

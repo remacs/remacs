@@ -2184,8 +2184,7 @@ the uid and gid from FILENAME."
 		   (or (eq op 'copy)
 		       (zerop
 			(logand
-			 (file-modes (file-name-directory localname1))
-			 (string-to-number "1000" 8))))
+			 (file-modes (file-name-directory localname1)) #o1000)))
 		   (file-writable-p (file-name-directory localname2))
 		   (or (file-directory-p localname2)
 		       (file-writable-p localname2))))
@@ -2229,8 +2228,7 @@ the uid and gid from FILENAME."
 		      ;; We must change the ownership as remote user.
 		      ;; Since this does not work reliable, we also
 		      ;; give read permissions.
-		      (set-file-modes
-		       (concat prefix tmpfile) (string-to-number "0777" 8))
+		      (set-file-modes (concat prefix tmpfile) #o0777)
 		      (tramp-set-file-uid-gid
 		       (concat prefix tmpfile)
 		       (tramp-get-local-uid 'integer)
@@ -2244,7 +2242,7 @@ the uid and gid from FILENAME."
 		      ;; We must change the ownership as local user.
 		      ;; Since this does not work reliable, we also
 		      ;; give read permissions.
-		      (set-file-modes tmpfile (string-to-number "0777" 8))
+		      (set-file-modes tmpfile #o0777)
 		      (tramp-set-file-uid-gid
 		       tmpfile
 		       (tramp-get-remote-uid v 'integer)
@@ -3267,9 +3265,7 @@ the result will be a local, non-Tramp, file name."
 	  ;; handles permissions.
 	  ;; Ensure that it is still readable.
 	  (when modes
-	    (set-file-modes
-	     tmpfile
-	     (logior (or modes 0) (string-to-number "0400" 8))))
+	    (set-file-modes tmpfile (logior (or modes 0) #o0400)))
 
 	  ;; This is a bit lengthy due to the different methods
 	  ;; possible for file transfer.  First, we check whether the

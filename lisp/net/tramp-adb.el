@@ -609,9 +609,7 @@ Emacs dired can't find files."
 	  (ignore-errors (delete-file tmpfile))
 	  (tramp-error
 	   v 'file-error "Cannot make local copy of file `%s'" filename))
-	(set-file-modes
-	 tmpfile
-	 (logior (or (file-modes filename) 0) (string-to-number "0400" 8))))
+	(set-file-modes tmpfile (logior (or (file-modes filename) 0) #o0400)))
       tmpfile)))
 
 (defun tramp-adb-handle-file-writable-p (filename)
@@ -657,9 +655,7 @@ But handle the case, if the \"test\" command is not available."
 	   (tmpfile (tramp-compat-make-temp-file filename)))
       (when (and append (file-exists-p filename))
 	(copy-file filename tmpfile 'ok)
-	(set-file-modes
-	 tmpfile
-	 (logior (or (file-modes tmpfile) 0) (string-to-number "0600" 8))))
+	(set-file-modes tmpfile (logior (or (file-modes tmpfile) 0) #o0600)))
       (tramp-run-real-handler
        'write-region (list start end tmpfile append 'no-message lockname))
       (with-tramp-progress-reporter

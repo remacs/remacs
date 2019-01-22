@@ -7,7 +7,7 @@
 ;; Maintainer: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
 ;; Package: tramp
-;; Version: 2.4.1
+;; Version: 2.4.2-pre
 ;; Package-Requires: ((emacs "24.1"))
 
 ;; This file is part of GNU Emacs.
@@ -2148,7 +2148,7 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 If the file modes of FILENAME cannot be determined, return the
 value of `default-file-modes', without execute permissions."
   (or (file-modes filename)
-      (logand (default-file-modes) (string-to-number "0666" 8))))
+      (logand (default-file-modes) #o0666)))
 
 (defun tramp-replace-environment-variables (filename)
  "Replace environment variables in FILENAME.
@@ -3539,7 +3539,7 @@ User is always nil."
 		    ;; When the file is not readable for the owner, it
 		    ;; cannot be inserted, even if it is readable for the
 		    ;; group or for everybody.
-		    (set-file-modes local-copy (string-to-number "0600" 8))
+		    (set-file-modes local-copy #o0600)
 
 		    (when (and (null remote-copy)
 			       (tramp-get-method-parameter
@@ -4254,47 +4254,47 @@ would yield t.  On the other hand, the following check results in nil:
          (other-execute-or-sticky (aref mode-chars 9)))
     (logior
      (cond
-      ((char-equal owner-read ?r) (string-to-number "00400" 8))
+      ((char-equal owner-read ?r) #o0400)
       ((char-equal owner-read ?-) 0)
       (t (error "Second char `%c' must be one of `r-'" owner-read)))
      (cond
-      ((char-equal owner-write ?w) (string-to-number "00200" 8))
+      ((char-equal owner-write ?w) #o0200)
       ((char-equal owner-write ?-) 0)
       (t (error "Third char `%c' must be one of `w-'" owner-write)))
      (cond
-      ((char-equal owner-execute-or-setid ?x) (string-to-number "00100" 8))
-      ((char-equal owner-execute-or-setid ?S) (string-to-number "04000" 8))
-      ((char-equal owner-execute-or-setid ?s) (string-to-number "04100" 8))
+      ((char-equal owner-execute-or-setid ?x) #o0100)
+      ((char-equal owner-execute-or-setid ?S) #o4000)
+      ((char-equal owner-execute-or-setid ?s) #o4100)
       ((char-equal owner-execute-or-setid ?-) 0)
       (t (error "Fourth char `%c' must be one of `xsS-'"
 		owner-execute-or-setid)))
      (cond
-      ((char-equal group-read ?r) (string-to-number "00040" 8))
+      ((char-equal group-read ?r) #o0040)
       ((char-equal group-read ?-) 0)
       (t (error "Fifth char `%c' must be one of `r-'" group-read)))
      (cond
-      ((char-equal group-write ?w) (string-to-number "00020" 8))
+      ((char-equal group-write ?w) #o0020)
       ((char-equal group-write ?-) 0)
       (t (error "Sixth char `%c' must be one of `w-'" group-write)))
      (cond
-      ((char-equal group-execute-or-setid ?x) (string-to-number "00010" 8))
-      ((char-equal group-execute-or-setid ?S) (string-to-number "02000" 8))
-      ((char-equal group-execute-or-setid ?s) (string-to-number "02010" 8))
+      ((char-equal group-execute-or-setid ?x) #o0010)
+      ((char-equal group-execute-or-setid ?S) #o2000)
+      ((char-equal group-execute-or-setid ?s) #o2010)
       ((char-equal group-execute-or-setid ?-) 0)
       (t (error "Seventh char `%c' must be one of `xsS-'"
 		group-execute-or-setid)))
      (cond
-      ((char-equal other-read ?r) (string-to-number "00004" 8))
+      ((char-equal other-read ?r) #o0004)
       ((char-equal other-read ?-) 0)
       (t (error "Eighth char `%c' must be one of `r-'" other-read)))
      (cond
-      ((char-equal other-write ?w) (string-to-number "00002" 8))
+      ((char-equal other-write ?w) #o0002)
       ((char-equal other-write ?-) 0)
       (t (error "Ninth char `%c' must be one of `w-'" other-write)))
      (cond
-      ((char-equal other-execute-or-sticky ?x) (string-to-number "00001" 8))
-      ((char-equal other-execute-or-sticky ?T) (string-to-number "01000" 8))
-      ((char-equal other-execute-or-sticky ?t) (string-to-number "01001" 8))
+      ((char-equal other-execute-or-sticky ?x) #o0001)
+      ((char-equal other-execute-or-sticky ?T) #o1000)
+      ((char-equal other-execute-or-sticky ?t) #o1001)
       ((char-equal other-execute-or-sticky ?-) 0)
       (t (error "Tenth char `%c' must be one of `xtT-'"
 		other-execute-or-sticky))))))
@@ -4353,7 +4353,11 @@ If UID and GID are provided, these values are used; otherwise uid
 and gid of the corresponding remote or local user is taken,
 depending whether FILENAME is remote or local.  Both parameters
 must be non-negative integers.
+The setgid bit of the upper directory is respected.
 If FILENAME is remote, a file name handler is called."
+  (unless (zerop (logand #o2000 (file-modes (file-name-directory filename))))
+    (setq gid (tramp-compat-file-attribute-group-id
+	       (file-attributes (file-name-directory filename) 'integer))))
   (let ((handler (find-file-name-handler filename 'tramp-set-file-uid-gid)))
     (if handler
 	(funcall handler 'tramp-set-file-uid-gid filename uid gid)
@@ -4521,7 +4525,7 @@ Return the local name of the temporary file."
 	  (setq result nil)
 	;; This creates the file by side effect.
 	(set-file-times result)
-	(set-file-modes result (string-to-number "0700" 8))))
+	(set-file-modes result #o0700)))
 
     ;; Return the local part.
     (with-parsed-tramp-file-name result nil localname)))
