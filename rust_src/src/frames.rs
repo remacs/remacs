@@ -43,7 +43,7 @@ impl LispFrameRef {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    return self.config_scroll_bar_width
+                    return self.config_scroll_bar_width;
                 }
                 _ => return 0,
             }
