@@ -3806,7 +3806,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (tramp--test-instrument-test-case 0
+  (tramp--test-instrument-test-case 10
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
@@ -3873,7 +3873,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-sh-p))
   (skip-unless (tramp--test-emacs27-p))
 
-  (tramp--test-instrument-test-case 0
+  (tramp--test-instrument-test-case 10
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
