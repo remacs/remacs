@@ -10,6 +10,7 @@ use crate::{
     remacs_sys::Fcopy_sequence,
 };
 
+/// Replaces IS_DAEMON
 cfg_if! {
     if #[cfg(windows)] {
         use crate::remacs_sys::w32_daemon_event;
