@@ -720,7 +720,10 @@ ETAGS = ../lib-src/etags${EXEEXT}
 ${ETAGS}: FORCE
 	${MAKE} -C ../lib-src $(notdir $@)
 
-ctagsfiles1 = $(wildcard ${srcdir}/*.[hc])
+# Remove macuvs.h and fingerprint.c since they'd cause `src/emacs`
+# to be built before we can get TAGS.
+ctagsfiles1 = $(filter-out ${srcdir}/macuvs.h ${srcdir}/fingerprint.c, \
+                           $(wildcard ${srcdir}/*.[hc]))
 ctagsfiles2 = $(wildcard ${srcdir}/*.m)
 
 ## In out-of-tree builds, TAGS are generated in the build dir, like
