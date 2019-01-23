@@ -707,7 +707,7 @@ emacs_basis (void)
 }
 
 static void *
-emacs_ptr (const ptrdiff_t offset)
+emacs_ptr_at (const ptrdiff_t offset)
 {
   /* TODO: assert somehow that the result is actually in the Emacs
      image.  */
@@ -5330,24 +5330,24 @@ dump_do_emacs_relocation (
     {
     case RELOC_EMACS_COPY_FROM_DUMP:
       eassume (reloc.length > 0);
-      memcpy (emacs_ptr (reloc.emacs_offset),
+      memcpy (emacs_ptr_at (reloc.emacs_offset),
               dump_ptr (dump_base, reloc.u.dump_offset),
               reloc.length);
       break;
     case RELOC_EMACS_IMMEDIATE:
       eassume (reloc.length > 0);
       eassume (reloc.length <= sizeof (reloc.u.immediate));
-      memcpy (emacs_ptr (reloc.emacs_offset),
+      memcpy (emacs_ptr_at (reloc.emacs_offset),
               &reloc.u.immediate,
               reloc.length);
       break;
     case RELOC_EMACS_DUMP_PTR_RAW:
       pval = reloc.u.dump_offset + dump_base;
-      memcpy (emacs_ptr (reloc.emacs_offset), &pval, sizeof (pval));
+      memcpy (emacs_ptr_at (reloc.emacs_offset), &pval, sizeof (pval));
       break;
     case RELOC_EMACS_EMACS_PTR_RAW:
       pval = reloc.u.emacs_offset2 + emacs_basis ();
-      memcpy (emacs_ptr (reloc.emacs_offset), &pval, sizeof (pval));
+      memcpy (emacs_ptr_at (reloc.emacs_offset), &pval, sizeof (pval));
       break;
     case RELOC_EMACS_DUMP_LV:
     case RELOC_EMACS_EMACS_LV:
@@ -5356,12 +5356,12 @@ dump_do_emacs_relocation (
         eassume (reloc.length <= Lisp_Float);
         void *obj_ptr = reloc.type == RELOC_EMACS_DUMP_LV
           ? dump_ptr (dump_base, reloc.u.dump_offset)
-          : emacs_ptr (reloc.u.emacs_offset2);
+          : emacs_ptr_at (reloc.u.emacs_offset2);
         if (reloc.length == Lisp_Symbol)
           lv = make_lisp_symbol (obj_ptr);
         else
           lv = make_lisp_ptr (obj_ptr, reloc.length);
-        memcpy (emacs_ptr (reloc.emacs_offset), &lv, sizeof (lv));
+        memcpy (emacs_ptr_at (reloc.emacs_offset), &lv, sizeof (lv));
         break;
       }
     default:
