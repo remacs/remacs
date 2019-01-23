@@ -334,6 +334,9 @@ the node "(emacs) Directory Variables" of the user manual.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** doc-view-mode
+*** New commands doc-view-presentation and doc-view-fit-window-to-page
+
 ** map.el
 *** Now also understands plists.
 *** Now defined via generic functions that can be extended via 'cl-defmethod'.

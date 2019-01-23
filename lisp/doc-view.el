@@ -155,12 +155,13 @@
 
 (defcustom doc-view-ghostscript-program "gs"
   "Program to convert PS and PDF files to PNG."
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (defcustom doc-view-pdfdraw-program
   (cond
    ((executable-find "pdfdraw") "pdfdraw")
+   ((executable-find "mudraw") "mudraw")
+   ((executable-find "mutool") "mutool")
    (t "mudraw"))
   "Name of MuPDF's program to convert PDF files to PNG."
   :type 'file
@@ -185,14 +186,12 @@
     "-dNOPAUSE" "-sDEVICE=png16m" "-dTextAlphaBits=4"
     "-dBATCH" "-dGraphicsAlphaBits=4" "-dQUIET")
   "A list of options to give to ghostscript."
-  :type '(repeat string)
-  :group 'doc-view)
+  :type '(repeat string))
 
 (defcustom doc-view-resolution 100
   "Dots per inch resolution used to render the documents.
 Higher values result in larger images."
-  :type 'number
-  :group 'doc-view)
+  :type 'number)
 
 (defcustom doc-view-scale-internally t
   "Whether we should try to rescale images ourselves.
@@ -207,8 +206,7 @@ scaling."
 Has only an effect if `doc-view-scale-internally' is non-nil and support for
 scaling is compiled into emacs."
   :version "24.1"
-  :type 'number
-  :group 'doc-view)
+  :type 'number)
 
 (defcustom doc-view-dvipdfm-program "dvipdfm"
   "Program to convert DVI files to PDF.
@@ -218,8 +216,7 @@ converted to PNG.
 
 If this and `doc-view-dvipdf-program' are set,
 `doc-view-dvipdf-program' will be preferred."
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (defcustom doc-view-dvipdf-program "dvipdf"
   "Program to convert DVI files to PDF.
@@ -229,8 +226,7 @@ converted to PNG.
 
 If this and `doc-view-dvipdfm-program' are set,
 `doc-view-dvipdf-program' will be preferred."
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (define-obsolete-variable-alias 'doc-view-unoconv-program
                                 'doc-view-odf->pdf-converter-program
@@ -245,8 +241,7 @@ If this and `doc-view-dvipdfm-program' are set,
 
 Needed for viewing OpenOffice.org (and MS Office) files."
   :version "24.4"
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (defcustom doc-view-odf->pdf-converter-function
   (cond
@@ -267,22 +262,19 @@ Needed for viewing OpenOffice.org (and MS Office) files."
   "Program to convert PS files to PDF.
 
 PS files will be converted to PDF before searching is possible."
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (defcustom doc-view-pdftotext-program "pdftotext"
   "Program to convert PDF files to plain text.
 
 Needed for searching."
-  :type 'file
-  :group 'doc-view)
+  :type 'file)
 
 (defcustom doc-view-cache-directory
   (expand-file-name (format "docview%d" (user-uid))
 		    temporary-file-directory)
   "The base directory, where the PNG images will be saved."
-  :type 'directory
-  :group 'doc-view)
+  :type 'directory)
 
 (defvar doc-view-conversion-buffer " *doc-view conversion output*"
   "The buffer where messages from the converter programs go to.")
@@ -293,8 +285,7 @@ After such a refresh newly converted pages will be available for
 viewing.  If set to nil there won't be any refreshes and the
 pages won't be displayed before conversion of the whole document
 has finished."
-  :type 'integer
-  :group 'doc-view)
+  :type 'integer)
 
 (defcustom doc-view-continuous nil
   "In Continuous mode reaching the page edge advances to next/previous page.
@@ -302,7 +293,6 @@ When non-nil, scrolling a line upward at the bottom edge of the page
 moves to the next page, and scrolling a line downward at the top edge
 of the page moves to the previous page."
   :type 'boolean
-  :group 'doc-view
   :version "23.2")
 
 ;;;; Internal Variables
@@ -412,6 +402,7 @@ Typically \"page-%s.png\".")
     (define-key map "W"               'doc-view-fit-width-to-window)
     (define-key map "H"               'doc-view-fit-height-to-window)
     (define-key map "P"               'doc-view-fit-page-to-window)
+    (define-key map "F"               'doc-view-fit-window-to-page) ;F = frame
     ;; Killing the buffer (and the process)
     (define-key map (kbd "K")         'doc-view-kill-proc)
     ;; Slicing the image
@@ -429,22 +420,20 @@ Typically \"page-%s.png\".")
     (define-key map (kbd "C-c C-c")   'doc-view-toggle-display)
     ;; Open a new buffer with doc's text contents
     (define-key map (kbd "C-c C-t")   'doc-view-open-text)
-    ;; Reconvert the current document.  Don't just use revert-buffer
-    ;; because that resets the scale factor, the page number, ...
-    (define-key map (kbd "g")         'doc-view-revert-buffer)
-    (define-key map (kbd "r")         'doc-view-revert-buffer)
+    (define-key map (kbd "r")         'revert-buffer)
     map)
   "Keymap used by `doc-view-mode' when displaying a doc as a set of images.")
 
-(defun doc-view-revert-buffer (&optional ignore-auto noconfirm)
-  "Like `revert-buffer', but preserves the buffer's current modes."
-  (interactive (list (not current-prefix-arg)))
+(define-obsolete-function-alias 'doc-view-revert-buffer #'revert-buffer "27.1")
+(defvar revert-buffer-preserve-modes)
+(defun doc-view--revert-buffer (orig-fun &rest args)
+  "Preserve the buffer's current mode and check PDF sanity."
   (if (< undo-outer-limit (* 2 (buffer-size)))
       ;; It's normal for this operation to result in a very large undo entry.
       (setq-local undo-outer-limit (* 2 (buffer-size))))
   (cl-labels ((revert ()
-                      (let (revert-buffer-function)
-                        (revert-buffer ignore-auto noconfirm 'preserve-modes))))
+                      (let ((revert-buffer-preserve-modes t))
+                        (apply orig-fun args))))
     (if (and (eq 'pdf doc-view-doc-type)
              (executable-find "pdfinfo"))
         ;; We don't want to revert if the PDF file is corrupted which
@@ -492,6 +481,8 @@ Typically \"page-%s.png\".")
 
 ;;;; Navigation Commands
 
+;; FIXME: The doc-view-current-* definitions below are macros because they
+;; map to accessors which we want to use via `setf' as well!
 (defmacro doc-view-current-page (&optional win)
   `(image-mode-window-get 'page ,win))
 (defmacro doc-view-current-info () '(image-mode-window-get 'info))
@@ -683,7 +674,7 @@ at the top edge of the page moves to the previous page."
        (file-error
 	(error
 	 (format "Unable to use temporary directory %s: %s"
-		 dir (mapconcat 'identity (cdr error) " "))))))))
+		 dir (mapconcat #'identity (cdr error) " "))))))))
 
 (defun doc-view--current-cache-dir ()
   "Return the directory where the png files of the current doc should be saved.
@@ -872,6 +863,38 @@ min {(window-width / image-width), (window-height / image-height)} times."
         (setf (doc-view-current-slice) new-slice)
         (doc-view-goto-page (doc-view-current-page))))))
 
+(defun doc-view-fit-window-to-page ()
+  "Resize selected window so it just fits the current page.
+Resize the containing frame if needed."
+  (interactive)
+  (let* ((slice (doc-view-current-slice))
+         (img-width  (if slice (nth 2 slice)
+                       (car (image-display-size
+                             (image-get-display-property) t))))
+         (img-height (if slice (nth 3 slice)
+                       (cdr (image-display-size
+                             (image-get-display-property) t))))
+         (win-width  (- (nth 2 (window-inside-pixel-edges))
+                        (nth 0 (window-inside-pixel-edges))))
+         (win-height (- (nth 3 (window-inside-pixel-edges))
+                        (nth 1 (window-inside-pixel-edges))))
+         (width-diff  (- img-width  win-width))
+         (height-diff (- img-height win-height))
+         (new-frame-params
+          (append
+           (if (= (window-width) (frame-width))
+               `((width  . (text-pixels
+                            . ,(+ (frame-text-width) width-diff))))
+             (enlarge-window (/ width-diff (frame-char-width)) 'horiz)
+             nil)
+           (if (= (window-height) (frame-height))
+               `((height  . (text-pixels
+                             . ,(+ (frame-text-height) height-diff))))
+             (enlarge-window (/ height-diff (frame-char-height)) nil)
+             nil))))
+    (when new-frame-params
+      (modify-frame-parameters (selected-frame) new-frame-params))))
+
 (defun doc-view-reconvert-doc ()
   "Reconvert the current document.
 Should be invoked when the cached images aren't up-to-date."
@@ -906,7 +929,7 @@ Should be invoked when the cached images aren't up-to-date."
   (let* ((default-directory (or (unhandled-file-name-directory
                                  default-directory)
 			      (expand-file-name "~/")))
-         (proc (apply 'start-process name doc-view-conversion-buffer
+         (proc (apply #'start-process name doc-view-conversion-buffer
                       program args)))
     (push proc doc-view--current-converter-processes)
     (setq mode-line-process (list (format ":%s" proc)))
@@ -960,7 +983,10 @@ If PAGE is nil, convert the whole document."
 (defun doc-view-pdf->png-converter-mupdf (pdf png page callback)
   (doc-view-start-process
    "pdf->png" doc-view-pdfdraw-program
-   `(,(concat "-o" png)
+   ;; FIXME: Ugly hack: recent mupdf distribution replaced "mudraw" with
+   ;; "mutool draw".
+   `(,@(if (string-match "mutool[^/\\]*$" doc-view-pdfdraw-program) '("draw"))
+     ,(concat "-o" png)
      ,(format "-r%d" (round doc-view-resolution))
      ,pdf
      ,@(if page `(,(format "%d" page))))
@@ -1217,7 +1243,8 @@ dragging it to its bottom-right corner.  See also
     (save-match-data
       (when (string-match (concat "%%BoundingBox: "
 				  "\\([[:digit:]]+\\) \\([[:digit:]]+\\) "
-				  "\\([[:digit:]]+\\) \\([[:digit:]]+\\)") o)
+				  "\\([[:digit:]]+\\) \\([[:digit:]]+\\)")
+                          o)
 	(mapcar #'string-to-number
 		(list (match-string 1 o)
 		      (match-string 2 o)
@@ -1301,10 +1328,10 @@ ARGS is a list of image descriptors."
       (let* ((image (if (and file (file-readable-p file))
 			(if (not (and doc-view-scale-internally
 				      (fboundp 'imagemagick-types)))
-			    (apply 'create-image file doc-view--image-type nil args)
+			    (apply #'create-image file doc-view--image-type nil args)
 			  (unless (member :width args)
 			    (setq args `(,@args :width ,doc-view-image-width)))
-			  (apply 'create-image file 'imagemagick nil args))))
+			  (apply #'create-image file 'imagemagick nil args))))
 	     (slice (doc-view-current-slice))
 	     (img-width (and image (car (image-size image))))
 	     (displayed-img-width (if (and image slice)
@@ -1725,7 +1752,7 @@ If BACKWARD is non-nil, jump to the previous match."
       ;; window-parameters in the window-state(s) and then restoring this
       ;; window-state should call us back (to interpret/use those parameters).
       (doc-view-goto-page page)
-      (when slice (apply 'doc-view-set-slice slice))
+      (when slice (apply #'doc-view-set-slice slice))
       (current-buffer))))
 
 (add-to-list 'desktop-buffer-mode-handlers
@@ -1789,22 +1816,22 @@ toggle between displaying the document or editing it as text.
     (when (not (string= doc-view--buffer-file-name buffer-file-name))
       (write-region nil nil doc-view--buffer-file-name))
 
-    (setq-local revert-buffer-function #'doc-view-revert-buffer)
+    (add-function :around (local 'revert-buffer-function) #'doc-view--revert-buffer)
 
     (add-hook 'change-major-mode-hook
 	      (lambda ()
 		(doc-view-kill-proc)
 		(remove-overlays (point-min) (point-max) 'doc-view t))
 	      nil t)
-    (add-hook 'clone-indirect-buffer-hook 'doc-view-clone-buffer-hook nil t)
-    (add-hook 'kill-buffer-hook 'doc-view-kill-proc nil t)
-    (setq-local desktop-save-buffer 'doc-view-desktop-save-buffer)
+    (add-hook 'clone-indirect-buffer-hook #'doc-view-clone-buffer-hook nil t)
+    (add-hook 'kill-buffer-hook #'doc-view-kill-proc nil t)
+    (setq-local desktop-save-buffer #'doc-view-desktop-save-buffer)
 
     (remove-overlays (point-min) (point-max) 'doc-view t) ;Just in case.
     ;; Keep track of display info ([vh]scroll, page number, overlay,
     ;; ...)  for each window in which this document is shown.
     (add-hook 'image-mode-new-window-functions
-	      'doc-view-new-window-function nil t)
+	      #'doc-view-new-window-function nil t)
     (image-mode-setup-winprops)
 
     (setq-local mode-line-position
@@ -1820,7 +1847,7 @@ toggle between displaying the document or editing it as text.
                     #'doc-view-scroll-down-or-previous-page))
     (setq-local cursor-type nil)
     (use-local-map doc-view-mode-map)
-    (add-hook 'after-revert-hook 'doc-view-reconvert-doc nil t)
+    (add-hook 'after-revert-hook #'doc-view-reconvert-doc nil t)
     (setq-local bookmark-make-record-function
                 #'doc-view-bookmark-make-record)
     (setq mode-name "DocView"
@@ -1862,8 +1889,7 @@ to the next best mode."
   "Toggle displaying buffer via Doc View (Doc View minor mode).
 
 See the command `doc-view-mode' for more information on this mode."
-  nil " DocView" doc-view-minor-mode-map
-  :group 'doc-view
+  :lighter " DocView"
   (when doc-view-minor-mode
     (add-hook 'change-major-mode-hook (lambda () (doc-view-minor-mode -1)) nil t)
     (message
@@ -1880,6 +1906,84 @@ See the command `doc-view-mode' for more information on this mode."
   "Open `dired' in `doc-view-cache-directory'."
   (interactive)
   (dired doc-view-cache-directory))
+
+;;;; Presentation mode
+
+(defvar doc-view-presentation-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\e" 'doc-view-presentation-exit)
+    (define-key map "q" 'doc-view-presentation-exit)
+    ;; (define-key map "C" 'doc-view-convert-all-pages)
+    map))
+
+(defvar-local doc-view-presentation--src-data nil)
+
+(defun doc-view-presentation-exit ()
+  "Leave Doc-View's presentation mode."
+  (interactive)
+  (doc-view-presentation-mode -1))
+
+(define-minor-mode doc-view-presentation-mode
+  "Minor mode used while in presentation mode."
+  :init-value nil :keymap doc-view-presentation-mode-map
+  (if doc-view-presentation-mode
+      (progn
+        (set (make-local-variable 'mode-line-format) nil)
+        (doc-view-fit-page-to-window)
+        ;; (doc-view-convert-all-pages)
+        )
+    (kill-local-variable 'mode-line-format)
+    (let ((pn (doc-view-current-page))
+          (win (selected-window)))
+      (doc-view-presentation--propagate-pn doc-view-presentation--src-data pn)
+      (setq doc-view-presentation--src-data nil)
+      (with-selected-window win
+        (if (and (one-window-p) (window-dedicated-p))
+            (delete-frame))))))
+
+(defun doc-view-presentation--propagate-pn (src-data pn)
+  (when src-data
+    (let ((win (car src-data)))
+      (when (and (window-live-p win)
+                 (eq (current-buffer) (window-buffer win)))
+        (select-window win))
+      (when (eq (doc-view-current-page) (cdr src-data))
+        (doc-view-goto-page pn)))))
+
+(defun doc-view-presentation ()
+  "Put Doc-View in presentation mode."
+  (interactive)
+  (let* ((src-data (cons (selected-window) (doc-view-current-page)))
+         (mal (display-monitor-attributes-list))
+         (monitor-top 0)
+         (monitor-left 0)
+         (monitor-height (display-pixel-height))
+         (monitor-width (display-pixel-width)))
+    (dolist (attrs mal)
+      (when (memq (selected-frame) (alist-get 'frames attrs))
+        (let ((geom (alist-get 'geometry attrs)))
+          (when geom
+            (setq monitor-top (nth 0 geom))
+            (setq monitor-left (nth 1 geom))
+            (setq monitor-width (nth 2 geom))
+            (setq monitor-height (nth 3 geom))))))
+    (let ((frame (make-frame
+                  `((minibuffer . nil)
+                    (fullscreen . fullboth)
+                    (height . ,(ceiling monitor-height (frame-char-height)))
+                    ;; Don't use `ceiling' here since doc-view will center the
+                    ;; image instead.
+                    (width . ,(ceiling monitor-width (frame-char-width)))
+                    (name . "Doc-View-Presentation")
+                    (top . ,monitor-top) (left . ,monitor-left) (user-position . t)
+                    (vertical-scroll-bars . nil)
+                    (left-fringe . 0) (right-fringe . 0)
+                    (menu-bar-lines . 0)
+                    (tool-bar-lines . 0)))))
+      (select-window (frame-root-window frame))
+      (setq doc-view-presentation--src-data src-data)
+      (set-window-dedicated-p (selected-window) t)
+      (doc-view-presentation-mode 1))))
 
 
 ;;;; Bookmark integration
