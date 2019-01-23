@@ -12,12 +12,11 @@ use crate::{
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
-    remacs_sys::{x_focus_frame as c_x_focus_frame},
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::vertical_scroll_bar_type;
+use crate::{remacs_sys::vertical_scroll_bar_type, remacs_sys::x_focus_frame as c_x_focus_frame};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -595,19 +594,18 @@ pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
 }
 
 /// Set the input focus to FRAME.
-/// FRAME nil means use the selected frame.  Optional argument NOACTIVATE
+/// FRAME nil means use the selected frame. Optional argument NOACTIVATE
 /// means do not activate FRAME.
+///
 /// If there is no window system support, this function does nothing.
 #[lisp_fn(min = "1")]
-pub fn x_focus_frame(
-    frame: LispFrameLiveOrSelected,
-    noactivate: LispObject,
-) -> LispObject {
+pub fn x_focus_frame(_frame: LispFrameLiveOrSelected, _noactivate: bool) -> LispObject {
     #[cfg(feature = "window-system")]
     {
-        let frame_ref: LispFrameRef = frame.into();
-        let frame_ref_ptr = frame_ref.as_ptr() as *mut Lisp_Frame;
-        unsafe { c_x_focus_frame(frame_ref_ptr, noactivate.is_not_nil()); }
+        let mut frame_ref: LispFrameRef = _frame.into();
+        unsafe {
+            c_x_focus_frame(frame_ref.as_mut(), _noactivate);
+        }
     }
 
     Qnil
