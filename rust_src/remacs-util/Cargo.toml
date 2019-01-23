@@ -16,11 +16,3 @@ path = "lib.rs"
 [features]
 # Treat warnings as a build error on Travis.
 strict = []
-
-[profile.release]
-panic = "abort"
-lto = true
-
-[profile.dev]
-panic = "abort"
-lto = true
