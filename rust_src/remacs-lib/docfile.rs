@@ -43,10 +43,12 @@ pub unsafe extern "C" fn scan_rust_file(
     let mut attribute = String::new();
 
     let mut line_iter = fp.lines();
+    let mut line_number = 0;
 
     let mut in_lisp_fn = false;
 
     while let Some(line) = line_iter.next() {
+        line_number += 1;
         let line = line.unwrap();
         let line = line.trim();
 
@@ -102,20 +104,68 @@ pub unsafe extern "C" fn scan_rust_file(
                 continue;
             }
             let attribute = mem::replace(&mut attribute, String::new());
-            let mut split = line.split('(');
-            let name = split.next().unwrap().split_whitespace().last().unwrap();
-
+            let lpar = line.find('(').unwrap();
+            let (fn_name, rest) = line.split_at(lpar);
+            let name = fn_name.split_whitespace().last().unwrap();
             if name.starts_with('$') {
                 // Macro; do not use it
                 continue;
             }
 
             // Read lines until the closing paren
-            let mut sig = split.next().unwrap().to_string();
-            while !sig.contains(')') {
-                sig.extend(line_iter.next().unwrap());
+            assert!(rest.as_bytes()[0] == b'(');
+            let mut sig = rest[1..].to_string();
+            let mut npar = 1;
+            let mut offset = 0;
+            loop {
+                if offset == sig.len() {
+                    sig.extend(line_iter.next().unwrap());
+                    line_number += 1;
+                }
+                let c = sig.as_bytes()[offset];
+                if c == b'(' {
+                    npar += 1;
+                }
+                if c == b')' {
+                    npar -= 1;
+                }
+                if npar == 0 {
+                    break;
+                }
+                offset += 1;
             }
-            let sig = sig.split(')').next().unwrap();
+            assert!(sig.as_bytes()[offset] == b')');
+            sig.truncate(offset); // without closing paren
+            if sig.contains("/") {
+                panic!(
+                    "#[lisp_fn] function signatures may not contain slashes/comments: {}:{}",
+                    filename, line_number
+                );
+            }
+            fn well_formed(sig: &str) -> bool {
+                let mut have_colon = false;
+                for i in 0..sig.len() {
+                    let c = sig.as_bytes()[i];
+                    if have_colon {
+                        if c == b':' {
+                            return false;
+                        }
+                        have_colon = !c == b',';
+                    } else {
+                        if c == b'(' {
+                            return false;
+                        }
+                        have_colon = c == b':';
+                    }
+                }
+                true
+            }
+            if !well_formed(&sig) {
+                panic!(
+                    "#[lisp_fn] function signature contains consecutive colons/commas: {}:{}",
+                    filename, line_number
+                );
+            }
             let has_many_args = sig.contains("&mut") || sig.contains("&[");
 
             // Split arg names and types
