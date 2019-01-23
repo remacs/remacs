@@ -145,7 +145,7 @@ icompletion is occurring."
 
 (defvar icomplete-minibuffer-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [?\M-\t] 'minibuffer-force-complete)
+    (define-key map [?\M-\t] 'icomplete-force-complete)
     (define-key map [?\C-j]  'icomplete-force-complete-and-exit)
     (define-key map [?\C-.]  'icomplete-forward-completions)
     (define-key map [?\C-,]  'icomplete-backward-completions)
@@ -161,6 +161,21 @@ the default otherwise."
           (> (icomplete--field-end) (icomplete--field-beg)))
       (minibuffer-force-complete-and-exit)
     (minibuffer-complete-and-exit)))
+
+(defun icomplete-force-complete ()
+  "Complete the icomplete minibuffer."
+  (interactive)
+  (let ((retval (minibuffer-force-complete)))
+    ;; FIXME: What's this, you ask?  To deal with a cycling corner
+    ;; case, `minibuffer-force-complete' will transiently replace the
+    ;; keybinding that this command was called with, but at least
+    ;; returns a function which we can call to disable that, since
+    ;; we're not at all interested in cycling here (bug#34077).
+    (when (and completion-cycling (functionp retval)) (funcall retval)))
+  ;; Again, since we're not interested in cycling, we don't want
+  ;; prospects to be recalculted from a cache of rotated completions.
+  (setq completion-cycling nil)
+  (setq completion-all-sorted-completions nil))
 
 (defun icomplete-forward-completions ()
   "Step forward completions by one entry.
