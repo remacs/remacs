@@ -1257,7 +1257,13 @@ scroll the window of possible completions."
 (defun minibuffer-force-complete-and-exit ()
   "Complete the minibuffer with first of the matches and exit."
   (interactive)
-  (minibuffer-force-complete)
+  ;; If `completion-cycling' is t, then surely a
+  ;; `minibuffer-force-complete' has already executed.  This is not
+  ;; just for speed: the extra rotation caused by the second
+  ;; unnecessary call would mess up the final result value
+  ;; (bug#34116).
+  (unless completion-cycling
+    (minibuffer-force-complete))
   (completion--complete-and-exit
    (minibuffer-prompt-end) (point-max) #'exit-minibuffer
    ;; If the previous completion completed to an element which fails
