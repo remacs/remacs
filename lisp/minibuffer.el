@@ -676,9 +676,9 @@ for use at QPOS."
 ;; (defmacro complete-in-turn (a b) `(completion-table-in-turn ,a ,b))
 ;; (defmacro dynamic-completion-table (fun) `(completion-table-dynamic ,fun))
 (define-obsolete-function-alias
-  'complete-in-turn 'completion-table-in-turn "23.1")
+  'complete-in-turn #'completion-table-in-turn "23.1")
 (define-obsolete-function-alias
-  'dynamic-completion-table 'completion-table-dynamic "23.1")
+  'dynamic-completion-table #'completion-table-dynamic "23.1")
 
 ;;; Minibuffer completion
 
@@ -696,7 +696,7 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
   (if (not (minibufferp (current-buffer)))
       (progn
         (if args
-            (apply 'message message args)
+            (apply #'message message args)
           (message "%s" message))
         (prog1 (sit-for (or minibuffer-message-timeout 1000000))
           (message nil)))
@@ -1003,7 +1003,7 @@ completion candidates than this number."
 
 (defvar-local completion-all-sorted-completions nil)
 (defvar-local completion--all-sorted-completions-location nil)
-(defvar completion-cycling nil)
+(defvar completion-cycling nil)      ;Function that takes down the cycling map.
 
 (defvar completion-fail-discreetly nil
   "If non-nil, stay quiet when there  is no match.")
@@ -1035,7 +1035,7 @@ when the buffer's text is already an exact match."
   (let* ((string (buffer-substring beg end))
          (md (completion--field-metadata beg))
          (comp (funcall (or try-completion-function
-                            'completion-try-completion)
+                            #'completion-try-completion)
                         string
                         minibuffer-completion-table
                         minibuffer-completion-predicate
@@ -1188,7 +1188,7 @@ scroll the window of possible completions."
 
 (defun completion--cache-all-sorted-completions (beg end comps)
   (add-hook 'after-change-functions
-            'completion--flush-all-sorted-completions nil t)
+            #'completion--flush-all-sorted-completions nil t)
   (setq completion--all-sorted-completions-location
         (cons (copy-marker beg) (copy-marker end)))
   (setq completion-all-sorted-completions comps))
@@ -1198,8 +1198,10 @@ scroll the window of possible completions."
                (or (> start (cdr completion--all-sorted-completions-location))
                    (< end (car completion--all-sorted-completions-location))))
     (remove-hook 'after-change-functions
-                 'completion--flush-all-sorted-completions t)
-    (setq completion-cycling nil)
+                 #'completion--flush-all-sorted-completions t)
+    ;; Remove the transient map if applicable.
+    (when completion-cycling
+      (funcall (prog1 completion-cycling (setq completion-cycling nil))))
     (setq completion-all-sorted-completions nil)))
 
 (defun completion--metadata (string base md-at-point table pred)
@@ -1263,16 +1265,17 @@ scroll the window of possible completions."
   ;; unnecessary call would mess up the final result value
   ;; (bug#34116).
   (unless completion-cycling
-    (minibuffer-force-complete))
+    (minibuffer-force-complete nil nil 'dont-cycle))
   (completion--complete-and-exit
    (minibuffer-prompt-end) (point-max) #'exit-minibuffer
    ;; If the previous completion completed to an element which fails
    ;; test-completion, then we shouldn't exit, but that should be rare.
    (lambda () (minibuffer-message "Incomplete"))))
 
-(defun minibuffer-force-complete (&optional start end)
+(defun minibuffer-force-complete (&optional start end dont-cycle)
   "Complete the minibuffer to an exact match.
-Repeated uses step through the possible completions."
+Repeated uses step through the possible completions.
+DONT-CYCLE tells the function not to setup cycling."
   (interactive)
   (setq minibuffer-scroll-window nil)
   ;; FIXME: Need to deal with the extra-size issue here as well.
@@ -1285,7 +1288,7 @@ Repeated uses step through the possible completions."
          (base (+ start (or (cdr (last all)) 0))))
     (cond
      ((not (consp all))
-        (completion--message
+      (completion--message
        (if all "No more completions" "No completions")))
      ((not (consp (cdr all)))
       (let ((done (equal (car all) (buffer-substring-no-properties base end))))
@@ -1296,33 +1299,34 @@ Repeated uses step through the possible completions."
       (completion--replace base end (car all))
       (setq end (+ base (length (car all))))
       (completion--done (buffer-substring-no-properties start (point)) 'sole)
-      ;; Set cycling after modifying the buffer since the flush hook resets it.
-      (setq completion-cycling t)
       (setq this-command 'completion-at-point) ;For completion-in-region.
-      ;; If completing file names, (car all) may be a directory, so we'd now
-      ;; have a new set of possible completions and might want to reset
-      ;; completion-all-sorted-completions to nil, but we prefer not to,
-      ;; so that repeated calls minibuffer-force-complete still cycle
-      ;; through the previous possible completions.
-      (let ((last (last all)))
-        (setcdr last (cons (car all) (cdr last)))
-        (completion--cache-all-sorted-completions start end (cdr all)))
-      ;; Make sure repeated uses cycle, even though completion--done might
-      ;; have added a space or something that moved us outside of the field.
-      ;; (bug#12221).
-      (let* ((table minibuffer-completion-table)
-             (pred minibuffer-completion-predicate)
-             (extra-prop completion-extra-properties)
-             (cmd
-              (lambda () "Cycle through the possible completions."
-                (interactive)
-                (let ((completion-extra-properties extra-prop))
-                  (completion-in-region start (point) table pred)))))
-        (set-transient-map
-         (let ((map (make-sparse-keymap)))
-           (define-key map [remap completion-at-point] cmd)
-           (define-key map (vector last-command-event) cmd)
-           map)))))))
+      ;; Set cycling after modifying the buffer since the flush hook resets it.
+      (unless dont-cycle
+        ;; If completing file names, (car all) may be a directory, so we'd now
+        ;; have a new set of possible completions and might want to reset
+        ;; completion-all-sorted-completions to nil, but we prefer not to,
+        ;; so that repeated calls minibuffer-force-complete still cycle
+        ;; through the previous possible completions.
+        (let ((last (last all)))
+          (setcdr last (cons (car all) (cdr last)))
+          (completion--cache-all-sorted-completions start end (cdr all)))
+        ;; Make sure repeated uses cycle, even though completion--done might
+        ;; have added a space or something that moved us outside of the field.
+        ;; (bug#12221).
+        (let* ((table minibuffer-completion-table)
+               (pred minibuffer-completion-predicate)
+               (extra-prop completion-extra-properties)
+               (cmd
+                (lambda () "Cycle through the possible completions."
+                  (interactive)
+                  (let ((completion-extra-properties extra-prop))
+                    (completion-in-region start (point) table pred)))))
+          (setq completion-cycling
+                (set-transient-map
+                 (let ((map (make-sparse-keymap)))
+                   (define-key map [remap completion-at-point] cmd)
+                   (define-key map (vector last-command-event) cmd)
+                   map)))))))))
 
 (defvar minibuffer-confirm-exit-commands
   '(completion-at-point minibuffer-complete
@@ -1540,7 +1544,7 @@ horizontally in alphabetical order, rather than down the screen."
 Uses columns to keep the listing readable but compact.
 It also eliminates runs of equal strings."
   (when (consp strings)
-    (let* ((length (apply 'max
+    (let* ((length (apply #'max
 			  (mapcar (lambda (s)
 				    (if (consp s)
 					(+ (string-width (car s))
@@ -2329,7 +2333,7 @@ same as `substitute-in-file-name'."
                      (match-beginning 0)))))))
        (t
         (if (eq (aref string (1- beg)) ?{)
-            (setq table (apply-partially 'completion-table-with-terminator
+            (setq table (apply-partially #'completion-table-with-terminator
                                          "}" table)))
         ;; Even if file-name completion is case-insensitive, we want
         ;; envvar completion to be case-sensitive.
@@ -2463,7 +2467,7 @@ except that it passes the file name through `substitute-in-file-name'.")
                             #'completion--file-name-table)
   "Internal subroutine for `read-file-name'.  Do not call this.")
 
-(defvar read-file-name-function 'read-file-name-default
+(defvar read-file-name-function #'read-file-name-default
   "The function called by `read-file-name' to do its work.
 It should accept the same arguments as `read-file-name'.")
 
@@ -2738,8 +2742,8 @@ See `read-file-name' for the meaning of the arguments."
 BUFFER nil or omitted means use the current buffer.
 Like `internal-complete-buffer', but removes BUFFER from the completion list."
   (let ((except (if (stringp buffer) buffer (buffer-name buffer))))
-    (apply-partially 'completion-table-with-predicate
-		     'internal-complete-buffer
+    (apply-partially #'completion-table-with-predicate
+		     #'internal-complete-buffer
 		     (lambda (name)
 		       (not (equal (if (consp name) (car name) name) except)))
 		     nil)))
@@ -3409,7 +3413,7 @@ the same set of elements."
     (when newstr
       (completion-pcm-try-completion newstr table pred (length newstr)))))
 
-(defvar completing-read-function 'completing-read-default
+(defvar completing-read-function #'completing-read-default
   "The function called by `completing-read' to do its work.
 It should accept the same arguments as `completing-read'.")
 

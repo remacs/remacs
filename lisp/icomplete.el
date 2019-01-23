@@ -165,17 +165,8 @@ the default otherwise."
 (defun icomplete-force-complete ()
   "Complete the icomplete minibuffer."
   (interactive)
-  (let ((retval (minibuffer-force-complete)))
-    ;; FIXME: What's this, you ask?  To deal with a cycling corner
-    ;; case, `minibuffer-force-complete' will transiently replace the
-    ;; keybinding that this command was called with, but at least
-    ;; returns a function which we can call to disable that, since
-    ;; we're not at all interested in cycling here (bug#34077).
-    (when (and completion-cycling (functionp retval)) (funcall retval)))
-  ;; Again, since we're not interested in cycling, we don't want
-  ;; prospects to be recalculted from a cache of rotated completions.
-  (setq completion-cycling nil)
-  (setq completion-all-sorted-completions nil))
+  ;; We're not at all interested in cycling here (bug#34077).
+  (minibuffer-force-complete nil nil 'dont-cycle))
 
 (defun icomplete-forward-completions ()
   "Step forward completions by one entry.
