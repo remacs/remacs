@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, LispBufferRef},
     hashtable::LispHashTableRef,
-    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual},
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual},
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},

@@ -5,7 +5,6 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
@@ -44,14 +43,14 @@ impl LispFrameRef {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    return self.config_scroll_bar_width
+                    self.config_scroll_bar_width
                 }
-                _ => return 0,
+                _ => 0,
             }
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 
@@ -66,7 +65,7 @@ impl LispFrameRef {
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 }
@@ -507,13 +506,13 @@ pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFram
     // a valid candidate will be returned regardless of its position.
     while passed < 2 {
         for_each_frame!(f => {
-	    if passed > 0 {
-	        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
-	        if !tmp.is_nil() {
+            if passed > 0 {
+                let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+                if !tmp.is_nil() {
                     // Found a valid candidate, stop looking.
-	            return f;
+                    return f;
                 }
-	    }
+            }
             if frame_ref == f {
                 // Count the number of times FRAME has been found in the list.
                 passed += 1;

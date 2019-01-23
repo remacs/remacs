@@ -9,7 +9,6 @@ use crate::{
     eval::unbind_to,
     frames::selected_frame,
     frames::{LispFrameOrSelected, LispFrameRef},
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
@@ -58,7 +57,7 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) {
 }
 
 /**********************************************************************
-		    Redrawing Frames
+            Redrawing Frames
 **********************************************************************/
 
 /// Redraw frame FRAME.
@@ -120,7 +119,7 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
 }
 
 /***********************************************************************
-		   Blinking cursor
+           Blinking cursor
 ***********************************************************************/
 
 /// Set the cursor-visibility flag of WINDOW to SHOW.

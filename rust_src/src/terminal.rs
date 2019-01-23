@@ -10,7 +10,6 @@ use crate::{
     dispnew::LispGlyphRef,
     frames::Fselected_frame,
     frames::LispFrameRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::build_string,
     remacs_sys::{pvec_type, Lisp_Terminal},

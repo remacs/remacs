@@ -2,11 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::{
-    hashtable::LispHashTableRef,
-    lisp::{defsubr, LispObject},
-    remacs_sys::equal_kind,
-};
+use crate::{hashtable::LispHashTableRef, lisp::LispObject, remacs_sys::equal_kind};
 
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]

@@ -750,7 +750,7 @@ macro_rules! export_lisp_fns {
         pub fn rust_init_syms() {
             unsafe {
                 $(
-                    defsubr(concat_idents!(S, $f).as_ptr());
+                    crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
                 )+
             }
         }

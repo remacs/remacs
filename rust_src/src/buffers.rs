@@ -18,7 +18,6 @@ use crate::{
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},

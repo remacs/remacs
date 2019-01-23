@@ -4,11 +4,7 @@ use cfg_if::cfg_if;
 
 use remacs_macros::lisp_fn;
 
-use crate::{
-    lisp::{defsubr, LispObject},
-    remacs_sys::globals,
-    remacs_sys::Fcopy_sequence,
-};
+use crate::{lisp::LispObject, remacs_sys::globals, remacs_sys::Fcopy_sequence};
 
 /// Replaces IS_DAEMON
 cfg_if! {

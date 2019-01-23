@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     coding::encode_file_name,
     errno::errno,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     lists::LispCons,
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,

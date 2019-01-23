@@ -7,7 +7,6 @@ use crate::{
     editfns::field_end,
     eval::unbind_to,
     keymap::get_keymap,
-    lisp::defsubr,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
     multibyte::LispStringRef,

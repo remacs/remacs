@@ -16,7 +16,6 @@ use crate::{
     data::aref,
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,

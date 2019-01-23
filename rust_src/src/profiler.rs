@@ -4,7 +4,7 @@ use std::ffi::CString;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_sys::{error, globals, Qnil},
     remacs_sys::{make_log, memory_log, profiler_memory_running},
 };

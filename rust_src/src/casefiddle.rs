@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     keymap::Ctl,
-    lisp::defsubr,
     lisp::LispObject,
     lists::put,
     lists::{LispConsCircularChecks, LispConsEndChecks},

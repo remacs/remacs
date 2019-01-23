@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 use crate::{
     chartable::LispCharTableRef,
     editfns::constrain_to_field,
-    lisp::defsubr,
     lisp::LispObject,
     numbers::LispNumber,
     remacs_sys::{

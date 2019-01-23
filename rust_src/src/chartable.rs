@@ -6,7 +6,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::uniprop_table_uncompress,
     remacs_sys::{

@@ -4,11 +4,7 @@
 use crate::remacs_sys::{EmacsInt, Qnumberp};
 use remacs_macros::lisp_fn;
 
-use crate::{
-    floatfns,
-    lisp::{defsubr, LispObject},
-    numbers::LispNumber,
-};
+use crate::{floatfns, lisp::LispObject, numbers::LispNumber};
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).

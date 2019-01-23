@@ -8,7 +8,6 @@ use crate::{
     emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
     frames::{selected_frame, window_frame_live_or_selected_with_action},
-    lisp::defsubr,
     lisp::LispObject,
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,

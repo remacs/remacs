@@ -7,7 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{insert_char, point, point_min},
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     multibyte::Codepoint,
     remacs_sys::globals,
     remacs_sys::EmacsUint,
@@ -132,7 +132,8 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
         last_known_column_point = buffer.pt;
         last_known_column_modified = buffer.modifications();
     }
-    col.into()
+
+    col
 }
 
 // Cancel any recorded value of the horizontal position.
@@ -149,7 +150,7 @@ pub extern "C" fn invalidate_current_column() {
 #[lisp_fn(min = "1", intspec = "NIndent to column: ")]
 pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
     let buffer = ThreadState::current_buffer_unchecked();
-    let tab_width = unsafe { sanitize_tab_width(buffer.tab_width_.force_fixnum()) } as EmacsInt;
+    let tab_width = EmacsInt::from(unsafe { sanitize_tab_width(buffer.tab_width_.force_fixnum()) });
     let arg_minimum = minimum.unwrap_or(0);
     let mut fromcol = current_column();
     let mincol = max(fromcol + arg_minimum, column);

@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     eval::{record_unwind_protect, un_autoload, unbind_to},
-    lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
