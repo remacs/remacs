@@ -83,7 +83,7 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
 /// symbol or a type descriptor.  SLOTS is used to initialize the record
 /// slots with shallow copies of the arguments.
 /// usage: (record TYPE &rest SLOTS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn record(args: &mut [LispObject]) -> LispObject {
     unsafe {
         let ptr = allocate_record(args.len() as i64);
