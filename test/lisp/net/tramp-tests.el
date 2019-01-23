@@ -3806,6 +3806,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
+  (tramp--test-instrument-test-case 0
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
@@ -3863,7 +3864,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
-	(ignore-errors (delete-process proc))))))
+	(ignore-errors (delete-process proc)))))))
 
 (ert-deftest tramp-test30-make-process ()
   "Check `make-process'."
