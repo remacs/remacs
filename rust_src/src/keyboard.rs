@@ -4,21 +4,27 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::current_buffer,
+    dispnew::ding_internal,
+    emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     numbers::IsLispNatnum,
+    remacs_sys::globals,
     remacs_sys::{
-        command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
-        recursive_edit_1, recursive_edit_unwind, update_mode_lines,
+        clear_message, command_loop_level, glyph_row_area, interrupt_input_blocked,
+        make_lispy_position, message_log_maybe_newline, minibuf_level, output_method,
+        print_error_message, recursive_edit_1, recursive_edit_unwind,
+        temporarily_switch_to_single_kboard, update_mode_lines, window_box_left_offset,
     },
+    remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
-        make_lispy_position, temporarily_switch_to_single_kboard, window_box_left_offset,
+        Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt,
+        Qvertical_line,
     },
-    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
-    remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line},
     threads::c_specpdl_index,
     windows::{selected_window, LispWindowOrSelected},
 };
@@ -218,6 +224,52 @@ pub extern "C" fn rust_syms_of_keyboard() {
     /// This is the command `repeat' will try to repeat.
     /// Taken from a previous value of `real-this-command'.  */
     defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
+}
+
+/// Produce default output for unhandled error message.
+/// Default value of `command-error-function'.
+#[lisp_fn]
+pub fn command_error_default_function(
+    data: LispObject,
+    context: LispStringRef,
+    signal: LispObject,
+) {
+    let selected_frame = selected_frame();
+    // If the window system or terminal frame hasn't been initialized
+    // yet, or we're not interactive, write the message to stderr and
+    // exit.
+    if selected_frame.glyphs_initialized_p()
+        // The initial frame is a special non-displaying frame. It
+        // will be current in daemon mode when there are no frames to
+        // display, and in non-daemon mode before the real frame has
+        // finished initializing.  If an error is thrown in the latter
+        // case while creating the frame, then the frame will never be
+        // displayed, so the safest thing to do is write to stderr and
+        // quit.  In daemon mode, there are many other potential
+        // errors that do not prevent frames from being created, so
+        // continuing as normal is better in that case.
+        || (!is_daemon() && selected_frame.output_method() == output_method::output_initial)
+        || unsafe {globals.noninteractive1 }
+    {
+        unsafe {
+            print_error_message(
+                data,
+                Qexternal_debugging_output,
+                context.const_sdata_ptr(),
+                signal,
+            );
+            Fterpri(Qexternal_debugging_output, Qnil);
+            Fkill_emacs(LispObject::from(-1));
+        }
+    } else {
+        unsafe {
+            clear_message(true, false);
+            Fdiscard_input();
+            message_log_maybe_newline();
+            ding_internal(true);
+            print_error_message(data, Qt, context.const_sdata_ptr(), signal);
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));
