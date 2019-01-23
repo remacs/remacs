@@ -64,6 +64,5 @@ window-system-x11 = []
 window-system-nextstep = []
 # Use the w32 window system
 window-system-w32 = []
-compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []
