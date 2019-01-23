@@ -551,6 +551,94 @@ WINDOW must be a valid window and defaults to the selected one.  */)
   return make_number (decode_valid_window (window)->left_col);
 }
 
+/* Return the number of lines/pixels of W's body.  Don't count any mode
+   or header line or horizontal divider of W.  Rounds down to nearest
+   integer when not working pixelwise. */
+static int
+window_body_height (struct window *w, bool pixelwise)
+{
+  int height = (w->pixel_height
+		- WINDOW_HEADER_LINE_HEIGHT (w)
+		- (WINDOW_HAS_HORIZONTAL_SCROLL_BAR (w)
+		   ? WINDOW_SCROLL_BAR_AREA_HEIGHT (w)
+		   : 0)
+		- WINDOW_MODE_LINE_HEIGHT (w)
+		- WINDOW_BOTTOM_DIVIDER_WIDTH (w));
+
+  /* Don't return a negative value.  */
+  return max (pixelwise
+	      ? height
+	      : height / FRAME_LINE_HEIGHT (WINDOW_XFRAME (w)),
+	      0);
+}
+
+/* Return the number of columns/pixels of W's body.  Don't count columns
+   occupied by the scroll bar or the divider/vertical bar separating W
+   from its right sibling or margins.  On window-systems don't count
+   fringes either.  Round down to nearest integer when not working
+   pixelwise.  */
+int
+window_body_width (struct window *w, bool pixelwise)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+
+  int width = (w->pixel_width
+	       - WINDOW_RIGHT_DIVIDER_WIDTH (w)
+	       - (WINDOW_HAS_VERTICAL_SCROLL_BAR (w)
+		  ? WINDOW_SCROLL_BAR_AREA_WIDTH (w)
+		  : (/* A vertical bar is either 1 or 0.  */
+		     !FRAME_WINDOW_P (f)
+		     && !WINDOW_RIGHTMOST_P (w)
+		     && !WINDOW_RIGHT_DIVIDER_WIDTH (w)))
+		- WINDOW_MARGINS_WIDTH (w)
+		- (FRAME_WINDOW_P (f)
+		   ? WINDOW_FRINGES_WIDTH (w)
+		   : 0));
+
+  /* Don't return a negative value.  */
+  return max (pixelwise
+	      ? width
+	      : width / FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w)),
+	      0);
+}
+
+DEFUN ("window-body-height", Fwindow_body_height, Swindow_body_height, 0, 2, 0,
+       doc: /* Return the height of WINDOW's text area.
+WINDOW must be a live window and defaults to the selected one.  Optional
+argument PIXELWISE non-nil means return the height of WINDOW's text area
+in pixels.  The return value does not include the mode line or header
+line or any horizontal divider.
+
+If PIXELWISE is nil, return the largest integer smaller than WINDOW's
+pixel height divided by the character height of WINDOW's frame.  This
+means that if a line at the bottom of the text area is only partially
+visible, that line is not counted.  */)
+  (Lisp_Object window, Lisp_Object pixelwise)
+{
+  return make_number (window_body_height (decode_live_window (window),
+					  !NILP (pixelwise)));
+}
+
+DEFUN ("window-body-width", Fwindow_body_width, Swindow_body_width, 0, 2, 0,
+       doc: /* Return the width of WINDOW's text area.
+WINDOW must be a live window and defaults to the selected one.  Optional
+argument PIXELWISE non-nil means return the width in pixels.  The return
+value does not include any vertical dividers, fringes or marginal areas,
+or scroll bars.
+
+If PIXELWISE is nil, return the largest integer smaller than WINDOW's
+pixel width divided by the character width of WINDOW's frame.  This
+means that if a column at the right of the text area is only partially
+visible, that column is not counted.
+
+Note that the returned value includes the column reserved for the
+continuation glyph.  */)
+  (Lisp_Object window, Lisp_Object pixelwise)
+{
+  return make_number (window_body_width (decode_live_window (window),
+					 !NILP (pixelwise)));
+}
+
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
        Swindow_mode_line_height, 0, 1, 0,
        doc: /* Return the height in pixels of WINDOW's mode-line.
@@ -6574,6 +6662,8 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
+  defsubr (&Swindow_body_height);
+  defsubr (&Swindow_body_width);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
