@@ -2919,7 +2919,7 @@ read_char (int commandflag, Lisp_Object map,
   if (! NILP (also_record))
     record_char (also_record);
 
-  Frun_hook_with_args (2, ((Lisp_Object []) {Qinput_event_functions, c}));
+  CALLN (Frun_hook_with_args, Qinput_event_functions, c);
 
   /* Wipe the echo area.
      But first, if we are about to use an input method,
