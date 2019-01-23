@@ -20,8 +20,16 @@ use crate::remacs_sys::vertical_scroll_bar_type;
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    pub fn root_window(self) -> LispWindowRef {
+        self.root_window.into()
+    }
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
+    }
+
+    // Awaiting Wilfred#1264
+    pub fn is_gui_window(self) -> bool {
+        cfg!(feature = "window_system")
     }
 
     // Pixel-width of internal border lines.
@@ -35,6 +43,15 @@ impl LispFrameRef {
 
     pub fn total_fringe_width(self) -> i32 {
         self.left_fringe_width + self.right_fringe_width
+    }
+
+    pub fn vertical_scroll_bar_type(self) -> u32 {
+        #[cfg(feature = "window-system")]
+        {
+            (*self).vertical_scroll_bar_type()
+        }
+        #[cfg(not(feature = "window-system"))]
+        0
     }
 
     pub fn scroll_bar_area_width(self) -> i32 {
