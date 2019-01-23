@@ -732,14 +732,15 @@ load_pdump (int argc, char **argv)
 
   result = PDUMPER_NOT_LOADED;
   if (dump_file)
-    result = pdumper_load (dump_file);
+    {
+      result = pdumper_load (dump_file);
 
-  if (dump_file && result != PDUMPER_LOAD_SUCCESS)
-    fatal ("could not load dump file \"%s\": %s",
-           dump_file, dump_error_to_string (result));
-
-  if (result == PDUMPER_LOAD_SUCCESS)
-    goto out;
+      if (result != PDUMPER_LOAD_SUCCESS)
+        fatal ("could not load dump file \"%s\": %s",
+               dump_file, dump_error_to_string (result));
+      else
+        goto out;
+    }
 
   /* Look for a dump file in the same directory as the executable; it
      should have the same basename.  */
