@@ -139,17 +139,6 @@ include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 #[cfg(test)]
 pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 
-#[cfg(feature = "compile-errors")]
-mod compile_errors {
-    use lisp::LispObject;
-    use remacs_macros::lisp_fn;
-
-    #[lisp_fn]
-    fn dummy(x: LispObject) -> LispObject {
-        compile_error!("error 001");
-    }
-}
-
 mod hacks {
     use core::mem::ManuallyDrop;
 
