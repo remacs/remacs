@@ -161,9 +161,9 @@ This shall used dynamically bound only.")
 
 (defmacro tramp--test-instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
-Print the content of the Tramp debug buffer, if BODY does not
-eval properly in `should' or `should-not'.  `should-error' is not
-handled properly.  BODY shall not contain a timeout."
+Print the content of the Tramp connection and debug buffers, if
+`tramp-verbose' is greater than 3.  `should-error' is not handled
+properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
   `(let ((tramp-verbose (max (or ,verbose 0) (or tramp-verbose 0)))
 	 (tramp-message-show-message t)
@@ -2251,7 +2251,6 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `copy-file'."
   (skip-unless (tramp--test-enabled))
 
-  (tramp--test-instrument-test-case (if (getenv "EMACS_EMBA_CI") 10 0)
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
   (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
@@ -2278,10 +2277,10 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(with-temp-buffer
 		  (insert-file-contents target)
 		  (should (string-equal (buffer-string) "foo")))
-		;; (when (tramp--test-expensive-test)
-		;;   (should-error
-		;;    (copy-file source target)
-		;;    :type 'file-already-exists))
+		(when (tramp--test-expensive-test)
+		  (should-error
+		   (copy-file source target)
+		   :type 'file-already-exists))
 		(copy-file source target 'ok))
 
 	    ;; Cleanup.
@@ -2297,11 +2296,11 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(should (file-exists-p source))
 		(make-directory target)
 		(should (file-directory-p target))
-		;; ;; This has been changed in Emacs 26.1.
-		;; (when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
-		;;   (should-error
-		;;    (copy-file source target)
-		;;    :type 'file-already-exists))
+		;; This has been changed in Emacs 26.1.
+		(when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
+		  (should-error
+		   (copy-file source target)
+		   :type 'file-already-exists))
 		(copy-file source (file-name-as-directory target))
 		(should
 		 (file-exists-p
@@ -2358,7 +2357,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 
 	    ;; Cleanup.
 	    (ignore-errors (delete-directory source 'recursive))
-	    (ignore-errors (delete-directory target 'recursive)))))))))
+	    (ignore-errors (delete-directory target 'recursive))))))))
 
 (ert-deftest tramp-test12-rename-file ()
   "Check `rename-file'."

@@ -4355,9 +4355,11 @@ depending whether FILENAME is remote or local.  Both parameters
 must be non-negative integers.
 The setgid bit of the upper directory is respected.
 If FILENAME is remote, a file name handler is called."
-  (unless (zerop (logand #o2000 (file-modes (file-name-directory filename))))
-    (setq gid (tramp-compat-file-attribute-group-id
-	       (file-attributes (file-name-directory filename) 'integer))))
+  (let* ((dir (file-name-directory filename))
+	 (modes (file-modes dir)))
+    (when (and modes (not (zerop (logand modes #o2000))))
+      (setq gid (tramp-compat-file-attribute-group-id (file-attributes dir)))))
+
   (let ((handler (find-file-name-handler filename 'tramp-set-file-uid-gid)))
     (if handler
 	(funcall handler 'tramp-set-file-uid-gid filename uid gid)
