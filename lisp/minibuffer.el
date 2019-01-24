@@ -1244,12 +1244,16 @@ scroll the window of possible completions."
           (setq all (if sort-fun (funcall sort-fun all)
                       ;; Prefer shorter completions, by default.
                       (sort all (lambda (c1 c2) (< (length c1) (length c2))))))
-          ;; Prefer recently used completions.
+          ;; Prefer recently used completions and put the default, if
+          ;; it exists, on top.
           (when (minibufferp)
             (let ((hist (symbol-value minibuffer-history-variable)))
-              (setq all (sort all (lambda (c1 c2)
-                                    (> (length (member c1 hist))
-                                       (length (member c2 hist))))))))
+              (setq all (sort all
+                              (lambda (c1 c2)
+                                (cond ((equal c1 minibuffer-default) t)
+                                      ((equal c2 minibuffer-default) nil)
+                                      (t (> (length (member c1 hist))
+                                            (length (member c2 hist))))))))))
           ;; Cache the result.  This is not just for speed, but also so that
           ;; repeated calls to minibuffer-force-complete can cycle through
           ;; all possibilities.
