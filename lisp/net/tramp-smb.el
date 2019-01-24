@@ -144,6 +144,7 @@ call, letting the SMB client use the default one."
 	 "NT_STATUS_NO_LOGON_SERVERS"
 	 "NT_STATUS_NO_SUCH_FILE"
 	 "NT_STATUS_NO_SUCH_USER"
+	 "NT_STATUS_NOT_A_DIRECTORY"
 	 "NT_STATUS_OBJECT_NAME_COLLISION"
 	 "NT_STATUS_OBJECT_NAME_INVALID"
 	 "NT_STATUS_OBJECT_NAME_NOT_FOUND"
@@ -1913,6 +1914,14 @@ If ARGUMENT is non-nil, use it as argument for
 		      share
 		      (tramp-get-connection-property p "smb-share" ""))))
 
+      ;; During completion, don't reopen a new connection.  We
+      ;; check this for the process related to
+      ;; `tramp-buffer-name'; otherwise `start-file-process'
+      ;; wouldn't run ever when `non-essential' is non-nil.
+      (when (and (tramp-completion-mode-p)
+		 (null (get-process (tramp-buffer-name vec))))
+	(throw 'non-essential 'non-essential))
+
       (save-match-data
 	;; There might be unread output from checking for share names.
 	(when buf (with-current-buffer buf (erase-buffer)))
@@ -1977,20 +1986,22 @@ If ARGUMENT is non-nil, use it as argument for
 		       tramp-smb-actions-without-share))
 
 		    ;; Check server version.
-		    (unless argument
-		      (with-current-buffer (tramp-get-connection-buffer vec)
-			(goto-char (point-min))
-			(search-forward-regexp tramp-smb-server-version nil t)
-			(let ((smbserver-version (match-string 0)))
-			  (unless
-			      (string-equal
-			       smbserver-version
-			       (tramp-get-connection-property
-				vec "smbserver-version" smbserver-version))
-			    (tramp-flush-directory-properties vec "")
-			    (tramp-flush-connection-properties vec))
-			  (tramp-set-connection-property
-			   vec "smbserver-version" smbserver-version))))
+		    ;; FIXME: With recent smbclient versions, this
+		    ;; information isn't printed anymore.
+		    ;; (unless argument
+		    ;;   (with-current-buffer (tramp-get-connection-buffer vec)
+		    ;; 	(goto-char (point-min))
+		    ;; 	(search-forward-regexp tramp-smb-server-version nil t)
+		    ;; 	(let ((smbserver-version (match-string 0)))
+		    ;; 	  (unless
+		    ;; 	      (string-equal
+		    ;; 	       smbserver-version
+		    ;; 	       (tramp-get-connection-property
+		    ;; 		vec "smbserver-version" smbserver-version))
+		    ;; 	    (tramp-flush-directory-properties vec "")
+		    ;; 	    (tramp-flush-connection-properties vec))
+		    ;; 	  (tramp-set-connection-property
+		    ;; 	   vec "smbserver-version" smbserver-version))))
 
 		    ;; Set chunksize to 1.  smbclient reads its input
 		    ;; character by character; if we send the string
@@ -2032,7 +2043,11 @@ Removes smb prompt.  Returns nil if an error message has appeared."
 	  (inhibit-read-only t))
 
       ;; Read pending output.
-      (while (tramp-accept-process-output p 0.1))
+      (goto-char (point-min))
+      (while (not (or (re-search-forward tramp-smb-prompt nil t)
+		      (re-search-forward tramp-smb-errors nil t)))
+	(while (tramp-accept-process-output p 0.1)
+	  (goto-char (point-min))))
       (tramp-message vec 6 "\n%s" (buffer-string))
 
       ;; Remove prompt.
