@@ -196,7 +196,7 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 	  (car result))))))
 
 (defun network-stream-certificate (host service parameters)
-  (let ((spec (plist-get :client-certificate parameters)))
+  (let ((spec (plist-get parameters :client-certificate)))
     (cond
      ((listp spec)
       ;; Either nil or a list with a key/certificate pair.
@@ -389,7 +389,7 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 	   (stream
             (if (gnutls-available-p)
                 (open-gnutls-stream name buffer host service
-                                    (plist-get parameters :nowait))
+                                    parameters)
               (require 'tls)
               (open-tls-stream name buffer host service)))
 	   (eoc (plist-get parameters :end-of-command)))

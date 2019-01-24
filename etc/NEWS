@@ -219,6 +219,13 @@ or adjust the elements in that variable to only happen on the 'high'
 security level (assuming you use the 'medium' level).
 
 +++
+** Native GnuTLS connections can now use client certificates.
+Previously, this support was only available when using the external
+gnutls-cli command.  Call 'open-network-stream' with
+':client-certificate t' to trigger looking up of per-server
+certificates via 'auth-source'.
+
++++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
 It blocks line breaking after a one-letter word, also in the case when
 this word is preceded by a non-space, but non-alphanumeric character.
