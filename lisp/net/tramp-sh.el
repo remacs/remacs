@@ -4499,7 +4499,7 @@ Goes through the list `tramp-local-coding-commands' and
 			   t)
 		    (throw 'wont-work-remote nil))
 
-		  (with-current-buffer (tramp-get-buffer vec)
+		  (with-current-buffer (tramp-get-connection-buffer vec)
 		    (goto-char (point-min))
 		    (unless (looking-at-p (regexp-quote magic))
 		      (throw 'wont-work-remote nil)))
