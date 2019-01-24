@@ -58,6 +58,21 @@
 (defvar starttls-gnutls-program)
 (defvar starttls-program)
 
+(defcustom network-stream-use-client-certificates t
+  "Whether to use client certificates for network connections.
+
+When non-nil, `open-network-stream' will automatically look for
+matching client certificates (via 'auth-source') for a
+destination server, if it is called without a :client-certificate
+keyword.
+
+Set to nil to disable this lookup globally.  To disable on a
+per-connection basis, specify ':client-certificate nil' when
+calling `open-network-stream'."
+  :group 'network
+  :type 'boolean
+  :version "27.1")
+
 ;;;###autoload
 (defun open-network-stream (name buffer host service &rest parameters)
   "Open a TCP connection to HOST, optionally with encryption.
@@ -132,7 +147,9 @@ values:
   element is the certificate file name itself, or t, which
   means that `auth-source' will be queried for the key and the
   certificate.  This parameter will only be used when doing TLS
-  or STARTTLS connections.
+  or STARTTLS connections.  If :client-certificate is not
+  specified, behave as if it were t, customize
+  `network-stream-use-client-certificates' to change this.
 
 :use-starttls-if-possible is a boolean that says to do opportunistic
 STARTTLS upgrades even if Emacs doesn't have built-in TLS functionality.
@@ -181,6 +198,11 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 		       ((memq type '(tls ssl)) 'network-stream-open-tls)
 		       ((eq type 'shell) 'network-stream-open-shell)
 		       (t (error "Invalid connection type %s" type))))
+            (parameters
+               (if (and network-stream-use-client-certificates
+                        (not (plist-member parameters :client-certificate)))
+                   (plist-put parameters :client-certificate t)
+                 parameters))
 	    result)
 	(unwind-protect
 	    (setq result (funcall fun name work-buffer host service parameters))
@@ -209,7 +231,7 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 				       :port service)))
 	     (key (plist-get auth-info :key))
 	     (cert (plist-get auth-info :cert)))
-	(and key cert
+	(and key cert (file-readable-p key) (file-readable-p cert)
 	     (list key cert)))))))
 
 ;;;###autoload

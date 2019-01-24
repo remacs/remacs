@@ -2516,12 +2516,16 @@ Emacs will warn if the connection isn't encrypted.  This is useful for
 protocols like @acronym{IMAP} and the like, where most users would
 expect the network traffic to be encrypted.
 
+@vindex network-stream-use-client-certificates
 @item :client-certificate @var{list-or-t}
 Either a list of the form @code{(@var{key-file} @var{cert-file})},
 naming the certificate key file and certificate file itself, or
 @code{t}, meaning to query @code{auth-source} for this information
-(@pxref{Top,,Overview, auth, The Auth-Source Manual}).
-Only used for @acronym{TLS} or @acronym{STARTTLS}.
+(@pxref{Help for users,,auth-source, auth, Emacs auth-source Library}).
+Only used for @acronym{TLS} or @acronym{STARTTLS}.  If
+@code{:client-certificate} is not specified, behave as if it were t,
+customize @code{network-stream-use-client-certificates} to change
+this.
 
 @item :return-list @var{cons-or-nil}
 The return value of this function.  If omitted or @code{nil}, return a
