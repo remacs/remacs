@@ -4913,6 +4913,8 @@ void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 
+extern char *daemon_name;
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
