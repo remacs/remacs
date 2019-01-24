@@ -215,41 +215,51 @@ fn fattrs_from_os(
 }
 
 fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: Option<LispObject>) {
-    let res = read_dir(dname, fnames, match_re);
-    if res.is_err() {
-        xsignal!(
-            Qfile_missing,
-            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            dname
-        );
+    match read_dir(dname, fnames, match_re) {
+        Ok(_) => {}
+        Err(err) => {
+            xsignal!(
+                Qfile_missing,
+                format!("Opening directory: {}", err).to_bstring(),
+                dname
+            );
+        }
     }
 }
 
 fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>) -> io::Result<()> {
     let dir_p = Path::new(dname);
 
-    let mut re = RegEx::new(String::from("").to_bstring());
-    if let Some(x) = match_re {
-        re = RegEx::new(x);
-    }
+    let re = match match_re {
+        Some(x) => Some(RegEx::new(x)),
+        None => None,
+    };
 
     let dot = String::from(".");
-    if match_re_maybe(dot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dot.to_owned(), &re).is_some() {
         fnames.push(dot);
     }
     let dotdot = String::from("..");
-    if match_re_maybe(dotdot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dotdot.to_owned(), &re).is_some() {
         fnames.push(dotdot);
     }
 
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
-        let f_enc = fname.file_name().into_string().unwrap();
+        let f_enc = match fname.file_name().into_string() {
+            Ok(file_name) => file_name,
+            Err(err) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("Could not decode {:?}", err),
+                ));
+            }
+        };
         let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
         let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
         let f = f_dec_lo.to_stdstring();
 
-        if match_re_maybe(f.to_owned(), match_re, &re).is_some() {
+        if match_re_maybe(f.to_owned(), &re).is_some() {
             fnames.push(f);
         }
     }
@@ -257,10 +267,10 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
     Ok(())
 }
 
-fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option<String> {
-    match match_re {
-        Some(_) => {
-            if re.is_match(f.as_str()) {
+fn match_re_maybe(f: String, re: &Option<RegEx>) -> Option<String> {
+    match re {
+        Some(re_value) => {
+            if re_value.is_match(f.as_str()) {
                 Some(f)
             } else {
                 None
