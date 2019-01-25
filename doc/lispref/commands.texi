@@ -256,7 +256,7 @@ It may be a Lisp expression that is not a string; then it should be a
 form that is evaluated to get a list of arguments to pass to the
 command.  Usually this form will call various functions to read input
 from the user, most often through the minibuffer (@pxref{Minibuffers})
-or directly from the keyboard (@pxref{Reading Input})
+or directly from the keyboard (@pxref{Reading Input}).
 
 Providing point or the mark as an argument value is also common, but
 if you do this @emph{and} read input (whether using the minibuffer or
@@ -2922,12 +2922,12 @@ this expression) remains the value of @code{last-command-event}.
 
 @defvar input-event-functions
 This variable holds a list of functions to call after Emacs reads an
-event, but before any commands are run. Each function recieves a
+event, but before any commands are run.  Each function receives a
 single argument: the event that has been read.
 
 There are normally easier hooks to use than this; in particular
 @var{pre-command-hook} is run immediately before any command resulting
-from an event. However, not all events result in a command, including
+from an event.  However, not all events result in a command, including
 many mouse events and some keyboard events when an input-method is
 active (@pxref{Reading Input}).
 @end defvar
