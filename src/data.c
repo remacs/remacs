@@ -943,57 +943,6 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
 
 /* Lisp functions for creating and removing buffer-local variables.  */
 
-DEFUN ("local-variable-p", Flocal_variable_p, Slocal_variable_p,
-       1, 2, 0,
-       doc: /* Non-nil if VARIABLE has a local binding in buffer BUFFER.
-BUFFER defaults to the current buffer.  */)
-  (Lisp_Object variable, Lisp_Object buffer)
-{
-  struct buffer *buf = decode_buffer (buffer);
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (variable);
-  sym = XSYMBOL (variable);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Qnil;
-    case SYMBOL_LOCALIZED:
-      {
-	Lisp_Object tail, elt, tmp;
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	XSETBUFFER (tmp, buf);
-	XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
-
-	if (EQ (blv->where, tmp)) /* The binding is already loaded.  */
-	  return blv_found (blv) ? Qt : Qnil;
-	else
-	  for (tail = BVAR (buf, local_var_alist); CONSP (tail); tail = XCDR (tail))
-	    {
-	      elt = XCAR (tail);
-	      if (EQ (variable, XCAR (elt)))
-		return Qt;
-	    }
-	return Qnil;
-      }
-    case SYMBOL_FORWARDED:
-      {
-	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-	if (BUFFER_OBJFWDP (valcontents))
-	  {
-	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
-	    int idx = PER_BUFFER_IDX (offset);
-	    if (idx == -1 || PER_BUFFER_VALUE_P (buf, idx))
-	      return Qt;
-	  }
-	return Qnil;
-      }
-    default: emacs_abort ();
-    }
-}
-
 DEFUN ("local-variable-if-set-p", Flocal_variable_if_set_p, Slocal_variable_if_set_p,
        1, 2, 0,
        doc: /* Non-nil if VARIABLE is local in buffer BUFFER when set there.
@@ -1774,7 +1723,6 @@ syms_of_data (void)
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);
   defsubr (&Skill_local_variable);
-  defsubr (&Slocal_variable_p);
   defsubr (&Slocal_variable_if_set_p);
   defsubr (&Svariable_binding_locus);
 #if 0                           /* XXX Remove this. --lorentey */

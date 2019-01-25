@@ -6,9 +6,10 @@ use std::fmt::{Debug, Formatter};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferLocalValueRef,
+    buffers::per_buffer_idx_from_field_offset,
+    buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{indirect_function, set},
+    data::{as_buffer_objfwd, indirect_function, set},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
@@ -277,9 +278,7 @@ pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
 /// global value outside of any lexical scope.
 #[lisp_fn]
 pub fn boundp(mut symbol: LispSymbolRef) -> bool {
-    while symbol.get_redirect() == symbol_redirect::SYMBOL_VARALIAS {
-        symbol = symbol.get_indirect_variable();
-    }
+    symbol = symbol.get_indirect_variable();
 
     let valcontents = match symbol.get_redirect() {
         symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
@@ -403,6 +402,41 @@ pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
         void_variable!(symbol);
     }
     val
+}
+/// Non-nil if VARIABLE has a local binding in buffer BUFFER.
+/// BUFFER defaults to the current buffer.
+#[lisp_fn(min = "1")]
+pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) -> bool {
+    let buf: LispBufferRef = buffer.into();
+
+    symbol = symbol.get_indirect_variable();
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => false,
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            let blv = unsafe { symbol.get_blv() };
+            if blv.where_.eq(buf) {
+                blv.found()
+            } else {
+                let variable: LispObject = symbol.into();
+                buf.local_vars_iter().any(|local_var| {
+                    let (car, _) = local_var.into();
+                    variable.eq(car)
+                })
+            }
+        }
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let contents = symbol.get_fwd();
+            match as_buffer_objfwd(contents) {
+                Some(buffer_objfwd) => {
+                    let idx = per_buffer_idx_from_field_offset(buffer_objfwd.offset);
+                    idx == -1 || buf.value_p(idx as isize)
+                }
+                None => false,
+            }
+        },
+        _ => unreachable!(),
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

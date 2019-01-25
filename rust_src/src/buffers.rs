@@ -21,7 +21,7 @@ use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member, rassq, setcar},
-    lists::{LispConsCircularChecks, LispConsEndChecks},
+    lists::{CarIter, LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
@@ -365,6 +365,11 @@ impl LispBufferRef {
 
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    pub fn local_vars_iter(self) -> CarIter {
+        let vars = self.local_var_alist_;
+        vars.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
