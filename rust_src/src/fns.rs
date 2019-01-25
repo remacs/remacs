@@ -41,6 +41,10 @@ pub unsafe extern "C" fn validate_subarray(
     *ito = t;
 }
 
+/// Check that ARRAY can have a valid subarray [FROM..TO) given that its size is SIZE.
+/// If FROM is None, use 0, if TO is None, use SIZE.
+/// Count negative values backwards from the ends.
+/// Returns the two indices used.
 pub fn validate_subarray_rust(
     array: LispObject,
     from: Option<EmacsInt>,
@@ -365,7 +369,7 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
 /// The arguments START1, END1, START2, and END2, if non-nil, are
 /// positions specifying which parts of STR1 or STR2 to compare.  In
 /// string STR1, compare the part between START1 (inclusive) and END1
-/// \(exclusive).  If START1 is nil, it defaults to 0, the beginning of
+/// (exclusive).  If START1 is nil, it defaults to 0, the beginning of
 /// the string; if END1 is nil, it defaults to the length of the string.
 /// Likewise, in string STR2, compare the part between START2 and END2.
 /// Like in `substring', negative values are counted from the end.
@@ -405,8 +409,14 @@ pub fn compare_strings(
     let (from1, to1) = validate_subarray_rust(str1.into(), start1, end1, len1);
     let (from2, to2) = validate_subarray_rust(str2.into(), start2, end2, len2);
 
-    let iter1 = str1.char_indices_multibyte().skip(from1 as usize);
-    let iter2 = str2.char_indices_multibyte().skip(from2 as usize);
+    let iter1 = str1
+        .char_indices_multibyte()
+        .skip(from1 as usize)
+        .take((to1 - from1) as usize);
+    let iter2 = str2
+        .char_indices_multibyte()
+        .skip(from2 as usize)
+        .take((to2 - from2) as usize);
     let (mut index1, mut index2) = (0, 0);
     for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
         let i1 = i1 as isize;
@@ -427,18 +437,18 @@ pub fn compare_strings(
             continue;
         }
         if c1 < c2 {
-            return (from1 - i1).into();
+            return (from1 - i1 - 1).into();
         } else {
-            return (i1 - from1).into();
+            return (i1 - from1 + 1).into();
         }
     }
 
     // To is exclusive, so add 1.
     if index1 + 1 < to1 {
-        return (index1 - from1 + 1).into();
+        return (index1 - from1 + 2).into();
     }
     if index2 + 1 < to2 {
-        return (from1 - index1 - 1).into();
+        return (from1 - index1 - 2).into();
     }
 
     Qt
