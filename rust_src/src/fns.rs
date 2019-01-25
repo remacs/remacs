@@ -367,19 +367,18 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
         ))
         .into();
 
-        if ans.as_slice() == "yes".as_bytes() {
-            return true;
+        match ans.as_slice() {
+            b"yes" => { return true; },
+            b"no" => { return false; },
+            _ => {
+                ding(Qnil);
+                unsafe {
+                    Fdiscard_input();
+                    message1("Please answer yes or no.\0".as_ptr() as *const i8);
+                }
+                sleep_for(2.0, None);
+            }
         }
-        if ans.as_slice() == "no".as_bytes() {
-            return false;
-        }
-
-        ding(Qnil);
-        unsafe {
-            Fdiscard_input();
-            message1("Please answer yes or no.\0".as_ptr() as *const i8);
-        }
-        sleep_for(2.0, None);
     }
 }
 
