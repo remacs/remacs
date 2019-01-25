@@ -370,10 +370,10 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
         match ans.as_slice() {
             b"yes" => {
                 return true;
-            },
+            }
             b"no" => {
                 return false;
-            },
+            }
             _ => {
                 ding(Qnil);
                 unsafe {
