@@ -1,3 +1,5 @@
+//! Lisp object printing and output
+
 use remacs_macros::lisp_fn;
 
 use crate::{
