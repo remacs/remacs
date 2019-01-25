@@ -534,6 +534,10 @@ lost after dumping")))
 	 (equal (nth 2 command-line-args) "loadup"))
     (setcdr command-line-args (nthcdr 3 command-line-args)))
 
+;; Don't keep `load-file-name' set during the top-level session!
+;; Otherwise, it breaks a lot of code which does things like
+;; (or load-file-name byte-compile-current-file).
+(setq load-file-name nil)
 (eval top-level)
 
 
