@@ -348,9 +348,8 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
 
     if use_popup {
         unsafe { redisplay_preserve_echo_area(4) };
-        let pane: LispObject = vec![("Yes", Qt).into(), ("No", Qnil).into()].into();
-        let menu: LispObject = (prompt, pane).into();
-        return unsafe { Fx_popup_dialog(Qt, menu, Qnil) }.into();
+        let menu = (prompt, (("Yes", true), ("No", false)));
+        return unsafe { Fx_popup_dialog(Qt, menu.into(), Qnil) }.into();
     }
 
     let yes_or_no: LispObject = "(yes or no) ".into();
