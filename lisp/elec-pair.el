@@ -228,6 +228,12 @@ inside a comment or string."
   (let ((last-command-event char)
 	(blink-matching-paren nil)
 	(electric-pair-mode nil)
+        ;; When adding the "closer" delimiter, a job his function is
+        ;; frequently used for, we don't want to munch any extra
+        ;; newlines above us.  That would be the default behaviour of
+        ;; `electric-layout-mode', which potentially kicked in before
+        ;; us to add these newlines, and is probably about to kick in
+        ;; again after we add the closer.
         (electric-layout-allow-duplicate-newlines t))
     (self-insert-command 1)))
 
@@ -406,6 +412,15 @@ strings."
   (let ((ppss (electric-pair--syntax-ppss (point) '(comment))))
     (memq (nth 3 ppss) (list t char))))
 
+(defmacro electric-pair--save-literal-point-excursion (&rest body)
+  ;; FIXME: need this instead of `save-excursion' when functions in
+  ;; BODY, such as `electric-pair-inhibit-if-helps-balance' and
+  ;; `electric-pair-skip-if-helps-balance' modify and restore the
+  ;; buffer in a way that modifies the marker used by save-excursion.
+  (let ((point (make-symbol "point")))
+    `(let ((,point (point)))
+       (unwind-protect (progn ,@body) (goto-char ,point)))))
+
 (defun electric-pair-inhibit-if-helps-balance (char)
   "Return non-nil if auto-pairing of CHAR would hurt parentheses' balance.
 
@@ -427,7 +442,7 @@ happened."
                            (eq (cdr outermost) pair)))))
                  ((eq syntax ?\")
                   (electric-pair--unbalanced-strings-p char))))
-       (insert-before-markers char)))))
+       (insert char)))))
 
 (defun electric-pair-skip-if-helps-balance (char)
   "Return non-nil if skipping CHAR would benefit parentheses' balance.
@@ -452,7 +467,7 @@ happened."
                             (not (eq (cdr outermost) pair)))))))
                  ((eq syntax ?\")
                   (electric-pair--inside-string-p char))))
-       (insert-before-markers char)))))
+       (insert char)))))
 
 (defun electric-pair-default-skip-self (char)
   (if electric-pair-preserve-balance
@@ -498,7 +513,7 @@ happened."
         ((and (memq syntax '(?\) ?\" ?\$))
               (and (or unconditional
                        (if (functionp electric-pair-skip-self)
-                           (save-excursion
+                           (electric-pair--save-literal-point-excursion
                              (goto-char pos)
                              (funcall electric-pair-skip-self last-command-event))
                          electric-pair-skip-self))
@@ -527,7 +542,7 @@ happened."
         ((and (memq syntax '(?\( ?\" ?\$))
               (not overwrite-mode)
               (or unconditional
-                  (not (save-excursion
+                  (not (electric-pair--save-literal-point-excursion
                          (goto-char pos)
                          (funcall electric-pair-inhibit-predicate
                                   last-command-event)))))
@@ -544,6 +559,11 @@ happened."
                       (matching-paren (char-after))))
          (save-excursion (newline 1 t)))))))
 
+;; Prioritize this to kick in after
+;; `electric-layout-post-self-insert-function': that considerably
+;; simplifies interoperation when `electric-pair-mode',
+;; `electric-layout-mode' and `electric-indent-mode' are used
+;; together.  Use `vc-region-history' on these lines for more info.
 (put 'electric-pair-post-self-insert-function   'priority  50)
 
 (defun electric-pair-will-use-region ()

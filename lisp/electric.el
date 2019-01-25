@@ -270,14 +270,12 @@ or comment."
         ;; hence copied).
         (let ((at-newline (<= pos (line-beginning-position))))
           (when at-newline
-            (let ((before (copy-marker (1- pos) t))
-                  inhibit-reindentation)
+            (let ((before (copy-marker (1- pos) t)))
               (save-excursion
                 (unless
-                    (setq inhibit-reindentation
-                          (or (memq indent-line-function
-                                    electric-indent-functions-without-reindent)
-                              electric-indent-inhibit))
+                    (or (memq indent-line-function
+                              electric-indent-functions-without-reindent)
+                        electric-indent-inhibit)
                   ;; Don't reindent the previous line if the
                   ;; indentation function is not a real one.
                   (goto-char before)
