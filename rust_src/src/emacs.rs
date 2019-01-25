@@ -7,7 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::LispObject,
     remacs_sys::{build_string, Fcopy_sequence},
-    remacs_sys::{daemon_name, globals, Qnil, Qt},
+    remacs_sys::{daemon_name, globals},
 };
 
 /// Replaces IS_DAEMON
@@ -43,15 +43,11 @@ pub fn invocation_directory() -> LispObject {
 #[lisp_fn]
 pub fn daemonp() -> LispObject {
     unsafe {
-        if is_daemon() {
-            if !daemon_name.is_null() {
-                build_string(daemon_name)
-            } else {
-                Qt
-            }
-        } else {
-            Qnil
+        if is_daemon() && !daemon_name.is_null() {
+            return build_string(daemon_name);
         }
+
+        is_daemon().into()
     }
 }
 
