@@ -2477,21 +2477,6 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
   return Qnil;
 }
 
-
-DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
-       doc: /* Set the input focus to FRAME.
-FRAME nil means use the selected frame.  Optional argument NOACTIVATE
-means do not activate FRAME.
-
-If there is no window system support, this function does nothing.  */)
-     (Lisp_Object frame, Lisp_Object noactivate)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  x_focus_frame (decode_window_system_frame (frame), !NILP (noactivate));
-#endif
-  return Qnil;
-}
-
 
 /* Discard BUFFER from the buffer-list and buried-buffer-list of each frame.  */
 
@@ -5673,7 +5658,6 @@ iconify the top level frame instead.  */);
   defsubr (&Svisible_frame_list);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
-  defsubr (&Sx_focus_frame);
   defsubr (&Sredirect_frame_focus);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);

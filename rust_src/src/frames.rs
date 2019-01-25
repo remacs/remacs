@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::vertical_scroll_bar_type;
+use crate::{remacs_sys::vertical_scroll_bar_type, remacs_sys::x_focus_frame as c_x_focus_frame};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -607,6 +607,24 @@ pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> L
 pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.focus_frame
+}
+
+/// Set the input focus to FRAME.
+/// FRAME nil means use the selected frame. Optional argument NOACTIVATE
+/// means do not activate FRAME.
+///
+/// If there is no window system support, this function does nothing.
+#[lisp_fn(min = "1")]
+pub fn x_focus_frame(_frame: LispFrameLiveOrSelected, _noactivate: bool) -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let mut frame_ref: LispFrameRef = _frame.into();
+        unsafe {
+            c_x_focus_frame(frame_ref.as_mut(), _noactivate);
+        }
+    }
+
+    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
