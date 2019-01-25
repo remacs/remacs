@@ -237,7 +237,7 @@ pub fn command_error_default_function(
     // If the window system or terminal frame hasn't been initialized
     // yet, or we're not interactive, write the message to stderr and
     // exit.
-    if selected_frame.glyphs_initialized_p()
+    if !selected_frame.glyphs_initialized_p()
         // The initial frame is a special non-displaying frame. It
         // will be current in daemon mode when there are no frames to
         // display, and in non-daemon mode before the real frame has
