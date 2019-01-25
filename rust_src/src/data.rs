@@ -9,7 +9,7 @@ use crate::{
     buffers::per_buffer_idx,
     frames::selected_frame,
     keymap::get_keymap,
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
     lists::{get, member, memq, put},
     math::leq,

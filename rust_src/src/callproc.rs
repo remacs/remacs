@@ -7,7 +7,7 @@ use crate::{
     coding::encode_file_name,
     eval::{record_unwind_protect_int, unbind_to},
     fileio::expand_file_name,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::Fdelete_region,
     remacs_sys::NULL_DEVICE,
@@ -131,7 +131,7 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
     let spec = c_specpdl_index();
 
     let empty_input = if let Some(string) = start.as_string() {
-        string.len_chars() == 0
+        string.is_empty()
     } else if start.is_nil() {
         let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()

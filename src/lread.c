@@ -564,8 +564,8 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
     }
   c = DECODE_CHAR (charset, code);
   if (c < 0)
-    Fsignal (Qinvalid_read_syntax,
-	     list1 (build_string ("invalid multibyte form")));
+    xsignal1 (Qinvalid_read_syntax,
+              build_string ("invalid multibyte form"));
   return c;
 }
 

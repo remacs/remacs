@@ -3783,6 +3783,7 @@ build_string (const char *str)
 extern Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
 extern void make_byte_code (struct Lisp_Vector *);
 extern struct Lisp_Vector *allocate_vector (EMACS_INT);
+extern struct Lisp_Vector *allocate_record (EMACS_INT);
 
 /* Make an uninitialized vector for SIZE objects.  NOTE: you must
    be sure that GC cannot happen until the vector is completely
@@ -3983,10 +3984,12 @@ extern Lisp_Object run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
 				       Lisp_Object (*funcall)
 				       (ptrdiff_t nargs, Lisp_Object *args));
 extern Lisp_Object quit (void);
+extern Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
 INLINE _Noreturn void
 xsignal (Lisp_Object error_symbol, Lisp_Object data)
 {
   Fsignal (error_symbol, data);
+  eassume(false);
 }
 extern _Noreturn void xsignal0 (Lisp_Object);
 extern _Noreturn void xsignal1 (Lisp_Object, Lisp_Object);
@@ -4909,11 +4912,6 @@ bool backtrace_debug_on_exit (union specbinding *pdl);
 void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
-extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_cons (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_vectorlike (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
 INLINE_HEADER_END
 

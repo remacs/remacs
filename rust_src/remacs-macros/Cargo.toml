@@ -17,9 +17,3 @@ lazy_static = "1.0"
 
 [dev-dependencies]
 syn = { version = "0.13.1", features = ["full"] }
-
-[profile.release]
-panic = "abort"
-
-[profile.dev]
-panic = "abort"

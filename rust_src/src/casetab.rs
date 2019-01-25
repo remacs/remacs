@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     objects::eq,
     remacs_sys::{set_case_table, Qcase_table, Vascii_downcase_table},
     threads::ThreadState,

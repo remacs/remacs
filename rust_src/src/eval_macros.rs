@@ -17,13 +17,13 @@ macro_rules! xsignal {
     ($symbol:expr) => {
         #[allow(unused_unsafe)]
         unsafe {
-            crate::remacs_sys::Fsignal($symbol, crate::remacs_sys::Qnil);
+            crate::eval::signal($symbol, crate::remacs_sys::Qnil);
         }
     };
     ($symbol:expr, $($tt:tt)+) => {
         #[allow(unused_unsafe)]
         unsafe {
-            crate::remacs_sys::Fsignal($symbol, list!($($tt)+));
+            crate::eval::signal($symbol, list!($($tt)+));
         }
     };
 }

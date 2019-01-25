@@ -15,7 +15,6 @@
 #![feature(const_fn_union)]
 #![feature(never_type)]
 #![feature(ptr_offset_from)]
-#![feature(self_struct_ctor)]
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
@@ -137,18 +136,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
-
-#[cfg(feature = "compile-errors")]
-mod compile_errors {
-    use lisp::LispObject;
-    use remacs_macros::lisp_fn;
-
-    #[lisp_fn]
-    fn dummy(x: LispObject) -> LispObject {
-        compile_error!("error 001");
-    }
-}
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 
 mod hacks {
     use core::mem::ManuallyDrop;

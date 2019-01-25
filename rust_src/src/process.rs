@@ -6,7 +6,6 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     eval::run_hook_with_args_until_success,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,
@@ -50,10 +49,6 @@ impl LispObject {
     }
 
     pub fn as_process(self) -> Option<LispProcessRef> {
-        self.into()
-    }
-
-    pub fn as_process_or_error(self) -> LispProcessRef {
         self.into()
     }
 }
@@ -119,7 +114,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
                 Some(proc) => proc.into(),
             }
         }
-        None => proc_or_buf.as_process_or_error().into(),
+        None => LispProcessRef::from(proc_or_buf).into(),
     }
 }
 
@@ -310,7 +305,7 @@ pub fn process_thread(process: LispProcessRef) -> LispObject {
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_type(process: LispObject) -> LispObject {
-    let p_ref = get_process(process).as_process_or_error();
+    let p_ref: LispProcessRef = get_process(process).into();
     p_ref.ptype()
 }
 
@@ -495,7 +490,7 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     // Initialize in case ioctl doesn't exist or gives an error,
     // in a way that will cause returning t.
     process = get_process(process);
-    let mut proc_ref = process.as_process_or_error();
+    let mut proc_ref: LispProcessRef = process.into();
 
     if !proc_ref.ptype().eq(Qreal) {
         error!("Process {} is not a subprocess.", proc_ref.name);

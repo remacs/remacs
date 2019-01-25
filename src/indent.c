@@ -779,54 +779,6 @@ string_display_width (Lisp_Object string, Lisp_Object beg, Lisp_Object end)
 #endif /* 0 */
 
 
-DEFUN ("indent-to", Findent_to, Sindent_to, 1, 2, "NIndent to column: ",
-       doc: /* Indent from point with tabs and spaces until COLUMN is reached.
-Optional second argument MINIMUM says always do at least MINIMUM spaces
-even if that goes past COLUMN; by default, MINIMUM is zero.
-
-The return value is the column where the insertion ends.  */)
-  (Lisp_Object column, Lisp_Object minimum)
-{
-  EMACS_INT mincol;
-  register ptrdiff_t fromcol;
-  int tab_width = SANE_TAB_WIDTH (current_buffer);
-
-  CHECK_NUMBER (column);
-  if (NILP (minimum))
-    XSETFASTINT (minimum, 0);
-  CHECK_NUMBER (minimum);
-
-  fromcol = current_column ();
-  mincol = fromcol + XINT (minimum);
-  if (mincol < XINT (column)) mincol = XINT (column);
-
-  if (fromcol == mincol)
-    return make_number (mincol);
-
-  if (indent_tabs_mode)
-    {
-      Lisp_Object n;
-      XSETFASTINT (n, mincol / tab_width - fromcol / tab_width);
-      if (XFASTINT (n) != 0)
-	{
-	  Finsert_char (make_number ('\t'), n, Qt);
-
-	  fromcol = (mincol / tab_width) * tab_width;
-	}
-    }
-
-  XSETFASTINT (column, mincol - fromcol);
-  Finsert_char (make_number (' '), column, Qt);
-
-  last_known_column = mincol;
-  last_known_column_point = PT;
-  last_known_column_modified = MODIFF;
-
-  XSETINT (column, mincol);
-  return column;
-}
-
-
 ptrdiff_t
 position_indentation (ptrdiff_t pos_byte)
 {
@@ -2261,7 +2213,6 @@ syms_of_indent (void)
 
   DEFSYM (Qcolumns, "columns");
 
-  defsubr (&Sindent_to);
   defsubr (&Sline_number_display_width);
   defsubr (&Svertical_motion);
   defsubr (&Scompute_motion);

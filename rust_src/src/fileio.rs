@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     coding::encode_file_name,
     errno::errno,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     lists::LispCons,
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
@@ -41,7 +41,7 @@ def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");
 /// Return non-nil if NAME ends with a directory separator character.
 #[lisp_fn]
 pub fn directory_name_p(name: LispStringRef) -> bool {
-    if name.len_bytes() == 0 {
+    if name.is_empty() {
         return false;
     }
 

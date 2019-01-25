@@ -11,7 +11,6 @@ use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     numbers::MOST_NEGATIVE_FIXNUM,
     remacs_sys::{lisp_time, EmacsDouble, EmacsInt},

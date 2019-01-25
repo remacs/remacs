@@ -1,9 +1,7 @@
 //! Routines to deal with category tables.
 
 use crate::{
-    chartable::LispCharTableRef,
-    lisp::{defsubr, LispObject},
-    remacs_sys::Qcategory_table,
+    chartable::LispCharTableRef, lisp::LispObject, remacs_sys::Qcategory_table,
     threads::ThreadState,
 };
 

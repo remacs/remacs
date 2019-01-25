@@ -1,6 +1,6 @@
 //! Generic Lisp eval functions
 
-use std::ptr;
+use std::{ptr, unreachable};
 
 use libc::c_void;
 
@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef},
     lists::{assq, car, cdr, get, memq, nth, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
@@ -22,7 +22,7 @@ use crate::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
         grow_specpdl, internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace,
-        record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
+        record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
@@ -114,10 +114,11 @@ pub fn and(args: LispObject) -> LispObject {
 
 /// Eval each item in ARGS and then compare it using CMP.
 /// INITIAL is returned if the list has no cons cells.
-fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
-where
-    CmpFunc: Fn(LispObject, LispObject) -> bool,
-{
+fn eval_and_compare_all(
+    args: LispObject,
+    initial: LispObject,
+    cmp: impl Fn(LispObject, LispObject) -> bool,
+) -> LispObject {
     let mut val = initial;
 
     for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
@@ -1272,6 +1273,32 @@ pub fn catch(args: LispCons) -> LispObject {
     let val = unsafe { eval_sub(tag) };
 
     unsafe { internal_catch(val, Some(Fprogn), body) }
+}
+
+/// Signal an error.  Args are ERROR-SYMBOL and associated DATA. This
+/// function does not return.
+///
+/// An error symbol is a symbol with an `error-conditions' property
+/// that is a list of condition names.  A handler for any of those
+/// names will get to handle this signal.  The symbol `error' should
+/// normally be one of them.
+///
+/// DATA should be a list.  Its elements are printed as part of the
+/// error message.  See Info anchor `(elisp)Definition of signal' for
+/// some details on how this error message is constructed.
+/// If the signal is handled, DATA is made available to the handler.
+/// See also the function `condition-case'.
+#[lisp_fn]
+pub fn signal(error_symbol: LispObject, data: LispObject) -> ! {
+    #[cfg(test)]
+    {
+        panic!("Fsignal called during tests.");
+    }
+    #[cfg(not(test))]
+    {
+        unsafe { signal_or_quit(error_symbol, data, false) };
+        unreachable!();
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

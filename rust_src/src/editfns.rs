@@ -16,7 +16,7 @@ use crate::{
     character::{char_head_p, dec_pos},
     eval::{progn, record_unwind_protect, unbind_to},
     indent::invalidate_current_column,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
         set_point_from_marker,
@@ -46,7 +46,7 @@ use crate::{
     threads::{c_specpdl_index, ThreadState},
     time::{lisp_time_struct, time_overflow, LispTime},
     util::clip_to_bounds,
-    windows::selected_window,
+    windows::{selected_window, LispWindowRef},
 };
 
 /// Return value of point, as an integer.
@@ -462,7 +462,7 @@ pub fn byte_to_string(byte: EmacsInt) -> LispObject {
 /// Return the first character in STRING.
 #[lisp_fn]
 pub fn string_to_char(string: LispStringRef) -> EmacsInt {
-    if string.len_chars() > 0 {
+    if !string.is_empty() {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
             EmacsInt::from(cp)
@@ -1113,7 +1113,7 @@ pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) 
 // offload some work from GC.
 #[no_mangle]
 pub extern "C" fn save_excursion_save() -> LispObject {
-    let window = selected_window().as_window_or_error();
+    let window: LispWindowRef = selected_window().into();
 
     unsafe {
         make_save_obj_obj_obj_obj(
@@ -1385,10 +1385,11 @@ pub fn delete_and_extract_region(
     }
 }
 
-fn time_arith<F>(a: LispObject, b: LispObject, op: F) -> Vec<EmacsInt>
-where
-    F: FnOnce(LispTime, LispTime) -> LispTime,
-{
+fn time_arith(
+    a: LispObject,
+    b: LispObject,
+    op: impl FnOnce(LispTime, LispTime) -> LispTime,
+) -> Vec<EmacsInt> {
     let mut alen: c_int = 0;
     let mut blen: c_int = 0;
     let ta = unsafe { lisp_time_struct(a, &mut alen) };

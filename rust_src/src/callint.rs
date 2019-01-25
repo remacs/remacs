@@ -2,7 +2,7 @@
 
 use crate::{
     eval::{funcall, unbind_to},
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::temporarily_switch_to_single_kboard,
     threads::c_specpdl_index,
