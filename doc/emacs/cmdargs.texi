@@ -387,12 +387,16 @@ elisp, The GNU Emacs Lisp Reference Manual}.
 @item --dump-file=@var{file}
 @opindex --dump-file
 @cindex specify dump file
-Load the dumped Emacs state from the named @var{file}.  By default,
-Emacs will look for its dump state in a file named
-@file{@var{emacs}.pdmp} in the directory of the executable, where
-@var{emacs} is the name of the Emacs executable file, normally just
-@file{emacs}.  However, if you rename or move the dump file to a
-different place, you can use this option to tell Emacs where to find
+Load the dumped Emacs state from the named @var{file}.  By default, an
+installed Emacs will look for its dump state in a file named
+@file{@var{emacs}.pdmp} in the directory where the Emacs installation
+puts the architecture-dependent files; the variable
+@code{exec-directory} holds the name of that directory.  @var{emacs}
+is the name of the Emacs executable file, normally just @file{emacs}.
+(When you invoke Emacs from the @file{src} directory where it was
+built without installing it, it will look for the dump file in the
+directory of the executable.)  If you rename or move the dump file to
+a different place, you can use this option to tell Emacs where to find
 that file.
 @end table
 

@@ -1626,7 +1626,7 @@ See also the function `substitute-in-file-name'.")
 }
 #endif
 
-static bool
+bool
 file_name_absolute_p (const char *filename)
 {
   return

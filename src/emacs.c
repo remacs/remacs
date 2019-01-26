@@ -703,7 +703,6 @@ static enum pdumper_load_result
 load_pdump (int argc, char **argv)
 {
   const char *const suffix = ".pdmp";
-  const char *const argv0_base = "emacs";
   enum pdumper_load_result result;
 #ifdef WINDOWSNT
   size_t argv0_len;
@@ -746,7 +745,7 @@ load_pdump (int argc, char **argv)
      should have the same basename.  */
 
   dump_file = alloca (strlen (argv[0]) + strlen (suffix) + 1);
-#ifdef WINDOWSNT
+#ifdef DOS_NT
   /* Remove the .exe extension if present.  */
   argv0_len = strlen (argv[0]);
   if (argv0_len >= 4 && c_strcasecmp (argv[0] + argv0_len - 4, ".exe") == 0)
@@ -763,16 +762,16 @@ load_pdump (int argc, char **argv)
     fatal ("could not load dump file \"%s\": %s",
            dump_file, dump_error_to_string (result));
 
-  /* Finally, look for "emacs.pdmp" in PATH_EXEC.  We hardcode
-     "emacs" in "emacs.pdmp" so that the Emacs binary still works
-     if the user copies and renames it.
-
-     FIXME: this doesn't work with emacs-XX.YY.ZZ.pdmp versioned files.  */
 #ifdef WINDOWSNT
   /* On MS-Windows, PATH_EXEC normally starts with a literal
      "%emacs_dir%", so it will never work without some tweaking.  */
   path_exec = w32_relocate (path_exec);
 #endif
+
+  /* Look for "emacs.pdmp" in PATH_EXEC.  We hardcode "emacs" in
+     "emacs.pdmp" so that the Emacs binary still works if the user
+     copies and renames it.  */
+  const char *argv0_base = "emacs";
   dump_file = alloca (strlen (path_exec)
                       + 1
                       + strlen (argv0_base)
@@ -781,6 +780,40 @@ load_pdump (int argc, char **argv)
   sprintf (dump_file, "%s%c%s%s",
            path_exec, DIRECTORY_SEP, argv0_base, suffix);
   result = pdumper_load (dump_file);
+
+  if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
+    fatal ("could not load dump file \"%s\": %s",
+           dump_file, dump_error_to_string (result));
+  if (result != PDUMPER_LOAD_SUCCESS)
+    {
+      /* Finally, look for basename(argv[0])+".pdmp" in PATH_EXEC.
+	 This way, they can rename both the executable and its pdump
+	 file in PATH_EXEC, and have several Emacs configurations in
+	 the same versioned libexec subdirectory.  */
+      char *p, *last_sep = NULL;
+      for (p = argv[0]; *p; p++)
+	{
+	  if (IS_DIRECTORY_SEP (*p))
+	    last_sep = p;
+	}
+      argv0_base = last_sep ? last_sep + 1 : argv[0];
+      dump_file = alloca (strlen (path_exec)
+			  + 1
+			  + strlen (argv0_base)
+			  + strlen (suffix)
+			  + 1);
+#ifdef DOS_NT
+      argv0_len = strlen (argv0_base);
+      if (argv0_len >= 4
+	  && c_strcasecmp (argv0_base + argv0_len - 4, ".exe") == 0)
+	sprintf (dump_file, "%s%c%.*s%s", path_exec, DIRECTORY_SEP,
+		 (int)(argv0_len - 4), argv0_base, suffix);
+      else
+#endif
+      sprintf (dump_file, "%s%c%s%s",
+	       path_exec, DIRECTORY_SEP, argv0_base, suffix);
+      result = pdumper_load (dump_file);
+    }
   if (result != PDUMPER_LOAD_SUCCESS)
     dump_file = NULL;
 
@@ -982,6 +1015,10 @@ main (int argc, char **argv)
     }
 
   emacs_wd = emacs_get_current_dir_name ();
+#ifdef HAVE_PDUMPER
+  if (dumped_with_pdumper_p ())
+    pdumper_record_wd (emacs_wd);
+#endif
 
   if (argmatch (argv, argc, "-chdir", "--chdir", 4, &ch_to_dir, &skip_args))
     {

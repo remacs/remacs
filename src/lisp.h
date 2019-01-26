@@ -4224,6 +4224,7 @@ extern void syms_of_marker (void);
 /* Defined in fileio.c.  */
 
 extern char *splice_dir_file (char *, char const *, char const *);
+extern bool file_name_absolute_p (const char *);
 extern char const *get_homedir (void);
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,

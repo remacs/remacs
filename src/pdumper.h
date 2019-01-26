@@ -260,6 +260,10 @@ pdumper_clear_marks (void)
    and execution should resume.  */
 bool pdumper_handle_page_fault (void *fault_addr_ptr);
 
+/* Record the Emacs startup directory, relative to which the pdump
+   file was loaded.  */
+extern void pdumper_record_wd (const char *);
+
 void syms_of_pdumper (void);
 
 INLINE_HEADER_END
