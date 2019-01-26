@@ -4,7 +4,11 @@ use cfg_if::cfg_if;
 
 use remacs_macros::lisp_fn;
 
-use crate::{lisp::LispObject, remacs_sys::globals, remacs_sys::Fcopy_sequence};
+use crate::{
+    lisp::LispObject,
+    remacs_sys::{build_string, Fcopy_sequence},
+    remacs_sys::{daemon_name, globals},
+};
 
 /// Replaces IS_DAEMON
 cfg_if! {
@@ -32,6 +36,19 @@ pub fn invocation_name() -> LispObject {
 #[lisp_fn]
 pub fn invocation_directory() -> LispObject {
     unsafe { Fcopy_sequence(globals.Vinvocation_directory) }
+}
+
+/// Return non-nil if the current emacs process is a daemon.
+/// If the daemon was given a name argument, return that name.
+#[lisp_fn]
+pub fn daemonp() -> LispObject {
+    unsafe {
+        if is_daemon() && !daemon_name.is_null() {
+            return build_string(daemon_name);
+        }
+
+        is_daemon().into()
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/emacs_exports.rs"));
