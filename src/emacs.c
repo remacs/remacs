@@ -780,11 +780,10 @@ load_pdump (int argc, char **argv)
   sprintf (dump_file, "%s%c%s%s",
            path_exec, DIRECTORY_SEP, argv0_base, suffix);
   result = pdumper_load (dump_file);
+  if (result == PDUMPER_LOAD_SUCCESS)
+    goto out;
 
-  if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
-    fatal ("could not load dump file \"%s\": %s",
-           dump_file, dump_error_to_string (result));
-  if (result != PDUMPER_LOAD_SUCCESS)
+  if (result == PDUMPER_LOAD_FILE_NOT_FOUND)
     {
       /* Finally, look for basename(argv[0])+".pdmp" in PATH_EXEC.
 	 This way, they can rename both the executable and its pdump
@@ -814,6 +813,10 @@ load_pdump (int argc, char **argv)
 	       path_exec, DIRECTORY_SEP, argv0_base, suffix);
       result = pdumper_load (dump_file);
     }
+  else
+    fatal ("could not load dump file \"%s\": %s",
+           dump_file, dump_error_to_string (result));
+
   if (result != PDUMPER_LOAD_SUCCESS)
     dump_file = NULL;
 
