@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::LispBufferRef,
     editfns::{goto_char, point},
-    frames::{LispFrameOrSelected, LispFrameRef},
+    frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
@@ -906,8 +906,8 @@ pub fn window_frame(window: LispWindowValidOrSelected) -> LispObject {
 /// Return the minibuffer window for frame FRAME.
 /// If FRAME is omitted or nil, it defaults to the selected frame.
 #[lisp_fn(min = "0")]
-pub fn minibuffer_window(frame: LispFrameOrSelected) -> LispObject {
-    let frame = frame.live_or_error();
+pub fn minibuffer_window(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame: LispFrameRef = frame.into();
     frame.minibuffer_window
 }
 

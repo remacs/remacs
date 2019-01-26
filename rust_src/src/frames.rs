@@ -165,17 +165,6 @@ impl From<LispFrameOrSelected> for LispFrameRef {
     }
 }
 
-impl LispFrameOrSelected {
-    pub fn live_or_error(self) -> LispFrameRef {
-        let frame = LispFrameRef::from(self);
-        if frame.is_live() {
-            frame
-        } else {
-            wrong_type!(Qframe_live_p, self);
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct LispFrameLiveOrSelected(LispFrameRef);
 
@@ -281,11 +270,11 @@ pub fn frame_selected_window(frame_or_window: LispObject) -> LispWindowRef {
 /// Return WINDOW.
 #[lisp_fn(min = "2")]
 pub fn set_frame_selected_window(
-    frame: LispFrameOrSelected,
+    frame: LispFrameLiveOrSelected,
     window: LispObject,
     norecord: LispObject,
 ) -> LispWindowRef {
-    let mut frame_ref = frame.live_or_error();
+    let mut frame_ref: LispFrameRef = frame.into();
     let w = window.as_live_window_or_error();
 
     if frame_ref != w.frame.as_frame().unwrap() {
@@ -350,8 +339,8 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispFrameOrSelected) -> (c_int, c_int) {
-    let frame_ref = frame.live_or_error();
+pub fn frame_position(frame: LispFrameLiveOrSelected) -> (c_int, c_int) {
+    let frame_ref: LispFrameRef = frame.into();
     (frame_ref.left_pos, frame_ref.top_pos)
 }
 
@@ -510,8 +499,8 @@ pub fn delete_frame_lisp(frame: LispObject, force: bool) {
 /// If MINIFRAME is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame_ref = frame.live_or_error();
+pub fn next_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref: LispFrameRef = frame.into();
     let frame_obj = frame_ref.into();
 
     // Track how many times have we passed FRAME in the list.
@@ -551,8 +540,8 @@ pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFram
 /// If MINIFRAME is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame_ref = frame.live_or_error();
+pub fn previous_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref: LispFrameRef = frame.into();
     let frame_obj: LispObject = frame_ref.into();
     let mut prev = Qnil;
 
@@ -591,8 +580,8 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
 /// otherwise used with utter care to avoid that running functions on
 /// `window-configuration-change-hook' is impeded forever.
 #[lisp_fn]
-pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
-    let mut frame_ref = frame.live_or_error();
+pub fn frame_after_make_frame(frame: LispFrameLiveOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref: LispFrameRef = frame.into();
     frame_ref.set_after_make_frame(made.is_not_nil());
     frame_ref.set_inhibit_horizontal_resize(false);
     frame_ref.set_inhibit_vertical_resize(false);
