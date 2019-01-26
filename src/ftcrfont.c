@@ -28,34 +28,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "ftfont.h"
 #include "pdumper.h"
 
-/* FTCR font driver.  */
-
-/* The actual structure for FTCR font.  A pointer to this structure
-   can be cast to struct font *.  */
-
-struct ftcrfont_info
-{
-  struct font font;
-  /* The following members up to and including 'matrix' must be here
-     in this order to be compatible with struct ftfont_info (in
-     ftfont.c).  */
-#ifdef HAVE_LIBOTF
-  bool maybe_otf;	  /* Flag to tell if this may be OTF or not.  */
-  OTF *otf;
-#endif	/* HAVE_LIBOTF */
-  FT_Size ft_size;
-  int index;
-  FT_Matrix matrix;
-
-  cairo_font_face_t *cr_font_face;
-  /* To prevent cairo from cluttering the activated FT_Size maintained
-     in ftfont.c, we activate this special FT_Size before drawing.  */
-  FT_Size ft_size_draw;
-  /* Font metrics cache.  */
-  struct font_metrics **metrics;
-  short metrics_nrows;
-};
-
 #define METRICS_NCOLS_PER_ROW	(128)
 
 enum metrics_status
@@ -72,7 +44,7 @@ ftcrfont_glyph_extents (struct font *font,
                         unsigned glyph,
                         struct font_metrics *metrics)
 {
-  struct ftcrfont_info *ftcrfont_info = (struct ftcrfont_info *) font;
+  struct font_info *ftcrfont_info = (struct font_info *) font;
   int row, col;
   struct font_metrics *cache;
 
@@ -134,7 +106,7 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 {
   Lisp_Object font_object;
   struct font *font;
-  struct ftcrfont_info *ftcrfont_info;
+  struct font_info *ftcrfont_info;
   FT_Face ft_face;
   FT_UInt size;
 
@@ -142,14 +114,14 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   size = XFIXNUM (AREF (entity, FONT_SIZE_INDEX));
   if (size == 0)
     size = pixel_size;
-  font_object = font_build_object (VECSIZE (struct ftcrfont_info),
+  font_object = font_build_object (VECSIZE (struct font_info),
 				   Qftcr, entity, size);
   font_object = ftfont_open2 (f, entity, pixel_size, font_object);
   if (NILP (font_object)) return Qnil;
 
   font = XFONT_OBJECT (font_object);
   font->driver = &ftcrfont_driver;
-  ftcrfont_info = (struct ftcrfont_info *) font;
+  ftcrfont_info = (struct font_info *) font;
   ft_face = ftcrfont_info->ft_size->face;
   FT_New_Size (ft_face, &ftcrfont_info->ft_size_draw);
   FT_Activate_Size (ftcrfont_info->ft_size_draw);
@@ -169,7 +141,7 @@ ftcrfont_close (struct font *font)
   if (font_data_structures_may_be_ill_formed ())
     return;
 
-  struct ftcrfont_info *ftcrfont_info = (struct ftcrfont_info *) font;
+  struct font_info *ftcrfont_info = (struct font_info *) font;
   int i;
 
   block_input ();
@@ -225,7 +197,7 @@ ftcrfont_draw (struct glyph_string *s,
 {
   struct frame *f = s->f;
   struct face *face = s->face;
-  struct ftcrfont_info *ftcrfont_info = (struct ftcrfont_info *) s->font;
+  struct font_info *ftcrfont_info = (struct font_info *) s->font;
   cairo_t *cr;
   cairo_glyph_t *glyphs;
   cairo_surface_t *surface;
@@ -316,9 +288,6 @@ struct font_driver const ftcrfont_driver =
 void
 syms_of_ftcrfont (void)
 {
-  if (ftfont_info_size != offsetof (struct ftcrfont_info, cr_font_face))
-    abort ();
-
   DEFSYM (Qftcr, "ftcr");
   pdumper_do_now_and_after_load (syms_of_ftcrfont_for_pdumper);
 }
