@@ -6035,10 +6035,21 @@ init_display_interactive (void)
 
   /* If running as a daemon, no need to initialize any frames/terminal,
      except on Windows, where we at least want to initialize it.  */
-#ifndef WINDOWSNT
   if (IS_DAEMON)
+    {
+      /* Pdump'ed Emacs doesn't record the initial frame from temacs,
+	 so the non-basic faces realized for that frame in temacs
+	 aren't in emacs.  This causes errors when users try to
+	 customize those faces in their init file.  The call to
+	 init_faces_initial will realize these faces now.  (Non-daemon
+	 Emacs does this either near the end of this function or when
+	 the GUI frame is created.)  */
+      if (dumped_with_pdumper_p ())
+        init_faces_initial ();
+#ifndef WINDOWSNT
       return;
 #endif
+    }
 
   /* If the user wants to use a window system, we shouldn't bother
      initializing the terminal.  This is especially important when the
