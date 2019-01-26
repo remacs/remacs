@@ -32,6 +32,8 @@ Reference Manual}.
                           By changing them, you can redefine keys.
 * Init File::           How to write common customizations in the
                           initialization file.
+* Authentication::      Keeping persistent authentication information.
+
 @end menu
 
 @node Easy Customization
@@ -2609,3 +2611,39 @@ instance:
 
 @noindent
 Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
+
+@node Authentication
+@section Keeping Persistent Authentication Information
+@cindex ~/.authinfo file
+@cindex ~/.authinfo.gpg file
+@cindex ~/.netrc file
+
+  Some Emacs packages, which connect to other services, require
+authentication (@pxref{Passwords}), e.g., @ref{Top, Gnus,, gnus, The
+Gnus Manual}, or @ref{Top, Tramp,, tramp, The Tramp Manual}.  Because
+it might be annoying to provide the same user name and password again
+and again, Emacs offers to keep this information persistent via the
+auth-source library.
+
+  Per default, this information is taken from the file
+@file{~/.authinfo} or @file{~/.authinfo.gpg} or @file{~/.netrc}.
+These files have a syntax similar to netrc files as known from the ftp
+program, like
+
+@example
+machine @var{mymachine} login @var{myloginname} password @var{mypassword} port @var{myport}
+@end example
+
+  Similarly, the auth-source library supports multiple storage
+backend, currently either the classic netrc backend, JSON files, the
+Secret Service API, and pass, the standard unix password manager.
+
+@vindex auth-sources
+  All these alternatives are customized via the user option
+@code{auth-sources}, @ref{Top, Emacs auth-source,, auth, Emacs auth-source}.
+
+@vindex auth-source-save-behavior
+  When a password is entered interactively, which is not found via the
+configured backend, some of the backends offer to save it
+persistently.  This can be changed by the customizing user option
+@code{auth-source-save-behavior}.
