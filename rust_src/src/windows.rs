@@ -593,6 +593,7 @@ impl LispGlyphMatrixRef {
 pub struct LispWindowOrSelected(LispObject);
 
 impl From<LispObject> for LispWindowOrSelected {
+    /// Same as `decode_any_window`
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(selected_window, |w| w))
     }
@@ -703,7 +704,7 @@ pub fn selected_window() -> LispObject {
 /// If WINDOW is omitted or nil, it defaults to the selected window.
 /// Return nil for an internal window or a deleted window.
 #[lisp_fn(min = "0")]
-pub fn window_buffer(window: LispWindowValidOrSelected) -> LispObject {
+pub fn window_buffer(window: LispWindowOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
     if win.is_live() {
         win.contents
