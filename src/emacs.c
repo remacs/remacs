@@ -813,12 +813,14 @@ load_pdump (int argc, char **argv)
 	       path_exec, DIRECTORY_SEP, argv0_base, suffix);
       result = pdumper_load (dump_file);
     }
-  else
-    fatal ("could not load dump file \"%s\": %s",
-           dump_file, dump_error_to_string (result));
 
   if (result != PDUMPER_LOAD_SUCCESS)
-    dump_file = NULL;
+    {
+      if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
+	fatal ("could not load dump file \"%s\": %s",
+	       dump_file, dump_error_to_string (result));
+      dump_file = NULL;
+    }
 
  out:
   return result;
