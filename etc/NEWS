@@ -590,6 +590,12 @@ Of course it will still find it if you have it in ~/.ecompleterc
 
 ** Gnus
 
+---
+*** Gnus now maps imaps to 993 only on old MS-Windows versions.
+The nnimap backend used to do this unconditionally to work around
+problems on old versions of MS-Windows.  This is now done only for
+Windows XP and older.
+
 +++
 *** The nnimap backend now has support for IMAP namespaces.
 This feature can be enabled by setting the new 'nnimap-use-namespaces'

@@ -413,8 +413,11 @@ textual parts.")
 	nil
       stream)))
 
+;; This is only needed for Windows XP or earlier
 (defun nnimap-map-port (port)
-  (if (equal port "imaps")
+  (if (and (eq system-type 'windows-nt)
+           (<= (car (x-server-version)) 5)
+           (equal port "imaps"))
       "993"
     port))
 
