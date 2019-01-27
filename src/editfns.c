@@ -668,7 +668,7 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
     /* It is possible that NEW_POS is not within the same field as
        OLD_POS; try to move NEW_POS so that it is.  */
     {
-      ptrdiff_t shortage;
+      ptrdiff_t counted;
       Lisp_Object field_bound;
 
       if (fwd)
@@ -691,8 +691,8 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
 		 there's an intervening newline or not.  */
 	      || (find_newline (XFIXNAT (new_pos), -1,
 				XFIXNAT (field_bound), -1,
-				fwd ? -1 : 1, &shortage, NULL, 1),
-		  shortage != 0)))
+				fwd ? -1 : 1, &counted, NULL, 1),
+		  counted == 0)))
 	/* Constrain NEW_POS to FIELD_BOUND.  */
 	new_pos = field_bound;
 

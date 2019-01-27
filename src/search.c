@@ -647,14 +647,16 @@ newline_cache_on_off (struct buffer *buf)
    If COUNT is zero, do anything you please; run rogue, for all I care.
 
    If END is zero, use BEGV or ZV instead, as appropriate for the
-   direction indicated by COUNT.
+   direction indicated by COUNT.  If START_BYTE is -1 it is unknown,
+   and similarly for END_BYTE.
 
-   If we find COUNT instances, set *SHORTAGE to zero, and return the
+   If we find COUNT instances, set *COUNTED to COUNT, and return the
    position past the COUNTth match.  Note that for reverse motion
    this is not the same as the usual convention for Emacs motion commands.
 
-   If we don't find COUNT instances before reaching END, set *SHORTAGE
-   to the number of newlines left unfound, and return END.
+   If we don't find COUNT instances before reaching END, set *COUNTED
+   to the number of newlines left found (negated if COUNT is negative),
+   and return END.
 
    If BYTEPOS is not NULL, set *BYTEPOS to the byte position corresponding
    to the returned character position.
@@ -664,23 +666,17 @@ newline_cache_on_off (struct buffer *buf)
 
 ptrdiff_t
 find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
-	      ptrdiff_t end_byte, ptrdiff_t count, ptrdiff_t *shortage,
+	      ptrdiff_t end_byte, ptrdiff_t count, ptrdiff_t *counted,
 	      ptrdiff_t *bytepos, bool allow_quit)
 {
   struct region_cache *newline_cache;
-  int direction;
   struct buffer *cache_buffer;
 
-  if (count > 0)
+  if (!end)
     {
-      direction = 1;
-      if (!end)
+      if (count > 0)
 	end = ZV, end_byte = ZV_BYTE;
-    }
-  else
-    {
-      direction = -1;
-      if (!end)
+      else
 	end = BEGV, end_byte = BEGV_BYTE;
     }
   if (end_byte == -1)
@@ -692,8 +688,8 @@ find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
   else
     cache_buffer = current_buffer;
 
-  if (shortage != 0)
-    *shortage = 0;
+  if (counted)
+    *counted = count;
 
   if (count > 0)
     while (start != end)
@@ -936,8 +932,8 @@ find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
         }
       }
 
-  if (shortage)
-    *shortage = count * direction;
+  if (counted)
+    *counted -= count;
   if (bytepos)
     {
       *bytepos = start_byte == -1 ? CHAR_TO_BYTE (start) : start_byte;
@@ -952,30 +948,28 @@ find_newline (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
    We report the resulting position by calling TEMP_SET_PT_BOTH.
 
    If we find COUNT instances. we position after (always after,
-   even if scanning backwards) the COUNTth match, and return 0.
+   even if scanning backwards) the COUNTth match.
 
    If we don't find COUNT instances before reaching the end of the
-   buffer (or the beginning, if scanning backwards), we return
-   the number of line boundaries left unfound, and position at
+   buffer (or the beginning, if scanning backwards), we position at
    the limit we bumped up against.
 
    If ALLOW_QUIT, check for quitting.  That's good to do
    except in special cases.  */
 
-ptrdiff_t
+void
 scan_newline (ptrdiff_t start, ptrdiff_t start_byte,
 	      ptrdiff_t limit, ptrdiff_t limit_byte,
 	      ptrdiff_t count, bool allow_quit)
 {
-  ptrdiff_t charpos, bytepos, shortage;
+  ptrdiff_t charpos, bytepos, counted;
 
   charpos = find_newline (start, start_byte, limit, limit_byte,
-			  count, &shortage, &bytepos, allow_quit);
-  if (shortage)
+			  count, &counted, &bytepos, allow_quit);
+  if (counted != count)
     TEMP_SET_PT_BOTH (limit, limit_byte);
   else
     TEMP_SET_PT_BOTH (charpos, bytepos);
-  return shortage;
 }
 
 /* Like above, but always scan from point and report the
@@ -985,19 +979,19 @@ ptrdiff_t
 scan_newline_from_point (ptrdiff_t count, ptrdiff_t *charpos,
 			 ptrdiff_t *bytepos)
 {
-  ptrdiff_t shortage;
+  ptrdiff_t counted;
 
   if (count <= 0)
     *charpos = find_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, count - 1,
-			     &shortage, bytepos, 1);
+			     &counted, bytepos, 1);
   else
     *charpos = find_newline (PT, PT_BYTE, ZV, ZV_BYTE, count,
-			     &shortage, bytepos, 1);
-  return shortage;
+			     &counted, bytepos, 1);
+  return counted;
 }
 
 /* Like find_newline, but doesn't allow QUITting and doesn't return
-   SHORTAGE.  */
+   COUNTED.  */
 ptrdiff_t
 find_newline_no_quit (ptrdiff_t from, ptrdiff_t frombyte,
 		      ptrdiff_t cnt, ptrdiff_t *bytepos)
@@ -1013,10 +1007,10 @@ ptrdiff_t
 find_before_next_newline (ptrdiff_t from, ptrdiff_t to,
 			  ptrdiff_t cnt, ptrdiff_t *bytepos)
 {
-  ptrdiff_t shortage;
-  ptrdiff_t pos = find_newline (from, -1, to, -1, cnt, &shortage, bytepos, 1);
+  ptrdiff_t counted;
+  ptrdiff_t pos = find_newline (from, -1, to, -1, cnt, &counted, bytepos, 1);
 
-  if (shortage == 0)
+  if (counted == cnt)
     {
       if (bytepos)
 	DEC_BOTH (pos, *bytepos);
@@ -3210,7 +3204,7 @@ DEFUN ("regexp-quote", Fregexp_quote, Sregexp_quote, 1, 1, 0,
 /* Like find_newline, but doesn't use the cache, and only searches forward.  */
 static ptrdiff_t
 find_newline1 (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
-	       ptrdiff_t end_byte, ptrdiff_t count, ptrdiff_t *shortage,
+	       ptrdiff_t end_byte, ptrdiff_t count, ptrdiff_t *counted,
 	       ptrdiff_t *bytepos, bool allow_quit)
 {
   if (count > 0)
@@ -3226,8 +3220,8 @@ find_newline1 (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
   if (end_byte == -1)
     end_byte = CHAR_TO_BYTE (end);
 
-  if (shortage != 0)
-    *shortage = 0;
+  if (counted)
+    *counted = count;
 
   if (count > 0)
     while (start != end)
@@ -3284,8 +3278,8 @@ find_newline1 (ptrdiff_t start, ptrdiff_t start_byte, ptrdiff_t end,
         }
       }
 
-  if (shortage)
-    *shortage = count;
+  if (counted)
+    *counted -= count;
   if (bytepos)
     {
       *bytepos = start_byte == -1 ? CHAR_TO_BYTE (start) : start_byte;
@@ -3306,7 +3300,7 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
   (Lisp_Object buffer)
 {
   struct buffer *buf, *old = NULL;
-  ptrdiff_t shortage, nl_count_cache, nl_count_buf;
+  ptrdiff_t nl_count_cache, nl_count_buf;
   Lisp_Object cache_newlines, buf_newlines, val;
   ptrdiff_t from, found, i;
 
@@ -3332,8 +3326,7 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
 
   /* How many newlines are there according to the cache?  */
   find_newline (BEGV, BEGV_BYTE, ZV, ZV_BYTE,
-		TYPE_MAXIMUM (ptrdiff_t), &shortage, NULL, true);
-  nl_count_cache = TYPE_MAXIMUM (ptrdiff_t) - shortage;
+		TYPE_MAXIMUM (ptrdiff_t), &nl_count_cache, NULL, true);
 
   /* Create vector and populate it.  */
   cache_newlines = make_uninit_vector (nl_count_cache);
@@ -3342,11 +3335,11 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
     {
       for (from = BEGV, found = from, i = 0; from < ZV; from = found, i++)
 	{
-	  ptrdiff_t from_byte = CHAR_TO_BYTE (from);
+	  ptrdiff_t from_byte = CHAR_TO_BYTE (from), counted;
 
-	  found = find_newline (from, from_byte, 0, -1, 1, &shortage,
+	  found = find_newline (from, from_byte, 0, -1, 1, &counted,
 				NULL, true);
-	  if (shortage != 0 || i >= nl_count_cache)
+	  if (counted == 0 || i >= nl_count_cache)
 	    break;
 	  ASET (cache_newlines, i, make_fixnum (found - 1));
 	}
@@ -3357,18 +3350,17 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
 
   /* Now do the same, but without using the cache.  */
   find_newline1 (BEGV, BEGV_BYTE, ZV, ZV_BYTE,
-		 TYPE_MAXIMUM (ptrdiff_t), &shortage, NULL, true);
-  nl_count_buf = TYPE_MAXIMUM (ptrdiff_t) - shortage;
+		 TYPE_MAXIMUM (ptrdiff_t), &nl_count_buf, NULL, true);
   buf_newlines = make_uninit_vector (nl_count_buf);
   if (nl_count_buf)
     {
       for (from = BEGV, found = from, i = 0; from < ZV; from = found, i++)
 	{
-	  ptrdiff_t from_byte = CHAR_TO_BYTE (from);
+	  ptrdiff_t from_byte = CHAR_TO_BYTE (from), counted;
 
-	  found = find_newline1 (from, from_byte, 0, -1, 1, &shortage,
+	  found = find_newline1 (from, from_byte, 0, -1, 1, &counted,
 				 NULL, true);
-	  if (shortage != 0 || i >= nl_count_buf)
+	  if (counted == 0 || i >= nl_count_buf)
 	    break;
 	  ASET (buf_newlines, i, make_fixnum (found - 1));
 	}
