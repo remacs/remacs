@@ -2640,7 +2640,8 @@ Secret Service API, and pass, the standard unix password manager.
 
 @vindex auth-sources
   All these alternatives are customized via the user option
-@code{auth-sources}, @ref{Top, Emacs auth-source,, auth, Emacs auth-source}.
+@code{auth-sources}, @ref{Help for users, Emacs auth-source,, auth,
+Emacs auth-source}.
 
 @vindex auth-source-save-behavior
   When a password is entered interactively, which is not found via the
