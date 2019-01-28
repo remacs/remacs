@@ -3977,7 +3977,7 @@ The terminal type can be configured with `tramp-terminal-type'."
 (defun tramp-action-out-of-band (proc vec)
   "Check, whether an out-of-band copy has finished."
   ;; There might be pending output for the exit status.
-  (while (tramp-accept-process-output proc 0.1))
+  (while (tramp-accept-process-output proc 0))
   (cond ((and (not (process-live-p proc))
 	      (zerop (process-exit-status proc)))
 	 (tramp-message	vec 3 "Process has finished.")
@@ -4007,7 +4007,7 @@ The terminal type can be configured with `tramp-terminal-type'."
     (while (not found)
       ;; Reread output once all actions have been performed.
       ;; Obviously, the output was not complete.
-      (tramp-accept-process-output proc 1)
+      (while (tramp-accept-process-output proc 0))
       (setq todo actions)
       (while todo
 	(setq item (pop todo))
@@ -4078,7 +4078,7 @@ connection buffer."
 
 ;;; Utility functions:
 
-(defun tramp-accept-process-output (proc timeout)
+(defun tramp-accept-process-output (proc &optional timeout)
   "Like `accept-process-output' for Tramp processes.
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
@@ -4088,15 +4088,12 @@ for process communication also."
 	  ;; We do not want to run timers.
 	  timer-list timer-idle-list
 	  result)
-      ;; Under Windows XP, `accept-process-output' doesn't return
-      ;; sometimes.  So we add an additional timeout.  JUST-THIS-ONE
-      ;; is set due to Bug#12145.  It is an integer, in order to avoid
-      ;; running timers as well.
+      ;; JUST-THIS-ONE is set due to Bug#12145.  It is an integer, in
+      ;; order to avoid running timers.
       (tramp-message
-       proc 10 "%s %s %s\n%s"
-       proc (process-status proc)
-       (setq result (with-timeout (timeout)
-		      (accept-process-output proc timeout nil 0)))
+       proc 10 "%s %s %s %s\n%s"
+       proc timeout (process-status proc)
+       (setq result (accept-process-output proc timeout nil 0))
        (buffer-string))
       result)))
 
@@ -4146,14 +4143,14 @@ nil."
       (cond (timeout
 	     (with-timeout (timeout)
 	       (while (not found)
-		 (tramp-accept-process-output proc 1)
+		 (tramp-accept-process-output proc)
 		 (unless (process-live-p proc)
 		   (tramp-error-with-buffer
 		    nil proc 'file-error "Process has died"))
 		 (setq found (tramp-check-for-regexp proc regexp)))))
 	    (t
 	     (while (not found)
-	       (tramp-accept-process-output proc 1)
+	       (tramp-accept-process-output proc)
 	       (unless (process-live-p proc)
 		 (tramp-error-with-buffer
 		  nil proc 'file-error "Process has died"))
@@ -4831,8 +4828,7 @@ Only works for Bourne-like shells."
 	;; fall back to the default implementation.
 	(with-timeout (1 (ignore))
 	  ;; We cannot run `tramp-accept-process-output', it blocks timers.
-	  (while (or (accept-process-output proc 0.1)
-		     (process-live-p proc)))
+	  (while (accept-process-output proc nil nil t))
 	  ;; Report success.
 	  proc)))))
 
