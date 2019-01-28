@@ -463,9 +463,11 @@ Interactively with prefix argument, read FILE-NAME."
    (list nil (and current-prefix-arg
                   (read-file-name "Jump to Dired file: "))))
   (cond
-   ((bound-and-true-p archive-subfile-mode)
+   ((and (bound-and-true-p archive-subfile-mode)
+         (buffer-live-p archive-superior-buffer))
     (switch-to-buffer archive-superior-buffer))
-   ((bound-and-true-p tar-subfile-mode)
+   ((and (bound-and-true-p tar-subfile-mode)
+         (buffer-live-p tar-superior-buffer))
     (switch-to-buffer tar-superior-buffer))
    (t
     ;; Expand file-name before `dired-goto-file' call:

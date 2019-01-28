@@ -2288,7 +2288,7 @@ It will be properly highlighted even when the call omits parens.")
         :command command
         :sentinel
         (lambda (proc _event)
-          (when (eq 'exit (process-status proc))
+          (when (and (eq 'exit (process-status proc)) (buffer-live-p source))
             (unwind-protect
                 (if (with-current-buffer source (eq proc ruby--flymake-proc))
                     (with-current-buffer (process-buffer proc)
