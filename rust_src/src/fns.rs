@@ -386,4 +386,45 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
     }
 }
 
+/// Concatenate any number of lists by altering them.
+/// Only the last argument is not altered, and need not be a list.
+/// usage: (nconc &rest LISTS)
+#[lisp_fn]
+pub fn nconc(args: &mut [LispObject]) -> LispObject {
+    let mut val = Qnil;
+
+    let len = args.len();
+
+    for i in 0..len {
+        let elt = args[i];
+
+        if elt.is_nil() {
+            continue;
+        }
+
+        if val.is_nil() {
+            val = elt;
+        }
+
+        if (i + 1) == len {
+            break;
+        }
+
+        let cons: LispCons = elt.into();
+
+        let tail = cons
+            .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::on)
+            .last()
+            .unwrap();
+
+        let next = args[i + 1];
+        tail.set_cdr(next);
+        if next.is_nil() {
+            args[i + 1] = tail.into();
+        }
+    }
+
+    val
+}
+
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
