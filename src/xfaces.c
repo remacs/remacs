@@ -6507,6 +6507,46 @@ DEFUN ("show-face-resources", Fshow_face_resources, Sshow_face_resources,
 			    Initialization
  ***********************************************************************/
 
+#ifdef HAVE_PDUMPER
+/* All the faces defined during loadup are recorded in
+   face-new-frame-defaults, with the last face first in the list.  We
+   need to set next_lface_id to the next face ID number, so that any
+   new faces defined in this session will have face IDs different from
+   those defined during loadup.  We also need to set up the
+   lface_id_to_name[] array for the faces that were defined during
+   loadup.  */
+void
+init_xfaces (void)
+{
+  if (CONSP (Vface_new_frame_defaults))
+    {
+      Lisp_Object lface = XCAR (Vface_new_frame_defaults);
+      if (CONSP (lface))
+	{
+	  /* The first face in the list is the last face defined
+	     during loadup. Compute how many faces are there, and
+	     allocate the lface_id_to_name[] array.  */
+	  Lisp_Object lface_id = Fget (XCAR (lface), Qface);
+	  lface_id_to_name_size = next_lface_id = XFIXNAT (lface_id) + 1;
+	  lface_id_to_name = xnmalloc (next_lface_id, sizeof *lface_id_to_name);
+	  /* Store the last face.  */
+	  lface_id_to_name[next_lface_id - 1] = lface;
+
+	  /* Store the rest of the faces.  */
+	  Lisp_Object tail;
+	  for (tail = XCDR (Vface_new_frame_defaults); CONSP (tail);
+	       tail = XCDR (tail))
+	    {
+	      lface = XCAR (tail);
+	      int face_id = XFIXNAT (Fget (XCAR (lface), Qface));
+	      eassert (face_id < lface_id_to_name_size);
+	      lface_id_to_name[face_id] = lface;
+	    }
+	}
+    }
+}
+#endif
+
 void
 syms_of_xfaces (void)
 {

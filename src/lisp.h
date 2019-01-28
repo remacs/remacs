@@ -4606,6 +4606,9 @@ extern void syms_of_w32cygwinx (void);
 extern Lisp_Object Vface_alternative_font_family_alist;
 extern Lisp_Object Vface_alternative_font_registry_alist;
 extern void syms_of_xfaces (void);
+#ifdef HAVE_PDUMPER
+extern void init_xfaces (void);
+#endif
 
 #ifdef HAVE_X_WINDOWS
 /* Defined in xfns.c.  */

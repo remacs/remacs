@@ -60,5 +60,14 @@
     (should (equal (background-color-at-point) "black"))
     (should (equal (foreground-color-at-point) "black"))))
 
+(ert-deftest faces--test-face-id ()
+  ;; Face ID of 0 is the 'default' face; no face should have the same ID.
+  (should (> (face-id 'faces--test1) 0))
+  ;; 'tooltip' is the last face defined by preloaded packages, so any
+  ;; face we define in Emacs should have a face ID greater than that,
+  ;; since the ID of a face is just its index in the array that maps
+  ;; face IDs to faces.
+  (should (> (face-id 'faces--test1) (face-id 'tooltip))))
+
 (provide 'faces-tests)
 ;;; faces-tests.el ends here
