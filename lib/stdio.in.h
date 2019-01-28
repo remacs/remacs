@@ -118,6 +118,13 @@
 # include <unistd.h>
 #endif
 
+/* Android 4.3 declares renameat in <sys/stat.h>, not in <stdio.h>.  */
+/* But in any case avoid namespace pollution on glibc systems.  */
+#if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && defined __ANDROID__ \
+    && ! defined __GLIBC__
+# include <sys/stat.h>
+#endif
+
 /* MSVC declares 'perror' in <stdlib.h>, not in <stdio.h>.  We must include
    it before we  #define perror rpl_perror.  */
 /* But in any case avoid namespace pollution on glibc systems.  */

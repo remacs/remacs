@@ -545,7 +545,7 @@ rpl_fcntl_DUPFD_CLOEXEC (int fd, int target)
 #ifdef __KLIBC__
 
 static int
-klibc_fcntl (int fd, int action, /* arg */...);
+klibc_fcntl (int fd, int action, /* arg */...)
 {
   va_list arg_ptr;
   int arg;

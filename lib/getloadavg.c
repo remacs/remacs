@@ -47,8 +47,8 @@
    N_NAME_POINTER               The nlist n_name element is a pointer,
                                 not an array.
    HAVE_STRUCT_NLIST_N_UN_N_NAME 'n_un.n_name' is member of 'struct nlist'.
-   LINUX_LDAV_FILE              [__linux__, __CYGWIN__]: File containing
-                                load averages.
+   LINUX_LDAV_FILE              [__linux__, __ANDROID__, __CYGWIN__]: File
+                                containing load averages.
 
    Specific system predefines this file uses, aside from setting
    default values if not emacs:
@@ -65,7 +65,7 @@
    UMAX4_3
    VMS
    _WIN32                       Native Windows (possibly also defined on Cygwin)
-   __linux__                    Linux: assumes /proc file system mounted.
+   __linux__, __ANDROID__       Linux: assumes /proc file system mounted.
                                 Support from Michael K. Johnson.
    __CYGWIN__                   Cygwin emulates linux /proc/loadavg.
    __NetBSD__                   NetBSD: assumes /kern file system mounted.
@@ -263,7 +263,7 @@
 # ifdef LOAD_AVE_TYPE
 
 #  ifndef __VMS
-#   ifndef __linux__
+#   if !(defined __linux__ || defined __ANDROID__)
 #    ifndef NLIST_STRUCT
 #     include <a.out.h>
 #    else /* NLIST_STRUCT */
@@ -286,7 +286,7 @@
 #    ifndef LDAV_SYMBOL
 #     define LDAV_SYMBOL "_avenrun"
 #    endif /* LDAV_SYMBOL */
-#   endif /* __linux__ */
+#   endif /* __linux__ || __ANDROID__ */
 
 #  else /* __VMS */
 
@@ -359,7 +359,8 @@
 #  include <sys/dg_sys_info.h>
 # endif
 
-# if (defined __linux__ || defined __CYGWIN__ || defined SUNOS_5        \
+# if (defined __linux__ || defined __ANDROID__ \
+      || defined __CYGWIN__ || defined SUNOS_5 \
       || (defined LOAD_AVE_TYPE && ! defined __VMS))
 #  include <fcntl.h>
 # endif
@@ -388,7 +389,7 @@ static bool getloadavg_initialized;
 /* Offset in kmem to seek to read load average, or 0 means invalid.  */
 static long offset;
 
-#  if ! defined __VMS && ! defined sgi && ! defined __linux__
+#  if ! defined __VMS && ! defined sgi && ! (defined __linux__ || defined __ANDROID__)
 static struct nlist name_list[2];
 #  endif
 
@@ -498,8 +499,8 @@ getloadavg (double loadavg[], int nelem)
   }
 # endif
 
-# if !defined (LDAV_DONE) && (defined (__linux__) || defined (__CYGWIN__))
-                                              /* Linux without glibc, Cygwin */
+# if !defined (LDAV_DONE) && (defined __linux__ || defined __ANDROID__ || defined __CYGWIN__)
+                                      /* Linux without glibc, Android, Cygwin */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 
@@ -554,7 +555,7 @@ getloadavg (double loadavg[], int nelem)
 
   return elem;
 
-# endif /* __linux__ || __CYGWIN__ */
+# endif /* __linux__ || __ANDROID__ || __CYGWIN__ */
 
 # if !defined (LDAV_DONE) && defined (__NetBSD__)          /* NetBSD < 0.9 */
 #  define LDAV_DONE

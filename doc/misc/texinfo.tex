@@ -3,7 +3,8 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2018-12-28.17}
+\def\texinfoversion{2019-01-03-15}
+
 %
 % Copyright 1985, 1986, 1988, 1990-2018 Free Software Foundation, Inc.
 %
@@ -5043,8 +5044,8 @@ end
   \commondummyword\xref
 }
 
-% For testing: output @{ and @} in index sort strings as \{ and \}.
-\newif\ifusebracesinindexes
+% This does nothing, but for a time it was recommended to use
+% \usebracesinindexestrue to be able to use braces in index entries.
 
 \let\indexlbrace\relax
 \let\indexrbrace\relax

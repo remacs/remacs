@@ -2207,7 +2207,7 @@ sift_states_iter_mb (const re_match_context_t *mctx, re_sift_context_t *sctx,
 			    dfa->nexts[node_idx]))
     /* The node can't accept the "multi byte", or the
        destination was already thrown away, then the node
-       could't accept the current input "multi byte".   */
+       couldn't accept the current input "multi byte".   */
     naccepted = 0;
   /* Otherwise, it is sure that the node could accept
      'naccepted' bytes input.  */

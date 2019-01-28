@@ -340,7 +340,7 @@
    semantics.
 
    clang++ identifies itself as gcc-4.2, but has support for GNU inlining
-   semantics, that can be checked fot by using the __GNUC_STDC_INLINE_ and
+   semantics, that can be checked for by using the __GNUC_STDC_INLINE_ and
    __GNUC_GNU_INLINE__ macro definitions.  */
 #if (!defined __cplusplus || __GNUC_PREREQ (4,3) \
      || (defined __clang__ && (defined __GNUC_STDC_INLINE__ \
