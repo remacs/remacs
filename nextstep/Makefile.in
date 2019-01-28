@@ -85,6 +85,7 @@ links: ../src/emacs${EXEEXT}
 	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
 	${MKDIR_P} ${ns_appbindir}
 	ln -s $(abs_top_builddir)/src/emacs${EXEEXT} ${ns_appbindir}/Emacs
+	ln -s $(abs_top_builddir)/src/emacs${EXEEXT}.pdmp ${ns_appbindir}/
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/bin
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/libexec
 	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
