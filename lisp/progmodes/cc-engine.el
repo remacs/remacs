@@ -665,10 +665,12 @@ comment at the start of cc-engine.el for more info."
 	     stack (cdr stack))
        t
      ,do-if-done
+     (setq pre-stmt-found t)
      (throw 'loop nil)))
 (defmacro c-bos-pop-state-and-retry ()
   '(throw 'loop (setq state (car (car stack))
 		      saved-pos (cdr (car stack))
+		      pre-stmt-found (not (cdr stack))
 		      ;; Throw nil if stack is empty, else throw non-nil.
 		      stack (cdr stack))))
 (defmacro c-bos-save-pos ()
@@ -694,7 +696,7 @@ comment at the start of cc-engine.el for more info."
 			     (c-point 'bol (elt saved-pos 0))))))))
 
 (defun c-beginning-of-statement-1 (&optional lim ignore-labels
-					     noerror comma-delim)
+					     noerror comma-delim hit-lim)
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
@@ -729,14 +731,16 @@ Return:
 `up'            if stepped to a containing statement;
 `previous'      if stepped to a preceding statement;
 `beginning'     if stepped from a statement continuation clause to
-                its start clause; or
-`macro'         if stepped to a macro start.
+                its start clause;
+`macro'         if stepped to a macro start; or
+nil             if HIT-LIM is non-nil, and we hit the limit.
 Note that `same' and not `label' is returned if stopped at the same
 label without crossing the colon character.
 
 LIM may be given to limit the search.  If the search hits the limit,
 point will be left at the closest following token, or at the start
-position if that is less (`same' is returned in this case).
+position if that is less.  If HIT-LIM is non-nil, nil is returned in
+this case, otherwise `same'.
 
 NOERROR turns off error logging to `c-parsing-error'.
 
@@ -840,6 +844,10 @@ comment at the start of cc-engine.el for more info."
 	pos
 	;; Position of last stmt boundary character (e.g. ;).
 	boundary-pos
+	;; Non-nil when a construct has been found which delimits the search
+	;; for a statement start, e.g. an opening brace or a macro start, or a
+	;; keyword like `if' when the PDA stack is empty.
+	pre-stmt-found
 	;; The position of the last sexp or bound that follows the
 	;; first found colon, i.e. the start of the nonlabel part of
 	;; the statement.  It's `start' if a colon is found just after
@@ -877,7 +885,10 @@ comment at the start of cc-engine.el for more info."
 	tok ptok pptok)
 
     (save-restriction
-      (if lim (narrow-to-region lim (point-max)))
+      (setq lim (if lim
+		    (max lim (point-min))
+		  (point-min)))
+      (widen)
 
       (if (save-excursion
 	    (and (c-beginning-of-macro)
@@ -923,9 +934,10 @@ comment at the start of cc-engine.el for more info."
 	;; The loop is exited only by throwing nil to the (catch 'loop ...):
 	;; 1. On reaching the start of a macro;
 	;; 2. On having passed a stmt boundary with the PDA stack empty;
-	;; 3. On reaching the start of an Objective C method def;
-	;; 4. From macro `c-bos-pop-state'; when the stack is empty;
-	;; 5. From macro `c-bos-pop-state-and-retry' when the stack is empty.
+	;; 3. Going backwards past the search limit.
+	;; 4. On reaching the start of an Objective C method def;
+	;; 5. From macro `c-bos-pop-state'; when the stack is empty;
+	;; 6. From macro `c-bos-pop-state-and-retry' when the stack is empty.
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
@@ -950,6 +962,7 @@ comment at the start of cc-engine.el for more info."
 		  (setq pos saved
 			ret 'macro
 			ignore-labels t))
+		(setq pre-stmt-found t)
 		(throw 'loop nil))	; 1. Start of macro.
 
 	       ;; Do a round through the automaton if we've just passed a
@@ -959,6 +972,7 @@ comment at the start of cc-engine.el for more info."
 			 (setq sym (intern (match-string 1)))))
 
 		(when (and (< pos start) (null stack))
+		  (setq pre-stmt-found t)
 		  (throw 'loop nil))	; 2. Statement boundary.
 
 		;; The PDA state handling.
@@ -1071,7 +1085,8 @@ comment at the start of cc-engine.el for more info."
 	      ;; Step to the previous sexp, but not if we crossed a
 	      ;; boundary, since that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
-		  (setq ret 'previous)
+		  (when (>= (point) lim)
+		    (setq ret 'previous))
 
                 ;; HERE IS THE SINGLE PLACE INSIDE THE PDA LOOP WHERE WE MOVE
 		;; BACKWARDS THROUGH THE SOURCE.
@@ -1093,6 +1108,7 @@ comment at the start of cc-engine.el for more info."
 			  ;; Give up if we hit an unbalanced block.  Since the
 			  ;; stack won't be empty the code below will report a
 			  ;; suitable error.
+			  (setq pre-stmt-found t)
 			  (throw 'loop nil))
 			(cond
 			 ;; Have we moved into a macro?
@@ -1162,12 +1178,17 @@ comment at the start of cc-engine.el for more info."
 		    ;; Like a C "continue".  Analyze the next sexp.
 		    (throw 'loop t))))
 
+	      ;; Have we gone past the limit?
+	      (when (< (point) lim)
+		(throw 'loop nil))	; 3. Gone back over the limit.
+
 	      ;; ObjC method def?
 	      (when (and c-opt-method-key
 			 (setq saved (c-in-method-def-p)))
 		(setq pos saved
+		      pre-stmt-found t
 		      ignore-labels t)	; Avoid the label check on exit.
-		(throw 'loop nil))	; 3. ObjC method def.
+		(throw 'loop nil))	; 4. ObjC method def.
 
 	      ;; Might we have a bitfield declaration, "<type> <id> : <size>"?
 	      (if c-has-bitfields
@@ -1228,8 +1249,14 @@ comment at the start of cc-engine.el for more info."
 		    ptok tok
 		    tok (point)
 		    pos tok) ; always non-nil
-	      )		     ; end of (catch loop ....)
+	      )		     ; end of (catch 'loop ....)
 	  )		     ; end of sexp-at-a-time (while ....)
+
+	(when (and hit-lim
+		   (or (not pre-stmt-found)
+		       (< pos lim)
+		       (>= pos start)))
+	  (setq ret nil))
 
 	;; If the stack isn't empty there might be errors to report.
 	(while stack
@@ -9659,7 +9686,7 @@ comment at the start of cc-engine.el for more info."
 
   (let ((beg (point)) id-start)
     (and
-     (eq (c-beginning-of-statement-1 lim) 'same)
+     (eq (c-beginning-of-statement-1 lim nil nil nil t) 'same)
 
      (not (and (c-major-mode-is 'objc-mode)
 	       (c-forward-objc-directive)))
