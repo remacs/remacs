@@ -1490,7 +1490,7 @@ like an INI file.  You can add this hook to `find-file-hook'."
      '("^\\([^:]+\\):\\([^:]*\\):\\([0-9]+\\):\\(.*\\)$"
        (1 font-lock-type-face)
        (4 font-lock-variable-name-face))))
-  '("/etc/passwd\\'" "/etc/group\\'")
+  '("/etc/passwd-?\\'" "/etc/group-?\\'" "/etc/shadow-?\\'")
   (list
    (function
     (lambda ()
