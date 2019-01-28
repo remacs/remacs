@@ -690,7 +690,8 @@ mostlyclean:
 	rm -f globals.h gl-stamp
 	rm -f ./*.res ./*.tmp
 clean: mostlyclean
-	rm -f emacs-*.*.*[0-9]$(EXEEXT) emacs$(EXEEXT) $(DEPDIR)/*
+	rm -f emacs-*.*.*[0-9]$(EXEEXT) emacs-*.*.*[0-9].pdmp
+	rm -f emacs$(EXEEXT) $(DEPDIR)/*
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
 ## It should remove all files generated during a compilation/bootstrap,
