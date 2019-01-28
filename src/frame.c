@@ -1370,25 +1370,6 @@ to that frame.  */)
   call1 (intern ("handle-focus-in"), event);
   return value;
 }
-
-DEFUN ("frame-list", Fframe_list, Sframe_list,
-       0, 0, 0,
-       doc: /* Return a list of all live frames.
-The return value does not include any tooltip frame.  */)
-  (void)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  Lisp_Object list = Qnil, tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
-      list = Fcons (frame, list);
-  /* Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.  */
-  return Fnreverse (list);
-#else /* !HAVE_WINDOW_SYSTEM */
-  return Fcopy_sequence (Vframe_list);
-#endif /* HAVE_WINDOW_SYSTEM */
-}
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
        0, 1, 0,
@@ -2376,21 +2357,6 @@ for how to proceed.  */)
 
   return Qnil;
 }
-
-DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
-       0, 0, 0,
-       doc: /* Return a list of all frames now \"visible\" (being updated).  */)
-  (void)
-{
-  Lisp_Object tail, frame, value = Qnil;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (FRAME_VISIBLE_P (XFRAME (frame)))
-      value = Fcons (frame, value);
-
-  return value;
-}
-
 
 DEFUN ("raise-frame", Fraise_frame, Sraise_frame, 0, 1, "",
        doc: /* Bring FRAME to the front, so it occludes any frames it overlaps.
@@ -5640,7 +5606,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);
-  defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
   defsubr (&Slast_nonminibuf_frame);
@@ -5655,7 +5620,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_frame_visible);
   defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
-  defsubr (&Svisible_frame_list);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
   defsubr (&Sredirect_frame_focus);
