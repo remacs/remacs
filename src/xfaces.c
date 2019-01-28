@@ -6520,28 +6520,19 @@ init_xfaces (void)
 {
   if (CONSP (Vface_new_frame_defaults))
     {
-      Lisp_Object lface = XCAR (Vface_new_frame_defaults);
-      if (CONSP (lface))
-	{
-	  /* The first face in the list is the last face defined
-	     during loadup. Compute how many faces are there, and
-	     allocate the lface_id_to_name[] array.  */
-	  Lisp_Object lface_id = Fget (XCAR (lface), Qface);
-	  lface_id_to_name_size = next_lface_id = XFIXNAT (lface_id) + 1;
-	  lface_id_to_name = xnmalloc (next_lface_id, sizeof *lface_id_to_name);
-	  /* Store the last face.  */
-	  lface_id_to_name[next_lface_id - 1] = lface;
+      /* Allocate the lface_id_to_name[] array.  */
+      lface_id_to_name_size = next_lface_id =
+	XFIXNAT (Flength (Vface_new_frame_defaults));
+      lface_id_to_name = xnmalloc (next_lface_id, sizeof *lface_id_to_name);
 
-	  /* Store the rest of the faces.  */
-	  Lisp_Object tail;
-	  for (tail = XCDR (Vface_new_frame_defaults); CONSP (tail);
-	       tail = XCDR (tail))
-	    {
-	      lface = XCAR (tail);
-	      int face_id = XFIXNAT (Fget (XCAR (lface), Qface));
-	      eassert (face_id < lface_id_to_name_size);
-	      lface_id_to_name[face_id] = lface;
-	    }
+      /* Store the faces.  */
+      Lisp_Object tail;
+      int i = next_lface_id - 1;
+      for (tail = Vface_new_frame_defaults; CONSP (tail); tail = XCDR (tail))
+	{
+	  Lisp_Object lface = XCAR (tail);
+	  eassert (i >= 0);
+	  lface_id_to_name[i--] = XCAR (lface);
 	}
     }
 }
