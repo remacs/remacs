@@ -1817,17 +1817,15 @@ properly.  BODY shall not contain a timeout."
   (should (string-equal (file-remote-p "/-:ftp.host:" 'method) "ftp"))
   (dolist (u '("ftp" "anonymous"))
     (should (string-equal (file-remote-p (format "/-:%s@:" u) 'method) "ftp")))
-  ;; Default values in tramp-gvfs.el.
-  (when (and (load "tramp-gvfs" 'noerror 'nomessage)
-	     (symbol-value 'tramp-gvfs-enabled))
-    (should (string-equal (file-remote-p "/synce::" 'user) nil)))
-  ;; Default values in tramp-sh.el.
+  ;; Default values in tramp-sh.el and tramp-sudoedit.el.
   (dolist (h `("127.0.0.1" "[::1]" "localhost" "localhost6" ,(system-name)))
     (should
      (string-equal (file-remote-p (format "/-:root@%s:" h) 'method) "su")))
-  (dolist (m '("su" "sudo" "ksu"))
-    (should (string-equal (file-remote-p (format "/%s::" m) 'user) "root")))
-  (dolist (m '("rcp" "remcp" "rsh" "telnet" "krlogin" "fcp"))
+  (dolist (m '("su" "sudo" "ksu" "doas" "sudoedit"))
+    (should (string-equal (file-remote-p (format "/%s::" m) 'user) "root"))
+    (should
+     (string-equal (file-remote-p (format "/%s::" m) 'host) (system-name))))
+  (dolist (m '("rcp" "remcp" "rsh" "telnet" "krlogin" "fcp" "nc"))
     (should
      (string-equal (file-remote-p (format "/%s::" m) 'user) (user-login-name))))
   ;; Default values in tramp-smb.el.
