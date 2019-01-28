@@ -2488,6 +2488,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                   (let ((ol (make-overlay (+ bol (nth 0 prop))
                                           (+ bol (nth 1 prop))
                                           nil 'front-advance nil)))
+                    (overlay-put ol 'diff-mode 'syntax)
                     (overlay-put ol 'evaporate t)
                     (overlay-put ol 'face (nth 2 prop))))))))))))
 
@@ -2502,6 +2503,7 @@ hunk text is not found in the source file."
   (unless no-init
     (buffer-disable-undo)
     (font-lock-mode -1)
+    (setq buffer-file-name nil)
     (let ((enable-local-variables :safe) ;; to find `mode:'
           (buffer-file-name file))
       (set-auto-mode)
