@@ -78,20 +78,6 @@ The new command-line argument '--dump-file=FILE' allows to specify a
 non-default '.pdmp' file to load the state from; see the node "Initial
 Options" in the Emacs manual for more information.
 
-** Ibuffer
-
----
-*** All mode filters can now accept a list of symbols.
-This means you can now easily filter several major modes, as well
-as a single mode.
-
-** Gnus
-
-+++
-*** The nnimap backend now has support for IMAP namespaces.
-This feature can be enabled by setting the new 'nnimap-use-namespaces'
-server variable to non-nil.
-
 
 * Startup Changes in Emacs 27.1
 
@@ -599,6 +585,11 @@ Of course it will still find it if you have it in ~/.ecompleterc
 ** Gnus
 
 +++
+*** The nnimap backend now has support for IMAP namespaces.
+This feature can be enabled by setting the new 'nnimap-use-namespaces'
+server variable to non-nil.
+
++++
 *** A prefix argument to 'gnus-summary-limit-to-score' will limit reverse.
 Limit to articles with score at below.
 
@@ -724,6 +715,11 @@ can now be searched via 'C-s'.
 
 ---
 *** New filter 'ibuffer-filter-by-process'; bound to '/E'.
+
+---
+*** All mode filters can now accept a list of symbols.
+This means you can now easily filter several major modes, as well
+as a single mode.
 
 ** Search and Replace
 
