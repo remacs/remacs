@@ -197,6 +197,12 @@ archlibdir='${libexecdir}/remacs/${version}/${configuration}'
 etcdocdir='${datadir}/remacs/${version}/etc'
 gamedir='${localstatedir}/games/remacs'
 
+dnl Check for the presence of pkg-config
+AC_CHECK_TOOL([PKG_CONFIG], [pkg-config])
+if test x$PKG_CONFIG = x ; then
+  AC_MSG_ERROR([pkg-config not in path. You may need to install it.])
+fi
+
 dnl Special option to disable the most of other options.
 AC_ARG_WITH(all,
 [AS_HELP_STRING([--without-all],
