@@ -515,7 +515,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless tramp-archive-enabled)
 
   (let ((tmp-name tramp-archive-test-archive)
-	(files '("." ".." "bar"  "baz.tar" "foo.hrd" "foo.lnk" "foo.txt")))
+	(files '("." ".." "bar" "baz.tar" "foo.hrd" "foo.lnk" "foo.txt")))
     (unwind-protect
 	(progn
 	  (should (file-directory-p tmp-name))

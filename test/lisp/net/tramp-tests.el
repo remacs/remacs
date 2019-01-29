@@ -3818,7 +3818,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3836,7 +3836,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3857,7 +3857,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3890,7 +3890,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`make-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3910,7 +3910,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`make-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3935,7 +3935,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`make-process' timed out"))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
-		(accept-process-output proc 0.1)))
+		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
 
 	;; Cleanup.
@@ -3958,8 +3958,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (delete-process proc)
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`make-process' timed out"))
-	      (while (process-live-p proc)
-		(accept-process-output proc 0.1)))
+	      (while (accept-process-output proc 0 nil t)))
 	    (should (string-equal (buffer-string) "killed\n")))
 
 	;; Cleanup.
@@ -3980,7 +3979,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (with-current-buffer stderr
 		(with-timeout (10 (ert-fail "`make-process' timed out"))
 		  (while (= (point-min) (point-max))
-		    (accept-process-output proc 0.1)))
+		    (while (accept-process-output proc 0 nil t))))
 		(should
 		 (string-equal (buffer-string) "cat: /: Is a directory\n"))))
 
@@ -4007,7 +4006,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (numberp (process-get proc 'remote-pid)))
 	  (should (interrupt-process proc))
 	  ;; Let the process accept the interrupt.
-          (accept-process-output proc 1 nil 0)
+	  (while (accept-process-output proc nil nil 0))
 	  (should-not (process-live-p proc))
 	  ;; An interrupted process cannot be interrupted, again.
 	  (should-error (interrupt-process proc) :type 'error))
@@ -4056,10 +4055,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	     (current-buffer))
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`async-shell-command' timed out"))
-	      (while (< (- (point-max) (point-min))
-			(1+ (length (file-name-nondirectory tmp-name))))
-		(accept-process-output
-		 (get-buffer-process (current-buffer)) 0.1)))
+	      (while (accept-process-output
+		      (get-buffer-process (current-buffer)) nil nil t)))
 	    ;; `ls' could produce colorized output.
 	    (goto-char (point-min))
 	    (while
@@ -4087,10 +4084,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	     (format "%s\n" (file-name-nondirectory tmp-name)))
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`async-shell-command' timed out"))
-	      (while (< (- (point-max) (point-min))
-			(1+ (length (file-name-nondirectory tmp-name))))
-		(accept-process-output
-		 (get-buffer-process (current-buffer)) 0.1)))
+	      (while (accept-process-output
+		      (get-buffer-process (current-buffer)) nil nil t)))
 	    ;; `ls' could produce colorized output.
 	    (goto-char (point-min))
 	    (while
@@ -4112,10 +4107,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Like `shell-command-to-string', but for asynchronous processes."
   (with-temp-buffer
     (async-shell-command command (current-buffer))
-    (with-timeout (10)
-      (while (get-buffer-process (current-buffer))
-	(accept-process-output (get-buffer-process (current-buffer)) 0.1)))
-    (accept-process-output nil 0.1)
+    (with-timeout (10 (ert-fail "`async-shell-command-to-string' timed out"))
+      (while (accept-process-output
+	      (get-buffer-process (current-buffer)) nil nil t)))
     (buffer-substring-no-properties (point-min) (point-max))))
 
 ;; This test is inspired by Bug#23952.
@@ -5359,7 +5353,7 @@ process sentinels.  They shall not disturb each other."
                     (should (file-attributes file)))
                   ;; Send string to process.
                   (process-send-string proc (format "%s\n" (buffer-name buf)))
-                  (accept-process-output proc 0.1 nil 0)
+                  (while (accept-process-output proc 0 nil 0))
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
                   (tramp--test-message
