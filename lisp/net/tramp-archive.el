@@ -108,7 +108,10 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
-(require 'tramp-gvfs)
+;; Sometimes, compilation fails with "Variable binding depth exceeds
+;; max-specpdl-size".
+(eval-and-compile
+  (let ((max-specpdl-size (* 2 max-specpdl-size))) (require 'tramp-gvfs)))
 
 (autoload 'dired-uncache "dired")
 (autoload 'url-tramp-convert-url-to-tramp "url-tramp")

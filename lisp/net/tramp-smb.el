@@ -1048,7 +1048,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (when (string-match-p "F" switches)
 	    (mapc
 	     (lambda (x)
-	       (when (not (zerop (length (car x))))
+	       (unless (zerop (length (car x)))
 		 (cond
 		  ((char-equal ?d (string-to-char (nth 1 x)))
 		   (setcar x (concat (car x) "/")))
@@ -1066,7 +1066,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  ;; Print entries.
 	  (mapc
 	   (lambda (x)
-	     (when (not (zerop (length (nth 0 x))))
+	     (unless (zerop (length (nth 0 x)))
 	       (let ((attr
 		      (when (tramp-smb-get-stat-capability v)
 			(ignore-errors

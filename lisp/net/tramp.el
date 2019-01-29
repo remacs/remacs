@@ -3595,10 +3595,9 @@ User is always nil."
 	(tramp-error
 	 v 'file-error
 	 "File `%s' does not include a `.el' or `.elc' suffix" file)))
-    (unless noerror
-      (when (not (file-exists-p file))
-	(tramp-error
-	 v tramp-file-missing "Cannot load nonexistent file `%s'" file)))
+    (unless (or noerror (file-exists-p file))
+      (tramp-error
+       v tramp-file-missing "Cannot load nonexistent file `%s'" file))
     (if (not (file-exists-p file))
 	nil
       (let ((tramp-message-show-message (not nomessage)))
@@ -3902,7 +3901,8 @@ of."
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-message vec 6 "\n%s" (buffer-string)))
     (tramp-message vec 3 "Sending login name `%s'" user)
-    (tramp-send-string vec (concat user tramp-local-end-of-line))))
+    (tramp-send-string vec (concat user tramp-local-end-of-line)))
+  t)
 
 (defun tramp-action-password (proc vec)
   "Query the user for a password."
@@ -3922,7 +3922,8 @@ of."
       (process-send-string
        proc (concat (tramp-read-passwd proc) tramp-local-end-of-line))
       ;; Hide password prompt.
-      (narrow-to-region (point-max) (point-max)))))
+      (narrow-to-region (point-max) (point-max))))
+  t)
 
 (defun tramp-action-succeed (_proc _vec)
   "Signal success in finding shell prompt."
@@ -3945,7 +3946,8 @@ See also `tramp-action-yn'."
 	(throw 'tramp-action 'permission-denied))
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(tramp-message vec 6 "\n%s" (buffer-string)))
-      (tramp-send-string vec (concat "yes" tramp-local-end-of-line)))))
+      (tramp-send-string vec (concat "yes" tramp-local-end-of-line))))
+  t)
 
 (defun tramp-action-yn (proc vec)
   "Ask the user for confirmation using `y-or-n-p'.
@@ -3959,7 +3961,8 @@ See also `tramp-action-yesno'."
 	(throw 'tramp-action 'permission-denied))
       (with-current-buffer (tramp-get-connection-buffer vec)
 	(tramp-message vec 6 "\n%s" (buffer-string)))
-      (tramp-send-string vec (concat "y" tramp-local-end-of-line)))))
+      (tramp-send-string vec (concat "y" tramp-local-end-of-line))))
+  t)
 
 (defun tramp-action-terminal (_proc vec)
   "Tell the remote host which terminal type to use.
@@ -3967,7 +3970,8 @@ The terminal type can be configured with `tramp-terminal-type'."
   (tramp-message vec 5 "Setting `%s' as terminal type." tramp-terminal-type)
   (with-current-buffer (tramp-get-connection-buffer vec)
     (tramp-message vec 6 "\n%s" (buffer-string)))
-  (tramp-send-string vec (concat tramp-terminal-type tramp-local-end-of-line)))
+  (tramp-send-string vec (concat tramp-terminal-type tramp-local-end-of-line))
+  t)
 
 (defun tramp-action-process-alive (proc _vec)
   "Check, whether a process has finished."
@@ -4001,7 +4005,8 @@ The terminal type can be configured with `tramp-terminal-type'."
 ;;; Functions for processing the actions:
 
 (defun tramp-process-one-action (proc vec actions)
-  "Wait for output from the shell and perform one action."
+  "Wait for output from the shell and perform one action.
+See `tramp-process-actions' for the format of ACTIONS."
   (let ((case-fold-search t)
 	found todo item pattern action)
     (while (not found)
@@ -4024,7 +4029,27 @@ The terminal type can be configured with `tramp-terminal-type'."
   "Perform ACTIONS until success or TIMEOUT.
 PROC and VEC indicate the remote connection to be used.  POS, if
 set, is the starting point of the region to be deleted in the
-connection buffer."
+connection buffer.
+
+ACTIONS is a list of (PATTERN ACTION).  The PATTERN should be a
+symbol, a variable.  The value of this variable gives the regular
+expression to search for.  Note that the regexp must match at the
+end of the buffer, \"\\'\" is implicitly appended to it.
+
+The ACTION should also be a symbol, but a function.  When the
+corresponding PATTERN matches, the ACTION function is called.
+
+An ACTION function has two arguments (PROC VEC).  If it returns
+nil, nothing has been done, and the next action shall be called.
+A non-nil return value indicates that the process output has been
+consumed, and new output shall be retrieved, before starting to
+process all ACTIONs, again.  The same happens after calling the
+last ACTION.
+
+If an action determines, that all processing has been done (e.g.,
+because the shell prompt has been detected), it shall throw a
+result.  The symbol `ok' means that all ACTIONs have been
+performed successfully.  Any other value means an error."
   ;; Enable `auth-source', unless "emacs -Q" has been called.  We must
   ;; use the "password-vector" property in case we have several hops.
   (tramp-set-connection-property
@@ -4156,7 +4181,7 @@ nil."
 		  nil proc 'file-error "Process has died"))
 	       (setq found (tramp-check-for-regexp proc regexp)))))
       (tramp-message proc 6 "\n%s" (buffer-string))
-      (when (not found)
+      (unless found
 	(if timeout
 	    (tramp-error
 	     proc 'file-error "[[Regexp `%s' not found in %d secs]]"

@@ -1931,7 +1931,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	      (setq newname
 		    (expand-file-name
 		     (file-name-nondirectory dirname) newname)))
-	    (when (not (file-directory-p (file-name-directory newname)))
+	    (unless (file-directory-p (file-name-directory newname))
 		(make-directory (file-name-directory newname) parents))
 	    (tramp-do-copy-or-rename-file-out-of-band
 	     'copy dirname newname keep-date))
@@ -4458,7 +4458,7 @@ Goes through the list `tramp-local-coding-commands' and
 		  ;; actually check the output it gives.  And also, when
 		  ;; redirecting "mimencode" output to /dev/null, then as root
 		  ;; it might change the permissions of /dev/null!
-		  (when (not (stringp rem-enc))
+		  (unless (stringp rem-enc)
 		    (let ((name (symbol-name rem-enc)))
 		      (while (string-match "-" name)
 			(setq name (replace-match "_" nil t name)))
@@ -4471,7 +4471,7 @@ Goes through the list `tramp-local-coding-commands' and
 			   vec (format "%s </dev/null" rem-enc) t)
 		    (throw 'wont-work-remote nil))
 
-		  (when (not (stringp rem-dec))
+		  (unless (stringp rem-dec)
 		    (let ((name (symbol-name rem-dec))
 			  (value (symbol-value rem-dec))
 			  tmpfile)

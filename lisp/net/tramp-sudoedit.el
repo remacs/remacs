@@ -747,7 +747,7 @@ ID-FORMAT valid values are `string' and `integer'."
   "Check, whether a sudo process has finished.
 Remove unneeded output."
   ;; There might be pending output for the exit status.
-  (when (not (process-live-p proc))
+  (unless (process-live-p proc)
     (while (tramp-accept-process-output proc 0))
     ;; Delete narrowed region, it would be in the way reading a Lisp form.
     (goto-char (point-min))
@@ -768,6 +768,15 @@ connection if a previous connection has died for some reason."
   ;; We need a process bound to the connection buffer.  Therefore, we
   ;; create a dummy process.  Maybe there is a better solution?
   (unless (tramp-get-connection-process vec)
+
+    ;; During completion, don't reopen a new connection.  We check
+    ;; this for the process related to `tramp-buffer-name'; otherwise
+    ;; `start-file-process' wouldn't run ever when `non-essential' is
+    ;; non-nil.
+    (when (and (tramp-completion-mode-p)
+	       (null (get-process (tramp-buffer-name vec))))
+      (throw 'non-essential 'non-essential))
+
     (let ((p (make-network-process
 	      :name (tramp-buffer-name vec)
 	      :buffer (tramp-get-connection-buffer vec)
