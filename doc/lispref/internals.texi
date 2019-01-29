@@ -65,7 +65,7 @@ can be one of the following:
 Record the preloaded Lisp data in a @dfn{portable dump} file.  This
 method produces an additional data file which Emacs will load at
 startup.  The portable dump file is usually called @file{emacs.pdmp},
-and is installed in the Emacs @code{data-directory} (@pxref{Help
+and is installed in the Emacs @code{exec-directory} (@pxref{Help
 Functions}).  This method is the most preferred one, as it does not
 require Emacs to employ any special techniques of memory allocation,
 which might get in the way of various memory-layout techniques used by
