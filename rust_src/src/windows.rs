@@ -1581,7 +1581,7 @@ pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool)
 /// Normally, the value of this function is not available while Emacs is
 /// busy, for example, when processing a command.  It should be retrievable
 /// though when run from an idle timer with a delay of zero seconds.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_lines_pixel_dimensions(
     window: LispWindowLiveOrSelected,
     first: Option<LispNumber>,
@@ -1646,22 +1646,21 @@ pub fn window_lines_pixel_dimensions(
 
     let mut rows = Qnil;
     while row.as_ptr() <= end_row.as_ptr() && row.enabled_p() && row.y + row.height < max_y {
-        if left {
+        let width = if left {
             let glyph = unsafe { &*row.glyphs[TEXT_AREA as usize] };
-            let width = if inverse {
+            if inverse {
                 glyph.pixel_width as i32
             } else {
                 window_width - glyph.pixel_width as i32
-            };
-            rows = ((width, row.y + row.height - subtract), rows).into();
+            }
         } else {
-            let width = if inverse {
+            if inverse {
                 window_width - row.pixel_width
             } else {
                 row.pixel_width
-            };
-            rows = ((width, row.y + row.height - subtract), rows).into();
-        }
+            }
+        };
+        rows = ((width, row.y + row.height - subtract), rows).into();
         let ptr = unsafe { row.as_mut().add(1) };
         row.replace_ptr(ptr);
     }
