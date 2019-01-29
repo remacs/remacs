@@ -10,11 +10,12 @@ use crate::{
     buffers::LispBufferRef,
     editfns::{goto_char, point},
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
+    glyphs::LispGlyphMatrixRef,
     interactive::prefix_numeric_value,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
-    numbers::{CheckRange, LispNumber},
+    numbers::LispNumber,
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
@@ -25,10 +26,7 @@ use crate::{
         update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p,
         windows_or_buffers_changed, wset_redisplay,
     },
-    remacs_sys::{
-        face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type,
-        Lisp_Window,
-    },
+    remacs_sys::{face_id, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{Fcopy_alist, Fnreverse},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
@@ -594,57 +592,6 @@ impl LispObject {
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 }
-
-pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
-
-impl LispGlyphMatrixRef {
-    /// Get a pointer to row number ROW.
-    pub unsafe fn row_unchecked(self, row: usize) -> LispGlyphRowRef {
-        LispGlyphRowRef::new(self.rows.add(row))
-    }
-
-    /// Get a pointer to row number ROW. Throws an error if out of range.
-    pub fn row(self, row: usize) -> LispGlyphRowRef {
-        (row as EmacsInt).check_range(0, self.nrows.into());
-        unsafe { self.row_unchecked(row) }
-    }
-
-    pub fn mode_line_height(self) -> i32 {
-        if self.is_null() || self.rows.is_null() {
-            0
-        } else {
-            unsafe { (*self.rows.offset((self.nrows - 1) as isize)).height }
-        }
-    }
-    pub fn header_line_height(self) -> i32 {
-        if self.is_null() || self.rows.is_null() {
-            0
-        } else {
-            unsafe { (*self.rows).height }
-        }
-    }
-
-    /// Return a pointer to the first row used for text display
-    pub fn first_text_row(self) -> LispGlyphRowRef {
-        unsafe {
-            if (*self.rows).mode_line_p() {
-                LispGlyphRowRef::new(self.rows.offset(1))
-            } else {
-                LispGlyphRowRef::new(self.rows)
-            }
-        }
-    }
-
-    pub fn bottom_text_row(self, window: LispWindowRef) -> LispGlyphRowRef {
-        let ptr = unsafe {
-            self.rows
-                .offset((self.nrows - if window.wants_mode_line() { 1 } else { 0 }) as isize)
-        };
-        LispGlyphRowRef::new(ptr)
-    }
-}
-
-pub type LispGlyphRowRef = ExternalPtr<glyph_row>;
 
 pub struct LispWindowOrSelected(LispObject);
 
@@ -1675,23 +1622,25 @@ pub fn window_lines_pixel_dimensions(
         }
     }
 
-    let mut row = if let Some(first) = first {
-        matrix.row(first.to_fixnum() as usize)
-    } else {
-        if body {
-            matrix.first_text_row()
-        } else {
-            matrix.row(0)
+    let mut row = match first {
+        Some(first) => matrix.row(first.to_fixnum() as usize),
+        None => {
+            if body {
+                matrix.first_text_row()
+            } else {
+                matrix.row(0)
+            }
         }
     };
 
-    let end_row = if let Some(last) = last {
-        matrix.row(last.to_fixnum() as usize)
-    } else {
-        if body {
-            matrix.bottom_text_row(window)
-        } else {
-            unsafe { matrix.row_unchecked(matrix.nrows as usize) }
+    let end_row = match last {
+        Some(last) => matrix.row(last.to_fixnum() as usize),
+        None => {
+            if body {
+                matrix.bottom_text_row(window)
+            } else {
+                unsafe { matrix.row_unchecked(matrix.nrows as usize) }
+            }
         }
     };
 
@@ -1704,14 +1653,14 @@ pub fn window_lines_pixel_dimensions(
             } else {
                 window_width - glyph.pixel_width as i32
             };
-            rows = (LispObject::cons(width, row.y + row.height - subtract), rows).into();
+            rows = ((width, row.y + row.height - subtract), rows).into();
         } else {
             let width = if inverse {
                 window_width - row.pixel_width
             } else {
                 row.pixel_width
             };
-            rows = (LispObject::cons(width, row.y + row.height - subtract), rows).into();
+            rows = ((width, row.y + row.height - subtract), rows).into();
         }
         let ptr = unsafe { row.as_mut().add(1) };
         row.replace_ptr(ptr);

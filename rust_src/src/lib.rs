@@ -91,6 +91,7 @@ mod fileio;
 mod floatfns;
 mod fns;
 mod fonts;
+mod glyphs;
 mod hashtable;
 mod indent;
 mod interactive;

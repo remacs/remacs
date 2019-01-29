@@ -1,8 +1,9 @@
 //! Functions operating on numbers.
 
-use rand::{Rng, SeedableRng, StdRng};
 use std::cmp;
 use std::sync::Mutex;
+
+use rand::{Rng, SeedableRng, StdRng};
 
 use remacs_macros::lisp_fn;
 
@@ -159,24 +160,21 @@ impl IsLispNatnum for EmacsInt {
     }
 }
 
-pub trait CheckRange {
-    fn check_range(self, from: EmacsInt, to: EmacsInt);
-}
-
-impl CheckRange for EmacsInt {
-    /// Check if number is within range [FROM..TO]
-    fn check_range(self, from: EmacsInt, to: EmacsInt) {
-        if !(from <= self && self <= to) {
-            args_out_of_range!(
-                self,
-                if from < 0 && from < MOST_NEGATIVE_FIXNUM {
-                    MOST_NEGATIVE_FIXNUM
-                } else {
-                    from
-                },
-                cmp::min(to, MOST_POSITIVE_FIXNUM)
-            )
-        }
+/// Check if NUM is within range [FROM..TO]
+pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl Into<EmacsInt>) {
+    let num: EmacsInt = num.into();
+    let from: EmacsInt = from.into();
+    let to: EmacsInt = to.into();
+    if !(from <= num && num <= to) {
+        args_out_of_range!(
+            num,
+            if from < 0 && from < MOST_NEGATIVE_FIXNUM {
+                MOST_NEGATIVE_FIXNUM
+            } else {
+                from
+            },
+            cmp::min(to, MOST_POSITIVE_FIXNUM)
+        )
     }
 }
 
