@@ -1,6 +1,6 @@
 //! Functions operating on windows.
 
-use std::{cmp, ptr};
+use std::{cmp, fmt, ptr};
 
 use libc::c_int;
 
@@ -73,14 +73,6 @@ impl LispWindowRef {
 
     pub fn get_matrix(self) -> LispGlyphMatrixRef {
         LispGlyphMatrixRef::new(self.current_matrix)
-    }
-
-    pub fn prev(self) -> Self {
-        self.prev.into()
-    }
-
-    pub fn next(self) -> Self {
-        self.next.into()
     }
 
     /// Return the current height of the mode line of window W. If not known
@@ -480,7 +472,7 @@ impl LispWindowRef {
     /// Width of the window's bottom divider
     pub fn bottom_divider_width(self) -> i32 {
         if self.is_bottommost() && self.get_frame().root_window().next.is_not_nil()
-            || self.prev() == self.get_frame().root_window()
+            || self.prev.eq(self.get_frame().root_window)
             || self.is_pseudo()
         {
             0
@@ -527,6 +519,12 @@ impl From<LispWindowRef> for LispObject {
 impl From<LispObject> for Option<LispWindowRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| v.as_window())
+    }
+}
+
+impl fmt::Debug for LispWindowRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "window({:?})", self.as_ptr())
     }
 }
 
@@ -590,6 +588,7 @@ impl LispGlyphMatrixRef {
     }
 }
 
+#[derive(Debug)]
 pub struct LispWindowOrSelected(LispObject);
 
 impl From<LispObject> for LispWindowOrSelected {
@@ -611,13 +610,14 @@ impl From<LispWindowOrSelected> for LispWindowRef {
     }
 }
 
+#[derive(Debug)]
 pub struct LispWindowLiveOrSelected(LispWindowRef);
 
 impl From<LispObject> for LispWindowLiveOrSelected {
     /// Same as the `decode_live_window` function
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(
-            || LispWindowRef::from(selected_window()),
+            || LispWindowRef::from(unsafe { current_window }),
             |w| w.as_live_window_or_error(),
         ))
     }
