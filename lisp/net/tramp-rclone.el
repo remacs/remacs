@@ -467,19 +467,19 @@ file names."
   (when (tramp-get-connection-process vec)
     ;; We cannot use `with-connection-property', because we don't want
     ;; to cache a nil result.
-    (unless (tramp-get-connection-property
-	     (tramp-get-connection-process vec) "mounted" nil)
-      (let* ((default-directory temporary-file-directory)
-	     (mount (shell-command-to-string "mount -t fuse.rclone")))
-	(tramp-message vec 6 "%s" "mount -t fuse.rclone")
-	(tramp-message vec 6 "\n%s" mount)
-	(tramp-set-connection-property
-	 (tramp-get-connection-process vec) "mounted"
-	 (when (string-match
-		(format
-		 "^\\(%s:\\S-*\\)" (regexp-quote (tramp-file-name-host vec)))
-		mount)
-	   (match-string 1 mount)))))))
+    (or (tramp-get-connection-property
+	 (tramp-get-connection-process vec) "mounted" nil)
+	(let* ((default-directory temporary-file-directory)
+	       (mount (shell-command-to-string "mount -t fuse.rclone")))
+	  (tramp-message vec 6 "%s" "mount -t fuse.rclone")
+	  (tramp-message vec 6 "\n%s" mount)
+	  (tramp-set-connection-property
+	   (tramp-get-connection-process vec) "mounted"
+	   (when (string-match
+		  (format
+		   "^\\(%s:\\S-*\\)" (regexp-quote (tramp-file-name-host vec)))
+		  mount)
+	     (match-string 1 mount)))))))
 
 (defun tramp-rclone-flush-directory-cache (vec)
   "Flush directory cache of VEC mount."
