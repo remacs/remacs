@@ -3647,7 +3647,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	(set-process-filter p filter)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
-	(while (tramp-accept-process-output p))
+	(while (tramp-accept-process-output p 0))
 	(unless (process-live-p p)
 	  (tramp-error
 	   p 'file-notify-error "Monitoring not supported for `%s'" file-name))
