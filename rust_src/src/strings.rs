@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::LispObject,
     multibyte,
-    multibyte::LispStringRef,
+    multibyte::{LispStringRef, LispSymbolOrString},
     remacs_sys::EmacsInt,
     remacs_sys::{
         make_unibyte_string, make_uninit_multibyte_string,
@@ -34,9 +34,9 @@ pub fn string_bytes(string: LispStringRef) -> EmacsInt {
 /// Case is significant, but text properties are ignored.
 /// Symbols are also allowed; their print names are used instead.
 #[lisp_fn]
-pub fn string_equal(s1: LispObject, s2: LispObject) -> bool {
-    let s1 = LispObject::symbol_or_string_as_string(s1);
-    let s2 = LispObject::symbol_or_string_as_string(s2);
+pub fn string_equal(s1: LispSymbolOrString, s2: LispSymbolOrString) -> bool {
+    let s1: LispStringRef = s1.into();
+    let s2: LispStringRef = s2.into();
 
     s1.len_chars() == s2.len_chars()
         && s1.len_bytes() == s2.len_bytes()
@@ -139,9 +139,9 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
 /// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
 /// Case is significant.
 #[lisp_fn]
-pub fn string_lessp(string1: LispObject, string2: LispObject) -> bool {
-    let s1 = LispObject::symbol_or_string_as_string(string1);
-    let s2 = LispObject::symbol_or_string_as_string(string2);
+pub fn string_lessp(string1: LispSymbolOrString, string2: LispSymbolOrString) -> bool {
+    let s1: LispStringRef = string1.into();
+    let s2: LispStringRef = string2.into();
 
     s1.as_slice() < s2.as_slice()
 }

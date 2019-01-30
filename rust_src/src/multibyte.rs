@@ -313,7 +313,18 @@ impl LispObject {
     }
 }
 
+#[derive(Copy, Clone, PartialEq)]
 pub struct LispSymbolOrString(LispObject);
+
+impl LispSymbolOrString {
+    pub fn is_string(self) -> bool {
+        self.0.is_string()
+    }
+
+    pub fn is_symbol(self) -> bool {
+        self.0.is_symbol()
+    }
+}
 
 impl From<LispSymbolOrString> for LispObject {
     fn from(s: LispSymbolOrString) -> Self {
@@ -327,6 +338,12 @@ impl From<LispSymbolOrString> for LispStringRef {
             Some(symbol) => symbol.symbol_name().into(),
             None => s.0.into(),
         }
+    }
+}
+
+impl From<LispStringRef> for LispSymbolOrString {
+    fn from(s: LispStringRef) -> Self {
+        Self(s.into())
     }
 }
 

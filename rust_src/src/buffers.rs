@@ -22,8 +22,8 @@ use crate::{
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
-    multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
+    multibyte::{LispStringRef, LispSymbolOrString},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
@@ -609,7 +609,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
-                    .find(|&item| string_equal(car(item), name));
+                    .find(|&item| string_equal(car(item).into(), name.into()));
 
                 cdr(tem.into())
             }
@@ -872,18 +872,18 @@ pub fn overlay_lists() -> LispObject {
     unsafe { (Fnreverse(before), Fnreverse(after)).into() }
 }
 
-fn get_truename_buffer_1(filename: LispObject) -> LispObject {
+fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
     LiveBufferIter::new()
         .find(|buf| {
             let buf_truename = buf.truename();
-            buf_truename.is_string() && string_equal(buf_truename, filename)
+            buf_truename.is_string() && string_equal(buf_truename.into(), filename)
         })
         .into()
 }
 
 #[no_mangle]
 pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
-    get_truename_buffer_1(filename)
+    get_truename_buffer_1(filename.into())
 }
 
 /// If buffer B has markers to record PT, BEGV and ZV when it is not
@@ -950,7 +950,7 @@ pub fn get_file_buffer(filename: LispStringRef) -> Option<LispBufferRef> {
     } else {
         LiveBufferIter::new().find(|buf| {
             let buf_filename = buf.filename();
-            buf_filename.is_string() && string_equal(buf_filename, filename.into())
+            buf_filename.is_string() && string_equal(buf_filename.into(), filename.into())
         })
     }
 }
@@ -1117,7 +1117,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore.is_not_nil() && string_equal(name.into(), ignore))
+    if (ignore.is_not_nil() && string_equal(name.into(), ignore.into()))
         || get_buffer(LispBufferOrName::Name(name.into())).is_none()
     {
         return name;
@@ -1144,7 +1144,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
-        if string_equal(candidate, ignore)
+        if string_equal(candidate.into(), ignore.into())
             || get_buffer(LispBufferOrName::Name(candidate)).is_none()
         {
             return candidate.into();

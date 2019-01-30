@@ -109,7 +109,7 @@ pub fn file_attributes(filename: LispStringRef, id_format: LispObject) -> LispOb
 /// Comparison is in lexicographic order and case is significant.
 #[lisp_fn]
 pub fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> bool {
-    string_lessp(car(f1), car(f2))
+    string_lessp(car(f1).into(), car(f2).into())
 }
 
 /// Return a list of user names currently registered in the system.

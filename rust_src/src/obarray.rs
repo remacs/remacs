@@ -5,7 +5,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    multibyte::LispStringRef,
+    multibyte::{LispStringRef, LispSymbolOrString},
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
@@ -44,8 +44,8 @@ impl LispObarrayRef {
     /// Return the symbol that matches NAME (either a symbol or string). If
     /// there is no such symbol, return the integer bucket number of where the
     /// symbol would be if it were present.
-    pub fn lookup(&self, name: LispObject) -> LispObject {
-        let string = name.symbol_or_string_as_string();
+    pub fn lookup(&self, name: LispSymbolOrString) -> LispObject {
+        let string: LispStringRef = name.into();
         unsafe {
             oblookup(
                 self.into(),
@@ -60,9 +60,10 @@ impl LispObarrayRef {
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
     /// name will be transferred to pure storage.
-    pub fn intern(&self, string: LispStringRef) -> LispObject {
+    pub fn intern(&self, string: impl Into<LispSymbolOrString>) -> LispObject {
         let string = string.into();
         let tem = self.lookup(string);
+        let string: LispObject = string.into();
         if tem.is_symbol() {
             tem
         } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
@@ -204,9 +205,10 @@ pub extern "C" fn intern_driver(
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObject {
+pub fn intern_soft(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> LispObject {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let tem = obarray.lookup(name);
+    let name: LispObject = name.into();
 
     if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
         Qnil

@@ -206,16 +206,6 @@ impl LispObject {
         self.into()
     }
 
-    pub fn symbol_or_string_as_string(self) -> LispStringRef {
-        match self.as_symbol() {
-            Some(sym) => sym
-                .symbol_name()
-                .as_string()
-                .expect("Expected a symbol name?"),
-            None => self.into(),
-        }
-    }
-
     fn symbol_ptr_value(self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
             self.to_C()
