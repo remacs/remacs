@@ -741,9 +741,11 @@ was inserted."
 	 (type (if (image--imagemagick-wanted-p filename)
 		   'imagemagick
 		 (image-type file-or-data nil data-p)))
+         ;; :scale 1: If we do not set this, create-image will apply
+         ;; default scaling based on font size.
 	 (image (if (not edges)
-		    (create-image file-or-data type data-p)
-		  (create-image file-or-data type data-p
+		    (create-image file-or-data type data-p :scale 1)
+		  (create-image file-or-data type data-p :scale 1
 				:max-width (- (nth 2 edges) (nth 0 edges))
 				:max-height (- (nth 3 edges) (nth 1 edges)))))
 	 (inhibit-read-only t)

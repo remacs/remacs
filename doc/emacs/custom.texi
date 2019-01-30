@@ -32,6 +32,8 @@ Reference Manual}.
                           By changing them, you can redefine keys.
 * Init File::           How to write common customizations in the
                           initialization file.
+* Authentication::      Keeping persistent authentication information.
+
 @end menu
 
 @node Easy Customization
@@ -2639,3 +2641,40 @@ provided by the Emacs startup, such as @code{window-setup-hook} or
 
   For more information on the early init file, @pxref{Init File,,,
 elisp, The Emacs Lisp Reference Manual}.
+
+@node Authentication
+@section Keeping Persistent Authentication Information
+
+  Some Emacs packages, which connect to other services, require
+authentication (@pxref{Passwords}), e.g., see @ref{Top, Gnus,, gnus, The
+Gnus Manual}, or @ref{Top, Tramp,, tramp, The Tramp Manual}.  Because
+it might be annoying to provide the same user name and password again
+and again, Emacs offers to keep this information persistent via the
+@file{auth-source} library.
+
+@cindex @file{~/.authinfo} file
+@cindex @file{~/.authinfo.gpg} file
+@cindex ~/.netrc file
+  By default, the authentication information is taken from the file
+@file{~/.authinfo} or @file{~/.authinfo.gpg} or @file{~/.netrc}.
+These files have a syntax similar to netrc files as known from the
+@command{ftp} program, like this:
+
+@example
+machine @var{mymachine} login @var{myloginname} password @var{mypassword} port @var{myport}
+@end example
+
+  Similarly, the @file{auth-source} library supports multiple storage
+backend, currently either the classic netrc backend, JSON files, the
+Secret Service API, and pass, the standard unix password manager.
+
+@vindex auth-sources
+  All these alternatives can be customized via the user option
+@code{auth-sources}, see @ref{Help for users, Emacs auth-source,,
+auth, Emacs auth-source}.
+
+@vindex auth-source-save-behavior
+  When a password is entered interactively, which is not found via the
+configured backend, some of the backends offer to save it
+persistently.  This can be changed by customizing the user option
+@code{auth-source-save-behavior}.

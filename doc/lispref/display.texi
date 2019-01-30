@@ -3079,10 +3079,17 @@ value, which inherits from @var{face}'s global definition.
 This function returns a list of all defined face names.
 @end defun
 
+@cindex face number
+@cindex face property of face symbols
 @defun face-id face
 This function returns the @dfn{face number} of face @var{face}.  This
 is a number that uniquely identifies a face at low levels within
 Emacs.  It is seldom necessary to refer to a face by its face number.
+However, functions that manipulate glyphs, such as
+@code{make-glyph-code} and @code{glyph-face} (@pxref{Glyphs}) access
+the face numbers internally.  Note that the face number is stored as
+the value of the @code{face} property of the face symbol, so we
+recommend not to set that property of a face to any value of your own.
 @end defun
 
 @defun face-documentation face
