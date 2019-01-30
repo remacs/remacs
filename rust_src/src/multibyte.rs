@@ -41,9 +41,10 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
-    remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
+    remacs_sys::{Qstringp, Qsymbolp},
+    symbols::LispSymbolRef,
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -309,6 +310,42 @@ impl LispObject {
 
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(unsafe { empty_unibyte_string })
+    }
+}
+
+pub struct LispSymbolOrString(LispObject);
+
+impl From<LispSymbolOrString> for LispObject {
+    fn from(s: LispSymbolOrString) -> Self {
+        s.0
+    }
+}
+
+impl From<LispSymbolOrString> for LispStringRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s.0.as_symbol() {
+            Some(symbol) => symbol.symbol_name().into(),
+            None => s.0.into(),
+        }
+    }
+}
+
+impl From<LispSymbolOrString> for LispSymbolRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s.0.as_symbol() {
+            Some(symbol) => symbol,
+            None => wrong_type!(s, Qsymbolp),
+        }
+    }
+}
+
+impl From<LispObject> for LispSymbolOrString {
+    fn from(o: LispObject) -> Self {
+        if o.is_string() || o.is_symbol() {
+            Self(o)
+        } else {
+            wrong_type!(Qstringp, o)
+        }
     }
 }
 
