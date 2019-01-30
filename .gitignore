@@ -199,6 +199,7 @@ lisp/international/charscript.el
 lisp/international/cp51932.el
 lisp/international/eucjp-ms.el
 lisp/international/uni-*.el
+lisp/language/pinyin.el
 
 # Documentation.
 *.aux
