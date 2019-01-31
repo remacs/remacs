@@ -281,7 +281,7 @@ pub const READABLE_EVENTS_FILTER_EVENTS: i32 = 2;
 ///
 /// If CHECK-TIMERS is non-nil, timers that are ready to run will do so.
 #[lisp_fn(min = "0")]
-pub fn input_pending_p(check_timers: LispObject) -> bool {
+pub fn input_pending_p(check_timers: bool) -> bool {
     unsafe {
         if globals.Vunread_command_events.is_cons()
             || globals.Vunread_post_input_method_events.is_not_nil()
@@ -293,13 +293,13 @@ pub fn input_pending_p(check_timers: LispObject) -> bool {
         // Process non-user-visible events (Bug#10195).
         process_special_events();
 
-        let val = if check_timers.is_nil() {
+        let val = if !check_timers {
             0
         } else {
             READABLE_EVENTS_DO_TIMERS_NOW
-        } | READABLE_EVENTS_FILTER_EVENTS;
+        };
 
-        get_input_pending(val)
+        get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)
     }
 }
 
