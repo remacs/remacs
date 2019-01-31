@@ -12,13 +12,14 @@ use std::ptr::null_mut;
 use std::slice;
 
 use crate::{
+    fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
+    multibyte::LispStringRef,
     remacs_sys::{
         build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
         filemode_string, globals, re_pattern_buffer, re_search,
     },
-    remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
     remacs_sys::{
         Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes, Qfile_missing, Qnil,
         Qt,
@@ -214,41 +215,51 @@ fn fattrs_from_os(
 }
 
 fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: Option<LispObject>) {
-    let res = read_dir(dname, fnames, match_re);
-    if res.is_err() {
-        xsignal!(
-            Qfile_missing,
-            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            dname
-        );
+    match read_dir(dname, fnames, match_re) {
+        Ok(_) => {}
+        Err(err) => {
+            xsignal!(
+                Qfile_missing,
+                format!("Opening directory: {}", err).to_bstring(),
+                dname
+            );
+        }
     }
 }
 
 fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>) -> io::Result<()> {
     let dir_p = Path::new(dname);
 
-    let mut re = RegEx::new(String::from("").to_bstring());
-    if let Some(x) = match_re {
-        re = RegEx::new(x);
-    }
+    let re = match match_re {
+        Some(x) => Some(RegEx::new(x)),
+        None => None,
+    };
 
     let dot = String::from(".");
-    if match_re_maybe(dot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dot.to_owned(), &re).is_some() {
         fnames.push(dot);
     }
     let dotdot = String::from("..");
-    if match_re_maybe(dotdot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dotdot.to_owned(), &re).is_some() {
         fnames.push(dotdot);
     }
 
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
-        let f_enc = fname.file_name().into_string().unwrap();
+        let f_enc = match fname.file_name().into_string() {
+            Ok(file_name) => file_name,
+            Err(err) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("Could not decode {:?}", err),
+                ));
+            }
+        };
         let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
         let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
         let f = f_dec_lo.to_stdstring();
 
-        if match_re_maybe(f.to_owned(), match_re, &re).is_some() {
+        if match_re_maybe(f.to_owned(), &re).is_some() {
             fnames.push(f);
         }
     }
@@ -256,10 +267,10 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
     Ok(())
 }
 
-fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option<String> {
-    match match_re {
-        Some(_) => {
-            if re.is_match(f.as_str()) {
+fn match_re_maybe(f: String, re: &Option<RegEx>) -> Option<String> {
+    match re {
+        Some(re_value) => {
+            if re_value.is_match(f.as_str()) {
                 Some(f)
             } else {
                 None
@@ -316,20 +327,27 @@ fn directory_files_core(dr: &DirReq, dd: &mut DirData) -> LispObject {
 }
 
 pub fn directory_files_intro(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
 ) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+    let dnexp = expand_file_name(directory, None);
 
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files) };
+    let handler = find_file_name_handler(dnexp, Qdirectory_files);
     if handler.is_not_nil() {
-        return call!(handler, Qdirectory_files, dnexp, full, match_re, nosort);
+        return call!(
+            handler,
+            Qdirectory_files,
+            dnexp.into(),
+            full,
+            match_re,
+            nosort
+        );
     }
 
     let dr = DirReq::new(
-        dnexp.to_stdstring(),
+        LispObject::from(dnexp).to_stdstring(),
         if full.is_nil() {
             FullPath::No
         } else {
@@ -353,20 +371,20 @@ pub fn directory_files_intro(
 }
 
 pub fn directory_files_and_attributes_intro(
-    directory: LispObject,
+    directory: LispStringRef,
     full: LispObject,
     match_re: LispObject,
     nosort: LispObject,
     id_format: LispObject,
 ) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+    let dnexp = expand_file_name(directory, None);
 
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files_and_attributes) };
+    let handler = find_file_name_handler(dnexp, Qdirectory_files_and_attributes);
     if handler.is_not_nil() {
         return call!(
             handler,
             Qdirectory_files_and_attributes,
-            dnexp,
+            dnexp.into(),
             full,
             match_re,
             nosort,
@@ -375,7 +393,7 @@ pub fn directory_files_and_attributes_intro(
     }
 
     let dr = DirReq::new(
-        dnexp.to_stdstring(),
+        LispObject::from(dnexp).to_stdstring(),
         if full.is_nil() {
             FullPath::No
         } else {
@@ -689,18 +707,18 @@ impl FileAttrs {
     }
 }
 
-pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
-    let fnexp = unsafe { Fexpand_file_name(filename, Qnil) };
-    let handler = unsafe { Ffind_file_name_handler(fnexp, Qfile_attributes) };
+pub fn file_attributes_intro(filename: LispStringRef, id_format: LispObject) -> LispObject {
+    let fnexp = expand_file_name(filename, None);
+    let handler = find_file_name_handler(fnexp, Qfile_attributes);
     if handler.is_not_nil() {
         if id_format.is_not_nil() {
-            return call!(handler, Qfile_attributes, fnexp, id_format);
+            return call!(handler, Qfile_attributes, fnexp.into(), id_format);
         } else {
-            return call!(handler, Qfile_attributes, fnexp);
+            return call!(handler, Qfile_attributes, fnexp.into());
         }
     }
 
-    file_attributes_core(fnexp, id_format)
+    file_attributes_core(fnexp.into(), id_format)
 }
 
 // Used by directory-files-and-attributes

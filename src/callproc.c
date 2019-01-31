@@ -770,7 +770,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
    Unwind-protect the file, so that the file descriptor will be closed
    and the file removed when the caller unwinds the specpdl stack.  */
 
-static int
+int
 create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
 		  Lisp_Object *filename_string_ptr)
 {
@@ -873,88 +873,6 @@ create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
   return fd;
 }
 
-DEFUN ("call-process-region", Fcall_process_region, Scall_process_region,
-       3, MANY, 0,
-       doc: /* Send text from START to END to a synchronous process running PROGRAM.
-
-START and END are normally buffer positions specifying the part of the
-buffer to send to the process.
-If START is nil, that means to use the entire buffer contents; END is
-ignored.
-If START is a string, then send that string to the process
-instead of any buffer contents; END is ignored.
-The remaining arguments are optional.
-Delete the text if fourth arg DELETE is non-nil.
-
-Insert output in BUFFER before point; t means current buffer; nil for
- BUFFER means discard it; 0 means discard and don't wait; and `(:file
- FILE)', where FILE is a file name string, means that it should be
- written to that file (if the file already exists it is overwritten).
-BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
-REAL-BUFFER says what to do with standard output, as above,
-while STDERR-FILE says what to do with standard error in the child.
-STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
-
-Sixth arg DISPLAY non-nil means redisplay buffer as output is inserted.
-Remaining args are passed to PROGRAM at startup as command args.
-
-If BUFFER is 0, `call-process-region' returns immediately with value nil.
-Otherwise it waits for PROGRAM to terminate
-and returns a numeric exit status or a signal description string.
-If you quit, the process is killed with SIGINT, or SIGKILL if you quit again.
-
-usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object infile, val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object start = args[0];
-  Lisp_Object end = args[1];
-  bool empty_input;
-  int fd;
-
-  if (STRINGP (start))
-    empty_input = SCHARS (start) == 0;
-  else if (NILP (start))
-    empty_input = BEG == Z;
-  else
-    {
-      validate_region (&args[0], &args[1]);
-      start = args[0];
-      end = args[1];
-      empty_input = XINT (start) == XINT (end);
-    }
-
-  if (!empty_input)
-    fd = create_temp_file (nargs, args, &infile);
-  else
-    {
-      infile = Qnil;
-      fd = emacs_open (NULL_DEVICE, O_RDONLY, 0);
-      if (fd < 0)
-	report_file_error ("Opening null device", Qnil);
-      record_unwind_protect_int (close_file_unwind, fd);
-    }
-
-  if (nargs > 3 && !NILP (args[3]))
-    Fdelete_region (start, end);
-
-  if (nargs > 3)
-    {
-      args += 2;
-      nargs -= 2;
-    }
-  else
-    {
-      args[0] = args[2];
-      nargs = 2;
-    }
-  args[1] = infile;
-
-  val = call_process (nargs, args, fd, empty_input ? -1 : count);
-  return unbind_to (count, val);
-}
 
 static char **
 add_env (char **env, char **new_env, char *string)
@@ -1553,5 +1471,4 @@ See `setenv' and `getenv'.  */);
   Vprocess_environment = Qnil;
 
   defsubr (&Sgetenv_internal);
-  defsubr (&Scall_process_region);
 }

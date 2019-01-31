@@ -1313,97 +1313,6 @@ See also the function `nreverse', which is used more often.  */)
     wrong_type_argument (Qsequencep, seq);
   return new;
 }
-
-/* Return true if O1 and O2 are equal.  Do not quit or check for cycles.
-   Use this only on arguments that are cycle-free and not too large and
-   are not window configurations.  */
-
-bool
-equal_no_quit (Lisp_Object o1, Lisp_Object o2)
-{
-  return internal_equal (o1, o2, EQUAL_NO_QUIT, 0, Qnil);
-}
-
-/* Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
-   of equality test to use: if it is EQUAL_NO_QUIT, do not check for
-   cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
-   Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
-   equal-including-properties.
-
-   If DEPTH is the current depth of recursion; signal an error if it
-   gets too deep.  HT is a hash table used to detect cycles; if nil,
-   it has not been allocated yet.  But ignore the last two arguments
-   if EQUAL_KIND == EQUAL_NO_QUIT.  */
-
-/* NOTE: made this non-static to call it from Rust. */
-bool
-internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
-		int depth, Lisp_Object ht)
-{
- tail_recurse:
-  if (depth > 10)
-    {
-      eassert (equal_kind != EQUAL_NO_QUIT);
-      if (depth > 200)
-	error ("Stack overflow in equal");
-      if (NILP (ht))
-	ht = CALLN (Fmake_hash_table, QCtest, Qeq);
-      switch (XTYPE (o1))
-	{
-	case Lisp_Cons: case Lisp_Misc: case Lisp_Vectorlike:
-	  {
-	    struct Lisp_Hash_Table *h = XHASH_TABLE (ht);
-	    EMACS_UINT hash;
-	    ptrdiff_t i = hash_lookup (h, o1, &hash);
-	    if (i >= 0)
-	      { /* `o1' was seen already.  */
-		Lisp_Object o2s = HASH_VALUE (h, i);
-		if (!NILP (Fmemq (o2, o2s)))
-		  return true;
-		else
-		  set_hash_value_slot (h, i, Fcons (o2, o2s));
-	      }
-	    else
-	      hash_put (h, o1, Fcons (o2, Qnil), hash);
-	  }
-	default: ;
-	}
-    }
-
-  if (EQ (o1, o2))
-    return true;
-  if (XTYPE (o1) != XTYPE (o2))
-    return false;
-
-  switch (XTYPE (o1))
-    {
-    case Lisp_Float:
-      {
-	double d1 = XFLOAT_DATA (o1);
-	double d2 = XFLOAT_DATA (o2);
-	/* If d is a NaN, then d != d. Two NaNs should be `equal' even
-	   though they are not =.  */
-	return d1 == d2 || (d1 != d1 && d2 != d2);
-      }
-
-    case Lisp_Cons:
-      return internal_equal_cons(o1, o2, equal_kind, depth, ht);
-
-    case Lisp_Misc:
-      return internal_equal_misc(o1, o2,  equal_kind, depth, ht);
-
-    case Lisp_Vectorlike:
-      return internal_equal_vectorlike(o1, o2, equal_kind, depth, ht);
-
-    case Lisp_String:
-      return internal_equal_string(o1, o2, equal_kind, depth, ht);
-
-    default:
-      break;
-    }
-
-  return false;
-}
 
 
 DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0,
@@ -1462,38 +1371,6 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
   return CALLN (Fnconc, s1, s2);
 }
 
-DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0,
-       doc: /* Concatenate any number of lists by altering them.
-Only the last argument is not altered, and need not be a list.
-usage: (nconc &rest LISTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object val = Qnil;
-
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object tem = args[argnum];
-      if (NILP (tem)) continue;
-
-      if (NILP (val))
-	val = tem;
-
-      if (argnum + 1 == nargs) break;
-
-      CHECK_CONS (tem);
-
-      Lisp_Object tail;
-      FOR_EACH_TAIL (tem)
-	tail = tem;
-
-      tem = args[argnum + 1];
-      Fsetcdr (tail, tem);
-      if (NILP (tem))
-	args[argnum + 1] = tail;
-    }
-
-  return val;
-}
 
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
@@ -1568,55 +1445,6 @@ Lisp_Object
 do_yes_or_no_p (Lisp_Object prompt)
 {
   return call1 (intern ("yes-or-no-p"), prompt);
-}
-
-DEFUN ("yes-or-no-p", Fyes_or_no_p, Syes_or_no_p, 1, 1, 0,
-       doc: /* Ask user a yes-or-no question.
-Return t if answer is yes, and nil if the answer is no.
-PROMPT is the string to display to ask the question.  It should end in
-a space; `yes-or-no-p' adds \"(yes or no) \" to it.
-
-The user must confirm the answer with RET, and can edit it until it
-has been confirmed.
-
-If dialog boxes are supported, a dialog box will be used
-if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
-  (Lisp_Object prompt)
-{
-  Lisp_Object ans;
-
-  CHECK_STRING (prompt);
-
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box && ! NILP (last_input_event))
-    {
-      Lisp_Object pane, menu, obj;
-      redisplay_preserve_echo_area (4);
-      pane = list2 (Fcons (build_string ("Yes"), Qt),
-		    Fcons (build_string ("No"), Qnil));
-      menu = Fcons (prompt, pane);
-      obj = Fx_popup_dialog (Qt, menu, Qnil);
-      return obj;
-    }
-
-  AUTO_STRING (yes_or_no, "(yes or no) ");
-  prompt = CALLN (Fconcat, prompt, yes_or_no);
-
-  while (1)
-    {
-      ans = Fdowncase (Fread_from_minibuffer (prompt, Qnil, Qnil, Qnil,
-					      Qyes_or_no_p_history, Qnil,
-					      Qnil));
-      if (SCHARS (ans) == 3 && !strcmp (SSDATA (ans), "yes"))
-	return Qt;
-      if (SCHARS (ans) == 2 && !strcmp (SSDATA (ans), "no"))
-	return Qnil;
-
-      Fding (Qnil);
-      Fdiscard_input ();
-      message1 ("Please answer yes or no.");
-      Fsleep_for (make_number (2), Qnil);
-    }
 }
 
 /* Primitives for work of the "widget" library.
@@ -3157,11 +2985,9 @@ this variable.  */);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
-  defsubr (&Syes_or_no_p);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);

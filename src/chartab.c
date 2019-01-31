@@ -60,7 +60,6 @@ static const int chartab_bits[4] =
 typedef Lisp_Object (*uniprop_decoder_t) (Lisp_Object, Lisp_Object);
 typedef Lisp_Object (*uniprop_encoder_t) (Lisp_Object, Lisp_Object);
 
-Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
 static uniprop_decoder_t uniprop_get_decoder (Lisp_Object);
 
 /* 1 iff TABLE is a uniprop table.  */

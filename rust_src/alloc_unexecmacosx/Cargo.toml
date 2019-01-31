@@ -5,4 +5,4 @@ authors = ["Felix S. Klock II <pnkfelix@pnkfx.org>"]
 edition = "2018"
 
 [dependencies]
-libc = { version = "0.2.17", default-features = false }
+libc = { version = "0.2", default-features = false }

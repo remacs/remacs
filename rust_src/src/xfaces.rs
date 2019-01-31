@@ -2,10 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::{
-    lisp::defsubr,
-    remacs_sys::{clear_face_cache, set_face_change, windows_or_buffers_changed},
-};
+use crate::remacs_sys::{clear_face_cache, set_face_change, windows_or_buffers_changed};
 
 /// Clear face caches on all frames.
 /// Optional THOROUGHLY non-nil means try to free unused fonts, too.

@@ -59,7 +59,7 @@ pub unsafe extern "C" fn scan_rust_file(
             }
             in_docstring = true;
             if line.starts_with("/// usage: (") {
-                docstring = format!("{}\n", docstring.trim_right());
+                docstring = format!("{}\n", docstring.trim_end());
                 let begin = &line[11..];
                 // Now find the first space after the function name. If there is a space
                 // capture the rest of the usage text.
@@ -69,7 +69,7 @@ pub unsafe extern "C" fn scan_rust_file(
                     docstring_usage.push_str(&line[pos..]);
                 }
             } else {
-                docstring.push_str(line[3..].trim_left());
+                docstring.push_str(line[3..].trim_start());
                 docstring.push('\n');
             }
         } else {
@@ -146,7 +146,7 @@ pub unsafe extern "C" fn scan_rust_file(
                         }
                         let argname = chunk[0]
                             .trim()
-                            .trim_left_matches("mut ")
+                            .trim_start_matches("mut ")
                             .trim()
                             .to_uppercase()
                             .replace("_", "-");

@@ -78,6 +78,8 @@ void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 void find_field (Lisp_Object, Lisp_Object, Lisp_Object, ptrdiff_t *, Lisp_Object, ptrdiff_t *);
 
+void general_insert_function (void (*) (const char *, ptrdiff_t), void (*) (Lisp_Object, ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool), bool, ptrdiff_t, Lisp_Object *);
+
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif

@@ -959,49 +959,6 @@ cmd_error_internal (Lisp_Object data, const char *context)
   Vsignaling_function = Qnil;
 }
 
-DEFUN ("command-error-default-function", Fcommand_error_default_function,
-       Scommand_error_default_function, 3, 3, 0,
-       doc: /* Produce default output for unhandled error message.
-Default value of `command-error-function'.  */)
-  (Lisp_Object data, Lisp_Object context, Lisp_Object signal)
-{
-  struct frame *sf = SELECTED_FRAME ();
-
-  CHECK_STRING (context);
-
-  /* If the window system or terminal frame hasn't been initialized
-     yet, or we're not interactive, write the message to stderr and exit.  */
-  if (!sf->glyphs_initialized_p
-	   /* The initial frame is a special non-displaying frame. It
-	      will be current in daemon mode when there are no frames
-	      to display, and in non-daemon mode before the real frame
-	      has finished initializing.  If an error is thrown in the
-	      latter case while creating the frame, then the frame
-	      will never be displayed, so the safest thing to do is
-	      write to stderr and quit.  In daemon mode, there are
-	      many other potential errors that do not prevent frames
-	      from being created, so continuing as normal is better in
-	      that case.  */
-	   || (!IS_DAEMON && FRAME_INITIAL_P (sf))
-	   || noninteractive)
-    {
-      print_error_message (data, Qexternal_debugging_output,
-			   SSDATA (context), signal);
-      Fterpri (Qexternal_debugging_output, Qnil);
-      Fkill_emacs (make_number (-1));
-    }
-  else
-    {
-      clear_message (1, 0);
-      Fdiscard_input ();
-      message_log_maybe_newline ();
-      ding_internal (true);
-
-      print_error_message (data, Qt, SSDATA (context), signal);
-    }
-  return Qnil;
-}
-
 static Lisp_Object command_loop_2 (Lisp_Object);
 static Lisp_Object top_level_1 (Lisp_Object);
 
@@ -11061,7 +11018,6 @@ syms_of_keyboard (void)
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
   defsubr (&Srecursion_depth);
-  defsubr (&Scommand_error_default_function);
   defsubr (&Stop_level);
   defsubr (&Sdiscard_input);
   defsubr (&Sopen_dribble_file);

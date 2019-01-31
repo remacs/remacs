@@ -1,23 +1,28 @@
 //! Generic Lisp eval functions
 
-use std::ptr;
+use std::{ptr, unreachable};
+
+use libc::c_void;
 
 use remacs_macros::lisp_fn;
 
 use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
+    lists::{assq, car, cdr, get, memq, nth, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys::specbind_tag::{
+        SPECPDL_UNWIND, SPECPDL_UNWIND_INT, SPECPDL_UNWIND_PTR, SPECPDL_UNWIND_VOID,
+    },
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
-        internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
-        record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
+        grow_specpdl, internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace,
+        record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
@@ -36,6 +41,58 @@ use crate::{
  *   NOTE!!! Every function that can call EVAL must protect its args   *
  *   and temporaries from garbage collection while it needs them.      *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect(
+    function: Option<unsafe extern "C" fn(LispObject)>,
+    arg: LispObject,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_ptr(
+    function: Option<unsafe extern "C" fn(*mut c_void)>,
+    arg: *mut c_void,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_ptr
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_PTR);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_int(
+    function: Option<unsafe extern "C" fn(i32)>,
+    arg: i32,
+) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_int
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_INT);
+    unwind.func = function;
+    unwind.arg = arg;
+    grow_specpdl();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn record_unwind_protect_void(function: Option<unsafe extern "C" fn()>) {
+    let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
+        .unwind_void
+        .as_mut();
+    unwind.set_kind(SPECPDL_UNWIND_VOID);
+    unwind.func = function;
+    grow_specpdl();
+}
 
 /// Eval args until one of them yields non-nil, then return that value.
 /// The remaining args are not evalled at all.
@@ -57,10 +114,11 @@ pub fn and(args: LispObject) -> LispObject {
 
 /// Eval each item in ARGS and then compare it using CMP.
 /// INITIAL is returned if the list has no cons cells.
-fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
-where
-    CmpFunc: Fn(LispObject, LispObject) -> bool,
-{
+fn eval_and_compare_all(
+    args: LispObject,
+    initial: LispObject,
+    cmp: impl Fn(LispObject, LispObject) -> bool,
+) -> LispObject {
     let mut val = initial;
 
     for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
@@ -107,7 +165,7 @@ pub fn cond(args: LispObject) -> LispObject {
     for clause in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (head, tail) = clause.into();
         val = unsafe { eval_sub(head) };
-        if val != Qnil {
+        if val.is_not_nil() {
             if tail.is_not_nil() {
                 val = progn(tail);
             }
@@ -186,7 +244,7 @@ pub fn setq(args: LispObject) -> LispObject {
         // Like for eval_sub, we do not check declared_special here since
         // it's been done when let-binding.
         // N.B. the check against nil is a mere optimization!
-        if unsafe { globals.Vinternal_interpreter_environment != Qnil } && sym.is_symbol() {
+        if unsafe { globals.Vinternal_interpreter_environment.is_not_nil() } && sym.is_symbol() {
             let binding = assq(sym, unsafe { globals.Vinternal_interpreter_environment });
             if let Some(binding) = binding.as_cons() {
                 lexical = true;
@@ -215,7 +273,7 @@ pub fn function(args: LispCons) -> LispObject {
         wrong_number_of_arguments!(Qfunction, length(args.into()));
     }
 
-    if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
+    if unsafe { globals.Vinternal_interpreter_environment.is_not_nil() } {
         if let Some((first, mut cdr)) = quoted.into() {
             if first.eq(Qlambda) {
                 // This is a lambda expression within a lexical environment;
@@ -231,8 +289,7 @@ pub fn function(args: LispCons) -> LispObject {
                         // Handle the special (:documentation <form>) to build the docstring
                         // dynamically.
 
-                        let docstring = unsafe { eval_sub(car(tail)) };
-                        docstring.as_string_or_error();
+                        let docstring: LispStringRef = unsafe { eval_sub(car(tail)) }.into();
                         let (a, b) = cdr.into();
                         let (_, bd) = b.into();
                         cdr = (a, (docstring, bd)).into();
@@ -297,14 +354,14 @@ pub fn defconst(args: LispCons) -> LispSymbolRef {
     };
 
     let mut tem = unsafe { eval_sub(car(tail)) };
-    if unsafe { globals.Vpurify_flag } != Qnil {
+    if unsafe { globals.Vpurify_flag }.is_not_nil() {
         tem = unsafe { Fpurecopy(tem) };
     }
     let sym_ref: LispSymbolRef = sym.into();
     set_default(sym_ref, tem);
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
-        if unsafe { globals.Vpurify_flag } != Qnil {
+        if unsafe { globals.Vpurify_flag }.is_not_nil() {
             docstring = unsafe { Fpurecopy(docstring) };
         }
 
@@ -362,7 +419,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
         let mut needs_bind = true;
 
-        if lexenv != Qnil {
+        if lexenv.is_not_nil() {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
                     let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
@@ -398,7 +455,7 @@ pub fn letX(args: LispCons) -> LispObject {
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body);
+    let val = progn(body);
 
     unbind_to(count, val)
 }
@@ -423,7 +480,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
         let mut dyn_bind = true;
 
-        if lexenv != Qnil {
+        if lexenv.is_not_nil() {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
                     let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
@@ -453,7 +510,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body);
+    let val = progn(body);
 
     unbind_to(count, val)
 }
@@ -466,7 +523,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 pub fn lisp_while(args: LispCons) {
     let (test, body) = args.into();
 
-    while unsafe { eval_sub(test) } != Qnil {
+    while unsafe { eval_sub(test) }.is_not_nil() {
         unsafe { maybe_quit() };
 
         prog_ignore(body);
@@ -565,7 +622,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 /// Apply fn to arg.
 #[no_mangle]
 pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
-    if arg == Qnil {
+    if arg.is_nil() {
         call!(func)
     } else {
         callN_raw!(Fapply, func, arg)
@@ -673,11 +730,11 @@ pub fn autoload(
     ty: LispObject,
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
-    if function.get_function() != Qnil && !is_autoload(function.get_function()) {
+    if function.get_function().is_not_nil() && !is_autoload(function.get_function()) {
         return Qnil;
     }
 
-    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(0) {
+    if unsafe { globals.Vpurify_flag.is_not_nil() } && docstring.eq(0) {
         // `read1' in lread.c has found the docstring starting with "\
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
@@ -788,10 +845,10 @@ pub fn autoload_do_load(
     unsafe {
         // This is to make sure that loadup.el gives a clear picture
         // of what files are preloaded and when.
-        if globals.Vpurify_flag != Qnil {
+        if globals.Vpurify_flag.is_not_nil() {
             error!(
                 "Attempt to autoload {} while preparing to dump",
-                sym.symbol_name().as_string_or_error()
+                sym.symbol_name()
             );
         }
 
@@ -821,7 +878,7 @@ pub fn autoload_do_load(
     };
 
     unsafe {
-        Fload(Fcar(Fcdr(fundef)), ignore_errors, Qt, Qnil, Qt);
+        Fload(car(cdr(fundef)), ignore_errors, Qt, Qnil, Qt);
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
@@ -837,8 +894,8 @@ pub fn autoload_do_load(
         if equal(fun, fundef) {
             error!(
                 "Autoloading file {} failed to define function {}",
-                car(car(unsafe { globals.Vload_history })).as_string_or_error(),
-                sym.symbol_name().as_string_or_error()
+                car(car(unsafe { globals.Vload_history })),
+                sym.symbol_name()
             );
         } else {
             fun
@@ -961,7 +1018,7 @@ fn run_hook_with_args_internal(
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
-    if unsafe { Vrun_hooks == Qnil } {
+    if unsafe { Vrun_hooks.is_nil() } {
         return Qnil;
     }
 
@@ -1216,6 +1273,32 @@ pub fn catch(args: LispCons) -> LispObject {
     let val = unsafe { eval_sub(tag) };
 
     unsafe { internal_catch(val, Some(Fprogn), body) }
+}
+
+/// Signal an error.  Args are ERROR-SYMBOL and associated DATA. This
+/// function does not return.
+///
+/// An error symbol is a symbol with an `error-conditions' property
+/// that is a list of condition names.  A handler for any of those
+/// names will get to handle this signal.  The symbol `error' should
+/// normally be one of them.
+///
+/// DATA should be a list.  Its elements are printed as part of the
+/// error message.  See Info anchor `(elisp)Definition of signal' for
+/// some details on how this error message is constructed.
+/// If the signal is handled, DATA is made available to the handler.
+/// See also the function `condition-case'.
+#[lisp_fn]
+pub fn signal(error_symbol: LispObject, data: LispObject) -> ! {
+    #[cfg(test)]
+    {
+        panic!("Fsignal called during tests.");
+    }
+    #[cfg(not(test))]
+    {
+        unsafe { signal_or_quit(error_symbol, data, false) };
+        unreachable!();
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

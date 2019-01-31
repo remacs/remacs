@@ -5465,7 +5465,20 @@ if test "$CANNOT_DUMP" != "yes"; then
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexec\", "
     fi
 fi
-
+if test "$window_system" != "none"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system\", "
+fi
+case "$window_system" in
+    x11)
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-x11\", "
+    ;;
+    nextstep)
+	CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-nextstep\", "
+    ;;
+    w32)
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-w32\", "
+    ;;
+esac
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

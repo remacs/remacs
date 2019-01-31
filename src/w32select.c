@@ -494,10 +494,10 @@ setup_config (void)
 
   dos_coding_system = validate_coding_system (coding_system);
   if (NILP (dos_coding_system))
-    Fsignal (Qerror,
-	     list2 (build_string ("Coding system is invalid or doesn't have "
-				  "an eol variant for dos line ends"),
-		    coding_system));
+    xsignal2 (Qerror,
+              build_string ("Coding system is invalid or doesn't have "
+                            "an eol variant for dos line ends"),
+              coding_system);
 
   /* Check if we have it cached */
   if (!NILP (cfg_coding_system)

@@ -111,14 +111,6 @@ pub extern "C" fn Fcons(car: LispObject, cdr: LispObject) -> LispObject {
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[no_mangle]
-pub extern "C" fn Fsignal(error_symbol: LispObject, data: LispObject) -> ! {
-    panic!("Fsignal called during tests");
-}
-
-#[cfg(test)]
-#[allow(unused_variables)]
-#[allow(dead_code)]
-#[no_mangle]
 pub extern "C" fn make_string(s: *const c_char, length: isize) -> LispObject {
     mock_multibyte_string!()
 }
