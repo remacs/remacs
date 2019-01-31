@@ -1785,10 +1785,8 @@ dump_root_visitor (Lisp_Object *root_ptr, enum gc_root_type type, void *data)
 static void
 dump_roots (struct dump_context *ctx)
 {
-  struct gc_root_visitor visitor;
-  memset (&visitor, 0, sizeof (visitor));
-  visitor.visit = dump_root_visitor;
-  visitor.data = ctx;
+  struct gc_root_visitor visitor = { .visit = dump_root_visitor,
+				     .data = ctx };
   visit_static_gc_roots (visitor);
 }
 
@@ -4949,19 +4947,12 @@ struct dump_bitset {
 static bool
 dump_bitset_init (struct dump_bitset *bitset, size_t number_bits)
 {
-  memset (bitset, 0, sizeof (*bitset));
   int xword_size = sizeof (bitset->bits[0]);
   int bits_per_word = xword_size * CHAR_BIT;
   ptrdiff_t words_needed = DIVIDE_ROUND_UP (number_bits, bits_per_word);
   bitset->number_words = words_needed;
   bitset->bits = calloc (words_needed, xword_size);
   return bitset->bits != NULL;
-}
-
-static void
-dump_bitset_destroy (struct dump_bitset *bitset)
-{
-  free (bitset->bits);
 }
 
 static dump_bitset_word *
@@ -5290,8 +5281,6 @@ dump_do_dump_relocation (
         struct bignum_reload_info reload_info;
         verify (sizeof (reload_info) <= sizeof (bignum->value));
         memcpy (&reload_info, &bignum->value, sizeof (reload_info));
-        memset (&bignum->value, 0, sizeof (bignum->value));
-        mpz_init (bignum->value);
         const mp_limb_t *limbs =
           dump_ptr (dump_base, reload_info.data_location);
         mpz_roinit_n (bignum->value, limbs, reload_info.nlimbs);
@@ -5395,9 +5384,6 @@ enum dump_section
 enum pdumper_load_result
 pdumper_load (const char *dump_filename)
 {
-  enum pdumper_load_result err = PDUMPER_LOAD_ERROR;
-
-  int dump_fd = -1;
   intptr_t dump_size;
   struct stat stat;
   uintptr_t dump_base;
@@ -5405,18 +5391,14 @@ pdumper_load (const char *dump_filename)
   dump_off adj_discardable_start;
 
   struct dump_bitset mark_bits;
-  bool free_mark_bits = false;
   size_t mark_bits_needed;
 
-  struct dump_header header_buf;
+  struct dump_header header_buf = { 0 };
   struct dump_header *header = &header_buf;
-  struct dump_memory_map sections[NUMBER_DUMP_SECTIONS];
+  struct dump_memory_map sections[NUMBER_DUMP_SECTIONS] = { 0 };
 
   const struct timespec start_time = current_timespec ();
-  char *dump_filename_copy = NULL;
-
-  memset (&header_buf, 0, sizeof (header_buf));
-  memset (&sections, 0, sizeof (sections));
+  char *dump_filename_copy;
 
   /* Overwriting an initialized Lisp universe will not go well.  */
   eassert (!initialized);
@@ -5424,8 +5406,8 @@ pdumper_load (const char *dump_filename)
   /* We can load only one dump.  */
   eassert (!dump_loaded_p ());
 
-  err = PDUMPER_LOAD_FILE_NOT_FOUND;
-  dump_fd = emacs_open (dump_filename, O_RDONLY, 0);
+  enum pdumper_load_result err = PDUMPER_LOAD_FILE_NOT_FOUND;
+  int dump_fd = emacs_open (dump_filename, O_RDONLY, 0);
   if (dump_fd < 0)
     goto out;
 
@@ -5470,10 +5452,10 @@ pdumper_load (const char *dump_filename)
       goto out;
     }
 
-  err = PDUMPER_LOAD_OOM;
+  /* FIXME: The comment at the start of this function says it should
+     not use xmalloc, but xstrdup calls xmalloc.  Either fix the
+     comment or fix the following code.  */
   dump_filename_copy = xstrdup (dump_filename);
-  if (!dump_filename_copy)
-    goto out;
 
   err = PDUMPER_LOAD_OOM;
 
@@ -5518,13 +5500,11 @@ pdumper_load (const char *dump_filename)
     DIVIDE_ROUND_UP (header->discardable_start, DUMP_ALIGNMENT);
   if (!dump_bitset_init (&mark_bits, mark_bits_needed))
     goto out;
-  free_mark_bits = true;
 
   /* Point of no return.  */
   err = PDUMPER_LOAD_SUCCESS;
   dump_base = (uintptr_t) sections[DS_HOT].mapping;
   gflags.dumped_with_pdumper_ = true;
-  free_mark_bits = false;
   dump_private.header = *header;
   dump_private.mark_bits = mark_bits;
   dump_public.start = dump_base;
@@ -5547,13 +5527,10 @@ pdumper_load (const char *dump_filename)
     timespec_sub (current_timespec (), start_time);
   dump_private.load_time = timespectod (load_timespec);
   dump_private.dump_filename = dump_filename_copy;
-  dump_filename_copy = NULL;
 
  out:
   for (int i = 0; i < ARRAYELTS (sections); ++i)
     dump_mmap_release (&sections[i]);
-  if (free_mark_bits)
-    dump_bitset_destroy (&mark_bits);
   if (dump_fd >= 0)
     emacs_close (dump_fd);
   return err;
