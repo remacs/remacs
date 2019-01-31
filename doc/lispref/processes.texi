@@ -2640,7 +2640,9 @@ Specify the host to connect to.  @var{host} should be a host name or
 Internet address, as a string, or the symbol @code{local} to specify
 the local host.  If you specify @var{host} for a server, it must
 specify a valid address for the local host, and only clients
-connecting to that address will be accepted.
+connecting to that address will be accepted.  When using @code{local},
+by default IPv4 will be used, specify a @var{family} of @code{ipv6} to
+override this.
 
 @item :service @var{service}
 @var{service} specifies a port number to connect to; or, for a server,

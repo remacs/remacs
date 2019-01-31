@@ -3733,6 +3733,8 @@ also nil, meaning that this process is not associated with any buffer.
 address.  The symbol `local' specifies the local host.  If specified
 for a server process, it must be a valid name or address for the local
 host, and only clients connecting to that address will be accepted.
+`local' will use IPv4 by default, use a FAMILY of 'ipv6 to override
+this.
 
 :service SERVICE -- SERVICE is name of the service desired, or an
 integer specifying a port number to connect to.  If SERVICE is t,
@@ -3983,14 +3985,24 @@ usage: (make-network-process &rest ARGS)  */)
 #ifdef HAVE_LOCAL_SOCKETS
       if (family != AF_LOCAL)
 #endif
-	host = build_string ("127.0.0.1");
+        {
+        if (family == AF_INET6)
+          host = build_string ("::1");
+        else
+          host = build_string ("127.0.0.1");
+        }
     }
   else
     {
       if (EQ (host, Qlocal))
+        {
 	/* Depending on setup, "localhost" may map to different IPv4 and/or
 	   IPv6 addresses, so it's better to be explicit (Bug#6781).  */
-	host = build_string ("127.0.0.1");
+        if (family == AF_INET6)
+          host = build_string ("::1");
+        else
+          host = build_string ("127.0.0.1");
+        }
       CHECK_STRING (host);
     }
 

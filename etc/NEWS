@@ -324,6 +324,11 @@ write alists of variables to ".dir-locals.el".  This is the same
 syntax that you can see in the example of a ".dir-locals.el" file in
 the node "(emacs) Directory Variables" of the user manual.
 
++++
+** Network connections using 'local can now use IPv6.
+'make-network-process' now uses the correct loopback address when
+asked to use :host 'local and :family 'ipv6.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
