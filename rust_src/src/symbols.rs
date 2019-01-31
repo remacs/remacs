@@ -6,9 +6,10 @@ use std::fmt::{Debug, Formatter};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferLocalValueRef,
+    buffers::per_buffer_idx_from_field_offset,
+    buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{indirect_function, set},
+    data::{as_buffer_objfwd, indirect_function, set},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,

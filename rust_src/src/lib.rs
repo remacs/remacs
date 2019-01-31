@@ -22,8 +22,6 @@
 
 extern crate errno;
 #[macro_use]
-extern crate if_chain;
-#[macro_use]
 extern crate lazy_static;
 
 extern crate base64 as base64_crate;
