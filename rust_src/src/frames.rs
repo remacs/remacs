@@ -15,7 +15,10 @@ use crate::{
 };
 
 #[cfg(feature = "window-system")]
-use crate::{remacs_sys::vertical_scroll_bar_type, remacs_sys::x_focus_frame as c_x_focus_frame};
+use crate::remacs_sys::{vertical_scroll_bar_type, x_focus_frame, Fnreverse};
+
+#[cfg(not(feature = "window-system"))]
+use crate::remacs_sys::Fcopy_sequence;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -39,6 +42,17 @@ impl LispFrameRef {
 
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+
+    pub fn has_tooltip(self) -> bool {
+        #[cfg(feature = "window-system")]
+        {
+            self.tooltip()
+        }
+        #[cfg(not(feature = "window-system"))]
+        {
+            false
+        }
     }
 
     pub fn total_fringe_width(self) -> i32 {
@@ -603,17 +617,47 @@ pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
 /// means do not activate FRAME.
 ///
 /// If there is no window system support, this function does nothing.
-#[lisp_fn(min = "1")]
-pub fn x_focus_frame(_frame: LispFrameLiveOrSelected, _noactivate: bool) -> LispObject {
+#[lisp_fn(min = "1", name = "x-focus-frame", c_name = "x_focus_frame")]
+pub fn x_focus_frame_lisp(_frame: LispFrameLiveOrSelected, _noactivate: bool) {
     #[cfg(feature = "window-system")]
     {
         let mut frame_ref: LispFrameRef = _frame.into();
         unsafe {
-            c_x_focus_frame(frame_ref.as_mut(), _noactivate);
+            x_focus_frame(frame_ref.as_mut(), _noactivate);
         }
     }
+}
 
-    Qnil
+fn filter_frame_list(predicate: impl Fn(LispFrameRef) -> bool) -> LispObject {
+    let mut list: LispObject = Qnil;
+    for_each_frame!(f => {
+        if predicate(f) {
+            list = (f, list).into();
+        }
+    });
+    list
+}
+
+/// Return a list of all live frames.
+/// The return value does not include any tooltip frame.
+#[lisp_fn]
+pub fn frame_list() -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let list = filter_frame_list(|f| !f.has_tooltip());
+        // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
+        unsafe { Fnreverse(list) }
+    }
+    #[cfg(not(feature = "window-system"))]
+    {
+        unsafe { Fcopy_sequence(Vframe_list) }
+    }
+}
+
+/// Return a list of all frames now \"visible\" (being updated).
+#[lisp_fn]
+pub fn visible_frame_list() -> LispObject {
+    filter_frame_list(|f| f.is_visible())
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
