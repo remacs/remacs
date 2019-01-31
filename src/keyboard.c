@@ -1238,7 +1238,7 @@ static void adjust_point_for_property (ptrdiff_t, bool);
 Lisp_Object
 command_loop_1 (void)
 {
-  EMACS_INT prev_modiff = 0;
+  modiff_count prev_modiff = 0;
   struct buffer *prev_buffer = NULL;
   bool already_adjusted = 0;
 

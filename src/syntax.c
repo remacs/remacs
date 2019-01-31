@@ -175,7 +175,7 @@ static ptrdiff_t find_start_value;
 static ptrdiff_t find_start_value_byte;
 static struct buffer *find_start_buffer;
 static ptrdiff_t find_start_begv;
-static EMACS_INT find_start_modiff;
+static modiff_count find_start_modiff;
 
 
 static Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
@@ -489,7 +489,7 @@ parse_sexp_propertize (ptrdiff_t charpos)
   if (syntax_propertize__done <= charpos
       && syntax_propertize__done < zv)
     {
-      EMACS_INT modiffs = CHARS_MODIFF;
+      modiff_count modiffs = CHARS_MODIFF;
       safe_call1 (Qinternal__syntax_propertize,
 		  make_fixnum (min (zv, 1 + charpos)));
       if (modiffs != CHARS_MODIFF)
@@ -608,7 +608,7 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 
   if (!NILP (Vcomment_use_syntax_ppss))
     {
-      EMACS_INT modiffs = CHARS_MODIFF;
+      modiff_count modiffs = CHARS_MODIFF;
       Lisp_Object ppss = call1 (Qsyntax_ppss, make_fixnum (pos));
       if (modiffs != CHARS_MODIFF)
 	error ("syntax-ppss modified the buffer!");

@@ -422,20 +422,20 @@ struct buffer_text
     ptrdiff_t gpt_byte;		/* Byte pos of gap in buffer.  */
     ptrdiff_t z_byte;		/* Byte pos of end of buffer.  */
     ptrdiff_t gap_size;		/* Size of buffer's gap.  */
-    EMACS_INT modiff;		/* This counts buffer-modification events
+    modiff_count modiff;	/* This counts buffer-modification events
 				   for this buffer.  It is incremented for
 				   each such event, and never otherwise
 				   changed.  */
-    EMACS_INT chars_modiff;	/* This is modified with character change
+    modiff_count chars_modiff;	/* This is modified with character change
 				   events for this buffer.  It is set to
 				   modiff for each such event, and never
 				   otherwise changed.  */
-    EMACS_INT save_modiff;	/* Previous value of modiff, as of last
+    modiff_count save_modiff;	/* Previous value of modiff, as of last
 				   time buffer visited or saved a file.  */
 
-    EMACS_INT overlay_modiff;	/* Counts modifications to overlays.  */
+    modiff_count overlay_modiff; /* Counts modifications to overlays.  */
 
-    EMACS_INT compact;		/* Set to modiff each time when compact_buffer
+    modiff_count compact;	/* Set to modiff each time when compact_buffer
 				   is called for this buffer.  */
 
     /* Minimum value of GPT - BEG since last redisplay that finished.  */
@@ -446,12 +446,12 @@ struct buffer_text
 
     /* MODIFF as of last redisplay that finished; if it matches MODIFF,
        beg_unchanged and end_unchanged contain no useful information.  */
-    EMACS_INT unchanged_modified;
+    modiff_count unchanged_modified;
 
     /* BUF_OVERLAY_MODIFF of current buffer, as of last redisplay that
        finished; if it matches BUF_OVERLAY_MODIFF, beg_unchanged and
        end_unchanged contain no useful information.  */
-    EMACS_INT overlay_unchanged_modified;
+    modiff_count overlay_unchanged_modified;
 
     /* Properties of this buffer's text.  */
     INTERVAL intervals;
@@ -812,11 +812,11 @@ struct buffer
   off_t modtime_size;
 
   /* The value of text->modiff at the last auto-save.  */
-  EMACS_INT auto_save_modified;
+  modiff_count auto_save_modified;
 
   /* The value of text->modiff at the last display error.
      Redisplay of this buffer is inhibited until it changes again.  */
-  EMACS_INT display_error_modiff;
+  modiff_count display_error_modiff;
 
   /* The time at which we detected a failure to auto-save,
      Or 0 if we didn't have a failure.  */

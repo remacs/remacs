@@ -573,7 +573,6 @@ echo area; use @code{set-buffer-modified-p} (above) instead.
 This function returns @var{buffer}'s modification-count.  This is a
 counter that increments every time the buffer is modified.  If
 @var{buffer} is @code{nil} (or omitted), the current buffer is used.
-The counter can wrap around occasionally.
 @end defun
 
 @defun buffer-chars-modified-tick &optional buffer

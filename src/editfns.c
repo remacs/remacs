@@ -2291,10 +2291,11 @@ Both characters must have the same length of multi-byte form.  */)
 
 	      if (! NILP (noundo))
 		{
-		  if (MODIFF - 1 == SAVE_MODIFF)
-		    SAVE_MODIFF++;
-		  if (MODIFF - 1 == BUF_AUTOSAVE_MODIFF (current_buffer))
-		    BUF_AUTOSAVE_MODIFF (current_buffer)++;
+		  modiff_count m = MODIFF;
+		  if (SAVE_MODIFF == m - 1)
+		    SAVE_MODIFF = m;
+		  if (BUF_AUTOSAVE_MODIFF (current_buffer) == m - 1)
+		    BUF_AUTOSAVE_MODIFF (current_buffer) = m;
 		}
 
 	      /* The before-change-function may have moved the gap

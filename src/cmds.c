@@ -423,7 +423,7 @@ internal_self_insert (int c, EMACS_INT n)
 		  : UNIBYTE_TO_CHAR (XFIXNAT (Fprevious_char ())))
 	  == Sword))
     {
-      EMACS_INT modiff = MODIFF;
+      modiff_count modiff = MODIFF;
       Lisp_Object sym;
 
       sym = call0 (Qexpand_abbrev);

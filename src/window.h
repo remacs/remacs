@@ -281,11 +281,11 @@ struct window
 
     /* Displayed buffer's text modification events counter as of last time
        display completed.  */
-    EMACS_INT last_modified;
+    modiff_count last_modified;
 
     /* Displayed buffer's overlays modification events counter as of last
        complete update.  */
-    EMACS_INT last_overlay_modified;
+    modiff_count last_overlay_modified;
 
     /* Value of point at that time.  Since this is a position in a buffer,
        it should be positive.  */

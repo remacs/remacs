@@ -4618,7 +4618,7 @@ by calling `format-decode', which see.  */)
 	  ptrdiff_t opoint = PT;
 	  ptrdiff_t opoint_byte = PT_BYTE;
 	  ptrdiff_t oinserted = ZV - BEGV;
-	  EMACS_INT ochars_modiff = CHARS_MODIFF;
+	  modiff_count ochars_modiff = CHARS_MODIFF;
 
 	  TEMP_SET_PT_BOTH (BEGV, BEGV_BYTE);
 	  insval = call3 (Qformat_decode,
@@ -4658,7 +4658,7 @@ by calling `format-decode', which see.  */)
 	      ptrdiff_t opoint = PT;
 	      ptrdiff_t opoint_byte = PT_BYTE;
 	      ptrdiff_t oinserted = ZV - BEGV;
-	      EMACS_INT ochars_modiff = CHARS_MODIFF;
+	      modiff_count ochars_modiff = CHARS_MODIFF;
 
 	      TEMP_SET_PT_BOTH (BEGV, BEGV_BYTE);
 	      insval = call1 (XCAR (p), make_fixnum (oinserted));
