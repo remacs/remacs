@@ -1371,38 +1371,6 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
   return CALLN (Fnconc, s1, s2);
 }
 
-DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0,
-       doc: /* Concatenate any number of lists by altering them.
-Only the last argument is not altered, and need not be a list.
-usage: (nconc &rest LISTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object val = Qnil;
-
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object tem = args[argnum];
-      if (NILP (tem)) continue;
-
-      if (NILP (val))
-	val = tem;
-
-      if (argnum + 1 == nargs) break;
-
-      CHECK_CONS (tem);
-
-      Lisp_Object tail;
-      FOR_EACH_TAIL (tem)
-	tail = tem;
-
-      tem = args[argnum + 1];
-      Fsetcdr (tail, tem);
-      if (NILP (tem))
-	args[argnum + 1] = tail;
-    }
-
-  return val;
-}
 
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
@@ -3017,7 +2985,6 @@ this variable.  */);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
