@@ -339,7 +339,7 @@ static struct timespec timer_last_idleness_start_time;
 /* Function for init_keyboard to call with no args (if nonzero).  */
 static void (*keyboard_init_hook) (void);
 
-static bool get_input_pending (int);
+
 static bool readable_events (int);
 static Lisp_Object read_char_x_menu_prompt (Lisp_Object,
                                             Lisp_Object, bool *);
@@ -3927,7 +3927,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 /* Process any non-user-visible events (currently X selection events),
    without reading any user-visible events.  */
 
-static void
+void
 process_special_events (void)
 {
   union buffered_input_event *event;
@@ -6628,7 +6628,7 @@ parse_solitary_modifier (Lisp_Object symbol)
    If READABLE_EVENTS_IGNORE_SQUEEZABLES is set in FLAGS, ignore mouse
    movements and toolkit scroll bar thumb drags.  */
 
-static bool
+bool
 get_input_pending (int flags)
 {
   /* First of all, have we already counted some input?  */
@@ -9784,28 +9784,6 @@ requeued_events_pending_p (void)
   return (CONSP (Vunread_command_events));
 }
 
-DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 1, 0,
-       doc: /* Return t if command input is currently available with no wait.
-Actually, the value is nil only if we can be sure that no input is available;
-if there is a doubt, the value is t.
-
-If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
-  (Lisp_Object check_timers)
-{
-  if (CONSP (Vunread_command_events)
-      || !NILP (Vunread_post_input_method_events)
-      || !NILP (Vunread_input_method_events))
-    return (Qt);
-
-  /* Process non-user-visible events (Bug#10195).  */
-  process_special_events ();
-
-  return (get_input_pending ((NILP (check_timers)
-                              ? 0 : READABLE_EVENTS_DO_TIMERS_NOW)
-			     | READABLE_EVENTS_FILTER_EVENTS)
-	  ? Qt : Qnil);
-}
-
 DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 1, 0,
        doc: /* Return vector of last few events, not counting those from keyboard macros.
 If INCLUDE-CMDS is non-nil, include the commands that were run,
@@ -11008,7 +10986,6 @@ syms_of_keyboard (void)
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
   defsubr (&Strack_mouse);
-  defsubr (&Sinput_pending_p);
   defsubr (&Srecent_keys);
   defsubr (&Sthis_command_keys);
   defsubr (&Sthis_command_keys_vector);

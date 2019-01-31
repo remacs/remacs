@@ -4256,6 +4256,8 @@ extern void init_casetab_once (void);
 extern void syms_of_casetab (void);
 
 /* Defined in keyboard.c.  */
+extern bool get_input_pending (int);
+extern void process_special_events (void);
 
 extern void recursive_edit_unwind (Lisp_Object buffer);
 extern Lisp_Object echo_message_buffer;
