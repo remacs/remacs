@@ -1893,7 +1893,7 @@ handle_sigsegv (int sig, siginfo_t *siginfo, void *arg)
 /* Return true if we have successfully set up SIGSEGV handler on alternate
    stack.  Otherwise we just treat SIGSEGV among the rest of fatal signals.  */
 
-bool
+static bool
 init_sigsegv (void)
 {
   struct sigaction sa;
@@ -1916,7 +1916,7 @@ init_sigsegv (void)
 
 #else /* not HAVE_STACK_OVERFLOW_HANDLING or WINDOWSNT */
 
-bool
+static bool
 init_sigsegv (void)
 {
   return 0;

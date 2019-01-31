@@ -1039,7 +1039,6 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    This value is always the same as FRAME_SELECTED_WINDOW (selected_frame).  */
 
 extern Lisp_Object selected_window;
-extern Lisp_Object old_selected_window;
 
 /* This is a time stamp for window selection, so we can find the least
    recently used window.  Its only users are Fselect_window,

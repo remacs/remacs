@@ -5019,7 +5019,7 @@ struct pdumper_loaded_dump_private
 };
 
 struct pdumper_loaded_dump dump_public;
-struct pdumper_loaded_dump_private dump_private;
+static struct pdumper_loaded_dump_private dump_private;
 
 /* Return a pointer to offset OFFSET within the dump, which begins at
    DUMP_BASE. DUMP_BASE must be equal to the current dump load

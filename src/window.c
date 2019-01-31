@@ -81,7 +81,7 @@ Lisp_Object selected_window;
 /* The value of selected_window at the last time window change
    functions were run.  This is always the same as
    FRAME_OLD_SELECTED_WINDOW (old_selected_frame).  */
-Lisp_Object old_selected_window;
+static Lisp_Object old_selected_window;
 
 /* A list of all windows for use by next_window and Fwindow_list.
    Functions creating or deleting windows should invalidate this cache

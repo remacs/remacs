@@ -52,8 +52,7 @@ INLINE_HEADER_BEGIN
 
 extern void pdumper_remember_scalar_impl (void *data, ptrdiff_t nbytes);
 
-INLINE
-void
+INLINE void
 pdumper_remember_scalar (void *data, ptrdiff_t nbytes)
 {
 #ifdef HAVE_PDUMPER
@@ -70,8 +69,7 @@ extern void pdumper_remember_lv_ptr_raw_impl (
 /* Remember the pointer at *PTR.  *PTR must be null or point to a Lisp
    object.  TYPE is the rough type of Lisp object to which *PTR
    points.  */
-INLINE
-void
+INLINE void
 pdumper_remember_lv_ptr_raw (void* ptr, enum Lisp_Type type)
 {
 #ifdef HAVE_PDUMPER
@@ -137,15 +135,12 @@ struct pdumper_loaded_dump {
   uintptr_t end;
 };
 
-#ifdef HAVE_PDUMPER
 extern struct pdumper_loaded_dump dump_public;
-#endif
 
 /* Return whether the OBJ points somewhere into the loaded dump image.
    Works even when we have no dump loaded --- in this case, it just
    returns false.  */
-INLINE _GL_ATTRIBUTE_CONST
-bool
+INLINE _GL_ATTRIBUTE_CONST bool
 pdumper_object_p (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -163,8 +158,7 @@ extern bool pdumper_cold_object_p_impl (const void *obj);
    Only bool-vectors and floats should end up there.
    pdumper_object_p() and pdumper_object_p_precise() must have
    returned true for OBJ before calling this function.  */
-INLINE _GL_ATTRIBUTE_CONST
-bool
+INLINE _GL_ATTRIBUTE_CONST bool
 pdumper_cold_object_p (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -181,8 +175,7 @@ extern enum Lisp_Type pdumper_find_object_type_impl (const void *obj);
 /* Return the type of the dumped object that starts at OBJ.  It is a
    programming error to call this routine for an OBJ for which
    pdumper_object_p would return false.  */
-INLINE _GL_ATTRIBUTE_CONST
-enum Lisp_Type
+INLINE _GL_ATTRIBUTE_CONST enum Lisp_Type
 pdumper_find_object_type (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -197,8 +190,7 @@ pdumper_find_object_type (const void *obj)
    the loaded dump image.  It is a programming error to call this
    routine for an OBJ for which pdumper_object_p would return
    false.  */
-INLINE _GL_ATTRIBUTE_CONST
-bool
+INLINE _GL_ATTRIBUTE_CONST bool
 pdumper_object_p_precise (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -214,8 +206,7 @@ extern bool pdumper_marked_p_impl (const void *obj);
 /* Return whether OBJ is marked according to the portable dumper.
    It is an error to call this routine for an OBJ for which
    pdumper_object_p_precise would return false.  */
-INLINE
-bool
+INLINE bool
 pdumper_marked_p (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -231,8 +222,7 @@ extern void pdumper_set_marked_impl (const void *obj);
 /* Set the pdumper mark bit for OBJ.  It is a programming error to
    call this function with an OBJ for which pdumper_object_p_precise
    would return false.  */
-INLINE
-void
+INLINE void
 pdumper_set_marked (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -246,19 +236,13 @@ pdumper_set_marked (const void *obj)
 extern void pdumper_clear_marks_impl (void);
 
 /* Clear all the mark bits for pdumper objects.  */
-INLINE
-void
+INLINE void
 pdumper_clear_marks (void)
 {
 #ifdef HAVE_PDUMPER
   pdumper_clear_marks_impl ();
 #endif
 }
-
-/* Handle a page fault that occurs when we access the portable dumper
-   mapping.  Return true iff the fault should be considered handled
-   and execution should resume.  */
-bool pdumper_handle_page_fault (void *fault_addr_ptr);
 
 /* Record the Emacs startup directory, relative to which the pdump
    file was loaded.  */

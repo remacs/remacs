@@ -4402,8 +4402,6 @@ init_obarray_once (void)
 }
 
 
-int ndefsubr;
-
 void
 defsubr (union Aligned_Lisp_Subr *aname)
 {
@@ -4413,7 +4411,6 @@ defsubr (union Aligned_Lisp_Subr *aname)
   XSETPVECTYPE (sname, PVEC_SUBR);
   XSETSUBR (tem, sname);
   set_symbol_function (sym, tem);
-  ++ndefsubr;
 }
 
 #ifdef NOTDEF /* Use fset in subr.el now!  */
