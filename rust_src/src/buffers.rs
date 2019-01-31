@@ -1157,7 +1157,8 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
 pub unsafe fn per_buffer_idx_from_field_offset(
     offset: FieldOffset<Lisp_Buffer, LispObject>,
 ) -> isize {
-    unsafe { *offset.apply_ptr_mut(&mut buffer_local_flags) }.to_fixnum_unchecked() as isize
+    let obj = *offset.apply_ptr_mut(&mut buffer_local_flags);
+    obj.to_fixnum_unchecked() as isize
 }
 
 pub unsafe fn per_buffer_idx(offset: isize) -> isize {

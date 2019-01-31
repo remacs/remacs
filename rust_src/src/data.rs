@@ -50,10 +50,6 @@ pub unsafe fn is_kboard_objfwd(a: *const Lisp_Fwd) -> bool {
     (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj
 }
 
-pub unsafe fn is_objfwd(a: *const Lisp_Fwd) -> bool {
-    (*a).u_intfwd.ty == Lisp_Fwd_Obj
-}
-
 pub unsafe fn as_buffer_objfwd(a: *const Lisp_Fwd) -> Option<Lisp_Buffer_Objfwd> {
     match (*a).u_intfwd.ty {
         Lisp_Fwd_Buffer_Obj => Some((*a).u_buffer_objfwd),
