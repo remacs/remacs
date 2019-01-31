@@ -272,8 +272,8 @@ pub fn command_error_default_function(
     }
 }
 
-pub const READABLE_EVENTS_DO_TIMERS_NOW: i32 = 1;
-pub const READABLE_EVENTS_FILTER_EVENTS: i32 = 2;
+const READABLE_EVENTS_DO_TIMERS_NOW: i32 = 1;
+const READABLE_EVENTS_FILTER_EVENTS: i32 = 2;
 
 /// Return t if command input is currently available with no wait.
 /// Actually, the value is nil only if we can be sure that no input is available;
