@@ -3,7 +3,7 @@
 use std::cmp;
 use std::sync::Mutex;
 
-use rand::{Rng, SeedableRng, StdRng};
+use rand::{rngs::StdRng, FromEntropy, Rng, SeedableRng};
 
 use remacs_macros::lisp_fn;
 
@@ -18,7 +18,7 @@ use crate::{
 };
 
 lazy_static! {
-    static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
+    static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::from_entropy());
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
@@ -314,10 +314,13 @@ pub fn number_or_marker_p(object: LispObject) -> bool {
 pub fn random(limit: LispObject) -> LispObject {
     let mut rng = RNG.lock().unwrap();
     if limit.is_t() {
-        *rng = StdRng::new().unwrap();
+        *rng = StdRng::from_entropy();
     } else if let Some(s) = limit.as_string() {
-        let values: Vec<usize> = s.as_slice().iter().map(|&x| x as usize).collect();
-        rng.reseed(&values);
+        let mut seed = [0; 32];
+        let mut values: Vec<u8> = s.as_slice().to_vec();
+        values.resize(32, 0);
+        seed.copy_from_slice(&values.as_slice());
+        *rng = StdRng::from_seed(seed);
     }
 
     if let Some(limit) = limit.as_fixnum() {
