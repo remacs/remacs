@@ -144,6 +144,13 @@ bar(
   /abc/
 )
 
+// No infloop inside js--re-search-backward-inner
+let b = {
+  a : `
+  //1
+  `
+}
+
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2
