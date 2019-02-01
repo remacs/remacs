@@ -794,7 +794,6 @@ macro as normal text."
 (defun js--re-search-backward-inner (regexp &optional bound count)
   "Auxiliary function for `js--re-search-backward'."
   (let ((parse)
-        str-terminator
         (orig-macro-start
          (save-excursion
            (and (js--beginning-of-macro)
@@ -805,13 +804,7 @@ macro as normal text."
                  (save-excursion (backward-char) (looking-at "/[/*]")))
         (forward-char))
       (setq parse (syntax-ppss))
-      (cond ((setq str-terminator (nth 3 parse))
-             (when (eq str-terminator t)
-               (setq str-terminator ?/))
-             (re-search-backward
-              (concat "\\([^\\]\\|^\\)" (string str-terminator))
-              (point-at-bol) t))
-            ((nth 7 parse)
+      (cond ((nth 8 parse)
              (goto-char (nth 8 parse)))
             ((or (nth 4 parse)
                  (and (eq (char-before) ?/) (eq (char-after) ?*)))
