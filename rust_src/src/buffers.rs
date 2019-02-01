@@ -352,6 +352,10 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    pub fn overlay_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).overlay_modiff }
+    }
+
     pub fn z_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }

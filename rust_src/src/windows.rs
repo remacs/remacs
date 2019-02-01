@@ -14,19 +14,22 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
+    numbers::{check_range, LispNumber},
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
-    remacs_sys::Fcopy_alist,
+    remacs_sys::glyph_row_area::TEXT_AREA,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
-        minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
-        selected_window as current_window, set_buffer_internal, set_window_hscroll,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p, wset_redisplay,
+        minibuf_selected_window as current_minibuf_window, noninteractive, scroll_command,
+        select_window, selected_window as current_window, set_buffer_internal, set_window_hscroll,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p,
+        windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{
-        face_id, glyph_matrix, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type,
+        face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type,
         Lisp_Window,
     },
+    remacs_sys::{Fcopy_alist, Fnreverse},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
@@ -45,6 +48,12 @@ impl LispWindowRef {
 
     pub fn is_pseudo(self) -> bool {
         self.pseudo_window_p()
+    }
+
+    pub fn is_outdated(self) -> bool {
+        let buffer: LispBufferRef = self.contents.into();
+        self.last_modified < buffer.modifications()
+            || self.last_overlay_modified < buffer.overlay_modifications()
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
@@ -80,8 +89,7 @@ impl LispWindowRef {
     /// a default based on the height of the font of the face `mode-line'.
     pub fn current_mode_line_height(&mut self) -> i32 {
         let mode_line_height = self.mode_line_height;
-        let matrix_mode_line_height =
-            LispGlyphMatrixRef::new(self.current_matrix).mode_line_height();
+        let matrix_mode_line_height = self.get_matrix().mode_line_height();
 
         if mode_line_height >= 0 {
             mode_line_height
@@ -502,6 +510,22 @@ impl LispWindowRef {
             self.get_frame().config_scroll_bar_height
         }
     }
+
+    /// Return the bottom boundary y-position for text lines in window W.
+    /// This is the first y position at which a line cannot start.
+    /// It is relative to the top of the window.
+    ///
+    /// This is the height of W minus the height of a mode line, if any.
+    pub fn text_bottom_y(mut self) -> i32 {
+        self.pixel_height
+            - self.bottom_divider_width()
+            - self.scroll_bar_area_height()
+            - if self.wants_mode_line() {
+                self.current_mode_line_height()
+            } else {
+                0
+            }
+    }
 }
 
 impl From<LispObject> for LispWindowRef {
@@ -572,6 +596,17 @@ impl LispObject {
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
 
 impl LispGlyphMatrixRef {
+    /// Get a pointer to row number ROW.
+    pub unsafe fn row_unchecked(self, row: usize) -> LispGlyphRowRef {
+        LispGlyphRowRef::new(self.rows.add(row))
+    }
+
+    /// Get a pointer to row number ROW. Throws an error if out of range.
+    pub fn row(self, row: usize) -> LispGlyphRowRef {
+        check_range(row as EmacsInt, 0, self.nrows);
+        unsafe { self.row_unchecked(row) }
+    }
+
     pub fn mode_line_height(self) -> i32 {
         if self.is_null() || self.rows.is_null() {
             0
@@ -586,7 +621,28 @@ impl LispGlyphMatrixRef {
             unsafe { (*self.rows).height }
         }
     }
+
+    /// Return a pointer to the first row used for text display
+    pub fn first_text_row(self) -> LispGlyphRowRef {
+        unsafe {
+            if (*self.rows).mode_line_p() {
+                LispGlyphRowRef::new(self.rows.offset(1))
+            } else {
+                LispGlyphRowRef::new(self.rows)
+            }
+        }
+    }
+
+    pub fn bottom_text_row(self, window: LispWindowRef) -> LispGlyphRowRef {
+        let ptr = unsafe {
+            self.rows
+                .offset((self.nrows - if window.wants_mode_line() { 1 } else { 0 }) as isize)
+        };
+        LispGlyphRowRef::new(ptr)
+    }
 }
+
+pub type LispGlyphRowRef = ExternalPtr<glyph_row>;
 
 #[derive(Debug)]
 pub struct LispWindowOrSelected(LispObject);
@@ -1534,6 +1590,134 @@ pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> 
 pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
     let window: LispWindowRef = window.into();
     window.body_width(pixelwise).into()
+}
+
+/// Return pixel dimensions of WINDOW's lines.
+/// The return value is a list of the x- and y-coordinates of the lower
+/// right corner of the last character of each line.  Return nil if the
+/// current glyph matrix of WINDOW is not up-to-date.
+///
+/// Optional argument WINDOW specifies the window whose lines' dimensions
+/// shall be returned.  Nil or omitted means to return the dimensions for
+/// the selected window.
+///
+/// FIRST, if non-nil, specifies the index of the first line whose
+/// dimensions shall be returned.  If FIRST is nil and BODY is non-nil,
+/// start with the first text line of WINDOW.  Otherwise, start with the
+/// first line of WINDOW.
+///
+/// LAST, if non-nil, specifies the last line whose dimensions shall be
+/// returned.  If LAST is nil and BODY is non-nil, the last line is the last
+/// line of the body (text area) of WINDOW.  Otherwise, last is the last
+/// line of WINDOW.
+///
+/// INVERSE, if nil, means that the y-pixel value returned for a specific
+/// line specifies the distance in pixels from the left edge (body edge if
+/// BODY is non-nil) of WINDOW to the right edge of the last glyph of that
+/// line.  INVERSE non-nil means that the y-pixel value returned for a
+/// specific line specifies the distance in pixels from the right edge of
+/// the last glyph of that line to the right edge (body edge if BODY is
+/// non-nil) of WINDOW.
+///
+/// LEFT non-nil means to return the x- and y-coordinates of the lower left
+/// corner of the leftmost character on each line.  This is the value that
+/// should be used for buffers that mostly display text from right to left.
+///
+/// If LEFT is non-nil and INVERSE is nil, this means that the y-pixel value
+/// returned for a specific line specifies the distance in pixels from the
+/// left edge of the last (leftmost) glyph of that line to the right edge
+/// (body edge if BODY is non-nil) of WINDOW.  If LEFT and INVERSE are both
+/// non-nil, the y-pixel value returned for a specific line specifies the
+/// distance in pixels from the left edge (body edge if BODY is non-nil) of
+/// WINDOW to the left edge of the last (leftmost) glyph of that line.
+///
+/// Normally, the value of this function is not available while Emacs is
+/// busy, for example, when processing a command.  It should be retrievable
+/// though when run from an idle timer with a delay of zero seconds.
+#[lisp_fn(min = "0")]
+pub fn window_lines_pixel_dimensions(
+    window: LispWindowLiveOrSelected,
+    first: Option<LispNumber>,
+    last: Option<LispNumber>,
+    body: bool,
+    inverse: bool,
+    left: bool,
+) -> LispObject {
+    let window: LispWindowRef = window.into();
+    let buffer: LispBufferRef = window.contents.into();
+    let max_y = if body {
+        window.text_bottom_y()
+    } else {
+        window.pixel_height
+    };
+    let window_width = if body {
+        window.body_width(true)
+    } else {
+        window.pixel_width
+    };
+    let header_line_height = window.header_line_height();
+    let subtract = if body { header_line_height } else { 0 };
+    let matrix = window.get_matrix();
+
+    if unsafe { noninteractive } || window.is_pseudo() {
+        return Qnil;
+    }
+
+    // Fail if current matrix is not up to date.
+    unsafe {
+        if !window.window_end_valid()
+            || windows_or_buffers_changed > 0
+            || buffer.clip_changed()
+            || buffer.prevent_redisplay_optimizations_p()
+            || window.is_outdated()
+        {
+            return Qnil;
+        }
+    }
+
+    let mut row = match first {
+        Some(first) => matrix.row(first.to_fixnum() as usize),
+        None => {
+            if body {
+                matrix.first_text_row()
+            } else {
+                matrix.row(0)
+            }
+        }
+    };
+
+    let end_row = match last {
+        Some(last) => matrix.row(last.to_fixnum() as usize),
+        None => {
+            if body {
+                matrix.bottom_text_row(window)
+            } else {
+                unsafe { matrix.row_unchecked(matrix.nrows as usize) }
+            }
+        }
+    };
+
+    let mut rows = Qnil;
+    while row.as_ptr() <= end_row.as_ptr() && row.enabled_p() && row.y + row.height < max_y {
+        let width = if left {
+            let glyph = unsafe { &*row.glyphs[TEXT_AREA as usize] };
+            if inverse {
+                glyph.pixel_width as i32
+            } else {
+                window_width - glyph.pixel_width as i32
+            }
+        } else {
+            if inverse {
+                window_width - row.pixel_width
+            } else {
+                row.pixel_width
+            }
+        };
+        rows = ((width, row.y + row.height - subtract), rows).into();
+        let ptr = unsafe { row.as_mut().add(1) };
+        row.replace_ptr(ptr);
+    }
+    unsafe { Fnreverse(rows) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
