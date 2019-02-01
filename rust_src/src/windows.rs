@@ -679,7 +679,7 @@ pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
 /// installed as WINDOW's pixel height (see `window-pixel-height') or pixel
 /// width (see `window-pixel-width').
 
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_new_pixel(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     EmacsInt::from(win.new_pixel)
