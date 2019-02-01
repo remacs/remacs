@@ -149,7 +149,7 @@ bool running_asynch_code;
 bool display_arg;
 #endif
 
-#if defined GNU_LINUX && !defined CANNOT_DUMP
+#if defined GNU_LINUX && defined HAVE_UNEXEC
 /* The gap between BSS end and heap start as far as we can tell.  */
 static uprintmax_t heap_bss_diff;
 #endif
@@ -868,7 +868,7 @@ main (int argc, char **argv)
      can set heap flags properly if we're going to unexec.  */
   if (!initialized && temacs)
     {
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
       if (strcmp (temacs, "dump") == 0 ||
           strcmp (temacs, "bootstrap") == 0)
         gflags.will_dump_with_unexec_ = true;
@@ -878,7 +878,7 @@ main (int argc, char **argv)
           strcmp (temacs, "pbootstrap") == 0)
         gflags.will_dump_with_pdumper_ = true;
 #endif
-#if defined (HAVE_PDUMPER) || !defined (CANNOT_DUMP)
+#if defined HAVE_PDUMPER || defined HAVE_UNEXEC
       if (strcmp (temacs, "bootstrap") == 0 ||
           strcmp (temacs, "pbootstrap") == 0)
         gflags.will_bootstrap_ = true;
@@ -904,7 +904,7 @@ main (int argc, char **argv)
 #endif
     }
 
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   if (!will_dump_with_unexec_p ())
     gflags.will_not_unexec_ = true;
 #endif
@@ -953,7 +953,7 @@ main (int argc, char **argv)
   argc = maybe_disable_address_randomization (
     will_dump_with_unexec_p (), argc, argv);
 
-#if defined (GNU_LINUX) && !defined (CANNOT_DUMP)
+#if defined GNU_LINUX && defined HAVE_UNEXEC
   if (!initialized)
     {
       char *heap_start = my_heap_start ();
@@ -967,7 +967,7 @@ main (int argc, char **argv)
 #endif
 
 /* If using unexmacosx.c (set by s/darwin.h), we must do this. */
-#if defined DARWIN_OS && !defined CANNOT_DUMP
+#if defined DARWIN_OS && defined HAVE_UNEXEC
   if (!initialized)
     unexec_init_emacs_zone ();
 #endif
@@ -1445,7 +1445,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       /* Call syms_of_keyboard before init_window_once because
 	 keyboard sets up symbols that include some face names that
 	 the X support will want to use.  This can happen when
-	 CANNOT_DUMP is defined.  */
+	 Emacs starts up from scratch (e.g., temacs).  */
       syms_of_keyboard ();
 
       /* Called before syms_of_fileio, because it sets up Qerror_condition.  */
@@ -2378,7 +2378,7 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 
 
 
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
 
 #include "unexec.h"
 
@@ -2405,10 +2405,10 @@ You must run Emacs in batch mode in order to dump it.  */)
   if (definitely_will_not_unexec_p ())
     error ("This Emacs instance was not started in temacs mode");
 
-#if defined GNU_LINUX && !defined CANNOT_DUMP
+# if defined GNU_LINUX && defined HAVE_UNEXEC
 
   /* Warn if the gap between BSS end and heap start is larger than this.  */
-# define MAX_HEAP_BSS_DIFF (1024*1024)
+#  define MAX_HEAP_BSS_DIFF (1024 * 1024)
 
   if (heap_bss_diff > MAX_HEAP_BSS_DIFF)
     {
@@ -2421,7 +2421,7 @@ You must run Emacs in batch mode in order to dump it.  */)
       fprintf (stderr, "exec-shield in etc/PROBLEMS for more information.\n");
       fprintf (stderr, "**************************************************\n");
     }
-#endif /* GNU_LINUX */
+# endif
 
   /* Bind `command-line-processed' to nil before dumping,
      so that the dumped Emacs will process its command line
@@ -2445,7 +2445,7 @@ You must run Emacs in batch mode in order to dump it.  */)
   tem = Vpurify_flag;
   Vpurify_flag = Qnil;
 
-#ifdef HYBRID_MALLOC
+# ifdef HYBRID_MALLOC
   {
     static char const fmt[] = "%d of %d static heap bytes used";
     char buf[sizeof fmt + 2 * (INT_STRLEN_BOUND (int) - 2)];
@@ -2454,18 +2454,16 @@ You must run Emacs in batch mode in order to dump it.  */)
     /* Don't log messages, because at this point buffers cannot be created.  */
     message1_nolog (buf);
   }
-#endif
+# endif
 
   fflush_unlocked (stdout);
   /* Tell malloc where start of impure now is.  */
   /* Also arrange for warnings when nearly out of space.  */
-#if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC
-#ifndef WINDOWSNT
+# if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC && !defined WINDOWSNT
   /* On Windows, this was done before dumping, and that once suffices.
      Meanwhile, my_edata is not valid on Windows.  */
   memory_warnings (my_edata, malloc_warning);
-#endif /* not WINDOWSNT */
-#endif /* not SYSTEM_MALLOC and not HYBRID_MALLOC */
+# endif
 
   struct gflags old_gflags = gflags;
   gflags.will_dump_ = false;
@@ -2480,19 +2478,19 @@ You must run Emacs in batch mode in order to dump it.  */)
 
   gflags = old_gflags;
 
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
   Vlibrary_cache = Qnil;
-#endif
-#ifdef HAVE_WINDOW_SYSTEM
+# endif
+# ifdef HAVE_WINDOW_SYSTEM
   reset_image_types ();
-#endif
+# endif
 
   Vpurify_flag = tem;
 
   return unbind_to (count, Qnil);
 }
 
-#endif /* not CANNOT_DUMP */
+#endif
 
 
 #if HAVE_SETLOCALE
@@ -2781,7 +2779,7 @@ syms_of_emacs (void)
   DEFSYM (Qkill_emacs, "kill-emacs");
   DEFSYM (Qkill_emacs_hook, "kill-emacs-hook");
 
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   defsubr (&Sdump_emacs);
 #endif
 

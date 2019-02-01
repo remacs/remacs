@@ -43,7 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 char my_edata[] = "End of Emacs initialized data";
 #endif
 
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
 
 /* Help unexec locate the end of the .bss area used by Emacs (which
    isn't always a separate section in NT executables).  */

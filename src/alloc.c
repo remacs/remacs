@@ -168,7 +168,7 @@ voidfuncptr __MALLOC_HOOK_VOLATILE __malloc_initialize_hook EXTERNALLY_VISIBLE
 
 #endif
 
-#if defined DOUG_LEA_MALLOC || !defined CANNOT_DUMP
+#if defined DOUG_LEA_MALLOC || defined HAVE_UNEXEC
 
 /* Allocator-related actions to do just before and after unexec.  */
 
@@ -502,11 +502,11 @@ static struct mem_node *mem_find (void *);
 #endif
 
 /* Addresses of staticpro'd variables.  Initialize it to a nonzero
-   value if we might dump; otherwise some compilers put it into
+   value if we might unexec; otherwise some compilers put it into
    BSS.  */
 
 Lisp_Object *staticvec[NSTATICS]
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
 = {&Vpurify_flag}
 #endif
   ;
@@ -1192,9 +1192,9 @@ verify (POWER_OF_2 (BLOCK_ALIGN));
 
 /* Use aligned_alloc if it or a simple substitute is available.
    Aligned allocation is incompatible with unexmacosx.c, so don't use
-   it on Darwin unless CANNOT_DUMP.  */
+   it on Darwin if HAVE_UNEXEC.  */
 
-#if !defined DARWIN_OS || defined CANNOT_DUMP
+#if ! (defined DARWIN_OS && defined HAVE_UNEXEC)
 # if (defined HAVE_ALIGNED_ALLOC					\
       || (defined HYBRID_MALLOC						\
 	  ? defined HAVE_POSIX_MEMALIGN					\
@@ -5390,7 +5390,7 @@ pure_alloc (size_t size, int type)
 }
 
 
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
 
 /* Print a warning if PURESIZE is too small.  */
 

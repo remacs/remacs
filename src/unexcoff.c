@@ -56,7 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #define PERROR(file) report_error (file, new)
 
-#ifndef CANNOT_DUMP  /* all rest of file!  */
+#ifdef HAVE_UNEXEC  /* all rest of file!  */
 
 #ifdef HAVE_COFF_H
 #include <coff.h>
@@ -538,4 +538,4 @@ unexec (const char *new_name, const char *a_name)
     emacs_close (a_out);
 }
 
-#endif /* not CANNOT_DUMP */
+#endif /* HAVE_UNEXEC */

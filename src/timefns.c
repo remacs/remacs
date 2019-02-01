@@ -294,7 +294,7 @@ tzlookup (Lisp_Object zone, bool settz)
 void
 init_timefns (void)
 {
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   /* A valid but unlikely setting for the TZ environment variable.
      It is OK (though a bit slower) if the user chooses this value.  */
   static char dump_tz_string[] = "TZ=UtC0";
@@ -311,7 +311,7 @@ init_timefns (void)
 
   char *tz = getenv ("TZ");
 
-#if !defined CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   /* If the execution TZ happens to be the same as the dump TZ,
      change it to some other value and then change it back,
      to force the underlying implementation to reload the TZ info.

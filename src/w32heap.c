@@ -115,9 +115,9 @@ typedef struct _RTL_HEAP_PARAMETERS {
    than half of the size stated below.  It would be nice to find a way
    to build only the first bootstrap-emacs.exe with the large size,
    and reset that to a lower value afterwards.  */
-#ifdef CANNOT_DUMP
-/* We don't use dumped_data[] when CANNOT_DUMP, so define to a small
-   size that won't matter.  */
+#ifndef HAVE_UNEXEC
+/* We don't use dumped_data[], so define to a small size that won't
+   matter.  */
 # define DUMPED_HEAP_SIZE 10
 #else
 # if defined _WIN64 || defined WIDE_EMACS_INT
@@ -597,7 +597,7 @@ free_after_dump_9x (void *ptr)
     }
 }
 
-#if !defined (CANNOT_DUMP) && defined (ENABLE_CHECKING)
+#if defined HAVE_UNEXEC && defined ENABLE_CHECKING
 void
 report_temacs_memory_usage (void)
 {

@@ -10003,7 +10003,7 @@ lookup_image_type (Lisp_Object type)
   return NULL;
 }
 
-#if !defined CANNOT_DUMP && defined HAVE_WINDOW_SYSTEM
+#if defined HAVE_UNEXEC && defined HAVE_WINDOW_SYSTEM
 
 /* Reset image_types before dumping.
    Called from Fdump_emacs.  */

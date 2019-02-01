@@ -382,15 +382,8 @@ if test "$with_pdumper" = "yes"; then
     AC_DEFINE(HAVE_PDUMPER, 1, [Define to build with portable dumper support])
 fi
 
-if test "$with_unexec" = "yes"; then
-  CANNOT_DUMP=no
-else
-  CANNOT_DUMP=yes
-fi
-
 DUMPING=$with_dumping
 AC_SUBST(DUMPING)
-AC_SUBST(CANNOT_DUMP)
 
 dnl FIXME currently it is not the last.
 dnl This should be the last --with option, because --with-x is
@@ -1314,7 +1307,7 @@ AC_SUBST([FIND_DELETE])
 
 PAXCTL_dumped=
 PAXCTL_notdumped=
-if test "$CANNOT_DUMP" = "no" && test $opsys = gnu-linux; then
+if test $with_unexec = yes && test $opsys = gnu-linux; then
   if test "${SETFATTR+set}" != set; then
     AC_CACHE_CHECK([for setfattr],
       [emacs_cv_prog_setfattr],
@@ -1434,7 +1427,7 @@ else
 fi
 
 AC_CACHE_CHECK([for -znocombreloc], [emacs_cv_znocombreloc],
-  [if test "$CANNOT_DUMP" = "yes"; then
+  [if test $with_unexec = no; then
      emacs_cv_znocombreloc='not needed'
    else
      save_LDFLAGS=$LDFLAGS
@@ -1465,13 +1458,16 @@ AC_CACHE_CHECK([whether addresses are sanitized],
      [emacs_cv_sanitize_address=yes],
      [emacs_cv_sanitize_address=no])])
 
-if test "$CANNOT_DUMP" = "yes"; then
-  AC_DEFINE(CANNOT_DUMP, 1, [Define if Emacs should not support unexec.])
-elif test "$emacs_cv_sanitize_address" = yes; then
-  AC_MSG_WARN([[Addresses are sanitized; suggest CANNOT_DUMP=yes]])
+if test $with_unexec = yes; then
+  AC_DEFINE([HAVE_UNEXEC], 1, [Define if Emacs supports unexec.])
+  if test "$emacs_cv_sanitize_address" = yes; then
+    AC_MSG_WARN([[Addresses are sanitized; suggest --without-unexec]])
+  fi
 fi
 
-UNEXEC_OBJ=unexelf.o
+
+UNEXEC_OBJ=
+test $with_unexec = yes &&
 case "$opsys" in
   # MSDOS uses unexcoff.o
   aix4-2)
@@ -1499,8 +1495,10 @@ case "$opsys" in
    # not been tested, so for now this change is for Solaris 10 or newer.
    UNEXEC_OBJ=unexsol.o
    ;;
+  *)
+   UNEXEC_OBJ=unexelf.o
+   ;;
 esac
-test "$CANNOT_DUMP" = "yes" && UNEXEC_OBJ=
 
 LD_SWITCH_SYSTEM=
 test "$with_unexec" = no || case "$opsys" in
@@ -1551,7 +1549,7 @@ esac
 
 C_SWITCH_MACHINE=
 
-test "$CANNOT_DUMP" = yes ||
+test $with_unexec = yes &&
 case $canonical in
  alpha*)
   AC_CHECK_DECL([__ELF__])
@@ -2310,7 +2308,7 @@ doug_lea_malloc=$emacs_cv_var_doug_lea_malloc
 hybrid_malloc=
 system_malloc=yes
 
-test "$CANNOT_DUMP" = yes ||
+test $with_unexec = yes &&
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
@@ -5440,7 +5438,7 @@ esac
 AC_CACHE_CHECK(
   [for $CC option to disable position independent executables],
   [emacs_cv_prog_cc_no_pie],
-  [if test "$CANNOT_DUMP" = yes; then
+  [if test $with_unexec = no; then
      emacs_cv_prog_cc_no_pie='not needed'
    else
      emacs_save_c_werror_flag=$ac_c_werror_flag
@@ -5552,10 +5550,9 @@ emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS GLIB NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 XDBE XIM \
-  NS MODULES THREADS XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2 GMP; do
+  NS MODULES THREADS XWIDGETS LIBSYSTEMD JSON LCMS2 GMP; do
 
     case $opt in
-      CANNOT_DUMP) eval val=\${$opt} ;;
       GLIB) val=${emacs_cv_links_glib} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
       TOOLKIT_SCROLL_BARS|X_TOOLKIT) eval val=\${USE_$opt} ;;

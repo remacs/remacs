@@ -1350,7 +1350,8 @@ term_get_fkeys_1 (void)
   char **address = term_get_fkeys_address;
   KBOARD *kboard = term_get_fkeys_kboard;
 
-  /* This can happen if CANNOT_DUMP or with strange options.  */
+  /* This can happen if Emacs is starting up from scratch, or with
+     strange options.  */
   if (!KEYMAPP (KVAR (kboard, Vinput_decode_map)))
     kset_input_decode_map (kboard, Fmake_sparse_keymap (Qnil));
 
