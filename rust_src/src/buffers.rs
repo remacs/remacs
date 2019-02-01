@@ -3,6 +3,7 @@
 use std::sync::Mutex;
 use std::{self, mem, ptr};
 
+use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
 use rand::{Rng, StdRng};
@@ -1157,10 +1158,17 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 }
 
-pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+pub unsafe fn per_buffer_idx_from_field_offset(
+    offset: FieldOffset<Lisp_Buffer, LispObject>,
+) -> isize {
+    let obj = *offset.apply_ptr_mut(&mut buffer_local_flags);
+    obj.to_fixnum_unchecked() as isize
+}
+
+pub unsafe fn per_buffer_idx(count: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
-    let obj = flags.offset(offset);
-    (*obj).as_fixnum_or_error() as isize
+    let obj = flags.offset(count);
+    (*obj).to_fixnum_unchecked() as isize
 }
 
 /// Return a list of overlays which is a copy of the overlay list
