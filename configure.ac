@@ -197,12 +197,6 @@ archlibdir='${libexecdir}/remacs/${version}/${configuration}'
 etcdocdir='${datadir}/remacs/${version}/etc'
 gamedir='${localstatedir}/games/remacs'
 
-dnl Check for the presence of pkg-config
-AC_CHECK_TOOL([PKG_CONFIG], [pkg-config])
-if test x$PKG_CONFIG = x ; then
-  AC_MSG_ERROR([pkg-config not in path. You may need to install it.])
-fi
-
 dnl Special option to disable the most of other options.
 AC_ARG_WITH(all,
 [AS_HELP_STRING([--without-all],
@@ -1598,6 +1592,9 @@ pre_PKG_CONFIG_CFLAGS=$CFLAGS
 pre_PKG_CONFIG_LIBS=$LIBS
 
 PKG_PROG_PKG_CONFIG(0.9.0)
+if test x$PKG_CONFIG = x ; then
+  AC_MSG_ERROR([pkg-config not found.])
+fi
 
 dnl EMACS_CHECK_MODULES(GSTUFF, gtk+-2.0 >= 1.3 glib = 1.3.4)
 dnl acts like PKG_CHECK_MODULES(GSTUFF, gtk+-2.0 >= 1.3 glib = 1.3.4,
