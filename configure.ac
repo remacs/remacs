@@ -791,7 +791,9 @@ case "${canonical}" in
     opsys=qnxnto
     test -z "$CC" && CC=qcc
     CFLAGS="$CFLAGS -D__NO_EXT_QNX"
-    LDFLAGS="-N2MB $LDFLAGS"
+    if test "$with_unexec" = yes; then
+      LDFLAGS="-N2MB $LDFLAGS"
+    fi
   ;;
 
   ## Intel 386 machines where we don't care about the manufacturer.
@@ -1501,7 +1503,7 @@ esac
 test "$CANNOT_DUMP" = "yes" && UNEXEC_OBJ=
 
 LD_SWITCH_SYSTEM=
-case "$opsys" in
+test "$with_unexec" = no || case "$opsys" in
   freebsd|dragonfly)
    ## Let 'ld' find image libs and similar things in /usr/local/lib.
    ## The system compiler, GCC, has apparently been modified to not
@@ -5379,14 +5381,6 @@ case "$opsys" in
   cygwin) LD_SWITCH_SYSTEM_TEMACS="-Wl,-stack,0x00800000" ;;
 
   darwin)
-   ## The -headerpad option tells ld (see man page) to leave room at the
-   ## end of the header for adding load commands.  Needed for dumping.
-   ## 0x1000 is enough for roughly 52 load commands on the x86_64
-   ## architecture (where they are 78 bytes each). The actual number of
-   ## load commands added is not consistent but normally ranges from
-   ## about 14 to about 34. Setting it high gets us plenty of slop and
-   ## only costs about 1.5K of wasted binary space.
-   headerpad_extra=1000
    if test "$HAVE_NS" = "yes"; then
      libs_nsgui="-framework AppKit"
      if test "$NS_IMPL_COCOA" = "yes"; then
@@ -5395,7 +5389,18 @@ case "$opsys" in
    else
      libs_nsgui=
    fi
-   LD_SWITCH_SYSTEM_TEMACS="-fno-pie $libs_nsgui -Xlinker -headerpad -Xlinker $headerpad_extra"
+   LD_SWITCH_SYSTEM_TEMACS=$libs_nsgui
+   ## The -headerpad option tells ld (see man page) to leave room at the
+   ## end of the header for adding load commands.  Needed for dumping.
+   ## 0x1000 is enough for roughly 52 load commands on the x86_64
+   ## architecture (where they are 78 bytes each). The actual number of
+   ## load commands added is not consistent but normally ranges from
+   ## about 14 to about 34. Setting it high gets us plenty of slop and
+   ## only costs about 1.5K of wasted binary space.
+   headerpad_extra=1000
+   if test "$with_unexec" = yes; then
+     LD_SWITCH_SYSTEM_TEMACS="-fno-pie $LD_SWITCH_SYSTEM_TEMACS -Xlinker -headerpad -Xlinker $headerpad_extra"
+   fi
 
    ## This is here because src/Makefile.in did some extra fiddling around
    ## with LD_SWITCH_SYSTEM.  It seems cleaner to put this in
