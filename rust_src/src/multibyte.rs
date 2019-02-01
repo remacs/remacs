@@ -371,6 +371,12 @@ impl From<LispObject> for LispSymbolOrString {
     }
 }
 
+impl PartialEq<LispObject> for LispSymbolOrString {
+    fn eq(&self, other: &LispObject) -> bool {
+        self.0.eq(*other)
+    }
+}
+
 pub fn is_ascii(c: Codepoint) -> bool {
     c < 0x80
 }

@@ -208,9 +208,8 @@ pub extern "C" fn intern_driver(
 pub fn intern_soft(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> LispObject {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let tem = obarray.lookup(name);
-    let name: LispObject = name.into();
 
-    if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
+    if tem.is_integer() || (name.is_symbol() && !name.eq(&tem)) {
         Qnil
     } else {
         tem
