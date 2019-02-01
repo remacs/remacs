@@ -1161,9 +1161,9 @@ pub unsafe fn per_buffer_idx_from_field_offset(
     obj.to_fixnum_unchecked() as isize
 }
 
-pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+pub unsafe fn per_buffer_idx(count: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
-    let obj = flags.offset(offset);
+    let obj = flags.offset(count);
     (*obj).to_fixnum_unchecked() as isize
 }
 
