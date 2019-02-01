@@ -682,7 +682,7 @@ pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
 #[lisp_fn(min = "0")]
 pub fn window_new_pixel(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
-    EmacsInt::from(win.new_pixel)
+    win.new_pixel.into()
 }
 
 /// Return current value of point in WINDOW.
