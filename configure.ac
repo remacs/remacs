@@ -5395,7 +5395,7 @@ case "$opsys" in
    else
      libs_nsgui=
    fi
-   LD_SWITCH_SYSTEM_TEMACS="-fno-pie -prebind $libs_nsgui -Xlinker -headerpad -Xlinker $headerpad_extra"
+   LD_SWITCH_SYSTEM_TEMACS="-fno-pie $libs_nsgui -Xlinker -headerpad -Xlinker $headerpad_extra"
 
    ## This is here because src/Makefile.in did some extra fiddling around
    ## with LD_SWITCH_SYSTEM.  It seems cleaner to put this in
