@@ -678,7 +678,7 @@ pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
 // The new pixel size of WINDOW is the value set by the last call of
 // `set-window-new-pixel' for WINDOW.  If it is valid, it will be shortly
 // installed as WINDOW's pixel height (see `window-pixel-height') or pixel
-// width (see `window-pixel-width'). 
+// width (see `window-pixel-width').
 
 #[lisp_fn]
 pub fn window_new_pixel(window: LispWindowLiveOrSelected) -> EmacsInt {
