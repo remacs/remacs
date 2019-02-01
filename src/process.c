@@ -4741,19 +4741,24 @@ server_accept_connection (Lisp_Object server, int channel)
   service = Qnil;
   Lisp_Object args[11];
   int nargs = 0;
-  AUTO_STRING (procname_format_in, "%s <%d.%d.%d.%d:%d>");
-  AUTO_STRING (procname_format_in6, "%s <[%x:%x:%x:%x:%x:%x:%x:%x]:%d>");
+  #define HOST_FORMAT_IN "%d.%d.%d.%d"
+  #define HOST_FORMAT_IN6 "%x:%x:%x:%x:%x:%x:%x:%x"
+  AUTO_STRING (host_format_in, HOST_FORMAT_IN);
+  AUTO_STRING (host_format_in6, HOST_FORMAT_IN6);
+  AUTO_STRING (procname_format_in, "%s <"HOST_FORMAT_IN":%d>");
+  AUTO_STRING (procname_format_in6, "%s <["HOST_FORMAT_IN6"]:%d>");
   AUTO_STRING (procname_format_default, "%s <%d>");
   switch (saddr.sa.sa_family)
     {
     case AF_INET:
       {
 	args[nargs++] = procname_format_in;
-	nargs++;
+	args[nargs++] = host_format_in;
 	unsigned char *ip = (unsigned char *)&saddr.in.sin_addr.s_addr;
 	service = make_fixnum (ntohs (saddr.in.sin_port));
 	for (int i = 0; i < 4; i++)
 	  args[nargs++] = make_fixnum (ip[i]);
+	host = Fformat (5, args + 1);
 	args[nargs++] = service;
       }
       break;
@@ -4762,11 +4767,12 @@ server_accept_connection (Lisp_Object server, int channel)
     case AF_INET6:
       {
 	args[nargs++] = procname_format_in6;
-	nargs++;
+	args[nargs++] = host_format_in6;
 	DECLARE_POINTER_ALIAS (ip6, uint16_t, &saddr.in6.sin6_addr);
 	service = make_fixnum (ntohs (saddr.in.sin_port));
 	for (int i = 0; i < 8; i++)
 	  args[nargs++] = make_fixnum (ip6[i]);
+	host = Fformat (9, args + 1);
 	args[nargs++] = service;
       }
       break;

@@ -2072,7 +2072,8 @@ Value is the size of the newly read mail after conversion."
 		   ;; If we just read the password, most likely it is
 		   ;; wrong.  Otherwise, see if there is a specific
 		   ;; reason to think that the problem is a wrong passwd.
-		   (if (and (rmail-remote-proto-p proto)
+		   (if (and proto
+                            (rmail-remote-proto-p proto)
 			    (or got-password
 				(re-search-forward rmail-remote-password-error
 						   nil t)))
