@@ -609,7 +609,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
-                    .find(|&item| string_equal(car(item).into(), name.into()));
+                    .find(|&item| string_equal(car(item), name));
 
                 cdr(tem.into())
             }
@@ -876,7 +876,7 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
     LiveBufferIter::new()
         .find(|buf| {
             let buf_truename = buf.truename();
-            buf_truename.is_string() && string_equal(buf_truename.into(), filename)
+            buf_truename.is_string() && string_equal(buf_truename, filename)
         })
         .into()
 }
@@ -950,7 +950,7 @@ pub fn get_file_buffer(filename: LispStringRef) -> Option<LispBufferRef> {
     } else {
         LiveBufferIter::new().find(|buf| {
             let buf_filename = buf.filename();
-            buf_filename.is_string() && string_equal(buf_filename.into(), filename.into())
+            buf_filename.is_string() && string_equal(buf_filename, filename)
         })
     }
 }
@@ -1117,7 +1117,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore.is_not_nil() && string_equal(name.into(), ignore.into()))
+    if (ignore.is_not_nil() && string_equal(name, ignore))
         || get_buffer(LispBufferOrName::Name(name.into())).is_none()
     {
         return name;
@@ -1144,7 +1144,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
-        if string_equal(candidate.into(), ignore.into())
+        if string_equal(candidate, ignore)
             || get_buffer(LispBufferOrName::Name(candidate)).is_none()
         {
             return candidate.into();

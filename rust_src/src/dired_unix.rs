@@ -15,7 +15,7 @@ use crate::{
     fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
-    multibyte::{LispStringRef, LispSymbolOrString},
+    multibyte::LispStringRef,
     remacs_sys::{
         build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
         filemode_string, globals, re_pattern_buffer, re_search,
@@ -108,7 +108,7 @@ impl LispObjectExt for LispObject {
         if self.is_nil() {
             "NOTstring".to_string()
         } else {
-            let idf_sym_s: LispStringRef = LispSymbolOrString::from(*self).into();
+            let idf_sym_s: LispStringRef = self.as_symbol_or_string().into();
             idf_sym_s.to_string().to_lowercase()
         }
     }

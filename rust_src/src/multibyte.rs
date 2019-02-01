@@ -311,6 +311,11 @@ impl LispObject {
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(unsafe { empty_unibyte_string })
     }
+
+    // We can excuse not using an option here because extracting the value checks the type
+    pub fn as_symbol_or_string(self) -> LispSymbolOrString {
+        LispSymbolOrString(self)
+    }
 }
 
 #[derive(Copy, Clone, PartialEq)]
