@@ -12,18 +12,18 @@ use crate::{
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     numbers::IsLispNatnum,
-    remacs_sys::globals,
     remacs_sys::{
-        clear_message, command_loop_level, get_input_pending, glyph_row_area,
+        cancel_hourglass, clear_message, command_loop_level, get_input_pending, glyph_row_area,
         interrupt_input_blocked, make_lispy_position, message_log_maybe_newline, minibuf_level,
         output_method, print_error_message, process_special_events, recursive_edit_1,
-        recursive_edit_unwind, temporarily_switch_to_single_kboard, update_mode_lines,
-        window_box_left_offset,
+        recursive_edit_unwind, temporarily_switch_to_single_kboard, totally_unblock_input,
+        update_mode_lines, window_box_left_offset,
     },
+    remacs_sys::{display_hourglass_p, globals},
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
         Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt,
-        Qvertical_line,
+        Qtop_level, Qvertical_line,
     },
     threads::c_specpdl_index,
     windows::{selected_window, LispWindowOrSelected},
@@ -300,6 +300,26 @@ pub fn input_pending_p(check_timers: bool) -> bool {
         };
 
         get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)
+    }
+}
+
+/// Exit all recursive editing levels.
+/// This also exits all active minibuffers.
+#[lisp_fn(intspec = "")]
+pub fn top_level() {
+    unsafe {
+        #[cfg(feature = "window-system")]
+        {
+            if display_hourglass_p {
+                cancel_hourglass();
+            }
+        }
+
+        // Unblock input if we enter with input blocked.  This may happen if
+        // redisplay traps e.g. during tool-bar update with input blocked.
+        totally_unblock_input();
+
+        Fthrow(Qtop_level, Qnil);
     }
 }
 
