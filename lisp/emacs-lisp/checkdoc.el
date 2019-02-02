@@ -174,6 +174,7 @@
 (require 'cl-lib)
 (require 'help-mode) ;; for help-xref-info-regexp
 (require 'thingatpt) ;; for handy thing-at-point-looking-at
+(require 'lisp-mnt)
 
 (defvar compilation-error-regexp-alist)
 (defvar compilation-mode-font-lock-keywords)
@@ -2205,21 +2206,10 @@ News agents may remove it"
 ;;
 (defvar generate-autoload-cookie)
 
-(eval-when-compile (require 'lisp-mnt))	; expand silly defsubsts
-(declare-function lm-summary "lisp-mnt" (&optional file))
-(declare-function lm-section-start "lisp-mnt" (header &optional after))
-(declare-function lm-section-end "lisp-mnt" (header))
-
 (defun checkdoc-file-comments-engine ()
   "Return a message list if this file does not match the Emacs standard.
 This checks for style only, such as the first line, Commentary:,
 Code:, and others referenced in the style guide."
-  (if (featurep 'lisp-mnt)
-      nil
-    (require 'lisp-mnt)
-    ;; Old XEmacs don't have `lm-commentary-mark'
-    (if (and (not (fboundp 'lm-commentary-mark)) (fboundp 'lm-commentary))
-	(defalias 'lm-commentary-mark #'lm-commentary)))
   (save-excursion
     (let* ((f1 (file-name-nondirectory (buffer-file-name)))
 	   (fn (file-name-sans-extension f1))
@@ -2280,7 +2270,7 @@ Code:, and others referenced in the style guide."
 	(if (or (not checkdoc-force-history-flag)
 		(file-exists-p "ChangeLog")
 		(file-exists-p "../ChangeLog")
-                (and (fboundp 'lm-history-mark) (funcall #'lm-history-mark)))
+                (lm-history-mark))
 	    nil
 	  (progn
 	    (goto-char (or (lm-commentary-mark) (point-min)))
