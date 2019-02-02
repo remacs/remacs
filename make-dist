@@ -496,7 +496,7 @@ if [ "${make_tar}" = yes ]; then
    case $default_gzip in
      cat) tar $taropt -cf - $emacsname;;
      *) if tar $taropt -cf /dev/null --use-compress-program="$default_gzip" \
-	       $emacsname/src/lisp.h >& /dev/null
+	       $emacsname/src/lisp.h > /dev/null 2>&1
 	then
 	  tar $taropt -cf - --use-compress-program="$default_gzip" $emacsname
 	else
