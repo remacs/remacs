@@ -209,7 +209,6 @@ AC_DEFUN([gl_INIT],
   gl_SHA512
   gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE
   gl_DIRENT_H
-  AC_REQUIRE([gl_C99_STRTOLD])
   gl_FUNC_DUP2
   if test $HAVE_DUP2 = 0 || test $REPLACE_DUP2 = 1; then
     AC_LIBOBJ([dup2])
@@ -999,7 +998,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/alloca.m4
   m4/builtin-expect.m4
   m4/byteswap.m4
-  m4/c-strtod.m4
   m4/clock_time.m4
   m4/close-stream.m4
   m4/count-leading-zeros.m4

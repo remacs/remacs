@@ -929,6 +929,7 @@ _GL_WARN_ON_USE (setenv, "setenv is unportable - "
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define strtod rpl_strtod
 #  endif
+#  define GNULIB_defined_strtod_function 1
 _GL_FUNCDECL_RPL (strtod, double, (const char *str, char **endp)
                                   _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (strtod, double, (const char *str, char **endp));
@@ -945,6 +946,32 @@ _GL_CXXALIASWARN (strtod);
 # if HAVE_RAW_DECL_STRTOD
 _GL_WARN_ON_USE (strtod, "strtod is unportable - "
                  "use gnulib module strtod for portability");
+# endif
+#endif
+
+#if @GNULIB_STRTOLD@
+ /* Parse a 'long double' from STRING, updating ENDP if appropriate.  */
+# if @REPLACE_STRTOLD@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define strtold rpl_strtold
+#  endif
+#  define GNULIB_defined_strtold_function 1
+_GL_FUNCDECL_RPL (strtold, long double, (const char *str, char **endp)
+                                        _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (strtold, long double, (const char *str, char **endp));
+# else
+#  if !@HAVE_STRTOLD@
+_GL_FUNCDECL_SYS (strtold, long double, (const char *str, char **endp)
+                                        _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (strtold, long double, (const char *str, char **endp));
+# endif
+_GL_CXXALIASWARN (strtold);
+#elif defined GNULIB_POSIXCHECK
+# undef strtold
+# if HAVE_RAW_DECL_STRTOLD
+_GL_WARN_ON_USE (strtold, "strtold is unportable - "
+                 "use gnulib module strtold for portability");
 # endif
 #endif
 
