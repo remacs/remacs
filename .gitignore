@@ -262,6 +262,9 @@ ChangeLog
 # Built by 'make install'.
 etc/emacs.tmpdesktop
 
+# Built by 'make-dist'.
+/MANIFEST
+
 # Distribution directories.
 /emacs-[1-9]*/
 
