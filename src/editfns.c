@@ -1260,7 +1260,7 @@ name, or nil if there is no such user.  */)
   /* Substitute the login name for the &, upcasing the first character.  */
   if (q)
     {
-      Lisp_Object login = Fuser_login_name (make_fixnum (pw->pw_uid));
+      Lisp_Object login = Fuser_login_name (INT_TO_INTEGER (pw->pw_uid));
       USE_SAFE_ALLOCA;
       char *r = SAFE_ALLOCA (strlen (p) + SBYTES (login) + 1);
       memcpy (r, p, q - p);
