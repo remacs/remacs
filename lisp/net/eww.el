@@ -1526,7 +1526,7 @@ Differences in #targets are ignored."
 (defun eww-download-callback (status url)
   (unless (plist-get status :error)
     (let* ((obj (url-generic-parse-url url))
-           (path (car (url-path-and-query obj)))
+           (path (directory-file-name (car (url-path-and-query obj))))
            (file (eww-make-unique-file-name
                   (eww-decode-url-file-name (file-name-nondirectory path))
                   eww-download-directory)))
