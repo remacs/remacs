@@ -327,10 +327,6 @@ if [ $update = yes ]; then
   echo "Running autoreconf"
   autoreconf -i -I m4 || { x=$?; echo Autoreconf FAILED! >&2; exit $x; }
 
-  ## Make sure src/stamp-h.in is newer than configure.ac.
-  rm -f src/stamp-h.in
-  echo timestamp > src/stamp-h.in
-
   echo "Updating Info files"
   make info
 
