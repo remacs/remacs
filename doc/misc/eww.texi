@@ -125,9 +125,10 @@ HTML-specified colors or not.  This sets the @code{shr-use-colors} variable.
 @vindex eww-download-directory
 @kindex d
 @cindex Download
-  A URL under the point can be downloaded with @kbd{d}
-(@code{eww-download}).  The file will be written to the directory
-specified in @code{eww-download-directory} (Default: @file{~/Downloads/}).
+  A URL can be downloaded with @kbd{d} (@code{eww-download}).  This
+will download the link under point if there is one, or else the URL of
+the current page.  The file will be written to the directory specified
+in @code{eww-download-directory} (default: @file{~/Downloads/}).
 
 @findex eww-back-url
 @findex eww-forward-url
