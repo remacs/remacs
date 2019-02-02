@@ -2391,6 +2391,7 @@ and the position in MAX."
 
 (defun diff-syntax-fontify (beg end)
   "Highlight source language syntax in diff hunk between BEG and END."
+  (remove-overlays beg end 'diff-mode 'syntax)
   (save-excursion
     (diff-syntax-fontify-hunk beg end t)
     (diff-syntax-fontify-hunk beg end nil)))
@@ -2402,9 +2403,10 @@ and the position in MAX."
 (defun diff-syntax-fontify-hunk (beg end old)
   "Highlight source language syntax in diff hunk between BEG and END.
 When OLD is non-nil, highlight the hunk from the old source."
-  (remove-overlays beg end 'diff-mode 'syntax)
   (goto-char beg)
   (let* ((hunk (buffer-substring-no-properties beg end))
+         ;; Trim a trailing newline to find hunk in diff-syntax-fontify-props
+         ;; in diffs that have no newline at end of diff file.
          (text (string-trim-right (or (ignore-errors (diff-hunk-text hunk (not old) nil)) "")))
 	 (line (if (looking-at "\\(?:\\*\\{15\\}.*\n\\)?[-@* ]*\\([0-9,]+\\)\\([ acd+]+\\([0-9,]+\\)\\)?")
 		   (if old (match-string 1)
@@ -2431,7 +2433,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                         (setq props (diff-syntax-fontify-props nil text line-nb t)))
                     ;; Get properties from the file
                     (with-temp-buffer
-                      (insert-file-contents file t)
+                      (insert-file-contents file)
                       (setq props (diff-syntax-fontify-props file text line-nb)))))
               ;; Get properties from a cached revision
               (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
@@ -2459,7 +2461,7 @@ When OLD is non-nil, highlight the hunk from the old source."
         (if (and file (file-exists-p file) (file-regular-p file))
             ;; Try to get full text from the file
             (with-temp-buffer
-              (insert-file-contents file t)
+              (insert-file-contents file)
               (setq props (diff-syntax-fontify-props file text line-nb)))
           ;; Otherwise, get properties from the hunk alone
           (with-temp-buffer
