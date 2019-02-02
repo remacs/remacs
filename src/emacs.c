@@ -914,7 +914,9 @@ main (int argc, char **argv)
      happens.  This relies on the static heap being needed only in
      temacs and only if we are going to dump with unexec.  */
   bool use_dynamic_heap = false;
-  if (strstr (argv[0], "temacs") != NULL)
+  char *temacs_str = strstr (argv[0], "temacs");
+  if (temacs_str != NULL
+      && (temacs_str == argv[0] || IS_DIRECTORY_SEP (temacs_str[-1])))
     {
       eassert (temacs);
       /* Note that gflags are set at this point only if we have been
