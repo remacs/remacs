@@ -189,9 +189,11 @@ to find the list of ignores for each directory."
 (defun project--files-in-directory (dir ignores &optional files)
   (require 'find-dired)
   (defvar find-name-arg)
-  (let ((command (format "%s %s %s -type f %s -print0"
+  (let ((default-directory dir)
+        (remote-id (file-remote-p dir))
+        (command (format "%s %s %s -type f %s -print0"
                          find-program
-                         dir
+                         (file-local-name dir)
                          (xref--find-ignores-arguments
                           ignores
                           (expand-file-name dir))
@@ -205,7 +207,8 @@ to find the list of ignores for each directory."
                                      " "
                                      (shell-quote-argument ")"))"")
                          )))
-    (split-string (shell-command-to-string command) "\0" t)))
+    (mapcar (lambda (file) (concat remote-id file))
+            (split-string (shell-command-to-string command) "\0" t))))
 
 (defgroup project-vc nil
   "Project implementation using the VC package."
