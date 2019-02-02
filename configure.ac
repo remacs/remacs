@@ -1351,6 +1351,7 @@ if test $with_unexec = yes && test $opsys = gnu-linux; then
 fi
 AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
+AC_SUBST([SETFATTR])
 
 # Makeinfo on macOS is ancient, check whether there is a more recent
 # version installed by Homebrew.
