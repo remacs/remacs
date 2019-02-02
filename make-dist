@@ -339,10 +339,6 @@ if [ $update = yes ]; then
   echo "Running autoreconf"
   autoreconf -i -I m4 || { x=$?; echo Autoreconf FAILED! >&2; exit $x; }
 
-  ## Make sure src/stamp-h.in is newer than configure.ac.
-  rm -f src/stamp-h.in
-  echo timestamp > src/stamp-h.in
-
   if [ "$make_info" = yes ] ; then
     echo "Updating Info files"
     make info
@@ -371,7 +367,7 @@ possibly_non_vc_files="
   MANIFEST aclocal.m4 configure
   admin/charsets/jisx2131-filter
   src/config.in src/dmpstruct.h src/emacs-module.h
-  src/fingerprint.c src/stamp-h.in
+  src/fingerprint.c
 "$(
   find admin doc etc lisp \
     \( -name '*.el' -o -name '*.elc' -o -name '*.map' -o -name '*.stamp' \
