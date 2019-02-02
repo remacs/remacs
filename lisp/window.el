@@ -7560,10 +7560,6 @@ selected frame."
     (or (and bottom-window-shows-buffer
 	     (window--display-buffer buffer bottom-window 'reuse alist))
 	(and (not (frame-parameter nil 'unsplittable))
-	     (let (split-height-threshold)
-	       (setq window (window--try-to-split-window bottom-window alist)))
-	     (window--display-buffer buffer window 'window alist))
-	(and (not (frame-parameter nil 'unsplittable))
 	     (setq window (split-window-no-error (window-main-window)))
 	     (window--display-buffer buffer window 'window alist))
 	(and (setq window bottom-window)
