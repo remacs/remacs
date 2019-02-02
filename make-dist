@@ -389,7 +389,7 @@ fi
 # 'git ls-files' later (e.g., after extraction from a tarball).
 # Otherwise, rely on the existing MANIFEST, which should be maintained some
 # other way when adding or deleting a distributed file while not using Git.
-if [ $update = yes ] && [ -r .git ]; then
+if ( [ $update = yes ] || [ ! -f MANIFEST ] ) && [ -r .git ]; then
   echo "Updating MANIFEST"
   if [ $with_tests = yes ]; then
     git ls-files >MANIFEST
