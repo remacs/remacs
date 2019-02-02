@@ -3710,6 +3710,7 @@ run_window_change_functions (void)
   ptrdiff_t count_outer = SPECPDL_INDEX ();
 
   record_unwind_protect_void (window_change_record);
+  specbind (Qinhibit_redisplay, Qt);
 
   FOR_EACH_FRAME (tail, frame)
     {

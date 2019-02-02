@@ -14153,6 +14153,9 @@ redisplay_internal (void)
       clear_garbaged_frames ();
     }
 
+  if (!NILP (Vrun_hooks))
+    run_window_change_functions ();
+
   if (windows_or_buffers_changed && !update_mode_lines)
     /* Code that sets windows_or_buffers_changed doesn't distinguish whether
        only the windows's contents needs to be refreshed, or whether the
@@ -14331,18 +14334,6 @@ redisplay_internal (void)
 	      if (WINDOWP (selected_window)
 		  && (w = XWINDOW (selected_window)) != sw)
 		goto retry;
-
-	      if (!NILP (Vrun_hooks))
-		{
-		  run_window_change_functions ();
-
-		  /* If windows or buffers changed or selected_window
-		     changed, redisplay again.  */
-		  if ((windows_or_buffers_changed)
-		      || (WINDOWP (selected_window)
-			  && (w = XWINDOW (selected_window)) != sw))
-		    goto retry;
-		}
 
 		/* We used to always goto end_of_redisplay here, but this
 		 isn't enough if we have a blinking cursor.  */
@@ -14706,18 +14697,6 @@ redisplay_internal (void)
       || (WINDOWP (selected_window)
 	  && (w = XWINDOW (selected_window)) != sw))
     goto retry;
-
-  if (!NILP (Vrun_hooks))
-    {
-      run_window_change_functions ();
-
-      /* If windows or buffers changed or selected_window changed,
-	 redisplay again.  */
-      if ((windows_or_buffers_changed)
-	  || (WINDOWP (selected_window)
-	      && (w = XWINDOW (selected_window)) != sw))
-	goto retry;
-    }
 
   /* Clear the face and image caches.
 
