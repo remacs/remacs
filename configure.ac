@@ -4492,15 +4492,27 @@ fi
 AC_SUBST(XGSELOBJ)
 
 dnl Adapted from Haible's version.
-AC_CACHE_CHECK([for nl_langinfo and CODESET], emacs_cv_langinfo_codeset,
+AC_CACHE_CHECK([for nl_langinfo and CODESET], [emacs_cv_langinfo_codeset],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <langinfo.h>]],
-    [[char* cs = nl_langinfo(CODESET);]])],
-    emacs_cv_langinfo_codeset=yes,
-    emacs_cv_langinfo_codeset=no)
+    [[char *cs = nl_langinfo(CODESET);]])],
+    [emacs_cv_langinfo_codeset=yes],
+    [emacs_cv_langinfo_codeset=no])
   ])
-if test $emacs_cv_langinfo_codeset = yes; then
-  AC_DEFINE(HAVE_LANGINFO_CODESET, 1,
-    [Define if you have <langinfo.h> and nl_langinfo(CODESET).])
+if test "$emacs_cv_langinfo_codeset" = yes; then
+  AC_DEFINE([HAVE_LANGINFO_CODESET], 1,
+    [Define if you have <langinfo.h> and nl_langinfo (CODESET).])
+
+  AC_CACHE_CHECK([for nl_langinfo and _NL_PAPER_WIDTH],
+    [emacs_cv_langinfo__nl_paper_width],
+    [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <langinfo.h>]],
+      [[char *cs = nl_langinfo (_NL_PAPER_WIDTH);]])],
+      [emacs_cv_langinfo__nl_paper_width=yes],
+      [emacs_cv_langinfo__nl_paper_width=no])
+    ])
+  if test "$emacs_cv_langinfo__nl_paper_width" = yes; then
+    AC_DEFINE([HAVE_LANGINFO__NL_PAPER_WIDTH], 1,
+      [Define if you have <langinfo.h> and nl_langinfo (_NL_PAPER_WIDTH).])
+  fi
 fi
 
 AC_TYPE_MBSTATE_T

@@ -2727,7 +2727,6 @@ See also `locale-charset-language-names', `locale-language-names',
       (let ((paper (locale-info 'paper))
             locale)
 	(if paper
-	    ;; This will always be null at the time of writing.
 	    (cond
 	     ((equal paper '(216 279))
 	      (setq ps-paper-type 'letter))

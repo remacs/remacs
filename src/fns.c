@@ -3118,8 +3118,8 @@ The data read from the system are decoded using `locale-coding-system'.  */)
       str = nl_langinfo (CODESET);
       return build_string (str);
     }
-#ifdef DAY_1
-  else if (EQ (item, Qdays))	/* e.g. for calendar-day-name-array */
+# ifdef DAY_1
+  if (EQ (item, Qdays))  /* E.g., for calendar-day-name-array.  */
     {
       Lisp_Object v = make_nil_vector (7);
       const int days[7] = {DAY_1, DAY_2, DAY_3, DAY_4, DAY_5, DAY_6, DAY_7};
@@ -3136,9 +3136,9 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 	}
       return v;
     }
-#endif	/* DAY_1 */
-#ifdef MON_1
-  else if (EQ (item, Qmonths))	/* e.g. for calendar-month-name-array */
+# endif
+# ifdef MON_1
+  if (EQ (item, Qmonths))  /* E.g., for calendar-month-name-array.  */
     {
       Lisp_Object v = make_nil_vector (12);
       const int months[12] = {MON_1, MON_2, MON_3, MON_4, MON_5, MON_6, MON_7,
@@ -3153,13 +3153,12 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 	}
       return v;
     }
-#endif	/* MON_1 */
-/* LC_PAPER stuff isn't defined as accessible in glibc as of 2.3.1,
-   but is in the locale files.  This could be used by ps-print.  */
-#ifdef PAPER_WIDTH
-  else if (EQ (item, Qpaper))
-    return list2i (nl_langinfo (PAPER_WIDTH), nl_langinfo (PAPER_HEIGHT));
-#endif	/* PAPER_WIDTH */
+# endif
+# ifdef HAVE_LANGINFO__NL_PAPER_WIDTH
+  if (EQ (item, Qpaper))
+    return list2i ((intptr_t) nl_langinfo (_NL_PAPER_WIDTH),
+		   (intptr_t) nl_langinfo (_NL_PAPER_HEIGHT));
+# endif
 #endif	/* HAVE_LANGINFO_CODESET*/
   return Qnil;
 }
