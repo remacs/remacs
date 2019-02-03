@@ -1712,12 +1712,13 @@ pub fn window_lines_pixel_dimensions(
 
     let mut rows = Qnil;
     while row.as_ptr() <= end_row.as_ptr() && row.enabled_p() && row.y + row.height < max_y {
+        #[allow(clippy::collapsible_if)] // The symmetry is worth ignoring this.
         let width = if left {
             let glyph = unsafe { &*row.glyphs[TEXT_AREA as usize] };
             if inverse {
-                glyph.pixel_width as i32
+                i32::from(glyph.pixel_width)
             } else {
-                window_width - glyph.pixel_width as i32
+                window_width - i32::from(glyph.pixel_width)
             }
         } else {
             if inverse {

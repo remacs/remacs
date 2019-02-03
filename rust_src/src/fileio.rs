@@ -128,7 +128,7 @@ pub fn file_directory_p_lisp(filename: LispStringRef) -> bool {
     let handler = find_file_name_handler(absname.into(), Qfile_directory_p);
 
     if handler.is_not_nil() {
-        call!(handler, Qfile_directory_p, absname.into()).into()
+        call!(handler, Qfile_directory_p, absname).into()
     } else {
         unsafe { file_directory_p(encode_file_name(absname.into()).into()) }
     }

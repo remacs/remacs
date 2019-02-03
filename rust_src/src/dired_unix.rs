@@ -169,7 +169,7 @@ enum DirData {
 }
 
 impl DirData {
-    fn from_os(&mut self, dr: &DirReq) {
+    fn load(&mut self, dr: &DirReq) {
         match *self {
             DirData::Files { ref mut fnames } => {
                 fnames_from_os(fnames, &dr.dname, dr.match_re);
@@ -191,12 +191,12 @@ impl DirData {
         }
     }
 
-    fn to_list(&mut self, dr: &DirReq) -> LispObject {
+    fn to_list(&self, dr: &DirReq) -> LispObject {
         match *self {
-            DirData::Files { ref mut fnames } => fnames_to_list(fnames, &dr.dname, &dr.full),
+            DirData::Files { ref fnames } => fnames_to_list(fnames, &dr.dname, &dr.full),
             DirData::FilesAttrs {
-                ref mut fnames,
-                ref mut fattrs,
+                ref fnames,
+                ref fattrs,
             } => fattrs_to_list(fattrs, fnames, &dr.dname, &dr.full),
         }
     }
@@ -280,7 +280,7 @@ fn match_re_maybe(f: String, re: &Option<RegEx>) -> Option<String> {
     }
 }
 
-fn fnames_to_list(fnames: &mut Vec<String>, dname: &str, full: &FullPath) -> LispObject {
+fn fnames_to_list(fnames: &[String], dname: &str, full: &FullPath) -> LispObject {
     match *full {
         FullPath::No => list(&fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
         FullPath::Yes => list(
@@ -294,8 +294,8 @@ fn fnames_to_list(fnames: &mut Vec<String>, dname: &str, full: &FullPath) -> Lis
 }
 
 fn fattrs_to_list(
-    fattrs: &mut Vec<LispObject>,
-    fnames: &mut Vec<String>,
+    fattrs: &[LispObject],
+    fnames: &[String],
     dname: &str,
     full: &FullPath,
 ) -> LispObject {
@@ -321,8 +321,7 @@ fn fattrs_to_list(
 }
 
 fn directory_files_core(dr: &DirReq, dd: &mut DirData) -> LispObject {
-    dd.from_os(dr);
-
+    dd.load(dr);
     dd.to_list(dr)
 }
 
