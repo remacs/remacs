@@ -4111,15 +4111,18 @@ for process communication also."
     (let ((inhibit-read-only t)
 	  last-coding-system-used
 	  ;; We do not want to run timers.
+          (stimers (with-timeout-suspend))
 	  timer-list timer-idle-list
 	  result)
-      ;; JUST-THIS-ONE is set due to Bug#12145.  It is an integer, in
-      ;; order to avoid running timers.
+      ;; JUST-THIS-ONE is set due to Bug#12145.
       (tramp-message
        proc 10 "%s %s %s %s\n%s"
        proc timeout (process-status proc)
-       (setq result (accept-process-output proc timeout nil 0))
+       (with-local-quit
+	 (setq result (accept-process-output proc timeout nil t)))
        (buffer-string))
+      ;; Reenable the timers.
+      (with-timeout-unsuspend stimers)
       result)))
 
 (defun tramp-check-for-regexp (proc regexp)
@@ -4640,6 +4643,7 @@ PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
   (let ((default-directory (tramp-compat-temporary-file-directory))
 	(destination (if (eq destination t) (current-buffer) destination))
+	(vec (or vec (car tramp-current-connection)))
 	output error result)
     (tramp-message
      vec 6 "`%s %s' %s %s"
@@ -4692,6 +4696,25 @@ are written with verbosity of 6."
       (error
        (setq result 1)
        (tramp-message vec 6 "%d\n%s" result (error-message-string err))))
+    result))
+
+(defun tramp-process-lines
+  (vec program &rest args)
+  "Calls `process-lines' on the local host.
+If an error occurs, it returns nil.  Traces are written with
+verbosity of 6."
+  (let ((default-directory (tramp-compat-temporary-file-directory))
+	(vec (or vec (car tramp-current-connection)))
+	result)
+    (if args
+	(tramp-message vec 6 "%s %s" program (mapconcat 'identity args " "))
+      (tramp-message vec 6 "%s" program))
+    (setq result
+	  (condition-case err
+	      (apply 'process-lines program args)
+	    (error
+	     (tramp-error vec (car err) (cdr err)))))
+    (tramp-message vec 6 "%s" result)
     result))
 
 (defun tramp-read-passwd (proc &optional prompt)
@@ -4852,8 +4875,7 @@ Only works for Bourne-like shells."
 	;; Wait, until the process has disappeared.  If it doesn't,
 	;; fall back to the default implementation.
 	(with-timeout (1 (ignore))
-	  ;; We cannot run `tramp-accept-process-output', it blocks timers.
-	  (while (accept-process-output proc nil nil t))
+	  (while (tramp-accept-process-output proc))
 	  ;; Report success.
 	  proc)))))
 

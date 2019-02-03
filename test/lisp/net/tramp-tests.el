@@ -3798,6 +3798,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))
 
+;; Must be a command, because used as `sigusr' handler.
+(defun tramp--test-timeout-handler (&rest _ignore)
+  "Timeout handler, reporting a failed test."
+  (interactive)
+  (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
+
 (ert-deftest tramp-test29-start-file-process ()
   "Check `start-file-process'."
   :tags '(:expensive-test)
@@ -3816,7 +3822,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-string proc "foo")
 	    (process-send-eof proc)
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3834,7 +3840,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		   "cat" (file-name-nondirectory tmp-name)))
 	    (should (processp proc))
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3855,7 +3861,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-string proc "foo")
 	    (process-send-eof proc)
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`start-file-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3888,7 +3894,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-string proc "foo")
 	    (process-send-eof proc)
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`make-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3908,7 +3914,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		   :file-handler t))
 	    (should (processp proc))
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`make-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3933,7 +3939,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-string proc "foo")
 	    (process-send-eof proc)
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`make-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
 	    (should (string-equal (buffer-string) "foo")))
@@ -3957,7 +3963,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-eof proc)
 	    (delete-process proc)
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`make-process' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (accept-process-output proc 0 nil t)))
 	    (should (string-equal (buffer-string) "killed\n")))
 
@@ -3977,7 +3983,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (should (processp proc))
 	      ;; Read stderr.
 	      (with-current-buffer stderr
-		(with-timeout (10 (ert-fail "`make-process' timed out"))
+		(with-timeout (10 (tramp--test-timeout-handler))
 		  (while (= (point-min) (point-max))
 		    (while (accept-process-output proc 0 nil t))))
 		(should
@@ -4054,7 +4060,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	     (format "ls %s" (file-name-nondirectory tmp-name))
 	     (current-buffer))
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`async-shell-command' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (accept-process-output
 		      (get-buffer-process (current-buffer)) nil nil t)))
 	    ;; `ls' could produce colorized output.
@@ -4083,7 +4089,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	     (get-buffer-process (current-buffer))
 	     (format "%s\n" (file-name-nondirectory tmp-name)))
 	    ;; Read output.
-	    (with-timeout (10 (ert-fail "`async-shell-command' timed out"))
+	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (accept-process-output
 		      (get-buffer-process (current-buffer)) nil nil t)))
 	    ;; `ls' could produce colorized output.
@@ -4107,7 +4113,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Like `shell-command-to-string', but for asynchronous processes."
   (with-temp-buffer
     (async-shell-command command (current-buffer))
-    (with-timeout (10 (ert-fail "`async-shell-command-to-string' timed out"))
+    (with-timeout (10 (tramp--test-timeout-handler))
       (while (accept-process-output
 	      (get-buffer-process (current-buffer)) nil nil t)))
     (buffer-substring-no-properties (point-min) (point-max))))
@@ -4326,7 +4332,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
   (let* ((tmp-name (tramp--test-make-temp-name))
 	 (default-directory tramp-test-temporary-file-directory)
-         (orig-exec-path (exec-path))
+         (orig-exec-path (with-no-warnings (exec-path)))
          (tramp-remote-path tramp-remote-path)
 	 (orig-tramp-remote-path tramp-remote-path))
     (unwind-protect
@@ -5204,9 +5210,11 @@ Use the `ls' command."
 		 (numberp (nth 1 fsi))
 		 (numberp (nth 2 fsi))))))
 
-(defun tramp--test-timeout-handler ()
-  "Timeout handler, reporting a failed test."
-  (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
+;; `tramp-test43-asynchronous-requests' could be blocked.  So we set a
+;; timeout of 300 seconds, and we send a SIGUSR1 signal after 300
+;; seconds.  Similar check is performed in the timer function.
+(defconst tramp--test-asynchronous-requests-timeout 300
+  "Timeout for `tramp-test43-asynchronous-requests'.")
 
 ;; This test is inspired by Bug#16928.
 (ert-deftest tramp-test43-asynchronous-requests ()
@@ -5216,26 +5224,27 @@ process sentinels.  They shall not disturb each other."
   ;; The test fails from time to time, w/o a reproducible pattern.  So
   ;; we mark it as unstable.
   :tags '(:expensive-test :unstable)
-  ;; Recent investigations have uncovered a race condition in
-  ;; `accept-process-output'.  Let's check on emba, whether this has
-  ;; been solved.
-  ;; (if (getenv "EMACS_EMBA_CI") '(:expensive-test) '(:expensive-test :unstable))
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  ;; This test is sensible wrt to other running tests.  Let it work
+  ;; only if it is the only selected test.
+  ;; FIXME: There must be a better solution.
+  (skip-unless
+   (= 1 (length
+	 (ert-select-tests (ert--stats-selector ert--current-run-stats) t))))
 
-  ;; This test could be blocked on hydra.  So we set a timeout of 300
-  ;; seconds, and we send a SIGUSR1 signal after 300 seconds.
-  ;; This clearly doesn't work though, because the test not
-  ;; infrequently hangs for hours until killed by the infrastructure.
-  (with-timeout (300 (tramp--test-timeout-handler))
+  (with-timeout
+      (tramp--test-asynchronous-requests-timeout (tramp--test-timeout-handler))
     (define-key special-event-map [sigusr1] 'tramp--test-timeout-handler)
-    (tramp--test-instrument-test-case (if (getenv "EMACS_HYDRA_CI") 10 0)
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
+	   (shell-file-name "/bin/sh")
 	   (watchdog
-            (start-process
-             "*watchdog*" nil shell-file-name shell-command-switch
-             (format "sleep 300; kill -USR1 %d" (emacs-pid))))
+            (start-process-shell-command
+             "*watchdog*" nil
+             (format
+	      "sleep %d; kill -USR1 %d"
+	      tramp--test-asynchronous-requests-timeout (emacs-pid))))
            (tmp-name (tramp--test-make-temp-name))
            (default-directory tmp-name)
            ;; Do not cache Tramp properties.
@@ -5263,6 +5272,9 @@ process sentinels.  They shall not disturb each other."
             (cond
              ((tramp--test-mock-p) 'vc-registered)
              (t 'file-attributes)))
+	   ;; This is when all timers start.  We check inside the
+	   ;; timer function, that we don't exceed timeout.
+	   (timer-start (current-time))
            timer buffers kill-buffer-query-functions)
 
       (unwind-protect
@@ -5277,6 +5289,9 @@ process sentinels.  They shall not disturb each other."
              (run-at-time
               0 timer-repeat
               (lambda ()
+                (when (> (- (time-to-seconds) (time-to-seconds timer-start))
+                         tramp--test-asynchronous-requests-timeout)
+                  (tramp--test-timeout-handler))
                 (when buffers
                   (let ((time (float-time))
                         (default-directory tmp-name)
@@ -5286,12 +5301,13 @@ process sentinels.  They shall not disturb each other."
                      "Start timer %s %s" file (current-time-string))
                     (funcall timer-operation file)
                     ;; Adjust timer if it takes too much time.
+                    (tramp--test-message
+                     "Stop timer %s %s" file (current-time-string))
                     (when (> (- (float-time) time) timer-repeat)
                       (setq timer-repeat (* 1.5 timer-repeat))
                       (setf (timer--repeat-delay timer) timer-repeat)
-                      (tramp--test-message "Increase timer %s" timer-repeat))
-                    (tramp--test-message
-                     "Stop timer %s %s" file (current-time-string)))))))
+                      (tramp--test-message
+		       "Increase timer %s" timer-repeat)))))))
 
             ;; Create temporary buffers.  The number of buffers
             ;; corresponds to the number of processes; it could be
@@ -5307,9 +5323,9 @@ process sentinels.  They shall not disturb each other."
                      (start-file-process-shell-command
                       (buffer-name buf) buf
                       (concat
-                       "(read line && echo $line >$line);"
-                       "(read line && cat $line);"
-                       "(read line && rm $line)")))
+		       "(read line && echo $line >$line && echo $line);"
+		       "(read line && cat $line);"
+		       "(read line && rm -f $line)")))
                     (file (expand-file-name (buffer-name buf))))
                 ;; Remember the file name.  Add counter.
                 (process-put proc 'foo file)
@@ -5325,17 +5341,16 @@ process sentinels.  They shall not disturb each other."
                    (unless (zerop (length string))
 		     (dired-uncache (process-get proc 'foo))
                      (should (file-attributes (process-get proc 'foo))))))
-                ;; Add process sentinel.
+                ;; Add process sentinel.  It shall not perform remote
+                ;; operations, triggering Tramp processes.  This blocks.
                 (set-process-sentinel
                  proc
                  (lambda (proc _state)
                    (tramp--test-message
-                    "Process sentinel %s %s" proc (current-time-string))
-		   (dired-uncache (process-get proc 'foo))
-                   (should-not (file-attributes (process-get proc 'foo)))))))
+                    "Process sentinel %s %s" proc (current-time-string))))))
 
-            ;; Send a string.  Use a random order of the buffers.  Mix
-            ;; with regular operation.
+            ;; Send a string to the processes.  Use a random order of
+            ;; the buffers.  Mix with regular operation.
             (let ((buffers (copy-sequence buffers)))
               (while buffers
 		;; Activate timer.
@@ -5375,7 +5390,8 @@ process sentinels.  They shall not disturb each other."
             (tramp--test-message "Check %s" (current-time-string))
             (dolist (buf buffers)
               (with-current-buffer buf
-                (should (string-equal (format "%s\n" buf) (buffer-string)))))
+                (should
+		 (string-equal (format "%s\n%s\n" buf buf) (buffer-string)))))
             (should-not
              (directory-files
               tmp-name nil directory-files-no-dot-files-regexp)))
@@ -5387,7 +5403,7 @@ process sentinels.  They shall not disturb each other."
           (ignore-errors (delete-process (get-buffer-process buf)))
           (ignore-errors (kill-buffer buf)))
         (ignore-errors (cancel-timer timer))
-        (ignore-errors (delete-directory tmp-name 'recursive)))))))
+        (ignore-errors (delete-directory tmp-name 'recursive))))))
 
 ;; This test is inspired by Bug#29163.
 (ert-deftest tramp-test44-auto-load ()

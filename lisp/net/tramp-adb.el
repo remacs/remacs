@@ -191,36 +191,14 @@ pass to the OPERATION."
 ;;;###tramp-autoload
 (defun tramp-adb-parse-device-names (_ignore)
   "Return a list of (nil host) tuples allowed to access."
-  (with-timeout (10)
-    (with-temp-buffer
-      ;; `call-process' does not react on timer under MS Windows.
-      ;; That's why we use `start-process'.
-      ;; We don't know yet whether we need a user or host name for the
-      ;; connection vector.  We assume we don't, it will be OK in most
-      ;; of the cases.  Otherwise, there might be an additional trace
-      ;; buffer, which doesn't hurt.
-      (let ((p (start-process
-		tramp-adb-program (current-buffer) tramp-adb-program "devices"))
-	    (v (make-tramp-file-name :method tramp-adb-method))
-	    result)
-	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
-	(process-put p 'adjust-window-size-function 'ignore)
-	(set-process-query-on-exit-flag p nil)
-	(while (accept-process-output p nil nil t))
-	(tramp-message v 6 "\n%s" (buffer-string))
-	(goto-char (point-min))
-	(while (search-forward-regexp "^\\(\\S-+\\)[[:space:]]+device$" nil t)
-	  (push (list nil (match-string 1)) result))
-
-	;; Replace ":" by "#".
-	(mapc
-	 (lambda (elt)
-	   (setcar
-	    (cdr elt)
-	    (replace-regexp-in-string
-	     ":" tramp-prefix-port-format (car (cdr elt)))))
-	 result)
-	result))))
+  (delq nil
+	(mapcar
+	 (lambda (line)
+	   (when (string-match "^\\(\\S-+\\)[[:space:]]+device$" line)
+	     ;; Replace ":" by "#".
+	     `(nil ,(replace-regexp-in-string
+		     ":" tramp-prefix-port-format (match-string 1 line)))))
+	 (tramp-process-lines nil tramp-adb-program "devices"))))
 
 (defun tramp-adb-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."

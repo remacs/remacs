@@ -171,24 +171,12 @@ pass to the OPERATION."
 (defun tramp-rclone-parse-device-names (_ignore)
   "Return a list of (nil host) tuples allowed to access."
   (with-tramp-connection-property nil "rclone-device-names"
-    (with-timeout (10)
-      (with-temp-buffer
-	;; `call-process' does not react on timer under MS Windows.
-	;; That's why we use `start-process'.
-	(let ((p (start-process
-		  tramp-rclone-program (current-buffer)
-		  tramp-rclone-program "listremotes"))
-	      (v (make-tramp-file-name :method tramp-rclone-method))
-	      result)
-	  (tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
-	  (process-put p 'adjust-window-size-function 'ignore)
-	  (set-process-query-on-exit-flag p nil)
-	  (while (accept-process-output p nil nil t))
-	  (tramp-message v 6 "\n%s" (buffer-string))
-	  (goto-char (point-min))
-	  (while (search-forward-regexp "^\\(\\S-+\\):$" nil t)
-	    (push (list nil (match-string 1)) result))
-	  result)))))
+    (delq nil
+	  (mapcar
+	   (lambda (line)
+	     (when (string-match "^\\(\\S-+\\):$" line)
+	       `(nil ,(match-string 1 line))))
+	   (tramp-process-lines nil tramp-rclone-program "listremotes")))))
 
 
 ;; File name primitives.
