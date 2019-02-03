@@ -1330,8 +1330,8 @@ pub fn signal(error_symbol: LispObject, data: LispObject) -> ! {
 #[lisp_fn(min = "2", unevalled = "true")]
 pub fn condition_case(args: LispCons) -> LispObject {
     let (var, consq) = args.into();
-    let (bodyform, handlers_) = consq.into();
-    unsafe { internal_lisp_condition_case(var, bodyform, handlers_) }
+    let (bodyform, handlers) = consq.into();
+    unsafe { internal_lisp_condition_case(var, bodyform, handlers) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
