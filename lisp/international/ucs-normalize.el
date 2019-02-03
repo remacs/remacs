@@ -30,7 +30,7 @@
 ;;
 ;; HFS-Normalization:
 ;; Reference:
-;; http://developer.apple.com/technotes/tn/tn1150.html
+;; https://developer.apple.com/library/archive/technotes/tn/tn1150.html
 ;;
 ;; HFS Normalization excludes following area for decomposition.
 ;;
