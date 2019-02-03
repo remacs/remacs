@@ -183,10 +183,15 @@
 (defcustom doc-view-ghostscript-options
   '("-dSAFER" ;; Avoid security problems when rendering files from untrusted
     ;; sources.
-    "-dNOPAUSE" "-sDEVICE=png16m" "-dTextAlphaBits=4"
+    "-dNOPAUSE" "-dTextAlphaBits=4"
     "-dBATCH" "-dGraphicsAlphaBits=4" "-dQUIET")
   "A list of options to give to ghostscript."
   :type '(repeat string))
+
+(defcustom doc-view-ghostscript-device "png16m"
+  "Output device to give to ghostscript."
+  :type 'string
+  :version "27.1")
 
 (defcustom doc-view-resolution 100
   "Dots per inch resolution used to render the documents.
@@ -950,16 +955,31 @@ Should be invoked when the cached images aren't up-to-date."
 			    (list "-o" pdf dvi)
 			    callback)))
 
+(defun doc-view-pdf-password-protected-ghostscript-p (pdf)
+  "Return non-nil if a PDF file is password-protected.
+The test is performed using `doc-view-ghostscript-program'."
+  (with-temp-buffer
+    (apply #'call-process doc-view-ghostscript-program nil (current-buffer)
+           nil `(,@doc-view-ghostscript-options
+                 "-sNODISPLAY"
+                 ,pdf))
+    (goto-char (point-min))
+    (search-forward "This file requires a password for access." nil t)))
+
 (defun doc-view-pdf->png-converter-ghostscript (pdf png page callback)
-  (doc-view-start-process
-   "pdf/ps->png" doc-view-ghostscript-program
-   `(,@doc-view-ghostscript-options
-     ,(format "-r%d" (round doc-view-resolution))
-     ,@(if page `(,(format "-dFirstPage=%d" page)))
-     ,@(if page `(,(format "-dLastPage=%d" page)))
-     ,(concat "-sOutputFile=" png)
-     ,pdf)
-   callback))
+  (let ((pdf-passwd (if (doc-view-pdf-password-protected-ghostscript-p pdf)
+                        (read-passwd "Enter password for PDF file: "))))
+    (doc-view-start-process
+     "pdf/ps->png" doc-view-ghostscript-program
+     `(,@doc-view-ghostscript-options
+       ,(concat "-sDEVICE=" doc-view-ghostscript-device)
+       ,(format "-r%d" (round doc-view-resolution))
+       ,@(if page `(,(format "-dFirstPage=%d" page)))
+       ,@(if page `(,(format "-dLastPage=%d" page)))
+       ,@(if pdf-passwd `(,(format "-sPDFPassword=%s" pdf-passwd)))
+       ,(concat "-sOutputFile=" png)
+       ,pdf)
+     callback)))
 
 (defalias 'doc-view-ps->png-converter-ghostscript
   'doc-view-pdf->png-converter-ghostscript)
@@ -980,17 +1000,36 @@ If PAGE is nil, convert the whole document."
      ,tiff)
    callback))
 
+(defun doc-view-pdfdraw-program-subcommand ()
+  "Return the mutool subcommand replacing mudraw.
+Recent MuPDF distributions replaced 'mudraw' with 'mutool draw'."
+  (when (string-match "mutool[^/\\]*$" doc-view-pdfdraw-program)
+    '("draw")))
+
+(defun doc-view-pdf-password-protected-pdfdraw-p (pdf)
+  "Return non-nil if a PDF file is password-protected.
+The test is performed using `doc-view-pdfdraw-program'."
+  (with-temp-buffer
+    (apply #'call-process doc-view-pdfdraw-program nil (current-buffer) nil
+           `(,@(doc-view-pdfdraw-program-subcommand)
+             ,(concat "-o" null-device)
+             ;; In case PDF isn't password-protected, "draw" only one page.
+             ,pdf "1"))
+    (goto-char (point-min))
+    (search-forward "error: cannot authenticate password" nil t)))
+
 (defun doc-view-pdf->png-converter-mupdf (pdf png page callback)
-  (doc-view-start-process
-   "pdf->png" doc-view-pdfdraw-program
-   ;; FIXME: Ugly hack: recent mupdf distribution replaced "mudraw" with
-   ;; "mutool draw".
-   `(,@(if (string-match "mutool[^/\\]*$" doc-view-pdfdraw-program) '("draw"))
-     ,(concat "-o" png)
-     ,(format "-r%d" (round doc-view-resolution))
-     ,pdf
-     ,@(if page `(,(format "%d" page))))
-   callback))
+  (let ((pdf-passwd (if (doc-view-pdf-password-protected-pdfdraw-p pdf)
+                        (read-passwd "Enter password for PDF file: "))))
+    (doc-view-start-process
+     "pdf->png" doc-view-pdfdraw-program
+     `(,@(doc-view-pdfdraw-program-subcommand)
+       ,(concat "-o" png)
+       ,(format "-r%d" (round doc-view-resolution))
+       ,@(if pdf-passwd `("-p" ,pdf-passwd))
+       ,pdf
+       ,@(if page `(,(format "%d" page))))
+     callback)))
 
 (defun doc-view-odf->pdf-converter-unoconv (odf callback)
   "Convert ODF to PDF asynchronously and call CALLBACK when finished.

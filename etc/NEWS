@@ -334,6 +334,7 @@ asked to use :host 'local and :family 'ipv6.
 
 ** doc-view-mode
 *** New commands doc-view-presentation and doc-view-fit-window-to-page
+*** Added support for password-protected PDF files
 
 ** map.el
 *** Now also understands plists.
