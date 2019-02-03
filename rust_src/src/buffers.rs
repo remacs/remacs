@@ -563,10 +563,10 @@ impl LispBufferLocalValueRef {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum LispBufferOrName {
-    Buffer(LispObject),
-    Name(LispObject),
+    Buffer(LispBufferRef),
+    Name(LispStringRef),
 }
 
 impl LispBufferOrName {
@@ -582,21 +582,35 @@ impl LispBufferOrName {
 impl From<LispBufferOrName> for LispObject {
     fn from(buffer_or_name: LispBufferOrName) -> Self {
         match buffer_or_name {
-            LispBufferOrName::Buffer(b) => b,
-            LispBufferOrName::Name(n) => n,
+            LispBufferOrName::Buffer(b) => b.into(),
+            LispBufferOrName::Name(n) => n.into(),
         }
     }
 }
 
 impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
-        if v.is_string() {
-            LispBufferOrName::Name(v)
-        } else if v.is_buffer() {
-            LispBufferOrName::Buffer(v)
+        if let Some(s) = v.as_string() {
+            LispBufferOrName::Name(s)
+        } else if let Some(b) = v.as_buffer() {
+            LispBufferOrName::Buffer(b)
         } else {
             wrong_type!(Qbufferp, v);
         }
+    }
+}
+
+impl From<LispBufferRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(b: LispBufferRef) -> Self {
+        LispBufferOrName::Buffer(b)
+    }
+}
+
+impl From<LispStringRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(n: LispStringRef) -> Self {
+        LispBufferOrName::Name(n)
     }
 }
 
@@ -604,10 +618,10 @@ impl From<LispObject> for Option<LispBufferOrName> {
     fn from(v: LispObject) -> Self {
         if v.is_nil() {
             None
-        } else if v.is_string() {
-            Some(LispBufferOrName::Name(v))
-        } else if v.is_buffer() {
-            Some(LispBufferOrName::Buffer(v))
+        } else if let Some(s) = v.as_string() {
+            Some(LispBufferOrName::Name(s))
+        } else if let Some(b) = v.as_buffer() {
+            Some(LispBufferOrName::Buffer(b))
         } else {
             None
         }
@@ -616,17 +630,16 @@ impl From<LispObject> for Option<LispBufferOrName> {
 
 impl From<LispBufferOrName> for Option<LispBufferRef> {
     fn from(v: LispBufferOrName) -> Self {
-        let buffer = match v {
-            LispBufferOrName::Buffer(b) => b,
+        match v {
+            LispBufferOrName::Buffer(b) => Some(b),
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
-                    .find(|&item| string_equal(car(item), name));
+                    .find(|&item| string_equal(car(item), name.into()));
 
-                cdr(tem.into())
+                cdr(tem.into()).as_buffer()
             }
-        };
-        buffer.as_buffer()
+        }
     }
 }
 
@@ -1130,7 +1143,7 @@ pub fn erase_buffer() {
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
     if (ignore.is_not_nil() && string_equal(name.into(), ignore))
-        || get_buffer(LispBufferOrName::Name(name.into())).is_none()
+        || get_buffer(name.into()).is_none()
     {
         return name;
     }
@@ -1143,7 +1156,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
-        if get_buffer(LispBufferOrName::Name(genname)).is_none() {
+        if get_buffer(genname.into()).is_none() {
             return genname.into();
         }
         genname
@@ -1156,9 +1169,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
-        if string_equal(candidate, ignore)
-            || get_buffer(LispBufferOrName::Name(candidate)).is_none()
-        {
+        if string_equal(candidate, ignore) || get_buffer(candidate.into()).is_none() {
             return candidate.into();
         }
         suffix_count += 1;
@@ -1253,7 +1264,7 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
 
     let mut current_buffer = ThreadState::current_buffer_unchecked();
 
-    let newname = get_buffer(LispBufferOrName::Name(newname.into())).map_or(newname, |tem| {
+    let newname = get_buffer(newname.into()).map_or(newname, |tem| {
         // Don't short-circuit if UNIQUE is t.  That is a useful
         // way to rename the buffer automatically so you can
         // create another with the original name.  It makes UNIQUE
