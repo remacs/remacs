@@ -1,5 +1,4 @@
 #![allow(clippy::cyclomatic_complexity)]
-#![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(non_upper_case_globals)]
