@@ -20,12 +20,13 @@ use crate::{
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
-    lists::{car, cdr, list, member},
+    lists::{car, cdr, list, member, rassq, setcar},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
     numbers::MOST_POSITIVE_FIXNUM,
+    obarray::intern,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
@@ -35,12 +36,13 @@ use crate::{
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
     remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
-        Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
+        Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
+        UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
@@ -1226,6 +1228,66 @@ pub extern "C" fn rust_syms_of_buffer() {
     /// The header line appears, optionally, at the top of a window;
     /// the mode line appears at the bottom.
     defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
+}
+
+/// Change current buffer's name to NEWNAME (a string).  If second arg
+/// UNIQUE is nil or omitted, it is an error if a buffer named NEWNAME
+/// already exists.  If UNIQUE is non-nil, come up with a new name
+/// using `generate-new-buffer-name'.  Interactively, you can set
+/// UNIQUE with a prefix argument.  We return the name we actually
+/// gave the buffer.  This does not change the name of the visited
+/// file (if any).
+#[lisp_fn(
+    min = "1",
+    intspec = "(list (read-string \"Rename buffer (to new name): \" nil 'buffer-name-history (buffer-name (current-buffer))) current-prefix-arg)"
+)]
+pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRef {
+    if newname.is_empty() {
+        error!("Empty string is invalid as a buffer name")
+    }
+
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    let newname = get_buffer(LispBufferOrName::Name(newname.into())).map_or(newname, |tem| {
+        // Don't short-circuit if UNIQUE is t.  That is a useful
+        // way to rename the buffer automatically so you can
+        // create another with the original name.  It makes UNIQUE
+        // equivalent to
+        // (rename-buffer (generate-new-buffer-name NEWNAME)).
+        if unique.is_nil() {
+            if tem == current_buffer {
+                return current_buffer.name_.into();
+            }
+            error!("Buffer name `{}' is in use", newname)
+        } else {
+            generate_new_buffer_name(newname, current_buffer.name_)
+        }
+    });
+
+    current_buffer.name_ = newname.into();
+
+    // Catch redisplay's attention.  Unless we do this, the mode lines
+    // for any windows displaying current_buffer will stay unchanged.
+    unsafe {
+        update_mode_lines = 11;
+    }
+
+    let buf: LispBufferRef = current_buffer;
+    unsafe {
+        setcar(rassq(buf.into(), Vbuffer_alist).into(), newname.into());
+    }
+    if current_buffer.filename_.is_nil() && current_buffer.auto_save_file_name_.is_not_nil() {
+        call!(intern("rename-auto-save-file").into());
+    }
+
+    unsafe {
+        if Vrun_hooks.is_not_nil() {
+            call!(Vrun_hooks, Qbuffer_list_update_hook);
+        }
+    }
+
+    // Refetch since that last call may have done GC.
+    ThreadState::current_buffer_unchecked().name_.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

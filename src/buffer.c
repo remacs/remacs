@@ -1016,62 +1016,6 @@ state of the current buffer.  Use with care.  */)
 }
 
 
-DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
-       "(list (read-string \"Rename buffer (to new name): \" \
-	      nil 'buffer-name-history (buffer-name (current-buffer))) \
-	      current-prefix-arg)",
-       doc: /* Change current buffer's name to NEWNAME (a string).
-If second arg UNIQUE is nil or omitted, it is an error if a
-buffer named NEWNAME already exists.
-If UNIQUE is non-nil, come up with a new name using
-`generate-new-buffer-name'.
-Interactively, you can set UNIQUE with a prefix argument.
-We return the name we actually gave the buffer.
-This does not change the name of the visited file (if any).  */)
-  (register Lisp_Object newname, Lisp_Object unique)
-{
-  register Lisp_Object tem, buf;
-
-  CHECK_STRING (newname);
-
-  if (SCHARS (newname) == 0)
-    error ("Empty string is invalid as a buffer name");
-
-  tem = Fget_buffer (newname);
-  if (!NILP (tem))
-    {
-      /* Don't short-circuit if UNIQUE is t.  That is a useful way to
-	 rename the buffer automatically so you can create another
-	 with the original name.  It makes UNIQUE equivalent to
-	 (rename-buffer (generate-new-buffer-name NEWNAME)).  */
-      if (NILP (unique) && XBUFFER (tem) == current_buffer)
-	return BVAR (current_buffer, name);
-      if (!NILP (unique))
-	newname = Fgenerate_new_buffer_name (newname, BVAR (current_buffer, name));
-      else
-	error ("Buffer name `%s' is in use", SDATA (newname));
-    }
-
-  bset_name (current_buffer, newname);
-
-  /* Catch redisplay's attention.  Unless we do this, the mode lines for
-     any windows displaying current_buffer will stay unchanged.  */
-  update_mode_lines = 11;
-
-  XSETBUFFER (buf, current_buffer);
-  Fsetcar (Frassq (buf, Vbuffer_alist), newname);
-  if (NILP (BVAR (current_buffer, filename))
-      && !NILP (BVAR (current_buffer, auto_save_file_name)))
-    call0 (intern ("rename-auto-save-file"));
-
-  /* Run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
-    call1 (Vrun_hooks, Qbuffer_list_update_hook);
-
-  /* Refetch since that last call may have done GC.  */
-  return BVAR (current_buffer, name);
-}
-
 /* True if B can be used as 'other-than-BUFFER' buffer.  */
 
 static bool
@@ -5661,7 +5605,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
-  defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
   defsubr (&Sbuffer_enable_undo);
   defsubr (&Skill_buffer);
