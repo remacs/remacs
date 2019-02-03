@@ -204,6 +204,8 @@ youthfulness
 
 (ert-deftest diff-mode-test-font-lock ()
   "Check font-locking of diff hunks."
+  (skip-unless (executable-find shell-file-name))
+  (skip-unless (executable-find diff-command))
   (let ((default-directory diff-mode-tests--datadir)
         (old "hello_world.c")
         (new "hello_emacs.c")
@@ -263,6 +265,8 @@ youthfulness
 
 (ert-deftest diff-mode-test-font-lock-syntax-one-line ()
   "Check diff syntax highlighting for one line with no newline at end."
+  (skip-unless (executable-find shell-file-name))
+  (skip-unless (executable-find diff-command))
   (let ((default-directory diff-mode-tests--datadir)
         (old "hello_world_1.c")
         (new "hello_emacs_1.c")
