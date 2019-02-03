@@ -21,8 +21,9 @@ use crate::{
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
-        grow_specpdl, internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace,
-        record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP, MODULE_FUNCTIONP,
+        grow_specpdl, internal_catch, internal_lisp_condition_case, list2, maybe_gc, maybe_quit,
+        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
+        MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
@@ -1299,6 +1300,38 @@ pub fn signal(error_symbol: LispObject, data: LispObject) -> ! {
         unsafe { signal_or_quit(error_symbol, data, false) };
         unreachable!();
     }
+}
+
+/// Regain control when an error is signaled.
+/// Executes BODYFORM and returns its value if no error happens.
+/// Each element of HANDLERS looks like (CONDITION-NAME BODY...)
+/// where the BODY is made of Lisp expressions.
+///
+/// A handler is applicable to an error
+/// if CONDITION-NAME is one of the error's condition names.
+/// If an error happens, the first applicable handler is run.
+///
+/// The car of a handler may be a list of condition names instead of a
+/// single condition name; then it handles all of them.  If the special
+/// condition name `debug' is present in this list, it allows another
+/// condition in the list to run the debugger if `debug-on-error' and the
+/// other usual mechanisms says it should (otherwise, `condition-case'
+/// suppresses the debugger).
+///
+/// When a handler handles an error, control returns to the `condition-case'
+/// and it executes the handler's BODY...
+/// with VAR bound to (ERROR-SYMBOL . SIGNAL-DATA) from the error.
+/// \(If VAR is nil, the handler can't access that information.)
+/// Then the value of the last BODY form is returned from the `condition-case'
+/// expression.
+///
+/// See also the function `signal' for more info.
+/// usage: (condition-case VAR BODYFORM &rest HANDLERS)
+#[lisp_fn(min = "2", unevalled = "true")]
+pub fn condition_case(args: LispCons) -> LispObject {
+    let (var, consq) = args.into();
+    let (bodyform, handlers_) = consq.into();
+    unsafe { internal_lisp_condition_case(var, bodyform, handlers_) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
