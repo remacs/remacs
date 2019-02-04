@@ -1,5 +1,6 @@
 //! Functions operating on process.
 use libc;
+use std::mem;
 
 use remacs_macros::lisp_fn;
 
@@ -10,14 +11,15 @@ use crate::{
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,
     remacs_sys::{
-        add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        list_system_processes, send_process, setup_process_coding_systems, update_status, Fmapcar,
-        STRING_BYTES,
+        add_process_read_fd, block_child_signal, current_thread, delete_read_fd,
+        emacs_get_tty_pgrp, list_system_processes, pset_status, redisplay_preserve_echo_area,
+        send_process, setup_process_coding_systems, unblock_child_signal, update_status, Fmapcar,
+        CDISABLE, STRING_BYTES, sigset_t
     },
-    remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
+    remacs_sys::{pid_t, pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
         QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
-        Qinternal_default_process_sentinel, Qinterrupt_process_functions, Qlisten, Qlistp,
+        Qinternal_default_process_sentinel, Qinterrupt_process_functions, Qlambda, Qlisten, Qlistp,
         Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
     },
 };
@@ -538,5 +540,148 @@ pub fn interrupt_process(process: LispObject, current_group: LispObject) -> Lisp
     run_hook_with_args_until_success(&mut [Qinterrupt_process_functions, process, current_group])
 }
 def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
+
+/// Send a signal number SIGNO to PROCESS.
+/// If CURRENT_GROUP is t, that means send to the process group
+/// that currently owns the terminal being used to communicate with PROCESS.
+/// This is used for various commands in shell mode.
+/// If CURRENT_GROUP is lambda, that means send to the process group
+/// that currently owns the terminal, but only if it is NOT the shell itself.
+///
+/// If NOMSG is false, insert signal-announcements into process's buffers
+/// right away.
+///
+/// If we can, we try to signal PROCESS by sending control characters
+/// down the pty.  This allows us to signal inferiors who have changed
+/// their uid, for which kill would return an EPERM error.
+fn process_send_signal_rust(
+    process: LispObject,
+    signo: libc::c_int,
+    mut current_group: LispObject,
+    nomsg: bool,
+) {
+    let gid_: libc::c_int;
+    let proc = get_process(process);
+    let mut p_ref: LispProcessRef = get_process(process).into();
+    let mut no_pgrp: bool = false;
+
+    if !p_ref.ptype().eq(Qreal) {
+        error!("Process {} is not a subprocess.", p_ref.name);
+    }
+    if p_ref.infd < 0 {
+        error!("Process {} is not active.", p_ref.name);
+    }
+
+    if !p_ref.pty_flag() {
+        current_group = Qnil;
+    }
+
+    let mut gid: pid_t;
+
+    // If we are using pgrps, get a pgrp number and make it negative.
+    if current_group.is_nil() {
+        // Send the signal to the shell's process group.
+        gid = p_ref.pid;
+    } else {
+        #[cfg(feature = "signals-via-characters")]
+        unsafe {
+            let mut termios = mem::uninitialized();
+            libc::tcgetattr(p_ref.infd, &mut termios);
+
+            let sig_char = match signo {
+                libc::SIGINT => termios.c_cc[libc::VINTR],
+                libc::SIGQUIT => termios.c_cc[libc::VQUIT],
+                // TODO: #ifdef VSWTCH
+                libc::SIGTSTP => termios.c_cc[libc::VSUSP],
+                _ => 0,
+            };
+
+            if (sig_char != 0) && (sig_char != CDISABLE) {
+                send_process(proc, sig_char as *mut libc::c_char, 1, Qnil);
+                return;
+            }
+        }
+
+        // If we can't send the signal with a character,
+        // fall through and send it another way.
+
+        // The code above may fall through if it can't
+        // handle the signal.
+
+        // Get the current pgrp using the tty itself, if we have that.
+        // Otherwise, use the pty to get the pgrp.
+        // On pfa systems, saka@pfu.fujitsu.co.JP writes:
+        // "TIOCGPGRP symbol defined in sys/ioctl.h at E50.
+        // But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
+        // His patch indicates that if TIOCGPGRP returns an error, then
+        // we should just assume that p->pid is also the process group id.
+        #[cfg(feature = "tiocgpgrp")]
+        unsafe {
+            gid = emacs_get_tty_pgrp(p_ref.as_mut());
+
+            // If we can't get the information, assume
+            // the shell owns the tty.
+            if gid == -1 {
+                gid = p_ref.pid;
+            }
+
+            // It is not clear whether anything really can set GID to -1.
+            // Perhaps on some system one of those ioctls can or could do so.
+            // Or perhaps this is vestigial.
+            if gid == -1 {
+                no_pgrp = true;
+            }
+
+            // If current_group is lambda, and the shell owns the terminal,
+            // don't send any signal.
+            if current_group.eq(Qlambda) && (gid == p_ref.pid) {
+                return;
+            }
+        }
+        #[cfg(not(feature = "tiocgpgrp"))]
+        {
+            gid = p_ref.pid;
+        }
+    }
+
+    // TODO: #ifdef SIGCONT
+    unsafe {
+        if signo == libc::SIGCONT {
+            p_ref.set_raw_status_new(false);
+            pset_status(p_ref.as_mut(), Qrun);
+            // TODO: Static?
+            // p.tick = ++process_tick;
+            if !nomsg {
+                //status_notify(ptr::null, ptr::null);
+                redisplay_preserve_echo_area(13);
+            }
+        }
+    }
+
+    // Work around a HP-UX 7.0 bug that mishandles signals to subjobs.
+    // We don't know whether the bug is fixed in later HP-UX versions.
+    #[cfg(feature = "tiocsigsend")]
+    {
+        if current_group.is_not_nil() {
+            libc::ioctl(p_ref.infd, libc::TIOCSIGSEND, signo)
+        }
+    }
+
+    // If we don't have process groups, send the signal to the immediate
+    // subprocess. That isn't really right, but it's better than any
+    // obvious alternative.
+    let pid: pid_t = if no_pgrp {  -gid } else { gid };
+
+    // Do not kill an already-reaped process, as that could kill an
+    // innocent bystander that happens to have the same process ID.
+    unsafe {
+        let mut oldset: sigset_t = mem::uninitialized();;
+        block_child_signal(&mut oldset);
+        if p_ref.alive() {
+            libc::kill(pid, signo);
+        }
+        unblock_child_signal(&mut oldset);
+    }
+}
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

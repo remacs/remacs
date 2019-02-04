@@ -4589,10 +4589,12 @@ esac
 AH_TEMPLATE(SIGNALS_VIA_CHARACTERS, [Make process_send_signal work by
 "typing" a signal character on the pty.])
 
+CARGO_DEFAULT_FEATURES=""
 case $opsys in
   dnl Perry Smith <pedz@ddivt1.austin.ibm.com> says this is correct for AIX.
   aix4-2 | cygwin | gnu | dragonfly | freebsd | netbsd | openbsd | darwin )
     AC_DEFINE(SIGNALS_VIA_CHARACTERS, 1)
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"signals-via-characters\", "
     ;;
 
   dnl 21 Jun 06: Eric Hanchrow <offby1@blarg.net> says this works.
@@ -4722,6 +4724,7 @@ case $opsys in
     dnl subprocesses the usual way.  But TIOCSIGNAL does work for PTYs,
     dnl and this is all we need.
     AC_DEFINE(TIOCSIGSEND, TIOCSIGNAL, [Some platforms redefine this.])
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"tiocsigsend\", "
     ;;
 esac
 
@@ -5457,7 +5460,6 @@ fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
 
 
-CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
 fi
