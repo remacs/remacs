@@ -474,27 +474,17 @@ and finally return the window."
           (or (eq xref--original-window-intent 'frame)
               pop-up-frames))
          (action
-          (cond ((memq
-                  xref--original-window-intent
-                  '(window frame))
+          (cond ((eq xref--original-window-intent 'frame)
                  t)
+                ((eq xref--original-window-intent 'window)
+                 '(display-buffer-same-window))
                 ((and
                   (window-live-p xref--original-window)
                   (or (not (window-dedicated-p xref--original-window))
                       (eq (window-buffer xref--original-window) buf)))
-                 `(,(lambda (buf _alist)
-                      (set-window-buffer xref--original-window buf)
-                      xref--original-window))))))
-    (with-selected-window
-        (with-selected-window
-            ;; Just before `display-buffer', place ourselves in the
-            ;; original window to suggest preserving it. Of course, if
-            ;; user has deleted the original window, all bets are off,
-            ;; just use the selected one.
-            (or (and (window-live-p xref--original-window)
-                     xref--original-window)
-                (selected-window))
-          (display-buffer buf action))
+                 `((display-buffer-in-previous-window)
+                   (previous-window . ,xref--original-window))))))
+    (with-selected-window (display-buffer buf action)
       (xref--goto-char pos)
       (run-hooks 'xref-after-jump-hook)
       (let ((buf (current-buffer)))
