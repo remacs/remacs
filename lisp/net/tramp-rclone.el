@@ -50,16 +50,15 @@
 
 ;;;###tramp-autoload
 (tramp--with-startup
- (add-to-list
-  'tramp-methods
-  `(,tramp-rclone-method
-    (tramp-mount-args nil)
-    (tramp-copyto-args nil)
-    (tramp-moveto-args nil)
-    (tramp-about-args ("--full")))))
+ (add-to-list 'tramp-methods
+	      `(,tramp-rclone-method
+		(tramp-mount-args nil)
+		(tramp-copyto-args nil)
+		(tramp-moveto-args nil)
+		(tramp-about-args ("--full"))))
 
-;;;###tramp-autoload
-(tramp--with-startup
+ (add-to-list 'tramp-default-host-alist `(,tramp-rclone-method nil ""))
+
  (tramp-set-completion-function
   tramp-rclone-method '((tramp-rclone-parse-device-names ""))))
 

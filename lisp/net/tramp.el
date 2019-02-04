@@ -2867,7 +2867,8 @@ for all methods.  Resulting data are derived from default settings."
   (and tramp-completion-use-auth-sources
        (mapcar
 	(lambda (x) `(,(plist-get x :user) ,(plist-get x :host)))
-	(auth-source-search :port method :max most-positive-fixnum))))
+	(auth-source-search
+	 :port method :require '(:port) :max most-positive-fixnum))))
 
 ;; Generic function.
 (defun tramp-parse-group (regexp match-level skip-regexp)
