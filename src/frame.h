@@ -413,6 +413,10 @@ struct frame
   /* Non-zero if this frame's faces need to be recomputed.  */
   bool_bf face_change : 1;
 
+  /* Non-zero if this frame's image cache cannot be freed because the
+     frame is in the process of being redisplayed.  */
+  bool_bf inhibit_clear_image_cache : 1;
+
   /* Bitfield area ends here.  */
 
   /* This frame's change stamp, set the last time window change

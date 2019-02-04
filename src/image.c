@@ -1554,7 +1554,7 @@ clear_image_cache (struct frame *f, Lisp_Object filter)
 {
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
 
-  if (c)
+  if (c && !f->inhibit_clear_image_cache)
     {
       ptrdiff_t i, nfreed = 0;
 
