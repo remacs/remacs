@@ -3248,6 +3248,12 @@ such programs cannot be invoked by Emacs anyway.  */)
 }
 
 #ifdef HAVE_LANGINFO_CODESET
+
+/* If we are compiling for compatibility with older 32-bit Windows
+   versions, this might not be defined by the Windows headers.  */
+#ifndef LOCALE_IPAPERSIZE
+# define LOCALE_IPAPERSIZE 0x100A
+#endif
 /* Emulation of nl_langinfo.  Used in fns.c:Flocale_info.  */
 char *
 nl_langinfo (nl_item item)
@@ -3260,7 +3266,8 @@ nl_langinfo (nl_item item)
     LOCALE_SMONTHNAME1, LOCALE_SMONTHNAME2, LOCALE_SMONTHNAME3,
     LOCALE_SMONTHNAME4, LOCALE_SMONTHNAME5, LOCALE_SMONTHNAME6,
     LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME8, LOCALE_SMONTHNAME9,
-    LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12
+    LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12,
+    LOCALE_IPAPERSIZE, LOCALE_IPAPERSIZE
   };
 
   static char *nl_langinfo_buf = NULL;
@@ -3268,6 +3275,8 @@ nl_langinfo (nl_item item)
 
   if (nl_langinfo_len <= 0)
     nl_langinfo_buf = xmalloc (nl_langinfo_len = 1);
+
+  char *retval = nl_langinfo_buf;
 
   if (item < 0 || item >= _NL_NUM)
     nl_langinfo_buf[0] = 0;
@@ -3290,6 +3299,8 @@ nl_langinfo (nl_item item)
 	  if (nl_langinfo_len <= need_len)
 	    nl_langinfo_buf = xrealloc (nl_langinfo_buf,
 					nl_langinfo_len = need_len);
+	  retval = nl_langinfo_buf;
+
 	  if (!GetLocaleInfo (cloc, w32item[item] | LOCALE_USE_CP_ACP,
 			      nl_langinfo_buf, nl_langinfo_len))
 	    nl_langinfo_buf[0] = 0;
@@ -3306,9 +3317,32 @@ nl_langinfo (nl_item item)
 		  nl_langinfo_buf[1] = 'p';
 		}
 	    }
+	  else if (item == _NL_PAPER_WIDTH || item == _NL_PAPER_HEIGHT)
+	    {
+	      static const int paper_size[][2] =
+		{
+		 { -1, -1 },
+		 { 216, 279 },
+		 { -1, -1 },
+		 { -1, -1 },
+		 { -1, -1 },
+		 { 216, 356 },
+		 { -1, -1 },
+		 { -1, -1 },
+		 { 297, 420 },
+		 { 210, 297 }
+		};
+	      int idx = atoi (nl_langinfo_buf);
+	      if (0 <= idx && idx < ARRAYELTS (paper_size))
+		retval = (char *)(intptr_t) (item == _NL_PAPER_WIDTH
+					     ? paper_size[idx][0]
+					     : paper_size[idx][1]);
+	      else
+		retval = (char *)(intptr_t) -1;
+	    }
 	}
     }
-  return nl_langinfo_buf;
+  return retval;
 }
 #endif	/* HAVE_LANGINFO_CODESET */
 

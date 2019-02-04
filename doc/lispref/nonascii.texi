@@ -2115,9 +2115,9 @@ Return a 12-element vector of month names (locale items @code{MON_1}
 through @code{MON_12}).
 
 @item paper
-Return a list @code{(@var{width} @var{height})} for the default paper
-size measured in millimeters (locale items @code{PAPER_WIDTH} and
-@code{PAPER_HEIGHT}).
+Return a list @w{@code{(@var{width} @var{height})}} of 2 integers, for
+the default paper size measured in millimeters (locale items
+@code{_NL_PAPER_WIDTH} and @code{_NL_PAPER_HEIGHT}).
 @end table
 
 If the system can't provide the requested information, or if

@@ -3100,8 +3100,9 @@ ITEM should be one of the following:
 
 `months', returning a 12-element vector of month names (locale items MON_n);
 
-`paper', returning a list (WIDTH HEIGHT) for the default paper size,
-  both measured in millimeters (locale items PAPER_WIDTH, PAPER_HEIGHT).
+`paper', returning a list of 2 integers (WIDTH HEIGHT) for the default
+  paper size, both measured in millimeters (locale items _NL_PAPER_WIDTH,
+  _NL_PAPER_HEIGHT).
 
 If the system can't provide such information through a call to
 `nl_langinfo', or if ITEM isn't from the list above, return nil.
