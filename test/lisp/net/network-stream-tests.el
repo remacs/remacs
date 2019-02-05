@@ -72,28 +72,34 @@
     (delete-process server)))
 
 (ert-deftest make-ipv6-tcp-server-with-unspecified-port ()
+  (skip-unless (featurep 'make-network-process '(:family ipv6)))
   (let ((server
-         (make-network-process
-          :name "server"
-          :server t
-          :noquery t
-          :family 'ipv6
-          :service t
-          :host 'local)))
+         (ignore-errors
+           (make-network-process
+            :name "server"
+            :server t
+            :noquery t
+            :family 'ipv6
+            :service t
+            :host 'local))))
+    (skip-unless server)
     (should (and (arrayp (process-contact server :local))
                  (numberp (aref (process-contact server :local) 8))
                  (> (aref (process-contact server :local) 8) 0)))
     (delete-process server)))
 
 (ert-deftest make-ipv6-tcp-server-with-specified-port ()
+  (skip-unless (featurep 'make-network-process '(:family ipv6)))
   (let ((server
-         (make-network-process
-          :name "server"
-          :server t
-          :noquery t
-          :family 'ipv6
-          :service 57870
-          :host 'local)))
+         (ignore-errors
+           (make-network-process
+            :name "server"
+            :server t
+            :noquery t
+            :family 'ipv6
+            :service 57870
+            :host 'local))))
+    (skip-unless server)
     (should (and (arrayp (process-contact server :local))
                  (= (aref (process-contact server :local) 8) 57870)))
     (delete-process server)))
@@ -171,18 +177,20 @@
     (delete-process server)))
 
 (ert-deftest echo-server-with-local-ipv6 ()
-  (let* ((server (make-server 'local 'ipv6))
-         (port (aref (process-contact server :local) 8))
-         (proc (make-network-process :name "foo"
-                                     :buffer (generate-new-buffer "*foo*")
-                                     :host 'local
-                                     :family 'ipv6
-                                     :service port)))
-    (with-current-buffer (process-buffer proc)
-      (process-send-string proc "echo foo")
-      (sleep-for 0.1)
-      (should (equal (buffer-string) "foo\n")))
-    (delete-process server)))
+  (skip-unless (featurep 'make-network-process '(:family ipv6)))
+  (let ((server (ignore-errors (make-server 'local 'ipv6))))
+    (skip-unless server)
+    (let* ((port (aref (process-contact server :local) 8))
+           (proc (make-network-process :name "foo"
+                                       :buffer (generate-new-buffer "*foo*")
+                                       :host 'local
+                                       :family 'ipv6
+                                       :service port)))
+      (with-current-buffer (process-buffer proc)
+        (process-send-string proc "echo foo")
+        (sleep-for 0.1)
+        (should (equal (buffer-string) "foo\n")))
+      (delete-process server))))
 
 (ert-deftest echo-server-with-ip ()
   (let* ((server (make-server 'local))
