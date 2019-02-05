@@ -1442,6 +1442,7 @@ extern struct infile* infile;
 extern void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,
                           Lisp_Object, Lisp_Object);
+extern int readbyte_from_stdio(void);
 
 INLINE_HEADER_END
 
