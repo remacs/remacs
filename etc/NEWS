@@ -466,6 +466,15 @@ To enable it, set the new defcustom 'diff-font-lock-prettify' to t.
 of the file under version control if point is on an old changed line,
 or to the new revision of the file otherwise.
 
+** Texinfo
+
++++
+*** New function for inserting @pxref, @xref, or @ref commands.
+The function 'texinfo-insert-dwim-@ref', bound to 'C-c C-c r' by
+default, inserts one of three types of references based on the text
+surrounding point, namely @pxref near a parenthesis, @xref at the
+start of a sentence or at (point-min), else @ref.
+
 ** Browse-url
 
 *** The function 'browse-url-emacs' can now visit a URL in selected window.
