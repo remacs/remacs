@@ -124,6 +124,21 @@ impl<T> ExternalPtr<T> {
     pub fn replace_ptr(&mut self, ptr: *mut T) {
         self.0 = ptr;
     }
+
+    pub unsafe fn ptr_offset(&mut self, size: isize) {
+        let ptr = self.0.offset(size);
+        self.replace_ptr(ptr);
+    }
+
+    pub unsafe fn ptr_add(&mut self, size: usize) {
+        let ptr = self.0.add(size);
+        self.replace_ptr(ptr);
+    }
+
+    pub unsafe fn ptr_sub(&mut self, size: usize) {
+        let ptr = self.0.sub(size);
+        self.replace_ptr(ptr);
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {

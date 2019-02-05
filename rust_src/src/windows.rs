@@ -1728,8 +1728,7 @@ pub fn window_lines_pixel_dimensions(
             }
         };
         rows = ((width, row.y + row.height - subtract), rows).into();
-        let ptr = unsafe { row.as_mut().add(1) };
-        row.replace_ptr(ptr);
+        unsafe { row.ptr_add(1) };
     }
     unsafe { Fnreverse(rows) }
 }
