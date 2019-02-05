@@ -381,27 +381,33 @@ else
   info_files=
 fi
 
-# If Git is in use update the file MANIFEST, which can substitute for
-# 'git ls-files' later (e.g., after extraction from a tarball).
-# Otherwise, rely on the existing MANIFEST, which should be maintained some
-# other way when adding or deleting a distributed file while not using Git.
-if ( [ $update = yes ] || [ ! -f MANIFEST ] ) && [ -r .git ]; then
-  echo "Updating MANIFEST"
-  if [ $with_tests = yes ]; then
-    git ls-files >MANIFEST
-  else
-    git ls-files | grep -v '^test' >MANIFEST
-  fi || exit
-  printf '%s\n' $possibly_non_vc_files $info_files >>MANIFEST || exit
-  sort -u -o MANIFEST MANIFEST || exit
-fi
-
-<MANIFEST || exit
-
 echo "Creating staging directory: '${tempparent}'"
 
 mkdir ${tempparent} || exit
 tempdir="${tempparent}/${emacsname}"
+
+manifest=MANIFEST
+
+[ -f $manifest ] || manifest=${tempparent}/MANIFEST
+
+# If Git is in use update the file MANIFEST, which can substitute for
+# 'git ls-files' later (e.g., after extraction from a tarball).
+# Otherwise, rely on the existing MANIFEST, which should be maintained some
+# other way when adding or deleting a distributed file while not using Git.
+# TODO: maybe this should ignore $update, and always update MANIFEST
+# if .git is present.
+if ( [ $update = yes ] || [ ! -f $manifest ] ) && [ -r .git ]; then
+  echo "Updating $manifest"
+  if [ $with_tests = yes ]; then
+    git ls-files > $manifest
+  else
+    git ls-files | grep -v '^test' >$manifest
+  fi || exit
+  printf '%s\n' $possibly_non_vc_files $info_files >>$manifest || exit
+  sort -u -o $manifest $manifest || exit
+fi
+
+<$manifest || exit
 
 ### This trap ensures that the staging directory will be cleaned up even
 ### when the script is interrupted in mid-career.
@@ -449,13 +455,17 @@ MANIFEST_subdir_sed='
   /^$/d
   s,^,'$tempdir'/,
 '
-tempsubdirs=$(sed "$MANIFEST_subdir_sed" MANIFEST | sort -u)
+tempsubdirs=$(sed "$MANIFEST_subdir_sed" $manifest | sort -u)
 $mkdir_verbose -p $tempsubdirs || exit
 
 echo "Making links to files"
 while read file; do
-  [ $file = "$file_to_skip" ] || ln $file $tempdir/$file || exit
-done <MANIFEST
+  case $file in
+    MANIFEST) ln $manifest $tempdir/MANIFEST || exit ;;
+    $file_to_skip) continue ;;
+    *) ln $file $tempdir/$file || exit ;;
+  esac
+done <$manifest
 
 if [ "${newer}" ]; then
   printf '%s\n' "Removing files older than $newer"
