@@ -419,6 +419,7 @@ pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
     }
     val
 }
+
 /// Non-nil if VARIABLE has a local binding in buffer BUFFER.
 /// BUFFER defaults to the current buffer.
 #[lisp_fn(min = "1")]

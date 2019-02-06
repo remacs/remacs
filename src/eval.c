@@ -1542,68 +1542,6 @@ eval_sub_1 (Lisp_Object original_fun, Lisp_Object original_args, ptrdiff_t count
   return false;
 }
 
-/* Eval a sub-expression of the current expression (i.e. in the same
-   lexical scope).  */
-Lisp_Object
-eval_sub (Lisp_Object form)
-{
-  Lisp_Object val, original_fun, original_args;
-  ptrdiff_t count;
-
-  if (SYMBOLP (form))
-    {
-      /* Look up its binding in the lexical environment.
-	 We do not pay attention to the declared_special flag here, since we
-	 already did that when let-binding the variable.  */
-      Lisp_Object lex_binding
-	= !NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	? Fassq (form, Vinternal_interpreter_environment)
-	: Qnil;
-      if (CONSP (lex_binding))
-	return XCDR (lex_binding);
-      else
-	return Fsymbol_value (form);
-    }
-
-  if (!CONSP (form))
-    return form;
-
-  maybe_quit ();
-
-  maybe_gc ();
-
-  if (++lisp_eval_depth > max_lisp_eval_depth)
-    {
-      if (max_lisp_eval_depth < 100)
-	max_lisp_eval_depth = 100;
-      if (lisp_eval_depth > max_lisp_eval_depth)
-	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
-    }
-
-  original_fun = XCAR (form);
-  original_args = XCDR (form);
-  CHECK_LIST (original_args);
-
-  /* This also protects them from gc.  */
-  count = record_in_backtrace (original_fun, &original_args, UNEVALLED);
-
-  if (debug_on_next_call)
-    do_debug_on_call (Qt, count);
-
-  /* At this point, only count, original_fun, and original_args
-     have values that will be used below.  */
-  if (eval_sub_1(original_fun, original_args, count, &val))
-    return val;
-
-  check_cons_list ();
-
-  lisp_eval_depth--;
-  if (backtrace_debug_on_exit (specpdl + count))
-    val = call_debugger (list2 (Qexit, val));
-  specpdl_ptr--;
-
-  return val;
-}
 
 DEFUN ("apply", Fapply, Sapply, 1, MANY, 0,
        doc: /* Call FUNCTION with our remaining args, using our last arg as list of args.
