@@ -15,7 +15,7 @@ use crate::{
     multibyte::LispStringRef,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
-        find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
+        get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
         set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
@@ -423,7 +423,7 @@ pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
 /// outside of any lexical scope.
 #[lisp_fn]
 pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
-    let val = unsafe { find_symbol_value(symbol.into()) };
+    let val = unsafe { symbol.find_value() };
     if val == Qunbound {
         void_variable!(symbol);
     }
