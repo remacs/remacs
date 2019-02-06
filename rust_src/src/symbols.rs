@@ -9,7 +9,7 @@ use crate::{
     buffers::per_buffer_idx_from_field_offset,
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{as_buffer_objfwd, indirect_function, set},
+    data::{as_buffer_objfwd, do_symval_forwarding, indirect_function, set},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
@@ -132,6 +132,32 @@ impl LispSymbolRef {
     pub unsafe fn get_value(self) -> LispObject {
         let s = self.u.s.as_ref();
         s.val.value
+    }
+
+    // Find the value of a symbol, returning Qunbound if it's not bound.
+    // This is helpful for code which just wants to get a variable's value
+    // if it has one, without signaling an error.
+    // Note that it must not be possible to quit
+    // within this function.  Great care is required for this.
+    pub unsafe fn find_value(self) -> LispObject {
+        let mut symbol = self.get_indirect_variable();
+
+        match symbol.get_redirect() {
+            symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+            symbol_redirect::SYMBOL_LOCALIZED => {
+                let mut blv = symbol.get_blv();
+                swap_in_symval_forwarding(symbol.as_mut(), blv.as_mut());
+
+                let fwd = blv.get_fwd();
+                if fwd.is_null() {
+                    blv.get_value()
+                } else {
+                    do_symval_forwarding(fwd)
+                }
+            }
+            symbol_redirect::SYMBOL_FORWARDED => do_symval_forwarding(symbol.get_fwd()),
+            _ => unreachable!(),
+        }
     }
 
     pub unsafe fn get_blv(self) -> LispBufferLocalValueRef {
