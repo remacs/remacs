@@ -146,6 +146,8 @@ Patterns can match both regular files and directories.
 To root an entry, start it with `./'.  To match directories only,
 end it with `/'.  DIR must be one of `project-roots' or
 `project-external-roots'."
+  ;; TODO: Document and support regexp ignores as used by Hg.
+  ;; TODO: Support whitelist entries.
   (require 'grep)
   (defvar grep-find-ignored-files)
   (nconc
