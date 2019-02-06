@@ -339,19 +339,16 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
         return alist;
     }
 
-    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
-
-    let mut tem = new_alist;
-    while tem.is_not_nil() {
-        debug_assert!(tem.is_cons());
-        let t = tem.as_cons().unwrap();
-        let car = t.car();
-
-        if let Some(c) = car.as_cons() {
-            setcar(t, LispObject::cons(c.car(), c.cdr()));
+    let mut new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+    
+    for elt in new_alist.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let front = elt.car();
+        // To make a copy, unpack the cons and then make a new one.
+        if let Some((car, cdr)) = front.into() {
+            elt.set_car((car, cdr).into());
         }
-        tem = t.cdr()
     }
+
     new_alist
 }
 
