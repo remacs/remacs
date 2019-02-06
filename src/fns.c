@@ -1292,97 +1292,6 @@ See also the function `nreverse', which is used more often.  */)
     wrong_type_argument (Qsequencep, seq);
   return new;
 }
-
-/* Return true if O1 and O2 are equal.  Do not quit or check for cycles.
-   Use this only on arguments that are cycle-free and not too large and
-   are not window configurations.  */
-
-bool
-equal_no_quit (Lisp_Object o1, Lisp_Object o2)
-{
-  return internal_equal (o1, o2, EQUAL_NO_QUIT, 0, Qnil);
-}
-
-/* Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
-   of equality test to use: if it is EQUAL_NO_QUIT, do not check for
-   cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
-   Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
-   equal-including-properties.
-
-   If DEPTH is the current depth of recursion; signal an error if it
-   gets too deep.  HT is a hash table used to detect cycles; if nil,
-   it has not been allocated yet.  But ignore the last two arguments
-   if EQUAL_KIND == EQUAL_NO_QUIT.  */
-
-/* NOTE: made this non-static to call it from Rust. */
-bool
-internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
-		int depth, Lisp_Object ht)
-{
- tail_recurse:
-  if (depth > 10)
-    {
-      eassert (equal_kind != EQUAL_NO_QUIT);
-      if (depth > 200)
-	error ("Stack overflow in equal");
-      if (NILP (ht))
-	ht = CALLN (Fmake_hash_table, QCtest, Qeq);
-      switch (XTYPE (o1))
-	{
-	case Lisp_Cons: case Lisp_Misc: case Lisp_Vectorlike:
-	  {
-	    struct Lisp_Hash_Table *h = XHASH_TABLE (ht);
-	    EMACS_UINT hash;
-	    ptrdiff_t i = hash_lookup (h, o1, &hash);
-	    if (i >= 0)
-	      { /* `o1' was seen already.  */
-		Lisp_Object o2s = HASH_VALUE (h, i);
-		if (!NILP (Fmemq (o2, o2s)))
-		  return true;
-		else
-		  set_hash_value_slot (h, i, Fcons (o2, o2s));
-	      }
-	    else
-	      hash_put (h, o1, Fcons (o2, Qnil), hash);
-	  }
-	default: ;
-	}
-    }
-
-  if (EQ (o1, o2))
-    return true;
-  if (XTYPE (o1) != XTYPE (o2))
-    return false;
-
-  switch (XTYPE (o1))
-    {
-    case Lisp_Float:
-      {
-	double d1 = XFLOAT_DATA (o1);
-	double d2 = XFLOAT_DATA (o2);
-	/* If d is a NaN, then d != d. Two NaNs should be `equal' even
-	   though they are not =.  */
-	return d1 == d2 || (d1 != d1 && d2 != d2);
-      }
-
-    case Lisp_Cons:
-      return internal_equal_cons(o1, o2, equal_kind, depth, ht);
-
-    case Lisp_Misc:
-      return internal_equal_misc(o1, o2,  equal_kind, depth, ht);
-
-    case Lisp_Vectorlike:
-      return internal_equal_vectorlike(o1, o2, equal_kind, depth, ht);
-
-    case Lisp_String:
-      return internal_equal_string(o1, o2, equal_kind, depth, ht);
-
-    default:
-      break;
-    }
-
-  return false;
-}
 
 
 DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0,
@@ -1441,38 +1350,6 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
   return CALLN (Fnconc, s1, s2);
 }
 
-DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0,
-       doc: /* Concatenate any number of lists by altering them.
-Only the last argument is not altered, and need not be a list.
-usage: (nconc &rest LISTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object val = Qnil;
-
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object tem = args[argnum];
-      if (NILP (tem)) continue;
-
-      if (NILP (val))
-	val = tem;
-
-      if (argnum + 1 == nargs) break;
-
-      CHECK_CONS (tem);
-
-      Lisp_Object tail;
-      FOR_EACH_TAIL (tem)
-	tail = tem;
-
-      tem = args[argnum + 1];
-      Fsetcdr (tail, tem);
-      if (NILP (tem))
-	args[argnum + 1] = tail;
-    }
-
-  return val;
-}
 
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
@@ -1522,22 +1399,6 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
   return ret;
 }
 
-DEFUN ("mapc", Fmapc, Smapc, 2, 2, 0,
-       doc: /* Apply FUNCTION to each element of SEQUENCE for side effects only.
-Unlike `mapcar', don't accumulate the results.  Return SEQUENCE.
-SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
-  (Lisp_Object function, Lisp_Object sequence)
-{
-  register EMACS_INT leni;
-
-  leni = XFASTINT (Flength (sequence));
-  if (CHAR_TABLE_P (sequence))
-    wrong_type_argument (Qlistp, sequence);
-  mapcar1 (leni, 0, function, sequence);
-
-  return sequence;
-}
-
 DEFUN ("mapcan", Fmapcan, Smapcan, 2, 2, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concatenate
 the results by altering them (using `nconc').
@@ -1563,55 +1424,6 @@ Lisp_Object
 do_yes_or_no_p (Lisp_Object prompt)
 {
   return call1 (intern ("yes-or-no-p"), prompt);
-}
-
-DEFUN ("yes-or-no-p", Fyes_or_no_p, Syes_or_no_p, 1, 1, 0,
-       doc: /* Ask user a yes-or-no question.
-Return t if answer is yes, and nil if the answer is no.
-PROMPT is the string to display to ask the question.  It should end in
-a space; `yes-or-no-p' adds \"(yes or no) \" to it.
-
-The user must confirm the answer with RET, and can edit it until it
-has been confirmed.
-
-If dialog boxes are supported, a dialog box will be used
-if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
-  (Lisp_Object prompt)
-{
-  Lisp_Object ans;
-
-  CHECK_STRING (prompt);
-
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box && ! NILP (last_input_event))
-    {
-      Lisp_Object pane, menu, obj;
-      redisplay_preserve_echo_area (4);
-      pane = list2 (Fcons (build_string ("Yes"), Qt),
-		    Fcons (build_string ("No"), Qnil));
-      menu = Fcons (prompt, pane);
-      obj = Fx_popup_dialog (Qt, menu, Qnil);
-      return obj;
-    }
-
-  AUTO_STRING (yes_or_no, "(yes or no) ");
-  prompt = CALLN (Fconcat, prompt, yes_or_no);
-
-  while (1)
-    {
-      ans = Fdowncase (Fread_from_minibuffer (prompt, Qnil, Qnil, Qnil,
-					      Qyes_or_no_p_history, Qnil,
-					      Qnil));
-      if (SCHARS (ans) == 3 && !strcmp (SSDATA (ans), "yes"))
-	return Qt;
-      if (SCHARS (ans) == 2 && !strcmp (SSDATA (ans), "no"))
-	return Qnil;
-
-      Fding (Qnil);
-      Fdiscard_input ();
-      message1 ("Please answer yes or no.");
-      Fsleep_for (make_number (2), Qnil);
-    }
 }
 
 /* Primitives for work of the "widget" library.
@@ -1749,136 +1561,6 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #endif	/* HAVE_LANGINFO_CODESET*/
   return Qnil;
 }
-
-/* base64 encode/decode functions (RFC 2045).
-   Based on code from GNU recode. */
-
-ptrdiff_t base64_encode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool, bool);
-ptrdiff_t base64_decode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool,
-                           ptrdiff_t *);
-ptrdiff_t pad_base64_size(ptrdiff_t len);
-ptrdiff_t compute_decode_size(ptrdiff_t len);
-ptrdiff_t compute_encode_size(ptrdiff_t len);
-
-DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
-       2, 3, "r",
-       doc: /* Base64-encode the region between BEG and END.
-Return the length of the encoded text.
-Optional third argument NO-LINE-BREAK means do not break long lines
-into shorter lines.  */)
-  (Lisp_Object beg, Lisp_Object end, Lisp_Object no_line_break)
-{
-  char *encoded;
-  ptrdiff_t allength, length;
-  ptrdiff_t ibeg, iend, encoded_length;
-  ptrdiff_t old_pos = PT;
-  USE_SAFE_ALLOCA;
-
-  validate_region (&beg, &end);
-
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
-  move_gap_both (XFASTINT (beg), ibeg);
-
-  /* We need to allocate enough room for encoding the text.
-     We need 33 1/3% more space, plus a newline every 76
-     characters, and then we round up. */
-  length = iend - ibeg;
-  allength = pad_base64_size(compute_encode_size(length));
-
-  encoded = SAFE_ALLOCA (allength);
-  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
-                                    encoded, allength,
-                                    NILP (no_line_break),
-				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
-
-  if (encoded_length < 0)
-    {
-      /* The encoding wasn't possible. */
-      SAFE_FREE ();
-      error ("Multibyte character in data for base64 encoding");
-    }
-
-  /* Now we have encoded the region, so we insert the new contents
-     and delete the old.  (Insert first in order to preserve markers.)  */
-  SET_PT_BOTH (XFASTINT (beg), ibeg);
-  insert (encoded, encoded_length);
-  SAFE_FREE ();
-  del_range_byte (ibeg + encoded_length, iend + encoded_length);
-
-  /* If point was outside of the region, restore it exactly; else just
-     move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += encoded_length - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
-  SET_PT (old_pos);
-
-  /* We return the length of the encoded text. */
-  return make_number (encoded_length);
-}
-
-DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
-       2, 2, "r",
-       doc: /* Base64-decode the region between BEG and END.
-Return the length of the decoded text.
-If the region can't be decoded, signal an error and don't modify the buffer.  */)
-  (Lisp_Object beg, Lisp_Object end)
-{
-  ptrdiff_t ibeg, iend, length, allength;
-  char *decoded;
-  ptrdiff_t old_pos = PT;
-  ptrdiff_t decoded_length;
-  ptrdiff_t inserted_chars;
-  bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
-  USE_SAFE_ALLOCA;
-
-  validate_region (&beg, &end);
-
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
-
-  length = iend - ibeg;
-
-  /* We need to allocate enough room for decoding the text.  If we are
-     working on a multibyte buffer, each decoded code may occupy at
-     most two bytes.  */
-  allength = compute_decode_size(multibyte ? length * 2 : length);
-  decoded = SAFE_ALLOCA (allength);
-
-  move_gap_both (XFASTINT (beg), ibeg);
-  decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
-				    decoded, allength,
-				    multibyte, &inserted_chars);
-
-  if (decoded_length < 0)
-    {
-      /* The decoding wasn't possible. */
-      error ("Invalid base64 data");
-    }
-
-  /* Now we have decoded the region, so we insert the new contents
-     and delete the old.  (Insert first in order to preserve markers.)  */
-  TEMP_SET_PT_BOTH (XFASTINT (beg), ibeg);
-  insert_1_both (decoded, inserted_chars, decoded_length, 0, 1, 0);
-  signal_after_change (XFASTINT (beg), 0, inserted_chars);
-  SAFE_FREE ();
-
-  /* Delete the original text.  */
-  del_range_both (PT, PT_BYTE, XFASTINT (end) + inserted_chars,
-		  iend + decoded_length, 1);
-
-  /* If point was outside of the region, restore it exactly; else just
-     move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += inserted_chars - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
-  SET_PT (old_pos > ZV ? ZV : old_pos);
-
-  return make_number (inserted_chars);
-}
-
 
 
 /***********************************************************************
@@ -3048,8 +2730,6 @@ extract_data_from_object (Lisp_Object spec,
 
       record_unwind_current_buffer ();
 
-      CHECK_BUFFER (object);
-
       struct buffer *bp = XBUFFER (object);
       set_buffer_internal (bp);
 
@@ -3171,6 +2851,9 @@ extract_data_from_object (Lisp_Object spec,
 #endif
     }
 
+  if (!STRINGP (object))
+    signal_error ("Invalid object argument",
+		  NILP (object) ? build_string ("nil") : object);
   return SSDATA (object);
 }
 
@@ -3280,17 +2963,12 @@ this variable.  */);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Snconc);
   defsubr (&Smapcar);
-  defsubr (&Smapc);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
-  defsubr (&Syes_or_no_p);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
-  defsubr (&Sbase64_encode_region);
-  defsubr (&Sbase64_decode_region);
   defsubr (&Ssecure_hash_algorithms);
   defsubr (&Slocale_info);
 }

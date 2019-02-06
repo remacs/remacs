@@ -1,8 +1,6 @@
 #![allow(clippy::cyclomatic_complexity)]
-#![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
-#![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
@@ -12,17 +10,16 @@
 #![cfg_attr(test, allow(unused))]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(concat_idents)]
+#![feature(const_fn)]
+#![feature(const_fn_union)]
+#![feature(never_type)]
+#![feature(ptr_offset_from)]
+#![feature(slice_patterns)]
+#![feature(specialization)]
 #![feature(stmt_expr_attributes)]
 #![feature(untagged_unions)]
-#![feature(never_type)]
-#![feature(const_fn_union)]
-#![feature(ptr_offset_from)]
-#![feature(self_struct_ctor)]
-#![feature(specialization)]
 
 extern crate errno;
-#[macro_use]
-extern crate if_chain;
 #[macro_use]
 extern crate lazy_static;
 
@@ -39,7 +36,7 @@ extern crate flate2;
 extern crate core;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 extern crate alloc_unexecmacosx;
 
 // Needed for linking.
@@ -122,12 +119,13 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+mod xfaces;
 mod xml;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
@@ -135,18 +133,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
-
-#[cfg(feature = "compile-errors")]
-mod compile_errors {
-    use lisp::LispObject;
-    use remacs_macros::lisp_fn;
-
-    #[lisp_fn]
-    fn dummy(x: LispObject) -> LispObject {
-        compile_error!("error 001");
-    }
-}
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 
 mod hacks {
     use core::mem::ManuallyDrop;

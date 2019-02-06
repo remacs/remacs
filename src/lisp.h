@@ -3594,17 +3594,17 @@ extern int count_combining_before (const unsigned char *,
 extern int count_combining_after (const unsigned char *,
 				  ptrdiff_t, ptrdiff_t, ptrdiff_t);
 extern void insert (const char *, ptrdiff_t);
-extern void insert_and_inherit (const char *, ptrdiff_t);
 extern void insert_1_both (const char *, ptrdiff_t, ptrdiff_t,
 			   bool, bool, bool);
 extern void insert_from_gap (ptrdiff_t, ptrdiff_t, bool text_at_gap_tail);
 extern void insert_from_string (Lisp_Object, ptrdiff_t, ptrdiff_t,
 				ptrdiff_t, ptrdiff_t, bool);
+extern void insert_from_string_1 (Lisp_Object, ptrdiff_t, ptrdiff_t, ptrdiff_t,
+				  ptrdiff_t, bool, bool);
 extern void insert_from_buffer (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
 extern void insert_char (int);
 extern void insert_string (const char *);
 extern void insert_before_markers (const char *, ptrdiff_t);
-extern void insert_before_markers_and_inherit (const char *, ptrdiff_t);
 extern void insert_from_string_before_markers (Lisp_Object, ptrdiff_t,
 					       ptrdiff_t, ptrdiff_t,
 					       ptrdiff_t, bool);
@@ -3783,6 +3783,7 @@ build_string (const char *str)
 extern Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
 extern void make_byte_code (struct Lisp_Vector *);
 extern struct Lisp_Vector *allocate_vector (EMACS_INT);
+extern struct Lisp_Vector *allocate_record (EMACS_INT);
 
 /* Make an uninitialized vector for SIZE objects.  NOTE: you must
    be sure that GC cannot happen until the vector is completely
@@ -3983,10 +3984,12 @@ extern Lisp_Object run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
 				       Lisp_Object (*funcall)
 				       (ptrdiff_t nargs, Lisp_Object *args));
 extern Lisp_Object quit (void);
+extern Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
 INLINE _Noreturn void
 xsignal (Lisp_Object error_symbol, Lisp_Object data)
 {
   Fsignal (error_symbol, data);
+  eassume(false);
 }
 extern _Noreturn void xsignal0 (Lisp_Object);
 extern _Noreturn void xsignal1 (Lisp_Object, Lisp_Object);
@@ -4046,6 +4049,7 @@ extern void syms_of_eval (void);
 extern void prog_ignore (Lisp_Object);
 extern ptrdiff_t record_in_backtrace (Lisp_Object, Lisp_Object *, ptrdiff_t);
 extern void mark_specpdl (union specbinding *first, union specbinding *ptr);
+extern void grow_specpdl (void);
 extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
@@ -4252,6 +4256,8 @@ extern void init_casetab_once (void);
 extern void syms_of_casetab (void);
 
 /* Defined in keyboard.c.  */
+extern bool get_input_pending (int);
+extern void process_special_events (void);
 
 extern void recursive_edit_unwind (Lisp_Object buffer);
 extern Lisp_Object echo_message_buffer;
@@ -4386,6 +4392,7 @@ extern void init_callproc (void);
 extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
 extern Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
+extern int create_temp_file (ptrdiff_t, Lisp_Object *, Lisp_Object *);
 
 /* Defined in doc.c.  */
 enum text_quoting_style
@@ -4507,6 +4514,8 @@ extern _Noreturn void fatal (const char *msgid, ...)
   ATTRIBUTE_FORMAT_PRINTF (1, 2);
 
 /* Defined in terminal.c.  */
+extern struct terminal *
+decode_terminal (Lisp_Object terminal);
 extern void syms_of_terminal (void);
 
 /* Defined in font.c.  */
@@ -4905,11 +4914,8 @@ bool backtrace_debug_on_exit (union specbinding *pdl);
 void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
-extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_cons (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_vectorlike (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+
+extern char *daemon_name;
 
 INLINE_HEADER_END
 

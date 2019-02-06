@@ -112,10 +112,10 @@
   :expected-result :failed
   (should (equal "C" (subr-lang (symbol-function 'rename-buffer)))))
 
-(ert-deftest data-test--describe-function-smoke-fail ()
+(ert-deftest data-test--describe-function ()
   ;; `describe-function' relies on `subr-lang' in its implementation,
   ;; so run it here to make sure that it works.
-  :expected-result :failed
+  (describe-function 'car)
   (describe-function 'rename-buffer))
 
 (ert-deftest data-test--get-variable-documentation ()
@@ -135,6 +135,16 @@
   (should (consp (find-definition-noselect 'gc-cons-threshold 'defvar)))
   ;; Defined in Rust
   (should (consp (find-definition-noselect 'post-self-insert-hook 'defvar))))
+
+(ert-deftest test-string-to-number ()
+  (should (= (string-to-number "aaa1") 0))
+  (should (= (string-to-number "1aaa1") 1))
+  (should (= (string-to-number "1") 1))
+  (should (= (string-to-number "-1") -1))
+  (should (= (string-to-number "0.1") 0.1))
+  (should (= (string-to-number "-0.1") -0.1))
+  (should (= (string-to-number "1111" 2) 15))
+  (should (= (string-to-number "FF" 16) 255)))
 
 (provide 'data-tests)
 ;;; data-tests.el ends here

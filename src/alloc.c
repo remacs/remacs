@@ -3344,7 +3344,7 @@ allocate_buffer (void)
 /* Allocate a record with COUNT slots.  COUNT must be positive, and
    includes the type slot.  */
 
-static struct Lisp_Vector *
+struct Lisp_Vector *
 allocate_record (EMACS_INT count)
 {
   if (count > PSEUDOVECTOR_SIZE_MASK)
@@ -3354,37 +3354,6 @@ allocate_record (EMACS_INT count)
   p->header.size = count;
   XSETPVECTYPE (p, PVEC_RECORD);
   return p;
-}
-
-
-DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
-       doc: /* Create a new record.
-TYPE is its type as returned by `type-of'; it should be either a
-symbol or a type descriptor.  SLOTS is the number of non-type slots,
-each initialized to INIT.  */)
-  (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
-{
-  CHECK_NATNUM (slots);
-  EMACS_INT size = XFASTINT (slots) + 1;
-  struct Lisp_Vector *p = allocate_record (size);
-  p->contents[0] = type;
-  for (ptrdiff_t i = 1; i < size; i++)
-    p->contents[i] = init;
-  return make_lisp_ptr (p, Lisp_Vectorlike);
-}
-
-
-DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
-       doc: /* Create a new record.
-TYPE is its type as returned by `type-of'; it should be either a
-symbol or a type descriptor.  SLOTS is used to initialize the record
-slots with shallow copies of the arguments.
-usage: (record TYPE &rest SLOTS) */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  struct Lisp_Vector *p = allocate_record (nargs);
-  memcpy (p->contents, args, nargs * sizeof *args);
-  return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
 
@@ -3596,7 +3565,7 @@ struct marker_block
 static struct marker_block *marker_block;
 static int marker_block_index = MARKER_BLOCK_SIZE;
 
-static union Lisp_Misc *marker_free_list;
+static union Lisp_Misc *misc_free_list;
 
 /* Return a newly allocated Lisp_Misc object of specified TYPE.  */
 
@@ -3607,10 +3576,10 @@ allocate_misc (enum Lisp_Misc_Type type)
 
   MALLOC_BLOCK_INPUT;
 
-  if (marker_free_list)
+  if (misc_free_list)
     {
-      XSETMISC (val, marker_free_list);
-      marker_free_list = marker_free_list->u_free.chain;
+      XSETMISC (val, misc_free_list);
+      misc_free_list = misc_free_list->u_free.chain;
     }
   else
     {
@@ -3642,8 +3611,8 @@ void
 free_misc (Lisp_Object misc)
 {
   XMISCANY (misc)->type = Lisp_Misc_Free;
-  XMISC (misc)->u_free.chain = marker_free_list;
-  marker_free_list = XMISC (misc);
+  XMISC (misc)->u_free.chain = misc_free_list;
+  misc_free_list = XMISC (misc);
   consing_since_gc -= sizeof (union Lisp_Misc);
   total_free_markers++;
 }
@@ -5568,7 +5537,7 @@ purecopy (Lisp_Object obj)
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
-      Fsignal (Qerror, list1 (CALLN (Fformat, fmt, obj)));
+      xsignal1 (Qerror, CALLN (Fformat, fmt, obj));
     }
 
   if (HASH_TABLE_P (Vpurify_flag)) /* Hash consing.  */
@@ -6974,7 +6943,7 @@ sweep_misc (void)
   /* Put all unmarked misc's on free list.  For a marker, first
      unchain it from the buffer it points into.  */
 
-  marker_free_list = 0;
+  misc_free_list = 0;
 
   for (mblk = marker_block; mblk; mblk = *mprev)
     {
@@ -7001,8 +6970,8 @@ sweep_misc (void)
                  We could leave the type alone, since nobody checks it,
                  but this might catch bugs faster.  */
               mblk->markers[i].m.u_marker.type = Lisp_Misc_Free;
-              mblk->markers[i].m.u_free.chain = marker_free_list;
-              marker_free_list = &mblk->markers[i].m;
+              mblk->markers[i].m.u_free.chain = misc_free_list;
+              misc_free_list = &mblk->markers[i].m;
               this_free++;
             }
           else
@@ -7019,7 +6988,7 @@ sweep_misc (void)
         {
           *mprev = mblk->next;
           /* Unhook from the free list.  */
-          marker_free_list = mblk->markers[0].m.u_free.chain;
+          misc_free_list = mblk->markers[0].m.u_free.chain;
           lisp_free (mblk);
         }
       else
@@ -7451,10 +7420,8 @@ The time is in seconds as a floating point value.  */);
 
   defsubr (&Scons);
   defsubr (&Svector);
-  defsubr (&Srecord);
   defsubr (&Smake_byte_code);
   defsubr (&Smake_vector);
-  defsubr (&Smake_record);
   defsubr (&Smake_string);
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);

@@ -8,12 +8,13 @@ use std::mem;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    hashtable::LispHashTableRef,
     libm,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
     numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
-    remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
+    remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
 
@@ -24,6 +25,26 @@ pub type LispFloatRef = ExternalPtr<Lisp_Float>;
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
         unsafe { &*(&self.u.data as *const EmacsDouble) }
+    }
+
+    fn to_float(self) -> EmacsDouble {
+        *self.as_data()
+    }
+}
+
+impl LispStructuralEqual for LispFloatRef {
+    fn equal(
+        &self,
+        other: Self,
+        _kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
+        let d1 = self.to_float();
+        let d2 = other.to_float();
+
+        // Two NaNs should be `equal' even though they are not =.
+        d1 == d2 || (d1.is_nan() && d2.is_nan())
     }
 }
 
@@ -39,6 +60,22 @@ impl LispObject {
 
     unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
         *self.to_float_unchecked().as_data()
+    }
+
+    pub fn force_float(self) -> EmacsDouble {
+        unsafe { self.get_float_data_unchecked() }
+    }
+
+    pub fn as_floatref(self) -> Option<LispFloatRef> {
+        if self.is_float() {
+            Some(unsafe { self.to_float_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    pub fn force_floatref(self) -> LispFloatRef {
+        unsafe { self.to_float_unchecked() }
     }
 
     pub fn as_float(self) -> Option<EmacsDouble> {
@@ -270,9 +307,9 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 /// The function returns the cons cell (SGNFCAND . EXP).
 /// If X is zero, both parts (SGNFCAND and EXP) are zero.
 #[lisp_fn]
-pub fn frexp(x: EmacsDouble) -> LispObject {
+pub fn frexp(x: EmacsDouble) -> (LispObject, libc::c_int) {
     let (significand, exponent) = libm::frexp(x);
-    LispObject::cons(LispObject::from_float(significand), exponent)
+    (LispObject::from_float(significand), exponent)
 }
 
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.
@@ -287,7 +324,7 @@ pub fn ldexp(significand: EmacsDouble, exponent: EmacsInt) -> EmacsDouble {
 pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
     if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
         if y >= 0 && y <= EmacsInt::from(u32::max_value()) {
-            return LispObject::from(x.pow(y as u32));
+            return x.pow(y as u32).into();
         }
     }
     let b = arg1.any_to_float_or_error();
@@ -363,16 +400,13 @@ pub fn truncate(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.trunc(), truncate2, "truncate")
 }
 
-fn rounding_driver<F>(
+fn rounding_driver(
     arg: LispObject,
     divisor: LispObject,
-    double_round: F,
+    double_round: impl Fn(f64) -> f64,
     int_round2: fn(EmacsInt, EmacsInt) -> EmacsInt,
     name: &str,
-) -> EmacsInt
-where
-    F: Fn(f64) -> f64,
-{
+) -> EmacsInt {
     let d;
     if divisor.is_nil() {
         if arg.is_fixnum() {

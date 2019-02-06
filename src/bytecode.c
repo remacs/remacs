@@ -374,9 +374,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
       ptrdiff_t nonrest = at >> 8;
       ptrdiff_t maxargs = rest ? PTRDIFF_MAX : nonrest;
       if (! (mandatory <= nargs && nargs <= maxargs))
-	Fsignal (Qwrong_number_of_arguments,
-		 list2 (Fcons (make_number (mandatory), make_number (nonrest)),
-			make_number (nargs)));
+        xsignal2 (Qwrong_number_of_arguments,
+                  Fcons (make_number (mandatory), make_number (nonrest)),
+                  make_number (nargs));
       ptrdiff_t pushedargs = min (nonrest, nargs);
       for (ptrdiff_t i = 0; i < pushedargs; i++, args++)
 	PUSH (*args);

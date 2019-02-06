@@ -3564,7 +3564,7 @@ support symbolic links."
 		  (concat (file-remote-p filename)
 			  (substitute-in-file-name localname))))))
       ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
-      (if (string-match "^~$" localname)
+      (if (and (stringp localname) (string-equal "~" localname))
 	  (concat filename "/")
 	filename))))
 
@@ -4459,6 +4459,7 @@ Invokes `password-read' if available, `read-passwd' else."
 					  auth-passwd))))
 	       ;; Try the password cache.
 	       (let ((password (password-read pw-prompt key)))
+		 ;; FIXME test password works before caching it.
 		 (password-cache-add key password)
 		 password)
 	       ;; Else, get the password interactively.

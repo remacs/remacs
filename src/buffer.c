@@ -695,49 +695,6 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
-/* Reinitialize everything about a buffer except its name and contents
-   and local variables.
-   If called on an already-initialized buffer, the list of overlays
-   should be deleted before calling this function, otherwise we end up
-   with overlays that claim to belong to the buffer but the buffer
-   claims it doesn't belong to it.  */
-
-void
-reset_buffer (register struct buffer *b)
-{
-  bset_filename (b, Qnil);
-  bset_file_truename (b, Qnil);
-  bset_directory (b, current_buffer ? BVAR (current_buffer, directory) : Qnil);
-  b->modtime = make_timespec (0, UNKNOWN_MODTIME_NSECS);
-  b->modtime_size = -1;
-  XSETFASTINT (BVAR (b, save_length), 0);
-  b->last_window_start = 1;
-  /* It is more conservative to start out "changed" than "unchanged".  */
-  b->clip_changed = 0;
-  b->prevent_redisplay_optimizations_p = 1;
-  bset_backed_up (b, Qnil);
-  BUF_AUTOSAVE_MODIFF (b) = 0;
-  b->auto_save_failure_time = 0;
-  bset_auto_save_file_name (b, Qnil);
-  bset_read_only (b, Qnil);
-  set_buffer_overlays_before (b, NULL);
-  set_buffer_overlays_after (b, NULL);
-  b->overlay_center = BEG;
-  bset_mark_active (b, Qnil);
-  bset_point_before_scroll (b, Qnil);
-  bset_file_format (b, Qnil);
-  bset_auto_save_file_format (b, Qt);
-  bset_last_selected_window (b, Qnil);
-  bset_display_count (b, make_number (0));
-  bset_display_time (b, Qnil);
-  bset_enable_multibyte_characters
-    (b, BVAR (&buffer_defaults, enable_multibyte_characters));
-  bset_cursor_type (b, BVAR (&buffer_defaults, cursor_type));
-  bset_extra_line_spacing (b, BVAR (&buffer_defaults, extra_line_spacing));
-
-  b->display_error_modiff = 0;
-}
-
 /* Reset buffer B's local variables info.
    Don't use this on a buffer that has already been in use;
    it does not treat permanent locals consistently.
@@ -1059,62 +1016,6 @@ state of the current buffer.  Use with care.  */)
 }
 
 
-DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
-       "(list (read-string \"Rename buffer (to new name): \" \
-	      nil 'buffer-name-history (buffer-name (current-buffer))) \
-	      current-prefix-arg)",
-       doc: /* Change current buffer's name to NEWNAME (a string).
-If second arg UNIQUE is nil or omitted, it is an error if a
-buffer named NEWNAME already exists.
-If UNIQUE is non-nil, come up with a new name using
-`generate-new-buffer-name'.
-Interactively, you can set UNIQUE with a prefix argument.
-We return the name we actually gave the buffer.
-This does not change the name of the visited file (if any).  */)
-  (register Lisp_Object newname, Lisp_Object unique)
-{
-  register Lisp_Object tem, buf;
-
-  CHECK_STRING (newname);
-
-  if (SCHARS (newname) == 0)
-    error ("Empty string is invalid as a buffer name");
-
-  tem = Fget_buffer (newname);
-  if (!NILP (tem))
-    {
-      /* Don't short-circuit if UNIQUE is t.  That is a useful way to
-	 rename the buffer automatically so you can create another
-	 with the original name.  It makes UNIQUE equivalent to
-	 (rename-buffer (generate-new-buffer-name NEWNAME)).  */
-      if (NILP (unique) && XBUFFER (tem) == current_buffer)
-	return BVAR (current_buffer, name);
-      if (!NILP (unique))
-	newname = Fgenerate_new_buffer_name (newname, BVAR (current_buffer, name));
-      else
-	error ("Buffer name `%s' is in use", SDATA (newname));
-    }
-
-  bset_name (current_buffer, newname);
-
-  /* Catch redisplay's attention.  Unless we do this, the mode lines for
-     any windows displaying current_buffer will stay unchanged.  */
-  update_mode_lines = 11;
-
-  XSETBUFFER (buf, current_buffer);
-  Fsetcar (Frassq (buf, Vbuffer_alist), newname);
-  if (NILP (BVAR (current_buffer, filename))
-      && !NILP (BVAR (current_buffer, auto_save_file_name)))
-    call0 (intern ("rename-auto-save-file"));
-
-  /* Run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
-    call1 (Vrun_hooks, Qbuffer_list_update_hook);
-
-  /* Refetch since that last call may have done GC.  */
-  return BVAR (current_buffer, name);
-}
-
 /* True if B can be used as 'other-than-BUFFER' buffer.  */
 
 static bool
@@ -5704,7 +5605,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
-  defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
   defsubr (&Sbuffer_enable_undo);
   defsubr (&Skill_buffer);

@@ -356,6 +356,11 @@ static struct face *realize_non_ascii_face (struct frame *, Lisp_Object,
 			      Utilities
  ***********************************************************************/
 
+void set_face_change(bool value)
+{
+    face_change = value;
+}
+
 #ifdef HAVE_X_WINDOWS
 
 #ifdef DEBUG_X_COLORS
@@ -644,17 +649,6 @@ clear_face_cache (bool clear_fonts_p)
       clear_image_caches (Qnil);
     }
 #endif /* HAVE_WINDOW_SYSTEM */
-}
-
-DEFUN ("clear-face-cache", Fclear_face_cache, Sclear_face_cache, 0, 1, 0,
-       doc: /* Clear face caches on all frames.
-Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
-  (Lisp_Object thoroughly)
-{
-  clear_face_cache (!NILP (thoroughly));
-  face_change = true;
-  windows_or_buffers_changed = 53;
-  return Qnil;
 }
 
 
@@ -3352,8 +3346,8 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
     value = Qunspecified;
   else if (EQ (attr, QCheight))
     {
-      value = Fstring_to_number (value, make_number (10));
-      if (XINT (value) <= 0)
+      value = Fstring_to_number (value, Qnil);
+      if (!INTEGERP (value) || XINT (value) <= 0)
 	signal_error ("Invalid face height from X resource", value);
     }
   else if (EQ (attr, QCbold) || EQ (attr, QCitalic))
@@ -6303,7 +6297,6 @@ syms_of_xfaces (void)
   defsubr (&Sdump_face);
   defsubr (&Sshow_face_resources);
 #endif /* GLYPH_DEBUG */
-  defsubr (&Sclear_face_cache);
   defsubr (&Stty_suppress_bold_inverse_default_colors);
 
 #if defined DEBUG_X_COLORS && defined HAVE_X_WINDOWS

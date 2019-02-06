@@ -1,25 +1,33 @@
-//* Random utility Lisp functions.
+//! Random utility Lisp functions.
+
+use std::ptr;
 
 use libc;
 
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::{un_autoload, unbind_to},
-    lisp::defsubr,
+    casefiddle::downcase,
+    dispnew::{ding, sleep_for},
+    eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put, setcar},
+    lists::{assq, car, get, mapcar1, member, memq, put, setcar},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    minibuf::read_from_minibuffer,
+    multibyte::LispStringRef,
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
-    remacs_sys::{equal_kind, Lisp_Type},
-    remacs_sys::{Fload, Fmapc},
-    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
+    remacs_sys::{concat as lisp_concat, globals, message1, redisplay_preserve_echo_area},
+    remacs_sys::{EmacsInt, Lisp_Type},
+    remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
+    remacs_sys::{
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt, Qyes_or_no_p_history,
+    },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
+    vectors::length,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -48,28 +56,24 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(0, globals.Vfeatures), Vautoload_queue);
+            Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
     if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature, globals.Vfeatures);
+            globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
     }
     if subfeature.is_not_nil() {
         put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature),
-            globals.Vcurrent_load_list,
-        );
+        globals.Vcurrent_load_list = ((Qprovide, feature), globals.Vcurrent_load_list).into();
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
-            Fmapc(Qfuncall, c.cdr());
+        if let Some((_, d)) = assq(feature.into(), globals.Vafter_load_alist).into() {
+            Fmapc(Qfuncall, d);
         }
     }
     feature.into()
@@ -92,6 +96,19 @@ pub fn quote(args: LispCons) -> LispObject {
     }
 
     args.car()
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and make a list of the
+/// results.  The result is a list just as long as SEQUENCE.  SEQUENCE
+/// may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+pub fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
+    let leni = length(sequence) as EmacsInt;
+    if sequence.is_char_table() {
+        wrong_type!(Qlistp, sequence);
+    }
+    mapcar1(leni, ptr::null_mut(), function, sequence);
+    sequence
 }
 
 /* List of features currently being require'd, innermost first.  */
@@ -123,7 +140,7 @@ unsafe extern "C" fn require_unwind(old_value: LispObject) {
 /// suppressed.
 #[lisp_fn(min = "1")]
 pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -> LispObject {
-    let feature_sym = feature.as_symbol_or_error();
+    let feature_sym: LispSymbolRef = feature.into();
     let current_load_list = unsafe { globals.Vcurrent_load_list };
 
     // Record the presence of `require' in this file
@@ -136,7 +153,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
-        let tem = LispObject::cons(Qrequire, feature);
+        let tem = (Qrequire, feature).into();
         if member(tem, current_load_list).is_nil() {
             loadhist_attach(tem);
         }
@@ -150,10 +167,10 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.Vpurify_flag != Qnil } {
+    if unsafe { globals.Vpurify_flag.is_not_nil() } {
         error!(
             "(require {}) while preparing to dump",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
@@ -168,14 +185,14 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if nesting > 3 {
         error!(
             "Recursive `require' for feature `{}'",
-            feature_sym.symbol_name().as_string_or_error()
+            feature_sym.symbol_name()
         );
     }
 
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = LispObject::cons(feature, require_nesting_list);
+        require_nesting_list = (feature, require_nesting_list).into();
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
@@ -191,11 +208,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             noerror,
             Qt,
             Qnil,
-            if filename.is_nil() { Qt } else { Qnil },
+            filename.is_nil().into(),
         );
 
         // If load failed entirely, return nil.
-        if tem == Qnil {
+        if tem.is_nil() {
             return unbind_to(count, Qnil);
         }
     }
@@ -205,16 +222,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
-            error!(
-                "Required feature `{}' was not provided",
-                feature.as_string_or_error()
-            );
+            error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
             error!(
                 "Loading file {} failed to provide feature `{}'",
-                tem3.as_string_or_error(),
-                feature.as_string_or_error()
+                tem3, feature
             );
         }
     }
@@ -261,60 +274,12 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+// Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+// Use this only on arguments that are cycle-free and not too large and
+// are not window configurations.
 #[no_mangle]
-pub extern "C" fn internal_equal_cons(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_cons(), o2.as_cons()) {
-        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_string(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    let s1 = o1.as_string_or_error();
-    let s2 = o2.as_string_or_error();
-
-    s1.equal(s2, kind, depth, ht)
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_misc(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_misc(), o2.as_misc()) {
-        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_vectorlike(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_vectorlike(), o2.as_vectorlike()) {
-        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
-        _ => false,
-    }
+pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
+    o1.equal_no_quit(o2)
 }
 
 #[cfg(windows)]
@@ -388,6 +353,106 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
         tem = t.cdr()
     }
     new_alist
+}
+
+/// Ask user a yes-or-no question.
+///
+/// Return t if answer is yes, and nil if the answer is no.  PROMPT is
+/// the string to display to ask the question.  It should end in a
+/// space; `yes-or-no-p' adds \"(yes or no) \" to it.
+///
+/// The user must confirm the answer with RET, and can edit it until
+/// it has been confirmed.
+///
+/// If dialog boxes are supported, a dialog box will be used if
+/// `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.
+#[lisp_fn]
+pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
+    let use_popup = unsafe {
+        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+            && globals.use_dialog_box
+            && globals.last_input_event.is_not_nil()
+    };
+
+    if use_popup {
+        unsafe { redisplay_preserve_echo_area(4) };
+        let menu = (prompt, (("Yes", true), ("No", false)));
+        return unsafe { Fx_popup_dialog(Qt, menu.into(), Qnil) }.into();
+    }
+
+    let yes_or_no: LispObject = "(yes or no) ".into();
+    let prompt = concat(&mut [prompt.into(), yes_or_no]).into();
+
+    loop {
+        let ans: LispStringRef = downcase(read_from_minibuffer(
+            prompt,
+            Qnil,
+            Qnil,
+            false,
+            Qyes_or_no_p_history,
+            Qnil,
+            false,
+        ))
+        .into();
+
+        match ans.as_slice() {
+            b"yes" => {
+                return true;
+            }
+            b"no" => {
+                return false;
+            }
+            _ => {
+                ding(Qnil);
+                unsafe {
+                    Fdiscard_input();
+                    message1("Please answer yes or no.\0".as_ptr() as *const i8);
+                }
+                sleep_for(2.0, None);
+            }
+        }
+    }
+}
+
+/// Concatenate any number of lists by altering them.
+/// Only the last argument is not altered, and need not be a list.
+/// usage: (nconc &rest LISTS)
+#[lisp_fn]
+pub fn nconc(args: &mut [LispObject]) -> LispObject {
+    let mut val = Qnil;
+
+    let len = args.len();
+
+    for i in 0..len {
+        let elt = args[i];
+
+        if elt.is_nil() {
+            continue;
+        }
+
+        if val.is_nil() {
+            val = elt;
+        }
+
+        if (i + 1) == len {
+            break;
+        }
+
+        let cons: LispCons = elt.into();
+
+        let tail = cons
+            .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::on)
+            .last()
+            .unwrap();
+
+        let next = args[i + 1];
+        tail.set_cdr(next);
+        if next.is_nil() {
+            args[i + 1] = tail.into();
+        }
+    }
+
+    val
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

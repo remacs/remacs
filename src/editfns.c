@@ -78,6 +78,8 @@ void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 void find_field (Lisp_Object, Lisp_Object, Lisp_Object, ptrdiff_t *, Lisp_Object, ptrdiff_t *);
 
+void general_insert_function (void (*) (const char *, ptrdiff_t), void (*) (Lisp_Object, ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool), bool, ptrdiff_t, Lisp_Object *);
+
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif
@@ -118,14 +120,10 @@ emacs_mktime_z (timezone_t tz, struct tm *tm)
   return t;
 }
 
-/* Allocate a timezone, signaling on failure.  */
-static timezone_t
-xtzalloc (char const *name)
+static _Noreturn void
+invalid_time_zone_specification (Lisp_Object zone)
 {
-  timezone_t tz = tzalloc (name);
-  if (!tz)
-    memory_full (SIZE_MAX);
-  return tz;
+  xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
 }
 
 /* Free a timezone, except do not free the time zone for local time.
@@ -206,9 +204,27 @@ tzlookup (Lisp_Object zone, bool settz)
 	    }
 	}
       else
-	xsignal2 (Qerror, build_string ("Invalid time zone specification"),
-		  zone);
-      new_tz = xtzalloc (zone_string);
+	invalid_time_zone_specification (zone);
+
+      new_tz = tzalloc (zone_string);
+
+#if defined __NetBSD_Version__ && __NetBSD_Version__ < 700000000
+      /* NetBSD 6 tzalloc mishandles POSIX TZ strings (Bug#30738).
+	 If possible, fall back on tzdb.  */
+      if (!new_tz && errno != ENOMEM && plain_integer
+	  && XINT (zone) % (60 * 60) == 0)
+	{
+	  sprintf (tzbuf, "Etc/GMT%+"pI"d", - (XINT (zone) / (60 * 60)));
+	  new_tz = tzalloc (zone_string);
+	}
+#endif
+
+      if (!new_tz)
+	{
+	  if (errno == ENOMEM)
+	    memory_full (SIZE_MAX);
+	  invalid_time_zone_specification (zone);
+	}
     }
 
   if (settz)
@@ -1277,142 +1293,12 @@ emacs_setenv_TZ (const char *tzstring)
   return 0;
 }
 
-/* Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC
-   (if a type of object is Lisp_Int) or INSERT_FROM_STRING_FUNC (if a
-   type of object is Lisp_String).  INHERIT is passed to
-   INSERT_FROM_STRING_FUNC as the last argument.  */
-
-void
-general_insert_function (void (*insert_func)
-			      (const char *, ptrdiff_t),
-			 void (*insert_from_string_func)
-			      (Lisp_Object, ptrdiff_t, ptrdiff_t,
-			       ptrdiff_t, ptrdiff_t, bool),
-			 bool inherit, ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t argnum;
-  Lisp_Object val;
-
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      val = args[argnum];
-      if (CHARACTERP (val))
-	{
-	  int c = XFASTINT (val);
-	  unsigned char str[MAX_MULTIBYTE_LENGTH];
-	  int len;
-
-	  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-	    len = CHAR_STRING (c, str);
-	  else
-	    {
-	      str[0] = CHAR_TO_BYTE8 (c);
-	      len = 1;
-	    }
-	  (*insert_func) ((char *) str, len);
-	}
-      else if (STRINGP (val))
-	{
-	  (*insert_from_string_func) (val, 0, 0,
-				      SCHARS (val),
-				      SBYTES (val),
-				      inherit);
-	}
-      else
-	wrong_type_argument (Qchar_or_string_p, val);
-    }
-}
-
 void
 insert1 (Lisp_Object arg)
 {
   Finsert (1, &arg);
 }
 
-
-DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
-       doc: /* Insert the arguments, either strings or characters, at point.
-Point and after-insertion markers move forward to end up
- after the inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `string-make-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion (see `string-make-unibyte').
-
-When operating on binary data, it may be necessary to preserve the
-original bytes of a unibyte string when inserting it into a multibyte
-buffer; to accomplish this, apply `string-as-multibyte' to the string
-and insert the result.
-
-usage: (insert &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert, insert_from_string, 0, nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-and-inherit", Finsert_and_inherit, Sinsert_and_inherit,
-   0, MANY, 0,
-       doc: /* Insert the arguments at point, inheriting properties from adjoining text.
-Point and after-insertion markers move forward to end up
- after the inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-usage: (insert-and-inherit &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_and_inherit, insert_from_string, 1,
-			   nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-before-markers", Finsert_before_markers, Sinsert_before_markers, 0, MANY, 0,
-       doc: /* Insert strings or characters at point, relocating markers after the text.
-Point and markers move forward to end up after the inserted text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-If an overlay begins at the insertion point, the inserted text falls
-outside the overlay; if a nonempty overlay ends at the insertion
-point, the inserted text falls inside that overlay.
-
-usage: (insert-before-markers &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_before_markers,
-			   insert_from_string_before_markers, 0,
-			   nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-before-markers-and-inherit", Finsert_and_inherit_before_markers,
-  Sinsert_and_inherit_before_markers, 0, MANY, 0,
-       doc: /* Insert text at point, relocating markers and inheriting properties.
-Point and markers move forward to end up after the inserted text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-usage: (insert-before-markers-and-inherit &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_before_markers_and_inherit,
-			   insert_from_string_before_markers, 1,
-			   nargs, args);
-  return Qnil;
-}
 
 /* Making strings from buffer contents.  */
 
@@ -2867,32 +2753,30 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 and with pM inserted for integer formats.
 		 At most two flags F can be specified at once.  */
 	      char convspec[sizeof "%FF.*d" + max (INT_AS_LDBL, pMlen)];
-	      {
-		char *f = convspec;
-		*f++ = '%';
-		/* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
-		*f = '+'; f +=  plus_flag;
-		*f = ' '; f += space_flag;
-		*f = '#'; f += sharp_flag;
-                *f++ = '.';
-                *f++ = '*';
-		if (float_conversion)
-		  {
-		    if (INT_AS_LDBL)
-		      {
-			*f = 'L';
-			f += INTEGERP (arg);
-		      }
-		  }
-		else if (conversion != 'c')
-		  {
-		    memcpy (f, pMd, pMlen);
-		    f += pMlen;
-		    zero_flag &= ! precision_given;
-		  }
-		*f++ = conversion;
-		*f = '\0';
-	      }
+	      char *f = convspec;
+	      *f++ = '%';
+	      /* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
+	      *f = '+'; f +=  plus_flag;
+	      *f = ' '; f += space_flag;
+	      *f = '#'; f += sharp_flag;
+	      *f++ = '.';
+	      *f++ = '*';
+	      if (float_conversion)
+		{
+		  if (INT_AS_LDBL)
+		    {
+		      *f = 'L';
+		      f += INTEGERP (arg);
+		    }
+		}
+	      else if (conversion != 'c')
+		{
+		  memcpy (f, pMd, pMlen);
+		  f += pMlen;
+		  zero_flag &= ! precision_given;
+		}
+	      *f++ = conversion;
+	      *f = '\0';
 
 	      int prec = -1;
 	      if (precision_given)
@@ -2934,29 +2818,20 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
-		  /* For float, maybe we should use "%1.0f"
-		     instead so it also works for values outside
-		     the integer range.  */
-		  printmax_t x;
 		  if (INTEGERP (arg))
-		    x = XINT (arg);
+		    {
+		      printmax_t x = XINT (arg);
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
+		    }
 		  else
 		    {
-		      double d = XFLOAT_DATA (arg);
-		      if (d < 0)
-			{
-			  x = TYPE_MINIMUM (printmax_t);
-			  if (x < d)
-			    x = d;
-			}
-		      else
-			{
-			  x = TYPE_MAXIMUM (printmax_t);
-			  if (d < x)
-			    x = d;
-			}
+		      strcpy (f - pMlen - 1, "f");
+		      double x = XFLOAT_DATA (arg);
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, 0, x);
+		      char c0 = sprintf_buf[0];
+		      bool signedp = ! ('0' <= c0 && c0 <= '9');
+		      prec = min (precision, sprintf_bytes - signedp);
 		    }
-		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 	      else
 		{
@@ -2967,22 +2842,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
-		      if (d < 0)
-			x = 0;
-		      else
-			{
-			  x = TYPE_MAXIMUM (uprintmax_t);
-			  if (d < x)
-			    x = d;
-			}
+		      double uprintmax = TYPE_MAXIMUM (uprintmax_t);
+		      if (! (0 <= d && d < uprintmax + 1))
+			xsignal1 (Qoverflow_error, arg);
+		      x = d;
 		    }
 		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 
 	      /* Now the length of the formatted item is known, except it omits
 		 padding and excess precision.  Deal with excess precision
-		 first.  This happens only when the format specifies
-		 ridiculously large precision.  */
+		 first.  This happens when the format specifies ridiculously
+		 large precision, or when %d or %i formats a float that would
+		 ordinarily need fewer digits than a specified precision.  */
 	      ptrdiff_t excess_precision
 		= precision_given ? precision - prec : 0;
 	      ptrdiff_t leading_zeros = 0, trailing_zeros = 0;
@@ -3379,7 +3251,16 @@ transpose_markers (ptrdiff_t start1, ptrdiff_t end1,
     }
 }
 
-DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5, 0,
+DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5,
+       "(if (< (length mark-ring) 2)\
+	    (error \"Other region must be marked before transposing two regions\")\
+	  (let* ((num (if current-prefix-arg\
+			 (prefix-numeric-value current-prefix-arg)\
+			0))\
+		 (ring-length (length mark-ring))\
+		 (eltnum (mod num ring-length))\
+		 (eltnum2 (mod (1+ num) ring-length)))\
+	    (list (point) (mark) (elt mark-ring eltnum) (elt mark-ring eltnum2))))",
        doc: /* Transpose region STARTR1 to ENDR1 with STARTR2 to ENDR2.
 The regions should not be overlapping, because the size of the buffer is
 never changed in a transposition.
@@ -3387,7 +3268,14 @@ never changed in a transposition.
 Optional fifth arg LEAVE-MARKERS, if non-nil, means don't update
 any markers that happen to be located in the regions.
 
-Transposing beyond buffer boundaries is an error.  */)
+Transposing beyond buffer boundaries is an error.
+
+Interactively, STARTR1 and ENDR1 are point and mark; STARTR2 and ENDR2
+are the last two marks pushed to the mark ring; LEAVE-MARKERS is nil.
+If a prefix argument N is given, STARTR2 and ENDR2 are the two
+successive marks N entries back in the mark ring.  A negative prefix
+argument instead counts forward from the oldest mark in the mark
+ring.  */)
   (Lisp_Object startr1, Lisp_Object endr1, Lisp_Object startr2, Lisp_Object endr2, Lisp_Object leave_markers)
 {
   register ptrdiff_t start1, end1, start2, end2;
@@ -3740,11 +3628,6 @@ functions if all the text being accessed has this property.  */);
 
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
-
-  defsubr (&Sinsert);
-  defsubr (&Sinsert_before_markers);
-  defsubr (&Sinsert_and_inherit);
-  defsubr (&Sinsert_and_inherit_before_markers);
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);

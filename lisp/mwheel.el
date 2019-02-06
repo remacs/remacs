@@ -52,38 +52,25 @@
   ;; Sync the bindings.
   (when (bound-and-true-p mouse-wheel-mode) (mouse-wheel-mode 1)))
 
-(defvar mouse-wheel-down-button 4)
-(make-obsolete-variable 'mouse-wheel-down-button
-                        'mouse-wheel-down-event
-			"22.1")
 (defcustom mouse-wheel-down-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
       'wheel-up
-    (intern (format "mouse-%s" mouse-wheel-down-button)))
+    'mouse-4)
   "Event used for scrolling down."
   :group 'mouse
   :type 'symbol
   :set 'mouse-wheel-change-button)
 
-(defvar mouse-wheel-up-button 5)
-(make-obsolete-variable 'mouse-wheel-up-button
-                        'mouse-wheel-up-event
-			"22.1")
 (defcustom mouse-wheel-up-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
       'wheel-down
-    (intern (format "mouse-%s" mouse-wheel-up-button)))
+    'mouse-5)
   "Event used for scrolling up."
   :group 'mouse
   :type 'symbol
   :set 'mouse-wheel-change-button)
 
-(defvar mouse-wheel-click-button 2)
-(make-obsolete-variable 'mouse-wheel-click-button
-                        'mouse-wheel-click-event
-			"22.1")
-(defcustom mouse-wheel-click-event
-  (intern (format "mouse-%s" mouse-wheel-click-button))
+(defcustom mouse-wheel-click-event 'mouse-2
   "Event that should be temporarily inhibited after mouse scrolling.
 The mouse wheel is typically on the mouse-2 button, so it may easily
 happen that text is accidentally yanked into the buffer when
@@ -223,6 +210,18 @@ This can be slightly disconcerting, but some people prefer it."
     (intern "mouse-7"))
   "Event used for scrolling right.")
 
+(defvar mouse-wheel-left-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-left
+    (intern "mouse-6"))
+  "Event used for scrolling left.")
+
+(defvar mouse-wheel-right-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-right
+    (intern "mouse-7"))
+  "Event used for scrolling right.")
+
 (defun mwheel-scroll (event)
   "Scroll up or down according to the EVENT.
 This should be bound only to mouse buttons 4, 5, 6, and 7 on
@@ -293,13 +292,13 @@ non-Windows systems."
                    ;; Make sure we do indeed scroll to the end of the buffer.
                    (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
                 ((eq button mouse-wheel-left-event) ; for tilt scroll
-                 (when mwheel-tilt-scroll-p
-                   (funcall (if mwheel-flip-direction
+                 (when mouse-wheel-tilt-scroll
+                   (funcall (if mouse-wheel-flip-direction
                                 mwheel-scroll-right-function
                               mwheel-scroll-left-function) amt)))
                 ((eq button mouse-wheel-right-event) ; for tilt scroll
-                 (when mwheel-tilt-scroll-p
-                   (funcall (if mwheel-flip-direction
+                 (when mouse-wheel-tilt-scroll
+                   (funcall (if mouse-wheel-flip-direction
                                 mwheel-scroll-left-function
                               mwheel-scroll-right-function) amt)))
 		(t (error "Bad binding in mwheel-scroll"))))

@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::validate_region,
-    lisp::defsubr,
     lisp::LispObject,
     remacs_sys::{
         buf_charpos_to_bytepos, del_range_2, insert_from_gap, make_gap, maybe_quit, modify_text,
@@ -44,7 +43,7 @@ fn create_buffer_decoder<'a>(buffer: &'a [u8]) -> Box<Read + 'a> {
 pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> bool {
     unsafe { validate_region(&mut start, &mut end) };
 
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
 
     if current_buffer.multibyte_characters_enabled() {
         error!("This function can be called only in unibyte buffers");

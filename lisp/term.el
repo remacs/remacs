@@ -487,7 +487,7 @@ inconsistent with the state of the terminal understood by the
 inferior process.  Only the process filter is allowed to make
 changes to the buffer.
 
-Customize this option to nil if you want the previous behaviour."
+Customize this option to nil if you want the previous behavior."
   :version "26.1"
   :type 'boolean
   :group 'term)
@@ -508,7 +508,7 @@ commands can be invoked on the mouse-selected point or region,
 until the process filter (or user) moves point to the process
 mark once again.
 
-Customize this option to nil if you want the previous behaviour."
+Customize this option to nil if you want the previous behavior."
   :version "26.1"
   :type 'boolean
   :group 'term)
@@ -598,8 +598,8 @@ This is run before the process is cranked up."
   "Called each time a process is exec'd by `term-exec'.
 This is called after the process is cranked up.  It is useful for things that
 must be done each time a process is executed in a term mode buffer (e.g.,
-`process-kill-without-query').  In contrast, `term-mode-hook' is only
-executed once when the buffer is created."
+`set-process-query-on-exit-flag').  In contrast, `term-mode-hook' is only
+executed once, when the buffer is created."
   :type 'hook
   :group 'term)
 
@@ -2891,9 +2891,11 @@ See `term-prompt-regexp'."
                 ;; If the last char was written in last column,
                 ;; back up one column, but remember we did so.
                 ;; Thus we emulate xterm/vt100-style line-wrapping.
-                (cond ((eq (term-current-column) term-width)
-                       (term-move-columns -1)
-                       (setq term-do-line-wrapping t)))
+                (when (eq (term-current-column) term-width)
+                  (term-move-columns -1)
+                  ;; We check after ctrl sequence handling if point
+                  ;; was moved (and leave line-wrapping state if so).
+                  (setq term-do-line-wrapping (point)))
                 (setq term-current-column nil)
                 (setq i funny))
               (pcase-exhaustive (and (<= ctl-end str-length) (aref str i))
@@ -2993,6 +2995,9 @@ See `term-prompt-regexp'."
                      (substring str i ctl-end)))))
                 ;; Ignore NUL, Shift Out, Shift In.
                 ((or ?\0 #xE #xF 'nil) nil))
+              ;; Leave line-wrapping state if point was moved.
+              (unless (eq term-do-line-wrapping (point))
+                (setq term-do-line-wrapping nil))
               (if (term-handling-pager)
                   (progn
                     ;; Finish stuff to get ready to handle PAGER.

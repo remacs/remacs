@@ -36,4 +36,7 @@
                      (find-auto-coding "" (buffer-size)))
                    '(utf-8 . :coding)))))
 
+;; Stop "Local Variables" above causing confusion when visiting this file.
+
+
 ;;; mule-tests.el ends here

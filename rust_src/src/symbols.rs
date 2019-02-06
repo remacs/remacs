@@ -1,20 +1,24 @@
 //! symbols support
 
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferLocalValueRef,
+    buffers::per_buffer_idx_from_field_offset,
+    buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{indirect_function, set},
-    lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    data::{as_buffer_objfwd, indirect_function, set},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
+    remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
         find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
         set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
-    remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsymbolp, Qunbound},
 };
 
@@ -151,9 +155,25 @@ impl LispSymbolRef {
     }
 }
 
+impl LispStructuralEqual for LispSymbolRef {
+    fn equal(
+        &self,
+        other: Self,
+        _equal_kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
+        LispObject::from(*self).eq(LispObject::from(other))
+    }
+}
+
 impl From<LispObject> for LispSymbolRef {
     fn from(o: LispObject) -> Self {
-        o.as_symbol_or_error()
+        if let Some(sym) = o.as_symbol() {
+            sym
+        } else {
+            wrong_type!(Qsymbolp, o)
+        }
     }
 }
 
@@ -165,7 +185,11 @@ impl From<LispSymbolRef> for LispObject {
 
 impl From<LispObject> for Option<LispSymbolRef> {
     fn from(o: LispObject) -> Self {
-        o.as_symbol()
+        if o.is_symbol() {
+            Some(LispSymbolRef::new(o.symbol_ptr_value() as *mut Lisp_Symbol))
+        } else {
+            None
+        }
     }
 }
 
@@ -175,22 +199,12 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Symbol
     }
 
-    pub fn as_symbol(self) -> Option<LispSymbolRef> {
-        if self.is_symbol() {
-            Some(LispSymbolRef::new(
-                self.symbol_ptr_value() as *mut Lisp_Symbol
-            ))
-        } else {
-            None
-        }
+    pub fn force_symbol(self) -> LispSymbolRef {
+        LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol)
     }
 
-    pub fn as_symbol_or_error(self) -> LispSymbolRef {
-        if let Some(sym) = self.as_symbol() {
-            sym
-        } else {
-            wrong_type!(Qsymbolp, self)
-        }
+    pub fn as_symbol(self) -> Option<LispSymbolRef> {
+        self.into()
     }
 
     pub fn symbol_or_string_as_string(self) -> LispStringRef {
@@ -199,7 +213,7 @@ impl LispObject {
                 .symbol_name()
                 .as_string()
                 .expect("Expected a symbol name?"),
-            None => self.as_string_or_error(),
+            None => self.into(),
         }
     }
 
@@ -212,6 +226,12 @@ impl LispObject {
 
         let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
         ptr_value + lispsym_offset
+    }
+}
+
+impl Debug for LispSymbolRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "'{:?}", self.symbol_name())
     }
 }
 
@@ -258,9 +278,7 @@ pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
 /// global value outside of any lexical scope.
 #[lisp_fn]
 pub fn boundp(mut symbol: LispSymbolRef) -> bool {
-    while symbol.get_redirect() == symbol_redirect::SYMBOL_VARALIAS {
-        symbol = symbol.get_indirect_variable();
-    }
+    symbol = symbol.get_indirect_variable();
 
     let valcontents = match symbol.get_redirect() {
         symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
@@ -322,7 +340,7 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 /// Return SYMBOL.
 #[lisp_fn]
 pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
-    let mut sym = symbol.as_symbol_or_error();
+    let mut sym: LispSymbolRef = symbol.into();
     if symbol.is_nil() || symbol.is_t() {
         setting_constant!(symbol);
     }
@@ -339,7 +357,7 @@ pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
 #[lisp_fn]
 pub fn keywordp(object: LispObject) -> bool {
     if let Some(sym) = object.as_symbol() {
-        let name = sym.symbol_name().as_string_or_error();
+        let name: LispStringRef = sym.symbol_name().into();
         name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray()
     } else {
         false
@@ -384,6 +402,41 @@ pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
         void_variable!(symbol);
     }
     val
+}
+/// Non-nil if VARIABLE has a local binding in buffer BUFFER.
+/// BUFFER defaults to the current buffer.
+#[lisp_fn(min = "1")]
+pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) -> bool {
+    let buf: LispBufferRef = buffer.into();
+
+    symbol = symbol.get_indirect_variable();
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => false,
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            let blv = unsafe { symbol.get_blv() };
+            if blv.where_.eq(buf) {
+                blv.found()
+            } else {
+                let variable: LispObject = symbol.into();
+                buf.local_vars_iter().any(|local_var| {
+                    let (car, _) = local_var.into();
+                    variable.eq(car)
+                })
+            }
+        }
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let contents = symbol.get_fwd();
+            match as_buffer_objfwd(contents) {
+                Some(buffer_objfwd) => {
+                    let idx = per_buffer_idx_from_field_offset(buffer_objfwd.offset);
+                    idx == -1 || buf.value_p(idx as isize)
+                }
+                None => false,
+            }
+        },
+        _ => unreachable!(),
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

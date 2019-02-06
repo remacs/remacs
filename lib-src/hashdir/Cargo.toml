@@ -4,6 +4,6 @@ version = "0.1.0"
 authors = ["Daniel Brooks <db48x@db48x.net>"]
 
 [dependencies]
-ignore = "0.4.2"
-sha2 = "0.7.1"
-base16 = "0.1.1"
+ignore = "0.4"
+sha2 = "0.8"
+base16 = "0.1"

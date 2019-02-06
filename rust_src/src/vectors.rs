@@ -1,6 +1,8 @@
 //! Functions operating on vector(like)s, and general sequences.
 
 use std::cmp::Ordering;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::mem;
 use std::ptr;
 
@@ -13,12 +15,11 @@ use crate::{
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
     frames::LispFrameRef,
-    lisp::defsubr,
-    lisp::{ExternalPtr, LispObject, LispSubrRef},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,
     process::LispProcessRef,
-    remacs_sys::internal_equal,
     remacs_sys::{
         equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Char_Table, Lisp_Type, Lisp_Vector,
         Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
@@ -46,11 +47,13 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| v.is_vector())
     }
 
+    pub fn force_vectorlike(self) -> LispVectorlikeRef {
+        unsafe { self.as_vectorlike_unchecked() }
+    }
+
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
-            Some(LispVectorlikeRef::new(
-                self.get_untaggedptr() as *mut Lisp_Vectorlike
-            ))
+            Some(unsafe { self.as_vectorlike_unchecked() })
         } else {
             None
         }
@@ -96,45 +99,33 @@ impl LispObject {
     }
 }
 
-impl LispVectorlikeRef {
-    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
-        // Pseudovectors have the type encoded in the size field, so this test
-        // actually checks that the objects have the same type as well as the
-        // same size.
-        if unsafe { self.header.size != other.header.size } {
-            false
-        } else if let (Some(bv1), Some(bv2)) = (self.as_bool_vector(), other.as_bool_vector()) {
-            bv1.equal(bv2, kind, depth, ht)
-        } else if let (Some(cf1), Some(cf2)) = (
-            self.as_window_configuration(),
-            other.as_window_configuration(),
-        ) {
-            assert!(kind != equal_kind::EQUAL_NO_QUIT);
-            cf1.equal(cf2, false)
-        } else if let (Some(vec1), Some(vec2)) = (self.as_vector(), other.as_vector()) {
-            vec1.equal(vec2, kind, depth, ht)
-        } else if let (Some(fn1), Some(fn2)) = (self.as_compiled(), other.as_compiled()) {
-            fn1.equal(fn2, kind, depth, ht)
-        } else if let (Some(rec1), Some(rec2)) = (self.as_record(), other.as_record()) {
-            rec1.equal(rec2, kind, depth, ht)
-        } else if let (Some(font1), Some(font2)) = (self.as_font(), other.as_font()) {
-            font1.equal(font2, kind, depth, ht)
-        } else if let (Some(ct1), Some(ct2)) = (self.as_char_table(), other.as_char_table()) {
-            ct1.equal(ct2, kind, depth, ht)
-        } else if let (Some(ct1), Some(ct2)) = (self.as_sub_char_table(), other.as_sub_char_table())
-        {
-            ct1.equal(ct2, kind, depth, ht)
-        } else if let (Some(ct1), Some(ct2)) = (
-            self.as_sub_char_table_ascii(),
-            other.as_sub_char_table_ascii(),
-        ) {
-            ct1.equal(ct2, kind, depth, ht)
-        } else {
-            // All of the other vector likes are not readily comparable.
-            false
+impl Debug for LispVectorlikeRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        match self.as_vector() {
+            Some(v) => {
+                write!(f, "[")?;
+                match v.as_slice() {
+                    [] => {}
+                    [first, rest..] => {
+                        write!(f, "{:?}", first)?;
+                        for elt in rest {
+                            write!(f, " {:?}", elt)?;
+                        }
+                    }
+                }
+                write!(f, "]")
+            }
+            None => write!(
+                f,
+                "#<VECTOR-LIKE @ {:p}: VAL({:#X})>",
+                self.as_ptr(),
+                LispObject::tag_ptr(*self, Lisp_Type::Lisp_Vectorlike).to_C()
+            ),
         }
     }
+}
 
+impl LispVectorlikeRef {
     pub fn is_vector(self) -> bool {
         unsafe { self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0 }
     }
@@ -287,6 +278,52 @@ impl LispVectorlikeRef {
     }
 }
 
+impl LispStructuralEqual for LispVectorlikeRef {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
+        // Pseudovectors have the type encoded in the size field, so this test
+        // actually checks that the objects have the same type as well as the
+        // same size.
+        if unsafe { self.header.size != other.header.size } {
+            false
+        } else if let (Some(bv1), Some(bv2)) = (self.as_bool_vector(), other.as_bool_vector()) {
+            bv1.equal(bv2, kind, depth, ht)
+        } else if let (Some(cf1), Some(cf2)) = (
+            self.as_window_configuration(),
+            other.as_window_configuration(),
+        ) {
+            assert!(kind != equal_kind::EQUAL_NO_QUIT);
+            cf1.equal(cf2, false)
+        } else if let (Some(vec1), Some(vec2)) = (self.as_vector(), other.as_vector()) {
+            vec1.equal(vec2, kind, depth, ht)
+        } else if let (Some(fn1), Some(fn2)) = (self.as_compiled(), other.as_compiled()) {
+            fn1.equal(fn2, kind, depth, ht)
+        } else if let (Some(rec1), Some(rec2)) = (self.as_record(), other.as_record()) {
+            rec1.equal(rec2, kind, depth, ht)
+        } else if let (Some(font1), Some(font2)) = (self.as_font(), other.as_font()) {
+            font1.equal(font2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (self.as_char_table(), other.as_char_table()) {
+            ct1.equal(ct2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (self.as_sub_char_table(), other.as_sub_char_table())
+        {
+            ct1.equal(ct2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (
+            self.as_sub_char_table_ascii(),
+            other.as_sub_char_table_ascii(),
+        ) {
+            ct1.equal(ct2, kind, depth, ht)
+        } else {
+            // All of the other vector likes are not readily comparable.
+            false
+        }
+    }
+}
+
 macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl From<$type> for LispObject {
@@ -339,23 +376,21 @@ macro_rules! impl_vectorlike_ref {
             pub fn iter(&self) -> $itertype {
                 $itertype::new(self)
             }
+        }
 
-            pub fn equal(
-                self,
+        impl LispStructuralEqual for $type {
+            fn equal(
+                &self,
                 other: Self,
                 kind: equal_kind::Type,
                 depth: i32,
-                ht: LispObject,
+                ht: &mut LispHashTableRef,
             ) -> bool {
-                for i in 0..self.len() {
+                (0..self.len()).all(|i| {
                     let v1 = self.get(i as usize);
                     let v2 = other.get(i as usize);
-                    if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
-                        return false;
-                    }
-                }
-
-                true
+                    v1.equal_internal(v2, kind, depth + 1, ht)
+                })
             }
         }
 
@@ -471,8 +506,16 @@ impl LispBoolVecRef {
             cur: 0,
         }
     }
+}
 
-    pub fn equal(self, other: Self, _kind: equal_kind::Type, _depth: i32, _ht: LispObject) -> bool {
+impl LispStructuralEqual for LispBoolVecRef {
+    fn equal(
+        &self,
+        other: Self,
+        _kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
         let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
         // Bool vectors are compared much like strings.
         self.len() == other.len()
@@ -514,12 +557,10 @@ impl<'a> Iterator for LispBoolVecIterator<'a> {
             if self.cur % BITS_PER_BITS_WORD as usize == 0 {
                 self.limb = self.bvec_slice[self.cur / BITS_PER_BITS_WORD as usize];
             }
-            let res = LispObject::from_bool(
-                self.limb & (1 << (self.cur % BITS_PER_BITS_WORD as usize)) != 0,
-            );
+            let res = self.limb & (1 << (self.cur % BITS_PER_BITS_WORD as usize)) != 0;
 
             self.cur += 1;
-            Some(res)
+            Some(res.into())
         }
     }
 

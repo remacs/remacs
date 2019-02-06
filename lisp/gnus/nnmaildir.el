@@ -1779,14 +1779,11 @@ This variable is set by `nnmaildir-request-article'.")
       t)))
 
 (defun nnmaildir-close-server (&optional server)
-  (defvar flist) (defvar ls) (defvar dirs) (defvar dir)
-  (defvar files) (defvar file) (defvar x)
-  (let (flist ls dirs dir files file x)
-    (nnmaildir--prepare server nil)
-    (when nnmaildir--cur-server
-      (setq server nnmaildir--cur-server
-	    nnmaildir--cur-server nil)
-      (unintern (nnmaildir--srv-address server) nnmaildir--servers)))
+  (nnmaildir--prepare server nil)
+  (when nnmaildir--cur-server
+    (setq server nnmaildir--cur-server
+	  nnmaildir--cur-server nil)
+    (unintern (nnmaildir--srv-address server) nnmaildir--servers))
   t)
 
 (defun nnmaildir-request-close ()

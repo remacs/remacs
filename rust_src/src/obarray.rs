@@ -4,8 +4,8 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
+    multibyte::LispStringRef,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
@@ -46,10 +46,9 @@ impl LispObarrayRef {
     /// symbol would be if it were present.
     pub fn lookup(&self, name: LispObject) -> LispObject {
         let string = name.symbol_or_string_as_string();
-        let obj = LispObject::from(self);
         unsafe {
             oblookup(
-                obj,
+                self.into(),
                 string.const_sdata_ptr(),
                 string.len_chars(),
                 string.len_bytes(),
@@ -61,30 +60,24 @@ impl LispObarrayRef {
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
     /// name will be transferred to pure storage.
-    pub fn intern(&self, string: LispObject) -> LispObject {
+    pub fn intern(&self, string: LispStringRef) -> LispObject {
+        let string = string.into();
         let tem = self.lookup(string);
-        let obj = LispObject::from(self);
         if tem.is_symbol() {
             tem
         } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
-            intern_driver(unsafe { Fpurecopy(string) }, obj, tem)
+            intern_driver(unsafe { Fpurecopy(string) }, self.into(), tem)
         } else {
-            intern_driver(string, obj, tem)
+            intern_driver(string, self.into(), tem)
         }
-    }
-}
-
-impl LispObject {
-    pub fn as_obarray_or_error(self) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(self))
     }
 }
 
 impl From<LispObject> for LispObarrayRef {
     fn from(o: LispObject) -> LispObarrayRef {
-        o.as_obarray_or_error()
+        LispObarrayRef::new(check_obarray(o))
     }
 }
 
@@ -93,7 +86,7 @@ impl From<LispObject> for Option<LispObarrayRef> {
         if o.is_nil() {
             None
         } else {
-            Some(o.as_obarray_or_error())
+            Some(o.into())
         }
     }
 }
@@ -101,19 +94,20 @@ impl From<LispObject> for Option<LispObarrayRef> {
 /// Intern (e.g. create a symbol from) a string.
 pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
     let s = string.as_ref();
-    LispSymbolRef::from(unsafe {
+    unsafe {
         intern_1(
             s.as_ptr() as *const libc::c_char,
             s.len() as libc::ptrdiff_t,
         )
-    })
+    }
+    .into()
 }
 
 #[no_mangle]
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.Vcurrent_load_list = LispObject::cons(x, globals.Vcurrent_load_list);
+            globals.Vcurrent_load_list = (x, globals.Vcurrent_load_list).into();
         }
     }
 }
@@ -226,12 +220,8 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
-pub fn lisp_intern(string: LispObject, obarray: LispObject) -> LispObject {
-    let obarray_ref = if obarray.is_nil() {
-        LispObarrayRef::global()
-    } else {
-        obarray.as_obarray_or_error()
-    };
+pub fn lisp_intern(string: LispStringRef, obarray: Option<LispObarrayRef>) -> LispObject {
+    let obarray_ref = obarray.unwrap_or_else(LispObarrayRef::global);
 
     obarray_ref.intern(string)
 }

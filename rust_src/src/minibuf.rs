@@ -7,9 +7,9 @@ use crate::{
     editfns::field_end,
     eval::unbind_to,
     keymap::get_keymap,
-    lisp::defsubr,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
+    multibyte::LispStringRef,
     obarray::{intern, lisp_intern},
     remacs_sys::{
         globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
@@ -77,7 +77,7 @@ pub fn minibuffer_prompt() -> LispObject {
 /// Return (point-min) if current buffer is not a minibuffer.
 #[lisp_fn]
 pub fn minibuffer_prompt_end() -> EmacsInt {
-    let buffer = ThreadState::current_buffer();
+    let buffer = ThreadState::current_buffer_unchecked();
     let beg = buffer.beg() as EmacsInt;
     if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
         return beg;
@@ -97,7 +97,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
 #[lisp_fn]
 pub fn minibuffer_contents() -> LispObject {
     let prompt_end = minibuffer_prompt_end() as isize;
-    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer().zv, true) }
+    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer_unchecked().zv, true) }
 }
 
 /// Return the user input in a minibuffer as a string, without text-properties.
@@ -105,7 +105,13 @@ pub fn minibuffer_contents() -> LispObject {
 #[lisp_fn]
 pub fn minibuffer_contents_no_properties() -> LispObject {
     let prompt_end = minibuffer_prompt_end() as isize;
-    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer().zv, false) }
+    unsafe {
+        make_buffer_string(
+            prompt_end,
+            ThreadState::current_buffer_unchecked().zv,
+            false,
+        )
+    }
 }
 
 /// Read a string from the minibuffer, prompting with string PROMPT.
@@ -159,15 +165,14 @@ pub fn minibuffer_contents_no_properties() -> LispObject {
 /// and some related functions, which use zero-indexing for POSITION.
 #[lisp_fn(min = "1")]
 pub fn read_from_minibuffer(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial_contents: LispObject,
     mut keymap: LispObject,
-    read: LispObject,
+    read: bool,
     hist: LispObject,
     default_value: LispObject,
-    inherit_input_method: LispObject,
+    inherit_input_method: bool,
 ) -> LispObject {
-    prompt.as_string_or_error();
     keymap = if keymap.is_nil() {
         unsafe { globals.Vminibuffer_local_map }
     } else {
@@ -191,13 +196,13 @@ pub fn read_from_minibuffer(
         read_minibuf(
             keymap,
             initial_contents,
-            prompt,
-            read.is_not_nil(),
+            prompt.into(),
+            read,
             histvar,
             histpos,
             default_value,
             globals.minibuffer_allow_text_properties,
-            inherit_input_method.is_not_nil(),
+            inherit_input_method,
         )
     }
 }
@@ -303,11 +308,11 @@ pub fn completing_read(
 ///  the current input method and the setting of `enable-multibyte-characters'.
 #[lisp_fn(min = "1")]
 pub fn read_string(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial_input: LispObject,
     history: LispObject,
     default_value: LispObject,
-    inherit_input_method: LispObject,
+    inherit_input_method: bool,
 ) -> LispObject {
     let count = c_specpdl_index();
 
@@ -322,17 +327,17 @@ pub fn read_string(
         prompt,
         initial_input,
         Qnil,
-        Qnil,
+        false,
         history,
         default_value,
         inherit_input_method,
     );
 
     if let Some(s) = val.as_string() {
-        if s.len_chars() == 0 && default_value.is_not_nil() {
-            val = match default_value.as_cons() {
+        if s.is_empty() && default_value.is_not_nil() {
+            val = match default_value.into() {
                 None => default_value,
-                Some(c) => c.car(),
+                Some((a, _)) => a,
             }
         }
     }
@@ -367,7 +372,7 @@ pub fn read_command_or_variable(
     if name.is_nil() {
         name
     } else {
-        lisp_intern(name, Qnil)
+        lisp_intern(name.into(), None)
     }
 }
 
@@ -400,16 +405,15 @@ pub fn read_variable(prompt: LispObject, default_value: LispObject) -> LispObjec
 /// the current input method and the setting of`enable-multibyte-characters'.
 #[lisp_fn(min = "1")]
 pub fn read_no_blanks_input(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    prompt.as_string_or_error();
     unsafe {
         read_minibuf(
             globals.Vminibuffer_local_ns_map,
             initial,
-            prompt,
+            prompt.into(),
             false,
             Qminibuffer_history,
             LispObject::from_fixnum(0),

@@ -7,7 +7,6 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     multibyte,
     multibyte::LispStringRef,
@@ -17,8 +16,6 @@ use crate::{
         string_to_multibyte as c_string_to_multibyte,
     },
 };
-
-pub static MIME_LINE_LENGTH: isize = 76;
 
 /// Return t if OBJECT is a string.
 #[lisp_fn]

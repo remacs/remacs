@@ -1734,9 +1734,9 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     {
       /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
-      /* First, disconnect its current controlling terminal.  */
-      if (pty_flag)
-	setsid ();
+      /* First, disconnect its current controlling terminal.
+	 Do this even if !PTY_FLAG; see Bug#30762.  */
+      setsid ();
       /* Make the pty's terminal the controlling terminal.  */
       if (pty_flag && forkin >= 0)
 	{
@@ -6293,27 +6293,6 @@ See function `interrupt-process' for more details on usage.  */)
   return process;
 }
 
-DEFUN ("interrupt-process", Finterrupt_process, Sinterrupt_process, 0, 2, 0,
-       doc: /* Interrupt process PROCESS.
-PROCESS may be a process, a buffer, or the name of a process or buffer.
-No arg or nil means current buffer's process.
-Second arg CURRENT-GROUP non-nil means send signal to
-the current process-group of the process's controlling terminal
-rather than to the process's own process group.
-If the process is a shell, this means interrupt current subjob
-rather than the shell.
-
-If CURRENT-GROUP is `lambda', and if the shell owns the terminal,
-don't send the signal.
-
-This function calls the functions of `interrupt-process-functions' in
-the order of the list, until one of them returns non-`nil'.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  return CALLN (Frun_hook_with_args_until_success, Qinterrupt_process_functions,
-		process, current_group);
-}
-
 DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
        doc: /* Kill process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.  */)
@@ -6434,7 +6413,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.  */)
       if (NILP (tem))
 	{
 	  Lisp_Object process_number
-	    = string_to_number (SSDATA (process), 10, 1);
+	    = string_to_number (SSDATA (process), 10, true);
 	  if (NUMBERP (process_number))
 	    tem = process_number;
 	}
@@ -7177,17 +7156,6 @@ kbd_on_hold_p (void)
 
 /* Enumeration of and access to system processes a-la ps(1).  */
 
-DEFUN ("list-system-processes", Flist_system_processes, Slist_system_processes,
-       0, 0, 0,
-       doc: /* Return a list of numerical process IDs of all running processes.
-If this functionality is unsupported, return nil.
-
-See `process-attributes' for getting attributes of a process given its ID.  */)
-  (void)
-{
-  return list_system_processes ();
-}
-
 DEFUN ("process-attributes", Fprocess_attributes,
        Sprocess_attributes, 1, 1, 0,
        doc: /* Return attributes of the process given by its PID, a number.
@@ -7520,7 +7488,6 @@ returns non-`nil'.  */);
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
-  DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
@@ -7543,7 +7510,6 @@ returns non-`nil'.  */);
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
   defsubr (&Sinternal_default_interrupt_process);
-  defsubr (&Sinterrupt_process);
   defsubr (&Skill_process);
   defsubr (&Squit_process);
   defsubr (&Sstop_process);
@@ -7588,6 +7554,5 @@ returns non-`nil'.  */);
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
 
-  defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }

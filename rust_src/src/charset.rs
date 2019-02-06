@@ -3,19 +3,17 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    hashtable::HashLookupResult,
-    lisp::{defsubr, LispObject},
+    hashtable::{HashLookupResult, LispHashTableRef},
+    lisp::LispObject,
     remacs_sys::Vcharset_hash_table,
 };
 
 impl LispObject {
     pub fn is_charset(self) -> bool {
-        unsafe {
-            let h_ref = Vcharset_hash_table.as_hash_table_or_error();
-            match h_ref.lookup(self) {
-                HashLookupResult::Found(_) => true,
-                HashLookupResult::Missing(_) => false,
-            }
+        let h_ref: LispHashTableRef = unsafe { Vcharset_hash_table }.into();
+        match h_ref.lookup(self) {
+            HashLookupResult::Found(_) => true,
+            HashLookupResult::Missing(_) => false,
         }
     }
 }

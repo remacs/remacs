@@ -1,9 +1,7 @@
 //! Routines to deal with category tables.
 
 use crate::{
-    chartable::LispCharTableRef,
-    lisp::{defsubr, LispObject},
-    remacs_sys::Qcategory_table,
+    chartable::LispCharTableRef, lisp::LispObject, remacs_sys::Qcategory_table,
     threads::ThreadState,
 };
 
@@ -19,7 +17,7 @@ pub fn category_table_p(arg: Option<LispCharTableRef>) -> bool {
 /// This is the one specified by the current buffer.
 #[lisp_fn]
 pub fn category_table() -> LispObject {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.category_table_
 }
 

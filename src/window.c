@@ -510,19 +510,6 @@ re-enlarged to its previous size.  */)
   return NILP (horizontal) ? w->normal_lines : w->normal_cols;
 }
 
-DEFUN ("window-new-pixel", Fwindow_new_pixel, Swindow_new_pixel, 0, 1, 0,
-       doc: /* Return new pixel size of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-
-The new pixel size of WINDOW is the value set by the last call of
-`set-window-new-pixel' for WINDOW.  If it is valid, it will be shortly
-installed as WINDOW's pixel height (see `window-pixel-height') or pixel
-width (see `window-pixel-width').  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->new_pixel;
-}
-
 DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
        doc: /* Return left pixel edge of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.  */)
@@ -549,94 +536,6 @@ WINDOW must be a valid window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return make_number (decode_valid_window (window)->left_col);
-}
-
-/* Return the number of lines/pixels of W's body.  Don't count any mode
-   or header line or horizontal divider of W.  Rounds down to nearest
-   integer when not working pixelwise. */
-static int
-window_body_height (struct window *w, bool pixelwise)
-{
-  int height = (w->pixel_height
-		- WINDOW_HEADER_LINE_HEIGHT (w)
-		- (WINDOW_HAS_HORIZONTAL_SCROLL_BAR (w)
-		   ? WINDOW_SCROLL_BAR_AREA_HEIGHT (w)
-		   : 0)
-		- WINDOW_MODE_LINE_HEIGHT (w)
-		- WINDOW_BOTTOM_DIVIDER_WIDTH (w));
-
-  /* Don't return a negative value.  */
-  return max (pixelwise
-	      ? height
-	      : height / FRAME_LINE_HEIGHT (WINDOW_XFRAME (w)),
-	      0);
-}
-
-/* Return the number of columns/pixels of W's body.  Don't count columns
-   occupied by the scroll bar or the divider/vertical bar separating W
-   from its right sibling or margins.  On window-systems don't count
-   fringes either.  Round down to nearest integer when not working
-   pixelwise.  */
-int
-window_body_width (struct window *w, bool pixelwise)
-{
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-
-  int width = (w->pixel_width
-	       - WINDOW_RIGHT_DIVIDER_WIDTH (w)
-	       - (WINDOW_HAS_VERTICAL_SCROLL_BAR (w)
-		  ? WINDOW_SCROLL_BAR_AREA_WIDTH (w)
-		  : (/* A vertical bar is either 1 or 0.  */
-		     !FRAME_WINDOW_P (f)
-		     && !WINDOW_RIGHTMOST_P (w)
-		     && !WINDOW_RIGHT_DIVIDER_WIDTH (w)))
-		- WINDOW_MARGINS_WIDTH (w)
-		- (FRAME_WINDOW_P (f)
-		   ? WINDOW_FRINGES_WIDTH (w)
-		   : 0));
-
-  /* Don't return a negative value.  */
-  return max (pixelwise
-	      ? width
-	      : width / FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w)),
-	      0);
-}
-
-DEFUN ("window-body-height", Fwindow_body_height, Swindow_body_height, 0, 2, 0,
-       doc: /* Return the height of WINDOW's text area.
-WINDOW must be a live window and defaults to the selected one.  Optional
-argument PIXELWISE non-nil means return the height of WINDOW's text area
-in pixels.  The return value does not include the mode line or header
-line or any horizontal divider.
-
-If PIXELWISE is nil, return the largest integer smaller than WINDOW's
-pixel height divided by the character height of WINDOW's frame.  This
-means that if a line at the bottom of the text area is only partially
-visible, that line is not counted.  */)
-  (Lisp_Object window, Lisp_Object pixelwise)
-{
-  return make_number (window_body_height (decode_live_window (window),
-					  !NILP (pixelwise)));
-}
-
-DEFUN ("window-body-width", Fwindow_body_width, Swindow_body_width, 0, 2, 0,
-       doc: /* Return the width of WINDOW's text area.
-WINDOW must be a live window and defaults to the selected one.  Optional
-argument PIXELWISE non-nil means return the width in pixels.  The return
-value does not include any vertical dividers, fringes or marginal areas,
-or scroll bars.
-
-If PIXELWISE is nil, return the largest integer smaller than WINDOW's
-pixel width divided by the character width of WINDOW's frame.  This
-means that if a column at the right of the text area is only partially
-visible, that column is not counted.
-
-Note that the returned value includes the column reserved for the
-continuation glyph.  */)
-  (Lisp_Object window, Lisp_Object pixelwise)
-{
-  return make_number (window_body_width (decode_live_window (window),
-					 !NILP (pixelwise)));
 }
 
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
@@ -1385,129 +1284,6 @@ Return nil if window display is not up-to-date.  In that case, use
  found_row:
   crop = max (0, (row->y + row->height) - max_y);
   return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
-}
-
-DEFUN ("window-lines-pixel-dimensions", Fwindow_lines_pixel_dimensions, Swindow_lines_pixel_dimensions, 0, 6, 0,
-       doc: /* Return pixel dimensions of WINDOW's lines.
-The return value is a list of the x- and y-coordinates of the lower
-right corner of the last character of each line.  Return nil if the
-current glyph matrix of WINDOW is not up-to-date.
-
-Optional argument WINDOW specifies the window whose lines' dimensions
-shall be returned.  Nil or omitted means to return the dimensions for
-the selected window.
-
-FIRST, if non-nil, specifies the index of the first line whose
-dimensions shall be returned.  If FIRST is nil and BODY is non-nil,
-start with the first text line of WINDOW.  Otherwise, start with the
-first line of WINDOW.
-
-LAST, if non-nil, specifies the last line whose dimensions shall be
-returned.  If LAST is nil and BODY is non-nil, the last line is the last
-line of the body (text area) of WINDOW.  Otherwise, last is the last
-line of WINDOW.
-
-INVERSE, if nil, means that the y-pixel value returned for a specific
-line specifies the distance in pixels from the left edge (body edge if
-BODY is non-nil) of WINDOW to the right edge of the last glyph of that
-line.  INVERSE non-nil means that the y-pixel value returned for a
-specific line specifies the distance in pixels from the right edge of
-the last glyph of that line to the right edge (body edge if BODY is
-non-nil) of WINDOW.
-
-LEFT non-nil means to return the x- and y-coordinates of the lower left
-corner of the leftmost character on each line.  This is the value that
-should be used for buffers that mostly display text from right to left.
-
-If LEFT is non-nil and INVERSE is nil, this means that the y-pixel value
-returned for a specific line specifies the distance in pixels from the
-left edge of the last (leftmost) glyph of that line to the right edge
-(body edge if BODY is non-nil) of WINDOW.  If LEFT and INVERSE are both
-non-nil, the y-pixel value returned for a specific line specifies the
-distance in pixels from the left edge (body edge if BODY is non-nil) of
-WINDOW to the left edge of the last (leftmost) glyph of that line.
-
-Normally, the value of this function is not available while Emacs is
-busy, for example, when processing a command.  It should be retrievable
-though when run from an idle timer with a delay of zero seconds.  */)
-  (Lisp_Object window, Lisp_Object first, Lisp_Object last, Lisp_Object body, Lisp_Object inverse, Lisp_Object left)
-{
-  struct window *w = decode_live_window (window);
-  struct buffer *b;
-  struct glyph_row *row, *end_row;
-  int max_y = NILP (body) ? WINDOW_PIXEL_HEIGHT (w) : window_text_bottom_y (w);
-  Lisp_Object rows = Qnil;
-  int window_width = NILP (body) ? w->pixel_width : window_body_width (w, true);
-  int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
-  int subtract = NILP (body) ? 0 : header_line_height;
-  bool invert = !NILP (inverse);
-  bool left_flag = !NILP (left);
-
-  if (noninteractive || w->pseudo_window_p)
-    return Qnil;
-
-  CHECK_BUFFER (w->contents);
-  b = XBUFFER (w->contents);
-
-  /* Fail if current matrix is not up-to-date.  */
-  if (!w->window_end_valid
-      || windows_or_buffers_changed
-      || b->clip_changed
-      || b->prevent_redisplay_optimizations_p
-      || window_outdated (w))
-    return Qnil;
-
-  if (NILP (first))
-    row = (NILP (body)
-	   ? MATRIX_ROW (w->current_matrix, 0)
-	   : MATRIX_FIRST_TEXT_ROW (w->current_matrix));
-  else if (NUMBERP (first))
-    {
-      CHECK_RANGED_INTEGER (first, 0, w->current_matrix->nrows);
-      row = MATRIX_ROW (w->current_matrix, XINT (first));
-    }
-  else
-    error ("Invalid specification of first line");
-
-  if (NILP (last))
-
-    end_row = (NILP (body)
-	       ? MATRIX_ROW (w->current_matrix, w->current_matrix->nrows)
-	       : MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w));
-  else if (NUMBERP (last))
-    {
-      CHECK_RANGED_INTEGER (last, 0, w->current_matrix->nrows);
-      end_row = MATRIX_ROW (w->current_matrix, XINT (last));
-    }
-  else
-    error ("Invalid specification of last line");
-
-  while (row <= end_row && row->enabled_p
-	 && row->y + row->height < max_y)
-    {
-
-      if (left_flag)
-	{
-	  struct glyph *glyph = row->glyphs[TEXT_AREA];
-
-	  rows = Fcons (Fcons (make_number
-			       (invert
-				? glyph->pixel_width
-				: window_width - glyph->pixel_width),
-			       make_number (row->y + row->height - subtract)),
-			rows);
-	}
-      else
-	rows = Fcons (Fcons (make_number
-			     (invert
-			      ? window_width - row->pixel_width
-			      : row->pixel_width),
-			     make_number (row->y + row->height - subtract)),
-		      rows);
-      row++;
-    }
-
-  return Fnreverse (rows);
 }
 
 struct Lisp_Char_Table *
@@ -5008,6 +4784,9 @@ and redisplay normally--don't erase and redraw the frame.  */)
   EMACS_INT iarg UNINIT;
   int this_scroll_margin;
 
+  /* For reasons why we signal an error here, see
+     http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00053.html,
+     http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00094.html.  */
   if (buf != current_buffer)
     error ("`recenter'ing a window that does not display current-buffer.");
 
@@ -6651,7 +6430,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
-  defsubr (&Swindow_new_pixel); 
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
@@ -6659,8 +6437,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
-  defsubr (&Swindow_body_height);
-  defsubr (&Swindow_body_width);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
@@ -6671,7 +6447,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
-  defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);

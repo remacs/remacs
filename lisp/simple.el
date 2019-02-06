@@ -121,6 +121,11 @@ If non-nil, the value is passed directly to `recenter'."
 A buffer becomes most recent when its compilation, grep, or
 similar mode is started, or when it is used with \\[next-error]
 or \\[compile-goto-error].")
+
+;; next-error-last-buffer is made buffer-local to keep the reference
+;; to the parent buffer used to navigate to the current buffer, so the
+;; next call of next-buffer will use the same parent buffer to
+;; continue navigation from it.
 (make-variable-buffer-local 'next-error-last-buffer)
 
 (defvar next-error-function nil
@@ -1125,6 +1130,7 @@ the actual saved text might be different from what was killed."
 
 (defun mark-whole-buffer ()
   "Put point at beginning and mark at end of buffer.
+Also push mark at point before pushing mark at end of buffer.
 If narrowing is in effect, only uses the accessible part of the buffer.
 You probably should not use this function in Lisp programs;
 it is usually a mistake for a Lisp function to use any subroutine

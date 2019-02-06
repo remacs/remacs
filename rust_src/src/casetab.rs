@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     objects::eq,
     remacs_sys::{set_case_table, Qcase_table, Vascii_downcase_table},
     threads::ThreadState,
@@ -37,7 +37,7 @@ pub fn case_table_p(object: LispObject) -> bool {
 /// Return the case table of the current buffer.
 #[lisp_fn]
 pub fn current_case_table() -> LispObject {
-    ThreadState::current_buffer().downcase_table_
+    ThreadState::current_buffer_unchecked().downcase_table_
 }
 
 /// Return the standard case table.

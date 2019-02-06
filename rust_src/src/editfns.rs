@@ -6,7 +6,7 @@ use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc;
-use libc::{c_int, c_uchar, ptrdiff_t};
+use libc::{c_char, c_int, c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
@@ -14,46 +14,49 @@ use crate::{
     buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
-    eval::{progn, unbind_to},
-    lisp::{defsubr, LispObject},
+    eval::{progn, record_unwind_protect, unbind_to},
+    indent::invalidate_current_column,
+    lisp::LispObject,
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
         set_point_from_marker,
     },
     multibyte::{
-        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
-        write_codepoint, MAX_MULTIBYTE_LENGTH,
+        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, raw_byte_from_codepoint,
+        unibyte_to_char, write_codepoint, MAX_MULTIBYTE_LENGTH,
     },
     multibyte::{Codepoint, LispStringRef},
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
-        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_from_buffer, invalidate_current_column, make_buffer_string,
+        buffer_overflow, build_string, chars_in_text, current_message, del_range, del_range_1,
+        downcase, find_before_next_newline, find_newline, get_char_property_and_overlay, globals,
+        insert_1_both, insert_from_buffer, insert_from_string_1, make_buffer_string,
         make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, message3, record_unwind_current_buffer, record_unwind_protect,
-        save_excursion_restore, save_restriction_restore, save_restriction_save,
-        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both, styled_format,
-        update_buffer_properties, STRING_BYTES,
+        message1, message3, record_unwind_current_buffer, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, signal_after_change, styled_format,
+        update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
         Fprevious_single_char_property_change, Fx_popup_dialog,
     },
-    remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    remacs_sys::{
+        Qboundary, Qchar_or_string_p, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt,
+    },
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
     time::{lisp_time_struct, time_overflow, LispTime},
     util::clip_to_bounds,
-    windows::selected_window,
+    windows::{selected_window, LispWindowRef},
 };
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
 #[lisp_fn]
 pub fn point() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt as EmacsInt
 }
 
@@ -76,7 +79,7 @@ pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
 /// If the buffer is narrowed, this means the end of the narrowed part.
 #[lisp_fn]
 pub fn eobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.zv == buffer_ref.pt
 }
 
@@ -84,14 +87,14 @@ pub fn eobp() -> bool {
 /// buffer is narrowed, this means the beginning of the narrowed part.
 #[lisp_fn]
 pub fn bobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv
 }
 
 /// Return t if point is at the beginning of a line.
 #[lisp_fn]
 pub fn bolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv || buffer_ref.fetch_byte(buffer_ref.pt_byte - 1) == b'\n'
 }
 
@@ -99,7 +102,7 @@ pub fn bolp() -> bool {
 /// `End of a line' includes point being at the end of the buffer.
 #[lisp_fn]
 pub fn eolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.zv || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
@@ -107,7 +110,7 @@ pub fn eolp() -> bool {
 /// See also `gap-size'.
 #[lisp_fn]
 pub fn gap_position() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_position() as EmacsInt
 }
 
@@ -115,7 +118,7 @@ pub fn gap_position() -> EmacsInt {
 /// See also `gap-position'.
 #[lisp_fn]
 pub fn gap_size() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_size() as EmacsInt
 }
 
@@ -123,7 +126,7 @@ pub fn gap_size() -> EmacsInt {
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
-    let current_buf = ThreadState::current_buffer();
+    let current_buf = ThreadState::current_buffer_unchecked();
     if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
         && unsafe { globals.Vmark_even_if_inactive }.is_nil()
         && current_buf.mark_active().is_nil()
@@ -159,7 +162,7 @@ pub fn region_end() -> EmacsInt {
 /// If you set the marker not to point anywhere, the buffer will have no mark.
 #[lisp_fn]
 pub fn mark_marker() -> LispObject {
-    ThreadState::current_buffer().mark()
+    ThreadState::current_buffer_unchecked().mark()
 }
 
 /// Return the minimum permissible value of point in the current
@@ -167,7 +170,7 @@ pub fn mark_marker() -> LispObject {
 /// effect.
 #[lisp_fn]
 pub fn point_min() -> EmacsInt {
-    ThreadState::current_buffer().begv as EmacsInt
+    ThreadState::current_buffer_unchecked().begv as EmacsInt
 }
 
 /// Return the maximum permissible value of point in the current
@@ -175,7 +178,7 @@ pub fn point_min() -> EmacsInt {
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max() -> EmacsInt {
-    ThreadState::current_buffer().zv as EmacsInt
+    ThreadState::current_buffer_unchecked().zv as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -187,9 +190,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let mut cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer_unchecked();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -202,10 +205,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -228,7 +231,7 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
         args_out_of_range!(byte, 0, 255)
     }
-    let buf = ThreadState::current_buffer();
+    let buf = ThreadState::current_buffer_unchecked();
     let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
         EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
     } else {
@@ -282,27 +285,27 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
     if BUF_BYTES_MAX / (len as isize) < (count as isize) {
         unsafe { buffer_overflow() };
     }
-    let mut n: ptrdiff_t = (count * (len as EmacsInt)) as ptrdiff_t;
-    let mut buffer = [0_i8; BUFSIZE];
+    let mut n = (count as usize) * len;
+    let mut buffer = [0_u8; BUFSIZE];
     // bufferlen is the number of bytes used when filling the buffer
     // with as many copies of str as possible, without overflowing it.
-    let bufferlen: ptrdiff_t = std::cmp::min(n, (BUFSIZE - (BUFSIZE % len)) as isize);
+    let bufferlen = std::cmp::min(n, BUFSIZE - (BUFSIZE % len));
     for i in 0..bufferlen {
-        buffer[i as usize] = str[(i % len as isize) as usize] as i8;
+        buffer[i] = str[i % len];
     }
     while n > bufferlen {
         unsafe { maybe_quit() };
         if inherit {
-            unsafe { insert_and_inherit(buffer.as_ptr(), bufferlen) };
+            insert_and_inherit(&buffer[..bufferlen]);
         } else {
-            unsafe { insert(buffer.as_ptr(), bufferlen) };
+            insert_slice(&buffer[..bufferlen]);
         }
         n -= bufferlen;
     }
     if inherit {
-        unsafe { insert_and_inherit(buffer.as_ptr(), n) };
+        insert_and_inherit(&buffer[..n]);
     } else {
-        unsafe { insert(buffer.as_ptr(), n) };
+        insert_slice(&buffer[..n]);
     }
 }
 
@@ -310,7 +313,7 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
 /// the buffer or accessible region, return 0.
 #[lisp_fn]
 pub fn following_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt >= buffer_ref.zv {
         0
@@ -323,7 +326,7 @@ pub fn following_char() -> EmacsInt {
 /// beginning of the buffer or accessible region, return 0.
 #[lisp_fn(c_name = "previous_char")]
 pub fn preceding_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt <= buffer_ref.begv {
         return EmacsInt::from(0);
@@ -342,7 +345,7 @@ pub fn preceding_char() -> EmacsInt {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     let pos_byte: isize;
 
     if pos.is_nil() {
@@ -363,7 +366,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -379,9 +382,9 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     if pos.is_nil() {
-        pos = LispObject::from(point());
+        pos = point().into();
     }
     if let Some(m) = pos.as_marker() {
         let pos_byte = m.bytepos_or_error();
@@ -397,7 +400,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -419,7 +422,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     // the unwrap call is safe, the number of args has already been checked
     let first = it.next().unwrap();
-    let orig_string = first.as_string_or_error();
+    let orig_string = LispStringRef::from(*first);
 
     let copy = unsafe { Fcopy_sequence(*first) };
 
@@ -427,16 +430,11 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = LispObject::cons(*a, LispObject::cons(*b, properties));
+        properties = (*a, (*b, properties)).into();
     }
 
     unsafe {
-        Fadd_text_properties(
-            LispObject::from(0),
-            LispObject::from(orig_string.len_chars()),
-            properties,
-            copy,
-        );
+        Fadd_text_properties(0.into(), orig_string.len_chars().into(), properties, copy);
     };
 
     copy
@@ -467,7 +465,7 @@ pub fn byte_to_string(byte: EmacsInt) -> LispObject {
 /// Return the first character in STRING.
 #[lisp_fn]
 pub fn string_to_char(string: LispStringRef) -> EmacsInt {
-    if string.len_chars() > 0 {
+    if !string.is_empty() {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
             EmacsInt::from(cp)
@@ -638,9 +636,9 @@ pub fn constrain_to_field(
 
     let prev_old = old_pos - 1;
     let prev_new = new_pos - 1;
-    let begv = ThreadState::current_buffer().begv as EmacsInt;
+    let begv = ThreadState::current_buffer_unchecked().begv as EmacsInt;
 
-    if unsafe { globals.Vinhibit_field_text_motion == Qnil }
+    if unsafe { globals.Vinhibit_field_text_motion.is_nil() }
         && new_pos != old_pos
         && (get_char_property(
             new_pos,
@@ -669,7 +667,7 @@ pub fn constrain_to_field(
                 Fget_pos_property(
                     LispObject::from(old_pos),
                     inhibit_capture_property,
-                    Qnil) == Qnil
+                    Qnil).is_nil()
             }
                 && (old_pos <= begv
                     || get_char_property(
@@ -743,7 +741,7 @@ pub fn constrain_to_field(
 /// If BYTEPOS is out of range, the value is nil.
 #[lisp_fn]
 pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     let mut pos_byte = bytepos as isize;
     if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
         return None;
@@ -775,7 +773,7 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
         return true;
     }
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.case_fold_search().is_nil() {
         return false;
     }
@@ -870,7 +868,7 @@ pub fn insert_buffer_substring(
         args_out_of_range!(beg, end);
     }
 
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe {
         set_buffer_internal_1(buf_ref.as_mut());
         update_buffer_properties(b, e);
@@ -900,13 +898,15 @@ pub fn insert_buffer_substring(
 /// usage: (message FORMAT-STRING &rest ARGS)
 #[lisp_fn(min = "1")]
 pub fn message(args: &mut [LispObject]) -> LispObject {
-    if args[0].is_nil()
-        || args[0]
+    let format_string = args[0];
+
+    if format_string.is_nil()
+        || format_string
             .as_string()
-            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) == 0 })
+            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) } == 0)
     {
         unsafe { message1(ptr::null_mut()) };
-        args[0]
+        format_string
     } else {
         let val = format_message(args);
         unsafe { message3(val) };
@@ -932,12 +932,8 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             Qnil
         } else {
             let val = format_message(args);
-            let pane = list!(LispObject::cons(
-                build_string("OK".as_ptr() as *const ::libc::c_char),
-                true
-            ));
-            let menu = LispObject::cons(val, pane);
-            Fx_popup_dialog(Qt, menu, Qt);
+            let pane = list!((build_string("OK".as_ptr() as *const ::libc::c_char), true));
+            Fx_popup_dialog(Qt, (val, pane).into(), Qt);
             val
         }
     }
@@ -1077,7 +1073,7 @@ pub fn format_message(args: &mut [LispObject]) -> LispObject {
 /// of the buffer.
 #[lisp_fn]
 pub fn buffer_string() -> LispObject {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     let begv = cur_buf.begv;
     let begv_byte = cur_buf.begv_byte;
@@ -1120,7 +1116,7 @@ pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) 
 // offload some work from GC.
 #[no_mangle]
 pub extern "C" fn save_excursion_save() -> LispObject {
-    let window = selected_window().as_window_or_error();
+    let window: LispWindowRef = selected_window().into();
 
     unsafe {
         make_save_obj_obj_obj_obj(
@@ -1218,7 +1214,7 @@ pub fn find_field(
     beg_limit: Option<EmacsInt>,
     end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
-    let current_buffer = ThreadState::current_buffer();
+    let current_buffer = ThreadState::current_buffer_unchecked();
     let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as ptrdiff_t);
 
     // Fields right before and after the point.
@@ -1392,10 +1388,11 @@ pub fn delete_and_extract_region(
     }
 }
 
-fn time_arith<F>(a: LispObject, b: LispObject, op: F) -> Vec<EmacsInt>
-where
-    F: FnOnce(LispTime, LispTime) -> LispTime,
-{
+fn time_arith(
+    a: LispObject,
+    b: LispObject,
+    op: impl FnOnce(LispTime, LispTime) -> LispTime,
+) -> Vec<EmacsInt> {
     let mut alen: c_int = 0;
     let mut blen: c_int = 0;
     let ta = unsafe { lisp_time_struct(a, &mut alen) };
@@ -1442,7 +1439,7 @@ pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
 /// This allows the buffer's full text to be seen and edited.
 #[lisp_fn(intspec = "")]
 pub fn widen() {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.beg() != buffer_ref.begv || buffer_ref.z() != buffer_ref.zv {
         buffer_ref.set_clip_changed(true);
@@ -1452,8 +1449,286 @@ pub fn widen() {
     buffer_ref.set_zv_both(buffer_ref.z(), buffer_ref.z_byte());
 
     // Changing the buffer bounds invalidates any recorded current column.
+    invalidate_current_column();
+}
+
+/// Insert the arguments, either strings or characters, at point.
+/// Point and after-insertion markers move forward to end up after the inserted text.
+/// Any other markers at the point of insertion remain before the text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `string-make-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion (see `string-make-unibyte').
+///
+/// When operating on binary data, it may be necessary to preserve the original bytes of a unibyte
+/// string when inserting it into a multibyte buffer; to accomplish this, apply
+/// `string-as-multibyte' to the string and insert the result.
+///
+/// usage: (insert &rest ARGS)
+#[lisp_fn(name = "insert", c_name = "insert")]
+pub fn insert_lisp(args: &[LispObject]) {
+    general_insert_function(insert_slice, insert_from_string_safe, false, args);
+}
+
+/// Insert the arguments at point, inheriting properties from adjoining text.  Point and
+/// after-insertion markers move forward to end up after the inserted text.  Any other markers at
+/// the point of insertion remain before the text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// usage: (insert-and-inherit &rest ARGS)
+#[lisp_fn(name = "insert-and-inherit", c_name = "insert_and_inherit")]
+pub fn insert_and_inherit_lisp(args: &[LispObject]) {
+    general_insert_function(insert_and_inherit, insert_from_string_safe, true, args);
+}
+
+/// Insert strings or characters at point, relocating markers after the text.  Point and markers
+/// move forward to end up after the inserted text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// If an overlay begins at the insertion point, the inserted text falls outside the overlay; if a
+/// nonempty overlay ends at the insertion point, the inserted text falls inside that overlay.
+///
+/// usage: (insert-before-markers &rest ARGS)
+#[lisp_fn(name = "insert-before-markers", c_name = "insert_before_markers")]
+pub fn insert_before_markers_lisp(args: &[LispObject]) {
+    general_insert_function(
+        insert_before_markers,
+        insert_from_string_before_markers_safe,
+        false,
+        args,
+    );
+}
+
+/// Insert text at point, relocating markers and inheriting properties.  Point and markers move
+/// forward to end up after the inserted text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// usage: (insert-before-markers-and-inherit &rest ARGS)
+#[lisp_fn(
+    name = "insert-before-markers-and-inherit",
+    c_name = "insert_and_inherit_before_markers"
+)]
+pub fn insert_and_inherit_before_markers_lisp(args: &[LispObject]) {
+    general_insert_function(
+        insert_before_markers_and_inherit,
+        insert_from_string_before_markers_safe,
+        true,
+        args,
+    );
+}
+
+/// Insert the part of the text of STRING, a Lisp object assumed to be of type string, consisting
+/// of the LENGTH characters (LENGTH_BYTE bytes) starting at position POS / POS_BYTE.  If the text
+/// of STRING has properties,
+///copy them into the buffer.
+///
+/// It does not work to use `insert' for this, because a GC could happen before we copy the stuff
+/// into the buffer, and relocate the string without insert noticing.
+#[no_mangle]
+pub unsafe extern "C" fn insert_from_string(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    let opoint = current_buffer.pt;
+
+    let s: LispStringRef = string.into();
+    if s.len_chars() == 0 {
+        return;
+    }
+
+    insert_from_string_1(string, pos, pos_byte, length, length_byte, inherit, false);
+    signal_after_change(opoint, 0, current_buffer.pt - opoint);
+    update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
+}
+
+/// A safe-marked version of insert_from_string
+fn insert_from_string_safe(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    unsafe { insert_from_string(string, pos, pos_byte, length, length_byte, inherit) };
+}
+
+/// Like `insert_from_string' except that all markers pointing at the place where the insertion
+/// happens are adjusted to point after it.
+#[no_mangle]
+pub unsafe extern "C" fn insert_from_string_before_markers(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    let opoint = current_buffer.pt;
+
+    let s: LispStringRef = string.into();
+    if s.len_chars() == 0 {
+        return;
+    }
+
+    insert_from_string_1(string, pos, pos_byte, length, length_byte, inherit, true);
+    signal_after_change(opoint, 0, current_buffer.pt - opoint);
+    update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
+}
+
+/// A safe-marked version of insert_from_string_before_markers
+fn insert_from_string_before_markers_safe(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
     unsafe {
-        invalidate_current_column();
+        insert_from_string_before_markers(string, pos, pos_byte, length, length_byte, inherit)
+    };
+}
+
+/// Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC (if a type of object is
+/// Lisp_Int) or INSERT_FROM_STRING_FUNC (if a type of object is Lisp_String).  INHERIT is passed
+/// to INSERT_FROM_STRING_FUNC as the last argument
+fn general_insert_function<IF, IFSF>(
+    insert_func: IF,
+    insert_from_string_func: IFSF,
+    inherit: bool,
+    args: &[LispObject],
+) where
+    IF: Fn(&[u8]),
+    IFSF: Fn(LispObject, ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool),
+{
+    for &val in args {
+        if val.is_character() {
+            let c = val.as_natnum_or_error() as Codepoint;
+            let mut s = [0 as c_uchar; MAX_MULTIBYTE_LENGTH];
+            let multibyte = ThreadState::current_buffer_unchecked().multibyte_characters_enabled();
+            let len = if multibyte {
+                write_codepoint(&mut s, c)
+            } else {
+                s[0] = raw_byte_from_codepoint(c);
+                1
+            };
+            insert_func(&s[..len]);
+        } else if let Some(string) = val.as_string() {
+            insert_from_string_func(val, 0, 0, string.len_chars(), string.len_bytes(), inherit);
+        } else {
+            wrong_type!(Qchar_or_string_p, val);
+        }
+    }
+}
+
+/// Insert a string of specified length before point.  This function judges multibyteness based on
+/// enable_multibyte_characters in the current buffer; it never converts between single-byte and
+/// multibyte.
+///
+/// DO NOT use this for the contents of a Lisp string or a Lisp buffer!  prepare_to_modify_buffer
+/// could relocate the text.
+#[no_mangle]
+pub unsafe extern "C" fn insert(string: *const c_char, nbytes: ptrdiff_t) {
+    if nbytes > 0 {
+        let len = chars_in_text(string as *const c_uchar, nbytes);
+        insert_1_both(string, len, nbytes, false, true, false);
+
+        let pt = point() as isize;
+        let opoint = pt - len;
+        signal_after_change(opoint, 0, len);
+        update_compositions(opoint, pt, CHECK_BORDER as i32);
+    }
+}
+
+/// A version of inset that takes a slice instead of pointer and length
+pub fn insert_slice(string: &[u8]) {
+    unsafe { insert(string.as_ptr() as *const c_char, string.len() as isize) }
+}
+
+/// Likewise, but inherit text properties from neighboring characters.
+pub fn insert_and_inherit(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                true,
+                true,
+                false,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
+        }
+    }
+}
+
+/// Like `insert' except that all markers pointing at the place where the insertion happens are
+/// adjusted to point after it.  Don't use this function to insert part of a Lisp string, since gc
+/// could happen and relocate it.
+pub fn insert_before_markers(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                false,
+                true,
+                true,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
+        }
+    }
+}
+
+/// Likewise, but inherit text properties from neighboring characters.
+pub fn insert_before_markers_and_inherit(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                true,
+                true,
+                true,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
+        }
     }
 }
 

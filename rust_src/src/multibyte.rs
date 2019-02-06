@@ -39,7 +39,8 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use crate::{
-    lisp::{ExternalPtr, LispObject},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
@@ -89,9 +90,11 @@ impl LispStringRef {
     /// considered; the validity of the following bytes is not checked.  Tabs in
     /// STRING are always taken to occupy `tab-width' columns.
     pub fn width(self) -> usize {
-        unsafe {
-            lisp_string_width(LispObject::from(self), -1, ptr::null_mut(), ptr::null_mut()) as usize
-        }
+        unsafe { lisp_string_width(self.into(), -1, ptr::null_mut(), ptr::null_mut()) as usize }
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.len_chars() == 0
     }
 
     pub fn is_multibyte(self) -> bool {
@@ -173,19 +176,21 @@ impl LispStringRef {
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
     }
+}
 
-    pub fn equal(
-        self,
+impl LispStructuralEqual for LispStringRef {
+    fn equal(
+        &self,
         other: LispStringRef,
         kind: equal_kind::Type,
         _depth: i32,
-        _ht: LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         self.len_chars() == other.len_chars()
             && self.len_bytes() == other.len_bytes()
             && self.as_slice() == other.as_slice()
             && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
-                || unsafe { compare_string_intervals(self.into(), other.into()) })
+                || unsafe { compare_string_intervals((*self).into(), other.into()) })
     }
 }
 
@@ -194,6 +199,12 @@ impl fmt::Display for LispStringRef {
         let slice =
             unsafe { slice::from_raw_parts(self.const_data_ptr(), self.len_bytes() as usize) };
         write!(f, "{}", String::from_utf8_lossy(slice).into_owned())
+    }
+}
+
+impl fmt::Debug for LispStringRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
@@ -259,7 +270,17 @@ impl From<EmacsDouble> for LispObject {
 
 impl From<LispObject> for LispStringRef {
     fn from(o: LispObject) -> Self {
-        o.as_string_or_error()
+        o.as_string().unwrap_or_else(|| wrong_type!(Qstringp, o))
+    }
+}
+
+impl From<LispObject> for Option<LispStringRef> {
+    fn from(o: LispObject) -> Self {
+        if o.is_string() {
+            Some(o.force_string())
+        } else {
+            None
+        }
     }
 }
 
@@ -274,20 +295,15 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_String
     }
 
+    pub fn force_string(self) -> LispStringRef {
+        unsafe { self.to_string_unchecked() }
+    }
+
     pub fn as_string(self) -> Option<LispStringRef> {
-        if self.is_string() {
-            Some(unsafe { self.as_string_unchecked() })
-        } else {
-            None
-        }
+        self.into()
     }
 
-    pub fn as_string_or_error(self) -> LispStringRef {
-        self.as_string()
-            .unwrap_or_else(|| wrong_type!(Qstringp, self))
-    }
-
-    pub unsafe fn as_string_unchecked(self) -> LispStringRef {
+    pub unsafe fn to_string_unchecked(self) -> LispStringRef {
         LispStringRef::new(self.get_untaggedptr() as *mut Lisp_String)
     }
 

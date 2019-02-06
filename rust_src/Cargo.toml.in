@@ -9,32 +9,36 @@ version = "0.1.0"
 build = "build.rs"
 edition = "2018"
 
+[workspace]
+members = ["remacs-lib", "remacs-macros", "remacs-util"]
+exclude = ["remacs-bindings", "alloc_unexecmacosx"]
+
 [dependencies]
 remacs-lib = { version = "0.1.0", path = "remacs-lib" }
 remacs-macros = { version = "0.1.0", path = "remacs-macros" }
-base64 = "0.9"
+base64 = "0.10.0"
 clippy = { version = "*", optional = true }
-errno = "0.2.3"
-lazy_static = "0.2.2"
+cfg-if = "0.1"
+errno = "0.2"
+field-offset = "0.1"
+flate2 = { version = "1.0", features = ["rust_backend"], default-features = false }
+lazy_static = "1.2"
 libc = "0.2"
-md5 = "0.3.5"
-rand = "0.4.3"
-sha1 = "0.2.0"
-sha2 = "0.4.2"
-field-offset = "0.1.1"
-flate2 = { version = "1.0.1", features = ["rust_backend"], default-features = false }
-if_chain = "0.1.3"
+line-wrap = "0.1.1"
+md5 = "0.6"
+rand = "0.4"
+sha1 = "0.6"
+sha2 = "0.8"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
-alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx" }
+alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx", optional = true }
 
 [build-dependencies]
 clippy = { version = "*", optional = true }
-lazy_static = "0.2.2"
+lazy_static = "1.2"
 libc = "0.2"
-regex = "0.2"
-bindgen = { git = "https://github.com/rust-lang-nursery/rust-bindgen.git", rev = "badb49277dddf1ea5d407075f9deea48897b52df" }
+regex = "1.1"
 
 [lib]
 crate-type = ["staticlib"]
@@ -49,8 +53,19 @@ panic = "abort"
 
 [features]
 default = [@CARGO_DEFAULT_FEATURES@]
+# Use unexec crate on Mac
+unexecmacosx = ["alloc_unexecmacosx"]
+# unexec everywhere else
+unexec = []
 # Compile with C xml2 library support.
 use-xml2 = []
-compile-errors = []
+# Use a window system
+window-system = []
+# Use the x11 window system
+window-system-x11 = []
+# Use the nextstep window system
+window-system-nextstep = []
+# Use the w32 window system
+window-system-w32 = []
 # Treat warnings as a build error on Travis.
 strict = []

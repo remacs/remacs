@@ -564,8 +564,8 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
     }
   c = DECODE_CHAR (charset, code);
   if (c < 0)
-    Fsignal (Qinvalid_read_syntax,
-	     list1 (build_string ("invalid multibyte form")));
+    xsignal1 (Qinvalid_read_syntax,
+              build_string ("invalid multibyte form"));
   return c;
 }
 
@@ -2603,7 +2603,7 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
-  return string_to_number (buf, radix, 0);
+  return string_to_number (buf, radix, false);
 }
 
 
@@ -3412,7 +3412,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
+	    Lisp_Object result = string_to_number (read_buffer, 10, false);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }

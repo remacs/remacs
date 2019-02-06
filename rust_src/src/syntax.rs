@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 use crate::{
     chartable::LispCharTableRef,
     editfns::constrain_to_field,
-    lisp::defsubr,
     lisp::LispObject,
     numbers::LispNumber,
     remacs_sys::{
@@ -21,7 +20,7 @@ use crate::{
 /// current buffer.
 #[lisp_fn]
 pub fn syntax_table() -> LispObject {
-    ThreadState::current_buffer().syntax_table_
+    ThreadState::current_buffer_unchecked().syntax_table_
 }
 
 /// Return t if OBJECT is a syntax table.
@@ -56,8 +55,8 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 
 // We don't name it scan_lists because there is an internal function
 // with the same name
-#[lisp_fn(name = "scan-lists")]
-pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
+#[lisp_fn(name = "scan-lists", c_name = "scan_lists")]
+pub fn scan_lists_lisp(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     unsafe { scan_lists(from, count, depth, false) }
 }
 
@@ -66,7 +65,7 @@ pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> Lis
 #[lisp_fn]
 pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
     check_syntax_table_p(table);
-    let mut buf = ThreadState::current_buffer();
+    let mut buf = ThreadState::current_buffer_unchecked();
     buf.set_syntax_table(table);
     let idx = per_buffer_var_idx!(syntax_table_);
     buf.set_per_buffer_value_p(idx, 1);
@@ -98,24 +97,24 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
 /// Construct a new syntax table and return it.
 /// It is a copy of the TABLE, which defaults to the standard syntax table.
 #[lisp_fn(min = "0")]
-pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
+pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     let buffer_table = unsafe { buffer_defaults.syntax_table_ };
     if table.is_not_nil() {
         check_syntax_table(table);
     } else {
         table = buffer_table;
     }
-    let copy = unsafe { Fcopy_sequence(table) };
+    let copy: LispCharTableRef = unsafe { Fcopy_sequence(table) }.into();
 
     // Only the standard syntax table should have a default element.
     // Other syntax tables should inherit from parents instead.
-    unsafe { set_char_table_defalt(copy, Qnil) };
+    unsafe { set_char_table_defalt(copy.into(), Qnil) };
 
     // Copied syntax tables should all have parents.
     // If we copied one with no parent, such as the standard syntax table,
     // use the standard syntax table as the copy's parent.
-    if copy.as_char_table_or_error().parent.is_nil() {
-        unsafe { Fset_char_table_parent(copy, buffer_table) };
+    if copy.parent.is_nil() {
+        unsafe { Fset_char_table_parent(copy.into(), buffer_table) };
     }
     copy
 }
@@ -135,7 +134,7 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
 #[lisp_fn(min = "0", intspec = "^p")]
 pub fn forward_word(arg: Option<EmacsInt>) -> bool {
     let arg = arg.unwrap_or(1);
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let point = cur_buf.pt;
 
     let (mut val, orig_val) = match unsafe { scan_words(point, arg) } {

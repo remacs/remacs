@@ -22,13 +22,12 @@ pub extern "C" fn arithcompare(
     obj2: LispObject,
     comparison: math::ArithComparison,
 ) -> LispObject {
-    let result = math::arithcompare(obj1, obj2, comparison);
-    LispObject::from(result)
+    math::arithcompare(obj1, obj2, comparison).into()
 }
 
 #[no_mangle]
 pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
-    keyboard::lucid_event_type_list_p(event.as_cons())
+    keyboard::lucid_event_type_list_p(event.into())
 }
 
 #[no_mangle]

@@ -1,16 +1,26 @@
 //! font support
 
+use std::ptr;
+
 use remacs_macros::lisp_fn;
 
+use std::{ffi::CString, mem};
+
 use crate::{
-    lisp::defsubr,
-    lisp::LispObject,
+    data,
+    frames::{LispFrameLiveOrSelected, LispFrameRef},
+    lisp::{ExternalPtr, LispObject},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
-    remacs_sys::Flist_fonts,
-    remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX},
+    remacs_sys::font_property_index::FONT_TYPE_INDEX,
+    remacs_sys::{font_add_log, font_at, Flist_fonts},
+    remacs_sys::{
+        pvec_type, Lisp_Font_Object, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX,
+    },
     remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
+    threads::ThreadState,
     vectors::LispVectorlikeRef,
+    windows::{LispWindowLiveOrSelected, LispWindowRef},
 };
 
 // A font is not a type in and of itself, it's just a group of three kinds of
@@ -97,6 +107,66 @@ impl FontExtraType {
     }
 }
 
+pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
+
+impl LispFontObjectRef {
+    pub fn add_log(self, action: &str, result: LispObject) {
+        let c_str = CString::new(action).unwrap();
+        unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
+    }
+
+    pub fn close(mut self, mut _frame: LispFrameRef) {
+        if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
+            // Already closed
+            return;
+        }
+        self.add_log("close", LispObject::from(false));
+        unsafe {
+            if let Some(f) = (*self.driver).close {
+                f(self.as_mut())
+            }
+            #[cfg(feature = "window-system")]
+            {
+                #[cfg(feature = "window-system-x11")]
+                let mut display_info = &mut *(*_frame.output_data.x).display_info;
+                #[cfg(feature = "window-system-nextstep")]
+                let mut display_info = &mut *(*_frame.output_data.ns).display_info;
+                #[cfg(feature = "window-system-w32")]
+                let mut display_info = &mut *(*_frame.output_data.w32).display_info;
+                debug_assert!(display_info.n_fonts > 0);
+                display_info.n_fonts -= 1;
+            }
+        }
+    }
+}
+
+impl From<LispFontObjectRef> for LispObject {
+    fn from(f: LispFontObjectRef) -> Self {
+        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
+impl From<LispObject> for LispFontObjectRef {
+    fn from(o: LispObject) -> Self {
+        match o.into() {
+            Some(font) => font,
+            None => wrong_type!(Qfont_object, o),
+        }
+    }
+}
+
+impl From<LispObject> for Option<LispFontObjectRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_object() {
+                Some(unsafe { mem::transmute(o) })
+            } else {
+                None
+            }
+        })
+    }
+}
+
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
 /// Return nil otherwise.
 /// Optional 2nd argument EXTRA-TYPE, if non-nil, specifies to check
@@ -136,11 +206,63 @@ pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
 /// Optional 2nd argument FRAME, if non-nil, specifies the target frame.
 #[lisp_fn(min = "1")]
 pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
-    let val = unsafe { Flist_fonts(spec, frame, LispObject::from(1), Qnil) };
-    match val.as_cons() {
-        Some(cons) => cons.car(),
+    let val = unsafe { Flist_fonts(spec, frame, 1.into(), Qnil) };
+    match val.into() {
+        Some((a, _)) => a,
         None => val,
     }
+}
+
+/// Close FONT-OBJECT
+#[lisp_fn(min = "1")]
+pub fn close_font(font_object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
+    let frame: LispFrameRef = frame.into();
+    font_object.close(frame)
+}
+
+/// Return a font-object for displaying a character at POSITION.
+/// Optional second arg WINDOW, if non-nil, is a window displaying
+/// the current buffer.  It defaults to the currently selected window.
+/// Optional third arg STRING, if non-nil, is a string containing the target
+/// character at index specified by POSITION.
+#[lisp_fn(min = "1", c_name = "font_at", name = "font-at")]
+pub fn font_at_lisp(
+    position: LispObject,
+    window: LispWindowLiveOrSelected,
+    string: LispObject,
+) -> LispObject {
+    let mut w: LispWindowRef = window.into();
+    let cur_buf = ThreadState::current_buffer_unchecked();
+
+    let pos = match string.as_string() {
+        Some(s) => {
+            let pos = EmacsInt::from(position) as isize;
+            if !(0 <= pos && pos < s.len_bytes()) {
+                args_out_of_range!(string, position);
+            }
+            pos
+        }
+
+        _ => {
+            if w.contents != cur_buf.into() {
+                error!("Specified window is not displaying the current buffer");
+            }
+            position.as_number_coerce_marker_or_error();
+            let pos = EmacsInt::from(position) as isize;
+
+            let begv = cur_buf.begv;
+            let zv = cur_buf.zv;
+            if !(begv <= pos && pos < zv) {
+                args_out_of_range!(
+                    position,
+                    LispObject::from(begv as EmacsInt),
+                    LispObject::from(zv as EmacsInt)
+                );
+            }
+            pos
+        }
+    };
+    unsafe { font_at(-1, pos, ptr::null_mut(), w.as_mut(), string) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));

@@ -5,13 +5,13 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
         char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
         Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
-    remacs_sys::{internal_equal, uniprop_table_uncompress},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
 };
 
@@ -27,27 +27,23 @@ impl LispObject {
     }
 
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_char_table())
-    }
-
-    pub fn as_char_table_or_error(self) -> LispCharTableRef {
-        if let Some(chartable) = self.as_char_table() {
-            chartable
-        } else {
-            wrong_type!(Qchar_table_p, self)
-        }
+        self.into()
     }
 }
 
 impl From<LispObject> for LispCharTableRef {
     fn from(o: LispObject) -> Self {
-        o.as_char_table_or_error()
+        if let Some(chartable) = o.as_char_table() {
+            chartable
+        } else {
+            wrong_type!(Qchar_table_p, o)
+        }
     }
 }
 
 impl From<LispObject> for Option<LispCharTableRef> {
     fn from(o: LispObject) -> Self {
-        o.as_char_table()
+        o.as_vectorlike().and_then(|v| v.as_char_table())
     }
 }
 
@@ -103,7 +99,7 @@ fn chartab_idx(c: isize, depth: i32, min_char: i32) -> usize {
 /// starting with '\001' nor '\002'.
 fn uniprop_compressed_form_p(obj: LispObject) -> bool {
     match obj.as_string() {
-        Some(s) => s.len_bytes() > 0 && (s.byte_at(0) == 1 || s.byte_at(0) == 2),
+        Some(s) => !s.is_empty() && (s.byte_at(0) == 1 || s.byte_at(0) == 2),
         None => false,
     }
 }
@@ -149,8 +145,16 @@ impl LispCharTableRef {
 
         val
     }
+}
 
-    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
+impl LispStructuralEqual for LispCharTableRef {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
         let mut size1 = (unsafe { self.header.size }
             & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize) as usize;
         let size2 = (unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
@@ -170,41 +174,48 @@ impl LispCharTableRef {
         // char table is 4 LispObjects + an array
         size1 -= 4;
 
-        unsafe {
-            if !internal_equal(self.defalt, other.defalt, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.parent, other.parent, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.purpose, other.purpose, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.ascii, other.ascii, kind, depth + 1, ht) {
-                return false;
-            }
+        if !self
+            .defalt
+            .equal_internal(other.defalt, kind, depth + 1, ht)
+        {
+            return false;
         }
-        for i in 0..size1 {
+        if !self
+            .parent
+            .equal_internal(other.parent, kind, depth + 1, ht)
+        {
+            return false;
+        }
+        if !self
+            .purpose
+            .equal_internal(other.purpose, kind, depth + 1, ht)
+        {
+            return false;
+        }
+        if !self.ascii.equal_internal(other.ascii, kind, depth + 1, ht) {
+            return false;
+        }
+
+        let all_equal = (0..size1).all(|i| {
             let v1 = self.contents[i];
             let v2 = other.contents[i];
-            if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
-                return false;
-            }
+            v1.equal_internal(v2, kind, depth + 1, ht)
+        });
+        if !all_equal {
+            return false;
         }
-        if extras > 0 {
+        if extras == 0 {
+            true
+        } else {
             let self_extras = unsafe { self.extras.as_slice(extras) };
             let other_extras = unsafe { other.extras.as_slice(extras) };
 
-            for i in 0..extras {
+            (0..extras).all(|i| {
                 let v1 = self_extras[i];
                 let v2 = other_extras[i];
-                if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
-                    return false;
-                }
-            }
+                v1.equal_internal(v2, kind, depth + 1, ht)
+            })
         }
-
-        true
     }
 }
 
@@ -218,8 +229,16 @@ impl LispSubCharTableAsciiRef {
         let m = self.0.min_char;
         self._get(chartab_idx(c, d, m))
     }
+}
 
-    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
+impl LispStructuralEqual for LispSubCharTableAsciiRef {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
         self.0.equal(other.0, kind, depth, ht)
     }
 }
@@ -259,36 +278,39 @@ impl LispSubCharTableRef {
 
         val
     }
+}
 
-    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
-        unsafe {
-            let mut size1 =
-                self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize;
-            let size2 =
-                other.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize;
-            if size1 != size2 {
-                return false;
-            }
-
-            size1 -= 2; // account for depth and min_char
-            if self.depth != other.depth {
-                return false;
-            }
-            if self.min_char != other.min_char {
-                return false;
-            }
-
-            let slice1 = self.contents.as_slice(size1);
-            let slice2 = other.contents.as_slice(size1);
-            for i in 0..size1 {
-                let v1 = slice1[i];
-                let v2 = slice2[i];
-                if !internal_equal(v1, v2, kind, depth + 1, ht) {
-                    return false;
-                }
-            }
+impl LispStructuralEqual for LispSubCharTableRef {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
+        let mut size1 =
+            unsafe { self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize };
+        let size2 =
+            unsafe { other.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize };
+        if size1 != size2 {
+            return false;
         }
-        true
+
+        size1 -= 2; // account for depth and min_char
+        if self.depth != other.depth {
+            return false;
+        }
+        if self.min_char != other.min_char {
+            return false;
+        }
+
+        let slice1 = unsafe { self.contents.as_slice(size1) };
+        let slice2 = unsafe { other.contents.as_slice(size1) };
+        (0..size1).all(|i| {
+            let v1 = slice1[i];
+            let v2 = slice2[i];
+            v1.equal_internal(v2, kind, depth + 1, ht)
+        })
     }
 }
 

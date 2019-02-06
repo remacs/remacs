@@ -1,0 +1,10 @@
+[package]
+name = "remacs-bindings"
+version = "0.1.0"
+description = "Tool to create remacs C bindings."
+edition = "2018"
+
+[dependencies]
+libc = "0.2"
+regex = "1.1"
+bindgen = "0.46"

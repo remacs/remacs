@@ -42,8 +42,16 @@ struct position *vmotion (ptrdiff_t from, ptrdiff_t from_byte,
 ptrdiff_t skip_invisible (ptrdiff_t pos, ptrdiff_t *next_boundary_p,
                           ptrdiff_t to, Lisp_Object window);
 
+/* Last value returned by current_column.
+   Some things in set last_known_column_point to -1
+   to mark the memorized value as invalid.  */
+extern ptrdiff_t last_known_column;
+
 /* Value of point when current_column was called */
 extern ptrdiff_t last_known_column_point;
+
+/* Value of MODIFF when current_column was called.  */
+extern EMACS_INT last_known_column_modified;
 
 /* Functions for dealing with the column cache.  */
 
@@ -59,5 +67,7 @@ void recompute_width_table (struct buffer *buf,
 
 /* Return the current indentation at a given byte offset */
 ptrdiff_t position_indentation (ptrdiff_t pos_byte);
+
+void scan_for_column (ptrdiff_t *endpos, EMACS_INT *goalcol, ptrdiff_t *prevcol);
 
 #endif /* EMACS_INDENT_H */

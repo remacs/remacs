@@ -8,8 +8,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     eval::unbind_to,
     frames::selected_frame,
-    frames::{LispFrameOrSelected, LispFrameRef},
-    lisp::defsubr,
+    frames::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
@@ -58,7 +57,7 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) {
 }
 
 /**********************************************************************
-		    Redrawing Frames
+            Redrawing Frames
 **********************************************************************/
 
 /// Redraw frame FRAME.
@@ -75,7 +74,7 @@ pub extern "C" fn redraw_frame(mut frame: LispFrameRef) {
         // Mark all windows as inaccurate, so that every window will have
         // its redisplay done.
         mark_window_display_accurate(frame.root_window, false);
-        set_window_update_flags(frame.root_window.as_window_or_error(), true);
+        set_window_update_flags(frame.root_window.into(), true);
         frame.set_garbaged(false);
     }
 }
@@ -83,8 +82,8 @@ pub extern "C" fn redraw_frame(mut frame: LispFrameRef) {
 /// Clear frame FRAME and output again what is supposed to appear on it.
 /// If FRAME is omitted or nil, the selected frame is used.
 #[lisp_fn(c_name = "redraw_frame", name = "redraw-frame", min = "0")]
-pub fn redraw_frame_lisp(frame: LispFrameOrSelected) {
-    redraw_frame(frame.live_or_error());
+pub fn redraw_frame_lisp(frame: LispFrameLiveOrSelected) {
+    redraw_frame(frame.into());
 }
 
 /// Clear and redisplay all visible frames.
@@ -114,13 +113,13 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
         w = if next.is_nil() {
             None
         } else {
-            Some(next.as_window_or_error())
+            Some(next.into())
         };
     }
 }
 
 /***********************************************************************
-		   Blinking cursor
+           Blinking cursor
 ***********************************************************************/
 
 /// Set the cursor-visibility flag of WINDOW to SHOW.

@@ -1,15 +1,18 @@
 //! Functions operating on numbers.
 
-use rand::{Rng, SeedableRng, StdRng};
+use std::cmp;
 use std::sync::Mutex;
+
+use rand::{Rng, SeedableRng, StdRng};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
-    lisp::LispObject,
+    hashtable::LispHashTableRef,
+    lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
-        EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG,
+        equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
+        USE_LSB_TAG,
     },
     remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
 };
@@ -52,6 +55,10 @@ impl LispObject {
         let ty = self.get_type();
         (ty as u8 & ((Lisp_Type::Lisp_Int0 as u8) | !(Lisp_Type::Lisp_Int1 as u8)))
             == Lisp_Type::Lisp_Int0 as u8
+    }
+
+    pub fn force_fixnum(self) -> EmacsInt {
+        unsafe { self.to_fixnum_unchecked() }
     }
 
     pub fn as_fixnum(self) -> Option<EmacsInt> {
@@ -153,12 +160,42 @@ impl IsLispNatnum for EmacsInt {
     }
 }
 
+/// Check if NUM is within range [FROM..TO]
+pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl Into<EmacsInt>) {
+    let num: EmacsInt = num.into();
+    let from: EmacsInt = from.into();
+    let to: EmacsInt = to.into();
+    if !(from <= num && num <= to) {
+        args_out_of_range!(
+            num,
+            if from < 0 && from < MOST_NEGATIVE_FIXNUM {
+                MOST_NEGATIVE_FIXNUM
+            } else {
+                from
+            },
+            cmp::min(to, MOST_POSITIVE_FIXNUM)
+        )
+    }
+}
+
 impl LispNumber {
     pub fn to_fixnum(&self) -> EmacsInt {
         match *self {
             LispNumber::Fixnum(v) => v,
             LispNumber::Float(v) => v as EmacsInt,
         }
+    }
+}
+
+impl LispStructuralEqual for EmacsInt {
+    fn equal(
+        &self,
+        other: Self,
+        _equal_kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
+        *self == other
     }
 }
 
@@ -170,13 +207,22 @@ impl From<EmacsInt> for LispNumber {
 
 impl From<LispObject> for LispNumber {
     fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker_or_error()
+        o.as_number_coerce_marker()
+            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, o))
     }
 }
 
 impl From<LispObject> for Option<LispNumber> {
     fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker()
+        if let Some(n) = o.as_fixnum() {
+            Some(LispNumber::Fixnum(n))
+        } else if let Some(f) = o.as_float() {
+            Some(LispNumber::Float(f))
+        } else if let Some(m) = o.as_marker() {
+            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
+        } else {
+            None
+        }
     }
 }
 
@@ -207,20 +253,11 @@ impl LispObject {
     */
 
     pub fn as_number_coerce_marker(self) -> Option<LispNumber> {
-        if let Some(n) = self.as_fixnum() {
-            Some(LispNumber::Fixnum(n))
-        } else if let Some(f) = self.as_float() {
-            Some(LispNumber::Float(f))
-        } else if let Some(m) = self.as_marker() {
-            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
-        } else {
-            None
-        }
+        self.into()
     }
 
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
-        self.as_number_coerce_marker()
-            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, self))
+        self.into()
     }
 }
 
@@ -291,7 +328,7 @@ pub fn random(limit: LispObject) -> LispObject {
             let val: EmacsInt = rng.gen();
             let remainder = val.abs() % limit;
             if val - remainder <= INTMASK - limit + 1 {
-                return LispObject::from(remainder);
+                return remainder.into();
             }
         }
     } else {

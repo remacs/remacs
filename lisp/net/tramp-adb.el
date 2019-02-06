@@ -458,13 +458,13 @@ pass to the OPERATION."
 			   result)))))))))
 
 (defun tramp-adb-get-ls-command (vec)
-  "Determine `ls' command at its arguments."
+  "Determine `ls' command and its arguments."
   (with-tramp-connection-property vec "ls"
     (tramp-message vec 5 "Finding a suitable `ls' command")
     (cond
      ;; Support Android derived systems where "ls" command is provided
      ;; by GNU Coreutils. Force "ls" to print one column and set
-     ;; time-style to imitate other "ls" flavours.
+     ;; time-style to imitate other "ls" flavors.
      ((tramp-adb-send-command-and-check
        vec "ls --time-style=long-iso /dev/null")
       "ls -1 --time-style=long-iso")

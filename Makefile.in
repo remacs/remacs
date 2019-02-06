@@ -961,6 +961,9 @@ check check-maybe check-expensive check-all: have-tests all
 clippy:
 	$(MAKE) -C src $@
 
+rustdoc:
+	$(MAKE) -C src $@
+
 .PHONY: clippy
 
 dist:
@@ -1177,6 +1180,7 @@ check-declare:
 	  exit 1; \
 	fi
 	$(MAKE) -C lisp $@
+	$(MAKE) -C test $@
 
 .PHONY: rustfmt
 

@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     keymap::Ctl,
-    lisp::defsubr,
     lisp::LispObject,
     lists::put,
     lists::{LispConsCircularChecks, LispConsEndChecks},
@@ -19,7 +18,7 @@ use crate::{
 };
 
 fn casify_word(flag: case_action, words: EmacsInt) {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
         0 => {
@@ -32,13 +31,7 @@ fn casify_word(flag: case_action, words: EmacsInt) {
         n => n,
     };
 
-    let new_pos = unsafe {
-        casify_region(
-            flag,
-            LispObject::from(buffer_ref.pt),
-            LispObject::from(far_end),
-        )
-    };
+    let new_pos = unsafe { casify_region(flag, buffer_ref.pt.into(), far_end.into()) };
 
     unsafe { set_point(new_pos) };
 }
@@ -185,11 +178,11 @@ fn casefiddle_region(
     } else {
         let bounds = call!(
             symbol_value(intern("region-extract-function")),
-            LispObject::from(intern("bounds"))
+            intern("bounds").into()
         );
 
         for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-            let (car, cdr) = elt.as_cons_or_error().as_tuple();
+            let (car, cdr) = elt.into();
             unsafe { casify_region(action, car, cdr) };
         }
     }
