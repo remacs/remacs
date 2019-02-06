@@ -767,6 +767,16 @@ the timer when no buffers need to be checked."
 		    (buffer-list)
 		  auto-revert-buffer-list))
 	  remaining new)
+      ;; Buffers with remote contents shall be reverted only if the
+      ;; connection is established already.
+      (setq bufs (delq nil
+                       (mapcar
+                        (lambda (buf)
+                          (with-current-buffer buf
+                            (and (or (not (file-remote-p default-directory))
+                                     (file-remote-p default-directory nil t))
+                                 buf)))
+                        bufs)))
       ;; Partition `bufs' into two halves depending on whether or not
       ;; the buffers are in `auto-revert-remaining-buffers'.  The two
       ;; halves are then re-joined with the "remaining" buffers at the

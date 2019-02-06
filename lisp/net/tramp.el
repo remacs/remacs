@@ -4060,23 +4060,17 @@ performed successfully.  Any other value means an error."
   (save-restriction
     (with-tramp-progress-reporter
 	proc 3 "Waiting for prompts from remote shell"
-      ;; `global-auto-revert-mode' could activate remote operations
-      ;; while we aren't ready.  We disable it temporarily.
-      (let ((garm (bound-and-true-p global-auto-revert-mode))
-	    exit)
-	(when garm (global-auto-revert-mode -1))
-	(unwind-protect
-	    (if timeout
-		(with-timeout (timeout (setq exit 'timeout))
-		  (while (not exit)
-		    (setq exit
-			  (catch 'tramp-action
-			    (tramp-process-one-action proc vec actions)))))
+      (let (exit)
+	(if timeout
+	    (with-timeout (timeout (setq exit 'timeout))
 	      (while (not exit)
 		(setq exit
 		      (catch 'tramp-action
 			(tramp-process-one-action proc vec actions)))))
-	  (when garm (global-auto-revert-mode)))
+	  (while (not exit)
+	    (setq exit
+		  (catch 'tramp-action
+		    (tramp-process-one-action proc vec actions)))))
 	(with-current-buffer (tramp-get-connection-buffer vec)
 	  (widen)
 	  (tramp-message vec 6 "\n%s" (buffer-string)))
