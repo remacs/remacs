@@ -163,27 +163,30 @@ pub unsafe fn defvar_per_buffer_offset(
 /// If read over network is interrupted, keep trying until read succeeds.
 #[no_mangle]
 pub unsafe extern "C" fn readbyte_from_stdio() -> i32 {
+    let file = &mut *infile;
+
     // If infile has lookahead, use stored value
-    if (*infile).lookahead > 0 {
-        let idx = (*infile.sub(1)).lookahead as usize;
-        return (*infile).buf[idx].into();
+    if file.lookahead > 0 {
+        file.lookahead -= 1;
+        return file.buf[file.lookahead as usize].into();
     }
 
-    let instream = (*infile).stream;
+    let instream = file.stream;
 
     block_input();
 
     // Interrupted read have been observed while reading over the network.
-    let mut c;
-    while {
-        c = getc_unlocked(instream);
-        c == libc::EOF && errno().0 == libc::EINTR && ferror_unlocked(instream) > 0
-    } {
-        unblock_input();
-        maybe_quit();
-        block_input();
-        clearerr_unlocked(instream);
-    }
+    let c = loop {
+        let c = getc_unlocked(instream);
+        if c == libc::EOF && errno().0 == libc::EINTR && ferror_unlocked(instream) > 0 {
+            unblock_input();
+            maybe_quit();
+            block_input();
+            clearerr_unlocked(instream);
+        } else {
+            break c;
+        }
+    };
 
     unblock_input();
 
