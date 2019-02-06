@@ -10831,6 +10831,7 @@ syms_of_coding (void)
   DEFSYM (Qundecided, "undecided");
   DEFSYM (Qno_conversion, "no-conversion");
   DEFSYM (Qraw_text, "raw-text");
+  DEFSYM (Qus_ascii, "us-ascii");
 
   DEFSYM (Qiso_2022, "iso-2022");
 
@@ -11341,4 +11342,9 @@ reset_coding_after_pdumper_load (void)
           setup_coding_system (CODING_ID_NAME (id), this);
         }
     }
+  /* In temacs the below is done by mule-conf.el, because we need to
+     define us-ascii first.  But in dumped Emacs us-ascii is restored
+     by the above loop, and mule-conf.el will not be loaded, so we set
+     it up now; otherwise safe_terminal_coding will remain zeroed.  */
+  Fset_safe_terminal_coding_system_internal (Qus_ascii);
 }
