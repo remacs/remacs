@@ -915,10 +915,10 @@ main (int argc, char **argv)
      temacs and only if we are going to dump with unexec.  */
   bool use_dynamic_heap = false;
   char *temacs_str = strstr (argv[0], "temacs");
-  if (temacs_str != NULL
+  if (temacs
+      && temacs_str != NULL
       && (temacs_str == argv[0] || IS_DIRECTORY_SEP (temacs_str[-1])))
     {
-      eassert (temacs);
       /* Note that gflags are set at this point only if we have been
 	 called with the --temacs=METHOD option.  We assume here that
 	 temacs is always called that way, otherwise the functions
