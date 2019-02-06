@@ -20463,7 +20463,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 static void
 extend_face_to_end_of_line (struct it *it)
 {
-  struct face *face, *default_face;
+  struct face *face;
   struct frame *f = it->f;
 
   /* If line is already filled, do nothing.  Non window-system frames
@@ -20480,10 +20480,6 @@ extend_face_to_end_of_line (struct it *it)
       && !(WINDOW_LEFT_MARGIN_WIDTH (it->w) > 0
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
-
-  /* The default face, possibly remapped. */
-  default_face =
-    FACE_FROM_ID_OR_NULL (f, lookup_basic_face (it->w, f, DEFAULT_FACE_ID));
 
   /* Face extension extends the background and box of IT->face_id
      to the end of the line.  If the background equals the background
@@ -20518,6 +20514,12 @@ extend_face_to_end_of_line (struct it *it)
     }
 
 #ifdef HAVE_WINDOW_SYSTEM
+  /* The default face, possibly remapped. */
+  struct face *default_face =
+    FACE_FROM_ID (f, lookup_basic_face (it->w, f, DEFAULT_FACE_ID));
+  if (default_face == NULL)
+    error ("extend_face_to_end_of_line: default_face is not set!");
+
   if (FRAME_WINDOW_P (f))
     {
       /* If the row is empty, add a space with the current face of IT,
