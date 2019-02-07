@@ -604,6 +604,12 @@ pub unsafe extern "C" fn store_symval_forwarding(
     }
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn find_symbol_value(sym: LispObject) -> LispObject {
+    let symbol: LispSymbolRef = sym.into();
+    symbol.find_value()
+}
+
 unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {
     // If this variable is a default for something stored
     // in the buffer itself, such as default-fill-column,
