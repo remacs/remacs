@@ -11,7 +11,7 @@ use crate::{
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::LispObject,
-    lists::{assq, car, get, mapcar1, member, memq, put, setcar},
+    lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
     multibyte::LispStringRef,
@@ -339,13 +339,13 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
         return alist;
     }
 
-    let mut new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
 
     for elt in new_alist.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let front = elt.car();
-        // To make a copy, unpack the cons and then make a new one.
+        // To make a copy, unpack the cons and then make a new one while re-using the car and cdr.
         if let Some((car, cdr)) = front.into() {
-            elt.set_car((car, cdr).into());
+            elt.set_car((car, cdr));
         }
     }
 
