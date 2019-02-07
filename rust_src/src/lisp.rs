@@ -254,6 +254,39 @@ impl LispSubrRef {
     pub fn symbol_name(self) -> *const c_char {
         unsafe { (*self.0).symbol_name }
     }
+
+    pub fn call_unevalled(&self, args: LispObject) -> LispObject {
+        unsafe { self.function.aUNEVALLED.unwrap()(args) }
+    }
+
+    pub fn call(&self, args: &[LispObject]) -> LispObject {
+        unsafe {
+            match args.len() {
+                0 => self.function.a0.unwrap()(),
+                1 => self.function.a1.unwrap()(args[0]),
+                2 => self.function.a2.unwrap()(args[0], args[1]),
+                3 => self.function.a3.unwrap()(args[0], args[1], args[2]),
+                4 => self.function.a4.unwrap()(args[0], args[1], args[2], args[3]),
+                5 => self.function.a5.unwrap()(args[0], args[1], args[2], args[3], args[4]),
+                6 => {
+                    self.function.a6.unwrap()(args[0], args[1], args[2], args[3], args[4], args[5])
+                }
+                7 => self.function.a7.unwrap()(
+                    args[0], args[1], args[2], args[3], args[4], args[5], args[6],
+                ),
+                8 => self.function.a8.unwrap()(
+                    args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7],
+                ),
+                _ => {
+                    // Someone has created a subr that takes more arguments than
+                    // is supported by this code.  We need to either rewrite the
+                    // subr to use a different argument protocol, or add more
+                    // cases to this switch.
+                    unreachable!();
+                }
+            }
+        }
+    }
 }
 
 impl LispObject {
@@ -276,6 +309,12 @@ impl From<LispObject> for LispSubrRef {
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| v.as_subr())
+    }
+}
+
+impl From<LispSubrRef> for LispObject {
+    fn from(s: LispSubrRef) -> Self {
+        LispObject::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

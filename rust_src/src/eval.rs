@@ -1,6 +1,6 @@
 //! Generic Lisp eval functions
 
-use std::{ptr, unreachable};
+use std::{iter, ptr, unreachable};
 
 use libc::c_void;
 
@@ -10,7 +10,7 @@ use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::is_autoload,
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put},
+    lists::{assq, car, cdr, get, memq, nth, put, safe_length},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
@@ -20,10 +20,10 @@ use crate::{
     },
     remacs_sys::{
         apply_lambda, backtrace_debug_on_exit, build_string, call_debugger, check_cons_list,
-        do_debug_on_call, do_one_unbind, eval_subr, funcall_lambda, funcall_subr, globals,
+        do_debug_on_call, do_one_unbind, eval_subr_many, funcall_lambda, funcall_subr, globals,
         grow_specpdl, internal_catch, internal_lisp_condition_case, maybe_gc, maybe_quit,
-        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
-        MODULE_FUNCTIONP,
+        record_in_backtrace, record_unwind_save_match_data, set_backtrace_args, signal_or_quit,
+        specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{maxargs::UNEVALLED, pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
@@ -31,7 +31,7 @@ use crate::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
         Qlexical_binding, Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
-        Qvariable_documentation, Qvoid_function,
+        Qvariable_documentation, Qvoid_function, Qwrong_number_of_arguments,
     },
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, symbol_value, LispSymbolRef},
@@ -1424,18 +1424,8 @@ fn eval_sub_1(
             fun = function((fun, Qnil).into());
         }
 
-        if fun.is_subr() {
-            unsafe {
-                if eval_subr(
-                    original_fun,
-                    fun,
-                    original_args,
-                    count,
-                    &mut val as *mut LispObject,
-                ) {
-                    return (val, true);
-                }
-            }
+        if let Some(subr) = fun.as_subr() {
+            return eval_subr(subr, original_fun, original_args, count);
         } else if fun.is_byte_code_function() || fun.is_module_function() {
             return unsafe { (apply_lambda(fun, original_args, count), true) };
         } else if fun.is_nil() {
@@ -1482,6 +1472,56 @@ fn eval_sub_1(
     }
 
     (val, false)
+}
+
+fn eval_subr(
+    fun: LispSubrRef,
+    original_fun: LispObject,
+    args: LispObject,
+    count: libc::ptrdiff_t,
+) -> (LispObject, bool) {
+    // args should be a Cons or nil. Use safe_length instead of Flength
+    // because Flength does more work.
+    let numargs = safe_length(args);
+
+    unsafe { check_cons_list() };
+
+    if numargs < fun.min_args() as usize
+        || (fun.max_args() >= 0 && (fun.max_args() as usize) < numargs)
+    {
+        xsignal!(Qwrong_number_of_arguments, original_fun, numargs);
+    } else if fun.is_unevalled() {
+        (fun.call_unevalled(args), false)
+    } else if fun.is_many() {
+        let mut val = Qnil;
+        let done = unsafe {
+            eval_subr_many(
+                fun.into(),
+                numargs.into(),
+                args,
+                count,
+                &mut val as *mut LispObject,
+            )
+        };
+        (val, done)
+    } else {
+        let mut argvals: Vec<LispObject> = args
+            .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+            .map(|elt| eval_sub(elt))
+            .chain(iter::repeat(Qnil)) // ensure we fully populate the vector.
+            .take(fun.max_args() as usize)
+            .collect();
+
+        unsafe {
+            set_backtrace_args(
+                ThreadState::current_thread().specpdl().offset(count),
+                (&mut argvals).as_mut_ptr(),
+                numargs as isize,
+            )
+        };
+
+        (fun.call(&argvals), false)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
