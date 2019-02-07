@@ -234,7 +234,7 @@ pub fn read(stream: LispObject) -> LispObject {
     }
 }
 
-/// Don't use this yourself
+/// Don't use this yourself.
 #[lisp_fn]
 pub fn get_file_char() -> EmacsInt {
     if unsafe { infile }.is_null() {
