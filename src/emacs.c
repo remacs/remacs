@@ -913,7 +913,7 @@ main (int argc, char **argv)
   /* Grab our malloc arena space now, before anything important
      happens.  This relies on the static heap being needed only in
      temacs and only if we are going to dump with unexec.  */
-  bool use_dynamic_heap = false;
+  bool use_dynamic_heap = true;
   if (temacs)
     {
       char *temacs_str = NULL, *p;
@@ -929,11 +929,7 @@ main (int argc, char **argv)
 	     will not do their job.  */
 	  use_dynamic_heap = will_dump_with_pdumper_p ();
 	}
-      else
-	use_dynamic_heap = true;
     }
-  else
-    use_dynamic_heap = true;
   init_heap (use_dynamic_heap);
   /* Set global variables used to detect Windows version.  Do this as
      early as possible.  (w32proc.c calls this function as well, but
