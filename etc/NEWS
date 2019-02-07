@@ -448,6 +448,9 @@ values.
 *** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
 and compares their entire trees.
 
+*** New user option 'vc-hg-revert-switches' specifies switches to pass
+to hg revert.
+
 ** Diff mode
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.

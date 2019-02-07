@@ -145,6 +145,15 @@ switches."
   :version "25.1"
   :group 'vc-hg)
 
+(defcustom vc-hg-revert-switches nil
+  "String or list of strings specifying switches for hg revert
+under VC."
+  :type '(choice (const :tag "None" nil)
+		 (string :tag "Argument String")
+		 (repeat :tag "Argument List" :value ("") string))
+  :version "27.1"
+  :group 'vc-hg)
+
 (defcustom vc-hg-program "hg"
   "Name of the Mercurial executable (excluding any arguments)."
   :type 'string
@@ -1161,7 +1170,11 @@ REV is the revision to check out into WORKFILE."
 ;; Modeled after the similar function in vc-bzr.el
 (defun vc-hg-revert (file &optional contents-done)
   (unless contents-done
-    (with-temp-buffer (vc-hg-command t 0 file "revert"))))
+    (with-temp-buffer
+      (apply #'vc-hg-command
+             t 0 file
+             "revert"
+             (append (vc-switches 'hg 'revert))))))
 
 ;;; Hg specific functionality.
 
