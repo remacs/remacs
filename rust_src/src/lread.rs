@@ -5,6 +5,8 @@ use libc;
 use std::ffi::CString;
 use std::ptr;
 
+use errno::errno;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -17,8 +19,10 @@ use crate::{
     lisp::LispObject,
     obarray::{intern, intern_c_string_1},
     remacs_sys,
+    remacs_sys::infile,
     remacs_sys::{
-        build_string, read_internal_start, readevalloop, specbind, staticpro, symbol_redirect,
+        block_input, build_string, clearerr_unlocked, ferror_unlocked, getc_unlocked, maybe_quit,
+        read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -155,6 +159,44 @@ pub unsafe fn defvar_per_buffer_offset(
     }
 }
 
+/// Read a byte from stdio. If it has lookahead, use the stored value.
+/// If read over network is interrupted, keep trying until read succeeds.
+#[no_mangle]
+pub unsafe extern "C" fn readbyte_from_stdio() -> i32 {
+    let file = &mut *infile;
+
+    // If infile has lookahead, use stored value
+    if file.lookahead > 0 {
+        file.lookahead -= 1;
+        return file.buf[file.lookahead as usize].into();
+    }
+
+    let instream = file.stream;
+
+    block_input();
+
+    // Interrupted read have been observed while reading over the network.
+    let c = loop {
+        let c = getc_unlocked(instream);
+        if c == libc::EOF && errno().0 == libc::EINTR && ferror_unlocked(instream) > 0 {
+            unblock_input();
+            maybe_quit();
+            block_input();
+            clearerr_unlocked(instream);
+        } else {
+            break c;
+        }
+    };
+
+    unblock_input();
+
+    if c != libc::EOF {
+        c
+    } else {
+        -1
+    }
+}
+
 /// Read one Lisp expression as text from STREAM, return as Lisp object.
 /// If STREAM is nil, use the value of `standard-input' (which see).
 /// STREAM or the value of `standard-input' may be:
@@ -190,6 +232,15 @@ pub fn read(stream: LispObject) -> LispObject {
     } else {
         unsafe { read_internal_start(input, Qnil, Qnil) }
     }
+}
+
+/// Don't use this yourself.
+#[lisp_fn]
+pub fn get_file_char() -> EmacsInt {
+    if unsafe { infile }.is_null() {
+        error!("get-file-char misused");
+    }
+    unsafe { readbyte_from_stdio().into() }
 }
 
 /// Execute the region as Lisp code.
