@@ -1478,7 +1478,7 @@ fn eval_subr(
     fun: LispSubrRef,
     original_fun: LispObject,
     args: LispObject,
-    count: libc::ptrdiff_t,
+    count: isize,
 ) -> (LispObject, bool) {
     // args should be a Cons or nil. Use safe_length instead of Flength
     // because Flength does more work.
