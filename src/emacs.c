@@ -897,10 +897,13 @@ main (int argc, char **argv)
     }
   else
     {
-      eassert (!initialized);
       eassert (!temacs);
+#ifndef HAVE_UNEXEC
+      eassert (!initialized);
+#endif
 #ifdef HAVE_PDUMPER
-      attempt_load_pdump = true;
+      if (!initialized)
+	attempt_load_pdump = true;
 #endif
     }
 
