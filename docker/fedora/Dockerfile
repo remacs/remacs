@@ -1,6 +1,6 @@
 FROM fedora:latest
 
-RUN yum install -y \
+RUN dnf install -y \
     git \
     gcc gcc-c++ \
     kernel-devel \
@@ -14,6 +14,8 @@ RUN yum install -y \
     libxml2-devel \
     libXpm-devel \
     gnutls-devel \
+    clang-devel \
+    libXt-devel \
     curl \
     texinfo
 
