@@ -100,7 +100,6 @@ Lisp_Object backtrace_function (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_next (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 
-static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
 static Lisp_Object lambda_arity (Lisp_Object);
 
 static Lisp_Object
@@ -1475,73 +1474,6 @@ eval_subr (Lisp_Object original_fun, Lisp_Object fun, Lisp_Object original_args,
   return false;
 }
 
-/* Actual work for evaluating a sub-expression happens here. */
-bool
-eval_sub_1 (Lisp_Object original_fun, Lisp_Object original_args, ptrdiff_t count, Lisp_Object *val)
-{
-  Lisp_Object fun;
-
- retry:
-
-  /* Optimize for no indirection.  */
-  fun = original_fun;
-  if (!SYMBOLP (fun))
-    fun = Ffunction (Fcons (fun, Qnil));
-  else if (!NILP (fun) && (fun = XSYMBOL (fun)->u.s.function, SYMBOLP (fun)))
-    fun = indirect_function (fun);
-
-  if (SUBRP (fun))
-    {
-      if (eval_subr (original_fun, fun, original_args, count, val))
-        return true;
-    }
-  else if (COMPILEDP (fun) || MODULE_FUNCTIONP (fun))
-    {
-      *val = apply_lambda (fun, original_args, count);
-      return true;
-    }
-  else
-    {
-      Lisp_Object funcar;
-
-      if (NILP (fun))
-	xsignal1 (Qvoid_function, original_fun);
-      if (!CONSP (fun))
-	xsignal1 (Qinvalid_function, original_fun);
-      funcar = XCAR (fun);
-      if (!SYMBOLP (funcar))
-	xsignal1 (Qinvalid_function, original_fun);
-      if (EQ (funcar, Qautoload))
-	{
-	  Fautoload_do_load (fun, original_fun, Qnil);
-	  goto retry;
-	}
-      if (EQ (funcar, Qmacro))
-	{
-	  ptrdiff_t count1 = SPECPDL_INDEX ();
-	  Lisp_Object exp;
-	  /* Bind lexical-binding during expansion of the macro, so the
-	     macro can know reliably if the code it outputs will be
-	     interpreted using lexical-binding or not.  */
-	  specbind (Qlexical_binding,
-		    NILP (Vinternal_interpreter_environment) ? Qnil : Qt);
-	  exp = apply1 (Fcdr (fun), original_args);
-	  unbind_to (count1, Qnil);
-	  *val = eval_sub (exp);
-	}
-      else if (EQ (funcar, Qlambda)
-	       || EQ (funcar, Qclosure))
-        {
-          *val = apply_lambda (fun, original_args, count);
-          return true;
-        }
-      else
-	xsignal1 (Qinvalid_function, original_fun);
-    }
-
-  return false;
-}
-
 
 DEFUN ("apply", Fapply, Sapply, 1, MANY, 0,
        doc: /* Call FUNCTION with our remaining args, using our last arg as list of args.
@@ -1856,7 +1788,7 @@ funcall_subr (struct Lisp_Subr *subr, ptrdiff_t numargs, Lisp_Object *args)
     }
 }
 
-static Lisp_Object
+Lisp_Object
 apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
 {
   Lisp_Object args_left;

@@ -19,17 +19,19 @@ use crate::{
         SPECPDL_UNWIND, SPECPDL_UNWIND_INT, SPECPDL_UNWIND_PTR, SPECPDL_UNWIND_VOID,
     },
     remacs_sys::{
-        backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        do_one_unbind, eval_sub_1, funcall_lambda, funcall_subr, globals, grow_specpdl,
-        internal_catch, internal_lisp_condition_case, maybe_gc, maybe_quit, record_in_backtrace,
-        record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP, MODULE_FUNCTIONP,
+        apply_lambda, backtrace_debug_on_exit, build_string, call_debugger, check_cons_list,
+        do_debug_on_call, do_one_unbind, eval_subr, funcall_lambda, funcall_subr, globals,
+        grow_specpdl, internal_catch, internal_lisp_condition_case, maybe_gc, maybe_quit,
+        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
+        MODULE_FUNCTIONP,
     },
     remacs_sys::{maxargs::UNEVALLED, pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
-        Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
-        Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
+        Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
+        Qlexical_binding, Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
+        Qvariable_documentation, Qvoid_function,
     },
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, symbol_value, LispSymbolRef},
@@ -1379,16 +1381,10 @@ pub extern "C" fn eval_sub(form: LispObject) -> LispObject {
             do_debug_on_call(Qt, count);
         }
 
-        let mut val = Qnil;
-
         // At this point, only count, original_fun, and original_args
         // have values that will be used below.
-        if eval_sub_1(
-            original_fun,
-            original_args,
-            count,
-            &mut val as *mut LispObject,
-        ) {
+        let (mut val, done) = eval_sub_1(original_fun, original_args, count);
+        if done {
             return val;
         }
 
@@ -1403,6 +1399,89 @@ pub extern "C" fn eval_sub(form: LispObject) -> LispObject {
 
         val
     }
+}
+
+// Actual work for evaluating a sub-expression happens here.
+fn eval_sub_1(
+    original_fun: LispObject,
+    original_args: LispObject,
+    count: libc::ptrdiff_t,
+) -> (LispObject, bool) {
+    let mut keep_going = true;
+    let mut val = Qnil;
+
+    while keep_going {
+        // Optimize for no indirection.
+        let mut fun = original_fun;
+        if let Some(symbol) = fun.as_symbol() {
+            if fun.is_not_nil() {
+                fun = symbol.get_function();
+                if let Some(symbol) = fun.as_symbol() {
+                    fun = symbol.get_indirect_function();
+                }
+            }
+        } else {
+            fun = function((fun, Qnil).into());
+        }
+
+        if fun.is_subr() {
+            unsafe {
+                if eval_subr(
+                    original_fun,
+                    fun,
+                    original_args,
+                    count,
+                    &mut val as *mut LispObject,
+                ) {
+                    return (val, true);
+                }
+            }
+        } else if fun.is_byte_code_function() || fun.is_module_function() {
+            return unsafe { (apply_lambda(fun, original_args, count), true) };
+        } else if fun.is_nil() {
+            xsignal!(Qvoid_function, original_fun);
+        } else {
+            let (funcar, funcdr) = match fun.as_cons() {
+                Some(cons) => cons.into(),
+                None => {
+                    xsignal!(Qinvalid_function, original_fun);
+                }
+            };
+
+            if !funcar.is_symbol() {
+                xsignal!(Qinvalid_function, original_fun);
+            } else if funcar.eq(Qautoload) {
+                autoload_do_load(fun, original_fun, Qnil);
+                continue;
+            } else if funcar.eq(Qmacro) {
+                let count1 = c_specpdl_index();
+
+                // Bind lexical-binding during expansion of the macro, so the
+                // macro can know reliably if the code it outputs will be
+                // interpreted using lexical-binding or not.
+                unsafe {
+                    specbind(
+                        Qlexical_binding,
+                        globals
+                            .Vinternal_interpreter_environment
+                            .is_not_nil()
+                            .into(),
+                    );
+                }
+                let exp = apply1(funcdr, original_args);
+                unbind_to(count1, Qnil);
+                val = eval_sub(exp);
+            } else if funcar.eq(Qlambda) || funcar.eq(Qclosure) {
+                return unsafe { (apply_lambda(fun, original_args, count), true) };
+            } else {
+                xsignal!(Qinvalid_function, original_fun);
+            }
+        }
+
+        keep_going = false;
+    }
+
+    (val, false)
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
