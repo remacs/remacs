@@ -511,30 +511,30 @@ recognized."
                              inherit-input-method)))
     (concat common-parent-directory res)))
 
-(declare-function multifile-continue "multifile" ())
+(declare-function fileloop-continue "fileloop" ())
 
 ;;;###autoload
 (defun project-search (regexp)
   "Search for REGEXP in all the files of the project.
 Stops when a match is found.
-To continue searching for next match, use command \\[multifile-continue]."
+To continue searching for next match, use command \\[fileloop-continue]."
   (interactive "sSearch (regexp): ")
-  (multifile-initialize-search
+  (fileloop-initialize-search
    regexp (project-files (project-current t)) 'default)
-  (multifile-continue))
+  (fileloop-continue))
 
 ;;;###autoload
 (defun project-query-replace (from to)
   "Search for REGEXP in all the files of the project.
 Stops when a match is found.
-To continue searching for next match, use command \\[multifile-continue]."
+To continue searching for next match, use command \\[fileloop-continue]."
   (interactive
    (pcase-let ((`(,from ,to)
                 (query-replace-read-args "Query replace (regexp)" t t)))
      (list from to)))
-  (multifile-initialize-replace
+  (fileloop-initialize-replace
    from to (project-files (project-current t)) 'default)
-  (multifile-continue))
+  (fileloop-continue))
 
 (provide 'project)
 ;;; project.el ends here

@@ -2859,11 +2859,11 @@ is part of a file name (i.e., has the text property `dired-filename')."
 Stops when a match is found.
 To continue searching for next match, use command \\[tags-loop-continue]."
   (interactive "sSearch marked files (regexp): ")
-  (multifile-initialize-search
+  (fileloop-initialize-search
    regexp
    (dired-get-marked-files nil nil #'dired-nondirectory-p)
    'default)
-  (multifile-continue))
+  (fileloop-continue))
 
 ;;;###autoload
 (defun dired-do-query-replace-regexp (from to &optional delimited)
@@ -2881,11 +2881,11 @@ with the command \\[tags-loop-continue]."
       (if (and buffer (with-current-buffer buffer
 			buffer-read-only))
 	  (error "File `%s' is visited read-only" file))))
-  (multifile-initialize-replace
+  (fileloop-initialize-replace
    from to (dired-get-marked-files nil nil #'dired-nondirectory-p)
    (if (equal from (downcase from)) nil 'default)
    delimited)
-  (multifile-continue))
+  (fileloop-continue))
 
 (declare-function xref--show-xrefs "xref")
 (declare-function xref-query-replace-in-results "xref")

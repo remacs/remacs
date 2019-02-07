@@ -394,11 +394,11 @@ The mode is automatically enabled in files that start with the
 *** 'next-file' is now an obsolete alias of 'tags-next-file'.
 
 *** 'tags-loop-revert-buffers' is an obsolete alias of
-'multifile-revert-buffers'.
+'fileloop-revert-buffers'.
 
 *** The 'tags-loop-continue' function along with the
 'tags-loop-operate' and 'tags-loop-scan' variables are now obsolete;
-use the new 'multifile-initialize' and 'multifile-continue' functions
+use the new 'fileloop-initialize' and 'fileloop-continue' functions
 instead.
 
 ** bibtex
@@ -1085,7 +1085,7 @@ indicator instead of just the indicator (which is sometimes cryptic).
 
 * New Modes and Packages in Emacs 27.1
 
-** multifile.el lets one setup multifile operations like search&replace.
+** fileloop.el lets one setup multifile operations like search&replace.
 
 +++
 ** Emacs can now visit files in archives as if they were directories.

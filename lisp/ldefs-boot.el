@@ -11493,7 +11493,7 @@ argument is passed to `next-file', which see).
 
 \(fn &optional FIRST-TIME)" t nil)
 
-(make-obsolete 'tags-loop-continue 'multifile-continue '"27.1")
+(make-obsolete 'tags-loop-continue 'fileloop-continue '"27.1")
 
 (autoload 'tags-search "etags" "\
 Search through all files listed in tags table for match for REGEXP.
@@ -11512,7 +11512,7 @@ Do `query-replace-regexp' of FROM with TO on all files listed in tags table.
 Third arg DELIMITED (prefix arg) means replace only word-delimited matches.
 If you exit (\\[keyboard-quit], RET or q), you can resume the query replace
 with the command \\[tags-loop-continue].
-For non-interactive use, superceded by `multifile-initialize-replace'.
+For non-interactive use, superceded by `fileloop-initialize-replace'.
 
 \(fn FROM TO &optional DELIMITED FILES)" t nil)
 
@@ -22298,10 +22298,10 @@ QUALITY can be:
 
 ;;;***
 
-;;;### (autoloads nil "multifile" "multifile.el" (0 0 0 0))
-;;; Generated autoloads from multifile.el
+;;;### (autoloads nil "fileloop" "fileloop.el" (0 0 0 0))
+;;; Generated autoloads from fileloop.el
 
-(autoload 'multifile-initialize "multifile" "\
+(autoload 'fileloop-initialize "fileloop" "\
 Initialize a new round of operation on several files.
 FILES can be either a list of file names, or an iterator (used with `iter-next')
 which returns a file name at each step.
@@ -22314,22 +22314,22 @@ operating on the next file and nil otherwise.
 
 \(fn FILES SCAN-FUNCTION OPERATE-FUNCTION)" nil nil)
 
-(autoload 'multifile-initialize-search "multifile" "\
+(autoload 'fileloop-initialize-search "fileloop" "\
 
 
 \(fn REGEXP FILES CASE-FOLD)" nil nil)
 
-(autoload 'multifile-initialize-replace "multifile" "\
+(autoload 'fileloop-initialize-replace "fileloop" "\
 Initialize a new round of query&replace on several files.
 FROM is a regexp and TO is the replacement to use.
-FILES describes the file, as in `multifile-initialize'.
+FILES describes the file, as in `fileloop-initialize'.
 CASE-FOLD can be t, nil, or `default', the latter one meaning to obey
 the default setting of `case-fold-search'.
 DELIMITED if non-nil means replace only word-delimited matches.
 
 \(fn FROM TO FILES CASE-FOLD &optional DELIMITED)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "multifile" '("multifile-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "fileloop" '("fileloop-")))
 
 ;;;***
 
@@ -26455,14 +26455,14 @@ recognized.
 (autoload 'project-search "project" "\
 Search for REGEXP in all the files of the project.
 Stops when a match is found.
-To continue searching for next match, use command \\[multifile-continue].
+To continue searching for next match, use command \\[fileloop-continue].
 
 \(fn REGEXP)" t nil)
 
 (autoload 'project-query-replace "project" "\
 Search for REGEXP in all the files of the project.
 Stops when a match is found.
-To continue searching for next match, use command \\[multifile-continue].
+To continue searching for next match, use command \\[fileloop-continue].
 
 \(fn FROM TO)" t nil)
 
