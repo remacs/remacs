@@ -725,6 +725,8 @@ FORM is either `(repeat N FORM1)' or `(repeat N M FORMS...)'."
 (defun rx-submatch-n (form)
   "Parse and produce code from FORM, which is `(submatch-n N ...)'."
   (let ((n (nth 1 form)))
+    (unless (and (integerp n) (> n 0))
+      (error "rx `submatch-n' argument must be positive"))
     (concat "\\(?" (number-to-string n) ":"
 	    (if (= 3 (length form))
 		;; Only one sub-form.
