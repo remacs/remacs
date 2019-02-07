@@ -914,17 +914,23 @@ main (int argc, char **argv)
      happens.  This relies on the static heap being needed only in
      temacs and only if we are going to dump with unexec.  */
   bool use_dynamic_heap = false;
-  char *temacs_str = strstr (argv[0], "temacs");
-  if (temacs
-      && temacs_str != NULL
-      && (temacs_str == argv[0] || IS_DIRECTORY_SEP (temacs_str[-1])))
+  if (temacs)
     {
-      /* Note that gflags are set at this point only if we have been
-	 called with the --temacs=METHOD option.  We assume here that
-	 temacs is always called that way, otherwise the functions
-	 that rely on gflags, like will_dump_with_pdumper_p below,
-	 will not do their job.  */
-      use_dynamic_heap = will_dump_with_pdumper_p ();
+      char *temacs_str = NULL, *p;
+      for (p = argv[0]; (p = strstr (p, "temacs")) != NULL; p++)
+	temacs_str = p;
+      if (temacs_str != NULL
+	  && (temacs_str == argv[0] || IS_DIRECTORY_SEP (temacs_str[-1])))
+	{
+	  /* Note that gflags are set at this point only if we have been
+	     called with the --temacs=METHOD option.  We assume here that
+	     temacs is always called that way, otherwise the functions
+	     that rely on gflags, like will_dump_with_pdumper_p below,
+	     will not do their job.  */
+	  use_dynamic_heap = will_dump_with_pdumper_p ();
+	}
+      else
+	use_dynamic_heap = true;
     }
   else
     use_dynamic_heap = true;
