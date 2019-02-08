@@ -1350,7 +1350,7 @@ If THREAD is nil, the process is unlocked.  */)
 
 DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
        1, 1, 0,
-       doc: /* Ret the locking thread of PROCESS.
+       doc: /* Return the locking thread of PROCESS.
 If PROCESS is unlocked, this function returns nil.  */)
   (Lisp_Object process)
 {
