@@ -635,7 +635,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
-                    .find(|&item| string_equal(car(item), name.into()));
+                    .find(|&item| string_equal(car(item), name));
 
                 cdr(tem.into()).as_buffer()
             }
