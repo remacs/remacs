@@ -1121,6 +1121,65 @@ that tags placed via @code{tabulated-list-put-tag} will not be removed
 from entries that haven't changed (normally all tags are removed).
 @end defun
 
+@defun tabulated-list-delete-entry
+This function deletes the entry at point.
+
+It returns a list @code{(@var{id} @var{cols})}, where @var{id} is the
+ID of the deleted entry and @var{cols} is a vector of its column
+descriptors.  It moves point to the beginning of the current line.  It
+returns @code{nil} if there is no entry at point.
+
+Note that this function only changes the buffer contents; it does not
+alter @code{tabulated-list-entries}.
+@end defun
+
+@defun tabulated-list-get-id &optional pos
+This @code{defsubst} returns the ID object from
+@code{tabulated-list-entries} (if that is a list) or from the list
+returned by @code{tabulated-list-entries} (if it is a function).  If
+omitted or @code{nil}, @var{pos} defaults to point.
+@end defun
+
+@defun tabulated-list-get-entry &optional pos
+This @code{defsubst} returns the entry object from
+@code{tabulated-list-entries} (if that is a list) or from the list
+returned by @code{tabulated-list-entries} (if it is a function).  This
+will be a vector for the ID at @var{pos}.  If there is no entry at
+@var{pos}, then the function returns @code{nil}.
+@end defun
+
+@vindex tabulated-list-use-header-line
+@defun tabulated-list-header-overlay-p &optional POS
+This @code{defsubst} returns non-nil if there is a fake header at
+@var{pos}.  A fake header is used if
+@code{tabulated-list-use-header-line} is @code{nil} to put the column
+names at the beginning of the buffer.  If omitted or @code{nil},
+@var{pos} defaults to @code{point-min}.
+@end defun
+
+@vindex tabulated-list-padding
+@defun tabulated-list-put-tag tag &optional advance
+This function puts @var{tag} in the padding area of the current line.
+The padding area can be empty space at the beginning of the line, the
+width of which is governed by @code{tabulated-list-padding}.
+@var{tag} should be a string, with a length less than or equal to
+@code{tabulated-list-padding}.  If @var{advance} is non-nil, this
+function advances point by one line.
+@end defun
+
+@defun tabulated-list-set-col col desc &optional change-entry-data
+This function changes the tabulated list entry at point, setting
+@var{col} to @var{desc}.  @var{col} is the column number to change, or
+the name of the column to change.  @var{desc} is the new column
+descriptor, which is inserted via @code{tabulated-list-print-col}.
+
+If @var{change-entry-data} is non-nil, this function modifies the
+underlying data (usually the column descriptor in the list
+@code{tabulated-list-entries}) by setting the column descriptor of the
+vector to @code{desc}.
+@end defun
+
+
 @node Generic Modes
 @subsection Generic Modes
 @cindex generic mode

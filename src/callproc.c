@@ -237,7 +237,7 @@ DESTINATION can also have the form (REAL-BUFFER STDERR-FILE); in that case,
  t (mix it with ordinary output), or a file name string.
 
 Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
-Remaining arguments are strings passed as command arguments to PROGRAM.
+Remaining arguments ARGS are strings passed as command arguments to PROGRAM.
 
 If executable PROGRAM can't be found as an executable, `call-process'
 signals a Lisp error.  `call-process' reports errors in execution of
@@ -1033,7 +1033,8 @@ STDERR-FILE may be nil (discard standard error output),
 t (mix it with ordinary output), or a file name string.
 
 Sixth arg DISPLAY non-nil means redisplay buffer as output is inserted.
-Remaining args are passed to PROGRAM at startup as command args.
+Remaining arguments ARGS are passed to PROGRAM at startup as command-line
+arguments.
 
 If BUFFER is 0, `call-process-region' returns immediately with value nil.
 Otherwise it waits for PROGRAM to terminate
