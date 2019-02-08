@@ -35,30 +35,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Xft font driver.  */
 
-
-/* The actual structure for Xft font that can be cast to struct
-   font.  */
-
-struct xftfont_info
-{
-  struct font font;
-  /* The following five members must be here in this order to be
-     compatible with struct ftfont_info (in ftfont.c).  */
-#ifdef HAVE_LIBOTF
-  bool maybe_otf;	  /* Flag to tell if this may be OTF or not.  */
-  OTF *otf;
-#endif	/* HAVE_LIBOTF */
-#ifdef HAVE_HARFBUZZ
-  hb_font_t *hb_font;
-#endif  /* HAVE_HARFBUZZ */
-  FT_Size ft_size;
-  int index;
-  FT_Matrix matrix;
-  Display *display;
-  XftFont *xftfont;
-  unsigned x_display_id;
-};
-
 /* Structure pointed by (struct face *)->extra  */
 
 struct xftface_info
@@ -258,7 +234,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   Display *display = FRAME_X_DISPLAY (f);
   Lisp_Object val, filename, idx, font_object;
   FcPattern *pat = NULL, *match;
-  struct xftfont_info *xftfont_info = NULL;
+  struct font_info *xftfont_info = NULL;
   struct font *font;
   double size = 0;
   XftFont *xftfont = NULL;
@@ -333,7 +309,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 
   /* We should not destroy PAT here because it is kept in XFTFONT and
      destroyed automatically when XFTFONT is closed.  */
-  font_object = font_build_object (VECSIZE (struct xftfont_info),
+  font_object = font_build_object (VECSIZE (struct font_info),
 				   Qxft, entity, size);
   ASET (font_object, FONT_FILE_INDEX, filename);
   font = XFONT_OBJECT (font_object);
@@ -341,7 +317,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   font->driver = &xftfont_driver;
   font->encoding_charset = font->repertory_charset = -1;
 
-  xftfont_info = (struct xftfont_info *) font;
+  xftfont_info = (struct font_info *) font;
   xftfont_info->display = display;
   xftfont_info->xftfont = xftfont;
   xftfont_info->x_display_id = FRAME_DISPLAY_INFO (f)->x_id;
@@ -466,7 +442,7 @@ static void
 xftfont_close (struct font *font)
 {
   struct x_display_info *xdi;
-  struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
+  struct font_info *xftfont_info = (struct font_info *) font;
 
 #ifdef HAVE_LIBOTF
   if (xftfont_info->otf)
@@ -539,7 +515,7 @@ xftfont_done_face (struct frame *f, struct face *face)
 static int
 xftfont_has_char (Lisp_Object font, int c)
 {
-  struct xftfont_info *xftfont_info;
+  struct font_info *xftfont_info;
   struct charset *cs = NULL;
 
   if (EQ (AREF (font, FONT_ADSTYLE_INDEX), Qja)
@@ -553,7 +529,7 @@ xftfont_has_char (Lisp_Object font, int c)
 
   if (FONT_ENTITY_P (font))
     return ftfont_has_char (font, c);
-  xftfont_info = (struct xftfont_info *) XFONT_OBJECT (font);
+  xftfont_info = (struct font_info *) XFONT_OBJECT (font);
   return (XftCharExists (xftfont_info->display, xftfont_info->xftfont,
 			 (FcChar32) c) == FcTrue);
 }
@@ -561,7 +537,7 @@ xftfont_has_char (Lisp_Object font, int c)
 static unsigned
 xftfont_encode_char (struct font *font, int c)
 {
-  struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
+  struct font_info *xftfont_info = (struct font_info *) font;
   unsigned code = XftCharIndex (xftfont_info->display, xftfont_info->xftfont,
 				(FcChar32) c);
 
@@ -572,7 +548,7 @@ static void
 xftfont_text_extents (struct font *font, unsigned int *code,
 		      int nglyphs, struct font_metrics *metrics)
 {
-  struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
+  struct font_info *xftfont_info = (struct font_info *) font;
   XGlyphInfo extents;
 
   block_input ();
@@ -614,7 +590,7 @@ xftfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 
   struct frame *f = s->f;
   struct face *face = s->face;
-  struct xftfont_info *xftfont_info = (struct xftfont_info *) s->font;
+  struct font_info *xftfont_info = (struct font_info *) s->font;
   struct xftface_info *xftface_info = NULL;
   XftDraw *xft_draw = xftfont_get_xft_draw (f);
   FT_UInt *code;
@@ -677,7 +653,7 @@ static Lisp_Object
 xftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
-  struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
+  struct font_info *xftfont_info = (struct font_info *) font;
   FT_Face ft_face = XftLockFace (xftfont_info->xftfont);
   xftfont_info->ft_size = ft_face->size;
   Lisp_Object val = ftfont_shape (lgstring, direction);
@@ -721,7 +697,7 @@ static bool
 xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
                         Lisp_Object entity)
 {
-  struct xftfont_info *info = (struct xftfont_info *) XFONT_OBJECT (font_object);
+  struct font_info *info = (struct font_info *) XFONT_OBJECT (font_object);
   FcPattern *oldpat = info->xftfont->pattern;
   Display *display = FRAME_X_DISPLAY (f);
   FcPattern *pat = FcPatternCreate ();
