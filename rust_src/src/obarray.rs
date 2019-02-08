@@ -63,15 +63,17 @@ impl LispObarrayRef {
     pub fn intern(&self, string: impl Into<LispSymbolOrString>) -> LispObject {
         let string = string.into();
         let tem = self.lookup(string);
-        let string: LispObject = string.into();
         if tem.is_symbol() {
             tem
-        } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
-            // When Emacs is running lisp code to dump to an executable, make
-            // use of pure storage.
-            intern_driver(unsafe { Fpurecopy(string) }, self.into(), tem)
         } else {
-            intern_driver(string, self.into(), tem)
+            let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
+                // When Emacs is running lisp code to dump to an executable, make
+                // use of pure storage.
+                unsafe { Fpurecopy(string.into()) }
+            } else {
+                string.into()
+            };
+            intern_driver(string_copy, self.into(), tem)
         }
     }
 }
