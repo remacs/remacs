@@ -41,9 +41,11 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    obarray::LispObarrayRef,
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
+    symbols::LispSymbolRef,
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -309,6 +311,91 @@ impl LispObject {
 
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(unsafe { empty_unibyte_string })
+    }
+
+    // We can excuse not using an option here because extracting the value checks the type
+    // TODO: this is false with the enum model, change this
+    pub fn as_symbol_or_string(self) -> LispSymbolOrString {
+        self.into()
+    }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum LispSymbolOrString {
+    String(LispStringRef),
+    Symbol(LispSymbolRef),
+}
+
+impl LispSymbolOrString {
+    pub fn is_string(self) -> bool {
+        match self {
+            LispSymbolOrString::String(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_symbol(self) -> bool {
+        match self {
+            LispSymbolOrString::Symbol(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl From<LispSymbolOrString> for LispObject {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => s.into(),
+            LispSymbolOrString::Symbol(sym) => sym.into(),
+        }
+    }
+}
+
+impl From<LispSymbolOrString> for LispStringRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => s,
+            LispSymbolOrString::Symbol(sym) => sym.symbol_name().into(),
+        }
+    }
+}
+
+impl From<LispStringRef> for LispSymbolOrString {
+    fn from(s: LispStringRef) -> Self {
+        Self::String(s)
+    }
+}
+
+impl From<LispSymbolOrString> for LispSymbolRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => LispObarrayRef::global().intern(s).into(),
+            LispSymbolOrString::Symbol(sym) => sym,
+        }
+    }
+}
+
+impl From<LispSymbolRef> for LispSymbolOrString {
+    fn from(s: LispSymbolRef) -> Self {
+        Self::Symbol(s)
+    }
+}
+
+impl From<LispObject> for LispSymbolOrString {
+    fn from(o: LispObject) -> Self {
+        if let Some(s) = o.as_string() {
+            Self::String(s)
+        } else if let Some(sym) = o.as_symbol() {
+            Self::Symbol(sym)
+        } else {
+            wrong_type!(Qstringp, o)
+        }
+    }
+}
+
+impl PartialEq<LispObject> for LispSymbolOrString {
+    fn eq(&self, other: &LispObject) -> bool {
+        (*other).eq(LispObject::from(*self))
     }
 }
 
