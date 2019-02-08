@@ -583,6 +583,30 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     }
 }
 
+/// Same as STRING_CHAR_AND_LENGHT
+pub unsafe fn string_char_and_length(ptr: *const u8) -> (Codepoint, usize) {
+    let head = *ptr;
+    match multibyte_length_by_head(head) {
+        1 => (head.into(), 1),
+        2 => {
+            let cp: Codepoint = ((head & 0x1F) << 6) as Codepoint
+                | (*ptr.add(1) & 0x3F) as Codepoint + if head < 0xC2 { 0x3FFF80 } else { 0 };
+            (cp, 2)
+        }
+        3 => {
+            let cp = (((head & 0x0F) as Codepoint) << 12)
+                | (((*ptr.add(1) & 0x3F) as Codepoint) << 6)
+                | (*ptr.add(2) & 0x3F) as Codepoint;
+            (cp, 3)
+        }
+        _ => {
+            let mut len = 0;
+            let cp = string_char(ptr, ptr::null_mut(), &mut len);
+            (cp as Codepoint, len as usize)
+        }
+    }
+}
+
 /// Same as `BYTES_BY_CHAR_HEAD` macro in C.
 pub fn multibyte_length_by_head(byte: c_uchar) -> usize {
     if byte & 0x80 == 0 {

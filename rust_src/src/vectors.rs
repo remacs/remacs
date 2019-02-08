@@ -86,6 +86,18 @@ impl LispObject {
         self.as_vectorlike_unchecked().as_vector_unchecked()
     }
 
+    pub fn force_vector(self) -> LispVectorRef {
+        unsafe { self.as_vector_unchecked() }
+    }
+
+    pub unsafe fn as_bool_vector_unchecked(self) -> LispBoolVecRef {
+        LispBoolVecRef::new(self.get_untaggedptr() as *mut Lisp_Bool_Vector)
+    }
+
+    pub fn force_bool_vector(self) -> LispBoolVecRef {
+        unsafe { self.as_bool_vector_unchecked() }
+    }
+
     pub fn as_vector_or_string_length(self) -> isize {
         if let Some(s) = self.as_string() {
             return s.len_chars();
