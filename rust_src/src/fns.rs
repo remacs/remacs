@@ -283,14 +283,14 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn]
 pub fn reverse(seq: LispObject) -> LispObject {
     if seq.is_nil() {
-        return Qnil;
+        Qnil
     } else if let Some(cons) = seq.as_cons() {
         let mut new = Qnil;
 
         for tail in cons.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on) {
             new = LispObject::cons(tail.car(), new);
         }
-        new.into()
+        new
     } else if let Some(vector) = seq.as_vector() {
         let size = vector.len();
         let mut new = unsafe { make_uninit_vector(size as isize) }.force_vector();
