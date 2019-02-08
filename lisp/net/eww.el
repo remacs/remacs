@@ -1532,7 +1532,7 @@ Differences in #targets are ignored."
 
 (defun eww-download ()
   "Download URL to `eww-download-directory'.
-Use link under point if there is one, else the current page URL."
+Use link at point if there is one, else the current page's URL."
   (interactive)
   (access-file eww-download-directory "Download failed")
   (let ((url (or (get-text-property (point) 'shr-url)

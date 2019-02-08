@@ -654,6 +654,11 @@ and its value has been changed to Duck Duck Go.
 
 ** eww/shr
 
++++
+*** The 'd' ('eww-download') command now falls back to current page's URL.
+If this command is invoked with no URL at point, it now downloads the
+current page instead of signaling an error.
+
 *** When opening external links in eww/shr (typically with the
 'C-u RET' keystroke on a link), the link will be flashed with the new
 'shr-selected-link' face to give the user feedback that the command
