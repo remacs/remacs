@@ -730,36 +730,40 @@ Advances point just past JSON object."
         ((hash-table-p object) (json-encode-hash-table object))
         (t                     (signal 'json-error (list object)))))
 
-;; Pretty printing
+;; Pretty printing & minimizing
 
-(defun json-pretty-print-buffer ()
-  "Pretty-print current buffer."
-  (interactive)
-  (json-pretty-print (point-min) (point-max)))
+(defun json-pretty-print-buffer (&optional minimize)
+  "Pretty-print current buffer.
+With prefix argument MINIMIZE, minimize it instead."
+  (interactive "P")
+  (json-pretty-print (point-min) (point-max) minimize))
 
-(defun json-pretty-print (begin end)
-  "Pretty-print selected region."
-  (interactive "r")
-  (atomic-change-group
-    (let ((json-encoding-pretty-print t)
-          ;; Distinguish an empty objects from 'null'
-          (json-null :json-null)
-          ;; Ensure that ordering is maintained
-          (json-object-type 'alist)
-          (txt (delete-and-extract-region begin end)))
-      (insert (json-encode (json-read-from-string txt))))))
+(defun json-pretty-print (begin end &optional minimize)
+  "Pretty-print selected region.
+With prefix argument MINIMIZE, minimize it instead."
+  (interactive "r\nP")
+  (let ((json-encoding-pretty-print (null minimize))
+        ;; Distinguish an empty objects from 'null'
+        (json-null :json-null)
+        ;; Ensure that ordering is maintained
+        (json-object-type 'alist))
+    (replace-region-contents
+     begin end
+     (lambda () (json-encode (json-read))))))
 
-(defun json-pretty-print-buffer-ordered ()
-  "Pretty-print current buffer with object keys ordered."
+(defun json-pretty-print-buffer-ordered (&optional minimize)
+  "Pretty-print current buffer with object keys ordered.
+With prefix argument MINIMIZE, minimize it instead."
   (interactive)
   (let ((json-encoding-object-sort-predicate 'string<))
-    (json-pretty-print-buffer)))
+    (json-pretty-print-buffer minimize)))
 
-(defun json-pretty-print-ordered (begin end)
-  "Pretty-print the region with object keys ordered."
-  (interactive "r")
+(defun json-pretty-print-ordered (begin end &optional minimize)
+  "Pretty-print the region with object keys ordered.
+With prefix argument MINIMIZE, minimize it instead."
+  (interactive "r\nP")
   (let ((json-encoding-object-sort-predicate 'string<))
-    (json-pretty-print begin end)))
+    (json-pretty-print begin end minimize)))
 
 (provide 'json)
 
