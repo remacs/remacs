@@ -583,6 +583,34 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     }
 }
 
+/// Same as STRING_CHAR_AND_LENGTH
+pub unsafe fn string_char_and_length(ptr: *const u8) -> (Codepoint, usize) {
+    let head = *ptr;
+    // using multibyte_length_by_head is slightly more expnsive, as it also
+    // checks if head & 0x08 == 0. Since this is function is going to be used
+    // pretty often as invocations of the original macro gets replaced, it may
+    // be worth it to directly make the bitwise comparisons.
+    match multibyte_length_by_head(head) {
+        1 => (head.into(), 1),
+        2 => {
+            let cp = (Codepoint::from((head & 0x1F) << 6) | Codepoint::from(*ptr.add(1) & 0x3F))
+                + if head < 0xC2 { 0x3F_FF_80 } else { 0 };
+            (cp, 2)
+        }
+        3 => {
+            let cp = (Codepoint::from(head & 0x0F) << 12)
+                | ((Codepoint::from(*ptr.add(1) & 0x3F)) << 6)
+                | Codepoint::from(*ptr.add(2) & 0x3F);
+            (cp, 3)
+        }
+        _ => {
+            let mut len = 0;
+            let cp = string_char(ptr, ptr::null_mut(), &mut len);
+            (cp as Codepoint, len as usize)
+        }
+    }
+}
+
 /// Same as `BYTES_BY_CHAR_HEAD` macro in C.
 pub fn multibyte_length_by_head(byte: c_uchar) -> usize {
     if byte & 0x80 == 0 {

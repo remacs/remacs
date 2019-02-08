@@ -1,6 +1,6 @@
 //! Random utility Lisp functions.
 
-use std::ptr;
+use std::{ptr, slice};
 
 use libc;
 
@@ -14,16 +14,20 @@ use crate::{
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
-    multibyte::LispStringRef,
+    multibyte::{string_char_and_length, write_codepoint, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, message1, redisplay_preserve_echo_area},
+    remacs_sys::{
+        concat as lisp_concat, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
+        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area,
+    },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
     remacs_sys::{
-        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt, Qyes_or_no_p_history,
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsequencep, Qsubfeatures, Qt,
+        Qyes_or_no_p_history,
     },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
@@ -271,6 +275,63 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
             Lisp_Type::Lisp_String,
             false,
         )
+    }
+}
+
+/// Return the reversed copy of list, vector, or string SEQ.
+/// See also the function `nreverse', which is used more often.
+#[lisp_fn]
+pub fn reverse(seq: LispObject) -> LispObject {
+    if seq.is_nil() {
+        Qnil
+    } else if let Some(cons) = seq.as_cons() {
+        cons.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .fold(Qnil, |cons, elt| LispObject::cons(elt, cons))
+    } else if let Some(vector) = seq.as_vector() {
+        let size = vector.len();
+        let mut new = unsafe { make_uninit_vector(size as isize) }.force_vector();
+
+        for (i, item) in vector.iter().enumerate() {
+            unsafe { new.set_unchecked(size - 1 - i, item) };
+        }
+        new.into()
+    } else if let Some(boolvec) = seq.as_bool_vector() {
+        let nbits = boolvec.len();
+        let mut new = unsafe { make_uninit_bool_vector(nbits as i64) }.force_bool_vector();
+
+        for (i, item) in boolvec.iter().enumerate() {
+            unsafe { new.set_unchecked(nbits - 1 - i, item.into()) }
+        }
+        new.into()
+    } else if let Some(string) = seq.as_string() {
+        let size = string.len_chars();
+        let bytes = string.len_bytes();
+
+        if !string.is_multibyte() {
+            let mut new = unsafe { make_uninit_string(size as i64) }.force_string();
+
+            for (i, c) in string.as_slice().iter().enumerate() {
+                new.set_byte(size - i as isize - 1, *c);
+            }
+            new.into()
+        } else {
+            let mut new =
+                unsafe { make_uninit_multibyte_string(size as i64, bytes as i64) }.force_string();
+            let mut p = string.const_data_ptr();
+            let mut q = unsafe { new.data_ptr().add(bytes as usize) };
+            let end = new.data_ptr();
+            while q > end {
+                unsafe {
+                    let (c, len) = string_char_and_length(p);
+                    p = p.add(len);
+                    q = q.sub(len);
+                    write_codepoint(slice::from_raw_parts_mut(q, len), c);
+                }
+            }
+            new.into()
+        }
+    } else {
+        wrong_type!(Qsequencep, seq);
     }
 }
 
