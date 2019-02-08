@@ -108,7 +108,7 @@ impl LispObjectExt for LispObject {
         if self.is_nil() {
             "NOTstring".to_string()
         } else {
-            let idf_sym_s = self.symbol_or_string_as_string();
+            let idf_sym_s: LispStringRef = self.as_symbol_or_string().into();
             idf_sym_s.to_string().to_lowercase()
         }
     }

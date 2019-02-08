@@ -447,32 +447,6 @@ readbyte_for_lambda (int c, Lisp_Object readcharfun)
 
 
 static int
-readbyte_from_stdio (void)
-{
-  if (infile->lookahead)
-    return infile->buf[--infile->lookahead];
-
-  int c;
-  FILE *instream = infile->stream;
-
-  block_input ();
-
-  /* Interrupted reads have been observed while reading over the network.  */
-  while ((c = getc_unlocked (instream)) == EOF && errno == EINTR
-	 && ferror_unlocked (instream))
-    {
-      unblock_input ();
-      maybe_quit ();
-      block_input ();
-      clearerr_unlocked (instream);
-    }
-
-  unblock_input ();
-
-  return (c == EOF ? -1 : c);
-}
-
-static int
 readbyte_from_file (int c, Lisp_Object readcharfun)
 {
   if (c >= 0)
@@ -782,15 +756,6 @@ floating-point value.  */)
 
   return (NILP (val) ? Qnil
 	  : make_number (char_resolve_modifier_mask (XINT (val))));
-}
-
-DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
-       doc: /* Don't use this yourself.  */)
-  (void)
-{
-  if (!infile)
-    error ("get-file-char misused");
-  return make_number (readbyte_from_stdio ());
 }
 
 
@@ -4462,7 +4427,6 @@ syms_of_lread (void)
   defsubr (&Sread_char);
   defsubr (&Sread_char_exclusive);
   defsubr (&Sread_event);
-  defsubr (&Sget_file_char);
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,

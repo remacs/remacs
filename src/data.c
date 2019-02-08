@@ -304,37 +304,6 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
     }
 }
 
-/* Find the value of a symbol, returning Qunbound if it's not bound.
-   This is helpful for code which just wants to get a variable's value
-   if it has one, without signaling an error.
-   Note that it must not be possible to quit
-   within this function.  Great care is required for this.  */
-
-Lisp_Object
-find_symbol_value (Lisp_Object symbol)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
-    case SYMBOL_LOCALIZED:
-      {
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	swap_in_symval_forwarding (sym, blv);
-	return blv->fwd ? do_symval_forwarding (blv->fwd) : get_blv_value (blv);
-      }
-      /* FALLTHROUGH */
-    case SYMBOL_FORWARDED:
-      return do_symval_forwarding (SYMBOL_FWD (sym));
-    default: emacs_abort ();
-    }
-}
 
 /* Store the value NEWVAL into SYMBOL.
    If buffer-locality is an issue, WHERE specifies which context to use.

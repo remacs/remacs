@@ -20,8 +20,8 @@ use crate::{
     },
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
-        grow_specpdl, internal_catch, internal_lisp_condition_case, list2, maybe_gc, maybe_quit,
+        do_one_unbind, eval_sub, funcall_lambda, funcall_subr, globals, grow_specpdl,
+        internal_catch, internal_lisp_condition_case, list2, maybe_gc, maybe_quit,
         record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
         MODULE_FUNCTIONP,
     },
@@ -1025,7 +1025,7 @@ fn run_hook_with_args_internal(
 
     let mut ret = Qnil;
     let sym = args[0];
-    let val = unsafe { find_symbol_value(sym) };
+    let val = unsafe { LispSymbolRef::from(sym).find_value() };
 
     if val.eq(Qunbound) || val.is_nil() {
         Qnil

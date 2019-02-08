@@ -9,13 +9,13 @@ use crate::{
     buffers::per_buffer_idx_from_field_offset,
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{as_buffer_objfwd, indirect_function, set},
+    data::{as_buffer_objfwd, do_symval_forwarding, indirect_function, set},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
-        find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
+        get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
         set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
@@ -134,6 +134,32 @@ impl LispSymbolRef {
         s.val.value
     }
 
+    // Find the value of a symbol, returning Qunbound if it's not bound.
+    // This is helpful for code which just wants to get a variable's value
+    // if it has one, without signaling an error.
+    // Note that it must not be possible to quit
+    // within this function.  Great care is required for this.
+    pub unsafe fn find_value(self) -> LispObject {
+        let mut symbol = self.get_indirect_variable();
+
+        match symbol.get_redirect() {
+            symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+            symbol_redirect::SYMBOL_LOCALIZED => {
+                let mut blv = symbol.get_blv();
+                swap_in_symval_forwarding(symbol.as_mut(), blv.as_mut());
+
+                let fwd = blv.get_fwd();
+                if fwd.is_null() {
+                    blv.get_value()
+                } else {
+                    do_symval_forwarding(fwd)
+                }
+            }
+            symbol_redirect::SYMBOL_FORWARDED => do_symval_forwarding(symbol.get_fwd()),
+            _ => unreachable!(),
+        }
+    }
+
     pub unsafe fn get_blv(self) -> LispBufferLocalValueRef {
         let s = self.u.s.as_ref();
         LispBufferLocalValueRef::new(s.val.blv)
@@ -205,16 +231,6 @@ impl LispObject {
 
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         self.into()
-    }
-
-    pub fn symbol_or_string_as_string(self) -> LispStringRef {
-        match self.as_symbol() {
-            Some(sym) => sym
-                .symbol_name()
-                .as_string()
-                .expect("Expected a symbol name?"),
-            None => self.into(),
-        }
     }
 
     fn symbol_ptr_value(self) -> EmacsInt {
@@ -397,7 +413,7 @@ pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
 /// outside of any lexical scope.
 #[lisp_fn]
 pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
-    let val = unsafe { find_symbol_value(symbol.into()) };
+    let val = unsafe { symbol.find_value() };
     if val == Qunbound {
         void_variable!(symbol);
     }
