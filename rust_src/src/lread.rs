@@ -21,14 +21,29 @@ use crate::{
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, clearerr_unlocked, ferror_unlocked, getc_unlocked, maybe_quit,
-        read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
+        block_input, build_string, getc_unlocked, maybe_quit, read_internal_start, readevalloop,
+        specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
 };
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "\u{1}_clearerr_unlocked"]
+    pub fn clearerr_unlocked(arg1: *mut crate::remacs_sys::FILE);
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "\u{1}_ferror_unlocked"]
+    pub fn ferror_unlocked(arg1: *mut crate::remacs_sys::FILE) -> ::libc::c_int;
+}
+
+#[cfg(not(target_os = "macos"))]
+use crate::remacs_sys::{clearerr_unlocked, ferror_unlocked};
 
 // Define an "integer variable"; a symbol whose value is forwarded to a
 // C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
