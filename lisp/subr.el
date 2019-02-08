@@ -5476,4 +5476,30 @@ returned list are in the same order as in TREE.
 ;; for discoverability:
 (defalias 'flatten-list 'flatten-tree)
 
+(defun replace-region-contents (beg end replace-fn)
+  "Replace the region between BEG and END using REPLACE-FN.
+REPLACE-FN runs on the current buffer narrowed to the region.  It
+should return either a string or a buffer replacing the region.
+
+The replacement is performed using `replace-buffer-contents'.
+
+Note: If the replacement is a string, it'll be placed in a
+temporary buffer so that `replace-buffer-contents' can operate on
+it.  Therefore, if you already have the replacement in a buffer,
+it makes no sense to convert it to a string using
+`buffer-substring' or similar."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (let ((repl (funcall replace-fn)))
+	(if (bufferp repl)
+	    (replace-buffer-contents repl)
+	  (let ((source-buffer (current-buffer)))
+	    (with-temp-buffer
+	      (insert repl)
+	      (let ((tmp-buffer (current-buffer)))
+		(set-buffer source-buffer)
+		(replace-buffer-contents tmp-buffer)))))))))
+
 ;;; subr.el ends here

@@ -1910,6 +1910,11 @@ determines whether case is significant or ignored.  */)
 
 #undef ELEMENT
 #undef EQUAL
+#define USE_HEURISTIC
+
+#ifdef USE_HEURISTIC
+#define DIFFSEQ_HEURISTIC
+#endif
 
 /* Counter used to rarely_quit in replace-buffer-contents.  */
 static unsigned short rbc_quitcounter;
@@ -2017,8 +2022,11 @@ differences between the two buffers.  */)
     .insertions = SAFE_ALLOCA (ins_bytes),
     .fdiag = buffer + size_b + 1,
     .bdiag = buffer + diags + size_b + 1,
+#ifdef DIFFSEQ_HEURISTIC
+    .heuristic = true,
+#endif
     /* FIXME: Find a good number for .too_expensive.  */
-    .too_expensive = 1000000,
+    .too_expensive = 64,
   };
   memclear (ctx.deletions, del_bytes);
   memclear (ctx.insertions, ins_bytes);
