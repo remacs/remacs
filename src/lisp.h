@@ -3481,7 +3481,6 @@ extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
 extern _Noreturn void circular_list (Lisp_Object);
 extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
-extern Lisp_Object find_symbol_value (Lisp_Object symbol);
 
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
