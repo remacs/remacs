@@ -65,6 +65,32 @@
     (should (equal [nil nil nil nil nil t t t t t] (vconcat (reverse A))))
     (should (equal A (reverse (reverse A))))))
 
+;; Test handling of cyclic and dotted lists.
+
+(defun cyc1 (a)
+  (let ((ls (make-list 10 a)))
+    (nconc ls ls)
+    ls))
+
+(defun cyc2 (a b)
+  (let ((ls1 (make-list 10 a))
+        (ls2 (make-list 1000 b)))
+    (nconc ls2 ls2)
+    (nconc ls1 ls2)
+    ls1))
+
+(defun dot1 (a)
+  (let ((ls (make-list 10 a)))
+    (nconc ls 'tail)
+    ls))
+
+(defun dot2 (a b)
+  (let ((ls1 (make-list 10 a))
+        (ls2 (make-list 10 b)))
+    (nconc ls1 ls2)
+    (nconc ls2 'tail)
+    ls1))
+
 (ert-deftest test-cycle-reverse ()
   "Tests reverse errors on a circular list"
   (should-error (reverse (cyc1 1)) :type 'circular-list)
