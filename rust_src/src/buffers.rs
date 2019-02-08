@@ -3,6 +3,7 @@
 use std::sync::Mutex;
 use std::{self, mem, ptr};
 
+use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
 use rand::{Rng, StdRng};
@@ -19,12 +20,13 @@ use crate::{
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
-    lists::{car, cdr, list, member},
-    lists::{LispConsCircularChecks, LispConsEndChecks},
+    lists::{car, cdr, list, member, rassq, setcar},
+    lists::{CarIter, LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::{multibyte_length_by_head, string_char},
     multibyte::{LispStringRef, LispSymbolOrString},
     numbers::MOST_POSITIVE_FIXNUM,
+    obarray::intern,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
@@ -34,12 +36,13 @@ use crate::{
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
     remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
-        Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
+        Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
+        UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
@@ -352,12 +355,21 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    pub fn overlay_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).overlay_modiff }
+    }
+
     pub fn z_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }
 
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    pub fn local_vars_iter(self) -> CarIter {
+        let vars = self.local_var_alist_;
+        vars.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
@@ -551,10 +563,10 @@ impl LispBufferLocalValueRef {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum LispBufferOrName {
-    Buffer(LispObject),
-    Name(LispObject),
+    Buffer(LispBufferRef),
+    Name(LispStringRef),
 }
 
 impl LispBufferOrName {
@@ -570,21 +582,35 @@ impl LispBufferOrName {
 impl From<LispBufferOrName> for LispObject {
     fn from(buffer_or_name: LispBufferOrName) -> Self {
         match buffer_or_name {
-            LispBufferOrName::Buffer(b) => b,
-            LispBufferOrName::Name(n) => n,
+            LispBufferOrName::Buffer(b) => b.into(),
+            LispBufferOrName::Name(n) => n.into(),
         }
     }
 }
 
 impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
-        if v.is_string() {
-            LispBufferOrName::Name(v)
-        } else if v.is_buffer() {
-            LispBufferOrName::Buffer(v)
+        if let Some(s) = v.as_string() {
+            LispBufferOrName::Name(s)
+        } else if let Some(b) = v.as_buffer() {
+            LispBufferOrName::Buffer(b)
         } else {
             wrong_type!(Qbufferp, v);
         }
+    }
+}
+
+impl From<LispBufferRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(b: LispBufferRef) -> Self {
+        LispBufferOrName::Buffer(b)
+    }
+}
+
+impl From<LispStringRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(n: LispStringRef) -> Self {
+        LispBufferOrName::Name(n)
     }
 }
 
@@ -592,10 +618,10 @@ impl From<LispObject> for Option<LispBufferOrName> {
     fn from(v: LispObject) -> Self {
         if v.is_nil() {
             None
-        } else if v.is_string() {
-            Some(LispBufferOrName::Name(v))
-        } else if v.is_buffer() {
-            Some(LispBufferOrName::Buffer(v))
+        } else if let Some(s) = v.as_string() {
+            Some(LispBufferOrName::Name(s))
+        } else if let Some(b) = v.as_buffer() {
+            Some(LispBufferOrName::Buffer(b))
         } else {
             None
         }
@@ -604,17 +630,16 @@ impl From<LispObject> for Option<LispBufferOrName> {
 
 impl From<LispBufferOrName> for Option<LispBufferRef> {
     fn from(v: LispBufferOrName) -> Self {
-        let buffer = match v {
-            LispBufferOrName::Buffer(b) => b,
+        match v {
+            LispBufferOrName::Buffer(b) => Some(b),
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
-                    .find(|&item| string_equal(car(item), name));
+                    .find(|&item| string_equal(car(item), name.into()));
 
-                cdr(tem.into())
+                cdr(tem.into()).as_buffer()
             }
-        };
-        buffer.as_buffer()
+        }
     }
 }
 
@@ -1117,9 +1142,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore.is_not_nil() && string_equal(name, ignore))
-        || get_buffer(LispBufferOrName::Name(name.into())).is_none()
-    {
+    if (ignore.is_not_nil() && string_equal(name, ignore)) || get_buffer(name.into()).is_none() {
         return name;
     }
 
@@ -1131,7 +1154,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
-        if get_buffer(LispBufferOrName::Name(genname)).is_none() {
+        if get_buffer(genname.into()).is_none() {
             return genname.into();
         }
         genname
@@ -1144,19 +1167,24 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) }.force_string();
-        if string_equal(candidate, ignore)
-            || get_buffer(LispBufferOrName::Name(candidate.into())).is_none()
-        {
+        if string_equal(candidate, ignore) || get_buffer(candidate.into()).is_none() {
             return candidate;
         }
         suffix_count += 1;
     }
 }
 
-pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+pub unsafe fn per_buffer_idx_from_field_offset(
+    offset: FieldOffset<Lisp_Buffer, LispObject>,
+) -> isize {
+    let obj = *offset.apply_ptr_mut(&mut buffer_local_flags);
+    obj.to_fixnum_unchecked() as isize
+}
+
+pub unsafe fn per_buffer_idx(count: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
-    let obj = flags.offset(offset);
-    (*obj).as_fixnum_or_error() as isize
+    let obj = flags.offset(count);
+    (*obj).to_fixnum_unchecked() as isize
 }
 
 /// Return a list of overlays which is a copy of the overlay list
@@ -1214,6 +1242,66 @@ pub extern "C" fn rust_syms_of_buffer() {
     /// The header line appears, optionally, at the top of a window;
     /// the mode line appears at the bottom.
     defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
+}
+
+/// Change current buffer's name to NEWNAME (a string).  If second arg
+/// UNIQUE is nil or omitted, it is an error if a buffer named NEWNAME
+/// already exists.  If UNIQUE is non-nil, come up with a new name
+/// using `generate-new-buffer-name'.  Interactively, you can set
+/// UNIQUE with a prefix argument.  We return the name we actually
+/// gave the buffer.  This does not change the name of the visited
+/// file (if any).
+#[lisp_fn(
+    min = "1",
+    intspec = "(list (read-string \"Rename buffer (to new name): \" nil 'buffer-name-history (buffer-name (current-buffer))) current-prefix-arg)"
+)]
+pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRef {
+    if newname.is_empty() {
+        error!("Empty string is invalid as a buffer name")
+    }
+
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    let newname = get_buffer(newname.into()).map_or(newname, |tem| {
+        // Don't short-circuit if UNIQUE is t.  That is a useful
+        // way to rename the buffer automatically so you can
+        // create another with the original name.  It makes UNIQUE
+        // equivalent to
+        // (rename-buffer (generate-new-buffer-name NEWNAME)).
+        if unique.is_nil() {
+            if tem == current_buffer {
+                return current_buffer.name_.into();
+            }
+            error!("Buffer name `{}' is in use", newname)
+        } else {
+            generate_new_buffer_name(newname, current_buffer.name_)
+        }
+    });
+
+    current_buffer.name_ = newname.into();
+
+    // Catch redisplay's attention.  Unless we do this, the mode lines
+    // for any windows displaying current_buffer will stay unchanged.
+    unsafe {
+        update_mode_lines = 11;
+    }
+
+    let buf: LispBufferRef = current_buffer;
+    unsafe {
+        setcar(rassq(buf.into(), Vbuffer_alist).into(), newname.into());
+    }
+    if current_buffer.filename_.is_nil() && current_buffer.auto_save_file_name_.is_not_nil() {
+        call!(intern("rename-auto-save-file").into());
+    }
+
+    unsafe {
+        if Vrun_hooks.is_not_nil() {
+            call!(Vrun_hooks, Qbuffer_list_update_hook);
+        }
+    }
+
+    // Refetch since that last call may have done GC.
+    ThreadState::current_buffer_unchecked().name_.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

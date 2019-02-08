@@ -510,19 +510,6 @@ re-enlarged to its previous size.  */)
   return NILP (horizontal) ? w->normal_lines : w->normal_cols;
 }
 
-DEFUN ("window-new-pixel", Fwindow_new_pixel, Swindow_new_pixel, 0, 1, 0,
-       doc: /* Return new pixel size of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-
-The new pixel size of WINDOW is the value set by the last call of
-`set-window-new-pixel' for WINDOW.  If it is valid, it will be shortly
-installed as WINDOW's pixel height (see `window-pixel-height') or pixel
-width (see `window-pixel-width').  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->new_pixel;
-}
-
 DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
        doc: /* Return left pixel edge of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.  */)
@@ -1297,129 +1284,6 @@ Return nil if window display is not up-to-date.  In that case, use
  found_row:
   crop = max (0, (row->y + row->height) - max_y);
   return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
-}
-
-DEFUN ("window-lines-pixel-dimensions", Fwindow_lines_pixel_dimensions, Swindow_lines_pixel_dimensions, 0, 6, 0,
-       doc: /* Return pixel dimensions of WINDOW's lines.
-The return value is a list of the x- and y-coordinates of the lower
-right corner of the last character of each line.  Return nil if the
-current glyph matrix of WINDOW is not up-to-date.
-
-Optional argument WINDOW specifies the window whose lines' dimensions
-shall be returned.  Nil or omitted means to return the dimensions for
-the selected window.
-
-FIRST, if non-nil, specifies the index of the first line whose
-dimensions shall be returned.  If FIRST is nil and BODY is non-nil,
-start with the first text line of WINDOW.  Otherwise, start with the
-first line of WINDOW.
-
-LAST, if non-nil, specifies the last line whose dimensions shall be
-returned.  If LAST is nil and BODY is non-nil, the last line is the last
-line of the body (text area) of WINDOW.  Otherwise, last is the last
-line of WINDOW.
-
-INVERSE, if nil, means that the y-pixel value returned for a specific
-line specifies the distance in pixels from the left edge (body edge if
-BODY is non-nil) of WINDOW to the right edge of the last glyph of that
-line.  INVERSE non-nil means that the y-pixel value returned for a
-specific line specifies the distance in pixels from the right edge of
-the last glyph of that line to the right edge (body edge if BODY is
-non-nil) of WINDOW.
-
-LEFT non-nil means to return the x- and y-coordinates of the lower left
-corner of the leftmost character on each line.  This is the value that
-should be used for buffers that mostly display text from right to left.
-
-If LEFT is non-nil and INVERSE is nil, this means that the y-pixel value
-returned for a specific line specifies the distance in pixels from the
-left edge of the last (leftmost) glyph of that line to the right edge
-(body edge if BODY is non-nil) of WINDOW.  If LEFT and INVERSE are both
-non-nil, the y-pixel value returned for a specific line specifies the
-distance in pixels from the left edge (body edge if BODY is non-nil) of
-WINDOW to the left edge of the last (leftmost) glyph of that line.
-
-Normally, the value of this function is not available while Emacs is
-busy, for example, when processing a command.  It should be retrievable
-though when run from an idle timer with a delay of zero seconds.  */)
-  (Lisp_Object window, Lisp_Object first, Lisp_Object last, Lisp_Object body, Lisp_Object inverse, Lisp_Object left)
-{
-  struct window *w = decode_live_window (window);
-  struct buffer *b;
-  struct glyph_row *row, *end_row;
-  int max_y = NILP (body) ? WINDOW_PIXEL_HEIGHT (w) : window_text_bottom_y (w);
-  Lisp_Object rows = Qnil;
-  int window_width = NILP (body) ? w->pixel_width : window_body_width (w, true);
-  int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
-  int subtract = NILP (body) ? 0 : header_line_height;
-  bool invert = !NILP (inverse);
-  bool left_flag = !NILP (left);
-
-  if (noninteractive || w->pseudo_window_p)
-    return Qnil;
-
-  CHECK_BUFFER (w->contents);
-  b = XBUFFER (w->contents);
-
-  /* Fail if current matrix is not up-to-date.  */
-  if (!w->window_end_valid
-      || windows_or_buffers_changed
-      || b->clip_changed
-      || b->prevent_redisplay_optimizations_p
-      || window_outdated (w))
-    return Qnil;
-
-  if (NILP (first))
-    row = (NILP (body)
-	   ? MATRIX_ROW (w->current_matrix, 0)
-	   : MATRIX_FIRST_TEXT_ROW (w->current_matrix));
-  else if (NUMBERP (first))
-    {
-      CHECK_RANGED_INTEGER (first, 0, w->current_matrix->nrows);
-      row = MATRIX_ROW (w->current_matrix, XINT (first));
-    }
-  else
-    error ("Invalid specification of first line");
-
-  if (NILP (last))
-
-    end_row = (NILP (body)
-	       ? MATRIX_ROW (w->current_matrix, w->current_matrix->nrows)
-	       : MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w));
-  else if (NUMBERP (last))
-    {
-      CHECK_RANGED_INTEGER (last, 0, w->current_matrix->nrows);
-      end_row = MATRIX_ROW (w->current_matrix, XINT (last));
-    }
-  else
-    error ("Invalid specification of last line");
-
-  while (row <= end_row && row->enabled_p
-	 && row->y + row->height < max_y)
-    {
-
-      if (left_flag)
-	{
-	  struct glyph *glyph = row->glyphs[TEXT_AREA];
-
-	  rows = Fcons (Fcons (make_number
-			       (invert
-				? glyph->pixel_width
-				: window_width - glyph->pixel_width),
-			       make_number (row->y + row->height - subtract)),
-			rows);
-	}
-      else
-	rows = Fcons (Fcons (make_number
-			     (invert
-			      ? window_width - row->pixel_width
-			      : row->pixel_width),
-			     make_number (row->y + row->height - subtract)),
-		      rows);
-      row++;
-    }
-
-  return Fnreverse (rows);
 }
 
 struct Lisp_Char_Table *
@@ -6566,7 +6430,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
-  defsubr (&Swindow_new_pixel); 
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
@@ -6584,7 +6447,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
-  defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);

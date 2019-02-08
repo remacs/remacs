@@ -14,10 +14,11 @@ use crate::{
     numbers::IsLispNatnum,
     remacs_sys::globals,
     remacs_sys::{
-        clear_message, command_loop_level, glyph_row_area, interrupt_input_blocked,
-        make_lispy_position, message_log_maybe_newline, minibuf_level, output_method,
-        print_error_message, recursive_edit_1, recursive_edit_unwind,
-        temporarily_switch_to_single_kboard, update_mode_lines, window_box_left_offset,
+        clear_message, command_loop_level, get_input_pending, glyph_row_area,
+        interrupt_input_blocked, make_lispy_position, message_log_maybe_newline, minibuf_level,
+        output_method, print_error_message, process_special_events, recursive_edit_1,
+        recursive_edit_unwind, temporarily_switch_to_single_kboard, update_mode_lines,
+        window_box_left_offset,
     },
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
@@ -268,6 +269,37 @@ pub fn command_error_default_function(
             ding_internal(true);
             print_error_message(data, Qt, context.const_sdata_ptr(), signal);
         }
+    }
+}
+
+const READABLE_EVENTS_DO_TIMERS_NOW: i32 = 1;
+const READABLE_EVENTS_FILTER_EVENTS: i32 = 2;
+
+/// Return t if command input is currently available with no wait.
+/// Actually, the value is nil only if we can be sure that no input is available;
+/// if there is a doubt, the value is t.
+///
+/// If CHECK-TIMERS is non-nil, timers that are ready to run will do so.
+#[lisp_fn(min = "0")]
+pub fn input_pending_p(check_timers: bool) -> bool {
+    unsafe {
+        if globals.Vunread_command_events.is_cons()
+            || globals.Vunread_post_input_method_events.is_not_nil()
+            || globals.Vunread_input_method_events.is_not_nil()
+        {
+            return true;
+        }
+
+        // Process non-user-visible events (Bug#10195).
+        process_special_events();
+
+        let val = if !check_timers {
+            0
+        } else {
+            READABLE_EVENTS_DO_TIMERS_NOW
+        };
+
+        get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)
     }
 }
 
