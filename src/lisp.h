@@ -4001,6 +4001,10 @@ extern _Noreturn void signal_error (const char *, Lisp_Object);
 extern bool FUNCTIONP (Lisp_Object);
 extern Lisp_Object funcall_subr (struct Lisp_Subr *subr, ptrdiff_t numargs, Lisp_Object *arg_vector);
 extern Lisp_Object eval_sub (Lisp_Object form);
+bool
+eval_subr (Lisp_Object original_fun, Lisp_Object fun, Lisp_Object original_args, ptrdiff_t count, Lisp_Object *val);
+extern Lisp_Object
+apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count);
 extern Lisp_Object apply1 (Lisp_Object, Lisp_Object);
 extern Lisp_Object call0 (Lisp_Object);
 extern Lisp_Object call1 (Lisp_Object, Lisp_Object);

@@ -100,7 +100,6 @@ Lisp_Object backtrace_function (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_next (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 
-static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
 static Lisp_Object lambda_arity (Lisp_Object);
 
 static Lisp_Object
@@ -1356,219 +1355,125 @@ record_in_backtrace (Lisp_Object function, Lisp_Object *args, ptrdiff_t nargs)
   return count;
 }
 
-/* Eval a sub-expression of the current expression (i.e. in the same
-   lexical scope).  */
-Lisp_Object
-eval_sub (Lisp_Object form)
+bool
+eval_subr_many (Lisp_Object fun, Lisp_Object numargs, Lisp_Object args_left, ptrdiff_t count, Lisp_Object *val)
 {
-  Lisp_Object fun, val, original_fun, original_args;
-  Lisp_Object funcar;
-  ptrdiff_t count;
+  /* Pass a vector of evaluated arguments.  */
+  Lisp_Object *vals;
+  ptrdiff_t argnum = 0;
+  USE_SAFE_ALLOCA;
 
+  SAFE_ALLOCA_LISP (vals, XINT (numargs));
+
+  while (CONSP (args_left) && argnum < XINT (numargs))
+    {
+      Lisp_Object arg = XCAR (args_left);
+      args_left = XCDR (args_left);
+      vals[argnum++] = eval_sub (arg);
+    }
+
+  set_backtrace_args (specpdl + count, vals, argnum);
+
+  *val = XSUBR (fun)->function.aMANY (argnum, vals);
+
+  check_cons_list ();
+  lisp_eval_depth--;
+  /* Do the debug-on-exit now, while VALS still exists.  */
+  if (backtrace_debug_on_exit (specpdl + count))
+    *val = call_debugger (list2 (Qexit, *val));
+  SAFE_FREE ();
+  specpdl_ptr--;
+  return true;
+}
+
+bool
+eval_subr (Lisp_Object original_fun, Lisp_Object fun, Lisp_Object original_args, ptrdiff_t count, Lisp_Object *val)
+{
+  Lisp_Object args_left = original_args;
+  Lisp_Object numargs = Flength (args_left);
   /* Declare here, as this array may be accessed by call_debugger near
      the end of this function.  See Bug#21245.  */
   Lisp_Object argvals[8];
 
-  if (SYMBOLP (form))
-    {
-      /* Look up its binding in the lexical environment.
-	 We do not pay attention to the declared_special flag here, since we
-	 already did that when let-binding the variable.  */
-      Lisp_Object lex_binding
-	= !NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	? Fassq (form, Vinternal_interpreter_environment)
-	: Qnil;
-      if (CONSP (lex_binding))
-	return XCDR (lex_binding);
-      else
-	return Fsymbol_value (form);
-    }
-
-  if (!CONSP (form))
-    return form;
-
-  maybe_quit ();
-
-  maybe_gc ();
-
-  if (++lisp_eval_depth > max_lisp_eval_depth)
-    {
-      if (max_lisp_eval_depth < 100)
-	max_lisp_eval_depth = 100;
-      if (lisp_eval_depth > max_lisp_eval_depth)
-	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
-    }
-
-  original_fun = XCAR (form);
-  original_args = XCDR (form);
-  CHECK_LIST (original_args);
-
-  /* This also protects them from gc.  */
-  count = record_in_backtrace (original_fun, &original_args, UNEVALLED);
-
-  if (debug_on_next_call)
-    do_debug_on_call (Qt, count);
-
-  /* At this point, only original_fun and original_args
-     have values that will be used below.  */
- retry:
-
-  /* Optimize for no indirection.  */
-  fun = original_fun;
-  if (!SYMBOLP (fun))
-    fun = Ffunction (Fcons (fun, Qnil));
-  else if (!NILP (fun) && (fun = XSYMBOL (fun)->u.s.function, SYMBOLP (fun)))
-    fun = indirect_function (fun);
-
-  if (SUBRP (fun))
-    {
-      Lisp_Object args_left = original_args;
-      Lisp_Object numargs = Flength (args_left);
-
-      check_cons_list ();
-
-      if (XINT (numargs) < XSUBR (fun)->min_args
-	  || (XSUBR (fun)->max_args >= 0
-	      && XSUBR (fun)->max_args < XINT (numargs)))
-	xsignal2 (Qwrong_number_of_arguments, original_fun, numargs);
-
-      else if (XSUBR (fun)->max_args == UNEVALLED)
-	val = (XSUBR (fun)->function.aUNEVALLED) (args_left);
-      else if (XSUBR (fun)->max_args == MANY)
-	{
-	  /* Pass a vector of evaluated arguments.  */
-	  Lisp_Object *vals;
-	  ptrdiff_t argnum = 0;
-	  USE_SAFE_ALLOCA;
-
-	  SAFE_ALLOCA_LISP (vals, XINT (numargs));
-
-	  while (CONSP (args_left) && argnum < XINT (numargs))
-	    {
-	      Lisp_Object arg = XCAR (args_left);
-	      args_left = XCDR (args_left);
-	      vals[argnum++] = eval_sub (arg);
-	    }
-
-	  set_backtrace_args (specpdl + count, vals, argnum);
-
-	  val = XSUBR (fun)->function.aMANY (argnum, vals);
-
-	  check_cons_list ();
-	  lisp_eval_depth--;
-	  /* Do the debug-on-exit now, while VALS still exists.  */
-	  if (backtrace_debug_on_exit (specpdl + count))
-	    val = call_debugger (list2 (Qexit, val));
-	  SAFE_FREE ();
-	  specpdl_ptr--;
-	  return val;
-	}
-      else
-	{
-	  int i, maxargs = XSUBR (fun)->max_args;
-
-	  for (i = 0; i < maxargs; i++)
-	    {
-	      argvals[i] = eval_sub (Fcar (args_left));
-	      args_left = Fcdr (args_left);
-	    }
-
-	  set_backtrace_args (specpdl + count, argvals, XINT (numargs));
-
-	  switch (i)
-	    {
-	    case 0:
-	      val = (XSUBR (fun)->function.a0 ());
-	      break;
-	    case 1:
-	      val = (XSUBR (fun)->function.a1 (argvals[0]));
-	      break;
-	    case 2:
-	      val = (XSUBR (fun)->function.a2 (argvals[0], argvals[1]));
-	      break;
-	    case 3:
-	      val = (XSUBR (fun)->function.a3
-		     (argvals[0], argvals[1], argvals[2]));
-	      break;
-	    case 4:
-	      val = (XSUBR (fun)->function.a4
-		     (argvals[0], argvals[1], argvals[2], argvals[3]));
-	      break;
-	    case 5:
-	      val = (XSUBR (fun)->function.a5
-		     (argvals[0], argvals[1], argvals[2], argvals[3],
-		      argvals[4]));
-	      break;
-	    case 6:
-	      val = (XSUBR (fun)->function.a6
-		     (argvals[0], argvals[1], argvals[2], argvals[3],
-		      argvals[4], argvals[5]));
-	      break;
-	    case 7:
-	      val = (XSUBR (fun)->function.a7
-		     (argvals[0], argvals[1], argvals[2], argvals[3],
-		      argvals[4], argvals[5], argvals[6]));
-	      break;
-
-	    case 8:
-	      val = (XSUBR (fun)->function.a8
-		     (argvals[0], argvals[1], argvals[2], argvals[3],
-		      argvals[4], argvals[5], argvals[6], argvals[7]));
-	      break;
-
-	    default:
-	      /* Someone has created a subr that takes more arguments than
-		 is supported by this code.  We need to either rewrite the
-		 subr to use a different argument protocol, or add more
-		 cases to this switch.  */
-	      emacs_abort ();
-	    }
-	}
-    }
-  else if (COMPILEDP (fun) || MODULE_FUNCTIONP (fun))
-    return apply_lambda (fun, original_args, count);
-  else
-    {
-      if (NILP (fun))
-	xsignal1 (Qvoid_function, original_fun);
-      if (!CONSP (fun))
-	xsignal1 (Qinvalid_function, original_fun);
-      funcar = XCAR (fun);
-      if (!SYMBOLP (funcar))
-	xsignal1 (Qinvalid_function, original_fun);
-      if (EQ (funcar, Qautoload))
-	{
-	  Fautoload_do_load (fun, original_fun, Qnil);
-	  goto retry;
-	}
-      if (EQ (funcar, Qmacro))
-	{
-	  ptrdiff_t count1 = SPECPDL_INDEX ();
-	  Lisp_Object exp;
-	  /* Bind lexical-binding during expansion of the macro, so the
-	     macro can know reliably if the code it outputs will be
-	     interpreted using lexical-binding or not.  */
-	  specbind (Qlexical_binding,
-		    NILP (Vinternal_interpreter_environment) ? Qnil : Qt);
-	  exp = apply1 (Fcdr (fun), original_args);
-	  unbind_to (count1, Qnil);
-	  val = eval_sub (exp);
-	}
-      else if (EQ (funcar, Qlambda)
-	       || EQ (funcar, Qclosure))
-	return apply_lambda (fun, original_args, count);
-      else
-	xsignal1 (Qinvalid_function, original_fun);
-    }
   check_cons_list ();
 
-  lisp_eval_depth--;
-  if (backtrace_debug_on_exit (specpdl + count))
-    val = call_debugger (list2 (Qexit, val));
-  specpdl_ptr--;
+  if (XINT (numargs) < XSUBR (fun)->min_args
+      || (XSUBR (fun)->max_args >= 0
+          && XSUBR (fun)->max_args < XINT (numargs)))
+    {
+      xsignal2 (Qwrong_number_of_arguments, original_fun, numargs);
+    }
+  else if (XSUBR (fun)->max_args == UNEVALLED)
+    {
+      *val = (XSUBR (fun)->function.aUNEVALLED) (args_left);
+    }
+  else if (XSUBR (fun)->max_args == MANY)
+    return eval_subr_many(fun, numargs, args_left, count, val);
+  else
+    {
+      int i, maxargs = XSUBR (fun)->max_args;
 
-  return val;
+      for (i = 0; i < maxargs; i++)
+        {
+          argvals[i] = eval_sub (Fcar (args_left));
+          args_left = Fcdr (args_left);
+        }
+
+      set_backtrace_args (specpdl + count, argvals, XINT (numargs));
+
+      switch (i)
+        {
+        case 0:
+          *val = (XSUBR (fun)->function.a0 ());
+          break;
+        case 1:
+          *val = (XSUBR (fun)->function.a1 (argvals[0]));
+          break;
+        case 2:
+          *val = (XSUBR (fun)->function.a2 (argvals[0], argvals[1]));
+          break;
+        case 3:
+          *val = (XSUBR (fun)->function.a3
+                  (argvals[0], argvals[1], argvals[2]));
+          break;
+        case 4:
+          *val = (XSUBR (fun)->function.a4
+                  (argvals[0], argvals[1], argvals[2], argvals[3]));
+          break;
+        case 5:
+          *val = (XSUBR (fun)->function.a5
+                  (argvals[0], argvals[1], argvals[2], argvals[3],
+                   argvals[4]));
+          break;
+        case 6:
+          *val = (XSUBR (fun)->function.a6
+                  (argvals[0], argvals[1], argvals[2], argvals[3],
+                   argvals[4], argvals[5]));
+          break;
+        case 7:
+          *val = (XSUBR (fun)->function.a7
+                  (argvals[0], argvals[1], argvals[2], argvals[3],
+                   argvals[4], argvals[5], argvals[6]));
+          break;
+
+        case 8:
+          *val = (XSUBR (fun)->function.a8
+                  (argvals[0], argvals[1], argvals[2], argvals[3],
+                   argvals[4], argvals[5], argvals[6], argvals[7]));
+          break;
+
+        default:
+          /* Someone has created a subr that takes more arguments than
+             is supported by this code.  We need to either rewrite the
+             subr to use a different argument protocol, or add more
+             cases to this switch.  */
+          emacs_abort ();
+        }
+    }
+
+  return false;
 }
+
 
 DEFUN ("apply", Fapply, Sapply, 1, MANY, 0,
        doc: /* Call FUNCTION with our remaining args, using our last arg as list of args.
@@ -1883,7 +1788,7 @@ funcall_subr (struct Lisp_Subr *subr, ptrdiff_t numargs, Lisp_Object *args)
     }
 }
 
-static Lisp_Object
+Lisp_Object
 apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
 {
   Lisp_Object args_left;
