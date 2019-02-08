@@ -904,7 +904,9 @@ untar into a directory named DIR; otherwise, signal an error."
           (print-length nil))
       (write-region
        (concat
-        ";;; -*- no-byte-compile: t -*-\n"
+        ";;; Generated package description from "
+        (replace-regexp-in-string "-pkg\\.el\\'" ".el" pkg-file)
+        "  -*- no-byte-compile: t -*-\n"
         (prin1-to-string
          (nconc
           (list 'define-package
@@ -1007,6 +1009,7 @@ is wrapped around any parts requiring it."
 
 (declare-function lm-header "lisp-mnt" (header))
 (declare-function lm-homepage "lisp-mnt" (&optional file))
+(declare-function lm-keywords-list "lisp-mnt" (&optional file))
 (declare-function lm-maintainer "lisp-mnt" (&optional file))
 (declare-function lm-authors "lisp-mnt" (&optional file))
 
@@ -1037,6 +1040,7 @@ boundaries."
            (pkg-version
             (or (package-strip-rcs-id (lm-header "package-version"))
                 (package-strip-rcs-id (lm-header "version"))))
+           (keywords (lm-keywords-list))
            (homepage (lm-homepage)))
       (unless pkg-version
         (error
@@ -1048,6 +1052,7 @@ boundaries."
             (package-read-from-string requires-str)))
        :kind 'single
        :url homepage
+       :keywords keywords
        :maintainer (lm-maintainer)
        :authors (lm-authors)))))
 
