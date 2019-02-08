@@ -148,6 +148,7 @@ it is assumed that PICO was omitted and should be treated as zero."
 ;; values.  timezone-make-date-arpa-standard should help.
 (defun date-to-time (date)
   "Parse a string DATE that represents a date-time and return a time value.
+DATE should be in one of the forms recognized by `parse-time-string'.
 If DATE lacks timezone information, GMT is assumed."
   (condition-case err
       (apply 'encode-time (parse-time-string date))
