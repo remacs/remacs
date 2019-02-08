@@ -583,7 +583,7 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     }
 }
 
-/// Same as STRING_CHAR_AND_LENGHT
+/// Same as STRING_CHAR_AND_LENGTH
 pub unsafe fn string_char_and_length(ptr: *const u8) -> (Codepoint, usize) {
     let head = *ptr;
     // using multibyte_length_by_head is slightly more expnsive, as it also

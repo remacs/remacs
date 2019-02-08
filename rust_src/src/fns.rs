@@ -285,12 +285,8 @@ pub fn reverse(seq: LispObject) -> LispObject {
     if seq.is_nil() {
         Qnil
     } else if let Some(cons) = seq.as_cons() {
-        let mut new = Qnil;
-
-        for tail in cons.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on) {
-            new = LispObject::cons(tail.car(), new);
-        }
-        new
+        cons.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .fold(Qnil, |cons, elt| LispObject::cons(elt, cons))
     } else if let Some(vector) = seq.as_vector() {
         let size = vector.len();
         let mut new = unsafe { make_uninit_vector(size as isize) }.force_vector();
