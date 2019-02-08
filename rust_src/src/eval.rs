@@ -1514,7 +1514,7 @@ fn eval_subr(
 
         unsafe {
             set_backtrace_args(
-                ThreadState::current_thread().specpdl().offset(count),
+                ThreadState::current_thread().m_specpdl_ptr.offset(count),
                 (&mut argvals).as_mut_ptr(),
                 numargs as isize,
             )
