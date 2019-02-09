@@ -181,7 +181,7 @@ backtrace_debug_on_exit (union specbinding *pdl)
 
 /* Functions to modify slots of backtrace records.  */
 
-static void
+void
 set_backtrace_args (union specbinding *pdl, Lisp_Object *args, ptrdiff_t nargs)
 {
   eassert (pdl->kind == SPECPDL_BACKTRACE);
@@ -1384,94 +1384,6 @@ eval_subr_many (Lisp_Object fun, Lisp_Object numargs, Lisp_Object args_left, ptr
   SAFE_FREE ();
   specpdl_ptr--;
   return true;
-}
-
-bool
-eval_subr (Lisp_Object original_fun, Lisp_Object fun, Lisp_Object original_args, ptrdiff_t count, Lisp_Object *val)
-{
-  Lisp_Object args_left = original_args;
-  Lisp_Object numargs = Flength (args_left);
-  /* Declare here, as this array may be accessed by call_debugger near
-     the end of this function.  See Bug#21245.  */
-  Lisp_Object argvals[8];
-
-  check_cons_list ();
-
-  if (XINT (numargs) < XSUBR (fun)->min_args
-      || (XSUBR (fun)->max_args >= 0
-          && XSUBR (fun)->max_args < XINT (numargs)))
-    {
-      xsignal2 (Qwrong_number_of_arguments, original_fun, numargs);
-    }
-  else if (XSUBR (fun)->max_args == UNEVALLED)
-    {
-      *val = (XSUBR (fun)->function.aUNEVALLED) (args_left);
-    }
-  else if (XSUBR (fun)->max_args == MANY)
-    return eval_subr_many(fun, numargs, args_left, count, val);
-  else
-    {
-      int i, maxargs = XSUBR (fun)->max_args;
-
-      for (i = 0; i < maxargs; i++)
-        {
-          argvals[i] = eval_sub (Fcar (args_left));
-          args_left = Fcdr (args_left);
-        }
-
-      set_backtrace_args (specpdl + count, argvals, XINT (numargs));
-
-      switch (i)
-        {
-        case 0:
-          *val = (XSUBR (fun)->function.a0 ());
-          break;
-        case 1:
-          *val = (XSUBR (fun)->function.a1 (argvals[0]));
-          break;
-        case 2:
-          *val = (XSUBR (fun)->function.a2 (argvals[0], argvals[1]));
-          break;
-        case 3:
-          *val = (XSUBR (fun)->function.a3
-                  (argvals[0], argvals[1], argvals[2]));
-          break;
-        case 4:
-          *val = (XSUBR (fun)->function.a4
-                  (argvals[0], argvals[1], argvals[2], argvals[3]));
-          break;
-        case 5:
-          *val = (XSUBR (fun)->function.a5
-                  (argvals[0], argvals[1], argvals[2], argvals[3],
-                   argvals[4]));
-          break;
-        case 6:
-          *val = (XSUBR (fun)->function.a6
-                  (argvals[0], argvals[1], argvals[2], argvals[3],
-                   argvals[4], argvals[5]));
-          break;
-        case 7:
-          *val = (XSUBR (fun)->function.a7
-                  (argvals[0], argvals[1], argvals[2], argvals[3],
-                   argvals[4], argvals[5], argvals[6]));
-          break;
-
-        case 8:
-          *val = (XSUBR (fun)->function.a8
-                  (argvals[0], argvals[1], argvals[2], argvals[3],
-                   argvals[4], argvals[5], argvals[6], argvals[7]));
-          break;
-
-        default:
-          /* Someone has created a subr that takes more arguments than
-             is supported by this code.  We need to either rewrite the
-             subr to use a different argument protocol, or add more
-             cases to this switch.  */
-          emacs_abort ();
-        }
-    }
-
-  return false;
 }
 
 
