@@ -479,6 +479,7 @@ This applies to function movement, marking, and so on."
   "Align continuation of non-empty ([{ lines in `js-mode'."
   :version "26.1"
   :type 'boolean
+  :safe 'booleanp
   :group 'js)
 
 (defcustom js-comment-lineup-func #'c-lineup-C-comments
