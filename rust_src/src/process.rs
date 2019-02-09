@@ -1,6 +1,6 @@
 //! Functions operating on process.
 use libc;
-use std::mem;
+use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
 
@@ -13,8 +13,9 @@ use crate::{
     remacs_sys::{
         add_process_read_fd, block_child_signal, current_thread, delete_read_fd,
         emacs_get_tty_pgrp, list_system_processes, pset_status, redisplay_preserve_echo_area,
-        send_process, setup_process_coding_systems, unblock_child_signal, update_status, Fmapcar,
-        CDISABLE, STRING_BYTES, sigset_t
+        send_process, setup_process_coding_systems, sigset_t, status_notify, tcflush,
+        unblock_child_signal, update_process_tick, update_status, Fdelete_process, Fmapcar,
+        CDISABLE, PROCESSP, STRING_BYTES,
     },
     remacs_sys::{pid_t, pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -554,7 +555,7 @@ def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
 /// If we can, we try to signal PROCESS by sending control characters
 /// down the pty.  This allows us to signal inferiors who have changed
 /// their uid, for which kill would return an EPERM error.
-fn process_send_signal_rust(
+fn process_send_signal(
     process: LispObject,
     signo: libc::c_int,
     mut current_group: LispObject,
@@ -591,7 +592,6 @@ fn process_send_signal_rust(
             let sig_char = match signo {
                 libc::SIGINT => termios.c_cc[libc::VINTR],
                 libc::SIGQUIT => termios.c_cc[libc::VQUIT],
-                // TODO: #ifdef VSWTCH
                 libc::SIGTSTP => termios.c_cc[libc::VSUSP],
                 _ => 0,
             };
@@ -608,6 +608,7 @@ fn process_send_signal_rust(
         // The code above may fall through if it can't
         // handle the signal.
 
+        #[cfg(feature = "tiocgpgrp")]
         // Get the current pgrp using the tty itself, if we have that.
         // Otherwise, use the pty to get the pgrp.
         // On pfa systems, saka@pfu.fujitsu.co.JP writes:
@@ -615,7 +616,6 @@ fn process_send_signal_rust(
         // But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
         // His patch indicates that if TIOCGPGRP returns an error, then
         // we should just assume that p->pid is also the process group id.
-        #[cfg(feature = "tiocgpgrp")]
         unsafe {
             gid = emacs_get_tty_pgrp(p_ref.as_mut());
 
@@ -631,28 +631,26 @@ fn process_send_signal_rust(
             if gid == -1 {
                 no_pgrp = true;
             }
-
-            // If current_group is lambda, and the shell owns the terminal,
-            // don't send any signal.
-            if current_group.eq(Qlambda) && (gid == p_ref.pid) {
-                return;
-            }
         }
         #[cfg(not(feature = "tiocgpgrp"))]
         {
             gid = p_ref.pid;
         }
+
+        // If current_group is lambda, and the shell owns the terminal,
+        // don't send any signal.
+        if current_group.eq(Qlambda) && (gid == p_ref.pid) {
+            return;
+        }
     }
 
-    // TODO: #ifdef SIGCONT
     unsafe {
         if signo == libc::SIGCONT {
             p_ref.set_raw_status_new(false);
             pset_status(p_ref.as_mut(), Qrun);
-            // TODO: Static?
-            // p.tick = ++process_tick;
+            p_ref.tick = update_process_tick();
             if !nomsg {
-                //status_notify(ptr::null, ptr::null);
+                status_notify(ptr::null_mut(), ptr::null_mut());
                 redisplay_preserve_echo_area(13);
             }
         }
@@ -670,7 +668,7 @@ fn process_send_signal_rust(
     // If we don't have process groups, send the signal to the immediate
     // subprocess. That isn't really right, but it's better than any
     // obvious alternative.
-    let pid: pid_t = if no_pgrp {  -gid } else { gid };
+    let pid: pid_t = if no_pgrp { -gid } else { gid };
 
     // Do not kill an already-reaped process, as that could kill an
     // innocent bystander that happens to have the same process ID.
@@ -682,6 +680,102 @@ fn process_send_signal_rust(
         }
         unblock_child_signal(&mut oldset);
     }
+}
+
+/// Default function to interrupt process PROCESS.
+/// It shall be the last element in list `interrupt-process-functions'.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn internal_default_interrupt_process(
+    process: LispObject,
+    current_group: LispObject,
+) -> LispObject {
+    process_send_signal(process, libc::SIGINT, current_group, false);
+    process
+}
+def_lisp_sym!(
+    Qinternal_default_interrupt_process,
+    "internal-default-interrupt-process"
+);
+
+/// Kill process PROCESS.  May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn kill_process(process: LispObject, current_group: LispObject) -> LispObject {
+    process_send_signal(process, libc::SIGKILL, current_group, false);
+    process
+}
+
+/// Send QUIT signal to process PROCESS.  May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn quit_process(process: LispObject, current_group: LispObject) -> LispObject {
+    process_send_signal(process, libc::SIGQUIT, current_group, false);
+    process
+}
+
+/// Stop process PROCESS.  May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+/// If PROCESS is a network or serial or pipe connection, inhibit handling
+/// of incoming traffic.
+#[lisp_fn(min = "0")]
+pub fn stop_process(process: LispObject, current_group: LispObject) -> LispObject {
+    let mut p_ref: LispProcessRef = get_process(process).into();
+    let process_type = p_ref.ptype();
+    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+        unsafe {
+            delete_read_fd(p_ref.infd);
+            p_ref.command = Qt;
+        }
+        return process;
+    }
+
+    process_send_signal(process, libc::SIGTSTP, current_group, false);
+    process
+}
+
+/// Continue process PROCESS.  May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+/// If PROCESS is a network or serial process, resume handling of incoming
+/// traffic.
+#[lisp_fn(min = "0")]
+pub fn continue_process(process: LispObject, current_group: LispObject) -> LispObject {
+    let mut p_ref: LispProcessRef = process.into();
+    let process_type = p_ref.ptype();
+    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+        unsafe {
+            if p_ref.command.eq(Qt)
+                && p_ref.infd >= 0
+                && (!p_ref.filter.eq(Qt) || p_ref.status.eq(Qlisten))
+            {
+                add_process_read_fd(p_ref.infd);
+                tcflush(p_ref.infd, libc::TCIFLUSH);
+            }
+        }
+        p_ref.command = Qnil;
+        return process;
+    }
+
+    process_send_signal(process, libc::SIGCONT, current_group, false);
+    process
+}
+
+/// Kill all processes associated with `buffer'.
+/// If `buffer' is nil, kill all processes.
+#[no_mangle]
+pub unsafe extern "C" fn kill_buffer_processes(buffer: LispObject) {
+    for_each_process!(p => {
+        let p_ref: LispProcessRef = p.into();
+        let process_type = p_ref.ptype();
+        if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+            let process = LispObject::from(p_ref);
+            if buffer.is_nil() || p_ref.buffer.eq(buffer) {
+                unsafe { Fdelete_process(process); }
+            } else if p_ref.infd >= 0 {
+                process_send_signal(process, libc::SIGHUP, Qnil, true);
+            }
+        }
+    });
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

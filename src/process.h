@@ -308,6 +308,10 @@ get_process (register Lisp_Object name);
 void
 update_status (struct Lisp_Process *p);
 
+EMACS_INT update_process_tick(void);
+
+int status_notify (struct Lisp_Process *, struct Lisp_Process *);
+
 void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object);

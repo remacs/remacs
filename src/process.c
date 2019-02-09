@@ -225,6 +225,12 @@ static EMACS_INT process_tick;
 /* Number of events for which the user or sentinel has been notified.  */
 static EMACS_INT update_tick;
 
+/* Update number of events of change of status of a process and return it new
+ * value. */
+EMACS_INT update_process_tick(void) {
+    return ++process_tick;
+}
+
 /* Define DATAGRAM_SOCKETS if datagrams can be used safely on
    this system.  We need to read full packets, so we need a
    "non-destructive" select.  So we require either native select,
@@ -261,7 +267,6 @@ static void create_process (Lisp_Object, char **, Lisp_Object);
 static bool keyboard_bit_set (fd_set *);
 #endif
 static void deactivate_process (Lisp_Object);
-static int status_notify (struct Lisp_Process *, struct Lisp_Process *);
 static int read_process_output (Lisp_Object, int);
 static void create_pty (Lisp_Object);
 static void exec_sentinel (Lisp_Object, Lisp_Object);
@@ -6131,248 +6136,6 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
 }
 
 
-/* Send a signal number SIGNO to PROCESS.
-   If CURRENT_GROUP is t, that means send to the process group
-   that currently owns the terminal being used to communicate with PROCESS.
-   This is used for various commands in shell mode.
-   If CURRENT_GROUP is lambda, that means send to the process group
-   that currently owns the terminal, but only if it is NOT the shell itself.
-
-   If NOMSG is false, insert signal-announcements into process's buffers
-   right away.
-
-   If we can, we try to signal PROCESS by sending control characters
-   down the pty.  This allows us to signal inferiors who have changed
-   their uid, for which kill would return an EPERM error.  */
-
-static void
-process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
-		     bool nomsg)
-{
-  Lisp_Object proc;
-  struct Lisp_Process *p;
-  pid_t gid;
-  bool no_pgrp = 0;
-
-  proc = get_process (process);
-  p = XPROCESS (proc);
-
-  if (!EQ (p->type, Qreal))
-    error ("Process %s is not a subprocess",
-	   SDATA (p->name));
-  if (p->infd < 0)
-    error ("Process %s is not active",
-	   SDATA (p->name));
-
-  if (!p->pty_flag)
-    current_group = Qnil;
-
-  /* If we are using pgrps, get a pgrp number and make it negative.  */
-  if (NILP (current_group))
-    /* Send the signal to the shell's process group.  */
-    gid = p->pid;
-  else
-    {
-#ifdef SIGNALS_VIA_CHARACTERS
-      /* If possible, send signals to the entire pgrp
-	 by sending an input character to it.  */
-
-      struct termios t;
-      cc_t *sig_char = NULL;
-
-      tcgetattr (p->infd, &t);
-
-      switch (signo)
-	{
-	case SIGINT:
-	  sig_char = &t.c_cc[VINTR];
-	  break;
-
-	case SIGQUIT:
-	  sig_char = &t.c_cc[VQUIT];
-	  break;
-
-  	case SIGTSTP:
-#ifdef VSWTCH
-	  sig_char = &t.c_cc[VSWTCH];
-#else
-	  sig_char = &t.c_cc[VSUSP];
-#endif
-	  break;
-	}
-
-      if (sig_char && *sig_char != CDISABLE)
-	{
-	  send_process (proc, (char *) sig_char, 1, Qnil);
-	  return;
-	}
-      /* If we can't send the signal with a character,
-	 fall through and send it another way.  */
-
-      /* The code above may fall through if it can't
-	 handle the signal.  */
-#endif /* defined (SIGNALS_VIA_CHARACTERS) */
-
-#ifdef TIOCGPGRP
-      /* Get the current pgrp using the tty itself, if we have that.
-	 Otherwise, use the pty to get the pgrp.
-	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
-	 "TIOCGPGRP symbol defined in sys/ioctl.h at E50.
-	 But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
-	 His patch indicates that if TIOCGPGRP returns an error, then
-	 we should just assume that p->pid is also the process group id.  */
-
-      gid = emacs_get_tty_pgrp (p);
-
-      if (gid == -1)
-	/* If we can't get the information, assume
-	   the shell owns the tty.  */
-	gid = p->pid;
-
-      /* It is not clear whether anything really can set GID to -1.
-	 Perhaps on some system one of those ioctls can or could do so.
-	 Or perhaps this is vestigial.  */
-      if (gid == -1)
-	no_pgrp = 1;
-#else  /* ! defined (TIOCGPGRP) */
-      /* Can't select pgrps on this system, so we know that
-	 the child itself heads the pgrp.  */
-      gid = p->pid;
-#endif /* ! defined (TIOCGPGRP) */
-
-      /* If current_group is lambda, and the shell owns the terminal,
-	 don't send any signal.  */
-      if (EQ (current_group, Qlambda) && gid == p->pid)
-	return;
-    }
-
-#ifdef SIGCONT
-  if (signo == SIGCONT)
-    {
-      p->raw_status_new = 0;
-      pset_status (p, Qrun);
-      p->tick = ++process_tick;
-      if (!nomsg)
-	{
-	  status_notify (NULL, NULL);
-	  redisplay_preserve_echo_area (13);
-	}
-    }
-#endif
-
-#ifdef TIOCSIGSEND
-  /* Work around a HP-UX 7.0 bug that mishandles signals to subjobs.
-     We don't know whether the bug is fixed in later HP-UX versions.  */
-  if (! NILP (current_group) && ioctl (p->infd, TIOCSIGSEND, signo) != -1)
-    return;
-#endif
-
-  /* If we don't have process groups, send the signal to the immediate
-     subprocess.  That isn't really right, but it's better than any
-     obvious alternative.  */
-  pid_t pid = no_pgrp ? gid : - gid;
-
-  /* Do not kill an already-reaped process, as that could kill an
-     innocent bystander that happens to have the same process ID.  */
-  sigset_t oldset;
-  block_child_signal (&oldset);
-  if (p->alive)
-    kill (pid, signo);
-  unblock_child_signal (&oldset);
-}
-
-DEFUN ("internal-default-interrupt-process",
-       Finternal_default_interrupt_process,
-       Sinternal_default_interrupt_process, 0, 2, 0,
-       doc: /* Default function to interrupt process PROCESS.
-It shall be the last element in list `interrupt-process-functions'.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGINT, current_group, 0);
-  return process;
-}
-
-DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
-       doc: /* Kill process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGKILL, current_group, 0);
-  return process;
-}
-
-DEFUN ("quit-process", Fquit_process, Squit_process, 0, 2, 0,
-       doc: /* Send QUIT signal to process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGQUIT, current_group, 0);
-  return process;
-}
-
-DEFUN ("stop-process", Fstop_process, Sstop_process, 0, 2, 0,
-       doc: /* Stop process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-If PROCESS is a network or serial or pipe connection, inhibit handling
-of incoming traffic.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  if (PROCESSP (process) && (NETCONN_P (process) || SERIALCONN_P (process)
-			     || PIPECONN_P (process)))
-    {
-      struct Lisp_Process *p;
-
-      p = XPROCESS (process);
-      if (NILP (p->command)
-	  && p->infd >= 0)
-	delete_read_fd (p->infd);
-      pset_command (p, Qt);
-      return process;
-    }
-#ifndef SIGTSTP
-  error ("No SIGTSTP support");
-#else
-  process_send_signal (process, SIGTSTP, current_group, 0);
-#endif
-  return process;
-}
-
-DEFUN ("continue-process", Fcontinue_process, Scontinue_process, 0, 2, 0,
-       doc: /* Continue process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-If PROCESS is a network or serial process, resume handling of incoming
-traffic.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  if (PROCESSP (process) && (NETCONN_P (process) || SERIALCONN_P (process)
-			     || PIPECONN_P (process)))
-    {
-      struct Lisp_Process *p;
-
-      p = XPROCESS (process);
-      if (EQ (p->command, Qt)
-	  && p->infd >= 0
-	  && (!EQ (p->filter, Qt) || EQ (p->status, Qlisten)))
-	{
-	  add_process_read_fd (p->infd);
-#ifdef WINDOWSNT
-	  if (fd_info[ p->infd ].flags & FILE_SERIAL)
-	    PurgeComm (fd_info[ p->infd ].hnd, PURGE_RXABORT | PURGE_RXCLEAR);
-#else /* not WINDOWSNT */
-	  tcflush (p->infd, TCIFLUSH);
-#endif /* not WINDOWSNT */
-	}
-      pset_command (p, Qnil);
-      return process;
-    }
-#ifdef SIGCONT
-    process_send_signal (process, SIGCONT, current_group, 0);
-#else
-    error ("No SIGCONT support");
-#endif
-  return process;
-}
 
 /* Return the integer value of the signal whose abbreviation is ABBR,
    or a negative number if there is no such signal.  */
@@ -6778,8 +6541,6 @@ exec_sentinel (Lisp_Object proc, Lisp_Object reason)
    Return positive if any input was received from WAIT_PROC (or from
    any process if WAIT_PROC is null), zero if input was attempted but
    none received, and negative if we didn't even try.  */
-
-static int
 status_notify (struct Lisp_Process *deleting_process,
 	       struct Lisp_Process *wait_proc)
 {
@@ -7109,24 +6870,6 @@ setup_process_coding_systems (Lisp_Object process)
     proc_encode_coding_system[outch] = xmalloc (sizeof (struct coding_system));
   setup_coding_system (p->encode_coding_system,
 		       proc_encode_coding_system[outch]);
-}
-
-/* Kill all processes associated with `buffer'.
-   If `buffer' is nil, kill all processes.  */
-
-void
-kill_buffer_processes (Lisp_Object buffer)
-{
-  Lisp_Object tail, proc;
-
-  FOR_EACH_PROCESS (tail, proc)
-    if (NILP (buffer) || EQ (XPROCESS (proc)->buffer, buffer))
-      {
-	if (NETCONN_P (proc) || SERIALCONN_P (proc) || PIPECONN_P (proc))
-	  Fdelete_process (proc);
-	else if (XPROCESS (proc)->infd >= 0)
-	  process_send_signal (proc, SIGHUP, Qnil, 1);
-      }
 }
 
 /* Stop reading input from keyboard sources.  */
@@ -7486,9 +7229,6 @@ returns non-`nil'.  */);
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
   Vinternal__daemon_sockname = Qnil;
 
-  DEFSYM (Qinternal_default_interrupt_process,
-	  "internal-default-interrupt-process");
-
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
   defsubr (&Sset_process_window_size);
@@ -7509,11 +7249,6 @@ returns non-`nil'.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
-  defsubr (&Sinternal_default_interrupt_process);
-  defsubr (&Skill_process);
-  defsubr (&Squit_process);
-  defsubr (&Sstop_process);
-  defsubr (&Scontinue_process);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
   defsubr (&Sinternal_default_process_sentinel);
