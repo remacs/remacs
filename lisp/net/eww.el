@@ -247,21 +247,29 @@ This list can be customized via `eww-suggest-uris'."
     (nreverse uris)))
 
 ;;;###autoload
-(defun eww (url)
+(defun eww (url &optional arg)
   "Fetch URL and render the page.
 If the input doesn't look like an URL or a domain name, the
-word(s) will be searched for via `eww-search-prefix'."
+word(s) will be searched for via `eww-search-prefix'.
+
+If called with a prefix ARG, use a new buffer instead of reusing
+the default EWW buffer."
   (interactive
    (let* ((uris (eww-suggested-uris))
 	  (prompt (concat "Enter URL or keywords"
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
-     (list (read-string prompt nil 'eww-prompt-history uris))))
+     (list (read-string prompt nil 'eww-prompt-history uris)
+           (prefix-numeric-value current-prefix-arg))))
   (setq url (eww--dwim-expand-url url))
   (pop-to-buffer-same-window
-   (if (eq major-mode 'eww-mode)
-       (current-buffer)
-     (get-buffer-create "*eww*")))
+   (cond
+    ((eq arg 4)
+     (generate-new-buffer "*eww*"))
+    ((eq major-mode 'eww-mode)
+     (current-buffer))
+    (t
+     (get-buffer-create "*eww*"))))
   (eww-setup-buffer)
   ;; Check whether the domain only uses "Highly Restricted" Unicode
   ;; IDNA characters.  If not, transform to punycode to indicate that
