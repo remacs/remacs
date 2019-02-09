@@ -318,6 +318,26 @@ impl From<LispSubrRef> for LispObject {
     }
 }
 
+impl Debug for LispSubrRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(
+            f,
+            "LispSubr: {}, min: {}, max: {}",
+            if self.symbol_name.is_null() {
+                "NULL".to_string()
+            } else {
+                unsafe {
+                    std::ffi::CStr::from_ptr(self.symbol_name)
+                        .to_string_lossy()
+                        .into_owned()
+                }
+            },
+            self.min_args,
+            self.max_args
+        )
+    }
+}
+
 // Other functions
 
 impl From<()> for LispObject {

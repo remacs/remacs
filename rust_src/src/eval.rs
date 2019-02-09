@@ -1520,6 +1520,10 @@ fn eval_subr(
             )
         };
 
+        println!("About to call {:?}", fun);
+        for (i, elt) in argvals.iter().enumerate() {
+            println!("Arg {}: {:?}", i, elt);
+        }
         (fun.call(&argvals), false)
     }
 }
