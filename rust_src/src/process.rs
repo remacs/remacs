@@ -549,4 +549,10 @@ pub fn internal_default_interrupt_process(process: LispObject, current_group: Li
 }
 def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
 
+/// List of functions to be called for `interrupt-process'.
+/// The arguments of the functions are the same as for `interrupt-process'.
+/// These functions are called in the order of the list, until one of them
+/// returns non-`nil'.
+defvar_lisp!(Vinterrupt_process_functions , "interrupt-process-functions", list1(Qinternal_default_interrupt_process));
+
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

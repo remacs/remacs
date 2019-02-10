@@ -7463,13 +7463,6 @@ non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
-  DEFVAR_LISP ("interrupt-process-functions", Vinterrupt_process_functions,
-	       doc: /* List of functions to be called for `interrupt-process'.
-The arguments of the functions are the same as for `interrupt-process'.
-These functions are called in the order of the list, until one of them
-returns non-`nil'.  */);
-  Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
-
   DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
   Vinternal__daemon_sockname = Qnil;
