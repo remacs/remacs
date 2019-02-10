@@ -12,7 +12,7 @@ use crate::{
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
         list_system_processes, send_process, setup_process_coding_systems, update_status, Fmapcar,
-        STRING_BYTES,
+        STRING_BYTES, process_send_signal, list1
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -538,5 +538,15 @@ pub fn interrupt_process(process: LispObject, current_group: LispObject) -> Lisp
     run_hook_with_args_until_success(&mut [Qinterrupt_process_functions, process, current_group])
 }
 def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
+
+/// Default function to interrupt process PROCESS.
+/// It shall be the last element in list `interrupt-process-functions'.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn internal_default_interrupt_process(process: LispObject, current_group: LispObject) -> LispObject {
+  unsafe { process_send_signal (process, libc::SIGINT, current_group, false); }
+  process
+}
+def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
