@@ -1,4 +1,4 @@
-;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files
+;;; conf-mode.el --- Simple major mode for editing conf/ini/properties files  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
@@ -281,10 +281,10 @@ whitespace.")
 ;; If anybody can figure out how to get the same effect by configuring
 ;; `align', I'd be glad to hear.
 (defun conf-align-assignments (&optional arg)
-  (interactive "P")
   "Align the assignments in the buffer or active region.
 In Transient Mark mode, if the mark is active, operate on the
 contents of the region.  Otherwise, operate on the whole buffer."
+  (interactive "P")
   (setq arg (if arg
 		(prefix-numeric-value arg)
 	      conf-assignment-column))
@@ -323,7 +323,7 @@ contents of the region.  Otherwise, operate on the whole buffer."
 
 (defun conf-quote-normal (arg)
   "Set the syntax of \\=' and \" to punctuation.
-With prefix arg, only do it for \\=' if 1, or only for \" if 2.
+With prefix ARG, only do it for \\=' if 1, or only for \" if 2.
 This only affects the current buffer.  Some conf files use quotes
 to delimit strings, while others allow quotes as simple parts of
 the assigned value.  In those files font locking will be wrong,
@@ -442,7 +442,7 @@ See also `conf-space-mode', `conf-colon-mode', `conf-javaprop-mode',
     (run-mode-hooks 'conf-mode-hook)))
 
 (defun conf-mode-initialize (comment &optional font-lock)
-  "Initializations for sub-modes of conf-mode.
+  "Initializations for sub-modes of `conf-mode'.
 COMMENT initializes `comment-start' and `comment-start-skip'.
 The optional arg FONT-LOCK is the value for FONT-LOCK-KEYWORDS."
   (set (make-local-variable 'comment-start) comment)
