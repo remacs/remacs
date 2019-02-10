@@ -912,7 +912,7 @@ main (int argc, char **argv)
     gflags.will_not_unexec_ = true;
 #endif
 
-#if defined WINDOWSNT || defined HAVE_NTGUI
+#ifdef WINDOWSNT
   /* Grab our malloc arena space now, before anything important
      happens.  This relies on the static heap being needed only in
      temacs and only if we are going to dump with unexec.  */
@@ -934,6 +934,8 @@ main (int argc, char **argv)
 	}
     }
   init_heap (use_dynamic_heap);
+#endif
+#if defined WINDOWSNT || defined HAVE_NTGUI
   /* Set global variables used to detect Windows version.  Do this as
      early as possible.  (w32proc.c calls this function as well, but
      the additional call here is harmless.) */
