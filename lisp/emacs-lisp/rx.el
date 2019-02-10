@@ -964,7 +964,7 @@ CHAR
      matches 0 through 9.
 
 `control', `cntrl'
-     matches ASCII control characters.
+     matches any character whose code is in the range 0-31.
 
 `hex-digit', `hex', `xdigit'
      matches 0 through 9, a through f and A through F.

@@ -559,7 +559,7 @@ tabs, and other characters whose Unicode @samp{general-category}
 property (@pxref{Character Properties}) indicates they are spacing
 separators.
 @item [:cntrl:]
-This matches any @acronym{ASCII} control character.
+This matches any character whose code is in the range 0--31.
 @item [:digit:]
 This matches @samp{0} through @samp{9}.  Thus, @samp{[-+[:digit:]]}
 matches any digit, as well as @samp{+} and @samp{-}.

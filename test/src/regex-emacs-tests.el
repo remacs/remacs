@@ -555,11 +555,11 @@ differences in behavior.")
 
 (defconst regex-tests-PTESTS-whitelist
   [
-   ;; emacs doesn't barf on weird ranges such as [b-a], but simply
-   ;; fails to match
+   ;; emacs doesn't see DEL (0x7f) as a [:cntrl:] character
    138
 
-   ;; emacs doesn't see DEL (0x78) as a [:cntrl:] character
+   ;; emacs doesn't barf on weird ranges such as [b-a], but simply
+   ;; fails to match
    168
   ]
   "Line numbers in the PTESTS test that should be skipped.  These
