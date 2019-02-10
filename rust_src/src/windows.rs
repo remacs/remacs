@@ -1255,7 +1255,7 @@ pub fn window_next_buffers(window: LispWindowLiveOrSelected) -> LispObject {
 /// Return the next sibling window of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 /// Return nil if WINDOW has no next sibling.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_next_sibling(window: LispWindowValidOrSelected) -> Option<LispWindowRef> {
     let win: LispWindowRef = window.into();
     win.next.as_window()
@@ -1264,7 +1264,7 @@ pub fn window_next_sibling(window: LispWindowValidOrSelected) -> Option<LispWind
 /// Return the previous sibling window of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 /// Return nil if WINDOW has no previous sibling.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_prev_sibling(window: LispWindowValidOrSelected) -> Option<LispWindowRef> {
     let win: LispWindowRef = window.into();
     win.prev.as_window()
