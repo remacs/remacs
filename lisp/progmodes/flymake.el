@@ -4,7 +4,7 @@
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0.3
+;; Version: 1.0.4
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
@@ -974,6 +974,11 @@ special *Flymake log* buffer."  :group 'flymake :lighter
     (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
     (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
 
+    ;; If Flymake happened to be alrady already ON, we must cleanup
+    ;; existing diagnostic overlays, lest we forget them by blindly
+    ;; reinitializing `flymake--backend-state' in the next line.
+    ;; See https://github.com/joaotavora/eglot/issues/223.
+    (mapc #'delete-overlay (flymake--overlays))
     (setq flymake--backend-state (make-hash-table))
     (setq flymake--recent-changes nil)
 
