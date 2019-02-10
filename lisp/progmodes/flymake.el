@@ -4,7 +4,7 @@
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0.4
+;; Version: 1.0.5
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
@@ -742,14 +742,13 @@ report applies to that region."
           ;; the associated overlay.
           (cond
            (region
-            (dolist (diag (flymake--backend-state-diags state))
-              (let ((diag-beg (flymake--diag-beg diag))
-                    (diag-end (flymake--diag-beg diag)))
-                (when (and (< diag-beg (cdr region))
-                           (> diag-end (car region)))
-                  (delete-overlay (flymake--diag-overlay diag))
-                  (setf (flymake--backend-state-diags state)
-                        (delq diag (flymake--backend-state-diags state)))))))
+            (cl-loop for diag in (flymake--backend-state-diags state)
+                     if (or (> (flymake--diag-end diag) (car region))
+                            (< (flymake--diag-beg diag) (cdr region)))
+                     do (delete-overlay (flymake--diag-overlay diag))
+                     else collect diag into surviving
+                     finally (setf (flymake--backend-state-diags state)
+                                   surviving)))
            (first-report
             (dolist (diag (flymake--backend-state-diags state))
               (delete-overlay (flymake--diag-overlay diag)))
