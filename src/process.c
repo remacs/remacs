@@ -7330,6 +7330,8 @@ init_process_emacs (int sockfd)
   kbd_is_on_hold = 0;
 }
 
+extern void rust_syms_of_process(void);
+
 void
 syms_of_process (void)
 {
@@ -7466,6 +7468,8 @@ The variable takes effect when `start-process' is called.  */);
   DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
   Vinternal__daemon_sockname = Qnil;
+
+  rust_syms_of_process();
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
