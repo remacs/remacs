@@ -16,9 +16,10 @@ use crate::{
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
-        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
-        Qinternal_default_process_sentinel, Qinterrupt_process_functions, Qlisten, Qlistp,
-        Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
+        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_interrupt_process,
+        Qinternal_default_process_filter, Qinternal_default_process_sentinel,
+        Qinterrupt_process_functions, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp,
+        Qreal, Qrun, Qserial, Qstop, Qt,
     },
 };
 
@@ -552,10 +553,8 @@ pub fn internal_default_interrupt_process(
     }
     process
 }
-def_lisp_sym!(
-    Qinternal_default_interrupt_process,
-    "internal-default-interrupt-process"
-);
+#[rustfmt::skip]
+def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
 
 #[no_mangle]
 pub extern "C" fn rust_syms_of_process() {
@@ -563,11 +562,8 @@ pub extern "C" fn rust_syms_of_process() {
     /// The arguments of the functions are the same as for `interrupt-process'.
     /// These functions are called in the order of the list, until one of them
     /// returns non-`nil'.
-    defvar_lisp!(
-        Vinterrupt_process_functions,
-        "interrupt-process-functions",
-        list1(Qinternal_default_interrupt_process)
-    );
+    #[rustfmt::skip]
+    defvar_lisp!(Vinterrupt_process_functions, "interrupt-process-functions", list1(Qinternal_default_interrupt_process));
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
