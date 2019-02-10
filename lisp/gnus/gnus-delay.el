@@ -166,9 +166,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 		(setq deadline (nnheader-header-value))
 		(setq deadline (apply 'encode-time
 				      (parse-time-string deadline)))
-		(setq deadline (time-since deadline))
-		(when (and (>= (nth 0 deadline) 0)
-			   (>= (nth 1 deadline) 0))
+		(unless (time-less-p nil deadline)
 		  (message "Sending delayed article %d" article)
 		  (gnus-draft-send article group)
 		  (message "Sending delayed article %d...done" article)))
