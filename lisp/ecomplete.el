@@ -96,7 +96,7 @@ string that was matched."
 (defun ecomplete-add-item (type key text)
   "Add item TEXT of TYPE to the database, using KEY as the identifier."
   (let ((elems (assq type ecomplete-database))
-	(now (string-to-number (format-time-string "%s")))
+	(now (encode-time nil 'integer))
 	entry)
     (unless elems
       (push (setq elems (list type)) ecomplete-database))
