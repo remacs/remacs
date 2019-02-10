@@ -190,12 +190,33 @@ Must called from within a `tar-mode' buffer."
   "Return the package version as a string."
   (package-version-join (package-desc-version desc)))
 
+(defun package-test--compatible-p (pkg-desc pkg-sample &optional kind)
+  (and (cl-every (lambda (f)
+                   (equal (funcall f pkg-desc)
+                          (funcall f pkg-sample)))
+                 (cons (if kind #'package-desc-kind #'ignore)
+                       '(package-desc-name
+                         package-desc-version
+                         package-desc-summary
+                         package-desc-reqs
+                         package-desc-archive
+                         package-desc-dir
+                         package-desc-signed)))
+       ;; The `extras' field should contain at least the specified elements.
+       (let ((extras (package-desc-extras pkg-desc))
+             (extras-sample (package-desc-extras pkg-sample)))
+         (cl-every (lambda (sample-elem)
+                     (member sample-elem extras))
+                   extras-sample))))
+
 (ert-deftest package-test-desc-from-buffer ()
   "Parse an elisp buffer to get a `package-desc' object."
   (with-package-test (:basedir "package-resources" :file "simple-single-1.3.el")
-    (should (equal (package-buffer-info) simple-single-desc)))
+    (should (package-test--compatible-p
+             (package-buffer-info) simple-single-desc 'kind)))
   (with-package-test (:basedir "package-resources" :file "simple-depend-1.0.el")
-    (should (equal (package-buffer-info) simple-depend-desc)))
+    (should (package-test--compatible-p
+             (package-buffer-info) simple-depend-desc 'kind)))
   (with-package-test (:basedir "package-resources"
                                :file "multi-file-0.2.3.tar")
     (tar-mode)
@@ -223,15 +244,12 @@ Must called from within a `tar-mode' buffer."
       (with-temp-buffer
         (insert-file-contents (expand-file-name "simple-single-pkg.el"
                                                 simple-pkg-dir))
-        (should (string= (buffer-string)
-                         (concat ";;; -*- no-byte-compile: t -*-\n"
-                                 "(define-package \"simple-single\" \"1.3\" "
-                                 "\"A single-file package "
-                                 "with no dependencies\" 'nil "
-                                 ":authors '((\"J. R. Hacker\" . \"jrh@example.com\")) "
-                                 ":maintainer '(\"J. R. Hacker\" . \"jrh@example.com\") "
-                                 ":url \"http://doodles.au\""
-                                 ")\n"))))
+        (goto-char (point-min))
+        (let ((sexp (read (current-buffer))))
+          (should (eq (car-safe sexp) 'define-package))
+          (should (package-test--compatible-p
+                   (apply #'package-desc-from-define (cdr sexp))
+                   simple-single-desc))))
       (should (file-exists-p autoloads-file))
       (should-not (get-file-buffer autoloads-file)))))
 
@@ -580,8 +598,17 @@ Must called from within a `tar-mode' buffer."
         (setq archive-contents
               (package-read-from-string
                (buffer-substring (point-min) (point-max)))))
-      (should (equal archive-contents
-                     (list 1 package-x-test--single-archive-entry-1-3))))))
+      (should (equal 1 (car archive-contents)))
+      (should (equal 2 (length archive-contents)))
+      (let ((pac (cadr archive-contents))
+            (pac-sample package-x-test--single-archive-entry-1-3))
+        (should (equal (pop pac) (pop pac-sample)))
+        (dotimes (i 4)
+          (should (equal (aref pac i) (aref pac-sample i))))
+        ;; The `extras' field should contain at least the specified elements.
+        (should (cl-every (lambda (sample-elem)
+                            (member sample-elem (aref pac 4)))
+                          (aref pac-sample 4)))))))
 
 (ert-deftest package-x-test-upload-new-version ()
   "Test uploading a new version of a package"
@@ -601,8 +628,17 @@ Must called from within a `tar-mode' buffer."
         (setq archive-contents
               (package-read-from-string
                (buffer-substring (point-min) (point-max)))))
-      (should (equal archive-contents
-                     (list 1 package-x-test--single-archive-entry-1-4))))))
+      (should (equal 1 (car archive-contents)))
+      (should (equal 2 (length archive-contents)))
+      (let ((pac (cadr archive-contents))
+            (pac-sample package-x-test--single-archive-entry-1-4))
+        (should (equal (pop pac) (pop pac-sample)))
+        (dotimes (i 4)
+          (should (equal (aref pac i) (aref pac-sample i))))
+        ;; The `extras' field should contain at least the specified elements.
+        (should (cl-every (lambda (sample-elem)
+                            (member sample-elem (aref pac 4)))
+                          (aref pac-sample 4)))))))
 
 (ert-deftest package-test-get-deps ()
   "Test `package--get-deps' with complex structures."
