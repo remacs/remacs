@@ -1041,24 +1041,6 @@ top_level_1 (Lisp_Object ignore)
   return Qnil;
 }
 
-DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, "",
-       doc: /* Exit all recursive editing levels.
-This also exits all active minibuffers.  */
-       attributes: noreturn)
-  (void)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  if (display_hourglass_p)
-    cancel_hourglass ();
-#endif
-
-  /* Unblock input if we enter with input blocked.  This may happen if
-     redisplay traps e.g. during tool-bar update with input blocked.  */
-  totally_unblock_input ();
-
-  Fthrow (Qtop_level, Qnil);
-}
-
 
 /* Restore mouse tracking enablement.  See Ftrack_mouse for the only use
    of this function.  */
@@ -10995,7 +10977,6 @@ syms_of_keyboard (void)
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
   defsubr (&Srecursion_depth);
-  defsubr (&Stop_level);
   defsubr (&Sdiscard_input);
   defsubr (&Sopen_dribble_file);
   defsubr (&Sset_input_interrupt_mode);
