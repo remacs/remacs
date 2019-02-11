@@ -2794,7 +2794,7 @@ the only argument."
   (let* ((nick (nth 1 args))
          (idle-secs (string-to-number (nth 2 args)))
          (idle-string (format-seconds "%yy %dd %hh %mm %z%ss" idle-secs))
-         (signon-time (seconds-to-time (string-to-number (nth 3 args))))
+	 (signon-time (encode-time (string-to-number (nth 3 args))))
          (signon-string (format-time-string "%c" signon-time))
          (message (format "%s idle for %s, signed on %s"
                           nick idle-string signon-string)))
@@ -2815,7 +2815,7 @@ Not in rfc1459.txt"
     (with-current-buffer buffer
       (let ((setter (nth 2 args))
 	    (time (current-time-string
-		   (seconds-to-time
+		   (encode-time
 		    (string-to-number (cl-cadddr args))))))
 	(rcirc-print process sender "TOPIC" (cadr args)
 		     (format "%s (%s on %s)" rcirc-topic setter time))))))

@@ -528,7 +528,7 @@ non-nil, the amount returned will be relative to past time worked."
   "Return a time value representing the end of today's workday.
 If TODAY-ONLY is non-nil, the value returned will be relative only to
 the time worked today, and not to past time."
-  (seconds-to-time
+  (encode-time
    (- (float-time)
       (let ((discrep (timeclock-find-discrep)))
 	(if discrep
@@ -1196,7 +1196,7 @@ HTML-P is non-nil, HTML markup is added."
 	    (insert project "</b><br>\n")
 	  (insert project "*\n"))
 	(let ((proj-data (cdr (assoc project (timeclock-project-alist log))))
-	      (two-weeks-ago (seconds-to-time
+	      (two-weeks-ago (encode-time
 			      (- (float-time today)
 				 (* 2 7 24 60 60))))
 	      two-week-len today-len)
@@ -1249,16 +1249,16 @@ HTML-P is non-nil, HTML markup is added."
     <th>-1 year</th>
 </tr>")
 	(let* ((day-list (timeclock-day-list))
-	       (thirty-days-ago (seconds-to-time
+	       (thirty-days-ago (encode-time
 				 (- (float-time today)
 				    (* 30 24 60 60))))
-	       (three-months-ago (seconds-to-time
+	       (three-months-ago (encode-time
 				  (- (float-time today)
 				     (* 90 24 60 60))))
-	       (six-months-ago (seconds-to-time
+	       (six-months-ago (encode-time
 				(- (float-time today)
 				   (* 180 24 60 60))))
-	       (one-year-ago (seconds-to-time
+	       (one-year-ago (encode-time
 			      (- (float-time today)
 				 (* 365 24 60 60))))
 	       (time-in  (vector (list t) (list t) (list t) (list t) (list t)))

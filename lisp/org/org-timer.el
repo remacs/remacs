@@ -140,7 +140,7 @@ the region 0:00:00."
 	  (unless (string-match "\\S-" s) (setq s def))
 	  (setq delta (org-timer-hms-to-secs (org-timer-fix-incomplete s)))))
 	(setq org-timer-start-time
-	      (seconds-to-time
+	      (encode-time
 	       ;; Pass `current-time' result to `float-time' (instead
 	       ;; of calling without arguments) so that only
 	       ;; `current-time' has to be overridden in tests.
@@ -168,12 +168,12 @@ With prefix arg STOP, stop it entirely."
 		  (org-timer--run-countdown-timer
 		   new-secs org-timer-countdown-timer-title))
 	    (setq org-timer-start-time
-		  (time-add (current-time) (seconds-to-time new-secs))))
+		  (time-add (current-time) (encode-time new-secs))))
 	(setq org-timer-start-time
 	      ;; Pass `current-time' result to `float-time' (instead
 	      ;; of calling without arguments) so that only
 	      ;; `current-time' has to be overridden in tests.
-	      (seconds-to-time (- (float-time (current-time))
+	      (encode-time (- (float-time (current-time))
 				  (- pause-secs start-secs)))))
       (setq org-timer-pause-time nil)
       (org-timer-set-mode-line 'on)
@@ -464,7 +464,7 @@ using three `C-u' prefix arguments."
 		 secs org-timer-countdown-timer-title))
 	  (run-hooks 'org-timer-set-hook)
 	  (setq org-timer-start-time
-		(time-add (current-time) (seconds-to-time secs)))
+		(time-add (current-time) (encode-time secs)))
 	  (setq org-timer-pause-time nil)
 	  (org-timer-set-mode-line 'on))))))
 

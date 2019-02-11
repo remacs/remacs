@@ -205,7 +205,7 @@ If `url-standalone-mode' is non-nil, cached items never expire."
 	  (time-less-p
 	   (time-add
 	    cache-time
-	    (seconds-to-time (or expire-time url-cache-expire-time)))
+	    (encode-time (or expire-time url-cache-expire-time)))
 	   nil)))))
 
 (defun url-cache-prune-cache (&optional directory)
@@ -227,7 +227,7 @@ considered \"expired\"."
 	   ((time-less-p
 	     (time-add
 	      (file-attribute-modification-time (file-attributes file))
-	      (seconds-to-time url-cache-expire-time))
+	      (encode-time url-cache-expire-time))
 	     now)
 	    (delete-file file)
 	    (setq deleted-files (1+ deleted-files))))))

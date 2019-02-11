@@ -1802,7 +1802,7 @@ download it from URL first."
              (time-less-p nil
                           (time-add (file-attribute-modification-time
 				     (file-attributes image-name))
-                                    (seconds-to-time 86400))))
+				    (encode-time 86400))))
         (newsticker--debug-msg "%s: Getting image for %s skipped"
                                (format-time-string "%A, %H:%M")
                                feed-name)
@@ -1996,7 +1996,7 @@ older than TIME."
           (lambda (item)
             (when (eq (newsticker--age item) old-age)
               (let ((exp-time (time-add (newsticker--time item)
-                                        (seconds-to-time time))))
+					(encode-time time))))
                 (when (time-less-p exp-time nil)
                   (newsticker--debug-msg
                    "Item `%s' from %s has expired on %s"

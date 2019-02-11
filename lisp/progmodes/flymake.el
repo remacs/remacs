@@ -1004,7 +1004,7 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
     (setq
      flymake-timer
      (run-with-idle-timer
-      (seconds-to-time flymake-no-changes-timeout)
+      (encode-time flymake-no-changes-timeout)
       nil
       (lambda (buffer)
         (when (buffer-live-p buffer)

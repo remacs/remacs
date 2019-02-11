@@ -1621,7 +1621,7 @@ enumeration, given as a time value, in same format as returned by
                    (mapcar
                     (lambda (offset)
                       (let* ((day (decode-time (time-add now
-                                                         (seconds-to-time
+							 (encode-time
                                                           (* offset 60 60 24)))))
                              (d (nth 3 day))
                              (m (nth 4 day))

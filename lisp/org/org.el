@@ -5621,7 +5621,7 @@ the rounding returns a past time."
 		   (append (list 0 (* r (floor (+ .5 (/ (float (nth 1 time)) r)))))
 			   (nthcdr 2 time))))
       (if (and past (< (float-time (time-subtract (current-time) res)) 0))
-	  (seconds-to-time (- (float-time res) (* r 60)))
+	  (encode-time (- (float-time res) (* r 60)))
 	res))))
 
 (defun org-today ()
@@ -17796,7 +17796,7 @@ NODEFAULT, hour and minute fields will be nil if not given."
 	 ;; second argument.  However, this requires at least Emacs
 	 ;; 25.1.  We can do it when we switch to this version as our
 	 ;; minimal requirement.
-	 (decode-time (seconds-to-time (org-matcher-time s))))
+	 (decode-time (encode-time (org-matcher-time s))))
 	(t (error "Not a standard Org time string: %s" s))))
 
 (defun org-timestamp-up (&optional arg)

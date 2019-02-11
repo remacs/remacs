@@ -110,7 +110,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 	     (setq deadline (+ 86400 deadline))) ; 86400 secs/day
 	   ;; Convert seconds to date header.
 	   (setq deadline (message-make-date
-			   (seconds-to-time deadline))))
+			   (encode-time deadline))))
 	  ((string-match "\\([0-9]+\\)\\s-*\\([mhdwMY]\\)" delay)
 	   (setq num (match-string 1 delay))
 	   (setq unit (match-string 2 delay))
@@ -129,7 +129,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 		 (t
 		  (setq delay (* num 60))))
 	   (setq deadline (message-make-date
-			   (seconds-to-time (+ (float-time) delay)))))
+			   (encode-time (+ (float-time) delay)))))
 	  (t (error "Malformed delay `%s'" delay)))
     (message-add-header (format "%s: %s" gnus-delay-header deadline)))
   (set-buffer-modified-p t)

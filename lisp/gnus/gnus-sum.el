@@ -3868,7 +3868,7 @@ Input should look like this: \"Sun, 14 Oct 2001 13:34:39 +0200\"."
 	      (setq top (eval (caar templist)))))
 	  (if (stringp (cdr (car templist)))
 	      (setq my-format (cdr (car templist)))))
-	(format-time-string (eval my-format) (seconds-to-time messy-date)))
+	(format-time-string (eval my-format) (encode-time messy-date)))
     (error "  ?   ")))
 
 (defun gnus-summary-set-local-parameters (group)

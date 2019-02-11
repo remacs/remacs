@@ -1279,27 +1279,27 @@ all.  This may very well take some time.")
        (cond ((eq (cdr reminder) 'minute)
 	      (time-subtract
 	       (apply 'encode-time 0 (nthcdr 1 date-elts))
-	       (seconds-to-time (* (car reminder) 60.0))))
+	       (encode-time (* (car reminder) 60.0))))
 	     ((eq (cdr reminder) 'hour)
 	      (time-subtract
 	       (apply 'encode-time 0 0 (nthcdr 2 date-elts))
-	       (seconds-to-time (* (car reminder) 3600.0))))
+	       (encode-time (* (car reminder) 3600.0))))
 	     ((eq (cdr reminder) 'day)
 	      (time-subtract
 	       (apply 'encode-time 0 0 0 (nthcdr 3 date-elts))
-	       (seconds-to-time (* (car reminder) 86400.0))))
+	       (encode-time (* (car reminder) 86400.0))))
 	     ((eq (cdr reminder) 'week)
 	      (time-subtract
 	       (apply 'encode-time 0 0 0 monday (nthcdr 4 date-elts))
-	       (seconds-to-time (* (car reminder) 604800.0))))
+	       (encode-time (* (car reminder) 604800.0))))
 	     ((eq (cdr reminder) 'month)
 	      (time-subtract
 	       (apply 'encode-time 0 0 0 1 (nthcdr 4 date-elts))
-	       (seconds-to-time (* (car reminder) 18748800.0))))
+	       (encode-time (* (car reminder) 18748800.0))))
 	     ((eq (cdr reminder) 'year)
 	      (time-subtract
 	       (apply 'encode-time 0 0 0 1 1 (nthcdr 5 date-elts))
-	       (seconds-to-time (* (car reminder) 400861056.0)))))
+	       (encode-time (* (car reminder) 400861056.0)))))
        res))
     (sort res 'time-less-p)))
 

@@ -622,7 +622,7 @@ Return propertized STRING."
 	(or (widget-get widget :tag) "")
 	(format-time-string
 	 "%d %B %Y, %T"
-	 (seconds-to-time
+	 (encode-time
 	  (string-to-number (widget-get widget :xesam:sourceModified)))))))
 
     ;; Second line: :value.

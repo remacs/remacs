@@ -1069,10 +1069,10 @@ to be CLOCKED OUT."))))
 		   (and gotback (= gotback default)))
 	       'now)
 	      (keep
-	       (time-add last-valid (seconds-to-time (* 60 keep))))
+	       (time-add last-valid (encode-time (* 60 keep))))
 	      (gotback
 	       (time-subtract (current-time)
-			      (seconds-to-time (* 60 gotback))))
+			      (encode-time (* 60 gotback))))
 	      (t
 	       (error "Unexpected, please report this as a bug")))
        (and gotback last-valid)
@@ -1155,7 +1155,7 @@ so long."
     (let* ((org-clock-user-idle-seconds (org-user-idle-seconds))
 	   (org-clock-user-idle-start
 	    (time-subtract (current-time)
-			   (seconds-to-time org-clock-user-idle-seconds)))
+			   (encode-time org-clock-user-idle-seconds)))
 	   (org-clock-resolving-clocks-due-to-idleness t))
       (if (> org-clock-user-idle-seconds (* 60 org-clock-idle-time))
 	  (org-clock-resolve
@@ -2714,14 +2714,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
     (setq tsb
 	  (if (eq step0 'week)
-	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
+	      (let ((dow (nth 6 (decode-time (encode-time ts)))))
 		(if (<= dow ws) ts
 		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (while (< tsb te)
       (unless (bolp) (insert "\n"))
-      (let ((start-time (seconds-to-time (max tsb ts))))
-	(cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
+      (let ((start-time (encode-time (max tsb ts))))
+	(cl-incf tsb (let ((dow (nth 6 (decode-time (encode-time tsb)))))
 		       (if (or (eq step0 'day)
 			       (= dow ws))
 			   step
@@ -2741,7 +2741,7 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
 		  :tstart (format-time-string (org-time-stamp-format t t)
 					      start-time)
 		  :tend (format-time-string (org-time-stamp-format t t)
-					    (seconds-to-time (min te tsb))))))))
+					    (encode-time (min te tsb))))))))
 	  (re-search-forward "^[ \t]*#\\+END:")
 	  (when (and stepskip0 (equal step-time 0))
 	    ;; Remove the empty table
