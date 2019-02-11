@@ -48,6 +48,10 @@
   (should (floatp (car (load-average "asdf"))))
   (should (floatp (car (load-average '(gimme floats))))))
 
+(ert-deftest test-copy-alist ()
+  (let ((alist '(("foo" . "bar") ("foo" . "bar"))))
+    (should (equal alist (copy-alist alist)))))
+
 (ert-deftest test-reverse ()
   (should-error (reverse))
   (should-error (reverse 1))

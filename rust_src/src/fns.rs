@@ -388,6 +388,31 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
         .collect()
 }
 
+/// Return a copy of ALIST.
+/// This is an alist which represents the same mapping from objects to objects,
+/// but does not share the alist structure with ALIST.
+/// The objects mapped (cars and cdrs of elements of the alist)
+/// are shared, however.
+/// Elements of ALIST that are not conses are also shared.
+#[lisp_fn]
+pub fn copy_alist(mut alist: LispObject) -> LispObject {
+    if alist.is_nil() {
+        return alist;
+    }
+
+    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+
+    for elt in new_alist.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let front = elt.car();
+        // To make a copy, unpack the cons and then make a new one while re-using the car and cdr.
+        if let Some((car, cdr)) = front.into() {
+            elt.set_car((car, cdr));
+        }
+    }
+
+    new_alist
+}
+
 /// Ask user a yes-or-no question.
 ///
 /// Return t if answer is yes, and nil if the answer is no.  PROMPT is
