@@ -279,8 +279,8 @@ expressions that when evaluated return the start and end dates,
 respectively. This function first attempts to use pre-calculated
 data from `calendar-dst-transition-cache', otherwise it calls
 `calendar-dst-find-data' (and adds the results to the cache).
-If dates in YEAR cannot be handled by `encode-time' (e.g. if they
-are too large to be represented as a lisp integer), then rather
+If dates in YEAR cannot be handled by `encode-time' (e.g.,
+if they are out of range for POSIX time_t), then rather
 than an error this function returns the result appropriate for
 the current year."
   (let ((e (assoc year calendar-dst-transition-cache))
