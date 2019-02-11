@@ -433,24 +433,6 @@ vertical combination.  */)
   return WINDOW_HORIZONTAL_COMBINATION_P (w) ? w->contents : Qnil;
 }
 
-DEFUN ("window-next-sibling", Fwindow_next_sibling, Swindow_next_sibling, 0, 1, 0,
-       doc: /* Return the next sibling window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW has no next sibling.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->next;
-}
-
-DEFUN ("window-prev-sibling", Fwindow_prev_sibling, Swindow_prev_sibling, 0, 1, 0,
-       doc: /* Return the previous sibling window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW has no previous sibling.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->prev;
-}
-
 DEFUN ("window-pixel-width-before-size-change",
        Fwindow_pixel_width_before_size_change,
        Swindow_pixel_width_before_size_change, 0, 1, 0,
@@ -6425,8 +6407,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_left_child);
-  defsubr (&Swindow_next_sibling);
-  defsubr (&Swindow_prev_sibling);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
