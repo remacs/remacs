@@ -1515,20 +1515,20 @@ Removes badly formatted data and ignored directories."
 				(files (cdr (cdr (car l)))))
 			    (and
 			     (stringp dir)
-			     (consp time)
-			     (cond
-			      ((integerp (car time))
-			       (and (not (zerop (float-time time)))
-				    (ido-may-cache-directory dir)))
-			      ((eq (car time) 'ftp)
-			       (and (numberp (cdr time))
-				    (ido-is-ftp-directory dir)
-				    (ido-cache-ftp-valid (cdr time))))
-			      ((eq (car time) 'unc)
-			       (and (numberp (cdr time))
-				    (ido-is-unc-host dir)
-				    (ido-cache-unc-valid (cdr time))))
-			      (t nil))
+			     (if (condition-case nil
+				     (not (time-equal-p time 0))
+				   (error))
+				 (ido-may-cache-directory dir)
+			       (and
+				(consp time)
+				(numberp (cdr time))
+				(cond
+				 ((eq (car time) 'ftp)
+				  (and (ido-is-ftp-directory dir)
+				       (ido-cache-ftp-valid (cdr time))))
+				 ((eq (car time) 'unc)
+				  (and (ido-is-unc-host dir)
+				       (ido-cache-unc-valid (cdr time)))))))
 			     (let ((s files) (ok t))
 			       (while s
 				 (if (stringp (car s))
@@ -3621,8 +3621,7 @@ Uses and updates `ido-dir-file-cache'."
 			     (ido-cache-unc-valid (cdr ctime)))))
 	   (t
 	    (if attr
-		(setq valid (and (= (car ctime) (car mtime))
-				 (= (car (cdr ctime)) (car (cdr mtime))))))))
+		(setq valid (time-equal-p ctime mtime)))))
 	  (unless valid
 	    (setq ido-dir-file-cache (delq cached ido-dir-file-cache)
 		  cached nil)))

@@ -2010,10 +2010,8 @@ Optional argument REDRAW, if non-nil, forces mode line to be updated."
 ;;   (after Man-bgproc-sentinel-advice activate)
 ;;   ;; Terminates man processing
 ;;   "Report formatting time."
-;;   (let* ((time (current-time))
-;; 	 (time (+ (* (- (car time) (car WoMan-Man-start-time)) 65536)
-;; 		  (- (cadr time) (cadr WoMan-Man-start-time)))))
-;;     (message "Man formatting done in %d seconds" time)))
+;;   (message "Man formatting done in %s seconds"
+;;            (float-time (time-subtract nil WoMan-Man-start-time))))
 
 
 ;;; Buffer handling:

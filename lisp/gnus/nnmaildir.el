@@ -1467,7 +1467,7 @@ This variable is set by `nnmaildir-request-article'.")
       (unless (string-equal nnmaildir--delivery-time file)
 	(setq nnmaildir--delivery-time file
 	      nnmaildir--delivery-count 0))
-      (setq file (concat file "M" (number-to-string (caddr time))))
+      (setq file (concat file (format-time-string "M%6N" time)))
       (setq file (concat file nnmaildir--delivery-pid)
 	    file (concat file "Q" (number-to-string nnmaildir--delivery-count))
 	    file (concat file "." (nnmaildir--system-name))
@@ -1553,7 +1553,7 @@ This variable is set by `nnmaildir-request-article'.")
 (defun nnmaildir-request-expire-articles (ranges &optional gname server force)
   (let ((no-force (not force))
 	(group (nnmaildir--prepare server gname))
-	pgname time boundary bound-iter high low target dir nlist
+	pgname time boundary high low target dir nlist
 	didnt nnmaildir--file nnmaildir-article-file-name
 	deactivate-mark)
     (catch 'return
@@ -1602,15 +1602,8 @@ This variable is set by `nnmaildir-request-article'.")
 	    ((null time)
 	     (nnmaildir--expired-article group article))
 	    ((and no-force
-		  (progn
-		    (setq time (file-attribute-modification-time time)
-			  bound-iter boundary)
-		    (while (and bound-iter time
-				(= (car bound-iter) (car time)))
-		      (setq bound-iter (cdr bound-iter)
-			    time (cdr time)))
-		    (and bound-iter time
-			 (car-less-than-car bound-iter time))))
+		  (time-less-p boundary
+			       (file-attribute-modification-time time)))
 	     (setq didnt (cons (nnmaildir--art-num article) didnt)))
 	    (t
 	     (setq nnmaildir-article-file-name nnmaildir--file

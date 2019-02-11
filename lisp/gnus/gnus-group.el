@@ -4578,8 +4578,7 @@ and the second element is the address."
 This function can be used in hooks like `gnus-select-group-hook'
 or `gnus-group-catchup-group-hook'."
   (when gnus-newsgroup-name
-    (let ((time (current-time)))
-      (setcdr (cdr time) nil)
+    (let ((time (encode-time nil 'integer)))
       (gnus-group-set-parameter gnus-newsgroup-name 'timestamp time))))
 
 (defsubst gnus-group-timestamp (group)
@@ -4588,11 +4587,11 @@ or `gnus-group-catchup-group-hook'."
 
 (defun gnus-group-timestamp-delta (group)
   "Return the offset in seconds from the timestamp for GROUP to the current time, as a floating point number."
-  (let* ((time (or (gnus-group-timestamp group)
-		   (list 0 0)))
+  ;; FIXME: This should return a Lisp integer, not a Lisp float,
+  ;; since it is always an integer.
+  (let* ((time (or (gnus-group-timestamp group) 0))
 	 (delta (time-subtract nil time)))
-    (+ (* (nth 0 delta) 65536.0)
-       (nth 1 delta))))
+    (float-time delta)))
 
 (defun gnus-group-timestamp-string (group)
   "Return a string of the timestamp for GROUP."
