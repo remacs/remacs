@@ -813,26 +813,28 @@ pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
 
 #[no_mangle]
 pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
-    let start = *b;
-    let stop = *e;
+    let (begin, end) = validate_region_rust(*b, *e);
+    *b = begin.into();
+    *e = end.into();
+}
 
-    let mut beg = start.as_fixnum_coerce_marker_or_error();
+pub fn validate_region_rust(start: LispObject, stop: LispObject) -> (isize, isize) {
+    let mut begin = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();
 
-    if beg > end {
-        mem::swap(&mut beg, &mut end);
+    if begin > end {
+        mem::swap(&mut begin, &mut end);
     }
-
-    *b = LispObject::from(beg);
-    *e = LispObject::from(end);
 
     let buf = ThreadState::current_buffer_unchecked();
     let begv = buf.begv as EmacsInt;
     let zv = buf.zv as EmacsInt;
 
-    if !(begv <= beg && end <= zv) {
+    if !(begv <= begin && end <= zv) {
         args_out_of_range!(current_buffer(), start, stop);
     }
+
+    (begin as isize, end as isize)
 }
 
 /// Make buffer BUFFER-OR-NAME current for editing operations.
