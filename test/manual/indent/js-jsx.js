@@ -257,12 +257,3 @@ return (
 // indent-tabs-mode: nil
 // js-indent-level: 2
 // End:
-
-// The following test has intentionally unclosed elements and should
-// be placed below all other tests to prevent awkward indentation.
-
-return (
-  <div>
-    {array.map(function () {
-      return {
-        a: 1
