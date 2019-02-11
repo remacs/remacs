@@ -13,7 +13,7 @@ use crate::{
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp, list1,
         list_system_processes, process_send_signal, send_process, setup_process_coding_systems,
-        update_status, Fmapcar, STRING_BYTES,
+        tcflush, update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -557,6 +557,77 @@ pub fn internal_default_interrupt_process(
 }
 #[rustfmt::skip]
 def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
+
+/// Kill process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn kill_process(process: LispObject, current_group: LispObject) -> LispObject {
+    unsafe {
+        process_send_signal(process, libc::SIGKILL, current_group, false);
+    }
+    process
+}
+
+/// Send QUIT signal to process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn quit_process(process: LispObject, current_group: LispObject) -> LispObject {
+    unsafe {
+        process_send_signal(process, libc::SIGQUIT, current_group, false);
+    }
+    process
+}
+
+/// Stop process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+/// If PROCESS is a network or serial or pipe connection, inhibit handling
+/// of incoming traffic.
+#[lisp_fn(min = "0")]
+pub fn stop_process(process: LispObject, current_group: LispObject) -> LispObject {
+    let mut p_ref: LispProcessRef = get_process(process).into();
+    let process_type = p_ref.ptype();
+    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+        unsafe {
+            delete_read_fd(p_ref.infd);
+            p_ref.command = Qt;
+        }
+        return process;
+    }
+
+    unsafe {
+        process_send_signal(process, libc::SIGTSTP, current_group, false);
+    }
+
+    process
+}
+
+/// Continue process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+/// If PROCESS is a network or serial process, resume handling of incoming
+/// traffic.
+#[lisp_fn(min = "0")]
+pub fn continue_process(process: LispObject, current_group: LispObject) -> LispObject {
+    let mut p_ref: LispProcessRef = process.into();
+    let process_type = p_ref.ptype();
+    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+        unsafe {
+            if p_ref.command.eq(Qt)
+                && p_ref.infd >= 0
+                && (!p_ref.filter.eq(Qt) || p_ref.status.eq(Qlisten))
+            {
+                add_process_read_fd(p_ref.infd);
+                tcflush(p_ref.infd, libc::TCIFLUSH);
+            }
+        }
+        p_ref.command = Qnil;
+        return process;
+    }
+
+    unsafe {
+        process_send_signal(process, libc::SIGCONT, current_group, false);
+    }
+    process
+}
 
 #[allow(unused_doc_comments)]
 #[no_mangle]
