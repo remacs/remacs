@@ -652,7 +652,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 			(setcar (nthcdr 0 moment) 0)
 			(setcar (nthcdr 1 moment) 0)
 			(setcar (nthcdr 2 moment) 0))
-		      (apply 'encode-time moment))
+		      (encode-time moment))
 		  (ange-ftp-file-modtime (expand-file-name name dir))))
 	       symlink)
 	  (if (string-match "\\(.+\\) -> \\(.+\\)" name)

@@ -5542,7 +5542,7 @@ In posting styles use `(\"Expires\" (make-expires-date 30))'."
   (let* ((cur (decode-time))
 	 (nday (+ days (nth 3 cur))))
     (setf (nth 3 cur) nday)
-    (message-make-date (apply 'encode-time cur))))
+    (message-make-date (encode-time cur))))
 
 (defun message-make-message-id ()
   "Make a unique Message-ID."

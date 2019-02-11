@@ -146,7 +146,7 @@ Returns nil if WebDAV is not supported."
       (setq time (parse-time-string date-string)))
 
     (if time
-	(setq time (apply 'encode-time time))
+	(setq time (encode-time time))
       (url-debug 'dav "Unable to decode date (%S) (%s)"
 		 (xml-node-name node) date-string))
     time))

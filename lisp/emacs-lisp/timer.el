@@ -88,7 +88,7 @@ SECS may be an integer, floating point number, or the internal
 time format returned by, e.g., `current-idle-time'.
 If optional third argument REPEAT is non-nil, make the timer
 fire each time Emacs is idle for that many seconds."
-  (setf (timer--time timer) (if (consp secs) secs (encode-time secs)))
+  (setf (timer--time timer) secs)
   (setf (timer--repeat-delay timer) repeat)
   timer)
 

@@ -3544,7 +3544,7 @@ possible values."
 		  (substring
 		   (message-make-date
 		    (let* ((e (parse-time-string date))
-			   (tm (apply 'encode-time e))
+			   (tm (encode-time e))
 			   (ms (car tm))
 			   (ls (- (cadr tm) (car (current-time-zone time)))))
 		      (cond ((< ls 0) (list (1- ms) (+ ls 65536)))

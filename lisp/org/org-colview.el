@@ -719,7 +719,7 @@ around it."
       (setq time-after (copy-sequence time))
       (setf (nth 3 time-before) (1- (nth 3 time)))
       (setf (nth 3 time-after) (1+ (nth 3 time)))
-      (mapcar (lambda (x) (format-time-string fmt (apply 'encode-time x)))
+      (mapcar (lambda (x) (format-time-string fmt (encode-time x)))
 	      (list time-before time time-after)))))
 
 (defun org-columns-open-link (&optional arg)
@@ -1070,7 +1070,7 @@ as a canonical duration, i.e., using units defined in
   (cond
    ((string-match-p org-ts-regexp s)
     (/ (- org-columns--time
-	  (float-time (apply #'encode-time (org-parse-time-string s))))
+	  (float-time (org-time-string-to-time s)))
        60))
    ((org-duration-p s) (org-duration-to-minutes s t)) ;skip user units
    (t (user-error "Invalid age: %S" s))))

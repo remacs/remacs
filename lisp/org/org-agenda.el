@@ -5491,8 +5491,8 @@ displayed in agenda view."
 	    (substring
 	     (format-time-string
 	      (car org-time-stamp-formats)
-	      (apply #'encode-time	; DATE bound by calendar
-		     (list 0 0 0 (nth 1 date) (car date) (nth 2 date))))
+	      (encode-time	; DATE bound by calendar
+	       0 0 0 (nth 1 date) (car date) (nth 2 date)))
 	     1 11))
 	   "\\|\\(<[0-9]+-[0-9]+-[0-9]+[^>\n]+?\\+[0-9]+[hdwmy]>\\)"
 	   "\\|\\(<%%\\(([^>\n]+)\\)>\\)"))
@@ -5742,8 +5742,8 @@ then those holidays will be skipped."
 		   (substring
 		    (format-time-string
 		     (car org-time-stamp-formats)
-		     (apply 'encode-time  ; DATE bound by calendar
-			    (list 0 0 0 (nth 1 date) (car date) (nth 2 date))))
+		     (encode-time  ; DATE bound by calendar
+		      0 0 0 (nth 1 date) (car date) (nth 2 date)))
 		    1 11))))
 	 (org-agenda-search-headline-for-time nil)
 	 marker hdmarker priority category level tags closedp
@@ -5860,10 +5860,8 @@ See also the user option `org-agenda-clock-consistency-checks'."
 	      (throw 'next t))
 	    (setq ts (match-string 1)
 		  te (match-string 3)
-		  ts (float-time
-		      (apply #'encode-time (org-parse-time-string ts)))
-		  te (float-time
-		      (apply #'encode-time (org-parse-time-string te)))
+		  ts (float-time (org-time-string-to-time ts))
+		  te (float-time (org-time-string-to-time te))
 		  dt (- te ts))))
 	(cond
 	 ((> dt (* 60 maxtime))

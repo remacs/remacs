@@ -528,14 +528,13 @@ non-nil, the amount returned will be relative to past time worked."
   "Return a time value representing the end of today's workday.
 If TODAY-ONLY is non-nil, the value returned will be relative only to
 the time worked today, and not to past time."
-  (encode-time
-   (- (float-time)
-      (let ((discrep (timeclock-find-discrep)))
-	(if discrep
-	    (if today-only
-		(cadr discrep)
-	      (car discrep))
-	  0.0)))))
+  (time-subtract nil
+		 (let ((discrep (timeclock-find-discrep)))
+		   (if discrep
+		       (if today-only
+			   (cadr discrep)
+			 (car discrep))
+		     0))))
 
 ;;;###autoload
 (defun timeclock-when-to-leave-string (&optional show-seconds
@@ -1156,7 +1155,7 @@ If optional argument TIME is non-nil, use that instead of the current time."
     (setcar (nthcdr 0 decoded) 0)
     (setcar (nthcdr 1 decoded) 0)
     (setcar (nthcdr 2 decoded) 0)
-    (apply 'encode-time decoded)))
+    (encode-time decoded)))
 
 (defun timeclock-mean (l)
   "Compute the arithmetic mean of the values in the list L."
@@ -1196,9 +1195,7 @@ HTML-P is non-nil, HTML markup is added."
 	    (insert project "</b><br>\n")
 	  (insert project "*\n"))
 	(let ((proj-data (cdr (assoc project (timeclock-project-alist log))))
-	      (two-weeks-ago (encode-time
-			      (- (float-time today)
-				 (* 2 7 24 60 60))))
+	      (two-weeks-ago (time-subtract today (* 2 7 24 60 60)))
 	      two-week-len today-len)
 	  (while proj-data
 	    (if (not (time-less-p
@@ -1249,18 +1246,10 @@ HTML-P is non-nil, HTML markup is added."
     <th>-1 year</th>
 </tr>")
 	(let* ((day-list (timeclock-day-list))
-	       (thirty-days-ago (encode-time
-				 (- (float-time today)
-				    (* 30 24 60 60))))
-	       (three-months-ago (encode-time
-				  (- (float-time today)
-				     (* 90 24 60 60))))
-	       (six-months-ago (encode-time
-				(- (float-time today)
-				   (* 180 24 60 60))))
-	       (one-year-ago (encode-time
-			      (- (float-time today)
-				 (* 365 24 60 60))))
+	       (thirty-days-ago (time-subtract today (* 30 24 60 60)))
+	       (three-months-ago (time-subtract today (* 90 24 60 60)))
+	       (six-months-ago (time-subtract today (* 180 24 60 60)))
+	       (one-year-ago (time-subtract today (* 365 24 60 60)))
 	       (time-in  (vector (list t) (list t) (list t) (list t) (list t)))
 	       (time-out (vector (list t) (list t) (list t) (list t) (list t)))
 	       (breaks   (vector (list t) (list t) (list t) (list t) (list t)))

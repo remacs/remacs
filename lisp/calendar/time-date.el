@@ -151,15 +151,14 @@ it is assumed that PICO was omitted and should be treated as zero."
 DATE should be in one of the forms recognized by `parse-time-string'.
 If DATE lacks timezone information, GMT is assumed."
   (condition-case err
-      (apply 'encode-time (parse-time-string date))
+      (encode-time (parse-time-string date))
     (error
      (let ((overflow-error '(error "Specified time is not representable")))
        (if (equal err overflow-error)
 	   (apply 'signal err)
 	 (condition-case err
-	     (apply 'encode-time
-		    (parse-time-string
-		     (timezone-make-date-arpa-standard date)))
+	     (encode-time (parse-time-string
+			   (timezone-make-date-arpa-standard date)))
 	   (error
 	    (if (equal err overflow-error)
 		(apply 'signal err)

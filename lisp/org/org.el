@@ -5613,16 +5613,15 @@ When ROUNDING-MINUTES is not an integer, fall back on the car of
 the rounding returns a past time."
   (let ((r (or (and (integerp rounding-minutes) rounding-minutes)
 	       (car org-time-stamp-rounding-minutes)))
-	(time (decode-time)) res)
+	(now (current-time)))
     (if (< r 1)
-	(current-time)
-      (setq res
-	    (apply 'encode-time
-		   (append (list 0 (* r (floor (+ .5 (/ (float (nth 1 time)) r)))))
-			   (nthcdr 2 time))))
-      (if (and past (< (float-time (time-subtract (current-time) res)) 0))
-	  (encode-time (- (float-time res) (* r 60)))
-	res))))
+	now
+      (let* ((time (decode-time now))
+	     (res (apply #'encode-time 0 (* r (round (nth 1 time) r))
+			 (nthcdr 2 time))))
+	(if (or (not past) (time-less-p res now))
+	    res
+	  (time-subtract res (* r 60)))))))
 
 (defun org-today ()
   "Return today date, considering `org-extend-today-until'."
@@ -9743,9 +9742,7 @@ active region."
 	  (setq link
 		(format-time-string
 		 (car org-time-stamp-formats)
-		 (apply 'encode-time
-			(list 0 0 0 (nth 1 cd) (nth 0 cd) (nth 2 cd)
-			      nil nil nil))))
+		 (encode-time 0 0 0 (nth 1 cd) (nth 0 cd) (nth 2 cd))))
 	  (org-store-link-props :type "calendar" :date cd)))
 
        ((eq major-mode 'help-mode)
@@ -13344,7 +13341,7 @@ for calling org-schedule with, or if there is no scheduling,
 returns nil."
   (let ((time (org-entry-get pom "SCHEDULED" inherit)))
     (when time
-      (apply 'encode-time (org-parse-time-string time)))))
+      (org-time-string-to-time time))))
 
 (defun org-get-deadline-time (pom &optional inherit)
   "Get the deadline as a time tuple, of a format suitable for
@@ -13352,7 +13349,7 @@ calling org-deadline with, or if there is no scheduling, returns
 nil."
   (let ((time (org-entry-get pom "DEADLINE" inherit)))
     (when time
-      (apply 'encode-time (org-parse-time-string time)))))
+      (org-time-string-to-time time))))
 
 (defun org-remove-timestamp-with-keyword (keyword)
   "Remove all time stamps with KEYWORD in the current entry."
@@ -13411,7 +13408,7 @@ WHAT entry will also be removed."
 				       org-deadline-time-regexp)
 				     end t)
 	      (setq ts (match-string 1)
-		    default-time (apply 'encode-time (org-parse-time-string ts))
+		    default-time (org-time-string-to-time ts)
 		    default-input (and ts (org-get-compact-tod ts)))))))
       (when what
 	(setq time
@@ -14668,7 +14665,7 @@ it as a time string and apply `float-time' to it.  If S is nil, just return 0."
    ((numberp s) s)
    ((stringp s)
     (condition-case nil
-	(float-time (apply #'encode-time (org-parse-time-string s)))
+	(float-time (org-time-string-to-time s))
       (error 0.)))
    (t 0.)))
 
@@ -14676,8 +14673,7 @@ it as a time string and apply `float-time' to it.  If S is nil, just return 0."
   "Time in seconds today at 0:00.
 Returns the float number of seconds since the beginning of the
 epoch to the beginning of today (00:00)."
-  (float-time (apply 'encode-time
-		     (append '(0 0 0) (nthcdr 3 (decode-time))))))
+  (float-time (apply #'encode-time 0 0 0 (nthcdr 3 (decode-time)))))
 
 (defun org-matcher-time (s)
   "Interpret a time comparison value."
@@ -16573,7 +16569,7 @@ non-nil."
 	 ;; Default time is either the timestamp at point or today.
 	 ;; When entering a range, only the range start is considered.
          (default-time (if (not ts) (current-time)
-			 (apply #'encode-time (org-parse-time-string ts))))
+			 (org-time-string-to-time ts)))
          (default-input (and ts (org-get-compact-tod ts)))
          (repeater (and ts
 			(string-match "\\([.+-]+[0-9]+[hdwmy] ?\\)+" ts)
@@ -16820,7 +16816,7 @@ user."
     (when (< (nth 2 org-defdecode) org-extend-today-until)
       (setf (nth 2 org-defdecode) -1)
       (setf (nth 1 org-defdecode) 59)
-      (setq org-def (apply #'encode-time org-defdecode))
+      (setq org-def (encode-time org-defdecode))
       (setq org-defdecode (decode-time org-def)))
     (let* ((timestr (format-time-string
 		     (if org-with-time "%Y-%m-%d %H:%M" "%Y-%m-%d")
@@ -16893,13 +16889,14 @@ user."
 		 "range representable on this machine"))
       (ding))
 
-    ;; One round trip to get rid of 34th of August and stuff like that....
-    (setq final (decode-time (apply 'encode-time final)))
+    (setq final (apply #'encode-time final))
 
     (setq org-read-date-final-answer ans)
 
     (if to-time
-	(apply 'encode-time final)
+	final
+      ;; This round-trip gets rid of 34th of August and stuff like that....
+      (setq final (decode-time final))
       (if (and (boundp 'org-time-was-given) org-time-was-given)
 	  (format "%04d-%02d-%02d %02d:%02d"
 		  (nth 5 final) (nth 4 final) (nth 3 final)
@@ -16929,7 +16926,7 @@ user."
 			  (and (boundp 'org-time-was-given) org-time-was-given))
 		      (cdr fmts)
 		    (car fmts)))
-	     (txt (format-time-string fmt (apply 'encode-time f)))
+	     (txt (format-time-string fmt (apply #'encode-time f)))
 	     (txt (if org-read-date-inactive (concat "[" (substring txt 1 -1) "]") txt))
 	     (txt (concat "=> " txt)))
 	(when (and org-end-time-was-given
@@ -17296,7 +17293,7 @@ The command returns the inserted time stamp."
 	  time (org-fix-decoded-time t1)
 	  str (org-add-props
 		  (format-time-string
-		   (substring tf 1 -1) (apply 'encode-time time))
+		   (substring tf 1 -1) (encode-time time))
 		  nil 'mouse-face 'highlight))
     (put-text-property beg end 'display str)))
 
@@ -17553,7 +17550,7 @@ days in order to avoid rounding problems."
 
 (defun org-time-string-to-time (s)
   "Convert timestamp string S into internal time."
-  (apply #'encode-time (org-parse-time-string s)))
+  (encode-time (org-parse-time-string s)))
 
 (defun org-time-string-to-seconds (s)
   "Convert a timestamp string S into a number of seconds."
@@ -17588,7 +17585,7 @@ signaled."
    (daynr (org-closest-date s daynr prefer))
    (t (time-to-days
        (condition-case errdata
-	   (apply #'encode-time (org-parse-time-string s))
+	   (org-time-string-to-time s)
 	 (error (error "Bad timestamp `%s'%s\nError was: %s"
 		       s
 		       (if (not (and buffer pos)) ""
@@ -17686,12 +17683,12 @@ stamp stay unchanged.  In any case, return value is an absolute
 day number."
   (if (not (string-match "\\+\\([0-9]+\\)\\([hdwmy]\\)" start))
       ;; No repeater.  Do not shift time stamp.
-      (time-to-days (apply #'encode-time (org-parse-time-string start)))
+      (time-to-days (org-time-string-to-time start))
     (let ((value (string-to-number (match-string 1 start)))
 	  (type (match-string 2 start)))
       (if (= 0 value)
 	  ;; Repeater with a 0-value is considered as void.
-	  (time-to-days (apply #'encode-time (org-parse-time-string start)))
+	  (time-to-days (org-time-string-to-time start))
 	(let* ((base (org-date-to-gregorian start))
 	       (target (org-date-to-gregorian current))
 	       (sday (calendar-absolute-from-gregorian base))
@@ -18000,7 +17997,7 @@ When SUPPRESS-TMP-DELAY is non-nil, suppress delays like \"--2d\"."
 	  (setcar time0 (or (car time0) 0))
 	  (setcar (nthcdr 1 time0) (or (nth 1 time0) 0))
 	  (setcar (nthcdr 2 time0) (or (nth 2 time0) 0))
-	  (setq time (apply 'encode-time time0))))
+	  (setq time (encode-time time0))))
       ;; Insert the new time-stamp, and ensure point stays in the same
       ;; category as before (i.e. not after the last position in that
       ;; category).
@@ -23389,13 +23386,12 @@ strictly within a source block, use appropriate comment syntax."
 (defun org-timestamp--to-internal-time (timestamp &optional end)
   "Encode TIMESTAMP object into Emacs internal time.
 Use end of date range or time range when END is non-nil."
-  (apply #'encode-time
-	 (cons 0
-	       (mapcar
-		(lambda (prop) (or (org-element-property prop timestamp) 0))
-		(if end '(:minute-end :hour-end :day-end :month-end :year-end)
-		  '(:minute-start :hour-start :day-start :month-start
-				  :year-start))))))
+  (apply #'encode-time 0
+	 (mapcar
+	  (lambda (prop) (or (org-element-property prop timestamp) 0))
+	  (if end '(:minute-end :hour-end :day-end :month-end :year-end)
+	    '(:minute-start :hour-start :day-start :month-start
+			    :year-start)))))
 
 (defun org-timestamp-has-time-p (timestamp)
   "Non-nil when TIMESTAMP has a time specified."

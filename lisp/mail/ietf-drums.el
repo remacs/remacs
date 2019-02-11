@@ -294,7 +294,7 @@ a list of address strings."
 
 (defun ietf-drums-parse-date (string)
   "Return an Emacs time spec from STRING."
-  (apply 'encode-time (parse-time-string string)))
+  (encode-time (parse-time-string string)))
 
 (defun ietf-drums-narrow-to-header ()
   "Narrow to the header section in the current buffer."

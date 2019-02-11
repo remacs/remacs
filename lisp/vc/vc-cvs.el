@@ -650,7 +650,7 @@ Optional arg REVISION is a revision to annotate from."
   "Return the current time, based at midnight of the current day, and
 encoded as fractional days."
   (vc-annotate-convert-time
-   (apply 'encode-time 0 0 0 (nthcdr 3 (decode-time)))))
+   (apply #'encode-time 0 0 0 (nthcdr 3 (decode-time)))))
 
 (defun vc-cvs-annotate-time ()
   "Return the time of the next annotation (as fraction of days)
@@ -1184,9 +1184,8 @@ is non-nil."
                   (car parsed-time)
                   ;; Compare just the seconds part of the file time,
                   ;; since CVS file time stamp resolution is just 1 second.
-                  (let ((ptime (apply 'encode-time parsed-time)))
-                    (and (eq (car mtime) (car ptime))
-                         (eq (cadr mtime) (cadr ptime)))))
+		  (= (encode-time mtime 'integer)
+		     (encode-time parsed-time 'integer)))
              (vc-file-setprop file 'vc-checkout-time mtime)
              (if set-state (vc-file-setprop file 'vc-state 'up-to-date)))
             (t

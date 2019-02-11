@@ -629,7 +629,7 @@ disallows them."
              (<= time-zone-minute 59))
       (error "Invalid or unsupported time: %s" date-time-string))
     ;; Return a value in a format similar to that returned by decode-time, and
-    ;; suitable for (apply 'encode-time ...).
+    ;; suitable for (apply #'encode-time ...).
     (list second minute hour day month year second-fraction datatype
           (if has-time-zone
               (* (rng-xsd-time-to-seconds

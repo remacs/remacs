@@ -723,8 +723,8 @@ menu\nmouse-2 will jump to task"))
 The time returned includes the time spent on this task in
 previous clocking intervals."
   (let ((currently-clocked-time
-	 (floor (- (float-time)
-		   (float-time org-clock-start-time)) 60)))
+	 (floor (encode-time (time-subtract nil org-clock-start-time) 'integer)
+		60)))
     (+ currently-clocked-time (or org-clock-total-time 0))))
 
 (defun org-clock-modify-effort-estimate (&optional value)
@@ -1033,8 +1033,9 @@ to be CLOCKED OUT."))))
 				   nil 45)))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
-	   (floor (/ (float-time
-		      (time-subtract (current-time) last-valid)) 60)))
+	   (floor (encode-time (time-subtract (current-time) last-valid)
+			       'integer)
+		  60))
 	 (keep
 	  (and (memq ch '(?k ?K))
 	       (read-number "Keep how many minutes? " default)))
@@ -1102,8 +1103,8 @@ If `only-dangling-p' is non-nil, only ask to resolve dangling
 			(lambda (clock)
 			  (format
 			   "Dangling clock started %d mins ago"
-			   (floor (- (float-time)
-				     (float-time (cdr clock)))
+			   (floor (encode-time (time-subtract nil (cdr clock))
+					       'integer)
 				  60)))))
 		   (or last-valid
 		       (cdr clock)))))))))))
@@ -1293,8 +1294,7 @@ the default behavior."
 	   (setq ts (concat "[" (match-string 1) "]"))
 	   (goto-char (match-end 1))
 	   (setq org-clock-start-time
-		 (apply 'encode-time
-			(org-parse-time-string (match-string 1))))
+		 (org-time-string-to-time (match-string 1)))
 	   (setq org-clock-effort (org-entry-get (point) org-effort-property))
 	   (setq org-clock-total-time (org-clock-sum-current-item
 				       (org-clock-get-sum-start))))
@@ -1431,7 +1431,7 @@ The time is always returned as UTC."
 	     (day (nth 3 dt)))
 	(if (< hour org-extend-today-until) (setf (nth 3 dt) (1- day)))
 	(setf (nth 2 dt) org-extend-today-until)
-	(apply #'encode-time (append (list 0 0) (nthcdr 2 dt)))))
+	(apply #'encode-time 0 0 (nthcdr 2 dt))))
      ((or (equal cmt "all")
 	  (and (or (not cmt) (equal cmt "auto"))
 	       (not lr)))
@@ -1577,14 +1577,12 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (delete-region (point) (point-at-eol))
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
-	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te)))
-		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts))))
-		h (floor (/ s 3600))
+	  (setq s (float-time (time-subtract
+			       (org-time-string-to-time te)
+			       (org-time-string-to-time ts)))
+		h (floor s 3600)
 		s (- s (* 3600 h))
-		m (floor (/ s 60))
-		s (- s (* 60 s)))
+		m (floor s 60))
 	  (insert " => " (format "%2d:%02d" h m))
 	  (move-marker org-clock-marker nil)
 	  (move-marker org-clock-hd-marker nil)
@@ -1813,15 +1811,15 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	  ((match-end 2)
 	   ;; Two time stamps.
 	   (let* ((ts (float-time
-		       (apply #'encode-time
-			      (save-match-data
-				(org-parse-time-string (match-string 2))))))
+		       (encode-time
+			(save-match-data
+			  (org-parse-time-string (match-string 2))))))
 		  (te (float-time
-		       (apply #'encode-time
-			      (org-parse-time-string (match-string 3)))))
+		       (encode-time
+			(org-parse-time-string (match-string 3)))))
 		  (dt (- (if tend (min te tend) te)
 			 (if tstart (max ts tstart) ts))))
-	     (when (> dt 0) (cl-incf t1 (floor (/ dt 60))))))
+	     (when (> dt 0) (cl-incf t1 (floor dt 60)))))
 	  ((match-end 4)
 	   ;; A naked time.
 	   (setq t1 (+ t1 (string-to-number (match-string 5))
@@ -2704,14 +2702,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (pcase-let ((`(,month ,day ,year) (calendar-gregorian-from-absolute ts)))
 	(setq ts (float-time (encode-time 0 0 0 day month year)))))
      (ts
-      (setq ts (float-time (apply #'encode-time (org-parse-time-string ts))))))
+      (setq ts (float-time (org-time-string-to-time ts)))))
     (cond
      ((numberp te)
       ;; Likewise for te.
       (pcase-let ((`(,month ,day ,year) (calendar-gregorian-from-absolute te)))
 	(setq te (float-time (encode-time 0 0 0 day month year)))))
      (te
-      (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
+      (setq te (float-time (org-time-string-to-time te)))))
     (setq tsb
 	  (if (eq step0 'week)
 	      (let ((dow (nth 6 (decode-time (encode-time ts)))))
@@ -2720,7 +2718,7 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
 	    ts))
     (while (< tsb te)
       (unless (bolp) (insert "\n"))
-      (let ((start-time (encode-time (max tsb ts))))
+      (let ((start-time (max tsb ts)))
 	(cl-incf tsb (let ((dow (nth 6 (decode-time (encode-time tsb)))))
 		       (if (or (eq step0 'day)
 			       (= dow ws))
@@ -2882,18 +2880,16 @@ Otherwise, return nil."
 		     (<= org-clock-marker (point-at-eol)))
 	    ;; The clock is running here
 	    (setq org-clock-start-time
-		  (apply 'encode-time
-			 (org-parse-time-string (match-string 1))))
+		  (org-time-string-to-time (match-string 1)))
 	    (org-clock-update-mode-line)))
 	 (t
 	  (and (match-end 4) (delete-region (match-beginning 4) (match-end 4)))
 	  (end-of-line 1)
 	  (setq ts (match-string 1)
 		te (match-string 3))
-	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te)))
-		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts))))
+	  (setq s (float-time
+		   (time-subtract (org-time-string-to-time te)
+				  (org-time-string-to-time ts)))
 		neg (< s 0)
 		s (abs s)
 		h (floor (/ s 3600))
