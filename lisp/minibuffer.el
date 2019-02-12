@@ -3042,6 +3042,22 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 	    (when (string-match-p regex c) (push c poss)))
 	  (nreverse poss))))))
 
+(defvar flex-score-falloff -1.5
+  "Controls how the `flex' completion style scores its matches.
+
+Value is a number whose sign and amplitude have subtly different
+effects.  Positive values make the scoring formula value matches
+scattered along the string, while negative values make the
+formula value tighter matches.  I.e \"foo\" matches both strings
+\"barfoobaz\" and \"fabrobazo\", which are of equal length, but
+only a negative value will score the former higher than the
+second.
+
+The absolute value of this variable controls the relative order
+of different-length strings matched by the same pattern .  Its
+effect is not completely understood yet, so feel free to play
+around with it.")
+
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
     (let* ((re (completion-pcm--pattern->regex pattern 'group))
@@ -3056,8 +3072,45 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
          (let* ((pos (if point-idx (match-beginning point-idx) (match-end 0)))
                 (md (match-data))
                 (start (pop md))
-                (end (pop md)))
+                (end (pop md))
+                (len (length str))
+                ;; To understand how this works, consider these bad
+                ;; ascii(tm) diagrams showing how the pattern \"foo\"
+                ;; flex-matches \"fabrobazo" and
+                ;; \"barfoobaz\":
+
+                ;;      f abr o baz o
+                ;;      + --- + --- +
+
+                ;;      bar foo baz
+                ;;      --- +++ ---
+
+                ;; Where + indicates parts where the pattern matched,
+                ;; - where it didn't match.  The score is a number
+                ;; bound by ]0..1]: the higher the better and only a
+                ;; perfect match (pattern equals string) will have
+                ;; score 1.  The formula takes the form of a quotient.
+                ;; For the numerator, we use the number of +, i.e. the
+                ;; length of the pattern.  For the denominator, it
+                ;; counts the number of - in each such group,
+                ;; exponentiates that number to `flex-score-falloff',
+                ;; adds it to the total, adds one to the final sum,
+                ;; and then multiples by the length of the string.
+                (score-numerator 0)
+                (score-denominator 0)
+                (last-b 0)
+                (update-score
+                 (lambda (a b)
+                   "Update score variables given match range (A B)."
+                   (setq
+                    score-numerator   (+ score-numerator (- b a))
+                    score-denominator (+ score-denominator
+                                         (expt (- a last-b)
+                                               flex-score-falloff))
+                    last-b              b))))
+           (funcall update-score 0 start)
            (while md
+             (funcall update-score start (car md))
              (put-text-property start (pop md)
                                 'font-lock-face 'completions-common-part
                                 str)
@@ -3065,11 +3118,16 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
            (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
+           (funcall update-score start end)
            (if (> (length str) pos)
                (put-text-property pos (1+ pos)
-				  'font-lock-face 'completions-first-difference
-				  str)))
-	 str)
+                                  'font-lock-face 'completions-first-difference
+                                  str))
+           (unless (zerop (length str))
+             (put-text-property
+              0 1 'completion-score
+              (/ score-numerator (* len (1+ score-denominator)) 1.0) str)))
+         str)
        completions))))
 
 (defun completion-pcm--find-all-completions (string table pred point
