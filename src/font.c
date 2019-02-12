@@ -517,12 +517,10 @@ font_registry_charsets (Lisp_Object registry, struct charset **encoding, struct 
 /* Font property value validators.  See the comment of
    font_property_table for the meaning of the arguments.  */
 
-static Lisp_Object font_prop_validate (int, Lisp_Object, Lisp_Object);
 static Lisp_Object font_prop_validate_symbol (Lisp_Object, Lisp_Object);
 static Lisp_Object font_prop_validate_style (Lisp_Object, Lisp_Object);
 static Lisp_Object font_prop_validate_non_neg (Lisp_Object, Lisp_Object);
 static Lisp_Object font_prop_validate_spacing (Lisp_Object, Lisp_Object);
-static int get_font_prop_index (Lisp_Object);
 
 static Lisp_Object
 font_prop_validate_symbol (Lisp_Object prop, Lisp_Object val)
@@ -671,7 +669,7 @@ static const struct
 /* Return an index number of font property KEY or -1 if KEY is not an
    already known property.  */
 
-static int
+int
 get_font_prop_index (Lisp_Object key)
 {
   int i;
@@ -686,7 +684,7 @@ get_font_prop_index (Lisp_Object key)
    symbol PROP, or the index IDX (if PROP is nil).  If VAL is invalid,
    signal an error.  The value is VAL or the regularized one.  */
 
-static Lisp_Object
+Lisp_Object
 font_prop_validate (int idx, Lisp_Object prop, Lisp_Object val)
 {
   Lisp_Object validated;
@@ -4140,40 +4138,6 @@ are to be displayed on.  If omitted, the selected frame is used.  */)
 
 #endif
 
-DEFUN ("font-put", Ffont_put, Sfont_put, 3, 3, 0,
-       doc: /* Set one property of FONT: give property KEY value VAL.
-FONT is a font-spec, a font-entity, or a font-object.
-
-If FONT is a font-spec, KEY can be any symbol.  But if KEY is the one
-accepted by the function `font-spec' (which see), VAL must be what
-allowed in `font-spec'.
-
-If FONT is a font-entity or a font-object, KEY must not be the one
-accepted by `font-spec'.  */)
-  (Lisp_Object font, Lisp_Object prop, Lisp_Object val)
-{
-  int idx;
-
-  idx = get_font_prop_index (prop);
-  if (idx >= 0 && idx < FONT_EXTRA_INDEX)
-    {
-      CHECK_FONT_SPEC (font);
-      ASET (font, idx, font_prop_validate (idx, Qnil, val));
-    }
-  else
-    {
-      if (EQ (prop, QCname)
-	  || EQ (prop, QCscript)
-	  || EQ (prop, QClang)
-	  || EQ (prop, QCotf))
-	CHECK_FONT_SPEC (font);
-      else
-	CHECK_FONT (font);
-      font_put_extra (font, prop, font_prop_validate (0, prop, val));
-    }
-  return val;
-}
-
 DEFUN ("list-fonts", Flist_fonts, Slist_fonts, 1, 4, 0,
        doc: /* List available fonts matching FONT-SPEC on the current frame.
 Optional 2nd argument FRAME specifies the target frame.
@@ -5267,7 +5231,6 @@ syms_of_font (void)
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sfont_face_attributes);
 #endif
-  defsubr (&Sfont_put);
   defsubr (&Slist_fonts);
   defsubr (&Sfont_family_list);
   defsubr (&Sfont_xlfd_name);
