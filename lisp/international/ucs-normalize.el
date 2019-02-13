@@ -109,7 +109,9 @@
 
 (defconst ucs-normalize-version "1.2")
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'regexp-opt))
 
 (declare-function nfd "ucs-normalize" (char))
 
