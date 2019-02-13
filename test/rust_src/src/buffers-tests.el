@@ -85,6 +85,27 @@
         (rename-buffer "test-rename-buffer-foo" t)
         (should (string= (buffer-name buf) "test-rename-buffer-foo<2>")))))
 
+(ert-deftest test-generate-new-buffer-name ()
+  (let ((buf-name "test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (should (string= (generate-new-buffer-name buf-name) (concat buf-name "<2>")))))
+
+(ert-deftest test-generate-new-buffer-name-ignore ()
+  (let ((buf-name "test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (should (string= (generate-new-buffer-name buf-name buf-name) buf-name))))
+
+(ert-deftest test-generate-new-buffer-name-space ()
+  (let ((buf-name " test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (let*((random-name (generate-new-buffer-name buf-name))
+          ;; 'random-name' should have the format like " test-generate-new-buffer-name-XXXXXX"
+          ;; For present implementation "XXXXXXX" is a random number greater than or equal to 0
+          ;; and less than 1_000_000.
+          (random-number (string-to-number (substring random-name (1+ (length buf-name))))))
+      (should-not (string= random-name buf-name))
+      (should (< 0 random-number 999999)))))
+
 (provide 'buffers-tests)
 
 ;;; buffers-tests.el ends here

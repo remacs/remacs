@@ -1,12 +1,11 @@
 //! Functions operating on buffers.
 
-use std::sync::Mutex;
 use std::{self, mem, ptr};
 
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
-use rand::{Rng, StdRng};
+use rand::{thread_rng, Rng};
 
 use remacs_macros::lisp_fn;
 
@@ -1147,11 +1146,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        lazy_static! {
-            static ref shared_rng: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
-        }
-        let mut rng = shared_rng.lock().unwrap();
-        let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
+        let mut s = format!("-{}", thread_rng().gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
         if get_buffer(genname.into()).is_none() {

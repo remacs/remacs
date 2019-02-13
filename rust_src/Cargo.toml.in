@@ -26,7 +26,7 @@ lazy_static = "1.2"
 libc = "0.2"
 line-wrap = "0.1.1"
 md5 = "0.6"
-rand = "0.4"
+rand = "0.6.5"
 sha1 = "0.6"
 sha2 = "0.8"
 
