@@ -280,8 +280,7 @@ with no arguments, prints the current paths in this variable.
 
 @item alias
 @cmindex alias
-Define an alias (@pxref{Aliases}).  This does not add it to the aliases
-file.
+Define an alias (@pxref{Aliases}).  This adds it to the aliases file.
 
 @item clear
 @cmindex clear
