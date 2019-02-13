@@ -182,7 +182,7 @@ Will not do anything if `url-show-status' is nil."
 	  (null url-show-status)
 	  (active-minibuffer-window)
 	  (= url-lazy-message-time
-	     (setq url-lazy-message-time (nth 1 (current-time)))))
+	     (setq url-lazy-message-time (encode-time nil 'integer))))
       nil
     (apply 'message args)))
 
