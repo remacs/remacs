@@ -3609,7 +3609,7 @@ Otherwise reindent just the current line."
 				    (save-excursion
 				      (goto-char end)
 				      (point-marker))
-				    (nth 1 (current-time))
+				    (encode-time nil 'integer)
 				    context))
       (message "Indenting region..."))
    ))
@@ -3617,7 +3617,7 @@ Otherwise reindent just the current line."
 (defun c-progress-update ()
   (if (not (and c-progress-info c-progress-interval))
       nil
-    (let ((now (nth 1 (current-time)))
+    (let ((now (encode-time nil 'integer))
 	  (start (aref c-progress-info 0))
 	  (end (aref c-progress-info 1))
 	  (lastsecs (aref c-progress-info 2)))
