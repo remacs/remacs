@@ -694,8 +694,10 @@ references displayed in the current *xref* buffer."
   (let ((backward (< n 0))
         (n (abs n))
         (xref nil))
-    (dotimes (_ n)
-      (setq xref (xref--search-property 'xref-item backward)))
+    (if (= n 0)
+        (setq xref (get-text-property (point) 'xref-item))
+      (dotimes (_ n)
+        (setq xref (xref--search-property 'xref-item backward))))
     (cond (xref
            ;; Save the current position (when the buffer is visible,
            ;; it gets reset to that window's point from time to time).
