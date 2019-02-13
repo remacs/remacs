@@ -1,15 +1,18 @@
 //! Functions operating on numbers.
 
-use rand::{Rng, SeedableRng, StdRng};
+use std::cmp;
 use std::sync::Mutex;
+
+use rand::{Rng, SeedableRng, StdRng};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
-    lisp::LispObject,
+    hashtable::LispHashTableRef,
+    lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
-        EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG,
+        equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
+        USE_LSB_TAG,
     },
     remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
 };
@@ -157,12 +160,42 @@ impl IsLispNatnum for EmacsInt {
     }
 }
 
+/// Check if NUM is within range [FROM..TO]
+pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl Into<EmacsInt>) {
+    let num: EmacsInt = num.into();
+    let from: EmacsInt = from.into();
+    let to: EmacsInt = to.into();
+    if !(from <= num && num <= to) {
+        args_out_of_range!(
+            num,
+            if from < 0 && from < MOST_NEGATIVE_FIXNUM {
+                MOST_NEGATIVE_FIXNUM
+            } else {
+                from
+            },
+            cmp::min(to, MOST_POSITIVE_FIXNUM)
+        )
+    }
+}
+
 impl LispNumber {
     pub fn to_fixnum(&self) -> EmacsInt {
         match *self {
             LispNumber::Fixnum(v) => v,
             LispNumber::Float(v) => v as EmacsInt,
         }
+    }
+}
+
+impl LispStructuralEqual for EmacsInt {
+    fn equal(
+        &self,
+        other: Self,
+        _equal_kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispHashTableRef,
+    ) -> bool {
+        *self == other
     }
 }
 

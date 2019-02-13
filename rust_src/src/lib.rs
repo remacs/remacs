@@ -1,5 +1,4 @@
 #![allow(clippy::cyclomatic_complexity)]
-#![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(non_upper_case_globals)]
@@ -15,15 +14,13 @@
 #![feature(const_fn_union)]
 #![feature(never_type)]
 #![feature(ptr_offset_from)]
-#![feature(self_struct_ctor)]
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
+#![feature(type_alias_enum_variants)]
 #![feature(untagged_unions)]
 
 extern crate errno;
-#[macro_use]
-extern crate if_chain;
 #[macro_use]
 extern crate lazy_static;
 
@@ -137,18 +134,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
-
-#[cfg(feature = "compile-errors")]
-mod compile_errors {
-    use lisp::LispObject;
-    use remacs_macros::lisp_fn;
-
-    #[lisp_fn]
-    fn dummy(x: LispObject) -> LispObject {
-        compile_error!("error 001");
-    }
-}
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 
 mod hacks {
     use core::mem::ManuallyDrop;

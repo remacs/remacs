@@ -10,11 +10,11 @@ use crate::{
     character::{self, characterp},
     data::set,
     dispnew::ding_internal,
-    editfns::{line_beginning_position, line_end_position, preceding_char},
+    editfns::{insert_and_inherit, line_beginning_position, line_end_position, preceding_char},
     frames::selected_frame,
     keymap::{current_global_map, Ctl},
-    lisp::defsubr,
     lisp::LispObject,
+    lists::get,
     multibyte::{
         char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
         MAX_MULTIBYTE_LENGTH,
@@ -24,11 +24,10 @@ use crate::{
     remacs_sys::EmacsInt,
     remacs_sys::{
         concat2, current_column, del_range, frame_make_pointer_invisible, globals,
-        initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
-        scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
-        translate_char,
+        initial_define_key, memory_full, replace_range, run_hook, scan_newline_from_point,
+        set_point, set_point_both, syntax_property, syntaxcode, translate_char,
     },
-    remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column},
+    remacs_sys::{Fchar_width, Fmake_string, Fmove_to_column},
     remacs_sys::{
         Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
         Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
@@ -69,7 +68,7 @@ fn move_point(n: LispObject, forward: bool) {
     }
 
     unsafe { set_point(new_point) };
-    if signal != Qnil {
+    if signal.is_not_nil() {
         xsignal!(signal);
     }
 }
@@ -401,7 +400,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.get_function().as_symbol() {
-                let prop = unsafe { Fget(f.into(), intern("no-self-insert").into()) };
+                let prop = get(f, intern("no-self-insert").into());
                 if prop.is_not_nil() {
                     return 1;
                 }
@@ -446,14 +445,9 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         for _ in 0..n {
             strn.extend_from_slice(&str[0..len]);
         }
-        unsafe {
-            insert_and_inherit(
-                strn.as_mut_slice().as_mut_ptr() as *mut i8,
-                strn.len() as isize,
-            )
-        };
+        insert_and_inherit(strn.as_slice());
     } else if n > 0 {
-        unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
+        insert_and_inherit(&str[..len]);
     }
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
@@ -519,7 +513,7 @@ pub extern "C" fn keys_of_cmds() {
 pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     def_lisp_sym!(Qundo_auto__this_command_amalgamating, "undo-auto--this-command-amalgamating");
     def_lisp_sym!(Qkill_forward_chars, "kill-forward-chars");
     // A possible value for a buffer's overwrite-mode variable.

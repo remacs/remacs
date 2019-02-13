@@ -1,30 +1,31 @@
 //! data helpers
 
 use field_offset::FieldOffset;
-use libc::c_int;
+use libc::{c_char, c_int};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::per_buffer_idx,
+    buffers::{per_buffer_idx, per_buffer_idx_from_field_offset},
     frames::selected_frame,
     keymap::get_keymap,
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
     lists::{get, member, memq, put},
     math::leq,
-    multibyte::{is_ascii, is_single_byte_char},
+    multibyte::{is_ascii, is_single_byte_char, LispStringRef},
     obarray::{loadhist_attach, map_obarray},
     remacs_sys,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
-        rust_count_one_bits, set_default_internal, set_internal, symbol_trapped_write,
-        valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+        rust_count_one_bits, set_default_internal, set_internal, string_to_number,
+        symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
+        CHECK_IMPURE,
     },
-    remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
+    remacs_sys::{per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fdelete, Fget, Fpurecopy},
+    remacs_sys::{Fdelete, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
@@ -39,14 +40,21 @@ use crate::{
 };
 
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
+
 #[no_mangle]
 pub unsafe extern "C" fn KBOARD_OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    is_kboard_objfwd(a)
+}
+
+pub unsafe fn is_kboard_objfwd(a: *const Lisp_Fwd) -> bool {
     (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn OBJFWDP(a: *const Lisp_Fwd) -> bool {
-    (*a).u_intfwd.ty == Lisp_Fwd_Obj
+pub unsafe fn as_buffer_objfwd(a: *const Lisp_Fwd) -> Option<Lisp_Buffer_Objfwd> {
+    match (*a).u_intfwd.ty {
+        Lisp_Fwd_Buffer_Obj => Some((*a).u_buffer_objfwd),
+        _ => None,
+    }
 }
 
 /// Find the function at the end of a chain of symbol function indirections.
@@ -276,16 +284,16 @@ pub fn defalias(
     let sym = LispObject::from(symbol);
 
     unsafe {
-        if globals.Vpurify_flag != Qnil
+        if globals.Vpurify_flag.is_not_nil()
             // If `definition' is a keymap, immutable (and copying) is wrong.
-            && get_keymap(definition, false, false) == Qnil
+            && get_keymap(definition, false, false).is_nil()
         {
             definition = Fpurecopy(definition);
         }
     }
 
     let autoload = is_autoload(definition);
-    if unsafe { globals.Vpurify_flag == Qnil } || !autoload {
+    if unsafe { globals.Vpurify_flag.is_nil() } || !autoload {
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
@@ -375,28 +383,21 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
                 d
             }
         }
-        symbol_redirect::SYMBOL_FORWARDED => {
-            let valcontents = unsafe { symbol.get_fwd() };
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let valcontents = symbol.get_fwd();
 
             // For a built-in buffer-local variable, get the default value
             // rather than letting do_symval_forwarding get the current value.
-            if_chain! {
-                // if_chain! builds up a series of conditions and contitional assignments into one
-                // big pair of then/else arms. This should be converted into idiomatic Option-based
-                // code eventually.
-                if unsafe { (*valcontents).u_intfwd.ty } == Lisp_Fwd_Buffer_Obj;
-                let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
-                if unsafe {
-                    *offset.apply_ptr_mut(&mut buffer_local_flags)
-                }.as_fixnum_or_error() != 0;
-                then {
-                    unsafe { per_buffer_default(offset.get_byte_offset() as i32) }
-                } else {
-                    // For other variables, get the current value.
-                    unsafe { do_symval_forwarding(valcontents) }
+            if let Some(buffer_objfwd) = as_buffer_objfwd(valcontents) {
+                let offset = buffer_objfwd.offset;
+
+                if per_buffer_idx_from_field_offset(offset) != 0 {
+                    return per_buffer_default(offset.get_byte_offset() as i32);
                 }
             }
-        }
+            // For other variables, get the current value.
+            do_symval_forwarding(valcontents)
+        },
         _ => panic!("Symbol type has no default value"),
     }
 }
@@ -567,13 +568,14 @@ pub unsafe extern "C" fn store_symval_forwarding(
             let predicate = (*valcontents).u_buffer_objfwd.predicate;
 
             if newval.is_not_nil() && predicate.is_symbol() {
-                let mut prop = Fget(predicate, Qchoice);
+                let pred_sym: LispSymbolRef = predicate.into();
+                let mut prop = get(pred_sym, Qchoice);
                 if prop.is_not_nil() {
                     if memq(newval, prop).is_nil() {
                         wrong_choice(prop, newval);
                     }
                 } else {
-                    prop = Fget(predicate, Qrange);
+                    prop = get(pred_sym, Qrange);
                     if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
                         if !newval.is_number() || leq(&args) {
@@ -600,6 +602,12 @@ pub unsafe extern "C" fn store_symval_forwarding(
         }
         _ => panic!("Unknown intfwd type"),
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn find_symbol_value(sym: LispObject) -> LispObject {
+    let symbol: LispSymbolRef = sym.into();
+    symbol.find_value()
 }
 
 unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {
@@ -723,7 +731,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
         symbol.into(),
     );
 
-    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = get(symbol, Qwatchers);
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
@@ -738,7 +746,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
 pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let symbol = symbol.get_indirect_variable();
 
-    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = get(symbol, Qwatchers);
     let watchers = unsafe { Fdelete(watch_function, watchers) };
 
     if watchers.is_nil() {
@@ -758,9 +766,9 @@ pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject
 #[lisp_fn]
 pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
     match symbol.get_trapped_write() {
-        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => unsafe {
-            Fget(symbol.get_indirect_variable().into(), Qwatchers)
-        },
+        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => {
+            get(symbol.get_indirect_variable(), Qwatchers)
+        }
         _ => Qnil,
     }
 }
@@ -808,6 +816,38 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
     symbol.set_function(definition);
 
     definition
+}
+
+/// Parse STRING as a decimal number and return the number.
+/// Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
+/// STRING cannot be parsed as an integer or floating point number.
+///
+/// If BASE, interpret STRING as a number in that base.  If BASE isn't
+/// present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
+/// If the base used is not 10, STRING is always parsed as an integer.
+#[lisp_fn(min = "1", name = "string-to-number", c_name = "string_to_number")]
+pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) -> LispObject {
+    let b = match base {
+        None => 10,
+        Some(n) => {
+            if n < 2 || n > 16 {
+                args_out_of_range!(base, 2, 16)
+            }
+            n
+        }
+    };
+
+    let mut p = string.sdata_ptr();
+    unsafe {
+        while *p == ' ' as c_char || *p == '\t' as c_char {
+            p = p.offset(1);
+        }
+    }
+
+    match unsafe { string_to_number(p, b as i32, true) } {
+        Qnil => LispObject::from(0),
+        n => n,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

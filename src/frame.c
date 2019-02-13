@@ -1370,25 +1370,6 @@ to that frame.  */)
   call1 (intern ("handle-focus-in"), event);
   return value;
 }
-
-DEFUN ("frame-list", Fframe_list, Sframe_list,
-       0, 0, 0,
-       doc: /* Return a list of all live frames.
-The return value does not include any tooltip frame.  */)
-  (void)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  Lisp_Object list = Qnil, tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
-      list = Fcons (frame, list);
-  /* Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.  */
-  return Fnreverse (list);
-#else /* !HAVE_WINDOW_SYSTEM */
-  return Fcopy_sequence (Vframe_list);
-#endif /* HAVE_WINDOW_SYSTEM */
-}
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
        0, 1, 0,
@@ -2377,21 +2358,6 @@ for how to proceed.  */)
   return Qnil;
 }
 
-DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
-       0, 0, 0,
-       doc: /* Return a list of all frames now \"visible\" (being updated).  */)
-  (void)
-{
-  Lisp_Object tail, frame, value = Qnil;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (FRAME_VISIBLE_P (XFRAME (frame)))
-      value = Fcons (frame, value);
-
-  return value;
-}
-
-
 DEFUN ("raise-frame", Fraise_frame, Sraise_frame, 0, 1, "",
        doc: /* Bring FRAME to the front, so it occludes any frames it overlaps.
 If FRAME is invisible or iconified, make it visible.
@@ -2474,31 +2440,6 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
   if (FRAME_TERMINAL (f)->frame_rehighlight_hook)
     (*FRAME_TERMINAL (f)->frame_rehighlight_hook) (f);
 
-  return Qnil;
-}
-
-
-DEFUN ("frame-focus", Fframe_focus, Sframe_focus, 0, 1, 0,
-       doc: /* Return the frame to which FRAME's keystrokes are currently being sent.
-If FRAME is omitted or nil, the selected frame is used.
-Return nil if FRAME's focus is not redirected.
-See `redirect-frame-focus'.  */)
-  (Lisp_Object frame)
-{
-  return FRAME_FOCUS_FRAME (decode_live_frame (frame));
-}
-
-DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
-       doc: /* Set the input focus to FRAME.
-FRAME nil means use the selected frame.  Optional argument NOACTIVATE
-means do not activate FRAME.
-
-If there is no window system support, this function does nothing.  */)
-     (Lisp_Object frame, Lisp_Object noactivate)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  x_focus_frame (decode_window_system_frame (frame), !NILP (noactivate));
-#endif
   return Qnil;
 }
 
@@ -3036,19 +2977,6 @@ is used.  */)
   return make_number (0);
 }
 
-DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
-       doc: /* Return scroll bar width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-scroll-bar-height", Fscroll_bar_height, Sscroll_bar_height, 0, 1, 0,
-       doc: /* Return scroll bar height of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_SCROLL_BAR_AREA_HEIGHT (decode_any_frame (frame)));
-}
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
@@ -5678,7 +5606,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);
-  defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
   defsubr (&Slast_nonminibuf_frame);
@@ -5693,12 +5620,9 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_frame_visible);
   defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
-  defsubr (&Svisible_frame_list);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
-  defsubr (&Sx_focus_frame);
   defsubr (&Sredirect_frame_focus);
-  defsubr (&Sframe_focus);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);
@@ -5706,8 +5630,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
-  defsubr (&Sscroll_bar_width);
-  defsubr (&Sscroll_bar_height);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);

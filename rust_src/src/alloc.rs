@@ -3,10 +3,13 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::{ExternalPtr, LispObject},
     remacs_sys::globals,
-    remacs_sys::EmacsInt,
-    remacs_sys::{bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector},
+    remacs_sys::Lisp_Type::Lisp_Vectorlike,
+    remacs_sys::{
+        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector,
+    },
+    remacs_sys::{EmacsInt, EmacsUint},
 };
 
 /// Return a list of counters that measure how much consing there has been.
@@ -55,6 +58,41 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     }
 
     vector
+}
+
+/// Create a new record.
+/// TYPE is its type as returned by `type-of'; it should be either a
+/// symbol or a type descriptor.  SLOTS is the number of non-type slots,
+/// each initialized to INIT.
+#[lisp_fn]
+pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> LispObject {
+    let size = slots + 1;
+    unsafe {
+        let ptr = allocate_record(size as i64);
+        let contents = (*ptr).contents.as_mut_slice(size as usize);
+        contents[0] = r#type;
+        for rec in contents.iter_mut().skip(1) {
+            *rec = init;
+        }
+        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
+    }
+}
+
+/// Create a new record.
+/// TYPE is its type as returned by `type-of'; it should be either a
+/// symbol or a type descriptor.  SLOTS is used to initialize the record
+/// slots with shallow copies of the arguments.
+/// usage: (record TYPE &rest SLOTS)
+#[lisp_fn(min = "1")]
+pub fn record(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        let ptr = allocate_record(args.len() as i64);
+        (*ptr)
+            .contents
+            .as_mut_slice(args.len())
+            .copy_from_slice(args);
+        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));

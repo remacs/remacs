@@ -63,6 +63,28 @@
     (should (equal (delq nil (delete-dups the-buffers))
                    the-buffers))))
 
+(ert-deftest test-rename-buffer ()
+    (let ((buf (get-buffer-create "test-rename-buffer")))
+      (with-current-buffer buf
+        (rename-buffer "test-rename-buffer-foo")
+        (should (string= (buffer-name buf) "test-rename-buffer-foo")))))
+
+(ert-deftest test-rename-buffer-empty ()
+    (let ((buf (get-buffer-create "test-rename-buffer-empty")))
+      (with-current-buffer buf
+        (should-error (rename-buffer "")))))
+
+(ert-deftest test-rename-buffer-existing ()
+    (let ((buf (get-buffer-create "test-rename-buffer-existing")))
+      (with-current-buffer buf
+        (should-error (rename-buffer "test-rename-buffer-foo")))))
+
+(ert-deftest test-rename-buffer-unique ()
+    (let ((buf (get-buffer-create "test-rename-buffer")))
+      (with-current-buffer buf
+        (rename-buffer "test-rename-buffer-foo" t)
+        (should (string= (buffer-name buf) "test-rename-buffer-foo<2>")))))
+
 (provide 'buffers-tests)
 
 ;;; buffers-tests.el ends here

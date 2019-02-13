@@ -48,7 +48,6 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
-    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn memory_full(nbytes: libc::size_t) -> !;
     pub fn wrong_choice(choice: LispObject, wrong: LispObject) -> !;
     pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
@@ -141,6 +140,7 @@ pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 unsafe impl Sync for Lisp_Subr {}
 
 pub type Lisp_Buffer = buffer;
+pub type Lisp_Font_Object = font;
 pub type Lisp_Frame = frame;
 pub type Lisp_Glyph = glyph;
 pub type Lisp_Terminal = terminal;

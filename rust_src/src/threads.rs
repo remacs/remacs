@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::LispBufferRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qthreadp,
     remacs_sys::{
@@ -66,10 +65,6 @@ impl LispObject {
 
     pub fn as_thread(self) -> Option<ThreadStateRef> {
         self.as_vectorlike().and_then(|v| v.as_thread())
-    }
-
-    pub fn as_thread_or_error(self) -> ThreadStateRef {
-        self.into()
     }
 }
 

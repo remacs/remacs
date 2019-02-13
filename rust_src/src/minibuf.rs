@@ -7,7 +7,6 @@ use crate::{
     editfns::field_end,
     eval::unbind_to,
     keymap::get_keymap,
-    lisp::defsubr,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
     multibyte::LispStringRef,
@@ -169,10 +168,10 @@ pub fn read_from_minibuffer(
     prompt: LispStringRef,
     initial_contents: LispObject,
     mut keymap: LispObject,
-    read: LispObject,
+    read: bool,
     hist: LispObject,
     default_value: LispObject,
-    inherit_input_method: LispObject,
+    inherit_input_method: bool,
 ) -> LispObject {
     keymap = if keymap.is_nil() {
         unsafe { globals.Vminibuffer_local_map }
@@ -198,12 +197,12 @@ pub fn read_from_minibuffer(
             keymap,
             initial_contents,
             prompt.into(),
-            read.is_not_nil(),
+            read,
             histvar,
             histpos,
             default_value,
             globals.minibuffer_allow_text_properties,
-            inherit_input_method.is_not_nil(),
+            inherit_input_method,
         )
     }
 }
@@ -313,7 +312,7 @@ pub fn read_string(
     initial_input: LispObject,
     history: LispObject,
     default_value: LispObject,
-    inherit_input_method: LispObject,
+    inherit_input_method: bool,
 ) -> LispObject {
     let count = c_specpdl_index();
 
@@ -328,14 +327,14 @@ pub fn read_string(
         prompt,
         initial_input,
         Qnil,
-        Qnil,
+        false,
         history,
         default_value,
         inherit_input_method,
     );
 
     if let Some(s) = val.as_string() {
-        if s.len_chars() == 0 && default_value.is_not_nil() {
+        if s.is_empty() && default_value.is_not_nil() {
             val = match default_value.into() {
                 None => default_value,
                 Some((a, _)) => a,

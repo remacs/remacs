@@ -2,10 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::{
-    lisp::{defsubr, LispObject},
-    remacs_sys::{equal_kind, internal_equal, Qnil},
-};
+use crate::{hashtable::LispHashTableRef, lisp::LispObject, remacs_sys::equal_kind};
 
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]
@@ -43,7 +40,8 @@ pub fn equal(o1: LispObject, o2: LispObject) -> bool {
 /// of strings.  (`equal' ignores text properties.)
 #[lisp_fn]
 pub fn equal_including_properties(o1: LispObject, o2: LispObject) -> bool {
-    unsafe { internal_equal(o1, o2, equal_kind::EQUAL_INCLUDING_PROPERTIES, 0, Qnil) }
+    let mut ht = LispHashTableRef::empty();
+    o1.equal_internal(o2, equal_kind::EQUAL_INCLUDING_PROPERTIES, 0, &mut ht)
 }
 
 /// Return the argument unchanged.

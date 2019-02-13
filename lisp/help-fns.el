@@ -677,7 +677,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
 	;; but that's completely wrong when the user used load-file.
 	(princ (format-message " in `%s'"
                                (if (eq file-name 'C-source)
-                                   (concat (subr-lang (indirect-function function)) " source code")
+                                   (concat (subr-lang def) " source code")
                                  (help-fns-short-filename file-name))))
 	;; Make a hyperlink to the library.
 	(with-current-buffer standard-output

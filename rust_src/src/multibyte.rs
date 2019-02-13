@@ -39,10 +39,13 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use crate::{
-    lisp::{ExternalPtr, LispObject},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    obarray::LispObarrayRef,
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
+    symbols::LispSymbolRef,
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -90,6 +93,10 @@ impl LispStringRef {
     /// STRING are always taken to occupy `tab-width' columns.
     pub fn width(self) -> usize {
         unsafe { lisp_string_width(self.into(), -1, ptr::null_mut(), ptr::null_mut()) as usize }
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.len_chars() == 0
     }
 
     pub fn is_multibyte(self) -> bool {
@@ -171,19 +178,21 @@ impl LispStringRef {
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
     }
+}
 
-    pub fn equal(
-        self,
+impl LispStructuralEqual for LispStringRef {
+    fn equal(
+        &self,
         other: LispStringRef,
         kind: equal_kind::Type,
         _depth: i32,
-        _ht: LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         self.len_chars() == other.len_chars()
             && self.len_bytes() == other.len_bytes()
             && self.as_slice() == other.as_slice()
             && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
-                || unsafe { compare_string_intervals(self.into(), other.into()) })
+                || unsafe { compare_string_intervals((*self).into(), other.into()) })
     }
 }
 
@@ -296,16 +305,97 @@ impl LispObject {
         self.into()
     }
 
-    pub fn as_string_or_error(self) -> LispStringRef {
-        self.into()
-    }
-
     pub unsafe fn to_string_unchecked(self) -> LispStringRef {
         LispStringRef::new(self.get_untaggedptr() as *mut Lisp_String)
     }
 
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(unsafe { empty_unibyte_string })
+    }
+
+    // We can excuse not using an option here because extracting the value checks the type
+    // TODO: this is false with the enum model, change this
+    pub fn as_symbol_or_string(self) -> LispSymbolOrString {
+        self.into()
+    }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum LispSymbolOrString {
+    String(LispStringRef),
+    Symbol(LispSymbolRef),
+}
+
+impl LispSymbolOrString {
+    pub fn is_string(self) -> bool {
+        match self {
+            LispSymbolOrString::String(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_symbol(self) -> bool {
+        match self {
+            LispSymbolOrString::Symbol(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl From<LispSymbolOrString> for LispObject {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => s.into(),
+            LispSymbolOrString::Symbol(sym) => sym.into(),
+        }
+    }
+}
+
+impl From<LispSymbolOrString> for LispStringRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => s,
+            LispSymbolOrString::Symbol(sym) => sym.symbol_name().into(),
+        }
+    }
+}
+
+impl From<LispStringRef> for LispSymbolOrString {
+    fn from(s: LispStringRef) -> Self {
+        Self::String(s)
+    }
+}
+
+impl From<LispSymbolOrString> for LispSymbolRef {
+    fn from(s: LispSymbolOrString) -> Self {
+        match s {
+            LispSymbolOrString::String(s) => LispObarrayRef::global().intern(s).into(),
+            LispSymbolOrString::Symbol(sym) => sym,
+        }
+    }
+}
+
+impl From<LispSymbolRef> for LispSymbolOrString {
+    fn from(s: LispSymbolRef) -> Self {
+        Self::Symbol(s)
+    }
+}
+
+impl From<LispObject> for LispSymbolOrString {
+    fn from(o: LispObject) -> Self {
+        if let Some(s) = o.as_string() {
+            Self::String(s)
+        } else if let Some(sym) = o.as_symbol() {
+            Self::Symbol(sym)
+        } else {
+            wrong_type!(Qstringp, o)
+        }
+    }
+}
+
+impl PartialEq<LispObject> for LispSymbolOrString {
+    fn eq(&self, other: &LispObject) -> bool {
+        (*other).eq(LispObject::from(*self))
     }
 }
 
@@ -577,6 +667,34 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
                 | (Codepoint::from(slice[4]) & 0x3F),
             5,
         )
+    }
+}
+
+/// Same as STRING_CHAR_AND_LENGTH
+pub unsafe fn string_char_and_length(ptr: *const u8) -> (Codepoint, usize) {
+    let head = *ptr;
+    // using multibyte_length_by_head is slightly more expnsive, as it also
+    // checks if head & 0x08 == 0. Since this is function is going to be used
+    // pretty often as invocations of the original macro gets replaced, it may
+    // be worth it to directly make the bitwise comparisons.
+    match multibyte_length_by_head(head) {
+        1 => (head.into(), 1),
+        2 => {
+            let cp = (Codepoint::from((head & 0x1F) << 6) | Codepoint::from(*ptr.add(1) & 0x3F))
+                + if head < 0xC2 { 0x3F_FF_80 } else { 0 };
+            (cp, 2)
+        }
+        3 => {
+            let cp = (Codepoint::from(head & 0x0F) << 12)
+                | ((Codepoint::from(*ptr.add(1) & 0x3F)) << 6)
+                | Codepoint::from(*ptr.add(2) & 0x3F);
+            (cp, 3)
+        }
+        _ => {
+            let mut len = 0;
+            let cp = string_char(ptr, ptr::null_mut(), &mut len);
+            (cp as Codepoint, len as usize)
+        }
     }
 }
 

@@ -304,36 +304,6 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
     }
 }
 
-/* Find the value of a symbol, returning Qunbound if it's not bound.
-   This is helpful for code which just wants to get a variable's value
-   if it has one, without signaling an error.
-   Note that it must not be possible to quit
-   within this function.  Great care is required for this.  */
-
-Lisp_Object
-find_symbol_value (Lisp_Object symbol)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
-    case SYMBOL_LOCALIZED:
-      {
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	swap_in_symval_forwarding (sym, blv);
-	return blv->fwd ? do_symval_forwarding (blv->fwd) : get_blv_value (blv);
-      }
-    case SYMBOL_FORWARDED:
-      return do_symval_forwarding (SYMBOL_FWD (sym));
-    default: emacs_abort ();
-    }
-}
 
 /* Store the value NEWVAL into SYMBOL.
    If buffer-locality is an issue, WHERE specifies which context to use.
@@ -925,57 +895,6 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
 
 /* Lisp functions for creating and removing buffer-local variables.  */
 
-DEFUN ("local-variable-p", Flocal_variable_p, Slocal_variable_p,
-       1, 2, 0,
-       doc: /* Non-nil if VARIABLE has a local binding in buffer BUFFER.
-BUFFER defaults to the current buffer.  */)
-  (Lisp_Object variable, Lisp_Object buffer)
-{
-  struct buffer *buf = decode_buffer (buffer);
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (variable);
-  sym = XSYMBOL (variable);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Qnil;
-    case SYMBOL_LOCALIZED:
-      {
-	Lisp_Object tail, elt, tmp;
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	XSETBUFFER (tmp, buf);
-	XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
-
-	if (EQ (blv->where, tmp)) /* The binding is already loaded.  */
-	  return blv_found (blv) ? Qt : Qnil;
-	else
-	  for (tail = BVAR (buf, local_var_alist); CONSP (tail); tail = XCDR (tail))
-	    {
-	      elt = XCAR (tail);
-	      if (EQ (variable, XCAR (elt)))
-		return Qt;
-	    }
-	return Qnil;
-      }
-    case SYMBOL_FORWARDED:
-      {
-	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-	if (BUFFER_OBJFWDP (valcontents))
-	  {
-	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
-	    int idx = PER_BUFFER_IDX (offset);
-	    if (idx == -1 || PER_BUFFER_VALUE_P (buf, idx))
-	      return Qt;
-	  }
-	return Qnil;
-      }
-    default: emacs_abort ();
-    }
-}
-
 DEFUN ("local-variable-if-set-p", Flocal_variable_if_set_p, Slocal_variable_if_set_p,
        1, 2, 0,
        doc: /* Non-nil if VARIABLE is local in buffer BUFFER when set there.
@@ -1241,41 +1160,7 @@ NUMBER may be an integer or a floating point number.  */)
 
   return make_unibyte_string (buffer, len);
 }
-
-DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 2, 0,
-       doc: /* Parse STRING as a decimal number and return the number.
-Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
-STRING cannot be parsed as an integer or floating point number.
-
-If BASE, interpret STRING as a number in that base.  If BASE isn't
-present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
-If the base used is not 10, STRING is always parsed as an integer.  */)
-  (register Lisp_Object string, Lisp_Object base)
-{
-  int b;
-
-  CHECK_STRING (string);
-
-  if (NILP (base))
-    b = 10;
-  else
-    {
-      CHECK_NUMBER (base);
-      if (! (XINT (base) >= 2 && XINT (base) <= 16))
-	xsignal1 (Qargs_out_of_range, base);
-      b = XINT (base);
-    }
-
-  char *p = SSDATA (string);
-  while (*p == ' ' || *p == '\t')
-    p++;
-
-  int flags = S2N_IGNORE_TRAILING | S2N_OVERFLOW_TO_FLOAT;
-  Lisp_Object val = string_to_number (p, b, flags);
-  return NILP (val) ? make_number (0) : val;
-}
 
-
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -1790,7 +1675,6 @@ syms_of_data (void)
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);
   defsubr (&Skill_local_variable);
-  defsubr (&Slocal_variable_p);
   defsubr (&Slocal_variable_if_set_p);
   defsubr (&Svariable_binding_locus);
 #if 0                           /* XXX Remove this. --lorentey */
@@ -1798,7 +1682,6 @@ syms_of_data (void)
   defsubr (&Sset_terminal_local_value);
 #endif
   defsubr (&Snumber_to_string);
-  defsubr (&Sstring_to_number);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES
