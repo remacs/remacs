@@ -105,6 +105,7 @@ fn set_case_table(table: LispObject, standard: bool) -> LispObject {
 extern "C" fn set_canon(table: LispObject, range: LispObject, elt: LispObject) {
     if let Some(idx) = elt.as_natnum() {
         let case_table: LispCaseTable = table.into();
+
         let (up, canon, _) = case_table.extras();
 
         let up_table: LispCharTableRef = up.into();
@@ -124,7 +125,7 @@ extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
     if elt.is_natnum() {
         let char_table: LispCharTableRef = table.into();
 
-        let (from, mut to): (EmacsInt, EmacsInt) = match c.into() {
+        let (from, to): (EmacsInt, EmacsInt) = match c.into() {
             Some((car, cdr)) => (car.into(), cdr.into()),
             None => {
                 let x = c.into();
@@ -132,8 +133,7 @@ extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
             }
         };
 
-        to += 1;
-        for i in from..to {
+        for i in from..=to {
             char_table.set_unchecked(i as isize, i.into());
         }
     }
@@ -147,7 +147,7 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
     if let Some(idx) = elt.as_natnum() {
         let char_table: LispCharTableRef = table.into();
 
-        let (from, mut to): (EmacsInt, EmacsInt) = match c.into() {
+        let (from, to): (EmacsInt, EmacsInt) = match c.into() {
             Some((car, cdr)) => (car.into(), cdr.into()),
             None => {
                 let x = c.into();
@@ -155,9 +155,8 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
             }
         };
 
-        to += 1;
         let idx = idx as isize;
-        for i in from..to {
+        for i in from..=to {
             let tem = char_table.get(idx);
             char_table.set(idx, i.into());
             char_table.set(i as isize, tem);
