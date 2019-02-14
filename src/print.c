@@ -2408,7 +2408,6 @@ priorities.  */);
 
   defsubr (&Sprin1);
   defsubr (&Sprin1_to_string);
-  defsubr (&Serror_message_string);
   defsubr (&Sprinc);
   defsubr (&Sprint);
   defsubr (&Sterpri);
