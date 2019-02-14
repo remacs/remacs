@@ -17,7 +17,7 @@ use crate::{
 /// error message is constructed.
 #[lisp_fn]
 pub fn error_message_string(obj: LispCons) -> LispObject {
-    let old = ThreadState::current_buffer_unchecked();
+    let mut old = ThreadState::current_buffer_unchecked();
     let value: LispObject;
 
     // If OBJ is (error STRING), just return STRING.
