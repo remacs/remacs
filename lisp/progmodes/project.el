@@ -532,7 +532,7 @@ To continue searching for next match, use command \\[fileloop-continue]."
   (fileloop-continue))
 
 ;;;###autoload
-(defun project-query-replace (from to)
+(defun project-query-replace-regexp (from to)
   "Search for REGEXP in all the files of the project.
 Stops when a match is found.
 To continue searching for next match, use command \\[fileloop-continue]."

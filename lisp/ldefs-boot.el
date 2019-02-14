@@ -26459,7 +26459,7 @@ To continue searching for next match, use command \\[fileloop-continue].
 
 \(fn REGEXP)" t nil)
 
-(autoload 'project-query-replace "project" "\
+(autoload 'project-query-replace-regexp "project" "\
 Search for REGEXP in all the files of the project.
 Stops when a match is found.
 To continue searching for next match, use command \\[fileloop-continue].

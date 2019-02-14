@@ -386,7 +386,7 @@ The mode is automatically enabled in files that start with the
 'function' keyword.
 
 ** project.el
-*** New commands 'project-search' and 'project-query-replace'.
+*** New commands 'project-search' and 'project-query-replace-regexp'.
 
 ** Etags
 
