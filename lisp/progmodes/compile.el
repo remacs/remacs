@@ -1429,17 +1429,17 @@ to `compilation-error-regexp-alist' if RULES is nil."
                              file line end-line col end-col (or type 2) fmt))
 
             (when (integerp file)
-              (setq type (if (consp type)
-                             (compilation-type type)
-                           (or type 2)))
-              (compilation--note-type type)
+              (let ((this-type (if (consp type)
+                                   (compilation-type type)
+                                 (or type 2))))
+                (compilation--note-type type)
 
-              (compilation--put-prop
-               file 'font-lock-face
-               (symbol-value (aref [compilation-info-face
-                                    compilation-warning-face
-                                    compilation-error-face]
-                                   type))))
+                (compilation--put-prop
+                 file 'font-lock-face
+                 (symbol-value (aref [compilation-info-face
+                                      compilation-warning-face
+                                      compilation-error-face]
+                                     this-type)))))
 
             (compilation--put-prop
              line 'font-lock-face compilation-line-face)
