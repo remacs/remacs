@@ -22,7 +22,7 @@ pub fn error_message_string(obj: LispCons) -> LispObject {
 
     // If OBJ is (error STRING), just return STRING.
     // That is not only faster, it also avoids the need to allocate
-    // space here when the error is due to memory full.  
+    // space here when the error is due to memory full.
     match obj.into() {
         (error, data) if error.eq(Qerror) => {
             if let Some((string, nil)) = data.into() {
