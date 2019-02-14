@@ -1056,7 +1056,9 @@ CHAR
      matches a character with category CATEGORY.  CATEGORY must be
      either a character to use for C, or one of the following symbols.
 
-     `consonant'			(\\c0 in string notation)
+     `space-for-indent'                 (\\c\\s in string notation)
+     `base'                             (\\c.)
+     `consonant'			(\\c0)
      `base-vowel'			(\\c1)
      `upper-diacritical-mark'		(\\c2)
      `lower-diacritical-mark'		(\\c3)
@@ -1074,7 +1076,9 @@ CHAR
      `japanese-hiragana-two-byte'	(\\cH)
      `indian-two-byte'			(\\cI)
      `japanese-katakana-two-byte'	(\\cK)
+     `strong-left-to-right'             (\\cL)
      `korean-hangul-two-byte'		(\\cN)
+     `strong-right-to-left'             (\\cR)
      `cyrillic-two-byte'		(\\cY)
      `combining-diacritic'		(\\c^)
      `ascii'				(\\ca)
