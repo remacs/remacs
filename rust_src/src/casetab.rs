@@ -6,7 +6,6 @@ use crate::{
     buffers::current_buffer,
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
-    data::{aref, aset},
     lisp::LispObject,
     objects::eq,
     remacs_sys::EmacsInt,
@@ -18,13 +17,30 @@ use crate::{
     threads::ThreadState,
 };
 
-impl LispObject {
-    pub fn to_case_table(self) -> LispCharTableRef {
-        let case_table: Option<LispCharTableRef> = self.into();
+pub struct LispCaseTable(LispCharTableRef);
+
+impl LispCaseTable {
+    pub fn extras(&self) -> (LispObject, LispObject, LispObject) {
+        let extras = unsafe { self.0.extras.as_slice(3) };
+        (extras[0], extras[1], extras[2])
+    }
+
+    pub fn from_char_table(table: LispCharTableRef) -> Self {
+        Self(table)
+    }
+
+    pub fn get(&self, idx: isize) -> LispObject {
+        self.0.get(idx)
+    }
+}
+
+impl From<LispObject> for LispCaseTable {
+    fn from(obj: LispObject) -> Self {
+        let case_table: Option<LispCharTableRef> = obj.into();
         if !case_table_p(case_table) {
-            wrong_type!(Qcase_table_p, self);
+            wrong_type!(Qcase_table_p, obj);
         }
-        case_table.unwrap()
+        Self(case_table.unwrap())
     }
 }
 
@@ -34,12 +50,8 @@ static mut Vascii_canon_table: LispObject = Qnil;
 static mut Vascii_eqv_table: LispObject = Qnil;
 
 fn set_case_table(table: LispObject, standard: bool) -> LispObject {
-    let case_table = table.to_case_table();
-
-    let extras = unsafe { case_table.extras.as_slice(3) };
-    let mut up = extras[0];
-    let mut canon = extras[1];
-    let mut eqv = extras[2];
+    let case_table: LispCaseTable = table.into();
+    let (mut up, mut canon, mut eqv) = case_table.extras();
 
     unsafe {
         if up.is_nil() {
@@ -92,13 +104,14 @@ fn set_case_table(table: LispObject, standard: bool) -> LispObject {
 // TABLE.
 extern "C" fn set_canon(table: LispObject, range: LispObject, elt: LispObject) {
     if let Some(idx) = elt.as_natnum() {
-        let case_table: LispCharTableRef = table.into();
-        let extras = unsafe { case_table.extras.as_slice(3) };
-        let up = extras[0];
-        let canon = extras[1];
+        let case_table: LispCaseTable = table.into();
+        let (up, canon, _) = case_table.extras();
+
+        let up_table: LispCharTableRef = up.into();
+        let value: EmacsInt = up_table.get(idx as isize).into();
 
         unsafe {
-            Fset_char_table_range(canon, range, aref(table, aref(up, idx as EmacsInt).into()));
+            Fset_char_table_range(canon, range, case_table.get(value as isize));
         }
     }
 }
@@ -109,6 +122,8 @@ extern "C" fn set_canon(table: LispObject, range: LispObject, elt: LispObject) {
 // character.  This is called in map_char_table.
 extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
     if elt.is_natnum() {
+        let char_table: LispCharTableRef = table.into();
+
         let (from, mut to): (EmacsInt, EmacsInt) = match c.into() {
             Some((car, cdr)) => (car.into(), cdr.into()),
             None => {
@@ -119,7 +134,7 @@ extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
 
         to += 1;
         for i in from..to {
-            unsafe { CHAR_TABLE_SET(table, i as i32, i.into()) };
+            char_table.set_unchecked(i as isize, i.into());
         }
     }
 }
@@ -130,6 +145,8 @@ extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
 // operated.
 extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
     if let Some(idx) = elt.as_natnum() {
+        let char_table: LispCharTableRef = table.into();
+
         let (from, mut to): (EmacsInt, EmacsInt) = match c.into() {
             Some((car, cdr)) => (car.into(), cdr.into()),
             None => {
@@ -139,11 +156,11 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
         };
 
         to += 1;
-        let idx = idx as EmacsInt;
+        let idx = idx as isize;
         for i in from..to {
-            let tem = aref(table, idx);
-            aset(table, idx, i.into());
-            aset(table, i, tem);
+            let tem = char_table.get(idx);
+            char_table.set(idx, i.into());
+            char_table.set(i as isize, tem);
         }
     }
 }
@@ -153,20 +170,19 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
 #[lisp_fn]
 pub fn case_table_p(table: Option<LispCharTableRef>) -> bool {
     let char_table = match table {
-        Some(ct) => ct,
+        Some(ct) => {
+            if !eq(ct.purpose, Qcase_table) {
+                return false;
+            }
+            ct
+        }
         None => {
             return false;
         }
     };
 
-    if !eq(char_table.purpose, Qcase_table) {
-        return false;
-    }
-
-    let extras = unsafe { char_table.extras.as_slice(3) };
-    let up = extras[0];
-    let canon = extras[1];
-    let eqv = extras[2];
+    let case_table = LispCaseTable::from_char_table(char_table);
+    let (up, canon, eqv) = case_table.extras();
 
     (up.is_nil() || up.is_char_table())
         && ((canon.is_nil() && eqv.is_nil())
@@ -185,6 +201,8 @@ pub fn current_case_table() -> LispObject {
 pub fn standard_case_table() -> LispObject {
     unsafe { get_downcase_table() }
 }
+
+// These two need to be exposed to our parts of the project.
 
 #[no_mangle]
 pub unsafe extern "C" fn get_downcase_table() -> LispObject {
@@ -230,8 +248,8 @@ pub unsafe extern "C" fn init_casetab_once() {
     Fput(Qcase_table, Qchar_table_extra_slots, 3.into());
 
     let down = Fmake_char_table(Qcase_table, Qnil);
-    Vascii_downcase_table = down;
     set_char_table_purpose(down, Qcase_table);
+    Vascii_downcase_table = down;
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.

@@ -284,11 +284,11 @@ macro_rules! declare_GC_protected_static {
 macro_rules! verify_lisp_type {
     ($obj:expr, Qarrayp) => {
         if !$obj.is_array() {
-            wrong_type!(::remacs_sys::Qarrayp, $obj);
+            wrong_type!(crate::remacs_sys::Qarrayp, $obj);
         }
     };
     ($n:expr, Qcharacterp) => {
-        if $n < 0 || $n > (EmacsInt::from($crate::multibyte::MAX_CHAR)) {
+        if $n < 0 || $n > (crate::remacs_sys::EmacsInt::from($crate::multibyte::MAX_CHAR)) {
             wrong_type!(
                 crate::remacs_sys::Qcharacterp,
                 $crate::lisp::LispObject::from($n)

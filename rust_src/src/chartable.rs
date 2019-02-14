@@ -7,11 +7,11 @@ use remacs_macros::lisp_fn;
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
-    remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
-        char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
+        char_table_specials, equal_kind, pvec_type, EmacsInt, Lisp_Char_Table, Lisp_Sub_Char_Table,
         Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
+    remacs_sys::{uniprop_table_uncompress, CHAR_TABLE_SET},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
 };
 
@@ -144,6 +144,15 @@ impl LispCharTableRef {
         }
 
         val
+    }
+
+    pub fn set(self, idx: isize, value: LispObject) {
+        verify_lisp_type!(idx as EmacsInt, Qcharacterp);
+        self.set_unchecked(idx, value);
+    }
+
+    pub fn set_unchecked(self, idx: isize, value: LispObject) {
+        unsafe { CHAR_TABLE_SET(self.into(), idx as i32, value) };
     }
 }
 
