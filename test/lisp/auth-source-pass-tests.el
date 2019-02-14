@@ -144,6 +144,17 @@ This function is intended to be set to `auth-source-debug`."
     (should (equal (auth-source-pass--find-match "foo.bar.com" nil nil)
                    nil))))
 
+(ert-deftest auth-source-pass-find-match-matching-host-port-and-subdir-user ()
+  (auth-source-pass--with-store '(("bar.com:443/someone"))
+    (should (equal (auth-source-pass--find-match "bar.com" "someone" "443")
+                   "bar.com:443/someone"))))
+
+(ert-deftest auth-source-pass-find-match-matching-host-port-and-subdir-user-with-custom-separator ()
+  (let ((auth-source-pass-port-separator "#"))
+    (auth-source-pass--with-store '(("bar.com#443/someone"))
+      (should (equal (auth-source-pass--find-match "bar.com" "someone" "443")
+                     "bar.com#443/someone")))))
+
 (ert-deftest auth-source-pass-find-match-matching-extracting-user-from-host ()
   (auth-source-pass--with-store '(("foo.com/bar"))
     (should (equal (auth-source-pass--find-match "https://bar@foo.com" nil nil)

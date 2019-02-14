@@ -262,6 +262,9 @@ HOSTNAME should not contain any username or port number."
    (and user port (auth-source-pass--find-one-by-entry-name
                    (format "%s@%s%s%s" user hostname auth-source-pass-port-separator port)
                    user))
+   (and user port (auth-source-pass--find-one-by-entry-name
+                   (format "%s%s%s" hostname auth-source-pass-port-separator port)
+                   user))
    (and user (auth-source-pass--find-one-by-entry-name
               (format "%s@%s" user hostname)
               user))
