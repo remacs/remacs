@@ -3042,21 +3042,16 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 	    (when (string-match-p regex c) (push c poss)))
 	  (nreverse poss))))))
 
-(defvar flex-score-falloff -1.5
+(defvar flex-score-match-tightness 100
   "Controls how the `flex' completion style scores its matches.
 
-Value is a number whose sign and amplitude have subtly different
-effects.  Positive values make the scoring formula value matches
-scattered along the string, while negative values make the
-formula value tighter matches.  I.e \"foo\" matches both strings
-\"barfoobaz\" and \"fabrobazo\", which are of equal length, but
-only a negative value will score the former higher than the
-second.
-
-The absolute value of this variable controls the relative order
-of different-length strings matched by the same pattern .  Its
-effect is not completely understood yet, so feel free to play
-around with it.")
+Value is a positive number.  Values smaller than one make the
+scoring formula value matches scattered along the string, while
+values greater than one make the formula value tighter matches.
+I.e \"foo\" matches both strings \"barbazfoo\" and \"fabrobazo\",
+which are of equal length, but only a value greater than one will
+score the former (which has one \"hole\") higher than the
+latter (which has two).")
 
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
@@ -3092,10 +3087,10 @@ around with it.")
                 ;; score 1.  The formula takes the form of a quotient.
                 ;; For the numerator, we use the number of +, i.e. the
                 ;; length of the pattern.  For the denominator, it
-                ;; counts the number of - in each such group,
-                ;; exponentiates that number to `flex-score-falloff',
-                ;; adds it to the total, adds one to the final sum,
-                ;; and then multiples by the length of the string.
+                ;; sums (1+ (/ (grouplen - 1)
+                ;; flex-score-match-tightness)) across all groups of
+                ;; -, sums one to that total, and then multiples by
+                ;; the length of the string.
                 (score-numerator 0)
                 (score-denominator 0)
                 (last-b 0)
@@ -3103,22 +3098,27 @@ around with it.")
                  (lambda (a b)
                    "Update score variables given match range (A B)."
                    (setq
-                    score-numerator   (+ score-numerator (- b a))
-                    score-denominator (+ score-denominator
-                                         (expt (- a last-b)
-                                               flex-score-falloff))
+                    score-numerator   (+ score-numerator (- b a)))
+                   (unless (= a last-b)
+                     (setq
+                      score-denominator (+ score-denominator
+                                           1
+                                           (/ (- a last-b 1)
+                                              flex-score-match-tightness
+                                              1.0))))
+                   (setq
                     last-b              b))))
-           (funcall update-score 0 start)
+           (funcall update-score start start)
            (while md
              (funcall update-score start (car md))
              (put-text-property start (pop md)
                                 'font-lock-face 'completions-common-part
                                 str)
              (setq start (pop md)))
+           (funcall update-score len len)
            (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
-           (funcall update-score start end)
            (if (> (length str) pos)
                (put-text-property pos (1+ pos)
                                   'font-lock-face 'completions-first-difference
