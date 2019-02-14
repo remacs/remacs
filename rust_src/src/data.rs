@@ -844,7 +844,7 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
         }
     }
 
-    match unsafe { string_to_number(p, b as i32, true) } {
+    match unsafe { string_to_number(p, b as i32, 0) } {
         Qnil => LispObject::from(0),
         n => n,
     }
