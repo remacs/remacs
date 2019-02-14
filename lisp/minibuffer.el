@@ -792,7 +792,7 @@ pattern \"*foo*bar*\".")
      completion-flex-try-completion completion-flex-all-completions
      "Completion of an in-order subset of characters.
 When completing \"foo\" the glob \"*f*o*o*\" is used, so that
-i.e. foo can complete to frodo.")
+\"foo\" can complete to \"frodo\".")
     (initials
      completion-initials-try-completion completion-initials-all-completions
      "Completion of acronyms and initialisms.
