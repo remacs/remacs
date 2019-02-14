@@ -95,12 +95,17 @@ impl LispObject {
         self.as_fixnum().map_or(false, |i| i >= 0)
     }
 
-    pub fn as_natnum_or_error(self) -> EmacsUint {
+    pub fn as_natnum(self) -> Option<EmacsUint> {
         if self.is_natnum() {
-            unsafe { self.to_fixnum_unchecked() as EmacsUint }
+            Some(unsafe { self.to_fixnum_unchecked() as EmacsUint })
         } else {
-            wrong_type!(Qwholenump, self)
+            None
         }
+    }
+
+    pub fn as_natnum_or_error(self) -> EmacsUint {
+        self.as_natnum()
+            .unwrap_or_else(|| wrong_type!(Qwholenump, self))
     }
 }
 
