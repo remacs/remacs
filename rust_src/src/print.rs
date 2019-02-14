@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::{as_buffer_or_error, LispBufferRef},
+    buffers::LispBufferRef,
     lisp::LispObject,
     lists::LispCons,
     remacs_sys::Vprin1_to_string_buffer,
