@@ -679,8 +679,8 @@ But handle the case, if the \"test\" command is not available."
 		    (current-time)
 		  time)))
       (tramp-adb-send-command-and-check
-       v (format "touch -t %s %s"
-		 (format-time-string "%Y%m%d%H%M.%S" time)
+       v (format "touch -d %s %s"
+		 (format-time-string "%Y-%m-%dT%H:%M:%S" time t)
 		 (tramp-shell-quote-argument localname))))))
 
 (defun tramp-adb-handle-copy-file
