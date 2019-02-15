@@ -763,7 +763,7 @@ MIME-Version header before proceeding."
         (mb enable-multibyte-characters)
         beg)
     (goto-char (point-min))
-    (search-forward-regexp "^\n" nil t)
+    (search-forward-regexp "^\n" nil 'move) ;; There might be no body.
     (setq beg (point))
     (with-current-buffer
           (generate-new-buffer " *mm*")

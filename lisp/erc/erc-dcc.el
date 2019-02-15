@@ -979,17 +979,20 @@ rather than every 1024 byte block, but nobody seems to care."
     (let ((inhibit-read-only t)
           received-bytes)
       (goto-char (point-max))
-      (insert (string-make-unibyte str))
+      (if str
+          (insert (string-make-unibyte str)))
 
       (when (> (point-max) erc-dcc-receive-cache)
         (erc-dcc-append-contents (current-buffer) erc-dcc-file-name))
-      (setq received-bytes (+ (buffer-size) erc-dcc-byte-count))
+      (setq received-bytes (buffer-size))
+      (if erc-dcc-byte-count
+          (setq received-bytes (+ received-bytes erc-dcc-byte-count)))
 
       (and erc-dcc-verbose
            (erc-display-message
             nil 'notice erc-server-process
             'dcc-get-bytes-received
-            ?f (file-name-nondirectory buffer-file-name)
+            ?f (file-name-nondirectory (buffer-name))
             ?b (number-to-string received-bytes)))
       (cond
        ((and (> (plist-get erc-dcc-entry-data :size) 0)
@@ -997,7 +1000,7 @@ rather than every 1024 byte block, but nobody seems to care."
         (erc-display-message
          nil '(notice error) 'active
          'dcc-get-file-too-long
-         ?f (file-name-nondirectory buffer-file-name))
+         ?f (file-name-nondirectory (buffer-name)))
         (delete-process proc))
        (t
         (process-send-string

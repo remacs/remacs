@@ -370,10 +370,12 @@
 	  (enriched-decode (point-min) (point-max))))
       (mm-handle-set-undisplayer
        handle
-       `(lambda ()
-          (let ((inhibit-read-only t))
-	    (delete-region ,(copy-marker (point-min) t)
-			   ,(point-max-marker))))))))
+       (if (= (point-min) (point-max))
+	   #'ignore
+	 `(lambda ()
+	    (let ((inhibit-read-only t))
+	      (delete-region ,(copy-marker (point-min) t)
+			     ,(point-max-marker)))))))))
 
 (defun mm-insert-inline (handle text)
   "Insert TEXT inline from HANDLE."

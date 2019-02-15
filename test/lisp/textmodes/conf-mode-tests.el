@@ -33,7 +33,7 @@
     (conf-colon-mode)
     (conf-align-assignments)
     (should (equal (buffer-string)
-                   "foo:                    bar\nbar:                    baz"))))
+                   "foo:			bar\nbar:			baz"))))
 
 (ert-deftest conf-test-font-lock ()
   (with-temp-buffer
