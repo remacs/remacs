@@ -7,11 +7,12 @@ use crate::{
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
     lisp::LispObject,
+    lists::put,
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
         map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fput, Fset_char_table_range, CHAR_TABLE_SET,
+        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
     threads::ThreadState,
@@ -122,20 +123,22 @@ extern "C" fn set_canon(table: LispObject, range: LispObject, elt: LispObject) {
 // that range to themselves.  This is done only when ELT is a
 // character.  This is called in map_char_table.
 extern "C" fn set_identity(table: LispObject, c: LispObject, elt: LispObject) {
-    if elt.is_natnum() {
-        let char_table: LispCharTableRef = table.into();
+    if !elt.is_natnum() {
+        return;
+    }
 
-        let (from, to): (EmacsInt, EmacsInt) = match c.into() {
-            Some((car, cdr)) => (car.into(), cdr.into()),
-            None => {
-                let x = c.into();
-                (x, x)
-            }
-        };
+    let char_table: LispCharTableRef = table.into();
 
-        for i in from..=to {
-            char_table.set_unchecked(i as isize, i.into());
+    let (from, to): (EmacsInt, EmacsInt) = match c.into() {
+        Some((car, cdr)) => (car.into(), cdr.into()),
+        None => {
+            let x = c.into();
+            (x, x)
         }
+    };
+
+    for i in from..=to {
+        char_table.set_unchecked(i as isize, i.into());
     }
 }
 
@@ -244,7 +247,7 @@ pub fn set_standard_case_table(table: LispObject) -> LispObject {
 #[no_mangle]
 pub unsafe extern "C" fn init_casetab_once() {
     def_lisp_sym!(Qcase_table, "case-table");
-    Fput(Qcase_table, Qchar_table_extra_slots, 3.into());
+    put(Qcase_table.into(), Qchar_table_extra_slots, 3.into());
 
     let down = Fmake_char_table(Qcase_table, Qnil);
     set_char_table_purpose(down, Qcase_table);
