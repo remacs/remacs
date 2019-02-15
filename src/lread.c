@@ -1932,13 +1932,12 @@ readevalloop (Lisp_Object readcharfun,
   Lisp_Object macroexpand = intern ("internal-macroexpand-for-load");
 
   if (NILP (Ffboundp (macroexpand))
-      /* Don't macroexpand in .elc files, since it should have been done
-	 already.  We actually don't know whether we're in a .elc file or not,
-	 so we use circumstantial evidence: .el files normally go through
-	 Vload_source_file_function -> load-with-code-conversion
-	 -> eval-buffer.  */
-      || EQ (readcharfun, Qget_file_char)
-      || EQ (readcharfun, Qget_emacs_mule_file_char))
+      || (STRINGP (sourcename)
+          && SBYTES (sourcename) >= 4
+          && !strcmp (".elc", SSDATA (sourcename) + SBYTES (sourcename) - 4)))
+    /* Don't macroexpand before the corresponding function is defined
+       and don't bother macroexpanding in .elc files, since it should have
+       been done already.  */
     macroexpand = Qnil;
 
   if (MARKERP (readcharfun))
