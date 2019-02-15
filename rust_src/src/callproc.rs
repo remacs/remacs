@@ -10,12 +10,12 @@ use crate::{
     lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::Fdelete_region,
+    remacs_sys::Qnil,
     remacs_sys::NULL_DEVICE,
     remacs_sys::{
         build_string, call_process, close_file_unwind, create_temp_file, emacs_open,
         report_file_error,
     },
-    remacs_sys::{EmacsInt, Qnil},
     threads::{c_specpdl_index, ThreadState},
 };
 
@@ -136,10 +136,13 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
         let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()
     } else {
-        unsafe { buffers::validate_region(&mut args[0], &mut args[1]) };
-        start = args[0];
-        end = args[1];
-        EmacsInt::from(start) == EmacsInt::from(end)
+        let (start_1, end_1) = buffers::validate_region_rust(args[0], args[1]);
+        start = start_1.into();
+        end = end_1.into();
+        args[0] = start;
+        args[1] = end;
+
+        start_1 == end_1
     };
 
     let fd = unsafe {

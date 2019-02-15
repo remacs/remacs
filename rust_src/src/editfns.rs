@@ -11,7 +11,7 @@ use libc::{c_char, c_int, c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::{current_buffer, validate_region},
+    buffers::{current_buffer, validate_region_rust},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, record_unwind_protect, unbind_to},
@@ -1093,22 +1093,18 @@ pub fn buffer_string() -> LispObject {
 /// into the result string; if you don't want the text properties,
 /// use `buffer-substring-no-properties' instead.
 #[lisp_fn]
-pub fn buffer_substring(mut beg: LispObject, mut end: LispObject) -> LispObject {
-    unsafe { validate_region(&mut beg, &mut end) };
-    let b = beg.as_fixnum_or_error();
-    let e = end.as_fixnum_or_error();
-    unsafe { make_buffer_string(b as isize, e as isize, true) }
+pub fn buffer_substring(beg: LispObject, end: LispObject) -> LispObject {
+    let (beg, end) = validate_region_rust(beg, end);
+    unsafe { make_buffer_string(beg, end, true) }
 }
 
 /// Return the characters of part of the buffer, without the text properties.
 /// The two arguments START and END are character positions;
 /// they can be in either order.
 #[lisp_fn]
-pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) -> LispObject {
-    unsafe { validate_region(&mut beg, &mut end) };
-    let b = beg.as_fixnum_or_error();
-    let e = end.as_fixnum_or_error();
-    unsafe { make_buffer_string(b as isize, e as isize, false) }
+pub fn buffer_substring_no_properties(beg: LispObject, end: LispObject) -> LispObject {
+    let (beg, end) = validate_region_rust(beg, end);
+    unsafe { make_buffer_string(beg, end, false) }
 }
 
 // Save current buffer state for `save-excursion' special form.
@@ -1349,42 +1345,23 @@ pub fn field_string_no_properties(pos: Option<LispNumber>) -> LispObject {
 /// called interactively, delete the region between point and mark. This command
 /// deletes buffer text without modifying the kill ring.
 #[lisp_fn(intspec = "r")]
-pub fn delete_region(mut start: LispObject, mut end: LispObject) {
+pub fn delete_region(start: LispObject, end: LispObject) {
     // Don't just call delete_and_extract_region and throw away the return value
     // to avoid doing the extra, unnecessary work of copying the region to
     // return it.
-    unsafe { validate_region(&mut start, &mut end) };
-    unsafe {
-        del_range(
-            start.as_fixnum_or_error() as ptrdiff_t,
-            end.as_fixnum_or_error() as ptrdiff_t,
-        )
-    };
+    let (start, end) = validate_region_rust(start, end);
+    unsafe { del_range(start as ptrdiff_t, end as ptrdiff_t) };
 }
 
 /// Delete the text between START and END, including START but excluding END, and
 /// return it.
 #[lisp_fn]
-pub fn delete_and_extract_region(
-    mut start: LispObject,
-    mut end: LispObject,
-) -> Option<LispStringRef> {
-    unsafe { validate_region(&mut start, &mut end) };
-
-    let start_fixnum = start.as_fixnum_or_error();
-    let end_fixnum = end.as_fixnum_or_error();
-    if start_fixnum == end_fixnum {
+pub fn delete_and_extract_region(start: LispObject, end: LispObject) -> Option<LispStringRef> {
+    let (start, end) = validate_region_rust(start, end);
+    if start == end {
         Some(LispObject::empty_unibyte_string())
     } else {
-        unsafe {
-            del_range_1(
-                start_fixnum as ptrdiff_t,
-                end_fixnum as ptrdiff_t,
-                true,
-                true,
-            )
-        }
-        .as_string()
+        unsafe { del_range_1(start as ptrdiff_t, end as ptrdiff_t, true, true) }.as_string()
     }
 }
 
