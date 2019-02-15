@@ -1101,6 +1101,14 @@ subexpression.
 When there is no menu for a mode, display the mode name after the
 indicator instead of just the indicator (which is sometimes cryptic).
 
+** rx
+
+---
+*** rx now handles raw bytes in character alternatives correctly,
+when given in a string.  Previously, '(any "\x80-\xff")' would match
+characters U+0080...U+00FF.  Now the expression matches raw bytes in
+the 128...255 range, as expected.
+
 
 * New Modes and Packages in Emacs 27.1
 

@@ -429,6 +429,13 @@ Only both edges of each range is checked."
     ;; set L list of all ranges
     (mapc (lambda (e) (cond ((stringp e) (push e str))
 			    ((numberp e) (push (cons e e) l))
+                            ;; Ranges between ASCII and raw bytes are split,
+                            ;; to prevent accidental inclusion of Unicode
+                            ;; characters later on.
+                            ((and (<= (car e) #x7f)
+                                  (>= (cdr e) #x3fff80))
+                             (push (cons (car e) #x7f) l)
+                             (push (cons #x3fff80 (cdr e)) l))
 			    (t (push e l))))
 	  args)
     ;; condense overlapped ranges in L

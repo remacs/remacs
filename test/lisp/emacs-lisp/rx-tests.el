@@ -53,7 +53,11 @@
   ;; Range of raw characters, multibyte.
   (should (equal (string-match-p (rx (any "Å\211\326-\377\177"))
                                  "XY\355\177\327")
-                 2)))
+                 2))
+  ;; Split range; \177-\377ÿ should not be optimised to \177-\377.
+  (should (equal (string-match-p (rx (any "\177-\377" ?ÿ))
+                                 "ÿA\310B")
+                 0)))
 
 (ert-deftest rx-pcase ()
   (should (equal (pcase "a 1 2 3 1 1 b"
