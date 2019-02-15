@@ -475,9 +475,13 @@ not contain `d', so that a full listing is expected."
 		       (ls-lisp-classify-file file fattr)
 		     file)
 		   fattr (file-attribute-size fattr)
-				  switches time-index))
-	(message "%s: doesn't exist or is inaccessible" file)
-	(ding) (sit-for 2)))))		; to show user the message!
+                   switches time-index))
+        ;; Emulate what we do on Posix hosts when we call access-file
+        ;; in insert-directory.
+	(signal 'file-error
+                (list "Reading directory"
+                      "Directory doesn't exist or is inaccessible"
+                      file))))))
 
 (declare-function dired-read-dir-and-switches "dired" (str))
 (declare-function dired-goto-next-file "dired" ())
