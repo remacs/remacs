@@ -661,6 +661,11 @@ and its value has been changed to Duck Duck Go.
 ** eww/shr
 
 +++
+*** The 'eww' command can now create a new EWW buffer.
+Invoking the command with a prefix argument will cause it to create a
+new EWW buffer for the URL instead of reusing the default one.
+
++++
 *** The 'd' ('eww-download') command now falls back to current page's URL.
 If this command is invoked with no URL at point, it now downloads the
 current page instead of signaling an error.
