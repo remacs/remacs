@@ -2094,23 +2094,23 @@ Return nil if no complete line has arrived."
 ;;                      addr-host ")"
 ;;
 ;;   addr-adl        = nstring
-;;                       ; Holds route from [RFC-822] route-addr if
+;;                       ; Holds route from [RFC-822 (or later)] route-addr if
 ;;                       ; non-nil
 ;;
 ;;   addr-host       = nstring
-;;                       ; nil indicates [RFC-822] group syntax.
-;;                       ; Otherwise, holds [RFC-822] domain name
+;;                       ; nil indicates [RFC-822 (or later)] group syntax.
+;;                       ; Otherwise, holds [RFC-822 (or later)] domain name
 ;;
 ;;   addr-mailbox    = nstring
-;;                       ; nil indicates end of [RFC-822] group; if
+;;                       ; nil indicates end of [RFC-822 (or later)] group; if
 ;;                       ; non-nil and addr-host is nil, holds
-;;                       ; [RFC-822] group name.
-;;                       ; Otherwise, holds [RFC-822] local-part
-;;                       ; after removing [RFC-822] quoting
+;;                       ; [RFC-822 (or later)] group name.
+;;                       ; Otherwise, holds [RFC-822 (or later)] local-part
+;;                       ; after removing [RFC-822 (or later)] quoting
 ;;
 ;;   addr-name       = nstring
-;;                       ; If non-nil, holds phrase from [RFC-822]
-;;                       ; mailbox after removing [RFC-822] quoting
+;;                       ; If non-nil, holds phrase from [RFC-822 (or later)]
+;;                       ; mailbox after removing [RFC-822 (or later)] quoting
 ;;
 
 (defsubst imap-parse-address ()

@@ -141,7 +141,7 @@ There are no Gnus dependencies in this file.
 There are no Gnus dependencies in this file.
 
 @item ietf-drums.el
-Functions for parsing RFC822bis headers.
+Functions for parsing RFC 2822 headers.
 @c As of 2005-10-21...
 There are no Gnus dependencies in this file.
 

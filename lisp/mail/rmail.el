@@ -785,8 +785,8 @@ The first parenthesized expression should match the MIME-charset name.")
     (concat
      "From "
 
-     ;; Many things can happen to an RFC 822 mailbox before it is put into
-     ;; a `From' line.  The leading phrase can be stripped, e.g.
+     ;; Many things can happen to an RFC 822 (or later) mailbox before it is
+     ;; put into a `From' line.  The leading phrase can be stripped, e.g.
      ;; `Joe <@w.x:joe@y.z>' -> `<@w.x:joe@y.z>'.  The <> can be stripped, e.g.
      ;; `<@x.y:joe@y.z>' -> `@x.y:joe@y.z'.  Everything starting with a CRLF
      ;; can be removed, e.g.
@@ -1009,8 +1009,8 @@ If `rmail-display-summary' is non-nil, make a summary for this RMAIL file."
   "Report that the buffer is not in the mbox file format.
 MSGNUM, if present, indicates the malformed message."
   (if msgnum
-      (error "Message %d is not a valid RFC2822 message" msgnum)
-    (error "Message is not a valid RFC2822 message")))
+      (error "Message %d is not a valid RFC 822 (or later) message" msgnum)
+    (error "Message is not a valid RFC 822 (or later) message")))
 
 (defun rmail-convert-babyl-to-mbox ()
   "Convert the mail file from Babyl version 5 to mbox.
@@ -2155,9 +2155,9 @@ Call with point at the end of the message."
     (insert "\n")))
 
 (defun rmail-add-mbox-headers ()
-  "Validate the RFC2822 format for the new messages.
+  "Validate the RFC 822 (or later) format for the new messages.
 Point should be at the first new message.
-An error is signaled if the new messages are not RFC2822
+An error is signaled if the new messages are not RFC 822 (or later)
 compliant.
 Unless an Rmail attribute header already exists, add it to the
 new messages.  Return the number of new messages."
@@ -3928,9 +3928,9 @@ which is an element of rmail-msgref-vector."
 	     (setq tem (copy-sequence tem))
 	     (set-text-properties 0 (length tem) nil tem)
 	     (setq tem (copy-sequence tem))
-	     ;; Use prin1 to fake RFC822 quoting
+	     ;; Use prin1 to fake RFC 822 (or later) quoting
 	     (let ((field (prin1-to-string tem)))
-	       ;; Wrap it in parens to make it a comment according to RFC822
+	       ;; Wrap it in parens to make it a comment.
 	       (if date
 		   (concat "(" field "'s message of " date ")")
 		 (concat "(" field ")"))))))
@@ -3959,7 +3959,7 @@ which is an element of rmail-msgref-vector."
              (if message-id
                  ;; "<AA259@bar.edu> (message from Unix Loser on 1-Apr-89)"
                  (concat message-id " (" field ")")
-	       ;; Wrap in parens to make it a comment, for RFC822.
+	       ;; Wrap in parens to make it a comment.
 	       (concat "(" field ")")))))
         (t
          ;; If we can't kludge it simply, do it correctly

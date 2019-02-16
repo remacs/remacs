@@ -851,7 +851,8 @@ scanned.  Info key-value pairs are created for each header found.  Also,
 such useful information as the author's name and email address are
 extracted.  If the variable @code{sc-mail-warn-if-non-rfc822-p} is
 non-@code{nil}, then Supercite will warn you if it finds a mail header
-that does not conform to RFC822.  This is rare and indicates a problem
+that does not conform to RFC 822 (or later).
+This is rare and indicates a problem
 either with your MUA or the original author's MUA, or some MTA (mail
 transport agent) along the way.
 

@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; This package provides an abstraction to RFC822-style messages, used in
+;; This package provides an abstraction of RFC 822 (or later) format, used in
 ;; mail, news, and some other systems.  The simple syntactic rules for such
 ;; headers, such as quoting and line folding, are routinely reimplemented
 ;; in many individual packages.  This package removes the need for this

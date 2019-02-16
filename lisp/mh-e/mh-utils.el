@@ -887,7 +887,7 @@ in this situation."
 ;;;###mh-autoload
 (defun mh-header-field-beginning ()
   "Move to the beginning of the current header field.
-Handles RFC 822 continuation lines."
+Handle RFC 822 (or later) continuation lines."
   (beginning-of-line)
   (while (looking-at "^[ \t]")
     (forward-line -1)))
@@ -895,7 +895,7 @@ Handles RFC 822 continuation lines."
 ;;;###mh-autoload
 (defun mh-header-field-end ()
   "Move to the end of the current header field.
-Handles RFC 822 continuation lines."
+Handle RFC 822 (or later) continuation lines."
   (forward-line 1)
   (while (looking-at "^[ \t]")
     (forward-line 1))

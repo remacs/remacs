@@ -160,9 +160,9 @@ to have no space characters in them."
 (defcustom org-id-include-domain nil
   "Non-nil means add the domain name to new IDs.
 This ensures global uniqueness of IDs, and is also suggested by
-RFC 2445 in combination with RFC 822.  This is only relevant if
-`org-id-method' is `org'.  When uuidgen is used, the domain will never
-be added.
+the relevant RFCs.  This is relevant only if `org-id-method' is
+`org'.  When uuidgen is used, the domain will never be added.
+
 The default is to not use this because we have no really good way to get
 the true domain, and Org entries will normally not be shared with enough
 people to make this necessary."
