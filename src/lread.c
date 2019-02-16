@@ -1070,14 +1070,15 @@ This uses the variables `load-suffixes' and `load-file-rep-suffixes'.  */)
   return Fnreverse (lst);
 }
 
-/* Returns true if STRING ends with SUFFIX */
+/* Return true if STRING ends with SUFFIX.  */
 static bool
 suffix_p (Lisp_Object string, const char *suffix)
 {
   ptrdiff_t suffix_len = strlen (suffix);
   ptrdiff_t string_len = SBYTES (string);
 
-  return string_len >= suffix_len && !strcmp (SSDATA (string) + string_len - suffix_len, suffix);
+  return (suffix_len <= string_len
+	  && strcmp (SSDATA (string) + string_len - suffix_len, suffix) == 0);
 }
 
 static void
@@ -1932,9 +1933,7 @@ readevalloop (Lisp_Object readcharfun,
   Lisp_Object macroexpand = intern ("internal-macroexpand-for-load");
 
   if (NILP (Ffboundp (macroexpand))
-      || (STRINGP (sourcename)
-          && SBYTES (sourcename) >= 4
-          && !strcmp (".elc", SSDATA (sourcename) + SBYTES (sourcename) - 4)))
+      || (STRINGP (sourcename) && suffix_p (sourcename, ".elc")))
     /* Don't macroexpand before the corresponding function is defined
        and don't bother macroexpanding in .elc files, since it should have
        been done already.  */
