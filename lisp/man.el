@@ -318,7 +318,7 @@ This regular expression should start with a `^' character.")
 
 (defvar Man-reference-regexp
   (concat "\\(" Man-name-regexp
-	  "\\(‐?\n[ \t]+" Man-name-regexp "\\)*\\)[ \t]*(\\("
+	  "\\(\\([-‐]\n\\)?[ \t]+" Man-name-regexp "\\)*\\)[ \t]*(\\("
 	  Man-section-regexp "\\))")
   "Regular expression describing a reference to another manpage.")
 
@@ -664,7 +664,7 @@ and the `Man-section-translations-alist' variables)."
      ;; "chmod(2V)" case ?
      ((string-match (concat "^" Man-reference-regexp "$") ref)
       (setq name (replace-regexp-in-string "[\n\t ]" "" (match-string 1 ref))
-	    section (match-string 3 ref)))
+	    section (match-string 4 ref)))
      ;; "2v chmod" case ?
      ((string-match (concat "^\\(" Man-section-regexp
 			    "\\) +\\(" Man-name-regexp "\\)$") ref)
@@ -783,11 +783,22 @@ POS defaults to `point'."
       ;;     see this-
       ;;     command-here(1)
       ;; Note: This code gets executed iff our entry is after POS.
-      (when (looking-at "‐?[ \t\r\n]+\\([-a-zA-Z0-9._+:]+\\)([0-9])")
-	(setq word (concat word (match-string-no-properties 1)))
+      (when (looking-at
+             (concat
+              "‐?[ \t\r\n]+\\([-a-zA-Z0-9._+:]+\\)(" Man-section-regexp ")"))
+        (let ((1st-part word))
+          (setq word (concat word (match-string-no-properties 1)))
+          ;; If they use -Tascii, we cannot know whether a hyphen at
+          ;; EOL is or isn't part of the referenced manpage name.
+          ;; Heuristics: if the part of the manpage before the hyphen
+          ;; doesn't include a hyphen, we consider the hyphen to be
+          ;; added by troff, and remove it.
+          (or (not (eq (string-to-char (substring 1st-part -1)) ?-))
+              (string-match-p "-" (substring 1st-part 0 -1))
+              (setq word (replace-regexp-in-string "-" "" word))))
 	;; Make sure the section number gets included by the code below.
 	(goto-char (match-end 1)))
-      (when (string-match "[-._]+$" word)
+      (when (string-match "[-._‐]+$" word)
 	(setq word (substring word 0 (match-beginning 0))))
       ;; The following was commented out since the preceding code
       ;; should not produce a leading "*" in the first place.
