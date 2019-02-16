@@ -1167,7 +1167,11 @@ please check its value")
   (load-user-init-file
    (lambda ()
      (expand-file-name
-      "early-init"
+      ;; We use an explicit .el extension here to force
+      ;; load-user-init-file to set user-init-file to "early-init.el",
+      ;; with the .el extension, if the file doesn't exist, not just
+      ;; "early-init" without an extension, as it does for ".emacs".
+      "early-init.el"
       (file-name-as-directory
        (concat "~" init-file-user "/.emacs.d")))))
   (setq early-init-file user-init-file)
