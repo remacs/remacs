@@ -698,6 +698,8 @@ has been executed.
 If set, shr will not render tags with attribute 'aria-hidden="true"'.
 This attribute is meant to tell screen readers to ignore a tag.
 
+*** 'shr-tag-ol' now respects the ordered list 'start' attribute.
+
 ** Htmlfontify
 
 *** The functions 'hfy-color', 'hfy-color-vals' and
