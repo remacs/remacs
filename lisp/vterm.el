@@ -122,7 +122,11 @@
   (add-hook 'window-size-change-functions #'vterm-resize-window t t))
 
 (defun vterm-make-process ()
-  (let ((process-environment (append '("TERM=xterm") process-environment)))
+  (let ((process-environment (nconc '("TERM=xterm"
+                                      "INSIDE_EMACS=vterm"
+                                      "LINES"
+                                      "COLUMNS")
+                                    process-environment)))
     (setq vterm--process
           (make-process
            :name "vterm"
