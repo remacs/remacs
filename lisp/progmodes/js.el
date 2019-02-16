@@ -1743,7 +1743,7 @@ This performs fontification according to `js--class-styles'."
   "Check if STRING is a unary operator keyword in JavaScript."
   (string-match-p js--unary-keyword-re string))
 
-(defun js--disambiguate-beginning-of-jsx-tag ()
+(defun js-jsx--disambiguate-beginning-of-tag ()
   "Parse enough to determine if a JSX tag starts here.
 Disambiguate JSX from equality operators by testing for syntax
 only valid as JSX."
@@ -1766,7 +1766,7 @@ only valid as JSX."
          ;; Check if a JSXAttribute follows.
          (looking-at js--name-start-re)))))))
 
-(defun js--disambiguate-end-of-jsx-tag ()
+(defun js-jsx--disambiguate-end-of-tag ()
   "Parse enough to determine if a JSX tag ends here.
 Disambiguate JSX from equality operators by testing for syntax
 only valid as JSX, or extremely unlikely except as JSX."
@@ -1812,7 +1812,7 @@ only valid as JSX, or extremely unlikely except as JSX."
                 ;; Nothing else to look for; give up parsing.
                 (throw 'match nil)))))))))
 
-(defun js--disambiguate-js-from-jsx (start end)
+(defun js-jsx--disambiguate-syntax (start end)
   "Figure out which ‘<’ and ‘>’ chars (from START to END) aren’t JSX.
 
 Later, this info prevents ‘sgml-’ functions from treating some
@@ -1821,8 +1821,8 @@ since they are serving their usual function as some JS equality
 operator or arrow function, instead."
   (goto-char start)
   (while (re-search-forward "[<>]" end t)
-    (unless (if (eq (char-before) ?<) (js--disambiguate-beginning-of-jsx-tag)
-              (js--disambiguate-end-of-jsx-tag))
+    (unless (if (eq (char-before) ?<) (js-jsx--disambiguate-beginning-of-tag)
+              (js-jsx--disambiguate-end-of-tag))
       ;; Inform sgml- functions that this >, >=, >>>, <, <=, <<<, or
       ;; => token is punctuation (and not an open or close parenthesis
       ;; as per usual in sgml-mode).
@@ -1856,7 +1856,7 @@ operator or arrow function, instead."
            (js-syntax-propertize-regexp end)))))
     ("\\`\\(#\\)!" (1 "< b")))
    (point) end)
-  (if js-jsx-syntax (js--disambiguate-js-from-jsx start end)))
+  (if js-jsx-syntax (js-jsx--disambiguate-syntax start end)))
 
 (defconst js--prettify-symbols-alist
   '(("=>" . ?⇒)
@@ -1881,13 +1881,13 @@ operator or arrow function, instead."
           (js--regexp-opt-symbol '("in" "instanceof")))
   "Regexp matching operators that affect indentation of continued expressions.")
 
-(defconst js--jsx-start-tag-re
+(defconst js-jsx--start-tag-re
   (concat "<" sgml-name-re)
   "Regexp matching code that looks like a JSXOpeningElement.")
 
-(defun js--looking-at-jsx-start-tag-p ()
+(defun js-jsx--looking-at-start-tag-p ()
   "Non-nil if a JSXOpeningElement immediately follows point."
-  (looking-at js--jsx-start-tag-re))
+  (looking-at js-jsx--start-tag-re))
 
 (defun js--looking-at-operator-p ()
   "Return non-nil if point is on a JavaScript operator, other than a comma."
@@ -1913,7 +1913,7 @@ operator or arrow function, instead."
                  ;; return NaN anyway.  Shouldn't be a problem.
                  (memq (char-before) '(?, ?} ?{)))))
          ;; “<” isn’t necessarily an operator in JSX.
-         (not (and js-jsx-syntax (js--looking-at-jsx-start-tag-p))))))
+         (not (and js-jsx-syntax (js-jsx--looking-at-start-tag-p))))))
 
 (defun js--find-newline-backward ()
   "Move backward to the nearest newline that is not in a block comment."
@@ -1933,13 +1933,13 @@ operator or arrow function, instead."
         (setq result nil)))
     result))
 
-(defconst js--jsx-end-tag-re
+(defconst js-jsx--end-tag-re
   (concat "</" sgml-name-re ">\\|/>")
   "Regexp matching a JSXClosingElement.")
 
-(defun js--looking-back-at-jsx-end-tag-p ()
+(defun js-jsx--looking-back-at-end-tag-p ()
   "Non-nil if a JSXClosingElement immediately precedes point."
-  (looking-back js--jsx-end-tag-re (point-at-bol)))
+  (looking-back js-jsx--end-tag-re (point-at-bol)))
 
 (defun js--continued-expression-p ()
   "Return non-nil if the current line continues an expression."
@@ -1961,7 +1961,7 @@ operator or arrow function, instead."
              (and
               ;; The “>” at the end of any JSXBoundaryElement isn’t
               ;; part of a continued expression.
-              (not (and js-jsx-syntax (js--looking-back-at-jsx-end-tag-p)))
+              (not (and js-jsx-syntax (js-jsx--looking-back-at-end-tag-p)))
               (progn
                 (or (bobp) (backward-char))
                 (and (> (point) (point-min))
@@ -2285,14 +2285,14 @@ current line is the \"=>\" token."
 
 ;;; JSX Indentation
 
-(defmacro js--as-sgml (&rest body)
+(defmacro js-jsx--as-sgml (&rest body)
   "Execute BODY as if in sgml-mode."
   `(with-syntax-table sgml-mode-syntax-table
      ,@body))
 
-(defun js--outermost-enclosing-jsx-tag-pos ()
+(defun js-jsx--outermost-enclosing-tag-pos ()
   (let (context tag-pos last-tag-pos parse-status parens paren-pos curly-pos)
-    (js--as-sgml
+    (js-jsx--as-sgml
       ;; Search until we reach the top or encounter the start of a
       ;; JSXExpressionContainer (implying nested JSX).
       (while (and (setq context (sgml-get-context))
@@ -2322,7 +2322,7 @@ current line is the \"=>\" token."
           (goto-char tag-pos))))
     last-tag-pos))
 
-(defun js--jsx-indentation ()
+(defun js-jsx--indentation-type ()
   "Determine if/how the current line should be indented as JSX.
 
 Return nil for first JSXElement line (indent like JS).
@@ -2336,7 +2336,7 @@ Return nil for non-JSX lines."
     (save-excursion
       ;; Determine if inside a JSXElement.
       (beginning-of-line) ; For exclusivity
-      (when (setq tag-start-pos (js--outermost-enclosing-jsx-tag-pos))
+      (when (setq tag-start-pos (js-jsx--outermost-enclosing-tag-pos))
         ;; Check if inside an embedded multi-line JS expression.
         (goto-char current-pos)
         (end-of-line) ; For exclusivity
@@ -2369,14 +2369,14 @@ Return nil for non-JSX lines."
                (setq parens (cdr parens)))))
         (or type 'n+1th)))))
 
-(defun js--indent-line-in-jsx-expression ()
+(defun js-jsx--indent-line-in-expression ()
   "Indent the current line as JavaScript within JSX."
   (let ((parse-status (save-excursion (syntax-ppss (point-at-bol))))
         offset indent-col)
     (unless (nth 3 parse-status)
       (save-excursion
         (setq offset (- (point) (progn (back-to-indentation) (point)))
-              indent-col (js--as-sgml (sgml-calculate-indent))))
+              indent-col (js-jsx--as-sgml (sgml-calculate-indent))))
       (if (null indent-col) 'noindent ; Like in sgml-mode
         ;; Use whichever indentation column is greater, such that the
         ;; SGML column is effectively a minimum.
@@ -2384,9 +2384,9 @@ Return nil for non-JSX lines."
                              (+ indent-col js-indent-level)))
         (when (> offset 0) (forward-char offset))))))
 
-(defun js--indent-n+1th-jsx-line ()
+(defun js-jsx--indent-n+1th-line ()
   "Indent the current line as JSX within JavaScript."
-  (js--as-sgml (sgml-indent-line)))
+  (js-jsx--as-sgml (sgml-indent-line)))
 
 (defun js-indent-line ()
   "Indent the current line as JavaScript."
@@ -2403,10 +2403,10 @@ Return nil for non-JSX lines."
 i.e., customize JSX element indentation with `sgml-basic-offset',
 `sgml-attribute-offset' et al."
   (interactive)
-  (let ((type (js--jsx-indentation)))
+  (let ((type (js-jsx--indentation-type)))
     (if type
-        (if (eq type 'n+1th) (js--indent-n+1th-jsx-line)
-          (js--indent-line-in-jsx-expression))
+        (if (eq type 'n+1th) (js-jsx--indent-n+1th-line)
+          (js-jsx--indent-line-in-expression))
       (js-indent-line))))
 
 ;;; Filling
