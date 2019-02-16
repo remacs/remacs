@@ -3262,8 +3262,9 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
           break;
         }
 
-      /* draw the character under the cursor */
-      if (cursor_type != NO_CURSOR)
+      /* Draw the character under the cursor.  Other terms only draw
+         the character on top of box cursors, so do the same here.  */
+      if (cursor_type == FILLED_BOX_CURSOR || cursor_type == HOLLOW_BOX_CURSOR)
         draw_phys_cursor_glyph (w, glyph_row, DRAW_CURSOR);
 
       ns_reset_clipping (f);
