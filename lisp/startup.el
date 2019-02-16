@@ -906,11 +906,17 @@ init-file, or to a default value if loading is not possible."
               ;; the name of the file that it loads into
               ;; `user-init-file'.
               (setq user-init-file t)
-              (load init-file-name 'noerror 'nomessage)
+              (load (if (equal (file-name-extension init-file-name)
+                               "el")
+                        (file-name-sans-extension init-file-name)
+                      init-file-name)
+                    'noerror 'nomessage)
 
               (when (and (eq user-init-file t) alternate-filename-function)
-                (load (funcall alternate-filename-function)
-                      'noerror 'nomessage))
+                (let ((alt-file (funcall alternate-filename-function)))
+                  (and (equal (file-name-extension alt-file) "el")
+                       (setq alt-file (file-name-sans-extension alt-file)))
+                  (load alt-file 'noerror 'nomessage)))
 
               ;; If we did not find the user's init file, set
               ;; user-init-file conclusively.  Don't let it be
