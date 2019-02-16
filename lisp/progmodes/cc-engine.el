@@ -152,8 +152,6 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
-(eval-when-compile (require 'cl))
-
 
 ;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
 
