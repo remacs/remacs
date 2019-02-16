@@ -13,7 +13,7 @@ use crate::{
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp, list1,
         list_system_processes, process_send_signal, send_process, setup_process_coding_systems,
-        tcflush, update_status, Fmapcar, STRING_BYTES,
+        update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -594,6 +594,9 @@ pub fn stop_process(process: LispObject, current_group: LispObject) -> LispObjec
         return process;
     }
 
+    #[cfg(windows)]
+    error!("No SIGTSTP support");
+    #[cfg(not(windows))]
     unsafe {
         process_send_signal(process, libc::SIGTSTP, current_group, false);
     }

@@ -6281,6 +6281,42 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
   unblock_child_signal (&oldset);
 }
 
+DEFUN ("continue-process", Fcontinue_process, Scontinue_process, 0, 2, 0,
+       doc: /* Continue process PROCESS.  May be process or name of one.
+See function `interrupt-process' for more details on usage.
+If PROCESS is a network or serial process, resume handling of incoming
+traffic.  */)
+  (Lisp_Object process, Lisp_Object current_group)
+{
+  if (PROCESSP (process) && (NETCONN_P (process) || SERIALCONN_P (process)
+			     || PIPECONN_P (process)))
+    {
+      struct Lisp_Process *p;
+
+      p = XPROCESS (process);
+      if (EQ (p->command, Qt)
+	  && p->infd >= 0
+	  && (!EQ (p->filter, Qt) || EQ (p->status, Qlisten)))
+	{
+	  add_process_read_fd (p->infd);
+#ifdef WINDOWSNT
+	  if (fd_info[ p->infd ].flags & FILE_SERIAL)
+	    PurgeComm (fd_info[ p->infd ].hnd, PURGE_RXABORT | PURGE_RXCLEAR);
+#else /* not WINDOWSNT */
+	  tcflush (p->infd, TCIFLUSH);
+#endif /* not WINDOWSNT */
+	}
+      pset_command (p, Qnil);
+      return process;
+    }
+#ifdef SIGCONT
+    process_send_signal (process, SIGCONT, current_group, 0);
+#else
+    error ("No SIGCONT support");
+#endif
+  return process;
+}
+
 /* Return the integer value of the signal whose abbreviation is ABBR,
    or a negative number if there is no such signal.  */
 static int
@@ -7410,6 +7446,7 @@ The variable takes effect when `start-process' is called.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
+  defsubr (&Scontinue_process);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
   defsubr (&Sinternal_default_process_sentinel);
