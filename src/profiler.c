@@ -232,9 +232,10 @@ static EMACS_INT current_sampling_interval;
 
 /* Signal handler for sampling profiler.  */
 
-/* timer_getoverrun is not implemented on Cygwin, but the following
-   seems to be good enough for profiling. */
-#ifdef CYGWIN
+/* timer_getoverrun is not implemented on Cygwin prior to
+   cygwin-3.0.0, but the following seems to be good enough for
+   profiling. */
+#if defined CYGWIN && !defined HAVE_TIMER_GETOVERRUN
 #define timer_getoverrun(x) 0
 #endif
 
