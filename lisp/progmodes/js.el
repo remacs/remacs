@@ -82,10 +82,6 @@
   (concat js--name-re "\\(?:\\." js--name-re "\\)*")
   "Regexp matching a dot-separated sequence of JavaScript names.")
 
-(defconst js--dotted-captured-name-re
-  (concat "\\(" js--name-re "\\)\\(?:\\." js--name-re "\\)*")
-  "Like `js--dotted-name-re', but capture the first name.")
-
 (defconst js--cpp-name-re js--name-re
   "Regexp matching a C preprocessor name.")
 
@@ -1498,6 +1494,33 @@ point of view of font-lock.  It applies highlighting directly with
   ;; Matcher always "fails"
   nil)
 
+(defconst js-jsx--font-lock-keywords
+  `((js-jsx--match-tag-name 0 font-lock-function-name-face t)
+    (js-jsx--match-attribute-name 0 font-lock-variable-name-face t))
+  "JSX font lock faces.")
+
+(defun js-jsx--match-tag-name (limit)
+  "Match JSXBoundaryElement names, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-name nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-tag-name))
+                 (progn (set-match-data value) t))
+            (js-jsx--match-tag-name limit))))))
+
+(defun js-jsx--match-attribute-name (limit)
+  "Match JSXAttribute names, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-attribute-name nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-attribute-name))
+                 (progn (set-match-data value) t))
+            (js-jsx--match-attribute-name limit))))))
+
 (defconst js--font-lock-keywords-3
   `(
     ;; This goes before keywords-2 so it gets used preferentially
@@ -1609,7 +1632,10 @@ point of view of font-lock.  It applies highlighting directly with
                  (forward-symbol -1)
                (end-of-line))
             '(end-of-line)
-            '(0 font-lock-variable-name-face))))
+            '(0 font-lock-variable-name-face)))
+
+    ;; jsx (when enabled)
+    ,@js-jsx--font-lock-keywords)
   "Level three font lock for `js-mode'.")
 
 (defun js--inside-pitem-p (pitem)
@@ -1743,94 +1769,100 @@ This performs fontification according to `js--class-styles'."
   "Check if STRING is a unary operator keyword in JavaScript."
   (string-match-p js--unary-keyword-re string))
 
-(defun js-jsx--disambiguate-beginning-of-tag ()
-  "Parse enough to determine if a JSX tag starts here.
-Disambiguate JSX from equality operators by testing for syntax
-only valid as JSX."
-  ;; “</…” - a JSXClosingElement.
-  ;; “<>” - a JSXOpeningFragment.
-  (if (memq (char-after) '(?\/ ?\>)) t
-    (save-excursion
-     (skip-chars-forward " \t\n")
-     (and
-      (looking-at js--dotted-captured-name-re)
-      ;; Don’t match code like “if (i < await foo)”
-      (not (js--unary-keyword-p (match-string 1)))
-      (progn
-        (goto-char (match-end 0))
-        (skip-chars-forward " \t\n")
-        (or
-         ;; “>”, “/>” - tag enders.
-         ;; “{” - a JSXExpressionContainer.
-         (memq (char-after) '(?\> ?\/ ?\{))
-         ;; Check if a JSXAttribute follows.
-         (looking-at js--name-start-re)))))))
+(defun js-jsx--syntax-propertize-tag (end)
+  "Determine if a JSXBoundaryElement is before END and propertize it.
+Disambiguate JSX from inequality operators and arrow functions by
+testing for syntax only valid as JSX."
+  (let ((tag-beg (1- (point))) tag-end (type 'open)
+        name-beg name-match-data unambiguous
+        forward-sexp-function) ; Use Lisp version.
+    (catch 'stop
+      (while (and (< (point) end)
+                  (progn (skip-chars-forward " \t\n" end)
+                         (< (point) end)))
+        (cond
+         ((= (char-after) ?>)
+          (forward-char)
+          (setq unambiguous t
+                tag-end (point))
+          (throw 'stop nil))
+         ;; Handle a JSXSpreadChild (“<Foo {...bar}”) or a
+         ;; JSXExpressionContainer as a JSXAttribute value
+         ;; (“<Foo bar={…}”).  Check this early in case continuing a
+         ;; JSXAttribute parse.
+         ((and name-beg (= (char-after) ?{))
+          (setq unambiguous t) ; JSXExpressionContainer post tag name ⇒ JSX
+          (let (expr-end)
+            (condition-case nil
+                (save-excursion
+                  (forward-sexp)
+                  (setq expr-end (point)))
+              (scan-error nil))
+            (forward-char)
+            (if (>= (point) end) (throw 'stop nil))
+            (skip-chars-forward " \t\n" end)
+            (if (>= (point) end) (throw 'stop nil))
+            (if (= (char-after) ?}) (forward-char) ; Shortcut to bail.
+              ;; Recursively propertize the JSXExpressionContainer’s
+              ;; expression.
+              (js-syntax-propertize (point) (if expr-end (min (1- expr-end) end) end))
+              ;; Exit the JSXExpressionContainer if that’s possible,
+              ;; else move to the end of the propertized area.
+              (goto-char (if expr-end (min expr-end end) end)))))
+         ((= (char-after) ?/)
+          ;; Assume a tag is an open tag until a slash is found, then
+          ;; figure out what type it actually is.
+          (if (eq type 'open) (setq type (if name-beg 'self-closing 'close)))
+          (forward-char))
+         ((looking-at js--dotted-name-re)
+          (if (not name-beg)
+              (progn
+                ;; Don’t match code like “if (i < await foo)”
+                (if (js--unary-keyword-p (match-string 0)) (throw 'stop nil))
+                ;; Save boundaries for later fontification after
+                ;; unambiguously determining the code is JSX.
+                (setq name-beg (match-beginning 0)
+                      name-match-data (match-data))
+                (goto-char (match-end 0)))
+            (setq unambiguous t) ; Non-unary name followed by 2nd name ⇒ JSX
+            ;; Save JSXAttribute’s name’s match data for font-locking later.
+            (put-text-property (match-beginning 0) (1+ (match-beginning 0))
+                               'js-jsx-attribute-name (match-data))
+            (goto-char (match-end 0))
+            (if (>= (point) end) (throw 'stop nil))
+            (skip-chars-forward " \t\n" end)
+            (if (>= (point) end) (throw 'stop nil))
+            ;; “=” is optional for null-valued JSXAttributes.
+            (when (= (char-after) ?=)
+              (forward-char)
+              (if (>= (point) end) (throw 'stop nil))
+              (skip-chars-forward " \t\n" end)
+              (if (>= (point) end) (throw 'stop nil))
+              ;; Skip over strings (if possible).  Any
+              ;; JSXExpressionContainer here will be parsed in the
+              ;; next iteration of the loop.
+              (when (memq (char-after) '(?\" ?\' ?\`))
+                (condition-case nil
+                    (forward-sexp)
+                  (scan-error (throw 'stop nil)))))))
+         ;; There is nothing more to check; this either isn’t JSX, or
+         ;; the tag is incomplete.
+         (t (throw 'stop nil)))))
+    (when unambiguous
+      ;; Save JSXBoundaryElement’s name’s match data for font-locking.
+      (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
+      ;; Mark beginning and end of tag for features like indentation.
+      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg type)
+      (if tag-end (put-text-property (1- tag-end) tag-end 'js-jsx-tag-end tag-beg)))))
 
-(defun js-jsx--disambiguate-end-of-tag ()
-  "Parse enough to determine if a JSX tag ends here.
-Disambiguate JSX from equality operators by testing for syntax
-only valid as JSX, or extremely unlikely except as JSX."
-  (save-excursion
-    (backward-char)
-    ;; “…/>” - a self-closing JSXOpeningElement.
-    ;; “</>” - a JSXClosingFragment.
-    (if (= (char-before) ?/) t
-      (let (last-tag-or-attr-name last-non-unary-p)
-        (catch 'match
-          (while t
-            (skip-chars-backward " \t\n")
-            ;; Check if the end of a JSXAttribute value or
-            ;; JSXExpressionContainer almost certainly precedes.
-            ;; The only valid JS this misses is
-            ;; - {} > foo
-            ;; - "bar" > foo
-            ;; which is no great loss, IMHO…
-            (if (memq (char-before) '(?\} ?\" ?\' ?\`)) (throw 'match t)
-              (if (and last-tag-or-attr-name last-non-unary-p
-                       ;; “<”, “</” - tag starters.
-                       (memq (char-before) '(?\< ?\/)))
-                  ;; Leftmost name parsed was the name of a
-                  ;; JSXOpeningElement.
-                  (throw 'match t))
-              ;; Technically the dotted name could span multiple
-              ;; lines, but dear God WHY?!  Also, match greedily to
-              ;; ensure the entire name is valid.
-              (if (looking-back js--dotted-captured-name-re (point-at-bol) t)
-                  (if (and (setq last-non-unary-p (not (js--unary-keyword-p (match-string 1))))
-                           last-tag-or-attr-name)
-                      ;; Valid (non-unary) name followed rightwards by
-                      ;; another name (any will do, including
-                      ;; keywords) is invalid JS, but valid JSX.
-                      (throw 'match t)
-                    ;; Remember match and skip backwards over it when
-                    ;; it is the first matched name or the N+1th
-                    ;; matched unary name (unary names on the left are
-                    ;; still ambiguously JS or JSX, so keep parsing to
-                    ;; disambiguate).
-                    (setq last-tag-or-attr-name (match-string 1))
-                    (goto-char (match-beginning 0)))
-                ;; Nothing else to look for; give up parsing.
-                (throw 'match nil)))))))))
-
-(defun js-jsx--disambiguate-syntax (start end)
-  "Figure out which ‘<’ and ‘>’ chars (from START to END) aren’t JSX.
-
-Later, this info prevents ‘sgml-’ functions from treating some
-‘<’ and ‘>’ chars as parts of tokens of SGML tags — a good thing,
-since they are serving their usual function as some JS equality
-operator or arrow function, instead."
-  (goto-char start)
-  (while (re-search-forward "[<>]" end t)
-    (unless (if (eq (char-before) ?<) (js-jsx--disambiguate-beginning-of-tag)
-              (js-jsx--disambiguate-end-of-tag))
-      ;; Inform sgml- functions that this >, >=, >>>, <, <=, <<<, or
-      ;; => token is punctuation (and not an open or close parenthesis
-      ;; as per usual in sgml-mode).
-      (put-text-property (1- (point)) (point) 'syntax-table '(1)))))
+(defconst js-jsx--text-properties
+  '(js-jsx-tag-beg nil js-jsx-tag-end nil js-jsx-tag-name nil js-jsx-attribute-name nil)
+  "Plist of text properties added by `js-syntax-propertize'.")
 
 (defun js-syntax-propertize (start end)
   ;; JavaScript allows immediate regular expression objects, written /.../.
   (goto-char start)
+  (if js-jsx-syntax (remove-text-properties start end js-jsx--text-properties))
   (js-syntax-propertize-regexp end)
   (funcall
    (syntax-propertize-rules
@@ -1854,9 +1886,9 @@ operator or arrow function, instead."
            (put-text-property (match-beginning 1) (match-end 1)
                               'syntax-table (string-to-syntax "\"/"))
            (js-syntax-propertize-regexp end)))))
-    ("\\`\\(#\\)!" (1 "< b")))
-   (point) end)
-  (if js-jsx-syntax (js-jsx--disambiguate-syntax start end)))
+    ("\\`\\(#\\)!" (1 "< b"))
+    ("<" (0 (ignore (if js-jsx-syntax (js-jsx--syntax-propertize-tag end))))))
+   (point) end))
 
 (defconst js--prettify-symbols-alist
   '(("=>" . ?⇒)
