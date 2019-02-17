@@ -95,6 +95,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'arc-mode)
 
 (defgroup tar nil
   "Simple editing of tar files."
@@ -852,26 +853,6 @@ actually appear on disk when you save the tar-file's buffer."
   (goto-char (posn-point (event-end event)))
   (tar-extract))
 
-(defun tar--try-jka-compr ()
-  (when (and auto-compression-mode
-             (jka-compr-get-compression-info buffer-file-name))
-    (let* ((basename (file-name-nondirectory buffer-file-name))
-           (tmpname (if (string-match ":\\([^:]+\\)\\'" basename)
-                        (match-string 1 basename) basename))
-           (tmpfile (make-temp-file (file-name-sans-extension tmpname)
-                                    nil
-                                    (file-name-extension tmpname 'period))))
-      (unwind-protect
-          (progn
-            (let ((coding-system-for-write 'no-conversion)
-                  ;; Don't re-compress this data just before decompressing it.
-                  (jka-compr-inhibit t))
-              (write-region (point-min) (point-max) tmpfile nil 'quiet))
-            (set-buffer-multibyte t)
-            (erase-buffer)
-            (insert-file-contents tmpfile))
-        (delete-file tmpfile)))))
-
 (defun tar-file-name-handler (op &rest args)
   "Helper function for `tar-extract'."
   (or (eq op 'file-exists-p)
@@ -951,7 +932,7 @@ actually appear on disk when you save the tar-file's buffer."
         (setq buffer-file-name new-buffer-file-name)
         (setq buffer-file-truename
               (abbreviate-file-name buffer-file-name))
-        (tar--try-jka-compr)       ;Pretty ugly hack :-(
+        (archive-try-jka-compr)       ;Pretty ugly hack :-(
         ;; Force buffer-file-coding-system to what
         ;; decode-coding-region actually used.
         (set-buffer-file-coding-system last-coding-system-used t)

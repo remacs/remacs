@@ -967,8 +967,8 @@ using `make-temp-file', and the generated name is returned."
                   ;; Don't re-compress this data just before decompressing it.
                   (jka-compr-inhibit t))
               (write-region (point-min) (point-max) tmpfile nil 'quiet))
-            (set-buffer-multibyte t)
             (erase-buffer)
+            (set-buffer-multibyte t)
             (insert-file-contents tmpfile))
         (delete-file tmpfile)))))
 
