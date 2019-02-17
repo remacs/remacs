@@ -1732,6 +1732,7 @@ comment at the start of cc-engine.el for more info."
      (put-text-property beg end 'c-is-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 '((c-debug-add-face beg end 'c-debug-is-sws-face)))))
+(def-edebug-spec c-put-is-sws t)
 
 (defmacro c-put-in-sws (beg end)
   ;; This macro does a hidden buffer change.
@@ -1739,6 +1740,7 @@ comment at the start of cc-engine.el for more info."
      (put-text-property beg end 'c-in-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 '((c-debug-add-face beg end 'c-debug-in-sws-face)))))
+(def-edebug-spec c-put-in-sws t)
 
 (defmacro c-remove-is-sws (beg end)
   ;; This macro does a hidden buffer change.
@@ -1746,6 +1748,7 @@ comment at the start of cc-engine.el for more info."
      (remove-text-properties beg end '(c-is-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
 	 '((c-debug-remove-face beg end 'c-debug-is-sws-face)))))
+(def-edebug-spec c-remove-is-sws t)
 
 (defmacro c-remove-in-sws (beg end)
   ;; This macro does a hidden buffer change.
@@ -1753,6 +1756,7 @@ comment at the start of cc-engine.el for more info."
      (remove-text-properties beg end '(c-in-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
 	 '((c-debug-remove-face beg end 'c-debug-in-sws-face)))))
+(def-edebug-spec c-remove-in-sws t)
 
 (defmacro c-remove-is-and-in-sws (beg end)
   ;; This macro does a hidden buffer change.
@@ -1761,6 +1765,7 @@ comment at the start of cc-engine.el for more info."
      ,@(when (facep 'c-debug-is-sws-face)
 	 '((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
+(def-edebug-spec c-remove-is-and-in-sws t)
 
 ;; The type of literal position `end' is in a `before-change-functions'
 ;; function - one of `c', `c++', `pound', or nil (but NOT `string').
@@ -1769,12 +1774,14 @@ comment at the start of cc-engine.el for more info."
 ;; enclosing END, if any, else nil.
 (defvar c-sws-lit-limits nil)
 
-(defun c-invalidate-sws-region-before (end)
-  ;; Called from c-before-change.  END is the end of the change region, the
-  ;; standard parameter given to all before-change-functions.
+(defun c-invalidate-sws-region-before (beg end)
+  ;; Called from c-before-change.  BEG and END are the bounds of the change
+  ;; region, the standard parameters given to all before-change-functions.
   ;;
-  ;; Note whether END is inside a comment or CPP construct, and if so note its
-  ;; bounds in `c-sws-lit-limits' and type in `c-sws-lit-type'.
+  ;; Note whether END is inside a comment, CPP construct, or noise macro, and
+  ;; if so note its bounds in `c-sws-lit-limits' and type in `c-sws-lit-type'.
+  (setq c-sws-lit-type nil
+	c-sws-lit-limits nil)
   (save-excursion
     (goto-char end)
     (let* ((limits (c-literal-limits))
@@ -1787,8 +1794,19 @@ comment at the start of cc-engine.el for more info."
 	(setq c-sws-lit-type 'pound
 	      c-sws-lit-limits (cons (point)
 				     (progn (c-end-of-macro) (point)))))
-       (t (setq c-sws-lit-type nil
-		c-sws-lit-limits nil))))))
+       ((progn (skip-syntax-backward "w_")
+	       (looking-at c-noise-macro-name-re))
+	(setq c-sws-lit-type 'noise
+	      c-sws-lit-limits (cons (match-beginning 1) (match-end 1))))
+       (t))))
+  (save-excursion
+    (goto-char beg)
+    (skip-syntax-backward "w_")
+    (when (looking-at c-noise-macro-name-re)
+      (setq c-sws-lit-type 'noise)
+      (if (consp c-sws-lit-limits)
+	  (setcar c-sws-lit-limits (match-beginning 1))
+	(setq c-sws-lit-limits (cons (match-beginning 1) (match-end 1)))))))
 
 (defun c-invalidate-sws-region-after-del (beg end old-len)
   ;; Text has been deleted, OLD-LEN characters of it starting from position
@@ -1797,7 +1815,6 @@ comment at the start of cc-engine.el for more info."
   ;; deletion deleted or "damaged" its opening delimiter.  If so, return the
   ;; current position of where the construct ended, otherwise return nil.
   (when c-sws-lit-limits
-    (setcdr c-sws-lit-limits (- (cdr c-sws-lit-limits) old-len))
     (if (and (< beg (+ (car c-sws-lit-limits) 2)) ; A lazy assumption that
 						  ; comment delimiters are 2
 						  ; chars long.
@@ -1815,9 +1832,9 @@ comment at the start of cc-engine.el for more info."
   ;; or `c-is-sws' text properties inside this literal.  If there are, return
   ;; the buffer position of the end of the literal, else return nil.
   (save-excursion
+    (goto-char end)
     (let* ((limits (c-literal-limits))
 	   (lit-type (c-literal-type limits)))
-      (goto-char end)
       (when (and (not (memq lit-type '(c c++)))
 		 (c-beginning-of-macro))
 	(setq lit-type 'pound
@@ -1841,6 +1858,10 @@ comment at the start of cc-engine.el for more info."
   ;; properties right after they're added.
   ;;
   ;; This function does hidden buffer changes.
+  (when c-sws-lit-limits
+    (setcar c-sws-lit-limits (min beg (car c-sws-lit-limits)))
+    (setcdr c-sws-lit-limits
+	    (max end (- (+ (cdr c-sws-lit-limits) (- end beg)) old-len))))
   (let ((del-end
 	 (and (> old-len 0)
 	      (c-invalidate-sws-region-after-del beg end old-len)))
@@ -1859,6 +1880,10 @@ comment at the start of cc-engine.el for more info."
       (skip-chars-forward " \t\f\v")
       (when (and (eolp) (not (eobp)))
 	(setq end (1+ (point)))))
+
+    (when (eq c-sws-lit-type 'noise)
+      (setq beg (car c-sws-lit-limits)
+	    end (cdr c-sws-lit-limits))) ; This last setting may be redundant.
 
     (when (and (= beg end)
 	       (get-text-property beg 'c-in-sws)
@@ -1879,6 +1904,7 @@ comment at the start of cc-engine.el for more info."
 
     (setq end (max (or del-end end)
 		   (or ins-end end)
+		   (or (cdr c-sws-lit-limits) end)
 		   end))
 
     (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
@@ -2147,7 +2173,8 @@ comment at the start of cc-engine.el for more info."
       ;; Try to find a rung position in the simple ws preceding point, so that
       ;; we can get a cache hit even if the last bit of the simple ws has
       ;; changed recently.
-      (setq simple-ws-beg (point))
+      (setq simple-ws-beg (or (match-end 1) ; Noise macro
+			      (match-end 0))) ; c-syntactic-ws-end
       (skip-chars-backward " \t\n\r\f\v")
       (if (setq rung-is-marked (text-property-any
 				(point) (min (1+ rung-pos) (point-max))
@@ -8672,7 +8699,16 @@ comment at the start of cc-engine.el for more info."
 		 (not (and (c-major-mode-is 'c-mode)
 			   (not got-prefix)
 			   (or (eq context 'top) make-top)
-			   (eq (char-after) ?\)))))
+			   (eq (char-after) ?\))
+			   (or (memq at-type '(nil maybe))
+			       (not got-identifier)
+			       (save-excursion
+				 (goto-char after-paren-pos)
+				 (c-forward-syntactic-ws)
+				 ;; Prevent the symbol being recorded as a type.
+				 (let (c-record-type-identifiers)
+				   (not (memq (c-forward-type)
+					      '(nil maybe)))))))))
 	    (if (eq (char-after) ?\))
 		(when (> paren-depth 0)
 		  (setq paren-depth (1- paren-depth))

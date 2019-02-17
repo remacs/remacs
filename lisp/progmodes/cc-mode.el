@@ -1623,7 +1623,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	  ;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
 	  (when (< beg end)
 	    (c-unfind-coalesced-tokens beg end))
-	  (c-invalidate-sws-region-before end)
+	  (c-invalidate-sws-region-before beg end)
 	  ;; Are we (potentially) disrupting the syntactic context which
 	  ;; makes a type a type?  E.g. by inserting stuff after "foo" in
 	  ;; "foo bar;", or before "foo" in "typedef foo *bar;"?

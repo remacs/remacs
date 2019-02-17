@@ -1649,7 +1649,9 @@ white space either before or after the operator, but not both."
 
 ;; Initialize the next two to a regexp which never matches.
 (defvar c-noise-macro-with-parens-name-re "a\\`")
+(make-variable-buffer-local 'c-noise-macro-with-parens-name-re)
 (defvar c-noise-macro-name-re "a\\`")
+(make-variable-buffer-local 'c-noise-macro-name-re)
 
 (defcustom c-noise-macro-names nil
   "A list of names of macros which expand to nothing, or compiler extensions
@@ -1664,6 +1666,7 @@ this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
   :type '(repeat :tag "List of names" string)
   :group 'c)
 (put 'c-noise-macro-names 'safe-local-variable #'c-string-list-p)
+(make-variable-buffer-local 'c-noise-macro-names)
 
 (defcustom c-noise-macro-with-parens-names nil
   "A list of names of macros \(or compiler extensions like \"__attribute__\")
@@ -1673,6 +1676,7 @@ These are recognized by CC Mode only in declarations."
   :type '(repeat :tag "List of names (possibly empty)" string)
   :group 'c)
 (put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
+(make-variable-buffer-local 'c-noise-macro-with-parens-names)
 
 (defun c-make-noise-macro-regexps ()
   ;; Convert `c-noise-macro-names' and `c-noise-macro-with-parens-names' into
