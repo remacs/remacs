@@ -2,7 +2,7 @@
          (sentence-end-double-space . t)
          (fill-column . 70)))
  (c-mode . ((c-file-style . "GNU")
-            (c-noise-macro-names . ("UNINIT" "CALLBACK" "ALIGN_STACK"))
+            (c-noise-macro-names . ("INLINE" "ATTRIBUTE_NO_SANITIZE_UNDEFINED" "UNINIT" "CALLBACK" "ALIGN_STACK"))
             (electric-quote-comment . nil)
             (electric-quote-string . nil)))
  (objc-mode . ((c-file-style . "GNU")
