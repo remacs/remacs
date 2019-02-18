@@ -594,10 +594,10 @@ too large if positive or too small if negative)."
 ;;;###autoload
 (defun cl-list-length (x)
   "Return the length of list X.  Return nil if list is circular."
-  (let ((n 0) (fast x) (slow x))
-    (while (and (cdr fast) (not (and (eq fast slow) (> n 0))))
-      (setq n (+ n 2) fast (cdr (cdr fast)) slow (cdr slow)))
-    (if fast (if (cdr fast) nil (1+ n)) n)))
+  (cl-check-type x list)
+  (condition-case nil
+      (length x)
+    (circular-list)))
 
 ;;;###autoload
 (defun cl-tailp (sublist list)
