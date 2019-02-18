@@ -331,12 +331,10 @@ pub unsafe extern "C" fn init_casetab_once() {
     let updated_table = set_case_table(down);
     let (up, canon, eqv) = updated_table.extras();
 
-    unsafe {
-        Vascii_downcase_table = down;
-        Vascii_upcase_table = up;
-        Vascii_canon_table = canon;
-        Vascii_eqv_table = eqv;
-    }
+    Vascii_downcase_table = down;
+    Vascii_upcase_table = up;
+    Vascii_canon_table = canon;
+    Vascii_eqv_table = eqv;
 }
 
 #[no_mangle]
