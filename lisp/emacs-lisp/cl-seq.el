@@ -113,6 +113,13 @@
 (defvar cl-key)
 
 ;;;###autoload
+(defun cl-endp (x)
+  "Return true if X is the empty list; false if it is a cons.
+Signal an error if X is not a list."
+  (cl-check-type x list)
+  (null x))
+
+;;;###autoload
 (defun cl-reduce (cl-func cl-seq &rest cl-keys)
   "Reduce two-argument FUNCTION across SEQ.
 \nKeywords supported:  :start :end :from-end :initial-value :key
