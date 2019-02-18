@@ -3357,18 +3357,6 @@ allocate_record (EMACS_INT count)
 }
 
 
-DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
-       doc: /* Return a newly created vector of length LENGTH, with each element being INIT.
-See also the function `vector'.  */)
-  (Lisp_Object length, Lisp_Object init)
-{
-  CHECK_NATNUM (length);
-  struct Lisp_Vector *p = allocate_vector (XFASTINT (length));
-  for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
-    p->contents[i] = init;
-  return make_lisp_ptr (p, Lisp_Vectorlike);
-}
-
 DEFUN ("vector", Fvector, Svector, 0, MANY, 0,
        doc: /* Return a newly created vector with specified arguments as elements.
 Any number of arguments, even zero arguments, are allowed.
@@ -7421,7 +7409,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Scons);
   defsubr (&Svector);
   defsubr (&Smake_byte_code);
-  defsubr (&Smake_vector);
   defsubr (&Smake_string);
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);

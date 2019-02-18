@@ -3,6 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::make_char_table,
     buffers::current_buffer,
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
@@ -11,23 +12,29 @@ use crate::{
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
+        map_char_table, staticpro, Fcopy_sequence, Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
+    symbols::LispSymbolRef,
     threads::ThreadState,
 };
 
 pub struct LispCaseTable(LispCharTableRef);
 
 impl LispCaseTable {
+    pub fn from_char_table(table: LispCharTableRef) -> Self {
+        Self(table)
+    }
+
     pub fn extras(&self) -> (LispObject, LispObject, LispObject) {
         let extras = unsafe { self.0.extras.as_slice(3) };
         (extras[0], extras[1], extras[2])
     }
 
-    pub fn from_char_table(table: LispCharTableRef) -> Self {
-        Self(table)
+    pub fn set_extras(&mut self, idx: isize, value: LispObject) {
+        assert!(0 <= idx && idx < 3);
+        let extras = unsafe { self.0.extras.as_mut_slice(3) };
+        extras[idx as usize] = value;
     }
 
     pub fn get(&self, idx: isize) -> LispObject {
@@ -51,33 +58,45 @@ static mut Vascii_canon_table: LispObject = Qnil;
 static mut Vascii_eqv_table: LispObject = Qnil;
 
 fn set_case_table(table: LispObject, standard: bool) -> LispObject {
-    let case_table: LispCaseTable = table.into();
+    let mut case_table: LispCaseTable = table.into();
     let (mut up, mut canon, mut eqv) = case_table.extras();
 
-    unsafe {
-        if up.is_nil() {
-            up = Fmake_char_table(Qcase_table, Qnil);
+    let sym_case_table = LispSymbolRef::from(Qcase_table);
+
+    if up.is_nil() {
+        let up_table = make_char_table(sym_case_table, Qnil);
+        up = LispObject::from(up_table);
+        unsafe {
             map_char_table(Some(set_identity), Qnil, table, up);
             map_char_table(Some(shuffle), Qnil, table, up);
-            set_char_table_extras(table, 0, up);
         }
+        case_table.set_extras(0, up);
+    }
 
-        if canon.is_nil() {
-            canon = Fmake_char_table(Qcase_table, Qnil);
-            set_char_table_extras(table, 1, canon);
+    let mut canon_table = if canon.is_nil() {
+        let tem = make_char_table(sym_case_table, Qnil);
+        canon = LispObject::from(tem);
+        case_table.set_extras(1, canon);
+        unsafe {
             map_char_table(Some(set_canon), Qnil, table, table);
         }
+        tem
+    } else {
+        canon.into()
+    };
 
-        if eqv.is_nil() {
-            eqv = Fmake_char_table(Qcase_table, Qnil);
+    if eqv.is_nil() {
+        let eqv_table = make_char_table(sym_case_table, Qnil);
+        eqv = eqv_table.into();
+        unsafe {
             map_char_table(Some(set_identity), Qnil, canon, eqv);
             map_char_table(Some(shuffle), Qnil, canon, eqv);
-            set_char_table_extras(table, 2, eqv);
         }
-
-        // This is so set_image_of_range_1 in regex.c can find the EQV table.
-        set_char_table_extras(canon, 2, eqv);
+        case_table.set_extras(2, eqv);
     }
+
+    // This is so set_image_of_range_1 in regex.c can find the EQV table.
+    canon_table.set_extras(2, eqv);
 
     if standard {
         unsafe {
@@ -247,10 +266,12 @@ pub fn set_standard_case_table(table: LispObject) -> LispObject {
 #[no_mangle]
 pub unsafe extern "C" fn init_casetab_once() {
     def_lisp_sym!(Qcase_table, "case-table");
-    put(Qcase_table.into(), Qchar_table_extra_slots, 3.into());
+    let sym_case_table = LispSymbolRef::from(Qcase_table);
+    put(sym_case_table, Qchar_table_extra_slots, 3.into());
 
-    let down = Fmake_char_table(Qcase_table, Qnil);
-    set_char_table_purpose(down, Qcase_table);
+    let mut down_table = make_char_table(sym_case_table, Qnil);
+    down_table.purpose = Qcase_table;
+    let down = LispObject::from(down_table);
     Vascii_downcase_table = down;
 
     for i in 0..128 {
@@ -264,10 +285,11 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(down, i, c.into());
     }
 
-    set_char_table_extras(down, 1, Fcopy_sequence(down));
+    down_table.set_extras(1, Fcopy_sequence(down));
 
-    let up = Fmake_char_table(Qcase_table, Qnil);
-    set_char_table_extras(down, 0, up);
+    let up_table = make_char_table(sym_case_table, Qnil);
+    let up = up_table.into();
+    down_table.set_extras(0, up);
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
@@ -280,7 +302,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(up, i, c.into());
     }
 
-    let eqv = Fmake_char_table(Qcase_table, Qnil);
+    let eqv = make_char_table(sym_case_table, Qnil).into();
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
@@ -296,7 +318,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(eqv, i, c.into());
     }
 
-    set_char_table_extras(down, 2, eqv);
+    down_table.set_extras(2, eqv);
 
     // Fill in what isn't filled in.
     set_case_table(down, true);
