@@ -52,12 +52,18 @@ impl From<LispObject> for LispCaseTable {
     }
 }
 
+impl From<LispCaseTable> for LispObject {
+    fn from(table: LispCaseTable) -> Self {
+        LispObject::from(table.0)
+    }
+}
+
 static mut Vascii_downcase_table: LispObject = Qnil;
 static mut Vascii_upcase_table: LispObject = Qnil;
 static mut Vascii_canon_table: LispObject = Qnil;
 static mut Vascii_eqv_table: LispObject = Qnil;
 
-fn set_case_table(table: LispObject, standard: bool) -> LispObject {
+fn set_case_table(table: LispObject) -> LispCaseTable {
     let mut case_table: LispCaseTable = table.into();
     let (mut up, mut canon, mut eqv) = case_table.extras();
 
@@ -98,22 +104,7 @@ fn set_case_table(table: LispObject, standard: bool) -> LispObject {
     // This is so set_image_of_range_1 in regex.c can find the EQV table.
     canon_table.set_extras(2, eqv);
 
-    if standard {
-        unsafe {
-            Vascii_downcase_table = table;
-            Vascii_upcase_table = up;
-            Vascii_canon_table = canon;
-            Vascii_eqv_table = eqv;
-        }
-    } else {
-        let mut buffer: LispBufferRef = current_buffer().into();
-        buffer.downcase_table_ = table;
-        buffer.upcase_table_ = up;
-        buffer.case_canon_table_ = canon;
-        buffer.case_eqv_table_ = eqv;
-    }
-
-    table
+    case_table
 }
 
 // The following functions are called in map_char_table.
@@ -252,15 +243,31 @@ pub unsafe extern "C" fn get_canonical_case_table() -> LispObject {
 ///  (of characters with the same canonical equivalent); it may be nil,
 ///  in which case it is deduced from CANONICALIZE.
 #[lisp_fn(name = "set-case-table", c_name = "set_case_table")]
-pub fn set_case_table_lisp(table: LispObject) -> LispObject {
-    set_case_table(table, false)
+pub fn set_case_table_lisp(table: LispObject) -> LispCaseTable {
+    let case_table = set_case_table(table);
+    let (up, canon, eqv) = case_table.extras();
+    let mut buffer: LispBufferRef = current_buffer().into();
+    buffer.downcase_table_ = table;
+    buffer.upcase_table_ = up;
+    buffer.case_canon_table_ = canon;
+    buffer.case_eqv_table_ = eqv;
+
+    case_table
 }
 
 /// Select a new standard case table for new buffers.
 /// See `set-case-table' for more info on case tables.
 #[lisp_fn]
-pub fn set_standard_case_table(table: LispObject) -> LispObject {
-    set_case_table(table, true)
+pub fn set_standard_case_table(table: LispObject) -> LispCaseTable {
+    let case_table = set_case_table(table);
+    let (up, canon, eqv) = case_table.extras();
+    unsafe {
+        Vascii_downcase_table = table;
+        Vascii_upcase_table = up;
+        Vascii_canon_table = canon;
+        Vascii_eqv_table = eqv;
+    }
+    case_table
 }
 
 #[no_mangle]
@@ -320,8 +327,16 @@ pub unsafe extern "C" fn init_casetab_once() {
 
     down_table.set_extras(2, eqv);
 
-    // Fill in what isn't filled in.
-    set_case_table(down, true);
+    // Fill in what isn't filled in. Use the updated versions.
+    let updated_table = set_case_table(down);
+    let (up, canon, eqv) = updated_table.extras();
+
+    unsafe {
+        Vascii_downcase_table = down;
+        Vascii_upcase_table = up;
+        Vascii_canon_table = canon;
+        Vascii_eqv_table = eqv;
+    }
 }
 
 #[no_mangle]
