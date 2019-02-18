@@ -3269,9 +3269,6 @@ rarely_quit (unsigned short int count)
     maybe_quit ();
 }
 
-extern Lisp_Object Vascii_downcase_table;
-extern Lisp_Object Vascii_canon_table;
-
 /* Call staticpro (&var) to protect static variable `var'.  */
 
 void staticpro (Lisp_Object *);
@@ -4161,6 +4158,13 @@ extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
                                                ptrdiff_t, ptrdiff_t);
 
+/* Defined in casetab.rs.  */
+
+extern void init_casetab_once (void);
+extern void syms_of_casetab (void);
+extern Lisp_Object get_downcase_table (void);
+extern Lisp_Object get_canonical_case_table (void);
+
 /* Defined in fileio.c.  */
 
 extern bool check_executable (char *);
@@ -4206,7 +4210,7 @@ fast_string_match (Lisp_Object regexp, Lisp_Object string)
 INLINE ptrdiff_t
 fast_string_match_ignore_case (Lisp_Object regexp, Lisp_Object string)
 {
-  return fast_string_match_internal (regexp, string, Vascii_canon_table);
+  return fast_string_match_internal (regexp, string, get_canonical_case_table());
 }
 
 extern ptrdiff_t fast_c_string_match_ignore_case (Lisp_Object, const char *,
@@ -4249,12 +4253,6 @@ Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
 ptrdiff_t casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e);
 extern void syms_of_casefiddle (void);
 extern void keys_of_casefiddle (void);
-
-/* Defined in casetab.c.  */
-
-extern Lisp_Object set_case_table (Lisp_Object, bool);
-extern void init_casetab_once (void);
-extern void syms_of_casetab (void);
 
 /* Defined in keyboard.c.  */
 extern bool get_input_pending (int);

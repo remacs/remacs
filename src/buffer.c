@@ -719,15 +719,15 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
 
   /* If the standard case table has been altered and invalidated,
      fix up its insides first.  */
-  if (! (CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[0])
-	 && CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[1])
-	 && CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[2])))
-    Fset_standard_case_table (Vascii_downcase_table);
+  if (! (CHAR_TABLE_P (XCHAR_TABLE (get_downcase_table ())->extras[0])
+	 && CHAR_TABLE_P (XCHAR_TABLE (get_downcase_table ())->extras[1])
+	 && CHAR_TABLE_P (XCHAR_TABLE (get_downcase_table ())->extras[2])))
+    Fset_standard_case_table (get_downcase_table ());
 
-  bset_downcase_table (b, Vascii_downcase_table);
-  bset_upcase_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[0]);
-  bset_case_canon_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[1]);
-  bset_case_eqv_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[2]);
+  bset_downcase_table (b, get_downcase_table ());
+  bset_upcase_table (b, XCHAR_TABLE (get_downcase_table ())->extras[0]);
+  bset_case_canon_table (b, XCHAR_TABLE (get_downcase_table ())->extras[1]);
+  bset_case_eqv_table (b, XCHAR_TABLE (get_downcase_table ())->extras[2]);
   bset_invisibility_spec (b, Qt);
 
   /* Reset all (or most) per-buffer variables to their defaults.  */
