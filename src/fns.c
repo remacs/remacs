@@ -91,8 +91,7 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 
 /* Random data-structure functions.  */
 
-/* Return the length of LIST.  Signal an error if LIST is not a proper
-   list or if the length does not fit into a fixnum or into ptrdiff_t.  */
+/* Return LIST's length.  Signal an error if LIST is not a proper list.  */
 
 ptrdiff_t
 list_length (Lisp_Object list)
