@@ -1432,19 +1432,39 @@ If no conflict maker is found, turn off `smerge-mode'."
         (smerge-next))
     (error (smerge-auto-leave))))
 
-(require 'vc)
+(defcustom smerge-change-buffer-confirm t
+  "If non-nil, request confirmation before moving to another buffer."
+  :type 'boolean)
 
 (defun smerge-vc-next-conflict ()
-  "Tries to go to next conflict in current file, otherwise tries
-to open next conflicted file version-control-system wise"
+  "Go to next conflict, possibly in another file.
+First tries to go to the next conflict in the current buffer, and if not
+found, uses VC to try and find the next file with conflict."
   (interactive)
   (let ((buffer (current-buffer)))
-    (when (not (smerge-goto-next-conflict))
-      (vc-find-conflicted-file)
-      (if (eq buffer (current-buffer))
-          (message "No conflicts found")
-        (goto-char 0)
-        (smerge-goto-next-conflict)))))
+    (condition-case nil
+        ;; FIXME: Try again from BOB before moving to the next file.
+        (smerge-next)
+      (error
+       (if (and (or smerge-change-buffer-confirm
+                    (and (buffer-modified-p) buffer-file-name))
+                (not (or (eq last-command this-command)
+                         (eq ?\r last-command-event)))) ;Called via M-x!?
+           ;; FIXME: Don't emit this message if `vc-find-conflicted-file' won't
+           ;; go to another file anyway (because there are no more conflicted
+           ;; files).
+           (message (if (buffer-modified-p)
+                        "No more conflicts here.  Repeat to save and go to next buffer"
+                      "No more conflicts here.  Repeat to go to next buffer"))
+         (if (and (buffer-modified-p) buffer-file-name)
+             (save-buffer))
+         (vc-find-conflicted-file)
+         (if (eq buffer (current-buffer))
+             ;; Do nothing: presumably `vc-find-conflicted-file' already
+             ;; emitted a message explaining there aren't any more conflicts.
+             nil
+           (goto-char (point-min))
+           (smerge-next)))))))
 
 (provide 'smerge-mode)
 
