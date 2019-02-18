@@ -4113,7 +4113,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Like `shell-command-to-string', but for asynchronous processes."
   (with-temp-buffer
     (async-shell-command command (current-buffer))
-    (with-timeout (10 (tramp--test-timeout-handler))
+    (with-timeout
+        ((if (getenv "EMACS_EMBA_CI") 30 10) (tramp--test-timeout-handler))
       (while (accept-process-output
 	      (get-buffer-process (current-buffer)) nil nil t)))
     (buffer-substring-no-properties (point-min) (point-max))))
