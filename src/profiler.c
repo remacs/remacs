@@ -118,9 +118,8 @@ static void evict_lower_half (log_t *log)
 {
   ptrdiff_t size = ASIZE (log->key_and_value) / 2;
   EMACS_INT median = approximate_median (log, 0, size);
-  ptrdiff_t i;
 
-  for (i = 0; i < size; i++)
+  for (ptrdiff_t i = 0; i < size; i++)
     /* Evict not only values smaller but also values equal to the median,
        so as to make sure we evict something no matter what.  */
     if (XFIXNUM (HASH_VALUE (log, i)) <= median)
@@ -148,17 +147,14 @@ static void evict_lower_half (log_t *log)
 static void
 record_backtrace (log_t *log, EMACS_INT count)
 {
-  Lisp_Object backtrace;
-  ptrdiff_t index;
-
   if (log->next_free < 0)
     /* FIXME: transfer the evicted counts to a special entry rather
        than dropping them on the floor.  */
     evict_lower_half (log);
-  index = log->next_free;
+  ptrdiff_t index = log->next_free;
 
   /* Get a "working memory" vector.  */
-  backtrace = HASH_KEY (log, index);
+  Lisp_Object backtrace = HASH_KEY (log, index);
   get_backtrace (backtrace);
 
   { /* We basically do a `gethash+puthash' here, except that we have to be
@@ -232,13 +228,6 @@ static EMACS_INT current_sampling_interval;
 
 /* Signal handler for sampling profiler.  */
 
-/* timer_getoverrun is not implemented on Cygwin prior to
-   cygwin-3.0.0, but the following seems to be good enough for
-   profiling. */
-#if defined CYGWIN && !defined HAVE_TIMER_GETOVERRUN
-#define timer_getoverrun(x) 0
-#endif
-
 static void
 handle_profiler_signal (int signal)
 {
@@ -253,7 +242,7 @@ handle_profiler_signal (int signal)
   else
     {
       EMACS_INT count = 1;
-#ifdef HAVE_ITIMERSPEC
+#if defined HAVE_ITIMERSPEC && defined HAVE_TIMER_GETOVERRUN
       if (profiler_timer_ok)
 	{
 	  int overruns = timer_getoverrun (profiler_timer);
@@ -275,9 +264,6 @@ deliver_profiler_signal (int signal)
 static int
 setup_cpu_timer (Lisp_Object sampling_interval)
 {
-  struct sigaction action;
-  struct itimerval timer;
-  struct timespec interval;
   int billion = 1000000000;
 
   if (! RANGED_FIXNUMP (1, sampling_interval,
@@ -288,8 +274,10 @@ setup_cpu_timer (Lisp_Object sampling_interval)
     return -1;
 
   current_sampling_interval = XFIXNUM (sampling_interval);
-  interval = make_timespec (current_sampling_interval / billion,
-			    current_sampling_interval % billion);
+  struct timespec interval
+    = make_timespec (current_sampling_interval / billion,
+		     current_sampling_interval % billion);
+  struct sigaction action;
   emacs_sigaction_init (&action, deliver_profiler_signal);
   sigaction (SIGPROF, &action, 0);
 
@@ -309,16 +297,15 @@ setup_cpu_timer (Lisp_Object sampling_interval)
 #endif
 	CLOCK_REALTIME
       };
-      int i;
       struct sigevent sigev;
       sigev.sigev_value.sival_ptr = &profiler_timer;
       sigev.sigev_signo = SIGPROF;
       sigev.sigev_notify = SIGEV_SIGNAL;
 
-      for (i = 0; i < ARRAYELTS (system_clock); i++)
+      for (int i = 0; i < ARRAYELTS (system_clock); i++)
 	if (timer_create (system_clock[i], &sigev, &profiler_timer) == 0)
 	  {
-	    profiler_timer_ok = 1;
+	    profiler_timer_ok = true;
 	    break;
 	  }
     }
@@ -333,6 +320,7 @@ setup_cpu_timer (Lisp_Object sampling_interval)
 #endif
 
 #ifdef HAVE_SETITIMER
+  struct itimerval timer;
   timer.it_value = timer.it_interval = make_timeval (interval);
   if (setitimer (ITIMER_PROF, &timer, 0) == 0)
     return SETITIMER_RUNNING;
@@ -359,7 +347,7 @@ See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
     }
 
   int status = setup_cpu_timer (sampling_interval);
-  if (status == -1)
+  if (status < 0)
     {
       profiler_cpu_running = NOT_RUNNING;
       error ("Invalid sampling interval");
@@ -388,8 +376,7 @@ Return non-nil if the profiler was running.  */)
 #ifdef HAVE_ITIMERSPEC
     case TIMER_SETTIME_RUNNING:
       {
-	struct itimerspec disable;
-	memset (&disable, 0, sizeof disable);
+	struct itimerspec disable = { 0, };
 	timer_settime (profiler_timer, 0, &disable, 0);
       }
       break;
@@ -398,8 +385,7 @@ Return non-nil if the profiler was running.  */)
 #ifdef HAVE_SETITIMER
     case SETITIMER_RUNNING:
       {
-	struct itimerval disable;
-	memset (&disable, 0, sizeof disable);
+	struct itimerval disable = { 0, };
 	setitimer (ITIMER_PROF, &disable, 0);
       }
       break;
@@ -551,10 +537,10 @@ cmpfn_profiler (struct hash_table_test *t,
 {
   if (VECTORP (bt1) && VECTORP (bt2))
     {
-      ptrdiff_t i, l = ASIZE (bt1);
+      ptrdiff_t l = ASIZE (bt1);
       if (l != ASIZE (bt2))
 	return false;
-      for (i = 0; i < l; i++)
+      for (ptrdiff_t i = 0; i < l; i++)
 	if (NILP (Ffunction_equal (AREF (bt1, i), AREF (bt2, i))))
 	  return false;
       return true;
@@ -569,8 +555,8 @@ hashfn_profiler (struct hash_table_test *ht, Lisp_Object bt)
   if (VECTORP (bt))
     {
       EMACS_UINT hash = 0;
-      ptrdiff_t i, l = ASIZE (bt);
-      for (i = 0; i < l; i++)
+      ptrdiff_t l = ASIZE (bt);
+      for (ptrdiff_t i = 0; i < l; i++)
 	{
 	  Lisp_Object f = AREF (bt, i);
 	  EMACS_UINT hash1
