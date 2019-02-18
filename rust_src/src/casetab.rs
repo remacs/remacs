@@ -42,8 +42,8 @@ impl LispCaseTable {
         (extras[0], extras[1], extras[2])
     }
 
-    pub fn set_extras(&mut self, idx: isize, value: LispObject) {
-        assert!(0 <= idx && idx < 3);
+    pub fn set_extras(&mut self, idx: usize, value: LispObject) {
+        assert!(idx < 3);
         let extras = unsafe { self.0.extras.as_mut_slice(3) };
         extras[idx as usize] = value;
     }
