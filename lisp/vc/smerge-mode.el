@@ -1432,6 +1432,20 @@ If no conflict maker is found, turn off `smerge-mode'."
         (smerge-next))
     (error (smerge-auto-leave))))
 
+(require 'vc)
+
+(defun smerge-vc-next-conflict ()
+  "Tries to go to next conflict in current file, otherwise tries
+to open next conflicted file version-control-system wise"
+  (interactive)
+  (let ((buffer (current-buffer)))
+    (when (not (smerge-goto-next-conflict))
+      (vc-find-conflicted-file)
+      (if (eq buffer (current-buffer))
+          (message "No conflicts found")
+        (goto-char 0)
+        (smerge-goto-next-conflict)))))
+
 (provide 'smerge-mode)
 
 ;;; smerge-mode.el ends here
