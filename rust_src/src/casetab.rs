@@ -9,7 +9,6 @@ use crate::{
     chartable::LispCharTableRef,
     lisp::LispObject,
     lists::put,
-    objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
         map_char_table, staticpro, Fcopy_sequence, Fset_char_table_range, CHAR_TABLE_SET,
@@ -22,8 +21,20 @@ use crate::{
 pub struct LispCaseTable(LispCharTableRef);
 
 impl LispCaseTable {
-    pub fn from_char_table(table: LispCharTableRef) -> Self {
-        Self(table)
+    pub fn from_char_table(table: LispCharTableRef) -> Option<Self> {
+        if table.purpose.eq(Qcase_table) {
+            Some(Self(table))
+        } else {
+            None
+        }
+    }
+
+    pub fn is_proper(self) -> bool {
+        let (up, canon, eqv) = self.extras();
+
+        (up.is_nil() || up.is_char_table())
+            && ((canon.is_nil() && eqv.is_nil())
+                || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
     }
 
     pub fn extras(&self) -> (LispObject, LispObject, LispObject) {
@@ -42,13 +53,26 @@ impl LispCaseTable {
     }
 }
 
+impl LispObject {
+    pub fn as_case_table(self) -> Option<LispCaseTable> {
+        self.into()
+    }
+}
+
 impl From<LispObject> for LispCaseTable {
     fn from(obj: LispObject) -> Self {
-        let case_table: Option<LispCharTableRef> = obj.into();
-        if !case_table_p(case_table) {
-            wrong_type!(Qcase_table_p, obj);
-        }
-        Self(case_table.unwrap())
+        obj.as_case_table()
+            .unwrap_or_else(|| wrong_type!(Qcase_table_p, obj))
+    }
+}
+
+// Allow for the transformation of char tables into case tables when their
+// `purpose` field is set to `Qcase_table`. Do not check the `extras` fields.
+// This way a new char table can be transformed into a case table.
+impl From<LispObject> for Option<LispCaseTable> {
+    fn from(obj: LispObject) -> Self {
+        Option::<LispCharTableRef>::from(obj)
+            .and_then(|char_table| LispCaseTable::from_char_table(char_table))
     }
 }
 
@@ -180,25 +204,11 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
 /// Return t if OBJECT is a case table.
 /// See `set-case-table' for more information on these data structures.
 #[lisp_fn]
-pub fn case_table_p(table: Option<LispCharTableRef>) -> bool {
-    let char_table = match table {
-        Some(ct) => {
-            if !eq(ct.purpose, Qcase_table) {
-                return false;
-            }
-            ct
-        }
-        None => {
-            return false;
-        }
-    };
-
-    let case_table = LispCaseTable::from_char_table(char_table);
-    let (up, canon, eqv) = case_table.extras();
-
-    (up.is_nil() || up.is_char_table())
-        && ((canon.is_nil() && eqv.is_nil())
-            || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+pub fn case_table_p(object: LispObject) -> bool {
+    match Option::<LispCaseTable>::from(object) {
+        None => false,
+        Some(case_table) => case_table.is_proper(),
+    }
 }
 
 /// Return the case table of the current buffer.
