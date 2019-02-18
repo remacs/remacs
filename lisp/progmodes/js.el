@@ -1496,8 +1496,10 @@ point of view of font-lock.  It applies highlighting directly with
 
 (defconst js-jsx--font-lock-keywords
   `((js-jsx--match-tag-name 0 font-lock-function-name-face t)
-    (js-jsx--match-attribute-name 0 font-lock-variable-name-face t))
-  "JSX font lock faces.")
+    (js-jsx--match-attribute-name 0 font-lock-variable-name-face t)
+    (js-jsx--match-tag-beg)
+    (js-jsx--match-tag-end))
+  "JSX font lock faces and multiline text properties.")
 
 (defun js-jsx--match-tag-name (limit)
   "Match JSXBoundaryElement names, until LIMIT."
@@ -1520,6 +1522,28 @@ point of view of font-lock.  It applies highlighting directly with
         (or (and (setq value (get-text-property pos 'js-jsx-attribute-name))
                  (progn (set-match-data value) t))
             (js-jsx--match-attribute-name limit))))))
+
+(defun js-jsx--match-tag-beg (limit)
+  "Match JSXBoundaryElements from start, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-beg nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-tag-beg))
+                 (progn (put-text-property pos (cdr value) 'font-lock-multiline t) t))
+            (js-jsx--match-tag-beg limit))))))
+
+(defun js-jsx--match-tag-end (limit)
+  "Match JSXBoundaryElements from end, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-tag-end nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-tag-end))
+                 (progn (put-text-property value pos 'font-lock-multiline t) t))
+            (js-jsx--match-tag-end limit))))))
 
 (defconst js--font-lock-keywords-3
   `(
@@ -1769,11 +1793,53 @@ This performs fontification according to `js--class-styles'."
   "Check if STRING is a unary operator keyword in JavaScript."
   (string-match-p js--unary-keyword-re string))
 
+(defun js--syntax-propertize-extend-region (start end)
+  "Extend the START-END region for propertization, if necessary.
+For use by `syntax-propertize-extend-region-functions'."
+  (if js-jsx-syntax (js-jsx--syntax-propertize-extend-region start end)))
+
+(defun js-jsx--syntax-propertize-extend-region (start end)
+  "Extend the START-END region for propertization, if necessary.
+If any “>” in the region appears to be the end of a tag starting
+before the start of the region, extend region backwards to the
+start of that tag so parsing may proceed from that point.
+For use by `syntax-propertize-extend-region-functions'."
+  (let (new-start
+        forward-sexp-function ; Use the Lisp version.
+        parse-sexp-lookup-properties) ; Fix backward-sexp error here.
+    (catch 'stop
+      (goto-char start)
+      (while (re-search-forward ">" end t)
+        (catch 'continue
+          ;; Check if this is really a right shift bitwise operator
+          ;; (“>>” or “>>>”).
+          (unless (or (eq (char-before (1- (point))) ?>)
+                      (eq (char-after) ?>))
+            (save-excursion
+              (backward-char)
+              (while (progn (if (= (point) (point-min)) (throw 'continue nil))
+                            (/= (char-before) ?<))
+                (skip-chars-backward " \t\n")
+                (if (= (point) (point-min)) (throw 'continue nil))
+                (cond
+                 ((memq (char-before) '(?\" ?\' ?\` ?\}))
+                  (condition-case nil
+                      (backward-sexp)
+                    (scan-error (throw 'continue nil))))
+                 ((memq (char-before) '(?\/ ?\=)) (backward-char))
+                 ((looking-back js--dotted-name-re (line-beginning-position) t)
+                  (goto-char (match-beginning 0)))
+                 (t (throw 'continue nil))))
+              (when (< (point) start)
+                (setq new-start (1- (point)))
+                (throw 'stop nil)))))))
+    (if new-start (cons new-start end))))
+
 (defun js-jsx--syntax-propertize-tag (end)
   "Determine if a JSXBoundaryElement is before END and propertize it.
 Disambiguate JSX from inequality operators and arrow functions by
 testing for syntax only valid as JSX."
-  (let ((tag-beg (1- (point))) tag-end (type 'open)
+  (let ((tag-beg (1- (point))) (type 'open)
         name-beg name-match-data unambiguous
         forward-sexp-function) ; Use Lisp version.
     (catch 'stop
@@ -1783,8 +1849,7 @@ testing for syntax only valid as JSX."
         (cond
          ((= (char-after) ?>)
           (forward-char)
-          (setq unambiguous t
-                tag-end (point))
+          (setq unambiguous t)
           (throw 'stop nil))
          ;; Handle a JSXSpreadChild (“<Foo {...bar}”) or a
          ;; JSXExpressionContainer as a JSXAttribute value
@@ -1852,8 +1917,8 @@ testing for syntax only valid as JSX."
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
       (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
       ;; Mark beginning and end of tag for features like indentation.
-      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg type)
-      (if tag-end (put-text-property (1- tag-end) tag-end 'js-jsx-tag-end tag-beg)))))
+      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg (cons type (point)))
+      (put-text-property (point) (1+ (point)) 'js-jsx-tag-end tag-beg))))
 
 (defconst js-jsx--text-properties
   '(js-jsx-tag-beg nil js-jsx-tag-end nil js-jsx-tag-name nil js-jsx-attribute-name nil)
@@ -3945,6 +4010,8 @@ If one hasn't been set, or if it's stale, prompt for a new one."
                     '(font-lock-syntactic-face-function
                       . js-font-lock-syntactic-face-function)))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
+  (add-hook 'syntax-propertize-extend-region-functions
+            #'js--syntax-propertize-extend-region 'append 'local)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
   (setq-local parse-sexp-ignore-comments t)
