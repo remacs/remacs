@@ -582,7 +582,7 @@ For example, the Unix uptime command format is \"%D, %z%2h:%.2m\"."
   "Return a string giving the duration of the Emacs initialization."
   (interactive)
   (let ((str
-	 (format "%.1f seconds"
+	 (format "%s seconds"
 		 (float-time
 		  (time-subtract after-init-time before-init-time)))))
     (if (called-interactively-p 'interactive)
