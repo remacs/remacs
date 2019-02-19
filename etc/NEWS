@@ -515,26 +515,44 @@ end.
 
 ** SQL
 
-*** Installation of 'sql-indent' from ELPA is strongly encouraged.
-This package support sophisticated rules for properly indenting SQL
-statements.  SQL is not like other programming languages like C, Java,
-or Python where code is sparse and rules for formatting are fairly
-well established. Instead SQL is more like COBOL (from which it came)
-and code tends to be very dense and line ending decisions driven by
-syntax and line length considerations to make readable code.
-Experienced SQL developers may prefer to rely upon existing Emacs
-facilities for formatting code but the 'sql-indent' package provides
-facilities to aid more casual SQL developers layout queries and
-complex expressions.
+*** SQL Indent Minor Mode
 
-*** 'sql-use-indent-support' (default t) enables SQL indention support.
+SQL Mode now supports the ELPA 'sql-indent' package for assisting
+sophisticated SQL indenting rules.  Note, however, that SQL is not
+like other programming languages like C, Java, or Python where code is
+sparse and rules for formatting are fairly well established. Instead
+SQL is more like COBOL (from which it came) and code tends to be very
+dense and line ending decisions driven by syntax and line length
+considerations to make readable code.  Experienced SQL developers may
+prefer to rely upon existing Emacs facilities for formatting code but
+the 'sql-indent' package provides facilities to aid more casual SQL
+developers layout queries and complex expressions.
+
+**** 'sql-use-indent-support' (default t) enables SQL indention support.
 The 'sql-indent' package from ELPA must be installed to get the
 indentation support in 'sql-mode' and 'sql-interactive-mode'.
 
-*** 'sql-mode-hook' and 'sql-interactive-mode-hook' changed.
+**** 'sql-mode-hook' and 'sql-interactive-mode-hook' changed.
 Both hook variables have had 'sql-indent-enable' added to their
-default values. If youhave existing customizations to these variables,
+default values. If you have existing customizations to these variables,
 you should make sure that the new default entry is included.
+
+*** Connection Wallet
+
+Database passwords can now by stored in NETRC or JSON data files that
+may optionally be encrypted. When establishing an interactive session
+with the database via 'sql-connect' or a product specific function,
+like 'sql-mysql' or 'my-postgres', the password wallet will be
+searched for the password. The 'sql-product', 'sql-server',
+'sql-database', and the 'sql-username' will be used to identify the
+appropriate authorization. This eliminates the discouraged practice of
+embedding database passwords in your Emacs initialization.
+
+See the `auth-source' module for complete documentation on the file
+formats.  By default, the wallet file is expected to be in the
+`user-emacs-directory', named 'sql-wallet' or '.sql-wallet', with
+'.json' (JSON) or no (NETRC) suffix.  Both file formats can optionally
+be encrypted with GPG by adding an additional '.gpg' suffix.
 
 ** Term
 

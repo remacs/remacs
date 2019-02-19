@@ -748,6 +748,126 @@ The package must be available to be loaded and activated."
   (when (sql-is-indent-available)
     (sqlind-minor-mode (if sql-use-indent-support +1 -1))))
 
+;; Secure Password wallet
+
+(require 'auth-source)
+
+(defun sql-auth-source-search-wallet (wallet product user server database port)
+    "Read auth source WALLET to locate the USER secret.
+Sets `auth-sources' to WALLET and uses `auth-source-search' to locate the entry.
+The DATABASE and SERVER are concatenated with a slash between them as the
+host key."
+    (let* ((auth-sources wallet)
+           host
+           secret h-secret sd-secret)
+
+      ;; product
+      (setq product (symbol-name product))
+
+      ;; user
+      (setq user (unless (string-empty-p user) user))
+
+      ;; port
+      (setq port
+            (when (and port (numberp port) (not (zerop port)))
+              (number-to-string port)))
+
+      ;; server
+      (setq server (unless (string-empty-p server) server))
+
+      ;; database
+      (setq database (unless (string-empty-p database) database))
+
+      ;; host
+      (setq host (if server
+                     (if database
+                         (concat server "/" database)
+                       server)
+                   database))
+
+      ;; Perform search
+      (dolist (s (auth-source-search :max 1000))
+        (when (and
+               ;; Is PRODUCT specified, in the enty, and they are equal
+               (if product
+                   (if (plist-member s :product)
+                       (equal (plist-get s :product) product)
+                     t)
+                 t)
+               ;; Is USER specified, in the entry, and they are equal
+               (if user
+                   (if (plist-member s :user)
+                       (equal (plist-get s :user) user)
+                     t)
+                 t)
+               ;; Is PORT specified, in the entry, and they are equal
+               (if port
+                   (if (plist-member s :port)
+                       (equal (plist-get s :port) port)
+                     t)
+                 t))
+          ;; Is HOST specified, in the entry, and they are equal
+          ;; then the H-SECRET list
+          (if (and host
+                   (plist-member s :host)
+                   (equal (plist-get s :host) host))
+              (push s h-secret)
+            ;; Are SERVER and DATABASE specified, present, and equal
+            ;; then the SD-SECRET list
+            (if (and server
+                     (plist-member s :server)
+                     database
+                     (plist-member s :database)
+                     (equal (plist-get s :server) server)
+                     (equal (plist-get s :database) database))
+                (push s sd-secret)
+              ;; Is SERVER specified, in the entry, and they are equal
+              ;; then the base SECRET list
+              (if (and server
+                       (plist-member s :server)
+                       (equal (plist-get s :server) server))
+                  (push s secret)
+                ;; Is DATABASE specified, in the entry, and they are equal
+                ;; then the base SECRET list
+                (if (and database
+                         (plist-member s :database)
+                         (equal (plist-get s :database) database))
+                    (push s secret)))))))
+      (setq secret (or h-secret sd-secret secret))
+
+      ;; If we found a single secret, return the password
+      (when (= 1 (length secret))
+        (setq secret (car secret))
+        (if (plist-member secret :secret)
+            (plist-get secret :secret)
+          nil))))
+
+(defcustom sql-password-wallet
+  (let (wallet w)
+    (dolist (ext '(".json.gpg" ".gpg" ".json" "") wallet)
+      (unless wallet
+        (setq w (locate-user-emacs-file (concat "sql-wallet" ext)
+                                        (concat ".sql-wallet" ext)))
+        (when (file-exists-p w)
+          (setq wallet w)))))
+  "Identification of the password wallet.
+See `sql-password-search-wallet-function' to understand how this value
+is used to locate the password wallet."
+  :type `(plist-get (symbol-plist 'auth-sources) 'custom-type)
+  :group 'SQL
+  :version "27.1")
+
+(defvar sql-password-search-wallet-function #'sql-auth-source-search-wallet
+  "Function to handle the lookup of the database password.
+The specified function will be called as:
+  (wallet-func WALLET PRODUCT USER SERVER DATABASE PORT)
+
+It is expected to return either a string containing the password,
+a function returning the password, or nil, If you want to support
+another format of password file, then implement a different
+search wallet function and identify the location of the password
+store with `sql-password-wallet'.")
+
 ;; misc customization of sql.el behavior
 
 (defcustom sql-electric-stuff nil
@@ -3199,6 +3319,10 @@ symbol `password', for the server if it contains the symbol
 `database'.  The members of WHAT are processed in the order in
 which they are provided.
 
+If the `sql-password-wallet' is non-nil and WHAT contains the
+`password' token, then the `password' token will be pushed to the
+end to be sure that all of the values can be fed to the wallet.
+
 Each token may also be a list with the token in the car and a
 plist of options as the cdr.  The following properties are
 supported:
@@ -3210,6 +3334,15 @@ supported:
 
 In order to ask the user for username, password and database, call the
 function like this: (sql-get-login \\='user \\='password \\='database)."
+
+  ;; Push the password to the end if we have a wallet
+  (when (and sql-password-wallet
+             (fboundp sql-password-search-wallet-function)
+             (member 'password what))
+    (setq what (append (cl-delete 'password what)
+                       '(password))))
+
+  ;; Prompt for each parameter
   (dolist (w what)
     (let ((plist (cdr-safe w)))
       (pcase (or (car-safe w) w)
@@ -3218,7 +3351,19 @@ function like this: (sql-get-login \\='user \\='password \\='database)."
 
         ('password
          (setq-default sql-password
-                       (read-passwd "Password: " nil (sql-default-value 'sql-password))))
+                       (if (and sql-password-wallet
+                                (fboundp sql-password-search-wallet-function))
+                           (let ((password (funcall sql-password-search-wallet-function
+                                                    sql-password-wallet
+                                                    sql-product
+                                                    sql-user
+                                                    sql-server
+                                                    sql-database
+                                                    sql-port)))
+                             (if password
+                                 password
+                               (read-passwd "Password: " nil (sql-default-value 'sql-password))))
+                         (read-passwd "Password: " nil (sql-default-value 'sql-password)))))
 
         ('server
          (sql-get-login-ext 'sql-server "Server: " 'sql-server-history plist))
@@ -4480,6 +4625,10 @@ the call to \\[sql-product-interactive] with
                     (default-directory
                                     (or sql-default-directory
                                         default-directory)))
+
+                ;; The password wallet returns a function which supplies the password.
+                (when (functionp sql-password)
+                  (setq sql-password (funcall sql-password)))
 
                 ;; Call the COMINT service
                 (funcall (sql-get-product-feature product :sqli-comint-func)
