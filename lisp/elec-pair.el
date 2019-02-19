@@ -429,20 +429,25 @@ some list calculations, finally restoring the situation as if nothing
 happened."
   (pcase (electric-pair-syntax-info char)
     (`(,syntax ,pair ,_ ,s-or-c)
-     (unwind-protect
-         (progn
-           (delete-char -1)
-           (cond ((eq ?\( syntax)
-                  (let* ((pair-data
-                          (electric-pair--balance-info 1 s-or-c))
-                         (outermost (cdr pair-data)))
-                    (cond ((car outermost)
-                           nil)
-                          (t
-                           (eq (cdr outermost) pair)))))
-                 ((eq syntax ?\")
-                  (electric-pair--unbalanced-strings-p char))))
-       (insert char)))))
+     (catch 'done
+       ;; FIXME: modify+undo is *very* tricky business.  We used to
+       ;; use `delete-char' followed by `insert', but this changed the
+       ;; position some markers.  The real fix would be to compute the
+       ;; result without having to modify the buffer at all.
+       (atomic-change-group
+         (delete-char -1)
+         (throw
+          'done
+          (cond ((eq ?\( syntax)
+                 (let* ((pair-data
+                         (electric-pair--balance-info 1 s-or-c))
+                        (outermost (cdr pair-data)))
+                   (cond ((car outermost)
+                          nil)
+                         (t
+                          (eq (cdr outermost) pair)))))
+                ((eq syntax ?\")
+                 (electric-pair--unbalanced-strings-p char)))))))))
 
 (defun electric-pair-skip-if-helps-balance (char)
   "Return non-nil if skipping CHAR would benefit parentheses' balance.
