@@ -2003,7 +2003,7 @@ position, else returns nil."
 It should not contain a caret (^) at the beginning."
   :type 'string)
 
-(defcustom python-shell-prompt-block-regexp "\\.\\.\\. "
+(defcustom python-shell-prompt-block-regexp "\\.\\.\\.:? "
   "Regular expression matching block input prompt of Python shell.
 It should not contain a caret (^) at the beginning."
   :type 'string)
