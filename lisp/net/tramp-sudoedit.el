@@ -63,7 +63,7 @@ See `tramp-actions-before-shell' for more info.")
 
 ;;;###tramp-autoload
 (defconst tramp-sudoedit-file-name-handler-alist
-  '((access-file . ignore)
+  '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-sudoedit-handle-add-name-to-file)
     (byte-compiler-base-file-name . ignore)
     ;; `copy-directory' performed by default handler.

@@ -940,7 +940,7 @@ of command line.")
 ;; New handlers should be added here.
 ;;;###tramp-autoload
 (defconst tramp-sh-file-name-handler-alist
-  '(;; `access-file' performed by default handler.
+  '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-sh-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
     (copy-directory . tramp-sh-handle-copy-directory)
@@ -2574,6 +2574,9 @@ The method used must be an out-of-band method."
   "Like `insert-directory' for Tramp files."
   (setq filename (expand-file-name filename))
   (unless switches (setq switches ""))
+  ;; Check, whether directory is accessible.
+  (unless wildcard
+    (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name filename nil
     (if (and (featurep 'ls-lisp)
 	     (not (symbol-value 'ls-lisp-use-insert-directory-program)))

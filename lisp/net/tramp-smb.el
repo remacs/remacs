@@ -214,7 +214,7 @@ See `tramp-actions-before-shell' for more info.")
 ;; New handlers should be added here.
 ;;;###tramp-autoload
 (defconst tramp-smb-file-name-handler-alist
-  '(;; `access-file' performed by default handler.
+  '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-smb-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
     (copy-directory . tramp-smb-handle-copy-directory)
@@ -994,6 +994,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       ;; Called from `dired-add-entry'.
       (setq filename (file-name-as-directory filename))
     (setq filename (directory-file-name filename)))
+  ;; Check, whether directory is accessible.
+  (unless wildcard
+    (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name filename nil
     (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
       (save-match-data

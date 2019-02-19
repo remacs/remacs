@@ -2730,7 +2730,14 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 		 (format
 		  "\\(.+ %s\\( ->.+\\)?\n\\)\\{%d\\}"
 		  (regexp-opt (directory-files tmp-name1))
-		  (length (directory-files tmp-name1))))))))
+		  (length (directory-files tmp-name1)))))))
+
+	    ;; Check error case.  We do not check for the error type,
+	    ;; because ls-lisp returns `file-error', and native Tramp
+	    ;; returns `file-missing'.
+	    (delete-directory tmp-name1 'recursive)
+	    (with-temp-buffer
+	      (should-error (insert-directory tmp-name1 nil))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
@@ -2856,8 +2863,8 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 
 (ert-deftest tramp-test18-file-attributes ()
   "Check `file-attributes'.
-This tests also `file-readable-p', `file-regular-p' and
-`file-ownership-preserved-p'."
+This tests also `access-file', `file-readable-p',
+`file-regular-p' and `file-ownership-preserved-p'."
   (skip-unless (tramp--test-enabled))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
@@ -2878,6 +2885,9 @@ This tests also `file-readable-p', `file-regular-p' and
 	   attr)
       (unwind-protect
 	  (progn
+	    (should-error
+	     (access-file tmp-name1 "error")
+	     :type tramp-file-missing)
 	    ;; `file-ownership-preserved-p' should return t for
 	    ;; non-existing files.  It is implemented only in tramp-sh.el.
 	    (when (tramp--test-sh-p)
@@ -2886,6 +2896,7 @@ This tests also `file-readable-p', `file-regular-p' and
 	    (should (file-exists-p tmp-name1))
 	    (should (file-readable-p tmp-name1))
 	    (should (file-regular-p tmp-name1))
+	    (should-not (access-file tmp-name1 "error"))
 	    (when (tramp--test-sh-p)
 	      (should (file-ownership-preserved-p tmp-name1 'group)))
 
@@ -2910,11 +2921,15 @@ This tests also `file-readable-p', `file-regular-p' and
 	    (should (stringp (nth 3 attr))) ;; Gid.
 
 	    (tramp--test-ignore-make-symbolic-link-error
+	     (should-error
+	      (access-file tmp-name2 "error")
+	      :type tramp-file-missing)
 	      (when (tramp--test-sh-p)
 		(should (file-ownership-preserved-p tmp-name2 'group)))
 	      (make-symbolic-link tmp-name1 tmp-name2)
 	      (should (file-exists-p tmp-name2))
 	      (should (file-symlink-p tmp-name2))
+	      (should-not (access-file tmp-name2 "error"))
 	      (when (tramp--test-sh-p)
 		(should (file-ownership-preserved-p tmp-name2 'group)))
 	      (setq attr (file-attributes tmp-name2))
@@ -2953,6 +2968,7 @@ This tests also `file-readable-p', `file-regular-p' and
 	    (should (file-exists-p tmp-name1))
 	    (should (file-readable-p tmp-name1))
 	    (should-not (file-regular-p tmp-name1))
+	    (should-not (access-file tmp-name1 ""))
 	    (when (tramp--test-sh-p)
 	      (should (file-ownership-preserved-p tmp-name1 'group)))
 	    (setq attr (file-attributes tmp-name1))
@@ -5590,8 +5606,8 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Investigate, why `tramp-test11-copy-file' and `tramp-test12-rename-file'
 ;;   do not work properly for `nextcloud'.
-;; * Fix `tramp-test29-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix `tramp-test31-interrupt-process', timeout doesn't work reliably.
+;; * Fix `tramp-test29-start-file-process' and
+;;   `tramp-test30-make-process' on MS Windows (`process-send-eof'?).
 ;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.
 
 (provide 'tramp-tests)

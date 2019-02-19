@@ -209,7 +209,7 @@ It must be supported by libarchive(3).")
 ;; New handlers should be added here.
 ;;;###tramp-autoload
 (defconst tramp-archive-file-name-handler-alist
-  '((access-file . ignore)
+  '((access-file . tramp-archive-handle-access-file)
     (add-name-to-file . tramp-archive-handle-not-implemented)
     ;; `byte-compiler-base-file-name' performed by default handler.
     ;; `copy-directory' performed by default handler.
@@ -530,6 +530,10 @@ offered."
 
 
 ;; File name primitives.
+
+(defun tramp-archive-handle-access-file (filename string)
+  "Like `access-file' for Tramp files."
+  (access-file (tramp-archive-gvfs-file-name filename) string))
 
 (defun tramp-archive-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date

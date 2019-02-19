@@ -570,26 +570,35 @@ This checks also `file-name-as-directory', `file-name-directory',
 	       (format
 		"\\(.+ %s\\( ->.+\\)?\n\\)\\{%d\\}"
 		(regexp-opt (directory-files tramp-archive-test-archive))
-		(length (directory-files tramp-archive-test-archive))))))))
+		(length (directory-files tramp-archive-test-archive)))))))
+
+	  ;; Check error case.
+	  (with-temp-buffer
+	    (should-error
+	     (insert-directory
+	      (expand-file-name "baz" tramp-archive-test-archive) nil)
+	     :type tramp-file-missing)))
 
       ;; Cleanup.
       (tramp-archive-cleanup-hash))))
 
 (ert-deftest tramp-archive-test18-file-attributes ()
   "Check `file-attributes'.
-This tests also `file-readable-p' and `file-regular-p'."
+This tests also `access-file', `file-readable-p' and `file-regular-p'."
   :tags '(:expensive-test)
   (skip-unless tramp-archive-enabled)
 
   (let ((tmp-name1 (expand-file-name "foo.txt" tramp-archive-test-archive))
 	(tmp-name2 (expand-file-name "foo.lnk" tramp-archive-test-archive))
 	(tmp-name3 (expand-file-name "bar" tramp-archive-test-archive))
+	(tmp-name4 (expand-file-name "baz" tramp-archive-test-archive))
 	attr)
     (unwind-protect
 	(progn
 	  (should (file-exists-p tmp-name1))
 	  (should (file-readable-p tmp-name1))
 	  (should (file-regular-p tmp-name1))
+	  (should-not (access-file tmp-name1 "error"))
 
 	  ;; We do not test inodes and device numbers.
 	  (setq attr (file-attributes tmp-name1))
@@ -622,7 +631,13 @@ This tests also `file-readable-p' and `file-regular-p'."
 	  (should (file-readable-p tmp-name3))
 	  (should-not (file-regular-p tmp-name3))
 	  (setq attr (file-attributes tmp-name3))
-	  (should (eq (car attr) t)))
+	  (should (eq (car attr) t))
+	  (should-not (access-file tmp-name3 "error"))
+
+	  ;; Check error case.
+	  (should-error
+	   (access-file tmp-name4  "error")
+	   :type tramp-file-missing))
 
       ;; Cleanup.
       (tramp-archive-cleanup-hash))))

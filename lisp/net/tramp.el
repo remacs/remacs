@@ -2310,6 +2310,7 @@ ARGS are the arguments OPERATION has been called with."
 (defmacro tramp-condition-case-unless-debug
   (var bodyform &rest handlers)
   "Like `condition-case-unless-debug' but `tramp-debug-on-error'."
+  (declare (debug condition-case) (indent 2))
   `(let ((debug-on-error tramp-debug-on-error))
      (condition-case-unless-debug ,var ,bodyform ,@handlers)))
 
@@ -3060,6 +3061,13 @@ User is always nil."
 (defvar tramp-handle-write-region-hook nil
   "Normal hook to be run at the end of `tramp-*-handle-write-region'.")
 
+(defun tramp-handle-access-file (filename string)
+  "Like `access-file' for Tramp files."
+  (unless (file-readable-p filename)
+    (tramp-error
+     (tramp-dissect-file-name filename) tramp-file-missing
+     "%s: No such file or directory %s" string filename)))
+
 (defun tramp-handle-add-name-to-file
   (filename newname &optional ok-if-already-exists)
   "Like `add-name-to-file' for Tramp files."
@@ -3439,6 +3447,9 @@ User is always nil."
   (when (and (zerop (length (file-name-nondirectory filename)))
 	     (not full-directory-p))
     (setq switches (concat switches "F")))
+  ;; Check, whether directory is accessible.
+  (unless wildcard
+    (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name (expand-file-name filename) nil
     (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
       (require 'ls-lisp)
