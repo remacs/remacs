@@ -62,9 +62,6 @@
 ;;; History:
 ;;
 
-(defconst erc-version-string (format "\C-bERC\C-b (IRC client for Emacs %s)" emacs-version)
-  "ERC version.  This is used by function `erc-version'.")
-
 ;;; Code:
 
 (load "erc-loaddefs" nil t)
