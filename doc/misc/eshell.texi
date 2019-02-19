@@ -418,7 +418,7 @@ Lisp functions, based on successful completion).
 
 @end table
 
-@xref{Aliases} for the built-in variables @samp{$*}, @samp{$1},
+@xref{Aliases}, for the built-in variables @samp{$*}, @samp{$1},
 @samp{$2}, @dots{}, in alias definitions.
 
 @node Variables
@@ -630,7 +630,7 @@ Eshell's globbing syntax is very similar to that of Zsh.  Users coming
 from Bash can still use Bash-style globbing, as there are no
 incompatibilities.  Most globbing is pattern-based expansion, but there
 is also predicate-based expansion.  @xref{Filename Generation, , ,
-zsh, The Z Shell Manual}
+zsh, The Z Shell Manual},
 for full syntax.  To customize the syntax and behavior of globbing in
 Eshell see the Customize@footnote{@xref{Easy Customization, , , emacs,
 The GNU Emacs Manual}.}
