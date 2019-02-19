@@ -237,6 +237,7 @@
 (require 'custom)
 (require 'thingatpt)
 (require 'view)
+(eval-when-compile (require 'subr-x))   ; string-empty-p
 
 (defvar font-lock-keyword-face)
 (defvar font-lock-set-defaults)
