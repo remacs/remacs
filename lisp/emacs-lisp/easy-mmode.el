@@ -624,9 +624,7 @@ BODY is executed after moving to the destination location."
          (when-narrowed
           (lambda (body)
             (if (null narrowfun) body
-              `(let ((was-narrowed
-                      (prog1 (or (< (- (point-max) (point-min)) (buffer-size)))
-                        (widen))))
+              `(let ((was-narrowed (prog1 (buffer-narrowed-p) (widen))))
                  ,body
                  (when was-narrowed (funcall #',narrowfun)))))))
     (unless name (setq name base-name))
