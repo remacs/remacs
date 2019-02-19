@@ -2929,7 +2929,7 @@ displayed."
 ;;; Motion Functions
 
 (defun sql-statement-regexp (prod)
-  (let* ((ansi-stmt (sql-get-product-feature 'ansi :statement))
+  (let* ((ansi-stmt (or (sql-get-product-feature 'ansi :statement) "select"))
          (prod-stmt (sql-get-product-feature prod  :statement)))
     (concat "^\\<"
             (if prod-stmt
@@ -4193,7 +4193,8 @@ you entered, right above the output it created.
   (setq local-abbrev-table sql-mode-abbrev-table)
   (setq abbrev-all-caps 1)
   ;; Exiting the process will call sql-stop.
-  (set-process-sentinel (get-buffer-process (current-buffer)) 'sql-stop)
+  (let ((proc (get-buffer-process (current-buffer))))
+    (when proc (set-process-sentinel proc 'sql-stop)))
   ;; Save the connection and login params
   (set (make-local-variable 'sql-user)       sql-user)
   (set (make-local-variable 'sql-database)   sql-database)
@@ -4211,7 +4212,7 @@ you entered, right above the output it created.
        (sql-make-alternate-buffer-name))
   ;; User stuff.  Initialize before the hook.
   (set (make-local-variable 'sql-prompt-regexp)
-       (sql-get-product-feature sql-product :prompt-regexp))
+       (or (sql-get-product-feature sql-product :prompt-regexp) "^"))
   (set (make-local-variable 'sql-prompt-length)
        (sql-get-product-feature sql-product :prompt-length))
   (set (make-local-variable 'sql-prompt-cont-regexp)
@@ -4230,7 +4231,7 @@ you entered, right above the output it created.
             (concat "\\(" sql-prompt-regexp
                     "\\|" sql-prompt-cont-regexp "\\)")
           sql-prompt-regexp))
-  (setq left-margin sql-prompt-length)
+  (setq left-margin (or sql-prompt-length 0))
   ;; Install input sender
   (set (make-local-variable 'comint-input-sender) 'sql-input-sender)
   ;; People wanting a different history file for each
@@ -4522,7 +4523,8 @@ the call to \\[sql-product-interactive] with
               (let ((proc (get-buffer-process new-sqli-buffer))
                     (secs sql-login-delay)
                     (step 0.3))
-                (while (and (memq (process-status proc) '(open run))
+                (while (and proc
+                            (memq (process-status proc) '(open run))
                             (or (accept-process-output proc step)
                                 (<= 0.0 (setq secs (- secs step))))
                             (progn (goto-char (point-max))
