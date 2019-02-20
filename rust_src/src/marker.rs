@@ -254,7 +254,7 @@ pub extern "C" fn set_point_from_marker(marker: LispObject) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), charpos);
+        bytepos = buf_charpos_to_bytepos(cur_buf, charpos);
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
@@ -552,7 +552,7 @@ fn set_marker_internal_else(
             .as_marker()
             .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = buf_charpos_to_bytepos(buf.as_mut(), charpos);
+        bytepos = buf_charpos_to_bytepos(buf, charpos);
     } else {
         let beg = buf.buffer_beg_byte(restricted);
         let end = buf.buffer_end_byte(restricted);
@@ -606,11 +606,14 @@ impl LispBufferRef {
 #[no_mangle]
 pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
+    buf_charpos_to_bytepos_rust(buffer_ref, charpos)
+}
 
-    assert!(buffer_ref.beg() <= charpos && charpos <= buffer_ref.z());
+pub fn buf_charpos_to_bytepos_rust(buffer: LispBufferRef, charpos: isize) -> isize {
+    assert!(buffer.beg() <= charpos && charpos <= buffer.z());
 
-    let mut best_above = buffer_ref.z();
-    let mut best_above_byte = buffer_ref.z_byte();
+    let mut best_above = buffer.z();
+    let mut best_above_byte = buffer.z_byte();
 
     // If this buffer has as many characters as bytes,
     // each character must be one byte.
@@ -619,8 +622,8 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         return charpos;
     }
 
-    let mut best_below = buffer_ref.beg();
-    let mut best_below_byte = buffer_ref.beg_byte();
+    let mut best_below = buffer.beg();
+    let mut best_below_byte = buffer.beg_byte();
 
     // We find in best_above and best_above_byte
     // the closest known point above CHARPOS,
@@ -636,7 +639,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
             let mut changed = false;
             if $cpos == charpos {
                 if MARKER_DEBUG {
-                    byte_char_debug_check(buffer_ref, charpos, $bpos);
+                    byte_char_debug_check(buffer, charpos, $bpos);
                 }
                 return $bpos;
             } else if $cpos > charpos {
@@ -658,16 +661,16 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         };
     }
 
-    consider_known!(buffer_ref.pt, buffer_ref.pt_byte);
-    consider_known!(buffer_ref.gpt(), buffer_ref.gpt_byte());
-    consider_known!(buffer_ref.begv, buffer_ref.begv_byte);
-    consider_known!(buffer_ref.zv, buffer_ref.zv_byte);
+    consider_known!(buffer.pt, buffer.pt_byte);
+    consider_known!(buffer.gpt(), buffer.gpt_byte());
+    consider_known!(buffer.begv, buffer.begv_byte);
+    consider_known!(buffer.zv, buffer.zv_byte);
 
-    if buffer_ref.is_cached && buffer_ref.modifications() == buffer_ref.cached_modiff {
-        consider_known!(buffer_ref.cached_charpos, buffer_ref.cached_bytepos);
+    if buffer.is_cached && buffer.modifications() == buffer.cached_modiff {
+        consider_known!(buffer.cached_charpos, buffer.cached_bytepos);
     }
 
-    for m in buffer_ref.markers().iter() {
+    for m in buffer.markers().iter() {
         consider_known!(m.charpos_or_error(), m.bytepos_or_error());
         // If we are down to a range of 50 chars,
         // don't bother checking any other markers;
@@ -682,20 +685,20 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 
         while best_below != charpos {
             best_below += 1;
-            best_below_byte = buffer_ref.inc_pos(best_below_byte);
+            best_below_byte = buffer.inc_pos(best_below_byte);
         }
         if record {
             build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
-            byte_char_debug_check(buffer_ref, best_below, best_below_byte);
+            byte_char_debug_check(buffer, best_below, best_below_byte);
         }
 
-        buffer_ref.is_cached = true;
-        buffer_ref.cached_modiff = buffer_ref.modifications();
+        buffer.is_cached = true;
+        buffer.cached_modiff = buffer.modifications();
 
-        buffer_ref.cached_charpos = best_below;
-        buffer_ref.cached_bytepos = best_below_byte;
+        buffer.cached_charpos = best_below;
+        buffer.cached_bytepos = best_below_byte;
 
         best_below_byte
     } else {
@@ -703,21 +706,21 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 
         while best_above != charpos {
             best_above -= 1;
-            best_above_byte = buffer_ref.dec_pos(best_above_byte);
+            best_above_byte = buffer.dec_pos(best_above_byte);
         }
 
         if record {
             build_marker(b, best_above, best_above_byte);
         }
         if MARKER_DEBUG {
-            byte_char_debug_check(buffer_ref, best_below, best_below_byte);
+            byte_char_debug_check(buffer, best_below, best_below_byte);
         }
 
-        buffer_ref.is_cached = true;
-        buffer_ref.cached_modiff = buffer_ref.modifications();
+        buffer.is_cached = true;
+        buffer.cached_modiff = buffer.modifications();
 
-        buffer_ref.cached_charpos = best_above;
-        buffer_ref.cached_bytepos = best_above_byte;
+        buffer.cached_charpos = best_above;
+        buffer.cached_bytepos = best_above_byte;
 
         best_above_byte
     }
