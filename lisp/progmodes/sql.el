@@ -739,14 +739,9 @@ The package must be available to be loaded and activated."
   :type 'booleanp
   :version "27.1")
 
-(defun sql-is-indent-available ()
-  "Check if sql-indent module is available."
-  (when (locate-library "sql-indent")
-    (fboundp 'sqlind-minor-mode)))
-
 (defun sql-indent-enable ()
   "Enable `sqlind-minor-mode' if available and requested."
-  (when (sql-is-indent-available)
+  (when (fboundp 'sqlind-minor-mode)
     (sqlind-minor-mode (if sql-use-indent-support +1 -1))))
 
 ;; Secure Password wallet
@@ -925,7 +920,7 @@ Globally should be set to nil; it will be non-nil in `sql-mode',
 
 (defvaralias 'sql-pop-to-buffer-after-send-region 'sql-display-sqli-buffer-function)
 
-(defcustom sql-display-sqli-buffer-function 'display-buffer
+(defcustom sql-display-sqli-buffer-function #'display-buffer
   "Function to be called to display a SQLi buffer after `sql-send-*'.
 
 When set to a function, it will be called to display the buffer.
@@ -3681,8 +3676,8 @@ Allows the suppression of continuation prompts.")
 
     ;; Count how many newlines in the string
     (setq sql-output-newline-count
-          (apply #'+ (mapcar (lambda (ch)
-                                (if (eq ch ?\n) 1 0)) string)))
+          (apply #'+ (mapcar (lambda (ch) (if (eq ch ?\n) 1 0))
+                             string)))
 
     ;; Send the string
     (comint-simple-send proc string)))
@@ -4232,7 +4227,7 @@ must tell Emacs.  Here's how to do that in your init file:
   ;; Set syntax and font-face highlighting
   ;; Catch changes to sql-product and highlight accordingly
   (sql-set-product (or sql-product 'ansi)) ; Fixes bug#13591
-  (add-hook 'hack-local-variables-hook 'sql-highlight-product t t))
+  (add-hook 'hack-local-variables-hook #'sql-highlight-product t t))
 
 
 
@@ -4240,7 +4235,7 @@ must tell Emacs.  Here's how to do that in your init file:
 
 (put 'sql-interactive-mode 'mode-class 'special)
 (put 'sql-interactive-mode 'custom-mode-group 'SQL)
-
+;; FIXME: Why not use `define-derived-mode'?
 (defun sql-interactive-mode ()
   "Major mode to use a SQL interpreter interactively.
 
@@ -4302,13 +4297,15 @@ certain length.
 
 \(add-hook \\='sql-interactive-mode-hook
     (function (lambda ()
-        (setq comint-output-filter-functions \\='comint-truncate-buffer))))
+        (setq comint-output-filter-functions #\\='comint-truncate-buffer))))
 
 Here is another example.  It will always put point back to the statement
 you entered, right above the output it created.
 
 \(setq comint-output-filter-functions
        (function (lambda (STR) (comint-show-output))))"
+  ;; FIXME: The doc above uses `setq' on `comint-output-filter-functions',
+  ;; whereas hooks should be manipulated with things like `add/remove-hook'.
   (delay-mode-hooks (comint-mode))
 
   ;; Get the `sql-product' for this interactive session.
@@ -4340,7 +4337,7 @@ you entered, right above the output it created.
   (setq abbrev-all-caps 1)
   ;; Exiting the process will call sql-stop.
   (let ((proc (get-buffer-process (current-buffer))))
-    (when proc (set-process-sentinel proc 'sql-stop)))
+    (when proc (set-process-sentinel proc #'sql-stop)))
   ;; Save the connection and login params
   (set (make-local-variable 'sql-user)       sql-user)
   (set (make-local-variable 'sql-database)   sql-database)
@@ -4366,7 +4363,7 @@ you entered, right above the output it created.
   (make-local-variable 'sql-output-newline-count)
   (make-local-variable 'sql-preoutput-hold)
   (add-hook 'comint-preoutput-filter-functions
-            'sql-interactive-remove-continuation-prompt nil t)
+            #'sql-interactive-remove-continuation-prompt nil t)
   (make-local-variable 'sql-input-ring-separator)
   (make-local-variable 'sql-input-ring-file-name)
   ;; Run the mode hook (along with comint's hooks).
@@ -4415,8 +4412,7 @@ Sentinels will always get the two parameters PROCESS and EVENT."
   "Read a connection name."
   (let ((completion-ignore-case t))
     (completing-read prompt
-                     (mapcar (lambda (c) (car c))
-                             sql-connection-alist)
+                     (mapcar #'car sql-connection-alist)
                      nil t initial 'sql-connection-history default)))
 
 ;;;###autoload
@@ -5378,8 +5374,7 @@ The default comes from `process-coding-system-alist' and
 your might try undecided-dos as a coding system.  If this doesn't help,
 Try to set `comint-output-filter-functions' like this:
 
-\(setq comint-output-filter-functions (append comint-output-filter-functions
-					     \\='(comint-strip-ctrl-m)))
+\(add-hook 'comint-output-filter-functions #\\='comint-strip-ctrl-m 'append)
 
 \(Type \\[describe-mode] in the SQL buffer for a list of commands.)"
   (interactive "P")
