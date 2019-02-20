@@ -6854,7 +6854,7 @@ Trigger a debugger invocation when VARIABLE is changed.
 
 When called interactively, prompt for VARIABLE in the minibuffer.
 
-This works by calling `add-variable-watch' on VARIABLE.  If you
+This works by calling `add-variable-watcher' on VARIABLE.  If you
 quit from the debugger, this will abort the change (unless the
 change is caused by the termination of a let-binding).
 
@@ -19472,9 +19472,10 @@ the current value of `kmacro-counter').
 
 When used during defining/executing a macro, inserts the current value
 of `kmacro-counter' and increments the counter value by ARG (or by 1 if no
-prefix argument).  With just \\[universal-argument], inserts the current value
-of `kmacro-counter', but does not modify the counter; this is the
-same as incrementing the counter by zero.
+prefix argument).  With just \\[universal-argument], inserts the previous
+value of `kmacro-counter', and does not modify the counter; this is
+different from incrementing the counter by zero.  (The previous value
+of the counter is the one it had before the last increment.)
 
 The macro counter can be set directly via \\[kmacro-set-counter] and \\[kmacro-add-counter].
 The format of the inserted value of the counter can be controlled
@@ -20157,7 +20158,8 @@ and then select the region of un-tablified names and use
 ;;; Generated autoloads from mail/mail-extr.el
 
 (autoload 'mail-extract-address-components "mail-extr" "\
-Given an RFC-822 address ADDRESS, extract full name and canonical address.
+Extract full name and canonical address from ADDRESS.
+ADDRESS should be in RFC 822 (or later) format.
 Returns a list of the form (FULL-NAME CANONICAL-ADDRESS).  If no
 name can be extracted, FULL-NAME will be nil.  Also see
 `mail-extr-ignore-single-names' and
@@ -20248,7 +20250,7 @@ This function normally would be called when the message is sent.
 ;;; Generated autoloads from mail/mail-utils.el
 
 (defvar mail-use-rfc822 nil "\
-If non-nil, use a full, hairy RFC822 parser on mail addresses.
+If non-nil, use a full, hairy RFC 822 (or later) parser on mail addresses.
 Otherwise, (the default) use a smaller, somewhat faster, and
 often correct parser.")
 
@@ -24925,7 +24927,7 @@ matching parenthesis is highlighted in `show-paren-style' after
 
 (autoload 'parse-time-string "parse-time" "\
 Parse the time-string STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
-STRING should be on something resembling an RFC2822 string, a la
+STRING should be something resembling an RFC 822 (or later) date-time, e.g.,
 \"Fri, 25 Mar 2016 16:24:56 +0100\", but this function is
 somewhat liberal in what format it accepts, and will attempt to
 return a \"likely\" value even for somewhat malformed strings.
@@ -30047,7 +30049,7 @@ Otherwise, let mailer send back a message to report errors.")
 (defvar send-mail-function (if (and (boundp 'smtpmail-smtp-server) smtpmail-smtp-server) 'smtpmail-send-it 'sendmail-query-once) "\
 Function to call to send the current buffer as mail.
 The headers should be delimited by a line which is
-not a valid RFC822 header or continuation line,
+not a valid RFC 822 (or later) header or continuation line,
 that matches the variable `mail-header-separator'.
 This is used by the default mail-sending commands.  See also
 `message-send-mail-function' for use with the Message package.")
@@ -34215,6 +34217,7 @@ Return a string giving the duration of the Emacs initialization.
 
 (autoload 'date-to-time "time-date" "\
 Parse a string DATE that represents a date-time and return a time value.
+DATE should be in one of the forms recognized by `parse-time-string'.
 If DATE lacks timezone information, GMT is assumed.
 
 \(fn DATE)" nil nil)

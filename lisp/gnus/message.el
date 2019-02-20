@@ -1285,10 +1285,9 @@ called and its result is inserted."
              (goto-char (point-min))
              (let ((case-fold-search nil))
                (re-search-forward "^OR\\>" nil t))))
-      ;; According to RFC822, "The field-name must be composed of printable
-      ;; ASCII characters (i. e., characters that have decimal values between
-      ;; 33 and 126, except colon)", i. e., any chars except ctl chars,
-      ;; space, or colon.
+      ;; According to RFC 822 and its successors, the field name must
+      ;; consist of printable US-ASCII characters other than colon,
+      ;; i.e., decimal 33-56 and 59-126.
       '(looking-at "[ \t]\\|[][!\"#$%&'()*+,-./0-9;<=>?@A-Z\\\\^_`a-z{|}~]+:"))
   "Set this non-nil if the system's mailer runs the header and body together.
 \(This problem exists on Sunos 4 when sendmail is run in remote mode.)
@@ -1791,8 +1790,8 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
     (concat
      "From "
 
-     ;; Many things can happen to an RFC 822 mailbox before it is put into
-     ;; a `From' line.  The leading phrase can be stripped, e.g.
+     ;; Many things can happen to an RFC 822 (or later) mailbox before it is
+     ;; put into a `From' line.  The leading phrase can be stripped, e.g.
      ;; `Joe <@w.x:joe@y.z>' -> `<@w.x:joe@y.z>'.  The <> can be stripped, e.g.
      ;; `<@x.y:joe@y.z>' -> `@x.y:joe@y.z'.  Everything starting with a CRLF
      ;; can be removed, e.g.
@@ -5732,7 +5731,7 @@ In posting styles use `(\"Expires\" (make-expires-date 30))'."
 	(insert fullname)
 	(goto-char (point-min))
 	;; Look for a character that cannot appear unquoted
-	;; according to RFC 822.
+	;; according to RFC 822 (or later).
 	(when (re-search-forward "[^- !#-'*+/-9=?A-Z^-~]" nil 1)
 	  ;; Quote fullname, escaping specials.
 	  (goto-char (point-min))
@@ -5746,8 +5745,7 @@ In posting styles use `(\"Expires\" (make-expires-date 30))'."
 	(let ((fullname-start (point)))
 	  (insert fullname)
 	  (goto-char fullname-start)
-	  ;; RFC 822 says \ and nonmatching parentheses
-	  ;; must be escaped in comments.
+	  ;; \ and nonmatching parentheses must be escaped in comments.
 	  ;; Escape every instance of ()\ ...
 	  (while (re-search-forward "[()\\]" nil 1)
 	    (replace-match "\\\\\\&" t))

@@ -1,3 +1,498 @@
+2019-02-20  Glenn Morris  <rgm@gnu.org>
+
+	Remove .art from the default list of ImageMagick extensions
+
+	It seems that .art files can be non-image files that
+	ImageMagick mistakenly treats as extremely large images.
+	Real .art images seem rare.
+	* lisp/image.el (imagemagick-enabled-types): Remove ART.  (Bug#22289)
+
+2019-02-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix input after setting x-wait-for-event-timeout nil
+
+	* src/w32term.c (x_make_frame_visible): Call unblock_input
+	before returning early.  (Bug#34575)
+
+2019-02-19  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix two warnings in eshell.texi
+
+	* doc/misc/eshell.texi (Built-ins, Globbing): Fix `.' or `,'
+	must follow @xref, not `f' warnings.
+
+2019-02-18  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/minibuffer.el (completion-table-dynamic): Improve docstring
+
+2019-02-18  David Pathakjee  <dpathakjee@gmail.com>  (tiny change)
+
+	* lisp/emacs-lisp/debug.el (debug-on-variable-change): Doc fix.  (Bug#34518)
+
+2019-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in ELisp manual
+
+	* doc/lispref/abbrevs.texi (Abbrev Table Properties): Fix a
+	typo.  (Bug#34508)
+
+2019-02-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update citations of Internet RFCs
+
+	For example, RFC 822 has been obsoleted by RFC 2822, which in
+	turn has been obsoleted by RFC 5322.
+	* doc/emacs/ack.texi, doc/lispref/os.texi:
+	* doc/misc/emacs-mime.texi, doc/misc/gnus-coding.texi:
+	* doc/misc/gnus.texi, doc/misc/sc.texi:
+	* lisp/calendar/parse-time.el, lisp/gnus/gnus-cite.el:
+	* lisp/gnus/gnus-util.el, lisp/gnus/message.el:
+	* lisp/gnus/mm-bodies.el, lisp/gnus/nnrss.el:
+	* lisp/mail/feedmail.el, lisp/mail/ietf-drums.el:
+	* lisp/mail/mail-extr.el, lisp/mail/mail-utils.el:
+	* lisp/mail/mailclient.el, lisp/mail/mailheader.el:
+	* lisp/mail/rfc2047.el, lisp/mail/rfc822.el, lisp/mail/rmail.el:
+	* lisp/mail/sendmail.el, lisp/mail/smtpmail.el:
+	* lisp/mail/supercite.el, lisp/mh-e/mh-e.el:
+	* lisp/mh-e/mh-utils.el, lisp/net/imap.el:
+	* lisp/net/newst-backend.el, lisp/org/org-id.el:
+	* lisp/ps-samp.el, lisp/simple.el, lisp/url/url-util.el:
+	Update RFC citations.
+
+2019-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix handling of manpage references divided by hyphenation
+
+	* lisp/man.el (Man-reference-regexp): Accept a newline as part
+	of a manpage name only if it's preceded by a hyphen.  (Bug#34286)
+	(Man-translate-references): Adapt to change in
+	'Man-reference-regexp'.
+	(Man-default-man-entry): Support references divided between
+	two lines by an ASCII hyphen.  This is a left-over from fixing
+	bug#6289.
+
+2019-02-16  Gregor Zattler  <telegraph@gmx.net>  (tiny change)
+
+	* doc/misc/eshell.texi: Fix some @ref's.
+
+2019-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in lispref/syntax.texi
+
+	* doc/lispref/syntax.texi (Syntax Table Internals): Fix a
+	typo.  (Bug#34495)
+
+2019-02-15  Victor J. Orlikowski  <vjo@duke.edu>  (tiny change)
+
+	Avoid errors in erc-dcc.el when erc-dcc-verbose is non-nil
+
+	* lisp/erc/erc-dcc.el (erc-dcc-get-filter): Don't assume STR
+	is always a string.  Use 'buffer-name' to get the DCC file
+	name, as buffer-file-name is not set in the process buffer.
+
+2019-02-15  Daniel Lopez  <daniel.lopez999@gmail.com>  (tiny change)
+
+	Fix faces in compilation messages
+
+	* lisp/progmodes/compile.el (compilation-parse-errors): Don't
+	clobber the value of TYPE inside the loop.  (Bug#34479)
+
+2019-02-15  Gregor Zattler  <telegraph@gmx.net>
+
+	* doc/misc/eshell.texi (Built-ins): Fix alias description
+
+	Dear eamcs developers, eshells current documentation first states
+	that alias definitions are not saved to an alias file, later that
+	they are saved to an alias file.  I tested it and the latter is
+	correct.
+
+	Please find attached a patch which fixes this.
+
+	Thanks for working on emacs which is really great, Gregor
+
+	>From 1fe51cc769ab7a30d0896fb3d6105c0561243fa7 Mon Sep 17 00:00:00 2001
+	From: Gregor Zattler <telegraph@gmx.net>
+	Date: Wed, 13 Feb 2019 20:19:38 +0100
+	Subject: * doc/misc/eshell.texi (Built-ins): Fix alias description.
+
+	Bring description of built-in 'alias' in line with (info "(eshell) Aliases"),
+	which describes the actual behaviur.
+
+	(cherry picked from commit a48099ce7ff63cda416a870766fe61f5b8ac7c2c)
+
+2019-02-14  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	Work for empty MIME attachments (related to bug#34387)
+
+	* lisp/gnus/mm-view.el (mm-inline-text):
+	Make undisplayer do nothing if the part is empty.
+
+	* lisp/gnus/mm-decode.el (mm-copy-to-buffer): Work for empty MIME part.
+	* lisp/gnus/mml.el (mime-to-mml): Ditto.
+
+2019-02-14  Jackson Ray Hamilton  <jackson@jacksonrayhamilton.com>
+
+	Backport: js-indent-align-list-continuation: Make variable safe
+
+	* lisp/progmodes/js.el (js-indent-align-list-continuation): Indicate
+	variable is safe as a file-local variable.  This fixes the
+	js-indent-align-list-continuation-nil test when run with make.
+
+	(cherry picked from commit dd319f2711f895eec87c1017b82cd9d88d9ecd0a)
+
+2019-02-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid crashes upon C-g in nested invocations of 'read_char'
+
+	* src/keyboard.c (read_char, read_event_from_main_queue):
+	Ensure the global value of getcjmp is restored when the stack
+	is unwound by the likes of 'throw', by calling
+	record_unwind_protect_ptr instead of restoring the value
+	manually.  (Bug#34394)
+	(restore_getcjmp): Argument is now 'void *', to match the
+	signature of record_unwind_protect_ptr.
+
+	(cherry picked from commit 10527fca66e39d7067986904161fa33741abcd26)
+
+2019-02-12  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* src/data.c (Fmake_local_variable): Fix bug#34318
+
+	Revert part of ed962f2b8a.
+
+	* test/src/data-tests.el (data-tests-make-local-forwarded-var):
+	Add corresponding test.
+
+2019-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fixes in ELisp manual wrt syntax-table properties
+
+	* doc/lispref/syntax.texi (Syntax Properties): Fix reference
+	to syntax-table properties.  (Bug#34455)
+	(Control Parsing): Remove redundant @vindex entry.
+
+2019-02-12  Michael Albinus  <michael.albinus@gmx.de>
+
+	* admin/notes/emba: New file.
+
+2019-02-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix Hunspell invocation for discovering its dictionaries
+
+	* lisp/textmodes/ispell.el
+	(ispell-find-hunspell-dictionaries): Invoke Hunspell with the
+	-a switch, to prevent it from initializing its curses UI.
+	(Bug#34272)
+
+2019-02-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements to do strings in callproc.c
+
+	* src/callproc.c (Fcall_process, Fcall_process_region): Minor
+	fixes to doc strings.  Suggested by Nicholas Drozd
+	<nicholasdrozd@gmail.com>.  (Bug#34274)
+
+2019-02-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'date-to-time' and 'parse-time-string'
+
+	* doc/lispref/os.texi (Time Parsing): Document
+	'parse-time-string', and refer to it for the description of
+	the argument of 'date-to-time'.
+
+	* lisp/calendar/time-date.el (date-to-time): Refer in the doc
+	string to 'parse-time-string' for more information about the
+	format of the DATE argument.  (Bug#34303)
+
+2019-02-08  Nick Drozd  <nicholasdrozd@gmail.com>
+
+	Fix downloading of URLs that end in a slash
+
+	* lisp/net/eww.el (eww-download-callback): Fix download URL
+	file name.  Previously this wasn't handling download URLs
+	correctly, resulting in all downloaded pages being named
+	"!", "!(1)", etc.  (Bug#34291)
+
+2019-02-08  Nick Drozd  <nicholasdrozd@gmail.com>
+
+	* doc/misc/eww.texi (Basics): Fix eww keybindings.  (Bug#34291)
+
+2019-02-08  Robert Pluim  <rpluim@gmail.com>
+
+	Fix process-thread docstring
+
+	* src/process.c (Fprocess_thread): Correct docstring.
+
+2019-02-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix failures of vc-find-revision with non-ASCII file names
+
+	* lisp/vc/vc.el (vc-find-revision): Instead of binding
+	coding-system-for-write, make the buffer-file-coding-system of
+	the temporary buffer be no-conversion.  This avoids the
+	unwanted side effect of not encoding the command-line
+	arguments of the VCS commands invoked by the backend.
+	(Bug#34350)
+
+2019-02-07  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/tips.texi (Documentation Tips): Fix quotes.  (Bug#34372)
+
+2019-02-05  Alex Branham  <alex.branham@gmail.com>
+
+	Add documentation for tabulated-list functions in the elisp manual
+
+	* doc/lispref/modes.texi: Add documentation for
+	  'tabulated-list-delete-entry', 'tabulated-list-get-id',
+	  'tabulated-list-get-entry', 'tabulated-list-header-overlay-p',
+	  'tabulated-list-put-tag', and 'tabulated-list-set-col'.
+
+	Bug#21074
+
+2019-02-03  Jean-Christophe Helary  <brandelune@gmail.com>
+
+	Fix URL in ucs-normalize.el
+
+	* lisp/international/ucs-normalize.el: Fix URL of the HFS
+	normalization reference.  (Bug#34300)
+
+2019-02-03  Alan Mackenzie  <acm@muc.de>
+
+	* etc/PROBLEMS: Amend entry for profiler bug #34235 to mention kernel 4.14.97
+
+2019-02-02  Glenn Morris  <rgm@gnu.org>
+
+	* make-dist: Remove references to src/stamp-h.in.
+
+	This file was removed two years ago in 2f89350.
+	No need to merge to master.
+
+2019-02-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/PROBLEMS: Mention profiler-report bug (Bug#34235).
+
+2019-02-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Correct the docs of inserting kmacro counter
+
+	* doc/emacs/kmacro.texi (Keyboard Macro Counter): Correct the
+	description of the affect "C-u" has on inserting the macro
+	counter.  Define "previous counter value".
+
+	* lisp/kmacro.el (kmacro-insert-counter)
+	(kmacro-start-macro-or-insert-counter): Fix the doc strings
+	regarding the effect of "C-u".  (Bug#34263)
+
+2019-02-01  Nicholas Drozd  <nicholasdrozd@gmail.com>
+
+	* doc/misc/calc.texi (Algebraic Tutorial): Fix a typo.  (Bug#34273)
+
+2019-02-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid errors in 'rmail-get-new-mail'
+
+	* lisp/mail/rmail.el (rmail-insert-inbox-text): Don't assume
+	the Rmail protocol is always a string when calling
+	'rmail-remote-proto-p'.  (Bug#34252)
+
+2019-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix process-contact bug with TCP connections
+
+	This fixes a regression from Emacs 25.3 (Bug#34134).
+	* src/process.c (server_accept_connection):
+	Set host correctly, fixing a bug introduced in
+	2017-09-16T21:29:18Z!eggert@cs.ucla.edu
+	when working around a GCC bug.
+
+2019-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in last manual change
+
+	* doc/emacs/custom.texi (Authentication): Improve markup,
+	indexing, and wording.
+
+2019-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of face numbers
+
+	* doc/lispref/display.texi (Face Functions): Mention where the
+	face number is used and that it depends on the 'face' property
+	of the face symbol.  Improve indexing.
+
+2019-01-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/emacs/custom.texi (Authentication): Refer to the "Help for users" node.
+
+2019-01-26  Michael Albinus  <michael.albinus@gmx.de>
+
+	New node Authentication in the Emacs manual
+
+	* doc/emacs/custom.texi (Customization):
+	* doc/emacs/emacs.texi (Top): Add node Authentication.
+
+2019-01-25  Alan Mackenzie  <acm@muc.de>
+
+	Fix a loop in c-fl-decl-start.  This fixes bug #34186.
+
+	* lisp/progmodes/cc-mode.el (c-fl-decl-start) In the pair of operations
+	c-syntactic-skip-backward and c-forward-syntactic-ws, ensure the latter
+	doesn't come back to the position before the former, and break out of the
+	enclosing loop if it does.
+
+2019-01-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix LaTeX output of month and day from cal-tex.el
+
+	* lisp/calendar/cal-tex.el (cal-tex-cursor-week-iso)
+	(cal-tex-week-hours): Escape a lone blank, to make it through
+	LaTeX.  (Bug#34148)
+
+2019-01-25  Daniel Kahn Gillmor  <dkg@fifthhorseman.net>  (tiny change)
+
+	Avoid elisp crash for OpenPGP User IDs with no e-mail address
+
+	* lisp/gnus/mml-sec.el (mml-secure-check-user-id): Verify that
+	there is an e-mail address in the current User ID before trying
+	to downcase it.  (Bug#34121)
+
+2019-01-25  Benjamin Riefenstahl  <b.riefenstahl@turtle-trading.net>
+
+	image-mode: Do not use default scaling (bug#33990)
+
+	* lisp/image-mode.el (image-toggle-display-image): Set :scale == 1 so
+	that create-image does not apply additional scaling.
+
+2019-01-25  Benjamin Riefenstahl  <b.riefenstahl@turtle-trading.net>
+
+	create-image: Expand documentation (bug#33990)
+
+	* lisp/image.el (create-image): Discuss default for :scale in the doc
+	string.
+
+2019-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'isearch-filter-predicate'
+
+	* lisp/isearch.el (isearch-filter-predicate)
+	(isearch-filter-visible): Doc fixes.  (Bug#34150)
+
+2019-01-19  Trevor Spiteri  <tspiteri@ieee.org>  (tiny change)
+
+	Fix cursor column positioning on Grep hits
+
+	* lisp/progmodes/grep.el (grep-match-face): Move before first
+	use, to avoid byte-compilation warning.
+	(grep-regexp-alist): Don't quote grep-match-face.  (Bug#34068)
+
+2019-01-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in ELisp manual
+
+	* doc/lispref/nonascii.texi (Converting Representations): Fix
+	inconsistency between @defun and the argument description of
+	'byte-to-string'.  (Bug#34119)
+
+2019-01-15  Alan Third  <alan@idiocy.org>
+
+	Prevent redrawing if frame is garbaged
+
+	* src/nsterm.m ([EmacsView viewWillDraw]): Cancel drawing if the frame
+	has been garbaged.
+	* src/xdisp.c (expose_window_tree, expose_frame): Remove NS only
+	exceptions.
+
+2019-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Attempt to fix hangs on MS-Windows due to C-g
+
+	* src/w32uniscribe.c (uniscribe_otf_capability): Set
+	inhibit-quit around calls to otf_features, because the latter
+	cons Lisp data structures while we are in a critical section.
+	* src/xdisp.c (ALLOCATE_HDC) [HAVE_NTGUI]: Set inhibit-quit.
+	(RELEASE_HDC) [HAVE_NTGUI]: Restore inhibit-quit.
+	(OPTIONAL_HDC, DECLARE_HDC): Remove macros, their job is now
+	done by ALLOCATE_HDC and by a single #ifdef.
+	(draw_glyphs): Adapt to the above changes in macros.
+	(Bug#34059)
+
+2019-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix Calc graph output on MS-Windows
+
+	The previous code relied on "pgnuplot" executable, which is
+	no longer provided with Gnuplot 5.x.
+	* lisp/calc/calc.el (calc-gnuplot-name): Set to "pgnuplot" on
+	MS-Windows only if such an executable exists.
+	* lisp/calc/calc-graph.el (calc-graph-w32-p): New defsubst.
+	(calc-graph-plot, calc-graph-command, calc-gnuplot-command)
+	(calc-graph-init): Call calc-graph-w32-p wherever we need to
+	do something special for invoking gnuplot on MS-Windows,
+	instead of comparing against calc-gnuplot-name.
+	(calc-graph-plot): Set the terminal to "qt" on MS-Windows when
+	pgnuplot.exe is not available.
+	(calc-graph-kill): Delete the temporary files only after
+	killing the gnuplot process, otherwise the deletion might fail
+	on MS-Windows because the files are still in use.
+
+2019-01-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a minor mistake in ELisp manual
+
+	* doc/lispref/buffers.texi (Modification Time): Fix
+	documentation of 'visited-file-modtime'.  (Bug#34055)
+
+2019-01-12  Stephen Berman  <stephen.berman@gmx.net>
+
+	* etc/tutorials/TUTORIAL: Fix typo (bug#34049)
+
+2019-01-12  Devon Sean McCullough  <Emacs-Hacker2018@jovi.net>
+
+	Fix UI of Buffer-menu
+
+	* lisp/buff-menu.el (Buffer-menu-execute): Don't remove
+	entries of buffers whose killing the user didn't confirm.
+	(Bug#33669)
+
+2019-01-12  Philip K  <philip@warpmail.net>  (tiny change)
+
+	Reinitialize ispell-really-enchant when changing the speller
+
+	* lisp/textmodes/ispell.el (ispell-check-version): Reset also
+	ispell-really-enchant.  (Bug#34019)
+
+2019-01-07  Leo Liu  <sdl.web@gmail.com>
+
+	Speed up loading css-mode
+
+	lisp/textmodes/css-mode.el: Remove (require 'eww) which is redundant
+	and slow.  (Bug#33939)
+
+2019-01-07  Michael Albinus  <michael.albinus@gmx.de>
+
+	Adapt filenotify-tests for emba
+
+	* .gitlab-ci.yml (test): Add EMACS_EMBA_CI variable.
+
+	* test/lisp/filenotify-tests.el (file-notify-test03-events)
+	(file-notify-test05-file-validity)
+	(file-notify-test06-dir-validity)
+	(file-notify-test07-many-events)
+	(file-notify-test09-watched-file-in-watched-dir): Adapt tests for emba.
+
+2019-01-07  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 26.1.91
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version to 26.1.91.
+
+2019-01-07  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update.
+
 2019-01-07  Leo Liu  <sdl.web@gmail.com>
 
 	* lisp/textmodes/mhtml-mode.el: Avoid loading flyspell.  (Bug#33939)
@@ -64181,7 +64676,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 2cf20b67cf6836dd7bd80077042068afa0d7b04f (inclusive).
+commit a19bfb7a5e3557a69824cdbe7d414f5ef422555c (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

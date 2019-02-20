@@ -259,7 +259,7 @@ for `smtpmail-try-auth-method'.")
 			       (fullname-end (point-marker)))
 			   (goto-char fullname-start)
 			   ;; Look for a character that cannot appear unquoted
-			   ;; according to RFC 822.
+			   ;; according to RFC 822 or its successors.
 			   (if (re-search-forward "[^- !#-'*+/-9=?A-Z^-~]"
 						  fullname-end 1)
 			       (progn
@@ -277,8 +277,9 @@ for `smtpmail-try-auth-method'.")
 			   (insert fullname)
 			   (let ((fullname-end (point-marker)))
 			     (goto-char fullname-start)
-			     ;; RFC 822 says \ and nonmatching parentheses
-			     ;; must be escaped in comments.
+			     ;; RFC 822 and its successors say \ and
+			     ;; nonmatching parentheses must be
+			     ;; escaped in comments.
 			     ;; Escape every instance of ()\ ...
 			     (while (re-search-forward "[()\\]" fullname-end 1)
 			       (replace-match "\\\\\\&" t))

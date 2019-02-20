@@ -9679,7 +9679,7 @@ Each article is divided into two parts---the head and the body.  The
 body can be divided into a signature part and a text part.  The variable
 that says what is to be considered a signature is
 @code{gnus-signature-separator}.  This is normally the standard
-@samp{^-- $} as mandated by son-of-RFC 1036.  However, many people use
+@samp{^-- $} as mandated by RFC 5536.  However, many people use
 non-standard signature separators, so this variable can also be a list
 of regular expressions to be tested, one by one.  (Searches are done
 from the end of the body towards the beginning.)  One likely value is:
@@ -15991,8 +15991,9 @@ Mailers and list servers are notorious for doing all sorts of really,
 really stupid things with mail.  ``Hey, RFC 822 doesn't explicitly
 prohibit us from adding the string @code{wE aRe ElItE!!!!!1!!} to the
 end of all lines passing through our server, so let's do that!!!!1!''
-Yes, but RFC 822 wasn't designed to be read by morons.  Things that were
-considered to be self-evident were not discussed.  So.  Here we are.
+Yes, but RFC 822 and its successors weren't designed to be read by
+morons.  Things that were considered to be self-evident were not
+discussed.  So.  Here we are.
 
 Case in point:  The German version of Microsoft Exchange adds @samp{AW:
 } to the subjects of replies instead of @samp{Re: }.  I could pretend to
@@ -17374,7 +17375,7 @@ Announcement messages from LANL Gov Announce.
 
 @cindex forwarded messages
 @item rfc822-forward
-A message forwarded according to RFC822.
+A message forwarded according to RFC 822 or its successors.
 
 @item outlook
 The Outlook mail box.
@@ -26721,18 +26722,20 @@ with, of course.
 
 @table @strong
 
-@item RFC (2)822
+@item RFC 822
 @cindex RFC 822
 @cindex RFC 2822
-There are no known breaches of this standard.
+@cindex RFC 5322
+There are no known breaches of this standard or its successors
+(currently RFCs 2822 and 5322).
 
 @item RFC 1036
 @cindex RFC 1036
-There are no known breaches of this standard, either.
+There are no known breaches of this (now-obsolete) standard, either.
 
-@item Son-of-RFC 1036
-@cindex Son-of-RFC 1036
-We do have some breaches to this one.
+@item RFC 5536
+@cindex RFC 5536
+We do have some breaches of this standard, the successor of RFC 1036.
 
 @table @emph
 
@@ -26747,10 +26750,9 @@ it wasn't for the @code{X-Newsreader} header.
 
 @item USEFOR
 @cindex USEFOR
-USEFOR is an IETF working group writing a successor to RFC 1036, based
-on Son-of-RFC 1036.  They have produced a number of drafts proposing
-various changes to the format of news articles.  The Gnus towers will
-look into implementing the changes when the draft is accepted as an RFC.
+USEFOR was an IETF working group that produced Internet RFCs 5536 and 5537.
+The Gnus towers will look into implementing the changes embodied by these
+standards.
 
 @item MIME---RFC 2045--2049 etc
 @cindex @acronym{MIME}
@@ -29529,7 +29531,8 @@ header         = <text> eol
 @end example
 
 @cindex BNF
-(The version of BNF used here is the one used in RFC822.)
+(The version of extended BNF used here is ABNF, the one used in Internet RFCs.
+See RFC 5234.)
 
 If the return value is @code{nov}, the data buffer should contain
 @dfn{network overview database} lines.  These are basically fields
@@ -30327,7 +30330,7 @@ almost suspect that the author looked at the @acronym{NOV} specification and
 just shamelessly @emph{stole} the entire thing, and one would be right.
 
 @dfn{Header} is a severely overloaded term.  ``Header'' is used in
-RFC 1036 to talk about lines in the head of an article (e.g.,
+RFC 5536 to talk about lines in the head of an article (e.g.,
 @code{From}).  It is used by many people as a synonym for
 ``head''---``the header and the body''.  (That should be avoided, in my
 opinion.)  And Gnus uses a format internally that it calls ``header'',

@@ -6733,7 +6733,10 @@ x_make_frame_visible (struct frame *f)
     }
 
   if (!FLOATP (Vx_wait_for_event_timeout))
+    {
+      unblock_input ();
       return;
+    }
 
   /* Synchronize to ensure Emacs knows the frame is visible
      before we do anything else.  We do this loop with input not blocked

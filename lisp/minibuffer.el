@@ -174,10 +174,14 @@ ACTION can be one of nil, t or `lambda'."
 
 (defun completion-table-dynamic (fun &optional switch-buffer)
   "Use function FUN as a dynamic completion table.
-FUN is called with one argument, the string for which completion is required,
-and it should return an alist containing all the intended possible completions.
-This alist may be a full list of possible completions so that FUN can ignore
-the value of its argument.
+FUN is called with one argument, the string for which completion is requested,
+and it should return a completion table containing all the intended possible
+completions.
+This table is allowed to include elements that do not actually match the
+string: they will be automatically filtered out.
+The completion table returned by FUN can use any of the usual formats of
+completion tables such as lists, alists, and hash-tables.
+
 If SWITCH-BUFFER is non-nil and completion is performed in the
 minibuffer, FUN will be called in the buffer from which the minibuffer
 was entered.
@@ -185,6 +189,8 @@ was entered.
 The result of the `completion-table-dynamic' form is a function
 that can be used as the COLLECTION argument to `try-completion' and
 `all-completions'.  See Info node `(elisp)Programmed Completion'.
+The completion table returned by `completion-table-dynamic' has empty
+metadata and trivial boundaries.
 
 See also the related function `completion-table-with-cache'."
   (lambda (string pred action)

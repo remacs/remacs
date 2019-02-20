@@ -7834,7 +7834,7 @@ appears to have customizations applying to the old default,
   "If the buffer starts with a mail header, move point to the header's end.
 Otherwise, moves to `point-min'.
 The end of the header is the start of the next line, if there is one,
-else the end of the last line.  This function obeys RFC822."
+else the end of the last line.  This function obeys RFC 822 (or later)."
   (goto-char (point-min))
   (when (re-search-forward
 	 "^\\([:\n]\\|[^: \t\n]+[ \t\n]\\)" nil 'move)

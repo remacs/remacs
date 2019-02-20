@@ -1041,8 +1041,8 @@ This function returns the syntax code for the raw syntax descriptor
 @var{syntax-code} component, masks off the high 16 bits which record
 the syntax flags, and returns the resulting integer.
 
-If @var{syntax} is @code{nil}, the return value is returns @code{nil}.
-This is so that the expression
+If @var{syntax} is @code{nil}, the return value is @code{nil}.  This
+is so that the expression
 
 @example
 (syntax-class (syntax-after pos))

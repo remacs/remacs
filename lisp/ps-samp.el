@@ -76,8 +76,8 @@
       (concat "Subject: " (or (mail-fetch-field "Subject") "???")))))
 
 ;; Look in an article or mail message for the From: line.  Sorta-kinda
-;; understands RFC-822 addresses and can pull the real name out where
-;; it's provided.
+;; understands RFC 822 (or later) addresses and can pull the real name
+;; out where it's provided.
 (defun ps-article-author ()
   (save-excursion
     (save-restriction

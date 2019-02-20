@@ -213,8 +213,8 @@ available in the Emacs Lisp library.  It does this by transforming the
 input line into a callable Lisp form.@footnote{To see the Lisp form that will be invoked, type: @samp{eshell-parse-command "echo hello"}}
 
 The command can be either an Elisp function or an external command.
-Eshell looks first for an @ref{Aliases, alias} with the same name as the
-command, then a @ref{Built-ins, built-in command} or a function with the
+Eshell looks first for an alias (@pxref{Aliases}) with the same name as the
+command, then a built-in (@pxref{Built-ins}) or a function with the
 same name; if there is no match, it then tries to execute it as an
 external command.
 
@@ -253,7 +253,7 @@ eshell/ls is a compiled Lisp function in `em-ls.el'
 @end example
 
 If you want to discard a given built-in command, you could declare an
-alias, @ref{Aliases}.  Example:
+alias (@pxref{Aliases}).  Example:
 
 @example
 ~ $ which sudo
@@ -418,7 +418,7 @@ Lisp functions, based on successful completion).
 
 @end table
 
-@ref{Aliases} for the built-in variables @samp{$*}, @samp{$1},
+@xref{Aliases}, for the built-in variables @samp{$*}, @samp{$1},
 @samp{$2}, @dots{}, in alias definitions.
 
 @node Variables
@@ -629,8 +629,8 @@ to @code{"hello"}.
 Eshell's globbing syntax is very similar to that of Zsh.  Users coming
 from Bash can still use Bash-style globbing, as there are no
 incompatibilities.  Most globbing is pattern-based expansion, but there
-is also predicate-based expansion.  See
-@ref{Filename Generation, , , zsh, The Z Shell Manual}
+is also predicate-based expansion.  @xref{Filename Generation, , ,
+zsh, The Z Shell Manual},
 for full syntax.  To customize the syntax and behavior of globbing in
 Eshell see the Customize@footnote{@xref{Easy Customization, , , emacs,
 The GNU Emacs Manual}.}

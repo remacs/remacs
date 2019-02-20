@@ -1,4 +1,4 @@
-;;; mail-extr.el --- extract full name and address from RFC 822 mail header
+;;; mail-extr.el --- extract full name and address from email header
 
 ;; Copyright (C) 1991-1994, 1997, 2001-2019 Free Software Foundation,
 ;; Inc.
@@ -29,15 +29,15 @@
 ;;
 ;;    mail-extract-address-components: (address &optional all)
 ;;
-;;    Given an RFC-822 ADDRESS, extract full name and canonical address.
+;;    Given an RFC-822-or-later ADDRESS, extract name and address.
 ;;    Returns a list of the form (FULL-NAME CANONICAL-ADDRESS).
 ;;    If no name can be extracted, FULL-NAME will be nil.
 ;;    ADDRESS may be a string or a buffer.  If it is a buffer, the visible
 ;;     (narrowed) portion of the buffer will be interpreted as the address.
 ;;     (This feature exists so that the clever caller might be able to avoid
 ;;     consing a string.)
-;;    If ADDRESS contains more than one RFC-822 address, only the first is
-;;     returned.
+;;    If ADDRESS contains more than one RFC-822-or-later address, only
+;;     the first is returned.
 ;;
 ;;    If ALL is non-nil, that means return info about all the addresses
 ;;     that are found in ADDRESS.  The value is a list of elements of
@@ -149,7 +149,7 @@
 ;; 	* Handle "null" addresses.  Handle = used for spacing in mailbox
 ;; 	  name.  Fix bug in handling of ROUTE-ADDR-type addresses that are
 ;; 	  missing their brackets.  Handle uppercase "JR".  Extract full
-;; 	  names from X.400 addresses encoded in RFC-822.  Fix bug in
+;; 	  names from X.400 addresses encoded in RFC-822-or-later.  Fix bug in
 ;;        handling of multiple addresses where first has trailing comment.
 ;;        Handle more kinds of telephone extension lead-ins.
 ;;
@@ -209,7 +209,7 @@
 
 
 (defgroup mail-extr nil
-  "Extract full name and address from RFC 822 mail header."
+  "Extract full name and address from RFC 822 (or later) mail header."
   :prefix "mail-extr-"
   :group 'mail)
 
@@ -288,8 +288,9 @@ by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\"."
 (defconst mail-extr-all-letters-but-separators
   (purecopy "][[:alnum:]{|}'~`"))
 
-;; Any character that can occur in a name in an RFC822 address including
-;; the separator (hyphen and possibly period) for multipart names.
+;; Any character that can occur in a name in an RFC 822 (or later)
+;; address including the separator (hyphen and possibly period) for
+;; multipart names.
 ;; #### should . be in here?
 (defconst mail-extr-all-letters
   (purecopy (concat mail-extr-all-letters-but-separators "---")))
@@ -532,7 +533,8 @@ by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\"."
     (?.  ".")
     (?\[ ".")
     (?\] ".")
-    ;; % and ! aren't RFC822 characters, but it is convenient to pretend
+    ;; % and ! aren't RFC 822 (or later) characters,
+    ;; but it is convenient to pretend.
     (?%  ".")
     (?!  ".") ;; this needs to be word-constituent when not in .UUCP mode
     )
@@ -697,7 +699,8 @@ Unless NO-REPLACE is true, at each of the positions in LIST-SYMBOL
 
 ;;;###autoload
 (defun mail-extract-address-components (address &optional all)
-  "Given an RFC-822 address ADDRESS, extract full name and canonical address.
+  "Extract full name and canonical address from ADDRESS.
+ADDRESS should be in RFC 822 (or later) format.
 Returns a list of the form (FULL-NAME CANONICAL-ADDRESS).  If no
 name can be extracted, FULL-NAME will be nil.  Also see
 `mail-extr-ignore-single-names' and
@@ -936,10 +939,10 @@ non-display use, you should probably use
 	  ;; Trim other punctuation lists of items outside < > pair to handle
 	  ;; stupid MTAs.
 	  (when <-pos			; don't need to check >-pos also
-	    ;; handle bozo software that violates RFC 822 by sticking
-	    ;; punctuation marks outside of a < > pair
+	    ;; Handle bozo software that violates RFC 822 (or later)
+	    ;; by sticking punctuation marks outside of a < > pair.
 	    (mail-extr-nuke-outside-range @-pos <-pos >-pos t)
-	    ;; RFC 822 says nothing about these two outside < >, but
+	    ;; RFC 822 (or later) says nothing about these two outside < >, but
 	    ;; remove those positions from the lists to make things
 	    ;; easier.
 	    (mail-extr-nuke-outside-range !-pos <-pos >-pos t)
@@ -1325,7 +1328,7 @@ non-display use, you should probably use
 		       (narrow-to-region atom-beg atom-end)
 		       (cond
 
-			;; Handle X.400 addresses encoded in RFC-822.
+			;; Handle X.400 addresses encoded in RFC 822 or later.
 			;; *** Shit!  This has to handle the case where it is
 			;; *** embedded in a quote too!
 			;; *** Shit!  The input is being broken up into atoms

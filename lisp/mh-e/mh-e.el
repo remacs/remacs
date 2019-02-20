@@ -2420,14 +2420,14 @@ of citations entirely, choose \"None\"."
   :package-version '(MH-E . "8.0"))
 
 ;; These entries have been intentionally excluded by the developers.
-;;  "Comments:"                         ; RFC 2822 - show this one
+;;  "Comments:"                         ; RFC 822 (or later) - show this one
 ;;  "Fax:"                              ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
 ;;  "Mail-System-Version:"              ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
 ;;  "Mailer:"                           ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
 ;;  "Organization:"                     ;
 ;;  "Phone:"                            ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
 ;;  "Reply-By:"                         ; RFC 2156
-;;  "Reply-To:"                         ; RFC 2822
+;;  "Reply-To:"                         ; RFC 822 (or later)
 ;;  "Sender:"                           ;
 ;;  "User-Agent:"                       ; Similar to X-Mailer, so display it.
 ;;  "X-Mailer:"                         ;
@@ -2488,9 +2488,9 @@ of citations entirely, choose \"None\"."
     "From "                             ; sendmail
     "Generate-Delivery-Report:"         ; RFC 2156
     "Importance:"                       ; RFC 2156, 2421
-    "In-Reply-To:"                      ; RFC 2822
+    "In-Reply-To:"                      ; RFC 822 (or later)
     "Incomplete-Copy:"                  ; RFC 2156
-    "Keywords:"                         ; RFC 2822
+    "Keywords:"                         ; RFC 822 (or later)
     "Language:"                         ; RFC 2156
     "Lines:"                            ; RFC 1036
     "List-"                             ; RFC 2369, 2919
@@ -2500,7 +2500,7 @@ of citations entirely, choose \"None\"."
     "Mail-Reply-To:"                    ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Mailing-List:"                     ; Egroups/yahoogroups mailing list manager
     "Message-Content:"                  ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
-    "Message-Id:"                       ; RFC 822
+    "Message-ID:"                       ; RFC 822 (or later)
     "Message-Type:"                     ; RFC 2156
     "Mime-Version"                      ; RFC 2045
     "Msgid:"
@@ -2531,14 +2531,14 @@ of citations entirely, choose \"None\"."
     "Priority:"                         ; RFC 2156
     "Read-Receipt-To:"                  ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Received-SPF:"                     ; Gmail
-    "Received:"                         ; RFC 822
-    "References:"                       ; RFC 2822
+    "Received:"                         ; RFC 822 (or later)
+    "References:"                       ; RFC 822 (or later)
     "Registered-Mail-Reply-Requested-By:"       ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Remailed-"                         ; MH
     "Replaces:"                         ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Replied:"                          ; MH
-    "Resent-"                           ; RFC 2822
-    "Return-Path:"                      ; RFC 822
+    "Resent-"                           ; RFC 822 (or later)
+    "Return-Path:"                      ; RFC 822 (or later)
     "Return-Receipt-Requested:"         ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Return-Receipt-To:"                ; http://people.dsv.su.se/~jpalme/ietf/mail-headers/
     "Seal-Send-Time:"

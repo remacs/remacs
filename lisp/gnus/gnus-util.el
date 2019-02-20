@@ -139,7 +139,7 @@ This is a compatibility function for different Emacsen."
 
 (defun gnus-extract-address-components (from)
   "Extract address components from a From header.
-Given an RFC-822 address FROM, extract full name and canonical address.
+Given an RFC-822 (or later) address FROM, extract name and address.
 Returns a list of the form (FULL-NAME CANONICAL-ADDRESS).  Much more simple
 solution than `mail-header-parse-address', which works much better, but
 is slower."

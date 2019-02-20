@@ -473,7 +473,7 @@ Set the property @var{prop} of abbrev table @var{table} to value @var{val}.
 
 @defun abbrev-table-get table prop
 Return the property @var{prop} of abbrev table @var{table}, or @code{nil}
-if the abbrev has no such property.
+if @var{table} has no such property.
 @end defun
 
 The following properties have special meaning:

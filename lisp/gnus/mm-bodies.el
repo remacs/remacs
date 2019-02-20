@@ -35,7 +35,7 @@
 ;; BS, vertical TAB, form feed, and ^_
 ;;
 ;; Note that CR is *not* included, as that would allow a non-paired CR
-;; in the body contrary to RFC 2822:
+;; in the body contrary to RFC 822 (or later):
 ;;
 ;;   - CR and LF MUST only occur together as CRLF; they MUST NOT
 ;;     appear independently in the body.
