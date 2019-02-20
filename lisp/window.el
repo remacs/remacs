@@ -571,23 +571,25 @@ FRAME.
 
 Optional argument MINIBUF t means run FUN on FRAME's minibuffer
 window even if it isn't active.  MINIBUF nil or omitted means run
-FUN on FRAME's minibuffer window only if it's active.  In both
-cases the minibuffer window must be part of FRAME.  MINIBUF
+FUN on FRAME's minibuffer window only if it's active.  In either
+case the minibuffer window must be part of FRAME.  MINIBUF
 neither nil nor t means never run FUN on the minibuffer window.
 
 This function performs a pre-order, depth-first traversal of the
 window tree.  If FUN changes the window tree, the result is
 unpredictable."
-  (setq frame (window-normalize-frame frame))
-  (walk-window-tree-1 fun (frame-root-window frame) any)
-  (when (memq minibuf '(nil t))
+  (let ((root (frame-root-window frame))
+        (mini (minibuffer-window frame)))
+    (setq frame (window-normalize-frame frame))
+    (unless (eq root mini)
+      (walk-window-tree-1 fun root any))
     ;; Run FUN on FRAME's minibuffer window if requested.
-    (let ((minibuffer-window (minibuffer-window frame)))
-      (when (and (window-live-p minibuffer-window)
-		 (eq (window-frame minibuffer-window) frame)
-		 (or (eq minibuf t)
-		     (minibuffer-window-active-p minibuffer-window)))
-	(funcall fun minibuffer-window)))))
+    (when (and (window-live-p mini)
+	       (eq (window-frame mini) frame)
+	       (or (eq minibuf t)
+		   (and (not minibuf)
+                        (minibuffer-window-active-p mini))))
+	(funcall fun mini))))
 
 (defun walk-window-subtree (fun &optional window any)
   "Run function FUN on the subtree of windows rooted at WINDOW.
@@ -2773,7 +2775,7 @@ shall be resized horizontally."
        (unless (= (window-new-pixel window)
 		  (window-size window horizontal t))
 	 (throw 'apply t)))
-     frame t)
+     frame t t)
     nil))
 
 (defun window-resize (window delta &optional horizontal ignore pixelwise)
@@ -3393,7 +3395,8 @@ may happen when the FRAME is not large enough to accommodate it."
 	 (when (> delta 0)
 	   (if (window-resizable-p window delta horizontal nil t)
 	       (window-resize window delta horizontal nil t)
-	     (setq value nil))))))
+	     (setq value nil)))))
+     nil nil 'nomini)
     value))
 
 (defun adjust-window-trailing-edge (window delta &optional horizontal pixelwise)
@@ -4171,7 +4174,8 @@ any window whose `no-delete-other-windows' parameter is non-nil."
                        (and (not (window-parameter other 'window-side))
                             (window-parameter
                              other 'no-delete-other-windows)))
-               (throw 'tag nil))))
+               (throw 'tag nil)))
+           nil nil 'nomini)
           t)
         (setq main (window-main-window frame)))
        (t
@@ -6655,7 +6659,7 @@ split."
                                   (unless (or (eq w window)
                                               (window-dedicated-p w))
                                     (throw 'done nil)))
-                                frame)
+                                frame nil 'nomini)
               t)))
 	 (not (window-minibuffer-p window))
 	 (let ((split-height-threshold 0))
