@@ -754,7 +754,7 @@ With prefix argument MINIMIZE, minimize it instead."
 (defun json-pretty-print-buffer-ordered (&optional minimize)
   "Pretty-print current buffer with object keys ordered.
 With prefix argument MINIMIZE, minimize it instead."
-  (interactive)
+  (interactive "P")
   (let ((json-encoding-object-sort-predicate 'string<))
     (json-pretty-print-buffer minimize)))
 
