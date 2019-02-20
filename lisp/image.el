@@ -923,7 +923,7 @@ has no effect."
   :version "24.3")
 
 (defcustom imagemagick-enabled-types
-  '(3FR ART ARW AVS BMP BMP2 BMP3 CAL CALS CMYK CMYKA CR2 CRW
+  '(3FR ARW AVS BMP BMP2 BMP3 CAL CALS CMYK CMYKA CR2 CRW
     CUR CUT DCM DCR DCX DDS DJVU DNG DPX EXR FAX FITS GBR GIF
     GIF87 GRB HRZ ICB ICO ICON J2C JNG JP2 JPC JPEG JPG JPX K25
     KDC MIFF MNG MRW MSL MSVG MTV NEF ORF OTB PBM PCD PCDS PCL
@@ -957,7 +957,7 @@ has no effect."
   :set (lambda (symbol value)
 	 (set-default symbol value)
 	 (imagemagick-register-types))
-  :version "24.3")
+  :version "26.2")                      ; remove ART (bug#22289)
 
 (imagemagick-register-types)
 
