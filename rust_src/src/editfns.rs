@@ -738,7 +738,7 @@ pub fn constrain_to_field(
 /// If BYTEPOS is out of range, the value is nil.
 #[lisp_fn]
 pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
-    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let mut pos_byte = bytepos as isize;
     if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
         return None;
