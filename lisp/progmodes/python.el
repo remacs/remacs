@@ -575,7 +575,7 @@ class declarations.")
            "reload" "unichr" "unicode" "xrange" "apply" "buffer" "coerce"
            "intern"
            ;; Python 3:
-           "ascii" "bytearray" "bytes" "exec"
+           "ascii" "breakpoint" "bytearray" "bytes" "exec"
            ;; Extra:
            "__all__" "__doc__" "__name__" "__package__")
           symbol-end) . font-lock-builtin-face))
