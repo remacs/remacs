@@ -4628,6 +4628,9 @@ extern char *xstrdup (const char *) ATTRIBUTE_MALLOC;
 extern char *xlispstrdup (Lisp_Object) ATTRIBUTE_MALLOC;
 extern void dupstring (char **, char const *);
 
+extern void
+window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror);
+
 /* Make DEST a copy of STRING's data.  Return a pointer to DEST's terminating
    null byte.  This is like stpcpy, except the source is a Lisp string.  */
 
