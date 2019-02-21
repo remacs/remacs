@@ -1458,7 +1458,7 @@ a diff with \\[diff-reverse-direction].
        (lambda () (diff-find-file-name nil 'noprompt)))
   (add-function :filter-return (local 'filter-buffer-substring-function)
                 #'diff--filter-substring)
-  (unless (buffer-file-name)
+  (unless buffer-file-name
     (hack-dir-local-variables-non-file-buffer)))
 
 ;;;###autoload
@@ -2123,6 +2123,26 @@ Return new point, if it was moved."
                                   (match-end 0) end
                                   nil #'diff-refine-preproc props-r props-a)))))))
 
+(defun diff--iterate-hunks (max fun)
+  "Iterate over all hunks between point and MAX.
+Call FUN with two args (BEG and END) for each hunk."
+  (save-excursion
+    (let* ((beg (or (ignore-errors (diff-beginning-of-hunk))
+                    (ignore-errors (diff-hunk-next) (point))
+                    max)))
+      (while (< beg max)
+        (goto-char beg)
+        (cl-assert (looking-at diff-hunk-header-re))
+        (let ((end
+               (save-excursion (diff-end-of-hunk) (point))))
+          (cl-assert (< beg end))
+          (funcall fun beg end)
+          (goto-char end)
+          (setq beg (if (looking-at diff-hunk-header-re)
+                        end
+                      (or (ignore-errors (diff-hunk-next) (point))
+                          max))))))))
+
 (defun diff--font-lock-refined (max)
   "Apply hunk refinement from font-lock."
   (when diff-font-lock-refine
@@ -2138,27 +2158,19 @@ Return new point, if it was moved."
       ;; same hunk.
       (goto-char (next-single-char-property-change
                   (point) 'diff--font-lock-refined nil max)))
-    (let* ((min (point))
-           (beg (or (ignore-errors (diff-beginning-of-hunk))
-                    (ignore-errors (diff-hunk-next) (point))
-                    max)))
-      (while (< beg max)
-        (let ((end
-               (save-excursion (goto-char beg) (diff-end-of-hunk) (point))))
-          (if (< end min) (setq beg min))
-          (unless (or (< end beg)
-                      (get-char-property beg 'diff--font-lock-refined))
-            (diff--refine-hunk beg end)
-            (let ((ol (make-overlay beg end)))
-              (overlay-put ol 'diff--font-lock-refined t)
-              (overlay-put ol 'diff-mode 'fine)
-              (overlay-put ol 'evaporate t)
-              (overlay-put ol 'modification-hooks
-                           '(diff--font-lock-refine--refresh))))
-          (goto-char (max beg end))
-          (setq beg (or (ignore-errors (diff-hunk-next) (point)) max)))))))
+    (diff--iterate-hunks
+     max
+     (lambda (beg end)
+       (unless (get-char-property beg 'diff--font-lock-refined)
+         (diff--refine-hunk beg end)
+         (let ((ol (make-overlay beg end)))
+           (overlay-put ol 'diff--font-lock-refined t)
+           (overlay-put ol 'diff-mode 'fine)
+           (overlay-put ol 'evaporate t)
+           (overlay-put ol 'modification-hooks
+                        '(diff--overlay-auto-delete))))))))
 
-(defun diff--font-lock-refine--refresh (ol _after _beg _end &optional _len)
+(defun diff--overlay-auto-delete (ol _after _beg _end &optional _len)
   (delete-overlay ol))
 
 (defun diff-undo (&optional arg)
@@ -2365,29 +2377,17 @@ and the position in MAX."
     (when (get-char-property (point) 'diff--font-lock-syntax)
       (goto-char (next-single-char-property-change
                   (point) 'diff--font-lock-syntax nil max)))
-    (let* ((min (point))
-           (beg (or (ignore-errors (diff-beginning-of-hunk))
-                    (ignore-errors (diff-hunk-next) (point))
-                    max)))
-      (while (< beg max)
-        (let ((end
-               (save-excursion (goto-char beg) (diff-end-of-hunk) (point))))
-          (if (< end min) (setq beg min))
-          (unless (or (< end beg)
-                      (get-char-property beg 'diff--font-lock-syntax))
-            (diff-syntax-fontify beg end)
-            (let ((ol (make-overlay beg end)))
-              (overlay-put ol 'diff--font-lock-syntax t)
-              (overlay-put ol 'diff-mode 'syntax)
-              (overlay-put ol 'evaporate t)
-              (overlay-put ol 'modification-hooks
-                           '(diff--font-lock-syntax--refresh))))
-          (goto-char (max beg end))
-          (setq beg (or (ignore-errors (diff-hunk-next) (point)) max))))))
-  nil)
-
-(defun diff--font-lock-syntax--refresh (ol _after _beg _end &optional _len)
-  (delete-overlay ol))
+    (diff--iterate-hunks
+     max
+     (lambda (beg end)
+       (unless (get-char-property beg 'diff--font-lock-syntax)
+         (diff-syntax-fontify beg end)
+         (let ((ol (make-overlay beg end)))
+           (overlay-put ol 'diff--font-lock-syntax t)
+           (overlay-put ol 'diff-mode 'syntax)
+           (overlay-put ol 'evaporate t)
+           (overlay-put ol 'modification-hooks
+                        '(diff--overlay-auto-delete))))))))
 
 (defun diff-syntax-fontify (beg end)
   "Highlight source language syntax in diff hunk between BEG and END."
@@ -2407,7 +2407,7 @@ When OLD is non-nil, highlight the hunk from the old source."
   (let* ((hunk (buffer-substring-no-properties beg end))
          ;; Trim a trailing newline to find hunk in diff-syntax-fontify-props
          ;; in diffs that have no newline at end of diff file.
-         (text (string-trim-right (or (ignore-errors (diff-hunk-text hunk (not old) nil)) "")))
+         (text (string-trim-right (or (with-demoted-errors (diff-hunk-text hunk (not old) nil)) "")))
 	 (line (if (looking-at "\\(?:\\*\\{15\\}.*\n\\)?[-@* ]*\\([0-9,]+\\)\\([ acd+]+\\([0-9,]+\\)\\)?")
 		   (if old (match-string 1)
 		     (if (match-end 3) (match-string 3) (match-string 1)))))
@@ -2430,7 +2430,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                   ;; Try to reuse an existing buffer
                   (if (get-file-buffer (expand-file-name file))
                       (with-current-buffer (get-file-buffer (expand-file-name file))
-                        (setq props (diff-syntax-fontify-props nil text line-nb t)))
+                        (setq props (diff-syntax-fontify-props nil text line-nb)))
                     ;; Get properties from the file
                     (with-temp-buffer
                       (insert-file-contents file)
@@ -2450,12 +2450,12 @@ When OLD is non-nil, highlight the hunk from the old source."
                       (puthash buffer-name buffer diff-syntax-fontify-revisions))))
                 (when buffer
                   (with-current-buffer buffer
-                    (setq props (diff-syntax-fontify-props file text line-nb t))))))
+                    (setq props (diff-syntax-fontify-props file text line-nb))))))
           ;; If file is unavailable, get properties from the hunk alone
           (setq file (car (diff-hunk-file-names old)))
           (with-temp-buffer
             (insert text)
-            (setq props (diff-syntax-fontify-props file text line-nb nil t))))))
+            (setq props (diff-syntax-fontify-props file text line-nb t))))))
      ((and diff-default-directory (not (eq diff-font-lock-syntax 'hunk-only)))
       (let ((file (car (diff-hunk-file-names old))))
         (if (and file (file-exists-p file) (file-regular-p file))
@@ -2466,12 +2466,12 @@ When OLD is non-nil, highlight the hunk from the old source."
           ;; Otherwise, get properties from the hunk alone
           (with-temp-buffer
             (insert text)
-            (setq props (diff-syntax-fontify-props file text line-nb nil t))))))
+            (setq props (diff-syntax-fontify-props file text line-nb t))))))
      ((memq diff-font-lock-syntax '(hunk-also hunk-only))
       (let ((file (car (diff-hunk-file-names old))))
         (with-temp-buffer
           (insert text)
-          (setq props (diff-syntax-fontify-props file text line-nb nil t))))))
+          (setq props (diff-syntax-fontify-props file text line-nb t))))))
 
     ;; Put properties over the hunk text
     (goto-char beg)
@@ -2494,18 +2494,22 @@ When OLD is non-nil, highlight the hunk from the old source."
                     (overlay-put ol 'evaporate t)
                     (overlay-put ol 'face (nth 2 prop))))))))))))
 
-(defun diff-syntax-fontify-props (file text line-nb &optional no-init hunk-only)
+(defun diff-syntax-fontify-props (file text line-nb &optional hunk-only)
   "Get font-lock properties from the source code.
-FILE is the name of the source file.  TEXT is the literal source text from
-hunk.  LINE-NB is a pair of numbers: start line number and the number of
+FILE is the name of the source file.  If non-nil, it requests initialization
+of the mode according to FILE.
+TEXT is the literal source text from hunk.
+LINE-NB is a pair of numbers: start line number and the number of
 lines in the hunk.  NO-INIT means no initialization is needed to set major
 mode.  When HUNK-ONLY is non-nil, then don't verify the existence of the
 hunk text in the source file.  Otherwise, don't highlight the hunk if the
 hunk text is not found in the source file."
-  (unless no-init
-    (buffer-disable-undo)
-    (font-lock-mode -1)
-    (setq buffer-file-name nil)
+  (when file
+    ;; When initialization is requested, we should be in a brand new
+    ;; temp buffer.
+    (cl-assert (eq t buffer-undo-list))
+    (cl-assert (not font-lock-mode))
+    (cl-assert (null buffer-file-name))
     (let ((enable-local-variables :safe) ;; to find `mode:'
           (buffer-file-name file))
       (set-auto-mode)
@@ -2514,7 +2518,6 @@ hunk text is not found in the source file."
         (generic-mode-find-file-hook))))
 
   (let ((font-lock-defaults (or font-lock-defaults '(nil t)))
-        (inhibit-read-only t)
         props beg end)
     (goto-char (point-min))
     (if hunk-only
@@ -2546,7 +2549,6 @@ hunk text is not found in the source file."
           (when val (push (list from eol val) line-props))
           (push (nreverse line-props) props))
         (forward-line 1)))
-    (set-buffer-modified-p nil)
     (nreverse props)))
 
 
