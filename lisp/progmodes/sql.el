@@ -2725,7 +2725,7 @@ highlighting rules in SQL mode.")
              nil 'require-match
              init 'sql-product-history init))))
 
-(defun sql-add-product (product display &rest plist)
+(defun sql-add-product (product display &optional plist)
   "Add support for a database product in `sql-mode'.
 
 Add PRODUCT to `sql-product-alist' which enables `sql-mode' to
@@ -2782,19 +2782,38 @@ list.  See `sql-add-product' to add new products.  The FEATURE
 argument must be a plist keyword accepted by
 `sql-product-alist'."
 
-  (let* ((p (assoc product sql-product-alist))
-         (v (plist-get (cdr p) feature)))
-    (if (and p v)
-        (if (and
-             (member feature sql-indirect-features)
-             (symbolp v))
-            (set v newvalue)
-          (setcdr p (plist-put (cdr p) feature newvalue)))
-      (progn
-       (when (null p)
-         (error "`%s' is not a known product; use `sql-add-product' to add it first." product))
-       (when (null v)
-         (error "`%s' is not a known feature for `%s'; use `sql-add-product' to add it first." feature product))))))
+  (let* ((p (assoc product sql-product-alist))  ;; (PRODUCT :f v ...)
+         (v (plist-member (cdr p) feature)))    ;; (:FEATURE value ...) or null
+
+    (if p
+        (if (member feature sql-indirect-features) ; is indirect
+            (if v
+                (if (car (cdr v))
+                    (if (symbolp (car (cdr v)))
+                        ;; Indirect reference
+                        (set (car (cdr v)) newvalue)
+                      ;; indirect is not a symbol
+                      (error "The value of `%s' for `%s' is not a symbol" feature product))
+                  ;; keyword present, set the indirect variable name
+                  (if (symbolp newvalue)
+                      (if (cdr v)
+                          (setf (car (cdr v)) newvalue)
+                        (setf (cdr v) (list newvalue)))
+                    (error "The indirect variable of `%s' for `%s' must be a symbol" feature product)))
+              ;; not present; insert list
+              (setq v (list feature newvalue))
+              (setf (cdr (cdr v)) (cdr p))
+              (setf (cdr p) v))
+          ;; Not an indirect feature
+          (if v
+              (if (cdr v)
+                  (setf (car (cdr v)) newvalue)
+                (setf (cdr v) (list newvalue)))
+            ;; no value; insert into the list
+            (setq v (list feature newvalue))
+            (setf (cdr (cdr v)) (cdr p))
+            (setf (cdr p) v)))
+      (error "`%s' is not a known product; use `sql-add-product' to add it first" product))))
 
 (defun sql-get-product-feature (product feature &optional fallback not-indirect)
   "Lookup FEATURE associated with a SQL PRODUCT.
@@ -2822,7 +2841,7 @@ See `sql-product-alist' for a list of products and supported features."
                (member feature sql-indirect-features)
                (not not-indirect)
                (symbolp v))
-              (symbol-value v)
+              (eval v)
             v))
       (error "`%s' is not a known product; use `sql-add-product' to add it first." product)
       nil)))
