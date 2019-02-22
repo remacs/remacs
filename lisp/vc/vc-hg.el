@@ -923,9 +923,6 @@ FILENAME must be the file's true absolute name."
       (setf ignored (string-match (pop patterns) filename)))
     ignored))
 
-(defun vc-hg--time-to-integer (ts)
-  (+ (* 65536 (car ts)) (cadr ts)))
-
 (defvar vc-hg--cached-ignore-patterns nil
   "Cached pre-parsed hg ignore patterns.")
 
@@ -1046,8 +1043,9 @@ hg binary."
                (let ((vc-hg-size (nth 2 dirstate-entry))
                      (vc-hg-mtime (nth 3 dirstate-entry))
                      (fs-size (file-attribute-size stat))
-                     (fs-mtime (vc-hg--time-to-integer
-				(file-attribute-modification-time stat))))
+		     (fs-mtime (encode-time
+				(file-attribute-modification-time stat)
+				'integer)))
                  (if (and (eql vc-hg-size fs-size) (eql vc-hg-mtime fs-mtime))
                      'up-to-date
                    'edited)))

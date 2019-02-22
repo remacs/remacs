@@ -3540,18 +3540,11 @@ possible values."
 	  (concat "Date: " (message-make-date time)))
 	 ;; Convert to Universal Time.
 	 ((eq type 'ut)
-	  (concat "Date: "
-		  (substring
-		   (message-make-date
-		    (let* ((e (parse-time-string date))
-			   (tm (encode-time e))
-			   (ms (car tm))
-			   (ls (- (cadr tm) (car (current-time-zone time)))))
-		      (cond ((< ls 0) (list (1- ms) (+ ls 65536)))
-			    ((> ls 65535) (list (1+ ms) (- ls 65536)))
-			    (t (list ms ls)))))
-		   0 -5)
-		  "UT"))
+	  (let ((system-time-locale "C"))
+	    (format-time-string
+	     "Date: %a, %d %b %Y %T UT"
+	     (encode-time (parse-time-string date))
+	     t)))
 	 ;; Get the original date from the article.
 	 ((eq type 'original)
 	  (concat "Date: " (if (string-match "\n+$" date)
@@ -3569,13 +3562,7 @@ possible values."
 	      (concat "Date: " (format-time-string format time)))))
 	 ;; ISO 8601.
 	 ((eq type 'iso8601)
-	  (let ((tz (car (current-time-zone time))))
-	    (concat
-	     "Date: "
-	     (format-time-string "%Y%m%dT%H%M%S" time)
-	     (format "%s%02d%02d"
-		     (if (> tz 0) "+" "-") (/ (abs tz) 3600)
-		     (/ (% (abs tz) 3600) 60)))))
+	  (format-time-string "Date: %Y%m%dT%H%M%S%z" time))
 	 ;; Do a lapsed format.
 	 ((eq type 'lapsed)
 	  (concat "Date: " (article-lapsed-string time)))
@@ -3624,17 +3611,13 @@ possible values."
   ;; If the date is seriously mangled, the timezone functions are
   ;; liable to bug out, so we ignore all errors.
   (let* ((real-time (time-subtract nil time))
-	 (real-sec (and real-time
-			(+ (* (float (car real-time)) 65536)
-			   (cadr real-time))))
-	 (sec (and real-time (abs real-sec)))
+	 (real-sec (float-time real-time))
+	 (sec (abs real-sec))
 	 (segments 0)
 	 num prev)
     (unless max-segments
       (setq max-segments (length article-time-units)))
     (cond
-     ((null real-time)
-      "Unknown")
      ((zerop sec)
       "Now")
      (t

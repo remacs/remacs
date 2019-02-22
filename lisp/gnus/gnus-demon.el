@@ -192,11 +192,9 @@ marked with SPECIAL."
 			    (elt nowParts 6)
 			    (elt nowParts 7)
 			    (elt nowParts 8)))
-	 ;; calculate number of seconds between NOW and THEN
-	 (diff (+ (* 65536 (- (car then) (car now)))
-		  (- (cadr then) (cadr now)))))
-    ;; return number of timesteps in the number of seconds
-    (round (/ diff gnus-demon-timestep))))
+	 (diff (float-time (time-subtract then now))))
+    ;; Return number of timesteps in the number of seconds.
+    (round diff gnus-demon-timestep)))
 
 (gnus-add-shutdown 'gnus-demon-cancel 'gnus)
 

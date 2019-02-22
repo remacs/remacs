@@ -180,8 +180,8 @@ Shorter values mean quicker response, but are more CPU intensive.")
 ;;  ("SERVER_B" ("USER_B1" "UIDL1" TIMESTAMP1 "UIDL2" TIMESTAMP2...)
 ;;              ("USER_B2" "UIDL1" TIMESTAMP1 "UIDL2" TIMESTAMP2...)
 ;;              ...))
-;; Where TIMESTAMP is the most significant two digits of an Emacs time,
-;; i.e. the return value of `current-time'.
+;; Where TIMESTAMP is an Emacs time value (HI LO) representing the
+;; number of seconds (+ (ash HI 16) LO).
 
 ;;;###autoload
 (defun pop3-movemail (file)
@@ -380,7 +380,9 @@ Use streaming commands."
 (defun pop3-uidl-dele (process)
   "Delete messages according to `pop3-leave-mail-on-server'.
 Return non-nil if it is necessary to update the local UIDL file."
-  (let* ((ctime (current-time))
+  (let* ((ctime (encode-time nil 'list))
+	 (age-limit (and (numberp pop3-leave-mail-on-server)
+			 (* 86400 pop3-leave-mail-on-server)))
 	 (srvr (assoc pop3-mailhost pop3-uidl-saved))
 	 (saved (assoc pop3-maildrop (cdr srvr)))
 	 i uidl mod new tstamp dele)
@@ -397,17 +399,13 @@ Return non-nil if it is necessary to update the local UIDL file."
 	   (setq new (mapcan (lambda (elt) (list elt ctime)) pop3-uidl))))
     (when new (setq mod t))
     ;; List expirable messages and delete them from the data to be saved.
-    (setq ctime (when (numberp pop3-leave-mail-on-server)
-		  (/ (+ (* (car ctime) 65536.0) (cadr ctime)) 86400))
-	  i (1- (length saved)))
+    (setq i (1- (length saved)))
     (while (> i 0)
       (if (member (setq uidl (nth (1- i) saved)) pop3-uidl)
 	  (progn
 	    (setq tstamp (nth i saved))
-	    (if (and ctime
-		     (> (- ctime (/ (+ (* (car tstamp) 65536.0) (cadr tstamp))
-				    86400))
-			pop3-leave-mail-on-server))
+	    (if (and age-limit
+		     (time-less-p age-limit (time-subtract ctime tstamp)))
 		;; Mails to delete.
 		(progn
 		  (setq mod t)
