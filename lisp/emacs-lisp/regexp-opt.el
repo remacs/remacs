@@ -121,9 +121,9 @@ than that of a simplified version:
                 ((eq paren \\='symbols) \\='(\"\\\\_<\\\\(\" . \"\\\\)\\\\_>\"))
                 ((null paren)          \\='(\"\\\\(?:\" . \"\\\\)\"))
                 (t                       \\='(\"\\\\(\" . \"\\\\)\")))))
-     (concat (car paren)
+     (concat (car parens)
              (mapconcat \\='regexp-quote strings \"\\\\|\")
-             (cdr paren))))"
+             (cdr parens))))"
   (save-match-data
     ;; Recurse on the sorted list.
     (let* ((max-lisp-eval-depth 10000)
