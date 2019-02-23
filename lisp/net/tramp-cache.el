@@ -128,9 +128,14 @@ Returns DEFAULT if not set."
 	(and (consp value)
 	     (or (null remote-file-name-inhibit-cache)
 		 (and (integerp remote-file-name-inhibit-cache)
-		      (time-less-p nil
-				   (time-add (car value)
-					     remote-file-name-inhibit-cache)))
+		      (time-less-p
+		       ;; `current-time' can be nil once we get rid of Emacs 24.
+		       (current-time)
+		       (time-add
+			(car value)
+		       ;; `seconds-to-time' can be removed once we get
+		       ;; rid of Emacs 24.
+			(seconds-to-time remote-file-name-inhibit-cache))))
 		 (and (consp remote-file-name-inhibit-cache)
 		      (time-less-p
 		       remote-file-name-inhibit-cache (car value)))))
