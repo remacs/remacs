@@ -20,8 +20,10 @@ use crate::{
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        concat as lisp_concat, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
-        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area,
+        bool_vector_bytes, bool_vector_data, bool_vector_size, concat as lisp_concat,
+        copy_char_table, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
+        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area, Frecord,
+        PVSIZE,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -511,6 +513,38 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
     }
 
     val
+}
+
+/// Return a copy of a list, vector, string, char-table or record.
+/// The elements of a list, vector or record are not copied; they are
+/// shared with the original.
+/// If the original sequence is empty, this function may return
+/// the same empty object instead of its copy.
+#[lisp_fn]
+pub fn copy_sequence(arg: LispObject) -> LispObject {
+    unsafe {
+        if arg.is_nil() {
+            arg
+        } else if arg.is_record() {
+            Frecord(PVSIZE(arg), arg.force_vector().contents)
+        } else if arg.is_char_table() {
+            copy_char_table(arg)
+        } else if arg.is_bool_vector() {
+            let nbits = bool_vector_size(arg);
+            let nbytes = bool_vector_bytes(nbits) as usize;
+            let val = make_uninit_bool_vector(nbits);
+            libc::memcpy(
+                bool_vector_data(val) as *mut libc::c_void,
+                bool_vector_data(arg) as *mut libc::c_void,
+                nbytes,
+            );
+            val
+        } else if !arg.is_cons() && !arg.is_vector() && !arg.is_string() {
+            wrong_type!(Qsequencep, arg);
+        } else {
+            lisp_concat(1, &mut arg, arg.get_type(), false)
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
