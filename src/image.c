@@ -8941,8 +8941,8 @@ imagemagick_load (struct frame *f, struct image *img)
 #endif
       success_p = imagemagick_load_image (f, img, 0, 0, SSDATA (file));
     }
-  /* Else its not a file, its a lisp object.  Load the image from a
-     lisp object rather than a file.  */
+  /* Else it's not a file, it's a Lisp object.  Load the image from a
+     Lisp object rather than a file.  */
   else
     {
       Lisp_Object data;
@@ -9250,8 +9250,8 @@ svg_load (struct frame *f, struct image *img)
 				  SSDATA (ENCODE_FILE (file)));
       xfree (contents);
     }
-  /* Else its not a file, its a lisp object.  Load the image from a
-     lisp object rather than a file.  */
+  /* Else it's not a file, it's a Lisp object.  Load the image from a
+     Lisp object rather than a file.  */
   else
     {
       Lisp_Object data, original_filename;
