@@ -210,7 +210,7 @@ matches."
 (defun ecomplete-decay-1 (elem)
   ;; We subtract 5% from the item for each week it hasn't been used.
   (/ (car elem)
-     (expt 1.05 (/ (- (float-time) (cadr elem))
+     (expt 1.05 (/ (float-time (time-since (cadr elem)))
                    (* 7 24 60 60)))))
 
 ;; `ecomplete-get-matches' uses substring matching, so also use the `substring'

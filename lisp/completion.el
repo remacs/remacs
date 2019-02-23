@@ -432,7 +432,7 @@ Used to decide whether to save completions.")
 
 
 (defun cmpl-hours-since-origin ()
-  (floor (float-time) 3600))
+  (floor (encode-time nil 'integer) 3600))
 
 ;;---------------------------------------------------------------------------
 ;; "Symbol" parsing functions

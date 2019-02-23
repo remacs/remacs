@@ -630,8 +630,8 @@ only consider active buffers visible.")
   (if erc-track-when-inactive
       (when erc-buffer-activity; could be nil
 	(and (erc-track-get-buffer-window buffer erc-track-visibility)
-	     (<= (erc-time-diff erc-buffer-activity (erc-current-time))
-		 erc-buffer-activity-timeout)))
+	     (not (time-less-p erc-buffer-activity-timeout
+			       (erc-time-diff erc-buffer-activity nil)))))
     (erc-track-get-buffer-window buffer erc-track-visibility)))
 
 ;;; Tracking the channel modifications

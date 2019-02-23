@@ -1000,8 +1000,7 @@ Store them in the capture property list."
 		   (equal current-prefix-arg 1))
 	       ;; Prompt for date.
 	       (let ((prompt-time (org-read-date
-				   nil t nil "Date for tree entry:"
-				   (current-time))))
+				   nil t nil "Date for tree entry:" nil)))
 		 (org-capture-put
 		  :default-time
 		  (cond ((and (or (not (boundp 'org-time-was-given))

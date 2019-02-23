@@ -943,7 +943,8 @@ Summarize disk usage of each FILE, recursively for directories.")
 (defvar eshell-time-start nil)
 
 (defun eshell-show-elapsed-time ()
-  (let ((elapsed (format "%.3f secs\n" (- (float-time) eshell-time-start))))
+  (let ((elapsed (format "%.3f secs\n"
+			 (float-time (time-since eshell-time-start)))))
     (set-text-properties 0 (length elapsed) '(face bold) elapsed)
     (eshell-interactive-print elapsed))
   (remove-hook 'eshell-post-command-hook 'eshell-show-elapsed-time t))

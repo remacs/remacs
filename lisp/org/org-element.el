@@ -4765,13 +4765,13 @@ you want to help debugging the issue.")
 (defvar org-element-cache-sync-idle-time 0.6
   "Length, in seconds, of idle time before syncing cache.")
 
-(defvar org-element-cache-sync-duration (encode-time 0.04)
+(defvar org-element-cache-sync-duration 0.04
   "Maximum duration, as a time value, for a cache synchronization.
 If the synchronization is not over after this delay, the process
 pauses and resumes after `org-element-cache-sync-break'
 seconds.")
 
-(defvar org-element-cache-sync-break (encode-time 0.3)
+(defvar org-element-cache-sync-break 0.3
   "Duration, as a time value, of the pause between synchronizations.
 See `org-element-cache-sync-duration' for more information.")
 
@@ -5066,7 +5066,7 @@ Assume ELEMENT belongs to cache and that a cache is active."
 TIME-LIMIT is a time value or nil."
   (and time-limit
        (or (input-pending-p)
-	   (time-less-p time-limit (current-time)))))
+	   (time-less-p time-limit nil))))
 
 (defsubst org-element--cache-shift-positions (element offset &optional props)
   "Shift ELEMENT properties relative to buffer positions by OFFSET.
@@ -5120,8 +5120,7 @@ updated before current modification are actually submitted."
 	     (and next (aref next 0))
 	     threshold
 	     (and (not threshold)
-		  (time-add (current-time)
-			    org-element-cache-sync-duration))
+		  (time-add nil org-element-cache-sync-duration))
 	     future-change)
 	    ;; Request processed.  Merge current and next offsets and
 	    ;; transfer ending position.

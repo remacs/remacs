@@ -2771,8 +2771,8 @@ Otherwise, use the current value of `process-mark'."
   (with-current-buffer (process-buffer process)
     (cl-loop with start-pos = (or start
                                   (marker-position (process-mark process)))
-             with end-time = (+ (float-time) timeout)
-             for time-left = (- end-time (float-time))
+	     with end-time = (time-add nil timeout)
+	     for time-left = (float-time (time-subtract end-time nil))
              do (goto-char (point-max))
              if (looking-back regexp start-pos) return t
              while (> time-left 0)

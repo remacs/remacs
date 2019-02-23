@@ -601,7 +601,7 @@ See `erc-log-match-format'."
 						       'timestamp))))
 		  (away-time (erc-emacs-time-to-erc-time (erc-away-time))))
 	     (when (and away-time last-msg-time
-			(erc-time-gt last-msg-time away-time))
+			(time-less-p away-time last-msg-time))
 	       (erc-display-message
 		nil 'notice 'active
 		(format "You have logged messages waiting in \"%s\"."

@@ -1948,11 +1948,10 @@ Otherwise buffers whose name matches an element of
   (ibuffer-mark-on-buffer
    #'(lambda (buf)
        (with-current-buffer buf
-	 ;; hacked from midnight.el
 	 (when buffer-display-time
-	   (let* ((now (float-time))
-		  (then (float-time buffer-display-time)))
-	     (> (- now then) (* 60 60 ibuffer-old-time))))))))
+	   (time-less-p
+	    (* 60 60 ibuffer-old-time)
+	    (time-since buffer-display-time)))))))
 
 ;;;###autoload
 (defun ibuffer-mark-special-buffers ()

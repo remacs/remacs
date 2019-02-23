@@ -2011,7 +2011,7 @@ Optional argument REDRAW, if non-nil, forces mode line to be updated."
 ;;   ;; Terminates man processing
 ;;   "Report formatting time."
 ;;   (message "Man formatting done in %s seconds"
-;;            (float-time (time-subtract nil WoMan-Man-start-time))))
+;;            (float-time (time-since WoMan-Man-start-time))))
 
 
 ;;; Buffer handling:

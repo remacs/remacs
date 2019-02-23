@@ -723,7 +723,7 @@ menu\nmouse-2 will jump to task"))
 The time returned includes the time spent on this task in
 previous clocking intervals."
   (let ((currently-clocked-time
-	 (floor (encode-time (time-subtract nil org-clock-start-time) 'integer)
+	 (floor (encode-time (time-since org-clock-start-time) 'integer)
 		60)))
     (+ currently-clocked-time (or org-clock-total-time 0))))
 
@@ -932,7 +932,7 @@ If necessary, clock-out of the currently active clock."
 	(unless (org-is-active-clock clock)
 	  (org-clock-clock-in clock t))))
 
-     ((not (time-less-p resolve-to (current-time)))
+     ((not (time-less-p resolve-to nil))
       (error "RESOLVE-TO must refer to a time in the past"))
 
      (t
@@ -1033,8 +1033,7 @@ to be CLOCKED OUT."))))
 				   nil 45)))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
-	   (floor (encode-time (time-subtract (current-time) last-valid)
-			       'integer)
+	   (floor (encode-time (time-since last-valid) 'integer)
 		  60))
 	 (keep
 	  (and (memq ch '(?k ?K))
@@ -1043,8 +1042,9 @@ to be CLOCKED OUT."))))
 	  (and (memq ch '(?g ?G))
 	       (read-number "Got back how many minutes ago? " default)))
 	 (subtractp (memq ch '(?s ?S)))
-	 (barely-started-p (< (- (float-time last-valid)
-				 (float-time (cdr clock))) 45))
+	 (barely-started-p (time-less-p
+			    (time-subtract last-valid (cdr clock))
+			    45))
 	 (start-over (and subtractp barely-started-p)))
     (cond
      ((memq ch '(?j ?J))
@@ -1070,10 +1070,9 @@ to be CLOCKED OUT."))))
 		   (and gotback (= gotback default)))
 	       'now)
 	      (keep
-	       (time-add last-valid (encode-time (* 60 keep))))
+	       (time-add last-valid (* 60 keep)))
 	      (gotback
-	       (time-subtract (current-time)
-			      (encode-time (* 60 gotback))))
+	       (time-since (* 60 gotback)))
 	      (t
 	       (error "Unexpected, please report this as a bug")))
        (and gotback last-valid)
@@ -1103,7 +1102,7 @@ If `only-dangling-p' is non-nil, only ask to resolve dangling
 			(lambda (clock)
 			  (format
 			   "Dangling clock started %d mins ago"
-			   (floor (encode-time (time-subtract nil (cdr clock))
+			   (floor (encode-time (time-since (cdr clock))
 					       'integer)
 				  60)))))
 		   (or last-valid
@@ -1155,8 +1154,7 @@ so long."
 	     org-clock-marker (marker-buffer org-clock-marker))
     (let* ((org-clock-user-idle-seconds (org-user-idle-seconds))
 	   (org-clock-user-idle-start
-	    (time-subtract (current-time)
-			   (encode-time org-clock-user-idle-seconds)))
+	    (time-since org-clock-user-idle-seconds))
 	   (org-clock-resolving-clocks-due-to-idleness t))
       (if (> org-clock-user-idle-seconds (* 60 org-clock-idle-time))
 	  (org-clock-resolve
@@ -1165,9 +1163,8 @@ so long."
 	   (lambda (_)
 	     (format "Clocked in & idle for %.1f mins"
 		     (/ (float-time
-			 (time-subtract (current-time)
-					org-clock-user-idle-start))
-			60.0)))
+			 (time-since org-clock-user-idle-start))
+			60)))
 	   org-clock-user-idle-start)))))
 
 (defvar org-clock-current-task nil "Task currently clocked in.")
@@ -1324,9 +1321,11 @@ the default behavior."
 			  (y-or-n-p
 			   (format
 			    "You stopped another clock %d mins ago; start this one from then? "
-			    (/ (- (float-time
-				   (org-current-time org-clock-rounding-minutes t))
-				  (float-time leftover))
+			    (/ (encode-time
+				(time-subtract
+				 (org-current-time org-clock-rounding-minutes t)
+				 leftover)
+				'integer)
 			       60)))
 			  leftover)
 		     start-time
@@ -1577,19 +1576,19 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (delete-region (point) (point-at-eol))
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
-	  (setq s (float-time (time-subtract
-			       (org-time-string-to-time te)
-			       (org-time-string-to-time ts)))
+	  (setq s (encode-time (time-subtract
+				(org-time-string-to-time te)
+				(org-time-string-to-time ts))
+			       'integer)
 		h (floor s 3600)
-		s (- s (* 3600 h))
-		m (floor s 60))
+		m (floor (mod s 3600) 60))
 	  (insert " => " (format "%2d:%02d" h m))
 	  (move-marker org-clock-marker nil)
 	  (move-marker org-clock-hd-marker nil)
 	  ;; Possibly remove zero time clocks.  However, do not add
 	  ;; a note associated to the CLOCK line in this case.
 	  (cond ((and org-clock-out-remove-zero-time-clocks
-		      (= (+ h m) 0))
+		      (= 0 h m))
 		 (setq remove t)
 		 (delete-region (line-beginning-position)
 				(line-beginning-position 2)))
@@ -1833,8 +1832,9 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 		      tend
 		      (>= (float-time org-clock-start-time) tstart)
 		      (<= (float-time org-clock-start-time) tend))
-	     (let ((time (floor (- (float-time)
-				   (float-time org-clock-start-time))
+	     (let ((time (floor (encode-time
+				 (time-since org-clock-start-time)
+				 'integer)
 				60)))
 	       (setq t1 (+ t1 time))))
 	   (let* ((headline-forced
@@ -2712,14 +2712,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq te (float-time (org-time-string-to-time te)))))
     (setq tsb
 	  (if (eq step0 'week)
-	      (let ((dow (nth 6 (decode-time (encode-time ts)))))
+	      (let ((dow (nth 6 (decode-time ts))))
 		(if (<= dow ws) ts
 		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (while (< tsb te)
       (unless (bolp) (insert "\n"))
       (let ((start-time (max tsb ts)))
-	(cl-incf tsb (let ((dow (nth 6 (decode-time (encode-time tsb)))))
+	(cl-incf tsb (let ((dow (nth 6 (decode-time tsb))))
 		       (if (or (eq step0 'day)
 			       (= dow ws))
 			   step
@@ -2739,7 +2739,7 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
 		  :tstart (format-time-string (org-time-stamp-format t t)
 					      start-time)
 		  :tend (format-time-string (org-time-stamp-format t t)
-					    (encode-time (min te tsb))))))))
+					    (min te tsb)))))))
 	  (re-search-forward "^[ \t]*#\\+END:")
 	  (when (and stepskip0 (equal step-time 0))
 	    ;; Remove the empty table

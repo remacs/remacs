@@ -229,10 +229,10 @@ file to byte-code before it is loaded."
   (interactive "fFile to load: \nP")
   (let* ((age (lambda (file)
 		(float-time
-		 (time-subtract (current-time)
-				(file-attribute-modification-time
-				 (or (file-attributes (file-truename file))
-				     (file-attributes file)))))))
+		 (time-since
+		  (file-attribute-modification-time
+		   (or (file-attributes (file-truename file))
+		       (file-attributes file)))))))
 	 (base-name (file-name-sans-extension file))
 	 (exported-file (concat base-name ".el")))
     ;; tangle if the Org file is newer than the elisp file
@@ -5626,8 +5626,7 @@ the rounding returns a past time."
 (defun org-today ()
   "Return today date, considering `org-extend-today-until'."
   (time-to-days
-   (time-subtract (current-time)
-		  (list 0 (* 3600 org-extend-today-until) 0))))
+   (time-since (* 3600 org-extend-today-until))))
 
 ;;;; Font-Lock stuff, including the activators
 
@@ -13110,8 +13109,7 @@ This function is run automatically after each state change to a DONE state."
 			(while (re-search-forward org-clock-line-re end t)
 			  (when (org-at-clock-log-p) (throw :clock t))))))
 	    (org-entry-put nil "LAST_REPEAT" (format-time-string
-					      (org-time-stamp-format t t)
-					      (current-time))))
+					      (org-time-stamp-format t t))))
 	  (when org-log-repeat
 	    (if (or (memq 'org-add-log-note (default-value 'post-command-hook))
 		    (memq 'org-add-log-note post-command-hook))
@@ -13170,7 +13168,7 @@ has been set"
 			  (let ((nshiftmax 10)
 				(nshift 0))
 			    (while (or (= nshift 0)
-				       (not (time-less-p (current-time) time)))
+				       (not (time-less-p nil time)))
 			      (when (= (cl-incf nshift) nshiftmax)
 				(or (y-or-n-p
 				     (format "%d repeater intervals were not \
@@ -14666,8 +14664,8 @@ it as a time string and apply `float-time' to it.  If S is nil, just return 0."
    ((stringp s)
     (condition-case nil
 	(float-time (org-time-string-to-time s))
-      (error 0.)))
-   (t 0.)))
+      (error 0)))
+   (t 0)))
 
 (defun org-time-today ()
   "Time in seconds today at 0:00.
@@ -16568,22 +16566,20 @@ non-nil."
 	      ((org-at-timestamp-p 'lax) (match-string 0))))
 	 ;; Default time is either the timestamp at point or today.
 	 ;; When entering a range, only the range start is considered.
-         (default-time (if (not ts) (current-time)
-			 (org-time-string-to-time ts)))
+	 (default-time (and ts (org-time-string-to-time ts)))
          (default-input (and ts (org-get-compact-tod ts)))
          (repeater (and ts
 			(string-match "\\([.+-]+[0-9]+[hdwmy] ?\\)+" ts)
 			(match-string 0 ts)))
 	 org-time-was-given
 	 org-end-time-was-given
-	 (time
-	  (and (if (equal arg '(16)) (current-time)
+	 (time (if (equal arg '(16)) (current-time)
 		 ;; Preserve `this-command' and `last-command'.
 		 (let ((this-command this-command)
 		       (last-command last-command))
 		   (org-read-date
 		    arg 'totime nil nil default-time default-input
-		    inactive))))))
+		    inactive)))))
     (cond
      ((and ts
            (memq last-command '(org-time-stamp org-time-stamp-inactive))
@@ -16957,7 +16953,7 @@ user."
     (when (string-match "\\`[ \t]*\\.[ \t]*\\'" ans)
       (setq ans "+0"))
 
-    (when (setq delta (org-read-date-get-relative ans (current-time) org-def))
+    (when (setq delta (org-read-date-get-relative ans nil org-def))
       (setq ans (replace-match "" t t ans)
 	    deltan (car delta)
 	    deltaw (nth 1 delta)
@@ -17114,7 +17110,7 @@ user."
 					;      (when (and org-read-date-prefer-future
 					;		 (not iso-year)
 					;		 (< (calendar-absolute-from-gregorian iso-date)
-					;		    (time-to-days (current-time))))
+					;		    (time-to-days nil)))
 					;	(setq year (1+ year)
 					;	      iso-date (calendar-gregorian-from-absolute
 					;			(calendar-iso-to-absolute
@@ -17308,7 +17304,7 @@ Don't touch the rest."
 If SECONDS is non-nil, return the difference in seconds."
   (let ((fdiff (if seconds #'float-time #'time-to-days)))
     (- (funcall fdiff (org-time-string-to-time timestamp-string))
-       (funcall fdiff (current-time)))))
+       (funcall fdiff nil))))
 
 (defun org-deadline-close-p (timestamp-string &optional ndays)
   "Is the time in TIMESTAMP-STRING close to the current date?"
@@ -17490,10 +17486,8 @@ days in order to avoid rounding problems."
 	  (match-end (match-end 0))
 	  (time1 (org-time-string-to-time ts1))
 	  (time2 (org-time-string-to-time ts2))
-	  (t1 (float-time time1))
-	  (t2 (float-time time2))
-	  (diff (abs (- t2 t1)))
-	  (negative (< (- t2 t1) 0))
+	  (diff (abs (float-time (time-subtract time2 time1))))
+	  (negative (time-less-p time2 time1))
 	  ;; (ys (floor (* 365 24 60 60)))
 	  (ds (* 24 60 60))
 	  (hs (* 60 60))
@@ -17504,14 +17498,14 @@ days in order to avoid rounding problems."
 	  (fh "%02d:%02d")
 	  y d h m align)
      (if havetime
-	 (setq ; y (floor (/ diff ys))  diff (mod diff ys)
+	 (setq ; y (floor diff ys)  diff (mod diff ys)
 	  y 0
-	  d (floor (/ diff ds))  diff (mod diff ds)
-	  h (floor (/ diff hs))  diff (mod diff hs)
-	  m (floor (/ diff 60)))
-       (setq ; y (floor (/ diff ys))  diff (mod diff ys)
+	  d (floor diff ds)  diff (mod diff ds)
+	  h (floor diff hs)  diff (mod diff hs)
+	  m (floor diff 60))
+       (setq ; y (floor diff ys)  diff (mod diff ys)
 	y 0
-	d (floor (+ (/ diff ds) 0.5))
+	d (round diff ds)
 	h 0 m 0))
      (if (not to-buffer)
 	 (message "%s" (org-make-tdiff-string y d h m))
@@ -17602,7 +17596,7 @@ signaled."
 YEAR is expanded into one of the 30 next years, if possible, or
 into a past one.  Any year larger than 99 is returned unchanged."
   (if (>= year 100) year
-    (let* ((current (string-to-number (format-time-string "%Y" (current-time))))
+    (let* ((current (string-to-number (format-time-string "%Y")))
 	   (century (/ current 100))
 	   (offset (- year (% current 100))))
       (cond ((> offset 30) (+ (* (1- century) 100) year))
@@ -18122,7 +18116,7 @@ A prefix ARG can be used to force the current date."
 	diff)
     (when (or (org-at-timestamp-p 'lax)
 	      (org-match-line (concat ".*" org-ts-regexp)))
-      (let ((d1 (time-to-days (current-time)))
+      (let ((d1 (time-to-days nil))
 	    (d2 (time-to-days (org-time-string-to-time (match-string 1)))))
 	(setq diff (- d2 d1))))
     (calendar)

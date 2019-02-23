@@ -670,8 +670,9 @@ last ping."
 
 (defun rcirc-handler-ctcp-KEEPALIVE (process _target _sender message)
   (with-rcirc-process-buffer process
-    (setq header-line-format (format "%f" (- (float-time)
-					     (string-to-number message))))))
+    (setq header-line-format
+	  (format "%f" (float-time
+			(time-since (string-to-number message)))))))
 
 (defvar rcirc-debug-buffer "*rcirc debug*")
 (defvar rcirc-debug-flag nil
@@ -723,8 +724,8 @@ When 0, do not auto-reconnect."
                  (< 0 rcirc-reconnect-delay))
         (let ((now (current-time)))
           (when (or (null rcirc-last-connect-time)
-                    (< rcirc-reconnect-delay
-                       (float-time (time-subtract now rcirc-last-connect-time))))
+		    (time-less-p rcirc-reconnect-delay
+				 (time-subtract now rcirc-last-connect-time)))
             (setq rcirc-last-connect-time now)
             (rcirc-cmd-reconnect nil))))
       (run-hook-with-args 'rcirc-sentinel-functions process sentinel))))
@@ -2794,7 +2795,7 @@ the only argument."
   (let* ((nick (nth 1 args))
          (idle-secs (string-to-number (nth 2 args)))
          (idle-string (format-seconds "%yy %dd %hh %mm %z%ss" idle-secs))
-	 (signon-time (encode-time (string-to-number (nth 3 args))))
+	 (signon-time (string-to-number (nth 3 args)))
          (signon-string (format-time-string "%c" signon-time))
          (message (format "%s idle for %s, signed on %s"
                           nick idle-string signon-string)))
@@ -2815,8 +2816,7 @@ Not in rfc1459.txt"
     (with-current-buffer buffer
       (let ((setter (nth 2 args))
 	    (time (current-time-string
-		   (encode-time
-		    (string-to-number (cl-cadddr args))))))
+		   (string-to-number (cl-cadddr args)))))
 	(rcirc-print process sender "TOPIC" (cadr args)
 		     (format "%s (%s on %s)" rcirc-topic setter time))))))
 

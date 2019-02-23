@@ -1541,10 +1541,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   "Create a stash with the current tree state."
   (interactive)
   (vc-git--call nil "stash" "save"
-		(let ((ct (current-time)))
-		  (concat
-		   (format-time-string "Snapshot on %Y-%m-%d" ct)
-		   (format-time-string " at %H:%M" ct))))
+		(format-time-string "Snapshot on %Y-%m-%d at %H:%M"))
   (vc-git-command "*vc-git-stash*" 0 nil "stash" "apply" "-q" "stash@{0}")
   (vc-resynch-buffer (vc-git-root default-directory) t t))
 

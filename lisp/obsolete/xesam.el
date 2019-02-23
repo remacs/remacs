@@ -622,8 +622,7 @@ Return propertized STRING."
 	(or (widget-get widget :tag) "")
 	(format-time-string
 	 "%d %B %Y, %T"
-	 (encode-time
-	  (string-to-number (widget-get widget :xesam:sourceModified)))))))
+	 (string-to-number (widget-get widget :xesam:sourceModified))))))
 
     ;; Second line: :value.
     (widget-put widget :value (widget-get widget :xesam:url))

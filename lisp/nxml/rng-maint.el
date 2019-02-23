@@ -228,8 +228,7 @@
   (let* ((start (current-time))
 	 (val (apply function args)))
     (message "%s ran in %g seconds"
-	     function
-	     (float-time (time-subtract nil start)))
+	     function (float-time (time-since start)))
     val))
 
 (defun rng-time-tokenize-buffer ()

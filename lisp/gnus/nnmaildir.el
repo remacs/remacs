@@ -764,7 +764,7 @@ This variable is set by `nnmaildir-request-article'.")
 
 (defun nnmaildir--scan (gname scan-msgs groups _method srv-dir srv-ls)
   (catch 'return
-    (let ((36h-ago (- (float-time) 129600))
+    (let ((36h-ago (time-since 129600))
 	  absdir nndir tdir ndir cdir nattr cattr isnew pgname read-only ls
 	  files num dir flist group x)
       (setq absdir (nnmaildir--srvgrp-dir srv-dir gname)
@@ -1577,7 +1577,7 @@ This variable is set by `nnmaildir-request-article'.")
       (when no-force
 	(unless (integerp time) ;; handle 'never
 	  (throw 'return (gnus-uncompress-range ranges)))
-	(setq boundary (time-subtract nil time)))
+	(setq boundary (time-since time)))
       (setq dir (nnmaildir--srv-dir nnmaildir--cur-server)
 	    dir (nnmaildir--srvgrp-dir dir gname)
 	    dir (nnmaildir--cur dir)

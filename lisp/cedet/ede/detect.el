@@ -198,7 +198,7 @@ Return a cons cell:
 	(ans (ede-detect-directory-for-project default-directory)))
     (if ans
 	(message "Project found in %d sec @ %s of type %s"
-		 (float-time (time-subtract nil start))
+		 (encode-time (time-since start) 'integer)
 		 (car ans)
 		 (eieio-object-name-string (cdr ans)))
       (message "No Project found.") )))

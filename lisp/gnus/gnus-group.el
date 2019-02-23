@@ -4590,7 +4590,7 @@ or `gnus-group-catchup-group-hook'."
   ;; FIXME: This should return a Lisp integer, not a Lisp float,
   ;; since it is always an integer.
   (let* ((time (or (gnus-group-timestamp group) 0))
-	 (delta (time-subtract nil time)))
+	 (delta (time-since time)))
     (float-time delta)))
 
 (defun gnus-group-timestamp-string (group)

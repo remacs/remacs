@@ -93,7 +93,7 @@ Emacs has been idle for IDLE `gnus-demon-timestep's."
 
 (defun gnus-demon-idle-since ()
   "Return the number of seconds since when Emacs is idle."
-  (float-time (or (current-idle-time) '(0 0 0))))
+  (float-time (or (current-idle-time) 0)))
 
 (defun gnus-demon-run-callback (func &optional idle time special)
   "Run FUNC if Emacs has been idle for longer than IDLE seconds.

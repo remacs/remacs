@@ -7393,7 +7393,7 @@ only-lines."
   "Update progress information."
   (when (and vhdl-progress-info (not noninteractive)
 	     (time-less-p vhdl-progress-interval
-			  (time-subtract nil (aref vhdl-progress-info 2))))
+			  (time-since (aref vhdl-progress-info 2))))
     (let ((delta (- (aref vhdl-progress-info 1)
                     (aref vhdl-progress-info 0))))
       (message "%s... (%2d%%)" string
@@ -8143,7 +8143,7 @@ depending on parameter UPPER-CASE."
 	       (downcase-word -1)))
 	 (when (and count vhdl-progress-interval (not noninteractive)
 		    (time-less-p vhdl-progress-interval
-				 (time-subtract nil last-update)))
+				 (time-since last-update)))
 	   (message "Fixing case... (%2d%s)"
 		    (+ (* count 20) (/ (* 20 (- (point) beg)) (- end beg)))
 		    "%")

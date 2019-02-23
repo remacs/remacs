@@ -386,12 +386,12 @@ textual parts.")
 	(with-current-buffer buffer
 	  (when (and nnimap-object
 		     (nnimap-last-command-time nnimap-object)
-		     (> (float-time
-			 (time-subtract
-			  now
-			  (nnimap-last-command-time nnimap-object)))
-			;; More than five minutes since the last command.
-			(* 5 60)))
+		     (time-less-p
+		      ;; More than five minutes since the last command.
+		      (* 5 60)
+		      (time-subtract
+		       now
+		       (nnimap-last-command-time nnimap-object))))
             (ignore-errors              ;E.g. "buffer foo has no process".
               (nnimap-send-command "NOOP"))))))))
 

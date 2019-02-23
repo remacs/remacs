@@ -1075,7 +1075,7 @@ See `find-file-noselect' for the arguments."
 (defvar nnheader-last-message-time '(0 0))
 (defun nnheader-message-maybe (&rest args)
   (let ((now (current-time)))
-    (when (> (float-time (time-subtract now nnheader-last-message-time)) 1)
+    (when (time-less-p 1 (time-subtract now nnheader-last-message-time))
       (setq nnheader-last-message-time now)
       (apply 'nnheader-message args))))
 

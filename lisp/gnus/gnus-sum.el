@@ -3855,20 +3855,20 @@ respectively."
 Returns \"  ?  \" if there's bad input or if another error occurs.
 Input should look like this: \"Sun, 14 Oct 2001 13:34:39 +0200\"."
   (condition-case ()
-      (let* ((messy-date (float-time (gnus-date-get-time messy-date)))
-	     (now (float-time))
+      (let* ((messy-date (gnus-date-get-time messy-date))
+	     (now (current-time))
 	     ;;If we don't find something suitable we'll use this one
 	     (my-format "%b %d '%y"))
-	(let* ((difference (- now messy-date))
+	(let* ((difference (time-subtract now messy-date))
 	       (templist gnus-user-date-format-alist)
 	       (top (eval (caar templist))))
-	  (while (if (numberp top) (< top difference) (not top))
+	  (while (if (numberp top) (time-less-p top difference) (not top))
 	    (progn
 	      (setq templist (cdr templist))
 	      (setq top (eval (caar templist)))))
 	  (if (stringp (cdr (car templist)))
 	      (setq my-format (cdr (car templist)))))
-	(format-time-string (eval my-format) (encode-time messy-date)))
+	(format-time-string (eval my-format) messy-date))
     (error "  ?   ")))
 
 (defun gnus-summary-set-local-parameters (group)
@@ -5093,8 +5093,8 @@ Unscored articles will be counted as having a score of zero."
   "Return the highest article date in THREAD."
   (apply 'max
 	 (mapcar (lambda (header) (float-time
-			      (gnus-date-get-time
-			       (mail-header-date header))))
+				   (gnus-date-get-time
+				    (mail-header-date header))))
 		 (flatten-tree thread))))
 
 (defun gnus-thread-total-score-1 (root)

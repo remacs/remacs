@@ -375,12 +375,12 @@ The following %-sequences are provided:
 			    last-full-capacity design-capacity))
     (and capacity rate
 	 (setq minutes (if (zerop rate) 0
-			 (floor (* (/ (float (if (string= charging-state
-							  "charging")
-						 (- full-capacity capacity)
-					       capacity))
-				      rate)
-				   60)))
+			 (floor (* (if (string= charging-state
+						"charging")
+				       (- full-capacity capacity)
+				     capacity)
+				   60)
+				rate))
 	       hours (/ minutes 60)))
     (list (cons ?c (or (and capacity (number-to-string capacity)) "N/A"))
 	  (cons ?L (or (battery-search-for-one-match-in-files
@@ -414,8 +414,7 @@ The following %-sequences are provided:
 	  (cons ?p (or (and full-capacity capacity
 			    (> full-capacity 0)
 			    (number-to-string
-			     (floor (/ capacity
-				       (/ (float full-capacity) 100)))))
+			     (floor (* 100 capacity) full-capacity)))
 		       "N/A")))))
 
 
@@ -471,9 +470,9 @@ The following %-sequences are provided:
                  "POWER_SUPPLY_\\(CURRENT\\|POWER\\)_NOW=\\([0-9]*\\)$"
                  nil t)
 	    (cl-incf power-now
-		     (* (float (string-to-number (match-string 2)))
+		     (* (string-to-number (match-string 2))
 			(if (eq (char-after (match-beginning 1)) ?C)
-			    voltage-now 1.0))))
+			    voltage-now 1))))
 	  (goto-char (point-min))
 	  (when (re-search-forward "POWER_SUPPLY_TEMP=\\([0-9]*\\)$" nil t)
 	    (setq temperature (match-string 1)))
@@ -585,9 +584,7 @@ The following %-sequences are provided:
     (when seconds
       (setq minutes (/ seconds 60)
             hours (/ minutes 60)
-            remaining-time
-            (format "%d:%02d" (truncate hours)
-                    (- (truncate minutes) (* 60 (truncate hours))))))
+	    remaining-time (format "%d:%02d" hours (mod minutes 60))))
     (list (cons ?c (or (and energy
                             (number-to-string (round (* 1000 energy))))
                        "N/A"))
@@ -656,10 +653,9 @@ The following %-sequences are provided:
 	  (setq minutes (string-to-number battery-life)
 		seconds (* 60 minutes))
 	(setq seconds (string-to-number battery-life)
-	      minutes (truncate (/ seconds 60))))
-      (setq hours (truncate (/ minutes 60))
-	    remaining-time (format "%d:%02d" hours
-				   (- minutes (* 60 hours)))))
+	      minutes (truncate seconds 60)))
+      (setq hours (truncate minutes 60)
+	    remaining-time (format "%d:%02d" hours (mod minutes 60))))
     (list (cons ?L (or line-status "N/A"))
 	  (cons ?B (or (car battery-status) "N/A"))
 	  (cons ?b (or (cdr battery-status) "N/A"))

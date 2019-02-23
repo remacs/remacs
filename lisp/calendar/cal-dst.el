@@ -231,7 +231,7 @@ The result has the proper form for `calendar-daylight-savings-starts'."
 ;; https://lists.gnu.org/r/emacs-pretest-bug/2006-11/msg00060.html
 (defun calendar-dst-find-data (&optional time)
   "Find data on the first daylight saving time transitions after TIME.
-TIME defaults to `current-time'.  Return value is as described
+TIME defaults to the current time.  Return value is as described
 for `calendar-current-time-zone'."
   (let* ((t0 (or time (current-time)))
          (t0-zone (current-time-zone t0))

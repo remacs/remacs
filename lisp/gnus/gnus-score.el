@@ -1501,7 +1501,7 @@ If FORMAT, also format the current score file."
       (when (and gnus-summary-default-score
 		 scores)
 	(let* ((entries gnus-header-index)
-	       (now (time-to-days (current-time)))
+	       (now (time-to-days nil))
 	       (expire (and gnus-score-expiry-days
 			    (- now gnus-score-expiry-days)))
 	       (headers gnus-newsgroup-headers)
@@ -2380,7 +2380,7 @@ score in `gnus-newsgroup-scored' by SCORE."
 	       (memq 'word gnus-newsgroup-adaptive))
       (with-temp-buffer
 	(let* ((hashtb (gnus-make-hashtable 1000))
-	       (date (time-to-days (current-time)))
+	       (date (time-to-days nil))
 	       (data gnus-newsgroup-data)
 	       word d score val)
 	  (with-syntax-table gnus-adaptive-word-syntax-table

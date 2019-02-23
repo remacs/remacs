@@ -162,8 +162,8 @@ The variable `url-queue-timeout' sets a timeout."
     (dolist (job url-queue)
       ;; Kill jobs that have lasted longer than the timeout.
       (when (and (url-queue-start-time job)
-		 (> (- (float-time) (url-queue-start-time job))
-		    url-queue-timeout))
+		 (time-less-p url-queue-timeout
+			      (time-since (url-queue-start-time job))))
 	(push job dead-jobs)))
     (dolist (job dead-jobs)
       (url-queue-kill-job job)

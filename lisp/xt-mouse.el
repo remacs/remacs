@@ -243,11 +243,10 @@ which is the \"1006\" extension implemented in Xterm >= 277."
              (y    (nth 2 click))
              ;; Emulate timestamp information.  This is accurate enough
              ;; for default value of mouse-1-click-follows-link (450msec).
-             (timestamp (truncate
-                         (* 1000
-                            (- (float-time)
-                               (or xt-mouse-epoch
-                                   (setq xt-mouse-epoch (float-time)))))))
+	     (timestamp (if (not xt-mouse-epoch)
+			    (progn (setq xt-mouse-epoch (float-time)) 0)
+			  (car (encode-time (time-since xt-mouse-epoch)
+					    1000))))
              (w (window-at x y))
              (ltrb (window-edges w))
              (left (nth 0 ltrb))

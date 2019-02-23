@@ -5867,12 +5867,12 @@ See also the user option `org-agenda-clock-consistency-checks'."
 	 ((> dt (* 60 maxtime))
 	  ;; a very long clocking chunk
 	  (setq issue (format "Clocking interval is very long: %s"
-			      (org-duration-from-minutes (floor (/ dt 60.))))
+			      (org-duration-from-minutes (floor dt 60)))
 		face (or (plist-get pl :long-face) face)))
 	 ((< dt (* 60 mintime))
 	  ;; a very short clocking chunk
 	  (setq issue (format "Clocking interval is very short: %s"
-			      (org-duration-from-minutes (floor (/ dt 60.))))
+			      (org-duration-from-minutes (floor dt 60)))
 		face (or (plist-get pl :short-face) face)))
 	 ((and (> tlend 0) (< ts tlend))
 	  ;; Two clock entries are overlapping
@@ -5912,8 +5912,8 @@ See also the user option `org-agenda-clock-consistency-checks'."
 	(throw 'exit t))
     ;; We have a shorter gap.
     ;; Now we have to get the minute of the day when these times are
-    (let* ((t1dec (decode-time (encode-time t1)))
-	   (t2dec (decode-time (encode-time t2)))
+    (let* ((t1dec (decode-time t1))
+	   (t2dec (decode-time t2))
 	   ;; compute the minute on the day
 	   (min1 (+ (nth 1 t1dec) (* 60 (nth 2 t1dec))))
 	   (min2 (+ (nth 1 t2dec) (* 60 (nth 2 t2dec)))))
@@ -10157,8 +10157,7 @@ to override `appt-message-warning-time'."
          ;; Do not use `org-today' here because appt only takes
          ;; time and without date as argument, so it may pass wrong
          ;; information otherwise
-         (today (org-date-to-gregorian
-                 (time-to-days (current-time))))
+	 (today (org-date-to-gregorian (time-to-days nil)))
          (org-agenda-restrict nil)
          (files (org-agenda-files 'unrestricted)) entries file
          (org-agenda-buffer nil))

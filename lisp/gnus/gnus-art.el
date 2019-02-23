@@ -3610,7 +3610,7 @@ possible values."
 (defun article-lapsed-string (time &optional max-segments)
   ;; If the date is seriously mangled, the timezone functions are
   ;; liable to bug out, so we ignore all errors.
-  (let* ((real-time (time-subtract nil time))
+  (let* ((real-time (time-since time))
 	 (real-sec (float-time real-time))
 	 (sec (abs real-sec))
 	 (segments 0)

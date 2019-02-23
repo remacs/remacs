@@ -1918,11 +1918,7 @@ on failure."
 	  (unless (< len 10)
 	    (setq imap-have-messaged t)
 	    (message "imap read: %dk" len))
-	  (accept-process-output imap-process
-				 (truncate imap-read-timeout)
-				 (truncate (* (- imap-read-timeout
-						 (truncate imap-read-timeout))
-					      1000)))))
+	  (accept-process-output imap-process imap-read-timeout)))
       ;; A process can die _before_ we have processed everything it
       ;; has to say.  Moreover, this can happen in between the call to
       ;; accept-process-output and the call to process-status in an

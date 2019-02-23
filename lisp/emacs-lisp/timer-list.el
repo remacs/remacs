@@ -37,16 +37,14 @@
                       ;; Idle.
                       (if (aref timer 7) "*" " ")
                       ;; Next time.
-                      (let ((time (float-time (list (aref timer 1)
-                                                    (aref timer 2)
-                                                    (aref timer 3)))))
+		      (let ((time (list (aref timer 1)
+					(aref timer 2)
+					(aref timer 3))))
                         (format "%.2f"
-                                (if (aref timer 7)
-                                    time
-                                  (- (float-time (list (aref timer 1)
-                                                       (aref timer 2)
-                                                       (aref timer 3)))
-                                     (float-time)))))
+				(float-time
+				 (if (aref timer 7)
+				     time
+				   (time-subtract time nil)))))
                       ;; Repeat.
                       (let ((repeat (aref timer 4)))
                         (cond

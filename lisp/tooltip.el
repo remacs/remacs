@@ -201,7 +201,8 @@ This might return nil if the event did not occur over a buffer."
 (defun tooltip-delay ()
   "Return the delay in seconds for the next tooltip."
   (if (and tooltip-hide-time
-           (< (- (float-time) tooltip-hide-time) tooltip-recent-seconds))
+	   (time-less-p (time-since tooltip-hide-time)
+			tooltip-recent-seconds))
       tooltip-short-delay
     tooltip-delay))
 

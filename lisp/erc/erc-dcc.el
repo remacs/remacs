@@ -1024,7 +1024,7 @@ transfer is complete."
      ?s (number-to-string erc-dcc-byte-count)
      ?t (format "%.0f"
                 (erc-time-diff (plist-get erc-dcc-entry-data :start-time)
-                               (erc-current-time)))))
+                               nil))))
   (kill-buffer (process-buffer proc))
   (delete-process proc))
 

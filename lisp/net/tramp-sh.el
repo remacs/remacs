@@ -1635,9 +1635,9 @@ of."
 		   (tramp-compat-time-equal-p
 		    (tramp-compat-file-attribute-modification-time fa2)
 		    tramp-time-dont-know)))
-		 (> 0 (tramp-time-diff
-		       (tramp-compat-file-attribute-modification-time fa2)
-		       (tramp-compat-file-attribute-modification-time fa1)))
+		 (time-less-p
+		  (tramp-compat-file-attribute-modification-time fa2)
+		  (tramp-compat-file-attribute-modification-time fa1))
 	       ;; If one of them is the dont-know value, then we can
 	       ;; still try to run a shell command on the remote host.
 	       ;; However, this only works if both files are Tramp
@@ -4784,9 +4784,9 @@ connection if a previous connection has died for some reason."
     (unless (or (process-live-p p)
 		(not (tramp-file-name-equal-p
 		      vec (car tramp-current-connection)))
-		(> (tramp-time-diff
-		    (current-time) (cdr tramp-current-connection))
-		   (or tramp-connection-min-time-diff 0)))
+		(time-less-p
+		 (or tramp-connection-min-time-diff 0)
+		 (time-since (cdr tramp-current-connection))))
       (throw 'suppress 'suppress))
 
     ;; If too much time has passed since last command was sent, look
@@ -4797,11 +4797,10 @@ connection if a previous connection has died for some reason."
     ;; try to send a command from time to time, then look again
     ;; whether the process is really alive.
     (condition-case nil
-	(when (and (> (tramp-time-diff
-		       (current-time)
-		       (tramp-get-connection-property
-			p "last-cmd-time" '(0 0 0)))
-		      60)
+	(when (and (time-less-p 60
+				(time-since
+				 (tramp-get-connection-property
+				  p "last-cmd-time" 0)))
 		   (process-live-p p))
 	  (tramp-send-command vec "echo are you awake" t t)
 	  (unless (and (process-live-p p)

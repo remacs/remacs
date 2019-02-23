@@ -74,7 +74,7 @@
 
 (defun timer-set-time (timer time &optional delta)
   "Set the trigger time of TIMER to TIME.
-TIME must be in the internal format returned by, e.g., `current-time'.
+TIME must be a Lisp time value.
 If optional third argument DELTA is a positive number, make the timer
 fire repeatedly that many seconds apart."
   (setf (timer--time timer) time)
@@ -249,8 +249,8 @@ how many will really happen."
 (defun timer-until (timer time)
   "Calculate number of seconds from when TIMER will run, until TIME.
 TIMER is a timer, and stands for the time when its next repeat is scheduled.
-TIME is a time-list."
-  (- (float-time time) (float-time (timer--time timer))))
+TIME is a Lisp time value."
+  (float-time (time-subtract time (timer--time timer))))
 
 (defun timer-event-handler (timer)
   "Call the handler for the timer TIMER.
@@ -281,7 +281,7 @@ This function is called, by name, directly by the C code."
               ;; perhaps because Emacs was suspended for a long time,
               ;; limit how many times things get repeated.
               (if (and (numberp timer-max-repeats)
-                       (< 0 (timer-until timer nil)))
+		       (time-less-p nil (timer--time timer)))
                   (let ((repeats (/ (timer-until timer nil)
                                     (timer--repeat-delay timer))))
                     (if (> repeats timer-max-repeats)

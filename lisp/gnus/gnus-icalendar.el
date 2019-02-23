@@ -413,13 +413,12 @@ Return nil for non-recurring EVENT."
          (end-time (format-time-string "%H:%M" end))
          (end-at-midnight (string= end-time "00:00"))
          (start-end-date-diff
-	  (/ (float-time (time-subtract
-			  (org-time-string-to-time end-date)
-			  (org-time-string-to-time start-date)))
-	     86400))
+	  (time-to-number-of-days (time-subtract
+				   (org-time-string-to-time end-date)
+				   (org-time-string-to-time start-date))))
          (org-repeat (gnus-icalendar-event:org-repeat event))
          (repeat (if org-repeat (concat " " org-repeat) ""))
-         (time-1-day '(0 86400)))
+	 (time-1-day 86400))
 
     ;; NOTE: special care is needed with appointments ending at midnight
     ;; (typically all-day events): the end time has to be changed to 23:59 to

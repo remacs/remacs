@@ -765,7 +765,8 @@ report applies to that region."
             (flymake-log :debug "backend %s reported %d diagnostics in %.2f second(s)"
                          backend
                          (length new-diags)
-                         (- (float-time) flymake-check-start-time)))
+			 (float-time
+			  (time-since flymake-check-start-time))))
           (when (and (get-buffer (flymake--diagnostics-buffer-name))
                      (get-buffer-window (flymake--diagnostics-buffer-name))
                      (null (cl-set-difference (flymake-running-backends)

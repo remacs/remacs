@@ -2369,7 +2369,7 @@ mapped to mostly alphanumerics for safety."
 
 (defun feedmail-rfc822-date (arg-time)
   (feedmail-say-debug ">in-> feedmail-rfc822-date %s" arg-time)
-  (let ((time (if arg-time arg-time (current-time)))
+  (let ((time (or arg-time (current-time)))
 	(system-time-locale "C"))
     (concat
      (format-time-string "%a, %e %b %Y %T " time)

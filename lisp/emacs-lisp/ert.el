@@ -1822,13 +1822,13 @@ determines how frequently the progress display is updated.")
   (force-mode-line-update)
   (redisplay t)
   (setf (ert--stats-next-redisplay stats)
-        (+ (float-time) ert-test-run-redisplay-interval-secs)))
+	(float-time (time-add nil ert-test-run-redisplay-interval-secs))))
 
 (defun ert--results-update-stats-display-maybe (ewoc stats)
   "Call `ert--results-update-stats-display' if not called recently.
 
 EWOC and STATS are arguments for `ert--results-update-stats-display'."
-  (when (>= (float-time) (ert--stats-next-redisplay stats))
+  (unless (time-less-p nil (ert--stats-next-redisplay stats))
     (ert--results-update-stats-display ewoc stats)))
 
 (defun ert--tests-running-mode-line-indicator ()

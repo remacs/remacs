@@ -837,7 +837,7 @@ updated again."
 (defmacro ses--time-check (format &rest args)
   "If `ses-start-time' is more than a second ago, call `message' with FORMAT
 and ARGS and reset `ses-start-time' to the current time."
-  `(when (> (- (float-time) ses-start-time) 1.0)
+  `(when (time-less-p 1 (time-since ses-start-time))
      (message ,format ,@args)
      (setq ses-start-time (float-time))))
 

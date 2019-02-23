@@ -105,11 +105,10 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 		    ;; away, make it expire a year from now
 		    (expires (format-time-string
 			      "%d %b %Y %T [GMT]"
-			      (encode-time
-			       (let ((s (string-to-number (nth 4 fields))))
-				 (if (and (= s 0) long-session)
-				     (encode-time (+ (* 365 24 60 60) (float-time)))
-				   s)))))
+			      (let ((s (string-to-number (nth 4 fields))))
+				(if (and (zerop s) long-session)
+				    (time-add nil (* 365 24 60 60))
+				  s))))
 		    (key (nth 5 fields))
 		    (val (nth 6 fields)))
 		(cl-incf n)
