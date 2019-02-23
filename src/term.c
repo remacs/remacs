@@ -2435,15 +2435,14 @@ term_mouse_movement (struct frame *frame, Gpm_Event *event)
   return 0;
 }
 
-/* Return the Time that corresponds to T.  Wrap around on overflow.  */
+/* Return the current time, as a Time value.  Wrap around on overflow.  */
 static Time
-timeval_to_Time (struct timeval const *t)
+current_Time (void)
 {
-  Time s_1000, ms;
-
-  s_1000 = t->tv_sec;
+  struct timespec now = current_timespec ();
+  Time s_1000 = now.tv_sec;
   s_1000 *= 1000;
-  ms = t->tv_usec / 1000;
+  Time ms = now.tv_nsec / 1000000;
   return s_1000 + ms;
 }
 
@@ -2465,8 +2464,6 @@ term_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 		     enum scroll_bar_part *part, Lisp_Object *x,
 		     Lisp_Object *y, Time *timeptr)
 {
-  struct timeval now;
-
   *fp = SELECTED_FRAME ();
   (*fp)->mouse_moved = 0;
 
@@ -2475,8 +2472,7 @@ term_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 
   XSETINT (*x, last_mouse_x);
   XSETINT (*y, last_mouse_y);
-  gettimeofday(&now, 0);
-  *timeptr = timeval_to_Time (&now);
+  *timeptr = current_Time ();
 }
 
 /* Prepare a mouse-event in *RESULT for placement in the input queue.
@@ -2488,7 +2484,6 @@ static Lisp_Object
 term_mouse_click (struct input_event *result, Gpm_Event *event,
 		  struct frame *f)
 {
-  struct timeval now;
   int i, j;
 
   result->kind = GPM_CLICK_EVENT;
@@ -2499,8 +2494,7 @@ term_mouse_click (struct input_event *result, Gpm_Event *event,
 	break;
       }
     }
-  gettimeofday(&now, 0);
-  result->timestamp = timeval_to_Time (&now);
+  result->timestamp = current_Time ();
 
   if (event->type & GPM_UP)
     result->modifiers = up_modifier;

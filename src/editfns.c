@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <stdio.h>
 
 #ifdef HAVE_PWD_H
@@ -48,6 +47,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "intervals.h"
 #include "ptr-bounds.h"
+#include "systime.h"
 #include "character.h"
 #include "buffer.h"
 #include "window.h"
@@ -1935,8 +1935,7 @@ static unsigned short rbc_quitcounter;
      or inserted.  */                           \
   unsigned char *deletions;                     \
   unsigned char *insertions;			\
-  struct timeval start;				\
-  double max_secs;				\
+  struct timespec time_limit;			\
   unsigned int early_abort_tests;
 
 #define NOTE_DELETE(ctx, xoff) set_bit ((ctx)->deletions, (xoff))
@@ -2037,6 +2036,17 @@ nil.  */)
   else
     CHECK_FIXNUM (max_costs);
 
+  struct timespec time_limit = make_timespec (0, -1);
+  if (!NILP (max_secs))
+    {
+      struct timespec
+	tlim = timespec_add (current_timespec (),
+			     lisp_time_argument (max_secs)),
+	tmax = make_timespec (TYPE_MAXIMUM (time_t), TIMESPEC_HZ - 1);
+      if (timespec_cmp (tlim, tmax) < 0)
+	time_limit = tlim;
+    }
+
   /* Micro-optimization: Casting to size_t generates much better
      code.  */
   ptrdiff_t del_bytes = (size_t) size_a / CHAR_BIT + 1;
@@ -2054,13 +2064,12 @@ nil.  */)
     .bdiag = buffer + diags + size_b + 1,
     .heuristic = true,
     .too_expensive = XFIXNUM (max_costs),
-    .max_secs = FLOATP (max_secs) ? XFLOAT_DATA (max_secs) : -1.0,
+    .time_limit = time_limit,
     .early_abort_tests = 0
   };
   memclear (ctx.deletions, del_bytes);
   memclear (ctx.insertions, ins_bytes);
 
-  gettimeofday (&ctx.start, NULL);
   /* compareseq requires indices to be zero-based.  We add BEGV back
      later.  */
   bool early_abort = compareseq (0, size_a, 0, size_b, false, &ctx);
@@ -2213,13 +2222,9 @@ buffer_chars_equal (struct context *ctx,
 static bool
 compareseq_early_abort (struct context *ctx)
 {
-  if (ctx->max_secs < 0.0)
+  if (ctx->time_limit.tv_nsec < 0)
     return false;
-
-  struct timeval now, diff;
-  gettimeofday (&now, NULL);
-  timersub (&now, &ctx->start, &diff);
-  return diff.tv_sec + diff.tv_usec / 1000000.0 > ctx->max_secs;
+  return timespec_cmp (ctx->time_limit, current_timespec ()) < 0;
 }
 
 
