@@ -891,11 +891,29 @@ DOWNCASE    t:   Downcase words before using them."
     ;; so this list mustn't get any more items.
     (defconst reftex-label-regexps '("\\\\label{\\([^}]*\\)}"))
   (defcustom reftex-label-regexps
-    '(;; Normal \\label{foo} labels
+    `(;; Normal \\label{foo} labels
       "\\\\label{\\(?1:[^}]*\\)}"
       ;; keyvals [..., label = {foo}, ...] forms used by ctable,
       ;; listings, minted, ...
-      "\\[[^][]\\{0,2000\\}\\<label[[:space:]]*=[[:space:]]*{?\\(?1:[^],}]+\\)}?")
+      ,(concat
+        ;; Make sure we search only for optional arguments of
+        ;; environments and don't match any other [
+        "\\\\begin[[:space:]]*{\\(?:[^}]+\\)}[[:space:]]*"
+        ;; Match the opening [ and the following chars
+        "\\[[^][]*"
+        ;; Allow nested levels of chars enclosed in braces
+        "\\(?:{[^}{]*"
+          "\\(?:{[^}{]*"
+            "\\(?:{[^}{]*}[^}{]*\\)*"
+          "}[^}{]*\\)*"
+        "}[^][]*\\)*"
+        ;; Match the label key
+        "\\<label[[:space:]]*=[[:space:]]*"
+        ;; Match the label value; braces around the value are
+        ;; optional.
+        "{?\\(?1:[^] ,}\r\n\t%]+\\)}?"
+        ;; We are done.  Such search until the next closing bracket
+        "[^]]*\\]"))
     "List of regexps matching \\label definitions.
 The default value matches usual \\label{...} definitions and
 keyval style [..., label = {...}, ...] label definitions.  It is
@@ -905,7 +923,7 @@ have to define it using \\(?1:...\\) when adding new regexps.
 When changed from Lisp, make sure to call
 `reftex-compile-variables' afterwards to make the change
 effective."
-    :version "25.1"
+    :version "27.1"
     :set (lambda (symbol value)
 	   (set symbol value)
 	   (when (fboundp 'reftex-compile-variables)
