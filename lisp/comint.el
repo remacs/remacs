@@ -2536,13 +2536,16 @@ Useful if you accidentally suspend the top-level process."
 
 (defun comint-skip-input ()
   "Skip all pending input, from last stuff output by interpreter to point.
-This means mark it as if it had been sent as input, without sending it."
+This means mark it as if it had been sent as input, without
+sending it.  The command keys used to trigger the command that
+called this function are inserted into the buffer."
   (let ((comint-input-sender 'ignore)
 	(comint-input-filter-functions nil))
     (comint-send-input t t))
   (end-of-line)
   (let ((pos (point))
-	(marker (process-mark (get-buffer-process (current-buffer)))))
+	(marker (process-mark (get-buffer-process (current-buffer))))
+        (inhibit-read-only t))
     (insert "  " (key-description (this-command-keys)))
     (if (= marker pos)
 	(set-marker marker (point)))))
