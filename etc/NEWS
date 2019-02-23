@@ -335,6 +335,16 @@ the node "(emacs) Directory Variables" of the user manual.
 'make-network-process' now uses the correct loopback address when
 asked to use :host 'local and :family 'ipv6.
 
++++
+** The new function `replace-region-contents' replaces the current
+region using a given replacement-function in a non-destructive manner
+(in terms of `replace-buffer-contents').
+
++++
+** The command `replace-buffer-contents' now has two optional
+arguments mitigating performance issues when operating on huge
+buffers.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 

@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <stdio.h>
 
 #ifdef HAVE_PWD_H
@@ -1912,10 +1913,6 @@ determines whether case is significant or ignored.  */)
 #undef EQUAL
 #define USE_HEURISTIC
 
-#ifdef USE_HEURISTIC
-#define DIFFSEQ_HEURISTIC
-#endif
-
 /* Counter used to rarely_quit in replace-buffer-contents.  */
 static unsigned short rbc_quitcounter;
 
@@ -1937,30 +1934,54 @@ static unsigned short rbc_quitcounter;
   /* Bit vectors recording for each character whether it was deleted
      or inserted.  */                           \
   unsigned char *deletions;                     \
-  unsigned char *insertions;
+  unsigned char *insertions;			\
+  struct timeval start;				\
+  double max_secs;				\
+  unsigned int early_abort_tests;
 
 #define NOTE_DELETE(ctx, xoff) set_bit ((ctx)->deletions, (xoff))
 #define NOTE_INSERT(ctx, yoff) set_bit ((ctx)->insertions, (yoff))
+#define EARLY_ABORT(ctx) compareseq_early_abort (ctx)
 
 struct context;
 static void set_bit (unsigned char *, OFFSET);
 static bool bit_is_set (const unsigned char *, OFFSET);
 static bool buffer_chars_equal (struct context *, OFFSET, OFFSET);
+static bool compareseq_early_abort (struct context *);
 
 #include "minmax.h"
 #include "diffseq.h"
 
 DEFUN ("replace-buffer-contents", Freplace_buffer_contents,
-       Sreplace_buffer_contents, 1, 1, "bSource buffer: ",
+       Sreplace_buffer_contents, 1, 3, "bSource buffer: ",
        doc: /* Replace accessible portion of current buffer with that of SOURCE.
 SOURCE can be a buffer or a string that names a buffer.
 Interactively, prompt for SOURCE.
+
 As far as possible the replacement is non-destructive, i.e. existing
 buffer contents, markers, properties, and overlays in the current
 buffer stay intact.
-Warning: this function can be slow if there's a large number of small
-differences between the two buffers.  */)
-  (Lisp_Object source)
+
+Because this function can be very slow if there is a large number of
+differences between the two buffers, there are two optional arguments
+mitigating this issue.
+
+The MAX-SECS argument, if given, defines a hard limit on the time used
+for comparing the buffers.  If it takes longer than MAX-SECS, the
+function falls back to a plain `delete-region' and
+`insert-buffer-substring'.  (Note that the checks are not performed
+too evenly over time, so in some cases it may run a bit longer than
+allowed).
+
+The optional argument MAX-COSTS defines the quality of the difference
+computation.  If the actual costs exceed this limit, heuristics are
+used to provide a faster but suboptimal solution.  The default value
+is 1000000.
+
+This function returns t if a non-destructive replacement could be
+performed.  Otherwise, i.e., if MAX-SECS was exceeded, it returns
+nil.  */)
+  (Lisp_Object source, Lisp_Object max_secs, Lisp_Object max_costs)
 {
   struct buffer *a = current_buffer;
   Lisp_Object source_buffer = Fget_buffer (source);
@@ -1985,15 +2006,18 @@ differences between the two buffers.  */)
      empty.  */
 
   if (a_empty && b_empty)
-    return Qnil;
+    return Qt;
 
   if (a_empty)
-    return Finsert_buffer_substring (source, Qnil, Qnil);
+    {
+      Finsert_buffer_substring (source, Qnil, Qnil);
+      return Qt;
+    }
 
   if (b_empty)
     {
       del_range_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, true);
-      return Qnil;
+      return Qt;
     }
 
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -2007,6 +2031,12 @@ differences between the two buffers.  */)
   ptrdiff_t *buffer;
   USE_SAFE_ALLOCA;
   SAFE_NALLOCA (buffer, 2, diags);
+
+  if (NILP (max_costs))
+    XSETFASTINT (max_costs, 1000000);
+  else
+    CHECK_FIXNUM (max_costs);
+
   /* Micro-optimization: Casting to size_t generates much better
      code.  */
   ptrdiff_t del_bytes = (size_t) size_a / CHAR_BIT + 1;
@@ -2022,20 +2052,26 @@ differences between the two buffers.  */)
     .insertions = SAFE_ALLOCA (ins_bytes),
     .fdiag = buffer + size_b + 1,
     .bdiag = buffer + diags + size_b + 1,
-#ifdef DIFFSEQ_HEURISTIC
     .heuristic = true,
-#endif
-    /* FIXME: Find a good number for .too_expensive.  */
-    .too_expensive = 64,
+    .too_expensive = XFIXNUM (max_costs),
+    .max_secs = FLOATP (max_secs) ? XFLOAT_DATA (max_secs) : -1.0,
+    .early_abort_tests = 0
   };
   memclear (ctx.deletions, del_bytes);
   memclear (ctx.insertions, ins_bytes);
+
+  gettimeofday (&ctx.start, NULL);
   /* compareseq requires indices to be zero-based.  We add BEGV back
      later.  */
   bool early_abort = compareseq (0, size_a, 0, size_b, false, &ctx);
-  /* Since we didn’t define EARLY_ABORT, we should never abort
-     early.  */
-  eassert (! early_abort);
+
+  if (early_abort)
+    {
+      del_range (min_a, ZV);
+      Finsert_buffer_substring (source, Qnil,Qnil);
+      SAFE_FREE_UNBIND_TO (count, Qnil);
+      return Qnil;
+    }
 
   rbc_quitcounter = 0;
 
@@ -2097,6 +2133,7 @@ differences between the two buffers.  */)
       --i;
       --j;
     }
+
   SAFE_FREE_UNBIND_TO (count, Qnil);
   rbc_quitcounter = 0;
 
@@ -2106,7 +2143,7 @@ differences between the two buffers.  */)
       update_compositions (BEGV, ZV, CHECK_INSIDE);
     }
 
-  return Qnil;
+  return Qt;
 }
 
 static void
@@ -2171,6 +2208,18 @@ buffer_chars_equal (struct context *ctx,
       == UNIBYTE_TO_CHAR (BUF_FETCH_BYTE (ctx->buffer_b, bpos_b));
   return BUF_FETCH_MULTIBYTE_CHAR (ctx->buffer_a, bpos_a)
     == BUF_FETCH_MULTIBYTE_CHAR (ctx->buffer_b, bpos_b);
+}
+
+static bool
+compareseq_early_abort (struct context *ctx)
+{
+  if (ctx->max_secs < 0.0)
+    return false;
+
+  struct timeval now, diff;
+  gettimeofday (&now, NULL);
+  timersub (&now, &ctx->start, &diff);
+  return diff.tv_sec + diff.tv_usec / 1000000.0 > ctx->max_secs;
 }
 
 
@@ -4440,6 +4489,12 @@ it to be non-nil.  */);
 #else
   binary_as_unsigned = true;
 #endif
+
+  DEFVAR_LISP ("replace-buffer-contents-max-secs",
+	       Vreplace_buffer_contents_max_secs,
+	       doc: /* If differencing the two buffers takes longer than this,
+`replace-buffer-contents' falls back to a plain delete and insert.  */);
+  Vreplace_buffer_contents_max_secs = Qnil;
 
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
