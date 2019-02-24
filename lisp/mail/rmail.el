@@ -4544,6 +4544,9 @@ Argument MIME is non-nil if this is a mime message."
 
     (unless armor-end
       (error "Encryption armor beginning has no matching end"))
+    (setq armor-start (move-marker (make-marker) armor-start))
+    (setq armor-end (move-marker (make-marker) armor-end))
+
     (goto-char armor-start)
 
     ;; Because epa--find-coding-system-for-mime-charset not autoloaded.
@@ -4576,15 +4579,16 @@ Argument MIME is non-nil if this is a mime message."
         (mail-unquote-printable-region armor-start
                                        (- (point-max) after-end))))
 
-    ;; Decrypt it, maybe in place, maybe making new buffer.
-    (epa-decrypt-region
-     armor-start (- (point-max) after-end)
-     ;; Call back this function to prepare the output.
-     (lambda ()
-       (let ((inhibit-read-only t))
-         (delete-region armor-start (- (point-max) after-end))
-         (goto-char armor-start)
-         (current-buffer))))
+    (condition-case nil
+	(epa-decrypt-region
+	 armor-start (- (point-max) after-end)
+	 ;; Call back this function to prepare the output.
+	 (lambda ()
+	   (let ((inhibit-read-only t))
+	     (delete-region armor-start (- (point-max) after-end))
+	     (goto-char armor-start)
+	     (current-buffer))))
+      (error nil))
 
     (list armor-start (- (point-max) after-end) mime
           armor-end-regexp
@@ -4620,9 +4624,14 @@ Argument MIME is non-nil if this is a mime message."
       (goto-char (point-min))
       (while (re-search-forward "-----BEGIN PGP MESSAGE-----$" nil t)
 	(let ((coding-system-for-read coding-system-for-read)
-	      (case-fold-search t))
-
-          (push (rmail-epa-decrypt-1 mime) decrypts)))
+	      (case-fold-search t)
+	      (armor-start (match-beginning 0)))
+	  ;; Don't decrypt an armor that was copied into
+	  ;; the message from a message it is a reply to.
+	  (or (equal (buffer-substring (line-beginning-position)
+				       armor-start)
+		     "> ")
+	      (push (rmail-epa-decrypt-1 mime) decrypts))))
 
       (when (and decrypts (eq major-mode 'rmail-mode))
         (rmail-add-label "decrypt"))
