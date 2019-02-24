@@ -4472,7 +4472,7 @@ replacement could be performed.  Otherwise, i.e., if MAX-SECS was
 exceeded, it returns nil.
 @end deffn
 
-@defun Command replace-region-contents beg end replace-fn &optional max-secs max-costs
+@deffn Command replace-region-contents beg end replace-fn &optional max-secs max-costs
 This function replaces the region between @code{beg} and @code{end}
 using the given @code{replace-fn}.  The function @code{replace-fn} is
 run in the current buffer narrowed to the specified region and it
