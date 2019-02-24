@@ -1751,4 +1751,12 @@ pub fn window_lines_pixel_dimensions(
     unsafe { Fnreverse(rows) }
 }
 
+/// Return top pixel edge of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_top(window: LispWindowValidOrSelected) -> EmacsInt {
+    let window: LispWindowRef = window.into();
+    window.pixel_top.into()
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
