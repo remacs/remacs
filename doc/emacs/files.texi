@@ -1461,26 +1461,19 @@ manipulate and apply parts of patches:
 Move to the next hunk-start (@code{diff-hunk-next}).  With prefix
 argument @var{n}, move forward to the @var{n}th next hunk.
 
-@findex diff-auto-refine-mode
-@cindex mode, Diff Auto-Refine
-@cindex Diff Auto-Refine mode
-This command has a side effect: it @dfn{refines} the hunk you move to,
-highlighting its changes with better granularity.  To disable this
-feature, type @kbd{M-x diff-auto-refine-mode} to toggle off the minor
-mode Diff Auto-Refine mode.  To disable Diff Auto-Refine mode by
-default, add this to your init file (@pxref{Hooks}):
-
-@example
-(add-hook 'diff-mode-hook
-          (lambda () (diff-auto-refine-mode -1)))
-@end example
+@vindex diff-refine
+By default, Diff mode @dfn{refines} hunks as Emacs displays them,
+highlighting their changes with better granularity.  Alternatively, if
+you set @code{diff-refine} to the symbol @code{navigation}, Diff mode
+only refines the hunk you move to with this command or with
+@code{diff-hunk-prev}.
 
 @item M-p
 @findex diff-hunk-prev
 Move to the previous hunk-start (@code{diff-hunk-prev}).  With prefix
 argument @var{n}, move back to the @var{n}th previous hunk.  Like
-@kbd{M-n}, this has the side-effect of refining the hunk you move to,
-unless you disable Diff Auto-Refine mode.
+@kbd{M-n}, this command refines the hunk you move to if you set
+@code{diff-refine} to the symbol @code{navigation}.
 
 @item M-@}
 @findex diff-file-next
@@ -1517,6 +1510,11 @@ hunk to the ``old'' version of the file instead.
 Highlight the changes of the hunk at point with a finer granularity
 (@code{diff-refine-hunk}).  This allows you to see exactly which parts
 of each changed line were actually changed.
+
+@vindex diff-refine
+By default, Diff mode refines hunks as Emacs displays them, so you may
+find this command useful if you customize @code{diff-refine} to a
+non-default value.
 
 @item C-c C-c
 @findex diff-goto-source

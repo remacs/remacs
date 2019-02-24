@@ -44,7 +44,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
-(require 'diff-mode)                    ;For diff-auto-refine-mode.
+(require 'diff-mode)                    ;For diff-refine.
 (require 'newcomment)
 
 ;;; The real definition comes later.
@@ -264,7 +264,7 @@ Can be nil if the style is undecided, or else:
 
 ;; Define smerge-next and smerge-prev
 (easy-mmode-define-navigation smerge smerge-begin-re "conflict" nil nil
-  (if diff-auto-refine-mode
+  (if diff-refine
       (condition-case nil (smerge-refine) (error nil))))
 
 (defconst smerge-match-names ["conflict" "upper" "base" "lower"])

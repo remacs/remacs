@@ -479,8 +479,15 @@ and compares their entire trees.
 to hg revert.
 
 ** Diff mode
-*** Hunks are now automatically refined by default.
-To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
++++
+*** Hunks are now automatically refined by font-lock.
+To disable refinement, set the new defcustom 'diff-refine' to nil.
+To get back the old behavior where hunks are refined as you navigate
+through a diff, set 'diff-refine' to the symbol 'navigate'.
++++
+*** 'diff-auto-refine-mode' is deprecated in favor of 'diff-refine'.
+It is no longer enabled by default and binding it no longer has any
+effect.
 
 +++
 *** Better syntax highlighting of Diff hunks.

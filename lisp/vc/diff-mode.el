@@ -94,10 +94,18 @@ when editing big diffs)."
   :type 'hook
   :options '(diff-delete-empty-files diff-make-unified))
 
-(defcustom diff-font-lock-refine t
-  "If non-nil, font-lock highlighting includes hunk refinement."
+(defcustom diff-refine 'font-lock
+  "If non-nil, enable hunk refinement.
+
+The value `font-lock' means to refine during font-lock.
+The value `navigation' means to refine each hunk as you visit it
+with `diff-hunk-next' or `diff-hunk-prev'.
+
+You can always manually refine a hunk with `diff-refine-hunk'."
   :version "27.1"
-  :type 'boolean)
+  :type '(choice (const :tag "Don't refine hunks" nil)
+                 (const :tag "Refine hunks during font-lock" font-lock)
+                 (const :tag "Refine hunks during navigation" navigation)))
 
 (defcustom diff-font-lock-prettify nil
   "If non-nil, font-lock will try and make the format prettier."
@@ -262,9 +270,15 @@ Diff Auto Refine mode is a buffer-local minor mode used with
 changes in detail as the user visits hunks.  When transitioning
 from disabled to enabled, it tries to refine the current hunk, as
 well."
-  :group 'diff-mode :init-value t :lighter nil ;; " Auto-Refine"
-  (when diff-auto-refine-mode
-    (condition-case-unless-debug nil (diff-refine-hunk) (error nil))))
+  :group 'diff-mode :init-value nil :lighter nil ;; " Auto-Refine"
+  (if diff-auto-refine-mode
+      (progn
+        (customize-set-variable 'diff-refine 'navigation)
+        (condition-case-unless-debug nil (diff-refine-hunk) (error nil)))
+    (customize-set-variable 'diff-refine nil)))
+(make-obsolete 'diff-auto-refine-mode "set `diff-refine' instead." "27.1")
+(make-obsolete-variable 'diff-auto-refine-mode
+                        "set `diff-refine' instead." "27.1")
 
 ;;;;
 ;;;; font-lock support
@@ -623,7 +637,7 @@ next hunk if TRY-HARDER is non-nil; otherwise signal an error."
 ;; Define diff-{hunk,file}-{prev,next}
 (easy-mmode-define-navigation
  diff-hunk diff-hunk-header-re "hunk" diff-end-of-hunk diff-restrict-view
- (when diff-auto-refine-mode
+ (when (and (eq diff-refine 'navigation) (called-interactively-p 'interactive))
    (unless (prog1 diff--auto-refine-data
              (setq diff--auto-refine-data
                    (cons (current-buffer) (point-marker))))
@@ -2146,7 +2160,7 @@ Call FUN with two args (BEG and END) for each hunk."
 
 (defun diff--font-lock-refined (max)
   "Apply hunk refinement from font-lock."
-  (when diff-font-lock-refine
+  (when (eq diff-refine 'font-lock)
     (when (get-char-property (point) 'diff--font-lock-refined)
       ;; Refinement works over a complete hunk, whereas font-lock limits itself
       ;; to highlighting smallish chunks between point..max, so we may be

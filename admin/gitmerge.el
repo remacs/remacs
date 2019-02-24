@@ -294,7 +294,7 @@ Returns non-nil if conflicts remain."
            ((derived-mode-p 'change-log-mode)
             ;; Fix up dates before resolving the conflicts.
             (goto-char (point-min))
-            (let ((diff-auto-refine-mode nil))
+            (let ((diff-refine nil))
               (while (re-search-forward smerge-begin-re nil t)
                 (smerge-match-conflict)
                 (smerge-ensure-match 3)
