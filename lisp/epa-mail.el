@@ -150,7 +150,7 @@ If no one is selected, default secret key is used.  "
 		   (mapcar
 		    (lambda (recipient)
 		      (let ((tem (assoc recipient epa-mail-aliases)))
-			(if tem (cdr tem)
+			(if tem (copy-sequence (cdr tem))
 			  (list recipient))))
 		    real-recipients)))
       )))
