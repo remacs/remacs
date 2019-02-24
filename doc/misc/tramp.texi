@@ -3166,7 +3166,8 @@ interactively, this command lists active remote connections in the
 minibuffer.  Each connection is of the format
 @file{@trampfn{method,user@@host,}}.  Flushing remote connections also
 cleans the password cache (@pxref{Password handling}), file cache,
-connection cache (@pxref{Connection caching}), and connection buffers.
+connection cache (@pxref{Connection caching}), recentf cache
+(@pxref{File Conveniences, , , emacs}), and connection buffers.
 @end deffn
 
 @deffn Command tramp-cleanup-this-connection

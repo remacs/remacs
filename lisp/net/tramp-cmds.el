@@ -118,7 +118,10 @@ When called interactively, a Tramp connection has to be selected."
 		   (unless keep-debug
 		     (get-buffer (tramp-debug-buffer-name vec)))
 		   (tramp-get-connection-property vec "process-buffer" nil)))
-      (when (bufferp buf) (kill-buffer buf)))))
+      (when (bufferp buf) (kill-buffer buf)))
+
+    ;; Remove recentf files.
+    (tramp-recentf-cleanup vec)))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-this-connection ()
@@ -162,7 +165,11 @@ This includes password cache, file cache, connection cache, buffers."
 
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))
-    (when (bufferp (get-buffer name)) (kill-buffer name))))
+    (when (bufferp (get-buffer name)) (kill-buffer name)))
+
+  ;; Remove recentf files.
+  (dolist (v (tramp-list-connections))
+    (tramp-recentf-cleanup v)))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-all-buffers ()
