@@ -393,7 +393,7 @@ FORM is of the form `(and FORM1 ...)'."
   (rx-group-if
    (if (memq nil (mapcar 'stringp (cdr form)))
        (mapconcat (lambda (x) (rx-form x '|)) (cdr form) "\\|")
-     (regexp-opt (cdr form)))
+     (regexp-opt (cdr form) nil t))
    (and (memq rx-parent '(: * t)) rx-parent)))
 
 

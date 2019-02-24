@@ -92,5 +92,18 @@
                          (*? "e") (+? "f") (\?? "g") (?? "h"))))
                  "a*b+c?d?e*?f+?g??h??")))
 
+(ert-deftest rx-or ()
+  ;; Test or-pattern reordering (Bug#34641).
+  (let ((s "abc"))
+    (should (equal (and (string-match (rx (or "abc" "ab" "a")) s)
+                        (match-string 0 s))
+                   "abc"))
+    (should (equal (and (string-match (rx (or "ab" "abc" "a")) s)
+                        (match-string 0 s))
+                   "ab"))
+    (should (equal (and (string-match (rx (or "a" "ab" "abc")) s)
+                        (match-string 0 s))
+                   "a"))))
+
 (provide 'rx-tests)
 ;; rx-tests.el ends here.

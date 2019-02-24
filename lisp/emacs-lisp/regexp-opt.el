@@ -84,7 +84,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun regexp-opt (strings &optional paren)
+(defun regexp-opt (strings &optional paren noreorder)
   "Return a regexp to match a string in the list STRINGS.
 Each string should be unique in STRINGS and should not contain
 any regexps, quoted or not.  Optional PAREN specifies how the
@@ -111,8 +111,14 @@ nil
     necessary to ensure that a postfix operator appended to it will
     apply to the whole expression.
 
-The resulting regexp is equivalent to but usually more efficient
-than that of a simplified version:
+The optional argument NOREORDER, if nil or omitted, allows the
+returned regexp to match the strings in any order.  If non-nil,
+the match is guaranteed to be performed in the order given, as if
+the strings were made into a regexp by joining them with the
+`\\|' operator.
+
+Up to reordering, the resulting regexp is equivalent to but
+usually more efficient than that of a simplified version:
 
  (defun simplified-regexp-opt (strings &optional paren)
    (let ((parens
@@ -133,7 +139,15 @@ than that of a simplified version:
 	   (open (cond ((stringp paren) paren) (paren "\\(")))
 	   (sorted-strings (delete-dups
 			    (sort (copy-sequence strings) 'string-lessp)))
-	   (re (regexp-opt-group sorted-strings (or open t) (not open))))
+	   (re
+            ;; If NOREORDER is non-nil and the list contains a prefix
+            ;; of another string, we give up all attempts at optimisation.
+            ;; There is plenty of room for improvement (Bug#34641).
+            (if (and noreorder (regexp-opt--contains-prefix sorted-strings))
+                (concat (or open "\\(?:")
+                        (mapconcat #'regexp-quote strings "\\|")
+                        "\\)")
+              (regexp-opt-group sorted-strings (or open t) (not open)))))
       (cond ((eq paren 'words)
 	     (concat "\\<" re "\\>"))
 	    ((eq paren 'symbols)
@@ -312,6 +326,22 @@ CHARS should be a list of characters."
             "\\^"                       ; [^] is not a valid regexp
           (concat "[" dash caret "]"))
       (concat "[" bracket charset caret dash "]"))))
+
+
+(defun regexp-opt--contains-prefix (strings)
+  "Whether STRINGS contains a proper prefix of one of its other elements.
+STRINGS must be a list of sorted strings without duplicates."
+  (let ((s strings))
+    ;; In a lexicographically sorted list, a string always immediately
+    ;; succeeds one of its prefixes.
+    (while (and (cdr s)
+                (not (string-equal
+                      (car s)
+                      (substring (cadr s) 0 (min (length (car s))
+                                                 (length (cadr s)))))))
+      (setq s (cdr s)))
+    (cdr s)))
+
 
 (provide 'regexp-opt)
 

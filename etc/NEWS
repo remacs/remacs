@@ -1642,6 +1642,13 @@ MS-Windows.
 ** New module environment function 'process_input' to process user
 input while module code is running.
 
++++
+** The function 'regexp-opt' accepts an additional optional argument.
+By default, the regexp returned by 'regexp-opt' may match the strings
+in any order.  If the new third argument is non-nil, the match is
+guaranteed to be performed in the order given, as if the strings were
+made into a regexp by joining them with '\|'.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
