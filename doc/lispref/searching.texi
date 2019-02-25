@@ -960,6 +960,9 @@ possible.  A hand-tuned regular expression can sometimes be slightly
 more efficient, but is almost never worth the effort.}.
 @c E.g., see https://debbugs.gnu.org/2816
 
+If @var{strings} is the empty list, the return value is a regexp that
+never matches anything.
+
 The optional argument @var{paren} can be any of the following:
 
 @table @asis

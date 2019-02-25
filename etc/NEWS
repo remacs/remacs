@@ -1649,6 +1649,12 @@ in any order.  If the new third argument is non-nil, the match is
 guaranteed to be performed in the order given, as if the strings were
 made into a regexp by joining them with '\|'.
 
++++
+** The function 'regexp-opt', when given an empty list of strings, now
+returns a regexp that never matches anything, which is an identity for
+this operation.  Previously, the empty string was returned in this
+case.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

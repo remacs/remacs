@@ -90,6 +90,9 @@ Each string should be unique in STRINGS and should not contain
 any regexps, quoted or not.  Optional PAREN specifies how the
 returned regexp is surrounded by grouping constructs.
 
+If STRINGS is the empty list, the return value is a regexp that
+never matches anything.
+
 The optional argument PAREN can be any of the following:
 
 a string
@@ -140,14 +143,18 @@ usually more efficient than that of a simplified version:
 	   (sorted-strings (delete-dups
 			    (sort (copy-sequence strings) 'string-lessp)))
 	   (re
-            ;; If NOREORDER is non-nil and the list contains a prefix
-            ;; of another string, we give up all attempts at optimisation.
-            ;; There is plenty of room for improvement (Bug#34641).
-            (if (and noreorder (regexp-opt--contains-prefix sorted-strings))
-                (concat (or open "\\(?:")
-                        (mapconcat #'regexp-quote strings "\\|")
-                        "\\)")
-              (regexp-opt-group sorted-strings (or open t) (not open)))))
+            (cond
+             ;; No strings: return a\` which cannot match anything.
+             ((null strings)
+              (concat (or open "\\(?:") "a\\`\\)"))
+             ;; If we cannot reorder, give up all attempts at
+             ;; optimisation.  There is room for improvement (Bug#34641).
+             ((and noreorder (regexp-opt--contains-prefix sorted-strings))
+              (concat (or open "\\(?:")
+                      (mapconcat #'regexp-quote strings "\\|")
+                      "\\)"))
+             (t
+              (regexp-opt-group sorted-strings (or open t) (not open))))))
       (cond ((eq paren 'words)
 	     (concat "\\<" re "\\>"))
 	    ((eq paren 'symbols)
