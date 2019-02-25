@@ -21,8 +21,11 @@ use crate::{
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member, rassq, setcar},
     lists::{CarIter, LispConsCircularChecks, LispConsEndChecks},
-    marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
-    multibyte::{multibyte_length_by_head, string_char},
+    marker::{
+        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
+        LispMarkerRef, MARKER_DEBUG,
+    },
+    multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
     multibyte::{LispStringRef, LispSymbolOrString},
     numbers::MOST_POSITIVE_FIXNUM,
     obarray::intern,
@@ -364,6 +367,246 @@ impl LispBufferRef {
 
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    pub fn bytepos_to_charpos(mut self, bytepos: isize) -> isize {
+        assert!(self.beg_byte() <= bytepos && bytepos <= self.z_byte());
+
+        let mut best_above = self.z();
+        let mut best_above_byte = self.z_byte();
+
+        // If this buffer has as many characters as bytes,
+        // each character must be one byte.
+        // This takes care of the case where enable-multibyte-characters is nil.
+        if best_above == best_above_byte {
+            return bytepos;
+        }
+
+        let mut best_below = self.beg();
+        let mut best_below_byte = self.beg_byte();
+
+        macro_rules! consider_known {
+            ($bpos:expr, $cpos:expr) => {
+                let mut changed = false;
+                if $bpos == bytepos {
+                    if MARKER_DEBUG {
+                        byte_char_debug_check(self, $cpos, bytepos);
+                    }
+                    return $cpos;
+                } else if $bpos > bytepos {
+                    if $bpos < best_above_byte {
+                        best_above = $cpos;
+                        best_above_byte = $bpos;
+                        changed = true;
+                    }
+                } else if $bpos > best_below_byte {
+                    best_below = $cpos;
+                    best_below_byte = $bpos;
+                    changed = true;
+                }
+                if changed {
+                    if best_above - best_below == best_above_byte - best_below_byte {
+                        return best_below + (bytepos - best_below_byte);
+                    }
+                }
+            };
+        }
+
+        consider_known!(self.pt_byte, self.pt);
+        consider_known!(self.gpt_byte(), self.gpt());
+        consider_known!(self.begv_byte, self.begv);
+        consider_known!(self.zv_byte, self.zv);
+
+        if self.is_cached && self.modifications() == self.cached_modiff {
+            consider_known!(self.cached_bytepos, self.cached_charpos);
+        }
+
+        for m in self.markers().iter() {
+            consider_known!(m.bytepos_or_error(), m.charpos_or_error());
+            // If we are down to a range of 50 chars,
+            // don't bother checking any other markers;
+            // scan the intervening chars directly now.
+            if best_above - best_below < 50 {
+                break;
+            }
+        }
+
+        // We get here if we did not exactly hit one of the known places.
+        // We have one known above and one known below.
+        // Scan, counting characters, from whichever one is closer.
+
+        if bytepos - best_below_byte < best_above_byte - bytepos {
+            let record = bytepos - best_below_byte > 5000;
+
+            while best_below_byte < bytepos {
+                best_below += 1;
+                best_below_byte = self.inc_pos(best_below_byte);
+            }
+
+            // If this position is quite far from the nearest known position,
+            // cache the correspondence by creating a marker here.
+            // It will last until the next GC.
+            // But don't do it if BUF_MARKERS is nil;
+            // that is a signal from Fset_buffer_multibyte.
+            if record && self.markers().is_some() {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_below;
+            self.cached_bytepos = best_below_byte;
+
+            best_below
+        } else {
+            let record = best_above_byte - bytepos > 5000;
+
+            while best_above_byte > bytepos {
+                best_above -= 1;
+                best_above_byte = self.dec_pos(best_above_byte);
+            }
+
+            // If this position is quite far from the nearest known position,
+            // cache the correspondence by creating a marker here.
+            // It will last until the next GC.
+            // But don't do it if BUF_MARKERS is nil;
+            // that is a signal from Fset_buffer_multibyte.
+            if record && self.markers().is_some() {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_above;
+            self.cached_bytepos = best_above_byte;
+
+            best_above
+        }
+    }
+
+    pub fn charpos_to_bytepos(mut self, charpos: isize) -> isize {
+        assert!(self.beg() <= charpos && charpos <= self.z());
+
+        let mut best_above = self.z();
+        let mut best_above_byte = self.z_byte();
+
+        // If this buffer has as many characters as bytes,
+        // each character must be one byte.
+        // This takes care of the case where enable-multibyte-characters is nil.
+        if best_above == best_above_byte {
+            return charpos;
+        }
+
+        let mut best_below = self.beg();
+        let mut best_below_byte = self.beg_byte();
+
+        // We find in best_above and best_above_byte
+        // the closest known point above CHARPOS,
+        // and in best_below and best_below_byte
+        // the closest known point below CHARPOS,
+        //
+        // If at any point we can tell that the space between those
+        // two best approximations is all single-byte,
+        // we interpolate the result immediately.
+
+        macro_rules! consider_known {
+            ($cpos:expr, $bpos:expr) => {
+                let mut changed = false;
+                if $cpos == charpos {
+                    if MARKER_DEBUG {
+                        byte_char_debug_check(self, charpos, $bpos);
+                    }
+                    return $bpos;
+                } else if $cpos > charpos {
+                    if $cpos < best_above {
+                        best_above = $cpos;
+                        best_above_byte = $bpos;
+                        changed = true;
+                    }
+                } else if $cpos > best_below {
+                    best_below = $cpos;
+                    best_below_byte = $bpos;
+                    changed = true;
+                }
+                if changed {
+                    if best_above - best_below == best_above_byte - best_below_byte {
+                        return best_below_byte + (charpos - best_below);
+                    }
+                }
+            };
+        }
+
+        consider_known!(self.pt, self.pt_byte);
+        consider_known!(self.gpt(), self.gpt_byte());
+        consider_known!(self.begv, self.begv_byte);
+        consider_known!(self.zv, self.zv_byte);
+
+        if self.is_cached && self.modifications() == self.cached_modiff {
+            consider_known!(self.cached_charpos, self.cached_bytepos);
+        }
+
+        for m in self.markers().iter() {
+            consider_known!(m.charpos_or_error(), m.bytepos_or_error());
+            // If we are down to a range of 50 chars,
+            // don't bother checking any other markers;
+            // scan the intervening chars directly now.
+            if best_above - best_below < 50 {
+                break;
+            }
+        }
+
+        if charpos - best_below < best_above - charpos {
+            let record = charpos - best_below > 5000;
+
+            while best_below != charpos {
+                best_below += 1;
+                best_below_byte = self.inc_pos(best_below_byte);
+            }
+            if record {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_below;
+            self.cached_bytepos = best_below_byte;
+
+            best_below_byte
+        } else {
+            let record = best_above - charpos > 5000;
+
+            while best_above != charpos {
+                best_above -= 1;
+                best_above_byte = self.dec_pos(best_above_byte);
+            }
+
+            if record {
+                build_marker_rust(self, best_above, best_above_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_above;
+            self.cached_bytepos = best_above_byte;
+
+            best_above_byte
+        }
     }
 
     pub fn local_vars_iter(self) -> CarIter {
@@ -1299,6 +1542,27 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
 
     // Refetch since that last call may have done GC.
     ThreadState::current_buffer_unchecked().name_.into()
+}
+
+// Debugging
+
+pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
+    if !b.multibyte_characters_enabled() {
+        return;
+    }
+
+    let nchars = unsafe {
+        if bytepos > b.gpt_byte() {
+            multibyte_chars_in_text(b.beg_addr(), b.gpt_byte() - b.beg_byte())
+                + multibyte_chars_in_text(b.gap_end_addr(), bytepos - b.gpt_byte())
+        } else {
+            multibyte_chars_in_text(b.beg_addr(), bytepos - b.beg_byte())
+        }
+    };
+
+    if charpos - 1 != nchars {
+        panic!("byte_char_debug_check failed.")
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
