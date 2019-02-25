@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2019-02-01.12}
+\def\texinfoversion{2019-02-23.16}
 
 %
 % Copyright 1985, 1986, 1988, 1990-2019 Free Software Foundation, Inc.
@@ -5872,7 +5872,9 @@ end
     \divide\doublecolumnhsize by 2
   \hsize = \doublecolumnhsize
   %
-  % Double the \vsize as well.
+  % Get the available space for the double columns -- the normal
+  % (undoubled) page height minus any material left over from the
+  % previous page.
   \advance\vsize by -\ht\partialpage
   \vsize = 2\vsize
   %
@@ -5886,16 +5888,13 @@ end
 \def\doublecolumnout{%
   %
   \splittopskip=\topskip \splitmaxdepth=\maxdepth
-  % Get the available space for the double columns -- the normal
-  % (undoubled) page height minus any material left over from the
-  % previous page.
   \dimen@ = \vsize
   \divide\dimen@ by 2
   %
   % box0 will be the left-hand column, box2 the right.
   \setbox0=\vsplit\PAGE to\dimen@ \setbox2=\vsplit\PAGE to\dimen@
   \global\advance\vsize by 2\ht\partialpage
-  \onepageout\pagesofar
+  \onepageout\pagesofar % empty except for the first time we are called
   \unvbox\PAGE
   \penalty\outputpenalty
 }
@@ -5978,13 +5977,14 @@ end
 \def\balancecolumns{%
   \setbox0 = \vbox{\unvbox\PAGE}% like \box255 but more efficient, see p.120.
   \dimen@ = \ht0
-  \advance\dimen@ by \topskip
-  \advance\dimen@ by-\baselineskip
-  \ifdim\dimen@<5\baselineskip
+  \ifdim\dimen@<7\baselineskip
     % Don't split a short final column in two.
     \setbox2=\vbox{}%
     \global\setbox\balancedcolumns=\vbox{\pagesofar}%
   \else
+    % double the leading vertical space
+    \advance\dimen@ by \topskip
+    \advance\dimen@ by-\baselineskip
     \divide\dimen@ by 2 % target to split to
     \dimen@ii = \dimen@
     \splittopskip = \topskip
@@ -11191,20 +11191,13 @@ directory should work if nowhere else does.}
    \relax
 }
 
-% define all Unicode characters we know about, for the sake of @U.
+% Define all Unicode characters we know about.  This makes UTF-8 the default
+% input encoding and allows @U to work.
 \iftxinativeunicodecapable
   \nativeunicodechardefsatu
 \else
   \utfeightchardefs
 \fi
-
-
-% Make non-ASCII characters printable again for compatibility with
-% existing Texinfo documents that may use them, even without declaring a
-% document encoding.
-%
-\setnonasciicharscatcode \other
-
 
 \message{formatting,}
 
