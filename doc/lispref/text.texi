@@ -4468,18 +4468,18 @@ If the actual costs exceed this limit, heuristics are used to provide
 a faster but suboptimal solution.  The default value is 1000000.
 
 @code{replace-buffer-contents} returns t if a non-destructive
-replacement could be performed.  Otherwise, i.e., if MAX-SECS was
-exceeded, it returns nil.
+replacement could be performed.  Otherwise, i.e., if @code{max-secs}
+was exceeded, it returns nil.
 @end deffn
 
-@deffn Command replace-region-contents beg end replace-fn &optional max-secs max-costs
+@defun replace-region-contents beg end replace-fn &optional max-secs max-costs
 This function replaces the region between @code{beg} and @code{end}
 using the given @code{replace-fn}.  The function @code{replace-fn} is
 run in the current buffer narrowed to the specified region and it
 should return either a string or a buffer replacing the region.
 
-The replacement is performed using @code{replace-buffer-contents}
-which also describes the @code{max-secs} and @code{max-costs}
+The replacement is performed using @code{replace-buffer-contents} (see
+above) which also describes the @code{max-secs} and @code{max-costs}
 arguments and the return value.
 
 Note: If the replacement is a string, it will be placed in a temporary
@@ -4487,7 +4487,7 @@ buffer so that @code{replace-buffer-contents} can operate on it.
 Therefore, if you already have the replacement in a buffer, it makes
 no sense to convert it to a string using @code{buffer-substring} or
 similar.
-@end deffn
+@end defun
 
 @node Decompression
 @section Dealing With Compressed Data
