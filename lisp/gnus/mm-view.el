@@ -493,7 +493,8 @@ If MODE is not set, try to find mode automatically."
 	    (let ((auto-mode-alist
 		   (delq (rassq 'doc-view-mode-maybe auto-mode-alist)
 			 (copy-sequence auto-mode-alist))))
-	      (set-auto-mode)))
+	      (set-auto-mode)
+	      (setq mode major-mode)))
 	  ;; The mode function might have already turned on font-lock.
 	  ;; Do not fontify if the guess mode is fundamental.
 	  (unless (or font-lock-mode

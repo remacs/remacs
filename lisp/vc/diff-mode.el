@@ -436,6 +436,7 @@ and the face `diff-added' for added lines.")
     ("^\\(?:Index\\|revno\\): \\(.+\\).*\n"
      (0 'diff-header) (1 'diff-index prepend))
     ("^\\(?:index .*\\.\\.\\|diff \\).*\n" . 'diff-header)
+    ("^\\(?:new\\|deleted\\) file mode .*\n" . 'diff-header)
     ("^Only in .*\n" . 'diff-nonexistent)
     ("^Binary files .* differ\n" . 'diff-file-header)
     ("^\\(#\\)\\(.*\\)"
