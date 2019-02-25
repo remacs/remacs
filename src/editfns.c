@@ -4495,12 +4495,6 @@ it to be non-nil.  */);
   binary_as_unsigned = true;
 #endif
 
-  DEFVAR_LISP ("replace-buffer-contents-max-secs",
-	       Vreplace_buffer_contents_max_secs,
-	       doc: /* If differencing the two buffers takes longer than this,
-`replace-buffer-contents' falls back to a plain delete and insert.  */);
-  Vreplace_buffer_contents_max_secs = Qnil;
-
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
   defsubr (&Sgoto_char);
