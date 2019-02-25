@@ -1343,6 +1343,12 @@ floating-point operators do.
 +++
 ** New function 'time-equal-p' compares time values for equality.
 
++++
+** 'format-time-string' supports a new conversion specifier flag '+'
+that acts like the '0' flag but also puts a '+' before nonnegative
+years containing more than four digits.  This is for compatibility
+with POSIX.1-2017.
+
 ** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++

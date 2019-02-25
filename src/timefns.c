@@ -1267,7 +1267,7 @@ by text that describes the specified date and time in TIME:
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
 %D is like "%m/%d/%y".
-%F is the ISO 8601 date format (like "%Y-%m-%d").
+%F is the ISO 8601 date format (like "%+4Y-%m-%d").
 
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
@@ -1275,17 +1275,23 @@ by text that describes the specified date and time in TIME:
 Finally, %n is a newline, %t is a tab, %% is a literal %, and
 unrecognized %-sequences stand for themselves.
 
-Certain flags and modifiers are available with some format controls.
-The flags are `_', `-', `^' and `#'.  For certain characters X,
-%_X is like %X, but padded with blanks; %-X is like %X,
-but without padding.  %^X is like %X, but with all textual
-characters up-cased; %#X is like %X, but with letter-case of
-all textual characters reversed.
-%NX (where N stands for an integer) is like %X,
-but takes up at least N (a number) positions.
-The modifiers are `E' and `O'.  For certain characters X,
-%EX is a locale's alternative version of %X;
-%OX is like %X, but uses the locale's number symbols.
+A %-sequence can contain optional flags, field width, and a modifier
+(in that order) after the `%'.  The flags are:
+
+`-' Do not pad the field.
+`_' Pad with spaces.
+`0' Pad with zeros.
+`+' Pad with zeros and put `+' before nonnegative year numbers with >4 digits.
+`^' Use upper case characters if possible.
+`#' Use opposite case characters if possible.
+
+A field width N is an unsigned decimal integer with a leading digit nonzero.
+%NX is like %X, but takes up at least N positions.
+
+The modifiers are:
+
+`E' Use the locale's alternative version.
+`O' Use the locale's number symbols.
 
 For example, to produce full ISO 8601 format, use "%FT%T%z".
 
