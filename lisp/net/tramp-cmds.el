@@ -69,6 +69,11 @@ SYNTAX can be one of the symbols `default' (default),
     (buffer-list))))
 
 ;;;###tramp-autoload
+(defvar tramp-cleanup-connection-hook nil
+  "List of functions to be called after Tramp connection is cleaned up.
+Each function is called with the current vector as argument.")
+
+;;;###tramp-autoload
 (defun tramp-cleanup-connection (vec &optional keep-debug keep-password)
   "Flush all connection related objects.
 This includes password cache, file cache, connection cache,
@@ -99,9 +104,8 @@ When called interactively, a Tramp connection has to be selected."
     (unless keep-password (tramp-clear-passwd vec))
 
     ;; Cleanup `tramp-current-connection'.  Otherwise, we would be
-    ;; suppressed in the test suite.  We use `keep-password' as
-    ;; indicator; it is not worth to add a new argument.
-    (when keep-password (setq tramp-current-connection nil))
+    ;; suppressed.
+    (setq tramp-current-connection nil)
 
     ;; Flush file cache.
     (tramp-flush-directory-properties vec "")
@@ -120,8 +124,8 @@ When called interactively, a Tramp connection has to be selected."
 		   (tramp-get-connection-property vec "process-buffer" nil)))
       (when (bufferp buf) (kill-buffer buf)))
 
-    ;; Remove recentf files.
-    (tramp-recentf-cleanup vec)))
+    ;; The end.
+    (run-hook-with-args 'tramp-cleanup-connection-hook vec)))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-this-connection ()
@@ -130,6 +134,10 @@ When called interactively, a Tramp connection has to be selected."
   (and (tramp-tramp-file-p default-directory)
        (tramp-cleanup-connection
 	(tramp-dissect-file-name default-directory 'noexpand))))
+
+;;;###tramp-autoload
+(defvar tramp-cleanup-all-connections-hook nil
+  "List of functions to be called after all Tramp connections are cleaned up.")
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-all-connections ()
@@ -145,10 +153,6 @@ This includes password cache, file cache, connection cache, buffers."
 
   ;; Flush file and connection cache.
   (clrhash tramp-cache-data)
-
-  ;; Cleanup local copies of archives.
-  (when (bound-and-true-p tramp-archive-enabled)
-    (tramp-archive-cleanup-hash))
 
   ;; Remove ad-hoc proxies.
   (let ((proxies tramp-default-proxies-alist))
@@ -167,9 +171,8 @@ This includes password cache, file cache, connection cache, buffers."
   (dolist (name (tramp-list-tramp-buffers))
     (when (bufferp (get-buffer name)) (kill-buffer name)))
 
-  ;; Remove recentf files.
-  (dolist (v (tramp-list-connections))
-    (tramp-recentf-cleanup v)))
+  ;; The end.
+  (run-hooks 'tramp-cleanup-all-connections-hook))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-all-buffers ()

@@ -369,13 +369,13 @@ pass to the OPERATION."
 (when url-handler-mode (tramp-register-file-name-handlers))
 
 (eval-after-load 'url-handler
-  (progn
-    (add-hook 'url-handler-mode-hook 'tramp-register-file-name-handlers)
-    (add-hook
-     'tramp-archive-unload-hook
-     (lambda ()
-       (remove-hook
-	'url-handler-mode-hook 'tramp-register-file-name-handlers)))))
+  '(progn
+     (add-hook 'url-handler-mode-hook 'tramp-register-file-name-handlers)
+     (add-hook
+      'tramp-archive-unload-hook
+      (lambda ()
+	(remove-hook
+	 'url-handler-mode-hook 'tramp-register-file-name-handlers)))))
 
 
 ;; File name conversions.
@@ -467,7 +467,6 @@ name is kept in slot `hop'"
       (setf (tramp-file-name-localname vec) localname)
       vec)))
 
-;;;###tramp-autoload
 (defun tramp-archive-cleanup-hash ()
   "Remove local copies of archives, used by GVFS."
   (maphash
@@ -482,9 +481,12 @@ name is kept in slot `hop'"
    tramp-archive-hash)
   (clrhash tramp-archive-hash))
 
+(add-hook 'tramp-cleanup-all-connections-hook 'tramp-archive-cleanup-hash)
 (add-hook 'kill-emacs-hook 'tramp-archive-cleanup-hash)
 (add-hook 'tramp-archive-unload-hook
 	  (lambda ()
+	    (remove-hook 'tramp-cleanup-all-connections-hook
+			 'tramp-archive-cleanup-hash)
 	    (remove-hook 'kill-emacs-hook
 			 'tramp-archive-cleanup-hash)))
 

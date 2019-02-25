@@ -128,7 +128,7 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 	       'tramp-eshell-directory-change)
      (add-hook 'eshell-directory-change-hook
 	       'tramp-eshell-directory-change)
-     (add-hook 'tramp-unload-hook
+     (add-hook 'tramp-integration-unload-hook
 	       (lambda ()
 		 (remove-hook 'eshell-mode-hook
 			      'tramp-eshell-directory-change)
@@ -150,6 +150,25 @@ NAME must be equal to `tramp-current-connection'."
     (let ((tramp-current-connection `(,vec))
 	  (recentf-exclude '(tramp-recentf-exclude-predicate)))
       (recentf-cleanup))))
+
+(defun tramp-recentf-cleanup-all ()
+  "Remove all remote file names from recentf."
+  (when (bound-and-true-p recentf-list)
+    (let ((recentf-exclude '(file-remote-p)))
+      (recentf-cleanup))))
+
+(eval-after-load "recentf"
+  '(progn
+     (add-hook 'tramp-cleanup-connection-hook
+	       'tramp-recentf-cleanup)
+     (add-hook 'tramp-cleanup-all-connections-hook
+	       'tramp-recentf-cleanup-all)
+     (add-hook 'tramp-integration-unload-hook
+	       (lambda ()
+		 (remove-hook 'tramp-cleanup-connection-hook
+			      'tramp-recentf-cleanup)
+		 (remove-hook 'tramp-cleanup-all-connections-hook
+			      'tramp-recentf-cleanup-all)))))
 
 (add-hook 'tramp-unload-hook
 	  (lambda () (unload-feature 'tramp-integration 'force)))
