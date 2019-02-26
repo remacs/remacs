@@ -2935,6 +2935,7 @@ See `term-prompt-regexp'."
                       (delete-region (point) (line-end-position))
                       (term-down 1 t)
                       (term-move-columns (- (term-current-column)))
+                      (put-text-property (1- (point)) (point) 'term-line-wrap t)
                       (setq decoded-substring
                             (substring decoded-substring (- term-width old-column)))
                       (setq old-column 0)))
