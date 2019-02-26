@@ -1217,6 +1217,7 @@ the conventions listed above:
     (modify-syntax-entry ?\\ ".   " st)
     ;; Add 'p' so M-c on 'hello' leads to 'Hello', not 'hello'.
     (modify-syntax-entry ?' "w p" st)
+    @dots{}
     st)
   "Syntax table used while in `text-mode'.")
 @end group
@@ -1226,6 +1227,7 @@ the conventions listed above:
 (defvar text-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\e\t" 'ispell-complete-word)
+    @dots{}
     map)
   "Keymap for `text-mode'.
 Many other modes, such as `mail-mode', `outline-mode' and
@@ -1269,11 +1271,11 @@ illustrate how these modes are written.
 @smallexample
 @group
 ;; @r{Create mode-specific table variables.}
-(defvar lisp-mode-abbrev-table nil)
-(define-abbrev-table 'lisp-mode-abbrev-table ())
+(define-abbrev-table 'lisp-mode-abbrev-table ()
+  "Abbrev table for Lisp mode.")
 
 (defvar lisp-mode-syntax-table
-  (let ((table (copy-syntax-table emacs-lisp-mode-syntax-table)))
+  (let ((table (make-syntax-table lisp--mode-syntax-table)))
     (modify-syntax-entry ?\[ "_   " table)
     (modify-syntax-entry ?\] "_   " table)
     (modify-syntax-entry ?# "' 14" table)
@@ -1288,10 +1290,9 @@ each calls the following function to set various variables:
 
 @smallexample
 @group
-(defun lisp-mode-variables (&optional syntax keywords-case-insensitive)
+(defun lisp-mode-variables (&optional syntax keywords-case-insensitive elisp)
   (when syntax
     (set-syntax-table lisp-mode-syntax-table))
-  (setq local-abbrev-table lisp-mode-abbrev-table)
   @dots{}
 @end group
 @end smallexample
@@ -1302,8 +1303,7 @@ variable to handle Lisp comments:
 
 @smallexample
 @group
-  (make-local-variable 'comment-start)
-  (setq comment-start ";")
+  (setq-local comment-start ";")
   @dots{}
 @end group
 @end smallexample
@@ -1317,6 +1317,7 @@ common.  The following code sets up the common commands:
 @group
 (defvar lisp-mode-shared-map
   (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map prog-mode-map)
     (define-key map "\e\C-q" 'indent-sexp)
     (define-key map "\177" 'backward-delete-char-untabify)
     map)
@@ -1331,7 +1332,7 @@ And here is the code to set up the keymap for Lisp mode:
 @group
 (defvar lisp-mode-map
   (let ((map (make-sparse-keymap))
-	(menu-map (make-sparse-keymap "Lisp")))
+        (menu-map (make-sparse-keymap "Lisp")))
     (set-keymap-parent map lisp-mode-shared-map)
     (define-key map "\e\C-x" 'lisp-eval-defun)
     (define-key map "\C-c\C-z" 'run-lisp)
@@ -1355,17 +1356,13 @@ Blank lines separate paragraphs.  Semicolons start comments.
 
 \\@{lisp-mode-map@}
 Note that `run-lisp' may be used either to start an inferior Lisp job
-or to switch back to an existing one.
+or to switch back to an existing one."
 @end group
-
 @group
-Entry to this mode calls the value of `lisp-mode-hook'
-if that value is non-nil."
   (lisp-mode-variables nil t)
-  (set (make-local-variable 'find-tag-default-function)
-       'lisp-find-tag-default)
-  (set (make-local-variable 'comment-start-skip)
-       "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\)\\(;+\\|#|\\) *")
+  (setq-local find-tag-default-function 'lisp-find-tag-default)
+  (setq-local comment-start-skip
+              "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\)\\(;+\\|#|\\) *")
   (setq imenu-case-fold-search t))
 @end group
 @end smallexample
