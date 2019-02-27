@@ -440,6 +440,17 @@ This function returns the attributes of the physical monitor
 dominating (see above) @var{frame}, which defaults to the selected frame.
 @end defun
 
+On multi-monitor displays it is possible to use the command
+@code{make-frame-on-monitor} to make frames on the specified monitor.
+
+@deffn Command make-frame-on-monitor monitor &optional display parameters
+This function creates and returns a new frame on @var{monitor} located
+on @var{display}, taking the other frame parameters from the alist
+@var{parameters}.  @var{monitor} should be the name of the physical
+monitor, the same string as returned by the function
+@code{display-monitor-attributes-list} in the attribute @code{name}.
+@var{display} should be the name of an X display (a string).
+@end deffn
 
 @node Frame Geometry
 @section Frame Geometry
