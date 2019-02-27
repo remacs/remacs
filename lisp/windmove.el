@@ -168,8 +168,7 @@ placement bugs in old versions of Emacs."
   :type 'number
   :group 'windmove)
 
-
-
+
 ;; Implementation overview:
 ;;
 ;; The conceptual framework behind this code is all fairly simple.  We
@@ -468,6 +467,7 @@ movement is relative to."
                windmove-window-distance-delta))) ; (x, y1+d-1)
      (t (error "Invalid direction of movement: %s" dir)))))
 
+
 ;; Rewritten on 2013-12-13 using `window-in-direction'.  After the
 ;; pixelwise change the old approach didn't work any more.  martin
 (defun windmove-find-other-window (dir &optional arg window)
@@ -497,9 +497,9 @@ in direction DIR instead."
           (t
            (select-window other-window)))))
 
-
-;;; end-user functions
-;; these are all simple interactive wrappers to
+
+;;; End-user functions
+;; These are all simple interactive wrappers to
 ;; `windmove-do-window-select', meant to be bound to keys.
 
 ;;;###autoload
@@ -571,6 +571,7 @@ Default value of MODIFIERS is `shift'."
   (global-set-key (vector (append modifiers '(up)))    'windmove-up)
   (global-set-key (vector (append modifiers '(down)))  'windmove-down))
 
+
 ;;; Directional window display and selection
 
 (defcustom windmove-display-no-select nil
@@ -680,6 +681,7 @@ Default value of MODIFIERS is `shift-meta'."
   (global-set-key (vector (append modifiers '(down)))  'windmove-display-down)
   (global-set-key (vector (append modifiers '(?0)))    'windmove-display-same-window))
 
+
 ;;; Directional window deletion
 
 (defun windmove-delete-in-direction (dir &optional arg)
@@ -750,6 +752,60 @@ a single modifier.  Default value of PREFIX is `C-x' and MODIFIERS is `shift'."
   (global-set-key (vector prefix (append modifiers '(up)))    'windmove-delete-up)
   (global-set-key (vector prefix (append modifiers '(down)))  'windmove-delete-down))
 
+
+;;; Directional window swap states
+
+(defun windmove-swap-states-in-direction (dir)
+  "Swap the states of the selected window and the window at direction DIR.
+When `windmove-wrap-around' is non-nil, takes the window
+from the opposite side of the frame."
+  (let ((other-window (window-in-direction dir nil nil nil
+                                           windmove-wrap-around t)))
+    (cond ((or (null other-window) (window-minibuffer-p other-window))
+           (user-error "No window %s from selected window" dir))
+          (t
+           (window-swap-states nil other-window)))))
+
+;;;###autoload
+(defun windmove-swap-states-left ()
+  "Swap the states with the window on the left from the current one."
+  (interactive)
+  (windmove-swap-states-in-direction 'left))
+
+;;;###autoload
+(defun windmove-swap-states-up ()
+  "Swap the states with the window above from the current one."
+  (interactive)
+  (windmove-swap-states-in-direction 'up))
+
+;;;###autoload
+(defun windmove-swap-states-down ()
+  "Swap the states with the window below from the current one."
+  (interactive)
+  (windmove-swap-states-in-direction 'down))
+
+;;;###autoload
+(defun windmove-swap-states-right ()
+  "Swap the states with the window on the right from the current one."
+  (interactive)
+  (windmove-swap-states-in-direction 'right))
+
+;;;###autoload
+(defun windmove-swap-states-default-keybindings (&optional modifiers)
+  "Set up keybindings for directional window swap states.
+Keys are bound to commands that swap the states of the selected window
+with the window in the specified direction.  Keybindings are of the form
+MODIFIERS-{left,right,up,down}, where MODIFIERS is either a list of modifiers
+or a single modifier.  Default value of MODIFIERS is `shift-super'."
+  (interactive)
+  (unless modifiers (setq modifiers '(shift super)))
+  (unless (listp modifiers) (setq modifiers (list modifiers)))
+  (global-set-key (vector (append modifiers '(left)))  'windmove-swap-states-left)
+  (global-set-key (vector (append modifiers '(right))) 'windmove-swap-states-right)
+  (global-set-key (vector (append modifiers '(up)))    'windmove-swap-states-up)
+  (global-set-key (vector (append modifiers '(down)))  'windmove-swap-states-down))
+
+
 (provide 'windmove)
 
 ;;; windmove.el ends here

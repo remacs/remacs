@@ -397,6 +397,10 @@ With a prefix arg 'C-u', also kills the buffer in that window.
 With 'M-0', deletes the selected window and selects the window
 that was in the specified direction.
 
+*** New command 'windmove-swap-states-in-direction' binds default keys
+to the commands that swap the states of the selected window with the
+window in the specified direction.
+
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
