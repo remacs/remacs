@@ -5445,6 +5445,11 @@ window_scroll_margin (struct window *window, enum margin_unit unit)
     return 0;
 }
 
+static int
+sanitize_next_screen_context_lines (void)
+{
+  return clip_to_bounds (0, next_screen_context_lines, 1000000);
+}
 
 /* Implementation of window_scroll that works based on pixel line
    heights.  See the comment of window_scroll for parameter
@@ -5515,9 +5520,11 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 	     height.  This is important to ensure we get back to the
 	     same position when scrolling up, then down.  */
 	  if (whole)
-	    dy = max ((window_box_height (w) / dy
-		       - next_screen_context_lines) * dy,
-		      dy);
+	    {
+	      int ht = window_box_height (w);
+	      int nscls = sanitize_next_screen_context_lines ();
+	      dy = max (dy, (ht / dy - nscls) * dy);
+	    }
 	  dy *= n;
 
 	  if (n < 0)
@@ -5598,13 +5605,14 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
     {
       ptrdiff_t start_pos = IT_CHARPOS (it);
       int dy = frame_line_height;
+      int ht = window_box_height (w);
+      int nscls = sanitize_next_screen_context_lines ();
       /* In the below we divide the window box height by the frame's
 	 line height to make the result predictable when the window
 	 box is not an integral multiple of the line height.  This is
 	 important to ensure we get back to the same position when
 	 scrolling up, then down.  */
-      dy = max ((window_box_height (w) / dy - next_screen_context_lines) * dy,
-		dy) * n;
+      dy = n * max (dy, (ht / dy - nscls) * dy);
 
       /* Note that move_it_vertically always moves the iterator to the
          start of a line.  So, if the last line doesn't have a newline,
@@ -5902,7 +5910,10 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
   /* If scrolling screen-fulls, compute the number of lines to
      scroll from the window's height.  */
   if (whole)
-    n *= max (1, ht - next_screen_context_lines);
+    {
+      int nscls = sanitize_next_screen_context_lines ();
+      n *= max (1, ht - nscls);
+    }
 
   if (!NILP (Vscroll_preserve_screen_position))
     {

@@ -5706,8 +5706,9 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
   bool old_message_p = 0;
   struct auto_save_unwind auto_save_unwind;
 
-  if (max_specpdl_size < specpdl_size + 40)
-    max_specpdl_size = specpdl_size + 40;
+  intmax_t sum = INT_ADD_WRAPV (specpdl_size, 40, &sum) ? INTMAX_MAX : sum;
+  if (max_specpdl_size < sum)
+    max_specpdl_size = sum;
 
   if (minibuf_level)
     no_message = Qt;

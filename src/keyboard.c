@@ -208,7 +208,7 @@ struct buffer *buffer_before_last_command_or_undo;
 
 /* Value of num_nonmacro_input_events as of last auto save.  */
 
-static EMACS_INT last_auto_save;
+static intmax_t last_auto_save;
 
 /* The value of point when the last command was started. */
 static ptrdiff_t last_point_position;
@@ -1213,7 +1213,7 @@ some_mouse_moved (void)
 
   if (ignore_mouse_drag_p)
     {
-      /* ignore_mouse_drag_p = 0; */
+      /* ignore_mouse_drag_p = false; */
       return 0;
     }
 
@@ -1301,7 +1301,7 @@ command_loop_1 (void)
 	 loop.  (This flag is set in xdisp.c whenever the tool bar is
 	 resized, because the resize moves text up or down, and would
 	 generate false mouse drag events if we don't ignore them.)  */
-      ignore_mouse_drag_p = 0;
+      ignore_mouse_drag_p = false;
 
       /* If minibuffer on and echo area in use,
 	 wait a short time and redraw minibuffer.  */
@@ -1966,14 +1966,14 @@ void
 bind_polling_period (int n)
 {
 #ifdef POLL_FOR_INPUT
-  EMACS_INT new = polling_period;
+  intmax_t new = polling_period;
 
   if (n > new)
     new = n;
 
   stop_other_atimers (poll_timer);
   stop_polling ();
-  specbind (Qpolling_period, make_fixnum (new));
+  specbind (Qpolling_period, make_int (new));
   /* Start a new alarm with the new period.  */
   start_polling ();
 #endif
@@ -2422,7 +2422,7 @@ read_char (int commandflag, Lisp_Object map,
 	  goto exit;
 	}
 
-      c = Faref (Vexecuting_kbd_macro, make_fixnum (executing_kbd_macro_index));
+      c = Faref (Vexecuting_kbd_macro, make_int (executing_kbd_macro_index));
       if (STRINGP (Vexecuting_kbd_macro)
 	  && (XFIXNAT (c) & 0x80) && (XFIXNAT (c) <= 0xff))
 	XSETFASTINT (c, CHAR_META | (XFIXNAT (c) & ~0x80));
@@ -5585,7 +5585,7 @@ make_lispy_event (struct input_event *event)
 	     double-click-fuzz as is.  On other frames, interpret it
 	     as a multiple of 1/8 characters.  */
 	  struct frame *f;
-	  int fuzz;
+	  intmax_t fuzz;
 
 	  if (WINDOWP (event->frame_or_window))
 	    f = XFRAME (XWINDOW (event->frame_or_window)->frame);
@@ -5628,7 +5628,7 @@ make_lispy_event (struct input_event *event)
 	      double_click_count = 1;
 	    button_down_time = event->timestamp;
 	    *start_pos_ptr = Fcopy_alist (position);
-	    ignore_mouse_drag_p = 0;
+	    ignore_mouse_drag_p = false;
 	  }
 
 	/* Now we're releasing a button - check the co-ordinates to
@@ -5644,11 +5644,14 @@ make_lispy_event (struct input_event *event)
 	    if (!CONSP (start_pos))
 	      return Qnil;
 
-	    event->modifiers &= ~up_modifier;
+	    unsigned click_or_drag_modifier = click_modifier;
 
+	    if (ignore_mouse_drag_p)
+	      ignore_mouse_drag_p = false;
+	    else
 	      {
 		Lisp_Object new_down, down;
-		EMACS_INT xdiff = double_click_fuzz, ydiff = double_click_fuzz;
+		intmax_t xdiff = double_click_fuzz, ydiff = double_click_fuzz;
 
 		/* The third element of every position
 		   should be the (x,y) pair.  */
@@ -5662,39 +5665,37 @@ make_lispy_event (struct input_event *event)
 		    ydiff = XFIXNUM (XCDR (new_down)) - XFIXNUM (XCDR (down));
 		  }
 
-		if (ignore_mouse_drag_p)
+		if (! (0 < double_click_fuzz
+		       && - double_click_fuzz < xdiff
+		       && xdiff < double_click_fuzz
+		       && - double_click_fuzz < ydiff
+		       && ydiff < double_click_fuzz
+		       /* Maybe the mouse has moved a lot, caused scrolling, and
+			  eventually ended up at the same screen position (but
+			  not buffer position) in which case it is a drag, not
+			  a click.  */
+		       /* FIXME: OTOH if the buffer position has changed
+			  because of a timer or process filter rather than
+			  because of mouse movement, it should be considered as
+			  a click.  But mouse-drag-region completely ignores
+			  this case and it hasn't caused any real problem, so
+			  it's probably OK to ignore it as well.  */
+		       && EQ (Fcar (Fcdr (start_pos)), Fcar (Fcdr (position)))))
 		  {
-		    event->modifiers |= click_modifier;
-		    ignore_mouse_drag_p = 0;
-		  }
-		else if (xdiff < double_click_fuzz && xdiff > - double_click_fuzz
-			 && ydiff < double_click_fuzz && ydiff > - double_click_fuzz
-		  /* Maybe the mouse has moved a lot, caused scrolling, and
-		     eventually ended up at the same screen position (but
-		     not buffer position) in which case it is a drag, not
-		     a click.  */
-		    /* FIXME: OTOH if the buffer position has changed
-		       because of a timer or process filter rather than
-		       because of mouse movement, it should be considered as
-		       a click.  But mouse-drag-region completely ignores
-		       this case and it hasn't caused any real problem, so
-		       it's probably OK to ignore it as well.  */
-		    && EQ (Fcar (Fcdr (start_pos)), Fcar (Fcdr (position))))
-		  /* Mouse hasn't moved (much).  */
-		  event->modifiers |= click_modifier;
-		else
-		  {
+		    /* Mouse has moved enough.  */
 		    button_down_time = 0;
-		    event->modifiers |= drag_modifier;
+		    click_or_drag_modifier = drag_modifier;
 		  }
-
-		/* Don't check is_double; treat this as multiple
-		   if the down-event was multiple.  */
-		if (double_click_count > 1)
-		  event->modifiers |= ((double_click_count > 2)
-				       ? triple_modifier
-				       : double_modifier);
 	      }
+
+	    /* Don't check is_double; treat this as multiple if the
+	       down-event was multiple.  */
+	    event->modifiers
+	      = ((event->modifiers & ~up_modifier)
+		 | click_or_drag_modifier
+		 | (double_click_count < 2 ? 0
+		    : double_click_count == 2 ? double_modifier
+		    : triple_modifier));
 	  }
 	else
 	  /* Every mouse event should either have the down_modifier or
@@ -5743,7 +5744,7 @@ make_lispy_event (struct input_event *event)
 	     double-click-fuzz as is.  On other frames, interpret it
 	     as a multiple of 1/8 characters.  */
 	  struct frame *fr;
-	  int fuzz;
+	  intmax_t fuzz;
 	  int symbol_num;
 	  bool is_double;
 

@@ -3389,7 +3389,7 @@ update_window (struct window *w, bool force_p)
 {
   struct glyph_matrix *desired_matrix = w->desired_matrix;
   bool paused_p;
-  int preempt_count = baud_rate / 2400 + 1;
+  int preempt_count = clip_to_bounds (1, baud_rate / 2400 + 1, INT_MAX);
   struct redisplay_interface *rif = FRAME_RIF (XFRAME (WINDOW_FRAME (w)));
 #ifdef GLYPH_DEBUG
   /* Check that W's frame doesn't have glyph matrices.  */
@@ -4485,15 +4485,12 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
   struct glyph_matrix *desired_matrix = f->desired_matrix;
   int i;
   bool pause_p;
-  int preempt_count = baud_rate / 2400 + 1;
+  int preempt_count = clip_to_bounds (1, baud_rate / 2400 + 1, INT_MAX);
 
   eassert (current_matrix && desired_matrix);
 
   if (baud_rate != FRAME_COST_BAUD_RATE (f))
     calculate_costs (f);
-
-  if (preempt_count <= 0)
-    preempt_count = 1;
 
   if (!force_p && detect_input_pending_ignore_squeezables ())
     {

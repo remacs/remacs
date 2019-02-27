@@ -1260,8 +1260,8 @@ INLINE bool
 #define FIXNUM_OVERFLOW_P(i) \
   (! ((0 <= (i) || MOST_NEGATIVE_FIXNUM <= (i)) && (i) <= MOST_POSITIVE_FIXNUM))
 
-INLINE ptrdiff_t
-clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
+INLINE intmax_t
+clip_to_bounds (intmax_t lower, intmax_t num, intmax_t upper)
 {
   return num < lower ? lower : num <= upper ? num : upper;
 }
@@ -2664,7 +2664,7 @@ make_uint (uintmax_t n)
 struct Lisp_Intfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Int */
-    EMACS_INT *intvar;
+    intmax_t *intvar;
   };
 
 /* Boolean forwarding pointer to an int variable.
@@ -3099,7 +3099,7 @@ enum maxargs
 extern void defvar_lisp (struct Lisp_Objfwd *, const char *, Lisp_Object *);
 extern void defvar_lisp_nopro (struct Lisp_Objfwd *, const char *, Lisp_Object *);
 extern void defvar_bool (struct Lisp_Boolfwd *, const char *, bool *);
-extern void defvar_int (struct Lisp_Intfwd *, const char *, EMACS_INT *);
+extern void defvar_int (struct Lisp_Intfwd *, const char *, intmax_t *);
 extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
 
 /* Macros we use to define forwarded Lisp variables.

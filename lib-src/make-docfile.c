@@ -700,7 +700,7 @@ write_globals (void)
       switch (globals[i].type)
 	{
 	case EMACS_INTEGER:
-	  type = "EMACS_INT";
+	  type = "intmax_t";
 	  break;
 	case BOOLEAN:
 	  type = "bool";

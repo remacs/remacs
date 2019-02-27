@@ -985,7 +985,7 @@ do_symval_forwarding (union Lisp_Fwd *valcontents)
   switch (XFWDTYPE (valcontents))
     {
     case Lisp_Fwd_Int:
-      return make_fixnum (*XFIXNUMFWD (valcontents)->intvar);
+      return make_int (*XFIXNUMFWD (valcontents)->intvar);
 
     case Lisp_Fwd_Bool:
       return (*XBOOLFWD (valcontents)->boolvar ? Qt : Qnil);
@@ -1076,8 +1076,13 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
   switch (XFWDTYPE (valcontents))
     {
     case Lisp_Fwd_Int:
-      CHECK_FIXNUM (newval);
-      *XFIXNUMFWD (valcontents)->intvar = XFIXNUM (newval);
+      {
+	intmax_t i;
+	CHECK_INTEGER (newval);
+	if (! integer_to_intmax (newval, &i))
+	  xsignal1 (Qoverflow_error, newval);
+	*XFIXNUMFWD (valcontents)->intvar = i;
+      }
       break;
 
     case Lisp_Fwd_Bool:

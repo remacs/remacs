@@ -1085,10 +1085,10 @@ wait_for_property_change (struct prop_location *location)
      property_change_reply, because property_change_reply_object says so.  */
   if (! location->arrived)
     {
-      EMACS_INT timeout = max (0, x_selection_timeout);
-      EMACS_INT secs = timeout / 1000;
+      intmax_t timeout = max (0, x_selection_timeout);
+      intmax_t secs = timeout / 1000;
       int nsecs = (timeout % 1000) * 1000000;
-      TRACE2 ("  Waiting %"pI"d secs, %d nsecs", secs, nsecs);
+      TRACE2 ("  Waiting %"PRIdMAX" secs, %d nsecs", secs, nsecs);
       wait_reading_process_output (secs, nsecs, 0, false,
 				   property_change_reply, NULL, 0);
 
@@ -1158,8 +1158,6 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type,
   Atom type_atom = (CONSP (target_type)
 		    ? symbol_to_x_atom (dpyinfo, XCAR (target_type))
 		    : symbol_to_x_atom (dpyinfo, target_type));
-  EMACS_INT timeout, secs;
-  int nsecs;
 
   if (!FRAME_LIVE_P (f))
     return Qnil;
@@ -1195,10 +1193,10 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type,
   unblock_input ();
 
   /* This allows quits.  Also, don't wait forever.  */
-  timeout = max (0, x_selection_timeout);
-  secs = timeout / 1000;
-  nsecs = (timeout % 1000) * 1000000;
-  TRACE1 ("  Start waiting %"pI"d secs for SelectionNotify", secs);
+  intmax_t timeout = max (0, x_selection_timeout);
+  intmax_t secs = timeout / 1000;
+  int nsecs = (timeout % 1000) * 1000000;
+  TRACE1 ("  Start waiting %"PRIdMAX" secs for SelectionNotify", secs);
   wait_reading_process_output (secs, nsecs, 0, false,
 			       reading_selection_reply, NULL, 0);
   TRACE1 ("  Got event = %d", !NILP (XCAR (reading_selection_reply)));

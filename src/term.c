@@ -1201,7 +1201,9 @@ calculate_costs (struct frame *frame)
       calculate_ins_del_char_costs (frame);
 
       /* Don't use TS_repeat if its padding is worse than sending the chars */
-      if (tty->TS_repeat && per_line_cost (tty->TS_repeat) * baud_rate < 9000)
+      if (tty->TS_repeat
+	  && (baud_rate <= 0
+	      || per_line_cost (tty->TS_repeat) < 9000 / baud_rate))
         tty->RPov = string_cost (tty->TS_repeat);
       else
         tty->RPov = FRAME_COLS (frame) * 2;

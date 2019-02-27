@@ -580,7 +580,7 @@ struct frame
   int config_scroll_bar_lines;
 
   /* The baud rate that was used to calculate costs for this frame.  */
-  int cost_calculation_baud_rate;
+  intmax_t cost_calculation_baud_rate;
 
   /* Frame opacity
      alpha[0]: alpha transparency of the active frame

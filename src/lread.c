@@ -4422,11 +4422,11 @@ defalias (struct Lisp_Subr *sname, char *string)
 #endif /* NOTDEF */
 
 /* Define an "integer variable"; a symbol whose value is forwarded to a
-   C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
+   C variable of type intmax_t.  Sample call (with "xx" to fool make-docfile):
    DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
 void
 defvar_int (struct Lisp_Intfwd *i_fwd,
-	    const char *namestring, EMACS_INT *address)
+	    const char *namestring, intmax_t *address)
 {
   Lisp_Object sym;
   sym = intern_c_string (namestring);

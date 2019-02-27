@@ -56,26 +56,6 @@ Lisp_Object Vautoload_queue;
    is shutting down.  */
 Lisp_Object Vrun_hooks;
 
-/* The commented-out variables below are macros defined in thread.h.  */
-
-/* Current number of specbindings allocated in specpdl, not counting
-   the dummy entry specpdl[-1].  */
-
-/* ptrdiff_t specpdl_size; */
-
-/* Pointer to beginning of specpdl.  A dummy entry specpdl[-1] exists
-   only so that its address can be taken.  */
-
-/* union specbinding *specpdl; */
-
-/* Pointer to first unused element in specpdl.  */
-
-/* union specbinding *specpdl_ptr; */
-
-/* Depth in Lisp evaluations and function calls.  */
-
-/* static EMACS_INT lisp_eval_depth; */
-
 /* The value of num_nonmacro_input_events as of the last time we
    started to enter the debugger.  If we decide to enter the debugger
    again when this is still equal to num_nonmacro_input_events, then we
@@ -83,7 +63,7 @@ Lisp_Object Vrun_hooks;
    signal the error instead of entering an infinite loop of debugger
    invocations.  */
 
-static EMACS_INT when_entered_debugger;
+static intmax_t when_entered_debugger;
 
 /* The function from which the last `signal' was called.  Set in
    Fsignal.  */
@@ -285,13 +265,23 @@ init_eval (void)
   when_entered_debugger = -1;
 }
 
+/* Ensure that *M is at least A + B if possible, or is its maximum
+   value otherwise.  */
+
+static void
+max_ensure_room (intmax_t *m, intmax_t a, intmax_t b)
+{
+  intmax_t sum = INT_ADD_WRAPV (a, b, &sum) ? INTMAX_MAX : sum;
+  *m = max (*m, sum);
+}
+
 /* Unwind-protect function used by call_debugger.  */
 
 static void
 restore_stack_limits (Lisp_Object data)
 {
-  max_specpdl_size = XFIXNUM (XCAR (data));
-  max_lisp_eval_depth = XFIXNUM (XCDR (data));
+  integer_to_intmax (XCAR (data), &max_specpdl_size);
+  integer_to_intmax (XCDR (data), &max_lisp_eval_depth);
 }
 
 static void grow_specpdl (void);
@@ -304,21 +294,19 @@ call_debugger (Lisp_Object arg)
   bool debug_while_redisplaying;
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object val;
-  EMACS_INT old_depth = max_lisp_eval_depth;
+  intmax_t old_depth = max_lisp_eval_depth;
   /* Do not allow max_specpdl_size less than actual depth (Bug#16603).  */
-  EMACS_INT old_max = max (max_specpdl_size, count);
+  intmax_t old_max = max (max_specpdl_size, count);
 
   /* The previous value of 40 is too small now that the debugger
      prints using cl-prin1 instead of prin1.  Printing lists nested 8
      deep (which is the value of print-level used in the debugger)
      currently requires 77 additional frames.  See bug#31919.  */
-  if (lisp_eval_depth + 100 > max_lisp_eval_depth)
-    max_lisp_eval_depth = lisp_eval_depth + 100;
+  max_ensure_room (&max_lisp_eval_depth, lisp_eval_depth, 100);
 
   /* While debugging Bug#16603, previous value of 100 was found
      too small to avoid specpdl overflow in the debugger itself.  */
-  if (max_specpdl_size - 200 < count)
-    max_specpdl_size = count + 200;
+  max_ensure_room (&max_specpdl_size, count, 200);
 
   if (old_max == count)
     {
@@ -329,8 +317,7 @@ call_debugger (Lisp_Object arg)
 
   /* Restore limits after leaving the debugger.  */
   record_unwind_protect (restore_stack_limits,
-			 Fcons (make_fixnum (old_max),
-				make_fixnum (old_depth)));
+			 Fcons (make_int (old_max), make_int (old_depth)));
 
 #ifdef HAVE_WINDOW_SYSTEM
   if (display_hourglass_p)
@@ -1654,11 +1641,8 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
       && specpdl_ptr < specpdl + specpdl_size)
     {
       /* Edebug takes care of restoring these variables when it exits.  */
-      if (lisp_eval_depth + 20 > max_lisp_eval_depth)
-	max_lisp_eval_depth = lisp_eval_depth + 20;
-
-      if (SPECPDL_INDEX () + 40 > max_specpdl_size)
-	max_specpdl_size = SPECPDL_INDEX () + 40;
+      max_ensure_room (&max_lisp_eval_depth, lisp_eval_depth, 20);
+      max_ensure_room (&max_specpdl_size, SPECPDL_INDEX (), 40);
 
       call2 (Vsignal_hook_function, error_symbol, data);
     }

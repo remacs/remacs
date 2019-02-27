@@ -5309,9 +5309,9 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	{
 	  int margin, relief;
 
-	  relief = (tool_bar_button_relief >= 0
-		    ? tool_bar_button_relief
-		    : DEFAULT_TOOL_BAR_BUTTON_RELIEF);
+	  relief = (tool_bar_button_relief < 0
+		    ? DEFAULT_TOOL_BAR_BUTTON_RELIEF
+		    : min (tool_bar_button_relief, 1000000));
 
 	  if (RANGED_FIXNUMP (1, Vtool_bar_button_margin, INT_MAX))
 	    margin = XFIXNAT (Vtool_bar_button_margin);

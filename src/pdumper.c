@@ -1615,7 +1615,7 @@ dump_emacs_reloc_immediate (struct dump_context *ctx,
 
 DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_lv, Lisp_Object);
 DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_ptrdiff_t, ptrdiff_t);
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_emacs_int, EMACS_INT);
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_intmax_t, intmax_t);
 DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_int, int);
 DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_bool, bool);
 
@@ -2286,10 +2286,10 @@ dump_float (struct dump_context *ctx, const struct Lisp_Float *lfloat)
 static dump_off
 dump_fwd_int (struct dump_context *ctx, const struct Lisp_Intfwd *intfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Intfwd_1225FA32CC)
+#if CHECK_STRUCTS && !defined HASH_Lisp_Intfwd_4D887A7387
 # error "Lisp_Intfwd changed. See CHECK_STRUCTS comment."
 #endif
-  dump_emacs_reloc_immediate_emacs_int (ctx, intfwd->intvar, *intfwd->intvar);
+  dump_emacs_reloc_immediate_intmax_t (ctx, intfwd->intvar, *intfwd->intvar);
   struct Lisp_Intfwd out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, intfwd, type);

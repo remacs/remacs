@@ -52,12 +52,16 @@ static const struct hash_table_test hashtest_profiler =
   };
 
 static Lisp_Object
-make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
+make_log (void)
 {
   /* We use a standard Elisp hash-table object, but we use it in
      a special way.  This is OK as long as the object is not exposed
      to Elisp, i.e. until it is returned by *-profiler-log, after which
      it can't be used any more.  */
+  EMACS_INT heap_size
+    = clip_to_bounds (0, profiler_log_size, MOST_POSITIVE_FIXNUM);
+  ptrdiff_t max_stack_depth
+    = clip_to_bounds (0, profiler_max_stack_depth, PTRDIFF_MAX);;
   Lisp_Object log = make_hash_table (hashtest_profiler, heap_size,
 				     DEFAULT_REHASH_SIZE,
 				     DEFAULT_REHASH_THRESHOLD,
@@ -342,8 +346,7 @@ See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
   if (NILP (cpu_log))
     {
       cpu_gc_count = 0;
-      cpu_log = make_log (profiler_log_size,
-			  profiler_max_stack_depth);
+      cpu_log = make_log ();
     }
 
   int status = setup_cpu_timer (sampling_interval);
@@ -419,9 +422,7 @@ Before returning, a new log is allocated for future samples.  */)
   /* Here we're making the log visible to Elisp, so it's not safe any
      more for our use afterwards since we can't rely on its special
      pre-allocated keys anymore.  So we have to allocate a new one.  */
-  cpu_log = (profiler_cpu_running
-	     ? make_log (profiler_log_size, profiler_max_stack_depth)
-	     : Qnil);
+  cpu_log = profiler_cpu_running ? make_log () : Qnil;
   Fputhash (make_vector (1, QAutomatic_GC),
 	    make_fixnum (cpu_gc_count),
 	    result);
@@ -450,8 +451,7 @@ See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
     error ("Memory profiler is already running");
 
   if (NILP (memory_log))
-    memory_log = make_log (profiler_log_size,
-			   profiler_max_stack_depth);
+    memory_log = make_log ();
 
   profiler_memory_running = true;
 
@@ -494,9 +494,7 @@ Before returning, a new log is allocated for future samples.  */)
   /* Here we're making the log visible to Elisp , so it's not safe any
      more for our use afterwards since we can't rely on its special
      pre-allocated keys anymore.  So we have to allocate a new one.  */
-  memory_log = (profiler_memory_running
-		? make_log (profiler_log_size, profiler_max_stack_depth)
-		: Qnil);
+  memory_log = profiler_memory_running ? make_log () : Qnil;
   return result;
 }
 

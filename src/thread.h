@@ -104,7 +104,7 @@ struct thread_state
 #define specpdl_ptr (current_thread->m_specpdl_ptr)
 
   /* Depth in Lisp evaluations and function calls.  */
-  EMACS_INT m_lisp_eval_depth;
+  intmax_t m_lisp_eval_depth;
 #define lisp_eval_depth (current_thread->m_lisp_eval_depth)
 
   /* This points to the current buffer.  */
