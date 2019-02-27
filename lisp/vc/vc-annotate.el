@@ -541,7 +541,9 @@ Return a cons (REV . FILENAME)."
 	(setq prev-rev
 	      (vc-call-backend vc-annotate-backend 'previous-revision
                                fname rev))
-	(vc-annotate-warp-revision prev-rev fname)))))
+	(if (not prev-rev)
+            (message "No previous revisions")
+          (vc-annotate-warp-revision prev-rev fname))))))
 
 (defvar log-view-vc-backend)
 (defvar log-view-vc-fileset)
