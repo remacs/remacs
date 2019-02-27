@@ -176,7 +176,9 @@ Emacs Lisp manual for more information and examples."
 
 ;; FIXME: Obviously, this will collide with nadvice's use of
 ;; function-documentation if we happen to advise `pcase'.
+;;;###autoload
 (put 'pcase 'function-documentation '(pcase--make-docstring))
+;;;###autoload
 (defun pcase--make-docstring ()
   (let* ((main (documentation (symbol-function 'pcase) 'raw))
          (ud (help-split-fundoc main 'pcase)))
