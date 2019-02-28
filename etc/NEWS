@@ -850,6 +850,9 @@ and case-sensitivity together with search strings in the search ring.
 ---
 *** Isearch now has its own tool-bar and menu-bar menu.
 
++++
+*** flush-lines prints and returns the number of deleted matching lines.
+
 ** Debugger
 
 +++
@@ -1146,6 +1149,7 @@ the 128...255 range, as expected.
 
 ** Frames
 
++++
 *** New command 'make-frame-on-monitor' makes a frame on the specified monitor.
 
 

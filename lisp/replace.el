@@ -850,7 +850,6 @@ If nil, uses `regexp-history'."
 (defalias 'delete-matching-lines 'flush-lines)
 (defalias 'count-matches 'how-many)
 
-
 (defun keep-lines-read-args (prompt)
   "Read arguments for `keep-lines' and friends.
 Prompt for a regexp with PROMPT.
@@ -930,9 +929,8 @@ a previously found match."
   (set-marker rend nil)
   nil)
 
-
 (defun flush-lines (regexp &optional rstart rend interactive)
- "Delete lines containing matches for REGEXP.
+  "Delete lines containing matches for REGEXP.
 When called from Lisp (and usually when called interactively as
 well, see below), applies to the part of the buffer after point.
 The line point is in is deleted if and only if it contains a
@@ -953,7 +951,10 @@ a non-nil INTERACTIVE argument.
 
 If a match is split across lines, all the lines it lies in are deleted.
 They are deleted _before_ looking for the next match.  Hence, a match
-starting on the same line at which another match ended is ignored."
+starting on the same line at which another match ended is ignored.
+
+Return the number of deleted matching lines.  When called interactively,
+also print the number."
   (interactive
    (progn
      (barf-if-buffer-read-only)
@@ -968,7 +969,8 @@ starting on the same line at which another match ended is ignored."
       (setq rstart (point)
 	    rend (point-max-marker)))
     (goto-char rstart))
-  (let ((case-fold-search
+  (let ((count 0)
+        (case-fold-search
 	 (if (and case-fold-search search-upper-case)
 	     (isearch-no-upper-case-p regexp t)
 	   case-fold-search)))
@@ -978,10 +980,11 @@ starting on the same line at which another match ended is ignored."
 	(delete-region (save-excursion (goto-char (match-beginning 0))
 				       (forward-line 0)
 				       (point))
-		       (progn (forward-line 1) (point))))))
-  (set-marker rend nil)
-  nil)
-
+		       (progn (forward-line 1) (point)))
+        (setq count (1+ count))))
+    (set-marker rend nil)
+    (when interactive (message "Deleted %d matching lines" count))
+    count))
 
 (defun how-many (regexp &optional rstart rend interactive)
   "Print and return number of matches for REGEXP following point.
