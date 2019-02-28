@@ -100,7 +100,7 @@ call, letting the SMB client use the default one."
 
 (defconst tramp-smb-errors
   (mapconcat
-   'identity
+   #'identity
    `(;; Connection error / timeout / unknown command.
      "Connection\\( to \\S-+\\)? failed"
      "Read from server failed, maybe it closed the connection"
@@ -405,7 +405,7 @@ pass to the OPERATION."
   (if copy-contents
       ;; We must do it file-wise.
       (tramp-run-real-handler
-       'copy-directory (list dirname newname keep-date parents copy-contents))
+       #'copy-directory (list dirname newname keep-date parents copy-contents))
 
     (setq dirname (expand-file-name dirname)
 	  newname (expand-file-name newname))
@@ -511,15 +511,15 @@ pass to the OPERATION."
 		    ;; password can be handled.
 		    (let* ((default-directory tmpdir)
 			   (p (apply
-			       'start-process
+			       #'start-process
 			       (tramp-get-connection-name v)
 			       (tramp-get-connection-buffer v)
 			       tramp-smb-program args)))
 
 		      (tramp-message
-		       v 6 "%s" (mapconcat 'identity (process-command p) " "))
+		       v 6 "%s" (mapconcat #'identity (process-command p) " "))
 		      (process-put p 'vector v)
-		      (process-put p 'adjust-window-size-function 'ignore)
+		      (process-put p 'adjust-window-size-function #'ignore)
 		      (set-process-query-on-exit-flag p nil)
 		      (tramp-process-actions p v nil tramp-smb-actions-with-tar)
 
@@ -552,7 +552,7 @@ pass to the OPERATION."
 	   ;; We must do it file-wise.
 	   (t
 	    (tramp-run-real-handler
-	     'copy-directory (list dirname newname keep-date parents)))))))))
+	     #'copy-directory (list dirname newname keep-date parents)))))))))
 
 (defun tramp-smb-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
@@ -670,7 +670,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-smb-handle-directory-files
   (directory &optional full match nosort)
   "Like `directory-files' for Tramp files."
-  (let ((result (mapcar 'directory-file-name
+  (let ((result (mapcar #'directory-file-name
 			(file-name-all-completions "" directory))))
     ;; Discriminate with regexp.
     (when match
@@ -685,7 +685,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	     (lambda (x) (format "%s/%s" directory x))
 	     result)))
     ;; Sort them if necessary.
-    (unless nosort (setq result (sort result 'string-lessp)))
+    (unless nosort (setq result (sort result #'string-lessp)))
     result))
 
 (defun tramp-smb-handle-expand-file-name (name &optional dir)
@@ -697,7 +697,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (setq name (concat (file-name-as-directory dir) name)))
   ;; If NAME is not a Tramp file, run the real handler.
   (if (not (tramp-tramp-file-p name))
-      (tramp-run-real-handler 'expand-file-name (list name nil))
+      (tramp-run-real-handler #'expand-file-name (list name nil))
     ;; Dissect NAME.
     (with-parsed-tramp-file-name name nil
       ;; Tilde expansion if necessary.  We use the user name as share,
@@ -710,12 +710,12 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		 (match-string 1 localname))
 	       nil nil localname)))
       ;; Make the file name absolute.
-      (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
+      (unless (tramp-run-real-handler #'file-name-absolute-p (list localname))
 	(setq localname (concat "/" localname)))
       ;; No tilde characters in file name, do normal
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
-       v (tramp-run-real-handler 'expand-file-name (list localname))))))
+       v (tramp-run-real-handler #'expand-file-name (list localname))))))
 
 (defun tramp-smb-action-get-acl (proc vec)
   "Read ACL data from connection buffer."
@@ -772,15 +772,15 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  ;; Use an asynchronous process.  By this, password can
 		  ;; be handled.
 		  (let ((p (apply
-			    'start-process
+			    #'start-process
 			    (tramp-get-connection-name v)
 			    (tramp-get-connection-buffer v)
 			    tramp-smb-acl-program args)))
 
 		    (tramp-message
-		     v 6 "%s" (mapconcat 'identity (process-command p) " "))
+		     v 6 "%s" (mapconcat #'identity (process-command p) " "))
 		    (process-put p 'vector v)
-		    (process-put p 'adjust-window-size-function 'ignore)
+		    (process-put p 'adjust-window-size-function #'ignore)
 		    (set-process-query-on-exit-flag p nil)
 		    (tramp-process-actions p v nil tramp-smb-actions-get-acl)
 		    (when (> (point-max) (point-min))
@@ -1163,7 +1163,7 @@ of the symlink.  If TARGET is a Tramp file, only the localname
 component is used as the target of the symlink."
   (if (not (tramp-tramp-file-p (expand-file-name linkname)))
       (tramp-run-real-handler
-       'make-symbolic-link (list target linkname ok-if-already-exists))
+       #'make-symbolic-link (list target linkname ok-if-already-exists))
 
     (with-parsed-tramp-file-name linkname nil
       ;; If TARGET is a Tramp name, use just the localname component.
@@ -1262,7 +1262,7 @@ component is used as the target of the symlink."
 	(setq outbuf (current-buffer))))
 
       ;; Construct command.
-      (setq command (mapconcat 'identity (cons program args) " ")
+      (setq command (mapconcat #'identity (cons program args) " ")
 	    command (if input
 			(format
 			 "get-content %s | & %s"
@@ -1426,15 +1426,15 @@ component is used as the target of the symlink."
 		;; Use an asynchronous process.  By this, password can
 		;; be handled.
 		(let ((p (apply
-			  'start-process
+			  #'start-process
 			  (tramp-get-connection-name v)
 			  (tramp-get-connection-buffer v)
 			  tramp-smb-acl-program args)))
 
 		  (tramp-message
-		   v 6 "%s" (mapconcat 'identity (process-command p) " "))
+		   v 6 "%s" (mapconcat #'identity (process-command p) " "))
 		  (process-put p 'vector v)
-		  (process-put p 'adjust-window-size-function 'ignore)
+		  (process-put p 'adjust-window-size-function #'ignore)
 		  (set-process-query-on-exit-flag p nil)
 		  (tramp-process-actions p v nil tramp-smb-actions-set-acl)
 		  (goto-char (point-max))
@@ -1476,7 +1476,7 @@ component is used as the target of the symlink."
 		(get-buffer-create buffer)
 	      ;; BUFFER can be nil.  We use a temporary buffer.
 	      (generate-new-buffer tramp-temp-buffer-name)))
-	   (command (mapconcat 'identity (cons program args) " "))
+	   (command (mapconcat #'identity (cons program args) " "))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
 	   (i 0)
@@ -1531,7 +1531,7 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	      (concat (file-remote-p filename)
 		      (replace-match "\\1" nil nil localname)))))
     (condition-case nil
-	(tramp-run-real-handler 'substitute-in-file-name (list filename))
+	(tramp-run-real-handler #'substitute-in-file-name (list filename))
       (error filename))))
 
 (defun tramp-smb-handle-write-region
@@ -1558,7 +1558,7 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
       ;; modtime data to be clobbered from the temp file.  We call
       ;; `set-visited-file-modtime' ourselves later on.
       (tramp-run-real-handler
-       'write-region (list start end tmpfile append 'no-message lockname))
+       #'write-region (list start end tmpfile append 'no-message lockname))
 
       (with-tramp-progress-reporter
 	  v 3 (format "Moving tmp file %s to %s" tmpfile filename)
@@ -1974,9 +1974,9 @@ If ARGUMENT is non-nil, use it as argument for
 			       args))))
 
 	      (tramp-message
-	       vec 6 "%s" (mapconcat 'identity (process-command p) " "))
+	       vec 6 "%s" (mapconcat #'identity (process-command p) " "))
 	      (process-put p 'vector vec)
-	      (process-put p 'adjust-window-size-function 'ignore)
+	      (process-put p 'adjust-window-size-function #'ignore)
 	      (set-process-query-on-exit-flag p nil)
 
 	      (condition-case err

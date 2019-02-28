@@ -69,7 +69,7 @@
 ;;; -- Cache --
 
 ;;;###tramp-autoload
-(defvar tramp-cache-data (make-hash-table :test 'equal)
+(defvar tramp-cache-data (make-hash-table :test #'equal)
   "Hash table for remote files properties.")
 
 ;;;###tramp-autoload
@@ -101,7 +101,7 @@ If it doesn't exist yet, it is created and initialized with
 matching entries of `tramp-connection-properties'."
   (or (gethash key tramp-cache-data)
       (let ((hash
-	     (puthash key (make-hash-table :test 'equal) tramp-cache-data)))
+	     (puthash key (make-hash-table :test #'equal) tramp-cache-data)))
 	(when (tramp-file-name-p key)
 	  (dolist (elt tramp-connection-properties)
 	    (when (string-match-p
@@ -118,7 +118,7 @@ Returns DEFAULT if not set."
   (setq file (tramp-compat-file-name-unquote file)
 	key (copy-tramp-file-name key))
   (setf (tramp-file-name-localname key)
-	(tramp-run-real-handler 'directory-file-name (list file))
+	(tramp-run-real-handler #'directory-file-name (list file))
 	(tramp-file-name-hop key) nil)
   (let* ((hash (tramp-get-hash-table key))
 	 (value (when (hash-table-p hash) (gethash property hash))))
@@ -161,7 +161,7 @@ Returns VALUE."
   (setq file (tramp-compat-file-name-unquote file)
 	key (copy-tramp-file-name key))
   (setf (tramp-file-name-localname key)
-	(tramp-run-real-handler 'directory-file-name (list file))
+	(tramp-run-real-handler #'directory-file-name (list file))
 	(tramp-file-name-hop key) nil)
   (let ((hash (tramp-get-hash-table key)))
     ;; We put the timestamp there.
@@ -184,7 +184,7 @@ Returns VALUE."
   (setq file (tramp-compat-file-name-unquote file)
 	key (copy-tramp-file-name key))
   (setf (tramp-file-name-localname key)
-	(tramp-run-real-handler 'directory-file-name (list file))
+	(tramp-run-real-handler #'directory-file-name (list file))
 	(tramp-file-name-hop key) nil)
   (remhash property (tramp-get-hash-table key))
   (tramp-message key 8 "%s %s" file property)
@@ -196,7 +196,7 @@ Returns VALUE."
 (defun tramp-flush-file-properties (key file)
   "Remove all properties of FILE in the cache context of KEY."
   (let* ((file (tramp-run-real-handler
-		'directory-file-name (list file)))
+		#'directory-file-name (list file)))
 	 (truename (tramp-get-file-property key file "file-truename" nil)))
     ;; Unify localname.  Remove hop from `tramp-file-name' structure.
     (setq file (tramp-compat-file-name-unquote file)
@@ -216,7 +216,7 @@ Returns VALUE."
 Remove also properties of all files in subdirectories."
   (setq directory (tramp-compat-file-name-unquote directory))
   (let* ((directory (tramp-run-real-handler
-		    'directory-file-name (list directory)))
+		    #'directory-file-name (list directory)))
 	 (truename (tramp-get-file-property key directory "file-truename" nil)))
     (tramp-message key 8 "%s" directory)
     (maphash
@@ -369,7 +369,7 @@ used to cache connection properties of the local machine."
 	 (when (tramp-file-name-p key)
 	   ;; (dolist
 	   ;;     (slot
-	   ;; 	(mapcar 'car (cdr (cl-struct-slot-info 'tramp-file-name))))
+	   ;; 	(mapcar #'car (cdr (cl-struct-slot-info 'tramp-file-name))))
 	   ;;   (when (stringp (cl-struct-slot-value 'tramp-file-name slot key))
 	   ;;     (setf (cl-struct-slot-value 'tramp-file-name slot key)
 	   ;; 	     (substring-no-properties

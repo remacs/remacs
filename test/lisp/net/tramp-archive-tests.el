@@ -78,7 +78,7 @@ the origin of the temporary TMPFILE, have no write permissions."
   (if (file-regular-p tmpfile)
       (delete-file tmpfile)
     (mapc
-     'tramp-archive--test-delete
+     #'tramp-archive--test-delete
      (directory-files tmpfile 'full directory-files-no-dot-files-regexp))
     (delete-directory tmpfile)))
 
@@ -662,7 +662,7 @@ This tests also `access-file', `file-readable-p' and `file-regular-p'."
 	  (dolist (elt attr)
 	    (should (equal (file-attributes (car elt)) (cdr elt))))
 	  (setq attr (directory-files-and-attributes tmp-name nil "^b"))
-	  (should (equal (mapcar 'car attr) '("bar"))))
+	  (should (equal (mapcar #'car attr) '("bar"))))
 
       ;; Cleanup.
       (tramp-archive-cleanup-hash))))
@@ -752,14 +752,14 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	  (should-not (file-name-completion "a" tmp-name))
 	  (should
 	   (equal
-	    (file-name-completion "b" tmp-name 'file-directory-p) "bar/"))
+	    (file-name-completion "b" tmp-name #'file-directory-p) "bar/"))
 	  (should
 	   (equal
-	    (sort (file-name-all-completions "fo" tmp-name) 'string-lessp)
+	    (sort (file-name-all-completions "fo" tmp-name) #'string-lessp)
 	    '("foo.hrd" "foo.lnk" "foo.txt")))
 	  (should
 	   (equal
-	    (sort (file-name-all-completions "b" tmp-name) 'string-lessp)
+	    (sort (file-name-all-completions "b" tmp-name) #'string-lessp)
 	    '("bar/" "baz.tar")))
 	  (should-not (file-name-all-completions "a" tmp-name))
 	  ;; `completion-regexp-list' restricts the completion to
@@ -770,7 +770,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	     (equal (file-name-completion "" tmp-name) "ba"))
 	    (should
 	     (equal
-	      (sort (file-name-all-completions "" tmp-name) 'string-lessp)
+	      (sort (file-name-all-completions "" tmp-name) #'string-lessp)
 	      '("bar/" "baz.tar")))))
 
       ;; Cleanup.
@@ -859,7 +859,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	  "%s -batch -Q -L %s --eval %s"
 	  (shell-quote-argument
 	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (mapconcat #'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument (format code file)))))))))
 
 (ert-deftest tramp-archive-test44-delay-load ()
@@ -896,7 +896,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	  "%s -batch -Q -L %s --eval %s"
 	  (shell-quote-argument
 	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (mapconcat #'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument
            (format
             code tae tramp-archive-test-file-archive
@@ -958,7 +958,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   "Run all tests for \\[tramp-archive]."
   (interactive "p")
   (funcall
-   (if interactive 'ert-run-tests-interactively 'ert-run-tests-batch)
+   (if interactive #'ert-run-tests-interactively #'ert-run-tests-batch)
    "^tramp-archive"))
 
 (provide 'tramp-archive-tests)

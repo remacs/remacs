@@ -232,7 +232,7 @@ pass to the OPERATION."
    ;; Preserve trailing "/".
   (funcall
    (if (string-equal (file-name-nondirectory filename) "")
-       'file-name-as-directory 'identity)
+       #'file-name-as-directory #'identity)
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
       v
@@ -257,14 +257,14 @@ pass to the OPERATION."
 	      (setq thisstep (pop steps))
 	      (tramp-message
 	       v 5 "Check %s"
-	       (mapconcat 'identity
+	       (mapconcat #'identity
 			  (append '("") (reverse result) (list thisstep))
 			  "/"))
 	      (setq symlink-target
 		    (tramp-compat-file-attribute-type
 		     (file-attributes
 		      (tramp-make-tramp-file-name
-		       v (mapconcat 'identity
+		       v (mapconcat #'identity
 				    (append
 				     '("") (reverse result) (list thisstep))
 				    "/")))))
@@ -302,7 +302,7 @@ pass to the OPERATION."
 	    ;; Combine list to form string.
 	    (setq result
 		  (if result
-		      (mapconcat 'identity (cons "" result) "/")
+		      (mapconcat #'identity (cons "" result) "/")
 		    "/"))
 	    (when (and is-dir (or (string= "" result)
 				  (not (string= (substring result -1) "/"))))
@@ -444,7 +444,7 @@ pass to the OPERATION."
   "Almquist shell can't handle multiple arguments.
 Convert (\"-al\") to (\"-a\" \"-l\").  Remove arguments like \"--dired\"."
   (split-string
-   (apply 'concat
+   (apply #'concat
 	  (mapcar (lambda (s)
 		    (replace-regexp-in-string
 		     "\\(.\\)" " -\\1" (replace-regexp-in-string "^-" "" s)))
@@ -476,10 +476,10 @@ Emacs dired can't find files."
 	    (sort
 	     lines
 	     (if sort-by-time
-		 'tramp-adb-ls-output-time-less-p
-	       'tramp-adb-ls-output-name-less-p))))
+		 #'tramp-adb-ls-output-time-less-p
+	       #'tramp-adb-ls-output-name-less-p))))
       (delete-region (point-min) (point-max))
-      (insert "  " (mapconcat 'identity sorted-lines "\n  ")))
+      (insert "  " (mapconcat #'identity sorted-lines "\n  ")))
     ;; Add final newline.
     (goto-char (point-max))
     (unless (bolp) (insert "\n"))))
@@ -634,7 +634,7 @@ But handle the case, if the \"test\" command is not available."
 	(copy-file filename tmpfile 'ok)
 	(set-file-modes tmpfile (logior (or (file-modes tmpfile) 0) #o0600)))
       (tramp-run-real-handler
-       'write-region (list start end tmpfile append 'no-message lockname))
+       #'write-region (list start end tmpfile append 'no-message lockname))
       (with-tramp-progress-reporter
         v 3 (format-message
              "Moving tmp file `%s' to `%s'" tmpfile filename)
@@ -827,7 +827,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (with-parsed-tramp-file-name default-directory nil
     (let (command input tmpinput stderr tmpstderr outbuf ret)
       ;; Compute command.
-      (setq command (mapconcat 'tramp-shell-quote-argument
+      (setq command (mapconcat #'tramp-shell-quote-argument
 			       (cons program args) " "))
       ;; Determine input.
       (if (null infile)
@@ -970,7 +970,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (if (and (not current-buffer-p) (integerp asynchronous))
 	(prog1
 	    ;; Run the process.
-	    (apply 'start-file-process "*Async Shell*" buffer args)
+	    (apply #'start-file-process "*Async Shell*" buffer args)
 	  ;; Display output.
 	  (pop-to-buffer output-buffer)
 	  (setq mode-line-process '(":%s"))
@@ -978,7 +978,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
       (prog1
 	  ;; Run the process.
-	  (apply 'process-file (car args) nil buffer nil (cdr args))
+	  (apply #'process-file (car args) nil buffer nil (cdr args))
 	;; Insert error messages if they were separated.
 	(when (listp buffer)
 	  (with-current-buffer error-buffer
@@ -1014,25 +1014,25 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (sentinel (plist-get args :sentinel))
 	    (stderr (plist-get args :stderr)))
 	(unless (stringp name)
-	  (signal 'wrong-type-argument (list 'stringp name)))
+	  (signal 'wrong-type-argument (list #'stringp name)))
 	(unless (or (null buffer) (bufferp buffer) (stringp buffer))
-	  (signal 'wrong-type-argument (list 'stringp buffer)))
+	  (signal 'wrong-type-argument (list #'stringp buffer)))
 	(unless (consp command)
-	  (signal 'wrong-type-argument (list 'consp command)))
+	  (signal 'wrong-type-argument (list #'consp command)))
 	(unless (or (null coding)
 		    (and (symbolp coding) (memq coding coding-system-list))
 		    (and (consp coding)
 			 (memq (car coding) coding-system-list)
 			 (memq (cdr coding) coding-system-list)))
-	  (signal 'wrong-type-argument (list 'symbolp coding)))
+	  (signal 'wrong-type-argument (list #'symbolp coding)))
 	(unless (or (null connection-type) (memq connection-type '(pipe pty)))
-	  (signal 'wrong-type-argument (list 'symbolp connection-type)))
+	  (signal 'wrong-type-argument (list #'symbolp connection-type)))
 	(unless (or (null filter) (functionp filter))
-	  (signal 'wrong-type-argument (list 'functionp filter)))
+	  (signal 'wrong-type-argument (list #'functionp filter)))
 	(unless (or (null sentinel) (functionp sentinel))
-	  (signal 'wrong-type-argument (list 'functionp sentinel)))
+	  (signal 'wrong-type-argument (list #'functionp sentinel)))
 	(unless (or (null stderr) (bufferp stderr) (stringp stderr))
-	  (signal 'wrong-type-argument (list 'stringp stderr)))
+	  (signal 'wrong-type-argument (list #'stringp stderr)))
 
 	(let* ((buffer
 		(if buffer
@@ -1044,7 +1044,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	       (command
 		(format "cd %s; %s"
 			(tramp-shell-quote-argument localname)
-			(mapconcat 'tramp-shell-quote-argument
+			(mapconcat #'tramp-shell-quote-argument
 				   (cons program args) " ")))
 	       (tramp-process-connection-type
 		(or (null program) tramp-process-connection-type))
@@ -1140,7 +1140,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
     (let* ((host (tramp-file-name-host vec))
 	   (port (tramp-file-name-port-or-default vec))
-	   (devices (mapcar 'cadr (tramp-adb-parse-device-names nil))))
+	   (devices (mapcar #'cadr (tramp-adb-parse-device-names nil))))
       (replace-regexp-in-string
        tramp-prefix-port-format ":"
        (cond ((member host devices) host)
@@ -1177,7 +1177,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
     (prog1
 	(unless
 	    (zerop
-	     (apply 'tramp-call-process vec tramp-adb-program nil t nil args))
+	     (apply #'tramp-call-process vec tramp-adb-program nil t nil args))
 	  (buffer-string))
       (tramp-message vec 6 "%s" (buffer-string)))))
 
@@ -1232,7 +1232,7 @@ the exit status is not equal 0, and t otherwise."
   "Run COMMAND, check exit status, throw error if exit status not okay.
 FMT and ARGS are passed to `error'."
   (unless (tramp-adb-send-command-and-check vec command)
-    (apply 'tramp-error vec 'file-error fmt args)))
+    (apply #'tramp-error vec 'file-error fmt args)))
 
 (defun tramp-adb-wait-for-output (proc &optional timeout)
   "Wait for output from remote command."
@@ -1308,12 +1308,12 @@ connection if a previous connection has died for some reason."
 			 (list "shell")))
 		 (p (let ((default-directory
 			    (tramp-compat-temporary-file-directory)))
-		      (apply 'start-process (tramp-get-connection-name vec) buf
+		      (apply #'start-process (tramp-get-connection-name vec) buf
 			     tramp-adb-program args)))
 		 (prompt (md5 (concat (prin1-to-string process-environment)
 				      (current-time-string)))))
 	    (tramp-message
-	     vec 6 "%s" (mapconcat 'identity (process-command p) " "))
+	     vec 6 "%s" (mapconcat #'identity (process-command p) " "))
 	    ;; Wait for initial prompt.  On some devices, it needs an
 	    ;; initial RET, in order to get it.
             (sleep-for 0.1)
@@ -1322,7 +1322,7 @@ connection if a previous connection has died for some reason."
 	    (unless (process-live-p p)
 	      (tramp-error vec 'file-error "Terminated!"))
 	    (process-put p 'vector vec)
-	    (process-put p 'adjust-window-size-function 'ignore)
+	    (process-put p 'adjust-window-size-function #'ignore)
 	    (set-process-query-on-exit-flag p nil)
 
 	    ;; Change prompt.

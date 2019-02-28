@@ -73,7 +73,7 @@ Add the extension of F, if existing."
 ;; `temporary-file-directory' as function is introduced with Emacs 26.1.
 (defalias 'tramp-compat-temporary-file-directory-function
   (if (fboundp 'temporary-file-directory)
-      'temporary-file-directory
+      #'temporary-file-directory
     'tramp-handle-temporary-file-directory))
 
 (defun tramp-compat-process-running-p (process-name)
@@ -102,12 +102,12 @@ Add the extension of F, if existing."
 
 ;; `default-toplevel-value' has been declared in Emacs 24.4.
 (unless (fboundp 'default-toplevel-value)
-  (defalias 'default-toplevel-value 'symbol-value))
+  (defalias 'default-toplevel-value #'symbol-value))
 
 ;; `file-attribute-*' are introduced in Emacs 25.1.
 
 (if (fboundp 'file-attribute-type)
-    (defalias 'tramp-compat-file-attribute-type 'file-attribute-type)
+    (defalias 'tramp-compat-file-attribute-type #'file-attribute-type)
   (defsubst tramp-compat-file-attribute-type (attributes)
     "The type field in ATTRIBUTES returned by `file-attributes'.
 The value is either t for directory, string (name linked to) for
@@ -116,13 +116,13 @@ symbolic link, or nil."
 
 (if (fboundp 'file-attribute-link-number)
     (defalias 'tramp-compat-file-attribute-link-number
-      'file-attribute-link-number)
+      #'file-attribute-link-number)
   (defsubst tramp-compat-file-attribute-link-number (attributes)
     "Return the number of links in ATTRIBUTES returned by `file-attributes'."
     (nth 1 attributes)))
 
 (if (fboundp 'file-attribute-user-id)
-    (defalias 'tramp-compat-file-attribute-user-id 'file-attribute-user-id)
+    (defalias 'tramp-compat-file-attribute-user-id #'file-attribute-user-id)
   (defsubst tramp-compat-file-attribute-user-id (attributes)
     "The UID field in ATTRIBUTES returned by `file-attributes'.
 This is either a string or a number.  If a string value cannot be
@@ -131,7 +131,7 @@ returned."
     (nth 2 attributes)))
 
 (if (fboundp 'file-attribute-group-id)
-    (defalias 'tramp-compat-file-attribute-group-id 'file-attribute-group-id)
+    (defalias 'tramp-compat-file-attribute-group-id #'file-attribute-group-id)
   (defsubst tramp-compat-file-attribute-group-id (attributes)
     "The GID field in ATTRIBUTES returned by `file-attributes'.
 This is either a string or a number.  If a string value cannot be
@@ -141,7 +141,7 @@ returned."
 
 (if (fboundp 'file-attribute-modification-time)
     (defalias 'tramp-compat-file-attribute-modification-time
-      'file-attribute-modification-time)
+      #'file-attribute-modification-time)
   (defsubst tramp-compat-file-attribute-modification-time (attributes)
     "The modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of the last change to the file's contents, and
@@ -149,7 +149,7 @@ is a Lisp timestamp in the style of `current-time'."
     (nth 5 attributes)))
 
 (if (fboundp 'file-attribute-size)
-    (defalias 'tramp-compat-file-attribute-size 'file-attribute-size)
+    (defalias 'tramp-compat-file-attribute-size #'file-attribute-size)
   (defsubst tramp-compat-file-attribute-size (attributes)
     "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
 If the size is too large for a fixnum, this is a bignum in Emacs 27
@@ -157,7 +157,7 @@ and later, and is a float in Emacs 26 and earlier."
     (nth 7 attributes)))
 
 (if (fboundp 'file-attribute-modes)
-    (defalias 'tramp-compat-file-attribute-modes 'file-attribute-modes)
+    (defalias 'tramp-compat-file-attribute-modes #'file-attribute-modes)
   (defsubst tramp-compat-file-attribute-modes (attributes)
     "The file modes in ATTRIBUTES returned by `file-attributes'.
 This is a string of ten letters or dashes as in ls -l."
@@ -165,11 +165,11 @@ This is a string of ten letters or dashes as in ls -l."
 
 ;; `format-message' is new in Emacs 25.1.
 (unless (fboundp 'format-message)
-  (defalias 'format-message 'format))
+  (defalias 'format-message #'format))
 
 ;; `directory-name-p' is new in Emacs 25.1.
 (if (fboundp 'directory-name-p)
-    (defalias 'tramp-compat-directory-name-p 'directory-name-p)
+    (defalias 'tramp-compat-directory-name-p #'directory-name-p)
   (defsubst tramp-compat-directory-name-p (name)
     "Return non-nil if NAME ends with a directory separator character."
     (let ((len (length name))
@@ -189,7 +189,7 @@ This is a string of ten letters or dashes as in ls -l."
 ;; `file-name-unquote' are introduced in Emacs 26.
 (eval-and-compile
   (if (fboundp 'file-local-name)
-      (defalias 'tramp-compat-file-local-name 'file-local-name)
+      (defalias 'tramp-compat-file-local-name #'file-local-name)
     (defsubst tramp-compat-file-local-name (name)
       "Return the local name component of NAME.
 It returns a file name which can be used directly as argument of
@@ -197,14 +197,14 @@ It returns a file name which can be used directly as argument of
       (or (file-remote-p name 'localname) name)))
 
   (if (fboundp 'file-name-quoted-p)
-      (defalias 'tramp-compat-file-name-quoted-p 'file-name-quoted-p)
+      (defalias 'tramp-compat-file-name-quoted-p #'file-name-quoted-p)
     (defsubst tramp-compat-file-name-quoted-p (name)
       "Whether NAME is quoted with prefix \"/:\".
 If NAME is a remote file name, check the local part of NAME."
       (string-prefix-p "/:" (tramp-compat-file-local-name name))))
 
   (if (fboundp 'file-name-quote)
-      (defalias 'tramp-compat-file-name-quote 'file-name-quote)
+      (defalias 'tramp-compat-file-name-quote #'file-name-quote)
     (defsubst tramp-compat-file-name-quote (name)
       "Add the quotation prefix \"/:\" to file NAME.
 If NAME is a remote file name, the local part of NAME is quoted."
@@ -214,7 +214,7 @@ If NAME is a remote file name, the local part of NAME is quoted."
 	 (file-remote-p name) "/:" (tramp-compat-file-local-name name)))))
 
   (if (fboundp 'file-name-unquote)
-      (defalias 'tramp-compat-file-name-unquote 'file-name-unquote)
+      (defalias 'tramp-compat-file-name-unquote #'file-name-unquote)
     (defsubst tramp-compat-file-name-unquote (name)
       "Remove quotation prefix \"/:\" from file NAME.
 If NAME is a remote file name, the local part of NAME is unquoted."
@@ -236,8 +236,8 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 ;; `cl-struct-slot-info' has been introduced with Emacs 25.
 (defmacro tramp-compat-tramp-file-name-slots ()
   (if (fboundp 'cl-struct-slot-info)
-      '(cdr (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))
-    '(cdr (mapcar 'car (get 'tramp-file-name 'cl-struct-slots)))))
+      '(cdr (mapcar #'car (cl-struct-slot-info 'tramp-file-name)))
+    '(cdr (mapcar #'car (get 'tramp-file-name 'cl-struct-slots)))))
 
 ;; The signature of `tramp-make-tramp-file-name' has been changed.
 ;; Therefore, we cannot us `url-tramp-convert-url-to-tramp' prior
@@ -248,7 +248,7 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 ;; `exec-path' is new in Emacs 27.1.
 (eval-and-compile
   (if (fboundp 'exec-path)
-      (defalias 'tramp-compat-exec-path 'exec-path)
+      (defalias 'tramp-compat-exec-path #'exec-path)
     (defun tramp-compat-exec-path ()
       "List of directories to search programs to run in remote subprocesses."
       (let ((handler (find-file-name-handler default-directory 'exec-path)))
@@ -258,7 +258,7 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 
 ;; `time-equal-p' has appeared in Emacs 27.1.
 (if (fboundp 'time-equal-p)
-    (defalias 'tramp-compat-time-equal-p 'time-equal-p)
+    (defalias 'tramp-compat-time-equal-p #'time-equal-p)
   (defsubst tramp-compat-time-equal-p (t1 t2)
     "Return non-nil if time value T1 is equal to time value T2.
 A nil value for either argument stands for the current time."
@@ -266,7 +266,7 @@ A nil value for either argument stands for the current time."
 
 ;; `flatten-tree' has appeared in Emacs 27.1.
 (if (fboundp 'flatten-tree)
-    (defalias 'tramp-compat-flatten-tree 'flatten-tree)
+    (defalias 'tramp-compat-flatten-tree #'flatten-tree)
   (defun tramp-compat-flatten-tree (tree)
     "Take TREE and \"flatten\" it."
     (let (elems)
@@ -288,7 +288,7 @@ A nil value for either argument stands for the current time."
 
 ;;; TODO:
 
-;; * When we get rid of Emacs 24, replace "(mapconcat 'identity" by
+;; * When we get rid of Emacs 24, replace "(mapconcat #'identity" by
 ;;   "(string-join".
 
 ;;; tramp-compat.el ends here

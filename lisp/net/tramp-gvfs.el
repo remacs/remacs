@@ -68,7 +68,7 @@
 ;; (message
 ;;  "%s"
 ;;  (mapcar
-;;   'car
+;;   #'car
 ;;   (dbus-call-method
 ;;    :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
 ;;    tramp-gvfs-interface-mounttracker "ListMountableInfo")))
@@ -657,7 +657,7 @@ Return nil for null BYTE-ARRAY."
     (cons (tramp-gvfs-stringify-dbus-message (car message))
 	  (tramp-gvfs-stringify-dbus-message (cdr message))))
    ((consp message)
-    (mapcar 'tramp-gvfs-stringify-dbus-message message))
+    (mapcar #'tramp-gvfs-stringify-dbus-message message))
    ((stringp message)
     (format "%S" message))
    (t message)))
@@ -681,7 +681,7 @@ it is an asynchronous call, with `ignore' as callback function.
 The other arguments have the same meaning as with `dbus-call-method'
 or `dbus-call-method-asynchronously'."
   `(let ((func (if ,synchronous
-		   'dbus-call-method 'dbus-call-method-asynchronously))
+		   #'dbus-call-method #'dbus-call-method-asynchronously))
 	 (args (append (list ,bus ,service ,path ,interface ,method)
 		       (if ,synchronous (list ,@args) (list 'ignore ,@args)))))
      (tramp-dbus-function ,vec func args)))
@@ -698,10 +698,10 @@ The call will be traced by Tramp with trace level 6."
   `(when (member
 	  ,interface
 	  (tramp-dbus-function
-	   ,vec 'dbus-introspect-get-interface-names
+	   ,vec #'dbus-introspect-get-interface-names
 	   (list ,bus ,service ,path)))
      (tramp-dbus-function
-      ,vec 'dbus-get-all-properties (list ,bus ,service ,path ,interface))))
+      ,vec #'dbus-get-all-properties (list ,bus ,service ,path ,interface))))
 
 (put 'with-tramp-dbus-get-all-properties 'lisp-indent-function 1)
 (put 'with-tramp-dbus-get-all-properties 'edebug-form-spec '(form symbolp body))
@@ -723,7 +723,7 @@ is no information where to trace the message.")
 (add-hook
  (if (boundp 'dbus-event-error-functions)
      'dbus-event-error-functions 'dbus-event-error-hooks)
- 'tramp-gvfs-dbus-event-error)
+ #'tramp-gvfs-dbus-event-error)
 
 
 ;; File name primitives.
@@ -783,7 +783,7 @@ file names."
 	      v 0 (format "%s %s to %s" msg-operation filename newname)
 	    (unless
 		(apply
-		 'tramp-gvfs-send-command v gvfs-operation
+		 #'tramp-gvfs-send-command v gvfs-operation
 		 (append
 		  (and (eq op 'copy) (or keep-date preserve-uid-gid)
 		       '("--preserve"))
@@ -888,7 +888,7 @@ file names."
     (setq name (concat (file-name-as-directory dir) name)))
   ;; If NAME is not a Tramp file, run the real handler.
   (if (not (tramp-tramp-file-p name))
-      (tramp-run-real-handler 'expand-file-name (list name nil))
+      (tramp-run-real-handler #'expand-file-name (list name nil))
     ;; Dissect NAME.
     (with-parsed-tramp-file-name name nil
       ;; If there is a default location, expand tilde.
@@ -907,7 +907,7 @@ file names."
 	(tramp-error
 	 v 'file-error
 	 "Cannot expand tilde in file `%s'" name))
-      (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
+      (unless (tramp-run-real-handler #'file-name-absolute-p (list localname))
 	(setq localname (concat "/" localname)))
       ;; We do not pass "/..".
       (if (string-match-p "^\\(afp\\|davs?\\|smb\\)$" method)
@@ -921,7 +921,7 @@ file names."
       ;; No tilde characters in file name, do normal
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
-       v (tramp-run-real-handler 'expand-file-name (list localname))))))
+       v (tramp-run-real-handler #'expand-file-name (list localname))))))
 
 (defun tramp-gvfs-get-directory-attributes (directory)
   "Return GVFS attributes association list of all files in DIRECTORY."
@@ -935,7 +935,7 @@ file names."
 	  ;; Send command.
 	  (tramp-gvfs-send-command
 	   v "gvfs-ls" "-h" "-n" "-a"
-	   (mapconcat 'identity tramp-gvfs-file-attributes ",")
+	   (mapconcat #'identity tramp-gvfs-file-attributes ",")
 	   (tramp-gvfs-url-file-name directory))
 	  ;; Parse output.
 	  (with-current-buffer (tramp-get-connection-buffer v)
@@ -1170,20 +1170,20 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	      '(created changed changes-done-hint moved deleted))
 	     ((memq 'attribute-change flags) '(attribute-changed))))
 	   (p (apply
-	       'start-process
+	       #'start-process
 	       "gvfs-monitor" (generate-new-buffer " *gvfs-monitor*")
 	       `("gio" "monitor" ,(tramp-gvfs-url-file-name file-name)))))
       (if (not (processp p))
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name)
 	(tramp-message
-	 v 6 "Run `%s', %S" (mapconcat 'identity (process-command p) " ") p)
+	 v 6 "Run `%s', %S" (mapconcat #'identity (process-command p) " ") p)
 	(process-put p 'vector v)
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
-	(process-put p 'adjust-window-size-function 'ignore)
+	(process-put p 'adjust-window-size-function #'ignore)
 	(set-process-query-on-exit-flag p nil)
-	(set-process-filter p 'tramp-gvfs-monitor-process-filter)
+	(set-process-filter p #'tramp-gvfs-monitor-process-filter)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(while (tramp-accept-process-output p 0))
@@ -1305,7 +1305,7 @@ file-notify events."
        'rename filename newname ok-if-already-exists
        'keep-date 'preserve-uid-gid)
     (tramp-run-real-handler
-     'rename-file (list filename newname ok-if-already-exists))))
+     #'rename-file (list filename newname ok-if-already-exists))))
 
 
 ;; File name conversions.
@@ -1514,20 +1514,20 @@ file-notify events."
   (dbus-register-signal
    :session nil tramp-gvfs-path-mounttracker
    tramp-gvfs-interface-mounttracker "mounted"
-   'tramp-gvfs-handler-mounted-unmounted)
+   #'tramp-gvfs-handler-mounted-unmounted)
   (dbus-register-signal
    :session nil tramp-gvfs-path-mounttracker
    tramp-gvfs-interface-mounttracker "Mounted"
-   'tramp-gvfs-handler-mounted-unmounted)
+   #'tramp-gvfs-handler-mounted-unmounted)
 
   (dbus-register-signal
    :session nil tramp-gvfs-path-mounttracker
    tramp-gvfs-interface-mounttracker "unmounted"
-   'tramp-gvfs-handler-mounted-unmounted)
+   #'tramp-gvfs-handler-mounted-unmounted)
   (dbus-register-signal
    :session nil tramp-gvfs-path-mounttracker
    tramp-gvfs-interface-mounttracker "Unmounted"
-   'tramp-gvfs-handler-mounted-unmounted))
+   #'tramp-gvfs-handler-mounted-unmounted))
 
 (defun tramp-gvfs-connection-mounted-p (vec)
   "Check, whether the location is already mounted."
@@ -1782,22 +1782,22 @@ connection if a previous connection has died for some reason."
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "askPassword"
-	 'tramp-gvfs-handler-askpassword)
+	 #'tramp-gvfs-handler-askpassword)
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "AskPassword"
-	 'tramp-gvfs-handler-askpassword)
+	 #'tramp-gvfs-handler-askpassword)
 
 	;; There could be a callback of "askQuestion" when adding
 	;; fingerprints or checking certificates.
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "askQuestion"
-	 'tramp-gvfs-handler-askquestion)
+	 #'tramp-gvfs-handler-askquestion)
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "AskQuestion"
-	 'tramp-gvfs-handler-askquestion)
+	 #'tramp-gvfs-handler-askquestion)
 
 	;; The call must be asynchronously, because of the "askPassword"
 	;; or "askQuestion" callbacks.
@@ -1880,7 +1880,7 @@ is applied, and it returns t if the return code is zero."
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-gvfs-maybe-open-connection vec)
       (erase-buffer)
-      (or (zerop (apply 'tramp-call-process vec command nil t nil args))
+      (or (zerop (apply #'tramp-call-process vec command nil t nil args))
 	  ;; Remove information about mounted connection.
 	  (and (tramp-flush-file-properties vec "/") nil)))))
 
@@ -1897,9 +1897,9 @@ VEC is used only for traces."
   (dolist
       (object-path
        (mapcar
-	'car
+	#'car
 	(tramp-dbus-function
-	 vec 'dbus-get-all-managed-objects
+	 vec #'dbus-get-all-managed-objects
 	 `(:session ,tramp-goa-service ,tramp-goa-path))))
     (let* ((account-properties
 	    (with-tramp-dbus-get-all-properties vec

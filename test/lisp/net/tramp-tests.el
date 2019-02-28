@@ -68,7 +68,7 @@
 ;; Beautify batch mode.
 (when noninteractive
   ;; Suppress nasty messages.
-  (fset 'shell-command-sentinel 'ignore)
+  (fset #'shell-command-sentinel #'ignore)
   ;; We do not want to be interrupted.
   (eval-after-load 'tramp-gvfs
     '(fset 'tramp-gvfs-handler-askquestion
@@ -149,7 +149,7 @@ If LOCAL is non-nil, a local file name is returned.
 If QUOTED is non-nil, the local part of the file name is quoted.
 The temporary file is not created."
   (funcall
-   (if quoted 'tramp-compat-file-name-quote 'identity)
+   (if quoted #'tramp-compat-file-name-quote #'identity)
    (expand-file-name
     (make-temp-name "tramp-test")
     (if local temporary-file-directory tramp-test-temporary-file-directory))))
@@ -185,7 +185,7 @@ properly.  BODY shall not contain a timeout."
   "Emit a message into ERT *Messages*."
   (tramp--test-instrument-test-case 0
     (apply
-     'tramp-message
+     #'tramp-message
      (tramp-dissect-file-name tramp-test-temporary-file-directory) 0
      fmt-string arguments)))
 
@@ -405,7 +405,7 @@ properly.  BODY shall not contain a timeout."
 	tramp-default-user-alist
 	tramp-default-host-alist
 	;; Suppress check for multihops.
-	(tramp-cache-data (make-hash-table :test 'equal))
+	(tramp-cache-data (make-hash-table :test #'equal))
 	(tramp-connection-properties '((nil "login-program" t))))
     ;; Expand `tramp-default-user' and `tramp-default-host'.
     (should (string-equal
@@ -844,7 +844,7 @@ properly.  BODY shall not contain a timeout."
 	tramp-default-user-alist
 	tramp-default-host-alist
 	;; Suppress check for multihops.
-	(tramp-cache-data (make-hash-table :test 'equal))
+	(tramp-cache-data (make-hash-table :test #'equal))
 	(tramp-connection-properties '((nil "login-program" t)))
 	(syntax tramp-syntax))
     (unwind-protect
@@ -1168,7 +1168,7 @@ properly.  BODY shall not contain a timeout."
 	tramp-default-user-alist
 	tramp-default-host-alist
 	;; Suppress check for multihops.
-	(tramp-cache-data (make-hash-table :test 'equal))
+	(tramp-cache-data (make-hash-table :test #'equal))
 	(tramp-connection-properties '((nil "login-program" t)))
 	(syntax tramp-syntax))
     (unwind-protect
@@ -2759,7 +2759,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	   (tmp-name4 (expand-file-name "bar" tmp-name2))
 	   (tramp-test-temporary-file-directory
 	    (funcall
-	     (if quoted 'tramp-compat-file-name-quote 'identity)
+	     (if quoted #'tramp-compat-file-name-quote #'identity)
 	     tramp-test-temporary-file-directory))
 	   buffer)
       (unwind-protect
@@ -2936,7 +2936,7 @@ This tests also `access-file', `file-readable-p',
 	      (should
 	       (string-equal
 		(funcall
-		 (if quoted 'tramp-compat-file-name-quote 'identity)
+		 (if quoted #'tramp-compat-file-name-quote #'identity)
 		 (car attr))
 		(file-remote-p (file-truename tmp-name1) 'localname)))
 	      (delete-file tmp-name2))
@@ -3028,7 +3028,7 @@ They might differ only in access time."
 		 (tramp--test-file-attributes-equal-p
 		  (file-attributes (car elt)) (cdr elt)))))
 	    (setq attr (directory-files-and-attributes tmp-name2 nil "^b"))
-	    (should (equal (mapcar 'car attr) '("bar" "boz"))))
+	    (should (equal (mapcar #'car attr) '("bar" "boz"))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
@@ -3100,7 +3100,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (string-equal
 	      (funcall
-	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (if quoted #'tramp-compat-file-name-unquote #'identity)
 	       (file-remote-p tmp-name1 'localname))
 	      (file-symlink-p tmp-name2)))
 	    (when (tramp--test-expensive-test)
@@ -3109,7 +3109,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       :type 'file-already-exists))
 	    (when (tramp--test-expensive-test)
 	      ;; A number means interactive case.
-	      (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	      (cl-letf (((symbol-function 'yes-or-no-p) #'ignore))
 		(should-error
 		 (make-symbolic-link tmp-name1 tmp-name2 0)
 		 :type 'file-already-exists)))
@@ -3118,14 +3118,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (should
 	       (string-equal
 		(funcall
-		 (if quoted 'tramp-compat-file-name-unquote 'identity)
+		 (if quoted #'tramp-compat-file-name-unquote #'identity)
 		 (file-remote-p tmp-name1 'localname))
 		(file-symlink-p tmp-name2))))
 	    (make-symbolic-link tmp-name1 tmp-name2 'ok-if-already-exists)
 	    (should
 	     (string-equal
 	      (funcall
-	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (if quoted #'tramp-compat-file-name-unquote #'identity)
 	       (file-remote-p tmp-name1 'localname))
 	      (file-symlink-p tmp-name2)))
 	    ;; If we use the local part of `tmp-name1', it shall still work.
@@ -3135,7 +3135,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (string-equal
 	      (funcall
-	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (if quoted #'tramp-compat-file-name-unquote #'identity)
 	       (file-remote-p tmp-name1 'localname))
 	      (file-symlink-p tmp-name2)))
 	    ;; `tmp-name3' is a local file name.  Therefore, the link
@@ -3155,7 +3155,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (string-equal
 	      (funcall
-	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (if quoted #'tramp-compat-file-name-unquote #'identity)
 	       (file-remote-p tmp-name1 'localname))
 	      (file-symlink-p tmp-name5)))
 	    ;; `smbclient' does not show symlinks in directories, so
@@ -3182,7 +3182,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (add-name-to-file tmp-name1 tmp-name2)
 	      :type 'file-already-exists)
 	     ;; A number means interactive case.
-	     (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	     (cl-letf (((symbol-function 'yes-or-no-p) #'ignore))
 	       (should-error
 		(add-name-to-file tmp-name1 tmp-name2 0)
 		:type 'file-already-exists))
@@ -3239,7 +3239,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (delete-file tmp-name2)
 	    (make-symbolic-link
 	     (funcall
-	      (if quoted 'tramp-compat-file-name-unquote 'identity)
+	      (if quoted #'tramp-compat-file-name-unquote #'identity)
 	      "/penguin:motd:")
 	     tmp-name2)
 	    (should (file-symlink-p tmp-name2))
@@ -3328,7 +3328,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (let* ((dir1
 	      (directory-file-name
 	       (funcall
-		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(if quoted #'tramp-compat-file-name-quote #'identity)
 		tramp-test-temporary-file-directory)))
 	     (dir2 (file-name-as-directory dir1)))
 	(should (string-equal (file-truename dir1) (expand-file-name dir1)))
@@ -3708,12 +3708,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (should-not (file-name-completion "a" tmp-name))
 	      (should
 	       (equal
-		(file-name-completion "b" tmp-name 'file-directory-p) "boz/"))
+		(file-name-completion "b" tmp-name #'file-directory-p) "boz/"))
 	      (should
 	       (equal (file-name-all-completions "fo" tmp-name) '("foo")))
 	      (should
 	       (equal
-		(sort (file-name-all-completions "b" tmp-name) 'string-lessp)
+		(sort (file-name-all-completions "b" tmp-name) #'string-lessp)
 		'("bold" "boz/")))
 	      (should-not (file-name-all-completions "a" tmp-name))
 	      ;; `completion-regexp-list' restricts the completion to
@@ -3724,7 +3724,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		 (equal (file-name-completion "" tmp-name) "bo"))
 		(should
 		 (equal
-		  (sort (file-name-all-completions "" tmp-name) 'string-lessp)
+		  (sort (file-name-all-completions "" tmp-name) #'string-lessp)
 		  '("bold" "boz/"))))
 	      ;; `file-name-completion' ignores file names that end in
 	      ;; any string in `completion-ignored-extensions'.
@@ -3739,7 +3739,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		;; `file-name-all-completions' is not affected.
 		(should
 		 (equal
-		  (sort (file-name-all-completions "" tmp-name) 'string-lessp)
+		  (sort (file-name-all-completions "" tmp-name) #'string-lessp)
 		  '("../" "./" "bold" "boz/" "foo" "foo.ext")))))
 
 	  ;; Cleanup.
@@ -4288,7 +4288,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (with-current-buffer (get-buffer-create "*shell*")
 	    (ignore-errors (kill-process (current-buffer)))
 	    (should-not explicit-shell-file-name)
-	    (call-interactively 'shell)
+	    (call-interactively #'shell)
 	    (should explicit-shell-file-name)))
 
       (put 'explicit-shell-file-name 'permanent-local nil)
@@ -4315,7 +4315,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (car (last (with-no-warnings (exec-path))))
 	    (file-remote-p default-directory 'localname)))
 	  ;; The shell "sh" shall always exist.
-	  (should (apply 'executable-find '("sh" remote)))
+	  (should (apply #'executable-find '("sh" remote)))
 	  ;; Since the last element in `exec-path' is the current
 	  ;; directory, an executable file in that directory will be
 	  ;; found.
@@ -4326,11 +4326,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should
 	   (string-equal
 	    (apply
-	     'executable-find `(,(file-name-nondirectory tmp-name) remote))
+	     #'executable-find `(,(file-name-nondirectory tmp-name) remote))
 	    (file-remote-p tmp-name 'localname)))
 	  (should-not
 	   (apply
-	    'executable-find
+	    #'executable-find
 	    `(,(concat (file-name-nondirectory tmp-name) "foo") remote))))
 
       ;; Cleanup.
@@ -4375,7 +4375,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
           ;; We make a super long `tramp-remote-path'.
           (make-directory tmp-name)
           (should (file-directory-p tmp-name))
-          (while (< (length (mapconcat 'identity orig-exec-path ":")) 5000)
+          (while (< (length (mapconcat #'identity orig-exec-path ":")) 5000)
             (let ((dir (make-temp-file (file-name-as-directory tmp-name) 'dir)))
               (should (file-directory-p dir))
               (setq tramp-remote-path
@@ -4391,9 +4391,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Ignore trailing newline.
 	    (substring (shell-command-to-string "echo $PATH") nil -1)
 	    ;; The last element of `exec-path' is `exec-directory'.
-	    (mapconcat 'identity (butlast orig-exec-path) ":")))
+	    (mapconcat #'identity (butlast orig-exec-path) ":")))
 	  ;; The shell "sh" shall always exist.
-	  (should (apply 'executable-find '("sh" remote))))
+	  (should (apply #'executable-find '("sh" remote))))
 
       ;; Cleanup.
       (tramp-cleanup-connection
@@ -4509,7 +4509,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		 (string-equal
 		  (make-auto-save-file-name)
 		  (funcall
-		   (if quoted 'tramp-compat-file-name-quote 'identity)
+		   (if quoted #'tramp-compat-file-name-quote #'identity)
 		   (expand-file-name
 		    (format "#%s#" (file-name-nondirectory tmp-name1))
 		    tramp-test-temporary-file-directory))))))
@@ -4583,7 +4583,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (find-backup-file-name tmp-name1)
 	      (list
 	       (funcall
-		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(if quoted #'tramp-compat-file-name-quote #'identity)
 		(expand-file-name
 		 (format "%s~" (file-name-nondirectory tmp-name1))
 		 tramp-test-temporary-file-directory)))))))
@@ -4597,7 +4597,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (find-backup-file-name tmp-name1)
 	      (list
 	       (funcall
-		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(if quoted #'tramp-compat-file-name-quote #'identity)
 		(expand-file-name
 		 (format
 		  "%s~"
@@ -4625,7 +4625,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (find-backup-file-name tmp-name1)
 	      (list
 	       (funcall
-		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(if quoted #'tramp-compat-file-name-quote #'identity)
 		(expand-file-name
 		 (format
 		  "%s~"
@@ -4654,7 +4654,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (find-backup-file-name tmp-name1)
 	      (list
 	       (funcall
-		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(if quoted #'tramp-compat-file-name-quote #'identity)
 		(expand-file-name
 		 (format
 		  "%s~"
@@ -4863,7 +4863,7 @@ This requires restrictions of file name syntax."
 		  (should
 		   (string-equal
 		    (funcall
-		     (if quoted 'tramp-compat-file-name-quote 'identity)
+		     (if quoted #'tramp-compat-file-name-quote #'identity)
 		     (car (file-attributes file3)))
 		    (file-remote-p (file-truename file1) 'localname)))
 		  ;; Check file contents.
@@ -4875,10 +4875,10 @@ This requires restrictions of file name syntax."
 	    ;; Check file names.
 	    (should (equal (directory-files
 			    tmp-name1 nil directory-files-no-dot-files-regexp)
-			   (sort (copy-sequence files) 'string-lessp)))
+			   (sort (copy-sequence files) #'string-lessp)))
 	    (should (equal (directory-files
 			    tmp-name2 nil directory-files-no-dot-files-regexp)
-			   (sort (copy-sequence files) 'string-lessp)))
+			   (sort (copy-sequence files) #'string-lessp)))
 
 	    ;; `substitute-in-file-name' could return different
 	    ;; values.  For `adb', there could be strange file
@@ -4938,7 +4938,7 @@ This requires restrictions of file name syntax."
 		    (should
 		     (string-equal
 		      (funcall
-		       (if quoted 'tramp-compat-file-name-quote 'identity)
+		       (if quoted #'tramp-compat-file-name-quote #'identity)
 		       (cadr (car (directory-files-and-attributes
 				   file1 nil (regexp-quote elt1)))))
 		      (file-remote-p (file-truename file2) 'localname)))
@@ -5024,9 +5024,9 @@ This requires restrictions of file name syntax."
 	  (unless (or (tramp--test-ftp-p) (tramp--test-gvfs-p)) "[foo]bar[baz]")
 	  "{foo}bar{baz}")))
     ;; Simplify test in order to speed up.
-    (apply 'tramp--test-check-files
+    (apply #'tramp--test-check-files
 	   (if (tramp--test-expensive-test)
-	       files (list (mapconcat 'identity files ""))))))
+	       files (list (mapconcat #'identity files ""))))))
 
 ;; These tests are inspired by Bug#17238.
 (ert-deftest tramp-test40-special-characters ()
@@ -5108,7 +5108,7 @@ Use the `ls' command."
 	 (file-name-coding-system
 	  (coding-system-change-eol-conversion utf8 'unix)))
     (apply
-     'tramp--test-check-files
+     #'tramp--test-check-files
      (append
       (list
        (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
@@ -5252,7 +5252,7 @@ process sentinels.  They shall not disturb each other."
 
   (with-timeout
       (tramp--test-asynchronous-requests-timeout (tramp--test-timeout-handler))
-    (define-key special-event-map [sigusr1] 'tramp--test-timeout-handler)
+    (define-key special-event-map [sigusr1] #'tramp--test-timeout-handler)
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
 	   (shell-file-name "/bin/sh")
@@ -5287,8 +5287,8 @@ process sentinels.  They shall not disturb each other."
            ;; We must distinguish due to performance reasons.
            (timer-operation
             (cond
-             ((tramp--test-mock-p) 'vc-registered)
-             (t 'file-attributes)))
+             ((tramp--test-mock-p) #'vc-registered)
+             (t #'file-attributes)))
 	   ;; This is when all timers start.  We check inside the
 	   ;; timer function, that we don't exceed timeout.
 	   (timer-start (current-time))
@@ -5414,7 +5414,7 @@ process sentinels.  They shall not disturb each other."
               tmp-name nil directory-files-no-dot-files-regexp)))
 
         ;; Cleanup.
-        (define-key special-event-map [sigusr1] 'ignore)
+        (define-key special-event-map [sigusr1] #'ignore)
         (ignore-errors (quit-process watchdog))
         (dolist (buf buffers)
           (ignore-errors (delete-process (get-buffer-process buf)))
@@ -5440,7 +5440,7 @@ process sentinels.  They shall not disturb each other."
 	"%s -batch -Q -L %s --eval %s"
 	(shell-quote-argument
 	 (expand-file-name invocation-name invocation-directory))
-	(mapconcat 'shell-quote-argument load-path " -L ")
+	(mapconcat #'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
 (ert-deftest tramp-test44-delay-load ()
@@ -5473,7 +5473,7 @@ process sentinels.  They shall not disturb each other."
 	  "%s -batch -Q -L %s --eval %s"
 	  (shell-quote-argument
 	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (mapconcat #'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument (format code tm)))))))))
 
 (ert-deftest tramp-test44-recursive-load ()
@@ -5497,7 +5497,7 @@ process sentinels.  They shall not disturb each other."
 	  "%s -batch -Q -L %s --eval %s"
 	  (shell-quote-argument
 	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (mapconcat #'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
 (ert-deftest tramp-test44-remote-load-path ()
@@ -5526,7 +5526,7 @@ process sentinels.  They shall not disturb each other."
 	"%s -batch -Q -L %s -l tramp-sh --eval %s"
 	(shell-quote-argument
 	 (expand-file-name invocation-name invocation-directory))
-	(mapconcat 'shell-quote-argument load-path " -L ")
+	(mapconcat #'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
 (ert-deftest tramp-test45-unload ()
@@ -5554,7 +5554,7 @@ Since it unloads Tramp, it shall be the last test to run."
    (all-completions
     "tramp" (delq 'tramp-tests (delq 'tramp-archive-tests features))))
   ;; `file-name-handler-alist' must be clean.
-  (should-not (all-completions "tramp" (mapcar 'cdr file-name-handler-alist)))
+  (should-not (all-completions "tramp" (mapcar #'cdr file-name-handler-alist)))
   ;; There shouldn't be left a bound symbol, except buffer-local
   ;; variables, and autoload functions.  We do not regard our test
   ;; symbols, and the Tramp unload hooks.
@@ -5589,7 +5589,8 @@ Since it unloads Tramp, it shall be the last test to run."
   "Run all tests for \\[tramp]."
   (interactive "p")
   (funcall
-   (if interactive 'ert-run-tests-interactively 'ert-run-tests-batch) "^tramp"))
+   (if interactive
+       #'ert-run-tests-interactively #'ert-run-tests-batch) "^tramp"))
 
 ;; TODO:
 

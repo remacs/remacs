@@ -55,9 +55,9 @@ SYNTAX can be one of the symbols `default' (default),
   "Return a list of all Tramp connection buffers."
   (append
    (all-completions
-    "*tramp" (mapcar 'list (mapcar 'buffer-name (buffer-list))))
+    "*tramp" (mapcar #'list (mapcar #'buffer-name (buffer-list))))
    (all-completions
-    "*debug tramp" (mapcar 'list (mapcar 'buffer-name (buffer-list))))))
+    "*debug tramp" (mapcar #'list (mapcar #'buffer-name (buffer-list))))))
 
 (defun tramp-list-remote-buffers ()
   "Return a list of all buffers with remote default-directory."
@@ -85,7 +85,7 @@ When called interactively, a Tramp connection has to be selected."
    ;; Return nil when there is no Tramp connection.
    (list
     (let ((connections
-	   (mapcar 'tramp-make-tramp-file-name (tramp-list-connections)))
+	   (mapcar #'tramp-make-tramp-file-name (tramp-list-connections)))
 	  name)
 
       (when connections
@@ -216,7 +216,7 @@ This includes password cache, file cache, connection cache, buffers."
 	  (lambda (x)
 	    (and x (boundp x) (cons x 'tramp-reporter-dump-variable)))
 	  (append
-	   (mapcar 'intern (all-completions "tramp-" obarray 'boundp))
+	   (mapcar #'intern (all-completions "tramp-" obarray #'boundp))
 	   ;; Non-tramp variables of interest.
 	   '(shell-prompt-pattern
 	     backup-by-copying
@@ -330,11 +330,11 @@ buffer in your bug report.
 	     (sort
 	      (append
 	       (mapcar
-		'intern
+		#'intern
 		(all-completions "tramp-" (buffer-local-variables buffer)))
 	       ;; Non-tramp variables of interest.
 	       '(connection-local-variables-alist default-directory))
-	      'string<))
+	      #'string<))
 	    (reporter-dump-variable varsym elbuf))
 	(lisp-indent-line)
 	(insert ")\n"))
@@ -412,7 +412,7 @@ please ensure that the buffers are attached to your email.\n\n"))
 	  (kill-buffer nil)
 	  (throw 'dont-send nil))))))
 
-(defalias 'tramp-submit-bug 'tramp-bug)
+(defalias 'tramp-submit-bug #'tramp-bug)
 
 (add-hook 'tramp-unload-hook
 	  (lambda () (unload-feature 'tramp-cmds 'force)))

@@ -280,7 +280,7 @@ file names."
        'copy filename newname ok-if-already-exists keep-date
        preserve-uid-gid preserve-extended-attributes)
     (tramp-run-real-handler
-     'copy-file
+     #'copy-file
      (list filename newname ok-if-already-exists keep-date
 	   preserve-uid-gid preserve-extended-attributes))))
 
@@ -314,7 +314,7 @@ file names."
 	(when full
 	  (let ((local (concat "^" (regexp-quote (tramp-rclone-mount-point v))))
 		(remote (funcall (if (tramp-compat-file-name-quoted-p directory)
-				     'tramp-compat-file-name-quote 'identity)
+				     #'tramp-compat-file-name-quote #'identity)
 				 (file-remote-p directory))))
 	    (setq result
 		  (mapcar
@@ -328,7 +328,7 @@ file names."
 			      result)))
 	    (setq result (cons item result))))
 	;; Return result.
-	(if nosort result (sort result 'string<))))))
+	(if nosort result (sort result #'string<))))))
 
 (defun tramp-rclone-handle-file-attributes (filename &optional id-format)
   "Like `file-attributes' for Tramp files."
@@ -436,7 +436,7 @@ file names."
        'rename filename newname ok-if-already-exists
        'keep-date 'preserve-uid-gid)
     (tramp-run-real-handler
-     'rename-file (list filename newname ok-if-already-exists))))
+     #'rename-file (list filename newname ok-if-already-exists))))
 
 
 ;; File name conversions.
@@ -500,7 +500,7 @@ file names."
       (let ((quoted (tramp-compat-file-name-quoted-p localname))
 	    (localname (tramp-compat-file-name-unquote localname)))
 	(funcall
-	 (if quoted 'tramp-compat-file-name-quote 'identity)
+	 (if quoted #'tramp-compat-file-name-quote #'identity)
 	 (expand-file-name
 	  (if (file-name-absolute-p localname)
 	      (substring localname 1) localname)
@@ -560,7 +560,7 @@ connection if a previous connection has died for some reason."
       ;; DESTINATION of `tramp-call-process'.
       (unless (tramp-rclone-mounted-p vec)
 	(apply
-	 'tramp-call-process
+	 #'tramp-call-process
 	 vec tramp-rclone-program nil 0 nil
 	 (delq nil
 	       `("mount" ,(concat host ":/")
@@ -591,7 +591,7 @@ connection if a previous connection has died for some reason."
     (erase-buffer)
     (let ((flags (tramp-get-method-parameter
 		  vec (intern (format "tramp-%s-args" (car args))))))
-      (apply 'tramp-call-process
+      (apply #'tramp-call-process
 	     vec tramp-rclone-program nil t nil (append args flags)))))
 
 (add-hook 'tramp-unload-hook

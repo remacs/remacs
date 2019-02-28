@@ -61,11 +61,11 @@ special handling of `substitute-in-file-name'."
           (pop props) (pop props))))))
 
 (add-hook 'rfn-eshadow-setup-minibuffer-hook
-	  'tramp-rfn-eshadow-setup-minibuffer)
+	  #'tramp-rfn-eshadow-setup-minibuffer)
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (remove-hook 'rfn-eshadow-setup-minibuffer-hook
-			 'tramp-rfn-eshadow-setup-minibuffer)))
+			 #'tramp-rfn-eshadow-setup-minibuffer)))
 
 (defun tramp-rfn-eshadow-update-overlay-regexp ()
   (format "[^%s/~]*\\(/\\|~\\)" tramp-postfix-host-format))
@@ -104,11 +104,11 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 	      (rfn-eshadow-update-overlay))))))))
 
 (add-hook 'rfn-eshadow-update-overlay-hook
-	  'tramp-rfn-eshadow-update-overlay)
+	  #'tramp-rfn-eshadow-update-overlay)
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (remove-hook 'rfn-eshadow-update-overlay-hook
-			 'tramp-rfn-eshadow-update-overlay)))
+			 #'tramp-rfn-eshadow-update-overlay)))
 
 ;;; Integration of eshell.el:
 
@@ -120,20 +120,20 @@ been set up by `rfn-eshadow-setup-minibuffer'."
   ;; Use `path-separator' as it does eshell.
   (setq eshell-path-env
 	(mapconcat
-	 'identity (butlast (tramp-compat-exec-path)) path-separator)))
+	 #'identity (butlast (tramp-compat-exec-path)) path-separator)))
 
 (eval-after-load "esh-util"
   '(progn
      (add-hook 'eshell-mode-hook
-	       'tramp-eshell-directory-change)
+	       #'tramp-eshell-directory-change)
      (add-hook 'eshell-directory-change-hook
-	       'tramp-eshell-directory-change)
+	       #'tramp-eshell-directory-change)
      (add-hook 'tramp-integration-unload-hook
 	       (lambda ()
 		 (remove-hook 'eshell-mode-hook
-			      'tramp-eshell-directory-change)
+			      #'tramp-eshell-directory-change)
 		 (remove-hook 'eshell-directory-change-hook
-			      'tramp-eshell-directory-change)))))
+			      #'tramp-eshell-directory-change)))))
 
 ;;; Integration of recentf.el:
 
@@ -160,15 +160,15 @@ NAME must be equal to `tramp-current-connection'."
 (eval-after-load "recentf"
   '(progn
      (add-hook 'tramp-cleanup-connection-hook
-	       'tramp-recentf-cleanup)
+	       #'tramp-recentf-cleanup)
      (add-hook 'tramp-cleanup-all-connections-hook
-	       'tramp-recentf-cleanup-all)
+	       #'tramp-recentf-cleanup-all)
      (add-hook 'tramp-integration-unload-hook
 	       (lambda ()
 		 (remove-hook 'tramp-cleanup-connection-hook
-			      'tramp-recentf-cleanup)
+			      #'tramp-recentf-cleanup)
 		 (remove-hook 'tramp-cleanup-all-connections-hook
-			      'tramp-recentf-cleanup-all)))))
+			      #'tramp-recentf-cleanup-all)))))
 
 (add-hook 'tramp-unload-hook
 	  (lambda () (unload-feature 'tramp-integration 'force)))

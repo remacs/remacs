@@ -314,7 +314,7 @@ absolute file names."
        'copy filename newname ok-if-already-exists keep-date
        preserve-uid-gid preserve-extended-attributes)
     (tramp-run-real-handler
-     'copy-file
+     #'copy-file
      (list filename newname ok-if-already-exists keep-date
 	   preserve-uid-gid preserve-extended-attributes))))
 
@@ -542,7 +542,7 @@ the result will be a local, non-Tramp, file name."
    ;; Preserve trailing "/".
   (funcall
    (if (string-equal (file-name-nondirectory filename) "")
-       'file-name-as-directory 'identity)
+       #'file-name-as-directory #'identity)
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
       v
@@ -601,7 +601,7 @@ of the symlink.  If TARGET is a Tramp file, only the localname
 component is used as the target of the symlink."
   (if (not (tramp-tramp-file-p (expand-file-name linkname)))
       (tramp-run-real-handler
-       'make-symbolic-link (list target linkname ok-if-already-exists))
+       #'make-symbolic-link (list target linkname ok-if-already-exists))
 
     (with-parsed-tramp-file-name linkname nil
       ;; If TARGET is a Tramp name, use just the localname component.
