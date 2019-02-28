@@ -179,7 +179,7 @@ set_backtrace_debug_on_exit (union specbinding *pdl, bool doe)
 
 bool
 backtrace_p (union specbinding *pdl)
-{ return pdl >= specpdl; }
+{ return specpdl ? pdl >= specpdl : false; }
 
 static bool
 backtrace_thread_p (struct thread_state *tstate, union specbinding *pdl)
@@ -188,6 +188,12 @@ backtrace_thread_p (struct thread_state *tstate, union specbinding *pdl)
 union specbinding *
 backtrace_top (void)
 {
+  /* This is so "xbacktrace" doesn't crash in pdumped Emacs if they
+     invoke the command before init_eval_once_for_pdumper initializes
+     specpdl machinery.  See also backtrace_p above.  */
+  if (!specpdl)
+    return NULL;
+
   union specbinding *pdl = specpdl_ptr - 1;
   while (backtrace_p (pdl) && pdl->kind != SPECPDL_BACKTRACE)
     pdl--;
