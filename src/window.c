@@ -463,35 +463,6 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
 
-DEFUN ("window-normal-size", Fwindow_normal_size, Swindow_normal_size, 0, 2, 0,
-       doc: /* Return the normal height of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-If HORIZONTAL is non-nil, return the normal width of WINDOW.
-
-The normal height of a frame's root window or a window that is
-horizontally combined (a window that has a left or right sibling) is
-1.0.  The normal height of a window that is vertically combined (has a
-sibling above or below) is the fraction of the window's height with
-respect to its parent.  The sum of the normal heights of all windows in a
-vertical combination equals 1.0.
-
-Similarly, the normal width of a frame's root window or a window that is
-vertically combined equals 1.0.  The normal width of a window that is
-horizontally combined is the fraction of the window's width with respect
-to its parent.  The sum of the normal widths of all windows in a
-horizontal combination equals 1.0.
-
-The normal sizes of windows are used to restore the proportional sizes
-of windows after they have been shrunk to their minimum sizes; for
-example when a frame is temporarily made very small and afterwards gets
-re-enlarged to its previous size.  */)
-  (Lisp_Object window, Lisp_Object horizontal)
-{
-  struct window *w = decode_valid_window (window);
-
-  return NILP (horizontal) ? w->normal_lines : w->normal_cols;
-}
-
 DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
        doc: /* Return left pixel edge of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.  */)
@@ -6401,7 +6372,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_normal_size);
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
