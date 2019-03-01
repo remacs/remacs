@@ -8,6 +8,7 @@ use crate::{
     objects::equal,
     remacs_sys::Qwindow_configuration_p,
     remacs_sys::{save_window_data, saved_window},
+    vectors::LispVectorlikeRef,
     windows::LispWindowRef,
 };
 
@@ -111,7 +112,7 @@ impl From<LispObject> for SaveWindowDataRef {
 impl LispObject {
     pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
         self.as_vectorlike()
-            .and_then(|v| v.as_window_configuration())
+            .and_then(LispVectorlikeRef::as_window_configuration)
     }
 }
 
