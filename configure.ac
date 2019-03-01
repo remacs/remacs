@@ -4294,6 +4294,10 @@ AC_SUBST(LIBS_TERMCAP)
 AC_SUBST(TERMCAP_OBJ)
 
 # GNU/Linux-specific timer functions.
+# Bug#34618.
+if test "$opsys" = "cygwin"; then
+  emacs_cv_have_timerfd=no
+fi
 AC_CACHE_CHECK([for timerfd interface], [emacs_cv_have_timerfd],
   [AC_COMPILE_IFELSE(
      [AC_LANG_PROGRAM([[#include <sys/timerfd.h>
