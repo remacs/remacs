@@ -2551,7 +2551,10 @@ read_char (int commandflag, Lisp_Object map,
       restore_getcjmp (save_jump);
       pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
       unbind_to (jmpcount, Qnil);
-      XSETINT (c, quit_char);
+      /* If we are in while-no-input, don't trigger C-g, as that will
+	 quit instead of letting while-no-input do its thing.  */
+      if (!EQ (Vquit_flag, Vthrow_on_input))
+	XSETINT (c, quit_char);
       internal_last_event_frame = selected_frame;
       Vlast_event_frame = internal_last_event_frame;
       /* If we report the quit char as an event,
