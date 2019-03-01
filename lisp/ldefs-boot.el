@@ -11926,7 +11926,10 @@ Fetch URL and render the page.
 If the input doesn't look like an URL or a domain name, the
 word(s) will be searched for via `eww-search-prefix'.
 
-\(fn URL)" t nil)
+If called with a prefix ARG, use a new buffer instead of reusing
+the default EWW buffer.
+
+\(fn URL &optional ARG)" t nil)
  (defalias 'browse-web 'eww)
 
 (autoload 'eww-open-file "eww" "\
@@ -12516,6 +12519,41 @@ the name is considered already unique; only the second substitution
 
 ;;;***
 
+;;;### (autoloads nil "fileloop" "fileloop.el" (0 0 0 0))
+;;; Generated autoloads from fileloop.el
+
+(autoload 'fileloop-initialize "fileloop" "\
+Initialize a new round of operation on several files.
+FILES can be either a list of file names, or an iterator (used with `iter-next')
+which returns a file name at each step.
+SCAN-FUNCTION is a function called with no argument inside a buffer
+and it should return non-nil if that buffer has something on which to operate.
+OPERATE-FUNCTION is a function called with no argument; it is expected
+to perform the operation on the current file buffer and when done
+should return non-nil to mean that we should immediately continue
+operating on the next file and nil otherwise.
+
+\(fn FILES SCAN-FUNCTION OPERATE-FUNCTION)" nil nil)
+
+(autoload 'fileloop-initialize-search "fileloop" "\
+
+
+\(fn REGEXP FILES CASE-FOLD)" nil nil)
+
+(autoload 'fileloop-initialize-replace "fileloop" "\
+Initialize a new round of query&replace on several files.
+FROM is a regexp and TO is the replacement to use.
+FILES describes the file, as in `fileloop-initialize'.
+CASE-FOLD can be t, nil, or `default', the latter one meaning to obey
+the default setting of `case-fold-search'.
+DELIMITED if non-nil means replace only word-delimited matches.
+
+\(fn FROM TO FILES CASE-FOLD &optional DELIMITED)" nil nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "fileloop" '("fileloop-")))
+
+;;;***
+
 ;;;### (autoloads nil "filenotify" "filenotify.el" (0 0 0 0))
 ;;; Generated autoloads from filenotify.el
 
@@ -13092,7 +13130,7 @@ to get the effect of a C-q.
 
 ;;;### (autoloads nil "flymake" "progmodes/flymake.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake.el
-(push (purecopy '(flymake 1 0 3)) package--builtin-versions)
+(push (purecopy '(flymake 1 0 5)) package--builtin-versions)
 
 (autoload 'flymake-log "flymake" "\
 Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -22300,41 +22338,6 @@ QUALITY can be:
 
 ;;;***
 
-;;;### (autoloads nil "fileloop" "fileloop.el" (0 0 0 0))
-;;; Generated autoloads from fileloop.el
-
-(autoload 'fileloop-initialize "fileloop" "\
-Initialize a new round of operation on several files.
-FILES can be either a list of file names, or an iterator (used with `iter-next')
-which returns a file name at each step.
-SCAN-FUNCTION is a function called with no argument inside a buffer
-and it should return non-nil if that buffer has something on which to operate.
-OPERATE-FUNCTION is a function called with no argument; it is expected
-to perform the operation on the current file buffer and when done
-should return non-nil to mean that we should immediately continue
-operating on the next file and nil otherwise.
-
-\(fn FILES SCAN-FUNCTION OPERATE-FUNCTION)" nil nil)
-
-(autoload 'fileloop-initialize-search "fileloop" "\
-
-
-\(fn REGEXP FILES CASE-FOLD)" nil nil)
-
-(autoload 'fileloop-initialize-replace "fileloop" "\
-Initialize a new round of query&replace on several files.
-FROM is a regexp and TO is the replacement to use.
-FILES describes the file, as in `fileloop-initialize'.
-CASE-FOLD can be t, nil, or `default', the latter one meaning to obey
-the default setting of `case-fold-search'.
-DELIMITED if non-nil means replace only word-delimited matches.
-
-\(fn FROM TO FILES CASE-FOLD &optional DELIMITED)" nil nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "fileloop" '("fileloop-")))
-
-;;;***
-
 ;;;### (autoloads nil "mwheel" "mwheel.el" (0 0 0 0))
 ;;; Generated autoloads from mwheel.el
 
@@ -25063,6 +25066,13 @@ Emacs Lisp manual for more information and examples.
 
 (function-put 'pcase 'lisp-indent-function '1)
 
+(put 'pcase 'function-documentation '(pcase--make-docstring))
+
+(autoload 'pcase--make-docstring "pcase" "\
+
+
+\(fn)" nil nil)
+
 (autoload 'pcase-exhaustive "pcase" "\
 The exhaustive version of `pcase' (which see).
 If EXP fails to match any of the patterns in CASES, an error is signaled.
@@ -25627,6 +25637,13 @@ they are not by default assigned to keys.
 (defalias 'edit-picture 'picture-mode)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "picture" '("picture-")))
+
+;;;***
+
+;;;### (autoloads nil "pinyin" "language/pinyin.el" (0 0 0 0))
+;;; Generated autoloads from language/pinyin.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "pinyin" '("pinyin-character-map")))
 
 ;;;***
 
@@ -28846,7 +28863,7 @@ CHAR
      matches 0 through 9.
 
 `control', `cntrl'
-     matches ASCII control characters.
+     matches any character whose code is in the range 0-31.
 
 `hex-digit', `hex', `xdigit'
      matches 0 through 9, a through f and A through F.
@@ -28933,7 +28950,9 @@ CHAR
      matches a character with category CATEGORY.  CATEGORY must be
      either a character to use for C, or one of the following symbols.
 
-     `consonant'			(\\c0 in string notation)
+     `space-for-indent'                 (\\c\\s in string notation)
+     `base'                             (\\c.)
+     `consonant'			(\\c0)
      `base-vowel'			(\\c1)
      `upper-diacritical-mark'		(\\c2)
      `lower-diacritical-mark'		(\\c3)
@@ -28951,7 +28970,9 @@ CHAR
      `japanese-hiragana-two-byte'	(\\cH)
      `indian-two-byte'			(\\cI)
      `japanese-katakana-two-byte'	(\\cK)
+     `strong-left-to-right'             (\\cL)
      `korean-hangul-two-byte'		(\\cN)
+     `strong-right-to-left'             (\\cR)
      `cyrillic-two-byte'		(\\cY)
      `combining-diacritic'		(\\c^)
      `ascii'				(\\ca)
@@ -31906,8 +31927,7 @@ The default comes from `process-coding-system-alist' and
 your might try undecided-dos as a coding system.  If this doesn't help,
 Try to set `comint-output-filter-functions' like this:
 
-\(setq comint-output-filter-functions (append comint-output-filter-functions
-					     \\='(comint-strip-ctrl-m)))
+\(add-hook 'comint-output-filter-functions #\\='comint-strip-ctrl-m 'append)
 
 \(Type \\[describe-mode] in the SQL buffer for a list of commands.)
 
@@ -32349,7 +32369,7 @@ Studlify-case the current buffer.
 ;;;### (autoloads nil "subr-x" "emacs-lisp/subr-x.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/subr-x.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("and-let*" "hash-table-" "if-let" "internal--" "string-" "thread-" "when-let")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("and-let*" "hash-table-" "if-let" "internal--" "replace-region-contents" "string-" "thread-" "when-let")))
 
 ;;;***
 
@@ -34504,7 +34524,7 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\".
 
 \(fn &optional FORCE)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "titdic-cnv" '("batch-miscdic-convert" "ctlau-" "miscdic-convert" "py-converter" "quail-" "quick-" "tit-" "tsang-" "ziranma-converter")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "titdic-cnv" '("batch-miscdic-convert" "ctlau-" "miscdic-convert" "pinyin-convert" "py-converter" "quail-" "quick-" "tit-" "tsang-" "ziranma-converter")))
 
 ;;;***
 
@@ -34841,14 +34861,14 @@ It must be supported by libarchive(3).")
 (defmacro tramp-archive-autoload-file-name-regexp nil "\
 Regular expression matching archive file names." '(concat "\\`" "\\(" ".+" "\\." (regexp-opt tramp-archive-suffixes) "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*" "\\)" "\\(" "/" ".*" "\\)" "\\'"))
 
-(defalias 'tramp-archive-autoload-file-name-handler 'tramp-autoload-file-name-handler)
+(defalias 'tramp-archive-autoload-file-name-handler #'tramp-autoload-file-name-handler)
 
 (defun tramp-register-archive-file-name-handler nil "\
-Add archive file name handler to `file-name-handler-alist'." (when tramp-archive-enabled (add-to-list 'file-name-handler-alist (cons (tramp-archive-autoload-file-name-regexp) 'tramp-archive-autoload-file-name-handler)) (put 'tramp-archive-autoload-file-name-handler 'safe-magic t)))
+Add archive file name handler to `file-name-handler-alist'." (when tramp-archive-enabled (add-to-list 'file-name-handler-alist (cons (tramp-archive-autoload-file-name-regexp) #'tramp-archive-autoload-file-name-handler)) (put 'tramp-archive-autoload-file-name-handler 'safe-magic t)))
 
-(add-hook 'after-init-hook 'tramp-register-archive-file-name-handler)
+(add-hook 'after-init-hook #'tramp-register-archive-file-name-handler)
 
-(add-hook 'tramp-archive-unload-hook (lambda nil (remove-hook 'after-init-hook 'tramp-register-archive-file-name-handler)))
+(add-hook 'tramp-archive-unload-hook (lambda nil (remove-hook 'after-init-hook #'tramp-register-archive-file-name-handler)))
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-archive" '("tramp-" "with-parsed-tramp-archive-file-name")))
 
@@ -34887,6 +34907,14 @@ Add archive file name handler to `file-name-handler-alist'." (when tramp-archive
 ;;; Generated autoloads from net/tramp-gvfs.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-gvfs" '("tramp-" "with-tramp-dbus-")))
+
+;;;***
+
+;;;### (autoloads nil "tramp-integration" "net/tramp-integration.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from net/tramp-integration.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-integration" '("tramp-")))
 
 ;;;***
 
@@ -36372,6 +36400,11 @@ Display a message indicating unresolved conflicts in FILENAME.
 \(fn FILENAME)" nil nil)
 
 (defalias 'vc-resolve-conflicts 'smerge-ediff)
+
+(autoload 'vc-find-conflicted-file "vc" "\
+Visit the next conflicted file in the current project.
+
+\(fn)" t nil)
 
 (autoload 'vc-create-tag "vc" "\
 Descending recursively from DIR, make a tag called NAME.
@@ -38711,6 +38744,35 @@ where PREFIX is a prefix key and MODIFIERS is either a list of modifiers or
 a single modifier.  Default value of PREFIX is `C-x' and MODIFIERS is `shift'.
 
 \(fn &optional PREFIX MODIFIERS)" t nil)
+
+(autoload 'windmove-swap-states-left "windmove" "\
+Swap the states with the window on the left from the current one.
+
+\(fn)" t nil)
+
+(autoload 'windmove-swap-states-up "windmove" "\
+Swap the states with the window above from the current one.
+
+\(fn)" t nil)
+
+(autoload 'windmove-swap-states-down "windmove" "\
+Swap the states with the window below from the current one.
+
+\(fn)" t nil)
+
+(autoload 'windmove-swap-states-right "windmove" "\
+Swap the states with the window on the right from the current one.
+
+\(fn)" t nil)
+
+(autoload 'windmove-swap-states-default-keybindings "windmove" "\
+Set up keybindings for directional window swap states.
+Keys are bound to commands that swap the states of the selected window
+with the window in the specified direction.  Keybindings are of the form
+MODIFIERS-{left,right,up,down}, where MODIFIERS is either a list of modifiers
+or a single modifier.  Default value of MODIFIERS is `shift-super'.
+
+\(fn &optional MODIFIERS)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "windmove" '("windmove-")))
 
