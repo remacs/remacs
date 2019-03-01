@@ -4732,8 +4732,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		int c1, c2;
 		int s1, s2;
 		int dummy;
-		ptrdiff_t offset = PTR_TO_OFFSET (d - 1);
-		ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
+                ptrdiff_t offset = PTR_TO_OFFSET (d);
+                ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset) - 1;
 		UPDATE_SYNTAX_TABLE (charpos);
 		GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 		s1 = SYNTAX (c1);
@@ -4811,8 +4811,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      int c1, c2;
 	      int s1, s2;
 	      int dummy;
-	      ptrdiff_t offset = PTR_TO_OFFSET (d) - 1;
-	      ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
+              ptrdiff_t offset = PTR_TO_OFFSET (d);
+              ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset) - 1;
 	      UPDATE_SYNTAX_TABLE (charpos);
 	      GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 	      s1 = SYNTAX (c1);
@@ -4826,7 +4826,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		{
 		  PREFETCH_NOLIMIT ();
 		  GET_CHAR_AFTER (c2, d, dummy);
-		  UPDATE_SYNTAX_TABLE_FORWARD (charpos);
+                  UPDATE_SYNTAX_TABLE_FORWARD (charpos + 1);
 		  s2 = SYNTAX (c2);
 
 		  /* ... and S2 is Sword, and WORD_BOUNDARY_P (C1, C2)
@@ -4890,8 +4890,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		 is the character at D, and S2 is the syntax of C2.  */
 	      int c1, c2;
 	      int s1, s2;
-	      ptrdiff_t offset = PTR_TO_OFFSET (d) - 1;
-	      ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
+              ptrdiff_t offset = PTR_TO_OFFSET (d);
+              ptrdiff_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset) - 1;
 	      UPDATE_SYNTAX_TABLE (charpos);
 	      GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 	      s1 = SYNTAX (c1);

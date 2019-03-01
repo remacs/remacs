@@ -713,11 +713,21 @@ previous_interval (register INTERVAL interval)
   return NULL;
 }
 
-/* Find the interval containing POS given some non-NULL INTERVAL
-   in the same tree.  Note that we need to update interval->position
-   if we go down the tree.
-   To speed up the process, we assume that the ->position of
-   I and all its parents is already uptodate.  */
+/* Set the ->position field of I's parent, based on I->position. */
+#define SET_PARENT_POSITION(i)                                  \
+  if (AM_LEFT_CHILD (i))                                        \
+    INTERVAL_PARENT (i)->position =                             \
+      i->position + TOTAL_LENGTH (i) - LEFT_TOTAL_LENGTH (i);   \
+  else                                                          \
+    INTERVAL_PARENT (i)->position =                             \
+      i->position - LEFT_TOTAL_LENGTH (i)                       \
+      - LENGTH (INTERVAL_PARENT (i))
+
+/* Find the interval containing POS, given some non-NULL INTERVAL in
+   the same tree.  Note that we update interval->position in each
+   interval we traverse, assuming it is already correctly set for the
+   argument I.  We don't assume that any other interval already has a
+   correctly set ->position.  */
 INTERVAL
 update_interval (register INTERVAL i, ptrdiff_t pos)
 {
@@ -738,7 +748,10 @@ update_interval (register INTERVAL i, ptrdiff_t pos)
 	  else if (NULL_PARENT (i))
 	    error ("Point before start of properties");
 	  else
-	      i = INTERVAL_PARENT (i);
+            {
+              SET_PARENT_POSITION (i);
+              i = INTERVAL_PARENT (i);
+            }
 	  continue;
 	}
       else if (pos >= INTERVAL_LAST_POS (i))
@@ -753,7 +766,10 @@ update_interval (register INTERVAL i, ptrdiff_t pos)
 	  else if (NULL_PARENT (i))
 	    error ("Point %"pD"d after end of properties", pos);
 	  else
-            i = INTERVAL_PARENT (i);
+            {
+              SET_PARENT_POSITION (i);
+              i = INTERVAL_PARENT (i);
+            }
 	  continue;
 	}
       else

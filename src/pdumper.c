@@ -2064,7 +2064,7 @@ dump_interval_tree (struct dump_context *ctx,
                     INTERVAL tree,
                     dump_off parent_offset)
 {
-#if CHECK_STRUCTS && !defined (HASH_interval_9110163DA0)
+#if CHECK_STRUCTS && !defined (HASH_interval_1B38941C37)
 # error "interval changed. See CHECK_STRUCTS comment."
 #endif
   // TODO: output tree breadth-first?

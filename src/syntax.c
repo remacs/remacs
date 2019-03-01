@@ -340,20 +340,6 @@ update_syntax_table (ptrdiff_t charpos, EMACS_INT count, bool init,
       invalidate = false;
       if (!i)
 	return;
-      /* interval_of updates only ->position of the return value, so
-	 update the parents manually to speed up update_interval.  */
-      while (!NULL_PARENT (i))
-	{
-	  if (AM_RIGHT_CHILD (i))
-	    INTERVAL_PARENT (i)->position = i->position
-	      - LEFT_TOTAL_LENGTH (i) + TOTAL_LENGTH (i) /* right end */
-	      - TOTAL_LENGTH (INTERVAL_PARENT (i))
-	      + LEFT_TOTAL_LENGTH (INTERVAL_PARENT (i));
-	  else
-	    INTERVAL_PARENT (i)->position = i->position - LEFT_TOTAL_LENGTH (i)
-	      + TOTAL_LENGTH (i);
-	  i = INTERVAL_PARENT (i);
-	}
       i = gl_state.forward_i;
       gl_state.b_property = i->position - gl_state.offset;
       gl_state.e_property = INTERVAL_LAST_POS (i) - gl_state.offset;
