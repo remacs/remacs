@@ -4055,7 +4055,7 @@ types.  */)
   /* Clear out any detritus in memory.  */
   do {
     number_finalizers_run = 0;
-    Fgarbage_collect ();
+    garbage_collect ();
   } while (number_finalizers_run);
 
   ptrdiff_t count = SPECPDL_INDEX ();

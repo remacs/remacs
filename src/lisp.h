@@ -3763,6 +3763,7 @@ extern void alloc_unexec_post (void);
 extern void mark_maybe_objects (Lisp_Object *, ptrdiff_t);
 extern void mark_stack (char *, char *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
+extern void garbage_collect (void);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
 typedef uintptr_t byte_ct;  /* System byte counts reported by GC.  */
@@ -5003,7 +5004,7 @@ maybe_gc (void)
        && consing_since_gc > gc_relative_threshold)
       || (!NILP (Vmemory_full)
 	  && consing_since_gc > memory_full_cons_threshold))
-    Fgarbage_collect ();
+    garbage_collect ();
 }
 
 INLINE_HEADER_END

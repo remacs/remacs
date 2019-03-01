@@ -253,9 +253,17 @@ typedef intptr_t object_ct;
 
 /* Number of live and free conses etc.  */
 
-static object_ct total_conses, total_symbols, total_buffers;
-static object_ct total_free_conses, total_free_symbols;
-static object_ct total_free_floats, total_floats;
+struct gcstat
+{
+  object_ct total_conses, total_free_conses;
+  object_ct total_symbols, total_free_symbols;
+  object_ct total_strings, total_free_strings;
+  byte_ct total_string_bytes;
+  object_ct total_vectors, total_vector_slots, total_free_vector_slots;
+  object_ct total_floats, total_free_floats;
+  object_ct total_intervals, total_free_intervals;
+  object_ct total_buffers;
+} gcstat;
 
 /* Points to memory space allocated as "spare", to be freed if we run
    out of memory.  We keep one large block, four cons-blocks, and
@@ -1538,10 +1546,6 @@ static struct interval_block *interval_block;
 
 static int interval_block_index = INTERVAL_BLOCK_SIZE;
 
-/* Number of free and live intervals.  */
-
-static object_ct total_free_intervals, total_intervals;
-
 /* List of free intervals.  */
 
 static INTERVAL interval_free_list;
@@ -1570,7 +1574,7 @@ make_interval (void)
 	  newi->next = interval_block;
 	  interval_block = newi;
 	  interval_block_index = 0;
-	  total_free_intervals += INTERVAL_BLOCK_SIZE;
+	  gcstat.total_free_intervals += INTERVAL_BLOCK_SIZE;
 	}
       val = &interval_block->intervals[interval_block_index++];
     }
@@ -1579,7 +1583,7 @@ make_interval (void)
 
   consing_since_gc += sizeof (struct interval);
   intervals_consed++;
-  total_free_intervals--;
+  gcstat.total_free_intervals--;
   RESET_INTERVAL (val);
   val->gcmarkbit = 0;
   return val;
@@ -1754,14 +1758,6 @@ static struct string_block *string_blocks;
 /* Free-list of Lisp_Strings.  */
 
 static struct Lisp_String *string_free_list;
-
-/* Number of live and free Lisp_Strings.  */
-
-static object_ct total_strings, total_free_strings;
-
-/* Number of bytes used by live strings.  */
-
-static byte_ct total_string_bytes;
 
 /* Given a pointer to a Lisp_String S which is on the free-list
    string_free_list, return a pointer to its successor in the
@@ -1972,7 +1968,7 @@ allocate_string (void)
 	  string_free_list = ptr_bounds_clip (s, sizeof *s);
 	}
 
-      total_free_strings += STRING_BLOCK_SIZE;
+      gcstat.total_free_strings += STRING_BLOCK_SIZE;
     }
 
   check_string_free_list ();
@@ -1983,8 +1979,8 @@ allocate_string (void)
 
   MALLOC_UNBLOCK_INPUT;
 
-  --total_free_strings;
-  ++total_strings;
+  gcstat.total_free_strings--;
+  gcstat.total_strings++;
   ++strings_consed;
   consing_since_gc += sizeof *s;
 
@@ -2119,8 +2115,8 @@ sweep_strings (void)
   struct string_block *live_blocks = NULL;
 
   string_free_list = NULL;
-  total_strings = total_free_strings = 0;
-  total_string_bytes = 0;
+  gcstat.total_strings = gcstat.total_free_strings = 0;
+  gcstat.total_string_bytes = 0;
 
   /* Scan strings_blocks, free Lisp_Strings that aren't marked.  */
   for (b = string_blocks; b; b = next)
@@ -2145,8 +2141,8 @@ sweep_strings (void)
 		  /* Do not use string_(set|get)_intervals here.  */
 		  s->u.s.intervals = balance_intervals (s->u.s.intervals);
 
-		  ++total_strings;
-		  total_string_bytes += STRING_BYTES (s);
+		  gcstat.total_strings++;
+		  gcstat.total_string_bytes += STRING_BYTES (s);
 		}
 	      else
 		{
@@ -2186,14 +2182,14 @@ sweep_strings (void)
       /* Free blocks that contain free Lisp_Strings only, except
 	 the first two of them.  */
       if (nfree == STRING_BLOCK_SIZE
-	  && total_free_strings > STRING_BLOCK_SIZE)
+	  && gcstat.total_free_strings > STRING_BLOCK_SIZE)
 	{
 	  lisp_free (b);
 	  string_free_list = free_list_before;
 	}
       else
 	{
-	  total_free_strings += nfree;
+	  gcstat.total_free_strings += nfree;
 	  b->next = live_blocks;
 	  live_blocks = b;
 	}
@@ -2701,7 +2697,7 @@ make_float (double float_value)
 	  memset (new->gcmarkbits, 0, sizeof new->gcmarkbits);
 	  float_block = new;
 	  float_block_index = 0;
-	  total_free_floats += FLOAT_BLOCK_SIZE;
+	  gcstat.total_free_floats += FLOAT_BLOCK_SIZE;
 	}
       XSETFLOAT (val, &float_block->floats[float_block_index]);
       float_block_index++;
@@ -2713,7 +2709,7 @@ make_float (double float_value)
   eassert (!XFLOAT_MARKED_P (XFLOAT (val)));
   consing_since_gc += sizeof (struct Lisp_Float);
   floats_consed++;
-  total_free_floats--;
+  gcstat.total_free_floats--;
   return val;
 }
 
@@ -2779,7 +2775,7 @@ free_cons (struct Lisp_Cons *ptr)
   ptr->u.s.car = Vdead;
   cons_free_list = ptr;
   consing_since_gc -= sizeof *ptr;
-  total_free_conses++;
+  gcstat.total_free_conses++;
 }
 
 DEFUN ("cons", Fcons, Scons, 2, 2, 0,
@@ -2809,7 +2805,7 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
 	     distinct conses might not fit.  */
 	  if (max_conses < INTPTR_MAX / sizeof (struct Lisp_Cons)
 	      && (max_conses - CONS_BLOCK_SIZE
-		  < total_free_conses + total_conses))
+		  < gcstat.total_free_conses + gcstat.total_conses))
 	    memory_full (sizeof (struct cons_block));
 
 	  struct cons_block *new
@@ -2818,7 +2814,7 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
 	  new->next = cons_block;
 	  cons_block = new;
 	  cons_block_index = 0;
-	  total_free_conses += CONS_BLOCK_SIZE;
+	  gcstat.total_free_conses += CONS_BLOCK_SIZE;
 	}
       XSETCONS (val, &cons_block->conses[cons_block_index]);
       cons_block_index++;
@@ -2830,7 +2826,7 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
   XSETCDR (val, cdr);
   eassert (!XCONS_MARKED_P (XCONS (val)));
   consing_since_gc += sizeof (struct Lisp_Cons);
-  total_free_conses--;
+  gcstat.total_free_conses--;
   cons_cells_consed++;
   return val;
 }
@@ -3080,14 +3076,6 @@ static struct large_vector *large_vectors;
 
 Lisp_Object zero_vector;
 
-/* Number of live vectors.  */
-
-static object_ct total_vectors;
-
-/* Total size of live and free vectors, in Lisp_Object units.  */
-
-static object_ct total_vector_slots, total_free_vector_slots;
-
 /* Common shortcut to setup vector on a free list.  */
 
 static void
@@ -3102,7 +3090,7 @@ setup_on_free_list (struct Lisp_Vector *v, ptrdiff_t nbytes)
   eassert (vindex < VECTOR_MAX_FREE_LIST_INDEX);
   set_next_vector (v, vector_free_lists[vindex]);
   vector_free_lists[vindex] = v;
-  total_free_vector_slots += nbytes / word_size;
+  gcstat.total_free_vector_slots += nbytes / word_size;
 }
 
 /* Get a new vector block.  */
@@ -3150,7 +3138,7 @@ allocate_vector_from_block (ptrdiff_t nbytes)
     {
       vector = vector_free_lists[index];
       vector_free_lists[index] = next_vector (vector);
-      total_free_vector_slots -= nbytes / word_size;
+      gcstat.total_free_vector_slots -= nbytes / word_size;
       return vector;
     }
 
@@ -3164,7 +3152,7 @@ allocate_vector_from_block (ptrdiff_t nbytes)
 	/* This vector is larger than requested.  */
 	vector = vector_free_lists[index];
 	vector_free_lists[index] = next_vector (vector);
-	total_free_vector_slots -= nbytes / word_size;
+	gcstat.total_free_vector_slots -= nbytes / word_size;
 
 	/* Excess bytes are used for the smaller vector,
 	   which should be set on an appropriate free list.  */
@@ -3295,7 +3283,8 @@ sweep_vectors (void)
   struct large_vector *lv, **lvprev = &large_vectors;
   struct Lisp_Vector *vector, *next;
 
-  total_vectors = total_vector_slots = total_free_vector_slots = 0;
+  gcstat.total_vectors = 0;
+  gcstat.total_vector_slots = gcstat.total_free_vector_slots = 0;
   memset (vector_free_lists, 0, sizeof (vector_free_lists));
 
   /* Looking through vector blocks.  */
@@ -3310,9 +3299,9 @@ sweep_vectors (void)
 	  if (XVECTOR_MARKED_P (vector))
 	    {
 	      XUNMARK_VECTOR (vector);
-	      total_vectors++;
+	      gcstat.total_vectors++;
 	      ptrdiff_t nbytes = vector_nbytes (vector);
-	      total_vector_slots += nbytes / word_size;
+	      gcstat.total_vector_slots += nbytes / word_size;
 	      next = ADVANCE (vector, nbytes);
 	    }
 	  else
@@ -3364,12 +3353,11 @@ sweep_vectors (void)
       if (XVECTOR_MARKED_P (vector))
 	{
 	  XUNMARK_VECTOR (vector);
-	  total_vectors++;
-	  if (vector->header.size & PSEUDOVECTOR_FLAG)
-            total_vector_slots += vector_nbytes (vector) / word_size;
-	  else
-	    total_vector_slots
-	      += header_size / word_size + vector->header.size;
+	  gcstat.total_vectors++;
+	  gcstat.total_vector_slots
+	    += (vector->header.size & PSEUDOVECTOR_FLAG
+		? vector_nbytes (vector) / word_size
+		: header_size / word_size + vector->header.size);
 	  lvprev = &lv->next;
 	}
       else
@@ -3703,7 +3691,7 @@ Its value is void, and its function definition and property list are nil.  */)
 	  new->next = symbol_block;
 	  symbol_block = new;
 	  symbol_block_index = 0;
-	  total_free_symbols += SYMBOL_BLOCK_SIZE;
+	  gcstat.total_free_symbols += SYMBOL_BLOCK_SIZE;
 	}
       XSETSYMBOL (val, &symbol_block->symbols[symbol_block_index]);
       symbol_block_index++;
@@ -3714,7 +3702,7 @@ Its value is void, and its function definition and property list are nil.  */)
   init_symbol (val, name);
   consing_since_gc += sizeof (struct Lisp_Symbol);
   symbols_consed++;
-  total_free_symbols--;
+  gcstat.total_free_symbols--;
   return val;
 }
 
@@ -4976,7 +4964,7 @@ mark_memory (void *start, void *end)
      {
        Lisp_Object obj = build_string ("test");
        struct Lisp_String *s = XSTRING (obj);
-       Fgarbage_collect ();
+       garbage_collect ();
        fprintf (stderr, "test '%s'\n", s->u.s.data);
        return Qnil;
      }
@@ -5774,13 +5762,13 @@ static byte_ct
 total_bytes_of_live_objects (void)
 {
   byte_ct tot = 0;
-  tot += object_bytes (total_conses, sizeof (struct Lisp_Cons));
-  tot += object_bytes (total_symbols, sizeof (struct Lisp_Symbol));
-  tot += total_string_bytes;
-  tot += object_bytes (total_vector_slots, word_size);
-  tot += object_bytes (total_floats, sizeof (struct Lisp_Float));
-  tot += object_bytes (total_intervals, sizeof (struct interval));
-  tot += object_bytes (total_strings, sizeof (struct Lisp_String));
+  tot += object_bytes (gcstat.total_conses, sizeof (struct Lisp_Cons));
+  tot += object_bytes (gcstat.total_symbols, sizeof (struct Lisp_Symbol));
+  tot += gcstat.total_string_bytes;
+  tot += object_bytes (gcstat.total_vector_slots, word_size);
+  tot += object_bytes (gcstat.total_floats, sizeof (struct Lisp_Float));
+  tot += object_bytes (gcstat.total_intervals, sizeof (struct interval));
+  tot += object_bytes (gcstat.total_strings, sizeof (struct Lisp_String));
   return tot;
 }
 
@@ -6029,22 +6017,15 @@ mark_and_sweep_weak_table_contents (void)
     }
 }
 
-/* Subroutine of Fgarbage_collect that does most of the work.  It is a
-   separate function so that we could limit mark_stack in searching
-   the stack frames below this function, thus avoiding the rare cases
-   where mark_stack finds values that look like live Lisp objects on
-   portions of stack that couldn't possibly contain such live objects.
-   For more details of this, see the discussion at
-   https://lists.gnu.org/r/emacs-devel/2014-05/msg00270.html.  */
-static Lisp_Object
-garbage_collect_1 (void *end)
+/* Subroutine of Fgarbage_collect that does most of the work.  */
+static bool
+garbage_collect_1 (struct gcstat *gcst)
 {
   struct buffer *nextb;
   char stack_top_variable;
   bool message_p;
   ptrdiff_t count = SPECPDL_INDEX ();
   struct timespec start;
-  Lisp_Object retval = Qnil;
   byte_ct tot_before = 0;
 
   eassert (weak_hash_tables == NULL);
@@ -6052,7 +6033,7 @@ garbage_collect_1 (void *end)
   /* Can't GC if pure storage overflowed because we can't determine
      if something is a pure object or not.  */
   if (pure_bytes_used_before_overflow)
-    return Qnil;
+    return false;
 
   /* Record this function, so it appears on the profiler's backtraces.  */
   record_in_backtrace (QAutomatic_GC, 0, 0);
@@ -6215,40 +6196,7 @@ garbage_collect_1 (void *end)
 
   unbind_to (count, Qnil);
 
-  Lisp_Object total[] = {
-    list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
-	   make_int (total_conses),
-	   make_int (total_free_conses)),
-    list4 (Qsymbols, make_fixnum (sizeof (struct Lisp_Symbol)),
-	   make_int (total_symbols),
-	   make_int (total_free_symbols)),
-    list4 (Qstrings, make_fixnum (sizeof (struct Lisp_String)),
-	   make_int (total_strings),
-	   make_int (total_free_strings)),
-    list3 (Qstring_bytes, make_fixnum (1),
-	   make_int (total_string_bytes)),
-    list3 (Qvectors,
-	   make_fixnum (header_size + sizeof (Lisp_Object)),
-	   make_int (total_vectors)),
-    list4 (Qvector_slots, make_fixnum (word_size),
-	   make_int (total_vector_slots),
-	   make_int (total_free_vector_slots)),
-    list4 (Qfloats, make_fixnum (sizeof (struct Lisp_Float)),
-	   make_int (total_floats),
-	   make_int (total_free_floats)),
-    list4 (Qintervals, make_fixnum (sizeof (struct interval)),
-	   make_int (total_intervals),
-	   make_int (total_free_intervals)),
-    list3 (Qbuffers, make_fixnum (sizeof (struct buffer)),
-	   make_int (total_buffers)),
-
-#ifdef DOUG_LEA_MALLOC
-    list4 (Qheap, make_fixnum (1024),
-	   make_int ((mallinfo ().uordblks + 1023) >> 10),
-	   make_int ((mallinfo ().fordblks + 1023) >> 10)),
-#endif
-  };
-  retval = CALLMANY (Flist, total);
+  *gcst = gcstat;
 
   /* GC is complete: now we can run our finalizer callbacks.  */
   run_finalizers (&doomed_finalizers);
@@ -6278,7 +6226,14 @@ garbage_collect_1 (void *end)
       malloc_probe (min (swept, SIZE_MAX));
     }
 
-  return retval;
+  return true;
+}
+
+void
+garbage_collect (void)
+{
+  struct gcstat gcst;
+  garbage_collect_1 (&gcst);
 }
 
 DEFUN ("garbage-collect", Fgarbage_collect, Sgarbage_collect, 0, 0, "",
@@ -6295,13 +6250,47 @@ where each entry has the form (NAME SIZE USED FREE), where:
   to return them to the OS).
 However, if there was overflow in pure space, `garbage-collect'
 returns nil, because real GC can't be done.
-See Info node `(elisp)Garbage Collection'.  */
-       attributes: noinline)
+See Info node `(elisp)Garbage Collection'.  */)
   (void)
 {
-  void *end;
-  SET_STACK_TOP_ADDRESS (&end);
-  return garbage_collect_1 (end);
+  struct gcstat gcst;
+  if (!garbage_collect_1 (&gcst))
+    return Qnil;
+
+  Lisp_Object total[] = {
+    list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
+	   make_int (gcst.total_conses),
+	   make_int (gcst.total_free_conses)),
+    list4 (Qsymbols, make_fixnum (sizeof (struct Lisp_Symbol)),
+	   make_int (gcst.total_symbols),
+	   make_int (gcst.total_free_symbols)),
+    list4 (Qstrings, make_fixnum (sizeof (struct Lisp_String)),
+	   make_int (gcst.total_strings),
+	   make_int (gcst.total_free_strings)),
+    list3 (Qstring_bytes, make_fixnum (1),
+	   make_int (gcst.total_string_bytes)),
+    list3 (Qvectors,
+	   make_fixnum (header_size + sizeof (Lisp_Object)),
+	   make_int (gcst.total_vectors)),
+    list4 (Qvector_slots, make_fixnum (word_size),
+	   make_int (gcst.total_vector_slots),
+	   make_int (gcst.total_free_vector_slots)),
+    list4 (Qfloats, make_fixnum (sizeof (struct Lisp_Float)),
+	   make_int (gcst.total_floats),
+	   make_int (gcst.total_free_floats)),
+    list4 (Qintervals, make_fixnum (sizeof (struct interval)),
+	   make_int (gcst.total_intervals),
+	   make_int (gcst.total_free_intervals)),
+    list3 (Qbuffers, make_fixnum (sizeof (struct buffer)),
+	   make_int (gcst.total_buffers)),
+
+#ifdef DOUG_LEA_MALLOC
+    list4 (Qheap, make_fixnum (1024),
+	   make_int ((mallinfo ().uordblks + 1023) >> 10),
+	   make_int ((mallinfo ().fordblks + 1023) >> 10)),
+#endif
+  };
+  return CALLMANY (Flist, total);
 }
 
 /* Mark Lisp objects in glyph matrix MATRIX.  Currently the
@@ -7003,8 +6992,8 @@ sweep_conses (void)
           cprev = &cblk->next;
         }
     }
-  total_conses = num_used;
-  total_free_conses = num_free;
+  gcstat.total_conses = num_used;
+  gcstat.total_free_conses = num_free;
 }
 
 NO_INLINE /* For better stack traces */
@@ -7052,8 +7041,8 @@ sweep_floats (void)
           fprev = &fblk->next;
         }
     }
-  total_floats = num_used;
-  total_free_floats = num_free;
+  gcstat.total_floats = num_used;
+  gcstat.total_free_floats = num_free;
 }
 
 NO_INLINE /* For better stack traces */
@@ -7101,8 +7090,8 @@ sweep_intervals (void)
           iprev = &iblk->next;
         }
     }
-  total_intervals = num_used;
-  total_free_intervals = num_free;
+  gcstat.total_intervals = num_used;
+  gcstat.total_free_intervals = num_free;
 }
 
 NO_INLINE /* For better stack traces */
@@ -7170,8 +7159,8 @@ sweep_symbols (void)
           sprev = &sblk->next;
         }
     }
-  total_symbols = num_used;
-  total_free_symbols = num_free;
+  gcstat.total_symbols = num_used;
+  gcstat.total_free_symbols = num_free;
 }
 
 /* Remove BUFFER's markers that are due to be swept.  This is needed since
@@ -7195,9 +7184,9 @@ NO_INLINE /* For better stack traces */
 static void
 sweep_buffers (void)
 {
-  register struct buffer *buffer, **bprev = &all_buffers;
+  struct buffer *buffer, **bprev = &all_buffers;
 
-  total_buffers = 0;
+  gcstat.total_buffers = 0;
   for (buffer = all_buffers; buffer; buffer = *bprev)
     if (!vectorlike_marked_p (&buffer->header))
       {
@@ -7211,7 +7200,7 @@ sweep_buffers (void)
         /* Do not use buffer_(set|get)_intervals here.  */
         buffer->text->intervals = balance_intervals (buffer->text->intervals);
         unchain_dead_markers (buffer);
-        total_buffers++;
+	gcstat.total_buffers++;
         bprev = &buffer->next;
       }
 }
