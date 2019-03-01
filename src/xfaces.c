@@ -6805,7 +6805,10 @@ between two colors that will still qualify them to be used as foreground
 and background.  If the value of `color-distance', invoked with a nil
 METRIC argument, for the foreground and background colors of a face is
 less than this threshold, the distant-foreground color, if defined,
-will be used for the face instead of the foreground color.  */);
+will be used for the face instead of the foreground color.
+
+Lisp programs that change the value of this variable should also
+clear the face cache, see `clear-face-cache'.  */);
   face_near_same_color_threshold = 30000;
 
 #ifdef HAVE_WINDOW_SYSTEM
