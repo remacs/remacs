@@ -96,7 +96,8 @@ A library name is equivalent to the file name that `load-library' would load."
   (let ((provides (file-provides file))
 	(dependents nil))
     (dolist (x load-history dependents)
-      (when (file-set-intersect provides (file-requires (car x)))
+      (when (and (stringp (car x))
+                 (file-set-intersect provides (file-requires (car x))))
 	(push (car x) dependents)))))
 
 (defun read-feature (prompt &optional loaded-p)

@@ -756,7 +756,8 @@ DIR, sorted by most recently loaded last."
   (let* ((history (delq nil
                         (mapcar (lambda (x)
                                   (let ((f (car x)))
-                                    (and f (file-name-sans-extension f))))
+                                    (and (stringp f)
+                                         (file-name-sans-extension f))))
                                 load-history)))
          (dir (file-truename dir))
          ;; List all files that have already been loaded.

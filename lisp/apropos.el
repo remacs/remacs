@@ -681,7 +681,7 @@ the output includes key-bindings of commands."
             (re (concat "\\(?:\\`\\|[\\/]\\)" (regexp-quote file)
                         "\\(\\.\\|\\'\\)")))
         (while (and lh (null lh-entry))
-          (if (and (caar lh) (string-match re (caar lh)))
+          (if (and (stringp (caar lh)) (string-match re (caar lh)))
               (setq lh-entry (car lh))
             (setq lh (cdr lh)))))
       (unless lh-entry (error "Unknown library `%s'" file)))
