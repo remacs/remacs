@@ -309,7 +309,7 @@ SETUP_SYNTAX_TABLE_FOR_OBJECT (Lisp_Object object,
 }
 
 /* Update gl_state to an appropriate interval which contains CHARPOS.  The
-   sign of COUNT give the relative position of CHARPOS wrt the previously
+   sign of COUNT gives the relative position of CHARPOS wrt the previously
    valid interval.  If INIT, only [be]_property fields of gl_state are
    valid at start, the rest is filled basing on OBJECT.
 
@@ -343,42 +343,43 @@ update_syntax_table (ptrdiff_t charpos, EMACS_INT count, bool init,
       i = gl_state.forward_i;
       gl_state.b_property = i->position - gl_state.offset;
       gl_state.e_property = INTERVAL_LAST_POS (i) - gl_state.offset;
-      goto update;
     }
-  i = count > 0 ? gl_state.forward_i : gl_state.backward_i;
-
-  /* We are guaranteed to be called with CHARPOS either in i,
-     or further off.  */
-  if (!i)
-    error ("Error in syntax_table logic for to-the-end intervals");
-  else if (charpos < i->position)		/* Move left.  */
+  else
     {
-      if (count > 0)
-	error ("Error in syntax_table logic for intervals <-");
-      /* Update the interval.  */
-      i = update_interval (i, charpos);
-      if (INTERVAL_LAST_POS (i) != gl_state.b_property)
-	{
-	  invalidate = false;
-	  gl_state.forward_i = i;
-	  gl_state.e_property = INTERVAL_LAST_POS (i) - gl_state.offset;
-	}
-    }
-  else if (charpos >= INTERVAL_LAST_POS (i)) /* Move right.  */
-    {
-      if (count < 0)
-	error ("Error in syntax_table logic for intervals ->");
-      /* Update the interval.  */
-      i = update_interval (i, charpos);
-      if (i->position != gl_state.e_property)
-	{
-	  invalidate = false;
-	  gl_state.backward_i = i;
-	  gl_state.b_property = i->position - gl_state.offset;
-	}
+      i = count > 0 ? gl_state.forward_i : gl_state.backward_i;
+
+      /* We are guaranteed to be called with CHARPOS either in i,
+         or further off.  */
+      if (!i)
+        error ("Error in syntax_table logic for to-the-end intervals");
+      else if (charpos < i->position)		/* Move left.  */
+        {
+          if (count > 0)
+	    error ("Error in syntax_table logic for intervals <-");
+          /* Update the interval.  */
+          i = update_interval (i, charpos);
+          if (INTERVAL_LAST_POS (i) != gl_state.b_property)
+	    {
+	      invalidate = false;
+	      gl_state.forward_i = i;
+	      gl_state.e_property = INTERVAL_LAST_POS (i) - gl_state.offset;
+	    }
+        }
+      else if (charpos >= INTERVAL_LAST_POS (i)) /* Move right.  */
+        {
+          if (count < 0)
+	    error ("Error in syntax_table logic for intervals ->");
+          /* Update the interval.  */
+          i = update_interval (i, charpos);
+          if (i->position != gl_state.e_property)
+	    {
+	      invalidate = false;
+	      gl_state.backward_i = i;
+	      gl_state.b_property = i->position - gl_state.offset;
+	    }
+        }
     }
 
-  update:
   tmp_table = textget (i->plist, Qsyntax_table);
 
   if (invalidate)
