@@ -1425,7 +1425,7 @@ The value of this variable is a list of all minor mode commands.
 @cindex conventions for writing minor modes
 
   There are conventions for writing minor modes just as there are for
-major modes.  These conventions are described below.  The easiest way to
+major modes (@pxref{Major Modes}).  These conventions are described below.  The easiest way to
 follow them is to use the macro @code{define-minor-mode}.
 @xref{Defining Minor Modes}.
 
@@ -1536,10 +1536,10 @@ or like this, using @code{add-to-list} (@pxref{List Variables}):
 @end smallexample
 @end itemize
 
-  In addition, several major mode conventions apply to minor modes as
-well: those regarding the names of global symbols, the use of a hook at
-the end of the initialization function, and the use of keymaps and other
-tables.
+  In addition, several major mode conventions (@pxref{Major Mode
+Conventions}) apply to minor modes as well: those regarding the names
+of global symbols, the use of a hook at the end of the initialization
+function, and the use of keymaps and other tables.
 
   The minor mode should, if possible, support enabling and disabling via
 Custom (@pxref{Customization}).  To do this, the mode variable should be

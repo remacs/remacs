@@ -1404,7 +1404,7 @@ to `compilation-error-regexp-alist' if RULES is nil."
               (let ((this-type (if (consp type)
                                    (compilation-type type)
                                  (or type 2))))
-                (compilation--note-type type)
+                (compilation--note-type this-type)
 
                 (compilation--put-prop
                  file 'font-lock-face
