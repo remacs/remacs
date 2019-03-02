@@ -1293,12 +1293,12 @@ removed.
 
 * Lisp Changes in Emacs 27.1
 
-+++
+
 ** 'self-insert-command' takes the char to insert as (optional) argument.
 
 ** 'lookup-key' can take a list of keymaps as argument.
 
-** New hook 'input-event-functions' run whenever a user-input is read.
+** New hook `input-event-functions` run whenever a user-input is read.
 
 +++
 ** 'condition-case' now accepts 't' to match any error symbol.
