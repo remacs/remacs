@@ -1298,7 +1298,6 @@ removed.
 
 ** 'lookup-key' can take a list of keymaps as argument.
 
-+++
 ** New hook 'input-event-functions' run whenever a user-input is read.
 
 +++

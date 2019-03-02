@@ -2920,18 +2920,6 @@ this expression) remains the value of @code{last-command-event}.
 @end example
 @end defvar
 
-@defvar input-event-functions
-This variable holds a list of functions to call after Emacs reads an
-event, but before any commands are run.  Each function receives a
-single argument: the event that has been read.
-
-There are normally easier hooks to use than this; in particular
-@var{pre-command-hook} is run immediately before any command resulting
-from an event.  However, not all events result in a command, including
-many mouse events and some keyboard events when an input-method is
-active (@pxref{Reading Input}).
-@end defvar
-
 @defmac while-no-input body@dots{}
 This construct runs the @var{body} forms and returns the value of the
 last one---but only if no input arrives.  If any input arrives during
