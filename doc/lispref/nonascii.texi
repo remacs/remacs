@@ -1632,11 +1632,16 @@ coding system for a file based on its undecoded contents.
 
 Each function in this list should be written to look at text in the
 current buffer, but should not modify it in any way.  The buffer will
-contain undecoded text of parts of the file.  Each function should
-take one argument, @var{size}, which tells it how many characters to
-look at, starting from point.  If the function succeeds in determining
-a coding system for the file, it should return that coding system.
-Otherwise, it should return @code{nil}.
+contain the text of parts of the file.  Each function should take one
+argument, @var{size}, which tells it how many characters to look at,
+starting from point.  If the function succeeds in determining a coding
+system for the file, it should return that coding system.  Otherwise,
+it should return @code{nil}.
+
+The functions in this list could be called either when the file is
+visited and Emacs wants to decode its contents, and/or when the file's
+buffer is about to be saved and Emacs wants to determine how to encode
+its contents.
 
 If a file has a @samp{coding:} tag, that takes precedence, so these
 functions won't be called.

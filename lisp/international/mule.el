@@ -1851,9 +1851,12 @@ or nil."
 
 Each function in this list should be written to operate on the
 current buffer, but should not modify it in any way.  The buffer
-will contain undecoded text of parts of the file.  Each function
+will contain the text of parts of the file.  Each function
 should take one argument, SIZE, which says how many characters
-\(starting from point) it should look at.
+\(starting from point) it should look at.  The function might be
+called both when the file is visited and Emacs wants to decode
+its contents, and when the file's buffer is about to be saved
+and Emacs wants to determine how to encode its contents.
 
 If one of these functions succeeds in determining a coding
 system, it should return that coding system.  Otherwise, it
