@@ -1289,12 +1289,6 @@ See `event-start' for a description of the value returned."
 The return value is a positive integer."
   (if (and (consp event) (integerp (nth 2 event))) (nth 2 event) 1))
 
-(defvar input-event-functions nil
-  ;; BEWARE: If it looks like this is not run anywhere, it's normal:
-  ;; this is run in keyboard.c.
-  "Special hook run each time a user-input event is read.
-Each function is called with one argument: the event.")
-
 (defsubst event-line-count (event)
   "Return the line count of EVENT, a mousewheel event.
 The return value is a positive integer."
