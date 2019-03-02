@@ -2286,7 +2286,7 @@ whether or not it is currently displayed in some window.  */)
 	  it.current_y = 0;
 	  /* Do this even if LINES is 0, so that we move back to the
 	     beginning of the current line as we ought.  */
-	  if ((nlines < 0 && IT_CHARPOS (it) > 0)
+	  if ((nlines < 0 && IT_CHARPOS (it) > BEGV)
 	      || (nlines == 0 && !(start_x_given && start_x <= to_x)))
 	    move_it_by_lines (&it, max (PTRDIFF_MIN, nlines));
 	}
@@ -2338,7 +2338,7 @@ whether or not it is currently displayed in some window.  */)
 	     and then reposition point at the requested X coordinate;
 	     if we don't, the cursor will be placed just after the
 	     string, which might not be the requested column.  */
-	  if (nlines > 0 && it.area == TEXT_AREA)
+	  if (nlines >= 0 && it.area == TEXT_AREA)
 	    {
 	      while (it.method == GET_FROM_STRING
 		     && !it.string_from_display_prop_p
