@@ -1015,6 +1015,29 @@ list-processes}).  The listing command should create or switch to a
 buffer, turn on the derived mode, specify the tabulated data, and
 finally call @code{tabulated-list-print} to populate the buffer.
 
+@defopt tabulated-list-gui-sort-indicator-asc
+This variable specifies the character to be used on GUI frames as an
+indication that the column is sorted in the ascending order.
+
+Whenever you change the sort direction in Tabulated List buffers, this
+indicator toggles between ascending (``asc'') and descending (``desc'').
+@end defopt
+
+@defopt tabulated-list-gui-sort-indicator-desc
+Like @code{tabulated-list-gui-sort-indicator-asc}, but used when the
+column is sorted in the descending order.
+@end defopt
+
+@defopt tabulated-list-tty-sort-indicator-asc
+Like @code{tabulated-list-gui-sort-indicator-asc}, but used for
+text-mode frames.
+@end defopt
+
+@defopt tabulated-list-tty-sort-indicator-desc
+Like @code{tabulated-list-tty-sort-indicator-asc}, but used when the
+column is sorted in the descending order.
+@end defopt
+
 @defvar tabulated-list-format
 This buffer-local variable specifies the format of the Tabulated List
 data.  Its value should be a vector.  Each element of the vector

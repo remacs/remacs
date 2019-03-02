@@ -923,7 +923,7 @@ been instrumented by Edebug.
 the XTerm window title.  This feature is experimental and is disabled
 by default.
 
-** grep
+** Grep
 
 +++
 *** rgrep, lgrep and zrgrep now hide part of the command line
@@ -1193,6 +1193,17 @@ the 128...255 range, as expected.
 *** New value of 'minibuffer' frame parameter 'child-frame'.
 This allows to create and parent immediately a minibuffer-only child
 frame when making a frame.
+
+** Tabulated List mode
+
++++
+** New user options for tabulated list sort indicators.
+You can now customize which sorting indicator character to display
+near the current column in Tabulated Lists (see variables
+'tabulated-list-gui-sort-indicator-asc',
+'tabulated-list-gui-sort-indicator-desc',
+'tabulated-list-tty-sort-indicator-asc', and
+'tabulated-list-tty-sort-indicator-desc').
 
 
 * New Modes and Packages in Emacs 27.1
