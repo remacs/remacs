@@ -5725,6 +5725,8 @@ purecopy (Lisp_Object obj)
 void
 staticpro (Lisp_Object *varaddress)
 {
+  for (int i = 0; i < staticidx; i++)
+    eassert (staticvec[i] != varaddress);
   if (staticidx >= NSTATICS)
     fatal ("NSTATICS too small; try increasing and recompiling Emacs.");
   staticvec[staticidx++] = varaddress;
