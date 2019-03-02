@@ -113,7 +113,7 @@ impl From<LispMarkerRef> for LispObject {
 
 impl From<LispObject> for Option<LispMarkerRef> {
     fn from(o: LispObject) -> Self {
-        o.as_misc().and_then(|m| m.as_marker())
+        o.as_misc().and_then(LispMiscRef::as_marker)
     }
 }
 
@@ -308,7 +308,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         marker.as_fixnum_coerce_marker_or_error();
     }
     let new = unsafe { Fmake_marker() };
-    let buffer_or_nil = marker.as_marker().and_then(|m| m.buffer());
+    let buffer_or_nil = marker.as_marker().and_then(LispMarkerRef::buffer);
 
     set_marker(new.into(), marker, buffer_or_nil.into());
 

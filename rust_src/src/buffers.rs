@@ -48,6 +48,7 @@ use crate::{
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
+    vectors::LispVectorlikeRef,
 };
 
 pub const BEG: ptrdiff_t = 1;
@@ -690,7 +691,7 @@ impl LispObject {
     }
 
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
-        self.as_buffer().and_then(|b| b.as_live())
+        self.as_buffer().and_then(LispBufferRef::as_live)
     }
 }
 
@@ -708,7 +709,7 @@ impl From<LispBufferRef> for LispObject {
 
 impl From<LispObject> for Option<LispBufferRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_buffer())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_buffer)
     }
 }
 
@@ -737,7 +738,7 @@ impl From<LispOverlayRef> for LispObject {
 
 impl From<LispObject> for Option<LispOverlayRef> {
     fn from(o: LispObject) -> Self {
-        o.as_misc().and_then(|m| m.as_overlay())
+        o.as_misc().and_then(LispMiscRef::as_overlay)
     }
 }
 
@@ -816,7 +817,7 @@ impl LispBufferOrName {
         let obj = LispObject::from(self);
         obj.map_or_else(
             || Some(ThreadState::current_buffer_unchecked()),
-            |o| o.as_buffer(),
+            LispObject::as_buffer,
         )
     }
 }
@@ -959,7 +960,7 @@ pub fn overlayp(object: LispObject) -> bool {
 /// Value is nil if OBJECT is not a buffer or if it has been killed.
 #[lisp_fn]
 pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
-    object.map_or(false, |m| m.is_live())
+    object.map_or(false, LispBufferRef::is_live)
 }
 
 /// Return the buffer named BUFFER-OR-NAME.

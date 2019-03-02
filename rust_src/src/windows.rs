@@ -35,6 +35,7 @@ use crate::{
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::ThreadState,
+    vectors::LispVectorlikeRef,
 };
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
@@ -542,7 +543,7 @@ impl From<LispWindowRef> for LispObject {
 
 impl From<LispObject> for Option<LispWindowRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_window())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_window)
     }
 }
 
@@ -674,7 +675,7 @@ impl From<LispObject> for LispWindowLiveOrSelected {
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(
             || LispWindowRef::from(unsafe { current_window }),
-            |w| w.as_live_window_or_error(),
+            LispObject::as_live_window_or_error,
         ))
     }
 }
@@ -692,7 +693,7 @@ impl From<LispObject> for LispWindowValidOrSelected {
     fn from(obj: LispObject) -> Self {
         Self(obj.map_or_else(
             || LispWindowRef::from(selected_window()),
-            |w| w.as_valid_window_or_error(),
+            LispObject::as_valid_window_or_error,
         ))
     }
 }
@@ -725,7 +726,7 @@ pub fn windowp(object: LispObject) -> bool {
 /// Internal windows and deleted windows are not live.
 #[lisp_fn]
 pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
-    object.map_or(false, |m| m.is_live())
+    object.map_or(false, LispWindowRef::is_live)
 }
 
 /// Return new pixel size of window WINDOW.
@@ -787,7 +788,7 @@ pub fn window_buffer(window: LispWindowOrSelected) -> LispObject {
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
 pub fn window_valid_p(object: Option<LispWindowRef>) -> bool {
-    object.map_or(false, |w| w.is_valid())
+    object.map_or(false, LispWindowRef::is_valid)
 }
 
 /// Return position at which display currently starts in WINDOW.

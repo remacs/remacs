@@ -10,7 +10,7 @@ use sha2::{Digest, Sha224, Sha256, Sha384, Sha512};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferOrName,
+    buffers::{LispBufferOrName, LispBufferRef},
     lisp::LispObject,
     multibyte::LispStringRef,
     remacs_sys::EmacsInt,
@@ -233,7 +233,7 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_hash(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    let b = buffer_or_name.map_or_else(ThreadState::current_buffer_unchecked, |b| b.into());
+    let b = buffer_or_name.map_or_else(ThreadState::current_buffer_unchecked, LispBufferRef::from);
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {
