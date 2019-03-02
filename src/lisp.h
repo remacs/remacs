@@ -3769,7 +3769,7 @@ extern Lisp_Object zero_vector;
 typedef uintptr_t byte_ct;  /* System byte counts reported by GC.  */
 extern byte_ct consing_since_gc;
 extern byte_ct gc_relative_threshold;
-extern byte_ct memory_full_cons_threshold;
+extern byte_ct const memory_full_cons_threshold;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
 #endif

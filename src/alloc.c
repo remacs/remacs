@@ -234,7 +234,7 @@ byte_ct gc_relative_threshold;
 /* Minimum number of bytes of consing since GC before next GC,
    when memory is full.  */
 
-byte_ct memory_full_cons_threshold;
+byte_ct const memory_full_cons_threshold = sizeof (struct cons_block);
 
 #ifdef HAVE_PDUMPER
 /* Number of finalizers run: used to loop over GC until we stop
@@ -4082,7 +4082,7 @@ void
 memory_full (size_t nbytes)
 {
   /* Do not go into hysterics merely because a large request failed.  */
-  bool enough_free_memory = 0;
+  bool enough_free_memory = false;
   if (SPARE_MEMORY < nbytes)
     {
       void *p;
@@ -4092,21 +4092,17 @@ memory_full (size_t nbytes)
       if (p)
 	{
 	  free (p);
-	  enough_free_memory = 1;
+	  enough_free_memory = true;
 	}
       MALLOC_UNBLOCK_INPUT;
     }
 
   if (! enough_free_memory)
     {
-      int i;
-
       Vmemory_full = Qt;
 
-      memory_full_cons_threshold = sizeof (struct cons_block);
-
       /* The first time we get here, free the spare memory.  */
-      for (i = 0; i < ARRAYELTS (spare_memory); i++)
+      for (int i = 0; i < ARRAYELTS (spare_memory); i++)
 	if (spare_memory[i])
 	  {
 	    if (i == 0)
