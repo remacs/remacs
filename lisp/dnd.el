@@ -130,6 +130,7 @@ Return nil if URI is not a local file."
 			 (match-string 0 sysname)
 		       sysname))))
       (when (and hostname
+                 (not (eq system-type 'windows-nt))
 		 (or (string-equal "localhost" hostname)
 		     (string-equal (downcase sysname) hostname)
 		     (string-equal sysname-no-dot hostname)))
