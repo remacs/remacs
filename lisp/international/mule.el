@@ -2500,10 +2500,17 @@ This function is intended to be added to `auto-coding-functions'."
                   (let ((sym-type (coding-system-type sym))
                         (bfcs-type
                          (coding-system-type buffer-file-coding-system)))
-                    ;; 'charset' will signal an error in
-                    ;; coding-system-equal, since it isn't a
-                    ;; coding-system.  So test that up front.
-                    (if (and (not (equal sym-type 'charset))
+                    ;; If the buffer is unibyte, its encoding is
+                    ;; immaterial (it is just the default value of
+                    ;; buffer-file-coding-system), so we ignore it.
+                    ;; This situation happens when this function is
+                    ;; called as part of visiting a file, as opposed
+                    ;; to when saving a buffer to a file.
+                    (if (and enable-multibyte-characters
+                             ;; 'charset' will signal an error in
+                             ;; coding-system-equal, since it isn't a
+                             ;; coding-system.  So test that up front.
+                             (not (equal sym-type 'charset))
                              (coding-system-equal 'utf-8 sym-type)
                              (coding-system-equal 'utf-8 bfcs-type))
                         buffer-file-coding-system
@@ -2555,7 +2562,8 @@ This function is intended to be added to `auto-coding-functions'."
             (let ((sym-type (coding-system-type sym))
                   (bfcs-type
                    (coding-system-type buffer-file-coding-system)))
-              (if (and (coding-system-equal 'utf-8 sym-type)
+              (if (and enable-multibyte-characters
+                       (coding-system-equal 'utf-8 sym-type)
                        (coding-system-equal 'utf-8 bfcs-type))
                   buffer-file-coding-system
 		sym))
