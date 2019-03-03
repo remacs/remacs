@@ -25,10 +25,8 @@ use crate::{
         update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p,
         windows_or_buffers_changed, wset_redisplay,
     },
-    remacs_sys::{
-        face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type, EmacsInt, Lisp_Type,
-        Lisp_Window,
-    },
+    remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
+    remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{Fcopy_alist, Fnreverse},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
@@ -712,6 +710,38 @@ pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -
 #[no_mangle]
 pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
     LispWindowOrSelected::from(window).into()
+}
+
+/// Return the normal height of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// If HORIZONTAL is non-nil, return the normal width of WINDOW.
+///
+/// The normal height of a frame's root window or a window that is
+/// horizontally combined (a window that has a left or right sibling) is
+/// 1.0.  The normal height of a window that is vertically combined (has a
+/// sibling above or below) is the fraction of the window's height with
+/// respect to its parent.  The sum of the normal heights of all windows in a
+/// vertical combination equals 1.0.
+///
+/// Similarly, the normal width of a frame's root window or a window that is
+/// vertically combined equals 1.0.  The normal width of a window that is
+/// horizontally combined is the fraction of the window's width with respect
+/// to its parent.  The sum of the normal widths of all windows in a
+/// horizontal combination equals 1.0.
+///
+/// The normal sizes of windows are used to restore the proportional sizes
+/// of windows after they have been shrunk to their minimum sizes; for
+/// example when a frame is temporarily made very small and afterwards gets
+/// re-enlarged to its previous size.
+#[lisp_fn(min = "0")]
+pub fn window_normal_size(window: LispWindowValidOrSelected, horizontal: bool) -> EmacsDouble {
+    let win: LispWindowRef = window.into();
+    let frac = if !horizontal {
+        win.normal_lines
+    } else {
+        win.normal_cols
+    };
+    EmacsDouble::from(frac)
 }
 
 /// Return t if OBJECT is a window and nil otherwise.
