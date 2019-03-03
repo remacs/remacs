@@ -1349,7 +1349,7 @@ Note that the style variables are always made local to the buffer."
 	     ;; We're at the start of a string.
 	     (memq (char-before) c-string-delims)))
 	(if (c-unescaped-nls-in-string-p (1- (point)))
-	    (looking-at "\\(\\\\\\(.\\|\n|\\\r\\)\\|[^\"]\\)*")
+	    (looking-at "\\(\\\\\\(.\\|\n|\r\\)\\|[^\"]\\)*")
 	  (looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
 	(cond
 	 ((memq (char-after (match-end 0)) '(?\n ?\r))

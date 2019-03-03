@@ -5118,7 +5118,7 @@ comment at the start of cc-engine.el for more info."
 	      (setq beg (c-safe (c-backward-sexp 1) (point))))
 
 	     ((and (c-safe (forward-char -2) t)
-		   (looking-at "*/"))
+		   (looking-at "\\*/"))
 	      ;; Block comment.  Due to the nature of line
 	      ;; comments, they will always be covered by the
 	      ;; normal case above.
