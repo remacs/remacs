@@ -231,11 +231,6 @@ byte_ct consing_since_gc;
 
 byte_ct gc_relative_threshold;
 
-/* Minimum number of bytes of consing since GC before next GC,
-   when memory is full.  */
-
-byte_ct const memory_full_cons_threshold = sizeof (struct cons_block);
-
 #ifdef HAVE_PDUMPER
 /* Number of finalizers run: used to loop over GC until we stop
    generating garbage.  */
@@ -2753,6 +2748,11 @@ struct cons_block
 
 #define XUNMARK_CONS(fptr) \
   UNSETMARKBIT (CONS_BLOCK (fptr), CONS_INDEX ((fptr)))
+
+/* Minimum number of bytes of consing since GC before next GC,
+   when memory is full.  */
+
+byte_ct const memory_full_cons_threshold = sizeof (struct cons_block);
 
 /* Current cons_block.  */
 
