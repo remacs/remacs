@@ -6186,7 +6186,7 @@ init_display_interactive (void)
   calculate_costs (XFRAME (selected_frame));
 
   /* Set up faces of the initial terminal frame.  */
-  if (!noninteractive && NILP (Vinitial_window_system))
+  if (initialized && !noninteractive && NILP (Vinitial_window_system))
     init_faces_initial ();
 }
 
