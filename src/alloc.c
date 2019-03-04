@@ -248,7 +248,7 @@ typedef intptr_t object_ct;
 
 /* Number of live and free conses etc.  */
 
-struct gcstat
+static struct gcstat
 {
   object_ct total_conses, total_free_conses;
   object_ct total_symbols, total_free_symbols;
