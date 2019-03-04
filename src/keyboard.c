@@ -1476,8 +1476,12 @@ command_loop_1 (void)
       safe_run_hooks (Qpost_command_hook);
 
       /* If displaying a message, resize the echo area window to fit
-	 that message's size exactly.  */
-      if (!NILP (echo_area_buffer[0]))
+	 that message's size exactly.  Do this only if the echo area
+	 window is the minibuffer window of the selected frame.  See
+	 Bug#34317.  */
+      if (!NILP (echo_area_buffer[0])
+	  && (EQ (echo_area_window,
+		  FRAME_MINIBUF_WINDOW (XFRAME (selected_frame)))))
 	resize_echo_area_exactly ();
 
       /* If there are warnings waiting, process them.  */
