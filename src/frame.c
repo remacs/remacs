@@ -163,10 +163,8 @@ frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
 	     Fcons (list4
 		    (frame, fun_symbol,
 		     ((width > 0)
-		      ? list4 (make_fixnum (FRAME_TEXT_WIDTH (f)),
-			       make_fixnum (FRAME_TEXT_HEIGHT (f)),
-			       make_fixnum (width),
-			       make_fixnum (height))
+		      ? list4i (FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f),
+				width, height)
 		      : Qnil),
 		     rest),
 		    XCDR (frame_size_history)));
@@ -744,8 +742,8 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 
   frame_size_history_add
     (f, Qadjust_frame_size_3, new_text_width, new_text_height,
-     list4 (make_fixnum (old_pixel_width), make_fixnum (old_pixel_height),
-	    make_fixnum (new_pixel_width), make_fixnum (new_pixel_height)));
+     list4i (old_pixel_width, old_pixel_height,
+	     new_pixel_width, new_pixel_height));
 
   /* Assign new sizes.  */
   FRAME_TEXT_WIDTH (f) = new_text_width;

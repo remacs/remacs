@@ -115,8 +115,7 @@ The following %-sequences are provided:
 	  remain = format_string ("%ld:%02ld", m / 60, m % 60);
 	}
 
-      status = listn (CONSTYPE_HEAP, 8,
-		      Fcons (make_fixnum ('L'), line_status),
+      status =  list (Fcons (make_fixnum ('L'), line_status),
 		      Fcons (make_fixnum ('B'), battery_status),
 		      Fcons (make_fixnum ('b'), battery_status_symbol),
 		      Fcons (make_fixnum ('p'), load_percentage),

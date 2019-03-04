@@ -1998,7 +1998,7 @@ The alist key is the cipher name. */)
       ptrdiff_t cipher_tag_size = gnutls_cipher_get_tag_size (gca);
 
       Lisp_Object cp
-	= listn (CONSTYPE_HEAP, 15, cipher_symbol,
+	 = list (cipher_symbol,
 		 QCcipher_id, make_fixnum (gca),
 		 QCtype, Qgnutls_type_cipher,
 		 QCcipher_aead_capable, cipher_tag_size == 0 ? Qnil : Qt,
@@ -2329,7 +2329,7 @@ name. */)
 # ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
       nonce_size = gnutls_mac_get_nonce_size (gma);
 # endif
-      Lisp_Object mp = listn (CONSTYPE_HEAP, 11, gma_symbol,
+      Lisp_Object mp =  list (gma_symbol,
 			      QCmac_algorithm_id, make_fixnum (gma),
 			      QCtype, Qgnutls_type_mac_algorithm,
 
@@ -2364,7 +2364,7 @@ method name. */)
       /* A symbol representing the GnuTLS digest algorithm.  */
       Lisp_Object gda_symbol = intern (gnutls_digest_get_name (gda));
 
-      Lisp_Object mp = listn (CONSTYPE_HEAP, 7, gda_symbol,
+      Lisp_Object mp  = list (gda_symbol,
 			      QCdigest_algorithm_id, make_fixnum (gda),
 			      QCtype, Qgnutls_type_digest_algorithm,
 

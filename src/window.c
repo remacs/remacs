@@ -2525,7 +2525,7 @@ window_list (void)
 	     have to reverse this list at the end.  */
 	  foreach_window (XFRAME (frame), add_window_to_list, &arglist);
 	  arglist = Fnreverse (arglist);
-	  Vwindow_list = CALLN (Fnconc, Vwindow_list, arglist);
+	  Vwindow_list = nconc2 (Vwindow_list, arglist);
 	}
     }
 

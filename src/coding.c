@@ -8720,20 +8720,20 @@ detect_coding_system (const unsigned char *src,
 	{
 	  detect_info.found = CATEGORY_MASK_RAW_TEXT;
 	  id = CODING_SYSTEM_ID (Qno_conversion);
-	  val = list1 (make_fixnum (id));
+	  val = list1i (id);
 	}
       else if (! detect_info.rejected && ! detect_info.found)
 	{
 	  detect_info.found = CATEGORY_MASK_ANY;
 	  id = coding_categories[coding_category_undecided].id;
-	  val = list1 (make_fixnum (id));
+	  val = list1i (id);
 	}
       else if (highest)
 	{
 	  if (detect_info.found)
 	    {
 	      detect_info.found = 1 << category;
-	      val = list1 (make_fixnum (this->id));
+	      val = list1i (this->id);
 	    }
 	  else
 	    for (i = 0; i < coding_category_raw_text; i++)
@@ -8741,7 +8741,7 @@ detect_coding_system (const unsigned char *src,
 		{
 		  detect_info.found = 1 << coding_priorities[i];
 		  id = coding_categories[coding_priorities[i]].id;
-		  val = list1 (make_fixnum (id));
+		  val = list1i (id);
 		  break;
 		}
 	}
@@ -8758,7 +8758,7 @@ detect_coding_system (const unsigned char *src,
 		  found |= 1 << category;
 		  id = coding_categories[category].id;
 		  if (id >= 0)
-		    val = list1 (make_fixnum (id));
+		    val = list1i (id);
 		}
 	    }
 	  for (i = coding_category_raw_text - 1; i >= 0; i--)
@@ -8783,7 +8783,7 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_8_sig;
 	  else
 	    this = coding_categories + coding_category_utf_8_nosig;
-	  val = list1 (make_fixnum (this->id));
+	  val = list1i (this->id);
 	}
     }
   else if (base_category == coding_category_utf_16_auto)
@@ -8800,13 +8800,13 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_16_be_nosig;
 	  else
 	    this = coding_categories + coding_category_utf_16_le_nosig;
-	  val = list1 (make_fixnum (this->id));
+	  val = list1i (this->id);
 	}
     }
   else
     {
       detect_info.found = 1 << XFIXNUM (CODING_ATTR_CATEGORY (attrs));
-      val = list1 (make_fixnum (coding.id));
+      val = list1i (coding.id);
     }
 
   /* Then, detect eol-format if necessary.  */
@@ -9749,7 +9749,7 @@ DEFUN ("set-terminal-coding-system-internal", Fset_terminal_coding_system_intern
   tset_charset_list
     (term, (terminal_coding->common_flags & CODING_REQUIRE_ENCODING_MASK
 	    ? coding_charset_list (terminal_coding)
-	    : list1 (make_fixnum (charset_ascii))));
+	    : list1i (charset_ascii)));
   return Qnil;
 }
 
@@ -10856,7 +10856,7 @@ syms_of_coding (void)
   /* Error signaled when there's a problem with detecting a coding system.  */
   DEFSYM (Qcoding_system_error, "coding-system-error");
   Fput (Qcoding_system_error, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qcoding_system_error, Qerror));
+	pure_list (Qcoding_system_error, Qerror));
   Fput (Qcoding_system_error, Qerror_message,
 	build_pure_c_string ("Invalid coding system"));
 
@@ -11298,7 +11298,7 @@ internal character representation.  */);
   /* This is already set.
      plist[7] = args[coding_arg_ascii_compatible_p] = Qt; */
   plist[8] = intern_c_string (":charset-list");
-  plist[9] = args[coding_arg_charset_list] = Fcons (Qascii, Qnil);
+  plist[9] = args[coding_arg_charset_list] = list1 (Qascii);
   plist[11] = args[coding_arg_for_unibyte] = Qnil;
   plist[13] = build_pure_c_string ("No conversion on encoding, "
 				   "automatic conversion on decoding.");

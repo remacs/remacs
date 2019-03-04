@@ -2811,23 +2811,20 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 
   /* Construct list.  */
   if (EQ (attribute, Qouter_edges))
-    return list4 (make_fixnum (f->left_pos), make_fixnum (f->top_pos),
-		  make_fixnum (f->left_pos + outer_width),
-		  make_fixnum (f->top_pos + outer_height));
+    return list4i (f->left_pos, f->top_pos,
+		   f->left_pos + outer_width,
+		   f->top_pos + outer_height);
   else if (EQ (attribute, Qnative_edges))
-    return list4 (make_fixnum (native_left), make_fixnum (native_top),
-		  make_fixnum (native_right), make_fixnum (native_bottom));
+    return list4i (native_left, native_top,
+		   native_right, native_bottom);
   else if (EQ (attribute, Qinner_edges))
-    return list4 (make_fixnum (native_left + internal_border_width),
-		  make_fixnum (native_top
-			       + tool_bar_height
-			       + internal_border_width),
-		  make_fixnum (native_right - internal_border_width),
-		  make_fixnum (native_bottom - internal_border_width));
+    return list4i (native_left + internal_border_width,
+		   native_top + tool_bar_height + internal_border_width,
+		   native_right - internal_border_width,
+		   native_bottom - internal_border_width);
   else
     return
-      listn (CONSTYPE_HEAP, 10,
-	     Fcons (Qouter_position,
+       list (Fcons (Qouter_position,
 		    Fcons (make_fixnum (f->left_pos),
 			   make_fixnum (f->top_pos))),
 	     Fcons (Qouter_size,

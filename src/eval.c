@@ -2246,7 +2246,7 @@ eval_sub (Lisp_Object form)
   /* Optimize for no indirection.  */
   fun = original_fun;
   if (!SYMBOLP (fun))
-    fun = Ffunction (Fcons (fun, Qnil));
+    fun = Ffunction (list1 (fun));
   else if (!NILP (fun) && (fun = XSYMBOL (fun)->u.s.function, SYMBOLP (fun)))
     fun = indirect_function (fun);
 
@@ -3690,7 +3690,7 @@ backtrace_frame_apply (Lisp_Object function, union specbinding *pdl)
 
   Lisp_Object flags = Qnil;
   if (backtrace_debug_on_exit (pdl))
-    flags = Fcons (QCdebug_on_exit, Fcons (Qt, Qnil));
+    flags = list2 (QCdebug_on_exit, Qt);
 
   if (backtrace_nargs (pdl) == UNEVALLED)
     return call4 (function, Qnil, backtrace_function (pdl), *backtrace_args (pdl), flags);

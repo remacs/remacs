@@ -3782,8 +3782,12 @@ extern Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
-enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
-extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
+extern Lisp_Object listn (ptrdiff_t, Lisp_Object, ...);
+extern Lisp_Object pure_listn (ptrdiff_t, Lisp_Object, ...);
+#define list(...) \
+  listn (ARRAYELTS (((Lisp_Object []) {__VA_ARGS__})), __VA_ARGS__)
+#define pure_list(...) \
+  pure_listn (ARRAYELTS (((Lisp_Object []) {__VA_ARGS__})), __VA_ARGS__)
 
 enum gc_root_type {
   GC_ROOT_STATICPRO,
@@ -3800,7 +3804,13 @@ struct gc_root_visitor {
 };
 extern void visit_static_gc_roots (struct gc_root_visitor visitor);
 
-/* Build a frequently used 2/3/4-integer lists.  */
+/* Build a frequently used 1/2/3/4-integer lists.  */
+
+INLINE Lisp_Object
+list1i (EMACS_INT x)
+{
+  return list1 (make_fixnum (x));
+}
 
 INLINE Lisp_Object
 list2i (EMACS_INT x, EMACS_INT y)

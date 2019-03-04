@@ -5580,8 +5580,7 @@ Value is nil if this session was not started using a portable dump file.*/)
 
   dump_fn = Fexpand_file_name (dump_fn, Qnil);
 
-  return CALLN (Flist,
-		Fcons (Qdumped_with_pdumper, Qt),
+  return list3 (Fcons (Qdumped_with_pdumper, Qt),
 		Fcons (Qload_time, make_float (dump_private.load_time)),
 		Fcons (Qdump_file_name, dump_fn));
 }

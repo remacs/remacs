@@ -1175,8 +1175,7 @@ usage: (define-charset-internal ...)  */)
       ISO_CHARSET_TABLE (charset.dimension, charset.iso_chars_96,
 			 charset.iso_final) = id;
       if (new_definition_p)
-	Viso_2022_charset_list = nconc2 (Viso_2022_charset_list,
-					 list1 (make_fixnum (id)));
+	Viso_2022_charset_list = nconc2 (Viso_2022_charset_list, list1i (id));
       if (ISO_CHARSET_TABLE (1, 0, 'J') == id)
 	charset_jisx0201_roman = id;
       else if (ISO_CHARSET_TABLE (2, 0, '@') == id)
@@ -1196,15 +1195,14 @@ usage: (define-charset-internal ...)  */)
 	emacs_mule_bytes[charset.emacs_mule_id] = charset.dimension + 2;
       if (new_definition_p)
 	Vemacs_mule_charset_list = nconc2 (Vemacs_mule_charset_list,
-					   list1 (make_fixnum (id)));
+					   list1i (id));
     }
 
   if (new_definition_p)
     {
       Vcharset_list = Fcons (args[charset_arg_name], Vcharset_list);
       if (charset.supplementary_p)
-	Vcharset_ordered_list = nconc2 (Vcharset_ordered_list,
-					list1 (make_fixnum (id)));
+	Vcharset_ordered_list = nconc2 (Vcharset_ordered_list, list1i (id));
       else
 	{
 	  Lisp_Object tail;
@@ -1221,7 +1219,7 @@ usage: (define-charset-internal ...)  */)
 					   Vcharset_ordered_list);
 	  else if (NILP (tail))
 	    Vcharset_ordered_list = nconc2 (Vcharset_ordered_list,
-					    list1 (make_fixnum (id)));
+					    list1i (id));
 	  else
 	    {
 	      val = Fcons (XCAR (tail), XCDR (tail));
@@ -1278,8 +1276,7 @@ define_charset_internal (Lisp_Object name,
   args[charset_arg_unify_map] = Qnil;
 
   args[charset_arg_plist] =
-    listn (CONSTYPE_HEAP, 14,
-	   QCname,
+     list (QCname,
 	   args[charset_arg_name],
 	   intern_c_string (":dimension"),
 	   args[charset_arg_dimension],
@@ -2180,7 +2177,7 @@ usage: (set-charset-priority &rest charsets)  */)
 	}
     }
   Vcharset_non_preferred_head = old_list;
-  Vcharset_ordered_list = CALLN (Fnconc, Fnreverse (new_head), old_list);
+  Vcharset_ordered_list = nconc2 (Fnreverse (new_head), old_list);
 
   charset_ordered_list_tick++;
 

@@ -8787,8 +8787,7 @@ and width values are in pixels.
     /* A single line menu bar.  */
     menu_bar_height = single_menu_bar_height;
 
-  return listn (CONSTYPE_HEAP, 10,
-		Fcons (Qouter_position,
+  return  list (Fcons (Qouter_position,
 		       Fcons (make_fixnum (left), make_fixnum (top))),
 		Fcons (Qouter_size,
 		       Fcons (make_fixnum (right - left),
@@ -10257,7 +10256,7 @@ syms_of_w32fns (void)
   DEFSYM (Qjson, "json");
 
   Fput (Qundefined_color, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));
+	pure_list (Qundefined_color, Qerror));
   Fput (Qundefined_color, Qerror_message,
 	build_pure_c_string ("Undefined color"));
 

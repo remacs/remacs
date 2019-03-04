@@ -5185,18 +5185,14 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 
   /* Construct list.  */
   if (EQ (attribute, Qouter_edges))
-    return list4 (make_fixnum (outer_left), make_fixnum (outer_top),
-		  make_fixnum (outer_right), make_fixnum (outer_bottom));
+    return list4i (outer_left, outer_top, outer_right, outer_bottom);
   else if (EQ (attribute, Qnative_edges))
-    return list4 (make_fixnum (native_left), make_fixnum (native_top),
-		  make_fixnum (native_right), make_fixnum (native_bottom));
+    return list4i (native_left, native_top, native_right, native_bottom);
   else if (EQ (attribute, Qinner_edges))
-    return list4 (make_fixnum (inner_left), make_fixnum (inner_top),
-		  make_fixnum (inner_right), make_fixnum (inner_bottom));
+    return list4i (inner_left, inner_top, inner_right, inner_bottom);
   else
     return
-      listn (CONSTYPE_HEAP, 11,
-	     Fcons (Qouter_position,
+       list (Fcons (Qouter_position,
 		    Fcons (make_fixnum (outer_left),
 			   make_fixnum (outer_top))),
 	     Fcons (Qouter_size,
@@ -7675,7 +7671,7 @@ syms_of_xfns (void)
 #endif
 
   Fput (Qundefined_color, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));
+	pure_list (Qundefined_color, Qerror));
   Fput (Qundefined_color, Qerror_message,
 	build_pure_c_string ("Undefined color"));
 

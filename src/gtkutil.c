@@ -967,7 +967,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
     {
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_1, width, height,
-	 list2 (make_fixnum (gheight), make_fixnum (totalheight)));
+	 list2i (gheight, totalheight));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
 			 gwidth, totalheight);
@@ -976,7 +976,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
     {
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_2, width, height,
-	 list2 (make_fixnum (gwidth), make_fixnum (totalwidth)));
+	 list2i (gwidth, totalwidth));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
 			 totalwidth, gheight);
@@ -985,7 +985,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
     {
       frame_size_history_add
 	(f, Qxg_frame_set_char_size_3, width, height,
-	 list2 (make_fixnum (totalwidth), make_fixnum (totalheight)));
+	 list2i (totalwidth, totalheight));
 
       gtk_window_resize (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
 			 totalwidth, totalheight);
@@ -4260,23 +4260,16 @@ xg_get_page_setup (void)
       eassume (false);
     }
 
-  return listn (CONSTYPE_HEAP, 7,
-		Fcons (Qorientation, orientation_symbol),
-#define MAKE_FLOAT_PAGE_SETUP(f)  make_float (f (page_setup, GTK_UNIT_POINTS))
-		Fcons (Qwidth,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_page_width)),
-		Fcons (Qheight,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_page_height)),
-		Fcons (Qleft_margin,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_left_margin)),
-		Fcons (Qright_margin,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_right_margin)),
-		Fcons (Qtop_margin,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_top_margin)),
-		Fcons (Qbottom_margin,
-		       MAKE_FLOAT_PAGE_SETUP (gtk_page_setup_get_bottom_margin))
-#undef MAKE_FLOAT_PAGE_SETUP
-		);
+#define GETSETUP(f) make_float (f (page_setup, GTK_UNIT_POINTS))
+  return
+    list (Fcons (Qorientation, orientation_symbol),
+	  Fcons (Qwidth, GETSETUP (gtk_page_setup_get_page_width)),
+	  Fcons (Qheight, GETSETUP (gtk_page_setup_get_page_height)),
+	  Fcons (Qleft_margin, GETSETUP (gtk_page_setup_get_left_margin)),
+	  Fcons (Qright_margin, GETSETUP (gtk_page_setup_get_right_margin)),
+	  Fcons (Qtop_margin, GETSETUP (gtk_page_setup_get_top_margin)),
+	  Fcons (Qbottom_margin, GETSETUP (gtk_page_setup_get_bottom_margin)));
+#undef GETSETUP
 }
 
 static void

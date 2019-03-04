@@ -2781,7 +2781,7 @@ font_list_entities (struct frame *f, Lisp_Object spec)
 	  {
 	    Lisp_Object copy;
 
-	    val = driver_list->driver->list (f, scratch_font_spec);
+	    val = (driver_list->driver->list) (f, scratch_font_spec);
 	    /* We put zero_vector in the font-cache to indicate that
 	       no fonts matching SPEC were found on the system.
 	       Failure to have this indication in the font cache can

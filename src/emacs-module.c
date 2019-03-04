@@ -1234,42 +1234,38 @@ syms_of_module (void)
 
   DEFSYM (Qmodule_load_failed, "module-load-failed");
   Fput (Qmodule_load_failed, Qerror_conditions,
-        listn (CONSTYPE_PURE, 2, Qmodule_load_failed, Qerror));
+	pure_list (Qmodule_load_failed, Qerror));
   Fput (Qmodule_load_failed, Qerror_message,
         build_pure_c_string ("Module load failed"));
 
   DEFSYM (Qmodule_open_failed, "module-open-failed");
   Fput (Qmodule_open_failed, Qerror_conditions,
-        listn (CONSTYPE_PURE, 3,
-               Qmodule_open_failed, Qmodule_load_failed, Qerror));
+	pure_list (Qmodule_open_failed, Qmodule_load_failed, Qerror));
   Fput (Qmodule_open_failed, Qerror_message,
         build_pure_c_string ("Module could not be opened"));
 
   DEFSYM (Qmodule_not_gpl_compatible, "module-not-gpl-compatible");
   Fput (Qmodule_not_gpl_compatible, Qerror_conditions,
-        listn (CONSTYPE_PURE, 3,
-               Qmodule_not_gpl_compatible, Qmodule_load_failed, Qerror));
+	pure_list (Qmodule_not_gpl_compatible, Qmodule_load_failed, Qerror));
   Fput (Qmodule_not_gpl_compatible, Qerror_message,
         build_pure_c_string ("Module is not GPL compatible"));
 
   DEFSYM (Qmissing_module_init_function, "missing-module-init-function");
   Fput (Qmissing_module_init_function, Qerror_conditions,
-        listn (CONSTYPE_PURE, 3,
-               Qmissing_module_init_function, Qmodule_load_failed, Qerror));
+	pure_list (Qmissing_module_init_function, Qmodule_load_failed,
+		   Qerror));
   Fput (Qmissing_module_init_function, Qerror_message,
         build_pure_c_string ("Module does not export an "
                              "initialization function"));
 
   DEFSYM (Qmodule_init_failed, "module-init-failed");
   Fput (Qmodule_init_failed, Qerror_conditions,
-        listn (CONSTYPE_PURE, 3,
-               Qmodule_init_failed, Qmodule_load_failed, Qerror));
+	pure_list (Qmodule_init_failed, Qmodule_load_failed, Qerror));
   Fput (Qmodule_init_failed, Qerror_message,
         build_pure_c_string ("Module initialization failed"));
 
   DEFSYM (Qinvalid_arity, "invalid-arity");
-  Fput (Qinvalid_arity, Qerror_conditions,
-        listn (CONSTYPE_PURE, 2, Qinvalid_arity, Qerror));
+  Fput (Qinvalid_arity, Qerror_conditions, pure_list (Qinvalid_arity, Qerror));
   Fput (Qinvalid_arity, Qerror_message,
         build_pure_c_string ("Invalid function arity"));
 

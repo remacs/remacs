@@ -99,7 +99,7 @@ kqueue_generate_event (Lisp_Object watch_object, Lisp_Object actions,
     event.arg = list2 (Fcons (XCAR (watch_object),
 			      Fcons (actions,
 				     NILP (file1)
-				     ? Fcons (file, Qnil)
+				     ? list1 (file)
 				     : list2 (file, file1))),
 		       Fnth (make_fixnum (3), watch_object));
     kbd_buffer_store_event (&event);

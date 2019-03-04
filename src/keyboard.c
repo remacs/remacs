@@ -1328,7 +1328,7 @@ command_loop_1 (void)
 	  if (!NILP (Vquit_flag))
 	    {
 	      Vquit_flag = Qnil;
-	      Vunread_command_events = list1 (make_fixnum (quit_char));
+	      Vunread_command_events = list1i (quit_char);
 	    }
 	}
 

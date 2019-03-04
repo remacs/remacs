@@ -3719,7 +3719,7 @@ syms_of_syntax (void)
 
   DEFSYM (Qscan_error, "scan-error");
   Fput (Qscan_error, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qscan_error, Qerror));
+	pure_list (Qscan_error, Qerror));
   Fput (Qscan_error, Qerror_message,
 	build_pure_c_string ("Scan error"));
 

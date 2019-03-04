@@ -831,8 +831,7 @@ Emacs allocated area accordingly.  */)
   CHECK_XWIDGET (xwidget);
   GtkRequisition requisition;
   gtk_widget_size_request (XXWIDGET (xwidget)->widget_osr, &requisition);
-  return list2 (make_fixnum (requisition.width),
-		make_fixnum (requisition.height));
+  return list2i (requisition.width, requisition.height);
 }
 
 DEFUN ("xwidgetp",

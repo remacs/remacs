@@ -1597,7 +1597,7 @@ the WIDTH times as wide as FACE on FRAME.  */)
     /* We don't have to check fontsets.  */
     return fonts;
   Lisp_Object fontsets = list_fontsets (f, pattern, size);
-  return CALLN (Fnconc, fonts, fontsets);
+  return nconc2 (fonts, fontsets);
 }
 
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -4254,12 +4254,8 @@ two lists of the form (RED GREEN BLUE) aforementioned. */)
     return make_fixnum (color_distance (&cdef1, &cdef2));
   else
     return call2 (metric,
-                  list3 (make_fixnum (cdef1.red),
-                         make_fixnum (cdef1.green),
-                         make_fixnum (cdef1.blue)),
-                  list3 (make_fixnum (cdef2.red),
-                         make_fixnum (cdef2.green),
-                         make_fixnum (cdef2.blue)));
+		  list3i (cdef1.red, cdef1.green, cdef1.blue),
+		  list3i (cdef2.red, cdef2.green, cdef2.blue));
 }
 
 

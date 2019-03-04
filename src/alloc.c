@@ -2864,50 +2864,57 @@ list3 (Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3)
   return Fcons (arg1, Fcons (arg2, Fcons (arg3, Qnil)));
 }
 
-
 Lisp_Object
 list4 (Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3, Lisp_Object arg4)
 {
   return Fcons (arg1, Fcons (arg2, Fcons (arg3, Fcons (arg4, Qnil))));
 }
 
-
 Lisp_Object
-list5 (Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3, Lisp_Object arg4, Lisp_Object arg5)
+list5 (Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3, Lisp_Object arg4,
+       Lisp_Object arg5)
 {
   return Fcons (arg1, Fcons (arg2, Fcons (arg3, Fcons (arg4,
 						       Fcons (arg5, Qnil)))));
 }
 
-/* Make a list of COUNT Lisp_Objects, where ARG is the
-   first one.  Allocate conses from pure space if TYPE
-   is CONSTYPE_PURE, or allocate as usual if type is CONSTYPE_HEAP.  */
-
-Lisp_Object
-listn (enum constype type, ptrdiff_t count, Lisp_Object arg, ...)
+/* Make a list of COUNT Lisp_Objects, where ARG is the first one.
+   Use CONS to construct the pairs.  AP has any remaining args.  */
+static Lisp_Object
+cons_listn (ptrdiff_t count, Lisp_Object arg,
+	    Lisp_Object (*cons) (Lisp_Object, Lisp_Object), va_list ap)
 {
-  Lisp_Object (*cons) (Lisp_Object, Lisp_Object);
-  switch (type)
-    {
-    case CONSTYPE_PURE: cons = pure_cons; break;
-    case CONSTYPE_HEAP: cons = Fcons; break;
-    default: emacs_abort ();
-    }
-
   eassume (0 < count);
   Lisp_Object val = cons (arg, Qnil);
   Lisp_Object tail = val;
-
-  va_list ap;
-  va_start (ap, arg);
   for (ptrdiff_t i = 1; i < count; i++)
     {
       Lisp_Object elem = cons (va_arg (ap, Lisp_Object), Qnil);
       XSETCDR (tail, elem);
       tail = elem;
     }
-  va_end (ap);
+  return val;
+}
 
+/* Make a list of COUNT Lisp_Objects, where ARG1 is the first one.  */
+Lisp_Object
+listn (ptrdiff_t count, Lisp_Object arg1, ...)
+{
+  va_list ap;
+  va_start (ap, arg1);
+  Lisp_Object val = cons_listn (count, arg1, Fcons, ap);
+  va_end (ap);
+  return val;
+}
+
+/* Make a pure list of COUNT Lisp_Objects, where ARG1 is the first one.  */
+Lisp_Object
+pure_listn (ptrdiff_t count, Lisp_Object arg1, ...)
+{
+  va_list ap;
+  va_start (ap, arg1);
+  Lisp_Object val = cons_listn (count, arg1, pure_cons, ap);
+  va_end (ap);
   return val;
 }
 
@@ -7283,8 +7290,7 @@ Frames, windows, buffers, and subprocesses count as vectors
   (but the contents of a buffer's text do not count here).  */)
   (void)
 {
-  return listn (CONSTYPE_HEAP, 7,
-		make_int (cons_cells_consed),
+  return  list (make_int (cons_cells_consed),
 		make_int (floats_consed),
 		make_int (vector_cells_consed),
 		make_int (symbols_consed),
@@ -7584,8 +7590,10 @@ do hash-consing of the objects allocated to pure space.  */);
   /* We build this in advance because if we wait until we need it, we might
      not be able to allocate the memory to hold it.  */
   Vmemory_signal_data
-    = listn (CONSTYPE_PURE, 2, Qerror,
-	     build_pure_c_string ("Memory exhausted--use M-x save-some-buffers then exit and restart Emacs"));
+    = pure_list (Qerror,
+		 build_pure_c_string ("Memory exhausted--use"
+				      " M-x save-some-buffers then"
+				      " exit and restart Emacs"));
 
   DEFVAR_LISP ("memory-full", Vmemory_full,
 	       doc: /* Non-nil means Emacs cannot get much more Lisp memory.  */);

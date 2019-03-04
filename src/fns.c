@@ -4914,13 +4914,7 @@ DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
        doc: /* Return a list of all the supported `secure_hash' algorithms. */)
   (void)
 {
-  return listn (CONSTYPE_HEAP, 6,
-                Qmd5,
-                Qsha1,
-                Qsha224,
-                Qsha256,
-                Qsha384,
-                Qsha512);
+  return list (Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512);
 }
 
 /* Extract data from a string or a buffer. SPEC is a list of
