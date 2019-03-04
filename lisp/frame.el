@@ -1119,9 +1119,23 @@ face specs for the new background mode."
 	    ;; most faces are unmodified).
 	    (dolist (face (face-list))
 	      (and (not (get face 'face-override-spec))
-		   (not (face-spec-match-p face
-					   (face-user-default-spec face)
-					   (selected-frame)))
+		   (not (and
+                         ;; If the face was not yet realized for the
+                         ;; frame, face-spec-match-p will signal an
+                         ;; error, so treat such a missing face as
+                         ;; having a mismatched spec; the call to
+                         ;; face-spec-recalc below will then realize
+                         ;; the face for the frame.  This happens
+                         ;; during startup with -rv on the command
+                         ;; line for the initial frame, because frames
+                         ;; are not recorded in the pdump file.
+                         (assq face (frame-face-alist))
+                         (face-spec-match-p face
+                                            (face-user-default-spec face)
+                                            ;; FIXME: why selected-frame and
+                                            ;; not the frame that is the
+                                            ;; argument to this function?
+                                            (selected-frame))))
 		   (push face locally-modified-faces)))
 	    ;; Now change to the new frame parameters
 	    (modify-frame-parameters frame params)
