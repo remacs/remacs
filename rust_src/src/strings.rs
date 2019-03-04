@@ -161,7 +161,9 @@ pub fn string_lessp_lisp(string1: LispSymbolOrString, string2: LispSymbolOrStrin
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
 pub fn multibyte_string_p(object: LispObject) -> bool {
-    object.as_string().map_or(false, |s| s.is_multibyte())
+    object
+        .as_string()
+        .map_or(false, LispStringRef::is_multibyte)
 }
 
 /// Clear the contents of STRING.

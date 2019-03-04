@@ -1096,7 +1096,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
         // Optimize for no indirection.
         let fun = original_fun
             .as_symbol()
-            .map_or_else(|| original_fun, |f| f.get_indirect_function());
+            .map_or_else(|| original_fun, LispSymbolRef::get_indirect_function);
 
         if fun.is_nil() {
             return Err(LispFunError::VoidFun);

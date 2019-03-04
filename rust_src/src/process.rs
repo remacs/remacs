@@ -2,6 +2,7 @@
 use libc;
 
 use remacs_macros::lisp_fn;
+use std::convert::Into;
 
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
@@ -21,6 +22,7 @@ use crate::{
         Qinterrupt_process_functions, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp,
         Qreal, Qrun, Qserial, Qstop, Qt,
     },
+    vectors::LispVectorlikeRef,
 };
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
@@ -68,7 +70,7 @@ impl From<LispProcessRef> for LispObject {
 
 impl From<LispObject> for Option<LispProcessRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_process())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_process)
     }
 }
 
@@ -169,7 +171,7 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> Option<LispProcessRef> {
-    get_buffer_process_internal(buffer_or_name.and_then(|b| b.into()))
+    get_buffer_process_internal(buffer_or_name.and_then(Into::into))
 }
 
 pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> Option<LispProcessRef> {

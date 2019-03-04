@@ -17,10 +17,7 @@ use crate::{
     eval::{progn, record_unwind_protect, unbind_to},
     indent::invalidate_current_column,
     lisp::LispObject,
-    marker::{
-        buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
-        set_point_from_marker,
-    },
+    marker::{marker_position_lisp, point_marker, set_point_from_marker},
     multibyte::{
         is_single_byte_char, multibyte_char_at, raw_byte_codepoint, raw_byte_from_codepoint,
         unibyte_to_char, write_codepoint, MAX_MULTIBYTE_LENGTH,
@@ -190,9 +187,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let mut cur_buf = ThreadState::current_buffer_unchecked();
+        let cur_buf = ThreadState::current_buffer_unchecked();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
+        let bytepos = cur_buf.charpos_to_bytepos(pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -205,10 +202,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
-    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
+        let bytepos = cur_buf.charpos_to_bytepos(pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -345,7 +342,7 @@ pub fn preceding_char() -> EmacsInt {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer_unchecked();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     let pos_byte: isize;
 
     if pos.is_nil() {
@@ -366,7 +363,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
+        pos_byte = buffer_ref.charpos_to_bytepos(p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -382,7 +379,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer_unchecked();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     if pos.is_nil() {
         pos = point().into();
     }
@@ -400,7 +397,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
+            let pos_byte = buffer_ref.charpos_to_bytepos(p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -741,7 +738,7 @@ pub fn constrain_to_field(
 /// If BYTEPOS is out of range, the value is nil.
 #[lisp_fn]
 pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
-    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let mut pos_byte = bytepos as isize;
     if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
         return None;
@@ -756,7 +753,7 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
         }
     }
 
-    Some(unsafe { buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) } as EmacsInt)
+    Some(cur_buf.bytepos_to_charpos(pos_byte) as EmacsInt)
 }
 
 /// Return t if two characters match, optionally ignoring case.
@@ -1116,7 +1113,7 @@ pub extern "C" fn save_excursion_save() -> LispObject {
 
     unsafe {
         make_save_obj_obj_obj_obj(
-            point_marker(),
+            point_marker().into(),
             Qnil,
             // Selected window if current buffer is shown in it, nil otherwise.
             if window.contents.eq(current_buffer()) {
