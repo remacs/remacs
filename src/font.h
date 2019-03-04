@@ -606,7 +606,7 @@ struct font_driver
 
      The properties that the font-entity has are the same as described
      for the `list' method above.  */
-  Lisp_Object (*match) (struct frame *f, Lisp_Object spec);
+  Lisp_Object (*match) (struct frame *f, Lisp_Object font_spec);
 
   /* Optional.
      List available families.  The value is a list of family names
