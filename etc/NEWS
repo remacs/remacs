@@ -1166,6 +1166,11 @@ the 128...255 range, as expected.
 +++
 *** New command 'make-frame-on-monitor' makes a frame on the specified monitor.
 
++++
+*** New value of 'minibuffer' frame parameter 'child-frame'.
+This allows to create and parent immediately a minibuffer-only child
+frame when making a frame.
+
 
 * New Modes and Packages in Emacs 27.1
 

@@ -1849,6 +1849,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   Lisp_Object frames, frame1;
   int minibuffer_selected, is_tooltip_frame;
   bool nochild = !FRAME_PARENT_FRAME (f);
+  Lisp_Object minibuffer_child_frame = Qnil;
 
   if (!FRAME_LIVE_P (f))
     return Qnil;
@@ -1865,13 +1866,33 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   /* Softly delete all frames with this frame as their parent frame or
      as their `delete-before' frame parameter value.  */
   FOR_EACH_FRAME (frames, frame1)
-    if (FRAME_PARENT_FRAME (XFRAME (frame1)) == f
+    {
+      struct frame *f1 = XFRAME (frame1);
+
+      if (EQ (frame1, frame) || FRAME_TOOLTIP_P (f1))
+	continue;
+      else if (FRAME_PARENT_FRAME (f1) == f)
+	{
+	  if (FRAME_HAS_MINIBUF_P (f1) && !FRAME_HAS_MINIBUF_P (f)
+	      && EQ (FRAME_MINIBUF_WINDOW (f), FRAME_MINIBUF_WINDOW (f1)))
+	    /* frame1 owns frame's minibuffer window so we must not
+	       delete it here to avoid a surrogate minibuffer error.
+	       Unparent frame1 and make it a top-level frame.  */
+	    {
+	      Fmodify_frame_parameters
+		(frame1, Fcons (Fcons (Qparent_frame, Qnil), Qnil));
+	      minibuffer_child_frame = frame1;
+	    }
+	  else
+	    delete_frame (frame1, Qnil);
+	}
+      else if (nochild
+	       && EQ (get_frame_param (XFRAME (frame1), Qdelete_before), frame))
 	/* Process `delete-before' parameter iff FRAME is not a child
 	   frame.  This avoids that we enter an infinite chain of mixed
 	   dependencies.  */
-	|| (nochild
-	    && EQ (get_frame_param (XFRAME (frame1), Qdelete_before), frame)))
-      delete_frame (frame1, Qnil);
+	delete_frame (frame1, Qnil);
+    }
 
   /* Does this frame have a minibuffer, and is it the surrogate
      minibuffer for any other frame?  */
@@ -2136,18 +2157,27 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	{
 	  struct frame *f1 = XFRAME (frame1);
 
-	  /* Consider only frames on the same kboard
-	     and only those with minibuffers.  */
-	  if (kb == FRAME_KBOARD (f1)
-	      && FRAME_HAS_MINIBUF_P (f1))
-	    {
-	      frame_with_minibuf = frame1;
-	      if (FRAME_MINIBUF_ONLY_P (f1))
-		break;
-	    }
+	  /* Set frame_on_same_kboard to frame1 if it is on the same
+	     keyboard.  Set frame_with_minibuf to frame1 if it also
+	     has a minibuffer.  Leave the loop immediately if frame1
+	     is also minibuffer-only.
 
+	     Emacs 26 does _not_ set frame_on_same_kboard here when it
+	     finds a minibuffer-only frame and subsequently fails to
+	     set default_minibuffer_frame below.  Not a great deal and
+	     never noticed since make_frame_without_minibuffer creates
+	     a new minibuffer frame in that case (which can be a minor
+	     annoyance though).  To consider for Emacs 26.3.  */
 	  if (kb == FRAME_KBOARD (f1))
-	    frame_on_same_kboard = frame1;
+	    {
+	      frame_on_same_kboard = frame1;
+	      if (FRAME_HAS_MINIBUF_P (f1))
+		{
+		  frame_with_minibuf = frame1;
+		  if (FRAME_MINIBUF_ONLY_P (f1))
+		    break;
+		}
+	    }
 	}
 
       if (!NILP (frame_on_same_kboard))
@@ -2180,7 +2210,46 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
       = Fcons (list3 (Qrun_hook_with_args, Qafter_delete_frame_functions, frame),
 	       pending_funcalls);
   else
-      safe_call2 (Qrun_hook_with_args, Qafter_delete_frame_functions, frame);
+    safe_call2 (Qrun_hook_with_args, Qafter_delete_frame_functions, frame);
+
+  if (!NILP (minibuffer_child_frame))
+    /* If minibuffer_child_frame is non-nil, it was FRAME's minibuffer
+       child frame.  Delete it unless it's also the minibuffer frame
+       of another frame in which case we make sure it's visible.  */
+    {
+      struct frame *f1 = XFRAME (minibuffer_child_frame);
+
+      if (FRAME_LIVE_P (f1))
+	{
+	  Lisp_Object window1 = FRAME_ROOT_WINDOW (f1);
+	  Lisp_Object frame2;
+
+	  FOR_EACH_FRAME (frames, frame2)
+	    {
+	      struct frame *f2 = XFRAME (frame2);
+
+	      if (EQ (frame2, minibuffer_child_frame) || FRAME_TOOLTIP_P (f2))
+		continue;
+	      else if (EQ (FRAME_MINIBUF_WINDOW (f2), window1))
+		{
+		  /* minibuffer_child_frame serves as minibuffer frame
+		     for at least one other frame - so make it visible
+		     and quit.  */
+		  if (!FRAME_VISIBLE_P (f1) && !FRAME_ICONIFIED_P (f1))
+		    Fmake_frame_visible (frame1);
+
+		  return Qnil;
+		}
+	    }
+
+	  /* No other frame found that uses minibuffer_child_frame as
+	     minibuffer frame.  If FORCE is Qnoelisp or there are
+	     other visible frames left, delete minibuffer_child_frame
+	     since it presumably was used by FRAME only.  */
+	  if (EQ (force, Qnoelisp) || other_frames (f1, false, !NILP (force)))
+	    delete_frame (minibuffer_child_frame, Qnoelisp);
+	}
+    }
 
   return Qnil;
 }

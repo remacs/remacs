@@ -1884,6 +1884,12 @@ minibuffer window to @code{t} and vice-versa, or from @code{t} to
 @code{nil}.  If the parameter specifies a minibuffer window already,
 setting it to @code{nil} has no effect.
 
+The special value @code{child-frame} means to make a minibuffer-only
+child frame (@pxref{Child Frames}) whose parent becomes the frame
+created.  As if specified as @code{nil}, Emacs will set this parameter
+to the minibuffer window of the child frame but will not select the
+child frame after its creation.
+
 @vindex buffer-predicate@r{, a frame parameter}
 @item buffer-predicate
 The buffer-predicate function for this frame.  The function
@@ -3214,9 +3220,17 @@ top-level frame which also always appears on top of its parent
 window---the desktop's root window.  When a parent frame is iconified or
 made invisible (@pxref{Visibility of Frames}), its child frames are made
 invisible.  When a parent frame is deiconified or made visible, its
-child frames are made visible.  When a parent frame is about to be
-deleted (@pxref{Deleting Frames}), its child frames are recursively
-deleted before it.
+child frames are made visible.
+
+  When a parent frame is about to be deleted (@pxref{Deleting
+Frames}), its child frames are recursively deleted before it.  There
+is one exception to this rule: When the child frame serves as a
+surrogate minibuffer frame (@pxref{Minibuffers and Frames}) for
+another frame, it is retained until the parent frame has been deleted.
+If, at this time, no remaining frame uses the child frame as its
+minibuffer frame, Emacs will try to delete the child frame too.  If
+that deletion fails for whatever reason, the child frame is made a
+top-level frame.
 
   Whether a child frame can have a menu or tool bar is window-system or
 window manager dependent.  Most window-systems explicitly disallow menus
