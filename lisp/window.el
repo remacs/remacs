@@ -4711,7 +4711,7 @@ frames.
 When a window showing BUFFER-OR-NAME is dedicated and the only
 window of its frame, that frame is deleted when there are other
 frames left."
-  (interactive "BDelete windows on (buffer):\nP")
+  (interactive "bDelete windows on (buffer):\nP")
   (let ((buffer (window-normalize-buffer buffer-or-name))
 	;; Handle the "inverted" meaning of the FRAME argument wrt other
 	;; `window-list-1' based function.
@@ -4894,7 +4894,7 @@ BUFFER-OR-NAME.  Optional argument FRAME is handled as by
 
 This function calls `quit-window' on all candidate windows
 showing BUFFER-OR-NAME."
-  (interactive "BQuit windows on (buffer):\nP")
+  (interactive "bQuit windows on (buffer):\nP")
   (let ((buffer (window-normalize-buffer buffer-or-name))
 	;; Handle the "inverted" meaning of the FRAME argument wrt other
 	;; `window-list-1' based function.
@@ -7188,7 +7188,7 @@ on all the frames on the current terminal, skipping the selected
 window; if that fails, it pops up a new frame.
 This uses the function `display-buffer' as a subroutine; see
 its documentation for additional customization information."
-  (interactive "BDisplay buffer in other frame: ")
+  (interactive "bDisplay buffer in other frame: ")
   (display-buffer buffer display-buffer--other-frame-action t))
 
 ;;; `display-buffer' action functions:
