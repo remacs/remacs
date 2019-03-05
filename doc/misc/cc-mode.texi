@@ -2548,7 +2548,7 @@ Basics}).
 @item
 The style variable @code{c-offsets-alist} (@pxref{c-offsets-alist}) is
 an association list with an element for each syntactic symbol.  It's
-handled a little differently from the other style variables.  It's
+handled a little differently from the other style variables.  Its
 default global binding is the empty list @code{nil}, rather than
 @code{set-from-style}.  Before the style system is initialized, you
 can add individual elements to @code{c-offsets-alist} by calling
@@ -5286,7 +5286,7 @@ The simplest and most used kind of ``offset'' setting in
 @defopt c-basic-offset
 @vindex basic-offset @r{(c-)}
 This style variable holds the basic offset between indentation levels.
-It's factory default is 4, but all the built-in styles set it
+Its factory default is 4, but all the built-in styles set it
 themselves, to some value between 2 (for @code{gnu} style) and 8 (for
 @code{bsd}, @code{linux}, and @code{python} styles).
 @end defopt

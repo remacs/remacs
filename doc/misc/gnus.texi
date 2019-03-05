@@ -9394,7 +9394,7 @@ function must return @code{mid}, @code{mail}, @code{invalid} or
 @item gnus-button-mid-or-mail-heuristic
 @findex gnus-button-mid-or-mail-heuristic
 Function that guesses whether its argument is a message ID or a mail
-address.  Returns @code{mid} if it's a message IDs, @code{mail} if
+address.  Returns @code{mid} if it's a message ID, @code{mail} if
 it's a mail address, @code{ask} if unsure and @code{invalid} if the
 string is invalid.
 

@@ -14824,7 +14824,7 @@ According to its documentation as shown by @kbd{C-h f} (the
 @code{describe-function} command), the @code{find-file-noselect}
 function reads the named file into a buffer and returns the buffer.
 (Its most recent version includes an optional @var{wildcards} argument,
-too, as well as another to read a file literally and an other you
+too, as well as another to read a file literally and another to
 suppress warning messages.  These optional arguments are irrelevant.)
 
 However, the @code{find-file-noselect} function does not select the

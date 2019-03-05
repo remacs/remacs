@@ -1741,7 +1741,7 @@ no, only reply back to the author."
   :type 'boolean)
 
 (defcustom message-user-fqdn nil
-  "Domain part of Message-Ids."
+  "Domain part of Message-IDs."
   :version "22.1"
   :group 'message-headers
   :link '(custom-manual "(message)News Headers")
