@@ -237,6 +237,10 @@ properly.  BODY shall not contain a timeout."
   (should (tramp-tramp-file-p "/method:[::1]:"))
   (should (tramp-tramp-file-p "/method:user@[::1]:"))
 
+  ;; Using an IPv4 mapped IPv6 address.
+  (should (tramp-tramp-file-p "/method:[::ffff:192.168.0.1]:"))
+  (should (tramp-tramp-file-p "/method:user@[::ffff:192.168.0.1]:"))
+
   ;; Local file name part.
   (should (tramp-tramp-file-p "/method:::"))
   (should (tramp-tramp-file-p "/method::/:"))
@@ -264,6 +268,7 @@ properly.  BODY shall not contain a timeout."
   (should-not (tramp-tramp-file-p "/1.2.3.4:"))
   (should-not (tramp-tramp-file-p "/[]:"))
   (should-not (tramp-tramp-file-p "/[::1]:"))
+  (should-not (tramp-tramp-file-p "/[::ffff:192.168.0.1]:"))
   (should-not (tramp-tramp-file-p "/host:/:"))
   (should-not (tramp-tramp-file-p "/host1|host2:"))
   (should-not (tramp-tramp-file-p "/user1@host1|user2@host2:"))
@@ -311,6 +316,10 @@ properly.  BODY shall not contain a timeout."
 	  ;; Using an IPv6 address.
 	  (should (tramp-tramp-file-p "/[::1]:"))
 	  (should (tramp-tramp-file-p "/user@[::1]:"))
+
+	  ;; Using an IPv4 mapped IPv6 address.
+	  (should (tramp-tramp-file-p "/[::ffff:192.168.0.1]:"))
+	  (should (tramp-tramp-file-p "/user@[::ffff:192.168.0.1]:"))
 
 	  ;; Local file name part.
 	  (should (tramp-tramp-file-p "/host::"))
@@ -361,6 +370,10 @@ properly.  BODY shall not contain a timeout."
 	  ;; Using an IPv6 address.
 	  (should (tramp-tramp-file-p "/[method/::1]"))
 	  (should (tramp-tramp-file-p "/[method/user@::1]"))
+
+	  ;; Using an IPv4 mapped IPv6 address.
+	  (should (tramp-tramp-file-p "/[method/::ffff:192.168.0.1]"))
+	  (should (tramp-tramp-file-p "/[method/user@::ffff:192.168.0.1]"))
 
 	  ;; Local file name part.
 	  (should (tramp-tramp-file-p "/[method/]"))
