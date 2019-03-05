@@ -1534,7 +1534,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
     (apply #'vector (nreverse files))))
 
 (defun archive-arc-rename-entry (newname descr)
-  (if (string-match "[:\\\\/]" newname)
+  (if (string-match "[:\\/]" newname)
       (error "File names in arc files must not contain a directory component"))
   (if (> (length newname) 12)
       (error "File names in arc files are limited to 12 characters"))
@@ -2016,7 +2016,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       (call-process "lsar" nil t nil "-l" (or file copy))
       (if copy (delete-file copy))
       (goto-char (point-min))
-      (re-search-forward "^\\(\s+=+\s?+\\)+\n")
+      (re-search-forward "^\\(\s+=+\s+\\)+\n")
       (while (looking-at (concat "^\s+[0-9.]+\s+D?-+\s+"   ; Flags
                                  "\\([0-9-]+\\)\s+"        ; Size
                                  "\\([-0-9.%]+\\|-+\\)\s+" ; Ratio

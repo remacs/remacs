@@ -3751,7 +3751,7 @@ just the host name."
     ;; otherwise collapse to select method.
     (let* ((colon (string-match ":" group))
 	   (server (and colon (substring group 0 colon)))
-	   (plus (and server (string-match "+" server))))
+	   (plus (and server (string-match "\\+" server))))
       (when server
 	(if plus
 	    (setq foreign (substring server (+ 1 plus)

@@ -845,11 +845,11 @@ If BEG and END are given, only do this in that region."
 	    (cl-incf cnt-error)
 	    (throw 'next t))
 	  (move-marker bos-marker (point))
-	  (if (re-search-forward "^** Old value[ \t]*$" eos t)
+	  (if (re-search-forward "^\\*\\* Old value[ \t]*$" eos t)
 	      (setq old (buffer-substring
 			 (1+ (match-end 0))
 			 (progn (outline-next-heading) (point)))))
-	  (if (re-search-forward "^** New value[ \t]*$" eos t)
+	  (if (re-search-forward "^\\*\\* New value[ \t]*$" eos t)
 	      (setq new (buffer-substring
 			 (1+ (match-end 0))
 			 (progn (outline-next-heading)

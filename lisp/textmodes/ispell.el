@@ -3475,7 +3475,7 @@ Returns the sum SHIFT due to changes in word replacements."
             ;; Error in tex mode when a potential math mode change exists.
             (if (and replace (listp replace) (= 2 (length replace)))
                 (if (and (eq ispell-parser 'tex)
-                         (string-match "[\\\\][]()[]\\|\\\\begin\\|\\$"
+                         (string-match "[\\][]()[]\\|\\\\begin\\|\\$"
                                        (regexp-quote string)))
                     (error
                      "Don't start query replace on a line with math characters"

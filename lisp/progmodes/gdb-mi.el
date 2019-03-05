@@ -1373,7 +1373,7 @@ With arg, enter name of variable to be watched in the minibuffer."
 TEXT is the text of the button we clicked on, a + or - item.
 TOKEN is data related to this node.
 INDENT is the current indentation depth."
-  (cond ((string-match "+" text)        ;expand this node
+  (cond ((string-match "\\+" text)        ;expand this node
 	 (let* ((var (assoc token gdb-var-list))
 		(expr (nth 1 var)) (children (nth 2 var)))
 	   (if (or (<= (string-to-number children) gdb-max-children)
@@ -4153,7 +4153,7 @@ member."
         (when (not value)
           (setq value "<complex data type>"))
         (if (or (not value)
-                (string-match "\\0x" value))
+                (string-match "0x" value))
             (add-text-properties 0 (length name)
                                  `(mouse-face highlight
                                               help-echo "mouse-2: create watch expression"

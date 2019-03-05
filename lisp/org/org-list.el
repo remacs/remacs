@@ -2678,7 +2678,7 @@ Return t if successful."
 		(error "Cannot outdent beyond margin")
 	      ;; Change bullet if necessary.
 	      (when (and (= (+ top-ind offset) 0)
-			 (string-match "*"
+			 (string-match "\\*"
 				       (org-list-get-bullet beg struct)))
 		(org-list-set-bullet beg struct
 				     (org-list-bullet-string "-")))

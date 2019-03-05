@@ -457,13 +457,13 @@ abbreviated part can also be toggled with
      (": \\(.+\\): \\(?:Permission denied\\|No such \\(?:file or directory\\|device or address\\)\\)$"
       1 grep-error-face)
      ;; remove match from grep-regexp-alist before fontifying
-     ("^Grep[/a-zA-z]* started.*"
+     ("^Grep[/a-zA-Z]* started.*"
       (0 '(face nil compilation-message nil help-echo nil mouse-face nil) t))
-     ("^Grep[/a-zA-z]* finished with \\(?:\\(\\(?:[0-9]+ \\)?matches found\\)\\|\\(no matches found\\)\\).*"
+     ("^Grep[/a-zA-Z]* finished with \\(?:\\(\\(?:[0-9]+ \\)?matches found\\)\\|\\(no matches found\\)\\).*"
       (0 '(face nil compilation-message nil help-echo nil mouse-face nil) t)
       (1 compilation-info-face nil t)
       (2 compilation-warning-face nil t))
-     ("^Grep[/a-zA-z]* \\(exited abnormally\\|interrupt\\|killed\\|terminated\\)\\(?:.*with code \\([0-9]+\\)\\)?.*"
+     ("^Grep[/a-zA-Z]* \\(exited abnormally\\|interrupt\\|killed\\|terminated\\)\\(?:.*with code \\([0-9]+\\)\\)?.*"
       (0 '(face nil compilation-message nil help-echo nil mouse-face nil) t)
       (1 grep-error-face)
       (2 grep-error-face nil t))

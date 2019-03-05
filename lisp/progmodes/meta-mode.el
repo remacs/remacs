@@ -666,7 +666,7 @@ If the list was changed, sort the list and remove duplicates first."
       (let ((count 0))
         (narrow-to-region
          (point) (save-excursion
-                   (re-search-forward "[^\\\\\"]%\\|\n\\|\\'" nil t)
+                   (re-search-forward "[^\\\"]%\\|\n\\|\\'" nil t)
                    (backward-char) (point)))
         (while (re-search-forward "\\<\\sw+\\>\\|(\\|)" nil t)
           (save-excursion

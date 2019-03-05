@@ -279,7 +279,7 @@ Optional MODIFIERS is additional text needed for variables."
 (defun semantic-sb-show-extra (text token indent)
   "Display additional information about the token as an expansion.
 TEXT TOKEN and INDENT are the details."
-  (cond ((string-match "+" text)	;we have to expand this file
+  (cond ((string-match "\\+" text)	;we have to expand this file
 	 (speedbar-change-expand-button-char ?-)
 	 (speedbar-with-writable
 	   (save-excursion
@@ -325,7 +325,7 @@ TEXT TOKEN and INDENT are the details."
 (defun semantic-sb-expand-group (text token indent)
   "Expand a group which has semantic tokens.
 TEXT TOKEN and INDENT are the details."
-  (cond ((string-match "+" text)	;we have to expand this file
+  (cond ((string-match "\\+" text)	;we have to expand this file
 	 (speedbar-change-expand-button-char ?-)
 	 (speedbar-with-writable
 	   (save-excursion

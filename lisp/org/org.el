@@ -10467,7 +10467,7 @@ This is still an experimental function, your mileage may vary."
    ((and (equal type "lisp") (string-match "^/" path))
     ;; Planner has a slash, we do not.
     (setq type "elisp" path (substring path 1)))
-   ((string-match "^//\\(.?*\\)/\\(<.*>\\)$" path)
+   ((string-match "^//\\(.*\\)/\\(<.*>\\)$" path)
     ;; A typical message link.  Planner has the id after the final slash,
     ;; we separate it with a hash mark
     (setq path (concat (match-string 1 path) "#"
@@ -22838,7 +22838,7 @@ assumed to be significant there."
   (save-excursion
     (skip-chars-backward "[ \t]")
     (skip-chars-backward "\\\\")
-    (looking-at "\\\\\\\\\\($\\|[^\\\\]\\)")))
+    (looking-at "\\\\\\\\\\($\\|[^\\]\\)")))
 
 (defun org-fill-paragraph-with-timestamp-nobreak-p ()
   "Non-nil when a new line at point would split a timestamp."

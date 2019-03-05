@@ -3092,7 +3092,7 @@ interpreter (e.g., the percent notation of cmd.exe on Windows)."
 	(let (env-var-name
 	      env-var-val)
 	  (save-match-data
-	    (while (string-match "%\\([^\\\\/]*\\)%" name)
+	    (while (string-match "%\\([^\\/]*\\)%" name)
 	      (setq env-var-name (match-string 1 name))
 	      (setq env-var-val (or (getenv env-var-name) ""))
 	      (setq name (replace-match env-var-val t t name))))))

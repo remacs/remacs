@@ -3145,12 +3145,12 @@ Returns true if comment is found.  In POD will not move the point."
 		  (cond
 		   ((looking-at "\\(s\\|tr\\)\\>")
 		    (or (re-search-forward
-			 "\\=\\w+[ \t]*#\\([^\n\\\\#]\\|\\\\[\\\\#]\\)*#\\([^\n\\\\#]\\|\\\\[\\\\#]\\)*"
+			 "\\=\\w+[ \t]*#\\([^\n\\#]\\|\\\\[\\#]\\)*#\\([^\n\\#]\\|\\\\[\\#]\\)*"
 			 lim 'move)
 			(setq stop-in t)))
 		   ((looking-at "\\(m\\|q\\([qxwr]\\)?\\)\\>")
 		    (or (re-search-forward
-			 "\\=\\w+[ \t]*#\\([^\n\\\\#]\\|\\\\[\\\\#]\\)*#"
+			 "\\=\\w+[ \t]*#\\([^\n\\#]\\|\\\\[\\#]\\)*#"
 			 lim 'move)
 			(setq stop-in t)))
 		   (t			; It was fair comment
@@ -3749,7 +3749,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 			     state-point b nil nil state)
 		      state-point b)
 		(if (or (nth 3 state) (nth 4 state)
-			(looking-at "\\(cut\\|\\end\\)\\>"))
+			(looking-at "\\(cut\\|end\\)\\>"))
 		    (if (or (nth 3 state) (nth 4 state) ignore-max)
 			nil		; Doing a chunk only
 		      (message "=cut is not preceded by a POD section")
@@ -3762,10 +3762,10 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 			b1 nil)		; error condition
 		  ;; We do not search to max, since we may be called from
 		  ;; some hook of fontification, and max is random
-		  (or (re-search-forward "^\n=\\(cut\\|\\end\\)\\>" stop-point 'toend)
+		  (or (re-search-forward "^\n=\\(cut\\|end\\)\\>" stop-point 'toend)
 		      (progn
 			(goto-char b)
-			(if (re-search-forward "\n=\\(cut\\|\\end\\)\\>" stop-point 'toend)
+			(if (re-search-forward "\n=\\(cut\\|end\\)\\>" stop-point 'toend)
 			    (progn
 			      (message "=cut is not preceded by an empty line")
 			      (setq b1 t)
@@ -5003,7 +5003,7 @@ Returns some position at the last line."
 	;; Looking at:
 	;; else   {
 	(if (looking-at
-	     "[ \t]*}?[ \t]*\\<\\(\\els\\(e\\|if\\)\\|continue\\|unless\\|if\\|while\\|for\\(each\\)?\\|until\\)\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]")
+	     "[ \t]*}?[ \t]*\\<\\(els\\(e\\|if\\)\\|continue\\|unless\\|if\\|while\\|for\\(each\\)?\\|until\\)\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]")
 	    (progn
 	      (forward-word-strictly 1)
 	      (delete-horizontal-space)
@@ -5031,7 +5031,7 @@ Returns some position at the last line."
 	;; Looking at (with or without "}" at start, ending after "({"):
 	;; } foreach my $var ()         OR   {
 	(if (looking-at
-	     "[ \t]*\\(}[ \t]*\\)?\\<\\(\\els\\(e\\|if\\)\\|continue\\|if\\|unless\\|while\\|for\\(each\\)?\\(\\([ \t]+\\(state\\|my\\|local\\|our\\)\\)?[ \t]*\\$[_a-zA-Z0-9]+\\)?\\|until\\)\\>\\([ \t]*(\\|[ \t\n]*{\\)\\|[ \t]*{")
+	     "[ \t]*\\(}[ \t]*\\)?\\<\\(els\\(e\\|if\\)\\|continue\\|if\\|unless\\|while\\|for\\(each\\)?\\(\\([ \t]+\\(state\\|my\\|local\\|our\\)\\)?[ \t]*\\$[_a-zA-Z0-9]+\\)?\\|until\\)\\>\\([ \t]*(\\|[ \t\n]*{\\)\\|[ \t]*{")
 	    (progn
 	      (setq ml (match-beginning 8)) ; "(" or "{" after control word
 	      (re-search-forward "[({]")
@@ -7347,7 +7347,7 @@ Currently it is tuned to C and Perl syntax."
      "-[a-zA-Z]"			; File test
      "\\\\[a-zA-Z0]"			; Special chars
      "^=[a-z][a-zA-Z0-9_]*"		; POD sections
-     "[-!&*+,-./<=>?\\\\^|~]+"		; Operator
+     "[-!&*+,./<=>?\\^|~]+"		; Operator
      "[a-zA-Z_0-9:]+"			; symbol or number
      "x="
      "#!")
@@ -7364,7 +7364,7 @@ Currently it is tuned to C and Perl syntax."
   ;; Does not save-excursion
   ;; Get to the something meaningful
   (or (eobp) (eolp) (forward-char 1))
-  (re-search-backward "[-a-zA-Z0-9_:!&*+,-./<=>?\\\\^|~$%@]"
+  (re-search-backward "[-a-zA-Z0-9_:!&*+,./<=>?\\^|~$%@]"
 		      (point-at-bol)
 		      'to-beg)
   ;;  (cond
@@ -7391,8 +7391,8 @@ Currently it is tuned to C and Perl syntax."
     (forward-char -1))
    ((and (looking-at "\\^") (eq (preceding-char) ?\$)) ; $^I
     (forward-char -1))
-   ((looking-at "[-!&*+,-./<=>?\\\\^|~]")
-    (skip-chars-backward "-!&*+,-./<=>?\\\\^|~")
+   ((looking-at "[-!&*+,./<=>?\\^|~]")
+    (skip-chars-backward "-!&*+,./<=>?\\^|~")
     (cond
      ((and (eq (preceding-char) ?\$)
 	   (not (eq (char-after (- (point) 2)) ?\$))) ; $-
@@ -8145,7 +8145,7 @@ prototype \\&SUB	Returns prototype of the function given a reference.
       ;; Protect fragile " ", "#"
       (if have-x nil
 	(goto-char (1+ b))
-	(while (re-search-forward "\\(\\=\\|[^\\\\]\\)\\(\\\\\\\\\\)*[ \t\n#]" e t) ; Need to include (?#) too?
+	(while (re-search-forward "\\(\\=\\|[^\\]\\)\\(\\\\\\\\\\)*[ \t\n#]" e t) ; Need to include (?#) too?
 	  (forward-char -1)
 	  (insert "\\")
 	  (forward-char 1)))

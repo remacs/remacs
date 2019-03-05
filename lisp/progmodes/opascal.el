@@ -1519,7 +1519,7 @@ value of `opascal-tab-always-indents' and the current line position."
         (setq dir-name (match-string 1 dir-name)
               recurse t))
     ;; Ensure the trailing slash is removed.
-    (if (string-match "^\\(.+\\)[\\\\/]$" dir-name)
+    (if (string-match "^\\(.+\\)[\\/]$" dir-name)
         (setq dir-name (match-string 1 dir-name)))
     (opascal-search-directory unit dir-name recurse)))
 

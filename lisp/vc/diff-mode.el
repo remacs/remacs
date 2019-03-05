@@ -1065,7 +1065,7 @@ else cover the whole buffer."
                             " ----\n" hunk))
 		  ;;(goto-char (point-min))
 		  (forward-line 1)
-		  (if (not (save-excursion (re-search-forward "^+" nil t)))
+		  (if (not (save-excursion (re-search-forward "^\\+" nil t)))
 		      (delete-region (point) (point-max))
 		    (let ((modif nil) (delete nil))
 		      (if (save-excursion (re-search-forward "^\\+.*\n-"

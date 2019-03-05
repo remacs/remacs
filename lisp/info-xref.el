@@ -71,7 +71,7 @@ you should set this variable to nil."
 (defun info-xref-lock-file-p (filename)
   "Return non-nil if FILENAME is an Emacs lock file.
 A lock file is \".#foo.txt\" etc per `lock-buffer'."
-  (string-match "\\(\\`\\|\\/\\)\\.#" filename))
+  (string-match "\\(\\`\\|/\\)\\.#" filename))
 
 (defun info-xref-subfile-p (filename)
   "Return t if FILENAME is an info subfile.

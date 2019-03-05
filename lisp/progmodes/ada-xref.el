@@ -416,7 +416,7 @@ As a special case, ${current} is replaced with the name of the current
 file, minus extension but with directory, and ${full_current} is
 replaced by the name including the extension."
 
-  (while (string-match "\\(-[^-$IO]*[IO]\\)?${\\([^}]+\\)}" cmd-string)
+  (while (string-match "\\(-[^-$IO]*[IO]\\)?\\${\\([^}]+\\)}" cmd-string)
     (let (value
 	  (name (match-string 2 cmd-string)))
       (cond

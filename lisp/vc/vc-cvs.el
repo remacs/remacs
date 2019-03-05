@@ -910,7 +910,7 @@ essential information. Note that this can never set the `ignored'
 state."
   (let (file status missing)
     (goto-char (point-min))
-    (while (looking-at "? \\(.*\\)")
+    (while (looking-at "\\? \\(.*\\)")
       (setq file (expand-file-name (match-string 1)))
       (vc-file-setprop file 'vc-state 'unregistered)
       (forward-line 1))

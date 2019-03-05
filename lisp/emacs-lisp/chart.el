@@ -704,7 +704,7 @@ SORT-PRED if desired."
 	(cntlst nil))
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward "\\-[A-Z][a-z][a-z] +\\(\\w+\\)@\\w+" nil t)
+      (while (re-search-forward "-[A-Z][a-z][a-z] +\\(\\w+\\)@\\w+" nil t)
 	(let* ((nam (buffer-substring (match-beginning 1) (match-end 1)))
 	       (m (member nam nmlst)))
 	  (message "Scanned username %s" nam)

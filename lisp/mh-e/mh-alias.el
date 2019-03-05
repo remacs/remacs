@@ -338,7 +338,7 @@ NO-COMMA-SWAP is non-nil."
     ;; Two words -> first.last
     (downcase
      (format "%s.%s" (match-string 1 string) (match-string 2 string))))
-   ((string-match "^\\([-a-zA-Z0-9._]+\\)@[-a-zA-z0-9_]+\\.+[a-zA-Z0-9]+$"
+   ((string-match "^\\([-a-zA-Z0-9._]+\\)@[-a-zA-Z0-9_]+\\.+[a-zA-Z0-9]+$"
                   string)
     ;; email only -> downcase username
     (downcase (match-string 1 string)))

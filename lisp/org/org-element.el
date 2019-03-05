@@ -2119,7 +2119,7 @@ containing `:key', `:value', `:begin', `:end', `:post-blank' and
     ;; this corner case.
     (let ((begin (or (car affiliated) (point)))
 	  (post-affiliated (point))
-	  (key (progn (looking-at "[ \t]*#\\+\\(\\S-+*\\):")
+	  (key (progn (looking-at "[ \t]*#\\+\\(\\S-*\\):")
 		      (upcase (match-string-no-properties 1))))
 	  (value (org-trim (buffer-substring-no-properties
 			    (match-end 0) (point-at-eol))))

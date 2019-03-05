@@ -1288,7 +1288,7 @@ called and its result is inserted."
       ;; According to RFC 822 and its successors, the field name must
       ;; consist of printable US-ASCII characters other than colon,
       ;; i.e., decimal 33-56 and 59-126.
-      '(looking-at "[ \t]\\|[][!\"#$%&'()*+,-./0-9;<=>?@A-Z\\\\^_`a-z{|}~]+:"))
+      '(looking-at "[ \t]\\|[][!\"#$%&'()*+,-./0-9;<=>?@A-Z\\^_`a-z{|}~]+:"))
   "Set this non-nil if the system's mailer runs the header and body together.
 \(This problem exists on Sunos 4 when sendmail is run in remote mode.)
 The value should be an expression to test whether the problem will

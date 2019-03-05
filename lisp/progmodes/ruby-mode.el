@@ -108,7 +108,7 @@
   "Regexp to match the beginning of a heredoc.")
 
   (defconst ruby-expression-expansion-re
-    "\\(?:[^\\]\\|\\=\\)\\(\\\\\\\\\\)*\\(#\\({[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\|\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+\\|\\$[^a-zA-Z \n]\\)\\)"))
+    "\\(?:[^\\]\\|\\=\\)\\(\\\\\\\\\\)*\\(#\\({[^}\n\\]*\\(\\\\.[^}\n\\]*\\)*}\\|\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+\\|\\$[^a-zA-Z \n]\\)\\)"))
 
 (defun ruby-here-doc-end-match ()
   "Return a regexp to find the end of a heredoc.
@@ -929,9 +929,9 @@ Can be one of `heredoc', `modifier', `expr-qstr', `expr-re'."
                    (goto-char (match-end 0))
                    (not (looking-at "\\s_")))
                   ((eq option 'expr-qstr)
-                   (looking-at "[a-zA-Z][a-zA-z0-9_]* +%[^ \t]"))
+                   (looking-at "[a-zA-Z][a-zA-Z0-9_]* +%[^ \t]"))
                   ((eq option 'expr-re)
-                   (looking-at "[a-zA-Z][a-zA-z0-9_]* +/[^ \t]"))
+                   (looking-at "[a-zA-Z][a-zA-Z0-9_]* +/[^ \t]"))
                   (t nil)))))))))
 
 (defun ruby-forward-string (term &optional end no-error expand)
@@ -1047,7 +1047,7 @@ delimiter."
        ((looking-at "\\?")              ;skip ?char
         (cond
          ((and (ruby-expr-beg)
-               (looking-at "?\\(\\\\C-\\|\\\\M-\\)*\\\\?."))
+               (looking-at "\\?\\(\\\\C-\\|\\\\M-\\)*\\\\?."))
           (goto-char (match-end 0)))
          (t
           (goto-char pnt))))
@@ -1794,8 +1794,8 @@ If the result is do-end block, it will always be multiline."
             (buffer-substring-no-properties (1+ min) (1- max))))
       (setq content
             (if (equal string-quote "'")
-                (replace-regexp-in-string "\\\\\"" "\"" (replace-regexp-in-string "\\(\\`\\|[^\\\\]\\)'" "\\1\\\\'" content))
-              (replace-regexp-in-string "\\\\'" "'" (replace-regexp-in-string "\\(\\`\\|[^\\\\]\\)\"" "\\1\\\\\"" content))))
+                (replace-regexp-in-string "\\\\\"" "\"" (replace-regexp-in-string "\\(\\`\\|[^\\]\\)'" "\\1\\\\'" content))
+              (replace-regexp-in-string "\\\\'" "'" (replace-regexp-in-string "\\(\\`\\|[^\\]\\)\"" "\\1\\\\\"" content))))
       (let ((orig-point (point)))
         (delete-region min max)
         (insert
@@ -2178,7 +2178,7 @@ It will be properly highlighted even when the call omits parens.")
           font-lock-constant-face)
         nil t))
     ;; Special globals.
-    (,(concat "\\$\\(?:[:\"!@;,/\\._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
+    (,(concat "\\$\\(?:[:\"!@;,/._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
               (regexp-opt '("LOAD_PATH" "LOADED_FEATURES" "PROGRAM_NAME"
                             "ERROR_INFO" "ERROR_POSITION"
                             "FS" "FIELD_SEPARATOR"

@@ -5788,7 +5788,7 @@ BULLET string, and a list of TEXT strings for the body."
 					; "\end{verbatim}" in text,
 					; it's special:
 	(if (and body-content
-		 (setq bop (string-match "\\end{verbatim}" curr-line)))
+		 (setq bop (string-match "\\\\end{verbatim}" curr-line)))
 	    (setq curr-line (concat (substring curr-line 0 bop)
 				    ">"
 				    (substring curr-line bop))))

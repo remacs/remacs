@@ -427,18 +427,18 @@ reversed."
 	     (forward-char 1)
 	     (setq ex-token-type 'whole))
 	    ((= char ?+)
-	     (cond ((or (looking-at "+[-+]") (looking-at "+[\n|]"))
+	     (cond ((looking-at "\\+[-+\n|]")
 		    (forward-char 1)
 		    (insert "1")
 		    (backward-char 1)
 		  (setq ex-token-type 'plus))
-		   ((looking-at "+[0-9]")
+		   ((looking-at "\\+[0-9]")
 		    (forward-char 1)
 		    (setq ex-token-type 'plus))
 		   (t
 		    (error viper-BadAddress))))
 	    ((= char ?-)
-	     (cond ((or (looking-at "-[-+]") (looking-at "-[\n|]"))
+	     (cond ((looking-at "-[-+\n|]")
 		    (forward-char 1)
 		    (insert "1")
 		    (backward-char 1)
@@ -455,7 +455,7 @@ reversed."
 	       (while (and (not (eolp)) cont)
 		 ;;(re-search-forward "[^/]*/")
 		 (re-search-forward "[^/]*\\(/\\|\n\\)")
-		 (if (not (looking-back "[^\\\\]\\(\\\\\\\\\\)*\\\\/"
+		 (if (not (looking-back "[^\\]\\(\\\\\\\\\\)*\\\\/"
                                         (line-beginning-position 0)))
 		     (setq cont nil))))
 	     (backward-char 1)
@@ -469,7 +469,7 @@ reversed."
 	       (while (and (not (eolp)) cont)
 		 ;;(re-search-forward "[^\\?]*\\?")
 		 (re-search-forward "[^\\?]*\\(\\?\\|\n\\)")
-		 (if (not (looking-back "[^\\\\]\\(\\\\\\\\\\)*\\\\\\?"
+		 (if (not (looking-back "[^\\]\\(\\\\\\\\\\)*\\\\\\?"
                                         (line-beginning-position 0)))
 		     (setq cont nil))
 		 (backward-char 1)
@@ -744,7 +744,7 @@ reversed."
 	     (error
 	      "Global regexp must be inside matching non-alphanumeric chars"))
 	    ((= c ??) (error "`?' is not an allowed pattern delimiter here")))
-      (if (looking-at "[^\\\\\n]")
+      (if (looking-at "[^\\\n]")
 	  (progn
 	    (forward-char 1)
 	    (set-mark (point))
@@ -757,7 +757,7 @@ reversed."
 			(error "Missing closing delimiter for global regexp")
 		      (goto-char (point-max))))
 		(if (not (looking-back
-			  (format "[^\\\\]\\(\\\\\\\\\\)*\\\\%c" c)
+			  (format "[^\\]\\(\\\\\\\\\\)*\\\\%c" c)
                           (line-beginning-position 0)))
 		    (setq cont nil)
 		  ;; we are at an escaped delimiter: unescape it and continue
@@ -1686,7 +1686,7 @@ reversed."
     (message ":set  <Variable> [= <Value>]")
     (or batch (sit-for 2))
 
-    (while (string-match "^[ \\t\\n]*$"
+    (while (string-match "^[ \t\n]*$"
 			 (setq str
 			       (completing-read ":set " ex-variable-alist)))
       (message ":set <Variable> [= <Value>]")

@@ -3322,7 +3322,7 @@ storing and resolving footnotes.  It is created automatically."
 			   (setq value (replace-match "" nil nil value)))))
 		   (lines
 		    (and (string-match
-			  ":lines +\"\\(\\(?:[0-9]+\\)?-\\(?:[0-9]+\\)?\\)\""
+			  ":lines +\"\\([0-9]*-[0-9]*\\)\""
 			  value)
 			 (prog1 (match-string 1 value)
 			   (setq value (replace-match "" nil nil value)))))

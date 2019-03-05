@@ -929,7 +929,7 @@ Mostly we check word delimiters."
                           (or (string= "" ispell-otherchars)
                               (not (looking-at ispell-otherchars)))
                           (or flyspell-consider-dash-as-word-delimiter-flag
-                              (not (looking-at "\\-")))
+                              (not (looking-at "-")))
                           2)))))
        (format "  because    : %S\n"
                (cond
@@ -947,7 +947,7 @@ Mostly we check word delimiters."
                             (or (string= "" ispell-otherchars)
                                 (not (looking-at ispell-otherchars)))
                             (or flyspell-consider-dash-as-word-delimiter-flag
-                                (not (looking-at "\\-")))))))
+                                (not (looking-at "-")))))))
                  ;; Yes because we have reached or typed a word delimiter.
                  'separator)
                 ((not (integerp flyspell-delay))

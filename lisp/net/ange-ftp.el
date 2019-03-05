@@ -2728,7 +2728,7 @@ The main reason for this alist is to deal with file versions in VMS.")
 	    ;; seem to believe in the F-switch
 	    (if (or (and symlink (string-match "@\\'" file))
 		    (and directory (string-match "/\\'" file))
-		    (and executable (string-match "*\\'" file))
+		    (and executable (string-match "\\*\\'" file))
 		    (and socket (string-match "=\\'" file)))
 		(setq file (substring file 0 -1)))))
       (puthash file (or symlink directory) tbl)

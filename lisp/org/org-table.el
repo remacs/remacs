@@ -1182,7 +1182,7 @@ to a number.  In the case of a timestamp, increment by days."
 			      (- (org-time-string-to-absolute txt)
 				 (org-time-string-to-absolute txt-up)))
 			     ((string-match org-ts-regexp3 txt) 1)
-			     ((string-match "\\([-+]\\)?\\(?:[0-9]+\\)?\\(?:\.[0-9]+\\)?" txt-up)
+			     ((string-match "\\([-+]\\)?[0-9]*\\(?:\\.[0-9]+\\)?" txt-up)
 			      (- (string-to-number txt)
 				 (string-to-number (match-string 0 txt-up))))
 			     (t 1)))
@@ -2307,7 +2307,7 @@ LOCATION instead."
 	      "\n"))))
 
 (defsubst org-table-formula-make-cmp-string (a)
-  (when (string-match "\\`$[<>]" a)
+  (when (string-match "\\`\\$[<>]" a)
     (let ((arrow (string-to-char (substring a 1))))
       ;; Fake a high number to make sure this is sorted at the end.
       (setq a (org-table-formula-handle-first/last-rc a))
@@ -2355,7 +2355,7 @@ LOCATION is a buffer position, consider the formulas there."
 		       (cond
 			((not (match-end 2)) m)
 			;; Is it a column reference?
-			((string-match-p "\\`$\\([0-9]+\\|[<>]+\\)\\'" m) m)
+			((string-match-p "\\`\\$\\([0-9]+\\|[<>]+\\)\\'" m) m)
 			;; Since named columns are not possible in
 			;; LHS, assume this is a named field.
 			(t (match-string 2 string)))))
@@ -3216,7 +3216,7 @@ known that the table will be realigned a little later anyway."
 		    (cond
 		     ((string-match "\\`@-?I+" old-lhs)
 		      (user-error "Can't assign to hline relative reference"))
-		     ((string-match "\\`$[<>]" old-lhs)
+		     ((string-match "\\`\\$[<>]" old-lhs)
 		      (let ((new (org-table-formula-handle-first/last-rc
 				  old-lhs)))
 			(when (assoc new eqlist)
@@ -3639,7 +3639,8 @@ Parameters get priority."
       (setq startline (org-current-line))
       (dolist (entry eql)
 	(let* ((type (cond
-		      ((string-match "\\`$\\([0-9]+\\|[<>]+\\)\\'" (car entry))
+		      ((string-match "\\`\\$\\([0-9]+\\|[<>]+\\)\\'"
+				     (car entry))
 		       'column)
 		      ((equal (string-to-char (car entry)) ?@) 'field)
 		      (t 'named)))

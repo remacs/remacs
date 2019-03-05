@@ -65,7 +65,7 @@ If m4 is not in your PATH, set this to an absolute file name."
 (defvar m4-font-lock-keywords
   '(("\\(\\_<\\(m4_\\)?dnl\\_>\\).*$" . font-lock-comment-face)
     ("\\$[*#@0-9]" . font-lock-variable-name-face)
-    ("\\$\\@" . font-lock-variable-name-face)
+    ("\\$@" . font-lock-variable-name-face)
     ("\\$\\*" . font-lock-variable-name-face)
     ("\\_<\\(m4_\\)?\\(builtin\\|change\\(com\\|quote\\|word\\)\\|d\\(e\\(bug\\(file\\|mode\\)\\|cr\\|f\\(ine\\|n\\)\\)\\|iv\\(ert\\|num\\)\\|nl\\|umpdef\\)\\|e\\(rrprint\\|syscmd\\|val\\)\\|f\\(ile\\|ormat\\)\\|gnu\\|i\\(f\\(def\\|else\\)\\|n\\(c\\(lude\\|r\\)\\|d\\(ex\\|ir\\)\\)\\)\\|l\\(en\\|ine\\)\\|m\\(4\\(exit\\|wrap\\)\\|aketemp\\)\\|p\\(atsubst\\|opdef\\|ushdef\\)\\|regexp\\|s\\(hift\\|include\\|ubstr\\|ys\\(cmd\\|val\\)\\)\\|tra\\(ceo\\(ff\\|n\\)\\|nslit\\)\\|un\\(d\\(efine\\|ivert\\)\\|ix\\)\\)\\_>" . font-lock-keyword-face))
   "Default `font-lock-keywords' for M4 mode.")

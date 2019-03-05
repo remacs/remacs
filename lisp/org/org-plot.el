@@ -336,7 +336,7 @@ line directly before or after the table."
                    (insert "\n")
                    (insert-file-contents (plist-get params :script))
                    (goto-char (point-min))
-                   (while (re-search-forward "$datafile" nil t)
+                   (while (re-search-forward "\\$datafile" nil t)
                      (replace-match data-file nil nil)))
 	  (insert (org-plot/gnuplot-script data-file num-cols params)))
 	;; Graph table.

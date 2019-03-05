@@ -612,7 +612,7 @@ See also `mh-compose-forward-as-mime-flag',
               (goto-char (mh-mail-header-end))
               (while
                   (re-search-forward
-                   "^#forw \\[\\([^]]+\\)\\] \\(+\\S-+\\) \\(.*\\)$"
+                   "^#forw \\[\\([^]]+\\)\\] \\(\\+\\S-+\\) \\(.*\\)$"
                    (point-max) t)
                 (let ((description (if (equal (match-string 1)
                                               "forwarded messages")

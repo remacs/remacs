@@ -332,7 +332,7 @@ in the repository root directory of FILE."
          (file-relative-name filename* rootdir))))
 
 (defvar vc-bzr-error-regexp-alist
-  '(("^\\( M[* ]\\|+N \\|-D \\|\\|  \\*\\|R[M ] \\) \\(.+\\)" 2 nil nil 1)
+  '(("^\\( M[* ]\\|\\+N \\|-D \\|\\|  \\*\\|R[M ] \\) \\(.+\\)" 2 nil nil 1)
     ("^C  \\(.+\\)" 2)
     ("^Text conflict in \\(.+\\)" 1 nil nil 2)
     ("^Using saved parent location: \\(.+\\)" 1 nil nil 0))

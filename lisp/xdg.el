@@ -117,7 +117,7 @@ file:///foo/bar.jpg"
 (defun xdg--substitute-home-env (str)
   (if (file-name-absolute-p str) str
     (save-match-data
-      (and (string-match "^$HOME/" str)
+      (and (string-match "^\\$HOME/" str)
            (replace-match "~/" t nil str 0)))))
 
 (defun xdg--user-dirs-parse-line ()

@@ -197,7 +197,7 @@ The directories are searched for in the order they appear in the list.")
                         (mh-funcall-if-exists ietf-drums-parse-address
                                               from-field))))
            (host (and from
-                      (string-match "\\([^+]*\\)\\(+.*\\)?@\\(.*\\)" from)
+                      (string-match "\\([^+]*\\)\\(\\+.*\\)?@\\(.*\\)" from)
                       (downcase (match-string 3 from))))
            (user (and host (downcase (match-string 1 from))))
            (canonical-address (format "%s@%s" user host))

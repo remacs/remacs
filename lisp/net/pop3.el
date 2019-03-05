@@ -585,7 +585,7 @@ Return the response string if optional second argument is non-nil."
       (goto-char pop3-read-point)
       (if (looking-at "-ERR")
 	  (error "%s" (buffer-substring (point) (- match-end 2)))
-	(if (not (looking-at "+OK"))
+	(if (not (looking-at "\\+OK"))
 	    (progn (setq pop3-read-point match-end) nil)
 	  (setq pop3-read-point match-end)
 	  (if return
@@ -684,14 +684,14 @@ If NOW, use that time instead."
   "Send USER information to POP3 server."
   (pop3-send-command process (format "USER %s" user))
   (let ((response (pop3-read-response process t)))
-    (if (not (and response (string-match "+OK" response)))
+    (if (not (and response (string-match "\\+OK" response)))
 	(error "USER %s not valid" user))))
 
 (defun pop3-pass (process)
   "Send authentication information to the server."
   (pop3-send-command process (format "PASS %s" pop3-password))
   (let ((response (pop3-read-response process t)))
-    (if (not (and response (string-match "+OK" response)))
+    (if (not (and response (string-match "\\+OK" response)))
 	(pop3-quit process))))
 
 (defun pop3-apop (process user)
@@ -704,7 +704,7 @@ If NOW, use that time instead."
 	(let ((hash (md5 (concat pop3-timestamp pass) nil nil 'binary)))
 	  (pop3-send-command process (format "APOP %s %s" user hash))
 	  (let ((response (pop3-read-response process t)))
-	    (if (not (and response (string-match "+OK" response)))
+	    (if (not (and response (string-match "\\+OK" response)))
 		(pop3-quit process)))))
     ))
 

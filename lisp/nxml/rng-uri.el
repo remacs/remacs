@@ -42,7 +42,7 @@ escape them using %HH."
 
 (defun rng-uri-escape-multibyte (uri)
   "Escape multibyte characters in URI."
-  (replace-regexp-in-string "[:nonascii:]"
+  (replace-regexp-in-string "[[:nonascii:]]"
 			    'rng-percent-encode
 			    (encode-coding-string uri 'utf-8)))
 

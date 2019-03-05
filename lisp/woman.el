@@ -2624,7 +2624,7 @@ If DELETE is non-nil then delete from point."
 	(t				; Ignore -- leave in buffer
 	 ;; This does not work too well, but it's only for debugging!
 	 (skip-chars-forward "^ \t")
-	 (if (looking-at "[ \t]*\\{") (search-forward "\\}"))
+	 (if (looking-at "[ \t]*{") (search-forward "}"))
 	 (forward-line 1))))
 
 ;; request is not used dynamically by any callees.
@@ -2636,7 +2636,7 @@ If DELETE is non-nil then delete from point."
     ;; Ignore -- leave in buffer
     ;; This does not work too well, but it's only for debugging!
     (skip-chars-forward "^ \t")
-    (if (looking-at "[ \t]*\\{") (search-forward "\\}"))
+    (if (looking-at "[ \t]*{") (search-forward "}"))
     (forward-line 1)))
 
 (defun woman0-so ()
@@ -3268,7 +3268,7 @@ If optional arg CONCAT is non-nil then join arguments."
     (while
 	;; Find font requests, paragraph macros and font escapes:
 	(re-search-forward
-	 "^[.'][ \t]*\\(\\(\\ft\\)\\|\\(.P\\)\\)\\|\\(\\\\f\\)" nil 1)
+	 "^[.'][ \t]*\\(\\(ft\\)\\|\\(.P\\)\\)\\|\\(\\\\f\\)" nil 1)
       (let (font beg notfont fescape)
 	;; Match font indicator and leave point at end of sequence:
 	(cond ((match-beginning 2)

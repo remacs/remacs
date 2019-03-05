@@ -1613,7 +1613,7 @@ INFO is a plist used as a communication channel."
 
 (defun org-latex-clean-invalid-line-breaks (data _backend _info)
   (replace-regexp-in-string
-   "\\(\\end{[A-Za-z0-9*]+}\\|^\\)[ \t]*\\\\\\\\[ \t]*$" "\\1"
+   "\\(\\\\end{[A-Za-z0-9*]+}\\|^\\)[ \t]*\\\\\\\\[ \t]*$" "\\1"
    data))
 
 

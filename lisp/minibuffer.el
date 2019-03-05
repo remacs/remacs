@@ -2311,7 +2311,7 @@ Useful to give the user default values that won't be substituted."
   ;; We can't reuse env--substitute-vars-regexp because we need to match only
   ;; potentially-unfinished envvars at end of string.
   (concat "\\(?:^\\|[^$]\\(?:\\$\\$\\)*\\)"
-          "$\\([[:alnum:]_]*\\|{\\([^}]*\\)\\)\\'"))
+          "\\$\\([[:alnum:]_]*\\|{\\([^}]*\\)\\)\\'"))
 
 (defun completion--embedded-envvar-table (string _pred action)
   "Completion table for envvars embedded in a string.

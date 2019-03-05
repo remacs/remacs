@@ -9446,7 +9446,7 @@ the resulting entry will not be shown.  When TEXT is empty, switch to
     (goto-char (point-min))
     (cond
      ((eq type 'anniversary)
-      (or (re-search-forward "^*[ \t]+Anniversaries" nil t)
+      (or (re-search-forward "^\\*[ \t]+Anniversaries" nil t)
 	  (progn
 	    (or (org-at-heading-p t)
 		(progn

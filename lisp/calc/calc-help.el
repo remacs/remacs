@@ -172,7 +172,7 @@ C-w  Describe how there is no warranty for Calc."
 	  (setq desc (concat "M-" (substring desc 4))))
       (while (string-match "^M-# \\(ESC \\|C-\\)" desc)
 	(setq desc (concat "M-# " (substring desc (match-end 0)))))
-      (if (string-match "\\(DEL\\|\\LFD\\|RET\\|SPC\\|TAB\\)" desc)
+      (if (string-match "\\(DEL\\|LFD\\|RET\\|SPC\\|TAB\\)" desc)
           (setq desc (replace-match "<\\&>" nil nil desc)))
       (if briefly
 	  (let ((msg (with-current-buffer (get-buffer-create "*Calc Summary*")

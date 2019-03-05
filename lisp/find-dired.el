@@ -175,7 +175,7 @@ use in place of \"-ls\" as the final argument."
 			  " " args " "
 			  (shell-quote-argument ")")
 			  " "))
-		       (if (string-match "\\`\\(.*\\) {} \\(\\\\;\\|+\\)\\'"
+		       (if (string-match "\\`\\(.*\\) {} \\(\\\\;\\|\\+\\)\\'"
 					 (car find-ls-option))
 			   (format "%s %s %s"
 				   (match-string 1 (car find-ls-option))

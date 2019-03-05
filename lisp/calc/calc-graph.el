@@ -1121,7 +1121,7 @@ This \"dumb\" driver will be present in Gnuplot 3.0."
                  (eval (intern
                         (concat "var-"
                                 (save-excursion
-                                  (re-search-backward ":\\(.*\\)\\}")
+				  (re-search-backward ":\\(.*\\)}")
                                   (match-string 1))))))
               (error nil)))
       (if yerr
@@ -1186,7 +1186,7 @@ This \"dumb\" driver will be present in Gnuplot 3.0."
 	 (or (looking-at "{")
 	     (error "Can't hide this curve (wrong format)"))
 	 (forward-char 1)
-	 (if (looking-at "*")
+	 (if (looking-at "\\*")
 	     (if (or (null flag) (<= (prefix-numeric-value flag) 0))
 		 (delete-char 1))
 	   (if (or (null flag) (> (prefix-numeric-value flag) 0))

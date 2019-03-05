@@ -2474,7 +2474,7 @@ specified."
 
 (defun vhdl-resolve-env-variable (string)
   "Resolve environment variables in STRING."
-  (while (string-match "\\(.*\\)${?\\(\\(\\w\\|_\\)+\\)}?\\(.*\\)" string)
+  (while (string-match "\\(.*\\)\\${?\\(\\(\\w\\|_\\)+\\)}?\\(.*\\)" string)
     (setq string (concat (match-string 1 string)
 			 (getenv (match-string 2 string))
 			 (match-string 4 string))))
@@ -15115,7 +15115,7 @@ otherwise use cached data."
 (defun vhdl-speedbar-expand-project (text token indent)
   "Expand/contract the project under the cursor."
   (cond
-   ((string-match "+" text)		; expand project
+   ((string-match "\\+" text)		; expand project
     (speedbar-change-expand-button-char ?-)
     (unless (member token vhdl-speedbar-shown-project-list)
       (setq vhdl-speedbar-shown-project-list
@@ -15137,7 +15137,7 @@ otherwise use cached data."
 (defun vhdl-speedbar-expand-entity (text token indent)
   "Expand/contract the entity under the cursor."
   (cond
-   ((string-match "+" text)		; expand entity
+   ((string-match "\\+" text)		; expand entity
     (let* ((key (vhdl-speedbar-line-key indent))
 	   (ent-alist (vhdl-aget vhdl-entity-alist key))
 	   (ent-entry (vhdl-aget ent-alist token))
@@ -15206,7 +15206,7 @@ otherwise use cached data."
 (defun vhdl-speedbar-expand-architecture (text token indent)
   "Expand/contract the architecture under the cursor."
   (cond
-   ((string-match "+" text)		; expand architecture
+   ((string-match "\\+" text)		; expand architecture
     (let* ((key (vhdl-speedbar-line-key (1- indent)))
 	   (ent-alist (vhdl-aget vhdl-entity-alist key))
 	   (conf-alist (vhdl-aget vhdl-config-alist key))
@@ -15266,7 +15266,7 @@ otherwise use cached data."
 (defun vhdl-speedbar-expand-config (text token indent)
   "Expand/contract the configuration under the cursor."
   (cond
-   ((string-match "+" text)		; expand configuration
+   ((string-match "\\+" text)		; expand configuration
     (let* ((key (vhdl-speedbar-line-key indent))
 	   (conf-alist (vhdl-aget vhdl-config-alist key))
 	   (conf-entry (vhdl-aget conf-alist token))
@@ -15324,7 +15324,7 @@ otherwise use cached data."
 (defun vhdl-speedbar-expand-package (text token indent)
   "Expand/contract the package under the cursor."
   (cond
-   ((string-match "+" text)		; expand package
+   ((string-match "\\+" text)		; expand package
     (let* ((key (vhdl-speedbar-line-key indent))
 	   (pack-alist (vhdl-aget vhdl-package-alist key))
 	   (pack-entry (vhdl-aget pack-alist token))
@@ -15729,7 +15729,7 @@ NO-POSITION non-nil means do not re-position cursor."
 
 (defun vhdl-speedbar-dired (text token indent)
   "Speedbar click handler for directory expand button in hierarchy mode."
-  (cond ((string-match "+" text)	; we have to expand this dir
+  (cond ((string-match "\\+" text)	; we have to expand this dir
 	 (setq speedbar-shown-directories
 	       (cons (expand-file-name
 		      (concat (speedbar-line-directory indent) token "/"))

@@ -2430,7 +2430,7 @@ the United States."
 	  (beep)
 	(and (not (calc-minibuffer-contains "[-+]?\\(1[5-9]\\|[2-9][0-9]\\)#.*"))
 	     (search-forward "e" nil t))
-	(if (looking-at "+")
+	(if (looking-at "\\+")
 	    (delete-char 1))
 	(if (looking-at "-")
 	    (delete-char 1)

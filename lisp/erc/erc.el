@@ -4285,7 +4285,7 @@ and as second argument the event parsed as a vector."
 (defun erc-is-message-ctcp-and-not-action-p (message)
   "Check if MESSAGE is a CTCP message or not."
   (and (erc-is-message-ctcp-p message)
-       (not (string-match "^\C-a\\ACTION.*\C-a$" message))))
+       (not (string-match "^\C-aACTION.*\C-a$" message))))
 
 (defun erc-format-privmessage (nick msg privp msgp)
   "Format a PRIVMSG in an insertable fashion."
@@ -4491,7 +4491,7 @@ See also: `erc-echo-notice-in-user-buffers',
                                     (mapcar #'upcase
                                             (cdr (split-string mode)))))
                         erc-channel-banlist)))
-                ((string-match "^+" mode)
+                ((string-match "^\\+" mode)
                  ;; Add the banned mask(s) to the ban list
                  (mapc
                   (lambda (mask)

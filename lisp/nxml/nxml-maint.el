@@ -34,10 +34,10 @@
   (let (lst head)
     (with-current-buffer (find-file-noselect file)
       (goto-char (point-min))
-      (while (re-search-forward "^ *\\([a-FA-F0-9]\\{2\\}\\)[ \t]+" nil t)
+      (while (re-search-forward "^ *\\([a-fA-F0-9]\\{2\\}\\)[ \t]+" nil t)
 	(let ((row (match-string 1))
 	      (eol (line-end-position)))
-	  (while (re-search-forward "\\([a-FA-F0-9]\\{2\\}\\)-\\([a-FA-F0-9]\\{2\\}\\)\\|\\([a-FA-F0-9]\\{2\\}\\)" eol t)
+	  (while (re-search-forward "\\([a-fA-F0-9]\\{2\\}\\)-\\([a-fA-F0-9]\\{2\\}\\)\\|\\([a-fA-F0-9]\\{2\\}\\)" eol t)
 	    (setq lst
 		  (cons (if (match-beginning 3)
 			    (concat "#x" row (match-string 3))

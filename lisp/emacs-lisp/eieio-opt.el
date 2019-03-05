@@ -327,7 +327,7 @@ current expansion depth."
 (defun eieio-sb-expand (text class indent)
   "For button TEXT, expand CLASS at the current location.
 Argument INDENT is the depth of indentation."
-  (cond ((string-match "+" text)	;we have to expand this file
+  (cond ((string-match "\\+" text)	;we have to expand this file
 	 (speedbar-change-expand-button-char ?-)
 	 (speedbar-with-writable
 	   (save-excursion

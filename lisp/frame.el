@@ -1072,7 +1072,7 @@ face specs for the new background mode."
 	   (default-bg-mode
 	     (if (or (window-system frame)
 		     (and tty-type
-			  (string-match "^\\(xterm\\|\\rxvt\\|dtterm\\|eterm\\)"
+			  (string-match "^\\(xterm\\|rxvt\\|dtterm\\|eterm\\)"
 					tty-type)))
 		 'light
 	       'dark))

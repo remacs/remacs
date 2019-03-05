@@ -209,7 +209,7 @@ parses to
 	    ;; 3.3. Path
 	    (skip-chars-forward "^?#")
 	    ;; 3.4. Query
-	    (when (looking-at "?")
+	    (when (looking-at "\\?")
 	      (skip-chars-forward "^#"))
 	    (setq file (buffer-substring save-pos (point)))
 	    ;; 3.5 Fragment

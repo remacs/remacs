@@ -2955,7 +2955,7 @@ If the table is trivial, then return it as a scalar."
 (defun org-babel-string-read (cell)
   "Strip nested \"s from around strings."
   (org-babel-read (or (and (stringp cell)
-                           (string-match "\\\"\\(.+\\)\\\"" cell)
+                           (string-match "\"\\(.+\\)\"" cell)
                            (match-string 1 cell))
                       cell) t))
 

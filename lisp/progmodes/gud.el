@@ -2237,7 +2237,7 @@ relative to a classpath directory."
 		    (split-string
 		     ;; Eliminate any subclass references in the class
 		     ;; name string. These start with a "$"
-                     (if (string-match "$.*" p)
+                     (if (string-match "\\$.*" p)
                          (replace-match "" t t p) p)
 		     "\\.") "/")
 	 ".java"))

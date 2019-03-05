@@ -870,7 +870,7 @@ Derived from `tramp-prefix-ipv6-format'.")
 ;; The following regexp is a bit sloppy.  But it shall serve our
 ;; purposes.  It covers also IPv4 mapped IPv6 addresses, like in
 ;; "::ffff:192.168.0.1".
-(defconst tramp-ipv6-regexp "\\(?:\\(?:[a-zA-Z0-9]+\\)?:\\)+[a-zA-Z0-9.]+"
+(defconst tramp-ipv6-regexp "\\(?:[a-zA-Z0-9]*:\\)+[a-zA-Z0-9.]+"
   "Regexp matching IPv6 addresses.")
 
 (defconst tramp-postfix-ipv6-format-alist
@@ -2087,7 +2087,7 @@ Return the string with the replaced variables."
        (tramp-compat-funcall 'substitute-env-vars filename 'only-defined))
      ;; We need an own implementation.
      (save-match-data
-       (let ((idx (string-match "$\\(\\w+\\)" filename)))
+       (let ((idx (string-match "\\$\\(\\w+\\)" filename)))
 	 ;; `$' is coded as `$$'.
 	 (when (and idx
 		    (or (zerop idx) (not (eq ?$ (aref filename (1- idx)))))

@@ -2786,7 +2786,7 @@ find the errors."
 (defconst verilog-behavioral-block-beg-re
   (eval-when-compile (verilog-regexp-words '("initial" "final" "always" "always_comb" "always_latch" "always_ff"
                                              "function" "task"))))
-(defconst verilog-coverpoint-re "\\w+\\s*:\\s*\\(coverpoint\\|cross\\constraint\\)"  )
+(defconst verilog-coverpoint-re "\\w+\\s-*:\\s-*\\(coverpoint\\|cross\\constraint\\)"  )
 (defconst verilog-in-constraint-re  ; keywords legal in constraint blocks starting a statement/block
   (eval-when-compile (verilog-regexp-words '("if" "else" "solve" "foreach"))))
 
@@ -6559,7 +6559,7 @@ Return >0 for nested struct."
     (skip-chars-forward " \t\n\f")
     (while
 	(cond
-	 ((looking-at "\\/\\*")
+	 ((looking-at "/\\*")
 	  (progn
 	    (setq h (point))
 	    (goto-char (match-end 0))
@@ -8952,7 +8952,7 @@ Inserts the list of signals found."
 		   (error "%s: Unmatched (* *), at char %d" (verilog-point-text) (point))))
 	      ;; On pins, parse and advance to next pin
 	      ;; Looking at pin, but *not* an // Output comment, or ) to end the inst
-	      ((looking-at "\\s-*[a-zA-Z0-9`_$({}\\\\][^,]*")
+	      ((looking-at "\\s-*[a-zA-Z0-9`_$({}\\][^,]*")
 	       (goto-char (match-end 0))
 	       (setq verilog-read-sub-decls-gate-ios (or (car iolist) "input")
 		     iolist (cdr iolist))
@@ -9357,7 +9357,7 @@ Returns REGEXP and list of ( (signal_name connection_name)... )."
 	      ;; Regexp form??
 	      ((looking-at
 		;; Regexp bug in XEmacs disallows ][ inside [], and wants + last
-		"\\s-*\\.\\(\\([a-zA-Z0-9`_$+@^.*?|---]\\|[][]\\|\\\\[()|]\\)+\\)\\s-*(\\(.*\\))\\s-*\\(,\\|)\\s-*;\\)")
+		"\\s-*\\.\\(\\([-a-zA-Z0-9`_$+@^.*?]\\|[][]\\|\\\\[()|]\\)+\\)\\s-*(\\(.*\\))\\s-*\\(,\\|)\\s-*;\\)")
 	       (setq rep (match-string-no-properties 3))
 	       (goto-char (match-end 0))
 	       (setq tpl-wild-list

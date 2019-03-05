@@ -308,7 +308,7 @@ also applies `reftex-translate-to-ascii-function' to the string."
   ;; Replace %escapes in a label prefix
   (save-match-data
     (let (letter (num 0) replace)
-      (while (string-match "\\%\\([a-zA-Z]\\)" prefix num)
+      (while (string-match "%\\([a-zA-Z]\\)" prefix num)
         (setq letter (match-string 1 prefix))
         (setq replace
               (save-match-data

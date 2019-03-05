@@ -609,7 +609,7 @@ ARG is optional."
   (rx-check form)
   (let ((result (rx-form (cadr form) '!))
 	case-fold-search)
-    (cond ((string-match "\\`\\[^" result)
+    (cond ((string-match "\\`\\[\\^" result)
 	   (cond
 	    ((equal result "[^]") "[^^]")
 	    ((and (= (length result) 4) (null (eq rx-parent '!)))
@@ -787,7 +787,7 @@ of all atomic regexps."
      ((= l 3) (string-match "\\`\\(?:\\\\[cCsS_]\\|\\[[^^]\\]\\)" r))
      ((null lax)
       (cond
-       ((string-match "\\`\\[^?\]?\\(?:\\[:[a-z]+:]\\|[^]]\\)*\\]\\'" r))
+       ((string-match "\\`\\[\\^?]?\\(?:\\[:[a-z]+:]\\|[^]]\\)*]\\'" r))
        ((string-match "\\`\\\\(\\(?:[^\\]\\|\\\\[^)]\\)*\\\\)\\'" r)))))))
 
 

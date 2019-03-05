@@ -572,7 +572,7 @@ within the region."
   (with-current-buffer (get-buffer-create pgg-output-buffer)
     (buffer-disable-undo)
     (erase-buffer)
-    (let ((proto (if (string-match "^[a-zA-Z\\+\\.\\\\-]+:" keyserver)
+    (let ((proto (if (string-match "^[a-zA-Z\\+.-]+:" keyserver)
 		     (substring keyserver 0 (1- (match-end 0))))))
       (save-excursion
 	(funcall pgg-insert-url-function

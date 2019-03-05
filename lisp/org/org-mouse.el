@@ -643,7 +643,7 @@ This means, between the beginning of line and the point."
 	 ,@(org-mouse-list-options-menu (mapcar 'car org-startup-options)
 					'org-mode-restart))))
      ((or (eolp)
-	  (and (looking-at "\\(  \\|\t\\)\\(+:[0-9a-zA-Z_:]+\\)?\\(  \\|\t\\)+$")
+	  (and (looking-at "\\(  \\|\t\\)\\(\\+:[0-9a-zA-Z_:]+\\)?\\(  \\|\t\\)+$")
 	       (looking-back "  \\|\t" (- (point) 2)
 			     (line-beginning-position))))
       (org-mouse-popup-global-menu))

@@ -2874,7 +2874,8 @@ See more for options in `search-exit-option'."
            (or (eq (get this-command 'isearch-move) 'enabled)
                (and (eq isearch-yank-on-move t)
                     (stringp (nth 1 (interactive-form this-command)))
-                    (string-match-p "^^" (nth 1 (interactive-form this-command))))
+                    (string-match-p "^\\^"
+				    (nth 1 (interactive-form this-command))))
                (and (eq isearch-yank-on-move 'shift)
                     this-command-keys-shift-translated)))
       (setq this-command-keys-shift-translated nil)

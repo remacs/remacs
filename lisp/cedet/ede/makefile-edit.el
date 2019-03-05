@@ -105,7 +105,7 @@ STOP-BEFORE is a regular expression matching a file name."
 	(let ((e (save-excursion
 		   (makefile-end-of-command)
 		   (point))))
-	  (while (re-search-forward "\\s-**\\([-a-zA-Z0-9./_@$%(){}]+\\)\\s-*" e t)
+	  (while (re-search-forward "\\s-*\\([-a-zA-Z0-9./_@$%(){}]+\\)\\s-*" e t)
 	    (let ((var nil)(varexp nil)
 		  (match (buffer-substring-no-properties
 			  (match-beginning 1)

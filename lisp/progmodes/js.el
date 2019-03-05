@@ -1838,7 +1838,7 @@ This performs fontification according to `js--class-styles'."
                   (save-excursion (backward-char) (not (looking-at "[/*]/\\|=>")))
                   (js--looking-at-operator-p)
                   (and (progn (backward-char)
-                              (not (looking-at "+\\+\\|--\\|/[/*]"))))))))))
+                              (not (looking-at "\\+\\+\\|--\\|/[/*]"))))))))))
 
 (defun js--skip-term-backward ()
   "Skip a term before point; return t if a term was skipped."

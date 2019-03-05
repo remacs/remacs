@@ -2575,7 +2575,7 @@ the message.  Point is at the beginning of the message."
   (save-excursion
     (setq deleted-head
 	  (cons (if (and (search-forward (concat rmail-attribute-header ": ") message-end t)
-			 (looking-at "?D"))
+			 (looking-at "\\?D"))
 		    ?D
 		  ?\s) deleted-head))))
 

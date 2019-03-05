@@ -294,7 +294,7 @@ your changes into effect."
   nil
   nil
   ;; Hostname ? user date request return-code number-of-bytes
-  '(("^\\([-a-zA-z0-9.]+\\) - [-A-Za-z]+ \\(\\[.*\\]\\)"
+  '(("^\\([-a-zA-Z0-9.]+\\) - [-A-Za-z]+ \\(\\[.*\\]\\)"
      (1 font-lock-constant-face)
      (2 font-lock-variable-name-face)))
   '("access_log\\'")

@@ -331,7 +331,7 @@ returned list."
 	 (len 0)
 	 dir
 	 ret)
-    (when (string-match "^\\(.*\\)\\(org-protocol:/+[a-zA-z0-9][-_a-zA-z0-9]*:/+\\)\\(.*\\)" trigger)
+    (when (string-match "^\\(.*\\)\\(org-protocol:/+[a-zA-Z0-9][-_a-zA-Z0-9]*:/+\\)\\(.*\\)" trigger)
       (setq dir (match-string 1 trigger))
       (setq len (length dir))
       (setcar l (concat dir (match-string 3 trigger))))
