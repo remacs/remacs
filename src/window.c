@@ -8135,7 +8135,7 @@ at least one window on that frame has been added, deleted, changed its
 buffer or its total or body size or the frame has been (de-)selected
 or its selected window has changed since the last redisplay.  In this
 case the frame is passed as argument.  */);
-  Vwindow_selection_change_functions = Qnil;
+  Vwindow_state_change_functions = Qnil;
 
   DEFVAR_LISP ("window-configuration-change-hook", Vwindow_configuration_change_hook,
 	       doc: /* Functions called during redisplay when window configuration has changed.
