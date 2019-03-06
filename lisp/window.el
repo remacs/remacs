@@ -8026,10 +8026,13 @@ Return 0 otherwise."
 (defun fit-frame-to-buffer (&optional frame max-height min-height max-width min-width only)
   "Adjust size of FRAME to display the contents of its buffer exactly.
 FRAME can be any live frame and defaults to the selected one.
-Fit only if FRAME's root window is live.  MAX-HEIGHT, MIN-HEIGHT,
-MAX-WIDTH and MIN-WIDTH specify bounds on the new total size of
-FRAME's root window.  MIN-HEIGHT and MIN-WIDTH default to the values of
-`window-min-height' and `window-min-width' respectively.
+Fit only if FRAME's root window is live.
+
+MAX-HEIGHT, MIN-HEIGHT, MAX-WIDTH and MIN-WIDTH specify bounds on
+the new total size of FRAME's root window.  MIN-HEIGHT and
+MIN-WIDTH default to the values of `window-min-height' and
+`window-min-width' respectively.  These arguments are specified
+in the canonical character width and height of FRAME.
 
 If the optional argument ONLY is `vertically', resize the frame
 vertically only.  If ONLY is `horizontally', resize the frame
