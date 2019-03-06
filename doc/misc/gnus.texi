@@ -27216,6 +27216,8 @@ actually are people who are using Gnus.  Who'd'a thunk it!
 * Ma Gnus::                     Celebrating 25 years of Gnus.
 @end menu
 
+For summaries of more recent changes, see the normal Emacs @file{NEWS} files.
+
 These lists are, of course, just @emph{short} overviews of the
 @emph{most} important new features.  No, really.  There are tons more.
 Yes, we have feeping creaturism in full effect.
