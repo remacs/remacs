@@ -800,6 +800,9 @@ zone name instead of the numeric form.  The '%z' format continues to
 be the numeric form.  The new behavior is compatible with
 'format-time-string'.
 
+*** New user option 'gnus-rcvstore-options' provides a way to
+specify additional options when saving messages to an MH folder.
+
 ** Ibuffer
 
 *** New command 'ibuffer-jump'.
