@@ -3761,7 +3761,7 @@ compute_display_string_pos (struct text_pos *position,
 	  || !EQ (Fget_char_property (make_fixnum (charpos - 1), Qdisplay,
 				      object),
 		  spec))
-      && (rv = handle_display_spec (NULL, spec, object, Qnil, &tpos, bufpos,
+      && (rv = handle_display_spec (NULL, spec, object1, Qnil, &tpos, bufpos,
 				    frame_window_p)))
     {
       if (rv == 2)
@@ -3788,7 +3788,7 @@ compute_display_string_pos (struct text_pos *position,
     if (!STRINGP (object))
       bufpos = CHARPOS (tpos);
   } while (NILP (spec)
-	   || !(rv = handle_display_spec (NULL, spec, object, Qnil, &tpos,
+	   || !(rv = handle_display_spec (NULL, spec, object1, Qnil, &tpos,
 					  bufpos, frame_window_p)));
   if (rv == 2)
     *disp_prop = 2;
