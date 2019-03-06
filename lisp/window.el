@@ -8225,7 +8225,7 @@ MAX-HEIGHT, MIN-HEIGHT, MAX-WIDTH and MIN-WIDTH specify bounds on
 the new total size of FRAME's root window.  MIN-HEIGHT and
 MIN-WIDTH default to the values of `window-min-height' and
 `window-min-width' respectively.  These arguments are specified
-in the canonical character width and height of WINDOW's frame.
+in the canonical character width and height of FRAME.
 
 If the optional argument ONLY is `vertically', resize the frame
 vertically only.  If ONLY is `horizontally', resize the frame
