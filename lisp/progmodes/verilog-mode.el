@@ -121,7 +121,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2019-03-05-e72ce53-vpo-GNU"
+(defconst verilog-mode-version "2019-03-05-39b4dac-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -2786,7 +2786,7 @@ find the errors."
 (defconst verilog-behavioral-block-beg-re
   (eval-when-compile (verilog-regexp-words '("initial" "final" "always" "always_comb" "always_latch" "always_ff"
                                              "function" "task"))))
-(defconst verilog-coverpoint-re "\\w+\\s*:\\s*\\(coverpoint\\|cross\\|constraint\\)")
+(defconst verilog-coverpoint-re "\\w+\\s-*:\\s-*\\(coverpoint\\|cross\\|constraint\\)")
 (defconst verilog-in-constraint-re  ; keywords legal in constraint blocks starting a statement/block
   (eval-when-compile (verilog-regexp-words '("if" "else" "solve" "foreach"))))
 
