@@ -1,7 +1,5 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include gnus-overrides.texi
-
 @set VERSION 0.3
 
 @setfilename ../../info/auth.info

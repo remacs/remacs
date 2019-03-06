@@ -1,7 +1,5 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/pgg.info
 
 @set VERSION 0.1

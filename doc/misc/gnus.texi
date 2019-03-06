@@ -1,7 +1,5 @@
 \input texinfo
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/gnus.info
 @settitle Gnus Manual
 @include docstyle.texi

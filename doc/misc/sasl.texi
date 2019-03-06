@@ -1,7 +1,5 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/sasl.info
 
 @set VERSION 0.2

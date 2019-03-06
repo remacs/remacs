@@ -1,7 +1,5 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/message.info
 @settitle Message Manual
 @include docstyle.texi

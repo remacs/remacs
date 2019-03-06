@@ -1,7 +1,5 @@
 \input texinfo
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/emacs-mime.info
 @settitle Emacs MIME Manual
 @include docstyle.texi

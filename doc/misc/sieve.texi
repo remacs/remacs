@@ -1,7 +1,5 @@
 \input texinfo                  @c -*-texinfo-*-
 
-@include gnus-overrides.texi
-
 @setfilename ../../info/sieve.info
 @settitle Emacs Sieve Manual
 @include docstyle.texi
