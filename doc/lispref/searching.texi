@@ -950,7 +950,7 @@ whitespace:
 @end defun
 
 @cindex optimize regexp
-@defun regexp-opt strings &optional paren noreorder
+@defun regexp-opt strings &optional paren keep-order
 This function returns an efficient regular expression that will match
 any of the strings in the list @var{strings}.  This is useful when you
 need to make matching or searching as fast as possible---for example,
@@ -988,7 +988,7 @@ if it is necessary to ensure that a postfix operator appended to
 it will apply to the whole expression.
 @end table
 
-The optional argument @var{noreorder}, if @code{nil} or omitted,
+The optional argument @var{keep-order}, if @code{nil} or omitted,
 allows the returned regexp to match the strings in any order.  If
 non-@code{nil}, the match is guaranteed to be performed in the order
 given, as if the strings were made into a regexp by joining them with

@@ -84,7 +84,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun regexp-opt (strings &optional paren noreorder)
+(defun regexp-opt (strings &optional paren keep-order)
   "Return a regexp to match a string in the list STRINGS.
 Each string should be unique in STRINGS and should not contain
 any regexps, quoted or not.  Optional PAREN specifies how the
@@ -114,7 +114,7 @@ nil
     necessary to ensure that a postfix operator appended to it will
     apply to the whole expression.
 
-The optional argument NOREORDER, if nil or omitted, allows the
+The optional argument KEEP-ORDER, if nil or omitted, allows the
 returned regexp to match the strings in any order.  If non-nil,
 the match is guaranteed to be performed in the order given, as if
 the strings were made into a regexp by joining them with the
@@ -149,7 +149,7 @@ usually more efficient than that of a simplified version:
               (concat (or open "\\(?:") "a\\`\\)"))
              ;; If we cannot reorder, give up all attempts at
              ;; optimisation.  There is room for improvement (Bug#34641).
-             ((and noreorder (regexp-opt--contains-prefix sorted-strings))
+             ((and keep-order (regexp-opt--contains-prefix sorted-strings))
               (concat (or open "\\(?:")
                       (mapconcat #'regexp-quote strings "\\|")
                       "\\)"))
