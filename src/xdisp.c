@@ -11035,15 +11035,15 @@ unwind_with_echo_area_buffer (Lisp_Object vector)
       buffer = AREF (vector, 4);
 
       wset_buffer (w, buffer);
-      set_marker_both (w->pointm, buffer,
-		       XFIXNAT (AREF (vector, 5)),
-		       XFIXNAT (AREF (vector, 6)));
-      set_marker_both (w->old_pointm, buffer,
-		       XFIXNAT (AREF (vector, 7)),
-		       XFIXNAT (AREF (vector, 8)));
-      set_marker_both (w->start, buffer,
-		       XFIXNAT (AREF (vector, 9)),
-		       XFIXNAT (AREF (vector, 10)));
+      set_marker_restricted_both (w->pointm, buffer,
+				  XFIXNAT (AREF (vector, 5)),
+				  XFIXNAT (AREF (vector, 6)));
+      set_marker_restricted_both (w->old_pointm, buffer,
+				  XFIXNAT (AREF (vector, 7)),
+				  XFIXNAT (AREF (vector, 8)));
+      set_marker_restricted_both (w->start, buffer,
+				  XFIXNAT (AREF (vector, 9)),
+				  XFIXNAT (AREF (vector, 10)));
     }
 
   Vwith_echo_area_save_vector = vector;
