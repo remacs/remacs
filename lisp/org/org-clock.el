@@ -1622,9 +1622,10 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 						"\\>"))))
 		  (org-todo org-clock-out-switch-to-state))))))
 	  (force-mode-line-update)
-	  (message (concat "Clock stopped at %s after "
-			   (org-duration-from-minutes (+ (* 60 h) m)) "%s")
-		   te (if remove " => LINE REMOVED" ""))
+	  (message (if remove
+		       "Clock stopped at %s after %s => LINE REMOVED"
+		     "Clock stopped at %s after %s")
+		   te (org-duration-from-minutes (+ (* 60 h) m)))
 	  (run-hooks 'org-clock-out-hook)
 	  (unless (org-clocking-p)
 	    (setq org-clock-current-task nil)))))))
@@ -1925,13 +1926,14 @@ Use `\\[org-clock-remove-overlays]' to remove the subtree times."
 		    nil 'local))))
     (let* ((h (/ org-clock-file-total-minutes 60))
 	   (m (- org-clock-file-total-minutes (* 60 h))))
-      (message (concat (format "Total file time%s: "
-			       (cond (todayp " for today")
-				     (customp " (custom)")
-				     (t "")))
-		       (org-duration-from-minutes
-			org-clock-file-total-minutes)
-		       " (%d hours and %d minutes)")
+      (message (cond
+		(todayp
+		 "Total file time for today: %s (%d hours and %d minutes)")
+		(customp
+		 "Total file time (custom): %s (%d hours and %d minutes)")
+		(t
+		 "Total file time: %s (%d hours and %d minutes)"))
+	       (org-duration-from-minutes org-clock-file-total-minutes)
 	       h m))))
 
 (defvar-local org-clock-overlays nil)

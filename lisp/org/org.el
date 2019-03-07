@@ -11878,7 +11878,8 @@ prefix argument (`C-u C-u C-u C-c C-w')."
 	    (when (featurep 'org-inlinetask)
 	      (org-inlinetask-remove-END-maybe))
 	    (setq org-markers-to-move nil)
-	    (message (concat actionmsg " to \"%s\" in file %s: done") (car it) file)))))))
+	    (message "%s to \"%s\" in file %s: done" actionmsg
+		     (car it) file)))))))
 
 (defun org-refile-goto-last-stored ()
   "Go to the location where the last refile was stored."

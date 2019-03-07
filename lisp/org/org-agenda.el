@@ -2882,13 +2882,12 @@ Pressing `<' twice means to restrict to the current subtree or region
 	     (let* ((m (org-agenda-get-any-marker))
 		    (note (and m (org-entry-get m "THEFLAGGINGNOTE"))))
 	       (when note
-		 (message (concat
-			   "FLAGGING-NOTE ([?] for more info): "
-			   (org-add-props
-			       (replace-regexp-in-string
-				"\\\\n" "//"
-				(copy-sequence note))
-			       nil 'face 'org-warning)))))))
+		 (message "FLAGGING-NOTE ([?] for more info): %s"
+			  (org-add-props
+			   (replace-regexp-in-string
+			    "\\\\n" "//"
+			    (copy-sequence note))
+			   nil 'face 'org-warning))))))
 	 t t))
        ((equal org-keys "#") (call-interactively 'org-agenda-list-stuck-projects))
        ((equal org-keys "/") (call-interactively 'org-occur-in-agenda-files))

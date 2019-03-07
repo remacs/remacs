@@ -5588,7 +5588,7 @@ be set to nil to disable library catalog scanning."
 	     (mapcar 'car idlwave-path-alist)))
 	  (old-libname "")
 	  dir-entry dir catalog all-routines)
-      (if message-base (message message-base))
+      (if message-base (message "%s" message-base))
       (while (setq dir (pop dirs))
 	(catch 'continue
 	  (when (file-readable-p
@@ -5603,8 +5603,7 @@ be set to nil to disable library catalog scanning."
 		     message-base
 		     (not (string= idlwave-library-catalog-libname
 				   old-libname)))
-		(message "%s" (concat message-base
-				      idlwave-library-catalog-libname))
+		(message "%s%s" message-base idlwave-library-catalog-libname)
 		(setq old-libname idlwave-library-catalog-libname))
 	      (when idlwave-library-catalog-routines
 		(setq all-routines
@@ -5618,7 +5617,7 @@ be set to nil to disable library catalog scanning."
 		       (setq dir-entry (assoc dir idlwave-path-alist)))
 	      (idlwave-path-alist-add-flag dir-entry 'lib)))))
       (unless no-load (setq idlwave-library-catalog-routines all-routines))
-      (if message-base (message (concat message-base "done"))))))
+      (if message-base (message "%sdone" message-base)))))
 
 ;;----- Communicating with the Shell -------------------
 

@@ -1133,8 +1133,7 @@ If OTHER-FRAME is non-nil, display the cross-reference in another frame."
 	(ada-find-in-ali identlist other-frame)
       ;; File not found: print explicit error message
       (ada-error-file-not-found
-       (message (concat (error-message-string err)
-			(nthcdr 1 err))))
+       (message "%s%s" (error-message-string err) (nthcdr 1 err)))
 
       (error
        (let ((ali-file (ada-get-ali-file-name (ada-file-of identlist))))

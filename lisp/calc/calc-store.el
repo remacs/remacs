@@ -405,8 +405,8 @@
                                     sconst))))
        (if var
            (let ((msg (calc-store-value var value "")))
-             (message (concat "Special constant \"%s\" copied to \"%s\"" msg)
-                      sconst (calc-var-name var)))))))))
+	     (message "Special constant \"%s\" copied to \"%s\"%s"
+		      sconst (calc-var-name var) msg))))))))
 
 (defun calc-copy-variable (&optional var1 var2)
   (interactive)

@@ -2685,7 +2685,7 @@ the only argument."
 (defun rcirc-handler-PART (process sender args _text)
   (let* ((channel (car args))
 	 (reason (cadr args))
-	 (message (concat channel " " reason)))
+	 (message "%s %s" channel reason))
     (rcirc-print process sender "PART" channel message)
     ;; print in private chat buffer if it exists
     (when (rcirc-get-buffer (rcirc-buffer-process) sender)
@@ -2697,7 +2697,7 @@ the only argument."
   (let* ((channel (car args))
 	 (nick (cadr args))
 	 (reason (nth 2 args))
-	 (message (concat nick " " channel " " reason)))
+	 (message "%s %s %s" nick channel reason))
     (rcirc-print process sender "KICK" channel message t)
     ;; print in private chat buffer if it exists
     (when (rcirc-get-buffer (rcirc-buffer-process) nick)
