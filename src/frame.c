@@ -2236,7 +2236,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 		     for at least one other frame - so make it visible
 		     and quit.  */
 		  if (!FRAME_VISIBLE_P (f1) && !FRAME_ICONIFIED_P (f1))
-		    Fmake_frame_visible (frame1);
+		    Fmake_frame_visible (minibuffer_child_frame);
 
 		  return Qnil;
 		}
