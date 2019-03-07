@@ -1849,7 +1849,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
   ;; Python and Guile commands that have an argument don't enter the
   ;; recursive reading loop.
   (let* ((control-command-p (string-match gdb-control-commands-regexp string))
-         (command-arg (match-string 3 string))
+         (command-arg (and control-command-p (match-string 3 string)))
          (python-or-guile-p (string-match gdb-python-guile-commands-regexp
                                           string)))
     (if (and control-command-p
