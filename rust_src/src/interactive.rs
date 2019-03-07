@@ -38,7 +38,7 @@ impl InteractiveNumericPrefix {
                 } else if raw.eq(Qminus) {
                     -1
                 } else if raw.is_integer() {
-                    raw.as_fixnum_or_error()
+                    raw.into()
                 } else if let Some(number) = raw.as_cons().and_then(|v| v.car().as_fixnum()) {
                     number
                 } else {
