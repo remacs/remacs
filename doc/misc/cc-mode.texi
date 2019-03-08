@@ -148,7 +148,17 @@ CC Mode
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @comment Define an index for syntactic symbols.
+@c Version for Texinfo <= 4.x
+@ifclear txicommandconditionals
+@ifnottex @c In texi2dvi, the @defindex would create an empty cc-mode.ss
+          @c For Info, unlike tex, @syncodeindex needs a matching @defindex.
 @defindex ss
+@end ifnottex
+@end ifclear
+@c Version for Texinfo >= 5.x
+@ifset txicommandconditionals
+@defindex ss
+@end ifset
 
 @comment Combine key, syntactic symbol and concept indices into one.
 @syncodeindex ss cp
@@ -2282,6 +2292,8 @@ method, ``Top-level commands or the customization interface''.
 
 If you make conflicting settings in several of these ways, the way
 that takes precedence is the one that appears latest in this list:
+@c Version of list for Texinfo <= 4.x
+@ifclear txicommandconditionals
 @itemize @w{}
 @item
 @table @asis
@@ -2292,6 +2304,18 @@ that takes precedence is the one that appears latest in this list:
 @itemx File Local Variable setting
 @end table
 @end itemize
+@end ifclear
+@c Version of list for Texinfo >= 5.x
+@ifset txicommandconditionals
+@itemize @asis
+@item Style
+@item File Style@footnote{In earlier versions of @ccmode{}, a File Style setting took precedence over any other setting apart from a File Local Variable setting.}
+@item Top-level command or ``customization interface''
+@item Hook
+@item File Local Variable setting
+@end itemize
+@end ifset
+
 
 Here is a summary of the different ways of writing your configuration
 settings:
