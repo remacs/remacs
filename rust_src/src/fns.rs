@@ -11,7 +11,7 @@ use crate::{
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::LispObject,
-    lists::{assq, car, circular_list, get, mapcar1, member, memq, put},
+    lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
     multibyte::{string_char_and_length, write_codepoint, LispStringRef},
