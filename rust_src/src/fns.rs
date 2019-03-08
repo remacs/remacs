@@ -1,6 +1,6 @@
 //! Random utility Lisp functions.
 
-use std::{ptr, slice};
+use std::{mem, ptr, slice};
 
 use libc;
 
@@ -360,9 +360,7 @@ pub fn nreverse(mut seq: LispObject) -> LispObject {
         let len = vec.len() / 2;
         let (left, right) = vec.as_mut_slice().split_at_mut(len);
         for (a, b) in left.iter_mut().zip(right.iter_mut().rev()) {
-            let c = *a;
-            *a = *b;
-            *b = c;
+            mem::swap(a, b);
         }
     } else if let Some(mut boolvec) = seq.as_bool_vector() {
         let len = boolvec.len();
