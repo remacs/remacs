@@ -68,7 +68,6 @@ static void apply_window_adjustment (struct window *);
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
-void scroll_command (Lisp_Object, int);
 
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
@@ -3864,7 +3863,7 @@ window_internal_height (struct window *w)
    means don't signal an error if we try to move over BEGV or ZV,
    respectively.  */
 
-static void
+void
 window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -4526,41 +4525,6 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
 		  ? make_number (BUF_PT (XBUFFER (w->contents)))
 		  : Fmarker_position (w->pointm)),
 		 w->contents);
-}
-
-
-/* Scroll selected_window up or down.  If N is nil, scroll a
-   screen-full which is defined as the height of the window minus
-   next_screen_context_lines.  If N is the symbol `-', scroll.
-   DIRECTION may be 1 meaning to scroll down, or -1 meaning to scroll
-   up.  This is the guts of Fscroll_up and Fscroll_down.  */
-
-void
-scroll_command (Lisp_Object n, int direction)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  eassert (eabs (direction) == 1);
-
-  /* If selected window's buffer isn't current, make it current for
-     the moment.  But don't screw up if window_scroll gets an error.  */
-  if (XBUFFER (XWINDOW (selected_window)->contents) != current_buffer)
-    {
-      record_unwind_protect (save_excursion_restore, save_excursion_save ());
-      Fset_buffer (XWINDOW (selected_window)->contents);
-    }
-
-  if (NILP (n))
-    window_scroll (selected_window, direction, true, false);
-  else if (EQ (n, Qminus))
-    window_scroll (selected_window, -direction, true, false);
-  else
-    {
-      n = Fprefix_numeric_value (n);
-      window_scroll (selected_window, XINT (n) * direction, false, false);
-    }
-
-  unbind_to (count, Qnil);
 }
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, Sother_window_for_scrolling, 0, 0, 0,
