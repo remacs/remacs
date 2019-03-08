@@ -30,9 +30,10 @@ Multibyte characters are left as is.  Use `rng-uri-escape-multibyte' to
 escape them using %HH."
   (setq f (expand-file-name f))
   (let ((url
-	 (replace-regexp-in-string "[\000-\032\177<>#%\"{}|\\^[]`%?;]"
-				   'rng-percent-encode
-				   f)))
+	 ;; FIXME. Explain why the pattern doesn't also have "!$&'()*+,/:@=".
+	 ;; See Internet RFC 3986 section 2.2.
+	 (replace-regexp-in-string "[]\0-\s\"#%;<>?[\\^`{|}\177]"
+				   'rng-percent-encode f)))
     (concat "file:"
 	    (if (and (> (length url) 0)
 		     (= (aref url 0) ?/))

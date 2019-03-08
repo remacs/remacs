@@ -3388,7 +3388,7 @@ expanded.  INDENT is the current indentation level."
   "Speedbar click handler for default directory buttons.
 TEXT is the button clicked on.  TOKEN is the directory to follow.
 INDENT is the current indentation level and is unused."
-  (if (string-match "^[A-z]:$" token)
+  (if (string-match "^[A-Za-z]:$" token)
       (setq default-directory (concat token "/"))
     (setq default-directory token))
   ;; Because we leave speedbar as the current buffer,

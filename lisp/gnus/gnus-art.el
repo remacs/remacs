@@ -7376,9 +7376,8 @@ groups."
   :group 'gnus-article-buttons
   :type 'regexp)
 
-;; Regexp suggested by Felix Wiemann in <87oeuomcz9.fsf@news2.ososo.de>
 (defcustom gnus-button-valid-localpart-regexp
-  "[a-z$%(*-=?[_][^<>\")!;:,{}\n\t @]*"
+  "[-a-z0-9$%(*+./=?[_][^<>\")!;:,{}\n\t @]*"
   "Regular expression that matches a localpart of mail addresses or MIDs."
   :version "22.1"
   :group 'gnus-article-buttons

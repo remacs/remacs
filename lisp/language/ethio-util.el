@@ -804,7 +804,7 @@ The 2nd and 3rd arguments BEGIN and END specify the region."
 
     ;; Special Ethiopic punctuation.
     (goto-char (point-min))
-    (while (re-search-forward "\\ce[»\\.?]\\|«\\ce" nil t)
+    (while (re-search-forward "\\ce[».?]\\|«\\ce" nil t)
       (cond
        ((= (setq ch (preceding-char)) ?\»)
 	(delete-char -1)

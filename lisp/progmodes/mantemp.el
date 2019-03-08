@@ -89,7 +89,7 @@
   (save-excursion
     (goto-char (point-min))
     (message "Removing comments")
-    (while (re-search-forward "^[A-z.()+0-9: ]*`\\|'.*$" nil t)
+    (while (re-search-forward "^[a-zA-Z.()+0-9: ]*`\\|'.*$" nil t)
       (replace-match ""))))
 
 (defun mantemp-remove-memfuncs ()
@@ -99,14 +99,14 @@
     (goto-char (point-min))
     (message "Removing member function extensions")
     (while (re-search-forward
-	    "^[A-z :&*<>~=,0-9+]*>::operator " nil t nil)
+	    "^[a-zA-Z :&*<>~=,0-9+]*>::operator " nil t nil)
       (progn
 	(backward-char 11)
 	(delete-region (point) (line-end-position))))
     ;; Remove other member function extensions.
     (goto-char (point-min))
     (message "Removing member function extensions")
-    (while (re-search-forward "^[A-z :&*<>~=,0-9+]*>::" nil t nil)
+    (while (re-search-forward "^[a-zA-Z :&*<>~=,0-9+]*>::" nil t nil)
       (progn
 	(backward-char 2)
 	(delete-region (point) (line-end-position))))))
@@ -154,7 +154,7 @@ the lines."
     (goto-char (point-min))
     (message "Inserting 'template' for functions")
     (while (re-search-forward
-	    "^template class [A-z :&*<>~=,0-9+!]*(" nil t nil)
+	    "^template class [a-zA-Z :&*<>~=,0-9+!]*(" nil t nil)
       (progn
 	(beginning-of-line)
 	(forward-word-strictly 1)
