@@ -93,6 +93,7 @@ mod floatfns;
 mod fns;
 mod fonts;
 mod hashtable;
+mod image;
 mod indent;
 mod interactive;
 mod keyboard;
