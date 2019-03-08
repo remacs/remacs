@@ -4684,6 +4684,8 @@ displayed there."
 BUFFER-OR-NAME may be a buffer or the name of an existing buffer
 and defaults to the current buffer.
 
+Interactively, prompt for the buffer.
+
 The following non-nil values of the optional argument FRAME
 have special meanings:
 
@@ -4699,6 +4701,10 @@ have special meanings:
 
 Any other value of FRAME means consider all windows on all
 frames.
+
+Interactively, FRAME is the prefix argument, so you can
+use \\[universal-argument] 0 to specify all windows only on
+the current terminal's frames.
 
 When a window showing BUFFER-OR-NAME is dedicated and the only
 window of its frame, that frame is deleted when there are other

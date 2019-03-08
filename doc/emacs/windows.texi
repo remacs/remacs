@@ -255,6 +255,8 @@ Delete all windows in the selected frame except the selected window
 Delete the selected window and kill the buffer that was showing in it
 (@code{kill-buffer-and-window}).  The last character in this key
 sequence is a zero.
+@item M-x delete-windows-on @key{RET} @var{buffer} @key{RET}
+Delete windows showing the specified @var{buffer}.
 @item C-x ^
 Make selected window taller (@code{enlarge-window}).
 @item C-x @}
@@ -289,6 +291,11 @@ selected window.
 @emph{except} the selected one; the selected window expands to use the
 whole frame.  (This command cannot be used while the minibuffer window
 is active; attempting to do so signals an error.)
+
+  @kbd{M-x delete-windows-on} deletes windows that show a specific
+buffer.  It prompts for the buffer, defaulting to the current buffer.
+With prefix argument of zero, @kbd{C-u 0}, this command deletes
+windows only on the current display's frames.
 
 @cindex resize window
 @cindex resizing windows
