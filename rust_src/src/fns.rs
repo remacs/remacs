@@ -344,21 +344,17 @@ pub fn nreverse(mut seq: LispObject) -> LispObject {
         return seq;
     } else if seq.is_string() {
         return reverse(seq);
-    } else if seq.is_cons() {
+    } else if let Some(cons) = seq.as_cons() {
+        let mut iter = cons
+            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .peekable();
         let mut prev = Qnil;
-        let mut tail = seq;
-        let mut next;
-        while tail.is_cons() {
-            next = tail.force_cons().cdr();
-
-            if next == seq {
-                circular_list(seq);
-            }
-            tail.force_cons().set_cdr(prev);
-            prev = tail;
-            tail = next;
+        while let Some(tail) = iter.next() {
+            // Invoked to advance the underlying iterator
+            iter.peek();
+            tail.set_cdr(prev);
+            prev = tail.into();
         }
-        tail.check_list_end(seq);
         seq = prev;
     } else if let Some(mut vec) = seq.as_vector() {
         let len = vec.len() / 2;
