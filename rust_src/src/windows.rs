@@ -7,10 +7,11 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferRef,
+    buffers::{set_buffer, LispBufferRef},
     editfns::{goto_char, point},
+    eval::unbind_to,
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
-    interactive::prefix_numeric_value,
+    interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
@@ -20,9 +21,10 @@ use crate::{
     remacs_sys::glyph_row_area::TEXT_AREA,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
-        minibuf_selected_window as current_minibuf_window, noninteractive, scroll_command,
-        select_window, selected_window as current_window, set_buffer_internal, set_window_hscroll,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_tool_bar_p,
+        minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
+        save_excursion_restore, save_excursion_save, select_window,
+        selected_window as current_window, set_buffer_internal, set_window_hscroll,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
         windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
@@ -32,7 +34,7 @@ use crate::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
-    threads::ThreadState,
+    threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
 };
 
@@ -1392,19 +1394,27 @@ pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowR
     }
 }
 
-pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
+fn scroll_horizontally(
+    arg: Option<InteractiveNumericPrefix>,
+    set_minimum: bool,
+    left: bool,
+) -> LispObject {
     let mut w: LispWindowRef = selected_window().into();
-    let requested_arg = if arg.is_nil() {
-        EmacsInt::from(w.body_width(false)) - 2
-    } else if left {
-        prefix_numeric_value(arg)
-    } else {
-        -prefix_numeric_value(arg)
+    let requested_arg = match arg {
+        None => EmacsInt::from(w.body_width(false)) - 2,
+        Some(value) => {
+            let tem = value.unwrap();
+            if left {
+                tem
+            } else {
+                -tem
+            }
+        }
     };
 
     let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
 
-    if set_minimum.is_not_nil() {
+    if set_minimum {
         w.min_hscroll = w.hscroll;
     }
 
@@ -1421,7 +1431,7 @@ pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool)
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_left(arg: LispObject, set_minimum: LispObject) -> LispObject {
+pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
     scroll_horizontally(arg, set_minimum, true)
 }
 
@@ -1434,7 +1444,7 @@ pub fn scroll_left(arg: LispObject, set_minimum: LispObject) -> LispObject {
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_right(arg: LispObject, set_minimum: LispObject) -> LispObject {
+pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
     scroll_horizontally(arg, set_minimum, false)
 }
 
@@ -1445,8 +1455,8 @@ pub fn scroll_right(arg: LispObject, set_minimum: LispObject) -> LispObject {
 /// If ARG is the atom `-', scroll downward by nearly full screen.
 /// When calling from a program, supply as argument a number, nil, or `-'.
 #[lisp_fn(min = "0", intspec = "^P")]
-pub fn scroll_up(arg: LispObject) {
-    unsafe { scroll_command(arg, 1) };
+pub fn scroll_up(arg: Option<InteractiveNumericPrefix>) {
+    scroll_command(arg, 1);
 }
 
 /// Scroll text of selected window down ARG lines.
@@ -1456,8 +1466,48 @@ pub fn scroll_up(arg: LispObject) {
 /// If ARG is the atom `-', scroll upward by nearly full screen.
 /// When calling from a program, supply as argument a number, nil, or `-'.
 #[lisp_fn(min = "0", intspec = "^P")]
-pub fn scroll_down(arg: LispObject) {
-    unsafe { scroll_command(arg, -1) };
+pub fn scroll_down(arg: Option<InteractiveNumericPrefix>) {
+    scroll_command(arg, -1);
+}
+
+// Scroll selected window up or down.  If N is nil, scroll upward by a
+// screen-full which is defined as the height of the window minus
+// next_screen_context_lines.  If N is the symbol `-', scroll downward
+// by a screen-full.  DIRECTION may be 1 meaning to scroll down, or -1
+// meaning to scroll up.
+fn scroll_command(n: Option<InteractiveNumericPrefix>, direction: EmacsInt) {
+    let count = c_specpdl_index();
+
+    assert!(direction.abs() == 1);
+
+    let window: LispWindowRef = selected_window().into();
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    let window_buffer = window.contents_as_buffer();
+    // If selected window's buffer isn't current, make it current for
+    // the moment.  But don't screw up if window_scroll gets an error.
+    if window_buffer != current_buffer {
+        unsafe {
+            record_unwind_protect(Some(save_excursion_restore), save_excursion_save());
+        }
+        set_buffer(window_buffer.into());
+    }
+
+    let (direction, whole_screen) = match n {
+        None => (direction, true),
+        Some(prefix) => {
+            if prefix.is_minus() {
+                (-direction, true)
+            } else {
+                let value = prefix.unwrap();
+                (value * direction, false)
+            }
+        }
+    };
+    unsafe {
+        window_scroll(current_window, direction, whole_screen, false);
+    }
+
+    unbind_to(count, Qnil);
 }
 
 /// Return new normal size of window WINDOW.
