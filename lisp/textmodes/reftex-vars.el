@@ -894,11 +894,25 @@ DOWNCASE    t:   Downcase words before using them."
     `(;; Normal \\label{foo} labels
       "\\\\label{\\(?1:[^}]*\\)}"
       ;; keyvals [..., label = {foo}, ...] forms used by ctable,
-      ;; listings, minted, ...
+      ;; listings, breqn, ...
       ,(concat
         ;; Make sure we search only for optional arguments of
-        ;; environments and don't match any other [
-        "\\\\begin[[:space:]]*{\\(?:[^}]+\\)}[[:space:]]*"
+        ;; environments/macros and don't match any other [.  ctable
+        ;; provides a macro called \ctable, listings/breqn have
+        ;; environments.  Start with a backslash and a group for names
+        "\\\\\\(?:"
+        ;; begin, optional spaces and opening brace
+        "begin[[:space:]]*{"
+        ;; Build a regexp for env names
+        (regexp-opt '("lstlisting" "dmath" "dseries" "dgroup" "darray"))
+        ;; closing brace, optional spaces
+        "}[[:space:]]*"
+        ;; Now for macros
+        "\\|"
+        ;; Build a regexp for macro names; currently only \ctable
+        (regexp-opt '("ctable"))
+        ;; Close the group for names
+        "\\)"
         ;; Match the opening [ and the following chars
         "\\[[^][]*"
         ;; Allow nested levels of chars enclosed in braces
@@ -912,13 +926,18 @@ DOWNCASE    t:   Downcase words before using them."
         ;; Match the label value; braces around the value are
         ;; optional.
         "{?\\(?1:[^] ,}\r\n\t%]+\\)}?"
-        ;; We are done.  Such search until the next closing bracket
+        ;; We are done.  Just search until the next closing bracket
         "[^]]*\\]"))
     "List of regexps matching \\label definitions.
 The default value matches usual \\label{...} definitions and
-keyval style [..., label = {...}, ...] label definitions.  It is
-assumed that the regexp group 1 matches the label text, so you
-have to define it using \\(?1:...\\) when adding new regexps.
+keyval style [..., label = {...}, ...] label definitions.  The
+regexp for keyval style explicitly looks for environments
+provided by the packages \"listings\" (\"lstlisting\"),
+\"breqn\" (\"dmath\", \"dseries\", \"dgroup\", \"darray\") and
+the macro \"\\ctable\" provided by the package of the same name.
+
+It is assumed that the regexp group 1 matches the label text, so
+you have to define it using \\(?1:...\\) when adding new regexps.
 
 When changed from Lisp, make sure to call
 `reftex-compile-variables' afterwards to make the change
