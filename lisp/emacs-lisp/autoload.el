@@ -146,7 +146,7 @@ expression, in which case we want to handle forms differently."
                            t))))
         ;; Add the usage form at the end where describe-function-1
         ;; can recover it.
-        (when (listp args) (setq doc (help-add-fundoc-usage doc args)))
+        (when (consp args) (setq doc (help-add-fundoc-usage doc args)))
         ;; (message "autoload of %S" (nth 1 form))
         `(autoload ,(nth 1 form) ,file ,doc ,interactive ,type)))
 
