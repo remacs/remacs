@@ -9,6 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::LispBufferRef,
     editfns::{goto_char, point},
+    fns::nreverse,
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
     lisp::{ExternalPtr, LispObject},
@@ -18,6 +19,7 @@ use crate::{
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
+    remacs_sys::Fcopy_alist,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, scroll_command,
@@ -27,7 +29,7 @@ use crate::{
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
-    remacs_sys::{Fcopy_alist, Fnreverse},
+    remacs_sys::{Fcopy_alist},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
@@ -1779,7 +1781,7 @@ pub fn window_lines_pixel_dimensions(
         rows = ((width, row.y + row.height - subtract), rows).into();
         unsafe { row.ptr_add(1) };
     }
-    unsafe { Fnreverse(rows) }
+    nreverse(rows)
 }
 
 /// Return top pixel edge of window WINDOW.

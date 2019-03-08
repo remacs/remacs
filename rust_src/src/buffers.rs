@@ -16,6 +16,7 @@ use crate::{
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
+    fns::nreverse,
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
@@ -40,7 +41,7 @@ use crate::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc},
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
         Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
@@ -940,7 +941,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
 
         Some(frame) => {
             let framelist = unsafe { Fcopy_sequence(frame.buffer_list) };
-            let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
+            let prevlist = nreverse(unsafe { Fcopy_sequence(frame.buried_buffer_list) });
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
             buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
@@ -1139,7 +1140,7 @@ pub fn overlay_lists() -> LispObject {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
     let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
-    unsafe { (Fnreverse(before), Fnreverse(after)).into() }
+    (nreverse(before), nreverse(after)).into()
 }
 
 fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
