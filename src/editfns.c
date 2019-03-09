@@ -2989,10 +2989,8 @@ the next available argument, or the argument explicitly specified:
 
 %s means print a string argument.  Actually, prints any object, with `princ'.
 %d means print as signed number in decimal.
-%o means print a number in octal.  The value of `binary-as-unsigned'
-   determines whether it's printed as signed or unsigned.
-%x means print a number in hex.  The value of `binary-as-unsigned'
-   determines whether it's printed as signed or unsigned.
+%o means print a number in octal.
+%x means print a number in hex.
 %X is like %x, but uses upper case.
 %e means print a number in exponential notation.
 %f means print a number in decimal-point notation.
@@ -3003,6 +3001,8 @@ the next available argument, or the argument explicitly specified:
 %S means print any object as an s-expression (using `prin1').
 
 The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
+The value of `binary-as-unsigned' determines whether it's printed as
+   signed or unsigned by %o, %x, and %X.
 Use %% to put a single % into the output.
 
 A %-sequence other than %% may contain optional field number, flag,
