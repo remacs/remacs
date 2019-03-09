@@ -1413,7 +1413,7 @@ Property value is a symbol `o' (Open), `c' (Close), or `n' (None)."
 	 (copyright (with-temp-buffer
 		      (insert-file-contents
 		       (expand-file-name "copyright.html" unidata-dir))
-		      (re-search-forward "^Copyright .*Unicode, Inc.")
+		      (re-search-forward "Copyright .*Unicode, Inc.")
 		      (match-string 0))))
     (or unidata-list (unidata-setup-list unidata-text-file))
     (let* ((basename (file-name-nondirectory file))

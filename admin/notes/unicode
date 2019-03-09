@@ -11,15 +11,20 @@ Emacs uses the following files from the Unicode Character Database
 
   . UnicodeData.txt
   . Blocks.txt
-  . BidiMirroring.txt
   . BidiBrackets.txt
+  . BidiCharacterTest.txt
+  . BidiMirroring.txt
   . IVD_Sequences.txt
   . NormalizationTest.txt
   . SpecialCasing.txt
-  . BidiCharacterTest.txt
 
 First, the first 7 files need to be copied into admin/unidata/, and
-then Emacs should be rebuilt for them to take effect.  Rebuilding
+the file https://www.unicode.org/copyright.html should be copied over
+copyright.html in admin/unidata (that file might need trailing
+whitespace removed before it can be committed to the Emacs
+repository).
+
+Then Emacs should be rebuilt for them to take effect.  Rebuilding
 Emacs updates several derived files elsewhere in the Emacs source
 tree, mainly in lisp/international/.
 
@@ -28,7 +33,10 @@ files, pay attention to any warning or error messages.  In particular,
 admin/unidata/unidata-gen.el will complain if UnicodeData.txt defines
 new bidirectional attributes of characters, because unidata-gen.el,
 bidi.c and dispextern.h need to be updated in that case; failure to do
-so will cause aborts in redisplay.
+so will cause aborts in redisplay.  unidata-gen.el will also complain
+if the format of the Unicode Copyright notice in copyright.html
+changed in significant ways; in that case, update the regular
+expression in unidata-gen-file used to extract the copyright string.
 
 Next, review the changes in UnicodeData.txt vs the previous version
 used by Emacs.  Any changes, be it introduction of new scripts or
@@ -40,7 +48,12 @@ and see if any changes in admin/unidata/blocks.awk are required.
 
 The setting of char-width-table around line 1200 of characters.el
 should be checked against the latest version of the Unicode file
-EastAsianWidth.txt, and any discrepancies fixed.
+EastAsianWidth.txt, and any discrepancies fixed: double-width
+characters are those marked with W or F in that file.  Zero-width
+characters are not taken from EastAsianWidth.txt, they are those whose
+Unicode General Category property is one of Mn, Me, or Cf, and also
+Hangul jungseong and jongseong characters (a.k.a. "Jamo medial vowels"
+and "Jamo final consonants").
 
 Any new scripts added by UnicodeData.txt will also need updates to
 script-representative-chars defined in fontset.el, and also the list
