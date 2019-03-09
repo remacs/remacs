@@ -1110,9 +1110,10 @@ A user option, or customizable variable, is one for which
 }
 
 DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 4, 0,
-       doc: /* Read the name of a buffer and return as a string.
+       doc: /* Read the name of a buffer and return it as a string.
 Prompt with PROMPT.
-Optional second arg DEF is value to return if user enters an empty line.
+Optional second arg DEF is value to return if user enters an empty line,
+ instead of that empty string.
  If DEF is a list of default values, return its first element.
 Optional third arg REQUIRE-MATCH determines whether non-existing
  buffer names are allowed.  It has the same meaning as the
