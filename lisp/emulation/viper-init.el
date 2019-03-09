@@ -268,6 +268,7 @@ that deletes a file.")
 (defconst viper-BadAddress "Ill-formed address"   "")
 (defconst viper-FirstAddrExceedsSecond "First address exceeds second"   "")
 (defconst viper-NoFileSpecified "No file specified"   "")
+(defconst viper-ViperBell "Viper bell"   "")
 
 ;; Is t until viper-mode executes for the very first time.
 ;; Prevents recursive descend into startup messages.
