@@ -188,8 +188,8 @@
   "\\[:[a-z]+:\\]")
   ;; Matches a character class spec (e.g. [:alpha:]).
 (defconst c-awk-regexp-char-list-re
-  (concat "\\[" c-awk-escaped-newlines*-re "^?" c-awk-escaped-newlines*-re "]?"
-          "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-class-re
+  (concat "\\[\\(" c-awk-escaped-newlines*-re "\\^\\)?" c-awk-escaped-newlines*-re "]?"
+	  "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-class-re
 	  "\\|" "[^]\n\r]" "\\)*" "\\(]\\|$\\)"))
 ;;   Matches a regexp char list, up to (but not including) EOL if the ] is
 ;;   missing.
