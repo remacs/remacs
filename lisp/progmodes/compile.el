@@ -1754,15 +1754,16 @@ Returns the compilation buffer created."
 	(if (fboundp 'make-process)
 	    (let ((proc
 		   (if (eq mode t)
-		       ;; comint uses `start-file-process'.
-		       (get-buffer-process
-			(with-no-warnings
-			  (comint-exec
-			   outbuf (downcase mode-name)
-			   (if (file-remote-p default-directory)
-			       "/bin/sh"
-			     shell-file-name)
-			   nil `("-c" ,command))))
+                       ;; On remote hosts, the local `shell-file-name'
+                       ;; might be useless.
+                       (with-connection-local-variables
+		        ;; comint uses `start-file-process'.
+		        (get-buffer-process
+			 (with-no-warnings
+			   (comint-exec
+			    outbuf (downcase mode-name)
+			    shell-file-name
+			    nil `(,shell-command-switch ,command)))))
 		     (start-file-process-shell-command (downcase mode-name)
 						       outbuf command))))
               ;; Make the buffer's mode line show process state.

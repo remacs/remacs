@@ -4277,7 +4277,7 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 			       nil
 			       t
 			       nil
-			       "-c"
+			       shell-command-switch
 			       (format "compress -f -c < %s > %s" tmp1 tmp2))
 	  (and ange-ftp-process-verbose
 	       (ange-ftp-message "Compressing %s...done" abbr))
@@ -4313,7 +4313,7 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 			       nil
 			       t
 			       nil
-			       "-c"
+			       shell-command-switch
 			       (format "uncompress -c < %s > %s" tmp1 tmp2))
 	  (and ange-ftp-process-verbose
 	       (ange-ftp-message "Uncompressing %s...done" abbr))

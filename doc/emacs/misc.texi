@@ -795,6 +795,10 @@ to @command{gpg}.  This will output the list of keys to the
 name is relative, Emacs searches the directories listed in
 @code{exec-path} (@pxref{Shell}).
 
+  If the default directory is remote (@pxref{Remote Files}), the
+default value is @file{/bin/sh}.  This can be changed by declaring
+@code{shell-file-name} connection-local (@pxref{Connection Variables}).
+
   To specify a coding system for @kbd{M-!} or @kbd{M-|}, use the command
 @kbd{C-x @key{RET} c} immediately beforehand.  @xref{Communication Coding}.
 

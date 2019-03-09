@@ -2191,9 +2191,9 @@ This function looks for connection-local variables according to
 @var{criteria}, and immediately applies them in the current buffer.
 @end defun
 
-@defmac with-connection-local-profiles profiles &rest body
-All connection-local variables, which are specified by a connection
-profile in @var{profiles}, are applied.
+@defmac with-connection-local-variables &rest body
+All connection-local variables, which are specified by
+@code{default-directory}, are applied.
 
 After that, @var{body} is executed, and the connection-local variables
 are unwound.  Example:
@@ -2207,8 +2207,15 @@ are unwound.  Example:
 @end group
 
 @group
-(with-connection-local-profiles '(remote-perl)
-  do something useful)
+(connection-local-set-profiles
+  '(:application 'tramp :protocol "ssh" :machine "remotehost")
+  'remote-perl)
+@end group
+
+@group
+(let ((default-directory "/ssh:remotehost:/working/dir/"))
+  (with-connection-local-variables
+    do something useful))
 @end group
 @end example
 @end defmac

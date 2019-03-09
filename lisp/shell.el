@@ -99,6 +99,7 @@
 
 (require 'comint)
 (require 'pcomplete)
+(eval-when-compile (require 'files-x)) ;with-connection-local-variables
 
 ;;; Customization and Buffer Variables
 
@@ -721,23 +722,17 @@ Otherwise, one argument `-i' is passed to the shell.
 
   (with-current-buffer buffer
     (when (file-remote-p default-directory)
-      ;; Apply connection-local variables.
-      (hack-connection-local-variables-apply
-       `(:application tramp
-         :protocol ,(file-remote-p default-directory 'method)
-         :user ,(file-remote-p default-directory 'user)
-         :machine ,(file-remote-p default-directory 'host)))
-
       ;; On remote hosts, the local `shell-file-name' might be useless.
-      (if (and (called-interactively-p 'any)
-               (null explicit-shell-file-name)
-               (null (getenv "ESHELL")))
-          (set (make-local-variable 'explicit-shell-file-name)
-               (file-local-name
-		(expand-file-name
-                 (read-file-name
-                  "Remote shell path: " default-directory shell-file-name
-                  t shell-file-name)))))))
+      (with-connection-local-variables
+       (if (and (called-interactively-p 'any)
+                (null explicit-shell-file-name)
+                (null (getenv "ESHELL")))
+           (set (make-local-variable 'explicit-shell-file-name)
+                (file-local-name
+		 (expand-file-name
+                  (read-file-name
+                   "Remote shell path: " default-directory shell-file-name
+                   t shell-file-name))))))))
 
   ;; The buffer's window must be correctly set when we call comint
   ;; (so that comint sets the COLUMNS env var properly).

@@ -1135,6 +1135,8 @@ Variables
 * Locals::              Per-buffer values of variables.
 * File Variables::      How files can specify variable values.
 * Directory Variables:: How variable values can be specified by directory.
+* Connection Variables:: Variables which are valid for buffers with a
+                           remote default directory.
 
 Local Variables in Files
 

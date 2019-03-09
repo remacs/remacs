@@ -3185,11 +3185,12 @@ discouraged."
   "Start a program in a subprocess.  Return the process object for it.
 Similar to `start-process-shell-command', but calls `start-file-process'."
   (declare (advertised-calling-convention (name buffer command) "23.1"))
-  (start-file-process
-   name buffer
-   (if (file-remote-p default-directory) "/bin/sh" shell-file-name)
-   (if (file-remote-p default-directory) "-c" shell-command-switch)
-   (mapconcat 'identity args " ")))
+  ;; On remote hosts, the local `shell-file-name' might be useless.
+  (with-connection-local-variables
+   (start-file-process
+    name buffer
+    shell-file-name shell-command-switch
+    (mapconcat 'identity args " "))))
 
 (defun call-process-shell-command (command &optional infile buffer display
 					   &rest args)

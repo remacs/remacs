@@ -81,6 +81,7 @@ the default storage location, e.g. \"$HOME/.sh_history\"."
                  (const :tag "Unset HISTFILE" t)
                  (string :tag "Redirect to a file")))
 
+;;;###tramp-autoload
 (defconst tramp-display-escape-sequence-regexp "\e[[;0-9]+m"
   "Terminal control escape sequences for display attributes.")
 

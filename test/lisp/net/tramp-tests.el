@@ -4274,12 +4274,78 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (dolist (dir '("/mock:localhost#11111:" "/mock:localhost#22222:"))
       (tramp-cleanup-connection (tramp-dissect-file-name dir)))))
 
+;; Connection-local variables are enabled per default since Emacs 27.1.
+(ert-deftest tramp-test34-connection-local-variables ()
+  "Check that connection-local variables are enabled."
+  :tags '(:expensive-test)
+  (skip-unless (tramp--test-enabled))
+  ;; Since Emacs 27.1.
+  (skip-unless (fboundp 'with-connection-local-variables))
+
+  ;; `connection-local-set-profile-variables' and
+  ;; `connection-local-set-profiles' exist since Emacs 26.1.  We don't
+  ;; want to see compiler warnings for older Emacsen.
+  (let* ((default-directory tramp-test-temporary-file-directory)
+	 (tmp-name1 (tramp--test-make-temp-name))
+	 (tmp-name2 (expand-file-name "foo" tmp-name1))
+	 (enable-local-variables :all)
+	 (enable-remote-dir-locals t)
+	 kill-buffer-query-functions
+	 connection-local-profile-alist connection-local-criteria-alist)
+    (unwind-protect
+	(progn
+	  (make-directory tmp-name1)
+          (should (file-directory-p tmp-name1))
+
+	  ;; `local-variable' is buffer-local due to explicit setting.
+	  (with-no-warnings
+	    (defvar-local local-variable 'buffer))
+	  (with-temp-buffer
+	    (should (eq local-variable 'buffer)))
+
+	  ;; `local-variable' is connection-local due to Tramp.
+	  (write-region "foo" nil tmp-name2)
+	  (should (file-exists-p tmp-name2))
+	  (with-no-warnings
+	    (connection-local-set-profile-variables
+	     'local-variable-profile
+	     '((local-variable . connect)))
+	    (connection-local-set-profiles
+	     `(:application tramp
+	       :protocol ,(file-remote-p default-directory 'method)
+	       :user ,(file-remote-p default-directory 'user)
+	       :machine ,(file-remote-p default-directory 'host))
+	     'local-variable-profile))
+	  (with-current-buffer (find-file-noselect tmp-name2)
+	    (should (eq local-variable 'connect))
+	    (kill-buffer (current-buffer)))
+
+	  ;; `local-variable' is dir-local due to existence of .dir-locals.el.
+	  (write-region
+	   "((nil . ((local-variable . dir))))" nil
+	   (expand-file-name ".dir-locals.el" tmp-name1))
+	  (should (file-exists-p (expand-file-name ".dir-locals.el" tmp-name1)))
+	  (with-current-buffer (find-file-noselect tmp-name2)
+	    (should (eq local-variable 'dir))
+	    (kill-buffer (current-buffer)))
+
+	  ;; `local-variable' is file-local due to specifying as file variable.
+	  (write-region
+	   "-*- mode: comint; local-variable: file; -*-" nil tmp-name2)
+          (should (file-exists-p tmp-name2))
+	  (with-current-buffer (find-file-noselect tmp-name2)
+	    (should (eq local-variable 'file))
+	    (kill-buffer (current-buffer))))
+
+      ;; Cleanup.
+      (ignore-errors (delete-directory tmp-name1 'recursive)))))
+
 ;; The functions were introduced in Emacs 26.1.
 (ert-deftest tramp-test34-explicit-shell-file-name ()
   "Check that connection-local `explicit-shell-file-name' is set."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
+  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
   ;; Since Emacs 26.1.
   (skip-unless (and (fboundp 'connection-local-set-profile-variables)
 		    (fboundp 'connection-local-set-profiles)))
@@ -4288,7 +4354,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   ;; `connection-local-set-profiles' exist since Emacs 26.1.  We don't
   ;; want to see compiler warnings for older Emacsen.
   (let ((default-directory tramp-test-temporary-file-directory)
-	explicit-shell-file-name kill-buffer-query-functions)
+	explicit-shell-file-name kill-buffer-query-functions
+	connection-local-profile-alist connection-local-criteria-alist)
     (unwind-protect
 	(progn
 	  ;; `shell-mode' would ruin our test, because it deletes all
@@ -4298,7 +4365,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (with-no-warnings
 	    (connection-local-set-profile-variables
 	     'remote-sh
-	     '((explicit-shell-file-name . "/bin/sh")
+	     `((explicit-shell-file-name
+		. ,(if (tramp--test-adb-p) "/system/bin/sh" "/bin/sh"))
 	       (explicit-sh-args . ("-i"))))
 	    (connection-local-set-profiles
 	     `(:application tramp
@@ -4306,6 +4374,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       :user ,(file-remote-p default-directory 'user)
 	       :machine ,(file-remote-p default-directory 'host))
 	     'remote-sh))
+	  (put 'explicit-shell-file-name 'safe-local-variable #'identity)
+	  (put 'explicit-sh-args 'safe-local-variable #'identity)
 
 	  ;; Run interactive shell.  Since the default directory is
 	  ;; remote, `explicit-shell-file-name' shall be set in order
@@ -4316,6 +4386,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (call-interactively #'shell)
 	    (should explicit-shell-file-name)))
 
+      ;; Cleanup.
       (put 'explicit-shell-file-name 'permanent-local nil)
       (kill-buffer "*shell*"))))
 

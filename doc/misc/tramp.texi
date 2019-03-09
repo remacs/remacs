@@ -2970,7 +2970,7 @@ Starting with Emacs 26, you could use connection-local variables for
 setting different values of @code{explicit-shell-file-name} for
 different remote hosts.
 @ifinfo
-@pxref{Connection Local Variables, , , elisp}
+@xref{Connection Variables, , , emacs}
 @end ifinfo
 
 @lisp
@@ -3022,6 +3022,14 @@ host.  Example:
 
 @kbd{M-x auto-revert-tail-mode @key{RET}} runs similarly showing
 continuous output.
+
+@code{shell-command} uses the variables @code{shell-file-name} and
+@code{shell-command-switch} in order to determine which shell to run.
+For remote hosts, their default values are @file{/bin/sh} and
+@option{-c}, respectively (except for the @option{adb} method, which
+uses @file{/system/bin/sh}).  Like the variables in the previous
+section, these variables can be changed via connection-local
+variables.
 
 
 @subsection Running @code{eshell} on a remote host
