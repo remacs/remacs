@@ -107,12 +107,14 @@
   (should (= 1.0 (window-normal-size w2 't)))))
 
 (ert-deftest window-pixel-top ()
+  (skip-unless (display-graphic-p))
   (let ((w1 (selected-window))
         (w2 (split-window-vertically)))
     (should (= (window-pixel-top) (window-pixel-top w1)))
     (should-not (= (window-pixel-top w1) (window-pixel-top w2)))))
 
 (ert-deftest window-fringes ()
+  (skip-unless (display-graphic-p))
   (let ((w1 (selected-window))
         (w2 (split-window)))
     (set-window-fringes w1 4 4 nil)
@@ -122,6 +124,7 @@
     (should (equal `(16 16 t) (window-fringes w2)))))
 
 (ert-deftest set-window-fringes ()
+  (skip-unless (display-graphic-p))
   (let ((w1 (selected-window))
         (w2 (split-window)))
     (set-window-fringes w1 4 4 nil)
