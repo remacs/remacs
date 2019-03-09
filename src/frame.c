@@ -3611,6 +3611,40 @@ bottom edge of FRAME's display.  */)
 
   return Qt;
 }
+
+DEFUN ("frame-window-state-change", Fframe_window_state_change,
+       Sframe_window_state_change, 0, 1, 0,
+       doc: /* Return t if FRAME's window state change flag is set, nil otherwise.
+FRAME must be a live frame and defaults to the selected one.
+
+If FRAME's window state change flag is set, the default values of
+`window-state-change-functions' and `window-state-change-hook' will be
+run during next redisplay, regardless of whether a window state change
+actually occurred on FRAME or not.  After that, the value of this flag
+is reset.  */)
+     (Lisp_Object frame)
+{
+  return FRAME_WINDOW_STATE_CHANGE (decode_live_frame (frame)) ? Qt : Qnil;
+}
+
+DEFUN ("set-frame-window-state-change", Fset_frame_window_state_change,
+       Sset_frame_window_state_change, 0, 2, 0,
+       doc: /* Set FRAME's window state change flag according to ARG.
+Set FRAME's window state change flag if ARG is non-nil, reset it
+otherwise.
+
+If FRAME's window state change flag is set, the default values of
+`window-state-change-functions' and `window-state-change-hook' will be
+run during next redisplay, regardless of whether a window state change
+actually occurred on FRAME or not.  After that, the value of FRAME's
+window state change flag is reset.  */)
+     (Lisp_Object frame, Lisp_Object arg)
+{
+  struct frame *f = decode_live_frame (frame);
+
+  return (FRAME_WINDOW_STATE_CHANGE (f) = !NILP (arg)) ? Qt : Qnil;
+}
+
 
 /***********************************************************************
 				Frame Parameters
@@ -6256,6 +6290,8 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_position);
   defsubr (&Sset_frame_position);
   defsubr (&Sframe_pointer_visible_p);
+  defsubr (&Sframe_window_state_change);
+  defsubr (&Sset_frame_window_state_change);
 
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sx_get_resource);

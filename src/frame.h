@@ -334,6 +334,10 @@ struct frame
      frame.  */
   bool_bf window_change : 1;
 
+  /* True if running window state change functions has been explicitly
+     requested for this frame since last redisplay.  */
+  bool_bf window_state_change : 1;
+
   /* True if the mouse has moved on this display device
      since the last time we checked.  */
   bool_bf mouse_moved : 1;
@@ -943,6 +947,10 @@ default_pixels_per_inch_y (void)
 /* True if at least one window changed on frame F since the last time
    window change functions were run on F.  */
 #define FRAME_WINDOW_CHANGE(f) (f)->window_change
+
+/* True if running window state change functions has been explicitly
+   requested for this frame since last redisplay.  */
+#define FRAME_WINDOW_STATE_CHANGE(f) (f)->window_state_change
 
 /* The minibuffer window of frame F, if it has one; otherwise nil.  */
 #define FRAME_MINIBUF_WINDOW(f) f->minibuffer_window

@@ -6046,8 +6046,8 @@ buffer are (re)fontified because a window was scrolled or its size
 changed.  @xref{Other Font Lock Variables}.
 
 @cindex window change functions
-   The remainder of this section covers five hooks that are called at
-the end of redisplay provided a significant, non-scrolling change of a
+   The remainder of this section covers six hooks that are called
+during redisplay provided a significant, non-scrolling change of a
 window has been detected.  For simplicity, these hooks and the
 functions they call will be collectively referred to as @dfn{window
 change functions}.
@@ -6058,9 +6058,9 @@ detected, which means that a window was created, deleted or assigned
 another buffer.
 
 @defvar window-buffer-change-functions
-This variable specifies functions called at the end of redisplay when
-window buffers have changed.  The value should be a list of functions
-that take one argument.
+This variable specifies functions called during redisplay when window
+buffers have changed.  The value should be a list of functions that
+take one argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if that window has been created or assigned
@@ -6074,14 +6074,14 @@ In this case the frame is passed as argument.
 @end defvar
 
 @cindex window size change
-The second of these hooks is run after a @dfn{window size change} has
+The second of these hooks is run when a @dfn{window size change} has
 been detected which means that a window was created, assigned another
 buffer, or changed its total size or that of its text area.
 
 @defvar window-size-change-functions
-This variable specifies functions called at the end of redisplay when
-a window size change occurred.  The value should be a list of
-functions that take one argument.
+This variable specifies functions called during redisplay when a
+window size change occurred.  The value should be a list of functions
+that take one argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if that window has been added or assigned
@@ -6097,13 +6097,13 @@ argument.
 @end defvar
 
 @cindex window selection change
-The third of these hooks is run after a @dfn{window selection change}
+The third of these hooks is run when a @dfn{window selection change}
 has selected another window since the last redisplay.
 
 @defvar window-selection-change-functions
-This variable specifies functions called at the end of redisplay when
-the selected window or a frame's selected window has changed.  The
-value should be a list of functions that take one argument.
+This variable specifies functions called during redisplay when the
+selected window or a frame's selected window has changed.  The value
+should be a list of functions that take one argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if that window has been selected or
@@ -6118,13 +6118,13 @@ run.  In this case the frame is passed as argument.
 @end defvar
 
 @cindex window state change
-The fourth of these hooks is run after a @dfn{window state change} has
+The fourth of these hooks is run when a @dfn{window state change} has
 been detected, which means that at least one of the three preceding
 window changes has occurred.
 
 @defvar window-state-change-functions
-This variable specifies functions called at the end of redisplay when
-a window buffer or size change occurred or the selected window or a
+This variable specifies functions called during redisplay when a
+window buffer or size change occurred or the selected window or a
 frame's selected window has changed.  The value should be a list of
 functions that take one argument.
 
@@ -6141,6 +6141,10 @@ another buffer, changed its total or body size or that frame has been
 selected or deselected or the frame's selected window has changed
 since the last time window change functions were run.  In this case
 the frame is passed as argument.
+
+Functions specified by the default value are also run for a frame when
+that frame's window state change flag (see below) has been set since
+last redisplay.
 @end defvar
 
 @cindex window configuration change
@@ -6150,9 +6154,9 @@ size of a window changed.  It differs from the four preceding hooks in
 the way it is run.
 
 @defvar window-configuration-change-hook
-This variable specifies functions called at the end of redisplay when
-either the buffer or the size of a window has changed.  The value
-should be a list of functions that take no argument.
+This variable specifies functions called during redisplay when either
+the buffer or the size of a window has changed.  The value should be a
+list of functions that take no argument.
 
 Functions specified buffer-locally are called for any window showing
 the corresponding buffer if at least one window on that frame has been
@@ -6168,14 +6172,29 @@ window change functions were run.  Each call is performed with the
 frame temporarily selected and the selected window's buffer current.
 @end defvar
 
-Window change functions are called at the end of redisplay for each
-frame as follows: First, any buffer-local window buffer change
-function, window size change function, selected window change and
-window state change functions are called in this order.  Next, the
-default values for these functions are called in the same order.  Then
-any buffer-local window configuration change functions are called
-followed by functions specified by the default value of those
-functions.
+Finally, Emacs runs a normal hook that generalizes the behavior of
+@code{window-state-change-functions}.
+
+@defvar window-state-change-hook
+The default value of this variable specifies functions called during
+redisplay when a window state change has been detected or the window
+state change flag has been set on at least one frame.  The value
+should be a list of functions that take no argument.
+
+Applications should put a function on this hook only if they want to
+react to changes that happened on (or have been signaled for) two or
+more frames since last redisplay.  In every other case, putting the
+function on @code{window-state-change-functions} should be preferred.
+@end defvar
+
+Window change functions are called during redisplay for each frame as
+follows: First, any buffer-local window buffer change function, window
+size change function, selected window change and window state change
+functions are called in this order.  Next, the default values for
+these functions are called in the same order.  Then any buffer-local
+window configuration change functions are called followed by functions
+specified by the default value of those functions.  Finally, functions
+on @code{window-state-change-hook} are run.
 
    Window change functions are run for a specific frame only if a
 corresponding change was registered for that frame earlier.  Such
@@ -6188,6 +6207,27 @@ Configurations}), this will trigger a call of window change functions
 only if that excursion still persists at the time change functions are
 run.  If it is exited earlier, hooks will be run only if registered by
 a change outside the scope of that excursion.
+
+@cindex window state change flag
+   The @dfn{window state change flag} of a frame, if set, will cause
+the default values of @code{window-state-change-functions} (for that
+frame) and @code{window-state-change-hook} to be run during next
+redisplay regardless of whether a window state change actually
+occurred for that frame or not.  After running any functions on these
+hooks, the flag is reset for each frame.  Applications can set that
+flag and inspect its value using the following functions.
+
+@defun set-frame-window-state-change &optional frame arg
+This function sets @var{frame}'s window state change flag if @var{arg}
+is non-@code{nil} and resets it otherwise.  @var{frame} must be a live
+frame and defaults to the selected one.
+@end defun
+
+@defun frame-window-state-change &optional frame
+This functions returns @code{t} if @var{frame}'s window state change
+flag is set and @code{nil} otherwise.  @var{frame} must be a live
+frame and defaults to the selected one.
+@end defun
 
    While window change functions are run, the functions described next
 can be called to get more insight into what has changed for a specific
@@ -6250,12 +6290,10 @@ change functions were run.
 
 Note that window change functions provide no information about which
 windows have been deleted since the last time they were run.  If
-necessary, an application should remember any window showing a
-specific buffer in a local variable of that buffer and update it in a
-function run by the default value of
-@code{window-buffer-change-functions} or
-@code{window-configuration-change-hook} (the only hooks triggered by
-the deletion of windows).
+necessary, applications should remember any window showing a specific
+buffer in a local variable of that buffer and update it in a function
+run by the default values of any of the hooks that are run when a
+window buffer change was detected.
 
    The following caveats should be considered when adding a function
 to window change functions:
@@ -6272,7 +6310,7 @@ the buffer, size or selection status of any window because there is no
 guarantee that the information about such a change will be propagated
 to other window change functions.  If at all, any such change should
 be executed only by the last function listed by the default value of
-@code{window-configuration-change-hook}.
+@code{window-state-change-hook}.
 
 @item
 Macros like @code{save-window-excursion}, @code{with-selected-window}

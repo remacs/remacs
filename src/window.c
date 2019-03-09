@@ -88,6 +88,9 @@ static Lisp_Object old_selected_window;
    by setting it to nil.  */
 Lisp_Object Vwindow_list;
 
+/* True mean window_change_record has to record all live frames.  */
+static bool window_change_record_frames;
+
 /* The mini-buffer window of the selected frame.
    Note that you cannot test for mini-bufferness of an arbitrary window
    by comparing against this; but you can test for mini-bufferness of
@@ -3426,8 +3429,8 @@ run_window_configuration_change_hook (struct frame *f)
   XSETFRAME (frame, f);
 
   if (NILP (Vrun_hooks)
-      || !(f->can_x_set_window_size)
-      || !(f->after_make_frame))
+      || !f->can_x_set_window_size
+      || !f->after_make_frame)
     return;
 
   /* Use the right buffer.  Matters when running the local hooks.  */
@@ -3574,41 +3577,12 @@ window_change_record_windows (Lisp_Object window, int stamp, ptrdiff_t number)
 
 
 /**
- * window_change_record_frame:
- *
- * Record changes for FRAME.  This records FRAME's selected window,
- * updates FRAME's change stamp, records the states of all live
- * windows of FRAME via window_change_record_windows and resets
- * FRAME's window_change flag.
- */
-static void
-window_change_record_frame (Lisp_Object frame)
-{
-  struct frame *f = XFRAME (frame);
-
-  /* Record selected window.  */
-  fset_old_selected_window (f, FRAME_SELECTED_WINDOW (f));
-
-  /* Bump up FRAME's change stamp.  If this wraps, make it 1 to avoid
-     that a new window (whose change stamp is always set to 0) gets
-     reported as "existing before".  */
-  f->change_stamp += 1;
-  if (f->change_stamp == 0)
-    f->change_stamp = 1;
-
-  /* Bump up the change stamps of all live windows on this frame so
-     the next call of this function can tell whether any of them
-     "existed before" and record state for each of these windows.  */
-  f->number_of_windows
-    = window_change_record_windows (f->root_window, f->change_stamp, 0);
-
-  /* Reset our flag.  */
-  FRAME_WINDOW_CHANGE (f) = false;
-}
-
-
-/**
  * window_change_record:
+ *
+ * For each frame that has recorded changes, record its selected
+ * window, update Fchange stamp, record the states of all its live
+ * windows via window_change_record_windows and reset its
+ * window_change and window_state_change flags.
  *
  * Record selected window in old_selected_window and selected frame in
  * old_selected_frame.
@@ -3616,6 +3590,36 @@ window_change_record_frame (Lisp_Object frame)
 static void
 window_change_record (void)
 {
+  if (window_change_record_frames)
+    {
+      Lisp_Object tail, frame;
+
+      FOR_EACH_FRAME (tail, frame)
+	{
+	  struct frame *f = XFRAME (frame);
+
+	  /* Record FRAME's selected window.  */
+	  fset_old_selected_window (f, FRAME_SELECTED_WINDOW (f));
+
+	  /* Bump up FRAME's change stamp.  If this wraps, make it 1 to avoid
+	     that a new window (whose change stamp is always set to 0) gets
+	     reported as "existing before".  */
+	  f->change_stamp += 1;
+	  if (f->change_stamp == 0)
+	    f->change_stamp = 1;
+
+	  /* Bump up the change stamps of all live windows on this frame so
+	     the next call of this function can tell whether any of them
+	     "existed before" and record state for each of these windows.  */
+	  f->number_of_windows
+	    = window_change_record_windows (f->root_window, f->change_stamp, 0);
+
+	  /* Reset our flags.  */
+	  FRAME_WINDOW_CHANGE (f) = false;
+	  FRAME_WINDOW_STATE_CHANGE (f) = false;
+	}
+    }
+
   /* Strictly spoken we don't need old_selected_window at all - its
      value is the old selected window of old_selected_frame.  */
   old_selected_window = selected_window;
@@ -3647,8 +3651,18 @@ run_window_change_functions_1 (Lisp_Object symbol, Lisp_Object buffer,
 
   while (CONSP (funs))
     {
-      if (!EQ (XCAR (funs), Qt))
-	safe_call1 (XCAR (funs), window_or_frame);
+      if (!EQ (XCAR (funs), Qt)
+	  && (NILP (buffer)
+	      ? FRAME_LIVE_P (XFRAME (window_or_frame))
+	      : WINDOW_LIVE_P (window_or_frame)))
+	{
+	  /* Any function called here may change the state of any
+	     frame.  Make sure to record changes for each live frame
+	     in window_change_record later.  */
+	  window_change_record_frames = true;
+	  safe_call1 (XCAR (funs), window_or_frame);
+	}
+
       funs = XCDR (funs);
     }
 }
@@ -3661,8 +3675,9 @@ run_window_change_functions_1 (Lisp_Object symbol, Lisp_Object buffer,
  * must be called from a "safe" position in redisplay_internal.
  *
  * Do not run any functions for a frame whose window_change flag is
- * nil and where no window selection happened since the last time this
- * function was called.  Also, skip any tooltip frame.
+ * nil, where no window selection happened and whose window state
+ * change flag was not set since the last time this function was
+ * called.  Never run any functions for tooltip frames.
  *
  * The change functions run are, in this order:
  *
@@ -3679,25 +3694,35 @@ run_window_change_functions_1 (Lisp_Object symbol, Lisp_Object buffer,
  * `window-selected-change-functions' run for a window that was
  * (de-)selected since the last time window change functions were run.
  *
+ * `window-state-change-functions' run for a window for which any of
+ * the above three changes occurred.
+ *
  * A buffer-local value of these functions is run if and only if the
- * window for which the functions are run, currently shows the buffer.
+ * window for which the functions are run currently shows the buffer.
  * Each call gets one argument - the window showing the buffer.  This
  * means that the buffer-local value of these functions may be called
- * as many times at the buffer is shown on the frame.
+ * as many times as the buffer is shown on the frame.
  *
- * The default value of these functions is called only after all
+ * The default values of these functions are called only after all
  * buffer-local values for all of these functions have been run.  Each
- * such call receives one argument - the frame for which this function
- * is run.
+ * such call receives one argument - the frame for which a change
+ * occurred.  Functions on `window-state-change-functions' are run
+ * also if the corresponding frame's window state change flag has been
+ * set.
  *
- * After the three change functions cited above have been run in the
+ * After the four change functions cited above have been run in the
  * indicated way, functions on 'window-configuration-change-hook' are
  * run.  A buffer-local value is run if a window shows that buffer and
  * has either changed its buffer or its body or total size or did not
  * appear on this frame since the last time window change functions
- * were run.  The functions are called without argument and the
+ * were run.  The functions are called without argument and with the
  * buffer's window selected.  The default value is run without
- * argument and the frame for which the function is run selected.
+ * argument and with the frame for which the function is run selected.
+ *
+ * In a final step, functions on `window-state-change-hook' are run
+ * provided a window state change has occurred or the window state
+ * change flag has been set on at least one frame.  Each of these
+ * functions is called without argument.
  *
  * This function does not save and restore match data.  Any functions
  * it calls are responsible for doing that themselves.
@@ -3707,8 +3732,10 @@ run_window_change_functions (void)
 {
   Lisp_Object tail, frame;
   bool selected_frame_change = !EQ (selected_frame, old_selected_frame);
-  ptrdiff_t count_outer = SPECPDL_INDEX ();
+  bool run_window_state_change_hook = false;
+  ptrdiff_t count = SPECPDL_INDEX ();
 
+  window_change_record_frames = false;
   record_unwind_protect_void (window_change_record);
   specbind (Qinhibit_redisplay, Qt);
 
@@ -3725,27 +3752,27 @@ run_window_change_functions (void)
 	       || EQ (frame, selected_frame)));
       bool frame_selected_window_change
 	= !EQ (FRAME_OLD_SELECTED_WINDOW (f), FRAME_SELECTED_WINDOW (f));
+      bool frame_window_state_change = FRAME_WINDOW_STATE_CHANGE (f);
       bool window_deleted = false;
       Lisp_Object windows;
       ptrdiff_t number_of_windows;
-      ptrdiff_t count_inner = SPECPDL_INDEX ();
 
-      if (!f->can_x_set_window_size
+      if (!FRAME_LIVE_P (f)
+	  || !f->can_x_set_window_size
 	  || !f->after_make_frame
 	  || FRAME_TOOLTIP_P (f)
 	  || !(frame_window_change
 	       || frame_selected_change
-	       || frame_selected_window_change))
-	/* Either we cannot run hooks for this frame yet or no window
-	   change has been reported for this frame since the last time
+	       || frame_selected_window_change
+	       || frame_window_state_change))
+	/* Either we are not allowed to run hooks for this frame or no
+	   window change has been reported for it since the last time
 	   we ran window change functions on it.  */
 	continue;
 
       /* Analyze windows and run buffer locals hooks in pre-order.  */
       windows = Fnreverse (window_sub_list (root, Qnil));
       number_of_windows = 0;
-
-      record_unwind_protect (window_change_record_frame, frame);
 
       /* The following loop collects all data needed to tell whether
 	 the default value of a hook shall be run and runs any buffer
@@ -3857,13 +3884,21 @@ run_window_change_functions (void)
 	  (Qwindow_selection_change_functions, Qnil, frame);
 
       /* A frame has changed state when a size or buffer change
-	 occurrd or its selected window has changed or when it was
-	 (de-)selected.  */
+	 occurred, its selected window has changed, when it was
+	 (de-)selected or its window state change flag was set.  */
       if ((frame_selected_change || frame_selected_window_change
-	   || frame_buffer_change || window_deleted || frame_size_change)
+	   || frame_buffer_change || window_deleted
+	   || frame_size_change || frame_window_state_change)
 	  && FRAME_LIVE_P (f))
-	run_window_change_functions_1
-	  (Qwindow_state_change_functions, Qnil, frame);
+	{
+	  run_window_change_functions_1
+	    (Qwindow_state_change_functions, Qnil, frame);
+	  /* Make sure to run 'window-state-change-hook' later.  */
+	  run_window_state_change_hook = true;
+	  /*  Make sure to record changes for each live frame in
+	     window_change_record later.  */
+	  window_change_record_frames = true;
+	}
 
       /* A frame's configuration changed when one of its windows has
 	 changed buffer or size or at least one window was deleted.  */
@@ -3871,17 +3906,16 @@ run_window_change_functions (void)
 	/* This will run any buffer local window configuration change
 	   hook as well.  */
 	run_window_configuration_change_hook (f);
-
-      if (!FRAME_LIVE_P (f))
-	continue;
-
-      /* Record changes (via window_change_record_frame) for this
-	 frame, even when an unhandled error occurred.  */
-      unbind_to (count_inner, Qnil);
     }
 
-  /* Record selected window and frame.  */
-  unbind_to (count_outer, Qnil);
+  /* Run 'window-state-change-hook' if at least one frame has changed
+     state.  */
+  if (run_window_state_change_hook && !NILP (Vwindow_state_change_hook))
+    safe_run_hooks (Qwindow_state_change_hook);
+
+  /* Record changes for all frames (if asked for), selected window and
+     frame.  */
+  unbind_to (count, Qnil);
 }
 
 /* Make WINDOW display BUFFER.  RUN_HOOKS_P means it's allowed
@@ -7999,6 +8033,7 @@ syms_of_window (void)
   Fput (Qscroll_down, Qscroll_command, Qt);
 
   DEFSYM (Qwindow_configuration_change_hook, "window-configuration-change-hook");
+  DEFSYM (Qwindow_state_change_hook, "window-state-change-hook");
   DEFSYM (Qwindow_state_change_functions, "window-state-change-functions");
   DEFSYM (Qwindow_size_change_functions, "window-size-change-functions");
   DEFSYM (Qwindow_buffer_change_functions, "window-buffer-change-functions");
@@ -8132,10 +8167,24 @@ redisplay.  In this case the window is passed as argument.
 
 Functions specified by the default value are called for each frame if
 at least one window on that frame has been added, deleted, changed its
-buffer or its total or body size or the frame has been (de-)selected
-or its selected window has changed since the last redisplay.  In this
-case the frame is passed as argument.  */);
+buffer or its total or body size or the frame has been (de-)selected,
+its selected window has changed or the window state change flag has
+been set for this frame since the last redisplay.  In this case the
+frame is passed as argument.  */);
   Vwindow_state_change_functions = Qnil;
+
+  DEFVAR_LISP ("window-state-change-hook", Vwindow_state_change_hook,
+	       doc: /* Functions called during redisplay when the window state changed.
+The value should be a list of functions that take no argument.
+
+This hook is called during redisplay when at least one window has been
+added, deleted, (de-)selected, changed its buffer or its total or body
+size or the window state change flag has been set for at least one
+frame.  This hook is called after all other window change functions
+have been run and should be used only if a function should react to
+changes that happened on at least two frames since last redisplay or
+the function intends to change the window configuration.  */);
+  Vwindow_state_change_hook = Qnil;
 
   DEFVAR_LISP ("window-configuration-change-hook", Vwindow_configuration_change_hook,
 	       doc: /* Functions called during redisplay when window configuration has changed.
