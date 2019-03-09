@@ -16,7 +16,7 @@ described in @ref{Backups and Auto-Saving}.
 names.  A file name is a string.  Most of these functions expand file
 name arguments using the function @code{expand-file-name}, so that
 @file{~} is handled correctly, as are relative file names (including
-@file{../}).  @xref{File Name Expansion}.
+@file{../} and the empty string).  @xref{File Name Expansion}.
 
   In addition, certain @dfn{magic} file names are handled specially.
 For example, when a remote file name is specified, Emacs accesses the
@@ -2408,6 +2408,17 @@ In some cases, a leading @samp{..} component can remain in the output:
 This is for the sake of filesystems that have the concept of a
 superroot above the root directory @file{/}.  On other filesystems,
 @file{/../} is interpreted exactly the same as @file{/}.
+
+Expanding @file{.} or the empty string returns the default directory:
+
+@example
+@group
+(expand-file-name "." "/usr/spool/")
+     @result{} "/usr/spool"
+(expand-file-name "" "/usr/spool/")
+     @result{} "/usr/spool"
+@end group
+@end example
 
 Note that @code{expand-file-name} does @emph{not} expand environment
 variables; only @code{substitute-in-file-name} does that:
