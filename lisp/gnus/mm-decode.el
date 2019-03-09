@@ -890,6 +890,7 @@ external if displayed external."
 	    (when method
 	      (message "Viewing with %s" method))
 	    (let ((mm (current-buffer))
+		  (attachment-filename (mm-handle-filename handle))
 		  (non-viewer (assq 'non-viewer
 				    (mailcap-mime-info
 				     (mm-handle-media-type handle) t))))
@@ -899,6 +900,9 @@ external if displayed external."
 			(when (and (boundp 'gnus-summary-buffer)
 				   (bufferp gnus-summary-buffer)
 				   (buffer-name gnus-summary-buffer))
+			  (when attachment-filename
+			    (with-current-buffer mm
+			      (rename-buffer (format "*mm* %s" attachment-filename) t)))
 			  ;; So that we pop back to the right place, sort of.
 			  (switch-to-buffer gnus-summary-buffer)
 			  (switch-to-buffer mm))
