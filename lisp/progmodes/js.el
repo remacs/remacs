@@ -66,7 +66,10 @@
 
 ;;; Constants
 
-(defconst js--name-start-re "[a-zA-Z_$]"
+(defconst js--name-start-chars "a-zA-Z_$"
+  "Character class chars matching the start of a JavaScript identifier.")
+
+(defconst js--name-start-re (concat "[" js--name-start-chars "]")
   "Regexp matching the start of a JavaScript identifier, without grouping.")
 
 (defconst js--stmt-delim-chars "^;{}?:")
@@ -1497,8 +1500,10 @@ point of view of font-lock.  It applies highlighting directly with
 (defconst js-jsx--font-lock-keywords
   `((js-jsx--match-tag-name 0 font-lock-function-name-face t)
     (js-jsx--match-attribute-name 0 font-lock-variable-name-face t)
+    (js-jsx--match-text 0 'default t) ; “Undo” keyword fontification.
     (js-jsx--match-tag-beg)
-    (js-jsx--match-tag-end))
+    (js-jsx--match-tag-end)
+    (js-jsx--match-expr))
   "JSX font lock faces and multiline text properties.")
 
 (defun js-jsx--match-tag-name (limit)
@@ -1523,6 +1528,19 @@ point of view of font-lock.  It applies highlighting directly with
                  (progn (set-match-data value) t))
             (js-jsx--match-attribute-name limit))))))
 
+(defun js-jsx--match-text (limit)
+  "Match JSXText, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-text nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-text))
+                 (progn (set-match-data value)
+                        (put-text-property (car value) (cadr value) 'font-lock-multiline t)
+                        t))
+            (js-jsx--match-text limit))))))
+
 (defun js-jsx--match-tag-beg (limit)
   "Match JSXBoundaryElements from start, until LIMIT."
   (when js-jsx-syntax
@@ -1544,6 +1562,17 @@ point of view of font-lock.  It applies highlighting directly with
         (or (and (setq value (get-text-property pos 'js-jsx-tag-end))
                  (progn (put-text-property value pos 'font-lock-multiline t) t))
             (js-jsx--match-tag-end limit))))))
+
+(defun js-jsx--match-expr (limit)
+  "Match JSXExpressionContainers, until LIMIT."
+  (when js-jsx-syntax
+    (let ((pos (next-single-char-property-change (point) 'js-jsx-expr nil limit))
+          value)
+      (when (and pos (> pos (point)))
+        (goto-char pos)
+        (or (and (setq value (get-text-property pos 'js-jsx-expr))
+                 (progn (put-text-property pos value 'font-lock-multiline t) t))
+            (js-jsx--match-expr limit))))))
 
 (defconst js--font-lock-keywords-3
   `(
@@ -1835,6 +1864,177 @@ For use by `syntax-propertize-extend-region-functions'."
                 (throw 'stop nil)))))))
     (if new-start (cons new-start end))))
 
+(defconst js-jsx--tag-re
+  (concat "<\\s-*\\("
+          "[/>]" ; JSXClosingElement, or JSXOpeningFragment, or JSXClosingFragment
+          "\\|"
+          js--dotted-name-re "\\s-*[" js--name-start-chars "{/>]" ; JSXOpeningElement
+          "\\)")
+  "Regexp unambiguously matching a JSXBoundaryElement.")
+
+(defun js-jsx--matched-tag-type ()
+  "Determine the tag type of the last match to `js-jsx--tag-re'.
+Return `close' for a JSXClosingElement/JSXClosingFragment match,
+return `self-closing' for some self-closing JSXOpeningElements,
+else return `other'."
+  (let ((chars (vconcat (match-string 1))))
+    (cond
+     ((= (aref chars 0) ?/) 'close)
+     ((= (aref chars (1- (length chars))) ?/) 'self-closing)
+     (t 'other))))
+
+(defconst js-jsx--self-closing-re "/\\s-*>"
+  "Regexp matching the end of a self-closing JSXOpeningElement.")
+
+(defun js-jsx--matching-close-tag-pos ()
+  "Return position of the closer of the opener before point.
+Assuming a JSXOpeningElement or a JSXOpeningFragment is
+immediately before point, find a matching JSXClosingElement or
+JSXClosingFragment, skipping over any nested JSXElements to find
+the match.  Return nil if a match can’t be found."
+  (let ((tag-stack 1) self-closing-pos type)
+    (catch 'stop
+      (while (re-search-forward js-jsx--tag-re nil t)
+        (setq type (js-jsx--matched-tag-type))
+        ;; Balance the total of self-closing tags that we subtract
+        ;; from the stack, ignoring those tags which are never added
+        ;; to the stack (see below).
+        (unless (eq type 'self-closing)
+          (when (and self-closing-pos (> (point) self-closing-pos))
+            (setq tag-stack (1- tag-stack))))
+        (if (eq type 'close)
+            (progn
+              (setq tag-stack (1- tag-stack))
+              (when (= tag-stack 0)
+                (throw 'stop (match-beginning 0))))
+          ;; Tags that we know are self-closing aren’t added to the
+          ;; stack at all, because we only close the ones that we have
+          ;; anticipated after moving past those anticipated tags’
+          ;; ends, and if a self-closing tag is the first tag we
+          ;; encounter in this loop, then it will never be anticipated
+          ;; (due to an optimization where we sometimes can avoid
+          ;; looking for self-closing tags).
+          (unless (eq type 'self-closing)
+            (setq tag-stack (1+ tag-stack))))
+        ;; Don’t needlessly recalculate.
+        (unless (and self-closing-pos (<= (point) self-closing-pos))
+          (setq self-closing-pos nil) ; Reset if recalculating.
+          (save-excursion
+            ;; Anticipate a self-closing tag that we should make sure
+            ;; to subtract from the tag stack once we move past its
+            ;; end; we might might miss the end otherwise, due to the
+            ;; regexp-matching method we use to detect tags.
+            (when (re-search-forward js-jsx--self-closing-re nil t)
+              (setq self-closing-pos (match-beginning 0)))))))))
+
+(defun js-jsx--enclosing-curly-pos ()
+  "Return position of enclosing “{” in a “{/}” pair about point."
+  (let ((parens (reverse (nth 9 (syntax-ppss)))) paren-pos curly-pos)
+    (while
+        (and
+         (setq paren-pos (car parens))
+         (not (when (= (char-after paren-pos) ?{)
+                (setq curly-pos paren-pos)))
+         (setq parens (cdr parens))))
+    curly-pos))
+
+(defun js-jsx--enclosing-tag-pos ()
+  "Return beginning and end of a JSXElement about point.
+Look backward for a JSXElement that both starts before point and
+also ends after point.  That may be either a self-closing
+JSXElement or a JSXOpeningElement/JSXClosingElement pair."
+  (let ((start (point))
+        (curly-pos (save-excursion (js-jsx--enclosing-curly-pos)))
+        tag-beg tag-beg-pos tag-end-pos close-tag-pos)
+    (while
+        (and
+         (setq tag-beg (js--backward-text-property 'js-jsx-tag-beg))
+         (progn
+           (setq tag-beg-pos (point)
+                 tag-end-pos (cdr tag-beg))
+           (not
+            (or
+             (and (eq (car tag-beg) 'self-closing)
+                  (< start tag-end-pos))
+             (and (eq (car tag-beg) 'open)
+                  (save-excursion
+                    (goto-char tag-end-pos)
+                    (setq close-tag-pos (js-jsx--matching-close-tag-pos))
+                    ;; The JSXOpeningElement may either be unclosed,
+                    ;; else the closure must occur after the start
+                    ;; point (otherwise, a miscellaneous previous
+                    ;; JSXOpeningElement has been found, and we should
+                    ;; keep looking back for an enclosing one).
+                    (or (not close-tag-pos) (< start close-tag-pos))))))))
+      ;; Don’t return the last tag pos (if any; it wasn’t enclosing).
+      (setq tag-beg nil))
+    (and tag-beg
+         (or (not curly-pos) (> tag-beg-pos curly-pos))
+         (cons tag-beg-pos tag-end-pos))))
+
+(defun js-jsx--at-enclosing-tag-child-p ()
+  "Return t if point is at an enclosing tag’s child."
+  (let ((pos (save-excursion (js-jsx--enclosing-tag-pos))))
+    (and pos (>= (point) (cdr pos)))))
+
+(defun js-jsx--text-range (beg end)
+  "Identify JSXText within a “>/{/}/<” pair."
+  (when (> (- end beg) 0)
+    (save-excursion
+      (goto-char beg)
+      (while (and (skip-chars-forward " \t\n" end) (< (point) end))
+        ;; Comments and string quotes don’t serve their usual
+        ;; syntactic roles in JSXText; make them plain punctuation to
+        ;; negate those roles.
+        (when (or (= (char-after) ?/) ; comment
+                  (= (syntax-class (syntax-after (point))) 7)) ; string quote
+          (put-text-property (point) (1+ (point)) 'syntax-table '(1)))
+        (forward-char)))
+    ;; Mark JSXText so it can be font-locked as non-keywords.
+    (put-text-property beg (1+ beg) 'js-jsx-text (list beg end (current-buffer)))
+    ;; Ensure future propertization beginning from within the
+    ;; JSXText determines JSXText context from earlier lines.
+    (put-text-property beg end 'syntax-multiline t)))
+
+(defun js-jsx--syntax-propertize-tag-text (end)
+  "Determine if JSXText is before END and propertize it.
+Text within an open/close tag pair may be JSXText.  Temporarily
+interrupt JSXText by JSXExpressionContainers, and terminate
+JSXText when another JSXBoundaryElement is encountered.  Despite
+terminations, all JSXText will be identified once all the
+JSXBoundaryElements within an outermost JSXElement’s tree have
+been propertized."
+  (let ((text-beg (point))
+        forward-sexp-function) ; Use Lisp version.
+    (catch 'stop
+      (while (re-search-forward "[{<]" end t)
+        (js-jsx--text-range text-beg (1- (point)))
+        (cond
+         ((= (char-before) ?{)
+          (let (expr-beg expr-end)
+            (condition-case nil
+                (save-excursion
+                  (backward-char)
+                  (setq expr-beg (point))
+                  (forward-sexp)
+                  (setq expr-end (point)))
+              (scan-error nil))
+            ;; Recursively propertize the JSXExpressionContainer’s
+            ;; (possibly-incomplete) expression.
+            (js-syntax-propertize (1+ expr-beg) (if expr-end (min (1- expr-end) end) end))
+            ;; Ensure future propertization beginning from within the
+            ;; (possibly-incomplete) expression can determine JSXText
+            ;; context from earlier lines.
+            (put-text-property expr-beg (1+ expr-beg) 'js-jsx-expr (or expr-end end)) ; font-lock
+            (put-text-property expr-beg (if expr-end (min expr-end end) end) 'syntax-multiline t) ; syntax-propertize
+            ;; Exit the JSXExpressionContainer if that’s possible,
+            ;; else move to the end of the propertized area.
+            (goto-char (if expr-end (min expr-end end) end))))
+         ((= (char-before) ?<)
+          (backward-char) ; Ensure the next tag can be propertized.
+          (throw 'stop nil)))
+        (setq text-beg (point))))))
+
 (defun js-jsx--syntax-propertize-tag (end)
   "Determine if a JSXBoundaryElement is before END and propertize it.
 Disambiguate JSX from inequality operators and arrow functions by
@@ -1916,12 +2116,16 @@ testing for syntax only valid as JSX."
     (when unambiguous
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
       (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
-      ;; Mark beginning and end of tag for features like indentation.
+      ;; Mark beginning and end of tag for font-locking.
       (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg (cons type (point)))
-      (put-text-property (point) (1+ (point)) 'js-jsx-tag-end tag-beg))))
+      (put-text-property (point) (1+ (point)) 'js-jsx-tag-end tag-beg))
+    (if (js-jsx--at-enclosing-tag-child-p) (js-jsx--syntax-propertize-tag-text end))))
 
 (defconst js-jsx--text-properties
-  '(js-jsx-tag-beg nil js-jsx-tag-end nil js-jsx-tag-name nil js-jsx-attribute-name nil)
+  (list
+   'js-jsx-tag-beg nil 'js-jsx-tag-end nil
+   'js-jsx-tag-name nil 'js-jsx-attribute-name nil
+   'js-jsx-text nil 'js-jsx-expr nil)
   "Plist of text properties added by `js-syntax-propertize'.")
 
 (defun js-syntax-propertize (start end)
@@ -4010,6 +4214,8 @@ If one hasn't been set, or if it's stale, prompt for a new one."
                     '(font-lock-syntactic-face-function
                       . js-font-lock-syntactic-face-function)))
   (setq-local syntax-propertize-function #'js-syntax-propertize)
+  (add-hook 'syntax-propertize-extend-region-functions
+            #'syntax-propertize-multiline 'append 'local)
   (add-hook 'syntax-propertize-extend-region-functions
             #'js--syntax-propertize-extend-region 'append 'local)
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
