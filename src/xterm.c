@@ -1302,7 +1302,11 @@ x_clear_under_internal_border (struct frame *f)
 #else
       int margin = FRAME_TOP_MARGIN_HEIGHT (f);
 #endif
-      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
+      int face_id =
+	!NILP (Vface_remapping_alist)
+	? lookup_basic_face (NULL, f, INTERNAL_BORDER_FACE_ID)
+	: INTERNAL_BORDER_FACE_ID;
+      struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 
       block_input ();
 
@@ -1365,7 +1369,11 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	    height > 0))
       {
 	int y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, desired_row->y));
-	struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
+	int face_id =
+	  !NILP (Vface_remapping_alist)
+	  ? lookup_basic_face (NULL, f, INTERNAL_BORDER_FACE_ID)
+	  : INTERNAL_BORDER_FACE_ID;
+	struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 
 	block_input ();
 	if (face)

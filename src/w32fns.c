@@ -1650,12 +1650,16 @@ x_clear_under_internal_border (struct frame *f)
   /* Clear border if it's larger than before.  */
   if (border != 0)
     {
-      HDC hdc = get_frame_dc (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
-      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
+      int face_id =
+	!NILP (Vface_remapping_alist)
+	? lookup_basic_face (NULL, f, INTERNAL_BORDER_FACE_ID)
+	: INTERNAL_BORDER_FACE_ID;
+      struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 
       block_input ();
+      HDC hdc = get_frame_dc (f);
       if (face)
 	{
 	  /* Fill border with internal border face.  */

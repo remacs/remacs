@@ -800,29 +800,32 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	  height > 0))
     {
       int y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, desired_row->y));
+      int face_id =
+	!NILP (Vface_remapping_alist)
+	? lookup_basic_face (NULL, f, INTERNAL_BORDER_FACE_ID)
+	: INTERNAL_BORDER_FACE_ID;
+      struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
 
       block_input ();
-      {
-	HDC hdc = get_frame_dc (f);
-	struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
-	if (face)
-	  {
-	    /* Fill border with internal border face.  */
-	    unsigned long color = face->background;
+      HDC hdc = get_frame_dc (f);
+      if (face)
+	{
+	  /* Fill border with internal border face.  */
+	  unsigned long color = face->background;
 
-	    w32_fill_area (f, hdc, color, 0, y, width, height);
-	    w32_fill_area (f, hdc, color, FRAME_PIXEL_WIDTH (f) - width,
-			   y, width, height);
-	  }
-	else
-	  {
-	    w32_clear_area (f, hdc, 0, y, width, height);
-	    w32_clear_area (f, hdc, FRAME_PIXEL_WIDTH (f) - width,
-			    y, width, height);
-	  }
-	release_frame_dc (f, hdc);
-      }
+	  w32_fill_area (f, hdc, color, 0, y, width, height);
+	  w32_fill_area (f, hdc, color, FRAME_PIXEL_WIDTH (f) - width,
+			 y, width, height);
+	}
+      else
+	{
+	  w32_clear_area (f, hdc, 0, y, width, height);
+	  w32_clear_area (f, hdc, FRAME_PIXEL_WIDTH (f) - width,
+			  y, width, height);
+	}
+      release_frame_dc (f, hdc);
+
       unblock_input ();
     }
 }
