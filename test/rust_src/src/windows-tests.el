@@ -138,4 +138,10 @@
     (set-window-fringes w2 15)
     (should (equal `(15 8 nil) (window-fringes w2)))
     (set-window-fringes w2 15 15)
-    (should (equal `(15 15 nil) (window-fringes w2)))))
+    (should (equal `(15 15 nil) (window-fringes w2)))
+
+    ;; invoking set-window-fringes with the same params would
+    ;; not change window fringe properties and should return nil
+    (should (set-window-fringes w1 1 1 nil))
+    (should-not (set-window-fringes w1 1 1 nil))
+    (should (set-window-fringes w1 1 2 nil))))
