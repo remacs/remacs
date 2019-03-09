@@ -1852,9 +1852,12 @@ or nil."
 
 Each function in this list should be written to operate on the
 current buffer, but should not modify it in any way.  The buffer
-will contain undecoded text of parts of the file.  Each function
+will contain the text of parts of the file.  Each function
 should take one argument, SIZE, which says how many characters
-\(starting from point) it should look at.
+\(starting from point) it should look at.  The function might be
+called both when the file is visited and Emacs wants to decode
+its contents, and when the file's buffer is about to be saved
+and Emacs wants to determine how to encode its contents.
 
 If one of these functions succeeds in determining a coding
 system, it should return that coding system.  Otherwise, it
@@ -2501,10 +2504,17 @@ This function is intended to be added to `auto-coding-functions'."
                   (let ((sym-type (coding-system-type sym))
                         (bfcs-type
                          (coding-system-type buffer-file-coding-system)))
-                    ;; 'charset' will signal an error in
-                    ;; coding-system-equal, since it isn't a
-                    ;; coding-system.  So test that up front.
-                    (if (and (not (equal sym-type 'charset))
+                    ;; If the buffer is unibyte, its encoding is
+                    ;; immaterial (it is just the default value of
+                    ;; buffer-file-coding-system), so we ignore it.
+                    ;; This situation happens when this function is
+                    ;; called as part of visiting a file, as opposed
+                    ;; to when saving a buffer to a file.
+                    (if (and enable-multibyte-characters
+                             ;; 'charset' will signal an error in
+                             ;; coding-system-equal, since it isn't a
+                             ;; coding-system.  So test that up front.
+                             (not (equal sym-type 'charset))
                              (coding-system-equal 'utf-8 sym-type)
                              (coding-system-equal 'utf-8 bfcs-type))
                         buffer-file-coding-system
@@ -2556,7 +2566,8 @@ This function is intended to be added to `auto-coding-functions'."
             (let ((sym-type (coding-system-type sym))
                   (bfcs-type
                    (coding-system-type buffer-file-coding-system)))
-              (if (and (coding-system-equal 'utf-8 sym-type)
+              (if (and enable-multibyte-characters
+                       (coding-system-equal 'utf-8 sym-type)
                        (coding-system-equal 'utf-8 bfcs-type))
                   buffer-file-coding-system
 		sym))

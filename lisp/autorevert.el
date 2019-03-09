@@ -816,7 +816,7 @@ the timer when no buffers need to be checked."
       (when (and (not global-auto-revert-mode)
 		 (null auto-revert-buffer-list))
         (if (timerp auto-revert-timer)
-	    (cancel-timer auto-revert-timer))
+            (cancel-timer auto-revert-timer))
 	(setq auto-revert-timer nil)))))
 
 

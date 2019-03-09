@@ -4894,6 +4894,16 @@ and the buffer position where the @code{display} property was found,
 respectively.  Both positions can be different when @code{object} is a
 string.
 
+Note that @var{condition} will only be evaluated when redisplay
+examines the text where this display spec is located, so this feature
+is best suited for conditions that are relatively stable, i.e.@:
+yield, for each particular buffer position, the same results on every
+evaluation.  If the results change for the same text location, e.g.,
+if the result depends on the position of point, then the conditional
+specification might not do what you want, because redisplay examines
+only those parts of buffer text where it has reasons to assume that
+something changed since the last display cycle.
+
 @node Display Margins
 @subsection Displaying in the Margins
 @cindex display margins

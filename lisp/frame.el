@@ -736,7 +736,9 @@ If DISPLAY is nil, that stands for the selected frame's display."
 (defun make-frame-command ()
   "Make a new frame, on the same terminal as the selected frame.
 If the terminal is a text-only terminal, this also selects the
-new frame."
+new frame.
+
+When called from Lisp, returns the new frame."
   (interactive)
   (if (display-graphic-p)
       (make-frame)
