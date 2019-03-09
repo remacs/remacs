@@ -105,3 +105,9 @@
   (should (= 1.0 (window-normal-size w1 't)))
   (should (= 0.5 (window-normal-size w2)))
   (should (= 1.0 (window-normal-size w2 't)))))
+
+(ert-deftest window-pixel-top ()
+  (let ((w1 (selected-window))
+        (w2 (split-window-vertically)))
+    (should (= (window-pixel-top) (window-pixel-top w1)))
+    (should-not (= (window-pixel-top w1) (window-pixel-top w2)))))
