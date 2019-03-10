@@ -666,7 +666,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 
       {
 	Lisp_Object regexps, table = (completion_ignore_case
-				      ? Vascii_canon_table : Qnil);
+				      ? get_canonical_case_table() : Qnil);
 
 	/* Ignore this element if it fails to match all the regexps.  */
 	for (regexps = Vcompletion_regexp_list; CONSP (regexps);

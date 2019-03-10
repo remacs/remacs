@@ -7,10 +7,9 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     multibyte,
-    multibyte::LispStringRef,
+    multibyte::{LispStringRef, LispSymbolOrString},
     remacs_sys::EmacsInt,
     remacs_sys::{
         make_unibyte_string, make_uninit_multibyte_string,
@@ -31,17 +30,21 @@ pub fn string_bytes(string: LispStringRef) -> EmacsInt {
     string.len_bytes() as EmacsInt
 }
 
-/// Return t if two strings have identical contents.
-/// Case is significant, but text properties are ignored.
-/// Symbols are also allowed; their print names are used instead.
-#[lisp_fn]
-pub fn string_equal(s1: LispObject, s2: LispObject) -> bool {
-    let s1 = LispObject::symbol_or_string_as_string(s1);
-    let s2 = LispObject::symbol_or_string_as_string(s2);
+pub fn string_equal(s1: impl Into<LispSymbolOrString>, s2: impl Into<LispSymbolOrString>) -> bool {
+    let s1 = LispStringRef::from(s1.into());
+    let s2 = LispStringRef::from(s2.into());
 
     s1.len_chars() == s2.len_chars()
         && s1.len_bytes() == s2.len_bytes()
         && s1.as_slice() == s2.as_slice()
+}
+
+/// Return t if two strings have identical contents.
+/// Case is significant, but text properties are ignored.
+/// Symbols are also allowed; their print names are used instead.
+#[lisp_fn(name = "string-equal", c_name = "string_equal")]
+pub fn string_equal_lisp(s1: LispSymbolOrString, s2: LispSymbolOrString) -> bool {
+    string_equal(s1, s2)
 }
 
 /// Return a multibyte string with the same individual bytes as STRING.
@@ -137,21 +140,30 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
     }
 }
 
-/// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
-/// Case is significant.
-#[lisp_fn]
-pub fn string_lessp(string1: LispObject, string2: LispObject) -> bool {
-    let s1 = LispObject::symbol_or_string_as_string(string1);
-    let s2 = LispObject::symbol_or_string_as_string(string2);
+pub fn string_lessp(
+    string1: impl Into<LispSymbolOrString>,
+    string2: impl Into<LispSymbolOrString>,
+) -> bool {
+    let s1 = LispStringRef::from(string1.into());
+    let s2 = LispStringRef::from(string2.into());
 
     s1.as_slice() < s2.as_slice()
+}
+
+/// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
+/// Case is significant.
+#[lisp_fn(name = "string-lessp", c_name = "string_lessp")]
+pub fn string_lessp_lisp(string1: LispSymbolOrString, string2: LispSymbolOrString) -> bool {
+    string_lessp(string1, string2)
 }
 
 /// Return t if OBJECT is a multibyte string.
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
 pub fn multibyte_string_p(object: LispObject) -> bool {
-    object.as_string().map_or(false, |s| s.is_multibyte())
+    object
+        .as_string()
+        .map_or(false, LispStringRef::is_multibyte)
 }
 
 /// Clear the contents of STRING.

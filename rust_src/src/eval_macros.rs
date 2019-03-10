@@ -17,13 +17,13 @@ macro_rules! xsignal {
     ($symbol:expr) => {
         #[allow(unused_unsafe)]
         unsafe {
-            crate::remacs_sys::Fsignal($symbol, crate::remacs_sys::Qnil);
+            crate::eval::signal($symbol, crate::remacs_sys::Qnil);
         }
     };
     ($symbol:expr, $($tt:tt)+) => {
         #[allow(unused_unsafe)]
         unsafe {
-            crate::remacs_sys::Fsignal($symbol, list!($($tt)+));
+            crate::eval::signal($symbol, list!($($tt)+));
         }
     };
 }
@@ -284,11 +284,11 @@ macro_rules! declare_GC_protected_static {
 macro_rules! verify_lisp_type {
     ($obj:expr, Qarrayp) => {
         if !$obj.is_array() {
-            wrong_type!(::remacs_sys::Qarrayp, $obj);
+            wrong_type!(crate::remacs_sys::Qarrayp, $obj);
         }
     };
     ($n:expr, Qcharacterp) => {
-        if $n < 0 || $n > (EmacsInt::from($crate::multibyte::MAX_CHAR)) {
+        if $n < 0 || $n > (crate::remacs_sys::EmacsInt::from($crate::multibyte::MAX_CHAR)) {
             wrong_type!(
                 crate::remacs_sys::Qcharacterp,
                 $crate::lisp::LispObject::from($n)

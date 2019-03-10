@@ -1,5 +1,4 @@
 #![recursion_limit = "128"]
-#![feature(extern_crate_item_prelude)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -34,9 +33,9 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let max_args = function.args.len() as i16;
     let intspec = if let Some(intspec) = lisp_fn_args.intspec {
         let cbyte_intspec = CByteLiteral(intspec.as_str());
-        quote!{ (#cbyte_intspec).as_ptr() as *const libc::c_char }
+        quote! { (#cbyte_intspec).as_ptr() as *const libc::c_char }
     } else {
-        quote!{ std::ptr::null() }
+        quote! { std::ptr::null() }
     };
 
     match function.fntype {
@@ -74,7 +73,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fname = concat_idents("F", &cname);
     let rname = function.name;
     let min_args = lisp_fn_args.min;
-    let mut windows_header = quote!{};
+    let mut windows_header = quote! {};
 
     let functype = if lisp_fn_args.unevalled {
         quote! { aUNEVALLED }
@@ -107,7 +106,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
     if cfg!(windows) {
-        windows_header = quote!{
+        windows_header = quote! {
             | (std::mem::size_of::<crate::remacs_sys::Lisp_Subr>()
                / std::mem::size_of::<crate::remacs_sys::EmacsInt>()) as libc::ptrdiff_t
         };

@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::{lisp::defsubr, lisp::LispObject, remacs_sys::Qnil};
+use crate::{lisp::LispObject, remacs_sys::Qnil};
 
 #[cfg(feature = "use-xml2")]
 use crate::remacs_sys::{init_libxml2_functions, parse_region};

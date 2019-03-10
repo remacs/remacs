@@ -95,3 +95,13 @@
   (set-window-parameter (selected-window) 'test 'test)
   (should (consp (window-parameters)))
   (should (consp (window-parameters (selected-window)))))
+
+(ert-deftest window-normal-size ()
+  (let ((w1 (selected-window))
+        (w2 (split-window)))
+  (should (= 0.5 (window-normal-size)))
+  (should (= 1.0 (window-normal-size nil 't)))
+  (should (= 0.5 (window-normal-size w1)))
+  (should (= 1.0 (window-normal-size w1 't)))
+  (should (= 0.5 (window-normal-size w2)))
+  (should (= 1.0 (window-normal-size w2 't)))))

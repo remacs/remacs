@@ -7,18 +7,30 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     coding::encode_file_name,
-    lisp::defsubr,
+    errno::errno,
     lisp::LispObject,
     lists::LispCons,
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
     remacs_sys::{
-        check_executable, check_existing, file_name_absolute_p, file_name_case_insensitive_p,
+        check_executable, check_existing, expand_and_dir_to_file, file_directory_p,
+        file_name_absolute_p, file_name_case_insensitive_p, report_file_errno,
     },
     remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
-    remacs_sys::{Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p},
+    remacs_sys::{
+        Qfile_directory_p, Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p,
+    },
     threads::ThreadState,
 };
+
+/// Signal a file-access failure that set errno.  STRING describes the
+/// failure, NAME the file involved.  When invoking this function, take
+/// care to not use arguments such as build_string ("foo") that involve
+/// side effects that may set errno.
+#[no_mangle]
+pub unsafe extern "C" fn report_file_error(string: *const i8, name: LispObject) {
+    report_file_errno(string, name, errno().0);
+}
 
 /// Return t if (car A) is numerically less than (car B).
 #[lisp_fn]
@@ -31,7 +43,7 @@ def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");
 /// Return non-nil if NAME ends with a directory separator character.
 #[lisp_fn]
 pub fn directory_name_p(name: LispStringRef) -> bool {
-    if name.len_bytes() == 0 {
+    if name.is_empty() {
         return false;
     }
 
@@ -106,6 +118,23 @@ pub fn file_exists_p(filename: LispStringRef) -> bool {
         unsafe { check_existing(encode_file_name(absname).const_data_ptr() as *const i8) }
     }
 }
+
+/// Return t if FILENAME names an existing directory.
+/// Symbolic links to directories count as directories.
+/// See `file-symlink-p' to distinguish symlinks.
+#[lisp_fn(name = "file-directory-p", c_name = "file_directory_p")]
+pub fn file_directory_p_lisp(filename: LispStringRef) -> bool {
+    let absname = unsafe { expand_and_dir_to_file(filename.into()) };
+    let handler = find_file_name_handler(absname.into(), Qfile_directory_p);
+
+    if handler.is_not_nil() {
+        call!(handler, Qfile_directory_p, absname).into()
+    } else {
+        unsafe { file_directory_p(encode_file_name(absname.into()).into()) }
+    }
+}
+
+def_lisp_sym!(Qfile_directory_p, "file-directory-p");
 
 /// Return t if FILENAME can be executed by you.
 /// For a directory, this means you can access files in that directory.

@@ -23,17 +23,6 @@
 
 (require 'cl-lib)
 
-(ert-deftest fns-tests-reverse ()
-  (should-error (reverse))
-  (should-error (reverse 1))
-  (should-error (reverse (make-char-table 'foo)))
-  (should (equal [] (reverse [])))
-  (should (equal [0] (reverse [0])))
-  (should (equal [1 2 3 4] (reverse (reverse [1 2 3 4]))))
-  (should (equal '(a b c d) (reverse (reverse '(a b c d)))))
-  (should (equal "xyzzy" (reverse (reverse "xyzzy"))))
-  (should (equal "こんにちは / ｺﾝﾆﾁﾊ" (reverse (reverse "こんにちは / ｺﾝﾆﾁﾊ")))))
-
 (ert-deftest fns-tests-nreverse ()
   (should-error (nreverse))
   (should-error (nreverse 1))
@@ -55,12 +44,6 @@
   (let* ((A [1 2 3 4])
 	 (B (nreverse (nreverse A))))
     (should (equal A B))))
-
-(ert-deftest fns-tests-reverse-bool-vector ()
-  (let ((A (make-bool-vector 10 nil)))
-    (dotimes (i 5) (aset A i t))
-    (should (equal [nil nil nil nil nil t t t t t] (vconcat (reverse A))))
-    (should (equal A (reverse (reverse A))))))
 
 (ert-deftest fns-tests-nreverse-bool-vector ()
   (let ((A (make-bool-vector 10 nil)))
@@ -442,12 +425,6 @@
   (should-error (delete 3 (cyc2 1 2)) :type 'circular-list)
   (should-error (delete 3 (dot1 1)) :type 'wrong-type-argument)
   (should-error (delete 3 (dot2 1 2)) :type 'wrong-type-argument))
-
-(ert-deftest test-cycle-reverse ()
-  (should-error (reverse (cyc1 1)) :type 'circular-list)
-  (should-error (reverse (cyc2 1 2)) :type 'circular-list)
-  (should-error (reverse (dot1 1)) :type 'wrong-type-argument)
-  (should-error (reverse (dot2 1 2)) :type 'wrong-type-argument))
 
 (ert-deftest test-cycle-equal ()
   (should-error (equal (cyc1 1) (cyc1 1)))

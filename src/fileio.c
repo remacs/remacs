@@ -198,16 +198,6 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
 	     Fcons (build_string (string), errdata));
 }
 
-/* Signal a file-access failure that set errno.  STRING describes the
-   failure, NAME the file involved.  When invoking this function, take
-   care to not use arguments such as build_string ("foo") that involve
-   side effects that may set errno.  */
-
-void
-report_file_error (char const *string, Lisp_Object name)
-{
-  report_file_errno (string, name, errno);
-}
 
 /* Like report_file_error, but reports a file-notify-error instead.  */
 
@@ -2554,24 +2544,6 @@ This function does not check whether the link target exists.  */)
   return emacs_readlinkat (AT_FDCWD, SSDATA (filename));
 }
 
-DEFUN ("file-directory-p", Ffile_directory_p, Sfile_directory_p, 1, 1, 0,
-       doc: /* Return t if FILENAME names an existing directory.
-Symbolic links to directories count as directories.
-See `file-symlink-p' to distinguish symlinks.  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object absname = expand_and_dir_to_file (filename);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_directory_p);
-  if (!NILP (handler))
-    return call2 (handler, Qfile_directory_p, absname);
-
-  absname = ENCODE_FILE (absname);
-
-  return file_directory_p (absname) ? Qt : Qnil;
-}
 
 /* Return true if FILE is a directory or a symlink to a directory.
    Otherwise return false and set errno.  */
@@ -5775,7 +5747,6 @@ syms_of_fileio (void)
   DEFSYM (Qfile_writable_p, "file-writable-p");
   DEFSYM (Qfile_symlink_p, "file-symlink-p");
   DEFSYM (Qaccess_file, "access-file");
-  DEFSYM (Qfile_directory_p, "file-directory-p");
   DEFSYM (Qfile_regular_p, "file-regular-p");
   DEFSYM (Qfile_accessible_directory_p, "file-accessible-directory-p");
   DEFSYM (Qfile_modes, "file-modes");
@@ -6036,7 +6007,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_writable_p);
   defsubr (&Saccess_file);
   defsubr (&Sfile_symlink_p);
-  defsubr (&Sfile_directory_p);
   defsubr (&Sfile_accessible_directory_p);
   defsubr (&Sfile_regular_p);
   defsubr (&Sfile_modes);

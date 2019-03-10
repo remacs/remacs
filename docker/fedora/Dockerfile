@@ -1,6 +1,6 @@
 FROM fedora:latest
 
-RUN yum install -y \
+RUN dnf install -y \
     git \
     gcc gcc-c++ \
     kernel-devel \
@@ -14,6 +14,8 @@ RUN yum install -y \
     libxml2-devel \
     libXpm-devel \
     gnutls-devel \
+    clang-devel \
+    libXt-devel \
     curl \
     texinfo
 
@@ -23,6 +25,6 @@ ENV PATH "/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb
 RUN curl https://sh.rustup.rs -o rustup.sh && \
     sh rustup.sh \
         --default-host x86_64-unknown-linux-gnu \
-        --default-toolchain nightly-2018-11-03 -y && \
-    rustup default nightly-2018-11-03
+        --default-toolchain nightly-2019-02-27 -y && \
+    rustup default nightly-2019-02-27
 

@@ -1,11 +1,11 @@
 //! Functions operating on buffers.
 
-use std::sync::Mutex;
 use std::{self, mem, ptr};
 
+use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
-use rand::{Rng, StdRng};
+use rand::{thread_rng, Rng};
 
 use remacs_macros::lisp_fn;
 
@@ -17,33 +17,38 @@ use crate::{
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
-    lisp::defsubr,
-    lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
-    lists::{car, cdr, list, member},
-    lists::{LispConsCircularChecks, LispConsEndChecks},
-    marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
-    multibyte::LispStringRef,
-    multibyte::{multibyte_length_by_head, string_char},
+    hashtable::LispHashTableRef,
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
+    lists::{car, cdr, list, member, rassq, setcar},
+    lists::{CarIter, LispConsCircularChecks, LispConsEndChecks},
+    marker::{
+        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
+        LispMarkerRef, MARKER_DEBUG,
+    },
+    multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
+    multibyte::{LispStringRef, LispSymbolOrString},
     numbers::MOST_POSITIVE_FIXNUM,
+    obarray::intern,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
-        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
-        windows_or_buffers_changed, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse,
-    },
-    remacs_sys::{
-        Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
+        Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
+        UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
+    vectors::LispVectorlikeRef,
 };
 
 pub const BEG: ptrdiff_t = 1;
@@ -353,12 +358,261 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    pub fn overlay_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).overlay_modiff }
+    }
+
     pub fn z_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }
 
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    pub fn bytepos_to_charpos(mut self, bytepos: isize) -> isize {
+        assert!(self.beg_byte() <= bytepos && bytepos <= self.z_byte());
+
+        let mut best_above = self.z();
+        let mut best_above_byte = self.z_byte();
+
+        // If this buffer has as many characters as bytes,
+        // each character must be one byte.
+        // This takes care of the case where enable-multibyte-characters is nil.
+        if best_above == best_above_byte {
+            return bytepos;
+        }
+
+        let mut best_below = self.beg();
+        let mut best_below_byte = self.beg_byte();
+
+        macro_rules! consider_known {
+            ($bpos:expr, $cpos:expr) => {
+                let mut changed = false;
+                if $bpos == bytepos {
+                    if MARKER_DEBUG {
+                        byte_char_debug_check(self, $cpos, bytepos);
+                    }
+                    return $cpos;
+                } else if $bpos > bytepos {
+                    if $bpos < best_above_byte {
+                        best_above = $cpos;
+                        best_above_byte = $bpos;
+                        changed = true;
+                    }
+                } else if $bpos > best_below_byte {
+                    best_below = $cpos;
+                    best_below_byte = $bpos;
+                    changed = true;
+                }
+                if changed {
+                    if best_above - best_below == best_above_byte - best_below_byte {
+                        return best_below + (bytepos - best_below_byte);
+                    }
+                }
+            };
+        }
+
+        consider_known!(self.pt_byte, self.pt);
+        consider_known!(self.gpt_byte(), self.gpt());
+        consider_known!(self.begv_byte, self.begv);
+        consider_known!(self.zv_byte, self.zv);
+
+        if self.is_cached && self.modifications() == self.cached_modiff {
+            consider_known!(self.cached_bytepos, self.cached_charpos);
+        }
+
+        for m in self.markers().iter() {
+            consider_known!(m.bytepos_or_error(), m.charpos_or_error());
+            // If we are down to a range of 50 chars,
+            // don't bother checking any other markers;
+            // scan the intervening chars directly now.
+            if best_above - best_below < 50 {
+                break;
+            }
+        }
+
+        // We get here if we did not exactly hit one of the known places.
+        // We have one known above and one known below.
+        // Scan, counting characters, from whichever one is closer.
+
+        if bytepos - best_below_byte < best_above_byte - bytepos {
+            let record = bytepos - best_below_byte > 5000;
+
+            while best_below_byte < bytepos {
+                best_below += 1;
+                best_below_byte = self.inc_pos(best_below_byte);
+            }
+
+            // If this position is quite far from the nearest known position,
+            // cache the correspondence by creating a marker here.
+            // It will last until the next GC.
+            // But don't do it if BUF_MARKERS is nil;
+            // that is a signal from Fset_buffer_multibyte.
+            if record && self.markers().is_some() {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_below;
+            self.cached_bytepos = best_below_byte;
+
+            best_below
+        } else {
+            let record = best_above_byte - bytepos > 5000;
+
+            while best_above_byte > bytepos {
+                best_above -= 1;
+                best_above_byte = self.dec_pos(best_above_byte);
+            }
+
+            // If this position is quite far from the nearest known position,
+            // cache the correspondence by creating a marker here.
+            // It will last until the next GC.
+            // But don't do it if BUF_MARKERS is nil;
+            // that is a signal from Fset_buffer_multibyte.
+            if record && self.markers().is_some() {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_above;
+            self.cached_bytepos = best_above_byte;
+
+            best_above
+        }
+    }
+
+    pub fn charpos_to_bytepos(mut self, charpos: isize) -> isize {
+        assert!(self.beg() <= charpos && charpos <= self.z());
+
+        let mut best_above = self.z();
+        let mut best_above_byte = self.z_byte();
+
+        // If this buffer has as many characters as bytes,
+        // each character must be one byte.
+        // This takes care of the case where enable-multibyte-characters is nil.
+        if best_above == best_above_byte {
+            return charpos;
+        }
+
+        let mut best_below = self.beg();
+        let mut best_below_byte = self.beg_byte();
+
+        // We find in best_above and best_above_byte
+        // the closest known point above CHARPOS,
+        // and in best_below and best_below_byte
+        // the closest known point below CHARPOS,
+        //
+        // If at any point we can tell that the space between those
+        // two best approximations is all single-byte,
+        // we interpolate the result immediately.
+
+        macro_rules! consider_known {
+            ($cpos:expr, $bpos:expr) => {
+                let mut changed = false;
+                if $cpos == charpos {
+                    if MARKER_DEBUG {
+                        byte_char_debug_check(self, charpos, $bpos);
+                    }
+                    return $bpos;
+                } else if $cpos > charpos {
+                    if $cpos < best_above {
+                        best_above = $cpos;
+                        best_above_byte = $bpos;
+                        changed = true;
+                    }
+                } else if $cpos > best_below {
+                    best_below = $cpos;
+                    best_below_byte = $bpos;
+                    changed = true;
+                }
+                if changed {
+                    if best_above - best_below == best_above_byte - best_below_byte {
+                        return best_below_byte + (charpos - best_below);
+                    }
+                }
+            };
+        }
+
+        consider_known!(self.pt, self.pt_byte);
+        consider_known!(self.gpt(), self.gpt_byte());
+        consider_known!(self.begv, self.begv_byte);
+        consider_known!(self.zv, self.zv_byte);
+
+        if self.is_cached && self.modifications() == self.cached_modiff {
+            consider_known!(self.cached_charpos, self.cached_bytepos);
+        }
+
+        for m in self.markers().iter() {
+            consider_known!(m.charpos_or_error(), m.bytepos_or_error());
+            // If we are down to a range of 50 chars,
+            // don't bother checking any other markers;
+            // scan the intervening chars directly now.
+            if best_above - best_below < 50 {
+                break;
+            }
+        }
+
+        if charpos - best_below < best_above - charpos {
+            let record = charpos - best_below > 5000;
+
+            while best_below != charpos {
+                best_below += 1;
+                best_below_byte = self.inc_pos(best_below_byte);
+            }
+            if record {
+                build_marker_rust(self, best_below, best_below_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_below;
+            self.cached_bytepos = best_below_byte;
+
+            best_below_byte
+        } else {
+            let record = best_above - charpos > 5000;
+
+            while best_above != charpos {
+                best_above -= 1;
+                best_above_byte = self.dec_pos(best_above_byte);
+            }
+
+            if record {
+                build_marker_rust(self, best_above, best_above_byte);
+            }
+            if MARKER_DEBUG {
+                byte_char_debug_check(self, best_below, best_below_byte);
+            }
+
+            self.is_cached = true;
+            self.cached_modiff = self.modifications();
+
+            self.cached_charpos = best_above;
+            self.cached_bytepos = best_above_byte;
+
+            best_above_byte
+        }
+    }
+
+    pub fn local_vars_iter(self) -> CarIter {
+        let vars = self.local_var_alist_;
+        vars.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
@@ -437,11 +691,7 @@ impl LispObject {
     }
 
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
-        self.as_buffer().and_then(|b| b.as_live())
-    }
-
-    pub fn as_buffer_or_error(self) -> LispBufferRef {
-        self.into()
+        self.as_buffer().and_then(LispBufferRef::as_live)
     }
 }
 
@@ -459,7 +709,7 @@ impl From<LispBufferRef> for LispObject {
 
 impl From<LispObject> for Option<LispBufferRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_buffer())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_buffer)
     }
 }
 
@@ -470,10 +720,6 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.into()
-    }
-
-    pub fn as_overlay_or_error(self) -> LispOverlayRef {
         self.into()
     }
 }
@@ -492,7 +738,7 @@ impl From<LispOverlayRef> for LispObject {
 
 impl From<LispObject> for Option<LispOverlayRef> {
     fn from(o: LispObject) -> Self {
-        o.as_misc().and_then(|m| m.as_overlay())
+        o.as_misc().and_then(LispMiscRef::as_overlay)
     }
 }
 
@@ -512,19 +758,19 @@ impl LispOverlayRef {
             current: Some(self),
         }
     }
+}
 
-    pub fn equal(
-        self,
-        other: LispOverlayRef,
+impl LispStructuralEqual for LispOverlayRef {
+    fn equal(
+        &self,
+        other: Self,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool {
-        unsafe {
-            let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
-                && internal_equal(self.end, other.end, kind, depth + 1, ht);
-            overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
-        }
+        let overlays_equal = self.start.equal_internal(other.start, kind, depth + 1, ht)
+            && self.end.equal_internal(other.end, kind, depth + 1, ht);
+        overlays_equal && self.plist.equal_internal(other.plist, kind, depth + 1, ht)
     }
 }
 
@@ -560,10 +806,10 @@ impl LispBufferLocalValueRef {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum LispBufferOrName {
-    Buffer(LispObject),
-    Name(LispObject),
+    Buffer(LispBufferRef),
+    Name(LispStringRef),
 }
 
 impl LispBufferOrName {
@@ -571,7 +817,7 @@ impl LispBufferOrName {
         let obj = LispObject::from(self);
         obj.map_or_else(
             || Some(ThreadState::current_buffer_unchecked()),
-            |o| o.as_buffer(),
+            LispObject::as_buffer,
         )
     }
 }
@@ -579,20 +825,35 @@ impl LispBufferOrName {
 impl From<LispBufferOrName> for LispObject {
     fn from(buffer_or_name: LispBufferOrName) -> Self {
         match buffer_or_name {
-            LispBufferOrName::Buffer(b) => b,
-            LispBufferOrName::Name(n) => n,
+            LispBufferOrName::Buffer(b) => b.into(),
+            LispBufferOrName::Name(n) => n.into(),
         }
     }
 }
 
 impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
-        if v.is_string() {
-            LispBufferOrName::Name(v)
+        if let Some(s) = v.as_string() {
+            LispBufferOrName::Name(s)
+        } else if let Some(b) = v.as_buffer() {
+            LispBufferOrName::Buffer(b)
         } else {
-            v.as_buffer_or_error();
-            LispBufferOrName::Buffer(v)
+            wrong_type!(Qbufferp, v);
         }
+    }
+}
+
+impl From<LispBufferRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(b: LispBufferRef) -> Self {
+        LispBufferOrName::Buffer(b)
+    }
+}
+
+impl From<LispStringRef> for LispBufferOrName {
+    #[inline(always)]
+    fn from(n: LispStringRef) -> Self {
+        LispBufferOrName::Name(n)
     }
 }
 
@@ -600,10 +861,10 @@ impl From<LispObject> for Option<LispBufferOrName> {
     fn from(v: LispObject) -> Self {
         if v.is_nil() {
             None
-        } else if v.is_string() {
-            Some(LispBufferOrName::Name(v))
-        } else if v.is_buffer() {
-            Some(LispBufferOrName::Buffer(v))
+        } else if let Some(s) = v.as_string() {
+            Some(LispBufferOrName::Name(s))
+        } else if let Some(b) = v.as_buffer() {
+            Some(LispBufferOrName::Buffer(b))
         } else {
             None
         }
@@ -612,17 +873,16 @@ impl From<LispObject> for Option<LispBufferOrName> {
 
 impl From<LispBufferOrName> for Option<LispBufferRef> {
     fn from(v: LispBufferOrName) -> Self {
-        let buffer = match v {
-            LispBufferOrName::Buffer(b) => b,
+        match v {
+            LispBufferOrName::Buffer(b) => Some(b),
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
                     .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
                     .find(|&item| string_equal(car(item), name));
 
-                cdr(tem.into())
+                cdr(tem.into()).as_buffer()
             }
-        };
-        buffer.as_buffer()
+        }
     }
 }
 
@@ -700,7 +960,7 @@ pub fn overlayp(object: LispObject) -> bool {
 /// Value is nil if OBJECT is not a buffer or if it has been killed.
 #[lisp_fn]
 pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
-    object.map_or(false, |m| m.is_live())
+    object.map_or(false, LispBufferRef::is_live)
 }
 
 /// Return the buffer named BUFFER-OR-NAME.
@@ -797,26 +1057,28 @@ pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
 
 #[no_mangle]
 pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
-    let start = *b;
-    let stop = *e;
+    let (begin, end) = validate_region_rust(*b, *e);
+    *b = begin.into();
+    *e = end.into();
+}
 
-    let mut beg = start.as_fixnum_coerce_marker_or_error();
+pub fn validate_region_rust(start: LispObject, stop: LispObject) -> (isize, isize) {
+    let mut begin = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();
 
-    if beg > end {
-        mem::swap(&mut beg, &mut end);
+    if begin > end {
+        mem::swap(&mut begin, &mut end);
     }
-
-    *b = LispObject::from(beg);
-    *e = LispObject::from(end);
 
     let buf = ThreadState::current_buffer_unchecked();
     let begv = buf.begv as EmacsInt;
     let zv = buf.zv as EmacsInt;
 
-    if !(begv <= beg && end <= zv) {
+    if !(begv <= begin && end <= zv) {
         args_out_of_range!(current_buffer(), start, stop);
     }
+
+    (begin as isize, end as isize)
 }
 
 /// Make buffer BUFFER-OR-NAME current for editing operations.
@@ -880,7 +1142,7 @@ pub fn overlay_lists() -> LispObject {
     unsafe { (Fnreverse(before), Fnreverse(after)).into() }
 }
 
-fn get_truename_buffer_1(filename: LispObject) -> LispObject {
+fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
     LiveBufferIter::new()
         .find(|buf| {
             let buf_truename = buf.truename();
@@ -891,7 +1153,7 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
 
 #[no_mangle]
 pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
-    get_truename_buffer_1(filename)
+    get_truename_buffer_1(filename.into())
 }
 
 /// If buffer B has markers to record PT, BEGV and ZV when it is not
@@ -958,7 +1220,7 @@ pub fn get_file_buffer(filename: LispStringRef) -> Option<LispBufferRef> {
     } else {
         LiveBufferIter::new().find(|buf| {
             let buf_filename = buf.filename();
-            buf_filename.is_string() && string_equal(buf_filename, filename.into())
+            buf_filename.is_string() && string_equal(buf_filename, filename)
         })
     }
 }
@@ -1017,7 +1279,7 @@ pub extern "C" fn build_overlay(
 ) -> LispObject {
     unsafe {
         let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
-        let mut overlay = obj.as_overlay_or_error();
+        let mut overlay: LispOverlayRef = obj.into();
         overlay.start = start;
         overlay.end = end;
         overlay.plist = plist;
@@ -1125,21 +1387,15 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore.is_not_nil() && string_equal(name.into(), ignore))
-        || get_buffer(LispBufferOrName::Name(name.into())).is_none()
-    {
+    if (ignore.is_not_nil() && string_equal(name, ignore)) || get_buffer(name.into()).is_none() {
         return name;
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        lazy_static! {
-            static ref shared_rng: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
-        }
-        let mut rng = shared_rng.lock().unwrap();
-        let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
+        let mut s = format!("-{}", thread_rng().gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
-        if get_buffer(LispBufferOrName::Name(genname)).is_none() {
+        if get_buffer(genname.into()).is_none() {
             return genname.into();
         }
         genname
@@ -1151,20 +1407,25 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     loop {
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
-        let candidate = unsafe { concat2(basename, suffix) };
-        if string_equal(candidate, ignore)
-            || get_buffer(LispBufferOrName::Name(candidate)).is_none()
-        {
-            return candidate.into();
+        let candidate = unsafe { concat2(basename, suffix) }.force_string();
+        if string_equal(candidate, ignore) || get_buffer(candidate.into()).is_none() {
+            return candidate;
         }
         suffix_count += 1;
     }
 }
 
-pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+pub unsafe fn per_buffer_idx_from_field_offset(
+    offset: FieldOffset<Lisp_Buffer, LispObject>,
+) -> isize {
+    let obj = *offset.apply_ptr_mut(&mut buffer_local_flags);
+    obj.to_fixnum_unchecked() as isize
+}
+
+pub unsafe fn per_buffer_idx(count: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
-    let obj = flags.offset(offset);
-    (*obj).as_fixnum_or_error() as isize
+    let obj = flags.offset(count);
+    (*obj).to_fixnum_unchecked() as isize
 }
 
 /// Return a list of overlays which is a copy of the overlay list
@@ -1195,8 +1456,8 @@ pub unsafe extern "C" fn copy_overlays(
         let start = duplicate_marker(overlay.start);
         let end = duplicate_marker(overlay.end);
 
-        let mut overlay_new =
-            build_overlay(start, end, Fcopy_sequence(overlay.plist)).as_overlay_or_error();
+        let mut overlay_new: LispOverlayRef =
+            build_overlay(start, end, Fcopy_sequence(overlay.plist)).into();
 
         match tail {
             Some(mut tail_ref) => tail_ref.next = overlay_new.as_mut(),
@@ -1222,6 +1483,87 @@ pub extern "C" fn rust_syms_of_buffer() {
     /// The header line appears, optionally, at the top of a window;
     /// the mode line appears at the bottom.
     defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
+}
+
+/// Change current buffer's name to NEWNAME (a string).  If second arg
+/// UNIQUE is nil or omitted, it is an error if a buffer named NEWNAME
+/// already exists.  If UNIQUE is non-nil, come up with a new name
+/// using `generate-new-buffer-name'.  Interactively, you can set
+/// UNIQUE with a prefix argument.  We return the name we actually
+/// gave the buffer.  This does not change the name of the visited
+/// file (if any).
+#[lisp_fn(
+    min = "1",
+    intspec = "(list (read-string \"Rename buffer (to new name): \" nil 'buffer-name-history (buffer-name (current-buffer))) current-prefix-arg)"
+)]
+pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRef {
+    if newname.is_empty() {
+        error!("Empty string is invalid as a buffer name")
+    }
+
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    let newname = get_buffer(newname.into()).map_or(newname, |tem| {
+        // Don't short-circuit if UNIQUE is t.  That is a useful
+        // way to rename the buffer automatically so you can
+        // create another with the original name.  It makes UNIQUE
+        // equivalent to
+        // (rename-buffer (generate-new-buffer-name NEWNAME)).
+        if unique.is_nil() {
+            if tem == current_buffer {
+                return current_buffer.name_.into();
+            }
+            error!("Buffer name `{}' is in use", newname)
+        } else {
+            generate_new_buffer_name(newname, current_buffer.name_)
+        }
+    });
+
+    current_buffer.name_ = newname.into();
+
+    // Catch redisplay's attention.  Unless we do this, the mode lines
+    // for any windows displaying current_buffer will stay unchanged.
+    unsafe {
+        update_mode_lines = 11;
+    }
+
+    let buf: LispBufferRef = current_buffer;
+    unsafe {
+        setcar(rassq(buf.into(), Vbuffer_alist).into(), newname.into());
+    }
+    if current_buffer.filename_.is_nil() && current_buffer.auto_save_file_name_.is_not_nil() {
+        call!(intern("rename-auto-save-file").into());
+    }
+
+    unsafe {
+        if Vrun_hooks.is_not_nil() {
+            call!(Vrun_hooks, Qbuffer_list_update_hook);
+        }
+    }
+
+    // Refetch since that last call may have done GC.
+    ThreadState::current_buffer_unchecked().name_.into()
+}
+
+// Debugging
+
+pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
+    if !b.multibyte_characters_enabled() {
+        return;
+    }
+
+    let nchars = unsafe {
+        if bytepos > b.gpt_byte() {
+            multibyte_chars_in_text(b.beg_addr(), b.gpt_byte() - b.beg_byte())
+                + multibyte_chars_in_text(b.gap_end_addr(), bytepos - b.gpt_byte())
+        } else {
+            multibyte_chars_in_text(b.beg_addr(), bytepos - b.beg_byte())
+        }
+    };
+
+    if charpos - 1 != nchars {
+        panic!("byte_char_debug_check failed.")
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

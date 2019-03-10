@@ -9,7 +9,6 @@ use std::{ffi::CString, mem};
 use crate::{
     data,
     frames::{LispFrameLiveOrSelected, LispFrameRef},
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,

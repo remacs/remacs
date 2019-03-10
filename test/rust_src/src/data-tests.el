@@ -112,10 +112,10 @@
   :expected-result :failed
   (should (equal "C" (subr-lang (symbol-function 'rename-buffer)))))
 
-(ert-deftest data-test--describe-function-smoke-fail ()
+(ert-deftest data-test--describe-function ()
   ;; `describe-function' relies on `subr-lang' in its implementation,
   ;; so run it here to make sure that it works.
-  :expected-result :failed
+  (describe-function 'car)
   (describe-function 'rename-buffer))
 
 (ert-deftest data-test--get-variable-documentation ()

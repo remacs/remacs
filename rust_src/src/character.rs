@@ -5,7 +5,6 @@ use libc::{c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe},
     multibyte::{Codepoint, MAX_CHAR},
