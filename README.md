@@ -207,6 +207,18 @@ For example:
 $ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --cfg MARKER_DEBUG"
 ```
 
+### libvterm
+
+If you want libvterm support, you have to install it manually before building 
+remacs.
+
+``` bash
+git clone git@github.com:remacs/remacs-libvterm.git
+cd remacs-libvterm/
+make install
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+```
+
 ## Running Remacs
 
 You can now run your shiny new Remacs build!
