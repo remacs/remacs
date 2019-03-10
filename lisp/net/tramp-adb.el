@@ -78,8 +78,11 @@ It is used for TCP/IP devices."
 (tramp--with-startup
  (add-to-list 'tramp-methods
 	      `(,tramp-adb-method
-	        (tramp-tmpdir "/data/local/tmp")
-                (tramp-default-port 5555)))
+                ;; Used in `tramp-handle-shell-command'.
+                (tramp-remote-shell      "/system/bin/sh")
+                (tramp-remote-shell-args ("-c"))
+	        (tramp-tmpdir            "/data/local/tmp")
+                (tramp-default-port      5555)))
 
  (add-to-list 'tramp-default-host-alist `(,tramp-adb-method nil ""))
 
@@ -153,7 +156,7 @@ It is used for TCP/IP devices."
     (set-file-selinux-context . ignore)
     (set-file-times . tramp-adb-handle-set-file-times)
     (set-visited-file-modtime . tramp-handle-set-visited-file-modtime)
-    (shell-command . tramp-adb-handle-shell-command)
+    (shell-command . tramp-handle-shell-command)
     (start-file-process . tramp-handle-start-file-process)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
@@ -922,80 +925,6 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (keyboard-quit)
 	ret))))
 
-(defun tramp-adb-handle-shell-command
-  (command &optional output-buffer error-buffer)
-  "Like `shell-command' for Tramp files."
-  (let* ((asynchronous (string-match-p "[ \t]*&[ \t]*\\'" command))
-	 ;; We cannot use `shell-file-name' and `shell-command-switch',
-	 ;; they are variables of the local host.
-	 (args (list "sh" "-c" (substring command 0 asynchronous)))
-	 current-buffer-p
-	 (output-buffer
-	  (cond
-	   ((bufferp output-buffer) output-buffer)
-	   ((stringp output-buffer) (get-buffer-create output-buffer))
-	   (output-buffer
-	    (setq current-buffer-p t)
-	    (current-buffer))
-	   (t (get-buffer-create
-	       (if asynchronous
-		   "*Async Shell Command*"
-		 "*Shell Command Output*")))))
-	 (error-buffer
-	  (cond
-	   ((bufferp error-buffer) error-buffer)
-	   ((stringp error-buffer) (get-buffer-create error-buffer))))
-	 (buffer
-	  (if (and (not asynchronous) error-buffer)
-	      (with-parsed-tramp-file-name default-directory nil
-		(list output-buffer (tramp-make-tramp-temp-file v)))
-	    output-buffer))
-	 (p (get-buffer-process output-buffer)))
-
-    ;; Check whether there is another process running.  Tramp does not
-    ;; support 2 (asynchronous) processes in parallel.
-    (when p
-      (if (yes-or-no-p "A command is running.  Kill it? ")
-	  (ignore-errors (kill-process p))
-	(tramp-user-error p "Shell command in progress")))
-
-    (if current-buffer-p
-	(progn
-	  (barf-if-buffer-read-only)
-	  (push-mark nil t))
-      (with-current-buffer output-buffer
-	(setq buffer-read-only nil)
-	(erase-buffer)))
-
-    (if (and (not current-buffer-p) (integerp asynchronous))
-	(prog1
-	    ;; Run the process.
-	    (apply #'start-file-process "*Async Shell*" buffer args)
-	  ;; Display output.
-	  (pop-to-buffer output-buffer)
-	  (setq mode-line-process '(":%s"))
-	  (shell-mode))
-
-      (prog1
-	  ;; Run the process.
-	  (apply #'process-file (car args) nil buffer nil (cdr args))
-	;; Insert error messages if they were separated.
-	(when (listp buffer)
-	  (with-current-buffer error-buffer
-	    (insert-file-contents (cadr buffer)))
-	  (delete-file (cadr buffer)))
-	(if current-buffer-p
-	    ;; This is like exchange-point-and-mark, but doesn't
-	    ;; activate the mark.  It is cleaner to avoid activation,
-	    ;; even though the command loop would deactivate the mark
-	    ;; because we inserted text.
-	    (goto-char (prog1 (mark t)
-			 (set-marker (mark-marker) (point)
-				     (current-buffer))))
-	  ;; There's some output, display it.
-	  (when (with-current-buffer output-buffer (> (point-max) (point-min)))
-	    (display-message-or-buffer output-buffer)))))))
-
 ;; We use BUFFER also as connection buffer during setup.  Because of
 ;; this, its original contents must be saved, and restored once
 ;; connection has been setup.
@@ -1085,9 +1014,13 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		      (delete-region mark (point))
 		      (narrow-to-region (point-max) (point-max))
 		      ;; Send the command.
-		      (let ((tramp-adb-prompt (regexp-quote command)))
-			(tramp-adb-send-command v command))
-		      (let ((p (tramp-get-connection-process v)))
+		      (let* ((p (tramp-get-connection-process v))
+			     (prompt
+			      (tramp-get-connection-property p "prompt" nil)))
+			(tramp-set-connection-property
+			 p "prompt" (regexp-quote command))
+			(tramp-adb-send-command v command)
+			(tramp-set-connection-property p "prompt" prompt)
 			;; Stop process if indicated.
 			(when stop
 			  (stop-process p))
@@ -1239,37 +1172,29 @@ FMT and ARGS are passed to `error'."
   (unless (buffer-live-p (process-buffer proc))
     (delete-process proc)
     (tramp-error proc 'file-error "Process `%s' not available, try again" proc))
-  (with-current-buffer (process-buffer proc)
-    (if (tramp-wait-for-regexp
-	 proc timeout
-	 (tramp-get-connection-property proc "prompt" tramp-adb-prompt))
-	(let ((inhibit-read-only t))
-	  (goto-char (point-min))
-	  ;; ADB terminal sends "^H" sequences.
-	  (when (re-search-forward "<\b+" (point-at-eol) t)
-	    (forward-line 1)
-	    (delete-region (point-min) (point)))
-	  ;; Delete the prompt.
-         (goto-char (point-min))
-         (when (re-search-forward
-		(tramp-get-connection-property proc "prompt" tramp-adb-prompt)
-		(point-at-eol) t)
-           (forward-line 1)
-           (delete-region (point-min) (point)))
-	  (goto-char (point-max))
-	  (re-search-backward
-	   (tramp-get-connection-property proc "prompt" tramp-adb-prompt) nil t)
-	  (delete-region (point) (point-max)))
-      (if timeout
+  (let ((prompt (tramp-get-connection-property proc "prompt" tramp-adb-prompt)))
+    (with-current-buffer (process-buffer proc)
+      (if (tramp-wait-for-regexp proc timeout prompt)
+	  (let ((inhibit-read-only t))
+	    (goto-char (point-min))
+	    ;; ADB terminal sends "^H" sequences.
+	    (when (re-search-forward "<\b+" (point-at-eol) t)
+	      (forward-line 1)
+	      (delete-region (point-min) (point)))
+	    ;; Delete the prompt.
+            (goto-char (point-min))
+            (when (re-search-forward prompt (point-at-eol) t)
+              (forward-line 1)
+              (delete-region (point-min) (point)))
+	    (goto-char (point-max))
+	    (re-search-backward prompt nil t)
+	    (delete-region (point) (point-max)))
+	(if timeout
+	    (tramp-error
+	     proc 'file-error
+	     "[[Remote prompt `%s' not found in %d secs]]" prompt timeout)
 	  (tramp-error
-	   proc 'file-error
-	   "[[Remote adb prompt `%s' not found in %d secs]]"
-	   (tramp-get-connection-property proc "prompt" tramp-adb-prompt)
-	   timeout)
-	(tramp-error
-	 proc 'file-error
-	 "[[Remote prompt `%s' not found]]"
-	 (tramp-get-connection-property proc "prompt" tramp-adb-prompt))))))
+	   proc 'file-error "[[Remote prompt `%s' not found]]" prompt))))))
 
 (defun tramp-adb-maybe-open-connection (vec)
   "Maybe open a connection VEC.
