@@ -4927,6 +4927,8 @@ extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, in
 
 extern Lisp_Object allocate_misc (enum Lisp_Misc_Type);
 
+extern char *daemon_name;
+
 #ifdef HAVE_LIBVTERM
 typedef struct VtermScrollbackLine {
   size_t cols;
@@ -4943,6 +4945,7 @@ typedef struct vterminal {
   /* This is for Lisp; the terminal code does not refer to it.  */
   union vectorlike_header header;
 
+  Lisp_Object buffer;
   Lisp_Object process;
 
   VTerm *vt;
@@ -4967,6 +4970,8 @@ typedef struct vterminal {
   bool is_title_changed;
 
   bool pending_resize;
+
+  int width, height;
 } vterminal;
 
 extern vterminal *allocate_vterm (void);
@@ -4998,6 +5003,8 @@ extern int vterminal_settermprop(VTermProp prop, VTermValue *val, void *user_dat
 
 extern bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
                               uint32_t *codepoint);
+
+extern int vterminal_resize (int rows, int cols, void *user_data);
 
 #endif
 

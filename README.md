@@ -15,6 +15,7 @@ A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust
     - [Requirements](#requirements)
     - [Dockerized development environment](#dockerized-development-environment)
     - [Building Remacs](#building-remacs)
+        - [libvterm](#libvterm)
     - [Running Remacs](#running-remacs)
 - [Design Goals](#design-goals)
 - [Progress](#progress)

@@ -115,11 +115,13 @@
   (buffer-disable-undo)
   (setq vterm--term (vterm-new (window-body-height)
                                (window-body-width)
-                               (vterm-make-process)))
+                               (vterm-make-process)
+                               (- vterm-max-scrollback 62)))
   (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
-  (add-hook 'window-size-change-functions #'vterm-resize-window t t))
+  (add-hook 'window-size-change-functions #'vterm-resize-window t t)
+  )
 
 (defun vterm-make-process ()
   (let ((process-environment (append '("TERM=xterm"
@@ -155,6 +157,19 @@ Then triggers a redraw from the module."
   (let ((buf (process-buffer proc)))
     (when (buffer-live-p buf)
       (kill-buffer buf))))
+
+;; (defun vterm-resize-window (window)
+;;   "Callback triggered by a size change of the WINDOW.
+
+;; Feeds the size change to the virtual terminal."
+;;   (with-current-buffer (window-buffer window)
+;;     (when (and (processp vterm--process)
+;;                (process-live-p vterm--process))
+;;       (let ((height (window-body-height window))
+;;             (width (window-body-width window))
+;;             (inhibit-read-only t))
+;;         (set-process-window-size vterm--process height width)
+;;         (vterm--set-size vterm--term height width)))))
 
 (defun vterm-resize-window (frame)
   "Callback triggered by a size change of the FRAME.

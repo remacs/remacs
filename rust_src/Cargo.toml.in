@@ -69,6 +69,5 @@ window-system-nextstep = []
 window-system-w32 = []
 # Build with libvterm support.
 libvterm = []
-compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []

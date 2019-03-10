@@ -318,6 +318,7 @@ VTermScreenCallbacks vterm_screen_callbacks = {
     .moverect = vterminal_moverect,
     .movecursor = vterminal_movecursor,
     .settermprop = vterminal_settermprop,
+    .resize = vterminal_resize,
     .sb_pushline = vterminal_sb_push,
     .sb_popline = vterminal_sb_pop,
 };

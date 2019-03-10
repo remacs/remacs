@@ -195,9 +195,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
 }
 
 pub fn goto_pos(pos: EmacsInt) {
-    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let p = clip_to_bounds(cur_buf.begv, pos, cur_buf.zv);
-    let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), p) };
+    let bytepos = cur_buf.charpos_to_bytepos(p);
     unsafe { set_point_both(p, bytepos) };
 }
 
