@@ -715,7 +715,7 @@ pub fn get_buffer(buffer_or_name: LispBufferOrName) -> Option<LispBufferRef> {
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
-    ThreadState::current_buffer().into()
+    ThreadState::current_buffer_unchecked().into()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.

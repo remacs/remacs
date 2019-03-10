@@ -141,7 +141,7 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
         // vterminal height may have decreased before `invalid_end` reflects it.
         let line_start = row_to_linenr(term.as_mut() as *mut vterminal, (*term).invalid_start);
 
-        goto_pos(ThreadState::current_buffer().begv as EmacsInt);
+        goto_pos(ThreadState::current_buffer_unchecked().begv as EmacsInt);
         forward_line(Some(line_start as EmacsInt));
 
         vterminal_delete_lines(line_start, (*term).invalid_end - (*term).invalid_start);
@@ -165,7 +165,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
     let cursor_lnum = row_to_linenr(term.as_mut() as *mut vterminal, pos.row);
 
-    goto_pos(ThreadState::current_buffer().begv as EmacsInt);
+    goto_pos(ThreadState::current_buffer_unchecked().begv as EmacsInt);
     forward_line(Some(cmp::min(cursor_lnum, buffer_lnum) as EmacsInt - 1));
 
     let offset = get_col_offset(term.as_mut() as *mut vterminal, pos.row, pos.col);
@@ -179,15 +179,15 @@ unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
     let mut buffer_lnum: i32;
 
     if (*term).sb_pending > 0 {
-        buffer_lnum = ThreadState::current_buffer().zv as i32;
+        buffer_lnum = ThreadState::current_buffer_unchecked().zv as i32;
         let del_cnt = buffer_lnum - height - (*term).sb_size as i32 + (*term).sb_pending;
 
         if del_cnt > 0 {
-            buffer_lnum = ThreadState::current_buffer().zv as i32;
+            buffer_lnum = ThreadState::current_buffer_unchecked().zv as i32;
         }
 
         let buf_index = buffer_lnum - height + 1;
-        goto_pos(ThreadState::current_buffer().begv as EmacsInt);
+        goto_pos(ThreadState::current_buffer_unchecked().begv as EmacsInt);
         forward_line(Some(buf_index as EmacsInt));
 
         refresh_lines(
@@ -218,7 +218,9 @@ pub fn vterminal_update(
 ) {
     unsafe {
         if string.is_not_nil() {
-            let mut utf8 = code_convert_string_norecord(string, Qutf_8, true).as_string_or_error();
+            let mut utf8 = code_convert_string_norecord(string, Qutf_8, true)
+                .as_string()
+                .unwrap();
             let len = STRING_BYTES(utf8.as_mut()) as usize;
 
             let mut v: Vec<c_uchar> = Vec::with_capacity(len as usize);
@@ -482,7 +484,7 @@ unsafe fn vterminal_redraw(mut vterm: LispVterminalRef) {
 }
 
 fn vterminal_delete_lines(linenum: i32, count: i32) {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
 
     goto_pos(cur_buf.begv as EmacsInt);
     forward_line(Some(linenum as EmacsInt - 1));
