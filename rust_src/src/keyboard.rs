@@ -46,17 +46,19 @@ impl Event {
 
     /// Checks if the event's data fields have contents
     pub fn has_data(self) -> bool {
-        self.has_parameters() && self.0.force_cons().cdr().is_cons()
+        match self.0.as_cons() {
+            Some(cons) => cons.cdr().is_cons(),
+            None => false,
+        }
     }
 
     // replaces EVENT_HEAD
     /// Extract the head from an event.
     /// This works on composite and simple events.
     pub fn head(self) -> LispObject {
-        if self.has_parameters() {
-            self.0.force_cons().car()
-        } else {
-            self.0
+        match self.0.as_cons() {
+            Some(cons) => cons.force_cons().car(),
+            None => self.0,
         }
     }
 
