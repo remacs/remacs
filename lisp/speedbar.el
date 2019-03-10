@@ -647,9 +647,9 @@ speedbar is loaded.  You may place anything you like in this list
 before speedbar has been loaded."
   :group 'speedbar
   :type '(repeat (regexp :tag "Directory Regexp"))
-  :set (lambda (_sym val)
-	 (setq speedbar-ignored-directory-expressions val
-	       speedbar-ignored-directory-regexp
+  :set (lambda (sym val)
+	 (set sym val)
+         (setq speedbar-ignored-directory-regexp
 	       (speedbar-extension-list-to-regex val))))
 
 (defcustom speedbar-directory-unshown-regexp "^\\(\\..*\\)\\'"
@@ -701,9 +701,9 @@ need to also modify `completion-ignored-extension' which will also help
 file completion."
   :group 'speedbar
   :type '(repeat (regexp :tag "Extension Regexp"))
-  :set (lambda (_sym val)
-	 (set 'speedbar-supported-extension-expressions val)
-	 (set 'speedbar-file-regexp (speedbar-extension-list-to-regex val))))
+  :set (lambda (sym val)
+	 (set sym val)
+	 (setq speedbar-file-regexp (speedbar-extension-list-to-regex val))))
 
 (setq speedbar-file-regexp
       (speedbar-extension-list-to-regex speedbar-supported-extension-expressions))
@@ -972,9 +972,8 @@ supported at a time.
   (interactive "P")
   ;; Get the buffer to play with
   (if (not (buffer-live-p speedbar-buffer))
-      (save-excursion
-	(setq speedbar-buffer (get-buffer-create " SPEEDBAR"))
-	(set-buffer speedbar-buffer)
+      (with-current-buffer
+          (setq speedbar-buffer (get-buffer-create " SPEEDBAR"))
 	(speedbar-mode)))
   ;; Do the frame thing
   (dframe-frame-mode arg
@@ -1476,57 +1475,59 @@ instead of reading it from the speedbar buffer."
 Return nil if not applicable."
   (save-excursion
     (beginning-of-line)
-    (if (re-search-forward " [-+=]?> \\([^\n]+\\)" (line-end-position) t)
-       (let* ((tag (match-string 1))
-	      (attr (speedbar-line-token))
-	      (item nil)
-	      (semantic-tagged (if (fboundp 'semantic-tag-p)
-				   (semantic-tag-p attr))))
-	  (if semantic-tagged
-	    (with-no-warnings
-	      (save-excursion
-		(when (and (semantic-tag-overlay attr)
-			   (semantic-tag-buffer attr))
-		  (set-buffer (semantic-tag-buffer attr)))
-		(dframe-message
-		 (funcall semantic-sb-info-format-tag-function attr)
-		 )))
-	    (looking-at "\\([0-9]+\\):")
-	    (setq item (file-name-nondirectory (speedbar-line-directory)))
-	    (dframe-message "Tag: %s  in %s" tag item)))
-      (if (re-search-forward "{[+-]} \\([^\n]+\\)$" (line-end-position) t)
-	  (dframe-message "Group of tags \"%s\"" (match-string 1))
-	(if (re-search-forward " [+-]?[()|@] \\([^\n]+\\)$" nil t)
-	    (let* ((detailtext (match-string 1))
-		   (detail (or (speedbar-line-token) detailtext))
-		   (parent (save-excursion
-			     (beginning-of-line)
-			     (let ((dep (if (looking-at "[0-9]+:")
-					    (1- (string-to-number (match-string 0)))
-					  0)))
-			       (re-search-backward (concat "^"
-			       (int-to-string dep)
-			       ":")
-						   nil t))
-			     (if (looking-at "[0-9]+: +[-+=>]> \\([^\n]+\\)$")
-				 (speedbar-line-token)
-			       nil))))
-	      (if (featurep 'semantic)
-		  (with-no-warnings
-		    (if (semantic-tag-p detail)
-			(dframe-message
-			 (funcall semantic-sb-info-format-tag-function detail parent))
-		      (if parent
-			  (dframe-message "Detail: %s of tag %s" detail
-					    (if (semantic-tag-p parent)
-						(semantic-format-tag-name parent nil t)
-					      parent))
-			(dframe-message "Detail: %s" detail))))
-		;; Not using `semantic':
-		(if parent
-		    (dframe-message "Detail: %s of tag %s" detail parent)
-		  (dframe-message "Detail: %s" detail))))
-	  nil)))))
+    (cond
+     ((re-search-forward " [-+=]?> \\([^\n]+\\)" (line-end-position) t)
+      (let* ((tag (match-string 1))
+             (attr (speedbar-line-token))
+             (item nil)
+             (semantic-tagged (if (fboundp 'semantic-tag-p)
+                                  (semantic-tag-p attr))))
+        (if semantic-tagged
+            (with-no-warnings
+              (save-excursion
+                (when (and (semantic-tag-overlay attr)
+                           (semantic-tag-buffer attr))
+                  (set-buffer (semantic-tag-buffer attr)))
+                (dframe-message
+                 (funcall semantic-sb-info-format-tag-function attr)
+                 )))
+          (looking-at "\\([0-9]+\\):")
+          (setq item (file-name-nondirectory (speedbar-line-directory)))
+          (dframe-message "Tag: %s  in %s" tag item))))
+     ((re-search-forward "{[+-]} \\([^\n]+\\)$" (line-end-position) t)
+      (dframe-message "Group of tags \"%s\"" (match-string 1)))
+     ((re-search-forward " [+-]?[()|@] \\([^\n]+\\)$" nil t)
+      (let* ((detailtext (match-string 1))
+             (detail (or (speedbar-line-token) detailtext))
+             (parent (save-excursion
+                       (beginning-of-line)
+                       (let ((dep (if (looking-at "[0-9]+:")
+                                      (1- (string-to-number (match-string 0)))
+                                    0)))
+                         (re-search-backward (concat "^"
+                                                     (int-to-string dep)
+                                                     ":")
+                                             nil t))
+                       (if (looking-at "[0-9]+: +[-+=>]> \\([^\n]+\\)$")
+                           (speedbar-line-token)
+                         nil))))
+        (cond
+         ((featurep 'semantic)
+          (with-no-warnings
+            (if (semantic-tag-p detail)
+                (dframe-message
+                 (funcall semantic-sb-info-format-tag-function detail parent))
+              (if parent
+                  (dframe-message "Detail: %s of tag %s" detail
+                                  (if (semantic-tag-p parent)
+                                      (semantic-format-tag-name parent nil t)
+                                    parent))
+                (dframe-message "Detail: %s" detail)))))
+         ;; Not using `semantic':
+         (parent
+          (dframe-message "Detail: %s of tag %s" detail parent))
+         (t
+          (dframe-message "Detail: %s" detail))))))))
 
 (defun speedbar-files-item-info ()
   "Display info in the minibuffer about the button the mouse is over."
@@ -3388,9 +3389,7 @@ expanded.  INDENT is the current indentation level."
   "Speedbar click handler for default directory buttons.
 TEXT is the button clicked on.  TOKEN is the directory to follow.
 INDENT is the current indentation level and is unused."
-  (if (string-match "^[A-Za-z]:$" token)
-      (setq default-directory (concat token "/"))
-    (setq default-directory token))
+  (setq default-directory (file-name-as-directory token))
   ;; Because we leave speedbar as the current buffer,
   ;; update contents will change directory without
   ;; having to touch the attached frame.
@@ -3964,7 +3963,7 @@ TEXT is the buffer's name, TOKEN and INDENT are unused."
   (speedbar-unhighlight-one-tag-line)
   (setq speedbar-highlight-one-tag-line
 	(speedbar-make-overlay (line-beginning-position)
-			       (1+ (line-end-position))))
+			       (line-beginning-position 2)))
   (speedbar-overlay-put speedbar-highlight-one-tag-line 'face
 			'speedbar-highlight-face)
   (add-hook 'pre-command-hook 'speedbar-unhighlight-one-tag-line))
