@@ -93,8 +93,7 @@
 
 (ert-deftest test-nreverse-list ()
   (let ((A '(one two three)))
-    (nreverse A)
-    (nreverse A)
+    (nreverse (nreverse A))
     (should (equal A '(one two three)))))
 
 (ert-deftest test-nreverse-bool-vector ()
