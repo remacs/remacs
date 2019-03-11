@@ -20578,7 +20578,7 @@ highlight_trailing_whitespace (struct it *it)
       else
 	{
 	  while (glyph <= start
-		 && glyph->type == CHAR_GLYPH
+		 && (glyph->type == CHAR_GLYPH || glyph->type == STRETCH_GLYPH)
 		 && NILP (glyph->object))
 	    ++glyph;
 	}
