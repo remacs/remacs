@@ -1614,7 +1614,7 @@ See `add-log-current-defun-function'."
                   (concat "^[ \t]*" re "[ \t]+"
                           "\\("
                           ;; \\. and :: for class methods
-                          "\\([A-Za-z_]" ruby-symbol-re "*\\|\\.\\|::" "\\)"
+                          "\\([A-Za-z_]" ruby-symbol-re "*[?!]?\\|\\.\\|::" "\\)"
                           "+\\)")))
                (definition-re (funcall make-definition-re ruby-defun-beg-re))
                (module-re (funcall make-definition-re "\\(class\\|module\\)")))
