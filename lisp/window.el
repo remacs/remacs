@@ -2753,7 +2753,7 @@ as small) as possible, but don't signal an error."
       ;; Sanitize DELTA.
       (cond
        ((<= (+ height delta) 0)
-	(setq delta (- (frame-char-height (window-frame window)) height)))
+	(setq delta (- (frame-char-height frame) height)))
        ((> delta min-delta)
 	(setq delta min-delta)))
 
@@ -3380,6 +3380,12 @@ routines."
      (if pixelwise
 	 pixel-delta
        (/ pixel-delta (frame-char-height frame)))))
+
+(defun window--resize-mini-frame (frame)
+  "Resize minibuffer-only frame FRAME."
+  (if (functionp resize-mini-frames)
+      (funcall resize-mini-frames frame)
+    (fit-frame-to-buffer frame)))
 
 (defun window--sanitize-window-sizes (horizontal)
   "Assert that all windows on selected frame are large enough.

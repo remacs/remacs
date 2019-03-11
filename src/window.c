@@ -5168,118 +5168,111 @@ Signal an error when WINDOW is the only window on its frame.  */)
 			Resizing Mini-Windows
  ***********************************************************************/
 
-/* Grow mini-window W by DELTA lines, DELTA >= 0, or as much as we
-   can.  */
-void
-grow_mini_window (struct window *w, int delta, bool pixelwise)
+/**
+ * resize_mini_window_apply:
+ *
+ * Assign new window sizes after resizing a mini window W by DELTA
+ * pixels.  No error checking performed.
+  */
+static void
+resize_mini_window_apply (struct window *w, int delta)
 {
   struct frame *f = XFRAME (w->frame);
-  struct window *r;
-  Lisp_Object root, height;
-  int line_height, pixel_height;
+  Lisp_Object root = FRAME_ROOT_WINDOW (f);
+  struct window *r = XWINDOW (root);
+
+  block_input ();
+  w->pixel_height = w->pixel_height + delta;
+  w->total_lines = w->pixel_height / FRAME_LINE_HEIGHT (f);
+
+  window_resize_apply (r, false);
+
+  w->pixel_top = r->pixel_top + r->pixel_height;
+  w->top_line = r->top_line + r->total_lines;
+
+  /* Enforce full redisplay of the frame.  */
+  /* FIXME: Shouldn't some of the caller do it?  */
+  fset_redisplay (f);
+  adjust_frame_glyphs (f);
+  unblock_input ();
+}
+
+/**
+ * grow_mini_window:
+ *
+ * Grow mini-window W by DELTA pixels.  If DELTA is negative, this may
+ * shrink the minibuffer window to the minimum height to display one
+ * line of text.
+ */
+void
+grow_mini_window (struct window *w, int delta)
+{
+  struct frame *f = XFRAME (w->frame);
+  int old_height = WINDOW_PIXEL_HEIGHT (w);
+  int min_height = FRAME_LINE_HEIGHT (f);
 
   eassert (MINI_WINDOW_P (w));
-  eassert (delta >= 0);
+
+  if (old_height + delta < min_height)
+    /* Never shrink mini-window to less than its minimum
+       height.  */
+    delta = old_height > min_height ? min_height - old_height : 0;
+
+  if (delta != 0)
+    {
+      Lisp_Object root = FRAME_ROOT_WINDOW (f);
+      struct window *r = XWINDOW (root);
+      Lisp_Object grow;
+
+      FRAME_WINDOWS_FROZEN (f) = true;
+      grow = call3 (Qwindow__resize_root_window_vertically,
+		    root, make_fixnum (- delta), Qt);
+
+      if (FIXNUMP (grow) && window_resize_check (r, false))
+	resize_mini_window_apply (w, -XFIXNUM (grow));
+    }
+}
+
+/**
+ * shrink_mini_window:
+ *
+ * Shrink mini-window W to the minimum height needed to display one
+ * line of text.
+ */
+void
+shrink_mini_window (struct window *w)
+{
+  struct frame *f = XFRAME (w->frame);
+  int delta = WINDOW_PIXEL_HEIGHT (w) - FRAME_LINE_HEIGHT (f);
+
+  eassert (MINI_WINDOW_P (w));
 
   if (delta > 0)
     {
-      root = FRAME_ROOT_WINDOW (f);
-      r = XWINDOW (root);
-      height = call3 (Qwindow__resize_root_window_vertically,
-		      root, make_fixnum (- delta), pixelwise ? Qt : Qnil);
-      if (FIXNUMP (height) && window_resize_check (r, false))
-	{
-	  block_input ();
-	  window_resize_apply (r, false);
+      Lisp_Object root = FRAME_ROOT_WINDOW (f);
+      struct window *r = XWINDOW (root);
+      Lisp_Object grow;
 
-	  if (pixelwise)
-	    {
-	      pixel_height = min (-XFIXNUM (height), INT_MAX - w->pixel_height);
-	      line_height = pixel_height / FRAME_LINE_HEIGHT (f);
-	    }
-	  else
-	    {
-	      line_height = min (-XFIXNUM (height),
-				 ((INT_MAX - w->pixel_height)
-				  / FRAME_LINE_HEIGHT (f)));
-	      pixel_height = line_height * FRAME_LINE_HEIGHT (f);
-	    }
+      FRAME_WINDOWS_FROZEN (f) = false;
+      grow = call3 (Qwindow__resize_root_window_vertically,
+		    root, make_fixnum (delta), Qt);
 
-	  /* Grow the mini-window.  */
-	  w->pixel_top = r->pixel_top + r->pixel_height;
-	  w->top_line = r->top_line + r->total_lines;
-	  /* Make sure the mini-window has always at least one line.  */
-	  w->pixel_height = max (w->pixel_height + pixel_height,
-				 FRAME_LINE_HEIGHT (f));
-	  w->total_lines = max (w->total_lines + line_height, 1);
-
-	  /* Enforce full redisplay of the frame.  */
-	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
-	  fset_redisplay (f);
-	  adjust_frame_glyphs (f);
-	  unblock_input ();
-	}
-      else
-	error ("Failed to grow minibuffer window");
-
+      if (FIXNUMP (grow) && window_resize_check (r, false))
+	resize_mini_window_apply (w, -XFIXNUM (grow));
     }
 }
 
-/* Shrink mini-window W to one line.  */
-void
-shrink_mini_window (struct window *w, bool pixelwise)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct window *r;
-  Lisp_Object root, delta;
-  EMACS_INT height, unit;
-
-  eassert (MINI_WINDOW_P (w));
-
-  height = pixelwise ? w->pixel_height : w->total_lines;
-  unit = pixelwise ? FRAME_LINE_HEIGHT (f) : 1;
-  if (height > unit)
-    {
-      root = FRAME_ROOT_WINDOW (f);
-      r = XWINDOW (root);
-      delta = call3 (Qwindow__resize_root_window_vertically,
-		     root, make_fixnum (height - unit),
-		     pixelwise ? Qt : Qnil);
-      if (FIXNUMP (delta) && window_resize_check (r, false))
-	{
-	  block_input ();
-	  window_resize_apply (r, false);
-
-	  /* Shrink the mini-window.  */
-	  w->top_line = r->top_line + r->total_lines;
-	  w->total_lines = 1;
-	  w->pixel_top = r->pixel_top + r->pixel_height;
-	  w->pixel_height = FRAME_LINE_HEIGHT (f);
-	  /* Enforce full redisplay of the frame.  */
-	  /* FIXME: Shouldn't window--resize-root-window-vertically do it?  */
-	  fset_redisplay (f);
-	  adjust_frame_glyphs (f);
-	  unblock_input ();
-	}
-      /* If the above failed for whatever strange reason we must make a
-	 one window frame here.  The same routine will be needed when
-	 shrinking the frame (and probably when making the initial
-	 *scratch* window).  For the moment leave things as they are.  */
-      else
-	error ("Failed to shrink minibuffer window");
-    }
-}
-
-DEFUN ("resize-mini-window-internal", Fresize_mini_window_internal, Sresize_mini_window_internal, 1, 1, 0,
-       doc: /* Resize minibuffer window WINDOW.  */)
+DEFUN ("resize-mini-window-internal", Fresize_mini_window_internal,
+       Sresize_mini_window_internal, 1, 1, 0,
+       doc: /* Resize mini window WINDOW.  */)
      (Lisp_Object window)
 {
   struct window *w = XWINDOW (window);
   struct window *r;
   struct frame *f;
-  int height;
+  int old_height, delta;
 
-  CHECK_WINDOW (window);
+  CHECK_LIVE_WINDOW (window);
   f = XFRAME (w->frame);
 
   if (!EQ (FRAME_MINIBUF_WINDOW (XFRAME (w->frame)), window))
@@ -5288,26 +5281,18 @@ DEFUN ("resize-mini-window-internal", Fresize_mini_window_internal, Sresize_mini
     error ("Cannot resize a minibuffer-only frame");
 
   r = XWINDOW (FRAME_ROOT_WINDOW (f));
-  height = r->pixel_height + w->pixel_height;
+  old_height = r->pixel_height + w->pixel_height;
+  delta = XFIXNUM (w->new_pixel) - w->pixel_height;
   if (window_resize_check (r, false)
       && XFIXNUM (w->new_pixel) > 0
-      && height == XFIXNUM (r->new_pixel) + XFIXNUM (w->new_pixel))
+      && old_height == XFIXNUM (r->new_pixel) + XFIXNUM (w->new_pixel))
     {
-      block_input ();
-      window_resize_apply (r, false);
+      resize_mini_window_apply (w, delta);
 
-      w->pixel_height = XFIXNAT (w->new_pixel);
-      w->total_lines = w->pixel_height / FRAME_LINE_HEIGHT (f);
-      w->pixel_top = r->pixel_top + r->pixel_height;
-      w->top_line = r->top_line + r->total_lines;
-
-      fset_redisplay (f);
-      adjust_frame_glyphs (f);
-      unblock_input ();
       return Qt;
     }
   else
-    error ("Failed to resize minibuffer window");
+    error ("Cannot resize mini window");
 }
 
 /* Mark window cursors off for all windows in the window tree rooted
@@ -8047,6 +8032,7 @@ syms_of_window (void)
   DEFSYM (Qwindow__resize_root_window, "window--resize-root-window");
   DEFSYM (Qwindow__resize_root_window_vertically,
 	  "window--resize-root-window-vertically");
+  DEFSYM (Qwindow__resize_mini_frame, "window--resize-mini-frame");
   DEFSYM (Qwindow__sanitize_window_sizes, "window--sanitize-window-sizes");
   DEFSYM (Qwindow__pixel_to_total, "window--pixel-to-total");
   DEFSYM (Qsafe, "safe");

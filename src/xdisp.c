@@ -11259,14 +11259,9 @@ bool
 resize_mini_window (struct window *w, bool exact_p)
 {
   struct frame *f = XFRAME (w->frame);
-  bool window_height_changed_p = false;
+  int old_height = WINDOW_PIXEL_HEIGHT (w);
 
   eassert (MINI_WINDOW_P (w));
-
-  /* By default, start display at the beginning.  */
-  set_marker_both (w->start, w->contents,
-		   BUF_BEGV (XBUFFER (w->contents)),
-		   BUF_BEGV_BYTE (XBUFFER (w->contents)));
 
   /* Don't resize windows while redisplaying a window; it would
      confuse redisplay functions when the size of the window they are
@@ -11278,19 +11273,30 @@ resize_mini_window (struct window *w, bool exact_p)
     return false;
 
   /* Nil means don't try to resize.  */
-  if (NILP (Vresize_mini_windows)
+  if ((NILP (Vresize_mini_windows)
+       && (NILP (resize_mini_frames) || !FRAME_MINIBUF_ONLY_P (f)))
       || (FRAME_X_P (f) && FRAME_X_OUTPUT (f) == NULL))
     return false;
 
-  if (!FRAME_MINIBUF_ONLY_P (f))
+  /* By default, start display at the beginning.  */
+  set_marker_both (w->start, w->contents,
+		   BUF_BEGV (XBUFFER (w->contents)),
+		   BUF_BEGV_BYTE (XBUFFER (w->contents)));
+
+  if (FRAME_MINIBUF_ONLY_P (f))
+    {
+      if (!NILP (resize_mini_frames))
+	safe_call1 (Qwindow__resize_mini_frame, WINDOW_FRAME (w));
+    }
+  else
     {
       struct it it;
-      int total_height = (WINDOW_PIXEL_HEIGHT (XWINDOW (FRAME_ROOT_WINDOW (f)))
-			  + WINDOW_PIXEL_HEIGHT (w));
+      int old_height = WINDOW_PIXEL_HEIGHT (w);
       int unit = FRAME_LINE_HEIGHT (f);
       int height, max_height;
       struct text_pos start;
       struct buffer *old_current_buffer = NULL;
+      int windows_height = FRAME_WINDOWS_HEIGHT (f);
 
       if (current_buffer != XBUFFER (w->contents))
 	{
@@ -11302,14 +11308,14 @@ resize_mini_window (struct window *w, bool exact_p)
 
       /* Compute the max. number of lines specified by the user.  */
       if (FLOATP (Vmax_mini_window_height))
-	max_height = XFLOAT_DATA (Vmax_mini_window_height) * total_height;
+	max_height = XFLOAT_DATA (Vmax_mini_window_height) * windows_height;
       else if (FIXNUMP (Vmax_mini_window_height))
 	max_height = XFIXNUM (Vmax_mini_window_height) * unit;
       else
-	max_height = total_height / 4;
+	max_height = windows_height / 4;
 
       /* Correct that max. height if it's bogus.  */
-      max_height = clip_to_bounds (unit, max_height, total_height);
+      max_height = clip_to_bounds (unit, max_height, windows_height);
 
       /* Find out the height of the text in the window.  */
       if (it.line_wrap == TRUNCATE)
@@ -11335,63 +11341,27 @@ resize_mini_window (struct window *w, bool exact_p)
 	}
       else
 	SET_TEXT_POS (start, BEGV, BEGV_BYTE);
+
       SET_MARKER_FROM_TEXT_POS (w->start, start);
 
       if (EQ (Vresize_mini_windows, Qgrow_only))
 	{
 	  /* Let it grow only, until we display an empty message, in which
 	     case the window shrinks again.  */
-	  if (height > WINDOW_PIXEL_HEIGHT (w))
-	    {
-	      int old_height = WINDOW_PIXEL_HEIGHT (w);
-
-	      FRAME_WINDOWS_FROZEN (f) = true;
-	      grow_mini_window (w, height - WINDOW_PIXEL_HEIGHT (w), true);
-	      window_height_changed_p = WINDOW_PIXEL_HEIGHT (w) != old_height;
-	    }
-	  else if (height < WINDOW_PIXEL_HEIGHT (w)
-		   && (exact_p || BEGV == ZV))
-	    {
-	      int old_height = WINDOW_PIXEL_HEIGHT (w);
-
-	      FRAME_WINDOWS_FROZEN (f) = false;
-	      shrink_mini_window (w, true);
-	      window_height_changed_p = WINDOW_PIXEL_HEIGHT (w) != old_height;
-	    }
+	  if (height > old_height)
+	    grow_mini_window (w, height - old_height);
+	  else if (height < old_height && (exact_p || BEGV == ZV))
+	    shrink_mini_window (w);
 	}
-      else
-	{
-	  /* Always resize to exact size needed.  */
-	  if (height > WINDOW_PIXEL_HEIGHT (w))
-	    {
-	      int old_height = WINDOW_PIXEL_HEIGHT (w);
-
-	      FRAME_WINDOWS_FROZEN (f) = true;
-	      grow_mini_window (w, height - WINDOW_PIXEL_HEIGHT (w), true);
-	      window_height_changed_p = WINDOW_PIXEL_HEIGHT (w) != old_height;
-	    }
-	  else if (height < WINDOW_PIXEL_HEIGHT (w))
-	    {
-	      int old_height = WINDOW_PIXEL_HEIGHT (w);
-
-	      FRAME_WINDOWS_FROZEN (f) = false;
-	      shrink_mini_window (w, true);
-
-	      if (height)
-		{
-		  FRAME_WINDOWS_FROZEN (f) = true;
-		  grow_mini_window (w, height - WINDOW_PIXEL_HEIGHT (w), true);
-		}
-
-	      window_height_changed_p = WINDOW_PIXEL_HEIGHT (w) != old_height;
-	    }
-	}
+      else if (height != old_height)
+	/* Always resize to exact size needed.  */
+	grow_mini_window (w, height - old_height);
 
       if (old_current_buffer)
 	set_buffer_internal (old_current_buffer);
     }
 
-  return window_height_changed_p;
+  return WINDOW_PIXEL_HEIGHT (w) != old_height;
 }
 
 
@@ -33091,7 +33061,11 @@ A value of nil means don't automatically resize mini-windows.
 A value of t means resize them to fit the text displayed in them.
 A value of `grow-only', the default, means let mini-windows grow only;
 they return to their normal size when the minibuffer is closed, or the
-echo area becomes empty.  */);
+echo area becomes empty.
+
+This variable does not affect resizing of the minibuffer window of
+minibuffer-only frames.  These are handled by 'resize-mini-frames'
+only.  */);
   /* Contrary to the doc string, we initialize this to nil, so that
      loading loadup.el won't try to resize windows before loading
      window.el, where some functions we need to call for this live.

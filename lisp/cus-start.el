@@ -314,7 +314,13 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 					    (other :tag "hidden by keypress" 1))
 			      "22.1")
 	     (make-pointer-invisible mouse boolean "23.2")
-	     (menu-bar-mode frames boolean nil
+             (resize-mini-frames
+              frames (choice
+                      (const :tag "Never" nil)
+                      (const :tag "Fit frame to buffer" t)
+                      (function :tag "User-defined function"))
+               "27.1")
+             (menu-bar-mode frames boolean nil
 			    ;; FIXME?
                             ;; :initialize custom-initialize-default
 			    :set custom-set-minor-mode)

@@ -6079,6 +6079,19 @@ setting this variable does not change that frame's previous association.
 
 This variable is local to the current terminal and cannot be buffer-local.  */);
 
+  DEFVAR_LISP ("resize-mini-frames", resize_mini_frames,
+    doc: /* Non-nil means resize minibuffer-only frames automatically.
+If this is nil, do not resize minibuffer-only frames automatically.
+
+If this is a function, call that function with the minibuffer-only
+frame that shall be resized as sole argument.  The buffer of the root
+window of that frame is the buffer whose text will be eventually shown
+in the minibuffer window.
+
+Any other non-nil value means to resize minibuffer-only frames by
+calling `fit-frame-to-buffer'.  */);
+  resize_mini_frames = Qnil;
+
   DEFVAR_LISP ("focus-follows-mouse", focus_follows_mouse,
 	       doc: /* Non-nil if window system changes focus when you move the mouse.
 You should set this variable to tell Emacs how your window manager

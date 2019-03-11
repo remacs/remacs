@@ -1469,6 +1469,11 @@ See the section "(elisp) Window Hooks" in the Elisp manual for a
 detailed explanation of the new behavior.
 
 +++
+*** New option 'resize-mini-frames'.
+This option allows to automatically resize minibuffer-only frames
+similarly to how minibuffer windows are resized on "normal" frames.
+
++++
 ** New buffer display action alist entry 'dedicated'.
 Such an entry allows to specify the dedicated status of a window
 created by 'display-buffer'.

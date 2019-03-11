@@ -1063,8 +1063,8 @@ extern Lisp_Object window_from_coordinates (struct frame *, int, int,
 extern void resize_frame_windows (struct frame *, int, bool, bool);
 extern void restore_window_configuration (Lisp_Object);
 extern void delete_all_child_windows (Lisp_Object);
-extern void grow_mini_window (struct window *, int, bool);
-extern void shrink_mini_window (struct window *, bool);
+extern void grow_mini_window (struct window *, int);
+extern void shrink_mini_window (struct window *);
 extern int window_relative_x_coord (struct window *, enum window_part, int);
 
 void run_window_change_functions (void);
