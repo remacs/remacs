@@ -1490,10 +1490,10 @@ between two strings.
 '(quote x)' instead of 'x you will have to bind it to nil where applicable.
 
 +++
-** Numbers formatted via '%o' or '%x' may now be formatted as signed integers.
+** Numbers formatted via '%o' or '%x' are now formatted as signed integers.
 This avoids problems in calls like '(read (format "#x%x" -1))', and is
-more compatible with bignums, a planned feature.  To get this
-behavior, set the experimental variable 'binary-as-unsigned' to nil,
+more compatible with bignums.  To get the traditional machine-dependent
+behavior, set the experimental variable 'binary-as-unsigned' to t,
 and if the new behavior breaks your code please email
 32252@debbugs.gnu.org.  Because '%o' and '%x' can now format signed
 integers, they now support the '+' and space flags.

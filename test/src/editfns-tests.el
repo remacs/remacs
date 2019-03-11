@@ -184,12 +184,11 @@
               'integer))
   (should (eq (type-of (read (format "#32rG%x" most-positive-fixnum)))
               'integer))
-  (let ((binary-as-unsigned nil))
-    (dolist (fmt '("%d" "%s" "#o%o" "#x%x"))
-      (dolist (val (list most-negative-fixnum (1+ most-negative-fixnum)
-                         -1 0 1
-                         (1- most-positive-fixnum) most-positive-fixnum))
-        (should (eq val (read (format fmt val))))))))
+  (dolist (fmt '("%d" "%s" "#o%o" "#x%x"))
+    (dolist (val (list most-negative-fixnum (1+ most-negative-fixnum)
+		       -1 0 1
+		       (1- most-positive-fixnum) most-positive-fixnum))
+      (should (eq val (read (format fmt val)))))))
 
 (ert-deftest format-%o-invalid-float ()
   (should-error (format "%o" -1e-37)

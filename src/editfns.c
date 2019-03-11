@@ -3001,8 +3001,8 @@ the next available argument, or the argument explicitly specified:
 %S means print any object as an s-expression (using `prin1').
 
 The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
-The value of `binary-as-unsigned' determines whether it's printed as
-   signed or unsigned by %o, %x, and %X.
+%o, %x, and %X treat arguments as unsigned if `binary-as-unsigned' is t
+  (this is experimental; email 32252@debbugs.gnu.org if you need it).
 Use %% to put a single % into the output.
 
 A %-sequence other than %% may contain optional field number, flag,
@@ -4485,17 +4485,13 @@ functions if all the text being accessed has this property.  */);
 	       binary_as_unsigned,
 	       doc: /* Non-nil means `format' %x and %o treat integers as unsigned.
 This has machine-dependent results.  Nil means to treat integers as
-signed, which is portable; for example, if N is a negative integer,
-(read (format "#x%x") N) returns N only when this variable is nil.
+signed, which is portable and is the default; for example, if N is a
+negative integer, (read (format "#x%x") N) returns N only when this
+variable is nil.
 
 This variable is experimental; email 32252@debbugs.gnu.org if you need
 it to be non-nil.  */);
-  /* For now, default to true if bignums exist, false in traditional Emacs.  */
-#ifdef lisp_h_FIXNUMP
   binary_as_unsigned = false;
-#else
-  binary_as_unsigned = true;
-#endif
 
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
