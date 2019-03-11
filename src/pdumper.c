@@ -1950,7 +1950,7 @@ dump_field_fixup_later (struct dump_context *ctx,
                         const void *in_start,
                         const void *in_field)
 {
-  // TODO: more error checking
+  /* TODO: more error checking.  */
   (void) field_relpos (in_start, in_field);
 }
 
@@ -2067,7 +2067,7 @@ dump_interval_tree (struct dump_context *ctx,
 #if CHECK_STRUCTS && !defined (HASH_interval_1B38941C37)
 # error "interval changed. See CHECK_STRUCTS comment."
 #endif
-  // TODO: output tree breadth-first?
+  /* TODO: output tree breadth-first?  */
   struct interval out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, tree, total_length);
@@ -4100,7 +4100,7 @@ types.  */)
   /* We want to consolidate certain object types that we know are very likely
      to be modified.  */
   ctx->flags.defer_hash_tables = true;
-  // ctx->flags.defer_symbols = true;  XXX
+  /* ctx->flags.defer_symbols = true; XXX  */
 
   /* These objects go into special sections.  */
   ctx->flags.defer_cold_objects = true;
@@ -4701,7 +4701,9 @@ dump_mmap_reset (struct dump_memory_map *map)
 {
   map->mapping = NULL;
   map->release = NULL;
+  void *private = map->private;
   map->private = NULL;
+  free (private);
 }
 
 static void
@@ -4723,17 +4725,13 @@ dump_mm_heap_cb_release (struct dump_memory_map_heap_control_block *cb)
 {
   eassert (cb->refcount > 0);
   if (--cb->refcount == 0)
-    {
-      free (cb->mem);
-      free (cb);
-    }
+    free (cb->mem);
 }
 
 static void
 dump_mmap_release_heap (struct dump_memory_map *map)
 {
-  struct dump_memory_map_heap_control_block *cb = map->private;
-  dump_mm_heap_cb_release (cb);
+  dump_mm_heap_cb_release (map->private);
 }
 
 /* Implement dump_mmap using malloc and read.  */
@@ -4932,9 +4930,7 @@ dump_mmap_contiguous (
       total_size += maps[i].spec.size;
     }
 
-  return (VM_SUPPORTED ?
-          dump_mmap_contiguous_vm :
-          dump_mmap_contiguous_heap)
+  return (VM_SUPPORTED ? dump_mmap_contiguous_vm : dump_mmap_contiguous_heap)
     (maps, nr_maps, total_size);
 }
 
