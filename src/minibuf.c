@@ -827,77 +827,7 @@ Prompt with PROMPT.  */)
 }
 #endif /* NOTDEF */
 
-DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 4, 0,
-       doc: /* Read the name of a buffer and return as a string.
-Prompt with PROMPT.
-Optional second arg DEF is value to return if user enters an empty line.
- If DEF is a list of default values, return its first element.
-Optional third arg REQUIRE-MATCH determines whether non-existing
- buffer names are allowed.  It has the same meaning as the
- REQUIRE-MATCH argument of `completing-read'.
-The argument PROMPT should be a string ending with a colon and a space.
-If `read-buffer-completion-ignore-case' is non-nil, completion ignores
-case while reading the buffer name.
-If `read-buffer-function' is non-nil, this works by calling it as a
-function, instead of the usual behavior.
-Optional arg PREDICATE if non-nil is a function limiting the buffers that can
-be considered.  */)
-  (Lisp_Object prompt, Lisp_Object def, Lisp_Object require_match,
-   Lisp_Object predicate)
-{
-  Lisp_Object result;
-  char *s;
-  ptrdiff_t len;
-  ptrdiff_t count = SPECPDL_INDEX ();
 
-  if (BUFFERP (def))
-    def = BVAR (XBUFFER (def), name);
-
-  specbind (Qcompletion_ignore_case,
-	    read_buffer_completion_ignore_case ? Qt : Qnil);
-
-  if (NILP (Vread_buffer_function))
-    {
-      if (!NILP (def))
-	{
-	  /* A default value was provided: we must change PROMPT,
-	     editing the default value in before the colon.  To achieve
-	     this, we replace PROMPT with a substring that doesn't
-	     contain the terminal space and colon (if present).  They
-	     are then added back using Fformat.  */
-
-	  if (STRINGP (prompt))
-	    {
-	      s = SSDATA (prompt);
-	      len = SBYTES (prompt);
-	      if (len >= 2 && s[len - 2] == ':' && s[len - 1] == ' ')
-		len = len - 2;
-	      else if (len >= 1 && (s[len - 1] == ':' || s[len - 1] == ' '))
-		len--;
-
-	      prompt = make_specified_string (s, -1, len,
-					      STRING_MULTIBYTE (prompt));
-	    }
-
-	  AUTO_STRING (format, "%s (default %s): ");
-	  prompt = CALLN (Fformat, format, prompt,
-			  CONSP (def) ? XCAR (def) : def);
-	}
-
-      result = Fcompleting_read (prompt, intern ("internal-complete-buffer"),
-				 predicate, require_match, Qnil,
-				 Qbuffer_name_history, def, Qnil);
-    }
-  else
-    result = (NILP (predicate)
-	      /* Partial backward compatibility for older read_buffer_functions
-		 which don't expect a `predicate' argument.  */
-	      ? call3 (Vread_buffer_function, prompt, def, require_match)
-	      : call4 (Vread_buffer_function, prompt, def, require_match,
-		       predicate));
-  return unbind_to (count, result);
-}
-
 static Lisp_Object
 minibuf_conform_representation (Lisp_Object string, Lisp_Object basis)
 {
@@ -1746,7 +1676,6 @@ characters.  This variable should never be set globally.  */);
   Vread_hide_char = Qnil;
 
   defsubr (&Sinternal_complete_buffer);
-  defsubr (&Sread_buffer);
 
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);
