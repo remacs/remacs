@@ -424,17 +424,17 @@ getloadavg (double loadavg[], int nelem)
   int saved_errno;
 
   kc = kstat_open ();
-  if (kc == 0)
+  if (kc == NULL)
     return -1;
   ksp = kstat_lookup (kc, "unix", 0, "system_misc");
-  if (ksp == 0)
+  if (ksp == NULL)
     return -1;
   if (kstat_read (kc, ksp, 0) == -1)
     return -1;
 
 
   kn = kstat_data_lookup (ksp, "avenrun_1min");
-  if (kn == 0)
+  if (kn == NULL)
     {
       /* Return -1 if no load average information is available.  */
       nelem = 0;
@@ -447,14 +447,14 @@ getloadavg (double loadavg[], int nelem)
   if (nelem >= 2)
     {
       kn = kstat_data_lookup (ksp, "avenrun_5min");
-      if (kn != 0)
+      if (kn != NULL)
         {
           loadavg[elem++] = (double) kn->value.ul / FSCALE;
 
           if (nelem >= 3)
             {
               kn = kstat_data_lookup (ksp, "avenrun_15min");
-              if (kn != 0)
+              if (kn != NULL)
                 loadavg[elem++] = (double) kn->value.ul / FSCALE;
             }
         }
@@ -895,7 +895,7 @@ getloadavg (double loadavg[], int nelem)
       /* We pass 0 for the kernel, corefile, and swapfile names
          to use the currently running kernel.  */
       kd = kvm_open (0, 0, 0, O_RDONLY, 0);
-      if (kd != 0)
+      if (kd != NULL)
         {
           /* nlist the currently running kernel.  */
           kvm_nlist (kd, name_list);
