@@ -2168,26 +2168,6 @@ font_score (Lisp_Object entity, Lisp_Object *spec_prop)
 }
 
 
-/* Concatenate all elements of LIST into one vector.  LIST is a list
-   of font-entity vectors.  */
-
-static Lisp_Object
-font_vconcat_entity_vectors (Lisp_Object list)
-{
-  EMACS_INT nargs = XFASTINT (Flength (list));
-  Lisp_Object *args;
-  USE_SAFE_ALLOCA;
-  SAFE_ALLOCA_LISP (args, nargs);
-  ptrdiff_t i;
-
-  for (i = 0; i < nargs; i++, list = XCDR (list))
-    args[i] = XCAR (list);
-  Lisp_Object result = Fvconcat (nargs, args);
-  SAFE_FREE ();
-  return result;
-}
-
-
 /* The structure for elements being sorted by qsort.  */
 struct font_sort_data
 {
@@ -2227,7 +2207,7 @@ font_compare (const void *d1, const void *d2)
    number of elements is 1.  The caller should avoid calling this in
    such a case.  */
 
-static Lisp_Object
+Lisp_Object
 font_sort_entities (Lisp_Object list, Lisp_Object prefer,
 		    struct frame *f, int best_only)
 {
@@ -4174,51 +4154,6 @@ accepted by `font-spec'.  */)
   return val;
 }
 
-DEFUN ("list-fonts", Flist_fonts, Slist_fonts, 1, 4, 0,
-       doc: /* List available fonts matching FONT-SPEC on the current frame.
-Optional 2nd argument FRAME specifies the target frame.
-Optional 3rd argument NUM, if non-nil, limits the number of returned fonts.
-Optional 4th argument PREFER, if non-nil, is a font-spec to
-control the order of the returned list.  Fonts are sorted by
-how close they are to PREFER.  */)
-  (Lisp_Object font_spec, Lisp_Object frame, Lisp_Object num, Lisp_Object prefer)
-{
-  struct frame *f = decode_live_frame (frame);
-  Lisp_Object vec, list;
-  EMACS_INT n = 0;
-
-  CHECK_FONT_SPEC (font_spec);
-  if (! NILP (num))
-    {
-      CHECK_NUMBER (num);
-      n = XINT (num);
-      if (n <= 0)
-	return Qnil;
-    }
-  if (! NILP (prefer))
-    CHECK_FONT_SPEC (prefer);
-
-  list = font_list_entities (f, font_spec);
-  if (NILP (list))
-    return Qnil;
-  if (NILP (XCDR (list))
-      && ASIZE (XCAR (list)) == 1)
-    return list1 (AREF (XCAR (list), 0));
-
-  if (! NILP (prefer))
-    vec = font_sort_entities (list, prefer, f, 0);
-  else
-    vec = font_vconcat_entity_vectors (list);
-  if (n == 0 || n >= ASIZE (vec))
-    list = CALLN (Fappend, vec, Qnil);
-  else
-    {
-      for (list = Qnil, n--; n >= 0; n--)
-	list = Fcons (AREF (vec, n), list);
-    }
-  return list;
-}
-
 DEFUN ("font-family-list", Ffont_family_list, Sfont_family_list, 0, 1, 0,
        doc: /* List available font families on the current frame.
 If FRAME is omitted or nil, the selected frame is used.  */)
@@ -5268,7 +5203,6 @@ syms_of_font (void)
   defsubr (&Sfont_face_attributes);
 #endif
   defsubr (&Sfont_put);
-  defsubr (&Slist_fonts);
   defsubr (&Sfont_family_list);
   defsubr (&Sfont_xlfd_name);
   defsubr (&Sclear_font_cache);

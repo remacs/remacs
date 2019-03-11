@@ -804,6 +804,9 @@ extern Lisp_Object font_style_symbolic (Lisp_Object font,
 
 extern bool font_match_p (Lisp_Object spec, Lisp_Object font);
 extern Lisp_Object font_list_entities (struct frame *, Lisp_Object);
+extern Lisp_Object font_sort_entities (Lisp_Object, Lisp_Object, struct frame *, int);
+
+extern Lisp_Object font_vconcat_entity_vectors(Lisp_Object);
 
 extern Lisp_Object font_get_name (Lisp_Object font_object);
 extern Lisp_Object font_spec_from_name (Lisp_Object font_name);
