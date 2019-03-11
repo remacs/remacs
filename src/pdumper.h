@@ -63,14 +63,13 @@ pdumper_remember_scalar (void *data, ptrdiff_t nbytes)
 #endif
 }
 
-extern void pdumper_remember_lv_ptr_raw_impl (
-  void *ptr, enum Lisp_Type type);
+extern void pdumper_remember_lv_ptr_raw_impl (void *ptr, enum Lisp_Type type);
 
 /* Remember the pointer at *PTR.  *PTR must be null or point to a Lisp
    object.  TYPE is the rough type of Lisp object to which *PTR
    points.  */
 INLINE void
-pdumper_remember_lv_ptr_raw (void* ptr, enum Lisp_Type type)
+pdumper_remember_lv_ptr_raw (void *ptr, enum Lisp_Type type)
 {
 #ifdef HAVE_PDUMPER
   pdumper_remember_lv_ptr_raw_impl (ptr, type);
@@ -130,7 +129,8 @@ enum pdumper_load_result
 
 enum pdumper_load_result pdumper_load (const char *dump_filename);
 
-struct pdumper_loaded_dump {
+struct pdumper_loaded_dump
+{
   uintptr_t start;
   uintptr_t end;
 };
