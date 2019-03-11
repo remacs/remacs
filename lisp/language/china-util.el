@@ -168,7 +168,7 @@ Return the length of resulting text."
 	      ;; ESC ESC -> ESC
 	      (delete-char 1)
 	    (forward-char -1)
-	    (if (looking-at iso2022-gb-designation)
+	    (if (looking-at "\e\\$A")
 		(progn
 		  (delete-region (match-beginning 0) (match-end 0))
 		  (insert hz-gb-designation)

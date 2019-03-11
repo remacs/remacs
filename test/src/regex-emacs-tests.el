@@ -278,7 +278,7 @@ on success"
 
 
 (defconst regex-tests-re-even-escapes
-  "\\(?:^\\|[^\\\\]\\)\\(?:\\\\\\\\\\)*"
+  "\\(?:^\\|[^\\]\\)\\(?:\\\\\\\\\\)*"
   "Regex that matches an even number of \\ characters")
 
 (defconst regex-tests-re-odd-escapes

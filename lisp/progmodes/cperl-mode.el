@@ -4924,7 +4924,7 @@ conditional/loop constructs."
 			      (if (looking-at "\\(state\\|my\\|local\\|our\\)\\>")
 				  (forward-sexp -1))))
 			(if (looking-at
-			     (concat "\\(\\elsif\\|if\\|unless\\|while\\|until"
+			     (concat "\\(elsif\\|if\\|unless\\|while\\|until"
 				     "\\|for\\(each\\)?\\>\\(\\("
 				     cperl-maybe-white-and-comment-rex
 				     "\\(state\\|my\\|local\\|our\\)\\)?"

@@ -3690,7 +3690,7 @@ constants - a double quote followed by an octal digit."
    (save-excursion
      (forward-char)
      (re-search-backward (concat "\\(" idlwave-idl-keywords
-                                 "\\|[[(*+-/=,^><]\\)\\s-*\\*") limit t))))
+                                 "\\|[-[(*+/=,^><]\\)\\s-*\\*") limit t))))
 
 
 ;; Statement templates

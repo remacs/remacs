@@ -399,7 +399,7 @@ The possible settings for `align-region-separate' are:
 		   (lambda (end reverse)
 		     (funcall (if reverse 're-search-backward
 				're-search-forward)
-			      (concat "[^ \t\n\\\\]"
+			      (concat "[^ \t\n\\]"
 				      (regexp-quote comment-start)
 				      "\\(.+\\)$") end t))))
      (modes    . align-open-comment-modes))

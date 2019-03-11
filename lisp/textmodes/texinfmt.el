@@ -552,13 +552,7 @@ if large.  You can use `Info-split' to do this manually."
 
 (defvar texinfo-accent-commands
   (concat
-   "@^\\|"
-   "@`\\|"
-   "@'\\|"
-   "@\"\\|"
-   "@,\\|"
-   "@=\\|"
-   "@~\\|"
+   "@[\"',=^`~]\\|"
    "@OE{\\|"
    "@oe{\\|"
    "@AA{\\|"

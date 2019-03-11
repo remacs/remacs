@@ -433,7 +433,7 @@ that variable's value is a string."
               ;; (make-regexp '("case" "cond" "else" "if" "lambda"
               ;; "let" "let*" "letrec" "and" "or" "map" "with-mode"))
               "and\\|c\\(ase\\|ond\\)\\|else\\|if\\|"
-              "l\\(ambda\\|et\\(\\|*\\|rec\\)\\)\\|map\\|or\\|with-mode"
+              "l\\(ambda\\|et\\(\\|\\*\\|rec\\)\\)\\|map\\|or\\|with-mode"
               "\\)\\>")
       1)
      ;; DSSSL syntax
