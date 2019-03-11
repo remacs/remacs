@@ -4486,7 +4486,7 @@ functions if all the text being accessed has this property.  */);
 	       doc: /* Non-nil means `format' %x and %o treat integers as unsigned.
 This has machine-dependent results.  Nil means to treat integers as
 signed, which is portable and is the default; for example, if N is a
-negative integer, (read (format "#x%x") N) returns N only when this
+negative integer, (read (format "#x%x" N)) returns N only when this
 variable is nil.
 
 This variable is experimental; email 32252@debbugs.gnu.org if you need
