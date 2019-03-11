@@ -57,7 +57,7 @@ impl Event {
     /// This works on composite and simple events.
     pub fn head(self) -> LispObject {
         match self.0.as_cons() {
-            Some(cons) => cons.force_cons().car(),
+            Some(cons) => cons.car(),
             None => self.0,
         }
     }
