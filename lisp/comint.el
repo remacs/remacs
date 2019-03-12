@@ -2081,7 +2081,7 @@ Make backspaces delete the previous character."
                        (prompt-re (concat "\\`" (regexp-quote prompt))))
                   (while (string-match prompt-re string)
                     (setq string (substring string (match-end 0)))))))
-            (while (string-match (concat "\\(" comint-prompt-regexp
+            (while (string-match (concat "\\(^" comint-prompt-regexp
                                          "\\)\\1+")
                                  string)
               (setq string (replace-match "\\1" nil nil string)))
