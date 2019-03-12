@@ -3602,9 +3602,7 @@ Return the result of the last expression."
   "Evaluate an expression in the outside environment.
 If interactive, prompt for the expression.
 Print result in minibuffer."
-  (interactive (list (read-from-minibuffer
-		      "Eval: " nil read-expression-map t
-		      'read-expression-history)))
+  (interactive (list (read--expression "Eval: ")))
   (princ
    (edebug-outside-excursion
     (setq values (cons (edebug-eval expr) values))
