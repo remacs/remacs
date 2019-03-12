@@ -40,6 +40,10 @@
   (should (equal (rx (any "\a-\n"))
                  "[\a-\n]")))
 
+(ert-deftest rx-char-any-range-bad ()
+  (should-error (rx (any "0-9a-Z")))
+  (should-error (rx (any (?0 . ?9) (?a . ?Z)))))
+
 (ert-deftest rx-char-any-raw-byte ()
   "Test raw bytes in character alternatives."
   ;; Separate raw characters.

@@ -482,7 +482,10 @@ The original order is not preserved.  Ranges, \"A-Z\", become pairs, (?A . ?Z)."
              (let ((start (funcall decode-char (aref str i)))
                    (end   (funcall decode-char (aref str (+ i 2)))))
                (cond ((< start end) (push (cons start end) ret))
-                     ((= start end) (push start ret)))
+                     ((= start end) (push start ret))
+                     (t
+                      (error "Rx character range `%c-%c' is reversed"
+                             start end)))
                (setq i (+ i 3))))
             (t
              ;; Single character.
@@ -503,7 +506,10 @@ The original order is not preserved.  Ranges, \"A-Z\", become pairs, (?A . ?Z)."
 	       (null (string-match "\\`\\[\\[:[-a-z]+:\\]\\]\\'" translation)))
 	   (error "Invalid char class `%s' in Rx `any'" arg))
        (list (substring translation 1 -1)))) ; strip outer brackets
-    ((and (integerp (car-safe arg)) (integerp (cdr-safe arg)))
+    ((and (characterp (car-safe arg)) (characterp (cdr-safe arg)))
+     (unless (<= (car arg) (cdr arg))
+       (error "Rx character range `%c-%c' is reversed"
+              (car arg) (cdr arg)))
      (list arg))
     ((stringp arg) (rx-check-any-string arg))
     ((error
@@ -916,6 +922,7 @@ CHAR
      matches any character in SET ....  SET may be a character or string.
      Ranges of characters can be specified as `A-Z' in strings.
      Ranges may also be specified as conses like `(?A . ?Z)'.
+     Reversed ranges like `Z-A' and `(?Z . ?A)' are not permitted.
 
      SET may also be the name of a character class: `digit',
      `control', `hex-digit', `blank', `graph', `print', `alnum',

@@ -1336,6 +1336,13 @@ they are now allocated like any other pseudovector.  As a result, the
 'misc' component, and the 'misc-objects-consed' variable has been
 removed.
 
++++
+** Reversed character ranges are no longer permitted in rx.
+Previously, ranges where the starting character is greater than the
+ending character were silently omitted.
+For example, '(rx (any "@z-a" (?9 . ?0)))' would match '@' only.
+Now, such rx expressions generate an error.
+
 
 * Lisp Changes in Emacs 27.1
 
