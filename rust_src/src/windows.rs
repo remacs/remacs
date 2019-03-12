@@ -20,12 +20,12 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
     remacs_sys::{
-        estimate_mode_line_height, minibuf_level,
+        apply_window_adjustment, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
-        selected_window as current_window, set_buffer_internal, set_window_hscroll,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
-        windows_or_buffers_changed, wset_redisplay,
+        selected_window as current_window, set_buffer_internal, set_window_fringes,
+        set_window_hscroll, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
+        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -526,6 +526,24 @@ impl LispWindowRef {
             } else {
                 0
             }
+    }
+
+    /// Equivalent to WINDOW_LEFT_FRINGE_WIDTH
+    pub fn get_left_fringe_width(self) -> i32 {
+        if self.left_fringe_width >= 0 {
+            self.left_fringe_width
+        } else {
+            self.get_frame().left_fringe_width
+        }
+    }
+
+    /// Equivalent to WINDOW_RIGHT_FRINGE_WIDTH
+    pub fn get_right_fringe_width(self) -> i32 {
+        if self.right_fringe_width >= 0 {
+            self.right_fringe_width
+        } else {
+            self.get_frame().right_fringe_width
+        }
     }
 }
 
@@ -1838,6 +1856,52 @@ pub fn window_lines_pixel_dimensions(
 pub fn window_pixel_top(window: LispWindowValidOrSelected) -> EmacsInt {
     let window: LispWindowRef = window.into();
     window.pixel_top.into()
+}
+
+/// Get width of fringes of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_fringes(window: LispWindowLiveOrSelected) -> LispObject {
+    let window: LispWindowRef = window.into();
+
+    list!(
+        window.get_left_fringe_width(),
+        window.get_right_fringe_width(),
+        window.fringes_outside_margins()
+    )
+}
+
+/// Set the fringe widths of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// Second arg LEFT-WIDTH specifies the number of pixels to reserve for
+/// the left fringe.  Optional third arg RIGHT-WIDTH specifies the right
+/// fringe width.  If a fringe width arg is nil, that means to use the
+/// frame's default fringe width.  Default fringe widths can be set with
+/// the command `set-fringe-style'.
+/// If optional fourth arg OUTSIDE-MARGINS is non-nil, draw the fringes
+/// outside of the display margins.  By default, fringes are drawn between
+/// display marginal areas and the text area.
+///
+/// Return t if any fringe was actually changed and nil otherwise.
+#[lisp_fn(name = "set-window-fringes", min = "2")]
+pub fn set_window_fringes_lisp(
+    window: LispWindowLiveOrSelected,
+    left_width: LispObject,
+    right_width: LispObject,
+    outside_margins: LispObject,
+) -> bool {
+    let mut window: LispWindowRef = window.into();
+
+    let updated_window =
+        unsafe { set_window_fringes(window.as_mut(), left_width, right_width, outside_margins) };
+
+    if !updated_window.is_null() {
+        unsafe { apply_window_adjustment(updated_window.into()) };
+        true
+    } else {
+        false
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
