@@ -7734,7 +7734,44 @@ See `display-line-numbers-mode' for more information on Display-Line-Numbers mod
 
 \(fn &optional ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
+(if (fboundp 'register-definition-prefixes)
+    (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
+
+;;;***
+
+;;;### (autoloads nil "display-fill-column-indicator" "display-fill-column-indicator.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from display-fill-column-indicator.el
+
+(autoload 'display-fill-column-indicator-mode "display-fill-column-indicator" "\
+Toggle display fill column indicator.
+This uses `display-fill-column-indicator' internally.
+
+To change the position of the line displayed by default,
+customize `display-fill-column-indicator-column'.
+
+\(fn &optional ARG)" t nil)
+
+(defvar global-display-fill-column-indicator-mode nil "\
+Non-nil if Global Display-fill-column-indicator mode is enabled.
+See the `global-display-fill-column-indicator-mode' command
+for a description of this minor mode.")
+
+(custom-autoload 'global-display-fill-column-indicator-mode
+                 "display-fill-column-indicator" nil)
+
+(autoload 'global-display-fill-column-indicator-mode
+  "display-fill-column-indicator" "\
+Toggle display fill column indicator.
+This uses `display-fill-column-indicator' internally.
+
+To change the position of the line displayed by default,
+customize `display-fill-column-indicator-column'.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes)
+    (register-definition-prefixes "display-fill-column-indicator" '("display-fill-column-indicator-")))
 
 ;;;***
 

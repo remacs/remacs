@@ -648,6 +648,11 @@ since it could result in memory overflow and make Emacs crash."
                                   (const :tag "Count lines from beginning of narrowed region"
                                          :value nil))
                                  "26.1")
+
+             (display-fill-column-indicator-column display-fill-column-indicator
+                                 integer "27.1")
+             (display-fill-column-indicator-character display-fill-column-indicator
+                                 character "27.1")
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c
