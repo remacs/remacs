@@ -1011,7 +1011,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		      ;; order to cleanup the prompt afterwards.
 		      (tramp-adb-maybe-open-connection v)
 		      (widen)
-		      (delete-region mark (point))
+		      (delete-region mark (point-max))
 		      (narrow-to-region (point-max) (point-max))
 		      ;; Send the command.
 		      (let* ((p (tramp-get-connection-process v))
@@ -1127,12 +1127,14 @@ This happens for Android >= 4.0."
   (tramp-adb-maybe-open-connection vec)
   (tramp-message vec 6 "%s" command)
   (tramp-send-string vec command)
-  ;; fixme: Race condition
+  ;; FIXME: Race condition.
   (tramp-adb-wait-for-output (tramp-get-connection-process vec))
   (with-current-buffer (tramp-get-connection-buffer vec)
     (save-excursion
       (goto-char (point-min))
-      ;; We can't use stty to disable echo of command.
+      ;; We can't use stty to disable echo of command.  stty is said
+      ;; to be added to toybox 0.7.6.  busybox shall have it, but this
+      ;; isn't used any longer for Android.
       (delete-matching-lines (regexp-quote command))
       ;; When the local machine is W32, there are still trailing ^M.
       ;; There must be a better solution by setting the correct coding
