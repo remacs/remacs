@@ -1803,7 +1803,16 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	;; Go to a less nested declaration each time round this loop.
 	(and
 	 (setq old-pos (point))
-	 (c-syntactic-skip-backward "^;{}" bod-lim t)
+	 (let (pseudo)
+	   (while
+	       (progn
+		 (c-syntactic-skip-backward "^;{}" bod-lim t)
+		 (and (eq (char-before) ?})
+		      (save-excursion
+			(backward-char)
+			(setq pseudo (c-cheap-inside-bracelist-p (c-parse-state))))))
+	     (goto-char pseudo))
+	   t)
 	 (> (point) bod-lim)
 	 (progn (c-forward-syntactic-ws)
 		;; Have we got stuck in a comment at EOB?

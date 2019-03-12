@@ -8040,48 +8040,27 @@ comment at the start of cc-engine.el for more info."
     (or res (goto-char here))
     res))
 
+(defun c-forward-class-decl ()
+  "From the beginning of a struct/union, etc. move forward to
+after the brace block which defines it, leaving point at the
+start of the next token and returning point.  On failure leave
+point unchanged and return nil."
+  (let ((here (point)))
+    (if
+	(and
+	 (looking-at c-class-key)
+	 (eq (c-forward-token-2) 0)
+	 (c-on-identifier)
+	 (eq (c-forward-token-2) 0)
+	 (eq (char-after) ?{)
+	 (c-go-list-forward))
+	(progn
+	  (c-forward-syntactic-ws)
+	  (point))
+      (goto-char here)
+      nil)))
 
 ;; Handling of large scale constructs like statements and declarations.
-
-;; Macro used inside `c-forward-decl-or-cast-1'.  It ought to be a
-;; defsubst or perhaps even a defun, but it contains lots of free
-;; variables that refer to things inside `c-forward-decl-or-cast-1'.
-(defmacro c-fdoc-shift-type-backward (&optional short)
-  ;; `c-forward-decl-or-cast-1' can consume an arbitrary length list
-  ;; of types when parsing a declaration, which means that it
-  ;; sometimes consumes the identifier in the declaration as a type.
-  ;; This is used to "backtrack" and make the last type be treated as
-  ;; an identifier instead.
-  `(progn
-     ,(unless short
-	;; These identifiers are bound only in the inner let.
-	'(setq identifier-type at-type
-	       identifier-start type-start
-	       got-parens nil
-	       got-identifier t
-	       got-suffix t
-	       got-suffix-after-parens id-start
-	       paren-depth 0))
-
-     (if (setq at-type (if (eq backup-at-type 'prefix)
-			   t
-			 backup-at-type))
-	 (setq type-start backup-type-start
-	       id-start backup-id-start)
-       (setq type-start start-pos
-	     id-start start-pos))
-
-     ;; When these flags already are set we've found specifiers that
-     ;; unconditionally signal these attributes - backtracking doesn't
-     ;; change that.  So keep them set in that case.
-     (or at-type-decl
-	 (setq at-type-decl backup-at-type-decl))
-     (or maybe-typeless
-	 (setq maybe-typeless backup-maybe-typeless))
-
-     ,(unless short
-	;; This identifier is bound only in the inner let.
-	'(setq start id-start))))
 
 (defun c-forward-declarator (&optional limit accept-anon)
   ;; Assuming point is at the start of a declarator, move forward over it,
@@ -8234,6 +8213,176 @@ comment at the start of cc-engine.el for more info."
 
       (goto-char here)
       nil)))
+
+(defun c-do-declarators
+    (cdd-limit cdd-list cdd-not-top cdd-comma-prop cdd-function)
+  "Assuming point is at the start of a comma separated list of declarators,
+apply CDD-FUNCTION to each declarator (when CDD-LIST is non-nil) or just the
+first declarator (when CDD-LIST is nil).  When CDD-FUNCTION is nil, no
+function is applied.
+
+CDD-FUNCTION is supplied with 6 arguments:
+0. The start position of the declarator's identifier;
+1. The end position of this identifier;
+\[Note: if there is no identifier, as in int (*);, both of these are nil.]
+2. The position of the next token after the declarator (CLARIFY!!!).
+3. CDD-NOT-TOP;
+4. Non-nil if the identifier is of a function.
+5. When there is an initialization following the declarator (such as \"=
+....\" or \"( ....\".), the character which introduces this initialization,
+otherwise nil.
+
+Additionally, if CDD-COMMA-PROP is non-nil, mark the separating commas with
+this value of the c-type property, when CDD-LIST is non-nil.
+
+Stop at or before CDD-LIMIT (which may NOT be nil).
+
+If CDD-NOT-TOP is non-nil, we are not at the top-level (\"top-level\" includes
+being directly inside a class or namespace, etc.).
+
+Return non-nil if we've reached the token after the last declarator (often a
+semicolon, or a comma when CDD-LIST is nil); otherwise (when we hit CDD-LIMIT,
+or fail otherwise) return nil, leaving point at the beginning of the putative
+declarator that could not be processed.
+
+This function might do hidden buffer changes."
+  ;; N.B.: We use the "cdd-" prefix in this routine to try to prevent
+  ;; confusion with possible reference to common variable names from within
+  ;; CDD-FUNCTION.
+  (let
+      ((cdd-pos (point)) cdd-next-pos cdd-id-start cdd-id-end
+       cdd-decl-res cdd-got-func cdd-got-type cdd-got-init
+       c-last-identifier-range cdd-exhausted)
+
+    ;; The following `while' applies `cdd-function' to a single declarator id
+    ;; each time round.  It loops only when CDD-LIST is non-nil.
+    (while
+	(and (not cdd-exhausted)
+	     (setq cdd-decl-res (c-forward-declarator cdd-limit)))
+      (setq cdd-next-pos (point)
+	    cdd-id-start (car cdd-decl-res)
+	    cdd-id-end (cadr cdd-decl-res)
+	    cdd-got-func (and (eq (char-after) ?\()
+			  (or (not (c-major-mode-is 'c++-mode))
+			      (not cdd-not-top)
+			      (car (cddr (cddr cdd-decl-res))) ; Id is in
+					; parens, etc.
+			      (save-excursion
+				(forward-char)
+				(c-forward-syntactic-ws)
+				(looking-at "[*&]")))
+			  (not (car (cddr cdd-decl-res)))
+			  (or (not (c-major-mode-is 'c++-mode))
+			      (save-excursion
+				(let (c-last-identifier-range)
+				  (forward-char)
+				  (c-forward-syntactic-ws)
+				  (catch 'is-function
+				    (while
+					(progn
+					  (if (eq (char-after) ?\))
+					      (throw 'is-function t))
+					  (setq cdd-got-type (c-forward-type))
+					  (cond
+					   ((null cdd-got-type)
+					    (throw 'is-function nil))
+					   ((not (eq cdd-got-type 'maybe))
+					    (throw 'is-function t)))
+					  (c-forward-declarator nil t)
+					  (eq (char-after) ?,))
+				      (forward-char)
+				      (c-forward-syntactic-ws))
+				    t)))))
+	    cdd-got-init (and (cadr (cddr cdd-decl-res))
+			  (char-after)))
+
+      ;; Jump past any initializer or function prototype to see if
+      ;; there's a ',' to continue at.
+      (cond (cdd-got-func
+	     ;; Skip a parenthesized initializer (C++) or a function
+	     ;; prototype.
+	     (if (c-go-list-forward (point) cdd-limit) ; over the parameter list.
+		 (c-forward-syntactic-ws cdd-limit)
+	       (setq cdd-exhausted t)))	; unbalanced parens
+
+	    (cdd-got-init	; "=" sign OR opening "(", "[", or "{"
+	     ;; Skip an initializer expression.  If we're at a '='
+	     ;; then accept a brace list directly after it to cope
+	     ;; with array initializers.  Otherwise stop at braces
+	     ;; to avoid going past full function and class blocks.
+	     (if (and (if (and (eq cdd-got-init ?=)
+			       (= (c-forward-token-2 1 nil cdd-limit) 0)
+			       (looking-at "{"))
+			  (c-go-list-forward (point) cdd-limit)
+			t)
+		      ;; FIXME: Should look for c-decl-end markers here;
+		      ;; we might go far into the following declarations
+		      ;; in e.g. ObjC mode (see e.g. methods-4.m).
+		      (c-syntactic-re-search-forward "[;,{]" cdd-limit 'move t))
+		 (backward-char)
+	       (setq cdd-exhausted t)
+	       ))
+
+	    (t (c-forward-syntactic-ws cdd-limit)))
+
+      (if cdd-function
+	  (funcall cdd-function cdd-id-start cdd-id-end cdd-next-pos
+		   cdd-not-top cdd-got-func cdd-got-init))
+
+      ;; If a ',' is found we set cdd-pos to the next declarator and iterate.
+      (if (and cdd-list (< (point) cdd-limit) (looking-at ","))
+	  (progn
+	    (when cdd-comma-prop
+	      (c-put-char-property (point) 'c-type cdd-comma-prop))
+	    (forward-char)
+	    (c-forward-syntactic-ws cdd-limit)
+	    (setq cdd-pos (point)))
+	(setq cdd-exhausted t)))
+
+    (if (> (point) cdd-pos)
+	t
+      (goto-char cdd-pos)
+      nil)))
+
+;; Macro used inside `c-forward-decl-or-cast-1'.  It ought to be a
+;; defsubst or perhaps even a defun, but it contains lots of free
+;; variables that refer to things inside `c-forward-decl-or-cast-1'.
+(defmacro c-fdoc-shift-type-backward (&optional short)
+  ;; `c-forward-decl-or-cast-1' can consume an arbitrary length list
+  ;; of types when parsing a declaration, which means that it
+  ;; sometimes consumes the identifier in the declaration as a type.
+  ;; This is used to "backtrack" and make the last type be treated as
+  ;; an identifier instead.
+  `(progn
+     ,(unless short
+	;; These identifiers are bound only in the inner let.
+	'(setq identifier-type at-type
+	       identifier-start type-start
+	       got-parens nil
+	       got-identifier t
+	       got-suffix t
+	       got-suffix-after-parens id-start
+	       paren-depth 0))
+
+     (if (setq at-type (if (eq backup-at-type 'prefix)
+			   t
+			 backup-at-type))
+	 (setq type-start backup-type-start
+	       id-start backup-id-start)
+       (setq type-start start-pos
+	     id-start start-pos))
+
+     ;; When these flags already are set we've found specifiers that
+     ;; unconditionally signal these attributes - backtracking doesn't
+     ;; change that.  So keep them set in that case.
+     (or at-type-decl
+	 (setq at-type-decl backup-at-type-decl))
+     (or maybe-typeless
+	 (setq maybe-typeless backup-maybe-typeless))
+
+     ,(unless short
+	;; This identifier is bound only in the inner let.
+	'(setq start id-start))))
 
 (defun c-forward-decl-or-cast-1 (preceding-token-end context last-cast-end)
   ;; Move forward over a declaration or a cast if at the start of one.
@@ -10727,12 +10876,17 @@ comment at the start of cc-engine.el for more info."
       )))
 
 (defun c-inside-bracelist-p (containing-sexp paren-state accept-in-paren)
-  ;; return the buffer position of the beginning of the brace list
-  ;; statement if we're inside a brace list, otherwise return nil.
-  ;; CONTAINING-SEXP is the buffer pos of the innermost containing
-  ;; paren.  PAREN-STATE is the remainder of the state of enclosing
-  ;; braces.  ACCEPT-IN-PAREN is non-nil iff we will accept as a brace
-  ;; list a brace directly enclosed in a parenthesis.
+  ;; return the buffer position of the beginning of the brace list statement
+  ;; if CONTAINING-SEXP is inside a brace list, otherwise return nil.
+  ;;
+  ;; CONTAINING-SEXP is the buffer pos of the innermost containing paren.  NO
+  ;; IT ISN'T!!!  [This function is badly designed, and probably needs
+  ;; reformulating without its first argument, and the critical position being
+  ;; at point.]
+  ;;
+  ;; PAREN-STATE is the remainder of the state of enclosing braces.
+  ;; ACCEPT-IN-PAREN is non-nil iff we will accept as a brace list a brace
+  ;; directly enclosed in a parenthesis.
   ;;
   ;; The "brace list" here is recognized solely by its context, not by
   ;; its contents.
@@ -10852,7 +11006,8 @@ comment at the start of cc-engine.el for more info."
 (defun c-looking-at-statement-block ()
   ;; Point is at an opening brace.  If this is a statement block (i.e. the
   ;; elements in the block are terminated by semicolons, or the block is
-  ;; empty, or the block contains a keyword) return t.  Otherwise, return nil.
+  ;; empty, or the block contains a keyword) return non-nil.  Otherwise,
+  ;; return nil.
   (let ((here (point)))
     (prog1
 	(if (c-go-list-forward)
@@ -11356,7 +11511,7 @@ comment at the start of cc-engine.el for more info."
 
 	    (if (and (eq step-type 'same)
 		     (/= paren-pos (point)))
-		(let (inexpr)
+		(let (inexpr bspec)
 		  (cond
 		   ((save-excursion
 		      (goto-char paren-pos)
@@ -11378,6 +11533,13 @@ comment at the start of cc-engine.el for more info."
 			  (c-looking-at-statement-block))
 			(c-add-syntax 'defun-block-intro nil)
 		      (c-add-syntax 'brace-list-intro nil)))
+		   ((save-excursion
+		      (goto-char paren-pos)
+		      (setq bspec (c-looking-at-or-maybe-in-bracelist
+				   containing-sexp containing-sexp))
+		      (and (consp bspec)
+			   (eq (cdr bspec) 'in-paren)))
+		    (c-add-syntax 'brace-list-intro (car bspec)))
 		   (t (c-add-syntax 'defun-block-intro nil))))
 
 	      (c-add-syntax 'statement-block-intro nil)))
@@ -13242,7 +13404,7 @@ Cannot combine absolute offsets %S and %S in `add' method"
 	   nil))))
 
     (if (or (null res) (integerp res)
-	    (and (vectorp res) (= (length res) 1) (integerp (aref res 0))))
+	    (and (vectorp res) (>= (length res) 1) (integerp (aref res 0))))
 	res
       (c-benign-error "Error evaluating offset %S for %s: Got invalid value %S"
 		      offset symbol res)
@@ -13265,12 +13427,11 @@ Cannot combine absolute offsets %S and %S in `add' method"
       (if c-strict-syntax-p
 	  (c-benign-error "No offset found for syntactic symbol %s" symbol))
       (setq offset 0))
-    (if (vectorp offset)
-	offset
-      (or (and (numberp offset) offset)
-	  (and (symbolp offset) (symbol-value offset))
-	  0))
-    ))
+    (cond
+     ((or (vectorp offset) (numberp offset))
+      offset)
+     ((and (symbolp offset) (symbol-value offset)))
+     (t 0))))
 
 (defun c-get-offset (langelem)
   ;; This is a compatibility wrapper for `c-calc-offset' in case
