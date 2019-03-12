@@ -182,8 +182,7 @@ Return immediately.  Call CALLBACK with process and result when ready."
 	(setq hashcash-process-alist (cons
 				      (cons process (current-buffer))
 				      hashcash-process-alist))
-	(set-process-filter process `(lambda (process output)
-				       (funcall ,callback process output))))
+	(set-process-filter process callback))
     (funcall callback nil nil)))
 
 (defun hashcash-check-payment (token str val)
@@ -244,8 +243,8 @@ Only start calculation.  Results are inserted when ready."
     (hashcash-generate-payment-async
      (hashcash-payment-to arg)
      (hashcash-payment-required arg)
-     `(lambda (process payment)
-	(hashcash-insert-payment-async-2 ,(current-buffer) process payment)))))
+     (lambda (process payment)
+       (hashcash-insert-payment-async-2 (current-buffer) process payment)))))
 
 (defun hashcash-insert-payment-async-2 (buffer process pay)
   (when (buffer-live-p buffer)
