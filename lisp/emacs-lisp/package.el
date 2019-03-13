@@ -2484,7 +2484,8 @@ The description is read from the installed package files."
                 (insert ?\n)))
             (setq readme-string (buffer-string))
             t)
-          (insert readme-string))
+          (insert (or readme-string
+                      "This package does not provide a description.")))
         ))))
 
 (defun package-install-button-action (button)
