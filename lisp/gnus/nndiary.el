@@ -83,7 +83,6 @@
 (require 'nnoo)
 (require 'nnheader)
 (require 'nnmail)
-(eval-when-compile (require 'cl))
 
 (require 'gnus-start)
 (require 'gnus-sum)

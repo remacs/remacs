@@ -48,6 +48,16 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <limits.h>
 
+#ifdef HAVE_TIMEZONE_T
+# include <sys/param.h>
+# if defined __NetBSD_Version__ && __NetBSD_Version__ < 700000000
+#  define HAVE_TZALLOC_BUG true
+# endif
+#endif
+#ifndef HAVE_TZALLOC_BUG
+# define HAVE_TZALLOC_BUG false
+#endif
+
 #include <c-ctype.h>
 #include <intprops.h>
 #include <stdlib.h>
@@ -150,7 +160,7 @@ tzlookup (Lisp_Object zone, bool settz)
 
   if (NILP (zone))
     return local_tz;
-  else if (EQ (zone, Qt))
+  else if (EQ (zone, Qt) || EQ (zone, make_number (0)))
     {
       zone_string = "UTC0";
       new_tz = utc_tz;
@@ -208,16 +218,14 @@ tzlookup (Lisp_Object zone, bool settz)
 
       new_tz = tzalloc (zone_string);
 
-#if defined __NetBSD_Version__ && __NetBSD_Version__ < 700000000
-      /* NetBSD 6 tzalloc mishandles POSIX TZ strings (Bug#30738).
-	 If possible, fall back on tzdb.  */
-      if (!new_tz && errno != ENOMEM && plain_integer
+      if (HAVE_TZALLOC_BUG && !new_tz && errno != ENOMEM && plain_integer
 	  && XINT (zone) % (60 * 60) == 0)
 	{
+	  /* tzalloc mishandles POSIX strings; fall back on tzdb if
+	     possible (Bug#30738).  */
 	  sprintf (tzbuf, "Etc/GMT%+"pI"d", - (XINT (zone) / (60 * 60)));
 	  new_tz = tzalloc (zone_string);
 	}
-#endif
 
       if (!new_tz)
 	{
@@ -2308,9 +2316,9 @@ save_restriction_restore (Lisp_Object data)
 
 	  buf->clip_changed = 1; /* Remember that the narrowing changed. */
 	}
-      /* These aren't needed anymore, so don't wait for GC.  */
-      free_marker (XCAR (data));
-      free_marker (XCDR (data));
+      /* Detach the markers, and free the cons instead of waiting for GC.  */
+      detach_marker (XCAR (data));
+      detach_marker (XCDR (data));
       free_cons (XCONS (data));
     }
   else

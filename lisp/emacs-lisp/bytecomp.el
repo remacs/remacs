@@ -124,17 +124,10 @@
 (require 'backquote)
 (require 'macroexp)
 (require 'cconv)
-(require 'cl-lib)
-
-;; During bootstrap, cl-loaddefs.el is not created yet, so loading cl-lib
-;; doesn't setup autoloads for things like cl-every, which is why we have to
-;; require cl-extra as well (bug#18804).
-(or (fboundp 'cl-every)
-    (require 'cl-extra))
-
-(or (fboundp 'defsubst)
-    ;; This really ought to be loaded already!
-    (load "byte-run"))
+;; Refrain from using cl-lib at run-time here, since it otherwise prevents
+;; us from emitting warnings when compiling files which use cl-lib without
+;; requiring it! (bug#30635)
+(eval-when-compile (require 'cl-lib))
 
 ;; The feature of compiling in a specific target Emacs version
 ;; has been turned off because compile time options are a bad idea.
@@ -2744,15 +2737,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		   (macroexp--const-symbol-p arg t))
 	       (error "Invalid lambda variable %s" arg))
 	      ((eq arg '&rest)
-	       (unless (cdr list)
-		 (error "&rest without variable name"))
 	       (when (cddr list)
-		 (error "Garbage following &rest VAR in lambda-list")))
+		 (error "Garbage following &rest VAR in lambda-list"))
+               (when (memq (cadr list) '(&optional &rest))
+                 (error "%s following &rest in lambda-list" (cadr list))))
 	      ((eq arg '&optional)
-	       (when (or (null (cdr list))
-                         (memq (cadr list) '(&optional &rest)))
-		 (error "Variable name missing after &optional"))
-               (when (memq '&optional (cddr list))
+               (when (memq '&optional (cdr list))
                  (error "Duplicate &optional")))
 	      ((memq arg vars)
 	       (byte-compile-warn "repeated variable %s in lambda-list" arg))
@@ -3582,7 +3572,8 @@ These implicitly `and' together a bunch of two-arg bytecodes."
     (cond
      ((< l 3) (byte-compile-form `(progn ,(nth 1 form) t)))
      ((= l 3) (byte-compile-two-args form))
-     ((cl-every #'macroexp-copyable-p (nthcdr 2 form))
+     ;; Don't use `cl-every' here (see comment where we require cl-lib).
+     ((not (memq nil (mapcar #'macroexp-copyable-p (nthcdr 2 form))))
       (byte-compile-form `(and (,(car form) ,(nth 1 form) ,(nth 2 form))
 			       (,(car form) ,@(nthcdr 2 form)))))
      (t (byte-compile-normal-call form)))))
@@ -4170,7 +4161,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
       ;; to be non-nil for generating tags for all cases. Since
       ;; `byte-compile-depth' will increase by at most 1 after compiling
       ;; all of the clause (which is further enforced by cl-assert below)
-      ;; it should be safe to preserve it's value.
+      ;; it should be safe to preserve its value.
       (let ((byte-compile-depth byte-compile-depth))
         (byte-compile-goto 'byte-goto default-tag))
 
@@ -4188,7 +4179,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
         (let ((byte-compile-depth byte-compile-depth)
               (init-depth byte-compile-depth))
           ;; Since `byte-compile-body' might increase `byte-compile-depth'
-          ;; by 1, not preserving it's value will cause it to potentially
+          ;; by 1, not preserving its value will cause it to potentially
           ;; increase by one for every clause body compiled, causing
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,

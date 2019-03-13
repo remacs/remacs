@@ -4,7 +4,7 @@
 
 ;; Author: Marco Wahl <marcowahlsoft>a<gmailcom>
 ;; Keywords: link, eww
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

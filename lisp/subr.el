@@ -768,7 +768,9 @@ side-effects, and the argument LIST is not modified."
 KEYS should be a string in the format returned by commands such
 as `C-h k' (`describe-key').
 This is the same format used for saving keyboard macros (see
-`edmacro-mode')."
+`edmacro-mode').
+
+For an approximate inverse of this, see `key-description'."
   ;; Don't use a defalias, since the `pure' property is only true for
   ;; the calling convention of `kbd'.
   (read-kbd-macro keys))

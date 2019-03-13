@@ -26,7 +26,6 @@
 ;; This misc target lets the user link in custom makefiles to an EDE
 ;; project.
 
-(eval-when-compile (require 'cl))
 (require 'ede/pmake)
 (require 'ede/proj-comp)
 
@@ -49,14 +48,12 @@ A user-written makefile is used to build this target.
 All listed sources are included in the distribution.")
 
 (defvar ede-misc-source
-  (ede-sourcecode "ede-misc-source"
-		  :name "Miscellaneous"
+  (ede-sourcecode :name "Miscellaneous"
 		  :sourcepattern ".*")
   "Miscellaneous field definition.")
 
 (defvar ede-misc-compile
-  (ede-compiler "ede-misc-compile"
-		:name "Sub Makefile"
+  (ede-compiler :name "Sub Makefile"
 		:commands
 		'(
 		  )

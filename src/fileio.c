@@ -199,6 +199,7 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
 }
 
 
+#ifdef USE_FILE_NOTIFY
 /* Like report_file_error, but reports a file-notify-error instead.  */
 
 void
@@ -213,6 +214,7 @@ report_file_notify_error (const char *string, Lisp_Object name)
 
   xsignal (Qfile_notify_error, Fcons (build_string (string), errdata));
 }
+#endif
 
 void
 close_file_unwind (int fd)

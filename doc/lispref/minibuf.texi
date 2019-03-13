@@ -1879,8 +1879,9 @@ completion tables (@pxref{Major Mode Conventions}).
 
 When the command @code{completion-at-point} runs, it calls the
 functions in the list one by one, without any argument.  Each function
-should return @code{nil} if it is unable to produce a completion table
-for the text at point.  Otherwise it should return a list of the form
+should return @code{nil} unless it can and wants to take
+responsibility for the completion data for the text at point.
+Otherwise it should return a list of the following form:
 
 @example
 (@var{start} @var{end} @var{collection} . @var{props})
@@ -1910,6 +1911,8 @@ next function in @code{completion-at-point-functions} instead of
 reporting a completion failure.
 @end table
 
+The functions on this hook should generally return quickly, since they
+may be called very often (e.g., from @code{post-command-hook}).
 Supplying a function for @var{collection} is strongly recommended if
 generating the list of completions is an expensive operation.  Emacs
 may internally call functions in @code{completion-at-point-functions}
@@ -1932,11 +1935,17 @@ can defer generating completions until necessary.  You can use
             (my-make-completions)))))
 @end smallexample
 
+Additionally, the @var{collection} should generally not be
+pre-filtered based on the current text between @var{start} and
+@var{end}, because that is the responsibility of the caller of
+@code{completion-at-point-functions} to do that according to the
+completion styles it decides to use.
+
 A function in @code{completion-at-point-functions} may also return a
 function instead of a list as described above.  In that case, that
 returned function is called, with no argument, and it is entirely
 responsible for performing the completion.  We discourage this usage;
-it is intended to help convert old code to using
+it is only intended to help convert old code to using
 @code{completion-at-point}.
 
 The first function in @code{completion-at-point-functions} to return a

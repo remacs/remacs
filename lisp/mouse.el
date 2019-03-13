@@ -41,8 +41,7 @@
 
 (defcustom mouse-yank-at-point nil
   "If non-nil, mouse yank commands yank at point instead of at click."
-  :type 'boolean
-  :group 'mouse)
+  :type 'boolean)
 
 (defcustom mouse-drag-copy-region nil
   "If non-nil, copy to kill-ring upon mouse adjustments of the region.
@@ -50,8 +49,7 @@
 This affects `mouse-save-then-kill' (\\[mouse-save-then-kill]) in
 addition to mouse drags."
   :type 'boolean
-  :version "24.1"
-  :group 'mouse)
+  :version "24.1")
 
 (defcustom mouse-1-click-follows-link 450
   "Non-nil means that clicking Mouse-1 on a link follows the link.
@@ -83,8 +81,7 @@ packages.  See `mouse-on-link-p' for details."
   :type '(choice (const :tag "Disabled" nil)
 		 (const :tag "Double click" double)
                  (number :tag "Single click time limit" :value 450)
-                 (other :tag "Single click" t))
-  :group 'mouse)
+                 (other :tag "Single click" t)))
 
 (defcustom mouse-1-click-in-non-selected-windows t
   "If non-nil, a Mouse-1 click also follows links in non-selected windows.
@@ -93,8 +90,7 @@ If nil, a Mouse-1 click on a link in a non-selected window performs
 the normal mouse-1 binding, typically selects the window and sets
 point at the click position."
   :type 'boolean
-  :version "22.1"
-  :group 'mouse)
+  :version "22.1")
 
 (defvar mouse--last-down nil)
 
@@ -135,7 +131,12 @@ Expects to be bound to `(double-)mouse-1' in `key-translation-map'."
                (unless (get newup 'event-kind)
                  (put newup 'event-kind
                       (get (car last-input-event) 'event-kind)))
-               (vector (cons newup (cdr last-input-event)))))))))
+               ;; Modify the event in-place, otherwise we can get a prefix
+               ;; added again, so a click on the header-line turns
+               ;; into a [header-line header-line mouse-2] :-(.
+               ;; See fake_prefixed_keys in src/keyboard.c's.
+               (setf (car last-input-event) newup)
+               (vector last-input-event)))))))
 
 (define-key key-translation-map [down-mouse-1]
   #'mouse--down-1-maybe-follows-link)
@@ -921,7 +922,6 @@ Nil means keep point at the position clicked (region end);
 non-nil means move point to beginning of region."
   :type '(choice (const :tag "Don't move point" nil)
 		 (const :tag "Move point to beginning of region" t))
-  :group 'mouse
   :version "26.1")
 
 (defun mouse-set-point (event &optional promote-to-region)
@@ -1027,8 +1027,7 @@ this many seconds between scroll steps.  Scrolling stops when you move
 the mouse back into the window, or release the button.
 This variable's value may be non-integral.
 Setting this to zero causes Emacs to scroll as fast as it can."
-  :type 'number
-  :group 'mouse)
+  :type 'number)
 
 (defcustom mouse-scroll-min-lines 1
   "The minimum number of lines scrolled by dragging mouse out of window.
@@ -1037,8 +1036,7 @@ scrolling repeatedly.  The number of lines scrolled per repetition
 is normally equal to the number of lines beyond the window edge that
 the mouse has moved.  However, it always scrolls at least the number
 of lines specified by this variable."
-  :type 'integer
-  :group 'mouse)
+  :type 'integer)
 
 (defun mouse-scroll-subr (window jump &optional overlay start)
   "Scroll the window WINDOW, JUMP lines at a time, until new input arrives.
@@ -1945,8 +1943,7 @@ When there is no region, this function does nothing."
   "Number of buffers in one pane (submenu) of the buffer menu.
 If we have lots of buffers, divide them into groups of
 `mouse-buffer-menu-maxlen' and make a pane (or submenu) for each one."
-  :type 'integer
-  :group 'mouse)
+  :type 'integer)
 
 (defcustom mouse-buffer-menu-mode-mult 4
   "Group the buffers by the major mode groups on \\[mouse-buffer-menu]?
@@ -1956,7 +1953,6 @@ will split the buffer menu by the major modes (see
 Set to 1 (or even 0!) if you want to group by major mode always, and to
 a large number if you prefer a mixed multitude.  The default is 4."
   :type 'integer
-  :group 'mouse
   :version "20.3")
 
 (defvar mouse-buffer-menu-mode-groups
@@ -2354,8 +2350,7 @@ region, text is copied instead of being cut."
                        modifier))
              '(alt super hyper shift control meta))
           (other :tag "Enable dragging the region" t))
-  :version "26.1"
-  :group 'mouse)
+  :version "26.1")
 
 (defcustom mouse-drag-and-drop-region-cut-when-buffers-differ nil
   "If non-nil, cut text also when source and destination buffers differ.
@@ -2364,8 +2359,7 @@ the text in the source buffer alone when dropping it in a
 different buffer.  If this is non-nil, it will cut the text just
 as it does when dropping text in the source buffer."
   :type 'boolean
-  :version "26.1"
-  :group 'mouse)
+  :version "26.1")
 
 (defcustom mouse-drag-and-drop-region-show-tooltip 256
   "If non-nil, text is shown by a tooltip in a graphic display.
@@ -2375,8 +2369,7 @@ tooltip.  If this is an integer (as with the default value of
 256), it will show that many characters of the dragged text in
 a tooltip."
   :type 'integer
-  :version "26.1"
-  :group 'mouse)
+  :version "26.1")
 
 (defcustom mouse-drag-and-drop-region-show-cursor t
   "If non-nil, move point with mouse cursor during dragging.
@@ -2385,16 +2378,14 @@ Otherwise, it will move point together with the mouse cursor and,
 in addition, temporarily highlight the original region with the
 `mouse-drag-and-drop-region' face."
   :type 'boolean
-  :version "26.1"
-  :group 'mouse)
+  :version "26.1")
 
 (defface mouse-drag-and-drop-region '((t :inherit region))
   "Face to highlight original text during dragging.
 This face is used by `mouse-drag-and-drop-region' to temporarily
 highlight the original region when
 `mouse-drag-and-drop-region-show-cursor' is non-nil."
-  :version "26.1"
-  :group 'mouse)
+  :version "26.1")
 
 (defun mouse-drag-and-drop-region (event)
   "Move text in the region to point where mouse is dragged to.

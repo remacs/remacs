@@ -39,6 +39,9 @@ use crate::{
     threads::ThreadState,
 };
 
+pub const S2N_IGNORE_TRAILING: i32 = 1;
+pub const S2N_OVERFLOW_TO_FLOAT: i32 = 2;
+
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
 
 #[no_mangle]
@@ -844,7 +847,8 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
         }
     }
 
-    match unsafe { string_to_number(p, b as i32, true) } {
+    let flags = S2N_IGNORE_TRAILING | S2N_OVERFLOW_TO_FLOAT;
+    match unsafe { string_to_number(p, b as i32, flags) } {
         Qnil => LispObject::from(0),
         n => n,
     }

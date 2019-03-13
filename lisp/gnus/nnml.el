@@ -35,7 +35,6 @@
 (require 'nnheader)
 (require 'nnmail)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
 
 ;; FIXME first is unused in this file.
 (autoload 'gnus-article-unpropagatable-p "gnus-sum")

@@ -624,14 +624,16 @@ if [ "${make_tar}" = yes ]; then
   case "${default_gzip}" in
     bzip2) gzip_extension=.bz2 ;;
     xz)  gzip_extension=.xz ;;
-    gzip)  gzip_extension=.gz ; default_gzip="gzip --best";;
+    gzip)  gzip_extension=.gz ; default_gzip="gzip --best --no-name";;
        *)  gzip_extension= ;;
   esac
   echo "Creating tar file"
-  taropt=
-  [ "$verbose" = "yes" ] && taropt=v
+  taropt='--numeric-owner --owner=0 --group=0 --mode=go+u,go-w'
+  tar --sort=name -cf /dev/null $tempparent/$emacsname/src/lisp.h 2>/tmp/out &&
+    taropt="$taropt --sort=name"
+  [ "$verbose" = "yes" ] && taropt="$taropt --verbose"
 
-  (cd ${tempparent} ; tar c${taropt}f - ${emacsname} ) \
+  (cd ${tempparent} ; tar $taropt -cf - ${emacsname} ) \
     | ${default_gzip} \
     > ${emacsname}.tar${gzip_extension}
 fi

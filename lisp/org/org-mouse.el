@@ -24,7 +24,7 @@
 ;;
 ;; Org-mouse provides mouse support for org-mode.
 ;;
-;; http://orgmode.org
+;; https://orgmode.org
 ;;
 ;; Org mouse implements the following features:
 ;; * following links with the left mouse button

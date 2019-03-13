@@ -813,7 +813,7 @@ The ARG parameter is unused."
 		       (and (>= ch ?A) (<= ch ?Z))))
 	      (setq key-seq (concat "\C-x\C-k" key-seq)
 		    ok t))))
-      (when (and (not (equal key-seq ""))
+      (when (and (not (equal key-seq "\^G"))
 		 (or ok
 		     (not (setq cmd (key-binding key-seq)))
 		     (stringp cmd)

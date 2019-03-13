@@ -465,7 +465,7 @@ customize `org-html-head-include-default-style'.")
 ;;;; Handle infojs
 
 (defvar org-html-infojs-opts-table
-  '((path PATH "http://orgmode.org/org-info.js")
+  '((path PATH "https://orgmode.org/org-info.js")
     (view VIEW "info")
     (toc TOC :with-toc)
     (ftoc FIXED_TOC "0")
@@ -1324,7 +1324,7 @@ like that: \"%%\"."
   :type 'string)
 
 (defcustom org-html-creator-string
-  (format "<a href=\"https://www.gnu.org/software/emacs/\">Emacs</a> %s (<a href=\"http://orgmode.org\">Org</a> mode %s)"
+  (format "<a href=\"https://www.gnu.org/software/emacs/\">Emacs</a> %s (<a href=\"https://orgmode.org\">Org</a> mode %s)"
 	  emacs-version
 	  (if (fboundp 'org-version) (org-version) "unknown version"))
   "Information about the creator of the HTML document.
@@ -1452,13 +1452,13 @@ done, timestamp, timestamp-kwd, tag, target.
 For example, a valid value would be:
 
    <style type=\"text/css\">
-    <![CDATA[
-       p { font-weight: normal; color: gray; }
-       h1 { color: black; }
+    /*<![CDATA[*/
+      p { font-weight: normal; color: gray; }
+      h1 { color: black; }
       .title { text-align: center; }
       .todo, .timestamp-kwd { color: red; }
       .done { color: green; }
-    ]]>
+    /*]]>*/
    </style>
 
 If you want to refer to an external style, use something like

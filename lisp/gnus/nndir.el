@@ -28,7 +28,6 @@
 (require 'nnmh)
 (require 'nnml)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
 
 (nnoo-declare nndir
   nnml nnmh)

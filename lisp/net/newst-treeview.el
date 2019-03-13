@@ -36,6 +36,7 @@
 
 ;; ======================================================================
 ;;; Code:
+(require 'cl-lib)
 (require 'newst-reader)
 (require 'widget)
 (require 'tree-widget)
@@ -258,7 +259,6 @@ their id stays constant."
 
 ;; ======================================================================
 
-(unless (fboundp 'declare-function) (defmacro declare-function (&rest _)))
 (declare-function w3m-toggle-inline-images "ext:w3m" (&optional force no-cache))
 (defvar w3m-fill-column)
 (defvar w3-maximum-line-length)

@@ -29,7 +29,7 @@
 (require 'nnheader)
 (require 'nntp)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 ;; Probably this entire thing should be obsolete.
 ;; It's only used to init nnspool-spool-directory, so why not just
@@ -172,7 +172,7 @@ there.")
 	      (delete-region (point) (point-max)))
 
 	    (and do-message
-		 (zerop (% (incf count) 20))
+		 (zerop (% (cl-incf count) 20))
 		 (nnheader-message 5 "nnspool: Receiving headers... %d%%"
 				   (floor (* count 100.0) number))))
 

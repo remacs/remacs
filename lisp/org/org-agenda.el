@@ -4,7 +4,7 @@
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -1644,9 +1644,10 @@ When nil, such items are sorted as 0 minutes effort."
     (tags  . " %i %-12:c")
     (search . " %i %-12:c"))
   "Format specifications for the prefix of items in the agenda views.
-An alist with five entries, each for the different agenda types.  The
-keys of the sublists are `agenda', `todo', `search' and `tags'.
-The values are format strings.
+
+An alist with one entry per agenda type.  The keys of the
+sublists are `agenda', `todo', `search' and `tags'.  The values
+are format strings.
 
 This format works similar to a printf format, with the following meaning:
 
@@ -2075,7 +2076,10 @@ works you probably want to add it to `org-agenda-custom-commands' for good."
 (defvar org-agenda-follow-mode nil)
 (defvar org-agenda-entry-text-mode nil)
 (defvar org-agenda-clockreport-mode nil)
-(defvar org-agenda-show-log nil)
+(defvar org-agenda-show-log nil
+  "When non-nil, show the log in the agenda.
+Do not set this directly; instead use
+`org-agenda-start-with-log-mode', which see.")
 (defvar org-agenda-redo-command nil)
 (defvar org-agenda-query-string nil)
 (defvar org-agenda-mode-hook nil
@@ -2211,9 +2215,9 @@ The following commands are available:
                   #'substring-no-properties))
   (unless org-agenda-keep-modes
     (setq org-agenda-follow-mode org-agenda-start-with-follow-mode
-	  org-agenda-entry-text-mode org-agenda-start-with-entry-text-mode))
-  (setq org-agenda-show-log org-agenda-start-with-log-mode)
-  (setq org-agenda-clockreport-mode org-agenda-start-with-clockreport-mode)
+	  org-agenda-entry-text-mode org-agenda-start-with-entry-text-mode
+	  org-agenda-show-log org-agenda-start-with-log-mode
+	  org-agenda-clockreport-mode org-agenda-start-with-clockreport-mode))
   (add-to-invisibility-spec '(org-filtered))
   (add-to-invisibility-spec '(org-link))
   (easy-menu-change
@@ -6176,7 +6180,7 @@ scheduled items with an hour specification like [h]h:mm."
 		 ;; Nullify delay when a repeater triggered already
 		 ;; and the delay is of the form --Xd.
 		 ((and (string-match-p "--[0-9]+[hdwmy]" s)
-		       (> current schedule))
+		       (> schedule (org-agenda--timestamp-to-absolute s)))
 		  0)
 		 (suppress-delay
 		  (let ((org-scheduled-delay-days suppress-delay))
@@ -8181,7 +8185,6 @@ so that the date SD will be in that range."
   (interactive)
   (org-agenda-check-type t 'agenda)
   (setq org-agenda-clockreport-mode (not org-agenda-clockreport-mode))
-  (setq org-agenda-start-with-clockreport-mode org-agenda-clockreport-mode)
   (org-agenda-set-mode-name)
   (org-agenda-redo)
   (message "Clocktable mode is %s"
@@ -8205,7 +8208,6 @@ log items, nothing else."
 	      nil 'clockcheck))
 	 (special '(closed clock state))
 	 (t (not org-agenda-show-log))))
-  (setq org-agenda-start-with-log-mode org-agenda-show-log)
   (org-agenda-set-mode-name)
   (org-agenda-redo)
   (message "Log mode is %s" (if org-agenda-show-log "on" "off")))
@@ -9899,32 +9901,33 @@ The prefix arg is passed through to the command if possible."
 		    (org-agenda-set-tags ,tag
 					 ,(if (eq action ?+) ''on ''off))))))
 
-	(?s
-	 (let ((time
-		(and (not arg)
-		     (org-read-date nil nil nil "(Re)Schedule to"
-				    org-overriding-default-time))))
+	((and (or ?s ?d) c)
+	 (let* ((schedule? (eq c ?s))
+		(prompt (if schedule? "(Re)Schedule to" "(Re)Set Deadline to"))
+		(time
+		 (and (not arg)
+		      (let ((new (org-read-date
+				  nil nil nil prompt org-overriding-default-time)))
+			;; A "double plus" answer applies to every
+			;; scheduled time.  Do not turn it into
+			;; a fixed date yet.
+			(if (string-match-p "\\`[ \t]*\\+\\+"
+					    org-read-date-final-answer)
+			    org-read-date-final-answer
+			  new)))))
 	   ;; Make sure to not prompt for a note when bulk
-	   ;; rescheduling as Org cannot cope with simultaneous notes.
-	   ;; Besides, it could be annoying depending on the number of
-	   ;; items re-scheduled.
+	   ;; rescheduling/resetting deadline as Org cannot cope with
+	   ;; simultaneous notes.  Besides, it could be annoying
+	   ;; depending on the number of marked items.
 	   (setq cmd
-		 `(lambda ()
-		    (let ((org-log-reschedule (and org-log-reschedule 'time)))
-		      (org-agenda-schedule arg ,time))))))
-	(?d
-	 (let ((time
-		(and (not arg)
-		     (org-read-date nil nil nil "(Re)Set Deadline to"
-				    org-overriding-default-time))))
-	   ;; Make sure to not prompt for a note when bulk
-	   ;; rescheduling as Org cannot cope with simultaneous
-	   ;; notes.  Besides, it could be annoying depending on the
-	   ;; number of items re-scheduled.
-	   (setq cmd
-		 `(lambda ()
-		    (let ((org-log-redeadline (and org-log-redeadline 'time)))
-		      (org-agenda-deadline arg ,time))))))
+		 (if schedule?
+		     `(lambda ()
+			(let ((org-log-reschedule
+			       (and org-log-reschedule 'time)))
+			  (org-agenda-schedule arg ,time)))
+		   `(lambda ()
+		      (let ((org-log-redeadline (and org-log-redeadline 'time)))
+			(org-agenda-deadline arg ,time)))))))
 
 	(?S
 	 (unless (org-agenda-check-type nil 'agenda 'todo)

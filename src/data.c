@@ -260,7 +260,7 @@ swap_in_global_binding (struct Lisp_Symbol *symbol)
 
   /* Indicate that the global binding is set up now.  */
   set_blv_where (blv, Qnil);
-  set_blv_found (blv, 0);
+  set_blv_found (blv, false);
 }
 
 /* Set up the buffer-local symbol SYMBOL for validity in the current buffer.
@@ -384,7 +384,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 	    tem1 = assq_no_quit (symbol,
 				 BVAR (XBUFFER (where), local_var_alist));
 	    set_blv_where (blv, where);
-	    blv->found = 1;
+	    blv->found = true;
 
 	    if (NILP (tem1))
 	      {
@@ -399,7 +399,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 		if (bindflag || !blv->local_if_set
 		    || let_shadows_buffer_binding_p (sym))
 		  {
-		    blv->found = 0;
+		    blv->found = false;
 		    tem1 = blv->defcell;
 		  }
 		/* If it's a local_if_set, being set not bound,
@@ -666,7 +666,7 @@ make_blv (struct Lisp_Symbol *sym, bool forwarded,
   blv->local_if_set = 0;
   set_blv_defcell (blv, tem);
   set_blv_valcell (blv, tem);
-  set_blv_found (blv, 0);
+  set_blv_found (blv, false);
   return blv;
 }
 
@@ -815,29 +815,16 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
 	  CALLN (Fmessage, format, SYMBOL_NAME (variable));
 	}
 
-      /* Swap out any local binding for some other buffer, and make
-	 sure the current value is permanently recorded, if it's the
-	 default value.  */
-      find_symbol_value (variable);
+      if (BUFFERP (blv->where) && current_buffer == XBUFFER (blv->where))
+        /* Make sure the current value is permanently recorded, if it's the
+           default value.  */
+        swap_in_global_binding (sym);
 
       bset_local_var_alist
 	(current_buffer,
 	 Fcons (Fcons (variable, XCDR (blv->defcell)),
 		BVAR (current_buffer, local_var_alist)));
-
-      /* Make sure symbol does not think it is set up for this buffer;
-	 force it to look once again for this buffer's value.  */
-      if (current_buffer == XBUFFER (blv->where))
-	set_blv_where (blv, Qnil);
-      set_blv_found (blv, 0);
     }
-
-  /* If the symbol forwards into a C variable, then load the binding
-     for this buffer now.  If C code modifies the variable before we
-     load the binding in, then that new value will clobber the default
-     binding the next time we unload it.  */
-  if (blv->fwd)
-    swap_in_symval_forwarding (sym, blv);
 
   return variable;
 }
@@ -900,11 +887,7 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
   {
     Lisp_Object buf; XSETBUFFER (buf, current_buffer);
     if (EQ (buf, blv->where))
-      {
-	set_blv_where (blv, Qnil);
-	blv->found = 0;
-	find_symbol_value (variable);
-      }
+      swap_in_global_binding (sym);
   }
 
   return variable;
@@ -1177,7 +1160,7 @@ NUMBER may be an integer or a floating point number.  */)
 
   return make_unibyte_string (buffer, len);
 }
-
+
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {

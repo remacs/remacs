@@ -6968,7 +6968,7 @@ The glyph for the end of a truncated screen line (the default for this
 is @samp{$}).  @xref{Glyphs}.  On graphical terminals, Emacs by
 default uses arrows in the fringes to indicate truncation, so the
 display table has no effect, unless you disable the fringes
-(@pxref{Fringes,, Window Fringes, emacs, the Gnu Emacs Manual}).
+(@pxref{Fringes,, Window Fringes, emacs, the GNU Emacs Manual}).
 
 @item 1
 The glyph for the end of a continued line (the default is @samp{\}).
