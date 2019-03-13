@@ -1,6 +1,6 @@
 use libc::{
-    c_char, c_long, endpwent, getgrgid, getpwent, getpwuid, group, passwd, size_t, ssize_t,
-    timespec as c_timespec,
+    c_char, c_long, endgrent, endpwent, getgrent, getgrgid, getpwent, getpwuid, group, passwd,
+    size_t, ssize_t, timespec as c_timespec,
 };
 
 use std::ffi::{CStr, CString, OsStr};
@@ -764,4 +764,20 @@ pub fn get_users() -> LispObject {
     }
 
     list(&unames)
+}
+
+pub fn get_groups() -> LispObject {
+    let mut group_names = Vec::new();
+    let mut done = false;
+
+    while !done {
+        let gr = unsafe { getgrent() };
+        if gr.is_null() {
+            done = true;
+        } else {
+            group_names.push(unsafe { build_string((*gr).gr_name) })
+        }
+    }
+    unsafe { endgrent() };
+    list(&group_names)
 }
