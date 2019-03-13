@@ -184,8 +184,7 @@ aliqua."
 
 (ert-deftest python-syntax-after-python-backspace ()
   ;; `python-indent-dedent-line-backspace' garbles syntax
-  ;; But it seems that since da7580, the test passes.
-;;;  :expected-result :failed
+  :expected-result :failed
   (python-tests-with-temp-buffer
       "\"\"\""
     (goto-char (point-max))
