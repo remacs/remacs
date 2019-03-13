@@ -61,7 +61,7 @@ If a list, it is a list of the types of messages to be logged."
 
 ;;;###autoload
 (defun url-debug (tag &rest args)
-  (if quit-flag
+  (if (eq quit-flag t)
       (error "Interrupted!"))
   (if (or (eq url-debug t)
 	  (numberp url-debug)

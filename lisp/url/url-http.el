@@ -150,7 +150,7 @@ request.")
 ;; These routines will allow us to implement persistent HTTP
 ;; connections.
 (defsubst url-http-debug (&rest args)
-  (if quit-flag
+  (if (eq quit-flag t)
       (let ((proc (get-buffer-process (current-buffer))))
 	;; The user hit C-g, honor it!  Some things can get in an
 	;; incredibly tight loop (chunked encoding)
