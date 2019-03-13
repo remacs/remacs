@@ -13,13 +13,12 @@ use crate::{
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
     remacs_sys::{
-        check_executable, check_existing, expand_and_dir_to_file, file_directory_p,
-        file_name_absolute_p, file_name_case_insensitive_p, report_file_errno,
-        empty_unibyte_string
+        check_executable, check_existing, empty_unibyte_string, expand_and_dir_to_file,
+        file_directory_p, file_name_absolute_p, file_name_case_insensitive_p, report_file_errno,
     },
     remacs_sys::{Fexpand_file_name, Ffind_file_name_handler, Fmake_temp_file_internal},
     remacs_sys::{
-        Qfile_directory_p, Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p, Qnil
+        Qfile_directory_p, Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p, Qnil,
     },
     threads::ThreadState,
 };
@@ -177,14 +176,14 @@ pub fn find_file_name_handler(filename: LispStringRef, operation: LispObject) ->
 /// There is a race condition between calling `make-temp-name' and
 /// later creating the file, which opens all kinds of security holes.
 /// For that reason, you should normally use `make-temp-file' instead.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn make_temp_name(prefix: LispStringRef) -> LispObject {
     unsafe {
         Fmake_temp_file_internal(
             prefix.into(),
             LispObject::from(0),
             empty_unibyte_string,
-            Qnil
+            Qnil,
         )
     }
 }
