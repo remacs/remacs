@@ -121,6 +121,8 @@ pub fn system_users() -> LispObject {
     get_users()
 }
 
+/// Return a list of user group names currently registered in the system.
+/// The value may be nil if not supported on this platform.
 #[lisp_fn]
 pub fn system_groups() -> LispObject {
     get_groups()
