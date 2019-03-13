@@ -243,8 +243,9 @@ Only start calculation.  Results are inserted when ready."
     (hashcash-generate-payment-async
      (hashcash-payment-to arg)
      (hashcash-payment-required arg)
-     (lambda (process payment)
-       (hashcash-insert-payment-async-2 (current-buffer) process payment)))))
+     (let ((buf (current-buffer)))
+       (lambda (process payment)
+         (hashcash-insert-payment-async-2 buf process payment))))))
 
 (defun hashcash-insert-payment-async-2 (buffer process pay)
   (when (buffer-live-p buffer)
