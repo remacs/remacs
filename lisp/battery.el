@@ -625,37 +625,54 @@ The following %-sequences are provided:
                      (_         "ms")))
          (apm-cmd (concat "/usr/sbin/apm -abl" apm-flag))
          (apm-output (split-string (shell-command-to-string apm-cmd)))
-         (battery-status-index (if (equal os-name "FreeBSD") 1 0))
-         (apm-mode-index (if (equal os-name "FreeBSD") 3 4))
-         (battery-percentage-index (if (equal os-name "FreeBSD") 2 1))
-         (battery-life-index (if (equal os-name "FreeBSD") 4 3))
-         (ac-index (if (equal os-name "FreeBSD") 0 3))
+         (indices (pcase os-name
+                    ;; FreeBSD's manpage documents that multiple
+                    ;; outputs are ordered by "the order in which
+                    ;; they're listed in the manpage", which is alphabetical
+                    ;; and is also the order in which we pass them.
+                    ("FreeBSD" '((ac . 0)
+                                 (battery-status . 1)
+                                 (battery-percent . 2)
+                                 (apm-mode . 3)
+                                 (battery-life . 4)))
+                    ;; For NetBSD and OpenBSD, the manpage doesn't document
+                    ;; the order.  The previous code used this order, so let's
+                    ;; assume it's right.
+                    (_         '((ac . 3)
+                                 (battery-status . 0)
+                                 (battery-percent . 1)
+                                 (apm-mode . 4)
+                                 (battery-life . 2)))))
          ;; Battery status
          (battery-status
-          (let ((stat (string-to-number (nth battery-status-index apm-output))))
-            (cond ((eq stat 0) '("high" . ""))
-                  ((eq stat 1) '("low" . "-"))
-                  ((eq stat 2) '("critical" . "!"))
-                  ((eq stat 3) '("charging" . "+"))
-                  ((eq stat 4) '("absent" . nil)))))
+          (pcase (string-to-number
+                  (nth (alist-get 'battery-status indices) apm-output))
+            (0 '("high" . ""))
+            (1 '("low" . "-"))
+            (2 '("critical" . "!"))
+            (3 '("charging" . "+"))
+            (4 '("absent" . nil))))
          ;; Battery percentage
-         (battery-percentage (nth battery-percentage-index apm-output))
+         (battery-percentage
+          (nth (alist-get 'battery-percent indices) apm-output))
          ;; Battery life
-         (battery-life (nth battery-life-index apm-output))
+         (battery-life (nth (alist-get 'battery-life indices) apm-output))
          ;; AC status
          (line-status
-          (let ((ac (string-to-number (nth ac-index apm-output))))
-            (cond ((eq ac 0) "disconnected")
-                  ((eq ac 1) "connected")
-                  ((eq ac 2) "backup power"))))
+          (pcase (string-to-number (nth (alist-get 'ac indices) apm-output))
+            (0 "disconnected")
+            (1 "connected")
+            (2 "backup power")))
          ;; Advanced power savings mode
          (apm-mode
-          (let ((apm (string-to-number (nth apm-mode-index apm-output))))
+          (let ((apm (string-to-number
+                      (nth (alist-get 'apm-mode indices) apm-output))))
             (if (string= os-name "OpenBSD")
-                (cond ((eq apm 0) "manual")
-                      ((eq apm 1) "automatic")
-		      ((eq apm 2) "cool running"))
-	      (if (eq apm 1) "on" "off"))))
+                (pcase apm
+                  (0 "manual")
+                  (1 "automatic")
+		  (2 "cool running"))
+	      (if (eql apm 1) "on" "off"))))
 	 seconds minutes hours remaining-time)
     (unless (member battery-life '("unknown" "-1"))
       (if (member os-name '("OpenBSD" "NetBSD"))
