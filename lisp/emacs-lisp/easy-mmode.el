@@ -628,6 +628,7 @@ BODY is executed after moving to the destination location."
                  ,body
                  (when was-narrowed (funcall #',narrowfun)))))))
     (unless name (setq name base-name))
+    ;; FIXME: Move most of those functions's bodies to helper functions!
     `(progn
        (defun ,next-sym (&optional count)
 	 ,(format "Go to the next COUNT'th %s.
@@ -649,7 +650,11 @@ Interactively, COUNT is the prefix numeric argument, and defaults to 1." name)
                                         `(re-search-forward ,re nil t 2)))
                                    (point-max))))
                     (unless (pos-visible-in-window-p endpt nil t)
-                      (recenter '(0)))))))
+                      (let ((ws (window-start)))
+                        (recenter '(0))
+                        (if (< (window-start) ws)
+                            ;; recenter scrolled in the wrong direction!
+                            (set-window-start nil ws))))))))
            ,@body))
        (put ',next-sym 'definition-name ',base)
        (defun ,prev-sym (&optional count)
