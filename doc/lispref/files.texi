@@ -1306,7 +1306,7 @@ The file's @acronym{GID}, likewise (@code{file-attribute-group-id}).
 
 @item
 The time of last access as a Lisp timestamp
-(@code{file-attribute-status-change-time}).  The timestamp is in the
+(@code{file-attribute-access-time}).  The timestamp is in the
 style of @code{current-time} (@pxref{Time of Day}) and is truncated
 to that of the filesystem's timestamp resolution; for example, on some
 FAT-based filesystems, only the date of last access is recorded, so
