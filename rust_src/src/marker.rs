@@ -375,7 +375,7 @@ pub fn attach_marker(
 /// function could have inserted it into an undo list (Bug#30931).
 #[no_mangle]
 pub extern "C" fn detach_marker(marker: LispObject) {
-    unsafe { Fset_marker(marker, Qnil, Qnil) };
+    Fset_marker(marker, Qnil, Qnil);
 }
 
 /// Remove MARKER from the chain of whatever buffer it is in,
