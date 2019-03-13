@@ -1129,6 +1129,8 @@ extern struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay);
 extern void delete_all_overlays (struct buffer *);
 extern void reset_buffer (struct buffer *);
+extern void reset_buffer_local_variables (struct buffer *, bool);
+extern void reset_per_buffer_values(struct buffer *, bool);
 extern void compact_buffer (struct buffer *);
 extern void evaporate_overlays (ptrdiff_t);
 extern ptrdiff_t overlays_at (EMACS_INT, bool, Lisp_Object **,
@@ -1146,6 +1148,7 @@ extern void fix_overlays_before (struct buffer *, ptrdiff_t, ptrdiff_t);
 extern void mmap_set_vars (bool);
 extern void restore_buffer (Lisp_Object);
 extern void set_buffer_if_live (Lisp_Object);
+extern void alloc_buffer_text(struct buffer *, ptrdiff_t);
 
 /* Return B as a struct buffer pointer, defaulting to the current buffer.  */
 
@@ -1200,6 +1203,8 @@ record_unwind_current_buffer (void)
   } while (false)
 
 extern Lisp_Object Vbuffer_alist;
+
+extern Lisp_Object buffer_fundamental_string(void);
 
 /* FOR_EACH_LIVE_BUFFER (LIST_VAR, BUF_VAR) followed by a statement is
    a `for' loop which iterates over the buffers from Vbuffer_alist.  */
@@ -1292,6 +1297,8 @@ buffer_window_count (struct buffer *b)
 /***********************************************************************
 			Buffer-local Variables
  ***********************************************************************/
+
+extern char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
 
 /* Number of per-buffer variables used.  */
 
