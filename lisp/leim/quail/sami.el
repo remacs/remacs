@@ -5,34 +5,471 @@
 
 (require 'quail)
 
-;; (quail-define-package
-;;  "northern-sami-prefix" "Sámi" "/NoS" nil
-;;  "Northern Sámi input method
+(quail-define-package
+ "norwegian-sami-prefix" "Sámi" "/NSoS" nil
+ "Norwegian Southern Sámi input method
 
-;; Alphabet:
-;; А а	Á á	B b	C c	Č č	D d	Đ đ	E e
-;; F f	G g	H h	I i	J j	K k	L l	M m
-;; N n	Ŋ ŋ	O o	P p	R r	S s	Š š	T t
-;; Ŧ ŧ	U u	V v	Z z	Ž ž
-;; "
-;;  nil t nil nil nil nil nil nil nil nil t)
+Alphabet (parenthesized letters are used in foreign names):
+А а	B b	(C c)	D d	E e	F f	G g	H h
+I i	(Ï ï)	J j	K k	L l	M m	N n	O o
+P p	(Q q)	R r	S s	T t	U u	V v	(W w)
+(X x)	Y y	(Z z)	Æ æ	Ø ø	Å å
+"
+ nil t nil nil nil nil nil nil nil nil t)
 
-;; (quail-define-rules)
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("B" ?B)
+ ("b" ?b)
+ ("C" ?C)
+ ("c" ?c)
+ ("D" ?D)
+ ("d" ?d)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ (":I" ?Ï)
+ (":i" ?ï)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("Q" ?Q)
+ ("q" ?q)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("T" ?T)
+ ("t" ?t)
+ ("U" ?U)
+ ("u" ?u)
+ ("V" ?V)
+ ("v" ?v)
+ ("W" ?W)
+ ("w" ?w)
+ ("X" ?X)
+ ("x" ?x)
+ ("Y" ?Y)
+ ("y" ?y)
+ ("Z" ?Z)
+ ("z" ?z)
+ ("AE" ?Æ)
+ ("ae" ?æ)
+ ("/O" ?Ø)
+ ("/o" ?ø)
+ ("/A" ?Å)
+ ("/a" ?å))
 
-;; (quail-define-package
-;;  "inari-sami-prefix" "Sámi" "/InS" nil
-;;  "Inari Sámi input method
+(quail-define-package
+ "bergsland-hasselbrink-sami-prefix" "Sámi" "/BHS" nil
+ "Bergsland-Hasselbrink Southern Sámi input method
 
-;; Alphabet (parenthesized letters are used in foreign names only):
-;; А а	Â â	B b	C c	Č č	D d	Đ đ	E e
-;; F f	G g	H h	I i	J j	K k	L l	M m
-;; N n	O o	P p	(Q q)	R r	S s	Š š	T t
-;; U u	V v	(W w)	(X x)	Y y	Z z	Ž ž	Ä ä
-;; Á á	Å å	Ö ö
-;; "
-;;  nil t nil nil nil nil nil nil nil nil t)
+Alphabet:
+А а	Â â	Á á	B b	C c	Č č	D d	Đ đ
+E e	F f	G g	H h	I i	Î î	J j	K k
+L l	M m	N n	Ŋ ŋ	O o	P p	R r	S s
+Š š	T t	U u	V v	Y y	Z z	Ž ž	Ä ä
+Æ æ	Ö ö	Å å	'
+"
+ nil t nil nil nil nil nil nil nil nil t)
 
-;; (quail-define-rules)
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("^A" ?Â)
+ ("^a" ?â)
+ ("'A" ?Á)
+ ("'a" ?á)
+ ("B" ?B)
+ ("b" ?b)
+ ("C" ?C)
+ ("c" ?c)
+ ("^C" ?Č)
+ ("^c" ?č)
+ ("D" ?D)
+ ("d" ?d)
+ ("-D" ?Đ)
+ ("-d" ?đ)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ ("^I" ?Î)
+ ("^i" ?î)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("/N" ?Ŋ)
+ ("/n" ?ŋ)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("^S" ?Š)
+ ("^s" ?š)
+ ("T" ?T)
+ ("t" ?t)
+ ("U" ?U)
+ ("u" ?u)
+ ("V" ?V)
+ ("v" ?v)
+ ("Y" ?Y)
+ ("y" ?y)
+ ("Z" ?Z)
+ ("z" ?z)
+ ("^Z" ?Ž)
+ ("^z" ?ž)
+ (":A" ?Ä)
+ (":a" ?ä)
+ ("AE" ?Æ)
+ ("ae" ?æ)
+ (":O" ?Ö)
+ (":o" ?ö)
+ ("/A" ?Å)
+ ("/a" ?å))
+
+(quail-define-package
+ "southern-sami-prefix" "Sámi" "/SoS" nil
+ "Contemporary Southern Sámi input method
+
+Alphabet (parenthesized letters are used in foreign names):
+А а	B b	(C c)	D d	E e	F f	G g	H h
+I i	(Ï ï)	J j	K k	L l	M m	N n	O o
+P p	(Q q)	R r	S s	T t	U u	V v	(W w)
+(X x)	Y y	(Z z)	Ä ä	Ö ö	Å å
+"
+ nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("B" ?B)
+ ("b" ?b)
+ ("C" ?C)
+ ("c" ?c)
+ ("D" ?D)
+ ("d" ?d)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ (":I" ?Ï)
+ (":i" ?ï)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("Q" ?Q)
+ ("q" ?q)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("T" ?T)
+ ("t" ?t)
+ ("U" ?U)
+ ("u" ?u)
+ ("V" ?V)
+ ("v" ?v)
+ ("W" ?W)
+ ("w" ?w)
+ ("X" ?X)
+ ("x" ?x)
+ ("Y" ?Y)
+ ("y" ?y)
+ ("Z" ?Z)
+ ("z" ?z)
+ (":A" ?Ä)
+ (":a" ?ä)
+ (":O" ?Ö)
+ (":o" ?ö)
+ ("/A" ?Å)
+ ("/a" ?å))
+
+(quail-define-package
+ "ume-sami-prefix" "Sámi" "/UmS" nil
+ "Ume Sámi input method
+
+Alphabet:
+А а	Á á	B b	D d	Đ đ	E e	F f	G g
+H h	I i	Ï ï	J j	K k	L l	M m	N n
+Ŋ ŋ	O o	P p	R r	S s	T t	Ŧ ŧ	U u
+Ü ü	V v	Y y	Å å	Ä ä	Ö ö
+"
+ nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("'A" ?Á)
+ ("'a" ?á)
+ ("B" ?B)
+ ("b" ?b)
+ ("D" ?D)
+ ("d" ?d)
+ ("-D" ?Đ)
+ ("-d" ?đ)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ (":I" ?Ï)
+ (":i" ?ï)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("/N" ?Ŋ)
+ ("/n" ?ŋ)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("T" ?T)
+ ("t" ?t)
+ ("-T" ?Ŧ)
+ ("-t" ?ŧ)
+ ("U" ?U)
+ ("u" ?u)
+ (":U" ?Ü)
+ (":u" ?ü)
+ ("V" ?V)
+ ("v" ?v)
+ ("Y" ?Y)
+ ("y" ?y)
+ ("/A" ?Å)
+ ("/a" ?å)
+ (":A" ?Ä)
+ (":a" ?ä)
+ (":O" ?Ö)
+ (":o" ?ö)
+ )
+
+(quail-define-package
+ "northern-sami-prefix" "Sámi" "/NoS" nil
+ "Northern Sámi input method
+
+Alphabet:
+А а	Á á	B b	C c	Č č	D d	Đ đ	E e
+F f	G g	H h	I i	J j	K k	L l	M m
+N n	Ŋ ŋ	O o	P p	R r	S s	Š š	T t
+Ŧ ŧ	U u	V v	Z z	Ž ž
+"
+ nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("'A" ?Á)
+ ("'a" ?á)
+ ("B" ?B)
+ ("b" ?b)
+ ("C" ?C)
+ ("c" ?c)
+ ("^C" ?Č)
+ ("^c" ?č)
+ ("D" ?D)
+ ("d" ?d)
+ ("-D" ?Đ)
+ ("-d" ?đ)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("/N" ?Ŋ)
+ ("/n" ?ŋ)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("^S" ?Š)
+ ("^s" ?š)
+ ("T" ?T)
+ ("t" ?t)
+ ("-T" ?Ŧ)
+ ("-t" ?ŧ)
+ ("U" ?U)
+ ("u" ?u)
+ ("V" ?V)
+ ("v" ?v)
+ ("Z" ?Z)
+ ("z" ?z)
+ ("^Z" ?Ž)
+ ("^z" ?ž)
+ )
+
+(quail-define-package
+ "inari-sami-prefix" "Sámi" "/InS" nil
+ "Inari Sámi input method
+
+Alphabet (parenthesized letters are used in foreign names only):
+А а	Â â	B b	C c	Č č	D d	Đ đ	E e
+F f	G g	H h	I i	J j	K k	L l	M m
+N n	O o	P p	(Q q)	R r	S s	Š š	T t
+U u	V v	(W w)	(X x)	Y y	Z z	Ž ž	Ä ä
+Á á	Å å	Ö ö
+"
+ nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("А" ?А)
+ ("а" ?а)
+ ("^A" ?Â)
+ ("^a" ?â)
+ ("B" ?B)
+ ("b" ?b)
+ ("C" ?C)
+ ("c" ?c)
+ ("^C" ?Č)
+ ("^c" ?č)
+ ("D" ?D)
+ ("d" ?d)
+ ("-D" ?Đ)
+ ("-d" ?đ)
+ ("E" ?E)
+ ("e" ?e)
+ ("F" ?F)
+ ("f" ?f)
+ ("G" ?G)
+ ("g" ?g)
+ ("H" ?H)
+ ("h" ?h)
+ ("I" ?I)
+ ("i" ?i)
+ ("J" ?J)
+ ("j" ?j)
+ ("K" ?K)
+ ("k" ?k)
+ ("L" ?L)
+ ("l" ?l)
+ ("M" ?M)
+ ("m" ?m)
+ ("N" ?N)
+ ("n" ?n)
+ ("O" ?O)
+ ("o" ?o)
+ ("P" ?P)
+ ("p" ?p)
+ ("Q" ?Q)
+ ("q" ?q)
+ ("R" ?R)
+ ("r" ?r)
+ ("S" ?S)
+ ("s" ?s)
+ ("^S" ?Š)
+ ("^s" ?š)
+ ("T" ?T)
+ ("t" ?t)
+ ("U" ?U)
+ ("u" ?u)
+ ("V" ?V)
+ ("v" ?v)
+ ("W" ?W)
+ ("w" ?w)
+ ("X" ?X)
+ ("x" ?x)
+ ("Y" ?Y)
+ ("y" ?y)
+ ("Z" ?Z)
+ ("z" ?z)
+ ("^Z" ?Ž)
+ ("^z" ?ž)
+ (":A" ?Ä)
+ (":a" ?ä)
+ ("'A" ?Á)
+ ("'a" ?á)
+ ("/A" ?Å)
+ ("/a" ?å)
+ (":O" ?Ö)
+ (":o" ?ö))
 
 (quail-define-package
  "skolt-sami-prefix" "Sámi" "/SkS" nil
