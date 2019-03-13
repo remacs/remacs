@@ -438,7 +438,7 @@ It returns a file name which can be used directly as argument of
                                          (* ?\\ ?\\) (any ?\' ?\")))
                                 (* ?\\ ?\\)
                                 ;; Match single or triple quotes of any kind.
-                                (group (or  "\"" "\"\"\"" "'" "'''")))))
+                                (group (or  "\"\"\"" "\"" "'''" "'")))))
       (coding-cookie . ,(rx line-start ?# (* space)
                             (or
                              ;; # coding=<encoding name>
