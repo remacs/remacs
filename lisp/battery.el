@@ -617,34 +617,43 @@ The following %-sequences are provided:
 %h Remaining battery charge time in hours
 %t Remaining battery charge time in the form `h:min'"
   (let* ((os-name (car (split-string
-			(shell-command-to-string "/usr/bin/uname"))))
-	 (apm-flag (if (equal os-name "OpenBSD") "P" "s"))
-	 (apm-cmd (concat "/usr/sbin/apm -ablm" apm-flag))
-	 (apm-output (split-string (shell-command-to-string apm-cmd)))
-	 ;; Battery status
-	 (battery-status
-	  (let ((stat (string-to-number (nth 0 apm-output))))
-	    (cond ((eq stat 0) '("high" . ""))
-		  ((eq stat 1) '("low" . "-"))
-		  ((eq stat 2) '("critical" . "!"))
-		  ((eq stat 3) '("charging" . "+"))
-		  ((eq stat 4) '("absent" . nil)))))
-	 ;; Battery percentage
-	 (battery-percentage (nth 1 apm-output))
-	 ;; Battery life
-	 (battery-life (nth 2 apm-output))
-	 ;; AC status
-	 (line-status
-	  (let ((ac (string-to-number (nth 3 apm-output))))
-	    (cond ((eq ac 0) "disconnected")
-		  ((eq ac 1) "connected")
-		  ((eq ac 2) "backup power"))))
-	 ;; Advanced power savings mode
-	 (apm-mode
-	  (let ((apm (string-to-number (nth 4 apm-output))))
-	    (if (string= os-name "OpenBSD")
-		(cond ((eq apm 0) "manual")
-		      ((eq apm 1) "automatic")
+                        ;; FIXME: Can't we use something like `system-type'?
+                        (shell-command-to-string "/usr/bin/uname"))))
+         (apm-flag (pcase os-name
+                     ("OpenBSD" "mP")
+                     ("FreeBSD" "st")
+                     (_         "ms")))
+         (apm-cmd (concat "/usr/sbin/apm -abl" apm-flag))
+         (apm-output (split-string (shell-command-to-string apm-cmd)))
+         (battery-status-index (if (equal os-name "FreeBSD") 1 0))
+         (apm-mode-index (if (equal os-name "FreeBSD") 3 4))
+         (battery-percentage-index (if (equal os-name "FreeBSD") 2 1))
+         (battery-life-index (if (equal os-name "FreeBSD") 4 3))
+         (ac-index (if (equal os-name "FreeBSD") 0 3))
+         ;; Battery status
+         (battery-status
+          (let ((stat (string-to-number (nth battery-status-index apm-output))))
+            (cond ((eq stat 0) '("high" . ""))
+                  ((eq stat 1) '("low" . "-"))
+                  ((eq stat 2) '("critical" . "!"))
+                  ((eq stat 3) '("charging" . "+"))
+                  ((eq stat 4) '("absent" . nil)))))
+         ;; Battery percentage
+         (battery-percentage (nth battery-percentage-index apm-output))
+         ;; Battery life
+         (battery-life (nth battery-life-index apm-output))
+         ;; AC status
+         (line-status
+          (let ((ac (string-to-number (nth ac-index apm-output))))
+            (cond ((eq ac 0) "disconnected")
+                  ((eq ac 1) "connected")
+                  ((eq ac 2) "backup power"))))
+         ;; Advanced power savings mode
+         (apm-mode
+          (let ((apm (string-to-number (nth apm-mode-index apm-output))))
+            (if (string= os-name "OpenBSD")
+                (cond ((eq apm 0) "manual")
+                      ((eq apm 1) "automatic")
 		      ((eq apm 2) "cool running"))
 	      (if (eq apm 1) "on" "off"))))
 	 seconds minutes hours remaining-time)
