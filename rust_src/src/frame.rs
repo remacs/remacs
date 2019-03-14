@@ -9,14 +9,16 @@ use crate::{
     lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
+    remacs_sys::SET_FRAME_VISIBLE,
     remacs_sys::{
-        candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_dimension,
-        other_frames, output_method, windows_or_buffers_changed,
+        candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_ancestor_p,
+        frame_dimension, internal_last_event_frame, other_frames, output_method,
+        resize_mini_window, windows_or_buffers_changed,
     },
     remacs_sys::{
         minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
     },
-    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qswitch_frame, Qt, Qw32, Qx},
     vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
@@ -24,7 +26,10 @@ use crate::{
 #[cfg(feature = "window-system")]
 use crate::{
     fns::nreverse,
-    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible},
+    remacs_sys::Fredirect_frame_focus,
+    remacs_sys::{
+        vertical_scroll_bar_type, x_focus_frame, x_get_focus_frame, x_make_frame_invisible,
+    },
 };
 
 #[cfg(not(feature = "window-system"))]
@@ -58,6 +63,10 @@ impl LispFrameRef {
 
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+
+    pub fn is_ancestor(mut self, mut other: Self) -> bool {
+        unsafe { frame_ancestor_p(self.as_mut(), other.as_mut()) }
     }
 
     pub fn has_tooltip(self) -> bool {
@@ -809,6 +818,147 @@ pub fn frame_char_width(_frame: LispFrameLiveOrSelected) -> i32 {
     }
 
     1
+}
+
+/// Perform the switch to frame FRAME.
+///
+/// If FRAME is a switch-frame event `(switch-frame FRAME1)', use
+/// FRAME1 as frame.
+///
+/// If TRACK is non-zero and the frame that currently has the focus
+/// redirects its focus to the selected frame, redirect that focused
+/// frame's focus to FRAME instead.
+///
+/// FOR_DELETION non-zero means that the selected frame is being
+/// deleted, which includes the possibility that the frame's terminal
+/// is dead.
+///
+/// The value of NORECORD is passed as argument to select_window_lisp.
+#[no_mangle]
+pub extern "C" fn do_switch_frame(
+    mut frame: LispObject,
+    _track: bool,
+    for_deletion: bool,
+    norecord: LispObject,
+) -> LispObject {
+    let current_frame_ref: LispFrameRef = selected_frame();
+
+    // If `frame` is a switch-frame event, extract the frame we should
+    // switch to.
+    if let Some((event_type, cdr)) = frame.into() {
+        if event_type.eq(Qswitch_frame) {
+            if let Some((event_frame, _)) = cdr.into() {
+                frame = event_frame;
+            }
+        }
+    }
+
+    // This used to check for a live frame, but apparently it's possible for
+    // a switch-frame event to arrive after a frame is no longer live,
+    // especially when deleting the initial frame during startup.
+    if let Some(mut target_frame) = frame.as_live_frame() {
+        if target_frame.eq(&current_frame_ref) {
+            return frame;
+        }
+
+        // If a frame's focus has been redirected toward the currently
+        // selected frame, we should change the redirection to point to the
+        // newly selected frame.  This means that if the focus is redirected
+        // from a minibufferless frame to a surrogate minibuffer frame, we
+        // can use `other-window' to switch between all the frames using
+        // that minibuffer frame, and the focus redirection will follow us
+        // around.
+
+        // Apply it only to the frame we're pointing to.
+        #[cfg(feature = "window-system")]
+        {
+            if _track && target_frame.is_gui_window() {
+                let xfocus = unsafe { x_get_focus_frame(target_frame.as_mut()) };
+                if let Some(xfocus_frame) = xfocus.as_frame() {
+                    let focus = xfocus_frame.focus_frame;
+                    if (focus.is_frame() && focus.as_frame().unwrap().eq(&current_frame_ref))
+                        || (focus.is_nil()
+                            && target_frame
+                                .minibuffer_window
+                                .eq(current_frame_ref.selected_window))
+                    {
+                        unsafe {
+                            Fredirect_frame_focus(xfocus, frame);
+                        }
+                    }
+                }
+            }
+        }
+
+        if !for_deletion && !current_frame_ref.minibuffer_window.is_nil() {
+            let mut win: LispWindowRef = current_frame_ref.minibuffer_window.into();
+            unsafe {
+                resize_mini_window(win.as_mut(), true);
+            }
+        }
+
+        if target_frame.output_method() == output_method::output_termcap {
+            // TODO: this should be much nicer
+            let mut tty = unsafe { (*(*target_frame.as_ptr()).terminal).display_info.tty };
+
+            let top_frame = unsafe { (*tty).top_frame };
+
+            if !frame.eq(top_frame) {
+                // TODO: refactor this code
+                unsafe {
+                    if let Some(mut tf) = top_frame.as_frame() {
+                        SET_FRAME_VISIBLE(tf.as_mut(), 2);
+                    }
+                    SET_FRAME_VISIBLE(target_frame.as_mut(), 1);
+
+                    if target_frame.text_cols != (*(*tty).Wcm).cm_cols {
+                        (*(*tty).Wcm).cm_cols = target_frame.text_cols;
+                    }
+                    if target_frame.total_lines != (*(*tty).Wcm).cm_rows {
+                        (*(*tty).Wcm).cm_rows = target_frame.total_lines;
+                    }
+                    (*tty).top_frame = frame;
+                }
+            }
+        }
+        let minibuffer_window: LispWindowRef = current_frame_ref.minibuffer_window.into();
+        unsafe { current_frame = frame };
+        if minibuffer_window.is_minibuffer_only() {
+            set_last_nonminibuffer_frame(current_frame_ref);
+        }
+
+        select_window_lisp(target_frame.selected_window, norecord);
+
+        if cfg!(feature = "window-system") && target_frame.is_ancestor(current_frame_ref)
+            || !cfg!(feature = "window-system")
+        {
+            unsafe {
+                internal_last_event_frame = Qnil;
+            }
+        }
+
+        return frame;
+    }
+    Qnil
+}
+
+/// Select FRAME.
+/// Subsequent editing commands apply to its selected window.
+/// Optional argument NORECORD means to neither change the order of
+/// recently selected windows nor the buffer list.
+///
+/// The selection of FRAME lasts until the next time the user does
+/// something to select a different frame, or until the next time
+/// this function is called.  If you are using a window system, the
+/// previously selected frame may be restored as the selected frame
+/// when returning to the command loop, because it still may have
+/// the window system's input focus.  On a text terminal, the next
+/// redisplay will display FRAME.
+///
+/// This function returns FRAME, or nil if FRAME has been deleted.
+#[lisp_fn(min = "1", intspec = "e")]
+pub fn select_frame(frame: LispObject, norecord: LispObject) -> LispObject {
+    do_switch_frame(frame, true, false, norecord)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frame_exports.rs"));
