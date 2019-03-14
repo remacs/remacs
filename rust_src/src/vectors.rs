@@ -164,6 +164,14 @@ impl LispVectorlikeRef {
         }
     }
 
+    pub fn set_pseudovector_type(mut self, code: pvec_type) {
+        unsafe {
+            self.header.size |= (PSEUDOVECTOR_FLAG
+                | ((code as usize) << More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS))
+                as isize
+        }
+    }
+
     pub fn is_pseudovector(self, tp: pvec_type) -> bool {
         unsafe {
             self.header.size

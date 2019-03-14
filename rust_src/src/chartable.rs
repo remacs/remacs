@@ -7,12 +7,15 @@ use remacs_macros::lisp_fn;
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    lists,
+    remacs_sys::Fmake_vector,
     remacs_sys::{
         char_table_specials, equal_kind, pvec_type, EmacsInt, Lisp_Char_Table, Lisp_Sub_Char_Table,
         Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
     remacs_sys::{uniprop_table_uncompress, CHAR_TABLE_SET},
-    remacs_sys::{Qchar_code_property_table, Qchar_table_p},
+    remacs_sys::{Qchar_code_property_table, Qchar_table_extra_slots, Qchar_table_p, Qnil},
+    symbols::LispSymbolRef,
     vectors::LispVectorlikeRef,
 };
 
@@ -29,6 +32,14 @@ impl LispObject {
 
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         self.into()
+    }
+
+    pub fn force_char_table(self) -> LispCharTableRef {
+        unsafe { self.to_char_table_unchecked() }
+    }
+
+    pub unsafe fn to_char_table_unchecked(self) -> LispCharTableRef {
+        LispCharTableRef::new(self.get_untaggedptr() as *mut Lisp_Char_Table)
     }
 }
 
@@ -107,6 +118,23 @@ fn uniprop_compressed_form_p(obj: LispObject) -> bool {
 }
 
 impl LispCharTableRef {
+    pub fn make_new(purpose: LispSymbolRef, init: LispObject) -> Self {
+        let extras = match lists::get(purpose, Qchar_table_extra_slots).as_natnum() {
+            None => 0,
+            Some(n) if n > 10 => args_out_of_range!(n, Qnil),
+            Some(n) => n as u32,
+        };
+        let size = char_table_specials::CHAR_TABLE_STANDARD_SLOTS + extras;
+        let vector = unsafe { Fmake_vector(size.into(), init) };
+        vector
+            .force_vectorlike()
+            .set_pseudovector_type(pvec_type::PVEC_CHAR_TABLE);
+        let mut char_table = vector.force_char_table();
+        char_table.parent = Qnil;
+        char_table.purpose = purpose.into();
+        char_table
+    }
+
     pub fn is_uniprop(self) -> bool {
         self.purpose == Qchar_code_property_table && self.extra_slots() == 5
     }
@@ -361,6 +389,11 @@ pub fn set_char_table_parent(mut chartable: LispCharTableRef, parent: Option<Lis
 
     chartable.parent = parent.into();
     //parent
+}
+
+#[lisp_fn(min = "1")]
+pub fn make_char_table(purpose: LispObject, init: LispObject) -> LispObject {
+    LispCharTableRef::make_new(purpose.into(), init).into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/chartable_exports.rs"));

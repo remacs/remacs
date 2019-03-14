@@ -9,6 +9,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::current_buffer,
+    chartable::make_char_table,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
     indent::indent_to,
@@ -23,10 +24,7 @@ use crate::{
         map_keymap_item, maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
-    remacs_sys::{
-        Fcopy_sequence, Fevent_convert_list, Fmake_char_table, Fpurecopy, Fset_char_table_range,
-        Fterpri,
-    },
+    remacs_sys::{Fcopy_sequence, Fevent_convert_list, Fpurecopy, Fset_char_table_range, Fterpri},
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
@@ -158,7 +156,7 @@ pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject))
         Qnil
     };
 
-    let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
+    let char_table = make_char_table(Qkeymap.into(), Qnil);
     (Qkeymap, (char_table, tail))
 }
 

@@ -5,14 +5,14 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::current_buffer,
     buffers::LispBufferRef,
-    chartable::LispCharTableRef,
+    chartable::{make_char_table, LispCharTableRef},
     lisp::LispObject,
     lists::put,
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
         map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
+        Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
     threads::ThreadState,
@@ -56,20 +56,20 @@ fn set_case_table(table: LispObject, standard: bool) -> LispObject {
 
     unsafe {
         if up.is_nil() {
-            up = Fmake_char_table(Qcase_table, Qnil);
+            up = make_char_table(Qcase_table, Qnil);
             map_char_table(Some(set_identity), Qnil, table, up);
             map_char_table(Some(shuffle), Qnil, table, up);
             set_char_table_extras(table, 0, up);
         }
 
         if canon.is_nil() {
-            canon = Fmake_char_table(Qcase_table, Qnil);
+            canon = make_char_table(Qcase_table, Qnil);
             set_char_table_extras(table, 1, canon);
             map_char_table(Some(set_canon), Qnil, table, table);
         }
 
         if eqv.is_nil() {
-            eqv = Fmake_char_table(Qcase_table, Qnil);
+            eqv = make_char_table(Qcase_table, Qnil);
             map_char_table(Some(set_identity), Qnil, canon, eqv);
             map_char_table(Some(shuffle), Qnil, canon, eqv);
             set_char_table_extras(table, 2, eqv);
@@ -249,7 +249,7 @@ pub unsafe extern "C" fn init_casetab_once() {
     def_lisp_sym!(Qcase_table, "case-table");
     put(Qcase_table.into(), Qchar_table_extra_slots, 3.into());
 
-    let down = Fmake_char_table(Qcase_table, Qnil);
+    let down = make_char_table(Qcase_table, Qnil);
     set_char_table_purpose(down, Qcase_table);
     Vascii_downcase_table = down;
 
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn init_casetab_once() {
 
     set_char_table_extras(down, 1, Fcopy_sequence(down));
 
-    let up = Fmake_char_table(Qcase_table, Qnil);
+    let up = make_char_table(Qcase_table, Qnil);
     set_char_table_extras(down, 0, up);
 
     for i in 0..128 {
@@ -280,7 +280,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(up, i, c.into());
     }
 
-    let eqv = Fmake_char_table(Qcase_table, Qnil);
+    let eqv = make_char_table(Qcase_table, Qnil);
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
