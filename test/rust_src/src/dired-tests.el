@@ -39,10 +39,10 @@
 (ert-deftest test-system-groups ()
   (should-error (eval '(system-groups 'rms)) :type 'wrong-number-of-arguments)
   ;; The result should be a list of >= 1 group name(s) on all Unix and GNU systems.
-  ;; Windows should be a ?????
+  ;; Windows should be a nil
   (should (eq 'cons (type-of (system-groups))))
   (if (memq system-type '(windows-nt))
       (progn
-        (should (= (length (system-groups)) 0)))
+        (should (= (system-groups) nil)))
     (progn
       (should (>= (length (system-groups)) 1)))))

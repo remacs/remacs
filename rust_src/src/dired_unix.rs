@@ -768,15 +768,12 @@ pub fn get_users() -> LispObject {
 
 pub fn get_groups() -> LispObject {
     let mut group_names = Vec::new();
-    let mut done = false;
-
-    while !done {
+    loop {
         let gr = unsafe { getgrent() };
         if gr.is_null() {
-            done = true;
-        } else {
-            group_names.push(unsafe { build_string((*gr).gr_name) })
+            break;
         }
+        group_names.push(unsafe { build_string((*gr).gr_name) });
     }
     unsafe { endgrent() };
     list(&group_names)
