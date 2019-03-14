@@ -63,7 +63,8 @@ impl Event {
     }
 
     // replaces EVENT_HEAD_KIND
-    // Note that the C macro expects an event head, this method expects an event which it exctracts the head from itself.
+    // Note that the C macro expects an event head, this method expects an event
+    // which it exctracts the head from itself.
     /// Extracts the kind from an event's head.
     pub fn head_kind(self) -> LispObject {
         lists::get(self.head().into(), Qevent_kind)

@@ -743,9 +743,9 @@ pub fn key_binding(
     // If the result of the ordinary keymap lookup is an interactive
     // command, look for a key binding (i.e. remapping) for that command.
     if !no_remap && value.is_symbol() {
-        let value = unsafe { Fcommand_remapping(value, position, Qnil) };
-        if value.is_not_nil() {
-            return value;
+        let remap = unsafe { Fcommand_remapping(value, position, Qnil) };
+        if remap.is_not_nil() {
+            return remap;
         }
     }
     value
