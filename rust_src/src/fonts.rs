@@ -11,7 +11,6 @@ use crate::{
     frames::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
-    numbers::LispNumber,
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
@@ -320,36 +319,35 @@ pub fn font_at_lisp(
 pub fn list_fonts(
     font_spec: LispFontSpecRef,
     frame: LispFrameLiveOrSelected,
-    num: Option<LispNumber>,
+    num: Option<EmacsInt>,
     prefer: Option<LispFontSpecRef>,
 ) -> LispObject {
     let mut frame: LispFrameRef = frame.into();
 
-    let n = match num.map(|n| n.to_fixnum()) {
+    let n = match num {
         Some(n) if n < 0 => return Qnil,
         Some(n) => n,
         None => 0,
     } as usize;
 
     let list = unsafe { font_list_entities(frame.as_mut(), font_spec.into()) };
-    match list.as_cons() {
-        Some(list) => {
-            if list.cdr().is_nil() && list.car().force_vector().len() == 1 {
-                return list!(list.car().force_vector().get(0));
-            }
-        }
-        None => return Qnil,
+    match list.into() {
+        Some((car, cdr)) if cdr.is_nil() => match car.as_vector() {
+            Some(vec) if vec.len() == 1 => return list!(vec.get(0)),
+            _ => (),
+        },
+        _ => return Qnil,
     }
 
     let vec = match prefer {
         None => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
         Some(_) => vconcat_entity_vectors(list.into()),
-    };
+    }
+    .force_vector();
 
-    if n == 0 || n >= vec.force_vector().len() {
-        fns::append(&mut [list, vec, Qnil])
+    if n == 0 || n >= vec.len() {
+        fns::append(&mut [list, vec.into(), Qnil])
     } else {
-        let vec = vec.force_vector();
         (0..=n)
             .into_iter()
             .rev()
