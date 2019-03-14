@@ -10,7 +10,6 @@ use crate::{
     base64_crate,
     buffers::validate_region_rust,
     lisp::LispObject,
-    marker::buf_charpos_to_bytepos,
     multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},
     remacs_sys::EmacsInt,
     remacs_sys::{
@@ -271,11 +270,11 @@ pub fn base64_decode_string(string: LispStringRef) -> LispObject {
 #[lisp_fn(min = "2", intspec = "r")]
 pub fn base64_encode_region(beg: LispObject, end: LispObject, no_line_break: bool) -> EmacsInt {
     let (beg, end) = validate_region_rust(beg, end);
-    let mut current_buffer = ThreadState::current_buffer_unchecked();
+    let current_buffer = ThreadState::current_buffer_unchecked();
     let old_pos = current_buffer.pt;
 
-    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), beg);
-    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), end);
+    let begpos = current_buffer.charpos_to_bytepos(beg);
+    let endpos = current_buffer.charpos_to_bytepos(end);
 
     unsafe { move_gap_both(beg, begpos) };
 
@@ -316,8 +315,8 @@ pub fn base64_decode_region(beg: LispObject, end: LispObject) -> EmacsInt {
     let mut current_buffer = ThreadState::current_buffer_unchecked();
     let mut old_pos = current_buffer.pt;
 
-    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), beg);
-    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), end);
+    let begpos = current_buffer.charpos_to_bytepos(beg);
+    let endpos = current_buffer.charpos_to_bytepos(end);
 
     let multibyte = current_buffer.multibyte_characters_enabled();
     let length = (endpos - begpos) as usize;

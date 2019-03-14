@@ -254,7 +254,7 @@ impl Iterator for CarIter {
     type Item = LispObject;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|cons| cons.car())
+        self.0.next().map(LispCons::car)
     }
 }
 

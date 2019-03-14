@@ -1,7 +1,7 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use std::convert::From;
+use std::convert::{From, Into};
 use std::ffi::CString;
 use std::fmt;
 use std::fmt::{Debug, Display, Error, Formatter};
@@ -17,7 +17,7 @@ use crate::{
         HashLookupResult::{Found, Missing},
         LispHashTableRef,
     },
-    lists::{list, memq, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
@@ -275,7 +275,7 @@ impl From<LispObject> for LispSubrRef {
 
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_subr())
+        o.as_vectorlike().and_then(ExternalPtr::as_subr)
     }
 }
 
@@ -530,9 +530,9 @@ macro_rules! impl_alistval_iter {
             fn next(&mut self) -> Option<Self::Item> {
                 self.0
                     .next()
-                    .and_then(|o| o.as_cons())
-                    .map(|p| p.cdr())
-                    .and_then(|q| q.into())
+                    .and_then(LispObject::as_cons)
+                    .map(LispCons::cdr)
+                    .and_then(Into::into)
             }
         }
     };

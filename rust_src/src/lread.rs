@@ -270,7 +270,7 @@ pub fn get_file_char() -> EmacsInt {
 /// which is the input stream for reading characters.
 ///
 /// This function does not move point.
-#[lisp_fn(min = "2")]
+#[lisp_fn(min = "2", intspec = "r")]
 pub fn eval_region(
     start: LispObject,
     end: LispObject,

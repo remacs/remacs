@@ -10,8 +10,8 @@ use crate::{
     buffers::validate_region_rust,
     lisp::LispObject,
     remacs_sys::{
-        buf_charpos_to_bytepos, del_range_2, insert_from_gap, make_gap, maybe_quit, modify_text,
-        move_gap_both, signal_after_change, update_compositions, CHECK_HEAD,
+        del_range_2, insert_from_gap, make_gap, maybe_quit, modify_text, move_gap_both,
+        signal_after_change, update_compositions, CHECK_HEAD,
     },
     threads::ThreadState,
 };
@@ -63,7 +63,7 @@ pub fn zlib_decompress_region(start: LispObject, end: LispObject) -> bool {
 
     // Insert the decompressed data at the end of the compressed data.
     let charpos = end;
-    let bytepos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), end) };
+    let bytepos = current_buffer.charpos_to_bytepos(end);
     let old_pt = current_buffer.pt;
     current_buffer.set_pt_both(charpos, bytepos);
 
@@ -142,7 +142,7 @@ pub fn zlib_decompress_region(start: LispObject, end: LispObject) -> bool {
                 // compressed data is bigger than the uncompressed, at
                 // point-max.
                 let charpos = min(old_pt, current_buffer.zv);
-                let bytepos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), charpos) };
+                let bytepos = current_buffer.charpos_to_bytepos(charpos);
                 current_buffer.set_pt_both(charpos, bytepos);
 
                 return false;

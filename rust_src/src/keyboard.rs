@@ -52,8 +52,8 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
     }
 
     let mut it = tem.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
-    let x = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
-    let mut y = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
+    let x = it.next().map_or(0, LispObject::as_fixnum_or_error);
+    let mut y = it.next().map_or(0, LispObject::as_fixnum_or_error);
 
     // Point invisible due to hscrolling?  X can be -1 when a
     // newline in a R2L line overflows into the left fringe.
@@ -62,7 +62,7 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
     }
     let aux_info = it.rest();
     if aux_info.is_not_nil() && y < 0 {
-        let rtop = it.next().map_or(0, |v| v.as_fixnum_or_error());
+        let rtop = it.next().map_or(0, LispObject::as_fixnum_or_error);
 
         y += rtop;
     }

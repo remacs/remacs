@@ -13,6 +13,7 @@ use crate::{
     remacs_sys::{
         current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type, SPECPDL_INDEX,
     },
+    vectors::LispVectorlikeRef,
 };
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
@@ -64,7 +65,7 @@ impl LispObject {
     }
 
     pub fn as_thread(self) -> Option<ThreadStateRef> {
-        self.as_vectorlike().and_then(|v| v.as_thread())
+        self.as_vectorlike().and_then(LispVectorlikeRef::as_thread)
     }
 }
 
