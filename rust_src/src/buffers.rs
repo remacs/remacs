@@ -20,7 +20,7 @@ use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member, rassq, setcar},
-    lists::{CarIter, LispConsCircularChecks, LispConsEndChecks},
+    lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     marker::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
         LispMarkerRef, MARKER_DEBUG,
@@ -803,6 +803,10 @@ impl LispBufferLocalValueRef {
     pub fn get_value(self) -> LispObject {
         let (_, d) = self.valcell.into();
         d
+    }
+
+    pub fn set_value(self, value: LispObject) {
+        LispCons::from(self.valcell).set_cdr(value);
     }
 }
 
