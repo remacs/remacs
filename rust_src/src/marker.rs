@@ -628,8 +628,8 @@ impl LispBufferRef {
 // worst case and it was rarely slower and never by much.
 // The asymptotic behavior is still poor, tho, so in largish buffers with many
 // overlays (e.g. 300KB and 30K overlays), it can still be a bottleneck.
-static BYTECHAR_DISTANCE_INITIAL: isize = 50;
-static BYTECHAR_DISTANCE_INCREMENT: isize = 50;
+//static BYTECHAR_DISTANCE_INITIAL: isize = 50;
+//static BYTECHAR_DISTANCE_INCREMENT: isize = 50;
 
 // There are several places in the buffer where we know
 // the correspondence: BEG, BEGV, PT, GPT, ZV and Z,
