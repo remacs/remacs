@@ -172,8 +172,8 @@ impl LispBufferRef {
         b.begv_marker_ = Qnil;
         b.zv_marker_ = Qnil;
 
-        let name: LispStringRef = unsafe { Fcopy_sequence(name.into()) }.force_string();
-        unsafe { name.u.s }.intervals = ptr::null_mut();
+        let mut name: LispStringRef = unsafe { Fcopy_sequence(name.into()) }.force_string();
+        name.set_intervals(ptr::null_mut());
         b.name_ = name.into();
         b.undo_list_ = if name.byte_at(0) != b' ' { Qnil } else { Qt };
 
