@@ -593,25 +593,33 @@ When called from Lisp code, ARG may be a prefix string to copy."
     (indent-to col 0)
     (goto-char pos)))
 
-(defun delete-indentation (&optional arg)
+(defun delete-indentation (&optional arg beg end)
   "Join this line to previous and fix up whitespace at join.
-If there is a fill prefix, delete it from the beginning of this line.
-With argument, join this line to following line."
-  (interactive "*P")
+If there is a fill prefix, delete it from the beginning of this
+line.  With prefix ARG, join the current line to the following line.
+With the region active, join lines in the region. If both the
+argument is set and the region is active, the region is ignored."
+  (interactive "*P\nr")
+  (if arg (forward-line 1)
+    (if (use-region-p)
+	(goto-char end)))
   (beginning-of-line)
-  (if arg (forward-line 1))
-  (if (eq (preceding-char) ?\n)
-      (progn
-	(delete-region (point) (1- (point)))
-	;; If the second line started with the fill prefix,
-	;; delete the prefix.
-	(if (and fill-prefix
-		 (<= (+ (point) (length fill-prefix)) (point-max))
-		 (string= fill-prefix
-			  (buffer-substring (point)
-					    (+ (point) (length fill-prefix)))))
-	    (delete-region (point) (+ (point) (length fill-prefix))))
-	(fixup-whitespace))))
+  (while (eq (preceding-char) ?\n)
+    (progn
+      (delete-region (point) (1- (point)))
+      ;; If the second line started with the fill prefix,
+      ;; delete the prefix.
+      (if (and fill-prefix
+	       (<= (+ (point) (length fill-prefix)) (point-max))
+	       (string= fill-prefix
+			(buffer-substring (point)
+					  (+ (point) (length fill-prefix)))))
+	  (delete-region (point) (+ (point) (length fill-prefix))))
+      (fixup-whitespace)
+      (if (and beg
+               (not arg)
+	       (< beg (point-at-bol)))
+	  (beginning-of-line)))))
 
 (defalias 'join-line #'delete-indentation) ; easier to find
 

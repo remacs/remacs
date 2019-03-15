@@ -110,6 +110,10 @@ parentheses, or if the junction follows another newline.
 If there is a fill prefix, @kbd{M-^} deletes the fill prefix if it
 appears after the newline that is deleted.  @xref{Fill Prefix}.
 
+With the universal prefix argument, join the current line line to the
+following line.  With the region active, join lines in the region.  If
+both the argument is set and the region is active, the region is ignored.
+
 @item C-M-\
 @kindex C-M-\
 @findex indent-region

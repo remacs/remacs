@@ -370,6 +370,10 @@ region using a given replacement-function in a non-destructive manner
 arguments mitigating performance issues when operating on huge
 buffers.
 
+** The command `delete-indentation` now can operate on the active
+region
+
++++
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
