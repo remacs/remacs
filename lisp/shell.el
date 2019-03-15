@@ -483,7 +483,7 @@ Shell buffers.  It implements `shell-completion-execonly' for
   ;; Don't use pcomplete's defaulting mechanism, rely on
   ;; shell-dynamic-complete-functions instead.
   (set (make-local-variable 'pcomplete-default-completion-function) #'ignore)
-  (setq comint-input-autoexpand shell-input-autoexpand)
+  (setq-local comint-input-autoexpand shell-input-autoexpand)
   ;; Not needed in shell-mode because it's inherited from comint-mode, but
   ;; placed here for read-shell-command.
   (add-hook 'completion-at-point-functions 'comint-completion-at-point nil t))
