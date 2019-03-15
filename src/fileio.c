@@ -678,22 +678,6 @@ This function does not grok magic file names.  */)
 }
 
 
-DEFUN ("make-temp-name", Fmake_temp_name, Smake_temp_name, 1, 1, 0,
-       doc: /* Generate temporary file name (string) starting with PREFIX (a string).
-
-This function tries to choose a name that has no existing file.
-For this to work, PREFIX should be an absolute file name, and PREFIX
-and the returned string should both be non-magic.
-
-There is a race condition between calling `make-temp-name' and
-later creating the file, which opens all kinds of security holes.
-For that reason, you should normally use `make-temp-file' instead.  */)
-  (Lisp_Object prefix)
-{
-  return Fmake_temp_file_internal (prefix, make_number (0),
-				   empty_unibyte_string, Qnil);
-}
-
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
        doc: /* Convert filename NAME to absolute, and canonicalize it.
 Second arg DEFAULT-DIRECTORY is directory to start with if NAME is relative
@@ -5993,7 +5977,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_as_directory);
   defsubr (&Sdirectory_file_name);
   defsubr (&Smake_temp_file_internal);
-  defsubr (&Smake_temp_name);
   defsubr (&Sexpand_file_name);
   defsubr (&Ssubstitute_in_file_name);
   defsubr (&Scopy_file);
