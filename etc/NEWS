@@ -236,6 +236,13 @@ regular expression was previously invalid, but is now accepted:
 ---
 ** New input methods 'hawaiian-postfix' and 'hawaiian-prefix'.
 
+---
+** New input methods for several variants of the Sami language.
+The Sami input methods include: 'norwegian-sami-prefix',
+'bergsland-hasselbrink-sami-prefix', 'southern-sami-prefix',
+'ume-sami-prefix', 'northern-sami-prefix', 'inari-sami-prefix',
+'skolt-sami-prefix', and 'kildin-sami-prefix'.
+
 +++
 ** In Japanese environments that do not specify encodings and are not
 based on MS-Windows, the default encoding is now utf-8 instead of
