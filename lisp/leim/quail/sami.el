@@ -1,5 +1,38 @@
+;;; sami.el --- Quail package for inputting Sámi  -*-coding: utf-8;-*-
+
+;; Copyright (C) 1998, 2001-2019 Free Software Foundation, Inc.
+
+;; Author: Wojciech S. Gac <wojciech.s.gac@gmail.com>
+;; Maintainer: Wojciech S. Gac <wojciech.s.gac@gmail.com>>
+;; Keywords: i18n, multilingual, input method, Sámi
+
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
+;; This file implements the following input methods for the Sámi
+;; language
+;; - norwegian-sami-prefix
+;; - bergsland-hasselbrink-sami-prefix
+;; - southern-sami-prefix
+;; - ume-sami-prefix
+;; - northern-sami-prefix
+;; - inari-sami-prefix
+;; - skolt-sami-prefix
+;; - kildin-sami-prefix
 
 ;;; Code
 
@@ -644,6 +677,7 @@ Alphabet (parenthesized letters are used in foreign names only):
  ("b" ?б)
  ("n" ?н)
  ("'n" ?ӊ)
+ (",n" ?ӈ)
  ("m" ?м)
  ("'m" ?ӎ)
  ("," ?,)
@@ -711,8 +745,11 @@ Alphabet (parenthesized letters are used in foreign names only):
  ("B" ?Б)
  ("N" ?Н)
  ("'N" ?Ӊ)
+ (",N" ?Ӈ)
  ("M" ?М)
  ("'M" ?Ӎ)
  ("<" ?<)
  (">" ?>)
  ("?" ??))
+
+;;; sami.el ends here
