@@ -1281,7 +1281,7 @@ buffer-local values of tags table format variables."
       ;; This regexp matches an explicit tag name or the place where
       ;; it would start.
       (while (re-search-forward
-              "[\f\t\n\r()=,; ]?\177\\\(?:\\([^\n\001]+\\)\001\\)?"
+              "[\f\t\n\r()=,; ]?\177\\(?:\\([^\n\001]+\\)\001\\)?"
 	      nil t)
 	(push	(prog1 (if (match-beginning 1)
 			   ;; There is an explicit tag name.

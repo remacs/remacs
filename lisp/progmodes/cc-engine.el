@@ -8968,7 +8968,7 @@ This function might do hidden buffer changes."
 
 	 (setq at-decl-end
 	       (looking-at (cond ((eq context '<>) "[,>]")
-				 ((not (memq context '(nil top))) "[,\)]")
+				 ((not (memq context '(nil top))) "[,)]")
 				 (t "[,;]"))))
 
 	 ;; Now we've collected info about various characteristics of
@@ -10321,7 +10321,7 @@ comment at the start of cc-engine.el for more info."
 			  ;; Check for `c-opt-block-decls-with-vars-key'
 			  ;; before the first paren.
 			  (c-syntactic-re-search-forward
-			   (concat "[;=\(\[{]\\|\\("
+			   (concat "[;=([{]\\|\\("
 				   c-opt-block-decls-with-vars-key
 				   "\\)")
 			   lim t t t)
@@ -10329,7 +10329,7 @@ comment at the start of cc-engine.el for more info."
 			  (not (eq (char-before) ?_))
 			  ;; Check that the first following paren is
 			  ;; the block.
-			  (c-syntactic-re-search-forward "[;=\(\[{]"
+			  (c-syntactic-re-search-forward "[;=([{]"
 							 lim t t t)
 			  (eq (char-before) ?{))))))
 	    ;; The declaration doesn't have any of the

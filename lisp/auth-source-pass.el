@@ -189,7 +189,7 @@ often."
   (let ((store-dir (expand-file-name "~/.password-store/")))
     (mapcar
      (lambda (file) (file-name-sans-extension (file-relative-name file store-dir)))
-     (directory-files-recursively store-dir "\.gpg$"))))
+     (directory-files-recursively store-dir "\\.gpg$"))))
 
 (defun auth-source-pass--find-all-by-entry-name (entryname user)
   "Search the store for all entries either matching ENTRYNAME/USER or ENTRYNAME.

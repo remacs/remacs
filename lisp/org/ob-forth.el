@@ -53,7 +53,7 @@ This function is called by `org-babel-execute-src-block'"
 (defun org-babel-forth-session-execute (body params)
   (require 'forth-mode)
   (let ((proc (forth-proc))
-	(rx " \\(\n:\\|compiled\n\\\|ok\n\\)")
+	(rx " \\(\n:\\|compiled\n\\|ok\n\\)")
 	(result-start))
     (with-current-buffer (process-buffer (forth-proc))
       (mapcar (lambda (line)

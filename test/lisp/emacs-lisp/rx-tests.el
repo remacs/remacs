@@ -25,7 +25,7 @@
 ;;; Code:
 
 (ert-deftest rx-char-any ()
-  "Test character alternatives with `\]' and `-' (Bug#25123)."
+  "Test character alternatives with `]' and `-' (Bug#25123)."
   (should (string-match
            (rx string-start (1+ (char (?\] . ?\{) (?< . ?\]) (?- . ?:)))
                string-end)

@@ -1867,7 +1867,7 @@ It will be properly highlighted even when the call omits parens.")
       ("^[ \t]*def +\\(`\\)" (1 "_"))
       ;; Ternary operator colon followed by opening paren or bracket
       ;; (semi-important for indentation).
-      ("\\(:\\)\\(?:[\({]\\|\\[[^]]\\)"
+      ("\\(:\\)\\(?:[({]\\|\\[[^]]\\)"
        (1 (string-to-syntax ".")))
       ;; Regular expressions.  Start with matching unescaped slash.
       ("\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*\\(/\\)"

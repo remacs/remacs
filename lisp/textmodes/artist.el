@@ -2895,7 +2895,7 @@ Returns a list of strings."
        dir-list)
       (mapcar
        (lambda (file)
-         (replace-regexp-in-string "\.flf\\'" "" file))
+         (replace-regexp-in-string "\\.flf\\'" "" file))
        result))))
 
 (defun artist-figlet-choose-font ()
