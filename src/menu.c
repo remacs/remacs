@@ -170,8 +170,7 @@ ensure_menu_items (int items)
     }
 }
 
-#if (defined USE_X_TOOLKIT || defined USE_GTK || defined HAVE_NS \
-     || defined HAVE_NTGUI)
+#ifdef HAVE_EXT_MENU_BAR
 
 /* Begin a submenu.  */
 
@@ -195,7 +194,7 @@ push_submenu_end (void)
   menu_items_submenu_depth--;
 }
 
-#endif /* USE_X_TOOLKIT || USE_GTK || HAVE_NS || defined HAVE_NTGUI */
+#endif /* HAVE_EXT_MENU_BAR */
 
 /* Indicate boundary between left and right.  */
 

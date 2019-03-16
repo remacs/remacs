@@ -5132,7 +5132,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
   inner_right = native_right - internal_border_width;
   inner_bottom = native_bottom - internal_border_width;
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
   menu_bar_external = true;
   menu_bar_height = FRAME_MENUBAR_HEIGHT (f);
   native_top += menu_bar_height;
@@ -5143,7 +5143,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 #endif
   menu_bar_width = menu_bar_height ? native_width : 0;
 
-#if defined (USE_GTK)
+#ifdef HAVE_EXT_TOOL_BAR
   tool_bar_external = true;
   if (EQ (FRAME_TOOL_BAR_POSITION (f), Qleft))
     {

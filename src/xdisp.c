@@ -12237,8 +12237,7 @@ update_menu_bar (struct frame *f, bool save_match_data, bool hooks_run)
 
   if (FRAME_WINDOW_P (f)
       ?
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
       FRAME_EXTERNAL_MENU_BAR (f)
 #else
       FRAME_MENU_BAR_LINES (f) > 0
@@ -12291,8 +12290,7 @@ update_menu_bar (struct frame *f, bool save_match_data, bool hooks_run)
 	  fset_menu_bar_items (f, menu_bar_items (FRAME_MENU_BAR_ITEMS (f)));
 
 	  /* Redisplay the menu bar in case we changed it.  */
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
 	  if (FRAME_WINDOW_P (f))
             {
 #if defined (HAVE_NS)
@@ -12306,11 +12304,11 @@ update_menu_bar (struct frame *f, bool save_match_data, bool hooks_run)
 	    /* On a terminal screen, the menu bar is an ordinary screen
 	       line, and this makes it get updated.  */
 	    w->update_mode_line = true;
-#else /* ! (USE_X_TOOLKIT || HAVE_NTGUI || HAVE_NS || USE_GTK) */
+#else /* ! (HAVE_EXT_MENU_BAR) */
 	  /* In the non-toolkit version, the menu bar is an ordinary screen
 	     line, and this makes it get updated.  */
 	  w->update_mode_line = true;
-#endif /* ! (USE_X_TOOLKIT || HAVE_NTGUI || HAVE_NS || USE_GTK) */
+#endif /* HAVE_EXT_MENU_BAR */
 
 	  unbind_to (count, Qnil);
 	  set_buffer_internal_1 (prev);
@@ -12348,7 +12346,7 @@ fast_set_selected_frame (Lisp_Object frame)
 static void
 update_tool_bar (struct frame *f, bool save_match_data)
 {
-#if defined (USE_GTK) || defined (HAVE_NS)
+#ifdef HAVE_EXT_TOOL_BAR
   bool do_update = FRAME_EXTERNAL_TOOL_BAR (f);
 #else
   bool do_update = (WINDOWP (f->tool_bar_window)
@@ -12433,7 +12431,7 @@ update_tool_bar (struct frame *f, bool save_match_data)
     }
 }
 
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
 
 /* Set F->desired_tool_bar_string to a Lisp string representing frame
    F's desired tool-bar contents.  F->tool_bar_items must have
@@ -12768,7 +12766,7 @@ tool_bar_height (struct frame *f, int *n_rows, bool pixelwise)
     return (it.current_y + FRAME_LINE_HEIGHT (f) - 1) / FRAME_LINE_HEIGHT (f);
 }
 
-#endif /* !USE_GTK && !HAVE_NS */
+#endif /* ! (HAVE_EXT_TOOL_BAR) */
 
 DEFUN ("tool-bar-height", Ftool_bar_height, Stool_bar_height,
        0, 2, 0,
@@ -12779,7 +12777,7 @@ PIXELWISE non-nil means return the height of the tool bar in pixels.  */)
 {
   int height = 0;
 
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
   struct frame *f = decode_any_frame (frame);
 
   if (WINDOWP (f->tool_bar_window)
@@ -12804,13 +12802,13 @@ static bool
 redisplay_tool_bar (struct frame *f)
 {
   f->tool_bar_redisplayed = true;
-#if defined (USE_GTK) || defined (HAVE_NS)
+#ifdef HAVE_EXT_TOOL_BAR
 
   if (FRAME_EXTERNAL_TOOL_BAR (f))
     update_frame_tool_bar (f);
   return false;
 
-#else /* !USE_GTK && !HAVE_NS */
+#else /* ! (HAVE_EXT_TOOL_BAR) */
 
   struct window *w;
   struct it it;
@@ -12959,10 +12957,10 @@ redisplay_tool_bar (struct frame *f)
   f->minimize_tool_bar_window_p = false;
   return false;
 
-#endif /* USE_GTK || HAVE_NS */
+#endif /* HAVE_EXT_TOOL_BAR */
 }
 
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
 
 /* Get information about the tool-bar item which is displayed in GLYPH
    on frame F.  Return in *PROP_IDX the index where tool-bar item
@@ -13200,7 +13198,7 @@ note_tool_bar_highlight (struct frame *f, int x, int y)
     help_echo_string = AREF (f->tool_bar_items, prop_idx + TOOL_BAR_ITEM_CAPTION);
 }
 
-#endif /* !USE_GTK && !HAVE_NS */
+#endif /* ! (HAVE_EXT_TOOL_BAR) */
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -17658,8 +17656,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 
       if (FRAME_WINDOW_P (f))
 	{
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
 	  redisplay_menu_p = FRAME_EXTERNAL_MENU_BAR (f);
 #else
 	  redisplay_menu_p = FRAME_MENU_BAR_LINES (f) > 0;
@@ -17674,7 +17671,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 #ifdef HAVE_WINDOW_SYSTEM
       if (FRAME_WINDOW_P (f))
         {
-#if defined (USE_GTK) || defined (HAVE_NS)
+#ifdef HAVE_EXT_TOOL_BAR
 	  if (FRAME_EXTERNAL_TOOL_BAR (f))
 	    redisplay_tool_bar (f);
 #else
@@ -19709,7 +19706,7 @@ If there's no tool-bar, or if the tool-bar is not drawn by Emacs,
 do nothing.  */)
   (Lisp_Object row, Lisp_Object glyphs)
 {
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   struct frame *sf = SELECTED_FRAME ();
   struct glyph_matrix *m = XWINDOW (sf->tool_bar_window)->current_matrix;
   EMACS_INT vpos;
@@ -20335,7 +20332,7 @@ extend_face_to_end_of_line (struct it *it)
       /* Mode line and the header line don't have margins, and
 	 likewise the frame's tool-bar window, if there is any.  */
       if (!(it->glyph_row->mode_line_p
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
 	    || (WINDOWP (f->tool_bar_window)
 		&& it->w == XWINDOW (f->tool_bar_window))
 #endif
@@ -30020,7 +30017,7 @@ show_mouse_face (Mouse_HLInfo *hlinfo, enum draw_glyphs_face draw)
   /* Change the mouse cursor.  */
   if (FRAME_WINDOW_P (f) && NILP (do_mouse_tracking))
     {
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
       if (draw == DRAW_NORMAL_TEXT
 	  && !EQ (hlinfo->mouse_face_window, f->tool_bar_window))
 	FRAME_RIF (f)->define_frame_cursor (f, FRAME_X_OUTPUT (f)->text_cursor);
@@ -31422,7 +31419,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
   w = XWINDOW (window);
   frame_to_window_pixel_xy (w, &x, &y);
 
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Handle tool-bar window differently since it doesn't display a
      buffer.  */
   if (EQ (window, f->tool_bar_window))
@@ -32447,7 +32444,7 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
   TRACE ((stderr, "(%d, %d, %d, %d)\n", r.x, r.y, r.width, r.height));
   mouse_face_overwritten_p = expose_window_tree (XWINDOW (f->root_window), &r);
 
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
   if (WINDOWP (f->tool_bar_window))
     mouse_face_overwritten_p
       |= expose_window (XWINDOW (f->tool_bar_window), &r);

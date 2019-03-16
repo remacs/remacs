@@ -70,7 +70,7 @@ static struct frame *last_nonminibuf_frame;
 bool frame_garbaged;
 
 /* The default tool bar height for future frames.  */
-#if defined USE_GTK || defined HAVE_NS
+#ifdef HAVE_EXT_TOOL_BAR
 enum { frame_default_tool_bar_height = 0 };
 #else
 int frame_default_tool_bar_height;
@@ -712,7 +712,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
       if ((FRAME_TERMCAP_P (f) && !pretend) || FRAME_MSDOS_P (f))
 	FrameCols (FRAME_TTY (f)) = new_cols;
 
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
       if (WINDOWP (f->tool_bar_window))
 	{
 	  XWINDOW (f->tool_bar_window)->pixel_width = new_windows_width;
@@ -848,7 +848,7 @@ make_frame (bool mini_p)
   f->no_accept_focus = false;
   f->z_group = z_group_none;
   f->tooltip = false;
-#if ! defined (USE_GTK) && ! defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
   f->last_tool_bar_item = -1;
 #endif
 #ifdef NS_IMPL_COCOA

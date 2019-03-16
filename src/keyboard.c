@@ -3869,8 +3869,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	}
         break;
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
       case MENU_BAR_ACTIVATE_EVENT:
 	{
 	  kbd_fetch_ptr = next_kbd_event (event);
@@ -3950,8 +3949,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	    {
 	      obj = make_lispy_event (&event->ie);
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
 	      /* If this was a menu selection, then set the flag to inhibit
 		 writing to last_nonmenu_event.  Don't do this if the event
 		 we're returning is (menu-bar), though; that indicates the
@@ -5232,7 +5230,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 static bool
 toolkit_menubar_in_use (struct frame *f)
 {
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#ifdef HAVE_EXT_MENU_BAR
   return !(!FRAME_WINDOW_P (f));
 #else
   return false;
@@ -5925,8 +5923,7 @@ make_lispy_event (struct input_event *event)
 	return list3 (head, position, files);
       }
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS) || defined (USE_GTK)
+#ifdef HAVE_EXT_MENU_BAR
     case MENU_BAR_EVENT:
       if (EQ (event->arg, event->frame_or_window))
 	/* This is the prefix key.  We translate this to
@@ -8136,7 +8133,7 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
       if (menu_separator_name_p (SSDATA (caption)))
 	{
 	  set_prop (TOOL_BAR_ITEM_TYPE, Qt);
-#if !defined (USE_GTK) && !defined (HAVE_NS)
+#ifndef HAVE_EXT_TOOL_BAR
 	  /* If we use build_desired_tool_bar_string to render the
 	     tool bar, the separator is rendered as an image.  */
 	  set_prop (TOOL_BAR_ITEM_IMAGES,
