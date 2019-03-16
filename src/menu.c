@@ -60,9 +60,9 @@ have_boxes (void)
 
 Lisp_Object menu_items;
 
-/* If non-nil, means that the global vars defined here are already in use.
+/* Whether the global vars defined here are already in use.
    Used to detect cases where we try to re-enter this non-reentrant code.  */
-Lisp_Object menu_items_inuse;
+bool menu_items_inuse;
 
 /* Number of slots currently allocated in menu_items.  */
 int menu_items_allocated;
@@ -80,7 +80,7 @@ static int menu_items_submenu_depth;
 void
 init_menu_items (void)
 {
-  if (!NILP (menu_items_inuse))
+  if (menu_items_inuse)
     error ("Trying to use a menu from within a menu-entry");
 
   if (NILP (menu_items))
@@ -89,7 +89,7 @@ init_menu_items (void)
       menu_items = make_nil_vector (menu_items_allocated);
     }
 
-  menu_items_inuse = Qt;
+  menu_items_inuse = true;
   menu_items_used = 0;
   menu_items_n_panes = 0;
   menu_items_submenu_depth = 0;
@@ -105,7 +105,7 @@ finish_menu_items (void)
 void
 unuse_menu_items (void)
 {
-  menu_items_inuse = Qnil;
+  menu_items_inuse = false;
 }
 
 /* Call when finished using the data for the current menu
@@ -121,7 +121,7 @@ discard_menu_items (void)
       menu_items = Qnil;
       menu_items_allocated = 0;
     }
-  eassert (NILP (menu_items_inuse));
+  eassert (!menu_items_inuse);
 }
 
 /* This undoes save_menu_items, and it is called by the specpdl unwind
@@ -131,7 +131,7 @@ static void
 restore_menu_items (Lisp_Object saved)
 {
   menu_items = XCAR (saved);
-  menu_items_inuse = (! NILP (menu_items) ? Qt : Qnil);
+  menu_items_inuse = ! NILP (menu_items);
   menu_items_allocated = (VECTORP (menu_items) ? ASIZE (menu_items) : 0);
   saved = XCDR (saved);
   menu_items_used = XFIXNUM (XCAR (saved));
@@ -147,12 +147,12 @@ restore_menu_items (Lisp_Object saved)
 void
 save_menu_items (void)
 {
-  Lisp_Object saved = list4 (!NILP (menu_items_inuse) ? menu_items : Qnil,
+  Lisp_Object saved = list4 (menu_items_inuse ? menu_items : Qnil,
 			     make_fixnum (menu_items_used),
 			     make_fixnum (menu_items_n_panes),
 			     make_fixnum (menu_items_submenu_depth));
   record_unwind_protect (restore_menu_items, saved);
-  menu_items_inuse = Qnil;
+  menu_items_inuse = false;
   menu_items = Qnil;
 }
 
@@ -1578,8 +1578,6 @@ syms_of_menu (void)
 {
   menu_items = Qnil;
   staticpro (&menu_items);
-  menu_items_inuse = Qnil;
-  staticpro (&menu_items_inuse);
 
   defsubr (&Sx_popup_menu);
   defsubr (&Sx_popup_dialog);

@@ -327,9 +327,9 @@ extern Lisp_Object item_properties;
    takes care of protecting all the data from GC.  */
 extern Lisp_Object menu_items;
 
-/* If non-nil, means that the global vars defined here are already in use.
+/* Whether the global vars defined here are already in use.
    Used to detect cases where we try to re-enter this non-reentrant code.  */
-extern Lisp_Object menu_items_inuse;
+extern bool menu_items_inuse;
 
 /* Number of slots currently allocated in menu_items.  */
 extern int menu_items_allocated;

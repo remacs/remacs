@@ -144,7 +144,7 @@ x_menu_set_in_use (bool in_use)
 {
   Lisp_Object frames, frame;
 
-  menu_items_inuse = in_use ? Qt : Qnil;
+  menu_items_inuse = in_use;
   popup_activated_flag = in_use;
 #ifdef USE_X_TOOLKIT
   if (popup_activated_flag)
