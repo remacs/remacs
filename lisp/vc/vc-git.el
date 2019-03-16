@@ -253,7 +253,7 @@ The following place holders should be present in the string:
                        ;; Git for Windows appends ".windows.N" to the
                        ;; numerical version reported by Git.
                        (string-match
-                        "git version \\([0-9.]+\\)\\(\\.windows.[0-9]+\\)?$"
+                        "git version \\([0-9.]+\\)\\(\\.windows\\.[0-9]+\\)?$"
                         version-string))
                   (match-string 1 version-string)
                 "0")))))
