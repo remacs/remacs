@@ -1736,6 +1736,14 @@ versions of MS-Windows.  Set this variable to 50 if for some reason
 you need the old behavior (and please report such situations to Emacs
 developers).
 
+---
+** New variable 'w32-multibyte-code-page'.
+This variable holds the value of the multibyte code page used by the
+system.  It is usually zero, which indicates that 'w32-ansi-code-page'
+is being used, except in Far Eastern locales.  When this variable is
+non-zero, Emacs at startup sets 'locale-coding-system' to the
+corresponding encoding, instead of using 'w32-ansi-code-page'.
+
 +++
 ** On NS the behaviour of drag and drop can now be modified by use of
 modifier keys in line with Apples guidelines.  This makes the drag and

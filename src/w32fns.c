@@ -48,6 +48,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifdef WINDOWSNT
 #include <mbstring.h>
+#include <mbctype.h>	/* for _getmbcp */
 #endif /* WINDOWSNT */
 
 #if CYGWIN
@@ -10907,6 +10908,15 @@ globals_of_w32fns (void)
 	      w32_ansi_code_page,
 	      doc: /* The ANSI code page used by the system.  */);
   w32_ansi_code_page = GetACP ();
+
+#ifndef CYGWIN
+  DEFVAR_INT ("w32-multibyte-code-page",
+	      w32_multibyte_code_page,
+	      doc: /* The current multibyte code page used by the system.
+A value of zero indicates that the single-byte code page is in use,
+see `w32-ansi-code-page'.  */);
+  w32_multibyte_code_page = _getmbcp ();
+#endif
 
   if (os_subtype == OS_NT)
     w32_unicode_gui = 1;
