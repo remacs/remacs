@@ -533,6 +533,11 @@ running the hook."
 
 	      ;; Setup the before-change function if necessary.
 	      (unless (or ppss-cache ppss-last)
+                ;; We should be either the very last function on
+                ;; before-change-functions or the very first on
+                ;; after-change-functions.
+                ;; Note: combine-change-calls-1 needs to be kept in sync
+                ;; with this!
 		(add-hook 'before-change-functions
 			  'syntax-ppss-flush-cache t t))
 
