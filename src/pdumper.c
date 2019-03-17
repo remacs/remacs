@@ -3212,7 +3212,11 @@ dump_charset_table (struct dump_context *ctx)
   ctx->flags.pack_objects = true;
   dump_align_output (ctx, DUMP_ALIGNMENT);
   dump_off offset = ctx->offset;
-  for (int i = 0; i < charset_table_used; ++i)
+  /* We are dumping the entire table, not just the used slots, because
+     otherwise when we restore from the pdump file, the actual size of
+     the table will be smaller than charset_table_size, and we will
+     crash if/when a new charset is defined.  */
+  for (int i = 0; i < charset_table_size; ++i)
     dump_charset (ctx, i);
   dump_emacs_reloc_to_dump_ptr_raw (ctx, &charset_table, offset);
   ctx->flags = old_flags;
