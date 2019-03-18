@@ -2502,7 +2502,7 @@ unwanted effects."
 
 ;; Definition stolen from display-line-numbers.
 (defface fill-column-face
-  '((t :inherit (shadow default) :height 1.0))
+  '((t :inherit (shadow default)))
   "Face for displaying fill column indicator line.
 This face is used when `display-fill-column-indicator-mode' is
 non-nil.

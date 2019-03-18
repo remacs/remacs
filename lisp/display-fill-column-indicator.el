@@ -55,8 +55,6 @@ character for the line setting `display-fill-column-indicator-character'."
   (if display-fill-column-indicator-mode
       (progn
         (setq display-fill-column-indicator t)
-        (unless display-fill-column-indicator-column
-          (setq display-fill-column-indicator-column fill-column))
         (unless display-fill-column-indicator-character
           (if (char-displayable-p ?\u2502)
               (setq display-fill-column-indicator-character ?\u2502)

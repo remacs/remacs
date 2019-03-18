@@ -20164,17 +20164,26 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	     same place than the line */
 	  if (!NILP (Vdisplay_fill_column_indicator)
 	      && (it->w->pseudo_window_p == 0)
-	      && FIXNATP (Vdisplay_fill_column_indicator_column)
+	      && (!NILP (Vdisplay_fill_column_indicator_column))
 	      && FIXNATP (Vdisplay_fill_column_indicator_character))
 	    {
+	       int fill_column_indicator_column = -1;
+
+	       if (EQ (Vdisplay_fill_column_indicator_column, Qt)
+	           && FIXNATP (BVAR (current_buffer, fill_column)))
+	         fill_column_indicator_column =
+		   XFIXNAT (BVAR (current_buffer, fill_column));
+	       else if (FIXNATP (Vdisplay_fill_column_indicator_column))
+		 fill_column_indicator_column =
+		   XFIXNAT (Vdisplay_fill_column_indicator_column);
+
 	       struct font *font =
 	         default_face->font ? default_face->font : FRAME_FONT (it->f);
 	       const int char_width =
 	         font->average_width ? font->average_width : font->space_width;
-	       const int fill_column =
-		 XFIXNAT (Vdisplay_fill_column_indicator_column);
+
 	       const int column_x =
-		 char_width * fill_column + it->lnum_pixel_width;
+		 char_width * fill_column_indicator_column + it->lnum_pixel_width;
 
 	       if (it->current_x == column_x)
 	         {
@@ -20416,18 +20425,26 @@ extend_face_to_end_of_line (struct it *it)
 	     active */
 	  if (!NILP (Vdisplay_fill_column_indicator)
 	      && (it->w->pseudo_window_p == 0)
-	      && FIXNATP (Vdisplay_fill_column_indicator_column)
+	      && (!NILP (Vdisplay_fill_column_indicator_column))
 	      && FIXNATP (Vdisplay_fill_column_indicator_character))
             {
+	       int fill_column_indicator_column = -1;
+
+	       if (EQ (Vdisplay_fill_column_indicator_column, Qt)
+	           && FIXNATP (BVAR (current_buffer, fill_column)))
+	         fill_column_indicator_column =
+		   XFIXNAT (BVAR (current_buffer, fill_column));
+	       else if (FIXNATP (Vdisplay_fill_column_indicator_column))
+		 fill_column_indicator_column =
+		   XFIXNAT (Vdisplay_fill_column_indicator_column);
+
 	      struct font *font =
 	        default_face->font ? default_face->font : FRAME_FONT (f);
 	      const int char_width =
 	        font->average_width ? font->average_width : font->space_width;
 
-	      const int fill_column =
-	        XFIXNAT (Vdisplay_fill_column_indicator_column);
-
-	      const int column_x = char_width * fill_column + it->lnum_pixel_width;
+	      const int column_x = char_width * fill_column_indicator_column +
+	        it->lnum_pixel_width;
 
 	      if ((it->current_x <= column_x)
 	          && (column_x <= it->last_visible_x))
@@ -20606,14 +20623,23 @@ extend_face_to_end_of_line (struct it *it)
 	it->face_id = face->id;
 
       /* Display fill-column-line if mode is active */
-      if (!NILP (Vdisplay_fill_column_indicator))
+      if (!NILP (Vdisplay_fill_column_indicator)
+          && (!NILP (Vdisplay_fill_column_indicator_column))
+          && FIXNATP (Vdisplay_fill_column_indicator_character))
 	{
-	  const int fill_column_indicator_line =
-	    XFIXNAT (Vdisplay_fill_column_indicator_column)
-	      + it->lnum_pixel_width;
+	  int fill_column_indicator_column = -1;
+
+	  if (EQ (Vdisplay_fill_column_indicator_column, Qt)
+	      && FIXNATP (BVAR (current_buffer, fill_column)))
+	    fill_column_indicator_column =
+	      XFIXNAT (BVAR (current_buffer, fill_column));
+	  else if (FIXNATP (Vdisplay_fill_column_indicator_column))
+	    fill_column_indicator_column =
+	      XFIXNAT (Vdisplay_fill_column_indicator_column);
+
 	  do
 	    {
-	      if (it->current_x == fill_column_indicator_line)
+	      if (it->current_x == fill_column_indicator_column)
 	        {
 		  const int saved_face = it->face_id;
 		  it->face_id =
@@ -33382,9 +33408,12 @@ either `relative' or `visual'.  */);
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator);
 
   DEFVAR_LISP ("display-fill-column-indicator-column", Vdisplay_fill_column_indicator_column,
-    doc: /* Column to draw the indicator when `display-fill-column-indicator' is non-nil.
-The default value is the variable `fill-column' if not other value is given. */);
-  Vdisplay_fill_column_indicator_column = Qnil;
+    doc: /* Column to draw the fill column indicator when
+`display-fill-column-indicator' is non-nil.  The default value is t
+which means that the indicator will use the `fill-column' variable. If
+a numeric value is set, the indicator will be drawn in that column
+independently of the `fill-column' value.  */);
+  Vdisplay_fill_column_indicator_column = Qt;
   DEFSYM (Qdisplay_fill_column_indicator_column, "display-fill-column-indicator-column");
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator_column);
 
