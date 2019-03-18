@@ -1601,19 +1601,21 @@ starting with `not' and followed by regexps."
 	(progn (goto-char (match-beginning 0)) (match-end 0)) nil
         (1 'message-header-name)
         (2 'message-header-other nil t)))
-      ,@(if (and mail-header-separator
-		 (not (equal mail-header-separator "")))
-	    `((,(concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
-	       1 'message-separator))
-	  nil)
-      ((lambda (limit)
-	 (re-search-forward (concat "^\\("
-				    message-cite-prefix-regexp
-				    "\\).*")
-			    limit t))
-       (0 'message-cited-text))
-      ("<#/?\\(multipart\\|part\\|external\\|mml\\|secure\\)[^>]*>"
-       (0 'message-mml))))
+      (,(lambda (limit)
+          (and mail-header-separator
+               (not (equal mail-header-separator ""))
+               (re-search-forward
+                (concat "^" (regexp-quote mail-header-separator) "$")
+                limit t)))
+       0 'message-separator)
+      (,(lambda (limit)
+          (re-search-forward (concat "^\\(?:"
+                                     message-cite-prefix-regexp
+                                     "\\).*")
+                             limit t))
+       0 'message-cited-text)
+      ("<#/?\\(?:multipart\\|part\\|external\\|mml\\|secure\\)[^>]*>"
+       0 'message-mml)))
   "Additional expressions to highlight in Message mode.")
 
 (defvar message-face-alist
