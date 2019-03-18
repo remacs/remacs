@@ -4854,7 +4854,7 @@ choose_write_coding_system (Lisp_Object start, Lisp_Object end, Lisp_Object file
   val = coding_inherit_eol_type (val, eol_parent);
   setup_coding_system (val, coding);
 
-  if (!STRINGP (start) && !NILP (BVAR (current_buffer, selective_display)))
+  if (!STRINGP (start) && EQ (Qt, BVAR (current_buffer, selective_display)))
     coding->mode |= CODING_MODE_SELECTIVE_DISPLAY;
   return val;
 }
