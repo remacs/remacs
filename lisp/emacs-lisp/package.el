@@ -1538,14 +1538,16 @@ similar to an entry in `package-alist'.  Save the cached copy to
                 (member name package-unsigned-archives))
             ;; If we don't care about the signature, save the file and
             ;; we're done.
-            (progn (write-region content nil local-file nil 'silent)
+            (progn (let ((coding-system-for-write 'utf-8))
+                     (write-region content nil local-file nil 'silent))
                    (package--update-downloads-in-progress archive))
           ;; If we care, check it (perhaps async) and *then* write the file.
           (package--check-signature
            location file content async
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
-             (write-region content nil local-file nil 'silent)
+             (let ((coding-system-for-write 'utf-8))
+               (write-region content nil local-file nil 'silent))
              ;; Write out good signatures into archive-contents.signed file.
              (when good-sigs
                (write-region (mapconcat #'epg-signature-to-string good-sigs "\n")
@@ -3425,6 +3427,9 @@ short description."
   ;; Generate the Package Menu.
   (let ((buf (get-buffer-create "*Packages*")))
     (with-current-buffer buf
+      ;; Since some packages have their descriptions include non-ASCII
+      ;; characters...
+      (setq buffer-file-coding-system 'utf-8)
       (package-menu-mode)
 
       ;; Fetch the remote list of packages.
