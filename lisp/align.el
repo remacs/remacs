@@ -452,7 +452,7 @@ The possible settings for `align-region-separate' are:
      (tab-stop . nil))
 
     (make-assignment
-     (regexp   . "^\\s-*\\w+\\(\\s-*\\):?=\\(\\s-*\\)\\([^\t\n \\\\]\\|$\\)")
+     (regexp   . "^\\s-*\\w+\\(\\s-*\\):?=\\(\\s-*\\)\\([^\t\n \\]\\|$\\)")
      (group    . (1 2))
      (modes    . '(makefile-mode))
      (tab-stop . nil))
@@ -759,7 +759,7 @@ The following attributes are meaningful:
 	  (lambda (end reverse)
 	    (funcall (if reverse 're-search-backward
 		       're-search-forward)
-		     (concat "[^ \t\n\\\\]"
+		     (concat "[^ \t\n\\]"
 			     (regexp-quote comment-start)
 			     "\\(.+\\)$") end t))))
      (modes  . align-open-comment-modes))

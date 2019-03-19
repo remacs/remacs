@@ -1618,8 +1618,8 @@ Go to the history element by the absolute history position HIST-POS."
 (defun comint-within-quotes (beg end)
   "Return t if the number of quotes between BEG and END is odd.
 Quotes are single and double."
-  (let ((countsq (comint-how-many-region "\\(^\\|[^\\\\]\\)'" beg end))
-	(countdq (comint-how-many-region "\\(^\\|[^\\\\]\\)\"" beg end)))
+  (let ((countsq (comint-how-many-region "\\(^\\|[^\\]\\)'" beg end))
+	(countdq (comint-how-many-region "\\(^\\|[^\\]\\)\"" beg end)))
     (or (= (mod countsq 2) 1) (= (mod countdq 2) 1))))
 
 (defun comint-how-many-region (regexp beg end)

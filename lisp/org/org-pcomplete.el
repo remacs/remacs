@@ -82,7 +82,7 @@ The return value is a string naming the thing at point."
 	   (not (equal (char-after (point-at-bol)) ?*))
 	   (save-excursion
 	     (move-beginning-of-line 1)
-	     (skip-chars-backward "[ \t\n]")
+	     (skip-chars-backward " \t\n")
 	     ;; org-drawer-regexp matches a whole line but while
 	     ;; looking-back, we just ignore trailing whitespaces
 	     (or (looking-back (substring org-drawer-regexp 0 -1)

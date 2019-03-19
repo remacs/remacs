@@ -565,7 +565,7 @@ reversed."
   (let (save-pos dist compl-list string-to-complete completion-result)
 
     (save-excursion
-      (setq dist (skip-chars-backward "[a-zA-Z!=>&~]")
+      (setq dist (skip-chars-backward "a-zA-Z!=>&~")
 	    save-pos (point)))
 
     (if (or (= dist 0)

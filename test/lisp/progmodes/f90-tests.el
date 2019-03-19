@@ -98,7 +98,7 @@ end subroutine test")
     (insert "(/ x /)")
     (f90-do-auto-fill)
     (beginning-of-line)
-    (skip-chars-forward "[ \t]")
+    (skip-chars-forward " \t")
     (should (equal "&(/" (buffer-substring (point) (+ 3 (point)))))))
 
 ;; TODO bug#5593

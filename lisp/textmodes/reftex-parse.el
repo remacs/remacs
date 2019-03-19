@@ -1000,7 +1000,7 @@ OPT-ARGS is a list of argument numbers which are optional."
                     (eq (following-char) ?\{))
           (cl-incf cnt)))
       (if (and (= n cnt)
-               (> (skip-chars-forward "{\\[") 0))
+               (> (skip-chars-forward "{[") 0))
           (reftex-context-substring)
         nil))))
 

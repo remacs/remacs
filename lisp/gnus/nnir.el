@@ -1185,7 +1185,7 @@ returning the one at the supplied position."
 
 (defun nnir-imap-end-of-input ()
   "Are we at the end of input?"
-  (skip-chars-forward "[[:blank:]]")
+  (skip-chars-forward "[:blank:]")
   (looking-at "$"))
 
 

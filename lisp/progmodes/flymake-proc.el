@@ -1133,7 +1133,7 @@ Use CREATE-TEMP-F for creating temp copy."
   (let* ((temp-master-file-name (flymake-proc--init-create-temp-source-and-master-buffer-copy
                                  'flymake-proc-get-include-dirs-dot 'flymake-proc-create-temp-inplace
 				 '("\\.tex\\'")
-				 "[ \t]*\\in\\(?:put\\|clude\\)[ \t]*{\\(.*%s\\)}")))
+				 "[ \t]*in\\(?:put\\|clude\\)[ \t]*{\\(.*%s\\)}")))
     (when temp-master-file-name
       (flymake-proc--get-tex-args temp-master-file-name))))
 

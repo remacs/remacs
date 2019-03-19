@@ -10494,7 +10494,7 @@ Presumes that any newlines end a list element."
 		      (looking-at "[(,]")))
                (not (save-excursion  ; Not `endif, or user define
 		      (backward-char 1)
-		      (skip-chars-backward "[a-zA-Z0-9_`]")
+		      (skip-chars-backward "a-zA-Z0-9_`")
 		      (looking-at "`"))))
       (insert ","))))
 

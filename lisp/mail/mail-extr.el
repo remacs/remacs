@@ -293,7 +293,7 @@ by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\"."
 ;; multipart names.
 ;; #### should . be in here?
 (defconst mail-extr-all-letters
-  (purecopy (concat mail-extr-all-letters-but-separators "---")))
+  (purecopy (concat mail-extr-all-letters-but-separators "-")))
 
 ;; Any character that can start a name.
 ;; Keep this set as minimal as possible.
@@ -305,18 +305,10 @@ by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\"."
 
 (defconst mail-extr-leading-garbage "\\W+")
 
-;; (defconst mail-extr-non-name-chars
-;;   (purecopy (concat "^" mail-extr-all-letters ".")))
 ;; (defconst mail-extr-non-begin-name-chars
 ;;   (purecopy (concat "^" mail-extr-first-letters)))
 ;; (defconst mail-extr-non-end-name-chars
 ;;   (purecopy (concat "^" mail-extr-last-letters)))
-
-;; Matches an initial not followed by both a period and a space.
-;; (defconst mail-extr-bad-initials-pattern
-;;   (purecopy
-;;    (format "\\(\\([^%s]\\|\\`\\)[%s]\\)\\(\\.\\([^ ]\\)\\| \\|\\([^%s .]\\)\\|\\'\\)"
-;;            mail-extr-all-letters mail-extr-first-letters mail-extr-all-letters)))
 
 ;; Matches periods used instead of spaces.  Must not match the period
 ;; following an initial.

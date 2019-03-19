@@ -2216,7 +2216,7 @@ a token has type \(command, address, end-mark\) and value."
 	     (while (and (not (eolp)) cont)
 	       ;;(re-search-forward "[^/]*/")
 	       (re-search-forward "[^/]*\\(/\\|\n\\)")
-	       (if (not (vip-looking-back "[^\\\\]\\(\\\\\\\\\\)*\\\\/"))
+	       (if (not (vip-looking-back "[^\\]\\(\\\\\\\\\\)*\\\\/"))
 		   (setq cont nil))))
 	   (backward-char 1)
 	   (setq ex-token (buffer-substring (point) (mark)))
@@ -2229,7 +2229,7 @@ a token has type \(command, address, end-mark\) and value."
 	     (while (and (not (eolp)) cont)
 	       ;;(re-search-forward "[^\\?]*\\?")
 	       (re-search-forward "[^\\?]*\\(\\?\\|\n\\)")
-	       (if (not (vip-looking-back "[^\\\\]\\(\\\\\\\\\\)*\\\\\\?"))
+	       (if (not (vip-looking-back "[^\\]\\(\\\\\\\\\\)*\\\\\\?"))
 		   (setq cont nil))
 	       (backward-char 1)
 	       (if (not (looking-at "\n")) (forward-char 1))))
@@ -2325,7 +2325,7 @@ a token has type \(command, address, end-mark\) and value."
 	    (while (and (not (eolp)) cont)
 	      (re-search-forward "[^/]*\\(/\\|\n\\)")
 	      ;;(re-search-forward "[^/]*/")
-	      (if (not (vip-looking-back "[^\\\\]\\(\\\\\\\\\\)*\\\\/"))
+	      (if (not (vip-looking-back "[^\\]\\(\\\\\\\\\\)*\\\\/"))
 		  (setq cont nil))))
 	  (setq ex-token
 		(if (= (mark) (point)) ""

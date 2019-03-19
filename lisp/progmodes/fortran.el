@@ -1795,7 +1795,7 @@ non-indentation text within the comment."
            (goto-char (match-end 0)))
           (t
            ;; Move past line number.
-           (skip-chars-forward "[ \t0-9]")))
+           (skip-chars-forward " \t0-9")))
     ;; Move past whitespace.
     (skip-chars-forward " \t")
     (current-column)))

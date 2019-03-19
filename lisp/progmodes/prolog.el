@@ -2826,7 +2826,7 @@ STRING should be given if the last search was by `string-match' on STRING."
           (progn
             (if (and (eq prolog-system 'mercury)
                      (looking-at
-                      (format ":-[ \t]*\\(pred\\|mode\\)[ \t]+\\(%s+\\)"
+                      (format ":-[ \t]*\\(pred\\|mode\\)[ \t]+\\(\\(?:%s\\)+\\)"
                               prolog-atom-regexp)))
                 ;; Skip predicate declarations
                 (progn
@@ -2950,7 +2950,7 @@ objects (relevant only if `prolog-system' is set to `sicstus')."
            (predname
             (if (looking-at prolog-atom-char-regexp)
                 (progn
-                  (skip-chars-forward "^ (\\.")
+                  (skip-chars-forward "^ (.")
                   (buffer-substring op (point)))
               ""))
            (arity 0))

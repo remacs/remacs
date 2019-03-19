@@ -420,7 +420,7 @@ region is invalid."
                        (beg)
                        (progn
                          (end-of-line)
-                         (skip-chars-backward " \t\f\t\n" beg)
+                         (skip-chars-backward " \t\f\n" beg)
                          (if (eq (point) beg)
                              (line-beginning-position 2)
                            (point)))))

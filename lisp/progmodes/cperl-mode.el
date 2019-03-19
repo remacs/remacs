@@ -3507,18 +3507,18 @@ Should be called with the point before leading colon of an attribute."
 (defsubst cperl-highlight-charclass (endbracket dashface bsface onec-space)
   (let ((l '(1 5 7)) ll lle lll
 	;; 2 groups, the first takes the whole match (include \[trnfabe])
-	(singleChar (concat "\\(" "[^\\\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)")))
+	(singleChar (concat "\\(" "[^\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)")))
     (while				; look for unescaped - between non-classes
 	(re-search-forward
 	 ;; On 19.33, certain simplifications lead
 	 ;; to bugs (as in  [^a-z] \\| [trnfabe]  )
 	 (concat	       		; 1: SingleChar (include \[trnfabe])
 	  singleChar
-	  ;;"\\(" "[^\\\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)"
+	  ;;"\\(" "[^\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)"
 	  "\\("				; 3: DASH SingleChar (match optionally)
 	    "\\(-\\)"			; 4: DASH
 	    singleChar			; 5: SingleChar
-	    ;;"\\(" "[^\\\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)"
+	    ;;"\\(" "[^\\]" "\\|" "\\\\[^cdg-mo-qsu-zA-Z0-9_]" "\\|" "\\\\c." "\\|" "\\\\x" "\\([0-9a-fA-F][0-9a-fA-F]?\\|\\={[0-9a-fA-F]+}\\)" "\\|" "\\\\0?[0-7][0-7]?[0-7]?" "\\|" "\\\\N{[^{}]*}" "\\)"
 	  "\\)?"
 	  "\\|"
 	  "\\("				; 7: other escapes
@@ -4455,13 +4455,13 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 			      ;; Apparently, I can't put \] into a charclass
 			      ;; in m]]: m][\\\]\]] produces [\\]]
 ;;;   POSIX?  [:word:] [:^word:] only inside []
-;;;	       "\\=\\(\\\\.\\|[^][\\\\]\\|\\[:\\^?\sw+:]\\|\\[[^:]\\)*]")
+;;;	       "\\=\\(\\\\.\\|[^][\\]\\|\\[:\\^?\sw+:]\\|\\[[^:]\\)*]")
 			      (while	; look for unescaped ]
 				  (and argument
 				       (re-search-forward
 					(if (eq (char-after b) ?\] )
-					    "\\=\\(\\\\[^]]\\|[^]\\\\]\\)*\\\\]"
-					  "\\=\\(\\\\.\\|[^]\\\\]\\)*]")
+					    "\\=\\(\\\\[^]]\\|[^]\\]\\)*\\\\]"
+					  "\\=\\(\\\\.\\|[^]\\]\\)*]")
 					(1- e) 'toend))
 				;; Is this ] an end of POSIX class?
 				(if (save-excursion
@@ -4580,7 +4580,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 			      ;; Works also if the outside delimiters are ().
 			      (or;;(if (eq (char-after b) ?\) )
 			       ;;(re-search-forward
-			       ;; "[^\\\\]\\(\\\\\\\\\\)*\\\\)"
+			       ;; "[^\\]\\(\\\\\\\\\\)*\\\\)"
 			       ;; (1- e) 'toend)
 			       (search-forward ")" (1- e) 'toend)
 			       ;;)
@@ -7261,7 +7261,7 @@ One may build such TAGS files from CPerl mode menu."
      ".->"				; a->b
      "->"				; a SPACE ->b
      "\\[-"				; a[-1]
-     "\\\\[&$@*\\\\]"			; \&func
+     "\\\\[&$@*\\]"			; \&func
      "^="				; =head
      "\\$."				; $|
      "<<[a-zA-Z_'\"`]"			; <<FOO, <<'FOO'
@@ -8174,7 +8174,7 @@ We suppose that the regexp is scanned already."
 	  (error "Cannot find `(' which starts a group"))
       (setq done
 	    (save-excursion
-	      (skip-chars-backward "\\")
+	      (skip-chars-backward "\\\\")
 	      (looking-at "\\(\\\\\\\\\\)*(")))
       (or done (forward-char -1)))))
 

@@ -1511,7 +1511,7 @@ may require more formatting")
 					      (line-end-position))))))))
      ;; Continuation of above.  Make sure our sentence is capitalized.
      (save-excursion
-       (skip-chars-forward "\"\\*")
+       (skip-chars-forward "\"*")
        (if (looking-at "[a-z]")
 	   (if (checkdoc-autofix-ask-replace
 		(match-beginning 0) (match-end 0)

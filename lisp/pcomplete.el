@@ -768,7 +768,7 @@ this is `comint-dynamic-complete-functions'."
 	(push (point) begins)
         (while
             (progn
-              (skip-chars-forward "^ \t\n\\")
+              (skip-chars-forward "^ \t\n")
               (when (eq (char-after) ?\\)
                 (forward-char 1)
                 (unless (eolp)

@@ -134,12 +134,12 @@ ENTRY is the name of a password-store entry."
 (defun auth-source-pass--parse-secret (contents)
   "Parse the password-store data in the string CONTENTS and return its secret.
 The secret is the first line of CONTENTS."
-  (car (split-string contents "\\\n" t)))
+  (car (split-string contents "\n" t)))
 
 (defun auth-source-pass--parse-data (contents)
   "Parse the password-store data in the string CONTENTS and return an alist.
 CONTENTS is the contents of a password-store formatted file."
-  (let ((lines (split-string contents "\\\n" t "\\\s")))
+  (let ((lines (split-string contents "\n" t "\\\s")))
     (seq-remove #'null
                 (mapcar (lambda (line)
                           (let ((pair (mapcar (lambda (s) (string-trim s))

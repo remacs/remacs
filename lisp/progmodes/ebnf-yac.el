@@ -392,7 +392,7 @@ See documentation for variable `ebnf-yac-lex'."
 (defun ebnf-yac-skip-spaces ()
   (skip-chars-forward
    (if ebnf-yac-skip-char
-       "\n\r\t !#$&()*+-.0123456789=?@[\\\\]^_`~"
+       "-\n\r\t !#$&()*+,.0123456789=?@[\\\\]^_`~"
      "\n\r\t ")
    ebnf-limit)
   (< (point) ebnf-limit))

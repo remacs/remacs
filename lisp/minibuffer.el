@@ -2297,7 +2297,7 @@ Useful to give the user default values that won't be substituted."
   (if (and (not (file-name-quoted-p filename))
            (file-name-absolute-p filename)
            (string-match-p (if (memq system-type '(windows-nt ms-dos))
-                               "[/\\\\]~" "/~")
+                               "[/\\]~" "/~")
                            (file-local-name filename)))
       (file-name-quote filename)
     (minibuffer--double-dollars filename)))

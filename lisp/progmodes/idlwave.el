@@ -7590,7 +7590,7 @@ property indicating the link is added."
 	(case-fold-search t))
     (cond ((save-excursion
 	     ;; Check if the context is right for system variable
-	     (skip-chars-backward "[a-zA-Z0-9_$]")
+	     (skip-chars-backward "a-zA-Z0-9_$")
 	     (equal (char-before) ?!))
 	   (setq idlwave-completion-help-info '(idlwave-complete-sysvar-help))
 	   (idlwave-complete-in-buffer 'sysvar 'sysvar

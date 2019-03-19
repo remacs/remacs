@@ -767,7 +767,7 @@ the 4 file locations can be clicked on and jumped to."
   (interactive "d")
   (goto-char pos)
 
-  (skip-chars-backward "-a-zA-Z0-9_:./\\")
+  (skip-chars-backward "-a-zA-Z0-9_:./\\\\")
   (cond
    ;;  special case: looking at a filename:line not at the beginning of a line
    ;;  or a simple line reference "at line ..."

@@ -1128,7 +1128,7 @@ Returns nil if there is no such line before LIMIT, t otherwise."
     (let ((cdepth (min (length (apply 'concat
 				      (split-string
 				       (match-string-no-properties 0)
-				       "[ \t [:alnum:]]+")))
+				       "[\t [:alnum:]]+")))
 		       gnus-message-max-citation-depth))
 	  (mlist (make-list (* (1+ gnus-message-max-citation-depth) 2) nil))
 	  (start (point-at-bol))

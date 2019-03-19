@@ -1490,7 +1490,7 @@ With ARG, do it many times.  Negative ARG means move backward."
             (cond ((looking-at "\\?\\(\\\\[CM]-\\)*\\\\?\\S ")
                    (goto-char (match-end 0)))
                   ((progn
-                     (skip-chars-forward ",.:;|&^~=!?\\+\\-\\*")
+                     (skip-chars-forward "-,.:;|&^~=!?+*")
                      (looking-at "\\s("))
                    (goto-char (scan-sexps (point) 1)))
                   ((and (looking-at (concat "\\<\\(" ruby-block-beg-re
@@ -1533,7 +1533,7 @@ With ARG, do it many times.  Negative ARG means move forward."
     (let ((i (or arg 1)))
       (condition-case nil
           (while (> i 0)
-            (skip-chars-backward " \t\n,.:;|&^~=!?\\+\\-\\*")
+            (skip-chars-backward "- \t\n,.:;|&^~=!?+*")
             (forward-char -1)
             (cond ((looking-at "\\s)")
                    (goto-char (scan-sexps (1+ (point)) -1))
@@ -1546,7 +1546,7 @@ With ARG, do it many times.  Negative ARG means move forward."
                   ((looking-at "\\s\"\\|\\\\\\S_")
                    (let ((c (char-to-string (char-before (match-end 0)))))
                      (while (and (search-backward c)
-				 (eq (logand (skip-chars-backward "\\") 1)
+				 (eq (logand (skip-chars-backward "\\\\") 1)
 				     1))))
                    nil)
                   ((looking-at "\\s.\\|\\s\\")
