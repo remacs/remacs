@@ -678,28 +678,20 @@ The optional argument DISPLAY can be a display name, and the optional
 argument PARAMETERS specifies additional frame parameters."
   (interactive (list (completing-read
                       (format "Make frame on monitor: ")
-                      (mapcar (lambda (a)
-                                (cdr (assq 'name a)))
-                              (display-monitor-attributes-list)))))
-  (let* ((monitor-geometry
-          (car (delq nil (mapcar (lambda (a)
-                                   (when (equal (cdr (assq 'name a)) monitor)
-                                     (cdr (assq 'workarea a))))
-                                 (display-monitor-attributes-list display)))))
-         (frame-geometry
-          (when monitor-geometry
-            (x-parse-geometry (format "%dx%d+%d+%d"
-                                      (nth 2 monitor-geometry)
-                                      (nth 3 monitor-geometry)
-                                      (nth 0 monitor-geometry)
-                                      (nth 1 monitor-geometry)))))
-         (frame-geometry-in-pixels
-          (when frame-geometry
-            `((top . ,(cdr (assq 'top frame-geometry)))
-              (left . ,(cdr (assq 'left frame-geometry)))
-              (height . (text-pixels . ,(cdr (assq 'height frame-geometry))))
-              (width . (text-pixels . ,(cdr (assq 'width frame-geometry))))))))
-    (make-frame (append frame-geometry-in-pixels parameters))))
+                      (or (delq nil (mapcar (lambda (a)
+                                              (cdr (assq 'name a)))
+                                            (display-monitor-attributes-list)))
+                          '("")))))
+  (let* ((monitor-workarea
+          (catch 'done
+            (dolist (a (display-monitor-attributes-list display))
+              (when (equal (cdr (assq 'name a)) monitor)
+                (throw 'done (cdr (assq 'workarea a)))))))
+         (geometry-parameters
+          (when monitor-workarea
+            `((top . ,(nth 1 monitor-workarea))
+              (left . ,(nth 0 monitor-workarea))))))
+    (make-frame (append geometry-parameters parameters))))
 
 (declare-function x-close-connection "xfns.c" (terminal))
 
