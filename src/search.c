@@ -319,7 +319,10 @@ looking_at_1 (Lisp_Object string, bool posix)
 		  ZV_BYTE - BEGV_BYTE);
 
   if (i == -2)
-    matcher_overflow ();
+    {
+      unbind_to (count, Qnil);
+      matcher_overflow ();
+    }
 
   val = (i >= 0 ? Qt : Qnil);
   if (preserve_match_data && i >= 0)
@@ -1198,6 +1201,7 @@ search_buffer_re (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
                          pos_byte - BEGV_BYTE);
       if (val == -2)
         {
+          unbind_to (count, Qnil);
           matcher_overflow ();
         }
       if (val >= 0)
@@ -1243,6 +1247,7 @@ search_buffer_re (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
                          lim_byte - BEGV_BYTE);
       if (val == -2)
         {
+          unbind_to (count, Qnil);
           matcher_overflow ();
         }
       if (val >= 0)
