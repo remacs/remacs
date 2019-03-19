@@ -631,7 +631,8 @@ extern _Noreturn void wrong_type_argument (Lisp_Object, Lisp_Object);
    subsequent starts.  */
 extern bool initialized;
 
-extern struct gflags {
+extern struct gflags
+{
   /* True means this Emacs instance was born to dump.  */
 #if defined HAVE_PDUMPER || defined HAVE_UNEXEC
   bool will_dump_ : 1;
@@ -3316,10 +3317,10 @@ extern Lisp_Object Vascii_canon_table;
 
 /* Call staticpro (&var) to protect static variable `var'.  */
 
-void staticpro (Lisp_Object *);
+void staticpro (Lisp_Object const *);
 
 enum { NSTATICS = 2048 };
-extern Lisp_Object *staticvec[NSTATICS];
+extern Lisp_Object const *staticvec[NSTATICS];
 extern int staticidx;
 
 
@@ -3341,7 +3342,8 @@ struct frame;
 /* Copy COUNT Lisp_Objects from ARGS to contents of V starting from OFFSET.  */
 
 INLINE void
-vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object *args, ptrdiff_t count)
+vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object const *args,
+       ptrdiff_t count)
 {
   eassert (0 <= offset && 0 <= count && offset + count <= ASIZE (v));
   memcpy (XVECTOR (v)->contents + offset, args, count * sizeof *args);
@@ -3771,8 +3773,8 @@ extern void refill_memory_reserve (void);
 #endif
 extern void alloc_unexec_pre (void);
 extern void alloc_unexec_post (void);
-extern void mark_maybe_objects (Lisp_Object *, ptrdiff_t);
-extern void mark_stack (char *, char *);
+extern void mark_maybe_objects (Lisp_Object const *, ptrdiff_t);
+extern void mark_stack (char const *, char const *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern void garbage_collect (void);
 extern const char *pending_malloc_warning;
@@ -3800,17 +3802,17 @@ extern Lisp_Object pure_listn (ptrdiff_t, Lisp_Object, ...);
 #define pure_list(...) \
   pure_listn (ARRAYELTS (((Lisp_Object []) {__VA_ARGS__})), __VA_ARGS__)
 
-enum gc_root_type {
+enum gc_root_type
+{
   GC_ROOT_STATICPRO,
   GC_ROOT_BUFFER_LOCAL_DEFAULT,
   GC_ROOT_BUFFER_LOCAL_NAME,
   GC_ROOT_C_SYMBOL
 };
 
-struct gc_root_visitor {
-  void (*visit)(Lisp_Object *root_ptr,
-                enum gc_root_type type,
-                void *data);
+struct gc_root_visitor
+{
+  void (*visit) (Lisp_Object const *, enum gc_root_type, void *);
   void *data;
 };
 extern void visit_static_gc_roots (struct gc_root_visitor visitor);

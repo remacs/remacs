@@ -1850,8 +1850,8 @@ stack_overflow (siginfo_t *siginfo)
 
   /* The known top and bottom of the stack.  The actual stack may
      extend a bit beyond these boundaries.  */
-  char *bot = stack_bottom;
-  char *top = current_thread->stack_top;
+  char const *bot = stack_bottom;
+  char const *top = current_thread->stack_top;
 
   /* Log base 2 of the stack heuristic ratio.  This ratio is the size
      of the known stack divided by the size of the guard area past the

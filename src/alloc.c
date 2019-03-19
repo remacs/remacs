@@ -508,7 +508,7 @@ static struct mem_node *mem_find (void *);
    value if we might unexec; otherwise some compilers put it into
    BSS.  */
 
-Lisp_Object *staticvec[NSTATICS]
+Lisp_Object const *staticvec[NSTATICS]
 #ifdef HAVE_UNEXEC
 = {&Vpurify_flag}
 #endif
@@ -4829,9 +4829,9 @@ mark_maybe_object (Lisp_Object obj)
 }
 
 void
-mark_maybe_objects (Lisp_Object *array, ptrdiff_t nelts)
+mark_maybe_objects (Lisp_Object const *array, ptrdiff_t nelts)
 {
-  for (Lisp_Object *lim = array + nelts; array < lim; array++)
+  for (Lisp_Object const *lim = array + nelts; array < lim; array++)
     mark_maybe_object (*array);
 }
 
@@ -4943,15 +4943,15 @@ mark_maybe_pointer (void *p)
    or END+OFFSET..START.  */
 
 static void ATTRIBUTE_NO_SANITIZE_ADDRESS
-mark_memory (void *start, void *end)
+mark_memory (void const *start, void const *end)
 {
-  char *pp;
+  char const *pp;
 
   /* Make START the pointer to the start of the memory region,
      if it isn't already.  */
   if (end < start)
     {
-      void *tem = start;
+      void const *tem = start;
       start = end;
       end = tem;
     }
@@ -4976,14 +4976,14 @@ mark_memory (void *start, void *end)
      away.  The only reference to the life string is through the
      pointer `s'.  */
 
-  for (pp = start; (void *) pp < end; pp += GC_POINTER_ALIGNMENT)
+  for (pp = start; (void const *) pp < end; pp += GC_POINTER_ALIGNMENT)
     {
-      mark_maybe_pointer (*(void **) pp);
+      mark_maybe_pointer (*(void *const *) pp);
 
       verify (alignof (Lisp_Object) % GC_POINTER_ALIGNMENT == 0);
       if (alignof (Lisp_Object) == GC_POINTER_ALIGNMENT
 	  || (uintptr_t) pp % alignof (Lisp_Object) == 0)
-	mark_maybe_object (*(Lisp_Object *) pp);
+	mark_maybe_object (*(Lisp_Object const *) pp);
     }
 }
 
@@ -5185,7 +5185,7 @@ typedef union
    from the stack start.  */
 
 void
-mark_stack (char *bottom, char *end)
+mark_stack (char const *bottom, char const *end)
 {
   /* This assumes that the stack is a contiguous region in memory.  If
      that's not the case, something has to be done here to iterate
@@ -5726,7 +5726,7 @@ purecopy (Lisp_Object obj)
    VARADDRESS.  */
 
 void
-staticpro (Lisp_Object *varaddress)
+staticpro (Lisp_Object const *varaddress)
 {
   for (int i = 0; i < staticidx; i++)
     eassert (staticvec[i] != varaddress);
@@ -5979,7 +5979,7 @@ visit_static_gc_roots (struct gc_root_visitor visitor)
 }
 
 static void
-mark_object_root_visitor (Lisp_Object *root_ptr,
+mark_object_root_visitor (Lisp_Object const *root_ptr,
                           enum gc_root_type type,
                           void *data)
 {
@@ -6074,7 +6074,7 @@ garbage_collect_1 (struct gcstat *gcst)
 #if MAX_SAVE_STACK > 0
   if (NILP (Vpurify_flag))
     {
-      char *stack;
+      char const *stack;
       ptrdiff_t stack_size;
       if (&stack_top_variable < stack_bottom)
 	{
@@ -6110,9 +6110,7 @@ garbage_collect_1 (struct gcstat *gcst)
 
   /* Mark all the special slots that serve as the roots of accessibility.  */
 
-  struct gc_root_visitor visitor;
-  memset (&visitor, 0, sizeof (visitor));
-  visitor.visit = mark_object_root_visitor;
+  struct gc_root_visitor visitor = { .visit = mark_object_root_visitor };
   visit_static_gc_roots (visitor);
 
   mark_pinned_objects ();
