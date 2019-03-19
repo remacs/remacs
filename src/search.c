@@ -198,11 +198,13 @@ static struct regexp_cache *
 compile_pattern (Lisp_Object pattern, struct re_registers *regp,
 		 Lisp_Object translate, bool posix, bool multibyte)
 {
-  struct regexp_cache *cp, **cpp;
+  struct regexp_cache *cp, **cpp, **lru_nonbusy;
 
-  for (cpp = &searchbuf_head; ; cpp = &cp->next)
+  for (cpp = &searchbuf_head, lru_nonbusy = NULL; ; cpp = &cp->next)
     {
       cp = *cpp;
+      if (!cp->busy)
+        lru_nonbusy = cpp;
       /* Entries are initialized to nil, and may be set to nil by
 	 compile_pattern_1 if the pattern isn't valid.  Don't apply
 	 string accessors in those cases.  However, compile_pattern_1
@@ -222,13 +224,14 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
 	  && cp->buf.charset_unibyte == charset_unibyte)
 	break;
 
-      /* If we're at the end of the cache, compile into the nil cell
-	 we found, or the last (least recently used) cell with a
-	 string value.  */
+      /* If we're at the end of the cache, compile into the last
+	 (least recently used) non-busy cell in the cache.  */
       if (cp->next == 0)
 	{
-          if (cp->busy)
+          if (!lru_nonbusy)
             error ("Too much matching reentrancy");
+          cpp = lru_nonbusy;
+          cp = *cpp;
 	compile_it:
           eassert (!cp->busy);
 	  compile_pattern_1 (cp, pattern, translate, posix);
