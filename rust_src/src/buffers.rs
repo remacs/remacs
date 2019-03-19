@@ -22,7 +22,7 @@ use crate::{
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists,
     lists::{car, cdr, list, member, rassq, setcar},
-    lists::{CarIter, LispConsCircularChecks, LispConsEndChecks, TailsIter},
+    lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks, TailsIter},
     marker::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
         LispMarkerRef, MARKER_DEBUG,
@@ -914,6 +914,10 @@ impl LispBufferLocalValueRef {
         let (_, d) = self.valcell.into();
         d
     }
+
+    pub fn set_value(self, value: LispObject) {
+        LispCons::from(self.valcell).set_cdr(value);
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -1031,6 +1035,17 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
             LispBufferOrCurrent::Buffer(buf) => buf,
             LispBufferOrCurrent::Current => ThreadState::current_buffer_unchecked(),
         }
+    }
+}
+
+/// Return false.
+/// If the optional arg BUFFER is provided and not nil, enable undoes in that
+/// buffer, otherwise run on the current buffer.
+#[lisp_fn(min = "0", intspec = "")]
+pub fn buffer_enable_undo(buffer: LispBufferOrCurrent) {
+    let mut buf: LispBufferRef = buffer.into();
+    if buf.undo_list_.eq(Qt) {
+        buf.undo_list_ = Qnil;
     }
 }
 
