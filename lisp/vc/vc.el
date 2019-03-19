@@ -1762,9 +1762,9 @@ Return t if the buffer had changes, nil otherwise."
                          nil nil initial-input 'vc-revision-history default)
       (read-string prompt initial-input nil default))))
 
-(defun vc-diff-build-argument-list-internal ()
+(defun vc-diff-build-argument-list-internal (&optional fileset)
   "Build argument list for calling internal diff functions."
-  (let* ((vc-fileset (vc-deduce-fileset t)) ;FIXME: why t?  --Stef
+  (let* ((vc-fileset (or fileset (vc-deduce-fileset t))) ;FIXME: why t?  --Stef
          (files (cadr vc-fileset))
          (backend (car vc-fileset))
          (first (car files))
@@ -1815,7 +1815,11 @@ Return t if the buffer had changes, nil otherwise."
 ;;;###autoload
 (defun vc-root-version-diff (_files rev1 rev2)
   "Report diffs between REV1 and REV2 revisions of the whole tree."
-  (interactive (vc-diff-build-argument-list-internal))
+  (interactive
+   (vc-diff-build-argument-list-internal
+    (or (ignore-errors (vc-deduce-fileset t))
+        (let ((backend (or (vc-deduce-backend) (vc-responsible-backend default-directory))))
+          (list backend (list (vc-call-backend backend 'root default-directory)))))))
   ;; This is a mix of `vc-root-diff' and `vc-version-diff'
   (when (and (not rev1) rev2)
     (error "Not a valid revision range"))
