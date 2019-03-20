@@ -185,6 +185,18 @@ Evaluate BODY for each created sequence.
   (with-test-sequences (seq '(3 4 5 6))
     (should (= 5 (seq-contains seq 5)))))
 
+(ert-deftest test-seq-contains-p ()
+  (with-test-sequences (seq '(3 4 5 6))
+    (should (eq (seq-contains-p seq 3) t))
+    (should-not (seq-contains-p seq 7)))
+  (with-test-sequences (seq '())
+    (should-not (seq-contains-p seq 3))
+    (should-not (seq-contains-p seq nil))))
+
+(ert-deftest test-seq-contains-p-with-nil ()
+  (should (seq-contains-p  [nil] nil))
+  (should (seq-contains-p '(nil) nil)))
+
 (ert-deftest test-seq-every-p ()
   (with-test-sequences (seq '(43 54 22 1))
     (should (seq-every-p (lambda (elt) t) seq))
@@ -435,6 +447,19 @@ Evaluate BODY for each created sequence.
         (vec [1 2 3]))
     (should (equal (seq-rest lst) '(2 3)))
     (should (equal (seq-rest vec) [2 3]))))
+
+;; Regression tests for bug#34852
+(progn
+  (ert-deftest test-seq-intersection-with-nil ()
+    (should (equal (seq-intersection '(1 2 nil) '(1 nil)) '(1 nil))))
+
+  (ert-deftest test-seq-set-equal-p-with-nil ()
+    (should (seq-set-equal-p '("a" "b" nil)
+                             '(nil "b" "a"))))
+
+  (ert-deftest test-difference-with-nil ()
+    (should (equal (seq-difference '(1 nil) '(2 nil))
+                   '(1)))))
 
 (provide 'seq-tests)
 ;;; seq-tests.el ends here

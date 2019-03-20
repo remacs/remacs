@@ -782,10 +782,11 @@ before being sorted.  @var{function} is a function of one argument.
 @end defun
 
 
-@defun seq-contains sequence elt &optional function
-  This function returns the first element in @var{sequence} that is equal to
-@var{elt}.  If the optional argument @var{function} is non-@code{nil},
-it is a function of two arguments to use instead of the default @code{equal}.
+@defun seq-contains-p sequence elt &optional function
+  This function returns non-@code{nil} if at least one element in
+@var{sequence} is equal to @var{elt}.  If the optional argument
+@var{function} is non-@code{nil}, it is a function of two arguments to
+use instead of the default @code{equal}.
 
 @example
 @group
