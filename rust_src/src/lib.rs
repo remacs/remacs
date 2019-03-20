@@ -55,6 +55,8 @@ mod lisp;
 #[macro_use]
 mod frames;
 #[macro_use]
+mod strings;
+#[macro_use]
 mod vector_macros;
 mod str2sig;
 
@@ -110,7 +112,6 @@ mod profiler;
 #[allow(clippy::all)]
 mod remacs_sys;
 mod search;
-mod strings;
 mod symbols;
 mod syntax;
 mod terminal;

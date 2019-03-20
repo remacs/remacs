@@ -1,7 +1,5 @@
 //! Minibuffer input and completion.
 
-use std::ffi::CString;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -19,8 +17,8 @@ use crate::{
         Qfield, Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
     },
     remacs_sys::{
-        make_buffer_string, make_specified_string, make_unibyte_string, minibuf_level,
-        minibuf_prompt, minibuf_window, read_minibuf, specbind, EmacsInt, Fcopy_sequence,
+        make_buffer_string, make_specified_string, minibuf_level, minibuf_prompt, minibuf_window,
+        read_minibuf, specbind, EmacsInt, Fcopy_sequence,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -466,8 +464,8 @@ pub fn read_buffer(
 
     let result = if unsafe { globals.Vread_buffer_function }.is_nil() {
         if !def.is_nil() {
-            // A default was provided: PROMT must be changed, editing in the
-            // default value before the colon. To achieve this, PROMT is replaced
+            // A default was provided: PROMPT must be changed, editing in the
+            // default value before the colon. To achieve this, PROMPT is replaced
             // with a substring that doesn't contain the terminal space and colon
             // (if present).
             if let Some(mut string) = prompt {
@@ -488,10 +486,8 @@ pub fn read_buffer(
                     .into()
                 };
             }
-            let format_str = CString::new("%s (default %s): ").unwrap();
-            let format_ptr = format_str.as_ptr();
-            let format =
-                unsafe { make_unibyte_string(format_ptr, format_str.as_bytes().len() as isize) };
+            let format = new_unibyte_string!("%s (default %s): ");
+
             prompt = editfns::format(&mut [
                 format,
                 prompt.into(),
