@@ -210,18 +210,6 @@ This can be slightly disconcerting, but some people prefer it."
     (intern "mouse-7"))
   "Event used for scrolling right.")
 
-(defvar mouse-wheel-left-event
-  (if (or (featurep 'w32-win) (featurep 'ns-win))
-      'wheel-left
-    (intern "mouse-6"))
-  "Event used for scrolling left.")
-
-(defvar mouse-wheel-right-event
-  (if (or (featurep 'w32-win) (featurep 'ns-win))
-      'wheel-right
-    (intern "mouse-7"))
-  "Event used for scrolling right.")
-
 (defun mwheel-scroll (event)
   "Scroll up or down according to the EVENT.
 This should be bound only to mouse buttons 4, 5, 6, and 7 on
