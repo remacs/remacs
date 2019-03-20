@@ -597,19 +597,6 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
-void
-reset_per_buffer_values(struct buffer *b, bool permanent_too) {
-  int offset;
-  FOR_EACH_PER_BUFFER_OBJECT_AT (offset)
-    {
-      int idx = PER_BUFFER_IDX (offset);
-      if ((idx > 0
-	   && (permanent_too
-	       || buffer_permanent_local_flags[idx] == 0)))
-	set_per_buffer_value (b, offset, per_buffer_default (offset));
-    }
-}
-
 
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
@@ -924,29 +911,6 @@ other_buffer_safely (Lisp_Object buffer)
   return buf;
 }
 
-DEFUN ("buffer-enable-undo", Fbuffer_enable_undo, Sbuffer_enable_undo,
-       0, 1, "",
-       doc: /* Start keeping undo information for buffer BUFFER.
-No argument or nil as argument means do this for the current buffer.  */)
-  (register Lisp_Object buffer)
-{
-  Lisp_Object real_buffer;
-
-  if (NILP (buffer))
-    XSETBUFFER (real_buffer, current_buffer);
-  else
-    {
-      real_buffer = Fget_buffer (buffer);
-      if (NILP (real_buffer))
-	nsberror (buffer);
-    }
-
-  if (EQ (BVAR (XBUFFER (real_buffer), undo_list), Qt))
-    bset_undo_list (XBUFFER (real_buffer), Qnil);
-
-  return Qnil;
-}
-
 /* Truncate undo list and shrink the gap of BUFFER.  */
 
 void
@@ -5414,7 +5378,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Sother_buffer);
-  defsubr (&Sbuffer_enable_undo);
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);

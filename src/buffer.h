@@ -1130,7 +1130,6 @@ unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay);
 extern void delete_all_overlays (struct buffer *);
 extern void reset_buffer (struct buffer *);
 extern void reset_buffer_local_variables (struct buffer *, bool);
-extern void reset_per_buffer_values(struct buffer *, bool);
 extern void compact_buffer (struct buffer *);
 extern void evaporate_overlays (ptrdiff_t);
 extern ptrdiff_t overlays_at (EMACS_INT, bool, Lisp_Object **,
