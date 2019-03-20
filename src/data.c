@@ -239,30 +239,6 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 	    wrong);
 }
 
-/* Set up SYMBOL to refer to its global binding.  This makes it safe
-   to alter the status of other bindings.  BEWARE: this may be called
-   during the mark phase of GC, where we assume that Lisp_Object slots
-   of BLV are marked after this function has changed them.  */
-
-void
-swap_in_global_binding (struct Lisp_Symbol *symbol)
-{
-  struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (symbol);
-
-  /* Unload the previously loaded binding.  */
-  if (blv->fwd)
-    set_blv_value (blv, do_symval_forwarding (blv->fwd));
-
-  /* Select the global binding in the symbol.  */
-  set_blv_valcell (blv, blv->defcell);
-  if (blv->fwd)
-    store_symval_forwarding (blv->fwd, XCDR (blv->defcell), NULL);
-
-  /* Indicate that the global binding is set up now.  */
-  set_blv_where (blv, Qnil);
-  set_blv_found (blv, 0);
-}
-
 /* Set up the buffer-local symbol SYMBOL for validity in the current buffer.
    VALCONTENTS is the contents of its value cell,
    which points to a struct Lisp_Buffer_Local_Value.
