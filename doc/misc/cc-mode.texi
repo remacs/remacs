@@ -2307,7 +2307,7 @@ that takes precedence is the one that appears latest in this list:
 @end ifclear
 @c Version of list for Texinfo >= 5.x
 @ifset txicommandconditionals
-@itemize @asis
+@itemize @w{}
 @item Style
 @item File Style@footnote{In earlier versions of @ccmode{}, a File Style setting took precedence over any other setting apart from a File Local Variable setting.}
 @item Top-level command or ``customization interface''

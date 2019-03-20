@@ -1,3 +1,273 @@
+2019-03-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve indexing of the user manual
+
+	* doc/emacs/search.texi (Word Search): Improve indexing of
+	"M-s M-w".
+
+2019-03-19  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Fix url-copy-file arglist
+
+	* lisp/url/url-handlers.el: Silence byte-compiler.
+	(url-copy-file): Add 6th argument following change to copy-file in
+	2012-12-16T19:22:27+01:00!romain@orebokech.com. (bug#4410)
+
+2019-03-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix downloading updates for packages with non-ASCII descriptions
+
+	* lisp/emacs-lisp/package.el (package--download-one-archive):
+	Make sure archive contents are written using UTF-8 encoding.
+	(Bug#34909)
+	(list-packages): Set buffer's encoding to UTF-8.
+
+2019-03-18  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/NEWS: Remove temporary markers.
+
+2019-03-15  Alan Mackenzie  <acm@muc.de>
+
+	* doc/misc/cc-mode.texi (Config Basics): in @itemize, @asis -> @w{}
+
+2019-03-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't clobber 'comint-input-autoexpand' in 'read-shell-command'
+
+	* lisp/shell.el (shell-completion-vars): Set only the
+	buffer-local value of 'comint-input-autoexpand'.  (Bug#34815)
+
+2019-03-13  Martin Rudalics  <rudalics@gmx.at>
+
+	Document restrictions when setting window margins, fringes or scroll bars
+
+	* src/window.c (Fset_window_margins, Fset_window_fringes)
+	(Fset_window_scroll_bars): In doc-strings tell that a window
+	must be large enough to accommodate fringes, sroll bars and
+	margins of the desired size.
+	* doc/lispref/display.texi (Fringe Size/Pos, Scroll Bars)
+	(Display Margins): Tell that windows must be large enough to
+	accommodate fringes, sroll bars and margins of the desired
+	size.
+
+2019-03-10  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements for 'read-buffer's doc string
+
+	* src/minibuf.c (Fread_buffer): Further improve the doc
+	string.  (Bug#347694)
+
+2019-03-10  Alan Mackenzie  <acm@muc.de>
+
+	* lisp/progmodes/cc-defs.el: Update c-version to 5.33.2 for Emacs 26.2
+
+2019-03-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/minibuf.c (Fread_buffer): Minor doc fixes.  (Bug#34749)
+
+2019-03-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix markup of fake keys in the ELisp manual
+
+	* doc/lispref/keymaps.texi (Menu Bar, Tool Bar): Fix markup of
+	fake keys.  (Bug#34785)
+
+2019-03-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid errors in Auto Revert mode
+
+	* lisp/autorevert.el (auto-revert-buffers): Cancel
+	auto-revert-timer only if it is non-nil.  This avoids errors
+	on first invocation of Auto-Revert mode.
+
+2019-03-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	Mention empty strings in file name expansion, emacs lisp reference
+
+	* doc/lispref/files.texi (Files, File Name Expansion):
+	Mention also empty strings.
+
+2019-03-08  Alan Mackenzie  <acm@muc.de>
+
+	cc-mode.texi: Work around makeinfo alignment bug.  Fix problem with ss index
+
+	* doc/misc/cc-mode.texi (top level): Using txicommandconditionals to
+	differentiate between the C and perl versions of Texinfo, create an "ss
+	index" unless we are both using the C Texinfo and are building the .dvi output
+	format.
+	(Config Basics): Work around a perl Texinfo alignment bug by writing a
+	separate version of an item list structure for this version, simplifying it
+	considerably.
+
+2019-03-08  Martin Rudalics  <rudalics@gmx.at>
+
+	Warn against recursive invocations of 'buffer-list-update-hook' (Bug#34765)
+
+	* src/buffer.c (Vbuffer_list_update_hook):
+	* doc/lispref/buffers.texi (Buffer List): Warn against
+	recursive invocations of 'buffer-list-update-hook' (Bug#34765).
+
+2019-03-08  Martin Rudalics  <rudalics@gmx.at>
+
+	Provide more details in doc-string of 'delete-windows-on' (Bug#34749)
+
+	* lisp/window.el (delete-windows-on): Provide more details in
+	doc-string (Bug#34749).
+
+2019-03-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'delete-windows-on'
+
+	* doc/emacs/windows.texi (Change Window): Document
+	'delete-windows-on'.
+
+	* lisp/window.el (delete-windows-on): Doc fix.  (Bug#34749)
+
+2019-03-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/frame.el (make-frame-command): Doc fix.  (Bug#34715)
+
+2019-03-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid undefined behavior in gdb-mi.el
+
+	* lisp/progmodes/gdb-mi.el (gdb-send): Don't call match-string
+	if this is not a control command.  (Bug#34769)
+
+2019-03-06  Martin Rudalics  <rudalics@gmx.at>
+
+	* lisp/window.el (fit-frame-to-buffer): Make doc-string more accurate.
+
+2019-03-05  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Minor spelling and grammar fixes (bug#34756)
+
+	doc/misc/cc-mode.texi (Style Variables, Customizing Indentation):
+	doc/misc/ede.texi (Extending EDE, ede-project-placeholder)
+	(ede-target, ede-proj-target, ede-compilation-program, ede-compiler)
+	(ede-linker): Remove apostrophe from possessive "it's".
+	doc/lispintro/emacs-lisp-intro.texi (Find a File):
+	doc/misc/gnus-faq.texi (FAQ 2-2): Write "an other" as a single word.
+	doc/misc/gnus.texi (Article Buttons):
+	lisp/gnus/gnus-art.el (gnus-button-mid-or-mail-heuristic-alist)
+	(gnus-button-mid-or-mail-heuristic): Write singular number of
+	Message-IDs, rather than plural.
+	lisp/gnus/message.el (message-user-fqdn): Capitalize initialism.
+
+2019-03-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement of documentation of '(when CONDITION . SPEC)'
+
+	* doc/lispref/display.texi (Other Display Specs): Add a caveat
+	to using the '(when CONDITION . SPEC)' display specs.
+
+2019-03-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'auto-coding-functions'
+
+	* doc/lispref/nonascii.texi (Default Coding Systems): Clarify
+	that the functions in 'auto-coding-functions' are called both
+	for decoding and for encoding.
+
+	* lisp/international/mule.el (auto-coding-functions): Doc fix.
+
+2019-03-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix visiting XML files with non-Unix EOL format
+
+	* lisp/international/mule.el (sgml-xml-auto-coding-function)
+	(sgml-html-meta-auto-coding-function): Don't use
+	'buffer-file-coding-system' if the buffer is unibyte.
+	(Bug#34704)
+
+2019-03-02  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Update example major mode code in Elisp manual
+
+	* doc/lispref/modes.texi (Example Major Modes): Update code examples
+	to reflect current state of lisp/textmodes/text-mode.el and
+	lisp/emacs-lisp/lisp-mode.el. (bug#34671)
+
+2019-03-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in the Calc manual
+
+	* doc/misc/calc.texi (Algebraic Tutorial): Fix parentheses in
+	@example.  (Bug#34689)
+
+2019-03-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement in cross-references of the ELisp manual
+
+	* doc/lispref/modes.texi (Minor Mode Conventions): Add
+	cross-references to related major-mode descriptions.  (Bug#34678)
+
+2019-03-01  Tobias Bading  <tbading@web.de>  (tiny change)
+
+	Fix last change on 'compilation-parse-errors'
+
+	* lisp/progmodes/compile.el (compilation-parse-errors): Fix
+	previous change in this function.  (Bug#34479)
+
+2019-02-25  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Backport: js--re-search-backward-inner: Fix infloop
+
+	Fix JS indentation infloop reported in
+	https://github.com/mooz/js2-mode/issues/513.
+
+	* lisp/progmodes/js.el (js--re-search-backward-inner): Account for
+	multiline string literals.
+	* test/manual/indent/js.js: New test example.
+
+	(cherry picked from commit b01a4295c2f9bb58858880e4e28b05cc8396791c)
+
+2019-02-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement for docs of completion
+
+	* doc/lispref/minibuf.texi (Completion Commands)
+	(Completion in Buffers, Programmed Completion): Add to text
+	that references completion tables a cross-reference to where
+	"completion table" is described.
+	(Programmed Completion): Fix the description of
+	'completion-table-dynamic'.  Add more cross-references.
+
+2019-02-22  Ken Brown  <kbrown@cornell.edu>
+
+	Disable the timerfd interface on Cygwin
+
+	* configure.ac (emacs_cv_have_timerfd): Set to "no" on Cygwin.
+
+2019-02-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in the doc string of 'regex-opt'
+
+	* lisp/emacs-lisp/regexp-opt.el (regexp-opt): Fix example in
+	the doc string.  (Bug#34596)
+
+2019-02-21  Michael Albinus  <michael.albinus@gmx.de>
+
+	Document bash 5.0.0 misbehavior in tramp.texi (Bug#34192)
+
+	* doc/misc/tramp.texi (Frequently Asked Questions): Warn about
+	bash 5.0.0 and HISTSIZE=0.  (Bug#34192)
+
+2019-02-20  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 26.1.92
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version to 26.1.92.
+
+2019-02-20  Nicolas Petton  <nicolas@petton.fr>
+
+	* ; ChangeLog.3 update
+
+	* etc/AUTHORS: Update.
+
 2019-02-20  Glenn Morris  <rgm@gnu.org>
 
 	Remove .art from the default list of ImageMagick extensions
@@ -64676,7 +64946,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit a19bfb7a5e3557a69824cdbe7d414f5ef422555c (inclusive).
+commit 0f523deec1c1e9e2a5a3474f912aa2183d3fe33d (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

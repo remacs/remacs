@@ -442,8 +442,8 @@ Bartosz Duszel: changed allout.el bib-mode.el cc-cmds.el hexl.el icon.el
 
 Basil L. Contovounesios: changed simple.el message.el sequences.texi
   bibtex.el css-mode-tests.el css-mode.el customize.texi display.texi
-  gnus-art.el json-tests.el json.el lists.texi man.el rcirc.el
-  shr-color.el text.texi
+  gnus-art.el json-tests.el json.el lists.texi man.el modes.texi rcirc.el
+  shr-color.el text.texi url-handlers.el
 
 Bastian Beischer: changed include.el mru-bookmark.el refs.el
   semantic/complete.el senator.el
@@ -1355,7 +1355,7 @@ Eli Zaretskii: wrote [bidirectional display in xdisp.c]
 and changed xdisp.c msdos.c w32.c display.texi w32fns.c simple.el
   files.el fileio.c keyboard.c w32proc.c files.texi w32term.c text.texi
   dispnew.c frames.texi emacs.c dispextern.h lisp.h process.c term.c
-  window.c and 1124 other files
+  window.c and 1125 other files
 
 Emanuele Giaquinta: changed configure.ac rxvt.el charset.c etags.c
   fontset.c frame.el gnus-faq.texi loadup.el lread.c sh-script.el
@@ -3598,7 +3598,7 @@ Nicolas Graner: changed message.el
 Nicolas Petton: wrote map-tests.el map.el seq-tests.el seq.el
   thunk-tests.el thunk.el
 and co-wrote auth-source-pass.el auth-source-tests.el subr-tests.el
-and changed README sequences.texi configure.ac sed2v2.inp authors.el
+and changed README configure.ac sed2v2.inp sequences.texi authors.el
   README.W32 emacs.png emacs23.png arc-mode.el cl-extra.el emacs.svg
   manoj-dark-theme.el Emacs.icns HISTORY Makefile.in auth-source.el
   emacs.ico fns.c make-tarball.txt obarray-tests.el obarray.el
@@ -4845,6 +4845,8 @@ and changed ibuffer.el dired-tests.el ibuf-ext.el dired.el dired-aux.el
   and 82 other files
 
 Titus von der Malsburg: changed simple.el window.el
+
+Tobias Bading: changed progmodes/compile.el
 
 Tobias C. Rittweiler: changed font-lock.el searching.texi sendmail.el
 
