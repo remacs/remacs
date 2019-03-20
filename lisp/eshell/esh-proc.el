@@ -498,7 +498,7 @@ See the variable `eshell-kill-processes-on-exit'."
 					(buffer-name))))
 	  (eshell-round-robin-kill
 	   (if (eq eshell-kill-processes-on-exit 'every)
-	       (format-message "Kill Eshell child process `%s'? "))))
+	       "Kill Eshell child process `%s'? ")))
       (let ((buf (get-buffer "*Process List*")))
 	(if (and buf (buffer-live-p buf))
 	    (kill-buffer buf)))
