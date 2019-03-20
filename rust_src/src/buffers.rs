@@ -1,6 +1,6 @@
 //! Functions operating on buffers.
 
-use std::{self, mem, ptr};
+use std::{self, iter, mem, ops, ptr};
 
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
@@ -10,6 +10,7 @@ use rand::{thread_rng, Rng};
 use remacs_macros::lisp_fn;
 
 use crate::{
+    casetab::{set_standard_case_table, standard_case_table},
     character::char_head_p,
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
@@ -19,8 +20,9 @@ use crate::{
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
+    lists,
     lists::{car, cdr, list, member, rassq, setcar},
-    lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
+    lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks, TailsIter},
     marker::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
         LispMarkerRef, MARKER_DEBUG,
@@ -29,23 +31,25 @@ use crate::{
     multibyte::{LispStringRef, LispSymbolOrString},
     numbers::MOST_POSITIVE_FIXNUM,
     obarray::intern,
+    remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::{
-        allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, make_timespec, marker_position, modify_overlay,
-        set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
-        windows_or_buffers_changed,
+        allocate_misc, bset_update_mode_line, buffer_fundamental_string, buffer_local_flags,
+        buffer_local_value, buffer_window_count, concat2, del_range, delete_all_overlays, globals,
+        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
+        notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
+        specbind, unchain_both, unchain_marker, update_mode_lines, windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
-        Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
-        Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
-        UNKNOWN_MODTIME_NSECS,
+        buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
+        Qbuffer_read_only, Qbufferp, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit,
+        Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
+        Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
@@ -615,6 +619,11 @@ impl LispBufferRef {
         vars.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
     }
 
+    pub fn local_vars_tails_iter(self) -> TailsIter {
+        let vars = self.local_var_alist_;
+        vars.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off)
+    }
+
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
@@ -677,6 +686,117 @@ impl LispBufferRef {
         self.cursor_type_ = unsafe { buffer_defaults.cursor_type_ };
         self.extra_line_spacing_ = unsafe { buffer_defaults.extra_line_spacing_ };
         self.display_error_modiff = 0;
+    }
+
+    /// Reset the buffer's local variables info.
+    /// Don't use this on a buffer that has already been in use; it does not
+    /// treat permanent locals consistently. Use Fkill_all_local_variables
+    /// instead.
+    ///
+    /// If `include_permanent` is true, permanent buffer-local variables will
+    /// also be reset. If not, they will be preserved.
+    pub fn reset_local_variables(&mut self, include_permanent: bool) {
+        // Reset the major mode to Fundamental, along with the things that
+        // depend on the major mode.
+        // default-major-mode is handled at a higher level. It is ignored here.
+        self.major_mode_ = Qfundamental_mode;
+        self.keymap_ = Qnil;
+        self.mode_name_ = unsafe { buffer_fundamental_string() };
+        self.minor_modes_ = Qnil;
+
+        // If the standard case table has been altered and invalidated, fix up
+        // its insides first.
+        if !standard_case_table().force_case_table().is_valid() {
+            set_standard_case_table(standard_case_table());
+        }
+
+        let case_table = standard_case_table();
+        let (upcase, case_canon, case_eqv) = case_table.force_case_table().extras();
+
+        self.downcase_table_ = case_table;
+        self.upcase_table_ = upcase;
+        self.case_canon_table_ = case_canon;
+        self.case_eqv_table_ = case_eqv;
+        self.invisibility_spec_ = Qt;
+
+        if include_permanent {
+            self.local_var_alist_ = Qnil;
+        } else {
+            let mut last = Qnil;
+            for tail in self.local_vars_tails_iter() {
+                let (local, _) = tail.car().into();
+                let prop = lists::get(local.force_symbol(), Qpermanent_local);
+                // If permanent-local, keep it.
+                if prop.is_not_nil() {
+                    last = tail.into();
+                    if prop == Qpermanent_local_hook {
+                        // This is a partially permanent hook variable.
+                        // Preserve only the elements that want to be preserved.
+                        let (_, list) = tail.car().into();
+                        let newlist = match list.as_cons() {
+                            None => list,
+                            Some(cons) => unsafe {
+                                Fnreverse(
+                                    cons.iter_cars(
+                                        LispConsEndChecks::off,
+                                        LispConsCircularChecks::on,
+                                    )
+                                    .filter(|elt| {
+                                        !elt.is_symbol()
+                                            || elt.is_t()
+                                            || lists::get((*elt).into(), Qpermanent_local_hook)
+                                                .is_not_nil()
+                                    })
+                                    .fold(Qnil, |new, elt| (elt, new).into()),
+                                )
+                            },
+                        };
+                        if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
+                            unsafe {
+                                notify_variable_watchers(
+                                    local,
+                                    newlist,
+                                    Qmakunbound,
+                                    current_buffer(),
+                                )
+                            };
+                        }
+                        tail.car().force_cons().set_cdr(newlist);
+                        // Don't do variable write trapping twice
+                        continue;
+                    }
+                } else if last.is_nil() {
+                    // Delete this local variable
+                    self.local_var_alist_ = tail.cdr();
+                } else {
+                    last.force_cons().set_cdr(tail)
+                }
+
+                if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
+                    unsafe { notify_variable_watchers(local, Qnil, Qmakunbound, current_buffer()) };
+                }
+            }
+        }
+
+        // Mark buffer-local variables as unset
+        for i in 0..unsafe { last_per_buffer_idx } {
+            if include_permanent || unsafe { buffer_permanent_local_flags[i as usize] } == 0 {
+                self.set_per_buffer_value_p(i as usize, 0)
+            }
+        }
+
+        // Copy default values into slots that have one
+        unsafe {
+            for offset in iter_per_buffer_objects() {
+                let fieldoffset = FieldOffset::new_from_offset(offset);
+                let idx = per_buffer_idx_from_field_offset(fieldoffset);
+                if idx > 0 && (include_permanent || buffer_permanent_local_flags[idx as usize] == 0)
+                {
+                    let offset = offset as i32;
+                    set_per_buffer_value(self.as_mut(), offset, per_buffer_default(offset));
+                }
+            }
+        }
     }
 }
 
@@ -1443,6 +1563,14 @@ pub unsafe fn per_buffer_idx(count: isize) -> isize {
     (*obj).to_fixnum_unchecked() as isize
 }
 
+pub fn iter_per_buffer_objects() -> iter::StepBy<ops::RangeInclusive<usize>> {
+    let first = field_offset::offset_of!(Lisp_Buffer => name_).get_byte_offset();
+    let last =
+        field_offset::offset_of!(Lisp_Buffer => cursor_in_non_selected_windows_).get_byte_offset();
+
+    (first..=last).step_by(mem::size_of::<LispObject>())
+}
+
 /// Return a list of overlays which is a copy of the overlay list
 /// LIST, but for buffer BUFFER.
 #[no_mangle]
@@ -1488,6 +1616,11 @@ pub unsafe extern "C" fn copy_overlays(
 #[no_mangle]
 pub extern "C" fn reset_buffer(mut buffer: LispBufferRef) {
     buffer.reset();
+}
+
+#[no_mangle]
+pub extern "C" fn reset_buffer_local_variables(mut buffer: LispBufferRef, include_permanent: bool) {
+    buffer.reset_local_variables(include_permanent)
 }
 
 #[no_mangle]
