@@ -444,10 +444,28 @@ Same as `pcomplete' but using the standard completion UI."
            ;; table which expects strings using a prefix from the
            ;; buffer's text but internally uses the corresponding
            ;; prefix from pcomplete-stub.
+           ;;
+           (argbeg (pcomplete-begin))
+           ;; When completing an envvar within an argument in Eshell
+           ;; (e.g. "cd /home/$US TAB"), `pcomplete-stub' will just be
+           ;; "US" whereas `argbeg' will point to the first "/".
+           ;; We could rely on c-t-subvert to handle the difference,
+           ;; but we try here to guess the "real" beginning so as to
+           ;; rely less on c-t-subvert.
            (beg (max (- (point) (length pcomplete-stub))
-                     (pcomplete-begin)))
-           (buftext (pcomplete-unquote-argument
-                     (buffer-substring beg (point)))))
+                     argbeg))
+           buftext)
+      ;; Try and improve our guess of `beg' in case the difference
+      ;; between pcomplete-stub and the buffer's text is simply due to
+      ;; some chars removed by unquoting.  Again, this is not
+      ;; indispensable but reduces the reliance on c-t-subvert and
+      ;; improves corner case behaviors.
+      (while (progn (setq buftext (pcomplete-unquote-argument
+                                   (buffer-substring beg (point))))
+                    (and (> beg argbeg)
+                         (> (length pcomplete-stub) (length buftext))))
+        (setq beg (max argbeg (- beg (- (length pcomplete-stub)
+                                        (length buftext))))))
       (when completions
         (let ((table
                (completion-table-with-quoting
