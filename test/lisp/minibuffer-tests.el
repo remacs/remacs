@@ -74,5 +74,11 @@
                     'completion-table-with-predicate
                     full-collection no-A nil))))))
 
+(ert-deftest completion-table-subvert-test ()
+  (let* ((origtable '("A-hello" "A-there"))
+         (subvtable (completion-table-subvert origtable "B" "A")))
+    (should (equal (try-completion "B-hel" subvtable)
+                   "B-hello"))))
+
 (provide 'completion-tests)
 ;;; completion-tests.el ends here
