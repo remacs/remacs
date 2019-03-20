@@ -1,6 +1,6 @@
 //! Functions operating on buffers.
 
-use std::{self, mem, ptr};
+use std::{self, iter, mem, ops, ptr};
 
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
@@ -36,8 +36,8 @@ use crate::{
         allocate_misc, bset_update_mode_line, buffer_fundamental_string, buffer_local_flags,
         buffer_local_value, buffer_window_count, concat2, del_range, delete_all_overlays, globals,
         last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
-        notify_variable_watchers, reset_per_buffer_values, set_buffer_internal_1, specbind,
-        unchain_both, unchain_marker, update_mode_lines, windows_or_buffers_changed,
+        notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
+        specbind, unchain_both, unchain_marker, update_mode_lines, windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
@@ -786,7 +786,17 @@ impl LispBufferRef {
         }
 
         // Copy default values into slots that have one
-        unsafe { reset_per_buffer_values(self.as_mut(), include_permanent) };
+        unsafe {
+            for offset in iter_per_buffer_objects() {
+                let fieldoffset = FieldOffset::new_from_offset(offset);
+                let idx = per_buffer_idx_from_field_offset(fieldoffset);
+                if idx > 0 && (include_permanent || buffer_permanent_local_flags[idx as usize] == 0)
+                {
+                    let offset = offset as i32;
+                    set_per_buffer_value(self.as_mut(), offset, per_buffer_default(offset));
+                }
+            }
+        }
     }
 }
 
@@ -1551,6 +1561,14 @@ pub unsafe fn per_buffer_idx(count: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
     let obj = flags.offset(count);
     (*obj).to_fixnum_unchecked() as isize
+}
+
+pub fn iter_per_buffer_objects() -> iter::StepBy<ops::RangeInclusive<usize>> {
+    let first = field_offset::offset_of!(Lisp_Buffer => name_).get_byte_offset();
+    let last =
+        field_offset::offset_of!(Lisp_Buffer => cursor_in_non_selected_windows_).get_byte_offset();
+
+    (first..=last).step_by(mem::size_of::<LispObject>())
 }
 
 /// Return a list of overlays which is a copy of the overlay list

@@ -697,19 +697,6 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
-void
-reset_per_buffer_values(struct buffer *b, bool permanent_too) {
-  int offset;
-  FOR_EACH_PER_BUFFER_OBJECT_AT (offset)
-    {
-      int idx = PER_BUFFER_IDX (offset);
-      if ((idx > 0
-	   && (permanent_too
-	       || buffer_permanent_local_flags[idx] == 0)))
-	set_per_buffer_value (b, offset, per_buffer_default (offset));
-    }
-}
-
 
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
