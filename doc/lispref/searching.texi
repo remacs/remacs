@@ -391,25 +391,18 @@ writing the starting and ending characters with a @samp{-} between them.
 Thus, @samp{[a-z]} matches any lower-case @acronym{ASCII} letter.
 Ranges may be intermixed freely with individual characters, as in
 @samp{[a-z$%.]}, which matches any lower case @acronym{ASCII} letter
-or @samp{$}, @samp{%} or period.
+or @samp{$}, @samp{%} or period.  However, the ending character of one
+range should not be the starting point of another one; for example,
+@samp{[a-m-z]} should be avoided.
 
-If @code{case-fold-search} is non-@code{nil}, @samp{[a-z]} also
-matches upper-case letters.  Note that a range like @samp{[a-z]} is
-not affected by the locale's collation sequence, it always represents
-a sequence in @acronym{ASCII} order.
-@c This wasn't obvious to me, since, e.g., the grep manual "Character
-@c Classes and Bracket Expressions" specifically notes the opposite
-@c behavior.  But by experiment Emacs seems unaffected by LC_COLLATE
-@c in this regard.
-
-Note also that the usual regexp special characters are not special inside a
+The usual regexp special characters are not special inside a
 character alternative.  A completely different set of characters is
 special inside character alternatives: @samp{]}, @samp{-} and @samp{^}.
 
 To include a @samp{]} in a character alternative, you must make it the
 first character.  For example, @samp{[]a]} matches @samp{]} or @samp{a}.
 To include a @samp{-}, write @samp{-} as the first or last character of
-the character alternative, or put it after a range.  Thus, @samp{[]-]}
+the character alternative, or as the upper bound of a range.  Thus, @samp{[]-]}
 matches both @samp{]} and @samp{-}.  (As explained below, you cannot
 use @samp{\]} to include a @samp{]} inside a character alternative,
 since @samp{\} is not special there.)
@@ -417,13 +410,34 @@ since @samp{\} is not special there.)
 To include @samp{^} in a character alternative, put it anywhere but at
 the beginning.
 
-@c What if it starts with a multibyte and ends with a unibyte?
-@c That doesn't seem to match anything...?
-If a range starts with a unibyte character @var{c} and ends with a
-multibyte character @var{c2}, the range is divided into two parts: one
-spans the unibyte characters @samp{@var{c}..?\377}, the other the
-multibyte characters @samp{@var{c1}..@var{c2}}, where @var{c1} is the
-first character of the charset to which @var{c2} belongs.
+The following aspects of ranges are specific to Emacs, in that POSIX
+allows but does not require this behavior and programs other than
+Emacs may behave differently:
+
+@enumerate
+@item
+If @code{case-fold-search} is non-@code{nil}, @samp{[a-z]} also
+matches upper-case letters.
+
+@item
+A range is not affected by the locale's collation sequence: it always
+represents the set of characters with codepoints ranging between those
+of its bounds, so that @samp{[a-z]} matches only ASCII letters, even
+outside the C or POSIX locale.
+
+@item
+As a special case, if either bound of a range is a raw 8-bit byte, the
+other bound should be a unibyte character, and the range matches only
+unibyte characters.
+
+@item
+If the lower bound of a range is greater than its upper bound, the
+range is empty and represents no characters.  Thus, @samp{[b-a]}
+always fails to match, and @samp{[^b-a]} matches any character,
+including newline.  However, the lower bound should be at most one
+greater than the upper bound; for example, @samp{[c-a]} should be
+avoided.
+@end enumerate
 
 A character alternative can also specify named character classes
 (@pxref{Char Classes}).  This is a POSIX feature.  For example,
@@ -431,6 +445,8 @@ A character alternative can also specify named character classes
 Using a character class is equivalent to mentioning each of the
 characters in that class; but the latter is not feasible in practice,
 since some classes include thousands of different characters.
+A character class should not appear as the lower or upper bound
+of a range.
 
 @item @samp{[^ @dots{} ]}
 @cindex @samp{^} in regexp
