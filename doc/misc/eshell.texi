@@ -499,15 +499,14 @@ be directories @emph{and} files.  Eshell provides predefined completions
 for the built-in functions and some common external commands, and you
 can define your own for any command.
 
-Eshell completion also works for lisp forms and glob patterns. If the
-point is on a lisp form, then @key{TAB} will behave similarly to completion
-in @code{elisp-mode} and @code{lisp-interaction-mode}.  For glob
-patterns, If there are few enough possible completions of the patterns,
-they will be cycled when @key{TAB} is pressed, otherwise it will be removed
-from the input line and the possible completions will be listed.
+Eshell completion also works for lisp forms and glob patterns. If the point is
+on a lisp form, then @key{TAB} will behave similarly to completion in
+@code{elisp-mode} and @code{lisp-interaction-mode}.  For glob patterns, the
+pattern will be removed from the input line, and replaced by the
+completion.
 
-If you want to see the entire list of possible completions when it's
-below the cycling threshold, press @kbd{M-?}.
+If you want to see the entire list of possible completions (e.g. when it's
+below the @code{completion-cycle-threshold}), press @kbd{M-?}.
 
 @subsection pcomplete
 Pcomplete, short for programmable completion, is the completion
