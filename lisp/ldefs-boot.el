@@ -35338,16 +35338,16 @@ the arguments that would have been passed to OPERATION.
 
 (autoload 'url-copy-file "url-handlers" "\
 Copy URL to NEWNAME.  Both args must be strings.
-Signals a `file-already-exists' error if file NEWNAME already exists,
+Signal a `file-already-exists' error if file NEWNAME already exists,
 unless a third argument OK-IF-ALREADY-EXISTS is supplied and non-nil.
 A number as third arg means request confirmation if NEWNAME already exists.
 This is what happens in interactive use with M-x.
 Fourth arg KEEP-TIME non-nil means give the new file the same
 last-modified time as the old one.  (This works on only some systems.)
-Fifth arg PRESERVE-UID-GID is ignored.
+Args PRESERVE-UID-GID and PRESERVE-PERMISSIONS are ignored.
 A prefix arg makes KEEP-TIME non-nil.
 
-\(fn URL NEWNAME &optional OK-IF-ALREADY-EXISTS KEEP-TIME PRESERVE-UID-GID)" nil nil)
+\(fn URL NEWNAME &optional OK-IF-ALREADY-EXISTS KEEP-TIME PRESERVE-UID-GID PRESERVE-PERMISSIONS)" nil nil)
 
 (autoload 'url-file-local-copy "url-handlers" "\
 Copy URL into a temporary file on this machine.
