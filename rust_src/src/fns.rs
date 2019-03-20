@@ -7,6 +7,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::record,
     casefiddle::downcase,
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
@@ -22,8 +23,7 @@ use crate::{
     remacs_sys::{
         bool_vector_bytes, bool_vector_data, bool_vector_size, concat as lisp_concat,
         copy_char_table, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
-        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area, Frecord,
-        PVSIZE,
+        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -521,12 +521,12 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
 /// If the original sequence is empty, this function may return
 /// the same empty object instead of its copy.
 #[lisp_fn]
-pub fn copy_sequence(arg: LispObject) -> LispObject {
+pub fn copy_sequence(mut arg: LispObject) -> LispObject {
     unsafe {
         if arg.is_nil() {
             arg
         } else if arg.is_record() {
-            Frecord(PVSIZE(arg), arg.force_vector().contents)
+            record(arg.force_vector().as_mut_slice())
         } else if arg.is_char_table() {
             copy_char_table(arg)
         } else if arg.is_bool_vector() {

@@ -2852,7 +2852,6 @@ this variable.  */);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
   defsubr (&Svconcat);
-  defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
   defsubr (&Sstring_as_unibyte);
