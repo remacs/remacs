@@ -269,7 +269,7 @@ the form (concat S2 S)."
                     (+ beg (- (length s1) (length s2))))
               . ,(and (eq (car-safe res) 'boundaries) (cddr res)))))
          ((stringp res)
-          (if (string-prefix-p s2 string completion-ignore-case)
+          (if (string-prefix-p s2 res completion-ignore-case)
               (concat s1 (substring res (length s2)))))
          ((eq action t)
           (let ((bounds (completion-boundaries str table pred "")))
