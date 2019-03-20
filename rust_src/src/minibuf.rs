@@ -6,7 +6,7 @@ use crate::{
     buffers::{current_buffer, LispBufferOrName},
     editfns,
     editfns::field_end,
-    eval::unbind_to,
+    eval,
     keymap::get_keymap,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
@@ -343,7 +343,7 @@ pub fn read_string(
         }
     }
 
-    unbind_to(count, val)
+    eval::unbind_to(count, val)
 }
 
 pub fn read_command_or_variable(
@@ -505,25 +505,21 @@ pub fn read_buffer(
             def,
             Qnil,
         )
-    } else if predicate.is_nil() {
+    } else {
         // Partial backwards compatability for older read_buffer_functions which
         // expect a 'predicate' argument.
-        call!(
-            unsafe { globals.Vread_buffer_function },
-            prompt.into(),
-            def,
-            require_match
-        )
-    } else {
-        call!(
+        let mut args = vec![
             unsafe { globals.Vread_buffer_function },
             prompt.into(),
             def,
             require_match,
-            predicate
-        )
+        ];
+        if predicate.is_not_nil() {
+            args.push(predicate)
+        }
+        eval::funcall(&mut args)
     };
-    unbind_to(count, result)
+    eval::unbind_to(count, result)
 }
 
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));
