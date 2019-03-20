@@ -1908,7 +1908,7 @@ the same column as the current line."
     (save-match-data
       (when (looking-at "\\s-*\\_<while\\_>")
 	(if (save-excursion
-	      (skip-chars-backward "[ \t\n]*}")
+	      (skip-chars-backward " \t\n}")
 	      (looking-at "[ \t\n]*}"))
 	    (save-excursion
 	      (backward-list) (forward-symbol -1) (looking-at "\\_<do\\_>"))

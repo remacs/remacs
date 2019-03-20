@@ -894,7 +894,7 @@ Return non-nil if we skipped over matched tags."
   (condition-case err
   (save-excursion
     (goto-char end)
-    (skip-chars-backward "[:alnum:]-_.:")
+    (skip-chars-backward "-[:alnum:]_.:")
     (if (and ;; (<= (point) beg) ; This poses problems for downcase-word.
              (or (eq (char-before) ?<)
                  (and (eq (char-before) ?/)
@@ -902,7 +902,7 @@ Return non-nil if we skipped over matched tags."
              (null (get-char-property (point) 'text-clones)))
         (let* ((endp (eq (char-before) ?/))
                (cl-start (point))
-               (cl-end (progn (skip-chars-forward "[:alnum:]-_.:") (point)))
+	       (cl-end (progn (skip-chars-forward "-[:alnum:]_.:") (point)))
                (match
                 (if endp
                     (when (sgml-skip-tag-backward 1) (forward-char 1) t)
@@ -919,7 +919,8 @@ Return non-nil if we skipped over matched tags."
                      (equal (buffer-substring cl-start cl-end)
                             (buffer-substring (point)
                                               (save-excursion
-                                                (skip-chars-forward "[:alnum:]-_.:")
+						(skip-chars-forward
+						 "-[:alnum:]_.:")
                                                 (point))))
                      (or (not endp) (eq (char-after cl-end) ?>)))
             (when clones

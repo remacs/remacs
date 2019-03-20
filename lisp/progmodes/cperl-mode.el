@@ -1884,7 +1884,7 @@ or as help on variables `cperl-tips', `cperl-problems',
 ;;Point is at start of real comment."
 ;;  (let ((c (current-column)) target cnt prevc)
 ;;    (if (= c comment-column) nil
-;;      (setq cnt (skip-chars-backward "[ \t]"))
+;;      (setq cnt (skip-chars-backward " \t"))
 ;;      (setq target (max (1+ (setq prevc
 ;;			     (current-column))) ; Else indent at comment column
 ;;		   comment-column))

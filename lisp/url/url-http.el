@@ -517,7 +517,7 @@ Return the number of characters removed."
   (setq url-http-response-version
 	(buffer-substring (point)
 			  (progn
-			    (skip-chars-forward "[0-9].")
+			    (skip-chars-forward "0-9.")
 			    (point))))
   (setq url-http-response-status (read (current-buffer))))
 
