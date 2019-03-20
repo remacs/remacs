@@ -2364,7 +2364,14 @@ read_char (int commandflag, Lisp_Object map,
       if (CONSP (c) && EQ (XCAR (c), Qt))
 	c = XCDR (c);
       else
-	reread = true;
+	{
+	  if (CONSP (c) && EQ (XCAR (c), Qno_record))
+	    {
+	      c = XCDR (c);
+	      recorded = true;
+	    }
+	  reread = true;
+	}
 
       /* Undo what read_char_x_menu_prompt did when it unread
 	 additional keys returned by Fx_popup_menu.  */
@@ -2745,7 +2752,14 @@ read_char (int commandflag, Lisp_Object map,
       if (CONSP (c) && EQ (XCAR (c), Qt))
 	c = XCDR (c);
       else
-	reread = true;
+	{
+	  if (CONSP (c) && EQ (XCAR (c), Qno_record))
+	    {
+	      c = XCDR (c);
+	      recorded = true;
+	    }
+	  reread = true;
+	}
     }
 
   /* Read something from current KBOARD's side queue, if possible.  */
@@ -2807,6 +2821,11 @@ read_char (int commandflag, Lisp_Object map,
 
       if (CONSP (c) && EQ (XCAR (c), Qt))
 	c = XCDR (c);
+      else if (CONSP (c) && EQ (XCAR (c), Qno_record))
+	{
+	  c = XCDR (c);
+	  recorded = true;
+	}
   }
 
  non_reread:
@@ -11193,6 +11212,7 @@ syms_of_keyboard (void)
 	Fput (var, Qevent_symbol_elements, list1 (var));
       }
   }
+  DEFSYM (Qno_record, "no-record");
 
   button_down_location = make_nil_vector (5);
   staticpro (&button_down_location);
@@ -11303,7 +11323,9 @@ so that you can determine whether the command was run by mouse or not.  */);
 These events are processed first, before actual keyboard input.
 Events read from this list are not normally added to `this-command-keys',
 as they will already have been added once as they were read for the first time.
-An element of the form (t . EVENT) forces EVENT to be added to that list.  */);
+An element of the form (t . EVENT) forces EVENT to be added to that list.
+An element of the form (no-record . EVENT) means process EVENT, but do not
+record it in the keyboard macros, recent-keys, and the dribble file.  */);
   Vunread_command_events = Qnil;
 
   DEFVAR_LISP ("unread-post-input-method-events", Vunread_post_input_method_events,

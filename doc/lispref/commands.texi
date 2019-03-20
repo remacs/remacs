@@ -2880,6 +2880,14 @@ command's key sequence (as returned by, e.g., @code{this-command-keys}),
 as the events will already have been added once as they were read for
 the first time.  An element of the form @w{@code{(t . @var{event})}}
 forces @var{event} to be added to the current command's key sequence.
+
+@cindex not recording input events
+@cindex input events, prevent recording
+Elements read from this list are normally recorded by the
+record-keeping features (@pxref{Recording Input}) and while defining a
+keyboard macro (@pxref{Keyboard Macros}).  However, an element of the
+form @w{@code{(no-record . @var{event})}} causes @var{event} to be
+processed normally without recording it.
 @end defvar
 
 @defun listify-key-sequence key

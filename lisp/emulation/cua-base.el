@@ -710,7 +710,8 @@ a cons (TYPE . COLOR), then both properties are affected."
     ;; C-x binding after the first C-x C-x was rewritten to just C-x).
     (prefix-command-preserve-state)
     ;; Push the key back on the event queue
-    (setq unread-command-events (cons key unread-command-events))))
+    (setq unread-command-events (cons (cons 'no-record key)
+                                      unread-command-events))))
 
 (defun cua--prefix-override-handler ()
   "Start timer waiting for prefix key to be followed by another key.
