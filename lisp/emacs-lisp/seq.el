@@ -430,9 +430,9 @@ Equality is defined by TESTFN if non-nil or by `equal' if nil."
   "Return a list of the elements that appear in SEQUENCE1 but not in SEQUENCE2.
 Equality is defined by TESTFN if non-nil or by `equal' if nil."
   (seq-reduce (lambda (acc elt)
-                (if (not (seq-contains-p sequence2 elt testfn))
-                    (cons elt acc)
-                  acc))
+                (if (seq-contains-p sequence2 elt testfn)
+                    acc
+                  (cons elt acc)))
               (seq-reverse sequence1)
               '()))
 
