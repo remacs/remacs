@@ -175,7 +175,7 @@ Thus, this does not include the current directory.")
   (setq eshell-variable-aliases-list
 	(append
 	 eshell-variable-aliases-list
-	 `(("-" (lambda (indices)
+         `(("-" ,(lambda (indices)
 		   (if (not indices)
 		       (unless (ring-empty-p eshell-last-dir-ring)
 			 (expand-file-name
