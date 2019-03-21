@@ -974,11 +974,10 @@ character class inside a character alternative.  For instance,
 elisp, The Emacs Lisp Reference Manual}, for a list of character
 classes.
 
-To include a @samp{]} in a character set, you must make it the first
-character.  For example, @samp{[]a]} matches @samp{]} or @samp{a}.  To
-include a @samp{-}, write @samp{-} as the first or last character of the
-set, or put it after a range.  Thus, @samp{[]-]} matches both @samp{]}
-and @samp{-}.
+To include a @samp{]} in a character set, you must make it the first character.
+For example, @samp{[]a]} matches @samp{]} or @samp{a}.  To include a @samp{-},
+write @samp{-} as the last character of the set, tho you can also put it first
+or after a range.  Thus, @samp{[]-]} matches both @samp{]} and @samp{-}.
 
 To include @samp{^} in a set, put it anywhere but at the beginning of
 the set.  (At the beginning, it complements the set---see below.)
