@@ -4025,6 +4025,12 @@ types.  */)
   Lisp_Object symbol = intern ("command-line-processed");
   specbind (symbol, Qnil);
 
+  /* Reset process-environment -- this is for when they re-dump a
+     pdump-restored emacs, since set_initial_environment wants always
+     to cons it from scratch.  */
+  Vprocess_environment = Qnil;
+  garbage_collect ();
+
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
   filename = ENCODE_FILE (filename);
