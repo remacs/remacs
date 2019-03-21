@@ -390,6 +390,9 @@ buffers.
 New convenience functions 'seq-first' and 'seq-rest' give easy access
 to respectively the first and all but the first elements of sequences.
 
+The new predicate function 'seq-contains-p' should be used instead of
+the now obsolete 'seq-contains'.
+
 ---
 ** Follow mode
 In the current follow group of windows, "ghost" cursors are no longer
