@@ -96,7 +96,7 @@ Returns the result of evaluating the form associated with MAP-VAR's type."
            (t (error "Unsupported map type `%S': %S"
                      (type-of ,map-var) ,map-var)))))
 
-(define-error 'map-not-inplace "Cannot modify map in-place: %S")
+(define-error 'map-not-inplace "Cannot modify map in-place")
 
 (defsubst map--plist-p (list)
   (and (consp list) (not (listp (car list)))))
@@ -393,7 +393,7 @@ If you want to insert an element without modifying MAP, use `map-insert'."
       (let ((oldmap map))
         (setf (alist-get key map key nil (or testfn #'equal)) value)
         (unless (eq oldmap map)
-          (signal 'map-not-inplace (list map)))))
+          (signal 'map-not-inplace (list oldmap)))))
     :hash-table (puthash key value map)
     ;; FIXME: If `key' is too large, should we signal `map-not-inplace'
     ;; and let `map-insert' grow the array?
