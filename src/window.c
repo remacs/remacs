@@ -459,14 +459,6 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
 
-DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
-       doc: /* Return left pixel edge of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_left);
-}
-
 DEFUN ("window-left-column", Fwindow_left_column, Swindow_left_column, 0, 1, 0,
        doc: /* Return left column of window WINDOW.
 This is the distance, in columns, between the left edge of WINDOW and
@@ -6293,7 +6285,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
   defsubr (&Sset_window_new_normal);
