@@ -592,6 +592,7 @@ a cons (TYPE . COLOR), then both properties are affected."
 
 (autoload 'cua-set-rectangle-mark "cua-rect"
   "Start rectangle at mouse click position." t nil)
+(autoload 'cua-toggle-rectangle-mark "cua-rect" nil t)
 
 ;; Stub definitions until it is loaded
 (defvar cua--rectangle)
