@@ -14,8 +14,8 @@ use crate::{
 /// or else nothing is done if current buffer isn't visiting a file.
 ///
 /// If the option `create-lockfiles' is nil, this does nothing.
-#[lisp_fn(min = "0", name = "lock-buffer")]
-pub fn lock_buffer_lisp(file: LispObject) {
+#[lisp_fn(min = "0")]
+pub fn lock_buffer(file: LispObject) {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let file = if file.is_nil() {
         cur_buf.truename()
