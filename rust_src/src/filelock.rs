@@ -1,8 +1,11 @@
+//! Lock files for editing.
+
 use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    remacs_sys::{lock_file, unlock_file, Qstringp},
+    remacs_sys::{lock_file, unlock_file},
+    remacs_sys::Qstringp,
     threads::ThreadState,
 };
 
