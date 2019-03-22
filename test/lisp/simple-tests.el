@@ -214,6 +214,40 @@
       (remove-hook 'post-self-insert-hook inc))))
 
 
+;;; `delete-indentation'
+(ert-deftest simple-delete-indentation-no-region ()
+  "delete-indentation works when no mark is set."
+  ;; interactive \r returns nil for BEG END args
+  (unwind-protect
+      (with-temp-buffer
+        (insert (concat "zero line \n"
+                        "first line \n"
+                        "second line"))
+        (delete-indentation)
+        (should (string-equal
+                 (buffer-string)
+                 (concat "zero line \n"
+                         "first line second line")))
+        )))
+
+(ert-deftest simple-delete-indentation-inactive-region ()
+  "delete-indentation ignores inactive region."
+  ;; interactive \r returns non-nil for BEG END args
+  (unwind-protect
+      (with-temp-buffer
+        (insert (concat "zero line \n"
+                        "first line \n"
+                        "second line"))
+        (push-mark (point-min) t t)
+        (deactivate-mark)
+        (delete-indentation)
+        (should (string-equal
+                 (buffer-string)
+                 (concat "zero line \n"
+                         "first line second line")))
+        )))
+
+
 ;;; `delete-trailing-whitespace'
 (ert-deftest simple-delete-trailing-whitespace--bug-21766 ()
   "Test bug#21766: delete-whitespace sometimes deletes non-whitespace."

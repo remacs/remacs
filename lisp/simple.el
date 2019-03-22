@@ -617,7 +617,8 @@ region is ignored if prefix argument is given.)"
 					  (+ (point) (length fill-prefix)))))
 	  (delete-region (point) (+ (point) (length fill-prefix))))
       (fixup-whitespace)
-      (if (and beg
+      (if (and (use-region-p)
+               beg
                (not arg)
 	       (< beg (point-at-bol)))
 	  (beginning-of-line)))))
