@@ -4065,7 +4065,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `shell-command'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
+  ;; Prior Emacs 27, `shell-file-name' was hard coded as "/bin/sh" for
+  ;; remote processes in Emacs.  That doesn't work for tramp-adb.el.
+  (skip-unless (or (and (tramp--test-adb-p) (tramp--test-emacs27-p))
+		   (tramp--test-sh-p)))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted))
@@ -4093,6 +4096,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name)))
 
+      ;; tramp-adb.el is not fit yet for asynchronous processes.
+      (unless (tramp--test-adb-p)
       (unwind-protect
 	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
@@ -4119,8 +4124,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (buffer-string))))
 
 	;; Cleanup.
-	(ignore-errors (delete-file tmp-name)))
+	(ignore-errors (delete-file tmp-name))))
 
+      ;; tramp-adb.el is not fit yet for asynchronous processes.
+      (unless (tramp--test-adb-p)
       (unwind-protect
 	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
@@ -4148,7 +4155,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (buffer-string))))
 
 	;; Cleanup.
-	(ignore-errors (delete-file tmp-name))))))
+	(ignore-errors (delete-file tmp-name)))))))
 
 (defun tramp--test-shell-command-to-string-asynchronously (command)
   "Like `shell-command-to-string', but for asynchronous processes."
@@ -5705,6 +5712,9 @@ Since it unloads Tramp, it shall be the last test to run."
 ;;   do not work properly for `nextcloud'.
 ;; * Fix `tramp-test29-start-file-process' and
 ;;   `tramp-test30-make-process' on MS Windows (`process-send-eof'?).
+;; * Fix `tramp-test29-start-file-process',
+;;   `tramp-test30-make-process' and `tramp-test32-shell-command' for
+;;   `adb' (see comment in `tramp-adb-send-command').
 ;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.
 
 (provide 'tramp-tests)

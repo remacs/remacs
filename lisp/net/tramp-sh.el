@@ -3619,7 +3619,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	      sequence `(,command "monitor" ,localname)))
        ;; "gvfs-monitor-dir".
        ((setq command (tramp-get-remote-gvfs-monitor-dir v))
-	(setq filter 'tramp-sh-gvfs-monitor-dir-process-filter
+	(setq filter #'tramp-sh-gvfs-monitor-dir-process-filter
 	      events
 	      (cond
 	       ((and (memq 'change flags) (memq 'attribute-change flags))
@@ -4886,7 +4886,7 @@ connection if a previous connection has died for some reason."
 			     (list tramp-encoding-shell))))))
 
 		;; Set sentinel and query flag.  Initialize variables.
-		(set-process-sentinel p 'tramp-process-sentinel)
+		(set-process-sentinel p #'tramp-process-sentinel)
 		(process-put p 'vector vec)
 		(process-put p 'adjust-window-size-function #'ignore)
 		(set-process-query-on-exit-flag p nil)

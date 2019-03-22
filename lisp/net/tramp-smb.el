@@ -41,10 +41,6 @@
   (tramp--with-startup
    (add-to-list 'tramp-methods
                 `(,tramp-smb-method
-                  ;; We define an empty command, because
-                  ;; `tramp-smb-call-winexe' opens already the powershell.
-                  ;; Used in `tramp-handle-shell-command'.
-                  (tramp-remote-shell "")
                   ;; This is just a guess.  We don't know whether the share "C$"
                   ;; is available for public use, and whether the user has write
                   ;; access.

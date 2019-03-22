@@ -78,9 +78,6 @@ It is used for TCP/IP devices."
 (tramp--with-startup
  (add-to-list 'tramp-methods
 	      `(,tramp-adb-method
-                ;; Used in `tramp-handle-shell-command'.
-                (tramp-remote-shell      "/system/bin/sh")
-                (tramp-remote-shell-args ("-c"))
 	        (tramp-tmpdir            "/data/local/tmp")
                 (tramp-default-port      5555)))
 

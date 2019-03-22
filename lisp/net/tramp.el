@@ -3569,17 +3569,7 @@ support symbolic links."
   (command &optional output-buffer error-buffer)
   "Like `shell-command' for Tramp files."
   (let* ((asynchronous (string-match-p "[ \t]*&[ \t]*\\'" command))
-	 ;; We cannot use `shell-file-name' and `shell-command-switch',
-	 ;; they are variables of the local host.
-	 (args (append
-		(cons
-		 (tramp-get-method-parameter
-		  (tramp-dissect-file-name default-directory)
-		  'tramp-remote-shell)
-		 (tramp-get-method-parameter
-		  (tramp-dissect-file-name default-directory)
-		  'tramp-remote-shell-args))
-		(list (substring command 0 asynchronous))))
+	 (command (substring command 0 asynchronous))
 	 current-buffer-p
 	 (output-buffer
 	  (cond
@@ -3596,19 +3586,48 @@ support symbolic links."
 	  (cond
 	   ((bufferp error-buffer) error-buffer)
 	   ((stringp error-buffer) (get-buffer-create error-buffer))))
-	 (buffer
-	  (if (and (not asynchronous) error-buffer)
-	      (with-parsed-tramp-file-name default-directory nil
-		(list output-buffer (tramp-make-tramp-temp-file v)))
-	    output-buffer))
-	 (p (get-buffer-process output-buffer)))
+	 (bname (buffer-name output-buffer))
+	 (p (get-buffer-process output-buffer))
+	 buffer)
 
-    ;; Check whether there is another process running.  Tramp does not
-    ;; support 2 (asynchronous) processes in parallel.
+    ;; The following code is taken from `shell-command', slightly
+    ;; adapted.  Shouldn't it be factored out?
     (when p
-      (if (yes-or-no-p "A command is running.  Kill it? ")
-	  (ignore-errors (kill-process p))
-	(tramp-user-error p "Shell command in progress")))
+      (cond
+       ((eq async-shell-command-buffer 'confirm-kill-process)
+	;; If will kill a process, query first.
+	(if (yes-or-no-p
+	     "A command is running in the default buffer.  Kill it? ")
+	    (kill-process p)
+	  (tramp-user-error p "Shell command in progress")))
+       ((eq async-shell-command-buffer 'confirm-new-buffer)
+	;; If will create a new buffer, query first.
+	(if (yes-or-no-p
+	     "A command is running in the default buffer.  Use a new buffer? ")
+            (setq output-buffer (generate-new-buffer bname))
+	  (tramp-user-error p "Shell command in progress")))
+       ((eq async-shell-command-buffer 'new-buffer)
+	;; It will create a new buffer.
+        (setq output-buffer (generate-new-buffer bname)))
+       ((eq async-shell-command-buffer 'confirm-rename-buffer)
+	;; If will rename the buffer, query first.
+	(if (yes-or-no-p
+	     "A command is running in the default buffer.  Rename it? ")
+	    (progn
+	      (with-current-buffer output-buffer
+		(rename-uniquely))
+              (setq output-buffer (get-buffer-create bname)))
+	  (tramp-user-error p "Shell command in progress")))
+       ((eq async-shell-command-buffer 'rename-buffer)
+	;; It will rename the buffer.
+	(with-current-buffer output-buffer
+	  (rename-uniquely))
+        (setq output-buffer (get-buffer-create bname)))))
+
+    (setq buffer (if (and (not asynchronous) error-buffer)
+		     (with-parsed-tramp-file-name default-directory nil
+		       (list output-buffer (tramp-make-tramp-temp-file v)))
+		   output-buffer))
 
     (if current-buffer-p
 	(progn
@@ -3621,18 +3640,19 @@ support symbolic links."
     (if (and (not current-buffer-p) (integerp asynchronous))
 	(prog1
 	    ;; Run the process.
-	    (setq p (apply #'start-file-process "*Async Shell*" buffer args))
+	    (setq p (start-file-process-shell-command
+		     "*Async Shell*" buffer command))
 	  ;; Display output.
 	  (with-current-buffer output-buffer
 	    (display-buffer output-buffer '(nil (allow-no-window . t)))
 	    (setq mode-line-process '(":%s"))
 	    (shell-mode)
 	    (set-process-sentinel p #'shell-command-sentinel)
-	    (set-process-filter p 'comint-output-filter)))
+	    (set-process-filter p #'comint-output-filter)))
 
       (prog1
 	  ;; Run the process.
-	  (apply #'process-file (car args) nil buffer nil (cdr args))
+	  (process-file-shell-command command nil buffer nil)
 	;; Insert error messages if they were separated.
 	(when (listp buffer)
 	  (with-current-buffer error-buffer
