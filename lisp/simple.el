@@ -596,9 +596,10 @@ When called from Lisp code, ARG may be a prefix string to copy."
 (defun delete-indentation (&optional arg beg end)
   "Join this line to previous and fix up whitespace at join.
 If there is a fill prefix, delete it from the beginning of this
-line.  With prefix ARG, join the current line to the following line.
-With the region active, join lines in the region. If both the
-argument is set and the region is active, the region is ignored."
+line.
+With prefix ARG, join the current line to the following line.
+If the region is active, join all the lines in the region.  (The
+region is ignored if prefix argument is given.)"
   (interactive "*P\nr")
   (if arg (forward-line 1)
     (if (use-region-p)
