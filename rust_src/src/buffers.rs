@@ -362,6 +362,11 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    /// Check if buffer was modified since its file was last read or saved.
+    pub fn modified_since_save(self) -> bool {
+        self.modifications_since_save() < self.modifications()
+    }
+
     pub fn overlay_modifications(self) -> EmacsInt {
         unsafe { (*self.text).overlay_modiff }
     }
@@ -1127,7 +1132,7 @@ pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_p(buffer: LispBufferOrCurrent) -> bool {
     let buf: LispBufferRef = buffer.into();
-    buf.modifications_since_save() < buf.modifications()
+    buf.modified_since_save()
 }
 
 /// Return the name of BUFFER, as a string.

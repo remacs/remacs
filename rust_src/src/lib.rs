@@ -86,6 +86,7 @@ mod emacs;
 mod eval;
 mod ffi;
 mod fileio;
+mod filelock;
 mod floatfns;
 mod fns;
 mod fonts;
