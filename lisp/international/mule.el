@@ -819,10 +819,10 @@ VALUE is a CCL program name defined by `define-ccl-program'.  The
 CCL program reads a character sequence and writes a byte sequence
 as an encoding result.
 
-`:inhibit-null-byte-detection'
+`:inhibit-nul-byte-detection'
 
 VALUE non-nil means Emacs ignore null bytes on code detection.
-See the variable `inhibit-null-byte-detection'.  This attribute
+See the variable `inhibit-nul-byte-detection'.  This attribute
 is meaningful only when `:coding-type' is `undecided'.
 
 `:inhibit-iso-escape-detection'
@@ -867,7 +867,7 @@ non-ASCII files.  This attribute is meaningful only when
 				      :ccl-encoder
 				      :valids))
 				   ((eq coding-type 'undecided)
-				    '(:inhibit-null-byte-detection
+				    '(:inhibit-nul-byte-detection
 				      :inhibit-iso-escape-detection
 				      :prefer-utf-8))))))
 
@@ -920,8 +920,8 @@ non-ASCII files.  This attribute is meaningful only when
 	  (cons :name (cons name (cons :docstring (cons (purecopy docstring)
 							props)))))
     (setcdr (assq :plist common-attrs) props)
-    (apply 'define-coding-system-internal
-	   name (mapcar 'cdr (append common-attrs spec-attrs)))))
+    (apply #'define-coding-system-internal
+	   name (mapcar #'cdr (append common-attrs spec-attrs)))))
 
 (defun coding-system-doc-string (coding-system)
   "Return the documentation string for CODING-SYSTEM."

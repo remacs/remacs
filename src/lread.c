@@ -2659,7 +2659,7 @@ free_contents (void *p)
 static Lisp_Object
 read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 {
-  /* Room for sign, leading 0, other digits, trailing null byte.
+  /* Room for sign, leading 0, other digits, trailing NUL byte.
      Also, room for invalid syntax diagnostic.  */
   size_t len = max (1 + 1 + UINTMAX_WIDTH + 1,
 		    sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT));

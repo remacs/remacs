@@ -1639,7 +1639,7 @@ file_name_absolute_p (const char *filename)
 }
 
 /* Put into BUF the concatenation of DIR and FILE, with an intervening
-   directory separator if needed.  Return a pointer to the null byte
+   directory separator if needed.  Return a pointer to the NUL byte
    at the end of the concatenated string.  */
 char *
 splice_dir_file (char *buf, char const *dir, char const *file)

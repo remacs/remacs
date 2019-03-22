@@ -584,7 +584,7 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   MODULE_FUNCTION_BEGIN (module_nil);
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     overflow_error ();
-  /* FIXME: AUTO_STRING_WITH_LEN requires STR to be null-terminated,
+  /* FIXME: AUTO_STRING_WITH_LEN requires STR to be NUL-terminated,
      but we shouldn't require that.  */
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (env,

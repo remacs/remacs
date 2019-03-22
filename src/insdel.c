@@ -708,7 +708,7 @@ insert_char (int c)
   insert ((char *) str, len);
 }
 
-/* Insert the null-terminated string S before point.  */
+/* Insert the NUL-terminated string S before point.  */
 
 void
 insert_string (const char *s)

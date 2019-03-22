@@ -642,14 +642,14 @@ Do the right thing if the file has been compressed or zipped."
 	  (insert-file-contents-literally fullname visit)
 	  (let ((inhibit-read-only t)
 		(coding-system-for-write 'no-conversion)
-		(inhibit-null-byte-detection t) ; Index nodes include null bytes
+		(inhibit-nul-byte-detection t) ; Index nodes include null bytes
 		(default-directory (or (file-name-directory fullname)
 				       default-directory)))
 	    (or (consp decoder)
 		(setq decoder (list decoder)))
 	    (apply #'call-process-region (point-min) (point-max)
 		   (car decoder) t t nil (cdr decoder))))
-      (let ((inhibit-null-byte-detection t)) ; Index nodes include null bytes
+      (let ((inhibit-nul-byte-detection t)) ; Index nodes include null bytes
 	(insert-file-contents fullname visit)))
 
     ;; Clear the caches of modified Info files.
@@ -1377,7 +1377,7 @@ is non-nil)."
 			  ;; Index nodes include null bytes.  DIR
 			  ;; files should not have indices, but who
 			  ;; knows...
-			  (let ((inhibit-null-byte-detection t))
+			  (let ((inhibit-nul-byte-detection t))
 			    (insert-file-contents file)
 			    (setq Info-dir-file-name file)
 			    (push (current-buffer) buffers)

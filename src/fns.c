@@ -412,7 +412,7 @@ Symbols are also allowed; their print names are used instead.  */)
 
   while ((cmp = filevercmp (p1, p2)) == 0)
     {
-      /* If the strings are identical through their first null bytes,
+      /* If the strings are identical through their first NUL bytes,
 	 skip past identical prefixes and try again.  */
       ptrdiff_t size = strlen (p1) + 1;
       p1 += size;

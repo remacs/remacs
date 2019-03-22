@@ -737,7 +737,8 @@ void
 force_auto_save_soon (void)
 {
   last_auto_save = - auto_save_interval - 1;
-
+  /* FIXME: What's the relationship between forcing auto-save and adding
+     a buffer-switch event?  */
   record_asynch_buffer_change ();
 }
 #endif
@@ -6191,7 +6192,7 @@ parse_modifiers_uncached (Lisp_Object symbol, ptrdiff_t *modifier_end)
 static Lisp_Object
 apply_modifiers_uncached (int modifiers, char *base, int base_len, int base_len_byte)
 {
-  /* Since BASE could contain nulls, we can't use intern here; we have
+  /* Since BASE could contain NULs, we can't use intern here; we have
      to use Fintern, which expects a genuine Lisp_String, and keeps a
      reference to it.  */
   char new_mods[sizeof "A-C-H-M-S-s-up-down-drag-double-triple-"];

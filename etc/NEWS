@@ -1355,6 +1355,9 @@ Now, such rx expressions generate an error.
 * Lisp Changes in Emacs 27.1
 
 +++
+** inhibit-null-byte-detection is renamed to inhibit-nul-byte-detection
+
++++
 ** 'self-insert-command' takes the char to insert as (optional) argument.
 
 ** 'lookup-key' can take a list of keymaps as argument.

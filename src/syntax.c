@@ -3477,10 +3477,7 @@ internalize_parse_state (Lisp_Object external, struct lisp_parse_state *state)
   else
     {
       tem = Fcar (external);
-      if (!NILP (tem))
-	state->depth = XFIXNUM (tem);
-      else
-	state->depth = 0;
+      state->depth = FIXNUMP (tem) ? XFIXNUM (tem) : 0;
 
       external = Fcdr (external);
       external = Fcdr (external);
