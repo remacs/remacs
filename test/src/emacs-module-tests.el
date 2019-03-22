@@ -265,7 +265,8 @@ during garbage collection."
   (skip-unless (file-executable-p mod-test-emacs))
   (module--test-assertion
       (rx "Module function called during garbage collection\n")
-    (mod-test-invalid-finalizer)))
+    (mod-test-invalid-finalizer)
+    (garbage-collect)))
 
 (ert-deftest module/describe-function-1 ()
   "Check that Bug#30163 is fixed."
