@@ -1183,9 +1183,9 @@ ns_update_window_end (struct window *w, bool cursor_on_p,
       if (draw_window_fringes (w, 1))
 	{
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 	}
 
       unblock_input ();
@@ -1528,12 +1528,12 @@ ns_frame_rehighlight (struct frame *frame)
     {
       if (old_highlight)
 	{
-          x_update_cursor (old_highlight, 1);
+          gui_update_cursor (old_highlight, 1);
 	  x_set_frame_alpha (old_highlight);
 	}
       if (dpyinfo->x_highlight_frame)
 	{
-          x_update_cursor (dpyinfo->x_highlight_frame, 1);
+          gui_update_cursor (dpyinfo->x_highlight_frame, 1);
           x_set_frame_alpha (dpyinfo->x_highlight_frame);
 	}
     }
@@ -2607,7 +2607,7 @@ ns_define_frame_cursor (struct frame *f, Cursor cursor)
       [[view window] invalidateCursorRectsForView: view];
       /* Redisplay assumes this function also draws the changed frame
          cursor, but this function doesn't, so do it explicitly.  */
-      x_update_cursor (f, 1);
+      gui_update_cursor (f, 1);
     }
 }
 
@@ -2885,7 +2885,7 @@ ns_scroll_run (struct window *w, struct run *run)
 
   block_input ();
 
-  x_clear_cursor (w);
+  gui_clear_cursor (w);
 
   {
     NSRect srcRect = NSMakeRect (x, from_y, width, height);
@@ -5099,7 +5099,7 @@ ns_initialize_display_info (struct ns_display_info *dpyinfo)
 
 
 /* This and next define (many of the) public functions in this file.  */
-/* x_... are generic versions in xdisp.c that we, and other terms, get away
+/* gui_* are generic versions in xdisp.c that we, and other terms, get away
          with using despite presence in the "system dependent" redisplay
          interface.  In addition, many of the ns_ methods have code that is
          shared with all terms, indicating need for further refactoring.  */
@@ -5107,18 +5107,18 @@ extern frame_parm_handler ns_frame_parm_handlers[];
 static struct redisplay_interface ns_redisplay_interface =
 {
   ns_frame_parm_handlers,
-  x_produce_glyphs,
-  x_write_glyphs,
-  x_insert_glyphs,
-  x_clear_end_of_line,
+  gui_produce_glyphs,
+  gui_write_glyphs,
+  gui_insert_glyphs,
+  gui_clear_end_of_line,
   ns_scroll_run,
   ns_after_update_window_line,
   ns_update_window_begin,
   ns_update_window_end,
   0, /* flush_display */
-  x_clear_window_mouse_face,
-  x_get_glyph_overhangs,
-  x_fix_overlapping_area,
+  gui_clear_window_mouse_face,
+  gui_get_glyph_overhangs,
+  gui_fix_overlapping_area,
   ns_draw_fringe_bitmap,
   0, /* define_fringe_bitmap */ /* FIXME: simplify ns_draw_fringe_bitmap */
   0, /* destroy_fringe_bitmap */
@@ -7249,7 +7249,7 @@ not_in_argv (NSString *arg)
             from sole-frame Emacs to get hollow box to show.  */
   if (!windowClosing && [[self window] isVisible] == YES)
     {
-      x_update_cursor (emacsframe, 1);
+      gui_update_cursor (emacsframe, 1);
       x_set_frame_alpha (emacsframe);
     }
 

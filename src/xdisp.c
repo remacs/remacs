@@ -491,7 +491,7 @@ int windows_or_buffers_changed;
 
    Since the frame title uses the same %-constructs as the mode line
    (except %c, %C, and %l), if this variable is non-zero, we also consider
-   redisplaying the title of each frame, see x_consider_frame_title.
+   redisplaying the title of each frame, see gui_consider_frame_title.
 
    The `redisplay' bits are the same as those used for
    windows_or_buffers_changed, and setting windows_or_buffers_changed also
@@ -900,7 +900,7 @@ static int underlying_face_id (struct it *);
 #ifdef HAVE_WINDOW_SYSTEM
 
 static void update_tool_bar (struct frame *, bool);
-static void x_draw_bottom_divider (struct window *w);
+static void gui_draw_bottom_divider (struct window *w);
 static void notice_overwritten_cursor (struct window *,
                                        enum glyph_row_area,
                                        int, int, int, int);
@@ -2139,7 +2139,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	  rc.width = s->w->phys_cursor_width;
 	  rc.height = s->w->phys_cursor_height;
 
-	  x_intersect_rectangles (&r_save, &rc, &r);
+	  gui_intersect_rectangles (&r_save, &rc, &r);
 	}
     }
   else
@@ -2200,7 +2200,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
     {
       XRectangle r_save = r;
 
-      if (! x_intersect_rectangles (&r_save, s->row->clip, &r))
+      if (! gui_intersect_rectangles (&r_save, s->row->clip, &r))
 	r.width = 0;
     }
 
@@ -6932,7 +6932,7 @@ static next_element_function const get_next_element[NUM_IT_METHODS] =
    method symbol.  By side-effect, update it->what and
    it->glyphless_method.  This function is called from
    get_next_display_element for each character element, and from
-   x_produce_glyphs when no suitable font was found.  */
+   gui_produce_glyphs when no suitable font was found.  */
 
 Lisp_Object
 lookup_glyphless_char_display (int c, struct it *it)
@@ -9630,7 +9630,7 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
 		      /* When display_line produces a continued line
 			 that ends in a TAB, it skips a tab stop that
 			 is closer than the font's space character
-			 width (see x_produce_glyphs where it produces
+			 width (see gui_produce_glyphs where it produces
 			 the stretch glyph which represents a TAB).
 			 We need to reproduce the same logic here.  */
 		      eassert (face_font);
@@ -12005,7 +12005,7 @@ store_mode_line_noprop (const char *string, int field_width, int precision)
    frame_title_format.  */
 
 static void
-x_consider_frame_title (Lisp_Object frame)
+gui_consider_frame_title (Lisp_Object frame)
 {
   struct frame *f = XFRAME (frame);
 
@@ -12152,7 +12152,7 @@ prepare_menu_bars (void)
 		  || FRAME_VISIBLE_P (f) == 1
 		  /* Exclude TTY frames that are obscured because they
 		     are not the top frame on their console.  This is
-		     because x_consider_frame_title actually switches
+		     because gui_consider_frame_title actually switches
 		     to the frame, which for TTY frames means it is
 		     marked as garbaged, and will be completely
 		     redrawn on the next redisplay cycle.  This causes
@@ -12160,7 +12160,7 @@ prepare_menu_bars (void)
 		     are more than one of them, even though nothing
 		     should be changed on display.  */
 		  || (FRAME_VISIBLE_P (f) == 2 && FRAME_WINDOW_P (f))))
-	    x_consider_frame_title (frame);
+	    gui_consider_frame_title (frame);
 	}
     }
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -17688,7 +17688,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
-      x_consider_frame_title (w->frame);
+      gui_consider_frame_title (w->frame);
 #endif
     }
 
@@ -17703,16 +17703,16 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       if (draw_window_fringes (w, true))
 	{
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 	}
       unblock_input ();
       update_end (f);
     }
 
   if (WINDOW_BOTTOM_DIVIDER_WIDTH (w))
-    x_draw_bottom_divider (w);
+    gui_draw_bottom_divider (w);
 #endif /* HAVE_WINDOW_SYSTEM */
 
   /* We go to this label, with fonts_changed set, if it is
@@ -19156,7 +19156,7 @@ try_window_id (struct window *w)
 		     + window_internal_height (w));
 
 #if defined (HAVE_GPM) || defined (MSDOS)
-	  x_clear_window_mouse_face (w);
+	  gui_clear_window_mouse_face (w);
 #endif
 	  /* Perform the operation on the screen.  */
 	  if (dvpos > 0)
@@ -20180,7 +20180,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	      it->object = saved_object; /* get_it_property needs this */
 	      normal_char_ascent_descent (font, -1, &it->ascent, &it->descent);
 	      /* Must do a subset of line height processing from
-		 x_produce_glyph for newline characters.  */
+		 gui_produce_glyph for newline characters.  */
 	      height = get_it_property (it, Qline_height);
 	      if (CONSP (height)
 		  && CONSP (XCDR (height))
@@ -26266,7 +26266,7 @@ normal_char_height (struct font *font, int c)
    assumed to be zero.  */
 
 void
-x_get_glyph_overhangs (struct glyph *glyph, struct frame *f, int *left, int *right)
+gui_get_glyph_overhangs (struct glyph *glyph, struct frame *f, int *left, int *right)
 {
   *left = *right = 0;
 
@@ -26356,7 +26356,7 @@ left_overwriting (struct glyph_string *s)
   for (i = first - 1; i >= 0; --i)
     {
       int left, right;
-      x_get_glyph_overhangs (glyphs + i, s->f, &left, &right);
+      gui_get_glyph_overhangs (glyphs + i, s->f, &left, &right);
       if (x + right > 0)
 	k = i;
       x -= glyphs[i].pixel_width;
@@ -26411,7 +26411,7 @@ right_overwriting (struct glyph_string *s)
   for (i = first; i < end; ++i)
     {
       int left, right;
-      x_get_glyph_overhangs (glyphs + i, s->f, &left, &right);
+      gui_get_glyph_overhangs (glyphs + i, s->f, &left, &right);
       if (x - left < 0)
 	k = i;
       x += glyphs[i].pixel_width;
@@ -27073,7 +27073,7 @@ font_for_underline_metrics (struct glyph_string *s)
   }
 
 /* Store one glyph for IT->char_to_display in IT->glyph_row.
-   Called from x_produce_glyphs when IT->glyph_row is non-null.  */
+   Called from gui_produce_glyphs when IT->glyph_row is non-null.  */
 
 static void
 append_glyph (struct it *it)
@@ -27155,9 +27155,8 @@ append_glyph (struct it *it)
     IT_EXPAND_MATRIX_WIDTH (it, area);
 }
 
-/* Store one glyph for the composition IT->cmp_it.id in
-   IT->glyph_row.  Called from x_produce_glyphs when IT->glyph_row is
-   non-null.  */
+/* Store one glyph for the composition IT->cmp_it.id in IT->glyph_row.
+   Called from gui_produce_glyphs when IT->glyph_row is non-null.  */
 
 static void
 append_composite_glyph (struct it *it)
@@ -28233,7 +28232,7 @@ produce_glyphless_glyph (struct it *it, bool for_no_font, Lisp_Object acronym)
    for an overview of struct it.  */
 
 void
-x_produce_glyphs (struct it *it)
+gui_produce_glyphs (struct it *it)
 {
   int extra_line_spacing = it->extra_line_spacing;
 
@@ -29001,7 +29000,7 @@ x_produce_glyphs (struct it *it)
    being updated, and UPDATED_AREA is the area of that row being updated.  */
 
 void
-x_write_glyphs (struct window *w, struct glyph_row *updated_row,
+gui_write_glyphs (struct window *w, struct glyph_row *updated_row,
 		struct glyph *start, enum glyph_row_area updated_area, int len)
 {
   int x, hpos, chpos = w->phys_cursor.hpos;
@@ -29045,7 +29044,7 @@ x_write_glyphs (struct window *w, struct glyph_row *updated_row,
    Insert LEN glyphs from START at the nominal cursor position.  */
 
 void
-x_insert_glyphs (struct window *w, struct glyph_row *updated_row,
+gui_insert_glyphs (struct window *w, struct glyph_row *updated_row,
 		 struct glyph *start, enum glyph_row_area updated_area, int len)
 {
   struct frame *f;
@@ -29102,7 +29101,7 @@ x_insert_glyphs (struct window *w, struct glyph_row *updated_row,
    updated window W.  TO_X == -1 means clear to the end of this area.  */
 
 void
-x_clear_end_of_line (struct window *w, struct glyph_row *updated_row,
+gui_clear_end_of_line (struct window *w, struct glyph_row *updated_row,
 		     enum glyph_row_area updated_area, int to_x)
 {
   struct frame *f;
@@ -29489,7 +29488,7 @@ notice_overwritten_cursor (struct window *w, enum glyph_row_area area,
    with respect to the overlapping part OVERLAPS.  */
 
 void
-x_fix_overlapping_area (struct window *w, struct glyph_row *row,
+gui_fix_overlapping_area (struct window *w, struct glyph_row *row,
 			enum glyph_row_area area, int overlaps)
 {
   int i, x;
@@ -29568,12 +29567,12 @@ draw_phys_cursor_glyph (struct window *w, struct glyph_row *row,
 
 	  if (row > w->current_matrix->rows
 	      && MATRIX_ROW_OVERLAPS_SUCC_P (row - 1))
-	    x_fix_overlapping_area (w, row - 1, TEXT_AREA,
+	    gui_fix_overlapping_area (w, row - 1, TEXT_AREA,
 				    OVERLAPS_ERASED_CURSOR);
 
 	  if (MATRIX_ROW_BOTTOM_Y (row) < window_text_bottom_y (w)
 	      && MATRIX_ROW_OVERLAPS_PRED_P (row + 1))
-	    x_fix_overlapping_area (w, row + 1, TEXT_AREA,
+	    gui_fix_overlapping_area (w, row + 1, TEXT_AREA,
 				    OVERLAPS_ERASED_CURSOR);
 	}
     }
@@ -29863,7 +29862,7 @@ update_cursor_in_window_tree (struct window *w, bool on_p)
    Don't change the cursor's position.  */
 
 void
-x_update_cursor (struct frame *f, bool on_p)
+gui_update_cursor (struct frame *f, bool on_p)
 {
   update_cursor_in_window_tree (XWINDOW (f->root_window), on_p);
 }
@@ -29875,7 +29874,7 @@ x_update_cursor (struct frame *f, bool on_p)
    is about to be rewritten.  */
 
 void
-x_clear_cursor (struct window *w)
+gui_clear_cursor (struct window *w)
 {
   if (FRAME_VISIBLE_P (XFRAME (w->frame)) && w->phys_cursor_on_p)
     update_window_cursor (w, false);
@@ -31903,7 +31902,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
    functions to ensure the mouse-highlight is off.  */
 
 void
-x_clear_window_mouse_face (struct window *w)
+gui_clear_window_mouse_face (struct window *w)
 {
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
   Lisp_Object window;
@@ -32047,13 +32046,13 @@ expose_overlaps (struct window *w,
 
 	row->clip = r;
 	if (row->used[LEFT_MARGIN_AREA])
-	  x_fix_overlapping_area (w, row, LEFT_MARGIN_AREA, OVERLAPS_BOTH);
+	  gui_fix_overlapping_area (w, row, LEFT_MARGIN_AREA, OVERLAPS_BOTH);
 
 	if (row->used[TEXT_AREA])
-	  x_fix_overlapping_area (w, row, TEXT_AREA, OVERLAPS_BOTH);
+	  gui_fix_overlapping_area (w, row, TEXT_AREA, OVERLAPS_BOTH);
 
 	if (row->used[RIGHT_MARGIN_AREA])
-	  x_fix_overlapping_area (w, row, RIGHT_MARGIN_AREA, OVERLAPS_BOTH);
+	  gui_fix_overlapping_area (w, row, RIGHT_MARGIN_AREA, OVERLAPS_BOTH);
 	row->clip = NULL;
       }
 }
@@ -32082,7 +32081,7 @@ phys_cursor_in_rect_p (struct window *w, XRectangle *r)
       cr.y = row->y;
       cr.width = WINDOW_RIGHT_FRINGE_WIDTH (w);
       cr.height = row->height;
-      return x_intersect_rectangles (&cr, r, &result);
+      return gui_intersect_rectangles (&cr, r, &result);
     }
 
   cursor_glyph = get_phys_cursor_glyph (w);
@@ -32096,7 +32095,7 @@ phys_cursor_in_rect_p (struct window *w, XRectangle *r)
       cr.height = w->phys_cursor_height;
       /* ++KFS: W32 version used W32-specific IntersectRect here, but
 	 I assume the effect is the same -- and this is portable.  */
-      return x_intersect_rectangles (&cr, r, &result);
+      return gui_intersect_rectangles (&cr, r, &result);
     }
   /* If we don't understand the format, pretend we're not in the hot-spot.  */
   return false;
@@ -32108,7 +32107,7 @@ phys_cursor_in_rect_p (struct window *w, XRectangle *r)
    have vertical scroll bars.  */
 
 void
-x_draw_vertical_border (struct window *w)
+gui_draw_vertical_border (struct window *w)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
 
@@ -32159,7 +32158,7 @@ x_draw_vertical_border (struct window *w)
 /* Draw window dividers for window W.  */
 
 void
-x_draw_right_divider (struct window *w)
+gui_draw_right_divider (struct window *w)
 {
   struct frame *f = WINDOW_XFRAME (w);
 
@@ -32185,7 +32184,7 @@ x_draw_right_divider (struct window *w)
 }
 
 static void
-x_draw_bottom_divider (struct window *w)
+gui_draw_bottom_divider (struct window *w)
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
 
@@ -32250,7 +32249,7 @@ expose_window (struct window *w, XRectangle *fr)
   wr.width = WINDOW_PIXEL_WIDTH (w);
   wr.height = WINDOW_PIXEL_HEIGHT (w);
 
-  if (x_intersect_rectangles (fr, &wr, &r))
+  if (gui_intersect_rectangles (fr, &wr, &r))
     {
       int yb = window_text_bottom_y (w);
       struct glyph_row *row;
@@ -32267,7 +32266,7 @@ expose_window (struct window *w, XRectangle *fr)
       bool cursor_cleared_p = (!w->pseudo_window_p
 			       && phys_cursor_in_rect_p (w, &r));
       if (cursor_cleared_p)
-	x_clear_cursor (w);
+	gui_clear_cursor (w);
 
       /* If the row containing the cursor extends face to end of line,
 	 then expose_area might overwrite the cursor outside the
@@ -32360,12 +32359,12 @@ expose_window (struct window *w, XRectangle *fr)
 
 	  /* Draw border between windows.  */
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 
 	  if (WINDOW_BOTTOM_DIVIDER_WIDTH (w))
-	    x_draw_bottom_divider (w);
+	    gui_draw_bottom_divider (w);
 
 	  /* Turn the cursor on again.  */
 	  if (cursor_cleared_p
@@ -32499,7 +32498,7 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
    empty.  */
 
 bool
-x_intersect_rectangles (XRectangle *r1, XRectangle *r2, XRectangle *result)
+gui_intersect_rectangles (XRectangle *r1, XRectangle *r2, XRectangle *result)
 {
   XRectangle *left, *right;
   XRectangle *upper, *lower;

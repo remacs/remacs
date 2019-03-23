@@ -3274,19 +3274,19 @@ extern void get_font_ascent_descent (struct font *, int *, int *);
 extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 #endif
 
-extern void x_get_glyph_overhangs (struct glyph *, struct frame *,
-                                   int *, int *);
+extern void gui_get_glyph_overhangs (struct glyph *, struct frame *,
+                                     int *, int *);
 extern struct font *font_for_underline_metrics (struct glyph_string *);
-extern void x_produce_glyphs (struct it *);
+extern void gui_produce_glyphs (struct it *);
 
-extern void x_write_glyphs (struct window *, struct glyph_row *,
-			    struct glyph *, enum glyph_row_area, int);
-extern void x_insert_glyphs (struct window *, struct glyph_row *,
-			     struct glyph *, enum glyph_row_area, int);
-extern void x_clear_end_of_line (struct window *, struct glyph_row *,
-				 enum glyph_row_area, int);
-extern void x_fix_overlapping_area (struct window *, struct glyph_row *,
-                                    enum glyph_row_area, int);
+extern void gui_write_glyphs (struct window *, struct glyph_row *,
+                              struct glyph *, enum glyph_row_area, int);
+extern void gui_insert_glyphs (struct window *, struct glyph_row *,
+                               struct glyph *, enum glyph_row_area, int);
+extern void gui_clear_end_of_line (struct window *, struct glyph_row *,
+                                   enum glyph_row_area, int);
+extern void gui_fix_overlapping_area (struct window *, struct glyph_row *,
+                                      enum glyph_row_area, int);
 extern void draw_phys_cursor_glyph (struct window *,
                                     struct glyph_row *,
                                     enum draw_glyphs_face);
@@ -3294,10 +3294,10 @@ extern void get_phys_cursor_geometry (struct window *, struct glyph_row *,
                                       struct glyph *, int *, int *, int *);
 extern void erase_phys_cursor (struct window *);
 extern void display_and_set_cursor (struct window *, bool, int, int, int, int);
-extern void x_update_cursor (struct frame *, bool);
-extern void x_clear_cursor (struct window *);
-extern void x_draw_vertical_border (struct window *w);
-extern void x_draw_right_divider (struct window *w);
+extern void gui_update_cursor (struct frame *, bool);
+extern void gui_clear_cursor (struct window *);
+extern void gui_draw_vertical_border (struct window *w);
+extern void gui_draw_right_divider (struct window *w);
 
 extern int get_glyph_string_clip_rects (struct glyph_string *,
                                         NativeRectangle *, int);
@@ -3309,11 +3309,11 @@ extern void handle_tool_bar_click (struct frame *,
                                    int, int, bool, int);
 
 extern void expose_frame (struct frame *, int, int, int, int);
-extern bool x_intersect_rectangles (XRectangle *, XRectangle *, XRectangle *);
+extern bool gui_intersect_rectangles (XRectangle *, XRectangle *, XRectangle *);
 #endif	/* HAVE_WINDOW_SYSTEM */
 
 extern void note_mouse_highlight (struct frame *, int, int);
-extern void x_clear_window_mouse_face (struct window *);
+extern void gui_clear_window_mouse_face (struct window *);
 extern void cancel_mouse_face (struct frame *);
 extern bool clear_mouse_face (Mouse_HLInfo *);
 extern bool cursor_in_mouse_face_p (struct window *w);

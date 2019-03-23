@@ -1514,8 +1514,8 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 
       if (FRAME_VISIBLE_P (f))
 	{
-	  x_update_cursor (f, 0);
-	  x_update_cursor (f, 1);
+	  gui_update_cursor (f, 0);
+	  gui_update_cursor (f, 1);
 	}
     }
 

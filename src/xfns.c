@@ -1388,8 +1388,8 @@ x_set_cursor_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 
       if (FRAME_VISIBLE_P (f))
 	{
-	  x_update_cursor (f, false);
-	  x_update_cursor (f, true);
+	  gui_update_cursor (f, false);
+	  gui_update_cursor (f, true);
 	}
     }
 
@@ -4583,7 +4583,7 @@ x_get_monitor_for_frame (struct frame *f,
 
       if (mi->geom.width == 0) continue;
 
-      if (x_intersect_rectangles (&mi->geom, &frect, &res))
+      if (gui_intersect_rectangles (&mi->geom, &frect, &res))
         {
           a = res.width * res.height;
           if (a > area)
@@ -4712,7 +4712,7 @@ x_get_monitor_attributes_xinerama (struct x_display_info *dpyinfo)
       if (i == 0 && x_get_net_workarea (dpyinfo, &workarea_r))
 	{
 	  mi->work = workarea_r;
-	  if (! x_intersect_rectangles (&mi->geom, &mi->work, &mi->work))
+	  if (! gui_intersect_rectangles (&mi->geom, &mi->work, &mi->work))
 	    mi->work = mi->geom;
 	}
       else
@@ -4816,7 +4816,7 @@ x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
           if (i == primary && x_get_net_workarea (dpyinfo, &workarea_r))
             {
               mi->work= workarea_r;
-              if (! x_intersect_rectangles (&mi->geom, &mi->work, &mi->work))
+              if (! gui_intersect_rectangles (&mi->geom, &mi->work, &mi->work))
                 mi->work = mi->geom;
             }
           else

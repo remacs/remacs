@@ -1168,9 +1168,9 @@ x_update_window_end (struct window *w, bool cursor_on_p,
       if (draw_window_fringes (w, true))
 	{
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 	}
 
       unblock_input ();
@@ -3077,7 +3077,7 @@ x_draw_image_foreground (struct glyph_string *s)
 	  image_rect.y = y;
 	  image_rect.width = s->slice.width;
 	  image_rect.height = s->slice.height;
-	  if (x_intersect_rectangles (&clip_rect, &image_rect, &r))
+	  if (gui_intersect_rectangles (&clip_rect, &image_rect, &r))
             x_composite_image (s, FRAME_X_DRAWABLE (s->f),
 			       s->slice.x + r.x - x, s->slice.y + r.y - y,
                                r.x, r.y, r.width, r.height);
@@ -3091,7 +3091,7 @@ x_draw_image_foreground (struct glyph_string *s)
 	  image_rect.y = y;
 	  image_rect.width = s->slice.width;
 	  image_rect.height = s->slice.height;
-	  if (x_intersect_rectangles (&clip_rect, &image_rect, &r))
+	  if (gui_intersect_rectangles (&clip_rect, &image_rect, &r))
             x_composite_image (s, FRAME_X_DRAWABLE (s->f), s->slice.x + r.x - x, s->slice.y + r.y - y,
                                r.x, r.y, r.width, r.height);
 
@@ -3578,7 +3578,7 @@ x_draw_underwave (struct glyph_string *s)
   wave_clip.height = wave_height;
   get_glyph_string_clip_rect (s, &string_clip);
 
-  if (!x_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
+  if (!gui_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
     return;
 
   XSetClipRectangles (s->display, s->gc, 0, 0, &final_clip, 1, Unsorted);
@@ -4309,7 +4309,7 @@ x_scroll_run (struct window *w, struct run *run)
   block_input ();
 
   /* Cursor off.  Will be switched on again in x_update_window_end.  */
-  x_clear_cursor (w);
+  gui_clear_cursor (w);
 
 #ifdef USE_CAIRO
   if (FRAME_CR_CONTEXT (f))
@@ -4370,7 +4370,7 @@ frame_highlight (struct frame *f)
 		    f->output_data.x->border_pixel);
   x_uncatch_errors ();
   unblock_input ();
-  x_update_cursor (f, true);
+  gui_update_cursor (f, true);
   x_set_frame_alpha (f);
 }
 
@@ -4388,7 +4388,7 @@ frame_unhighlight (struct frame *f)
 			  f->output_data.x->border_tile);
   x_uncatch_errors ();
   unblock_input ();
-  x_update_cursor (f, true);
+  gui_update_cursor (f, true);
   x_set_frame_alpha (f);
 }
 
@@ -13077,18 +13077,18 @@ x_activate_timeout_atimer (void)
 static struct redisplay_interface x_redisplay_interface =
   {
     x_frame_parm_handlers,
-    x_produce_glyphs,
-    x_write_glyphs,
-    x_insert_glyphs,
-    x_clear_end_of_line,
+    gui_produce_glyphs,
+    gui_write_glyphs,
+    gui_insert_glyphs,
+    gui_clear_end_of_line,
     x_scroll_run,
     x_after_update_window_line,
     x_update_window_begin,
     x_update_window_end,
     x_flip_and_flush,
-    x_clear_window_mouse_face,
-    x_get_glyph_overhangs,
-    x_fix_overlapping_area,
+    gui_clear_window_mouse_face,
+    gui_get_glyph_overhangs,
+    gui_fix_overlapping_area,
     x_draw_fringe_bitmap,
 #ifdef USE_CAIRO
     x_cr_define_fringe_bitmap,

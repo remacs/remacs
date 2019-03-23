@@ -176,7 +176,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 
   /* Maximum length of a string of glyphs.  XftGlyphExtents limits
      this to INT_MAX, and Emacs limits it further.  Divide INT_MAX - 1
-     by 2 because x_produce_glyphs computes glyph_len * 2 + 1.  Divide
+     by 2 because gui_produce_glyphs computes glyph_len * 2 + 1.  Divide
      the size by MAX_MULTIBYTE_LENGTH because encode_terminal_code
      multiplies glyph_len by MAX_MULTIBYTE_LENGTH.  */
   enum {

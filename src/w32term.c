@@ -363,7 +363,7 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
   get_glyph_string_clip_rect (s, &w32_string_clip);
   CONVERT_TO_XRECT (string_clip, w32_string_clip);
 
-  if (!x_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
+  if (!gui_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
     return;
 
   hp = CreatePen (PS_SOLID, thickness, color);
@@ -713,9 +713,9 @@ x_update_window_end (struct window *w, bool cursor_on_p,
       if (draw_window_fringes (w, true))
 	{
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 	}
 
       unblock_input ();
@@ -2863,7 +2863,7 @@ x_scroll_run (struct window *w, struct run *run)
   block_input ();
 
   /* Cursor off.  Will be switched on again in x_update_window_end.  */
-  x_clear_cursor (w);
+  gui_clear_cursor (w);
 
   {
     RECT from;
@@ -2906,14 +2906,14 @@ x_scroll_run (struct window *w, struct run *run)
 static void
 frame_highlight (struct frame *f)
 {
-  x_update_cursor (f, 1);
+  gui_update_cursor (f, 1);
   x_set_frame_alpha (f);
 }
 
 static void
 frame_unhighlight (struct frame *f)
 {
-  x_update_cursor (f, 1);
+  gui_update_cursor (f, 1);
   x_set_frame_alpha (f);
 }
 
@@ -7092,18 +7092,18 @@ extern frame_parm_handler w32_frame_parm_handlers[];
 static struct redisplay_interface w32_redisplay_interface =
 {
   w32_frame_parm_handlers,
-  x_produce_glyphs,
-  x_write_glyphs,
-  x_insert_glyphs,
-  x_clear_end_of_line,
+  gui_produce_glyphs,
+  gui_write_glyphs,
+  gui_insert_glyphs,
+  gui_clear_end_of_line,
   x_scroll_run,
   x_after_update_window_line,
   x_update_window_begin,
   x_update_window_end,
   0, /* flush_display */
-  x_clear_window_mouse_face,
-  x_get_glyph_overhangs,
-  x_fix_overlapping_area,
+  gui_clear_window_mouse_face,
+  gui_get_glyph_overhangs,
+  gui_fix_overlapping_area,
   w32_draw_fringe_bitmap,
   w32_define_fringe_bitmap,
   w32_destroy_fringe_bitmap,
