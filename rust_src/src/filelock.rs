@@ -4,8 +4,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    remacs_sys::{lock_file, unlock_file},
     remacs_sys::Qstringp,
+    remacs_sys::{lock_file, unlock_file},
     threads::ThreadState,
 };
 
