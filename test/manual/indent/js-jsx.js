@@ -37,7 +37,7 @@ return (
 
 React.render(
   <input
-    />,
+  />,
   {
     a: 1
   }
@@ -242,12 +242,18 @@ export default ({ stars }) => (
 
 // JS expressions should not break indentation
 // (https://github.com/mooz/js2-mode/issues/462).
+//
+// In the referenced issue, the user actually wanted indentation which
+// was simply different than Emacs’ SGML attribute indentation.
+// Nevertheless, his issue highlighted our inability to properly
+// indent code with JSX inside JSXExpressionContainers inside JSX.
 return (
   <Router>
     <Bar>
-      <Route exact path="/foo" render={() => (
-        <div>nothing</div>
-      )} />
+      <Route exact path="/foo"
+             render={() => (
+               <div>nothing</div>
+             )} />
       <Route exact path="/bar" />
     </Bar>
   </Router>
