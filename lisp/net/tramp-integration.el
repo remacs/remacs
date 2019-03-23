@@ -173,21 +173,10 @@ NAME must be equal to `tramp-current-connection'."
 
 ;;; Default connection-local variables for Tramp:
 
-;;;###tramp-autoload
-(defvar tramp-connection-local-safe-shell-file-names nil
-  "List of safe `shell-file-name' values for remote hosts.")
-(add-to-list 'tramp-connection-local-safe-shell-file-names "/bin/sh")
-
 (defconst tramp-connection-local-default-profile
   '((shell-file-name . "/bin/sh")
     (shell-command-switch . "-c"))
   "Default connection-local variables for remote connections.")
-(put 'shell-file-name 'safe-local-variable
-     (lambda (item)
-       (and (stringp item)
-	    (member item tramp-connection-local-safe-shell-file-names))))
-(put 'shell-command-switch 'safe-local-variable
-     (lambda (item) (and (stringp item) (string-equal item "-c"))))
 
 ;; `connection-local-set-profile-variables' and
 ;; `connection-local-set-profiles' exists since Emacs 26.1.

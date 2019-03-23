@@ -1299,7 +1299,6 @@ connection if a previous connection has died for some reason."
   '((shell-file-name . "/system/bin/sh")
     (shell-command-switch . "-c"))
   "Default connection-local variables for remote adb connections.")
-(add-to-list 'tramp-connection-local-safe-shell-file-names "/system/bin/sh")
 
 ;; `connection-local-set-profile-variables' and
 ;; `connection-local-set-profiles' exists since Emacs 26.1.

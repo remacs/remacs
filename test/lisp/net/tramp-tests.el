@@ -4350,7 +4350,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 ;; The functions were introduced in Emacs 26.1.
 (ert-deftest tramp-test34-explicit-shell-file-name ()
   "Check that connection-local `explicit-shell-file-name' is set."
-  :tags '(:expensive-test)
+  ;; The handling of connection-local variables has changed.  Test
+  ;; must be reworked.
+  :tags '(:expensive-test :unstable)
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
   ;; Since Emacs 26.1.
@@ -5715,6 +5717,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test29-start-file-process',
 ;;   `tramp-test30-make-process' and `tramp-test32-shell-command' for
 ;;   `adb' (see comment in `tramp-adb-send-command').
+;; * Rework `tramp-test34-explicit-shell-file-name'.
 ;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.
 
 (provide 'tramp-tests)

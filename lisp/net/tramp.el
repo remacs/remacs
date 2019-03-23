@@ -3641,7 +3641,7 @@ support symbolic links."
 	(prog1
 	    ;; Run the process.
 	    (setq p (start-file-process-shell-command
-		     "*Async Shell*" buffer command))
+		     (buffer-name output-buffer) buffer command))
 	  ;; Display output.
 	  (with-current-buffer output-buffer
 	    (display-buffer output-buffer '(nil (allow-no-window . t)))
@@ -4892,6 +4892,12 @@ Only works for Bourne-like shells."
 ;;   and friends, for most of the handlers this is the major
 ;;   difference between the different backends.  Other handlers but
 ;;   *-process-file would profit from this as well.
+;;
+;; * Get rid of `shell-command'.  In its primary implementation, it
+;;   uses `process-file-shell-command' and
+;;   `start-file-process-shell-command', which is sufficient due to
+;;   connection-local `shell-file-name'.
+
 
 ;;; tramp.el ends here
 
