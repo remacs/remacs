@@ -1776,22 +1776,27 @@ w32_executable_type (char * filename,
           if (data_dir)
             {
               /* Look for Cygwin DLL in the DLL import list. */
-              IMAGE_DATA_DIRECTORY import_dir =
-                data_dir[IMAGE_DIRECTORY_ENTRY_IMPORT];
+              IMAGE_DATA_DIRECTORY import_dir
+                = data_dir[IMAGE_DIRECTORY_ENTRY_IMPORT];
 
 	      /* Import directory can be missing in .NET DLLs.  */
 	      if (import_dir.VirtualAddress != 0)
 		{
+		  IMAGE_SECTION_HEADER *section
+		    = rva_to_section (import_dir.VirtualAddress, nt_header);
+		  if (!section)
+		    emacs_abort ();
+
 		  IMAGE_IMPORT_DESCRIPTOR * imports =
-		    RVA_TO_PTR (import_dir.VirtualAddress,
-				rva_to_section (import_dir.VirtualAddress,
-						nt_header),
+		    RVA_TO_PTR (import_dir.VirtualAddress, section,
 				executable);
 
 		  for ( ; imports->Name; imports++)
 		    {
-		      IMAGE_SECTION_HEADER * section =
-			rva_to_section (imports->Name, nt_header);
+		      section = rva_to_section (imports->Name, nt_header);
+		      if (!section)
+			emacs_abort ();
+
 		      char * dllname = RVA_TO_PTR (imports->Name, section,
 						   executable);
 
