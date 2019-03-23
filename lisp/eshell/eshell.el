@@ -175,6 +175,9 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'esh-util)
+;; Provide eshell before requiring esh-mode, to avoid a recursive load.
+;; (Bug #34954)
+(provide 'eshell)
 (require 'esh-mode)
 
 (defgroup eshell nil
@@ -402,7 +405,5 @@ Emacs."
     (message "Unloading eshell...done")))
 
 (run-hooks 'eshell-load-hook)
-
-(provide 'eshell)
 
 ;;; eshell.el ends here
