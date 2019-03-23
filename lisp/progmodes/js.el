@@ -584,6 +584,29 @@ be buffer-local when in `js-jsx-mode'."
   :safe 'booleanp
   :group 'js)
 
+(defcustom js-jsx-attribute-offset 0
+  "Specifies a delta for JSXAttribute indentation.
+
+Let `js-indent-level' be 2.  When this variable is also set to 0,
+JSXAttribute indentation looks like this:
+
+  <element
+    attribute=\"value\">
+  </element>
+
+Alternatively, when this variable is also set to 2, JSXAttribute
+indentation looks like this:
+
+  <element
+      attribute=\"value\">
+  </element>
+
+This variable is like `sgml-attribute-offset'."
+  :version "27.1"
+  :type 'integer
+  :safe 'integerp
+  :group 'js)
+
 ;;; KeyMap
 
 (defvar js-mode-map
@@ -1938,14 +1961,21 @@ the match.  Return nil if a match can’t be found."
          (setq parens (cdr parens))))
     curly-pos))
 
+(defun js-jsx--goto-outermost-enclosing-curly (limit)
+  "Set point to enclosing “{” at or closest after LIMIT."
+  (let (pos)
+    (while
+        (and
+         (setq pos (js-jsx--enclosing-curly-pos))
+         (if (>= pos limit) (goto-char pos))
+         (> pos limit)))))
+
 (defun js-jsx--enclosing-tag-pos ()
   "Return beginning and end of a JSXElement about point.
 Look backward for a JSXElement that both starts before point and
 also ends after point.  That may be either a self-closing
 JSXElement or a JSXOpeningElement/JSXClosingElement pair."
-  (let ((start (point))
-        (curly-pos (save-excursion (js-jsx--enclosing-curly-pos)))
-        tag-beg tag-beg-pos tag-end-pos close-tag-pos)
+  (let ((start (point)) tag-beg tag-beg-pos tag-end-pos close-tag-pos)
     (while
         (and
          (setq tag-beg (js--backward-text-property 'js-jsx-tag-beg))
@@ -1957,25 +1987,24 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
              (and (eq (car tag-beg) 'self-closing)
                   (< start tag-end-pos))
              (and (eq (car tag-beg) 'open)
-                  (save-excursion
-                    (goto-char tag-end-pos)
-                    (setq close-tag-pos (js-jsx--matching-close-tag-pos))
-                    ;; The JSXOpeningElement may either be unclosed,
-                    ;; else the closure must occur after the start
-                    ;; point (otherwise, a miscellaneous previous
-                    ;; JSXOpeningElement has been found, and we should
-                    ;; keep looking back for an enclosing one).
-                    (or (not close-tag-pos) (< start close-tag-pos))))))))
-      ;; Don’t return the last tag pos (if any; it wasn’t enclosing).
-      (setq tag-beg nil))
-    (and tag-beg
-         (or (not curly-pos) (> tag-beg-pos curly-pos))
-         (cons tag-beg-pos tag-end-pos))))
+                  (or (< start tag-end-pos)
+                      (save-excursion
+                        (goto-char tag-end-pos)
+                        (setq close-tag-pos (js-jsx--matching-close-tag-pos))
+                        ;; The JSXOpeningElement may be unclosed, else
+                        ;; the closure must occur at/after the start
+                        ;; point (otherwise, a miscellaneous previous
+                        ;; JSXOpeningElement has been found, so keep
+                        ;; looking backwards for an enclosing one).
+                        (or (not close-tag-pos) (<= start close-tag-pos)))))))))
+      ;; Don’t return the last tag pos, as it wasn’t enclosing.
+      (setq tag-beg nil close-tag-pos nil))
+    (and tag-beg (list tag-beg-pos tag-end-pos close-tag-pos))))
 
 (defun js-jsx--at-enclosing-tag-child-p ()
   "Return t if point is at an enclosing tag’s child."
   (let ((pos (save-excursion (js-jsx--enclosing-tag-pos))))
-    (and pos (>= (point) (cdr pos)))))
+    (and pos (>= (point) (nth 1 pos)))))
 
 (defun js-jsx--text-range (beg end)
   "Identify JSXText within a “>/{/}/<” pair."
@@ -2515,6 +2544,118 @@ current line is the \"=>\" token."
    (t (looking-at-p
        (concat js--name-re js--line-terminating-arrow-re)))))
 
+(defun js-jsx--context ()
+  "Determine JSX context and move to enclosing JSX."
+  (let ((pos (point))
+        (parse-status (syntax-ppss))
+        (enclosing-tag-pos (js-jsx--enclosing-tag-pos)))
+    (when enclosing-tag-pos
+      (if (< pos (nth 1 enclosing-tag-pos))
+          (if (nth 3 parse-status)
+              (list 'string (nth 8 parse-status))
+            (list 'tag (nth 0 enclosing-tag-pos) (nth 1 enclosing-tag-pos)))
+        (list 'text (nth 0 enclosing-tag-pos) (nth 2 enclosing-tag-pos))))))
+
+(defvar js-jsx--indenting nil
+  "Flag to prevent infinite recursion while indenting JSX.")
+
+(defun js-jsx--indentation (parse-status)
+  "Helper function for `js--proper-indentation'.
+Return the proper indentation of the current line if it is part
+of a JSXElement expression spanning multiple lines; otherwise,
+return nil."
+  (let ((current-line (line-number-at-pos))
+        (curly-pos (js-jsx--enclosing-curly-pos))
+        nth-context context expr-p beg-line col
+        forward-sexp-function) ; Use the Lisp version.
+    ;; Find the immediate context for indentation information, but
+    ;; keep going to determine that point is at the N+1th line of
+    ;; multiline JSX.
+    (save-excursion
+      (while
+          (and
+           (setq nth-context (js-jsx--context))
+           (progn
+             (unless context
+               (setq context nth-context)
+               (setq expr-p (and curly-pos (< (point) curly-pos))))
+             (setq beg-line (line-number-at-pos))
+             (and
+              (= beg-line current-line)
+              (or (not curly-pos) (> (point) curly-pos)))))))
+    (when (and context (> current-line beg-line))
+      (save-excursion
+        ;; The column calculation is based on `sgml-calculate-indent'.
+        (setq col (pcase (nth 0 context)
+
+                    ('string
+                     ;; Go back to previous non-empty line.
+                     (while (and (> (point) (nth 1 context))
+		                 (zerop (forward-line -1))
+		                 (looking-at "[ \t]*$")))
+                     (if (> (point) (nth 1 context))
+	                 ;; Previous line is inside the string.
+	                 (current-indentation)
+                       (goto-char (nth 1 context))
+                       (1+ (current-column))))
+
+                    ('tag
+                     ;; Special JSX indentation rule: a “dangling”
+                     ;; closing angle bracket on its own line is
+                     ;; indented at the same level as the opening
+                     ;; angle bracket of the JSXElement.  Otherwise,
+                     ;; indent JSXAttribute space like SGML.
+                     (if (progn
+                           (goto-char (nth 2 context))
+                           (and (= current-line (line-number-at-pos))
+                                (looking-back "^\\s-*/?>" (line-beginning-position))))
+                         (progn
+                           (goto-char (nth 1 context))
+                           (current-column))
+                       ;; Indent JSXAttribute space like SGML.
+                       (goto-char (nth 1 context))
+                       ;; Skip tag name:
+                       (skip-chars-forward " \t")
+                       (skip-chars-forward "^ \t\n")
+                       (skip-chars-forward " \t")
+                       (if (not (eolp))
+	                   (current-column)
+                         ;; This is the first attribute: indent.
+                         (goto-char (+ (nth 1 context) js-jsx-attribute-offset))
+                         (+ (current-column) js-indent-level))))
+
+                    ('text
+                     ;; Indent to reflect nesting.
+                     (goto-char (nth 1 context))
+	             (+ (current-column)
+                        ;; The last line isn’t nested, but the rest are.
+                        (if (or (not (nth 2 context)) ; Unclosed.
+                                (< current-line (line-number-at-pos (nth 2 context))))
+                            js-indent-level
+                          0)))
+
+                    )))
+      ;; When indenting a JSXExpressionContainer expression, use JSX
+      ;; indentation as a minimum, and use regular JS indentation if
+      ;; it’s deeper.
+      (if expr-p
+          (max (+ col
+                  ;; An expression in a JSXExpressionContainer in a
+                  ;; JSXAttribute should be indented more, except on
+                  ;; the ending line of the JSXExpressionContainer.
+                  (if (and (eq (nth 0 context) 'tag)
+                           (< current-line
+                              (save-excursion
+                                (js-jsx--goto-outermost-enclosing-curly
+                                 (nth 1 context))
+                                (forward-sexp)
+                                (line-number-at-pos))))
+                      js-indent-level
+                    0))
+               (let ((js-jsx--indenting t)) ; Prevent recursion.
+                 (js--proper-indentation parse-status)))
+        col))))
+
 (defun js--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
   (save-excursion
@@ -2522,6 +2663,8 @@ current line is the \"=>\" token."
     (cond ((nth 4 parse-status)    ; inside comment
            (js--get-c-offset 'c (nth 8 parse-status)))
           ((nth 3 parse-status) 0) ; inside string
+          ((when (and js-jsx-syntax (not js-jsx--indenting))
+             (save-excursion (js-jsx--indentation parse-status))))
           ((eq (char-after) ?#) 0)
           ((save-excursion (js--beginning-of-macro)) 4)
           ;; Indent array comprehension continuation lines specially.
@@ -2584,111 +2727,6 @@ current line is the \"=>\" token."
            (+ js-indent-level js-expr-indent-offset))
           (t (prog-first-column)))))
 
-;;; JSX Indentation
-
-(defmacro js-jsx--as-sgml (&rest body)
-  "Execute BODY as if in sgml-mode."
-  `(with-syntax-table sgml-mode-syntax-table
-     ,@body))
-
-(defun js-jsx--outermost-enclosing-tag-pos ()
-  (let (context tag-pos last-tag-pos parse-status parens paren-pos curly-pos)
-    (js-jsx--as-sgml
-      ;; Search until we reach the top or encounter the start of a
-      ;; JSXExpressionContainer (implying nested JSX).
-      (while (and (setq context (sgml-get-context))
-                  (progn
-                    (setq tag-pos (sgml-tag-start (car (last context))))
-                    (or (not curly-pos)
-                        ;; Stop before curly brackets (start of a
-                        ;; JSXExpressionContainer).
-                        (> tag-pos curly-pos))))
-        ;; Record this position so it can potentially be returned.
-        (setq last-tag-pos tag-pos)
-        ;; Always parse sexps / search for the next context from the
-        ;; immediately enclosing tag (sgml-get-context may not leave
-        ;; point there).
-        (goto-char tag-pos)
-        (unless parse-status ; Don’t needlessly reparse.
-          ;; Search upward for an enclosing starting curly bracket.
-          (setq parse-status (syntax-ppss))
-          (setq parens (reverse (nth 9 parse-status)))
-          (while (and (setq paren-pos (car parens))
-                      (not (when (= (char-after paren-pos) ?{)
-                             (setq curly-pos paren-pos))))
-            (setq parens (cdr parens)))
-          ;; Always search for the next context from the immediately
-          ;; enclosing tag (calling syntax-ppss in the above loop
-          ;; may move point from there).
-          (goto-char tag-pos))))
-    last-tag-pos))
-
-(defun js-jsx--indentation-type ()
-  "Determine if/how the current line should be indented as JSX.
-
-Return nil for first JSXElement line (indent like JS).
-Return `n+1th' for second+ JSXElement lines (indent like SGML).
-Return `expression' for lines within embedded JS expressions
-  (indent like JS inside SGML).
-Return nil for non-JSX lines."
-  (let ((current-pos (point))
-        (current-line (line-number-at-pos))
-        tag-start-pos parens paren type)
-    (save-excursion
-      ;; Determine if inside a JSXElement.
-      (beginning-of-line) ; For exclusivity
-      (when (setq tag-start-pos (js-jsx--outermost-enclosing-tag-pos))
-        ;; Check if inside an embedded multi-line JS expression.
-        (goto-char current-pos)
-        (end-of-line) ; For exclusivity
-        (setq parens (nth 9 (syntax-ppss)))
-        (while
-            (and
-             (setq paren (car parens))
-             (if (and
-                  (>= paren tag-start-pos)
-                  ;; A curly bracket indicates the start of an
-                  ;; embedded expression.
-                  (= (char-after paren) ?{)
-                  ;; The first line of the expression is indented
-                  ;; like SGML.
-                  (> current-line (line-number-at-pos paren))
-                  ;; Check if within a closing curly bracket (if any)
-                  ;; (exclusive, as the closing bracket is indented
-                  ;; like SGML).
-                  (if (progn
-                        (goto-char paren)
-                        (ignore-errors (let (forward-sexp-function)
-                                         (forward-sexp))))
-                      (< current-line (line-number-at-pos))
-                    ;; No matching bracket implies we’re inside!
-                    t))
-                 ;; Indicate this will be indented specially.  Return
-                 ;; nil to stop iterating too.
-                 (progn (setq type 'expression) nil)
-               ;; Stop iterating when parens = nil.
-               (setq parens (cdr parens)))))
-        (or type 'n+1th)))))
-
-(defun js-jsx--indent-line-in-expression ()
-  "Indent the current line as JavaScript within JSX."
-  (let ((parse-status (save-excursion (syntax-ppss (point-at-bol))))
-        offset indent-col)
-    (unless (nth 3 parse-status)
-      (save-excursion
-        (setq offset (- (point) (progn (back-to-indentation) (point)))
-              indent-col (js-jsx--as-sgml (sgml-calculate-indent))))
-      (if (null indent-col) 'noindent ; Like in sgml-mode
-        ;; Use whichever indentation column is greater, such that the
-        ;; SGML column is effectively a minimum.
-        (indent-line-to (max (js--proper-indentation parse-status)
-                             (+ indent-col js-indent-level)))
-        (when (> offset 0) (forward-char offset))))))
-
-(defun js-jsx--indent-n+1th-line ()
-  "Indent the current line as JSX within JavaScript."
-  (js-jsx--as-sgml (sgml-indent-line)))
-
 (defun js-indent-line ()
   "Indent the current line as JavaScript."
   (interactive)
@@ -2700,15 +2738,9 @@ Return nil for non-JSX lines."
       (when (> offset 0) (forward-char offset)))))
 
 (defun js-jsx-indent-line ()
-  "Indent the current line as JSX (with SGML offsets).
-i.e., customize JSX element indentation with `sgml-basic-offset',
-`sgml-attribute-offset' et al."
+  "Indent the current line as JavaScript+JSX."
   (interactive)
-  (let ((type (js-jsx--indentation-type)))
-    (if type
-        (if (eq type 'n+1th) (js-jsx--indent-n+1th-line)
-          (js-jsx--indent-line-in-expression))
-      (js-indent-line))))
+  (let ((js-jsx-syntax t)) (js-indent-line)))
 
 ;;; Filling
 
@@ -4281,18 +4313,9 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 
 ;;;###autoload
 (define-derived-mode js-jsx-mode js-mode "JSX"
-  "Major mode for editing JSX.
-
-To customize the indentation for this mode, set the SGML offset
-variables (`sgml-basic-offset', `sgml-attribute-offset' et al.)
-locally, like so:
-
-  (defun set-jsx-indentation ()
-    (setq-local sgml-basic-offset js-indent-level))
-  (add-hook \\='js-jsx-mode-hook #\\='set-jsx-indentation)"
+  "Major mode for editing JSX."
   :group 'js
-  (setq-local js-jsx-syntax t)
-  (setq-local indent-line-function #'js-jsx-indent-line))
+  (setq-local js-jsx-syntax t))
 
 ;;;###autoload (defalias 'javascript-mode 'js-mode)
 
