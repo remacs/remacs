@@ -3105,7 +3105,7 @@ displayed."
 (defun sql-end-of-statement (arg)
   "Move to the end of the current SQL statement."
   (interactive "p")
-  (let ((term (sql-get-product-feature sql-product :terminator))
+  (let ((term (or (sql-get-product-feature sql-product :terminator) ";"))
         (re-search (if (> 0 arg) 're-search-backward 're-search-forward))
         (here (point))
         (n 0))
