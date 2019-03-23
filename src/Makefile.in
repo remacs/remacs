@@ -461,7 +461,7 @@ dmpstruct_headers=$(srcdir)/lisp.h $(srcdir)/buffer.h \
 pdumper.o: dmpstruct.h
 dmpstruct.h: $(srcdir)/dmpstruct.awk
 dmpstruct.h: $(libsrc)/make-fingerprint$(EXEEXT) $(dmpstruct_headers)
-	POSIXLY_CORRECT=1 awk -f $(srcdir)/dmpstruct.awk \
+	$(AM_V_GEN)POSIXLY_CORRECT=1 awk -f $(srcdir)/dmpstruct.awk \
 		$(dmpstruct_headers) > $@
 
 AUTO_DEPEND = @AUTO_DEPEND@
