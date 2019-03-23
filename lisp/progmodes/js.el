@@ -50,7 +50,6 @@
 (require 'imenu)
 (require 'moz nil t)
 (require 'json)
-(require 'sgml-mode)
 (require 'prog-mode)
 
 (eval-when-compile
@@ -2211,13 +2210,10 @@ testing for syntax only valid as JSX."
           (js--regexp-opt-symbol '("in" "instanceof")))
   "Regexp matching operators that affect indentation of continued expressions.")
 
-(defconst js-jsx--start-tag-re
-  (concat "<" sgml-name-re)
-  "Regexp matching code that looks like a JSXOpeningElement.")
-
 (defun js-jsx--looking-at-start-tag-p ()
   "Non-nil if a JSXOpeningElement immediately follows point."
-  (looking-at js-jsx--start-tag-re))
+  (let ((tag-beg (get-text-property (point) 'js-jsx-tag-beg)))
+    (and tag-beg (memq (car tag-beg) '(open self-closing)))))
 
 (defun js--looking-at-operator-p ()
   "Return non-nil if point is on a JavaScript operator, other than a comma."
@@ -2263,13 +2259,9 @@ testing for syntax only valid as JSX."
         (setq result nil)))
     result))
 
-(defconst js-jsx--end-tag-re
-  (concat "</" sgml-name-re ">\\|/>")
-  "Regexp matching a JSXClosingElement.")
-
 (defun js-jsx--looking-back-at-end-tag-p ()
   "Non-nil if a JSXClosingElement immediately precedes point."
-  (looking-back js-jsx--end-tag-re (point-at-bol)))
+  (get-text-property (point) 'js-jsx-tag-end))
 
 (defun js--continued-expression-p ()
   "Return non-nil if the current line continues an expression."
