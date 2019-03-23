@@ -40,7 +40,7 @@ pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
 
-/// Hash table used to cache a reverse-map to speed up calls to where-is.
+// Hash table used to cache a reverse-map to speed up calls to where-is.
 declare_GC_protected_static!(where_is_cache, Qnil);
 
 /// Allows the C code to get the value of `where_is_cache`
@@ -57,7 +57,7 @@ pub extern "C" fn set_where_is_cache(val: LispObject) {
     }
 }
 
-/// Which keymaps are reverse-stored in the cache.
+// Which keymaps are reverse-stored in the cache.
 declare_GC_protected_static!(where_is_cache_keymaps, Qt);
 
 /// Allows the C code to get the value of `where_is_cache_keymaps`

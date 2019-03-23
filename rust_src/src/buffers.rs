@@ -1623,6 +1623,7 @@ pub extern "C" fn reset_buffer_local_variables(mut buffer: LispBufferRef, includ
     buffer.reset_local_variables(include_permanent)
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn rust_syms_of_buffer() {
     def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
