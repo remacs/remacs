@@ -31,7 +31,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x)) ; for string-trim-right
-(eval-when-compile (require 'cl-lib)) ; for cl-letf
 
 
 ;;; Commands to add/delete file-local/directory-local variables.
@@ -690,7 +689,7 @@ This does nothing if `enable-connection-local-variables' is nil."
     ;; Push them to `file-local-variables-alist'.  Connection-local
     ;; variables do not appear from external files.  So we can regard
     ;; them as safe.
-    (cl-letf (((symbol-function 'safe-local-variable-p) (lambda (_sym _val) t)))
+    (let ((enable-local-variables :all))
       (hack-local-variables-filter connection-local-variables-alist nil))))
 
 ;;;###autoload
