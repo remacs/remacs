@@ -262,6 +262,7 @@ pub fn recursive_edit() {
     }
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn rust_syms_of_keyboard() {
     /// The last command executed.
