@@ -574,10 +574,30 @@ then the \".\"s will be lined up:
   :safe 'booleanp
   :group 'js)
 
+(defcustom js-jsx-detect-syntax t
+  "When non-nil, automatically detect whether JavaScript uses JSX.
+`js-jsx-syntax' (which see) may be made buffer-local and set to
+t.  The detection strategy can be customized by adding elements
+to `js-jsx-regexps', which see."
+  :version "27.1"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'js)
+
 (defcustom js-jsx-syntax nil
   "When non-nil, parse JavaScript with consideration for JSX syntax.
-This fixes indentation of JSX code in some cases.  It is set to
-be buffer-local when in `js-jsx-mode'."
+
+This enables proper font-locking and indentation of code using
+Facebook’s “JSX” syntax extension for JavaScript, for use with
+Facebook’s “React” library.  Font-locking is like sgml-mode.
+Indentation is also like sgml-mode, although some indentation
+behavior may differ slightly to align more closely with the
+conventions of the React developer community.
+
+When `js-mode' is already enabled, you should call
+`js-jsx-enable' to set this variable.
+
+It is set to be buffer-local (and t) when in `js-jsx-mode'."
   :version "27.1"
   :type 'boolean
   :safe 'booleanp
@@ -4223,6 +4243,79 @@ If one hasn't been set, or if it's stale, prompt for a new one."
         (when temp-name
           (delete-file temp-name))))))
 
+;;; Syntax extensions
+
+(defvar js-syntactic-mode-name t
+  "If non-nil, print enabled syntaxes in the mode name.")
+
+(defun js--update-mode-name ()
+  "Print enabled syntaxes if `js-syntactic-mode-name' is t."
+  (when js-syntactic-mode-name
+    (setq mode-name (concat "JavaScript"
+                            (if js-jsx-syntax "+JSX" "")))))
+
+(defun js--idly-update-mode-name ()
+  "Update `mode-name' whenever Emacs goes idle.
+In case `js-jsx-syntax' is updated, especially by features of
+Emacs like .dir-locals.el or file variables, this ensures the
+modeline eventually reflects which syntaxes are enabled."
+  (let (timer)
+    (setq timer
+          (run-with-idle-timer
+           0 t
+           (lambda (buffer)
+             (if (buffer-live-p buffer)
+                 (with-current-buffer buffer
+                   (js--update-mode-name))
+               (cancel-timer timer)))
+           (current-buffer)))))
+
+(defun js-jsx-enable ()
+  "Enable JSX in the current buffer."
+  (interactive)
+  (setq-local js-jsx-syntax t)
+  (js--update-mode-name))
+
+(defvar js-jsx-regexps
+  (list "\\_<\\(?:var\\|let\\|const\\|import\\)\\_>.*?React")
+  "Regexps for detecting JSX in JavaScript buffers.
+When `js-jsx-detect-syntax' is non-nil and any of these regexps
+match text near the beginning of a JavaScript buffer,
+`js-jsx-syntax' (which see) will be made buffer-local and set to
+t.")
+
+(defun js-jsx--detect-and-enable (&optional arbitrarily)
+  "Detect if JSX is likely to be used, and enable it if so.
+Might make `js-jsx-syntax' buffer-local and set it to t.  Matches
+from the beginning of the buffer, unless optional arg ARBITRARILY
+is non-nil.  Return t after enabling, nil otherwise."
+  (when (or (and (buffer-file-name)
+                 (string-match-p "\\.jsx\\'" (buffer-file-name)))
+            (and js-jsx-detect-syntax
+                 (save-excursion
+                   (unless arbitrarily
+                     (goto-char (point-min)))
+                   (catch 'match
+                     (mapc
+                      (lambda (regexp)
+                        (if (re-search-forward regexp 4000 t) (throw 'match t)))
+                      js-jsx-regexps)
+                     nil))))
+    (js-jsx-enable)
+    t))
+
+(defun js-jsx--detect-after-change (beg end _len)
+  "Detect if JSX is likely to be used after a change.
+This function is intended for use in `after-change-functions'."
+  (when (<= end 4000)
+    (save-excursion
+      (goto-char beg)
+      (beginning-of-line)
+      (save-restriction
+        (narrow-to-region (point) end)
+        (when (js-jsx--detect-and-enable 'arbitrarily)
+          (remove-hook 'after-change-functions #'js-jsx--detect-after-change t))))))
+
 ;;; Main Function
 
 ;;;###autoload
@@ -4258,6 +4351,12 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 
   ;; Frameworks
   (js--update-quick-match-re)
+
+  ;; Syntax extensions
+  (unless (js-jsx--detect-and-enable)
+    (add-hook 'after-change-functions #'js-jsx--detect-after-change nil t))
+  (js--update-mode-name) ; If `js-jsx-syntax' was set from outside.
+  (js--idly-update-mode-name)
 
   ;; Imenu
   (setq imenu-case-fold-search nil)
@@ -4304,10 +4403,20 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   )
 
 ;;;###autoload
-(define-derived-mode js-jsx-mode js-mode "JSX"
-  "Major mode for editing JSX."
+(define-derived-mode js-jsx-mode js-mode "JavaScript+JSX"
+  "Major mode for editing JavaScript+JSX.
+
+Simply makes `js-jsx-syntax' buffer-local and sets it to t.
+
+`js-mode' may detect and enable support for JSX automatically if
+it appears to be used in a JavaScript file.  You could also
+customize `js-jsx-regexps' to improve that detection; or, you
+could set `js-jsx-syntax' to t in your init file, or in a
+.dir-locals.el file, or using file variables; or, you could call
+`js-jsx-enable' in `js-mode-hook'.  You may be better served by
+one of the aforementioned options instead of using this mode."
   :group 'js
-  (setq-local js-jsx-syntax t))
+  (js-jsx-enable))
 
 ;;;###autoload (defalias 'javascript-mode 'js-mode)
 
