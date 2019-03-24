@@ -983,7 +983,10 @@ also print the number."
 		       (progn (forward-line 1) (point)))
         (setq count (1+ count))))
     (set-marker rend nil)
-    (when interactive (message "Deleted %d matching lines" count))
+    (when interactive (message (ngettext "Deleted %d matching line"
+					 "Deleted %d matching lines"
+					 count)
+			       count))
     count))
 
 (defun how-many (regexp &optional rstart rend interactive)
@@ -1032,9 +1035,10 @@ a previously found match."
 	(if (= opoint (point))
 	    (forward-char 1)
 	  (setq count (1+ count))))
-      (when interactive (message "%d occurrence%s"
-				 count
-				 (if (= count 1) "" "s")))
+      (when interactive (message (ngettext "%d occurrence"
+					   "%d occurrences"
+					   count)
+				 count))
       count)))
 
 
@@ -1617,11 +1621,12 @@ See also `multi-occur'."
 		  (not (eq occur-excluded-properties t))))))
 	  (let* ((bufcount (length active-bufs))
 		 (diff (- (length bufs) bufcount)))
-	    (message "Searched %d buffer%s%s; %s match%s%s"
-		     bufcount (if (= bufcount 1) "" "s")
+	    (message "Searched %d %s%s; %s %s%s"
+		     bufcount
+		     (ngettext "buffer" "buffers" bufcount)
 		     (if (zerop diff) "" (format " (%d killed)" diff))
 		     (if (zerop count) "no" (format "%d" count))
-		     (if (= count 1) "" "es")
+		     (ngettext "match" "matches" count)
 		     ;; Don't display regexp if with remaining text
 		     ;; it is longer than window-width.
 		     (if (> (+ (length (or (get-text-property 0 'isearch-string regexp)
@@ -1856,14 +1861,15 @@ See also `multi-occur'."
 		  (let ((beg (point))
 		        end)
 		    (insert (propertize
-			     (format "%d match%s%s%s in buffer: %s%s\n"
-				     matches (if (= matches 1) "" "es")
+			     (format "%d %s%s%s in buffer: %s%s\n"
+				     matches
+				     (ngettext "match" "matches" matches)
 				     ;; Don't display the same number of lines
 				     ;; and matches in case of 1 match per line.
 				     (if (= lines matches)
-				         "" (format " in %d line%s"
+				         "" (format " in %d %s"
 						    lines
-						    (if (= lines 1) "" "s")))
+						    (ngettext "line" "lines" lines)))
 				     ;; Don't display regexp for multi-buffer.
 				     (if (> (length buffers) 1)
 				         "" (occur-regexp-descr regexp))
@@ -1889,13 +1895,15 @@ See also `multi-occur'."
 	(goto-char (point-min))
 	(let ((beg (point))
 	      end)
-	  (insert (format "%d match%s%s total%s:\n"
-			  global-matches (if (= global-matches 1) "" "es")
+	  (insert (format "%d %s%s total%s:\n"
+			  global-matches
+			  (ngettext "match" "matches" global-matches)
 			  ;; Don't display the same number of lines
 			  ;; and matches in case of 1 match per line.
 			  (if (= global-lines global-matches)
-			      "" (format " in %d line%s"
-					 global-lines (if (= global-lines 1) "" "s")))
+			      "" (format " in %d %s"
+					 global-lines
+					 (ngettext "line" "lines" global-lines)))
 			  (occur-regexp-descr regexp)))
 	  (setq end (point))
 	  (when title-face
@@ -2730,10 +2738,10 @@ characters."
                                            (1+ num-replacements))))))
                              (when (and (eq def 'undo-all)
                                         (null (zerop num-replacements)))
-                               (message "Undid %d %s" num-replacements
-                                        (if (= num-replacements 1)
-                                            "replacement"
-                                          "replacements"))
+                               (message (ngettext "Undid %d replacement"
+                                                  "Undid %d replacements"
+                                                  num-replacements)
+                                        num-replacements)
                                (ding 'no-terminate)
                                (sit-for 1)))
 			   (setq replaced nil last-was-undo t last-was-act-and-show nil)))
@@ -2859,9 +2867,10 @@ characters."
                       last-was-act-and-show     nil))))))
       (replace-dehighlight))
     (or unread-command-events
-	(message "Replaced %d occurrence%s%s"
+	(message (ngettext "Replaced %d occurrence%s"
+			   "Replaced %d occurrences%s"
+			   replace-count)
 		 replace-count
-		 (if (= replace-count 1) "" "s")
 		 (if (> (+ skip-read-only-count
 			   skip-filtered-count
 			   skip-invisible-count)

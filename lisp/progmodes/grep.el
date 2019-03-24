@@ -459,7 +459,7 @@ abbreviated part can also be toggled with
      ;; remove match from grep-regexp-alist before fontifying
      ("^Grep[/a-zA-Z]* started.*"
       (0 '(face nil compilation-message nil help-echo nil mouse-face nil) t))
-     ("^Grep[/a-zA-Z]* finished with \\(?:\\(\\(?:[0-9]+ \\)?matches found\\)\\|\\(no matches found\\)\\).*"
+     ("^Grep[/a-zA-Z]* finished with \\(?:\\(\\(?:[0-9]+ \\)?match\\(?:es\\)? found\\)\\|\\(no matches found\\)\\).*"
       (0 '(face nil compilation-message nil help-echo nil mouse-face nil) t)
       (1 compilation-info-face nil t)
       (2 compilation-warning-face nil t))
@@ -552,7 +552,10 @@ Set up `compilation-exit-message-function' and run `grep-setup-hook'."
       ;; so the buffer is still unmodified if there is no output.
       (cond ((and (zerop code) (buffer-modified-p))
 	     (if (> grep-num-matches-found 0)
-                 (cons (format "finished with %d matches found\n" grep-num-matches-found)
+                 (cons (format (ngettext "finished with %d match found\n"
+                                         "finished with %d matches found\n"
+                                         grep-num-matches-found)
+                               grep-num-matches-found)
                        "matched")
                '("finished with matches found\n" . "matched")))
 	    ((not (buffer-modified-p))

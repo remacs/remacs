@@ -1364,6 +1364,11 @@ Now, such rx expressions generate an error.
 
 * Lisp Changes in Emacs 27.1
 
+** i18n (internationalization)
+
+*** ngettext can be used now to return the right plural form
+according to the given numeric value.
+
 +++
 ** inhibit-null-byte-detection is renamed to inhibit-nul-byte-detection
 
