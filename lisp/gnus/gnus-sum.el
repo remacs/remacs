@@ -3053,6 +3053,11 @@ When FORCE, rebuild the tool bar."
 
 (defvar bidi-paragraph-direction)
 
+(defvar gnus-summary-mode-group nil
+  "Variable for communication with `gnus-summary-mode'.
+Allows the `gnus-newsgroup-name' local variable to be set before
+the summary mode hooks are run.")
+
 (define-derived-mode gnus-summary-mode gnus-mode "Summary"
   "Major mode for reading articles.
 \\<gnus-summary-mode-map>
@@ -3467,11 +3472,6 @@ display only a single character."
 	    overlay-arrow-position (set-marker overlay-arrow-position
 					       (point)
 					       (current-buffer))))))
-
-(defvar gnus-summary-mode-group nil
-  "Variable for communication with `gnus-summary-mode'.
-Allows the `gnus-newsgroup-name' local variable to be set before
-the summary mode hooks are run.")
 
 (defun gnus-summary-setup-buffer (group)
   "Initialize summary buffer for GROUP.
@@ -7744,7 +7744,7 @@ be displayed."
   (unless (derived-mode-p 'gnus-summary-mode)
     (set-buffer gnus-summary-buffer))
   (let ((article (or article (gnus-summary-article-number)))
-	(all-headers (not (not all-headers))) ;Must be t or nil.
+        (all-headers (and all-headers t)) ; Must be t or nil.
 	gnus-summary-display-article-function)
     (and (not pseudo)
 	 (gnus-summary-article-pseudo-p article)
@@ -9978,13 +9978,12 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 		 (crosspost "Crosspost" "Crossposting")))
 	(copy-buf (save-excursion
 		    (nnheader-set-temp-buffer " *copy article*")))
-	art-group to-method new-xref article to-groups
+        art-group to-method new-xref to-groups
 	articles-to-update-marks encoded)
     (unless (assq action names)
       (error "Unknown action %s" action))
     ;; Read the newsgroup name.
-    (when (and (not to-newsgroup)
-	       (not select-method))
+    (unless (or to-newsgroup select-method)
       (if (and gnus-move-split-methods
 	       (not
 		(and (memq gnus-current-article articles)
@@ -10029,8 +10028,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 		  (or (car select-method)
 		      (gnus-group-decoded-name to-newsgroup))
 		  articles)
-    (while articles
-      (setq article (pop articles))
+    (dolist (article articles)
       ;; Set any marks that may have changed in the summary buffer.
       (when gnus-preserve-marks
 	(gnus-summary-push-marks-to-backend article))
@@ -10039,8 +10037,9 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
        (cond
 	;; Move the article.
 	((eq action 'move)
-	 ;; Remove this article from future suppression.
-	 (gnus-dup-unsuppress-article article)
+         (when gnus-suppress-duplicates
+           ;; Remove this article from future suppression.
+           (gnus-dup-unsuppress-article article))
 	 (let* ((from-method (gnus-find-method-for-group
 			      gnus-newsgroup-name))
 		(to-method (or select-method
