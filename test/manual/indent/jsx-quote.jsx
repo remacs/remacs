@@ -1,5 +1,3 @@
-// -*- mode: js-jsx; -*-
-
 // JSX text node values should be strings, but only JS string syntax
 // is considered, so quote marks delimit strings like normal, with
 // disastrous results (https://github.com/mooz/js2-mode/issues/409).

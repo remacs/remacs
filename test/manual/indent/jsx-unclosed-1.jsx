@@ -1,5 +1,3 @@
-// -*- mode: js-jsx; -*-
-
 // Local Variables:
 // indent-tabs-mode: nil
 // js-indent-level: 2

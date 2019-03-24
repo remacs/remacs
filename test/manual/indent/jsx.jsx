@@ -1,5 +1,3 @@
-// -*- mode: js-jsx; -*-
-
 var foo = <div></div>;
 
 return (
