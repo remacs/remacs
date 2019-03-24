@@ -2550,23 +2550,17 @@ indentation is aligned to that column."
         (when comma-p
           (goto-char (1+ declaration-keyword-end))))))))
 
-(defconst js--line-terminating-arrow-re "\\s-*=>\\s-*\\(/[/*]\\|$\\)"
+(defconst js--line-terminating-arrow-re "=>\\s-*\\(/[/*]\\|$\\)"
   "Regexp matching the last \"=>\" (arrow) token on a line.
 Whitespace and comments around the arrow are ignored.")
 
-(defun js--looking-at-broken-arrow-function-p ()
+(defun js--broken-arrow-terminates-line-p ()
   "Helper function for `js--proper-indentation'.
-Return t if point is at the start of a (possibly async) arrow
-function and the last non-comment, non-whitespace token of the
-current line is the \"=>\" token."
-  (when (looking-at "\\s-*async\\s-*")
-    (goto-char (match-end 0)))
-  (cond
-   ((eq (char-after) ?\()
-    (forward-list)
-    (looking-at-p js--line-terminating-arrow-re))
-   (t (looking-at-p
-       (concat js--name-re js--line-terminating-arrow-re)))))
+Return t if the last non-comment, non-whitespace token of the
+current line is the \"=>\" token (of an arrow function)."
+  (let ((from (point)))
+    (end-of-line)
+    (re-search-backward js--line-terminating-arrow-re from t)))
 
 (defun js-jsx--context ()
   "Determine JSX context and move to enclosing JSX."
@@ -2713,7 +2707,7 @@ return nil."
              (goto-char (nth 1 parse-status)) ; go to the opening char
              (if (or (not js-indent-align-list-continuation)
                      (looking-at "[({[]\\s-*\\(/[/*]\\|$\\)")
-                     (save-excursion (forward-char) (js--looking-at-broken-arrow-function-p)))
+                     (save-excursion (forward-char) (js--broken-arrow-terminates-line-p)))
                  (progn ; nothing following the opening paren/bracket
                    (skip-syntax-backward " ")
                    (when (eq (char-before) ?\)) (backward-list))
