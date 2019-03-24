@@ -29,3 +29,11 @@ while (await foo > bar) void 0
     </Baz>
   </Bar>
 </Foo>
+
+// “-” is not allowed in a JSXBoundaryElement’s name.
+<ABC />
+  <A-B-C /> // Weirdly-indented “continued expression.”
+
+// “-” may be used in a JSXAttribute’s name.
+<Foo a-b-c=""
+     x-y-z="" />

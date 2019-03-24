@@ -2083,11 +2083,15 @@ been propertized."
           (throw 'stop nil)))
         (setq text-beg (point))))))
 
+(defconst js-jsx--attribute-name-re (concat js--name-start-re
+                                            "\\(?:\\s_\\|\\sw\\|-\\)*")
+  "Like `js--name-re', but matches “-” as well.")
+
 (defun js-jsx--syntax-propertize-tag (end)
   "Determine if a JSXBoundaryElement is before END and propertize it.
 Disambiguate JSX from inequality operators and arrow functions by
 testing for syntax only valid as JSX."
-  (let ((tag-beg (1- (point))) (type 'open)
+  (let ((tag-beg (1- (point))) tag-end (type 'open)
         name-beg name-match-data unambiguous
         forward-sexp-function) ; Use Lisp version.
     (catch 'stop
@@ -2127,46 +2131,54 @@ testing for syntax only valid as JSX."
           ;; figure out what type it actually is.
           (if (eq type 'open) (setq type (if name-beg 'self-closing 'close)))
           (forward-char))
-         ((looking-at js--dotted-name-re)
-          (if (not name-beg)
-              (progn
-                ;; Don’t match code like “if (i < await foo)”
-                (if (js--unary-keyword-p (match-string 0)) (throw 'stop nil))
-                ;; Save boundaries for later fontification after
-                ;; unambiguously determining the code is JSX.
-                (setq name-beg (match-beginning 0)
-                      name-match-data (match-data))
-                (goto-char (match-end 0)))
-            (setq unambiguous t) ; Non-unary name followed by 2nd name ⇒ JSX
-            ;; Save JSXAttribute’s name’s match data for font-locking later.
-            (put-text-property (match-beginning 0) (1+ (match-beginning 0))
-                               'js-jsx-attribute-name (match-data))
-            (goto-char (match-end 0))
+         ((and (not name-beg) (looking-at js--dotted-name-re))
+          ;; Don’t match code like “if (i < await foo)”
+          (if (js--unary-keyword-p (match-string 0)) (throw 'stop nil))
+          ;; Save boundaries for later fontification after
+          ;; unambiguously determining the code is JSX.
+          (setq name-beg (match-beginning 0)
+                name-match-data (match-data))
+          (goto-char (match-end 0)))
+         ((and name-beg (looking-at js-jsx--attribute-name-re))
+          (setq unambiguous t) ; Non-unary name followed by 2nd name ⇒ JSX
+          ;; Save JSXAttribute’s name’s match data for font-locking later.
+          (put-text-property (match-beginning 0) (1+ (match-beginning 0))
+                             'js-jsx-attribute-name (match-data))
+          (goto-char (match-end 0))
+          (if (>= (point) end) (throw 'stop nil))
+          (skip-chars-forward " \t\n" end)
+          (if (>= (point) end) (throw 'stop nil))
+          ;; “=” is optional for null-valued JSXAttributes.
+          (when (= (char-after) ?=)
+            (forward-char)
             (if (>= (point) end) (throw 'stop nil))
             (skip-chars-forward " \t\n" end)
             (if (>= (point) end) (throw 'stop nil))
-            ;; “=” is optional for null-valued JSXAttributes.
-            (when (= (char-after) ?=)
-              (forward-char)
-              (if (>= (point) end) (throw 'stop nil))
-              (skip-chars-forward " \t\n" end)
-              (if (>= (point) end) (throw 'stop nil))
-              ;; Skip over strings (if possible).  Any
-              ;; JSXExpressionContainer here will be parsed in the
-              ;; next iteration of the loop.
-              (when (memq (char-after) '(?\" ?\' ?\`))
-                (condition-case nil
-                    (forward-sexp)
-                  (scan-error (throw 'stop nil)))))))
+            ;; Skip over strings (if possible).  Any
+            ;; JSXExpressionContainer here will be parsed in the
+            ;; next iteration of the loop.
+            (when (memq (char-after) '(?\" ?\' ?\`))
+              (condition-case nil
+                  (forward-sexp)
+                (scan-error (throw 'stop nil))))))
          ;; There is nothing more to check; this either isn’t JSX, or
          ;; the tag is incomplete.
          (t (throw 'stop nil)))))
     (when unambiguous
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
       (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
+      ;; Prevent “out of range” errors when typing at the end of a buffer.
+      (setq tag-end (if (eobp) (1- (point)) (point)))
       ;; Mark beginning and end of tag for font-locking.
-      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg (cons type (point)))
-      (put-text-property (point) (1+ (point)) 'js-jsx-tag-end tag-beg))
+      (put-text-property tag-beg (1+ tag-beg) 'js-jsx-tag-beg (cons type tag-end))
+      (put-text-property tag-end (1+ tag-end) 'js-jsx-tag-end tag-beg)
+      ;; Use text properties to extend the syntax-propertize region
+      ;; backward to the beginning of the JSXBoundaryElement in the
+      ;; future.  Typically the closing angle bracket could suggest
+      ;; extending backward, but that would also involve more rigorous
+      ;; parsing, and the closing angle bracket may not even exist yet
+      ;; if the JSXBoundaryElement is still being typed.
+      (put-text-property tag-beg (1+ tag-end) 'syntax-multiline t))
     (if (js-jsx--at-enclosing-tag-child-p) (js-jsx--syntax-propertize-tag-text end))))
 
 (defconst js-jsx--text-properties
