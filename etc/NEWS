@@ -671,6 +671,10 @@ mouse click event, and is intended to be bound to a mouse event.
 Previously, setting 'xref-marker-ring-length' would only take effect
 if set before 'xref.el' was loaded.
 
+---
+*** xref-find-definitions now sets the mark at the buffer position
+where it was invoked
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.

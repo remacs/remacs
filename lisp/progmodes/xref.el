@@ -797,6 +797,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defvar xref--read-pattern-history nil)
 
 (defun xref--show-xrefs (xrefs display-action &optional always-show-list)
+  (unless (region-active-p) (push-mark nil t))
   (cond
    ((and (not (cdr xrefs)) (not always-show-list))
     (xref-push-marker-stack)
