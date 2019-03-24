@@ -4218,7 +4218,6 @@ extern void syms_of_module (void);
 #endif
 
 /* Defined in thread.c.  */
-extern struct thread_state primary_thread;
 extern void mark_threads (void);
 extern void unmark_main_thread (void);
 
