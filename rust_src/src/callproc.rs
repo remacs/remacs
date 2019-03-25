@@ -59,14 +59,14 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
             ThreadState::current_buffer_unchecked().directory_.into(),
         )
     } else {
-        unsafe { build_string(NULL_DEVICE.as_ptr() as *const i8) }.into()
+        unsafe { build_string(NULL_DEVICE.as_ptr() as *const libc::c_char) }.into()
     };
 
     let encoded_file = encode_file_name(infile);
 
     let filefd = unsafe {
         emacs_open(
-            encoded_file.const_data_ptr() as *const i8,
+            encoded_file.const_data_ptr() as *const libc::c_char,
             libc::O_RDONLY,
             0,
         )
@@ -75,7 +75,7 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     if filefd < 0 {
         unsafe {
             report_file_error(
-                "Opening process input file".as_ptr() as *const i8,
+                "Opening process input file".as_ptr() as *const libc::c_char,
                 infile.into(),
             )
         };
@@ -149,9 +149,9 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
         if !empty_input {
             create_temp_file(args.len() as isize, args.as_mut_ptr(), &mut infile)
         } else {
-            let fd = emacs_open(NULL_DEVICE.as_ptr() as *const i8, O_RDONLY, 0);
+            let fd = emacs_open(NULL_DEVICE.as_ptr() as *const libc::c_char, O_RDONLY, 0);
             if fd < 0 {
-                report_file_error("opening null device".as_ptr() as *const i8, Qnil);
+                report_file_error("opening null device".as_ptr() as *const libc::c_char, Qnil);
             }
             record_unwind_protect_int(Some(close_file_unwind), fd);
             fd

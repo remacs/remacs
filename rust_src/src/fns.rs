@@ -464,7 +464,7 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
                 ding(Qnil);
                 unsafe {
                     Fdiscard_input();
-                    message1("Please answer yes or no.\0".as_ptr() as *const i8);
+                    message1("Please answer yes or no.\0".as_ptr() as *const libc::c_char);
                 }
                 sleep_for(2.0, None);
             }

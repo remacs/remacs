@@ -28,7 +28,7 @@ use crate::{
 /// care to not use arguments such as build_string ("foo") that involve
 /// side effects that may set errno.
 #[no_mangle]
-pub unsafe extern "C" fn report_file_error(string: *const i8, name: LispObject) {
+pub unsafe extern "C" fn report_file_error(string: *const libc::c_char, name: LispObject) {
     report_file_errno(string, name, errno().0);
 }
 
@@ -86,7 +86,7 @@ pub fn file_name_case_insensitive_p_lisp(filename: LispStringRef) -> bool {
         call!(handler, Qfile_name_case_insensitive_p, absname.into()).into()
     } else {
         unsafe {
-            file_name_case_insensitive_p(encode_file_name(absname).const_data_ptr() as *const i8)
+            file_name_case_insensitive_p(encode_file_name(absname).const_data_ptr() as *const libc::c_char)
         }
     }
 }
@@ -95,7 +95,7 @@ pub fn file_name_case_insensitive_p_lisp(filename: LispStringRef) -> bool {
 /// On Unix, absolute file names start with `/'.
 #[lisp_fn(name = "file-name-absolute-p", c_name = "file_name_absolute_p")]
 pub fn file_name_absolute_p_lisp(filename: LispStringRef) -> bool {
-    unsafe { file_name_absolute_p(filename.const_data_ptr() as *const i8) }
+    unsafe { file_name_absolute_p(filename.const_data_ptr() as *const libc::c_char) }
 }
 
 /// Return t if file FILENAME exists (whether or not you can read it.)
@@ -115,7 +115,7 @@ pub fn file_exists_p(filename: LispStringRef) -> bool {
         set_errno(Errno(0));
         result.into()
     } else {
-        unsafe { check_existing(encode_file_name(absname).const_data_ptr() as *const i8) }
+        unsafe { check_existing(encode_file_name(absname).const_data_ptr() as *const libc::c_char) }
     }
 }
 
@@ -150,7 +150,7 @@ pub fn file_executable_p(filename: LispStringRef) -> bool {
     if handler.is_not_nil() {
         call!(handler, Qfile_executable_p, absname.into()).into()
     } else {
-        unsafe { check_executable(encode_file_name(absname).data_ptr() as *mut i8) }
+        unsafe { check_executable(encode_file_name(absname).data_ptr() as *mut libc::c_char) }
     }
 }
 

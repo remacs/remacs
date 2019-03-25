@@ -445,7 +445,7 @@ pub fn char_to_string(character: LispObject) -> LispObject {
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
     let len = write_codepoint(&mut buffer[..], c);
 
-    unsafe { make_string_from_bytes(buffer.as_ptr() as *const i8, 1, len as isize) }
+    unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, len as isize) }
 }
 
 /// Convert arg BYTE to a unibyte string containing that byte.
@@ -454,9 +454,9 @@ pub fn byte_to_string(byte: EmacsInt) -> LispObject {
     if byte < 0 || byte > 255 {
         error!("Invalid byte");
     }
-    let byte = byte as i8;
+    let byte = byte as libc::c_char;
 
-    unsafe { make_string_from_bytes(&byte as *const i8, 1, 1) }
+    unsafe { make_string_from_bytes(&byte as *const libc::c_char, 1, 1) }
 }
 
 /// Return the first character in STRING.
