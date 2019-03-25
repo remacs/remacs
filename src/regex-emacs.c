@@ -1302,9 +1302,7 @@ struct range_table_work_area
   int bits;			/* flag to record character classes */
 };
 
-/* Make sure that WORK_AREA can hold more N multibyte characters.
-   This is used only in set_image_of_range and set_image_of_range_1.
-   It expects WORK_AREA to be a pointer.
+/* Make sure that WORK_AREA can hold N more multibyte characters.
    If it can't get the space, it returns from the surrounding function.  */
 
 #define EXTEND_RANGE_TABLE(work_area, n)				\
@@ -1732,7 +1730,7 @@ regex_compile (re_char *pattern, size_t size,
   /* Work area for range table of charset.  */
   struct range_table_work_area range_table_work;
 
-  /* If the object matched can contain multibyte characters.  */
+  /* If the regular expression is multibyte.  */
   bool multibyte = RE_MULTIBYTE_P (bufp);
 
   /* Nonzero if we have pushed down into a subpattern.  */
