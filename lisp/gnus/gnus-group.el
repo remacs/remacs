@@ -4029,7 +4029,7 @@ entail asking the server for the groups."
 		 (insert "       *: "
 			 (gnus-group-decoded-name group)
 			 "\n"))
-       (list 'gnus-group (gethash group gnus-active-hashtb)
+       (list 'gnus-group group
 	     'gnus-unread t
 	     'gnus-level (inline (gnus-group-level group)))))
     (goto-char (point-min))))
