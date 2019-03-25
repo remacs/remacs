@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::fmt::{Debug, Formatter};
+use std::ptr;
 
 use remacs_macros::lisp_fn;
 
@@ -9,9 +10,12 @@ use crate::{
     buffers::per_buffer_idx_from_field_offset,
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{as_buffer_objfwd, do_symval_forwarding, indirect_function, set},
+    data::{
+        as_buffer_objfwd, do_symval_forwarding, indirect_function, set, store_symval_forwarding,
+    },
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    lists::LispCons,
     multibyte::LispStringRef,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
@@ -178,6 +182,32 @@ impl LispSymbolRef {
 
     pub fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+
+    /// Set up SYMBOL to refer to its global binding.  This makes it safe
+    /// to alter the status of other bindings.  BEWARE: this may be called
+    /// during the mark phase of GC, where we assume that Lisp_Object slots
+    /// of BLV are marked after this function has changed them.
+    pub unsafe fn swap_in_global_binding(self) {
+        let mut blv = self.get_blv();
+        let fwd = blv.get_fwd();
+
+        // Unload the previously loaded binding.
+        if !fwd.is_null() {
+            blv.set_value(do_symval_forwarding(fwd));
+        }
+
+        // Select the global binding in the symbol.
+        blv.valcell = blv.defcell;
+
+        if !fwd.is_null() {
+            let defcell: LispCons = blv.defcell.into();
+            store_symval_forwarding(fwd as *mut Lisp_Fwd, defcell.cdr(), ptr::null_mut());
+        }
+
+        // Indicate that the global binding is set up now.
+        blv.where_ = Qnil;
+        blv.set_found(false);
     }
 }
 
@@ -419,6 +449,7 @@ pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
     }
     val
 }
+
 /// Non-nil if VARIABLE has a local binding in buffer BUFFER.
 /// BUFFER defaults to the current buffer.
 #[lisp_fn(min = "1")]
@@ -453,6 +484,11 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
         },
         _ => unreachable!(),
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn swap_in_global_binding(symbol: *mut Lisp_Symbol) {
+    LispSymbolRef::new(symbol).swap_in_global_binding();
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

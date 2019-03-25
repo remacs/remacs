@@ -1520,7 +1520,7 @@ of the statement."
                        ;; narrowing.
                        (cl-assert (> string-start last-string-end)
                                   :show-args
-                                  "\
+                                  "
 Overlapping strings detected (start=%d, last-end=%d)")
                        (goto-char string-start)
                        (if (python-syntax-context 'paren)
@@ -5394,8 +5394,10 @@ REPORT-FN is Flymake's callback function."
            "`outline-level' function for Python mode."
            (1+ (/ (current-indentation) python-indent-offset))))
 
-  (set (make-local-variable 'prettify-symbols-alist)
-       python-prettify-symbols-alist)
+  (when (and (boundp 'prettify-symbols-alist)
+             (boundp 'python--prettify-symbols-alist))
+    (set (make-local-variable 'prettify-symbols-alist)
+         python--prettify-symbols-alist))
 
   (python-skeleton-add-menu-items)
 

@@ -42,6 +42,11 @@ impl LispCaseTable {
             && ((canon.is_nil() && eqv.is_nil())
                 || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
     }
+      
+    pub fn is_valid(&self) -> bool {
+        let (e1, e2, e3) = self.extras();
+        e1.is_char_table() && e2.is_char_table() && e3.is_char_table()
+    }
 
     pub fn extras(&self) -> (LispObject, LispObject, LispObject) {
         let extras = unsafe { self.0.extras.as_slice(3) };
@@ -105,6 +110,10 @@ impl LispCaseTable {
 impl LispObject {
     pub fn as_case_table(self) -> Option<LispCaseTable> {
         self.into()
+    }
+
+    pub fn force_case_table(self) -> LispCaseTable {
+        LispCaseTable(self.force_char_table())
     }
 }
 

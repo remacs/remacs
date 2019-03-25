@@ -558,6 +558,7 @@ pub fn internal_default_interrupt_process(
 #[rustfmt::skip]
 def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn rust_syms_of_process() {
     /// List of functions to be called for `interrupt-process'.

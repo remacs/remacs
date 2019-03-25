@@ -31,6 +31,14 @@ impl LispObject {
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         self.into()
     }
+
+    pub fn force_char_table(self) -> LispCharTableRef {
+        unsafe { self.to_char_table_unchecked() }
+    }
+
+    pub unsafe fn to_char_table_unchecked(self) -> LispCharTableRef {
+        LispCharTableRef::new(self.get_untaggedptr() as *mut Lisp_Char_Table)
+    }
 }
 
 impl From<LispObject> for LispCharTableRef {
