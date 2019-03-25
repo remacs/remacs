@@ -533,7 +533,8 @@ See https://lists.gnu.org/r/emacs-devel/2007-11/msg01990.html")
                                      "^[^-+# \\\n]\\|" "^[^-+# \\]\\|")
                                  ;; A `unified' header is ambiguous.
                                  diff-file-header-re))
-                        ('context "^[^-+#! \\]")
+                        ('context (if diff-valid-unified-empty-line
+                                      "^[^-+#! \n\\]" "^[^-+#! \\]"))
                         ('normal "^[^<>#\\]")
                         (_ "^[^-+#!<> \\]"))
                       nil t)
@@ -2116,7 +2117,7 @@ Return new point, if it was moved."
              (smerge-refine-regions beg-del beg-add beg-add end-add
                                     nil #'diff-refine-preproc props-r props-a)))))
       ('context
-       (let* ((middle (save-excursion (re-search-forward "^---")))
+       (let* ((middle (save-excursion (re-search-forward "^---" end)))
               (other middle))
          (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
            (smerge-refine-regions (match-beginning 0) (match-end 0)
