@@ -2145,9 +2145,12 @@ The info element is shared with the same element of
 	(condition-case ()
 	    (if (and (stringp (progn
 				(setq group (read cur)
-				      group (if (numberp group)
-						(number-to-string group)
-					      (symbol-name group)))))
+				      group (cond ((numberp group)
+						   (number-to-string group))
+						  ((symbolp group)
+						   (symbol-name group))
+						  ((stringp group)
+						   group)))))
 		     (numberp (setq max (read cur)))
 		     (numberp (setq min (read cur)))
 		     (null (progn
