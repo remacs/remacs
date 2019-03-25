@@ -53,12 +53,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "blockinput.h"
 
-#ifdef _LIBC
-# include <libintl.h>
-#else
-# include "gettext.h"
-#endif
-
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
@@ -2845,30 +2839,20 @@ usage: (save-restriction &rest BODY)  */)
 /* i18n (internationalization).  */
 
 DEFUN ("ngettext", Fngettext, Sngettext, 3, 3, 0,
-       doc: /* Return the plural form of the translation of the string.
-This function is similar to the `gettext' function as it finds the message
-catalogs in the same way.  But it takes two extra arguments.  The MSGID
-parameter must contain the singular form of the string to be converted.
-It is also used as the key for the search in the catalog.
-The MSGID_PLURAL parameter is the plural form.  The parameter N is used
-to determine the plural form.  If no message catalog is found MSGID is
-returned if N is equal to 1, otherwise MSGID_PLURAL.  */)
+       doc: /* Return the translation of MSGID (plural MSGID_PLURAL) depending on N.
+MSGID is the singular form of the string to be converted;
+use it as the key for the search in the translation catalog.
+MSGID_PLURAL is the plural form.  Use N to select the proper translation.
+If no message catalog is found, MSGID is returned if N is equal to 1,
+otherwise MSGID_PLURAL.  */)
   (Lisp_Object msgid, Lisp_Object msgid_plural, Lisp_Object n)
 {
   CHECK_STRING (msgid);
   CHECK_STRING (msgid_plural);
-  CHECK_FIXNUM (n);
+  CHECK_INTEGER (n);
 
-#ifdef _LIBGETTEXT_H
-  return build_string (ngettext (SSDATA (msgid),
-                                 SSDATA (msgid_plural),
-                                 XFIXNUM (n)));
-#else
-  if (XFIXNUM (n) == 1)
-    return msgid;
-  else
-    return msgid_plural;
-#endif
+  /* Placeholder implementation until we get our act together.  */
+  return EQ (n, make_fixnum (1)) ? msgid : msgid_plural;
 }
 
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
