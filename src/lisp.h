@@ -3233,11 +3233,6 @@ union specbinding
     } bt;
   };
 
-/* These 3 are defined as macros in thread.h.  */
-/* extern union specbinding *specpdl; */
-/* extern union specbinding *specpdl_ptr; */
-/* extern ptrdiff_t specpdl_size; */
-
 INLINE ptrdiff_t
 SPECPDL_INDEX (void)
 {

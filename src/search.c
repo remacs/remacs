@@ -59,31 +59,6 @@ static struct regexp_cache searchbufs[REGEXP_CACHE_SIZE];
 /* The head of the linked list; points to the most recently used buffer.  */
 static struct regexp_cache *searchbuf_head;
 
-
-/* Every call to re_search, etc., must pass &search_regs as the regs
-   argument unless you can show it is unnecessary (i.e., if re_search
-   is certainly going to be called again before region-around-match
-   can be called).
-
-   Since the registers are now dynamically allocated, we need to make
-   sure not to refer to the Nth register before checking that it has
-   been allocated by checking search_regs.num_regs.
-
-   The regex code keeps track of whether it has allocated the search
-   buffer using bits in the re_pattern_buffer.  This means that whenever
-   you compile a new pattern, it completely forgets whether it has
-   allocated any registers, and will allocate new registers the next
-   time you call a searching or matching function.  Therefore, we need
-   to call re_set_registers after compiling a new pattern or after
-   setting the match registers, so that the regex functions will be
-   able to free or re-allocate it properly.  */
-/* static struct re_registers search_regs; */
-
-/* The buffer in which the last search was performed, or
-   Qt if the last search was done in a string;
-   Qnil if no searching has been done yet.  */
-/* static Lisp_Object last_thing_searched; */
-
 static void set_search_regs (ptrdiff_t, ptrdiff_t);
 static void save_search_regs (void);
 static EMACS_INT simple_search (EMACS_INT, unsigned char *, ptrdiff_t,
@@ -2763,7 +2738,7 @@ since only regular expressions have distinguished subexpressions.  */)
      error out since otherwise this will result in confusing bugs.  */
   ptrdiff_t sub_start = search_regs.start[sub];
   ptrdiff_t sub_end = search_regs.end[sub];
-  unsigned  num_regs = search_regs.num_regs;
+  ptrdiff_t num_regs = search_regs.num_regs;
   newpoint = search_regs.start[sub] + SCHARS (newtext);
 
   /* Replace the old text with the new in the cleanest possible way.  */
@@ -3078,12 +3053,6 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 
   return Qnil;
 }
-
-/* If true the match data have been saved in saved_search_regs
-   during the execution of a sentinel or filter. */
-/* static bool search_regs_saved; */
-/* static struct re_registers saved_search_regs; */
-/* static Lisp_Object saved_last_thing_searched; */
 
 /* Called from Flooking_at, Fstring_match, search_buffer, Fstore_match_data
    if asynchronous code (filter or sentinel) is running. */

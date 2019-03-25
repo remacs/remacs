@@ -40,10 +40,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define CACHEABLE /* empty */
 #endif
 
-/* Chain of condition and catch handlers currently in effect.  */
-
-/* struct handler *handlerlist; */
-
 /* Non-nil means record all fset's and provide's, to be undone
    if the file being autoloaded is not fully loaded.
    They are recorded by being consed onto the front of Vautoload_queue:
@@ -247,8 +243,6 @@ init_eval_once_for_pdumper (void)
   specpdl_size = size;
   specpdl = specpdl_ptr = pdlvec + 1;
 }
-
-/* static struct handler handlerlist_sentinel; */
 
 void
 init_eval (void)

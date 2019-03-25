@@ -111,8 +111,8 @@ struct thread_state
   struct buffer *m_current_buffer;
 #define current_buffer (current_thread->m_current_buffer)
 
-  /* Every call to re_match_2, etc., must pass &search_regs as the regs
-     argument unless you can show it is unnecessary (i.e., if re_match_2
+  /* Every call to re_search, etc., must pass &search_regs as the regs
+     argument unless you can show it is unnecessary (i.e., if re_search
      is certainly going to be called again before region-around-match
      can be called).
 
