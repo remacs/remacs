@@ -78,7 +78,11 @@ SOURCE."
 (defun flymake-cc-use-special-make-target ()
   "Command for checking a file via a CHK_SOURCES Make target."
   (unless (executable-find "make") (error "Make not found"))
-  '("make" "check-syntax" "CHK_SOURCES=-x c -"))
+  `("make"
+    "check-syntax"
+    ,(format "CHK_SOURCES=-x %s -c -"
+             (cond ((derived-mode-p 'c++-mode) "c++")
+                   (t "c")))))
 
 (defvar-local flymake-cc--proc nil "Internal variable for `flymake-gcc'")
 
