@@ -5342,7 +5342,8 @@ valid_lisp_object_p (Lisp_Object obj)
 
 /* Allocate room for SIZE bytes from pure Lisp storage and return a
    pointer to it.  TYPE is the Lisp type for which the memory is
-   allocated.  TYPE < 0 means it's not used for a Lisp object.  */
+   allocated.  TYPE < 0 means it's not used for a Lisp object,
+   and that the result should have an alignment of -TYPE.  */
 
 static void *
 pure_alloc (size_t size, int type)
@@ -5361,8 +5362,11 @@ pure_alloc (size_t size, int type)
     {
       /* Allocate space for a non-Lisp object from the end of the free
 	 space.  */
-      pure_bytes_used_non_lisp += size;
-      result = purebeg + pure_size - pure_bytes_used_non_lisp;
+      ptrdiff_t unaligned_non_lisp = pure_bytes_used_non_lisp + size;
+      char *unaligned = purebeg + pure_size - unaligned_non_lisp;
+      int decr = (intptr_t) unaligned & (-1 - type);
+      pure_bytes_used_non_lisp = unaligned_non_lisp + decr;
+      result = unaligned - decr;
     }
   pure_bytes_used = pure_bytes_used_lisp + pure_bytes_used_non_lisp;
 
@@ -5549,7 +5553,8 @@ make_pure_bignum (struct Lisp_Bignum *value)
   struct Lisp_Bignum *b = pure_alloc (sizeof *b, Lisp_Vectorlike);
   XSETPVECTYPESIZE (b, PVEC_BIGNUM, 0, VECSIZE (struct Lisp_Bignum));
 
-  pure_limbs = pure_alloc (nbytes, -1);
+  int limb_alignment = alignof (mp_limb_t);
+  pure_limbs = pure_alloc (nbytes, - limb_alignment);
   for (i = 0; i < nlimbs; ++i)
     pure_limbs[i] = mpz_getlimbn (value->value, i);
 
