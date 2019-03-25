@@ -38,8 +38,8 @@
   :group 'text)
 
 (defvar text-mode-variant nil
-  "Non-nil if this buffer's major mode is a variant of Text mode.
-Use (derived-mode-p \\='text-mode) instead.")
+  "Non-nil if this buffer's major mode is a variant of Text mode.")
+(make-obsolete-variable 'text-mode-variant 'derived-mode-p "27.1")
 
 (defvar text-mode-syntax-table
   (let ((st (make-syntax-table)))

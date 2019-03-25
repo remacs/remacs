@@ -1233,6 +1233,11 @@ near the current column in Tabulated Lists (see variables
 'tabulated-list-tty-sort-indicator-asc', and
 'tabulated-list-tty-sort-indicator-desc').
 
+** Text mode
+
++++
+*** 'text-mode-variant' is now obsolete, use 'derived-mode-p' instead.
+
 
 * New Modes and Packages in Emacs 27.1
 
