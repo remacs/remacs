@@ -551,7 +551,7 @@ Putting this function on `eshell-pre-command-hook' will mimic Plan 9's
 9term behavior."
   (goto-char eshell-last-input-start))
 
-(custom-add-option 'eshell-pre-command-hook 'eshell-push-command-mark)
+(custom-add-option 'eshell-pre-command-hook 'eshell-goto-input-start)
 
 (defsubst eshell-interactive-print (string)
   "Print STRING to the eshell display buffer."
