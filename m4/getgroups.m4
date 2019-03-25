@@ -1,4 +1,4 @@
-# serial 21
+# serial 22
 
 dnl From Jim Meyering.
 dnl A wrapper around AC_FUNC_GETGROUPS.
@@ -42,6 +42,8 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
          [case "$host_os" in # ((
                            # Guess yes on glibc systems.
             *-gnu* | gnu*) ac_cv_func_getgroups_works="guessing yes" ;;
+                           # Guess yes on musl systems.
+            *-musl*)       ac_cv_func_getgroups_works="guessing yes" ;;
                            # If we don't know, assume the worst.
             *)             ac_cv_func_getgroups_works="guessing no" ;;
           esac
@@ -95,6 +97,8 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
           [case "$host_os" in
                             # Guess yes on glibc systems.
              *-gnu* | gnu*) gl_cv_func_getgroups_works="guessing yes" ;;
+                            # Guess yes on musl systems.
+             *-musl*)       gl_cv_func_getgroups_works="guessing yes" ;;
                             # If we don't know, assume the worst.
              *)             gl_cv_func_getgroups_works="guessing no" ;;
            esac

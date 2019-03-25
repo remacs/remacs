@@ -3,8 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2019-03-09.13}
-
+\def\texinfoversion{2019-03-23.11}
 %
 % Copyright 1985, 1986, 1988, 1990-2019 Free Software Foundation, Inc.
 %
@@ -449,11 +448,10 @@
   }%
 }
 
-% First remove any @comment, then any @c comment.  Also remove a @texinfoc
-% comment (see \scanmacro for details).  Pass the result on to \argcheckspaces.
+% First remove any @comment, then any @c comment.  Pass the result on to 
+% \argcheckspaces.
 \def\argremovecomment#1\comment#2\ArgTerm{\argremovec #1\c\ArgTerm}
-\def\argremovec#1\c#2\ArgTerm{\argremovetexinfoc #1\texinfoc\ArgTerm}
-\def\argremovetexinfoc#1\texinfoc#2\ArgTerm{\argcheckspaces#1\^^M\ArgTerm}
+\def\argremovec#1\c#2\ArgTerm{\argcheckspaces#1\^^M\ArgTerm}
 
 % Each occurrence of `\^^M' or `<space>\^^M' is replaced by a single space.
 %
@@ -1124,6 +1122,16 @@ where each line of input produces a line of output.}
     \fi
   \fi
 \fi
+
+\newif\ifpdforxetex
+\pdforxetexfalse
+\ifpdf
+  \pdforxetextrue
+\fi
+\ifx\XeTeXrevision\thisisundefined\else
+  \pdforxetextrue
+\fi
+
 
 % PDF uses PostScript string constants for the names of xref targets,
 % for display in the outlines, and in other places.  Thus, we have to
@@ -2838,7 +2846,7 @@ end
 
 % @t, explicit typewriter.
 \def\t#1{%
-  {\tt \rawbackslash \plainfrenchspacing #1}%
+  {\tt \plainfrenchspacing #1}%
   \null
 }
 
@@ -2865,7 +2873,6 @@ end
     % Turn off hyphenation.
     \nohyphenation
     %
-    \rawbackslash
     \plainfrenchspacing
     #1%
   }%
@@ -3106,7 +3113,7 @@ end
 % So now @email is just like @uref, unless we are pdf.
 %
 %\def\email#1{\angleleft{\tt #1}\angleright}
-\ifpdf
+\ifpdforxetex
   \def\email#1{\doemail#1,,\finish}
   \def\doemail#1,#2,#3\finish{\begingroup
     \unsepspaces
@@ -3116,18 +3123,7 @@ end
     \endlink
   \endgroup}
 \else
-  \ifx\XeTeXrevision\thisisundefined
-    \let\email=\uref
-  \else
-    \def\email#1{\doemail#1,,\finish}
-    \def\doemail#1,#2,#3\finish{\begingroup
-      \unsepspaces
-      \pdfurl{mailto:#1}%
-      \setbox0 = \hbox{\ignorespaces #2}%
-      \ifdim\wd0>0pt\unhbox0\else\code{#1}\fi
-      \endlink
-    \endgroup}
-  \fi
+  \let\email=\uref
 \fi
 
 % @kbdinputstyle -- arg is `distinct' (@kbd uses slanted tty font always),
@@ -4661,19 +4657,6 @@ end
   }
 }
 
-% We have this subroutine so that we can handle at least some @value's
-% properly in indexes (we call \makevalueexpandable in \indexdummies).
-% The command has to be fully expandable (if the variable is set), since
-% the result winds up in the index file.  This means that if the
-% variable's value contains other Texinfo commands, it's almost certain
-% it will fail (although perhaps we could fix that with sufficient work
-% to do a one-level expansion on the result, instead of complete).
-% 
-% Unfortunately, this has the consequence that when _ is in the *value*
-% of an @set, it does not print properly in the roman fonts (get the cmr
-% dot accent at position 126 instead).  No fix comes to mind, and it's
-% been this way since 2003 or earlier, so just ignore it.
-% 
 \def\expandablevalue#1{%
   \expandafter\ifx\csname SET#1\endcsname\relax
     {[No value for ``#1'']}%
@@ -4702,7 +4685,7 @@ end
 % if possible, otherwise sort late.
 \def\indexnofontsvalue#1{%
   \expandafter\ifx\csname SET#1\endcsname\relax
-    ZZZZZZZ
+    ZZZZZZZ%
   \else
     \csname SET#1\endcsname
   \fi
@@ -5238,17 +5221,25 @@ end
   \xdef\indexsortkey{#1}\endgroup}
 }
 
-% The default definition
+\def\indexwriteseealso#1{
+  \gdef\pagenumbertext{@seealso{#1}}%
+}
+
+% The default definitions
 \def\sortas#1{}%
+\def\seealso#1{\i{\putwordSeeAlso}\ #1}% for sorted index file only
+\def\putwordSeeAlso{see also}
 
 % Given index entry text like "aaa @subentry bbb @sortas{ZZZ}":
 %   * Set \bracedtext to "{aaa}{bbb}"
 %   * Set \fullindexsortkey to "aaa @subentry ZZZ"
+%   * If @seealso occurs, set \pagenumbertext
 %
 \def\splitindexentry#1{%
   \gdef\fullindexsortkey{}%
   \xdef\bracedtext{}%
   \def\sep{}%
+  \def\seealso##1{}%
   \expandafter\doindexsegment#1\subentry\finish\subentry
 }
 
@@ -5269,6 +5260,7 @@ end
     % font commands turned off.
     \bgroup
       \let\sortas\indexwritesortas
+      \let\seealso\indexwriteseealso
       \indexnofonts
       % The braces around the commands are recognized by texindex.
       \def\lbracechar{{\indexlbrace}}%
@@ -5279,8 +5271,9 @@ end
       \def\atchar##1{\@}%
       %
       \let\indexsortkey\empty
+      \global\let\pagenumbertext\empty
       % Execute the segment and throw away the typeset output.  This executes
-      % any @sortas commands in this segment.
+      % any @sortas or @seealso commands in this segment.
       \setbox\dummybox = \hbox{\segment}%
       \ifx\indexsortkey\empty{%
         \indexnonalnumdisappear
@@ -5328,7 +5321,9 @@ end
   %
   \edef\temp{%
     \write\writeto{%
-      \string\entry{\fullindexsortkey}{\noexpand\folio}\bracedtext}%
+      \string\entry{\fullindexsortkey}%
+        {\ifx\pagenumbertext\empty\noexpand\folio\else\pagenumbertext\fi}%
+        \bracedtext}%
   }%
   \temp
 }
@@ -5428,9 +5423,14 @@ end
 %  \entry {topic}{pagelist}
 %     for a topic that is used without subtopics
 %  \primary {topic}
+%  \entry {topic}{}
 %     for the beginning of a topic that is used with subtopics
 %  \secondary {subtopic}{pagelist}
 %     for each subtopic.
+%  \secondary {subtopic}{}
+%     for a subtopic with sub-subtopics
+%  \tertiary {subtopic}{subsubtopic}{pagelist}
+%     for each sub-subtopic.
 
 % Define the user-accessible indexing commands
 % @findex, @vindex, @kindex, @cindex.
@@ -5480,8 +5480,6 @@ end
   \fi
   \closein 1
 \endgroup}
-\def\loopdo#1\repeat{\def\body{#1}\loopdoxxx}
-\def\loopdoxxx{\let\next=\relax\body\let\next=\loopdoxxx\fi\next}
 
 % If the index file starts with a backslash, forgo reading the index
 % file altogether.  If somebody upgrades texinfo.tex they may still have
@@ -5493,41 +5491,11 @@ end
     \message{skipping sorted index file}%
     (Skipped sorted index file in obsolete format)
   \else
-    \printindexzzz
+    \begindoublecolumns
+    \input \jobname.\indexname s
+    \enddoublecolumns
   \fi
 }
-
-\def\printindexzzz{%
-   \begindoublecolumns
-   \let\dotheinsertentrybox\dotheinsertentryboxwithpenalty
-   %
-   % Read input from the index file line by line.
-   \loopdo
-     \ifeof1 \else
-       \read 1 to \nextline
-     \fi
-     %
-     \indexinputprocessing
-     \thisline
-     %
-     \ifeof1\else
-     \let\thisline\nextline
-   \repeat
-   %%
-   \enddoublecolumns
-}
-
-\def\indexinputprocessing{%
-  \ifeof1
-    \let\firsttoken\relax
-  \else
-    \edef\act{\gdef\noexpand\firsttoken{\getfirsttoken\nextline}}%
-    \act
-  \fi
-}
-\def\getfirsttoken#1{\expandafter\getfirsttokenx#1\endfirsttoken}
-\long\def\getfirsttokenx#1#2\endfirsttoken{\noexpand#1}
-
 
 % These macros are used by the sorted index file itself.
 % Change them to control the appearance of the index.
@@ -5607,12 +5575,6 @@ end
 \def\entry{%
   \begingroup
     %
-    % For pdfTeX and XeTeX.
-    % The redefinition of \domark stops marks being added in \pdflink to 
-    % preserve coloured links across page boundaries.  Otherwise the marks
-    % would get in the way of \lastbox in \insertentrybox.
-    \let\domark\relax
-    %
     % Start a new paragraph if necessary, so our assignments below can't
     % affect previous text.
     \par
@@ -5645,35 +5607,31 @@ end
 \gdef\finishentry#1{%
     \egroup % end box A
     \dimen@ = \wd\boxA % Length of text of entry
-    \global\setbox\boxA=\hbox\bgroup\unhbox\boxA
-    % #1 is the page number.
-    %
-    % Get the width of the page numbers, and only use
-    % leaders if they are present.
-    \global\setbox\boxB = \hbox{#1}%
-    \ifdim\wd\boxB = 0pt
-      \null\nobreak\hfill\ %
-    \else
+    \global\setbox\boxA=\hbox\bgroup
+      \unhbox\boxA
+      % #1 is the page number.
       %
-      \null\nobreak\indexdotfill % Have leaders before the page number.
-      %
-      \ifpdf
-        \pdfgettoks#1.%
-        \hskip\skip\thinshrinkable\the\toksA
+      % Get the width of the page numbers, and only use
+      % leaders if they are present.
+      \global\setbox\boxB = \hbox{#1}%
+      \ifdim\wd\boxB = 0pt
+        \null\nobreak\hfill\ %
       \else
-        \ifx\XeTeXrevision\thisisundefined
-          \hskip\skip\thinshrinkable #1%
-        \else
+        %
+        \null\nobreak\indexdotfill % Have leaders before the page number.
+        %
+        \ifpdforxetex
           \pdfgettoks#1.%
           \hskip\skip\thinshrinkable\the\toksA
+        \else
+          \hskip\skip\thinshrinkable #1%
         \fi
       \fi
-    \fi
     \egroup % end \boxA
     \ifdim\wd\boxB = 0pt
-      \global\setbox\entrybox=\vbox{\unhbox\boxA}%
-    \else
-    \global\setbox\entrybox=\vbox\bgroup
+      \noindent\unhbox\boxA\par
+      \nobreak
+    \else\bgroup
       % We want the text of the entries to be aligned to the left, and the
       % page numbers to be aligned to the right.
       %
@@ -5739,54 +5697,10 @@ end
     \egroup % The \vbox
     \fi
   \endgroup
-  \dotheinsertentrybox
 }}
 
 \newskip\thinshrinkable
 \skip\thinshrinkable=.15em minus .15em
-
-\newbox\entrybox
-\def\insertentrybox{%
-  \ourunvbox\entrybox
-}
-
-% default definition
-\let\dotheinsertentrybox\insertentrybox
-
-% Use \lastbox to take apart vbox box by box, and add each sub-box
-% to the current vertical list.
-\def\ourunvbox#1{%
-\bgroup % for local binding of \delayedbox
-  % Remove the last box from box #1
-  \global\setbox#1=\vbox{%
-    \unvbox#1%
-    \unskip % remove any glue
-    \unpenalty
-    \global\setbox\interbox=\lastbox
-  }%
-  \setbox\delayedbox=\box\interbox
-  \ifdim\ht#1=0pt\else
-    \ourunvbox#1 % Repeat on what's left of the box
-    \nobreak
-  \fi
-  \box\delayedbox
-\egroup
-}
-\newbox\delayedbox
-\newbox\interbox
-
-% Used from \printindex.  \firsttoken should be the first token
-% after the \entry.  If it's not another \entry, we are at the last
-% line of a group of index entries, so insert a penalty to discourage
-% widowed index entries.
-\def\dotheinsertentryboxwithpenalty{%
-  \ifx\firsttoken\isentry
-  \else
-    \penalty 9000
-  \fi
-  \insertentrybox
-}
-\def\isentry{\entry}%
 
 % Like plain.tex's \dotfill, except uses up at least 1 em.
 % The filll stretch here overpowers both the fil and fill stretch to push
@@ -5797,24 +5711,15 @@ end
 
 \def\primary #1{\line{#1\hfil}}
 
-\newskip\secondaryindent \secondaryindent=0.5cm
-\def\secondary#1#2{{%
-  \parfillskip=0in
-  \parskip=0in
-  \hangindent=1in
-  \hangafter=1
-  \noindent\hskip\secondaryindent\hbox{#1}\indexdotfill
-  \ifpdf
-    \pdfgettoks#2.\ \the\toksA % The page number ends the paragraph.
-  \else
-    \ifx\XeTeXrevision\thisisundefined
-      #2
-    \else
-      \pdfgettoks#2.\ \the\toksA % The page number ends the paragraph.
-    \fi
-  \fi
-  \par
-}}
+\def\secondary{\indententry{0.5cm}}
+\def\tertiary{\indententry{1cm}}
+
+\def\indententry#1#2#3{%
+  \bgroup
+  \leftskip=#1
+  \entry{#2}{#3}%
+  \egroup
+}
 
 % Define two-column mode, which we use to typeset indexes.
 % Adapted from the TeXbook, page 416, which is to say,
@@ -5831,17 +5736,6 @@ end
   % Grab any single-column material above us.
   \output = {%
     \savetopmark
-    %
-    % Here is a possibility not foreseen in manmac: if we accumulate a
-    % whole lot of material, we might end up calling this \output
-    % routine twice in a row (see the doublecol-lose test, which is
-    % essentially a couple of indexes with @setchapternewpage off).  In
-    % that case we just ship out what is in \partialpage with the normal
-    % output routine.  Generally, \partialpage will be empty when this
-    % runs and this will be a no-op.  See the indexspread.tex test case.
-    \ifvoid\partialpage \else
-      \onepageout{\pagecontents\partialpage}%
-    \fi
     %
     \global\setbox\partialpage = \vbox{%
       % Unvbox the main output page.
@@ -6122,11 +6016,9 @@ end
 
 % @raisesections: treat @section as chapter, @subsection as section, etc.
 \def\raisesections{\global\advance\secbase by -1}
-\let\up=\raisesections % original BFox name
 
 % @lowersections: treat @chapter as section, @section as subsection, etc.
 \def\lowersections{\global\advance\secbase by 1}
-\let\down=\lowersections % original BFox name
 
 % we only have subsub.
 \chardef\maxseclevel = 3
@@ -6778,13 +6670,8 @@ end
   % 1 and 2 (the page numbers aren't printed), and so are the first
   % two pages of the document.  Thus, we'd have two destinations named
   % `1', and two named `2'.
-  \ifpdf
+  \ifpdforxetex
     \global\pdfmakepagedesttrue
-  \else
-    \ifx\XeTeXrevision\thisisundefined
-    \else
-      \global\pdfmakepagedesttrue
-    \fi
   \fi
 }
 
@@ -7147,11 +7034,7 @@ end
 
 % @cartouche ... @end cartouche: draw rectangle w/rounded corners around
 % environment contents.
-\font\circle=lcircle10
-\newdimen\circthick
-\newdimen\cartouter\newdimen\cartinner
-\newskip\normbskip\newskip\normpskip\newskip\normlskip
-\circthick=\fontdimen8\circle
+
 %
 \def\ctl{{\circle\char'013\hskip -6pt}}% 6pt from pl file: 1/2charwidth
 \def\ctr{{\hskip 6pt\circle\char'010}}
@@ -7166,7 +7049,18 @@ end
 %
 \newskip\lskip\newskip\rskip
 
+% only require the font if @cartouche is actually used
+\def\cartouchefontdefs{%
+  \font\circle=lcircle10\relax
+  \circthick=\fontdimen8\circle
+}
+\newdimen\circthick
+\newdimen\cartouter\newdimen\cartinner
+\newskip\normbskip\newskip\normpskip\newskip\normlskip
+
+
 \envdef\cartouche{%
+  \cartouchefontdefs
   \ifhmode\par\fi  % can't be in the midst of a paragraph.
   \startsavinginserts
   \lskip=\leftskip \rskip=\rightskip
@@ -8038,9 +7932,6 @@ end
   }
 \fi
 
-% alias because \c means cedilla in @tex or @math
-\let\texinfoc=\c
-
 % Used at the time of macro expansion.
 % Argument is macro body with arguments substituted
 \def\scanmacro#1{%
@@ -8048,10 +7939,11 @@ end
   \def\xeatspaces{\eatspaces}%
   %
   % Process the macro body under the current catcode regime.
-  \scantokens{#1@texinfoc}%
+  \scantokens{#1@comment}%
   %
-  % The \texinfoc is to remove the \newlinechar added by \scantokens, and
-  % can be noticed by \parsearg.
+  % The \comment is to remove the \newlinechar added by \scantokens, and
+  % can be noticed by \parsearg.  Note \c isn't used because this means cedilla 
+  % in math mode.
 }
 
 % Used for copying and captions
@@ -8152,12 +8044,14 @@ end
 \def\macroargctxt{%
   \scanctxt
   \catcode`\ =\active
+  \catcode`\@=\other
   \catcode`\^^M=\other
   \catcode`\\=\active
 }
 
 \def\macrolineargctxt{% used for whole-line arguments without braces
   \scanctxt
+  \catcode`\@=\other
   \catcode`\{=\other
   \catcode`\}=\other
 }
@@ -8721,9 +8615,21 @@ end
 % also remove a trailing comma, in case of something like this:
 % @node Help-Cross,  ,  , Cross-refs
 \def\donode#1 ,#2\finishnodeparse{\dodonode #1,\finishnodeparse}
-\def\dodonode#1,#2\finishnodeparse{\gdef\lastnode{#1}}
+\def\dodonode#1,#2\finishnodeparse{\gdef\lastnode{#1}\omittopnode}
 
-\let\nwnode=\node
+% Used so that the @top node doesn't have to be wrapped in an @ifnottex
+% conditional.
+% \doignore goes to more effort to skip nested conditionals but we don't need 
+% that here.
+\def\omittopnode{%
+   \ifx\lastnode\wordTop
+   \expandafter\ignorenode\fi
+}
+\def\wordTop{Top}
+
+% Divert output to a box that is not output until the next @node command.
+\def\ignorenode{\setbox\dummybox\vbox\bgroup\def\node{\egroup\node}}
+
 \let\lastnode=\empty
 
 % Write a cross-reference definition for the current node.  #1 is the
@@ -9198,19 +9104,6 @@ end
   \catcode`\^^]=\other
   \catcode`\^^^=\other
   \catcode`\^^_=\other
-  % It was suggested to set the catcode of ^ to 7, which would allow ^^e4 etc.
-  % in xref tags, i.e., node names.  But since ^^e4 notation isn't
-  % supported in the main text, it doesn't seem desirable.  Furthermore,
-  % that is not enough: for node names that actually contain a ^
-  % character, we would end up writing a line like this: 'xrdef {'hat
-  % b-title}{'hat b} and \xrdef does a \csname...\endcsname on the first
-  % argument, and \hat is not an expandable control sequence.  It could
-  % all be worked out, but why?  Either we support ^^ or we don't.
-  %
-  % The other change necessary for this was to define \auxhat:
-  % \def\auxhat{\def^{'hat }}% extra space so ok if followed by letter
-  % and then to call \auxhat in \setq.
-  %
   \catcode`\^=\other
   %
   % Special characters.  Should be turned off anyway, but...
@@ -9228,14 +9121,7 @@ end
   \catcode`\%=\other
   \catcode`+=\other % avoid \+ for paranoia even though we've turned it off
   %
-  % This is to support \ in node names and titles, since the \
-  % characters end up in a \csname.  It's easier than
-  % leaving it active and making its active definition an actual \
-  % character.  What I don't understand is why it works in the *value*
-  % of the xrdef.  Seems like it should be a catcode12 \, and that
-  % should not typeset properly.  But it works, so I'm moving on for
-  % now.  --karl, 15jan04.
-  \catcode`\\=\other
+  \catcode`\\=\active
   %
   % @ is our escape character in .aux files, and we need braces.
   \catcode`\{=1
@@ -11506,11 +11392,9 @@ directory should work if nowhere else does.}
 % \backslashcurfont outputs one backslash character in current font,
 % as in \char`\\.
 \global\chardef\backslashcurfont=`\\
-\global\let\rawbackslashxx=\backslashcurfont  % let existing .??s files work
 
-% \realbackslash is an actual character `\' with catcode other, and
-% \doublebackslash is two of them (for the pdf outlines).
-{\catcode`\\=\other @gdef@realbackslash{\} @gdef@doublebackslash{\\}}
+% \realbackslash is an actual character `\' with catcode other.
+{\catcode`\\=\other @gdef@realbackslash{\}}
 
 % In Texinfo, backslash is an active character; it prints the backslash
 % in fixed width font.
@@ -11528,10 +11412,8 @@ directory should work if nowhere else does.}
 @def@ttbackslash{{@tt @ifmmode @mathchar29020 @else @backslashcurfont @fi}}
 @let@backslashchar = @ttbackslash % @backslashchar{} is for user documents.
 
-% \rawbackslash defines an active \ to do \backslashcurfont.
 % \otherbackslash defines an active \ to be a literal `\' character with
-% catcode other.  We switch back and forth between these.
-@gdef@rawbackslash{@let\=@backslashcurfont}
+% catcode other.
 @gdef@otherbackslash{@let\=@realbackslash}
 
 % Same as @turnoffactive except outputs \ as {\tt\char`\\} instead of
@@ -11603,7 +11485,7 @@ directory should work if nowhere else does.}
   @ifx\@eatinput @let\ = @ttbackslash @fi
   @catcode13=5 % regular end of line
   @enableemergencynewline
-  @let@c=@texinfoc
+  @let@c=@comment
   @let@parsearg@originalparsearg
   % Also turn back on active characters that might appear in the input
   % file name, in case not using a pre-dumped format.
