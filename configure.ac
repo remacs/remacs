@@ -2941,7 +2941,7 @@ fi
 AC_SUBST(LIBSELINUX_LIBS)
 
 HAVE_GNUTLS=no
-if test "${with_gnutls}" = "yes" ; then
+if test "${with_gnutls}" != "no" ; then
   EMACS_CHECK_MODULES([LIBGNUTLS], [gnutls >= 2.12.2],
     [HAVE_GNUTLS=yes], [HAVE_GNUTLS=no])
   if test "${HAVE_GNUTLS}" = "yes"; then
@@ -3512,7 +3512,10 @@ fi
 
 if test "${HAVE_X11}" = "yes"; then
   dnl Avoid Xpm on AIX unless requested, as it crashes; see Bug#17598.
-  test "$opsys$with_xpm_set" = aix4-2 && with_xpm=no
+  case $opsys,$with_xpm_set,$with_xpm in
+    aix4-2,set,yes) ;;
+    aix4-2,*) with_xpm=no;;
+  esac
 
   if test "${with_xpm}" != "no"; then
     AC_CHECK_HEADER(X11/xpm.h,
@@ -3830,28 +3833,46 @@ AC_SUBST(LIBGIF)
 
 dnl Check for required libraries.
 MISSING=
-WITH_NO=
+WITH_IFAVAILABLE=
 if test "${HAVE_X11}" = "yes"; then
-  test "${with_xpm}" != "no" && test "${HAVE_XPM}" != "yes" &&
-    MISSING="libXpm" && WITH_NO="--with-xpm=no"
-  test "${with_jpeg}" != "no" && test "${HAVE_JPEG}" != "yes" &&
-    MISSING="$MISSING libjpeg" && WITH_NO="$WITH_NO --with-jpeg=no"
-  test "${with_png}" != "no" && test "${HAVE_PNG}" != "yes" &&
-    MISSING="$MISSING libpng" && WITH_NO="$WITH_NO --with-png=no"
-  test "${with_gif}" != "no" && test "${HAVE_GIF}" != "yes" &&
-    MISSING="$MISSING libgif/libungif" && WITH_NO="$WITH_NO --with-gif=no"
-  test "${with_tiff}" != "no" && test "${HAVE_TIFF}" != "yes" &&
-    MISSING="$MISSING libtiff" && WITH_NO="$WITH_NO --with-tiff=no"
+  case $with_xpm,$HAVE_XPM in
+    no,* | ifavailable,* | *,yes) ;;
+    *) MISSING="libXpm"
+       WITH_IFAVAILABLE="--with-xpm=ifavailable";;
+  esac
+  case $with_jpeg,$HAVE_JPEG in
+    no,* | ifavailable,* | *,yes) ;;
+    *) MISSING="$MISSING libjpeg"
+       WITH_IFAVAILABLE="$WITH_IFAVAILABLE --with-jpeg=ifavailable";;
+  esac
+  case $with_png,$HAVE_PNG in
+    no,* | ifavailable,* | *,yes) ;;
+    *) MISSING="$MISSING libpng"
+       WITH_IFAVAILABLE="$WITH_IFAVAILABLE --with-png=ifavailable";;
+  esac
+  case $with_gif,$HAVE_GIF in
+    no,* | ifavailable,* | *,yes) ;;
+    *) MISSING="$MISSING libgif/libungif"
+       WITH_IFAVAILABLE="$WITH_IFAVAILABLE --with-gif=ifavailable";;
+  esac
+  case $with_tiff,$HAVE_TIFF in
+    no,* | ifavailable,* | *,yes) ;;
+    *) MISSING="$MISSING libtiff"
+       WITH_IFAVAILABLE="$WITH_IFAVAILABLE --with-tiff=ifavailable";;
+  esac
 fi
-test "${with_gnutls}" != "no" && test "${HAVE_GNUTLS}" != "yes" &&
-  MISSING="$MISSING gnutls" && WITH_NO="$WITH_NO --with-gnutls=no"
+case $with_gnutls,$HAVE_GNUTLS in
+  no,* | ifavailable,* | *,yes) ;;
+  *) MISSING="$MISSING gnutls"
+     WITH_IFAVAILABLE="$WITH_IFAVAILABLE --with-gnutls=ifavailable";;
+esac
 if test "X${MISSING}" != X; then
   AC_MSG_ERROR([The following required libraries were not found:
     $MISSING
 Maybe some development libraries/packages are missing?
-If you don't want to link with them give
-    $WITH_NO
-as options to configure])
+To build anyway, give:
+    $WITH_IFAVAILABLE
+as options to configure.])
 fi
 
 ### Use -lgpm if available, unless '--with-gpm=no'.

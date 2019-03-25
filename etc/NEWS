@@ -37,6 +37,12 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
+** Several configure options now accept an option-argument 'ifavailable'.
+For example, './configure --with-xpm=ifavailable' now configures Emacs
+to attempt to use libxpm but to continue building even if libxpm is absent.
+The other affected options are --with-gif, --with-gnutls, --with-jpeg,
+--with-png, and --with-tiff.
+
 ** The etags program now uses the C library's regular expression matcher
 when possible, and a compatible regex substitute otherwise.  This will
 let developers maintain Emacs's own regex code without having to also
