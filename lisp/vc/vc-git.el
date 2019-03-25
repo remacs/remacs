@@ -101,6 +101,7 @@
 
 (eval-when-compile
   (require 'cl-lib)
+  (require 'subr-x) ; for string-trim-right
   (require 'vc)
   (require 'vc-dir))
 
@@ -1017,7 +1018,8 @@ This prompts for a branch to merge from."
 If SHORTLOG is non-nil, use a short format based on `vc-git-root-log-format'.
 \(This requires at least Git version 1.5.6, for the --graph option.)
 If START-REVISION is non-nil, it is the newest revision to show.
-If LIMIT is non-nil, show no more than this many entries."
+If LIMIT is a number, show no more than this many entries.
+If LIMIT is a revision string, use it as an end-revision."
   (let ((coding-system-for-read
          (or coding-system-for-read vc-git-log-output-coding-system)))
     ;; `vc-do-command' creates the buffer, but we need it before running
@@ -1045,8 +1047,14 @@ If LIMIT is non-nil, show no more than this many entries."
                     ,(format "--pretty=tformat:%s"
 			     (car vc-git-root-log-format))
 		    "--abbrev-commit"))
-		(when limit (list "-n" (format "%s" limit)))
-		(when start-revision (list start-revision))
+		(when (numberp limit)
+                  (list "-n" (format "%s" limit)))
+		(when start-revision
+                  (if (and limit (not (numberp limit)))
+                      (list (concat start-revision ".." (if (equal limit "")
+                                                            "HEAD"
+                                                          limit)))
+                    (list start-revision)))
 		'("--")))))))
 
 (defun vc-git-log-outgoing (buffer remote-location)
@@ -1077,6 +1085,10 @@ If LIMIT is non-nil, show no more than this many entries."
 			"@{upstream}"
 		      remote-location))))
 
+(defun vc-git-mergebase (rev1 &optional rev2)
+  (unless rev2 (setq rev2 "HEAD"))
+  (string-trim-right (vc-git--run-command-string nil "merge-base" rev1 rev2)))
+
 (defvar log-view-message-re)
 (defvar log-view-file-re)
 (defvar log-view-font-lock-keywords)
@@ -1093,7 +1105,7 @@ If LIMIT is non-nil, show no more than this many entries."
 	   (cadr vc-git-root-log-format)
 	 "^commit *\\([0-9a-z]+\\)"))
   ;; Allow expanding short log entries.
-  (when (memq vc-log-view-type '(short log-outgoing log-incoming))
+  (when (memq vc-log-view-type '(short log-outgoing log-incoming mergebase))
     (setq truncate-lines t)
     (set (make-local-variable 'log-view-expanded-log-entry-function)
 	 'vc-git-expanded-log-entry))

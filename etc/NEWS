@@ -511,6 +511,10 @@ and compares their entire trees.
 *** New user option 'vc-hg-revert-switches' specifies switches to pass
 to hg revert.
 
+*** 'C-x v M D' ('vc-diff-mergebase') and 'C-x v M L' ('vc-log-mergebase')
+print diffs and logs between the merge base (common ancestor) of two
+given revisions.
+
 ** Diff mode
 +++
 *** Hunks are now automatically refined by font-lock.

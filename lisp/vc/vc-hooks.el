@@ -890,6 +890,8 @@ In the latter case, VC mode is deactivated for this buffer."
     (define-key map "L" 'vc-print-root-log)
     (define-key map "I" 'vc-log-incoming)
     (define-key map "O" 'vc-log-outgoing)
+    (define-key map "ML" 'vc-log-mergebase)
+    (define-key map "MD" 'vc-diff-mergebase)
     (define-key map "m" 'vc-merge)
     (define-key map "r" 'vc-retrieve-tag)
     (define-key map "s" 'vc-create-tag)

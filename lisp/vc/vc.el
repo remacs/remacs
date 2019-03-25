@@ -429,6 +429,10 @@
 ;; - region-history-mode ()
 ;;
 ;;   Major mode to use for the output of `region-history'.
+;;
+;; - mergebase (rev1 &optional rev2)
+;;
+;;   Return the common ancestor between REV1 and REV2 revisions.
 
 ;; TAG SYSTEM
 ;;
@@ -1854,6 +1858,33 @@ saving the buffer."
     (vc-diff-internal t (vc-deduce-fileset t) nil nil
 		      (called-interactively-p 'interactive))))
 
+;;;###autoload
+(defun vc-diff-mergebase (_files rev1 rev2)
+  "Report diffs between the merge base of REV1 and REV2 revisions.
+The merge base is a common ancestor between REV1 and REV2 revisions."
+  (interactive
+   (vc-diff-build-argument-list-internal
+    (or (ignore-errors (vc-deduce-fileset t))
+        (let ((backend (or (vc-deduce-backend) (vc-responsible-backend default-directory))))
+          (list backend (list (vc-call-backend backend 'root default-directory)))))))
+  (when (and (not rev1) rev2)
+    (error "Not a valid revision range"))
+  (let ((backend (vc-deduce-backend))
+        (default-directory default-directory)
+        rootdir)
+    (if backend
+        (setq rootdir (vc-call-backend backend 'root default-directory))
+      (setq rootdir (read-directory-name "Directory for VC root-diff: "))
+      (setq backend (vc-responsible-backend rootdir))
+      (if backend
+          (setq default-directory rootdir)
+        (error "Directory is not version controlled")))
+    (let ((default-directory rootdir)
+          (rev1 (vc-call-backend backend 'mergebase rev1 rev2)))
+      (vc-diff-internal
+       t (list backend (list rootdir)) rev1 rev2
+       (called-interactively-p 'interactive)))))
+
 (declare-function ediff-load-version-control "ediff" (&optional silent))
 (declare-function ediff-vc-internal "ediff-vers"
                   (rev1 rev2 &optional startup-hooks))
@@ -2483,6 +2514,28 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
       (error "Buffer is not version controlled"))
     (vc-incoming-outgoing-internal backend (or remote-location "")
                                    "*vc-outgoing*" 'log-outgoing)))
+
+;;;###autoload
+(defun vc-log-mergebase (_files rev1 rev2)
+  "Show a log of changes between the merge base of REV1 and REV2 revisions.
+The merge base is a common ancestor between REV1 and REV2 revisions."
+  (interactive
+   (vc-diff-build-argument-list-internal
+    (or (ignore-errors (vc-deduce-fileset t))
+        (let ((backend (or (vc-deduce-backend) (vc-responsible-backend default-directory))))
+          (list backend (list (vc-call-backend backend 'root default-directory)))))))
+  (let ((backend (vc-deduce-backend))
+	(default-directory default-directory)
+	rootdir)
+    (if backend
+	(setq rootdir (vc-call-backend backend 'root default-directory))
+      (setq rootdir (read-directory-name "Directory for VC root-log: "))
+      (setq backend (vc-responsible-backend rootdir))
+      (unless backend
+        (error "Directory is not version controlled")))
+    (setq default-directory rootdir)
+    (setq rev1 (vc-call-backend backend 'mergebase rev1 rev2))
+    (vc-print-log-internal backend (list rootdir) rev1 t (or rev2 ""))))
 
 ;;;###autoload
 (defun vc-region-history (from to)
