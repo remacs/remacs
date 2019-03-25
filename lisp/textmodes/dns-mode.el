@@ -292,9 +292,9 @@ Examples:
   (skip-syntax-backward " ")
   (skip-syntax-backward "w_.")
   (re-search-forward "\\([[:xdigit:]:]+\\)\\(/-?[0-9]\\{2,3\\}\\)?")
-  (kill-new (match-string 0))
   (let ((address (match-string 1))
         (prefix-length (match-string 2)))
+    (kill-new (match-string 0))
     (when prefix-length
       (setq prefix-length (string-to-number (substring prefix-length 1)))
       (if negate-prefix
