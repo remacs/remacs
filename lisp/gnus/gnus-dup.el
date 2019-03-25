@@ -107,7 +107,7 @@ seen in the same session."
 
 (defun gnus-dup-enter-articles ()
   "Enter articles from the current group for future duplicate suppression."
-  (unless gnus-dup-list
+  (unless gnus-dup-hashtb
     (gnus-dup-open))
   (setq gnus-dup-list-dirty t)		; mark list for saving
   (let (msgid)
@@ -133,7 +133,7 @@ seen in the same session."
 
 (defun gnus-dup-suppress-articles ()
   "Mark duplicate articles as read."
-  (unless gnus-dup-list
+  (unless gnus-dup-hashtb
     (gnus-dup-open))
   (gnus-message 8 "Suppressing duplicates...")
   (let ((auto (and gnus-newsgroup-auto-expire
@@ -152,9 +152,10 @@ seen in the same session."
 
 (defun gnus-dup-unsuppress-article (article)
   "Stop suppression of ARTICLE."
-  (let* ((header (gnus-data-header (gnus-data-find article)))
-	 (id     (when header (mail-header-id header))))
-    (when id
+  (let (header id)
+    (when (and gnus-dup-hashtb
+               (setq header (gnus-data-header (gnus-data-find article)))
+               (setq id (mail-header-id header)))
       (setq gnus-dup-list-dirty t)
       (setq gnus-dup-list (delete id gnus-dup-list))
       (remhash id gnus-dup-hashtb))))
