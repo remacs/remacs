@@ -2881,7 +2881,7 @@ SPECIFIC-VARIABLES, or those in `gnus-variable-list'."
 		gnus-variable-list)
 	   (mapcar (lambda (g)
 		     (nth 1 (gethash g gnus-newsrc-hashtb)))
-		   gnus-group-list))
+		   (delete "dummy.group" gnus-group-list)))
 
       ;; Insert the variables into the file.
       (while variables
