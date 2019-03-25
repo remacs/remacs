@@ -53,6 +53,12 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "blockinput.h"
 
+#ifdef _LIBC
+# include <libintl.h>
+#else
+# include "gettext.h"
+#endif
+
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
@@ -2836,6 +2842,35 @@ usage: (save-restriction &rest BODY)  */)
   return unbind_to (count, val);
 }
 
+/* i18n (internationalization).  */
+
+DEFUN ("ngettext", Fngettext, Sngettext, 3, 3, 0,
+       doc: /* Return the plural form of the translation of the string.
+This function is similar to the `gettext' function as it finds the message
+catalogs in the same way.  But it takes two extra arguments.  The MSGID
+parameter must contain the singular form of the string to be converted.
+It is also used as the key for the search in the catalog.
+The MSGID_PLURAL parameter is the plural form.  The parameter N is used
+to determine the plural form.  If no message catalog is found MSGID is
+returned if N is equal to 1, otherwise MSGID_PLURAL.  */)
+  (Lisp_Object msgid, Lisp_Object msgid_plural, Lisp_Object n)
+{
+  CHECK_STRING (msgid);
+  CHECK_STRING (msgid_plural);
+  CHECK_FIXNUM (n);
+
+#ifdef _LIBGETTEXT_H
+  return build_string (ngettext (SSDATA (msgid),
+                                 SSDATA (msgid_plural),
+                                 XFIXNUM (n)));
+#else
+  if (XFIXNUM (n) == 1)
+    return msgid;
+  else
+    return msgid_plural;
+#endif
+}
+
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
        doc: /* Display a message at the bottom of the screen.
 The message also goes into the `*Messages*' buffer, if `message-log-max'
@@ -4553,6 +4588,8 @@ it to be non-nil.  */);
   defsubr (&Sinsert_and_inherit_before_markers);
   defsubr (&Sinsert_char);
   defsubr (&Sinsert_byte);
+
+  defsubr (&Sngettext);
 
   defsubr (&Suser_login_name);
   defsubr (&Sgroup_name);

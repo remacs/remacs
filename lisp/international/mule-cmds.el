@@ -2430,7 +2430,7 @@ See `set-language-info-alist' for use in programs."
     ("ind" . "Latin-1") ; MS-Windows Indonesian
     ("sme" . "UTF-8") ; MS-Windows Northern Sami (Norway)
     ("smf" . "UTF-8") ; MS-Windows Northern Sami (Sweden)
-    ("smg" . "ITF-8") ; MS-Windows Northern Sami (Finland)
+    ("smg" . "UTF-8") ; MS-Windows Northern Sami (Finland)
     ("kdi" "Kannada" utf-8) ; MS-Windows Kannada
     ("mar" "Devanagari" utf-8) ; MS-Windows Marathi
     ("khm" "Khmer" utf-8) ; MS-Windows Khmer
@@ -2797,20 +2797,6 @@ See also `locale-charset-language-names', `locale-language-names',
 						  ("frc$" . letter)))
 		      'a4)))))))
   nil)
-
-;;; i18n (internationalization)
-
-(defun ngettext (msgid msgid_plural n)
-  "Return the plural form of the translation of the string.
-This function is similar to the `gettext' function as it finds the message
-catalogs in the same way.  But it takes two extra arguments.  The MSGID
-parameter must contain the singular form of the string to be converted.
-It is also used as the key for the search in the catalog.
-The MSGID_PLURAL parameter is the plural form.  The parameter N is used
-to determine the plural form.  If no message catalog is found MSGID is
-returned if N is equal to 1, otherwise MSGID_PLURAL."
-  (if (= n 1) msgid msgid_plural))
-
 
 ;;; Character property
 
