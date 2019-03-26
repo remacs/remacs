@@ -592,8 +592,9 @@ considered.
 
 If the previous nonblank line has no indent points beyond the
 column point starts at, then `tab-to-tab-stop' is done, if both
-FIRST-ONLY and UNINDENTED-OK are nil, otherwise nothing is done
-in this case.
+FIRST-ONLY and UNINDENTED-OK are nil, otherwise nothing is done.
+If there isn't a previous nonblank line and UNINDENTED-OK is nil,
+call `tab-to-tab-stop'.
 
 See also `indent-relative-first-indent-point'."
   (interactive "P")
