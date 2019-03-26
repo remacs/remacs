@@ -4315,7 +4315,6 @@ x_scroll_run (struct window *w, struct run *run)
 #ifdef USE_CAIRO
   if (FRAME_CR_CONTEXT (f))
     {
-      int wx = WINDOW_LEFT_EDGE_X (w);
       cairo_surface_t *s = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
 						       width, height);
       cairo_t *cr = cairo_create (s);
@@ -4326,8 +4325,8 @@ x_scroll_run (struct window *w, struct run *run)
 
       cr = FRAME_CR_CONTEXT (f);
       cairo_save (cr);
-      cairo_set_source_surface (cr, s, wx, to_y);
-      cairo_rectangle (cr, wx, to_y, width, height);
+      cairo_set_source_surface (cr, s, x, to_y);
+      cairo_rectangle (cr, x, to_y, width, height);
       cairo_fill (cr);
       cairo_restore (cr);
       cairo_surface_destroy (s);
