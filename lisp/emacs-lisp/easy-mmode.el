@@ -411,12 +411,6 @@ on if the hook has explicitly disabled it."
 	(:global (setq keys (cdr keys)))
 	(_ (push keyw extra-keywords) (push (pop keys) extra-keywords))))
 
-    (unless group
-      ;; We might as well provide a best-guess default group.
-      (setq group
-	    `(:group ',(intern (replace-regexp-in-string
-				"-mode\\'" "" (symbol-name mode))))))
-
     `(progn
        (progn
          :autoload-end
