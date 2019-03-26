@@ -1157,24 +1157,22 @@ get_spec_bg_or_alpha_as_argb (struct image *img,
   return bgcolor;
 }
 
-static void
-create_cairo_image_surface (struct image *img,
-                            unsigned char *data,
-                            int width,
-                            int height)
+static cairo_surface_t *
+create_cairo_image_surface (int width, int height)
 {
-  cairo_surface_t *surface;
   cairo_format_t format = CAIRO_FORMAT_ARGB32;
-  int stride = cairo_format_stride_for_width (format, width);
-  surface = cairo_image_surface_create_for_data (data,
-                                                 format,
-                                                 width,
-                                                 height,
-                                                 stride);
-  img->width = width;
-  img->height = height;
+  eassert (cairo_format_stride_for_width (format, width) == width * 4);
+
+  return cairo_image_surface_create (format, width, height);
+}
+
+static void
+set_cairo_image_surface (struct image *img, cairo_surface_t *surface)
+{
+  cairo_surface_mark_dirty (surface);
+  img->width = cairo_image_surface_get_width (surface);
+  img->height = cairo_image_surface_get_height (surface);
   img->cr_data = surface;
-  img->cr_data2 = data;
   img->pixmap = 0;
 }
 #endif
@@ -1404,7 +1402,6 @@ x_clear_image (struct frame *f, struct image *img)
 #ifdef USE_CAIRO
   if (img->cr_data)
     cairo_surface_destroy ((cairo_surface_t *)img->cr_data);
-  if (img->cr_data2) xfree (img->cr_data2);
 #endif
   x_clear_image_1 (f, img,
 		   CLEAR_IMAGE_PIXMAP | CLEAR_IMAGE_MASK | CLEAR_IMAGE_COLORS);
@@ -3967,9 +3964,9 @@ xpm_load (struct frame *f, struct image *img)
     {
       int width = img->ximg->width;
       int height = img->ximg->height;
-      void *data = xmalloc (width * height * 4);
+      cairo_surface_t *surface = create_cairo_image_surface (width, height);
       int i;
-      uint32_t *od = data;
+      uint32_t *od = (uint32_t *) cairo_image_surface_get_data (surface);
       uint32_t *id = (uint32_t *) img->ximg->data;
       char *mid = img->mask_img ? img->mask_img->data : 0;
       uint32_t bgcolor = get_spec_bg_or_alpha_as_argb (img, f);
@@ -3988,7 +3985,7 @@ xpm_load (struct frame *f, struct image *img)
             }
         }
 
-      create_cairo_image_surface (img, data, width, height);
+      set_cairo_image_surface (img, surface);
     }
   else
     {
@@ -5625,8 +5622,8 @@ pbm_load (struct frame *f, struct image *img)
   height = pbm_scan_number (&p, end);
 
 #ifdef USE_CAIRO
-  void *data = xmalloc (width * height * 4);
-  uint32_t *dataptr = data;
+  cairo_surface_t *surface = create_cairo_image_surface (width, height);
+  uint32_t *dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
 #endif
 
   if (type != PBM_MONO)
@@ -5710,7 +5707,7 @@ pbm_load (struct frame *f, struct image *img)
 		    if (p >= end)
 		      {
 #ifdef USE_CAIRO
-                        xfree (data);
+                        cairo_surface_destroy (surface);
 #else
 			x_destroy_x_image (ximg);
 #endif
@@ -5756,7 +5753,7 @@ pbm_load (struct frame *f, struct image *img)
       if (raw_p && p + expected_size > end)
 	{
 #ifdef USE_CAIRO
-          xfree (data);
+          cairo_surface_destroy (surface);
 #else
 	  x_destroy_x_image (ximg);
 #endif
@@ -5790,7 +5787,7 @@ pbm_load (struct frame *f, struct image *img)
 	    if (r < 0 || g < 0 || b < 0)
 	      {
 #ifdef USE_CAIRO
-                xfree (data);
+                cairo_surface_destroy (surface);
 #else
 		x_destroy_x_image (ximg);
 #endif
@@ -5827,7 +5824,7 @@ pbm_load (struct frame *f, struct image *img)
   /* Maybe fill in the background field while we have ximg handy.  */
 
 #ifdef USE_CAIRO
-  create_cairo_image_surface (img, data, width, height);
+  set_cairo_image_surface (img, surface);
 #else
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
@@ -6173,7 +6170,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   ptrdiff_t nbytes;
 
 #ifdef USE_CAIRO
-  unsigned char *data = 0;
+  cairo_surface_t *surface;
   uint32_t *dataptr;
 #else
   XImagePtr ximg, mask_img = NULL;
@@ -6388,8 +6385,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
     }
 
 #ifdef USE_CAIRO
-  data = (unsigned char *) xmalloc (width * height * 4);
-  dataptr = (uint32_t *) data;
+  surface = create_cairo_image_surface (width, height);
+  dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
 #else
   /* Create an image and pixmap serving as mask if the PNG image
      contains an alpha channel.  */
@@ -6480,7 +6477,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   img->height = height;
 
 #ifdef USE_CAIRO
-  create_cairo_image_surface (img, data, width, height);
+  set_cairo_image_surface (img, surface);
 #else
   /* Maybe fill in the background field while we have ximg handy.
      Casting avoids a GCC warning.  */
@@ -7084,8 +7081,8 @@ jpeg_load_body (struct frame *f, struct image *img,
 					 JPOOL_IMAGE, row_stride, 1);
 #ifdef USE_CAIRO
   {
-    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
-    uint32_t *dataptr = (uint32_t *) data;
+    cairo_surface_t *surface = create_cairo_image_surface (width, height);
+    uint32_t *dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
     int r, g, b;
 
     for (y = 0; y < height; ++y)
@@ -7102,7 +7099,7 @@ jpeg_load_body (struct frame *f, struct image *img,
           }
       }
 
-    create_cairo_image_surface (img, data, width, height);
+    set_cairo_image_surface (img, surface);
   }
 #else
   for (y = 0; y < height; ++y)
@@ -7564,8 +7561,8 @@ tiff_load (struct frame *f, struct image *img)
 
 #ifdef USE_CAIRO
   {
-    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
-    uint32_t *dataptr = (uint32_t *) data;
+    cairo_surface_t *surface = create_cairo_image_surface (width, height);
+    uint32_t *dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
 
     for (y = 0; y < height; ++y)
       {
@@ -7581,7 +7578,7 @@ tiff_load (struct frame *f, struct image *img)
           }
       }
 
-    create_cairo_image_surface (img, data, width, height);
+    set_cairo_image_surface (img, surface);
   }
 #else
   /* Initialize the color table.  */
@@ -8020,9 +8017,8 @@ gif_load (struct frame *f, struct image *img)
     }
 
 #ifdef USE_CAIRO
-  /* xzalloc so data is zero => transparent */
-  void *data = xzalloc (width * height * 4);
-  uint32_t *data32 = data;
+  cairo_surface_t *surface = create_cairo_image_surface (width, height);
+  uint32_t *data32 = (uint32_t *) cairo_image_surface_get_data (surface);
   if (STRINGP (specified_bg))
     {
       XColor color;
@@ -8169,7 +8165,7 @@ gif_load (struct frame *f, struct image *img)
                     {
 #ifdef USE_CAIRO
                       uint32_t *dataptr =
-                        (data32 + ((row + subimg_top) * subimg_width
+                        (data32 + ((row + subimg_top) * width
 				   + x + subimg_left));
                       int r = gif_color_map->Colors[c].Red;
                       int g = gif_color_map->Colors[c].Green;
@@ -8181,7 +8177,7 @@ gif_load (struct frame *f, struct image *img)
                       XPutPixel (ximg, x + subimg_left, row + subimg_top,
                                  pixel_colors[c]);
 #endif
-                    }
+                   }
 		}
 	    }
 	}
@@ -8195,7 +8191,7 @@ gif_load (struct frame *f, struct image *img)
                   {
 #ifdef USE_CAIRO
                     uint32_t *dataptr =
-                      (data32 + ((y + subimg_top) * subimg_width
+                      (data32 + ((y + subimg_top) * width
 				 + x + subimg_left));
                     int r = gif_color_map->Colors[c].Red;
                     int g = gif_color_map->Colors[c].Green;
@@ -8265,7 +8261,7 @@ gif_load (struct frame *f, struct image *img)
     }
 
 #ifdef USE_CAIRO
-  create_cairo_image_surface (img, data, width, height);
+  set_cairo_image_surface (img, surface);
 #else
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
@@ -8693,7 +8689,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   char hint_buffer[MaxTextExtent];
   char *filename_hint = NULL;
 #ifdef USE_CAIRO
-  void *data = NULL;
+  cairo_surface_t *surface;
 #endif
 
   /* Initialize the ImageMagick environment.  */
@@ -8905,9 +8901,9 @@ imagemagick_load_image (struct frame *f, struct image *img,
          ad-hoc and needs to be more researched. */
       void *dataptr;
 #ifdef USE_CAIRO
-      data = xmalloc (width * height * 4);
+      surface = create_cairo_image_surface (width, height);
       const char *exportdepth = "BGRA";
-      dataptr = data;
+      dataptr = cairo_image_surface_get_data (surface);
 #else
       int imagedepth = 24; /*MagickGetImageDepth(image_wand);*/
       const char *exportdepth = imagedepth <= 8 ? "I" : "BGRP"; /*"RGBP";*/
@@ -8954,7 +8950,8 @@ imagemagick_load_image (struct frame *f, struct image *img,
       double quantum_range = QuantumRange;
       MagickRealType color_scale = 65535.0 / quantum_range;
 #ifdef USE_CAIRO
-      data = xmalloc (width * height * 4);
+      surface = create_cairo_image_surface (width, height);
+      uint32_t *dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
       color_scale /= 256;
 #else
       /* Try to create a x pixmap to hold the imagemagick pixmap.  */
@@ -8999,7 +8996,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
             {
               PixelGetMagickColor (pixels[x], &pixel);
 #ifdef USE_CAIRO
-	      ((uint32_t *)data)[width * y + x] =
+	      dataptr[width * y + x] =
 		lookup_rgb_color (f,
 				  color_scale * pixel.red,
 				  color_scale * pixel.green,
@@ -9017,7 +9014,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
     }
 
 #ifdef USE_CAIRO
-  create_cairo_image_surface (img, data, width, height);
+  set_cairo_image_surface (img, surface);
 #else
 #ifdef COLOR_TABLE_SUPPORT
   /* Remember colors allocated for this image.  */
@@ -9480,13 +9477,13 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 
   {
 #ifdef USE_CAIRO
-    unsigned char *data = (unsigned char *) xmalloc (width*height*4);
+    cairo_surface_t *surface = create_cairo_image_surface (width, height);
+    uint32_t *dataptr = (uint32_t *) cairo_image_surface_get_data (surface);
     uint32_t bgcolor = get_spec_bg_or_alpha_as_argb (img, f);
 
     for (int y = 0; y < height; ++y)
       {
         const guchar *iconptr = pixels + y * rowstride;
-        uint32_t *dataptr = (uint32_t *) (data + y * rowstride);
 
         for (int x = 0; x < width; ++x)
           {
@@ -9503,7 +9500,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
           }
       }
 
-    create_cairo_image_surface (img, data, width, height);
+    set_cairo_image_surface (img, surface);
     g_object_unref (pixbuf);
 #else
     /* Try to create a x pixmap to hold the svg pixmap.  */
