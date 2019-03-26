@@ -1850,6 +1850,14 @@ pub fn window_lines_pixel_dimensions(
     unsafe { Fnreverse(rows) }
 }
 
+/// Return left pixel edge of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_left(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_left
+}
+
 /// Return top pixel edge of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
