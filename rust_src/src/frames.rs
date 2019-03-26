@@ -661,4 +661,12 @@ pub fn visible_frame_list() -> LispObject {
     filter_frame_list(LispFrameRef::is_visible)
 }
 
+/// Return an alist of frame-local faces defined on FRAME.
+/// For internal use only.
+#[lisp_fn(min = "0")]
+pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.face_alist
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
