@@ -426,7 +426,7 @@ x_set_cr_source_with_gc_background (struct frame *f, GC gc)
 /* Fringe bitmaps.  */
 
 static int max_fringe_bmp = 0;
-static cairo_pattern_t **fringe_bmp = 0;
+static cairo_surface_t **fringe_bmp = 0;
 
 static void
 x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
@@ -434,13 +434,12 @@ x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
   int i, stride;
   cairo_surface_t *surface;
   unsigned char *data;
-  cairo_pattern_t *pattern;
 
   if (which >= max_fringe_bmp)
     {
       i = max_fringe_bmp;
       max_fringe_bmp = which + 20;
-      fringe_bmp = (cairo_pattern_t **) xrealloc (fringe_bmp, max_fringe_bmp * sizeof (cairo_pattern_t *));
+      fringe_bmp = xrealloc (fringe_bmp, max_fringe_bmp * sizeof (*fringe_bmp));
       while (i < max_fringe_bmp)
 	fringe_bmp[i++] = 0;
     }
@@ -458,12 +457,10 @@ x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
     }
 
   cairo_surface_mark_dirty (surface);
-  pattern = cairo_pattern_create_for_surface (surface);
-  cairo_surface_destroy (surface);
 
   unblock_input ();
 
-  fringe_bmp[which] = pattern;
+  fringe_bmp[which] = surface;
 }
 
 static void
@@ -475,20 +472,18 @@ x_cr_destroy_fringe_bitmap (int which)
   if (fringe_bmp[which])
     {
       block_input ();
-      cairo_pattern_destroy (fringe_bmp[which]);
+      cairo_surface_destroy (fringe_bmp[which]);
       unblock_input ();
     }
   fringe_bmp[which] = 0;
 }
 
 static void
-x_cr_draw_image (struct frame *f, GC gc, cairo_pattern_t *image,
+x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
 		 int src_x, int src_y, int width, int height,
 		 int dest_x, int dest_y, bool overlay_p)
 {
   cairo_t *cr;
-  cairo_matrix_t matrix;
-  cairo_surface_t *surface;
   cairo_format_t format;
 
   cr = x_begin_cr_clip (f, gc);
@@ -501,19 +496,16 @@ x_cr_draw_image (struct frame *f, GC gc, cairo_pattern_t *image,
       cairo_fill_preserve (cr);
     }
   cairo_clip (cr);
-  cairo_matrix_init_translate (&matrix, src_x - dest_x, src_y - dest_y);
-  cairo_pattern_set_matrix (image, &matrix);
-  cairo_pattern_get_surface (image, &surface);
-  format = cairo_image_surface_get_format (surface);
+  format = cairo_image_surface_get_format (image);
   if (format != CAIRO_FORMAT_A8 && format != CAIRO_FORMAT_A1)
     {
-      cairo_set_source (cr, image);
+      cairo_set_source_surface (cr, image, dest_x - src_x, dest_y - src_y);
       cairo_fill (cr);
     }
   else
     {
       x_set_cr_source_with_gc_foreground (f, gc);
-      cairo_mask (cr, image);
+      cairo_mask_surface (cr, image, dest_x - src_x, dest_y - src_y);
     }
   x_end_cr_clip (f);
 }
