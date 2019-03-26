@@ -1934,40 +1934,29 @@ Assuming a JSXOpeningElement or a JSXOpeningFragment is
 immediately before point, find a matching JSXClosingElement or
 JSXClosingFragment, skipping over any nested JSXElements to find
 the match.  Return nil if a match can’t be found."
-  (let ((tag-stack 1) self-closing-pos type)
+  (let ((tag-stack 1) type tag-pos last-pos pos)
     (catch 'stop
       (while (re-search-forward js-jsx--tag-re nil t)
-        (setq type (js-jsx--matched-tag-type))
-        ;; Balance the total of self-closing tags that we subtract
-        ;; from the stack, ignoring those tags which are never added
-        ;; to the stack (see below).
-        (unless (eq type 'self-closing)
-          (when (and self-closing-pos (> (point) self-closing-pos))
+        (setq type (js-jsx--matched-tag-type)
+              tag-pos (match-beginning 0))
+        ;; Clear the stack of any JSXOpeningElements which turned out
+        ;; to be self-closing.
+        (when last-pos
+          (setq pos (point))
+          (goto-char last-pos)
+          (while (re-search-forward js-jsx--self-closing-re pos 'move)
             (setq tag-stack (1- tag-stack))))
         (if (eq type 'close)
             (progn
               (setq tag-stack (1- tag-stack))
               (when (= tag-stack 0)
-                (throw 'stop (match-beginning 0))))
-          ;; Tags that we know are self-closing aren’t added to the
-          ;; stack at all, because we only close the ones that we have
-          ;; anticipated after moving past those anticipated tags’
-          ;; ends, and if a self-closing tag is the first tag we
-          ;; encounter in this loop, then it will never be anticipated
-          ;; (due to an optimization where we sometimes can avoid
-          ;; looking for self-closing tags).
+                (throw 'stop tag-pos)))
+          ;; JSXOpeningElements that we know are self-closing aren’t
+          ;; added to the stack at all (since re-search-forward moves
+          ;; point after their self-closing syntax).
           (unless (eq type 'self-closing)
             (setq tag-stack (1+ tag-stack))))
-        ;; Don’t needlessly recalculate.
-        (unless (and self-closing-pos (<= (point) self-closing-pos))
-          (setq self-closing-pos nil) ; Reset if recalculating.
-          (save-excursion
-            ;; Anticipate a self-closing tag that we should make sure
-            ;; to subtract from the tag stack once we move past its
-            ;; end; we might might miss the end otherwise, due to the
-            ;; regexp-matching method we use to detect tags.
-            (when (re-search-forward js-jsx--self-closing-re nil t)
-              (setq self-closing-pos (match-beginning 0)))))))))
+        (setq last-pos (point))))))
 
 (defun js-jsx--enclosing-curly-pos ()
   "Return position of enclosing “{” in a “{/}” pair about point."
