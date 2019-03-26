@@ -1225,7 +1225,7 @@ frame when making a frame.
 ** Tabulated List mode
 
 +++
-** New user options for tabulated list sort indicators.
+*** New user options for tabulated list sort indicators.
 You can now customize which sorting indicator character to display
 near the current column in Tabulated Lists (see variables
 'tabulated-list-gui-sort-indicator-asc',
