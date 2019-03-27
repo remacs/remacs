@@ -67,7 +67,6 @@
 (load "erc-loaddefs" nil t)
 
 (eval-when-compile (require 'cl-lib))
-(require 'cl-seq)
 (require 'font-lock)
 (require 'pp)
 (require 'thingatpt)
@@ -2523,8 +2522,7 @@ Returns NICK unmodified unless `erc-lurker-trim-nicks' is
 non-nil."
   (if erc-lurker-trim-nicks
       (replace-regexp-in-string
-       (regexp-opt (cl-delete-duplicates
-		    (mapcar #'char-to-string erc-lurker-ignore-chars)))
+       (regexp-opt-charset (string-to-list erc-lurker-ignore-chars))
        "" nick)
     nick))
 
