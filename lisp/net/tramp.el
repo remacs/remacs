@@ -4074,9 +4074,14 @@ for process communication also."
     (let ((inhibit-read-only t)
 	  last-coding-system-used
 	  ;; We do not want to run timers.
+	  (tl timer-list)
           (stimers (with-timeout-suspend))
 	  timer-list timer-idle-list
 	  result)
+      ;; Enable our progress reporter.
+      (dolist (timer tl)
+	(if (eq (timer--function timer) #'tramp-progress-reporter-update)
+            (add-to-list 'timer-list timer)))
       ;; JUST-THIS-ONE is set due to Bug#12145.
       (tramp-message
        proc 10 "%s %s %s %s\n%s"
