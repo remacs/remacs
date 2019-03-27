@@ -497,25 +497,25 @@ parameters \(point-min) and \(point-max).")
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
   t '(c-depropertize-new-text
-      c-after-change-re-mark-unbalanced-strings
+      c-after-change-mark-abnormal-strings
       c-change-expand-fl-region)
   (c objc) '(c-depropertize-new-text
 	     c-parse-quotes-after-change
-	     c-after-change-re-mark-unbalanced-strings
+	     c-after-change-mark-abnormal-strings
 	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
+	c-after-change-unmark-raw-strings
 	c-parse-quotes-after-change
-	c-after-change-re-mark-unbalanced-strings
+	c-after-change-mark-abnormal-strings
 	c-extend-font-lock-region-for-macros
-	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
 	 c-parse-quotes-after-change
-	 c-after-change-re-mark-unbalanced-strings
+	 c-after-change-mark-abnormal-strings
 	 c-restore-<>-properties
 	 c-change-expand-fl-region)
   awk '(c-depropertize-new-text

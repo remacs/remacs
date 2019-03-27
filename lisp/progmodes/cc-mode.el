@@ -678,14 +678,12 @@ that requires a literal mode spec at compile time."
 (make-variable-buffer-local 'c-new-BEG)
 (defvar c-new-END 0)
 (make-variable-buffer-local 'c-new-END)
-;; The following two variables record the values of `c-new-BEG' and
-;; `c-new-END' just after `c-new-END' has been adjusted for the length of text
-;; inserted or removed.  They may be read by any after-change function (but
-;; should not be altered by one).
-(defvar c-old-BEG 0)
-(make-variable-buffer-local 'c-old-BEG)
-(defvar c-old-END 0)
-(make-variable-buffer-local 'c-old-END)
+
+;; Buffer local variable which notes the value of calling `c-in-literal' just
+;; before a change.  It is one of 'string, 'c, 'c++ (for the two sorts of
+;; comments), or nil.
+(defvar c-old-END-literality nil)
+(make-variable-buffer-local 'c-old-END-literality)
 
 (defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
@@ -900,7 +898,8 @@ Note that the style variables are always made local to the buffer."
 
 (defun c-depropertize-CPP (beg end)
   ;; Remove the punctuation syntax-table text property from the CPP parts of
-  ;; (c-new-BEG c-new-END).
+  ;; (c-new-BEG c-new-END), and remove all syntax-table properties from any
+  ;; raw strings within these CPP parts.
   ;;
   ;; This function is in the C/C++/ObjC values of
   ;; `c-get-state-before-change-functions' and is called exclusively as a
@@ -912,6 +911,7 @@ Note that the style variables are always made local to the buffer."
       (goto-char (match-beginning 1))
       (setq m-beg (point))
       (c-end-of-macro)
+      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
       (c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
 
     (while (and (< (point) end)
@@ -920,14 +920,16 @@ Note that the style variables are always made local to the buffer."
       (goto-char (match-beginning 1))
       (setq m-beg (point))
       (c-end-of-macro))
-    (if (and ss-found (> (point) end))
-	(c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
+    (when (and ss-found (> (point) end))
+      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
+      (c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
 
     (while (and (< (point) c-new-END)
 		(search-forward-regexp c-anchored-cpp-prefix c-new-END 'bound))
       (goto-char (match-beginning 1))
       (setq m-beg (point))
       (c-end-of-macro)
+      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
       (c-clear-char-property-with-value
        m-beg (point) 'syntax-table '(1)))))
 
@@ -1213,6 +1215,7 @@ Note that the style variables are always made local to the buffer."
 		     "\"\\|\\s|" (point-max) t t)
 		    (progn
 		      (c-clear-char-property (1- (point)) 'syntax-table)
+		      (c-truncate-semi-nonlit-pos-cache (1- (point)))
 		      (not (eq (char-before) ?\")))))
 	       (eq (char-before) ?\"))
 	     (progn
@@ -1247,27 +1250,38 @@ Note that the style variables are always made local to the buffer."
 		(forward-char)
 		(backward-sexp)
 		(c-clear-char-property eoll-1 'syntax-table)
+		(c-truncate-semi-nonlit-pos-cache eoll-1)
 		(c-clear-char-property (point) 'syntax-table))
 	    ;; Opening " at EOB.
 	    (c-clear-char-property (1- (point)) 'syntax-table))
-	(if (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
-	    ;; Opening " on last line of text (without EOL).
-	    (c-clear-char-property (point) 'syntax-table))))
+	(when (and (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
+		   (eq (char-after) ?\")) ; Ignore an unterminated raw string's (.
+	  ;; Opening " on last line of text (without EOL).
+	  (c-clear-char-property (point) 'syntax-table)
+	  (c-truncate-semi-nonlit-pos-cache (point)))))
 
      (t (goto-char end)			; point-max
-	(if (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
-	    (c-clear-char-property (point) 'syntax-table))))
+	(when
+	    (and
+	     (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
+	     (eq (char-after) ?\"))
+	  (c-clear-char-property (point) 'syntax-table)
+	  (c-truncate-semi-nonlit-pos-cache (point)))))
 
     (unless (and c-multiline-string-start-char
 		 (not (c-characterp c-multiline-string-start-char)))
-      (when (eq end-literal-type 'string)
-	(c-clear-char-property (1- (cdr end-limits)) 'syntax-table))
+      (when (and (eq end-literal-type 'string)
+		 (not (eq (char-before (cdr end-limits)) ?\()))
+	(c-clear-char-property (1- (cdr end-limits)) 'syntax-table)
+	(c-truncate-semi-nonlit-pos-cache (1- (cdr end-limits))))
 
-      (when (eq beg-literal-type 'string)
+      (when (and (eq beg-literal-type 'string)
+		 (eq (char-after (car beg-limits)) ?\"))
 	(setq c-new-BEG (min c-new-BEG (car beg-limits)))
-	(c-clear-char-property (car beg-limits) 'syntax-table)))))
+	(c-clear-char-property (car beg-limits) 'syntax-table)
+	(c-truncate-semi-nonlit-pos-cache (car beg-limits))))))
 
-(defun c-after-change-re-mark-unbalanced-strings (beg end _old-len)
+(defun c-after-change-mark-abnormal-strings (beg end _old-len)
   ;; Mark any unbalanced strings in the region (c-new-BEG c-new-END) with
   ;; string fence syntax-table text properties.
   ;;
@@ -1318,7 +1332,8 @@ Note that the style variables are always made local to the buffer."
 	       (min (1+ (point)) (point-max)))))
 	   ((and (null beg-literal-type)
 		 (goto-char beg)
-		 (eq (char-before) c-multiline-string-start-char)
+		 (and (not (bobp))
+		      (eq (char-before) c-multiline-string-start-char))
 		 (memq (char-after) c-string-delims))
 	    (cons (point)
 		  (progn
@@ -1343,22 +1358,24 @@ Note that the style variables are always made local to the buffer."
 	     (while (progn
 		      (setq s (parse-partial-sexp (point) c-new-END nil
 						  nil s 'syntax-table))
-                      (and (< (point) c-new-END)
-                           (or (not (nth 3 s))
-                               (not (memq (char-before) c-string-delims))))))
+		      (and (< (point) c-new-END)
+			   (or (not (nth 3 s))
+			       (not (memq (char-before) c-string-delims))))))
 	     ;; We're at the start of a string.
 	     (memq (char-before) c-string-delims)))
-	(if (c-unescaped-nls-in-string-p (1- (point)))
-	    (looking-at "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\"]\\)*")
-	  (looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
-	(cond
-	 ((memq (char-after (match-end 0)) '(?\n ?\r))
-	  (c-put-char-property (1- (point)) 'syntax-table '(15))
-	  (c-put-char-property (match-end 0) 'syntax-table '(15)))
-	 ((or (eq (match-end 0) (point-max))
-	      (eq (char-after (match-end 0)) ?\\)) ; \ at EOB
-	  (c-put-char-property (1- (point)) 'syntax-table '(15))))
-	(goto-char (min (1+ (match-end 0)) (point-max)))
+	(unless (and (c-major-mode-is 'c++-mode)
+		     (c-maybe-re-mark-raw-string))
+	  (if (c-unescaped-nls-in-string-p (1- (point)))
+	      (looking-at "\\(\\\\\\(.\\|\n|\\\r\\)\\|[^\"]\\)*")
+	    (looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
+	  (cond
+	   ((memq (char-after (match-end 0)) '(?\n ?\r))
+	    (c-put-char-property (1- (point)) 'syntax-table '(15))
+	    (c-put-char-property (match-end 0) 'syntax-table '(15)))
+	   ((or (eq (match-end 0) (point-max))
+		(eq (char-after (match-end 0)) ?\\)) ; \ at EOB
+	    (c-put-char-property (1- (point)) 'syntax-table '(15))))
+	  (goto-char (min (1+ (match-end 0)) (point-max))))
 	(setq s nil)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1721,7 +1738,6 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
   ;; larger than (beg end).
   (setq c-new-END (- (+ c-new-END (- end beg)) old-len))
-  (setq c-old-BEG c-new-BEG  c-old-END c-new-END)
 
   (unless (c-called-from-text-property-change-p)
     (setq c-just-done-before-change nil)

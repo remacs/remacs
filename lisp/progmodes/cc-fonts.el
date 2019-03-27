@@ -1674,25 +1674,36 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			(goto-char string-start)
 			(and (eq (char-before) ?R)
 			     (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
-			     (match-string-no-properties 1))))))
+			     (match-string-no-properties 1)))))
+	 (content-start (and raw-id (point))))
+    ;; We go round the next loop twice per raw string, once for each "end".
     (while (< (point) limit)
       (if raw-id
+	  ;; Search for the raw string end delimiter
 	  (progn
-	    (if (search-forward-regexp (concat ")\\(" (regexp-quote raw-id) "\\)\"")
-				       limit 'limit)
-		(c-put-font-lock-face (match-beginning 1) (point) 'default))
+	    (when (search-forward-regexp (concat ")\\(" (regexp-quote raw-id) "\\)\"")
+					 limit 'limit)
+	      (c-put-font-lock-face content-start (match-beginning 1)
+				    'font-lock-string-face)
+	      (c-remove-font-lock-face (match-beginning 1) (point)))
 	    (setq raw-id nil))
-
+	;; Search for the start of a raw string.
 	(when (search-forward-regexp
 	       "R\\(\"\\)\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" limit 'limit)
 	  (when
-	      (or (and (eobp)
-		       (eq (c-get-char-property (1- (point)) 'face)
-			   'font-lock-warning-face))
-		  (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
-		  (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
-		       (equal (c-get-char-property (match-beginning 1) 'syntax-table)
-			      '(1))))
+	      ;; Make sure we're not in a comment or string.
+	      (and
+	       (not (memq (c-get-char-property (match-beginning 0) 'face)
+			  '(font-lock-comment-face font-lock-comment-delimiter-face
+						   font-lock-string-face)))
+	       (or (and (eobp)
+	  		(eq (c-get-char-property (1- (point)) 'face)
+	  		    'font-lock-warning-face))
+	  	   (not (eq (c-get-char-property (point) 'face) 'font-lock-comment-face))
+		   ;; (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
+	  	   (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
+	  		(equal (c-get-char-property (match-beginning 1) 'syntax-table)
+	  		       '(1)))))
 	    (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
 	      (if paren-prop
 		  (progn
@@ -1703,8 +1714,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			 (equal paren-prop '(15))
 			 (not (c-search-forward-char-property 'syntax-table '(15) limit)))
 		      (goto-char limit)))
-		(c-put-font-lock-face (match-beginning 1) (match-end 2) 'default)
-		(setq raw-id (match-string-no-properties 2)))))))))
+		(c-remove-font-lock-face (match-beginning 0) (match-end 2))
+		(setq raw-id (match-string-no-properties 2))
+		(setq content-start (match-end 0)))))))))
   nil)
 
 (defun c-font-lock-c++-lambda-captures (limit)

@@ -212,6 +212,13 @@ This variant works around bugs in `eval-when-compile' in various
 	`(cl-delete-duplicates ,cl-seq ,@cl-keys)
       `(delete-duplicates ,cl-seq ,@cl-keys))))
 
+(defmacro c-font-lock-flush (beg end)
+  "Declare the region BEG...END's fontification as out-of-date.
+On XEmacs and older Emacsen, this refontifies that region immediately."
+  (if (fboundp 'font-lock-flush)
+      `(font-lock-flush ,beg ,end)
+    `(font-lock-fontify-region ,beg ,end)))
+
 (defmacro c-point (position &optional point)
   "Return the value of certain commonly referenced POSITIONs relative to POINT.
 The current point is used if POINT isn't specified.  POSITION can be
@@ -258,10 +265,12 @@ to it is returned.  This function does not modify the point or the mark."
 	 ((eq position 'eoll)
 	  `(save-excursion
 	     ,@(if point `((goto-char ,point)))
-	     (while (progn
-		      (end-of-line)
-		      (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1)))
-	       (beginning-of-line 2))
+	     (while (and
+		     (not (eobp))
+		     (progn
+		       (end-of-line)
+		       (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1))))
+	       (forward-line))
 	     (end-of-line)
 	     (point)))
 
@@ -1214,7 +1223,7 @@ Leave point just after the character, and set the match data on
 this character, and return point.  If the search fails, return
 nil; point is then left undefined."
   `(let ((char-skip (concat "^" (char-to-string ,char)))
-	 (-limit- ,limit)
+	 (-limit- (or ,limit (point-max)))
 	 (-value- ,value))
      (while
 	 (and
@@ -1226,15 +1235,39 @@ nil; point is then left undefined."
        (search-forward-regexp ".")	; to set the match-data.
        (point))))
 
+(defmacro c-search-forward-char-property-without-value-on-char
+    (property value char &optional limit)
+  "Search forward for a character CHAR without text property PROPERTY having
+a value CHAR.
+LIMIT bounds the search.  The value comparison is done with `equal'.
+PROPERTY must be a constant.
+
+Leave point just after the character, and set the match data on
+this character, and return point.  If the search fails, return
+nil; point is then left undefined."
+  `(let ((char-skip (concat "^" (char-to-string ,char)))
+	 (-limit- (or ,limit (point-max)))
+	 (-value- ,value))
+     (while
+	 (and
+	  (progn (skip-chars-forward char-skip -limit-)
+		 (< (point) -limit-))
+	  (equal (c-get-char-property (point) ,property) -value-))
+       (forward-char))
+     (when (< (point) -limit-)
+       (search-forward-regexp ".")	; to set the match-data.
+       (point))))
+
 (defun c-clear-char-property-with-value-on-char-function (from to property
 							       value char)
   "Remove all text-properties PROPERTY with value VALUE on
 characters with value CHAR from the region [FROM, TO), as tested
 by `equal'.  These properties are assumed to be over individual
 characters, having been put there by c-put-char-property.  POINT
-remains unchanged."
+remains unchanged.  Return the position of the first removed
+property, or nil."
   (let ((place from)
-	)
+	first)
     (while			  ; loop round occurrences of (PROPERTY VALUE)
 	(progn
 	  (while	   ; loop round changes in PROPERTY till we find VALUE
@@ -1243,28 +1276,34 @@ remains unchanged."
 	       (not (equal (get-text-property place property) value)))
 	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
-      (if (eq (char-after place) char)
-	  (remove-text-properties place (1+ place) (cons property nil)))
+      (when (eq (char-after place) char)
+	(remove-text-properties place (1+ place) (cons property nil))
+	(or first (setq first place)))
       ;; Do we have to do anything with stickiness here?
-      (setq place (1+ place)))))
+      (setq place (1+ place)))
+    first))
 
 (defmacro c-clear-char-property-with-value-on-char (from to property value char)
   "Remove all text-properties PROPERTY with value VALUE on
 characters with value CHAR from the region [FROM, TO), as tested
 by `equal'.  These properties are assumed to be over individual
 characters, having been put there by c-put-char-property.  POINT
-remains unchanged."
+remains unchanged.  Return the position of the first removed
+property, or nil."
   (if c-use-extents
       ;; XEmacs
       `(let ((-property- ,property)
-	     (-char- ,char))
+	     (-char- ,char)
+	     (first (1+ (point-max))))
 	 (map-extents (lambda (ext val)
-			(if (and (equal (extent-property ext -property-) val)
-				 (eq (char-after
-				      (extent-start-position ext))
-				     -char-))
-			    (delete-extent ext)))
-		      nil ,from ,to ,value nil -property-))
+			(when (and (equal (extent-property ext -property-) val)
+				   (eq (char-after
+					(extent-start-position ext))
+				       -char-))
+			  (setq first (min first (extent-start-position ext)))
+			  (delete-extent ext)))
+		      nil ,from ,to ,value nil -property-)
+	 (and (<= first (point-max)) first))
     ;; GNU Emacs
     `(c-clear-char-property-with-value-on-char-function ,from ,to ,property
 							,value ,char)))
@@ -1316,6 +1355,7 @@ with value CHAR in the region [FROM to)."
 ;(eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
 ;  '(progn
 (def-edebug-spec cc-eval-when-compile (&rest def-form))
+(def-edebug-spec c-font-lock-flush t)
 (def-edebug-spec c--mapcan t)
 (def-edebug-spec c--set-difference (form form &rest [symbolp form]))
 (def-edebug-spec c--intersection (form form &rest [symbolp form]))
