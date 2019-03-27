@@ -1979,6 +1979,39 @@ preserves the path value, which can be used to update
 shell supports the login argument @samp{-l}.
 @end defopt
 
+Starting with Emacs 26, @code{tramp-remote-path} can be set per host
+via connection-local
+@ifinfo
+variables, @xref{Connection Variables, , , emacs}.
+@end ifinfo
+@ifnotinfo
+variables.
+@end ifnotinfo
+You could define your own search directories like this:
+
+@lisp
+@group
+(connection-local-set-profile-variables 'remote-path-with-bin
+   '((tramp-remote-path . ("~/bin" tramp-default-remote-path))))
+@end group
+
+@group
+(connection-local-set-profile-variables 'remote-path-with-apply-pub-bin
+   '((tramp-remote-path . ("/appli/pub/bin" tramp-default-remote-path))))
+@end group
+
+@group
+(connection-local-set-profiles
+   '(:application tramp :machine "randomhost") 'remote-path-with-bin)
+@end group
+
+@group
+(connection-local-set-profiles
+   '(:application tramp :user "anotheruser" :machine "anotherhost")
+     'remote-path-with-apply-pub-bin)
+@end group
+@end lisp
+
 When remote search paths are changed, local @value{tramp} caches must
 be recomputed.  To force @value{tramp} to recompute afresh, call
 @kbd{M-x tramp-cleanup-this-connection @key{RET}} or friends
