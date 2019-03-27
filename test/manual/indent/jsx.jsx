@@ -93,6 +93,32 @@ return (
        } />
 )
 
+// JSXMemberExpression names are parsed/indented:
+<Foo.Bar>
+  <div>
+    <Foo.Bar>
+      Hello World!
+    </Foo.Bar>
+    <Foo.Bar>
+      <div>
+      </div>
+    </Foo.Bar>
+  </div>
+</Foo.Bar>
+
+// JSXOpeningFragment and JSXClosingFragment are parsed/indented:
+<>
+  <div>
+    <>
+      Hello World!
+    </>
+    <>
+      <div>
+      </div>
+    </>
+  </div>
+</>
+
 // Indent void expressions (no need for contextual parens / commas)
 // (https://github.com/mooz/js2-mode/issues/140#issuecomment-166250016).
 <div className="class-name">
