@@ -7798,42 +7798,6 @@ static Lisp_Object Vcode_conversion_reused_workbuf;
 static bool reused_workbuf_in_use;
 
 
-/* Return a working buffer of code conversion.  MULTIBYTE specifies the
-   multibyteness of returning buffer.  */
-
-static Lisp_Object
-make_conversion_work_buffer (bool multibyte)
-{
-  Lisp_Object name, workbuf;
-  struct buffer *current;
-
-  if (reused_workbuf_in_use)
-    {
-      name = Fgenerate_new_buffer_name (Vcode_conversion_workbuf_name, Qnil);
-      workbuf = Fget_buffer_create (name);
-    }
-  else
-    {
-      reused_workbuf_in_use = 1;
-      if (NILP (Fbuffer_live_p (Vcode_conversion_reused_workbuf)))
-	Vcode_conversion_reused_workbuf
-	  = Fget_buffer_create (Vcode_conversion_workbuf_name);
-      workbuf = Vcode_conversion_reused_workbuf;
-    }
-  current = current_buffer;
-  set_buffer_internal (XBUFFER (workbuf));
-  /* We can't allow modification hooks to run in the work buffer.  For
-     instance, directory_files_internal assumes that file decoding
-     doesn't compile new regexps.  */
-  Fset (Fmake_local_variable (Qinhibit_modification_hooks), Qt);
-  Ferase_buffer ();
-  bset_undo_list (current_buffer, Qt);
-  bset_enable_multibyte_characters (current_buffer, multibyte ? Qt : Qnil);
-  set_buffer_internal (current);
-  return workbuf;
-}
-
-
 static void
 code_conversion_restore (Lisp_Object arg)
 {
@@ -7846,7 +7810,12 @@ code_conversion_restore (Lisp_Object arg)
       if (EQ (workbuf, Vcode_conversion_reused_workbuf))
 	reused_workbuf_in_use = 0;
       else
-	Fkill_buffer (workbuf);
+	{
+	  ptrdiff_t count = SPECPDL_INDEX ();
+	  specbind (Qbuffer_list_update_hook, Qnil);
+	  Fkill_buffer (workbuf);
+	  unbind_to (count, Qnil);
+	}
     }
   set_buffer_internal (XBUFFER (current));
 }
@@ -7857,9 +7826,51 @@ code_conversion_save (bool with_work_buf, bool multibyte)
   Lisp_Object workbuf = Qnil;
 
   if (with_work_buf)
-    workbuf = make_conversion_work_buffer (multibyte);
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      if (reused_workbuf_in_use)
+	{
+	  Lisp_Object name
+	    = Fgenerate_new_buffer_name (Vcode_conversion_workbuf_name, Qnil);
+	  specbind (Qbuffer_list_update_hook, Qnil);
+	  workbuf = Fget_buffer_create (name);
+	  unbind_to (count, Qnil);
+	}
+      else
+	{
+	  if (NILP (Fbuffer_live_p (Vcode_conversion_reused_workbuf)))
+	    {
+	      specbind (Qbuffer_list_update_hook, Qnil);
+	      Vcode_conversion_reused_workbuf
+		= Fget_buffer_create (Vcode_conversion_workbuf_name);
+	      unbind_to (count, Qnil);
+	    }
+	  workbuf = Vcode_conversion_reused_workbuf;
+	}
+    }
   record_unwind_protect (code_conversion_restore,
 			 Fcons (Fcurrent_buffer (), workbuf));
+  if (!NILP (workbuf))
+    {
+      struct buffer *current = current_buffer;
+      set_buffer_internal (XBUFFER (workbuf));
+      /* We can't allow modification hooks to run in the work buffer.  For
+	 instance, directory_files_internal assumes that file decoding
+	 doesn't compile new regexps.  */
+      Fset (Fmake_local_variable (Qinhibit_modification_hooks), Qt);
+      Ferase_buffer ();
+      bset_undo_list (current_buffer, Qt);
+      bset_enable_multibyte_characters (current_buffer, multibyte ? Qt : Qnil);
+      if (EQ (workbuf, Vcode_conversion_reused_workbuf))
+	reused_workbuf_in_use = 1;
+      else
+	{
+	  Fset (Fmake_local_variable (Qkill_buffer_query_functions), Qnil);
+	  Fset (Fmake_local_variable (Qkill_buffer_hook), Qnil);
+	}
+      set_buffer_internal (current);
+    }
+
   return workbuf;
 }
 

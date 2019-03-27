@@ -4623,7 +4623,8 @@ dump_discard_mem (void *mem, size_t size)
       /* Discard COWed pages.  */
       (void) VirtualFree (mem, size, MEM_DECOMMIT);
       /* Release the commit charge for the mapping.  */
-      (void) VirtualProtect (mem, size, PAGE_NOACCESS, NULL);
+      DWORD old_prot;
+      (void) VirtualProtect (mem, size, PAGE_NOACCESS, &old_prot);
 #elif VM_SUPPORTED == VM_POSIX
 # ifdef HAVE_POSIX_MADVISE
       /* Discard COWed pages.  */
