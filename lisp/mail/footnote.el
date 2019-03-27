@@ -64,6 +64,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'cl-seq)
 (defvar filladapt-token-table)
 
 (defgroup footnote nil
@@ -363,7 +364,9 @@ Use Unicode characters for footnoting."
     ("ק" "ר" "ש" "ת" "תק" "תר" "תש" "תת" "תתק")))
 
 (defconst footnote-hebrew-numeric-regex
-  (concat "[" (apply #'concat (apply #'append footnote-hebrew-numeric)) "']+"))
+  (concat "[" (cl-delete-duplicates
+	       (apply #'concat (apply #'append footnote-hebrew-numeric)))
+	  "']+"))
 ;; (defconst footnote-hebrew-numeric-regex "\\([אבגדהוזחט]'\\)?\\(ת\\)?\\(ת\\)?\\([קרשת]\\)?\\([טיכלמנסעפצ]\\)?\\([אבגדהוזחט]\\)?")
 
 (defun footnote--hebrew-numeric (n)
@@ -457,9 +460,14 @@ Conversion is done based upon the current selected style."
 
 (defun footnote--current-regexp ()
   "Return the regexp of the index of the current style."
-  (concat (nth 2 (or (assq footnote-style footnote-style-alist)
-		     (nth 0 footnote-style-alist)))
-	  "*"))
+  (let ((regexp (nth 2 (or (assq footnote-style footnote-style-alist)
+			   (nth 0 footnote-style-alist)))))
+    (concat
+     ;; Hack to avoid repetition of repetition.
+     (if (string-match "[^\\]\\\\\\{2\\}*[*+?]\\'" regexp)
+	 (substring regexp 0 -1)
+       regexp)
+     "*")))
 
 (defun footnote--refresh-footnotes (&optional index-regexp)
   "Redraw all footnotes.

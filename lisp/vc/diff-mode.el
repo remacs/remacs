@@ -2213,7 +2213,7 @@ I.e. like `add-change-log-entry-other-window' but applied to all hunks."
                  ;; `add-change-log-entry-other-window' works better in
                  ;; that case.
                  (re-search-forward
-                  (concat "\n[!+-<>]"
+		  (concat "\n[!+<>-]"
                           ;; If the hunk is a context hunk with an empty first
                           ;; half, recognize the "--- NNN,MMM ----" line
                           "\\(-- [0-9]+\\(,[0-9]+\\)? ----\n"

@@ -3511,7 +3511,7 @@ The expression may be an argument in quotes."
   (let ((value (if (looking-at "[+-]") 0 (woman-parse-numeric-value)))
 	op)
     (while (cond
-	    ((looking-at "[+-/*%]")	; arithmetic operators
+	    ((looking-at "[+/*%-]")	; arithmetic operators
 	     (forward-char)
 	     (setq op (intern-soft (match-string 0)))
 	     (setq value (funcall op value (woman-parse-numeric-value))))

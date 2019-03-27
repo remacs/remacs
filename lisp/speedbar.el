@@ -2849,7 +2849,7 @@ indicator, then do not add a space."
 	(progn
 	  (goto-char speedbar-ro-to-do-point)
 	  (while (and (not (input-pending-p))
-		      (re-search-forward "^\\([0-9]+\\):\\s-*[[<][+-?][]>] "
+		      (re-search-forward "^\\([0-9]+\\):\\s-*[[<][+?-][]>] "
 					 nil t))
 	    (setq speedbar-ro-to-do-point (point))
 	    (let ((f (speedbar-line-file)))
@@ -2900,7 +2900,7 @@ to add more types of version control systems."
 	(progn
 	  (goto-char speedbar-vc-to-do-point)
 	  (while (and (not (input-pending-p))
-		      (re-search-forward "^\\([0-9]+\\):\\s-*\\[[+-?]\\] "
+		      (re-search-forward "^\\([0-9]+\\):\\s-*\\[[+?-]\\] "
 					 nil t))
 	    (setq speedbar-vc-to-do-point (point))
 	    (if (speedbar-check-vc-this-line (match-string 1))

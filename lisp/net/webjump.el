@@ -342,7 +342,7 @@ Please submit bug reports and other feedback to the author, Neil W. Van Dyke
   (mapconcat (lambda (c)
                (let ((s (char-to-string c)))
                  (cond ((string= s " ") "+")
-                       ((string-match "[a-zA-Z_.-/]" s) s)
+		       ((string-match "[a-zA-Z_./~-]" s) s)
                        (t (upcase (format "%%%02x" c))))))
              (encode-coding-string str 'utf-8)
              ""))

@@ -438,7 +438,7 @@ The possible settings for `align-region-separate' are:
      (tab-stop . nil))
 
     (perl-assignment
-     (regexp   . ,(concat "[^=!^&*-+<>/| \t\n]\\(\\s-*\\)=[~>]?"
+     (regexp   . ,(concat "[^=!^&*+<>/| \t\n-]\\(\\s-*\\)=[~>]?"
 			  "\\(\\s-*\\)\\([^>= \t\n]\\|$\\)"))
      (group    . (1 2))
      (modes    . align-perl-modes)
