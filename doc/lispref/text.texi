@@ -723,12 +723,18 @@ You thought
 @end example
 @end deffn
 
-@deffn Command delete-indentation &optional join-following-p
+@deffn Command delete-indentation &optional join-following-p beg end
 This function joins the line point is on to the previous line, deleting
 any whitespace at the join and in some cases replacing it with one
 space.  If @var{join-following-p} is non-@code{nil},
 @code{delete-indentation} joins this line to the following line
-instead.  The function returns @code{nil}.
+instead.  Otherwise, if @var{beg} and @var{end} are non-@code{nil},
+this function joins all lines in the region they define.
+
+In an interactive call, @var{join-following-p} is the prefix argument,
+and @var{beg} and @var{end} are, respectively, the start and end of
+the region if it is active, else @code{nil}.  The function returns
+@code{nil}.
 
 If there is a fill prefix, and the second of the lines being joined
 starts with the prefix, then @code{delete-indentation} deletes the
