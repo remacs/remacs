@@ -127,9 +127,15 @@ impl<'a> ModuleParser<'a> {
     }
 
     pub fn run(&mut self, in_file: impl BufRead) -> Result<ModuleData, BuildError> {
+        lazy_static! {
+            static ref FEATURE_RE: Regex =
+                Regex::new(r#"^#\[cfg\(feature *= *"([^"]+)"\)\]"#).unwrap();
+        }
+
         let mut mod_data = ModuleData::new(self.info.clone());
         let mut reader = in_file.lines();
         let mut has_include = false;
+        let mut require_feature: Option<String> = None;
 
         while let Some(next) = reader.next() {
             let line = next?;
@@ -152,6 +158,11 @@ impl<'a> ModuleParser<'a> {
                     }
                 } else {
                     self.fail(1, "unexpected end of file");
+                }
+            } else if line.starts_with("#[cfg") {
+                match FEATURE_RE.captures(&line) {
+                    Some(caps) => require_feature = Some(caps[1].to_string()),
+                    _ => (),
                 }
             } else if line.starts_with("#[lisp_fn") {
                 let line = if line.ends_with("]") {
@@ -193,11 +204,18 @@ impl<'a> ModuleParser<'a> {
                     let line = next?;
 
                     if let Some(func) = self.parse_c_export(&line, name)? {
-                        mod_data.lisp_fns.push(func);
+                        if require_feature
+                            .map(|f| is_feature_activated(&f))
+                            .unwrap_or(true)
+                        {
+                            mod_data.lisp_fns.push(func);
+                        }
                     }
                 } else {
                     self.fail(1, "unexpected end of file");
                 }
+
+                require_feature = None;
             } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
                 has_include = true;
             } else if line.starts_with("/*") && !line.ends_with("*/") {
@@ -207,6 +225,8 @@ impl<'a> ModuleParser<'a> {
                         break;
                     }
                 }
+            } else {
+                require_feature = None;
             }
         }
 
@@ -343,6 +363,17 @@ fn path_as_str(path: Option<&OsStr>) -> &str {
 
 fn env_var(name: &str) -> String {
     env::var(name).unwrap_or_else(|e| panic!("Could not find {} in environment: {}", name, e))
+}
+
+/// Check if a feature is activated by checking its
+/// corresponding [`CARGO_FEATURE_` environment variable][1].
+///
+/// [1]: https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-build-scripts
+fn is_feature_activated(name: &str) -> bool {
+    let name_as_suffix = name.to_ascii_uppercase().replace("-", "_");
+    env::var(format!("CARGO_FEATURE_{}", name_as_suffix))
+        .map(|e| !e.is_empty())
+        .unwrap_or(false)
 }
 
 // What to ignore when walking the list of files

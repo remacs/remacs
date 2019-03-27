@@ -497,34 +497,28 @@ CARGO_CHECKING_FEATURES=""
 if test x$ac_enable_checking != x ; then
   AC_DEFINE(ENABLE_CHECKING, 1,
 [Define to 1 if expensive run-time data type and consistency checks are enabled.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"checking\", "
 fi
 if test x$ac_gc_check_stringbytes != x ; then
   AC_DEFINE(GC_CHECK_STRING_BYTES, 1,
 [Define this temporarily to hunt a bug.  If defined, the size of
    strings is redundantly recorded in sdata structures so that it can
    be compared to the sizes recorded in Lisp strings.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"gc-check-string-bytes\", "
 fi
 if test x$ac_gc_check_string_overrun != x ; then
   AC_DEFINE(GC_CHECK_STRING_OVERRUN, 1,
 [Define this to check for short string overrun.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"gc-check-string-overrun\", "
 fi
 if test x$ac_gc_check_string_free_list != x ; then
   AC_DEFINE(GC_CHECK_STRING_FREE_LIST, 1,
 [Define this to check the string free list.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"gc-check-string-free-list\", "
 fi
 if test x$ac_xmalloc_overrun != x ; then
   AC_DEFINE(XMALLOC_OVERRUN_CHECK, 1,
 [Define this to check for malloc buffer overrun.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"xmalloc-overrun-check\", "
 fi
 if test x$ac_gc_check_cons_list != x ; then
   AC_DEFINE(GC_CHECK_CONS_LIST, 1,
 [Define this to check for errors in cons list.])
-  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"gc-check-cons-list\", "
 fi
 if test x$ac_glyphs_debug != x ; then
   AC_DEFINE(GLYPH_DEBUG, 1,
