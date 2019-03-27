@@ -180,7 +180,7 @@ See also `xml-get-attribute-or-nil'."
 
 ;; [4a] NameChar ::= NameStartChar | "-" | "." | [0-9] | #xB7
 ;;                 | [#x0300-#x036F] | [#x203F-#x2040]
-(defconst xml-name-char-re (concat "[-0-9.[:word:]:_·̀-ͯ‿-⁀]"))
+(defconst xml-name-char-re (concat "[-0-9.[:word:]:_·̀-ͯ‿⁀]"))
 
 ;; [5] Name     ::= NameStartChar (NameChar)*
 (defconst xml-name-re (concat xml-name-start-char-re xml-name-char-re "*"))
