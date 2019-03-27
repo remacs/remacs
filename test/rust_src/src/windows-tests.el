@@ -24,13 +24,13 @@
   (should(eq (window-dedicated-p (selected-window)) nil)))
 
 (ert-deftest window-dedicated-set-not-nil()
-  ;; set widnow to dedicated
+  ;; set window to dedicated
   (should (eq (set-window-dedicated-p (selected-window) 't) 't))
   (should(eq (window-dedicated-p (selected-window)) 't)))
 
 (ert-deftest window-dedicated-p-default-selected-window()
   (should(eq (window-dedicated-p) nil))
-  ;; set selected widnow to dedicated
+  ;; set selected window to dedicated
   (should (eq (set-window-dedicated-p (selected-window) 't) 't))
   (should(eq (window-dedicated-p) 't)))
 
@@ -112,6 +112,14 @@
         (w2 (split-window-vertically)))
     (should (= (window-pixel-top) (window-pixel-top w1)))
     (should-not (= (window-pixel-top w1) (window-pixel-top w2)))))
+
+(ert-deftest window-left-column ()
+  (let ((w1 (selected-window))
+        (w2 (split-window-vertically))
+        (w3 (split-window-horizontally (/ (window-width) 2))))
+    (should (= 0 (window-left-column w1)))
+    (should (= 0 (window-left-column w2)))
+    (should-not (= 0 (window-left-column w3)))))
 
 (ert-deftest window-fringes ()
   (skip-unless (display-graphic-p))

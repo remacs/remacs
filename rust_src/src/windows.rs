@@ -1866,6 +1866,18 @@ pub fn window_pixel_top(window: LispWindowValidOrSelected) -> EmacsInt {
     window.pixel_top.into()
 }
 
+/// Return left column of window WINDOW.
+/// This is the distance, in columns, between the left edge of WINDOW and
+/// the left edge of the frame's window area.  For instance, the return
+/// value is 0 if there is no window to the left of WINDOW.
+///
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_left_column(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.left_col
+}
+
 /// Get width of fringes of window WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
