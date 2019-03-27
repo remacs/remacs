@@ -60,7 +60,7 @@
 
 
 (defun calc-hms-notation (fmt)
-  (interactive "sHours-minutes-seconds format (hms, @ \\=' \", etc.): ")
+  (interactive "sHours-minutes-seconds format (hms, @ ' \", etc.): ")
   (calc-wrapper
    (if (string-match "\\`\\([^,; ]+\\)\\([,; ]*\\)\\([^,; ]\\)\\([,; ]*\\)\\([^,; ]\\)\\'" fmt)
        (progn
