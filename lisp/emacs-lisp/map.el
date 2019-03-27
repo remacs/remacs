@@ -399,7 +399,7 @@ If you want to insert an element without modifying MAP, use `map-insert'."
     ;; and let `map-insert' grow the array?
     :array (aset map key value)))
 
-(define-error 'map-inplace "Can only modify map in place: %S")
+(define-error 'map-inplace "Can only modify map in place")
 
 (cl-defgeneric map-insert (map key value)
   "Return a new map like MAP except that it associates KEY with VALUE.
