@@ -68,6 +68,31 @@ return (
   </div>
 );
 
+return (
+  <div attribute={{
+         a: 1, // Indent relative to “attribute” column.
+         b: 2
+       } && {  // Dedent to “attribute” column.
+         a: 1,
+         b: 2
+       }} />   // Also dedent.
+);
+
+return (
+  <div attribute=
+       {   // Indent properly on another line, too.
+         {
+           a: 1,
+           b: 2,
+         } && (
+           // Indent other forms, too.
+           a ? b :
+             c ? d :
+             e
+         )
+       } />
+)
+
 // Indent void expressions (no need for contextual parens / commas)
 // (https://github.com/mooz/js2-mode/issues/140#issuecomment-166250016).
 <div className="class-name">

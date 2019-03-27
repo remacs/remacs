@@ -2081,7 +2081,7 @@ been propertized."
 Disambiguate JSX from inequality operators and arrow functions by
 testing for syntax only valid as JSX."
   (let ((tag-beg (1- (point))) tag-end (type 'open)
-        name-beg name-match-data unambiguous
+        name-beg name-match-data expr-attribute-beg unambiguous
         forward-sexp-function) ; Use Lisp version.
     (catch 'stop
       (while (and (< (point) end)
@@ -2096,8 +2096,16 @@ testing for syntax only valid as JSX."
          ;; JSXExpressionContainer as a JSXAttribute value
          ;; (“<Foo bar={…}”).  Check this early in case continuing a
          ;; JSXAttribute parse.
-         ((and name-beg (= (char-after) ?{))
+         ((or (and name-beg (= (char-after) ?{))
+              (setq expr-attribute-beg nil))
           (setq unambiguous t) ; JSXExpressionContainer post tag name ⇒ JSX
+          (when expr-attribute-beg
+            ;; Remember that this JSXExpressionContainer is part of a
+            ;; JSXAttribute, as that can affect its expression’s
+            ;; indentation.
+            (put-text-property
+             (point) (1+ (point)) 'js-jsx-expr-attribute expr-attribute-beg)
+            (setq expr-attribute-beg nil))
           (let (expr-end)
             (condition-case nil
                 (save-excursion
@@ -2146,10 +2154,14 @@ testing for syntax only valid as JSX."
             ;; Skip over strings (if possible).  Any
             ;; JSXExpressionContainer here will be parsed in the
             ;; next iteration of the loop.
-            (when (memq (char-after) '(?\" ?\' ?\`))
-              (condition-case nil
-                  (forward-sexp)
-                (scan-error (throw 'stop nil))))))
+            (if (memq (char-after) '(?\" ?\' ?\`))
+                (condition-case nil
+                    (forward-sexp)
+                  (scan-error (throw 'stop nil)))
+              ;; Save JSXAttribute’s beginning in case we find a
+              ;; JSXExpressionContainer as the JSXAttribute’s value which
+              ;; we should associate with the JSXAttribute.
+              (setq expr-attribute-beg (match-beginning 0)))))
          ;; There is nothing more to check; this either isn’t JSX, or
          ;; the tag is incomplete.
          (t (throw 'stop nil)))))
@@ -2174,7 +2186,7 @@ testing for syntax only valid as JSX."
   (list
    'js-jsx-tag-beg nil 'js-jsx-tag-end nil
    'js-jsx-tag-name nil 'js-jsx-attribute-name nil
-   'js-jsx-text nil 'js-jsx-expr nil)
+   'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil)
   "Plist of text properties added by `js-syntax-propertize'.")
 
 (defun js-syntax-propertize (start end)
@@ -2563,8 +2575,11 @@ current line is the \"=>\" token (of an arrow function)."
             (list 'tag (nth 0 enclosing-tag-pos) (nth 1 enclosing-tag-pos)))
         (list 'text (nth 0 enclosing-tag-pos) (nth 2 enclosing-tag-pos))))))
 
-(defvar js-jsx--indenting nil
-  "Flag to prevent infinite recursion while indenting JSX.")
+(defvar js-jsx--indent-col nil
+  "Baseline column for JS indentation within JSX.")
+
+(defvar js-jsx--indent-attribute-line nil
+  "Line relative to which indentation uses JSX as a baseline.")
 
 (defun js-jsx--indentation (parse-status)
   "Helper function for `js--proper-indentation'.
@@ -2642,25 +2657,22 @@ return nil."
                           0)))
 
                     )))
-      ;; When indenting a JSXExpressionContainer expression, use JSX
-      ;; indentation as a minimum, and use regular JS indentation if
-      ;; it’s deeper.
+      ;; To indent a JSXExpressionContainer’s expression, calculate
+      ;; the JS indentation, possibly using JSX indentation as the
+      ;; base column.
       (if expr-p
-          (max (+ col
-                  ;; An expression in a JSXExpressionContainer in a
-                  ;; JSXAttribute should be indented more, except on
-                  ;; the ending line of the JSXExpressionContainer.
-                  (if (and (eq (nth 0 context) 'tag)
-                           (< current-line
-                              (save-excursion
-                                (js-jsx--goto-outermost-enclosing-curly
-                                 (nth 1 context))
-                                (forward-sexp)
-                                (line-number-at-pos))))
-                      js-indent-level
-                    0))
-               (let ((js-jsx--indenting t)) ; Prevent recursion.
-                 (js--proper-indentation parse-status)))
+          (let* ((js-jsx--indent-col col)
+                 (expr-attribute-pos
+                  (save-excursion
+                    (goto-char curly-pos) ; Skip first curly.
+                    ;; Skip any remaining enclosing curlies up until
+                    ;; the contextual JSXElement’s beginning position.
+                    (js-jsx--goto-outermost-enclosing-curly (nth 1 context))
+                    (get-text-property (point) 'js-jsx-expr-attribute)))
+                 (js-jsx--indent-attribute-line
+                  (when expr-attribute-pos
+                    (line-number-at-pos expr-attribute-pos))))
+            (js--proper-indentation parse-status))
         col))))
 
 (defun js--proper-indentation (parse-status)
@@ -2670,7 +2682,7 @@ return nil."
     (cond ((nth 4 parse-status)    ; inside comment
            (js--get-c-offset 'c (nth 8 parse-status)))
           ((nth 3 parse-status) 0) ; inside string
-          ((when (and js-jsx-syntax (not js-jsx--indenting))
+          ((when (and js-jsx-syntax (not js-jsx--indent-col))
              (save-excursion (js-jsx--indentation parse-status))))
           ((eq (char-after) ?#) 0)
           ((save-excursion (js--beginning-of-macro)) 4)
@@ -2708,17 +2720,24 @@ return nil."
                                              (and switch-keyword-p
                                                   in-switch-p)))
                           (indent
-                           (cond (same-indent-p
-                                  (current-column))
-                                 (continued-expr-p
-                                  (+ (current-column) (* 2 js-indent-level)
-                                     js-expr-indent-offset))
-                                 (t
-                                  (+ (current-column) js-indent-level
-                                     (pcase (char-after (nth 1 parse-status))
-                                       (?\( js-paren-indent-offset)
-                                       (?\[ js-square-indent-offset)
-                                       (?\{ js-curly-indent-offset)))))))
+                           (+
+                            (cond
+                             ((and js-jsx--indent-attribute-line
+                                   (eq js-jsx--indent-attribute-line
+                                       (line-number-at-pos)))
+                              js-jsx--indent-col)
+                             (t
+                              (current-column)))
+                            (cond (same-indent-p 0)
+                                  (continued-expr-p
+                                   (+ (* 2 js-indent-level)
+                                      js-expr-indent-offset))
+                                  (t
+                                   (+ js-indent-level
+                                      (pcase (char-after (nth 1 parse-status))
+                                        (?\( js-paren-indent-offset)
+                                        (?\[ js-square-indent-offset)
+                                        (?\{ js-curly-indent-offset))))))))
                      (if in-switch-p
                          (+ indent js-switch-indent-offset)
                        indent)))
