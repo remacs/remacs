@@ -23,7 +23,7 @@
 
 
 (ert-deftest rmail-autoload ()
-  "Tests to see whether reftex-auc has been autoloaded"
+  "Test that `rmail-edit-current-message' has been autoloaded."
   (should
    (fboundp 'rmail-edit-current-message))
   (should
