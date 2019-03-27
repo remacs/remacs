@@ -2575,11 +2575,85 @@ current line is the \"=>\" token (of an arrow function)."
             (list 'tag (nth 0 enclosing-tag-pos) (nth 1 enclosing-tag-pos)))
         (list 'text (nth 0 enclosing-tag-pos) (nth 2 enclosing-tag-pos))))))
 
+(defun js-jsx--contextual-indentation (line context)
+  "Calculate indentation column for LINE from CONTEXT.
+The column calculation is based off of `sgml-calculate-indent'."
+  (pcase (nth 0 context)
+
+    ('string
+     ;; Go back to previous non-empty line.
+     (while (and (> (point) (nth 1 context))
+		 (zerop (forward-line -1))
+		 (looking-at "[ \t]*$")))
+     (if (> (point) (nth 1 context))
+	 ;; Previous line is inside the string.
+	 (current-indentation)
+       (goto-char (nth 1 context))
+       (1+ (current-column))))
+
+    ('tag
+     ;; Special JSX indentation rule: a “dangling” closing angle
+     ;; bracket on its own line is indented at the same level as the
+     ;; opening angle bracket of the JSXElement.  Otherwise, indent
+     ;; JSXAttribute space like SGML.
+     (if (progn
+           (goto-char (nth 2 context))
+           (and (= line (line-number-at-pos))
+                (looking-back "^\\s-*/?>" (line-beginning-position))))
+         (progn
+           (goto-char (nth 1 context))
+           (current-column))
+       ;; Indent JSXAttribute space like SGML.
+       (goto-char (nth 1 context))
+       ;; Skip tag name:
+       (skip-chars-forward " \t")
+       (skip-chars-forward "^ \t\n")
+       (skip-chars-forward " \t")
+       (if (not (eolp))
+	   (current-column)
+         ;; This is the first attribute: indent.
+         (goto-char (+ (nth 1 context) js-jsx-attribute-offset))
+         (+ (current-column) js-indent-level))))
+
+    ('text
+     ;; Indent to reflect nesting.
+     (goto-char (nth 1 context))
+     (+ (current-column)
+        ;; The last line isn’t nested, but the rest are.
+        (if (or (not (nth 2 context)) ; Unclosed.
+                (< line (line-number-at-pos (nth 2 context))))
+            js-indent-level
+          0)))
+
+    ))
+
+(defun js-jsx--expr-attribute-pos (start limit)
+  "Look back from START to LIMIT for a JSXAttribute."
+  (save-excursion
+    (goto-char start) ; Skip the first curly.
+    ;; Skip any remaining enclosing curlies until the JSXElement’s
+    ;; beginning position; the last curly ought to be one of a
+    ;; JSXExpressionContainer, which may refer to its JSXAttribute’s
+    ;; beginning position (if it has one).
+    (js-jsx--goto-outermost-enclosing-curly limit)
+    (get-text-property (point) 'js-jsx-expr-attribute)))
+
 (defvar js-jsx--indent-col nil
   "Baseline column for JS indentation within JSX.")
 
 (defvar js-jsx--indent-attribute-line nil
   "Line relative to which indentation uses JSX as a baseline.")
+
+(defun js-jsx--expr-indentation (parse-status pos col)
+  "Indent using PARSE-STATUS; relative to POS, use base COL.
+To indent a JSXExpressionContainer’s expression, calculate the JS
+indentation, using JSX indentation as the base column when
+indenting relative to the beginning line of the
+JSXExpressionContainer’s JSXAttribute (if any)."
+  (let* ((js-jsx--indent-col col)
+         (js-jsx--indent-attribute-line
+          (if pos (line-number-at-pos pos))))
+    (js--proper-indentation parse-status)))
 
 (defun js-jsx--indentation (parse-status)
   "Helper function for `js--proper-indentation'.
@@ -2605,74 +2679,16 @@ return nil."
              (and
               (= beg-line current-line)
               (or (not curly-pos) (> (point) curly-pos)))))))
+    ;; When on the second or later line of JSX, indent as JSX,
+    ;; possibly switching back to JS indentation within
+    ;; JSXExpressionContainers, possibly using the JSX as a base
+    ;; column while switching back to JS indentation.
     (when (and context (> current-line beg-line))
       (save-excursion
-        ;; The column calculation is based on `sgml-calculate-indent'.
-        (setq col (pcase (nth 0 context)
-
-                    ('string
-                     ;; Go back to previous non-empty line.
-                     (while (and (> (point) (nth 1 context))
-		                 (zerop (forward-line -1))
-		                 (looking-at "[ \t]*$")))
-                     (if (> (point) (nth 1 context))
-	                 ;; Previous line is inside the string.
-	                 (current-indentation)
-                       (goto-char (nth 1 context))
-                       (1+ (current-column))))
-
-                    ('tag
-                     ;; Special JSX indentation rule: a “dangling”
-                     ;; closing angle bracket on its own line is
-                     ;; indented at the same level as the opening
-                     ;; angle bracket of the JSXElement.  Otherwise,
-                     ;; indent JSXAttribute space like SGML.
-                     (if (progn
-                           (goto-char (nth 2 context))
-                           (and (= current-line (line-number-at-pos))
-                                (looking-back "^\\s-*/?>" (line-beginning-position))))
-                         (progn
-                           (goto-char (nth 1 context))
-                           (current-column))
-                       ;; Indent JSXAttribute space like SGML.
-                       (goto-char (nth 1 context))
-                       ;; Skip tag name:
-                       (skip-chars-forward " \t")
-                       (skip-chars-forward "^ \t\n")
-                       (skip-chars-forward " \t")
-                       (if (not (eolp))
-	                   (current-column)
-                         ;; This is the first attribute: indent.
-                         (goto-char (+ (nth 1 context) js-jsx-attribute-offset))
-                         (+ (current-column) js-indent-level))))
-
-                    ('text
-                     ;; Indent to reflect nesting.
-                     (goto-char (nth 1 context))
-	             (+ (current-column)
-                        ;; The last line isn’t nested, but the rest are.
-                        (if (or (not (nth 2 context)) ; Unclosed.
-                                (< current-line (line-number-at-pos (nth 2 context))))
-                            js-indent-level
-                          0)))
-
-                    )))
-      ;; To indent a JSXExpressionContainer’s expression, calculate
-      ;; the JS indentation, possibly using JSX indentation as the
-      ;; base column.
+        (setq col (js-jsx--contextual-indentation current-line context)))
       (if expr-p
-          (let* ((js-jsx--indent-col col)
-                 (expr-attribute-pos
-                  (save-excursion
-                    (goto-char curly-pos) ; Skip first curly.
-                    ;; Skip any remaining enclosing curlies up until
-                    ;; the contextual JSXElement’s beginning position.
-                    (js-jsx--goto-outermost-enclosing-curly (nth 1 context))
-                    (get-text-property (point) 'js-jsx-expr-attribute)))
-                 (js-jsx--indent-attribute-line
-                  (when expr-attribute-pos
-                    (line-number-at-pos expr-attribute-pos))))
-            (js--proper-indentation parse-status))
+          (js-jsx--expr-indentation
+           parse-status (js-jsx--expr-attribute-pos curly-pos (nth 1 context)) col)
         col))))
 
 (defun js--proper-indentation (parse-status)
