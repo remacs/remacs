@@ -1718,9 +1718,9 @@ the process.  That way 'make-process' can start remote processes.
 +++
 ** Emacs now supports resizing (scaling) of images without ImageMagick.
 All modern systems are supported by this feature.  (On GNU and Unix
-systems, the XRender extension to X11 is required for this to be
-available; the configure script will test for it and, if found, enable
-scaling.)
+systems, Cairo drawing or the XRender extension to X11 is required for
+this to be available; the configure script will test for it and, if
+found, enable scaling.)
 
 The new function 'image-scaling-p' can be used to test whether any
 given frame supports resizing.

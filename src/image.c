@@ -1878,7 +1878,10 @@ x_set_image_size (struct frame *f, struct image *img)
   img->height = height;
 # endif
 
-# ifdef HAVE_XRENDER
+# ifdef USE_CAIRO
+  img->width = width;
+  img->height = height;
+# elif defined HAVE_XRENDER
   if (img->picture)
     {
       double xscale = img->width / (double) width;
@@ -9918,7 +9921,7 @@ DEFUN ("image-scaling-p", Fimage_scaling_p, Simage_scaling_p, 0, 1, 0,
 Return t if FRAME supports native scaling, nil otherwise.  */)
      (Lisp_Object frame)
 {
-#if defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_CAIRO) || defined (HAVE_NS) || defined (HAVE_NTGUI)
   return Qt;
 #elif defined (HAVE_X_WINDOWS) && defined (HAVE_XRENDER)
   int event_basep, error_basep;

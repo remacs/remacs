@@ -480,13 +480,12 @@ x_cr_destroy_fringe_bitmap (int which)
 
 static void
 x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
+		 int image_width, int image_height,
 		 int src_x, int src_y, int width, int height,
 		 int dest_x, int dest_y, bool overlay_p)
 {
-  cairo_t *cr;
-  cairo_format_t format;
+  cairo_t *cr = x_begin_cr_clip (f, gc);
 
-  cr = x_begin_cr_clip (f, gc);
   if (overlay_p)
     cairo_rectangle (cr, dest_x, dest_y, width, height);
   else
@@ -495,18 +494,33 @@ x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
       cairo_rectangle (cr, dest_x, dest_y, width, height);
       cairo_fill_preserve (cr);
     }
-  format = cairo_image_surface_get_format (image);
+
+  int orig_image_width = cairo_image_surface_get_width (image);
+  if (image_width == 0) image_width = orig_image_width;
+  int orig_image_height = cairo_image_surface_get_height (image);
+  if (image_height == 0) image_height = orig_image_height;
+
+  cairo_pattern_t *pattern = cairo_pattern_create_for_surface (image);
+  cairo_matrix_t matrix;
+  cairo_matrix_init_scale (&matrix, orig_image_width / (double) image_width,
+			   orig_image_height / (double) image_height);
+  cairo_matrix_translate (&matrix, src_x - dest_x, src_y - dest_y);
+  cairo_pattern_set_matrix (pattern, &matrix);
+
+  cairo_format_t format = cairo_image_surface_get_format (image);
   if (format != CAIRO_FORMAT_A8 && format != CAIRO_FORMAT_A1)
     {
-      cairo_set_source_surface (cr, image, dest_x - src_x, dest_y - src_y);
+      cairo_set_source (cr, pattern);
       cairo_fill (cr);
     }
   else
     {
       x_set_cr_source_with_gc_foreground (f, gc);
       cairo_clip (cr);
-      cairo_mask_surface (cr, image, dest_x - src_x, dest_y - src_y);
+      cairo_mask (cr, pattern);
     }
+  cairo_pattern_destroy (pattern);
+
   x_end_cr_clip (f);
 }
 
@@ -1430,7 +1444,7 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 				       : f->output_data.x->cursor_pixel)
 				    : face->foreground));
       XSetBackground (display, gc, face->background);
-      x_cr_draw_image (f, gc, fringe_bmp[p->which], 0, p->dh,
+      x_cr_draw_image (f, gc, fringe_bmp[p->which], 0, 0, 0, p->dh,
 		       p->wd, p->h, p->x, p->y, p->overlay_p);
       XSetForeground (display, gc, gcv.foreground);
       XSetBackground (display, gc, gcv.background);
@@ -3041,8 +3055,10 @@ x_draw_image_foreground (struct glyph_string *s)
   if (s->img->cr_data)
     {
       x_set_glyph_string_clipping (s);
-      x_cr_draw_image (s->f, s->gc, s->img->cr_data, s->slice.x, s->slice.y,
-		       s->slice.width, s->slice.height, x, y, true);
+      x_cr_draw_image (s->f, s->gc,
+		       s->img->cr_data, s->img->width, s->img->height,
+		       s->slice.x, s->slice.y, s->slice.width, s->slice.height,
+		       x, y, true);
       if (!s->img->mask)
 	{
 	  /* When the image has a mask, we can expect that at
