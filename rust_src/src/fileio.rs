@@ -86,7 +86,9 @@ pub fn file_name_case_insensitive_p_lisp(filename: LispStringRef) -> bool {
         call!(handler, Qfile_name_case_insensitive_p, absname.into()).into()
     } else {
         unsafe {
-            file_name_case_insensitive_p(encode_file_name(absname).const_data_ptr() as *const libc::c_char)
+            file_name_case_insensitive_p(
+                encode_file_name(absname).const_data_ptr() as *const libc::c_char
+            )
         }
     }
 }
