@@ -495,7 +495,6 @@ x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
       cairo_rectangle (cr, dest_x, dest_y, width, height);
       cairo_fill_preserve (cr);
     }
-  cairo_clip (cr);
   format = cairo_image_surface_get_format (image);
   if (format != CAIRO_FORMAT_A8 && format != CAIRO_FORMAT_A1)
     {
@@ -505,6 +504,7 @@ x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
   else
     {
       x_set_cr_source_with_gc_foreground (f, gc);
+      cairo_clip (cr);
       cairo_mask_surface (cr, image, dest_x - src_x, dest_y - src_y);
     }
   x_end_cr_clip (f);
@@ -1511,7 +1511,9 @@ static void x_setup_relief_colors (struct glyph_string *);
 static void x_draw_image_glyph_string (struct glyph_string *);
 static void x_draw_image_relief (struct glyph_string *);
 static void x_draw_image_foreground (struct glyph_string *);
+#ifndef USE_CAIRO
 static void x_draw_image_foreground_1 (struct glyph_string *, Pixmap);
+#endif
 static void x_clear_glyph_string_rect (struct glyph_string *, int,
                                        int, int, int);
 static void x_draw_relief_rect (struct frame *, int, int, int, int,
@@ -3035,6 +3037,30 @@ x_draw_image_foreground (struct glyph_string *s)
   if (s->slice.y == 0)
     y += s->img->vmargin;
 
+#ifdef USE_CAIRO
+  if (s->img->cr_data)
+    {
+      x_set_glyph_string_clipping (s);
+      x_cr_draw_image (s->f, s->gc, s->img->cr_data, s->slice.x, s->slice.y,
+		       s->slice.width, s->slice.height, x, y, true);
+      if (!s->img->mask)
+	{
+	  /* When the image has a mask, we can expect that at
+	     least part of a mouse highlight or a block cursor will
+	     be visible.  If the image doesn't have a mask, make
+	     a block cursor visible by drawing a rectangle around
+	     the image.  I believe it's looking better if we do
+	     nothing here for mouse-face.  */
+	  if (s->hl == DRAW_CURSOR)
+	    {
+	      int relief = eabs (s->img->relief);
+	      x_draw_rectangle (s->f, s->gc, x - relief, y - relief,
+				s->slice.width + relief*2 - 1,
+				s->slice.height + relief*2 - 1);
+	    }
+	}
+    }
+#else  /* ! USE_CAIRO */
   if (s->img->pixmap)
     {
       if (s->img->mask)
@@ -3095,6 +3121,7 @@ x_draw_image_foreground (struct glyph_string *s)
 	    }
 	}
     }
+#endif	/* ! USE_CAIRO */
   else
     /* Draw a rectangle if image could not be loaded.  */
     x_draw_rectangle (s->f, s->gc, x, y,
@@ -3177,6 +3204,7 @@ x_draw_image_relief (struct glyph_string *s)
 }
 
 
+#ifndef USE_CAIRO
 /* Draw the foreground of image glyph string S to PIXMAP.  */
 
 static void
@@ -3249,6 +3277,7 @@ x_draw_image_foreground_1 (struct glyph_string *s, Pixmap pixmap)
     x_draw_rectangle (s->f, s->gc, x, y,
 		    s->slice.width - 1, s->slice.height - 1);
 }
+#endif	/* ! USE_CAIRO */
 
 
 /* Draw part of the background of glyph string S.  X, Y, W, and H
@@ -3308,6 +3337,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
       || s->img->pixmap == 0
       || s->width != s->background_width)
     {
+#ifndef USE_CAIRO
       if (s->img->mask)
 	{
 	  /* Create a pixmap as large as the glyph string.  Fill it
@@ -3348,6 +3378,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
 	    }
 	}
       else
+#endif	/* ! USE_CAIRO */
 	{
 	  int x = s->x;
 	  int y = s->y;
@@ -3370,25 +3401,8 @@ x_draw_image_glyph_string (struct glyph_string *s)
     }
 
   /* Draw the foreground.  */
-#ifdef USE_CAIRO
-  if (s->img->cr_data)
-    {
-      cairo_t *cr = x_begin_cr_clip (s->f, s->gc);
-
-      int x = s->x + s->img->hmargin;
-      int y = s->y + s->img->vmargin;
-      int width = s->background_width;
-
-      cairo_set_source_surface (cr, s->img->cr_data,
-                                x - s->slice.x,
-                                y - s->slice.y);
-      cairo_rectangle (cr, x, y, width, height);
-      cairo_fill (cr);
-      x_end_cr_clip (s->f);
-    }
-  else
-#endif
-    if (pixmap != None)
+#ifndef USE_CAIRO
+  if (pixmap != None)
     {
       x_draw_image_foreground_1 (s, pixmap);
       x_set_glyph_string_clipping (s);
@@ -3397,6 +3411,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
       XFreePixmap (s->display, pixmap);
     }
   else
+#endif	/* ! USE_CAIRO */
     x_draw_image_foreground (s);
 
   /* If we must draw a relief around the image, do it.  */
