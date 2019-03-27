@@ -1557,7 +1557,7 @@ rgb()/rgba()."
         (prev nil))
     (dolist (sel selectors)
       (cond
-       ((seq-contains sel ?&)
+       ((seq-contains-p sel ?&)
         (setq sel (replace-regexp-in-string "&" prev sel))
         (pop processed))
        ;; Unless this is the first selector, separate this one and the
