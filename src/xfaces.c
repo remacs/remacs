@@ -3346,7 +3346,7 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
     value = Qunspecified;
   else if (EQ (attr, QCheight))
     {
-      value = Fstring_to_number (value, Qnil);
+      value = Fstring_to_number (value, make_number (10));
       if (!INTEGERP (value) || XINT (value) <= 0)
 	signal_error ("Invalid face height from X resource", value);
     }

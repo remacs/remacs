@@ -19471,8 +19471,8 @@ score file and edit it.
 
 @item V w
 @kindex V w @r{(Summary)}
-@findex gnus-score-find-favourite-words
-List words used in scoring (@code{gnus-score-find-favourite-words}).
+@findex gnus-score-find-favorite-words
+List words used in scoring (@code{gnus-score-find-favorite-words}).
 
 @item V R
 @kindex V R @r{(Summary)}

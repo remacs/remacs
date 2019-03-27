@@ -324,7 +324,7 @@ might be useful to turn off XIM on slow X client/server links.
 
 @item @code{verticalScrollBars} (class @code{ScrollBars})
 Give frames scroll bars on the left if @samp{left}, on the right if
-@samp{right}; don't have scroll bars if @samp{off}.
+@samp{right}; don't have scroll bars if @samp{off} (@pxref{Scroll Bars}).
 
 @ifnottex
 @item @code{visualClass} (class @code{VisualClass})
@@ -617,7 +617,7 @@ widget "*verticalScrollBar*" style "scroll"
 @end smallexample
 
 @node GTK Widget Names
-@appendixsubsec GTK widget names
+@appendixsubsec GTK+ widget names
 @cindex GTK+ widget names
 
   A GTK+ widget is specified by a @dfn{widget name} and a @dfn{widget
@@ -662,7 +662,7 @@ widget "*" style "my_style"
 @end smallexample
 
 @node GTK Names in Emacs
-@appendixsubsec GTK Widget Names in Emacs
+@appendixsubsec GTK+ Widget Names in Emacs
 @cindex GTK+ widget names in Emacs
 @cindex GTK+ widget classes
 
@@ -726,7 +726,7 @@ widget_class "*Menu*" style "my_menu_style"
 @end smallexample
 
 @node GTK styles
-@appendixsubsec GTK styles
+@appendixsubsec GTK+ styles
 @cindex GTK+ styles
 
   Here is an example of two GTK+ style declarations:
