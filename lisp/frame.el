@@ -676,12 +676,16 @@ The optional argument PARAMETERS specifies additional frame parameters."
   "Make a frame on monitor MONITOR.
 The optional argument DISPLAY can be a display name, and the optional
 argument PARAMETERS specifies additional frame parameters."
-  (interactive (list (completing-read
-                      (format "Make frame on monitor: ")
-                      (or (delq nil (mapcar (lambda (a)
-                                              (cdr (assq 'name a)))
-                                            (display-monitor-attributes-list)))
-                          '("")))))
+  (interactive
+   (list
+    (let* ((default (cdr (assq 'name (frame-monitor-attributes)))))
+      (completing-read
+       (format "Make frame on monitor (default %s): " default)
+       (or (delq nil (mapcar (lambda (a)
+                               (cdr (assq 'name a)))
+                             (display-monitor-attributes-list)))
+           '(""))
+       nil nil nil nil default))))
   (let* ((monitor-workarea
           (catch 'done
             (dolist (a (display-monitor-attributes-list display))
