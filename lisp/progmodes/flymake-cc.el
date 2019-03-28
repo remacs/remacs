@@ -72,7 +72,8 @@ SOURCE."
                  '(("error" . :error)
                    ("note" . :note)
                    ("warning" . :warning))
-                 #'string-match))
+                 #'string-match
+                 :error))
    collect (flymake-make-diagnostic source beg end type msg)))
 
 (defun flymake-cc-use-special-make-target ()
