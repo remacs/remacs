@@ -2283,7 +2283,8 @@ Return the name of the group if selection was successful."
     (nnheader-init-server-buffer)
     ;; Necessary because of funky inlining.
     (require 'gnus-cache)
-    (setq gnus-newsrc-hashtb (gnus-make-hashtable 100)))
+    (setq gnus-newsrc-hashtb (gnus-make-hashtable 100)
+	  gnus-active-hashtb (gnus-make-hashtable 100)))
   ;; Transform the select method into a unique server.
   (when (stringp method)
     (setq method (gnus-server-to-method method)))
