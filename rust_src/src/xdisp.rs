@@ -1,5 +1,8 @@
 //! Display generation from window structure and buffer text.
 
+// Remove the feature check when this file gains functions
+// that are not guarded by it.
+#[cfg(feature = "glyph-debug")]
 use remacs_macros::lisp_fn;
 
 #[cfg(feature = "glyph-debug")]
