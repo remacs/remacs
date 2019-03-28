@@ -4081,7 +4081,7 @@ for process communication also."
       ;; Enable our progress reporter.
       (dolist (timer tl)
 	(if (eq (timer--function timer) #'tramp-progress-reporter-update)
-            (add-to-list 'timer-list timer)))
+            (push timer timer-list)))
       ;; JUST-THIS-ONE is set due to Bug#12145.
       (tramp-message
        proc 10 "%s %s %s %s\n%s"
