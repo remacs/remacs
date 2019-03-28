@@ -11,7 +11,8 @@ use crate::{
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
     data::{
-        as_buffer_objfwd, do_symval_forwarding, indirect_function, set, store_symval_forwarding,
+        as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd, set,
+        store_symval_forwarding,
     },
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
@@ -482,6 +483,30 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
                 None => false,
             }
         },
+        _ => unreachable!(),
+    }
+}
+
+/// Non-nil if VARIABLE is local in buffer BUFFER when set there.
+/// BUFFER defaults to the current buffer.
+///
+/// More precisely, return non-nil if either VARIABLE already has a local
+/// value in BUFFER, or if VARIABLE is automatically buffer-local (see
+/// `make-variable-buffer-local')
+#[lisp_fn(min = "1")]
+pub fn local_variable_if_set_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) -> bool {
+    symbol = symbol.get_indirect_variable();
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => false,
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            let blv = unsafe { symbol.get_blv() };
+            blv.local_if_set() || local_variable_p(symbol, buffer)
+        }
+        symbol_redirect::SYMBOL_FORWARDED => {
+            // All BUFFER_OBJFWD slots become local if they are set.
+            unsafe { is_buffer_objfwd(symbol.get_fwd()) }
+        }
         _ => unreachable!(),
     }
 }
