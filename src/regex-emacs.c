@@ -3940,8 +3940,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
     }
 
   /* Initialize subexpression text positions to -1 to mark ones that no
-     start_memory/stop_memory has been seen for. Also initialize the
-     register information struct.  */
+     start_memory/stop_memory has been seen for.  */
   for (ptrdiff_t reg = 1; reg < num_regs; reg++)
     regstart[reg] = regend[reg] = NULL;
 
@@ -4091,10 +4090,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
 	    {
 	      /* Have the register data arrays been allocated?	*/
 	      if (bufp->regs_allocated == REGS_UNALLOCATED)
-		{ /* No.  So allocate them with malloc.  We need one
-		     extra element beyond 'num_regs' for the '-1' marker
-		     GNU code uses.  */
-		  ptrdiff_t n = max (RE_NREGS, num_regs + 1);
+		{ /* No.  So allocate them with malloc.  */
+		  ptrdiff_t n = max (RE_NREGS, num_regs);
 		  regs->start = xnmalloc (n, sizeof *regs->start);
 		  regs->end = xnmalloc (n, sizeof *regs->end);
 		  regs->num_regs = n;
@@ -4104,9 +4101,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
 		{ /* Yes.  If we need more elements than were already
 		     allocated, reallocate them.  If we need fewer, just
 		     leave it alone.  */
-		  if (regs->num_regs < num_regs + 1)
+		  ptrdiff_t n = regs->num_regs;
+		  if (n < num_regs)
 		    {
-		      ptrdiff_t n = num_regs + 1;
+		      n = max (n + (n >> 1), num_regs);
 		      regs->start
 			= xnrealloc (regs->start, n, sizeof *regs->start);
 		      regs->end = xnrealloc (regs->end, n, sizeof *regs->end);
@@ -4137,10 +4135,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
 		}
 
 	      /* If the regs structure we return has more elements than
-		 were in the pattern, set the extra elements to -1.  If
-		 we (re)allocated the registers, this is the case,
-		 because we always allocate enough to have at least one
-		 -1 at the end.  */
+		 were in the pattern, set the extra elements to -1.  */
 	      for (ptrdiff_t reg = num_regs; reg < regs->num_regs; reg++)
 		regs->start[reg] = regs->end[reg] = -1;
 	    }
@@ -5053,13 +5048,10 @@ re_compile_pattern (const char *pattern, ptrdiff_t length,
 		    bool posix_backtracking, const char *whitespace_regexp,
 		    struct re_pattern_buffer *bufp)
 {
-  reg_errcode_t ret;
-
-  /* GNU code is written to assume at least RE_NREGS registers will be set
-     (and at least one extra will be -1).  */
   bufp->regs_allocated = REGS_UNALLOCATED;
 
-  ret = regex_compile ((re_char *) pattern, length,
+  reg_errcode_t ret
+      = regex_compile ((re_char *) pattern, length,
 		       posix_backtracking,
 		       whitespace_regexp,
 		       bufp);

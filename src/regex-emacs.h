@@ -98,7 +98,7 @@ struct re_pattern_buffer
   bool_bf can_be_null : 1;
 
         /* If REGS_UNALLOCATED, allocate space in the 'regs' structure
-             for 'max (RE_NREGS, re_nsub + 1)' groups.
+             for at least (re_nsub + 1) groups.
            If REGS_REALLOCATE, reallocate space if necessary.
            If REGS_FIXED, use what's there.  */
   unsigned regs_allocated : 2;
