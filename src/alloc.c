@@ -7649,6 +7649,12 @@ than 2**N, where N is this variable's value.  N should be nonnegative.  */);
   defsubr (&Ssuspicious_object);
 }
 
+#ifdef HAVE_X_WINDOWS
+enum defined_HAVE_X_WINDOWS { defined_HAVE_X_WINDOWS = true };
+#else
+enum defined_HAVE_X_WINDOWS { defined_HAVE_X_WINDOWS = false };
+#endif
+
 /* When compiled with GCC, GDB might say "No enum type named
    pvec_type" if we don't have at least one symbol with that type, and
    then xbacktrace could fail.  Similarly for the other enums and
@@ -7667,5 +7673,6 @@ union
   enum MAX_ALLOCA MAX_ALLOCA;
   enum More_Lisp_Bits More_Lisp_Bits;
   enum pvec_type pvec_type;
+  enum defined_HAVE_X_WINDOWS defined_HAVE_X_WINDOWS;
 } const EXTERNALLY_VISIBLE gdb_make_enums_visible = {0};
 #endif	/* __GNUC__ */
