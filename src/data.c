@@ -886,50 +886,6 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
   return variable;
 }
 
-/* Lisp functions for creating and removing buffer-local variables.  */
-
-DEFUN ("variable-binding-locus", Fvariable_binding_locus, Svariable_binding_locus,
-       1, 1, 0,
-       doc: /* Return a value indicating where VARIABLE's current binding comes from.
-If the current binding is buffer-local, the value is the current buffer.
-If the current binding is global (the default), the value is nil.  */)
-  (register Lisp_Object variable)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (variable);
-  sym = XSYMBOL (variable);
-
-  /* Make sure the current binding is actually swapped in.  */
-  find_symbol_value (variable);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Qnil;
-    case SYMBOL_FORWARDED:
-      {
-	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-	if (KBOARD_OBJFWDP (valcontents))
-	  return Fframe_terminal (selected_frame);
-	else if (!BUFFER_OBJFWDP (valcontents))
-	  return Qnil;
-      }
-      FALLTHROUGH;
-    case SYMBOL_LOCALIZED:
-      /* For a local variable, record both the symbol and which
-	 buffer's or frame's value we are saving.  */
-      if (!NILP (Flocal_variable_p (variable, Qnil)))
-	return Fcurrent_buffer ();
-      else if (sym->u.s.redirect == SYMBOL_LOCALIZED
-	       && blv_found (SYMBOL_BLV (sym)))
-	return SYMBOL_BLV (sym)->where;
-      else
-	return Qnil;
-    default: emacs_abort ();
-    }
-}
 
 
 void
@@ -1633,7 +1589,6 @@ syms_of_data (void)
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);
   defsubr (&Skill_local_variable);
-  defsubr (&Svariable_binding_locus);
 #if 0                           /* XXX Remove this. --lorentey */
   defsubr (&Sterminal_local_value);
   defsubr (&Sset_terminal_local_value);
