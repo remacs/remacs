@@ -38,7 +38,7 @@ trait StringExt {
 impl StringExt for String {
     fn to_bstring(&self) -> LispObject {
         let c_str = CString::new(self.as_str()).unwrap();
-        unsafe { build_string(c_str.as_ptr() as *const i8) }
+        unsafe { build_string(c_str.as_ptr() as *const libc::c_char) }
     }
     fn to_cstring(&self) -> *const c_char {
         let c_str = CString::new(self.as_str()).unwrap();

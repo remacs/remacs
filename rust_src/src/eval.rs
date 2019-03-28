@@ -639,7 +639,10 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(Qerror, (build_string(msg.as_ptr() as *const i8), arg));
+    xsignal!(
+        Qerror,
+        (build_string(msg.as_ptr() as *const libc::c_char), arg)
+    );
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
