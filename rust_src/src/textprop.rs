@@ -4,7 +4,10 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 
-use crate::{lisp::LispObject, remacs_sys::get_char_property_and_overlay, remacs_sys::EmacsInt};
+use crate::{
+    lisp::LispObject, remacs_sys::get_char_property_and_overlay, remacs_sys::textget,
+    remacs_sys::EmacsInt, remacs_sys::Ftext_properties_at,
+};
 
 /// Return the value of POSITION's property PROP, in OBJECT.
 /// Both overlay properties and text properties are checked.
@@ -17,6 +20,15 @@ use crate::{lisp::LispObject, remacs_sys::get_char_property_and_overlay, remacs_
 #[lisp_fn(min = "2")]
 pub fn get_char_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
     unsafe { get_char_property_and_overlay(position.into(), prop, object, ptr::null_mut()) }
+}
+
+/// Return the value of POSITION's property PROP, in OBJECT.
+/// OBJECT should be a buffer or a string; if omitted or nil, it defaults
+/// to the current buffer.
+/// If POSITION is at the end of OBJECT, the value is nil.
+#[lisp_fn(min = "2")]
+pub fn get_text_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
+    unsafe { textget(Ftext_properties_at(position.into(), object), prop) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/textprop_exports.rs"));
