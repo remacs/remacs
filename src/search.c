@@ -3059,18 +3059,14 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 static void
 save_search_regs (void)
 {
-  if (!search_regs_saved)
+  if (saved_search_regs.num_regs == 0)
     {
-      saved_search_regs.num_regs = search_regs.num_regs;
-      saved_search_regs.start = search_regs.start;
-      saved_search_regs.end = search_regs.end;
+      saved_search_regs = search_regs;
       saved_last_thing_searched = last_thing_searched;
       last_thing_searched = Qnil;
       search_regs.num_regs = 0;
       search_regs.start = 0;
       search_regs.end = 0;
-
-      search_regs_saved = 1;
     }
 }
 
@@ -3078,19 +3074,17 @@ save_search_regs (void)
 void
 restore_search_regs (void)
 {
-  if (search_regs_saved)
+  if (saved_search_regs.num_regs != 0)
     {
       if (search_regs.num_regs > 0)
 	{
 	  xfree (search_regs.start);
 	  xfree (search_regs.end);
 	}
-      search_regs.num_regs = saved_search_regs.num_regs;
-      search_regs.start = saved_search_regs.start;
-      search_regs.end = saved_search_regs.end;
+      search_regs = saved_search_regs;
       last_thing_searched = saved_last_thing_searched;
       saved_last_thing_searched = Qnil;
-      search_regs_saved = 0;
+      saved_search_regs.num_regs = 0;
     }
 }
 

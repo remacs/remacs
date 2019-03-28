@@ -131,11 +131,6 @@ struct thread_state
   struct re_registers m_search_regs;
 #define search_regs (current_thread->m_search_regs)
 
-  /* If non-zero the match data have been saved in saved_search_regs
-     during the execution of a sentinel or filter. */
-  bool m_search_regs_saved;
-#define search_regs_saved (current_thread->m_search_regs_saved)
-
   struct re_registers m_saved_search_regs;
 #define saved_search_regs (current_thread->m_saved_search_regs)
 
