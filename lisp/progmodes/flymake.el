@@ -604,10 +604,11 @@ associated `flymake-category' return DEFAULT."
 
 (defun flymake--highlight-line (diagnostic)
   "Highlight buffer with info in DIGNOSTIC."
-  (when-let* ((type (flymake--diag-type diagnostic))
-              (ov (make-overlay
-                   (flymake--diag-beg diagnostic)
-                   (flymake--diag-end diagnostic))))
+  (let ((type (or (flymake--diag-type diagnostic)
+                  :error))
+        (ov (make-overlay
+             (flymake--diag-beg diagnostic)
+             (flymake--diag-end diagnostic))))
     ;; First set `category' in the overlay
     ;;
     (overlay-put ov 'category
