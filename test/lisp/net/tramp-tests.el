@@ -2013,9 +2013,9 @@ properly.  BODY shall not contain a timeout."
     (expand-file-name "/method:host:/:/~/path/./file")
     "/method:host:/:/~/path/file")))
 
-;; The following test is inspired by Bug#26911.  It is rather a bug in
-;; `expand-file-name', and it fails for all Emacs versions.  Test
-;; added for later, when it is fixed.
+;; The following test is inspired by Bug#26911 and Bug#34834.  They
+;; are rather bugs in `expand-file-name', and it fails for all Emacs
+;; versions.  Test added for later, when they are fixed.
 (ert-deftest tramp-test05-expand-file-name-relative ()
   "Check `expand-file-name'."
   ;; Mark as failed until bug has been fixed.
