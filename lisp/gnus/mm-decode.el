@@ -190,45 +190,45 @@ before the external MIME handler is invoked."
   :group 'mime-display)
 
 (defcustom mm-inline-media-tests
-  '(("image/p?jpeg"
+  `(("image/p?jpeg"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'jpeg handle)))
     ("image/png"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'png handle)))
     ("image/gif"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'gif handle)))
     ("image/tiff"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'tiff handle)))
     ("image/xbm"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'xbm handle)))
     ("image/x-xbitmap"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'xbm handle)))
     ("image/xpm"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'xpm handle)))
     ("image/x-xpixmap"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'xpm handle)))
     ("image/bmp"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'bmp handle)))
     ("image/x-portable-bitmap"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (mm-valid-and-fit-image-p 'pbm handle)))
     ("text/plain" mm-inline-text identity)
     ("text/enriched" mm-inline-text identity)
@@ -246,13 +246,14 @@ before the external MIME handler is invoked."
     ("text/x-org" mm-display-org-inline identity)
     ("text/html"
      mm-inline-text-html
-     (lambda (handle)
+     ,(lambda (_handle)
        mm-text-html-renderer))
     ("text/x-vcard"
      mm-inline-text-vcard
-     (lambda (handle)
+     ,(lambda (_handle)
        (or (featurep 'vcard)
 	   (locate-library "vcard"))))
+    ("text/calendar" gnus-icalendar-mm-inline identity)
     ("message/delivery-status" mm-inline-text identity)
     ("message/rfc822" mm-inline-message identity)
     ("message/partial" mm-inline-partial identity)
@@ -261,13 +262,13 @@ before the external MIME handler is invoked."
     ("application/x-.?tar\\(-.*\\)?" mm-archive-dissect-and-inline identity)
     ("application/zip" mm-archive-dissect-and-inline identity)
     ("audio/wav" mm-inline-audio
-     (lambda (handle)
-       (and (or (featurep 'nas-sound) (featurep 'native-sound))
+     ,(lambda (_handle)
+       (and (fboundp 'device-sound-enabled-p)
 	    (device-sound-enabled-p))))
     ("audio/au"
      mm-inline-audio
-     (lambda (handle)
-       (and (or (featurep 'nas-sound) (featurep 'native-sound))
+     ,(lambda (_handle)
+       (and (fboundp 'device-sound-enabled-p)
 	    (device-sound-enabled-p))))
     ("application/pgp-signature" ignore identity)
     ("application/x-pkcs7-signature" ignore identity)
@@ -279,7 +280,7 @@ before the external MIME handler is invoked."
     ("multipart/related" ignore identity)
     ("image/.*"
      mm-inline-image
-     (lambda (handle)
+     ,(lambda (handle)
        (and (mm-valid-image-format-p 'imagemagick)
 	    (mm-with-unibyte-buffer
 	      (mm-insert-part handle)
@@ -331,6 +332,7 @@ a list of regexps."
 
 (defcustom mm-automatic-display
   '("text/plain" "text/enriched" "text/richtext" "text/html" "text/x-verbatim"
+    "text/calendar"
     "text/x-vcard" "image/.*" "message/delivery-status" "multipart/.*"
     "message/rfc822" "text/x-patch" "text/dns" "application/pgp-signature"
     "application/emacs-lisp" "application/x-emacs-lisp"

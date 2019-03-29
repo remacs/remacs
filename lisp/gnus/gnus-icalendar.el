@@ -1,4 +1,4 @@
-;;; gnus-icalendar.el --- reply to iCalendar meeting requests
+;;; gnus-icalendar.el --- reply to iCalendar meeting requests  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
@@ -244,7 +244,7 @@
 				(map-property ical-property))
 			       args)))))
       (mapc #'accumulate-args prop-map)
-      (apply 'make-instance event-class args))))
+      (apply #'make-instance event-class args))))
 
 (defun gnus-icalendar-event-from-buffer (buf &optional attendee-name-or-email)
   "Parse RFC5545 iCalendar in buffer BUF and return an event object.
@@ -301,7 +301,8 @@ status will be retrieved from the first matching attendee record."
 		     ((string= key "DTSTAMP") (update-dtstamp))
 		     ((member key '("ORGANIZER" "DTSTART" "DTEND"
 				    "LOCATION" "DURATION" "SEQUENCE"
-				    "RECURRENCE-ID" "UID")) line)
+				    "RECURRENCE-ID" "UID"))
+                      line)
 		     (t nil))))
 	      (when new-line
 		(push new-line reply-event-lines))))))
@@ -352,9 +353,9 @@ on the IDENTITIES list."
 
 ;;;
 ;;; gnus-icalendar-org
-;;;
-;;; TODO: this is an optional feature, and it's only available with org-mode
-;;; 7+, so will need to properly handle emacsen with no/outdated org-mode
+;;
+;; TODO: this is an optional feature, and it's only available with org-mode
+;; 7+, so will need to properly handle emacsen with no/outdated org-mode
 
 (require 'org)
 (require 'org-capture)
@@ -367,23 +368,19 @@ on the IDENTITIES list."
 
 (defcustom gnus-icalendar-org-capture-file nil
   "Target Org file for storing captured calendar events."
-  :type '(choice (const nil) file)
-  :group 'gnus-icalendar-org)
+  :type '(choice (const nil) file))
 
 (defcustom gnus-icalendar-org-capture-headline nil
   "Target outline in `gnus-icalendar-org-capture-file' for storing captured events."
-  :type '(repeat string)
-  :group 'gnus-icalendar-org)
+  :type '(repeat string))
 
 (defcustom gnus-icalendar-org-template-name "used by gnus-icalendar-org"
   "Org-mode template name."
-  :type '(string)
-  :group 'gnus-icalendar-org)
+  :type '(string))
 
 (defcustom gnus-icalendar-org-template-key "#"
   "Org-mode template hotkey."
-  :type '(string)
-  :group 'gnus-icalendar-org)
+  :type '(string))
 
 (defvar gnus-icalendar-org-enabled-p nil)
 
@@ -662,7 +659,7 @@ is searched."
       (gnus-icalendar--update-org-event event reply-status)
     (gnus-icalendar:org-event-save event reply-status)))
 
-(cl-defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-cancel) reply-status)
+(cl-defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-cancel) _reply-status)
   (when (gnus-icalendar-find-org-event-file event)
     (gnus-icalendar--cancel-org-event event)))
 
@@ -685,8 +682,7 @@ is searched."
 
 (defcustom gnus-icalendar-reply-bufname "*CAL*"
   "Buffer used for building iCalendar invitation reply."
-  :type '(string)
-  :group 'gnus-icalendar)
+  :type '(string))
 
 (defcustom gnus-icalendar-additional-identities nil
   "We need to know your identity to make replies to calendar requests work.
@@ -702,17 +698,13 @@ Your identity is guessed automatically from the variables
 If you need even more aliases you can define them here.  It really
 only makes sense to define names or email addresses."
 
-  :type '(repeat string)
-  :group 'gnus-icalendar)
+  :type '(repeat string))
 
-(make-variable-buffer-local
- (defvar gnus-icalendar-reply-status nil))
+(defvar-local gnus-icalendar-reply-status nil)
 
-(make-variable-buffer-local
- (defvar gnus-icalendar-event nil))
+(defvar-local gnus-icalendar-event nil)
 
-(make-variable-buffer-local
- (defvar gnus-icalendar-handle nil))
+(defvar-local gnus-icalendar-handle nil)
 
 (defun gnus-icalendar-identities ()
   "Return list of regexp-quoted names and email addresses belonging to the user.
@@ -738,7 +730,8 @@ These will be used to retrieve the RSVP information from ical events."
 			      (cadr x))))
 
     (with-slots (organizer summary description location recur uid
-                           method rsvp participation-type) event
+                           method rsvp participation-type)
+        event
       (let ((headers `(("Summary" ,summary)
 		       ("Location" ,(or location ""))
 		       ("Time" ,(gnus-icalendar-event:org-timestamp event))
@@ -844,7 +837,7 @@ These will be used to retrieve the RSVP information from ical events."
       ("Tentative" gnus-icalendar-reply (,handle tentative ,event))
       ("Decline" gnus-icalendar-reply (,handle declined ,event)))))
 
-(cl-defmethod gnus-icalendar-event:inline-reply-buttons ((event gnus-icalendar-event-reply) handle)
+(cl-defmethod gnus-icalendar-event:inline-reply-buttons ((_event gnus-icalendar-event-reply) _handle)
   "No buttons for REPLY events."
   nil)
 
@@ -853,7 +846,7 @@ These will be used to retrieve the RSVP information from ical events."
         (gnus-icalendar--get-org-event-reply-status event))
       "Not replied yet"))
 
-(cl-defmethod gnus-icalendar-event:inline-reply-status ((event gnus-icalendar-event-reply))
+(cl-defmethod gnus-icalendar-event:inline-reply-status ((_event gnus-icalendar-event-reply))
   "No reply status for REPLY events."
   nil)
 
@@ -880,7 +873,7 @@ These will be used to retrieve the RSVP information from ical events."
                (when org-entry-exists-p
                  `("Show Org Entry" gnus-icalendar--show-org-event ,event))))))
 
-
+;;;###autoload
 (defun gnus-icalendar-mm-inline (handle)
   (let ((event (gnus-icalendar-event-from-handle handle (gnus-icalendar-identities))))
 
@@ -892,7 +885,7 @@ These will be used to retrieve the RSVP information from ical events."
 	    (buttons)
 	    (when buttons
 	      (mapc (lambda (x)
-		      (apply 'gnus-icalendar-insert-button x)
+		      (apply #'gnus-icalendar-insert-button x)
 		      (insert "    "))
 		    buttons)
 	      (insert "\n\n"))))
@@ -973,6 +966,9 @@ These will be used to retrieve the RSVP information from ical events."
 (defvar gnus-mime-action-alist)         ; gnus-art
 
 (defun gnus-icalendar-setup ()
+  ;; FIXME: Get rid of this!
+  ;; The three add-to-list are now redundant (good), but I think the rest
+  ;; is still not automatically setup.
   (add-to-list 'mm-inlined-types "text/calendar")
   (add-to-list 'mm-automatic-display "text/calendar")
   (add-to-list 'mm-inline-media-tests '("text/calendar" gnus-icalendar-mm-inline identity))
@@ -987,7 +983,7 @@ These will be used to retrieve the RSVP information from ical events."
 
   (require 'gnus-art)
   (add-to-list 'gnus-mime-action-alist
-               (cons "save calendar event" 'gnus-icalendar-save-event)
+               (cons "save calendar event" #'gnus-icalendar-save-event)
                t))
 
 (provide 'gnus-icalendar)
