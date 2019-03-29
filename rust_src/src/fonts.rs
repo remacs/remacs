@@ -346,10 +346,9 @@ pub fn list_fonts(
     .force_vector();
 
     if n == 0 || n >= vec.len() {
-        fns::append(&mut [list, vec.into(), Qnil])
+        fns::append(&mut [vec.into(), Qnil])
     } else {
         (0..=n)
-            .into_iter()
             .rev()
             .fold(Qnil, |list, n| (vec.get(n), list).into())
     }
