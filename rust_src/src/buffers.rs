@@ -37,8 +37,9 @@ use crate::{
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay, nconc2,
-        notify_variable_watchers, per_buffer_default, set_buffer_internal_1, specbind,
-        unblock_input, unchain_both, unchain_marker, update_mode_lines, windows_or_buffers_changed,
+        notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
+        specbind, unblock_input, unchain_both, unchain_marker, update_mode_lines,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
