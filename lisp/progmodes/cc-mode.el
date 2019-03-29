@@ -1366,7 +1366,7 @@ Note that the style variables are always made local to the buffer."
 	(unless (and (c-major-mode-is 'c++-mode)
 		     (c-maybe-re-mark-raw-string))
 	  (if (c-unescaped-nls-in-string-p (1- (point)))
-	      (looking-at "\\(\\\\\\(.\\|\n|\\\r\\)\\|[^\"]\\)*")
+	      (looking-at "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\"]\\)*")
 	    (looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
 	  (cond
 	   ((memq (char-after (match-end 0)) '(?\n ?\r))
