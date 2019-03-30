@@ -107,7 +107,6 @@
   (should (= 1.0 (window-normal-size w2 't)))))
 
 (ert-deftest window-pixel-top ()
-  (skip-unless (display-graphic-p))
   (let ((w1 (selected-window))
         (w2 (split-window-vertically)))
     (should (= (window-pixel-top) (window-pixel-top w1)))
