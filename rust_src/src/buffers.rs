@@ -33,11 +33,13 @@ use crate::{
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::{
-        allocate_misc, bset_update_mode_line, buffer_fundamental_string, buffer_local_flags,
-        buffer_local_value, buffer_window_count, concat2, del_range, delete_all_overlays, globals,
-        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
+        alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
+        buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        lookup_char_property, make_timespec, marker_position, modify_overlay, nconc2,
         notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
-        specbind, unchain_both, unchain_marker, update_mode_lines, windows_or_buffers_changed,
+        specbind, unblock_input, unchain_both, unchain_marker, update_mode_lines,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
@@ -49,7 +51,7 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fmake_marker, Fnconc, Fnreverse},
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
@@ -109,6 +111,90 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
+    pub fn create_new(name: LispStringRef) -> LispBufferRef {
+        if name.is_empty() {
+            error!("Empty string for buffer name is not allowed");
+        }
+
+        let mut b = unsafe { ExternalPtr::new(allocate_buffer()) };
+        // An ordinary b uses its own b_text
+        b.text = &mut b.own_text;
+        b.base_buffer = ptr::null_mut();
+        // No one shares the text with us.
+        b.indirections = 0;
+        // No one shows us now.
+        b.window_count = 0;
+
+        let gap_size = 20;
+        let mut b_text = unsafe { &mut *b.text };
+        b_text.gap_size = gap_size;
+        unsafe {
+            block_input();
+            alloc_buffer_text(b.as_mut(), gap_size + 1);
+            unblock_input();
+            if b.beg_addr().is_null() {
+                buffer_memory_full(gap_size + 1);
+            }
+        }
+
+        b.set_pt_both(b.beg(), b.beg_byte());
+        b.set_begv_both(b.beg(), b.beg_byte());
+        b.set_zv_both(b.beg(), b.beg_byte());
+        b_text.gpt = b.beg();
+        b_text.gpt_byte = b.beg_byte();
+        b_text.z = b.beg();
+        b_text.z_byte = b.beg_byte();
+        b_text.modiff = 1;
+        b_text.chars_modiff = 1;
+        b_text.overlay_modiff = 1;
+        b_text.save_modiff = 1;
+        b_text.compact = 1;
+        b_text.intervals = ptr::null_mut();
+        b_text.unchanged_modified = 1;
+        b_text.overlay_unchanged_modified = 1;
+        b_text.end_unchanged = 0;
+        b_text.beg_unchanged = 0;
+        unsafe {
+            // Put an anchor '\0'.
+            *b.z_addr() = 0;
+            *b.gap_start_addr() = 0;
+        }
+        b_text.set_inhibit_shrinking(false);
+        b_text.set_redisplay(false);
+
+        b.newline_cache = ptr::null_mut();
+        b.width_run_cache = ptr::null_mut();
+        b.bidi_paragraph_cache = ptr::null_mut();
+        b.width_table_ = Qnil;
+        b.set_prevent_redisplay_optimizations_p(true);
+
+        // An ordinary buffer normally doesn't need markers to handle BEGV and ZV.
+        b.pt_marker_ = Qnil;
+        b.begv_marker_ = Qnil;
+        b.zv_marker_ = Qnil;
+
+        let mut name: LispStringRef = unsafe { Fcopy_sequence(name.into()) }.force_string();
+        name.set_intervals(ptr::null_mut());
+        b.name_ = name.into();
+        b.undo_list_ = if name.byte_at(0) != b' ' { Qnil } else { Qt };
+
+        b.reset();
+        b.reset_local_variables(true);
+
+        b.mark_ = unsafe { Fmake_marker() };
+        b_text.markers = ptr::null_mut();
+
+        // Add the buffer to the alist of live buffers
+        let buffer: LispObject = b.into();
+        unsafe {
+            Vbuffer_alist = nconc2(Vbuffer_alist, list!((name, buffer)));
+            if Vrun_hooks.is_not_nil() {
+                call!(Vrun_hooks, Qbuffer_list_update_hook);
+            }
+        }
+
+        buffer.into()
+    }
     pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
@@ -652,12 +738,12 @@ impl LispBufferRef {
         *pos = value;
     }
 
-    // Reinitialize everything about a buffer except its name and contents
-    // and local variables.
-    // If called on an already-initialized buffer, the list of overlays
-    // should be deleted before calling this function, otherwise we end up
-    // with overlays that claim to belong to the buffer but the buffer
-    // claims it doesn't belong to it.
+    /// Reinitialize everything about a buffer except its name and contents
+    /// and local variables.
+    /// If called on an already-initialized buffer, the list of overlays
+    /// should be deleted before calling this function, otherwise we end up
+    /// with overlays that claim to belong to the buffer but the buffer
+    /// claims it doesn't belong to it.
     pub fn reset(&mut self) {
         self.filename_ = Qnil;
         self.file_truename_ = Qnil;
@@ -1021,6 +1107,15 @@ impl From<LispBufferOrName> for LispBufferRef {
     }
 }
 
+impl From<LispBufferOrName> for LispStringRef {
+    fn from(v: LispBufferOrName) -> Self {
+        match v {
+            LispBufferOrName::Name(s) => s,
+            LispBufferOrName::Buffer(b) => b.name().into(),
+        }
+    }
+}
+
 pub enum LispBufferOrCurrent {
     Buffer(LispBufferRef),
     Current,
@@ -1110,6 +1205,26 @@ pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
 #[lisp_fn]
 pub fn get_buffer(buffer_or_name: LispBufferOrName) -> Option<LispBufferRef> {
     buffer_or_name.into()
+}
+
+/// Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
+/// If BUFFER-OR-NAME is a string and a live buffer with that name exists,
+/// return that buffer.  If no such buffer exists, create a new buffer with
+/// that name and return it.  If BUFFER-OR-NAME starts with a space, the new
+/// buffer does not keep undo information.
+///
+/// If BUFFER-OR-NAME is a buffer instead of a string, return it as given,
+/// even if it is dead.  The return value is never nil.
+#[lisp_fn]
+pub fn get_buffer_create(buffer_or_name: LispBufferOrName) -> LispBufferRef {
+    if let Some(buffer) = get_buffer(buffer_or_name) {
+        return buffer;
+    }
+
+    // At this point buffer_or_name is guaranteed to be a string, otherwise
+    // get_buffer would have returned it.
+    let name: LispStringRef = buffer_or_name.into();
+    LispBufferRef::create_new(name)
 }
 
 /// Return the current buffer as a Lisp object.

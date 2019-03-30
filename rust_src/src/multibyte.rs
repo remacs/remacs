@@ -43,7 +43,9 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     obarray::LispObarrayRef,
     remacs_sys::Qstringp,
-    remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
+    remacs_sys::{
+        char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval, Lisp_String, Lisp_Type,
+    },
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
     symbols::LispSymbolRef,
 };
@@ -122,6 +124,11 @@ impl LispStringRef {
     pub fn const_sdata_ptr(self) -> *const c_char {
         let s = unsafe { self.u.s };
         s.data as *const c_char
+    }
+
+    pub fn set_intervals(&mut self, interval: *mut Lisp_Interval) {
+        let mut s = unsafe { self.u.s };
+        s.intervals = interval;
     }
 
     pub fn as_slice(&self) -> &[u8] {
