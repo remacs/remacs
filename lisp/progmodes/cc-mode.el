@@ -1212,12 +1212,15 @@ Note that the style variables are always made local to the buffer."
 	       (while
 		   (and
 		    (c-syntactic-re-search-forward
-		     "\"\\|\\s|" (point-max) t t)
+		     (if c-single-quotes-quote-strings
+			 "[\"']\\|\\s|"
+		       "\"\\|\\s|")
+		     (point-max) t t)
 		    (progn
 		      (c-clear-char-property (1- (point)) 'syntax-table)
 		      (c-truncate-semi-nonlit-pos-cache (1- (point)))
-		      (not (eq (char-before) ?\")))))
-	       (eq (char-before) ?\"))
+		      (not (memq (char-before) c-string-delims)))))
+	       (memq (char-before) c-string-delims))
 	     (progn
 	       (c-pps-to-string-delim (point-max))
 	       (< (point) (point-max))))))
@@ -1229,7 +1232,9 @@ Note that the style variables are always made local to the buffer."
 		     (eq beg-literal-type 'string))))
       ;; Deal with deletion of backslashes before "s.
       (goto-char end)
-      (if (and (looking-at "\\\\*\"")
+      (if (and (looking-at (if c-single-quotes-quote-strings
+			       "\\\\*[\"']"
+			     "\\\\*\""))
 	       (eq (logand (skip-chars-backward "\\\\" beg) 1) 1))
 	  (setq c-bc-changed-stringiness (not c-bc-changed-stringiness)))
       (if (eq beg-literal-type 'string)
@@ -1250,12 +1255,12 @@ Note that the style variables are always made local to the buffer."
 		(forward-char)
 		(backward-sexp)
 		(c-clear-char-property eoll-1 'syntax-table)
-		(c-truncate-semi-nonlit-pos-cache eoll-1)
-		(c-clear-char-property (point) 'syntax-table))
+		(c-clear-char-property (point) 'syntax-table)
+		(c-truncate-semi-nonlit-pos-cache (point)))
 	    ;; Opening " at EOB.
 	    (c-clear-char-property (1- (point)) 'syntax-table))
 	(when (and (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
-		   (eq (char-after) ?\")) ; Ignore an unterminated raw string's (.
+		   (memq (char-after) c-string-delims)) ; Ignore an unterminated raw string's (.
 	  ;; Opening " on last line of text (without EOL).
 	  (c-clear-char-property (point) 'syntax-table)
 	  (c-truncate-semi-nonlit-pos-cache (point)))))
@@ -1264,7 +1269,7 @@ Note that the style variables are always made local to the buffer."
 	(when
 	    (and
 	     (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
-	     (eq (char-after) ?\"))
+	     (memq (char-after) c-string-delims))
 	  (c-clear-char-property (point) 'syntax-table)
 	  (c-truncate-semi-nonlit-pos-cache (point)))))
 
@@ -1276,7 +1281,7 @@ Note that the style variables are always made local to the buffer."
 	(c-truncate-semi-nonlit-pos-cache (1- (cdr end-limits))))
 
       (when (and (eq beg-literal-type 'string)
-		 (eq (char-after (car beg-limits)) ?\"))
+		 (memq (char-after (car beg-limits)) c-string-delims))
 	(setq c-new-BEG (min c-new-BEG (car beg-limits)))
 	(c-clear-char-property (car beg-limits) 'syntax-table)
 	(c-truncate-semi-nonlit-pos-cache (car beg-limits))))))
@@ -1492,7 +1497,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; This function is called exclusively as a before-change function via the
   ;; variable `c-get-state-before-change-functions'.
-  (c-save-buffer-state ()
+  (c-save-buffer-state (case-fold-search)
     (goto-char c-new-BEG)
     ;; We need to scan for 's from the BO (logical) line.
     (beginning-of-line)
@@ -1508,13 +1513,13 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
        ((c-quoted-number-head-before-point)
 	(if (>= (point) c-new-BEG)
 	    (setq c-new-BEG (match-beginning 0))))
-       ((looking-at "\\([^'\\]\\|\\\\.\\)'")
+       ((looking-at
+	 "\\([^'\\]\\|\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\\)'")
 	(goto-char (match-end 0))
 	(if (> (match-end 0) c-new-BEG)
 	    (setq c-new-BEG (1- (match-beginning 0)))))
-       ((or (>= (point) (1- c-new-BEG))
-	    (and (eq (point) (- c-new-BEG 2))
-		 (eq (char-after) ?\\)))
+       ((save-excursion
+	  (not (search-forward "'" c-new-BEG t)))
 	(setq c-new-BEG (1- (point))))
        (t nil)))
 
@@ -1534,19 +1539,26 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	(goto-char (match-end 0))
 	(if (> (match-end 0) c-new-END)
 	    (setq c-new-END (match-end 0))))
-       ((looking-at "\\([^'\\]\\|\\\\.\\)'")
+       ((looking-at
+	 "\\([^'\\]\\|\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\\)'")
 	(goto-char (match-end 0))
 	(if (> (match-end 0) c-new-END)
 	    (setq c-new-END (match-end 0))))
+       ((equal (c-get-char-property (1- (point)) 'syntax-table) '(1))
+	(when (c-search-forward-char-property-with-value-on-char
+	       'syntax-table '(1) ?\' (c-point 'eoll))
+	  (setq c-new-END (max (point) c-new-END))))
        (t nil)))
     ;; Having reached c-new-END, handle any 's after it whose context may be
-    ;; changed by the current buffer change.
+    ;; changed by the current buffer change.  The idea is to catch
+    ;; monstrosities like ',',',',',' changing "polarity".
     (goto-char c-new-END)
     (cond
      ((c-quoted-number-tail-after-point)
       (setq c-new-END (match-end 0)))
      ((looking-at
-       "\\(\\\\.\\|.\\)?\\('\\([^'\\]\\|\\\\.\\)\\)*'")
+       "\\(\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\\|.\\)?\
+\\('\\([^'\\]\\|\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\\)\\)*'")
       (setq c-new-END (match-end 0))))
 
     ;; Remove the '(1) syntax-table property from any "'"s within (c-new-BEG
@@ -1575,7 +1587,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; This function is called exclusively as an after-change function via the
   ;; variable `c-before-font-lock-functions'.
-  (c-save-buffer-state (num-beg num-end)
+  (c-save-buffer-state (num-beg num-end case-fold-search)
     ;; Apply the needed syntax-table and c-digit-separator text properties to
     ;; quotes.
     (save-restriction
@@ -1597,7 +1609,9 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	       (c-put-char-properties-on-char num-beg num-end
 					      'c-digit-separator t ?')
 	       (goto-char num-end))
-	      ((looking-at "\\([^\\']\\|\\\\.\\)'") ; balanced quoted expression.
+	      ((looking-at
+		"\\([^\\']\\|\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\
+\\)'") ; balanced quoted expression.
 	       (goto-char (match-end 0)))
 	      (t
 	       (c-invalidate-state-cache (1- (point)))

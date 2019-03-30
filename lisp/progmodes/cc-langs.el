@@ -599,13 +599,21 @@ EOL terminated statements."
 (c-lang-defvar c-has-bitfields (c-lang-const c-has-bitfields))
 
 (c-lang-defconst c-single-quotes-quote-strings
-  "Whether the language uses single quotes for multi-char strings."
+  "Whether the language uses single quotes for multi-char strings.
+
+Note that to set up a language to use this, additionally:
+\(i) the syntax of \"'\" must be \"string quote\" (7);
+\(ii) the language's value of `c-has-quoted-numbers' must be nil;
+\(iii) the language's value of `c-get-state-before-change-functions' may not
+  contain `c-parse-quotes-before-change';
+\(iv) the language's value of `c-before-font-lock-functions' may not contain
+  `c-parse-quotes-after-change'."
   t nil)
 (c-lang-defvar c-single-quotes-quote-strings
 	       (c-lang-const c-single-quotes-quote-strings))
 
 (c-lang-defconst c-string-delims
-  "A list of characters which can delimit arbitrary length strings"
+;; A list of characters which can delimit arbitrary length strings.
   t (if (c-lang-const c-single-quotes-quote-strings)
 	'(?\" ?\')
       '(?\")))
