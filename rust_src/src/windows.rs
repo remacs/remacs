@@ -1861,9 +1861,9 @@ pub fn window_pixel_left(window: LispWindowValidOrSelected) -> i32 {
 /// Return top pixel edge of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
-pub fn window_pixel_top(window: LispWindowValidOrSelected) -> EmacsInt {
+pub fn window_pixel_top(window: LispWindowValidOrSelected) -> i32 {
     let window: LispWindowRef = window.into();
-    window.pixel_top.into()
+    window.pixel_top
 }
 
 /// Return left column of window WINDOW.
