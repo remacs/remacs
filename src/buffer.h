@@ -855,6 +855,13 @@ struct buffer
   /* Non-zero whenever the narrowing is changed in this buffer.  */
   bool_bf clip_changed : 1;
 
+  /* Non-zero for internally used temporary buffers that don't need to
+     run hooks kill-buffer-hook, buffer-list-update-hook, and
+     kill-buffer-query-functions.  This is used in coding.c to avoid
+     slowing down en/decoding when there are a lot of these hooks
+     defined.  */
+  bool_bf inhibit_buffer_hooks : 1;
+
   /* List of overlays that end at or before the current center,
      in order of end-position.  */
   struct Lisp_Overlay *overlays_before;
