@@ -1713,10 +1713,12 @@ cleaning up all windows currently displaying the buffer to be killed. */)
     /* First run the query functions; if any query is answered no,
        don't kill the buffer.  */
     if (!b->inhibit_buffer_hooks)
-      tem = CALLN (Frun_hook_with_args_until_failure,
-		   Qkill_buffer_query_functions);
-    if (NILP (tem))
-      return unbind_to (count, Qnil);
+      {
+	tem = CALLN (Frun_hook_with_args_until_failure,
+		     Qkill_buffer_query_functions);
+	if (NILP (tem))
+	  return unbind_to (count, Qnil);
+      }
 
     /* Query if the buffer is still modified.  */
     if (INTERACTIVE && !NILP (BVAR (b, filename))
