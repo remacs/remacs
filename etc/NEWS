@@ -1371,6 +1371,15 @@ ending character were silently omitted.
 For example, '(rx (any "@z-a" (?9 . ?0)))' would match '@' only.
 Now, such rx expressions generate an error.
 
++++
+** 'text-mode' no longer sets the value of 'indent-line-function'.
+The global value of 'indent-line-function', which defaults to
+'indent-relative', will no longer be reset locally when turning on
+'text-mode'.
+
+To get back the old behavior, add a function to 'text-mode-hook' which
+performs (setq-local indent-line-function #'indent-relative).
+
 
 * Lisp Changes in Emacs 27.1
 

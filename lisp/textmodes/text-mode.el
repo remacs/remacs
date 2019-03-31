@@ -105,8 +105,7 @@ You can thus get the full benefit of adaptive filling
 \\{text-mode-map}
 Turning on Text mode runs the normal hook `text-mode-hook'."
   (setq-local text-mode-variant t)
-  (setq-local require-final-newline mode-require-final-newline)
-  (setq-local indent-line-function #'indent-relative))
+  (setq-local require-final-newline mode-require-final-newline))
 
 (define-derived-mode paragraph-indent-text-mode text-mode "Parindent"
   "Major mode for editing text, with leading spaces starting a paragraph.
