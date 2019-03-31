@@ -663,7 +663,7 @@ nn*-request-list should have been called before calling this function."
 	    (narrow-to-region (point) (point-at-eol))
 	    (setq group (read buffer))
 	    (unless (stringp group)
-	      (setq group (symbol-name group)))
+	      (setq group (encode-coding-string (symbol-name group) 'latin-1)))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
 		(push (list group (cons min max))
