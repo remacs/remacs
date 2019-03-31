@@ -44,7 +44,7 @@ ns_check_file = @ns_appdir@/@ns_check_file@
 
 .PHONY: all
 
-all: ${ns_appdir} ${ns_appbindir}/Emacs ${ns_appbindir}/emacs.pdmp
+all: ${ns_appdir} ${ns_appbindir}/Emacs ${ns_appbindir}/Emacs.pdmp
 
 ${ns_check_file} ${ns_appdir}: ${srcdir}/${ns_appsrc} ${ns_appsrc}
 	rm -rf ${ns_appdir}
@@ -63,7 +63,7 @@ ${ns_appbindir}/Emacs: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT}
 	${MKDIR_P} ${ns_appbindir}
 	cp -f ../src/emacs${EXEEXT} $@
 
-${ns_appbindir}/emacs.pdmp: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT}.pdmp
+${ns_appbindir}/Emacs.pdmp: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT}.pdmp
 	${MKDIR_P} ${ns_appbindir}
 	cp -f ../src/emacs${EXEEXT}.pdmp $@
 
@@ -85,7 +85,7 @@ links: ../src/emacs${EXEEXT}
 	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
 	${MKDIR_P} ${ns_appbindir}
 	ln -s $(abs_top_builddir)/src/emacs${EXEEXT} ${ns_appbindir}/Emacs
-	ln -s $(abs_top_builddir)/src/emacs${EXEEXT}.pdmp ${ns_appbindir}/
+	ln -s $(abs_top_builddir)/src/emacs${EXEEXT}.pdmp ${ns_appbindir}/Emacs.pdmp
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/bin
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/libexec
 	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
