@@ -4750,7 +4750,8 @@ If LINE, insert the rebuilt thread starting on line LINE."
 
 (defun gnus-id-to-thread (id)
   "Return the (sub-)thread where ID appears."
-  (gethash id gnus-newsgroup-dependencies))
+  (when (hash-table-p gnus-newsgroup-dependencies)
+    (gethash id gnus-newsgroup-dependencies)))
 
 (defun gnus-id-to-article (id)
   "Return the article number of ID."
