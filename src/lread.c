@@ -4434,7 +4434,7 @@ defvar_int (struct Lisp_Intfwd *i_fwd,
   i_fwd->intvar = address;
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)i_fwd);
+  SET_SYMBOL_FWD (XSYMBOL (sym), i_fwd);
 }
 
 /* Similar but define a variable whose value is t if address contains 1,
@@ -4449,7 +4449,7 @@ defvar_bool (struct Lisp_Boolfwd *b_fwd,
   b_fwd->boolvar = address;
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)b_fwd);
+  SET_SYMBOL_FWD (XSYMBOL (sym), b_fwd);
   Vbyte_boolean_vars = Fcons (sym, Vbyte_boolean_vars);
 }
 
@@ -4468,7 +4468,7 @@ defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
   o_fwd->objvar = address;
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)o_fwd);
+  SET_SYMBOL_FWD (XSYMBOL (sym), o_fwd);
 }
 
 void
@@ -4492,7 +4492,7 @@ defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
   ko_fwd->offset = offset;
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
+  SET_SYMBOL_FWD (XSYMBOL (sym), ko_fwd);
 }
 
 /* Check that the elements of lpath exist.  */

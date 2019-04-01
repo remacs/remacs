@@ -797,6 +797,13 @@ INLINE void
 
 #define XUNTAG(a, type, ctype) ((ctype *) \
 				((char *) XLP (a) - LISP_WORD_TAG (type)))
+
+/* A forwarding pointer to a value.  It uses a generic pointer to
+   avoid alignment bugs that could occur if it used a pointer to a
+   union of the possible values (struct Lisp_Objfwd, struct
+   Lisp_Intfwd, etc.).  The pointer is packaged inside a struct to
+   help static checking.  */
+typedef struct { void *fwdptr; } lispfwd;
 
 /* Interned state of a symbol.  */
 
@@ -862,7 +869,7 @@ struct Lisp_Symbol
 	Lisp_Object value;
 	struct Lisp_Symbol *alias;
 	struct Lisp_Buffer_Local_Value *blv;
-	union Lisp_Fwd *fwd;
+	lispfwd fwd;
       } val;
 
       /* Function value of the symbol or Qnil if not fboundp.  */
@@ -2171,10 +2178,10 @@ SYMBOL_BLV (struct Lisp_Symbol *sym)
   eassume (sym->u.s.redirect == SYMBOL_LOCALIZED && sym->u.s.val.blv);
   return sym->u.s.val.blv;
 }
-INLINE union Lisp_Fwd *
+INLINE lispfwd
 SYMBOL_FWD (struct Lisp_Symbol *sym)
 {
-  eassume (sym->u.s.redirect == SYMBOL_FORWARDED && sym->u.s.val.fwd);
+  eassume (sym->u.s.redirect == SYMBOL_FORWARDED && sym->u.s.val.fwd.fwdptr);
   return sym->u.s.val.fwd;
 }
 
@@ -2197,10 +2204,10 @@ SET_SYMBOL_BLV (struct Lisp_Symbol *sym, struct Lisp_Buffer_Local_Value *v)
   sym->u.s.val.blv = v;
 }
 INLINE void
-SET_SYMBOL_FWD (struct Lisp_Symbol *sym, union Lisp_Fwd *v)
+SET_SYMBOL_FWD (struct Lisp_Symbol *sym, void *v)
 {
   eassume (sym->u.s.redirect == SYMBOL_FORWARDED && v);
-  sym->u.s.val.fwd = v;
+  sym->u.s.val.fwd.fwdptr = v;
 }
 
 INLINE Lisp_Object
@@ -2727,7 +2734,7 @@ struct Lisp_Buffer_Local_Value
        Presumably equivalent to (defcell!=valcell).  */
     bool_bf found : 1;
     /* If non-NULL, a forwarding to the C var where it should also be set.  */
-    union Lisp_Fwd *fwd;	/* Should never be (Buffer|Kboard)_Objfwd.  */
+    lispfwd fwd;	/* Should never be (Buffer|Kboard)_Objfwd.  */
     /* The buffer for which the loaded binding was found.  */
     Lisp_Object where;
     /* A cons cell that holds the default value.  It has the form
@@ -2749,32 +2756,24 @@ struct Lisp_Kboard_Objfwd
     int offset;
   };
 
-union Lisp_Fwd
-  {
-    struct Lisp_Intfwd u_intfwd;
-    struct Lisp_Boolfwd u_boolfwd;
-    struct Lisp_Objfwd u_objfwd;
-    struct Lisp_Buffer_Objfwd u_buffer_objfwd;
-    struct Lisp_Kboard_Objfwd u_kboard_objfwd;
-  };
-
 INLINE enum Lisp_Fwd_Type
-XFWDTYPE (union Lisp_Fwd *a)
+XFWDTYPE (lispfwd a)
 {
-  return a->u_intfwd.type;
+  enum Lisp_Fwd_Type *p = a.fwdptr;
+  return *p;
 }
 
 INLINE bool
-BUFFER_OBJFWDP (union Lisp_Fwd *a)
+BUFFER_OBJFWDP (lispfwd a)
 {
   return XFWDTYPE (a) == Lisp_Fwd_Buffer_Obj;
 }
 
 INLINE struct Lisp_Buffer_Objfwd *
-XBUFFER_OBJFWD (union Lisp_Fwd *a)
+XBUFFER_OBJFWD (lispfwd a)
 {
   eassert (BUFFER_OBJFWDP (a));
-  return &a->u_buffer_objfwd;
+  return a.fwdptr;
 }
 
 /* Lisp floating point type.  */
@@ -3552,7 +3551,7 @@ extern _Noreturn void args_out_of_range (Lisp_Object, Lisp_Object);
 extern _Noreturn void args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					   Lisp_Object);
 extern _Noreturn void circular_list (Lisp_Object);
-extern Lisp_Object do_symval_forwarding (union Lisp_Fwd *);
+extern Lisp_Object do_symval_forwarding (lispfwd);
 enum Set_Internal_Bind {
   SET_INTERNAL_SET,
   SET_INTERNAL_BIND,
