@@ -3690,7 +3690,7 @@ x_window_to_scroll_bar (Window window_id, int type)
 			       ! NILP (bar));
 	   bar = XSCROLL_BAR (bar)->next)
 	if (SCROLL_BAR_W32_WINDOW (XSCROLL_BAR (bar)) == window_id
-	    && (type = 2
+	    && (type == 2
 		|| (type == 1 && XSCROLL_BAR (bar)->horizontal)
 		|| (type == 0 && !XSCROLL_BAR (bar)->horizontal)))
 	  return XSCROLL_BAR (bar);

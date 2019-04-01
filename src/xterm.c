@@ -5343,7 +5343,7 @@ x_window_to_scroll_bar (Display *display, Window window_id, int type)
 	   bar = XSCROLL_BAR (bar)->next)
 	if (XSCROLL_BAR (bar)->x_window == window_id
             && FRAME_X_DISPLAY (XFRAME (frame)) == display
-	    && (type = 2
+	    && (type == 2
 		|| (type == 1 && XSCROLL_BAR (bar)->horizontal)
 		|| (type == 0 && !XSCROLL_BAR (bar)->horizontal)))
 	  return XSCROLL_BAR (bar);
