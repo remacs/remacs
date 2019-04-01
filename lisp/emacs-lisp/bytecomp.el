@@ -3910,7 +3910,6 @@ discarding."
 
 
 (byte-defop-compiler-1 setq)
-(byte-defop-compiler-1 setq-default)
 (byte-defop-compiler-1 quote)
 
 (defun byte-compile-setq (form)
@@ -3935,34 +3934,20 @@ discarding."
         (byte-compile-form nil byte-compile--for-effect)))
     (setq byte-compile--for-effect nil)))
 
-(defun byte-compile-setq-default (form)
-  (setq form (cdr form))
-  (if (null form)			; (setq-default), with no arguments
-      (byte-compile-form nil byte-compile--for-effect)
-    (if (> (length form) 2)
-	(let ((setters ()))
-	  (while (consp form)
-	    (push `(setq-default ,(pop form) ,(pop form)) setters))
-	  (byte-compile-form (cons 'progn (nreverse setters))))
-      (let ((var (car form)))
-	(and (or (not (symbolp var))
-		 (macroexp--const-symbol-p var t))
-	     (byte-compile-warning-enabled-p 'constants)
-	     (byte-compile-warn
-	      "variable assignment to %s `%s'"
-	      (if (symbolp var) "constant" "nonvariable")
-	      (prin1-to-string var)))
-	(byte-compile-normal-call `(set-default ',var ,@(cdr form)))))))
-
 (byte-defop-compiler-1 set-default)
 (defun byte-compile-set-default (form)
   (let ((varexp (car-safe (cdr-safe form))))
     (if (eq (car-safe varexp) 'quote)
-        ;; If the varexp is constant, compile it as a setq-default
-        ;; so we get more warnings.
-        (byte-compile-setq-default `(setq-default ,(car-safe (cdr varexp))
-                                                  ,@(cddr form)))
-      (byte-compile-normal-call form))))
+        ;; If the varexp is constant, check the var's name.
+        (let ((var (car-safe (cdr varexp))))
+          (and (or (not (symbolp var))
+	           (macroexp--const-symbol-p var t))
+               (byte-compile-warning-enabled-p 'constants)
+               (byte-compile-warn
+	        "variable assignment to %s `%s'"
+	        (if (symbolp var) "constant" "nonvariable")
+	        (prin1-to-string var)))))
+    (byte-compile-normal-call form)))
 
 (defun byte-compile-quote (form)
   (byte-compile-constant (car (cdr form))))

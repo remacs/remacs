@@ -940,8 +940,7 @@ If READABLE is nil, an expression is inserted.  The expression is
 a call to `define-abbrev-table' that when evaluated will define
 the abbrev table NAME exactly as it is currently defined.
 Abbrevs marked as \"system abbrevs\" are ignored."
-  (let ((table (symbol-value name))
-        (symbols (abbrev--table-symbols name readable)))
+  (let ((symbols (abbrev--table-symbols name readable)))
     (setq symbols (sort symbols 'string-lessp))
     (let ((standard-output (current-buffer)))
       (if readable

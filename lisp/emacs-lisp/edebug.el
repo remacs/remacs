@@ -2165,7 +2165,6 @@ into `edebug--cl-macrolet-defs' which is checked in `edebug-list-form-args'."
 (def-edebug-spec let* let)
 
 (def-edebug-spec setq (&rest symbolp form))
-(def-edebug-spec setq-default setq)
 
 (def-edebug-spec cond (&rest (&rest form)))
 
