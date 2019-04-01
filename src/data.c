@@ -62,25 +62,25 @@ OBJFWDP (lispfwd a)
   return XFWDTYPE (a) == Lisp_Fwd_Obj;
 }
 
-static struct Lisp_Boolfwd *
+static struct Lisp_Boolfwd const *
 XBOOLFWD (lispfwd a)
 {
   eassert (BOOLFWDP (a));
   return a.fwdptr;
 }
-static struct Lisp_Kboard_Objfwd *
+static struct Lisp_Kboard_Objfwd const *
 XKBOARD_OBJFWD (lispfwd a)
 {
   eassert (KBOARD_OBJFWDP (a));
   return a.fwdptr;
 }
-static struct Lisp_Intfwd *
+static struct Lisp_Intfwd const *
 XFIXNUMFWD (lispfwd a)
 {
   eassert (INTFWDP (a));
   return a.fwdptr;
 }
-static struct Lisp_Objfwd *
+static struct Lisp_Objfwd const *
 XOBJFWD (lispfwd a)
 {
   eassert (OBJFWDP (a));

@@ -4425,28 +4425,19 @@ defalias (struct Lisp_Subr *sname, char *string)
    C variable of type intmax_t.  Sample call (with "xx" to fool make-docfile):
    DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
 void
-defvar_int (struct Lisp_Intfwd *i_fwd,
-	    const char *namestring, intmax_t *address)
+defvar_int (struct Lisp_Intfwd const *i_fwd, char const *namestring)
 {
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  i_fwd->type = Lisp_Fwd_Int;
-  i_fwd->intvar = address;
+  Lisp_Object sym = intern_c_string (namestring);
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), i_fwd);
 }
 
-/* Similar but define a variable whose value is t if address contains 1,
-   nil if address contains 0.  */
+/* Similar but define a variable whose value is t if 1, nil if 0.  */
 void
-defvar_bool (struct Lisp_Boolfwd *b_fwd,
-	     const char *namestring, bool *address)
+defvar_bool (struct Lisp_Boolfwd const *b_fwd, char const *namestring)
 {
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  b_fwd->type = Lisp_Fwd_Bool;
-  b_fwd->boolvar = address;
+  Lisp_Object sym = intern_c_string (namestring);
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), b_fwd);
@@ -4459,37 +4450,28 @@ defvar_bool (struct Lisp_Boolfwd *b_fwd,
    gc-marked for some other reason, since marking the same slot twice
    can cause trouble with strings.  */
 void
-defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
-		   const char *namestring, Lisp_Object *address)
+defvar_lisp_nopro (struct Lisp_Objfwd const *o_fwd, char const *namestring)
 {
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  o_fwd->type = Lisp_Fwd_Obj;
-  o_fwd->objvar = address;
+  Lisp_Object sym = intern_c_string (namestring);
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), o_fwd);
 }
 
 void
-defvar_lisp (struct Lisp_Objfwd *o_fwd,
-	     const char *namestring, Lisp_Object *address)
+defvar_lisp (struct Lisp_Objfwd const *o_fwd, char const *namestring)
 {
-  defvar_lisp_nopro (o_fwd, namestring, address);
-  staticpro (address);
+  defvar_lisp_nopro (o_fwd, namestring);
+  staticpro (o_fwd->objvar);
 }
 
 /* Similar but define a variable whose value is the Lisp Object stored
    at a particular offset in the current kboard object.  */
 
 void
-defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
-	       const char *namestring, int offset)
+defvar_kboard (struct Lisp_Kboard_Objfwd const *ko_fwd, char const *namestring)
 {
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  ko_fwd->type = Lisp_Fwd_Kboard_Obj;
-  ko_fwd->offset = offset;
+  Lisp_Object sym = intern_c_string (namestring);
   XSYMBOL (sym)->u.s.declared_special = true;
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), ko_fwd);

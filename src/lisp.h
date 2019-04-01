@@ -803,7 +803,7 @@ INLINE void
    union of the possible values (struct Lisp_Objfwd, struct
    Lisp_Intfwd, etc.).  The pointer is packaged inside a struct to
    help static checking.  */
-typedef struct { void *fwdptr; } lispfwd;
+typedef struct { void const *fwdptr; } lispfwd;
 
 /* Interned state of a symbol.  */
 
@@ -2204,7 +2204,7 @@ SET_SYMBOL_BLV (struct Lisp_Symbol *sym, struct Lisp_Buffer_Local_Value *v)
   sym->u.s.val.blv = v;
 }
 INLINE void
-SET_SYMBOL_FWD (struct Lisp_Symbol *sym, void *v)
+SET_SYMBOL_FWD (struct Lisp_Symbol *sym, void const *v)
 {
   eassume (sym->u.s.redirect == SYMBOL_FORWARDED && v);
   sym->u.s.val.fwd.fwdptr = v;
@@ -2759,7 +2759,7 @@ struct Lisp_Kboard_Objfwd
 INLINE enum Lisp_Fwd_Type
 XFWDTYPE (lispfwd a)
 {
-  enum Lisp_Fwd_Type *p = a.fwdptr;
+  enum Lisp_Fwd_Type const *p = a.fwdptr;
   return *p;
 }
 
@@ -2769,7 +2769,7 @@ BUFFER_OBJFWDP (lispfwd a)
   return XFWDTYPE (a) == Lisp_Fwd_Buffer_Obj;
 }
 
-INLINE struct Lisp_Buffer_Objfwd *
+INLINE struct Lisp_Buffer_Objfwd const *
 XBUFFER_OBJFWD (lispfwd a)
 {
   eassert (BUFFER_OBJFWDP (a));
@@ -3096,11 +3096,11 @@ enum maxargs
    CALLN is overkill for simple usages like 'Finsert (1, &text);'.  */
 #define CALLN(f, ...) CALLMANY (f, ((Lisp_Object []) {__VA_ARGS__}))
 
-extern void defvar_lisp (struct Lisp_Objfwd *, const char *, Lisp_Object *);
-extern void defvar_lisp_nopro (struct Lisp_Objfwd *, const char *, Lisp_Object *);
-extern void defvar_bool (struct Lisp_Boolfwd *, const char *, bool *);
-extern void defvar_int (struct Lisp_Intfwd *, const char *, intmax_t *);
-extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
+extern void defvar_lisp (struct Lisp_Objfwd const *, char const *);
+extern void defvar_lisp_nopro (struct Lisp_Objfwd const *, char const *);
+extern void defvar_bool (struct Lisp_Boolfwd const *, char const *);
+extern void defvar_int (struct Lisp_Intfwd const *, char const *);
+extern void defvar_kboard (struct Lisp_Kboard_Objfwd const *, char const *);
 
 /* Macros we use to define forwarded Lisp variables.
    These are used in the syms_of_FILENAME functions.
@@ -3121,29 +3121,34 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
 
 #define DEFVAR_LISP(lname, vname, doc)		\
   do {						\
-    static struct Lisp_Objfwd o_fwd;		\
-    defvar_lisp (&o_fwd, lname, &globals.f_ ## vname);		\
+    static struct Lisp_Objfwd const o_fwd	\
+      = {Lisp_Fwd_Obj, &globals.f_##vname};	\
+    defvar_lisp (&o_fwd, lname);		\
   } while (false)
 #define DEFVAR_LISP_NOPRO(lname, vname, doc)	\
   do {						\
-    static struct Lisp_Objfwd o_fwd;		\
-    defvar_lisp_nopro (&o_fwd, lname, &globals.f_ ## vname);	\
+    static struct Lisp_Objfwd const o_fwd	\
+      = {Lisp_Fwd_Obj, &globals.f_##vname};	\
+    defvar_lisp_nopro (&o_fwd, lname);		\
   } while (false)
 #define DEFVAR_BOOL(lname, vname, doc)		\
   do {						\
-    static struct Lisp_Boolfwd b_fwd;		\
-    defvar_bool (&b_fwd, lname, &globals.f_ ## vname);		\
+    static struct Lisp_Boolfwd const b_fwd	\
+      = {Lisp_Fwd_Bool, &globals.f_##vname};	\
+    defvar_bool (&b_fwd, lname);		\
   } while (false)
 #define DEFVAR_INT(lname, vname, doc)		\
   do {						\
-    static struct Lisp_Intfwd i_fwd;		\
-    defvar_int (&i_fwd, lname, &globals.f_ ## vname);		\
+    static struct Lisp_Intfwd const i_fwd	\
+      = {Lisp_Fwd_Int, &globals.f_##vname};	\
+    defvar_int (&i_fwd, lname);			\
   } while (false)
 
 #define DEFVAR_KBOARD(lname, vname, doc)			\
   do {								\
-    static struct Lisp_Kboard_Objfwd ko_fwd;			\
-    defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
+    static struct Lisp_Kboard_Objfwd const ko_fwd		\
+      = {Lisp_Fwd_Kboard_Obj, offsetof (KBOARD, vname##_)};	\
+    defvar_kboard (&ko_fwd, lname);				\
   } while (false)
 
 
