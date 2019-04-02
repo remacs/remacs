@@ -584,6 +584,13 @@ installed and loaded:
 (customize-set-variable 'tramp-verbose 6 "Enable remote command traces")
 @end lisp
 
+For functions used to configure @value{tramp}, the following clause
+might be used in your init file:
+
+@lisp
+(with-eval-after-load 'tramp (tramp-change-syntax 'simplified))
+@end lisp
+
 
 @menu
 * Connection types::            Types of connections to remote hosts.
