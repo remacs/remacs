@@ -2093,7 +2093,7 @@ If DISPLAY is omitted or nil, it defaults to the selected frame's display."
      ((eq frame-type 'pc)
       4)
      (t
-      (truncate (log (length (tty-color-alist)) 2))))))
+      (logb (length (tty-color-alist)))))))
 
 (declare-function x-display-color-cells "xfns.c" (&optional terminal))
 
