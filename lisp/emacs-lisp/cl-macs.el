@@ -2687,6 +2687,9 @@ The function's arguments should be treated as immutable.
 ;; for bootstrapping reasons.
 (defvar cl--struct-default-parent nil)
 
+(defvar cl--struct-inline t
+  "If non-nil, `cl-defstruct' will define inlinable functions.")
+
 ;;;###autoload
 (defmacro cl-defstruct (struct &rest descs)
   "Define a struct type.
@@ -2698,7 +2701,7 @@ You can use the accessors to set the corresponding slots, via `setf'.
 NAME may instead take the form (NAME OPTIONS...), where each
 OPTION is either a single keyword or (KEYWORD VALUE) where
 KEYWORD can be one of :conc-name, :constructor, :copier, :predicate,
-:type, :named, :initial-offset, :print-function, or :include.
+:type, :named, :initial-offset, :print-function, :noinline, or :include.
 
 Each SLOT may instead take the form (SNAME SDEFAULT SOPTIONS...), where
 SDEFAULT is the default value of that slot and SOPTIONS are keyword-value
@@ -2757,6 +2760,8 @@ non-nil value, that slot cannot be set via `setf'.
 	 (include-name nil)
 	 (type nil)         ;nil here means not specified explicitly.
 	 (named nil)
+         (cldefsym (if cl--struct-inline 'cl-defsubst 'cl-defun))
+         (defsym (if cl--struct-inline 'cl-defsubst 'defun))
 	 (forms nil)
          (docstring (if (stringp (car descs)) (pop descs)))
 	 pred-form pred-check)
@@ -2803,6 +2808,8 @@ non-nil value, that slot cannot be set via `setf'.
                  (error "Invalid :type specifier: %s" type)))
 	      ((eq opt :named)
 	       (setq named t))
+	      ((eq opt :noinline)
+	       (setq defsym 'defun) (setq cldefsym 'cl-defun))
 	      ((eq opt :initial-offset)
 	       (setq descs (nconc (make-list (car args) '(cl-skip-slot))
 				  descs)))
@@ -2861,7 +2868,7 @@ non-nil value, that slot cannot be set via `setf'.
 			      (cons 'and (cl-cdddr pred-form))
                             `(,predicate cl-x))))
     (when pred-form
-      (push `(cl-defsubst ,predicate (cl-x)
+      (push `(,defsym ,predicate (cl-x)
                (declare (side-effect-free error-free))
                ,(if (eq (car pred-form) 'and)
                     (append pred-form '(t))
@@ -2884,7 +2891,7 @@ non-nil value, that slot cannot be set via `setf'.
 	      (push (pop desc) defaults)
 	      ;; The arg "cl-x" is referenced by name in eg pred-form
 	      ;; and pred-check, so changing it is not straightforward.
-	      (push `(cl-defsubst ,accessor (cl-x)
+	      (push `(,defsym ,accessor (cl-x)
                        ,(format "Access slot \"%s\" of `%s' struct CL-X."
                                 slot struct)
                        (declare (side-effect-free t))
@@ -2955,7 +2962,7 @@ non-nil value, that slot cannot be set via `setf'.
       (let* ((anames (cl--arglist-args args))
 	     (make (cl-mapcar (function (lambda (s d) (if (memq s anames) s d)))
 			    slots defaults)))
-	(push `(cl-defsubst ,cname
+	(push `(,cldefsym ,cname
                    (&cl-defs (nil ,@descs) ,@args)
                  ,(if (stringp doc) doc
                     (format "Constructor for objects of type `%s'." name))

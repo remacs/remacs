@@ -385,6 +385,9 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** cl-lib
+*** cl-defstruct has a new :noinline argument to prevent inlining its functions
+
 ** doc-view-mode
 *** New commands doc-view-presentation and doc-view-fit-window-to-page
 *** Added support for password-protected PDF files
