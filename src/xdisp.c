@@ -378,6 +378,13 @@ static Lisp_Object list_of_error;
 	   && (*BYTE_POS_ADDR (IT_BYTEPOS (*it)) == ' '			\
 	       || *BYTE_POS_ADDR (IT_BYTEPOS (*it)) == '\t'))))		\
 
+/* Test all the conditions needed to print the fill column indicator.  */
+#define FILL_COLUMN_INDICATOR_NEEDED(it)               \
+  !NILP (Vdisplay_fill_column_indicator)               \
+  && (it->continuation_lines_width == 0)               \
+  && (!NILP (Vdisplay_fill_column_indicator_column))   \
+  && FIXNATP (Vdisplay_fill_column_indicator_character)
+
 /* True means print newline to stdout before next mini-buffer message.  */
 
 bool noninteractive_need_newline;
@@ -20162,10 +20169,8 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  /* Corner case for when display-fill-column-indicator-mode
 	     is active and the extra character should be added in the
 	     same place than the line */
-	  if (!NILP (Vdisplay_fill_column_indicator)
-	      && (it->w->pseudo_window_p == 0)
-	      && (!NILP (Vdisplay_fill_column_indicator_column))
-	      && FIXNATP (Vdisplay_fill_column_indicator_character))
+	  if ((it->w->pseudo_window_p == 0)
+	      && FILL_COLUMN_INDICATOR_NEEDED(it))
 	    {
 	       int fill_column_indicator_column = -1;
 
@@ -20423,10 +20428,8 @@ extend_face_to_end_of_line (struct it *it)
 	  /* Display fill column indicator if not in modeline or
 	     toolbar and display fill column indicator mode is
 	     active */
-	  if (!NILP (Vdisplay_fill_column_indicator)
-	      && (it->w->pseudo_window_p == 0)
-	      && (!NILP (Vdisplay_fill_column_indicator_column))
-	      && FIXNATP (Vdisplay_fill_column_indicator_character))
+	  if ((it->w->pseudo_window_p == 0)
+	      && FILL_COLUMN_INDICATOR_NEEDED(it))
             {
 	       int fill_column_indicator_column = -1;
 
@@ -20622,13 +20625,13 @@ extend_face_to_end_of_line (struct it *it)
       else
 	it->face_id = face->id;
 
-      /* Display fill-column-line if mode is active */
-      if (!NILP (Vdisplay_fill_column_indicator)
-          && (!NILP (Vdisplay_fill_column_indicator_column))
-          && FIXNATP (Vdisplay_fill_column_indicator_character))
+      /* Display fill-column-line if needed.  */
+      if (FILL_COLUMN_INDICATOR_NEEDED(it))
 	{
 	  int fill_column_indicator_column = -1;
 
+	  /* Vdisplay_fill_column_indicator_column accepts the special value t
+	     to use the default fill-column variable.  */
 	  if (EQ (Vdisplay_fill_column_indicator_column, Qt)
 	      && FIXNATP (BVAR (current_buffer, fill_column)))
 	    fill_column_indicator_column =
