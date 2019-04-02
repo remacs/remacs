@@ -4149,7 +4149,7 @@ package, @code{cl-typep} simply looks for a function called
 only if they used the default predicate name.
 
 @item :include
-This option implements a very limited form of C++-style inheritance.
+This option implements a very limited form of C@t{++}-style inheritance.
 The argument is the name of another structure type previously
 created with @code{cl-defstruct}.  The effect is to cause the new
 structure type to inherit all of the included structure's slots
@@ -4193,6 +4193,10 @@ other way around).  Every @code{astronaut} includes all the slots
 of a @code{person}, plus extra slots that are specific to
 astronauts.  Operations that work on people (like @code{person-name})
 work on astronauts just like other people.
+
+@item :noinline
+If this option is present, this structure's functions will not be
+inlined, even functions that normally would.
 
 @item :print-function
 In full Common Lisp, this option allows you to specify a function
