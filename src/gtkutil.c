@@ -1401,7 +1401,6 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   GdkGeometry size_hints;
   gint hint_flags = 0;
   int base_width, base_height;
-  int min_rows = 0, min_cols = 0;
   int win_gravity = f->win_gravity;
   Lisp_Object fs_state, frame;
   int scale = xg_get_scale (f);
@@ -1450,13 +1449,10 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   base_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 1)
     + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
 
-  if (min_cols > 0) --min_cols; /* We used one col in base_width = ... 1); */
-  if (min_rows > 0) --min_rows; /* We used one row in base_height = ... 1); */
-
   size_hints.base_width = base_width;
   size_hints.base_height = base_height;
-  size_hints.min_width  = base_width + min_cols * FRAME_COLUMN_WIDTH (f);
-  size_hints.min_height = base_height + min_rows * FRAME_LINE_HEIGHT (f);
+  size_hints.min_width  = base_width;
+  size_hints.min_height = base_height;
 
   /* These currently have a one to one mapping with the X values, but I
      don't think we should rely on that.  */
