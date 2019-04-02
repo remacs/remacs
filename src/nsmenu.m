@@ -668,9 +668,9 @@ ns_activate_menubar (struct frame *f)
       /* Draw radio buttons and tickboxes.  */
       if (wv->selected && (wv->button_type == BUTTON_TYPE_TOGGLE ||
                            wv->button_type == BUTTON_TYPE_RADIO))
-        [item setState: NSOnState];
+        [item setState: NSControlStateValueOn];
       else
-        [item setState: NSOffState];
+        [item setState: NSControlStateValueOff];
 
       [item setTag: (NSInteger)wv->call_data];
     }
@@ -1594,7 +1594,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   [cell setBordered: NO];
   [cell setEnabled: NO];
   [cell setCellAttribute: NSCellIsInsetButton to: 8];
-  [cell setBezelStyle: NSRoundedBezelStyle];
+  [cell setBezelStyle: NSBezelStyleRounded];
 
   matrix = [[NSMatrix alloc] initWithFrame: contentRect
                                       mode: NSHighlightModeMatrix
@@ -1607,7 +1607,6 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   [matrix autorelease];
 
   [[self contentView] addSubview: matrix];
-  [self setOneShot: YES];
   [self setReleasedWhenClosed: YES];
   [self setHidesOnDeactivate: YES];
   return self;

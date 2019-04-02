@@ -1165,10 +1165,6 @@ extern void ns_release_autorelease_pool (void *);
 extern const char *ns_get_defaults_value (const char *key);
 extern void ns_init_locale (void);
 
-#ifdef NS_IMPL_COCOA
-extern void ns_enable_screen_updates (void);
-#endif
-
 /* in nsmenu */
 extern void update_frame_tool_bar (struct frame *f);
 extern void free_frame_tool_bar (struct frame *f);
@@ -1335,5 +1331,15 @@ enum NSWindowTabbingMode
 #if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_13)
 /* Deprecated in macOS 10.13.  */
 #define NSPasteboardNameGeneral NSGeneralPboard
+#endif
+
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_14)
+/* Deprecated in macOS 10.14.  */
+#define NSPasteboardTypeString NSStringPboardType
+#define NSPasteboardTypeTabularText NSTabularTextPboardType
+#define NSPasteboardTypeURL NSURLPboardType
+#define NSControlStateValueOn NSOnState
+#define NSControlStateValueOff NSOffState
+#define NSBezelStyleRounded NSRoundedBezelStyle
 #endif
 #endif	/* HAVE_NS */
