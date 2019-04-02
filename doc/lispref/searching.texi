@@ -398,17 +398,11 @@ range should not be the starting point of another one; for example,
 The usual regexp special characters are not special inside a
 character alternative.  A completely different set of characters is
 special inside character alternatives: @samp{]}, @samp{-} and @samp{^}.
-
-To include a @samp{]} in a character alternative, you must make it the first
-character.  For example, @samp{[]a]} matches @samp{]} or @samp{a}.  To include
-a @samp{-}, write @samp{-} as the last character of the character alternative,
-tho you can also put it first or after a range.  Thus, @samp{[]-]} matches both
-@samp{]} and @samp{-}.  (As explained below, you cannot use @samp{\]} to
-include a @samp{]} inside a character alternative, since @samp{\} is not
-special there.)
-
-To include @samp{^} in a character alternative, put it anywhere but at
-the beginning.
+To include @samp{]} in a character alternative, put it at the
+beginning.  To include @samp{^}, put it anywhere but at the beginning.
+To include @samp{-}, put it at the end.  Thus, @samp{[]^-]} matches
+all three of these special characters.  You cannot use @samp{\} to
+escape these three characters, since @samp{\} is not special here.
 
 The following aspects of ranges are specific to Emacs, in that POSIX
 allows but does not require this behavior and programs other than
@@ -426,17 +420,33 @@ of its bounds, so that @samp{[a-z]} matches only ASCII letters, even
 outside the C or POSIX locale.
 
 @item
-As a special case, if either bound of a range is a raw 8-bit byte, the
-other bound should be a unibyte character, and the range matches only
-unibyte characters.
+If the lower bound of a range is greater than its upper bound, the
+range is empty and represents no characters.  Thus, @samp{[z-a]}
+always fails to match, and @samp{[^z-a]} matches any character,
+including newline.  However, a reversed range should always be from
+the letter @samp{z} to the letter @samp{a} to make it clear that it is
+not a typo; for example, @samp{[+-*/]} should be avoided, because it
+matches only @samp{/} rather than the likely-intended four characters.
+@end enumerate
+
+Some kinds of character alternatives are not the best style even
+though they are standardized by POSIX and are portable.  They include:
+
+@enumerate
+@item
+A character alternative can include duplicates.  For example,
+@samp{[XYa-yYb-zX]} is less clear than @samp{[XYa-z]}.
 
 @item
-If the lower bound of a range is greater than its upper bound, the
-range is empty and represents no characters.  Thus, @samp{[b-a]}
-always fails to match, and @samp{[^b-a]} matches any character,
-including newline.  However, the lower bound should be at most one
-greater than the upper bound; for example, @samp{[c-a]} should be
-avoided.
+A range can denote just one, two, or three characters.  For example,
+@samp{[(-(]} is less clear than @samp{[(]}, @samp{[*-+]} is less clear
+than @samp{[*+]}, and @samp{[*-,]} is less clear than @samp{[*+,]}.
+
+@item
+A @samp{-} also appear at the beginning of a character alternative, or
+as the upper bound of a range.  For example, although @samp{[-a-z]} is
+valid, @samp{[a-z-]} is better style; and although @samp{[!--/]} is
+valid, @samp{[!-,/-]} is clearer.
 @end enumerate
 
 A character alternative can also specify named character classes
@@ -452,7 +462,7 @@ of a range.
 @cindex @samp{^} in regexp
 @samp{[^} begins a @dfn{complemented character alternative}.  This
 matches any character except the ones specified.  Thus,
-@samp{[^a-z0-9A-Z]} matches all characters @emph{except} letters and
+@samp{[^a-z0-9A-Z]} matches all characters @emph{except} ASCII letters and
 digits.
 
 @samp{^} is not special in a character alternative unless it is the first
