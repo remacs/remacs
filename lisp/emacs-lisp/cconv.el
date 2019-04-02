@@ -556,7 +556,7 @@ places where they originally did not directly appear."
 
     (`(,func . ,forms)
      ;; First element is function or whatever function-like forms are: or, and,
-     ;; if, catch, progn, prog1, prog2, while, until
+     ;; if, catch, progn, prog1, while, until
      `(,func . ,(mapcar (lambda (form)
                           (cconv-convert form env extend))
                         forms)))

@@ -374,13 +374,6 @@ don't yield.")
                       `(setf ,cps--value-symbol ,temp-var-symbol
                              ,cps--state-symbol ,next-state))))))))
 
-    ;; Process `prog2'.
-
-    (`(prog2 ,form1 ,form2 . ,body)
-      (cps--transform-1
-       `(progn ,form1 (prog1 ,form2 ,@body))
-       next-state))
-
     ;; Process `unwind-protect': If we're inside an unwind-protect, we
     ;; have a block of code UNWINDFORMS which we would like to run
     ;; whenever control flows away from the main piece of code,

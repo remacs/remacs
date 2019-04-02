@@ -495,17 +495,6 @@ usage: (prog1 FIRST BODY...)  */)
   return val;
 }
 
-DEFUN ("prog2", Fprog2, Sprog2, 2, UNEVALLED, 0,
-       doc: /* Eval FORM1, FORM2 and BODY sequentially; return value from FORM2.
-The value of FORM2 is saved during the evaluation of the
-remaining args, whose values are discarded.
-usage: (prog2 FORM1 FORM2 BODY...)  */)
-  (Lisp_Object args)
-{
-  eval_sub (XCAR (args));
-  return Fprog1 (XCDR (args));
-}
-
 DEFUN ("setq", Fsetq, Ssetq, 0, UNEVALLED, 0,
        doc: /* Set each SYM to the value of its VAL.
 The symbols SYM are variables; they are literal (not evaluated).
@@ -4219,7 +4208,6 @@ alist of active lexical bindings.  */);
   defsubr (&Scond);
   defsubr (&Sprogn);
   defsubr (&Sprog1);
-  defsubr (&Sprog2);
   defsubr (&Ssetq);
   defsubr (&Squote);
   defsubr (&Sfunction);

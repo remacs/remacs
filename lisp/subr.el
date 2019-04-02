@@ -118,6 +118,13 @@ BODY should be a list of Lisp expressions.
   ;; depend on backquote.el.
   (list 'function (cons 'lambda cdr)))
 
+(defmacro prog2 (form1 form2 &rest body)
+  "Eval FORM1, FORM2 and BODY sequentially; return value from FORM2.
+The value of FORM2 is saved during the evaluation of the
+remaining args, whose values are discarded."
+  (declare (indent 2) (debug t))
+  `(progn ,form1 (prog1 ,form2 ,@body)))
+
 (defmacro setq-default (&rest args)
   "Set the default value of variable VAR to VALUE.
 VAR, the variable name, is literal (not evaluated);

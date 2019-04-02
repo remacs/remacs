@@ -2501,9 +2501,8 @@ list that represents a doc string reference.
 
 (put 'progn 'byte-hunk-handler 'byte-compile-file-form-progn)
 (put 'prog1 'byte-hunk-handler 'byte-compile-file-form-progn)
-(put 'prog2 'byte-hunk-handler 'byte-compile-file-form-progn)
 (defun byte-compile-file-form-progn (form)
-  (mapc 'byte-compile-file-form (cdr form))
+  (mapc #'byte-compile-file-form (cdr form))
   ;; Return nil so the forms are not output twice.
   nil)
 
@@ -3971,7 +3970,6 @@ discarding."
 (byte-defop-compiler-1 inline byte-compile-progn)
 (byte-defop-compiler-1 progn)
 (byte-defop-compiler-1 prog1)
-(byte-defop-compiler-1 prog2)
 (byte-defop-compiler-1 if)
 (byte-defop-compiler-1 cond)
 (byte-defop-compiler-1 and)
@@ -3987,11 +3985,6 @@ discarding."
 (defun byte-compile-prog1 (form)
   (byte-compile-form-do-effect (car (cdr form)))
   (byte-compile-body (cdr (cdr form)) t))
-
-(defun byte-compile-prog2 (form)
-  (byte-compile-form (nth 1 form) t)
-  (byte-compile-form-do-effect (nth 2 form))
-  (byte-compile-body (cdr (cdr (cdr form))) t))
 
 (defmacro byte-compile-goto-if (cond discard tag)
   `(byte-compile-goto

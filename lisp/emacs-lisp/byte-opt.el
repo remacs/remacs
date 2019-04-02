@@ -436,11 +436,6 @@
 		     (cons (byte-optimize-form (nth 1 form) for-effect)
 			   (byte-optimize-body (cdr (cdr form)) t)))
 	     (byte-optimize-form (nth 1 form) for-effect)))
-	  ((eq fn 'prog2)
-	   (cons 'prog2
-	     (cons (byte-optimize-form (nth 1 form) t)
-	       (cons (byte-optimize-form (nth 2 form) for-effect)
-		     (byte-optimize-body (cdr (cdr (cdr form))) t)))))
 
 	  ((memq fn '(save-excursion save-restriction save-current-buffer))
 	   ;; those subrs which have an implicit progn; it's not quite good
