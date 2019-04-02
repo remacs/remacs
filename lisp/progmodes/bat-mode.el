@@ -78,7 +78,7 @@
              "goto" "gtr" "if" "in" "leq" "lss" "neq" "not" "start"))
           (UNIX
            '("bash" "cat" "cp" "fgrep" "grep" "ls" "sed" "sh" "mv" "rm")))
-      `(("\\_<\\(call\\|goto\\)\\_>[ \t]+%?\\([A-Za-z0-9-_\\:.]+\\)%?"
+      `(("\\_<\\(call\\|goto\\)\\_>[ \t]+%?\\([A-Za-z0-9_\\:.-]+\\)%?"
          (2 font-lock-constant-face t))
         ("^:[^:].*"
          . 'bat-label-face)

@@ -1087,7 +1087,7 @@ CVS/Entries should only be accessed through this function."
   ;; an uppercase or lowercase letter and can contain uppercase and
   ;; lowercase letters, digits, `-', and `_'.
   (and (string-match "^[a-zA-Z]" tag)
-       (not (string-match "[^a-z0-9A-Z-_]" tag))))
+       (not (string-match "[^a-z0-9A-Z_-]" tag))))
 
 (defun vc-cvs-valid-revision-number-p (tag)
   "Return non-nil if TAG is a valid revision number."

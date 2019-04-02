@@ -194,10 +194,10 @@ directory by default."
 ;; - custom faces.
 (defconst less-css-font-lock-keywords
   '(;; Variables
-    ("@[a-z_-][a-z-_0-9]*" . font-lock-variable-name-face)
+    ("@[a-z_-][a-z_0-9-]*" . font-lock-variable-name-face)
     ("&" . font-lock-preprocessor-face)
     ;; Mixins
-    ("\\(?:[ \t{;]\\|^\\)\\(\\.[a-z_-][a-z-_0-9]*\\)[ \t]*;" .
+    ("\\(?:[ \t{;]\\|^\\)\\(\\.[a-z_-][a-z_0-9-]*\\)[ \t]*;" .
      (1 font-lock-keyword-face))))
 
 (defvar less-css-mode-syntax-table

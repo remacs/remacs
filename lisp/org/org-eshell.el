@@ -37,7 +37,7 @@
    eshell buffer) or a command line prefixed by a buffer name
    followed by a colon."
   (let* ((buffer-and-command
-          (if (string-match "\\([A-Za-z0-9-+*]+\\):\\(.*\\)" link)
+          (if (string-match "\\([A-Za-z0-9+*-]+\\):\\(.*\\)" link)
 	      (list (match-string 1 link)
 		    (match-string 2 link))
             (list eshell-buffer-name link)))

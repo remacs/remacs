@@ -6316,7 +6316,7 @@ See also `auto-save-file-name-p'."
       ;; We do this on all platforms, because even if we are not
       ;; running on DOS/Windows, the current directory may be on a
       ;; mounted VFAT filesystem, such as a USB memory stick.
-      (while (string-match "[^A-Za-z0-9-_.~#+]" buffer-name limit)
+      (while (string-match "[^A-Za-z0-9_.~#+-]" buffer-name limit)
 	(let* ((character (aref buffer-name (match-beginning 0)))
 	       (replacement
                 ;; For multibyte characters, this will produce more than

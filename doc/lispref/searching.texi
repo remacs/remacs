@@ -395,9 +395,18 @@ or @samp{$}, @samp{%} or period.  However, the ending character of one
 range should not be the starting point of another one; for example,
 @samp{[a-m-z]} should be avoided.
 
+A character alternative can also specify named character classes
+(@pxref{Char Classes}).  This is a POSIX feature.  For example,
+@samp{[[:ascii:]]} matches any @acronym{ASCII} character.
+Using a character class is equivalent to mentioning each of the
+characters in that class; but the latter is not feasible in practice,
+since some classes include thousands of different characters.
+A character class should not appear as the lower or upper bound
+of a range.
+
 The usual regexp special characters are not special inside a
 character alternative.  A completely different set of characters is
-special inside character alternatives: @samp{]}, @samp{-} and @samp{^}.
+special: @samp{]}, @samp{-} and @samp{^}.
 To include @samp{]} in a character alternative, put it at the
 beginning.  To include @samp{^}, put it anywhere but at the beginning.
 To include @samp{-}, put it at the end.  Thus, @samp{[]^-]} matches
@@ -430,33 +439,36 @@ matches only @samp{/} rather than the likely-intended four characters.
 @end enumerate
 
 Some kinds of character alternatives are not the best style even
-though they are standardized by POSIX and are portable.  They include:
+though they have a well-defined meaning in Emacs.  They include:
 
 @enumerate
 @item
-A character alternative can include duplicates.  For example,
-@samp{[XYa-yYb-zX]} is less clear than @samp{[XYa-z]}.
+Although a range's bound can be almost any character, it is better
+style to stay within natural sequences of ASCII letters and digits
+because most people have not memorized character code tables.
+For example, @samp{[.-9]} is less clear than @samp{[./0-9]},
+and @samp{[`-~]} is less clear than @samp{[`a-z@{|@}~]}.
+Unicode character escapes can help here; for example, for most programmers
+@samp{[ก-ฺ฿-๛]} is less clear than @samp{[\u0E01-\u0E3A\u0E3F-\u0E5B]}.
 
 @item
-A range can denote just one, two, or three characters.  For example,
-@samp{[(-(]} is less clear than @samp{[(]}, @samp{[*-+]} is less clear
-than @samp{[*+]}, and @samp{[*-,]} is less clear than @samp{[*+,]}.
+Although a character alternative can include duplicates, it is better
+style to avoid them.  For example, @samp{[XYa-yYb-zX]} is less clear
+than @samp{[XYa-z]}.
 
 @item
-A @samp{-} also appear at the beginning of a character alternative, or
-as the upper bound of a range.  For example, although @samp{[-a-z]} is
-valid, @samp{[a-z-]} is better style; and although @samp{[!--/]} is
-valid, @samp{[!-,/-]} is clearer.
+Although a range can denote just one, two, or three characters, it
+is simpler to list the characters.  For example,
+@samp{[a-a0]} is less clear than @samp{[a0]}, @samp{[i-j]} is less clear
+than @samp{[ij]}, and @samp{[i-k]} is less clear than @samp{[ijk]}.
+
+@item
+Although a @samp{-} can appear at the beginning of a character
+alternative or as the upper bound of a range, it is better style to
+put @samp{-} by itself at the end of a character alternative.  For
+example, although @samp{[-a-z]} is valid, @samp{[a-z-]} is better
+style; and although @samp{[*--]} is valid, @samp{[*+,-]} is clearer.
 @end enumerate
-
-A character alternative can also specify named character classes
-(@pxref{Char Classes}).  This is a POSIX feature.  For example,
-@samp{[[:ascii:]]} matches any @acronym{ASCII} character.
-Using a character class is equivalent to mentioning each of the
-characters in that class; but the latter is not feasible in practice,
-since some classes include thousands of different characters.
-A character class should not appear as the lower or upper bound
-of a range.
 
 @item @samp{[^ @dots{} ]}
 @cindex @samp{^} in regexp
