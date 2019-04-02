@@ -343,20 +343,12 @@ Emacs configured with Cairo drawing and linked with cairo >= 1.16.0.
 ---
 ** Emacs now optionally displays a fill column indicator.
 
-The fill column indicator is a usefull functionality specially in
-prog-mode to indicate the position of a specific column. This is
-similar to what 'fill-column-indicator' package provides, but much
-faster and compatible with show-trailing-whitespace.
+This is similar to what 'fill-column-indicator' package provides, but
+much faster and compatible with show-trailing-whitespace.
 
 Customize the buffer-local variables 'display-fill-column-indicator'
 and 'display-fill-column-indicator-character' to activate the
 indicator.
-
-Alternatively you can use the modes
-'display-fill-column-indicator-mode' or the global
-'global-display-fill-column-indicator-mode' which enables it locally
-and globally respectively and also chooses the character to use if no
-one is set.
 
 The indicators is not displayed at all in minibuffer windows and
 in tooltips, as it is not useful there.
