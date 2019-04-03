@@ -1777,6 +1777,8 @@ dump_roots (struct dump_context *ctx)
   visit_static_gc_roots (visitor);
 }
 
+#define PDUMPER_MAX_OBJECT_SIZE 2048
+
 static dump_off
 field_relpos (const void *in_start, const void *in_field)
 {
@@ -1784,7 +1786,15 @@ field_relpos (const void *in_start, const void *in_field)
   ptrdiff_t in_field_val = (ptrdiff_t) in_field;
   eassert (in_start_val <= in_field_val);
   ptrdiff_t relpos = in_field_val - in_start_val;
-  eassert (relpos < 1024); /* Sanity check.  */
+  /* The following assertion attempts to detect bugs whereby IN_START
+     and IN_FIELD don't point to the same object/structure, on the
+     assumption that a too-large difference between them is
+     suspicious.  As of Apr 2019 the largest object we dump -- 'struct
+     buffer' -- is slightly smaller than 1KB, and we want to leave
+     some margin for future extensions.  If the assertion below is
+     ever violated, make sure the two pointers indeed point into the
+     same object, and if so, enlarge the value of PDUMPER_MAX_OBJECT_SIZE.  */
+  eassert (relpos < PDUMPER_MAX_OBJECT_SIZE);
   return (dump_off) relpos;
 }
 
