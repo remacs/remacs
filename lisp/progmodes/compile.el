@@ -77,7 +77,7 @@ If this is buffer-local in the destination buffer, Emacs obeys
 that value, otherwise it uses the value in the *compilation*
 buffer.  This enables a major-mode to specify its own value.")
 
-(defvar compilation-parse-errors-filename-function nil
+(defvar compilation-parse-errors-filename-function #'identity
   "Function to call to post-process filenames while parsing error messages.
 It takes one arg FILENAME which is the name of a file as found
 in the compilation output, and should return a transformed file name
@@ -86,18 +86,18 @@ or a buffer, the one which was compiled.")
 ;; match data.
 
 ;;;###autoload
-(defvar compilation-process-setup-function nil
+(defvar compilation-process-setup-function #'ignore
   "Function to call to customize the compilation process.
 This function is called immediately before the compilation process is
 started.  It can be used to set any variables or functions that are used
 while processing the output of the compilation process.")
 
 ;;;###autoload
-(defvar compilation-buffer-name-function nil
+(defvar compilation-buffer-name-function #'compilation--default-buffer-name
   "Function to compute the name of a compilation buffer.
 The function receives one argument, the name of the major mode of the
 compilation buffer.  It should return a string.
-If nil, compute the name with `(concat \"*\" (downcase major-mode) \"*\")'.")
+By default, it returns `(concat \"*\" (downcase name-of-mode) \"*\")'.")
 
 ;;;###autoload
 (defvar compilation-finish-functions nil
@@ -721,8 +721,9 @@ This only affects platforms that support asynchronous processes (see
 Then every error line will have a debug text property with the matcher that
 fit this line and the match data.  Use `describe-text-properties'.")
 
-(defvar compilation-exit-message-function nil "\
-If non-nil, called when a compilation process dies to return a status message.
+(defvar compilation-exit-message-function
+  (lambda (_process-status exit-status msg) (cons msg exit-status))
+  "If non-nil, called when a compilation process dies to return a status message.
 This should be a function of three arguments: process status, exit status,
 and exit message; it returns a cons (MESSAGE . MODELINE) of the strings to
 write into the compilation buffer, and to put in its mode line.")
@@ -1562,19 +1563,22 @@ point on its location in the *compilation* buffer."
   :version "20.3")
 
 
-(defun compilation-buffer-name (name-of-mode mode-command name-function)
+(defun compilation-buffer-name (name-of-mode _mode-command name-function)
   "Return the name of a compilation buffer to use.
 If NAME-FUNCTION is non-nil, call it with one argument NAME-OF-MODE
 to determine the buffer name.
 Likewise if `compilation-buffer-name-function' is non-nil.
-If current buffer has the major mode MODE-COMMAND,
+If current buffer has the NAME-OF-MODE major mode,
 return the name of the current buffer, so that it gets reused.
 Otherwise, construct a buffer name from NAME-OF-MODE."
-  (cond (name-function
-	 (funcall name-function name-of-mode))
-	(compilation-buffer-name-function
-	 (funcall compilation-buffer-name-function name-of-mode))
-	((eq mode-command major-mode)
+  (funcall (or name-function
+	       compilation-buffer-name-function
+               #'compilation--default-buffer-name)
+           name-of-mode))
+
+(defun compilation--default-buffer-name (name-of-mode)
+  (cond ((or (eq major-mode (intern-soft name-of-mode))
+             (eq major-mode (intern-soft (concat name-of-mode "-mode"))))
 	 (buffer-name))
 	(t
 	 (concat "*" (downcase name-of-mode) "*"))))
@@ -2778,7 +2782,8 @@ TRUE-DIRNAME is the `file-truename' of DIRNAME, if given."
 	;; If compilation-parse-errors-filename-function is
 	;; defined, use it to process the filename.  The result might be a
 	;; buffer.
-	(when compilation-parse-errors-filename-function
+	(unless (memq compilation-parse-errors-filename-function
+                      '(nil identity))
           (save-match-data
 	    (setq filename
 		  (funcall compilation-parse-errors-filename-function
