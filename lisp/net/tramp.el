@@ -4212,6 +4212,19 @@ the remote host use line-endings as defined in the variable
       ;; Reenable the timers.
       (with-timeout-unsuspend stimers))))
 
+(defun tramp-process-sentinel (proc event)
+  "Flush file caches and remove shell prompt."
+  (unless (process-live-p proc)
+    (let ((vec (process-get proc 'vector))
+	  (prompt (tramp-get-connection-property proc "prompt" nil)))
+      (when vec
+	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
+        (tramp-flush-connection-properties proc)
+        (tramp-flush-directory-properties vec ""))
+      (goto-char (point-max))
+      (when (and prompt (re-search-backward (regexp-quote prompt) nil t))
+	(delete-region (point) (point-max))))))
+
 (defun tramp-get-inode (vec)
   "Returns the virtual inode number.
 If it doesn't exist, generate a new one."
