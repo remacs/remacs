@@ -427,13 +427,23 @@ and after the region marked by the rectangle to search."
 
 (defcustom cua-rectangle-modifier-key 'meta
   "Modifier key used for rectangle commands bindings.
-On non-window systems, always use the meta modifier.
+On non-window systems, use `cua-rectangle-terminal-modifier-key'.
 Must be set prior to enabling CUA."
   :type '(choice (const :tag "Meta key" meta)
 		 (const :tag "Alt key" alt)
 		 (const :tag "Hyper key" hyper)
 		 (const :tag "Super key" super))
   :group 'cua)
+
+(defcustom cua-rectangle-terminal-modifier-key 'meta
+  "Modifier key used for rectangle commands bindings in terminals.
+Must be set prior to enabling CUA."
+  :type '(choice (const :tag "Meta key" meta)
+		 (const :tag "Alt key" alt)
+		 (const :tag "Hyper key" hyper)
+		 (const :tag "Super key" super))
+  :group 'cua
+  :version "27.1")
 
 (defcustom cua-enable-rectangle-auto-help t
   "If non-nil, automatically show help for region, rectangle and global mark."
@@ -1237,10 +1247,9 @@ If ARG is the atom `-', scroll upward by nearly full screen."
 (defun cua--init-keymaps ()
   ;; Cache actual rectangle modifier key.
   (setq cua--rectangle-modifier-key
-	(if (and cua-rectangle-modifier-key
-		 (memq window-system '(x)))
-	    cua-rectangle-modifier-key
-	  'meta))
+	(if (eq (framep (selected-frame)) t)
+	    cua-rectangle-terminal-modifier-key
+	  cua-rectangle-modifier-key))
   ;; C-return always toggles rectangle mark
   (define-key cua-global-keymap cua-rectangle-mark-key	'cua-set-rectangle-mark)
   (unless (eq cua--rectangle-modifier-key 'meta)

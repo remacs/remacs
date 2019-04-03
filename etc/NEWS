@@ -1252,6 +1252,13 @@ near the current column in Tabulated Lists (see variables
 +++
 *** 'text-mode-variant' is now obsolete, use 'derived-mode-p' instead.
 
+** CUA mode
+
+---
+*** New defcustom 'cua-rectangle-terminal-modifier-key'.
+This defcustom allows for the customization of the modifier key used
+in a terminal frame.
+
 
 * New Modes and Packages in Emacs 27.1
 
