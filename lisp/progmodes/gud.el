@@ -678,7 +678,7 @@ The option \"--fullname\" must be included in this value."
     ;; gud-marker-acc until we receive the rest of it.  Since we
     ;; know the full marker regexp above failed, it's pretty simple to
     ;; test for marker starts.
-    (if (string-match "\n\\(\032.*\\)?\\'" gud-marker-acc)
+    (if (string-match "\\(\n\\)?\\(\032.*\\)?\\'" gud-marker-acc)
 	(progn
 	  ;; Everything before the potential marker start can be output.
 	  (setq output (concat output (substring gud-marker-acc
