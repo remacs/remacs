@@ -385,6 +385,10 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** compile.el
+---
+*** In compilation-error-regexp-alist, 'line' (and 'end-line') can be functions
+
 ** cl-lib
 +++
 *** cl-defstruct has a new :noinline argument to prevent inlining its functions
@@ -1271,6 +1275,9 @@ documentation of the new mode and its commands.
 
 
 * Incompatible Lisp Changes in Emacs 27.1
+
+** In compilation-error-regexp-alist the old undocumented feature where 'line'
+could be a function of 2 arguments has been dropped.
 
 ** 'define-fringe-bitmap' is always defined, even when Emacs is built
 without any GUI support.
