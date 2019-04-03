@@ -1230,6 +1230,12 @@ the 128...255 range, as expected.
 This allows to create and parent immediately a minibuffer-only child
 frame when making a frame.
 
+---
+*** New predicates 'display-blink-cursor-p' and 'display-symbol-keys-p'.
+These predicates are to be preferred over 'display-graphic-p' when
+testing for blinking cursor capability and the capability to have
+symbols (e.g., [return], [tab], [backspace]) as keys respectively.
+
 ** Tabulated List mode
 
 +++

@@ -8690,7 +8690,7 @@ call `normal-erase-is-backspace-mode' (which see) instead."
                (and (not noninteractive)
                     (or (memq system-type '(ms-dos windows-nt))
 			(memq window-system '(w32 ns))
-                        (and (memq window-system '(x))
+                        (and (eq window-system 'x)
                              (fboundp 'x-backspace-delete-keys-p)
                              (x-backspace-delete-keys-p))
                         ;; If the terminal Emacs is running on has erase char
@@ -8700,6 +8700,8 @@ call `normal-erase-is-backspace-mode' (which see) instead."
                              (eq tty-erase-char ?\^H))))
              normal-erase-is-backspace)
            1 0)))))
+
+(declare-function display-symbol-keys-p "frame" (&optional display))
 
 (define-minor-mode normal-erase-is-backspace-mode
   "Toggle the Erase and Delete mode of the Backspace and Delete keys.
@@ -8736,8 +8738,7 @@ See also `normal-erase-is-backspace'."
   (let ((enabled (eq 1 (terminal-parameter
                         nil 'normal-erase-is-backspace))))
 
-    (cond ((or (memq window-system '(x w32 ns pc))
-	       (memq system-type '(ms-dos windows-nt)))
+    (cond ((display-symbol-keys-p)
 	   (let ((bindings
 		  '(([M-delete] [M-backspace])
 		    ([C-M-delete] [C-M-backspace])

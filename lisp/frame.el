@@ -1927,6 +1927,16 @@ frame's display)."
      (t
       nil))))
 
+(defun display-symbol-keys-p (&optional display)
+  "Return non-nil if DISPLAY supports symbol names as keys.
+This means that, for example, DISPLAY can differentiate between
+the keybinding RET and [return]."
+  (let ((frame-type (framep-on-display display)))
+    (or (memq frame-type '(x w32 ns pc))
+        ;; MS-DOS and MS-Windows terminals have built-in support for
+        ;; function (symbol) keys
+        (memq system-type '(ms-dos windows-nt)))))
+
 (declare-function x-display-screens "xfns.c" (&optional terminal))
 
 (defun display-screens (&optional display)
