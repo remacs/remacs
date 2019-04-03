@@ -1905,6 +1905,7 @@ frame's display)."
        (fboundp 'image-mask-p)
        (fboundp 'image-size)))
 
+(defalias 'display-blink-cursor-p 'display-graphic-p)
 (defalias 'display-multi-frame-p 'display-graphic-p)
 (defalias 'display-multi-font-p 'display-graphic-p)
 
@@ -2545,7 +2546,7 @@ terminals, cursor blinking is controlled by the terminal."
   :init-value (not (or noninteractive
 		       no-blinking-cursor
 		       (eq system-type 'ms-dos)
-		       (not (memq window-system '(x w32 ns)))))
+		       (not (display-blink-cursor-p))))
   :initialize 'custom-initialize-delay
   :group 'cursor
   :global t
