@@ -350,7 +350,7 @@ Customize the buffer-local variables 'display-fill-column-indicator'
 and 'display-fill-column-indicator-character' to activate the
 indicator.
 
-The indicators is not displayed at all in minibuffer windows and
+The indicator is not displayed at all in minibuffer windows and
 in tooltips, as it is not useful there.
 
 There are 2 new buffer local variables and 1 face to customize this

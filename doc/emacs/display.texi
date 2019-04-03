@@ -1141,7 +1141,7 @@ right-to-left paragraphs.
 @node Displaying Boundaries
 @section Displaying Boundaries
 
-@cindex mode, fill-column-indicator
+@cindex mode, display-fill-column-indicator
 @findex display-fill-column-indicator-mode
 @findex global-display-fill-column-indicator-mode
   Emacs can add an indicator to display a fill column position.  The

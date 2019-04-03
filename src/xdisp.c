@@ -33411,10 +33411,9 @@ either `relative' or `visual'.  */);
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator);
 
   DEFVAR_LISP ("display-fill-column-indicator-column", Vdisplay_fill_column_indicator_column,
-    doc: /* Column to draw the fill column indicator when
-`display-fill-column-indicator' is non-nil.  The default value is t
-which means that the indicator will use the `fill-column' variable. If
-a numeric value is set, the indicator will be drawn in that column
+    doc: /* Column for indicator when `display-fill-column-indicator' is non-nil.
+The default value is t which means that the indicator will use the `fill-column' variable.
+If a numeric value is set, the indicator will be drawn in that column
 independently of the `fill-column' value.  */);
   Vdisplay_fill_column_indicator_column = Qt;
   DEFSYM (Qdisplay_fill_column_indicator_column, "display-fill-column-indicator-column");
