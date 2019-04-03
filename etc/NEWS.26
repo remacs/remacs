@@ -431,9 +431,9 @@ always restricting the margin to a quarter of the window.
 
 +++
 ** Emacs can scroll horizontally using mouse, touchpad, and trackbar.
-You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
+You can enable this by customizing 'mouse-wheel-tilt-scroll'.  If you
 want to reverse the direction of the scroll, customize
-'mwheel-flip-direction'.
+'mouse-wheel-flip-direction'.
 
 +++
 ** The default GnuTLS priority string now includes %DUMBFW.
