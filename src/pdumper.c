@@ -495,6 +495,7 @@ struct dump_context
 
   Lisp_Object old_purify_flag;
   Lisp_Object old_post_gc_hook;
+  Lisp_Object old_process_environment;
 
 #ifdef REL_ALLOC
   bool blocked_ralloc;
@@ -3593,6 +3594,8 @@ dump_unwind_cleanup (void *data)
     r_alloc_inhibit_buffer_relocation (0);
 #endif
   Vpurify_flag = ctx->old_purify_flag;
+  Vpost_gc_hook = ctx->old_post_gc_hook;
+  Vprocess_environment = ctx->old_process_environment;
 }
 
 /* Return DUMP_OFFSET, making sure it is within the heap.  */
@@ -4024,12 +4027,6 @@ types.  */)
   Lisp_Object symbol = intern ("command-line-processed");
   specbind (symbol, Qnil);
 
-  /* Reset process-environment -- this is for when they re-dump a
-     pdump-restored emacs, since set_initial_environment wants always
-     to cons it from scratch.  */
-  Vprocess_environment = Qnil;
-  garbage_collect ();
-
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
   filename = ENCODE_FILE (filename);
@@ -4090,6 +4087,12 @@ types.  */)
   /* Make sure various weird things are less likely to happen.  */
   ctx->old_post_gc_hook = Vpost_gc_hook;
   Vpost_gc_hook = Qnil;
+
+  /* Reset process-environment -- this is for when they re-dump a
+     pdump-restored emacs, since set_initial_environment wants always
+     to cons it from scratch.  */
+  ctx->old_process_environment = Vprocess_environment;
+  Vprocess_environment = Qnil;
 
   ctx->fd = emacs_open (SSDATA (filename),
                         O_RDWR | O_TRUNC | O_CREAT, 0666);
