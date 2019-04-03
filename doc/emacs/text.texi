@@ -644,6 +644,10 @@ or before @samp{)}, @samp{:} or @samp{?}); and
 @code{fill-polish-nobreak-p} (don't break after a one letter word,
 even if preceded by a non-whitespace character).
 
+  Emacs can display an indicator in the @code{fill-column} position
+using the Display fill column indicator mode 
+(@xref{Displaying Boundaries, display-fill-column-indicator}).
+
 @node Fill Prefix
 @subsection The Fill Prefix
 
