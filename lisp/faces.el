@@ -55,6 +55,7 @@ This means to treat a terminal of type TYPE as if it were of type ALIAS."
   :group 'terminals
   :version "25.1")
 
+(declare-function display-graphic-p "frame" (&optional display))
 (declare-function xw-defined-colors "term/common-win" (&optional frame))
 
 (defvar help-xref-stack-item)
@@ -1239,7 +1240,7 @@ of a global face.  Value is the new attribute value."
 	       ;; explicitly in VALID, using color approximation code
 	       ;; in tty-colors.el.
 	       (when (and (memq attribute '(:foreground :background))
-			  (not (memq (window-system frame) '(x w32 ns)))
+			  (not (display-graphic-p frame))
 			  (not (member new-value
 				       '("unspecified"
 					 "unspecified-fg" "unspecified-bg"))))
@@ -1833,7 +1834,7 @@ The argument FRAME specifies which frame to try.
 The value may be different for frames on different display types.
 If FRAME doesn't support colors, the value is nil.
 If FRAME is nil, that stands for the selected frame."
-  (if (memq (framep (or frame (selected-frame))) '(x w32 ns))
+  (if (display-graphic-p frame)
       (xw-defined-colors frame)
     (mapcar 'car (tty-color-alist frame))))
 (defalias 'x-defined-colors 'defined-colors)
@@ -1877,7 +1878,7 @@ or one of the strings \"unspecified-fg\" or \"unspecified-bg\".
 
 If FRAME is omitted or nil, use the selected frame."
   (unless (member color '(unspecified "unspecified-bg" "unspecified-fg"))
-    (if (member (framep (or frame (selected-frame))) '(x w32 ns))
+    (if (display-graphic-p frame)
 	(xw-color-defined-p color frame)
       (numberp (tty-color-translate color frame)))))
 (defalias 'x-color-defined-p 'color-defined-p)
@@ -1903,7 +1904,7 @@ return value is nil."
   (cond
    ((member color '(unspecified "unspecified-fg" "unspecified-bg"))
     nil)
-   ((memq (framep (or frame (selected-frame))) '(x w32 ns))
+   ((display-graphic-p frame)
     (xw-color-values color frame))
    (t
     (tty-color-values color frame))))
@@ -1917,7 +1918,7 @@ return value is nil."
 The optional argument DISPLAY specifies which display to ask about.
 DISPLAY should be either a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display."
-  (if (memq (framep-on-display display) '(x w32 ns))
+  (if (display-graphic-p display)
       (xw-display-color-p display)
     (tty-display-color-p display)))
 (defalias 'x-display-color-p 'display-color-p)
@@ -1928,12 +1929,9 @@ If omitted or nil, that stands for the selected frame's display."
   "Return non-nil if frames on DISPLAY can display shades of gray.
 DISPLAY should be either a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display."
-  (let ((frame-type (framep-on-display display)))
-    (cond
-     ((memq frame-type '(x w32 ns))
-      (x-display-grayscale-p display))
-     (t
-      (> (tty-color-gray-shades display) 2)))))
+  (if (display-graphic-p display)
+      (x-display-grayscale-p display)
+    (> (tty-color-gray-shades display) 2)))
 
 (defun read-color (&optional prompt convert-to-RGB allow-empty-name msg)
   "Read a color name or RGB triplet.

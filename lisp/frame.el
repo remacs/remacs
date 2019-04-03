@@ -974,7 +974,7 @@ recently selected windows nor the buffer list."
   (select-frame frame norecord)
   (raise-frame frame)
   ;; Ensure, if possible, that FRAME gets input focus.
-  (when (memq (window-system frame) '(x w32 ns))
+  (when (display-multi-frame-p frame)
     (x-focus-frame frame))
   ;; Move mouse cursor if necessary.
   (cond
@@ -1027,16 +1027,15 @@ that variable should be nil."
   "Do whatever is right to suspend the current frame.
 Calls `suspend-emacs' if invoked from the controlling tty device,
 `suspend-tty' from a secondary tty device, and
-`iconify-or-deiconify-frame' from an X frame."
+`iconify-or-deiconify-frame' from a graphical frame."
   (interactive)
-  (let ((type (framep (selected-frame))))
-    (cond
-     ((memq type '(x ns w32)) (iconify-or-deiconify-frame))
-     ((eq type t)
-      (if (controlling-tty-p)
-	  (suspend-emacs)
-	(suspend-tty)))
-     (t (suspend-emacs)))))
+  (cond
+   ((display-multi-frame-p) (iconify-or-deiconify-frame))
+   ((eq (framep (selected-frame)) t)
+    (if (controlling-tty-p)
+        (suspend-emacs)
+      (suspend-tty)))
+   (t (suspend-emacs))))
 
 (defun make-frame-names-alist ()
   ;; Only consider the frames on the same display.

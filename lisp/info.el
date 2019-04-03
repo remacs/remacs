@@ -4768,7 +4768,7 @@ first line or header line, and for breadcrumb links.")
             ;; This is a serious problem for trying to handle multiple
             ;; frame types at once.  We want this text to be invisible
             ;; on frames that can display the font above.
-            (when (memq (framep (selected-frame)) '(x pc w32 ns))
+            (when (display-multi-font-p)
               (add-text-properties (1- (match-beginning 2)) (match-end 2)
                                    '(invisible t front-sticky nil rear-nonsticky t))))))
 
