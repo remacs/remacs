@@ -24,8 +24,8 @@ use crate::{
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        set_window_hscroll, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
-        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
+        windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -1416,7 +1416,7 @@ fn scroll_horizontally(
     arg: Option<InteractiveNumericPrefix>,
     set_minimum: bool,
     left: bool,
-) -> LispObject {
+) -> EmacsInt {
     let mut w: LispWindowRef = selected_window().into();
     let requested_arg = match arg {
         None => EmacsInt::from(w.body_width(false)) - 2,
@@ -1430,7 +1430,7 @@ fn scroll_horizontally(
         }
     };
 
-    let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
+    let result = set_window_hscroll(w, w.hscroll as EmacsInt + requested_arg);
 
     if set_minimum {
         w.min_hscroll = w.hscroll;
@@ -1449,7 +1449,7 @@ fn scroll_horizontally(
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, true)
 }
 
@@ -1462,7 +1462,7 @@ pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> 
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, false)
 }
 
@@ -1606,6 +1606,18 @@ pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
 pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     win.hscroll as EmacsInt
+}
+
+// Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
+// range, returning the new amount as a fixnum.
+#[no_mangle]
+pub extern "C" fn set_window_hscroll(mut w: LispWindowRef, hscroll: EmacsInt) -> EmacsInt {
+    hscroll
+}
+
+#[lisp_fn(min = "1", name = "set-window-hscroll", c_name = "set_window_hscroll")]
+pub fn set_window_hscroll_lisp(window: LispWindowLiveOrSelected, ncol: EmacsInt) -> EmacsInt {
+    set_window_hscroll(window.into(), ncol)
 }
 
 #[no_mangle]

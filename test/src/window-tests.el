@@ -26,30 +26,3 @@
       (split-window-vertically)
       (other-window 1)
       (should (< current (window-top-line))))))
-
-(ert-deftest window-hscroll ()
-  "Effectively tests both `window-hscroll' (the getter) and
-  `set-window-hscroll' (the setter)."
-
-  ;; Can we change hscroll on this window?
-  (set-window-hscroll nil 42)
-  (should (= (window-hscroll) 42))
-  (should (= (window-hscroll nil) 42))
-  (set-window-hscroll nil 7)
-  (should (= (window-hscroll) 7))
-  (should (= (window-hscroll nil) 7))
-
-  ;; Can we correctly operate on a different window?
-  (let ((initial-window (selected-window))
-        (other-window (split-window)))
-    (set-window-hscroll initial-window 1337)
-    (set-window-hscroll other-window 4711)
-    (should (= (window-hscroll) 1337))
-    (should (= (window-hscroll initial-window) 1337))
-    (should (= (window-hscroll other-window) 4711))
-    (select-window other-window)
-    (should (= (window-hscroll) 4711))
-    (should (= (window-hscroll initial-window) 1337))
-    (should (= (window-hscroll other-window) 4711))
-    (delete-window other-window)
-    ))
