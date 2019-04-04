@@ -562,7 +562,7 @@ LINE, END-LINE, COL, and END-COL can also be functions of no argument
 that return the corresponding line or column number.  They can assume REGEXP
 has just been matched, and should correspondingly preserve this match data.
 
-f/usr/shaTYPE is 2 or nil for a real error or 1 for warning or 0 for info.
+TYPE is 2 or nil for a real error or 1 for warning or 0 for info.
 TYPE can also be of the form (WARNING . INFO).  In that case this
 will be equivalent to 1 if the WARNING'th subexpression matched
 or else equivalent to 0 if the INFO'th subexpression matched.
