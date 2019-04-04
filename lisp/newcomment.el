@@ -319,11 +319,11 @@ behavior for explicit filling, you might as well use \\[newline-and-indent]."
 (defcustom comment-empty-lines nil
   "If nil, `comment-region' does not comment out empty lines.
 If t, it always comments out empty lines.
-If `eol' it only comments out empty lines if comments are
-terminated by the end of line (i.e. `comment-end' is empty)."
+If `eol', it only comments out empty lines if comments are
+terminated by the end of line (i.e., `comment-end' is empty)."
   :type '(choice (const :tag "Never" nil)
-	  (const :tag "Always" t)
-	  (const :tag "EOl-terminated" eol))
+                 (const :tag "Always" t)
+                 (const :tag "EOL-terminated" eol))
   :group 'comment)
 
 ;;;;
