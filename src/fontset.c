@@ -1447,7 +1447,7 @@ or t for the default fontset.
 
 TARGET may be a single character to use FONT-SPEC for.
 
-Target may be a cons (FROM . TO), where FROM and TO are characters.
+TARGET may be a cons (FROM . TO), where FROM and TO are characters.
 In that case, use FONT-SPEC for all the characters in the range
 between FROM and TO (inclusive).
 
