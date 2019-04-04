@@ -8,8 +8,10 @@ use crate::{
     lisp::LispObject,
     numbers::LispNumber,
     remacs_sys::Ftext_properties_at,
-    remacs_sys::Qt,
-    remacs_sys::{get_char_property_and_overlay, set_text_properties, textget},
+    remacs_sys::{
+        get_char_property_and_overlay, set_text_properties, textget, validate_interval_range,
+    },
+    remacs_sys::{EmacsInt, Lisp_Interval, Qnil, Qt, ThreadState},
 };
 
 /// Return the value of POSITION's property PROP, in OBJECT.
@@ -31,7 +33,39 @@ pub fn get_char_property(position: LispNumber, prop: LispObject, object: LispObj
 /// If POSITION is at the end of OBJECT, the value is nil.
 #[lisp_fn(min = "2")]
 pub fn get_text_property(position: LispNumber, prop: LispObject, object: LispObject) -> LispObject {
-    unsafe { textget(Ftext_properties_at(position.into(), object), prop) }
+    unsafe { textget(text_properties_at(position.into(), object), prop) }
+}
+
+/// Return the list of properties of the character at POSITION in OBJECT.
+/// If the optional second argument OBJECT is a buffer (or nil, which means
+/// the current buffer), POSITION is a buffer position (integer or marker).
+/// If OBJECT is a string, POSITION is a 0-based index into it.
+/// If POSITION is at the end of OBJECT, the value is nil.
+#[lisp_fn(min = "1")]
+pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> LispObject {
+    if object.is_nil() {
+        object = ThreadState::current_buffer().into();
+    }
+
+    let i: *mut Lisp_Interval =
+        unsafe { validate_interval_range(object, &mut position, &mut position, false) };
+
+    if ptr::eq(i, ptr::null_mut()) {
+        return Qnil;
+    }
+
+    unsafe {
+        /* If POSITION is at the end of the interval,
+        it means it's the end of OBJECT.
+        There are no properties at the very end,
+        since no character follows.  */
+        let position_isize = EmacsInt::from(position) as isize;
+        if position_isize == ((*i).total_length + (*i).position) {
+            return Qnil;
+        }
+
+        (*i).plist
+    }
 }
 
 /// Completely replace properties of the text from START to END
