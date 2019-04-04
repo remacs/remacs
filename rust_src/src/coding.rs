@@ -102,11 +102,11 @@ pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
 /// Decode the string `input_string` using the specified coding system
 /// for system functions, if any.
 pub fn decode_system(input_string: LispStringRef) -> LispStringRef {
-    let local_coding_system: LispObject = unsafe { globals.Vlocale_coding_system }.into();
-    if !local_coding_system.is_nil() {
-        unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
+    let local_coding_system: LispObject = unsafe { globals.Vlocale_coding_system };
+    if local_coding_system.is_nil() {
+        input_string
     } else {
-        input_string.into()
+        unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
     }
 }
 
