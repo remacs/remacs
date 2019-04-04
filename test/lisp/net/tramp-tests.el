@@ -3923,6 +3923,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  ;; `make-process' supports file name handlers since Emacs 27.
   (skip-unless (tramp--test-emacs27-p))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
@@ -5362,20 +5363,14 @@ process sentinels.  They shall not disturb each other."
   ;; we mark it as unstable.
   :tags '(:expensive-test :unstable)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
-  ;; This test is sensible wrt to other running tests.  Let it work
-  ;; only if it is the only selected test.
-  ;; FIXME: There must be a better solution.
-  (skip-unless
-   (= 1 (length
-	 (ert-select-tests (ert--stats-selector ert--current-run-stats) t))))
+  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
 
   (with-timeout
       (tramp--test-asynchronous-requests-timeout (tramp--test-timeout-handler))
     (define-key special-event-map [sigusr1] #'tramp--test-timeout-handler)
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
-	   (shell-file-name "/bin/sh")
+	   (shell-file-name (if (tramp--test-adb-p) "/system/bin/sh" "/bin/sh"))
 	   (watchdog
             (start-process-shell-command
              "*watchdog*" nil
@@ -5475,7 +5470,7 @@ process sentinels.  They shall not disturb each other."
                     "Process filter %s %s %s" proc string (current-time-string))
                    (with-current-buffer (process-buffer proc)
                      (insert string))
-                   (unless (zerop (length string))
+                   (when (< (process-get proc 'bar) 2)
 		     (dired-uncache (process-get proc 'foo))
                      (should (file-attributes (process-get proc 'foo))))))
                 ;; Add process sentinel.  It shall not perform remote
@@ -5528,7 +5523,12 @@ process sentinels.  They shall not disturb each other."
             (dolist (buf buffers)
               (with-current-buffer buf
                 (should
-		 (string-equal (format "%s\n%s\n" buf buf) (buffer-string)))))
+		 (string-equal
+		  ;; tramp-adb.el echoes, so we must add the three strings.
+		  (if (tramp--test-adb-p)
+		      (format "%s\n%s\n%s\n%s\n%s\n" buf buf buf buf buf)
+		    (format "%s\n%s\n" buf buf))
+		  (buffer-string)))))
             (should-not
              (directory-files
               tmp-name nil directory-files-no-dot-files-regexp)))
@@ -5729,8 +5729,8 @@ Since it unloads Tramp, it shall be the last test to run."
 ;;   do not work properly for `nextcloud'.
 ;; * Fix `tramp-test29-start-file-process' and
 ;;   `tramp-test30-make-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.
-;; * Fix `tramp-test44-threads'.
+;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.  Looks
+;;   like it is resolved now.  Remove `:unstable' tag?
 
 (provide 'tramp-tests)
 ;;; tramp-tests.el ends here
