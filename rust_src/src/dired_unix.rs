@@ -12,6 +12,7 @@ use std::ptr::null_mut;
 use std::slice;
 
 use crate::{
+    coding::decode_system,
     fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
@@ -769,11 +770,12 @@ pub fn get_users() -> LispObject {
 pub fn get_groups() -> LispObject {
     let mut group_names = Vec::new();
     loop {
-        let gr = unsafe { getgrent() };
-        if gr.is_null() {
+        let group = unsafe { getgrent() };
+        if group.is_null() {
             break;
         }
-        group_names.push(unsafe { build_string((*gr).gr_name) });
+        let group_name: LispStringRef = unsafe { build_string((*group).gr_name) }.into();
+        group_names.push(decode_system(group_name).into());
     }
     unsafe { endgrent() };
     list(&group_names)
