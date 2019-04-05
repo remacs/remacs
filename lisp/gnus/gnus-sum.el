@@ -10038,7 +10038,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 		 (crosspost "Crosspost" "Crossposting")))
 	(copy-buf (save-excursion
 		    (nnheader-set-temp-buffer " *copy article*")))
-        art-group to-method new-xref to-groups
+	art-group to-method new-xref article to-groups
 	articles-to-update-marks encoded)
     (unless (assq action names)
       (error "Unknown action %s" action))
@@ -10088,7 +10088,8 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 		  (or (car select-method)
 		      (gnus-group-decoded-name to-newsgroup))
 		  articles)
-    (dolist (article articles)
+    (while articles
+      (setq article (pop articles))
       ;; Set any marks that may have changed in the summary buffer.
       (when gnus-preserve-marks
 	(gnus-summary-push-marks-to-backend article))
