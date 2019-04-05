@@ -6699,7 +6699,7 @@ search, and an argument indicating an interactive call."
     (if (and interactive
 	     (or (nth 3 state)
 		 (nth 4 state)
-		 (looking-at (concat "[ \t]*" comment-start-skip))))
+		 (looking-at (concat "[ \t]*\\(?:" comment-start-skip "\\)"))))
 	(forward-sentence (- count))
       (while (> count 0)
 	(vhdl-beginning-of-statement-1 lim)

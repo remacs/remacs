@@ -1275,7 +1275,8 @@ Directive lines are treated as comments."
                      (concat "[ \t]*"
                              (regexp-quote fortran-continuation-string)))
                     (looking-at "[ \t]*$\\| \\{5\\}[^ 0\n]\\|\t[1-9]")
-                    (looking-at (concat "[ \t]*" comment-start-skip)))))
+                    (looking-at (concat "[ \t]*\\(?:"
+                                        comment-start-skip "\\)")))))
     (cond ((and continue-test
                 (not not-first-statement))
            (message "Incomplete continuation statement."))
@@ -1298,7 +1299,8 @@ Directive lines are treated as comments."
                 (or (looking-at fortran-comment-line-start-skip)
                     (looking-at fortran-directive-re)
                     (looking-at "[ \t]*$\\|     [^ 0\n]\\|\t[1-9]")
-                    (looking-at (concat "[ \t]*" comment-start-skip)))))
+                    (looking-at (concat "[ \t]*\\(?:"
+                                        comment-start-skip "\\)")))))
     (if (not not-last-statement)
         'last-statement)))
 
@@ -2146,7 +2148,8 @@ Always returns non-nil (to prevent `fill-paragraph' being called)."
               (or (looking-at "[ \t]*$")
                   (looking-at fortran-comment-line-start-skip)
                   (and comment-start-skip
-                       (looking-at (concat "[ \t]*" comment-start-skip)))))
+                       (looking-at (concat "[ \t]*\\(?:"
+                                           comment-start-skip "\\)")))))
       (save-excursion
         ;; Find beginning of statement.
         (fortran-next-statement)

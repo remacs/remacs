@@ -1446,9 +1446,9 @@ in order to figure out the indentation of some other (further down) point."
   (and (smie-indent--bolp)
        (save-excursion
          (comment-normalize-vars)
-         (re-search-forward (concat comment-start-skip
+         (re-search-forward (concat "\\(?:" comment-start-skip "\\)"
                                     "fixindent"
-                                    comment-end-skip)
+                                    "\\(?:" comment-end-skip "\\)")
                             ;; 1+ to account for the \n comment termination.
                             (1+ (line-end-position)) t))
        (current-column)))
