@@ -20183,19 +20183,23 @@ append_space_for_newline (struct it *it, bool default_face_p)
 		   XFIXNAT (Vdisplay_fill_column_indicator_column);
 
 	       struct font *font =
-	         default_face->font ? default_face->font : FRAME_FONT (it->f);
+	         default_face->font ?
+		   default_face->font : FRAME_FONT (it->f);
 	       const int char_width =
-	         font->average_width ? font->average_width : font->space_width;
+	         font->average_width ?
+		   font->average_width : font->space_width;
 
 	       const int column_x =
-		 char_width * fill_column_indicator_column + it->lnum_pixel_width;
+		 char_width * fill_column_indicator_column +
+		   it->lnum_pixel_width;
 
 	       if (it->current_x == column_x)
 	         {
 	           it->c = it->char_to_display =
 		     XFIXNAT (Vdisplay_fill_column_indicator_character);
 	           it->face_id =
-		     merge_faces (it->w, Qfill_column_face, 0, DEFAULT_FACE_ID);
+		     merge_faces (it->w, Qfill_column_face,
+		                  0, DEFAULT_FACE_ID);
 	           face = FACE_FROM_ID(it->f, it->face_id);
 	           goto produce_glyphs;
 	         }
@@ -20444,10 +20448,12 @@ extend_face_to_end_of_line (struct it *it)
 	      struct font *font =
 	        default_face->font ? default_face->font : FRAME_FONT (f);
 	      const int char_width =
-	        font->average_width ? font->average_width : font->space_width;
+	        font->average_width ?
+		  font->average_width : font->space_width;
 
-	      const int column_x = char_width * fill_column_indicator_column +
-	        it->lnum_pixel_width;
+	      const int column_x =
+	        char_width * fill_column_indicator_column +
+	          it->lnum_pixel_width;
 
 	      if ((it->current_x <= column_x)
 	          && (column_x <= it->last_visible_x))
@@ -20459,39 +20465,43 @@ extend_face_to_end_of_line (struct it *it)
 	          const bool saved_box_start = it->start_of_box_run_p;
 	          Lisp_Object save_object = it->object;
 
-	          /* The stretch width needs to considet the latter added glyph */
-	          const int stretch_width = column_x - it->current_x - char_width;
+	          /* The stretch width needs to considet the latter
+	             added glyph */
+	          const int stretch_width =
+	            column_x - it->current_x - char_width;
 
 	          memset (&it->position, 0, sizeof it->position);
 	          it->avoid_cursor_p = true;
 	          it->object = Qnil;
 
-	          /* Only generate a stretch glysph if there is distance between
-	             current_x and and the indicator position */
+	          /* Only generate a stretch glysph if there is distance
+	             between current_x and and the indicator position */
 	          if (stretch_width > 0)
-	    	{
-	    	  int stretch_ascent = (((it->ascent + it->descent)
-	    	                     * FONT_BASE (font)) / FONT_HEIGHT (font));
-	              append_stretch_glyph (it, Qnil, stretch_width,
-	                                 it->ascent + it->descent, stretch_ascent);
-	    	}
+		    {
+	    	      int stretch_ascent = (((it->ascent + it->descent)
+		                             * FONT_BASE (font)) / FONT_HEIGHT (font));
+		      append_stretch_glyph (it, Qnil, stretch_width,
+		                            it->ascent + it->descent,
+		                            stretch_ascent);
+		    }
 
-	          /* Generate the glysph indicator only if append_space_for_newline
-	             didn't already. */
+	          /* Generate the glysph indicator only if
+	             append_space_for_newline didn't already. */
 	          if (it->current_x < column_x)
 	            {
-	    	  it->char_to_display =
+		      it->char_to_display =
 	                XFIXNAT (Vdisplay_fill_column_indicator_character);
 	              it->face_id =
-	                merge_faces (it->w, Qfill_column_face, 0, DEFAULT_FACE_ID);
+	                merge_faces (it->w, Qfill_column_face,
+	                             0, DEFAULT_FACE_ID);
 	              PRODUCE_GLYPHS (it);
 	            }
 
 	          /* Restore the face after the indicator was generated */
 	          it->face_id = saved_face_id;
 
-	          /* If there is space after the indicator generate an extra
-	             empty glysph to restore the face. */
+	          /* If there is space after the indicator generate an
+	             extra empty glysph to restore the face. */
 	          it->char_to_display = ' ';
 	          PRODUCE_GLYPHS (it);
 
@@ -20630,8 +20640,8 @@ extend_face_to_end_of_line (struct it *it)
 	{
 	  int fill_column_indicator_column = -1;
 
-	  /* Vdisplay_fill_column_indicator_column accepts the special value t
-	     to use the default fill-column variable.  */
+	  /* Vdisplay_fill_column_indicator_column accepts the special
+	     value t to use the default fill-column variable.  */
 	  if (EQ (Vdisplay_fill_column_indicator_column, Qt)
 	      && FIXNATP (BVAR (current_buffer, fill_column)))
 	    fill_column_indicator_column =

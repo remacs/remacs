@@ -649,6 +649,11 @@ since it could result in memory overflow and make Emacs crash."
                                          :value nil))
                                  "26.1")
 
+             (display-fill-column-indicator display-fill-column-indicator
+                                 (choice
+                                  (const :tag "Off (nil)" :value nil)
+                                  (const :tag "On (t)" :value t))
+                                  "27.1")
              (display-fill-column-indicator-column display-fill-column-indicator
                                  integer "27.1")
              (display-fill-column-indicator-character display-fill-column-indicator
