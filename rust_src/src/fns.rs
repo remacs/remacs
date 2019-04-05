@@ -345,13 +345,13 @@ pub fn nreverse(mut seq: LispObject) -> LispObject {
     } else if seq.is_string() {
         return reverse(seq);
     } else if let Some(cons) = seq.as_cons() {
-        let mut iter = cons
-            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
-            .peekable();
+        let mut iter =
+            itertools::put_back(cons.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on));
         let mut prev = Qnil;
         while let Some(tail) = iter.next() {
-            // Invoked to advance the underlying iterator
-            iter.peek();
+            if let Some(next) = iter.next() {
+                iter.put_back(next);
+            }
             tail.set_cdr(prev);
             prev = tail.into();
         }
