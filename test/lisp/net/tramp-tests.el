@@ -3926,6 +3926,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   ;; `make-process' supports file name handlers since Emacs 27.
   (skip-unless (tramp--test-emacs27-p))
 
+  (tramp--test-instrument-test-case 0
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
@@ -4045,11 +4046,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		    (while (= (point-min) (point-max))
 		      (while (accept-process-output proc 0 nil t))))
 		  (should
-		   (string-equal (buffer-string) "cat: /: Is a directory\n"))))
+		   (string-match "^cat:.* Is a directory" (buffer-string)))))
 
 	    ;; Cleanup.
 	    (ignore-errors (delete-process proc))
-	    (ignore-errors (kill-buffer stderr))))))))
+	    (ignore-errors (kill-buffer stderr)))))))))
 
 (ert-deftest tramp-test31-interrupt-process ()
   "Check `interrupt-process'."
@@ -4365,7 +4366,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check that connection-local `explicit-shell-file-name' is set."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  ;; Prior Emacs 27, `shell-file-name' was hard coded as "/bin/sh" for
+  ;; remote processes in Emacs.  That doesn't work for tramp-adb.el.
+  (skip-unless (or (and (tramp--test-adb-p) (tramp--test-emacs27-p))
+		   (tramp--test-sh-p)))
   ;; Since Emacs 26.1.
   (skip-unless (and (fboundp 'connection-local-set-profile-variables)
 		    (fboundp 'connection-local-set-profiles)))
@@ -5363,7 +5367,10 @@ process sentinels.  They shall not disturb each other."
   ;; we mark it as unstable.
   :tags '(:expensive-test :unstable)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  ;; Prior Emacs 27, `shell-file-name' was hard coded as "/bin/sh" for
+  ;; remote processes in Emacs.  That doesn't work for tramp-adb.el.
+  (skip-unless (or (and (tramp--test-adb-p) (tramp--test-emacs27-p))
+		   (tramp--test-sh-p)))
 
   (with-timeout
       (tramp--test-asynchronous-requests-timeout (tramp--test-timeout-handler))
@@ -5731,6 +5738,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;;   `tramp-test30-make-process' on MS Windows (`process-send-eof'?).
 ;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.  Looks
 ;;   like it is resolved now.  Remove `:unstable' tag?
+;; * Implement `tramp-test31-interrupt-process' for `adb'.
 
 (provide 'tramp-tests)
 ;;; tramp-tests.el ends here
