@@ -1,6 +1,6 @@
 //! Functions operating on windows.
 
-use std::{cmp, fmt, ptr};
+use std::{cmp, convert::TryFrom, fmt, ptr};
 
 use libc::c_int;
 
@@ -15,7 +15,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
-    numbers::{check_range, LispNumber},
+    numbers::{check_range, LispNumber, MOST_POSITIVE_FIXNUM},
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
@@ -24,8 +24,8 @@ use crate::{
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        set_window_hscroll, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
-        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
+        windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -35,6 +35,7 @@ use crate::{
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::{c_specpdl_index, ThreadState},
+    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -1416,7 +1417,7 @@ fn scroll_horizontally(
     arg: Option<InteractiveNumericPrefix>,
     set_minimum: bool,
     left: bool,
-) -> LispObject {
+) -> EmacsInt {
     let mut w: LispWindowRef = selected_window().into();
     let requested_arg = match arg {
         None => EmacsInt::from(w.body_width(false)) - 2,
@@ -1430,7 +1431,7 @@ fn scroll_horizontally(
         }
     };
 
-    let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
+    let result = set_window_hscroll(w, w.hscroll as EmacsInt + requested_arg);
 
     if set_minimum {
         w.min_hscroll = w.hscroll;
@@ -1449,7 +1450,7 @@ fn scroll_horizontally(
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, true)
 }
 
@@ -1462,7 +1463,7 @@ pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> 
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, false)
 }
 
@@ -1606,6 +1607,47 @@ pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
 pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     win.hscroll as EmacsInt
+}
+
+// Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
+// range, returning the new amount as a fixnum.
+#[no_mangle]
+pub extern "C" fn set_window_hscroll(mut w: LispWindowRef, hscroll: EmacsInt) -> EmacsInt {
+    // Horizontal scrolling has problems with large scroll amounts.
+    // It's too slow with long lines, and even with small lines the
+    // display can be messed up.  For now, though, impose only the limits
+    // required by the internal representation: horizontal scrolling must
+    // fit in fixnum (since it's visible to Elisp) and into isize
+    // (since it's stored in a ptrdiff_t).
+    let hscroll_max = match isize::try_from(MOST_POSITIVE_FIXNUM) {
+        Ok(mpf) => cmp::max(mpf, isize::max_value()),
+        Err(_) => isize::max_value(),
+    };
+    let new_hscroll = clip_to_bounds(0, hscroll, hscroll_max);
+
+    // Prevent redisplay shortcuts when changing the hscroll.
+    if w.hscroll != new_hscroll {
+        let mut buf: LispBufferRef = w.contents.into();
+        buf.set_prevent_redisplay_optimizations_p(true);
+    }
+
+    w.hscroll = new_hscroll;
+    w.set_suspend_auto_hscroll(true);
+
+    // new_hscroll must fit in EmacsInt, since 0 <= new_scroll <= hscroll which is EmacsInt
+    new_hscroll as EmacsInt
+}
+
+/// Set number of columns WINDOW is scrolled from left margin to NCOL.
+/// WINDOW must be a live window and defaults to the selected one.
+/// Clip the number to a reasonable value if out of range.
+/// Return the new number.  NCOL should be zero or positive.
+///
+/// Note that if `automatic-hscrolling' is non-nil, you cannot scroll the
+/// window so that the location of point moves off-window.
+#[lisp_fn(min = "1", name = "set-window-hscroll", c_name = "set_window_hscroll")]
+pub fn set_window_hscroll_lisp(window: LispWindowLiveOrSelected, ncol: EmacsInt) -> EmacsInt {
+    set_window_hscroll(window.into(), ncol)
 }
 
 #[no_mangle]
