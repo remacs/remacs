@@ -588,6 +588,8 @@ even if it is dead.  The return value is never nil.  */)
       && strncmp (SSDATA (name), SSDATA (Vcode_conversion_workbuf_name),
 		  SBYTES (Vcode_conversion_workbuf_name)) == 0)
     b->inhibit_buffer_hooks = true;
+  else
+    b->inhibit_buffer_hooks = false;
 
   bset_undo_list (b, SREF (name, 0) != ' ' ? Qnil : Qt);
 
