@@ -137,7 +137,7 @@ more Emacs-y.
    The file `rust-toolchain` indicates the version that gets installed.
    This happens automatically, so don't override the toolchain manually.
    IMPORTANT: Whenever the toolchain updates, you have to reinstall
-   rustfmt manually. PRs to fix this issue are very welcome.
+   rustfmt manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like:
