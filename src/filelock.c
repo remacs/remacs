@@ -822,6 +822,7 @@ t if it is locked by you, else a string saying which user has locked it.  */)
   USE_SAFE_ALLOCA;
 
   filename = Fexpand_file_name (filename, Qnil);
+  filename = ENCODE_FILE (filename);
 
   MAKE_LOCK_NAME (lfname, filename);
 
