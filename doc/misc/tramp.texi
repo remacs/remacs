@@ -3010,7 +3010,7 @@ Starting with Emacs 26, you could use connection-local variables for
 setting different values of @code{explicit-shell-file-name} for
 different remote hosts.
 @ifinfo
-@xref{Connection Variables, , , emacs}
+@xref{Connection Variables, , , emacs}.
 @end ifinfo
 
 @lisp
