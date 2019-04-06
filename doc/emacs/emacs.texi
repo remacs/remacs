@@ -1484,7 +1484,7 @@ Stevens, Andy Stewart, Jonathan Stigelman, Martin Stjernholm, Kim F.
 Storm, Steve Strassmann, Christopher Suckling, Olaf Sylvester, Naoto
 Takahashi, Steven Tamm, Jan Tatarik, Luc Teirlinck, Jean-Philippe Theberge, Jens
 T. Berger Thielemann, Spencer Thomas, Jim Thompson, Toru Tomabechi,
-David O'Toole, Markus Triska, Tom Tromey, Enami Tsugutomo, Eli
+David O'Toole, Markus Triska, Tom Tromey, Eli
 Tziperman, Daiki Ueno, Masanobu Umeda, Rajesh Vaidheeswarran, Neil
 W. Van Dyke, Didier Verna, Joakim Verona, Ulrik Vieth, Geoffrey
 Voelker, Johan Vromans, Inge Wallin, John Paul Wallington, Colin
