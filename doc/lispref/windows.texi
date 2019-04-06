@@ -4625,13 +4625,14 @@ This function sets the display-start position of @var{window} to
 @var{position} in @var{window}'s buffer.  It returns @var{position}.
 
 The display routines insist that the position of point be visible when a
-buffer is displayed.  Normally, they change the display-start position
-(that is, scroll the window) whenever necessary to make point visible.
-However, if you specify the start position with this function using
-@code{nil} for @var{noforce}, it means you want display to start at
-@var{position} even if that would put the location of point off the
-screen.  If this does place point off screen, the display routines move
-point to the left margin on the middle line in the window.
+buffer is displayed.  Normally, they select the display-start position
+according to their internal logic (and scroll the window if necessary)
+to make point visible.  However, if you specify the start position
+with this function using @code{nil} for @var{noforce}, it means you
+want display to start at @var{position} even if that would put the
+location of point off the screen.  If this does place point off
+screen, the display routines attempt to move point to the left margin
+on the middle line in the window.
 
 For example, if point @w{is 1} and you set the start of the window
 @w{to 37}, the start of the next line, point will be above the top
@@ -4677,6 +4678,13 @@ it is still 1 when redisplay occurs.  Here is an example:
 ---------- Buffer: foo ----------
 @end group
 @end example
+
+If the attempt to make point visible (i.e., in a fully-visible screen
+line) fails, the display routines will disregard the requested
+window-start position and compute a new one anyway.  Thus, for
+reliable results Lisp programs that call this function should always
+move point to be inside the window whose display starts at
+@var{position}.
 
 If @var{noforce} is non-@code{nil}, and @var{position} would place point
 off screen at the next redisplay, then redisplay computes a new window-start
