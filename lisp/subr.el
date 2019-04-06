@@ -138,7 +138,7 @@ This sets each VAR's default value to the corresponding VALUE.
 The VALUE for the Nth VAR can refer to the new default values
 of previous VARs.
 
-\(setq-default [VAR VALUE]...)"
+\(fn [VAR VALUE]...)"
   (declare (debug setq))
   (let ((exps nil))
     (while args
