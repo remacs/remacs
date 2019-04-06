@@ -1814,7 +1814,12 @@ Return t if the buffer had changes, nil otherwise."
 
 ;;;###autoload
 (defun vc-version-diff (_files rev1 rev2)
-  "Report diffs between revisions of the fileset in the repository history."
+  "Report diffs between revisions REV1 and REV2 in the repository history.
+This compares two revisions of the current fileset.
+If REV1 is nil, it defaults to the current revision, i.e. revision
+of the last commit.
+If REV2 is nil, it defaults to the work tree, i.e. the current
+state of each file in the fileset."
   (interactive (vc-diff-build-argument-list-internal))
   ;; All that was just so we could do argument completion!
   (when (and (not rev1) rev2)
@@ -1846,8 +1851,14 @@ saving the buffer."
 
 ;;;###autoload
 (defun vc-version-ediff (files rev1 rev2)
-  "Show differences between revisions of the fileset in the
-repository history using ediff."
+  "Show differences between REV1 and REV2 of FILES using ediff.
+This compares two revisions of the files in FILES.  Currently,
+only a single file's revisions can be compared, i.e. FILES can
+specify only one file name.
+If REV1 is nil, it defaults to the current revision, i.e. revision
+of the last commit.
+If REV2 is nil, it defaults to the work tree, i.e. the current
+state of each file in FILES."
   (interactive (vc-diff-build-argument-list-internal))
   ;; All that was just so we could do argument completion!
   (when (and (not rev1) rev2)
