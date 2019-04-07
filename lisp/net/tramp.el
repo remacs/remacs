@@ -2801,14 +2801,14 @@ for all methods.  Resulting data are derived from default settings."
 	 :port method :require '(:port) :max most-positive-fixnum))))
 
 ;; Generic function.
-(defun tramp-parse-group (regexp match-level skip-regexp)
+(defun tramp-parse-group (regexp match-level skip-chars)
    "Return a (user host) tuple allowed to access.
 User is always nil."
    (let (result)
      (when (re-search-forward regexp (point-at-eol) t)
        (setq result (list nil (match-string match-level))))
      (or
-      (> (skip-chars-forward skip-regexp) 0)
+      (> (skip-chars-forward skip-chars) 0)
       (forward-line 1))
      result))
 
@@ -2864,7 +2864,7 @@ User is always nil."
    (tramp-parse-group
     (concat "\\(?:^[ \t]*Host\\)" "\\|" "\\(?:^.+\\)"
 	    "\\|" "\\(" tramp-host-regexp "\\)")
-    1 "[ \t]+"))
+    1 " \t"))
 
 ;; Generic function.
 (defun tramp-parse-shostkeys-sknownhosts (dirname regexp)
