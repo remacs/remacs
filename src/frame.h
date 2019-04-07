@@ -1648,7 +1648,7 @@ flush_frame (struct frame *f)
 struct MonitorInfo {
   XRectangle geom, work;
   int mm_width, mm_height;
-  char *name;
+  const char *name;
 };
 
 extern void free_monitors (struct MonitorInfo *monitors, int n_monitors);
