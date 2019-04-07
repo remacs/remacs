@@ -749,11 +749,12 @@ extern "C" {
 }
 
 macro_rules! export_lisp_fns {
-    ($($f:ident),+) => {
+    ($($(#[$($meta:meta),*])* $f:ident),+) => {
         pub fn rust_init_syms() {
+            #[allow(unused_unsafe)] // just in case the block is empty
             unsafe {
                 $(
-                    crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
+                    $(#[$($meta),*])* crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
                 )+
             }
         }

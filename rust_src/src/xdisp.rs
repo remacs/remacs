@@ -21,7 +21,4 @@ pub fn trace_redisplay(arg: Option<InteractiveNumericPrefix>) {
     }
 }
 
-// Remove the feature check when this file gains functions
-// that are not guarded by it.
-#[cfg(feature = "glyph-debug")]
 include!(concat!(env!("OUT_DIR"), "/xdisp_exports.rs"));
