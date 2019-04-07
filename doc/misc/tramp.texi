@@ -2671,7 +2671,7 @@ name syntax.  Its value changes after every call of
 this variable in external packages, a call of @code{file-remote-p} is
 much more appropriate.
 @ifinfo
-@pxref{Magic File Names, , , elisp}
+@pxref{Magic File Names, , , elisp}.
 @end ifinfo
 @end defvar
 @end ifset
@@ -3720,7 +3720,7 @@ Set @code{file-precious-flag} to @code{t} for files accessed by
 @value{tramp} so the file contents are checked using checksum by
 first saving to a temporary file.
 @ifinfo
-@pxref{Saving Buffers, , , elisp}
+@pxref{Saving Buffers, , , elisp}.
 @end ifinfo
 
 @lisp
