@@ -6,9 +6,14 @@
 // The following tests go below any comments to avoid including
 // misindented comments among the erroring lines.
 
-// Don’t misinterpret equality operators as JSX.
+// Don’t misinterpret inequality operators as JSX.
 for (; i < length;) void 0
 if (foo > bar) void 0
+
+// Don’t misintrepet inequalities within JSX, either.
+<div>
+  {foo < bar}
+</div>
 
 // Don’t even misinterpret unary operators as JSX.
 if (foo < await bar) void 0

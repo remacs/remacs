@@ -1906,26 +1906,23 @@ For use by `syntax-propertize-extend-region-functions'."
                 (throw 'stop nil)))))))
     (if new-start (cons new-start end))))
 
-(defconst js-jsx--tag-re
-  (concat "<\\s-*\\("
-          "[/>]" ; JSXClosingElement, or JSXOpeningFragment, or JSXClosingFragment
-          "\\|"
-          js--dotted-name-re "\\s-*[" js--name-start-chars "{/>]" ; JSXOpeningElement
-          "\\)")
-  "Regexp unambiguously matching a JSXBoundaryElement.")
+(defconst js-jsx--tag-start-re
+  (concat js--dotted-name-re "\\s-*[" js--name-start-chars "{/>]")
+  "Regexp unambiguously matching a JSXOpeningElement.")
 
 (defun js-jsx--matched-tag-type ()
-  "Determine the tag type of the last match to `js-jsx--tag-re'.
+  "Determine if the last “<” was a JSXBoundaryElement and its type.
 Return `close' for a JSXClosingElement/JSXClosingFragment match,
 return `self-closing' for some self-closing JSXOpeningElements,
 else return `other'."
-  (let ((chars (vconcat (match-string 1))))
-    (cond
-     ((= (aref chars 0) ?/) 'close)
-     ((= (aref chars (1- (length chars))) ?/) 'self-closing)
-     (t 'other))))
+  (cond
+   ((= (char-after) ?/) (forward-char) 'close) ; JSXClosingElement/JSXClosingFragment
+   ((= (char-after) ?>) (forward-char) 'other) ; JSXOpeningFragment
+   ((looking-at js-jsx--tag-start-re) ; JSXOpeningElement
+    (goto-char (match-end 0))
+    (if (= (char-before) ?/) 'self-closing 'other))))
 
-(defconst js-jsx--self-closing-re "/\\s-*>"
+(defconst js-jsx--self-closing-re "/>"
   "Regexp matching the end of a self-closing JSXOpeningElement.")
 
 (defun js-jsx--matching-close-tag-pos ()
@@ -1934,29 +1931,27 @@ Assuming a JSXOpeningElement or a JSXOpeningFragment is
 immediately before point, find a matching JSXClosingElement or
 JSXClosingFragment, skipping over any nested JSXElements to find
 the match.  Return nil if a match can’t be found."
-  (let ((tag-stack 1) type tag-pos last-pos pos)
+  (let ((tag-stack 1) tag-pos type last-pos pos)
     (catch 'stop
-      (while (re-search-forward js-jsx--tag-re nil t)
-        (setq type (js-jsx--matched-tag-type)
-              tag-pos (match-beginning 0))
-        ;; Clear the stack of any JSXOpeningElements which turned out
-        ;; to be self-closing.
-        (when last-pos
-          (setq pos (point))
-          (goto-char last-pos)
-          (while (re-search-forward js-jsx--self-closing-re pos 'move)
-            (setq tag-stack (1- tag-stack))))
-        (if (eq type 'close)
-            (progn
-              (setq tag-stack (1- tag-stack))
-              (when (= tag-stack 0)
-                (throw 'stop tag-pos)))
-          ;; JSXOpeningElements that we know are self-closing aren’t
-          ;; added to the stack at all (since re-search-forward moves
-          ;; point after their self-closing syntax).
-          (unless (eq type 'self-closing)
-            (setq tag-stack (1+ tag-stack))))
-        (setq last-pos (point))))))
+      (while (and (re-search-forward "<" nil t) (not (eobp)))
+        (when (setq tag-pos (match-beginning 0)
+                    type (js-jsx--matched-tag-type))
+          (when last-pos
+            (setq pos (point))
+            (goto-char last-pos)
+            (while (re-search-forward js-jsx--self-closing-re pos 'move)
+              (setq tag-stack (1- tag-stack))))
+          (if (eq type 'close)
+              (progn
+                (setq tag-stack (1- tag-stack))
+                (when (= tag-stack 0)
+                  (throw 'stop tag-pos)))
+            ;; JSXOpeningElements that we know are self-closing aren’t
+            ;; added to the stack at all (because point is already
+            ;; past that syntax).
+            (unless (eq type 'self-closing)
+              (setq tag-stack (1+ tag-stack))))
+          (setq last-pos (point)))))))
 
 (defun js-jsx--enclosing-curly-pos ()
   "Return position of enclosing “{” in a “{/}” pair about point."
