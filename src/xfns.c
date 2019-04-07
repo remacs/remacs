@@ -5044,7 +5044,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 #if GTK_CHECK_VERSION (2, 14, 0)
   free_monitors (monitors, n_monitors);
 #else
-  xfree (monitors)
+  xfree (monitors);
 #endif
   unblock_input ();
 #else  /* not USE_GTK */
