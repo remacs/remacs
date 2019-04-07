@@ -65,10 +65,7 @@
 
 ;;; Constants
 
-(defconst js--name-start-chars "a-zA-Z_$"
-  "Character class chars matching the start of a JavaScript identifier.")
-
-(defconst js--name-start-re (concat "[" js--name-start-chars "]")
+(defconst js--name-start-re (concat "[a-zA-Z_$]")
   "Regexp matching the start of a JavaScript identifier, without grouping.")
 
 (defconst js--stmt-delim-chars "^;{}?:")
@@ -1907,7 +1904,12 @@ For use by `syntax-propertize-extend-region-functions'."
     (if new-start (cons new-start end))))
 
 (defconst js-jsx--tag-start-re
-  (concat js--dotted-name-re "\\s-*[" js--name-start-chars "{/>]")
+  (concat "\\(" js--dotted-name-re "\\)\\(?:"
+          ;; Whitespace is only necessary if an attribute implies JSX.
+          "\\(?:\\s-\\|\n\\)*[{/>]"
+          "\\|"
+          "\\(?:\\s-\\|\n\\)+" js--name-start-re
+          "\\)")
   "Regexp unambiguously matching a JSXOpeningElement.")
 
 (defun js-jsx--matched-tag-type ()
@@ -1918,11 +1920,12 @@ else return `other'."
   (cond
    ((= (char-after) ?/) (forward-char) 'close) ; JSXClosingElement/JSXClosingFragment
    ((= (char-after) ?>) (forward-char) 'other) ; JSXOpeningFragment
-   ((looking-at js-jsx--tag-start-re) ; JSXOpeningElement
+   ((and (looking-at js-jsx--tag-start-re) ; JSXOpeningElement
+         (not (js--unary-keyword-p (match-string 1))))
     (goto-char (match-end 0))
     (if (= (char-before) ?/) 'self-closing 'other))))
 
-(defconst js-jsx--self-closing-re "/>"
+(defconst js-jsx--self-closing-re "/\\s-*>"
   "Regexp matching the end of a self-closing JSXOpeningElement.")
 
 (defun js-jsx--matching-close-tag-pos ()
@@ -1933,7 +1936,7 @@ JSXClosingFragment, skipping over any nested JSXElements to find
 the match.  Return nil if a match can’t be found."
   (let ((tag-stack 1) tag-pos type last-pos pos)
     (catch 'stop
-      (while (and (re-search-forward "<" nil t) (not (eobp)))
+      (while (and (re-search-forward "<\\s-*" nil t) (not (eobp)))
         (when (setq tag-pos (match-beginning 0)
                     type (js-jsx--matched-tag-type))
           (when last-pos

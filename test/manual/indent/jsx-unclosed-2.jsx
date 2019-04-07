@@ -19,6 +19,10 @@ if (foo > bar) void 0
 if (foo < await bar) void 0
 while (await foo > bar) void 0
 
+<div>
+  {foo < await bar}
+</div>
+
 // Allow unary keyword names as null-valued JSX attributes.
 // (As if this will EVER happen…)
 <Foo yield>
@@ -40,3 +44,15 @@ while (await foo > bar) void 0
 // “-” may be used in a JSXAttribute’s name.
 <Foo a-b-c=""
      x-y-z="" />
+
+// Weird spaces should be tolerated.
+< div >
+  < div >
+    < div
+      attr=""
+      / >
+    < div
+      attr=""
+      / >
+  < / div>
+< / div >
