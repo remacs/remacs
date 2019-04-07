@@ -1163,8 +1163,9 @@ When not inside a field, signal an error."
 
 (defun widget-at (&optional pos)
   "The button or field at POS (default, point)."
-  (or (get-char-property (or pos (point)) 'button)
-      (widget-field-at pos)))
+  (let ((widget (or (get-char-property (or pos (point)) 'button)
+                    (widget-field-at pos))))
+    (and (widgetp widget) widget)))
 
 ;;;###autoload
 (defun widget-setup ()
