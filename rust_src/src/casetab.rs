@@ -3,24 +3,46 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::make_char_table,
     buffers::current_buffer,
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
     lisp::LispObject,
     lists::put,
-    objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
+        map_char_table, staticpro, Fcopy_sequence, Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
+    symbols::LispSymbolRef,
     threads::ThreadState,
 };
 
+#[derive(Copy, Clone)]
 pub struct LispCaseTable(LispCharTableRef);
 
 impl LispCaseTable {
+    pub fn convert_char_table(mut table: LispCharTableRef) -> Self {
+        table.purpose = Qcase_table;
+        Self(table)
+    }
+
+    pub fn from_char_table(table: LispCharTableRef) -> Option<Self> {
+        if table.purpose.eq(Qcase_table) {
+            Some(Self(table))
+        } else {
+            None
+        }
+    }
+
+    pub fn is_proper(&self) -> bool {
+        let (up, canon, eqv) = self.extras();
+
+        (up.is_nil() || up.is_char_table())
+            && ((canon.is_nil() && eqv.is_nil())
+                || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+    }
+      
     pub fn is_valid(&self) -> bool {
         let (e1, e2, e3) = self.extras();
         e1.is_char_table() && e2.is_char_table() && e3.is_char_table()
@@ -31,16 +53,65 @@ impl LispCaseTable {
         (extras[0], extras[1], extras[2])
     }
 
-    pub fn from_char_table(table: LispCharTableRef) -> Self {
-        Self(table)
+    pub fn set_extras(&mut self, idx: usize, value: LispObject) {
+        assert!(idx < 3);
+        let extras = unsafe { self.0.extras.as_mut_slice(3) };
+        extras[idx as usize] = value;
     }
 
     pub fn get(&self, idx: isize) -> LispObject {
         self.0.get(idx)
     }
+
+    pub fn setup_extras(&mut self) {
+        let table = LispObject::from(*self);
+
+        let (mut up, mut canon, mut eqv) = self.extras();
+
+        let sym_case_table = LispSymbolRef::from(Qcase_table);
+
+        if up.is_nil() {
+            let up_table = make_char_table(sym_case_table, Qnil);
+            up = LispObject::from(up_table);
+            unsafe {
+                map_char_table(Some(set_identity), Qnil, table, up);
+                map_char_table(Some(shuffle), Qnil, table, up);
+            }
+            self.set_extras(0, up);
+        }
+
+        let mut canon_table = if canon.is_nil() {
+            let tem = make_char_table(sym_case_table, Qnil);
+            canon = LispObject::from(tem);
+            self.set_extras(1, canon);
+            unsafe {
+                map_char_table(Some(set_canon), Qnil, table, table);
+            }
+            tem
+        } else {
+            canon.into()
+        };
+
+        if eqv.is_nil() {
+            let eqv_table = make_char_table(sym_case_table, Qnil);
+            eqv = eqv_table.into();
+            unsafe {
+                map_char_table(Some(set_identity), Qnil, canon, eqv);
+                map_char_table(Some(shuffle), Qnil, canon, eqv);
+            }
+            self.set_extras(2, eqv);
+        }
+
+        // This is so set_image_of_range_1 in regex.c can find the EQV table.
+        canon_table.set_extras(2, eqv);
+    }
 }
 
 impl LispObject {
+    pub fn as_case_table(self) -> Option<LispCaseTable> {
+        self.into()
+    }
+
     pub fn force_case_table(self) -> LispCaseTable {
         LispCaseTable(self.force_char_table())
     }
@@ -48,11 +119,23 @@ impl LispObject {
 
 impl From<LispObject> for LispCaseTable {
     fn from(obj: LispObject) -> Self {
-        let case_table: Option<LispCharTableRef> = obj.into();
-        if !case_table_p(case_table) {
-            wrong_type!(Qcase_table_p, obj);
-        }
-        Self(case_table.unwrap())
+        obj.as_case_table()
+            .unwrap_or_else(|| wrong_type!(Qcase_table_p, obj))
+    }
+}
+
+// Allow for the transformation of char tables into case tables when their
+// `purpose` field is set to `Qcase_table`. Do not check the `extras` fields.
+// This way a new char table can be transformed into a case table.
+impl From<LispObject> for Option<LispCaseTable> {
+    fn from(obj: LispObject) -> Self {
+        Option::<LispCharTableRef>::from(obj).and_then(LispCaseTable::from_char_table)
+    }
+}
+
+impl From<LispCaseTable> for LispObject {
+    fn from(table: LispCaseTable) -> Self {
+        LispObject::from(table.0)
     }
 }
 
@@ -60,53 +143,6 @@ static mut Vascii_downcase_table: LispObject = Qnil;
 static mut Vascii_upcase_table: LispObject = Qnil;
 static mut Vascii_canon_table: LispObject = Qnil;
 static mut Vascii_eqv_table: LispObject = Qnil;
-
-fn set_case_table(table: LispObject, standard: bool) -> LispObject {
-    let case_table: LispCaseTable = table.into();
-    let (mut up, mut canon, mut eqv) = case_table.extras();
-
-    unsafe {
-        if up.is_nil() {
-            up = Fmake_char_table(Qcase_table, Qnil);
-            map_char_table(Some(set_identity), Qnil, table, up);
-            map_char_table(Some(shuffle), Qnil, table, up);
-            set_char_table_extras(table, 0, up);
-        }
-
-        if canon.is_nil() {
-            canon = Fmake_char_table(Qcase_table, Qnil);
-            set_char_table_extras(table, 1, canon);
-            map_char_table(Some(set_canon), Qnil, table, table);
-        }
-
-        if eqv.is_nil() {
-            eqv = Fmake_char_table(Qcase_table, Qnil);
-            map_char_table(Some(set_identity), Qnil, canon, eqv);
-            map_char_table(Some(shuffle), Qnil, canon, eqv);
-            set_char_table_extras(table, 2, eqv);
-        }
-
-        // This is so set_image_of_range_1 in regex.c can find the EQV table.
-        set_char_table_extras(canon, 2, eqv);
-    }
-
-    if standard {
-        unsafe {
-            Vascii_downcase_table = table;
-            Vascii_upcase_table = up;
-            Vascii_canon_table = canon;
-            Vascii_eqv_table = eqv;
-        }
-    } else {
-        let mut buffer: LispBufferRef = current_buffer().into();
-        buffer.downcase_table_ = table;
-        buffer.upcase_table_ = up;
-        buffer.case_canon_table_ = canon;
-        buffer.case_eqv_table_ = eqv;
-    }
-
-    table
-}
 
 // The following functions are called in map_char_table.
 
@@ -181,25 +217,11 @@ extern "C" fn shuffle(table: LispObject, c: LispObject, elt: LispObject) {
 /// Return t if OBJECT is a case table.
 /// See `set-case-table' for more information on these data structures.
 #[lisp_fn]
-pub fn case_table_p(table: Option<LispCharTableRef>) -> bool {
-    let char_table = match table {
-        Some(ct) => {
-            if !eq(ct.purpose, Qcase_table) {
-                return false;
-            }
-            ct
-        }
-        None => {
-            return false;
-        }
-    };
-
-    let case_table = LispCaseTable::from_char_table(char_table);
-    let (up, canon, eqv) = case_table.extras();
-
-    (up.is_nil() || up.is_char_table())
-        && ((canon.is_nil() && eqv.is_nil())
-            || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+pub fn case_table_p(object: LispObject) -> bool {
+    match Option::<LispCaseTable>::from(object) {
+        None => false,
+        Some(case_table) => case_table.is_proper(),
+    }
 }
 
 /// Return the case table of the current buffer.
@@ -244,24 +266,51 @@ pub unsafe extern "C" fn get_canonical_case_table() -> LispObject {
 ///  (of characters with the same canonical equivalent); it may be nil,
 ///  in which case it is deduced from CANONICALIZE.
 #[lisp_fn(name = "set-case-table", c_name = "set_case_table")]
-pub fn set_case_table_lisp(table: LispObject) -> LispObject {
-    set_case_table(table, false)
+pub fn set_case_table_lisp(table: LispObject) -> LispCaseTable {
+    let mut case_table = LispCaseTable::from(table);
+    if !case_table.is_proper() {
+        wrong_type!(Qcase_table, table);
+    }
+    case_table.setup_extras();
+
+    let mut buffer: LispBufferRef = current_buffer().into();
+    buffer.set_case_table(case_table);
+
+    case_table
 }
 
 /// Select a new standard case table for new buffers.
 /// See `set-case-table' for more info on case tables.
 #[lisp_fn]
-pub fn set_standard_case_table(table: LispObject) -> LispObject {
-    set_case_table(table, true)
+pub fn set_standard_case_table(table: LispObject) -> LispCaseTable {
+    let case_table = LispCaseTable::from(table);
+    if !case_table.is_proper() {
+        wrong_type!(Qcase_table, table);
+    }
+    set_standard_case_table_1(case_table);
+    case_table
+}
+
+fn set_standard_case_table_1(mut case_table: LispCaseTable) {
+    case_table.setup_extras();
+
+    let (up, canon, eqv) = case_table.extras();
+    unsafe {
+        Vascii_downcase_table = case_table.into();
+        Vascii_upcase_table = up;
+        Vascii_canon_table = canon;
+        Vascii_eqv_table = eqv;
+    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn init_casetab_once() {
     def_lisp_sym!(Qcase_table, "case-table");
-    put(Qcase_table.into(), Qchar_table_extra_slots, 3.into());
+    let sym_case_table = LispSymbolRef::from(Qcase_table);
+    put(sym_case_table, Qchar_table_extra_slots, 3.into());
 
-    let down = Fmake_char_table(Qcase_table, Qnil);
-    set_char_table_purpose(down, Qcase_table);
+    let mut down_table = LispCaseTable::convert_char_table(make_char_table(sym_case_table, Qnil));
+    let down = LispObject::from(down_table);
     Vascii_downcase_table = down;
 
     for i in 0..128 {
@@ -275,10 +324,11 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(down, i, c.into());
     }
 
-    set_char_table_extras(down, 1, Fcopy_sequence(down));
+    down_table.set_extras(1, Fcopy_sequence(down));
 
-    let up = Fmake_char_table(Qcase_table, Qnil);
-    set_char_table_extras(down, 0, up);
+    let up_table = make_char_table(sym_case_table, Qnil);
+    let up = up_table.into();
+    down_table.set_extras(0, up);
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
@@ -291,7 +341,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(up, i, c.into());
     }
 
-    let eqv = Fmake_char_table(Qcase_table, Qnil);
+    let eqv = make_char_table(sym_case_table, Qnil).into();
 
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
@@ -307,10 +357,9 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(eqv, i, c.into());
     }
 
-    set_char_table_extras(down, 2, eqv);
+    down_table.set_extras(2, eqv);
 
-    // Fill in what isn't filled in.
-    set_case_table(down, true);
+    set_standard_case_table_1(down_table);
 }
 
 #[no_mangle]

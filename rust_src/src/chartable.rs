@@ -13,6 +13,7 @@ use crate::{
     },
     remacs_sys::{uniprop_table_uncompress, CHAR_TABLE_SET},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
+    vectors::LispVectorRef,
     vectors::LispVectorlikeRef,
 };
 
@@ -115,13 +116,17 @@ fn uniprop_compressed_form_p(obj: LispObject) -> bool {
 }
 
 impl LispCharTableRef {
+    pub fn from_vector(mut vector: LispVectorRef) -> Self {
+        Self::new(vector.as_mut() as *mut Lisp_Char_Table)
+    }
+
     pub fn is_uniprop(self) -> bool {
         self.purpose == Qchar_code_property_table && self.extra_slots() == 5
     }
 
-    pub fn extra_slots(self) -> isize {
-        (unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
-            - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)
+    pub fn extra_slots(self) -> usize {
+        ((unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
+            - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)) as usize
     }
 
     pub fn get(self, c: isize) -> LispObject {
@@ -163,6 +168,13 @@ impl LispCharTableRef {
 
     pub fn set_unchecked(self, idx: isize, value: LispObject) {
         unsafe { CHAR_TABLE_SET(self.into(), idx as i32, value) };
+    }
+
+    pub fn set_extras(&mut self, idx: usize, value: LispObject) {
+        let slots = self.extra_slots();
+        assert!(idx < slots);
+        let extras = unsafe { self.extras.as_mut_slice(slots) };
+        extras[idx as usize] = value;
     }
 }
 

@@ -10,6 +10,7 @@ use rand::{thread_rng, Rng};
 use remacs_macros::lisp_fn;
 
 use crate::{
+    casetab::LispCaseTable,
     casetab::{set_standard_case_table, standard_case_table},
     character::char_head_p,
     chartable::LispCharTableRef,
@@ -290,6 +291,14 @@ impl LispBufferRef {
     pub fn set_zv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
         self.zv = charpos;
         self.zv_byte = byte;
+    }
+
+    pub fn set_case_table(&mut self, table: LispCaseTable) {
+        let (up, canon, eqv) = table.extras();
+        self.downcase_table_ = table.into();
+        self.upcase_table_ = up;
+        self.case_canon_table_ = canon;
+        self.case_eqv_table_ = eqv;
     }
 
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {

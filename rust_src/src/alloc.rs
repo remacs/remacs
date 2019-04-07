@@ -3,13 +3,19 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
+    chartable::LispCharTableRef,
     lisp::{ExternalPtr, LispObject},
+    lists::get,
     remacs_sys::globals,
-    remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector,
+        allocate_record, allocate_vector, bool_vector_fill, bool_vector_set, bounded_number,
+        make_uninit_bool_vector,
     },
-    remacs_sys::{EmacsInt, EmacsUint},
+    remacs_sys::{char_table_specials::CHAR_TABLE_STANDARD_SLOTS, EmacsInt, EmacsUint},
+    remacs_sys::{pvec_type, Lisp_Type::Lisp_Vectorlike},
+    remacs_sys::{Qchar_table_extra_slots, Qnil},
+    symbols::LispSymbolRef,
+    vectors::LispVectorRef,
 };
 
 /// Return a list of counters that measure how much consing there has been.
@@ -39,6 +45,19 @@ pub fn memory_use_counts() -> Vec<LispObject> {
     }
 }
 
+/// Return a newly created vector of length LENGTH, with each element being INIT.
+/// See also the function `vector'.
+#[lisp_fn]
+pub fn make_vector(length: EmacsUint, init: LispObject) -> LispVectorRef {
+    let mut p = LispVectorRef::new(unsafe { allocate_vector(length as EmacsInt) });
+
+    for i in 0..length {
+        unsafe { p.set_unchecked(i as usize, init) };
+    }
+
+    p
+}
+
 /// Return a new bool-vector of length LENGTH, using INIT for each element.
 /// LENGTH must be a number.  INIT matters only in whether it is t or nil.
 #[lisp_fn]
@@ -58,6 +77,36 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     }
 
     vector
+}
+
+/// Return a newly created char-table, with purpose PURPOSE.
+/// Each element is initialized to INIT, which defaults to nil.
+///
+/// PURPOSE should be a symbol.  If it has a `char-table-extra-slots'
+/// property, the property's value should be an integer between 0 and 10
+/// that specifies how many extra slots the char-table has.  Otherwise,
+/// the char-table has no extra slot.
+#[lisp_fn(min = "1")]
+pub fn make_char_table(purpose: LispSymbolRef, init: LispObject) -> LispCharTableRef {
+    let n = get(purpose, Qchar_table_extra_slots);
+    let n_extras: EmacsUint = match n.into() {
+        None => 0,
+        Some(x) => {
+            if x > 10 {
+                args_out_of_range!(n, Qnil);
+            }
+            x
+        }
+    };
+
+    let size = EmacsUint::from(CHAR_TABLE_STANDARD_SLOTS) + n_extras;
+    let vector = make_vector(size, init);
+    let mut char_table = LispCharTableRef::from_vector(vector);
+    char_table.parent = Qnil;
+    char_table.purpose = purpose.into();
+    set_vector_type!(char_table, pvec_type::PVEC_CHAR_TABLE);
+
+    char_table
 }
 
 /// Create a new record.

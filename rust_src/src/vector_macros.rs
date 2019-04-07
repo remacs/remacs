@@ -1,3 +1,15 @@
+macro_rules! set_vector_type {
+    ($var:ident, $vectype:expr) => {
+        let _cast_tmp = ($var).as_mut() as *mut crate::remacs_sys::Lisp_Vector;
+        unsafe {
+            (*_cast_tmp).header.size = (*_cast_tmp).header.size
+                | (crate::remacs_sys::PSEUDOVECTOR_FLAG as isize)
+                | (($vectype as isize)
+                    << crate::remacs_sys::More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS);
+        }
+    };
+}
+
 macro_rules! offset_of {
     ($ty:ty, $field:ident) => {
         &(*(ptr::null() as *const $ty)).$field as *const _ as usize
