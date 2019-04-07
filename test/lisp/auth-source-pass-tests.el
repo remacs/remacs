@@ -186,6 +186,17 @@ This function is intended to be set to `auth-source-debug`."
     (should (equal (auth-source-pass--find-match "host.com:8888" "someuser" nil)
                    "host.com"))))
 
+(ert-deftest auth-source-pass-find-host-with-port ()
+  (auth-source-pass--with-store '(("host.com:443"))
+    (should (equal (auth-source-pass--find-match "host.com" "someuser" "443")
+                   "host.com:443"))))
+
+(ert-deftest auth-source-pass-find-host-with-custom-port-separator ()
+  (let ((auth-source-pass-port-separator "#"))
+    (auth-source-pass--with-store '(("host.com#443"))
+      (should (equal (auth-source-pass--find-match "host.com" "someuser" "443")
+                     "host.com#443")))))
+
 (defmacro auth-source-pass--with-store-find-foo (store &rest body)
   "Use STORE while executing BODY.  \"foo\" is the matched entry."
   (declare (indent 1))

@@ -49,6 +49,11 @@
   :type 'directory
   :version "27.1")
 
+(defcustom auth-source-pass-port-separator ":"
+  "Separator string between host and port in entry filename."
+  :type 'string
+  :version "27.1")
+
 (cl-defun auth-source-pass-search (&rest spec
                                          &key backend type host user port
                                          &allow-other-keys)
@@ -254,9 +259,15 @@ return nil.
 
 HOSTNAME should not contain any username or port number."
   (or
-   (and user port (auth-source-pass--find-one-by-entry-name (format "%s@%s:%s" user hostname port) user))
-   (and user (auth-source-pass--find-one-by-entry-name (format "%s@%s" user hostname) user))
-   (and port (auth-source-pass--find-one-by-entry-name (format "%s:%s" hostname port) nil))
+   (and user port (auth-source-pass--find-one-by-entry-name
+                   (format "%s@%s%s%s" user hostname auth-source-pass-port-separator port)
+                   user))
+   (and user (auth-source-pass--find-one-by-entry-name
+              (format "%s@%s" user hostname)
+              user))
+   (and port (auth-source-pass--find-one-by-entry-name
+              (format "%s%s%s" hostname auth-source-pass-port-separator port)
+              nil))
    (auth-source-pass--find-one-by-entry-name hostname user)
    ;; if that didn't work, remove subdomain: foo.bar.com -> bar.com
    (let ((components (split-string hostname "\\.")))
