@@ -1976,7 +1976,7 @@ the match.  Return nil if a match can’t be found."
 (defun js-jsx--enclosing-tag-pos ()
   "Return beginning and end of a JSXElement about point.
 Look backward for a JSXElement that both starts before point and
-also ends after point.  That may be either a self-closing
+also ends at/after point.  That may be either a self-closing
 JSXElement or a JSXOpeningElement/JSXClosingElement pair."
   (let ((start (point)) tag-beg tag-beg-pos tag-end-pos close-tag-pos)
     (while
@@ -1991,9 +1991,21 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
                   (< start tag-end-pos))
              (and (eq (car tag-beg) 'open)
                   (or (< start tag-end-pos)
-                      (save-excursion
-                        (goto-char tag-end-pos)
-                        (setq close-tag-pos (js-jsx--matching-close-tag-pos))
+                      (progn
+                        (unless
+                            ;; Try to read a cached close position,
+                            ;; but it might not be available yet.
+                            (setq close-tag-pos
+                                  (get-text-property (point) 'js-jsx-close-tag-pos))
+                          (save-excursion
+                            (goto-char tag-end-pos)
+                            (setq close-tag-pos (js-jsx--matching-close-tag-pos)))
+                          (when close-tag-pos
+                            ;; Cache the close position to make future
+                            ;; searches faster.
+                            (put-text-property
+                             (point) (1+ (point))
+                             'js-jsx-close-tag-pos close-tag-pos)))
                         ;; The JSXOpeningElement may be unclosed, else
                         ;; the closure must occur at/after the start
                         ;; point (otherwise, a miscellaneous previous
@@ -2179,7 +2191,7 @@ testing for syntax only valid as JSX."
 
 (defconst js-jsx--text-properties
   (list
-   'js-jsx-tag-beg nil 'js-jsx-tag-end nil
+   'js-jsx-tag-beg nil 'js-jsx-tag-end nil 'js-jsx-close-tag-pos nil
    'js-jsx-tag-name nil 'js-jsx-attribute-name nil
    'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil)
   "Plist of text properties added by `js-syntax-propertize'.")
