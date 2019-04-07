@@ -31,6 +31,12 @@ impl LispObject {
         }
     }
 
+    pub fn check_list_end(self, list: LispObject) {
+        if !self.is_nil() {
+            wrong_type!(Qlistp, list);
+        }
+    }
+
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }

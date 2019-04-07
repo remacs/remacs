@@ -1,6 +1,6 @@
 //! Random utility Lisp functions.
 
-use std::{ptr, slice};
+use std::{mem, ptr, slice};
 
 use libc;
 
@@ -26,7 +26,7 @@ use crate::{
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
     remacs_sys::{
-        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsequencep, Qsubfeatures, Qt,
+        Qarrayp, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsequencep, Qsubfeatures, Qt,
         Qyes_or_no_p_history,
     },
     symbols::LispSymbolRef,
@@ -333,6 +333,48 @@ pub fn reverse(seq: LispObject) -> LispObject {
     } else {
         wrong_type!(Qsequencep, seq);
     }
+}
+
+/// Reverse order of items in a list, vector or string SEQ.
+/// If SEQ is a list, it should be nil-terminated.
+/// This function may destructively modify SEQ to produce the value.
+#[lisp_fn]
+pub fn nreverse(mut seq: LispObject) -> LispObject {
+    if seq.is_nil() {
+        return seq;
+    } else if seq.is_string() {
+        return reverse(seq);
+    } else if let Some(cons) = seq.as_cons() {
+        let mut iter =
+            itertools::put_back(cons.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on));
+        let mut prev = Qnil;
+        while let Some(tail) = iter.next() {
+            if let Some(next) = iter.next() {
+                iter.put_back(next);
+            }
+            tail.set_cdr(prev);
+            prev = tail.into();
+        }
+        seq = prev;
+    } else if let Some(mut vec) = seq.as_vector() {
+        let len = vec.len() / 2;
+        let (left, right) = vec.as_mut_slice().split_at_mut(len);
+        for (a, b) in left.iter_mut().zip(right.iter_mut().rev()) {
+            mem::swap(a, b);
+        }
+    } else if let Some(mut boolvec) = seq.as_bool_vector() {
+        let len = boolvec.len();
+        for i in 0..len / 2 {
+            unsafe {
+                let temp: bool = boolvec.get_unchecked(i).into();
+                boolvec.set_unchecked(i, boolvec.get_unchecked(len - 1 - i).into());
+                boolvec.set_unchecked(len - 1 - i, temp);
+            }
+        }
+    } else {
+        wrong_type!(Qarrayp, seq);
+    }
+    seq
 }
 
 // Return true if O1 and O2 are equal.  Do not quit or check for cycles.
