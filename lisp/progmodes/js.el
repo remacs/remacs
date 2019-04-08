@@ -2165,9 +2165,14 @@ testing for syntax only valid as JSX."
             ;; JSXExpressionContainer here will be parsed in the
             ;; next iteration of the loop.
             (if (memq (char-after) '(?\" ?\' ?\`))
-                (condition-case nil
-                    (forward-sexp)
-                  (scan-error (throw 'stop nil)))
+                (progn
+                  ;; Record the string’s position so derived modes
+                  ;; applying syntactic fontification atypically
+                  ;; (e.g. js2-mode) can recognize it as part of JSX.
+                  (put-text-property (point) (1+ (point)) 'js-jsx-string t)
+                  (condition-case nil
+                      (forward-sexp)
+                    (scan-error (throw 'stop nil))))
               ;; Save JSXAttribute’s beginning in case we find a
               ;; JSXExpressionContainer as the JSXAttribute’s value which
               ;; we should associate with the JSXAttribute.
@@ -2195,7 +2200,7 @@ testing for syntax only valid as JSX."
 (defconst js-jsx--text-properties
   (list
    'js-jsx-tag-beg nil 'js-jsx-tag-end nil 'js-jsx-close-tag-pos nil
-   'js-jsx-tag-name nil 'js-jsx-attribute-name nil
+   'js-jsx-tag-name nil 'js-jsx-attribute-name nil 'js-jsx-string nil
    'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil)
   "Plist of text properties added by `js-syntax-propertize'.")
 
