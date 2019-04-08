@@ -56,3 +56,10 @@ while (await foo > bar) void 0
       / >
   < / div>
 < / div >
+
+// Non-ASCII identifiers are acceptable.
+<Über>
+  <Québec διακριτικός sueño="">
+    Guten Tag!
+  </Québec>
+</Über>
