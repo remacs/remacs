@@ -52,8 +52,9 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fmake_marker, Fnconc, Fnreverse},
+    remacs_sys::{Fcopy_sequence, Fmake_marker, Fnconc, Fnreverse},
     strings::string_equal,
+    textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
 };
@@ -1362,7 +1363,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
-    let prop = unsafe { Fget_text_property(pos.into(), Qinhibit_read_only, Qnil) };
+    let prop = get_text_property(pos, Qinhibit_read_only, Qnil);
 
     if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
     {
