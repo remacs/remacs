@@ -4288,33 +4288,27 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 (defvar js-syntactic-mode-name t
   "If non-nil, print enabled syntaxes in the mode name.")
 
-(defun js--update-mode-name ()
-  "Print enabled syntaxes if `js-syntactic-mode-name' is t."
-  (when js-syntactic-mode-name
-    (setq mode-name (concat "JavaScript"
-                            (if js-jsx-syntax "+JSX" "")))))
+(defun js--syntactic-mode-name-part ()
+  "Return a string like “[JSX]” when `js-jsx-syntax' is enabled."
+  (if js-syntactic-mode-name
+      (let (syntaxes)
+        (if js-jsx-syntax (push "JSX" syntaxes))
+        (if syntaxes
+            (concat "[" (mapconcat #'identity syntaxes ",") "]")
+          ""))
+    ""))
 
-(defun js--idly-update-mode-name ()
-  "Update `mode-name' whenever Emacs goes idle.
-In case `js-jsx-syntax' is updated, especially by features of
-Emacs like .dir-locals.el or file variables, this ensures the
-modeline eventually reflects which syntaxes are enabled."
-  (let (timer)
-    (setq timer
-          (run-with-idle-timer
-           0 t
-           (lambda (buffer)
-             (if (buffer-live-p buffer)
-                 (with-current-buffer buffer
-                   (js--update-mode-name))
-               (cancel-timer timer)))
-           (current-buffer)))))
+(defun js-use-syntactic-mode-name ()
+  "Print enabled syntaxes if `js-syntactic-mode-name' is t.
+Modes deriving from `js-mode' should call this to ensure that
+their `mode-name' updates to show enabled syntax extensions."
+  (when (stringp mode-name)
+    (setq mode-name `(,mode-name (:eval (js--syntactic-mode-name-part))))))
 
 (defun js-jsx-enable ()
   "Enable JSX in the current buffer."
   (interactive)
-  (setq-local js-jsx-syntax t)
-  (js--update-mode-name))
+  (setq-local js-jsx-syntax t))
 
 (defvar js-jsx-regexps
   (list "\\_<\\(?:var\\|let\\|const\\|import\\)\\_>.*?React")
@@ -4395,8 +4389,7 @@ This function is intended for use in `after-change-functions'."
   ;; Syntax extensions
   (unless (js-jsx--detect-and-enable)
     (add-hook 'after-change-functions #'js-jsx--detect-after-change nil t))
-  (js--update-mode-name) ; If `js-jsx-syntax' was set from outside.
-  (js--idly-update-mode-name)
+  (js-use-syntactic-mode-name)
 
   ;; Imenu
   (setq imenu-case-fold-search nil)
@@ -4443,7 +4436,7 @@ This function is intended for use in `after-change-functions'."
   )
 
 ;;;###autoload
-(define-derived-mode js-jsx-mode js-mode "JavaScript+JSX"
+(define-derived-mode js-jsx-mode js-mode "JavaScript"
   "Major mode for editing JavaScript+JSX.
 
 Simply makes `js-jsx-syntax' buffer-local and sets it to t.
@@ -4456,7 +4449,8 @@ could set `js-jsx-syntax' to t in your init file, or in a
 `js-jsx-enable' in `js-mode-hook'.  You may be better served by
 one of the aforementioned options instead of using this mode."
   :group 'js
-  (js-jsx-enable))
+  (js-jsx-enable)
+  (js-use-syntactic-mode-name))
 
 ;;;###autoload (defalias 'javascript-mode 'js-mode)
 
