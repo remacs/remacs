@@ -3840,8 +3840,9 @@ but is not deleted; if you save the buffer in a file, the invisible
 text is included in the file.  \\[widen] makes all visible again.
 See also `save-restriction'.
 
-When calling from a program, pass two arguments; positions (integers
-or markers) bounding the text that should remain visible.  */)
+When calling from Lisp, pass two arguments START and END:
+positions (integers or markers) bounding the text that should
+remain visible.  */)
   (register Lisp_Object start, Lisp_Object end)
 {
   CHECK_NUMBER_COERCE_MARKER (start);
