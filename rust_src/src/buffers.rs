@@ -52,7 +52,7 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fmake_marker, Fnconc, Fnreverse},
+    remacs_sys::{Fcopy_sequence, Fget_text_property, Fmake_marker, Fnconc},
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
@@ -816,7 +816,7 @@ impl LispBufferRef {
         } else {
             let mut last = Qnil;
             for tail in self.local_vars_tails_iter() {
-                let (local, _) = tail.car().into();
+                let (local, list) = tail.car().into();
                 let prop = lists::get(local.force_symbol(), Qpermanent_local);
                 // If permanent-local, keep it.
                 if prop.is_not_nil() {
@@ -824,15 +824,10 @@ impl LispBufferRef {
                     if prop == Qpermanent_local_hook {
                         // This is a partially permanent hook variable.
                         // Preserve only the elements that want to be preserved.
-                        let (_, list) = tail.car().into();
                         let newlist = match list.as_cons() {
                             None => list,
-                            Some(cons) => unsafe {
-                                Fnreverse(
-                                    cons.iter_cars(
-                                        LispConsEndChecks::off,
-                                        LispConsCircularChecks::on,
-                                    )
+                            Some(cons) => nreverse(
+                                cons.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::on)
                                     .filter(|elt| {
                                         !elt.is_symbol()
                                             || elt.is_t()
@@ -840,8 +835,7 @@ impl LispBufferRef {
                                                 .is_not_nil()
                                     })
                                     .fold(Qnil, |new, elt| (elt, new).into()),
-                                )
-                            },
+                            ),
                         };
                         if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
                             unsafe {
