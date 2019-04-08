@@ -89,6 +89,10 @@ Options" in the Emacs manual for more information.
 check that the portable dumper code has been updated to match the last
 change to one of the data structures that it relies on.
 
+---
+** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
+builds respectively.
+
 
 * Startup Changes in Emacs 27.1
 

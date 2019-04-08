@@ -4496,7 +4496,7 @@ On MS Windows, this just returns nil.  */)
    Return false if and only if the workarea information cannot be
    obtained via the _NET_WORKAREA root window property.  */
 
-#if ! GTK_CHECK_VERSION (3, 4, 0)
+#ifndef HAVE_GTK3
 static bool
 x_get_net_workarea (struct x_display_info *dpyinfo, XRectangle *rect)
 {
@@ -4906,9 +4906,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
   Lisp_Object attributes_list = Qnil;
 
 #ifdef USE_GTK
-  double mm_width_per_pixel, mm_height_per_pixel;
   GdkDisplay *gdpy;
 #if ! GTK_CHECK_VERSION (3, 22, 0)
+  double mm_width_per_pixel, mm_height_per_pixel;
   GdkScreen *gscreen;
 #endif
   gint primary_monitor = 0, n_monitors, i;
@@ -4917,19 +4917,18 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
   struct MonitorInfo *monitors;
 
   block_input ();
-  mm_width_per_pixel = ((double) WidthMMOfScreen (dpyinfo->screen)
-			/ x_display_pixel_width (dpyinfo));
-  mm_height_per_pixel = ((double) HeightMMOfScreen (dpyinfo->screen)
-			 / x_display_pixel_height (dpyinfo));
   gdpy = gdk_x11_lookup_xdisplay (dpyinfo->display);
 #if GTK_CHECK_VERSION (3, 22, 0)
   n_monitors = gdk_display_get_n_monitors (gdpy);
 #else
   gscreen = gdk_display_get_default_screen (gdpy);
-#if GTK_CHECK_VERSION (2, 20, 0)
-  primary_monitor = gdk_screen_get_primary_monitor (gscreen);
-#endif
   n_monitors = gdk_screen_get_n_monitors (gscreen);
+  primary_monitor = gdk_screen_get_primary_monitor (gscreen);
+  /* Fallback if gdk_screen_get_monitor_{width,height}_mm fail */
+  mm_width_per_pixel = ((double) WidthMMOfScreen (dpyinfo->screen)
+			/ x_display_pixel_width (dpyinfo));
+  mm_height_per_pixel = ((double) HeightMMOfScreen (dpyinfo->screen)
+			 / x_display_pixel_height (dpyinfo));
 #endif
   monitor_frames = make_nil_vector (n_monitors);
   monitors = xzalloc (n_monitors * sizeof *monitors);
@@ -4958,7 +4957,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 
   for (i = 0; i < n_monitors; ++i)
     {
-      gint width_mm = -1, height_mm = -1;
+      gint width_mm, height_mm;
       GdkRectangle rec, work;
       struct MonitorInfo *mi = &monitors[i];
       int scale = 1;
@@ -4975,18 +4974,17 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 #if GTK_CHECK_VERSION (3, 22, 0)
       width_mm = gdk_monitor_get_width_mm (monitor);
       height_mm = gdk_monitor_get_height_mm (monitor);
-#elif GTK_CHECK_VERSION (2, 14, 0)
+#else
       width_mm = gdk_screen_get_monitor_width_mm (gscreen, i);
       height_mm = gdk_screen_get_monitor_height_mm (gscreen, i);
-#endif
       if (width_mm < 0)
 	width_mm = rec.width * mm_width_per_pixel + 0.5;
       if (height_mm < 0)
 	height_mm = rec.height * mm_height_per_pixel + 0.5;
-
+#endif
 #if GTK_CHECK_VERSION (3, 22, 0)
       gdk_monitor_get_workarea (monitor, &work);
-#elif GTK_CHECK_VERSION (3, 4, 0)
+#elif defined HAVE_GTK3
       gdk_screen_get_monitor_workarea (gscreen, i, &work);
 #else
       /* Emulate the behavior of GTK+ 3.4.  */
@@ -5010,7 +5008,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       /* GTK returns scaled sizes for the workareas.  */
 #if GTK_CHECK_VERSION (3, 22, 0)
       scale = gdk_monitor_get_scale_factor (monitor);
-#elif GTK_CHECK_VERSION (3, 10, 0)
+#elif defined HAVE_GTK3
       scale = gdk_screen_get_monitor_scale_factor (gscreen, i);
 #endif
       rec.width *= scale;
@@ -5031,7 +5029,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 
 #if GTK_CHECK_VERSION (3, 22, 0)
       dupstring (&mi->name, (gdk_monitor_get_model (monitor)));
-#elif GTK_CHECK_VERSION (2, 14, 0)
+#else
       mi->name = gdk_screen_get_monitor_plug_name (gscreen, i);
 #endif
     }
@@ -5041,11 +5039,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
                                                  primary_monitor,
                                                  monitor_frames,
                                                  source);
-#if GTK_CHECK_VERSION (2, 14, 0)
   free_monitors (monitors, n_monitors);
-#else
-  xfree (monitors);
-#endif
   unblock_input ();
 #else  /* not USE_GTK */
 
@@ -5380,7 +5374,7 @@ Frames are listed from topmost (first) to bottommost (last).  */)
 static void
 x_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
 {
-#if defined (USE_GTK) && GTK_CHECK_VERSION (2, 18, 0)
+#ifdef USE_GTK
   block_input ();
   xg_frame_restack (f1, f2, above_flag);
   unblock_input ();
