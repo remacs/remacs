@@ -37,3 +37,25 @@
         (split-string-and-unquote (buffer-string)))
     (should (equal initial-shell "nil"))
     (should-not (equal initial-shell shell))))
+
+(ert-deftest call-process-w32-debug-spawn-error ()
+  "Check that debugger runs on `call-process' failure (Bug#33016)."
+  (skip-unless (eq system-type 'windows-nt))
+  (let* ((debug-on-error t)
+         (have-called-debugger nil)
+         (debugger (lambda (&rest _)
+                     (setq have-called-debugger t)
+                     ;; Allow entering the debugger later in the same
+                     ;; test run, before going back to the command
+                     ;; loop.
+                     (setq internal-when-entered-debugger -1))))
+    (should (eq :got-error ;; NOTE: `should-error' would inhibit debugger.
+                (condition-case-unless-debug ()
+                    ;; On Windows, "nul.FOO" act like an always-empty
+                    ;; file for any FOO, in any directory.  So this
+                    ;; passes Emacs' test for the file's existence,
+                    ;; and ensures we hit an error in the w32 process
+                    ;; spawn code.
+                    (call-process "c:/nul.exe")
+                  (error :got-error))))
+    (should have-called-debugger)))

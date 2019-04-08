@@ -681,7 +681,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
   unblock_input ();
 
   if (pid < 0)
-    report_file_errno ("Doing vfork", Qnil, child_errno);
+    report_file_errno (CHILD_SETUP_ERROR_DESC, Qnil, child_errno);
 
   /* Close our file descriptors, except for callproc_fd[CALLPROC_PIPEREAD]
      since we will use that to read input from.  */
@@ -1174,7 +1174,7 @@ exec_failed (char const *name, int err)
    executable directory by the parent.
 
    On GNUish hosts, either exec or return an error number.
-   On MS-Windows, either return a pid or signal an error.
+   On MS-Windows, either return a pid or return -1 and set errno.
    On MS-DOS, either return an exit status or signal an error.  */
 
 CHILD_SETUP_TYPE
@@ -1319,9 +1319,6 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   /* Spawn the child.  (See w32proc.c:sys_spawnve).  */
   cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, env);
   reset_standard_handles (in, out, err, handles);
-  if (cpid == -1)
-    /* An error occurred while trying to spawn the process.  */
-    report_file_error ("Spawning child process", Qnil);
   return cpid;
 
 #else  /* not WINDOWSNT */

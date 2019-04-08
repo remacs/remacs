@@ -52,15 +52,6 @@ Lisp_Object Vautoload_queue;
    is shutting down.  */
 Lisp_Object Vrun_hooks;
 
-/* The value of num_nonmacro_input_events as of the last time we
-   started to enter the debugger.  If we decide to enter the debugger
-   again when this is still equal to num_nonmacro_input_events, then we
-   know that the debugger itself has an error, and we should just
-   signal the error instead of entering an infinite loop of debugger
-   invocations.  */
-
-static intmax_t when_entered_debugger;
-
 /* The function from which the last `signal' was called.  Set in
    Fsignal.  */
 /* FIXME: We should probably get rid of this!  */
@@ -1835,7 +1826,8 @@ maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig, Lisp_Object data)
 	  ? debug_on_quit
 	  : wants_debugger (Vdebug_on_error, conditions))
       && ! skip_debugger (conditions, combined_data)
-      /* RMS: What's this for?  */
+      /* See commentary on definition of
+         `internal-when-entered-debugger'.  */
       && when_entered_debugger < num_nonmacro_input_events)
     {
       call_debugger (list2 (Qerror, combined_data));
@@ -4169,6 +4161,18 @@ The Edebug package uses this to regain control.  */);
 Note that `debug-on-error', `debug-on-quit' and friends
 still determine whether to handle the particular condition.  */);
   Vdebug_on_signal = Qnil;
+
+  /* The value of num_nonmacro_input_events as of the last time we
+   started to enter the debugger.  If we decide to enter the debugger
+   again when this is still equal to num_nonmacro_input_events, then we
+   know that the debugger itself has an error, and we should just
+   signal the error instead of entering an infinite loop of debugger
+   invocations.  */
+  DEFSYM (Qinternal_when_entered_debugger, "internal-when-entered-debugger");
+  DEFVAR_INT ("internal-when-entered-debugger", when_entered_debugger,
+              doc: /* The number of keyboard events as of last time `debugger' was called.
+Used to avoid infinite loops if the debugger itself has an error.
+Don't set this unless you're sure that can't happen.  */);
 
   /* When lexical binding is being used,
    Vinternal_interpreter_environment is non-nil, and contains an alist

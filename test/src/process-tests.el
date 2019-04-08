@@ -215,6 +215,26 @@
                                       (string-to-list "stdout\n")
                                       (string-to-list "stderr\n"))))))
 
+(ert-deftest make-process-w32-debug-spawn-error ()
+  "Check that debugger runs on `make-process' failure (Bug#33016)."
+  (skip-unless (eq system-type 'windows-nt))
+  (let* ((debug-on-error t)
+         (have-called-debugger nil)
+         (debugger (lambda (&rest _)
+                     (setq have-called-debugger t)
+                     ;; Allow entering the debugger later in the same
+                     ;; test run, before going back to the command
+                     ;; loop.
+                     (setq internal-when-entered-debugger -1))))
+    (should (eq :got-error ;; NOTE: `should-error' would inhibit debugger.
+                (condition-case-unless-debug ()
+                    ;; Emacs doesn't search for absolute filenames, so
+                    ;; the error will be hit in the w32 process spawn
+                    ;; code.
+                    (make-process :name "test" :command '("c:/No-Such-Command"))
+                  (error :got-error))))
+    (should have-called-debugger)))
+
 (ert-deftest make-process/file-handler/found ()
   "Check that the ‘:file-handler’ argument of ‘make-process’
 works as expected if a file name handler is found."

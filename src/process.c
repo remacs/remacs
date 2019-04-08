@@ -2233,7 +2233,7 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   unblock_input ();
 
   if (pid < 0)
-    report_file_errno ("Doing vfork", Qnil, vfork_errno);
+    report_file_errno (CHILD_SETUP_ERROR_DESC, Qnil, vfork_errno);
   else
     {
       /* vfork succeeded.  */
