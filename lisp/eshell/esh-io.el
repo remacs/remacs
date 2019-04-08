@@ -68,8 +68,6 @@
 
 ;;; Code:
 
-(provide 'esh-io)
-
 (require 'esh-arg)
 (require 'esh-util)
 
@@ -511,4 +509,5 @@ Returns what was actually sent, or nil if nothing was sent."
 	(eshell-output-object-to-target object (car target))
 	(setq target (cdr target))))))
 
+(provide 'esh-io)
 ;;; esh-io.el ends here

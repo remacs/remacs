@@ -105,11 +105,12 @@
 
 ;;; Code:
 
-(provide 'esh-var)
-
 (require 'esh-util)
 (require 'esh-cmd)
 (require 'esh-opt)
+(require 'esh-module)
+(require 'esh-arg)
+(require 'esh-io)
 
 (require 'pcomplete)
 (require 'env)
@@ -206,6 +207,9 @@ function), and the arguments passed to this function would be the list
     (set (make-local-variable 'process-environment)
 	 (eshell-copy-environment)))
 
+  ;; This is supposedly run after enabling esh-mode, when eshell-command-map
+  ;; already exists.
+  (defvar eshell-command-map)
   (define-key eshell-command-map [(meta ?v)] 'eshell-insert-envvar)
 
   (set (make-local-variable 'eshell-special-chars-inside-quoting)
@@ -213,16 +217,16 @@ function), and the arguments passed to this function would be the list
   (set (make-local-variable 'eshell-special-chars-outside-quoting)
        (append eshell-special-chars-outside-quoting '(?$)))
 
-  (add-hook 'eshell-parse-argument-hook 'eshell-interpolate-variable t t)
+  (add-hook 'eshell-parse-argument-hook #'eshell-interpolate-variable t t)
 
   (add-hook 'eshell-prepare-command-hook
-	    'eshell-handle-local-variables nil t)
+	    #'eshell-handle-local-variables nil t)
 
   (when (eshell-using-module 'eshell-cmpl)
     (add-hook 'pcomplete-try-first-hook
-	      'eshell-complete-variable-reference nil t)
+	      #'eshell-complete-variable-reference nil t)
     (add-hook 'pcomplete-try-first-hook
-	      'eshell-complete-variable-assignment nil t)))
+	      #'eshell-complete-variable-assignment nil t)))
 
 (defun eshell-handle-local-variables ()
   "Allow for the syntax `VAR=val <command> <args>'."
@@ -532,7 +536,7 @@ For example, to retrieve the second element of a user's record in
 	      (setq separator (caar indices)
 		    refs (cdr refs)))
 	  (setq value
-		(mapcar 'eshell-convert
+		(mapcar #'eshell-convert
 			(split-string value separator)))))
       (cond
        ((< (length refs) 0)
@@ -618,4 +622,5 @@ For example, to retrieve the second element of a user's record in
       (setq pcomplete-stub (substring arg pos))
       (throw 'pcomplete-completions (pcomplete-entries)))))
 
+(provide 'esh-var)
 ;;; esh-var.el ends here

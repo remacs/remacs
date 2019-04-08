@@ -23,9 +23,6 @@
 
 ;;; Code:
 
-(provide 'esh-opt)
-
-(require 'esh-ext)
 
 ;; Unused.
 ;; (defgroup eshell-opt nil
@@ -127,6 +124,8 @@ let-bound variable `args'."
 (defun eshell--do-opts (name options args)
   "Helper function for `eshell-eval-using-options'.
 This code doesn't really need to be macro expanded everywhere."
+  (require 'esh-ext)
+  (declare-function eshell-external-command "esh-ext" (command args))
   (let ((ext-command
          (catch 'eshell-ext-command
            (let ((usage-msg
@@ -145,6 +144,8 @@ This code doesn't really need to be macro expanded everywhere."
 
 (defun eshell-show-usage (name options)
   "Display the usage message for NAME, using OPTIONS."
+  (require 'esh-ext)
+  (declare-function eshell-search-path "esh-ext" (name))
   (let ((usage (format "usage: %s %s\n\n" name
 		       (cadr (memq ':usage options))))
 	(extcmd (memq ':external options))
@@ -273,4 +274,5 @@ switch is unrecognized."
 		(setq index (1+ index))))))))
     (nconc (mapcar #'cdr opt-vals) eshell--args)))
 
+(provide 'esh-opt)
 ;;; esh-opt.el ends here

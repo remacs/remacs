@@ -105,6 +105,8 @@
   (require 'eldoc))
 (require 'esh-arg)
 (require 'esh-proc)
+(require 'esh-module)
+(require 'esh-io)
 (require 'esh-ext)
 
 (eval-when-compile
@@ -1337,7 +1339,7 @@ messages, and errors."
 	  (eshell-print "\n"))
       (eshell-close-handles 0 (list 'quote result)))))
 
-(defalias 'eshell-lisp-command* 'eshell-lisp-command)
+(defalias 'eshell-lisp-command* #'eshell-lisp-command)
 
 (provide 'esh-cmd)
 

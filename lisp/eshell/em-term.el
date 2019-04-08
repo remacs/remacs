@@ -191,7 +191,7 @@ allowed."
       (term-exec term-buf program program nil args)
       (let ((proc (get-buffer-process term-buf)))
 	(if (and proc (eq 'run (process-status proc)))
-	    (set-process-sentinel proc 'eshell-term-sentinel)
+	    (set-process-sentinel proc #'eshell-term-sentinel)
 	  (error "Failed to invoke visual command")))
       (term-char-mode)
       (if eshell-escape-control-x

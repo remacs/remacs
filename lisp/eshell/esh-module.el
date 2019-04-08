@@ -22,9 +22,6 @@
 
 ;;; Code:
 
-(provide 'esh-module)
-
-(require 'eshell)
 (require 'esh-util)
 
 (defgroup eshell-module nil
@@ -101,4 +98,5 @@ customization group.  Example: `eshell-cmpl' for that module."
 	  (unload-feature module)
 	  (message "Unloading %s...done" (symbol-name module))))))
 
+(provide 'esh-module)
 ;;; esh-module.el ends here
