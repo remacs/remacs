@@ -578,16 +578,6 @@ If POSITION is at the end of OBJECT, the value is nil.  */)
   return i->plist;
 }
 
-DEFUN ("get-text-property", Fget_text_property, Sget_text_property, 2, 3, 0,
-       doc: /* Return the value of POSITION's property PROP, in OBJECT.
-OBJECT should be a buffer or a string; if omitted or nil, it defaults
-to the current buffer.
-If POSITION is at the end of OBJECT, the value is nil.  */)
-  (Lisp_Object position, Lisp_Object prop, Lisp_Object object)
-{
-  return textget (Ftext_properties_at (position, object), prop);
-}
-
 /* Return the value of char's property PROP, in OBJECT at POSITION.
    OBJECT is optional and defaults to the current buffer.
    If OVERLAY is non-0, then in the case that the returned property is from
@@ -2352,7 +2342,6 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   DEFSYM (Qpoint_entered, "point-entered");
 
   defsubr (&Stext_properties_at);
-  defsubr (&Sget_text_property);
   defsubr (&Sget_char_property_and_overlay);
   defsubr (&Snext_char_property_change);
   defsubr (&Sprevious_char_property_change);
