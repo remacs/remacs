@@ -2529,7 +2529,8 @@ hunk text is not found in the source file."
     (let ((enable-local-variables :safe) ;; to find `mode:'
           (buffer-file-name file))
       (set-auto-mode)
-      (when (and (memq 'generic-mode-find-file-hook find-file-hook)
+      (when (and (memq 'generic-mode-find-file-hook
+                       (append find-file-hook (default-value 'find-file-hook)))
                  (fboundp 'generic-mode-find-file-hook))
         (generic-mode-find-file-hook))))
 
