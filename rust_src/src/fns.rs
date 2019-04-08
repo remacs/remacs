@@ -278,6 +278,22 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+/// Concatenate all the arguments and make the result a vector.
+/// The result is a vector whose elements are the elements of all the arguments.
+/// Each argument may be a list, vector or string.
+/// usage: (vconcat &rest SEQUENCES)
+#[lisp_fn]
+pub fn vconcat(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        lisp_concat(
+            args.len() as isize,
+            args.as_mut_ptr(),
+            Lisp_Type::Lisp_Vectorlike,
+            false,
+        )
+    }
+}
+
 /// Return the reversed copy of list, vector, or string SEQ.
 /// See also the function `nreverse', which is used more often.
 #[lisp_fn]

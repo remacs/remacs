@@ -17,7 +17,7 @@ use crate::{
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
-    fns::nreverse,
+    fns::{nconc, nreverse},
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
@@ -37,7 +37,7 @@ use crate::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, make_timespec, marker_position, modify_overlay, nconc2,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
         specbind, unblock_input, unchain_both, unchain_marker, update_mode_lines,
         windows_or_buffers_changed,
@@ -52,7 +52,7 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fmake_marker, Fnconc, Fnreverse},
+    remacs_sys::{Fcopy_sequence, Fmake_marker},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
@@ -189,7 +189,7 @@ impl LispBufferRef {
         // Add the buffer to the alist of live buffers
         let buffer: LispObject = b.into();
         unsafe {
-            Vbuffer_alist = nconc2(Vbuffer_alist, list!((name, buffer)));
+            Vbuffer_alist = nconc(&mut [Vbuffer_alist, list!((name, buffer))]);
             if Vrun_hooks.is_not_nil() {
                 call!(Vrun_hooks, Qbuffer_list_update_hook);
             }
@@ -817,7 +817,7 @@ impl LispBufferRef {
         } else {
             let mut last = Qnil;
             for tail in self.local_vars_tails_iter() {
-                let (local, _) = tail.car().into();
+                let (local, list) = tail.car().into();
                 let prop = lists::get(local.force_symbol(), Qpermanent_local);
                 // If permanent-local, keep it.
                 if prop.is_not_nil() {
@@ -825,15 +825,10 @@ impl LispBufferRef {
                     if prop == Qpermanent_local_hook {
                         // This is a partially permanent hook variable.
                         // Preserve only the elements that want to be preserved.
-                        let (_, list) = tail.car().into();
                         let newlist = match list.as_cons() {
                             None => list,
-                            Some(cons) => unsafe {
-                                Fnreverse(
-                                    cons.iter_cars(
-                                        LispConsEndChecks::off,
-                                        LispConsCircularChecks::on,
-                                    )
+                            Some(cons) => nreverse(
+                                cons.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::on)
                                     .filter(|elt| {
                                         !elt.is_symbol()
                                             || elt.is_t()
@@ -841,8 +836,7 @@ impl LispBufferRef {
                                                 .is_not_nil()
                                     })
                                     .fold(Qnil, |new, elt| (elt, new).into()),
-                                )
-                            },
+                            ),
                         };
                         if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
                             unsafe {
@@ -1182,7 +1176,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
             buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
 
-            callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
+            nconc(&mut [framelist, list(&buffers), prevlist])
         }
     }
 }

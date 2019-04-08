@@ -52,6 +52,14 @@
   (let ((alist '(("foo" . "bar") ("foo" . "bar"))))
     (should (equal alist (copy-alist alist)))))
 
+(ert-deftest test-vconcat ()
+  (should-error (vconcat t))
+  (should (equal (vconcat) []))
+  (should (equal (vconcat nil) []))
+  (should (equal (vconcat [1 2 3] [4 5 6]) [1 2 3 4 5 6]))
+  (should (equal (vconcat '(1 2 3) [4 5 6]) [1 2 3 4 5 6]))
+  (should (equal (vconcat [1 2 3] "abc") [1 2 3 97 98 99])))
+
 (ert-deftest test-reverse ()
   (should-error (reverse))
   (should-error (reverse 1))
