@@ -20645,10 +20645,10 @@ extend_face_to_end_of_line (struct it *it)
 	  if (EQ (Vdisplay_fill_column_indicator_column, Qt)
 	      && FIXNATP (BVAR (current_buffer, fill_column)))
 	    fill_column_indicator_column =
-	      XFIXNAT (BVAR (current_buffer, fill_column));
+	      XFIXNAT (BVAR (current_buffer, fill_column)) + it->lnum_pixel_width;
 	  else if (FIXNATP (Vdisplay_fill_column_indicator_column))
 	    fill_column_indicator_column =
-	      XFIXNAT (Vdisplay_fill_column_indicator_column);
+	      XFIXNAT (Vdisplay_fill_column_indicator_column) + it->lnum_pixel_width;
 
 	  do
 	    {
