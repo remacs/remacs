@@ -212,9 +212,8 @@ struct window
     /* The help echo text for this window.  Qnil if there's none.  */
     Lisp_Object mode_line_help_echo;
 
-    /* No Lisp data may follow below this point without changing
-       mark_object in alloc.c.  The member current_matrix must be the
-       first non-Lisp member.  */
+    /* No Lisp data may follow this point; mode_line_help_echo must be
+       the last Lisp member.  */
 
     /* Glyph matrices.  */
     struct glyph_matrix *current_matrix;

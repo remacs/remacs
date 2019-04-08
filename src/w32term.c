@@ -3896,7 +3896,7 @@ x_scroll_bar_create (struct window *w, int left, int top, int width, int height,
   HWND hwnd;
   SCROLLINFO si;
   struct scroll_bar *bar
-    = ALLOCATE_PSEUDOVECTOR (struct scroll_bar, top, PVEC_OTHER);
+    = ALLOCATE_PSEUDOVECTOR (struct scroll_bar, w32_widget_high, PVEC_OTHER);
   Lisp_Object barobj;
 
   block_input ();

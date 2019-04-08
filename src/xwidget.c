@@ -41,14 +41,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 static struct xwidget *
 allocate_xwidget (void)
 {
-  return ALLOCATE_PSEUDOVECTOR (struct xwidget, height, PVEC_XWIDGET);
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget, script_callbacks, PVEC_XWIDGET);
 }
 
 static struct xwidget_view *
 allocate_xwidget_view (void)
 {
-  return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, redisplayed,
-                                PVEC_XWIDGET_VIEW);
+  return ALLOCATE_PSEUDOVECTOR (struct xwidget_view, w, PVEC_XWIDGET_VIEW);
 }
 
 #define XSETXWIDGET(a, b) XSETPSEUDOVECTOR (a, b, PVEC_XWIDGET)

@@ -4170,8 +4170,8 @@ temp_output_buffer_show (register Lisp_Object buf)
 static struct window *
 allocate_window (void)
 {
-  return ALLOCATE_ZEROED_PSEUDOVECTOR
-    (struct window, current_matrix, PVEC_WINDOW);
+  return ALLOCATE_ZEROED_PSEUDOVECTOR (struct window, mode_line_help_echo,
+				       PVEC_WINDOW);
 }
 
 /* Make new window, have it replace WINDOW in window-tree, and make
@@ -6710,7 +6710,8 @@ struct save_window_data
     Lisp_Object saved_windows;
 
     /* All fields above are traced by the GC.
-       From `frame-cols' down, the fields are ignored by the GC.  */
+       After saved_windows, the fields are ignored by the GC.  */
+
     /* We should be able to do without the following two.  */
     int frame_cols, frame_lines;
     /* These two should get eventually replaced by their pixel
@@ -7383,15 +7384,11 @@ redirection (see `redirect-frame-focus').  The variable
 saved by this function.  */)
   (Lisp_Object frame)
 {
-  Lisp_Object tem;
-  ptrdiff_t i, n_windows;
-  struct save_window_data *data;
   struct frame *f = decode_live_frame (frame);
-
-  n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
-  data = ALLOCATE_PSEUDOVECTOR (struct save_window_data, frame_cols,
-			       PVEC_WINDOW_CONFIGURATION);
-
+  ptrdiff_t n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
+  struct save_window_data *data
+    = ALLOCATE_PSEUDOVECTOR (struct save_window_data, saved_windows,
+			     PVEC_WINDOW_CONFIGURATION);
   data->frame_cols = FRAME_COLS (f);
   data->frame_lines = FRAME_LINES (f);
   data->frame_menu_bar_lines = FRAME_MENU_BAR_LINES (f);
@@ -7407,9 +7404,9 @@ saved by this function.  */)
   data->minibuf_selected_window = minibuf_level > 0 ? minibuf_selected_window : Qnil;
   data->root_window = FRAME_ROOT_WINDOW (f);
   data->focus_frame = FRAME_FOCUS_FRAME (f);
-  tem = make_uninit_vector (n_windows);
+  Lisp_Object tem = make_uninit_vector (n_windows);
   data->saved_windows = tem;
-  for (i = 0; i < n_windows; i++)
+  for (ptrdiff_t i = 0; i < n_windows; i++)
     ASET (tem, i, make_nil_vector (VECSIZE (struct saved_window)));
   save_window_save (FRAME_ROOT_WINDOW (f), XVECTOR (tem), 0);
   XSETWINDOW_CONFIGURATION (tem, data);

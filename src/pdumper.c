@@ -2702,7 +2702,7 @@ dump_hash_table (struct dump_context *ctx,
                  Lisp_Object object,
                  dump_off offset)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Hash_Table_73C9BFB7D1)
+#if CHECK_STRUCTS && !defined HASH_Lisp_Hash_Table_EF95ED06FF
 # error "Lisp_Hash_Table changed. See CHECK_STRUCTS comment."
 #endif
   const struct Lisp_Hash_Table *hash_in = XHASH_TABLE (object);
@@ -2770,7 +2770,7 @@ dump_hash_table (struct dump_context *ctx,
 static dump_off
 dump_buffer (struct dump_context *ctx, const struct buffer *in_buffer)
 {
-#if CHECK_STRUCTS && !defined HASH_buffer_2CEE653E74
+#if CHECK_STRUCTS && !defined HASH_buffer_E34A11C6B9
 # error "buffer changed. See CHECK_STRUCTS comment."
 #endif
   struct buffer munged_buffer = *in_buffer;

@@ -741,8 +741,8 @@ struct buffer
      See `cursor-type' for other values.  */
   Lisp_Object cursor_in_non_selected_windows_;
 
-  /* No more Lisp_Object beyond this point.  Except undo_list,
-     which is handled specially in Fgarbage_collect.  */
+  /* No more Lisp_Object beyond cursor_in_non_selected_windows_.
+     Except undo_list, which is handled specially in Fgarbage_collect.  */
 
   /* This structure holds the coordinates of the buffer contents
      in ordinary buffers.  In indirect buffers, this is not used.  */
@@ -1019,14 +1019,12 @@ bset_width_table (struct buffer *b, Lisp_Object val)
    structure, make sure that this is still correct.  */
 
 #define BUFFER_LISP_SIZE						\
-  ((offsetof (struct buffer, own_text) - header_size) / word_size)
+  PSEUDOVECSIZE (struct buffer, cursor_in_non_selected_windows_)
 
-/* Size of the struct buffer part beyond leading Lisp_Objects, in word_size
-   units.  Rounding is needed for --with-wide-int configuration.  */
+/* Allocated size of the struct buffer part beyond leading
+   Lisp_Objects, in word_size units.  */
 
-#define BUFFER_REST_SIZE						\
-  ((((sizeof (struct buffer) - offsetof (struct buffer, own_text))	\
-     + (word_size - 1)) & ~(word_size - 1)) / word_size)
+#define BUFFER_REST_SIZE (VECSIZE (struct buffer) - BUFFER_LISP_SIZE)
 
 /* Initialize the pseudovector header of buffer object.  BUFFER_LISP_SIZE
    is required for GC, but BUFFER_REST_SIZE is set up just to be consistent
