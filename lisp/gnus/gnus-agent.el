@@ -276,7 +276,7 @@ Actually a hash table holding subjects mapped to t.")
 (defmacro gnus-agent-with-refreshed-group (group &rest body)
   "Performs the body then updates the group's line in the group
 buffer.  Automatically blocks multiple updates due to recursion."
-`(prog1 (let ((gnus-agent-inhibit-update-total-fetched-for t)) ,@body)
+  `(prog1 (let ((gnus-agent-inhibit-update-total-fetched-for t)) ,@body)
      (when (and gnus-agent-need-update-total-fetched-for
 		(not gnus-agent-inhibit-update-total-fetched-for))
 	(with-current-buffer gnus-group-buffer
@@ -311,9 +311,10 @@ buffer.  Automatically blocks multiple updates due to recursion."
 (defun gnus-agent-cat-set-property (category property value)
   (if value
       (setcdr (or (assq property category)
-              (let ((cell (cons property nil)))
+                  (let ((cell (cons property nil)))
                     (setcdr category (cons cell (cdr category)))
-                    cell)) value)
+                    cell))
+              value)
     (let ((category category))
       (while (cond ((eq property (caadr category))
                     (setcdr category (cddr category))
@@ -378,7 +379,8 @@ manipulated as follows:
              (setcdr (or (assq 'agent-groups category)
                          (let ((cell (cons 'agent-groups nil)))
                            (setcdr category (cons cell (cdr category)))
-                           cell)) new-g))
+                           cell))
+                     new-g))
             (t
              (let ((groups groups))
                (while groups
@@ -395,7 +397,8 @@ manipulated as follows:
              (setcdr (or (assq 'agent-groups category)
                          (let ((cell (cons 'agent-groups nil)))
                            (setcdr category (cons cell (cdr category)))
-                           cell)) groups))))))
+                           cell))
+                     groups))))))
 
 (defsubst gnus-agent-cat-make (name &optional default-agent-predicate)
   (list name `(agent-predicate . ,(or default-agent-predicate 'false))))
@@ -1557,11 +1560,8 @@ downloaded into the agent."
                           (skip-chars-forward " ")
                           (setq crosses nil)
                           (while (looking-at "\\([^: \n]+\\):\\([0-9]+\\) *")
-                            (push (cons (buffer-substring (match-beginning 1)
-                                                          (match-end 1))
-                                        (string-to-number
-					 (buffer-substring (match-beginning 2)
-							   (match-end 2))))
+                            (push (cons (match-string 1)
+                                        (string-to-number (match-string 2)))
                                   crosses)
                             (goto-char (match-end 0)))
                           (gnus-agent-crosspost crosses (caar pos) date)))
@@ -2939,7 +2939,7 @@ The following commands are available:
 	 'or)
 	((memq (car predicate) gnus-category-not)
 	 'not))
-      ,@(mapcar 'gnus-category-make-function-1 (cdr predicate))))
+      ,@(mapcar #'gnus-category-make-function-1 (cdr predicate))))
    (t
     (error "Unknown predicate type: %s" predicate))))
 
@@ -2965,7 +2965,7 @@ return read articles, nil when it is known to always return read
 articles, and t_nil when the function may return both read and unread
 articles."
   (let ((func (car function))
-        (args (mapcar 'gnus-function-implies-unread-1 (cdr function))))
+        (args (mapcar #'gnus-function-implies-unread-1 (cdr function))))
     (cond ((eq func 'and)
            (cond ((memq t args) ; if any argument returns only unread articles
                   ;; then that argument constrains the result to only unread articles.
@@ -3151,38 +3151,37 @@ FORCE is equivalent to setting the expiration predicates to true."
 	      (nov-file (concat dir ".overview"))
 	      (cnt 0)
 	      (completed -1)
-	      dlist
-	      type)
+	      type
 
-	 ;; The normal article alist contains elements that look like
-	 ;; (article# .  fetch_date) I need to combine other
-	 ;; information with this list.  For example, a flag indicating
-	 ;; that a particular article MUST BE KEPT.  To do this, I'm
-	 ;; going to transform the elements to look like (article#
-	 ;; fetch_date keep_flag NOV_entry_position) Later, I'll reverse
-	 ;; the process to generate the expired article alist.
+              ;; The normal article alist contains elements that look like
+              ;; (article# .  fetch_date) I need to combine other
+              ;; information with this list.  For example, a flag indicating
+              ;; that a particular article MUST BE KEPT.  To do this, I'm
+              ;; going to transform the elements to look like (article#
+              ;; fetch_date keep_flag NOV_entry_position) Later, I'll reverse
+              ;; the process to generate the expired article alist.
+	      (dlist
+               (nconc
+                ;; Convert the alist elements to (article# fetch_date nil nil).
+                (mapcar (lambda (e)
+                          (list (car e) (cdr e) nil nil))
+                        alist)
 
-	 ;; Convert the alist elements to (article# fetch_date nil
-	 ;; nil).
-	 (setq dlist (mapcar (lambda (e)
-			       (list (car e) (cdr e) nil nil)) alist))
+                ;; Convert the keep lists to elements that look like (article#
+                ;; nil keep_flag nil) then append it to the expanded dlist
+                ;; These statements are sorted by ascending precedence of the
+                ;; keep_flag.
+                (mapcar (lambda (e)
+                          (list e nil 'unread  nil))
+                        unreads)
 
-	 ;; Convert the keep lists to elements that look like (article#
-	 ;; nil keep_flag nil) then append it to the expanded dlist
-	 ;; These statements are sorted by ascending precedence of the
-	 ;; keep_flag.
-	 (setq dlist (nconc dlist
-			    (mapcar (lambda (e)
-				      (list e nil 'unread  nil))
-				    unreads)))
-	 (setq dlist (nconc dlist
-			    (mapcar (lambda (e)
-				      (list e nil 'marked  nil))
-				    marked)))
-	 (setq dlist (nconc dlist
-			    (mapcar (lambda (e)
-				      (list e nil 'special nil))
-				    specials)))
+                (mapcar (lambda (e)
+                          (list e nil 'marked  nil))
+                        marked)
+
+                (mapcar (lambda (e)
+                          (list e nil 'special nil))
+                        specials))))
 
 	 (set-buffer overview)
 	 (erase-buffer)
@@ -3391,7 +3390,7 @@ article alist" type) actions))
 		   (when actions
 		     (gnus-agent-message 8 "gnus-agent-expire: %s:%d: %s"
 					 decoded article-number
-					 (mapconcat 'identity actions ", ")))))
+					 (mapconcat #'identity actions ", ")))))
 		(t
 		 (gnus-agent-message
 		  10 "gnus-agent-expire: %s:%d: Article kept as \
@@ -3624,7 +3623,7 @@ If CACHED-HEADER is nil, articles are only excluded if the article itself
 has been fetched."
 
   ;; Logically equivalent to: (gnus-sorted-difference articles (mapcar
-  ;; 'car gnus-agent-article-alist))
+  ;; #'car gnus-agent-article-alist))
 
   ;; Functionally, I don't need to construct a temp list using mapcar.
 
