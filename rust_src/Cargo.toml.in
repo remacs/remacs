@@ -22,6 +22,7 @@ cfg-if = "0.1"
 errno = "0.2"
 field-offset = "0.1"
 flate2 = { version = "1.0", features = ["rust_backend"], default-features = false }
+itertools = "0.8"
 lazy_static = "1.2"
 libc = "0.2"
 line-wrap = "0.1.1"

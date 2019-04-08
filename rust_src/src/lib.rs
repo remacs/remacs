@@ -1,4 +1,4 @@
-#![allow(clippy::cyclomatic_complexity)]
+#![allow(clippy::cognitive_complexity)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(non_upper_case_globals)]
@@ -86,6 +86,7 @@ mod emacs;
 mod eval;
 mod ffi;
 mod fileio;
+mod filelock;
 mod floatfns;
 mod fns;
 mod fonts;
@@ -104,6 +105,7 @@ mod multibyte;
 mod numbers;
 mod obarray;
 mod objects;
+mod print;
 mod process;
 mod profiler;
 #[allow(clippy::all)]

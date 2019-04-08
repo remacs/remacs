@@ -11,11 +11,15 @@ use crate::{
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::{vertical_scroll_bar_type, x_focus_frame, Fnreverse};
+use crate::{
+    fns::nreverse,
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame},
+};
 
 #[cfg(not(feature = "window-system"))]
 use crate::remacs_sys::Fcopy_sequence;
@@ -115,7 +119,7 @@ impl From<LispFrameRef> for LispObject {
 
 impl From<LispObject> for Option<LispFrameRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_frame())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_frame)
     }
 }
 
@@ -184,7 +188,7 @@ pub struct LispFrameLiveOrSelected(LispFrameRef);
 
 impl From<LispObject> for LispFrameLiveOrSelected {
     fn from(obj: LispObject) -> Self {
-        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, |f| f.as_live_frame_or_error()))
+        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
     }
 }
 
@@ -646,7 +650,7 @@ pub fn frame_list() -> LispObject {
     {
         let list = filter_frame_list(|f| !f.has_tooltip());
         // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
-        unsafe { Fnreverse(list) }
+        nreverse(list)
     }
     #[cfg(not(feature = "window-system"))]
     {
@@ -657,7 +661,15 @@ pub fn frame_list() -> LispObject {
 /// Return a list of all frames now \"visible\" (being updated).
 #[lisp_fn]
 pub fn visible_frame_list() -> LispObject {
-    filter_frame_list(|f| f.is_visible())
+    filter_frame_list(LispFrameRef::is_visible)
+}
+
+/// Return an alist of frame-local faces defined on FRAME.
+/// For internal use only.
+#[lisp_fn(min = "0")]
+pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.face_alist
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

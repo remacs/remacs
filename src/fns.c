@@ -280,16 +280,6 @@ concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
   return concat (3, ((Lisp_Object []) {s1, s2, s3}), Lisp_String, 0);
 }
 
-DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0,
-       doc: /* Concatenate all the arguments and make the result a vector.
-The result is a vector whose elements are the elements of all the arguments.
-Each argument may be a list, vector or string.
-usage: (vconcat &rest SEQUENCES)   */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return concat (nargs, args, Lisp_Vectorlike, 0);
-}
-
 
 /* This structure holds information of an argument of `concat' that is
    a string and has text properties to be copied.  */
@@ -1135,60 +1125,6 @@ changing the value of a sequence `foo'.  */)
       CHECK_LIST_END (tail, seq);
     }
 
-  return seq;
-}
-
-DEFUN ("nreverse", Fnreverse, Snreverse, 1, 1, 0,
-       doc: /* Reverse order of items in a list, vector or string SEQ.
-If SEQ is a list, it should be nil-terminated.
-This function may destructively modify SEQ to produce the value.  */)
-  (Lisp_Object seq)
-{
-  if (NILP (seq))
-    return seq;
-  else if (STRINGP (seq))
-    return Freverse (seq);
-  else if (CONSP (seq))
-    {
-      Lisp_Object prev, tail, next;
-
-      for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
-	{
-	  next = XCDR (tail);
-	  /* If SEQ contains a cycle, attempting to reverse it
-	     in-place will inevitably come back to SEQ.  */
-	  if (EQ (next, seq))
-	    circular_list (seq);
-	  Fsetcdr (tail, prev);
-	  prev = tail;
-	}
-      CHECK_LIST_END (tail, seq);
-      seq = prev;
-    }
-  else if (VECTORP (seq))
-    {
-      ptrdiff_t i, size = ASIZE (seq);
-
-      for (i = 0; i < size / 2; i++)
-	{
-	  Lisp_Object tem = AREF (seq, i);
-	  ASET (seq, i, AREF (seq, size - i - 1));
-	  ASET (seq, size - i - 1, tem);
-	}
-    }
-  else if (BOOL_VECTOR_P (seq))
-    {
-      ptrdiff_t i, size = bool_vector_size (seq);
-
-      for (i = 0; i < size / 2; i++)
-	{
-	  bool tem = bool_vector_bitref (seq, i);
-	  bool_vector_set (seq, i, bool_vector_bitref (seq, size - i - 1));
-	  bool_vector_set (seq, size - i - 1, tem);
-	}
-    }
-  else
-    wrong_type_argument (Qarrayp, seq);
   return seq;
 }
 
@@ -2851,14 +2787,12 @@ this variable.  */);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
-  defsubr (&Svconcat);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
   defsubr (&Sstring_as_unibyte);
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);
   defsubr (&Sdelete);
-  defsubr (&Snreverse);
   defsubr (&Sfillarray);
   defsubr (&Smapcar);
   defsubr (&Smapcan);

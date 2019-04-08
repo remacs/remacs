@@ -44,7 +44,8 @@ impl LispObject {
     }
 
     pub fn is_vector(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| v.is_vector())
+        self.as_vectorlike()
+            .map_or(false, LispVectorlikeRef::is_vector)
     }
 
     pub fn force_vectorlike(self) -> LispVectorlikeRef {
@@ -74,7 +75,7 @@ impl LispObject {
     }
 
     pub fn as_vector(self) -> Option<LispVectorRef> {
-        self.as_vectorlike().and_then(|v| v.as_vector())
+        self.as_vectorlike().and_then(LispVectorlikeRef::as_vector)
     }
 
     pub fn as_vector_or_error(self) -> LispVectorRef {
@@ -548,7 +549,8 @@ impl LispObject {
     }
 
     pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
-        self.as_vectorlike().and_then(|v| v.as_bool_vector())
+        self.as_vectorlike()
+            .and_then(LispVectorlikeRef::as_bool_vector)
     }
 }
 
@@ -637,7 +639,7 @@ pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
 pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
-    } else if let Some(mut vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
+    } else if let Some(mut vec) = seq.as_vectorlike().and_then(LispVectorlikeRef::as_vector) {
         vec.as_mut_slice().sort_by(|&a, &b| {
             // XXX: since the `sort' predicate is a two-outcome comparison
             // Less/!Less, and slice::sort_by() uses Greater/!Greater

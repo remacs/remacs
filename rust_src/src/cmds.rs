@@ -509,6 +509,7 @@ pub extern "C" fn keys_of_cmds() {
     }
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");

@@ -38,7 +38,7 @@ trait StringExt {
 impl StringExt for String {
     fn to_bstring(&self) -> LispObject {
         let c_str = CString::new(self.as_str()).unwrap();
-        unsafe { build_string(c_str.as_ptr() as *const i8) }
+        unsafe { build_string(c_str.as_ptr() as *const libc::c_char) }
     }
     fn to_cstring(&self) -> *const c_char {
         let c_str = CString::new(self.as_str()).unwrap();
@@ -282,7 +282,7 @@ fn match_re_maybe(f: String, re: &Option<RegEx>) -> Option<String> {
 
 fn fnames_to_list(fnames: &[String], dname: &str, full: &FullPath) -> LispObject {
     match *full {
-        FullPath::No => list(&fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
+        FullPath::No => list(&fnames.iter().map(StringExt::to_bstring).collect::<Vec<_>>()),
         FullPath::Yes => list(
             &fnames
                 .iter()
@@ -303,7 +303,7 @@ fn fattrs_to_list(
         FullPath::No => list(
             &fnames
                 .iter()
-                .map(|x| x.to_bstring())
+                .map(StringExt::to_bstring)
                 .zip(fattrs.to_owned())
                 .map(|x| LispObject::cons(x.0, x.1))
                 .collect::<Vec<_>>(),

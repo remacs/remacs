@@ -855,37 +855,6 @@ safe_debug_print (Lisp_Object arg)
     }
 }
 
-
-DEFUN ("error-message-string", Ferror_message_string, Serror_message_string,
-       1, 1, 0,
-       doc: /* Convert an error value (ERROR-SYMBOL . DATA) to an error message.
-See Info anchor `(elisp)Definition of signal' for some details on how this
-error message is constructed.  */)
-  (Lisp_Object obj)
-{
-  struct buffer *old = current_buffer;
-  Lisp_Object value;
-
-  /* If OBJ is (error STRING), just return STRING.
-     That is not only faster, it also avoids the need to allocate
-     space here when the error is due to memory full.  */
-  if (CONSP (obj) && EQ (XCAR (obj), Qerror)
-      && CONSP (XCDR (obj))
-      && STRINGP (XCAR (XCDR (obj)))
-      && NILP (XCDR (XCDR (obj))))
-    return XCAR (XCDR (obj));
-
-  print_error_message (obj, Vprin1_to_string_buffer, 0, Qnil);
-
-  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
-  value = Fbuffer_string ();
-
-  Ferase_buffer ();
-  set_buffer_internal (old);
-
-  return value;
-}
-
 /* Print an error message for the error DATA onto Lisp output stream
    STREAM (suitable for the print functions).
    CONTEXT is a C string describing the context of the error.
@@ -2439,7 +2408,6 @@ priorities.  */);
 
   defsubr (&Sprin1);
   defsubr (&Sprin1_to_string);
-  defsubr (&Serror_message_string);
   defsubr (&Sprinc);
   defsubr (&Sprint);
   defsubr (&Sterpri);

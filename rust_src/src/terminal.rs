@@ -50,7 +50,8 @@ impl LispObject {
     }
 
     pub fn as_terminal(self) -> Option<LispTerminalRef> {
-        self.as_vectorlike().and_then(|v| v.as_terminal())
+        self.as_vectorlike()
+            .and_then(LispVectorlikeRef::as_terminal)
     }
 }
 

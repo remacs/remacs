@@ -13,6 +13,7 @@ use crate::{
     },
     remacs_sys::{uniprop_table_uncompress, CHAR_TABLE_SET},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
+    vectors::LispVectorlikeRef,
 };
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
@@ -29,6 +30,14 @@ impl LispObject {
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         self.into()
     }
+
+    pub fn force_char_table(self) -> LispCharTableRef {
+        unsafe { self.to_char_table_unchecked() }
+    }
+
+    pub unsafe fn to_char_table_unchecked(self) -> LispCharTableRef {
+        LispCharTableRef::new(self.get_untaggedptr() as *mut Lisp_Char_Table)
+    }
 }
 
 impl From<LispObject> for LispCharTableRef {
@@ -43,7 +52,7 @@ impl From<LispObject> for LispCharTableRef {
 
 impl From<LispObject> for Option<LispCharTableRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_char_table())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_char_table)
     }
 }
 
@@ -55,12 +64,13 @@ impl From<LispCharTableRef> for LispObject {
 
 impl LispObject {
     pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
+        self.as_vectorlike()
+            .and_then(LispVectorlikeRef::as_sub_char_table)
     }
 
     pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
         self.as_vectorlike()
-            .and_then(|v| v.as_sub_char_table_ascii())
+            .and_then(LispVectorlikeRef::as_sub_char_table_ascii)
     }
 }
 

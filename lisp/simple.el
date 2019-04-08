@@ -128,6 +128,12 @@ or \\[compile-goto-error].")
 ;; continue navigation from it.
 (make-variable-buffer-local 'next-error-last-buffer)
 
+;; next-error-last-buffer is made buffer-local to keep the reference
+;; to the parent buffer used to navigate to the current buffer, so the
+;; next call of next-buffer will use the same parent buffer to
+;; continue navigation from it.
+(make-variable-buffer-local 'next-error-last-buffer)
+
 (defvar next-error-function nil
   "Function to use to find the next error in the current buffer.
 The function is called with 2 parameters:

@@ -3346,7 +3346,7 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
     value = Qunspecified;
   else if (EQ (attr, QCheight))
     {
-      value = Fstring_to_number (value, Qnil);
+      value = Fstring_to_number (value, make_number (10));
       if (!INTEGERP (value) || XINT (value) <= 0)
 	signal_error ("Invalid face height from X resource", value);
     }
@@ -3735,16 +3735,6 @@ If FRAME is omitted or nil, use the selected frame.  */)
       break;
 
   return i == LFACE_VECTOR_SIZE ? Qt : Qnil;
-}
-
-
-DEFUN ("frame-face-alist", Fframe_face_alist, Sframe_face_alist,
-       0, 1, 0,
-       doc: /* Return an alist of frame-local faces defined on FRAME.
-For internal use only.  */)
-  (Lisp_Object frame)
-{
-  return decode_live_frame (frame)->face_alist;
 }
 
 
@@ -6286,7 +6276,6 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_copy_lisp_face);
   defsubr (&Sinternal_merge_in_global_face);
   defsubr (&Sface_font);
-  defsubr (&Sframe_face_alist);
   defsubr (&Sdisplay_supports_face_attributes_p);
   defsubr (&Scolor_distance);
   defsubr (&Sinternal_set_font_selection_order);

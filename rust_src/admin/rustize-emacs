@@ -137,7 +137,7 @@ def parse_c_definition(c_code):
     if match:
         return ('defun', match.groupdict())
 
-    c_func_regex = re.compile(r'''^\s*(?:/\*\s*(?P<comment>.+)\*/)?\s*(?:static|extern)?\s*(?P<return_type>\w+)\s*(?P<func_name>[^\)]+)\s+\((?P<func_args>[^\)]+)\)
+    c_func_regex = re.compile(r'''^\s*(?:/\*\s*(?P<comment>.+?)\*/)?\s*(?:static|extern)?\s*(?P<return_type>\w+)\s*(?P<func_name>[^\)]+)\s+\((?P<func_args>[^\)]+)\)
 (?P<code>.+)''', re.DOTALL)
 
     match = c_func_regex.match(c_code)

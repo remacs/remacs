@@ -1,6 +1,6 @@
 //! Extract Rust docstrings from source files for Emacs' DOC file.
 
-#![allow(clippy::cyclomatic_complexity)]
+#![allow(clippy::cognitive_complexity)]
 
 use libc::{c_char, c_int};
 use regex::Regex;
