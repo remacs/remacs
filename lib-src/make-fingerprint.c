@@ -99,9 +99,9 @@ main (int argc, char **argv)
     }
   else
     {
-      puts ("#include <config.h>\n"
-	    "#include \"fingerprint.h\"\n"
-	    "unsigned char const fingerprint[] = {");
+      puts ("#include \"fingerprint.h\"\n"
+	    "unsigned char const fingerprint[] =\n"
+	    "{");
       for (int i = 0; i < 32; ++i)
         printf ("\t0x%02X,\n", digest[i]);
       puts ("};");
