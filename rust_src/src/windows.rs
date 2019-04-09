@@ -1960,7 +1960,7 @@ pub fn set_window_fringes_lisp(
         unsafe { set_window_fringes(window.as_mut(), left_width, right_width, outside_margins) };
 
     if !updated_window.is_null() {
-        unsafe { apply_window_adjustment(updated_window.into()) };
+        unsafe { apply_window_adjustment(updated_window) };
         true
     } else {
         false
