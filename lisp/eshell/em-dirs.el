@@ -42,14 +42,10 @@
 
 ;;; Code:
 
-(require 'eshell)
+(require 'esh-mode)                     ;For eshell-directory-name
+(require 'esh-var)                      ;For eshell-variable-aliases-list
 (require 'ring)
 (require 'esh-opt)
-
-(declare-function eshell-apply-indices "esh-var")
-(defvar eshell-variable-aliases-list)
-(defvar eshell-directory-name)
-(defvar eshell-mode)
 
 ;;;###autoload
 (progn
@@ -174,9 +170,8 @@ Thus, this does not include the current directory.")
 
 ;;; Functions:
 
-(defun eshell-dirs-initialize ()
+(defun eshell-dirs-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the builtin functions for Eshell."
-  (require 'esh-var)
   (make-local-variable 'eshell-variable-aliases-list)
   (setq eshell-variable-aliases-list
 	(append

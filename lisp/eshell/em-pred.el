@@ -46,9 +46,7 @@
 
 ;;; Code:
 
-(require 'esh-util)
-(require 'esh-arg)
-(eval-when-compile (require 'eshell))
+(require 'esh-mode)
 
 ;;;###autoload
 (progn
@@ -247,10 +245,10 @@ EXAMPLES:
     (lambda ()
       (insert eshell-modifier-help-string)))))
 
-(defun eshell-pred-initialize ()
+(defun eshell-pred-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the predicate/modifier code."
   (add-hook 'eshell-parse-argument-hook
-	    'eshell-parse-arg-modifier t t)
+	    #'eshell-parse-arg-modifier t t)
   (define-key eshell-command-map [(meta ?q)] 'eshell-display-predicate-help)
   (define-key eshell-command-map [(meta ?m)] 'eshell-display-modifier-help))
 

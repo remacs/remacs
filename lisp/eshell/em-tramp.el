@@ -46,7 +46,7 @@
    :tag "TRAMP Eshell features"
    :group 'eshell-module))
 
-(defun eshell-tramp-initialize ()
+(defun eshell-tramp-initialize ()   ;Called from `eshell-mode' via intern-soft!
   "Initialize the TRAMP-using commands code."
   (when (eshell-using-module 'eshell-cmpl)
     (add-hook 'pcomplete-try-first-hook

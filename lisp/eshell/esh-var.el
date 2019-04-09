@@ -199,7 +199,7 @@ function), and the arguments passed to this function would be the list
 
 ;;; Functions:
 
-(defun eshell-var-initialize ()
+(defun eshell-var-initialize ()     ;Called from `eshell-mode' via intern-soft!
   "Initialize the variable handle code."
   ;; Break the association with our parent's environment.  Otherwise,
   ;; changing a variable will affect all of Emacs.

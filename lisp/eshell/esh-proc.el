@@ -121,7 +121,7 @@ PROC and STATUS to functions on the latter."
   (eshell-reset-after-proc status)
   (run-hook-with-args 'eshell-kill-hook proc status))
 
-(defun eshell-proc-initialize ()
+(defun eshell-proc-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the process handling code."
   (make-local-variable 'eshell-process-list)
   ;; This is supposedly run after enabling esh-mode, when eshell-command-map

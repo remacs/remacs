@@ -169,7 +169,7 @@ not be added to this variable."
 
 ;;; Functions:
 
-(defun eshell-io-initialize ()
+(defun eshell-io-initialize ()      ;Called from `eshell-mode' via intern-soft!
   "Initialize the I/O subsystem code."
   (add-hook 'eshell-parse-argument-hook
 	    'eshell-parse-redirection nil t)

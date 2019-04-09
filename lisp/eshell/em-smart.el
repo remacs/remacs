@@ -166,7 +166,7 @@ The options are `begin', `after' or `end'."
 
 ;;; Functions:
 
-(defun eshell-smart-initialize ()
+(defun eshell-smart-initialize ()   ;Called from `eshell-mode' via intern-soft!
   "Setup Eshell smart display."
   (unless eshell-non-interactive-p
     ;; override a few variables, since they would interfere with the

@@ -216,7 +216,7 @@ Returns non-nil if INPUT is blank."
 Returns nil if INPUT is prepended by blank space, otherwise non-nil."
   (not (string-match-p "\\`\\s-+" input)))
 
-(defun eshell-hist-initialize ()
+(defun eshell-hist-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the history management code for one Eshell buffer."
   (when (eshell-using-module 'eshell-cmpl)
     (add-hook 'pcomplete-try-first-hook

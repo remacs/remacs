@@ -412,7 +412,7 @@ and the hook `eshell-exit-hook'."
       (when (and load-hook (boundp load-hook))
         (if (memq initfunc (symbol-value load-hook)) (setq initfunc nil))
         (run-hooks load-hook))
-      ;; So we don't need the -initialize functions on the hooks (b#5375).
+      ;; So we don't need the -initialize functions on the hooks (bug#5375).
       (and initfunc (fboundp initfunc) (funcall initfunc))))
 
   (if eshell-send-direct-to-subprocesses

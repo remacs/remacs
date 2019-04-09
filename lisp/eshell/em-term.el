@@ -147,7 +147,7 @@ behavior for short-lived processes, see bug#18108."
 
 ;;; Functions:
 
-(defun eshell-term-initialize ()
+(defun eshell-term-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the `term' interface code."
   (make-local-variable 'eshell-interpreter-alist)
   (setq eshell-interpreter-alist

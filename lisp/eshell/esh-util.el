@@ -478,24 +478,22 @@ list."
       (insert-file-contents (or filename eshell-hosts-file))
       (goto-char (point-min))
       (while (re-search-forward
-	      "^\\([^#[:space:]]+\\)\\s-+\\(\\S-+\\)\\(\\s-*\\(\\S-+\\)\\)?" nil t)
-	(if (match-string 1)
-	    (cl-pushnew (match-string 1) hosts :test #'equal))
-	(if (match-string 2)
-	    (cl-pushnew (match-string 2) hosts :test #'equal))
-	(if (match-string 4)
-	    (cl-pushnew (match-string 4) hosts :test #'equal))))
-    (sort hosts #'string-lessp)))
+              ;; "^ \t\\([^# \t\n]+\\)[ \t]+\\([^ \t\n]+\\)\\([ \t]*\\([^ \t\n]+\\)\\)?"
+	      "^[ \t]*\\([^# \t\n]+\\)[ \t]+\\([^ \t\n].+\\)" nil t)
+        (push (cons (match-string 1)
+                    (split-string (match-string 2)))
+              hosts)))
+    (nreverse hosts)))
 
 (defun eshell-read-hosts (file result-var timestamp-var)
-  "Read the contents of /etc/passwd for user names."
+  "Read the contents of /etc/hosts for host names."
   (if (or (not (symbol-value result-var))
 	  (not (symbol-value timestamp-var))
 	  (time-less-p
 	   (symbol-value timestamp-var)
 	   (file-attribute-modification-time (file-attributes file))))
       (progn
-	(set result-var (eshell-read-hosts-file file))
+	(set result-var (apply #'nconc (eshell-read-hosts-file file)))
 	(set timestamp-var (current-time))))
   (symbol-value result-var))
 

@@ -157,7 +157,7 @@ treated as a literal character."
 
 ;;; Functions:
 
-(defun eshell-arg-initialize ()
+(defun eshell-arg-initialize ()     ;Called from `eshell-mode' via intern-soft!
   "Initialize the argument parsing code."
   ;; This is supposedly run after enabling esh-mode, when eshell-mode-map
   ;; already exists.

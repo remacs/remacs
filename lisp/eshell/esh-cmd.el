@@ -287,7 +287,7 @@ otherwise t.")
   "Return currently running command process, if non-Lisp."
   eshell-last-async-proc)
 
-(defun eshell-cmd-initialize ()
+(defun eshell-cmd-initialize ()     ;Called from `eshell-mode' via intern-soft!
   "Initialize the Eshell command processing module."
   (set (make-local-variable 'eshell-current-command) nil)
   (set (make-local-variable 'eshell-command-name) nil)

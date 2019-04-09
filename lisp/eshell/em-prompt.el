@@ -99,7 +99,7 @@ arriving, or after."
 
 ;;; Functions:
 
-(defun eshell-prompt-initialize ()
+(defun eshell-prompt-initialize ()  ;Called from `eshell-mode' via intern-soft!
   "Initialize the prompting code."
   (unless eshell-non-interactive-p
     (add-hook 'eshell-post-command-hook 'eshell-emit-prompt nil t)

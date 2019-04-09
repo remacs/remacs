@@ -172,7 +172,7 @@ external version."
 
 ;;; Functions:
 
-(defun eshell-ext-initialize ()
+(defun eshell-ext-initialize ()     ;Called from `eshell-mode' via intern-soft!
   "Initialize the external command handling code."
   (add-hook 'eshell-named-command-hook #'eshell-explicit-command nil t))
 

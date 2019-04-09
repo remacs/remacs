@@ -125,7 +125,7 @@ This option slows down recursive glob processing by quite a bit."
 
 ;;; Functions:
 
-(defun eshell-glob-initialize ()
+(defun eshell-glob-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the extended globbing code."
   ;; it's important that `eshell-glob-chars-list' come first
   (when (boundp 'eshell-special-chars-outside-quoting)
