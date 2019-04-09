@@ -55,10 +55,10 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
     }
 
     unsafe {
-        /* If POSITION is at the end of the interval,
-        it means it's the end of OBJECT.
-        There are no properties at the very end,
-        since no character follows.  */
+        // If POSITION is at the end of the interval,
+        // it means it's the end of OBJECT.
+        // There are no properties at the very end,
+        // since no character follows.
         let position_isize = EmacsInt::from(position) as isize;
         if position_isize == ((*i).total_length + (*i).position) {
             return Qnil;
