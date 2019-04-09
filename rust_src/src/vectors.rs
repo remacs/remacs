@@ -74,6 +74,14 @@ impl LispObject {
         LispVectorlikeRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike)
     }
 
+    pub unsafe fn as_vectorlike_slots_unchecked(self) -> LispVectorlikeSlotsRef {
+        LispVectorlikeSlotsRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike_With_Slots)
+    }
+
+    pub fn force_vectorlike_slots(self) -> LispVectorlikeSlotsRef {
+        unsafe { self.as_vectorlike_slots_unchecked() }
+    }
+
     pub fn as_vector(self) -> Option<LispVectorRef> {
         self.as_vectorlike().and_then(LispVectorlikeRef::as_vector)
     }
@@ -468,13 +476,21 @@ impl LispBoolVecRef {
         self.size as usize
     }
 
+    pub fn len_bytes(self) -> usize {
+        (self.len() + BOOL_VECTOR_BITS_PER_CHAR as usize - 1) / BOOL_VECTOR_BITS_PER_CHAR as usize
+    }
+
+    pub fn len_words(self) -> usize {
+        (self.len() + BITS_PER_BITS_WORD as usize - 1) / BITS_PER_BITS_WORD as usize
+    }
+
     pub fn as_slice(&self) -> &[usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_slice(l) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_mut_slice(l) }
     }
 

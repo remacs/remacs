@@ -21,9 +21,9 @@ use crate::{
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        bool_vector_bytes, bool_vector_data, bool_vector_size, concat as lisp_concat,
-        copy_char_table, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
-        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area,
+        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
+        make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
+        redisplay_preserve_echo_area,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -580,28 +580,21 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
 /// the same empty object instead of its copy.
 #[lisp_fn]
 pub fn copy_sequence(mut arg: LispObject) -> LispObject {
-    unsafe {
-        if arg.is_nil() {
-            arg
-        } else if arg.is_record() {
-            record(arg.force_vector().as_mut_slice())
-        } else if arg.is_char_table() {
-            copy_char_table(arg)
-        } else if arg.is_bool_vector() {
-            let nbits = bool_vector_size(arg);
-            let nbytes = bool_vector_bytes(nbits) as usize;
-            let val = make_uninit_bool_vector(nbits);
-            libc::memcpy(
-                bool_vector_data(val) as *mut libc::c_void,
-                bool_vector_data(arg) as *mut libc::c_void,
-                nbytes,
-            );
-            val
-        } else if !arg.is_cons() && !arg.is_vector() && !arg.is_string() {
-            wrong_type!(Qsequencep, arg);
-        } else {
-            lisp_concat(1, &mut arg, arg.get_type(), false)
-        }
+    if arg.is_nil() {
+        arg
+    } else if arg.is_record() {
+        record(arg.force_vectorlike_slots().as_mut_slice())
+    } else if arg.is_char_table() {
+        unsafe { copy_char_table(arg) }
+    } else if let Some(boolvec) = arg.as_bool_vector() {
+        let nbits = boolvec.len() as i64;
+        let mut new = unsafe { make_uninit_bool_vector(nbits).force_bool_vector() };
+        new.as_mut_slice().copy_from_slice(boolvec.as_slice());
+        new.into()
+    } else if !arg.is_cons() && !arg.is_vector() && !arg.is_string() {
+        wrong_type!(Qsequencep, arg);
+    } else {
+        unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
     }
 }
 
