@@ -116,7 +116,7 @@ You can always manually refine a hunk with `diff-refine-hunk'."
   "If non-nil, diff hunk font-lock includes source language syntax highlighting.
 This highlighting is the same as added by `font-lock-mode'
 when corresponding source files are visited normally.
-Syntax highlighting is added over diff own highlighted changes.
+Syntax highlighting is added over diff-mode's own highlighted changes.
 
 If t, the default, highlight syntax only in Diff buffers created by Diff
 commands that compare files or by VC commands that compare revisions.
@@ -126,17 +126,17 @@ For diffs against the working-tree version of a file, the highlighting is
 based on the current file contents.  File-based fontification tries to
 infer fontification from the compared files.
 
-If revision-based or file-based method fails, use hunk-based method to get
-fontification from hunk alone if the value is `hunk-also'.
-
-If `hunk-only', fontification is based on hunk alone, without full source.
+If `hunk-only' fontification is based on hunk alone, without full source.
 It tries to highlight hunks without enough context that sometimes might result
-in wrong fontification.  This is the fastest option, but less reliable."
+in wrong fontification.  This is the fastest option, but less reliable.
+
+If `hunk-also', use reliable file-based syntax highlighting when available
+and hunk-based syntax highlighting otherwise as a fallback."
   :version "27.1"
   :type '(choice (const :tag "Don't highlight syntax" nil)
-                 (const :tag "Hunk-based also" hunk-also)
                  (const :tag "Hunk-based only" hunk-only)
-                 (const :tag "Highlight syntax" t)))
+                 (const :tag "Highlight syntax" t)
+                 (const :tag "Allow hunk-based fallback" hunk-also)))
 
 (defvar diff-vc-backend nil
   "The VC backend that created the current Diff buffer, if any.")
@@ -2434,67 +2434,61 @@ When OLD is non-nil, highlight the hunk from the old source."
                               (string-to-number (match-string 2 line)))
                       (list (string-to-number line) 1)))) ; One-line diffs
          (props
-          (cond
-           ((and diff-vc-backend (not (eq diff-font-lock-syntax 'hunk-only)))
-            (let* ((file (diff-find-file-name old t))
-                   (revision (and file (if (not old) (nth 1 diff-vc-revisions)
-                                         (or (nth 0 diff-vc-revisions)
-                                             (vc-working-revision file))))))
-              (if file
-                  (if (not revision)
-                      ;; Get properties from the current working revision
-                      (when (and (not old) (file-exists-p file)
-                                 (file-regular-p file))
-                        (let ((buf (get-file-buffer (expand-file-name file))))
-                          ;; Try to reuse an existing buffer
-                          (if buf
-                              (with-current-buffer buf
-                                (diff-syntax-fontify-props nil text line-nb))
-                            ;; Get properties from the file
-                            (with-temp-buffer
-                              (insert-file-contents file)
-                              (diff-syntax-fontify-props file text line-nb)))))
-                    ;; Get properties from a cached revision
-                    (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
-                                                (expand-file-name file)
-                                                revision))
-                           (buffer (gethash buffer-name
-                                            diff-syntax-fontify-revisions)))
-                      (unless (and buffer (buffer-live-p buffer))
-                        (let* ((vc-buffer (ignore-errors
-                                            (vc-find-revision-no-save
-                                             (expand-file-name file) revision
-                                             diff-vc-backend
-                                             (get-buffer-create buffer-name)))))
-                          (when vc-buffer
-                            (setq buffer vc-buffer)
-                            (puthash buffer-name buffer
-                                     diff-syntax-fontify-revisions))))
-                      (when buffer
-                        (with-current-buffer buffer
-                          (diff-syntax-fontify-props file text line-nb)))))
-                ;; If file is unavailable, get properties from the hunk alone
-                (setq file (car (diff-hunk-file-names old)))
-                (with-temp-buffer
-                  (insert text)
-                  (diff-syntax-fontify-props file text line-nb t)))))
-           ((and diff-default-directory
-                 (not (eq diff-font-lock-syntax 'hunk-only)))
-            (let ((file (car (diff-hunk-file-names old))))
-              (if (and file (file-exists-p file) (file-regular-p file))
-                  ;; Try to get full text from the file
-                  (with-temp-buffer
-                    (insert-file-contents file)
-                    (diff-syntax-fontify-props file text line-nb))
-                ;; Otherwise, get properties from the hunk alone
-                (with-temp-buffer
-                  (insert text)
-                  (diff-syntax-fontify-props file text line-nb t)))))
-           ((memq diff-font-lock-syntax '(hunk-also hunk-only))
-            (let ((file (car (diff-hunk-file-names old))))
-              (with-temp-buffer
-                (insert text)
-                (diff-syntax-fontify-props file text line-nb t)))))))
+          (or
+           (when (and diff-vc-backend
+                      (not (eq diff-font-lock-syntax 'hunk-only)))
+             (let* ((file (diff-find-file-name old t))
+                    (revision (and file (if (not old) (nth 1 diff-vc-revisions)
+                                          (or (nth 0 diff-vc-revisions)
+                                              (vc-working-revision file))))))
+               (when file
+                 (if (not revision)
+                     ;; Get properties from the current working revision
+                     (when (and (not old) (file-exists-p file)
+                                (file-regular-p file))
+                       (let ((buf (get-file-buffer (expand-file-name file))))
+                         ;; Try to reuse an existing buffer
+                         (if buf
+                             (with-current-buffer buf
+                               (diff-syntax-fontify-props nil text line-nb))
+                           ;; Get properties from the file
+                           (with-temp-buffer
+                             (insert-file-contents file)
+                             (diff-syntax-fontify-props file text line-nb)))))
+                   ;; Get properties from a cached revision
+                   (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
+                                               (expand-file-name file)
+                                               revision))
+                          (buffer (gethash buffer-name
+                                           diff-syntax-fontify-revisions)))
+                     (unless (and buffer (buffer-live-p buffer))
+                       (let* ((vc-buffer (ignore-errors
+                                           (vc-find-revision-no-save
+                                            (expand-file-name file) revision
+                                            diff-vc-backend
+                                            (get-buffer-create buffer-name)))))
+                         (when vc-buffer
+                           (setq buffer vc-buffer)
+                           (puthash buffer-name buffer
+                                    diff-syntax-fontify-revisions))))
+                     (when buffer
+                       (with-current-buffer buffer
+                         (diff-syntax-fontify-props file text line-nb))))))))
+           (let ((file (car (diff-hunk-file-names old))))
+             (cond
+              ((and file diff-default-directory
+                    (not (eq diff-font-lock-syntax 'hunk-only))
+                    (not diff-vc-backend)
+                    (file-readable-p file) (file-regular-p file))
+               ;; Try to get full text from the file.
+               (with-temp-buffer
+                 (insert-file-contents file)
+                 (diff-syntax-fontify-props file text line-nb)))
+              ;; Otherwise, get properties from the hunk alone
+              ((memq diff-font-lock-syntax '(hunk-also hunk-only))
+               (with-temp-buffer
+                 (insert text)
+                 (diff-syntax-fontify-props file text line-nb t))))))))
 
     ;; Put properties over the hunk text
     (goto-char beg)
