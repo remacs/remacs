@@ -46,6 +46,11 @@
 (require 'ring)
 (require 'esh-opt)
 
+(declare-function eshell-apply-indices "esh-var")
+(defvar eshell-variable-aliases-list)
+(defvar eshell-directory-name)
+(defvar eshell-mode)
+
 ;;;###autoload
 (progn
 (defgroup eshell-dirs nil
@@ -171,6 +176,7 @@ Thus, this does not include the current directory.")
 
 (defun eshell-dirs-initialize ()
   "Initialize the builtin functions for Eshell."
+  (require 'esh-var)
   (make-local-variable 'eshell-variable-aliases-list)
   (setq eshell-variable-aliases-list
 	(append
