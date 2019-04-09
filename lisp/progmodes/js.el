@@ -1956,26 +1956,6 @@ the match.  Return nil if a match can’t be found."
               (setq tag-stack (1+ tag-stack))))
           (setq last-pos (point)))))))
 
-(defun js-jsx--enclosing-curly-pos ()
-  "Return position of enclosing “{” in a “{/}” pair about point."
-  (let ((parens (reverse (nth 9 (syntax-ppss)))) paren-pos curly-pos)
-    (while
-        (and
-         (setq paren-pos (car parens))
-         (not (when (= (char-after paren-pos) ?{)
-                (setq curly-pos paren-pos)))
-         (setq parens (cdr parens))))
-    curly-pos))
-
-(defun js-jsx--goto-outermost-enclosing-curly (limit)
-  "Set point to enclosing “{” at or closest after LIMIT."
-  (let (pos)
-    (while
-        (and
-         (setq pos (js-jsx--enclosing-curly-pos))
-         (if (>= pos limit) (goto-char pos))
-         (> pos limit)))))
-
 (defun js-jsx--enclosing-tag-pos ()
   "Return beginning and end of a JSXElement about point.
 Look backward for a JSXElement that both starts before point and
@@ -2645,6 +2625,26 @@ The column calculation is based off of `sgml-calculate-indent'."
           0)))
 
     ))
+
+(defun js-jsx--enclosing-curly-pos ()
+  "Return position of enclosing “{” in a “{/}” pair about point."
+  (let ((parens (reverse (nth 9 (syntax-ppss)))) paren-pos curly-pos)
+    (while
+        (and
+         (setq paren-pos (car parens))
+         (not (when (= (char-after paren-pos) ?{)
+                (setq curly-pos paren-pos)))
+         (setq parens (cdr parens))))
+    curly-pos))
+
+(defun js-jsx--goto-outermost-enclosing-curly (limit)
+  "Set point to enclosing “{” at or closest after LIMIT."
+  (let (pos)
+    (while
+        (and
+         (setq pos (js-jsx--enclosing-curly-pos))
+         (if (>= pos limit) (goto-char pos))
+         (> pos limit)))))
 
 (defun js-jsx--expr-attribute-pos (start limit)
   "Look back from START to LIMIT for a JSXAttribute."
