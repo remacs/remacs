@@ -46,8 +46,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "thread.h"
 #include "bignum.h"
 
-#include "dmpstruct.h"
-
 /*
   TODO:
 
@@ -67,16 +65,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 */
 
 #ifdef HAVE_PDUMPER
-
-/* CHECK_STRUCTS being true makes the build break if we notice
-   changes to the source defining certain Lisp structures we dump. If
-   you change one of these structures, check that the pdumper code is
-   still valid, and update the pertinent hash lower down in this file
-   (pdumper.c) by manually copying the value from the dmpstruct.h
-   generated from your new code.  */
-#ifndef CHECK_STRUCTS
-# define CHECK_STRUCTS 1
-#endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)
 # pragma GCC diagnostic error "-Wconversion"
@@ -2043,9 +2031,6 @@ dump_pseudovector_lisp_fields (struct dump_context *ctx,
 static dump_off
 dump_cons (struct dump_context *ctx, const struct Lisp_Cons *cons)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Cons_00EEE63F67)
-# error "Lisp_Cons changed. See CHECK_STRUCTS comment."
-#endif
   struct Lisp_Cons out;
   dump_object_start (ctx, &out, sizeof (out));
   dump_field_lv (ctx, &out, cons, &cons->u.s.car, WEIGHT_STRONG);
@@ -2058,9 +2043,6 @@ dump_interval_tree (struct dump_context *ctx,
                     INTERVAL tree,
                     dump_off parent_offset)
 {
-#if CHECK_STRUCTS && !defined (HASH_interval_1B38941C37)
-# error "interval changed. See CHECK_STRUCTS comment."
-#endif
   /* TODO: output tree breadth-first?  */
   struct interval out;
   dump_object_start (ctx, &out, sizeof (out));
@@ -2102,9 +2084,6 @@ dump_interval_tree (struct dump_context *ctx,
 static dump_off
 dump_string (struct dump_context *ctx, const struct Lisp_String *string)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_String_86FEA6EC7C)
-# error "Lisp_String changed. See CHECK_STRUCTS comment."
-#endif
   /* If we have text properties, write them _after_ the string so that
      at runtime, the prefetcher and cache will DTRT. (We access the
      string before its properties.).
@@ -2148,10 +2127,6 @@ dump_string (struct dump_context *ctx, const struct Lisp_String *string)
 static dump_off
 dump_marker (struct dump_context *ctx, const struct Lisp_Marker *marker)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Marker_642DBAF866)
-# error "Lisp_Marker changed. See CHECK_STRUCTS comment."
-#endif
-
   START_DUMP_PVEC (ctx, &marker->header, struct Lisp_Marker, out);
   dump_pseudovector_lisp_fields (ctx, &out->header, &marker->header);
   DUMP_FIELD_COPY (out, marker, need_adjustment);
@@ -2171,9 +2146,6 @@ dump_marker (struct dump_context *ctx, const struct Lisp_Marker *marker)
 static dump_off
 dump_overlay (struct dump_context *ctx, const struct Lisp_Overlay *overlay)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Overlay_72EADA9882)
-# error "Lisp_Overlay changed. See CHECK_STRUCTS comment."
-#endif
   START_DUMP_PVEC (ctx, &overlay->header, struct Lisp_Overlay, out);
   dump_pseudovector_lisp_fields (ctx, &out->header, &overlay->header);
   dump_field_lv_rawptr (ctx, out, overlay, &overlay->next,
@@ -2199,9 +2171,6 @@ static dump_off
 dump_finalizer (struct dump_context *ctx,
                 const struct Lisp_Finalizer *finalizer)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Finalizer_D58E647CB8)
-# error "Lisp_Finalizer changed. See CHECK_STRUCTS comment."
-#endif
   START_DUMP_PVEC (ctx, &finalizer->header, struct Lisp_Finalizer, out);
   /* Do _not_ call dump_pseudovector_lisp_fields here: we dump the
      only Lisp field, finalizer->function, manually, so we can give it
@@ -2221,9 +2190,6 @@ struct bignum_reload_info
 static dump_off
 dump_bignum (struct dump_context *ctx, Lisp_Object object)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Bignum_661945DE2B)
-# error "Lisp_Bignum changed. See CHECK_STRUCTS comment."
-#endif
   const struct Lisp_Bignum *bignum = XBIGNUM (object);
   START_DUMP_PVEC (ctx, &bignum->header, struct Lisp_Bignum, out);
   verify (sizeof (out->value) >= sizeof (struct bignum_reload_info));
@@ -2259,9 +2225,6 @@ dump_bignum (struct dump_context *ctx, Lisp_Object object)
 static dump_off
 dump_float (struct dump_context *ctx, const struct Lisp_Float *lfloat)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Float_50A7B216D9)
-# error "Lisp_Float changed. See CHECK_STRUCTS comment."
-#endif
   eassert (ctx->header.cold_start);
   struct Lisp_Float out;
   dump_object_start (ctx, &out, sizeof (out));
@@ -2272,9 +2235,6 @@ dump_float (struct dump_context *ctx, const struct Lisp_Float *lfloat)
 static dump_off
 dump_fwd_int (struct dump_context *ctx, const struct Lisp_Intfwd *intfwd)
 {
-#if CHECK_STRUCTS && !defined HASH_Lisp_Intfwd_4D887A7387
-# error "Lisp_Intfwd changed. See CHECK_STRUCTS comment."
-#endif
   dump_emacs_reloc_immediate_intmax_t (ctx, intfwd->intvar, *intfwd->intvar);
   struct Lisp_Intfwd out;
   dump_object_start (ctx, &out, sizeof (out));
@@ -2286,9 +2246,6 @@ dump_fwd_int (struct dump_context *ctx, const struct Lisp_Intfwd *intfwd)
 static dump_off
 dump_fwd_bool (struct dump_context *ctx, const struct Lisp_Boolfwd *boolfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Boolfwd_0EA1C7ADCC)
-# error "Lisp_Boolfwd changed. See CHECK_STRUCTS comment."
-#endif
   dump_emacs_reloc_immediate_bool (ctx, boolfwd->boolvar, *boolfwd->boolvar);
   struct Lisp_Boolfwd out;
   dump_object_start (ctx, &out, sizeof (out));
@@ -2300,9 +2257,6 @@ dump_fwd_bool (struct dump_context *ctx, const struct Lisp_Boolfwd *boolfwd)
 static dump_off
 dump_fwd_obj (struct dump_context *ctx, const struct Lisp_Objfwd *objfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Objfwd_45D3E513DC)
-# error "Lisp_Objfwd changed. See CHECK_STRUCTS comment."
-#endif
   if (NILP (Fgethash (dump_off_to_lisp (emacs_offset (objfwd->objvar)),
                       ctx->staticpro_table,
                       Qnil)))
@@ -2318,9 +2272,6 @@ static dump_off
 dump_fwd_buffer_obj (struct dump_context *ctx,
                      const struct Lisp_Buffer_Objfwd *buffer_objfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Buffer_Objfwd_13CA6B04FC)
-# error "Lisp_Buffer_Objfwd changed. See CHECK_STRUCTS comment."
-#endif
   struct Lisp_Buffer_Objfwd out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, buffer_objfwd, type);
@@ -2334,9 +2285,6 @@ static dump_off
 dump_fwd_kboard_obj (struct dump_context *ctx,
                      const struct Lisp_Kboard_Objfwd *kboard_objfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Kboard_Objfwd_CAA7E71069)
-# error "Lisp_Intfwd changed. See CHECK_STRUCTS comment."
-#endif
   struct Lisp_Kboard_Objfwd out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, kboard_objfwd, type);
@@ -2347,9 +2295,6 @@ dump_fwd_kboard_obj (struct dump_context *ctx,
 static dump_off
 dump_fwd (struct dump_context *ctx, lispfwd fwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Fwd_Type_9CBA6EE55E)
-# error "Lisp_Fwd_Type changed. See CHECK_STRUCTS comment."
-#endif
   void const *p = fwd.fwdptr;
   dump_off offset;
 
@@ -2381,9 +2326,6 @@ static dump_off
 dump_blv (struct dump_context *ctx,
           const struct Lisp_Buffer_Local_Value *blv)
 {
-#if CHECK_STRUCTS && !defined HASH_Lisp_Buffer_Local_Value_3C363FAC3C
-# error "Lisp_Buffer_Local_Value changed. See CHECK_STRUCTS comment."
-#endif
   struct Lisp_Buffer_Local_Value out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, blv, local_if_set);
@@ -2446,13 +2388,6 @@ dump_symbol (struct dump_context *ctx,
              Lisp_Object object,
              dump_off offset)
 {
-#if CHECK_STRUCTS && !defined HASH_Lisp_Symbol_999DC26DEC
-# error "Lisp_Symbol changed. See CHECK_STRUCTS comment."
-#endif
-#if CHECK_STRUCTS && !defined (HASH_symbol_redirect_ADB4F5B113)
-# error "symbol_redirect changed. See CHECK_STRUCTS comment."
-#endif
-
   if (ctx->flags.defer_symbols)
     {
       if (offset != DUMP_OBJECT_ON_SYMBOL_QUEUE)
@@ -2542,9 +2477,6 @@ static dump_off
 dump_vectorlike_generic (struct dump_context *ctx,
 			 const union vectorlike_header *header)
 {
-#if CHECK_STRUCTS && !defined (HASH_vectorlike_header_00A5A4BFB2)
-# error "vectorlike_header changed. See CHECK_STRUCTS comment."
-#endif
   const struct Lisp_Vector *v = (const struct Lisp_Vector *) header;
   ptrdiff_t size = header->size;
   enum pvec_type pvectype = PSEUDOVECTOR_TYPE (v);
@@ -2702,9 +2634,6 @@ dump_hash_table (struct dump_context *ctx,
                  Lisp_Object object,
                  dump_off offset)
 {
-#if CHECK_STRUCTS && !defined HASH_Lisp_Hash_Table_EF95ED06FF
-# error "Lisp_Hash_Table changed. See CHECK_STRUCTS comment."
-#endif
   const struct Lisp_Hash_Table *hash_in = XHASH_TABLE (object);
   bool is_stable = dump_hash_table_stable_p (hash_in);
   /* If the hash table is likely to be modified in memory (either
@@ -2770,9 +2699,6 @@ dump_hash_table (struct dump_context *ctx,
 static dump_off
 dump_buffer (struct dump_context *ctx, const struct buffer *in_buffer)
 {
-#if CHECK_STRUCTS && !defined HASH_buffer_E34A11C6B9
-# error "buffer changed. See CHECK_STRUCTS comment."
-#endif
   struct buffer munged_buffer = *in_buffer;
   struct buffer *buffer = &munged_buffer;
 
@@ -2906,9 +2832,6 @@ dump_buffer (struct dump_context *ctx, const struct buffer *in_buffer)
 static dump_off
 dump_bool_vector (struct dump_context *ctx, const struct Lisp_Vector *v)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Vector_3091289B35)
-# error "Lisp_Vector changed. See CHECK_STRUCTS comment."
-#endif
   /* No relocation needed, so we don't need dump_object_start.  */
   dump_align_output (ctx, DUMP_ALIGNMENT);
   eassert (ctx->offset >= ctx->header.cold_start);
@@ -2923,9 +2846,6 @@ dump_bool_vector (struct dump_context *ctx, const struct Lisp_Vector *v)
 static dump_off
 dump_subr (struct dump_context *ctx, const struct Lisp_Subr *subr)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Subr_594AB72B54)
-# error "Lisp_Subr changed. See CHECK_STRUCTS comment."
-#endif
   struct Lisp_Subr out;
   dump_object_start (ctx, &out, sizeof (out));
   DUMP_FIELD_COPY (&out, subr, header.size);
@@ -2962,9 +2882,6 @@ dump_vectorlike (struct dump_context *ctx,
                  Lisp_Object lv,
                  dump_off offset)
 {
-#if CHECK_STRUCTS && !defined (HASH_pvec_type_549C833A54)
-# error "pvec_type changed. See CHECK_STRUCTS comment."
-#endif
   const struct Lisp_Vector *v = XVECTOR (lv);
   switch (PSEUDOVECTOR_TYPE (v))
     {
@@ -3072,9 +2989,6 @@ dump_vectorlike (struct dump_context *ctx,
 static dump_off
 dump_object (struct dump_context *ctx, Lisp_Object object)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Type_E2AD97D3F7)
-# error "Lisp_Type changed. See CHECK_STRUCTS comment."
-#endif
 #ifdef ENABLE_CHECKING
   /* Vdead is extern only when ENABLE_CHECKING.  */
   eassert (!EQ (object, Vdead));
@@ -3177,9 +3091,6 @@ dump_object_for_offset (struct dump_context *ctx, Lisp_Object object)
 static dump_off
 dump_charset (struct dump_context *ctx, int cs_i)
 {
-#if CHECK_STRUCTS && !defined (HASH_charset_317C49E291)
-# error "charset changed. See CHECK_STRUCTS comment."
-#endif
   dump_align_output (ctx, alignof (int));
   const struct charset *cs = charset_table + cs_i;
   struct charset out;

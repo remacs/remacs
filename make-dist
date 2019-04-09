@@ -366,7 +366,7 @@ possibly_non_vc_files="
   $top_level_ChangeLog
   MANIFEST aclocal.m4 configure
   admin/charsets/jisx2131-filter
-  src/config.in src/dmpstruct.h src/emacs-module.h
+  src/config.in src/emacs-module.h
   src/fingerprint.c
 "$(
   find admin doc etc lisp \

@@ -456,14 +456,6 @@ ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 all: emacs$(EXEEXT) $(pdmp) $(OTHER_FILES)
 .PHONY: all
 
-dmpstruct_headers=$(srcdir)/lisp.h $(srcdir)/buffer.h \
-	$(srcdir)/intervals.h $(srcdir)/charset.h $(srcdir)/bignum.h
-pdumper.o: dmpstruct.h
-dmpstruct.h: $(srcdir)/dmpstruct.awk
-dmpstruct.h: $(libsrc)/make-fingerprint$(EXEEXT) $(dmpstruct_headers)
-	$(AM_V_GEN)POSIXLY_CORRECT=1 awk -f $(srcdir)/dmpstruct.awk \
-		$(dmpstruct_headers) > $@
-
 AUTO_DEPEND = @AUTO_DEPEND@
 DEPDIR = deps
 ifeq ($(AUTO_DEPEND),yes)
@@ -681,7 +673,7 @@ ns-app: emacs$(EXEEXT) $(pdmp)
 
 mostlyclean:
 	rm -f temacs$(EXEEXT) core ./*.core \#* ./*.o
-	rm -f temacs.in$(EXEEXT) fingerprint.c dmpstruct.h
+	rm -f temacs.in$(EXEEXT) fingerprint.c
 	rm -f emacs.pdmp
 	rm -f ../etc/DOC
 	rm -f bootstrap-emacs$(EXEEXT) $(bootstrap_pdmp)
