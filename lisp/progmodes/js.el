@@ -1536,6 +1536,25 @@ point of view of font-lock.  It applies highlighting directly with
   ;; Matcher always "fails"
   nil)
 
+;; It wouldn’t be sufficient to font-lock JSX with mere regexps, since
+;; a JSXElement may be nested inside a JS expression within the
+;; boundaries of a parent JSXOpeningElement, and such a hierarchy
+;; ought to be fontified like JSX, JS, and JSX respectively:
+;;
+;;   <div attr={void(<div></div>) && void(0)}></div>
+;;
+;;   <div attr={           ← JSX
+;;          void(          ← JS
+;;            <div></div>  ← JSX
+;;          ) && void(0)   ← JS
+;;        }></div>         ← JSX
+;;
+;; `js-syntax-propertize' unambiguously identifies JSX syntax,
+;; including when it’s nested.
+;;
+;; Using a matcher function for each relevant part, retrieve match
+;; data recorded as syntax properties for fontification.
+
 (defconst js-jsx--font-lock-keywords
   `((js-jsx--match-tag-name 0 font-lock-function-name-face t)
     (js-jsx--match-attribute-name 0 font-lock-variable-name-face t)
@@ -1861,6 +1880,27 @@ This performs fontification according to `js--class-styles'."
   "Check if STRING is a unary operator keyword in JavaScript."
   (string-match-p js--unary-keyword-re string))
 
+;; Adding `syntax-multiline' text properties to JSX isn’t sufficient
+;; to identify multiline JSX when first typing it.  For instance, if
+;; the user is typing a JSXOpeningElement for the first time…
+;;
+;;   <div
+;;       ^ (point)
+;;
+;; …and the user inserts a line break after the tag name (before the
+;; JSXOpeningElement starting on that line has been unambiguously
+;; identified as such), then the `syntax-propertize' region won’t be
+;; extended backwards to the start of the JSXOpeningElement:
+;;
+;;   <div         ← This line wasn’t JSX when last edited.
+;;     attr="">   ← Despite completing the JSX, the next
+;;             ^    `syntax-propertize' region wouldn’t magically
+;;                  extend back a few lines.
+;;
+;; Therefore, to try and recover from this scenario, parse backward
+;; from “>” to try and find the start of JSXBoundaryElements, and
+;; extend the `syntax-propertize' region there.
+
 (defun js--syntax-propertize-extend-region (start end)
   "Extend the START-END region for propertization, if necessary.
 For use by `syntax-propertize-extend-region-functions'."
@@ -1902,6 +1942,23 @@ For use by `syntax-propertize-extend-region-functions'."
                 (setq new-start (1- (point)))
                 (throw 'stop nil)))))))
     (if new-start (cons new-start end))))
+
+;; When applying syntax properties, since `js-syntax-propertize' uses
+;; `syntax-propertize-rules' to parse JSXBoundaryElements iteratively
+;; and statelessly, whenever we exit such an element, we need to
+;; determine the JSX depth.  If >0, then we know we to apply syntax
+;; properties to JSXText up until the next JSXBoundaryElement occurs.
+;; But if the JSX depth is 0, then—importantly—we know to NOT parse
+;; the following code as JSXText, rather propertize it as regular JS
+;; as long as warranted.
+;;
+;; Also, when indenting code, we need to know if the code we’re trying
+;; to indent is on the 2nd or later line of multiline JSX, in which
+;; case the code is indented according to XML-like JSX conventions.
+;;
+;; For the aforementioned reasons, we find ourselves needing to
+;; determine whether point is enclosed in JSX or not; and, if so,
+;; where the JSX is.  The following functions provide that knowledge.
 
 (defconst js-jsx--tag-start-re
   (concat "\\(" js--dotted-name-re "\\)\\(?:"
@@ -2004,6 +2061,24 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
   (let ((pos (save-excursion (js-jsx--enclosing-tag-pos))))
     (and pos (>= (point) (nth 1 pos)))))
 
+;; We implement `syntax-propertize-function' logic fully parsing JSX
+;; in order to provide very accurate JSX indentation, even in the most
+;; complex cases (e.g. to indent JSX within a JS expression within a
+;; JSXAttribute…), as over the years users have requested this.  Since
+;; we find so much information during this parse, we later use some of
+;; the useful bits for font-locking, too.
+;;
+;; Some extra effort is devoted to ensuring that no code which could
+;; possibly be valid JS is ever misinterpreted as partial JSX, since
+;; that would be regressive.
+;;
+;; We first parse trying to find the minimum number of components
+;; necessary to unambiguously identify a JSXBoundaryElement, even if
+;; it is a partial one.  If a complete one is parsed, we move on to
+;; parse any JSXText.  When that’s terminated, we unwind back to the
+;; `syntax-propertize-rules' loop so the next JSXBoundaryElement can
+;; be parsed, if any, be it an opening or closing one.
+
 (defun js-jsx--text-range (beg end)
   "Identify JSXText within a “>/{/}/<” pair."
   (when (> (- end beg) 0)
@@ -2022,6 +2097,10 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
     ;; Ensure future propertization beginning from within the
     ;; JSXText determines JSXText context from earlier lines.
     (put-text-property beg end 'syntax-multiline t)))
+
+;; In order to respect the end boundary `syntax-propertize-function'
+;; sets, care is taken in the following functions to abort parsing
+;; whenever that boundary is reached.
 
 (defun js-jsx--syntax-propertize-tag-text (end)
   "Determine if JSXText is before END and propertize it.
@@ -2561,6 +2640,21 @@ current line is the \"=>\" token (of an arrow function)."
   (let ((from (point)))
     (end-of-line)
     (re-search-backward js--line-terminating-arrow-re from t)))
+
+;; When indenting, we want to know if the line is…
+;;
+;;   - within a multiline JSXElement, or
+;;   - within a string in a JSXBoundaryElement, or
+;;   - within JSXText, or
+;;   - within a JSXAttribute’s multiline JSXExpressionContainer.
+;;
+;; In these cases, special XML-like indentation rules for JSX apply.
+;; If JS is nested within JSX, then indentation calculations may be
+;; combined, such that JS indentation is “relative” to the JSX’s.
+;;
+;; Therefore, functions below provide such contextual information, and
+;; `js--proper-indentation' may call itself once recursively in order
+;; to finish calculating that “relative” JS+JSX indentation.
 
 (defun js-jsx--context ()
   "Determine JSX context and move to enclosing JSX."
@@ -4319,6 +4413,10 @@ their `mode-name' updates to show enabled syntax extensions."
   (interactive)
   (setq-local js-jsx-syntax t))
 
+;; To make discovering and using syntax extensions features easier for
+;; users (who might not read the docs), try to safely and
+;; automatically enable syntax extensions based on heuristics.
+
 (defvar js-jsx-regexps
   (list "\\_<\\(?:var\\|let\\|const\\|import\\)\\_>.*?React")
   "Regexps for detecting JSX in JavaScript buffers.
@@ -4443,6 +4541,17 @@ This function is intended for use in `after-change-functions'."
   ;; calls to syntax-propertize wherever it's really needed.
   ;;(syntax-propertize (point-max))
   )
+
+;; Since we made JSX support available and automatically-enabled in
+;; the base `js-mode' (for ease of use), now `js-jsx-mode' simply
+;; serves as one other interface to unconditionally enable JSX in
+;; buffers, mostly for backwards-compatibility.
+;;
+;; Since it is probably more common for packages to integrate with
+;; `js-mode' than with `js-jsx-mode', it is therefore probably
+;; slightly better for users to use one of the many other methods for
+;; enabling JSX syntax.  But using `js-jsx-mode' can’t be that bad
+;; either, so we won’t bother users with an obsoletion warning.
 
 ;;;###autoload
 (define-derived-mode js-jsx-mode js-mode "JavaScript"
