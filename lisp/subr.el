@@ -604,6 +604,11 @@ If N is omitted or nil, remove the last element."
 	   (if (> n 0) (setcdr (nthcdr (- (1- m) n) list) nil))
 	   list))))
 
+;; The function's definition was moved to fns.c,
+;; but it's easier to set properties here.
+(put 'proper-list-p 'pure t)
+(put 'proper-list-p 'side-effect-free 'error-free)
+
 (defun delete-dups (list)
   "Destructively remove `equal' duplicates from LIST.
 Store the result in LIST and return it.  LIST must be a proper list.

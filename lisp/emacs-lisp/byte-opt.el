@@ -879,7 +879,8 @@
 (put 'symbolp 'byte-optimizer 'byte-optimize-predicate)
 (put 'stringp 'byte-optimizer 'byte-optimize-predicate)
 (put 'string< 'byte-optimizer 'byte-optimize-predicate)
-(put 'string-lessp 'byte-optimizer 'byte-optimize-predicate)
+(put 'string-lessp  'byte-optimizer 'byte-optimize-predicate)
+(put 'proper-list-p 'byte-optimizer 'byte-optimize-predicate)
 
 (put 'logand 'byte-optimizer 'byte-optimize-predicate)
 (put 'logior 'byte-optimizer 'byte-optimize-predicate)
