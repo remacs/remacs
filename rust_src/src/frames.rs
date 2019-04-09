@@ -654,7 +654,7 @@ pub fn frame_list() -> LispObject {
     }
     #[cfg(not(feature = "window-system"))]
     {
-        copy_sequence(unsafe { Vframe_list) })
+        copy_sequence(unsafe { Vframe_list })
     }
 }
 
