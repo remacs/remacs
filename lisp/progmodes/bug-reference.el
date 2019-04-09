@@ -1,4 +1,4 @@
-;; bug-reference.el --- buttonize bug references
+;; bug-reference.el --- buttonize bug references  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
@@ -91,7 +91,7 @@ The second subexpression should match the bug reference (usually a number)."
 (bug-reference-set-overlay-properties)
 
 (defun bug-reference-unfontify (start end)
-  "Remove bug reference overlays from region."
+  "Remove bug reference overlays from the region between START and END."
   (dolist (o (overlays-in start end))
     (when (eq (overlay-get o 'category) 'bug-reference)
       (delete-overlay o))))
@@ -99,7 +99,7 @@ The second subexpression should match the bug reference (usually a number)."
 (defvar bug-reference-prog-mode)
 
 (defun bug-reference-fontify (start end)
-  "Apply bug reference overlays to region."
+  "Apply bug reference overlays to the region between START and END."
   (save-excursion
     (let ((beg-line (progn (goto-char start) (line-beginning-position)))
 	  (end-line (progn (goto-char end) (line-end-position))))
