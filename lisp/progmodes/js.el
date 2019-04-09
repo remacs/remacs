@@ -2099,6 +2099,8 @@ testing for syntax only valid as JSX."
                          (< (point) end)))
         (cond
          ((= (char-after) ?>)
+          ;; Make the closing “>” a close parenthesis.
+          (put-text-property (point) (1+ (point)) 'syntax-table '(5))
           (forward-char)
           (setq unambiguous t)
           (throw 'stop nil))
@@ -2183,6 +2185,8 @@ testing for syntax only valid as JSX."
     (when unambiguous
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
       (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
+      ;; Make the opening “<” an open parenthesis.
+      (put-text-property tag-beg (1+ tag-beg) 'syntax-table '(4))
       ;; Prevent “out of range” errors when typing at the end of a buffer.
       (setq tag-end (if (eobp) (1- (point)) (point)))
       ;; Mark beginning and end of tag for font-locking.
