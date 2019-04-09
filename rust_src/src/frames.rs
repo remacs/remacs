@@ -22,7 +22,7 @@ use crate::{
 };
 
 #[cfg(not(feature = "window-system"))]
-use crate::remacs_sys::Fcopy_sequence;
+use crate::fns::copy_sequence;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -654,7 +654,7 @@ pub fn frame_list() -> LispObject {
     }
     #[cfg(not(feature = "window-system"))]
     {
-        unsafe { Fcopy_sequence(Vframe_list) }
+        copy_sequence(Vframe_list)
     }
 }
 

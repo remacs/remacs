@@ -6,13 +6,14 @@ use crate::{
     buffers::current_buffer,
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
+    fns::copy_sequence,
     lisp::LispObject,
     lists::put,
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
+        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fmake_char_table,
+        Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
     threads::ThreadState,
@@ -275,7 +276,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(down, i, c.into());
     }
 
-    set_char_table_extras(down, 1, Fcopy_sequence(down));
+    set_char_table_extras(down, 1, copy_sequence(down));
 
     let up = Fmake_char_table(Qcase_table, Qnil);
     set_char_table_extras(down, 0, up);

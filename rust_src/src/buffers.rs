@@ -17,7 +17,7 @@ use crate::{
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
-    fns::{nconc, nreverse},
+    fns::{copy_sequence, nconc, nreverse},
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
@@ -33,6 +33,7 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
+    remacs_sys::Fmake_marker,
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
@@ -52,7 +53,6 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fmake_marker},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
@@ -175,7 +175,7 @@ impl LispBufferRef {
         b.begv_marker_ = Qnil;
         b.zv_marker_ = Qnil;
 
-        let mut name: LispStringRef = unsafe { Fcopy_sequence(name.into()) }.force_string();
+        let mut name: LispStringRef = copy_sequence(name.into()).force_string();
         name.set_intervals(ptr::null_mut());
         b.name_ = name.into();
         b.undo_list_ = if name.byte_at(0) != b' ' { Qnil } else { Qt };
@@ -1170,8 +1170,8 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
         None => list(&buffers),
 
         Some(frame) => {
-            let framelist = unsafe { Fcopy_sequence(frame.buffer_list) };
-            let prevlist = nreverse(unsafe { Fcopy_sequence(frame.buried_buffer_list) });
+            let framelist = copy_sequence(frame.buffer_list);
+            let prevlist = nreverse(copy_sequence(frame.buried_buffer_list));
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
             buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
@@ -1303,7 +1303,7 @@ pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
 /// effect on OVERLAY.
 #[lisp_fn]
 pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
-    unsafe { Fcopy_sequence(overlay.plist) }
+    copy_sequence(overlay.plist)
 }
 
 #[no_mangle]
@@ -1716,7 +1716,7 @@ pub unsafe extern "C" fn copy_overlays(
         let end = duplicate_marker(overlay.end);
 
         let mut overlay_new: LispOverlayRef =
-            build_overlay(start, end, Fcopy_sequence(overlay.plist)).into();
+            build_overlay(start, end, copy_sequence(overlay.plist)).into();
 
         match tail {
             Some(mut tail_ref) => tail_ref.next = overlay_new.as_mut(),
