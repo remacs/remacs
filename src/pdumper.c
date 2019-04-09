@@ -123,8 +123,6 @@ verify (sizeof (intptr_t) == sizeof (ptrdiff_t));
 verify (sizeof (void (*)(void)) == sizeof (void *));
 verify (sizeof (ptrdiff_t) <= sizeof (Lisp_Object));
 verify (sizeof (ptrdiff_t) <= sizeof (EMACS_INT));
-verify (sizeof (off_t) == sizeof (int32_t)
-	|| sizeof (off_t) == sizeof (int64_t));
 verify (CHAR_BIT == 8);
 
 #define DIVIDE_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
@@ -145,9 +143,9 @@ static struct
 } remembered_data[32];
 static int nr_remembered_data = 0;
 
-typedef int32_t dump_off;
-#define DUMP_OFF_MIN INT32_MIN
-#define DUMP_OFF_MAX INT32_MAX
+typedef int_least32_t dump_off;
+#define DUMP_OFF_MIN INT_LEAST32_MIN
+#define DUMP_OFF_MAX INT_LEAST32_MAX
 
 __attribute__((format (printf,1,2)))
 static void
@@ -290,10 +288,10 @@ verify (DUMP_ALIGNMENT >= GCALIGNMENT);
 
 struct dump_reloc
 {
-  uint32_t raw_offset : DUMP_RELOC_OFFSET_BITS;
+  unsigned int raw_offset : DUMP_RELOC_OFFSET_BITS;
   ENUM_BF (dump_reloc_type) type : DUMP_RELOC_TYPE_BITS;
 };
-verify (sizeof (struct dump_reloc) == sizeof (int32_t));
+verify (sizeof (struct dump_reloc) == sizeof (dump_off));
 
 /* Set the type of a dump relocation.
 
@@ -323,7 +321,7 @@ dump_reloc_set_offset (struct dump_reloc *reloc, dump_off offset)
 }
 
 static void
-dump_fingerprint (const char *label, const uint8_t *xfingerprint)
+dump_fingerprint (const char *label, unsigned char const *xfingerprint)
 {
   fprintf (stderr, "%s: ", label);
   for (int i = 0; i < 32; ++i)
@@ -354,7 +352,7 @@ struct dump_header
   char magic[sizeof (dump_magic)];
 
   /* Associated Emacs binary.  */
-  uint8_t fingerprint[32];
+  unsigned char fingerprint[32];
 
   /* Relocation table for the dump file; each entry is a
      struct dump_reloc.  */
@@ -4230,17 +4228,12 @@ enum dump_memory_protection
   DUMP_MEMORY_ACCESS_READWRITE = 3,
 };
 
+#if VM_SUPPORTED == VM_MS_WINDOWS
 static void *
 dump_anonymous_allocate_w32 (void *base,
                              size_t size,
                              enum dump_memory_protection protection)
 {
-#if VM_SUPPORTED != VM_MS_WINDOWS
-  (void) base;
-  (void) size;
-  (void) protection;
-  emacs_abort ();
-#else
   void *ret;
   DWORD mem_type;
   DWORD mem_prot;
@@ -4269,26 +4262,22 @@ dump_anonymous_allocate_w32 (void *base,
       ? EBUSY
       : EPERM;
   return ret;
-#endif
 }
+#endif
+
+#if VM_SUPPORTED == VM_POSIX
 
 /* Old versions of macOS only define MAP_ANON, not MAP_ANONYMOUS.
    FIXME: This probably belongs elsewhere (gnulib/autoconf?)  */
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
+# ifndef MAP_ANONYMOUS
+#  define MAP_ANONYMOUS MAP_ANON
+# endif
 
 static void *
 dump_anonymous_allocate_posix (void *base,
                                size_t size,
                                enum dump_memory_protection protection)
 {
-#if VM_SUPPORTED != VM_POSIX
-  (void) base;
-  (void) size;
-  (void) protection;
-  emacs_abort ();
-#else
   void *ret;
   int mem_prot;
 
@@ -4333,8 +4322,8 @@ dump_anonymous_allocate_posix (void *base,
   if (ret == MAP_FAILED)
     ret = NULL;
   return ret;
-#endif
 }
+#endif
 
 /* Perform anonymous memory allocation.  */
 static void *
@@ -4342,14 +4331,14 @@ dump_anonymous_allocate (void *base,
                          const size_t size,
                          enum dump_memory_protection protection)
 {
-  void *ret = NULL;
-  if (VM_SUPPORTED == VM_MS_WINDOWS)
-    ret = dump_anonymous_allocate_w32 (base, size, protection);
-  else if (VM_SUPPORTED == VM_POSIX)
-    ret = dump_anonymous_allocate_posix (base, size, protection);
-  else
-    errno = ENOSYS;
-  return ret;
+#if VM_SUPPORTED == VM_POSIX
+  return dump_anonymous_allocate_posix (base, size, protection);
+#elif VM_SUPPORTED == VM_MS_WINDOWS
+  return dump_anonymous_allocate_w32 (base, size, protection);
+#else
+  errno = ENOSYS;
+  return NULL;
+#endif
 }
 
 /* Undo the effect of dump_reserve_address_space().  */
@@ -4371,18 +4360,11 @@ dump_anonymous_release (void *addr, size_t size)
 #endif
 }
 
+#if VM_SUPPORTED == VM_MS_WINDOWS
 static void *
 dump_map_file_w32 (void *base, int fd, off_t offset, size_t size,
 		   enum dump_memory_protection protection)
 {
-#if VM_SUPPORTED != VM_MS_WINDOWS
-  (void) base;
-  (void) fd;
-  (void) offset;
-  (void) size;
-  (void) protection;
-  emacs_abort ();
-#else
   void *ret = NULL;
   HANDLE section = NULL;
   HANDLE file;
@@ -4437,21 +4419,14 @@ dump_map_file_w32 (void *base, int fd, off_t offset, size_t size,
   if (section && !CloseHandle (section))
     emacs_abort ();
   return ret;
-#endif
 }
+#endif
 
+#if VM_SUPPORTED == VM_POSIX
 static void *
 dump_map_file_posix (void *base, int fd, off_t offset, size_t size,
 		     enum dump_memory_protection protection)
 {
-#if VM_SUPPORTED != VM_POSIX
-  (void) base;
-  (void) fd;
-  (void) offset;
-  (void) size;
-  (void) protection;
-  emacs_abort ();
-#else
   void *ret;
   int mem_prot;
   int mem_flags;
@@ -4481,22 +4456,22 @@ dump_map_file_posix (void *base, int fd, off_t offset, size_t size,
   if (ret == MAP_FAILED)
     ret = NULL;
   return ret;
-#endif
 }
+#endif
 
 /* Map a file into memory.  */
 static void *
 dump_map_file (void *base, int fd, off_t offset, size_t size,
 	       enum dump_memory_protection protection)
 {
-  void *ret = NULL;
-  if (VM_SUPPORTED == VM_MS_WINDOWS)
-    ret = dump_map_file_w32 (base, fd, offset, size, protection);
-  else if (VM_SUPPORTED == VM_POSIX)
-    ret = dump_map_file_posix (base, fd, offset, size, protection);
-  else
-    errno = ENOSYS;
+#if VM_SUPPORTED == VM_POSIX
+  return dump_map_file_posix (base, fd, offset, size, protection);
+#elif VM_SUPPORTED == VM_MS_WINDOWS
+  return dump_map_file_w32 (base, fd, offset, size, protection);
+#else
+  errno = ENOSYS;
   return ret;
+#endif
 }
 
 /* Remove a virtual memory mapping.
