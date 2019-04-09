@@ -111,7 +111,8 @@ let-bound variable `args'."
                                ;; `options' is of the form (quote OPTS).
                                (cadr options))))
           (args processed-args))
-     ;; Unused lexical variable warning if body does not use `args'.
+     ;; Silence unused lexical variable warning if body does not use `args'.
+     (ignore args)
      ,@body-forms))
 
 ;;; Internal Functions:

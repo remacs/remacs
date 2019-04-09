@@ -17,7 +17,7 @@ use crate::{
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
-    fns::nreverse,
+    fns::{nconc, nreverse},
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
@@ -37,7 +37,7 @@ use crate::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, make_timespec, marker_position, modify_overlay, nconc2,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
         specbind, unblock_input, unchain_both, unchain_marker, update_mode_lines,
         windows_or_buffers_changed,
@@ -52,8 +52,9 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fget_text_property, Fmake_marker, Fnconc},
+    remacs_sys::{Fcopy_sequence, Fmake_marker},
     strings::string_equal,
+    textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
     vectors::LispVectorlikeRef,
 };
@@ -188,7 +189,7 @@ impl LispBufferRef {
         // Add the buffer to the alist of live buffers
         let buffer: LispObject = b.into();
         unsafe {
-            Vbuffer_alist = nconc2(Vbuffer_alist, list!((name, buffer)));
+            Vbuffer_alist = nconc(&mut [Vbuffer_alist, list!((name, buffer))]);
             if Vrun_hooks.is_not_nil() {
                 call!(Vrun_hooks, Qbuffer_list_update_hook);
             }
@@ -1175,7 +1176,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
             buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
 
-            callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
+            nconc(&mut [framelist, list(&buffers), prevlist])
         }
     }
 }
@@ -1356,7 +1357,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
-    let prop = unsafe { Fget_text_property(pos.into(), Qinhibit_read_only, Qnil) };
+    let prop = get_text_property(pos, Qinhibit_read_only, Qnil);
 
     if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
     {

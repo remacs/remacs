@@ -387,7 +387,7 @@ or `desktop-modes-not-to-save'."
 
 ;; Skip tramp and ange-ftp files
 (defcustom desktop-files-not-to-save
-  "\\(^/[^/:]*:\\|(ftp)$\\)"
+  "\\(\\`/[^/:]*:\\|(ftp)\\'\\)"
   "Regexp identifying files whose buffers are to be excluded from saving.
 The default value excludes buffers visiting remote files."
   :type '(choice (const :tag "None" nil)

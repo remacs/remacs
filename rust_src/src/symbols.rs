@@ -7,17 +7,19 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::per_buffer_idx_from_field_offset,
+    buffers::{current_buffer, per_buffer_idx_from_field_offset},
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
     data::{
-        as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd, set,
-        store_symval_forwarding,
+        as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd,
+        is_kboard_objfwd, set, store_symval_forwarding,
     },
+    frames::selected_frame,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     lists::LispCons,
     multibyte::LispStringRef,
+    remacs_sys::Fframe_terminal,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
         get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
@@ -483,6 +485,48 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
                 None => false,
             }
         },
+        _ => unreachable!(),
+    }
+}
+
+/// Return a value indicating where VARIABLE's current binding comes from.
+/// If the current binding is buffer-local, the value is the current buffer.
+/// If the current binding is global (the default), the value is nil.
+#[lisp_fn]
+pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
+    // Make sure the current binding is actually swapped in.
+    unsafe {
+        symbol.find_value();
+    }
+    symbol = symbol.get_indirect_variable();
+
+    fn localized_handler(sym: LispSymbolRef) -> LispObject {
+        // For a local variable, record both the symbol and which
+        // buffer's or frame's value we are saving.
+        let blv = unsafe { sym.get_blv() };
+
+        if local_variable_p(sym, LispBufferOrCurrent::Current) {
+            current_buffer()
+        } else if sym.get_redirect() == symbol_redirect::SYMBOL_LOCALIZED && blv.found() {
+            blv.where_
+        } else {
+            Qnil
+        }
+    }
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => Qnil,
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let fwd = symbol.get_fwd();
+            if is_kboard_objfwd(fwd) {
+                Fframe_terminal(selected_frame().into())
+            } else if !is_buffer_objfwd(fwd) {
+                Qnil
+            } else {
+                localized_handler(symbol)
+            }
+        },
+        symbol_redirect::SYMBOL_LOCALIZED => localized_handler(symbol),
         _ => unreachable!(),
     }
 }
