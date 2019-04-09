@@ -4483,6 +4483,7 @@ This function is intended for use in `after-change-functions'."
 
   ;; Comments
   (setq-local comment-start "// ")
+  (setq-local comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
   (setq-local comment-end "")
   (setq-local fill-paragraph-function #'js-fill-paragraph)
   (setq-local normal-auto-fill-function #'js-do-auto-fill)
@@ -4508,8 +4509,7 @@ This function is intended for use in `after-change-functions'."
         c-paragraph-separate "$"
         c-block-comment-prefix "* "
         c-line-comment-starter "//"
-        c-comment-start-regexp "/[*/]\\|\\s!"
-        comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
+        c-comment-start-regexp "/[*/]\\|\\s!")
   (setq-local comment-line-break-function #'c-indent-new-comment-line)
   (setq-local c-block-comment-start-regexp "/\\*")
   (setq-local comment-multi-line t)
