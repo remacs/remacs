@@ -10088,6 +10088,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 		  (or (car select-method)
 		      (gnus-group-decoded-name to-newsgroup))
 		  articles)
+    ;; This `while' is not equivalent to a `dolist' (bug#33653#134).
     (while articles
       (setq article (pop articles))
       ;; Set any marks that may have changed in the summary buffer.
