@@ -8181,6 +8181,9 @@ CHOICE - the string to insert in the buffer,
 BUFFER - the buffer in which the choice should be inserted,
 BASE-POSITION - where to insert the completion.
 
+Functions should also accept and ignore a potential fourth
+argument, passed for backwards compatibility.
+
 If a function in the list returns non-nil, that function is supposed
 to have inserted the CHOICE in the BUFFER, and possibly exited
 the minibuffer; no further functions will be called.
