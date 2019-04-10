@@ -1269,8 +1269,8 @@ If HDR is non-nil, insert a header line with the directory name."
 	 ;; as indicated by `ls-lisp-use-insert-directory-program'.
 	 (not (and (featurep 'ls-lisp)
 		   (null ls-lisp-use-insert-directory-program)))
-         (not (and (featurep 'eshell)
-                   (bound-and-true-p eshell-ls-use-in-dired)))
+         ;; FIXME: Big ugly hack for Eshell's eshell-ls-use-in-dired.
+         (not (bound-and-true-p eshell-ls-use-in-dired))
 	 (or (file-remote-p dir)
              (if (eq dired-use-ls-dired 'unspecified)
 		 ;; Check whether "ls --dired" gives exit code 0, and

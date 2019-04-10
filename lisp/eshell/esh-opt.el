@@ -33,6 +33,10 @@
 
 ;;; User Functions:
 
+;; Macro expansion of eshell-eval-using-options refers to eshell-stringify-list
+;; defined in esh-util.
+(require 'esh-util)
+
 (defmacro eshell-eval-using-options (name macro-args options &rest body-forms)
   "Process NAME's MACRO-ARGS using a set of command line OPTIONS.
 After doing so, stores settings in local symbols as declared by OPTIONS;
