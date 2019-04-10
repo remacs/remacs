@@ -1951,7 +1951,13 @@ The optional argument @var{all-frames} has the same meaning as in
 @code{next-window}.
 
 This function does not select a window that has a non-@code{nil}
-@code{no-other-window} window parameter (@pxref{Window Parameters}).
+@code{no-other-window} window parameter (@pxref{Window Parameters}),
+provided that @code{ignore-window-parameters} is @code{nil}.
+
+If the @code{other-window} parameter of the selected window is a
+function, and @code{ignore-window-parameters} is @code{nil}, that
+function will be called with the arguments @var{count} and
+@var{all-frames} instead of the normal operation of this function.
 @end deffn
 
 @defun walk-windows fun &optional minibuf all-frames
@@ -3936,8 +3942,33 @@ described next to deal with the window and its buffer.
 This function handles @var{window} and its buffer after quitting.  The
 optional argument @var{window} must be a live window and defaults to
 the selected one. The function's behavior is determined by the four
-elements of the @code{quit-restore} window parameter (@pxref{Window
-Parameters}), which is set to @code{nil} afterwards.
+elements of the list specified by the @code{quit-restore} window
+parameter (@pxref{Window Parameters}), which is set to @code{nil}
+afterwards.
+
+The first element of the @code{quit-restore} parameter is one of the
+symbols @code{window}, meaning that the window has been specially
+created by @code{display-buffer}; @code{frame}, a separate frame has
+been created; @code{same}, the window has only ever displayed this
+buffer; or @code{other}, the window showed another buffer before.
+@code{frame} and @code{window} affect how the window is quit, while
+@code{same} and @code{other} affect the redisplay of buffers
+previously shown in this window.
+
+The second element is either one of the symbols @code{window} or
+@code{frame}, or a list whose elements are the buffer shown in the
+window before, that buffer's window start and window point positions,
+and the window's height at that time.  If that buffer is still live
+when the window is quit, then the function @code{quit-restore-window}
+reuses the window to display the buffer.
+
+The third element is the window selected at the time the parameter was
+created.  If @code{quit-restore-window} deletes the window passed to
+it as argument, it then tries to reselect this window.
+
+The fourth element is the buffer whose display caused the creation of
+this parameter.  @code{quit-restore-window} deletes the specified window
+only if it still shows that buffer.
 
 The window is deleted entirely if: 1) the first element of the
 @code{quit-restore} parameter is one of 'window or 'frame, 2) the
@@ -4627,13 +4658,14 @@ This function sets the display-start position of @var{window} to
 @var{position} in @var{window}'s buffer.  It returns @var{position}.
 
 The display routines insist that the position of point be visible when a
-buffer is displayed.  Normally, they change the display-start position
-(that is, scroll the window) whenever necessary to make point visible.
-However, if you specify the start position with this function using
-@code{nil} for @var{noforce}, it means you want display to start at
-@var{position} even if that would put the location of point off the
-screen.  If this does place point off screen, the display routines move
-point to the left margin on the middle line in the window.
+buffer is displayed.  Normally, they select the display-start position
+according to their internal logic (and scroll the window if necessary)
+to make point visible.  However, if you specify the start position
+with this function using @code{nil} for @var{noforce}, it means you
+want display to start at @var{position} even if that would put the
+location of point off the screen.  If this does place point off
+screen, the display routines attempt to move point to the left margin
+on the middle line in the window.
 
 For example, if point @w{is 1} and you set the start of the window
 @w{to 37}, the start of the next line, point will be above the top
@@ -4679,6 +4711,13 @@ it is still 1 when redisplay occurs.  Here is an example:
 ---------- Buffer: foo ----------
 @end group
 @end example
+
+If the attempt to make point visible (i.e., in a fully-visible screen
+line) fails, the display routines will disregard the requested
+window-start position and compute a new one anyway.  Thus, for
+reliable results Lisp programs that call this function should always
+move point to be inside the window whose display starts at
+@var{position}.
 
 If @var{noforce} is non-@code{nil}, and @var{position} would place point
 off screen at the next redisplay, then redisplay computes a new window-start
@@ -5796,8 +5835,8 @@ and heights, if possible.  Frames are not resized by this function.
 @section Window Parameters
 @cindex window parameters
 
-This section describes how window parameters can be used to associate
-additional information with windows.
+This section describes the window parameters that can be used to
+associate additional information with windows.
 
 @defun window-parameter window parameter
 This function returns @var{window}'s value for @var{parameter}.  The
@@ -5930,44 +5969,21 @@ parameter is installed and updated by the function
 @vindex quit-restore@r{, a window parameter}
 This parameter is installed by the buffer display functions
 (@pxref{Choosing Window}) and consulted by @code{quit-restore-window}
-(@pxref{Quitting Windows}).  It contains four elements:
+(@pxref{Quitting Windows}).  It is a list of four elements, see the
+description of @code{quit-restore-window} in @ref{Quitting Windows}
+for details.
 
-The first element is one of the symbols @code{window}, meaning that
-the window has been specially created by @code{display-buffer};
-@code{frame}, a separate frame has been created; @code{same}, the
-window has only ever displayed this buffer; or @code{other}, the
-window showed another buffer before.  @code{frame} and @code{window}
-affect how the window is quit, while @code{same} and @code{other}
-affect the redisplay of buffers previously shown in this window.
-
-The second element is either one of the symbols @code{window} or
-@code{frame}, or a list whose elements are the buffer shown in the
-window before, that buffer's window start and window point positions,
-and the window's height at that time.  If that buffer is still live
-when the window is quit, then the function @code{quit-restore-window}
-reuses the window to display the buffer.
-
-The third element is the window selected at the time the parameter was
-created.  If @code{quit-restore-window} deletes the window passed to
-it as argument, it then tries to reselect this window.
-
-The fourth element is the buffer whose display caused the creation of
-this parameter.  @code{quit-restore-window} deletes the specified window
-only if it still shows that buffer.
-
-See the description of @code{quit-restore-window} in @ref{Quitting
-Windows} for details.
-
-@item window-side window-slot
+@item window-side
+@itemx window-slot
 @vindex window-side@r{, a window parameter}
 @vindex window-slot@r{, a window parameter}
-These parameters are used for implementing side windows (@pxref{Side
-Windows}).
+These parameters are used internally for implementing side windows
+(@pxref{Side Windows}).
 
 @item window-atom
 @vindex window-atom@r{, a window parameter}
-This parameter is used for implementing atomic windows, see @ref{Atomic
-Windows}.
+This parameter is used internally for implementing atomic windows, see
+@ref{Atomic Windows}.
 
 @item mode-line-format
 @vindex mode-line-format@r{, a window parameter}
@@ -5989,11 +6005,12 @@ affected.
 
 @item min-margins
 @vindex min-margins@r{, a window parameter}
-The value of this parameter is a cons cell whose @sc{car} and @sc{cdr},
-if non-@code{nil}, specify the minimum values (in columns) for the left
-and right margin of this window.  When present, Emacs will use these
-values instead of the actual margin widths for determining whether a
-window can be split or shrunk horizontally.
+The value of this parameter is a cons cell whose @sc{car} and
+@sc{cdr}, if non-@code{nil}, specify the minimum values (in columns)
+for the left and right margin of this window (@pxref{Display Margins}.
+When present, Emacs will use these values instead of the actual margin
+widths for determining whether a window can be split or shrunk
+horizontally.
 
 Emacs never auto-adjusts the margins of any window after splitting or
 resizing it.  It is the sole responsibility of any application setting

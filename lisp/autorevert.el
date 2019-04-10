@@ -465,7 +465,7 @@ If `global-auto-revert-non-file-buffers' is non-nil, this mode
 may also revert some non-file buffers, as described in the
 documentation of that variable.  It ignores buffers with modes
 matching `global-auto-revert-ignore-modes', and buffers with a
-non-nil vale of `global-auto-revert-ignore-buffer'.
+non-nil value of `global-auto-revert-ignore-buffer'.
 
 When a buffer is reverted, a message is generated.  This can be
 suppressed by setting `auto-revert-verbose' to nil.
