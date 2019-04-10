@@ -1294,12 +1294,19 @@ conventions.
 
 ---
 *** Indentation uses 'js-indent-level' instead of 'sgml-basic-offset'.
-It was never really intuitive that JSX indentation would be controlled
-by an SGML variable.  JSX is a syntax extension of JavaScript, so it
-should be indented just like any other expression in JavaScript.  This
-is technically a breaking change, but it will probably align with how
-you would normally expect for this indentation to be controlled, and
-you probably won't need to change your config.
+Since JSX is a syntax extension of JavaScript, it makes the most sense
+for JSX expressions to be indented the same number of spaces as other
+JS expressions.  This is a breaking change, but it probably aligns
+with how you'd expect this indentation to behave.  If you want JSX to
+be indented like JS, you won't need to change your config.
+
+The old behavior can be emulated by controlling JSX indentation
+independently of JS, by setting 'js-jsx-indent-level'.
+
+---
+*** New defcustom 'js-jsx-indent-level' for different JSX indentation.
+If you wish to indent JSX by a different number of spaces than JS, set
+this variable to the desired number.
 
 ---
 *** New defcustom 'js-jsx-attribute-offset' for JSX attribute indents.
