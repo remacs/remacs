@@ -287,7 +287,7 @@ You should set this variable through Custom."
 	   (dolist (buf (buffer-list))
 	     (with-current-buffer buf
 	       (when (symbol-value 'auto-revert-notify-watch-descriptor)
-		 (auto-revert-notify-rm-watch))))))
+		 (auto-revert-notify-rm-watch t))))))
   :initialize 'custom-initialize-default
   :version "24.4")
 
@@ -371,7 +371,7 @@ without being changed in the part that is already in the buffer."
          'kill-buffer-hook
          #'auto-revert-remove-current-buffer
          nil t))
-    (when auto-revert-notify-watch-descriptor (auto-revert-notify-rm-watch))
+    (when auto-revert-notify-watch-descriptor (auto-revert-notify-rm-watch t))
     (auto-revert-remove-current-buffer))
   (auto-revert-set-timer)
   (when auto-revert-mode
@@ -480,7 +480,7 @@ specifies in the mode line."
     (dolist (buf (buffer-list))
       (with-current-buffer buf
 	(when auto-revert-notify-watch-descriptor
-	  (auto-revert-notify-rm-watch))))))
+	  (auto-revert-notify-rm-watch t))))))
 
 (defun auto-revert-set-timer ()
   "Restart or cancel the timer used by Auto-Revert Mode.
@@ -497,8 +497,10 @@ will use an up-to-date value of `auto-revert-interval'"
 			    auto-revert-interval
 			    'auto-revert-buffers))))
 
-(defun auto-revert-notify-rm-watch ()
-  "Disable file notification for current buffer's associated file."
+(defun auto-revert-notify-rm-watch (remove-descriptor)
+  "Disable file notification for current buffer's associated file.
+If REMOVE-DESCRIPTOR is non-nil, remove the corresponding notification
+descriptor; otherwise assume that it has already been removed."
   (when auto-revert-notify-watch-descriptor
     (maphash
      (lambda (key value)
@@ -507,12 +509,18 @@ will use an up-to-date value of `auto-revert-interval'"
 	 (if value
 	     (puthash key value auto-revert-notify-watch-descriptor-hash-list)
 	   (remhash key auto-revert-notify-watch-descriptor-hash-list)
-	   (ignore-errors
-	     (file-notify-rm-watch auto-revert-notify-watch-descriptor)))))
+           (when remove-descriptor
+	     (ignore-errors
+	       (file-notify-rm-watch auto-revert-notify-watch-descriptor))))))
      auto-revert-notify-watch-descriptor-hash-list)
-    (remove-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch t))
+    (remove-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch-callback t))
   (setq auto-revert-notify-watch-descriptor nil
 	auto-revert-notify-modified-p nil))
+
+(defun auto-revert-notify-rm-watch-callback ()
+  "Disable file notification for current buffer's associated file,
+and remove the notification descriptor."
+  (auto-revert-notify-rm-watch t))
 
 (defun auto-revert-notify-add-watch ()
   "Enable file notification for current buffer's associated file."
@@ -553,7 +561,8 @@ will use an up-to-date value of `auto-revert-interval'"
 	       (gethash auto-revert-notify-watch-descriptor
 		        auto-revert-notify-watch-descriptor-hash-list))
          auto-revert-notify-watch-descriptor-hash-list)
-        (add-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch nil t)))))
+        (add-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch-callback
+                  nil t)))))
 
 ;; If we have file notifications, we want to update the auto-revert buffers
 ;; immediately when a notification occurs. Since file updates can happen very
@@ -609,7 +618,9 @@ no more reverts are possible until the next call of
                                 (file-name-nondirectory buffer-file-name)))
                           ;; A buffer w/o a file, like dired.
                           (null buffer-file-name)))
-                (auto-revert-notify-rm-watch))))
+                ;; Since we got a `stopped' event, the notification descriptor
+                ;; is already gone; don't try to remove it.
+                (auto-revert-notify-rm-watch nil))))
 
         ;; Loop over all buffers, in order to find the intended one.
         (cl-dolist (buffer buffers)
