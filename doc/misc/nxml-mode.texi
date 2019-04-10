@@ -250,7 +250,7 @@ xml:lang                           xmlns
 If you input @kbd{xmlns}, the result will be:
 
 @example
-<html xmlns="@point{}
+<html xmlns="@point{}"
 @end example
 
 @noindent
