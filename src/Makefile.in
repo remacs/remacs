@@ -533,7 +533,7 @@ ${lispintdir}/cp51932.el ${lispintdir}/eucjp-ms.el: FORCE
 
 charsets = ${top_srcdir}/admin/charsets/charsets.stamp
 ${charsets}: FORCE
-	$(MAKE) -C $(dir $@) all
+	$(MAKE) -C ../admin/charsets all
 
 charscript = ${lispintdir}/charscript.el
 ${charscript}: FORCE
@@ -765,7 +765,7 @@ VCSWITNESS =
 
 $(lispsource)/loaddefs.el: $(VCSWITNESS) | \
 		bootstrap-emacs$(EXEEXT) $(bootstrap_pdmp)
-	$(MAKE) -C $(dir $@) autoloads EMACS="$(bootstrap_exe)"
+	$(MAKE) -C ../lisp autoloads EMACS="$(bootstrap_exe)"
 
 ## Dump an Emacs executable named bootstrap-emacs containing the
 ## files from loadup.el in source form.
