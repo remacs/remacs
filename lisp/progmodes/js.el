@@ -600,6 +600,42 @@ It is set to be buffer-local (and t) when in `js-jsx-mode'."
   :safe 'booleanp
   :group 'js)
 
+(defcustom js-jsx-indent-level nil
+  "When non-nil, indent JSX by this value, instead of like JS.
+
+Let `js-indent-level' be 4.  When this variable is also set to
+nil, JSX indentation looks like this (consistent):
+
+  return (
+      <element>
+          <element>
+              Hello World!
+          </element>
+      </element>
+  )
+
+Alternatively, when this variable is also set to 2, JSX
+indentation looks like this (different):
+
+  return (
+      <element>
+        <element>
+          Hello World!
+        </element>
+      </element>
+  )"
+  :version "27.1"
+  :type 'integer
+  :safe (lambda (x) (or (null x) (integerp x)))
+  :group 'js)
+;; This is how indentation behaved out-of-the-box until Emacs 27.  JSX
+;; indentation was controlled with `sgml-basic-offset', which defaults
+;; to 2, whereas `js-indent-level' defaults to 4.  Users who had the
+;; same values configured for both their HTML and JS indentation would
+;; luckily get consistent JSX indentation; most others were probably
+;; unhappy.  I’d be surprised if anyone actually wants different
+;; indentation levels, but just in case, here’s a way back to that.
+
 (defcustom js-jsx-attribute-offset 0
   "Specifies a delta for JSXAttribute indentation.
 
@@ -2706,7 +2742,7 @@ The column calculation is based off of `sgml-calculate-indent'."
 	   (current-column)
          ;; This is the first attribute: indent.
          (goto-char (+ (nth 1 context) js-jsx-attribute-offset))
-         (+ (current-column) js-indent-level))))
+         (+ (current-column) (or js-jsx-indent-level js-indent-level)))))
 
     ('text
      ;; Indent to reflect nesting.
@@ -2715,7 +2751,7 @@ The column calculation is based off of `sgml-calculate-indent'."
         ;; The last line isn’t nested, but the rest are.
         (if (or (not (nth 2 context)) ; Unclosed.
                 (< line (line-number-at-pos (nth 2 context))))
-            js-indent-level
+            (or js-jsx-indent-level js-indent-level)
           0)))
 
     ))
