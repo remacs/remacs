@@ -1289,8 +1289,20 @@ wrapped in parenthesis (e.g. in a 'return' statement or a function
 call).  It would also fail in many intricate cases.  Now, indentation
 should work anywhere without parenthesis; many more intricacies are
 supported; and, indentation conventions align more closely with those
-of the React developer community, otherwise still adhering to SGML
-conventions.
+of the React developer community (see 'js-jsx-align->-with-<'),
+otherwise still adhering to SGML conventions.
+
+---
+*** New defcustom 'js-jsx-align->-with-<' controls '>' indents.
+Commonly in JSX code, a '>' on its own line is indented at the same
+level as its opening '<'.  This is the new default for JSX.  This
+behavior is slightly different than that used by SGML in Emacs, where
+'>' is indented at the same level as attributes, which was also the
+old default for JSX.
+
+This is turned on by default.  To get back the old default indentation
+behavior of aligning '>' with attributes, set 'js-jsx-align->-with-<'
+to nil.
 
 ---
 *** Indentation uses 'js-indent-level' instead of 'sgml-basic-offset'.
