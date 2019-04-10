@@ -351,6 +351,9 @@
                    "-0x000000003ffffffffffffffe000000000000000        "))))
 
 (ert-deftest test-group-name ()
+  ;; FIXME: Actually my GID in one of my systems has no associated entry
+  ;; in /etc/group so there's no name for it and `group-name' correctly
+  ;; returns nil!
   (should (stringp (group-name (group-gid))))
   (should-error (group-name 'foo))
   (cond
