@@ -30,7 +30,7 @@ use crate::{
     },
     multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
     multibyte::{LispStringRef, LispSymbolOrString},
-    numbers::MOST_POSITIVE_FIXNUM,
+    numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::{
@@ -1407,16 +1407,11 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
 /// That makes overlay lookup faster for positions near POS (but perhaps slower
 /// for positions far away from POS).
 #[lisp_fn]
-pub fn overlay_recenter(pos: LispObject) -> LispObject {
-    let p = clip_to_bounds(
-        std::isize::MIN,
-        pos.as_fixnum_coerce_marker_or_error(),
-        std::isize::MAX,
-    );
+pub fn overlay_recenter(pos: LispNumber) {
+    let p = clip_to_bounds(std::isize::MIN, pos.to_fixnum(), std::isize::MAX);
     unsafe {
         recenter_overlay_lists(ThreadState::current_buffer_unchecked().as_mut(), p);
     }
-    Qnil
 }
 
 #[no_mangle]
