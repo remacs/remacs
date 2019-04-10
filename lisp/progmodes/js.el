@@ -600,6 +600,31 @@ It is set to be buffer-local (and t) when in `js-jsx-mode'."
   :safe 'booleanp
   :group 'js)
 
+(defcustom js-jsx-align->-with-< t
+  "When non-nil, “>” will be indented to the opening “<” in JSX.
+
+When this is enabled, JSX indentation looks like this:
+
+  <element
+    attr=\"\"
+  >
+  </element>
+  <input
+  />
+
+When this is disabled, JSX indentation looks like this:
+
+  <element
+    attr=\"\"
+    >
+  </element>
+  <input
+    />"
+  :version "27.1"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'js)
+
 (defcustom js-jsx-indent-level nil
   "When non-nil, indent JSX by this value, instead of like JS.
 
@@ -2725,10 +2750,12 @@ The column calculation is based off of `sgml-calculate-indent'."
      ;; bracket on its own line is indented at the same level as the
      ;; opening angle bracket of the JSXElement.  Otherwise, indent
      ;; JSXAttribute space like SGML.
-     (if (progn
-           (goto-char (nth 2 context))
-           (and (= line (line-number-at-pos))
-                (looking-back "^\\s-*/?>" (line-beginning-position))))
+     (if (and
+          js-jsx-align->-with-<
+          (progn
+            (goto-char (nth 2 context))
+            (and (= line (line-number-at-pos))
+                 (looking-back "^\\s-*/?>" (line-beginning-position)))))
          (progn
            (goto-char (nth 1 context))
            (current-column))
