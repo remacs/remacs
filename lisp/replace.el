@@ -2643,22 +2643,24 @@ characters."
 		  (setq def (lookup-key map key))
 		  ;; Restore the match data while we process the command.
 		  (cond ((eq def 'help)
-			 (with-output-to-temp-buffer "*Help*"
-			   (princ
-			    (concat "Query replacing "
-				    (if backward "backward " "")
-				    (if delimited-flag
-					(or (and (symbolp delimited-flag)
-						 (get delimited-flag
-                                                      'isearch-message-prefix))
-					    "word ") "")
-				    (if regexp-flag "regexp " "")
-				    from-string " with "
-				    next-replacement ".\n\n"
-				    (substitute-command-keys
-				     query-replace-help)))
-			   (with-current-buffer standard-output
-			     (help-mode))))
+			 (let ((display-buffer-overriding-action
+				'(nil (inhibit-same-window . t))))
+			   (with-output-to-temp-buffer "*Help*"
+			     (princ
+			      (concat "Query replacing "
+				      (if backward "backward " "")
+				      (if delimited-flag
+					  (or (and (symbolp delimited-flag)
+						   (get delimited-flag
+							'isearch-message-prefix))
+					      "word ") "")
+				      (if regexp-flag "regexp " "")
+				      from-string " with "
+				      next-replacement ".\n\n"
+				      (substitute-command-keys
+				       query-replace-help)))
+			     (with-current-buffer standard-output
+			       (help-mode)))))
 			((eq def 'exit)
 			 (setq keep-going nil)
 			 (setq done t))
