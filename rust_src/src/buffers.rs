@@ -30,7 +30,7 @@ use crate::{
     },
     multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
     multibyte::{LispStringRef, LispSymbolOrString},
-    numbers::MOST_POSITIVE_FIXNUM,
+    numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::{
@@ -52,10 +52,11 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
-    remacs_sys::{Fcopy_sequence, Fmake_marker},
+    remacs_sys::{recenter_overlay_lists, Fcopy_sequence, Fmake_marker},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
+    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -1400,6 +1401,17 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
             buf_truename.is_string() && string_equal(buf_truename, filename)
         })
         .into()
+}
+
+/// Recenter the overlays of the current buffer around position POS.
+/// That makes overlay lookup faster for positions near POS (but perhaps slower
+/// for positions far away from POS).
+#[lisp_fn]
+pub fn overlay_recenter(pos: LispNumber) {
+    let p = clip_to_bounds(std::isize::MIN, pos.to_fixnum(), std::isize::MAX);
+    unsafe {
+        recenter_overlay_lists(ThreadState::current_buffer_unchecked().as_mut(), p);
+    }
 }
 
 #[no_mangle]

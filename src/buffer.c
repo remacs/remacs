@@ -3455,20 +3455,6 @@ the value is (point-min).  */)
 }
 
 /* These functions are for debugging overlays.  */
-
-DEFUN ("overlay-recenter", Foverlay_recenter, Soverlay_recenter, 1, 1, 0,
-       doc: /* Recenter the overlays of the current buffer around position POS.
-That makes overlay lookup faster for positions near POS (but perhaps slower
-for positions far away from POS).  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t p;
-  CHECK_NUMBER_COERCE_MARKER (pos);
-
-  p = clip_to_bounds (PTRDIFF_MIN, XINT (pos), PTRDIFF_MAX);
-  recenter_overlay_lists (current_buffer, p);
-  return Qnil;
-}
 
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
@@ -5391,7 +5377,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Soverlays_in);
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
-  defsubr (&Soverlay_recenter);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 
