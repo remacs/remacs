@@ -2140,6 +2140,14 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
 ;; `syntax-propertize-rules' loop so the next JSXBoundaryElement can
 ;; be parsed, if any, be it an opening or closing one.
 
+(defun js-jsx--put-syntax-table (start end value)
+  "Set syntax-table text property from START to END as VALUE.
+Redundantly set the value to two properties, syntax-table and
+js-jsx-syntax-table.  Derivative modes that remove syntax-table
+text properties may recover the value from the second property." ; i.e. js2-mode
+  (add-text-properties start end (list 'syntax-table value
+                                       'js-jsx-syntax-table value)))
+
 (defun js-jsx--text-range (beg end)
   "Identify JSXText within a “>/{/}/<” pair."
   (when (> (- end beg) 0)
@@ -2151,7 +2159,7 @@ JSXElement or a JSXOpeningElement/JSXClosingElement pair."
         ;; negate those roles.
         (when (or (= (char-after) ?/) ; comment
                   (= (syntax-class (syntax-after (point))) 7)) ; string quote
-          (put-text-property (point) (1+ (point)) 'syntax-table '(1)))
+          (js-jsx--put-syntax-table (point) (1+ (point)) '(1)))
         (forward-char)))
     ;; Mark JSXText so it can be font-locked as non-keywords.
     (put-text-property beg (1+ beg) 'js-jsx-text (list beg end (current-buffer)))
@@ -2220,7 +2228,7 @@ testing for syntax only valid as JSX."
         (cond
          ((= (char-after) ?>)
           ;; Make the closing “>” a close parenthesis.
-          (put-text-property (point) (1+ (point)) 'syntax-table '(5))
+          (js-jsx--put-syntax-table (point) (1+ (point)) '(5))
           (forward-char)
           (setq unambiguous t)
           (throw 'stop nil))
@@ -2306,7 +2314,7 @@ testing for syntax only valid as JSX."
       ;; Save JSXBoundaryElement’s name’s match data for font-locking.
       (if name-beg (put-text-property name-beg (1+ name-beg) 'js-jsx-tag-name name-match-data))
       ;; Make the opening “<” an open parenthesis.
-      (put-text-property tag-beg (1+ tag-beg) 'syntax-table '(4))
+      (js-jsx--put-syntax-table tag-beg (1+ tag-beg) '(4))
       ;; Prevent “out of range” errors when typing at the end of a buffer.
       (setq tag-end (if (eobp) (1- (point)) (point)))
       ;; Mark beginning and end of tag for font-locking.
@@ -2325,7 +2333,8 @@ testing for syntax only valid as JSX."
   (list
    'js-jsx-tag-beg nil 'js-jsx-tag-end nil 'js-jsx-close-tag-pos nil
    'js-jsx-tag-name nil 'js-jsx-attribute-name nil 'js-jsx-string nil
-   'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil)
+   'js-jsx-text nil 'js-jsx-expr nil 'js-jsx-expr-attribute nil
+   'js-jsx-syntax-table nil)
   "Plist of text properties added by `js-syntax-propertize'.")
 
 (defun js-syntax-propertize (start end)
