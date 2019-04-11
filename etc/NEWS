@@ -303,6 +303,10 @@ and directory-local variables.
 'with-connection-local-profiles'.  No argument 'profiles' needed any
 longer.
 
+---
+** next-error-verbosity controls when `next-error' outputs a message
+   about the error locus.
+
 
 * Editing Changes in Emacs 27.1
 
