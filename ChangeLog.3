@@ -1,3 +1,148 @@
+2019-04-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'read-command'
+
+	* src/minibuf.c (Fread_command): Document the return value
+	when DEFAULT-VALUE is nil and the user enters nothing.
+	* doc/lispref/minibuf.texi (High-Level Completion): Document
+	the printed representation of a symbol whose name is empty.
+	(Bug#3522)
+
+2019-04-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix an outdated URL in a comment
+
+	* src/emacs.c: Fix reference to Cocoa CoreFoundation Release
+	Notes.  (Bug#35225)
+
+2019-04-11  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Backport: Fix comment-empty-lines docstring (bug#35152)
+
+	* lisp/newcomment.el (comment-empty-lines): Consistently use US
+	commas in docstring.  Fix indentation of and typo in custom :type.
+
+	(cherry picked from commit 690c678fb6c1fb5b2f828f9bb90782bd0b01c399)
+
+2019-04-11  Alex Branham  <alex.branham@gmail.com>
+
+	Backport: Update documentation for indent-relative functions
+
+	* lisp/indent.el (indent-relative): Document what happens when there
+	  is no previous nonblank line.
+	* doc/lispref/text.texi (Relative Indent): Document
+	  indent-relative-first-indent-point instead of obsolete
+	  indent-relative-maybe. Fix documentation of which argument from
+	  'indent-relative' is used.
+
+	Bug#34858
+
+	(cherry picked from commit 10cd65878c741d2a22a1f2c36c54fcad4e516f72)
+
+2019-04-11  Noam Postavsky  <npostavs@gmail.com>
+
+	Update nxml-mode.texi: completion now gives xmlns="-!-"
+
+	* doc/misc/nxml-mode.texi (Completion): As of 2016-01-16 "* lisp/nxml:
+	Use standard completion; it also works for company-mode", completing
+	an attribute when there is only one candidate inserts both quotes.
+	Update the example accordingly.
+
+2019-04-10  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Note that choose-completion-string-functions funcs take four args
+
+	* lisp/simple.el (choose-completion-string-functions): Functions in
+	  this list actually need to accept four arguments, though the fourth
+	  should be ignored.
+
+2019-04-10  Gemini Lasswell  <gazally@runbox.com>
+
+	Address name conflicts in EIEIO documentation (bug#31660)
+
+	* doc/misc/eieio.texi (Quick Start): Rename the class used in the
+	example from 'record' to 'person'.
+	(Building Classes): Advise user to check for name conflicts before
+	naming a class.  Add a missing apostrophe.
+	(Making New Objects): Correct grammar.  Rename the class used in the
+	example from 'record' to 'my-class'.
+
+2019-04-09  Mattias Engdegård  <mattiase@acm.org>
+
+	Clarify the TESTFN argument to `alist-get'
+
+	* lisp/subr.el (alist-get):
+	Rephrase the initial text to clarify the meaning of the TESTFN argument.
+	It's an equality predicate, not a look-up function (Bug#35206).
+
+	(cherry picked from commit c81465580fe262f28ce47502c00f4afcbe3b8f8d)
+
+2019-04-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/editfns.c (Fnarrow_to_region): Doc fix.  (Bug#35163)
+
+2019-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc strings of 'vc-version-diff' and 'vc-version-ediff'
+
+	* lisp/vc/vc.el (vc-version-diff, vc-version-ediff): Describe
+	arguments in the doc strings.  (Bug#35019)
+
+2019-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of set-window-start
+
+	* doc/lispref/windows.texi (Window Start and End):
+	* src/window.c (Fset_window_start): Document that reliable
+	setting of a window start position requires to adjust point to
+	be visible.  (Bug#34038)
+
+2019-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of window parameters
+
+	* doc/lispref/windows.texi (Cyclic Window Ordering): Describe
+	the effect of the 'other-window' window parameter.
+	(Window Parameters): Improve the descriptions of window
+	parameters.  Move the detailed description of the
+	'quit-restore' window parameter from here...
+	(Quitting Windows): ...to here.  (Bug#35063)
+
+2019-04-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve commentary in frame.el
+
+	* lisp/frame.el: Improve commentary for display-* functions.
+	(Bug#35058)
+
+2019-04-06  Mauro Aranda  <maurooaranda@gmail.com>
+
+	Fix typo in a doc string
+
+	* lisp/autorevert.el (global-auto-revert-mode): Fix a typo.
+	(Bug#35165)
+
+2019-03-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Say which regexp ranges should be avoided
+
+	* doc/lispref/searching.texi (Regexp Special): Say that
+	regular expressions like "[a-m-z]" and "[[:alpha:]-~]" should
+	be avoided, for the same reason that regular expressions like
+	"+" and "*" should be avoided: POSIX says their behavior is
+	undefined, and they are confusing anyway.  Also, explain
+	better what happens when the bound of a range is a raw 8-bit
+	byte; the old explanation appears to have been obsolete
+	anyway.  Finally, say that ranges like "[\u00FF-\xFF]" that
+	mix non-ASCII characters and raw 8-bit bytes should be
+	avoided, since it’s not clear what they should mean.
+
+2019-03-20  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update.
+
+	* ; ChangeLog.3 update
+
 2019-03-20  Eli Zaretskii  <eliz@gnu.org>
 
 	Improve indexing of the user manual
@@ -64946,7 +65091,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 0f523deec1c1e9e2a5a3474f912aa2183d3fe33d (inclusive).
+commit 85829363f728c410e33ffdc3839202977b2115cc (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
