@@ -331,6 +331,7 @@ BUILD_DETAILS = @BUILD_DETAILS@
 UNEXEC_OBJ = @UNEXEC_OBJ@
 
 DUMPING=@DUMPING@
+CHECK_STRUCTS = @CHECK_STRUCTS@
 
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -455,6 +456,16 @@ ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 # Must be first, before dep inclusion!
 all: emacs$(EXEEXT) $(pdmp) $(OTHER_FILES)
 .PHONY: all
+
+dmpstruct_headers=$(srcdir)/lisp.h $(srcdir)/buffer.h \
+	$(srcdir)/intervals.h $(srcdir)/charset.h $(srcdir)/bignum.h
+ifeq ($(CHECK_STRUCTS),true)
+pdumper.o: dmpstruct.h
+endif
+dmpstruct.h: $(srcdir)/dmpstruct.awk
+dmpstruct.h: $(libsrc)/make-fingerprint$(EXEEXT) $(dmpstruct_headers)
+	$(AM_V_GEN)POSIXLY_CORRECT=1 awk -f $(srcdir)/dmpstruct.awk \
+		$(dmpstruct_headers) > $@
 
 AUTO_DEPEND = @AUTO_DEPEND@
 DEPDIR = deps
@@ -665,7 +676,7 @@ ns-app: emacs$(EXEEXT) $(pdmp)
 
 mostlyclean:
 	rm -f temacs$(EXEEXT) core ./*.core \#* ./*.o
-	rm -f fingerprint.c
+	rm -f dmpstruct.h fingerprint.c
 	rm -f emacs.pdmp
 	rm -f ../etc/DOC
 	rm -f bootstrap-emacs$(EXEEXT) $(bootstrap_pdmp)

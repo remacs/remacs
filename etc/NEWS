@@ -84,6 +84,11 @@ The new command-line argument '--dump-file=FILE' allows to specify a
 non-default '.pdmp' file to load the state from; see the node "Initial
 Options" in the Emacs manual for more information.
 
++++
+** The new configure option '--enable-checking=structs' attempts to
+check that the portable dumper code has been updated to match the last
+change to one of the data structures that it relies on.
+
 
 * Startup Changes in Emacs 27.1
 

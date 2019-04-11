@@ -537,19 +537,21 @@ fi)
 
 AC_ARG_ENABLE(checking,
 [AS_HELP_STRING([--enable-checking@<:@=LIST@:>@],
-		[enable expensive run-time checks.  With LIST,
+		[enable expensive checks.  With LIST,
 		 enable only specific categories of checks.
 		 Categories are: all,yes,no.
 		 Flags are: stringbytes, stringoverrun, stringfreelist,
-		 xmallocoverrun, conslist, glyphs])],
+		 structs, xmallocoverrun, conslist, glyphs])],
 [ac_checking_flags="${enableval}"],[])
 IFS="${IFS= 	}"; ac_save_IFS="$IFS"; IFS="$IFS,"
+CHECK_STRUCTS=false
 for check in $ac_checking_flags
 do
 	case $check in
 	# these set all the flags to specific states
 	yes)		ac_enable_checking=1 ;;
 	no)		ac_enable_checking= ;
+			CHECK_STRUCTS=false
 			ac_gc_check_stringbytes= ;
 	                ac_gc_check_string_overrun= ;
 	                ac_gc_check_string_free_list= ;
@@ -557,6 +559,7 @@ do
 	                ac_gc_check_cons_list= ;
 			ac_glyphs_debug= ;;
 	all)		ac_enable_checking=1 ;
+			CHECK_STRUCTS=true
 			ac_gc_check_stringbytes=1 ;
 	                ac_gc_check_string_overrun=1 ;
 	                ac_gc_check_string_free_list=1 ;
@@ -567,6 +570,7 @@ do
 	stringbytes)	ac_gc_check_stringbytes=1 ;;
 	stringoverrun)	ac_gc_check_string_overrun=1 ;;
 	stringfreelist) ac_gc_check_string_free_list=1 ;;
+	structs)	CHECK_STRUCTS=true ;;
 	xmallocoverrun)	ac_xmalloc_overrun=1 ;;
 	conslist)	ac_gc_check_cons_list=1 ;;
 	glyphs)		ac_glyphs_debug=1 ;;
@@ -579,6 +583,15 @@ if test x$ac_enable_checking != x ; then
   AC_DEFINE(ENABLE_CHECKING, 1,
 [Define to 1 if expensive run-time data type and consistency checks are enabled.])
 fi
+if $CHECK_STRUCTS; then
+  AC_DEFINE([CHECK_STRUCTS], 1,
+    [Define this to check whether someone updated the portable dumper
+     code after changing the layout of a structure that it uses.
+     If you change one of these structures, check that the pdumper.c
+     code is still valid, and update the pertinent hash in pdumper.c
+     by manually copying the hash from the newly-generated dmpstruct.h.])
+fi
+AC_SUBST([CHECK_STRUCTS])
 if test x$ac_gc_check_stringbytes != x ; then
   AC_DEFINE(GC_CHECK_STRING_BYTES, 1,
 [Define this temporarily to hunt a bug.  If defined, the size of
