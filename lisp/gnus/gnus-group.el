@@ -4137,20 +4137,19 @@ If DONT-SCAN is non-nil, scan non-activated groups as well."
   (when (not (or gnus-description-hashtb
 		 (gnus-read-all-descriptions-files)))
     (error "Couldn't request descriptions file"))
-  (let ((buffer-read-only nil)
-	(groups (sort (hash-table-keys gnus-description-hashtb)))
-	b)
+  (let ((buffer-read-only nil))
     (erase-buffer)
-    (dolist (group groups)
-      (setq b (point))
-      (let ((charset (gnus-group-name-charset nil group)))
+    (dolist (group (sort (hash-table-keys gnus-description-hashtb) #'string<))
+      (let ((b (point))
+            (desc (gethash group gnus-description-hashtb))
+            (charset (gnus-group-name-charset nil group)))
 	(insert (format "      *: %-20s %s\n"
 			(gnus-group-name-decode group charset)
-			(gnus-group-name-decode group charset))))
-      (add-text-properties
-       b (1+ b) (list 'gnus-group (intern group gnus-description-hashtb)
-		      'gnus-unread t 'gnus-marked nil
-		      'gnus-level (1+ gnus-level-subscribed))))
+                        (gnus-group-name-decode desc charset)))
+        (add-text-properties
+         b (1+ b) (list 'gnus-group group
+                        'gnus-unread t 'gnus-marked nil
+                        'gnus-level (1+ gnus-level-subscribed)))))
     (goto-char (point-min))
     (gnus-group-position-point)))
 
