@@ -30,7 +30,7 @@ use crate::{
     },
     multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
     multibyte::{LispStringRef, LispSymbolOrString},
-    numbers::MOST_POSITIVE_FIXNUM,
+    numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::Fmake_marker,
@@ -39,9 +39,9 @@ use crate::{
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay,
-        notify_variable_watchers, per_buffer_default, set_buffer_internal_1, set_per_buffer_value,
-        specbind, unblock_input, unchain_both, unchain_marker, update_mode_lines,
-        windows_or_buffers_changed,
+        notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
+        set_buffer_internal_1, set_per_buffer_value, specbind, unblock_input, unchain_both,
+        unchain_marker, update_mode_lines, windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
@@ -56,6 +56,7 @@ use crate::{
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
+    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -1400,6 +1401,17 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
             buf_truename.is_string() && string_equal(buf_truename, filename)
         })
         .into()
+}
+
+/// Recenter the overlays of the current buffer around position POS.
+/// That makes overlay lookup faster for positions near POS (but perhaps slower
+/// for positions far away from POS).
+#[lisp_fn]
+pub fn overlay_recenter(pos: LispNumber) {
+    let p = clip_to_bounds(std::isize::MIN, pos.to_fixnum(), std::isize::MAX);
+    unsafe {
+        recenter_overlay_lists(ThreadState::current_buffer_unchecked().as_mut(), p);
+    }
 }
 
 #[no_mangle]
