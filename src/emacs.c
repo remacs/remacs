@@ -158,9 +158,14 @@ static uprintmax_t heap_bss_diff;
 /* To run as a background daemon under Cocoa or Windows,
    we must do a fork+exec, not a simple fork.
 
-   On Cocoa, CoreFoundation lib fails in forked process:
+   On Cocoa, CoreFoundation lib fails in forked process, see Mac OS X
+   Leopard Developer Release Notes for CoreFoundation Framework:
+
    http://developer.apple.com/ReleaseNotes/
-   CoreFoundation/CoreFoundation.html)
+   CoreFoundation/CoreFoundation.html
+
+   Note: the above is no longer available on-line, but it can be found
+   via the "Wayback machine", https://web.archive.org.
 
    On Windows, a Cygwin fork child cannot access the USER subsystem.
 
