@@ -4,20 +4,21 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, LispBufferOrName},
+    editfns,
     editfns::field_end,
-    eval::unbind_to,
+    eval,
     keymap::get_keymap,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
     multibyte::LispStringRef,
     obarray::{intern, lisp_intern},
     remacs_sys::{
-        globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
-        Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
+        globals, Qbuffer_name_history, Qcommandp, Qcompletion_ignore_case, Qcustom_variable_p,
+        Qfield, Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
     },
     remacs_sys::{
-        make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
-        EmacsInt, Fcopy_sequence,
+        make_buffer_string, make_specified_string, minibuf_level, minibuf_prompt, minibuf_window,
+        read_minibuf, specbind, EmacsInt, Fcopy_sequence,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -342,7 +343,7 @@ pub fn read_string(
         }
     }
 
-    unbind_to(count, val)
+    eval::unbind_to(count, val)
 }
 
 pub fn read_command_or_variable(
@@ -422,6 +423,103 @@ pub fn read_no_blanks_input(
             inherit_input_method.is_not_nil(),
         )
     }
+}
+
+/// Read the name of a buffer and return as a string.
+/// Prompt with PROMPT.
+/// Optional second arg DEF is value to return if user enters an empty line.
+/// If DEF is a list of default values, return its first element.
+///
+/// Optional third arg REQUIRE-MATCH determines whether non-existing
+/// buffer names are allowed.  It has the same meaning as the
+/// REQUIRE-MATCH argument of `completing-read'.
+///
+/// The argument PROMPT should be a string ending with a colon and a space.
+/// If `read-buffer-completion-ignore-case' is non-nil, completion ignores
+/// case while reading the buffer name.
+/// If `read-buffer-function' is non-nil, this works by calling it as a
+/// function, instead of the usual behavior.
+///
+/// Optional arg PREDICATE if non-nil is a function limiting the buffers that can
+/// be considered.
+#[lisp_fn(min = "1")]
+pub fn read_buffer(
+    mut prompt: Option<LispStringRef>,
+    mut def: LispObject,
+    require_match: LispObject,
+    predicate: LispObject,
+) -> LispObject {
+    let count = c_specpdl_index();
+
+    if let Some(buffer) = def.as_buffer() {
+        def = buffer.name();
+    }
+
+    unsafe {
+        specbind(
+            Qcompletion_ignore_case,
+            globals.read_buffer_completion_ignore_case.into(),
+        )
+    }
+
+    let result = if unsafe { globals.Vread_buffer_function }.is_nil() {
+        if !def.is_nil() {
+            // A default was provided: PROMPT must be changed, editing in the
+            // default value before the colon. To achieve this, PROMPT is replaced
+            // with a substring that doesn't contain the terminal space and colon
+            // (if present).
+            if let Some(mut string) = prompt {
+                let data = string.as_slice();
+                let mut len = string.len_bytes() as usize;
+                if len >= 2 && &data[len - 2..len] == &[b':', b' '] {
+                    len -= 2;
+                } else if len >= 1 && (data[len - 1] == b':' || data[len - 1] == b' ') {
+                    len -= 1;
+                }
+                prompt = unsafe {
+                    make_specified_string(
+                        string.sdata_ptr(),
+                        -1,
+                        len as isize,
+                        string.is_multibyte(),
+                    )
+                    .into()
+                };
+            }
+            let format = new_unibyte_string!("%s (default %s): ");
+
+            prompt = editfns::format(&mut [
+                format,
+                prompt.into(),
+                def.as_cons().map_or(def, |d| d.car()),
+            ])
+            .into();
+        }
+        completing_read(
+            prompt.into(),
+            intern("internal-complete-buffer").into(),
+            predicate,
+            require_match,
+            Qnil,
+            Qbuffer_name_history,
+            def,
+            Qnil,
+        )
+    } else {
+        // Partial backwards compatability for older read_buffer_functions which
+        // expect a 'predicate' argument.
+        let mut args = vec![
+            unsafe { globals.Vread_buffer_function },
+            prompt.into(),
+            def,
+            require_match,
+        ];
+        if predicate.is_not_nil() {
+            args.push(predicate)
+        }
+        eval::funcall(&mut args)
+    };
+    eval::unbind_to(count, result)
 }
 
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));
