@@ -52,6 +52,14 @@
   (let ((alist '(("foo" . "bar") ("foo" . "bar"))))
     (should (equal alist (copy-alist alist)))))
 
+(ert-deftest test-copy-sequence ()
+  (should-error (copy-sequence))
+  (should (eq nil (copy-sequence nil)))
+  (should (equal (copy-sequence (record 'foo 23 [bar baz] "rats")) #s(foo 23 [bar baz] "rats")))
+  (should (equal (copy-sequence (standard-case-table)) (standard-case-table)))
+  (should (equal (copy-sequence (bool-vector nil t t nil t)) (bool-vector nil t t nil t)))
+  (should (equal (copy-sequence (list 1 2 3)) (list 1 2 3))))
+
 (ert-deftest test-vconcat ()
   (should-error (vconcat t))
   (should (equal (vconcat) []))
