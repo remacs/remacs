@@ -234,7 +234,7 @@ static void x_wm_set_window_state (struct frame *, int);
 static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
 
-static bool get_current_wm_state (struct frame *, Window, int *, bool *);
+static bool x_get_current_wm_state (struct frame *, Window, int *, bool *);
 
 /* Flush display of frame F.  */
 
@@ -4354,7 +4354,7 @@ x_scroll_run (struct window *w, struct run *run)
 
 
 static void
-frame_highlight (struct frame *f)
+x_frame_highlight (struct frame *f)
 {
   /* We used to only do this if Vx_no_window_manager was non-nil, but
      the ICCCM (section 4.1.6) says that the window's border pixmap
@@ -4375,7 +4375,7 @@ frame_highlight (struct frame *f)
 }
 
 static void
-frame_unhighlight (struct frame *f)
+x_frame_unhighlight (struct frame *f)
 {
   /* We used to only do this if Vx_no_window_manager was non-nil, but
      the ICCCM (section 4.1.6) says that the window's border pixmap
@@ -4740,9 +4740,9 @@ x_frame_rehighlight (struct x_display_info *dpyinfo)
   if (dpyinfo->x_highlight_frame != old_highlight)
     {
       if (old_highlight)
-	frame_unhighlight (old_highlight);
+	x_frame_unhighlight (old_highlight);
       if (dpyinfo->x_highlight_frame)
-	frame_highlight (dpyinfo->x_highlight_frame);
+	x_frame_highlight (dpyinfo->x_highlight_frame);
     }
 }
 
@@ -4962,9 +4962,9 @@ x_get_keysym_name (int keysym)
    the mouse.  */
 
 static Lisp_Object
-construct_mouse_click (struct input_event *result,
-		       const XButtonEvent *event,
-		       struct frame *f)
+x_construct_mouse_click (struct input_event *result,
+                         const XButtonEvent *event,
+                         struct frame *f)
 {
   /* Make the event type NO_EVENT; we'll change that when we decide
      otherwise.  */
@@ -4993,7 +4993,7 @@ construct_mouse_click (struct input_event *result,
    another motion event, so we can check again the next time it moves.  */
 
 static bool
-note_mouse_movement (struct frame *frame, const XMotionEvent *event)
+x_note_mouse_movement (struct frame *frame, const XMotionEvent *event)
 {
   XRectangle *r;
   struct x_display_info *dpyinfo;
@@ -7670,7 +7670,7 @@ x_net_wm_state (struct frame *f, Window window)
   Lisp_Object lval = Qnil;
   bool sticky = false;
 
-  get_current_wm_state (f, window, &value, &sticky);
+  x_get_current_wm_state (f, window, &value, &sticky);
 
   switch (value)
     {
@@ -8594,12 +8594,12 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       /* EnterNotify counts as mouse movement,
 	 so update things that depend on mouse position.  */
       if (f && !f->output_data.x->hourglass_p)
-	note_mouse_movement (f, &event->xmotion);
+	x_note_mouse_movement (f, &event->xmotion);
 #ifdef USE_GTK
       /* We may get an EnterNotify on the buttons in the toolbar.  In that
          case we moved out of any highlighted area and need to note this.  */
       if (!f && dpyinfo->last_mouse_glyph_frame)
-        note_mouse_movement (dpyinfo->last_mouse_glyph_frame, &event->xmotion);
+        x_note_mouse_movement (dpyinfo->last_mouse_glyph_frame, &event->xmotion);
 #endif
       goto OTHER;
 
@@ -8632,7 +8632,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #ifdef USE_GTK
       /* See comment in EnterNotify above */
       else if (dpyinfo->last_mouse_glyph_frame)
-        note_mouse_movement (dpyinfo->last_mouse_glyph_frame, &event->xmotion);
+        x_note_mouse_movement (dpyinfo->last_mouse_glyph_frame, &event->xmotion);
 #endif
       goto OTHER;
 
@@ -8701,7 +8701,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 		last_mouse_window = window;
 	      }
 
-            if (!note_mouse_movement (f, &event->xmotion))
+            if (!x_note_mouse_movement (f, &event->xmotion))
 	      help_echo_string = previous_help_echo_string;
           }
         else
@@ -8959,13 +8959,13 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                           && event->xbutton.time > ignore_next_mouse_click_timeout)
                         {
                           ignore_next_mouse_click_timeout = 0;
-                          construct_mouse_click (&inev.ie, &event->xbutton, f);
+                          x_construct_mouse_click (&inev.ie, &event->xbutton, f);
                         }
                       if (event->type == ButtonRelease)
                         ignore_next_mouse_click_timeout = 0;
                     }
                   else
-                    construct_mouse_click (&inev.ie, &event->xbutton, f);
+                    x_construct_mouse_click (&inev.ie, &event->xbutton, f);
                 }
             if (FRAME_X_EMBEDDED_P (f))
               xembed_send_message (f, event->xbutton.time,
@@ -10671,10 +10671,10 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
    Return true iff we are not hidden.  */
 
 static bool
-get_current_wm_state (struct frame *f,
-                      Window window,
-                      int *size_state,
-                      bool *sticky)
+x_get_current_wm_state (struct frame *f,
+                        Window window,
+                        int *size_state,
+                        bool *sticky)
 {
   unsigned long actual_size;
   int i;
@@ -10922,7 +10922,7 @@ x_handle_net_wm_state (struct frame *f, const XPropertyEvent *event)
   int value = FULLSCREEN_NONE;
   Lisp_Object lval;
   bool sticky = false;
-  bool not_hidden = get_current_wm_state (f, event->window, &value, &sticky);
+  bool not_hidden = x_get_current_wm_state (f, event->window, &value, &sticky);
 
   lval = Qnil;
   switch (value)

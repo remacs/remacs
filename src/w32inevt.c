@@ -680,7 +680,7 @@ handle_file_notifications (struct input_event *hold_quit)
 		     already be defined at this point.  */
 		  Lisp_Object fname
 		    = code_convert_string_norecord (utf_16_fn, cs, 0);
-		  Lisp_Object action = lispy_file_action (fni->Action);
+		  Lisp_Object action = w32_lispy_file_action (fni->Action);
 
 		  inev.kind = FILE_NOTIFY_EVENT;
 		  inev.timestamp = GetTickCount ();

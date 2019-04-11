@@ -180,8 +180,8 @@ static void w32_initialize (void);
 static void x_update_end (struct frame *);
 static void w32_frame_up_to_date (struct frame *);
 static void x_clear_frame (struct frame *);
-static void frame_highlight (struct frame *);
-static void frame_unhighlight (struct frame *);
+static void w32_frame_highlight (struct frame *);
+static void w32_frame_unhighlight (struct frame *);
 static void x_new_focus_frame (struct w32_display_info *,
                                struct frame *);
 static void x_focus_changed (int, int, struct w32_display_info *,
@@ -2904,14 +2904,14 @@ x_scroll_run (struct window *w, struct run *run)
  ***********************************************************************/
 
 static void
-frame_highlight (struct frame *f)
+w32_frame_highlight (struct frame *f)
 {
   gui_update_cursor (f, 1);
   x_set_frame_alpha (f);
 }
 
 static void
-frame_unhighlight (struct frame *f)
+w32_frame_unhighlight (struct frame *f)
 {
   gui_update_cursor (f, 1);
   x_set_frame_alpha (f);
@@ -3059,9 +3059,9 @@ x_frame_rehighlight (struct w32_display_info *dpyinfo)
   if (dpyinfo->x_highlight_frame != old_highlight)
     {
       if (old_highlight)
-	frame_unhighlight (old_highlight);
+	w32_frame_unhighlight (old_highlight);
       if (dpyinfo->x_highlight_frame)
-	frame_highlight (dpyinfo->x_highlight_frame);
+	w32_frame_highlight (dpyinfo->x_highlight_frame);
     }
 }
 
@@ -3168,7 +3168,8 @@ parse_button (int message, int xbutton, int * pbutton, int * pup)
    the mouse.  */
 
 static Lisp_Object
-construct_mouse_click (struct input_event *result, W32Msg *msg, struct frame *f)
+w32_construct_mouse_click (struct input_event *result, W32Msg *msg,
+                           struct frame *f)
 {
   int button = 0;
   int up = 0;
@@ -3194,7 +3195,8 @@ construct_mouse_click (struct input_event *result, W32Msg *msg, struct frame *f)
 }
 
 static Lisp_Object
-construct_mouse_wheel (struct input_event *result, W32Msg *msg, struct frame *f)
+w32_construct_mouse_wheel (struct input_event *result, W32Msg *msg,
+                           struct frame *f)
 {
   POINT p;
   int delta;
@@ -3228,7 +3230,8 @@ construct_mouse_wheel (struct input_event *result, W32Msg *msg, struct frame *f)
 }
 
 static Lisp_Object
-construct_drag_n_drop (struct input_event *result, W32Msg *msg, struct frame *f)
+w32_construct_drag_n_drop (struct input_event *result, W32Msg *msg,
+                           struct frame *f)
 {
   Lisp_Object files;
   Lisp_Object frame;
@@ -3307,7 +3310,7 @@ construct_drag_n_drop (struct input_event *result, W32Msg *msg, struct frame *f)
 /* File event notifications (see w32notify.c).  */
 
 Lisp_Object
-lispy_file_action (DWORD action)
+w32_lispy_file_action (DWORD action)
 {
   static char unknown_fmt[] = "unknown-action(%d)";
   Lisp_Object retval;
@@ -3347,8 +3350,8 @@ lispy_file_action (DWORD action)
    function runs when the WM_EMACS_FILENOTIFY message arrives from a
    watcher thread.  */
 static void
-queue_notifications (struct input_event *event, W32Msg *msg, struct frame *f,
-		     int *evcount)
+w32_queue_notifications (struct input_event *event, W32Msg *msg,
+                         struct frame *f, int *evcount)
 {
   struct notifications_set *ns = NULL;
   Lisp_Object frame;
@@ -3407,7 +3410,7 @@ queue_notifications (struct input_event *event, W32Msg *msg, struct frame *f,
 		     already be defined at this point.  */
 		  Lisp_Object fname
 		    = code_convert_string_norecord (utf_16_fn, cs, 0);
-		  Lisp_Object action = lispy_file_action (fni->Action);
+		  Lisp_Object action = w32_lispy_file_action (fni->Action);
 
 		  event->kind = FILE_NOTIFY_EVENT;
 		  event->timestamp = msg->msg.time;
@@ -3445,7 +3448,7 @@ queue_notifications (struct input_event *event, W32Msg *msg, struct frame *f,
    another motion event, so we can check again the next time it moves.  */
 
 static int
-note_mouse_movement (struct frame *frame, MSG *msg)
+w32_note_mouse_movement (struct frame *frame, MSG *msg)
 {
   struct w32_display_info *dpyinfo;
   int mouse_x = LOWORD (msg->lParam);
@@ -5020,7 +5023,7 @@ w32_read_socket (struct terminal *terminal,
 		  last_mouse_window = window;
 		}
 
-	      if (!note_mouse_movement (f, &msg.msg))
+	      if (!w32_note_mouse_movement (f, &msg.msg))
 		help_echo_string = previous_help_echo_string;
 	    }
 	  else
@@ -5064,7 +5067,7 @@ w32_read_socket (struct terminal *terminal,
 
 	    if (f)
 	      {
-                construct_mouse_click (&inev, &msg, f);
+                w32_construct_mouse_click (&inev, &msg, f);
 
                 /* Is this in the tool-bar?  */
                 if (WINDOWP (f->tool_bar_window)
@@ -5129,7 +5132,7 @@ w32_read_socket (struct terminal *terminal,
 		    || f == dpyinfo->w32_focus_frame)
 		  /* Emit an Emacs wheel-up/down event.  */
 		  {
-		    construct_mouse_wheel (&inev, &msg, f);
+		    w32_construct_mouse_wheel (&inev, &msg, f);
 
 		    /* Ignore any mouse motion that happened before this
 		       event; any subsequent mouse-movement Emacs events
@@ -5146,7 +5149,7 @@ w32_read_socket (struct terminal *terminal,
 
 		    if (f1 && FRAME_LIVE_P (f1) && FRAME_W32_P (f1))
 		      {
-			construct_mouse_wheel (&inev, &msg, f1);
+			w32_construct_mouse_wheel (&inev, &msg, f1);
 			f1->mouse_moved = false;
 			f1->last_tool_bar_item = -1;
 			dpyinfo->last_mouse_frame = f1;
@@ -5166,7 +5169,7 @@ w32_read_socket (struct terminal *terminal,
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 
 	  if (f)
-	    construct_drag_n_drop (&inev, &msg, f);
+	    w32_construct_drag_n_drop (&inev, &msg, f);
 	  break;
 
 	case WM_HSCROLL:
@@ -5577,7 +5580,7 @@ w32_read_socket (struct terminal *terminal,
 	case WM_EMACS_FILENOTIFY:
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
 	  if (f)
-	    queue_notifications (&inev, &msg, f, &count);
+	    w32_queue_notifications (&inev, &msg, f, &count);
 	  break;
 #endif
 

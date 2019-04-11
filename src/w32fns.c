@@ -3061,7 +3061,7 @@ w32_get_modifiers (void)
    and window input.  */
 
 static int
-construct_console_modifiers (void)
+w32_construct_console_modifiers (void)
 {
   int mods;
 
@@ -3087,7 +3087,7 @@ w32_get_key_modifiers (unsigned int wparam, unsigned int lparam)
   int mods;
 
   /* Convert to emacs modifiers.  */
-  mods = w32_kbd_mods_to_emacs (construct_console_modifiers (), wparam);
+  mods = w32_kbd_mods_to_emacs (w32_construct_console_modifiers (), wparam);
 
   return mods;
 }
@@ -3719,7 +3719,7 @@ deliver_wm_chars (int do_translate, HWND hwnd, UINT msg, UINT wParam,
   if (count)
     {
       W32Msg wmsg;
-      DWORD console_modifiers = construct_console_modifiers ();
+      DWORD console_modifiers = w32_construct_console_modifiers ();
       int *b = buf, strip_ExtraMods = 1, hairy = 0;
       const char *type_CtrlAlt = NULL;
 
@@ -4351,7 +4351,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  /* If not defined as a function key, change it to a WM_CHAR message.  */
 	  if (wParam > 255 || !lispy_function_keys[wParam])
 	    {
-	      DWORD modifiers = construct_console_modifiers ();
+	      DWORD modifiers = w32_construct_console_modifiers ();
 
 	      if (!NILP (Vw32_recognize_altgr)
 		  && modifier_set (VK_LCONTROL) && modifier_set (VK_RMENU))

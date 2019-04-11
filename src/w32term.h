@@ -732,7 +732,7 @@ struct notifications_set {
 };
 extern struct notifications_set *notifications_set_head;
 extern Lisp_Object w32_get_watch_object (void *);
-extern Lisp_Object lispy_file_action (DWORD);
+extern Lisp_Object w32_lispy_file_action (DWORD);
 extern int handle_file_notifications (struct input_event *);
 
 extern void w32_initialize_display_info (Lisp_Object);
