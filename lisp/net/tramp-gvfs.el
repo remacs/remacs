@@ -1136,7 +1136,8 @@ If FILE-SYSTEM is non-nil, return file system attributes."
   "Like `file-executable-p' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     (with-tramp-file-property v localname "file-executable-p"
-      (tramp-check-cached-permissions v ?x))))
+      (and (file-exists-p filename)
+	   (tramp-check-cached-permissions v ?x)))))
 
 (defun tramp-gvfs-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
@@ -1258,7 +1259,20 @@ file-notify events."
   "Like `file-readable-p' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     (with-tramp-file-property v localname "file-readable-p"
-      (tramp-check-cached-permissions v ?r))))
+      (and (file-exists-p filename)
+	   (or (tramp-check-cached-permissions v ?r)
+	       ;; If the user is different from what we guess to be
+	       ;; the user, we don't know.  Let's check, whether
+	       ;; access is restricted explicitly.
+	       (and (/= (tramp-gvfs-get-remote-uid v 'integer)
+			(tramp-compat-file-attribute-user-id
+			 (file-attributes filename 'integer)))
+		    (not
+		     (string-equal
+		      "FALSE"
+		      (cdr (assoc
+			    "access::can-read"
+			    (tramp-gvfs-get-file-attributes filename)))))))))))
 
 (defun tramp-gvfs-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."

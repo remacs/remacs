@@ -3849,12 +3849,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `start-file-process'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
+  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
 	  kill-buffer-query-functions proc)
+
+      ;; Simple process.
       (unwind-protect
 	  (with-temp-buffer
 	    (setq proc (start-file-process "test1" (current-buffer) "cat"))
@@ -3866,11 +3868,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
-	    (should (string-equal (buffer-string) "foo")))
+	    ;; We cannot use `string-equal', because tramp-adb.el
+	    ;; echoes also the sent string.
+	    (should (string-match "\\`foo" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc)))
 
+      ;; Simple process using a file.
       (unwind-protect
 	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
@@ -3891,6 +3896,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (delete-process proc)
 	  (delete-file tmp-name)))
 
+      ;; Process filter.
       (unwind-protect
 	  (with-temp-buffer
 	    (setq proc (start-file-process "test3" (current-buffer) "cat"))
@@ -3905,7 +3911,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
-	    (should (string-equal (buffer-string) "foo")))
+	    ;; We cannot use `string-equal', because tramp-adb.el
+	    ;; echoes also the sent string.
+	    (should (string-match "\\`foo" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc))))))
@@ -3914,9 +3922,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `make-process'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
+  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  ;; `make-process' supports file name handlers since Emacs 27.
   (skip-unless (tramp--test-emacs27-p))
 
+  (tramp--test-instrument-test-case 0
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
@@ -3938,7 +3948,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (< (- (point-max) (point-min)) (length "foo"))
 		(while (accept-process-output proc 0 nil t))))
-	    (should (string-equal (buffer-string) "foo")))
+	    ;; We cannot use `string-equal', because tramp-adb.el
+	    ;; echoes also the sent string.
+	    (should (string-match "\\`foo" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc)))
@@ -3981,9 +3993,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (process-send-eof proc)
 	    ;; Read output.
 	    (with-timeout (10 (tramp--test-timeout-handler))
-	      (while (< (- (point-max) (point-min)) (length "foo"))
+	      (while (not (string-match "foo" (buffer-string)))
 		(while (accept-process-output proc 0 nil t))))
-	    (should (string-equal (buffer-string) "foo")))
+	    ;; We cannot use `string-equal', because tramp-adb.el
+	    ;; echoes also the sent string.
+	    (should (string-match "\\`foo" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc)))
@@ -4006,33 +4020,37 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Read output.
 	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (accept-process-output proc 0 nil t)))
-	    (should (string-equal (buffer-string) "killed\n")))
+	    ;; We cannot use `string-equal', because tramp-adb.el
+	    ;; echoes also the sent string.
+	    (should (string-match "killed\n\\'" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc)))
 
-      ;; Process with stderr.
-      (let ((stderr (generate-new-buffer (generate-new-buffer-name "stderr"))))
-	(unwind-protect
-	    (with-temp-buffer
-	      (setq proc
-		    (make-process
-		     :name "test5" :buffer (current-buffer)
-		     :command '("cat" "/")
-		     :stderr stderr
-		     :file-handler t))
-	      (should (processp proc))
-	      ;; Read stderr.
-	      (with-current-buffer stderr
-		(with-timeout (10 (tramp--test-timeout-handler))
-		  (while (= (point-min) (point-max))
-		    (while (accept-process-output proc 0 nil t))))
-		(should
-		 (string-equal (buffer-string) "cat: /: Is a directory\n"))))
+      ;; Process with stderr.  tramp-adb.el doesn't support it (yet).
+      (unless (tramp--test-adb-p)
+	(let ((stderr
+	       (generate-new-buffer (generate-new-buffer-name "stderr"))))
+	  (unwind-protect
+	      (with-temp-buffer
+		(setq proc
+		      (make-process
+		       :name "test5" :buffer (current-buffer)
+		       :command '("cat" "/")
+		       :stderr stderr
+		       :file-handler t))
+		(should (processp proc))
+		;; Read stderr.
+		(with-current-buffer stderr
+		  (with-timeout (10 (tramp--test-timeout-handler))
+		    (while (= (point-min) (point-max))
+		      (while (accept-process-output proc 0 nil t))))
+		  (should
+		   (string-match "^cat:.* Is a directory" (buffer-string)))))
 
-	  ;; Cleanup.
-	  (ignore-errors (delete-process proc))
-	  (ignore-errors (kill-buffer stderr)))))))
+	    ;; Cleanup.
+	    (ignore-errors (delete-process proc))
+	    (ignore-errors (kill-buffer stderr)))))))))
 
 (ert-deftest tramp-test31-interrupt-process ()
   "Check `interrupt-process'."
@@ -4096,8 +4114,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name)))
 
-      ;; tramp-adb.el is not fit yet for asynchronous processes.
-      (unless (tramp--test-adb-p)
       (unwind-protect
 	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
@@ -4124,10 +4140,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (buffer-string))))
 
 	;; Cleanup.
-	(ignore-errors (delete-file tmp-name))))
+	(ignore-errors (delete-file tmp-name)))
 
-      ;; tramp-adb.el is not fit yet for asynchronous processes.
-      (unless (tramp--test-adb-p)
       (unwind-protect
 	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
@@ -4155,7 +4169,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (buffer-string))))
 
 	;; Cleanup.
-	(ignore-errors (delete-file tmp-name)))))))
+	(ignore-errors (delete-file tmp-name))))))
 
 (defun tramp--test-shell-command-to-string-asynchronously (command)
   "Like `shell-command-to-string', but for asynchronous processes."
@@ -4350,11 +4364,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 ;; The functions were introduced in Emacs 26.1.
 (ert-deftest tramp-test34-explicit-shell-file-name ()
   "Check that connection-local `explicit-shell-file-name' is set."
-  ;; The handling of connection-local variables has changed.  Test
-  ;; must be reworked.
-  :tags '(:expensive-test :unstable)
+  :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  ;; Prior Emacs 27, `shell-file-name' was hard coded as "/bin/sh" for
+  ;; remote processes in Emacs.  That doesn't work for tramp-adb.el.
+  (skip-unless (or (and (tramp--test-adb-p) (tramp--test-emacs27-p))
+		   (tramp--test-sh-p)))
   ;; Since Emacs 26.1.
   (skip-unless (and (fboundp 'connection-local-set-profile-variables)
 		    (fboundp 'connection-local-set-profiles)))
@@ -4368,15 +4383,16 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (unwind-protect
 	(progn
 	  ;; `shell-mode' would ruin our test, because it deletes all
-	  ;; buffer local variables.
+	  ;; buffer local variables.  Not needed in Emacs 27.1.
 	  (put 'explicit-shell-file-name 'permanent-local t)
-	  ;; Declare connection-local variable `explicit-shell-file-name'.
+	  ;; Declare connection-local variables `explicit-shell-file-name'
+	  ;; and `explicit-sh-args'.
 	  (with-no-warnings
 	    (connection-local-set-profile-variables
 	     'remote-sh
 	     `((explicit-shell-file-name
 		. ,(if (tramp--test-adb-p) "/system/bin/sh" "/bin/sh"))
-	       (explicit-sh-args . ("-i"))))
+	       (explicit-sh-args . ("-c" "echo foo"))))
 	    (connection-local-set-profiles
 	     `(:application tramp
 	       :protocol ,(file-remote-p default-directory 'method)
@@ -4386,14 +4402,18 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (put 'explicit-shell-file-name 'safe-local-variable #'identity)
 	  (put 'explicit-sh-args 'safe-local-variable #'identity)
 
-	  ;; Run interactive shell.  Since the default directory is
-	  ;; remote, `explicit-shell-file-name' shall be set in order
-	  ;; to avoid a question.
+	  ;; Run `shell' interactively.  Since the default directory
+	  ;; is remote, `explicit-shell-file-name' shall be set in
+	  ;; order to avoid a question.  `explicit-sh-args' echoes the
+	  ;; test data.
 	  (with-current-buffer (get-buffer-create "*shell*")
 	    (ignore-errors (kill-process (current-buffer)))
 	    (should-not explicit-shell-file-name)
 	    (call-interactively #'shell)
-	    (should explicit-shell-file-name)))
+	    (with-timeout (10)
+	      (while (accept-process-output
+		      (get-buffer-process (current-buffer)) nil nil t)))
+	    (should (string-match "^foo$" (buffer-string)))))
 
       ;; Cleanup.
       (put 'explicit-shell-file-name 'permanent-local nil)
@@ -5347,20 +5367,17 @@ process sentinels.  They shall not disturb each other."
   ;; we mark it as unstable.
   :tags '(:expensive-test :unstable)
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
-  ;; This test is sensible wrt to other running tests.  Let it work
-  ;; only if it is the only selected test.
-  ;; FIXME: There must be a better solution.
-  (skip-unless
-   (= 1 (length
-	 (ert-select-tests (ert--stats-selector ert--current-run-stats) t))))
+  ;; Prior Emacs 27, `shell-file-name' was hard coded as "/bin/sh" for
+  ;; remote processes in Emacs.  That doesn't work for tramp-adb.el.
+  (skip-unless (or (and (tramp--test-adb-p) (tramp--test-emacs27-p))
+		   (tramp--test-sh-p)))
 
   (with-timeout
       (tramp--test-asynchronous-requests-timeout (tramp--test-timeout-handler))
     (define-key special-event-map [sigusr1] #'tramp--test-timeout-handler)
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
-	   (shell-file-name "/bin/sh")
+	   (shell-file-name (if (tramp--test-adb-p) "/system/bin/sh" "/bin/sh"))
 	   (watchdog
             (start-process-shell-command
              "*watchdog*" nil
@@ -5460,7 +5477,7 @@ process sentinels.  They shall not disturb each other."
                     "Process filter %s %s %s" proc string (current-time-string))
                    (with-current-buffer (process-buffer proc)
                      (insert string))
-                   (unless (zerop (length string))
+                   (when (< (process-get proc 'bar) 2)
 		     (dired-uncache (process-get proc 'foo))
                      (should (file-attributes (process-get proc 'foo))))))
                 ;; Add process sentinel.  It shall not perform remote
@@ -5513,7 +5530,12 @@ process sentinels.  They shall not disturb each other."
             (dolist (buf buffers)
               (with-current-buffer buf
                 (should
-		 (string-equal (format "%s\n%s\n" buf buf) (buffer-string)))))
+		 (string-equal
+		  ;; tramp-adb.el echoes, so we must add the three strings.
+		  (if (tramp--test-adb-p)
+		      (format "%s\n%s\n%s\n%s\n%s\n" buf buf buf buf buf)
+		    (format "%s\n%s\n" buf buf))
+		  (buffer-string)))))
             (should-not
              (directory-files
               tmp-name nil directory-files-no-dot-files-regexp)))
@@ -5714,11 +5736,9 @@ Since it unloads Tramp, it shall be the last test to run."
 ;;   do not work properly for `nextcloud'.
 ;; * Fix `tramp-test29-start-file-process' and
 ;;   `tramp-test30-make-process' on MS Windows (`process-send-eof'?).
-;; * Fix `tramp-test29-start-file-process',
-;;   `tramp-test30-make-process' and `tramp-test32-shell-command' for
-;;   `adb' (see comment in `tramp-adb-send-command').
-;; * Rework `tramp-test34-explicit-shell-file-name'.
-;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.
+;; * Fix Bug#16928 in `tramp-test43-asynchronous-requests'.  Looks
+;;   like it is resolved now.  Remove `:unstable' tag?
+;; * Implement `tramp-test31-interrupt-process' for `adb'.
 
 (provide 'tramp-tests)
 ;;; tramp-tests.el ends here

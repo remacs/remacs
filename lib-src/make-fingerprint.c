@@ -89,7 +89,7 @@ main (int argc, char **argv)
       fclose (f);
     }
 
-  uint8_t digest[32];
+  unsigned char digest[32];
   sha256_finish_ctx (&ctx, digest);
 
   if (raw)
@@ -99,12 +99,12 @@ main (int argc, char **argv)
     }
   else
     {
-      printf ("#include \"fingerprint.h\"\n");
-      printf ("\n");
-      printf ("const uint8_t fingerprint[32] = { ");
+      puts ("#include \"fingerprint.h\"\n"
+	    "unsigned char const fingerprint[] =\n"
+	    "{");
       for (int i = 0; i < 32; ++i)
-        printf ("%s0x%02X", i ? ", " : "", digest[i]);
-      printf (" };\n");
+        printf ("\t0x%02X,\n", digest[i]);
+      puts ("};");
     }
 
   return EXIT_SUCCESS;

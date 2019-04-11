@@ -393,8 +393,8 @@ parse_settings (unsigned char *prop,
                 unsigned long bytes,
                 struct xsettings *settings)
 {
-  Lisp_Object byteorder = Fbyteorder ();
-  int my_bo = XFIXNAT (byteorder) == 'B' ? MSBFirst : LSBFirst;
+  int int1 = 1;
+  int my_bo = *(char *) &int1 == 1 ? LSBFirst : MSBFirst;
   int that_bo = prop[0];
   CARD32 n_settings;
   int bytes_parsed = 0;

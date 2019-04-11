@@ -145,7 +145,7 @@ This is default behavior of shells like bash."
 
 ;;; Functions:
 
-(defun eshell-rebind-initialize ()
+(defun eshell-rebind-initialize ()  ;Called from `eshell-mode' via intern-soft!
   "Initialize the inputting code."
   (unless eshell-non-interactive-p
     (add-hook 'eshell-mode-hook 'eshell-setup-input-keymap nil t)

@@ -408,7 +408,7 @@ struct terminal
      whether the mapping is available.  */
   Lisp_Object glyph_code_table;
 
-  /* All fields before `next_terminal' should be Lisp_Object and are traced
+  /* All earlier fields should be Lisp_Objects and are traced
      by the GC.  All fields afterwards are ignored by the GC.  */
 
   /* Chain of all terminal devices. */

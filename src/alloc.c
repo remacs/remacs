@@ -3718,8 +3718,8 @@ Its value is void, and its function definition and property list are nil.  */)
 Lisp_Object
 make_misc_ptr (void *a)
 {
-  struct Lisp_Misc_Ptr *p = ALLOCATE_PSEUDOVECTOR (struct Lisp_Misc_Ptr, pointer,
-						   PVEC_MISC_PTR);
+  struct Lisp_Misc_Ptr *p = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Misc_Ptr,
+							 PVEC_MISC_PTR);
   p->pointer = a;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
@@ -3729,7 +3729,7 @@ make_misc_ptr (void *a)
 Lisp_Object
 build_overlay (Lisp_Object start, Lisp_Object end, Lisp_Object plist)
 {
-  struct Lisp_Overlay *p = ALLOCATE_PSEUDOVECTOR (struct Lisp_Overlay, next,
+  struct Lisp_Overlay *p = ALLOCATE_PSEUDOVECTOR (struct Lisp_Overlay, plist,
 						  PVEC_OVERLAY);
   Lisp_Object overlay = make_lisp_ptr (p, Lisp_Vectorlike);
   OVERLAY_START (overlay) = start;
@@ -3743,8 +3743,8 @@ DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
        doc: /* Return a newly allocated marker which does not point at any place.  */)
   (void)
 {
-  struct Lisp_Marker *p = ALLOCATE_PSEUDOVECTOR (struct Lisp_Marker, buffer,
-						 PVEC_MARKER);
+  struct Lisp_Marker *p = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Marker,
+						       PVEC_MARKER);
   p->buffer = 0;
   p->bytepos = 0;
   p->charpos = 0;
@@ -3766,8 +3766,8 @@ build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
   /* Every character is at least one byte.  */
   eassert (charpos <= bytepos);
 
-  struct Lisp_Marker *m = ALLOCATE_PSEUDOVECTOR (struct Lisp_Marker, buffer,
-						 PVEC_MARKER);
+  struct Lisp_Marker *m = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Marker,
+						       PVEC_MARKER);
   m->buffer = buf;
   m->charpos = charpos;
   m->bytepos = bytepos;
@@ -3821,8 +3821,8 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
 Lisp_Object
 make_user_ptr (void (*finalizer) (void *), void *p)
 {
-  struct Lisp_User_Ptr *uptr = ALLOCATE_PSEUDOVECTOR (struct Lisp_User_Ptr,
-						      finalizer, PVEC_USER_PTR);
+  struct Lisp_User_Ptr *uptr
+    = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_User_Ptr, PVEC_USER_PTR);
   uptr->finalizer = finalizer;
   uptr->p = p;
   return make_lisp_ptr (uptr, Lisp_Vectorlike);
@@ -3945,7 +3945,7 @@ FUNCTION.  FUNCTION will be run once per finalizer object.  */)
   (Lisp_Object function)
 {
   struct Lisp_Finalizer *finalizer
-    = ALLOCATE_PSEUDOVECTOR (struct Lisp_Finalizer, prev, PVEC_FINALIZER);
+    = ALLOCATE_PSEUDOVECTOR (struct Lisp_Finalizer, function, PVEC_FINALIZER);
   finalizer->function = function;
   finalizer->prev = finalizer->next = NULL;
   finalizer_insert (&finalizers, finalizer);

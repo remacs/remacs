@@ -71,7 +71,7 @@ This can be any sexp, and should end with at least two newlines."
   :type 'hook
   :group 'eshell-banner)
 
-(defun eshell-banner-initialize ()
+(defun eshell-banner-initialize ()  ;Called from `eshell-mode' via intern-soft!
   "Output a welcome banner on initialization."
   ;; it's important to use `eshell-interactive-print' rather than
   ;; `insert', because `insert' doesn't know how to interact with the

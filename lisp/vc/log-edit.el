@@ -350,7 +350,7 @@ The first subexpression is the actual text of the field.")
 (defun log-edit-goto-eoh ()             ;FIXME: Almost rfc822-goto-eoh!
   (goto-char (point-min))
   (when (re-search-forward
-	 "^\\([^[:alpha:]]\\|[[:alnum:]-]+[^[:alnum:]-:]\\)" nil 'move)
+	 "^\\([^[:alpha:]]\\|[[:alnum:]-]+[^[:alnum:]-]\\)" nil 'move)
     (goto-char (match-beginning 0))))
 
 (defun log-edit--match-first-line (limit)

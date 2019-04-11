@@ -61,8 +61,8 @@ struct thread_state
   /* If we are waiting for some event, this holds the object we are
      waiting on.  */
   Lisp_Object event_object;
+  /* event_object must be the last Lisp field.  */
 
-  /* m_stack_bottom must be the first non-Lisp field.  */
   /* An address near the bottom of the stack.
      Tells GC how to save a copy of the stack.  */
   char const *m_stack_bottom;

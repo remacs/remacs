@@ -340,10 +340,10 @@ for decoding when the cdr that the data specify is not available.")
   (let (elem)
     ;; There may be two or more entries in `nnrss-group-alist' since
     ;; this function didn't delete them formerly.
-    (while (setq elem (assoc group nnrss-group-alist))
+    (while (setq elem (assoc-string group nnrss-group-alist))
       (setq nnrss-group-alist (delq elem nnrss-group-alist))))
   (setq nnrss-server-data
-	(delq (assoc group nnrss-server-data) nnrss-server-data))
+	(delq (assoc-string group nnrss-server-data) nnrss-server-data))
   (nnrss-save-server-data server)
   (ignore-errors
     (let ((file-name-coding-system nnmail-pathname-coding-system))
@@ -367,7 +367,7 @@ for decoding when the cdr that the data specify is not available.")
   (with-current-buffer nntp-server-buffer
     (erase-buffer)
     (dolist (group groups)
-      (let ((elem (assoc (gnus-group-decoded-name group) nnrss-server-data)))
+      (let ((elem (assoc-string (gnus-group-decoded-name group) nnrss-server-data)))
 	(insert (format "%S %s 1 y\n" group (or (cadr elem) 0)))))
     'active))
 
@@ -539,7 +539,7 @@ which RSS 2.0 allows."
   (if (hash-table-p nnrss-group-hashtb)
       (clrhash nnrss-group-hashtb)
     (setq nnrss-group-hashtb (make-hash-table :test 'equal)))
-  (let ((pair (assoc group nnrss-server-data)))
+  (let ((pair (assoc-string group nnrss-server-data)))
     (setq nnrss-group-max (or (cadr pair) 0))
     (setq nnrss-group-min (+ nnrss-group-max 1)))
   (let ((file (nnrss-make-filename group server))
@@ -644,8 +644,8 @@ which RSS 2.0 allows."
 					 (concat group ".xml"))
 					nnrss-directory))))
 	(setq xml (nnrss-fetch file t))
-      (setq url (or (nth 2 (assoc group nnrss-server-data))
-		    (cadr (assoc group nnrss-group-alist))))
+      (setq url (or (nth 2 (assoc-string group nnrss-server-data))
+		    (cadr (assoc-string group nnrss-group-alist))))
       (unless url
 	(setq url
 	      (cdr
@@ -653,7 +653,7 @@ which RSS 2.0 allows."
 		      (nnrss-discover-feed
 		       (read-string
 			(format "URL to search for %s: " group) "http://")))))
-	(let ((pair (assoc group nnrss-server-data)))
+	(let ((pair (assoc-string group nnrss-server-data)))
 	  (if pair
 	      (setcdr (cdr pair) (list url))
 	    (push (list group nnrss-group-max url) nnrss-server-data)))
@@ -721,7 +721,7 @@ which RSS 2.0 allows."
       (setq extra nil))
     (when changed
       (nnrss-save-group-data group server)
-      (let ((pair (assoc group nnrss-server-data)))
+      (let ((pair (assoc-string group nnrss-server-data)))
 	(if pair
 	    (setcar (cdr pair) nnrss-group-max)
 	  (push (list group nnrss-group-max) nnrss-server-data)))
@@ -792,7 +792,7 @@ It is useful when `(setq nnrss-use-local t)'."
   (insert "RSSDIR='" (expand-file-name nnrss-directory) "'\n")
   (dolist (elem nnrss-server-data)
     (let ((url (or (nth 2 elem)
-		   (cadr (assoc (car elem) nnrss-group-alist)))))
+		   (cadr (assoc-string (car elem) nnrss-group-alist)))))
       (insert "$WGET -q -O \"$RSSDIR\"/'"
 	      (nnrss-translate-file-chars (concat (car elem) ".xml"))
 	      "' '" url "'\n"))))

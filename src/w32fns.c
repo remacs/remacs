@@ -10099,6 +10099,8 @@ It can also be nil, which means try `HKCU', and if that fails, try `HKLM'.
 
 KEY and NAME must be strings, and NAME must not include slashes.
 KEY can use either forward- or back-slashes.
+To access the default value of KEY (if it is defined), use NAME
+that is an empty string.
 
 If the the named KEY or its subkey called NAME don't exist, or cannot
 be accessed by the current user, the function returns nil.  Otherwise,

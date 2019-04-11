@@ -23,9 +23,6 @@
 
 ;;; Code:
 
-(provide 'esh-opt)
-
-(require 'esh-ext)
 
 ;; Unused.
 ;; (defgroup eshell-opt nil
@@ -35,6 +32,10 @@
 ;;   :group 'eshell)
 
 ;;; User Functions:
+
+;; Macro expansion of eshell-eval-using-options refers to eshell-stringify-list
+;; defined in esh-util.
+(require 'esh-util)
 
 (defmacro eshell-eval-using-options (name macro-args options &rest body-forms)
   "Process NAME's MACRO-ARGS using a set of command line OPTIONS.
@@ -127,6 +128,8 @@ let-bound variable `args'."
 (defun eshell--do-opts (name options args)
   "Helper function for `eshell-eval-using-options'.
 This code doesn't really need to be macro expanded everywhere."
+  (require 'esh-ext)
+  (declare-function eshell-external-command "esh-ext" (command args))
   (let ((ext-command
          (catch 'eshell-ext-command
            (let ((usage-msg
@@ -145,6 +148,8 @@ This code doesn't really need to be macro expanded everywhere."
 
 (defun eshell-show-usage (name options)
   "Display the usage message for NAME, using OPTIONS."
+  (require 'esh-ext)
+  (declare-function eshell-search-path "esh-ext" (name))
   (let ((usage (format "usage: %s %s\n\n" name
 		       (cadr (memq ':usage options))))
 	(extcmd (memq ':external options))
@@ -273,4 +278,5 @@ switch is unrecognized."
 		(setq index (1+ index))))))))
     (nconc (mapcar #'cdr opt-vals) eshell--args)))
 
+(provide 'esh-opt)
 ;;; esh-opt.el ends here

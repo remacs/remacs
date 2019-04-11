@@ -584,9 +584,7 @@ offered."
 
 (defun tramp-archive-handle-file-readable-p (filename)
   "Like `file-readable-p' for file archives."
-  (with-parsed-tramp-file-name
-      (tramp-archive-gvfs-file-name filename) nil
-    (tramp-check-cached-permissions v ?r)))
+  (file-readable-p (tramp-archive-gvfs-file-name filename)))
 
 (defun tramp-archive-handle-file-system-info (filename)
   "Like `file-system-info' for file archives."

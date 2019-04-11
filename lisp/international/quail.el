@@ -568,7 +568,7 @@ While this input method is active, the variable
 	    (quail-delete-overlays)
 	    (setq describe-current-input-method-function nil)
 	    (quail-hide-guidance)
-	    (remove-hook 'post-command-hook 'quail-show-guidance t)
+	    (remove-hook 'post-command-hook #'quail-show-guidance t)
 	    (run-hooks 'quail-deactivate-hook))
 	(kill-local-variable 'input-method-function))
     ;; Let's activate Quail input method.
@@ -579,19 +579,18 @@ While this input method is active, the variable
 	      (setq name (car (car quail-package-alist)))
 	    (error "No Quail package loaded"))
 	  (quail-select-package name)))
-    (setq deactivate-current-input-method-function 'quail-deactivate)
-    (setq describe-current-input-method-function 'quail-help)
+    (setq deactivate-current-input-method-function #'quail-deactivate)
+    (setq describe-current-input-method-function #'quail-help)
     (quail-delete-overlays)
     (setq quail-guidance-str "")
     (quail-show-guidance)
     ;; If we are in minibuffer, turn off the current input method
     ;; before exiting.
     (when (eq (selected-window) (minibuffer-window))
-      (add-hook 'minibuffer-exit-hook 'quail-exit-from-minibuffer)
-      (add-hook 'post-command-hook 'quail-show-guidance nil t))
+      (add-hook 'minibuffer-exit-hook #'quail-exit-from-minibuffer)
+      (add-hook 'post-command-hook #'quail-show-guidance nil t))
     (run-hooks 'quail-activate-hook)
-    (make-local-variable 'input-method-function)
-    (setq input-method-function 'quail-input-method)))
+    (setq-local input-method-function #'quail-input-method)))
 
 (define-obsolete-variable-alias
   'quail-inactivate-hook
@@ -1367,9 +1366,7 @@ If STR has `advice' text property, append the following special event:
   (let ((start (overlay-start overlay))
 	(end (overlay-end overlay)))
     (if (< start end)
-	(prog1
-	    (string-to-list (buffer-substring start end))
-	  (delete-region start end)))))
+	(string-to-list (delete-and-extract-region start end)))))
 
 (defsubst quail-delete-region ()
   "Delete the text in the current translation region of Quail."

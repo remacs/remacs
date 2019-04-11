@@ -244,7 +244,7 @@ to writing a completion function."
   (let ((completion-at-point-functions '(lisp-completion-at-point)))
     (completion-at-point)))
 
-(defun eshell-cmpl-initialize ()
+(defun eshell-cmpl-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the completions module."
   (set (make-local-variable 'pcomplete-command-completion-function)
        eshell-command-completion-function)

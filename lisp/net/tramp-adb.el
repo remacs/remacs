@@ -968,7 +968,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	       (program (car command))
 	       (args (cdr command))
 	       (command
-		(format "cd %s; %s"
+		(format "cd %s && exec %s"
 			(tramp-shell-quote-argument localname)
 			(mapconcat #'tramp-shell-quote-argument
 				   (cons program args) " ")))
@@ -1000,24 +1000,16 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		    ;; otherwise we might be interrupted by
 		    ;; `verify-visited-file-modtime'.
 		    (let ((buffer-undo-list t)
-			  (inhibit-read-only t)
-			  (mark (point)))
+			  (inhibit-read-only t))
 		      (clear-visited-file-modtime)
 		      (narrow-to-region (point-max) (point-max))
 		      ;; We call `tramp-adb-maybe-open-connection', in
 		      ;; order to cleanup the prompt afterwards.
 		      (tramp-adb-maybe-open-connection v)
-		      (widen)
-		      (delete-region mark (point-max))
-		      (narrow-to-region (point-max) (point-max))
+		      (delete-region (point-min) (point-max))
 		      ;; Send the command.
-		      (let* ((p (tramp-get-connection-process v))
-			     (prompt
-			      (tramp-get-connection-property p "prompt" nil)))
-			(tramp-set-connection-property
-			 p "prompt" (regexp-quote command))
-			(tramp-adb-send-command v command)
-			(tramp-set-connection-property p "prompt" prompt)
+		      (let* ((p (tramp-get-connection-process v)))
+                        (tramp-adb-send-command v command nil t) ; nooutput
 			;; Stop process if indicated.
 			(when stop
 			  (stop-process p))
@@ -1032,6 +1024,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 			(ignore-errors
 			  (set-process-query-on-exit-flag p (null noquery))
 			  (set-marker (process-mark p) (point)))
+			;; Read initial output.  Remove the first line,
+			;; which is the command echo.
+			(while
+			    (progn
+			      (goto-char (point-min))
+			      (not (re-search-forward "[\n]" nil t)))
+			  (tramp-accept-process-output p 0))
+			(delete-region (point-min) (point))
 			;; Return process.
 			p))))
 
@@ -1119,26 +1119,27 @@ This happens for Android >= 4.0."
 
 ;; Connection functions
 
-(defun tramp-adb-send-command (vec command)
+(defun tramp-adb-send-command (vec command &optional neveropen nooutput)
   "Send the COMMAND to connection VEC."
-  (tramp-adb-maybe-open-connection vec)
+  (unless neveropen (tramp-adb-maybe-open-connection vec))
   (tramp-message vec 6 "%s" command)
   (tramp-send-string vec command)
-  ;; FIXME: Race condition.
-  (tramp-adb-wait-for-output (tramp-get-connection-process vec))
-  (with-current-buffer (tramp-get-connection-buffer vec)
-    (save-excursion
-      (goto-char (point-min))
-      ;; We can't use stty to disable echo of command.  stty is said
-      ;; to be added to toybox 0.7.6.  busybox shall have it, but this
-      ;; isn't used any longer for Android.
-      (delete-matching-lines (regexp-quote command))
-      ;; When the local machine is W32, there are still trailing ^M.
-      ;; There must be a better solution by setting the correct coding
-      ;; system, but this requires changes in core Tramp.
-      (goto-char (point-min))
-      (while (re-search-forward "\r+$" nil t)
-	(replace-match "" nil nil)))))
+  (unless nooutput
+    ;; FIXME: Race condition.
+    (tramp-adb-wait-for-output (tramp-get-connection-process vec))
+    (with-current-buffer (tramp-get-connection-buffer vec)
+      (save-excursion
+	(goto-char (point-min))
+	;; We can't use stty to disable echo of command.  stty is said
+	;; to be added to toybox 0.7.6.  busybox shall have it, but this
+	;; isn't used any longer for Android.
+	(delete-matching-lines (regexp-quote command))
+	;; When the local machine is W32, there are still trailing ^M.
+	;; There must be a better solution by setting the correct coding
+	;; system, but this requires changes in core Tramp.
+	(goto-char (point-min))
+	(while (re-search-forward "\r+$" nil t)
+	  (replace-match "" nil nil))))))
 
 (defun tramp-adb-send-command-and-check (vec command)
   "Run COMMAND and check its exit status.
@@ -1245,6 +1246,9 @@ connection if a previous connection has died for some reason."
 	    (tramp-adb-wait-for-output p 30)
 	    (unless (process-live-p p)
 	      (tramp-error vec 'file-error "Terminated!"))
+
+	    ;; Set sentinel and query flag.  Initialize variables.
+	    (set-process-sentinel p #'tramp-process-sentinel)
 	    (process-put p 'vector vec)
 	    (process-put p 'adjust-window-size-function #'ignore)
 	    (set-process-query-on-exit-flag p nil)

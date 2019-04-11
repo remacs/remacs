@@ -787,28 +787,19 @@ static Lisp_Object gstring_work;
 static Lisp_Object gstring_work_headers;
 
 static Lisp_Object
-fill_gstring_header (Lisp_Object header, ptrdiff_t from, ptrdiff_t from_byte,
+fill_gstring_header (ptrdiff_t from, ptrdiff_t from_byte,
 		     ptrdiff_t to, Lisp_Object font_object, Lisp_Object string)
 {
-  ptrdiff_t len = to - from, i;
-
+  ptrdiff_t len = to - from;
   if (len == 0)
     error ("Attempt to shape zero-length text");
-  if (VECTORP (header))
-    {
-      if (ASIZE (header) != len + 1)
-	args_out_of_range (header, make_fixnum (len + 1));
-    }
-  else
-    {
-      if (len <= 8)
-	header = AREF (gstring_work_headers, len - 1);
-      else
-	header = make_uninit_vector (len + 1);
-    }
+  eassume (0 < len);
+  Lisp_Object header = (len <= 8
+			? AREF (gstring_work_headers, len - 1)
+			: make_uninit_vector (len + 1));
 
   ASET (header, 0, font_object);
-  for (i = 0; i < len; i++)
+  for (ptrdiff_t i = 0; i < len; i++)
     {
       int c;
 
@@ -1748,7 +1739,7 @@ should be ignored.  */)
       frombyte = string_char_to_byte (string, frompos);
     }
 
-  header = fill_gstring_header (Qnil, frompos, frombyte,
+  header = fill_gstring_header (frompos, frombyte,
 				topos, font_object, string);
   gstring = gstring_lookup_cache (header);
   if (! NILP (gstring))

@@ -5030,7 +5030,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       mi->mm_height = height_mm;
 
 #if GTK_CHECK_VERSION (3, 22, 0)
-      mi->name = g_strdup (gdk_monitor_get_model (monitor));
+      mi->name = xstrdup (gdk_monitor_get_model (monitor));
 #elif GTK_CHECK_VERSION (2, 14, 0)
       mi->name = gdk_screen_get_monitor_plug_name (gscreen, i);
 #endif
@@ -5041,6 +5041,11 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
                                                  primary_monitor,
                                                  monitor_frames,
                                                  source);
+#if GTK_CHECK_VERSION (2, 14, 0)
+  free_monitors (monitors, n_monitors);
+#else
+  xfree (monitors);
+#endif
   unblock_input ();
 #else  /* not USE_GTK */
 

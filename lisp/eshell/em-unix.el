@@ -35,8 +35,7 @@
 
 ;;; Code:
 
-(require 'eshell)
-(require 'esh-opt)
+(require 'esh-mode)
 (require 'pcomplete)
 
 ;;;###autoload
@@ -140,7 +139,7 @@ Otherwise, Emacs will attempt to use rsh to invoke du on the remote machine."
 
 ;;; Functions:
 
-(defun eshell-unix-initialize ()
+(defun eshell-unix-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the UNIX support/emulation code."
   (when (eshell-using-module 'eshell-cmpl)
     (add-hook 'pcomplete-try-first-hook

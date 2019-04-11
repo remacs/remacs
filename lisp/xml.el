@@ -718,10 +718,10 @@ This follows the rule [28] in the XML specifications."
     (cond ((looking-at "PUBLIC\\s-+")
 	   (goto-char (match-end 0))
 	   (unless (or (re-search-forward
-			"\\=\"\\([[:space:][:alnum:]-'()+,./:=?;!*#@$_%]*\\)\""
+			"\\=\"\\([[:space:][:alnum:]'()+,./:=?;!*#@$_%-]*\\)\""
 			nil t)
 		       (re-search-forward
-			"\\='\\([[:space:][:alnum:]-()+,./:=?;!*#@$_%]*\\)'"
+			"\\='\\([[:space:][:alnum:]()+,./:=?;!*#@$_%-]*\\)'"
 			nil t))
 	     (error "XML: Missing Public ID"))
 	   (let ((pubid (match-string-no-properties 1)))

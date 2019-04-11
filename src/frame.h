@@ -190,9 +190,6 @@ struct frame
   Lisp_Object current_tool_bar_string;
 #endif
 
-  /* Desired and current tool-bar items.  */
-  Lisp_Object tool_bar_items;
-
 #ifdef USE_GTK
   /* Where tool bar is, can be left, right, top or bottom.
      Except with GTK, the only supported position is `top'.  */
@@ -204,7 +201,9 @@ struct frame
   Lisp_Object font_data;
 #endif
 
-  /* Beyond here, there should be no more Lisp_Object components.  */
+  /* Desired and current tool-bar items.  */
+  Lisp_Object tool_bar_items;
+  /* tool_bar_items should be the last Lisp_Object member.  */
 
   /* Cache of realized faces.  */
   struct face_cache *face_cache;

@@ -584,10 +584,10 @@ even if it is dead.  The return value is never nil.  */)
   set_string_intervals (name, NULL);
   bset_name (b, name);
 
-  if (STRINGP (Vcode_conversion_workbuf_name)
-      && strncmp (SSDATA (name), SSDATA (Vcode_conversion_workbuf_name),
-		  SBYTES (Vcode_conversion_workbuf_name)) == 0)
-    b->inhibit_buffer_hooks = true;
+  b->inhibit_buffer_hooks
+    = (STRINGP (Vcode_conversion_workbuf_name)
+       && strncmp (SSDATA (name), SSDATA (Vcode_conversion_workbuf_name),
+		   SBYTES (Vcode_conversion_workbuf_name)) == 0);
 
   bset_undo_list (b, SREF (name, 0) != ' ' ? Qnil : Qt);
 

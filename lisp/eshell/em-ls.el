@@ -29,7 +29,8 @@
 (require 'cl-lib)
 (require 'esh-util)
 (require 'esh-opt)
-(eval-when-compile (require 'eshell))
+(require 'esh-proc)
+(require 'esh-cmd)
 
 ;;;###autoload
 (progn

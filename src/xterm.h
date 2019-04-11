@@ -897,7 +897,7 @@ struct scroll_bar
   /* The next and previous in the chain of scroll bars in this frame.  */
   Lisp_Object next, prev;
 
-  /* Fields from `x_window' down will not be traced by the GC.  */
+  /* Fields after 'prev' are not traced by the GC.  */
 
   /* The X window representing this scroll bar.  */
   Window x_window;

@@ -5345,13 +5345,23 @@ class SomeClass:
 (ert-deftest python-tests--python-nav-end-of-statement--infloop ()
   "Checks that `python-nav-end-of-statement' doesn't infloop in a
 buffer with overlapping strings."
+  ;; FIXME: The treatment of strings has changed in the mean time, and the
+  ;; test below now neither signals an error nor inf-loops.
+  ;; The description of the problem it's trying to catch is not clear enough
+  ;; to be able to see if the underlying problem is really fixed, sadly.
+  ;; E.g. I don't know what is meant by "overlap", really.
+  (skip-unless nil)
   (python-tests-with-temp-buffer "''' '\n''' ' '\n"
     (syntax-propertize (point-max))
     ;; Create a situation where strings nominally overlap.  This
     ;; shouldn't happen in practice, but apparently it can happen when
     ;; a package calls `syntax-ppss' in a narrowed buffer during JIT
     ;; lock.
+    ;; FIXME: 4-5 is the SPC right after the opening triple quotes: why
+    ;; put a string-fence syntax on it?
     (put-text-property 4 5 'syntax-table (string-to-syntax "|"))
+    ;; FIXME: 8-9 is the middle quote in the closing triple quotes:
+    ;; it shouldn't have any syntax-table property to remove anyway!
     (remove-text-properties 8 9 '(syntax-table nil))
     (goto-char 4)
     (setq-local syntax-propertize-function nil)

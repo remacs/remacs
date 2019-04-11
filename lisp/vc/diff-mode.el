@@ -116,7 +116,7 @@ You can always manually refine a hunk with `diff-refine-hunk'."
   "If non-nil, diff hunk font-lock includes source language syntax highlighting.
 This highlighting is the same as added by `font-lock-mode'
 when corresponding source files are visited normally.
-Syntax highlighting is added over diff own highlighted changes.
+Syntax highlighting is added over diff-mode's own highlighted changes.
 
 If t, the default, highlight syntax only in Diff buffers created by Diff
 commands that compare files or by VC commands that compare revisions.
@@ -126,17 +126,17 @@ For diffs against the working-tree version of a file, the highlighting is
 based on the current file contents.  File-based fontification tries to
 infer fontification from the compared files.
 
-If revision-based or file-based method fails, use hunk-based method to get
-fontification from hunk alone if the value is `hunk-also'.
-
-If `hunk-only', fontification is based on hunk alone, without full source.
+If `hunk-only' fontification is based on hunk alone, without full source.
 It tries to highlight hunks without enough context that sometimes might result
-in wrong fontification.  This is the fastest option, but less reliable."
+in wrong fontification.  This is the fastest option, but less reliable.
+
+If `hunk-also', use reliable file-based syntax highlighting when available
+and hunk-based syntax highlighting otherwise as a fallback."
   :version "27.1"
   :type '(choice (const :tag "Don't highlight syntax" nil)
-                 (const :tag "Hunk-based also" hunk-also)
                  (const :tag "Hunk-based only" hunk-only)
-                 (const :tag "Highlight syntax" t)))
+                 (const :tag "Highlight syntax" t)
+                 (const :tag "Allow hunk-based fallback" hunk-also)))
 
 (defvar diff-vc-backend nil
   "The VC backend that created the current Diff buffer, if any.")
@@ -144,9 +144,8 @@ in wrong fontification.  This is the fastest option, but less reliable."
 (defvar diff-vc-revisions nil
   "The VC revisions compared in the current Diff buffer, if any.")
 
-(defvar diff-default-directory nil
+(defvar-local diff-default-directory nil
   "The default directory where the current Diff buffer was created.")
-(make-variable-buffer-local 'diff-default-directory)
 
 (defvar diff-outline-regexp
   "\\([*+][*+][*+] [^0-9]\\|@@ ...\\|\\*\\*\\* [0-9].\\|--- [0-9]..\\)")
@@ -2423,7 +2422,9 @@ When OLD is non-nil, highlight the hunk from the old source."
   (let* ((hunk (buffer-substring-no-properties beg end))
          ;; Trim a trailing newline to find hunk in diff-syntax-fontify-props
          ;; in diffs that have no newline at end of diff file.
-         (text (string-trim-right (or (with-demoted-errors (diff-hunk-text hunk (not old) nil)) "")))
+         (text (string-trim-right
+                (or (with-demoted-errors (diff-hunk-text hunk (not old) nil))
+                    "")))
 	 (line (if (looking-at "\\(?:\\*\\{15\\}.*\n\\)?[-@* ]*\\([0-9,]+\\)\\([ acd+]+\\([0-9,]+\\)\\)?")
 		   (if old (match-string 1)
 		     (if (match-end 3) (match-string 3) (match-string 1)))))
@@ -2432,83 +2433,106 @@ When OLD is non-nil, highlight the hunk from the old source."
                         (list (string-to-number (match-string 1 line))
                               (string-to-number (match-string 2 line)))
                       (list (string-to-number line) 1)))) ; One-line diffs
-         props)
-    (cond
-     ((and diff-vc-backend (not (eq diff-font-lock-syntax 'hunk-only)))
-      (let* ((file (diff-find-file-name old t))
-             (revision (and file (if (not old) (nth 1 diff-vc-revisions)
-                                   (or (nth 0 diff-vc-revisions)
-                                       (vc-working-revision file))))))
-        (if file
-            (if (not revision)
-                ;; Get properties from the current working revision
-                (when (and (not old) (file-exists-p file) (file-regular-p file))
-                  ;; Try to reuse an existing buffer
-                  (if (get-file-buffer (expand-file-name file))
-                      (with-current-buffer (get-file-buffer (expand-file-name file))
-                        (setq props (diff-syntax-fontify-props nil text line-nb)))
-                    ;; Get properties from the file
-                    (with-temp-buffer
-                      (insert-file-contents file)
-                      (setq props (diff-syntax-fontify-props file text line-nb)))))
-              ;; Get properties from a cached revision
-              (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
-                                          (expand-file-name file) revision))
-                     (buffer (gethash buffer-name diff-syntax-fontify-revisions)))
-                (unless (and buffer (buffer-live-p buffer))
-                  (let* ((vc-buffer (ignore-errors
-                                      (vc-find-revision-no-save
-                                       (expand-file-name file) revision
-                                       diff-vc-backend
-                                       (get-buffer-create buffer-name)))))
-                    (when vc-buffer
-                      (setq buffer vc-buffer)
-                      (puthash buffer-name buffer diff-syntax-fontify-revisions))))
-                (when buffer
-                  (with-current-buffer buffer
-                    (setq props (diff-syntax-fontify-props file text line-nb))))))
-          ;; If file is unavailable, get properties from the hunk alone
-          (setq file (car (diff-hunk-file-names old)))
-          (with-temp-buffer
-            (insert text)
-            (setq props (diff-syntax-fontify-props file text line-nb t))))))
-     ((and diff-default-directory (not (eq diff-font-lock-syntax 'hunk-only)))
-      (let ((file (car (diff-hunk-file-names old))))
-        (if (and file (file-exists-p file) (file-regular-p file))
-            ;; Try to get full text from the file
-            (with-temp-buffer
-              (insert-file-contents file)
-              (setq props (diff-syntax-fontify-props file text line-nb)))
-          ;; Otherwise, get properties from the hunk alone
-          (with-temp-buffer
-            (insert text)
-            (setq props (diff-syntax-fontify-props file text line-nb t))))))
-     ((memq diff-font-lock-syntax '(hunk-also hunk-only))
-      (let ((file (car (diff-hunk-file-names old))))
-        (with-temp-buffer
-          (insert text)
-          (setq props (diff-syntax-fontify-props file text line-nb t))))))
+         (props
+          (or
+           (when (and diff-vc-backend
+                      (not (eq diff-font-lock-syntax 'hunk-only)))
+             (let* ((file (diff-find-file-name old t))
+                    (revision (and file (if (not old) (nth 1 diff-vc-revisions)
+                                          (or (nth 0 diff-vc-revisions)
+                                              (vc-working-revision file))))))
+               (when file
+                 (if (not revision)
+                     ;; Get properties from the current working revision
+                     (when (and (not old) (file-exists-p file)
+                                (file-regular-p file))
+                       (let ((buf (get-file-buffer (expand-file-name file))))
+                         ;; Try to reuse an existing buffer
+                         (if buf
+                             (with-current-buffer buf
+                               (diff-syntax-fontify-props nil text line-nb))
+                           ;; Get properties from the file
+                           (with-temp-buffer
+                             (insert-file-contents file)
+                             (diff-syntax-fontify-props file text line-nb)))))
+                   ;; Get properties from a cached revision
+                   (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
+                                               (expand-file-name file)
+                                               revision))
+                          (buffer (gethash buffer-name
+                                           diff-syntax-fontify-revisions)))
+                     (unless (and buffer (buffer-live-p buffer))
+                       (let* ((vc-buffer (ignore-errors
+                                           (vc-find-revision-no-save
+                                            (expand-file-name file) revision
+                                            diff-vc-backend
+                                            (get-buffer-create buffer-name)))))
+                         (when vc-buffer
+                           (setq buffer vc-buffer)
+                           (puthash buffer-name buffer
+                                    diff-syntax-fontify-revisions))))
+                     (when buffer
+                       (with-current-buffer buffer
+                         (diff-syntax-fontify-props file text line-nb))))))))
+           (let ((file (car (diff-hunk-file-names old))))
+             (cond
+              ((and file diff-default-directory
+                    (not (eq diff-font-lock-syntax 'hunk-only))
+                    (not diff-vc-backend)
+                    (file-readable-p file) (file-regular-p file))
+               ;; Try to get full text from the file.
+               (with-temp-buffer
+                 (insert-file-contents file)
+                 (diff-syntax-fontify-props file text line-nb)))
+              ;; Otherwise, get properties from the hunk alone
+              ((memq diff-font-lock-syntax '(hunk-also hunk-only))
+               (with-temp-buffer
+                 (insert text)
+                 (diff-syntax-fontify-props file text line-nb t))))))))
 
     ;; Put properties over the hunk text
     (goto-char beg)
     (when (and props (eq (diff-hunk-style) 'unified))
       (while (< (progn (forward-line 1) (point)) end)
-        (when (or (and (not old) (not (looking-at-p "[-<]")))
-                  (and      old  (not (looking-at-p "[+>]"))))
-          (unless (looking-at-p "\\\\") ; skip "\ No newline at end of file"
-            (if (and old (not (looking-at-p "[-<]")))
-                ;; Fontify context lines only from new source,
-                ;; don't refontify context lines from old source.
-                (pop props)
-              (let ((line-props (pop props))
-                    (bol (1+ (point))))
-                (dolist (prop line-props)
-                  (let ((ol (make-overlay (+ bol (nth 0 prop))
-                                          (+ bol (nth 1 prop))
-                                          nil 'front-advance nil)))
-                    (overlay-put ol 'diff-mode 'syntax)
-                    (overlay-put ol 'evaporate t)
-                    (overlay-put ol 'face (nth 2 prop))))))))))))
+        ;; Skip the "\ No newline at end of file" lines as well as the lines
+        ;; corresponding to the "other" version.
+        (unless (looking-at-p (if old "[+>\\]" "[-<\\]"))
+          (if (and old (not (looking-at-p "[-<]")))
+              ;; Fontify context lines only from new source,
+              ;; don't refontify context lines from old source.
+              (pop props)
+            (let ((line-props (pop props))
+                  (bol (1+ (point))))
+              (dolist (prop line-props)
+                ;; Ideally, we'd want to use text-properties as in:
+                ;;
+                ;;     (add-face-text-property
+                ;;      (+ bol (nth 0 prop)) (+ bol (nth 1 prop))
+                ;;      (nth 2 prop) 'append)
+                ;;
+                ;; rather than overlays here, but they'd get removed by later
+                ;; font-locking.
+                ;; This is because we also apply faces outside of the
+                ;; beg...end chunk currently font-locked and when font-lock
+                ;; later comes to handle the rest of the hunk that we already
+                ;; handled we don't (want to) redo it (we work at
+                ;; hunk-granularity rather than font-lock's own chunk
+                ;; granularity).
+                ;; I see two ways to fix this:
+                ;; - don't immediately apply the props that fall outside of
+                ;;   font-lock's chunk but stash them somewhere (e.g. in another
+                ;;   text property) and only later when font-lock comes back
+                ;;   move them to `face'.
+                ;; - change the code so work at font-lock's chunk granularity
+                ;;   (this seems doable without too much extra overhead,
+                ;;   contrary to the refine highlighting, which inherently
+                ;;   works at a different granularity).
+                (let ((ol (make-overlay (+ bol (nth 0 prop))
+                                        (+ bol (nth 1 prop))
+                                        nil 'front-advance nil)))
+                  (overlay-put ol 'diff-mode 'syntax)
+                  (overlay-put ol 'evaporate t)
+                  (overlay-put ol 'face (nth 2 prop)))))))))))
 
 (defun diff-syntax-fontify-props (file text line-nb &optional hunk-only)
   "Get font-lock properties from the source code.
@@ -2516,21 +2540,23 @@ FILE is the name of the source file.  If non-nil, it requests initialization
 of the mode according to FILE.
 TEXT is the literal source text from hunk.
 LINE-NB is a pair of numbers: start line number and the number of
-lines in the hunk.  NO-INIT means no initialization is needed to set major
-mode.  When HUNK-ONLY is non-nil, then don't verify the existence of the
+lines in the hunk.
+When HUNK-ONLY is non-nil, then don't verify the existence of the
 hunk text in the source file.  Otherwise, don't highlight the hunk if the
 hunk text is not found in the source file."
   (when file
     ;; When initialization is requested, we should be in a brand new
     ;; temp buffer.
-    (cl-assert (eq t buffer-undo-list))
-    (cl-assert (not font-lock-mode))
     (cl-assert (null buffer-file-name))
     (let ((enable-local-variables :safe) ;; to find `mode:'
           (buffer-file-name file))
       (set-auto-mode)
-      (when (and (memq 'generic-mode-find-file-hook find-file-hook)
-                 (fboundp 'generic-mode-find-file-hook))
+      ;; FIXME: Is this really worth the trouble?
+      (when (and (fboundp 'generic-mode-find-file-hook)
+                 (memq #'generic-mode-find-file-hook
+                       ;; There's no point checking the buffer-local value,
+                       ;; we're in a fresh new buffer.
+                       (default-value 'find-file-hook)))
         (generic-mode-find-file-hook))))
 
   (let ((font-lock-defaults (or font-lock-defaults '(nil t)))

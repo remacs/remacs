@@ -562,7 +562,7 @@ LINE, END-LINE, COL, and END-COL can also be functions of no argument
 that return the corresponding line or column number.  They can assume REGEXP
 has just been matched, and should correspondingly preserve this match data.
 
-f/usr/shaTYPE is 2 or nil for a real error or 1 for warning or 0 for info.
+TYPE is 2 or nil for a real error or 1 for warning or 0 for info.
 TYPE can also be of the form (WARNING . INFO).  In that case this
 will be equivalent to 1 if the WARNING'th subexpression matched
 or else equivalent to 0 if the INFO'th subexpression matched.
@@ -2056,8 +2056,7 @@ by replacing the first word, e.g., `compilation-scroll-output' from
 			    (if (boundp 'byte-compile-bound-variables)
 				(memq (cdr v) byte-compile-bound-variables)))
 			`(set (make-local-variable ',(car v)) ,(cdr v))))
-		 '(compilation-buffer-name-function
-		   compilation-directory-matcher
+		 '(compilation-directory-matcher
 		   compilation-error
 		   compilation-error-regexp-alist
 		   compilation-error-regexp-alist-alist

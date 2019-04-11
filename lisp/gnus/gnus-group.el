@@ -2560,7 +2560,11 @@ If FAR, it is likely that the group is not on the current line.
 If TEST-MARKED, the line must be marked."
   (when group
     (let ((start (point))
-	  (active (and (gethash group gnus-active-hashtb)
+	  (active (and (or
+			;; some kind of group may be only there.
+			(gethash group gnus-active-hashtb)
+			;; all groups (but with exception) are there.
+			(gethash group gnus-newsrc-hashtb))
 		       group)))
       (beginning-of-line)
       (cond

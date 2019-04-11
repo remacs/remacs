@@ -9314,6 +9314,8 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
      ;; autoselection.
      (mouse-autoselect-window-start mouse-position window)))))
 
+(declare-function display-multi-frame-p "frame" (&optional display))
+
 (defun handle-select-window (event)
   "Handle select-window events."
   (interactive "^e")
@@ -9351,7 +9353,7 @@ is active.  This function is run by `mouse-autoselect-window-timer'."
       ;; we might get two windows with an active cursor.
       (select-window window)
       (cond
-       ((or (not (memq (window-system frame) '(x w32 ns)))
+       ((or (not (display-multi-frame-p))
             (not focus-follows-mouse)
             ;; Focus FRAME if it's either a child frame or an ancestor
             ;; of the frame switched from.

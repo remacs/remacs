@@ -675,7 +675,7 @@ Which one will be chosen depends on the value of
 
 (defconst python-syntax-propertize-function
   (syntax-propertize-rules
-   ((python-rx string-delimiter)
+   ((rx (or "\"\"\"" "'''"))
     (0 (ignore (python-syntax-stringify))))))
 
 (define-obsolete-variable-alias 'python--prettify-symbols-alist
@@ -701,35 +701,27 @@ is used to limit the scan."
 
 (defun python-syntax-stringify ()
   "Put `syntax-table' property correctly on single/triple quotes."
-  (let* ((num-quotes (length (match-string-no-properties 1)))
-         (ppss (prog2
-                   (backward-char num-quotes)
-                   (syntax-ppss)
-                 (forward-char num-quotes)))
-         (string-start (and (not (nth 4 ppss)) (nth 8 ppss)))
-         (quote-starting-pos (- (point) num-quotes))
-         (quote-ending-pos (point))
-         (num-closing-quotes
-          (and string-start
-               (python-syntax-count-quotes
-                (char-before) string-start quote-starting-pos))))
-    (cond ((and string-start (= num-closing-quotes 0))
-           ;; This set of quotes doesn't match the string starting
-           ;; kind. Do nothing.
+  (let* ((ppss (save-excursion (backward-char 3) (syntax-ppss)))
+         (string-start (and (eq t (nth 3 ppss)) (nth 8 ppss)))
+         (quote-starting-pos (- (point) 3))
+         (quote-ending-pos (point)))
+    (cond ((or (nth 4 ppss)             ;Inside a comment
+               (and string-start
+                    ;; Inside of a string quoted with different triple quotes.
+                    (not (eql (char-after string-start)
+                              (char-after quote-starting-pos)))))
+           ;; Do nothing.
            nil)
-          ((not string-start)
+          ((nth 5 ppss)
+           ;; The first quote is escaped, so it's not part of a triple quote!
+           (goto-char (1+ quote-starting-pos)))
+          ((null string-start)
            ;; This set of quotes delimit the start of a string.
            (put-text-property quote-starting-pos (1+ quote-starting-pos)
                               'syntax-table (string-to-syntax "|")))
-          ((= num-quotes num-closing-quotes)
+          (t
            ;; This set of quotes delimit the end of a string.
            (put-text-property (1- quote-ending-pos) quote-ending-pos
-                              'syntax-table (string-to-syntax "|")))
-          ((> num-quotes num-closing-quotes)
-           ;; This may only happen whenever a triple quote is closing
-           ;; a single quoted string. Add string delimiter syntax to
-           ;; all three quotes.
-           (put-text-property quote-starting-pos quote-ending-pos
                               'syntax-table (string-to-syntax "|"))))))
 
 (defvar python-mode-syntax-table

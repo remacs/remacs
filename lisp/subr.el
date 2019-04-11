@@ -138,7 +138,7 @@ This sets each VAR's default value to the corresponding VALUE.
 The VALUE for the Nth VAR can refer to the new default values
 of previous VARs.
 
-\(setq-default [VAR VALUE]...)"
+\(fn [VAR VALUE]...)"
   (declare (debug setq))
   (let ((exps nil))
     (while args
@@ -779,9 +779,9 @@ Elements of ALIST that are not conses are ignored."
   alist)
 
 (defun alist-get (key alist &optional default remove testfn)
-  "Return the value associated with KEY in ALIST.
+  "Find the first element of ALIST whose `car' equals KEY and return its `cdr'.
 If KEY is not found in ALIST, return DEFAULT.
-Use TESTFN to lookup in the alist if non-nil.  Otherwise, use `assq'.
+Equality with KEY is tested by TESTFN, defaulting to `eq'.
 
 You can use `alist-get' in PLACE expressions.  This will modify
 an existing association (more precisely, the first one if

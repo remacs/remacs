@@ -36,6 +36,11 @@
 
 ;;; Code:
 
+;; The autoloads.el mechanism which adds package--builtin-versions
+;; maintenance to loaddefs.el doesn't work for preloaded packages (such
+;; as this one), so we have to do it by hand!
+(push (purecopy '(nadvice 1 0)) package--builtin-versions)
+
 ;;;; Lightweight advice/hook
 (defvar advice--where-alist
   '((:around "\300\301\302\003#\207" 5)
@@ -241,6 +246,8 @@ different, but `function-equal' will hopefully ignore those differences.")
   (if (local-variable-p var) (symbol-value var)
     (setq advice--buffer-local-function-sample
           ;; This function acts like the t special value in buffer-local hooks.
+          ;; FIXME: Provide an `advice-bottom' function that's like
+          ;; `advice-cd*r' but also follows through this proxy.
           (lambda (&rest args) (apply (default-value var) args)))))
 
 (eval-and-compile

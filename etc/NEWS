@@ -84,6 +84,11 @@ The new command-line argument '--dump-file=FILE' allows to specify a
 non-default '.pdmp' file to load the state from; see the node "Initial
 Options" in the Emacs manual for more information.
 
++++
+** The new configure option '--enable-checking=structs' attempts to
+check that the portable dumper code has been updated to match the last
+change to one of the data structures that it relies on.
+
 
 * Startup Changes in Emacs 27.1
 
@@ -1234,6 +1239,12 @@ the 128...255 range, as expected.
 This allows to create and parent immediately a minibuffer-only child
 frame when making a frame.
 
+---
+*** New predicates 'display-blink-cursor-p' and 'display-symbol-keys-p'.
+These predicates are to be preferred over 'display-graphic-p' when
+testing for blinking cursor capability and the capability to have
+symbols (e.g., [return], [tab], [backspace]) as keys respectively.
+
 ** Tabulated List mode
 
 +++
@@ -1249,6 +1260,89 @@ near the current column in Tabulated Lists (see variables
 
 +++
 *** 'text-mode-variant' is now obsolete, use 'derived-mode-p' instead.
+
+** CUA mode
+
+---
+*** New defcustom 'cua-rectangle-terminal-modifier-key'.
+This defcustom allows for the customization of the modifier key used
+in a terminal frame.
+
+** JS mode
+
+---
+*** JSX syntax is now automatically detected and enabled.
+If a file imports Facebook's 'React' library, or if the file uses the
+extension '.jsx', then various features supporting XML-like syntax
+will be supported in 'js-mode' and derivative modes.  ('js-jsx-mode'
+no longer needs to be enabled.)
+
+---
+*** New defcustom 'js-jsx-detect-syntax' disables automatic detection.
+This is turned on by default.
+
+---
+*** New defcustom 'js-jsx-syntax' enables JSX syntax unconditionally.
+This is off by default.
+
+---
+*** New variable 'js-jsx-regexps' controls JSX detection.
+
+---
+*** JSX syntax is now highlighted like SGML.
+
+---
+*** JSX code is properly indented in many more scenarios.
+Previously, JSX indentation usually only worked when an element was
+wrapped in parenthesis (e.g. in a 'return' statement or a function
+call).  It would also fail in many intricate cases.  Now, indentation
+should work anywhere without parenthesis; many more intricacies are
+supported; and, indentation conventions align more closely with those
+of the React developer community (see 'js-jsx-align->-with-<'),
+otherwise still adhering to SGML conventions.
+
+---
+*** New defcustom 'js-jsx-align->-with-<' controls '>' indents.
+Commonly in JSX code, a '>' on its own line is indented at the same
+level as its opening '<'.  This is the new default for JSX.  This
+behavior is slightly different than that used by SGML in Emacs, where
+'>' is indented at the same level as attributes, which was also the
+old default for JSX.
+
+This is turned on by default.  To get back the old default indentation
+behavior of aligning '>' with attributes, set 'js-jsx-align->-with-<'
+to nil.
+
+---
+*** Indentation uses 'js-indent-level' instead of 'sgml-basic-offset'.
+Since JSX is a syntax extension of JavaScript, it makes the most sense
+for JSX expressions to be indented the same number of spaces as other
+JS expressions.  This is a breaking change, but it probably aligns
+with how you'd expect this indentation to behave.  If you want JSX to
+be indented like JS, you won't need to change your config.
+
+The old behavior can be emulated by controlling JSX indentation
+independently of JS, by setting 'js-jsx-indent-level'.
+
+---
+*** New defcustom 'js-jsx-indent-level' for different JSX indentation.
+If you wish to indent JSX by a different number of spaces than JS, set
+this variable to the desired number.
+
+---
+*** New defcustom 'js-jsx-attribute-offset' for JSX attribute indents.
+
+---
+*** New variable 'js-syntactic-mode-name' controls mode name display.
+Previously, the mode name was simply 'JavaScript'.  Now, when a syntax
+extension like JSX is enabled, the mode name is 'JavaScript[JSX]'.
+Set this variable to nil to disable the new behavior.
+
+---
+*** New function 'js-use-syntactic-mode-name' for deriving modes.
+Packages deriving from 'js-mode' with 'define-derived-mode' should
+call this function to add enabled syntax extensions to their mode
+name, too.
 
 
 * New Modes and Packages in Emacs 27.1

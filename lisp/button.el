@@ -382,10 +382,12 @@ Also see `make-text-button'."
 If the button at POS is a text property button, the return value
 is a marker pointing to POS."
   (let ((button (get-char-property pos 'button)))
-    (if (or (overlayp button) (null button))
-	button
-      ;; Must be a text-property button; return a marker pointing to it.
-      (copy-marker pos t))))
+    (and button (get-char-property pos 'category)
+         (if (overlayp button)
+             button
+           ;; Must be a text-property button;
+           ;; return a marker pointing to it.
+           (copy-marker pos t)))))
 
 (defun next-button (pos &optional count-current)
   "Return the next button after position POS in the current buffer.

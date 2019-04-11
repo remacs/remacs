@@ -297,7 +297,6 @@ update_wm_hints (EmacsFrame ew)
   int char_height;
   int base_width;
   int base_height;
-  int min_rows = 0, min_cols = 0;
 
   /* This happens when the frame is just created.  */
   if (! wmshell) return;
@@ -323,8 +322,8 @@ update_wm_hints (EmacsFrame ew)
 		 XtNbaseHeight, (XtArgVal) base_height,
 		 XtNwidthInc, (XtArgVal) (frame_resize_pixelwise ? 1 : cw),
 		 XtNheightInc, (XtArgVal) (frame_resize_pixelwise ? 1 : ch),
-		 XtNminWidth, (XtArgVal) (base_width + min_cols * cw),
-		 XtNminHeight, (XtArgVal) (base_height + min_rows * ch),
+		 XtNminWidth, (XtArgVal) base_width,
+		 XtNminHeight, (XtArgVal) base_height,
 		 NULL);
 }
 

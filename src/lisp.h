@@ -1904,9 +1904,9 @@ memclear (void *p, ptrdiff_t nbytes)
    at the end and we need to compute the number of Lisp_Object fields (the
    ones that the GC needs to trace).  */
 
-#define PSEUDOVECSIZE(type, nonlispfield)			\
-   (offsetof (type, nonlispfield) < header_size			\
-    ? 0 : (offsetof (type, nonlispfield) - header_size) / word_size)
+#define PSEUDOVECSIZE(type, lastlispfield)				\
+  (offsetof (type, lastlispfield) + word_size < header_size		\
+   ? 0 : (offsetof (type, lastlispfield) + word_size - header_size) / word_size)
 
 /* Compute A OP B, using the unsigned comparison operator OP.  A and B
    should be integer expressions.  This is not the same as
@@ -2109,11 +2109,14 @@ enum char_table_specials
     /* This is the number of slots that every char table must have.  This
        counts the ordinary slots and the top, defalt, parent, and purpose
        slots.  */
-    CHAR_TABLE_STANDARD_SLOTS = PSEUDOVECSIZE (struct Lisp_Char_Table, extras),
+    CHAR_TABLE_STANDARD_SLOTS
+      = (PSEUDOVECSIZE (struct Lisp_Char_Table, contents) - 1
+	 + (1 << CHARTAB_SIZE_BITS_0)),
 
-    /* This is an index of first Lisp_Object field in Lisp_Sub_Char_Table
+    /* This is the index of the first Lisp_Object field in Lisp_Sub_Char_Table
        when the latter is treated as an ordinary Lisp_Vector.  */
-    SUB_CHAR_TABLE_OFFSET = PSEUDOVECSIZE (struct Lisp_Sub_Char_Table, contents)
+    SUB_CHAR_TABLE_OFFSET
+      = PSEUDOVECSIZE (struct Lisp_Sub_Char_Table, contents) - 1
   };
 
 /* Sanity-check pseudovector layout.  */
@@ -2313,8 +2316,8 @@ struct Lisp_Hash_Table
      hash table size to reduce collisions.  */
   Lisp_Object index;
 
-  /* Only the fields above are traced normally by the GC.  The ones below
-     `count' are special and are either ignored by the GC or traced in
+  /* Only the fields above are traced normally by the GC.  The ones after
+     'index' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
 
   /* Number of key/value entries in the table.  */
@@ -3939,6 +3942,11 @@ make_nil_vector (ptrdiff_t size)
 
 extern struct Lisp_Vector *allocate_pseudovector (int, int, int,
 						  enum pvec_type);
+
+/* Allocate uninitialized pseudovector with no Lisp_Object slots.  */
+
+#define ALLOCATE_PLAIN_PSEUDOVECTOR(type, tag) \
+  ((type *) allocate_pseudovector (VECSIZE (type), 0, 0, tag))
 
 /* Allocate partially initialized pseudovector where all Lisp_Object
    slots are set to Qnil but the rest (if any) is left uninitialized.  */

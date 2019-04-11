@@ -117,9 +117,7 @@ struct Lisp_Process
 
     /* The thread a process is linked to, or nil for any thread.  */
     Lisp_Object thread;
-
-    /* After this point, there are no Lisp_Objects any more.  */
-    /* alloc.c assumes that `pid' is the first such non-Lisp slot.  */
+    /* After this point, there are no Lisp_Objects.  */
 
     /* Process ID.  A positive value is a child process ID.
        Zero is for pseudo-processes such as network or serial connections,

@@ -86,8 +86,8 @@ make_bignum_bits (size_t bits)
   if (integer_width < bits)
     overflow_error ();
 
-  struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
-						 PVEC_BIGNUM);
+  struct Lisp_Bignum *b = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Bignum,
+						       PVEC_BIGNUM);
   mpz_init (b->value);
   mpz_swap (b->value, mpz[0]);
   return make_lisp_ptr (b, Lisp_Vectorlike);
@@ -342,8 +342,8 @@ bignum_to_string (Lisp_Object num, int base)
 Lisp_Object
 make_bignum_str (char const *num, int base)
 {
-  struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
-						 PVEC_BIGNUM);
+  struct Lisp_Bignum *b = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Bignum,
+						       PVEC_BIGNUM);
   mpz_init (b->value);
   int check = mpz_set_str (b->value, num, base);
   eassert (check == 0);

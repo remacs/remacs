@@ -42,7 +42,8 @@
 
 ;;; Code:
 
-(require 'eshell)
+(require 'esh-mode)                     ;For eshell-directory-name
+(require 'esh-var)                      ;For eshell-variable-aliases-list
 (require 'ring)
 (require 'esh-opt)
 
@@ -169,7 +170,7 @@ Thus, this does not include the current directory.")
 
 ;;; Functions:
 
-(defun eshell-dirs-initialize ()
+(defun eshell-dirs-initialize ()    ;Called from `eshell-mode' via intern-soft!
   "Initialize the builtin functions for Eshell."
   (make-local-variable 'eshell-variable-aliases-list)
   (setq eshell-variable-aliases-list

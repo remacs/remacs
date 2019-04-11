@@ -2769,15 +2769,6 @@ the result will be a local, non-Tramp, file name."
 
 ;;; Remote commands:
 
-(defun tramp-process-sentinel (proc event)
-  "Flush file caches."
-  (unless (process-live-p proc)
-    (let ((vec (process-get proc 'vector)))
-      (when vec
-	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
-        (tramp-flush-connection-properties proc)
-        (tramp-flush-directory-properties vec "")))))
-
 ;; We use BUFFER also as connection buffer during setup. Because of
 ;; this, its original contents must be saved, and restored once
 ;; connection has been setup.
@@ -2912,8 +2903,7 @@ the result will be a local, non-Tramp, file name."
 		    ;; otherwise we might be interrupted by
 		    ;; `verify-visited-file-modtime'.
 		    (let ((buffer-undo-list t)
-			  (inhibit-read-only t)
-			  (mark (point-max)))
+			  (inhibit-read-only t))
 		      (clear-visited-file-modtime)
 		      (narrow-to-region (point-max) (point-max))
 		      ;; We call `tramp-maybe-open-connection', in
@@ -2926,9 +2916,7 @@ the result will be a local, non-Tramp, file name."
 			(let ((pid (tramp-send-command-and-read v "echo $$")))
 			  (process-put p 'remote-pid pid)
 			  (tramp-set-connection-property p "remote-pid" pid))
-			(widen)
-			(delete-region mark (point-max))
-			(narrow-to-region (point-max) (point-max))
+			(delete-region (point-min) (point-max))
 			;; Now do it.
 			(if command
 			    ;; Send the command.

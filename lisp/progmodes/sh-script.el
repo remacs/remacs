@@ -2905,8 +2905,7 @@ STRING	     This is ignored for the purposes of calculating
 		      (setq align-point (point))))
 		(or (bobp)
 		    (forward-char -1))
-                ;; FIXME: This charset looks too much like a regexp.  --Stef
-		(skip-chars-forward "[a-z0-9]*?")
+		(skip-chars-forward "*0-9?[]a-z")
 		)
 	       ((string-match "[])}]" x)
 		(setq x (sh-safe-forward-sexp -1))

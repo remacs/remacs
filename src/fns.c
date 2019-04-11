@@ -3904,7 +3904,7 @@ static struct Lisp_Hash_Table *
 allocate_hash_table (void)
 {
   return ALLOCATE_PSEUDOVECTOR (struct Lisp_Hash_Table,
-				count, PVEC_HASH_TABLE);
+				index, PVEC_HASH_TABLE);
 }
 
 /* An upper bound on the size of a hash table index.  It must fit in

@@ -774,6 +774,15 @@ as an argument to `dired-goto-file'."
 	  (file-name-as-directory (abbreviate-file-name filename))
 	(abbreviate-file-name filename)))))
 
+(defun dired-grep-read-files ()
+  "Use file at point as the file for grep's default file-name pattern suggestion.
+If a directory or nothing is found at point, return nil."
+  (let ((file-name (dired-file-name-at-point)))
+    (if (and file-name
+	     (not (file-directory-p file-name)))
+	file-name)))
+(put 'dired-mode 'grep-read-files 'dired-grep-read-files)
+
 ;;;###autoload (define-key ctl-x-map "d" 'dired)
 ;;;###autoload
 (defun dired (dirname &optional switches)
@@ -1269,8 +1278,8 @@ If HDR is non-nil, insert a header line with the directory name."
 	 ;; as indicated by `ls-lisp-use-insert-directory-program'.
 	 (not (and (featurep 'ls-lisp)
 		   (null ls-lisp-use-insert-directory-program)))
-         (not (and (featurep 'eshell)
-                   (bound-and-true-p eshell-ls-use-in-dired)))
+         ;; FIXME: Big ugly hack for Eshell's eshell-ls-use-in-dired.
+         (not (bound-and-true-p eshell-ls-use-in-dired))
 	 (or (file-remote-p dir)
              (if (eq dired-use-ls-dired 'unspecified)
 		 ;; Check whether "ls --dired" gives exit code 0, and
