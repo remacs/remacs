@@ -11,8 +11,8 @@
     (should-error (trace-redisplay 1 2))
     (should-error (trace-redisplay nil 2))
 
-    (should (eq nil (trace-redisplay)))
-    (should (eq nil (trace-redisplay nil)))
-    (should (eq nil (trace-redisplay -1)))
-    (should (eq nil (trace-redisplay 0)))
-    (should (eq nil (trace-redisplay 1)))))
+    (should-not (trace-redisplay))
+    (should-not (trace-redisplay nil))
+    (should-not (trace-redisplay -1))
+    (should-not (trace-redisplay 0))
+    (should-not (trace-redisplay 1))))
