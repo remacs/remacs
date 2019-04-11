@@ -236,6 +236,7 @@ before the external MIME handler is invoked."
     ("text/x-patch" mm-display-patch-inline identity)
     ;; In case mime.types uses x-diff (as does Debian's mime-support-3.40).
     ("text/x-diff" mm-display-patch-inline identity)
+    ("application/x-patch" mm-display-patch-inline identity)
     ("application/emacs-lisp" mm-display-elisp-inline identity)
     ("application/x-emacs-lisp" mm-display-elisp-inline identity)
     ("application/x-shellscript" mm-display-shell-script-inline identity)
@@ -303,8 +304,9 @@ before the external MIME handler is invoked."
 
 (defcustom mm-inlined-types
   '("image/.*" "text/.*" "message/delivery-status" "message/rfc822"
-    "message/partial" "message/external-body" "application/emacs-lisp"
-    "application/x-emacs-lisp"
+    "message/partial" "message/external-body"
+    "application/x-patch"
+    "application/emacs-lisp" "application/x-emacs-lisp"
     "application/pgp-signature" "application/x-pkcs7-signature"
     "application/pkcs7-signature" "application/x-pkcs7-mime"
     "application/pkcs7-mime"
