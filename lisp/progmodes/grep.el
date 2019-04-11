@@ -959,8 +959,16 @@ substitution string.  Note dynamic scoping of variables.")
 The pattern can include shell wildcards.  As whitespace triggers
 completion when entering a pattern, including it requires
 quoting, e.g. `\\[quoted-insert]<space>'."
-  (let* ((bn (or (buffer-file-name)
-		 (replace-regexp-in-string "<[0-9]+>\\'" "" (buffer-name))))
+  (let* ((grep-read-files-function (get major-mode 'grep-read-files))
+	 (file-name-at-point
+	   (run-hook-with-args-until-success 'file-name-at-point-functions))
+	 (bn (if grep-read-files-function
+		 (funcall grep-read-files-function)
+	       (or (if (and (stringp file-name-at-point)
+			    (not (file-directory-p file-name-at-point)))
+		       file-name-at-point)
+		   (buffer-file-name)
+		   (replace-regexp-in-string "<[0-9]+>\\'" "" (buffer-name)))))
 	 (fn (and bn
 		  (stringp bn)
 		  (file-name-nondirectory bn)))
