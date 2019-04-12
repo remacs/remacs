@@ -31,6 +31,12 @@ impl LispObject {
         }
     }
 
+    pub fn check_list_end(self, list: LispObject) {
+        if !self.is_nil() {
+            wrong_type!(Qlistp, list);
+        }
+    }
+
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
@@ -330,7 +336,7 @@ impl LispCons {
         }
     }
 
-    /// Set the car of the cons cell.
+    /// Set the cdr of the cons cell.
     pub fn set_cdr(self, n: impl Into<LispObject>) {
         unsafe {
             (*self._extract()).u.s.as_mut().u.cdr = n.into();

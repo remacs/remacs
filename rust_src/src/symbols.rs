@@ -2,17 +2,24 @@
 
 use std::fmt;
 use std::fmt::{Debug, Formatter};
+use std::ptr;
 
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::per_buffer_idx_from_field_offset,
+    buffers::{current_buffer, per_buffer_idx_from_field_offset},
     buffers::{LispBufferLocalValueRef, LispBufferOrCurrent, LispBufferRef},
     data::Lisp_Fwd,
-    data::{as_buffer_objfwd, do_symval_forwarding, indirect_function, set},
+    data::{
+        as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd,
+        is_kboard_objfwd, set, store_symval_forwarding,
+    },
+    frames::selected_frame,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    lists::LispCons,
     multibyte::LispStringRef,
+    remacs_sys::Fframe_terminal,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
         get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
@@ -178,6 +185,32 @@ impl LispSymbolRef {
 
     pub fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+
+    /// Set up SYMBOL to refer to its global binding.  This makes it safe
+    /// to alter the status of other bindings.  BEWARE: this may be called
+    /// during the mark phase of GC, where we assume that Lisp_Object slots
+    /// of BLV are marked after this function has changed them.
+    pub unsafe fn swap_in_global_binding(self) {
+        let mut blv = self.get_blv();
+        let fwd = blv.get_fwd();
+
+        // Unload the previously loaded binding.
+        if !fwd.is_null() {
+            blv.set_value(do_symval_forwarding(fwd));
+        }
+
+        // Select the global binding in the symbol.
+        blv.valcell = blv.defcell;
+
+        if !fwd.is_null() {
+            let defcell: LispCons = blv.defcell.into();
+            store_symval_forwarding(fwd as *mut Lisp_Fwd, defcell.cdr(), ptr::null_mut());
+        }
+
+        // Indicate that the global binding is set up now.
+        blv.where_ = Qnil;
+        blv.set_found(false);
     }
 }
 
@@ -419,6 +452,7 @@ pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
     }
     val
 }
+
 /// Non-nil if VARIABLE has a local binding in buffer BUFFER.
 /// BUFFER defaults to the current buffer.
 #[lisp_fn(min = "1")]
@@ -453,6 +487,77 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
         },
         _ => unreachable!(),
     }
+}
+
+/// Return a value indicating where VARIABLE's current binding comes from.
+/// If the current binding is buffer-local, the value is the current buffer.
+/// If the current binding is global (the default), the value is nil.
+#[lisp_fn]
+pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
+    // Make sure the current binding is actually swapped in.
+    unsafe {
+        symbol.find_value();
+    }
+    symbol = symbol.get_indirect_variable();
+
+    fn localized_handler(sym: LispSymbolRef) -> LispObject {
+        // For a local variable, record both the symbol and which
+        // buffer's or frame's value we are saving.
+        let blv = unsafe { sym.get_blv() };
+
+        if local_variable_p(sym, LispBufferOrCurrent::Current) {
+            current_buffer()
+        } else if sym.get_redirect() == symbol_redirect::SYMBOL_LOCALIZED && blv.found() {
+            blv.where_
+        } else {
+            Qnil
+        }
+    }
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => Qnil,
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let fwd = symbol.get_fwd();
+            if is_kboard_objfwd(fwd) {
+                Fframe_terminal(selected_frame().into())
+            } else if !is_buffer_objfwd(fwd) {
+                Qnil
+            } else {
+                localized_handler(symbol)
+            }
+        },
+        symbol_redirect::SYMBOL_LOCALIZED => localized_handler(symbol),
+        _ => unreachable!(),
+    }
+}
+
+/// Non-nil if VARIABLE is local in buffer BUFFER when set there.
+/// BUFFER defaults to the current buffer.
+///
+/// More precisely, return non-nil if either VARIABLE already has a local
+/// value in BUFFER, or if VARIABLE is automatically buffer-local (see
+/// `make-variable-buffer-local')
+#[lisp_fn(min = "1")]
+pub fn local_variable_if_set_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) -> bool {
+    symbol = symbol.get_indirect_variable();
+
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => false,
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            let blv = unsafe { symbol.get_blv() };
+            blv.local_if_set() || local_variable_p(symbol, buffer)
+        }
+        symbol_redirect::SYMBOL_FORWARDED => {
+            // All BUFFER_OBJFWD slots become local if they are set.
+            unsafe { is_buffer_objfwd(symbol.get_fwd()) }
+        }
+        _ => unreachable!(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn swap_in_global_binding(symbol: *mut Lisp_Symbol) {
+    LispSymbolRef::new(symbol).swap_in_global_binding();
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

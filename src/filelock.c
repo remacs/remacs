@@ -753,38 +753,6 @@ unlock_all_files (void)
 	unlock_file (BVAR (b, file_truename));
     }
 }
-
-DEFUN ("lock-buffer", Flock_buffer, Slock_buffer,
-       0, 1, 0,
-       doc: /* Lock FILE, if current buffer is modified.
-FILE defaults to current buffer's visited file,
-or else nothing is done if current buffer isn't visiting a file.
-
-If the option `create-lockfiles' is nil, this does nothing.  */)
-  (Lisp_Object file)
-{
-  if (NILP (file))
-    file = BVAR (current_buffer, file_truename);
-  else
-    CHECK_STRING (file);
-  if (SAVE_MODIFF < MODIFF
-      && !NILP (file))
-    lock_file (file);
-  return Qnil;
-}
-
-DEFUN ("unlock-buffer", Funlock_buffer, Sunlock_buffer,
-       0, 0, 0,
-       doc: /* Unlock the file visited in the current buffer.
-If the buffer is not modified, this does nothing because the file
-should not be locked in that case.  */)
-  (void)
-{
-  if (SAVE_MODIFF < MODIFF
-      && STRINGP (BVAR (current_buffer, file_truename)))
-    unlock_file (BVAR (current_buffer, file_truename));
-  return Qnil;
-}
 
 /* Unlock the file visited in buffer BUFFER.  */
 
@@ -835,7 +803,5 @@ syms_of_filelock (void)
 	       doc: /* Non-nil means use lockfiles to avoid editing collisions.  */);
   create_lockfiles = 1;
 
-  defsubr (&Sunlock_buffer);
-  defsubr (&Slock_buffer);
   defsubr (&Sfile_locked_p);
 }

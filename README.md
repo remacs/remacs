@@ -136,6 +136,8 @@ more Emacs-y.
    [Rust installed](https://www.rust-lang.org/en-US/install.html). 
    The file `rust-toolchain` indicates the version that gets installed.
    This happens automatically, so don't override the toolchain manually.
+   IMPORTANT: Whenever the toolchain updates, you have to reinstall
+   rustfmt manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like:
@@ -297,4 +299,4 @@ Pull requests welcome, no copyright assignment required. This project is under t
 [Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct).
 
 There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
-one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
+one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our [Gitter channel](https://gitter.im/remacs-discuss/Lobby).

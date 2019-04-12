@@ -3738,16 +3738,6 @@ If FRAME is omitted or nil, use the selected frame.  */)
 }
 
 
-DEFUN ("frame-face-alist", Fframe_face_alist, Sframe_face_alist,
-       0, 1, 0,
-       doc: /* Return an alist of frame-local faces defined on FRAME.
-For internal use only.  */)
-  (Lisp_Object frame)
-{
-  return decode_live_frame (frame)->face_alist;
-}
-
-
 /* Return a hash code for Lisp string STRING with case ignored.  Used
    below in computing a hash value for a Lisp face.  */
 
@@ -6286,7 +6276,6 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_copy_lisp_face);
   defsubr (&Sinternal_merge_in_global_face);
   defsubr (&Sface_font);
-  defsubr (&Sframe_face_alist);
   defsubr (&Sdisplay_supports_face_attributes_p);
   defsubr (&Scolor_distance);
   defsubr (&Sinternal_set_font_selection_order);

@@ -10,7 +10,7 @@ use crate::{
     remacs_sys::{daemon_name, globals},
 };
 
-/// Replaces IS_DAEMON
+// Replaces IS_DAEMON
 cfg_if! {
     if #[cfg(windows)] {
         use crate::remacs_sys::w32_daemon_event;

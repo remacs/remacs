@@ -56,14 +56,11 @@ static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
 static void run_window_configuration_change_hook (struct frame *);
 
-static struct window *set_window_fringes (struct window *, Lisp_Object,
-					  Lisp_Object, Lisp_Object);
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
 static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object);
-static void apply_window_adjustment (struct window *);
 
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
@@ -462,26 +459,6 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
 
-DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
-       doc: /* Return left pixel edge of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_left);
-}
-
-DEFUN ("window-left-column", Fwindow_left_column, Swindow_left_column, 0, 1, 0,
-       doc: /* Return left column of window WINDOW.
-This is the distance, in columns, between the left edge of WINDOW and
-the left edge of the frame's window area.  For instance, the return
-value is 0 if there is no window to the left of WINDOW.
-
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->left_col);
-}
-
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
        Swindow_mode_line_height, 0, 1, 0,
        doc: /* Return the height in pixels of WINDOW's mode-line.
@@ -534,44 +511,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
-}
-
-/* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
-   range, returning the new amount as a fixnum.  */
-Lisp_Object
-set_window_hscroll (struct window *w, EMACS_INT hscroll)
-{
-  /* Horizontal scrolling has problems with large scroll amounts.
-     It's too slow with long lines, and even with small lines the
-     display can be messed up.  For now, though, impose only the limits
-     required by the internal representation: horizontal scrolling must
-     fit in fixnum (since it's visible to Elisp) and into ptrdiff_t
-     (since it's stored in a ptrdiff_t).  */
-  ptrdiff_t hscroll_max = min (MOST_POSITIVE_FIXNUM, PTRDIFF_MAX);
-  ptrdiff_t new_hscroll = clip_to_bounds (0, hscroll, hscroll_max);
-
-  /* Prevent redisplay shortcuts when changing the hscroll.  */
-  if (w->hscroll != new_hscroll)
-    XBUFFER (w->contents)->prevent_redisplay_optimizations_p = true;
-
-  w->hscroll = new_hscroll;
-  w->suspend_auto_hscroll = true;
-
-  return make_number (new_hscroll);
-}
-
-DEFUN ("set-window-hscroll", Fset_window_hscroll, Sset_window_hscroll, 2, 2, 0,
-       doc: /* Set number of columns WINDOW is scrolled from left margin to NCOL.
-WINDOW must be a live window and defaults to the selected one.
-Clip the number to a reasonable value if out of range.
-Return the new number.  NCOL should be zero or positive.
-
-Note that if `automatic-hscrolling' is non-nil, you cannot scroll the
-window so that the location of point moves off-window.  */)
-  (Lisp_Object window, Lisp_Object ncol)
-{
-  CHECK_NUMBER (ncol);
-  return set_window_hscroll (decode_live_window (window), XINT (ncol));
 }
 
 /* Test if the character at column X, row Y is within window W.
@@ -5701,7 +5640,7 @@ saved by this function.  */)
 
 /* Called after W's margins, fringes or scroll bars was adjusted.  */
 
-static void
+void
 apply_window_adjustment (struct window *w)
 {
   eassert (w);
@@ -5778,7 +5717,7 @@ Return t if any margin was actually changed and nil otherwise.  */)
 			    Fringes
  ***********************************************************************/
 
-static struct window *
+struct window *
 set_window_fringes (struct window *w, Lisp_Object left_width,
 		    Lisp_Object right_width, Lisp_Object outside_margins)
 {
@@ -5811,46 +5750,6 @@ set_window_fringes (struct window *w, Lisp_Object left_width,
     }
   else
     return NULL;
-}
-
-DEFUN ("set-window-fringes", Fset_window_fringes, Sset_window_fringes,
-       2, 4, 0,
-       doc: /* Set the fringe widths of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Second arg LEFT-WIDTH specifies the number of pixels to reserve for
-the left fringe.  Optional third arg RIGHT-WIDTH specifies the right
-fringe width.  If a fringe width arg is nil, that means to use the
-frame's default fringe width.  Default fringe widths can be set with
-the command `set-fringe-style'.
-If optional fourth arg OUTSIDE-MARGINS is non-nil, draw the fringes
-outside of the display margins.  By default, fringes are drawn between
-display marginal areas and the text area.
-
-Return t if any fringe was actually changed and nil otherwise.  */)
-  (Lisp_Object window, Lisp_Object left_width,
-   Lisp_Object right_width, Lisp_Object outside_margins)
-{
-  struct window *w
-    = set_window_fringes (decode_live_window (window),
-			  left_width, right_width, outside_margins);
-  return w ? (apply_window_adjustment (w), Qt) : Qnil;
-}
-
-
-DEFUN ("window-fringes", Fwindow_fringes, Swindow_fringes,
-       0, 1, 0,
-       doc: /* Get width of fringes of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS).  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_live_window (window);
-
-  return list3 (make_number (WINDOW_LEFT_FRINGE_WIDTH (w)),
-		make_number (WINDOW_RIGHT_FRINGE_WIDTH (w)),
-		WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w) ? Qt : Qnil);
 }
 
 
@@ -6336,13 +6235,10 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_pixel_left);
-  defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
-  defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
@@ -6372,8 +6268,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
-  defsubr (&Sset_window_fringes);
-  defsubr (&Swindow_fringes);
   defsubr (&Sset_window_scroll_bars);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);

@@ -51,7 +51,7 @@ use crate::remacs_sys::{clearerr_unlocked, ferror_unlocked};
 #[no_mangle]
 pub unsafe extern "C" fn defvar_int(
     i_fwd: *mut Lisp_Intfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut EmacsInt,
 ) {
     (*i_fwd).ty = Lisp_Fwd_Int;
@@ -68,7 +68,7 @@ pub unsafe extern "C" fn defvar_int(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_bool(
     b_fwd: *mut Lisp_Boolfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut bool,
 ) {
     (*b_fwd).ty = Lisp_Fwd_Bool;
@@ -88,7 +88,7 @@ pub unsafe extern "C" fn defvar_bool(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp_nopro(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     (*o_fwd).ty = Lisp_Fwd_Obj;
@@ -103,7 +103,7 @@ pub unsafe extern "C" fn defvar_lisp_nopro(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     defvar_lisp_nopro(o_fwd, namestring, address);
@@ -115,7 +115,7 @@ pub unsafe extern "C" fn defvar_lisp(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_kboard(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: i32,
 ) {
     defvar_kboard_offset(
@@ -127,7 +127,7 @@ pub unsafe extern "C" fn defvar_kboard(
 
 pub unsafe fn defvar_kboard_offset(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::kboard, LispObject>,
 ) {
     (*ko_fwd).ty = Lisp_Fwd_Kboard_Obj;
@@ -142,7 +142,7 @@ pub unsafe fn defvar_kboard_offset(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_per_buffer(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {
@@ -151,7 +151,7 @@ pub unsafe extern "C" fn defvar_per_buffer(
 
 pub unsafe fn defvar_per_buffer_offset(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {

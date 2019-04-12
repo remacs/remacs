@@ -57,6 +57,10 @@ pub unsafe fn as_buffer_objfwd(a: *const Lisp_Fwd) -> Option<Lisp_Buffer_Objfwd>
     }
 }
 
+pub unsafe fn is_buffer_objfwd(a: *const Lisp_Fwd) -> bool {
+    as_buffer_objfwd(a).is_some()
+}
+
 /// Find the function at the end of a chain of symbol function indirections.
 
 /// If OBJECT is a symbol, find the end of its function chain and

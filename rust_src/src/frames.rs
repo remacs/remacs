@@ -16,7 +16,10 @@ use crate::{
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::{vertical_scroll_bar_type, x_focus_frame, Fnreverse};
+use crate::{
+    fns::nreverse,
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame},
+};
 
 #[cfg(not(feature = "window-system"))]
 use crate::remacs_sys::Fcopy_sequence;
@@ -647,7 +650,7 @@ pub fn frame_list() -> LispObject {
     {
         let list = filter_frame_list(|f| !f.has_tooltip());
         // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
-        unsafe { Fnreverse(list) }
+        nreverse(list)
     }
     #[cfg(not(feature = "window-system"))]
     {
@@ -659,6 +662,14 @@ pub fn frame_list() -> LispObject {
 #[lisp_fn]
 pub fn visible_frame_list() -> LispObject {
     filter_frame_list(LispFrameRef::is_visible)
+}
+
+/// Return an alist of frame-local faces defined on FRAME.
+/// For internal use only.
+#[lisp_fn(min = "0")]
+pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.face_alist
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
