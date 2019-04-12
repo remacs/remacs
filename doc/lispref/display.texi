@@ -5856,8 +5856,8 @@ This function returns the size of an image as a pair
 specification.  @var{pixels} non-@code{nil} means return sizes measured
 in pixels, otherwise return sizes measured in the default character size
 of @var{frame} (@pxref{Frame Font}).  @var{frame} is the frame on which
-the image will be displayed.  @var{frame} null or omitted means use the
-selected frame (@pxref{Input Focus}).
+the image will be displayed.  @var{frame} @code{nil} or omitted means
+use the selected frame (@pxref{Input Focus}).
 @end defun
 
 @defvar max-image-size
