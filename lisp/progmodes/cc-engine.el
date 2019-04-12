@@ -10953,7 +10953,8 @@ comment at the start of cc-engine.el for more info."
 		      (eq (char-after) ?\())
 		 (setq braceassignp 'c++-noassign
 		       in-paren 'in-paren))
-		((looking-at c-pre-id-bracelist-key))
+		((looking-at c-pre-id-bracelist-key)
+		 (setq braceassignp nil))
 		((looking-at c-return-key))
 		((and (looking-at c-symbol-start)
 		      (not (looking-at c-keywords-regexp)))
@@ -10995,6 +10996,8 @@ comment at the start of cc-engine.el for more info."
 
       (setq pos (point))
       (cond
+       ((not braceassignp)
+	nil)
        ((and after-type-id-pos
 	     (goto-char after-type-id-pos)
 	     (setq res (c-back-over-member-initializers))
@@ -11069,14 +11072,20 @@ comment at the start of cc-engine.el for more info."
 				     ))))
 			   nil)
 			  (t t))))))
-	  (when (and (eq braceassignp 'dontknow)
-		     (/= (c-backward-token-2 1 t lim) 0))
-	    (if (save-excursion
-		  (and c-has-compound-literals
-		       (eq (c-backward-token-2 1 nil lim) 0)
-		       (eq (char-after) ?\()))
-		(setq braceassignp t)
-	      (setq braceassignp nil))))
+	  (when (eq braceassignp 'dontknow)
+	    (cond ((and
+		    (not (eq (char-after) ?,))
+		    (save-excursion
+		      (c-backward-syntactic-ws)
+		      (eq (char-before) ?})))
+		   (setq braceassignp nil))
+		  ((/= (c-backward-token-2 1 t lim) 0)
+		   (if (save-excursion
+			 (and c-has-compound-literals
+			      (eq (c-backward-token-2 1 nil lim) 0)
+			      (eq (char-after) ?\()))
+		       (setq braceassignp t)
+		     (setq braceassignp nil))))))
 
 	(cond
 	 (braceassignp
@@ -11108,9 +11117,14 @@ comment at the start of cc-engine.el for more info."
 		    (and (consp res)
 			 (eq (car res) after-type-id-pos))))))
 	  (cons bufpos (or in-paren inexpr-brace-list)))
-	 ((eq (char-after) ?\;)
-	  ;; Brace lists can't contain a semicolon, so we're done.
-	  ;; (setq containing-sexp nil)
+	 ((or (eq (char-after) ?\;)
+	      ;; Brace lists can't contain a semicolon, so we're done.
+	      (save-excursion
+		(c-backward-syntactic-ws)
+		(eq (char-before) ?}))
+	      ;; They also can't contain a bare }, which is probably the end
+	      ;; of a function.
+	      )
 	  nil)
 	 ((and (setq macro-start (point))
 	       (c-forward-to-cpp-define-body)
