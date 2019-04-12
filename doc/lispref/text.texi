@@ -5167,6 +5167,11 @@ key-value mappings of a JSON object.  It can be either
 keys; @code{alist} to use alists with symbols as keys; or @code{plist}
 to use plists with keyword symbols as keys.
 
+@item :array-type
+The value decides which Lisp object to use for representing a JSON
+array.  It can be either @code{array}, the default, to use Lisp
+arrays; or @code{list} to use lists.
+
 @item :null-object
 The value decides which Lisp object to use to represent the JSON
 keyword @code{null}.  It defaults to the symbol @code{:null}.
