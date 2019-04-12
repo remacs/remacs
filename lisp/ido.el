@@ -735,6 +735,14 @@ not provide the normal completion.  To show the completions, use \\[ido-toggle-i
 		 (integer :tag "Size in bytes" 30000))
   :group 'ido)
 
+(defcustom ido-big-directories nil
+  "List of directory pattern strings that should be considered big.
+Ido won't attempt to list the contents of directories matching
+any of these regular expressions when completing file names."
+  :type '(repeat regexp)
+  :group 'ido
+  :version "27.1")
+
 (defcustom ido-rotate-file-list-default nil
   "Non-nil means that Ido will always rotate file list to get default in front."
   :type 'boolean
@@ -1743,13 +1751,16 @@ is enabled then some keybindings are changed in the keymap."
   ;; Return t if dir is a directory, but too big to show
   ;; Do not check for non-readable directories via tramp, as this causes a premature
   ;; connect on incomplete tramp paths (after entering just method:).
-  (let ((ido-enable-tramp-completion nil))
-    (and (numberp ido-max-directory-size)
-	 (ido-final-slash dir)
-	 (not (ido-is-unc-host dir))
-	 (file-directory-p dir)
-	 (> (file-attribute-size (file-attributes (file-truename dir)))
-	    ido-max-directory-size))))
+  (let ((ido-enable-tramp-completion nil)
+        (case-fold-search nil))
+    (or (seq-some (lambda (regexp) (string-match-p regexp dir))
+                  ido-big-directories)
+        (and (numberp ido-max-directory-size)
+	     (ido-final-slash dir)
+	     (not (ido-is-unc-host dir))
+	     (file-directory-p dir)
+	     (> (file-attribute-size (file-attributes (file-truename dir)))
+	        ido-max-directory-size)))))
 
 (defun ido-set-current-directory (dir &optional subdir no-merge)
   ;; Set ido's current directory to DIR or DIR/SUBDIR

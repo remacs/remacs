@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'ido)
+
 (ert-deftest ido-tests--other-window-frame ()
   "Verifies that Bug#26360 is fixed."
   (should-not ido-mode)
@@ -43,5 +45,10 @@
                        #'ido-display-buffer-other-frame))
         (should (commandp #'ido-display-buffer-other-frame)))
     (ido-mode 0)))
+
+(ert-deftest ido-directory-too-big-p ()
+  (should-not (ido-directory-too-big-p "/some/dir/"))
+  (let ((ido-big-directories (cons (rx "me/di") ido-big-directories)))
+    (should (ido-directory-too-big-p "/some/dir/"))))
 
 ;;; ido-tests.el ends here
