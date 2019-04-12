@@ -11,6 +11,7 @@ use crate::{
     buffers::current_buffer,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
+    fns::copy_sequence,
     indent::indent_to,
     keyboard,
     keyboard::lucid_event_type_list_p,
@@ -25,8 +26,8 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcommand_remapping, Fcopy_sequence, Fcurrent_active_maps, Fevent_convert_list,
-        Fmake_char_table, Fpurecopy, Fset_char_table_range, Fterpri,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table, Fpurecopy,
+        Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qt,
@@ -649,10 +650,10 @@ pub fn copy_keymap(keymap: LispObject) -> LispObject {
         }
 
         if elt.is_char_table() {
-            elt = unsafe { Fcopy_sequence(elt) };
+            elt = copy_sequence(elt);
             unsafe { map_char_table(Some(copy_keymap_1), Qnil, elt, elt) };
         } else if let Some(v) = elt.as_vector() {
-            elt = unsafe { Fcopy_sequence(elt) };
+            elt = copy_sequence(elt);
             let mut v2 = elt.as_vector().unwrap();
             for (i, obj) in v.iter().enumerate() {
                 v2.set(i, unsafe { copy_keymap_item(obj) });

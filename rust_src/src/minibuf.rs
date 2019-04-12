@@ -6,7 +6,7 @@ use crate::{
     buffers::{current_buffer, LispBufferOrName},
     editfns,
     editfns::field_end,
-    eval,
+    eval, fns,
     keymap::get_keymap,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
@@ -18,7 +18,7 @@ use crate::{
     },
     remacs_sys::{
         make_buffer_string, make_specified_string, minibuf_level, minibuf_prompt, minibuf_window,
-        read_minibuf, specbind, EmacsInt, Fcopy_sequence,
+        read_minibuf, specbind, EmacsInt,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -71,7 +71,7 @@ pub fn minibuffer_depth() -> EmacsInt {
 /// minibuffer. If no minibuffer is active return nil.
 #[lisp_fn]
 pub fn minibuffer_prompt() -> LispObject {
-    unsafe { Fcopy_sequence(minibuf_prompt) }
+    fns::copy_sequence(unsafe { minibuf_prompt })
 }
 
 /// Return the buffer position of the end of the minibuffer prompt.

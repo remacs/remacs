@@ -7,6 +7,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::record,
     casefiddle::downcase,
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
@@ -20,8 +21,9 @@ use crate::{
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        concat as lisp_concat, globals, make_uninit_bool_vector, make_uninit_multibyte_string,
-        make_uninit_string, make_uninit_vector, message1, redisplay_preserve_echo_area,
+        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
+        make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
+        redisplay_preserve_echo_area,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -569,6 +571,31 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
     }
 
     val
+}
+
+/// Return a copy of a list, vector, string, char-table or record.
+/// The elements of a list, vector or record are not copied; they are
+/// shared with the original.
+/// If the original sequence is empty, this function may return
+/// the same empty object instead of its copy.
+#[lisp_fn]
+pub fn copy_sequence(mut arg: LispObject) -> LispObject {
+    if arg.is_nil() {
+        arg
+    } else if arg.is_record() {
+        record(arg.force_vectorlike_slots().as_mut_slice())
+    } else if arg.is_char_table() {
+        unsafe { copy_char_table(arg) }
+    } else if let Some(boolvec) = arg.as_bool_vector() {
+        let nbits = boolvec.len() as i64;
+        let mut new = unsafe { make_uninit_bool_vector(nbits).force_bool_vector() };
+        new.as_mut_slice().copy_from_slice(boolvec.as_slice());
+        new.into()
+    } else if !(arg.is_cons() || arg.is_vector() || arg.is_string()) {
+        wrong_type!(Qsequencep, arg);
+    } else {
+        unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

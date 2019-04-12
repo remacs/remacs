@@ -5,14 +5,15 @@ use remacs_macros::lisp_fn;
 use crate::{
     chartable::LispCharTableRef,
     editfns::constrain_to_field,
+    fns::copy_sequence,
     lisp::LispObject,
     numbers::LispNumber,
+    remacs_sys::Fset_char_table_parent,
     remacs_sys::{
         buffer_defaults, scan_lists, scan_words, set_char_table_defalt, set_point, skip_chars,
         skip_syntaxes,
     },
     remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p},
-    remacs_sys::{Fcopy_sequence, Fset_char_table_parent},
     threads::ThreadState,
 };
 
@@ -104,7 +105,7 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     } else {
         table = buffer_table;
     }
-    let copy: LispCharTableRef = unsafe { Fcopy_sequence(table) }.into();
+    let copy: LispCharTableRef = copy_sequence(table).into();
 
     // Only the standard syntax table should have a default element.
     // Other syntax tables should inherit from parents instead.

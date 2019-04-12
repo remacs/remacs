@@ -15,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, record_unwind_protect, unbind_to},
+    fns::copy_sequence,
     indent::invalidate_current_column,
     lisp::LispObject,
     marker::{marker_position_lisp, point_marker, set_point_from_marker},
@@ -36,7 +37,7 @@ use crate::{
         update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
-        Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
+        Fadd_text_properties, Fget_pos_property, Fnext_single_char_property_change,
         Fprevious_single_char_property_change, Fx_popup_dialog,
     },
     remacs_sys::{
@@ -421,7 +422,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = LispStringRef::from(*first);
 
-    let copy = unsafe { Fcopy_sequence(*first) };
+    let copy = copy_sequence(*first);
 
     let mut properties = Qnil;
 

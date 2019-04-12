@@ -281,41 +281,6 @@ concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
 }
 
 
-DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
-       doc: /* Return a copy of a list, vector, string, char-table or record.
-The elements of a list, vector or record are not copied; they are
-shared with the original.
-If the original sequence is empty, this function may return
-the same empty object instead of its copy.  */)
-  (Lisp_Object arg)
-{
-  if (NILP (arg)) return arg;
-
-  if (RECORDP (arg))
-    {
-      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
-    }
-
-  if (CHAR_TABLE_P (arg))
-    {
-      return copy_char_table (arg);
-    }
-
-  if (BOOL_VECTOR_P (arg))
-    {
-      EMACS_INT nbits = bool_vector_size (arg);
-      ptrdiff_t nbytes = bool_vector_bytes (nbits);
-      Lisp_Object val = make_uninit_bool_vector (nbits);
-      memcpy (bool_vector_data (val), bool_vector_data (arg), nbytes);
-      return val;
-    }
-
-  if (!CONSP (arg) && !VECTORP (arg) && !STRINGP (arg))
-    wrong_type_argument (Qsequencep, arg);
-
-  return concat (1, &arg, XTYPE (arg), 0);
-}
-
 /* This structure holds information of an argument of `concat' that is
    a string and has text properties to be copied.  */
 struct textprop_rec
@@ -2822,7 +2787,6 @@ this variable.  */);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
-  defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
   defsubr (&Sstring_as_unibyte);
