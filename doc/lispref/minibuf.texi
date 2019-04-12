@@ -1333,7 +1333,8 @@ is a string, @code{read-command} interns it before returning it.
 If it is a list, @code{read-command} interns the first element of this list.
 If @var{default} is @code{nil}, that means no default has been
 specified; then if the user enters null input, the return value is
-@code{(intern "")}, that is, a symbol whose name is an empty string.
+@code{(intern "")}, that is, a symbol whose name is an empty string,
+and whose printed representation is @code{##} (@pxref{Symbol Type}).
 
 @example
 (read-command "Command name? ")
