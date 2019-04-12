@@ -14,7 +14,7 @@ use crate::{
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
-    remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities, Fvconcat},
+    remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
     remacs_sys::{
         pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX,
         FONT_SPEC_MAX,
@@ -208,7 +208,7 @@ fn vconcat_entity_vectors(list: LispCons) -> LispObject {
     let mut args: Vec<LispObject> = list
         .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .collect();
-    unsafe { Fvconcat(args.len() as isize, args.as_mut_ptr()) }
+    fns::vconcat(&mut args)
 }
 
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
