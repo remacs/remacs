@@ -2339,9 +2339,9 @@ It's Beat CCA Week.
 
 ** Lisp macros now exist.
  For example, you can write
-    (defmacro cadr (arg) (list 'car (list 'cdr arg)))
+    (defmacro mycadr (arg) (list 'car (list 'cdr arg)))
  and then the expression
-    (cadr foo)
+    (mycadr foo)
  will expand into
     (car (cdr foo))
 

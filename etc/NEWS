@@ -847,6 +847,9 @@ directories in the destination.
 ** Help
 
 ---
+*** Description of variables and functions give an estimated first release
+
+---
 *** Output format of 'C-h l' ('view-lossage') has changed.
 For convenience, 'view-lossage' now displays the last keystrokes
 and commands in the same format as the edit buffer of
@@ -1496,6 +1499,9 @@ performs (setq-local indent-line-function #'indent-relative).
 
 
 * Lisp Changes in Emacs 27.1
+
+** New 'help-fns-describe-variable-functions' hook.
+Makes it possible to add metadata information to describe-variable.
 
 ** i18n (internationalization)
 
