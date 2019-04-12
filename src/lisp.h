@@ -4518,6 +4518,8 @@ decode_terminal (Lisp_Object terminal);
 extern void syms_of_terminal (void);
 
 /* Defined in font.c.  */
+extern Lisp_Object font_prop_validate (int, Lisp_Object, Lisp_Object);
+extern int get_font_prop_index (Lisp_Object);
 extern void syms_of_font (void);
 extern void init_font (void);
 

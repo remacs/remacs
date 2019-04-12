@@ -13,11 +13,15 @@ use crate::{
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
-    remacs_sys::{font_add_log, font_at, Flist_fonts},
+    remacs_sys::{font_add_log, font_at, font_prop_validate, font_put_extra, Flist_fonts},
     remacs_sys::{
-        pvec_type, Lisp_Font_Object, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX,
+        font_property_index, get_font_prop_index, pvec_type, Lisp_Font_Object, Lisp_Font_Spec,
+        Lisp_Type, ASET, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX,
     },
-    remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
+    remacs_sys::{
+        EmacsInt, QClang, QCname, QCotf, QCscript, Qfont, Qfont_entity, Qfont_object, Qfont_spec,
+        Qnil,
+    },
     threads::ThreadState,
     vectors::LispVectorlikeRef,
     windows::{LispWindowLiveOrSelected, LispWindowRef},
@@ -28,6 +32,9 @@ use crate::{
 // font types: Spec, Entity, and Object.
 #[repr(transparent)]
 pub struct LispFontRef(LispVectorlikeRef);
+
+pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
+pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl LispFontRef {
     pub fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
@@ -107,8 +114,6 @@ impl FontExtraType {
     }
 }
 
-pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
-
 impl LispFontObjectRef {
     pub fn add_log(self, action: &str, result: LispObject) {
         let c_str = CString::new(action).unwrap();
@@ -137,6 +142,48 @@ impl LispFontObjectRef {
                 display_info.n_fonts -= 1;
             }
         }
+    }
+}
+
+impl From<LispObject> for LispFontRef {
+    fn from(o: LispObject) -> Self {
+        match o.into() {
+            Some(font) => font,
+            None => wrong_type!(Qfont, o),
+        }
+    }
+}
+
+impl From<LispObject> for Option<LispFontRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font() {
+                Some(unsafe { mem::transmute(o) })
+            } else {
+                None
+            }
+        })
+    }
+}
+
+impl From<LispObject> for LispFontSpecRef {
+    fn from(o: LispObject) -> Self {
+        match o.into() {
+            Some(font) => font,
+            None => wrong_type!(Qfont_spec, o),
+        }
+    }
+}
+
+impl From<LispObject> for Option<LispFontSpecRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
+                Some(unsafe { mem::transmute(o) })
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -263,6 +310,35 @@ pub fn font_at_lisp(
         }
     };
     unsafe { font_at(-1, pos, ptr::null_mut(), w.as_mut(), string) }
+}
+
+/// Set one property of FONT: give property KEY value VAL.
+/// FONT is a font-spec, a font-entity, or a font-object.
+///
+/// If FONT is a font-spec, KEY can be any symbol.  But if KEY is the one
+/// accepted by the function `font-spec' (which see), VAL must be what
+/// allowed in `font-spec'.
+///
+/// If FONT is a font-entity or a font-object, KEY must not be the one
+/// accepted by `font-spec'.
+#[lisp_fn]
+pub fn font_put(font: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+    unsafe {
+        let idx = get_font_prop_index(prop);
+
+        if idx >= 0 && idx < font_property_index::FONT_EXTRA_INDEX as i32 {
+            LispFontSpecRef::from(font);
+            ASET(font, idx as isize, font_prop_validate(idx, Qnil, val));
+        } else {
+            if prop.eq(QCname) || prop.eq(QCscript) || prop.eq(QClang) || prop.eq(QCotf) {
+                LispFontSpecRef::from(font);
+            } else {
+                LispFontRef::from(font);
+            }
+            font_put_extra(font, prop, font_prop_validate(0, prop, val));
+        }
+        val
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
