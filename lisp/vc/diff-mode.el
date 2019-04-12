@@ -2411,9 +2411,10 @@ and the position in MAX."
     (diff-syntax-fontify-hunk beg end t)
     (diff-syntax-fontify-hunk beg end nil)))
 
-(defvar diff-syntax-fontify-revisions (make-hash-table :test 'equal))
-
 (eval-when-compile (require 'subr-x)) ; for string-trim-right
+
+(defvar-local diff--syntax-file-attributes nil)
+(put 'diff--syntax-file-attributes 'permanent-local t)
 
 (defun diff-syntax-fontify-hunk (beg end old)
   "Highlight source language syntax in diff hunk between BEG and END.
@@ -2444,33 +2445,38 @@ When OLD is non-nil, highlight the hunk from the old source."
                (when file
                  (if (not revision)
                      ;; Get properties from the current working revision
-                     (when (and (not old) (file-exists-p file)
+                     (when (and (not old) (file-readable-p file)
                                 (file-regular-p file))
                        (let ((buf (get-file-buffer (expand-file-name file))))
                          ;; Try to reuse an existing buffer
                          (if buf
                              (with-current-buffer buf
                                (diff-syntax-fontify-props nil text line-nb))
-                           ;; Get properties from the file
-                           (with-temp-buffer
-                             (insert-file-contents file)
+                           ;; Get properties from the file.
+                           (with-current-buffer (get-buffer-create
+                                                 " *diff-syntax-file*")
+                             (let ((attrs (file-attributes file)))
+                               (if (equal diff--syntax-file-attributes attrs)
+                                   ;; Same file as last-time, unmodified.
+                                   ;; Reuse buffer as-is.
+                                   (setq file nil)
+                                 (insert-file-contents file)
+                                 (setq diff--syntax-file-attributes attrs)))
                              (diff-syntax-fontify-props file text line-nb)))))
                    ;; Get properties from a cached revision
                    (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
                                                (expand-file-name file)
                                                revision))
-                          (buffer (gethash buffer-name
-                                           diff-syntax-fontify-revisions)))
-                     (unless (and buffer (buffer-live-p buffer))
-                       (let* ((vc-buffer (ignore-errors
-                                           (vc-find-revision-no-save
-                                            (expand-file-name file) revision
-                                            diff-vc-backend
-                                            (get-buffer-create buffer-name)))))
-                         (when vc-buffer
-                           (setq buffer vc-buffer)
-                           (puthash buffer-name buffer
-                                    diff-syntax-fontify-revisions))))
+                          (buffer (get-buffer buffer-name)))
+                     (if buffer
+                         ;; Don't re-initialize the buffer (which would throw
+                         ;; away the previous fontification work).
+                         (setq file nil)
+                       (setq buffer (ignore-errors
+                                      (vc-find-revision-no-save
+                                       (expand-file-name file) revision
+                                       diff-vc-backend
+                                       (get-buffer-create buffer-name)))))
                      (when buffer
                        (with-current-buffer buffer
                          (diff-syntax-fontify-props file text line-nb))))))))
