@@ -448,6 +448,18 @@ If SELECT is non-nil, select the target window."
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")
 
+(defface xref-file-header '((t :inherit compilation-info))
+  "Face used to highlight file header in the xref buffer."
+  :version "27.1")
+
+(defface xref-line-number '((t :inherit compilation-line-number))
+  "Face for displaying line numbers in the xref buffer."
+  :version "27.1")
+
+(defface xref-match '((t :inherit highlight))
+  "Face used to highlight matches in the xref buffer."
+  :version "27.1")
+
 (defmacro xref--with-dedicated-window (&rest body)
   `(let* ((xref-w (get-buffer-window xref-buffer-name))
           (xref-w-dedicated (window-dedicated-p xref-w)))
@@ -737,18 +749,17 @@ GROUP is a string for decoration purposes and XREF is an
            for line-format = (and max-line-width
                                   (format "%%%dd: " max-line-width))
            do
-           (xref--insert-propertized '(face compilation-info) group "\n")
+           (xref--insert-propertized '(face xref-file-header) group "\n")
            (cl-loop for (xref . more2) on xrefs do
                     (with-slots (summary location) xref
                       (let* ((line (xref-location-line location))
                              (prefix
                               (if line
                                   (propertize (format line-format line)
-                                              'face 'compilation-line-number)
+                                              'face 'xref-line-number)
                                 "  ")))
                         (xref--insert-propertized
                          (list 'xref-item xref
-                               ;; 'face 'font-lock-keyword-face
                                'mouse-face 'highlight
                                'keymap xref--button-map
                                'help-echo
@@ -1159,7 +1170,7 @@ Such as the current syntax table and the applied syntax properties."
              (end-column (- (match-end 0) line-beg))
              (loc (xref-make-file-location file line beg-column))
              (summary (buffer-substring line-beg line-end)))
-        (add-face-text-property beg-column end-column 'highlight
+        (add-face-text-property beg-column end-column 'xref-match
                                 t summary)
         (push (xref-make-match summary loc (- end-column beg-column))
               matches)))
