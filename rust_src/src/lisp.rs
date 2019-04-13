@@ -502,7 +502,7 @@ impl LispObject {
     }
 
     pub fn is_sequence(self) -> bool {
-        self.is_cons() || self.is_nil() || self.is_array()
+        self.is_list() || self.is_array()
     }
 
     pub fn is_record(self) -> bool {

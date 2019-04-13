@@ -637,7 +637,7 @@ pub fn length(sequence: LispObject) -> usize {
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
 pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
-    if sequence.is_cons() || sequence.is_nil() {
+    if sequence.is_list() {
         nth(n, sequence)
     } else if sequence.is_array() {
         aref(sequence, n)

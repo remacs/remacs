@@ -26,7 +26,7 @@ pub struct LispCons(LispObject);
 
 impl LispObject {
     pub fn check_list(self) {
-        if !(self.is_cons() || self.is_nil()) {
+        if !self.is_list() {
             wrong_type!(Qlistp, self);
         }
     }
@@ -439,7 +439,7 @@ pub fn consp(object: LispObject) -> bool {
 /// Otherwise, return nil.
 #[lisp_fn]
 pub fn listp(object: LispObject) -> bool {
-    object.is_nil() || consp(object)
+    object.is_list()
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.
