@@ -3351,6 +3351,15 @@ is output."
   :group 'shell
   :version "26.1")
 
+(defcustom shell-command-width nil
+  "Number of columns available for asynchronous shell command output.
+If nil, use the shell default number (usually 80 columns).
+If a positive integer, use a fixed width for command output."
+  :type '(choice (const :tag "Use system limit" nil)
+                 (integer :tag "Fixed width" :value 80))
+  :group 'shell
+  :version "27.1")
+
 (defcustom shell-command-dont-erase-buffer nil
   "If non-nil, output buffer is not erased between shell commands.
 Also, a non-nil value sets the point in the output buffer
@@ -3614,8 +3623,13 @@ impose the use of a shell (with its need to quote arguments)."
 		(with-current-buffer buffer
                   (shell-command--save-pos-or-erase)
 		  (setq default-directory directory)
-                  (setq proc
-                        (start-process-shell-command "Shell" buffer command))
+		  (let ((process-environment
+			 (if (natnump shell-command-width)
+			     (cons (format "COLUMNS=%d" shell-command-width)
+				   process-environment)
+			   process-environment)))
+		    (setq proc
+			  (start-process-shell-command "Shell" buffer command)))
 		  (setq mode-line-process '(":%s"))
 		  (require 'shell) (shell-mode)
                   (set-process-sentinel proc #'shell-command-sentinel)
