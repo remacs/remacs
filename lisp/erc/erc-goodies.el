@@ -548,7 +548,7 @@ channel that has weird people talking in morse to each other.
 
 See also `unmorse-region'."
   (goto-char (point-min))
-  (when (re-search-forward "[.-]+\\([.-]*/? *\\)+[.-]+/?" nil t)
+  (when (re-search-forward "[.-]+[./ -]*[.-]/?" nil t)
     (save-restriction
       (narrow-to-region (match-beginning 0) (match-end 0))
       ;; Turn " / " into "  "

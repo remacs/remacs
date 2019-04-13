@@ -6454,10 +6454,10 @@ ARROW:  Location of the arrow"
      ((string-match "\\`[ \t]*\\(pro\\|function\\)\\>"
 		    match-string)
       nil)
-     ((string-match "OBJ_NEW([ \t]*['\"]\\([a-zA-Z0-9$_]*\\)?\\'"
+     ((string-match "OBJ_NEW([ \t]*['\"][a-zA-Z0-9$_]*\\'"
 		    match-string)
       (setq cw 'class))
-     ((string-match "\\<inherits\\s-+\\([a-zA-Z0-9$_]*\\)?\\'"
+     ((string-match "\\<inherits\\s-+[a-zA-Z0-9$_]*\\'"
 		    match-string)
       (setq cw 'class))
      ((and func

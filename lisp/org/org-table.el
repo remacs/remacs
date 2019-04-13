@@ -484,8 +484,8 @@ Line numbers are counted from the beginning of the table.  This
 variable is initialized with `org-table-analyze'.")
 
 (defconst org-table-range-regexp
-  "@\\([-+]?I*[-+]?[0-9]*\\)?\\(\\$[-+]?[0-9]+\\)?\\(\\.\\.@?\\([-+]?I*[-+]?[0-9]*\\)?\\(\\$[-+]?[0-9]+\\)?\\)?"
-  ;;   1                        2                    3          4                        5
+  "@\\([-+]?I*[-+]?[0-9]*\\)\\(\\$[-+]?[0-9]+\\)?\\(\\.\\.@?\\([-+]?I*[-+]?[0-9]*\\)\\(\\$[-+]?[0-9]+\\)?\\)?"
+  ;;   1                       2                    3          4                       5
   "Regular expression for matching ranges in formulas.")
 
 (defconst org-table-range-regexp2

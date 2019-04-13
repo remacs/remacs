@@ -1285,7 +1285,7 @@ add things to `%s' instead."
     (pcase-let ((`(,nick ,login ,host)
                  (erc-parse-user (erc-response.sender parsed))))
       ;; strip the stupid combined JOIN facility (IRC 2.9)
-      (if (string-match "^\\(.*\\)?\^g.*$" chnl)
+      (if (string-match "^\\(.*\\)\^g.*$" chnl)
           (setq chnl (match-string 1 chnl)))
       (save-excursion
         (let* ((str (cond

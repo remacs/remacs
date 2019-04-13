@@ -52,7 +52,7 @@ This is useful for ChangeLogs."
 (defcustom copyright-regexp
  "\\(©\\|@copyright{}\\|[Cc]opyright\\s *:?\\s *\\(?:(C)\\)?\
 \\|[Cc]opyright\\s *:?\\s *©\\)\
-\\s *\\(?:[^0-9\n]*\\s *\\)?\
+\\s *[^0-9\n]*\\s *\
 \\([1-9]\\([-0-9, ';/*%#\n\t]\\|\\s<\\|\\s>\\)*[0-9]+\\)"
   "What your copyright notice looks like.
 The second \\( \\) construct must match the years."
