@@ -10,7 +10,7 @@ use crate::{
     buffers::{set_buffer, LispBufferRef},
     editfns::{goto_char, point},
     eval::unbind_to,
-    fns::nreverse,
+    fns::{copy_alist, nreverse},
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
@@ -20,7 +20,6 @@ use crate::{
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
-    remacs_sys::Fcopy_alist,
     remacs_sys::{
         apply_window_adjustment, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
@@ -1701,7 +1700,7 @@ pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
 #[lisp_fn(min = "0")]
 pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
-    unsafe { Fcopy_alist(win.window_parameters) }
+    copy_alist(win.window_parameters)
 }
 
 /// Return WINDOW's redisplay end trigger value.
