@@ -358,6 +358,10 @@ macro_rules! impl_vectorlike_ref {
                 (unsafe { self.header.size } & ($size_mask as isize)) as usize
             }
 
+            pub fn is_empty(self) -> bool {
+                self.len() == 0
+            }
+
             pub fn as_slice(&self) -> &[LispObject] {
                 let l = self.len();
                 unsafe { self.contents.as_slice(l) }
@@ -474,6 +478,10 @@ impl From<LispBoolVecRef> for LispObject {
 impl LispBoolVecRef {
     pub fn len(self) -> usize {
         self.size as usize
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.len() == 0
     }
 
     pub fn len_bytes(self) -> usize {
