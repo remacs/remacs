@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef},
     lists::{assq, car, cdr, get, memq, nth, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
@@ -20,9 +20,10 @@ use crate::{
     },
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
-        grow_specpdl, internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace,
-        record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP, MODULE_FUNCTIONP,
+        do_one_unbind, eval_sub, funcall_lambda, funcall_subr, globals, grow_specpdl,
+        internal_catch, internal_lisp_condition_case, list2, maybe_gc, maybe_quit,
+        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
+        MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
@@ -114,10 +115,11 @@ pub fn and(args: LispObject) -> LispObject {
 
 /// Eval each item in ARGS and then compare it using CMP.
 /// INITIAL is returned if the list has no cons cells.
-fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
-where
-    CmpFunc: Fn(LispObject, LispObject) -> bool,
-{
+fn eval_and_compare_all(
+    args: LispObject,
+    initial: LispObject,
+    cmp: impl Fn(LispObject, LispObject) -> bool,
+) -> LispObject {
     let mut val = initial;
 
     for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
@@ -637,7 +639,10 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(Qerror, (build_string(msg.as_ptr() as *const i8), arg));
+    xsignal!(
+        Qerror,
+        (build_string(msg.as_ptr() as *const libc::c_char), arg)
+    );
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
@@ -1023,7 +1028,7 @@ fn run_hook_with_args_internal(
 
     let mut ret = Qnil;
     let sym = args[0];
-    let val = unsafe { find_symbol_value(sym) };
+    let val = unsafe { LispSymbolRef::from(sym).find_value() };
 
     if val.eq(Qunbound) || val.is_nil() {
         Qnil
@@ -1094,7 +1099,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
         // Optimize for no indirection.
         let fun = original_fun
             .as_symbol()
-            .map_or_else(|| original_fun, |f| f.get_indirect_function());
+            .map_or_else(|| original_fun, LispSymbolRef::get_indirect_function);
 
         if fun.is_nil() {
             return Err(LispFunError::VoidFun);
@@ -1298,6 +1303,38 @@ pub fn signal(error_symbol: LispObject, data: LispObject) -> ! {
         unsafe { signal_or_quit(error_symbol, data, false) };
         unreachable!();
     }
+}
+
+/// Regain control when an error is signaled.
+/// Executes BODYFORM and returns its value if no error happens.
+/// Each element of HANDLERS looks like (CONDITION-NAME BODY...)
+/// where the BODY is made of Lisp expressions.
+///
+/// A handler is applicable to an error
+/// if CONDITION-NAME is one of the error's condition names.
+/// If an error happens, the first applicable handler is run.
+///
+/// The car of a handler may be a list of condition names instead of a
+/// single condition name; then it handles all of them.  If the special
+/// condition name `debug' is present in this list, it allows another
+/// condition in the list to run the debugger if `debug-on-error' and the
+/// other usual mechanisms says it should (otherwise, `condition-case'
+/// suppresses the debugger).
+///
+/// When a handler handles an error, control returns to the `condition-case'
+/// and it executes the handler's BODY...
+/// with VAR bound to (ERROR-SYMBOL . SIGNAL-DATA) from the error.
+/// \(If VAR is nil, the handler can't access that information.)
+/// Then the value of the last BODY form is returned from the `condition-case'
+/// expression.
+///
+/// See also the function `signal' for more info.
+/// usage: (condition-case VAR BODYFORM &rest HANDLERS)
+#[lisp_fn(min = "2", unevalled = "true")]
+pub fn condition_case(args: LispCons) -> LispObject {
+    let (var, consq) = args.into();
+    let (bodyform, handlers) = consq.into();
+    unsafe { internal_lisp_condition_case(var, bodyform, handlers) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

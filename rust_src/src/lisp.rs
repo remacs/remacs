@@ -1,7 +1,7 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use std::convert::From;
+use std::convert::{From, Into};
 use std::ffi::CString;
 use std::fmt;
 use std::fmt::{Debug, Display, Error, Formatter};
@@ -17,7 +17,7 @@ use crate::{
         HashLookupResult::{Found, Missing},
         LispHashTableRef,
     },
-    lists::{list, memq, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
@@ -123,6 +123,21 @@ impl<T> ExternalPtr<T> {
 
     pub fn replace_ptr(&mut self, ptr: *mut T) {
         self.0 = ptr;
+    }
+
+    pub unsafe fn ptr_offset(&mut self, size: isize) {
+        let ptr = self.0.offset(size);
+        self.replace_ptr(ptr);
+    }
+
+    pub unsafe fn ptr_add(&mut self, size: usize) {
+        let ptr = self.0.add(size);
+        self.replace_ptr(ptr);
+    }
+
+    pub unsafe fn ptr_sub(&mut self, size: usize) {
+        let ptr = self.0.sub(size);
+        self.replace_ptr(ptr);
     }
 }
 
@@ -260,7 +275,7 @@ impl From<LispObject> for LispSubrRef {
 
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_subr())
+        o.as_vectorlike().and_then(ExternalPtr::as_subr)
     }
 }
 
@@ -515,9 +530,9 @@ macro_rules! impl_alistval_iter {
             fn next(&mut self) -> Option<Self::Item> {
                 self.0
                     .next()
-                    .and_then(|o| o.as_cons())
-                    .map(|p| p.cdr())
-                    .and_then(|q| q.into())
+                    .and_then(LispObject::as_cons)
+                    .map(LispCons::cdr)
+                    .and_then(Into::into)
             }
         }
     };
@@ -558,17 +573,11 @@ impl LispObject {
 
     // The three Emacs Lisp comparison functions.
 
-    pub fn eq<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn eq(self, other: impl Into<LispObject>) -> bool {
         self == other.into()
     }
 
-    pub fn eql<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn eql(self, other: impl Into<LispObject>) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)
         } else {
@@ -576,10 +585,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn equal(self, other: impl Into<LispObject>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
@@ -671,10 +677,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal_no_quit<T>(self, other: T) -> bool
-    where
-        T: Into<LispObject>,
-    {
+    pub fn equal_no_quit(self, other: impl Into<LispObject>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
@@ -683,7 +686,7 @@ impl LispObject {
         FUNCTIONP(self)
     }
 
-    pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
+    pub fn map_or<T>(self, default: T, action: impl FnOnce(LispObject) -> T) -> T {
         if self.is_nil() {
             default
         } else {
@@ -691,10 +694,10 @@ impl LispObject {
         }
     }
 
-    pub fn map_or_else<T, F: FnOnce() -> T, F1: FnOnce(LispObject) -> T>(
+    pub fn map_or_else<T>(
         self,
-        default: F,
-        action: F1,
+        default: impl FnOnce() -> T,
+        action: impl FnOnce(LispObject) -> T,
     ) -> T {
         if self.is_nil() {
             default()
@@ -750,7 +753,7 @@ macro_rules! export_lisp_fns {
         pub fn rust_init_syms() {
             unsafe {
                 $(
-                    defsubr(concat_idents!(S, $f).as_ptr());
+                    crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
                 )+
             }
         }

@@ -8,10 +8,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     base64_crate,
-    buffers::validate_region,
-    lisp::defsubr,
+    buffers::validate_region_rust,
     lisp::LispObject,
-    marker::buf_charpos_to_bytepos,
     multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},
     remacs_sys::EmacsInt,
     remacs_sys::{
@@ -270,21 +268,15 @@ pub fn base64_decode_string(string: LispStringRef) -> LispObject {
 /// Base64-encode the region between BEG and END. Return the length of the encoded text. Optional
 /// third argument NO-LINE-BREAK means do not break long lines into shorter lines.
 #[lisp_fn(min = "2", intspec = "r")]
-pub fn base64_encode_region(
-    mut beg: LispObject,
-    mut end: LispObject,
-    no_line_break: bool,
-) -> EmacsInt {
-    unsafe { validate_region(&mut beg, &mut end) };
-    let mut current_buffer = ThreadState::current_buffer_unchecked();
+pub fn base64_encode_region(beg: LispObject, end: LispObject, no_line_break: bool) -> EmacsInt {
+    let (beg, end) = validate_region_rust(beg, end);
+    let current_buffer = ThreadState::current_buffer_unchecked();
     let old_pos = current_buffer.pt;
 
-    let ibeg = beg.as_natnum_or_error() as isize;
-    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg);
-    let iend = end.as_natnum_or_error() as isize;
-    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), iend);
+    let begpos = current_buffer.charpos_to_bytepos(beg);
+    let endpos = current_buffer.charpos_to_bytepos(end);
 
-    unsafe { move_gap_both(ibeg, begpos) };
+    unsafe { move_gap_both(beg, begpos) };
 
     // Allocate room for the extra 33% plus newlines
     let length = (endpos - begpos) as usize;
@@ -299,15 +291,15 @@ pub fn base64_encode_region(
 
     // We now insert the new contents and delete the old in the region
     unsafe {
-        set_point_both(begpos, ibeg);
+        set_point_both(begpos, beg);
         insert(encoded.as_ptr() as *const c_char, encoded_length);
         del_range_byte(begpos + encoded_length, endpos + encoded_length);
     }
 
-    let pos_to_set = if old_pos >= iend {
-        old_pos + encoded_length - (iend - ibeg)
-    } else if old_pos > ibeg {
-        old_pos - ibeg
+    let pos_to_set = if old_pos >= end {
+        old_pos + encoded_length - (end - beg)
+    } else if old_pos > beg {
+        old_pos - beg
     } else {
         old_pos
     };
@@ -317,16 +309,14 @@ pub fn base64_encode_region(
 }
 
 #[lisp_fn(intspec = "r")]
-pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsInt {
-    unsafe { validate_region(&mut beg, &mut end) };
+pub fn base64_decode_region(beg: LispObject, end: LispObject) -> EmacsInt {
+    let (beg, end) = validate_region_rust(beg, end);
 
     let mut current_buffer = ThreadState::current_buffer_unchecked();
     let mut old_pos = current_buffer.pt;
 
-    let ibeg = beg.as_natnum_or_error() as isize;
-    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg);
-    let iend = end.as_natnum_or_error() as isize;
-    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), iend);
+    let begpos = current_buffer.charpos_to_bytepos(beg);
+    let endpos = current_buffer.charpos_to_bytepos(end);
 
     let multibyte = current_buffer.multibyte_characters_enabled();
     let length = (endpos - begpos) as usize;
@@ -342,7 +332,7 @@ pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsIn
 
     // We've decoded it so insert the new contents and delete the old.
     unsafe {
-        temp_set_point_both(current_buffer.as_mut(), ibeg, begpos);
+        temp_set_point_both(current_buffer.as_mut(), beg, begpos);
         insert_1_both(
             decoded.as_ptr() as *const c_char,
             inserted_chars,
@@ -351,20 +341,20 @@ pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsIn
             true,
             false,
         );
-        signal_after_change(ibeg, 0, inserted_chars);
+        signal_after_change(beg, 0, inserted_chars);
         del_range_both(
             current_buffer.pt,
             current_buffer.pt_byte,
-            iend + inserted_chars,
+            end + inserted_chars,
             endpos + decoded_length,
             true,
         );
     }
 
-    if old_pos >= iend {
-        old_pos += inserted_chars - (iend - ibeg);
-    } else if old_pos > ibeg {
-        old_pos = ibeg;
+    if old_pos >= end {
+        old_pos += inserted_chars - (end - beg);
+    } else if old_pos > beg {
+        old_pos = beg;
     }
     unsafe { set_point(max(current_buffer.zv, old_pos)) };
 

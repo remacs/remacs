@@ -400,16 +400,13 @@ pub fn truncate(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.trunc(), truncate2, "truncate")
 }
 
-fn rounding_driver<F>(
+fn rounding_driver(
     arg: LispObject,
     divisor: LispObject,
-    double_round: F,
+    double_round: impl Fn(f64) -> f64,
     int_round2: fn(EmacsInt, EmacsInt) -> EmacsInt,
     name: &str,
-) -> EmacsInt
-where
-    F: Fn(f64) -> f64,
-{
+) -> EmacsInt {
     let d;
     if divisor.is_nil() {
         if arg.is_fixnum() {

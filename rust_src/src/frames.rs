@@ -5,24 +5,38 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::vertical_scroll_bar_type;
+use crate::{
+    fns::nreverse,
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame},
+};
+
+#[cfg(not(feature = "window-system"))]
+use crate::fns::copy_sequence;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    pub fn root_window(self) -> LispWindowRef {
+        self.root_window.into()
+    }
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
+    }
+
+    // Awaiting Wilfred#1264
+    pub fn is_gui_window(self) -> bool {
+        cfg!(feature = "window_system")
     }
 
     // Pixel-width of internal border lines.
@@ -34,8 +48,28 @@ impl LispFrameRef {
         self.visible() != 0
     }
 
+    pub fn has_tooltip(self) -> bool {
+        #[cfg(feature = "window-system")]
+        {
+            self.tooltip()
+        }
+        #[cfg(not(feature = "window-system"))]
+        {
+            false
+        }
+    }
+
     pub fn total_fringe_width(self) -> i32 {
         self.left_fringe_width + self.right_fringe_width
+    }
+
+    pub fn vertical_scroll_bar_type(self) -> u32 {
+        #[cfg(feature = "window-system")]
+        {
+            (*self).vertical_scroll_bar_type()
+        }
+        #[cfg(not(feature = "window-system"))]
+        0
     }
 
     pub fn scroll_bar_area_width(self) -> i32 {
@@ -44,14 +78,14 @@ impl LispFrameRef {
             match self.vertical_scroll_bar_type() {
                 vertical_scroll_bar_type::vertical_scroll_bar_left
                 | vertical_scroll_bar_type::vertical_scroll_bar_right => {
-                    return self.config_scroll_bar_width
+                    self.config_scroll_bar_width
                 }
-                _ => return 0,
+                _ => 0,
             }
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 
@@ -66,7 +100,7 @@ impl LispFrameRef {
         }
         #[cfg(not(feature = "window-system"))]
         {
-            return 0;
+            0
         }
     }
 }
@@ -85,7 +119,7 @@ impl From<LispFrameRef> for LispObject {
 
 impl From<LispObject> for Option<LispFrameRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_frame())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_frame)
     }
 }
 
@@ -149,23 +183,12 @@ impl From<LispFrameOrSelected> for LispFrameRef {
     }
 }
 
-impl LispFrameOrSelected {
-    pub fn live_or_error(self) -> LispFrameRef {
-        let frame = LispFrameRef::from(self);
-        if frame.is_live() {
-            frame
-        } else {
-            wrong_type!(Qframe_live_p, self);
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct LispFrameLiveOrSelected(LispFrameRef);
 
 impl From<LispObject> for LispFrameLiveOrSelected {
     fn from(obj: LispObject) -> Self {
-        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, |f| f.as_live_frame_or_error()))
+        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
     }
 }
 
@@ -191,9 +214,9 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
 /// Get the live frame either from the passed in object directly, from the object
 /// as a window, or by using the selected window when object is nil.
 /// When the object is a window the provided `window_action` is called.
-pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
+pub fn window_frame_live_or_selected_with_action(
     mut object: LispObject,
-    mut window_action: W,
+    mut window_action: impl FnMut(LispWindowRef) -> (),
 ) -> LispFrameRef {
     if object.is_nil() {
         object = selected_window();
@@ -265,11 +288,11 @@ pub fn frame_selected_window(frame_or_window: LispObject) -> LispWindowRef {
 /// Return WINDOW.
 #[lisp_fn(min = "2")]
 pub fn set_frame_selected_window(
-    frame: LispFrameOrSelected,
+    frame: LispFrameLiveOrSelected,
     window: LispObject,
     norecord: LispObject,
 ) -> LispWindowRef {
-    let mut frame_ref = frame.live_or_error();
+    let mut frame_ref: LispFrameRef = frame.into();
     let w = window.as_live_window_or_error();
 
     if frame_ref != w.frame.as_frame().unwrap() {
@@ -334,8 +357,8 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispFrameOrSelected) -> (c_int, c_int) {
-    let frame_ref = frame.live_or_error();
+pub fn frame_position(frame: LispFrameLiveOrSelected) -> (c_int, c_int) {
+    let frame_ref: LispFrameRef = frame.into();
     (frame_ref.left_pos, frame_ref.top_pos)
 }
 
@@ -494,8 +517,8 @@ pub fn delete_frame_lisp(frame: LispObject, force: bool) {
 /// If MINIFRAME is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame_ref = frame.live_or_error();
+pub fn next_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref: LispFrameRef = frame.into();
     let frame_obj = frame_ref.into();
 
     // Track how many times have we passed FRAME in the list.
@@ -507,13 +530,13 @@ pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFram
     // a valid candidate will be returned regardless of its position.
     while passed < 2 {
         for_each_frame!(f => {
-	    if passed > 0 {
-	        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
-	        if !tmp.is_nil() {
+            if passed > 0 {
+                let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+                if !tmp.is_nil() {
                     // Found a valid candidate, stop looking.
-	            return f;
+                    return f;
                 }
-	    }
+            }
             if frame_ref == f {
                 // Count the number of times FRAME has been found in the list.
                 passed += 1;
@@ -535,8 +558,8 @@ pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFram
 /// If MINIFRAME is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame_ref = frame.live_or_error();
+pub fn previous_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref: LispFrameRef = frame.into();
     let frame_obj: LispObject = frame_ref.into();
     let mut prev = Qnil;
 
@@ -575,8 +598,8 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
 /// otherwise used with utter care to avoid that running functions on
 /// `window-configuration-change-hook' is impeded forever.
 #[lisp_fn]
-pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
-    let mut frame_ref = frame.live_or_error();
+pub fn frame_after_make_frame(frame: LispFrameLiveOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref: LispFrameRef = frame.into();
     frame_ref.set_after_make_frame(made.is_not_nil());
     frame_ref.set_inhibit_horizontal_resize(false);
     frame_ref.set_inhibit_vertical_resize(false);
@@ -591,6 +614,62 @@ pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> L
 pub fn frame_focus(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.focus_frame
+}
+
+/// Set the input focus to FRAME.
+/// FRAME nil means use the selected frame. Optional argument NOACTIVATE
+/// means do not activate FRAME.
+///
+/// If there is no window system support, this function does nothing.
+#[lisp_fn(min = "1", name = "x-focus-frame", c_name = "x_focus_frame")]
+pub fn x_focus_frame_lisp(_frame: LispFrameLiveOrSelected, _noactivate: bool) {
+    #[cfg(feature = "window-system")]
+    {
+        let mut frame_ref: LispFrameRef = _frame.into();
+        unsafe {
+            x_focus_frame(frame_ref.as_mut(), _noactivate);
+        }
+    }
+}
+
+fn filter_frame_list(predicate: impl Fn(LispFrameRef) -> bool) -> LispObject {
+    let mut list: LispObject = Qnil;
+    for_each_frame!(f => {
+        if predicate(f) {
+            list = (f, list).into();
+        }
+    });
+    list
+}
+
+/// Return a list of all live frames.
+/// The return value does not include any tooltip frame.
+#[lisp_fn]
+pub fn frame_list() -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let list = filter_frame_list(|f| !f.has_tooltip());
+        // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
+        nreverse(list)
+    }
+    #[cfg(not(feature = "window-system"))]
+    {
+        copy_sequence(unsafe { Vframe_list })
+    }
+}
+
+/// Return a list of all frames now \"visible\" (being updated).
+#[lisp_fn]
+pub fn visible_frame_list() -> LispObject {
+    filter_frame_list(LispFrameRef::is_visible)
+}
+
+/// Return an alist of frame-local faces defined on FRAME.
+/// For internal use only.
+#[lisp_fn(min = "0")]
+pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.face_alist
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

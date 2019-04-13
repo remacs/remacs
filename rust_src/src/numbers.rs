@@ -1,13 +1,14 @@
 //! Functions operating on numbers.
 
-use rand::{Rng, SeedableRng, StdRng};
+use std::cmp;
 use std::sync::Mutex;
+
+use rand::{rngs::StdRng, FromEntropy, Rng, SeedableRng};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
@@ -17,7 +18,7 @@ use crate::{
 };
 
 lazy_static! {
-    static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
+    static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::from_entropy());
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
@@ -94,12 +95,17 @@ impl LispObject {
         self.as_fixnum().map_or(false, |i| i >= 0)
     }
 
-    pub fn as_natnum_or_error(self) -> EmacsUint {
+    pub fn as_natnum(self) -> Option<EmacsUint> {
         if self.is_natnum() {
-            unsafe { self.to_fixnum_unchecked() as EmacsUint }
+            Some(unsafe { self.to_fixnum_unchecked() as EmacsUint })
         } else {
-            wrong_type!(Qwholenump, self)
+            None
         }
+    }
+
+    pub fn as_natnum_or_error(self) -> EmacsUint {
+        self.as_natnum()
+            .unwrap_or_else(|| wrong_type!(Qwholenump, self))
     }
 }
 
@@ -156,6 +162,24 @@ impl IsLispNatnum for EmacsInt {
         if self < 0 {
             wrong_type!(Qwholenump, self);
         }
+    }
+}
+
+/// Check if NUM is within range [FROM..TO]
+pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl Into<EmacsInt>) {
+    let num: EmacsInt = num.into();
+    let from: EmacsInt = from.into();
+    let to: EmacsInt = to.into();
+    if !(from <= num && num <= to) {
+        args_out_of_range!(
+            num,
+            if from < 0 && from < MOST_NEGATIVE_FIXNUM {
+                MOST_NEGATIVE_FIXNUM
+            } else {
+                from
+            },
+            cmp::min(to, MOST_POSITIVE_FIXNUM)
+        )
     }
 }
 
@@ -295,10 +319,13 @@ pub fn number_or_marker_p(object: LispObject) -> bool {
 pub fn random(limit: LispObject) -> LispObject {
     let mut rng = RNG.lock().unwrap();
     if limit.is_t() {
-        *rng = StdRng::new().unwrap();
+        *rng = StdRng::from_entropy();
     } else if let Some(s) = limit.as_string() {
-        let values: Vec<usize> = s.as_slice().iter().map(|&x| x as usize).collect();
-        rng.reseed(&values);
+        let mut seed = [0; 32];
+        let mut values: Vec<u8> = s.as_slice().to_vec();
+        values.resize(32, 0);
+        seed.copy_from_slice(&values.as_slice());
+        *rng = StdRng::from_seed(seed);
     }
 
     if let Some(limit) = limit.as_fixnum() {

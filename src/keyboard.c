@@ -339,7 +339,7 @@ static struct timespec timer_last_idleness_start_time;
 /* Function for init_keyboard to call with no args (if nonzero).  */
 static void (*keyboard_init_hook) (void);
 
-static bool get_input_pending (int);
+
 static bool readable_events (int);
 static Lisp_Object read_char_x_menu_prompt (Lisp_Object,
                                             Lisp_Object, bool *);
@@ -959,49 +959,6 @@ cmd_error_internal (Lisp_Object data, const char *context)
   Vsignaling_function = Qnil;
 }
 
-DEFUN ("command-error-default-function", Fcommand_error_default_function,
-       Scommand_error_default_function, 3, 3, 0,
-       doc: /* Produce default output for unhandled error message.
-Default value of `command-error-function'.  */)
-  (Lisp_Object data, Lisp_Object context, Lisp_Object signal)
-{
-  struct frame *sf = SELECTED_FRAME ();
-
-  CHECK_STRING (context);
-
-  /* If the window system or terminal frame hasn't been initialized
-     yet, or we're not interactive, write the message to stderr and exit.  */
-  if (!sf->glyphs_initialized_p
-	   /* The initial frame is a special non-displaying frame. It
-	      will be current in daemon mode when there are no frames
-	      to display, and in non-daemon mode before the real frame
-	      has finished initializing.  If an error is thrown in the
-	      latter case while creating the frame, then the frame
-	      will never be displayed, so the safest thing to do is
-	      write to stderr and quit.  In daemon mode, there are
-	      many other potential errors that do not prevent frames
-	      from being created, so continuing as normal is better in
-	      that case.  */
-	   || (!IS_DAEMON && FRAME_INITIAL_P (sf))
-	   || noninteractive)
-    {
-      print_error_message (data, Qexternal_debugging_output,
-			   SSDATA (context), signal);
-      Fterpri (Qexternal_debugging_output, Qnil);
-      Fkill_emacs (make_number (-1));
-    }
-  else
-    {
-      clear_message (1, 0);
-      Fdiscard_input ();
-      message_log_maybe_newline ();
-      ding_internal (true);
-
-      print_error_message (data, Qt, SSDATA (context), signal);
-    }
-  return Qnil;
-}
-
 static Lisp_Object command_loop_2 (Lisp_Object);
 static Lisp_Object top_level_1 (Lisp_Object);
 
@@ -1082,24 +1039,6 @@ top_level_1 (Lisp_Object ignore)
   else
     message1 ("Bare Emacs (standard Lisp code not loaded)");
   return Qnil;
-}
-
-DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, "",
-       doc: /* Exit all recursive editing levels.
-This also exits all active minibuffers.  */
-       attributes: noreturn)
-  (void)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  if (display_hourglass_p)
-    cancel_hourglass ();
-#endif
-
-  /* Unblock input if we enter with input blocked.  This may happen if
-     redisplay traps e.g. during tool-bar update with input blocked.  */
-  totally_unblock_input ();
-
-  Fthrow (Qtop_level, Qnil);
 }
 
 
@@ -3970,7 +3909,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 /* Process any non-user-visible events (currently X selection events),
    without reading any user-visible events.  */
 
-static void
+void
 process_special_events (void)
 {
   union buffered_input_event *event;
@@ -6671,7 +6610,7 @@ parse_solitary_modifier (Lisp_Object symbol)
    If READABLE_EVENTS_IGNORE_SQUEEZABLES is set in FLAGS, ignore mouse
    movements and toolkit scroll bar thumb drags.  */
 
-static bool
+bool
 get_input_pending (int flags)
 {
   /* First of all, have we already counted some input?  */
@@ -9827,28 +9766,6 @@ requeued_events_pending_p (void)
   return (CONSP (Vunread_command_events));
 }
 
-DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 1, 0,
-       doc: /* Return t if command input is currently available with no wait.
-Actually, the value is nil only if we can be sure that no input is available;
-if there is a doubt, the value is t.
-
-If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
-  (Lisp_Object check_timers)
-{
-  if (CONSP (Vunread_command_events)
-      || !NILP (Vunread_post_input_method_events)
-      || !NILP (Vunread_input_method_events))
-    return (Qt);
-
-  /* Process non-user-visible events (Bug#10195).  */
-  process_special_events ();
-
-  return (get_input_pending ((NILP (check_timers)
-                              ? 0 : READABLE_EVENTS_DO_TIMERS_NOW)
-			     | READABLE_EVENTS_FILTER_EVENTS)
-	  ? Qt : Qnil);
-}
-
 DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 1, 0,
        doc: /* Return vector of last few events, not counting those from keyboard macros.
 If INCLUDE-CMDS is non-nil, include the commands that were run,
@@ -11051,7 +10968,6 @@ syms_of_keyboard (void)
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
   defsubr (&Strack_mouse);
-  defsubr (&Sinput_pending_p);
   defsubr (&Srecent_keys);
   defsubr (&Sthis_command_keys);
   defsubr (&Sthis_command_keys_vector);
@@ -11061,8 +10977,6 @@ syms_of_keyboard (void)
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
   defsubr (&Srecursion_depth);
-  defsubr (&Scommand_error_default_function);
-  defsubr (&Stop_level);
   defsubr (&Sdiscard_input);
   defsubr (&Sopen_dribble_file);
   defsubr (&Sset_input_interrupt_mode);

@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject},
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
@@ -83,7 +83,7 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
 /// symbol or a type descriptor.  SLOTS is used to initialize the record
 /// slots with shallow copies of the arguments.
 /// usage: (record TYPE &rest SLOTS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn record(args: &mut [LispObject]) -> LispObject {
     unsafe {
         let ptr = allocate_record(args.len() as i64);

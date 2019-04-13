@@ -2,25 +2,27 @@
 use libc;
 
 use remacs_macros::lisp_fn;
+use std::convert::Into;
 
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     eval::run_hook_with_args_until_success,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,
     remacs_sys::{
-        add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        list_system_processes, send_process, setup_process_coding_systems, update_status, Fmapcar,
-        STRING_BYTES,
+        add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp, list1,
+        list_system_processes, process_send_signal, send_process, setup_process_coding_systems,
+        update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
-        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
-        Qinternal_default_process_sentinel, Qinterrupt_process_functions, Qlisten, Qlistp,
-        Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
+        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_interrupt_process,
+        Qinternal_default_process_filter, Qinternal_default_process_sentinel,
+        Qinterrupt_process_functions, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp,
+        Qreal, Qrun, Qserial, Qstop, Qt,
     },
+    vectors::LispVectorlikeRef,
 };
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
@@ -68,7 +70,7 @@ impl From<LispProcessRef> for LispObject {
 
 impl From<LispObject> for Option<LispProcessRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_process())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_process)
     }
 }
 
@@ -169,7 +171,7 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> Option<LispProcessRef> {
-    get_buffer_process_internal(buffer_or_name.and_then(|b| b.into()))
+    get_buffer_process_internal(buffer_or_name.and_then(Into::into))
 }
 
 pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> Option<LispProcessRef> {
@@ -539,5 +541,32 @@ pub fn interrupt_process(process: LispObject, current_group: LispObject) -> Lisp
     run_hook_with_args_until_success(&mut [Qinterrupt_process_functions, process, current_group])
 }
 def_lisp_sym!(Qinterrupt_process_functions, "interrupt-process-functions");
+
+/// Default function to interrupt process PROCESS.
+/// It shall be the last element in list `interrupt-process-functions'.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn internal_default_interrupt_process(
+    process: LispObject,
+    current_group: LispObject,
+) -> LispObject {
+    unsafe {
+        process_send_signal(process, libc::SIGINT, current_group, false);
+    }
+    process
+}
+#[rustfmt::skip]
+def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
+
+#[allow(unused_doc_comments)]
+#[no_mangle]
+pub extern "C" fn rust_syms_of_process() {
+    /// List of functions to be called for `interrupt-process'.
+    /// The arguments of the functions are the same as for `interrupt-process'.
+    /// These functions are called in the order of the list, until one of them
+    /// returns non-`nil'.
+    #[rustfmt::skip]
+    defvar_lisp!(Vinterrupt_process_functions, "interrupt-process-functions", list1(Qinternal_default_interrupt_process));
+}
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

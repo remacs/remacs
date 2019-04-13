@@ -9,12 +9,7 @@ use crate::dired_unix::{
 #[cfg(windows)]
 use dired_windows::{file_attributes_intro, get_users};
 
-use crate::{
-    lisp::{defsubr, LispObject},
-    lists::car,
-    multibyte::LispStringRef,
-    strings::string_lessp,
-};
+use crate::{lisp::LispObject, lists::car, multibyte::LispStringRef, strings::string_lessp};
 
 /// Return a list of names of files in DIRECTORY.
 /// There are three optional arguments:

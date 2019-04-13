@@ -6145,7 +6145,7 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
    down the pty.  This allows us to signal inferiors who have changed
    their uid, for which kill would return an EPERM error.  */
 
-static void
+void
 process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 		     bool nomsg)
 {
@@ -6279,18 +6279,6 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
   if (p->alive)
     kill (pid, signo);
   unblock_child_signal (&oldset);
-}
-
-DEFUN ("internal-default-interrupt-process",
-       Finternal_default_interrupt_process,
-       Sinternal_default_interrupt_process, 0, 2, 0,
-       doc: /* Default function to interrupt process PROCESS.
-It shall be the last element in list `interrupt-process-functions'.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGINT, current_group, 0);
-  return process;
 }
 
 DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
@@ -7342,6 +7330,8 @@ init_process_emacs (int sockfd)
   kbd_is_on_hold = 0;
 }
 
+extern void rust_syms_of_process(void);
+
 void
 syms_of_process (void)
 {
@@ -7475,19 +7465,11 @@ non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
-  DEFVAR_LISP ("interrupt-process-functions", Vinterrupt_process_functions,
-	       doc: /* List of functions to be called for `interrupt-process'.
-The arguments of the functions are the same as for `interrupt-process'.
-These functions are called in the order of the list, until one of them
-returns non-`nil'.  */);
-  Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
-
   DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
   Vinternal__daemon_sockname = Qnil;
 
-  DEFSYM (Qinternal_default_interrupt_process,
-	  "internal-default-interrupt-process");
+  rust_syms_of_process();
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
@@ -7509,7 +7491,6 @@ returns non-`nil'.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
-  defsubr (&Sinternal_default_interrupt_process);
   defsubr (&Skill_process);
   defsubr (&Squit_process);
   defsubr (&Sstop_process);

@@ -1293,142 +1293,12 @@ emacs_setenv_TZ (const char *tzstring)
   return 0;
 }
 
-/* Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC
-   (if a type of object is Lisp_Int) or INSERT_FROM_STRING_FUNC (if a
-   type of object is Lisp_String).  INHERIT is passed to
-   INSERT_FROM_STRING_FUNC as the last argument.  */
-
-void
-general_insert_function (void (*insert_func)
-			      (const char *, ptrdiff_t),
-			 void (*insert_from_string_func)
-			      (Lisp_Object, ptrdiff_t, ptrdiff_t,
-			       ptrdiff_t, ptrdiff_t, bool),
-			 bool inherit, ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t argnum;
-  Lisp_Object val;
-
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      val = args[argnum];
-      if (CHARACTERP (val))
-	{
-	  int c = XFASTINT (val);
-	  unsigned char str[MAX_MULTIBYTE_LENGTH];
-	  int len;
-
-	  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-	    len = CHAR_STRING (c, str);
-	  else
-	    {
-	      str[0] = CHAR_TO_BYTE8 (c);
-	      len = 1;
-	    }
-	  (*insert_func) ((char *) str, len);
-	}
-      else if (STRINGP (val))
-	{
-	  (*insert_from_string_func) (val, 0, 0,
-				      SCHARS (val),
-				      SBYTES (val),
-				      inherit);
-	}
-      else
-	wrong_type_argument (Qchar_or_string_p, val);
-    }
-}
-
 void
 insert1 (Lisp_Object arg)
 {
   Finsert (1, &arg);
 }
 
-
-DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
-       doc: /* Insert the arguments, either strings or characters, at point.
-Point and after-insertion markers move forward to end up
- after the inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `string-make-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion (see `string-make-unibyte').
-
-When operating on binary data, it may be necessary to preserve the
-original bytes of a unibyte string when inserting it into a multibyte
-buffer; to accomplish this, apply `string-as-multibyte' to the string
-and insert the result.
-
-usage: (insert &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert, insert_from_string, 0, nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-and-inherit", Finsert_and_inherit, Sinsert_and_inherit,
-   0, MANY, 0,
-       doc: /* Insert the arguments at point, inheriting properties from adjoining text.
-Point and after-insertion markers move forward to end up
- after the inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-usage: (insert-and-inherit &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_and_inherit, insert_from_string, 1,
-			   nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-before-markers", Finsert_before_markers, Sinsert_before_markers, 0, MANY, 0,
-       doc: /* Insert strings or characters at point, relocating markers after the text.
-Point and markers move forward to end up after the inserted text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-If an overlay begins at the insertion point, the inserted text falls
-outside the overlay; if a nonempty overlay ends at the insertion
-point, the inserted text falls inside that overlay.
-
-usage: (insert-before-markers &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_before_markers,
-			   insert_from_string_before_markers, 0,
-			   nargs, args);
-  return Qnil;
-}
-
-DEFUN ("insert-before-markers-and-inherit", Finsert_and_inherit_before_markers,
-  Sinsert_and_inherit_before_markers, 0, MANY, 0,
-       doc: /* Insert text at point, relocating markers and inheriting properties.
-Point and markers move forward to end up after the inserted text.
-
-If the current buffer is multibyte, unibyte strings are converted
-to multibyte for insertion (see `unibyte-char-to-multibyte').
-If the current buffer is unibyte, multibyte strings are converted
-to unibyte for insertion.
-
-usage: (insert-before-markers-and-inherit &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  general_insert_function (insert_before_markers_and_inherit,
-			   insert_from_string_before_markers, 1,
-			   nargs, args);
-  return Qnil;
-}
 
 /* Making strings from buffer contents.  */
 
@@ -3758,11 +3628,6 @@ functions if all the text being accessed has this property.  */);
 
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
-
-  defsubr (&Sinsert);
-  defsubr (&Sinsert_before_markers);
-  defsubr (&Sinsert_and_inherit);
-  defsubr (&Sinsert_and_inherit_before_markers);
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);

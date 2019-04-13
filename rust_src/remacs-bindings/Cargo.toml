@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2"
-regex = "0.2"
-bindgen = { git = "https://github.com/rust-lang-nursery/rust-bindgen.git", rev = "badb49277dddf1ea5d407075f9deea48897b52df" }
+regex = "1.1"
+bindgen = "0.46"

@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::{HashLookupResult, LispHashTableRef},
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_sys::Vcharset_hash_table,
 };
 

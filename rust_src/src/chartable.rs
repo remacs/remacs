@@ -6,14 +6,14 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
-    remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
-        char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
+        char_table_specials, equal_kind, pvec_type, EmacsInt, Lisp_Char_Table, Lisp_Sub_Char_Table,
         Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
+    remacs_sys::{uniprop_table_uncompress, CHAR_TABLE_SET},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
+    vectors::LispVectorlikeRef,
 };
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
@@ -30,6 +30,14 @@ impl LispObject {
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         self.into()
     }
+
+    pub fn force_char_table(self) -> LispCharTableRef {
+        unsafe { self.to_char_table_unchecked() }
+    }
+
+    pub unsafe fn to_char_table_unchecked(self) -> LispCharTableRef {
+        LispCharTableRef::new(self.get_untaggedptr() as *mut Lisp_Char_Table)
+    }
 }
 
 impl From<LispObject> for LispCharTableRef {
@@ -44,7 +52,7 @@ impl From<LispObject> for LispCharTableRef {
 
 impl From<LispObject> for Option<LispCharTableRef> {
     fn from(o: LispObject) -> Self {
-        o.as_vectorlike().and_then(|v| v.as_char_table())
+        o.as_vectorlike().and_then(LispVectorlikeRef::as_char_table)
     }
 }
 
@@ -56,12 +64,13 @@ impl From<LispCharTableRef> for LispObject {
 
 impl LispObject {
     pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
+        self.as_vectorlike()
+            .and_then(LispVectorlikeRef::as_sub_char_table)
     }
 
     pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
         self.as_vectorlike()
-            .and_then(|v| v.as_sub_char_table_ascii())
+            .and_then(LispVectorlikeRef::as_sub_char_table_ascii)
     }
 }
 
@@ -145,6 +154,15 @@ impl LispCharTableRef {
         }
 
         val
+    }
+
+    pub fn set(self, idx: isize, value: LispObject) {
+        verify_lisp_type!(idx as EmacsInt, Qcharacterp);
+        self.set_unchecked(idx, value);
+    }
+
+    pub fn set_unchecked(self, idx: isize, value: LispObject) {
+        unsafe { CHAR_TABLE_SET(self.into(), idx as i32, value) };
     }
 }
 

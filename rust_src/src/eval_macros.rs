@@ -173,7 +173,7 @@ macro_rules! defvar_lisp {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::remacs_sys::defvar_lisp(
                 o_fwd.get_mut(),
-                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                concat!($lisp_name, "\0").as_ptr() as *const libc::c_char,
                 &mut crate::remacs_sys::globals.$field_name,
             );
             crate::remacs_sys::globals.$field_name = $value;
@@ -242,7 +242,7 @@ macro_rules! defvar_kboard {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::lread::defvar_kboard_offset(
                 o_fwd.get_mut(),
-                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                concat!($lisp_name, "\0").as_ptr() as *const libc::c_char,
                 ::field_offset::offset_of!(crate::remacs_sys::kboard => $vname),
             );
         }
@@ -266,7 +266,7 @@ macro_rules! defvar_per_buffer {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::lread::defvar_per_buffer_offset(
                 o_fwd.get_mut(),
-                concat!($lname, "\0").as_ptr() as *const i8,
+                concat!($lname, "\0").as_ptr() as *const libc::c_char,
                 ::field_offset::offset_of!(crate::remacs_sys::Lisp_Buffer => $vname),
                 $pred,
             );
@@ -284,11 +284,11 @@ macro_rules! declare_GC_protected_static {
 macro_rules! verify_lisp_type {
     ($obj:expr, Qarrayp) => {
         if !$obj.is_array() {
-            wrong_type!(::remacs_sys::Qarrayp, $obj);
+            wrong_type!(crate::remacs_sys::Qarrayp, $obj);
         }
     };
     ($n:expr, Qcharacterp) => {
-        if $n < 0 || $n > (EmacsInt::from($crate::multibyte::MAX_CHAR)) {
+        if $n < 0 || $n > (crate::remacs_sys::EmacsInt::from($crate::multibyte::MAX_CHAR)) {
             wrong_type!(
                 crate::remacs_sys::Qcharacterp,
                 $crate::lisp::LispObject::from($n)

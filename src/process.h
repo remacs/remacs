@@ -311,6 +311,9 @@ update_status (struct Lisp_Process *p);
 void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object);
+void
+process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
+		     bool nomsg);
 
 void pset_filter (struct Lisp_Process *, Lisp_Object);
 void pset_sentinel (struct Lisp_Process *, Lisp_Object);

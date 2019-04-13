@@ -2,7 +2,7 @@
 arch: x86_64
 distro: fedora:latest
 base_config: |
-    RUN yum install -y \
+    RUN dnf install -y \
         git \
         gcc gcc-c++ \
         kernel-devel \
@@ -16,5 +16,7 @@ base_config: |
         libxml2-devel \
         libXpm-devel \
         gnutls-devel \
+        clang-devel \
+        libXt-devel \
         curl \
         texinfo

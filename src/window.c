@@ -56,19 +56,15 @@ static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
 static void run_window_configuration_change_hook (struct frame *);
 
-static struct window *set_window_fringes (struct window *, Lisp_Object,
-					  Lisp_Object, Lisp_Object);
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
 static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object);
-static void apply_window_adjustment (struct window *);
 
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
-void scroll_command (Lisp_Object, int);
 
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
@@ -433,24 +429,6 @@ vertical combination.  */)
   return WINDOW_HORIZONTAL_COMBINATION_P (w) ? w->contents : Qnil;
 }
 
-DEFUN ("window-next-sibling", Fwindow_next_sibling, Swindow_next_sibling, 0, 1, 0,
-       doc: /* Return the next sibling window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW has no next sibling.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->next;
-}
-
-DEFUN ("window-prev-sibling", Fwindow_prev_sibling, Swindow_prev_sibling, 0, 1, 0,
-       doc: /* Return the previous sibling window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW has no previous sibling.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->prev;
-}
-
 DEFUN ("window-pixel-width-before-size-change",
        Fwindow_pixel_width_before_size_change,
        Swindow_pixel_width_before_size_change, 0, 1, 0,
@@ -479,164 +457,6 @@ after that.  */)
 {
   return (make_number
 	  (decode_valid_window (window)->pixel_height_before_size_change));
-}
-
-DEFUN ("window-normal-size", Fwindow_normal_size, Swindow_normal_size, 0, 2, 0,
-       doc: /* Return the normal height of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-If HORIZONTAL is non-nil, return the normal width of WINDOW.
-
-The normal height of a frame's root window or a window that is
-horizontally combined (a window that has a left or right sibling) is
-1.0.  The normal height of a window that is vertically combined (has a
-sibling above or below) is the fraction of the window's height with
-respect to its parent.  The sum of the normal heights of all windows in a
-vertical combination equals 1.0.
-
-Similarly, the normal width of a frame's root window or a window that is
-vertically combined equals 1.0.  The normal width of a window that is
-horizontally combined is the fraction of the window's width with respect
-to its parent.  The sum of the normal widths of all windows in a
-horizontal combination equals 1.0.
-
-The normal sizes of windows are used to restore the proportional sizes
-of windows after they have been shrunk to their minimum sizes; for
-example when a frame is temporarily made very small and afterwards gets
-re-enlarged to its previous size.  */)
-  (Lisp_Object window, Lisp_Object horizontal)
-{
-  struct window *w = decode_valid_window (window);
-
-  return NILP (horizontal) ? w->normal_lines : w->normal_cols;
-}
-
-DEFUN ("window-new-pixel", Fwindow_new_pixel, Swindow_new_pixel, 0, 1, 0,
-       doc: /* Return new pixel size of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-
-The new pixel size of WINDOW is the value set by the last call of
-`set-window-new-pixel' for WINDOW.  If it is valid, it will be shortly
-installed as WINDOW's pixel height (see `window-pixel-height') or pixel
-width (see `window-pixel-width').  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->new_pixel;
-}
-
-DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
-       doc: /* Return left pixel edge of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_left);
-}
-
-DEFUN ("window-pixel-top", Fwindow_pixel_top, Swindow_pixel_top, 0, 1, 0,
-       doc: /* Return top pixel edge of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_top);
-}
-
-DEFUN ("window-left-column", Fwindow_left_column, Swindow_left_column, 0, 1, 0,
-       doc: /* Return left column of window WINDOW.
-This is the distance, in columns, between the left edge of WINDOW and
-the left edge of the frame's window area.  For instance, the return
-value is 0 if there is no window to the left of WINDOW.
-
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->left_col);
-}
-
-/* Return the number of lines/pixels of W's body.  Don't count any mode
-   or header line or horizontal divider of W.  Rounds down to nearest
-   integer when not working pixelwise. */
-static int
-window_body_height (struct window *w, bool pixelwise)
-{
-  int height = (w->pixel_height
-		- WINDOW_HEADER_LINE_HEIGHT (w)
-		- (WINDOW_HAS_HORIZONTAL_SCROLL_BAR (w)
-		   ? WINDOW_SCROLL_BAR_AREA_HEIGHT (w)
-		   : 0)
-		- WINDOW_MODE_LINE_HEIGHT (w)
-		- WINDOW_BOTTOM_DIVIDER_WIDTH (w));
-
-  /* Don't return a negative value.  */
-  return max (pixelwise
-	      ? height
-	      : height / FRAME_LINE_HEIGHT (WINDOW_XFRAME (w)),
-	      0);
-}
-
-/* Return the number of columns/pixels of W's body.  Don't count columns
-   occupied by the scroll bar or the divider/vertical bar separating W
-   from its right sibling or margins.  On window-systems don't count
-   fringes either.  Round down to nearest integer when not working
-   pixelwise.  */
-int
-window_body_width (struct window *w, bool pixelwise)
-{
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-
-  int width = (w->pixel_width
-	       - WINDOW_RIGHT_DIVIDER_WIDTH (w)
-	       - (WINDOW_HAS_VERTICAL_SCROLL_BAR (w)
-		  ? WINDOW_SCROLL_BAR_AREA_WIDTH (w)
-		  : (/* A vertical bar is either 1 or 0.  */
-		     !FRAME_WINDOW_P (f)
-		     && !WINDOW_RIGHTMOST_P (w)
-		     && !WINDOW_RIGHT_DIVIDER_WIDTH (w)))
-		- WINDOW_MARGINS_WIDTH (w)
-		- (FRAME_WINDOW_P (f)
-		   ? WINDOW_FRINGES_WIDTH (w)
-		   : 0));
-
-  /* Don't return a negative value.  */
-  return max (pixelwise
-	      ? width
-	      : width / FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w)),
-	      0);
-}
-
-DEFUN ("window-body-height", Fwindow_body_height, Swindow_body_height, 0, 2, 0,
-       doc: /* Return the height of WINDOW's text area.
-WINDOW must be a live window and defaults to the selected one.  Optional
-argument PIXELWISE non-nil means return the height of WINDOW's text area
-in pixels.  The return value does not include the mode line or header
-line or any horizontal divider.
-
-If PIXELWISE is nil, return the largest integer smaller than WINDOW's
-pixel height divided by the character height of WINDOW's frame.  This
-means that if a line at the bottom of the text area is only partially
-visible, that line is not counted.  */)
-  (Lisp_Object window, Lisp_Object pixelwise)
-{
-  return make_number (window_body_height (decode_live_window (window),
-					  !NILP (pixelwise)));
-}
-
-DEFUN ("window-body-width", Fwindow_body_width, Swindow_body_width, 0, 2, 0,
-       doc: /* Return the width of WINDOW's text area.
-WINDOW must be a live window and defaults to the selected one.  Optional
-argument PIXELWISE non-nil means return the width in pixels.  The return
-value does not include any vertical dividers, fringes or marginal areas,
-or scroll bars.
-
-If PIXELWISE is nil, return the largest integer smaller than WINDOW's
-pixel width divided by the character width of WINDOW's frame.  This
-means that if a column at the right of the text area is only partially
-visible, that column is not counted.
-
-Note that the returned value includes the column reserved for the
-continuation glyph.  */)
-  (Lisp_Object window, Lisp_Object pixelwise)
-{
-  return make_number (window_body_width (decode_live_window (window),
-					 !NILP (pixelwise)));
 }
 
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
@@ -691,44 +511,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
-}
-
-/* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
-   range, returning the new amount as a fixnum.  */
-Lisp_Object
-set_window_hscroll (struct window *w, EMACS_INT hscroll)
-{
-  /* Horizontal scrolling has problems with large scroll amounts.
-     It's too slow with long lines, and even with small lines the
-     display can be messed up.  For now, though, impose only the limits
-     required by the internal representation: horizontal scrolling must
-     fit in fixnum (since it's visible to Elisp) and into ptrdiff_t
-     (since it's stored in a ptrdiff_t).  */
-  ptrdiff_t hscroll_max = min (MOST_POSITIVE_FIXNUM, PTRDIFF_MAX);
-  ptrdiff_t new_hscroll = clip_to_bounds (0, hscroll, hscroll_max);
-
-  /* Prevent redisplay shortcuts when changing the hscroll.  */
-  if (w->hscroll != new_hscroll)
-    XBUFFER (w->contents)->prevent_redisplay_optimizations_p = true;
-
-  w->hscroll = new_hscroll;
-  w->suspend_auto_hscroll = true;
-
-  return make_number (new_hscroll);
-}
-
-DEFUN ("set-window-hscroll", Fset_window_hscroll, Sset_window_hscroll, 2, 2, 0,
-       doc: /* Set number of columns WINDOW is scrolled from left margin to NCOL.
-WINDOW must be a live window and defaults to the selected one.
-Clip the number to a reasonable value if out of range.
-Return the new number.  NCOL should be zero or positive.
-
-Note that if `automatic-hscrolling' is non-nil, you cannot scroll the
-window so that the location of point moves off-window.  */)
-  (Lisp_Object window, Lisp_Object ncol)
-{
-  CHECK_NUMBER (ncol);
-  return set_window_hscroll (decode_live_window (window), XINT (ncol));
 }
 
 /* Test if the character at column X, row Y is within window W.
@@ -1385,129 +1167,6 @@ Return nil if window display is not up-to-date.  In that case, use
  found_row:
   crop = max (0, (row->y + row->height) - max_y);
   return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
-}
-
-DEFUN ("window-lines-pixel-dimensions", Fwindow_lines_pixel_dimensions, Swindow_lines_pixel_dimensions, 0, 6, 0,
-       doc: /* Return pixel dimensions of WINDOW's lines.
-The return value is a list of the x- and y-coordinates of the lower
-right corner of the last character of each line.  Return nil if the
-current glyph matrix of WINDOW is not up-to-date.
-
-Optional argument WINDOW specifies the window whose lines' dimensions
-shall be returned.  Nil or omitted means to return the dimensions for
-the selected window.
-
-FIRST, if non-nil, specifies the index of the first line whose
-dimensions shall be returned.  If FIRST is nil and BODY is non-nil,
-start with the first text line of WINDOW.  Otherwise, start with the
-first line of WINDOW.
-
-LAST, if non-nil, specifies the last line whose dimensions shall be
-returned.  If LAST is nil and BODY is non-nil, the last line is the last
-line of the body (text area) of WINDOW.  Otherwise, last is the last
-line of WINDOW.
-
-INVERSE, if nil, means that the y-pixel value returned for a specific
-line specifies the distance in pixels from the left edge (body edge if
-BODY is non-nil) of WINDOW to the right edge of the last glyph of that
-line.  INVERSE non-nil means that the y-pixel value returned for a
-specific line specifies the distance in pixels from the right edge of
-the last glyph of that line to the right edge (body edge if BODY is
-non-nil) of WINDOW.
-
-LEFT non-nil means to return the x- and y-coordinates of the lower left
-corner of the leftmost character on each line.  This is the value that
-should be used for buffers that mostly display text from right to left.
-
-If LEFT is non-nil and INVERSE is nil, this means that the y-pixel value
-returned for a specific line specifies the distance in pixels from the
-left edge of the last (leftmost) glyph of that line to the right edge
-(body edge if BODY is non-nil) of WINDOW.  If LEFT and INVERSE are both
-non-nil, the y-pixel value returned for a specific line specifies the
-distance in pixels from the left edge (body edge if BODY is non-nil) of
-WINDOW to the left edge of the last (leftmost) glyph of that line.
-
-Normally, the value of this function is not available while Emacs is
-busy, for example, when processing a command.  It should be retrievable
-though when run from an idle timer with a delay of zero seconds.  */)
-  (Lisp_Object window, Lisp_Object first, Lisp_Object last, Lisp_Object body, Lisp_Object inverse, Lisp_Object left)
-{
-  struct window *w = decode_live_window (window);
-  struct buffer *b;
-  struct glyph_row *row, *end_row;
-  int max_y = NILP (body) ? WINDOW_PIXEL_HEIGHT (w) : window_text_bottom_y (w);
-  Lisp_Object rows = Qnil;
-  int window_width = NILP (body) ? w->pixel_width : window_body_width (w, true);
-  int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
-  int subtract = NILP (body) ? 0 : header_line_height;
-  bool invert = !NILP (inverse);
-  bool left_flag = !NILP (left);
-
-  if (noninteractive || w->pseudo_window_p)
-    return Qnil;
-
-  CHECK_BUFFER (w->contents);
-  b = XBUFFER (w->contents);
-
-  /* Fail if current matrix is not up-to-date.  */
-  if (!w->window_end_valid
-      || windows_or_buffers_changed
-      || b->clip_changed
-      || b->prevent_redisplay_optimizations_p
-      || window_outdated (w))
-    return Qnil;
-
-  if (NILP (first))
-    row = (NILP (body)
-	   ? MATRIX_ROW (w->current_matrix, 0)
-	   : MATRIX_FIRST_TEXT_ROW (w->current_matrix));
-  else if (NUMBERP (first))
-    {
-      CHECK_RANGED_INTEGER (first, 0, w->current_matrix->nrows);
-      row = MATRIX_ROW (w->current_matrix, XINT (first));
-    }
-  else
-    error ("Invalid specification of first line");
-
-  if (NILP (last))
-
-    end_row = (NILP (body)
-	       ? MATRIX_ROW (w->current_matrix, w->current_matrix->nrows)
-	       : MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w));
-  else if (NUMBERP (last))
-    {
-      CHECK_RANGED_INTEGER (last, 0, w->current_matrix->nrows);
-      end_row = MATRIX_ROW (w->current_matrix, XINT (last));
-    }
-  else
-    error ("Invalid specification of last line");
-
-  while (row <= end_row && row->enabled_p
-	 && row->y + row->height < max_y)
-    {
-
-      if (left_flag)
-	{
-	  struct glyph *glyph = row->glyphs[TEXT_AREA];
-
-	  rows = Fcons (Fcons (make_number
-			       (invert
-				? glyph->pixel_width
-				: window_width - glyph->pixel_width),
-			       make_number (row->y + row->height - subtract)),
-			rows);
-	}
-      else
-	rows = Fcons (Fcons (make_number
-			     (invert
-			      ? window_width - row->pixel_width
-			      : row->pixel_width),
-			     make_number (row->y + row->height - subtract)),
-		      rows);
-      row++;
-    }
-
-  return Fnreverse (rows);
 }
 
 struct Lisp_Char_Table *
@@ -4143,7 +3802,7 @@ window_internal_height (struct window *w)
    means don't signal an error if we try to move over BEGV or ZV,
    respectively.  */
 
-static void
+void
 window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -4805,41 +4464,6 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
 		  ? make_number (BUF_PT (XBUFFER (w->contents)))
 		  : Fmarker_position (w->pointm)),
 		 w->contents);
-}
-
-
-/* Scroll selected_window up or down.  If N is nil, scroll a
-   screen-full which is defined as the height of the window minus
-   next_screen_context_lines.  If N is the symbol `-', scroll.
-   DIRECTION may be 1 meaning to scroll down, or -1 meaning to scroll
-   up.  This is the guts of Fscroll_up and Fscroll_down.  */
-
-void
-scroll_command (Lisp_Object n, int direction)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  eassert (eabs (direction) == 1);
-
-  /* If selected window's buffer isn't current, make it current for
-     the moment.  But don't screw up if window_scroll gets an error.  */
-  if (XBUFFER (XWINDOW (selected_window)->contents) != current_buffer)
-    {
-      record_unwind_protect (save_excursion_restore, save_excursion_save ());
-      Fset_buffer (XWINDOW (selected_window)->contents);
-    }
-
-  if (NILP (n))
-    window_scroll (selected_window, direction, true, false);
-  else if (EQ (n, Qminus))
-    window_scroll (selected_window, -direction, true, false);
-  else
-    {
-      n = Fprefix_numeric_value (n);
-      window_scroll (selected_window, XINT (n) * direction, false, false);
-    }
-
-  unbind_to (count, Qnil);
 }
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, Sother_window_for_scrolling, 0, 0, 0,
@@ -6016,7 +5640,7 @@ saved by this function.  */)
 
 /* Called after W's margins, fringes or scroll bars was adjusted.  */
 
-static void
+void
 apply_window_adjustment (struct window *w)
 {
   eassert (w);
@@ -6093,7 +5717,7 @@ Return t if any margin was actually changed and nil otherwise.  */)
 			    Fringes
  ***********************************************************************/
 
-static struct window *
+struct window *
 set_window_fringes (struct window *w, Lisp_Object left_width,
 		    Lisp_Object right_width, Lisp_Object outside_margins)
 {
@@ -6126,46 +5750,6 @@ set_window_fringes (struct window *w, Lisp_Object left_width,
     }
   else
     return NULL;
-}
-
-DEFUN ("set-window-fringes", Fset_window_fringes, Sset_window_fringes,
-       2, 4, 0,
-       doc: /* Set the fringe widths of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Second arg LEFT-WIDTH specifies the number of pixels to reserve for
-the left fringe.  Optional third arg RIGHT-WIDTH specifies the right
-fringe width.  If a fringe width arg is nil, that means to use the
-frame's default fringe width.  Default fringe widths can be set with
-the command `set-fringe-style'.
-If optional fourth arg OUTSIDE-MARGINS is non-nil, draw the fringes
-outside of the display margins.  By default, fringes are drawn between
-display marginal areas and the text area.
-
-Return t if any fringe was actually changed and nil otherwise.  */)
-  (Lisp_Object window, Lisp_Object left_width,
-   Lisp_Object right_width, Lisp_Object outside_margins)
-{
-  struct window *w
-    = set_window_fringes (decode_live_window (window),
-			  left_width, right_width, outside_margins);
-  return w ? (apply_window_adjustment (w), Qt) : Qnil;
-}
-
-
-DEFUN ("window-fringes", Fwindow_fringes, Swindow_fringes,
-       0, 1, 0,
-       doc: /* Get width of fringes of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS).  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_live_window (window);
-
-  return list3 (make_number (WINDOW_LEFT_FRINGE_WIDTH (w)),
-		make_number (WINDOW_RIGHT_FRINGE_WIDTH (w)),
-		WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w) ? Qt : Qnil);
 }
 
 
@@ -6649,22 +6233,12 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_left_child);
-  defsubr (&Swindow_next_sibling);
-  defsubr (&Swindow_prev_sibling);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_normal_size);
-  defsubr (&Swindow_new_pixel); 
-  defsubr (&Swindow_pixel_left);
-  defsubr (&Swindow_pixel_top);
-  defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
-  defsubr (&Swindow_body_height);
-  defsubr (&Swindow_body_width);
-  defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
@@ -6674,7 +6248,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
-  defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);
@@ -6695,8 +6268,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
-  defsubr (&Sset_window_fringes);
-  defsubr (&Swindow_fringes);
   defsubr (&Sset_window_scroll_bars);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);

@@ -193,7 +193,7 @@ SCRIPTS= rcs2log
 EXE_FILES = ${INSTALLABLES} ${UTILITIES} ${DONT_INSTALL}
 
 # Rust files to be linked as part of the executables
-RUST_ARCHIVE = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
+RUST_ARCHIVE = ../rust_src/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
 RUST_LIB = $(RUST_ARCHIVE) @RUST_DEPS@
 
 # Specify additional -D flags for movemail. Options:

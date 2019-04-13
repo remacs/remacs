@@ -1,8 +1,5 @@
 use errno;
 
-use rand::{Rng, StdRng};
-use std::sync::Mutex;
-
 use std::ffi::{CStr, CString};
 use std::io;
 
@@ -10,6 +7,8 @@ use libc::{self, c_char, c_int, EEXIST, EINVAL};
 
 #[cfg(unix)]
 use libc::{open, O_CLOEXEC, O_CREAT, O_EXCL, O_RDWR};
+
+use rand::{thread_rng, RngCore};
 
 #[cfg(windows)]
 extern "C" {
@@ -66,20 +65,13 @@ fn validate_template(template: String) -> Result<String, i32> {
 }
 
 fn generate_temporary_filename(name: &mut String) {
-    // Note: rand::thread_rng causes a segfault on mac when used here,
-    //  as of nightly-09-15
-    lazy_static! {
-        static ref shared_rng: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
-    }
-
     let len = name.len();
     assert!(len >= 6);
     let name_vec = unsafe { &mut name.as_mut_vec() };
 
     let bytes = &mut name_vec[len - 6..len];
     {
-        let mut rng = shared_rng.lock().unwrap();
-        rng.fill_bytes(bytes);
+        thread_rng().fill_bytes(bytes);
     }
     for byte in bytes.iter_mut() {
         *byte = match *byte % 62 {

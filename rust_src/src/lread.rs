@@ -5,6 +5,8 @@ use libc;
 use std::ffi::CString;
 use std::ptr;
 
+use errno::errno;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -14,11 +16,13 @@ use crate::{
         Lisp_Objfwd,
     },
     eval::unbind_to,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     obarray::{intern, intern_c_string_1},
     remacs_sys,
+    remacs_sys::infile,
     remacs_sys::{
-        build_string, read_internal_start, readevalloop, specbind, staticpro, symbol_redirect,
+        block_input, build_string, getc_unlocked, maybe_quit, read_internal_start, readevalloop,
+        specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -26,13 +30,28 @@ use crate::{
     threads::{c_specpdl_index, ThreadState},
 };
 
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "\u{1}_clearerr_unlocked"]
+    pub fn clearerr_unlocked(arg1: *mut crate::remacs_sys::FILE);
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "\u{1}_ferror_unlocked"]
+    pub fn ferror_unlocked(arg1: *mut crate::remacs_sys::FILE) -> ::libc::c_int;
+}
+
+#[cfg(not(target_os = "macos"))]
+use crate::remacs_sys::{clearerr_unlocked, ferror_unlocked};
+
 // Define an "integer variable"; a symbol whose value is forwarded to a
 // C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
 // DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");
 #[no_mangle]
 pub unsafe extern "C" fn defvar_int(
     i_fwd: *mut Lisp_Intfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut EmacsInt,
 ) {
     (*i_fwd).ty = Lisp_Fwd_Int;
@@ -49,7 +68,7 @@ pub unsafe extern "C" fn defvar_int(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_bool(
     b_fwd: *mut Lisp_Boolfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut bool,
 ) {
     (*b_fwd).ty = Lisp_Fwd_Bool;
@@ -69,7 +88,7 @@ pub unsafe extern "C" fn defvar_bool(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp_nopro(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     (*o_fwd).ty = Lisp_Fwd_Obj;
@@ -84,7 +103,7 @@ pub unsafe extern "C" fn defvar_lisp_nopro(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     defvar_lisp_nopro(o_fwd, namestring, address);
@@ -96,7 +115,7 @@ pub unsafe extern "C" fn defvar_lisp(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_kboard(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: i32,
 ) {
     defvar_kboard_offset(
@@ -108,7 +127,7 @@ pub unsafe extern "C" fn defvar_kboard(
 
 pub unsafe fn defvar_kboard_offset(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::kboard, LispObject>,
 ) {
     (*ko_fwd).ty = Lisp_Fwd_Kboard_Obj;
@@ -123,7 +142,7 @@ pub unsafe fn defvar_kboard_offset(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_per_buffer(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {
@@ -132,7 +151,7 @@ pub unsafe extern "C" fn defvar_per_buffer(
 
 pub unsafe fn defvar_per_buffer_offset(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {
@@ -152,6 +171,44 @@ pub unsafe fn defvar_per_buffer_offset(
             "Did a DEFVAR_PER_BUFFER without initializing
              the corresponding slot of buffer_local_flags."
         );
+    }
+}
+
+/// Read a byte from stdio. If it has lookahead, use the stored value.
+/// If read over network is interrupted, keep trying until read succeeds.
+#[no_mangle]
+pub unsafe extern "C" fn readbyte_from_stdio() -> i32 {
+    let file = &mut *infile;
+
+    // If infile has lookahead, use stored value
+    if file.lookahead > 0 {
+        file.lookahead -= 1;
+        return file.buf[file.lookahead as usize].into();
+    }
+
+    let instream = file.stream;
+
+    block_input();
+
+    // Interrupted read have been observed while reading over the network.
+    let c = loop {
+        let c = getc_unlocked(instream);
+        if c == libc::EOF && errno().0 == libc::EINTR && ferror_unlocked(instream) > 0 {
+            unblock_input();
+            maybe_quit();
+            block_input();
+            clearerr_unlocked(instream);
+        } else {
+            break c;
+        }
+    };
+
+    unblock_input();
+
+    if c != libc::EOF {
+        c
+    } else {
+        -1
     }
 }
 
@@ -192,6 +249,15 @@ pub fn read(stream: LispObject) -> LispObject {
     }
 }
 
+/// Don't use this yourself.
+#[lisp_fn]
+pub fn get_file_char() -> EmacsInt {
+    if unsafe { infile }.is_null() {
+        error!("get-file-char misused");
+    }
+    unsafe { readbyte_from_stdio().into() }
+}
+
 /// Execute the region as Lisp code.
 /// When called from programs, expects two arguments,
 /// giving starting and ending indices in the current buffer
@@ -204,7 +270,7 @@ pub fn read(stream: LispObject) -> LispObject {
 /// which is the input stream for reading characters.
 ///
 /// This function does not move point.
-#[lisp_fn(min = "2")]
+#[lisp_fn(min = "2", intspec = "r")]
 pub fn eval_region(
     start: LispObject,
     end: LispObject,

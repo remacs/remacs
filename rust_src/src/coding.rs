@@ -9,7 +9,6 @@ use crate::{
         HashLookupResult::{Found, Missing},
         LispHashTableRef,
     },
-    lisp::defsubr,
     lisp::LispObject,
     lists::{get, put},
     multibyte::LispStringRef,

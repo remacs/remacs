@@ -1,7 +1,7 @@
 # Rust :heart: Emacs
 
 [![Join the chat at https://gitter.im/remacs-discuss/Lobby](https://badges.gitter.im/remacs-discuss/Lobby.svg)](https://gitter.im/remacs-discuss/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/Wilfred/remacs.svg?branch=master)](https://travis-ci.org/Wilfred/remacs)
+[![Build Status](https://travis-ci.org/remacs/remacs.svg?branch=master)](https://travis-ci.org/remacs/remacs)
 
 A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
@@ -136,6 +136,8 @@ more Emacs-y.
    [Rust installed](https://www.rust-lang.org/en-US/install.html). 
    The file `rust-toolchain` indicates the version that gets installed.
    This happens automatically, so don't override the toolchain manually.
+   IMPORTANT: Whenever the toolchain updates, you have to reinstall
+   rustfmt manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like:
@@ -235,17 +237,17 @@ different.
 # Progress
 
 At this point we focus on porting lisp functions from C to Rust.
-Currently there are 555 functions in Rust and 911 in C (January 2019).
+Currently there are 615 functions in Rust and 844 in C (April 2019).
 
 We have a [progress section](https://github.com/Wilfred/remacs/wiki/Progress) in our wiki
 and there's also a list of [long-term goals](https://github.com/Wilfred/remacs/projects/1) 
-in the project section.
+under projects.
 
 # Porting Elisp Primitive Functions
 
 The first thing to look at is the C implementation for the `atan` function. It takes an optional second argument, which makes it interesting. The complicated mathematical bits, on the other hand, are handled by the standard library. This allows us to focus on the porting process without getting distracted by the math.
 
-The Lisp values we are given as arguments are tagged pointers; in this case they are pointers to doubles. The code has to check the tag and follow the pointer to retrieve the real values. Note that this code invokes a C macro (called `DEFUN`) that reduces some of the boilerplate. The macro declares a static varable called `Satan` that holds the metadata the Lisp compiler will need in order to successfully call this function, such as the docstring and the pointer to the `Fatan` function, which is what the C implementation is named:
+The Lisp values we are given as arguments are tagged pointers; in this case they are pointers to doubles. The code has to check the tag and follow the pointer to retrieve the real values. Note that this code invokes a C macro (called `DEFUN`) that reduces some of the boilerplate. The macro declares a static variable called `Satan` that holds the metadata the Lisp compiler will need in order to successfully call this function, such as the docstring and the pointer to the `Fatan` function, which is what the C implementation is named:
 
 ``` c
 DEFUN ("atan", Fatan, Satan, 1, 2, 0,
@@ -297,4 +299,4 @@ Pull requests welcome, no copyright assignment required. This project is under t
 [Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct).
 
 There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
-one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
+one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our [Gitter channel](https://gitter.im/remacs-discuss/Lobby).

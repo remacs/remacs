@@ -454,7 +454,7 @@ fast_c_string_match_ignore_case (Lisp_Object regexp,
   regexp = string_make_unibyte (regexp);
   re_match_object = Qt;
   bufp = compile_pattern (regexp, 0,
-			  Vascii_canon_table, 0,
+			  get_canonical_case_table(), 0,
 			  0);
   val = re_search (bufp, string, len, 0, len, 0);
   return val;

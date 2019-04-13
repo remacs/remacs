@@ -16,7 +16,6 @@ use crate::{
     data::aref,
     frames::LispFrameRef,
     hashtable::LispHashTableRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,
@@ -45,7 +44,8 @@ impl LispObject {
     }
 
     pub fn is_vector(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| v.is_vector())
+        self.as_vectorlike()
+            .map_or(false, LispVectorlikeRef::is_vector)
     }
 
     pub fn force_vectorlike(self) -> LispVectorlikeRef {
@@ -74,8 +74,16 @@ impl LispObject {
         LispVectorlikeRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike)
     }
 
+    pub unsafe fn as_vectorlike_slots_unchecked(self) -> LispVectorlikeSlotsRef {
+        LispVectorlikeSlotsRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike_With_Slots)
+    }
+
+    pub fn force_vectorlike_slots(self) -> LispVectorlikeSlotsRef {
+        unsafe { self.as_vectorlike_slots_unchecked() }
+    }
+
     pub fn as_vector(self) -> Option<LispVectorRef> {
-        self.as_vectorlike().and_then(|v| v.as_vector())
+        self.as_vectorlike().and_then(LispVectorlikeRef::as_vector)
     }
 
     pub fn as_vector_or_error(self) -> LispVectorRef {
@@ -85,6 +93,18 @@ impl LispObject {
 
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
         self.as_vectorlike_unchecked().as_vector_unchecked()
+    }
+
+    pub fn force_vector(self) -> LispVectorRef {
+        unsafe { self.as_vector_unchecked() }
+    }
+
+    pub unsafe fn as_bool_vector_unchecked(self) -> LispBoolVecRef {
+        LispBoolVecRef::new(self.get_untaggedptr() as *mut Lisp_Bool_Vector)
+    }
+
+    pub fn force_bool_vector(self) -> LispBoolVecRef {
+        unsafe { self.as_bool_vector_unchecked() }
     }
 
     pub fn as_vector_or_string_length(self) -> isize {
@@ -456,13 +476,21 @@ impl LispBoolVecRef {
         self.size as usize
     }
 
+    pub fn len_bytes(self) -> usize {
+        (self.len() + BOOL_VECTOR_BITS_PER_CHAR as usize - 1) / BOOL_VECTOR_BITS_PER_CHAR as usize
+    }
+
+    pub fn len_words(self) -> usize {
+        (self.len() + BITS_PER_BITS_WORD as usize - 1) / BITS_PER_BITS_WORD as usize
+    }
+
     pub fn as_slice(&self) -> &[usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_slice(l) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_mut_slice(l) }
     }
 
@@ -537,7 +565,8 @@ impl LispObject {
     }
 
     pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
-        self.as_vectorlike().and_then(|v| v.as_bool_vector())
+        self.as_vectorlike()
+            .and_then(LispVectorlikeRef::as_bool_vector)
     }
 }
 
@@ -626,7 +655,7 @@ pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
 pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
-    } else if let Some(mut vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
+    } else if let Some(mut vec) = seq.as_vectorlike().and_then(LispVectorlikeRef::as_vector) {
         vec.as_mut_slice().sort_by(|&a, &b| {
             // XXX: since the `sort' predicate is a two-outcome comparison
             // Less/!Less, and slice::sort_by() uses Greater/!Greater

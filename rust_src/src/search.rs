@@ -3,7 +3,6 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     remacs_sys::{looking_at_1, match_limit, search_command, string_match_1},
 };

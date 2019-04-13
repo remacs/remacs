@@ -654,41 +654,6 @@ Both TAG and VALUE are evalled.  */
   xsignal2 (Qno_catch, tag, value);
 }
 
-DEFUN ("condition-case", Fcondition_case, Scondition_case, 2, UNEVALLED, 0,
-       doc: /* Regain control when an error is signaled.
-Executes BODYFORM and returns its value if no error happens.
-Each element of HANDLERS looks like (CONDITION-NAME BODY...)
-where the BODY is made of Lisp expressions.
-
-A handler is applicable to an error
-if CONDITION-NAME is one of the error's condition names.
-If an error happens, the first applicable handler is run.
-
-The car of a handler may be a list of condition names instead of a
-single condition name; then it handles all of them.  If the special
-condition name `debug' is present in this list, it allows another
-condition in the list to run the debugger if `debug-on-error' and the
-other usual mechanisms says it should (otherwise, `condition-case'
-suppresses the debugger).
-
-When a handler handles an error, control returns to the `condition-case'
-and it executes the handler's BODY...
-with VAR bound to (ERROR-SYMBOL . SIGNAL-DATA) from the error.
-\(If VAR is nil, the handler can't access that information.)
-Then the value of the last BODY form is returned from the `condition-case'
-expression.
-
-See also the function `signal' for more info.
-usage: (condition-case VAR BODYFORM &rest HANDLERS)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object var = XCAR (args);
-  Lisp_Object bodyform = XCAR (XCDR (args));
-  Lisp_Object handlers = XCDR (XCDR (args));
-
-  return internal_lisp_condition_case (var, bodyform, handlers);
-}
-
 /* Like Fcondition_case, but the args are separate
    rather than passed in a list.  Used by Fbyte_code.  */
 
@@ -3037,7 +3002,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Sthrow);
-  defsubr (&Scondition_case);
   defsubr (&Sapply);
   defsubr (&Sfunc_arity);
   defsubr (&Sfetch_bytecode);

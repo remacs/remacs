@@ -7,15 +7,15 @@ use crate::{
     coding::encode_file_name,
     eval::{record_unwind_protect_int, unbind_to},
     fileio::expand_file_name,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::Fdelete_region,
+    remacs_sys::Qnil,
     remacs_sys::NULL_DEVICE,
     remacs_sys::{
         build_string, call_process, close_file_unwind, create_temp_file, emacs_open,
         report_file_error,
     },
-    remacs_sys::{EmacsInt, Qnil},
     threads::{c_specpdl_index, ThreadState},
 };
 
@@ -59,14 +59,14 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
             ThreadState::current_buffer_unchecked().directory_.into(),
         )
     } else {
-        unsafe { build_string(NULL_DEVICE.as_ptr() as *const i8) }.into()
+        unsafe { build_string(NULL_DEVICE.as_ptr() as *const libc::c_char) }.into()
     };
 
     let encoded_file = encode_file_name(infile);
 
     let filefd = unsafe {
         emacs_open(
-            encoded_file.const_data_ptr() as *const i8,
+            encoded_file.const_data_ptr() as *const libc::c_char,
             libc::O_RDONLY,
             0,
         )
@@ -75,7 +75,7 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     if filefd < 0 {
         unsafe {
             report_file_error(
-                "Opening process input file".as_ptr() as *const i8,
+                "Opening process input file".as_ptr() as *const libc::c_char,
                 infile.into(),
             )
         };
@@ -136,19 +136,22 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
         let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()
     } else {
-        unsafe { buffers::validate_region(&mut args[0], &mut args[1]) };
-        start = args[0];
-        end = args[1];
-        EmacsInt::from(start) == EmacsInt::from(end)
+        let (start_1, end_1) = buffers::validate_region_rust(args[0], args[1]);
+        start = start_1.into();
+        end = end_1.into();
+        args[0] = start;
+        args[1] = end;
+
+        start_1 == end_1
     };
 
     let fd = unsafe {
         if !empty_input {
             create_temp_file(args.len() as isize, args.as_mut_ptr(), &mut infile)
         } else {
-            let fd = emacs_open(NULL_DEVICE.as_ptr() as *const i8, O_RDONLY, 0);
+            let fd = emacs_open(NULL_DEVICE.as_ptr() as *const libc::c_char, O_RDONLY, 0);
             if fd < 0 {
-                report_file_error("opening null device".as_ptr() as *const i8, Qnil);
+                report_file_error("opening null device".as_ptr() as *const libc::c_char, Qnil);
             }
             record_unwind_protect_int(Some(close_file_unwind), fd);
             fd

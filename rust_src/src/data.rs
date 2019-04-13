@@ -6,10 +6,10 @@ use libc::{c_char, c_int};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::per_buffer_idx,
+    buffers::{per_buffer_idx, per_buffer_idx_from_field_offset},
     frames::selected_frame,
     keymap::get_keymap,
-    lisp::{defsubr, is_autoload},
+    lisp::is_autoload,
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
     lists::{get, member, memq, put},
     math::leq,
@@ -23,7 +23,7 @@ use crate::{
         symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
         CHECK_IMPURE,
     },
-    remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
+    remacs_sys::{per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
     remacs_sys::{Fdelete, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
@@ -40,14 +40,25 @@ use crate::{
 };
 
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
+
 #[no_mangle]
 pub unsafe extern "C" fn KBOARD_OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    is_kboard_objfwd(a)
+}
+
+pub unsafe fn is_kboard_objfwd(a: *const Lisp_Fwd) -> bool {
     (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn OBJFWDP(a: *const Lisp_Fwd) -> bool {
-    (*a).u_intfwd.ty == Lisp_Fwd_Obj
+pub unsafe fn as_buffer_objfwd(a: *const Lisp_Fwd) -> Option<Lisp_Buffer_Objfwd> {
+    match (*a).u_intfwd.ty {
+        Lisp_Fwd_Buffer_Obj => Some((*a).u_buffer_objfwd),
+        _ => None,
+    }
+}
+
+pub unsafe fn is_buffer_objfwd(a: *const Lisp_Fwd) -> bool {
+    as_buffer_objfwd(a).is_some()
 }
 
 /// Find the function at the end of a chain of symbol function indirections.
@@ -376,28 +387,21 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
                 d
             }
         }
-        symbol_redirect::SYMBOL_FORWARDED => {
-            let valcontents = unsafe { symbol.get_fwd() };
+        symbol_redirect::SYMBOL_FORWARDED => unsafe {
+            let valcontents = symbol.get_fwd();
 
             // For a built-in buffer-local variable, get the default value
             // rather than letting do_symval_forwarding get the current value.
-            if_chain! {
-                // if_chain! builds up a series of conditions and contitional assignments into one
-                // big pair of then/else arms. This should be converted into idiomatic Option-based
-                // code eventually.
-                if unsafe { (*valcontents).u_intfwd.ty } == Lisp_Fwd_Buffer_Obj;
-                let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
-                if unsafe {
-                    *offset.apply_ptr_mut(&mut buffer_local_flags)
-                }.as_fixnum_or_error() != 0;
-                then {
-                    unsafe { per_buffer_default(offset.get_byte_offset() as i32) }
-                } else {
-                    // For other variables, get the current value.
-                    unsafe { do_symval_forwarding(valcontents) }
+            if let Some(buffer_objfwd) = as_buffer_objfwd(valcontents) {
+                let offset = buffer_objfwd.offset;
+
+                if per_buffer_idx_from_field_offset(offset) != 0 {
+                    return per_buffer_default(offset.get_byte_offset() as i32);
                 }
             }
-        }
+            // For other variables, get the current value.
+            do_symval_forwarding(valcontents)
+        },
         _ => panic!("Symbol type has no default value"),
     }
 }
@@ -602,6 +606,12 @@ pub unsafe extern "C" fn store_symval_forwarding(
         }
         _ => panic!("Unknown intfwd type"),
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn find_symbol_value(sym: LispObject) -> LispObject {
+    let symbol: LispSymbolRef = sym.into();
+    symbol.find_value()
 }
 
 unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {

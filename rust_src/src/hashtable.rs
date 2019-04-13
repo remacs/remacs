@@ -7,12 +7,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::aref,
-    lisp::defsubr,
+    fns::copy_sequence,
     lisp::{ExternalPtr, LispObject},
     lists::{list, put},
-    remacs_sys::{
-        gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Fcopy_sequence,
-    },
+    remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table},
     remacs_sys::{
         pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
     },
@@ -237,10 +235,10 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispHashTableRef {
     unsafe { new_table.copy(table) };
     assert_ne!(new_table.as_ptr(), table.as_ptr());
 
-    let key_and_value = unsafe { Fcopy_sequence(new_table.get_key_and_value()) };
-    let hash = unsafe { Fcopy_sequence(new_table.get_hash()) };
-    let next = unsafe { Fcopy_sequence(new_table.get_next()) };
-    let index = unsafe { Fcopy_sequence(new_table.get_index()) };
+    let key_and_value = copy_sequence(new_table.get_key_and_value());
+    let hash = copy_sequence(new_table.get_hash());
+    let next = copy_sequence(new_table.get_next());
+    let index = copy_sequence(new_table.get_index());
     new_table.set_key_and_value(key_and_value);
     new_table.set_hash(hash);
     new_table.set_next(next);

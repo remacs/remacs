@@ -2,11 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::{
-    lisp::{defsubr, LispObject},
-    remacs_sys::exec_byte_code as c_exec_byte_code,
-    remacs_sys::Qnil,
-};
+use crate::{lisp::LispObject, remacs_sys::exec_byte_code as c_exec_byte_code, remacs_sys::Qnil};
 
 // Temporary Rust wrapper for C's exec_byte_code
 fn rust_exec_byte_code(

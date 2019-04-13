@@ -1,26 +1,38 @@
 //! Random utility Lisp functions.
 
-use std::{cmp, ptr};
+use std::{cmp, mem, ptr, slice};
 
 use libc;
 
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::record,
+    casefiddle::downcase,
+    dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
-    lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
-    multibyte::{raw_byte_from_codepoint, Codepoint, LispStringRef},
+    minibuf::read_from_minibuffer,
+    multibyte::{
+        raw_byte_from_codepoint, string_char_and_length, write_codepoint, Codepoint, LispStringRef,
+    },
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals},
+    remacs_sys::{
+        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
+        make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
+        redisplay_preserve_echo_area,
+    },
     remacs_sys::{EmacsInt, Lisp_Type},
-    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
+    remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
+    remacs_sys::{
+        Qarrayp, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsequencep, Qsubfeatures, Qt,
+        Qyes_or_no_p_history,
+    },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
     vectors::length,
@@ -312,6 +324,121 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+/// Concatenate all the arguments and make the result a vector.
+/// The result is a vector whose elements are the elements of all the arguments.
+/// Each argument may be a list, vector or string.
+/// usage: (vconcat &rest SEQUENCES)
+#[lisp_fn]
+pub fn vconcat(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        lisp_concat(
+            args.len() as isize,
+            args.as_mut_ptr(),
+            Lisp_Type::Lisp_Vectorlike,
+            false,
+        )
+    }
+}
+
+/// Return the reversed copy of list, vector, or string SEQ.
+/// See also the function `nreverse', which is used more often.
+#[lisp_fn]
+pub fn reverse(seq: LispObject) -> LispObject {
+    if seq.is_nil() {
+        Qnil
+    } else if let Some(cons) = seq.as_cons() {
+        cons.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .fold(Qnil, |cons, elt| LispObject::cons(elt, cons))
+    } else if let Some(vector) = seq.as_vector() {
+        let size = vector.len();
+        let mut new = unsafe { make_uninit_vector(size as isize) }.force_vector();
+
+        for (i, item) in vector.iter().enumerate() {
+            unsafe { new.set_unchecked(size - 1 - i, item) };
+        }
+        new.into()
+    } else if let Some(boolvec) = seq.as_bool_vector() {
+        let nbits = boolvec.len();
+        let mut new = unsafe { make_uninit_bool_vector(nbits as i64) }.force_bool_vector();
+
+        for (i, item) in boolvec.iter().enumerate() {
+            unsafe { new.set_unchecked(nbits - 1 - i, item.into()) }
+        }
+        new.into()
+    } else if let Some(string) = seq.as_string() {
+        let size = string.len_chars();
+        let bytes = string.len_bytes();
+
+        if !string.is_multibyte() {
+            let mut new = unsafe { make_uninit_string(size as i64) }.force_string();
+
+            for (i, c) in string.as_slice().iter().enumerate() {
+                new.set_byte(size - i as isize - 1, *c);
+            }
+            new.into()
+        } else {
+            let mut new =
+                unsafe { make_uninit_multibyte_string(size as i64, bytes as i64) }.force_string();
+            let mut p = string.const_data_ptr();
+            let mut q = unsafe { new.data_ptr().add(bytes as usize) };
+            let end = new.data_ptr();
+            while q > end {
+                unsafe {
+                    let (c, len) = string_char_and_length(p);
+                    p = p.add(len);
+                    q = q.sub(len);
+                    write_codepoint(slice::from_raw_parts_mut(q, len), c);
+                }
+            }
+            new.into()
+        }
+    } else {
+        wrong_type!(Qsequencep, seq);
+    }
+}
+
+/// Reverse order of items in a list, vector or string SEQ.
+/// If SEQ is a list, it should be nil-terminated.
+/// This function may destructively modify SEQ to produce the value.
+#[lisp_fn]
+pub fn nreverse(mut seq: LispObject) -> LispObject {
+    if seq.is_nil() {
+        return seq;
+    } else if seq.is_string() {
+        return reverse(seq);
+    } else if let Some(cons) = seq.as_cons() {
+        let mut iter =
+            itertools::put_back(cons.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on));
+        let mut prev = Qnil;
+        while let Some(tail) = iter.next() {
+            if let Some(next) = iter.next() {
+                iter.put_back(next);
+            }
+            tail.set_cdr(prev);
+            prev = tail.into();
+        }
+        seq = prev;
+    } else if let Some(mut vec) = seq.as_vector() {
+        let len = vec.len() / 2;
+        let (left, right) = vec.as_mut_slice().split_at_mut(len);
+        for (a, b) in left.iter_mut().zip(right.iter_mut().rev()) {
+            mem::swap(a, b);
+        }
+    } else if let Some(mut boolvec) = seq.as_bool_vector() {
+        let len = boolvec.len();
+        for i in 0..len / 2 {
+            unsafe {
+                let temp: bool = boolvec.get_unchecked(i).into();
+                boolvec.set_unchecked(i, boolvec.get_unchecked(len - 1 - i).into());
+                boolvec.set_unchecked(len - 1 - i, temp);
+            }
+        }
+    } else {
+        wrong_type!(Qarrayp, seq);
+    }
+    seq
+}
+
 // Return true if O1 and O2 are equal.  Do not quit or check for cycles.
 // Use this only on arguments that are cycle-free and not too large and
 // are not window configurations.
@@ -452,6 +579,156 @@ pub fn compare_strings(
     }
 
     Qt
+}
+
+/// Return a copy of ALIST.
+/// This is an alist which represents the same mapping from objects to objects,
+/// but does not share the alist structure with ALIST.
+/// The objects mapped (cars and cdrs of elements of the alist)
+/// are shared, however.
+/// Elements of ALIST that are not conses are also shared.
+#[lisp_fn]
+pub fn copy_alist(mut alist: LispObject) -> LispObject {
+    if alist.is_nil() {
+        return alist;
+    }
+
+    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+
+    for elt in new_alist.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let front = elt.car();
+        // To make a copy, unpack the cons and then make a new one while re-using the car and cdr.
+        if let Some((car, cdr)) = front.into() {
+            elt.set_car((car, cdr));
+        }
+    }
+
+    new_alist
+}
+
+/// Ask user a yes-or-no question.
+///
+/// Return t if answer is yes, and nil if the answer is no.  PROMPT is
+/// the string to display to ask the question.  It should end in a
+/// space; `yes-or-no-p' adds \"(yes or no) \" to it.
+///
+/// The user must confirm the answer with RET, and can edit it until
+/// it has been confirmed.
+///
+/// If dialog boxes are supported, a dialog box will be used if
+/// `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.
+#[lisp_fn]
+pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
+    let use_popup = unsafe {
+        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+            && globals.use_dialog_box
+            && globals.last_input_event.is_not_nil()
+    };
+
+    if use_popup {
+        unsafe { redisplay_preserve_echo_area(4) };
+        let menu = (prompt, (("Yes", true), ("No", false)));
+        return unsafe { Fx_popup_dialog(Qt, menu.into(), Qnil) }.into();
+    }
+
+    let yes_or_no: LispObject = "(yes or no) ".into();
+    let prompt = concat(&mut [prompt.into(), yes_or_no]).into();
+
+    loop {
+        let ans: LispStringRef = downcase(read_from_minibuffer(
+            prompt,
+            Qnil,
+            Qnil,
+            false,
+            Qyes_or_no_p_history,
+            Qnil,
+            false,
+        ))
+        .into();
+
+        match ans.as_slice() {
+            b"yes" => {
+                return true;
+            }
+            b"no" => {
+                return false;
+            }
+            _ => {
+                ding(Qnil);
+                unsafe {
+                    Fdiscard_input();
+                    message1("Please answer yes or no.\0".as_ptr() as *const libc::c_char);
+                }
+                sleep_for(2.0, None);
+            }
+        }
+    }
+}
+
+/// Concatenate any number of lists by altering them.
+/// Only the last argument is not altered, and need not be a list.
+/// usage: (nconc &rest LISTS)
+#[lisp_fn]
+pub fn nconc(args: &mut [LispObject]) -> LispObject {
+    let mut val = Qnil;
+
+    let len = args.len();
+
+    for i in 0..len {
+        let elt = args[i];
+
+        if elt.is_nil() {
+            continue;
+        }
+
+        if val.is_nil() {
+            val = elt;
+        }
+
+        if (i + 1) == len {
+            break;
+        }
+
+        let cons: LispCons = elt.into();
+
+        let tail = cons
+            .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::on)
+            .last()
+            .unwrap();
+
+        let next = args[i + 1];
+        tail.set_cdr(next);
+        if next.is_nil() {
+            args[i + 1] = tail.into();
+        }
+    }
+
+    val
+}
+
+/// Return a copy of a list, vector, string, char-table or record.
+/// The elements of a list, vector or record are not copied; they are
+/// shared with the original.
+/// If the original sequence is empty, this function may return
+/// the same empty object instead of its copy.
+#[lisp_fn]
+pub fn copy_sequence(mut arg: LispObject) -> LispObject {
+    if arg.is_nil() {
+        arg
+    } else if arg.is_record() {
+        record(arg.force_vectorlike_slots().as_mut_slice())
+    } else if arg.is_char_table() {
+        unsafe { copy_char_table(arg) }
+    } else if let Some(boolvec) = arg.as_bool_vector() {
+        let nbits = boolvec.len() as i64;
+        let mut new = unsafe { make_uninit_bool_vector(nbits).force_bool_vector() };
+        new.as_mut_slice().copy_from_slice(boolvec.as_slice());
+        new.into()
+    } else if !(arg.is_cons() || arg.is_vector() || arg.is_string()) {
+        wrong_type!(Qsequencep, arg);
+    } else {
+        unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

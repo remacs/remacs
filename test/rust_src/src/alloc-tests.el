@@ -17,7 +17,8 @@
 
 (ert-deftest record ()
   (should (recordp (record 'foo)))
-  (should (equal (record 'foo 23 [bar baz] "rats") #s(foo 23 [bar baz] "rats"))))
+  (should (equal (record 'foo 23 [bar baz] "rats") #s(foo 23 [bar baz] "rats")))
+  (should-error (record)))
 
 (provide 'alloc-tests)
 ;;; alloc-tests.el ends here

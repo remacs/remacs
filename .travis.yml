@@ -23,7 +23,6 @@ addons:
 stages:
   - rustfmt
   - clippy
-  - cerrors
   - test
 
 jobs:
@@ -38,14 +37,6 @@ jobs:
         - travis_wait rustup component add rustfmt-preview
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
       script: ./.travis-format.sh
-    - stage: cerrors
-      os: linux  # No need to run this everywhere
-      before_script:
-        - travis_wait rustup install $(cat rust-toolchain)
-        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
-        - make -C src globals.h
-      script:
-        - ./.travis-cerrors.sh
     - stage: clippy
       os: linux  # No need to run this everywhere
       before_script:

@@ -10,10 +10,9 @@ use crate::{
     character::{self, characterp},
     data::set,
     dispnew::ding_internal,
-    editfns::{line_beginning_position, line_end_position, preceding_char},
+    editfns::{insert_and_inherit, line_beginning_position, line_end_position, preceding_char},
     frames::selected_frame,
     keymap::{current_global_map, Ctl},
-    lisp::defsubr,
     lisp::LispObject,
     lists::get,
     multibyte::{
@@ -25,9 +24,8 @@ use crate::{
     remacs_sys::EmacsInt,
     remacs_sys::{
         concat2, current_column, del_range, frame_make_pointer_invisible, globals,
-        initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
-        scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
-        translate_char,
+        initial_define_key, memory_full, replace_range, run_hook, scan_newline_from_point,
+        set_point, set_point_both, syntax_property, syntaxcode, translate_char,
     },
     remacs_sys::{Fchar_width, Fmake_string, Fmove_to_column},
     remacs_sys::{
@@ -447,14 +445,9 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         for _ in 0..n {
             strn.extend_from_slice(&str[0..len]);
         }
-        unsafe {
-            insert_and_inherit(
-                strn.as_mut_slice().as_mut_ptr() as *mut i8,
-                strn.len() as isize,
-            )
-        };
+        insert_and_inherit(strn.as_slice());
     } else if n > 0 {
-        unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
+        insert_and_inherit(&str[..len]);
     }
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
@@ -516,11 +509,12 @@ pub extern "C" fn keys_of_cmds() {
     }
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     def_lisp_sym!(Qundo_auto__this_command_amalgamating, "undo-auto--this-command-amalgamating");
     def_lisp_sym!(Qkill_forward_chars, "kill-forward-chars");
     // A possible value for a buffer's overwrite-mode variable.

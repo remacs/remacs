@@ -4,9 +4,8 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
-    multibyte::LispStringRef,
+    multibyte::{LispStringRef, LispSymbolOrString},
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
@@ -14,6 +13,7 @@ use crate::{
     remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
+    vectors::LispVectorRef,
 };
 
 /// A lisp object containing an `obarray`.
@@ -45,8 +45,8 @@ impl LispObarrayRef {
     /// Return the symbol that matches NAME (either a symbol or string). If
     /// there is no such symbol, return the integer bucket number of where the
     /// symbol would be if it were present.
-    pub fn lookup(&self, name: LispObject) -> LispObject {
-        let string = name.symbol_or_string_as_string();
+    pub fn lookup(&self, name: LispSymbolOrString) -> LispObject {
+        let string: LispStringRef = name.into();
         unsafe {
             oblookup(
                 self.into(),
@@ -61,17 +61,20 @@ impl LispObarrayRef {
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
     /// name will be transferred to pure storage.
-    pub fn intern(&self, string: LispStringRef) -> LispObject {
+    pub fn intern(&self, string: impl Into<LispSymbolOrString>) -> LispObject {
         let string = string.into();
         let tem = self.lookup(string);
         if tem.is_symbol() {
             tem
-        } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
-            // When Emacs is running lisp code to dump to an executable, make
-            // use of pure storage.
-            intern_driver(unsafe { Fpurecopy(string) }, self.into(), tem)
         } else {
-            intern_driver(string, self.into(), tem)
+            let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
+                // When Emacs is running lisp code to dump to an executable, make
+                // use of pure storage.
+                unsafe { Fpurecopy(string.into()) }
+            } else {
+                string.into()
+            };
+            intern_driver(string_copy, self.into(), tem)
         }
     }
 }
@@ -126,7 +129,7 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
 
     // A valid obarray is a non-empty vector.
     let v = obarray.as_vector();
-    if v.map_or(0, |v_1| v_1.len()) == 0 {
+    if v.map_or(0, LispVectorRef::len) == 0 {
         // If Vobarray is now invalid, force it to be valid.
         if unsafe { globals.Vobarray }.eq(obarray) {
             unsafe { globals.Vobarray = initial_obarray };
@@ -205,11 +208,11 @@ pub extern "C" fn intern_driver(
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObject {
+pub fn intern_soft(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> LispObject {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let tem = obarray.lookup(name);
 
-    if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
+    if tem.is_integer() || (name.is_symbol() && !name.eq(&tem)) {
         Qnil
     } else {
         tem

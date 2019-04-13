@@ -4,24 +4,96 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::current_buffer,
+    dispnew::ding_internal,
+    emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
     frames::{selected_frame, window_frame_live_or_selected_with_action},
-    lisp::defsubr,
     lisp::LispObject,
+    lists,
+    lists::{car_safe, cdr_safe},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     numbers::IsLispNatnum,
+    remacs_sys::globals,
     remacs_sys::{
-        command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
-        recursive_edit_1, recursive_edit_unwind, update_mode_lines,
+        clear_message, command_loop_level, get_input_pending, glyph_row_area,
+        interrupt_input_blocked, make_lispy_position, message_log_maybe_newline, minibuf_level,
+        output_method, print_error_message, process_special_events, recursive_edit_1,
+        recursive_edit_unwind, temporarily_switch_to_single_kboard, totally_unblock_input,
+        update_mode_lines, window_box_left_offset,
     },
+    remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
-        make_lispy_position, temporarily_switch_to_single_kboard, window_box_left_offset,
+        Qevent_kind, Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil,
+        Qt, Qtop_level, Qvertical_line,
     },
-    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
-    remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line},
     threads::c_specpdl_index,
     windows::{selected_window, LispWindowOrSelected},
 };
+
+#[cfg(feature = "window-system")]
+use crate::remacs_sys::cancel_hourglass;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Event(LispObject);
+
+impl Event {
+    // replaces EVENT_HAS_PARAMETERS
+    /// Checks if the event has data fields describing it (i.e. a mouse click).
+    pub fn has_parameters(self) -> bool {
+        self.0.is_cons()
+    }
+
+    /// Checks if the event's data fields have contents
+    pub fn has_data(self) -> bool {
+        match self.0.as_cons() {
+            Some(cons) => cons.cdr().is_cons(),
+            None => false,
+        }
+    }
+
+    // replaces EVENT_HEAD
+    /// Extract the head from an event.
+    /// This works on composite and simple events.
+    pub fn head(self) -> LispObject {
+        match self.0.as_cons() {
+            Some(cons) => cons.car(),
+            None => self.0,
+        }
+    }
+
+    // replaces EVENT_HEAD_KIND
+    // Note that the C macro expects an event head, this method expects an event
+    // which it exctracts the head from itself.
+    /// Extracts the kind from an event's head.
+    pub fn head_kind(self) -> LispObject {
+        lists::get(self.head().into(), Qevent_kind)
+    }
+
+    // replaces EVENT_START
+    /// Extracts the starting position from a composite event.
+    pub fn start(self) -> LispObject {
+        car_safe(cdr_safe(self.0))
+    }
+
+    // replaces EVENT_END
+    /// Extracts the ending position from a composite event.
+    pub fn end(self) -> LispObject {
+        car_safe(cdr_safe(cdr_safe(self.0)))
+    }
+}
+
+impl From<LispObject> for Event {
+    fn from(o: LispObject) -> Self {
+        Self(o)
+    }
+}
+
+impl From<Event> for LispObject {
+    fn from(o: Event) -> Self {
+        o.0
+    }
+}
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -43,8 +115,8 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
     }
 
     let mut it = tem.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
-    let x = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
-    let mut y = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
+    let x = it.next().map_or(0, LispObject::as_fixnum_or_error);
+    let mut y = it.next().map_or(0, LispObject::as_fixnum_or_error);
 
     // Point invisible due to hscrolling?  X can be -1 when a
     // newline in a R2L line overflows into the left fringe.
@@ -53,7 +125,7 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
     }
     let aux_info = it.rest();
     if aux_info.is_not_nil() && y < 0 {
-        let rtop = it.next().map_or(0, |v| v.as_fixnum_or_error());
+        let rtop = it.next().map_or(0, LispObject::as_fixnum_or_error);
 
         y += rtop;
     }
@@ -190,6 +262,7 @@ pub fn recursive_edit() {
     }
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn rust_syms_of_keyboard() {
     /// The last command executed.
@@ -218,6 +291,103 @@ pub extern "C" fn rust_syms_of_keyboard() {
     /// This is the command `repeat' will try to repeat.
     /// Taken from a previous value of `real-this-command'.  */
     defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
+}
+
+/// Produce default output for unhandled error message.
+/// Default value of `command-error-function'.
+#[lisp_fn]
+pub fn command_error_default_function(
+    data: LispObject,
+    context: LispStringRef,
+    signal: LispObject,
+) {
+    let selected_frame = selected_frame();
+    // If the window system or terminal frame hasn't been initialized
+    // yet, or we're not interactive, write the message to stderr and
+    // exit.
+    if !selected_frame.glyphs_initialized_p()
+        // The initial frame is a special non-displaying frame. It
+        // will be current in daemon mode when there are no frames to
+        // display, and in non-daemon mode before the real frame has
+        // finished initializing.  If an error is thrown in the latter
+        // case while creating the frame, then the frame will never be
+        // displayed, so the safest thing to do is write to stderr and
+        // quit.  In daemon mode, there are many other potential
+        // errors that do not prevent frames from being created, so
+        // continuing as normal is better in that case.
+        || (!is_daemon() && selected_frame.output_method() == output_method::output_initial)
+        || unsafe {globals.noninteractive1 }
+    {
+        unsafe {
+            print_error_message(
+                data,
+                Qexternal_debugging_output,
+                context.const_sdata_ptr(),
+                signal,
+            );
+            Fterpri(Qexternal_debugging_output, Qnil);
+            Fkill_emacs(LispObject::from(-1));
+        }
+    } else {
+        unsafe {
+            clear_message(true, false);
+            Fdiscard_input();
+            message_log_maybe_newline();
+            ding_internal(true);
+            print_error_message(data, Qt, context.const_sdata_ptr(), signal);
+        }
+    }
+}
+
+const READABLE_EVENTS_DO_TIMERS_NOW: i32 = 1;
+const READABLE_EVENTS_FILTER_EVENTS: i32 = 2;
+
+/// Return t if command input is currently available with no wait.
+/// Actually, the value is nil only if we can be sure that no input is available;
+/// if there is a doubt, the value is t.
+///
+/// If CHECK-TIMERS is non-nil, timers that are ready to run will do so.
+#[lisp_fn(min = "0")]
+pub fn input_pending_p(check_timers: bool) -> bool {
+    unsafe {
+        if globals.Vunread_command_events.is_cons()
+            || globals.Vunread_post_input_method_events.is_not_nil()
+            || globals.Vunread_input_method_events.is_not_nil()
+        {
+            return true;
+        }
+
+        // Process non-user-visible events (Bug#10195).
+        process_special_events();
+
+        let val = if !check_timers {
+            0
+        } else {
+            READABLE_EVENTS_DO_TIMERS_NOW
+        };
+
+        get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)
+    }
+}
+
+/// Exit all recursive editing levels.
+/// This also exits all active minibuffers.
+#[lisp_fn(intspec = "")]
+pub fn top_level() {
+    unsafe {
+        #[cfg(feature = "window-system")]
+        {
+            if globals.display_hourglass_p {
+                cancel_hourglass();
+            }
+        }
+
+        // Unblock input if we enter with input blocked.  This may happen if
+        // redisplay traps e.g. during tool-bar update with input blocked.
+        totally_unblock_input();
+
+        Fthrow(Qtop_level, Qnil);
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));

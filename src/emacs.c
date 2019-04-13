@@ -177,7 +177,7 @@ bool no_site_lisp;
 bool build_details;
 
 /* Name for the server started by the daemon.*/
-static char *daemon_name;
+char *daemon_name;
 
 /* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
 int daemon_type;
@@ -2370,20 +2370,6 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
   return Fnreverse (lpath);
 }
 
-DEFUN ("daemonp", Fdaemonp, Sdaemonp, 0, 0, 0,
-       doc: /* Return non-nil if the current emacs process is a daemon.
-If the daemon was given a name argument, return that name. */)
-  (void)
-{
-  if (IS_DAEMON)
-    if (daemon_name)
-      return build_string (daemon_name);
-    else
-      return Qt;
-  else
-    return Qnil;
-}
-
 DEFUN ("daemon-initialized", Fdaemon_initialized, Sdaemon_initialized, 0, 0, 0,
        doc: /* Mark the Emacs daemon as being initialized.
 This finishes the daemonization process by doing the other half of detaching
@@ -2455,7 +2441,6 @@ syms_of_emacs (void)
 
   defsubr (&Skill_emacs);
 
-  defsubr (&Sdaemonp);
   defsubr (&Sdaemon_initialized);
 
   DEFVAR_LISP ("command-line-args", Vcommand_line_args,

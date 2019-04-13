@@ -197,51 +197,6 @@ concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
   return concat (3, ((Lisp_Object []) {s1, s2, s3}), Lisp_String, 0);
 }
 
-DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0,
-       doc: /* Concatenate all the arguments and make the result a vector.
-The result is a vector whose elements are the elements of all the arguments.
-Each argument may be a list, vector or string.
-usage: (vconcat &rest SEQUENCES)   */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return concat (nargs, args, Lisp_Vectorlike, 0);
-}
-
-
-DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
-       doc: /* Return a copy of a list, vector, string, char-table or record.
-The elements of a list, vector or record are not copied; they are
-shared with the original.
-If the original sequence is empty, this function may return
-the same empty object instead of its copy.  */)
-  (Lisp_Object arg)
-{
-  if (NILP (arg)) return arg;
-
-  if (RECORDP (arg))
-    {
-      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
-    }
-
-  if (CHAR_TABLE_P (arg))
-    {
-      return copy_char_table (arg);
-    }
-
-  if (BOOL_VECTOR_P (arg))
-    {
-      EMACS_INT nbits = bool_vector_size (arg);
-      ptrdiff_t nbytes = bool_vector_bytes (nbits);
-      Lisp_Object val = make_uninit_bool_vector (nbits);
-      memcpy (bool_vector_data (val), bool_vector_data (arg), nbytes);
-      return val;
-    }
-
-  if (!CONSP (arg) && !VECTORP (arg) && !STRINGP (arg))
-    wrong_type_argument (Qsequencep, arg);
-
-  return concat (1, &arg, XTYPE (arg), 0);
-}
 
 /* This structure holds information of an argument of `concat' that is
    a string and has text properties to be copied.  */
@@ -804,27 +759,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-DEFUN ("copy-alist", Fcopy_alist, Scopy_alist, 1, 1, 0,
-       doc: /* Return a copy of ALIST.
-This is an alist which represents the same mapping from objects to objects,
-but does not share the alist structure with ALIST.
-The objects mapped (cars and cdrs of elements of the alist)
-are shared, however.
-Elements of ALIST that are not conses are also shared.  */)
-  (Lisp_Object alist)
-{
-  if (NILP (alist))
-    return alist;
-  alist = concat (1, &alist, Lisp_Cons, false);
-  for (Lisp_Object tem = alist; !NILP (tem); tem = XCDR (tem))
-    {
-      Lisp_Object car = XCAR (tem);
-      if (CONSP (car))
-	XSETCAR (tem, Fcons (XCAR (car), XCDR (car)));
-    }
-  return alist;
-}
-
 /* Check that ARRAY can have a valid subarray [FROM..TO),
    given that its size is SIZE.
    If FROM is nil, use 0; if TO is nil, use SIZE.
@@ -1076,126 +1010,6 @@ changing the value of a sequence `foo'.  */)
   return seq;
 }
 
-DEFUN ("nreverse", Fnreverse, Snreverse, 1, 1, 0,
-       doc: /* Reverse order of items in a list, vector or string SEQ.
-If SEQ is a list, it should be nil-terminated.
-This function may destructively modify SEQ to produce the value.  */)
-  (Lisp_Object seq)
-{
-  if (NILP (seq))
-    return seq;
-  else if (STRINGP (seq))
-    return Freverse (seq);
-  else if (CONSP (seq))
-    {
-      Lisp_Object prev, tail, next;
-
-      for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
-	{
-	  next = XCDR (tail);
-	  /* If SEQ contains a cycle, attempting to reverse it
-	     in-place will inevitably come back to SEQ.  */
-	  if (EQ (next, seq))
-	    circular_list (seq);
-	  Fsetcdr (tail, prev);
-	  prev = tail;
-	}
-      CHECK_LIST_END (tail, seq);
-      seq = prev;
-    }
-  else if (VECTORP (seq))
-    {
-      ptrdiff_t i, size = ASIZE (seq);
-
-      for (i = 0; i < size / 2; i++)
-	{
-	  Lisp_Object tem = AREF (seq, i);
-	  ASET (seq, i, AREF (seq, size - i - 1));
-	  ASET (seq, size - i - 1, tem);
-	}
-    }
-  else if (BOOL_VECTOR_P (seq))
-    {
-      ptrdiff_t i, size = bool_vector_size (seq);
-
-      for (i = 0; i < size / 2; i++)
-	{
-	  bool tem = bool_vector_bitref (seq, i);
-	  bool_vector_set (seq, i, bool_vector_bitref (seq, size - i - 1));
-	  bool_vector_set (seq, size - i - 1, tem);
-	}
-    }
-  else
-    wrong_type_argument (Qarrayp, seq);
-  return seq;
-}
-
-DEFUN ("reverse", Freverse, Sreverse, 1, 1, 0,
-       doc: /* Return the reversed copy of list, vector, or string SEQ.
-See also the function `nreverse', which is used more often.  */)
-  (Lisp_Object seq)
-{
-  Lisp_Object new;
-
-  if (NILP (seq))
-    return Qnil;
-  else if (CONSP (seq))
-    {
-      new = Qnil;
-      FOR_EACH_TAIL (seq)
-	new = Fcons (XCAR (seq), new);
-      CHECK_LIST_END (seq, seq);
-    }
-  else if (VECTORP (seq))
-    {
-      ptrdiff_t i, size = ASIZE (seq);
-
-      new = make_uninit_vector (size);
-      for (i = 0; i < size; i++)
-	ASET (new, i, AREF (seq, size - i - 1));
-    }
-  else if (BOOL_VECTOR_P (seq))
-    {
-      ptrdiff_t i;
-      EMACS_INT nbits = bool_vector_size (seq);
-
-      new = make_uninit_bool_vector (nbits);
-      for (i = 0; i < nbits; i++)
-	bool_vector_set (new, i, bool_vector_bitref (seq, nbits - i - 1));
-    }
-  else if (STRINGP (seq))
-    {
-      ptrdiff_t size = SCHARS (seq), bytes = SBYTES (seq);
-
-      if (size == bytes)
-	{
-	  ptrdiff_t i;
-
-	  new = make_uninit_string (size);
-	  for (i = 0; i < size; i++)
-	    SSET (new, i, SREF (seq, size - i - 1));
-	}
-      else
-	{
-	  unsigned char *p, *q;
-
-	  new = make_uninit_multibyte_string (size, bytes);
-	  p = SDATA (seq), q = SDATA (new) + bytes;
-	  while (q > SDATA (new))
-	    {
-	      int ch, len;
-
-	      ch = STRING_CHAR_AND_LENGTH (p, len);
-	      p += len, q -= len;
-	      CHAR_STRING (ch, q);
-	    }
-	}
-    }
-  else
-    wrong_type_argument (Qsequencep, seq);
-  return new;
-}
-
 
 DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0,
        doc: /* Store each element of ARRAY with ITEM.
@@ -1253,38 +1067,6 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
   return CALLN (Fnconc, s1, s2);
 }
 
-DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0,
-       doc: /* Concatenate any number of lists by altering them.
-Only the last argument is not altered, and need not be a list.
-usage: (nconc &rest LISTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object val = Qnil;
-
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object tem = args[argnum];
-      if (NILP (tem)) continue;
-
-      if (NILP (val))
-	val = tem;
-
-      if (argnum + 1 == nargs) break;
-
-      CHECK_CONS (tem);
-
-      Lisp_Object tail;
-      FOR_EACH_TAIL (tem)
-	tail = tem;
-
-      tem = args[argnum + 1];
-      Fsetcdr (tail, tem);
-      if (NILP (tem))
-	args[argnum + 1] = tail;
-    }
-
-  return val;
-}
 
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
@@ -1359,55 +1141,6 @@ Lisp_Object
 do_yes_or_no_p (Lisp_Object prompt)
 {
   return call1 (intern ("yes-or-no-p"), prompt);
-}
-
-DEFUN ("yes-or-no-p", Fyes_or_no_p, Syes_or_no_p, 1, 1, 0,
-       doc: /* Ask user a yes-or-no question.
-Return t if answer is yes, and nil if the answer is no.
-PROMPT is the string to display to ask the question.  It should end in
-a space; `yes-or-no-p' adds \"(yes or no) \" to it.
-
-The user must confirm the answer with RET, and can edit it until it
-has been confirmed.
-
-If dialog boxes are supported, a dialog box will be used
-if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
-  (Lisp_Object prompt)
-{
-  Lisp_Object ans;
-
-  CHECK_STRING (prompt);
-
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box && ! NILP (last_input_event))
-    {
-      Lisp_Object pane, menu, obj;
-      redisplay_preserve_echo_area (4);
-      pane = list2 (Fcons (build_string ("Yes"), Qt),
-		    Fcons (build_string ("No"), Qnil));
-      menu = Fcons (prompt, pane);
-      obj = Fx_popup_dialog (Qt, menu, Qnil);
-      return obj;
-    }
-
-  AUTO_STRING (yes_or_no, "(yes or no) ");
-  prompt = CALLN (Fconcat, prompt, yes_or_no);
-
-  while (1)
-    {
-      ans = Fdowncase (Fread_from_minibuffer (prompt, Qnil, Qnil, Qnil,
-					      Qyes_or_no_p_history, Qnil,
-					      Qnil));
-      if (SCHARS (ans) == 3 && !strcmp (SSDATA (ans), "yes"))
-	return Qt;
-      if (SCHARS (ans) == 2 && !strcmp (SSDATA (ans), "no"))
-	return Qnil;
-
-      Fding (Qnil);
-      Fdiscard_input ();
-      message1 ("Please answer yes or no.");
-      Fsleep_for (make_number (2), Qnil);
-    }
 }
 
 /* Primitives for work of the "widget" library.
@@ -2935,23 +2668,16 @@ this variable.  */);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
-  defsubr (&Svconcat);
-  defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
   defsubr (&Sstring_as_unibyte);
-  defsubr (&Scopy_alist);
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);
   defsubr (&Sdelete);
-  defsubr (&Snreverse);
-  defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
-  defsubr (&Syes_or_no_p);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);

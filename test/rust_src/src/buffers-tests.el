@@ -63,6 +63,49 @@
     (should (equal (delq nil (delete-dups the-buffers))
                    the-buffers))))
 
+(ert-deftest test-rename-buffer ()
+    (let ((buf (get-buffer-create "test-rename-buffer")))
+      (with-current-buffer buf
+        (rename-buffer "test-rename-buffer-foo")
+        (should (string= (buffer-name buf) "test-rename-buffer-foo")))))
+
+(ert-deftest test-rename-buffer-empty ()
+    (let ((buf (get-buffer-create "test-rename-buffer-empty")))
+      (with-current-buffer buf
+        (should-error (rename-buffer "")))))
+
+(ert-deftest test-rename-buffer-existing ()
+    (let ((buf (get-buffer-create "test-rename-buffer-existing")))
+      (with-current-buffer buf
+        (should-error (rename-buffer "test-rename-buffer-foo")))))
+
+(ert-deftest test-rename-buffer-unique ()
+    (let ((buf (get-buffer-create "test-rename-buffer")))
+      (with-current-buffer buf
+        (rename-buffer "test-rename-buffer-foo" t)
+        (should (string= (buffer-name buf) "test-rename-buffer-foo<2>")))))
+
+(ert-deftest test-generate-new-buffer-name ()
+  (let ((buf-name "test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (should (string= (generate-new-buffer-name buf-name) (concat buf-name "<2>")))))
+
+(ert-deftest test-generate-new-buffer-name-ignore ()
+  (let ((buf-name "test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (should (string= (generate-new-buffer-name buf-name buf-name) buf-name))))
+
+(ert-deftest test-generate-new-buffer-name-space ()
+  (let ((buf-name " test-generate-new-buffer-name"))
+    (get-buffer-create buf-name)
+    (let*((random-name (generate-new-buffer-name buf-name))
+          ;; 'random-name' should have the format like " test-generate-new-buffer-name-XXXXXX"
+          ;; For present implementation "XXXXXXX" is a random number greater than or equal to 0
+          ;; and less than 1_000_000.
+          (random-number (string-to-number (substring random-name (1+ (length buf-name))))))
+      (should-not (string= random-name buf-name))
+      (should (< 0 random-number 999999)))))
+
 (provide 'buffers-tests)
 
 ;;; buffers-tests.el ends here

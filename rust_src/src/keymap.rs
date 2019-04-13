@@ -11,9 +11,11 @@ use crate::{
     buffers::current_buffer,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
+    fns::copy_sequence,
     indent::indent_to,
+    keyboard,
     keyboard::lucid_event_type_list_p,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     lists::{nth, setcdr},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
@@ -24,11 +26,12 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcopy_sequence, Fevent_convert_list, Fmake_char_table, Fpurecopy, Fset_char_table_range,
-        Fterpri,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table, Fpurecopy,
+        Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
-        Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
+        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qt,
+        Qvector_or_char_table_p,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
@@ -38,7 +41,7 @@ pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
 
-/// Hash table used to cache a reverse-map to speed up calls to where-is.
+// Hash table used to cache a reverse-map to speed up calls to where-is.
 declare_GC_protected_static!(where_is_cache, Qnil);
 
 /// Allows the C code to get the value of `where_is_cache`
@@ -55,7 +58,7 @@ pub extern "C" fn set_where_is_cache(val: LispObject) {
     }
 }
 
-/// Which keymaps are reverse-stored in the cache.
+// Which keymaps are reverse-stored in the cache.
 declare_GC_protected_static!(where_is_cache_keymaps, Qt);
 
 /// Allows the C code to get the value of `where_is_cache_keymaps`
@@ -647,10 +650,10 @@ pub fn copy_keymap(keymap: LispObject) -> LispObject {
         }
 
         if elt.is_char_table() {
-            elt = unsafe { Fcopy_sequence(elt) };
+            elt = copy_sequence(elt);
             unsafe { map_char_table(Some(copy_keymap_1), Qnil, elt, elt) };
         } else if let Some(v) = elt.as_vector() {
-            elt = unsafe { Fcopy_sequence(elt) };
+            elt = copy_sequence(elt);
             let mut v2 = elt.as_vector().unwrap();
             for (i, obj) in v.iter().enumerate() {
                 v2.set(i, unsafe { copy_keymap_item(obj) });
@@ -671,6 +674,82 @@ pub fn copy_keymap(keymap: LispObject) -> LispObject {
 
     setcdr(tail.into(), keymap);
     copy
+}
+
+// GC is possible in this funtion if it autoloads a keymap.
+/// Return the binding for command KEY in current keymaps.
+/// KEY is a string or vector, a sequence of keystrokes.
+/// The binding is probably a symbol with a function definition.
+///
+/// Normally, `key-binding' ignores bindings for t, which act as default
+/// bindings, used when nothing else in the keymap applies; this makes it
+/// usable as a general function for probing keymaps.  However, if the
+/// optional second argument ACCEPT-DEFAULT is non-nil, `key-binding' does
+/// recognize the default bindings, just as `read-key-sequence' does.
+///
+/// Like the normal command loop, `key-binding' will remap the command
+/// resulting from looking up KEY by looking up the command in the
+/// current keymaps.  However, if the optional third argument NO-REMAP
+/// is non-nil, `key-binding' returns the unmapped command.
+///
+/// If KEY is a key sequence initiated with the mouse, the used keymaps
+/// will depend on the clicked mouse position with regard to the buffer
+/// and possible local keymaps on strings.
+///
+/// If the optional argument POSITION is non-nil, it specifies a mouse
+/// position as returned by `event-start' and `event-end', and the lookup
+/// occurs in the keymaps associated with it instead of KEY.  It can also
+/// be a number or marker, in which case the keymap properties at the
+/// specified buffer position instead of point are used.
+#[lisp_fn(min = "1")]
+pub fn key_binding(
+    key: LispObject,
+    accept_default: bool,
+    no_remap: bool,
+    mut position: LispObject,
+) -> LispObject {
+    if key.is_vector() && position.is_nil() {
+        let key = key.force_vector();
+        if key.len() == 0 {
+            return Qnil;
+        }
+
+        // Mouse events may have a symbolic prefix indicating the scrollbar or modeline
+        let idx = if key.get(0).is_symbol() && key.len() > 1 {
+            1
+        } else {
+            0
+        };
+        let event: keyboard::Event = key.get(idx).into();
+
+        // Ignore locations without event data
+        if event.has_data() {
+            let kind = event.head_kind();
+            if kind == Qmouse_click {
+                position = event.start()
+            }
+        }
+    }
+
+    let value = lookup_key(
+        (Qkeymap, unsafe { Fcurrent_active_maps(Qt, position) }).into(),
+        key,
+        accept_default.into(),
+    );
+
+    if value.is_nil() || value.is_integer() {
+        return Qnil;
+    }
+
+    // If the result of the ordinary keymap lookup is an interactive
+    // command, look for a key binding (i.e. remapping) for that command.
+    if !no_remap && value.is_symbol() {
+        let remap = unsafe { Fcommand_remapping(value, position, Qnil) };
+        if remap.is_not_nil() {
+            return remap;
+        }
+    }
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

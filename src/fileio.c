@@ -678,22 +678,6 @@ This function does not grok magic file names.  */)
 }
 
 
-DEFUN ("make-temp-name", Fmake_temp_name, Smake_temp_name, 1, 1, 0,
-       doc: /* Generate temporary file name (string) starting with PREFIX (a string).
-
-This function tries to choose a name that has no existing file.
-For this to work, PREFIX should be an absolute file name, and PREFIX
-and the returned string should both be non-magic.
-
-There is a race condition between calling `make-temp-name' and
-later creating the file, which opens all kinds of security holes.
-For that reason, you should normally use `make-temp-file' instead.  */)
-  (Lisp_Object prefix)
-{
-  return Fmake_temp_file_internal (prefix, make_number (0),
-				   empty_unibyte_string, Qnil);
-}
-
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
        doc: /* Convert filename NAME to absolute, and canonicalize it.
 Second arg DEFAULT-DIRECTORY is directory to start with if NAME is relative
@@ -2544,24 +2528,6 @@ This function does not check whether the link target exists.  */)
   return emacs_readlinkat (AT_FDCWD, SSDATA (filename));
 }
 
-DEFUN ("file-directory-p", Ffile_directory_p, Sfile_directory_p, 1, 1, 0,
-       doc: /* Return t if FILENAME names an existing directory.
-Symbolic links to directories count as directories.
-See `file-symlink-p' to distinguish symlinks.  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object absname = expand_and_dir_to_file (filename);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_directory_p);
-  if (!NILP (handler))
-    return call2 (handler, Qfile_directory_p, absname);
-
-  absname = ENCODE_FILE (absname);
-
-  return file_directory_p (absname) ? Qt : Qnil;
-}
 
 /* Return true if FILE is a directory or a symlink to a directory.
    Otherwise return false and set errno.  */
@@ -5765,7 +5731,6 @@ syms_of_fileio (void)
   DEFSYM (Qfile_writable_p, "file-writable-p");
   DEFSYM (Qfile_symlink_p, "file-symlink-p");
   DEFSYM (Qaccess_file, "access-file");
-  DEFSYM (Qfile_directory_p, "file-directory-p");
   DEFSYM (Qfile_regular_p, "file-regular-p");
   DEFSYM (Qfile_accessible_directory_p, "file-accessible-directory-p");
   DEFSYM (Qfile_modes, "file-modes");
@@ -6012,7 +5977,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_as_directory);
   defsubr (&Sdirectory_file_name);
   defsubr (&Smake_temp_file_internal);
-  defsubr (&Smake_temp_name);
   defsubr (&Sexpand_file_name);
   defsubr (&Ssubstitute_in_file_name);
   defsubr (&Scopy_file);
@@ -6026,7 +5990,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_writable_p);
   defsubr (&Saccess_file);
   defsubr (&Sfile_symlink_p);
-  defsubr (&Sfile_directory_p);
   defsubr (&Sfile_accessible_directory_p);
   defsubr (&Sfile_regular_p);
   defsubr (&Sfile_modes);
