@@ -12734,6 +12734,13 @@ comment at the start of cc-engine.el for more info."
 			(if (eq (char-after) ?<)
 			    (zerop (c-forward-token-2 1 t indent-point))
 			  t)
+			(progn
+			  (while
+			      (and
+			       (< (point) indent-point)
+			       (looking-at c-class-id-suffix-ws-ids-key)
+			       (zerop (c-forward-token-2 1 nil indent-point))))
+			  t)
 			(eq (char-after) ?:))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'inher-cont (c-point 'boi)))

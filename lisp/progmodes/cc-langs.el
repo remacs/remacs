@@ -2049,6 +2049,19 @@ effect in the declaration, but are syntactically like whitespace."
 (c-lang-defvar c-type-decl-suffix-ws-ids-key
   (c-lang-const c-type-decl-suffix-ws-ids-key))
 
+(c-lang-defconst c-class-id-suffix-ws-ids-kwds
+  "\"Identifiers\" that when immediately following the identifier
+of a class declaration have semantic effect in the declaration,
+but are syntactially like whitespace."
+  t    nil
+  c++ '("final"))
+
+(c-lang-defconst c-class-id-suffix-ws-ids-key
+  ;; An adorned regexp matching `c-class-id-suffix-ws-ids-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-class-id-suffix-ws-ids-kwds)))
+(c-lang-defvar c-class-id-suffix-ws-ids-key
+  (c-lang-const c-class-id-suffix-ws-ids-key))
+
 (c-lang-defconst c-class-decl-kwds
   "Keywords introducing declarations where the following block (if any)
 contains another declaration level that should be considered a class.
