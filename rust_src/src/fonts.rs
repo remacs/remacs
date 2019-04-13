@@ -32,7 +32,7 @@ use crate::{
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
-    pub fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
+    pub const fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
         LispFontRef(v)
     }
 

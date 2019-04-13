@@ -215,7 +215,7 @@ impl<'a> Iterator for KeyAndValueIter<'a> {
 // The references are necessary to satisfy the lifetime requirements.
 // Otherwise, the iterator would contain a copy which might no longer be valid.
 impl LispHashTableRef {
-    pub fn indices(&self) -> HashTableIter {
+    pub const fn indices(&self) -> HashTableIter {
         HashTableIter {
             table: self,
             current: 0,

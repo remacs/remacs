@@ -130,7 +130,7 @@ struct DirReq {
 }
 
 impl DirReq {
-    fn new(
+    const fn new(
         dname: String,
         full: FullPath,
         match_re: Option<LispObject>,

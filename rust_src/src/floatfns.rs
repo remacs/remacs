@@ -443,15 +443,15 @@ fn rounding_driver(
     xsignal!(Qrange_error, name, arg)
 }
 
-fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
+const fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     i1 / i2 + ((i1 % i2 != 0) & ((i1 < 0) == (i2 < 0))) as EmacsInt
 }
 
-fn floor2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
+const fn floor2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     i1 / i2 - ((i1 % i2 != 0) & ((i1 < 0) != (i2 < 0))) as EmacsInt
 }
 
-fn truncate2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
+const fn truncate2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     i1 / i2
 }
 

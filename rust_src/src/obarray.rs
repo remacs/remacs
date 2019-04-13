@@ -33,7 +33,7 @@ impl From<&LispObarrayRef> for LispObject {
 }
 
 impl LispObarrayRef {
-    pub fn new(obj: LispObject) -> LispObarrayRef {
+    pub const fn new(obj: LispObject) -> LispObarrayRef {
         LispObarrayRef(obj)
     }
 
