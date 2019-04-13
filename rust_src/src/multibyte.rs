@@ -402,7 +402,7 @@ impl From<LispObject> for LispSymbolOrString {
 
 impl PartialEq<LispObject> for LispSymbolOrString {
     fn eq(&self, other: &LispObject) -> bool {
-        (*other).eq(LispObject::from(*self))
+        (*other).eq(*self)
     }
 }
 

@@ -112,9 +112,9 @@ impl FontExtraType {
 pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
 
 impl LispFontObjectRef {
-    pub fn add_log(self, action: &str, result: LispObject) {
+    pub fn add_log(self, action: &str, result: impl Into<LispObject>) {
         let c_str = CString::new(action).unwrap();
-        unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
+        unsafe { font_add_log(c_str.as_ptr(), self.into(), result.into()) }
     }
 
     pub fn close(mut self, mut _frame: LispFrameRef) {
@@ -122,7 +122,7 @@ impl LispFontObjectRef {
             // Already closed
             return;
         }
-        self.add_log("close", LispObject::from(false));
+        self.add_log("close", false);
         unsafe {
             if let Some(f) = (*self.driver).close {
                 f(self.as_mut())
