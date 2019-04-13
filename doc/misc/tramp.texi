@@ -2,9 +2,8 @@
 @setfilename ../../info/tramp.info
 @c %**start of header
 @include docstyle.texi
-@c In the Tramp repository, the version number is auto-frobbed from
-@c configure.ac, so you should edit that file and run
-@c "autoconf && ./configure" to change the version number.
+@c In the Tramp GIT, the version number is auto-frobbed from tramp.el,
+@c and the bug report address is auto-frobbed from configure.ac.
 @include trampver.texi
 @settitle @value{tramp} @value{trampver} User Manual
 @c %**end of header
@@ -52,7 +51,7 @@ editing package for Emacs.
 
 @value{tramp} stands for ``Transparent Remote (file) Access, Multiple
 Protocol''.  This package provides remote file editing, similar to
-Ange FTP.
+Ange FTP@.
 
 The difference is that Ange FTP uses FTP to transfer files between the
 local and the remote host, whereas @value{tramp} uses a combination of
@@ -968,7 +967,7 @@ after a predefined timeout.
 @cindex @option{ftp} method
 
 When @value{tramp} uses @option{ftp}, it forwards requests to whatever
-ftp program is specified by Ange FTP.  This external program must be
+ftp program is specified by Ange FTP@.  This external program must be
 capable of servicing requests from @value{tramp}.
 
 @item @option{smb}
@@ -1092,8 +1091,8 @@ numbers are not applicable to Android devices connected through USB@.
 The program @command{rclone} allows to access different system
 storages in the cloud, see @url{https://rclone.org/} for a list of
 supported systems.  If the @command{rclone} program isn't found in
-your @env{PATH} environment variable, you can tell Tramp its absolute
-path via the user option @code{tramp-rclone-program}.
+your @env{PATH} environment variable, you can tell @value{tramp} its
+absolute path via the user option @code{tramp-rclone-program}.
 
 A system storage must be configured via the @command{rclone config}
 command, outside Emacs.  If you have configured a storage in
@@ -1108,7 +1107,7 @@ User names are part of the @command{rclone} configuration, and not
 needed in the remote file name.  If a user name is contained in the
 remote file name, it is ignored.
 
-Internally, Tramp mounts the remote system storage at location
+Internally, @value{tramp} mounts the remote system storage at location
 @file{/tmp/tramp.rclone.storage}, with @file{storage} being the name
 of the configured system storage.
 
@@ -1538,8 +1537,8 @@ Host host.other.domain
 @end group
 @end example
 
-@code{nc} is BSD's netcat program, which establishes HTTP tunnels. Any
-other program with such a feature could be used as well.
+@code{nc} is BSD's netcat program, which establishes HTTP tunnels.
+Any other program with such a feature could be used as well.
 
 In the example, opening @file{@trampfn{ssh,host.your.domain,}} passes
 the HTTP proxy server @samp{proxy.your.domain} on port 3128.
@@ -1615,7 +1614,7 @@ Integration for LXD containers.  A container is accessed via
 @cindex method @option{git}
 @cindex @option{git} method
 Browing git repositories with @code{magit}.  A versioned file is accessed via
-@file{@trampfn{git,rev@@root-dir,/path/to/file}}. @samp{rev} is a git
+@file{@trampfn{git,rev@@root-dir,/path/to/file}}.  @samp{rev} is a git
 revision, and @samp{root-dir} is a virtual host name for the root
 directory, specified in @code{magit-tramp-hosts-alist}.
 
@@ -2642,7 +2641,7 @@ names.  Beside the @code{default} value, @var{syntax} can be
 @item @code{simplified}
 @cindex simplified syntax
 
-The remote file name syntax is similar to the syntax used by Ange FTP.
+The remote file name syntax is similar to the syntax used by Ange FTP@.
 A remote file name has the form
 @code{@value{prefix}user@@host@value{postfix}path/to/file}.  The
 @code{user@@} part is optional, and the method is determined by
@@ -4372,7 +4371,7 @@ handlers.
 @vindex non-essential
 Sometimes, it is not convenient to open a new connection to a remote
 host, including entering the password and alike.  For example, this is
-nasty for packages providing file name completion. Such a package
+nasty for packages providing file name completion.  Such a package
 could signal to @value{tramp}, that they don't want it to establish a
 new connection.  Use the variable @code{non-essential} temporarily and
 bind it to non-@code{nil} value.
