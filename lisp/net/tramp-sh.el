@@ -2903,7 +2903,8 @@ the result will be a local, non-Tramp, file name."
 		    ;; otherwise we might be interrupted by
 		    ;; `verify-visited-file-modtime'.
 		    (let ((buffer-undo-list t)
-			  (inhibit-read-only t))
+			  (inhibit-read-only t)
+			  (mark (point-max)))
 		      (clear-visited-file-modtime)
 		      (narrow-to-region (point-max) (point-max))
 		      ;; We call `tramp-maybe-open-connection', in
@@ -2916,7 +2917,12 @@ the result will be a local, non-Tramp, file name."
 			(let ((pid (tramp-send-command-and-read v "echo $$")))
 			  (process-put p 'remote-pid pid)
 			  (tramp-set-connection-property p "remote-pid" pid))
-			(delete-region (point-min) (point-max))
+			;; `tramp-maybe-open-connection' and
+			;; `tramp-send-command-and-read' could have
+			;; trashed the connection buffer.  Remove this.
+			(widen)
+			(delete-region mark (point-max))
+			(narrow-to-region (point-max) (point-max))
 			;; Now do it.
 			(if command
 			    ;; Send the command.
