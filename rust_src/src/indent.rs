@@ -15,7 +15,7 @@ use crate::{
     remacs_sys::Qt,
     remacs_sys::{
         self, del_range, find_newline, position_indentation, sanitize_tab_width, scan_for_column,
-        set_point, set_point_both, window_internal_height,
+        set_point, set_point_both,
     },
     remacs_sys::{globals, last_known_column, last_known_column_modified, last_known_column_point},
     remacs_sys::{EmacsInt, EmacsUint},
@@ -244,10 +244,7 @@ pub fn compute_motion(
         };
 
     let (to_hpos, to_vpos) = if topos.is_nil() {
-        (
-            window_width,
-            EmacsInt::from(unsafe { window_internal_height(win.as_mut()) }),
-        )
+        (window_width, EmacsInt::from(win.internal_height()))
     } else {
         let (hpos, vpos) = topos.into();
         (hpos.into(), vpos.into())
