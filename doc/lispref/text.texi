@@ -5156,8 +5156,11 @@ as in @code{json-parse-string}.
 
 @defun json-parse-string string &rest args
 This function parses the JSON value in @var{string}, which must be a
-Lisp string.  The argument @var{args} is a list of keyword/argument
-pairs.  The following keywords are accepted:
+Lisp string.  If @var{string} doesn't contain a valid JSON object,
+this function signals the @code{json-parse-error} error.
+
+The argument @var{args} is a list of keyword/argument pairs.  The
+following keywords are accepted:
 
 @table @code
 @item :object-type
@@ -5186,9 +5189,9 @@ keyword @code{false}.  It defaults to the symbol @code{:false}.
 @defun json-parse-buffer &rest args
 This function reads the next JSON value from the current buffer,
 starting at point.  It moves point to the position immediately after
-the value if a value could be read and converted to Lisp; otherwise it
-doesn't move point.  The arguments @var{args} are interpreted as in
-@code{json-parse-string}.
+the value if contains a valid JSON object; otherwise it signals the
+@code{json-parse-error} error and doesn't move point.  The arguments
+@var{args} are interpreted as in @code{json-parse-string}.
 @end defun
 
 @node JSONRPC

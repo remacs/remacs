@@ -948,23 +948,22 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
 DEFUN ("json-parse-string", Fjson_parse_string, Sjson_parse_string, 1, MANY,
        NULL,
        doc: /* Parse the JSON STRING into a Lisp object.
-
 This is essentially the reverse operation of `json-serialize', which
-see.  The returned object will be a vector, hashtable, alist, or
+see.  The returned object will be a vector, list, hashtable, alist, or
 plist.  Its elements will be the JSON null value, the JSON false
 value, t, numbers, strings, or further vectors, hashtables, alists, or
 plists.  If there are duplicate keys in an object, all but the last
-one are ignored.  If STRING doesn't contain a valid JSON object, an
-error of type `json-parse-error' is signaled.  The arguments ARGS are
-a list of keyword/argument pairs:
+one are ignored.  If STRING doesn't contain a valid JSON object, this
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
 
 The keyword argument `:object-type' specifies which Lisp type is used
 to represent objects; it can be `hash-table', `alist' or `plist'.  It
 defaults to `hash-table'.
 
 The keyword argument `:array-type' specifies which Lisp type is used
-to represent arrays; it can be `array' or `list'.  It defaults to
-`array'.
+to represent arrays; it can be `array' (the default) or `list'.
 
 The keyword argument `:null-object' specifies which object to use
 to represent a JSON null value.  It defaults to `:null'.
@@ -1042,9 +1041,32 @@ json_read_buffer_callback (void *buffer, size_t buflen, void *data)
 DEFUN ("json-parse-buffer", Fjson_parse_buffer, Sjson_parse_buffer,
        0, MANY, NULL,
        doc: /* Read JSON object from current buffer starting at point.
-This is similar to `json-parse-string', which see.  Move point after
-the end of the object if parsing was successful.  On error, point is
-not moved.
+Move point after the end of the object if parsing was successful.
+On error, don't move point.
+
+The returned object will be a vector, list, hashtable, alist, or
+plist.  Its elements will be the JSON null value, the JSON false
+value, t, numbers, strings, or further vectors, lists, hashtables,
+alists, or plists.  If there are duplicate keys in an object, all
+but the last one are ignored.
+
+If the current buffer doesn't contain a valid JSON object, the
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
+
+The keyword argument `:object-type' specifies which Lisp type is used
+to represent objects; it can be `hash-table', `alist' or `plist'.  It
+defaults to `hash-table'.
+
+The keyword argument `:array-type' specifies which Lisp type is used
+to represent arrays; it can be `array' (the default) or `list'.
+
+The keyword argument `:null-object' specifies which object to use
+to represent a JSON null value.  It defaults to `:null'.
+
+The keyword argument `:false-object' specifies which object to use to
+represent a JSON false value.  It defaults to `:false'.
 usage: (json-parse-buffer &rest args) */)
      (ptrdiff_t nargs, Lisp_Object *args)
 {
