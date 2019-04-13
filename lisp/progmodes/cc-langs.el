@@ -2052,7 +2052,7 @@ effect in the declaration, but are syntactically like whitespace."
 (c-lang-defconst c-class-id-suffix-ws-ids-kwds
   "\"Identifiers\" that when immediately following the identifier
 of a class declaration have semantic effect in the declaration,
-but are syntactially like whitespace."
+but are syntactically like whitespace."
   t    nil
   c++ '("final"))
 
