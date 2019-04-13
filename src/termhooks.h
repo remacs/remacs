@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 /* Miscellanea.   */
 
 #include "lisp.h"
+#include "dispextern.h"
 #include "systime.h" /* for Time */
 
 struct glyph;
@@ -487,6 +488,17 @@ struct terminal
   void (*update_begin_hook) (struct frame *);
   void (*update_end_hook) (struct frame *);
   void (*set_terminal_window_hook) (struct frame *, int);
+
+  /* Decide if color named COLOR_NAME is valid for the display
+   associated with the frame F; if so, return the RGB values in
+   COLOR_DEF.  If ALLOC (and MAKEINDEX for NS), allocate a new
+   colormap cell.
+
+   If MAKEINDEX (on NS), set COLOR_DEF pixel to ARGB.  */
+  bool (*defined_color_hook) (struct frame *f, const char *color_name,
+                              XColor *color_def,
+                              bool alloc,
+                              bool makeIndex);
 
   /* Multi-frame and mouse support hooks.  */
 

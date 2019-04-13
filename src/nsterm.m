@@ -5232,6 +5232,7 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->update_end_hook = ns_update_end;
   terminal->read_socket_hook = ns_read_socket;
   terminal->frame_up_to_date_hook = ns_frame_up_to_date;
+  terminal->defined_color_hook = ns_defined_color;
   terminal->mouse_position_hook = ns_mouse_position;
   terminal->get_focus_frame = ns_get_focus_frame;
   terminal->focus_frame_hook = ns_focus_frame;

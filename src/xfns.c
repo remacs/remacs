@@ -653,7 +653,7 @@ gamma_correct (struct frame *f, XColor *color)
 
 bool
 x_defined_color (struct frame *f, const char *color_name,
-		 XColor *color, bool alloc_p)
+		 XColor *color, bool alloc_p, bool _makeIndex)
 {
   bool success_p = false;
   Colormap cmap = FRAME_X_COLORMAP (f);
@@ -698,7 +698,7 @@ x_decode_color (struct frame *f, Lisp_Object color_name, int mono_color)
 
   /* x_defined_color is responsible for coping with failures
      by looking for a near-miss.  */
-  if (x_defined_color (f, SSDATA (color_name), &cdef, true))
+  if (x_defined_color (f, SSDATA (color_name), &cdef, true, false))
     return cdef.pixel;
 
   signal_error ("Undefined color", color_name);
@@ -4110,7 +4110,7 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (x_defined_color (f, SSDATA (color), &foo, false))
+  if (x_defined_color (f, SSDATA (color), &foo, false, false))
     return Qt;
   else
     return Qnil;
@@ -4126,7 +4126,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (x_defined_color (f, SSDATA (color), &foo, false))
+  if (x_defined_color (f, SSDATA (color), &foo, false, false))
     return list3i (foo.red, foo.green, foo.blue);
   else
     return Qnil;

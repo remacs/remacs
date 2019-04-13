@@ -241,8 +241,8 @@ extern void w32_set_scroll_bar_default_height (struct frame *);
 
 extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
-extern int w32_defined_color (struct frame *f, const char *color,
-                              XColor *color_def, bool alloc_p);
+extern bool w32_defined_color (struct frame *, const char *, XColor *,
+                               bool, bool);
 extern int w32_display_pixel_height (struct w32_display_info *);
 extern int w32_display_pixel_width (struct w32_display_info *);
 extern void initialize_frame_menubar (struct frame *);

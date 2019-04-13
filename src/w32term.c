@@ -7159,6 +7159,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->update_end_hook = w32_update_end;
   terminal->read_socket_hook = w32_read_socket;
   terminal->frame_up_to_date_hook = w32_frame_up_to_date;
+  terminal->defined_color_hook = w32_defined_color;
   terminal->query_colors = w32_query_colors;
   terminal->mouse_position_hook = w32_mouse_position;
   terminal->get_focus_frame = w32_get_focus_frame;
@@ -7262,8 +7263,8 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   /* initialize palette with white and black */
   {
     XColor color;
-    w32_defined_color (0, "white", &color, 1);
-    w32_defined_color (0, "black", &color, 1);
+    w32_defined_color (0, "white", &color, true, false);
+    w32_defined_color (0, "black", &color, true, false);
   }
 
 #ifdef WINDOWSNT

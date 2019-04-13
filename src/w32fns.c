@@ -1173,9 +1173,9 @@ gamma_correct (struct frame *f, COLORREF *color)
    the selected frame; if so, return the rgb values in COLOR_DEF.
    If ALLOC is nonzero, allocate a new colormap cell.  */
 
-int
+bool
 w32_defined_color (struct frame *f, const char *color, XColor *color_def,
-		   bool alloc_p)
+		   bool alloc_p, bool _makeIndex)
 {
   register Lisp_Object tem;
   COLORREF w32_color_ref;
@@ -1262,7 +1262,7 @@ w32_decode_color (struct frame *f, Lisp_Object arg, int def)
 
   /* w32_defined_color is responsible for coping with failures
      by looking for a near-miss.  */
-  if (w32_defined_color (f, SSDATA (arg), &cdef, true))
+  if (w32_defined_color (f, SSDATA (arg), &cdef, true, false))
     return cdef.pixel;
 
   /* defined_color failed; return an ultimate default.  */
@@ -6105,7 +6105,7 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (w32_defined_color (f, SSDATA (color), &foo, false))
+  if (w32_defined_color (f, SSDATA (color), &foo, false, false))
     return Qt;
   else
     return Qnil;
@@ -6120,7 +6120,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
 
   CHECK_STRING (color);
 
-  if (w32_defined_color (f, SSDATA (color), &foo, false))
+  if (w32_defined_color (f, SSDATA (color), &foo, false, false))
     return list3i ((GetRValue (foo.pixel) << 8) | GetRValue (foo.pixel),
 		   (GetGValue (foo.pixel) << 8) | GetGValue (foo.pixel),
 		   (GetBValue (foo.pixel) << 8) | GetBValue (foo.pixel));

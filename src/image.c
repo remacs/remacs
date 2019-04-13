@@ -89,8 +89,6 @@ typedef struct w32_bitmap_record Bitmap_Record;
 #define PIX_MASK_RETAIN	0
 #define PIX_MASK_DRAW	1
 
-#define x_defined_color w32_defined_color
-
 #endif /* HAVE_NTGUI */
 
 #ifdef HAVE_NS
@@ -101,8 +99,6 @@ typedef struct ns_bitmap_record Bitmap_Record;
 
 #define PIX_MASK_RETAIN	0
 
-#define x_defined_color(f, name, color_def, alloc) \
-  ns_defined_color (f, name, color_def, alloc, 0)
 #endif /* HAVE_NS */
 
 #if (defined HAVE_X_WINDOWS \
@@ -1424,7 +1420,11 @@ image_alloc_image_color (struct frame *f, struct image *img,
 
   eassert (STRINGP (color_name));
 
-  if (x_defined_color (f, SSDATA (color_name), &color, 1)
+  if (FRAME_TERMINAL (f)->defined_color_hook (f,
+                                              SSDATA (color_name),
+                                              &color,
+                                              true,
+                                              false)
       && img->ncolors < min (min (PTRDIFF_MAX, SIZE_MAX) / sizeof *img->colors,
 			     INT_MAX))
     {
@@ -4470,8 +4470,8 @@ xpm_load_image (struct frame *f,
 	    {
 	      if (xstrcasecmp (SSDATA (XCDR (specified_color)), "None") == 0)
 		color_val = Qt;
-	      else if (x_defined_color (f, SSDATA (XCDR (specified_color)),
-					&cdef, 0))
+	      else if (FRAME_TERMINAL (f)->defined_color_hook
+                       (f, SSDATA (XCDR (specified_color)), &cdef, false, false))
 		color_val = make_fixnum (cdef.pixel);
 	    }
 	}
@@ -4479,7 +4479,8 @@ xpm_load_image (struct frame *f,
 	{
 	  if (xstrcasecmp (max_color, "None") == 0)
 	    color_val = Qt;
-	  else if (x_defined_color (f, max_color, &cdef, 0))
+	  else if (FRAME_TERMINAL (f)->defined_color_hook
+                   (f, max_color, &cdef, false, false))
 	    color_val = make_fixnum (cdef.pixel);
 	}
       if (!NILP (color_val))
@@ -5681,7 +5682,11 @@ pbm_load (struct frame *f, struct image *img)
 #ifdef USE_CAIRO
       if (! fmt[PBM_FOREGROUND].count
           || ! STRINGP (fmt[PBM_FOREGROUND].value)
-          || ! x_defined_color (f, SSDATA (fmt[PBM_FOREGROUND].value), &xfg, 0))
+          || ! FRAME_TERMINAL (f)->defined_color_hook (f,
+                                                       SSDATA (fmt[PBM_FOREGROUND].value),
+                                                       &xfg,
+                                                       false,
+                                                       false))
         {
           xfg.pixel = fg;
           x_query_colors (f, &xfg, 1);
@@ -5690,7 +5695,11 @@ pbm_load (struct frame *f, struct image *img)
 
       if (! fmt[PBM_BACKGROUND].count
           || ! STRINGP (fmt[PBM_BACKGROUND].value)
-          || ! x_defined_color (f, SSDATA (fmt[PBM_BACKGROUND].value), &xbg, 0))
+          || ! FRAME_TERMINAL (f)->defined_color_hook (f,
+                                                       SSDATA (fmt[PBM_BACKGROUND].value),
+                                                       &xbg,
+                                                       false,
+                                                       false))
 	{
           xbg.pixel = bg;
           x_query_colors (f, &xbg, 1);
@@ -6349,7 +6358,11 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	 current frame background, ignoring any default background
 	 color set by the image.  */
       if (STRINGP (specified_bg)
-	  ? x_defined_color (f, SSDATA (specified_bg), &color, false)
+	  ? FRAME_TERMINAL (f)->defined_color_hook (f,
+                                                    SSDATA (specified_bg),
+                                                    &color,
+                                                    false,
+                                                    false)
 	  : (image_query_frame_background_color (f, &color), true))
 	/* The user specified `:background', use that.  */
 	{
@@ -8036,7 +8049,8 @@ gif_load (struct frame *f, struct image *img)
   if (STRINGP (specified_bg))
     {
       XColor color;
-      if (x_defined_color (f, SSDATA (specified_bg), &color, 0))
+      if (FRAME_TERMINAL (f)->defined_color_hook
+          (f, SSDATA (specified_bg), &color, false, false))
         {
           uint32_t *dataptr = data32;
           int r = color.red/256;
@@ -8797,7 +8811,11 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
     specified_bg = image_spec_value (img->spec, QCbackground, NULL);
     if (!STRINGP (specified_bg)
-	|| !x_defined_color (f, SSDATA (specified_bg), &bgcolor, 0))
+	|| !FRAME_TERMINAL (f)->defined_color_hook (f,
+                                                    SSDATA (specified_bg),
+                                                    &bgcolor,
+                                                    false,
+                                                    false))
       image_query_frame_background_color (f, &bgcolor);
 
     bg_wand = NewPixelWand ();
@@ -9532,7 +9550,11 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
     XColor background;
     Lisp_Object specified_bg = image_spec_value (img->spec, QCbackground, NULL);
     if (!STRINGP (specified_bg)
-	|| !x_defined_color (f, SSDATA (specified_bg), &background, 0))
+	|| !FRAME_TERMINAL (f)->defined_color_hook (f,
+                                                    SSDATA (specified_bg),
+                                                    &background,
+                                                    false,
+                                                    false))
       image_query_frame_background_color (f, &background);
 
     /* SVG pixmaps specify transparency in the last byte, so right

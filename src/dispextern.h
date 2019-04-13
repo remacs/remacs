@@ -3413,6 +3413,9 @@ void x_free_colors (struct frame *, unsigned long *, int);
 
 void update_face_from_frame_parameter (struct frame *, Lisp_Object,
                                        Lisp_Object);
+extern bool tty_defined_color (struct frame *f, const char *, XColor *, bool,
+                               bool);
+
 Lisp_Object tty_color_name (struct frame *, int);
 void clear_face_cache (bool);
 unsigned long load_color (struct frame *, struct face *, Lisp_Object,
