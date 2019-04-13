@@ -264,7 +264,13 @@ impl<'a> Iterator for LispStringRefMultibyteIterator<'a> {
     type Item = (usize, Codepoint);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(i, c)| (i, make_char_multibyte(c)))
+        self.0.next().map(|(i, c)| {
+            if self.0.string_ref.is_multibyte() {
+                (i, c)
+            } else {
+                (i, make_char_multibyte(c))
+            }
+        })
     }
 }
 

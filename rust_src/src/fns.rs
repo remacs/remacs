@@ -15,17 +15,15 @@ use crate::{
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
-    multibyte::{
-        raw_byte_from_codepoint, string_char_and_length, write_codepoint, Codepoint, LispStringRef,
-    },
+    multibyte::{string_char_and_length, write_codepoint, Codepoint, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
-        make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
-        redisplay_preserve_echo_area,
+        concat as lisp_concat, copy_char_table, globals, make_multibyte_string,
+        make_uninit_bool_vector, make_uninit_multibyte_string, make_uninit_string,
+        make_uninit_vector, message1, redisplay_preserve_echo_area,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -551,16 +549,17 @@ pub fn compare_strings(
         index1 = i1;
         index2 = i2;
 
-        let to_lowercase = |c: Codepoint| {
-            char::from(raw_byte_from_codepoint(c))
-                .to_lowercase()
-                .to_string()
+        let to_lowercase = |c: Codepoint| -> LispStringRef {
+            let mut bytes = [0u8; 5];
+            let len = write_codepoint(&mut bytes, c) as isize;
+            let string = unsafe { make_multibyte_string(&bytes as *const u8 as *const i8, 1, len) };
+            downcase(string).force_string()
         };
 
         if c1 == c2 {
             continue;
         }
-        if ignore_case && to_lowercase(c1) == to_lowercase(c2) {
+        if ignore_case && to_lowercase(c1).as_slice() == to_lowercase(c2).as_slice() {
             continue;
         }
         if c1 < c2 {
