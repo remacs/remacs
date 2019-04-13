@@ -397,9 +397,9 @@ struct frame
      in pixels.  */
   bool_bf new_pixelwise : 1;
 
-  /* True means x_set_window_size requests can be processed for this
-     frame.  */
-  bool_bf can_x_set_window_size : 1;
+  /* True means set_window_size_hook requests can be processed for
+     this frame.  */
+  bool_bf can_set_window_size : 1;
 
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
@@ -786,8 +786,8 @@ default_pixels_per_inch_y (void)
 #define FRAME_NS_P(f) ((f)->output_method == output_ns)
 #endif
 
-/* FRAME_WINDOW_P tests whether the frame is a window, and is
-   defined to be the predicate for the window system being used.  */
+/* FRAME_WINDOW_P tests whether the frame is a graphical window system
+   frame.  */
 
 #ifdef HAVE_X_WINDOWS
 #define FRAME_WINDOW_P(f) FRAME_X_P (f)
@@ -1544,59 +1544,44 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
 /* The class of this X application.  */
 #define EMACS_CLASS "Emacs"
 
-extern void x_set_scroll_bar_default_width (struct frame *);
-extern void x_set_scroll_bar_default_height (struct frame *);
-extern void x_set_offset (struct frame *, int, int, int);
-extern void x_wm_set_size_hint (struct frame *f, long flags, bool user_position);
-extern Lisp_Object x_new_font (struct frame *, Lisp_Object, int);
-extern void x_set_frame_parameters (struct frame *, Lisp_Object);
-extern void x_set_fullscreen (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_line_spacing (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_screen_gamma (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_font (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_font_backend (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_left_fringe (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_right_fringe (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_border_width (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_right_divider_width (struct frame *, Lisp_Object,
-				       Lisp_Object);
-extern void x_set_bottom_divider_width (struct frame *, Lisp_Object,
-					Lisp_Object);
-extern void x_set_visibility (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_autoraise (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_autolower (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_unsplittable (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_vertical_scroll_bars (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_horizontal_scroll_bars (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_scroll_bar_width (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_scroll_bar_height (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_frame_parameters (struct frame *, Lisp_Object);
+extern void gui_set_fullscreen (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_line_spacing (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_screen_gamma (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_font (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_font_backend (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_left_fringe (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_right_fringe (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_border_width (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_right_divider_width (struct frame *, Lisp_Object,
+                                         Lisp_Object);
+extern void gui_set_bottom_divider_width (struct frame *, Lisp_Object,
+                                          Lisp_Object);
+extern void gui_set_visibility (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_autoraise (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_autolower (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_unsplittable (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_vertical_scroll_bars (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_horizontal_scroll_bars (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_scroll_bar_width (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_scroll_bar_height (struct frame *, Lisp_Object, Lisp_Object);
 
-extern long x_figure_window_size (struct frame *, Lisp_Object, bool, int *, int *);
+extern long gui_figure_window_size (struct frame *, Lisp_Object, bool, int *, int *);
 
-extern void x_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_no_special_glyphs (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
+extern void gui_set_no_special_glyphs (struct frame *, Lisp_Object, Lisp_Object);
 
 extern void validate_x_resource_name (void);
 
-extern Lisp_Object display_x_get_resource (Display_Info *,
-					   Lisp_Object attribute,
-					   Lisp_Object class,
-					   Lisp_Object component,
-					   Lisp_Object subclass);
+extern Lisp_Object gui_display_get_resource (Display_Info *,
+                                             Lisp_Object attribute,
+                                             Lisp_Object class,
+                                             Lisp_Object component,
+                                             Lisp_Object subclass);
 
 extern void set_frame_menubar (struct frame *f, bool first_time, bool deep_p);
-extern void x_set_window_size (struct frame *f, bool change_gravity,
-			       int width, int height, bool pixelwise);
-extern Lisp_Object x_get_focus_frame (struct frame *);
 extern void frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y);
-extern void x_make_frame_visible (struct frame *f);
-extern void x_make_frame_invisible (struct frame *f);
-extern void x_iconify_frame (struct frame *f);
-extern void x_set_frame_alpha (struct frame *f);
-extern void x_activate_menubar (struct frame *);
-extern void x_real_positions (struct frame *, int *, int *);
 extern void free_frame_menubar (struct frame *);
-extern void x_free_frame_resources (struct frame *);
 extern bool frame_ancestor_p (struct frame *af, struct frame *df);
 extern enum internal_border_part frame_internal_border_part (struct frame *f, int x, int y);
 
@@ -1608,22 +1593,17 @@ extern char *x_get_resource_string (const char *, const char *);
 extern void x_sync (struct frame *);
 #endif /* HAVE_X_WINDOWS */
 
-extern void x_query_colors (struct frame *f, XColor *, int);
-extern void x_focus_frame (struct frame *, bool);
-
 #ifndef HAVE_NS
-
-extern bool x_bitmap_icon (struct frame *, Lisp_Object);
 
 /* Set F's bitmap icon, if specified among F's parameters.  */
 
 INLINE void
-x_set_bitmap_icon (struct frame *f)
+gui_set_bitmap_icon (struct frame *f)
 {
   Lisp_Object obj = assq_no_quit (Qicon_type, f->param_alist);
 
   if (CONSP (obj) && !NILP (XCDR (obj)))
-    x_bitmap_icon (f, XCDR (obj));
+    FRAME_TERMINAL (f)->set_bitmap_icon_hook (f, XCDR (obj));
 }
 
 #endif /* !HAVE_NS */

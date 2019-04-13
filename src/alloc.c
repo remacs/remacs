@@ -6289,7 +6289,7 @@ mark_frame (struct Lisp_Vector *ptr)
   mark_vectorlike (&ptr->header);
   mark_face_cache (f->face_cache);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (FRAME_WINDOW_P (f) && FRAME_X_OUTPUT (f))
+  if (FRAME_WINDOW_P (f) && FRAME_OUTPUT_DATA (f))
     {
       struct font *font = FRAME_FONT (f);
 

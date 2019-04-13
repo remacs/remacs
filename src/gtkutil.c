@@ -328,7 +328,7 @@ xg_get_image_for_pixmap (struct frame *f,
      In that case, use the pixmap already loaded.  */
 
   if (STRINGP (specified_file)
-      && STRINGP (file = x_find_image_file (specified_file)))
+      && STRINGP (file = image_find_image_file (specified_file)))
     {
       char *encoded_file = SSDATA (ENCODE_FILE (file));
       if (! old_widget)
@@ -866,7 +866,7 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
-      x_clear_under_internal_border (f);
+      FRAME_RIF (f)->clear_under_internal_border (f);
       change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);
       cancel_mouse_face (f);
@@ -894,7 +894,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
 		       &gwidth, &gheight);
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
-  x_clear_under_internal_border (f);
+  FRAME_RIF (f)->clear_under_internal_border (f);
 
   totalheight /= xg_get_scale (f);
   totalwidth /= xg_get_scale (f);
@@ -960,7 +960,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
 	/* Try to restore fullscreen state.  */
 	{
 	  store_frame_param (f, Qfullscreen, fullscreen);
-	  x_set_fullscreen (f, fullscreen, fullscreen);
+	  gui_set_fullscreen (f, fullscreen, fullscreen);
 	}
     }
   else
@@ -1078,8 +1078,8 @@ style_changed_cb (GObject *go,
               && FRAME_X_P (f)
               && FRAME_X_DISPLAY (f) == dpy)
             {
-              x_set_scroll_bar_default_width (f);
-              x_set_scroll_bar_default_height (f);
+              FRAME_TERMINAL (f)->set_scroll_bar_default_width_hook (f);
+              FRAME_TERMINAL (f)->set_scroll_bar_default_height_hook (f);
               xg_frame_set_char_size (f, FRAME_TEXT_WIDTH (f), FRAME_TEXT_HEIGHT (f));
             }
         }
@@ -4324,7 +4324,7 @@ xg_tool_bar_callback (GtkWidget *w, gpointer client_data)
 
   /* Return focus to the frame after we have clicked on a detached
      tool bar button. */
-  x_focus_frame (f, false);
+  FRAME_TERMINAL (f)->focus_frame_hook (f, false);
 }
 
 static GtkWidget *

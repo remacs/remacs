@@ -117,9 +117,6 @@ typedef void * Color;
 typedef int Window;
 typedef int Display;
 
-/* Xism */
-typedef Lisp_Object XrmDatabase;
-
 
 /* Some sort of attempt to normalize rectangle handling.  Seems a bit
    much for what is accomplished.  */

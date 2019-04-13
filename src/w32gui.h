@@ -42,8 +42,6 @@ typedef struct _XGCValues
 typedef HBITMAP Pixmap;
 typedef HBITMAP Bitmap;
 
-typedef char * XrmDatabase;
-
 typedef XGCValues * GC;
 typedef COLORREF Color;
 typedef HWND Window;

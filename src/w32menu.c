@@ -153,7 +153,7 @@ w32_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
    This way we can safely execute Lisp code.  */
 
 void
-x_activate_menubar (struct frame *f)
+w32_activate_menubar (struct frame *f)
 {
   set_frame_menubar (f, false, true);
 
@@ -1469,7 +1469,7 @@ w32_menu_display_help (HWND owner, HMENU menu, UINT item, UINT flags)
 {
   if (get_menu_item_info)
     {
-      struct frame *f = x_window_to_frame (&one_w32_display_info, owner);
+      struct frame *f = w32_window_to_frame (&one_w32_display_info, owner);
       Lisp_Object frame, help;
 
       /* No help echo on owner-draw menu items, or when the keyboard

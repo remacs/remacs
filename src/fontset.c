@@ -1061,7 +1061,7 @@ font_for_char (struct face *face, int c, ptrdiff_t pos, Lisp_Object object)
 /* Make a realized fontset for ASCII face FACE on frame F from the
    base fontset BASE_FONTSET_ID.  If BASE_FONTSET_ID is -1, use the
    default fontset as the base.  Value is the id of the new fontset.
-   Called from realize_x_face.  */
+   Called from realize_gui_face.  */
 
 int
 make_fontset_for_ascii_face (struct frame *f, int base_fontset_id, struct face *face)
@@ -1743,13 +1743,14 @@ static Lisp_Object auto_fontset_alist;
 static ptrdiff_t num_auto_fontsets;
 
 /* Return a fontset synthesized from FONT-OBJECT.  This is called from
-   x_new_font when FONT-OBJECT is used for the default ASCII font of a
-   frame, and the returned fontset is used for the default fontset of
-   that frame.  The fontset specifies a font of the same registry as
-   FONT-OBJECT for all characters in the repertory of the registry
-   (see Vfont_encoding_alist).  If the repertory is not known, the
-   fontset specifies the font for all Latin characters assuming that a
-   user intends to use FONT-OBJECT for Latin characters.  */
+   the terminal hook set_new_font_hook when FONT-OBJECT is used for
+   the default ASCII font of a frame, and the returned fontset is used
+   for the default fontset of that frame.  The fontset specifies a
+   font of the same registry as FONT-OBJECT for all characters in the
+   repertory of the registry (see Vfont_encoding_alist).  If the
+   repertory is not known, the fontset specifies the font for all
+   Latin characters assuming that a user intends to use FONT-OBJECT
+   for Latin characters.  */
 
 int
 fontset_from_font (Lisp_Object font_object)

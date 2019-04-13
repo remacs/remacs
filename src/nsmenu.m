@@ -470,7 +470,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 }
 
 void
-x_activate_menubar (struct frame *f)
+ns_activate_menubar (struct frame *f)
 {
 #ifdef NS_IMPL_COCOA
   ns_update_menubar (f, true, nil);

@@ -235,7 +235,7 @@ struct x_display_info
 #endif
 
   /* X Resource data base */
-  XrmDatabase xrdb;
+  XrmDatabase rdb;
 
   /* Minimum width over all characters in all fonts in font_table.  */
   int smallest_char_width;
@@ -747,9 +747,11 @@ enum
 
 /* Return the X output data for frame F.  */
 #define FRAME_X_OUTPUT(f) ((f)->output_data.x)
+#define FRAME_OUTPUT_DATA(f) FRAME_X_OUTPUT (f)
 
 /* Return the X window used for displaying data in frame F.  */
 #define FRAME_X_WINDOW(f) ((f)->output_data.x->window_desc)
+#define FRAME_NATIVE_WINDOW(f) FRAME_X_WINDOW (f)
 
 /* Return the drawable used for rendering to frame F.  */
 #define FRAME_X_RAW_DRAWABLE(f) ((f)->output_data.x->draw_desc)
@@ -1058,6 +1060,7 @@ extern void x_real_pos_and_offsets (struct frame *f,
 
 XrmDatabase x_load_resources (Display *, const char *, const char *,
 			      const char *);
+extern const char *x_get_string_resource (void *, const char *, const char *);
 
 /* Defined in xterm.c */
 
@@ -1074,8 +1077,13 @@ extern bool x_had_errors_p (Display *);
 extern void x_uncatch_errors (void);
 extern void x_uncatch_errors_after_check (void);
 extern void x_clear_errors (Display *);
-extern void xembed_request_focus (struct frame *);
-extern void x_ewmh_activate_frame (struct frame *);
+extern void x_set_window_size (struct frame *f, bool, int, int, bool);
+extern void x_make_frame_visible (struct frame *f);
+extern void x_make_frame_invisible (struct frame *f);
+extern void x_iconify_frame (struct frame *f);
+extern void x_free_frame_resources (struct frame *);
+extern void x_wm_set_size_hint (struct frame *, long, bool);
+
 extern void x_delete_terminal (struct terminal *terminal);
 extern unsigned long x_copy_color (struct frame *, unsigned long);
 #ifdef USE_X_TOOLKIT
@@ -1088,7 +1096,7 @@ extern bool x_alloc_lighter_color_for_widget (Widget, Display *, Colormap,
 					      double, int);
 #endif
 extern bool x_alloc_nearest_color (struct frame *, Colormap, XColor *);
-extern void x_query_color (struct frame *f, XColor *);
+extern void x_query_colors (struct frame *f, XColor *, int);
 extern void x_clear_area (struct frame *f, int, int, int, int);
 #if !defined USE_X_TOOLKIT && !defined USE_GTK
 extern void x_mouse_leave (struct x_display_info *);
@@ -1164,6 +1172,13 @@ extern void x_clear_under_internal_border (struct frame *f);
 
 extern void tear_down_x_back_buffer (struct frame *f);
 extern void initial_set_up_x_back_buffer (struct frame *f);
+
+/* Defined in xfns.c.  */
+extern void x_real_positions (struct frame *, int *, int *);
+extern void x_change_tool_bar_height (struct frame *, int);
+extern void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
+extern void x_set_scroll_bar_default_width (struct frame *);
+extern void x_set_scroll_bar_default_height (struct frame *);
 
 /* Defined in xselect.c.  */
 

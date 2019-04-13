@@ -678,7 +678,7 @@ w32font_draw (struct glyph_string *s, int from, int to,
 	 characters, because drawing background with font dimensions
 	 in those cases makes the display illegible.  There's only one
 	 more call to the draw method with with_background set to
-	 true, and that's in x_draw_glyph_string_foreground, when
+	 true, and that's in w32_draw_glyph_string_foreground, when
 	 drawing the cursor, where we have no such heuristics
 	 available.  FIXME.  */
       if (s->first_glyph->type == GLYPHLESS_GLYPH

@@ -193,7 +193,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   EmacsImage *image;
 
   /* Search bitmap-file-path for the file, if appropriate.  */
-  found = x_find_image_file (file);
+  found = image_find_image_file (file);
   if (!STRINGP (found))
     return nil;
   found = ENCODE_FILE (found);

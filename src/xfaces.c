@@ -338,7 +338,7 @@ struct named_merge_point;
 
 static struct face *realize_face (struct face_cache *, Lisp_Object *,
 				  int);
-static struct face *realize_x_face (struct face_cache *, Lisp_Object *);
+static struct face *realize_gui_face (struct face_cache *, Lisp_Object *);
 static struct face *realize_tty_face (struct face_cache *, Lisp_Object *);
 static bool realize_basic_faces (struct frame *);
 static bool realize_default_face (struct frame *);
@@ -772,13 +772,13 @@ load_pixmap (struct frame *f, Lisp_Object name)
       h = XFIXNUM (Fcar (Fcdr (name)));
       bits = Fcar (Fcdr (Fcdr (name)));
 
-      bitmap_id = x_create_bitmap_from_data (f, SSDATA (bits),
-					     w, h);
+      bitmap_id = image_create_bitmap_from_data (f, SSDATA (bits),
+                                                 w, h);
     }
   else
     {
       /* It must be a string -- a file name.  */
-      bitmap_id = x_create_bitmap_from_file (f, name);
+      bitmap_id = image_create_bitmap_from_file (f, name);
     }
   unblock_input ();
 
@@ -1183,7 +1183,7 @@ load_face_colors (struct frame *f, struct face *face,
   if (!face_color_supported_p (f, SSDATA (bg), false)
       && !NILP (Fbitmap_spec_p (Vface_default_stipple)))
     {
-      x_destroy_bitmap (f, face->stipple);
+      image_destroy_bitmap (f, face->stipple);
       face->stipple = load_pixmap (f, Vface_default_stipple);
     }
 
@@ -3476,8 +3476,8 @@ ordinary `x-get-resource' doesn't take a frame argument.  */)
   CHECK_STRING (class);
   f = decode_live_frame (frame);
   block_input ();
-  value = display_x_get_resource (FRAME_DISPLAY_INFO (f),
-				  resource, class, Qnil, Qnil);
+  value = gui_display_get_resource (FRAME_DISPLAY_INFO (f),
+                                    resource, class, Qnil, Qnil);
   unblock_input ();
   return value;
 }
@@ -4145,7 +4145,7 @@ free_realized_face (struct frame *f, struct face *face)
 #ifdef HAVE_X_WINDOWS
 	  free_face_colors (f, face);
 #endif /* HAVE_X_WINDOWS */
-	  x_destroy_bitmap (f, face->stipple);
+	  image_destroy_bitmap (f, face->stipple);
 	}
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -4180,7 +4180,7 @@ prepare_face_for_display (struct frame *f, struct face *face)
       if (face->stipple)
 	{
 	  xgcv.fill_style = FillOpaqueStippled;
-	  xgcv.stipple = x_bitmap_pixmap (f, face->stipple);
+	  xgcv.stipple = image_bitmap_pixmap (f, face->stipple);
 	  mask |= GCFillStyle | GCStipple;
 	}
 #endif
@@ -4791,9 +4791,9 @@ DEFUN ("face-attributes-as-vector", Fface_attributes_as_vector,
     (2) `close in spirit' to what the attributes specify, if not exact.  */
 
 static bool
-x_supports_face_attributes_p (struct frame *f,
-			      Lisp_Object attrs[LFACE_VECTOR_SIZE],
-			      struct face *def_face)
+gui_supports_face_attributes_p (struct frame *f,
+                                Lisp_Object attrs[LFACE_VECTOR_SIZE],
+                                struct face *def_face)
 {
   Lisp_Object *def_attrs = def_face->lface;
 
@@ -5130,7 +5130,7 @@ face for italic.  */)
     supports = tty_supports_face_attributes_p (f, attrs, def_face);
 #ifdef HAVE_WINDOW_SYSTEM
   else
-    supports = x_supports_face_attributes_p (f, attrs, def_face);
+    supports = gui_supports_face_attributes_p (f, attrs, def_face);
 #endif
 
   return supports ? Qt : Qnil;
@@ -5450,7 +5450,7 @@ realize_default_face (struct frame *f)
 	 acceptable as a font for the default face (perhaps because
 	 auto-scaled fonts are rejected), so we must adjust the frame
 	 font.  */
-      x_set_font (f, LFACE_FONT (lface), Qnil);
+      gui_set_font (f, LFACE_FONT (lface), Qnil);
     }
 #endif
   return true;
@@ -5516,7 +5516,7 @@ realize_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE],
     }
 
   if (FRAME_WINDOW_P (cache->f))
-    face = realize_x_face (cache, attrs);
+    face = realize_gui_face (cache, attrs);
   else if (FRAME_TERMCAP_P (cache->f) || FRAME_MSDOS_P (cache->f))
     face = realize_tty_face (cache, attrs);
   else if (FRAME_INITIAL_P (cache->f))
@@ -5567,14 +5567,14 @@ realize_non_ascii_face (struct frame *f, Lisp_Object font_object,
 
 
 /* Realize the fully-specified face with attributes ATTRS in face
-   cache CACHE for ASCII characters.  Do it for X frame CACHE->f.  If
-   the new face doesn't share font with the default face, a fontname
-   is allocated from the heap and set in `font_name' of the new face,
-   but it is not yet loaded here.  Value is a pointer to the newly
-   created realized face.  */
+   cache CACHE for ASCII characters.  Do it for GUI frame CACHE->f.
+   If the new face doesn't share font with the default face, a
+   fontname is allocated from the heap and set in `font_name' of the
+   new face, but it is not yet loaded here.  Value is a pointer to the
+   newly created realized face.  */
 
 static struct face *
-realize_x_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE])
+realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE])
 {
   struct face *face = NULL;
 #ifdef HAVE_WINDOW_SYSTEM

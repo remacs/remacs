@@ -4647,7 +4647,7 @@ extern void syms_of_xterm (void);
 
 #ifdef HAVE_WINDOW_SYSTEM
 /* Defined in xterm.c, nsterm.m, w32term.c.  */
-extern char *x_get_keysym_name (int);
+extern char *get_keysym_name (int);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 /* Defined in xml.c.  */
