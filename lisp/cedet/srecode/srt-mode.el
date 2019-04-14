@@ -64,7 +64,7 @@
 (defvar srecode-font-lock-keywords
   '(
     ;; Template
-    ("^\\(template\\)\\s-+\\(\\w*\\)\\(\\( \\(:\\w+\\)\\|\\)+\\)$"
+    ("^\\(template\\)\\s-+\\(\\w*\\)\\(\\( \\(:\\w+\\)\\)*\\)$"
      (1 font-lock-keyword-face)
      (2 font-lock-function-name-face)
      (3 font-lock-builtin-face ))

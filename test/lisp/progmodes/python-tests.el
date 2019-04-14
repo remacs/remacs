@@ -5350,7 +5350,7 @@ buffer with overlapping strings."
   ;; The description of the problem it's trying to catch is not clear enough
   ;; to be able to see if the underlying problem is really fixed, sadly.
   ;; E.g. I don't know what is meant by "overlap", really.
-  (skip-unless nil)
+  :tags '(:unstable)
   (python-tests-with-temp-buffer "''' '\n''' ' '\n"
     (syntax-propertize (point-max))
     ;; Create a situation where strings nominally overlap.  This

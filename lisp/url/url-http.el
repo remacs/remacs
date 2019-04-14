@@ -150,15 +150,6 @@ request.")
 ;; These routines will allow us to implement persistent HTTP
 ;; connections.
 (defsubst url-http-debug (&rest args)
-  (if (eq quit-flag t)
-      (let ((proc (get-buffer-process (current-buffer))))
-	;; The user hit C-g, honor it!  Some things can get in an
-	;; incredibly tight loop (chunked encoding)
-	(if proc
-	    (progn
-	      (set-process-sentinel proc nil)
-	      (set-process-filter proc nil)))
-	(error "Transfer interrupted!")))
   (apply 'url-debug 'http args))
 
 (defun url-http-mark-connection-as-busy (host port proc)

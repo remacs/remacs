@@ -754,7 +754,9 @@ regardless of user name or time."
 	     (log-edit-insert-changelog-entries (log-edit-files)))))
       (log-edit-set-common-indentation)
       ;; Add an Author: field if appropriate.
-      (when author (log-edit-add-field "Author" (car author)))
+      (when author
+        (log-edit-add-field "Author" (car author))
+        (log-edit-add-field "Summary" ""))
       ;; Add a Fixes: field if applicable.
       (when (consp log-edit-rewrite-fixes)
 	(rfc822-goto-eoh)

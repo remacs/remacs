@@ -337,8 +337,14 @@ enum json_object_type {
   json_object_plist
 };
 
+enum json_array_type {
+  json_array_array,
+  json_array_list
+};
+
 struct json_configuration {
   enum json_object_type object_type;
+  enum json_array_type array_type;
   Lisp_Object null_object;
   Lisp_Object false_object;
 };
@@ -521,7 +527,7 @@ static void
 json_parse_args (ptrdiff_t nargs,
                  Lisp_Object *args,
                  struct json_configuration *conf,
-                 bool configure_object_type)
+                 bool parse_object_types)
 {
   if ((nargs % 2) != 0)
     wrong_type_argument (Qplistp, Flist (nargs, args));
@@ -531,7 +537,7 @@ json_parse_args (ptrdiff_t nargs,
   for (ptrdiff_t i = nargs; i > 0; i -= 2) {
     Lisp_Object key = args[i - 2];
     Lisp_Object value = args[i - 1];
-    if (configure_object_type && EQ (key, QCobject_type))
+    if (parse_object_types && EQ (key, QCobject_type))
       {
         if (EQ (value, Qhash_table))
           conf->object_type = json_object_hashtable;
@@ -542,12 +548,22 @@ json_parse_args (ptrdiff_t nargs,
         else
           wrong_choice (list3 (Qhash_table, Qalist, Qplist), value);
       }
+    else if (parse_object_types && EQ (key, QCarray_type))
+      {
+        if (EQ (value, Qarray))
+          conf->array_type = json_array_array;
+        else if (EQ (value, Qlist))
+          conf->array_type = json_array_list;
+        else
+          wrong_choice (list2 (Qarray, Qlist), value);
+      }
     else if (EQ (key, QCnull_object))
       conf->null_object = value;
     else if (EQ (key, QCfalse_object))
       conf->false_object = value;
-    else if (configure_object_type)
-      wrong_choice (list3 (QCobject_type,
+    else if (parse_object_types)
+      wrong_choice (list4 (QCobject_type,
+                           QCarray_type,
                            QCnull_object,
                            QCfalse_object),
                     value);
@@ -604,7 +620,8 @@ usage: (json-serialize OBJECT &rest ARGS)  */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, false);
 
   json_t *json = lisp_to_json_toplevel (args[0], &conf);
@@ -701,7 +718,8 @@ usage: (json-insert OBJECT &rest ARGS)  */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, false);
 
   json_t *json = lisp_to_json (args[0], &conf);
@@ -817,10 +835,35 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
         size_t size = json_array_size (json);
         if (PTRDIFF_MAX < size)
           overflow_error ();
-        Lisp_Object result = make_vector (size, Qunbound);
-        for (ptrdiff_t i = 0; i < size; ++i)
-          ASET (result, i,
-                json_to_lisp (json_array_get (json, i), conf));
+        Lisp_Object result;
+        switch (conf->array_type)
+          {
+          case json_array_array:
+            {
+              result = make_vector (size, Qunbound);
+              for (ptrdiff_t i = 0; i < size; ++i)
+                {
+                  rarely_quit (i);
+                  ASET (result, i,
+                        json_to_lisp (json_array_get (json, i), conf));
+                }
+              break;
+            }
+          case json_array_list:
+            {
+              result = Qnil;
+              for (ptrdiff_t i = size - 1; i >= 0; --i)
+                {
+                  rarely_quit (i);
+                  result = Fcons (json_to_lisp (json_array_get (json, i), conf),
+                                  result);
+                }
+              break;
+            }
+          default:
+            /* Can't get here.  */
+            emacs_abort ();
+          }
         --lisp_eval_depth;
         return result;
       }
@@ -905,18 +948,22 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
 DEFUN ("json-parse-string", Fjson_parse_string, Sjson_parse_string, 1, MANY,
        NULL,
        doc: /* Parse the JSON STRING into a Lisp object.
-
 This is essentially the reverse operation of `json-serialize', which
-see.  The returned object will be a vector, hashtable, alist, or
+see.  The returned object will be a vector, list, hashtable, alist, or
 plist.  Its elements will be the JSON null value, the JSON false
 value, t, numbers, strings, or further vectors, hashtables, alists, or
 plists.  If there are duplicate keys in an object, all but the last
-one are ignored.  If STRING doesn't contain a valid JSON object, an
-error of type `json-parse-error' is signaled.  The arguments ARGS are
-a list of keyword/argument pairs:
+one are ignored.  If STRING doesn't contain a valid JSON object, this
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
 
 The keyword argument `:object-type' specifies which Lisp type is used
-to represent objects; it can be `hash-table', `alist' or `plist'.
+to represent objects; it can be `hash-table', `alist' or `plist'.  It
+defaults to `hash-table'.
+
+The keyword argument `:array-type' specifies which Lisp type is used
+to represent arrays; it can be `array' (the default) or `list'.
 
 The keyword argument `:null-object' specifies which object to use
 to represent a JSON null value.  It defaults to `:null'.
@@ -946,7 +993,8 @@ usage: (json-parse-string STRING &rest ARGS) */)
   Lisp_Object string = args[0];
   Lisp_Object encoded = json_encode (string);
   check_string_without_embedded_nuls (encoded);
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, true);
 
   json_error_t error;
@@ -993,9 +1041,32 @@ json_read_buffer_callback (void *buffer, size_t buflen, void *data)
 DEFUN ("json-parse-buffer", Fjson_parse_buffer, Sjson_parse_buffer,
        0, MANY, NULL,
        doc: /* Read JSON object from current buffer starting at point.
-This is similar to `json-parse-string', which see.  Move point after
-the end of the object if parsing was successful.  On error, point is
-not moved.
+Move point after the end of the object if parsing was successful.
+On error, don't move point.
+
+The returned object will be a vector, list, hashtable, alist, or
+plist.  Its elements will be the JSON null value, the JSON false
+value, t, numbers, strings, or further vectors, lists, hashtables,
+alists, or plists.  If there are duplicate keys in an object, all
+but the last one are ignored.
+
+If the current buffer doesn't contain a valid JSON object, the
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
+
+The keyword argument `:object-type' specifies which Lisp type is used
+to represent objects; it can be `hash-table', `alist' or `plist'.  It
+defaults to `hash-table'.
+
+The keyword argument `:array-type' specifies which Lisp type is used
+to represent arrays; it can be `array' (the default) or `list'.
+
+The keyword argument `:null-object' specifies which object to use
+to represent a JSON null value.  It defaults to `:null'.
+
+The keyword argument `:false-object' specifies which object to use to
+represent a JSON false value.  It defaults to `:false'.
 usage: (json-parse-buffer &rest args) */)
      (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -1016,7 +1087,8 @@ usage: (json-parse-buffer &rest args) */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs, args, &conf, true);
 
   ptrdiff_t point = PT_BYTE;
@@ -1095,10 +1167,12 @@ syms_of_json (void)
   Fput (Qjson_parse_string, Qside_effect_free, Qt);
 
   DEFSYM (QCobject_type, ":object-type");
+  DEFSYM (QCarray_type, ":array-type");
   DEFSYM (QCnull_object, ":null-object");
   DEFSYM (QCfalse_object, ":false-object");
   DEFSYM (Qalist, "alist");
   DEFSYM (Qplist, "plist");
+  DEFSYM (Qarray, "array");
 
   defsubr (&Sjson_serialize);
   defsubr (&Sjson_insert);

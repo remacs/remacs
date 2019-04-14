@@ -922,16 +922,17 @@ x_set_frame_alpha (struct frame *f)
   else
     alpha = f->alpha[1];
 
+  if (alpha < 0.0)
+    return;
+
   if (FLOATP (Vframe_alpha_lower_limit))
     alpha_min = XFLOAT_DATA (Vframe_alpha_lower_limit);
   else if (FIXNUMP (Vframe_alpha_lower_limit))
     alpha_min = (XFIXNUM (Vframe_alpha_lower_limit)) / 100.0;
 
-  if (alpha < 0.0)
-    return;
-  else if (alpha > 1.0)
+  if (alpha > 1.0)
     alpha = 1.0;
-  else if (0.0 <= alpha && alpha < alpha_min && alpha_min <= 1.0)
+  else if (alpha < alpha_min && alpha_min <= 1.0)
     alpha = alpha_min;
 
   opac = alpha * OPAQUE;

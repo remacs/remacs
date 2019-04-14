@@ -383,7 +383,7 @@ by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\"."
 ;; Matches telephone extensions.
 (defconst mail-extr-telephone-extension-pattern
   (purecopy
-   "\\(\\([Ee]xt\\|\\|[Tt]ph\\|[Tt]el\\|[Xx]\\).?\\)? *\\+?[0-9][- 0-9]+"))
+   "\\(\\([Ee]xt\\|[Tt]ph\\|[Tt]el\\|[Xx]\\).?\\)? *\\+?[0-9][- 0-9]+"))
 
 ;; Matches ham radio call signs.
 ;; Help from: Mat Maessen N2NJZ <maessm@rpi.edu>, Mark Feit

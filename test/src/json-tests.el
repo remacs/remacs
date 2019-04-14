@@ -117,6 +117,14 @@
     (should (equal (json-parse-string input :object-type 'plist)
                    '(:abc [9 :false] :def :null)))))
 
+(ert-deftest json-parse-string/array ()
+  (skip-unless (fboundp 'json-parse-string))
+  (let ((input "[\"a\", 1, [\"b\", 2]]"))
+    (should (equal (json-parse-string input)
+                   ["a" 1 ["b" 2]]))
+    (should (equal (json-parse-string input :array-type 'list)
+                   '("a" 1 ("b" 2))))))
+
 (ert-deftest json-parse-string/string ()
   (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "[\"formfeed\f\"]") :type 'json-parse-error)

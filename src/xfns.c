@@ -5030,7 +5030,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       mi->mm_height = height_mm;
 
 #if GTK_CHECK_VERSION (3, 22, 0)
-      mi->name = xstrdup (gdk_monitor_get_model (monitor));
+      dupstring (&mi->name, (gdk_monitor_get_model (monitor)));
 #elif GTK_CHECK_VERSION (2, 14, 0)
       mi->name = gdk_screen_get_monitor_plug_name (gscreen, i);
 #endif

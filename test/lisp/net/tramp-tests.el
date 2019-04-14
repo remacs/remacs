@@ -4579,7 +4579,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      ;; skip the test then.
 	      (condition-case nil
 		  (vc-create-repo (car vc-handled-backends))
-		(error (skip-unless nil)))
+		(error (ert-skip "`vc-create-repo' not supported")))
 	      ;; The structure of VC-FILESET is not documented.  Let's
 	      ;; hope it won't change.
 	      (condition-case nil

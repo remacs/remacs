@@ -53,7 +53,7 @@ It is used for TCP/IP devices."
   "When this method name is used, forward all calls to Android Debug Bridge.")
 
 (defcustom tramp-adb-prompt
-  "^\\(?:[[:digit:]]*|?\\)?\\(?:[[:alnum:]\e;[]*@?[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
+  "^[[:digit:]]*|?\\(?:[[:alnum:]\e;[]*@?[[:alnum:]]*[^#\\$]*\\)?[#\\$][[:space:]]"
   "Regexp used as prompt in almquist shell."
   :type 'string
   :version "24.4"

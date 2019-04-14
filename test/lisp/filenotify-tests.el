@@ -266,9 +266,8 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
   (declare (indent 1))
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
-     :tags '(:expensive-test)
      :expected-result (or ,expected :passed)
-     (skip-unless (not ,skip))
+     :tags ,(if skip ''(:expensive-test :unstable) ''(:expensive-test))
      (let* ((temporary-file-directory
 	     file-notify-test-remote-temporary-file-directory)
 	    (ert-test (ert-get-test ',test))
