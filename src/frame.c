@@ -5670,8 +5670,7 @@ free_monitors (struct MonitorInfo *monitors, int n_monitors)
 {
   int i;
   for (i = 0; i < n_monitors; ++i)
-    if (monitors[i].name)
-      xfree (monitors[i].name);
+    xfree (monitors[i].name);
   xfree (monitors);
 }
 # endif
