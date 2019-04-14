@@ -3638,17 +3638,24 @@ support symbolic links."
 	(erase-buffer)))
 
     (if (and (not current-buffer-p) (integerp asynchronous))
-	(prog1
-	    ;; Run the process.
-	    (setq p (start-file-process-shell-command
-		     (buffer-name output-buffer) buffer command))
-	  ;; Display output.
-	  (with-current-buffer output-buffer
-	    (display-buffer output-buffer '(nil (allow-no-window . t)))
-	    (setq mode-line-process '(":%s"))
-	    (shell-mode)
-	    (set-process-sentinel p #'shell-command-sentinel)
-	    (set-process-filter p #'comint-output-filter)))
+	(let ((tramp-remote-process-environment
+	       ;; `shell-command-width' has been introduced with Emacs 27.1.
+	       (if (natnump (bound-and-true-p shell-command-width))
+		   (cons (format "COLUMNS=%d"
+				 (bound-and-true-p shell-command-width))
+			 tramp-remote-process-environment)
+		 tramp-remote-process-environment)))
+	  (prog1
+	      ;; Run the process.
+	      (setq p (start-file-process-shell-command
+		       (buffer-name output-buffer) buffer command))
+	    ;; Display output.
+	    (with-current-buffer output-buffer
+	      (display-buffer output-buffer '(nil (allow-no-window . t)))
+	      (setq mode-line-process '(":%s"))
+	      (shell-mode)
+	      (set-process-sentinel p #'shell-command-sentinel)
+	      (set-process-filter p #'comint-output-filter))))
 
       (prog1
 	  ;; Run the process.
