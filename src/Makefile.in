@@ -332,6 +332,7 @@ UNEXEC_OBJ = @UNEXEC_OBJ@
 
 DUMPING=@DUMPING@
 CHECK_STRUCTS = @CHECK_STRUCTS@
+HAVE_PDUMPER = @HAVE_PDUMPER@
 
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -627,19 +628,25 @@ LIBEGNU_ARCHIVE = $(lib)/lib$(if $(HYBRID_MALLOC),e)gnu.a
 $(LIBEGNU_ARCHIVE): $(config_h)
 	$(MAKE) -C $(dir $@) all
 
-FINGERPRINTED = $(LIBXMENU) $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(EMACSRES)
-fingerprint.c: $(FINGERPRINTED) $(libsrc)/make-fingerprint$(EXEEXT)
-	$(AM_V_GEN)$(libsrc)/make-fingerprint$(EXEEXT) $(FINGERPRINTED) >$@.tmp
-	$(AM_V_at)mv $@.tmp $@
+ifeq ($(HAVE_PDUMPER),yes)
+  MAKE_PDUMPER_FINGERPRINT = $(libsrc)/make-fingerprint$(EXEEXT)
+else
+  MAKE_PDUMPER_FINGERPRINT =
+endif
 
 ## We have to create $(etc) here because init_cmdargs tests its
 ## existence when setting Vinstallation_directory (FIXME?).
 ## This goes on to affect various things, and the emacs binary fails
 ## to start if Vinstallation_directory has the wrong value.
-temacs$(EXEEXT): fingerprint.o $(charsets) $(charscript)
-	$(AM_V_CCLD)$(CC) -o $@ $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
-	  $(ALLOBJS) fingerprint.o \
-	  $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
+temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(EMACSRES) \
+  $(charsets) $(charscript) $(MAKE_PDUMPER_FINGERPRINT)
+	$(AM_V_CCLD)$(CC) -o $@.tmp \
+	  $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
+	  $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
+ifeq ($(HAVE_PDUMPER),yes)
+	$(AM_V_at)$(MAKE_PDUMPER_FINGERPRINT) $@.tmp
+endif
+	$(AM_V_at)mv $@.tmp $@
 	$(MKDIR_P) $(etc)
 ifeq ($(DUMPING),unexec)
   ifneq ($(PAXCTL_notdumped),)
@@ -676,7 +683,7 @@ ns-app: emacs$(EXEEXT) $(pdmp)
 
 mostlyclean:
 	rm -f temacs$(EXEEXT) core ./*.core \#* ./*.o
-	rm -f dmpstruct.h fingerprint.c
+	rm -f dmpstruct.h
 	rm -f emacs.pdmp
 	rm -f ../etc/DOC
 	rm -f bootstrap-emacs$(EXEEXT) $(bootstrap_pdmp)
@@ -716,10 +723,9 @@ ETAGS = ../lib-src/etags${EXEEXT}
 ${ETAGS}: FORCE
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
-# Remove macuvs.h and fingerprint.c since they'd cause `src/emacs`
+# Remove macuvs.h since it'd cause `src/emacs`
 # to be built before we can get TAGS.
-ctagsfiles1 = $(filter-out ${srcdir}/macuvs.h ${srcdir}/fingerprint.c, \
-                           $(wildcard ${srcdir}/*.[hc]))
+ctagsfiles1 = $(filter-out ${srcdir}/macuvs.h, $(wildcard ${srcdir}/*.[hc]))
 ctagsfiles2 = $(wildcard ${srcdir}/*.m)
 
 ## In out-of-tree builds, TAGS are generated in the build dir, like

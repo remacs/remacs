@@ -44,6 +44,7 @@
 #  --avoid=malloc-posix \
 #  --avoid=mbrtowc \
 #  --avoid=mbsinit \
+#  --avoid=memchr \
 #  --avoid=mkdir \
 #  --avoid=msvc-inval \
 #  --avoid=msvc-nothrow \
@@ -111,6 +112,7 @@
 #  largefile \
 #  lstat \
 #  manywarnings \
+#  memmem-simple \
 #  memrchr \
 #  minmax \
 #  mkostemp \
@@ -1053,7 +1055,6 @@ gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7 = @gl_GNULIB_ENABLED_03e0aaad
 gl_GNULIB_ENABLED_2049e887c7e5308faad27b3f894bb8c9 = @gl_GNULIB_ENABLED_2049e887c7e5308faad27b3f894bb8c9@
 gl_GNULIB_ENABLED_21ee726a3540c09237a8e70c0baf7467 = @gl_GNULIB_ENABLED_21ee726a3540c09237a8e70c0baf7467@
 gl_GNULIB_ENABLED_260941c0e5dc67ec9e87d1fb321c300b = @gl_GNULIB_ENABLED_260941c0e5dc67ec9e87d1fb321c300b@
-gl_GNULIB_ENABLED_37f71b604aa9c54446783d80f42fe547 = @gl_GNULIB_ENABLED_37f71b604aa9c54446783d80f42fe547@
 gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31 = @gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31@
 gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c = @gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c@
 gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec = @gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec@
@@ -1962,6 +1963,17 @@ EXTRA_libgnu_a_SOURCES += lstat.c
 
 endif
 ## end   gnulib module lstat
+
+## begin gnulib module memmem-simple
+ifeq (,$(OMIT_GNULIB_MODULE_memmem-simple))
+
+
+EXTRA_DIST += memmem.c str-two-way.h
+
+EXTRA_libgnu_a_SOURCES += memmem.c
+
+endif
+## end   gnulib module memmem-simple
 
 ## begin gnulib module memrchr
 ifeq (,$(OMIT_GNULIB_MODULE_memrchr))

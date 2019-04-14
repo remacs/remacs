@@ -25,14 +25,25 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
 #include <sysstdio.h>
-#include <sha256.h>
+
+#include <fingerprint.h>
 #include <getopt.h>
+#include <intprops.h>
+#include <min-max.h>
+#include <sha256.h>
+
+#ifndef SSIZE_MAX
+# define SSIZE_MAX TYPE_MAXIMUM (ssize_t)
+#endif
 
 #ifdef WINDOWSNT
 /* Defined to be sys_fopen in ms-w32.h, but only #ifdef emacs, so this
@@ -54,40 +65,61 @@ main (int argc, char **argv)
           raw = true;
           break;
         case 'h':
-          printf ("make-fingerprint [-r] FILES...: compute a hash\n");
-          return 0;
+          printf ("make-fingerprint [-r] FILE: replace or compute a hash\n");
+          return EXIT_SUCCESS;
         default:
-          return 1;
+          return EXIT_FAILURE;
         }
     }
 
   struct sha256_ctx ctx;
   sha256_init_ctx (&ctx);
 
-  for (int i = optind; i < argc; ++i)
+  if (argc - optind != 1)
     {
-      FILE *f = fopen (argv[i], "r" FOPEN_BINARY);
-      if (!f)
-        {
-          fprintf (stderr, "%s: Error: could not open %s\n",
-                   argv[0], argv[i]);
-          return 1;
-        }
-
-      char buf[128*1024];
-      do
-        {
-          size_t chunksz = fread (buf, 1, sizeof (buf), f);
-          if (ferror (f))
-            {
-              fprintf (stderr, "%s: Error: could not read %s\n",
-                       argv[0], argv[i]);
-              return 1;
-            }
-          sha256_process_bytes (buf, chunksz, &ctx);
-        } while (!feof (f));
-      fclose (f);
+      fprintf (stderr, "%s: missing or extra file operand\n", argv[0]);
+      return EXIT_FAILURE;
     }
+
+  FILE *f = fopen (argv[1], raw ? "r" FOPEN_BINARY : "r+" FOPEN_BINARY);
+  struct stat st;
+  if (!f || fstat (fileno (f), &st) != 0)
+    {
+      perror (argv[1]);
+      return EXIT_FAILURE;
+    }
+
+  if (!S_ISREG (st.st_mode))
+    {
+      fprintf (stderr, "%s: Error: %s is not a regular file\n",
+	       argv[0], argv[1]);
+      return EXIT_FAILURE;
+    }
+
+  ptrdiff_t maxlen = min (min (TYPE_MAXIMUM (off_t), PTRDIFF_MAX),
+			  min (SIZE_MAX, SSIZE_MAX));
+  if (maxlen <= st.st_size)
+    {
+      fprintf (stderr, "%s: %s: file too big\n", argv[0], argv[1]);
+      return EXIT_FAILURE;
+    }
+
+  char *buf = malloc (st.st_size + 1);
+  if (!buf)
+    {
+      perror ("malloc");
+      return EXIT_FAILURE;
+    }
+
+  size_t chunksz = fread (buf, 1, st.st_size + 1, f);
+  if (ferror (f) || chunksz != st.st_size)
+    {
+      fprintf (stderr, "%s: Error: could not read %s\n",
+	       argv[0], argv[1]);
+      return EXIT_FAILURE;
+    }
+
+  sha256_process_bytes (buf, chunksz, &ctx);
 
   unsigned char digest[32];
   sha256_finish_ctx (&ctx, digest);
@@ -99,12 +131,37 @@ main (int argc, char **argv)
     }
   else
     {
-      puts ("#include \"fingerprint.h\"\n"
-	    "unsigned char const fingerprint[] =\n"
-	    "{");
-      for (int i = 0; i < 32; ++i)
-        printf ("\t0x%02X,\n", digest[i]);
-      puts ("};");
+      char *finger = memmem (buf, chunksz, fingerprint, sizeof fingerprint);
+      if (!finger)
+	{
+	  fprintf (stderr, "%s: %s: missing fingerprint\n", argv[0], argv[1]);
+	  return EXIT_FAILURE;
+	}
+      else if (memmem (finger + 1, buf + chunksz - (finger + 1),
+		       fingerprint, sizeof fingerprint))
+	{
+	  fprintf (stderr, "%s: %s: two occurrences of fingerprint\n",
+		   argv[0], argv[1]);
+	  return EXIT_FAILURE;
+	}
+
+      if (fseeko (f, finger - buf, SEEK_SET) != 0)
+	{
+	  perror (argv[1]);
+	  return EXIT_FAILURE;
+	}
+
+      if (fwrite (digest, 1, sizeof digest, f) != sizeof digest)
+	{
+	  perror (argv[1]);
+	  return EXIT_FAILURE;
+	}
+    }
+
+  if (fclose (f) != 0)
+    {
+      perror (argv[1]);
+      return EXIT_FAILURE;
     }
 
   return EXIT_SUCCESS;
