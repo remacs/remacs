@@ -767,7 +767,7 @@ These will be used to retrieve the RSVP information from ical events."
     `(let ((,charset (cdr (assoc 'charset (mm-handle-type ,handle)))))
        (with-temp-buffer
          (mm-insert-part ,handle)
-         (when (string= ,charset "utf-8")
+         (when (string= (downcase ,charset) "utf-8")
            (decode-coding-region (point-min) (point-max) 'utf-8))
          ,@body))))
 
