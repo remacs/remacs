@@ -467,6 +467,27 @@ The method @option{sg} stands for ``switch group''; the changed group
 must be used here as user name.  The default host name is the same.
 
 
+@anchor{Quick Start Guide: @option{ssh}, @option{plink}, @option{su}, @option{sudo} and @option{sg} methods}
+@section Combining @option{ssh} or @option{plink} with @option{su} or @option{sudo}
+@cindex method @option{ssh}
+@cindex @option{ssh} method
+@cindex method @option{plink}
+@cindex @option{plink} method
+@cindex method @option{su}
+@cindex @option{su} method
+@cindex method @option{sudo}
+@cindex @option{sudo} method
+
+If the @option{su} or @option{sudo} option shall be performed on
+another host, it could be comnbined with a leading @option{ssh} or
+@option{plink} option.  That means, @value{tramp} connects first to
+the other host with non-administrative credentials, and changes to
+administrative credentials on that host afterwards.  In a simple case,
+the syntax looks like
+@file{@value{prefix}ssh@value{postfixhop}user@@host|sudo@value{postfixhop}@value{postfix}/path/to/file}.
+@xref{Ad-hoc multi-hops}.
+
+
 @anchor{Quick Start Guide: @option{sudoedit} method}
 @section Using @command{sudoedit}
 @cindex method @option{sudoedit}
