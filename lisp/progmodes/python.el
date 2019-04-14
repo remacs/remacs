@@ -2266,15 +2266,16 @@ detection and just returns nil."
                          ;; carriage returns in unbuffered mode.
                          (let ((inhibit-eol-conversion (getenv "PYTHONUNBUFFERED")))
                            (python-shell--save-temp-file code))))
-                    ;; Use `process-file' as it is remote-host friendly.
-                    (process-file
-                     interpreter
-                     code-file
-                     '(t nil)
-                     nil
-                     interpreter-arg)
-                    ;; Try to cleanup
-                    (delete-file code-file)))
+                    (unwind-protect
+                        ;; Use `process-file' as it is remote-host friendly.
+                        (process-file
+                         interpreter
+                         code-file
+                         '(t nil)
+                         nil
+                         interpreter-arg)
+                      ;; Try to cleanup
+                      (delete-file code-file))))
                 (buffer-string)))
              (prompts
               (catch 'prompts
