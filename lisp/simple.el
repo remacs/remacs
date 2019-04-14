@@ -3352,9 +3352,10 @@ is output."
   :version "26.1")
 
 (defcustom shell-command-width nil
-  "Number of columns available for asynchronous shell command output.
+  "Number of display columns available for asynchronous shell command output.
 If nil, use the shell default number (usually 80 columns).
-If a positive integer, use a fixed width for command output."
+If a positive integer, tell the shell to use that number of columns for
+command output."
   :type '(choice (const :tag "Use system limit" nil)
                  (integer :tag "Fixed width" :value 80))
   :group 'shell

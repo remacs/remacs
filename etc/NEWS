@@ -1066,8 +1066,9 @@ variable for remote shells.  It still defaults to "/bin/sh".
 
 ** Single shell commands
 
-*** 'shell-command-width' defines the number of output columns
-for asynchronous shell command.
+---
+*** 'shell-command-width' defines the number of display columns
+available for output of asynchronous shell commands.
 
 ** Pcomplete
 
