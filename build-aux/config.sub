@@ -822,7 +822,9 @@ case $basic_machine in
 		cpu=m68k
 		vendor=next
 		case $os in
-		    nextstep* )
+		    openstep*)
+		        ;;
+		    nextstep*)
 			;;
 		    ns2*)
 		      os=nextstep2
