@@ -147,6 +147,7 @@ impl LispObject {
     }
 }
 
+/// lisp_fn allows markers for LispNumber arguments
 #[derive(Clone, Copy)]
 pub enum LispNumber {
     Fixnum(EmacsInt),
