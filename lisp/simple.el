@@ -110,9 +110,9 @@ If non-nil, the value is passed directly to `recenter'."
   :type 'hook
   :group 'next-error)
 
-(defcustom next-error-verbosity nil
-  "If nil, `next-error' always outputs the current error buffer.
-If non-nil, the message is output only when the error buffer
+(defcustom next-error-verbose t
+  "If non-nil, `next-error' always outputs the current error buffer.
+If nil, the message is output only when the error buffer
 changes."
   :group 'next-error
   :type 'boolean
@@ -323,7 +323,7 @@ To control which errors are matched, customize the variable
         (funcall next-error-function (prefix-numeric-value arg) reset)
         (let ((prev next-error-last-buffer))
           (next-error-found buffer (current-buffer))
-          (when (or (not next-error-verbosity)
+          (when (or next-error-verbose
                     (not (eq prev next-error-last-buffer)))
             (message "%s locus from %s"
                      (cond (reset                             "First")
@@ -339,7 +339,7 @@ To control which errors are matched, customize the variable
     (funcall next-error-function 0 nil)
     (let ((prev next-error-last-buffer))
       (next-error-found buffer (current-buffer))
-      (when (or (not next-error-verbosity)
+      (when (or next-error-verbose
                 (not (eq prev next-error-last-buffer)))
         (message "Current locus from %s" next-error-last-buffer)))))
 

@@ -309,7 +309,7 @@ and directory-local variables.
 longer.
 
 ---
-** next-error-verbosity controls when `next-error' outputs a message
+** next-error-verbose controls when `next-error' outputs a message
    about the error locus.
 
 
