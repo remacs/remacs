@@ -951,10 +951,7 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
 /// usage: (message-or-box FORMAT-STRING &rest ARGS)
 #[lisp_fn(min = "1")]
 pub fn message_or_box(args: &mut [LispObject]) -> LispObject {
-    if unsafe {
-        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
-            && globals.use_dialog_box
-    } {
+    if unsafe { globals.last_nonmenu_event.is_list() && globals.use_dialog_box } {
         message_box(args)
     } else {
         message(args)

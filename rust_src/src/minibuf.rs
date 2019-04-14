@@ -9,7 +9,7 @@ use crate::{
     eval, fns,
     keymap::get_keymap,
     lisp::LispObject,
-    lists::{car_safe, cdr_safe, memq},
+    lists::{car_safe, cdr_safe, memq, LispCons},
     multibyte::LispStringRef,
     obarray::{intern, lisp_intern},
     remacs_sys::{
@@ -471,7 +471,7 @@ pub fn read_buffer(
             if let Some(mut string) = prompt {
                 let data = string.as_slice();
                 let mut len = string.len_bytes() as usize;
-                if len >= 2 && &data[len - 2..len] == &[b':', b' '] {
+                if len >= 2 && data[len - 2..len] == [b':', b' '] {
                     len -= 2;
                 } else if len >= 1 && (data[len - 1] == b':' || data[len - 1] == b' ') {
                     len -= 1;
@@ -491,7 +491,7 @@ pub fn read_buffer(
             prompt = editfns::format(&mut [
                 format,
                 prompt.into(),
-                def.as_cons().map_or(def, |d| d.car()),
+                def.as_cons().map_or(def, LispCons::car),
             ])
             .into();
         }

@@ -710,7 +710,7 @@ pub fn key_binding(
 ) -> LispObject {
     if key.is_vector() && position.is_nil() {
         let key = key.force_vector();
-        if key.len() == 0 {
+        if key.is_empty() {
             return Qnil;
         }
 

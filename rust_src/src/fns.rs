@@ -487,7 +487,7 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
     let use_popup = unsafe {
-        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+        globals.last_nonmenu_event.is_list()
             && globals.use_dialog_box
             && globals.last_input_event.is_not_nil()
     };
