@@ -1967,4 +1967,30 @@ pub fn set_window_fringes_lisp(
     }
 }
 
+/// Return pixel width of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel width of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) -> EmacsInt {
+    LispWindowRef::from(window)
+        .pixel_width_before_size_change
+        .into()
+}
+
+/// Return pixel height of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel height of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> EmacsInt {
+    LispWindowRef::from(window)
+        .pixel_height_before_size_change
+        .into()
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
