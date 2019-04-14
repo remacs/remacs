@@ -1608,6 +1608,14 @@ w32_query_colors (struct frame *f, XColor *colors, int ncolors)
     }
 }
 
+/* Store F's background color into *BGCOLOR.  */
+
+static void
+w32_query_frame_background_color (struct frame *f, XColor *bgcolor)
+{
+  bgcolor->pixel = FRAME_BACKGROUND_PIXEL (f);
+  w32_query_colors (f, bgcolor, 1);
+}
 
 /* Set up the foreground color for drawing relief lines of glyph
    string S.  RELIEF is a pointer to a struct relief containing the GC
@@ -7160,6 +7168,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->read_socket_hook = w32_read_socket;
   terminal->frame_up_to_date_hook = w32_frame_up_to_date;
   terminal->defined_color_hook = w32_defined_color;
+  terminal->query_frame_background_color = w32_query_frame_background_color;
   terminal->query_colors = w32_query_colors;
   terminal->mouse_position_hook = w32_mouse_position;
   terminal->get_focus_frame = w32_get_focus_frame;

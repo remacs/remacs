@@ -1306,22 +1306,6 @@ image_background_transparent (struct image *img, struct frame *f, XImagePtr_or_D
   return img->background_transparent;
 }
 
-#if defined (HAVE_PNG) || defined (HAVE_IMAGEMAGICK) || defined (HAVE_RSVG)
-
-/* Store F's background color into *BGCOLOR.  */
-static void
-image_query_frame_background_color (struct frame *f, XColor *bgcolor)
-{
-#ifndef HAVE_NS
-  bgcolor->pixel = FRAME_BACKGROUND_PIXEL (f);
-  x_query_color (f, bgcolor);
-#else
-  ns_query_color (FRAME_BACKGROUND_COLOR (f), bgcolor, 1);
-#endif
-}
-
-#endif /* HAVE_PNG || HAVE_IMAGEMAGICK || HAVE_RSVG */
-
 /***********************************************************************
 		  Helper functions for X image types
  ***********************************************************************/
@@ -6363,7 +6347,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
                                                     &color,
                                                     false,
                                                     false)
-	  : (image_query_frame_background_color (f, &color), true))
+	  : (FRAME_TERMINAL (f)->query_frame_background_color (f, &color),
+             true))
 	/* The user specified `:background', use that.  */
 	{
 	  int shift = bit_depth == 16 ? 0 : 8;
@@ -8816,7 +8801,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
                                                     &bgcolor,
                                                     false,
                                                     false))
-      image_query_frame_background_color (f, &bgcolor);
+      FRAME_TERMINAL (f)->query_frame_background_color (f, &bgcolor);
 
     bg_wand = NewPixelWand ();
     PixelSetRed   (bg_wand, (double) bgcolor.red   / 65535);
@@ -9555,7 +9540,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
                                                     &background,
                                                     false,
                                                     false))
-      image_query_frame_background_color (f, &background);
+      FRAME_TERMINAL (f)->query_frame_background_color (f, &background);
 
     /* SVG pixmaps specify transparency in the last byte, so right
        shift 8 bits to get rid of it, since emacs doesn't support

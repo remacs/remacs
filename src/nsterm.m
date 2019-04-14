@@ -2447,6 +2447,14 @@ ns_defined_color (struct frame *f,
   return 1;
 }
 
+static void
+ns_query_frame_background_color (struct frame *f, XColor *bgcolor)
+/* --------------------------------------------------------------------------
+     External (hook): Store F's background color into *BGCOLOR
+   -------------------------------------------------------------------------- */
+{
+  ns_query_color (FRAME_BACKGROUND_COLOR (f), bgcolor, true);
+}
 
 static void
 ns_set_frame_alpha (struct frame *f)
@@ -5233,6 +5241,7 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->read_socket_hook = ns_read_socket;
   terminal->frame_up_to_date_hook = ns_frame_up_to_date;
   terminal->defined_color_hook = ns_defined_color;
+  terminal->query_frame_background_color = ns_query_frame_background_color;
   terminal->mouse_position_hook = ns_mouse_position;
   terminal->get_focus_frame = ns_get_focus_frame;
   terminal->focus_frame_hook = ns_focus_frame;

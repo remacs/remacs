@@ -2325,6 +2325,14 @@ x_query_colors (struct frame *f, XColor *colors, int ncolors)
   XQueryColors (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), colors, ncolors);
 }
 
+/* Store F's background color into *BGCOLOR.  */
+
+static void
+x_query_frame_background_color (struct frame *f, XColor *bgcolor)
+{
+  bgcolor->pixel = FRAME_BACKGROUND_PIXEL (f);
+  x_query_colors (f, bgcolor, 1);
+}
 
 /* On frame F, translate the color name to RGB values.  Use cached
    information, if possible.
@@ -13272,6 +13280,7 @@ x_create_terminal (struct x_display_info *dpyinfo)
   terminal->frame_up_to_date_hook = XTframe_up_to_date;
   terminal->buffer_flipping_unblocked_hook = XTbuffer_flipping_unblocked_hook;
   terminal->defined_color_hook = x_defined_color;
+  terminal->query_frame_background_color = x_query_frame_background_color;
   terminal->query_colors = x_query_colors;
   terminal->mouse_position_hook = XTmouse_position;
   terminal->get_focus_frame = x_get_focus_frame;
