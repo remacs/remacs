@@ -209,7 +209,8 @@ to find the list of ignores for each directory."
                                      (shell-quote-argument ")"))"")
                          )))
     (project--remote-file-names
-     (split-string (shell-command-to-string command) "\0" t))))
+     (sort (split-string (shell-command-to-string command) "\0" t)
+           #'string<))))
 
 (defun project--remote-file-names (local-files)
   "Return LOCAL-FILES as if they were on the system of `default-directory'."
