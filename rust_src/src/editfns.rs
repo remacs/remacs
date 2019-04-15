@@ -639,11 +639,11 @@ pub fn constrain_to_field(
     if unsafe { globals.Vinhibit_field_text_motion.is_nil() }
         && new_pos != old_pos
         && (get_char_property(
-            new_pos,
+            new_pos.into (),
             Qfield,
             Qnil).is_not_nil()
             || get_char_property(
-                old_pos,
+                old_pos.into (),
                 Qfield,
                 Qnil).is_not_nil()
             // To recognize field boundaries, we must also look at the
@@ -652,11 +652,11 @@ pub fn constrain_to_field(
             // fields (like comint prompts).
             || (new_pos > begv
                 && get_char_property(
-                    prev_new,
+                    prev_new.into (),
                     Qfield,
                     Qnil).is_not_nil())
             || (old_pos > begv
-                && get_char_property(prev_old, Qfield, Qnil).is_not_nil()))
+                && get_char_property(prev_old.into (), Qfield, Qnil).is_not_nil()))
         && (inhibit_capture_property.is_nil()
             // Field boundaries are again a problem; but now we must
             // decide the case exactly, so we need to call
@@ -669,11 +669,11 @@ pub fn constrain_to_field(
             }
                 && (old_pos <= begv
                     || get_char_property(
-                        old_pos,
+                        old_pos.into (),
                         inhibit_capture_property,
                         Qnil).is_nil()
                     || get_char_property(
-                        prev_old,
+                        prev_old.into (),
                         inhibit_capture_property,
                         Qnil).is_nil())))
     // It is possible that NEW_POS is not within the same field as
