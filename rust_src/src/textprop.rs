@@ -47,8 +47,9 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
         object = ThreadState::current_buffer().into();
     }
 
+    let position_pointer = &mut position as *mut LispObject;
     let i: *mut Lisp_Interval =
-        unsafe { validate_interval_range(object, &mut position, &mut position, false) };
+        unsafe { validate_interval_range(object, position_pointer, position_pointer, false) };
 
     if ptr::eq(i, ptr::null_mut()) {
         return Qnil;
@@ -59,12 +60,11 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
         // it means it's the end of OBJECT.
         // There are no properties at the very end,
         // since no character follows.
-        let position_isize = EmacsInt::from(position) as isize;
-        if position_isize == ((*i).total_length + (*i).position) {
-            return Qnil;
+        if EmacsInt::from(position) == (((*i).total_length + (*i).position) as EmacsInt) {
+            Qnil
+        } else {
+            (*i).plist
         }
-
-        (*i).plist
     }
 }
 
