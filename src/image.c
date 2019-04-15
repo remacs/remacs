@@ -7043,7 +7043,9 @@ jpeg_load_body (struct frame *f, struct image *img,
      colors generated, and mgr->cinfo.colormap is a two-dimensional array
      of color indices in the range 0..mgr->cinfo.actual_number_of_colors.
      No more than 255 colors will be generated.  */
+#ifndef USE_CAIRO
   USE_SAFE_ALLOCA;
+#endif
   {
     if (mgr->cinfo.out_color_components > 2)
       ir = 0, ig = 1, ib = 2;
@@ -7127,8 +7129,8 @@ jpeg_load_body (struct frame *f, struct image *img,
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
-#endif
   SAFE_FREE ();
+#endif
   return 1;
 }
 

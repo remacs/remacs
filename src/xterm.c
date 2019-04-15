@@ -2989,6 +2989,7 @@ x_draw_glyph_string_box (struct glyph_string *s)
 }
 
 
+#ifndef USE_CAIRO
 static void
 x_composite_image (struct glyph_string *s, Pixmap dest,
                    int srcX, int srcY, int dstX, int dstY,
@@ -3028,6 +3029,7 @@ x_composite_image (struct glyph_string *s, Pixmap dest,
 	     srcX, srcY,
 	     width, height, dstX, dstY);
 }
+#endif	/* !USE_CAIRO */
 
 
 /* Draw foreground of image glyph string S.  */
@@ -3335,7 +3337,9 @@ x_draw_image_glyph_string (struct glyph_string *s)
   int box_line_hwidth = eabs (s->face->box_line_width);
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height;
+#ifndef USE_CAIRO
   Pixmap pixmap = None;
+#endif
 
   height = s->height;
   if (s->slice.y == 0)
