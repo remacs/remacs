@@ -12077,9 +12077,10 @@ gui_consider_frame_title (Lisp_Object frame)
 	 already wasted too much time by walking through the list with
 	 display_mode_element, then we might need to optimize at a
 	 higher level than this.)  */
-      if (! STRINGP (f->name)
-	  || SBYTES (f->name) != len
-	  || memcmp (title, SDATA (f->name), len) != 0)
+      if ((! STRINGP (f->name)
+           || SBYTES (f->name) != len
+           || memcmp (title, SDATA (f->name), len) != 0)
+          && FRAME_TERMINAL (f)->implicit_set_name_hook)
 	FRAME_TERMINAL (f)->implicit_set_name_hook (f,
                                                     make_string (title, len),
                                                     Qnil);
@@ -12856,7 +12857,8 @@ redisplay_tool_bar (struct frame *f)
 
       if (new_height != WINDOW_PIXEL_HEIGHT (w))
 	{
-	  FRAME_TERMINAL (f)->change_tool_bar_height_hook (f, new_height);
+          if (FRAME_TERMINAL (f)->change_tool_bar_height_hook)
+            FRAME_TERMINAL (f)->change_tool_bar_height_hook (f, new_height);
 	  frame_default_tool_bar_height = new_height;
 	  /* Always do that now.  */
 	  clear_glyph_matrix (w->desired_matrix);
@@ -12951,7 +12953,8 @@ redisplay_tool_bar (struct frame *f)
 
 	  if (change_height_p)
 	    {
-	      FRAME_TERMINAL (f)->change_tool_bar_height_hook (f, new_height);
+              if (FRAME_TERMINAL (f)->change_tool_bar_height_hook)
+                FRAME_TERMINAL (f)->change_tool_bar_height_hook (f, new_height);
 	      frame_default_tool_bar_height = new_height;
 	      clear_glyph_matrix (w->desired_matrix);
 	      f->n_tool_bar_rows = nrows;

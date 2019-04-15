@@ -482,7 +482,8 @@ keep_ratio (struct frame *f, struct frame *p, int old_width, int old_height,
 	      f->top_pos = pos_y;
 	    }
 
-	  FRAME_TERMINAL (f)->set_frame_offset_hook (f, pos_x, pos_y, -1);
+          if (FRAME_TERMINAL (f)->set_frame_offset_hook)
+            FRAME_TERMINAL (f)->set_frame_offset_hook (f, pos_x, pos_y, -1);
 	}
 
       if (!CONSP (keep_ratio) || !NILP (Fcar (keep_ratio)))
@@ -669,11 +670,12 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 	 list2 (inhibit_horizontal ? Qt : Qnil,
 		inhibit_vertical ? Qt : Qnil));
 
-      FRAME_TERMINAL (f)->set_window_size_hook (f,
-                                                0,
-                                                new_text_width,
-                                                new_text_height,
-                                                1);
+      if (FRAME_TERMINAL (f)->set_window_size_hook)
+        FRAME_TERMINAL (f)->set_window_size_hook (f,
+                                                  0,
+                                                  new_text_width,
+                                                  new_text_height,
+                                                  1);
       f->resized_p = true;
 
       return;
@@ -1370,7 +1372,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 #else /* ! 0 */
   /* Instead, apply it only to the frame we're pointing to.  */
 #ifdef HAVE_WINDOW_SYSTEM
-  if (track && FRAME_WINDOW_P (f))
+  if (track && FRAME_WINDOW_P (f) && FRAME_TERMINAL (f)->get_focus_frame)
     {
       Lisp_Object focus, gfocus;
 
@@ -2836,7 +2838,7 @@ If there is no window system support, this function does nothing.  */)
 {
 #ifdef HAVE_WINDOW_SYSTEM
   struct frame *f = decode_window_system_frame (frame);
-  if (f)
+  if (f && FRAME_TERMINAL (f)->focus_frame_hook)
     FRAME_TERMINAL (f)->focus_frame_hook (f, !NILP (noactivate));
 #endif
   return Qnil;
@@ -3602,10 +3604,11 @@ bottom edge of FRAME's display.  */)
   if (FRAME_WINDOW_P (f))
     {
 #ifdef HAVE_WINDOW_SYSTEM
-      FRAME_TERMINAL (f)->set_frame_offset_hook (f,
-                                                 XFIXNUM (x),
-                                                 XFIXNUM (y),
-                                                 1);
+      if (FRAME_TERMINAL (f)->set_frame_offset_hook)
+        FRAME_TERMINAL (f)->set_frame_offset_hook (f,
+                                                   XFIXNUM (x),
+                                                   XFIXNUM (y),
+                                                   1);
 #endif
     }
 
@@ -4161,7 +4164,8 @@ gui_set_frame_parameters (struct frame *f, Lisp_Object alist)
       f->win_gravity = NorthWestGravity;
 
       /* Actually set that position, and convert to absolute.  */
-      FRAME_TERMINAL (f)->set_frame_offset_hook (f, leftpos, toppos, -1);
+      if (FRAME_TERMINAL (f)->set_frame_offset_hook)
+        FRAME_TERMINAL (f)->set_frame_offset_hook (f, leftpos, toppos, -1);
     }
 
   if (fullscreen_change)
@@ -4436,7 +4440,8 @@ gui_set_font (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   if (! NILP (Fequal (font_object, oldval)))
     return;
 
-  FRAME_TERMINAL (f)->set_new_font_hook (f, font_object, fontset);
+  if (FRAME_TERMINAL (f)->set_new_font_hook)
+    FRAME_TERMINAL (f)->set_new_font_hook (f, font_object, fontset);
   store_frame_param (f, Qfont, arg);
 #ifdef HAVE_X_WINDOWS
   store_frame_param (f, Qfont_parameter, font_param);
@@ -4716,7 +4721,8 @@ gui_set_scroll_bar_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     }
   else
     {
-      FRAME_TERMINAL (f)->set_scroll_bar_default_width_hook (f);
+      if (FRAME_TERMINAL (f)->set_scroll_bar_default_width_hook)
+        FRAME_TERMINAL (f)->set_scroll_bar_default_width_hook (f);
 
       if (FRAME_NATIVE_WINDOW (f))
 	adjust_frame_size (f, -1, -1, 3, 0, Qscroll_bar_width);
@@ -4746,7 +4752,8 @@ gui_set_scroll_bar_height (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     }
   else
     {
-      FRAME_TERMINAL (f)->set_scroll_bar_default_height_hook (f);
+      if (FRAME_TERMINAL (f)->set_scroll_bar_default_height_hook)
+        FRAME_TERMINAL (f)->set_scroll_bar_default_height_hook (f);
 
       if (FRAME_NATIVE_WINDOW (f))
 	adjust_frame_size (f, -1, -1, 3, 0, Qscroll_bar_height);

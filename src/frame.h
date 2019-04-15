@@ -1602,7 +1602,8 @@ gui_set_bitmap_icon (struct frame *f)
 {
   Lisp_Object obj = assq_no_quit (Qicon_type, f->param_alist);
 
-  if (CONSP (obj) && !NILP (XCDR (obj)))
+  if (CONSP (obj) && !NILP (XCDR (obj))
+      && FRAME_TERMINAL (f)->set_bitmap_icon_hook)
     FRAME_TERMINAL (f)->set_bitmap_icon_hook (f, XCDR (obj));
 }
 
