@@ -351,4 +351,59 @@ pub fn read_char(
 }
 def_lisp_sym!(Qread_char, "read-char");
 
+/// Read an event object from the input stream.
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_event(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> LispObject {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    unsafe { read_filtered_event(false, false, false, inherit_input_method.is_nil(), seconds) }
+}
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.  Non-character events are ignored.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char_exclusive(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> LispObject {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, false, !inherit_input_method.is_nil(), seconds) };
+
+    if val.is_nil() {
+        Qnil
+    } else {
+        unsafe { make_number(char_resolve_modifier_mask(val.into())) }
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
