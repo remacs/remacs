@@ -302,12 +302,6 @@ encode_coding_XXX (struct coding_system *coding)
 
 Lisp_Object Vcoding_system_hash_table;
 
-/* Format of end-of-line decided by system.  This is Qunix on
-   Unix and Mac, Qdos on DOS/Windows.
-   This has an effect only for external encoding (i.e. for output to
-   file and process), not for in-buffer or Lisp string encoding.  */
-static Lisp_Object system_eol_type;
-
 /* Coding-systems are handed between Emacs Lisp programs and C internal
    routines by the following three variables.  */
 /* Coding system to be used to encode text for terminal display when
@@ -5972,8 +5966,7 @@ raw_text_coding_system_p (struct coding_system *coding)
 
 /* If CODING_SYSTEM doesn't specify end-of-line format, return one of
    the subsidiary that has the same eol-spec as PARENT (if it is not
-   nil and specifies end-of-line format) or the system's setting
-   (system_eol_type).  */
+   nil and specifies end-of-line format) or the system's setting.  */
 
 Lisp_Object
 coding_inherit_eol_type (Lisp_Object coding_system, Lisp_Object parent)
@@ -5988,20 +5981,24 @@ coding_inherit_eol_type (Lisp_Object coding_system, Lisp_Object parent)
   eol_type = AREF (spec, 2);
   if (VECTORP (eol_type))
     {
-      Lisp_Object parent_eol_type;
+      /* Format of end-of-line decided by system.
+	 This is Qunix on Unix and Mac, Qdos on DOS/Windows.
+	 This has an effect only for external encoding (i.e., for output to
+	 file and process), not for in-buffer or Lisp string encoding.  */
+      Lisp_Object system_eol_type = Qunix;
+      #ifdef DOS_NT
+       system_eol_type = Qdos;
+      #endif
 
+      Lisp_Object parent_eol_type = system_eol_type;
       if (! NILP (parent))
 	{
-	  Lisp_Object parent_spec;
-
 	  CHECK_CODING_SYSTEM (parent);
-	  parent_spec = CODING_SYSTEM_SPEC (parent);
-	  parent_eol_type = AREF (parent_spec, 2);
-	  if (VECTORP (parent_eol_type))
-	    parent_eol_type = system_eol_type;
+	  Lisp_Object parent_spec = CODING_SYSTEM_SPEC (parent);
+	  Lisp_Object pspec_type = AREF (parent_spec, 2);
+	  if (!VECTORP (pspec_type))
+	    parent_eol_type = pspec_type;
 	}
-      else
-	parent_eol_type = system_eol_type;
       if (EQ (parent_eol_type, Qunix))
 	coding_system = AREF (eol_type, 0);
       else if (EQ (parent_eol_type, Qdos))
@@ -11305,13 +11302,6 @@ internal character representation.  */);
 
   for (int i = 0; i < coding_category_max; i++)
     Fset (AREF (Vcoding_category_table, i), Qno_conversion);
-
-#if defined (DOS_NT)
-  system_eol_type = Qdos;
-#else
-  system_eol_type = Qunix;
-#endif
-  staticpro (&system_eol_type);
 
   pdumper_do_now_and_after_load (reset_coding_after_pdumper_load);
 }
