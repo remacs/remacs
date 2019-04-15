@@ -1205,19 +1205,25 @@ ENDPOS is encountered."
                     ;; Get error now if we don't have a complete sexp
                     ;; after point.
                     (save-excursion
+                      (forward-sexp 1)
                       (let ((eol (line-end-position)))
-                        (forward-sexp 1)
                         ;; We actually look for a sexp which ends
                         ;; after the current line so that we properly
                         ;; indent things like #s(...).  This might not
                         ;; be needed if Bug#15998 is fixed.
-                        (condition-case ()
-                            (while (and (< (point) eol) (not (eobp)))
-                              (forward-sexp 1))
-                          ;; But don't signal an error for incomplete
-                          ;; sexps following the first complete sexp
-                          ;; after point.
-                          (scan-error nil)))
+                        (when (and (< (point) eol)
+                                   ;; Check if eol is within a sexp.
+                                   (> (nth 0 (save-excursion
+                                               (parse-partial-sexp
+                                                (point) eol)))
+                                      0))
+                          (condition-case ()
+                              (while (< (point) eol)
+                                (forward-sexp 1))
+                            ;; But don't signal an error for incomplete
+                            ;; sexps following the first complete sexp
+                            ;; after point.
+                            (scan-error nil))))
                       (point)))))
     (save-excursion
       (while (let ((indent (lisp-indent-calc-next parse-state))

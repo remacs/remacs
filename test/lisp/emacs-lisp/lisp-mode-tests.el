@@ -136,6 +136,34 @@ noindent\" 3
     (indent-sexp)
     (should (equal (buffer-string) "(())"))))
 
+(ert-deftest indent-sexp-stop-before-eol-comment ()
+  "`indent-sexp' shouldn't look for more sexps after an eol comment."
+  ;; See https://debbugs.gnu.org/35286.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (let ((str "() ;;\n  x"))
+      (insert str)
+      (goto-char (point-min))
+      (indent-sexp)
+      ;; The "x" is in the next sexp, so it shouldn't get indented.
+      (should (equal (buffer-string) str)))))
+
+(ert-deftest indent-sexp-stop-before-eol-non-lisp ()
+  "`indent-sexp' shouldn't be too agressive in non-Lisp modes."
+  ;; See https://debbugs.gnu.org/35286#13.
+  (with-temp-buffer
+    (prolog-mode)
+    (let ((str "\
+x(H) -->
+    {y(H)}.
+a(A) -->
+    b(A)."))
+      (insert str)
+      (search-backward "{")
+      (indent-sexp)
+      ;; There's no line-spanning sexp, so nothing should be indented.
+      (should (equal (buffer-string) str)))))
+
 (ert-deftest lisp-indent-region ()
   "Test basics of `lisp-indent-region'."
   (with-temp-buffer
