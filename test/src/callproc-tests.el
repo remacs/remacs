@@ -51,11 +51,12 @@
                      (setq internal-when-entered-debugger -1))))
     (should (eq :got-error ;; NOTE: `should-error' would inhibit debugger.
                 (condition-case-unless-debug ()
-                    ;; On Windows, "nul.FOO" act like an always-empty
-                    ;; file for any FOO, in any directory.  So this
-                    ;; passes Emacs' test for the file's existence,
-                    ;; and ensures we hit an error in the w32 process
-                    ;; spawn code.
+                    ;; On MS-Windows, "nul.FOO" resolves to the null
+                    ;; device, and thus acts like an always-empty
+                    ;; file, for any FOO, in any directory.  So
+                    ;; c:/null.exe passes Emacs' test for the file's
+                    ;; existence, and ensures we hit an error in the
+                    ;; w32 process spawn code.
                     (call-process "c:/nul.exe")
                   (error :got-error))))
     (should have-called-debugger)))
