@@ -50,6 +50,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    is really just insurance.  */
 #undef fopen
 #include <direct.h>
+
+#ifndef MINGW_W64
+# undef fseeko
+# define fseeko fseeko64
+#endif
 #endif /* WINDOWSNT */
 
 int
