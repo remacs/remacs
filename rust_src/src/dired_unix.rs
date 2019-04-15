@@ -63,9 +63,9 @@ impl StringExt for String {
             Some(s) => ext = s,
         }
 
-        let dir_s: String;
-        let stem_s: String;
-        let ext_s: String;
+        let dir_s: Self;
+        let stem_s: Self;
+        let ext_s: Self;
         match parent.to_str() {
             None => error!("new parent path is not a valid UTF-8 sequence"),
             Some(s) => dir_s = s.to_string(),

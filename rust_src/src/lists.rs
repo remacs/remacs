@@ -31,7 +31,7 @@ impl LispObject {
         }
     }
 
-    pub fn check_list_end(self, list: LispObject) {
+    pub fn check_list_end(self, list: Self) {
         if !self.is_nil() {
             wrong_type!(Qlistp, list);
         }
@@ -76,7 +76,7 @@ impl Debug for LispCons {
 }
 
 impl LispObject {
-    pub fn cons(car: impl Into<LispObject>, cdr: impl Into<LispObject>) -> Self {
+    pub fn cons(car: impl Into<Self>, cdr: impl Into<Self>) -> Self {
         unsafe { Fcons(car.into(), cdr.into()) }
     }
 

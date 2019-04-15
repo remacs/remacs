@@ -54,7 +54,7 @@ impl From<LispObject> for ThreadStateRef {
 
 impl From<ThreadStateRef> for LispObject {
     fn from(t: ThreadStateRef) -> Self {
-        LispObject::tag_ptr(t, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(t, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

@@ -84,7 +84,7 @@ impl LispSymbolRef {
     pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
         let s = self.u.s.as_ref();
-        LispSymbolRef::new(s.val.alias)
+        Self::new(s.val.alias)
     }
 
     pub fn get_declared_special(self) -> bool {
