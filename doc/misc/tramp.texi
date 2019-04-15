@@ -27,10 +27,10 @@ copy and modify this GNU manual.''
 @end quotation
 @end copying
 
-@c Entries for @command{install-info} to use
+@c Entries for @command{install-info} to use.  We cannot use @value{tramp}.
 @dircategory Emacs network features
 @direntry
-* @value{tramp}: (tramp).               Transparent Remote Access, Multiple Protocol
+* Tramp: (tramp).               Transparent Remote Access, Multiple Protocol
                                   Emacs remote file access via ssh and scp.
 @end direntry
 
@@ -113,8 +113,8 @@ For the developer:
 
 Installing @value{tramp} with your Emacs
 
-* System Requirements::         Prerequisites for :@value{tramp} installation.
-* Basic Installation::          Installation steps.:
+* System Requirements::         Prerequisites for @value{tramp} installation.
+* Basic Installation::          Installation steps.
 * Installation parameters::     Parameters in order to control installation.
 * Testing::                     A test suite for @value{tramp}.
 * Load paths::                  How to plug-in @value{tramp} into your environment.
