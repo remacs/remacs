@@ -17,12 +17,13 @@ use crate::{
     },
     eval::unbind_to,
     lisp::LispObject,
+    multibyte::char_resolve_modifier_mask,
     obarray::{intern, intern_c_string_1},
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, getc_unlocked, maybe_quit, read_internal_start, readevalloop,
-        specbind, staticpro, symbol_redirect, unblock_input,
+        block_input, build_string, getc_unlocked, make_number, maybe_quit, read_filtered_event,
+        read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -308,5 +309,46 @@ pub fn eval_region(
         unbind_to(count, Qnil);
     }
 }
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the user generates an event which is not a character (i.e. a mouse
+/// click or function key event), `read-char' signals an error.  As an
+/// exception, switch-frame events are put off until non-character events
+/// can be read.
+/// If you want to read non-character events, or ignore them, call
+/// `read-event' or `read-char-exclusive' instead.
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> LispObject {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, true, !inherit_input_method.is_nil(), seconds) };
+
+    if val.is_nil() {
+        Qnil
+    } else {
+        unsafe { make_number(char_resolve_modifier_mask(val.into())) }
+    }
+}
+def_lisp_sym!(Qread_char, "read-char");
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
