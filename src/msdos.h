@@ -93,6 +93,7 @@ typedef int XRectangle;
 typedef struct tty_display_info Display_Info;
 
 extern struct tty_display_info the_only_display_info;
+extern struct tty_output the_only_tty_output;
 
 #define FRAME_X_DISPLAY(f) ((Display *) 0)
 #define FRAME_FONT(f) ((f)->output_data.tty->font)
