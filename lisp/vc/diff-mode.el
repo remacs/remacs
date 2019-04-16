@@ -2439,6 +2439,7 @@ When OLD is non-nil, highlight the hunk from the old source."
            (when (and diff-vc-backend
                       (not (eq diff-font-lock-syntax 'hunk-only)))
              (let* ((file (diff-find-file-name old t))
+                    (file (and file (expand-file-name file)))
                     (revision (and file (if (not old) (nth 1 diff-vc-revisions)
                                           (or (nth 0 diff-vc-revisions)
                                               (vc-working-revision file))))))
@@ -2447,7 +2448,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                      ;; Get properties from the current working revision
                      (when (and (not old) (file-readable-p file)
                                 (file-regular-p file))
-                       (let ((buf (get-file-buffer (expand-file-name file))))
+                       (let ((buf (get-file-buffer file)))
                          ;; Try to reuse an existing buffer
                          (if buf
                              (with-current-buffer buf
@@ -2460,13 +2461,13 @@ When OLD is non-nil, highlight the hunk from the old source."
                                    ;; Same file as last-time, unmodified.
                                    ;; Reuse buffer as-is.
                                    (setq file nil)
+                                 (erase-buffer)
                                  (insert-file-contents file)
                                  (setq diff--syntax-file-attributes attrs)))
                              (diff-syntax-fontify-props file text line-nb)))))
                    ;; Get properties from a cached revision
                    (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
-                                               (expand-file-name file)
-                                               revision))
+                                               file revision))
                           (buffer (get-buffer buffer-name)))
                      (if buffer
                          ;; Don't re-initialize the buffer (which would throw
@@ -2474,7 +2475,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                          (setq file nil)
                        (setq buffer (ignore-errors
                                       (vc-find-revision-no-save
-                                       (expand-file-name file) revision
+                                       file revision
                                        diff-vc-backend
                                        (get-buffer-create buffer-name)))))
                      (when buffer
