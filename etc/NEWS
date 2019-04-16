@@ -706,6 +706,9 @@ if set before 'xref.el' was loaded.
 *** xref-find-definitions now sets the mark at the buffer position
 where it was invoked
 
+---
+*** New xref faces 'xref-file-header', 'xref-line-number', 'xref-match'
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
@@ -1072,7 +1075,7 @@ variable for remote shells.  It still defaults to "/bin/sh".
 
 ---
 *** 'shell-command-width' defines the number of display columns
-available for output of asynchronous shell commands.
+available for output of asynchronous or remote shell commands.
 
 ** Pcomplete
 
