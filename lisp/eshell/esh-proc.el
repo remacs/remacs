@@ -242,7 +242,11 @@ The prompt will be set to PROMPT."
   "A marker that tracks the beginning of output of the last subprocess.
 Used only on systems which do not support async subprocesses.")
 
-(defvar eshell-needs-pipe '("bc")
+(defvar eshell-needs-pipe
+  '("bc"
+    ;; xclip.el (in GNU ELPA) calls all of these with
+    ;; `process-connection-type' set to nil.
+    "pbpaste" "putclip" "xclip" "xsel" "wl-copy")
   "List of commands which need `process-connection-type' to be nil.
 Currently only affects commands in pipelines, and not those at
 the front.  If an element contains a directory part it must match
