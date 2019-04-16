@@ -51,7 +51,7 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
     let i: *mut Lisp_Interval =
         unsafe { validate_interval_range(object, position_pointer, position_pointer, false) };
 
-    if ptr::eq(i, ptr::null_mut()) {
+    if i.is_null() {
         return Qnil;
     }
 
