@@ -434,21 +434,20 @@ EmacsFrameResize (Widget widget)
 }
 
 static XtGeometryResult
-EmacsFrameQueryGeometry (Widget widget, XtWidgetGeometry *request, XtWidgetGeometry *result)
+EmacsFrameQueryGeometry (Widget widget, XtWidgetGeometry *request,
+			 XtWidgetGeometry *result)
 {
-  EmacsFrame ew = (EmacsFrame) widget;
-
   int mask = request->request_mode;
-  Dimension ok_width, ok_height;
 
-  if (mask & (CWWidth | CWHeight))
+  if (mask & (CWWidth | CWHeight) && !frame_resize_pixelwise)
     {
-      if (!frame_resize_pixelwise)
-	round_size_to_char (ew,
-			    (mask & CWWidth) ? request->width : ew->core.width,
-			    ((mask & CWHeight) ? request->height
-			     : ew->core.height),
-			    &ok_width, &ok_height);
+      EmacsFrame ew = (EmacsFrame) widget;
+      Dimension ok_width, ok_height;
+
+      round_size_to_char (ew,
+			  mask & CWWidth ? request->width : ew->core.width,
+			  mask & CWHeight ? request->height : ew->core.height,
+			  &ok_width, &ok_height);
       if ((mask & CWWidth) && (ok_width != request->width))
 	{
 	  result->request_mode |= CWWidth;
