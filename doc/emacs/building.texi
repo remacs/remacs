@@ -151,6 +151,20 @@ with the mouse (@pxref{Mouse References}), to visit the @dfn{locus} of
 the error message in a separate window.  The locus is the specific
 position in a file where that error occurred.
 
+@cindex compilation mode faces
+@vindex compilation-error
+@vindex compilation-warning
+  The appearance of the @file{*compilation*} buffer can be controlled
+by customizing the faces which are used to highlight parts of the
+@file{*compilation*} buffer, e.g., @code{compilation-error} or
+@code{compilation-warning}, for error and warning messages
+respectively.  Note that since those faces inherit from the
+@code{error} and @code{warning} faces, it is also possible to
+customize the parent face directly instead.
+
+  Use @w{@kbd{M-x customize-group RET compilation}} to see the entire
+list of customization variables and faces.
+
 @findex compile-goto-error
 @vindex compilation-auto-jump-to-first-error
   If you change the variable
