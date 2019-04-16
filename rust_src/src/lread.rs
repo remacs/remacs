@@ -22,7 +22,7 @@ use crate::{
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, getc_unlocked, make_number, maybe_quit, read_filtered_event,
+        block_input, build_string, getc_unlocked, maybe_quit, read_filtered_event,
         read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
@@ -335,7 +335,7 @@ pub fn read_char(
     prompt: LispObject,
     inherit_input_method: LispObject,
     seconds: LispObject,
-) -> LispObject {
+) -> Option<EmacsInt> {
     if !prompt.is_nil() {
         message_with_string!("%s", prompt, false);
     }
@@ -343,10 +343,9 @@ pub fn read_char(
     let val =
         unsafe { read_filtered_event(true, true, true, !inherit_input_method.is_nil(), seconds) };
 
-    if val.is_nil() {
-        Qnil
-    } else {
-        unsafe { make_number(char_resolve_modifier_mask(val.into())) }
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
     }
 }
 def_lisp_sym!(Qread_char, "read-char");
@@ -370,7 +369,7 @@ pub fn read_event(
         message_with_string!("%s", prompt, false);
     }
 
-    unsafe { read_filtered_event(false, false, false, inherit_input_method.is_nil(), seconds) }
+    unsafe { read_filtered_event(false, false, false, !inherit_input_method.is_nil(), seconds) }
 }
 
 /// Read a character from the command input (keyboard or macro).
@@ -391,7 +390,7 @@ pub fn read_char_exclusive(
     prompt: LispObject,
     inherit_input_method: LispObject,
     seconds: LispObject,
-) -> LispObject {
+) -> Option<EmacsInt> {
     if !prompt.is_nil() {
         message_with_string!("%s", prompt, false);
     }
@@ -399,10 +398,9 @@ pub fn read_char_exclusive(
     let val =
         unsafe { read_filtered_event(true, true, false, !inherit_input_method.is_nil(), seconds) };
 
-    if val.is_nil() {
-        Qnil
-    } else {
-        unsafe { make_number(char_resolve_modifier_mask(val.into())) }
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
     }
 }
 
