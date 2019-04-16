@@ -1084,8 +1084,7 @@ started editing, and asks for confirmation for discarding the changes.
 If you agree, the fileset is reverted.  If you don't want @kbd{C-x v
 u} to show a diff, set the variable @code{vc-revert-show-diff} to
 @code{nil} (you can still view the diff directly with @kbd{C-x v =};
-@pxref{Old Revisions}).  Note that @kbd{C-x v u} cannot be reversed
-with the usual undo commands (@pxref{Undo}), so use it with care.
+@pxref{Old Revisions}).
 
   On locking-based version control systems, @kbd{C-x v u} leaves files
 unlocked; you must lock again to resume editing.  You can also use
