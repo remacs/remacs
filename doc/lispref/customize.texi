@@ -950,10 +950,10 @@ possibilities:
 
 @itemize @bullet
 @item
-A predicate---that is, a function of one argument that has no side
-effects, and returns either @code{nil} or non-@code{nil} according to
-the argument.  Using a predicate in the list says that objects for which
-the predicate returns non-@code{nil} are acceptable.
+A predicate---that is, a function of one argument that returns either
+@code{nil} or non-@code{nil} according to the argument.  Using a
+predicate in the list says that objects for which the predicate
+returns non-@code{nil} are acceptable.
 
 @item
 A quoted constant---that is, @code{'@var{object}}.  This sort of element

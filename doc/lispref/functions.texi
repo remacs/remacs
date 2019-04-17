@@ -38,11 +38,16 @@ define them.
 @cindex return value
 @cindex value of function
 @cindex argument
+@cindex pure function
   In a general sense, a function is a rule for carrying out a
 computation given input values called @dfn{arguments}.  The result of
 the computation is called the @dfn{value} or @dfn{return value} of the
 function.  The computation can also have side effects, such as lasting
-changes in the values of variables or the contents of data structures.
+changes in the values of variables or the contents of data structures
+(@pxref{Definition of side effect}).  A @dfn{pure function} is a
+function which, in addition to having no side effects, always returns
+the same value for the same combination of arguments, regardless of
+external factors such as machine type or system state.
 
   In most computer languages, every function has a name.  But in Lisp,
 a function in the strictest sense has no name: it is an object which
