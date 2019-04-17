@@ -228,6 +228,14 @@ fn str_equality() {
 }
 
 #[test]
+fn str_foreign_equality() {
+    let lisp_str = mock_unibyte_string!("Hello World").force_string();
+    let rust_str = String::from("Hello World");
+    assert!(lisp_str == rust_str.as_str());
+    assert!(lisp_str == rust_str.as_bytes());
+}
+
+#[test]
 fn test_stringlessp() {
     let string = mock_unibyte_string!("Hello World");
     let string2 = mock_unibyte_string!("World Hello");

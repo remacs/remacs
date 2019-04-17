@@ -187,6 +187,18 @@ impl LispStringRef {
     }
 }
 
+impl PartialEq<&[u8]> for LispStringRef {
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.as_slice() == *other
+    }
+}
+
+impl PartialEq<&str> for LispStringRef {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_slice() == other.as_bytes()
+    }
+}
+
 impl LispStructuralEqual for LispStringRef {
     fn equal(
         &self,
