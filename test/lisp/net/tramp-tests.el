@@ -3011,6 +3011,9 @@ They might differ only in access time."
   (setcar (nthcdr 4 attr2) tramp-time-dont-know)
   (equal attr1 attr2))
 
+;; This isn't 100% correct, but better than no explainer at all.
+(put #'tramp--test-file-attributes-equal-p 'ert-explainer #'ert--explain-equal)
+
 (ert-deftest tramp-test19-directory-files-and-attributes ()
   "Check `directory-files-and-attributes'."
   (skip-unless (tramp--test-enabled))
