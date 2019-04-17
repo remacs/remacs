@@ -86,6 +86,7 @@ also temporarily alter the environment by binding variables
 (@pxref{Local Variables}).
 
 @cindex side effect
+@anchor{Definition of side effect}
   Evaluating a form may also make changes that persist; these changes
 are called @dfn{side effects}.  An example of a form that produces a
 side effect is @code{(setq foo 1)}.

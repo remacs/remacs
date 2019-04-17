@@ -976,10 +976,9 @@ number of arguments.  They work by calling @code{Ffuncall}.
 @file{lisp.h} contains the definitions for some important macros and
 functions.
 
-  If you define a function which is side-effect free, update the code
-in @file{byte-opt.el} that binds @code{side-effect-free-fns} and
-@code{side-effect-and-error-free-fns} so that the compiler optimizer
-knows about it.
+  If you define a function which is side-effect free or pure, give it
+a non-@code{nil} @code{side-effect-free} or @code{pure} property,
+respectively (@pxref{Standard Properties}).
 
 @node Writing Dynamic Modules
 @section Writing Dynamically-Loaded Modules
