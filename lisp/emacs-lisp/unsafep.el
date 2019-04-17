@@ -92,11 +92,6 @@
 in the parse.")
 (put 'unsafep-vars 'risky-local-variable t)
 
-;;Side-effect-free functions from subr.el
-(dolist (x '(assoc-default butlast last match-string
-	     match-string-no-properties member-ignore-case remove remq))
-  (put x 'side-effect-free t))
-
 ;;Other safe functions
 (dolist (x '(;;Special forms
 	     and catch if or prog1 prog2 progn while unwind-protect

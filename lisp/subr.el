@@ -580,6 +580,7 @@ i.e., subtract 2 * most-negative-fixnum from VALUE before shifting it."
 If LIST is nil, return nil.
 If N is non-nil, return the Nth-to-last link of LIST.
 If N is bigger than the length of LIST, return LIST."
+  (declare (side-effect-free t))
   (if n
       (and (>= n 0)
            (let ((m (safe-length list)))
@@ -591,6 +592,7 @@ If N is bigger than the length of LIST, return LIST."
   "Return a copy of LIST with the last N elements removed.
 If N is omitted or nil, the last element is removed from the
 copy."
+  (declare (side-effect-free t))
   (if (and n (<= n 0)) list
     (nbutlast (copy-sequence list) n)))
 
@@ -726,6 +728,7 @@ If that is non-nil, the element matches; then `assoc-default'
 
 If no element matches, the value is nil.
 If TEST is omitted or nil, `equal' is used."
+  (declare (side-effect-free t))
   (let (found (tail alist) value)
     (while (and tail (not found))
       (let ((elt (car tail)))
@@ -739,6 +742,7 @@ If TEST is omitted or nil, `equal' is used."
 ELT must be a string.  Upper-case and lower-case letters are treated as equal.
 Unibyte strings are converted to multibyte for comparison.
 Non-strings in LIST are ignored."
+  (declare (side-effect-free t))
   (while (and list
 	      (not (and (stringp (car list))
 			(eq t (compare-strings elt 0 nil (car list) 0 nil t)))))
@@ -822,6 +826,7 @@ Example:
 (defun remove (elt seq)
   "Return a copy of SEQ with all occurrences of ELT removed.
 SEQ must be a list, vector, or string.  The comparison is done with `equal'."
+  (declare (side-effect-free t))
   (if (nlistp seq)
       ;; If SEQ isn't a list, there's no need to copy SEQ because
       ;; `delete' will return a new object.
@@ -832,6 +837,7 @@ SEQ must be a list, vector, or string.  The comparison is done with `equal'."
   "Return LIST with all occurrences of ELT removed.
 The comparison is done with `eq'.  Contrary to `delq', this does not use
 side-effects, and the argument LIST is not modified."
+  (declare (side-effect-free t))
   (while (and (eq elt (car list)) (setq list (cdr list))))
   (if (memq elt list)
       (delq elt (copy-sequence list))
@@ -3898,6 +3904,7 @@ Zero means the entire text matched by the whole regexp or whole string.
 STRING should be given if the last search was by `string-match' on STRING.
 If STRING is nil, the current buffer should be the same buffer
 the search/match was performed in."
+  (declare (side-effect-free t))
   (if (match-beginning num)
       (if string
 	  (substring string (match-beginning num) (match-end num))
@@ -3911,6 +3918,7 @@ Zero means the entire text matched by the whole regexp or whole string.
 STRING should be given if the last search was by `string-match' on STRING.
 If STRING is nil, the current buffer should be the same buffer
 the search/match was performed in."
+  (declare (side-effect-free t))
   (if (match-beginning num)
       (if string
 	  (substring-no-properties string (match-beginning num)
