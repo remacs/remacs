@@ -29306,7 +29306,7 @@ get_window_cursor_type (struct window *w, struct glyph *glyph, int *width,
 
   /* Detect a nonselected window or nonselected frame.  */
   else if (w != XWINDOW (f->selected_window)
-	   || f != FRAME_DISPLAY_INFO (f)->x_highlight_frame)
+	   || f != FRAME_DISPLAY_INFO (f)->highlight_frame)
     {
       *active_cursor = false;
 

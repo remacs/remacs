@@ -881,7 +881,7 @@ struct ns_display_info
      mouse-face.  */
   Mouse_HLInfo mouse_highlight;
 
-  struct frame *x_highlight_frame;
+  struct frame *highlight_frame;
   struct frame *ns_focus_frame;
 
   /* The frame where the mouse was last time we reported a mouse event.  */

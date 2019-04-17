@@ -1540,36 +1540,36 @@ ns_frame_rehighlight (struct frame *frame)
    -------------------------------------------------------------------------- */
 {
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (frame);
-  struct frame *old_highlight = dpyinfo->x_highlight_frame;
+  struct frame *old_highlight = dpyinfo->highlight_frame;
 
   NSTRACE ("ns_frame_rehighlight");
   if (dpyinfo->ns_focus_frame)
     {
-      dpyinfo->x_highlight_frame
+      dpyinfo->highlight_frame
 	= (FRAMEP (FRAME_FOCUS_FRAME (dpyinfo->ns_focus_frame))
            ? XFRAME (FRAME_FOCUS_FRAME (dpyinfo->ns_focus_frame))
            : dpyinfo->ns_focus_frame);
-      if (!FRAME_LIVE_P (dpyinfo->x_highlight_frame))
+      if (!FRAME_LIVE_P (dpyinfo->highlight_frame))
         {
           fset_focus_frame (dpyinfo->ns_focus_frame, Qnil);
-          dpyinfo->x_highlight_frame = dpyinfo->ns_focus_frame;
+          dpyinfo->highlight_frame = dpyinfo->ns_focus_frame;
         }
     }
   else
-      dpyinfo->x_highlight_frame = 0;
+      dpyinfo->highlight_frame = 0;
 
-  if (dpyinfo->x_highlight_frame &&
-         dpyinfo->x_highlight_frame != old_highlight)
+  if (dpyinfo->highlight_frame &&
+         dpyinfo->highlight_frame != old_highlight)
     {
       if (old_highlight)
 	{
           gui_update_cursor (old_highlight, 1);
 	  ns_set_frame_alpha (old_highlight);
 	}
-      if (dpyinfo->x_highlight_frame)
+      if (dpyinfo->highlight_frame)
 	{
-          gui_update_cursor (dpyinfo->x_highlight_frame, 1);
-          ns_set_frame_alpha (dpyinfo->x_highlight_frame);
+          gui_update_cursor (dpyinfo->highlight_frame, 1);
+          ns_set_frame_alpha (dpyinfo->highlight_frame);
 	}
     }
 }
@@ -1667,8 +1667,8 @@ ns_iconify_frame (struct frame *f)
   view = FRAME_NS_VIEW (f);
   dpyinfo = FRAME_DISPLAY_INFO (f);
 
-  if (dpyinfo->x_highlight_frame == f)
-    dpyinfo->x_highlight_frame = 0;
+  if (dpyinfo->highlight_frame == f)
+    dpyinfo->highlight_frame = 0;
 
   if ([[view window] windowNumber] <= 0)
     {
@@ -1714,8 +1714,8 @@ ns_free_frame_resources (struct frame *f)
 
   if (f == dpyinfo->ns_focus_frame)
     dpyinfo->ns_focus_frame = 0;
-  if (f == dpyinfo->x_highlight_frame)
-    dpyinfo->x_highlight_frame = 0;
+  if (f == dpyinfo->highlight_frame)
+    dpyinfo->highlight_frame = 0;
   if (f == hlinfo->mouse_face_mouse_frame)
     reset_mouse_highlight (hlinfo);
 
@@ -2468,7 +2468,7 @@ ns_set_frame_alpha (struct frame *f)
 
   NSTRACE ("ns_set_frame_alpha");
 
-  if (dpyinfo->x_highlight_frame == f)
+  if (dpyinfo->highlight_frame == f)
     alpha = f->alpha[0];
   else
     alpha = f->alpha[1];
@@ -5142,7 +5142,7 @@ ns_initialize_display_info (struct ns_display_info *dpyinfo)
     dpyinfo->color_table = xmalloc (sizeof *dpyinfo->color_table);
     dpyinfo->color_table->colors = NULL;
     dpyinfo->root_window = 42; /* A placeholder.  */
-    dpyinfo->x_highlight_frame = dpyinfo->ns_focus_frame = NULL;
+    dpyinfo->highlight_frame = dpyinfo->ns_focus_frame = NULL;
     dpyinfo->n_fonts = 0;
     dpyinfo->smallest_font_height = 1;
     dpyinfo->smallest_char_width = 1;

@@ -917,7 +917,7 @@ x_set_frame_alpha (struct frame *f)
   unsigned long opac;
   Window parent;
 
-  if (dpyinfo->x_highlight_frame == f)
+  if (dpyinfo->highlight_frame == f)
     alpha = f->alpha[0];
   else
     alpha = f->alpha[1];
@@ -4718,29 +4718,29 @@ XTframe_rehighlight (struct frame *frame)
 static void
 x_frame_rehighlight (struct x_display_info *dpyinfo)
 {
-  struct frame *old_highlight = dpyinfo->x_highlight_frame;
+  struct frame *old_highlight = dpyinfo->highlight_frame;
 
   if (dpyinfo->x_focus_frame)
     {
-      dpyinfo->x_highlight_frame
+      dpyinfo->highlight_frame
 	= ((FRAMEP (FRAME_FOCUS_FRAME (dpyinfo->x_focus_frame)))
 	   ? XFRAME (FRAME_FOCUS_FRAME (dpyinfo->x_focus_frame))
 	   : dpyinfo->x_focus_frame);
-      if (! FRAME_LIVE_P (dpyinfo->x_highlight_frame))
+      if (! FRAME_LIVE_P (dpyinfo->highlight_frame))
 	{
 	  fset_focus_frame (dpyinfo->x_focus_frame, Qnil);
-	  dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame;
+	  dpyinfo->highlight_frame = dpyinfo->x_focus_frame;
 	}
     }
   else
-    dpyinfo->x_highlight_frame = 0;
+    dpyinfo->highlight_frame = 0;
 
-  if (dpyinfo->x_highlight_frame != old_highlight)
+  if (dpyinfo->highlight_frame != old_highlight)
     {
       if (old_highlight)
 	x_frame_unhighlight (old_highlight);
-      if (dpyinfo->x_highlight_frame)
-	x_frame_highlight (dpyinfo->x_highlight_frame);
+      if (dpyinfo->highlight_frame)
+	x_frame_highlight (dpyinfo->highlight_frame);
     }
 }
 
@@ -8907,7 +8907,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 		   into a parent frame with the child frame selected and
 		   `no-accept-focus' is not set, select the clicked
 		   frame.  */
-		struct frame *hf = dpyinfo->x_highlight_frame;
+		struct frame *hf = dpyinfo->highlight_frame;
 
 		if (FRAME_PARENT_FRAME (f) || (hf && frame_ancestor_p (f, hf)))
 		  {
@@ -11674,8 +11674,8 @@ x_make_frame_invisible (struct frame *f)
   window = FRAME_OUTER_WINDOW (f);
 
   /* Don't keep the highlight on an invisible frame.  */
-  if (FRAME_DISPLAY_INFO (f)->x_highlight_frame == f)
-    FRAME_DISPLAY_INFO (f)->x_highlight_frame = 0;
+  if (FRAME_DISPLAY_INFO (f)->highlight_frame == f)
+    FRAME_DISPLAY_INFO (f)->highlight_frame = 0;
 
   block_input ();
 
@@ -11735,8 +11735,8 @@ x_iconify_frame (struct frame *f)
 #endif
 
   /* Don't keep the highlight on an invisible frame.  */
-  if (FRAME_DISPLAY_INFO (f)->x_highlight_frame == f)
-    FRAME_DISPLAY_INFO (f)->x_highlight_frame = 0;
+  if (FRAME_DISPLAY_INFO (f)->highlight_frame == f)
+    FRAME_DISPLAY_INFO (f)->highlight_frame = 0;
 
   if (FRAME_ICONIFIED_P (f))
     return;
@@ -11999,8 +11999,8 @@ x_free_frame_resources (struct frame *f)
     dpyinfo->x_focus_frame = 0;
   if (f == dpyinfo->x_focus_event_frame)
     dpyinfo->x_focus_event_frame = 0;
-  if (f == dpyinfo->x_highlight_frame)
-    dpyinfo->x_highlight_frame = 0;
+  if (f == dpyinfo->highlight_frame)
+    dpyinfo->highlight_frame = 0;
   if (f == hlinfo->mouse_face_mouse_frame)
     reset_mouse_highlight (hlinfo);
 

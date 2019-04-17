@@ -350,7 +350,7 @@ struct x_display_info
      event).  It points to the X focus frame's selected window's
      frame.  It differs from x_focus_frame when we're using a global
      minibuffer.  */
-  struct frame *x_highlight_frame;
+  struct frame *highlight_frame;
 
   /* The frame waiting to be auto-raised in XTread_socket.  */
   struct frame *x_pending_autoraise_frame;
