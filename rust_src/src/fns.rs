@@ -499,7 +499,7 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
     }
 
     let yes_or_no: LispObject = "(yes or no) ".into();
-    let prompt = concat(&mut [prompt.into(), yes_or_no]).into();
+    let prompt = lisp_concat!(prompt, yes_or_no).into();
 
     loop {
         let ans: LispStringRef = downcase(read_from_minibuffer(

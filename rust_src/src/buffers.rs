@@ -37,7 +37,7 @@ use crate::{
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
         set_buffer_internal_1, set_per_buffer_value, specbind, unblock_input, unchain_both,
@@ -1657,7 +1657,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     let basename = if name.byte_at(0) == b' ' {
         let mut s = format!("-{}", thread_rng().gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
-        let genname = unsafe { concat2(name.into(), suffix) };
+        let genname = lisp_concat!(name, suffix);
         if get_buffer(genname.into()).is_none() {
             return genname.into();
         }
@@ -1670,7 +1670,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     loop {
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
-        let candidate = unsafe { concat2(basename, suffix) }.force_string();
+        let candidate = lisp_concat!(basename, suffix).force_string();
         if string_equal(candidate, ignore) || get_buffer(candidate.into()).is_none() {
             return candidate;
         }
