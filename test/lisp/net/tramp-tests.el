@@ -4188,6 +4188,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       ;; Test `shell-command-width' of `async-shell-command'.
       (when (tramp--test-sh-p)
 	(let (shell-command-width)
+          (tramp--test-message "Hallo1 %s" (ignore-errors (car (process-lines "tput" "cols"))))
+          (tramp--test-message "Hallo2 %s" (ignore-errors (tramp--test-shell-command-to-string-asynchronously "tput cols")))
 	  (should
 	   (string-equal
 	    ;; `frame-width' does not return a proper value.
@@ -4197,6 +4199,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (tramp--test-shell-command-to-string-asynchronously
 	     "tput cols")))
 	  (setq shell-command-width 1024)
+          (tramp--test-message "Hallo3 %s" (ignore-errors (tramp--test-shell-command-to-string-asynchronously "tput cols")))
 	  (should
 	   (string-equal
 	    "1024\n"
