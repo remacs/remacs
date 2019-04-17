@@ -131,6 +131,12 @@ macro_rules! list {
     () => { crate::remacs_sys::Qnil };
 }
 
+macro_rules! lisp_concat {
+    ($($tt:tt),+) => {
+        crate::fns::concat(&mut vec![$(($tt).into(), )*])
+    };
+}
+
 /// Macro that expands to nothing, but is used at build time to
 /// generate the starting symbol table. Equivalent to the DEFSYM
 /// macro. See also lib-src/make-docfile.c
