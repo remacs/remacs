@@ -591,7 +591,7 @@ static void substitute_in_interval (INTERVAL, void *);
    If SECONDS is a number, wait that many seconds for input, and
    return Qnil if no input arrives within that time.  */
 
-static Lisp_Object
+Lisp_Object
 read_filtered_event (bool no_switch_frame, bool ascii_required,
 		     bool error_nonascii, bool input_method, Lisp_Object seconds)
 {
@@ -680,86 +680,6 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
 
   return val;
 }
-
-DEFUN ("read-char", Fread_char, Sread_char, 0, 3, 0,
-       doc: /* Read a character from the command input (keyboard or macro).
-It is returned as a number.
-If the character has modifiers, they are resolved and reflected to the
-character code if possible (e.g. C-SPC -> 0).
-
-If the user generates an event which is not a character (i.e. a mouse
-click or function key event), `read-char' signals an error.  As an
-exception, switch-frame events are put off until non-character events
-can be read.
-If you want to read non-character events, or ignore them, call
-`read-event' or `read-char-exclusive' instead.
-
-If the optional argument PROMPT is non-nil, display that as a prompt.
-If the optional argument INHERIT-INPUT-METHOD is non-nil and some
-input method is turned on in the current buffer, that input method
-is used for reading a character.
-If the optional argument SECONDS is non-nil, it should be a number
-specifying the maximum number of seconds to wait for input.  If no
-input arrives in that time, return nil.  SECONDS may be a
-floating-point value.  */)
-  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
-{
-  Lisp_Object val;
-
-  if (! NILP (prompt))
-    message_with_string ("%s", prompt, 0);
-  val = read_filtered_event (1, 1, 1, ! NILP (inherit_input_method), seconds);
-
-  return (NILP (val) ? Qnil
-	  : make_number (char_resolve_modifier_mask (XINT (val))));
-}
-
-DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
-       doc: /* Read an event object from the input stream.
-If the optional argument PROMPT is non-nil, display that as a prompt.
-If the optional argument INHERIT-INPUT-METHOD is non-nil and some
-input method is turned on in the current buffer, that input method
-is used for reading a character.
-If the optional argument SECONDS is non-nil, it should be a number
-specifying the maximum number of seconds to wait for input.  If no
-input arrives in that time, return nil.  SECONDS may be a
-floating-point value.  */)
-  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
-{
-  if (! NILP (prompt))
-    message_with_string ("%s", prompt, 0);
-  return read_filtered_event (0, 0, 0, ! NILP (inherit_input_method), seconds);
-}
-
-DEFUN ("read-char-exclusive", Fread_char_exclusive, Sread_char_exclusive, 0, 3, 0,
-       doc: /* Read a character from the command input (keyboard or macro).
-It is returned as a number.  Non-character events are ignored.
-If the character has modifiers, they are resolved and reflected to the
-character code if possible (e.g. C-SPC -> 0).
-
-If the optional argument PROMPT is non-nil, display that as a prompt.
-If the optional argument INHERIT-INPUT-METHOD is non-nil and some
-input method is turned on in the current buffer, that input method
-is used for reading a character.
-If the optional argument SECONDS is non-nil, it should be a number
-specifying the maximum number of seconds to wait for input.  If no
-input arrives in that time, return nil.  SECONDS may be a
-floating-point value.  */)
-  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
-{
-  Lisp_Object val;
-
-  if (! NILP (prompt))
-    message_with_string ("%s", prompt, 0);
-
-  val = read_filtered_event (1, 1, 0, ! NILP (inherit_input_method), seconds);
-
-  return (NILP (val) ? Qnil
-	  : make_number (char_resolve_modifier_mask (XINT (val))));
-}
-
-
-
 
 /* Return true if the lisp code read using READCHARFUN defines a non-nil
    `lexical-binding' file variable.  After returning, the stream is
@@ -4424,9 +4344,6 @@ syms_of_lread (void)
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
-  defsubr (&Sread_char);
-  defsubr (&Sread_char_exclusive);
-  defsubr (&Sread_event);
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,
@@ -4704,7 +4621,6 @@ this variable will become obsolete.  */);
 
   DEFSYM (Qcurrent_load_list, "current-load-list");
   DEFSYM (Qstandard_input, "standard-input");
-  DEFSYM (Qread_char, "read-char");
   DEFSYM (Qget_file_char, "get-file-char");
 
   /* Used instead of Qget_file_char while loading *.elc files compiled

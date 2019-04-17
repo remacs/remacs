@@ -3925,6 +3925,9 @@ extern ptrdiff_t evxprintf (char **, ptrdiff_t *, char const *, ptrdiff_t,
   ATTRIBUTE_FORMAT_PRINTF (5, 0);
 
 /* Defined in lread.c.  */
+Lisp_Object read_filtered_event (bool no_switch_frame, bool ascii_required,
+                                bool error_nonascii, bool input_method,
+                                Lisp_Object seconds);
 extern Lisp_Object check_obarray (Lisp_Object);
 extern Lisp_Object intern_1 (const char *, ptrdiff_t);
 extern Lisp_Object intern_c_string_1 (const char *, ptrdiff_t);
