@@ -1218,5 +1218,31 @@ See <https://debbugs.gnu.org/19657#20>."
                                     process-environment)))
     (should (equal old (file-truename (abbreviate-file-name testfile))))))
 
+(ert-deftest files-tests-executable-find ()
+  "Test that `executable-find' works also with a relative or remote PATH.
+See <https://debbugs.gnu.org/35241>."
+  (let ((tmpfile (make-temp-file "files-test")))
+    (unwind-protect
+        (progn
+          (set-file-modes tmpfile #o777)
+          (let ((exec-path `(,temporary-file-directory)))
+            (should
+             (equal tmpfile
+                    (executable-find (file-name-nondirectory tmpfile)))))
+          ;; An empty element of `exec-path' means `default-directory'.
+          (let ((default-directory temporary-file-directory)
+                (exec-path nil))
+            (should
+             (equal tmpfile
+                    (executable-find (file-name-nondirectory tmpfile)))))
+          ;; The remote file name shall be quoted, and handled like a
+          ;; non-existing directory.
+          (let ((default-directory "/ssh::")
+                (exec-path (append exec-path `("." ,temporary-file-directory))))
+            (should
+             (equal tmpfile
+                    (executable-find (file-name-nondirectory tmpfile))))))
+      (delete-file tmpfile))))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here

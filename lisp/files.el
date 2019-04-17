@@ -1058,7 +1058,8 @@ REMOTE is non-nil, search on the remote host indicated by
         (when (stringp res) (file-local-name res)))
     ;; Use 1 rather than file-executable-p to better match the
     ;; behavior of call-process.
-    (locate-file command exec-path exec-suffixes 1)))
+    (let ((default-directory (file-name-quote default-directory 'top)))
+      (locate-file command exec-path exec-suffixes 1))))
 
 (defun load-library (library)
   "Load the Emacs Lisp library named LIBRARY.
