@@ -72,7 +72,7 @@ impl LispMarkerRef {
         }
     }
 
-    pub fn next(self) -> Option<LispMarkerRef> {
+    pub fn next(self) -> Option<Self> {
         unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
     }
 

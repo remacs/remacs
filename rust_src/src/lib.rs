@@ -150,7 +150,7 @@ mod hacks {
 
     impl<T> Hack<T> {
         pub const unsafe fn uninitialized() -> Self {
-            Hack { u: () }
+            Self { u: () }
         }
 
         pub unsafe fn get_mut(&mut self) -> &mut T {

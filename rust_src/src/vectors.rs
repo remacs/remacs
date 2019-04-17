@@ -349,7 +349,7 @@ macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl From<$type> for LispObject {
             fn from(v: $type) -> Self {
-                LispObject::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
+                Self::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
             }
         }
 
@@ -471,7 +471,7 @@ More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
 impl From<LispBoolVecRef> for LispObject {
     fn from(b: LispBoolVecRef) -> Self {
-        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

@@ -114,7 +114,7 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
-    pub fn create_new(name: LispStringRef) -> LispBufferRef {
+    pub fn create_new(name: LispStringRef) -> Self {
         if name.is_empty() {
             error!("Empty string for buffer name is not allowed");
         }
@@ -263,7 +263,7 @@ impl LispBufferRef {
         self.filename_
     }
 
-    pub fn base_buffer(self) -> Option<LispBufferRef> {
+    pub fn base_buffer(self) -> Option<Self> {
         Self::from_ptr(self.base_buffer as *mut c_void)
     }
 
@@ -726,7 +726,7 @@ impl LispBufferRef {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
     }
 
-    pub fn as_live(self) -> Option<LispBufferRef> {
+    pub fn as_live(self) -> Option<Self> {
         if self.is_live() {
             Some(self)
         } else {
@@ -1100,7 +1100,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
 
 impl From<LispBufferOrName> for LispBufferRef {
     fn from(v: LispBufferOrName) -> Self {
-        Option::<LispBufferRef>::from(v).unwrap_or_else(|| nsberror(v.into()))
+        Option::<Self>::from(v).unwrap_or_else(|| nsberror(v.into()))
     }
 }
 

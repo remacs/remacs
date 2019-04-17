@@ -188,7 +188,7 @@ pub struct LispFrameLiveOrSelected(LispFrameRef);
 
 impl From<LispObject> for LispFrameLiveOrSelected {
     fn from(obj: LispObject) -> Self {
-        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
+        Self(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
     }
 }
 

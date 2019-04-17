@@ -32,8 +32,8 @@ use crate::{
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
-    pub const fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
-        LispFontRef(v)
+    pub const fn from_vectorlike(v: LispVectorlikeRef) -> Self {
+        Self(v)
     }
 
     pub fn is_font_spec(&self) -> bool {
@@ -96,7 +96,7 @@ pub enum FontExtraType {
 impl FontExtraType {
     // Needed for wrong_type! that is using a safe predicate. This may change in the future.
     #[allow(unused_unsafe)]
-    pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
+    pub fn from_symbol_or_error(extra_type: LispObject) -> Self {
         if extra_type.eq(unsafe { Qfont_spec }) {
             FontExtraType::Spec
         } else if extra_type.eq(unsafe { Qfont_entity }) {
@@ -144,7 +144,7 @@ impl LispFontObjectRef {
 
 impl From<LispFontObjectRef> for LispObject {
     fn from(f: LispFontObjectRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -173,7 +173,7 @@ pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl From<LispFontSpecRef> for LispObject {
     fn from(f: LispFontSpecRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

@@ -100,7 +100,7 @@ impl LispWindowRef {
             matrix_mode_line_height
         } else {
             let mut frame = self.get_frame();
-            let window: LispWindowRef = selected_window().into();
+            let window: Self = selected_window().into();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };

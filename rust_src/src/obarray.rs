@@ -21,25 +21,25 @@ use crate::{
 pub struct LispObarrayRef(LispObject);
 
 impl From<LispObarrayRef> for LispObject {
-    fn from(o: LispObarrayRef) -> LispObject {
+    fn from(o: LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl From<&LispObarrayRef> for LispObject {
-    fn from(o: &LispObarrayRef) -> LispObject {
+    fn from(o: &LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl LispObarrayRef {
-    pub const fn new(obj: LispObject) -> LispObarrayRef {
-        LispObarrayRef(obj)
+    pub const fn new(obj: LispObject) -> Self {
+        Self(obj)
     }
 
     /// Return a reference to the Lisp variable `obarray`.
-    pub fn global() -> LispObarrayRef {
-        LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
+    pub fn global() -> Self {
+        Self(check_obarray(unsafe { globals.Vobarray }))
     }
 
     /// Return the symbol that matches NAME (either a symbol or string). If
@@ -80,8 +80,8 @@ impl LispObarrayRef {
 }
 
 impl From<LispObject> for LispObarrayRef {
-    fn from(o: LispObject) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(o))
+    fn from(o: LispObject) -> Self {
+        Self::new(check_obarray(o))
     }
 }
 

@@ -64,7 +64,7 @@ impl From<LispObject> for LispProcessRef {
 
 impl From<LispProcessRef> for LispObject {
     fn from(p: LispProcessRef) -> Self {
-        LispObject::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
