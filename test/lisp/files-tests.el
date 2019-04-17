@@ -137,7 +137,7 @@ form.")
       (hack-local-variables)
       (eval (nth 2 test-settings)))))
 
-(ert-deftest files-test-local-variables ()
+(ert-deftest files-tests-local-variables ()
   "Test the file-local variables implementation."
   (cl-letf (((symbol-function 'hack-local-variables-confirm)
              (lambda (&rest _)
@@ -154,7 +154,7 @@ form.")
   (expand-file-name "data/files-bug18141.el.gz" (getenv "EMACS_TEST_DIRECTORY"))
   "Test file for bug#18141.")
 
-(ert-deftest files-test-bug-18141 ()
+(ert-deftest files-tests-bug-18141 ()
   "Test for https://debbugs.gnu.org/18141 ."
   (skip-unless (executable-find "gzip"))
   ;; If called interactively, environment variable
@@ -170,7 +170,7 @@ form.")
 	    (should (eq buffer-file-coding-system 'iso-2022-7bit-unix))))
       (delete-file tempfile))))
 
-(ert-deftest files-test-make-temp-file-empty-prefix ()
+(ert-deftest files-tests-make-temp-file-empty-prefix ()
   "Test make-temp-file with an empty prefix."
   (let ((tempfile (make-temp-file ""))
         (tempdir (make-temp-file "" t))
@@ -188,7 +188,7 @@ form.")
 ;; Stop the above "Local Var..." confusing Emacs.
 
 
-(ert-deftest files-test-bug-21454 ()
+(ert-deftest files-tests-bug-21454 ()
   "Test for https://debbugs.gnu.org/21454 ."
   :expected-result :failed
   (let ((input-result
@@ -216,7 +216,7 @@ form.")
       (setenv "FOO" foo-env)
       (setenv "BAR" bar-env))))
 
-(ert-deftest files-test--save-buffers-kill-emacs--confirm-kill-processes ()
+(ert-deftest files-tests-save-buffers-kill-emacs--confirm-kill-processes ()
   "Test that `save-buffers-kill-emacs' honors
 `confirm-kill-processes'."
   (cl-letf* ((yes-or-no-p-prompts nil)
@@ -239,7 +239,7 @@ form.")
     (should-not yes-or-no-p-prompts)
     (should (equal kill-emacs-args '(nil)))))
 
-(ert-deftest files-test-read-file-in-~ ()
+(ert-deftest files-tests-read-file-in-~ ()
   "Test file prompting in directory named '~'.
 If we are in a directory named '~', the default value should not
 be $HOME."
@@ -278,7 +278,7 @@ be $HOME."
                    (file-name-unquote
                     (file-name-unquote temporary-file-directory))))))
 
-(ert-deftest files-tests--file-name-non-special--subprocess ()
+(ert-deftest files-tests-file-name-non-special--subprocess ()
   "Check that Bug#25949 is fixed."
   (skip-unless (executable-find "true"))
   (let ((default-directory (file-name-quote temporary-file-directory)))
@@ -306,7 +306,7 @@ be $HOME."
          (progn ,@body)
        (delete-file ,name))))
 
-(ert-deftest files-tests--file-name-non-special--buffers ()
+(ert-deftest files-tests-file-name-non-special--buffers ()
   "Check that Bug#25951 is fixed.
 We call `verify-visited-file-modtime' on a buffer visiting a file
 with a quoted name.  We use two different variants: first with
@@ -1119,7 +1119,7 @@ works as expected if the default directory is quoted."
                                     :command (list program "--version")
                                     :file-handler t)))))
 
-(ert-deftest files-tests--insert-directory-wildcard-in-dir-p ()
+(ert-deftest files-tests-insert-directory-wildcard-in-dir-p ()
   (let ((alist (list (cons "/home/user/*/.txt" (cons "/home/user/" "*/.txt"))
                      (cons "/home/user/.txt" nil)
                      (cons "/home/*/.txt" (cons "/home/" "*/.txt"))
@@ -1136,7 +1136,7 @@ works as expected if the default directory is quoted."
         (cdr path-res)
         (insert-directory-wildcard-in-dir-p (car path-res)))))))
 
-(ert-deftest files-tests--make-directory ()
+(ert-deftest files-tests-make-directory ()
   (let* ((dir (make-temp-file "files-mkdir-test" t))
 	 (dirname (file-name-as-directory dir))
 	 (file (concat dirname "file"))
@@ -1158,7 +1158,7 @@ works as expected if the default directory is quoted."
     (should-not (make-directory a/b t))
     (delete-directory dir 'recursive)))
 
-(ert-deftest files-test-no-file-write-contents ()
+(ert-deftest files-tests-no-file-write-contents ()
   "Test that `write-contents-functions' permits saving a file.
 Usually `basic-save-buffer' will prompt for a file name if the
 current buffer has none.  It should first call the functions in
@@ -1187,7 +1187,7 @@ name (Bug#28412)."
         (should (null (save-buffer)))
         (should (eq (buffer-size) 1))))))
 
-(ert-deftest files-tests--copy-directory ()
+(ert-deftest files-tests-copy-directory ()
   (let* ((dir (make-temp-file "files-mkdir-test" t))
 	 (dirname (file-name-as-directory dir))
 	 (source (concat dirname "source"))
@@ -1204,7 +1204,7 @@ name (Bug#28412)."
     (should (file-directory-p (concat (file-name-as-directory dest2) "a")))
     (delete-directory dir 'recursive)))
 
-(ert-deftest files-test-abbreviated-home-dir ()
+(ert-deftest files-tests-abbreviated-home-dir ()
   "Test that changing HOME does not confuse `abbreviate-file-name'.
 See <https://debbugs.gnu.org/19657#20>."
   (let* ((homedir temporary-file-directory)
