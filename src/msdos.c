@@ -420,6 +420,9 @@ static unsigned short outside_cursor;
 /* The only display since MS-DOS does not support multiple ones.  */
 struct tty_display_info the_only_display_info;
 
+/* The only tty_output, since MS-DOS supports only 1 display.  */
+struct tty_output the_only_tty_output;
+
 /* Support for DOS/V (allows Japanese characters to be displayed on
    standard, non-Japanese, ATs).  Only supported for DJGPP v2 and later.  */
 

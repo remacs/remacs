@@ -1118,6 +1118,7 @@ make_terminal_frame (struct terminal *terminal)
   f->terminal = terminal;
   f->terminal->reference_count++;
 #ifdef MSDOS
+  f->output_data.tty = &the_only_tty_output;
   f->output_data.tty->display_info = &the_only_display_info;
   if (!inhibit_window_system
       && (!FRAMEP (selected_frame) || !FRAME_LIVE_P (XFRAME (selected_frame))
