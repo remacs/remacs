@@ -452,10 +452,10 @@ Internal use only."
         ;; plist.  Decouple plist entries where the key matches
         ;; the property.
         (if (eq (cadr image) property)
-            (setcdr image (cddr image))
+            (setcdr image (cdddr image))
           (setq image (cddr image))))
     ;; Just enter the new value.
-    (plist-put (cdr image) property value))
+    (setcdr image (plist-put (cdr image) property value)))
   value)
 
 (defun image-property (image property)
