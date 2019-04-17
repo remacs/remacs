@@ -1221,7 +1221,7 @@ See <https://debbugs.gnu.org/19657#20>."
 (ert-deftest files-tests-executable-find ()
   "Test that `executable-find' works also with a relative or remote PATH.
 See <https://debbugs.gnu.org/35241>."
-  (let ((tmpfile (make-temp-file "files-test")))
+  (let ((tmpfile (make-temp-file "files-test" nil (car exec-suffixes))))
     (unwind-protect
         (progn
           (set-file-modes tmpfile #o777)
