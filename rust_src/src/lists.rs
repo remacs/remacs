@@ -41,7 +41,7 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
-    pub fn force_cons(self) -> LispCons {
+    pub const fn force_cons(self) -> LispCons {
         LispCons(self)
     }
 
@@ -181,7 +181,7 @@ impl TailsIter {
         }
     }
 
-    pub fn rest(&self) -> LispObject {
+    pub const fn rest(&self) -> LispObject {
         // This is kind of like Peekable but even when None is returned there
         // might still be a valid item in self.tail.
         self.tail
@@ -247,11 +247,11 @@ impl Iterator for TailsIter {
 pub struct CarIter(TailsIter);
 
 impl CarIter {
-    pub fn new(tails: TailsIter) -> Self {
+    pub const fn new(tails: TailsIter) -> Self {
         Self(tails)
     }
 
-    pub fn rest(&self) -> LispObject {
+    pub const fn rest(&self) -> LispObject {
         self.0.tail
     }
 }

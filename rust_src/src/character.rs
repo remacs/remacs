@@ -33,7 +33,7 @@ impl LispObject {
 /// True iff byte starts a character in a multibyte form.
 ///
 /// Same as the `CHAR_HEAD_P` macro.
-pub fn char_head_p(byte: c_uchar) -> bool {
+pub const fn char_head_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
 }
 

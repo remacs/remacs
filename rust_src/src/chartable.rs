@@ -333,7 +333,7 @@ impl LispStructuralEqual for LispSubCharTableRef {
     }
 }
 
-fn is_ascii(c: isize) -> bool {
+const fn is_ascii(c: isize) -> bool {
     c < 128
 }
 

@@ -37,7 +37,7 @@ use crate::{
     threads::{c_specpdl_index, ThreadState},
 };
 
-pub fn Ctl(c: char) -> i32 {
+pub const fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
 

@@ -53,7 +53,7 @@ use crate::{
 pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
-    pub fn from_C(n: EmacsInt) -> Self {
+    pub const fn from_C(n: EmacsInt) -> Self {
         LispObject(n)
     }
 
@@ -61,11 +61,11 @@ impl LispObject {
         Self::from_C(n as EmacsInt)
     }
 
-    pub fn to_C(self) -> EmacsInt {
+    pub const fn to_C(self) -> EmacsInt {
         self.0
     }
 
-    pub fn to_C_unsigned(self) -> EmacsUint {
+    pub const fn to_C_unsigned(self) -> EmacsUint {
         self.0 as EmacsUint
     }
 
@@ -101,7 +101,7 @@ impl<T> Clone for ExternalPtr<T> {
 }
 
 impl<T> ExternalPtr<T> {
-    pub fn new(p: *mut T) -> Self {
+    pub const fn new(p: *mut T) -> Self {
         ExternalPtr(p)
     }
 
@@ -109,7 +109,7 @@ impl<T> ExternalPtr<T> {
         self.0.is_null()
     }
 
-    pub fn as_ptr(self) -> *const T {
+    pub const fn as_ptr(self) -> *const T {
         self.0
     }
 

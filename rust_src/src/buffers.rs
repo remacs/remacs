@@ -202,11 +202,11 @@ impl LispBufferRef {
         self.read_only_.into()
     }
 
-    pub fn beg(self) -> ptrdiff_t {
+    pub const fn beg(self) -> ptrdiff_t {
         BEG
     }
 
-    pub fn beg_byte(self) -> ptrdiff_t {
+    pub const fn beg_byte(self) -> ptrdiff_t {
         BEG_BYTE
     }
 
