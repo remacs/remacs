@@ -1910,6 +1910,9 @@ returns a regexp that never matches anything, which is an identity for
 this operation.  Previously, the empty string was returned in this
 case.
 
+** New module environment functions 'make_time' and 'extract_time' to
+convert between timespec structures and Emacs Lisp time values.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

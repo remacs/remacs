@@ -77,6 +77,7 @@ To add a new module function, proceed as follows:
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "lisp.h"
 #include "dynlib.h"
@@ -737,6 +738,20 @@ module_process_input (emacs_env *env)
   return emacs_process_input_continue;
 }
 
+static struct timespec
+module_extract_time (emacs_env *env, emacs_value value)
+{
+  MODULE_FUNCTION_BEGIN ((struct timespec) {0});
+  return lisp_time_argument (value_to_lisp (value));
+}
+
+static emacs_value
+module_make_time (emacs_env *env, struct timespec time)
+{
+  MODULE_FUNCTION_BEGIN (NULL);
+  return lisp_to_value (env, make_lisp_time (time));
+}
+
 
 /* Subroutines.  */
 
@@ -1140,6 +1155,8 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
   env->vec_size = module_vec_size;
   env->should_quit = module_should_quit;
   env->process_input = module_process_input;
+  env->extract_time = module_extract_time;
+  env->make_time = module_make_time;
   Vmodule_environments = Fcons (make_mint_ptr (env), Vmodule_environments);
   return env;
 }

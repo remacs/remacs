@@ -310,4 +310,32 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
                       'finished))
         (quit)))))
 
+(ert-deftest mod-test-add-nanosecond/valid ()
+  (dolist (input (list
+                  ;; Some realistic examples.
+                  (current-time) (time-to-seconds)
+                  (encode-time 12 34 5 6 7 2019 t)
+                  ;; Various legacy timestamp forms.
+                  '(123 456) '(123 456 789) '(123 456 789 6000)
+                  ;; Corner case: this will result in a nanosecond
+                  ;; value of 1000000000 after addition.  The module
+                  ;; code should handle this correctly.
+                  '(123 65535 999999 999000)
+                  ;; Seconds since the epoch.
+                  123 123.45
+                  ;; New (TICKS . HZ) format.
+                  '(123456789 . 1000000000)))
+    (ert-info ((format "input: %s" input))
+      (should (time-equal-p (mod-test-add-nanosecond input)
+                            (time-add input '(0 0 0 1000)))))))
+
+(ert-deftest mod-test-add-nanosecond/nil ()
+  (should (<= (float-time (mod-test-add-nanosecond nil))
+              (+ (float-time) 1e-9))))
+
+(ert-deftest mod-test-add-nanosecond/invalid ()
+  (dolist (input '(1.0e+INF 1.0e-INF 0.0e+NaN (123) (123.45 6 7) "foo" [1 2]))
+    (ert-info ((format "input: %s" input))
+      (should-error (mod-test-add-nanosecond input)))))
+
 ;;; emacs-module-tests.el ends here

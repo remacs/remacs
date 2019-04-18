@@ -1387,6 +1387,38 @@ This function returns the value of a Lisp float specified by
 @var{arg}, as a C @code{double} value.
 @end deftypefn
 
+@deftypefn Function struct timespec extract_time (emacs_env *@var{env}, emacs_value @var{time})
+This function, which is available since Emacs 27, interprets
+@var{time} as an Emacs Lisp time value and returns the corresponding
+@code{struct timespec}.  @xref{Time of Day}.  @code{struct timespec}
+represents a timestamp with nanosecond precision.  It has the
+following members:
+
+@table @code
+@item time_t tv_sec
+Whole number of seconds.
+@item long tv_nsec
+Fractional seconds as number of nanoseconds, always less than one
+billion.
+@end table
+
+@noindent
+@xref{Elapsed Time,,,libc}.
+
+If @var{time} has higher precision than nanoseconds, then this
+function truncates it to nanosecond precision.  This function signals
+an error if @var{time} (truncated to nanoseconds) cannot be
+represented by @code{struct timespec}.  For example, if @code{time_t}
+is a 32-bit integral type, then a @var{time} value of ten billion
+seconds would signal an error, but a @var{time} value of 600
+picoseconds would get truncated to zero.
+
+If you need to deal with time values that are not representable by
+@code{struct timespec}, or if you want higher precision, call the Lisp
+function @code{encode-time} and work with its return value.
+@xref{Time Conversion}.
+@end deftypefn
+
 @deftypefn Function bool copy_string_contents (emacs_env *@var{env}, emacs_value @var{arg}, char *@var{buf}, ptrdiff_t *@var{len})
 This function stores the UTF-8 encoded text of a Lisp string specified
 by @var{arg} in the array of @code{char} pointed by @var{buf}, which
@@ -1450,6 +1482,18 @@ limits set by @code{most-negative-fixnum} and
 @deftypefn Function emacs_value make_float (emacs_env *@var{env}, double @var{d})
 This function takes a @code{double} argument @var{d} and returns the
 corresponding Emacs floating-point value.
+@end deftypefn
+
+@deftypefn Function emacs_value make_time (emacs_env *@var{env}, struct timespec @var{time})
+This function, which is available since Emacs 27, takes a @code{struct
+timespec} argument @var{time} and returns the corresponding Emacs
+timestamp as a pair @code{(@var{ticks} . @var{hz})}.  @xref{Time of
+Day}.  The return value represents exactly the same timestamp as
+@var{time}: all input values are representable, and there is never a
+loss of precision.  @code{@var{time}.tv_sec} and
+@code{@var{time}.tv_nsec} can be arbitrary values.  In particular,
+there's no requirement that @var{time} be normalized.  This means that
+@code{@var{time}.tv_nsec} can be negative or larger than 999,999,999.
 @end deftypefn
 
 @deftypefn Function emacs_value make_string (emacs_env *@var{env}, const char *@var{str}, ptrdiff_t @var{strlen})

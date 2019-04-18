@@ -366,6 +366,18 @@ Fmod_test_sleep_until (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
   return env->intern (env, "finished");
 }
 
+static emacs_value
+Fmod_test_add_nanosecond (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+                          void *data)
+{
+  assert (nargs == 1);
+  struct timespec time = env->extract_time (env, args[0]);
+  assert (time.tv_nsec >= 0);
+  assert (time.tv_nsec < 2000000000);  /* possible leap second */
+  time.tv_nsec++;
+  return env->make_time (env, time);
+}
+
 /* Lisp utilities for easier readability (simple wrappers).  */
 
 /* Provide FEATURE to Emacs.  */
@@ -434,6 +446,7 @@ emacs_module_init (struct emacs_runtime *ert)
   DEFUN ("mod-test-invalid-finalizer", Fmod_test_invalid_finalizer, 0, 0,
          NULL, NULL);
   DEFUN ("mod-test-sleep-until", Fmod_test_sleep_until, 2, 2, NULL, NULL);
+  DEFUN ("mod-test-add-nanosecond", Fmod_test_add_nanosecond, 1, 1, NULL, NULL);
 
 #undef DEFUN
 
