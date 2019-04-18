@@ -80,7 +80,7 @@ main (int argc, char **argv)
   struct sha256_ctx ctx;
   sha256_init_ctx (&ctx);
 
-  char *prog = prog;
+  char *prog = argv[0];
   char *file = argv[optind];
   if (argc - optind != 1)
     {
