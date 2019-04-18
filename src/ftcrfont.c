@@ -75,7 +75,7 @@ ftcrfont_glyph_extents (struct font *font,
 
   if (METRICS_STATUS (cache) == METRICS_INVALID)
     {
-      cairo_glyph_t cr_glyph = {.index = glyph, .x = 0, . y = 0};
+      cairo_glyph_t cr_glyph = {.index = glyph};
       cairo_text_extents_t extents;
 
       cairo_scaled_font_glyph_extents (ftcrfont_info->cr_scaled_font,
@@ -83,8 +83,8 @@ ftcrfont_glyph_extents (struct font *font,
       cache->lbearing = floor (extents.x_bearing);
       cache->rbearing = ceil (extents.width + extents.x_bearing);
       cache->width = lround (extents.x_advance);
-      cache->ascent = ceil (extents.y_bearing);
-      cache->descent = ceil (extents.height - extents.y_bearing);
+      cache->ascent = ceil (- extents.y_bearing);
+      cache->descent = ceil (extents.height + extents.y_bearing);
     }
 
   if (metrics)
