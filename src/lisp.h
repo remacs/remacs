@@ -3475,7 +3475,7 @@ extern Lisp_Object make_bignum_str (char const *, int);
 extern Lisp_Object make_neg_biguint (uintmax_t);
 extern Lisp_Object double_to_integer (double);
 
-/* Converthe integer NUM to *N.  Return true if successful, false
+/* Convert the integer NUM to *N.  Return true if successful, false
    (possibly setting *N) otherwise.  */
 INLINE bool
 integer_to_intmax (Lisp_Object num, intmax_t *n)
