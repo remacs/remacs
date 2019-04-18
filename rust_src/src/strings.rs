@@ -231,8 +231,19 @@ fn str_equality() {
 fn str_foreign_equality() {
     let lisp_str = mock_unibyte_string!("Hello World").force_string();
     let rust_str = String::from("Hello World");
-    assert!(lisp_str == rust_str.as_str());
-    assert!(lisp_str == rust_str.as_bytes());
+
+    assert_eq!(lisp_str, rust_str);
+    assert_eq!(lisp_str, rust_str.as_str());
+    assert_eq!(lisp_str, rust_str.as_bytes());
+
+    let lisp_utf_str = mock_multibyte_string!("Hëllö Wørld").force_string();
+    let rust_utf_str = "Hëllö Wørld";
+    let lisp_utf_str2 = mock_unibyte_string!("こんにちはｺﾝﾆﾁﾊ").force_string();
+    let rust_utf_str2 = "こんにちはｺﾝﾆﾁﾊ";
+
+    assert_eq!(lisp_utf_str, rust_utf_str);
+    assert_ne!(lisp_utf_str, rust_str);
+    assert_eq!(lisp_utf_str2, rust_utf_str2);
 }
 
 #[test]
