@@ -27,7 +27,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <string.h>
 #include <time.h>
 
+#define EMACS_MODULE_GMP
 #include <emacs-module.h>
+
+#include <gmp.h>
 
 #include "timespec.h"
 
@@ -378,6 +381,21 @@ Fmod_test_add_nanosecond (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
   return env->make_time (env, time);
 }
 
+static emacs_value
+Fmod_test_double (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+                  void *data)
+{
+  assert (nargs == 1);
+  emacs_value arg = args[0];
+  struct emacs_mpz value;
+  mpz_init (value.value);
+  env->extract_big_integer (env, arg, &value);
+  mpz_mul_ui (value.value, value.value, 2);
+  emacs_value result = env->make_big_integer (env, &value);
+  mpz_clear (value.value);
+  return result;
+}
+
 /* Lisp utilities for easier readability (simple wrappers).  */
 
 /* Provide FEATURE to Emacs.  */
@@ -447,6 +465,7 @@ emacs_module_init (struct emacs_runtime *ert)
          NULL, NULL);
   DEFUN ("mod-test-sleep-until", Fmod_test_sleep_until, 2, 2, NULL, NULL);
   DEFUN ("mod-test-add-nanosecond", Fmod_test_add_nanosecond, 1, 1, NULL, NULL);
+  DEFUN ("mod-test-double", Fmod_test_double, 1, 1, NULL, NULL);
 
 #undef DEFUN
 

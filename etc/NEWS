@@ -1913,6 +1913,10 @@ case.
 ** New module environment functions 'make_time' and 'extract_time' to
 convert between timespec structures and Emacs Lisp time values.
 
+** New module environment functions 'make_big_integer' and
+'extract_big_integer' to create and extract arbitrary-size integer
+values.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

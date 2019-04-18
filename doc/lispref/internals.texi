@@ -1508,6 +1508,41 @@ function raises the @code{overflow-error} error condition if
 string.
 @end deftypefn
 
+If you define the preprocessor macro @code{EMACS_MODULE_GMP} before
+including the header @file{emacs-module.h}, you can also convert
+between Emacs integers and GMP @code{mpz_t} values.  @xref{GMP
+Basics,,,gmp}.  If @code{EMACS_MODULE_GMP} is defined,
+@file{emacs-module.h} wraps @code{mpz_t} in the following structure:
+
+@deftp struct emacs_mpz value
+struct emacs_mpz @{ mpz_t value; @};
+@end deftp
+
+@noindent
+Then you can use the following additional functions:
+
+@deftypefn Function bool extract_big_integer (emacs_env *@var{env}, emacs_value @var{arg}, struct emacs_mpz *@var{result})
+This function, which is available since Emacs 27, extracts the
+integral value of @var{arg} into @var{result}.  @var{result} must not
+be @code{NULL}.  @code{@var{result}->value} must be an initialized
+@code{mpz_t} object.  @xref{Initializing Integers,,,gmp}.  If
+@var{arg} is an integer, Emacs will store its value into
+@code{@var{result}->value}.  After you have finished using
+@code{@var{result}->value}, you should free it using @code{mpz_clear}
+or similar.
+@end deftypefn
+
+@deftypefn Function emacs_value make_big_integer (emacs_env *@var{env}, const struct emacs_mpz *@var{value})
+This function, which is available since Emacs 27, takes an
+arbitrary-sized integer argument and returns a corresponding
+@code{emacs_value} object.  @var{value} must not be @code{NULL}.
+@code{@var{value}->value} must be an initialized @code{mpz_t} object.
+@xref{Initializing Integers,,,gmp}.  Emacs will return a corresponding
+integral object.  After you have finished using
+@code{@var{value}->value}, you should free it using @code{mpz_clear}
+or similar.
+@end deftypefn
+
 The @acronym{API} does not provide functions to manipulate Lisp data
 structures, for example, create lists with @code{cons} and @code{list}
 (@pxref{Building Lists}), extract list members with @code{car} and

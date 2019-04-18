@@ -338,4 +338,11 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
     (ert-info ((format "input: %s" input))
       (should-error (mod-test-add-nanosecond input)))))
 
+(ert-deftest mod-test-double ()
+  (dolist (input (list 0 1 2 -1 42 12345678901234567890
+                       most-positive-fixnum (1+ most-positive-fixnum)
+                       most-negative-fixnum (1- most-negative-fixnum)))
+    (ert-info ((format "input: %d" input))
+      (should (= (mod-test-double input) (* 2 input))))))
+
 ;;; emacs-module-tests.el ends here

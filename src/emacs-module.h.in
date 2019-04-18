@@ -28,6 +28,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdbool.h>
 #endif
 
+#ifdef EMACS_MODULE_GMP
+#include <gmp.h>
+#endif
+
 #if defined __cplusplus && __cplusplus >= 201103L
 # define EMACS_NOEXCEPT noexcept
 #else
@@ -93,6 +97,12 @@ enum emacs_process_input_result
   /* Module code should return control to Emacs as soon as possible.  */
   emacs_process_input_quit = 1
 };
+
+#ifdef EMACS_MODULE_GMP
+struct emacs_mpz { mpz_t value; };
+#else
+struct emacs_mpz;  /* no definition */
+#endif
 
 struct emacs_env_25
 {

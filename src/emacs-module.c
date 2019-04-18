@@ -70,6 +70,7 @@ To add a new module function, proceed as follows:
 
 #include <config.h>
 
+#define EMACS_MODULE_GMP
 #include "emacs-module.h"
 
 #include <stdarg.h>
@@ -79,7 +80,10 @@ To add a new module function, proceed as follows:
 #include <stdlib.h>
 #include <time.h>
 
+#include <gmp.h>
+
 #include "lisp.h"
+#include "bignum.h"
 #include "dynlib.h"
 #include "coding.h"
 #include "keyboard.h"
@@ -752,6 +756,27 @@ module_make_time (emacs_env *env, struct timespec time)
   return lisp_to_value (env, make_lisp_time (time));
 }
 
+static void
+module_extract_big_integer (emacs_env *env, emacs_value value,
+                            struct emacs_mpz *result)
+{
+  MODULE_FUNCTION_BEGIN ();
+  Lisp_Object o = value_to_lisp (value);
+  CHECK_INTEGER (o);
+  if (FIXNUMP (o))
+    mpz_set_intmax (result->value, XFIXNUM (o));
+  else
+    mpz_set (result->value, XBIGNUM (o)->value);
+}
+
+static emacs_value
+module_make_big_integer (emacs_env *env, const struct emacs_mpz *value)
+{
+  MODULE_FUNCTION_BEGIN (NULL);
+  mpz_set (mpz[0], value->value);
+  return lisp_to_value (env, make_integer_mpz ());
+}
+
 
 /* Subroutines.  */
 
@@ -1157,6 +1182,8 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
   env->process_input = module_process_input;
   env->extract_time = module_extract_time;
   env->make_time = module_make_time;
+  env->extract_big_integer = module_extract_big_integer;
+  env->make_big_integer = module_make_big_integer;
   Vmodule_environments = Fcons (make_mint_ptr (env), Vmodule_environments);
   return env;
 }

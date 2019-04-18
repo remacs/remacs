@@ -4151,6 +4151,7 @@ extern void *unexec_realloc (void *, size_t);
 extern void unexec_free (void *);
 #endif
 
+#define EMACS_MODULE_GMP
 #include "emacs-module.h"
 
 /* Function prototype for the module Lisp functions.  */
