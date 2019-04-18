@@ -80,24 +80,26 @@ main (int argc, char **argv)
   struct sha256_ctx ctx;
   sha256_init_ctx (&ctx);
 
+  char *prog = prog;
+  char *file = argv[optind];
   if (argc - optind != 1)
     {
-      fprintf (stderr, "%s: missing or extra file operand\n", argv[0]);
+      fprintf (stderr, "%s: missing or extra file operand\n", prog);
       return EXIT_FAILURE;
     }
 
-  FILE *f = fopen (argv[1], raw ? "r" FOPEN_BINARY : "r+" FOPEN_BINARY);
+  FILE *f = fopen (file, raw ? "r" FOPEN_BINARY : "r+" FOPEN_BINARY);
   struct stat st;
   if (!f || fstat (fileno (f), &st) != 0)
     {
-      perror (argv[1]);
+      perror (file);
       return EXIT_FAILURE;
     }
 
   if (!S_ISREG (st.st_mode))
     {
       fprintf (stderr, "%s: Error: %s is not a regular file\n",
-	       argv[0], argv[1]);
+	       prog, file);
       return EXIT_FAILURE;
     }
 
@@ -105,7 +107,7 @@ main (int argc, char **argv)
 			  min (SIZE_MAX, SSIZE_MAX));
   if (maxlen <= st.st_size)
     {
-      fprintf (stderr, "%s: %s: file too big\n", argv[0], argv[1]);
+      fprintf (stderr, "%s: %s: file too big\n", prog, file);
       return EXIT_FAILURE;
     }
 
@@ -119,8 +121,7 @@ main (int argc, char **argv)
   size_t chunksz = fread (buf, 1, st.st_size + 1, f);
   if (ferror (f) || chunksz != st.st_size)
     {
-      fprintf (stderr, "%s: Error: could not read %s\n",
-	       argv[0], argv[1]);
+      fprintf (stderr, "%s: Error: could not read %s\n", prog, file);
       return EXIT_FAILURE;
     }
 
@@ -139,33 +140,33 @@ main (int argc, char **argv)
       char *finger = memmem (buf, chunksz, fingerprint, sizeof fingerprint);
       if (!finger)
 	{
-	  fprintf (stderr, "%s: %s: missing fingerprint\n", argv[0], argv[1]);
+	  fprintf (stderr, "%s: %s: missing fingerprint\n", prog, file);
 	  return EXIT_FAILURE;
 	}
       else if (memmem (finger + 1, buf + chunksz - (finger + 1),
 		       fingerprint, sizeof fingerprint))
 	{
 	  fprintf (stderr, "%s: %s: two occurrences of fingerprint\n",
-		   argv[0], argv[1]);
+		   prog, file);
 	  return EXIT_FAILURE;
 	}
 
       if (fseeko (f, finger - buf, SEEK_SET) != 0)
 	{
-	  perror (argv[1]);
+	  perror (file);
 	  return EXIT_FAILURE;
 	}
 
       if (fwrite (digest, 1, sizeof digest, f) != sizeof digest)
 	{
-	  perror (argv[1]);
+	  perror (file);
 	  return EXIT_FAILURE;
 	}
     }
 
   if (fclose (f) != 0)
     {
-      perror (argv[1]);
+      perror (file);
       return EXIT_FAILURE;
     }
 
