@@ -1134,13 +1134,15 @@ internal_catch (Lisp_Object tag,
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
 static AVOID
-unwind_to_catch (struct handler *catch, Lisp_Object value)
+unwind_to_catch (struct handler *catch, enum nonlocal_exit type,
+                 Lisp_Object value)
 {
   bool last_time;
 
   eassert (catch->next);
 
   /* Save the value in the tag.  */
+  catch->nonlocal_exit = type;
   catch->val = value;
 
   /* Restore certain special C variables.  */
@@ -1177,9 +1179,9 @@ Both TAG and VALUE are evalled.  */
     for (c = handlerlist; c; c = c->next)
       {
 	if (c->type == CATCHER_ALL)
-          unwind_to_catch (c, Fcons (tag, value));
-	if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
-	  unwind_to_catch (c, value);
+          unwind_to_catch (c, NONLOCAL_EXIT_THROW, Fcons (tag, value));
+        if (c->type == CATCHER && EQ (c->tag_or_ch, tag))
+	  unwind_to_catch (c, NONLOCAL_EXIT_THROW, value);
       }
   xsignal2 (Qno_catch, tag, value);
 }
@@ -1427,8 +1429,13 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
     }
 }
 
-static Lisp_Object
-internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
+/* Like a combination of internal_condition_case_1 and internal_catch.
+   Catches all signals and throws.  Never exits nonlocally; returns
+   Qcatch_all_memory_full if no handler could be allocated.  */
+
+Lisp_Object
+internal_catch_all (Lisp_Object (*function) (void *), void *argument,
+                    Lisp_Object (*handler) (enum nonlocal_exit, Lisp_Object))
 {
   struct handler *c = push_handler_nosignal (Qt, CATCHER_ALL);
   if (c == NULL)
@@ -1444,37 +1451,10 @@ internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
   else
     {
       eassert (handlerlist == c);
+      enum nonlocal_exit type = c->nonlocal_exit;
       Lisp_Object val = c->val;
       handlerlist = c->next;
-      Fsignal (Qno_catch, val);
-    }
-}
-
-/* Like a combination of internal_condition_case_1 and internal_catch.
-   Catches all signals and throws.  Never exits nonlocally; returns
-   Qcatch_all_memory_full if no handler could be allocated.  */
-
-Lisp_Object
-internal_catch_all (Lisp_Object (*function) (void *), void *argument,
-                    Lisp_Object (*handler) (Lisp_Object))
-{
-  struct handler *c = push_handler_nosignal (Qt, CONDITION_CASE);
-  if (c == NULL)
-    return Qcatch_all_memory_full;
-
-  if (sys_setjmp (c->jmp) == 0)
-    {
-      Lisp_Object val = internal_catch_all_1 (function, argument);
-      eassert (handlerlist == c);
-      handlerlist = c->next;
-      return val;
-    }
-  else
-    {
-      eassert (handlerlist == c);
-      Lisp_Object val = c->val;
-      handlerlist = c->next;
-      return handler (val);
+      return handler (type, val);
     }
 }
 
@@ -1645,6 +1625,11 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
 
   for (h = handlerlist; h; h = h->next)
     {
+      if (h->type == CATCHER_ALL)
+        {
+          clause = Qt;
+          break;
+        }
       if (h->type != CONDITION_CASE)
 	continue;
       clause = find_handler_clause (h->tag_or_ch, conditions);
@@ -1678,7 +1663,7 @@ signal_or_quit (Lisp_Object error_symbol, Lisp_Object data, bool keyboard_quit)
       Lisp_Object unwind_data
 	= (NILP (error_symbol) ? data : Fcons (error_symbol, data));
 
-      unwind_to_catch (h, unwind_data);
+      unwind_to_catch (h, NONLOCAL_EXIT_SIGNAL, unwind_data);
     }
   else
     {

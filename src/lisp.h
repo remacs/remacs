@@ -3262,8 +3262,10 @@ SPECPDL_INDEX (void)
    member is TAG, and then unbinds to it.  The `val' member is used to
    hold VAL while the stack is unwound; `val' is returned as the value
    of the catch form.  If there is a handler of type CATCHER_ALL, it will
-   be treated as a handler for all invocations of `throw'; in this case
-   `val' will be set to (TAG . VAL).
+   be treated as a handler for all invocations of `signal' and `throw';
+   in this case `val' will be set to (ERROR-SYMBOL . DATA) or (TAG . VAL),
+   respectively.  During stack unwinding, `nonlocal_exit' is set to
+   specify the type of nonlocal exit that caused the stack unwinding.
 
    All the other members are concerned with restoring the interpreter
    state.
@@ -3273,11 +3275,21 @@ SPECPDL_INDEX (void)
 
 enum handlertype { CATCHER, CONDITION_CASE, CATCHER_ALL };
 
+enum nonlocal_exit
+{
+  NONLOCAL_EXIT_SIGNAL,
+  NONLOCAL_EXIT_THROW,
+};
+
 struct handler
 {
   enum handlertype type;
   Lisp_Object tag_or_ch;
+
+  /* The next two are set by unwind_to_catch.  */
+  enum nonlocal_exit nonlocal_exit;
   Lisp_Object val;
+
   struct handler *next;
   struct handler *nextfree;
 
@@ -4129,7 +4141,7 @@ extern Lisp_Object internal_condition_case_2 (Lisp_Object (*) (Lisp_Object, Lisp
 extern Lisp_Object internal_condition_case_n
     (Lisp_Object (*) (ptrdiff_t, Lisp_Object *), ptrdiff_t, Lisp_Object *,
      Lisp_Object, Lisp_Object (*) (Lisp_Object, ptrdiff_t, Lisp_Object *));
-extern Lisp_Object internal_catch_all (Lisp_Object (*) (void *), void *, Lisp_Object (*) (Lisp_Object));
+extern Lisp_Object internal_catch_all (Lisp_Object (*) (void *), void *, Lisp_Object (*) (enum nonlocal_exit, Lisp_Object));
 extern struct handler *push_handler (Lisp_Object, enum handlertype);
 extern struct handler *push_handler_nosignal (Lisp_Object, enum handlertype);
 extern void specbind (Lisp_Object, Lisp_Object);

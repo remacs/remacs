@@ -665,6 +665,18 @@ json_insert (void *data)
   return Qnil;
 }
 
+static Lisp_Object
+json_handle_nonlocal_exit (enum nonlocal_exit type, Lisp_Object data)
+{
+  switch (type)
+    {
+    case NONLOCAL_EXIT_SIGNAL:
+      return data;
+    case NONLOCAL_EXIT_THROW:
+      return Fcons (Qno_catch, data);
+    }
+}
+
 struct json_insert_data
 {
   /* This tracks how many bytes were inserted by the callback since
@@ -687,7 +699,8 @@ json_insert_callback (const char *buffer, size_t size, void *data)
   struct json_insert_data *d = data;
   struct json_buffer_and_size buffer_and_size
     = {.buffer = buffer, .size = size, .inserted_bytes = d->inserted_bytes};
-  d->error = internal_catch_all (json_insert, &buffer_and_size, Fidentity);
+  d->error = internal_catch_all (json_insert, &buffer_and_size,
+                                 json_handle_nonlocal_exit);
   d->inserted_bytes = buffer_and_size.inserted_bytes;
   return NILP (d->error) ? 0 : -1;
 }

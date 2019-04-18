@@ -201,8 +201,8 @@ static emacs_env *initialize_environment (emacs_env *,
 static void finalize_environment (emacs_env *);
 static void finalize_environment_unwind (void *);
 static void finalize_runtime_unwind (void *);
-static void module_handle_signal (emacs_env *, Lisp_Object);
-static void module_handle_throw (emacs_env *, Lisp_Object);
+static void module_handle_nonlocal_exit (emacs_env *, enum nonlocal_exit,
+                                         Lisp_Object);
 static void module_non_local_exit_signal_1 (emacs_env *,
 					    Lisp_Object, Lisp_Object);
 static void module_non_local_exit_throw_1 (emacs_env *,
@@ -231,11 +231,8 @@ static bool module_assertions = false;
    or a pointer to handle non-local exits.  The function must have an
    ENV parameter.  The function will return the specified value if a
    signal or throw is caught.  */
-/* TODO: Have Fsignal check for CATCHER_ALL so we only have to install
-   one handler.  */
 #define MODULE_HANDLE_NONLOCAL_EXIT(retval)                     \
-  MODULE_SETJMP (CONDITION_CASE, module_handle_signal, retval); \
-  MODULE_SETJMP (CATCHER_ALL, module_handle_throw, retval)
+  MODULE_SETJMP (CATCHER_ALL, module_handle_nonlocal_exit, retval)
 
 #define MODULE_SETJMP(handlertype, handlerfunc, retval)			       \
   MODULE_SETJMP_1 (handlertype, handlerfunc, retval,			       \
@@ -271,7 +268,7 @@ static bool module_assertions = false;
     = c0;								\
   if (sys_setjmp (c->jmp))						\
     {									\
-      (handlerfunc) (env, c->val);					\
+      (handlerfunc) (env, c->nonlocal_exit, c->val);                    \
       return retval;							\
     }									\
   do { } while (false)
@@ -1183,20 +1180,22 @@ module_reset_handlerlist (struct handler **phandlerlist)
   handlerlist = handlerlist->next;
 }
 
-/* Called on `signal'.  ERR is a pair (SYMBOL . DATA), which gets
-   stored in the environment.  Set the pending non-local exit flag.  */
+/* Called on `signal' and `throw'.  DATA is a pair
+   (ERROR-SYMBOL . ERROR-DATA) or (TAG . VALUE), which gets stored in
+   the environment.  Set the pending non-local exit flag.  */
 static void
-module_handle_signal (emacs_env *env, Lisp_Object err)
+module_handle_nonlocal_exit (emacs_env *env, enum nonlocal_exit type,
+                             Lisp_Object data)
 {
-  module_non_local_exit_signal_1 (env, XCAR (err), XCDR (err));
-}
-
-/* Called on `throw'.  TAG_VAL is a pair (TAG . VALUE), which gets
-   stored in the environment.  Set the pending non-local exit flag.  */
-static void
-module_handle_throw (emacs_env *env, Lisp_Object tag_val)
-{
-  module_non_local_exit_throw_1 (env, XCAR (tag_val), XCDR (tag_val));
+  switch (type)
+    {
+    case NONLOCAL_EXIT_SIGNAL:
+      module_non_local_exit_signal_1 (env, XCAR (data), XCDR (data));
+      break;
+    case NONLOCAL_EXIT_THROW:
+      module_non_local_exit_throw_1 (env, XCAR (data), XCDR (data));
+      break;
+    }
 }
 
 
