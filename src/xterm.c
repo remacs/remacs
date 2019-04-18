@@ -1505,37 +1505,8 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 			    Glyph display
  ***********************************************************************/
 
-
-
-static void x_set_glyph_string_clipping (struct glyph_string *);
-static void x_set_glyph_string_gc (struct glyph_string *);
-static void x_draw_glyph_string_foreground (struct glyph_string *);
-static void x_draw_composite_glyph_string_foreground (struct glyph_string *);
-static void x_draw_glyph_string_box (struct glyph_string *);
-static void x_draw_glyph_string  (struct glyph_string *);
-static _Noreturn void x_delete_glyphs (struct frame *, int);
-static void x_compute_glyph_string_overhangs (struct glyph_string *);
-static void x_set_cursor_gc (struct glyph_string *);
-static void x_set_mode_line_face_gc (struct glyph_string *);
-static void x_set_mouse_face_gc (struct glyph_string *);
 static bool x_alloc_lighter_color (struct frame *, Display *, Colormap,
 				   unsigned long *, double, int);
-static void x_setup_relief_color (struct frame *, struct relief *,
-                                  double, int, unsigned long);
-static void x_setup_relief_colors (struct glyph_string *);
-static void x_draw_image_glyph_string (struct glyph_string *);
-static void x_draw_image_relief (struct glyph_string *);
-static void x_draw_image_foreground (struct glyph_string *);
-#ifndef USE_CAIRO
-static void x_draw_image_foreground_1 (struct glyph_string *, Pixmap);
-#endif
-static void x_clear_glyph_string_rect (struct glyph_string *, int,
-                                       int, int, int);
-static void x_draw_relief_rect (struct frame *, int, int, int, int,
-                                int, bool, bool, bool, bool, bool,
-                                XRectangle *);
-static void x_draw_box_rect (struct glyph_string *, int, int, int, int,
-                             int, bool, bool, XRectangle *);
 static void x_scroll_bar_clear (struct frame *);
 
 #ifdef GLYPH_DEBUG
@@ -3975,7 +3946,7 @@ x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height,
    for X frames.  */
 
 static void
-x_delete_glyphs (struct frame *f, register int n)
+x_delete_glyphs (struct frame *f, int n)
 {
   emacs_abort ();
 }
@@ -9842,7 +9813,7 @@ static char *error_msg;
 /* Handle the loss of connection to display DPY.  ERROR_MESSAGE is
    the text of an error message that lead to the connection loss.  */
 
-static _Noreturn void
+static AVOID
 x_connection_closed (Display *dpy, const char *error_message, bool ioerror)
 {
   struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
@@ -10005,7 +9976,7 @@ x_error_quitter (Display *display, XErrorEvent *event)
    It kills all frames on the display that we lost touch with.
    If that was the only one, it prints an error message and kills Emacs.  */
 
-static _Noreturn int
+static _Noreturn ATTRIBUTE_COLD int
 x_io_error_quitter (Display *display)
 {
   char buf[256];

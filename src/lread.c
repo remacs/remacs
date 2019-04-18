@@ -1019,7 +1019,7 @@ load_error_handler (Lisp_Object data)
   return Qnil;
 }
 
-static _Noreturn void
+static AVOID
 load_error_old_style_backquotes (void)
 {
   if (NILP (Vload_file_name))
@@ -1874,7 +1874,7 @@ readevalloop_1 (int old)
 /* Signal an `end-of-file' error, if possible with file name
    information.  */
 
-static _Noreturn void
+static AVOID
 end_of_file_error (void)
 {
   if (STRINGP (Vload_file_name))
@@ -2297,7 +2297,7 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
 /* Signal Qinvalid_read_syntax error.
    S is error string of length N (if > 0)  */
 
-static _Noreturn void
+static AVOID
 invalid_syntax (const char *s)
 {
   xsignal1 (Qinvalid_read_syntax, build_string (s));

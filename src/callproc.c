@@ -1135,7 +1135,7 @@ add_env (char **env, char **new_env, char *string)
    mess up the allocator's data structures in the parent.
    Report the error and exit the child.  */
 
-static _Noreturn void
+static AVOID
 exec_failed (char const *name, int err)
 {
   /* Avoid deadlock if the child's perror writes to a full pipe; the

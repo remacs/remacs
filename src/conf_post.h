@@ -73,6 +73,7 @@ typedef bool bool_bf;
 # define __has_attribute(a) __has_attribute_##a
 # define __has_attribute_alloc_size GNUC_PREREQ (4, 3, 0)
 # define __has_attribute_cleanup GNUC_PREREQ (3, 4, 0)
+# define __has_attribute_cold GNUC_PREREQ (4, 3, 0)
 # define __has_attribute_externally_visible GNUC_PREREQ (4, 1, 0)
 # define __has_attribute_no_address_safety_analysis false
 # define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
@@ -222,6 +223,12 @@ extern void _DebPrint (const char *fmt, ...);
 #define setenv_TZ emacs_setenv_TZ
 extern char *emacs_getenv_TZ (void);
 extern int emacs_setenv_TZ (char const *);
+
+#if __has_attribute (cold)
+# define ATTRIBUTE_COLD __attribute__ ((cold))
+#else
+# define ATTRIBUTE_COLD
+#endif
 
 #if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
 #define NO_INLINE __attribute__((noinline))

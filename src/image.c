@@ -6079,7 +6079,7 @@ init_png_functions (void)
 /* Error and warning handlers installed when the PNG library
    is initialized.  */
 
-static _Noreturn void
+static AVOID
 my_png_error (png_struct *png_ptr, const char *msg)
 {
   eassert (png_ptr != NULL);
@@ -6718,7 +6718,7 @@ struct my_jpeg_error_mgr
 };
 
 
-static _Noreturn void
+static AVOID
 my_error_exit (j_common_ptr cinfo)
 {
   struct my_jpeg_error_mgr *mgr = (struct my_jpeg_error_mgr *) cinfo->err;

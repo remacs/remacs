@@ -1133,7 +1133,7 @@ internal_catch (Lisp_Object tag,
 
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
-static _Noreturn void
+static AVOID
 unwind_to_catch (struct handler *catch, Lisp_Object value)
 {
   bool last_time;

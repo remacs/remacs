@@ -255,7 +255,7 @@ json_encode (Lisp_Object string)
   return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
 }
 
-static _Noreturn void
+static AVOID
 json_out_of_memory (void)
 {
   xsignal0 (Qjson_out_of_memory);
@@ -263,7 +263,7 @@ json_out_of_memory (void)
 
 /* Signal a Lisp error corresponding to the JSON ERROR.  */
 
-static _Noreturn void
+static AVOID
 json_parse_error (const json_error_t *error)
 {
   Lisp_Object symbol;

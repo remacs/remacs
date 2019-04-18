@@ -747,6 +747,8 @@ write_globals (void)
 	    printf ("%d", globals[i].v.value);
 	  putchar (')');
 
+	  if (globals[i].flags & DEFUN_noreturn)
+	    fputs (" ATTRIBUTE_COLD", stdout);
 	  if (globals[i].flags & DEFUN_const)
 	    fputs (" ATTRIBUTE_CONST", stdout);
 

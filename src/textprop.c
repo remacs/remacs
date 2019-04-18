@@ -65,7 +65,7 @@ static Lisp_Object interval_insert_in_front_hooks;
 /* Signal a `text-read-only' error.  This function makes it easier
    to capture that error in GDB by putting a breakpoint on it.  */
 
-static _Noreturn void
+static AVOID
 text_read_only (Lisp_Object propval)
 {
   if (STRINGP (propval))

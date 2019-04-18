@@ -92,7 +92,7 @@ extern Lisp_Object make_lisp_time (struct timespec);
 extern bool list4_to_timespec (Lisp_Object, Lisp_Object, Lisp_Object,
 			       Lisp_Object, struct timespec *);
 extern struct timespec lisp_time_argument (Lisp_Object);
-extern _Noreturn void time_overflow (void);
+extern AVOID time_overflow (void);
 extern void init_timefns (void);
 extern void syms_of_timefns (void);
 

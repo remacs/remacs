@@ -172,7 +172,7 @@ emacs_localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
   return tm;
 }
 
-static _Noreturn void
+static AVOID
 invalid_time_zone_specification (Lisp_Object zone)
 {
   xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
@@ -337,7 +337,7 @@ time_overflow (void)
   error ("Specified time is not representable");
 }
 
-static _Noreturn void
+static AVOID
 time_error (int err)
 {
   switch (err)
@@ -348,7 +348,7 @@ time_error (int err)
     }
 }
 
-static _Noreturn void
+static AVOID
 invalid_hz (Lisp_Object hz)
 {
   xsignal2 (Qerror, build_string ("Invalid time frequency"), hz);

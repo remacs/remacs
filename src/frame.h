@@ -1262,7 +1262,7 @@ extern int frame_default_tool_bar_height;
 #ifdef HAVE_WINDOW_SYSTEM
 # define WINDOW_SYSTEM_RETURN
 #else
-# define WINDOW_SYSTEM_RETURN _Noreturn
+# define WINDOW_SYSTEM_RETURN _Noreturn ATTRIBUTE_COLD
 #endif
 
 extern WINDOW_SYSTEM_RETURN struct frame *

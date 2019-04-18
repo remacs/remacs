@@ -364,7 +364,7 @@ static void restore_getcjmp (void *);
 static Lisp_Object apply_modifiers (int, Lisp_Object);
 static void restore_kboard_configuration (int);
 static void handle_interrupt (bool);
-static _Noreturn void quit_throw_to_read_char (bool);
+static AVOID quit_throw_to_read_char (bool);
 static void timer_start_idle (void);
 static void timer_stop_idle (void);
 static void timer_resume_idle (void);
@@ -1131,13 +1131,12 @@ This also exits all active minibuffers.  */
   Fthrow (Qtop_level, Qnil);
 }
 
-static _Noreturn void
+static AVOID
 user_error (const char *msg)
 {
   xsignal1 (Quser_error, build_string (msg));
 }
 
-/* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
        doc: /* Exit from the innermost recursive edit or minibuffer.  */
        attributes: noreturn)
@@ -1149,7 +1148,6 @@ DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, 
   user_error ("No recursive edit is in progress");
 }
 
-/* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
        doc: /* Abort the command that requested this recursive edit or minibuffer input.  */
        attributes: noreturn)

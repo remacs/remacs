@@ -77,7 +77,7 @@ INLINE_HEADER_BEGIN
 #define PURESIZE  (BASE_PURESIZE * PURESIZE_RATIO * PURESIZE_CHECKING_RATIO)
 #endif
 
-extern _Noreturn void pure_write_error (Lisp_Object);
+extern AVOID pure_write_error (Lisp_Object);
 
 extern EMACS_INT pure[];
 

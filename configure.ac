@@ -1068,6 +1068,9 @@ AS_IF([test $gl_gcc_warnings = no],
   # Emacs's use of alloca inhibits protecting the stack.
   nw="$nw -Wstack-protector"
 
+  # Emacs's use of __attribute__ ((cold)) causes false alarms with this option.
+  nw="$nw -Wsuggest-attribute=cold"
+
   # Emacs's use of partly-const functions such as Fgnutls_available_p
   # make this option problematic.
   nw="$nw -Wsuggest-attribute=const"

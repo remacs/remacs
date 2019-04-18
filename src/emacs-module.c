@@ -147,8 +147,7 @@ static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void module_assert_thread (void);
 static void module_assert_runtime (struct emacs_runtime *);
 static void module_assert_env (emacs_env *);
-static _Noreturn void module_abort (const char *format, ...)
-  ATTRIBUTE_FORMAT_PRINTF(1, 2);
+static AVOID module_abort (const char *, ...) ATTRIBUTE_FORMAT_PRINTF (1, 2);
 static emacs_env *initialize_environment (emacs_env *,
 					  struct emacs_env_private *);
 static void finalize_environment (emacs_env *);
@@ -1163,8 +1162,7 @@ init_module_assertions (bool enable)
   initialize_storage (&global_storage);
 }
 
-static _Noreturn void
-ATTRIBUTE_FORMAT_PRINTF(1, 2)
+static AVOID ATTRIBUTE_FORMAT_PRINTF (1, 2)
 module_abort (const char *format, ...)
 {
   fputs ("Emacs module assertion: ", stderr);

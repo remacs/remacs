@@ -680,8 +680,7 @@ static void dump_remember_cold_op (struct dump_context *ctx,
                                    enum cold_op op,
                                    Lisp_Object arg);
 
-_Noreturn
-static void
+static AVOID
 error_unsupported_dump_object (struct dump_context *ctx,
                                Lisp_Object object,
 			       const char *msg)

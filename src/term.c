@@ -73,11 +73,10 @@ static void clear_tty_hooks (struct terminal *terminal);
 static void set_tty_hooks (struct terminal *terminal);
 static void dissociate_if_controlling_tty (int fd);
 static void delete_tty (struct terminal *);
-static _Noreturn void maybe_fatal (bool, struct terminal *,
-				   const char *, const char *, ...)
+static AVOID maybe_fatal (bool, struct terminal *, const char *, const char *,
+			  ...)
   ATTRIBUTE_FORMAT_PRINTF (3, 5) ATTRIBUTE_FORMAT_PRINTF (4, 5);
-static _Noreturn void vfatal (const char *str, va_list ap)
-  ATTRIBUTE_FORMAT_PRINTF (1, 0);
+static AVOID vfatal (const char *, va_list) ATTRIBUTE_FORMAT_PRINTF (1, 0);
 
 
 #define OUTPUT(tty, a)                                          \

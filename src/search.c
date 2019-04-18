@@ -73,7 +73,7 @@ static EMACS_INT search_buffer (Lisp_Object, ptrdiff_t, ptrdiff_t,
 
 Lisp_Object re_match_object;
 
-static _Noreturn void
+static AVOID
 matcher_overflow (void)
 {
   error ("Stack overflow in regexp matcher");

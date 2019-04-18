@@ -1805,7 +1805,7 @@ deliver_fatal_thread_signal (int sig)
   deliver_thread_signal (sig, handle_fatal_signal);
 }
 
-static _Noreturn void
+static AVOID
 handle_arith_signal (int sig)
 {
   pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
