@@ -1378,7 +1378,9 @@ can be used to obtain the type of a @code{emacs_value} object.
 This function returns the value of a Lisp integer specified by
 @var{arg}.  The C data type of the return value, @code{intmax_t}, is
 the widest integral data type supported by the C compiler, typically
-@w{@code{long long}}.
+@w{@code{long long}}.  If the value of @var{arg} doesn't fit into an
+@code{intmax_t}, the function signals an error using the error symbol
+@code{overflow-error}.
 @end deftypefn
 
 @deftypefn Function double extract_float (emacs_env *@var{env}, emacs_value @var{arg})
@@ -1440,11 +1442,10 @@ objects from basic C data types.  They all return the created
 
 @deftypefn Function emacs_value make_integer (emacs_env *@var{env}, intmax_t @var{n})
 This function takes an integer argument @var{n} and returns the
-corresponding @code{emacs_value} object.  It raises the
-@code{overflow-error} error condition if the value of @var{n} cannot
-be represented as an Emacs integer, i.e.@: is not inside the limits
-set by @code{most-negative-fixnum} and @code{most-positive-fixnum}
-(@pxref{Integer Basics}).
+corresponding @code{emacs_value} object.  It returns either a fixnum
+or a bignum depending on whether the value of @var{n} is inside the
+limits set by @code{most-negative-fixnum} and
+@code{most-positive-fixnum} (@pxref{Integer Basics}).
 @end deftypefn
 
 @deftypefn Function emacs_value make_float (emacs_env *@var{env}, double @var{d})
