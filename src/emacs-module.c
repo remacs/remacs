@@ -17,6 +17,54 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+/*
+The public module API is defined in the header emacs-module.h.  The
+configure script generates emacs-module.h from emacs-module.h.in and
+the version-specific environment fragments in module-env-*.h.
+
+If you want to change the module API, please abide to the following
+rules:
+
+- Don't remove publicly documented declarations from the headers.
+
+- Don't remove, reorder, or rename structure fields, as such changes
+  break ABI compatibility.
+
+- Don't change the types of structure fields.
+
+- Add structure fields only at the end of structures.
+
+- For every Emacs major version there is a new fragment file
+  module-env-VER.h.  Add functions solely at the end of the fragment
+  file for the next (not yet released) major version of Emacs.  For
+  example, if the current Emacs release is 26.2, add functions only to
+  emacs-env-27.h.
+
+- emacs-module.h should only depend on standard C headers.  In
+  particular, don't include config.h or lisp.h from emacs-module.h.
+
+- Prefix all names in emacs-module.h with "emacs_" or "EMACS_".
+
+To add a new module function, proceed as follows:
+
+1. Add a new function pointer field at the end of the emacs-env-*.h
+   file for the next major version of Emacs.
+
+2. Run config.status or configure to regenerate emacs-module.h.
+
+3. Create a corresponding implementation function in this file.  See
+   "Implementation of runtime and environment functions" below for
+   further rules.
+
+4. Assign the new field in the initialize_environment function.
+
+5. Add a test function that calls your new function to
+   test/data/emacs-module/mod-test.c.  Add a unit test that invokes
+   your new test function to test/src/emacs-module-tests.el.
+
+6. Document your new function in the manual and in etc/NEWS.
+*/
+
 #include <config.h>
 
 #include "emacs-module.h"
