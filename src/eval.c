@@ -2153,14 +2153,6 @@ record_in_backtrace (Lisp_Object function, Lisp_Object *args, ptrdiff_t nargs)
 Lisp_Object
 eval_sub (Lisp_Object form)
 {
-  Lisp_Object fun, val, original_fun, original_args;
-  Lisp_Object funcar;
-  ptrdiff_t count;
-
-  /* Declare here, as this array may be accessed by call_debugger near
-     the end of this function.  See Bug#21245.  */
-  Lisp_Object argvals[8];
-
   if (SYMBOLP (form))
     {
       /* Look up its binding in the lexical environment.
@@ -2170,10 +2162,7 @@ eval_sub (Lisp_Object form)
 	= !NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
 	? Fassq (form, Vinternal_interpreter_environment)
 	: Qnil;
-      if (CONSP (lex_binding))
-	return XCDR (lex_binding);
-      else
-	return Fsymbol_value (form);
+      return !NILP (lex_binding) ? XCDR (lex_binding) : Fsymbol_value (form);
     }
 
   if (!CONSP (form))
@@ -2191,18 +2180,22 @@ eval_sub (Lisp_Object form)
 	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
     }
 
-  original_fun = XCAR (form);
-  original_args = XCDR (form);
+  Lisp_Object original_fun = XCAR (form);
+  Lisp_Object original_args = XCDR (form);
   CHECK_LIST (original_args);
 
   /* This also protects them from gc.  */
-  count = record_in_backtrace (original_fun, &original_args, UNEVALLED);
+  ptrdiff_t count
+    = record_in_backtrace (original_fun, &original_args, UNEVALLED);
 
   if (debug_on_next_call)
     do_debug_on_call (Qt, count);
 
-  /* At this point, only original_fun and original_args
-     have values that will be used below.  */
+  Lisp_Object fun, val, funcar;
+  /* Declare here, as this array may be accessed by call_debugger near
+     the end of this function.  See Bug#21245.  */
+  Lisp_Object argvals[8];
+
  retry:
 
   /* Optimize for no indirection.  */
