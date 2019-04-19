@@ -117,39 +117,37 @@ static Lisp_Object
 ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 {
   Lisp_Object font_object;
-  struct font *font;
-  struct font_info *ftcrfont_info;
-  FT_Face ft_face;
-  FT_UInt size;
 
-  block_input ();
-  size = XFIXNUM (AREF (entity, FONT_SIZE_INDEX));
+  FT_UInt size = XFIXNUM (AREF (entity, FONT_SIZE_INDEX));
   if (size == 0)
     size = pixel_size;
   font_object = font_build_object (VECSIZE (struct font_info),
 				   Qftcr, entity, size);
+  block_input ();
   font_object = ftfont_open2 (f, entity, pixel_size, font_object);
-  if (NILP (font_object)) return Qnil;
+  if (FONT_OBJECT_P (font_object))
+    {
+      struct font *font = XFONT_OBJECT (font_object);
+      struct font_info *ftcrfont_info = (struct font_info *) font;
+      FT_Face ft_face = ftcrfont_info->ft_size->face;
 
-  font = XFONT_OBJECT (font_object);
-  font->driver = &ftcrfont_driver;
-  ftcrfont_info = (struct font_info *) font;
-  ft_face = ftcrfont_info->ft_size->face;
-  FT_New_Size (ft_face, &ftcrfont_info->ft_size_draw);
-  FT_Activate_Size (ftcrfont_info->ft_size_draw);
-  FT_Set_Pixel_Sizes (ft_face, 0, font->pixel_size);
-  cairo_font_face_t *font_face =
-    cairo_ft_font_face_create_for_ft_face (ft_face, 0);
-  cairo_matrix_t font_matrix, ctm;
-  cairo_matrix_init_scale (&font_matrix, pixel_size, pixel_size);
-  cairo_matrix_init_identity (&ctm);
-  cairo_font_options_t *options = cairo_font_options_create ();
-  ftcrfont_info->cr_scaled_font =
-    cairo_scaled_font_create (font_face, &font_matrix, &ctm, options);
-  cairo_font_face_destroy (font_face);
-  cairo_font_options_destroy (options);
-  ftcrfont_info->metrics = NULL;
-  ftcrfont_info->metrics_nrows = 0;
+      font->driver = &ftcrfont_driver;
+      FT_New_Size (ft_face, &ftcrfont_info->ft_size_draw);
+      FT_Activate_Size (ftcrfont_info->ft_size_draw);
+      FT_Set_Pixel_Sizes (ft_face, 0, font->pixel_size);
+      cairo_font_face_t *font_face =
+	cairo_ft_font_face_create_for_ft_face (ft_face, 0);
+      cairo_matrix_t font_matrix, ctm;
+      cairo_matrix_init_scale (&font_matrix, pixel_size, pixel_size);
+      cairo_matrix_init_identity (&ctm);
+      cairo_font_options_t *options = cairo_font_options_create ();
+      ftcrfont_info->cr_scaled_font =
+	cairo_scaled_font_create (font_face, &font_matrix, &ctm, options);
+      cairo_font_face_destroy (font_face);
+      cairo_font_options_destroy (options);
+      ftcrfont_info->metrics = NULL;
+      ftcrfont_info->metrics_nrows = 0;
+    }
   unblock_input ();
 
   return font_object;
