@@ -4845,10 +4845,6 @@ maybe_lisp_pointer (void *p)
   return (uintptr_t) p % LISP_ALIGNMENT == 0;
 }
 
-#ifndef HAVE_MODULES
-enum { HAVE_MODULES = false };
-#endif
-
 /* If P points to Lisp data, mark that as live if it isn't already
    marked.  */
 
