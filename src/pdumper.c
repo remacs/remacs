@@ -4550,7 +4550,7 @@ dump_map_file (void *base, int fd, off_t offset, size_t size,
   return dump_map_file_w32 (base, fd, offset, size, protection);
 #else
   errno = ENOSYS;
-  return ret;
+  return NULL;
 #endif
 }
 
