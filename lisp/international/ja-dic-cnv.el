@@ -124,7 +124,7 @@
 	(setq l (cdr l)))))
 
   ;; Search postfix entries.
-  (while (re-search-forward "^[#<>?]\\(\\(\\cH\\|ー\\)+\\) " nil t)
+  (while (re-search-forward "^[#<>?]\\(\\cH+\\) " nil t)
     (let ((kana (match-string-no-properties 1))
 	  str candidates)
       (while (looking-at "/[#0-9 ]*\\([^/\n]*\\)/")
@@ -157,7 +157,7 @@
     (insert ";; Setting prefix entries.\n"
 	    "(skkdic-set-prefix\n"))
   (save-excursion
-    (while (re-search-forward "^\\(\\(\\cH\\|ー\\)+\\)[<>?] " nil t)
+    (while (re-search-forward "^\\(\\cH+\\)[<>?] " nil t)
       (let ((kana (match-string-no-properties 1))
 	    str candidates)
 	(while (looking-at "/\\([^/\n]+\\)/")
@@ -275,11 +275,11 @@
     (let ((progress (make-progress-reporter "Collecting OKURI-NASI entries"
                                             (point) (point-max)
                                             nil 10)))
-      (while (re-search-forward "^\\(\\(\\cH\\|ー\\)+\\) \\(/\\cj.*\\)/$"
+      (while (re-search-forward "^\\(\\cH+\\) \\(/\\cj.*\\)/$"
 				nil t)
         (let ((kana (match-string-no-properties 1))
-	      (candidates (skkdic-get-candidate-list (match-beginning 3)
-						     (match-end 3))))
+	      (candidates (skkdic-get-candidate-list (match-beginning 2)
+						     (match-end 2))))
 	  (setq skkdic-okuri-nasi-entries
 		(cons (cons kana candidates) skkdic-okuri-nasi-entries))
           (progress-reporter-update progress (point))

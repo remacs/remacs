@@ -153,7 +153,7 @@ element, regardless of any text on the command line.  In that case,
   :group 'eshell-hist)
 
 (defcustom eshell-hist-word-designator
-  "^:?\\([0-9]+\\|[$^%*]\\)?\\(\\*\\|-[0-9]*\\|[$^%*]\\)?"
+  "^:?\\([0-9]+\\|[$^%*]\\)?\\(-[0-9]*\\|[$^%*]\\)?"
   "The regexp used to identify history word designators."
   :type 'regexp
   :group 'eshell-hist)

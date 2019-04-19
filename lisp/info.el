@@ -1531,7 +1531,7 @@ is non-nil)."
 	    (save-restriction
 	      (narrow-to-region start (point))
 	      (goto-char (point-min))
-	      (while (re-search-forward "^\\* \\([^:\n]+:\\(:\\|[^.\n]+\\).\\)" nil 'move)
+	      (while (re-search-forward "^\\* \\([^:\n]+:[^.\n]+.\\)" nil 'move)
 		;; Fold case straight away; `member-ignore-case' here wasteful.
 		(let ((x (downcase (match-string 1))))
 		  (if (member x seen)

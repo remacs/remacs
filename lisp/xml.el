@@ -245,7 +245,6 @@ See also `xml-get-attribute-or-nil'."
 ;; [54] AttType    ::= StringType | TokenizedType | EnumeratedType
 ;; [55] StringType ::= 'CDATA'
 (defconst xml-att-type-re (concat "\\(?:CDATA\\|" xml-tokenized-type-re
-				  "\\|" xml-notation-type-re
 				  "\\|" xml-enumerated-type-re "\\)"))
 
 ;; [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)

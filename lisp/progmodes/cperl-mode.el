@@ -7983,7 +7983,7 @@ prototype \\&SUB	Returns prototype of the function given a reference.
 		       "\\|"		; $ ^
 		       "[$^]"
 		       "\\|"		; simple-code simple-code*?
-		       "\\(\\\\.\\|[^][()#|*+?\n]\\)\\([*+{?]\\??\\)?" ; 4 5
+		       "\\(\\\\.\\|[^][()#|*+?$^\n]\\)\\([*+{?]\\??\\)?" ; 4 5
 		       "\\|"		; Class
 		       "\\(\\[\\)"	; 6
 		       "\\|"		; Grouping
