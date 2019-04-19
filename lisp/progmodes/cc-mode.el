@@ -1244,7 +1244,7 @@ Note that the style variables are always made local to the buffer."
       (goto-char (1+ end))	; might be a newline.
       ;; In the following regexp, the initial \n caters for a newline getting
       ;; joined to a preceding \ by the removal of what comes between.
-      (re-search-forward "[\n\r]?\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*"
+      (re-search-forward "[\n\r]?\\(\\\\\\(.\\|\n\\)\\|[^\\\n\r]\\)*"
 			 nil t)
       ;; We're at an EOLL or point-max.
       (setq c-new-END (max c-new-END (min (1+ (point)) (point-max))))
@@ -1371,7 +1371,7 @@ Note that the style variables are always made local to the buffer."
 	(unless (and (c-major-mode-is 'c++-mode)
 		     (c-maybe-re-mark-raw-string))
 	  (if (c-unescaped-nls-in-string-p (1- (point)))
-	      (looking-at "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\"]\\)*")
+	      (looking-at "\\(\\\\\\(.\\|\n\\)\\|[^\"]\\)*")
 	    (looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
 	  (cond
 	   ((memq (char-after (match-end 0)) '(?\n ?\r))
