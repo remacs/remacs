@@ -2549,37 +2549,33 @@ If PROMPT (the prefix) is a number, use the prompt specified in
     (gnus-group-position-point)))
 
 (defun gnus-group-goto-group (group &optional far test-marked)
-  "Goto to newsgroup GROUP.
+  "Go to newsgroup GROUP.
 If FAR, it is likely that the group is not on the current line.
-If TEST-MARKED, the line must be marked."
+If TEST-MARKED, the line must be marked.
+
+Return nil if GROUP is not found."
   (when group
-    (let ((start (point))
-	  (active (and (or
-                        ;; Some kind of group may be only there.
-                        (gnus-active group)
-                        ;; All groups (but with exception) are there.
-                        (gnus-group-entry group))
-		       group)))
+    (let ((start (point)))
       (beginning-of-line)
       (cond
        ;; It's quite likely that we are on the right line, so
        ;; we check the current line first.
        ((and (not far)
-	     (equal (get-text-property (point) 'gnus-group) active)
+	     (equal (get-text-property (point) 'gnus-group) group)
 	     (or (not test-marked) (gnus-group-mark-line-p)))
 	(point))
        ;; Previous and next line are also likely, so we check them as well.
        ((and (not far)
 	     (save-excursion
 	       (forward-line -1)
-	       (and (equal (get-text-property (point) 'gnus-group) active)
+	       (and (equal (get-text-property (point) 'gnus-group) group)
 		    (or (not test-marked) (gnus-group-mark-line-p)))))
 	(forward-line -1)
 	(point))
        ((and (not far)
 	     (save-excursion
 	       (forward-line 1)
-	       (and (equal (get-text-property (point) 'gnus-group) active)
+	       (and (equal (get-text-property (point) 'gnus-group) group)
 		    (or (not test-marked) (gnus-group-mark-line-p)))))
 	(forward-line 1)
 	(point))
@@ -2588,7 +2584,7 @@ If TEST-MARKED, the line must be marked."
 	(let (found)
 	  (while (and (not found)
 		      (gnus-text-property-search
-		       'gnus-group active 'forward 'goto))
+		       'gnus-group group 'forward 'goto))
 	    (if (gnus-group-mark-line-p)
 		(setq found t)
 	      (forward-line 1)))
@@ -2596,7 +2592,7 @@ If TEST-MARKED, the line must be marked."
        (t
 	;; Search through the entire buffer.
 	(if (gnus-text-property-search
-	     'gnus-group active nil 'goto)
+	     'gnus-group group nil 'goto)
 	    (point)
 	  (goto-char start)
 	  nil))))))
