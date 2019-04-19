@@ -179,3 +179,13 @@
     (should (= (window-hscroll other-window) 4711))
     (delete-window other-window)
     ))
+
+;; TODO: make proper tests for this function when we will be able to change 
+;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
+(ert-deftest window-pixel-width-before-size-change ()
+  (window-pixel-width-before-size-change))
+
+;; TODO: make proper tests for this function when we will be able to change 
+;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
+(ert-deftest window-pixel-height-before-size-change ()
+  (window-pixel-height-before-size-change))
