@@ -1643,10 +1643,11 @@ ENCODING is used for writing.
 :noquery BOOL -- When exiting Emacs, query the user if BOOL is nil and
 the process is running.  If BOOL is not given, query before exiting.
 
-:stop BOOL -- Start process in the `stopped' state if BOOL non-nil.
-In the stopped state, a process does not accept incoming data, but you
-can send outgoing data.  The stopped state is cleared by
-`continue-process' and set by `stop-process'.
+:stop BOOL -- BOOL must be nil.  The `:stop' key is ignored otherwise
+and is retained for compatibility with other process types such as
+pipe processes.  Asynchronous subprocesses never start in the
+`stopped' state.  Use `stop-process' and `continue-process' to send
+signals to stop and continue a process.
 
 :connection-type TYPE -- TYPE is control type of device used to
 communicate with subprocesses.  Values are `pipe' to use a pipe, `pty'
@@ -1746,8 +1747,10 @@ usage: (make-process &rest ARGS)  */)
 
   if (!query_on_exit)
     XPROCESS (proc)->kill_without_query = 1;
-  if (tem = Fplist_get (contact, QCstop), !NILP (tem))
-    pset_command (XPROCESS (proc), Qt);
+  tem = Fplist_get (contact, QCstop);
+  /* Normal processes can't be started in a stopped state, see
+     Bug#30460.  */
+  CHECK_TYPE (NILP (tem), Qnull, tem);
 
   tem = Fplist_get (contact, QCconnection_type);
   if (EQ (tem, Qpty))
@@ -8299,6 +8302,8 @@ returns non-`nil'.  */);
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
+
+  DEFSYM (Qnull, "null");
 
   defsubr (&Sprocessp);
   defsubr (&Sget_process);

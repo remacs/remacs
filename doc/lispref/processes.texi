@@ -678,7 +678,9 @@ Initialize the process query flag to @var{query-flag}.
 @xref{Query Before Exit}.
 
 @item :stop @var{stopped}
-If @var{stopped} is non-@code{nil}, start the process in the
+@var{stopped} must be @code{nil}.  The @code{:stop} key is ignored
+otherwise and is retained for compatibility with other process types
+such as pipe processes.  Asynchronous subprocesses never start in the
 stopped state.
 
 @item :filter @var{filter}

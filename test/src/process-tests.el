@@ -284,5 +284,14 @@ file name handler."
 (put #'process-tests--file-handler 'operations
      '(unhandled-file-name-directory make-process))
 
+(ert-deftest make-process/stop ()
+  "Check that `make-process' doesn't accept a `:stop' key.
+See Bug#30460."
+  (should-error
+   (make-process :name "test"
+                 :command (list (expand-file-name invocation-name
+                                                  invocation-directory))
+                 :stop t)))
+
 (provide 'process-tests)
 ;; process-tests.el ends here.

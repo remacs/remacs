@@ -1515,6 +1515,9 @@ The global value of 'indent-line-function', which defaults to
 To get back the old behavior, add a function to 'text-mode-hook' which
 performs (setq-local indent-line-function #'indent-relative).
 
+** 'make-process' no longer accepts a non-nil ':stop' key.  This has
+never worked reliably, and now causes an error.
+
 
 * Lisp Changes in Emacs 27.1
 
