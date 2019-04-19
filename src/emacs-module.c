@@ -349,6 +349,8 @@ module_get_environment (struct emacs_runtime *ert)
 /* To make global refs (GC-protected global values) keep a hash that
    maps global Lisp objects to reference counts.  */
 
+static Lisp_Object Vmodule_refs_hash;
+
 static emacs_value
 module_make_global_ref (emacs_env *env, emacs_value ref)
 {
@@ -759,6 +761,10 @@ module_signal_or_throw (struct emacs_env_private *env)
       eassume (false);
     }
 }
+
+/* Live runtime and environment objects, for assertions.  */
+static Lisp_Object Vmodule_runtimes;
+static Lisp_Object Vmodule_environments;
 
 DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
        doc: /* Load module FILE.  */)
@@ -1228,31 +1234,17 @@ module_abort (const char *format, ...)
 void
 syms_of_module (void)
 {
-  DEFSYM (Qmodule_refs_hash, "module-refs-hash");
-  DEFVAR_LISP ("module-refs-hash", Vmodule_refs_hash,
-	       doc: /* Module global reference table.  */);
-
+  staticpro (&Vmodule_refs_hash);
   Vmodule_refs_hash
     = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE,
 		       DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
 		       Qnil, false);
-  Funintern (Qmodule_refs_hash, Qnil);
 
-  DEFSYM (Qmodule_runtimes, "module-runtimes");
-  DEFVAR_LISP ("module-runtimes", Vmodule_runtimes,
-               doc: /* List of active module runtimes.  */);
+  staticpro (&Vmodule_runtimes);
   Vmodule_runtimes = Qnil;
-  /* Unintern `module-runtimes' because it is only used
-     internally.  */
-  Funintern (Qmodule_runtimes, Qnil);
 
-  DEFSYM (Qmodule_environments, "module-environments");
-  DEFVAR_LISP ("module-environments", Vmodule_environments,
-               doc: /* List of active module environments.  */);
+  staticpro (&Vmodule_environments);
   Vmodule_environments = Qnil;
-  /* Unintern `module-environments' because it is only used
-     internally.  */
-  Funintern (Qmodule_environments, Qnil);
 
   DEFSYM (Qmodule_load_failed, "module-load-failed");
   Fput (Qmodule_load_failed, Qerror_conditions,
@@ -1290,10 +1282,6 @@ syms_of_module (void)
   Fput (Qinvalid_arity, Qerror_conditions, pure_list (Qinvalid_arity, Qerror));
   Fput (Qinvalid_arity, Qerror_message,
         build_pure_c_string ("Invalid function arity"));
-
-  /* Unintern `module-refs-hash' because it is internal-only and Lisp
-     code or modules should not access it.  */
-  Funintern (Qmodule_refs_hash, Qnil);
 
   DEFSYM (Qmodule_function_p, "module-function-p");
 

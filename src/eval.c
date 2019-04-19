@@ -1429,6 +1429,8 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
     }
 }
 
+static Lisp_Object Qcatch_all_memory_full;
+
 /* Like a combination of internal_condition_case_1 and internal_catch.
    Catches all signals and throws.  Never exits nonlocally; returns
    Qcatch_all_memory_full if no handler could be allocated.  */
@@ -4188,8 +4190,12 @@ alist of active lexical bindings.  */);
   staticpro (&Vsignaling_function);
   Vsignaling_function = Qnil;
 
-  DEFSYM (Qcatch_all_memory_full, "catch-all-memory-full");
-  Funintern (Qcatch_all_memory_full, Qnil);
+  staticpro (&Qcatch_all_memory_full);
+  /* Make sure Qcatch_all_memory_full is a unique object.  We could
+     also use something like Fcons (Qnil, Qnil), but json.c treats any
+     cons cell as error data, so use an uninterned symbol instead.  */
+  Qcatch_all_memory_full
+    = Fmake_symbol (build_pure_c_string ("catch-all-memory-full"));
 
   defsubr (&Sor);
   defsubr (&Sand);
