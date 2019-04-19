@@ -3270,14 +3270,12 @@ cleanup_vector (struct Lisp_Vector *vector)
       /* sweep_buffer should already have unchained this from its buffer.  */
       eassert (! PSEUDOVEC_STRUCT (vector, Lisp_Marker)->buffer);
     }
-#ifdef HAVE_MODULES
   else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_USER_PTR))
     {
       struct Lisp_User_Ptr *uptr = PSEUDOVEC_STRUCT (vector, Lisp_User_Ptr);
       if (uptr->finalizer)
 	uptr->finalizer (uptr->p);
     }
-#endif
 }
 
 /* Reclaim space used by unmarked vectors.  */

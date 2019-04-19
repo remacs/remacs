@@ -230,9 +230,7 @@ for example, (type-of 1) returns `integer'.  */)
 	case PVEC_MARKER: return Qmarker;
 	case PVEC_OVERLAY: return Qoverlay;
 	case PVEC_FINALIZER: return Qfinalizer;
-#ifdef HAVE_MODULES
 	case PVEC_USER_PTR: return Quser_ptr;
-#endif
         case PVEC_WINDOW_CONFIGURATION: return Qwindow_configuration;
         case PVEC_PROCESS: return Qprocess;
         case PVEC_WINDOW: return Qwindow;

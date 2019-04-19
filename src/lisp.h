@@ -1097,9 +1097,7 @@ enum pvec_type
   PVEC_OVERLAY,
   PVEC_FINALIZER,
   PVEC_MISC_PTR,
-#ifdef HAVE_MODULES
   PVEC_USER_PTR,
-#endif
   PVEC_PROCESS,
   PVEC_FRAME,
   PVEC_WINDOW,
@@ -2561,14 +2559,12 @@ xmint_pointer (Lisp_Object a)
   return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Misc_Ptr)->pointer;
 }
 
-#ifdef HAVE_MODULES
 struct Lisp_User_Ptr
 {
   union vectorlike_header header;
   void (*finalizer) (void *);
   void *p;
 } GCALIGNED_STRUCT;
-#endif
 
 /* A finalizer sentinel.  */
 struct Lisp_Finalizer
@@ -2627,7 +2623,6 @@ XOVERLAY (Lisp_Object a)
   return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Overlay);
 }
 
-#ifdef HAVE_MODULES
 INLINE bool
 USER_PTRP (Lisp_Object x)
 {
@@ -2640,7 +2635,6 @@ XUSER_PTR (Lisp_Object a)
   eassert (USER_PTRP (a));
   return XUNTAG (a, Lisp_Vectorlike, struct Lisp_User_Ptr);
 }
-#endif
 
 INLINE bool
 BIGNUMP (Lisp_Object x)

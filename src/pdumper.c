@@ -3013,9 +3013,7 @@ dump_vectorlike (struct dump_context *ctx,
     case PVEC_XWIDGET_VIEW:
       error_unsupported_dump_object (ctx, lv, "xwidget view");
     case PVEC_MISC_PTR:
-#ifdef HAVE_MODULES
     case PVEC_USER_PTR:
-#endif
       error_unsupported_dump_object (ctx, lv, "smuggled pointers");
     case PVEC_THREAD:
       if (main_thread_p (v))
