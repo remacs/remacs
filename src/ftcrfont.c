@@ -78,6 +78,7 @@ ftcrfont_glyph_extents (struct font *font,
       cairo_glyph_t cr_glyph = {.index = glyph};
       cairo_text_extents_t extents;
 
+      FT_Activate_Size (ftcrfont_info->ft_size_draw);
       cairo_scaled_font_glyph_extents (ftcrfont_info->cr_scaled_font,
 				       &cr_glyph, 1, &extents);
       cache->lbearing = floor (extents.x_bearing);
