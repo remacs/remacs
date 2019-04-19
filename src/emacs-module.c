@@ -1207,7 +1207,7 @@ value_storage_contains_p (const struct emacs_value_storage *storage,
         {
           if (&frame->objects[i] == value)
             return true;
-          ++count;
+          ++*count;
         }
     }
   return false;
