@@ -1439,6 +1439,10 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
+  /* Declare here rather than inside the else-part because the storage
+     might be accessed by the unbind_to call below.  */
+  struct infile input;
+
   if (is_module)
     {
 #ifdef HAVE_MODULES
@@ -1453,7 +1457,6 @@ Return t if the file exists and loads successfully.  */)
     }
   else
     {
-      struct infile input;
       input.stream = stream;
       input.lookahead = 0;
       infile = &input;
