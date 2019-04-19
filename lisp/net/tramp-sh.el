@@ -2781,7 +2781,6 @@ the result will be a local, non-Tramp, file name."
 	    (command (plist-get args :command))
 	    (coding (plist-get args :coding))
 	    (noquery (plist-get args :noquery))
-	    (stop (plist-get args :stop))
 	    (connection-type (plist-get args :connection-type))
 	    (filter (plist-get args :filter))
 	    (sentinel (plist-get args :sentinel))
@@ -2933,9 +2932,6 @@ the result will be a local, non-Tramp, file name."
 			     v 'file-error
 			     "pty association is not supported for `%s'"
 			     name))))
-		      ;; Stop process if indicated.
-		      (when stop
-			(stop-process p))
 		      ;; Set sentinel and filter.
 		      (when sentinel
 			(set-process-sentinel p sentinel))
