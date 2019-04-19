@@ -335,7 +335,7 @@ section of the Emacs manual or the file BUGS.\n"
 bool fatal_error_in_progress;
 
 #ifdef HAVE_NS
-/* NS autrelease pool, for memory management.  */
+/* NS autorelease pool, for memory management.  */
 static void *ns_pool;
 #endif
 
