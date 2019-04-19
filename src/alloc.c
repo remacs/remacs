@@ -919,7 +919,7 @@ xzalloc (size_t size)
   return val;
 }
 
-/* Like realloc but check for no memory and block interrupt input..  */
+/* Like realloc but check for no memory and block interrupt input.  */
 
 void *
 xrealloc (void *block, size_t size)
