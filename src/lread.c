@@ -1034,12 +1034,12 @@ load_error_old_style_backquotes (void)
 static void
 load_warn_unescaped_character_literals (Lisp_Object file)
 {
-  Lisp_Object warning
-    = call0 (Qbyte_run_unescaped_character_literals_warning);
-  if (NILP (warning))
-    return;
-  Lisp_Object format = build_string ("Loading `%s': %s");
-  CALLN (Fmessage, format, file, warning);
+  Lisp_Object warning = call0 (Qbyte_run_unescaped_character_literals_warning);
+  if (!NILP (warning))
+    {
+      AUTO_STRING (format, "Loading `%s': %s");
+      CALLN (Fmessage, format, file, warning);
+    }
 }
 
 DEFUN ("get-load-suffixes", Fget_load_suffixes, Sget_load_suffixes, 0, 0, 0,
@@ -1301,8 +1301,8 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qlread_unescaped_character_literals, Qnil);
   record_unwind_protect (load_warn_unescaped_character_literals, file);
 
-  int is_elc;
-  if ((is_elc = suffix_p (found, ".elc")) != 0
+  bool is_elc = suffix_p (found, ".elc");
+  if (is_elc
       /* version = 1 means the file is empty, in which case we can
 	 treat it as not byte-compiled.  */
       || (fd >= 0 && (version = safe_to_load_version (fd)) > 1))
