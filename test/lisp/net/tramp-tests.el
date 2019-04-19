@@ -4085,15 +4085,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (defun tramp--test-shell-command-to-string-asynchronously (command)
   "Like `shell-command-to-string', but for asynchronous processes."
   (with-temp-buffer
-    (unwind-protect
-        (async-shell-command command (current-buffer))
-      (with-timeout
-          ((if (getenv "EMACS_EMBA_CI") 30 10) (tramp--test-timeout-handler))
-        (while (accept-process-output
-	        (get-buffer-process (current-buffer)) nil nil t)))
-      (tramp--test-message
-       "# %s\n%s"
-       command (buffer-substring-no-properties (point-min) (point-max))))
+    (async-shell-command command (current-buffer))
+    (with-timeout
+        ((if (getenv "EMACS_EMBA_CI") 30 10) (tramp--test-timeout-handler))
+      (while (accept-process-output
+	      (get-buffer-process (current-buffer)) nil nil t)))
     (buffer-substring-no-properties (point-min) (point-max))))
 
 (ert-deftest tramp-test32-shell-command ()
