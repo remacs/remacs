@@ -1834,6 +1834,26 @@ corresponding connection contains buffered data.  The function returns
 arrived.
 @end defun
 
+If a connection from a process contains buffered data,
+@code{accept-process-output} can return non-@code{nil} even after the
+process has exited.  Therefore, although the following loop:
+
+@example
+;; This loop contains a bug.
+(while (process-live-p process)
+  (accept-process-output process))
+@end example
+
+@noindent
+will often read all output from @var{process}, it has a race condition
+and can miss some output if @code{process-live-p} returns @code{nil}
+while the connection still contains data.  Better is to write the loop
+like this:
+
+@example
+(while (accept-process-output process))
+@end example
+
 @node Processes and Threads
 @subsection Processes and Threads
 @cindex processes, threads
