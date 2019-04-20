@@ -1097,6 +1097,7 @@ ftfont_open2 (struct frame *f,
   int spacing;
   int i;
   double upEM;
+  FT_Int strike_index = -1;
 
   val = assq_no_quit (QCfont_entity, AREF (entity, FONT_EXTRA_INDEX));
   if (! CONSP (val))
@@ -1126,12 +1127,32 @@ ftfont_open2 (struct frame *f,
     size = pixel_size;
   if (FT_Set_Pixel_Sizes (ft_face, size, size) != 0)
     {
-      if (cache_data->face_refcount == 0)
+      int min_distance = INT_MAX;
+      bool magnify = true;
+
+      for (FT_Int i = 0; i < ft_face->num_fixed_sizes; i++)
 	{
-	  FT_Done_Face (ft_face);
-	  cache_data->ft_face = NULL;
+	  int distance = ft_face->available_sizes[i].height - (int) size;
+
+	  /* Prefer down-scaling to upscaling.  */
+	  if (magnify == (distance < 0) ? abs (distance) <= min_distance
+	      : magnify)
+	    {
+	      magnify = distance < 0;
+	      min_distance = abs (distance);
+	      strike_index = i;
+	    }
 	}
-      return Qnil;
+
+      if (strike_index < 0 || FT_Select_Size (ft_face, strike_index) != 0)
+	{
+	  if (cache_data->face_refcount == 0)
+	    {
+	      FT_Done_Face (ft_face);
+	      cache_data->ft_face = NULL;
+	    }
+	  return Qnil;
+	}
     }
   cache_data->face_refcount++;
 
@@ -1144,6 +1165,7 @@ ftfont_open2 (struct frame *f,
   ftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   ftfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+  ftfont_info->bitmap_strike_index = strike_index;
   /* This means that there's no need of transformation.  */
   ftfont_info->matrix.xx = 0;
   font->pixel_size = size;
@@ -1229,7 +1251,19 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
     size = pixel_size;
   font_object = font_build_object (VECSIZE (struct font_info),
 				   Qfreetype, entity, size);
-  return ftfont_open2 (f, entity, pixel_size, font_object);
+  font_object = ftfont_open2 (f, entity, pixel_size, font_object);
+  if (FONT_OBJECT_P (font_object))
+    {
+      struct font *font = XFONT_OBJECT (font_object);
+      struct font_info *ftfont_info = (struct font_info *) font;
+
+      if (ftfont_info->bitmap_strike_index >= 0)
+	{
+	  ftfont_close (font);
+	  font_object = Qnil;
+	}
+    }
+  return font_object;
 }
 
 void

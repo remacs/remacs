@@ -135,7 +135,10 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
       font->driver = &ftcrfont_driver;
       FT_New_Size (ft_face, &ftcrfont_info->ft_size_draw);
       FT_Activate_Size (ftcrfont_info->ft_size_draw);
-      FT_Set_Pixel_Sizes (ft_face, 0, font->pixel_size);
+      if (ftcrfont_info->bitmap_strike_index < 0)
+	FT_Set_Pixel_Sizes (ft_face, 0, font->pixel_size);
+      else
+	FT_Select_Size (ft_face, ftcrfont_info->bitmap_strike_index);
       cairo_font_face_t *font_face =
 	cairo_ft_font_face_create_for_ft_face (ft_face, 0);
       cairo_matrix_t font_matrix, ctm;
@@ -148,6 +151,56 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
       cairo_font_options_destroy (options);
       ftcrfont_info->metrics = NULL;
       ftcrfont_info->metrics_nrows = 0;
+      if (ftcrfont_info->bitmap_strike_index >= 0)
+	{
+	  /* Several members of struct font/font_info set by
+	     ftfont_open2 are bogus.  Recalculate them with cairo
+	     scaled font functions.  */
+	  cairo_font_extents_t extents;
+	  cairo_scaled_font_extents (ftcrfont_info->cr_scaled_font, &extents);
+	  font->ascent = lround (extents.ascent);
+	  font->descent = lround (extents.descent);
+	  font->height = lround (extents.height);
+
+	  cairo_glyph_t stack_glyph;
+	  int n = 0;
+	  font->min_width = font->average_width = font->space_width = 0;
+	  for (char c = 32; c < 127; c++)
+	    {
+	      cairo_glyph_t *glyphs = &stack_glyph;
+	      int num_glyphs = 1;
+	      cairo_status_t status =
+		cairo_scaled_font_text_to_glyphs (ftcrfont_info->cr_scaled_font,
+						  0, 0, &c, 1,
+						  &glyphs, &num_glyphs,
+						  NULL, NULL, NULL);
+
+	      if (status == CAIRO_STATUS_SUCCESS)
+		{
+		  if (glyphs != &stack_glyph)
+		    cairo_glyph_free (glyphs);
+		  else
+		    {
+		      int this_width =
+			ftcrfont_glyph_extents (font, stack_glyph.index, NULL);
+
+		      if (this_width > 0
+			  && (! font->min_width
+			      || font->min_width > this_width))
+			font->min_width = this_width;
+		      if (c == 32)
+			font->space_width = this_width;
+		      font->average_width += this_width;
+		      n++;
+		    }
+		}
+	    }
+	  if (n > 0)
+	    font->average_width /= n;
+
+	  font->underline_position = -1;
+	  font->underline_thickness = 0;
+	}
     }
   unblock_input ();
 
@@ -208,6 +261,43 @@ ftcrfont_text_extents (struct font *font,
 
   if (metrics)
     metrics->width = width;
+}
+
+static int
+ftcrfont_get_bitmap (struct font *font, unsigned int code,
+		     struct font_bitmap *bitmap, int bits_per_pixel)
+{
+  struct font_info *ftcrfont_info = (struct font_info *) font;
+
+  if (ftcrfont_info->bitmap_strike_index < 0)
+    return ftfont_get_bitmap (font, code, bitmap, bits_per_pixel);
+
+  return -1;
+}
+
+static int
+ftcrfont_anchor_point (struct font *font, unsigned int code, int idx,
+		       int *x, int *y)
+{
+  struct font_info *ftcrfont_info = (struct font_info *) font;
+
+  if (ftcrfont_info->bitmap_strike_index < 0)
+    return ftfont_anchor_point (font, code, idx, x, y);
+
+  return -1;
+}
+
+static Lisp_Object
+ftcrfont_shape (Lisp_Object lgstring)
+{
+#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
+  struct font_info *ftcrfont_info = (struct font_info *) font;
+
+  if (ftcrfont_info->bitmap_strike_index < 0)
+    return ftfont_shape (lgstring);
+#endif
+
+  return make_fixnum (0);
 }
 
 static int
@@ -286,14 +376,12 @@ struct font_driver const ftcrfont_driver =
   .encode_char = ftfont_encode_char,
   .text_extents = ftcrfont_text_extents,
   .draw = ftcrfont_draw,
-  .get_bitmap = ftfont_get_bitmap,
-  .anchor_point = ftfont_anchor_point,
+  .get_bitmap = ftcrfont_get_bitmap,
+  .anchor_point = ftcrfont_anchor_point,
 #ifdef HAVE_LIBOTF
   .otf_capability = ftfont_otf_capability,
 #endif
-#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
-  .shape = ftfont_shape,
-#endif
+  .shape = ftcrfont_shape,
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS
   .get_variation_glyphs = ftfont_variation_glyphs,
 #endif
