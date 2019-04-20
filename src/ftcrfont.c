@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "xterm.h"
 #include "blockinput.h"
+#include "composite.h"
 #include "font.h"
 #include "ftfont.h"
 #include "pdumper.h"
@@ -291,6 +292,7 @@ static Lisp_Object
 ftcrfont_shape (Lisp_Object lgstring)
 {
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct font_info *ftcrfont_info = (struct font_info *) font;
 
   if (ftcrfont_info->bitmap_strike_index < 0)
