@@ -42,11 +42,15 @@ use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     obarray::LispObarrayRef,
-    remacs_sys::Qstringp,
     remacs_sys::{
-        char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval, Lisp_String, Lisp_Type,
+        buffer_display_table, char_width, compare_string_intervals, empty_unibyte_string,
+        find_composition as c_find_composition, get_composition_id, string_char_to_byte,
     },
-    remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
+    remacs_sys::{
+        char_bits, composition_table, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval,
+        Lisp_String, Lisp_Type,
+    },
+    remacs_sys::{Qnil, Qstringp},
     symbols::LispSymbolRef,
 };
 
@@ -88,13 +92,85 @@ impl LispStringRef {
         s.size
     }
 
-    /// Return width of STRING when displayed in the current buffer. Width is
-    /// measured by how many columns it occupies on the screen. When calculating
-    /// width of a multibyte character in STRING, only the base leading-code is
-    /// considered; the validity of the following bytes is not checked.  Tabs in
-    /// STRING are always taken to occupy `tab-width' columns.
+    /// Return width of the string when displayed in the current buffer. The
+    /// width is measured by how many columns it occupies on the screen while
+    /// paying attention to compositions. This is a convenience function for
+    /// `self.display_width(None)`
     pub fn width(self) -> usize {
-        unsafe { lisp_string_width(self.into(), -1, ptr::null_mut(), ptr::null_mut()) as usize }
+        let (width, _) = self.display_width(None);
+        width
+    }
+
+    /// Return width of the string when displayed in the current buffer. The
+    /// width is measured by how many columns it occupies on the screen while
+    /// paying attention to compositions.
+    ///
+    /// With `precision` argument, return the width of longest substring that
+    /// doesn't exceed `precision`, and the number of characters and bytes it
+    /// contains in the returned tuple.
+    pub fn display_width(self, precision: Option<usize>) -> (usize, Option<(usize, usize)>) {
+        // Manually determine if string is unibyte.
+        let len = self.len_chars() as usize;
+        let multibyte = self.len_chars() < self.len_bytes();
+        let distab = unsafe { buffer_display_table() };
+        // Sum width
+        let mut width = 0;
+        // Character index
+        let mut i = 0;
+        // Byte index
+        let mut b = 0;
+
+        while i < len {
+            let (chars, bytes, thiswidth) = unsafe {
+                // If there is a composition, get its id.
+                let (cmp_id, end) = match find_composition(i, None, self.into()) {
+                    Some((_, end, val)) => (
+                        get_composition_id(
+                            i as isize,
+                            b as isize,
+                            (end - i) as isize,
+                            val,
+                            self.into(),
+                        ),
+                        end,
+                    ),
+                    None => (-1, 0),
+                };
+                if cmp_id >= 0 {
+                    // Character is a composition, look it up in the composition table.
+                    let chars = end - i;
+                    let bytes = string_char_to_byte(self.into(), end as isize) - b as isize;
+                    let thiswidth = (*(*composition_table.offset(cmp_id))).width as usize;
+                    (chars, bytes as usize, thiswidth)
+                } else {
+                    // Character is a single codepoint, calculate it if multibyte, otherwise get
+                    // raw byte at b.
+                    let (c, bytes) = if multibyte {
+                        string_char_and_length(self.const_data_ptr().add(b))
+                    } else {
+                        (self.as_slice()[b].into(), 1)
+                    };
+                    (1, bytes, char_width(c as i32, distab) as usize)
+                }
+            };
+
+            // Return if adding character exceeds precision
+            if let Some(precision) = precision {
+                if precision - width < thiswidth {
+                    return (width, Some((i, b)));
+                }
+            }
+
+            width = match width.checked_add(thiswidth) {
+                Some(w) => w,
+                None => string_overflow(),
+            };
+            i += chars;
+            b += bytes;
+        }
+
+        let n = precision.map(|_| (i, b));
+        (width, n)
     }
 
     pub fn is_empty(self) -> bool {
@@ -949,4 +1025,46 @@ pub fn char_to_byte8(c: Codepoint) -> u8 {
 
 pub const fn single_byte_charp(c: Codepoint) -> bool {
     c < 0x100
+}
+
+/// Wrapper function for find_composition in src/composite.c
+pub fn find_composition(
+    pos: usize,
+    limit: Option<usize>,
+    object: LispObject,
+) -> Option<(usize, usize, LispObject)> {
+    let pos = pos as isize;
+    let limit = limit.map_or(-1, |l| l as isize);
+    let mut start = 0;
+    let mut end = 0;
+    let mut prop = Qnil;
+    unsafe {
+        if c_find_composition(pos, limit, &mut start, &mut end, &mut prop, object) {
+            Some((start as usize, end as usize, prop))
+        } else {
+            None
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn lisp_string_width(
+    string: LispObject,
+    precision: isize,
+    nchars: *mut isize,
+    nbytes: *mut isize,
+) -> isize {
+    let precision = if precision < 0 {
+        None
+    } else {
+        Some(precision as usize)
+    };
+    let (width, n) = string.force_string().display_width(precision);
+    if let Some((chars, bytes)) = n {
+        unsafe {
+            *nchars = chars as isize;
+            *nbytes = bytes as isize;
+        }
+    };
+    width as isize
 }
