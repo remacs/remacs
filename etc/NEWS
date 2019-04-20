@@ -57,9 +57,6 @@ directory as part of the Emacs installation.  This allows to build
 Emacs modules outside of the Emacs source tree.
 
 
-* Startup Changes in Emacs 26.2
-
-
 * Changes in Emacs 26.2
 
 ** Emacs is now compliant with the latest version 11.0 of the Unicode Standard.
@@ -67,9 +64,6 @@ Emacs modules outside of the Emacs source tree.
 ** New variable 'xft-ignore-color-fonts'.
 Default t means don't try to load color fonts when using Xft, as they
 often cause crashes.  Set it to nil if you really need those fonts.
-
-
-* Editing Changes in Emacs 26.2
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
@@ -141,9 +135,6 @@ the revision.  Starting with Emacs 26.1, the default has changed, and
 it now shows the global revision number, in the form of its changeset
 hash value.  To get back the previous behavior, customize the new
 option 'vc-hg-symbolic-revision-styles' to the value '("{rev}")'.
-
-
-* New Modes and Packages in Emacs 26.2
 
 
 * Incompatible Lisp Changes in Emacs 26.2
