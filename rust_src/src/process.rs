@@ -584,21 +584,24 @@ pub fn quit_process(process: LispObject, current_group: LispObject) -> LispObjec
 /// of incoming traffic.
 #[lisp_fn(min = "0")]
 pub fn stop_process(process: LispObject, current_group: LispObject) -> LispObject {
-    let mut p_ref: LispProcessRef = get_process(process).into();
-    let process_type = p_ref.ptype();
-    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
-        unsafe {
-            delete_read_fd(p_ref.infd);
-            p_ref.command = Qt;
+    match get_process(process).as_process() {
+        Some(mut p_ref) => {
+            let process_type = p_ref.ptype();
+            if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+                unsafe {
+                    delete_read_fd(p_ref.infd);
+                    p_ref.command = Qt;
+                }
+            }
         }
-        return process;
-    }
-
-    #[cfg(windows)]
-    error!("No SIGTSTP support");
-    #[cfg(not(windows))]
-    unsafe {
-        process_send_signal(process, libc::SIGTSTP, current_group, false);
+        None => {
+            #[cfg(windows)]
+            error!("No SIGTSTP support");
+            #[cfg(not(windows))]
+            unsafe {
+                process_send_signal(process, libc::SIGTSTP, current_group, false);
+            }
+        }
     }
 
     process
