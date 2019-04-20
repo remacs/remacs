@@ -1357,6 +1357,7 @@ set_local_socket (char const *server_name)
   int tmpdirlen = -1;
   int socknamelen = -1;
   uid_t uid = geteuid ();
+  bool tmpdir_used = false;
 
   if (strchr (server_name, '/')
       || (ISSLASH ('\\') && strchr (server_name, '\\')))
@@ -1389,6 +1390,7 @@ set_local_socket (char const *server_name)
 	    }
 	  socknamelen = local_sockname (sockname, socknamesize, tmpdirlen,
 					uid, server_name);
+	  tmpdir_used = true;
 	}
     }
 
@@ -1462,11 +1464,27 @@ set_local_socket (char const *server_name)
   if (sock_status < 0)
     message (true, "%s: Invalid socket owner\n", progname);
   else if (sock_status == ENOENT)
-    message (true,
-	     ("%s: can't find socket; have you started the server?\n"
-	      "%s: To start the server in Emacs,"
-	      " type \"M-x server-start\".\n"),
-	     progname, progname);
+    {
+      if (tmpdir_used)
+	{
+	  uintmax_t id = uid;
+	  char sockdirname[socknamesize];
+	  int sockdirnamelen = snprintf (sockdirname, sizeof sockdirname,
+					 "/run/user/%"PRIuMAX, id);
+	  if (0 <= sockdirnamelen && sockdirnamelen < sizeof sockdirname
+	      && euidaccess (sockdirname, X_OK) == 0)
+	    message
+	      (true,
+	       ("%s: Should XDG_RUNTIME_DIR='%s' be in the environment?\n"
+		"%s: (Be careful: XDG_RUNTIME_DIR is security-related.)\n"),
+	       progname, sockdirname, progname);
+	}
+      message (true,
+	       ("%s: can't find socket; have you started the server?\n"
+		"%s: To start the server in Emacs,"
+		" type \"M-x server-start\".\n"),
+	       progname, progname);
+    }
   else
     message (true, "%s: can't stat %s: %s\n",
 	     progname, sockname, strerror (sock_status));
