@@ -1104,15 +1104,42 @@ hg binary."
   (vc-hg-command nil 0 file "forget"))
 
 (declare-function log-edit-extract-headers "log-edit" (headers string))
+(declare-function log-edit-mode "log-edit" ())
+(declare-function log-edit--toggle-amend "log-edit" (last-msg-fn))
+
+(defun vc-hg-log-edit-toggle-amend ()
+  "Toggle whether this will amend the previous commit.
+If toggling on, also insert its message into the buffer."
+  (interactive)
+  (log-edit--toggle-amend
+   (lambda ()
+     (with-output-to-string
+       (vc-hg-command
+        standard-output 1 nil
+        "log" "--limit=1" "--template" "{desc}")))))
+
+(defvar vc-hg-log-edit-mode-map
+  (let ((map (make-sparse-keymap "Hg-Log-Edit")))
+    (define-key map "\C-c\C-e" 'vc-hg-log-edit-toggle-amend)
+    map))
+
+(define-derived-mode vc-hg-log-edit-mode log-edit-mode "Log-Edit/hg"
+  "Major mode for editing Hg log messages.
+It is based on `log-edit-mode', and has Hg-specific extensions.")
 
 (defun vc-hg-checkin (files comment &optional _rev)
   "Hg-specific version of `vc-backend-checkin'.
 REV is ignored."
-  (apply 'vc-hg-command nil 0 files
-         (nconc (list "commit" "-m")
-                (log-edit-extract-headers '(("Author" . "--user")
-					    ("Date" . "--date"))
-                                          comment))))
+  (let ((amend-extract-fn
+         (lambda (value)
+           (when (equal value "yes")
+             (list "--amend")))))
+    (apply 'vc-hg-command nil 0 files
+           (nconc (list "commit" "-m")
+                  (log-edit-extract-headers `(("Author" . "--user")
+                                              ("Date" . "--date")
+                                              ("Amend" . ,amend-extract-fn))
+                                            comment)))))
 
 (defun vc-hg-find-revision (file rev buffer)
   (let ((coding-system-for-read 'binary)

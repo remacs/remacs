@@ -1087,6 +1087,22 @@ line of MSG."
       (if summary (insert summary "\n\n"))
       (cons (buffer-string) res))))
 
+(defun log-edit--toggle-amend (last-msg-fn)
+  (when (log-edit-toggle-header "Amend" "yes")
+    (goto-char (point-max))
+    (unless (bolp) (insert "\n"))
+    (insert (funcall last-msg-fn))
+    (save-excursion
+      (rfc822-goto-eoh)
+      (forward-line 1)
+      (let ((pt (point)))
+        (and (zerop (forward-line 1))
+             (looking-at "\n\\|\\'")
+             (let ((summary (buffer-substring-no-properties pt (1- (point)))))
+               (skip-chars-forward " \n")
+               (delete-region pt (point))
+               (log-edit-set-header "Summary" summary)))))))
+
 (provide 'log-edit)
 
 ;;; log-edit.el ends here

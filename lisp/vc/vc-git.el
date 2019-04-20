@@ -750,7 +750,7 @@ The car of the list is the current branch."
 (declare-function log-edit-mode "log-edit" ())
 (declare-function log-edit-toggle-header "log-edit" (header value))
 (declare-function log-edit-extract-headers "log-edit" (headers string))
-(declare-function log-edit-set-header "log-edit" (header value &optional toggle))
+(declare-function log-edit--toggle-amend "log-edit" (last-msg-fn))
 
 (defun vc-git-log-edit-toggle-signoff ()
   "Toggle whether to add the \"Signed-off-by\" line at the end of
@@ -767,23 +767,12 @@ the commit message."
   "Toggle whether this will amend the previous commit.
 If toggling on, also insert its message into the buffer."
   (interactive)
-  (when (log-edit-toggle-header "Amend" "yes")
-    (goto-char (point-max))
-    (unless (bolp) (insert "\n"))
-    (insert (with-output-to-string
-              (vc-git-command
-               standard-output 1 nil
-               "log" "--max-count=1" "--pretty=format:%B" "HEAD")))
-    (save-excursion
-      (rfc822-goto-eoh)
-      (forward-line 1)
-      (let ((pt (point)))
-        (and (zerop (forward-line 1))
-             (looking-at "\n\\|\\'")
-             (let ((summary (buffer-substring-no-properties pt (1- (point)))))
-               (skip-chars-forward " \n")
-               (delete-region pt (point))
-               (log-edit-set-header "Summary" summary)))))))
+  (log-edit--toggle-amend
+   (lambda ()
+     (with-output-to-string
+       (vc-git-command
+        standard-output 1 nil
+        "log" "--max-count=1" "--pretty=format:%B" "HEAD")))))
 
 (defvar vc-git-log-edit-mode-map
   (let ((map (make-sparse-keymap "Git-Log-Edit")))
