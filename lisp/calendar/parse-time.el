@@ -168,8 +168,7 @@ unknown DST value is returned as -1."
 	    (when (and (not (nth (car slots) time)) ;not already set
 		       (setq parse-time-val
 			     (cond ((and (consp predicate)
-					 (not (eq (car predicate)
-						  'lambda)))
+					 (not (functionp predicate)))
 				    (and (numberp parse-time-elt)
 					 (<= (car predicate) parse-time-elt)
 					 (or (not (cdr predicate))
@@ -191,7 +190,7 @@ unknown DST value is returned as -1."
 					  :end (aref this 1))
 				       (funcall this)))
 				 parse-time-val)))
-		  (rplaca (nthcdr (pop slots) time) new-val))))))))
+		  (setf (nth (pop slots) time) new-val))))))))
     time))
 
 (defconst parse-time-iso8601-regexp
@@ -244,16 +243,17 @@ If DATE-STRING cannot be parsed, it falls back to
 	      re-start (match-end 0))
 	(when (string-match tz-re date-string re-start)
           (setq dst nil)
-          (if (string= "Z" (match-string 1 date-string))
-              (setq tz 0)  ;; UTC timezone indicated by Z
-            (setq tz (+
-                      (* 3600
-                         (string-to-number (match-string 3 date-string)))
-                      (* 60
-                         (string-to-number
-                          (or (match-string 4 date-string) "0")))))
-            (when (string= "-" (match-string 2 date-string))
-              (setq tz (- tz)))))
+          (setq tz (if (string= "Z" (match-string 1 date-string))
+                       0  ;; UTC timezone indicated by Z
+                     (let ((tz (+
+                                (* 3600
+                                   (string-to-number
+                                    (match-string 3 date-string)))
+                                (* 60
+                                   (string-to-number
+                                    (or (match-string 4 date-string) "0"))))))
+                       (if (string= "-" (match-string 2 date-string))
+                            (- tz) tz)))))
 	(setq time (list seconds minute hour day month year day-of-week dst tz))))
 
     ;; Fall back to having `parse-time-string' do fancy things for us.
