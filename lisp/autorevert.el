@@ -594,19 +594,16 @@ no more reverts are possible until the next call of
 
       (if (eq action 'stopped)
           ;; File notification has stopped.  Continue with polling.
-          (cl-dolist (buffer
-                      (if global-auto-revert-mode
-                          (buffer-list) auto-revert-buffer-list))
+          (cl-dolist (buffer buffers)
             (with-current-buffer buffer
-              (when (and (equal descriptor auto-revert-notify-watch-descriptor)
-                         (or
-                          ;; A buffer associated with a file.
-                          (and (stringp buffer-file-name)
-                               (string-equal
-                                (file-name-nondirectory file)
-                                (file-name-nondirectory buffer-file-name)))
-                          ;; A buffer w/o a file, like dired.
-                          (null buffer-file-name)))
+              (when (or
+                     ;; A buffer associated with a file.
+                     (and (stringp buffer-file-name)
+                          (string-equal
+                           (file-name-nondirectory file)
+                           (file-name-nondirectory buffer-file-name)))
+                     ;; A buffer w/o a file, like dired.
+                     (null buffer-file-name))
                 (auto-revert-notify-rm-watch))))
 
         ;; Loop over all buffers, in order to find the intended one.
