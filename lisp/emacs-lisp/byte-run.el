@@ -423,7 +423,7 @@ variable (this is due to the way `defvaralias' works).
 If provided, WHEN should be a string indicating when the variable
 was first made obsolete, for example a date or a release number.
 
-For the benefit of `custom-set-variables', if OBSOLETE-NAME has
+For the benefit of Customize, if OBSOLETE-NAME has
 any of the following properties, they are copied to
 CURRENT-NAME, if it does not already have them:
 `saved-value', `saved-variable-comment'."
