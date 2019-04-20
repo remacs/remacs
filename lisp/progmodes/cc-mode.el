@@ -1797,6 +1797,34 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 		    (funcall fn beg end old-len))
 		  c-before-font-lock-functions)))))))
 
+(defun c-doc-fl-decl-start (pos)
+  ;; If the line containing POS is in a doc comment continued line (as defined
+  ;; by `c-doc-line-join-re'), return the position of the first line of the
+  ;; sequence.  Otherwise, return nil.  Point has no significance at entry to
+  ;; and exit from this function.
+  (goto-char pos)
+  (back-to-indentation)
+  (and (or (looking-at c-comment-start-regexp)
+	   (memq (c-literal-type (c-literal-limits)) '(c c++)))
+       (progn
+	 (end-of-line)
+	 (let ((here (point)))
+	   (while (re-search-backward c-doc-line-join-re (c-point 'bopl) t))
+	   (and (not (eq (point) here))
+		(c-point 'bol))))))
+
+(defun c-doc-fl-decl-end (pos)
+  ;; If the line containing POS is continued by a doc comment continuation
+  ;; marker (as defined by `c-doc-line-join-re), return the position of
+  ;; the BOL at the end of the sequence.  Otherwise, return nil.  Point has no
+  ;; significance at entry to and exit from this function.
+  (goto-char pos)
+  (back-to-indentation)
+  (let ((here (point)))
+    (while (re-search-forward c-doc-line-join-re (c-point 'eonl) t))
+    (and (not (eq (point) here))
+	 (c-point 'bonl))))
+
 (defun c-fl-decl-start (pos)
   ;; If the beginning of the line containing POS is in the middle of a "local"
   ;; declaration, return the beginning of that declaration.  Otherwise return
@@ -1912,9 +1940,10 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; and OLD-LEN are not used.
   (if font-lock-mode
       (setq c-new-BEG
-	    (or (c-fl-decl-start c-new-BEG) (c-point 'bol c-new-BEG))
+	    (or (c-fl-decl-start c-new-BEG) (c-doc-fl-decl-start c-new-BEG)
+		(c-point 'bol c-new-BEG))
 	    c-new-END
-	    (or (c-fl-decl-end c-new-END)
+	    (or (c-fl-decl-end c-new-END) (c-doc-fl-decl-end c-new-END)
 		(c-point 'bonl c-new-END)))))
 
 (defun c-context-expand-fl-region (beg end)
@@ -1922,8 +1951,10 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; "local" declaration containing BEG (see `c-fl-decl-start') or BOL BEG is
   ;; in.  NEW-END is beginning of the line after the one END is in.
   (c-save-buffer-state ()
-    (cons (or (c-fl-decl-start beg) (c-point 'bol beg))
-	  (or (c-fl-decl-end end) (c-point 'bonl (1- end))))))
+    (cons (or (c-fl-decl-start beg) (c-doc-fl-decl-start beg)
+	      (c-point 'bol beg))
+	  (or (c-fl-decl-end end) (c-doc-fl-decl-end end)
+	      (c-point 'bonl (1- end))))))
 
 (defun c-before-context-fl-expand-region (beg end)
   ;; Expand the region (BEG END) as specified by

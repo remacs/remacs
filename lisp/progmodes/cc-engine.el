@@ -152,6 +152,10 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
+(defvar c-doc-line-join-re)
+(defvar c-doc-bright-comment-start-re)
+(defvar c-doc-line-join-end-ch)
+
 
 ;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
 
@@ -1930,7 +1934,8 @@ comment at the start of cc-engine.el for more info."
     (skip-chars-forward " \t\n\r\f\v")
     (when (or (looking-at c-syntactic-ws-start)
 	      (and c-opt-cpp-prefix
-		   (looking-at c-noise-macro-name-re)))
+		   (looking-at c-noise-macro-name-re))
+	      (looking-at c-doc-line-join-re))
 
       (setq rung-end-pos (min (1+ (point)) (point-max)))
       (if (setq rung-is-marked (text-property-any rung-pos rung-end-pos
@@ -2060,6 +2065,13 @@ comment at the start of cc-engine.el for more info."
 		   (looking-at c-noise-macro-name-re))
 	      ;; Skip over a noise macro.
 	      (goto-char (match-end 1))
+	      (not (eobp)))
+
+	     ((looking-at c-doc-line-join-re)
+	      ;; Skip over a line join in (e.g.) Pike autodoc.
+	      (goto-char (match-end 0))
+	      (setq safe-start nil) ; Never cache this; the doc style could be
+					; changed at any time.
 	      (not (eobp)))))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
@@ -2154,7 +2166,8 @@ comment at the start of cc-engine.el for more info."
   (let (;; `rung-pos' is set to a position as late as possible in the unmarked
 	;; part of the simple ws region.
 	(rung-pos (point)) next-rung-pos last-put-in-sws-pos
-	rung-is-marked simple-ws-beg cmt-skip-pos)
+	rung-is-marked simple-ws-beg cmt-skip-pos
+	(doc-line-join-here (concat c-doc-line-join-re "\\=")))
 
     ;; Skip simple horizontal ws and do a quick check on the preceding
     ;; character to see if it's anything that can't end syntactic ws, so we can
@@ -2164,12 +2177,17 @@ comment at the start of cc-engine.el for more info."
     (skip-chars-backward " \t\f")
     (when (and (not (bobp))
 	       (save-excursion
-		 (backward-char)
-		 (or (looking-at c-syntactic-ws-end)
-		     (and c-opt-cpp-prefix
-			  (looking-at c-symbol-char-key)
-			  (progn (c-beginning-of-current-token)
-				 (looking-at c-noise-macro-name-re))))))
+		 (or (and
+		      (memq (char-before) c-doc-line-join-end-ch) ; For speed.
+		      (re-search-backward doc-line-join-here
+					  (c-point 'bopl) t))
+		     (progn
+		       (backward-char)
+		       (or (looking-at c-syntactic-ws-end)
+			   (and c-opt-cpp-prefix
+				(looking-at c-symbol-char-key)
+				(progn (c-beginning-of-current-token)
+				       (looking-at c-noise-macro-name-re))))))))
       ;; Try to find a rung position in the simple ws preceding point, so that
       ;; we can get a cache hit even if the last bit of the simple ws has
       ;; changed recently.
@@ -2309,7 +2327,11 @@ comment at the start of cc-engine.el for more info."
 				 (looking-at c-noise-macro-name-re)))))
 	      ;; Skipped over a noise macro
 	      (goto-char next-rung-pos)
-	      t)))
+	      t)
+
+	     ((and
+	       (memq (char-before) c-doc-line-join-end-ch) ; For speed.
+	       (re-search-backward doc-line-join-here (c-point 'bopl) t)))))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
 	;; can be cached.
@@ -5691,7 +5713,16 @@ comment at the start of cc-engine.el for more info."
 
      (when (< cfd-match-pos cfd-limit)
        ;; Skip forward past comments only so we don't skip macros.
-       (c-forward-comments)
+       (while
+	   (progn
+	     (c-forward-comments)
+	     ;; The following is of use within a doc comment when a doc
+	     ;; comment style has removed face properties from a construct,
+	     ;; and is relying on `c-font-lock-declarations' to add them
+	     ;; again.
+	     (and (< (point) cfd-limit)
+		  (looking-at c-doc-line-join-re)
+		  (goto-char (match-end 0)))))
        ;; Set the position to continue at.  We can avoid going over
        ;; the comments skipped above a second time, but it's possible
        ;; that the comment skipping has taken us past `cfd-prop-match'
@@ -5950,7 +5981,7 @@ comment at the start of cc-engine.el for more info."
 	  (goto-char (or start-in-literal cfd-start-pos))
 	  ;; The only syntactic ws in macros are comments.
 	  (c-backward-comments)
-	  (backward-char)
+	  (or (bobp) (backward-char))
 	  (c-beginning-of-current-token))
 
 	 (start-in-literal
@@ -5975,7 +6006,8 @@ comment at the start of cc-engine.el for more info."
 			  (not (eq (c-get-char-property (point) 'c-type)
 				   'c-decl-end))))))
 
-	  (when (= (point) start-in-literal)
+	  (when (and (= (point) start-in-literal)
+		     (not (looking-at c-doc-bright-comment-start-re)))
 	    ;; Didn't find any property inside the comment, so we can
 	    ;; skip it entirely.  (This won't skip past a string, but
 	    ;; that'll be handled quickly by the next

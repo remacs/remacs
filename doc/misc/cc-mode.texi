@@ -2140,7 +2140,10 @@ with @code{c-doc-comment-style}: Supply a variable or function
 in @code{c-doc-comment-style}.  If it's a variable, it's prepended to
 @code{font-lock-keywords}.  If it's a function, it's called at mode
 initialization and the result is prepended.  For an example, see
-@code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
+@code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.  It is even
+possible, to a limited extent, to fontify constructs inside a doc
+comment with other faces.  For an example, see pike autodoc comment
+style towards the end of @file{cc-fonts-el}.
 
 If you add support for another doc comment style, please consider
 contributing it: send a note to @email{bug-cc-mode@@gnu.org}.

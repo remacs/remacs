@@ -2089,6 +2089,14 @@ higher."
 	    (c-lang-const c-complex-decl-matchers)
 	    (c-lang-const c-basic-matchers-after)))
 
+(defun c-get-doc-comment-style ()
+  ;; Get the symbol (or list of symbols) constituting the document style.
+  ;; Return nil if there is no such, otherwise something like `autodoc'.
+  (if (consp (car-safe c-doc-comment-style))
+      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
+		    (assq 'other c-doc-comment-style)))
+    c-doc-comment-style))
+
 (defun c-compose-keywords-list (base-list)
   ;; Incorporate the font lock keyword lists according to
   ;; `c-doc-comment-style' on the given keyword list and return it.
@@ -2099,11 +2107,7 @@ higher."
   (unless (memq c-doc-face-name c-literal-faces)
     (setq c-literal-faces (cons c-doc-face-name c-literal-faces)))
 
-  (let* ((doc-keywords
-	  (if (consp (car-safe c-doc-comment-style))
-	      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
-			    (assq 'other c-doc-comment-style)))
-	    c-doc-comment-style))
+  (let* ((doc-keywords (c-get-doc-comment-style))
 	 (list (nconc (c--mapcan
 		       (lambda (doc-style)
 			 (let ((sym (intern
@@ -2552,14 +2556,87 @@ need for `pike-font-lock-extra-types'.")
   "Default expressions to highlight in Pike mode.")
 
 (defun pike-font-lock-keywords-2 ()
+  (c-set-doc-comment-res)
   (c-compose-keywords-list pike-font-lock-keywords-2))
 (defun pike-font-lock-keywords-3 ()
+  (c-set-doc-comment-res)
   (c-compose-keywords-list pike-font-lock-keywords-3))
 (defun pike-font-lock-keywords ()
+  (c-set-doc-comment-res)
   (c-compose-keywords-list pike-font-lock-keywords))
 
 
 ;;; Doc comments.
+
+(defvar c-doc-line-join-re "a\\`")
+;; Matches a join of two lines in a doc comment.
+;; This should not be changed directly, but instead set by
+;; `c-setup-doc-comment-style'.  This variable is used in `c-find-decl-spots'
+;; in (e.g.) autodoc style comments to bridge the gap between a "@\n" at an
+;; EOL and the token following "//!" on the next line.
+
+(defvar c-doc-bright-comment-start-re "a\\`")
+;; Matches the start of a "bright" comment, one whose contents may be
+;; fontified by, e.g., `c-font-lock-declarations'.
+
+(defvar c-doc-line-join-end-ch nil)
+;; A list of characters, each being a last character of a doc comment marker,
+;; e.g. the ! from pike autodoc's "//!".
+
+(defmacro c-set-doc-comment-re-element (suffix)
+  ;; Set the variable `c-doc-line-join-re' to a buffer local value suitable
+  ;; for the current doc comment style, or kill the local value.
+  (let ((var (intern (concat "c-doc" suffix))))
+    `(let* ((styles (c-get-doc-comment-style))
+	    elts)
+       (when (atom styles)
+	 (setq styles (list styles)))
+       (setq elts
+	     (mapcar (lambda (style)
+		       (let ((sym
+			      (intern-soft
+			       (concat (symbol-name style) ,suffix))))
+			 (and sym
+			      (boundp sym)
+			      (symbol-value sym))))
+		     styles))
+       (setq elts (delq nil elts))
+       (setq elts (and elts
+		       (concat "\\("
+			       (mapconcat #'identity elts "\\|")
+			       "\\)")))
+       (if elts
+	   (set (make-local-variable ',var) elts)
+	 (kill-local-variable ',var)))))
+
+(defmacro c-set-doc-comment-char-list (suffix)
+  ;; Set the variable 'c-doc-<suffix>' to the list of *-<suffix>, which must
+  ;; be characters, and * represents the doc comment style.
+  (let ((var (intern (concat "c-doc" suffix))))
+    `(let* ((styles (c-get-doc-comment-style))
+	    elts)
+       (when (atom styles)
+	 (setq styles (list styles)))
+       (setq elts
+	     (mapcar (lambda (style)
+		       (let ((sym
+			      (intern-soft
+			       (concat (symbol-name style) ,suffix))))
+			 (and sym
+			      (boundp sym)
+			      (symbol-value sym))))
+		     styles))
+       (setq elts (delq nil elts))
+       (if elts
+	   (set (make-local-variable ',var) elts)
+	 (kill-local-variable ',var)))))
+
+(defun c-set-doc-comment-res ()
+  ;; Set the variables `c-doc-line-join-re' and
+  ;; `c-doc-bright-comment-start-re' from the current doc comment style(s).
+  (c-set-doc-comment-re-element "-line-join-re")
+  (c-set-doc-comment-re-element "-bright-comment-start-re")
+  (c-set-doc-comment-char-list "-line-join-end-ch"))
 
 (defun c-font-lock-doc-comments (prefix limit keywords)
   ;; Fontify the comments between the point and LIMIT whose start
@@ -2621,17 +2698,20 @@ need for `pike-font-lock-extra-types'.")
 	    (goto-char comment-beg)
 	    (while (and (progn
 			  (c-forward-single-comment)
+			  (c-put-font-lock-face comment-beg (point)
+						c-doc-face-name)
 			  (skip-syntax-forward " ")
+			  (setq comment-beg (point))
 			  (< (point) limit))
 			(looking-at prefix))))
 	(goto-char comment-beg)
-	(c-forward-single-comment))
+	(c-forward-single-comment)
+	(c-put-font-lock-face comment-beg (point) c-doc-face-name))
       (if (> (point) limit) (goto-char limit))
       (setq comment-beg nil)
 
       (let ((region-end (point))
 	    (keylist keywords) keyword matcher highlights)
-	(c-put-font-lock-face region-beg region-end c-doc-face-name)
 	(save-restriction
 	  ;; Narrow to the doc comment.  Among other things, this
 	  ;; helps by making "^" match at the start of the comment.
@@ -2837,6 +2917,13 @@ need for `pike-font-lock-extra-types'.")
 	(c-find-invalid-doc-markup "@" limit))
      0 'font-lock-warning-face prepend nil)
     ))
+
+(defconst autodoc-line-join-re "@[\n\r][ \t]*/[/*]!")
+;; Matches a line continuation in autodoc comment style.
+(defconst autodoc-bright-comment-start-re "/[/*]!")
+;; Matches an autodoc comment opener.
+(defconst autodoc-line-join-end-ch ?!)
+;; The final character of `autodoc-line-join-re'.
 
 (defun autodoc-font-lock-keywords ()
   ;; Note that we depend on that `c-current-comment-prefix' has got
