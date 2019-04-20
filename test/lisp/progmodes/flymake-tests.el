@@ -143,7 +143,8 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest different-diagnostic-types ()
   "Test GCC warning via function predicate."
   ;; http://lists.gnu.org/archive/html/emacs-devel/2019-03/msg01043.html
-  :expected-result (if (getenv "EMACS_HYDRA_CI") :failed :passed)
+  :expected-result (if (or (getenv "EMACS_HYDRA_CI") (getenv "EMACS_EMBA_CI"))
+                       :failed :passed)
   (skip-unless (and (executable-find "gcc")
                     (version<=
                      "5" (string-trim
