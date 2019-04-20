@@ -49,7 +49,7 @@ could use another implementation.")
   directory
   ;; Watched relative filename, nil if watching the directory.
   filename
-  ;; Function to propagate events to.
+  ;; Function to propagate events to, or nil if watch is being removed.
   callback)
 
 (defun file-notify--watch-absolute-filename (watch)
@@ -72,12 +72,15 @@ struct.")
 DESCRIPTOR should be an object returned by `file-notify-add-watch'.
 If it is registered in `file-notify-descriptors', a stopped event is sent."
   (when-let* ((watch (gethash descriptor file-notify-descriptors)))
-    ;; Send `stopped' event.
-    (unwind-protect
-        (funcall
-         (file-notify--watch-callback watch)
-         `(,descriptor stopped ,(file-notify--watch-absolute-filename watch)))
-      (remhash descriptor file-notify-descriptors))))
+    (let ((callback (file-notify--watch-callback watch)))
+      ;; Make sure this is the last time the callback is invoked.
+      (setf (file-notify--watch-callback watch) nil)
+      ;; Send `stopped' event.
+      (unwind-protect
+          (funcall
+           callback
+           `(,descriptor stopped ,(file-notify--watch-absolute-filename watch)))
+        (remhash descriptor file-notify-descriptors)))))
 
 ;; This function is used by `inotify', `kqueue', `gfilenotify' and
 ;; `w32notify' events.
@@ -381,25 +384,27 @@ FILE is the name of the file whose event is being reported."
   "Remove an existing watch specified by its DESCRIPTOR.
 DESCRIPTOR should be an object returned by `file-notify-add-watch'."
   (when-let* ((watch (gethash descriptor file-notify-descriptors)))
-    (let ((handler (find-file-name-handler
-                    (file-notify--watch-directory watch)
-                    'file-notify-rm-watch)))
-      (condition-case nil
-          (if handler
-              ;; A file name handler could exist even if there is no
-              ;; local file notification support.
-              (funcall handler 'file-notify-rm-watch descriptor)
+    ;; If we are called from a `stopped' event, do nothing.
+    (when (file-notify--watch-callback watch)
+      (let ((handler (find-file-name-handler
+                      (file-notify--watch-directory watch)
+                      'file-notify-rm-watch)))
+        (condition-case nil
+            (if handler
+                ;; A file name handler could exist even if there is no
+                ;; local file notification support.
+                (funcall handler 'file-notify-rm-watch descriptor)
 
-            (funcall
-             (cond
-              ((eq file-notify--library 'inotify) 'inotify-rm-watch)
-              ((eq file-notify--library 'kqueue) 'kqueue-rm-watch)
-              ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
-              ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
-             descriptor))
-        (file-notify-error nil)))
-    ;; Modify `file-notify-descriptors'.
-    (file-notify--rm-descriptor descriptor)))
+              (funcall
+               (cond
+                ((eq file-notify--library 'inotify) 'inotify-rm-watch)
+                ((eq file-notify--library 'kqueue) 'kqueue-rm-watch)
+                ((eq file-notify--library 'gfilenotify) 'gfile-rm-watch)
+                ((eq file-notify--library 'w32notify) 'w32notify-rm-watch))
+               descriptor))
+          (file-notify-error nil)))
+      ;; Modify `file-notify-descriptors' and send a `stopped' event.
+      (file-notify--rm-descriptor descriptor))))
 
 (defun file-notify-valid-p (descriptor)
   "Check a watch specified by its DESCRIPTOR.
