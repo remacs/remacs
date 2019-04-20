@@ -1648,11 +1648,33 @@ should not be computed on the basis of the following token."
          (let ((ppss (syntax-ppss)))
            (save-excursion
              (forward-line -1)
-             (if (<= (point) (nth 8 ppss))
-                 (progn (goto-char (1+ (nth 8 ppss))) (current-column))
-               (skip-chars-forward " \t")
-               (if (looking-at (regexp-quote continue))
-                   (current-column))))))))
+             (let ((start (nth 8 ppss)))
+               (if (<= (point) start)
+                   (progn
+                     (goto-char start)
+                     (if (not (and comment-start-skip
+                                   (looking-at comment-start-skip)))
+                         (forward-char 1)
+                       (goto-char (match-end 0))
+                       (skip-chars-backward " \t")
+                       ;; Try to align the first char of the comment-continue
+                       ;; with the second char of the comment-start or the
+                       ;; first char if the comment-start is made of
+                       ;; a single char.  E.g.
+                       ;;
+                       ;;     /* foo
+                       ;;      * bar */
+                       ;;
+                       ;; but
+                       ;;
+                       ;;     { foo
+                       ;;     | bar }
+                       (goto-char (if (eq (point) (1+ start))
+                                      start (1+ start))))
+                     (current-column))
+                 (skip-chars-forward " \t")
+                 (if (looking-at (regexp-quote continue))
+                     (current-column)))))))))
 
 (defun smie-indent-comment-close ()
   (and (boundp 'comment-end-skip)
