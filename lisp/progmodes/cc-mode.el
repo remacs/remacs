@@ -2220,6 +2220,7 @@ Key bindings:
 
 ;; reporter-submit-bug-report requires sendmail.
 (declare-function mail-position-on-field "sendmail" (field &optional soft))
+(declare-function mail-text "sendmail" ())
 
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on CC Mode."
@@ -2284,9 +2285,26 @@ Key bindings:
 	vars)
       (lambda ()
 	(run-hooks 'c-prepare-bug-report-hook)
+	(let ((hook (get mail-user-agent 'hookvar)))
+	  (if hook
+	      (add-hook hook
+			(lambda ()
+			  (save-excursion
+			    (mail-text)
+			    (unless (looking-at "Package: ")
+			      (insert "Package: " c-mode-bug-package "\n\n"))))
+			nil t)))
 	(save-excursion
 	  (or (mail-position-on-field "X-Debbugs-Package")
-	      (insert c-mode-bug-package)))
+	      (insert c-mode-bug-package))
+	  ;; For mail clients that do not support X- headers.
+	  ;; Sadly reporter-submit-bug-report unconditionally adds
+	  ;; a blank line before SALUTATION, so we can't use that.
+	  ;; It is also sad that reporter offers no way to leave point
+	  ;; after this line we are now inserting.
+	  (mail-text)
+	  (or (looking-at "Package:")
+	      (insert "Package: " c-mode-bug-package)))
 	(insert (format "Buffer Style: %s\nc-emacs-features: %s\n"
 			style c-features)))))))
 
