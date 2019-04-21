@@ -138,7 +138,10 @@ Root must be the root of an Emacs source tree."
                               (if (eq 2 (length newversion)) 0 1))))
          (majorbump (and oldversion (not (equal oldmajor newmajor))))
          (minorbump (and oldversion (not majorbump)
-                         (not (equal (cadr oldversion) (cadr newversion)))))
+                         (or (not (equal (cadr oldversion)
+                                         (cadr newversion)))
+                             (and (equal (cadr oldversion) (cadr newversion))
+                                  (equal (nth 2 newversion) 50)))))
          (newsfile (expand-file-name "etc/NEWS" root))
          (oldnewsfile (expand-file-name (format "etc/NEWS.%s" oldmajor) root)))
     (unless (> (length newversion) 2)   ; pretest or release candidate?
