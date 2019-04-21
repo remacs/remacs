@@ -57,6 +57,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 #endif /* WINDOWSNT */
 
+/* Static (instead of being local to 'main') to pacify LeakSanitizer.  */
+static char *buf;
+
 int
 main (int argc, char **argv)
 {
@@ -111,7 +114,7 @@ main (int argc, char **argv)
       return EXIT_FAILURE;
     }
 
-  char *buf = malloc (st.st_size + 1);
+  buf = malloc (st.st_size + 1);
   if (!buf)
     {
       perror ("malloc");
