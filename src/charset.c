@@ -2042,27 +2042,6 @@ DIMENSION, CHARS, and FINAL-CHAR.  */)
   return (id >= 0 ? CHARSET_NAME (CHARSET_FROM_ID (id)) : Qnil);
 }
 
-
-DEFUN ("clear-charset-maps", Fclear_charset_maps, Sclear_charset_maps,
-       0, 0, 0,
-       doc: /*
-Internal use only.
-Clear temporary charset mapping tables.
-It should be called only from temacs invoked for dumping.  */)
-  (void)
-{
-  if (temp_charset_work)
-    {
-      xfree (temp_charset_work);
-      temp_charset_work = NULL;
-    }
-
-  if (CHAR_TABLE_P (Vchar_unify_table))
-    Foptimize_char_table (Vchar_unify_table, Qnil);
-
-  return Qnil;
-}
-
 DEFUN ("charset-priority-list", Fcharset_priority_list,
        Scharset_priority_list, 0, 1, 0,
        doc: /* Return the list of charsets ordered by priority.
@@ -2314,7 +2293,6 @@ syms_of_charset (void)
   defsubr (&Schar_charset);
   defsubr (&Scharset_after);
   defsubr (&Siso_charset);
-  defsubr (&Sclear_charset_maps);
   defsubr (&Scharset_priority_list);
   defsubr (&Sset_charset_priority);
   defsubr (&Scharset_id_internal);
