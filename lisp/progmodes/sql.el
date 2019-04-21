@@ -443,6 +443,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :sqli-login sql-ms-login-params
      :sqli-comint-func sql-comint-ms
      :prompt-regexp "^[0-9]*>"
+     :prompt-cont-regexp "^[0-9]*>"
      :prompt-length 5
      :syntax-alist ((?@ . "_"))
      :terminator ("^go" . "go"))
@@ -1218,6 +1219,11 @@ Starts `sql-interactive-mode' after doing some setup."
   :group 'SQL)
 
 ;; Customization for Microsoft
+
+;; Microsoft documentation seems to indicate that ISQL and OSQL are
+;; going away and being replaced by SQLCMD.  If anyone has experience
+;; using SQLCMD, modified product configuration and feedback on its
+;; use would be greatly appreciated.
 
 (defcustom sql-ms-program "osql"
   "Command to start osql by Microsoft.
