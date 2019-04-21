@@ -3746,7 +3746,8 @@ to avoid deleting non-prompt output."
              (or (> (length (or sql-preoutput-hold "")) 0)
                  (> (or sql-output-newline-count 0) 0)
                  (not (or (string-match sql-prompt-regexp oline)
-                          (string-match sql-prompt-cont-regexp oline)))))
+                          (and sql-prompt-cont-regexp
+                               (string-match sql-prompt-cont-regexp oline))))))
 
     (save-match-data
       (let (prompt-found last-nl)
@@ -4394,12 +4395,12 @@ you entered, right above the output it created.
   ;; Set comint based on user overrides.
   (setq comint-prompt-regexp
         (if sql-prompt-cont-regexp
-            (concat "\\(" sql-prompt-regexp
-                    "\\|" sql-prompt-cont-regexp "\\)")
+            (concat "\\(?:\\(?:" sql-prompt-regexp "\\)"
+                    "\\|\\(?:" sql-prompt-cont-regexp "\\)\\)")
           sql-prompt-regexp))
   (setq left-margin (or sql-prompt-length 0))
   ;; Install input sender
-  (set (make-local-variable 'comint-input-sender) 'sql-input-sender)
+  (set (make-local-variable 'comint-input-sender) #'sql-input-sender)
   ;; People wanting a different history file for each
   ;; buffer/process/client/whatever can change separator and file-name
   ;; on the sql-interactive-mode-hook.
