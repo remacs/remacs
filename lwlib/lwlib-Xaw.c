@@ -170,11 +170,12 @@ draw_text (struct widget_xft_data *data, char *lbl, int inverse)
   int x = inverse ? 0 : 2;
   char *bp = lbl;
 
-  data->xft_draw = XftDrawCreate (XtDisplay (data->widget),
-                                  data->p,
-                                  DefaultVisual (XtDisplay (data->widget),
-                                                 screen),
-                                  DefaultColormapOfScreen (sc));
+  if (!data->xft_draw)
+    data->xft_draw = XftDrawCreate (XtDisplay (data->widget),
+				    data->p,
+				    DefaultVisual (XtDisplay (data->widget),
+						   screen),
+				    DefaultColormapOfScreen (sc));
   XftDrawRect (data->xft_draw,
                inverse ? &data->xft_fg : &data->xft_bg,
                0, 0, data->p_width, data->p_height);
