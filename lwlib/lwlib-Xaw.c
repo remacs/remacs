@@ -154,7 +154,7 @@ get_text_width_and_height (Widget widget, char *text,
                           &gi);
       bp = cp ? cp + 1 : NULL;
       h += xft_font->height;
-      if (w < gi.width) w = gi.width;
+      if (w < gi.xOff) w = gi.xOff;
     }
 
   *height = h;

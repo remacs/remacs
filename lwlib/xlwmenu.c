@@ -332,7 +332,7 @@ string_width (XlwMenuWidget mw, char *s)
       XftTextExtentsUtf8 (XtDisplay (mw), mw->menu.xft_font,
                           (FcChar8 *) s,
                           strlen (s), &gi);
-      return gi.width;
+      return gi.xOff;
     }
 #endif
 #ifdef HAVE_X_I18N
