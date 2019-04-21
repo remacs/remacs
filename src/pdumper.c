@@ -4623,9 +4623,7 @@ dump_mmap_reset (struct dump_memory_map *map)
 {
   map->mapping = NULL;
   map->release = NULL;
-  void *private = map->private;
   map->private = NULL;
-  free (private);
 }
 
 static void
@@ -4648,7 +4646,10 @@ dump_mm_heap_cb_release (struct dump_memory_map_heap_control_block *cb)
 {
   eassert (cb->refcount > 0);
   if (--cb->refcount == 0)
-    free (cb->mem);
+    {
+      free (cb->mem);
+      free (cb);
+    }
 }
 
 static void
@@ -4663,7 +4664,12 @@ dump_mmap_contiguous_heap (struct dump_memory_map *maps, int nr_maps,
 			   size_t total_size)
 {
   bool ret = false;
+
+  /* FIXME: This storage sometimes is never freed.
+     Beware: the simple patch 2019-03-11T15:20:54Z!eggert@cs.ucla.edu
+     is worse, as it sometimes frees this storage twice.  */
   struct dump_memory_map_heap_control_block *cb = calloc (1, sizeof (*cb));
+
   char *mem;
   if (!cb)
     goto out;
