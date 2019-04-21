@@ -39,6 +39,11 @@
   :group 'gnus-windows
   :type 'boolean)
 
+(defcustom gnus-use-atomic-windows t
+  "If non-nil, Gnus' window compositions will be atomic."
+  :type 'boolean
+  :version "27.1")
+
 (defcustom gnus-window-min-width 2
   "Minimum width of Gnus buffers."
   :group 'gnus-windows
@@ -402,6 +407,15 @@ See the Gnus manual for an explanation of the syntax used.")
         (unless (gnus-buffer-live-p nntp-server-buffer)
           (nnheader-init-server-buffer))
 
+	;; Remove all 'window-atom parameters, as we're going to blast
+	;; and recreate the window layout.
+	(when (window-parameter nil 'window-atom)
+	  (let ((root (window-atom-root)))
+	    (walk-window-subtree
+	     (lambda (win)
+	       (set-window-parameter win 'window-atom nil))
+	     root t)))
+
         ;; Either remove all windows or just remove all Gnus windows.
         (let ((frame (selected-frame)))
           (unwind-protect
@@ -423,6 +437,13 @@ See the Gnus manual for an explanation of the syntax used.")
           (set-buffer nntp-server-buffer)
           (gnus-configure-frame split)
           (run-hooks 'gnus-configure-windows-hook)
+
+	  ;; If we're using atomic windows, and the current frame has
+	  ;; multiple windows, make them atomic.
+	  (when (and gnus-use-atomic-windows
+		     (window-parent (selected-window)))
+	    (window-make-atom (window-parent (selected-window))))
+
           (when gnus-window-frame-focus
             (select-frame-set-input-focus
              (window-frame gnus-window-frame-focus)))))))))

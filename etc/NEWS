@@ -1032,6 +1032,11 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 ** Gnus
 
 +++
+*** New option 'gnus-use-atomic-windows' makes Gnus window layouts
+atomic.  See the "Atomic Windows" section of the Elisp manual for
+details.
+
++++
 *** There's a new value for 'gnus-article-date-headers',
 'combined-local-lapsed', which will show both the time (in the local
 timezone) and the lapsed time.
