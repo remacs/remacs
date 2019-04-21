@@ -701,6 +701,19 @@ created with @code{make-pipe-process}, described below.  If
 @var{stderr} is @code{nil}, standard error is mixed with standard
 output, and both are sent to @var{buffer} or @var{filter}.
 
+@cindex standard error process
+If @var{stderr} is a buffer, Emacs will create a pipe process, the
+@dfn{standard error process}.  This process will have the default
+filter (@pxref{Filter Functions}), sentinel (@pxref{Sentinels}), and
+coding systems (@pxref{Default Coding Systems}).  On the other hand,
+it will use @var{query-flag} as its query-on-exit flag (@pxref{Query
+Before Exit}).  It will be associated with the @var{stderr} buffer
+(@pxref{Process Buffers}) and send its output (which is the standard
+error of the main process) there.
+
+If @var{stderr} is a pipe process, Emacs will use it as standard error
+process for the new process.
+
 @item :file-handler @var{file-handler}
 If @var{file-handler} is non-@code{nil}, then look for a file name
 handler for the current buffer's @code{default-directory}, and invoke
@@ -1880,6 +1893,19 @@ like this:
 
 @example
 (while (accept-process-output process))
+@end example
+
+If you have passed a non-@code{nil} @var{stderr} to
+@code{make-process}, it will have a standard error process.
+@xref{Asynchronous Processes}.  In that case, waiting for process
+output from the main process doesn't wait for output from the standard
+error process.  To make sure you have received both all of standard
+output and all of standard error from a process, use the following
+code:
+
+@example
+(while (accept-process-output process))
+(while (accept-process-output stderr-process))
 @end example
 
 @node Processes and Threads
