@@ -1575,6 +1575,11 @@ performs '(setq-local indent-line-function #'indent-relative)'.
 ** 'make-process' no longer accepts a non-nil ':stop' key.  This has
 never worked reliably, and now causes an error.
 
++++
+** 'eventp' no longer returns non-nil for lists whose car is nil.
+This is consistent with the fact that nil, though a symbol, is not a
+valid event type.
+
 
 * Lisp Changes in Emacs 27.1
 

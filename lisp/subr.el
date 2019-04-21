@@ -1238,12 +1238,14 @@ The normal global definition of the character C-x indirects to this keymap.")
 			  c)))
 	    key)))
 
-(defun eventp (obj)
-  "True if the argument is an event object."
-  (when obj
-    (or (integerp obj)
-        (and (symbolp obj) obj (not (keywordp obj)))
-        (and (consp obj) (symbolp (car obj))))))
+(defun eventp (object)
+  "Return non-nil if OBJECT is an input event or event object."
+  (or (integerp object)
+      (and (if (consp object)
+               (setq object (car object))
+             object)
+           (symbolp object)
+           (not (keywordp object)))))
 
 (defun event-modifiers (event)
   "Return a list of symbols representing the modifier keys in event EVENT.
