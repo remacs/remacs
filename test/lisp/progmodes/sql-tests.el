@@ -270,5 +270,39 @@ Perform ACTION and validate results"
   (sql-test-product-feature-harness
       (should-not (sql-get-product-feature 'd :Z))))
 
+;;; SQL Oracle SCAN/DEFINE
+(ert-deftest sql-tests-placeholder-filter ()
+  "Test that placeholder relacement is as expected."
+    (let ((syntab (syntax-table))
+          (sql-oracle-scan-on t)
+          (placeholder-value ""))
+      (set-syntax-table sql-mode-syntax-table)
+
+      (cl-letf
+          (((symbol-function 'read-from-minibuffer)
+            (lambda (&rest _) placeholder-value)))
+
+        (setq placeholder-value "XX")
+        (should (equal
+                 (sql-placeholders-filter "select '&x' from dual;")
+                 "select 'XX' from dual;"))
+
+        (setq placeholder-value "&Y")
+        (should (equal
+                 (sql-placeholders-filter "select '&x' from dual;")
+                 "select '&Y' from dual;"))
+        (should (equal
+                 (sql-placeholders-filter "select '&x' from dual;")
+                 "select '&Y' from dual;"))
+        (should (equal
+                 (sql-placeholders-filter "select '&x.' from dual;")
+                 "select '&Y' from dual;"))
+        (should (equal
+                 (sql-placeholders-filter "select '&x.y' from dual;")
+                 "select '&Yy' from dual;")))
+
+      (set-syntax-table syntab)))
+
+
 (provide 'sql-tests)
 ;;; sql-tests.el ends here

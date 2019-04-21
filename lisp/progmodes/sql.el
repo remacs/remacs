@@ -223,6 +223,7 @@
 ;; Simen Heggestøyl <simenheg@gmail.com> -- Postgres database completion
 ;; Robert Cochran <robert-emacs@cochranmail.com> -- MariaDB support
 ;; Alex Harsanyi <alexharsanyi@gmail.com> -- sql-indent package and support
+;; Roy Mathew <rmathew8@gmail.com> -- bug in `sql-send-string'
 ;;
 
 
@@ -477,7 +478,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :prompt-cont-regexp "^\\(?:[ ][ ][1-9]\\|[ ][1-9][0-9]\\|[1-9][0-9]\\{2\\}\\)[ ]\\{2\\}"
      :statement sql-oracle-statement-starters
      :syntax-alist ((?$ . "_") (?# . "_"))
-     :terminator ("\\(^/\\|;\\)$" . "/")
+     :terminator ("\\(^/\\|;\\)" . "/")
      :input-filter sql-placeholders-filter)
 
     (postgres
@@ -495,7 +496,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :prompt-length 5
      :prompt-cont-regexp "^[[:alnum:]_]*[-(][#>] "
      :input-filter sql-remove-tabs-filter
-     :terminator ("\\(^\\s-*\\\\g$\\|;\\)" . "\\g"))
+     :terminator ("\\(^\\s-*\\\\g\\|;\\)" . "\\g"))
 
     (solid
      :name "Solid"
@@ -520,8 +521,7 @@ file.  Since that is a plaintext file, this could be dangerous."
      :completion-object sql-sqlite-completion-object
      :prompt-regexp "^sqlite> "
      :prompt-length 8
-     :prompt-cont-regexp "^   \\.\\.\\.> "
-     :terminator ";")
+     :prompt-cont-regexp "^   \\.\\.\\.> ")
 
     (sybase
      :name "Sybase"
@@ -3640,12 +3640,16 @@ Inserts SELECT or commas if appropriate."
 Placeholders are words starting with an ampersand like &this."
 
   (when sql-oracle-scan-on
-    (while (string-match "&?&\\(\\(?:\\sw\\|\\s_\\)+\\)[.]?" string)
-      (setq string (replace-match
-		    (read-from-minibuffer
-		     (format "Enter value for %s: " (match-string 1 string))
-		     nil nil nil 'sql-placeholder-history)
-		    t t string))))
+    (let ((start 0)
+          (replacement ""))
+      (while (string-match "&?&\\(\\(?:\\sw\\|\\s_\\)+\\)[.]?" string start)
+        (setq replacement (read-from-minibuffer
+		           (format "Enter value for %s: "
+                                   (propertize (match-string 1 string)
+                                               'face 'font-lock-variable-name-face))
+		           nil nil nil 'sql-placeholder-history)
+              string (replace-match replacement t t string)
+              start (+ (match-beginning 1) (length replacement))))))
   string)
 
 ;; Using DB2 interactively, newlines must be escaped with " \".
@@ -3794,6 +3798,8 @@ to avoid deleting non-prompt output."
   oline)
 
 ;;; Sending the region to the SQLi buffer.
+(defvar sql-debug-send nil
+  "Display text sent to SQL process pragmatically.")
 
 (defun sql-send-string (str)
   "Send the string STR to the SQL process."
@@ -3807,12 +3813,14 @@ to avoid deleting non-prompt output."
 	  (save-excursion
 	    ;; Set product context
 	    (with-current-buffer sql-buffer
+              (when sql-debug-send
+                (message ">>SQL> %S" s))
+
 	      ;; Send the string (trim the trailing whitespace)
-	      (sql-input-sender (get-buffer-process sql-buffer) s)
+	      (sql-input-sender (get-buffer-process (current-buffer)) s)
 
 	      ;; Send a command terminator if we must
-	      (when sql-send-terminator
-		(sql-send-magic-terminator sql-buffer s sql-send-terminator))
+	      (sql-send-magic-terminator sql-buffer s sql-send-terminator)
 
               (when sql-pop-to-buffer-after-send-region
 	        (message "Sent string to buffer %s" sql-buffer))))
@@ -3874,12 +3882,8 @@ to avoid deleting non-prompt output."
 
     ;; Check to see if the pattern is present in the str already sent
     (unless (and pat term
-		 (string-match (concat pat "\\'") str))
-      (comint-simple-send (get-buffer-process buf) term)
-      (setq sql-output-newline-count
-            (if sql-output-newline-count
-                (1+ sql-output-newline-count)
-              1)))))
+		 (string-match-p (concat pat "\\'") str))
+      (sql-input-sender (get-buffer-process buf) term))))
 
 (defun sql-remove-tabs-filter (str)
   "Replace tab characters with spaces."
