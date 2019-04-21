@@ -249,10 +249,10 @@ And that's what I think too.
 @end menu
 
 Note that multiple inclusions of the original messages result in a
-nesting of the @samp{@code{>}} characters.  This can sometimes be quite
+nesting of the @samp{>} characters.  This can sometimes be quite
 confusing when many levels of citations are included since it may be
 difficult or impossible to figure out who actually participated in the
-thread, and multiple nesting of @samp{@code{>}} characters can sometimes
+thread, and multiple nesting of @samp{>} characters can sometimes
 make the message very difficult for the eye to scan.
 
 @cindex non-nested citations

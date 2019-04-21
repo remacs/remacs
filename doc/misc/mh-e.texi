@@ -6294,24 +6294,24 @@ Emacs navigational keys (like the arrow keys, or @kbd{C-n}) to move
 the cursor over the desired folder and then use the shortcuts for the
 menu items listed in the table below.
 
-@table @samp
+@table @asis
 @findex mh-speed-view
-@item Visit Folder (@key{RET})
+@item @samp{Visit Folder} (@key{RET})
 Visits the selected folder just as if you had used @kbd{F v}
 (@code{mh-speed-view}).
 @c -------------------------
 @findex mh-speed-expand-folder
-@item Expand Nested Folders (@kbd{+})
+@item @samp{Expand Nested Folders} (@kbd{+})
 Expands the selected folder in the speedbar, exposing the children
 folders inside it (@code{mh-speed-expand-folder}).
 @c -------------------------
 @findex mh-speed-contract-folder
-@item Contract Nested Folders (@kbd{-})
+@item @samp{Contract Nested Folders} (@kbd{-})
 Contracts or collapses the selected folder in the speedbar, hiding the
 children folders inside it (@code{mh-speed-contract-folder}).
 @c -------------------------
 @findex mh-speed-refresh
-@item Refresh Speedbar (@kbd{r})
+@item @samp{Refresh Speedbar} (@kbd{r})
 Regenerates the list of folders in the speedbar. Run this command if
 you've added or deleted a folder, or want to update the unseen message
 count before the next automatic update (@code{mh-speed-refresh}).
