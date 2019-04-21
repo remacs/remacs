@@ -14661,7 +14661,7 @@ conventions of Yacas, a free computer algebra system.  While the
 operators and functions in Yacas are similar to those of Calc, the names
 of built-in functions in Yacas are capitalized.  The Calc formula
 @samp{sin(2 x)}, for example, is entered and displayed @samp{Sin(2 x)}
-in Yacas mode,  and `@samp{arcsin(x^2)} is @samp{ArcSin(x^2)} in Yacas
+in Yacas mode,  and @samp{arcsin(x^2)} is @samp{ArcSin(x^2)} in Yacas
 mode.  Complex numbers are written  are written @samp{3 + 4 I}.
 The standard special constants are written @code{Pi}, @code{E},
 @code{I}, @code{GoldenRatio} and @code{Gamma}.  @code{Infinity}
