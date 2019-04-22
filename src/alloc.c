@@ -151,9 +151,7 @@ malloc_initialize_hook (void)
 
       if (malloc_set_state (malloc_state_ptr) != 0)
 	emacs_abort ();
-# ifndef XMALLOC_OVERRUN_CHECK
       alloc_unexec_post ();
-# endif
     }
 }
 
@@ -650,171 +648,6 @@ verify (LISP_ALIGNMENT % GCALIGNMENT == 0);
    the malloc alignment is only 8, and where Emacs still works because
    it never does anything that requires an alignment of 16.  */
 enum { MALLOC_IS_LISP_ALIGNED = alignof (max_align_t) % LISP_ALIGNMENT == 0 };
-
-#ifndef XMALLOC_OVERRUN_CHECK
-#define XMALLOC_OVERRUN_CHECK_OVERHEAD 0
-#else
-
-/* Check for overrun in malloc'ed buffers by wrapping a header and trailer
-   around each block.
-
-   The header consists of XMALLOC_OVERRUN_CHECK_SIZE fixed bytes
-   followed by XMALLOC_OVERRUN_SIZE_SIZE bytes containing the original
-   block size in little-endian order.  The trailer consists of
-   XMALLOC_OVERRUN_CHECK_SIZE fixed bytes.
-
-   The header is used to detect whether this block has been allocated
-   through these functions, as some low-level libc functions may
-   bypass the malloc hooks.  */
-
-#define XMALLOC_OVERRUN_CHECK_SIZE 16
-#define XMALLOC_OVERRUN_CHECK_OVERHEAD \
-  (2 * XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE)
-
-/* Define XMALLOC_OVERRUN_SIZE_SIZE so that (1) it's large enough to
-   hold a size_t value and (2) the header size is a multiple of the
-   alignment that Emacs needs for C types and for USE_LSB_TAG.  */
-#define XMALLOC_OVERRUN_SIZE_SIZE				\
-   (((XMALLOC_OVERRUN_CHECK_SIZE + sizeof (size_t)		\
-      + LISP_ALIGNMENT - 1)					\
-     / LISP_ALIGNMENT * LISP_ALIGNMENT)				\
-    - XMALLOC_OVERRUN_CHECK_SIZE)
-
-static char const xmalloc_overrun_check_header[XMALLOC_OVERRUN_CHECK_SIZE] =
-  { '\x9a', '\x9b', '\xae', '\xaf',
-    '\xbf', '\xbe', '\xce', '\xcf',
-    '\xea', '\xeb', '\xec', '\xed',
-    '\xdf', '\xde', '\x9c', '\x9d' };
-
-static char const xmalloc_overrun_check_trailer[XMALLOC_OVERRUN_CHECK_SIZE] =
-  { '\xaa', '\xab', '\xac', '\xad',
-    '\xba', '\xbb', '\xbc', '\xbd',
-    '\xca', '\xcb', '\xcc', '\xcd',
-    '\xda', '\xdb', '\xdc', '\xdd' };
-
-/* Insert and extract the block size in the header.  */
-
-static void
-xmalloc_put_size (unsigned char *ptr, size_t size)
-{
-  int i;
-  for (i = 0; i < XMALLOC_OVERRUN_SIZE_SIZE; i++)
-    {
-      *--ptr = size & ((1 << CHAR_BIT) - 1);
-      size >>= CHAR_BIT;
-    }
-}
-
-static size_t
-xmalloc_get_size (unsigned char *ptr)
-{
-  size_t size = 0;
-  int i;
-  ptr -= XMALLOC_OVERRUN_SIZE_SIZE;
-  for (i = 0; i < XMALLOC_OVERRUN_SIZE_SIZE; i++)
-    {
-      size <<= CHAR_BIT;
-      size += *ptr++;
-    }
-  return size;
-}
-
-
-/* Like malloc, but wraps allocated block with header and trailer.  */
-
-static void *
-overrun_check_malloc (size_t size)
-{
-  register unsigned char *val;
-  if (SIZE_MAX - XMALLOC_OVERRUN_CHECK_OVERHEAD < size)
-    emacs_abort ();
-
-  val = malloc (size + XMALLOC_OVERRUN_CHECK_OVERHEAD);
-  if (val)
-    {
-      memcpy (val, xmalloc_overrun_check_header, XMALLOC_OVERRUN_CHECK_SIZE);
-      val += XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
-      xmalloc_put_size (val, size);
-      memcpy (val + size, xmalloc_overrun_check_trailer,
-	      XMALLOC_OVERRUN_CHECK_SIZE);
-    }
-  return val;
-}
-
-
-/* Like realloc, but checks old block for overrun, and wraps new block
-   with header and trailer.  */
-
-static void *
-overrun_check_realloc (void *block, size_t size)
-{
-  register unsigned char *val = (unsigned char *) block;
-  if (SIZE_MAX - XMALLOC_OVERRUN_CHECK_OVERHEAD < size)
-    emacs_abort ();
-
-  if (val
-      && memcmp (xmalloc_overrun_check_header,
-		 val - XMALLOC_OVERRUN_CHECK_SIZE - XMALLOC_OVERRUN_SIZE_SIZE,
-		 XMALLOC_OVERRUN_CHECK_SIZE) == 0)
-    {
-      size_t osize = xmalloc_get_size (val);
-      if (memcmp (xmalloc_overrun_check_trailer, val + osize,
-		  XMALLOC_OVERRUN_CHECK_SIZE))
-	emacs_abort ();
-      memset (val + osize, 0, XMALLOC_OVERRUN_CHECK_SIZE);
-      val -= XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
-      memset (val, 0, XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE);
-    }
-
-  val = realloc (val, size + XMALLOC_OVERRUN_CHECK_OVERHEAD);
-
-  if (val)
-    {
-      memcpy (val, xmalloc_overrun_check_header, XMALLOC_OVERRUN_CHECK_SIZE);
-      val += XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
-      xmalloc_put_size (val, size);
-      memcpy (val + size, xmalloc_overrun_check_trailer,
-	      XMALLOC_OVERRUN_CHECK_SIZE);
-    }
-  return val;
-}
-
-/* Like free, but checks block for overrun.  */
-
-static void
-overrun_check_free (void *block)
-{
-  unsigned char *val = (unsigned char *) block;
-
-  if (val
-      && memcmp (xmalloc_overrun_check_header,
-		 val - XMALLOC_OVERRUN_CHECK_SIZE - XMALLOC_OVERRUN_SIZE_SIZE,
-		 XMALLOC_OVERRUN_CHECK_SIZE) == 0)
-    {
-      size_t osize = xmalloc_get_size (val);
-      if (memcmp (xmalloc_overrun_check_trailer, val + osize,
-		  XMALLOC_OVERRUN_CHECK_SIZE))
-	emacs_abort ();
-#ifdef XMALLOC_CLEAR_FREE_MEMORY
-      val -= XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
-      memset (val, 0xff, osize + XMALLOC_OVERRUN_CHECK_OVERHEAD);
-#else
-      memset (val + osize, 0, XMALLOC_OVERRUN_CHECK_SIZE);
-      val -= XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE;
-      memset (val, 0, XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE);
-#endif
-    }
-
-  free (val);
-}
-
-#undef malloc
-#undef realloc
-#undef free
-#define malloc overrun_check_malloc
-#define realloc overrun_check_realloc
-#define free overrun_check_free
-#endif
 
 /* If compiled with XMALLOC_BLOCK_INPUT_CHECK, define a symbol
    BLOCK_INPUT_IN_MEMORY_ALLOCATORS that is visible to the debugger.
@@ -1790,7 +1623,7 @@ static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
    calculating a value to be passed to malloc.  */
 static ptrdiff_t const STRING_BYTES_MAX =
   min (STRING_BYTES_BOUND,
-       ((SIZE_MAX - XMALLOC_OVERRUN_CHECK_OVERHEAD
+       ((SIZE_MAX
 	 - GC_STRING_EXTRA
 	 - offsetof (struct sblock, data)
 	 - SDATA_DATA_OFFSET)
