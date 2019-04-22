@@ -3167,7 +3167,7 @@ dump_charset (struct dump_context *ctx, int cs_i)
 #if CHECK_STRUCTS && !defined (HASH_charset_317C49E291)
 # error "charset changed. See CHECK_STRUCTS comment."
 #endif
-  dump_align_output (ctx, alignof (int));
+  dump_align_output (ctx, alignof (struct charset));
   const struct charset *cs = charset_table + cs_i;
   struct charset out;
   dump_object_start (ctx, &out, sizeof (out));
@@ -3816,7 +3816,8 @@ drain_reloc_list (struct dump_context *ctx,
   Lisp_Object relocs = Fsort (Fnreverse (*reloc_list),
                               Qdump_emacs_portable__sort_predicate);
   *reloc_list = Qnil;
-  dump_align_output (ctx, sizeof (dump_off));
+  dump_align_output (ctx, max (alignof (struct dump_reloc),
+			       alignof (struct emacs_reloc)));
   struct dump_table_locator locator;
   memset (&locator, 0, sizeof (locator));
   locator.offset = ctx->offset;
