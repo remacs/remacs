@@ -558,15 +558,11 @@ PNTR_ADD (char *p, EMACS_UINT i)
 		 - ((EMACS_UINT) Lisp_Symbol << (USE_LSB_TAG ? 0 : VALBITS)))) \
     : (char *) XLP (o) - (XLI (o) & ~VALMASK)))
 
-static ATTRIBUTE_UNUSED void *
+static ATTRIBUTE_NO_SANITIZE_UNDEFINED void *
 XPNTR (Lisp_Object a)
 {
   return macro_XPNTR (a);
 }
-
-#if DEFINE_KEY_OPS_AS_MACROS
-# define XPNTR(a) macro_XPNTR (a)
-#endif
 
 static void
 XFLOAT_INIT (Lisp_Object f, double n)

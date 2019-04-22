@@ -421,19 +421,6 @@ typedef EMACS_INT Lisp_Word;
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
 # define lisp_h_XFIXNAT(a) XFIXNUM (a)
 # define lisp_h_XFIXNUM(a) (XLI (a) >> INTTYPEBITS)
-# ifdef __CHKP__
-#  define lisp_h_XSYMBOL(a) \
-    (eassert (SYMBOLP (a)), \
-     (struct Lisp_Symbol *) ((char *) XUNTAG (a, Lisp_Symbol, \
-					      struct Lisp_Symbol) \
-			     + (intptr_t) lispsym))
-# else
-   /* If !__CHKP__ this is equivalent, and is a bit faster as of GCC 7.  */
-#  define lisp_h_XSYMBOL(a) \
-    (eassert (SYMBOLP (a)), \
-     (struct Lisp_Symbol *) ((intptr_t) XLI (a) - Lisp_Symbol \
-			     + (char *) lispsym))
-# endif
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
 #endif
 
@@ -479,7 +466,6 @@ typedef EMACS_INT Lisp_Word;
 #  define make_fixnum(n) lisp_h_make_fixnum (n)
 #  define XFIXNAT(a) lisp_h_XFIXNAT (a)
 #  define XFIXNUM(a) lisp_h_XFIXNUM (a)
-#  define XSYMBOL(a) lisp_h_XSYMBOL (a)
 #  define XTYPE(a) lisp_h_XTYPE (a)
 # endif
 #endif
@@ -1023,21 +1009,17 @@ INLINE bool
 }
 
 INLINE struct Lisp_Symbol * ATTRIBUTE_NO_SANITIZE_UNDEFINED
-(XSYMBOL) (Lisp_Object a)
+XSYMBOL (Lisp_Object a)
 {
-#if USE_LSB_TAG
-  return lisp_h_XSYMBOL (a);
-#else
   eassert (SYMBOLP (a));
   intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol, struct Lisp_Symbol);
   void *p = (char *) lispsym + i;
-# ifdef __CHKP__
+#ifdef __CHKP__
   /* Bypass pointer checking.  Although this could be improved it is
      probably not worth the trouble.  */
   p = __builtin___bnd_set_ptr_bounds (p, sizeof (struct Lisp_Symbol));
-# endif
-  return p;
 #endif
+  return p;
 }
 
 INLINE Lisp_Object
