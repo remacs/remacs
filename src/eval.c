@@ -501,7 +501,7 @@ usage: (setq [SYM VAL]...)  */)
 
   for (EMACS_INT nargs = 0; CONSP (tail); nargs += 2)
     {
-      Lisp_Object sym = XCAR (tail), lex_binding;
+      Lisp_Object sym = XCAR (tail);
       tail = XCDR (tail);
       if (!CONSP (tail))
 	xsignal2 (Qwrong_number_of_arguments, Qsetq, make_fixnum (nargs + 1));
@@ -510,10 +510,12 @@ usage: (setq [SYM VAL]...)  */)
       val = eval_sub (arg);
       /* Like for eval_sub, we do not check declared_special here since
 	 it's been done when let-binding.  */
-      if (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	  && SYMBOLP (sym)
-	  && !NILP (lex_binding
-		    = Fassq (sym, Vinternal_interpreter_environment)))
+      Lisp_Object lex_binding
+	= ((!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
+	    && SYMBOLP (sym))
+	   ? assq_no_quit (sym, Vinternal_interpreter_environment)
+	   : Qnil);
+      if (!NILP (lex_binding))
 	XSETCDR (lex_binding, val); /* SYM is lexically bound.  */
       else
 	Fset (sym, val);	/* SYM is dynamically bound.  */
@@ -2159,9 +2161,9 @@ eval_sub (Lisp_Object form)
 	 We do not pay attention to the declared_special flag here, since we
 	 already did that when let-binding the variable.  */
       Lisp_Object lex_binding
-	= !NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	? Fassq (form, Vinternal_interpreter_environment)
-	: Qnil;
+	= (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
+	   ? assq_no_quit (form, Vinternal_interpreter_environment)
+	   : Qnil);
       return !NILP (lex_binding) ? XCDR (lex_binding) : Fsymbol_value (form);
     }
 
