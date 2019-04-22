@@ -224,26 +224,19 @@ static bool module_assertions = false;
    not prepared for long jumps (e.g., the behavior in C++ is undefined
    if objects with nontrivial destructors would be skipped).
    Therefore, catch all non-local exits.  There are two kinds of
-   non-local exits: `signal' and `throw'.  The macros in this section
-   can be used to catch both.  Use macros to avoid additional variants
+   non-local exits: `signal' and `throw'.  The macro in this section
+   can be used to catch both.  Use a macro to avoid additional variants
    of `internal_condition_case' etc., and to avoid worrying about
    passing information to the handler functions.  */
+
+#if !__has_attribute (cleanup)
+ #error "__attribute__ ((cleanup)) not supported by this compiler; try GCC"
+#endif
 
 /* Place this macro at the beginning of a function returning a number
    or a pointer to handle non-local exits.  The function must have an
    ENV parameter.  The function will return the specified value if a
    signal or throw is caught.  */
-#define MODULE_HANDLE_NONLOCAL_EXIT(retval)                     \
-  MODULE_SETJMP (CATCHER_ALL, module_handle_nonlocal_exit, retval)
-
-#define MODULE_SETJMP(handlertype, handlerfunc, retval)			       \
-  MODULE_SETJMP_1 (handlertype, handlerfunc, retval,			       \
-		   internal_handler_##handlertype,			       \
-		   internal_cleanup_##handlertype)
-
-#if !__has_attribute (cleanup)
- #error "__attribute__ ((cleanup)) not supported by this compiler; try GCC"
-#endif
 
 /* It is very important that pushing the handler doesn't itself raise
    a signal.  Install the cleanup only after the handler has been
@@ -253,24 +246,28 @@ static bool module_assertions = false;
    The do-while forces uses of the macro to be followed by a semicolon.
    This macro cannot enclose its entire body inside a do-while, as the
    code after the macro may longjmp back into the macro, which means
-   its local variable C must stay live in later code.  */
+   its local variable INTERNAL_CLEANUP must stay live in later code.  */
 
-/* TODO: Make backtraces work if this macros is used.  */
+/* TODO: Make backtraces work if this macro is used.  */
 
-#define MODULE_SETJMP_1(handlertype, handlerfunc, retval, c0, c)	\
+#define MODULE_HANDLE_NONLOCAL_EXIT(retval)                             \
   if (module_non_local_exit_check (env) != emacs_funcall_exit_return)	\
     return retval;							\
-  struct handler *c0 = push_handler_nosignal (Qt, handlertype);		\
-  if (!c0)								\
+  struct handler *internal_handler =                                    \
+    push_handler_nosignal (Qt, CATCHER_ALL);                            \
+  if (!internal_handler)                                                \
     {									\
       module_out_of_memory (env);					\
       return retval;							\
     }									\
-  struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
-    = c0;								\
-  if (sys_setjmp (c->jmp))						\
+  struct handler *internal_cleanup                                      \
+    __attribute__ ((cleanup (module_reset_handlerlist)))                \
+    = internal_handler;                                                 \
+  if (sys_setjmp (internal_cleanup->jmp))                               \
     {									\
-      (handlerfunc) (env, c->nonlocal_exit, c->val);                    \
+      module_handle_nonlocal_exit (env,                                 \
+                                   internal_cleanup->nonlocal_exit,     \
+                                   internal_cleanup->val);              \
       return retval;							\
     }									\
   do { } while (false)
