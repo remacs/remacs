@@ -1697,16 +1697,7 @@ window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
 	        a frame, just look at windows on that frame.
    If MINI, perform the operation on minibuffer windows too.  */
 
-enum window_loop
-{
-  WINDOW_LOOP_UNUSED,
-  GET_BUFFER_WINDOW,		    /* Arg is buffer */
-  REPLACE_BUFFER_IN_WINDOWS_SAFELY, /* Arg is buffer */
-  REDISPLAY_BUFFER_WINDOWS,	    /* Arg is buffer */
-  CHECK_ALL_WINDOWS                 /* Arg is ignored */
-};
-
-static Lisp_Object
+Lisp_Object
 window_loop (enum window_loop type, Lisp_Object obj, bool mini,
 	     Lisp_Object frames)
 {
@@ -1850,40 +1841,6 @@ check_all_windows (void)
 {
   window_loop (CHECK_ALL_WINDOWS, Qnil, true, Qt);
 }
-
-DEFUN ("get-buffer-window", Fget_buffer_window, Sget_buffer_window, 0, 2, 0,
-       doc: /* Return a window currently displaying BUFFER-OR-NAME, or nil if none.
-BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
-the current buffer.
-
-The optional argument ALL-FRAMES specifies the frames to consider:
-
-- t means consider all windows on all existing frames.
-
-- `visible' means consider all windows on all visible frames.
-
-- 0 (the number zero) means consider all windows on all visible
-    and iconified frames.
-
-- A frame means consider all windows on that frame only.
-
-Any other value of ALL-FRAMES means consider all windows on the
-selected frame and no others.  */)
-     (Lisp_Object buffer_or_name, Lisp_Object all_frames)
-{
-  Lisp_Object buffer;
-
-  if (NILP (buffer_or_name))
-    buffer = Fcurrent_buffer ();
-  else
-    buffer = Fget_buffer (buffer_or_name);
-
-  if (BUFFERP (buffer))
-    return window_loop (GET_BUFFER_WINDOW, buffer, true, all_frames);
-  else
-    return Qnil;
-}
-
 
 static Lisp_Object
 resize_root_window (Lisp_Object window, Lisp_Object delta,
@@ -6218,7 +6175,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_end);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
-  defsubr (&Sget_buffer_window);
   defsubr (&Sdelete_other_windows_internal);
   defsubr (&Sdelete_window_internal);
   defsubr (&Sresize_mini_window_internal);

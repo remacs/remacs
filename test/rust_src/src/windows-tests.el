@@ -189,3 +189,14 @@
 ;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
 (ert-deftest window-pixel-height-before-size-change ()
   (window-pixel-height-before-size-change))
+
+(ert-deftest test-get-buffer-window ()
+  (let ((buf (get-buffer-create "test-get-buffer-window")))
+    (should-not (eq (get-buffer-window buf) (selected-window)))
+    (set-window-buffer (selected-window) buf)
+    (should (eq (get-buffer-window buf) (selected-window)))
+    (should (eq (get-buffer-window "test-get-buffer-window") (selected-window)))
+    (should (eq (get-buffer-window "dummy") nil))
+    (with-current-buffer buf
+      (should (eq (get-buffer-window) (selected-window))))
+    (kill-buffer buf)))

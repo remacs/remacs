@@ -7,7 +7,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::{set_buffer, LispBufferRef},
+    buffers::{set_buffer, Fget_buffer, LispBufferRef},
     editfns::{goto_char, point},
     eval::unbind_to,
     fns::{copy_alist, nreverse},
@@ -25,10 +25,12 @@ use crate::{
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
-        windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_list_1, window_loop as window_loop_func, window_menu_bar_p,
+        window_scroll, window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
     },
-    remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
+    remacs_sys::{
+        face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type, window_loop,
+    },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
@@ -1988,6 +1990,38 @@ pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) 
 pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
     let window: LispWindowRef = window.into();
     window.pixel_height_before_size_change
+}
+
+/// Return a window currently displaying BUFFER-OR-NAME, or nil if none.
+/// BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
+/// the current buffer.
+///
+/// The optional argument ALL-FRAMES specifies the frames to consider:
+///
+/// - t means consider all windows on all existing frames.
+///
+/// - `visible' means consider all windows on all visible frames.
+///
+/// - 0 (the number zero) means consider all windows on all visible
+///     and iconified frames.
+///
+/// - A frame means consider all windows on that frame only.
+///
+/// Any other value of ALL-FRAMES means consider all windows on the
+/// selected frame and no others.
+#[lisp_fn(min = "0")]
+pub fn get_buffer_window(buffer_or_name: LispObject, all_frames: LispObject) -> LispObject {
+    let buffer: Option<LispBufferRef> = if buffer_or_name.is_nil() {
+        Some(ThreadState::current_buffer_unchecked())
+    } else {
+        Fget_buffer(buffer_or_name).as_buffer()
+    };
+
+    if let Some(b) = buffer {
+        unsafe { window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames) }
+    } else {
+        Qnil
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
