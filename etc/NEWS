@@ -93,7 +93,8 @@ change to one of the data structures that it relies on.
 ** The configure options '--enable-checking=conslist' and
 '--enable-checking=xmallocoverrun' have been withdrawn.  The former
 made Emacs irredeemably slow, and the latter made it crash.  Neither
-option was useful with modern debugging tools.
+option was useful with modern debugging tools such as AddressSanitizer
+(see etc/DEBUG).
 
 ---
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
