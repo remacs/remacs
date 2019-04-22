@@ -2640,6 +2640,13 @@ make_uint (uintmax_t n)
 #define INT_TO_INTEGER(expr) \
   (EXPR_SIGNED (expr) ? make_int (expr) : make_uint (expr))
 
+/* Return the integral value of NUM.  If NUM is too big for TYPE,
+   signal an error.  */
+#define INTEGER_TO_INT(num, type)                                              \
+  (TYPE_SIGNED (type)                                                          \
+     ? ranged_integer_to_int ((num), TYPE_MINIMUM (type), TYPE_MAXIMUM (type)) \
+     : ranged_integer_to_uint ((num), TYPE_MINIMUM (type)))
+
 
 /* Forwarding pointer to an int variable.
    This is allowed only in the value cell of a symbol,
@@ -5014,6 +5021,26 @@ maybe_gc (void)
       || (!NILP (Vmemory_full)
 	  && consing_since_gc > memory_full_cons_threshold))
     garbage_collect ();
+}
+
+INLINE intmax_t
+ranged_integer_to_int (Lisp_Object num, intmax_t min, intmax_t max)
+{
+  CHECK_INTEGER (num);
+  intmax_t result;
+  if (!(integer_to_intmax (num, &result) && min <= result && result <= max))
+    args_out_of_range_3 (num, make_int (min), make_int (max));
+  return result;
+}
+
+INLINE uintmax_t
+ranged_integer_to_uint (Lisp_Object num, uintmax_t max)
+{
+  CHECK_INTEGER (num);
+  uintmax_t result;
+  if (!(integer_to_uintmax (num, &result) && result <= max))
+    args_out_of_range_3 (num, make_fixed_natnum (0), make_uint (max));
+  return result;
 }
 
 INLINE_HEADER_END
