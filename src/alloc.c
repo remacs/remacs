@@ -528,40 +528,14 @@ pointer_align (void *ptr, int alignment)
   return (void *) ROUNDUP ((uintptr_t) ptr, alignment);
 }
 
-/* Define PNTR_ADD and XPNTR as functions, which are cleaner and can
-   be used in debuggers.  Also, define them as macros if
-   DEFINE_KEY_OPS_AS_MACROS, for performance in that case.
-   The macro_* macros are private to this section of code.  */
-
-/* Add a pointer P to an integer I without gcc -fsanitize complaining
-   about the result being out of range of the underlying array.  */
-
-#define macro_PNTR_ADD(p, i) ((p) + (i))
-
-static ATTRIBUTE_NO_SANITIZE_UNDEFINED ATTRIBUTE_UNUSED char *
-PNTR_ADD (char *p, EMACS_UINT i)
-{
-  return macro_PNTR_ADD (p, i);
-}
-
-#if DEFINE_KEY_OPS_AS_MACROS
-# define PNTR_ADD(p, i) macro_PNTR_ADD (p, i)
-#endif
-
 /* Extract the pointer hidden within O.  */
-
-#define macro_XPNTR(o)                                                 \
-  ((void *) \
-   (SYMBOLP (o)							       \
-    ? PNTR_ADD ((char *) lispsym,				       \
-		(XLI (o)						\
-		 - ((EMACS_UINT) Lisp_Symbol << (USE_LSB_TAG ? 0 : VALBITS)))) \
-    : (char *) XLP (o) - (XLI (o) & ~VALMASK)))
 
 static ATTRIBUTE_NO_SANITIZE_UNDEFINED void *
 XPNTR (Lisp_Object a)
 {
-  return macro_XPNTR (a);
+  return (SYMBOLP (a)
+	  ? (char *) lispsym + (XLI (a) - LISP_WORD_TAG (Lisp_Symbol))
+	  : (char *) XLP (a) - (XLI (a) & ~VALMASK));
 }
 
 static void
