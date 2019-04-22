@@ -21,12 +21,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <stdbool.h>
 
-#ifndef __has_attribute
-# define __has_attribute(a) false
-#endif
-
-#if __has_attribute (__warn_unused_result__)
-# define ATTRIBUTE_WARN_UNUSED_RESULT __attribute__ ((__warn_unused_result__))
+#if __has_attribute (warn_unused_result)
+# define ATTRIBUTE_WARN_UNUSED_RESULT __attribute__ ((warn_unused_result))
 #else
 # define ATTRIBUTE_WARN_UNUSED_RESULT
 #endif

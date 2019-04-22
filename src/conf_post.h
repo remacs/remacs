@@ -78,6 +78,7 @@ typedef bool bool_bf;
 # define __has_attribute_no_address_safety_analysis false
 # define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
 # define __has_attribute_no_sanitize_undefined GNUC_PREREQ (4, 9, 0)
+# define __has_attribute_warn_unused_result GNUC_PREREQ (3, 4, 0)
 #endif
 
 /* Simulate __has_feature on compilers that lack it.  It is used only
