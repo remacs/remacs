@@ -1,4 +1,4 @@
-static struct
+typedef struct
 {
   /* The current charset for which the following tables are setup.  */
   struct charset *current;
@@ -28,7 +28,9 @@ static struct
        uses both SMP and SIP.  */
     unsigned short encoder[0x20000];
   } table;
-} *temp_charset_work;
+} TempCharsetWork;
+
+TempCharsetWork *temp_charset_work;
 
 #define SET_TEMP_CHARSET_WORK_ENCODER(C, CODE)			\
   do {								\
