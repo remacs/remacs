@@ -499,18 +499,16 @@ will use an up-to-date value of `auto-revert-interval'"
 
 (defun auto-revert-notify-rm-watch ()
   "Disable file notification for current buffer's associated file."
-  (when auto-revert-notify-watch-descriptor
-    (maphash
-     (lambda (key value)
-       (when (equal key auto-revert-notify-watch-descriptor)
-	 (setq value (delete (current-buffer) value))
-	 (if value
-	     (puthash key value auto-revert-notify-watch-descriptor-hash-list)
-	   (remhash key auto-revert-notify-watch-descriptor-hash-list)
-	   (ignore-errors
-	     (file-notify-rm-watch auto-revert-notify-watch-descriptor)))))
-     auto-revert-notify-watch-descriptor-hash-list)
-    (remove-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch t))
+  (let ((desc auto-revert-notify-watch-descriptor)
+        (table auto-revert-notify-watch-descriptor-hash-list))
+    (when desc
+      (let ((buffers (delq (current-buffer) (gethash desc table))))
+        (if buffers
+            (puthash desc buffers table)
+          (remhash desc table)))
+      (ignore-errors
+	(file-notify-rm-watch desc))
+      (remove-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch t)))
   (setq auto-revert-notify-watch-descriptor nil
 	auto-revert-notify-modified-p nil))
 
