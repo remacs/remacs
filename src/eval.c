@@ -2210,8 +2210,6 @@ eval_sub (Lisp_Object form)
       Lisp_Object args_left = original_args;
       ptrdiff_t numargs = list_length (args_left);
 
-      check_cons_list ();
-
       if (numargs < XSUBR (fun)->min_args
 	  || (XSUBR (fun)->max_args >= 0
 	      && XSUBR (fun)->max_args < numargs))
@@ -2240,7 +2238,6 @@ eval_sub (Lisp_Object form)
 
 	  val = XSUBR (fun)->function.aMANY (argnum, vals);
 
-	  check_cons_list ();
 	  lisp_eval_depth--;
 	  /* Do the debug-on-exit now, while VALS still exists.  */
 	  if (backtrace_debug_on_exit (specpdl + count))
@@ -2346,7 +2343,6 @@ eval_sub (Lisp_Object form)
       else
 	xsignal1 (Qinvalid_function, original_fun);
     }
-  check_cons_list ();
 
   lisp_eval_depth--;
   if (backtrace_debug_on_exit (specpdl + count))
@@ -2786,8 +2782,6 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   if (debug_on_next_call)
     do_debug_on_call (Qlambda, count);
 
-  check_cons_list ();
-
   original_fun = args[0];
 
  retry:
@@ -2817,13 +2811,11 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
       else if (EQ (funcar, Qautoload))
 	{
 	  Fautoload_do_load (fun, original_fun, Qnil);
-	  check_cons_list ();
 	  goto retry;
 	}
       else
 	xsignal1 (Qinvalid_function, original_fun);
     }
-  check_cons_list ();
   lisp_eval_depth--;
   if (backtrace_debug_on_exit (specpdl + count))
     val = call_debugger (list2 (Qexit, val));
@@ -2935,7 +2927,6 @@ apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
   set_backtrace_args (specpdl + count, arg_vector, numargs);
   tem = funcall_lambda (fun, numargs, arg_vector);
 
-  check_cons_list ();
   lisp_eval_depth--;
   /* Do the debug-on-exit now, while arg_vector still exists.  */
   if (backtrace_debug_on_exit (specpdl + count))

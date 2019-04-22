@@ -2801,18 +2801,6 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
   return val;
 }
 
-#ifdef GC_CHECK_CONS_LIST
-/* Get an error now if there's any junk in the cons free list.  */
-void
-check_cons_list (void)
-{
-  struct Lisp_Cons *tail = cons_free_list;
-
-  while (tail)
-    tail = tail->u.s.u.chain;
-}
-#endif
-
 /* Make a list of 1, 2, 3, 4 or 5 specified objects.  */
 
 Lisp_Object
@@ -6003,8 +5991,6 @@ garbage_collect_1 (struct gcstat *gcst)
   /* Record this function, so it appears on the profiler's backtraces.  */
   record_in_backtrace (QAutomatic_GC, 0, 0);
 
-  check_cons_list ();
-
   /* Don't keep undo information around forever.
      Do this early on, so it is no problem if the user quits.  */
   FOR_EACH_BUFFER (nextb)
@@ -6123,8 +6109,6 @@ garbage_collect_1 (struct gcstat *gcst)
   gc_sweep ();
 
   unmark_main_thread ();
-
-  check_cons_list ();
 
   gc_in_progress = 0;
 

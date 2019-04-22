@@ -89,6 +89,11 @@ Options" in the Emacs manual for more information.
 check that the portable dumper code has been updated to match the last
 change to one of the data structures that it relies on.
 
++++
+** The configure option '--enable-checking=conslist' has been withdrawn.
+It made Emacs irredeemably slow, and is no longer useful with modern
+debugging tools.
+
 ---
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
 builds respectively.

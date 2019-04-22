@@ -545,7 +545,7 @@ AC_ARG_ENABLE(checking,
 		 enable only specific categories of checks.
 		 Categories are: all,yes,no.
 		 Flags are: stringbytes, stringoverrun, stringfreelist,
-		 structs, xmallocoverrun, conslist, glyphs])],
+		 structs, xmallocoverrun, glyphs])],
 [ac_checking_flags="${enableval}"],[])
 IFS="${IFS= 	}"; ac_save_IFS="$IFS"; IFS="$IFS,"
 CHECK_STRUCTS=false
@@ -560,7 +560,6 @@ do
 	                ac_gc_check_string_overrun= ;
 	                ac_gc_check_string_free_list= ;
 	                ac_xmalloc_overrun= ;
-	                ac_gc_check_cons_list= ;
 			ac_glyphs_debug= ;;
 	all)		ac_enable_checking=1 ;
 			CHECK_STRUCTS=true
@@ -568,7 +567,6 @@ do
 	                ac_gc_check_string_overrun=1 ;
 	                ac_gc_check_string_free_list=1 ;
 	                ac_xmalloc_overrun=1 ;
-	                ac_gc_check_cons_list=1 ;
 			ac_glyphs_debug=1 ;;
 	# these enable particular checks
 	stringbytes)	ac_gc_check_stringbytes=1 ;;
@@ -576,7 +574,6 @@ do
 	stringfreelist) ac_gc_check_string_free_list=1 ;;
 	structs)	CHECK_STRUCTS=true ;;
 	xmallocoverrun)	ac_xmalloc_overrun=1 ;;
-	conslist)	ac_gc_check_cons_list=1 ;;
 	glyphs)		ac_glyphs_debug=1 ;;
 	*)	AC_MSG_ERROR(unknown check category $check) ;;
 	esac
@@ -613,10 +610,6 @@ fi
 if test x$ac_xmalloc_overrun != x ; then
   AC_DEFINE(XMALLOC_OVERRUN_CHECK, 1,
 [Define this to check for malloc buffer overrun.])
-fi
-if test x$ac_gc_check_cons_list != x ; then
-  AC_DEFINE(GC_CHECK_CONS_LIST, 1,
-[Define this to check for errors in cons list.])
 fi
 if test x$ac_glyphs_debug != x ; then
   AC_DEFINE(GLYPH_DEBUG, 1,

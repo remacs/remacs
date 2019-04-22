@@ -413,9 +413,6 @@ typedef EMACS_INT Lisp_Word;
 #define lisp_h_XCONS(a) \
    (eassert (CONSP (a)), XUNTAG (a, Lisp_Cons, struct Lisp_Cons))
 #define lisp_h_XHASH(a) XUFIXNUM (a)
-#ifndef GC_CHECK_CONS_LIST
-# define lisp_h_check_cons_list() ((void) 0)
-#endif
 #if USE_LSB_TAG
 # define lisp_h_make_fixnum(n) \
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
@@ -459,9 +456,6 @@ typedef EMACS_INT Lisp_Word;
 # define XCDR(c) lisp_h_XCDR (c)
 # define XCONS(a) lisp_h_XCONS (a)
 # define XHASH(a) lisp_h_XHASH (a)
-# ifndef GC_CHECK_CONS_LIST
-#  define check_cons_list() lisp_h_check_cons_list ()
-# endif
 # if USE_LSB_TAG
 #  define make_fixnum(n) lisp_h_make_fixnum (n)
 #  define XFIXNAT(a) lisp_h_XFIXNAT (a)
@@ -3965,11 +3959,6 @@ extern void init_alloc (void);
 extern void syms_of_alloc (void);
 extern struct buffer * allocate_buffer (void);
 extern int valid_lisp_object_p (Lisp_Object);
-#ifdef GC_CHECK_CONS_LIST
-extern void check_cons_list (void);
-#else
-INLINE void (check_cons_list) (void) { lisp_h_check_cons_list (); }
-#endif
 
 /* Defined in gmalloc.c.  */
 #if !defined DOUG_LEA_MALLOC && !defined HYBRID_MALLOC && !defined SYSTEM_MALLOC
