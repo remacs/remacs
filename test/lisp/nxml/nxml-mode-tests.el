@@ -58,5 +58,25 @@
     (nxml-balanced-close-start-tag-inline)
     (should (equal (buffer-string) "<a><b c=\"\"></b></a>"))))
 
+(ert-deftest nxml-mode-font-lock-quotes ()
+  (with-temp-buffer
+    (nxml-mode)
+    (insert "<x a=\"dquote attr\" b='squote attr'>\"dquote text\"'squote text'</x>")
+    (font-lock-ensure)
+    (let ((squote-txt-pos (search-backward "squote text"))
+          (dquote-txt-pos (search-backward "dquote text"))
+          (squote-att-pos (search-backward "squote attr"))
+          (dquote-att-pos (search-backward "dquote attr")))
+      ;; Just make sure that each quote uses the same face for quoted
+      ;; attribute values, and a different face for quoted text
+      ;; outside tags.  Don't test `font-lock-string-face' vs
+      ;; `nxml-attribute-value' here.
+      (should (equal (get-text-property squote-att-pos 'face)
+                     (get-text-property dquote-att-pos 'face)))
+      (should (equal (get-text-property squote-txt-pos 'face)
+                     (get-text-property dquote-txt-pos 'face)))
+      (should-not (equal (get-text-property squote-txt-pos 'face)
+                         (get-text-property dquote-att-pos 'face))))))
+
 (provide 'nxml-mode-tests)
 ;;; nxml-mode-tests.el ends here

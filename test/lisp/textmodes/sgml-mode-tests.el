@@ -125,7 +125,6 @@ The point is set to the beginning of the buffer."
      (should (string= content (buffer-string))))))
 
 (ert-deftest sgml-delete-tag-bug-8203-should-not-delete-apostrophe ()
-  :expected-result :failed
   (sgml-with-content
    "<title>Winter is comin'</title>"
    (sgml-delete-tag 1)
