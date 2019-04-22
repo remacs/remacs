@@ -4923,7 +4923,8 @@ static void
 dump_bitset_clear (struct dump_bitset *bitset)
 {
   int xword_size = sizeof (bitset->bits[0]);
-  memset (bitset->bits, 0, bitset->number_words * xword_size);
+  if (bitset->number_words)
+    memset (bitset->bits, 0, bitset->number_words * xword_size);
 }
 
 struct pdumper_loaded_dump_private
