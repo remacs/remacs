@@ -1046,9 +1046,9 @@ impl From<LispBufferOrName> for LispObject {
 impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
         if let Some(s) = v.as_string() {
-            LispBufferOrName::Name(s)
+            Self::Name(s)
         } else if let Some(b) = v.as_buffer() {
-            LispBufferOrName::Buffer(b)
+            Self::Buffer(b)
         } else {
             wrong_type!(Qbufferp, v);
         }
@@ -1058,14 +1058,14 @@ impl From<LispObject> for LispBufferOrName {
 impl From<LispBufferRef> for LispBufferOrName {
     #[inline(always)]
     fn from(b: LispBufferRef) -> Self {
-        LispBufferOrName::Buffer(b)
+        Self::Buffer(b)
     }
 }
 
 impl From<LispStringRef> for LispBufferOrName {
     #[inline(always)]
     fn from(n: LispStringRef) -> Self {
-        LispBufferOrName::Name(n)
+        Self::Name(n)
     }
 }
 
@@ -1121,8 +1121,8 @@ pub enum LispBufferOrCurrent {
 impl From<LispObject> for LispBufferOrCurrent {
     fn from(obj: LispObject) -> Self {
         match obj.as_buffer() {
-            None => LispBufferOrCurrent::Current,
-            Some(buf) => LispBufferOrCurrent::Buffer(buf),
+            None => Self::Current,
+            Some(buf) => Self::Buffer(buf),
         }
     }
 }
