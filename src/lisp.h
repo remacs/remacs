@@ -2645,7 +2645,7 @@ make_uint (uintmax_t n)
 #define INTEGER_TO_INT(num, type)                                              \
   (TYPE_SIGNED (type)                                                          \
      ? ranged_integer_to_int ((num), TYPE_MINIMUM (type), TYPE_MAXIMUM (type)) \
-     : ranged_integer_to_uint ((num), TYPE_MINIMUM (type)))
+     : ranged_integer_to_uint ((num), TYPE_MAXIMUM (type)))
 
 
 /* Forwarding pointer to an int variable.
