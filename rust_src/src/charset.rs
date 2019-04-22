@@ -22,32 +22,6 @@ impl LispObject {
     }
 }
 
-unsafe fn set_temp_charset_work_encoder(c: c_int, code: u16) {
-    if code == 0 {
-        (*temp_charset_work).zero_index_char = c;
-    } else if c < 0x20000 {
-        (*temp_charset_work).table.encoder[c as usize] = code;
-    } else {
-        (*temp_charset_work).table.encoder[c as usize - 0x10000] = code
-    }
-}
-
-unsafe fn get_temp_charset_work_encoder(c: c_int) -> c_int {
-    if c == (*temp_charset_work).zero_index_char {
-        0
-    } else if c < 0x20000 {
-        if (*temp_charset_work).table.encoder[c as usize] != 0 {
-            i32::from((*temp_charset_work).table.encoder[c as usize])
-        } else {
-            -1
-        }
-    } else if (*temp_charset_work).table.encoder[c as usize - 0x10000] != 0 {
-        i32::from((*temp_charset_work).table.encoder[c as usize - 0x10000])
-    } else {
-        -1
-    }
-}
-
 /// Internal use only.
 /// Clear temporary charset mapping tables.
 /// It should be called only from temacs invoked for dumping.
