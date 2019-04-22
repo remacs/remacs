@@ -212,6 +212,7 @@ static void module_reset_handlerlist (struct handler **);
 static bool value_storage_contains_p (const struct emacs_value_storage *,
                                       emacs_value, ptrdiff_t *);
 static Lisp_Object module_encode (Lisp_Object);
+static Lisp_Object module_decode (Lisp_Object);
 static Lisp_Object module_decode_copy (Lisp_Object);
 
 static bool module_assertions = false;
@@ -629,10 +630,8 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   MODULE_FUNCTION_BEGIN (NULL);
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     overflow_error ();
-  /* FIXME: AUTO_STRING_WITH_LEN requires STR to be NUL-terminated,
-     but we shouldn't require that.  */
-  AUTO_STRING_WITH_LEN (lstr, str, length);
-  return lisp_to_value (env, module_decode_copy (lstr));
+  Lisp_Object lstr = make_unibyte_string (str, length);
+  return lisp_to_value (env, module_decode (lstr));
 }
 
 static emacs_value
@@ -944,6 +943,12 @@ static Lisp_Object
 module_encode (Lisp_Object string)
 {
   return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
+}
+
+static Lisp_Object
+module_decode (Lisp_Object string)
+{
+  return code_convert_string (string, Qutf_8_unix, Qt, false, true, true);
 }
 
 static Lisp_Object
