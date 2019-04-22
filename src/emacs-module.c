@@ -211,6 +211,8 @@ static void module_out_of_memory (emacs_env *);
 static void module_reset_handlerlist (struct handler **);
 static bool value_storage_contains_p (const struct emacs_value_storage *,
                                       emacs_value, ptrdiff_t *);
+static Lisp_Object module_encode (Lisp_Object);
+static Lisp_Object module_decode_copy (Lisp_Object);
 
 static bool module_assertions = false;
 
@@ -496,8 +498,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   if (documentation)
     {
       AUTO_STRING (unibyte_doc, documentation);
-      function->documentation =
-        code_convert_string_norecord (unibyte_doc, Qutf_8, false);
+      function->documentation = module_decode_copy (unibyte_doc);
     }
 
   Lisp_Object result;
@@ -600,7 +601,7 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
   Lisp_Object lisp_str = value_to_lisp (value);
   CHECK_STRING (lisp_str);
 
-  Lisp_Object lisp_str_utf8 = ENCODE_UTF_8 (lisp_str);
+  Lisp_Object lisp_str_utf8 = module_encode (lisp_str);
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
   ptrdiff_t required_buf_size = raw_size + 1;
 
@@ -631,8 +632,7 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   /* FIXME: AUTO_STRING_WITH_LEN requires STR to be NUL-terminated,
      but we shouldn't require that.  */
   AUTO_STRING_WITH_LEN (lstr, str, length);
-  return lisp_to_value (env,
-                        code_convert_string_norecord (lstr, Qutf_8, false));
+  return lisp_to_value (env, module_decode_copy (lstr));
 }
 
 static emacs_value
@@ -938,6 +938,18 @@ module_out_of_memory (emacs_env *env)
      been modified.  */
   module_non_local_exit_signal_1 (env, XCAR (Vmemory_signal_data),
 				  XCDR (Vmemory_signal_data));
+}
+
+static Lisp_Object
+module_encode (Lisp_Object string)
+{
+  return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
+}
+
+static Lisp_Object
+module_decode_copy (Lisp_Object string)
+{
+  return code_convert_string (string, Qutf_8_unix, Qt, false, false, true);
 }
 
 
