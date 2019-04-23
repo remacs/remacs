@@ -734,7 +734,11 @@ current working directory is the local name component of
 
 Depending on the implementation of the file name handler, it might not
 be possible to apply @var{filter} or @var{sentinel} to the resulting
-process object.  @xref{Filter Functions}, and @ref{Sentinels}.
+process object.  The @code{:stderr} argument cannot be a pipe process,
+file name handlers do not support pipe processes for this.  A buffer
+as @code{:stderr} argument is accepted, its contents is shown without
+the use of pipe processes.  @xref{Filter Functions}, @ref{Sentinels},
+and @ref{Accepting Output}.
 
 Some file name handlers may not support @code{make-process}.  In such
 cases, this function does nothing and returns @code{nil}.
@@ -1907,6 +1911,9 @@ code:
 (while (accept-process-output process))
 (while (accept-process-output stderr-process))
 @end example
+
+Reading pending standard error from a process running on a remote host
+is not possible this way.
 
 @node Processes and Threads
 @subsection Processes and Threads
