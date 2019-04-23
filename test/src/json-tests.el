@@ -159,7 +159,7 @@
   (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "\x00") :type 'wrong-type-argument)
   ;; FIXME: Reconsider whether this is the right behavior.
-  (should-error (json-parse-string "[a\\u0000b]") :type 'json-parse-error))
+  (should-error (json-parse-string "[\"a\\u0000b\"]") :type 'json-parse-error))
 
 (ert-deftest json-parse-string/invalid-unicode ()
   "Some examples from
