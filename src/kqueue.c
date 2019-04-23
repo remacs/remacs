@@ -19,7 +19,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#ifdef HAVE_KQUEUE
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/event.h>
@@ -532,8 +531,6 @@ syms_of_kqueue (void)
 
   Fprovide (intern_c_string ("kqueue"), Qnil);
 }
-
-#endif /* HAVE_KQUEUE  */
 
 /* PROBLEMS
    * https://bugs.launchpad.net/ubuntu/+source/libkqueue/+bug/1514837

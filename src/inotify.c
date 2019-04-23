@@ -19,8 +19,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#ifdef HAVE_INOTIFY
-
 #include "lisp.h"
 #include "coding.h"
 #include "process.h"
@@ -550,5 +548,3 @@ syms_of_inotify (void)
 
   Fprovide (intern_c_string ("inotify"), Qnil);
 }
-
-#endif /* HAVE_INOTIFY */

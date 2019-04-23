@@ -18,7 +18,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#ifdef HAVE_GFILENOTIFY
 #include <stdio.h>
 #include <gio/gio.h>
 #include "lisp.h"
@@ -333,7 +332,4 @@ syms_of_gfilenotify (void)
   staticpro (&watch_list);
 
   Fprovide (intern_c_string ("gfilenotify"), Qnil);
-
 }
-
-#endif /* HAVE_GFILENOTIFY  */
