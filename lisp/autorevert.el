@@ -326,12 +326,12 @@ the list of old buffers.")
 (add-hook 'find-file-hook
 	  #'auto-revert-find-file-function)
 
-(defvar auto-revert-notify-watch-descriptor-hash-list
+(defvar auto-revert--buffers-by-watch-descriptor
   (make-hash-table :test 'equal)
-  "A hash table collecting all file watch descriptors.
-Hash key is a watch descriptor, hash value is a list of buffers
-which are related to files being watched and carrying the same
-default directory.")
+  "A hash table mapping notification descriptors to lists of buffers.
+The buffers use that descriptor for auto-revert notifications.
+The key is equal to `auto-revert-notify-watch-descriptor' in each
+buffer.")
 
 (defvar-local auto-revert-notify-watch-descriptor nil
   "The file watch descriptor active for the current buffer.")
@@ -500,7 +500,7 @@ will use an up-to-date value of `auto-revert-interval'"
 (defun auto-revert-notify-rm-watch ()
   "Disable file notification for current buffer's associated file."
   (let ((desc auto-revert-notify-watch-descriptor)
-        (table auto-revert-notify-watch-descriptor-hash-list))
+        (table auto-revert--buffers-by-watch-descriptor))
     (when desc
       (let ((buffers (delq (current-buffer) (gethash desc table))))
         (if buffers
@@ -534,7 +534,7 @@ will use an up-to-date value of `auto-revert-interval'"
                         (gethash key file-notify-descriptors))
                        'auto-revert-notify-handler))
          (setq auto-revert-notify-watch-descriptor key)))
-       auto-revert-notify-watch-descriptor-hash-list)
+       auto-revert--buffers-by-watch-descriptor)
       ;; Create a new watch if needed.
       (unless auto-revert-notify-watch-descriptor
         (setq auto-revert-notify-watch-descriptor
@@ -549,8 +549,8 @@ will use an up-to-date value of `auto-revert-interval'"
          auto-revert-notify-watch-descriptor
          (cons (current-buffer)
 	       (gethash auto-revert-notify-watch-descriptor
-		        auto-revert-notify-watch-descriptor-hash-list))
-         auto-revert-notify-watch-descriptor-hash-list)
+		        auto-revert--buffers-by-watch-descriptor))
+         auto-revert--buffers-by-watch-descriptor)
         (add-hook 'kill-buffer-hook #'auto-revert-notify-rm-watch nil t)))))
 
 ;; If we have file notifications, we want to update the auto-revert buffers
@@ -585,7 +585,7 @@ no more reverts are possible until the next call of
 	   (file (nth 2 event))
 	   (file1 (nth 3 event)) ;; Target of `renamed'.
 	   (buffers (gethash descriptor
-			     auto-revert-notify-watch-descriptor-hash-list)))
+			     auto-revert--buffers-by-watch-descriptor)))
       ;; Check, that event is meant for us.
       (cl-assert descriptor)
       ;; Since we watch a directory, a file name must be returned.
