@@ -614,8 +614,11 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
 
   if (*length < required_buf_size)
     {
+      ptrdiff_t actual = *length;
       *length = required_buf_size;
-      xsignal0 (Qargs_out_of_range);
+      args_out_of_range_3 (INT_TO_INTEGER (actual),
+                           INT_TO_INTEGER (required_buf_size),
+                           INT_TO_INTEGER (PTRDIFF_MAX));
     }
 
   *length = required_buf_size;
