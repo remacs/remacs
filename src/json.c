@@ -237,7 +237,7 @@ json_make_string (const char *data, ptrdiff_t size)
       struct coding_system coding;
       setup_coding_system (Qutf_8_unix, &coding);
       coding.mode |= CODING_MODE_LAST_BLOCK;
-      coding.source = data;
+      coding.source = (const unsigned char *) data;
       decode_coding_object (&coding, Qnil, 0, 0, size, size, Qt);
       return coding.dst_object;
     }
