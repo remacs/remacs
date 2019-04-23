@@ -32,6 +32,9 @@ rules:
 
 - Don't change the types of structure fields.
 
+- Likewise, the presence, order, and type of structure fields may not
+  depend on preprocessor macros.
+
 - Add structure fields only at the end of structures.
 
 - For every Emacs major version there is a new fragment file
