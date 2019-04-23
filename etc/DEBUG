@@ -181,10 +181,10 @@ Good luck!
 
 ** When you are trying to analyze failed assertions or backtraces, it
 is essential to compile Emacs with flags suitable for debugging.
-With GCC 4.8 or later, you can invoke 'make' with CFLAGS="-O0 -g3".
-With older GCC, you can use CFLAGS="-O0 -g3 -gdwarf-4", replacing "4"
-by the highest version of DWARF that your compiler supports;
-with non-GCC compilers, "-O0 -g3" may be the best you can do.
+Although CFLAGS="-O0 -g3" often suffices with modern compilers,
+you may benefit further by using CFLAGS="-O0 -g3 -gdwarf-4", replacing
+"4" by the highest version of DWARF that your compiler supports;
+this is especially important for GCC versions older than 4.8.
 With GCC and higher optimization levels such as -O2, the
 -fno-omit-frame-pointer and -fno-crossjumping options are often
 essential.  The latter prevents GCC from using the same abort call for
@@ -917,13 +917,26 @@ setting the new-console option before running Emacs under GDB:
 
 ** Running Emacs with undefined-behavior sanitization
 
-Building Emacs with undefined-behavior sanitization can help debug
-integer overflow and other undefined behavior in C code.  To use
-UndefinedBehaviorSanitizer with GCC and similar compilers, append
-'-fsanitize=undefined' to CFLAGS, either when running 'configure' or
-running 'make'.  For example:
+Building Emacs with undefined-behavior sanitization can help find
+several kinds of low-level problems in C code, including:
 
-  ./configure CFLAGS='-O0 -g3 -fsanitize=undefined'
+  * Out-of-bounds access of many (but not all) arrays.
+  * Signed integer overflow, e.g., (INT_MAX + 1).
+  * Integer shifts by a negative or wider-than-word value.
+  * Misaligned pointers and pointer overflow.
+  * Loading a bool or enum value that is out of range for its type.
+  * Passing NULL to or returning NULL from a function requiring nonnull.
+  * Passing a size larger than the corresponding array to memcmp etc.
+  * Passing invalid values to some builtin functions, e.g., __builtin_clz (0).
+  * Reaching __builtin_unreachable calls (in Emacs, 'eassume' failure).
+
+To use UndefinedBehaviorSanitizer with GCC and similar compilers,
+append '-fsanitize=undefined' to CFLAGS, either when running
+'configure' or running 'make'.  When supported, you can also specify
+'bound-strict' and 'float-cast-overflow'.  For example:
+
+  ./configure \
+    CFLAGS='-O0 -g3 -fsanitize=undefined,bounds-strict,float-cast-overflow'
 
 You may need to append '-static-libubsan' to CFLAGS if your version of
 GCC is installed in an unusual location.
@@ -940,9 +953,10 @@ program.
 ** Running Emacs with address sanitization
 
 Building Emacs with address sanitization can help debug memory-use
-problems.  To use AddressSanitizer with GCC and similar compilers,
-append '-fsanitize=address' to CFLAGS, either when running 'configure'
-or running 'make'.  Configure, build and run Emacs with
+problems, such as freeing the same object twice.  To use
+AddressSanitizer with GCC and similar compilers, append
+'-fsanitize=address' to CFLAGS, either when running 'configure' or
+running 'make'.  Configure, build and run Emacs with
 ASAN_OPTIONS='detect_leaks=0' in the environment to suppress
 diagnostics of minor memory leaks in Emacs.  For example:
 
