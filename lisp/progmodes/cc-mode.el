@@ -1192,8 +1192,6 @@ Note that the style variables are always made local to the buffer."
        (beg-literal-type (and beg-limits
                                       (c-literal-type beg-limits))))
 
-    (when (eq end-literal-type 'string)
-      (setq c-new-END (max c-new-END (cdr end-limits))))
     ;; It is possible the buffer change will include inserting a string quote.
     ;; This could have the effect of flipping the meaning of any following
     ;; quotes up until the next unescaped EOL.  Also guard against the change
@@ -1282,7 +1280,6 @@ Note that the style variables are always made local to the buffer."
 
       (when (and (eq beg-literal-type 'string)
 		 (memq (char-after (car beg-limits)) c-string-delims))
-	(setq c-new-BEG (min c-new-BEG (car beg-limits)))
 	(c-clear-char-property (car beg-limits) 'syntax-table)
 	(c-truncate-semi-nonlit-pos-cache (car beg-limits))))))
 
@@ -1832,6 +1829,9 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; declaration is one which does not start outside of struct braces (and
   ;; similar) enclosing POS.  Brace list braces here are not "similar".
   ;;
+  ;; POS being in a literal does not count as being in a declaration (on
+  ;; pragmatic grounds).
+  ;;
   ;; This function is called indirectly from font locking stuff - either from
   ;; c-after-change (to prepare for after-change font-locking) or from font
   ;; lock context (etc.) fontification.
@@ -1842,92 +1842,92 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	capture-opener
 	bod-lim bo-decl)
     (goto-char (c-point 'bol new-pos))
-    (when lit-start			; Comment or string.
-      (goto-char lit-start))
-    (setq bod-lim (c-determine-limit 500))
+    (unless lit-start
+      (setq bod-lim (c-determine-limit 500))
 
-    ;; In C++ Mode, first check if we are within a (possibly nested) lambda
-    ;; form capture list.
-    (when (c-major-mode-is 'c++-mode)
-      (let ((paren-state (c-parse-state))
-	    opener)
-	(save-excursion
-	  (while (setq opener (c-pull-open-brace paren-state))
-	    (goto-char opener)
-	    (if (c-looking-at-c++-lambda-capture-list)
-		(setq capture-opener (point)))))))
+      ;; In C++ Mode, first check if we are within a (possibly nested) lambda
+      ;; form capture list.
+      (when (c-major-mode-is 'c++-mode)
+	(let ((paren-state (c-parse-state))
+	      opener)
+	  (save-excursion
+	    (while (setq opener (c-pull-open-brace paren-state))
+	      (goto-char opener)
+	      (if (c-looking-at-c++-lambda-capture-list)
+		  (setq capture-opener (point)))))))
 
-    (while
-	;; Go to a less nested declaration each time round this loop.
-	(and
-	 (setq old-pos (point))
-	 (let (pseudo)
-	   (while
-	       (progn
-		 (c-syntactic-skip-backward "^;{}" bod-lim t)
-		 (and (eq (char-before) ?})
-		      (save-excursion
-			(backward-char)
-			(setq pseudo (c-cheap-inside-bracelist-p (c-parse-state))))))
-	     (goto-char pseudo))
-	   t)
-	 (> (point) bod-lim)
-	 (progn (c-forward-syntactic-ws)
-		;; Have we got stuck in a comment at EOB?
-		(not (and (eobp)
-			  (c-literal-start))))
-	 (< (point) old-pos)
-	 (progn (setq bo-decl (point))
-		(or (not (looking-at c-protection-key))
-		    (c-forward-keyword-clause 1)))
-	 (progn
-	   ;; Are we looking at a keyword such as "template" or
-	   ;; "typedef" which can decorate a type, or the type itself?
-	   (when (or (looking-at c-prefix-spec-kwds-re)
-		     (c-forward-type t))
-	     ;; We've found another candidate position.
-	     (setq new-pos (min new-pos bo-decl))
-	     (goto-char bo-decl))
-	   t)
-	 ;; Try and go out a level to search again.
-	 (progn
-	   (c-backward-syntactic-ws bod-lim)
-	   (and (> (point) bod-lim)
-		(or (memq (char-before) '(?\( ?\[))
-		    (and (eq (char-before) ?\<)
-			 (eq (c-get-char-property
-			      (1- (point)) 'syntax-table)
-			     c-<-as-paren-syntax))
-		    (and (eq (char-before) ?{)
-			 (save-excursion
-			   (backward-char)
-			   (consp (c-looking-at-or-maybe-in-bracelist))))
-		    )))
-	 (not (bobp)))
-      (backward-char))			; back over (, [, <.
-    (when (and capture-opener (< capture-opener new-pos))
-      (setq new-pos capture-opener))
-    (and (/= new-pos pos) new-pos)))
+      (while
+	  ;; Go to a less nested declaration each time round this loop.
+	  (and
+	   (setq old-pos (point))
+	   (let (pseudo)
+	     (while
+		 (progn
+		   (c-syntactic-skip-backward "^;{}" bod-lim t)
+		   (and (eq (char-before) ?})
+			(save-excursion
+			  (backward-char)
+			  (setq pseudo (c-cheap-inside-bracelist-p (c-parse-state))))))
+	       (goto-char pseudo))
+	     t)
+	   (> (point) bod-lim)
+	   (progn (c-forward-syntactic-ws)
+		  ;; Have we got stuck in a comment at EOB?
+		  (not (and (eobp)
+			    (c-literal-start))))
+	   (< (point) old-pos)
+	   (progn (setq bo-decl (point))
+		  (or (not (looking-at c-protection-key))
+		      (c-forward-keyword-clause 1)))
+	   (progn
+	     ;; Are we looking at a keyword such as "template" or
+	     ;; "typedef" which can decorate a type, or the type itself?
+	     (when (or (looking-at c-prefix-spec-kwds-re)
+		       (c-forward-type t))
+	       ;; We've found another candidate position.
+	       (setq new-pos (min new-pos bo-decl))
+	       (goto-char bo-decl))
+	     t)
+	   ;; Try and go out a level to search again.
+	   (progn
+	     (c-backward-syntactic-ws bod-lim)
+	     (and (> (point) bod-lim)
+		  (or (memq (char-before) '(?\( ?\[))
+		      (and (eq (char-before) ?\<)
+			   (eq (c-get-char-property
+				(1- (point)) 'syntax-table)
+			       c-<-as-paren-syntax))
+		      (and (eq (char-before) ?{)
+			   (save-excursion
+			     (backward-char)
+			     (consp (c-looking-at-or-maybe-in-bracelist))))
+		      )))
+	   (not (bobp)))
+	(backward-char))		; back over (, [, <.
+      (when (and capture-opener (< capture-opener new-pos))
+	(setq new-pos capture-opener))
+      (and (/= new-pos pos) new-pos))))
 
 (defun c-fl-decl-end (pos)
   ;; If POS is inside a declarator, return the end of the token that follows
-  ;; the declarator, otherwise return nil.
+  ;; the declarator, otherwise return nil.  POS being in a literal does not
+  ;; count as being in a declarator (on pragmatic grounds).
   (goto-char pos)
   (let ((lit-start (c-literal-start))
 	pos1)
-    (if lit-start (goto-char lit-start))
-    (c-backward-syntactic-ws)
-    (when (setq pos1 (c-on-identifier))
-      (goto-char pos1)
-      (let ((lim (save-excursion
-		   (and (c-beginning-of-macro)
-			(progn (c-end-of-macro) (point))))))
-	(when (and (c-forward-declarator lim)
-		   (or (not (eq (char-after) ?\())
-		       (c-go-list-forward nil lim))
-		   (eq (c-forward-token-2 1 nil lim) 0))
-	  (c-backward-syntactic-ws)
-	  (point))))))
+    (unless lit-start
+      (c-backward-syntactic-ws)
+      (when (setq pos1 (c-on-identifier))
+	(goto-char pos1)
+	(let ((lim (save-excursion
+		     (and (c-beginning-of-macro)
+			  (progn (c-end-of-macro) (point))))))
+	  (when (and (c-forward-declarator lim)
+		     (or (not (eq (char-after) ?\())
+			 (c-go-list-forward nil lim))
+		     (eq (c-forward-token-2 1 nil lim) 0))
+	    (c-backward-syntactic-ws)
+	    (point)))))))
 
 (defun c-change-expand-fl-region (_beg _end _old-len)
   ;; Expand the region (c-new-BEG c-new-END) to an after-change font-lock
