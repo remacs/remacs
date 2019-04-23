@@ -869,7 +869,7 @@ top_bootclean=\
 top_distclean=\
 	${top_bootclean}; \
 	rm -f config.status config.log~ \
-	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
+	  Makefile makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
 distclean_dirs = $(clean_dirs) leim lisp
 

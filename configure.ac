@@ -5814,4 +5814,12 @@ you can continue to support by using '$0 --with-pop'.])
   esac
 fi
 
-test "$MAKE" = make || AC_MSG_NOTICE([Now you can run '$MAKE'.])
+# Let plain 'make' work.
+test "$MAKE" = make || test -f makefile || cat >makefile <<EOF
+.POSIX:
+MAKE = $MAKE
+all:
+	\$(MAKE) -f Makefile \$?
+.DEFAULT:
+	\$(MAKE) -f Makefile \$<
+EOF
