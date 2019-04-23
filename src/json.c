@@ -304,8 +304,8 @@ json_parse_error (const json_error_t *error)
 #endif
   xsignal (symbol,
            list5 (json_build_string (error->text),
-                  json_build_string (error->source), make_fixed_natnum (error->line),
-                  make_fixed_natnum (error->column), make_fixed_natnum (error->position)));
+                  json_build_string (error->source), INT_TO_INTEGER (error->line),
+                  INT_TO_INTEGER (error->column), INT_TO_INTEGER (error->position)));
 }
 
 static void
