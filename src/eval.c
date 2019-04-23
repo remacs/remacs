@@ -513,7 +513,7 @@ usage: (setq [SYM VAL]...)  */)
       Lisp_Object lex_binding
 	= ((!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
 	    && SYMBOLP (sym))
-	   ? assq_no_quit (sym, Vinternal_interpreter_environment)
+	   ? Fassq (sym, Vinternal_interpreter_environment)
 	   : Qnil);
       if (!NILP (lex_binding))
 	XSETCDR (lex_binding, val); /* SYM is lexically bound.  */
@@ -2162,7 +2162,7 @@ eval_sub (Lisp_Object form)
 	 already did that when let-binding the variable.  */
       Lisp_Object lex_binding
 	= (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	   ? assq_no_quit (form, Vinternal_interpreter_environment)
+	   ? Fassq (form, Vinternal_interpreter_environment)
 	   : Qnil);
       return !NILP (lex_binding) ? XCDR (lex_binding) : Fsymbol_value (form);
     }
