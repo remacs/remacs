@@ -1,4 +1,4 @@
-;;; timer-list.el --- list active timers in a buffer
+;;; timer-list.el --- list active timers in a buffer  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
@@ -23,6 +23,9 @@
 ;;; Commentary:
 
 ;;; Code:
+
+(defvar cl-print-compiled)
+(defvar cl-print-compiled-button)
 
 ;;;###autoload
 (defun list-timers (&optional _ignore-auto _nonconfirm)
@@ -85,8 +88,9 @@
   (setq-local revert-buffer-function #'list-timers)
   (setq buffer-read-only t)
   (setq header-line-format
-        (format "%4s %10s %8s %s"
-                "Idle" "Next" "Repeat" "Function")))
+        (concat (propertize " " 'display '(space :align-to 0))
+                (format "%4s %10s %8s %s"
+                "Idle" "Next" "Repeat" "Function"))))
 
 (defun timer-list-cancel ()
   "Cancel the timer on the line under point."
