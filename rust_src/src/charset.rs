@@ -7,8 +7,8 @@ use crate::{
     hashtable::{HashLookupResult, LispHashTableRef},
     lisp::LispObject,
     remacs_sys::temp_charset_work,
-    remacs_sys::Foptimize_char_table,
     remacs_sys::Qnil,
+    remacs_sys::{xfree, Foptimize_char_table},
     remacs_sys::{Vchar_unify_table, Vcharset_hash_table},
 };
 
@@ -28,6 +28,7 @@ impl LispObject {
 #[lisp_fn]
 pub fn clear_charset_maps() {
     unsafe {
+        xfree(temp_charset_work as *mut libc::c_void);
         temp_charset_work = ptr::null_mut();
 
         if Vchar_unify_table.is_char_table() {
