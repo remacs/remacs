@@ -281,7 +281,7 @@ This function is called, by name, directly by the C code."
               ;; perhaps because Emacs was suspended for a long time,
               ;; limit how many times things get repeated.
               (if (and (numberp timer-max-repeats)
-		       (time-less-p nil (timer--time timer)))
+		       (time-less-p (timer--time timer) nil))
                   (let ((repeats (/ (timer-until timer nil)
                                     (timer--repeat-delay timer))))
                     (if (> repeats timer-max-repeats)
