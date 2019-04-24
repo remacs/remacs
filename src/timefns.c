@@ -532,7 +532,7 @@ make_lisp_time (struct timespec t)
 }
 
 /* Return (TICKS . HZ) for time T.  */
-struct Lisp_Object
+Lisp_Object
 timespec_to_lisp (struct timespec t)
 {
   return Fcons (timespec_ticks (t), timespec_hz);
