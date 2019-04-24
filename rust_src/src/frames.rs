@@ -683,8 +683,11 @@ pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
     frame_ref.face_alist
 }
 
+/// Return the value of frame parameter PROP in frame FRAME.
 #[no_mangle]
 pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> LispObject {
+    // I should be possible to use this method directly when we port
+    // one of the original function's callers.
     frame.get_param(prop)
 }
 
