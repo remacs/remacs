@@ -3387,12 +3387,6 @@ syms_of_search (void)
   Fput (Qinvalid_regexp, Qerror_message,
 	build_pure_c_string ("Invalid regexp"));
 
-  last_thing_searched = Qnil;
-  staticpro (&last_thing_searched);
-
-  saved_last_thing_searched = Qnil;
-  staticpro (&saved_last_thing_searched);
-
   re_match_object = Qnil;
   staticpro (&re_match_object);
 

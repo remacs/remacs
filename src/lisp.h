@@ -1279,11 +1279,11 @@ INLINE bool
 
 #define XSETPVECTYPE(v, code)						\
   ((v)->header.size |= PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_AREA_BITS))
+#define PVECHEADERSIZE(code, lispsize, restsize) \
+  (PSEUDOVECTOR_FLAG | ((code) << PSEUDOVECTOR_AREA_BITS) \
+   | ((restsize) << PSEUDOVECTOR_SIZE_BITS) | (lispsize))
 #define XSETPVECTYPESIZE(v, code, lispsize, restsize)		\
-  ((v)->header.size = (PSEUDOVECTOR_FLAG			\
-		       | ((code) << PSEUDOVECTOR_AREA_BITS)	\
-		       | ((restsize) << PSEUDOVECTOR_SIZE_BITS) \
-		       | (lispsize)))
+  ((v)->header.size = PVECHEADERSIZE (code, lispsize, restsize))
 
 /* The cast to union vectorlike_header * avoids aliasing issues.  */
 #define XSETPSEUDOVECTOR(a, b, code) \
