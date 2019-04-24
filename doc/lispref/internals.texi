@@ -1191,6 +1191,17 @@ grow with new Emacs releases.  Given the version of Emacs, the module
 can use only the parts of the module @acronym{API} that existed in
 that version, since those parts are identical in later versions.
 
+@file{emacs-module.h} defines a preprocessor macro
+@code{EMACS_MAJOR_VERSION}.  It expands to an integer literal which is
+the latest major version of Emacs supported by the header.
+@xref{Version Info}.  Note that the value of
+@code{EMACS_MAJOR_VERSION} is a compile-time constant and does not
+represent the version of Emacs that is currently running and has
+loaded your module.  If you want your module to be compatible with
+various versions of @file{emacs-module.h} as well as various versions
+of Emacs, you can use conditional compilation based on
+@code{EMACS_MAJOR_VERSION}.
+
 We recommend that modules always perform the compatibility
 verification, unless they do their job entirely in the initialization
 function, and don't access any Lisp objects or use any Emacs functions

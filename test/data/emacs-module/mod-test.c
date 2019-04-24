@@ -445,6 +445,11 @@ bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 int
 emacs_module_init (struct emacs_runtime *ert)
 {
+  /* Check that EMACS_MAJOR_VERSION is defined and an integral
+     constant.  */
+  char dummy[EMACS_MAJOR_VERSION];
+  assert (27 <= sizeof dummy);
+
   if (ert->size < sizeof *ert)
     {
       fprintf (stderr, "Runtime size of runtime structure (%"pT" bytes) "

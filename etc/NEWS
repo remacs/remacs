@@ -1933,6 +1933,9 @@ convert between timespec structures and Emacs Lisp time values.
 'extract_big_integer' to create and extract arbitrary-size integer
 values.
 
+** emacs-module.h now defines a macro EMACS_MAJOR_VERSION that expands
+to the major version of the latest Emacs supported by the header.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
