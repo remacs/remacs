@@ -1623,6 +1623,12 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 		      set_iterator_to_next (&it3, false);
 		    }
 		  top_x = it3.current_x - it3.pixel_width;
+		  /* Account for line-number display, if IT3 still
+		     didn't.  This can happen if START - 1 is the
+		     first character on its display line.  */
+		  if (!it3.line_number_produced_p
+		      && it.line_number_produced_p)
+		    top_x += it.lnum_pixel_width;
 		  /* Normally, we would exit the above loop because we
 		     found the display element whose character
 		     position is CHARPOS.  For the contingency that we
