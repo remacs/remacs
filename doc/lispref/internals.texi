@@ -1543,6 +1543,31 @@ integral object.  After you have finished using
 or similar.
 @end deftypefn
 
+The following example uses GMP to calculate the next probable prime
+after a given integer:
+
+@example
+#include <assert.h>
+#include <gmp.h>
+
+#define EMACS_MODULE_GMP
+#include <emacs-module.h>
+
+static emacs_value
+next_prime (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+            void *data)
+@{
+  assert (nargs == 1);
+  emacs_mpz p;
+  mpz_init (p.value);
+  env->extract_big_integer (env, args[0], &p);
+  mpz_nextprime (p.value, p.value);
+  emacs_value result = env->make_big_integer (env, &p);
+  mpz_clear (p.value);
+  return result;
+@}
+@end example
+
 The @acronym{API} does not provide functions to manipulate Lisp data
 structures, for example, create lists with @code{cons} and @code{list}
 (@pxref{Building Lists}), extract list members with @code{car} and
