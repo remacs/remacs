@@ -988,6 +988,20 @@ the polling interval through the variable @code{auto-revert-interval}.
 supported, @code{auto-revert-use-notify} will be @code{nil} by
 default.
 
+@vindex auto-revert-avoid-polling
+@vindex auto-revert-notify-exclude-dir-regexp
+  By default, Auto-Revert mode will poll files for changes
+periodically even when file notifications are used.  Such polling is
+usually unnecessary, and turning it off may save power by relying on
+notifications only.  To do so, set the variable
+@code{auto-revert-avoid-polling} to non-@code{nil}.  However,
+notification is ineffective on certain file systems; mainly network
+file system on Unix-like machines, where files can be altered from
+other machines.  To force polling when
+@code{auto-revert-avoid-polling} is non-@code{nil}, set
+@code{auto-revert-notify-exclude-dir-regexp} to match files that
+should be excluded from using notification.
+
   One use of Auto-Revert mode is to ``tail'' a file such as a system
 log, so that changes made to that file by other programs are
 continuously displayed.  To do this, just move the point to the end of
