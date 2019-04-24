@@ -30,7 +30,7 @@ typedef struct
   } table;
 } TempCharsetWork;
 
-TempCharsetWork *temp_charset_work;
+extern TempCharsetWork *temp_charset_work;
 
 #define SET_TEMP_CHARSET_WORK_ENCODER(C, CODE)			\
   do {								\

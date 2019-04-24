@@ -141,6 +141,8 @@ int iso_charset_table[ISO_MAX_DIMENSION][ISO_MAX_CHARS][ISO_MAX_FINAL];
        | (((charset)->code_space[12] + ((idx) / (charset)->code_space[11]))  \
 	  << 24))))
 
+TempCharsetWork *temp_charset_work;
+
 /* Set to 1 to warn that a charset map is loaded and thus a buffer
    text and a string data may be relocated.  */
 bool charset_map_loaded;
