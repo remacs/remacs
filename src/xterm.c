@@ -12733,7 +12733,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
     dpyinfo->supports_xdbe = true;
 #endif
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
   {
     /* If we are using Xft, the following precautions should be made:
 

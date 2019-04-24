@@ -50,8 +50,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <X11/Xatom.h>
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
+#ifdef USE_CAIRO
+#include <stdlib.h>
+#include "lwlib-utils.h"
+#else  /* HAVE_XFT */
 #include <X11/Xft/Xft.h>
+#endif
 
 struct widget_xft_data
 {
@@ -79,7 +84,7 @@ lw_xaw_widget_p (Widget widget)
 }
 
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
 static void
 fill_xft_data (struct widget_xft_data *data, Widget widget, XftFont *font)
 {
@@ -210,6 +215,9 @@ draw_text (struct widget_xft_data *data, char *lbl, int inverse)
       /* 1.2 gives reasonable line spacing.  */
       y += data->xft_font->height * 1.2;
     }
+#ifdef USE_CAIRO
+  cairo_surface_flush (cairo_get_target (data->xft_draw));
+#endif
 
 }
 
@@ -307,7 +315,7 @@ xaw_update_one_widget (widget_instance *instance,
   if (XtIsSubclass (widget, dialogWidgetClass))
     {
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
       if (instance->xft_data && instance->xft_data[0].xft_font)
         {
           set_text (&instance->xft_data[0], instance->parent,
@@ -339,7 +347,7 @@ xaw_update_one_widget (widget_instance *instance,
       XtSetArg (al[ac], XtNlabel, val->value);ac++;
       /* Force centered button text.  Se above. */
       XtSetArg (al[ac], XtNjustify, XtJustifyCenter);ac++;
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
       if (instance->xft_data && instance->xft_data[0].xft_font)
         {
           int th;
@@ -473,7 +481,7 @@ static XtActionsRec xaw_actions [] = {
 };
 static Boolean actions_initted = False;
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
 static XtActionsRec button_actions[] =
   {
     { "my_reset", command_reset },
@@ -506,7 +514,7 @@ make_dialog (char* name,
   Widget dialog;
   Widget button;
   XtTranslations override;
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
   XftFont *xft_font = 0;
   XtTranslations button_override;
 #endif
@@ -521,7 +529,7 @@ make_dialog (char* name,
       XtAppContext app = XtWidgetToApplicationContext (parent);
       XtAppAddActions (app, xaw_actions,
 		       sizeof (xaw_actions) / sizeof (xaw_actions[0]));
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
       XtAppAddActions (app, button_actions,
 		       sizeof (button_actions) / sizeof (button_actions[0]));
 #endif
@@ -546,7 +554,7 @@ make_dialog (char* name,
   override = XtParseTranslationTable (dialogOverride);
   XtOverrideTranslations (dialog, override);
 
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
   {
     int num;
     Widget *ch = NULL;
@@ -618,7 +626,7 @@ make_dialog (char* name,
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
       if (xft_font)
         {
           fill_xft_data (&instance->xft_data[bc], button, xft_font);
@@ -651,7 +659,7 @@ make_dialog (char* name,
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
       if (xft_font)
         {
           fill_xft_data (&instance->xft_data[bc], button, xft_font);

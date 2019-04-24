@@ -687,7 +687,7 @@ digest_single_submenu (int start, int end, bool top_level_items)
 
 		  ASET (menu_items, i + MENU_ITEMS_PANE_NAME, pane_name);
 		}
-#elif defined (USE_LUCID) && defined (HAVE_XFT)
+#elif defined (USE_LUCID) && (defined USE_CAIRO || defined HAVE_XFT)
 	      if (STRINGP (pane_name))
 		{
 		  pane_name = ENCODE_UTF_8 (pane_name);

@@ -3487,7 +3487,7 @@ x_default_font_parameter (struct frame *f, Lisp_Object parms)
     {
       const char *names[]
 	= {
-#ifdef HAVE_XFT
+#if defined USE_CAIRO || defined HAVE_XFT
 	    /* This will find the normal Xft font.  */
  	    "monospace-10",
 #endif
