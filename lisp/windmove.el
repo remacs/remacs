@@ -596,12 +596,25 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
          (old-window (or (minibuffer-selected-window) (selected-window)))
          (new-window)
          (minibuffer-depth (minibuffer-depth))
-         (action display-buffer-overriding-action)
+         (action (lambda (buffer alist)
+                   (unless (> (minibuffer-depth) minibuffer-depth)
+                     (let ((window (if (eq dir 'same-window)
+                                       (selected-window)
+                                     (window-in-direction
+                                      dir nil nil
+                                      (and arg (prefix-numeric-value arg))
+                                      windmove-wrap-around)))
+                           (type 'reuse))
+                       (unless window
+                         (setq window (split-window nil nil dir) type 'window))
+                       (setq new-window (window--display-buffer buffer window
+                                                                type alist))))))
          (command this-command)
          (clearfun (make-symbol "clear-display-buffer-overriding-action"))
          (exitfun
           (lambda ()
-            (setq display-buffer-overriding-action action)
+            (setq display-buffer-overriding-action
+                  (delq action display-buffer-overriding-action))
             (when (window-live-p (if no-select old-window new-window))
               (select-window (if no-select old-window new-window)))
             (remove-hook 'post-command-hook clearfun))))
@@ -616,19 +629,7 @@ When `switch-to-buffer-obey-display-actions' is non-nil,
 		     (eq this-command command))
               (funcall exitfun))))
     (add-hook 'post-command-hook clearfun)
-    (push (lambda (buffer alist)
-	    (unless (> (minibuffer-depth) minibuffer-depth)
-	      (let ((window (if (eq dir 'same-window)
-			        (selected-window)
-                              (window-in-direction
-                               dir nil nil
-                               (and arg (prefix-numeric-value arg))
-                               windmove-wrap-around)))
-                    (type 'reuse))
-                (unless window
-                  (setq window (split-window nil nil dir) type 'window))
-		(setq new-window (window--display-buffer buffer window type alist)))))
-          display-buffer-overriding-action)
+    (push action display-buffer-overriding-action)
     (message "[display-%s]" dir)))
 
 ;;;###autoload
