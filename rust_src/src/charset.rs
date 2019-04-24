@@ -1,7 +1,8 @@
 //! Basic character set support.
 
-use remacs_macros::lisp_fn;
 use std::ptr;
+
+use remacs_macros::lisp_fn;
 
 use crate::{
     hashtable::{HashLookupResult, LispHashTableRef},
