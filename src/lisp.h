@@ -4151,32 +4151,8 @@ extern void *unexec_realloc (void *, size_t);
 extern void unexec_free (void *);
 #endif
 
-#define EMACS_MODULE_GMP
-#include "emacs-module.h"
-
-/* Function prototype for the module Lisp functions.  */
-typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
-				   emacs_value [], void *);
-
-/* Module function.  */
-
-/* A function environment is an auxiliary structure returned by
-   `module_make_function' to store information about a module
-   function.  It is stored in a pseudovector.  Its members correspond
-   to the arguments given to `module_make_function'.  */
-
-struct Lisp_Module_Function
-{
-  union vectorlike_header header;
-
-  /* Fields traced by GC; these must come first.  */
-  Lisp_Object documentation;
-
-  /* Fields ignored by GC.  */
-  ptrdiff_t min_arity, max_arity;
-  emacs_subr subr;
-  void *data;
-} GCALIGNED_STRUCT;
+/* The definition of Lisp_Module_Function depends on emacs-module.h,
+   so we don't define it here.  It's defined in emacs-module.c.  */
 
 INLINE bool
 MODULE_FUNCTIONP (Lisp_Object o)
@@ -4198,6 +4174,8 @@ extern Lisp_Object make_user_ptr (void (*finalizer) (void *), void *p);
 /* Defined in emacs-module.c.  */
 extern Lisp_Object funcall_module (Lisp_Object, ptrdiff_t, Lisp_Object *);
 extern Lisp_Object module_function_arity (const struct Lisp_Module_Function *);
+extern Lisp_Object module_function_documentation (const struct Lisp_Module_Function *);
+extern void *module_function_address (const struct Lisp_Module_Function *);
 extern void mark_modules (void);
 extern void init_module_assertions (bool);
 extern void syms_of_module (void);

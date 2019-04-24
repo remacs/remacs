@@ -1787,8 +1787,8 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
     case PVEC_MODULE_FUNCTION:
       {
 	print_c_string ("#<module function ", printcharfun);
-	void *ptr = XMODULE_FUNCTION (obj)->subr;
-	const char *file = NULL;
+        void *ptr = module_function_address (XMODULE_FUNCTION (obj));
+        const char *file = NULL;
 	const char *symbol = NULL;
 	dynlib_addr (ptr, &file, &symbol);
 

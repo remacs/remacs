@@ -337,8 +337,10 @@ string is passed through `substitute-command-keys'.  */)
     fun = XCDR (fun);
   if (SUBRP (fun))
     doc = make_fixnum (XSUBR (fun)->doc);
+#ifdef HAVE_MODULES
   else if (MODULE_FUNCTIONP (fun))
-    doc = XMODULE_FUNCTION (fun)->documentation;
+    doc = module_function_documentation (XMODULE_FUNCTION (fun));
+#endif
   else if (COMPILEDP (fun))
     {
       if (PVSIZE (fun) <= COMPILED_DOC_STRING)

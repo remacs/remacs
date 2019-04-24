@@ -471,6 +471,30 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
+/* Function prototype for the module Lisp functions.  */
+typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
+				   emacs_value [], void *);
+
+/* Module function.  */
+
+/* A function environment is an auxiliary structure returned by
+   `module_make_function' to store information about a module
+   function.  It is stored in a pseudovector.  Its members correspond
+   to the arguments given to `module_make_function'.  */
+
+struct Lisp_Module_Function
+{
+  union vectorlike_header header;
+
+  /* Fields traced by GC; these must come first.  */
+  Lisp_Object documentation;
+
+  /* Fields ignored by GC.  */
+  ptrdiff_t min_arity, max_arity;
+  emacs_subr subr;
+  void *data;
+} GCALIGNED_STRUCT;
+
 static struct Lisp_Module_Function *
 allocate_module_function (void)
 {
@@ -899,6 +923,18 @@ module_function_arity (const struct Lisp_Module_Function *const function)
   ptrdiff_t maxargs = function->max_arity;
   return Fcons (make_fixnum (minargs),
 		maxargs == MANY ? Qmany : make_fixnum (maxargs));
+}
+
+Lisp_Object
+module_function_documentation (const struct Lisp_Module_Function *function)
+{
+  return function->documentation;
+}
+
+void *
+module_function_address (const struct Lisp_Module_Function *function)
+{
+  return function->subr;
 }
 
 
