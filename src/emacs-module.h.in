@@ -28,7 +28,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdbool.h>
 #endif
 
-#ifdef EMACS_MODULE_GMP
+#if defined EMACS_MODULE_GMP && !defined EMACS_MODULE_HAVE_MPZ_T
 #include <gmp.h>
 #endif
 

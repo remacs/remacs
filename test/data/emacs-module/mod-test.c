@@ -27,10 +27,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <string.h>
 #include <time.h>
 
+#ifdef HAVE_GMP
+#include <gmp.h>
+#else
+#include "mini-gmp.h"
+#define EMACS_MODULE_HAVE_MPZ_T
+#endif
+
 #define EMACS_MODULE_GMP
 #include <emacs-module.h>
-
-#include <gmp.h>
 
 #include "timespec.h"
 

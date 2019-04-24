@@ -257,6 +257,7 @@ endif
 HYBRID_MALLOC = @HYBRID_MALLOC@
 LIBEGNU_ARCHIVE = ../lib/lib$(if $(HYBRID_MALLOC),e)gnu.a
 GMP_LIB = @GMP_LIB@
+GMP_OBJ = $(if @GMP_OBJ@, ../src/@GMP_OBJ@)
 
 # Note: emacs-module.h is generated from emacs-module.h.in, hence we
 # look in ../src, not $(srcdir)/../src.
@@ -269,7 +270,7 @@ src/emacs-module-tests.log: $(test_module)
 $(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h $(LIBEGNU_ARCHIVE)
 	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
-	  -o $@ $< $(LIBEGNU_ARCHIVE) $(GMP_LIB)
+	  -o $@ $< $(LIBEGNU_ARCHIVE) $(GMP_LIB) $(GMP_OBJ)
 endif
 
 ## Check that there is no 'automated' subdirectory, which would

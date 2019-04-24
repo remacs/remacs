@@ -70,6 +70,11 @@ To add a new module function, proceed as follows:
 
 #include <config.h>
 
+#ifndef HAVE_GMP
+#include "mini-gmp.h"
+#define EMACS_MODULE_HAVE_MPZ_T
+#endif
+
 #define EMACS_MODULE_GMP
 #include "emacs-module.h"
 
@@ -79,8 +84,6 @@ To add a new module function, proceed as follows:
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-#include <gmp.h>
 
 #include "lisp.h"
 #include "bignum.h"
