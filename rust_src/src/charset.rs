@@ -1,6 +1,7 @@
 //! Basic character set support.
 
 use remacs_macros::lisp_fn;
+use std::ptr;
 
 use crate::{
     hashtable::{HashLookupResult, LispHashTableRef},
@@ -27,7 +28,7 @@ impl LispObject {
 #[lisp_fn]
 pub fn clear_charset_maps() {
     unsafe {
-        *temp_charset_work = Default::default();
+        temp_charset_work = ptr::null_mut();
 
         if Vchar_unify_table.is_char_table() {
             Foptimize_char_table(Vchar_unify_table, Qnil);
