@@ -1,4 +1,4 @@
-;;; ws-mode.el --- WordStar emulation mode for GNU Emacs
+;;; ws-mode.el --- WordStar emulation mode for GNU Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1991, 2001-2019 Free Software Foundation, Inc.
 
@@ -24,9 +24,20 @@
 
 ;;; Commentary:
 
-;; This emulates WordStar, with a major mode.
+;; This provides emulation of WordStar with a minor mode.
 
 ;;; Code:
+
+(defgroup wordstar nil
+  "WordStar emulation within Emacs."
+  :prefix "wordstar-"
+  :prefix "ws-"
+  :group 'emulations)
+
+(defcustom wordstar-mode-lighter " WordStar"
+  "Lighter shown in the modeline for `wordstar' mode."
+  :type 'string)
+
 (defvar wordstar-C-k-map
   (let ((map (make-keymap)))
     (define-key map " " ())
@@ -98,8 +109,7 @@
     (define-key map "wh" 'split-window-right)
     (define-key map "wo" 'other-window)
     (define-key map "wv" 'split-window-below)
-    map)
-  "")
+    map))
 
 (defvar wordstar-C-q-map
   (let ((map (make-keymap)))
@@ -174,12 +184,9 @@
 ;; wordstar-C-j-map not yet implemented
 (defvar wordstar-C-j-map nil)
 
-
-(put 'wordstar-mode 'mode-class 'special)
-
 ;;;###autoload
-(define-derived-mode wordstar-mode fundamental-mode "WordStar"
-  "Major mode with WordStar-like key bindings.
+(define-minor-mode wordstar-mode
+  "Minor mode with WordStar-like key bindings.
 
 BUGS:
  - Help menus with WordStar commands (C-j just calls help-for-help)
@@ -189,8 +196,18 @@ BUGS:
  - Search and replace (C-q a) is only available in forward direction
 
 No key bindings beginning with ESC are installed, they will work
-Emacs-like.")
+Emacs-like."
+  :group 'wordstar
+  :lighter wordstar-mode-lighter
+  :keymap wordstar-mode-map)
 
+(defun turn-on-wordstar-mode ()
+  (when (and (not (minibufferp))
+             (not wordstar-mode))
+    (wordstar-mode 1)))
+
+(define-globalized-minor-mode global-wordstar-mode wordstar-mode
+  turn-on-wordstar-mode)
 
 (defun wordstar-center-paragraph ()
   "Center each line in the paragraph at or after point.
