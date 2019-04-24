@@ -753,7 +753,7 @@ static emacs_value
 module_make_time (emacs_env *env, struct timespec time)
 {
   MODULE_FUNCTION_BEGIN (NULL);
-  return lisp_to_value (env, make_lisp_time (time));
+  return lisp_to_value (env, timespec_to_lisp (time));
 }
 
 static void

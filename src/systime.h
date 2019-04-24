@@ -89,6 +89,7 @@ struct lisp_time
 /* defined in timefns.c */
 extern struct timeval make_timeval (struct timespec) ATTRIBUTE_CONST;
 extern Lisp_Object make_lisp_time (struct timespec);
+extern Lisp_Object timespec_to_lisp (struct timespec);
 extern bool list4_to_timespec (Lisp_Object, Lisp_Object, Lisp_Object,
 			       Lisp_Object, struct timespec *);
 extern struct timespec lisp_time_argument (Lisp_Object);

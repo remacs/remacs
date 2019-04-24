@@ -528,7 +528,14 @@ make_lisp_time (struct timespec t)
 		    make_fixnum (ns / 1000), make_fixnum (ns % 1000 * 1000));
     }
   else
-    return Fcons (timespec_ticks (t), timespec_hz);
+    return timespec_to_lisp (t);
+}
+
+/* Return (TICKS . HZ) for time T.  */
+struct Lisp_Object
+timespec_to_lisp (struct timespec t)
+{
+  return Fcons (timespec_ticks (t), timespec_hz);
 }
 
 /* Convert T to a Lisp timestamp.  FORM specifies the timestamp format.  */

@@ -326,8 +326,12 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
                   ;; New (TICKS . HZ) format.
                   '(123456789 . 1000000000)))
     (ert-info ((format "input: %s" input))
-      (should (time-equal-p (mod-test-add-nanosecond input)
-                            (time-add input '(0 0 0 1000)))))))
+      (let ((result (mod-test-add-nanosecond input)))
+        (should (consp result))
+        (should (integerp (car result)))
+        (should (integerp (cdr result)))
+        (should (cl-plusp (cdr result)))
+        (should (time-equal-p result (time-add input '(0 0 0 1000))))))))
 
 (ert-deftest mod-test-add-nanosecond/nil ()
   (should (<= (float-time (mod-test-add-nanosecond nil))
