@@ -382,6 +382,22 @@ Fmod_test_add_nanosecond (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
 }
 
 static emacs_value
+Fmod_test_nanoseconds (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *data) {
+  assert (nargs == 1);
+  struct timespec time = env->extract_time (env, args[0]);
+  struct emacs_mpz nanoseconds;
+  assert (LONG_MIN <= time.tv_sec && time.tv_sec <= LONG_MAX);
+  mpz_init_set_si (nanoseconds.value, time.tv_sec);
+  static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
+  mpz_mul_ui (nanoseconds.value, nanoseconds.value, 1000000000);
+  assert (0 <= time.tv_nsec && time.tv_nsec <= ULONG_MAX);
+  mpz_add_ui (nanoseconds.value, nanoseconds.value, time.tv_nsec);
+  emacs_value result = env->make_big_integer (env, &nanoseconds);
+  mpz_clear (nanoseconds.value);
+  return result;
+}
+
+static emacs_value
 Fmod_test_double (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
                   void *data)
 {
@@ -465,6 +481,7 @@ emacs_module_init (struct emacs_runtime *ert)
          NULL, NULL);
   DEFUN ("mod-test-sleep-until", Fmod_test_sleep_until, 2, 2, NULL, NULL);
   DEFUN ("mod-test-add-nanosecond", Fmod_test_add_nanosecond, 1, 1, NULL, NULL);
+  DEFUN ("mod-test-nanoseconds", Fmod_test_nanoseconds, 1, 1, NULL, NULL);
   DEFUN ("mod-test-double", Fmod_test_double, 1, 1, NULL, NULL);
 
 #undef DEFUN

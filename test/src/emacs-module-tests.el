@@ -342,6 +342,25 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
     (ert-info ((format "input: %s" input))
       (should-error (mod-test-add-nanosecond input)))))
 
+(ert-deftest mod-test-nanoseconds ()
+  "Test truncation when converting to `struct timespec'."
+  (dolist (test-case '((0 . 0)
+                       (-1 . -1000000000)
+                       ((1 . 1000000000) . 1)
+                       ((-1 . 1000000000) . -1)
+                       ((1 . 1000000000000) . 0)
+                       ((-1 . 1000000000000) . -1)
+                       ((999 . 1000000000000) . 0)
+                       ((-999 . 1000000000000) . -1)
+                       ((1000 . 1000000000000) . 1)
+                       ((-1000 . 1000000000000) . -1)
+                       ((0 0 0 1) . 0)
+                       ((0 0 0 -1) . -1)))
+    (let ((input (car test-case))
+          (expected (cdr test-case)))
+      (ert-info ((format "input: %S, expected result: %d" input expected))
+        (should (eq (mod-test-nanoseconds input) expected))))))
+
 (ert-deftest mod-test-double ()
   (dolist (input (list 0 1 2 -1 42 12345678901234567890
                        most-positive-fixnum (1+ most-positive-fixnum)

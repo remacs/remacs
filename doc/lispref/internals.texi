@@ -1406,12 +1406,12 @@ billion.
 @xref{Elapsed Time,,,libc}.
 
 If @var{time} has higher precision than nanoseconds, then this
-function truncates it to nanosecond precision.  This function signals
-an error if @var{time} (truncated to nanoseconds) cannot be
-represented by @code{struct timespec}.  For example, if @code{time_t}
-is a 32-bit integral type, then a @var{time} value of ten billion
-seconds would signal an error, but a @var{time} value of 600
-picoseconds would get truncated to zero.
+function truncates it to nanosecond precision towards negative
+infinity.  This function signals an error if @var{time} (truncated to
+nanoseconds) cannot be represented by @code{struct timespec}.  For
+example, if @code{time_t} is a 32-bit integral type, then a @var{time}
+value of ten billion seconds would signal an error, but a @var{time}
+value of 600 picoseconds would get truncated to zero.
 
 If you need to deal with time values that are not representable by
 @code{struct timespec}, or if you want higher precision, call the Lisp
