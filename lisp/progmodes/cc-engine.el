@@ -6567,6 +6567,9 @@ comment at the start of cc-engine.el for more info."
 ;; BEG and END.
 (defvar c-old-beg-rs nil)
 (defvar c-old-end-rs nil)
+;; Whether a buffer change has disrupted or will disrupt the terminating id of
+;; a raw string.
+(defvar c-raw-string-end-delim-disrupted nil)
 
 (defun c-raw-string-pos ()
   ;; Get POINT's relationship to any containing raw string.
@@ -6768,17 +6771,12 @@ comment at the start of cc-engine.el for more info."
   ;; This function is called as a before-change function solely due to its
   ;; membership of the C++ value of `c-get-state-before-change-functions'.
   (goto-char end)
+  (setq c-raw-string-end-delim-disrupted nil)
   ;; We use the following to detect a R"<id>( being swallowed into a string by
   ;; the pending change.
   (setq c-old-END-literality (c-in-literal))
   (c-save-buffer-state
-      (;; (beg-rs (progn (goto-char beg) (c-raw-string-pos)))
-       ;; (end-rs (progn (goto-char end) (c-raw-string-pos)))
-					; FIXME!!!
-					; Optimize this so that we don't call
-					; `c-raw-string-pos' twice when once
-					; will do.  (2016-06-02).
-       (term-del (c-raw-string-in-end-delim beg end))
+      ((term-del (c-raw-string-in-end-delim beg end))
        Rquote close-quote)
     (setq c-old-beg-rs (progn (goto-char beg) (c-raw-string-pos))
 	  c-old-end-rs (progn (goto-char end) (c-raw-string-pos)))
@@ -6792,6 +6790,7 @@ comment at the start of cc-engine.el for more info."
 	       (<= (car term-del) (nth 3 c-old-beg-rs))))
       (setq Rquote (1- (cadr c-old-beg-rs))
 	    close-quote (1+ (cdr term-del)))
+      (setq c-raw-string-end-delim-disrupted t)
       (c-depropertize-raw-strings-in-region Rquote close-quote)
       (setq c-new-BEG (min c-new-BEG Rquote)
 	    c-new-END (max c-new-END close-quote)))
@@ -6991,42 +6990,45 @@ comment at the start of cc-engine.el for more info."
 					      (c-point 'eol))
 	      (c-clear-char-property (1- (point)) 'syntax-table))))
 
+      ;; Have we matched up with an existing terminator by typing into an
+      ;; opening delimiter? ... or by messing up a raw string's terminator so
+      ;; that it now matches a later terminator?
+      (when
+	  (or c-raw-string-end-delim-disrupted
+	      (and c-old-beg-rs
+		   (eq (car c-old-beg-rs) 'open-delim)))
+	(goto-char (cadr c-old-beg-rs))
+	(when (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+	  (setq id (match-string-no-properties 1))
+	  (when (re-search-forward (concat ")" id "\"") nil t) ; No bound.
+	    (setq c-new-END (point-max))
+	    (c-clear-char-properties (cadr c-old-beg-rs) c-new-END
+				     'syntax-table)
+	    (c-truncate-semi-nonlit-pos-cache (cadr c-old-beg-rs)))))
       ;; Have we terminated an existing raw string by inserting or removing
       ;; text?
       (when (eq c-old-END-literality 'string)
-	(setq state (c-state-semi-pp-to-literal beg))
-	(cond
-	 ;; Possibly terminating a(n un)terminated raw string.
-	 ((eq (nth 3 (car state)) t)
-	  (goto-char (nth 8 (car state)))
-	  (when
-	      (and (eq (char-after) ?\()
-		   (search-backward-regexp
-		    "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)\\=" (- (point) 18) t))
-	    (setq id (match-string-no-properties 1)
-		  found-beg (match-beginning 0)
-		  found-end (1+ (match-end 0)))))
-	 ;; Possibly terminating an already terminated raw string.
-	 ((eq (nth 3 (car state)) ?\")
-	  (goto-char (nth 8 (car state)))
-	  (when
-	      (and (eq (char-before) ?R)
-		   (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("))
-	    (setq id (match-string-no-properties 1)
-		  found-beg (1- (point))
-		  found-end (match-end 0)))))
-	(when id
-	  (goto-char (max (- beg 18) (point-min)))
-	  (when (search-forward (concat ")" id "\"") (+ end 1 (length id)) t)
-	    ;; Has an earlier close delimiter just been inserted into an
-	    ;; already terminated raw string?
-	    (if (and (eq (nth 3 (car state)) ?\")
-		     (search-forward (concat ")" id "\"") nil t))
-		(setq found-end (point)))
-	    (setq c-new-BEG (min c-new-BEG found-beg)
-		  c-new-END (max c-new-END found-end))
-	    (c-clear-char-properties found-beg found-end 'syntax-table)
-	    (c-truncate-semi-nonlit-pos-cache found-beg))))
+	;; Have we just made or modified a closing delimiter?
+	(goto-char (max (- beg 18) (point-min)))
+	(while
+	    (and
+	     (setq found
+		   (search-forward-regexp ")\\([^ ()\\\n\r\t]\\{0,16\\}\\)\""
+					  (+ end 17) t))
+	     (< (match-end 0) beg)))
+	(when (and found (<= (match-beginning 0) end))
+	  (setq id (match-string-no-properties 1))
+	  (goto-char (match-beginning 0))
+	  (while
+	      (and
+	       (setq found (search-backward (concat "R\"" id "(") nil t))
+	       (setq state (c-state-semi-pp-to-literal (point)))
+	       (memq (nth 3 (car state)) '(t ?\"))))
+	  (when found
+	    (setq c-new-BEG (min (point) c-new-BEG)
+		  c-new-END (point-max))
+	    (c-clear-char-properties (point) c-new-END 'syntax-table)
+	    (c-truncate-semi-nonlit-pos-cache (point)))))
 
       ;; Are there any raw strings in a newly created macro?
       (when (< beg end)
