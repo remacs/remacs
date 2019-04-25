@@ -123,7 +123,7 @@ dynlib_sym (dynlib_handle_ptr h, const char *sym)
 }
 
 void
-dynlib_addr (void *addr, const char **fname, const char **symname)
+dynlib_addr (void (*addr) (void), const char **fname, const char **symname)
 {
   static char dll_filename[MAX_UTF8_PATH];
   static GetModuleHandleExA_Proc s_pfn_Get_Module_HandleExA = NULL;
@@ -279,11 +279,12 @@ dynlib_sym (dynlib_handle_ptr h, const char *sym)
 }
 
 void
-dynlib_addr (void *ptr, const char **path, const char **sym)
+dynlib_addr (void (*funcptr) (void), const char **path, const char **sym)
 {
   *path = NULL;
   *sym = NULL;
 #ifdef HAVE_DLADDR
+  void *ptr = (void *) funcptr;
   Dl_info info;
   if (dladdr (ptr, &info) && info.dli_fname && info.dli_sname)
     {

@@ -32910,14 +32910,18 @@ which no explicit name has been set (see `modify-frame-parameters').  */);
 This variable has the same structure as `mode-line-format' (which see),
 and is used only on frames for which no explicit name has been set
 \(see `modify-frame-parameters').  */);
+  /* Do not nest calls to pure_list.  This works around a bug in
+     Oracle Developer Studio 12.6.  */
+  Lisp_Object icon_title_name_format
+    = pure_list (empty_unibyte_string,
+		 intern_c_string ("invocation-name"),
+		 build_pure_c_string ("@"),
+		 intern_c_string ("system-name"));
   Vicon_title_format
     = Vframe_title_format
     = pure_list (intern_c_string ("multiple-frames"),
 		 build_pure_c_string ("%b"),
-		 pure_list (empty_unibyte_string,
-			    intern_c_string ("invocation-name"),
-			    build_pure_c_string ("@"),
-			    intern_c_string ("system-name")));
+		 icon_title_name_format);
 
   DEFVAR_LISP ("message-log-max", Vmessage_log_max,
     doc: /* Maximum number of lines to keep in the message log buffer.

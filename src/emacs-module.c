@@ -934,10 +934,10 @@ module_function_documentation (const struct Lisp_Module_Function *function)
   return function->documentation;
 }
 
-void *
+module_funcptr
 module_function_address (const struct Lisp_Module_Function *function)
 {
-  return function->subr;
+  return (module_funcptr) function->subr;
 }
 
 

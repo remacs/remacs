@@ -3782,7 +3782,7 @@ string_to_number (char const *string, int base, ptrdiff_t *plen)
 	      state |= E_EXP;
 	      cp += 3;
 	      union ieee754_double u
-		= { .ieee_nan = { .exponent = -1, .quiet_nan = 1,
+		= { .ieee_nan = { .exponent = 0x7ff, .quiet_nan = 1,
 				  .mantissa0 = n >> 31 >> 1, .mantissa1 = n }};
 	      value = u.d;
 	    }

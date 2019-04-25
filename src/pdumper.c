@@ -70,18 +70,18 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_PDUMPER
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)
+#if GNUC_PREREQ (4, 7, 0)
 # pragma GCC diagnostic error "-Wconversion"
+# pragma GCC diagnostic ignored "-Wsign-conversion"
 # pragma GCC diagnostic error "-Wshadow"
 # define ALLOW_IMPLICIT_CONVERSION                       \
   _Pragma ("GCC diagnostic push")                        \
   _Pragma ("GCC diagnostic ignored \"-Wconversion\"")
-  _Pragma ("GCC diagnostic ignored \"-Wsign-conversion\"")
 # define DISALLOW_IMPLICIT_CONVERSION \
   _Pragma ("GCC diagnostic pop")
 #else
-# define ALLOW_IMPLICIT_CONVERSION ((void)0)
-# define DISALLOW_IMPLICIT_CONVERSION ((void)0)
+# define ALLOW_IMPLICIT_CONVERSION ((void) 0)
+# define DISALLOW_IMPLICIT_CONVERSION ((void) 0)
 #endif
 
 #define VM_POSIX 1
@@ -124,7 +124,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    general-purpose computer made after 1990.  */
 verify (sizeof (ptrdiff_t) == sizeof (void *));
 verify (sizeof (intptr_t) == sizeof (ptrdiff_t));
-verify (sizeof (void (*)(void)) == sizeof (void *));
+verify (sizeof (void (*) (void)) == sizeof (void *));
 verify (sizeof (ptrdiff_t) <= sizeof (Lisp_Object));
 verify (sizeof (ptrdiff_t) <= sizeof (EMACS_INT));
 verify (CHAR_BIT == 8);
@@ -151,8 +151,7 @@ typedef int_least32_t dump_off;
 #define DUMP_OFF_MIN INT_LEAST32_MIN
 #define DUMP_OFF_MAX INT_LEAST32_MAX
 
-__attribute__((format (printf,1,2)))
-static void
+static void ATTRIBUTE_FORMAT ((printf, 1, 2))
 dump_trace (const char *fmt, ...)
 {
   if (0)
@@ -734,11 +733,7 @@ dump_builtin_symbol_p (Lisp_Object object)
 static bool
 dump_object_self_representing_p (Lisp_Object object)
 {
-  bool result;
-  ALLOW_IMPLICIT_CONVERSION;
-  result =  FIXNUMP (object) || dump_builtin_symbol_p (object);
-  DISALLOW_IMPLICIT_CONVERSION;
-  return result;
+  return FIXNUMP (object) || dump_builtin_symbol_p (object);
 }
 
 #define DEFINE_FROMLISP_FUNC(fn, type)          \
@@ -749,10 +744,13 @@ dump_object_self_representing_p (Lisp_Object object)
     if (FIXNUMP (value))                        \
       return XFIXNUM (value);                   \
     eassert (BIGNUMP (value));                  \
-    return TYPE_SIGNED (type)                   \
-      ? bignum_to_intmax (value)                \
-      : bignum_to_uintmax (value);              \
+    type result;				\
+    if (TYPE_SIGNED (type))			\
+      result = bignum_to_intmax (value);	\
+    else					\
+      result = bignum_to_uintmax (value);	\
     DISALLOW_IMPLICIT_CONVERSION;               \
+    return result;				\
   }
 
 #define DEFINE_TOLISP_FUNC(fn, type) \
@@ -762,10 +760,10 @@ dump_object_self_representing_p (Lisp_Object object)
     return INT_TO_INTEGER (value);   \
   }
 
-DEFINE_FROMLISP_FUNC (intmax_t_from_lisp, intmax_t);
-DEFINE_TOLISP_FUNC (intmax_t_to_lisp, intmax_t);
-DEFINE_FROMLISP_FUNC (dump_off_from_lisp, dump_off);
-DEFINE_TOLISP_FUNC (dump_off_to_lisp, dump_off);
+DEFINE_FROMLISP_FUNC (intmax_t_from_lisp, intmax_t)
+DEFINE_TOLISP_FUNC (intmax_t_to_lisp, intmax_t)
+DEFINE_FROMLISP_FUNC (dump_off_from_lisp, dump_off)
+DEFINE_TOLISP_FUNC (dump_off_to_lisp, dump_off)
 
 static void
 dump_write (struct dump_context *ctx, const void *buf, dump_off nbyte)
@@ -797,8 +795,7 @@ dump_tailq_length (const struct dump_tailq *tailq)
   return tailq->length;
 }
 
-__attribute__((unused))
-static void
+static void ATTRIBUTE_UNUSED
 dump_tailq_prepend (struct dump_tailq *tailq, Lisp_Object value)
 {
   Lisp_Object link = Fcons (value, tailq->head);
@@ -808,8 +805,7 @@ dump_tailq_prepend (struct dump_tailq *tailq, Lisp_Object value)
   tailq->length += 1;
 }
 
-__attribute__((unused))
-static void
+static void ATTRIBUTE_UNUSED
 dump_tailq_append (struct dump_tailq *tailq, Lisp_Object value)
 {
   Lisp_Object link = Fcons (value, Qnil);
@@ -1593,11 +1589,11 @@ dump_emacs_reloc_immediate (struct dump_context *ctx,
       ctx, emacs_ptr, &value, sizeof (value));                          \
   }
 
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_lv, Lisp_Object);
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_ptrdiff_t, ptrdiff_t);
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_intmax_t, intmax_t);
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_int, int);
-DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_bool, bool);
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_lv, Lisp_Object)
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_ptrdiff_t, ptrdiff_t)
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_intmax_t, intmax_t)
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_int, int)
+DEFINE_EMACS_IMMEDIATE_FN (dump_emacs_reloc_immediate_bool, bool)
 
 /* Add an emacs relocation that makes a raw pointer in Emacs point
    into the dump.  */
@@ -2011,8 +2007,10 @@ finish_dump_pvec (struct dump_context *ctx,
                   union vectorlike_header *out_hdr)
 {
   ALLOW_IMPLICIT_CONVERSION;
-  return dump_object_finish (ctx, out_hdr, vectorlike_nbytes (out_hdr));
+  dump_off result = dump_object_finish (ctx, out_hdr,
+					vectorlike_nbytes (out_hdr));
   DISALLOW_IMPLICIT_CONVERSION;
+  return result;
 }
 
 static void
@@ -3237,7 +3235,8 @@ static void
 dump_metadata_for_pdumper (struct dump_context *ctx)
 {
   for (int i = 0; i < nr_dump_hooks; ++i)
-    dump_emacs_reloc_to_emacs_ptr_raw (ctx, &dump_hooks[i], dump_hooks[i]);
+    dump_emacs_reloc_to_emacs_ptr_raw (ctx, &dump_hooks[i],
+				       (void const *) dump_hooks[i]);
   dump_emacs_reloc_immediate_int (ctx, &nr_dump_hooks, nr_dump_hooks);
 
   for (int i = 0; i < nr_remembered_data; ++i)
@@ -3801,8 +3800,8 @@ dump_merge_emacs_relocs (Lisp_Object lreloc_a, Lisp_Object lreloc_b)
                 dump_off_to_lisp (reloc_a.length));
 }
 
-typedef void (*drain_reloc_handler)(struct dump_context *, Lisp_Object);
-typedef Lisp_Object (*drain_reloc_merger)(Lisp_Object a, Lisp_Object b);
+typedef void (*drain_reloc_handler) (struct dump_context *, Lisp_Object);
+typedef Lisp_Object (*drain_reloc_merger) (Lisp_Object a, Lisp_Object b);
 
 static void
 drain_reloc_list (struct dump_context *ctx,
@@ -4040,7 +4039,7 @@ types.  */)
   ctx->deferred_symbols = Qnil;
 
   ctx->fixups = Qnil;
-  ctx->staticpro_table = CALLN (Fmake_hash_table);
+  ctx->staticpro_table = Fmake_hash_table (0, NULL);
   ctx->symbol_aux = Qnil;
   ctx->copied_queue = Qnil;
   ctx->cold_queue = Qnil;
@@ -4587,7 +4586,7 @@ struct dump_memory_map
 {
   struct dump_memory_map_spec spec;
   void *mapping;  /* Actual mapped memory.  */
-  void (*release)(struct dump_memory_map *);
+  void (*release) (struct dump_memory_map *);
   void *private;
 };
 
