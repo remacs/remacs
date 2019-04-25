@@ -1247,7 +1247,8 @@ case $cpu-$vendor in
 			| v70 | v850 | v850e | v850e1 | v850es | v850e2 | v850e2v3 \
 			| vax \
 			| visium \
-			| w65 | wasm32 \
+			| w65 \
+			| wasm32 | wasm64 \
 			| we32k \
 			| x86 | x86_64 | xc16x | xgate | xps100 \
 			| xstormy16 | xtensa* \
@@ -1367,7 +1368,7 @@ case $os in
 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
-	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
+	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	qnx*)
