@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <errno.h>
-#include <stdalign.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1576,16 +1575,15 @@ static struct Lisp_String *string_free_list;
 
 #ifdef GC_CHECK_STRING_OVERRUN
 
-/* We check for overrun in string data blocks by appending a small
+/* Check for overrun in string data blocks by appending a small
    "cookie" after each allocated string data block, and check for the
    presence of this cookie during GC.  */
-
-#define GC_STRING_OVERRUN_COOKIE_SIZE	8
+# define GC_STRING_OVERRUN_COOKIE_SIZE ROUNDUP (4, alignof (sdata))
 static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
-  { '\xde', '\xad', '\xbe', '\xef', '\xde', '\xad', '\xbe', '\xef' };
+  { '\xde', '\xad', '\xbe', '\xef', /* Perhaps some zeros here.  */ };
 
 #else
-#define GC_STRING_OVERRUN_COOKIE_SIZE 0
+# define GC_STRING_OVERRUN_COOKIE_SIZE 0
 #endif
 
 /* Value is the size of an sdata structure large enough to hold NBYTES
@@ -1615,13 +1613,7 @@ static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
 #endif /* not GC_CHECK_STRING_BYTES */
 
 /* Extra bytes to allocate for each string.  */
-
-#define GC_STRING_EXTRA (GC_STRING_OVERRUN_COOKIE_SIZE)
-
-/* Make sure that allocating the extra bytes doesn't misalign
-   `sdata'.  */
-
-verify (GC_STRING_EXTRA % alignof (sdata) == 0);
+#define GC_STRING_EXTRA GC_STRING_OVERRUN_COOKIE_SIZE
 
 /* Exact bound on the number of bytes in a string, not counting the
    terminating NUL.  A string cannot contain more bytes than
@@ -1882,7 +1874,7 @@ allocate_string_data (struct Lisp_String *s,
 
   data->string = s;
   b->next_free = (sdata *) ((char *) data + needed + GC_STRING_EXTRA);
-  eassert ((uintptr_t) (char *) b->next_free % alignof (sdata) == 0);
+  eassert ((uintptr_t) b->next_free % alignof (sdata) == 0);
 
   MALLOC_UNBLOCK_INPUT;
 
