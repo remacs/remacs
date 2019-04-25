@@ -6607,15 +6607,14 @@ comment at the start of cc-engine.el for more info."
 		      (while
 			  (and
 			   (search-forward-regexp
-			    "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("
+			    c-c++-raw-string-opener-re
 			    (1+ here) 'limit)
 			   (< (point) here)))
 		      (and (eq (point) (1+ here))
 			   (match-beginning 1)
 			   (goto-char (1- (match-beginning 1)))))))
 		  (not (bobp)))))
-	   (eq (char-before) ?R)
-	   (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("))
+	   (c-at-c++-raw-string-opener))
 	(setq open-quote-pos (point)
 	      open-paren-pos (match-end 1)
 	      id (match-string-no-properties 1))
@@ -6733,7 +6732,7 @@ comment at the start of cc-engine.el for more info."
 	       (concat "\\("				     ; 1
 		       c-anchored-cpp-prefix		     ; 2
 		       "\\)\\|\\("			     ; 3
-		       "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("  ; 4
+		       c-c++-raw-string-opener-re	     ; 4
 		       "\\)")
 	       finish t))
     (when (save-excursion
@@ -6752,7 +6751,7 @@ comment at the start of cc-engine.el for more info."
 	  (goto-char (match-end 2))	; after the "#".
 	  (while (and (< (point) eom)
 		      (c-syntactic-re-search-forward
-		       "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(" eom t))
+		       c-c++-raw-string-opener-re eom t))
 	    (c-depropertize-raw-string
 	     (match-string-no-properties 1) ; id
 	     (1+ (match-beginning 0))	    ; open quote
@@ -6931,8 +6930,7 @@ comment at the start of cc-engine.el for more info."
       (goto-char end)
       (setq eoll (c-point 'eoll))
       (when (and (null c-old-END-literality)
-		 (search-forward-regexp "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("
-				 eoll t))
+		 (search-forward-regexp c-c++-raw-string-opener-re eoll t))
 	(setq state (c-state-semi-pp-to-literal end))
 	(when (eq (cadr state) 'string)
 	  (unwind-protect
@@ -6969,7 +6967,7 @@ comment at the start of cc-engine.el for more info."
       (while
 	  (and
 	   (setq found
-		 (search-forward-regexp "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)("
+		 (search-forward-regexp c-c++-raw-string-opener-re
 				       c-new-END 'bound))
 	   (<= (match-end 0) beg)))
       (when (and found (<= (match-beginning 0) end))
@@ -6983,7 +6981,7 @@ comment at the start of cc-engine.el for more info."
 					     'syntax-table)
 			'(1)))
 	(goto-char (1- (cadr c-old-beg-rs)))
-	(unless (looking-at "R\"[^ ()\\\n\r\t]\\{0,16\\}(")
+	(unless (looking-at c-c++-raw-string-opener-re)
 	  (c-clear-char-property (1+ (point)) 'syntax-table)
 	  (c-truncate-semi-nonlit-pos-cache (1+ (point)))
 	  (if (c-search-forward-char-property 'syntax-table '(15)
@@ -6998,7 +6996,7 @@ comment at the start of cc-engine.el for more info."
 	      (and c-old-beg-rs
 		   (eq (car c-old-beg-rs) 'open-delim)))
 	(goto-char (cadr c-old-beg-rs))
-	(when (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+	(when (looking-at c-c++-raw-string-opener-1-re)
 	  (setq id (match-string-no-properties 1))
 	  (when (re-search-forward (concat ")" id "\"") nil t) ; No bound.
 	    (setq c-new-END (point-max))

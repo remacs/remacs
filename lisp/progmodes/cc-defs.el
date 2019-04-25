@@ -503,6 +503,31 @@ to it is returned.  This function does not modify the point or the mark."
     ;; Emacs <22 + XEmacs
     '(default-value 'sentence-end)))
 
+(defconst c-c++-raw-string-opener-re "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+;; Matches a C++ raw string opener.  Submatch 1 is its identifier.
+
+(defconst c-c++-raw-string-opener-1-re "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+;; Matches a C++ raw string opener starting after the initial R.
+
+(defmacro c-sub-at-c++-raw-string-opener ()
+  `(save-excursion
+     (and
+      (if (eq (char-after) ?R)
+	  (progn (forward-char) t)
+	(eq (char-before) ?R))
+      (looking-at c-c++-raw-string-opener-1-re))))
+
+(defmacro c-at-c++-raw-string-opener (&optional pos)
+  ;; Return non-nil if POS (default point) is either at the start of a C++ raw
+  ;; string opener, or after the introductory R of one.  The match data is
+  ;; overwritten.  On success the opener's identifier will be (match-string
+  ;; 1).  Text properties on any characters are ignored.
+  (if pos
+      `(save-excursion
+	 (goto-char ,pos)
+	 (c-sub-at-c++-raw-string-opener))
+    `(c-sub-at-c++-raw-string-opener)))
+
 ;; The following is essentially `save-buffer-state' from lazy-lock.el.
 ;; It ought to be a standard macro.
 (defmacro c-save-buffer-state (varlist &rest body)

@@ -1261,7 +1261,8 @@ Note that the style variables are always made local to the buffer."
 		   (memq (char-after) c-string-delims)) ; Ignore an unterminated raw string's (.
 	  ;; Opening " on last line of text (without EOL).
 	  (c-clear-char-property (point) 'syntax-table)
-	  (c-truncate-semi-nonlit-pos-cache (point)))))
+	  (c-truncate-semi-nonlit-pos-cache (point))
+	  (setq c-new-BEG (min c-new-BEG (point))))))
 
      (t (goto-char end)			; point-max
 	(when
@@ -1271,17 +1272,24 @@ Note that the style variables are always made local to the buffer."
 	  (c-clear-char-property (point) 'syntax-table)
 	  (c-truncate-semi-nonlit-pos-cache (point)))))
 
-    (unless (and c-multiline-string-start-char
-		 (not (c-characterp c-multiline-string-start-char)))
+    (unless 
+	(or (and
+	     ;; Don't set c-new-BEG/END if we're in a raw string.
+	     (eq beg-literal-type 'string)
+	     (c-at-c++-raw-string-opener (car beg-limits)))
+	    (and c-multiline-string-start-char
+		 (not (c-characterp c-multiline-string-start-char))))
       (when (and (eq end-literal-type 'string)
 		 (not (eq (char-before (cdr end-limits)) ?\()))
 	(c-clear-char-property (1- (cdr end-limits)) 'syntax-table)
-	(c-truncate-semi-nonlit-pos-cache (1- (cdr end-limits))))
+	(c-truncate-semi-nonlit-pos-cache (1- (cdr end-limits)))
+	(setq c-new-END (max c-new-END (cdr end-limits))))
 
       (when (and (eq beg-literal-type 'string)
 		 (memq (char-after (car beg-limits)) c-string-delims))
 	(c-clear-char-property (car beg-limits) 'syntax-table)
-	(c-truncate-semi-nonlit-pos-cache (car beg-limits))))))
+	(c-truncate-semi-nonlit-pos-cache (car beg-limits))
+	(setq c-new-BEG (min c-new-BEG (car beg-limits)))))))
 
 (defun c-after-change-mark-abnormal-strings (beg end _old-len)
   ;; Mark any unbalanced strings in the region (c-new-BEG c-new-END) with
@@ -1352,6 +1360,7 @@ Note that the style variables are always made local to the buffer."
 	      (car beg-limits))
 	     (t				; comment
 	      (cdr beg-limits))))
+      ;; Handle one string each time around the next while loop.
       (while
 	  (and
 	   (< (point) c-new-END)
@@ -1373,10 +1382,15 @@ Note that the style variables are always made local to the buffer."
 	  (cond
 	   ((memq (char-after (match-end 0)) '(?\n ?\r))
 	    (c-put-char-property (1- (point)) 'syntax-table '(15))
-	    (c-put-char-property (match-end 0) 'syntax-table '(15)))
+	    (c-put-char-property (match-end 0) 'syntax-table '(15))
+	    (setq c-new-BEG (min c-new-BEG (point))
+		  c-new-END (max c-new-END (match-end 0))))
 	   ((or (eq (match-end 0) (point-max))
 		(eq (char-after (match-end 0)) ?\\)) ; \ at EOB
-	    (c-put-char-property (1- (point)) 'syntax-table '(15))))
+	    (c-put-char-property (1- (point)) 'syntax-table '(15))
+	    (setq c-new-BEG (min c-new-BEG (point))
+		  c-new-END (max c-new-END (match-end 0))) ; Do we need c-new-END?
+	    ))
 	  (goto-char (min (1+ (match-end 0)) (point-max))))
 	(setq s nil)))))
 

@@ -1684,11 +1684,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (string-start (and (eq (cadr state) 'string)
 			    (car (cddr state))))
 	 (raw-id (and string-start
-		      (save-excursion
-			(goto-char string-start)
-			(and (eq (char-before) ?R)
-			     (looking-at "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
-			     (match-string-no-properties 1)))))
+		      (c-at-c++-raw-string-opener string-start)
+		      (match-string-no-properties 1)))
 	 (content-start (and raw-id (point))))
     ;; We go round the next loop twice per raw string, once for each "end".
     (while (< (point) limit)
