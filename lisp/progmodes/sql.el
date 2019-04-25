@@ -1423,6 +1423,15 @@ specified, it's `sql-product' or `sql-connection' must match."
                     (and (stringp connection)
                          (string= connection sql-connection))))))))
 
+(defun sql-is-sqli-buffer-p (buffer)
+  "Return non-nil if buffer is a SQLi buffer."
+  (when buffer
+    (setq buffer (get-buffer buffer))
+    (and buffer
+         (buffer-live-p buffer)
+         (with-current-buffer buffer
+           (derived-mode-p 'sql-interactive-mode)))))
+
 ;; Keymap for sql-interactive-mode.
 
 (defvar sql-interactive-mode-map
@@ -3550,24 +3559,29 @@ server/database name."
   "Generate a new, unique buffer name for a SQLi buffer.
 
 Append a sequence number until a unique name is found."
-  (let ((base-name (when (stringp base)
-                     (substring-no-properties
-                      (or base
-                          (sql-get-product-feature product :name)
+  (let ((base-name (substring-no-properties
+                    (if base
+                        (if (stringp base)
+                            base
+                          (format "%S" base))
+                      (or (sql-get-product-feature product :name)
                           (symbol-name product)))))
-        buf-fmt-1st buf-fmt-rest)
+        buf-fmt-1st
+        buf-fmt-rest)
 
     ;; Calculate buffer format
-    (if base-name
-        (setq buf-fmt-1st  (format "*SQL: %s*" base-name)
-              buf-fmt-rest (format "*SQL: %s-%%d*" base-name))
-      (setq buf-fmt-1st  "*SQL*"
-            buf-fmt-rest "*SQL-%d*"))
+    (if (string-blank-p base-name)
+        (setq buf-fmt-1st  "*SQL*"
+              buf-fmt-rest "*SQL-%d*")
+      (setq buf-fmt-1st  (format "*SQL: %s*" base-name)
+            buf-fmt-rest (format "*SQL: %s-%%d*" base-name)))
 
     ;; See if we can find an unused buffer
     (let ((buf-name buf-fmt-1st)
           (i 1))
-      (while (sql-buffer-live-p buf-name)
+      (while (if (sql-is-sqli-buffer-p buf-name)
+                 (comint-check-proc buf-name)
+               (buffer-live-p (get-buffer buf-name)))
         ;; Check a sequence number on the BASE
         (setq buf-name (format buf-fmt-rest i)
               i (1+ i)))
@@ -4670,13 +4684,13 @@ the call to \\[sql-product-interactive] with
                             (read-string
                              "Buffer name (\"*SQL: XXX*\"; enter `XXX'): "
                              (sql-make-alternate-buffer-name product))))
-                          ((or (string-prefix-p " " new-name)
-                               (string-match-p "\\`[*].*[*]\\'" new-name))
-                           new-name)
                           ((stringp new-name)
-                           (sql-generate-unique-sqli-buffer-name product new-name))
+                           (if (or (string-prefix-p " " new-name)
+                                   (string-match-p "\\`[*].*[*]\\'" new-name))
+                               new-name
+                             (sql-generate-unique-sqli-buffer-name product new-name)))
                           (t
-                           (sql-generate-unique-sqli-buffer-name product nil)))))
+                           (sql-generate-unique-sqli-buffer-name product new-name)))))
 
               ;; Set SQLi mode.
               (let ((sql-interactive-product product))
