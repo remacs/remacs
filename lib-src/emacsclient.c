@@ -1472,7 +1472,7 @@ set_local_socket (char const *server_name)
 	  int sockdirnamelen = snprintf (sockdirname, sizeof sockdirname,
 					 "/run/user/%"PRIuMAX, id);
 	  if (0 <= sockdirnamelen && sockdirnamelen < sizeof sockdirname
-	      && euidaccess (sockdirname, X_OK) == 0)
+	      && faccessat (AT_FDCWD, sockdirname, X_OK, AT_EACCESS) == 0)
 	    message
 	      (true,
 	       ("%s: Should XDG_RUNTIME_DIR='%s' be in the environment?\n"

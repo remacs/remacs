@@ -220,12 +220,6 @@ AC_DEFUN([gl_INIT],
   gl_ENVIRON
   gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
-  gl_FUNC_EUIDACCESS
-  if test $HAVE_EUIDACCESS = 0; then
-    AC_LIBOBJ([euidaccess])
-    gl_PREREQ_EUIDACCESS
-  fi
-  gl_UNISTD_MODULE_INDICATOR([euidaccess])
   gl_EXECINFO_H
   gl_FUNC_EXPLICIT_BZERO
   if test $HAVE_EXPLICIT_BZERO = 0; then
@@ -441,6 +435,7 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b=false
   gl_gnulib_enabled_cloexec=false
   gl_gnulib_enabled_dirfd=false
+  gl_gnulib_enabled_euidaccess=false
   gl_gnulib_enabled_getdtablesize=false
   gl_gnulib_enabled_getgroups=false
   gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36=false
@@ -450,6 +445,7 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=false
   gl_gnulib_enabled_open=false
   gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=false
+  gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
   gl_gnulib_enabled_strtoll=false
   gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=false
   func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b ()
@@ -478,6 +474,22 @@ AC_DEFUN([gl_INIT],
       fi
       gl_DIRENT_MODULE_INDICATOR([dirfd])
       gl_gnulib_enabled_dirfd=true
+    fi
+  }
+  func_gl_gnulib_m4code_euidaccess ()
+  {
+    if ! $gl_gnulib_enabled_euidaccess; then
+      gl_FUNC_EUIDACCESS
+      if test $HAVE_EUIDACCESS = 0; then
+        AC_LIBOBJ([euidaccess])
+        gl_PREREQ_EUIDACCESS
+      fi
+      gl_UNISTD_MODULE_INDICATOR([euidaccess])
+      gl_gnulib_enabled_euidaccess=true
+      if test $HAVE_EUIDACCESS = 0; then
+        func_gl_gnulib_m4code_a9786850e999ae65a836a6041e8e5ed1
+      fi
+      func_gl_gnulib_m4code_6099e9737f757db36c47fa9d9f02e88c
     fi
   }
   func_gl_gnulib_m4code_getdtablesize ()
@@ -576,6 +588,12 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=true
     fi
   }
+  func_gl_gnulib_m4code_6099e9737f757db36c47fa9d9f02e88c ()
+  {
+    if ! $gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c; then
+      gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=true
+    fi
+  }
   func_gl_gnulib_m4code_strtoll ()
   {
     if ! $gl_gnulib_enabled_strtoll; then
@@ -594,11 +612,11 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=true
     fi
   }
-  if test $HAVE_EUIDACCESS = 0; then
-    func_gl_gnulib_m4code_a9786850e999ae65a836a6041e8e5ed1
-  fi
   if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
+  fi
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
+    func_gl_gnulib_m4code_euidaccess
   fi
   if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_03e0aaad4cb89ca757653bd367a6ccb7
@@ -646,6 +664,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_260941c0e5dc67ec9e87d1fb321c300b], [$gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_cloexec], [$gl_gnulib_enabled_cloexec])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dirfd], [$gl_gnulib_enabled_dirfd])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_euidaccess], [$gl_gnulib_enabled_euidaccess])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_getdtablesize], [$gl_gnulib_enabled_getdtablesize])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_getgroups], [$gl_gnulib_enabled_getgroups])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_be453cec5eecf5731a274f2de7f2db36], [$gl_gnulib_enabled_be453cec5eecf5731a274f2de7f2db36])
@@ -655,6 +674,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31], [$gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_open], [$gl_gnulib_enabled_open])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7], [$gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoll], [$gl_gnulib_enabled_strtoll])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec], [$gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec])
   # End of code from modules

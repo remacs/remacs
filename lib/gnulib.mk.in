@@ -88,7 +88,6 @@
 #  dtotimespec \
 #  dup2 \
 #  environ \
-#  euidaccess \
 #  execinfo \
 #  explicit_bzero \
 #  faccessat \
@@ -1492,7 +1491,9 @@ endif
 ## begin gnulib module euidaccess
 ifeq (,$(OMIT_GNULIB_MODULE_euidaccess))
 
+ifneq (,$(gl_GNULIB_ENABLED_euidaccess))
 
+endif
 EXTRA_DIST += euidaccess.c
 
 EXTRA_libgnu_a_SOURCES += euidaccess.c
@@ -2148,7 +2149,9 @@ endif
 ## begin gnulib module root-uid
 ifeq (,$(OMIT_GNULIB_MODULE_root-uid))
 
+ifneq (,$(gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c))
 
+endif
 EXTRA_DIST += root-uid.h
 
 endif
