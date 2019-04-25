@@ -105,10 +105,10 @@ impl LispFrameRef {
         }
     }
 
-    pub fn get_param(self, prop: LispObject) -> Option<LispObject> {
+    pub fn get_param(self, prop: LispObject) -> LispObject {
         match assq(prop, self.param_alist) {
-            Qnil => None,
-            cons => Some(cdr(cons)),
+            Qnil => Qnil,
+            cons => cdr(cons),
         }
     }
 }
@@ -683,9 +683,9 @@ pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
 /// Return the value of frame parameter PROP in frame FRAME.
 #[no_mangle]
 pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> LispObject {
-    // I should be possible to use this method directly when we port
+    // It should be possible to use this method directly when we port
     // one of the original function's callers.
-    frame.get_param(prop).unwrap_or(Qnil)
+    frame.get_param(prop)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
