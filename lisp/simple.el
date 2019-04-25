@@ -1647,7 +1647,7 @@ this command arranges for all errors to enter the debugger."
 
   (if (null eval-expression-debug-on-error)
       (push (eval (let ((lexical-binding t)) (macroexpand-all exp)) t)
-            values))
+            values)
     (let ((old-value (make-symbol "t")) new-value)
       ;; Bind debug-on-error to something unique so that we can
       ;; detect when evalled code changes it.
