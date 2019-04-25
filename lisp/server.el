@@ -807,7 +807,7 @@ Server mode runs a process that accepts commands from the
   ;; intended it to interrupt us rather than interrupt whatever Emacs
   ;; was doing before it started handling the process filter.
   ;; Hence `with-local-quit' (bug#6585).
-  (let ((v (with-local-quit (eval (car (read-from-string expr))))))
+  (let ((v (with-local-quit (eval (car (read-from-string expr)) t))))
     (when proc
       (with-temp-buffer
         (let ((standard-output (current-buffer)))
@@ -1329,7 +1329,7 @@ The following commands are accepted by the client:
                                                (find-file-noselect initial-buffer-choice))
                                               ((functionp initial-buffer-choice)
                                                (funcall initial-buffer-choice)))))
-                                   (if (buffer-live-p buf) buf (get-buffer-create "*scratch*")))))
+                                   (if (buffer-live-p buf) buf (startup--get-buffer-create-scratch)))))
                ;; Set current buffer so that newly created tty frames
                ;; show the correct buffer initially.
                (frame (with-current-buffer (or (car buffers)

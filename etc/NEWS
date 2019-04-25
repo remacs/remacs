@@ -178,6 +178,10 @@ The default value is 30000, as the previously hard-coded threshold.
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
 
+** Lexical binding is now used when evaluating interactive Elisp forms
+More specifically, lexical-binding is now used for M-:, --eval, as well
+as in the *scratch* and *ielm* buffers.
+
 ---
 ** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
 on GUI frames when tooltips are displayed in the echo area.  Instead,

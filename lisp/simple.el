@@ -1646,12 +1646,14 @@ this command arranges for all errors to enter the debugger."
          (eval-expression-get-print-arguments current-prefix-arg)))
 
   (if (null eval-expression-debug-on-error)
-      (push (eval (macroexpand-all exp) lexical-binding) values)
+      (push (eval (let ((lexical-binding t)) (macroexpand-all exp)) t)
+            values))
     (let ((old-value (make-symbol "t")) new-value)
       ;; Bind debug-on-error to something unique so that we can
       ;; detect when evalled code changes it.
       (let ((debug-on-error old-value))
-	(push (eval (macroexpand-all exp) lexical-binding) values)
+	(push (eval (let ((lexical-binding t)) (macroexpand-all exp)) t)
+              values)
 	(setq new-value debug-on-error))
       ;; If evalled code has changed the value of debug-on-error,
       ;; propagate that change to the global binding.

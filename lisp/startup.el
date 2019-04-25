@@ -1378,7 +1378,8 @@ please check its value")
   (if (get-buffer "*scratch*")
       (with-current-buffer "*scratch*"
 	(if (eq major-mode 'fundamental-mode)
-	    (funcall initial-major-mode))))
+	    (funcall initial-major-mode))
+        (setq-local lexical-binding t)))
 
   ;; Load library for our terminal type.
   ;; User init file can set term-file-prefix to nil to prevent this.
@@ -2124,7 +2125,7 @@ If you have no Meta key, you may instead type ESC followed by the character.)"))
   (insert "\t\t")
   (insert-button "Open *scratch* buffer"
 		 'action (lambda (_button) (switch-to-buffer
-                                       (get-buffer-create "*scratch*")))
+                                       (startup--get-buffer-create-scratch)))
 		 'follow-link t)
   (insert "\n")
   (insert "\n" (emacs-version) "\n" emacs-copyright "\n")
@@ -2249,6 +2250,13 @@ A fancy display is used on graphic displays, normal otherwise."
 
 (defalias 'about-emacs 'display-about-screen)
 (defalias 'display-splash-screen 'display-startup-screen)
+
+(defun startup--get-buffer-create-scratch ()
+  (or (get-buffer "*scratch*")
+      (with-current-buffer (get-buffer-create "*scratch*")
+        (set-buffer-major-mode (current-buffer))
+        (setq-local lexical-binding t)
+        (current-buffer))))
 
 (defun command-line-1 (args-left)
   "A subroutine of `command-line'."
@@ -2399,7 +2407,7 @@ nil default-directory" name)
                        (unless (= end (length str-expr))
                          (error "Trailing garbage following expression: %s"
                                 (substring str-expr end)))
-                       (eval expr)))
+                       (eval expr t)))
 
                     ((member argi '("-L" "-directory"))
                      ;; -L :/foo adds /foo to the _end_ of load-path.
@@ -2514,7 +2522,7 @@ nil default-directory" name)
     (when (eq initial-buffer-choice t)
       ;; When `initial-buffer-choice' equals t make sure that *scratch*
       ;; exists.
-      (get-buffer-create "*scratch*"))
+      (startup--get-buffer-create-scratch))
 
     ;; If *scratch* exists and is empty, insert initial-scratch-message.
     ;; Do this before switching to *scratch* below to handle bug#9605.
@@ -2538,7 +2546,7 @@ nil default-directory" name)
 		   ((functionp initial-buffer-choice)
 		    (funcall initial-buffer-choice))
                    ((eq initial-buffer-choice t)
-                    (get-buffer-create "*scratch*"))
+                    (startup--get-buffer-create-scratch))
                    (t
                     (error "`initial-buffer-choice' must be a string, a function, or t")))))
         (unless (buffer-live-p buf)
