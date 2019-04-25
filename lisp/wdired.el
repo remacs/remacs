@@ -612,14 +612,23 @@ Optional arguments are ignored."
         (when (re-search-forward
                directory-listing-before-filename-regexp lep t)
           (setq beg (point)
-                ;; If the file is a symlink, put the dired-filename
-                ;; property only on the link name.  (Using
-                ;; (file-symlink-p (dired-get-filename)) fails in
-                ;; wdired-mode, bug#32673.)
-                end (if (and (re-search-backward
-                              dired-permission-flags-regexp nil t)
-                             (looking-at "l")
-                             (search-forward " -> " lep t))
+                end (if (or
+                         ;; If the file is a symlink, put the
+                         ;; dired-filename property only on the link
+                         ;; name.  (Using (file-symlink-p
+                         ;; (dired-get-filename)) fails in
+                         ;; wdired-mode, bug#32673.)
+                         (and (re-search-backward
+                               dired-permission-flags-regexp nil t)
+                              (looking-at "l")
+                              (search-forward " -> " lep t))
+                         ;; When dired-listing-switches includes "F"
+                         ;; or "classify", don't treat appended
+                         ;; indicator characters as part of the file
+                         ;; name (bug#34915).
+                         (and (dired-check-switches dired-actual-switches
+                                                    "F" "classify")
+                              (re-search-forward "[*/@|=>]$" lep t)))
                         (goto-char (match-beginning 0))
                       lep))
           (put-text-property beg end 'dired-filename t))))))
