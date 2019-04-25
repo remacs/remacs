@@ -325,8 +325,17 @@ and directory-local variables.
 longer.
 
 ---
-** next-error-verbose controls when `next-error' outputs a message
-   about the error locus.
+** New variable next-error-verbose controls when `next-error' outputs
+   a message about the error locus.
+
+---
+** New variable grep-search-path defines the directories searched for
+   grep hits (this used to be controlled by compilation-search-path).
+
+---
+** New variable emacs-lisp-compilation-search-path defines the
+   directories searched for byte-compiler error messages (this used to
+   be controlled by compilation-search-path).
 
 
 * Editing Changes in Emacs 27.1

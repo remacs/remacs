@@ -1022,6 +1022,15 @@ If STR is something like \"Buffer foo.el\", return #<buffer foo.el>
   "The value for `compilation-parse-errors-filename-function' for when
 we go into emacs-lisp-compilation-mode.")
 
+(defcustom emacs-lisp-compilation-search-path '(nil)
+  "Search path for byte-compile error messages.
+Elements should be directory names, not file names of directories.
+The value nil as an element means to try the default directory."
+  :group 'bytecomp
+  :version "27.1"
+  :type '(repeat (choice (const :tag "Default" nil)
+			 (string :tag "Directory"))))
+
 (define-compilation-mode emacs-lisp-compilation-mode "elisp-compile"
   "The variant of `compilation-mode' used for emacs-lisp error buffers")
 

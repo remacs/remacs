@@ -441,6 +441,15 @@ abbreviated part can also be toggled with
   :version "27.1"
   :group 'grep)
 
+(defcustom grep-search-path '(nil)
+  "Search path for grep results.
+Elements should be directory names, not file names of directories.
+The value nil as an element means to try the default directory."
+  :group 'grep
+  :version "27.1"
+  :type '(repeat (choice (const :tag "Default" nil)
+			 (string :tag "Directory"))))
+
 (defvar grep-find-abbreviate-properties
   (let ((ellipsis (if (char-displayable-p ?…) "[…]" "[...]"))
         (map (make-sparse-keymap)))
