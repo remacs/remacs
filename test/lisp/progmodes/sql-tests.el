@@ -331,20 +331,22 @@ yield OUTP."
 The ACTION will be tested after set-up of PRODUCT."
 
   (declare (indent 1))
-  `(let (new-bufs)
-     (cl-letf
-         (((symbol-function 'make-comint-in-buffer)
-           (lambda (_name buffer _program &optional _startfile &rest _switches)
-             (let ((b (get-buffer-create buffer)))
-               (message ">>make-comint-in-buffer %S" b)
-               (cl-pushnew b new-bufs) ;; Keep track of what we create
-               b))))
+  `(progn
+     (skip-unless (executable-find sql-sqlite-program))
+     (let (new-bufs)
+       (cl-letf
+           (((symbol-function 'make-comint-in-buffer)
+             (lambda (_name buffer _program &optional _startfile &rest _switches)
+               (let ((b (get-buffer-create buffer)))
+                 (message ">>make-comint-in-buffer %S" b)
+                 (cl-pushnew b new-bufs) ;; Keep track of what we create
+                 b))))
 
-       (let (,(intern (format "sql-%s-login-params" product)))
-         ,@action)
+         (let (,(intern (format "sql-%s-login-params" product)))
+           ,@action)
 
-       (let (kill-buffer-query-functions) ;; Kill what we create
-         (mapc #'kill-buffer new-bufs)))))
+         (let (kill-buffer-query-functions) ;; Kill what we create
+           (mapc #'kill-buffer new-bufs))))))
 
 (ert-deftest sql-tests-buffer-naming-default ()
   "Test buffer naming."
