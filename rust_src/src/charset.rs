@@ -29,8 +29,10 @@ impl LispObject {
 #[lisp_fn]
 pub fn clear_charset_maps() {
     unsafe {
-        xfree(temp_charset_work as *mut libc::c_void);
-        temp_charset_work = ptr::null_mut();
+        if !temp_charset_work.is_null() {
+            xfree(temp_charset_work as *mut libc::c_void);
+            temp_charset_work = ptr::null_mut();
+        }
 
         if Vchar_unify_table.is_char_table() {
             Foptimize_char_table(Vchar_unify_table, Qnil);
