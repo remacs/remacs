@@ -21,6 +21,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <errno.h>
+#include <stdalign.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>		/* For CHAR_BIT.  */
@@ -1578,9 +1580,9 @@ static struct Lisp_String *string_free_list;
    "cookie" after each allocated string data block, and check for the
    presence of this cookie during GC.  */
 
-#define GC_STRING_OVERRUN_COOKIE_SIZE	4
+#define GC_STRING_OVERRUN_COOKIE_SIZE	8
 static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
-  { '\xde', '\xad', '\xbe', '\xef' };
+  { '\xde', '\xad', '\xbe', '\xef', '\xde', '\xad', '\xbe', '\xef' };
 
 #else
 #define GC_STRING_OVERRUN_COOKIE_SIZE 0
@@ -1615,6 +1617,11 @@ static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
 /* Extra bytes to allocate for each string.  */
 
 #define GC_STRING_EXTRA (GC_STRING_OVERRUN_COOKIE_SIZE)
+
+/* Make sure that allocating the extra bytes doesn't misalign
+   `sdata'.  */
+
+verify (GC_STRING_EXTRA % alignof (sdata) == 0);
 
 /* Exact bound on the number of bytes in a string, not counting the
    terminating NUL.  A string cannot contain more bytes than
@@ -1875,6 +1882,7 @@ allocate_string_data (struct Lisp_String *s,
 
   data->string = s;
   b->next_free = (sdata *) ((char *) data + needed + GC_STRING_EXTRA);
+  eassert ((uintptr_t) (char *) b->next_free % alignof (sdata) == 0);
 
   MALLOC_UNBLOCK_INPUT;
 
