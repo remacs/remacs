@@ -198,10 +198,11 @@ It returns a file name which can be used directly as argument of
 
   (if (fboundp 'file-name-quoted-p)
       (defalias 'tramp-compat-file-name-quoted-p #'file-name-quoted-p)
-    (defsubst tramp-compat-file-name-quoted-p (name)
+    (defsubst tramp-compat-file-name-quoted-p (name &optional top)
       "Whether NAME is quoted with prefix \"/:\".
-If NAME is a remote file name, check the local part of NAME."
-      (string-prefix-p "/:" (tramp-compat-file-local-name name))))
+If NAME is a remote file name and TOP is nil, check the local part of NAME."
+      (let ((file-name-handler-alist (unless top file-name-handler-alist)))
+	(string-prefix-p "/:" (tramp-compat-file-local-name name)))))
 
   (if (fboundp 'file-name-quote)
       (defalias 'tramp-compat-file-name-quote #'file-name-quote)
