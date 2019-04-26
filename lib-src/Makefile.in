@@ -163,7 +163,7 @@ INSTALLABLES = etags${EXEEXT} ctags${EXEEXT} emacsclient${EXEEXT} $(CLIENTW) \
 
 # Things that Emacs runs internally, or during the build process,
 #  which should not be installed in bindir.
-UTILITIES = profile${EXEEXT} hexl${EXEEXT} \
+UTILITIES = hexl${EXEEXT} 			 	 \
 	    $(if $(with_mailutils), , movemail${EXEEXT}) \
             $(and $(use_gamedir), update-game-score${EXEEXT})
 
@@ -379,10 +379,6 @@ ebrowse${EXEEXT}: ${srcdir}/ebrowse.c ${srcdir}/../lib/min-max.h $(NTLIB) \
                    $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -DVERSION="\"${version}\"" \
 	  $< $(NTLIB) $(LOADLIBES) -o $@
-
-profile${EXEEXT}: ${srcdir}/profile.c $(NTLIB) $(config_h)
-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
-	  $(NTLIB) $(LOADLIBES) $(LIB_CLOCK_GETTIME) -o $@
 
 make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
