@@ -354,4 +354,31 @@ pub fn list_fonts(
     }
 }
 
+/// Return FRAME's font cache.  Mainly used for debugging.
+/// If FRAME is omitted or nil, use the selected frame.
+#[lisp_fn(min = "0")]
+pub fn frame_font_cache(frame: LispFrameLiveOrSelected) -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let frame: LispFrameRef = frame.into();
+        if frame.is_gui_window() {
+            unsafe {
+                #[cfg(feature = "window-system-x11")]
+                let display_info = (*frame.output_data.x).display_info;
+                #[cfg(feature = "window-system-nextstep")]
+                let display_info = (*frame.output_data.ns).display_info;
+                #[cfg(feature = "window-system-w32")]
+                let display_info = (*frame.output_data.w32).display_info;
+                (*display_info).name_list_element
+            }
+        } else {
+            Qnil
+        }
+    }
+    #[cfg(not(feature = "window-system"))]
+    {
+        Qnil
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));

@@ -36,7 +36,7 @@ impl LispFrameRef {
 
     // Awaiting Wilfred#1264
     pub const fn is_gui_window(self) -> bool {
-        cfg!(feature = "window_system")
+        cfg!(feature = "window-system")
     }
 
     // Pixel-width of internal border lines.
