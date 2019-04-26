@@ -332,7 +332,7 @@ The ACTION will be tested after set-up of PRODUCT."
 
   (declare (indent 1))
   `(progn
-     (skip-unless (executable-find sql-sqlite-program))
+     (ert--skip-unless (executable-find sql-sqlite-program))
      (let (new-bufs)
        (cl-letf
            (((symbol-function 'make-comint-in-buffer)
