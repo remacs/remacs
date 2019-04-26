@@ -1529,9 +1529,12 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	(goto-char (match-end 0))
 	(if (> (match-end 0) c-new-BEG)
 	    (setq c-new-BEG (1- (match-beginning 0)))))
+       ((looking-at "\\\\'")
+	(setq c-new-BEG (min c-new-BEG (1- (point))))
+	(goto-char (match-end 0)))
        ((save-excursion
 	  (not (search-forward "'" c-new-BEG t)))
-	(setq c-new-BEG (1- (point))))
+	(setq c-new-BEG (min c-new-BEG (1- (point)))))
        (t nil)))
 
     (goto-char c-new-END)
@@ -1555,6 +1558,9 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	(goto-char (match-end 0))
 	(if (> (match-end 0) c-new-END)
 	    (setq c-new-END (match-end 0))))
+       ((looking-at "\\\\'")
+	(goto-char (match-end 0))
+	(setq c-new-END (max c-new-END (point))))
        ((equal (c-get-char-property (1- (point)) 'syntax-table) '(1))
 	(when (c-search-forward-char-property-with-value-on-char
 	       'syntax-table '(1) ?\' (c-point 'eoll))
@@ -1623,6 +1629,12 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	      ((looking-at
 		"\\([^\\']\\|\\\\\\([0-7]\\{1,3\\}\\|[xuU][0-9a-fA-F]+\\|.\\)\
 \\)'") ; balanced quoted expression.
+	       (goto-char (match-end 0)))
+	      ((looking-at "\\\\'")	; Anomalous construct.
+	       (c-invalidate-state-cache (1- (point)))
+	       (c-truncate-semi-nonlit-pos-cache (1- (point)))
+	       (c-put-char-properties-on-char (1- (point)) (+ (point) 2)
+					      'syntax-table '(1) ?')
 	       (goto-char (match-end 0)))
 	      (t
 	       (c-invalidate-state-cache (1- (point)))
