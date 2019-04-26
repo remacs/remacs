@@ -6,7 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
-    lists::{assq, cdr},
+    lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
@@ -106,9 +106,9 @@ impl LispFrameRef {
     }
 
     pub fn get_param(self, prop: LispObject) -> LispObject {
-        match assq(prop, self.param_alist) {
-            Qnil => Qnil,
-            cons => cdr(cons),
+        match assq(prop, self.param_alist).as_cons() {
+            Some(cons) => cons.cdr(),
+            None => Qnil,
         }
     }
 }
