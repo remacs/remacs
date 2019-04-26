@@ -1968,8 +1968,11 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
 	 outside the accessible region, in which case we widen the
 	 buffer temporarily.  It could even be beyond the buffer's end
 	 (Org mode's display of source code snippets is known to cause
-	 that), in which case we just punt and start from point instead.  */
-      if (startpos.charpos > Z)
+	 that) or belong to the wrong buffer, in which cases we just
+	 punt and start from point instead.  */
+      if (startpos.charpos > Z
+	  || !(BUFFERP (w->contents)
+	       && XBUFFER (w->contents) == XMARKER (w->start)->buffer))
 	SET_TEXT_POS (startpos, PT, PT_BYTE);
       if (startpos.charpos < BEGV || startpos.charpos > ZV)
 	{
