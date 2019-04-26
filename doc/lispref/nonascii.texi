@@ -1049,7 +1049,7 @@ is like @code{undecided}, but it prefers to choose @code{utf-8} when
 possible.
 
   In general, a coding system doesn't guarantee roundtrip identity:
-decoding a byte sequence using coding system, then encoding the
+decoding a byte sequence using a coding system, then encoding the
 resulting text in the same coding system, can produce a different byte
 sequence.  But some coding systems do guarantee that the byte sequence
 will be the same as what you originally decoded.  Here are a few
