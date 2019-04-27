@@ -337,6 +337,9 @@ longer.
    directories searched for byte-compiler error messages (this used to
    be controlled by compilation-search-path).
 
+** Multicolor fonts such as "Noto Color Emoji" can be displayed on
+Emacs configured with Cairo drawing and linked with cairo >= 1.16.0.
+
 
 * Editing Changes in Emacs 27.1
 
@@ -1976,6 +1979,9 @@ corresponding encoding, instead of using 'w32-ansi-code-page'.
 modifier keys in line with Apples guidelines.  This makes the drag and
 drop behaviour more consistent, as previously the sending application
 was able to 'set' modifiers without the knowledge of the user.
+
+** On NS multicolor font display is enabled again since it is also
+implemented in Emacs on free operating systems via Cairo drawing.
 
 
 ----------------------------------------------------------------------
