@@ -1,7 +1,7 @@
 ;;; trampver.el --- Transparent Remote Access, Multiple Protocol  -*- lexical-binding:t -*-
 ;;; lisp/trampver.el.  Generated from trampver.el.in by configure.
 
-;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;; Maintainer: Michael Albinus <michael.albinus@gmx.de>
@@ -31,7 +31,7 @@
 ;; aclocal.m4; should be changed only there.
 
 ;;;###tramp-autoload
-(defconst tramp-version "2.4.1-pre"
+(defconst tramp-version "2.4.2-pre"
   "This version of Tramp.")
 
 ;;;###tramp-autoload
@@ -65,7 +65,7 @@
 ;; Check for Emacs version.
 (let ((x   (if (not (string-lessp emacs-version "24.1"))
       "ok"
-    (format "Tramp 2.4.1-pre is not fit for %s"
+    (format "Tramp 2.4.2-pre is not fit for %s"
             (replace-regexp-in-string "\n" "" (emacs-version))))))
   (unless (string-equal "ok" x) (error "%s" x)))
 

@@ -1,6 +1,6 @@
 ;;; ibuffer.el --- operate on buffers like dired  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Colin Walters <walters@verbum.org>
 ;; Maintainer: John Paul Wallington <jpw@gnu.org>
@@ -155,7 +155,7 @@ elisp byte-compiler."
 	     (string-match ibuffer-compressed-file-name-regexp
 			   buffer-file-name))
 	font-lock-doc-face)
-    (20 (string-match "^*" (buffer-name)) font-lock-keyword-face)
+    (20 (string-match "^\\*" (buffer-name)) font-lock-keyword-face)
     (25 (and (string-match "^ " (buffer-name))
 	     (null buffer-file-name))
 	italic)

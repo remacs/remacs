@@ -1,6 +1,6 @@
 /* Timestamp functions for Emacs
 
-Copyright (C) 1985-1987, 1989, 1993-2018 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "bignum.h"
 #include "coding.h"
 #include "lisp.h"
+#include "pdumper.h"
 
 #include <strftime.h>
 
@@ -44,7 +45,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_TZALLOC_BUG false
 #endif
 
-#define TM_YEAR_BASE 1900
+enum { TM_YEAR_BASE = 1900 };
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -171,7 +172,7 @@ emacs_localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
   return tm;
 }
 
-static _Noreturn void
+static AVOID
 invalid_time_zone_specification (Lisp_Object zone)
 {
   xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
@@ -291,16 +292,16 @@ tzlookup (Lisp_Object zone, bool settz)
 }
 
 void
-init_timefns (bool dumping)
+init_timefns (void)
 {
-#ifndef CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   /* A valid but unlikely setting for the TZ environment variable.
      It is OK (though a bit slower) if the user chooses this value.  */
   static char dump_tz_string[] = "TZ=UtC0";
 
   /* When just dumping out, set the time zone to a known unlikely value
      and skip the rest of this function.  */
-  if (dumping)
+  if (will_dump_with_unexec_p ())
     {
       xputenv (dump_tz_string);
       tzset ();
@@ -310,7 +311,7 @@ init_timefns (bool dumping)
 
   char *tz = getenv ("TZ");
 
-#if !defined CANNOT_DUMP
+#ifdef HAVE_UNEXEC
   /* If the execution TZ happens to be the same as the dump TZ,
      change it to some other value and then change it back,
      to force the underlying implementation to reload the TZ info.
@@ -336,7 +337,7 @@ time_overflow (void)
   error ("Specified time is not representable");
 }
 
-static _Noreturn void
+static AVOID
 time_error (int err)
 {
   switch (err)
@@ -347,7 +348,7 @@ time_error (int err)
     }
 }
 
-static _Noreturn void
+static AVOID
 invalid_hz (Lisp_Object hz)
 {
   xsignal2 (Qerror, build_string ("Invalid time frequency"), hz);
@@ -527,7 +528,14 @@ make_lisp_time (struct timespec t)
 		    make_fixnum (ns / 1000), make_fixnum (ns % 1000 * 1000));
     }
   else
-    return Fcons (timespec_ticks (t), timespec_hz);
+    return timespec_to_lisp (t);
+}
+
+/* Return (TICKS . HZ) for time T.  */
+Lisp_Object
+timespec_to_lisp (struct timespec t)
+{
+  return Fcons (timespec_ticks (t), timespec_hz);
 }
 
 /* Convert T to a Lisp timestamp.  FORM specifies the timestamp format.  */
@@ -1132,7 +1140,7 @@ or (if you need time as a string) `format-time-string'.  */)
    determine how many bytes would be written, use NULL for S and
    ((size_t) -1) for MAXSIZE.
 
-   This function behaves like nstrftime, except it allows null
+   This function behaves like nstrftime, except it allows NUL
    bytes in FORMAT and it does not support nanoseconds.  */
 static size_t
 emacs_nmemftime (char *s, size_t maxsize, const char *format,
@@ -1140,8 +1148,8 @@ emacs_nmemftime (char *s, size_t maxsize, const char *format,
 {
   size_t total = 0;
 
-  /* Loop through all the null-terminated strings in the format
-     argument.  Normally there's just one null-terminated string, but
+  /* Loop through all the NUL-terminated strings in the format
+     argument.  Normally there's just one NUL-terminated string, but
      there can be arbitrarily many, concatenated together, if the
      format contains '\0' bytes.  nstrftime stops at the first
      '\0' byte so we must invoke it separately for each such string.  */
@@ -1266,7 +1274,7 @@ by text that describes the specified date and time in TIME:
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
 %D is like "%m/%d/%y".
-%F is the ISO 8601 date format (like "%Y-%m-%d").
+%F is the ISO 8601 date format (like "%+4Y-%m-%d").
 
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
@@ -1274,17 +1282,23 @@ by text that describes the specified date and time in TIME:
 Finally, %n is a newline, %t is a tab, %% is a literal %, and
 unrecognized %-sequences stand for themselves.
 
-Certain flags and modifiers are available with some format controls.
-The flags are `_', `-', `^' and `#'.  For certain characters X,
-%_X is like %X, but padded with blanks; %-X is like %X,
-but without padding.  %^X is like %X, but with all textual
-characters up-cased; %#X is like %X, but with letter-case of
-all textual characters reversed.
-%NX (where N stands for an integer) is like %X,
-but takes up at least N (a number) positions.
-The modifiers are `E' and `O'.  For certain characters X,
-%EX is a locale's alternative version of %X;
-%OX is like %X, but uses the locale's number symbols.
+A %-sequence can contain optional flags, field width, and a modifier
+(in that order) after the `%'.  The flags are:
+
+`-' Do not pad the field.
+`_' Pad with spaces.
+`0' Pad with zeros.
+`+' Pad with zeros and put `+' before nonnegative year numbers with >4 digits.
+`^' Use upper case characters if possible.
+`#' Use opposite case characters if possible.
+
+A field width N is an unsigned decimal integer with a leading digit nonzero.
+%NX is like %X, but takes up at least N positions.
+
+The modifiers are:
+
+`E' Use the locale's alternative version.
+`O' Use the locale's number symbols.
 
 For example, to produce full ISO 8601 format, use "%FT%T%z".
 
@@ -1336,12 +1350,22 @@ usage: (decode-time &optional TIME ZONE)  */)
 
   if (!tm)
     time_error (localtime_errno);
-  if (! (MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= local_tm.tm_year
-	 && local_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE))
-    time_overflow ();
 
-  /* Avoid overflow when INT_MAX < EMACS_INT_MAX.  */
-  EMACS_INT tm_year_base = TM_YEAR_BASE;
+  Lisp_Object year;
+  if (FASTER_TIMEFNS
+      && MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= local_tm.tm_year
+      && local_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE)
+    {
+      /* Avoid overflow when INT_MAX - TM_YEAR_BASE < local_tm.tm_year.  */
+      EMACS_INT tm_year_base = TM_YEAR_BASE;
+      year = make_fixnum (local_tm.tm_year + tm_year_base);
+    }
+  else
+    {
+      mpz_set_si (mpz[0], local_tm.tm_year);
+      mpz_add_ui (mpz[0], mpz[0], TM_YEAR_BASE);
+      year = make_integer_mpz ();
+    }
 
   return CALLN (Flist,
 		make_fixnum (local_tm.tm_sec),
@@ -1349,7 +1373,7 @@ usage: (decode-time &optional TIME ZONE)  */)
 		make_fixnum (local_tm.tm_hour),
 		make_fixnum (local_tm.tm_mday),
 		make_fixnum (local_tm.tm_mon + 1),
-		make_fixnum (local_tm.tm_year + tm_year_base),
+		year,
 		make_fixnum (local_tm.tm_wday),
 		(local_tm.tm_isdst < 0 ? make_fixnum (-1)
 		 : local_tm.tm_isdst == 0 ? Qnil : Qt),
@@ -1360,7 +1384,7 @@ usage: (decode-time &optional TIME ZONE)  */)
 		 : Qnil));
 }
 
-/* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
+/* Return OBJ - OFFSET, checking that OBJ is a valid integer and that
    the result is representable as an int.  0 <= OFFSET <= TM_YEAR_BASE.  */
 static int
 check_tm_member (Lisp_Object obj, int offset)
@@ -1475,7 +1499,6 @@ usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
     {
       if (6 < nargs)
 	zone = args[nargs - 1];
-      form = Qnil;
       tm.tm_sec  = check_tm_member (a, 0);
       tm.tm_min  = check_tm_member (args[1], 0);
       tm.tm_hour = check_tm_member (args[2], 0);
@@ -1720,6 +1743,19 @@ emacs_setenv_TZ (const char *tzstring)
   return 0;
 }
 
+#if (ULONG_MAX < TRILLION || !FASTER_TIMEFNS) && !defined ztrillion
+# define NEED_ZTRILLION_INIT 1
+#endif
+
+#ifdef NEED_ZTRILLION_INIT
+static void
+syms_of_timefns_for_pdumper (void)
+{
+  mpz_init_set_ui (ztrillion, 1000000);
+  mpz_mul_ui (ztrillion, ztrillion, 1000000);
+}
+#endif
+
 void
 syms_of_timefns (void)
 {
@@ -1730,10 +1766,6 @@ syms_of_timefns (void)
 #ifndef trillion
   trillion = make_int (1000000000000);
   staticpro (&trillion);
-#endif
-#if (ULONG_MAX < TRILLION || !FASTER_TIMEFNS) && !defined ztrillion
-  mpz_init_set_ui (ztrillion, 1000000);
-  mpz_mul_ui (ztrillion, ztrillion, 1000000);
 #endif
 
   DEFSYM (Qencode_time, "encode-time");
@@ -1750,4 +1782,7 @@ syms_of_timefns (void)
   defsubr (&Scurrent_time_string);
   defsubr (&Scurrent_time_zone);
   defsubr (&Sset_time_zone_rule);
+#ifdef NEED_ZTRILLION_INIT
+  pdumper_do_now_and_after_load (syms_of_timefns_for_pdumper);
+#endif
 }

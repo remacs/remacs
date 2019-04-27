@@ -1,6 +1,6 @@
 ;;; opascal.el --- major mode for editing Object Pascal source in Emacs  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-1999, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1998-1999, 2001-2019 Free Software Foundation, Inc.
 
 ;; Authors: Ray Blaak <blaak@infomatch.com>,
 ;;          Simon South <ssouth@member.fsf.org>
@@ -1519,7 +1519,7 @@ value of `opascal-tab-always-indents' and the current line position."
         (setq dir-name (match-string 1 dir-name)
               recurse t))
     ;; Ensure the trailing slash is removed.
-    (if (string-match "^\\(.+\\)[\\\\/]$" dir-name)
+    (if (string-match "^\\(.+\\)[\\/]$" dir-name)
         (setq dir-name (match-string 1 dir-name)))
     (opascal-search-directory unit dir-name recurse)))
 

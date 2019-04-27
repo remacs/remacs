@@ -1,5 +1,5 @@
 /* xftfont.c -- XFT font driver.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -32,6 +32,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "font.h"
 #include "ftfont.h"
+#include "pdumper.h"
 
 /* Xft font driver.  */
 
@@ -738,6 +739,8 @@ xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
   return ok;
 }
 
+static void syms_of_xftfont_for_pdumper (void);
+
 struct font_driver const xftfont_driver =
   {
     /* We can't draw a text without device dependent functions.  */
@@ -789,7 +792,11 @@ syms_of_xftfont (void)
 This is needed with some fonts to correct vertical overlap of glyphs.  */);
   xft_font_ascent_descent_override = 0;
 
-  ascii_printable[0] = 0;
+  pdumper_do_now_and_after_load (syms_of_xftfont_for_pdumper);
+}
 
+static void
+syms_of_xftfont_for_pdumper (void)
+{
   register_font_driver (&xftfont_driver, NULL);
 }

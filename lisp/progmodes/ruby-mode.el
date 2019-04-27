@@ -1,6 +1,6 @@
 ;;; ruby-mode.el --- Major mode for editing Ruby files -*- lexical-binding: t -*-
 
-;; Copyright (C) 1994-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
 ;; Authors: Yukihiro Matsumoto
 ;;	Nobuyoshi Nakada
@@ -108,7 +108,7 @@
   "Regexp to match the beginning of a heredoc.")
 
   (defconst ruby-expression-expansion-re
-    "\\(?:[^\\]\\|\\=\\)\\(\\\\\\\\\\)*\\(#\\({[^}\n\\\\]*\\(\\\\.[^}\n\\\\]*\\)*}\\|\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+\\|\\$[^a-zA-Z \n]\\)\\)"))
+    "\\(?:[^\\]\\|\\=\\)\\(\\\\\\\\\\)*\\(#\\({[^}\n\\]*\\(\\\\.[^}\n\\]*\\)*}\\|\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+\\|\\$[^a-zA-Z \n]\\)\\)"))
 
 (defun ruby-here-doc-end-match ()
   "Return a regexp to find the end of a heredoc.
@@ -517,6 +517,9 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
              ((ruby-smie--opening-pipe-p) "opening-|")
              ((ruby-smie--closing-pipe-p) "closing-|")
              (t tok)))
+           ((string-match "\\`[^|]+|\\'" tok)
+            (forward-char -1)
+            (substring tok 0 -1))
            ((and (equal tok "") (looking-at "\\\\\n"))
             (goto-char (match-end 0)) (ruby-smie--forward-token))
            ((equal tok "do")
@@ -559,6 +562,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
            ((ruby-smie--opening-pipe-p) "opening-|")
            ((ruby-smie--closing-pipe-p) "closing-|")
            (t tok)))
+         ((string-match-p "\\`[^|]+|\\'" tok) "closing-|")
          ((string-match-p "\\`|[*&]\\'" tok)
           (forward-char 1)
           (substring tok 1))
@@ -925,9 +929,9 @@ Can be one of `heredoc', `modifier', `expr-qstr', `expr-re'."
                    (goto-char (match-end 0))
                    (not (looking-at "\\s_")))
                   ((eq option 'expr-qstr)
-                   (looking-at "[a-zA-Z][a-zA-z0-9_]* +%[^ \t]"))
+                   (looking-at "[a-zA-Z][a-zA-Z0-9_]* +%[^ \t]"))
                   ((eq option 'expr-re)
-                   (looking-at "[a-zA-Z][a-zA-z0-9_]* +/[^ \t]"))
+                   (looking-at "[a-zA-Z][a-zA-Z0-9_]* +/[^ \t]"))
                   (t nil)))))))))
 
 (defun ruby-forward-string (term &optional end no-error expand)
@@ -1043,7 +1047,7 @@ delimiter."
        ((looking-at "\\?")              ;skip ?char
         (cond
          ((and (ruby-expr-beg)
-               (looking-at "?\\(\\\\C-\\|\\\\M-\\)*\\\\?."))
+               (looking-at "\\?\\(\\\\C-\\|\\\\M-\\)*\\\\?."))
           (goto-char (match-end 0)))
          (t
           (goto-char pnt))))
@@ -1486,7 +1490,7 @@ With ARG, do it many times.  Negative ARG means move backward."
             (cond ((looking-at "\\?\\(\\\\[CM]-\\)*\\\\?\\S ")
                    (goto-char (match-end 0)))
                   ((progn
-                     (skip-chars-forward ",.:;|&^~=!?\\+\\-\\*")
+                     (skip-chars-forward "-,.:;|&^~=!?+*")
                      (looking-at "\\s("))
                    (goto-char (scan-sexps (point) 1)))
                   ((and (looking-at (concat "\\<\\(" ruby-block-beg-re
@@ -1529,7 +1533,7 @@ With ARG, do it many times.  Negative ARG means move forward."
     (let ((i (or arg 1)))
       (condition-case nil
           (while (> i 0)
-            (skip-chars-backward " \t\n,.:;|&^~=!?\\+\\-\\*")
+            (skip-chars-backward "- \t\n,.:;|&^~=!?+*")
             (forward-char -1)
             (cond ((looking-at "\\s)")
                    (goto-char (scan-sexps (1+ (point)) -1))
@@ -1542,7 +1546,7 @@ With ARG, do it many times.  Negative ARG means move forward."
                   ((looking-at "\\s\"\\|\\\\\\S_")
                    (let ((c (char-to-string (char-before (match-end 0)))))
                      (while (and (search-backward c)
-				 (eq (logand (skip-chars-backward "\\") 1)
+				 (eq (logand (skip-chars-backward "\\\\") 1)
 				     1))))
                    nil)
                   ((looking-at "\\s.\\|\\s\\")
@@ -1610,7 +1614,7 @@ See `add-log-current-defun-function'."
                   (concat "^[ \t]*" re "[ \t]+"
                           "\\("
                           ;; \\. and :: for class methods
-                          "\\([A-Za-z_]" ruby-symbol-re "*\\|\\.\\|::" "\\)"
+                          "\\([A-Za-z_]" ruby-symbol-re "*[?!]?\\|\\.\\|::" "\\)"
                           "+\\)")))
                (definition-re (funcall make-definition-re ruby-defun-beg-re))
                (module-re (funcall make-definition-re "\\(class\\|module\\)")))
@@ -1790,8 +1794,8 @@ If the result is do-end block, it will always be multiline."
             (buffer-substring-no-properties (1+ min) (1- max))))
       (setq content
             (if (equal string-quote "'")
-                (replace-regexp-in-string "\\\\\"" "\"" (replace-regexp-in-string "\\(\\`\\|[^\\\\]\\)'" "\\1\\\\'" content))
-              (replace-regexp-in-string "\\\\'" "'" (replace-regexp-in-string "\\(\\`\\|[^\\\\]\\)\"" "\\1\\\\\"" content))))
+                (replace-regexp-in-string "\\\\\"" "\"" (replace-regexp-in-string "\\(\\`\\|[^\\]\\)'" "\\1\\\\'" content))
+              (replace-regexp-in-string "\\\\'" "'" (replace-regexp-in-string "\\(\\`\\|[^\\]\\)\"" "\\1\\\\\"" content))))
       (let ((orig-point (point)))
         (delete-region min max)
         (insert
@@ -1863,7 +1867,7 @@ It will be properly highlighted even when the call omits parens.")
       ("^[ \t]*def +\\(`\\)" (1 "_"))
       ;; Ternary operator colon followed by opening paren or bracket
       ;; (semi-important for indentation).
-      ("\\(:\\)\\(?:[\({]\\|\\[[^]]\\)"
+      ("\\(:\\)\\(?:[({]\\|\\[[^]]\\)"
        (1 (string-to-syntax ".")))
       ;; Regular expressions.  Start with matching unescaped slash.
       ("\\(?:\\=\\|[^\\]\\)\\(?:\\\\\\\\\\)*\\(/\\)"
@@ -2174,7 +2178,7 @@ It will be properly highlighted even when the call omits parens.")
           font-lock-constant-face)
         nil t))
     ;; Special globals.
-    (,(concat "\\$\\(?:[:\"!@;,/\\._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
+    (,(concat "\\$\\(?:[:\"!@;,/._><\\$?~=*&`'+0-9]\\|-[0adFiIlpvw]\\|"
               (regexp-opt '("LOAD_PATH" "LOADED_FEATURES" "PROGRAM_NAME"
                             "ERROR_INFO" "ERROR_POSITION"
                             "FS" "FIELD_SEPARATOR"
@@ -2284,7 +2288,7 @@ It will be properly highlighted even when the call omits parens.")
         :command command
         :sentinel
         (lambda (proc _event)
-          (when (eq 'exit (process-status proc))
+          (when (and (eq 'exit (process-status proc)) (buffer-live-p source))
             (unwind-protect
                 (if (with-current-buffer source (eq proc ruby--flymake-proc))
                     (with-current-buffer (process-buffer proc)
@@ -2297,7 +2301,10 @@ It will be properly highlighted even when the call omits parens.")
 
 (defcustom ruby-flymake-use-rubocop-if-available t
   "Non-nil to use the RuboCop Flymake backend.
-Only takes effect if RuboCop is installed."
+Only takes effect if RuboCop is installed.
+
+If there is no Rubocop config file, Rubocop will be passed a flag
+'--lint' to only show syntax errors and important problems."
   :version "26.1"
   :type 'boolean
   :safe 'booleanp)
@@ -2316,14 +2323,21 @@ Only takes effect if RuboCop is installed."
   (let ((command (list "rubocop" "--stdin" buffer-file-name "--format" "emacs"
                        "--cache" "false" ; Work around a bug in old version.
                        "--display-cop-names"))
+        (default-directory default-directory)
         config-dir)
     (when buffer-file-name
       (setq config-dir (locate-dominating-file buffer-file-name
                                                ruby-rubocop-config))
-      (when config-dir
+      (if (not config-dir)
+          (setq command (append command '("--lint")))
         (setq command (append command (list "--config"
                                             (expand-file-name ruby-rubocop-config
-                                                              config-dir)))))
+                                                              config-dir))))
+        (when (ruby-flymake-rubocop--use-bundler-p config-dir)
+          (setq command (append '("bundle" "exec") command))
+          ;; In case of a project with multiple nested subprojects,
+          ;; each one with a Gemfile.
+          (setq default-directory config-dir)))
 
       (ruby-flymake--helper
        "rubocop-flymake"
@@ -2360,6 +2374,13 @@ Only takes effect if RuboCop is installed."
                                            (substring msg 3))
           into diags
           finally (funcall report-fn diags)))))))
+
+(defun ruby-flymake-rubocop--use-bundler-p (dir)
+  (let ((file (expand-file-name "Gemfile" dir)))
+    (and (file-exists-p file)
+         (with-temp-buffer
+           (insert-file-contents file)
+           (re-search-forward "^ *gem ['\"]rubocop['\"]" nil t)))))
 
 (defun ruby-flymake-auto (report-fn &rest args)
   (apply

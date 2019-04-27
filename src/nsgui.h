@@ -1,5 +1,5 @@
 /* Definitions and headers for communication on the NeXT/Open/GNUstep API.
-   Copyright (C) 1995, 2005, 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2005, 2008-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -116,9 +116,6 @@ typedef void * Color;
 #endif
 typedef int Window;
 typedef int Display;
-
-/* Xism */
-typedef Lisp_Object XrmDatabase;
 
 
 /* Some sort of attempt to normalize rectangle handling.  Seems a bit

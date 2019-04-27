@@ -1,6 +1,6 @@
 /* JSON parsing and serialization.
 
-Copyright (C) 2017-2018 Free Software Foundation, Inc.
+Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -217,7 +217,8 @@ json_has_suffix (const char *string, const char *suffix)
 
 /* Create a multibyte Lisp string from the UTF-8 string in
    [DATA, DATA + SIZE).  If the range [DATA, DATA + SIZE) does not
-   contain a valid UTF-8 string, an unspecified string is returned.
+   contain a valid UTF-8 string, the returned string will include raw
+   bytes.
    Note that all callers below either pass only value UTF-8 strings or
    use this function for formatting error messages; in the latter case
    correctness isn't critical.  */
@@ -225,11 +226,24 @@ json_has_suffix (const char *string, const char *suffix)
 static Lisp_Object
 json_make_string (const char *data, ptrdiff_t size)
 {
-  return code_convert_string (make_specified_string (data, -1, size, false),
-                              Qutf_8_unix, Qt, false, true, true);
+  ptrdiff_t chars, bytes;
+  parse_str_as_multibyte ((const unsigned char *) data, size, &chars, &bytes);
+  /* If DATA is a valid UTF-8 string, we can convert it to a Lisp
+     string directly.  Otherwise, we need to decode it.  */
+  if (chars == size || bytes == size)
+    return make_specified_string (data, chars, size, true);
+  else
+    {
+      struct coding_system coding;
+      setup_coding_system (Qutf_8_unix, &coding);
+      coding.mode |= CODING_MODE_LAST_BLOCK;
+      coding.source = (const unsigned char *) data;
+      decode_coding_object (&coding, Qnil, 0, 0, size, size, Qt);
+      return coding.dst_object;
+    }
 }
 
-/* Create a multibyte Lisp string from the null-terminated UTF-8
+/* Create a multibyte Lisp string from the NUL-terminated UTF-8
    string beginning at DATA.  If the string is not a valid UTF-8
    string, an unspecified string is returned.  Note that all callers
    below either pass only value UTF-8 strings or use this function for
@@ -255,7 +269,7 @@ json_encode (Lisp_Object string)
   return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
 }
 
-static _Noreturn void
+static AVOID
 json_out_of_memory (void)
 {
   xsignal0 (Qjson_out_of_memory);
@@ -263,7 +277,7 @@ json_out_of_memory (void)
 
 /* Signal a Lisp error corresponding to the JSON ERROR.  */
 
-static _Noreturn void
+static AVOID
 json_parse_error (const json_error_t *error)
 {
   Lisp_Object symbol;
@@ -290,8 +304,8 @@ json_parse_error (const json_error_t *error)
 #endif
   xsignal (symbol,
            list5 (json_build_string (error->text),
-                  json_build_string (error->source), make_fixed_natnum (error->line),
-                  make_fixed_natnum (error->column), make_fixed_natnum (error->position)));
+                  json_build_string (error->source), INT_TO_INTEGER (error->line),
+                  INT_TO_INTEGER (error->column), INT_TO_INTEGER (error->position)));
 }
 
 static void
@@ -301,10 +315,10 @@ json_release_object (void *object)
 }
 
 /* Signal an error if OBJECT is not a string, or if OBJECT contains
-   embedded null characters.  */
+   embedded NUL characters.  */
 
 static void
-check_string_without_embedded_nulls (Lisp_Object object)
+check_string_without_embedded_nuls (Lisp_Object object)
 {
   CHECK_STRING (object);
   CHECK_TYPE (memchr (SDATA (object), '\0', SBYTES (object)) == NULL,
@@ -337,8 +351,14 @@ enum json_object_type {
   json_object_plist
 };
 
+enum json_array_type {
+  json_array_array,
+  json_array_list
+};
+
 struct json_configuration {
   enum json_object_type object_type;
+  enum json_array_type array_type;
   Lisp_Object null_object;
   Lisp_Object false_object;
 };
@@ -381,8 +401,8 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp,
           {
             Lisp_Object key = json_encode (HASH_KEY (h, i));
             /* We can't specify the length, so the string must be
-               null-terminated.  */
-            check_string_without_embedded_nulls (key);
+               NUL-terminated.  */
+            check_string_without_embedded_nuls (key);
             const char *key_str = SSDATA (key);
             /* Reject duplicate keys.  These are possible if the hash
                table test is not `equal'.  */
@@ -432,8 +452,8 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp,
           CHECK_SYMBOL (key_symbol);
           Lisp_Object key = SYMBOL_NAME (key_symbol);
           /* We can't specify the length, so the string must be
-             null-terminated.  */
-          check_string_without_embedded_nulls (key);
+             NUL-terminated.  */
+          check_string_without_embedded_nuls (key);
           key_str = SSDATA (key);
           /* In plists, ensure leading ":" in keys is stripped.  It
              will be reconstructed later in `json_to_lisp'.*/
@@ -493,7 +513,7 @@ lisp_to_json (Lisp_Object lisp, struct json_configuration *conf)
       intmax_t low = TYPE_MINIMUM (json_int_t);
       intmax_t high = TYPE_MAXIMUM (json_int_t);
       intmax_t value;
-      if (! integer_to_intmax (lisp, &value) || value < low || high < value)
+      if (! (integer_to_intmax (lisp, &value) && low <= value && value <= high))
         args_out_of_range_3 (lisp, make_int (low), make_int (high));
       return json_check (json_integer (value));
     }
@@ -521,7 +541,7 @@ static void
 json_parse_args (ptrdiff_t nargs,
                  Lisp_Object *args,
                  struct json_configuration *conf,
-                 bool configure_object_type)
+                 bool parse_object_types)
 {
   if ((nargs % 2) != 0)
     wrong_type_argument (Qplistp, Flist (nargs, args));
@@ -531,7 +551,7 @@ json_parse_args (ptrdiff_t nargs,
   for (ptrdiff_t i = nargs; i > 0; i -= 2) {
     Lisp_Object key = args[i - 2];
     Lisp_Object value = args[i - 1];
-    if (configure_object_type && EQ (key, QCobject_type))
+    if (parse_object_types && EQ (key, QCobject_type))
       {
         if (EQ (value, Qhash_table))
           conf->object_type = json_object_hashtable;
@@ -542,12 +562,22 @@ json_parse_args (ptrdiff_t nargs,
         else
           wrong_choice (list3 (Qhash_table, Qalist, Qplist), value);
       }
+    else if (parse_object_types && EQ (key, QCarray_type))
+      {
+        if (EQ (value, Qarray))
+          conf->array_type = json_array_array;
+        else if (EQ (value, Qlist))
+          conf->array_type = json_array_list;
+        else
+          wrong_choice (list2 (Qarray, Qlist), value);
+      }
     else if (EQ (key, QCnull_object))
       conf->null_object = value;
     else if (EQ (key, QCfalse_object))
       conf->false_object = value;
-    else if (configure_object_type)
-      wrong_choice (list3 (QCobject_type,
+    else if (parse_object_types)
+      wrong_choice (list4 (QCobject_type,
+                           QCarray_type,
                            QCnull_object,
                            QCfalse_object),
                     value);
@@ -568,7 +598,7 @@ false values, t, numbers, strings, or other vectors hashtables, alists
 or plists.  t will be converted to the JSON true value.  Vectors will
 be converted to JSON arrays, whereas hashtables, alists and plists are
 converted to JSON objects.  Hashtable keys must be strings without
-embedded null characters and must be unique within each object.  Alist
+embedded NUL characters and must be unique within each object.  Alist
 and plist keys must be symbols; if a key is duplicate, the first
 instance is used.
 
@@ -604,7 +634,8 @@ usage: (json-serialize OBJECT &rest ARGS)  */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, false);
 
   json_t *json = lisp_to_json_toplevel (args[0], &conf);
@@ -648,6 +679,20 @@ json_insert (void *data)
   return Qnil;
 }
 
+static Lisp_Object
+json_handle_nonlocal_exit (enum nonlocal_exit type, Lisp_Object data)
+{
+  switch (type)
+    {
+    case NONLOCAL_EXIT_SIGNAL:
+      return data;
+    case NONLOCAL_EXIT_THROW:
+      return Fcons (Qno_catch, data);
+    default:
+      eassume (false);
+    }
+}
+
 struct json_insert_data
 {
   /* This tracks how many bytes were inserted by the callback since
@@ -670,7 +715,8 @@ json_insert_callback (const char *buffer, size_t size, void *data)
   struct json_insert_data *d = data;
   struct json_buffer_and_size buffer_and_size
     = {.buffer = buffer, .size = size, .inserted_bytes = d->inserted_bytes};
-  d->error = internal_catch_all (json_insert, &buffer_and_size, Fidentity);
+  d->error = internal_catch_all (json_insert, &buffer_and_size,
+                                 json_handle_nonlocal_exit);
   d->inserted_bytes = buffer_and_size.inserted_bytes;
   return NILP (d->error) ? 0 : -1;
 }
@@ -701,7 +747,8 @@ usage: (json-insert OBJECT &rest ARGS)  */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, false);
 
   json_t *json = lisp_to_json (args[0], &conf);
@@ -815,12 +862,37 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
         if (++lisp_eval_depth > max_lisp_eval_depth)
           xsignal0 (Qjson_object_too_deep);
         size_t size = json_array_size (json);
-        if (FIXNUM_OVERFLOW_P (size))
+        if (PTRDIFF_MAX < size)
           overflow_error ();
-        Lisp_Object result = make_vector (size, Qunbound);
-        for (ptrdiff_t i = 0; i < size; ++i)
-          ASET (result, i,
-                json_to_lisp (json_array_get (json, i), conf));
+        Lisp_Object result;
+        switch (conf->array_type)
+          {
+          case json_array_array:
+            {
+              result = make_vector (size, Qunbound);
+              for (ptrdiff_t i = 0; i < size; ++i)
+                {
+                  rarely_quit (i);
+                  ASET (result, i,
+                        json_to_lisp (json_array_get (json, i), conf));
+                }
+              break;
+            }
+          case json_array_list:
+            {
+              result = Qnil;
+              for (ptrdiff_t i = size - 1; i >= 0; --i)
+                {
+                  rarely_quit (i);
+                  result = Fcons (json_to_lisp (json_array_get (json, i), conf),
+                                  result);
+                }
+              break;
+            }
+          default:
+            /* Can't get here.  */
+            emacs_abort ();
+          }
         --lisp_eval_depth;
         return result;
       }
@@ -905,18 +977,22 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
 DEFUN ("json-parse-string", Fjson_parse_string, Sjson_parse_string, 1, MANY,
        NULL,
        doc: /* Parse the JSON STRING into a Lisp object.
-
 This is essentially the reverse operation of `json-serialize', which
-see.  The returned object will be a vector, hashtable, alist, or
+see.  The returned object will be a vector, list, hashtable, alist, or
 plist.  Its elements will be the JSON null value, the JSON false
 value, t, numbers, strings, or further vectors, hashtables, alists, or
 plists.  If there are duplicate keys in an object, all but the last
-one are ignored.  If STRING doesn't contain a valid JSON object, an
-error of type `json-parse-error' is signaled.  The arguments ARGS are
-a list of keyword/argument pairs:
+one are ignored.  If STRING doesn't contain a valid JSON object, this
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
 
 The keyword argument `:object-type' specifies which Lisp type is used
-to represent objects; it can be `hash-table', `alist' or `plist'.
+to represent objects; it can be `hash-table', `alist' or `plist'.  It
+defaults to `hash-table'.
+
+The keyword argument `:array-type' specifies which Lisp type is used
+to represent arrays; it can be `array' (the default) or `list'.
 
 The keyword argument `:null-object' specifies which object to use
 to represent a JSON null value.  It defaults to `:null'.
@@ -945,8 +1021,9 @@ usage: (json-parse-string STRING &rest ARGS) */)
 
   Lisp_Object string = args[0];
   Lisp_Object encoded = json_encode (string);
-  check_string_without_embedded_nulls (encoded);
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  check_string_without_embedded_nuls (encoded);
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs - 1, args + 1, &conf, true);
 
   json_error_t error;
@@ -993,9 +1070,32 @@ json_read_buffer_callback (void *buffer, size_t buflen, void *data)
 DEFUN ("json-parse-buffer", Fjson_parse_buffer, Sjson_parse_buffer,
        0, MANY, NULL,
        doc: /* Read JSON object from current buffer starting at point.
-This is similar to `json-parse-string', which see.  Move point after
-the end of the object if parsing was successful.  On error, point is
-not moved.
+Move point after the end of the object if parsing was successful.
+On error, don't move point.
+
+The returned object will be a vector, list, hashtable, alist, or
+plist.  Its elements will be the JSON null value, the JSON false
+value, t, numbers, strings, or further vectors, lists, hashtables,
+alists, or plists.  If there are duplicate keys in an object, all
+but the last one are ignored.
+
+If the current buffer doesn't contain a valid JSON object, the
+function signals an error of type `json-parse-error'.
+
+The arguments ARGS are a list of keyword/argument pairs:
+
+The keyword argument `:object-type' specifies which Lisp type is used
+to represent objects; it can be `hash-table', `alist' or `plist'.  It
+defaults to `hash-table'.
+
+The keyword argument `:array-type' specifies which Lisp type is used
+to represent arrays; it can be `array' (the default) or `list'.
+
+The keyword argument `:null-object' specifies which object to use
+to represent a JSON null value.  It defaults to `:null'.
+
+The keyword argument `:false-object' specifies which object to use to
+represent a JSON false value.  It defaults to `:false'.
 usage: (json-parse-buffer &rest args) */)
      (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -1016,7 +1116,8 @@ usage: (json-parse-buffer &rest args) */)
     }
 #endif
 
-  struct json_configuration conf = {json_object_hashtable, QCnull, QCfalse};
+  struct json_configuration conf =
+    {json_object_hashtable, json_array_array, QCnull, QCfalse};
   json_parse_args (nargs, args, &conf, true);
 
   ptrdiff_t point = PT_BYTE;
@@ -1095,10 +1196,12 @@ syms_of_json (void)
   Fput (Qjson_parse_string, Qside_effect_free, Qt);
 
   DEFSYM (QCobject_type, ":object-type");
+  DEFSYM (QCarray_type, ":array-type");
   DEFSYM (QCnull_object, ":null-object");
   DEFSYM (QCfalse_object, ":false-object");
   DEFSYM (Qalist, "alist");
   DEFSYM (Qplist, "plist");
+  DEFSYM (Qarray, "array");
 
   defsubr (&Sjson_serialize);
   defsubr (&Sjson_insert);

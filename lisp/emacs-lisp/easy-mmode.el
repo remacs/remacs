@@ -1,6 +1,6 @@
 ;;; easy-mmode.el --- easy definition for major and minor modes
 
-;; Copyright (C) 1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Georges Brun-Cottan <Georges.Brun-Cottan@inria.fr>
 ;; Maintainer: Stefan Monnier <monnier@gnu.org>
@@ -411,12 +411,6 @@ on if the hook has explicitly disabled it."
 	(:global (setq keys (cdr keys)))
 	(_ (push keyw extra-keywords) (push (pop keys) extra-keywords))))
 
-    (unless group
-      ;; We might as well provide a best-guess default group.
-      (setq group
-	    `(:group ',(intern (replace-regexp-in-string
-				"-mode\\'" "" (symbol-name mode))))))
-
     `(progn
        (progn
          :autoload-end
@@ -624,12 +618,11 @@ BODY is executed after moving to the destination location."
          (when-narrowed
           (lambda (body)
             (if (null narrowfun) body
-              `(let ((was-narrowed
-                      (prog1 (or (< (- (point-max) (point-min)) (buffer-size)))
-                        (widen))))
+              `(let ((was-narrowed (prog1 (buffer-narrowed-p) (widen))))
                  ,body
                  (when was-narrowed (funcall #',narrowfun)))))))
     (unless name (setq name base-name))
+    ;; FIXME: Move most of those functions's bodies to helper functions!
     `(progn
        (defun ,next-sym (&optional count)
 	 ,(format "Go to the next COUNT'th %s.
@@ -651,7 +644,11 @@ Interactively, COUNT is the prefix numeric argument, and defaults to 1." name)
                                         `(re-search-forward ,re nil t 2)))
                                    (point-max))))
                     (unless (pos-visible-in-window-p endpt nil t)
-                      (recenter '(0)))))))
+                      (let ((ws (window-start)))
+                        (recenter '(0))
+                        (if (< (window-start) ws)
+                            ;; recenter scrolled in the wrong direction!
+                            (set-window-start nil ws))))))))
            ,@body))
        (put ',next-sym 'definition-name ',base)
        (defun ,prev-sym (&optional count)

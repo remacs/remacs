@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2018 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2019 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Mark
@@ -76,7 +76,7 @@ Set point and the mark around the text you drag across.
 @item mouse-3
 Set the mark at point, then move point to where you click
 (@code{mouse-save-then-kill}).
-@item @samp{Shifted cursor motion keys}
+@item @r{Shifted cursor motion keys}
 Set the mark at point if the mark is inactive, then move point.
 @xref{Shift Selection}.
 @end table

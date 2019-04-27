@@ -1,5 +1,5 @@
 /* Definitions and headers for communication on the Microsoft Windows API.
-   Copyright (C) 1995, 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2001-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -120,7 +120,7 @@ struct w32_display_info
   Cursor horizontal_scroll_bar_cursor;
 
   /* Resource data base */
-  XrmDatabase xrdb;
+  const char *rdb;
 
   /* color palette information.  */
   int has_palette;
@@ -182,7 +182,7 @@ struct w32_display_info
      event).  It points to the focus frame's selected window's
      frame.  It differs from w32_focus_frame when we're using a global
      minibuffer.  */
-  struct frame *x_highlight_frame;
+  struct frame *highlight_frame;
 
   /* The frame waiting to be auto-raised in w32_read_socket.  */
   struct frame *w32_pending_autoraise_frame;
@@ -227,27 +227,32 @@ extern struct w32_display_info one_w32_display_info;
 extern HMENU current_popup_menu;
 extern int menubar_in_use;
 
-extern struct frame *x_window_to_frame (struct w32_display_info *, HWND);
+extern struct frame *w32_window_to_frame (struct w32_display_info *, HWND);
 
-struct w32_display_info *x_display_info_for_name (Lisp_Object);
+extern void w32_real_positions (struct frame *f, int *xptr, int *yptr);
 
-/* also defined in xterm.h XXX: factor out to common header */
+extern void w32_clear_under_internal_border (struct frame *);
+
+extern void w32_change_tool_bar_height (struct frame *, int);
+extern void w32_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
+extern void w32_set_scroll_bar_default_width (struct frame *);
+extern void w32_set_scroll_bar_default_height (struct frame *);
+
 
 extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
-extern int w32_defined_color (struct frame *f, const char *color,
-                              XColor *color_def, bool alloc_p);
-extern int x_display_pixel_height (struct w32_display_info *);
-extern int x_display_pixel_width (struct w32_display_info *);
-extern void x_set_menu_bar_lines (struct frame *, Lisp_Object, Lisp_Object);
-extern void x_set_tool_bar_lines (struct frame *f,
-                                  Lisp_Object value,
-                                  Lisp_Object oldval);
-extern void x_set_internal_border_width (struct frame *f,
-					 Lisp_Object value,
-					 Lisp_Object oldval);
+extern bool w32_defined_color (struct frame *, const char *, XColor *,
+                               bool, bool);
+extern int w32_display_pixel_height (struct w32_display_info *);
+extern int w32_display_pixel_width (struct w32_display_info *);
 extern void initialize_frame_menubar (struct frame *);
 extern void w32_dialog_in_progress (Lisp_Object in_progress);
+
+extern void w32_make_frame_visible (struct frame *f);
+extern void w32_make_frame_invisible (struct frame *f);
+extern void w32_iconify_frame (struct frame *f);
+extern void w32_free_frame_resources (struct frame *);
+extern void w32_wm_set_size_hint (struct frame *, long, bool);
 
 /* w32inevt.c */
 extern int w32_kbd_patch_key (KEY_EVENT_RECORD *event, int cpId);
@@ -257,6 +262,10 @@ extern int w32_kbd_mods_to_emacs (DWORD mods, WORD key);
 extern void w32con_hide_cursor (void);
 extern void w32con_show_cursor (void);
 
+/* w32reg.c */
+extern const char *w32_get_string_resource (void *v_rdb,
+                                            const char *name,
+                                            const char *class);
 
 #define PIX_TYPE COLORREF
 
@@ -397,12 +406,12 @@ struct w32_output
 
 extern struct w32_output w32term_display;
 
-/* Return the X output data for frame F.  */
-#define FRAME_X_OUTPUT(f) ((f)->output_data.w32)
+/* Return the output data for frame F.  */
+#define FRAME_OUTPUT_DATA(f) ((f)->output_data.w32)
 
 /* Return the window associated with the frame F.  */
 #define FRAME_W32_WINDOW(f) ((f)->output_data.w32->window_desc)
-#define FRAME_X_WINDOW(f) FRAME_W32_WINDOW (f)
+#define FRAME_NATIVE_WINDOW(f) FRAME_W32_WINDOW (f)
 
 #define FRAME_FONT(f) ((f)->output_data.w32->font)
 #define FRAME_FONTSET(f) ((f)->output_data.w32->fontset)
@@ -715,9 +724,8 @@ extern void complete_deferred_msg (HWND hwnd, UINT msg, LRESULT result);
 extern BOOL parse_button (int, int, int *, int *);
 
 extern void w32_sys_ring_bell (struct frame *f);
-extern void x_delete_display (struct w32_display_info *dpyinfo);
-extern void x_clear_under_internal_border (struct frame *f);
-extern void x_query_color (struct frame *, XColor *);
+extern void w32_query_color (struct frame *, XColor *);
+extern void w32_delete_display (struct w32_display_info *dpyinfo);
 
 #define FILE_NOTIFICATIONS_SIZE 16384
 /* Notifications come in sets.  We use a doubly linked list with a
@@ -732,7 +740,7 @@ struct notifications_set {
 };
 extern struct notifications_set *notifications_set_head;
 extern Lisp_Object w32_get_watch_object (void *);
-extern Lisp_Object lispy_file_action (DWORD);
+extern Lisp_Object w32_lispy_file_action (DWORD);
 extern int handle_file_notifications (struct input_event *);
 
 extern void w32_initialize_display_info (Lisp_Object);

@@ -1,6 +1,6 @@
 ;;; unit tests for src/fileio.c      -*- lexical-binding: t; -*-
 
-;; Copyright 2017-2018 Free Software Foundation, Inc.
+;; Copyright 2017-2019 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -102,4 +102,8 @@ Also check that an encoding error can appear in a symlink."
     (setenv "HOME" "a/b/c")
     (should (equal (expand-file-name "~/foo")
                    (expand-file-name "a/b/c/foo")))
+    (when (memq system-type '(ms-dos windows-nt))
+      ;; Test expansion of drive-relative file names.
+      (setenv "HOME" "x:foo")
+      (should (equal (expand-file-name "~/bar") "x:/foo/bar")))
     (setenv "HOME" old-home)))

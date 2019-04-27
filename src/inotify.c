@@ -1,6 +1,6 @@
 /* Inotify support for Emacs
 
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -18,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#ifdef HAVE_INOTIFY
 
 #include "lisp.h"
 #include "coding.h"
@@ -550,5 +548,3 @@ syms_of_inotify (void)
 
   Fprovide (intern_c_string ("inotify"), Qnil);
 }
-
-#endif /* HAVE_INOTIFY */

@@ -1,6 +1,6 @@
 ;;; pcase.el --- ML-style pattern-matching macro for Elisp -*- lexical-binding: t -*-
 
-;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords:
@@ -63,6 +63,7 @@
 ;; FIXME: Now that macroexpansion is also performed when loading an interpreted
 ;; file, this is not a real problem any more.
 (defconst pcase--memoize (make-hash-table :weakness 'key :test 'eq))
+;; (defconst pcase--memoize (make-hash-table :test 'eq))
 ;; (defconst pcase--memoize-1 (make-hash-table :test 'eq))
 ;; (defconst pcase--memoize-2 (make-hash-table :weakness 'key :test 'equal))
 
@@ -175,7 +176,9 @@ Emacs Lisp manual for more information and examples."
 
 ;; FIXME: Obviously, this will collide with nadvice's use of
 ;; function-documentation if we happen to advise `pcase'.
+;;;###autoload
 (put 'pcase 'function-documentation '(pcase--make-docstring))
+;;;###autoload
 (defun pcase--make-docstring ()
   (let* ((main (documentation (symbol-function 'pcase) 'raw))
          (ud (help-split-fundoc main 'pcase)))
@@ -782,7 +785,7 @@ Otherwise, it defers to REST which is a list of branches of the form
    ((eq 'or (caar matches))
     (let* ((alts (cdar matches))
            (var (if (eq (caar alts) 'match) (cadr (car alts))))
-           (simples '()) (others '()) (memq-ok t))
+           (simples '()) (others '()) (memql-ok t))
       (when var
         (dolist (alt alts)
           (if (and (eq (car alt) 'match) (eq var (cadr alt))
@@ -790,16 +793,16 @@ Otherwise, it defers to REST which is a list of branches of the form
                      (eq (car-safe upat) 'quote)))
               (let ((val (cadr (cddr alt))))
                 (unless (or (integerp val) (symbolp val))
-                  (setq memq-ok nil))
+                  (setq memql-ok nil))
                 (push (cadr (cddr alt)) simples))
             (push alt others))))
       (cond
        ((null alts) (error "Please avoid it") (pcase--u rest))
-       ;; Yes, we can use `memq' (or `member')!
+       ;; Yes, we can use `memql' (or `member')!
        ((> (length simples) 1)
         (pcase--u1 (cons `(match ,var
                                  . (pred (pcase--flip
-                                          ,(if memq-ok #'memq #'member)
+                                          ,(if memql-ok #'memql #'member)
                                           ',simples)))
                          (cdr matches))
                    code vars

@@ -1,6 +1,6 @@
 ;;; erc-dcc.el --- CTCP DCC module for ERC
 
-;; Copyright (C) 1993-1995, 1998, 2002-2004, 2006-2018 Free Software
+;; Copyright (C) 1993-1995, 1998, 2002-2004, 2006-2019 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Ben A. Mesander <ben@gnu.ai.mit.edu>
@@ -979,17 +979,20 @@ rather than every 1024 byte block, but nobody seems to care."
     (let ((inhibit-read-only t)
           received-bytes)
       (goto-char (point-max))
-      (insert (string-make-unibyte str))
+      (if str
+          (insert (string-make-unibyte str)))
 
       (when (> (point-max) erc-dcc-receive-cache)
         (erc-dcc-append-contents (current-buffer) erc-dcc-file-name))
-      (setq received-bytes (+ (buffer-size) erc-dcc-byte-count))
+      (setq received-bytes (buffer-size))
+      (if erc-dcc-byte-count
+          (setq received-bytes (+ received-bytes erc-dcc-byte-count)))
 
       (and erc-dcc-verbose
            (erc-display-message
             nil 'notice erc-server-process
             'dcc-get-bytes-received
-            ?f (file-name-nondirectory buffer-file-name)
+            ?f (file-name-nondirectory (buffer-name))
             ?b (number-to-string received-bytes)))
       (cond
        ((and (> (plist-get erc-dcc-entry-data :size) 0)
@@ -997,7 +1000,7 @@ rather than every 1024 byte block, but nobody seems to care."
         (erc-display-message
          nil '(notice error) 'active
          'dcc-get-file-too-long
-         ?f (file-name-nondirectory buffer-file-name))
+         ?f (file-name-nondirectory (buffer-name)))
         (delete-process proc))
        (t
         (process-send-string
@@ -1021,7 +1024,7 @@ transfer is complete."
      ?s (number-to-string erc-dcc-byte-count)
      ?t (format "%.0f"
                 (erc-time-diff (plist-get erc-dcc-entry-data :start-time)
-                               (erc-current-time)))))
+                               nil))))
   (kill-buffer (process-buffer proc))
   (delete-process proc))
 

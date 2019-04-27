@@ -1,6 +1,6 @@
 /* sound.c -- sound support.
 
-Copyright (C) 1998-1999, 2001-2018 Free Software Foundation, Inc.
+Copyright (C) 1998-1999, 2001-2019 Free Software Foundation, Inc.
 
 Author: Gerd Moellmann <gerd@gnu.org>
 
@@ -297,7 +297,7 @@ static int do_play_sound (const char *, unsigned long);
 #ifndef WINDOWSNT
 /* Like perror, but signals an error.  */
 
-static _Noreturn void
+static AVOID
 sound_perror (const char *msg)
 {
   int saved_errno = errno;
@@ -874,7 +874,7 @@ vox_write (struct sound_device *sd, const char *buffer, ptrdiff_t nbytes)
 #define DEFAULT_ALSA_SOUND_DEVICE "default"
 #endif
 
-static _Noreturn void
+static AVOID
 alsa_sound_perror (const char *msg, int err)
 {
   error ("%s: %s", msg, snd_strerror (err));

@@ -54,12 +54,21 @@ packages the patch's commit message and changes.  To send just one
 such patch without additional remarks, you can use a command like
 'git send-email --to=bug-gnu-emacs@gnu.org 0001-DESCRIPTION.patch'.
 
+Once the cumulative amount of your submissions exceeds about 15 lines
+of non-trivial changes, we will need you to assign to the FSF the
+copyright for your contributions.  Ask on emacs-devel@gnu.org, and we
+will send you the necessary form together with the instructions to
+fill and email it, in order to start this legal paperwork.
+
 ** Issue tracker (a.k.a. "bug tracker")
 
 The Emacs issue tracker at https://debbugs.gnu.org lets you view bug
 reports and search the database for bugs matching several criteria.
 Messages posted to the bug-gnu-emacs@gnu.org mailing list, mentioned
-above, are recorded by the tracker with the corresponding bugs/issues.
+above, are recorded by the tracker with the corresponding
+bugs/issues.  If a message to the bug tracker contains a patch, please
+include the string "[PATCH]" in the subject of the message in order to
+let the bug tracker tag the bug properly.
 
 GNU ELPA has a 'debbugs' package that allows accessing the tracker
 database from Emacs.

@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1993, 1998-1999, 2001-2018 Free Software
+@c Copyright (C) 1990-1993, 1998-1999, 2001-2019 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node GNU Emacs Internals
@@ -48,24 +48,63 @@ environment.  After this step, the Emacs executable is no longer
 @dfn{bare}.
 
 @cindex dumping Emacs
+@cindex @option{--temacs} option, and dumping method
   Because it takes some time to load the standard Lisp files, the
 @file{temacs} executable usually isn't run directly by users.
-Instead, as one of the last steps of building Emacs, the command
-@samp{temacs -batch -l loadup dump} is run.  The special @samp{dump}
-argument causes @command{temacs} to dump out an executable program,
-called @file{emacs}, which has all the standard Lisp files preloaded.
-(The @samp{-batch} argument prevents @file{temacs} from trying to
-initialize any of its data on the terminal, so that the tables of
-terminal information are empty in the dumped Emacs.)
+Instead, one of the last steps of building Emacs runs the command
+@w{@samp{temacs -batch -l loadup --temacs=@var{dump-method}}}.  The
+special option @option{--temacs} tells @command{temacs} how to record
+all the standard preloaded Lisp functions and variables, so that when
+you subsequently run Emacs, it will start much faster.  The
+@option{--temacs} option requires an argument @var{dump-method}, which
+can be one of the following:
+
+@table @samp
+@item pdump
+@cindex portable dump file
+Record the preloaded Lisp data in a @dfn{portable dump} file.  This
+method produces an additional data file which Emacs will load at
+startup.  The portable dump file is usually called @file{emacs.pdmp},
+and is installed in the Emacs @code{exec-directory} (@pxref{Help
+Functions}).  This method is the most preferred one, as it does not
+require Emacs to employ any special techniques of memory allocation,
+which might get in the way of various memory-layout techniques used by
+modern systems to enhance security and privacy.
+
+@item pbootstrap
+@cindex bootstrapping Emacs
+Like @samp{pdump}, but used while @dfn{bootstrapping} Emacs, when no
+previous Emacs binary and no @file{*.elc} byte-compiled Lisp files are
+available.  The produced portable dump file is usually named
+@file{bootstrap-emacs.pdmp} in this case.
+
+@item dump
+@cindex unexec
+This method causes @command{temacs} to dump out an executable program,
+called @file{emacs}, which has all the standard Lisp files already
+preloaded into it.  (The @samp{-batch} argument prevents
+@command{temacs} from trying to initialize any of its data on the
+terminal, so that the tables of terminal information are empty in the
+dumped Emacs.)  This method is also known as @dfn{unexec}, because it
+produces a program file from a running process, and thus is in some
+sense the opposite of executing a program to start a process.
+
+@item bootstrap
+Like @samp{dump}, but used when bootstrapping Emacs with the
+@code{unexec} method.
+@end table
 
 @cindex preloaded Lisp files
 @vindex preloaded-file-list
   The dumped @file{emacs} executable (also called a @dfn{pure} Emacs)
-is the one which is installed.  The variable
-@code{preloaded-file-list} stores a list of the Lisp files preloaded
-into the dumped Emacs.  If you port Emacs to a new operating system,
-and are not able to implement dumping, then Emacs must load
-@file{loadup.el} each time it starts.
+is the one which is installed.  If the portable dumping was used to
+build Emacs, the @file{emacs} executable is actually an exact copy of
+@file{temacs}, and the corresponding @file{emacs.pdmp} file is
+installed as well.  The variable @code{preloaded-file-list} stores a
+list of the preloaded Lisp files recorded in the portable dump file or
+in the dumped Emacs executable.  If you port Emacs to a new operating
+system, and are not able to implement dumping of any kind, then Emacs
+must load @file{loadup.el} each time it starts.
 
 @cindex build details
 @cindex deterministic build
@@ -161,14 +200,41 @@ In the unlikely event that you need a more general functionality than
 @code{custom-initialize-delay} provides, you can use
 @code{before-init-hook} (@pxref{Startup Summary}).
 
+@defun dump-emacs-portable to-file &optional track-referrers
+This function dumps the current state of Emacs into a portable dump
+file @var{to-file}, using the @code{pdump} method.  Normally, the
+portable dump file is called @file{@var{emacs-name}.dmp}, where
+@var{emacs-name} is the name of the Emacs executable file.  The
+optional argument @var{track-referrers}, if non-@code{nil}, causes the
+portable dumping process keep additional information to help track
+down the provenance of object types that are not yet supported by the
+@code{pdump} method.
+
+If you want to use this function in an Emacs that was already dumped,
+you must run Emacs with the @samp{-batch} option.
+@end defun
+
 @defun dump-emacs to-file from-file
 @cindex unexec
 This function dumps the current state of Emacs into an executable file
-@var{to-file}.  It takes symbols from @var{from-file} (this is normally
-the executable file @file{temacs}).
+@var{to-file}, using the @code{unexec} method.  It takes symbols from
+@var{from-file} (this is normally the executable file @file{temacs}).
 
-If you want to use this function in an Emacs that was already dumped,
-you must run Emacs with @samp{-batch}.
+This function cannot be used in an Emacs that was already dumped.  If
+Emacs was built without @code{unexec} support, this function will not
+be available.
+@end defun
+
+@defun pdumper-stats
+If the current Emacs session restored its state from a portable dump
+file, this function returns information about the dump file and the
+time it took to restore the Emacs state.  The value is an alist
+@w{@code{((dumped-with-pdumper . t) (load-time . @var{time})
+(dump-file-name . @var{file}))}},
+where @var{file} is the name of the dump file, and @var{time} is the
+time in seconds it took to restore the state from the dump file.
+If the current session was not restored from a portable dump file, the
+value is nil.
 @end defun
 
 @node Pure Storage
@@ -965,10 +1031,9 @@ number of arguments.  They work by calling @code{Ffuncall}.
 @file{lisp.h} contains the definitions for some important macros and
 functions.
 
-  If you define a function which is side-effect free, update the code
-in @file{byte-opt.el} that binds @code{side-effect-free-fns} and
-@code{side-effect-and-error-free-fns} so that the compiler optimizer
-knows about it.
+  If you define a function which is side-effect free or pure, give it
+a non-@code{nil} @code{side-effect-free} or @code{pure} property,
+respectively (@pxref{Standard Properties}).
 
 @node Writing Dynamic Modules
 @section Writing Dynamically-Loaded Modules
@@ -1312,12 +1377,46 @@ can be used to obtain the type of a @code{emacs_value} object.
 This function returns the value of a Lisp integer specified by
 @var{arg}.  The C data type of the return value, @code{intmax_t}, is
 the widest integral data type supported by the C compiler, typically
-@w{@code{long long}}.
+@w{@code{long long}}.  If the value of @var{arg} doesn't fit into an
+@code{intmax_t}, the function signals an error using the error symbol
+@code{overflow-error}.
 @end deftypefn
 
 @deftypefn Function double extract_float (emacs_env *@var{env}, emacs_value @var{arg})
 This function returns the value of a Lisp float specified by
 @var{arg}, as a C @code{double} value.
+@end deftypefn
+
+@deftypefn Function struct timespec extract_time (emacs_env *@var{env}, emacs_value @var{time})
+This function, which is available since Emacs 27, interprets
+@var{time} as an Emacs Lisp time value and returns the corresponding
+@code{struct timespec}.  @xref{Time of Day}.  @code{struct timespec}
+represents a timestamp with nanosecond precision.  It has the
+following members:
+
+@table @code
+@item time_t tv_sec
+Whole number of seconds.
+@item long tv_nsec
+Fractional seconds as number of nanoseconds, always less than one
+billion.
+@end table
+
+@noindent
+@xref{Elapsed Time,,,libc}.
+
+If @var{time} has higher precision than nanoseconds, then this
+function truncates it to nanosecond precision towards negative
+infinity.  This function signals an error if @var{time} (truncated to
+nanoseconds) cannot be represented by @code{struct timespec}.  For
+example, if @code{time_t} is a 32-bit integral type, then a @var{time}
+value of ten billion seconds would signal an error, but a @var{time}
+value of 600 picoseconds would get truncated to zero.
+
+If you need to deal with time values that are not representable by
+@code{struct timespec}, or if you want higher precision, call the Lisp
+function @code{encode-time} and work with its return value.
+@xref{Time Conversion}.
 @end deftypefn
 
 @deftypefn Function bool copy_string_contents (emacs_env *@var{env}, emacs_value @var{arg}, char *@var{buf}, ptrdiff_t *@var{len})
@@ -1374,16 +1473,27 @@ objects from basic C data types.  They all return the created
 
 @deftypefn Function emacs_value make_integer (emacs_env *@var{env}, intmax_t @var{n})
 This function takes an integer argument @var{n} and returns the
-corresponding @code{emacs_value} object.  It raises the
-@code{overflow-error} error condition if the value of @var{n} cannot
-be represented as an Emacs integer, i.e.@: is not inside the limits
-set by @code{most-negative-fixnum} and @code{most-positive-fixnum}
-(@pxref{Integer Basics}).
+corresponding @code{emacs_value} object.  It returns either a fixnum
+or a bignum depending on whether the value of @var{n} is inside the
+limits set by @code{most-negative-fixnum} and
+@code{most-positive-fixnum} (@pxref{Integer Basics}).
 @end deftypefn
 
 @deftypefn Function emacs_value make_float (emacs_env *@var{env}, double @var{d})
 This function takes a @code{double} argument @var{d} and returns the
 corresponding Emacs floating-point value.
+@end deftypefn
+
+@deftypefn Function emacs_value make_time (emacs_env *@var{env}, struct timespec @var{time})
+This function, which is available since Emacs 27, takes a @code{struct
+timespec} argument @var{time} and returns the corresponding Emacs
+timestamp as a pair @code{(@var{ticks} . @var{hz})}.  @xref{Time of
+Day}.  The return value represents exactly the same timestamp as
+@var{time}: all input values are representable, and there is never a
+loss of precision.  @code{@var{time}.tv_sec} and
+@code{@var{time}.tv_nsec} can be arbitrary values.  In particular,
+there's no requirement that @var{time} be normalized.  This means that
+@code{@var{time}.tv_nsec} can be negative or larger than 999,999,999.
 @end deftypefn
 
 @deftypefn Function emacs_value make_string (emacs_env *@var{env}, const char *@var{str}, ptrdiff_t @var{strlen})
@@ -1397,6 +1507,66 @@ function raises the @code{overflow-error} error condition if
 @var{strlen} is negative or exceeds the maximum length of an Emacs
 string.
 @end deftypefn
+
+If you define the preprocessor macro @code{EMACS_MODULE_GMP} before
+including the header @file{emacs-module.h}, you can also convert
+between Emacs integers and GMP @code{mpz_t} values.  @xref{GMP
+Basics,,,gmp}.  If @code{EMACS_MODULE_GMP} is defined,
+@file{emacs-module.h} wraps @code{mpz_t} in the following structure:
+
+@deftp struct emacs_mpz value
+struct emacs_mpz @{ mpz_t value; @};
+@end deftp
+
+@noindent
+Then you can use the following additional functions:
+
+@deftypefn Function bool extract_big_integer (emacs_env *@var{env}, emacs_value @var{arg}, struct emacs_mpz *@var{result})
+This function, which is available since Emacs 27, extracts the
+integral value of @var{arg} into @var{result}.  @var{result} must not
+be @code{NULL}.  @code{@var{result}->value} must be an initialized
+@code{mpz_t} object.  @xref{Initializing Integers,,,gmp}.  If
+@var{arg} is an integer, Emacs will store its value into
+@code{@var{result}->value}.  After you have finished using
+@code{@var{result}->value}, you should free it using @code{mpz_clear}
+or similar.
+@end deftypefn
+
+@deftypefn Function emacs_value make_big_integer (emacs_env *@var{env}, const struct emacs_mpz *@var{value})
+This function, which is available since Emacs 27, takes an
+arbitrary-sized integer argument and returns a corresponding
+@code{emacs_value} object.  @var{value} must not be @code{NULL}.
+@code{@var{value}->value} must be an initialized @code{mpz_t} object.
+@xref{Initializing Integers,,,gmp}.  Emacs will return a corresponding
+integral object.  After you have finished using
+@code{@var{value}->value}, you should free it using @code{mpz_clear}
+or similar.
+@end deftypefn
+
+The following example uses GMP to calculate the next probable prime
+after a given integer:
+
+@example
+#include <assert.h>
+#include <gmp.h>
+
+#define EMACS_MODULE_GMP
+#include <emacs-module.h>
+
+static emacs_value
+next_prime (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+            void *data)
+@{
+  assert (nargs == 1);
+  emacs_mpz p;
+  mpz_init (p.value);
+  env->extract_big_integer (env, args[0], &p);
+  mpz_nextprime (p.value, p.value);
+  emacs_value result = env->make_big_integer (env, &p);
+  mpz_clear (p.value);
+  return result;
+@}
+@end example
 
 The @acronym{API} does not provide functions to manipulate Lisp data
 structures, for example, create lists with @code{cons} and @code{list}
@@ -1557,7 +1727,27 @@ purpose.
 @deftypefn Function bool should_quit (emacs_env *@var{env})
 This function returns @code{true} if the user wants to quit.  In that
 case, we recommend that your module function aborts any on-going
-processing and returns as soon as possible.
+processing and returns as soon as possible.  In most cases, use
+@code{process_input} instead.
+@end deftypefn
+
+To process input events in addition to checking whether the user wants
+to quit, use the following function, which is available since Emacs
+27.1.
+
+@anchor{process_input}
+@deftypefn Function enum emacs_process_input_result process_input (emacs_env *@var{env})
+This function processes pending input events.  It returns
+@code{emacs_process_input_quit} if the user wants to quit or an error
+occurred while processing signals.  In that case, we recommend that
+your module function aborts any on-going processing and returns as
+soon as possible.  If the module code may continue running,
+@code{process_input} returns @code{emacs_process_input_continue}.  The
+return value is @code{emacs_process_input_continue} if and only if
+there is no pending nonlocal exit in @code{env}.  If the module
+continues after calling @code{process_input}, global state such as
+variable values and buffer content may have been modified in arbitrary
+ways.
 @end deftypefn
 
 @node Module Nonlocal
@@ -1622,7 +1812,7 @@ The last @acronym{API} function exited via @code{throw}.
 @end vtable
 @end deftypefn
 
-@deftypefn Function emacs_funcall_exit non_local_exit_get (emacs_env *@var{env}, emacs_value *@var{symbol}, emacs_value *@var{data})
+@deftypefn Function enum emacs_funcall_exit non_local_exit_get (emacs_env *@var{env}, emacs_value *@var{symbol}, emacs_value *@var{data})
 This function returns the kind of nonlocal exit condition stored in
 @var{env}, like @code{non_local_exit_check} does, but it also returns
 the full information about the nonlocal exit, if any.  If the return
@@ -2033,45 +2223,76 @@ if that window no longer displays this buffer.
 The frame that this window is on, as a Lisp object.
 
 @item mini
-Non-zero if this window is a minibuffer window.
+Non-zero if this window is a minibuffer window, a window showing the
+minibuffer or the echo area.
+
+@item pseudo_window_p
+@cindex pseudo window
+Non-zero if this window is a @dfn{pseudo window}.  A pseudo window is
+either a window used to display the menu bar or the tool bar (when
+Emacs uses toolkits that don't display their own menu bar and tool
+bar) or a window showing a tooltip on a tooltip frame.  Pseudo windows
+are in general not accessible from Lisp code.
 
 @item parent
-Internally, Emacs arranges windows in a tree; each group of siblings has
-a parent window whose area includes all the siblings.  This field points
-to a window's parent, as a Lisp object.
+Internally, Emacs arranges windows in a tree; each group of siblings
+has a parent window whose area includes all the siblings.  This field
+points to the window's parent in that tree, as a Lisp object.  For the
+root window of the tree and a minibuffer window this is always
+@code{nil}.
 
 Parent windows do not display buffers, and play little role in display
-except to shape their child windows.  Emacs Lisp programs usually have
-no access to the parent windows; they operate on the windows at the
+except to shape their child windows.  Emacs Lisp programs cannot
+directly manipulate parent windows; they operate on the windows at the
 leaves of the tree, which actually display buffers.
+
+@item contents
+For a leaf window and windows showing a tooltip, this is the buffer,
+as a Lisp object, that the window is displaying.  For an internal
+(``parent'') window, this is its first child window.  For a pseudo
+window showing a menu or tool bar this is @code{nil}.  It is also
+@code{nil} for a window that has been deleted.
 
 @item next
 @itemx prev
-The next sibling and previous sibling of this window.  @code{next} is
-@code{nil} if the window is the right-most or bottom-most in its group;
-@code{prev} is @code{nil} if it is the left-most or top-most in its
-group.  Whether the sibling is left/right or up/down is determined by
-the @code{horizontal} field: if it's non-zero, the siblings are
-arranged horizontally.
+The next and previous sibling of this window as Lisp objects.
+@code{next} is @code{nil} if the window is the right-most or
+bottom-most in its group; @code{prev} is @code{nil} if it is the
+left-most or top-most in its group.  Whether the sibling is left/right
+or up/down is determined by the @code{horizontal} field of the
+sibling's parent: if it's non-zero, the siblings are arranged
+horizontally.
+
+As a special case, @code{next} of a frame's root window points to the
+frame's minibuffer window, provided this is not a minibuffer-only or
+minibuffer-less frame.  On such frames @code{prev} of the minibuffer
+window points to that frame's root window.  In any other case, the
+root window's @code{next} and the minibuffer window's (if present)
+@code{prev} fields are @code{nil}.
 
 @item left_col
 The left-hand edge of the window, measured in columns, relative to the
-leftmost column in the frame (column 0).
+leftmost column (column 0) of the window's native frame.
 
 @item top_line
 The top edge of the window, measured in lines, relative to the topmost
-line in the frame (line 0).
+line (line 0) of the window's native frame.
+
+@item pixel_left
+@itemx pixel_top
+The left-hand and top edges of this window, measured in pixels,
+relative to the top-left corner (0, 0) of the window's native frame.
 
 @item total_cols
 @itemx total_lines
-The width and height of the window, measured in columns and lines
-respectively.  The width includes the scroll bar and fringes, and/or
-the separator line on the right of the window (if any).
+The total width and height of the window, measured in columns and
+lines respectively.  The values include scroll bars and fringes,
+dividers and/or the separator line on the right of the window (if
+any).
 
-@item contents
-For leaf windows, this is the buffer, as a Lisp object, that the
-window is displaying.  For an internal (``parent'') window, this is
-its child window.  It can also be @code{nil}, for a pseudo-window.
+@item pixel_width;
+@itemx pixel_height;
+The total width and height of the window measured in pixels.
 
 @item start
 A marker pointing to the position in the buffer that is the first
@@ -2125,8 +2346,14 @@ in this window.
 A non-zero value means the window's buffer was modified when the
 window was last updated.
 
-@item vertical_scroll_bar
-This window's vertical scroll bar, a Lisp object.
+@item vertical_scroll_bar_type
+@itemx horizontal_scroll_bar_type
+The types of this window's vertical and horizontal scroll bars.
+
+@item scroll_bar_width
+@itemx scroll_bar_height
+The width of this window's vertical scroll bar and the height of this
+window's horizontal scroll bar, in pixels.
 
 @item left_margin_cols
 @itemx right_margin_cols
@@ -2210,6 +2437,14 @@ Vertical scroll amount, in pixels.  Normally, this is 0.
 @item dedicated
 Non-@code{nil} if this window is dedicated to its buffer.
 
+@item combination_limit
+This window's combination limit, meaningful only for a parent window.
+If this is @code{t}, then it is not allowed to delete this window and
+recombine its child windows with other siblings of this window.
+
+@item window_parameters
+The alist of this window's parameters.
+
 @item display_table
 The window's display table, or @code{nil} if none is specified for it.
 
@@ -2233,11 +2468,6 @@ the line number as long as the window shows that buffer.
 @item column_number_displayed
 The column number currently displayed in this window's mode line, or
 @minus{}1 if column numbers are not being displayed.
-
-@item pseudo_window_p
-This is non-zero for windows that display the menu bar and the tool
-bar (when Emacs uses toolkits that don't display their own menu bar
-and tool bar).
 
 @item current_matrix
 @itemx desired_matrix

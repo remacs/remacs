@@ -1,6 +1,6 @@
 ;;; gnus-cite.el --- parse citations in articles for Gnus
 
-;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
 ;; Author: Per Abhiddenware
 
@@ -92,7 +92,7 @@ The first regexp group should match the Supercite attribution."
 ;;     -----Original Message-----
 ;;     From: ...
 ;;     To: ...
-;;     Sent: ...   [date, in non-RFC-2822 format]
+;;     Sent: ...   [date, in non-RFC-822-or-later format]
 ;;     Subject: ...
 ;;
 ;;     Cited message, with no prefixes
@@ -1128,7 +1128,7 @@ Returns nil if there is no such line before LIMIT, t otherwise."
     (let ((cdepth (min (length (apply 'concat
 				      (split-string
 				       (match-string-no-properties 0)
-				       "[ \t [:alnum:]]+")))
+				       "[\t [:alnum:]]+")))
 		       gnus-message-max-citation-depth))
 	  (mlist (make-list (* (1+ gnus-message-max-citation-depth) 2) nil))
 	  (start (point-at-bol))

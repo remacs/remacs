@@ -1,6 +1,6 @@
 ;;; tramp-cmds.el --- Interactive commands for Tramp  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -55,9 +55,9 @@ SYNTAX can be one of the symbols `default' (default),
   "Return a list of all Tramp connection buffers."
   (append
    (all-completions
-    "*tramp" (mapcar 'list (mapcar 'buffer-name (buffer-list))))
+    "*tramp" (mapcar #'list (mapcar #'buffer-name (buffer-list))))
    (all-completions
-    "*debug tramp" (mapcar 'list (mapcar 'buffer-name (buffer-list))))))
+    "*debug tramp" (mapcar #'list (mapcar #'buffer-name (buffer-list))))))
 
 (defun tramp-list-remote-buffers ()
   "Return a list of all buffers with remote default-directory."
@@ -67,6 +67,11 @@ SYNTAX can be one of the symbols `default' (default),
     (lambda (x)
       (with-current-buffer x (when (tramp-tramp-file-p default-directory) x)))
     (buffer-list))))
+
+;;;###tramp-autoload
+(defvar tramp-cleanup-connection-hook nil
+  "List of functions to be called after Tramp connection is cleaned up.
+Each function is called with the current vector as argument.")
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-connection (vec &optional keep-debug keep-password)
@@ -80,7 +85,7 @@ When called interactively, a Tramp connection has to be selected."
    ;; Return nil when there is no Tramp connection.
    (list
     (let ((connections
-	   (mapcar 'tramp-make-tramp-file-name (tramp-list-connections)))
+	   (mapcar #'tramp-make-tramp-file-name (tramp-list-connections)))
 	  name)
 
       (when connections
@@ -99,9 +104,8 @@ When called interactively, a Tramp connection has to be selected."
     (unless keep-password (tramp-clear-passwd vec))
 
     ;; Cleanup `tramp-current-connection'.  Otherwise, we would be
-    ;; suppressed in the test suite.  We use `keep-password' as
-    ;; indicator; it is not worth to add a new argument.
-    (when keep-password (setq tramp-current-connection nil))
+    ;; suppressed.
+    (setq tramp-current-connection nil)
 
     ;; Flush file cache.
     (tramp-flush-directory-properties vec "")
@@ -118,7 +122,10 @@ When called interactively, a Tramp connection has to be selected."
 		   (unless keep-debug
 		     (get-buffer (tramp-debug-buffer-name vec)))
 		   (tramp-get-connection-property vec "process-buffer" nil)))
-      (when (bufferp buf) (kill-buffer buf)))))
+      (when (bufferp buf) (kill-buffer buf)))
+
+    ;; The end.
+    (run-hook-with-args 'tramp-cleanup-connection-hook vec)))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-this-connection ()
@@ -127,6 +134,10 @@ When called interactively, a Tramp connection has to be selected."
   (and (tramp-tramp-file-p default-directory)
        (tramp-cleanup-connection
 	(tramp-dissect-file-name default-directory 'noexpand))))
+
+;;;###tramp-autoload
+(defvar tramp-cleanup-all-connections-hook nil
+  "List of functions to be called after all Tramp connections are cleaned up.")
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-all-connections ()
@@ -143,10 +154,6 @@ This includes password cache, file cache, connection cache, buffers."
   ;; Flush file and connection cache.
   (clrhash tramp-cache-data)
 
-  ;; Cleanup local copies of archives.
-  (when (bound-and-true-p tramp-archive-enabled)
-    (tramp-archive-cleanup-hash))
-
   ;; Remove ad-hoc proxies.
   (let ((proxies tramp-default-proxies-alist))
     (while proxies
@@ -162,7 +169,10 @@ This includes password cache, file cache, connection cache, buffers."
 
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))
-    (when (bufferp (get-buffer name)) (kill-buffer name))))
+    (when (bufferp (get-buffer name)) (kill-buffer name)))
+
+  ;; The end.
+  (run-hooks 'tramp-cleanup-all-connections-hook))
 
 ;;;###tramp-autoload
 (defun tramp-cleanup-all-buffers ()
@@ -206,7 +216,7 @@ This includes password cache, file cache, connection cache, buffers."
 	  (lambda (x)
 	    (and x (boundp x) (cons x 'tramp-reporter-dump-variable)))
 	  (append
-	   (mapcar 'intern (all-completions "tramp-" obarray 'boundp))
+	   (mapcar #'intern (all-completions "tramp-" obarray #'boundp))
 	   ;; Non-tramp variables of interest.
 	   '(shell-prompt-pattern
 	     backup-by-copying
@@ -320,11 +330,11 @@ buffer in your bug report.
 	     (sort
 	      (append
 	       (mapcar
-		'intern
+		#'intern
 		(all-completions "tramp-" (buffer-local-variables buffer)))
 	       ;; Non-tramp variables of interest.
 	       '(connection-local-variables-alist default-directory))
-	      'string<))
+	      #'string<))
 	    (reporter-dump-variable varsym elbuf))
 	(lisp-indent-line)
 	(insert ")\n"))
@@ -402,7 +412,7 @@ please ensure that the buffers are attached to your email.\n\n"))
 	  (kill-buffer nil)
 	  (throw 'dont-send nil))))))
 
-(defalias 'tramp-submit-bug 'tramp-bug)
+(defalias 'tramp-submit-bug #'tramp-bug)
 
 (add-hook 'tramp-unload-hook
 	  (lambda () (unload-feature 'tramp-cmds 'force)))

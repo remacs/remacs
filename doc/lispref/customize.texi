@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1997-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1997-2019 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Customization
 @chapter Customization Settings
@@ -950,10 +950,10 @@ possibilities:
 
 @itemize @bullet
 @item
-A predicate---that is, a function of one argument that has no side
-effects, and returns either @code{nil} or non-@code{nil} according to
-the argument.  Using a predicate in the list says that objects for which
-the predicate returns non-@code{nil} are acceptable.
+A predicate---that is, a function of one argument that returns either
+@code{nil} or non-@code{nil} according to the argument.  Using a
+predicate in the list says that objects for which the predicate
+returns non-@code{nil} are acceptable.
 
 @item
 A quoted constant---that is, @code{'@var{object}}.  This sort of element

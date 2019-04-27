@@ -1,6 +1,6 @@
 ;;; subr-tests.el --- Tests for subr.el
 
-;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 ;; Author: Oleh Krehel <ohwoeowho@gmail.com>,
 ;;         Nicolas Petton <nicolas@petton.fr>
@@ -318,24 +318,6 @@ cf. Bug#25477."
   (should (eq (string-to-char (symbol-name (gensym))) ?g))
   (should (eq (string-to-char (symbol-name (gensym "X"))) ?X)))
 
-(ert-deftest subr-tests--proper-list-p ()
-  "Test `proper-list-p' behavior."
-  (dotimes (length 4)
-    ;; Proper and dotted lists.
-    (let ((list (make-list length 0)))
-      (should (= (proper-list-p list) length))
-      (should (not (proper-list-p (nconc list 0)))))
-    ;; Circular lists.
-    (dotimes (n (1+ length))
-      (let ((circle (make-list (1+ length) 0)))
-        (should (not (proper-list-p (nconc circle (nthcdr n circle))))))))
-  ;; Atoms.
-  (should (not (proper-list-p 0)))
-  (should (not (proper-list-p "")))
-  (should (not (proper-list-p [])))
-  (should (not (proper-list-p (make-bool-vector 0 nil))))
-  (should (not (proper-list-p (make-symbol "a")))))
-
 (ert-deftest subr-tests--assq-delete-all ()
   "Test `assq-delete-all' behavior."
   (cl-flet ((new-list-fn
@@ -371,6 +353,25 @@ See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19350."
                             "%ca%"
                             (shell-quote-argument "%ca%")))
                    "without-caret %ca%"))))
+
+(ert-deftest subr-tests-flatten-tree ()
+  "Test `flatten-tree' behavior."
+  (should (equal (flatten-tree '(1 (2 . 3) nil (4 5 (6)) 7))
+                 '(1 2 3 4 5 6 7)))
+  (should (equal (flatten-tree '((1 . 2)))
+                 '(1 2)))
+  (should (equal (flatten-tree '(1 nil 2))
+                 '(1 2)))
+  (should (equal (flatten-tree 42)
+                 '(42)))
+  (should (equal (flatten-tree t)
+                 '(t)))
+  (should (equal (flatten-tree nil)
+                 nil))
+  (should (equal (flatten-tree '((nil) ((((nil)))) nil))
+                 nil))
+  (should (equal (flatten-tree '(1 ("foo" "bar") 2))
+                 '(1 "foo" "bar" 2))))
 
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

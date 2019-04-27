@@ -4,7 +4,7 @@
 #
 #	admin/merge-gnulib
 
-# Copyright 2012-2018 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -36,7 +36,7 @@ GNULIB_MODULES='
   filemode filevercmp flexmember fpieee fstatat fsusage fsync
   getloadavg getopt-gnu gettime gettimeofday gitlog-to-changelog
   ieee754-h ignore-value intprops largefile lstat
-  manywarnings memrchr minmax mkostemp mktime nstrftime
+  manywarnings memmem-simple memrchr minmax mkostemp mktime nstrftime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat regex
   sig2str socklen stat-time std-gnu11 stdalign stddef stdio
   stpcpy strtoimax symlink sys_stat sys_time
@@ -47,7 +47,7 @@ GNULIB_MODULES='
 
 AVOIDED_MODULES='
   btowc close dup fchdir fstat langinfo lock
-  malloc-posix mbrtowc mbsinit mkdir msvc-inval msvc-nothrow nl_langinfo
+  malloc-posix mbrtowc mbsinit memchr mkdir msvc-inval msvc-nothrow nl_langinfo
   openat-die opendir raise
   save-cwd select setenv sigprocmask stat stdarg stdbool
   threadlib tzset unsetenv utime utime-h

@@ -1,6 +1,6 @@
 ;;; server.el --- Lisp code for GNU Emacs running as server process -*- lexical-binding: t -*-
 
-;; Copyright (C) 1986-1987, 1992, 1994-2018 Free Software Foundation,
+;; Copyright (C) 1986-1987, 1992, 1994-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Author: William Sommerfeld <wesommer@athena.mit.edu>
@@ -270,7 +270,14 @@ been consumed.")
     "server")
   "The name of the Emacs server, if this Emacs process creates one.
 The command `server-start' makes use of this.  It should not be
-changed while a server is running."
+changed while a server is running.
+If this is a file name with no leading directories, Emacs will
+create a socket file by that name under `server-socket-dir'
+if `server-use-tcp' is nil, else under `server-auth-dir'.
+If this is an absolute file name, it specifies where the socket
+file will be created.  To have emacsclient connect to the same
+socket, use the \"-s\" switch for local non-TCP sockets, and
+the \"-f\" switch otherwise."
   :group 'server
   :type 'string
   :version "23.1")
@@ -800,7 +807,7 @@ Server mode runs a process that accepts commands from the
   ;; intended it to interrupt us rather than interrupt whatever Emacs
   ;; was doing before it started handling the process filter.
   ;; Hence `with-local-quit' (bug#6585).
-  (let ((v (with-local-quit (eval (car (read-from-string expr))))))
+  (let ((v (with-local-quit (eval (car (read-from-string expr)) t))))
     (when proc
       (with-temp-buffer
         (let ((standard-output (current-buffer)))
@@ -1322,7 +1329,7 @@ The following commands are accepted by the client:
                                                (find-file-noselect initial-buffer-choice))
                                               ((functionp initial-buffer-choice)
                                                (funcall initial-buffer-choice)))))
-                                   (if (buffer-live-p buf) buf (get-buffer-create "*scratch*")))))
+                                   (if (buffer-live-p buf) buf (startup--get-buffer-create-scratch)))))
                ;; Set current buffer so that newly created tty frames
                ;; show the correct buffer initially.
                (frame (with-current-buffer (or (car buffers)
@@ -1737,7 +1744,7 @@ returns the process ID of the Emacs instance running \"server\"."
 				   (server-quote-arg (format "%S" form))
 				   "\n"))
       (while (memq (process-status process) '(open run))
-	(accept-process-output process 0 10))
+	(accept-process-output process 0.01))
       (goto-char (point-min))
       ;; If the result is nil, there's nothing in the buffer.  If the
       ;; result is non-nil, it's after "-print ".

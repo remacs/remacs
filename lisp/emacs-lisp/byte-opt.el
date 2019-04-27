@@ -1,6 +1,6 @@
 ;;; byte-opt.el --- the optimization passes of the emacs-lisp byte compiler -*- lexical-binding: t -*-
 
-;; Copyright (C) 1991, 1994, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 1994, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -436,11 +436,6 @@
 		     (cons (byte-optimize-form (nth 1 form) for-effect)
 			   (byte-optimize-body (cdr (cdr form)) t)))
 	     (byte-optimize-form (nth 1 form) for-effect)))
-	  ((eq fn 'prog2)
-	   (cons 'prog2
-	     (cons (byte-optimize-form (nth 1 form) t)
-	       (cons (byte-optimize-form (nth 2 form) for-effect)
-		     (byte-optimize-body (cdr (cdr (cdr form))) t)))))
 
 	  ((memq fn '(save-excursion save-restriction save-current-buffer))
 	   ;; those subrs which have an implicit progn; it's not quite good
@@ -884,7 +879,8 @@
 (put 'symbolp 'byte-optimizer 'byte-optimize-predicate)
 (put 'stringp 'byte-optimizer 'byte-optimize-predicate)
 (put 'string< 'byte-optimizer 'byte-optimize-predicate)
-(put 'string-lessp 'byte-optimizer 'byte-optimize-predicate)
+(put 'string-lessp  'byte-optimizer 'byte-optimize-predicate)
+(put 'proper-list-p 'byte-optimizer 'byte-optimize-predicate)
 
 (put 'logand 'byte-optimizer 'byte-optimize-predicate)
 (put 'logior 'byte-optimizer 'byte-optimize-predicate)

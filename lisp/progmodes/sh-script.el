@@ -1,6 +1,6 @@
 ;;; sh-script.el --- shell-script editing commands for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1997, 1999, 2001-2018 Free Software Foundation,
+;; Copyright (C) 1993-1997, 1999, 2001-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
@@ -2905,8 +2905,7 @@ STRING	     This is ignored for the purposes of calculating
 		      (setq align-point (point))))
 		(or (bobp)
 		    (forward-char -1))
-                ;; FIXME: This charset looks too much like a regexp.  --Stef
-		(skip-chars-forward "[a-z0-9]*?")
+		(skip-chars-forward "*0-9?[]a-z")
 		)
 	       ((string-match "[])}]" x)
 		(setq x (sh-safe-forward-sexp -1))

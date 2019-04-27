@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2017-2018 Free Software Foundation, Inc.
+Copyright (C) 2017-2019 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to 'bug-gnu-emacs@gnu.org'.
@@ -41,6 +41,12 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
+** Several configure options now accept an option-argument 'ifavailable'.
+For example, './configure --with-xpm=ifavailable' now configures Emacs
+to attempt to use libxpm but to continue building even if libxpm is absent.
+The other affected options are --with-gif, --with-gnutls, --with-jpeg,
+--with-png, and --with-tiff.
+
 ** The etags program now uses the C library's regular expression matcher
 when possible, and a compatible regex substitute otherwise.  This will
 let developers maintain Emacs's own regex code without having to also
@@ -63,19 +69,41 @@ option '--enable-check-lisp-object-type' is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
-** Ibuffer
++++
+** Emacs now uses a "portable dumper" instead of unexec.
+This improves compatibility with memory allocation on modern systems,
+and in particular better supports the Address Space Layout
+Randomization (ASLR) feature, a security technique used by most modern
+operating systems.
 
----
-*** All mode filters can now accept a list of symbols.
-This means you can now easily filter several major modes, as well
-as a single mode.
+Portable dumping can be disabled at configure time via the configure
+option '--with-dumping=unexec' (but we don't recommend that, unless
+the portable dumping doesn't work on your system for some
+reason---please report such systems to the Emacs developers as bugs).
 
-** Gnus
+When built with the portable dumping support (which is the default),
+Emacs looks for the 'emacs.pdmp' file, generated during the build, in
+its data directory at startup, and loads the dumped state from there.
+The new command-line argument '--dump-file=FILE' allows to specify a
+non-default '.pdmp' file to load the state from; see the node "Initial
+Options" in the Emacs manual for more information.
 
 +++
-*** The nnimap backend now has support for IMAP namespaces.
-This feature can be enabled by setting the new 'nnimap-use-namespaces'
-server variable to non-nil.
+** The new configure option '--enable-checking=structs' attempts to
+check that the portable dumper code has been updated to match the last
+change to one of the data structures that it relies on.
+
++++
+** The configure options '--enable-checking=conslist' and
+'--enable-checking=xmallocoverrun' have been withdrawn.  The former
+made Emacs irredeemably slow, and the latter made it crash.  Neither
+option was useful with modern debugging tools such as AddressSanitizer.
+(See etc/DEBUG for the details of using the modern replacements of the
+removed configure options.)
+
+---
+** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
+builds respectively.
 
 
 * Startup Changes in Emacs 27.1
@@ -144,8 +172,19 @@ EMACS_SOCKET_NAME environment variable to an appropriate value.
 *** When run by root, emacsclient no longer connects to non-root sockets.
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
 
+---
+** Control of the threshold for using the 'distant-foreground' color.
+The threshold for color distance below which the 'distant-foreground'
+color of the face will be used instead of the foreground color can now
+be controlled via the new variable 'face-near-same-color-threshold'.
+The default value is 30000, as the previously hard-coded threshold.
+
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
+
+** Lexical binding is now used when evaluating interactive Elisp forms
+More specifically, lexical-binding is now used for M-:, --eval, as well
+as in the *scratch* and *ielm* buffers.
 
 ---
 ** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
@@ -204,6 +243,13 @@ or adjust the elements in that variable to only happen on the 'high'
 security level (assuming you use the 'medium' level).
 
 +++
+** Native GnuTLS connections can now use client certificates.
+Previously, this support was only available when using the external
+gnutls-cli command.  Call 'open-network-stream' with
+':client-certificate t' to trigger looking up of per-server
+certificates via 'auth-source'.
+
++++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
 It blocks line breaking after a one-letter word, also in the case when
 this word is preceded by a non-space, but non-alphanumeric character.
@@ -220,6 +266,18 @@ regular expression was previously invalid, but is now accepted:
 
 ---
 ** New input methods 'hawaiian-postfix' and 'hawaiian-prefix'.
+
+---
+** New input methods for several variants of the Sami language.
+The Sami input methods include: 'norwegian-sami-prefix',
+'bergsland-hasselbrink-sami-prefix', 'southern-sami-prefix',
+'ume-sami-prefix', 'northern-sami-prefix', 'inari-sami-prefix',
+'skolt-sami-prefix', and 'kildin-sami-prefix'.
+
++++
+** In Japanese environments that do not specify encodings and are not
+based on MS-Windows, the default encoding is now utf-8 instead of
+japanese-iso-8bit.
 
 +++
 ** New function 'exec-path'.
@@ -246,6 +304,45 @@ when the last screen line in a window is not fully visible.
 +++
 ** New variable 'emacs-repository-branch'.
 It reports the git branch from which Emacs was built.
+
++++
+** New user option 'switch-to-buffer-obey-display-actions'.
+When non-nil, 'switch-to-buffer' uses 'pop-to-buffer-same-window' that
+respects display actions specified by 'display-buffer-alist' and
+'display-buffer-overriding-action'.
+
+** New 'flex' completion style
+An implementation of popular "flx/fuzzy/scatter" completion which
+matches strings where the pattern appears as a subsequence.  Put
+simply, makes "foo" complete to both "barfoo" and "frodo".  Add 'flex'
+to 'completion-styles' or 'completion-category-overrides' to use it.
+
+** Connection-local variables
+
++++
+*** Connection-local variables are applied by default like file-local
+and directory-local variables.
+
++++
+*** The macro 'with-connection-local-variables' has been renamed from
+'with-connection-local-profiles'.  No argument 'profiles' needed any
+longer.
+
+---
+** New variable next-error-verbose controls when `next-error' outputs
+   a message about the error locus.
+
+---
+** New variable grep-search-path defines the directories searched for
+   grep hits (this used to be controlled by compilation-search-path).
+
+---
+** New variable emacs-lisp-compilation-search-path defines the
+   directories searched for byte-compiler error messages (this used to
+   be controlled by compilation-search-path).
+
+** Multicolor fonts such as "Noto Color Emoji" can be displayed on
+Emacs configured with Cairo drawing and linked with cairo >= 1.16.0.
 
 
 * Editing Changes in Emacs 27.1
@@ -305,8 +402,62 @@ write alists of variables to ".dir-locals.el".  This is the same
 syntax that you can see in the example of a ".dir-locals.el" file in
 the node "(emacs) Directory Variables" of the user manual.
 
++++
+** Network connections using 'local can now use IPv6.
+'make-network-process' now uses the correct loopback address when
+asked to use :host 'local and :family 'ipv6.
+
++++
+** The new function `replace-region-contents' replaces the current
+region using a given replacement-function in a non-destructive manner
+(in terms of `replace-buffer-contents').
+
++++
+** The command `replace-buffer-contents' now has two optional
+arguments mitigating performance issues when operating on huge
+buffers.
+
+** The command 'delete-indentation' now operates on the active region.
+If the region is active, the command joins all the lines in the
+region.  When there's no active region, the command works on the
+current and the previous or the next line, as before.
+
++++
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
+
+** compile.el
+---
+*** In compilation-error-regexp-alist, 'line' (and 'end-line') can be functions
+
+** cl-lib
++++
+*** cl-defstruct has a new :noinline argument to prevent inlining its functions
+
+** doc-view-mode
+*** New commands doc-view-presentation and doc-view-fit-window-to-page
+*** Added support for password-protected PDF files
+
+** Ido
+*** New user option 'ido-big-directories' to mark directories whose
+names match certain regular expressions as big.  Ido won't attempt to
+list the contents of such directories when completing file names.
+
+** map.el
+*** Now also understands plists.
+*** Now defined via generic functions that can be extended via 'cl-defmethod'.
+*** Deprecate the 'map-put' macro in favor of a new 'map-put!' function.
+*** 'map-contains-key' now returns a boolean rather than the key.
+*** Deprecate the 'testfn' args of 'map-elt' and 'map-contains-key'.
+*** New generic function 'map-insert'.
+
++++
+** seq.el
+New convenience functions 'seq-first' and 'seq-rest' give easy access
+to respectively the first and all but the first elements of sequences.
+
+The new predicate function 'seq-contains-p' should be used instead of
+the now obsolete 'seq-contains'.
 
 ---
 ** Follow mode
@@ -333,18 +484,23 @@ displays the *Messages* buffer in the same window.
 
 *** Windmove also supports directional window deletion.
 The new command 'windmove-delete-default-keybindings' binds default
-keys with provided prefix (by default, C-x) and modifiers (by default,
-Shift) to the commands that delete the window in the specified
+keys with provided prefix (by default, 'C-x') and modifiers (by default,
+'Shift') to the commands that delete the window in the specified
 direction.  For example, 'C-x S-down' deletes the window below.
-With a prefix arg 'C-u', deletes the selected window and selects
-the window that was in the specified direction.
+With a prefix arg 'C-u', also kills the buffer in that window.
+With 'M-0', deletes the selected window and selects the window
+that was in the specified direction.
+
+*** New command 'windmove-swap-states-in-direction' binds default keys
+to the commands that swap the states of the selected window with the
+window in the specified direction.
 
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
 
 ** project.el
-*** New commands 'project-search' and 'project-query-replace'.
+*** New commands 'project-search' and 'project-query-replace-regexp'.
 
 ** Etags
 
@@ -352,11 +508,11 @@ The mode is automatically enabled in files that start with the
 *** 'next-file' is now an obsolete alias of 'tags-next-file'.
 
 *** 'tags-loop-revert-buffers' is an obsolete alias of
-'multifile-revert-buffers'.
+'fileloop-revert-buffers'.
 
 *** The 'tags-loop-continue' function along with the
 'tags-loop-operate' and 'tags-loop-scan' variables are now obsolete;
-use the new 'multifile-initialize' and 'multifile-continue' functions
+use the new 'fileloop-initialize' and 'fileloop-continue' functions
 instead.
 
 ** bibtex
@@ -402,9 +558,33 @@ with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
 
++++
+*** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
+and compares their entire trees.
+
+*** New user option 'vc-hg-revert-switches' specifies switches to pass
+to hg revert.
+
+*** 'C-x v M D' ('vc-diff-mergebase') and 'C-x v M L' ('vc-log-mergebase')
+print diffs and logs between the merge base (common ancestor) of two
+given revisions.
+
 ** Diff mode
-*** Hunks are now automatically refined by default.
-To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
++++
+*** Hunks are now automatically refined by font-lock.
+To disable refinement, set the new defcustom 'diff-refine' to nil.
+To get back the old behavior where hunks are refined as you navigate
+through a diff, set 'diff-refine' to the symbol 'navigate'.
++++
+*** 'diff-auto-refine-mode' is deprecated in favor of 'diff-refine'.
+It is no longer enabled by default and binding it no longer has any
+effect.
+
++++
+*** Better syntax highlighting of Diff hunks.
+Fragments of source in Diff hunks are now by default highlighted
+according to the appropriate major mode.  Customize the new option
+'diff-font-lock-syntax' to nil to disable this.
 
 *** File headers can be shortened, mimicking Magit's diff format.
 To enable it, set the new defcustom 'diff-font-lock-prettify' to t.
@@ -413,6 +593,15 @@ To enable it, set the new defcustom 'diff-font-lock-prettify' to t.
 *** Prefix arg of 'diff-goto-source' means jump to the old revision
 of the file under version control if point is on an old changed line,
 or to the new revision of the file otherwise.
+
+** Texinfo
+
++++
+*** New function for inserting @pxref, @xref, or @ref commands.
+The function 'texinfo-insert-dwim-@ref', bound to 'C-c C-c r' by
+default, inserts one of three types of references based on the text
+surrounding point, namely @pxref near a parenthesis, @xref at the
+start of a sentence or at (point-min), else @ref.
 
 ** Browse-url
 
@@ -445,26 +634,44 @@ end.
 
 ** SQL
 
-*** Installation of 'sql-indent' from ELPA is strongly encouraged.
-This package support sophisticated rules for properly indenting SQL
-statements.  SQL is not like other programming languages like C, Java,
-or Python where code is sparse and rules for formatting are fairly
-well established. Instead SQL is more like COBOL (from which it came)
-and code tends to be very dense and line ending decisions driven by
-syntax and line length considerations to make readable code.
-Experienced SQL developers may prefer to rely upon existing Emacs
-facilities for formatting code but the 'sql-indent' package provides
-facilities to aid more casual SQL developers layout queries and
-complex expressions.
+*** SQL Indent Minor Mode
 
-*** 'sql-use-indent-support' (default t) enables SQL indention support.
+SQL Mode now supports the ELPA 'sql-indent' package for assisting
+sophisticated SQL indenting rules.  Note, however, that SQL is not
+like other programming languages like C, Java, or Python where code is
+sparse and rules for formatting are fairly well established. Instead
+SQL is more like COBOL (from which it came) and code tends to be very
+dense and line ending decisions driven by syntax and line length
+considerations to make readable code.  Experienced SQL developers may
+prefer to rely upon existing Emacs facilities for formatting code but
+the 'sql-indent' package provides facilities to aid more casual SQL
+developers layout queries and complex expressions.
+
+**** 'sql-use-indent-support' (default t) enables SQL indention support.
 The 'sql-indent' package from ELPA must be installed to get the
 indentation support in 'sql-mode' and 'sql-interactive-mode'.
 
-*** 'sql-mode-hook' and 'sql-interactive-mode-hook' changed.
+**** 'sql-mode-hook' and 'sql-interactive-mode-hook' changed.
 Both hook variables have had 'sql-indent-enable' added to their
-default values. If youhave existing customizations to these variables,
+default values. If you have existing customizations to these variables,
 you should make sure that the new default entry is included.
+
+*** Connection Wallet
+
+Database passwords can now by stored in NETRC or JSON data files that
+may optionally be encrypted. When establishing an interactive session
+with the database via 'sql-connect' or a product specific function,
+like 'sql-mysql' or 'my-postgres', the password wallet will be
+searched for the password. The 'sql-product', 'sql-server',
+'sql-database', and the 'sql-username' will be used to identify the
+appropriate authorization. This eliminates the discouraged practice of
+embedding database passwords in your Emacs initialization.
+
+See the `auth-source' module for complete documentation on the file
+formats.  By default, the wallet file is expected to be in the
+`user-emacs-directory', named 'sql-wallet' or '.sql-wallet', with
+'.json' (JSON) or no (NETRC) suffix.  Both file formats can optionally
+be encrypted with GPG by adding an additional '.gpg' suffix.
 
 ** Term
 
@@ -484,6 +691,13 @@ Control whether Flymake starts checking the buffer on save.
 *** Flymake and backend functions may exchange hints about buffer changes.
 This enables more efficient backends.  See the docstring of
 'flymake-diagnostic-functions' or the Flymake manual for details.
+
+** Ruby
+
+*** The Rubocop Flymake diagnostic function will only run Lint cops if
+it can't find the config file.
+
+*** Rubocop is called with 'bundle exec' if Gemfile mentions it.
 
 ** Package
 
@@ -521,6 +735,13 @@ mouse click event, and is intended to be bound to a mouse event.
 Previously, setting 'xref-marker-ring-length' would only take effect
 if set before 'xref.el' was loaded.
 
+---
+*** xref-find-definitions now sets the mark at the buffer position
+where it was invoked
+
+---
+*** New xref faces 'xref-file-header', 'xref-line-number', 'xref-match'
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
@@ -530,6 +751,17 @@ This can be controlled by the new 'ecomplete-sort-predicate' variable.
 Of course it will still find it if you have it in ~/.ecompleterc
 
 ** Gnus
+
+---
+*** Gnus now maps imaps to 993 only on old MS-Windows versions.
+The nnimap backend used to do this unconditionally to work around
+problems on old versions of MS-Windows.  This is now done only for
+Windows XP and older.
+
++++
+*** The nnimap backend now has support for IMAP namespaces.
+This feature can be enabled by setting the new 'nnimap-use-namespaces'
+server variable to non-nil.
 
 +++
 *** A prefix argument to 'gnus-summary-limit-to-score' will limit reverse.
@@ -572,6 +804,16 @@ and its value has been changed to Duck Duck Go.
 
 ** eww/shr
 
++++
+*** The 'eww' command can now create a new EWW buffer.
+Invoking the command with a prefix argument will cause it to create a
+new EWW buffer for the URL instead of reusing the default one.
+
++++
+*** The 'd' ('eww-download') command now falls back to current page's URL.
+If this command is invoked with no URL at point, it now downloads the
+current page instead of signaling an error.
+
 *** When opening external links in eww/shr (typically with the
 'C-u RET' keystroke on a link), the link will be flashed with the new
 'shr-selected-link' face to give the user feedback that the command
@@ -581,6 +823,9 @@ has been executed.
 *** New option 'shr-discard-aria-hidden'.
 If set, shr will not render tags with attribute 'aria-hidden="true"'.
 This attribute is meant to tell screen readers to ignore a tag.
+
+---
+*** 'shr-tag-ol' now respects the ordered list 'start' attribute.
 
 ** Htmlfontify
 
@@ -642,6 +887,9 @@ directories in the destination.
 ** Help
 
 ---
+*** Description of variables and functions give an estimated first release
+
+---
 *** Output format of 'C-h l' ('view-lossage') has changed.
 For convenience, 'view-lossage' now displays the last keystrokes
 and commands in the same format as the edit buffer of
@@ -657,6 +905,11 @@ can now be searched via 'C-s'.
 
 ---
 *** New filter 'ibuffer-filter-by-process'; bound to '/E'.
+
+---
+*** All mode filters can now accept a list of symbols.
+This means you can now easily filter several major modes, as well
+as a single mode.
 
 ** Search and Replace
 
@@ -712,6 +965,9 @@ and case-sensitivity together with search strings in the search ring.
 ---
 *** Isearch now has its own tool-bar and menu-bar menu.
 
++++
+*** flush-lines prints and returns the number of deleted matching lines.
+
 ** Debugger
 
 +++
@@ -750,7 +1006,7 @@ been instrumented by Edebug.
 the XTerm window title.  This feature is experimental and is disabled
 by default.
 
-** grep
+** Grep
 
 +++
 *** rgrep, lgrep and zrgrep now hide part of the command line
@@ -812,6 +1068,11 @@ default, and not just the opening element.
 
 ** Eshell
 
+*** TAB completion uses the standard completion-at-point rather than pcomplete
+Its UI is slightly different but can be customized to behave similarly,
+e.g. Pcomplete's default cycling can be obtained with
+(setq completion-cycle-threshold 5).
+
 ---
 *** Expansion of history event designators is disabled by default.
 To restore the old behavior, use
@@ -839,7 +1100,18 @@ followed when Emacs writes the relevant history variables to the disk.
 ---
 *** Program name completion inside remote shells works now as expected.
 
++++
+*** The variable 'shell-file-name' can be set now as connection-local
+variable for remote shells.  It still defaults to "/bin/sh".
+
+** Single shell commands
+
+---
+*** 'shell-command-width' defines the number of display columns
+available for output of asynchronous or remote shell commands.
+
 ** Pcomplete
+
 *** The function 'pcomplete-uniquify-list' has been renamed from
 'pcomplete-uniqify-list'.
 
@@ -859,6 +1131,12 @@ or NextCloud hosted files and directories.
 storages via the 'rclone' program.  This feature is experimental.
 
 +++
+*** New connection method "sudoedit", which allows to edit local files
+with different user credentials.  Contrary to the "sudo" method, no
+session is run permanently in the background.  This is for security
+reasons.
+
++++
 *** Connection methods "obex" and "synce" are removed, because they
 are obsoleted in GVFS.
 
@@ -876,7 +1154,8 @@ Tramp for some look-alike remote file names.
 
 +++
 *** For some connection methods, like "su" or "sudo", the host name in
-ad-hoc multi-hop file names must match the previous hop.
+ad-hoc multi-hop file names must match the previous hop.  Default host
+names are adjusted to the host name from the previous hop.
 
 +++
 *** For the connection methods "sudo" and "doas" there exists a
@@ -991,10 +1270,133 @@ subexpression.
 When there is no menu for a mode, display the mode name after the
 indicator instead of just the indicator (which is sometimes cryptic).
 
+** rx
+
+---
+*** rx now handles raw bytes in character alternatives correctly,
+when given in a string.  Previously, '(any "\x80-\xff")' would match
+characters U+0080...U+00FF.  Now the expression matches raw bytes in
+the 128...255 range, as expected.
+
+** Frames
+
++++
+*** New command 'make-frame-on-monitor' makes a frame on the specified monitor.
+
++++
+*** New value of 'minibuffer' frame parameter 'child-frame'.
+This allows to create and parent immediately a minibuffer-only child
+frame when making a frame.
+
+---
+*** New predicates 'display-blink-cursor-p' and 'display-symbol-keys-p'.
+These predicates are to be preferred over 'display-graphic-p' when
+testing for blinking cursor capability and the capability to have
+symbols (e.g., [return], [tab], [backspace]) as keys respectively.
+
+** Tabulated List mode
+
++++
+*** New user options for tabulated list sort indicators.
+You can now customize which sorting indicator character to display
+near the current column in Tabulated Lists (see variables
+'tabulated-list-gui-sort-indicator-asc',
+'tabulated-list-gui-sort-indicator-desc',
+'tabulated-list-tty-sort-indicator-asc', and
+'tabulated-list-tty-sort-indicator-desc').
+
+** Text mode
+
++++
+*** 'text-mode-variant' is now obsolete, use 'derived-mode-p' instead.
+
+** CUA mode
+
+---
+*** New defcustom 'cua-rectangle-terminal-modifier-key'.
+This defcustom allows for the customization of the modifier key used
+in a terminal frame.
+
+** JS mode
+
+---
+*** JSX syntax is now automatically detected and enabled.
+If a file imports Facebook's 'React' library, or if the file uses the
+extension '.jsx', then various features supporting XML-like syntax
+will be supported in 'js-mode' and derivative modes.  ('js-jsx-mode'
+no longer needs to be enabled.)
+
+---
+*** New defcustom 'js-jsx-detect-syntax' disables automatic detection.
+This is turned on by default.
+
+---
+*** New defcustom 'js-jsx-syntax' enables JSX syntax unconditionally.
+This is off by default.
+
+---
+*** New variable 'js-jsx-regexps' controls JSX detection.
+
+---
+*** JSX syntax is now highlighted like SGML.
+
+---
+*** JSX code is properly indented in many more scenarios.
+Previously, JSX indentation usually only worked when an element was
+wrapped in parenthesis (e.g. in a 'return' statement or a function
+call).  It would also fail in many intricate cases.  Now, indentation
+should work anywhere without parenthesis; many more intricacies are
+supported; and, indentation conventions align more closely with those
+of the React developer community (see 'js-jsx-align->-with-<'),
+otherwise still adhering to SGML conventions.
+
+---
+*** New defcustom 'js-jsx-align->-with-<' controls '>' indents.
+Commonly in JSX code, a '>' on its own line is indented at the same
+level as its opening '<'.  This is the new default for JSX.  This
+behavior is slightly different than that used by SGML in Emacs, where
+'>' is indented at the same level as attributes, which was also the
+old default for JSX.
+
+This is turned on by default.  To get back the old default indentation
+behavior of aligning '>' with attributes, set 'js-jsx-align->-with-<'
+to nil.
+
+---
+*** Indentation uses 'js-indent-level' instead of 'sgml-basic-offset'.
+Since JSX is a syntax extension of JavaScript, it makes the most sense
+for JSX expressions to be indented the same number of spaces as other
+JS expressions.  This is a breaking change, but it probably aligns
+with how you'd expect this indentation to behave.  If you want JSX to
+be indented like JS, you won't need to change your config.
+
+The old behavior can be emulated by controlling JSX indentation
+independently of JS, by setting 'js-jsx-indent-level'.
+
+---
+*** New defcustom 'js-jsx-indent-level' for different JSX indentation.
+If you wish to indent JSX by a different number of spaces than JS, set
+this variable to the desired number.
+
+---
+*** New defcustom 'js-jsx-attribute-offset' for JSX attribute indents.
+
+---
+*** New variable 'js-syntactic-mode-name' controls mode name display.
+Previously, the mode name was simply 'JavaScript'.  Now, when a syntax
+extension like JSX is enabled, the mode name is 'JavaScript[JSX]'.
+Set this variable to nil to disable the new behavior.
+
+---
+*** New function 'js-use-syntactic-mode-name' for deriving modes.
+Packages deriving from 'js-mode' with 'define-derived-mode' should
+call this function to add enabled syntax extensions to their mode
+name, too.
+
 
 * New Modes and Packages in Emacs 27.1
 
-** multifile.el lets one setup multifile operations like search&replace.
+** fileloop.el lets one setup multifile operations like search&replace.
 
 +++
 ** Emacs can now visit files in archives as if they were directories.
@@ -1020,6 +1422,9 @@ documentation of the new mode and its commands.
 
 
 * Incompatible Lisp Changes in Emacs 27.1
+
+** In compilation-error-regexp-alist the old undocumented feature where 'line'
+could be a function of 2 arguments has been dropped.
 
 ** 'define-fringe-bitmap' is always defined, even when Emacs is built
 without any GUI support.
@@ -1072,6 +1477,10 @@ old-style backquotes as new-style, bind the new variable
 integer, Emacs now signals an error if the number is too large for the
 implementation to format.
 
+** logb now returns infinity when given an infinite or zero argument,
+and returns a NaN when given a NaN.  Formerly, it returned an extreme
+fixnum for such arguments.
+
 ---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
 archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,
@@ -1118,11 +1527,41 @@ they are now allocated like any other pseudovector.  As a result, the
 'misc' component, and the 'misc-objects-consed' variable has been
 removed.
 
++++
+** Reversed character ranges are no longer permitted in rx.
+Previously, ranges where the starting character is greater than the
+ending character were silently omitted.
+For example, '(rx (any "@z-a" (?9 . ?0)))' would match '@' only.
+Now, such rx expressions generate an error.
+
++++
+** 'text-mode' no longer sets the value of 'indent-line-function'.
+The global value of 'indent-line-function', which defaults to
+'indent-relative', will no longer be reset locally when turning on
+'text-mode'.
+
+To get back the old behavior, add a function to 'text-mode-hook' which
+performs (setq-local indent-line-function #'indent-relative).
+
+** 'make-process' no longer accepts a non-nil ':stop' key.  This has
+never worked reliably, and now causes an error.
+
 
 * Lisp Changes in Emacs 27.1
 
+** New 'help-fns-describe-variable-functions' hook.
+Makes it possible to add metadata information to describe-variable.
+
+** i18n (internationalization)
+
+*** ngettext can be used now to return the right plural form
+according to the given numeric value.
+
 +++
-** self-insert-command takes the char to insert as (optional) argument
+** inhibit-null-byte-detection is renamed to inhibit-nul-byte-detection
+
++++
+** 'self-insert-command' takes the char to insert as (optional) argument.
 
 ** 'lookup-key' can take a list of keymaps as argument.
 
@@ -1187,6 +1626,12 @@ floating-point operators do.
 +++
 ** New function 'time-equal-p' compares time values for equality.
 
++++
+** 'format-time-string' supports a new conversion specifier flag '+'
+that acts like the '0' flag but also puts a '+' before nonnegative
+years containing more than four digits.  This is for compatibility
+with POSIX.1-2017.
+
 ** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++
@@ -1234,9 +1679,43 @@ displaying the same buffer.  See the node "(elisp) Face Remapping"
 of the Emacs Lisp Reference manual for more detail.
 
 +++
-** Special handling of buffer-local 'window-size-change-functions'.
-A buffer-local value of this hook is now run only if at least one
-window showing the buffer has changed its size.
+** Window change functions have been redesigned.
+
+Hooks reacting to window changes run now only when redisplay detects
+that a change has actually occurred.  Six hooks are now provided:
+'window-buffer-change-functions' (run after window buffers have
+changed), 'window-size-change-functions' (run after a window was
+assigned a new buffer or size), 'window-configuration-change-hook'
+(like the former but run also when a window was deleted),
+'window-selection-change-functions' (run when the selected window
+changed) and 'window-state-change-functions' and
+'window-state-change-hook' (run when any of the preceding ones is
+run).  Applications can enforce running the latter two using the new
+function 'set-frame-window-state-change'.  'window-scroll-functions'
+are unaffected by these changes.
+
+In addition, a number of functions now allow the caller to detect what
+has changed since last redisplay: 'window-old-buffer' returns for any
+window the buffer it showed at that time.  ‘old-selected-window’ and
+'old-selected-frame' return the window and frame that were selected
+during last redisplay.  'window-old-pixel-width' (renamed from
+'window-pixel-width-before-size-change'), 'window-old-pixel-height'
+(renamed from 'window-pixel-height-before-size-change'),
+'window-old-body-pixel-width' and 'window-old-body-pixel-height'
+return the total and body sizes of any window during last redisplay.
+
+See the section "(elisp) Window Hooks" in the Elisp manual for a
+detailed explanation of the new behavior.
+
++++
+*** New option 'resize-mini-frames'.
+This option allows to automatically resize minibuffer-only frames
+similarly to how minibuffer windows are resized on "normal" frames.
+
++++
+** New buffer display action alist entry 'dedicated'.
+Such an entry allows to specify the dedicated status of a window
+created by 'display-buffer'.
 
 +++
 ** New buffer display action alist entry 'window-min-height'.
@@ -1255,10 +1734,10 @@ between two strings.
 '(quote x)' instead of 'x you will have to bind it to nil where applicable.
 
 +++
-** Numbers formatted via '%o' or '%x' may now be formatted as signed integers.
+** Numbers formatted via '%o' or '%x' are now formatted as signed integers.
 This avoids problems in calls like '(read (format "#x%x" -1))', and is
-more compatible with bignums, a planned feature.  To get this
-behavior, set the experimental variable 'binary-as-unsigned' to nil,
+more compatible with bignums.  To get the traditional machine-dependent
+behavior, set the experimental variable 'binary-as-unsigned' to t,
 and if the new behavior breaks your code please email
 32252@debbugs.gnu.org.  Because '%o' and '%x' can now format signed
 integers, they now support the '+' and space flags.
@@ -1347,6 +1826,18 @@ are implemented in C using the Jansson library.
 ** New function 'ring-resize'.
 'ring-resize' can be used to grow or shrink a ring.
 
++++
+** New function 'flatten-tree'.
+'flatten-list' is provided as an alias. These functions take a tree
+and 'flatten' it such that the result is a list of all the terminal
+nodes.
+
++++
+** 'zlib-decompress-region' can partially decompress corrupted data.
+If the new optional ALLOW-PARTIAL argument is passed, then the data
+that was decompressed successfully before failing will be inserted
+into the buffer.
+
 ** Mailcap
 
 ---
@@ -1376,6 +1867,13 @@ left to higher-level functions.
 some years back.  It now respects 'imagemagick-types-inhibit' as a way
 to disable that.
 
+---
+*** Some image-mode variables are now buffer-local.
+The image parameters 'image-transform-rotation',
+'image-transform-scale' and 'image-transform-resize' are now declared
+buffer-local, so each buffer could have its own values for these
+parameters.
+
 ** The function 'load' now behaves correctly when loading modules.
 Specifically, it puts the module name into 'load-history', prints
 loading messages if requested, and protects against recursive loads.
@@ -1394,6 +1892,50 @@ un-obsoleting it.
 
 +++
 ** New function 'group-name' returns a group name corresponding to GID.
+
++++
+** 'make-process' now takes a keyword argument ':file-handler'; if
+that is non-nil, it will look for a file name handler for the current
+buffer's 'default-directory' and invoke that file name handler to make
+the process.  That way 'make-process' can start remote processes.
+
++++
+** Emacs now supports resizing (scaling) of images without ImageMagick.
+All modern systems are supported by this feature.  (On GNU and Unix
+systems, Cairo drawing or the XRender extension to X11 is required for
+this to be available; the configure script will test for it and, if
+found, enable scaling.)
+
+The new function 'image-scaling-p' can be used to test whether any
+given frame supports resizing.
+
++++
+** (locale-info 'paper) now returns the paper size on systems that support it.
+This is currently supported on GNUish hosts and on modern versions of
+MS-Windows.
+
+** New module environment function 'process_input' to process user
+input while module code is running.
+
++++
+** The function 'regexp-opt' accepts an additional optional argument.
+By default, the regexp returned by 'regexp-opt' may match the strings
+in any order.  If the new third argument is non-nil, the match is
+guaranteed to be performed in the order given, as if the strings were
+made into a regexp by joining them with '\|'.
+
++++
+** The function 'regexp-opt', when given an empty list of strings, now
+returns a regexp that never matches anything, which is an identity for
+this operation.  Previously, the empty string was returned in this
+case.
+
+** New module environment functions 'make_time' and 'extract_time' to
+convert between timespec structures and Emacs Lisp time values.
+
+** New module environment functions 'make_big_integer' and
+'extract_big_integer' to create and extract arbitrary-size integer
+values.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
@@ -1427,6 +1969,23 @@ as Emacs subprocesses, which by now is not supported on modern
 versions of MS-Windows.  Set this variable to 50 if for some reason
 you need the old behavior (and please report such situations to Emacs
 developers).
+
+---
+** New variable 'w32-multibyte-code-page'.
+This variable holds the value of the multibyte code page used by the
+system.  It is usually zero, which indicates that 'w32-ansi-code-page'
+is being used, except in Far Eastern locales.  When this variable is
+non-zero, Emacs at startup sets 'locale-coding-system' to the
+corresponding encoding, instead of using 'w32-ansi-code-page'.
+
++++
+** On NS the behaviour of drag and drop can now be modified by use of
+modifier keys in line with Apples guidelines.  This makes the drag and
+drop behaviour more consistent, as previously the sending application
+was able to 'set' modifiers without the knowledge of the user.
+
+** On NS multicolor font display is enabled again since it is also
+implemented in Emacs on free operating systems via Cairo drawing.
 
 
 ----------------------------------------------------------------------

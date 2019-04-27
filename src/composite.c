@@ -1,5 +1,5 @@
 /* Composite sequence support.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H14PRO021
@@ -176,7 +176,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 
   /* Maximum length of a string of glyphs.  XftGlyphExtents limits
      this to INT_MAX, and Emacs limits it further.  Divide INT_MAX - 1
-     by 2 because x_produce_glyphs computes glyph_len * 2 + 1.  Divide
+     by 2 because gui_produce_glyphs computes glyph_len * 2 + 1.  Divide
      the size by MAX_MULTIBYTE_LENGTH because encode_terminal_code
      multiplies glyph_len by MAX_MULTIBYTE_LENGTH.  */
   enum {
@@ -654,6 +654,7 @@ Lisp_Object
 composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
 {
   struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
+  hash_rehash_if_needed (h);
   Lisp_Object header = LGSTRING_HEADER (gstring);
   EMACS_UINT hash = h->test.hashfn (&h->test, header);
   if (len < 0)
@@ -786,28 +787,19 @@ static Lisp_Object gstring_work;
 static Lisp_Object gstring_work_headers;
 
 static Lisp_Object
-fill_gstring_header (Lisp_Object header, ptrdiff_t from, ptrdiff_t from_byte,
+fill_gstring_header (ptrdiff_t from, ptrdiff_t from_byte,
 		     ptrdiff_t to, Lisp_Object font_object, Lisp_Object string)
 {
-  ptrdiff_t len = to - from, i;
-
+  ptrdiff_t len = to - from;
   if (len == 0)
     error ("Attempt to shape zero-length text");
-  if (VECTORP (header))
-    {
-      if (ASIZE (header) != len + 1)
-	args_out_of_range (header, make_fixnum (len + 1));
-    }
-  else
-    {
-      if (len <= 8)
-	header = AREF (gstring_work_headers, len - 1);
-      else
-	header = make_uninit_vector (len + 1);
-    }
+  eassume (0 < len);
+  Lisp_Object header = (len <= 8
+			? AREF (gstring_work_headers, len - 1)
+			: make_uninit_vector (len + 1));
 
   ASET (header, 0, font_object);
-  for (i = 0; i < len; i++)
+  for (ptrdiff_t i = 0; i < len; i++)
     {
       int c;
 
@@ -1758,7 +1750,7 @@ should be ignored.  */)
       frombyte = string_char_to_byte (string, frompos);
     }
 
-  header = fill_gstring_header (Qnil, frompos, frombyte,
+  header = fill_gstring_header (frompos, frombyte,
 				topos, font_object, string);
   gstring = gstring_lookup_cache (header);
   if (! NILP (gstring))

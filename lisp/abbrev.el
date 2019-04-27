@@ -1,6 +1,6 @@
 ;;; abbrev.el --- abbrev mode commands for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1987, 1992, 2001-2018 Free Software Foundation,
+;; Copyright (C) 1985-1987, 1992, 2001-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -940,8 +940,7 @@ If READABLE is nil, an expression is inserted.  The expression is
 a call to `define-abbrev-table' that when evaluated will define
 the abbrev table NAME exactly as it is currently defined.
 Abbrevs marked as \"system abbrevs\" are ignored."
-  (let ((table (symbol-value name))
-        (symbols (abbrev--table-symbols name readable)))
+  (let ((symbols (abbrev--table-symbols name readable)))
     (setq symbols (sort symbols 'string-lessp))
     (let ((standard-output (current-buffer)))
       (if readable

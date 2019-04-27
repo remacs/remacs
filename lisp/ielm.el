@@ -1,6 +1,6 @@
 ;;; ielm.el --- interaction mode for Emacs Lisp  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1994, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: David Smith <maa036@lancaster.ac.uk>
 ;; Maintainer: emacs-devel@gnu.org
@@ -559,10 +559,11 @@ Customized bindings may be defined in `ielm-map', which currently contains:
   ;; Useful for `hs-minor-mode'.
   (setq-local comment-start ";")
   (setq-local comment-use-syntax t)
+  (setq-local lexical-binding t)
 
-  (set (make-local-variable 'indent-line-function) 'ielm-indent-line)
+  (set (make-local-variable 'indent-line-function) #'ielm-indent-line)
   (set (make-local-variable 'ielm-working-buffer) (current-buffer))
-  (set (make-local-variable 'fill-paragraph-function) 'lisp-fill-paragraph)
+  (set (make-local-variable 'fill-paragraph-function) #'lisp-fill-paragraph)
 
   ;; Value holders
   (set (make-local-variable '*) nil)

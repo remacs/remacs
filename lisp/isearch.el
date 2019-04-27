@@ -1,6 +1,6 @@
 ;;; isearch.el --- incremental search minor mode -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992-1997, 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1997, 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
 ;; Maintainer: emacs-devel@gnu.org
@@ -199,11 +199,14 @@ or to the end of the buffer for a backward search.")
 to the search status stack.")
 
 (defvar isearch-filter-predicate #'isearch-filter-visible
-  "Predicate that filters the search hits that would normally be available.
-Search hits that dissatisfy the predicate are skipped.  The function
-has two arguments: the positions of start and end of text matched by
-the search.  If this function returns nil, continue searching without
-stopping at this match.
+  "Predicate to filter hits of Isearch and replace commands.
+Isearch hits that don't satisfy the predicate will be skipped.
+The value should be a function of two arguments; it will be
+called with the the positions of the start and the end of the
+text matched by Isearch and replace commands.  If this function
+returns nil, Isearch and replace commands will continue searching
+without stopping at resp. replacing this match.
+
 If you use `add-function' to modify this variable, you can use the
 `isearch-message-prefix' advice property to specify the prefix string
 displayed in the search message.")
@@ -1357,6 +1360,7 @@ NOPUSH is t and EDIT is t."
   (setq minibuffer-message-timeout isearch-original-minibuffer-message-timeout)
   (isearch-dehighlight)
   (lazy-highlight-cleanup lazy-highlight-cleanup)
+  (setq isearch-lazy-highlight-last-string nil)
   (let ((found-start (window-group-start))
 	(found-point (point)))
     (when isearch-window-configuration
@@ -2811,10 +2815,10 @@ the bottom."
 If `shift', extend the search string by motion commands while holding down
 the shift key.  The search string is extended by yanking text that
 ends at the new position after moving point in the current buffer.
-If t, extend the search string without the shift key pressed
-by motion commands that have the `isearch-move' property on their
-symbols equal to `enabled', or for which the shift-translated command
-is not disabled by the value `disabled' of property `isearch-move'."
+If t, extend the search string without the shift key pressed.
+To enable motion commands, put the `isearch-move' property on their
+symbols to `enabled', or to disable an automatically detected
+shift-translated command, use the property value `disabled'."
   :type '(choice (const :tag "Motion keys exit Isearch" nil)
                  (const :tag "Motion keys extend the search string" t)
                  (const :tag "Shifted motion keys extend the search string" shift))
@@ -2864,14 +2868,16 @@ See more for options in `search-exit-option'."
       (read-event)
       (setq this-command 'isearch-edit-string))
      ;; Don't terminate the search for motion commands.
-     ((or (and (eq isearch-yank-on-move t)
-               (symbolp this-command)
-               (or (eq (get this-command 'isearch-move) 'enabled)
-                   (and (not (eq (get this-command 'isearch-move) 'disabled))
-                        (stringp (nth 1 (interactive-form this-command)))
-                        (string-match-p "^^" (nth 1 (interactive-form this-command))))))
-          (and (eq isearch-yank-on-move 'shift)
-               this-command-keys-shift-translated))
+     ((and isearch-yank-on-move
+           (symbolp this-command)
+           (not (eq (get this-command 'isearch-move) 'disabled))
+           (or (eq (get this-command 'isearch-move) 'enabled)
+               (and (eq isearch-yank-on-move t)
+                    (stringp (nth 1 (interactive-form this-command)))
+                    (string-match-p "^\\^"
+				    (nth 1 (interactive-form this-command))))
+               (and (eq isearch-yank-on-move 'shift)
+                    this-command-keys-shift-translated)))
       (setq this-command-keys-shift-translated nil)
       (setq isearch-pre-move-point (point)))
      ;; Append control characters to the search string
@@ -3507,10 +3513,13 @@ Optional third argument, if t, means if fail just return nil (no error).
 	      (setq isearch-hidden t)))))))
 
 (defun isearch-filter-visible (beg end)
-  "Test whether the current search hit is visible at least partially.
-Return non-nil if the text from BEG to END is visible to Isearch as
-determined by `isearch-range-invisible' unless invisible text can be
-searched too when `search-invisible' is t."
+  "Return non-nil if text between BEG and END is deemed visible by Isearch.
+This function is intended to be used as `isearch-filter-predicate'.
+It returns non-nil if the text between BEG and END is visible to
+Isearch, at least partially, as determined by `isearch-range-invisible'.
+If `search-invisible' is t, which allows Isearch matches inside
+invisible text, this function will always return non-nil, regardless
+of what `isearch-range-invisible' says."
   (or (eq search-invisible t)
       (not (isearch-range-invisible beg end))))
 
@@ -3767,7 +3776,7 @@ by other Emacs features."
     (when isearch-lazy-count-current
       (setq isearch-lazy-count-current
             (gethash (point) isearch-lazy-count-hash 0))
-      (isearch-message nil t))))
+      (isearch-message))))
 
 (defun isearch-lazy-highlight-search (string bound)
   "Search ahead for the next or previous match, for lazy highlighting.
@@ -3970,7 +3979,7 @@ Attempt to do the search exactly the way the pending Isearch would."
 		    (setq isearch-lazy-count-total 0))
 		  (setq isearch-lazy-count-current
 			(gethash opoint isearch-lazy-count-hash 0))
-		  (isearch-message nil t))
+		  (isearch-message))
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
 				 'isearch-lazy-highlight-buffer-update)))))))))

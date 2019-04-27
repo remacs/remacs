@@ -1,5 +1,5 @@
 /* Elisp bindings for D-Bus.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -1830,6 +1830,8 @@ be called when the D-Bus reply message arrives.  */);
   /* Initialize internal objects.  */
   xd_registered_buses = Qnil;
   staticpro (&xd_registered_buses);
+
+  // TODO: reset buses on dump load
 
   Fprovide (intern_c_string ("dbusbind"), Qnil);
 

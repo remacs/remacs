@@ -1,6 +1,6 @@
 ;; xref.el --- Cross-referencing commands              -*-lexical-binding:t-*-
 
-;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -70,9 +70,6 @@
 (require 'eieio)
 (require 'ring)
 (require 'project)
-
-(eval-when-compile
-  (require 'semantic/symref)) ;; for hit-lines slot
 
 (defgroup xref nil "Cross-referencing commands"
   :version "25.1"
@@ -451,6 +448,18 @@ If SELECT is non-nil, select the target window."
 (defconst xref-buffer-name "*xref*"
   "The name of the buffer to show xrefs.")
 
+(defface xref-file-header '((t :inherit compilation-info))
+  "Face used to highlight file header in the xref buffer."
+  :version "27.1")
+
+(defface xref-line-number '((t :inherit compilation-line-number))
+  "Face for displaying line numbers in the xref buffer."
+  :version "27.1")
+
+(defface xref-match '((t :inherit highlight))
+  "Face used to highlight matches in the xref buffer."
+  :version "27.1")
+
 (defmacro xref--with-dedicated-window (&rest body)
   `(let* ((xref-w (get-buffer-window xref-buffer-name))
           (xref-w-dedicated (window-dedicated-p xref-w)))
@@ -477,27 +486,17 @@ and finally return the window."
           (or (eq xref--original-window-intent 'frame)
               pop-up-frames))
          (action
-          (cond ((memq
-                  xref--original-window-intent
-                  '(window frame))
+          (cond ((eq xref--original-window-intent 'frame)
                  t)
+                ((eq xref--original-window-intent 'window)
+                 '(display-buffer-same-window))
                 ((and
                   (window-live-p xref--original-window)
                   (or (not (window-dedicated-p xref--original-window))
                       (eq (window-buffer xref--original-window) buf)))
-                 `(,(lambda (buf _alist)
-                      (set-window-buffer xref--original-window buf)
-                      xref--original-window))))))
-    (with-selected-window
-        (with-selected-window
-            ;; Just before `display-buffer', place ourselves in the
-            ;; original window to suggest preserving it. Of course, if
-            ;; user has deleted the original window, all bets are off,
-            ;; just use the selected one.
-            (or (and (window-live-p xref--original-window)
-                     xref--original-window)
-                (selected-window))
-          (display-buffer buf action))
+                 `((display-buffer-in-previous-window)
+                   (previous-window . ,xref--original-window))))))
+    (with-selected-window (display-buffer buf action)
       (xref--goto-char pos)
       (run-hooks 'xref-after-jump-hook)
       (let ((buf (current-buffer)))
@@ -554,9 +553,10 @@ SELECT is `quit', also quit the *xref* window."
 Non-interactively, non-nil QUIT means to first quit the *xref*
 buffer."
   (interactive)
-  (let ((buffer (current-buffer))
-        (xref (or (xref--item-at-point)
-                  (user-error "No reference at point"))))
+  (let* ((buffer (current-buffer))
+         (xref (or (xref--item-at-point)
+                   (user-error "No reference at point")))
+         (xref--current-item xref))
     (xref--show-location (xref-item-location xref) (if quit 'quit t))
     (next-error-found buffer (current-buffer))))
 
@@ -706,8 +706,10 @@ references displayed in the current *xref* buffer."
   (let ((backward (< n 0))
         (n (abs n))
         (xref nil))
-    (dotimes (_ n)
-      (setq xref (xref--search-property 'xref-item backward)))
+    (if (= n 0)
+        (setq xref (get-text-property (point) 'xref-item))
+      (dotimes (_ n)
+        (setq xref (xref--search-property 'xref-item backward))))
     (cond (xref
            ;; Save the current position (when the buffer is visible,
            ;; it gets reset to that window's point from time to time).
@@ -747,18 +749,17 @@ GROUP is a string for decoration purposes and XREF is an
            for line-format = (and max-line-width
                                   (format "%%%dd: " max-line-width))
            do
-           (xref--insert-propertized '(face compilation-info) group "\n")
+           (xref--insert-propertized '(face xref-file-header) group "\n")
            (cl-loop for (xref . more2) on xrefs do
                     (with-slots (summary location) xref
                       (let* ((line (xref-location-line location))
                              (prefix
                               (if line
                                   (propertize (format line-format line)
-                                              'face 'compilation-line-number)
+                                              'face 'xref-line-number)
                                 "  ")))
                         (xref--insert-propertized
                          (list 'xref-item xref
-                               ;; 'face 'font-lock-keyword-face
                                'mouse-face 'highlight
                                'keymap xref--button-map
                                'help-echo
@@ -807,6 +808,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defvar xref--read-pattern-history nil)
 
 (defun xref--show-xrefs (xrefs display-action &optional always-show-list)
+  (unless (region-active-p) (push-mark nil t))
   (cond
    ((and (not (cdr xrefs)) (not always-show-list))
     (xref-push-marker-stack)
@@ -1168,7 +1170,7 @@ Such as the current syntax table and the applied syntax properties."
              (end-column (- (match-end 0) line-beg))
              (loc (xref-make-file-location file line beg-column))
              (summary (buffer-substring line-beg line-end)))
-        (add-face-text-property beg-column end-column 'highlight
+        (add-face-text-property beg-column end-column 'xref-match
                                 t summary)
         (push (xref-make-match summary loc (- end-column beg-column))
               matches)))

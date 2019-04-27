@@ -1,6 +1,6 @@
 ;;; json-tests.el --- unit tests for json.c          -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -117,6 +117,14 @@
     (should (equal (json-parse-string input :object-type 'plist)
                    '(:abc [9 :false] :def :null)))))
 
+(ert-deftest json-parse-string/array ()
+  (skip-unless (fboundp 'json-parse-string))
+  (let ((input "[\"a\", 1, [\"b\", 2]]"))
+    (should (equal (json-parse-string input)
+                   ["a" 1 ["b" 2]]))
+    (should (equal (json-parse-string input :array-type 'list)
+                   '("a" 1 ("b" 2))))))
+
 (ert-deftest json-parse-string/string ()
   (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "[\"formfeed\f\"]") :type 'json-parse-error)
@@ -151,7 +159,7 @@
   (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "\x00") :type 'wrong-type-argument)
   ;; FIXME: Reconsider whether this is the right behavior.
-  (should-error (json-parse-string "[a\\u0000b]") :type 'json-parse-error))
+  (should-error (json-parse-string "[\"a\\u0000b\"]") :type 'json-parse-error))
 
 (ert-deftest json-parse-string/invalid-unicode ()
   "Some examples from

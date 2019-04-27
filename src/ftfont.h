@@ -59,13 +59,17 @@ struct font_info
 #endif	/* HAVE_LIBOTF */
   FT_Size ft_size;
   int index;
+  /* Index of the bitmap strike used as a fallback for
+     FT_Set_Pixel_Sizes failure.  If the value is non-negative, then
+     ft_size is not of the requested size.  Otherwise it is -1.  */
+  FT_Int bitmap_strike_index;
   FT_Matrix matrix;
 #ifdef HAVE_HARFBUZZ
   hb_font_t *hb_font;
 #endif  /* HAVE_HARFBUZZ */
 
 #ifdef USE_CAIRO
-  cairo_font_face_t *cr_font_face;
+  cairo_scaled_font_t *cr_scaled_font;
   /* To prevent cairo from cluttering the activated FT_Size maintained
      in ftfont.c, we activate this special FT_Size before drawing.  */
   FT_Size ft_size_draw;

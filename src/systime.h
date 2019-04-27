@@ -1,5 +1,5 @@
 /* systime.h - System-dependent definitions for time manipulations.
-   Copyright (C) 1993-1994, 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2002-2019 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -89,11 +89,12 @@ struct lisp_time
 /* defined in timefns.c */
 extern struct timeval make_timeval (struct timespec) ATTRIBUTE_CONST;
 extern Lisp_Object make_lisp_time (struct timespec);
+extern Lisp_Object timespec_to_lisp (struct timespec);
 extern bool list4_to_timespec (Lisp_Object, Lisp_Object, Lisp_Object,
 			       Lisp_Object, struct timespec *);
 extern struct timespec lisp_time_argument (Lisp_Object);
-extern _Noreturn void time_overflow (void);
-extern void init_timefns (bool);
+extern AVOID time_overflow (void);
+extern void init_timefns (void);
 extern void syms_of_timefns (void);
 
 INLINE_HEADER_END

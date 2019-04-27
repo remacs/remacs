@@ -1,6 +1,6 @@
 ;;; css-mode.el --- Major mode to edit CSS files  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Maintainer: Simen Heggestøyl <simenheg@gmail.com>
@@ -892,7 +892,7 @@ cannot be completed sensibly: `custom-ident',
     (,(concat "@" css-ident-re) (0 font-lock-builtin-face))
     ;; Selectors.
     ;; Allow plain ":root" as a selector.
-    ("^[ \t]*\\(:root\\)\\(?:[\n \t]*\\)*{" (1 'css-selector keep))
+    ("^[ \t]*\\(:root\\)[\n \t]*{" (1 'css-selector keep))
     ;; FIXME: attribute selectors don't work well because they may contain
     ;; strings which have already been highlighted as f-l-string-face and
     ;; thus prevent this highlighting from being applied (actually now that
@@ -915,7 +915,7 @@ cannot be completed sensibly: `custom-ident',
        "\\(?:\\(:" (regexp-opt (append css-pseudo-class-ids
                                        css-pseudo-element-ids)
                                t)
-       "\\|\\::" (regexp-opt css-pseudo-element-ids t) "\\)"
+       "\\|::" (regexp-opt css-pseudo-element-ids t) "\\)"
        "\\(?:([^)]+)\\)?"
        (if (not sassy)
            "[^:{}()\n]*"
@@ -1557,7 +1557,7 @@ rgb()/rgba()."
         (prev nil))
     (dolist (sel selectors)
       (cond
-       ((seq-contains sel ?&)
+       ((seq-contains-p sel ?&)
         (setq sel (replace-regexp-in-string "&" prev sel))
         (pop processed))
        ;; Unless this is the first selector, separate this one and the

@@ -1,6 +1,6 @@
 ;;; fns-tests.el --- tests for src/fns.c
 
-;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -161,7 +161,10 @@
 	     '(9 . "ppp") '(8 . "ttt") '(8 . "eee") '(9 . "fff"))
 	    (lambda (x y) (< (car x) (car y))))
 	   [(8 . "xxx") (8 . "bbb") (8 . "ttt") (8 . "eee")
-	    (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")])))
+	    (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")]))
+  ;; Bug#34104
+  (should (equal (should-error (sort "cba" #'<) :type 'wrong-type-argument)
+                 '(wrong-type-argument list-or-vector-p "cba"))))
 
 (ert-deftest fns-tests-collate-sort ()
   (skip-unless (fns-tests--collate-enabled-p))
@@ -644,5 +647,23 @@
               (b (if (<= n 0) cycle (nthcdr (mod n len) cycle))))
           (should (equal (list (eq a b) n len)
                          (list t n len))))))))
+
+(ert-deftest test-proper-list-p ()
+  "Test `proper-list-p' behavior."
+  (dotimes (length 4)
+    ;; Proper and dotted lists.
+    (let ((list (make-list length 0)))
+      (should (= (proper-list-p list) length))
+      (should (not (proper-list-p (nconc list 0)))))
+    ;; Circular lists.
+    (dotimes (n (1+ length))
+      (let ((circle (make-list (1+ length) 0)))
+        (should (not (proper-list-p (nconc circle (nthcdr n circle))))))))
+  ;; Atoms.
+  (should (not (proper-list-p 0)))
+  (should (not (proper-list-p "")))
+  (should (not (proper-list-p [])))
+  (should (not (proper-list-p (make-bool-vector 0 nil))))
+  (should (not (proper-list-p (make-symbol "a")))))
 
 (provide 'fns-tests)

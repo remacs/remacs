@@ -1,6 +1,6 @@
 /* NeXT/Open/GNUstep / macOS communication module.      -*- coding: utf-8 -*-
 
-Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2018 Free Software
+Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2019 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -60,6 +60,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include "keyboard.h"
 #include "buffer.h"
 #include "font.h"
+#include "pdumper.h"
 
 #ifdef NS_IMPL_GNUSTEP
 #include "process.h"
@@ -499,7 +500,7 @@ append2 (Lisp_Object list, Lisp_Object item)
    Utility to append to a list
    -------------------------------------------------------------------------- */
 {
-  return CALLN (Fnconc, list, list1 (item));
+  return nconc2 (list, list (item));
 }
 
 
@@ -697,7 +698,7 @@ ns_release_autorelease_pool (void *pool)
    NSDisableScreenUpdates.
 
    We use these functions to prevent the user seeing a blank frame
-   after it has been resized.  x_set_window_size disables updates and
+   after it has been resized.  ns_set_window_size disables updates and
    when redisplay completes unwind_redisplay enables them again
    (bug#30699).  */
 
@@ -1182,9 +1183,9 @@ ns_update_window_end (struct window *w, bool cursor_on_p,
       if (draw_window_fringes (w, 1))
 	{
 	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    x_draw_right_divider (w);
+	    gui_draw_right_divider (w);
 	  else
-	    x_draw_vertical_border (w);
+	    gui_draw_vertical_border (w);
 	}
 
       unblock_input ();
@@ -1443,6 +1444,40 @@ hide_bell (void)
 
    ========================================================================== */
 
+static Lisp_Object
+ns_get_focus_frame (struct frame *f)
+/* --------------------------------------------------------------------------
+     External (hook)
+   -------------------------------------------------------------------------- */
+{
+  Lisp_Object lisp_focus;
+
+  struct frame *focus =  FRAME_DISPLAY_INFO (f)->ns_focus_frame;
+
+  if (!focus)
+    return Qnil;
+
+  XSETFRAME (lisp_focus, focus);
+  return lisp_focus;
+}
+
+static void
+ns_focus_frame (struct frame *f, bool noactivate)
+/* --------------------------------------------------------------------------
+     External (hook)
+   -------------------------------------------------------------------------- */
+{
+  struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+  if (dpyinfo->ns_focus_frame != f)
+    {
+      EmacsView *view = FRAME_NS_VIEW (f);
+      block_input ();
+      [NSApp activateIgnoringOtherApps: YES];
+      [[view window] makeKeyAndOrderFront: view];
+      unblock_input ();
+    }
+}
 
 static void
 ns_raise_frame (struct frame *f, BOOL make_key)
@@ -1496,6 +1531,7 @@ ns_frame_raise_lower (struct frame *f, bool raise)
     ns_lower_frame (f);
 }
 
+static void ns_set_frame_alpha (struct frame *f);
 
 static void
 ns_frame_rehighlight (struct frame *frame)
@@ -1504,48 +1540,48 @@ ns_frame_rehighlight (struct frame *frame)
    -------------------------------------------------------------------------- */
 {
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (frame);
-  struct frame *old_highlight = dpyinfo->x_highlight_frame;
+  struct frame *old_highlight = dpyinfo->highlight_frame;
 
   NSTRACE ("ns_frame_rehighlight");
-  if (dpyinfo->x_focus_frame)
+  if (dpyinfo->ns_focus_frame)
     {
-      dpyinfo->x_highlight_frame
-	= (FRAMEP (FRAME_FOCUS_FRAME (dpyinfo->x_focus_frame))
-           ? XFRAME (FRAME_FOCUS_FRAME (dpyinfo->x_focus_frame))
-           : dpyinfo->x_focus_frame);
-      if (!FRAME_LIVE_P (dpyinfo->x_highlight_frame))
+      dpyinfo->highlight_frame
+	= (FRAMEP (FRAME_FOCUS_FRAME (dpyinfo->ns_focus_frame))
+           ? XFRAME (FRAME_FOCUS_FRAME (dpyinfo->ns_focus_frame))
+           : dpyinfo->ns_focus_frame);
+      if (!FRAME_LIVE_P (dpyinfo->highlight_frame))
         {
-          fset_focus_frame (dpyinfo->x_focus_frame, Qnil);
-          dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame;
+          fset_focus_frame (dpyinfo->ns_focus_frame, Qnil);
+          dpyinfo->highlight_frame = dpyinfo->ns_focus_frame;
         }
     }
   else
-      dpyinfo->x_highlight_frame = 0;
+      dpyinfo->highlight_frame = 0;
 
-  if (dpyinfo->x_highlight_frame &&
-         dpyinfo->x_highlight_frame != old_highlight)
+  if (dpyinfo->highlight_frame &&
+         dpyinfo->highlight_frame != old_highlight)
     {
       if (old_highlight)
 	{
-          x_update_cursor (old_highlight, 1);
-	  x_set_frame_alpha (old_highlight);
+          gui_update_cursor (old_highlight, 1);
+	  ns_set_frame_alpha (old_highlight);
 	}
-      if (dpyinfo->x_highlight_frame)
+      if (dpyinfo->highlight_frame)
 	{
-          x_update_cursor (dpyinfo->x_highlight_frame, 1);
-          x_set_frame_alpha (dpyinfo->x_highlight_frame);
+          gui_update_cursor (dpyinfo->highlight_frame, 1);
+          ns_set_frame_alpha (dpyinfo->highlight_frame);
 	}
     }
 }
 
 
 void
-x_make_frame_visible (struct frame *f)
+ns_make_frame_visible (struct frame *f)
 /* --------------------------------------------------------------------------
      External: Show the window (X11 semantics)
    -------------------------------------------------------------------------- */
 {
-  NSTRACE ("x_make_frame_visible");
+  NSTRACE ("ns_make_frame_visible");
   /* XXX: at some points in past this was not needed, as the only place that
      called this (frame.c:Fraise_frame ()) also called raise_lower;
      if this ends up the case again, comment this out again.  */
@@ -1584,20 +1620,20 @@ x_make_frame_visible (struct frame *f)
           /* If the parent frame moved while the child frame was
              invisible, the child frame's position won't have been
              updated.  Make sure it's in the right place now.  */
-          x_set_offset(f, f->left_pos, f->top_pos, 0);
+          ns_set_offset(f, f->left_pos, f->top_pos, 0);
         }
     }
 }
 
 
-void
-x_make_frame_invisible (struct frame *f)
+static void
+ns_make_frame_invisible (struct frame *f)
 /* --------------------------------------------------------------------------
-     External: Hide the window (X11 semantics)
+     Hide the window (X11 semantics)
    -------------------------------------------------------------------------- */
 {
   NSView *view;
-  NSTRACE ("x_make_frame_invisible");
+  NSTRACE ("ns_make_frame_invisible");
   check_window_system (f);
   view = FRAME_NS_VIEW (f);
   [[view window] orderOut: NSApp];
@@ -1605,23 +1641,34 @@ x_make_frame_invisible (struct frame *f)
   SET_FRAME_ICONIFIED (f, 0);
 }
 
+static void
+ns_make_frame_visible_invisible (struct frame *f, bool visible)
+/* --------------------------------------------------------------------------
+     External (hook)
+   -------------------------------------------------------------------------- */
+{
+  if (visible)
+    ns_make_frame_visible (f);
+  else
+    ns_make_frame_invisible (f);
+}
 
 void
-x_iconify_frame (struct frame *f)
+ns_iconify_frame (struct frame *f)
 /* --------------------------------------------------------------------------
-     External: Iconify window
+     External (hook): Iconify window
    -------------------------------------------------------------------------- */
 {
   NSView *view;
   struct ns_display_info *dpyinfo;
 
-  NSTRACE ("x_iconify_frame");
+  NSTRACE ("ns_iconify_frame");
   check_window_system (f);
   view = FRAME_NS_VIEW (f);
   dpyinfo = FRAME_DISPLAY_INFO (f);
 
-  if (dpyinfo->x_highlight_frame == f)
-    dpyinfo->x_highlight_frame = 0;
+  if (dpyinfo->highlight_frame == f)
+    dpyinfo->highlight_frame = 0;
 
   if ([[view window] windowNumber] <= 0)
     {
@@ -1643,16 +1690,16 @@ x_iconify_frame (struct frame *f)
   unblock_input();
 }
 
-/* Free X resources of frame F.  */
+/* Free resources of frame F.  */
 
 void
-x_free_frame_resources (struct frame *f)
+ns_free_frame_resources (struct frame *f)
 {
   NSView *view;
   struct ns_display_info *dpyinfo;
   Mouse_HLInfo *hlinfo;
 
-  NSTRACE ("x_free_frame_resources");
+  NSTRACE ("ns_free_frame_resources");
   check_window_system (f);
   view = FRAME_NS_VIEW (f);
   dpyinfo = FRAME_DISPLAY_INFO (f);
@@ -1665,10 +1712,10 @@ x_free_frame_resources (struct frame *f)
   free_frame_menubar (f);
   free_frame_faces (f);
 
-  if (f == dpyinfo->x_focus_frame)
-    dpyinfo->x_focus_frame = 0;
-  if (f == dpyinfo->x_highlight_frame)
-    dpyinfo->x_highlight_frame = 0;
+  if (f == dpyinfo->ns_focus_frame)
+    dpyinfo->ns_focus_frame = 0;
+  if (f == dpyinfo->highlight_frame)
+    dpyinfo->highlight_frame = 0;
   if (f == hlinfo->mouse_face_mouse_frame)
     reset_mouse_highlight (hlinfo);
 
@@ -1683,13 +1730,13 @@ x_free_frame_resources (struct frame *f)
   unblock_input ();
 }
 
-void
-x_destroy_window (struct frame *f)
+static void
+ns_destroy_window (struct frame *f)
 /* --------------------------------------------------------------------------
      External: Delete the window
    -------------------------------------------------------------------------- */
 {
-  NSTRACE ("x_destroy_window");
+  NSTRACE ("ns_destroy_window");
 
   /* If this frame has a parent window, detach it as not doing so can
      cause a crash in GNUStep.  */
@@ -1702,13 +1749,13 @@ x_destroy_window (struct frame *f)
     }
 
   check_window_system (f);
-  x_free_frame_resources (f);
+  ns_free_frame_resources (f);
   ns_window_num--;
 }
 
 
 void
-x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
+ns_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
 /* --------------------------------------------------------------------------
      External: Position the window
    -------------------------------------------------------------------------- */
@@ -1716,7 +1763,7 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
   NSView *view = FRAME_NS_VIEW (f);
   NSScreen *screen = [[view window] screen];
 
-  NSTRACE ("x_set_offset");
+  NSTRACE ("ns_set_offset");
 
   block_input ();
 
@@ -1773,12 +1820,12 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
 }
 
 
-void
-x_set_window_size (struct frame *f,
-                   bool change_gravity,
-                   int width,
-                   int height,
-                   bool pixelwise)
+static void
+ns_set_window_size (struct frame *f,
+                    bool change_gravity,
+                    int width,
+                    int height,
+                    bool pixelwise)
 /* --------------------------------------------------------------------------
      Adjust window pixel size based on given character grid size
      Impl is a bit more complex than other terms, need to do some
@@ -1791,7 +1838,7 @@ x_set_window_size (struct frame *f,
   int pixelwidth, pixelheight;
   int orig_height = wr.size.height;
 
-  NSTRACE ("x_set_window_size");
+  NSTRACE ("ns_set_window_size");
 
   if (view == nil)
     return;
@@ -1852,7 +1899,7 @@ x_set_window_size (struct frame *f,
 
 #ifdef NS_IMPL_COCOA
 void
-x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+ns_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /* --------------------------------------------------------------------------
      Set frame F's `undecorated' parameter.  If non-nil, F's window-system
      window is drawn without decorations, title, minimize/maximize boxes
@@ -1867,7 +1914,7 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
 
-  NSTRACE ("x_set_undecorated");
+  NSTRACE ("ns_set_undecorated");
 
   if (!EQ (new_value, old_value))
     {
@@ -1902,7 +1949,7 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
 #endif /* NS_IMPL_COCOA */
 
 void
-x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+ns_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /* --------------------------------------------------------------------------
      Set frame F's `parent-frame' parameter.  If non-nil, make F a child
      frame of the frame specified by that parameter.  Technically, this
@@ -1928,7 +1975,7 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
   struct frame *p = NULL;
   NSWindow *parent, *child;
 
-  NSTRACE ("x_set_parent_frame");
+  NSTRACE ("ns_set_parent_frame");
 
   if (!NILP (new_value)
       && (!FRAMEP (new_value)
@@ -1976,7 +2023,7 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 }
 
 void
-x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+ns_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /* Set frame F's `no-focus-on-map' parameter which, if non-nil, means
  * that F's window-system window does not want to receive input focus
  * when it is mapped.  (A frame's window is mapped when the frame is
@@ -1985,7 +2032,7 @@ x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
  *
  * Some window managers may not honor this parameter.  */
 {
-  NSTRACE ("x_set_no_focus_on_map");
+  NSTRACE ("ns_set_no_focus_on_map");
 
   if (!EQ (new_value, old_value))
     {
@@ -1994,7 +2041,7 @@ x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
 }
 
 void
-x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+ns_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /*  Set frame F's `no-accept-focus' parameter which, if non-nil, hints
  * that F's window-system window does not want to receive input focus
  * via mouse clicks or by moving the mouse into it.
@@ -2004,14 +2051,14 @@ x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
  *
  * Some window managers may not honor this parameter.  */
 {
-  NSTRACE ("x_set_no_accept_focus");
+  NSTRACE ("ns_set_no_accept_focus");
 
   if (!EQ (new_value, old_value))
     FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
 }
 
 void
-x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+ns_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 /* Set frame F's `z-group' parameter.  If `above', F's window-system
    window is displayed above all windows that do not have the `above'
    property set.  If nil, F's window is shown below all windows that
@@ -2024,7 +2071,7 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
 
-  NSTRACE ("x_set_z_group");
+  NSTRACE ("ns_set_z_group");
 
   if (NILP (new_value))
     {
@@ -2350,7 +2397,7 @@ ns_color_index_to_rgba(int idx, struct frame *f)
 }
 
 void
-ns_query_color(void *col, XColor *color_def, int setPixel)
+ns_query_color(void *col, XColor *color_def, bool setPixel)
 /* --------------------------------------------------------------------------
          Get ARGB values out of NSColor col and put them into color_def.
          If setPixel, set the pixel to a concatenated version.
@@ -2369,7 +2416,6 @@ ns_query_color(void *col, XColor *color_def, int setPixel)
       = ARGB_TO_ULONG((int)(a*255),
 		      (int)(r*255), (int)(g*255), (int)(b*255));
 }
-
 
 bool
 ns_defined_color (struct frame *f,
@@ -2401,9 +2447,17 @@ ns_defined_color (struct frame *f,
   return 1;
 }
 
+static void
+ns_query_frame_background_color (struct frame *f, XColor *bgcolor)
+/* --------------------------------------------------------------------------
+     External (hook): Store F's background color into *BGCOLOR
+   -------------------------------------------------------------------------- */
+{
+  ns_query_color (FRAME_BACKGROUND_COLOR (f), bgcolor, true);
+}
 
-void
-x_set_frame_alpha (struct frame *f)
+static void
+ns_set_frame_alpha (struct frame *f)
 /* --------------------------------------------------------------------------
      change the entire-frame transparency
    -------------------------------------------------------------------------- */
@@ -2412,9 +2466,9 @@ x_set_frame_alpha (struct frame *f)
   double alpha = 1.0;
   double alpha_min = 1.0;
 
-  NSTRACE ("x_set_frame_alpha");
+  NSTRACE ("ns_set_frame_alpha");
 
-  if (dpyinfo->x_highlight_frame == f)
+  if (dpyinfo->highlight_frame == f)
     alpha = f->alpha[0];
   else
     alpha = f->alpha[1];
@@ -2466,7 +2520,7 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
 }
 
 static int
-note_mouse_movement (struct frame *frame, CGFloat x, CGFloat y)
+ns_note_mouse_movement (struct frame *frame, CGFloat x, CGFloat y)
 /*   ------------------------------------------------------------------------
      Called by EmacsView on mouseMovement events.  Passes on
      to emacs mainstream code if we moved off of a rect of interest
@@ -2540,7 +2594,7 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
       && FRAME_LIVE_P (dpyinfo->last_mouse_frame))
     f = dpyinfo->last_mouse_frame;
   else
-    f = dpyinfo->x_focus_frame ? dpyinfo->x_focus_frame : SELECTED_FRAME ();
+    f = dpyinfo->ns_focus_frame ? dpyinfo->ns_focus_frame : SELECTED_FRAME ();
 
   if (f && FRAME_NS_P (f))
     {
@@ -2606,7 +2660,7 @@ ns_define_frame_cursor (struct frame *f, Cursor cursor)
       [[view window] invalidateCursorRectsForView: view];
       /* Redisplay assumes this function also draws the changed frame
          cursor, but this function doesn't, so do it explicitly.  */
-      x_update_cursor (f, 1);
+      gui_update_cursor (f, 1);
     }
 }
 
@@ -2638,14 +2692,14 @@ ns_convert_key (unsigned code)
 
 
 char *
-x_get_keysym_name (int keysym)
+get_keysym_name (int keysym)
 /* --------------------------------------------------------------------------
     Called by keyboard.c.  Not sure if the return val is important, except
     that it be unique.
    -------------------------------------------------------------------------- */
 {
   static char value[16];
-  NSTRACE ("x_get_keysym_name");
+  NSTRACE ("get_keysym_name");
   sprintf (value, "%d", keysym);
   return value;
 }
@@ -2884,7 +2938,7 @@ ns_scroll_run (struct window *w, struct run *run)
 
   block_input ();
 
-  x_clear_cursor (w);
+  gui_clear_cursor (w);
 
   {
     NSRect srcRect = NSMakeRect (x, from_y, width, height);
@@ -3062,7 +3116,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   /* Work out the rectangle we will need to clear.  Because we're
      compositing rather than blitting, we need to clear the area under
      the image regardless of anything else.  */
-  if (!p->overlay_p)
+  if (p->bx >= 0 && !p->overlay_p)
     {
       clearRect = NSMakeRect (p->bx, p->by, p->nx, p->ny);
       clearRect = NSUnionRect (clearRect, imageRect);
@@ -3121,7 +3175,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
             [img setXBMColor: bm_color];
           }
 
-#ifdef NS_IMPL_COCOA
           // Note: For periodic images, the full image height is "h + hd".
           // By using the height h, a suitable part of the image is used.
           NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
@@ -3134,13 +3187,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
                  fraction: 1.0
                respectFlipped: YES
                     hints: nil];
-#else
-          {
-            NSPoint pt = imageRect.origin;
-            pt.y += p->h;
-            [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
-          }
-#endif
         }
       ns_reset_clipping (f);
     }
@@ -3269,8 +3315,9 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
           break;
         }
 
-      /* draw the character under the cursor */
-      if (cursor_type != NO_CURSOR)
+      /* Draw the character under the cursor.  Other terms only draw
+         the character on top of box cursors, so do the same here.  */
+      if (cursor_type == FILLED_BOX_CURSOR || cursor_type == HOLLOW_BOX_CURSOR)
         draw_phys_cursor_glyph (w, glyph_row, DRAW_CURSOR);
 
       ns_reset_clipping (f);
@@ -3918,8 +3965,9 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
     {
       if (s->hl == DRAW_IMAGE_SUNKEN || s->hl == DRAW_IMAGE_RAISED)
         {
-          th = tool_bar_button_relief >= 0 ?
-            tool_bar_button_relief : DEFAULT_TOOL_BAR_BUTTON_RELIEF;
+          th = (tool_bar_button_relief < 0
+		? DEFAULT_TOOL_BAR_BUTTON_RELIEF
+		: min (tool_bar_button_relief, 1000000));
           raised_p = (s->hl == DRAW_IMAGE_RAISED);
         }
       else
@@ -4995,7 +5043,7 @@ ns_judge_scroll_bars (struct frame *f)
    ========================================================================== */
 
 int
-x_display_pixel_height (struct ns_display_info *dpyinfo)
+ns_display_pixel_height (struct ns_display_info *dpyinfo)
 {
   NSArray *screens = [NSScreen screens];
   NSEnumerator *enumerator = [screens objectEnumerator];
@@ -5010,7 +5058,7 @@ x_display_pixel_height (struct ns_display_info *dpyinfo)
 }
 
 int
-x_display_pixel_width (struct ns_display_info *dpyinfo)
+ns_display_pixel_width (struct ns_display_info *dpyinfo)
 {
   NSArray *screens = [NSScreen screens];
   NSEnumerator *enumerator = [screens objectEnumerator];
@@ -5094,7 +5142,7 @@ ns_initialize_display_info (struct ns_display_info *dpyinfo)
     dpyinfo->color_table = xmalloc (sizeof *dpyinfo->color_table);
     dpyinfo->color_table->colors = NULL;
     dpyinfo->root_window = 42; /* A placeholder.  */
-    dpyinfo->x_highlight_frame = dpyinfo->x_focus_frame = NULL;
+    dpyinfo->highlight_frame = dpyinfo->ns_focus_frame = NULL;
     dpyinfo->n_fonts = 0;
     dpyinfo->smallest_font_height = 1;
     dpyinfo->smallest_char_width = 1;
@@ -5104,7 +5152,7 @@ ns_initialize_display_info (struct ns_display_info *dpyinfo)
 
 
 /* This and next define (many of the) public functions in this file.  */
-/* x_... are generic versions in xdisp.c that we, and other terms, get away
+/* gui_* are generic versions in xdisp.c that we, and other terms, get away
          with using despite presence in the "system dependent" redisplay
          interface.  In addition, many of the ns_ methods have code that is
          shared with all terms, indicating need for further refactoring.  */
@@ -5112,18 +5160,18 @@ extern frame_parm_handler ns_frame_parm_handlers[];
 static struct redisplay_interface ns_redisplay_interface =
 {
   ns_frame_parm_handlers,
-  x_produce_glyphs,
-  x_write_glyphs,
-  x_insert_glyphs,
-  x_clear_end_of_line,
+  gui_produce_glyphs,
+  gui_write_glyphs,
+  gui_insert_glyphs,
+  gui_clear_end_of_line,
   ns_scroll_run,
   ns_after_update_window_line,
   ns_update_window_begin,
   ns_update_window_end,
   0, /* flush_display */
-  x_clear_window_mouse_face,
-  x_get_glyph_overhangs,
-  x_fix_overlapping_area,
+  gui_clear_window_mouse_face,
+  gui_get_glyph_overhangs,
+  gui_fix_overlapping_area,
   ns_draw_fringe_bitmap,
   0, /* define_fringe_bitmap */ /* FIXME: simplify ns_draw_fringe_bitmap */
   0, /* destroy_fringe_bitmap */
@@ -5131,6 +5179,7 @@ static struct redisplay_interface ns_redisplay_interface =
   ns_draw_glyph_string,
   ns_define_frame_cursor,
   ns_clear_frame_area,
+  0, /* clear_under_internal_border */
   ns_draw_window_cursor,
   ns_draw_vertical_window_border,
   ns_draw_window_divider,
@@ -5162,11 +5211,13 @@ ns_delete_terminal (struct terminal *terminal)
 
   block_input ();
 
-  x_destroy_all_bitmaps (dpyinfo);
+  image_destroy_all_bitmaps (dpyinfo);
   ns_delete_display (dpyinfo);
   unblock_input ();
 }
 
+static Lisp_Object ns_new_font (struct frame *f, Lisp_Object font_object,
+                                int fontset);
 
 static struct terminal *
 ns_create_terminal (struct ns_display_info *dpyinfo)
@@ -5189,18 +5240,33 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->update_end_hook = ns_update_end;
   terminal->read_socket_hook = ns_read_socket;
   terminal->frame_up_to_date_hook = ns_frame_up_to_date;
+  terminal->defined_color_hook = ns_defined_color;
+  terminal->query_frame_background_color = ns_query_frame_background_color;
   terminal->mouse_position_hook = ns_mouse_position;
+  terminal->get_focus_frame = ns_get_focus_frame;
+  terminal->focus_frame_hook = ns_focus_frame;
   terminal->frame_rehighlight_hook = ns_frame_rehighlight;
   terminal->frame_raise_lower_hook = ns_frame_raise_lower;
+  terminal->frame_visible_invisible_hook = ns_make_frame_visible_invisible;
   terminal->fullscreen_hook = ns_fullscreen_hook;
+  terminal->iconify_frame_hook = ns_iconify_frame;
+  terminal->set_window_size_hook = ns_set_window_size;
+  terminal->set_frame_offset_hook = ns_set_offset;
+  terminal->set_frame_alpha_hook = ns_set_frame_alpha;
+  terminal->set_new_font_hook = ns_new_font;
+  terminal->implicit_set_name_hook = ns_implicitly_set_name;
   terminal->menu_show_hook = ns_menu_show;
+  terminal->activate_menubar_hook = ns_activate_menubar;
   terminal->popup_dialog_hook = ns_popup_dialog;
   terminal->set_vertical_scroll_bar_hook = ns_set_vertical_scroll_bar;
   terminal->set_horizontal_scroll_bar_hook = ns_set_horizontal_scroll_bar;
+  terminal->set_scroll_bar_default_width_hook = ns_set_scroll_bar_default_width;
+  terminal->set_scroll_bar_default_height_hook = ns_set_scroll_bar_default_height;
   terminal->condemn_scroll_bars_hook = ns_condemn_scroll_bars;
   terminal->redeem_scroll_bar_hook = ns_redeem_scroll_bar;
   terminal->judge_scroll_bars_hook = ns_judge_scroll_bars;
-  terminal->delete_frame_hook = x_destroy_window;
+  terminal->get_string_resource_hook = ns_get_string_resource;
+  terminal->delete_frame_hook = ns_destroy_window;
   terminal->delete_terminal_hook = ns_delete_terminal;
   /* Other hooks are NULL by default.  */
 
@@ -5663,7 +5729,7 @@ ns_term_shutdown (int sig)
       struct ns_display_info *di;
       BOOL has_focus = NO;
       for (di = x_display_list; ! has_focus && di; di = di->next)
-        has_focus = di->x_focus_frame != 0;
+        has_focus = di->ns_focus_frame != 0;
       if (! has_focus)
         return;
     }
@@ -6895,7 +6961,7 @@ not_in_argv (NSString *arg)
       last_mouse_window = window;
     }
 
-  if (!note_mouse_movement (emacsframe, pt.x, pt.y))
+  if (!ns_note_mouse_movement (emacsframe, pt.x, pt.y))
     help_echo_string = previous_help_echo_string;
 
   XSETFRAME (frame, emacsframe);
@@ -6903,7 +6969,7 @@ not_in_argv (NSString *arg)
     {
       /* NOTE: help_echo_{window,pos,object} are set in xdisp.c
          (note_mouse_highlight), which is called through the
-         note_mouse_movement () call above.  */
+         ns_note_mouse_movement () call above.  */
       any_help_event_p = YES;
       gen_help_event (help_echo_string, frame, help_echo_window,
                       help_echo_object, help_echo_pos);
@@ -7220,12 +7286,12 @@ not_in_argv (NSString *arg)
 - (void)windowDidBecomeKey      /* for direct calls */
 {
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (emacsframe);
-  struct frame *old_focus = dpyinfo->x_focus_frame;
+  struct frame *old_focus = dpyinfo->ns_focus_frame;
 
   NSTRACE ("[EmacsView windowDidBecomeKey]");
 
   if (emacsframe != old_focus)
-    dpyinfo->x_focus_frame = emacsframe;
+    dpyinfo->ns_focus_frame = emacsframe;
 
   ns_frame_rehighlight (emacsframe);
 
@@ -7241,11 +7307,11 @@ not_in_argv (NSString *arg)
 /* cf. x_detect_focus_change(), x_focus_changed(), x_new_focus_frame() */
 {
   struct ns_display_info *dpyinfo = FRAME_DISPLAY_INFO (emacsframe);
-  BOOL is_focus_frame = dpyinfo->x_focus_frame == emacsframe;
+  BOOL is_focus_frame = dpyinfo->ns_focus_frame == emacsframe;
   NSTRACE ("[EmacsView windowDidResignKey:]");
 
   if (is_focus_frame)
-    dpyinfo->x_focus_frame = 0;
+    dpyinfo->ns_focus_frame = 0;
 
   emacsframe->mouse_moved = 0;
   ns_frame_rehighlight (emacsframe);
@@ -7254,8 +7320,8 @@ not_in_argv (NSString *arg)
             from sole-frame Emacs to get hollow box to show.  */
   if (!windowClosing && [[self window] isVisible] == YES)
     {
-      x_update_cursor (emacsframe, 1);
-      x_set_frame_alpha (emacsframe);
+      gui_update_cursor (emacsframe, 1);
+      ns_set_frame_alpha (emacsframe);
     }
 
   if (any_help_event_p)
@@ -7524,7 +7590,7 @@ not_in_argv (NSString *arg)
 
 
 /* Called AFTER method below, but before our windowWillResize call there leads
-   to windowDidResize -> x_set_window_size.  Update emacs' notion of frame
+   to windowDidResize -> ns_set_window_size.  Update emacs' notion of frame
    location so set_window_size moves the frame.  */
 - (BOOL)windowShouldZoom: (NSWindow *)sender toFrame: (NSRect)newFrame
 {
@@ -8162,6 +8228,14 @@ not_in_argv (NSString *arg)
 }
 
 
+- (void)viewWillDraw
+{
+  /* If the frame has been garbaged there's no point in redrawing
+     anything.  */
+  if (FRAME_GARBAGED_P (emacsframe))
+    [self setNeedsDisplay:NO];
+}
+
 - (void)drawRect: (NSRect)rect
 {
   const NSRect *rectList;
@@ -8230,7 +8304,9 @@ not_in_argv (NSString *arg)
   NSEvent *theEvent = [[self window] currentEvent];
   NSPoint position;
   NSDragOperation op = [sender draggingSourceOperationMask];
-  int modifiers = 0;
+  Lisp_Object operations = Qnil;
+  Lisp_Object strings = Qnil;
+  Lisp_Object type_sym;
 
   NSTRACE ("[EmacsView performDragOperation:]");
 
@@ -8243,19 +8319,17 @@ not_in_argv (NSString *arg)
   pb = [sender draggingPasteboard];
   type = [pb availableTypeFromArray: ns_drag_types];
 
-  if (! (op & (NSDragOperationMove|NSDragOperationDelete)) &&
-      // URL drags contain all operations (0xf), don't allow all to be set.
-      (op & 0xf) != 0xf)
-    {
-      if (op & NSDragOperationLink)
-        modifiers |= NSEventModifierFlagControl;
-      if (op & NSDragOperationCopy)
-        modifiers |= NSEventModifierFlagOption;
-      if (op & NSDragOperationGeneric)
-        modifiers |= NSEventModifierFlagCommand;
-    }
+  /* We used to convert these drag operations to keyboard modifiers,
+     but because they can be set by the sending program as well as the
+     keyboard modifiers it was difficult to work out a sensible key
+     mapping for drag and drop.  */
+  if (op & NSDragOperationLink)
+    operations = Fcons (Qns_drag_operation_link, operations);
+  if (op & NSDragOperationCopy)
+    operations = Fcons (Qns_drag_operation_copy, operations);
+  if (op & NSDragOperationGeneric || NILP (operations))
+    operations = Fcons (Qns_drag_operation_generic, operations);
 
-  modifiers = EV_MODIFIERS2 (modifiers);
   if (type == 0)
     {
       return NO;
@@ -8269,39 +8343,20 @@ not_in_argv (NSString *arg)
       if (!(files = [pb propertyListForType: type]))
         return NO;
 
+      type_sym = Qfile;
+
       fenum = [files objectEnumerator];
       while ( (file = [fenum nextObject]) )
-        {
-          emacs_event->kind = DRAG_N_DROP_EVENT;
-          XSETINT (emacs_event->x, x);
-          XSETINT (emacs_event->y, y);
-          emacs_event->modifiers = modifiers;
-          emacs_event->arg =  list2 (Qfile, build_string ([file UTF8String]));
-          EV_TRAILER (theEvent);
-        }
-      return YES;
+        strings = Fcons (build_string ([file UTF8String]), strings);
     }
   else if ([type isEqualToString: NSURLPboardType])
     {
       NSURL *url = [NSURL URLFromPasteboard: pb];
       if (url == nil) return NO;
 
-      emacs_event->kind = DRAG_N_DROP_EVENT;
-      XSETINT (emacs_event->x, x);
-      XSETINT (emacs_event->y, y);
-      emacs_event->modifiers = modifiers;
-      emacs_event->arg =  list2 (Qurl,
-                                 build_string ([[url absoluteString]
-                                                 UTF8String]));
-      EV_TRAILER (theEvent);
+      type_sym = Qurl;
 
-      if ([url isFileURL] != NO)
-        {
-          NSString *file = [url path];
-          ns_input_file = append2 (ns_input_file,
-                                   build_string ([file UTF8String]));
-        }
-      return YES;
+      strings = list1 (build_string ([[url absoluteString] UTF8String]));
     }
   else if ([type isEqualToString: NSStringPboardType]
            || [type isEqualToString: NSTabularTextPboardType])
@@ -8311,19 +8366,27 @@ not_in_argv (NSString *arg)
       if (! (data = [pb stringForType: type]))
         return NO;
 
-      emacs_event->kind = DRAG_N_DROP_EVENT;
-      XSETINT (emacs_event->x, x);
-      XSETINT (emacs_event->y, y);
-      emacs_event->modifiers = modifiers;
-      emacs_event->arg =  list2 (Qnil, build_string ([data UTF8String]));
-      EV_TRAILER (theEvent);
-      return YES;
+      type_sym = Qnil;
+
+      strings = list1 (build_string ([data UTF8String]));
     }
   else
     {
       fprintf (stderr, "Invalid data type in dragging pasteboard");
       return NO;
     }
+
+  emacs_event->kind = DRAG_N_DROP_EVENT;
+  XSETINT (emacs_event->x, x);
+  XSETINT (emacs_event->y, y);
+  emacs_event->modifiers = 0;
+
+  emacs_event->arg = Fcons (type_sym,
+                            Fcons (operations,
+                                   strings));
+  EV_TRAILER (theEvent);
+
+  return YES;
 }
 
 
@@ -9230,9 +9293,12 @@ not_in_argv (NSString *arg)
    ========================================================================== */
 
 
-Lisp_Object
-x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
+static Lisp_Object
+ns_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 {
+  /* --------------------------------------------------------------------------
+     External (hook)
+     -------------------------------------------------------------------------- */
   struct font *font = XFONT_OBJECT (font_object);
   EmacsView *view = FRAME_NS_VIEW (f);
   int font_ascent, font_descent;
@@ -9345,6 +9411,7 @@ syms_of_nsterm (void)
   NSTRACE ("syms_of_nsterm");
 
   ns_antialias_threshold = 10.0;
+  PDUMPER_REMEMBER_SCALAR (ns_antialias_threshold);
 
   /* From 23+ we need to tell emacs what modifiers there are.  */
   DEFSYM (Qmodifier_value, "modifier-value");
@@ -9357,6 +9424,10 @@ syms_of_nsterm (void)
 
   DEFSYM (Qfile, "file");
   DEFSYM (Qurl, "url");
+
+  DEFSYM (Qns_drag_operation_copy, "ns-drag-operation-copy");
+  DEFSYM (Qns_drag_operation_link, "ns-drag-operation-link");
+  DEFSYM (Qns_drag_operation_generic, "ns-drag-operation-generic");
 
   Fput (Qalt, Qmodifier_value, make_fixnum (alt_modifier));
   Fput (Qhyper, Qmodifier_value, make_fixnum (hyper_modifier));

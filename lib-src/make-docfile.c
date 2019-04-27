@@ -1,6 +1,6 @@
 /* Generate doc-string file for GNU Emacs from source files.
 
-Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2018 Free Software
+Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2019 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -700,7 +700,7 @@ write_globals (void)
       switch (globals[i].type)
 	{
 	case EMACS_INTEGER:
-	  type = "EMACS_INT";
+	  type = "intmax_t";
 	  break;
 	case BOOLEAN:
 	  type = "bool";
@@ -747,6 +747,8 @@ write_globals (void)
 	    printf ("%d", globals[i].v.value);
 	  putchar (')');
 
+	  if (globals[i].flags & DEFUN_noreturn)
+	    fputs (" ATTRIBUTE_COLD", stdout);
 	  if (globals[i].flags & DEFUN_const)
 	    fputs (" ATTRIBUTE_CONST", stdout);
 
@@ -1107,6 +1109,9 @@ scan_c_stream (FILE *infile)
 		g->flags |= DEFUN_noreturn;
 	      if (strstr (input_buffer, "const"))
 		g->flags |= DEFUN_const;
+
+	      /* Although the noinline attribute is no longer used,
+		 leave its support in, in case it's needed later.  */
 	      if (strstr (input_buffer, "noinline"))
 		g->flags |= DEFUN_noinline;
 	    }

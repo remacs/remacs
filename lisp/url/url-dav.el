@@ -1,6 +1,6 @@
 ;;; url-dav.el --- WebDAV support
 
-;; Copyright (C) 2001, 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2001, 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -146,7 +146,7 @@ Returns nil if WebDAV is not supported."
       (setq time (parse-time-string date-string)))
 
     (if time
-	(setq time (apply 'encode-time time))
+	(setq time (encode-time time))
       (url-debug 'dav "Unable to decode date (%S) (%s)"
 		 (xml-node-name node) date-string))
     time))

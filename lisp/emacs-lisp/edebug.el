@@ -1,6 +1,6 @@
 ;;; edebug.el --- a source-level debugger for Emacs Lisp  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988-1995, 1997, 1999-2018 Free Software Foundation,
+;; Copyright (C) 1988-1995, 1997, 1999-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Daniel LaLiberte <liberte@holonexus.org>
@@ -2165,7 +2165,6 @@ into `edebug--cl-macrolet-defs' which is checked in `edebug-list-form-args'."
 (def-edebug-spec let* let)
 
 (def-edebug-spec setq (&rest symbolp form))
-(def-edebug-spec setq-default setq)
 
 (def-edebug-spec cond (&rest (&rest form)))
 
@@ -3602,9 +3601,7 @@ Return the result of the last expression."
   "Evaluate an expression in the outside environment.
 If interactive, prompt for the expression.
 Print result in minibuffer."
-  (interactive (list (read-from-minibuffer
-		      "Eval: " nil read-expression-map t
-		      'read-expression-history)))
+  (interactive (list (read--expression "Eval: ")))
   (princ
    (edebug-outside-excursion
     (setq values (cons (edebug-eval expr) values))

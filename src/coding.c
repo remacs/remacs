@@ -1,5 +1,5 @@
 /* Coding system handler (conversion, detection, etc).
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -298,24 +298,15 @@ encode_coding_XXX (struct coding_system *coding)
 #include "composite.h"
 #include "coding.h"
 #include "termhooks.h"
+#include "pdumper.h"
 
 Lisp_Object Vcoding_system_hash_table;
-
-/* Format of end-of-line decided by system.  This is Qunix on
-   Unix and Mac, Qdos on DOS/Windows.
-   This has an effect only for external encoding (i.e. for output to
-   file and process), not for in-buffer or Lisp string encoding.  */
-static Lisp_Object system_eol_type;
-
-#ifdef emacs
 
 /* Coding-systems are handed between Emacs Lisp programs and C internal
    routines by the following three variables.  */
 /* Coding system to be used to encode text for terminal display when
    terminal coding system is nil.  */
 struct coding_system safe_terminal_coding;
-
-#endif /* emacs */
 
 /* Two special coding systems.  */
 static Lisp_Object Vsjis_coding_system;
@@ -617,23 +608,7 @@ inhibit_flag (int encoded_flag, bool var)
   do {							\
     (attrs) = CODING_ID_ATTRS ((coding)->id);		\
     (charset_list) = CODING_ATTR_CHARSET_LIST (attrs);	\
-  } while (0)
-
-static void
-CHECK_FIXNAT_CAR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCAR (x);
-  CHECK_FIXNAT (tmp);
-  XSETCAR (x, tmp);
-}
-
-static void
-CHECK_FIXNAT_CDR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCDR (x);
-  CHECK_FIXNAT (tmp);
-  XSETCDR (x, tmp);
-}
+  } while (false)
 
 /* True if CODING's destination can be grown.  */
 
@@ -4611,8 +4586,7 @@ detect_coding_sjis (struct coding_system *coding,
   int max_first_byte_of_2_byte_code;
 
   CODING_GET_INFO (coding, attrs, charset_list);
-  max_first_byte_of_2_byte_code
-    = (XFIXNUM (Flength (charset_list)) > 3 ? 0xFC : 0xEF);
+  max_first_byte_of_2_byte_code = list_length (charset_list) <= 3 ? 0xEF : 0xFC;
 
   detect_info->checked |= CATEGORY_MASK_SJIS;
   /* A coding system of this category is always ASCII compatible.  */
@@ -5739,7 +5713,7 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
       coding->common_flags |= CODING_REQUIRE_DETECTION_MASK;
       coding->spec.undecided.inhibit_nbd
 	= (encode_inhibit_flag
-	   (AREF (attrs, coding_attr_undecided_inhibit_null_byte_detection)));
+	   (AREF (attrs, coding_attr_undecided_inhibit_nul_byte_detection)));
       coding->spec.undecided.inhibit_ied
 	= (encode_inhibit_flag
 	   (AREF (attrs, coding_attr_undecided_inhibit_iso_escape_detection)));
@@ -5992,8 +5966,7 @@ raw_text_coding_system_p (struct coding_system *coding)
 
 /* If CODING_SYSTEM doesn't specify end-of-line format, return one of
    the subsidiary that has the same eol-spec as PARENT (if it is not
-   nil and specifies end-of-line format) or the system's setting
-   (system_eol_type).  */
+   nil and specifies end-of-line format) or the system's setting.  */
 
 Lisp_Object
 coding_inherit_eol_type (Lisp_Object coding_system, Lisp_Object parent)
@@ -6008,20 +5981,24 @@ coding_inherit_eol_type (Lisp_Object coding_system, Lisp_Object parent)
   eol_type = AREF (spec, 2);
   if (VECTORP (eol_type))
     {
-      Lisp_Object parent_eol_type;
+      /* Format of end-of-line decided by system.
+	 This is Qunix on Unix and Mac, Qdos on DOS/Windows.
+	 This has an effect only for external encoding (i.e., for output to
+	 file and process), not for in-buffer or Lisp string encoding.  */
+      Lisp_Object system_eol_type = Qunix;
+      #ifdef DOS_NT
+       system_eol_type = Qdos;
+      #endif
 
+      Lisp_Object parent_eol_type = system_eol_type;
       if (! NILP (parent))
 	{
-	  Lisp_Object parent_spec;
-
 	  CHECK_CODING_SYSTEM (parent);
-	  parent_spec = CODING_SYSTEM_SPEC (parent);
-	  parent_eol_type = AREF (parent_spec, 2);
-	  if (VECTORP (parent_eol_type))
-	    parent_eol_type = system_eol_type;
+	  Lisp_Object parent_spec = CODING_SYSTEM_SPEC (parent);
+	  Lisp_Object pspec_type = AREF (parent_spec, 2);
+	  if (!VECTORP (pspec_type))
+	    parent_eol_type = pspec_type;
 	}
-      else
-	parent_eol_type = system_eol_type;
       if (EQ (parent_eol_type, Qunix))
 	coding_system = AREF (eol_type, 0);
       else if (EQ (parent_eol_type, Qdos))
@@ -6534,9 +6511,9 @@ detect_coding (struct coding_system *coding)
     {
       int c, i;
       struct coding_detection_info detect_info;
-      bool null_byte_found = 0, eight_bit_found = 0;
+      bool nul_byte_found = 0, eight_bit_found = 0;
       bool inhibit_nbd = inhibit_flag (coding->spec.undecided.inhibit_nbd,
-				       inhibit_null_byte_detection);
+				       inhibit_nul_byte_detection);
       bool inhibit_ied = inhibit_flag (coding->spec.undecided.inhibit_ied,
 				       inhibit_iso_escape_detection);
       bool prefer_utf_8 = coding->spec.undecided.prefer_utf_8;
@@ -6549,7 +6526,7 @@ detect_coding (struct coding_system *coding)
 	  if (c & 0x80)
 	    {
 	      eight_bit_found = 1;
-	      if (null_byte_found)
+	      if (nul_byte_found)
 		break;
 	    }
 	  else if (c < 0x20)
@@ -6564,7 +6541,7 @@ detect_coding (struct coding_system *coding)
 		      if (! (detect_info.rejected & CATEGORY_MASK_ISO_7_ELSE))
 			{
 			  /* We didn't find an 8-bit code.  We may
-			     have found a null-byte, but it's very
+			     have found a NUL-byte, but it's very
 			     rare that a binary file conforms to
 			     ISO-2022.  */
 			  src = src_end;
@@ -6576,7 +6553,7 @@ detect_coding (struct coding_system *coding)
 		}
 	      else if (! c && !inhibit_nbd)
 		{
-		  null_byte_found = 1;
+		  nul_byte_found = 1;
 		  if (eight_bit_found)
 		    break;
 		}
@@ -6608,7 +6585,7 @@ detect_coding (struct coding_system *coding)
 	    coding->head_ascii++;
 	}
 
-      if (null_byte_found || eight_bit_found
+      if (nul_byte_found || eight_bit_found
 	  || coding->head_ascii < coding->src_bytes
 	  || detect_info.found)
 	{
@@ -6626,7 +6603,7 @@ detect_coding (struct coding_system *coding)
 	      }
 	  else
 	    {
-	      if (null_byte_found)
+	      if (nul_byte_found)
 		{
 		  detect_info.checked |= ~CATEGORY_MASK_UTF_16;
 		  detect_info.rejected |= ~CATEGORY_MASK_UTF_16;
@@ -6699,7 +6676,7 @@ detect_coding (struct coding_system *coding)
 	      else
 		found = CODING_ID_NAME (this->id);
 	    }
-	  else if (null_byte_found)
+	  else if (nul_byte_found)
 	    found = Qno_conversion;
 	  else if ((detect_info.rejected & CATEGORY_MASK_ANY)
 		   == CATEGORY_MASK_ANY)
@@ -7805,7 +7782,7 @@ encode_coding (struct coding_system *coding)
 
 
 /* Name (or base name) of work buffer for code conversion.  */
-static Lisp_Object Vcode_conversion_workbuf_name;
+Lisp_Object Vcode_conversion_workbuf_name;
 
 /* A working buffer used by the top level conversion.  Once it is
    created, it is never destroyed.  It has the name
@@ -7816,43 +7793,6 @@ static Lisp_Object Vcode_conversion_reused_workbuf;
 
 /* True iff Vcode_conversion_reused_workbuf is already in use.  */
 static bool reused_workbuf_in_use;
-
-
-/* Return a working buffer of code conversion.  MULTIBYTE specifies the
-   multibyteness of returning buffer.  */
-
-static Lisp_Object
-make_conversion_work_buffer (bool multibyte)
-{
-  Lisp_Object name, workbuf;
-  struct buffer *current;
-
-  if (reused_workbuf_in_use)
-    {
-      name = Fgenerate_new_buffer_name (Vcode_conversion_workbuf_name, Qnil);
-      workbuf = Fget_buffer_create (name);
-    }
-  else
-    {
-      reused_workbuf_in_use = 1;
-      if (NILP (Fbuffer_live_p (Vcode_conversion_reused_workbuf)))
-	Vcode_conversion_reused_workbuf
-	  = Fget_buffer_create (Vcode_conversion_workbuf_name);
-      workbuf = Vcode_conversion_reused_workbuf;
-    }
-  current = current_buffer;
-  set_buffer_internal (XBUFFER (workbuf));
-  /* We can't allow modification hooks to run in the work buffer.  For
-     instance, directory_files_internal assumes that file decoding
-     doesn't compile new regexps.  */
-  Fset (Fmake_local_variable (Qinhibit_modification_hooks), Qt);
-  Ferase_buffer ();
-  bset_undo_list (current_buffer, Qt);
-  bset_enable_multibyte_characters (current_buffer, multibyte ? Qt : Qnil);
-  set_buffer_internal (current);
-  return workbuf;
-}
-
 
 static void
 code_conversion_restore (Lisp_Object arg)
@@ -7877,9 +7817,39 @@ code_conversion_save (bool with_work_buf, bool multibyte)
   Lisp_Object workbuf = Qnil;
 
   if (with_work_buf)
-    workbuf = make_conversion_work_buffer (multibyte);
+    {
+      if (reused_workbuf_in_use)
+	{
+	  Lisp_Object name
+	    = Fgenerate_new_buffer_name (Vcode_conversion_workbuf_name, Qnil);
+	  workbuf = Fget_buffer_create (name);
+	}
+      else
+	{
+	  if (NILP (Fbuffer_live_p (Vcode_conversion_reused_workbuf)))
+	    Vcode_conversion_reused_workbuf
+	      = Fget_buffer_create (Vcode_conversion_workbuf_name);
+	  workbuf = Vcode_conversion_reused_workbuf;
+	}
+    }
   record_unwind_protect (code_conversion_restore,
 			 Fcons (Fcurrent_buffer (), workbuf));
+  if (!NILP (workbuf))
+    {
+      struct buffer *current = current_buffer;
+      set_buffer_internal (XBUFFER (workbuf));
+      /* We can't allow modification hooks to run in the work buffer.  For
+	 instance, directory_files_internal assumes that file decoding
+	 doesn't compile new regexps.  */
+      Fset (Fmake_local_variable (Qinhibit_modification_hooks), Qt);
+      Ferase_buffer ();
+      bset_undo_list (current_buffer, Qt);
+      bset_enable_multibyte_characters (current_buffer, multibyte ? Qt : Qnil);
+      if (EQ (workbuf, Vcode_conversion_reused_workbuf))
+	reused_workbuf_in_use = 1;
+      set_buffer_internal (current);
+    }
+
   return workbuf;
 }
 
@@ -8468,7 +8438,7 @@ from_unicode (Lisp_Object str)
 Lisp_Object
 from_unicode_buffer (const wchar_t *wstr)
 {
-  /* We get one of the two final null bytes for free.  */
+  /* We get one of the two final NUL bytes for free.  */
   ptrdiff_t len = 1 + sizeof (wchar_t) * wcslen (wstr);
   AUTO_STRING_WITH_LEN (str, (char *) wstr, len);
   return from_unicode (str);
@@ -8481,7 +8451,7 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
   /* We need to make another copy (in addition to the one made by
      code_convert_string_norecord) to ensure that the final string is
      _doubly_ zero terminated --- that is, that the string is
-     terminated by two zero bytes and one utf-16le null character.
+     terminated by two zero bytes and one utf-16le NUL character.
      Because strings are already terminated with a single zero byte,
      we just add one additional zero. */
   str = make_uninit_string (SBYTES (*buf) + 1);
@@ -8494,7 +8464,6 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 #endif /* WINDOWSNT || CYGWIN */
 
 
-#ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
 
 DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
@@ -8598,7 +8567,7 @@ detect_coding_system (const unsigned char *src,
   ptrdiff_t id;
   struct coding_detection_info detect_info;
   enum coding_category base_category;
-  bool null_byte_found = 0, eight_bit_found = 0;
+  bool nul_byte_found = 0, eight_bit_found = 0;
 
   if (NILP (coding_system))
     coding_system = Qundecided;
@@ -8625,7 +8594,7 @@ detect_coding_system (const unsigned char *src,
       struct coding_system *this UNINIT;
       int c, i;
       bool inhibit_nbd = inhibit_flag (coding.spec.undecided.inhibit_nbd,
-				       inhibit_null_byte_detection);
+				       inhibit_nul_byte_detection);
       bool inhibit_ied = inhibit_flag (coding.spec.undecided.inhibit_ied,
 				       inhibit_iso_escape_detection);
       bool prefer_utf_8 = coding.spec.undecided.prefer_utf_8;
@@ -8637,7 +8606,7 @@ detect_coding_system (const unsigned char *src,
 	  if (c & 0x80)
 	    {
 	      eight_bit_found = 1;
-	      if (null_byte_found)
+	      if (nul_byte_found)
 		break;
 	    }
 	  else if (c < 0x20)
@@ -8652,7 +8621,7 @@ detect_coding_system (const unsigned char *src,
 		      if (! (detect_info.rejected & CATEGORY_MASK_ISO_7_ELSE))
 			{
 			  /* We didn't find an 8-bit code.  We may
-			     have found a null-byte, but it's very
+			     have found a NUL-byte, but it's very
 			     rare that a binary file confirm to
 			     ISO-2022.  */
 			  src = src_end;
@@ -8664,7 +8633,7 @@ detect_coding_system (const unsigned char *src,
 		}
 	      else if (! c && !inhibit_nbd)
 		{
-		  null_byte_found = 1;
+		  nul_byte_found = 1;
 		  if (eight_bit_found)
 		    break;
 		}
@@ -8675,7 +8644,7 @@ detect_coding_system (const unsigned char *src,
 	    coding.head_ascii++;
 	}
 
-      if (null_byte_found || eight_bit_found
+      if (nul_byte_found || eight_bit_found
 	  || coding.head_ascii < coding.src_bytes
 	  || detect_info.found)
 	{
@@ -8690,7 +8659,7 @@ detect_coding_system (const unsigned char *src,
 	      }
 	  else
 	    {
-	      if (null_byte_found)
+	      if (nul_byte_found)
 		{
 		  detect_info.checked |= ~CATEGORY_MASK_UTF_16;
 		  detect_info.rejected |= ~CATEGORY_MASK_UTF_16;
@@ -8737,24 +8706,24 @@ detect_coding_system (const unsigned char *src,
 	}
 
       if ((detect_info.rejected & CATEGORY_MASK_ANY) == CATEGORY_MASK_ANY
-	  || null_byte_found)
+	  || nul_byte_found)
 	{
 	  detect_info.found = CATEGORY_MASK_RAW_TEXT;
 	  id = CODING_SYSTEM_ID (Qno_conversion);
-	  val = list1 (make_fixnum (id));
+	  val = list1i (id);
 	}
       else if (! detect_info.rejected && ! detect_info.found)
 	{
 	  detect_info.found = CATEGORY_MASK_ANY;
 	  id = coding_categories[coding_category_undecided].id;
-	  val = list1 (make_fixnum (id));
+	  val = list1i (id);
 	}
       else if (highest)
 	{
 	  if (detect_info.found)
 	    {
 	      detect_info.found = 1 << category;
-	      val = list1 (make_fixnum (this->id));
+	      val = list1i (this->id);
 	    }
 	  else
 	    for (i = 0; i < coding_category_raw_text; i++)
@@ -8762,7 +8731,7 @@ detect_coding_system (const unsigned char *src,
 		{
 		  detect_info.found = 1 << coding_priorities[i];
 		  id = coding_categories[coding_priorities[i]].id;
-		  val = list1 (make_fixnum (id));
+		  val = list1i (id);
 		  break;
 		}
 	}
@@ -8779,7 +8748,7 @@ detect_coding_system (const unsigned char *src,
 		  found |= 1 << category;
 		  id = coding_categories[category].id;
 		  if (id >= 0)
-		    val = list1 (make_fixnum (id));
+		    val = list1i (id);
 		}
 	    }
 	  for (i = coding_category_raw_text - 1; i >= 0; i--)
@@ -8804,7 +8773,7 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_8_sig;
 	  else
 	    this = coding_categories + coding_category_utf_8_nosig;
-	  val = list1 (make_fixnum (this->id));
+	  val = list1i (this->id);
 	}
     }
   else if (base_category == coding_category_utf_16_auto)
@@ -8821,13 +8790,13 @@ detect_coding_system (const unsigned char *src,
 	    this = coding_categories + coding_category_utf_16_be_nosig;
 	  else
 	    this = coding_categories + coding_category_utf_16_le_nosig;
-	  val = list1 (make_fixnum (this->id));
+	  val = list1i (this->id);
 	}
     }
   else
     {
       detect_info.found = 1 << XFIXNUM (CODING_ATTR_CATEGORY (attrs));
-      val = list1 (make_fixnum (coding.id));
+      val = list1i (coding.id);
     }
 
   /* Then, detect eol-format if necessary.  */
@@ -8839,7 +8808,7 @@ detect_coding_system (const unsigned char *src,
       {
 	if (detect_info.found & ~CATEGORY_MASK_UTF_16)
 	  {
-	    if (null_byte_found)
+	    if (nul_byte_found)
 	      normal_eol = EOL_SEEN_LF;
 	    else
 	      normal_eol = detect_eol (coding.source, src_bytes,
@@ -9770,7 +9739,7 @@ DEFUN ("set-terminal-coding-system-internal", Fset_terminal_coding_system_intern
   tset_charset_list
     (term, (terminal_coding->common_flags & CODING_REQUIRE_ENCODING_MASK
 	    ? coding_charset_list (terminal_coding)
-	    : list1 (make_fixnum (charset_ascii))));
+	    : list1i (charset_ascii)));
   return Qnil;
 }
 
@@ -10271,15 +10240,9 @@ usage: (define-coding-system-internal ...)  */)
 	  else
 	    {
 	      CHECK_CONS (val);
-	      CHECK_FIXNAT_CAR (val);
-	      CHECK_FIXNUM_CDR (val);
-	      if (XFIXNUM (XCAR (val)) > 255)
-		args_out_of_range_3 (XCAR (val),
-				     make_fixnum (0), make_fixnum (255));
+	      CHECK_RANGED_INTEGER (XCAR (val), 0, 255);
 	      from = XFIXNUM (XCAR (val));
-	      if (! (from <= XFIXNUM (XCDR (val)) && XFIXNUM (XCDR (val)) <= 255))
-		args_out_of_range_3 (XCDR (val),
-				     XCAR (val), make_fixnum (255));
+	      CHECK_RANGED_INTEGER (XCDR (val), from, 255);
 	      to = XFIXNUM (XCDR (val));
 	    }
 	  for (int i = from; i <= to; i++)
@@ -10354,23 +10317,18 @@ usage: (define-coding-system-internal ...)  */)
 
       reg_usage = args[coding_arg_iso2022_reg_usage];
       CHECK_CONS (reg_usage);
-      CHECK_FIXNUM_CAR (reg_usage);
-      CHECK_FIXNUM_CDR (reg_usage);
+      CHECK_FIXNUM (XCAR (reg_usage));
+      CHECK_FIXNUM (XCDR (reg_usage));
 
       request = Fcopy_sequence (args[coding_arg_iso2022_request]);
       for (Lisp_Object tail = request; CONSP (tail); tail = XCDR (tail))
 	{
 	  int id;
-	  Lisp_Object tmp1;
 
 	  val = XCAR (tail);
 	  CHECK_CONS (val);
-	  tmp1 = XCAR (val);
-	  CHECK_CHARSET_GET_ID (tmp1, id);
-	  CHECK_FIXNAT_CDR (val);
-	  if (XFIXNUM (XCDR (val)) >= 4)
-	    error ("Invalid graphic register number: %"pI"d",
-		   XFIXNUM (XCDR (val)));
+	  CHECK_CHARSET_GET_ID (XCAR (val), id);
+	  CHECK_RANGED_INTEGER (XCDR (val), 0, 3);
 	  XSETCAR (val, make_fixnum (id));
 	}
 
@@ -10419,14 +10377,11 @@ usage: (define-coding-system-internal ...)  */)
     }
   else if (EQ (coding_type, Qshift_jis))
     {
-
-      struct charset *charset;
-
-      if (XFIXNUM (Flength (charset_list)) != 3
-	  && XFIXNUM (Flength (charset_list)) != 4)
+      ptrdiff_t charset_list_len = list_length (charset_list);
+      if (charset_list_len != 3 && charset_list_len != 4)
 	error ("There should be three or four charsets");
 
-      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
+      struct charset *charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 1)
 	error ("Dimension of charset %s is not one",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10461,7 +10416,7 @@ usage: (define-coding-system-internal ...)  */)
     {
       struct charset *charset;
 
-      if (XFIXNUM (Flength (charset_list)) != 2)
+      if (list_length (charset_list) != 2)
 	error ("There should be just two charsets");
 
       charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
@@ -10513,8 +10468,8 @@ usage: (define-coding-system-internal ...)  */)
     {
       if (nargs < coding_arg_undecided_max)
 	goto short_args;
-      ASET (attrs, coding_attr_undecided_inhibit_null_byte_detection,
-	    args[coding_arg_undecided_inhibit_null_byte_detection]);
+      ASET (attrs, coding_attr_undecided_inhibit_nul_byte_detection,
+	    args[coding_arg_undecided_inhibit_nul_byte_detection]);
       ASET (attrs, coding_attr_undecided_inhibit_iso_escape_detection,
 	    args[coding_arg_undecided_inhibit_iso_escape_detection]);
       ASET (attrs, coding_attr_undecided_prefer_utf_8,
@@ -10759,8 +10714,6 @@ coding system whose eol-type is N.  */)
   return make_fixnum (n);
 }
 
-#endif /* emacs */
-
 
 /*** 9. Post-amble ***/
 
@@ -10774,6 +10727,9 @@ init_coding_once (void)
       coding_categories[i].id = -1;
       coding_priorities[i] = i;
     }
+
+  PDUMPER_REMEMBER_SCALAR (coding_categories);
+  PDUMPER_REMEMBER_SCALAR (coding_priorities);
 
   /* ISO2022 specific initialize routine.  */
   for (i = 0; i < 0x20; i++)
@@ -10794,6 +10750,8 @@ init_coding_once (void)
   iso_code_class[ISO_CODE_SS3] = ISO_single_shift_3;
   iso_code_class[ISO_CODE_CSI] = ISO_control_sequence_introducer;
 
+  PDUMPER_REMEMBER_SCALAR (iso_code_class);
+
   for (i = 0; i < 256; i++)
     {
       emacs_mule_bytes[i] = 1;
@@ -10802,9 +10760,11 @@ init_coding_once (void)
   emacs_mule_bytes[EMACS_MULE_LEADING_CODE_PRIVATE_12] = 3;
   emacs_mule_bytes[EMACS_MULE_LEADING_CODE_PRIVATE_21] = 4;
   emacs_mule_bytes[EMACS_MULE_LEADING_CODE_PRIVATE_22] = 4;
+
+  PDUMPER_REMEMBER_SCALAR (emacs_mule_bytes);
 }
 
-#ifdef emacs
+static void reset_coding_after_pdumper_load (void);
 
 void
 syms_of_coding (void)
@@ -10825,6 +10785,7 @@ syms_of_coding (void)
   Vcode_conversion_workbuf_name = build_pure_c_string (" *code-conversion-work*");
 
   reused_workbuf_in_use = 0;
+  PDUMPER_REMEMBER_SCALAR (reused_workbuf_in_use);
 
   DEFSYM (Qcharset, "charset");
   DEFSYM (Qtarget_idx, "target-idx");
@@ -10860,6 +10821,7 @@ syms_of_coding (void)
   DEFSYM (Qundecided, "undecided");
   DEFSYM (Qno_conversion, "no-conversion");
   DEFSYM (Qraw_text, "raw-text");
+  DEFSYM (Qus_ascii, "us-ascii");
 
   DEFSYM (Qiso_2022, "iso-2022");
 
@@ -10884,7 +10846,7 @@ syms_of_coding (void)
   /* Error signaled when there's a problem with detecting a coding system.  */
   DEFSYM (Qcoding_system_error, "coding-system-error");
   Fput (Qcoding_system_error, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qcoding_system_error, Qerror));
+	pure_list (Qcoding_system_error, Qerror));
   Fput (Qcoding_system_error, Qerror_message,
 	build_pure_c_string ("Invalid coding system"));
 
@@ -11262,18 +11224,18 @@ to explicitly specify some coding system that doesn't use ISO-2022
 escape sequence (e.g., `latin-1') on reading by \\[universal-coding-system-argument].  */);
   inhibit_iso_escape_detection = 0;
 
-  DEFVAR_BOOL ("inhibit-null-byte-detection",
-	       inhibit_null_byte_detection,
-	       doc: /* If non-nil, Emacs ignores null bytes on code detection.
+  DEFVAR_BOOL ("inhibit-nul-byte-detection",
+	       inhibit_nul_byte_detection,
+	       doc: /* If non-nil, Emacs ignores NUL bytes on code detection.
 By default, Emacs treats it as binary data, and does not attempt to
 decode it.  The effect is as if you specified `no-conversion' for
 reading that text.
 
-Set this to non-nil when a regular text happens to include null bytes.
-Examples are Index nodes of Info files and null-byte delimited output
-from GNU Find and GNU Grep.  Emacs will then ignore the null bytes and
+Set this to non-nil when a regular text happens to include NUL bytes.
+Examples are Index nodes of Info files and NUL-byte delimited output
+from GNU Find and GNU Grep.  Emacs will then ignore the NUL bytes and
 decode text as usual.  */);
-  inhibit_null_byte_detection = 0;
+  inhibit_nul_byte_detection = 0;
 
   DEFVAR_BOOL ("disable-ascii-optimization", disable_ascii_optimization,
 	       doc: /* If non-nil, Emacs does not optimize code decoder for ASCII files.
@@ -11326,13 +11288,13 @@ internal character representation.  */);
   /* This is already set.
      plist[7] = args[coding_arg_ascii_compatible_p] = Qt; */
   plist[8] = intern_c_string (":charset-list");
-  plist[9] = args[coding_arg_charset_list] = Fcons (Qascii, Qnil);
+  plist[9] = args[coding_arg_charset_list] = list1 (Qascii);
   plist[11] = args[coding_arg_for_unibyte] = Qnil;
   plist[13] = build_pure_c_string ("No conversion on encoding, "
 				   "automatic conversion on decoding.");
   plist[15] = args[coding_arg_eol_type] = Qnil;
   args[coding_arg_plist] = CALLMANY (Flist, plist);
-  args[coding_arg_undecided_inhibit_null_byte_detection] = make_fixnum (0);
+  args[coding_arg_undecided_inhibit_nul_byte_detection] = make_fixnum (0);
   args[coding_arg_undecided_inhibit_iso_escape_detection] = make_fixnum (0);
   Fdefine_coding_system_internal (coding_arg_undecided_max, args);
 
@@ -11341,11 +11303,31 @@ internal character representation.  */);
   for (int i = 0; i < coding_category_max; i++)
     Fset (AREF (Vcoding_category_table, i), Qno_conversion);
 
-#if defined (DOS_NT)
-  system_eol_type = Qdos;
-#else
-  system_eol_type = Qunix;
-#endif
-  staticpro (&system_eol_type);
+  pdumper_do_now_and_after_load (reset_coding_after_pdumper_load);
 }
-#endif /* emacs */
+
+static void
+reset_coding_after_pdumper_load (void)
+{
+  if (!dumped_with_pdumper_p ())
+    return;
+  for (struct coding_system *this = &coding_categories[0];
+       this < &coding_categories[coding_category_max];
+       ++this)
+    {
+      int id = this->id;
+      if (id >= 0)
+        {
+          /* Need to rebuild the coding system object because we
+             persisted it as a scalar and it's full of gunk that's now
+             invalid.  */
+          memset (this, 0, sizeof (*this));
+          setup_coding_system (CODING_ID_NAME (id), this);
+        }
+    }
+  /* In temacs the below is done by mule-conf.el, because we need to
+     define us-ascii first.  But in dumped Emacs us-ascii is restored
+     by the above loop, and mule-conf.el will not be loaded, so we set
+     it up now; otherwise safe_terminal_coding will remain zeroed.  */
+  Fset_safe_terminal_coding_system_internal (Qus_ascii);
+}

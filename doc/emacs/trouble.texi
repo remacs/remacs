@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2018 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2019 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @iftex
@@ -1400,9 +1400,10 @@ to the FSF@.  For the reasons behind this, see
 @url{https://www.gnu.org/licenses/why-assign.html}.
 
 Copyright assignment is a simple process.  Residents of some countries
-can do it entirely electronically.  We can help you get started, and
-answer any questions you may have (or point you to the people with the
-answers), at the @email{emacs-devel@@gnu.org} mailing list.
+can do it entirely electronically.  We can help you get started,
+including sending you the forms you should fill, and answer any
+questions you may have (or point you to the people with the answers),
+at the @email{emacs-devel@@gnu.org} mailing list.
 
 (Please note: general discussion about why some GNU projects ask
 for a copyright assignment is off-topic for emacs-devel.

@@ -1,6 +1,6 @@
 ;;; bytecomp-tests.el
 
-;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 ;; Author: Shigeru Fukaya <shigeru.fukaya@gmail.com>
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
@@ -540,7 +540,9 @@ literals (Bug#20852)."
         (should (equal (cdr err)
                        (list (concat "unescaped character literals "
                                      "`?\"', `?(', `?)', `?;', `?[', `?]' "
-                                     "detected!"))))))))
+                                     "detected, "
+                                     "`?\\\"', `?\\(', `?\\)', `?\\;', `?\\[', "
+                                     "`?\\]' expected!"))))))))
 
 (ert-deftest bytecomp-tests--old-style-backquotes ()
   "Check that byte compiling warns about old-style backquotes."

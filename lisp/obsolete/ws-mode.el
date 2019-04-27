@@ -1,6 +1,6 @@
-;;; ws-mode.el --- WordStar emulation mode for GNU Emacs
+;;; ws-mode.el --- WordStar emulation mode for GNU Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1991, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Juergen Nickelsen <nickel@cs.tu-berlin.de>
 ;; Version: 0.7
@@ -24,9 +24,20 @@
 
 ;;; Commentary:
 
-;; This emulates WordStar, with a major mode.
+;; This provides emulation of WordStar with a minor mode.
 
 ;;; Code:
+
+(defgroup wordstar nil
+  "WordStar emulation within Emacs."
+  :prefix "wordstar-"
+  :prefix "ws-"
+  :group 'emulations)
+
+(defcustom wordstar-mode-lighter " WordStar"
+  "Lighter shown in the modeline for `wordstar' mode."
+  :type 'string)
+
 (defvar wordstar-C-k-map
   (let ((map (make-keymap)))
     (define-key map " " ())
@@ -98,8 +109,7 @@
     (define-key map "wh" 'split-window-right)
     (define-key map "wo" 'other-window)
     (define-key map "wv" 'split-window-below)
-    map)
-  "")
+    map))
 
 (defvar wordstar-C-q-map
   (let ((map (make-keymap)))
@@ -174,12 +184,9 @@
 ;; wordstar-C-j-map not yet implemented
 (defvar wordstar-C-j-map nil)
 
-
-(put 'wordstar-mode 'mode-class 'special)
-
 ;;;###autoload
-(define-derived-mode wordstar-mode fundamental-mode "WordStar"
-  "Major mode with WordStar-like key bindings.
+(define-minor-mode wordstar-mode
+  "Minor mode with WordStar-like key bindings.
 
 BUGS:
  - Help menus with WordStar commands (C-j just calls help-for-help)
@@ -189,8 +196,18 @@ BUGS:
  - Search and replace (C-q a) is only available in forward direction
 
 No key bindings beginning with ESC are installed, they will work
-Emacs-like.")
+Emacs-like."
+  :group 'wordstar
+  :lighter wordstar-mode-lighter
+  :keymap wordstar-mode-map)
 
+(defun turn-on-wordstar-mode ()
+  (when (and (not (minibufferp))
+             (not wordstar-mode))
+    (wordstar-mode 1)))
+
+(define-globalized-minor-mode global-wordstar-mode wordstar-mode
+  turn-on-wordstar-mode)
 
 (defun wordstar-center-paragraph ()
   "Center each line in the paragraph at or after point.
@@ -254,7 +271,7 @@ the distance between the end of the text and `fill-column'."
 
 (defvar ws-search-string nil "String of last search in WordStar mode.")
 (defvar ws-search-direction t
-  "Direction of last search in WordStar mode. t if forward, nil if backward.")
+  "Direction of last search in WordStar mode.  t if forward, nil if backward.")
 
 (defvar ws-last-cursorposition nil
   "Position before last search etc. in WordStar mode.")
@@ -266,8 +283,9 @@ the distance between the end of the text and `fill-column'."
 ;; wordstar special functions:
 
 (defun ws-error (string)
-  "Report error of a WordStar special function. Error message is saved
-in ws-last-errormessage for recovery with C-q w."
+  "Report error of a WordStar special function.
+Error message is saved in `ws-last-errormessage' for recovery
+with C-q w."
   (setq ws-last-errormessage string)
   (error string))
 
@@ -358,7 +376,6 @@ in ws-last-errormessage for recovery with C-q w."
 	(message ""))
     (message "Block markers not set")))
 
-
 (defun ws-indent-block ()
   "In WordStar mode: Indent block (not yet implemented)."
   (interactive)
@@ -373,7 +390,7 @@ in ws-last-errormessage for recovery with C-q w."
 (defun ws-print-block ()
   "In WordStar mode: Print block."
   (interactive)
-  (message "Don't do this. Write block to a file (C-k w) and print this file."))
+  (message "Don't do this. Write block to a file (C-k w) and print this file"))
 
 (defun ws-mark-word ()
   "In WordStar mode: Mark current word as block."
@@ -389,7 +406,7 @@ in ws-last-errormessage for recovery with C-q w."
 (defun ws-exdent-block ()
   "I don't know what this (C-k u) should do."
   (interactive)
-  (ws-error "This won't be done -- not yet implemented."))
+  (ws-error "This won't be done -- not yet implemented"))
 
 (defun ws-move-block ()
   "In WordStar mode: Move block to current cursor position."
@@ -560,16 +577,16 @@ in ws-last-errormessage for recovery with C-q w."
   "In WordStar mode: Undo and give message about undoing more changes."
   (interactive)
   (undo)
-  (message "Repeat C-q l to undo more changes."))
+  (message "Repeat C-q l to undo more changes"))
 
 (defun ws-goto-last-cursorposition ()
-  "In WordStar mode: "
+  "In WordStar mode: Go to position before last search."
   (interactive)
   (if ws-last-cursorposition
       (progn
 	(setq ws-last-cursorposition (point-marker))
 	(goto-char ws-last-cursorposition))
-    (ws-error "No last cursor position available.")))
+    (ws-error "No last cursor position available")))
 
 (defun ws-last-error ()
   "In WordStar mode: repeat last error message.
@@ -577,7 +594,7 @@ This will only work for errors raised by WordStar mode functions."
   (interactive)
   (if ws-last-errormessage
       (message "%s" ws-last-errormessage)
-    (message "No WordStar error yet.")))
+    (message "No WordStar error yet")))
 
 (defun ws-kill-eol ()
   "In WordStar mode: Kill to end of line (like WordStar, not like Emacs)."
@@ -587,8 +604,7 @@ This will only work for errors raised by WordStar mode functions."
     (kill-region p (point))))
 
 (defun ws-kill-bol ()
-  "In WordStar mode: Kill to beginning of line
-\(like WordStar, not like Emacs)."
+  "In WordStar mode: Kill to beginning of line (like WordStar, not like Emacs)."
   (interactive)
   (let ((p (point)))
     (beginning-of-line)

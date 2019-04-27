@@ -1,6 +1,6 @@
 ;;; calc.el --- the GNU Emacs calculator  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1990-1993, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 ;; Keywords: convenience, extensions
@@ -395,10 +395,17 @@ This is not required to be present for user-written mode annotations."
                                   (string :tag "Closing annotation delimiter"))))
 
 (defcustom calc-gnuplot-name
-  (if (eq system-type 'windows-nt) "pgnuplot" "gnuplot")
+  (if (and (eq system-type 'windows-nt)
+           ;; Gnuplot v4.x on MS-Windows came with a special
+           ;; pipe-enabled gnuplot executable for batch-mode
+           ;; execution; newer versions allow using gnuplot.exe.
+           (executable-find "pgnuplot"))
+      "pgnuplot"
+    "gnuplot")
   "Name of GNUPLOT program, for calc-graph features."
   :group 'calc
-  :type '(string))
+  :type '(string)
+  :version "26.2")
 
 (defcustom calc-gnuplot-plot-command
   nil
@@ -2423,7 +2430,7 @@ the United States."
 	  (beep)
 	(and (not (calc-minibuffer-contains "[-+]?\\(1[5-9]\\|[2-9][0-9]\\)#.*"))
 	     (search-forward "e" nil t))
-	(if (looking-at "+")
+	(if (looking-at "\\+")
 	    (delete-char 1))
 	(if (looking-at "-")
 	    (delete-char 1)

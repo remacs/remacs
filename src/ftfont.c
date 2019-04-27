@@ -1,5 +1,5 @@
 /* ftfont.c -- FreeType font driver.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -45,6 +45,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "font.h"
 #include "ftfont.h"
+#include "pdumper.h"
 
 static struct font_driver const ftfont_driver;
 
@@ -598,16 +599,14 @@ ftfont_get_open_type_spec (Lisp_Object otf_spec)
   spec->nfeatures[0] = spec->nfeatures[1] = 0;
   for (i = 0; i < 2 && ! NILP (otf_spec); i++, otf_spec = XCDR (otf_spec))
     {
-      Lisp_Object len;
-
       val = XCAR (otf_spec);
       if (NILP (val))
 	continue;
-      len = Flength (val);
+      ptrdiff_t len = list_length (val);
       spec->features[i] =
-	(min (PTRDIFF_MAX, SIZE_MAX) / sizeof (int) < XFIXNUM (len)
+	(min (PTRDIFF_MAX, SIZE_MAX) / sizeof (int) < len
 	 ? 0
-	 : malloc (XFIXNUM (len) * sizeof *spec->features[i]));
+	 : malloc (len * sizeof *spec->features[i]));
       if (! spec->features[i])
 	{
 	  if (i > 0 && spec->features[0])
@@ -1111,6 +1110,7 @@ ftfont_open2 (struct frame *f,
   int spacing;
   int i;
   double upEM;
+  FT_Int strike_index = -1;
 
   val = assq_no_quit (QCfont_entity, AREF (entity, FONT_EXTRA_INDEX));
   if (! CONSP (val))
@@ -1140,12 +1140,32 @@ ftfont_open2 (struct frame *f,
     size = pixel_size;
   if (FT_Set_Pixel_Sizes (ft_face, size, size) != 0)
     {
-      if (cache_data->face_refcount == 0)
+      int min_distance = INT_MAX;
+      bool magnify = true;
+
+      for (FT_Int i = 0; i < ft_face->num_fixed_sizes; i++)
 	{
-	  FT_Done_Face (ft_face);
-	  cache_data->ft_face = NULL;
+	  int distance = ft_face->available_sizes[i].height - (int) size;
+
+	  /* Prefer down-scaling to upscaling.  */
+	  if (magnify == (distance < 0) ? abs (distance) <= min_distance
+	      : magnify)
+	    {
+	      magnify = distance < 0;
+	      min_distance = abs (distance);
+	      strike_index = i;
+	    }
 	}
-      return Qnil;
+
+      if (strike_index < 0 || FT_Select_Size (ft_face, strike_index) != 0)
+	{
+	  if (cache_data->face_refcount == 0)
+	    {
+	      FT_Done_Face (ft_face);
+	      cache_data->ft_face = NULL;
+	    }
+	  return Qnil;
+	}
     }
   cache_data->face_refcount++;
 
@@ -1161,6 +1181,7 @@ ftfont_open2 (struct frame *f,
 #ifdef HAVE_HARFBUZZ
   ftfont_info->hb_font = NULL;
 #endif	/* HAVE_HARFBUZZ */
+  ftfont_info->bitmap_strike_index = strike_index;
   /* This means that there's no need of transformation.  */
   ftfont_info->matrix.xx = 0;
   font->pixel_size = size;
@@ -1246,7 +1267,19 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
     size = pixel_size;
   font_object = font_build_object (VECSIZE (struct font_info),
 				   Qfreetype, entity, size);
-  return ftfont_open2 (f, entity, pixel_size, font_object);
+  font_object = ftfont_open2 (f, entity, pixel_size, font_object);
+  if (FONT_OBJECT_P (font_object))
+    {
+      struct font *font = XFONT_OBJECT (font_object);
+      struct font_info *ftfont_info = (struct font_info *) font;
+
+      if (ftfont_info->bitmap_strike_index >= 0)
+	{
+	  ftfont_close (font);
+	  font_object = Qnil;
+	}
+    }
+  return font_object;
 }
 
 void
@@ -3020,6 +3053,8 @@ ftfont_combining_capability (struct font *font)
 #endif
 }
 
+static void syms_of_ftfont_for_pdumper (void);
+
 static struct font_driver const ftfont_driver =
   {
   /* We can't draw a text without device dependent functions.  */
@@ -3071,5 +3106,12 @@ syms_of_ftfont (void)
   staticpro (&ft_face_cache);
   ft_face_cache = Qnil;
 
+  pdumper_do_now_and_after_load (syms_of_ftfont_for_pdumper);
+}
+
+static void
+syms_of_ftfont_for_pdumper (void)
+{
+  PDUMPER_RESET_LV (ft_face_cache, Qnil);
   register_font_driver (&ftfont_driver, NULL);
 }
