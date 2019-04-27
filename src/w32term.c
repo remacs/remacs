@@ -2940,7 +2940,7 @@ w32_new_focus_frame (struct w32_display_info *dpyinfo, struct frame *frame)
 	dpyinfo->w32_pending_autoraise_frame = NULL;
     }
 
-  w32_reframe_highlight_1 (dpyinfo);
+  w32_frame_rehighlight_1 (dpyinfo);
 }
 
 
