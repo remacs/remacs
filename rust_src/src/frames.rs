@@ -34,9 +34,11 @@ impl LispFrameRef {
         !self.terminal.is_null()
     }
 
-    // Awaiting Wilfred#1264
-    pub const fn is_gui_window(self) -> bool {
-        cfg!(feature = "window-system")
+    pub fn is_gui_window(self) -> bool {
+        match self.output_method() {
+            output_method::output_initial | output_method::output_termcap => false,
+            _ => true,
+        }
     }
 
     // Pixel-width of internal border lines.
