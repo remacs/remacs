@@ -5529,7 +5529,9 @@ comment at the start of cc-engine.el for more info."
 		      (prog1 (looking-at "\\s(")
 			(forward-char))))
 	  (backward-char)
-	  (if (c-forward-<>-arglist nil) ; Should always work.
+	  (if (let ((c-parse-and-markup-<>-arglists t)
+		    (c-restricted-<>-arglists t))
+		(c-forward-<>-arglist nil)) ; Should always work.
 	      (when (> (point) to)
 		(setq bound-<> (point)))
 	    (forward-char)))
