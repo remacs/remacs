@@ -1122,6 +1122,10 @@ a byte-code function object (@pxref{Byte Compilation}).
 When lexical binding is enabled, @var{function-object} is converted
 into a closure.  @xref{Closures}.
 @end itemize
+
+When @var{function-object} is a symbol and the code is byte compiled,
+the byte-compiler will warn if that function is not defined or might
+not be known at run time.
 @end defspec
 
 @cindex @samp{#'} syntax
