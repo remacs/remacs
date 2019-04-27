@@ -11599,7 +11599,8 @@ clear_garbaged_frames (void)
 		clear_current_matrices (f);
 
 #ifdef HAVE_WINDOW_SYSTEM
-              if (FRAME_RIF (f)->clear_under_internal_border)
+              if (FRAME_WINDOW_P (f)
+                  && FRAME_RIF (f)->clear_under_internal_border)
                 FRAME_RIF (f)->clear_under_internal_border (f);
 #endif
 	      fset_redisplay (f);
@@ -11671,7 +11672,8 @@ echo_area_display (bool update_frame_p)
 	      n = redisplay_mode_lines (FRAME_ROOT_WINDOW (f), false);
 
 #ifdef HAVE_WINDOW_SYSTEM
-              if (FRAME_RIF (f)->clear_under_internal_border)
+              if (FRAME_WINDOW_P (f)
+                  && FRAME_RIF (f)->clear_under_internal_border)
                 FRAME_RIF (f)->clear_under_internal_border (f);
 #endif
 	    }
@@ -14497,7 +14499,8 @@ redisplay_internal (void)
                     goto retry;
 
 #ifdef HAVE_WINDOW_SYSTEM
-                  if (FRAME_RIF (f)->clear_under_internal_border)
+                  if (FRAME_WINDOW_P (f)
+                      && FRAME_RIF (f)->clear_under_internal_border)
                     FRAME_RIF (f)->clear_under_internal_border (f);
 #endif
 		  /* Prevent various kinds of signals during display
