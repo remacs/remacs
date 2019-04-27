@@ -5045,7 +5045,7 @@ x_get_resource_string (const char *attribute, const char *class)
   esprintf (name_key, "%s.%s", SSDATA (Vinvocation_name), attribute);
   sprintf (class_key, "%s.%s", EMACS_CLASS, class);
 
-  result = gui_display_get_resource (&FRAME_DISPLAY_INFO (sf)->rdb,
+  result = gui_display_get_resource (FRAME_DISPLAY_INFO (sf),
                                      name_key, class_key);
   SAFE_FREE ();
   return result;
