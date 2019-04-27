@@ -4612,8 +4612,6 @@ corresponding character.  */)
 }
 #endif	/* 0 */
 
-#ifdef FONT_DEBUG
-
 DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
        doc: /* Open FONT-ENTITY.  */)
   (Lisp_Object font_entity, Lisp_Object size, Lisp_Object frame)
@@ -4867,8 +4865,6 @@ Type C-l to recover what previously shown.  */)
   return make_number (len);
 }
 #endif
-
-#endif	/* FONT_DEBUG */
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -5199,14 +5195,12 @@ syms_of_font (void)
   defsubr (&Sfont_otf_alternates);
 #endif	/* 0 */
 
-#ifdef FONT_DEBUG
   defsubr (&Sopen_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
 #if 0
   defsubr (&Sdraw_string);
 #endif
-#endif	/* FONT_DEBUG */
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sfont_info);
 #endif
