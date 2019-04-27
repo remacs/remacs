@@ -493,6 +493,7 @@ do
 done
 IFS="$ac_save_IFS"
 
+CARGO_CHECKING_FEATURES=""
 if test x$ac_enable_checking != x ; then
   AC_DEFINE(ENABLE_CHECKING, 1,
 [Define to 1 if expensive run-time data type and consistency checks are enabled.])
@@ -522,7 +523,9 @@ fi
 if test x$ac_glyphs_debug != x ; then
   AC_DEFINE(GLYPH_DEBUG, 1,
 [Define this to enable glyphs debugging code.])
+  CARGO_CHECKING_FEATURES="${CARGO_CHECKING_FEATURES}\"glyph-debug\", "
 fi
+AC_SUBST(CARGO_CHECKING_FEATURES)
 
 dnl The name of this option is unfortunate.  It predates, and has no
 dnl relation to, the "sampling-based elisp profiler" added in 24.3.

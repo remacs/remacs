@@ -123,6 +123,7 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+mod xdisp;
 mod xfaces;
 mod xml;
 

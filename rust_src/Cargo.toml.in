@@ -53,7 +53,10 @@ panic = "abort"
 panic = "abort"
 
 [features]
-default = [@CARGO_DEFAULT_FEATURES@]
+default = [
+  @CARGO_DEFAULT_FEATURES@
+  @CARGO_CHECKING_FEATURES@
+]
 # Use unexec crate on Mac
 unexecmacosx = ["alloc_unexecmacosx"]
 # unexec everywhere else
@@ -70,3 +73,6 @@ window-system-nextstep = []
 window-system-w32 = []
 # Treat warnings as a build error on Travis.
 strict = []
+
+# Enable glyphs debugging code.
+glyph-debug = []

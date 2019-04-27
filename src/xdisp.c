@@ -19612,23 +19612,6 @@ do nothing.  */)
 }
 
 
-DEFUN ("trace-redisplay", Ftrace_redisplay, Strace_redisplay, 0, 1, "P",
-       doc: /* Toggle tracing of redisplay.
-With ARG, turn tracing on if and only if ARG is positive.  */)
-  (Lisp_Object arg)
-{
-  if (NILP (arg))
-    trace_redisplay_p = !trace_redisplay_p;
-  else
-    {
-      arg = Fprefix_numeric_value (arg);
-      trace_redisplay_p = XINT (arg) > 0;
-    }
-
-  return Qnil;
-}
-
-
 DEFUN ("trace-to-stderr", Ftrace_to_stderr, Strace_to_stderr, 1, MANY, "",
        doc: /* Like `format', but print result to stderr.
 usage: (trace-to-stderr STRING &rest OBJECTS)  */)
@@ -32394,7 +32377,6 @@ They are still logged to the *Messages* buffer.  */);
   defsubr (&Sdump_glyph_matrix);
   defsubr (&Sdump_glyph_row);
   defsubr (&Sdump_tool_bar_row);
-  defsubr (&Strace_redisplay);
   defsubr (&Strace_to_stderr);
 #endif
 #ifdef HAVE_WINDOW_SYSTEM

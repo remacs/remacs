@@ -97,8 +97,8 @@ impl ModuleInfo {
 
 struct ModuleData {
     pub info: ModuleInfo,
-    pub c_exports: Vec<String>,
-    pub lisp_fns: Vec<String>,
+    pub c_exports: Vec<(Option<String>, String)>,
+    pub lisp_fns: Vec<(Option<String>, String)>,
     pub protected_statics: Vec<String>,
 }
 
@@ -130,6 +130,7 @@ impl<'a> ModuleParser<'a> {
         let mut mod_data = ModuleData::new(self.info.clone());
         let mut reader = in_file.lines();
         let mut has_include = false;
+        let mut preceding_cfg: Option<String> = None;
 
         while let Some(next) = reader.next() {
             let line = next?;
@@ -148,11 +149,15 @@ impl<'a> ModuleParser<'a> {
 
                     if let Some(func) = self.parse_c_export(&line, None)? {
                         self.lint_nomangle(&line)?;
-                        mod_data.c_exports.push(func);
+                        mod_data.c_exports.push((preceding_cfg, func));
                     }
+
+                    preceding_cfg = None;
                 } else {
                     self.fail(1, "unexpected end of file");
                 }
+            } else if line.starts_with("#[cfg") {
+                preceding_cfg = Some(line);
             } else if line.starts_with("#[lisp_fn") {
                 let line = if line.ends_with("]") {
                     line.clone()
@@ -193,11 +198,13 @@ impl<'a> ModuleParser<'a> {
                     let line = next?;
 
                     if let Some(func) = self.parse_c_export(&line, name)? {
-                        mod_data.lisp_fns.push(func);
+                        mod_data.lisp_fns.push((preceding_cfg, func));
                     }
                 } else {
                     self.fail(1, "unexpected end of file");
                 }
+
+                preceding_cfg = None;
             } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
                 has_include = true;
             } else if line.starts_with("/*") && !line.ends_with("*/") {
@@ -207,6 +214,8 @@ impl<'a> ModuleParser<'a> {
                         break;
                     }
                 }
+            } else {
+                preceding_cfg = None;
             }
         }
 
@@ -372,14 +381,20 @@ fn generate_include_files() -> Result<(), BuildError> {
     let mut out_file = File::create(out_path)?;
 
     for mod_data in &modules {
-        for func in &mod_data.c_exports {
+        for (cfg, func) in &mod_data.c_exports {
+            if let Some(cfg) = cfg {
+                write!(out_file, "{}\n", cfg)?;
+            }
             write!(
                 out_file,
                 "pub use crate::{}::{};\n",
                 mod_data.info.name, func
             )?;
         }
-        for func in &mod_data.lisp_fns {
+        for (cfg, func) in &mod_data.lisp_fns {
+            if let Some(cfg) = cfg {
+                write!(out_file, "{}\n", cfg)?;
+            }
             write!(
                 out_file,
                 "pub use crate::{}::F{};\n",
@@ -409,8 +424,16 @@ fn generate_include_files() -> Result<(), BuildError> {
             let mut file = File::create(&exports_path)?;
             write!(
                 file,
-                "export_lisp_fns! {{ {} }}\n",
-                mod_data.lisp_fns.join(", ")
+                "export_lisp_fns! {{\n    {}\n}}\n",
+                mod_data
+                    .lisp_fns
+                    .iter()
+                    .map(|lisp_fn| match lisp_fn {
+                        (Some(cfg), func) => format!("{} {}", cfg, func),
+                        (_, func) => format!("{}", func),
+                    })
+                    .collect::<Vec<String>>()
+                    .join(",\n    ")
             )?;
 
             write!(out_file, "    {}::rust_init_syms();\n", mod_data.info.name)?;
