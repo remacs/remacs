@@ -1588,7 +1588,7 @@ extern enum internal_border_part frame_internal_border_part (struct frame *f, in
 #if defined HAVE_X_WINDOWS
 extern void x_wm_set_icon_position (struct frame *, int, int);
 #if !defined USE_X_TOOLKIT
-extern char *x_get_resource_string (const char *, const char *);
+extern const char *x_get_resource_string (const char *, const char *);
 #endif
 extern void x_sync (struct frame *);
 #endif /* HAVE_X_WINDOWS */
