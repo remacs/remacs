@@ -18030,12 +18030,14 @@ try_window_reusing_current_matrix (struct window *w)
 
 	  if (run.height > 0 && run.current_y != run.desired_y)
 	    {
+#ifdef HAVE_WINDOW_SYSTEM
 	      update_begin (f);
-	      FRAME_RIF (f)->update_window_begin_hook (w);
+	      gui_update_window_begin (w);
 	      FRAME_RIF (f)->clear_window_mouse_face (w);
 	      FRAME_RIF (f)->scroll_run_hook (w, &run);
-	      FRAME_RIF (f)->update_window_end_hook (w, false, false);
+	      gui_update_window_end (w, false, false);
 	      update_end (f);
+#endif
 	    }
 
 	  /* Shift current matrix down by nrows_scrolled lines.  */
@@ -18194,12 +18196,14 @@ try_window_reusing_current_matrix (struct window *w)
 
       if (run.height)
 	{
+#ifdef HAVE_WINDOW_SYSTEM
 	  update_begin (f);
-	  FRAME_RIF (f)->update_window_begin_hook (w);
+	  gui_update_window_begin (w);
 	  FRAME_RIF (f)->clear_window_mouse_face (w);
 	  FRAME_RIF (f)->scroll_run_hook (w, &run);
-	  FRAME_RIF (f)->update_window_end_hook (w, false, false);
+	  gui_update_window_end (w, false, false);
 	  update_end (f);
+#endif
 	}
 
       /* Adjust Y positions of reused rows.  */
@@ -19147,10 +19151,12 @@ try_window_id (struct window *w)
 
       if (FRAME_WINDOW_P (f))
 	{
-	  FRAME_RIF (f)->update_window_begin_hook (w);
+#ifdef HAVE_WINDOW_SYSTEM
+	  gui_update_window_begin (w);
 	  FRAME_RIF (f)->clear_window_mouse_face (w);
 	  FRAME_RIF (f)->scroll_run_hook (w, &run);
-	  FRAME_RIF (f)->update_window_end_hook (w, false, false);
+	  gui_update_window_end (w, false, false);
+#endif
 	}
       else
 	{

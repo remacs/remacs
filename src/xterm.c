@@ -989,7 +989,7 @@ x_set_frame_alpha (struct frame *f)
 
 /* Start an update of frame F.  This function is installed as a hook
    for update_begin, i.e. it is called when update_begin is called.
-   This function is called prior to calls to x_update_window_begin for
+   This function is called prior to calls to gui_update_window_begin for
    each window being updated.  Currently, there is nothing to do here
    because all interesting stuff is done on a window basis.  */
 
@@ -1032,33 +1032,6 @@ x_update_begin (struct frame *f)
     }
 #endif /* USE_CAIRO */
 }
-
-/* Start update of window W.  */
-
-static void
-x_update_window_begin (struct window *w)
-{
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-
-  w->output_cursor = w->cursor;
-
-  block_input ();
-
-  if (f == hlinfo->mouse_face_mouse_frame)
-    {
-      /* Don't do highlighting for mouse motion during the update.  */
-      hlinfo->mouse_face_defer = true;
-
-      /* If F needs to be redrawn, simply forget about any prior mouse
-	 highlighting.  */
-      if (FRAME_GARBAGED_P (f))
-	hlinfo->mouse_face_window = Qnil;
-    }
-
-  unblock_input ();
-}
-
 
 /* Draw a vertical window border from (x,y0) to (x,y1)  */
 
@@ -1136,55 +1109,6 @@ x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
       XSetForeground (display, f->output_data.x->normal_gc, color);
       x_fill_rectangle (f, f->output_data.x->normal_gc,
 			x0, y0, x1 - x0, y1 - y0);
-    }
-}
-
-/* End update of window W.
-
-   Draw vertical borders between horizontally adjacent windows, and
-   display W's cursor if CURSOR_ON_P is non-zero.
-
-   MOUSE_FACE_OVERWRITTEN_P non-zero means that some row containing
-   glyphs in mouse-face were overwritten.  In that case we have to
-   make sure that the mouse-highlight is properly redrawn.
-
-   W may be a menu bar pseudo-window in case we don't have X toolkit
-   support.  Such windows don't have a cursor, so don't display it
-   here.  */
-
-static void
-x_update_window_end (struct window *w, bool cursor_on_p,
-		     bool mouse_face_overwritten_p)
-{
-  if (!w->pseudo_window_p)
-    {
-      block_input ();
-
-      if (cursor_on_p)
-	display_and_set_cursor (w, true,
-				w->output_cursor.hpos, w->output_cursor.vpos,
-				w->output_cursor.x, w->output_cursor.y);
-
-      if (draw_window_fringes (w, true))
-	{
-	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    gui_draw_right_divider (w);
-	  else
-	    gui_draw_vertical_border (w);
-	}
-
-      unblock_input ();
-    }
-
-  /* If a row with mouse-face was overwritten, arrange for
-     XTframe_up_to_date to redisplay the mouse highlight.  */
-  if (mouse_face_overwritten_p)
-    {
-      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
-
-      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
-      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
-      hlinfo->mouse_face_window = Qnil;
     }
 }
 
@@ -4306,7 +4230,7 @@ x_scroll_run (struct window *w, struct run *run)
 
   block_input ();
 
-  /* Cursor off.  Will be switched on again in x_update_window_end.  */
+  /* Cursor off.  Will be switched on again in gui_update_window_end.  */
   gui_clear_cursor (w);
 
 #ifdef USE_CAIRO
@@ -13145,8 +13069,8 @@ static struct redisplay_interface x_redisplay_interface =
     gui_clear_end_of_line,
     x_scroll_run,
     x_after_update_window_line,
-    x_update_window_begin,
-    x_update_window_end,
+    NULL, /* update_window_begin */
+    NULL, /* update_window_end   */
     x_flip_and_flush,
     gui_clear_window_mouse_face,
     gui_get_glyph_overhangs,

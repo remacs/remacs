@@ -529,7 +529,7 @@ w32_display_pixel_width (struct w32_display_info *dpyinfo)
 
 /* Start an update of frame F.  This function is installed as a hook
    for update_begin, i.e. it is called when update_begin is called.
-   This function is called prior to calls to w32_update_window_begin
+   This function is called prior to calls to gui_update_window_begin
    for each window being updated.  */
 
 static void
@@ -555,58 +555,12 @@ w32_update_begin (struct frame *f)
 static void
 w32_update_window_begin (struct window *w)
 {
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-
   /* Hide the system caret during an update.  */
   if (w32_use_visible_system_caret && w32_system_caret_hwnd)
     {
       SendMessageTimeout (w32_system_caret_hwnd, WM_EMACS_HIDE_CARET, 0, 0,
 			  0, 6000, NULL);
     }
-
-  w->output_cursor = w->cursor;
-
-  block_input ();
-
-  if (f == hlinfo->mouse_face_mouse_frame)
-    {
-      /* Don't do highlighting for mouse motion during the update.  */
-      hlinfo->mouse_face_defer = true;
-
-      /* If F needs to be redrawn, simply forget about any prior mouse
-	 highlighting.  */
-      if (FRAME_GARBAGED_P (f))
-	hlinfo->mouse_face_window = Qnil;
-
-#if 0 /* Rows in a current matrix containing glyphs in mouse-face have
-	 their mouse_face_p flag set, which means that they are always
-	 unequal to rows in a desired matrix which never have that
-	 flag set.  So, rows containing mouse-face glyphs are never
-	 scrolled, and we don't have to switch the mouse highlight off
-	 here to prevent it from being scrolled.  */
-
-      /* Can we tell that this update does not affect the window
-	 where the mouse highlight is?  If so, no need to turn off.
-	 Likewise, don't do anything if the frame is garbaged;
-	 in that case, the frame's current matrix that we would use
-	 is all wrong, and we will redisplay that line anyway.  */
-      if (!NILP (hlinfo->mouse_face_window)
-	  && w == XWINDOW (hlinfo->mouse_face_window))
-	{
-	  int i;
-
-          for (i = 0; i < w->desired_matrix->nrows; ++i)
-	    if (MATRIX_ROW_ENABLED_P (w->desired_matrix, i))
-	      break;
-
-	  if (i < w->desired_matrix->nrows)
-	    clear_mouse_face (hlinfo);
-	}
-#endif /* 0 */
-    }
-
-  unblock_input ();
 }
 
 /* Draw a vertical window border from (x,y0) to (x,y1)  */
@@ -694,39 +648,8 @@ w32_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 
 static void
 w32_update_window_end (struct window *w, bool cursor_on_p,
-		     bool mouse_face_overwritten_p)
+                       bool mouse_face_overwritten_p)
 {
-  if (!w->pseudo_window_p)
-    {
-      block_input ();
-
-      if (cursor_on_p)
-	display_and_set_cursor (w, true,
-				w->output_cursor.hpos, w->output_cursor.vpos,
-				w->output_cursor.x, w->output_cursor.y);
-
-      if (draw_window_fringes (w, true))
-	{
-	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    gui_draw_right_divider (w);
-	  else
-	    gui_draw_vertical_border (w);
-	}
-
-      unblock_input ();
-    }
-
-  /* If a row with mouse-face was overwritten, arrange for
-     XTframe_up_to_date to redisplay the mouse highlight.  */
-  if (mouse_face_overwritten_p)
-    {
-      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (XFRAME (w->frame));
-
-      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
-      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
-      hlinfo->mouse_face_window = Qnil;
-    }
-
   /* Unhide the caret.  This won't actually show the cursor, unless it
      was visible before the corresponding call to HideCaret in
      w32_update_window_begin.  */
@@ -2859,7 +2782,7 @@ w32_scroll_run (struct window *w, struct run *run)
 
   block_input ();
 
-  /* Cursor off.  Will be switched on again in w32_update_window_end.  */
+  /* Cursor off.  Will be switched on again in gui_update_window_end.  */
   gui_clear_cursor (w);
 
   {

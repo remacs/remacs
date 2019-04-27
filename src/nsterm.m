@@ -1106,7 +1106,7 @@ static void
 ns_update_begin (struct frame *f)
 /* --------------------------------------------------------------------------
    Prepare for a grouped sequence of drawing calls
-   external (RIF) call; whole frame, called before update_window_begin
+   external (RIF) call; whole frame, called before gui_update_window_begin
    -------------------------------------------------------------------------- */
 {
 #ifdef NS_IMPL_COCOA
@@ -1129,80 +1129,10 @@ ns_update_begin (struct frame *f)
 
 
 static void
-ns_update_window_begin (struct window *w)
-/* --------------------------------------------------------------------------
-   Prepare for a grouped sequence of drawing calls
-   external (RIF) call; for one window, called after update_begin
-   -------------------------------------------------------------------------- */
-{
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-
-  NSTRACE_WHEN (NSTRACE_GROUP_UPDATES, "ns_update_window_begin");
-  w->output_cursor = w->cursor;
-
-  block_input ();
-
-  if (f == hlinfo->mouse_face_mouse_frame)
-    {
-      /* Don't do highlighting for mouse motion during the update.  */
-      hlinfo->mouse_face_defer = 1;
-
-        /* If the frame needs to be redrawn,
-           simply forget about any prior mouse highlighting.  */
-      if (FRAME_GARBAGED_P (f))
-        hlinfo->mouse_face_window = Qnil;
-
-      /* (further code for mouse faces ifdef'd out in other terms elided) */
-    }
-
-  unblock_input ();
-}
-
-
-static void
-ns_update_window_end (struct window *w, bool cursor_on_p,
-                      bool mouse_face_overwritten_p)
-/* --------------------------------------------------------------------------
-   Finished a grouped sequence of drawing calls
-   external (RIF) call; for one window called before update_end
-   -------------------------------------------------------------------------- */
-{
-  NSTRACE_WHEN (NSTRACE_GROUP_UPDATES, "ns_update_window_end");
-
-  /* note: this fn is nearly identical in all terms */
-  if (!w->pseudo_window_p)
-    {
-      block_input ();
-
-      if (cursor_on_p)
-	display_and_set_cursor (w, 1,
-				w->output_cursor.hpos, w->output_cursor.vpos,
-				w->output_cursor.x, w->output_cursor.y);
-
-      if (draw_window_fringes (w, 1))
-	{
-	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
-	    gui_draw_right_divider (w);
-	  else
-	    gui_draw_vertical_border (w);
-	}
-
-      unblock_input ();
-    }
-
-  /* If a row with mouse-face was overwritten, arrange for
-     frame_up_to_date to redisplay the mouse highlight.  */
-  if (mouse_face_overwritten_p)
-    reset_mouse_highlight (MOUSE_HL_INFO (XFRAME (w->frame)));
-}
-
-
-static void
 ns_update_end (struct frame *f)
 /* --------------------------------------------------------------------------
    Finished a grouped sequence of drawing calls
-   external (RIF) call; for whole frame, called after update_window_end
+   external (RIF) call; for whole frame, called after gui_update_window_end
    -------------------------------------------------------------------------- */
 {
   NSTRACE_WHEN (NSTRACE_GROUP_UPDATES, "ns_update_end");
@@ -5166,8 +5096,8 @@ static struct redisplay_interface ns_redisplay_interface =
   gui_clear_end_of_line,
   ns_scroll_run,
   ns_after_update_window_line,
-  ns_update_window_begin,
-  ns_update_window_end,
+  NULL, /* update_window_begin */
+  NULL, /* update_window_end   */
   0, /* flush_display */
   gui_clear_window_mouse_face,
   gui_get_glyph_overhangs,
