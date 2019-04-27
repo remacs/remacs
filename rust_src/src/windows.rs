@@ -25,8 +25,8 @@ use crate::{
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
-        windows_or_buffers_changed, wset_redisplay,
+        set_window_scroll_bars, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
+        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -2015,6 +2015,55 @@ pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) 
 pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
     let window: LispWindowRef = window.into();
     window.pixel_height_before_size_change
+}
+
+/// Set width and type of scroll bars of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// Second parameter WIDTH specifies the pixel width for the vertical scroll
+/// bar.  If WIDTH is nil, use the scroll bar width of WINDOW's frame.
+/// Third parameter VERTICAL-TYPE specifies the type of the vertical scroll
+/// bar: left, right, nil or t where nil means to not display a vertical
+/// scroll bar on WINDOW and t means to use WINDOW frame's vertical scroll
+/// bar type.
+///
+/// Fourth parameter HEIGHT specifies the pixel height for the horizontal
+/// scroll bar.  If HEIGHT is nil, use the scroll bar height of WINDOW's
+/// frame.  Fifth parameter HORIZONTAL-TYPE specifies the type of the
+/// horizontal scroll bar: bottom, nil, or t where nil means to not display
+/// a horizontal scroll bar on WINDOW and t means to use WINDOW frame's
+/// horizontal scroll bar type.
+///
+/// Return t if scroll bars were actually changed and nil otherwise.
+#[lisp_fn(
+    name = "set-window-scroll-bars",
+    c_name = "set_window_scroll_bars",
+    min = "1"
+)]
+pub fn set_window_scroll_bars_lisp(
+    window: LispWindowLiveOrSelected,
+    width: LispObject,
+    vertical_type: LispObject,
+    height: LispObject,
+    horizontal_type: LispObject,
+) -> bool {
+    let mut window: LispWindowRef = window.into();
+    let updated_window = unsafe {
+        set_window_scroll_bars(
+            window.as_mut(),
+            width,
+            vertical_type,
+            height,
+            horizontal_type,
+        )
+    };
+
+    if updated_window.is_null() {
+        false
+    } else {
+        unsafe { apply_window_adjustment(updated_window) };
+        true
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
