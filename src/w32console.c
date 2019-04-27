@@ -30,6 +30,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "coding.h"
 #include "termchar.h"	/* for FRAME_TTY */
+#include "dispextern.h"	/* for tty_defined_color */
 #include "menu.h"	/* for tty_menu_show */
 #include "w32term.h"
 #include "w32common.h"	/* for os_subtype */
@@ -673,6 +674,7 @@ initialize_w32_display (struct terminal *term, int *width, int *height)
   term->update_begin_hook	= w32con_update_begin;
   term->update_end_hook		= w32con_update_end;
 
+  term->defined_color_hook = &tty_defined_color; /* xfaces.c */
   term->read_socket_hook = w32_console_read_socket;
   term->mouse_position_hook = w32_console_mouse_position;
   term->menu_show_hook = tty_menu_show;
