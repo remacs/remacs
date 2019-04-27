@@ -9573,10 +9573,12 @@ a two-argument function used to combine the widths and heights of
 the given windows."
   (when windows
     (let ((width (window-max-chars-per-line (car windows)))
-          (height (window-body-height (car windows))))
+          (height (with-selected-window (car windows)
+                    (floor (window-screen-lines)))))
       (dolist (window (cdr windows))
         (setf width (funcall reducer width (window-max-chars-per-line window)))
-        (setf height (funcall reducer height (window-body-height window))))
+        (setf height (funcall reducer height (with-selected-window window
+                                               (floor (window-screen-lines))))))
       (cons width height))))
 
 (defun window-adjust-process-window-size-smallest (_process windows)
