@@ -200,4 +200,19 @@ pub fn skip_syntax_backward(syntax: LispObject, lim: LispObject) -> LispObject {
     unsafe { skip_syntaxes(false, syntax, lim) }
 }
 
+/// Scan from character number FROM by COUNT balanced expressions.
+/// If COUNT is negative, scan backwards.
+/// Returns the character number of the position thus found.
+///
+/// Comments are ignored if `parse-sexp-ignore-comments' is non-nil.
+///
+/// If the beginning or end of (the accessible part of) the buffer is reached
+/// in the middle of a parenthetical grouping, an error is signaled.
+/// If the beginning or end is reached between groupings
+/// but before count is used up, nil is returned.
+#[lisp_fn]
+pub fn scan_sexps(from: EmacsInt, count: EmacsInt) -> LispObject {
+    unsafe { scan_lists(from, count, 0, true) }
+}
+
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));

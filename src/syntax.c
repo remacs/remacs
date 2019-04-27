@@ -2863,25 +2863,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 	    make_number (last_good), make_number (from));
 }
 
-DEFUN ("scan-sexps", Fscan_sexps, Sscan_sexps, 2, 2, 0,
-       doc: /* Scan from character number FROM by COUNT balanced expressions.
-If COUNT is negative, scan backwards.
-Returns the character number of the position thus found.
-
-Comments are ignored if `parse-sexp-ignore-comments' is non-nil.
-
-If the beginning or end of (the accessible part of) the buffer is reached
-in the middle of a parenthetical grouping, an error is signaled.
-If the beginning or end is reached between groupings
-but before count is used up, nil is returned.  */)
-  (Lisp_Object from, Lisp_Object count)
-{
-  CHECK_NUMBER (from);
-  CHECK_NUMBER (count);
-
-  return scan_lists (XINT (from), XINT (count), 0, 1);
-}
-
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, Sbackward_prefix_chars,
        0, 0, 0,
        doc: /* Move point backward over any number of chars with prefix syntax.
@@ -3600,7 +3581,6 @@ In both cases, LIMIT bounds the search. */);
   defsubr (&Sinternal_describe_syntax_value);
 
   defsubr (&Sforward_comment);
-  defsubr (&Sscan_sexps);
   defsubr (&Sbackward_prefix_chars);
   defsubr (&Sparse_partial_sexp);
 }
