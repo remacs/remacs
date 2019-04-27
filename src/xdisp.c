@@ -31526,7 +31526,9 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	     is currently hidden to avoid Bug#30519.  */
 	  || (!hlinfo->mouse_face_hidden
 	      && OVERLAYP (hlinfo->mouse_face_overlay)
-	      && mouse_face_overlay_overlaps (hlinfo->mouse_face_overlay)))
+	      /* It's possible the overlay was deleted (Bug#35273).  */
+              && XMARKER (OVERLAY_START (hlinfo->mouse_face_overlay))->buffer
+              && mouse_face_overlay_overlaps (hlinfo->mouse_face_overlay)))
 	{
 	  /* Find the highest priority overlay with a mouse-face.  */
 	  Lisp_Object overlay = Qnil;
