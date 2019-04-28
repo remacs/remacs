@@ -4559,6 +4559,8 @@ extern void syms_of_w32cygwinx (void);
 /* Defined in xfaces.c.  */
 extern Lisp_Object Vface_alternative_font_family_alist;
 extern Lisp_Object Vface_alternative_font_registry_alist;
+extern bool face_color_supported_p (struct frame *f, const char *color_name,
+                                    bool background_p);
 extern void syms_of_xfaces (void);
 
 #ifdef HAVE_X_WINDOWS
