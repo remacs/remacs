@@ -110,11 +110,8 @@ absolute file name and number of characters inserted."
       (let* ((ibeg (point))
 	     (iend (+ (point) (cadr rval)))
 	     (visitingp (and visit (= ibeg (point-min)) (= iend (point-max))))
-	     (data
-	      (string-make-unibyte
-	       (buffer-substring-no-properties ibeg iend)))
-	     (image
-	      (create-image data nil t))
+             (image (create-image (encode-coding-region ibeg iend 'binary t)
+                                  nil t))
 	     (props
 	      `(display ,image
 			yank-handler
