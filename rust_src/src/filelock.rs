@@ -8,6 +8,17 @@ use std::io::Error;
 use std::io::ErrorKind::{InvalidData, InvalidInput, NotFound, PermissionDenied};
 use std::io::Result;
 use std::path::{Path, PathBuf};
+use systemstat::Platform;
+
+#[cfg(unix)]
+use libc::{ELOOP, O_NOFOLLOW, O_RDONLY};
+#[cfg(unix)]
+use std::{
+    ffi::OsStr,
+    ffi::CString,
+    os::unix::ffi::OsStrExt,
+    os::unix::io::FromRawFd,
+};
 
 use crate::{
     coding::encode_file_name,
@@ -19,6 +30,8 @@ use crate::{
     remacs_sys::{Qnil, Qstringp, Qt},
     threads::ThreadState,
 };
+use LockState::*;
+
 
 /// An arbitrary limit on lock contents length when it is stored in the
 /// contents of the lock file.  8 K should be plenty big enough in practice.
@@ -52,8 +65,9 @@ impl LockInfo {
         let user = user.to_string();
 
         // The HOST is everything after the '@' to the last '.'.
-        let (at_host, rest) = rest.split_at(rest.rfind('.')?);
-        let host = at_host[1..].to_string();
+        let rest = rest.trim_start_matches('@');
+        let (host, rest) = rest.split_at(rest.rfind('.')?);
+        let host = host.to_string();
 
         // The PID is everything from the last '.' to the ':' or equivalent.
         // NOTE: Unlike GNU Emacs, we do not tolerate negative PID values
@@ -103,11 +117,6 @@ enum LockState {
 /// because the `path` refers to a symbolic link.
 #[cfg(unix)]
 fn open_nofollow(path: &Path) -> Result<Option<File>> {
-    use libc::{ELOOP, O_NOFOLLOW, O_RDONLY};
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-    use std::os::unix::io::FromRawFd;
-
     let c_path =
         CString::new(path.as_os_str().as_bytes()).map_err(|err| Error::new(InvalidInput, err))?;
     let open_res = unsafe { emacs_open(c_path.as_ptr(), O_RDONLY | O_NOFOLLOW, 0) };
@@ -129,18 +138,23 @@ fn open_nofollow(path: &Path) -> Result<Option<File>> {
     }
 }
 
+#[cfg(windows)]
+fn open_nofollow(path: &Path) -> Result<Option<File>> {} // TODO
+
 /// Reads the contents of a regular file at `path` up to `max_content_length` bytes.
 /// Returns [`None`] if the `path` is a symbolic link.
 fn read_nofollow(path: &Path, max_content_length: usize) -> Result<Option<String>> {
-    match open_nofollow(path)? {
+    let result = match open_nofollow(path)? {
         Some(file) => {
             let mut content = String::with_capacity(max_content_length);
             file.take(max_content_length as u64)
                 .read_to_string(&mut content)?;
-            Ok(Some(content))
+            Some(content)
         }
-        None => Ok(None),
-    }
+        None => None,
+    };
+
+    Ok(result)
 }
 
 /// Reads the target of the symbolic link at `path` and converts it
@@ -207,9 +221,11 @@ fn process_exists(pid: i32) -> bool {
     }
 }
 
+#[cfg(windows)]
+fn process_exists(pid: i32) -> bool {} // TODO
+
 /// Returns the system’s last boot time as Unix epoch seconds.
 fn get_boot_time() -> Result<i64> {
-    use systemstat::Platform;
     let sys = systemstat::System::new();
     sys.boot_time().map(|t| t.timestamp())
 }
@@ -225,40 +241,41 @@ fn boot_time_within_one_second(info: &LockInfo) -> bool {
 
 /// Returns the current state of the lock from lock file `path`.
 fn current_lock_owner(path: &Path) -> Result<LockState> {
-    use LockState::*;
-
-    match read_lock_info(path)? {
+    let result = match read_lock_info(path)? {
         Some(info) => {
             // On current host?
             if info.host.as_bytes() == system_name().as_slice() {
                 if info.pid == std::process::id() as i32 {
                     // We own it.
-                    Ok(LockedByUs)
+                    LockedByUs
                 } else if process_exists(info.pid) && boot_time_within_one_second(&info) {
                     // An existing process on this machine owns it.
-                    Ok(LockedBy(info))
+                    LockedBy(info)
                 } else {
                     // The owner process is dead or has a strange pid, so try to
                     // zap the lockfile.
                     remove_file(path)?;
-                    Ok(NotLocked)
+                    NotLocked
                 }
             } else {
-                Ok(LockedBy(info))
+                LockedBy(info)
             }
         }
 
-        None => Ok(NotLocked),
-    }
+        None => NotLocked,
+    };
+
+    Ok(result)
 }
 
 #[cfg(unix)]
 fn to_path_buf(path: LispStringRef) -> PathBuf {
-    use std::ffi::OsStr;
-    use std::os::unix::ffi::OsStrExt;
     let path = encode_file_name(path);
     PathBuf::from(OsStr::from_bytes(path.as_slice()))
 }
+
+#[cfg(windows)]
+fn to_path_buf(path: LispStringRef) -> PathBuf {} // TODO (may have to return a Result)
 
 /// Generates a path to a lock file corresponding to the given
 /// file name in `path`.
@@ -312,8 +329,6 @@ pub fn unlock_buffer_lisp() {
 /// t if it is locked by you, else a string saying which user has locked it.
 #[lisp_fn]
 pub fn file_locked_p(filename: LispStringRef) -> LispObject {
-    use LockState::*;
-
     let path = make_lock_name(expand_file_name(filename, None));
 
     match current_lock_owner(&path) {
