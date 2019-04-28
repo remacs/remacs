@@ -2994,7 +2994,7 @@ macfont_shape (Lisp_Object lgstring)
 
       if (NILP (lglyph))
         {
-          lglyph = Fmake_vector (make_number (LGLYPH_SIZE), Qnil);
+          lglyph = LGLYPH_NEW ();
           LGSTRING_SET_GLYPH (lgstring, i, lglyph);
         }
 
