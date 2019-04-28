@@ -51,6 +51,7 @@
 #include "termchar.h"
 #include "termhooks.h"
 #include "termopts.h"
+#include "tempcharset.h"
 #include "thread.h"
 #include "tparam.h"
 #include "unexec.h"
