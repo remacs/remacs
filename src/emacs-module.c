@@ -902,6 +902,11 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
 	memory_full (sizeof *args[i]);
     }
 
+  /* The only possibility of getting an error until here is failure to
+     allocate memory for the arguments, but then we already should
+     have signaled an error before.  */
+  eassert (priv.pending_non_local_exit == emacs_funcall_exit_return);
+
   emacs_value ret = func->subr (env, nargs, args, func->data);
 
   eassert (&priv == env->private_members);
