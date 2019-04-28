@@ -2935,7 +2935,8 @@ See `term-prompt-regexp'."
                       (delete-region (point) (line-end-position))
                       (term-down 1 t)
                       (term-move-columns (- (term-current-column)))
-                      (put-text-property (1- (point)) (point) 'term-line-wrap t)
+                      (add-text-properties (1- (point)) (point)
+                                           '(term-line-wrap t rear-nonsticky t))
                       (setq decoded-substring
                             (substring decoded-substring (- term-width old-column)))
                       (setq old-column 0)))
@@ -3754,7 +3755,8 @@ all pending output has been dealt with."))
   (when (not (bolp))
     (let ((old-point (point)))
       (insert-before-markers ?\n)
-      (put-text-property old-point (point) 'term-line-wrap t))))
+      (add-text-properties old-point (point)
+                           '(term-line-wrap t rear-nonsticky t)))))
 
 (defun term-erase-in-line (kind)
   (when (= kind 1) ;; erase left of point
