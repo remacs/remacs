@@ -13,12 +13,7 @@ use systemstat::Platform;
 #[cfg(unix)]
 use libc::{ELOOP, O_NOFOLLOW, O_RDONLY};
 #[cfg(unix)]
-use std::{
-    ffi::OsStr,
-    ffi::CString,
-    os::unix::ffi::OsStrExt,
-    os::unix::io::FromRawFd,
-};
+use std::{ffi::CString, ffi::OsStr, os::unix::ffi::OsStrExt, os::unix::io::FromRawFd};
 
 use crate::{
     coding::encode_file_name,
@@ -31,7 +26,6 @@ use crate::{
     threads::ThreadState,
 };
 use LockState::*;
-
 
 /// An arbitrary limit on lock contents length when it is stored in the
 /// contents of the lock file.  8 K should be plenty big enough in practice.
