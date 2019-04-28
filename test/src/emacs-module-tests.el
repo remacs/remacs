@@ -147,7 +147,7 @@ changes."
 (defun multiply-string (s n)
   "Return N copies of S concatenated together."
   (let ((res ""))
-    (dotimes (i n)
+    (dotimes (_ n)
       (setq res (concat res s)))
     res))
 
