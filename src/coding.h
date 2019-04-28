@@ -695,6 +695,7 @@ extern Lisp_Object raw_text_coding_system (Lisp_Object);
 extern bool raw_text_coding_system_p (struct coding_system *);
 extern Lisp_Object coding_inherit_eol_type (Lisp_Object, Lisp_Object);
 extern Lisp_Object complement_process_encoding_system (Lisp_Object);
+extern Lisp_Object make_utf8_string (const char *, ptrdiff_t);
 
 extern void decode_coding_gap (struct coding_system *,
 			       ptrdiff_t, ptrdiff_t);
@@ -761,6 +762,17 @@ surrogates_to_codepoint (int low, int high)
   eassert (UTF_16_HIGH_SURROGATE_P (high));
   return 0x10000 + (low - 0xDC00) + ((high - 0xD800) * 0x400);
 }
+
+/* Create a multibyte Lisp string from the NUL-terminated UTF-8 string
+   beginning at DATA.  If the string is not a valid UTF-8 string, an
+   unspecified string is returned.  */
+
+INLINE Lisp_Object
+build_utf8_string (const char *data)
+{
+  return make_utf8_string (data, strlen (data));
+}
+
 
 extern Lisp_Object preferred_coding_system (void);
 

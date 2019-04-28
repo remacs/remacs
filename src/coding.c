@@ -6353,6 +6353,25 @@ utf8_string_p (Lisp_Object string)
   return check_utf_8 (&coding) != -1;
 }
 
+Lisp_Object
+make_utf8_string (const char *data, ptrdiff_t size)
+{
+  ptrdiff_t chars, bytes;
+  parse_str_as_multibyte ((const unsigned char *) data, size, &chars, &bytes);
+  /* If DATA is a valid UTF-8 string, we can convert it to a Lisp
+     string directly.  Otherwise, we need to decode it.  */
+  if (chars == size || bytes == size)
+    return make_specified_string (data, chars, size, true);
+  else
+    {
+      struct coding_system coding;
+      setup_coding_system (Qutf_8_unix, &coding);
+      coding.mode |= CODING_MODE_LAST_BLOCK;
+      coding.source = (const unsigned char *) data;
+      decode_coding_object (&coding, Qnil, 0, 0, size, size, Qt);
+      return coding.dst_object;
+    }
+}
 
 /* Detect how end-of-line of a text of length SRC_BYTES pointed by
    SOURCE is encoded.  If CATEGORY is one of
