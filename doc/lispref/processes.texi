@@ -1643,7 +1643,7 @@ how to do these things:
         (save-excursion
           ;; @r{Insert the text, advancing the process marker.}
           (goto-char (process-mark proc))
-          (insert string)
+          (insert-before-markers string)
           (set-marker (process-mark proc) (point)))
         (if moving (goto-char (process-mark proc)))))))
 @end group
