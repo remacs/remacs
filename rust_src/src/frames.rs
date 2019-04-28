@@ -6,6 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
+    lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
@@ -101,6 +102,13 @@ impl LispFrameRef {
         #[cfg(not(feature = "window-system"))]
         {
             0
+        }
+    }
+
+    pub fn get_param(self, prop: LispObject) -> LispObject {
+        match assq(prop, self.param_alist).as_cons() {
+            Some(cons) => cons.cdr(),
+            None => Qnil,
         }
     }
 }
@@ -670,6 +678,14 @@ pub fn visible_frame_list() -> LispObject {
 pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.face_alist
+}
+
+/// Return the value of frame parameter PROP in frame FRAME.
+#[no_mangle]
+pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> LispObject {
+    // It should be possible to use this method directly when we port
+    // one of the original function's callers.
+    frame.get_param(prop)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

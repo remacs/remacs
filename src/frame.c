@@ -148,19 +148,6 @@ check_window_system (struct frame *f)
 	 : "Window system is not in use or not initialized");
 }
 
-/* Return the value of frame parameter PROP in frame FRAME.  */
-
-Lisp_Object
-get_frame_param (register struct frame *frame, Lisp_Object prop)
-{
-  register Lisp_Object tem;
-
-  tem = Fassq (prop, frame->param_alist);
-  if (EQ (tem, Qnil))
-    return tem;
-  return Fcdr (tem);
-}
-
 
 void
 frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
