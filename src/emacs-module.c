@@ -530,7 +530,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   function->data = data;
 
   if (documentation)
-    function->documentation = build_utf8_string (documentation);
+    function->documentation = build_string_from_utf8 (documentation);
 
   Lisp_Object result;
   XSET_MODULE_FUNCTION (result, function);
@@ -663,7 +663,7 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   MODULE_FUNCTION_BEGIN (NULL);
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     overflow_error ();
-  Lisp_Object lstr = make_utf8_string (str, length);
+  Lisp_Object lstr = make_string_from_utf8 (str, length);
   return lisp_to_value (env, lstr);
 }
 
