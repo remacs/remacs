@@ -59,7 +59,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    into the same 1-, 2-, or 4-byte allocation unit in the MinGW
    builds.  It was also needed to port to pre-C99 compilers, although
    we don't care about that any more.  */
-#if NS_IMPL_GNUSTEP || defined(__MINGW32__)
+#if NS_IMPL_GNUSTEP || defined __MINGW32__
 typedef unsigned int bool_bf;
 #else
 typedef bool bool_bf;
@@ -225,7 +225,9 @@ extern void _DebPrint (const char *fmt, ...);
 extern char *emacs_getenv_TZ (void);
 extern int emacs_setenv_TZ (char const *);
 
-#if __has_attribute (cold)
+/* Avoid __attribute__ ((cold)) on MinGW; see thread starting at
+   <https://lists.gnu.org/r/emacs-devel/2019-04/msg01152.html>. */
+#if __has_attribute (cold) && !defined __MINGW32__
 # define ATTRIBUTE_COLD __attribute__ ((cold))
 #else
 # define ATTRIBUTE_COLD
