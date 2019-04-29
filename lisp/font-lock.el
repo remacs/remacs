@@ -1096,7 +1096,7 @@ accessible portion of the current buffer."
   (lambda (beg end)
     (unless font-lock-fontified
       (save-excursion
-        (font-lock-fontify-region (or beg (point-min)) (or end (point-max))))))
+        (font-lock-fontify-region beg end))))
   "Function to make sure a region has been fontified.
 Called with two arguments BEG and END.")
 
@@ -1392,7 +1392,12 @@ delimit the region to fontify."
 Arguments PROP and VALUE specify the property and value to prepend to the value
 already in place.  The resulting property values are always lists.
 Optional argument OBJECT is the string or buffer containing the text."
-  (let ((val (if (listp value) value (list value))) next prev)
+  (let ((val (if (and (listp value) (not (keywordp (car value))))
+                 ;; Already a list of faces.
+                 value
+               ;; A single face (e.g. a plist of face properties).
+               (list value)))
+        next prev)
     (while (/= start end)
       (setq next (next-single-property-change start prop object end)
 	    prev (get-text-property start prop object))
