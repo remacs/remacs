@@ -38,7 +38,7 @@ use crate::{
     },
     remacs_sys::{
         Fadd_text_properties, Fget_pos_property, Fnext_single_char_property_change,
-        Fprevious_single_char_property_change, Fx_popup_dialog,
+        Fprevious_single_char_property_change, Fsystem_name, Fx_popup_dialog,
     },
     remacs_sys::{
         Qboundary, Qchar_or_string_p, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt,
@@ -1702,6 +1702,11 @@ pub fn insert_before_markers_and_inherit(string: &[u8]) {
             update_compositions(opoint, pt, CHECK_BORDER as i32);
         }
     }
+}
+
+/// Wrapper for Fsystem_name (NOT PORTED)
+pub fn system_name() -> LispStringRef {
+    unsafe { Fsystem_name() }.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
