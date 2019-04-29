@@ -3846,6 +3846,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (defun tramp--test-timeout-handler (&rest _ignore)
   "Timeout handler, reporting a failed test."
   (interactive)
+  (let ((proc (get-buffer-process (current-buffer))))
+    (when (processp proc)
+      (tramp--test-message
+       "cmd: %s\n%s" (process-command proc) (buffer-string))))
   (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
 
 (ert-deftest tramp-test29-start-file-process ()
