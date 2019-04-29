@@ -456,7 +456,7 @@ QUALITY can be:
          (lineno (if (= eol 1) (1- (line-number-at-pos position)) 0))
          (type (coding-system-type coding-system))
          (base (coding-system-base coding-system))
-         byte)
+         (point-min 1))                 ;Clarify what the `1' means.
     (and (eq type 'utf-8)
          ;; Any post-read/pre-write conversions mean it's not really UTF-8.
          (not (null (coding-system-get coding-system :post-read-conversion)))
@@ -471,19 +471,17 @@ QUALITY can be:
          (setq type 'single-byte))
     (pcase type
       ('utf-8
-       (setq byte (position-bytes position))
-       (when (null byte)
-         (if (<= position 0)
-             (setq byte 1)
-           (setq byte (position-bytes (point-max)))))
-       (setq byte (1- byte))
-       (+ byte
+       (+ (or (position-bytes position)
+              (if (<= position 0)
+                  point-min
+                (position-bytes (point-max))))
           ;; Account for BOM, if any.
           (if (coding-system-get coding-system :bom) 3 0)
           ;; Account for CR in CRLF pairs.
-          lineno))
+          lineno
+          (- point-min)))
       ('single-byte
-       (+ position -1 lineno))
+       (+ position (- point-min) lineno))
       ((and 'utf-16
             ;; FIXME: For utf-16, we could use the same approach as used for
             ;; dos EOLs (counting the number of non-BMP chars instead of the
@@ -491,14 +489,14 @@ QUALITY can be:
             (guard (not (eq quality 'exact))))
        ;; In approximate mode, assume all characters are within the
        ;; BMP, i.e. each one takes up 2 bytes.
-       (+ (* (1- position) 2)
+       (+ (* (- position point-min) 2)
           ;; Account for BOM, if any.
           (if (coding-system-get coding-system :bom) 2 0)
           ;; Account for CR in CRLF pairs.
           lineno))
       (_
        (pcase quality
-         ('approximate (+ (position-bytes position) -1 lineno))
+         ('approximate (+ (position-bytes position) (- point-min) lineno))
          ('exact
           ;; Rather than assume that the file exists and still holds the right
           ;; data, we reconstruct its relevant portion.
@@ -511,7 +509,7 @@ QUALITY can be:
                     (widen)
                     (encode-coding-region (point-min) (min (point-max) position)
                                           coding-system tmp-buf)))
-                (1- (point-max)))))))))))
+                (buffer-size))))))))))
 
 (provide 'mule-util)
 
