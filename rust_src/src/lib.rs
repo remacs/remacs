@@ -126,6 +126,7 @@ mod windows;
 mod xdisp;
 mod xfaces;
 mod xml;
+mod xsettings;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

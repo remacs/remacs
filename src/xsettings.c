@@ -32,6 +32,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 #include "blockinput.h"
 #include "termhooks.h"
+#include "tempxsettings.h"
 
 #include <X11/Xproto.h>
 
@@ -48,7 +49,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/Xft/Xft.h>
 #endif
 
-#include "tempxsettings.h"
+char *current_mono_font;
+char *current_font;
+struct x_display_info *first_dpyinfo;
 static Lisp_Object current_tool_bar_style;
 
 /* Store a config changed event in to the event queue.  */
@@ -971,23 +974,6 @@ xsettings_get_system_font (void)
   return current_mono_font;
 }
 
-DEFUN ("font-get-system-normal-font", Ffont_get_system_normal_font,
-       Sfont_get_system_normal_font,
-       0, 0, 0,
-       doc: /* Get the system default application font. */)
-  (void)
-{
-  return current_font ? build_string (current_font) : Qnil;
-}
-
-DEFUN ("font-get-system-font", Ffont_get_system_font, Sfont_get_system_font,
-       0, 0, 0,
-       doc: /* Get the system default fixed width font. */)
-  (void)
-{
-  return current_mono_font ? build_string (current_mono_font) : Qnil;
-}
-
 DEFUN ("tool-bar-get-system-style", Ftool_bar_get_system_style,
        Stool_bar_get_system_style, 0, 0, 0,
        doc: /* Get the system tool bar style.
@@ -1022,8 +1008,6 @@ syms_of_xsettings (void)
   DEFSYM (Qmonospace_font_name, "monospace-font-name");
   DEFSYM (Qfont_name, "font-name");
   DEFSYM (Qfont_render, "font-render");
-  defsubr (&Sfont_get_system_font);
-  defsubr (&Sfont_get_system_normal_font);
 
   DEFVAR_BOOL ("font-use-system-font", use_system_font,
     doc: /* Non-nil means to apply the system defined font dynamically.
