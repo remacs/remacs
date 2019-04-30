@@ -322,7 +322,8 @@ the value of this variable."
   :type 'boolean
   :set (lambda (variable value)
          (set-default variable value)
-         (auto-revert-set-timer))
+	 (when (fboundp 'auto-revert-set-timer)
+           (auto-revert-set-timer)))
   :version "27.1")
 
 ;; Internal variables:
