@@ -1,4 +1,9 @@
 //! Functions for handling font and other changes dynamically.
+//!
+//! All of the functions defined in this file and on xsettings.c are
+//! only defined when Remacs is compiled with support for the X window
+//! system.
+
 #[cfg(feature = "window-system-x11")]
 use remacs_macros::lisp_fn;
 
