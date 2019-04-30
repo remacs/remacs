@@ -142,3 +142,9 @@
 		      (< 0.99 (/ x y) 1.01)
 		      (< 0.99 (/ (- (float-time a)) (float-time b))
 			 1.01))))))))
+
+(ert-deftest encode-time-dst-numeric-zone ()
+    "Check for Bug#35502."
+    (should (time-equal-p
+             (encode-time '(29 31 17 30 4 2019 2 t 7200))
+             '(23752 27217))))
