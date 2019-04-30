@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2019 Free Software Foundation, Inc.
 
-timestamp='2019-03-04'
+timestamp='2019-04-28'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1468,6 +1468,14 @@ cat > "$dummy.c" <<EOF
 #include <sys/types.h>
 #include <sys/utsname.h>
 #endif
+#if defined(ultrix) || defined(_ultrix) || defined(__ultrix) || defined(__ultrix__)
+#if defined (vax) || defined (__vax) || defined (__vax__) || defined(mips) || defined(__mips) || defined(__mips__) || defined(MIPS) || defined(__MIPS__)
+#include <signal.h>
+#if defined(_SIZE_T_) || defined(SIGLOST)
+#include <sys/utsname.h>
+#endif
+#endif
+#endif
 main ()
 {
 #if defined (sony)
@@ -1555,18 +1563,23 @@ main ()
   printf ("vax-dec-bsd\n"); exit (0);
 #endif
 #else
+#if defined(_SIZE_T_) || defined(SIGLOST)
+  struct utsname un;
+  uname (&un);
+  printf ("vax-dec-ultrix%s\n", un.release); exit (0);
+#else
   printf ("vax-dec-ultrix\n"); exit (0);
+#endif
 #endif
 #endif
 #if defined(ultrix) || defined(_ultrix) || defined(__ultrix) || defined(__ultrix__)
 #if defined(mips) || defined(__mips) || defined(__mips__) || defined(MIPS) || defined(__MIPS__)
-#include <signal.h>
-#if defined(_SIZE_T_) /* >= ULTRIX4 */
-  printf ("mips-dec-ultrix4\n"); exit (0);
+#if defined(_SIZE_T_) || defined(SIGLOST)
+  struct utsname *un;
+  uname (&un);
+  printf ("mips-dec-ultrix%s\n", un.release); exit (0);
 #else
-#if defined(ULTRIX3) || defined(ultrix3) || defined(SIGLOST)
-  printf ("mips-dec-ultrix3\n"); exit (0);
-#endif
+  printf ("mips-dec-ultrix\n"); exit (0);
 #endif
 #endif
 #endif
