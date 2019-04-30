@@ -48,9 +48,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/Xft/Xft.h>
 #endif
 
-static char *current_mono_font;
-static char *current_font;
-static struct x_display_info *first_dpyinfo;
+#include "tempxsettings.h"
 static Lisp_Object current_tool_bar_style;
 
 /* Store a config changed event in to the event queue.  */
