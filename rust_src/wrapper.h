@@ -52,7 +52,6 @@
 #include "termhooks.h"
 #include "termopts.h"
 #include "tempcharset.h"
-#include "tempxsettings.h"
 #include "thread.h"
 #include "tparam.h"
 #include "unexec.h"
@@ -60,6 +59,7 @@
 # include "widget.h"
 # include "widgetprv.h"
 # include "xsettings.h"
+# include "tempxsettings.h"
 #endif
 #include "window.h"
 #include "xgselect.h"

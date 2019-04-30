@@ -1,7 +1,8 @@
 //! Functions for handling font and other changes dynamically.
-
+#[cfg(feature = "window-system-x11")]
 use remacs_macros::lisp_fn;
 
+#[cfg(feature = "window-system-x11")]
 use crate::{
     lisp::LispObject,
     remacs_sys::build_string,
@@ -10,6 +11,7 @@ use crate::{
 };
 
 /// Get the system default application font.
+#[cfg(feature = "window-system-x11")]
 #[lisp_fn]
 pub fn font_get_system_normal_font() -> LispObject {
     if unsafe { current_font.is_null() } {
@@ -20,6 +22,7 @@ pub fn font_get_system_normal_font() -> LispObject {
 }
 
 /// Get the system default fixed width font.
+#[cfg(feature = "window-system-x11")]
 #[lisp_fn]
 pub fn font_get_system_font() -> LispObject {
     if unsafe { current_mono_font.is_null() } {
