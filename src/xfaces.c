@@ -976,7 +976,7 @@ face_color_gray_p (struct frame *f, const char *color_name)
 /* Return true if color COLOR_NAME can be displayed on frame F.
    BACKGROUND_P means the color will be used as background color.  */
 
-static bool
+bool
 face_color_supported_p (struct frame *f, const char *color_name,
 			bool background_p)
 {
@@ -1010,23 +1010,6 @@ If FRAME is nil or omitted, use the selected frame.  */)
   return (face_color_gray_p (decode_any_frame (frame), SSDATA (color))
 	  ? Qt : Qnil);
 }
-
-
-DEFUN ("color-supported-p", Fcolor_supported_p,
-       Scolor_supported_p, 1, 3, 0,
-       doc: /* Return non-nil if COLOR can be displayed on FRAME.
-BACKGROUND-P non-nil means COLOR is used as a background.
-Otherwise, this function tells whether it can be used as a foreground.
-If FRAME is nil or omitted, use the selected frame.
-COLOR must be a valid color name.  */)
-  (Lisp_Object color, Lisp_Object frame, Lisp_Object background_p)
-{
-  CHECK_STRING (color);
-  return (face_color_supported_p (decode_any_frame (frame),
-				  SSDATA (color), !NILP (background_p))
-	  ? Qt : Qnil);
-}
-
 
 static unsigned long
 load_color2 (struct frame *f, struct face *face, Lisp_Object name,
@@ -6263,7 +6246,6 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_set_lisp_face_attribute_from_resource);
 #endif
   defsubr (&Scolor_gray_p);
-  defsubr (&Scolor_supported_p);
 #ifndef HAVE_X_WINDOWS
   defsubr (&Sx_load_color_file);
 #endif
