@@ -4,13 +4,14 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     lisp::LispObject,
     multibyte::{LispStringRef, LispSymbolOrString},
+    remacs_sys::Fmake_symbol,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
     },
-    remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
     vectors::LispVectorRef,
@@ -70,7 +71,7 @@ impl LispObarrayRef {
             let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
                 // When Emacs is running lisp code to dump to an executable, make
                 // use of pure storage.
-                unsafe { Fpurecopy(string.into()) }
+                purecopy(string.into())
             } else {
                 string.into()
             };

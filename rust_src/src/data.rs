@@ -6,6 +6,7 @@ use libc::{c_char, c_int};
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     buffers::{per_buffer_idx, per_buffer_idx_from_field_offset},
     frames::selected_frame,
     keymap::get_keymap,
@@ -16,6 +17,7 @@ use crate::{
     multibyte::{is_ascii, is_single_byte_char, LispStringRef},
     obarray::{loadhist_attach, map_obarray},
     remacs_sys,
+    remacs_sys::Fdelete,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
@@ -25,7 +27,6 @@ use crate::{
     },
     remacs_sys::{per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fdelete, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
@@ -287,13 +288,11 @@ pub fn defalias(
 ) -> LispObject {
     let sym = LispObject::from(symbol);
 
-    unsafe {
-        if globals.Vpurify_flag.is_not_nil()
+    if unsafe {globals.Vpurify_flag.is_not_nil()}
             // If `definition' is a keymap, immutable (and copying) is wrong.
             && get_keymap(definition, false, false).is_nil()
-        {
-            definition = Fpurecopy(definition);
-        }
+    {
+        definition = purecopy(definition);
     }
 
     let autoload = is_autoload(definition);

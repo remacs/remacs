@@ -7,7 +7,8 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector,
+        allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
+        make_uninit_bool_vector, purecopy as c_purecopy,
     },
     remacs_sys::{EmacsInt, EmacsUint},
 };
@@ -92,6 +93,22 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
             .as_mut_slice(args.len())
             .copy_from_slice(args);
         LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
+    }
+}
+
+/// Make a copy of object OBJ in pure storage.
+/// Recursively copies contents of vectors and cons cells.
+/// Does not copy symbols.  Copies strings without text properties.
+#[lisp_fn]
+pub fn purecopy(obj: LispObject) -> LispObject {
+    #![allow(clippy::if_same_then_else)]
+    if unsafe { globals.Vpurify_flag.is_nil() } {
+        obj
+    } else if obj.is_marker() || obj.is_overlay() || obj.is_symbol() {
+        // Can't purify those.
+        obj
+    } else {
+        unsafe { c_purecopy(obj) }
     }
 }
 
