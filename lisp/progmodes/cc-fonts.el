@@ -1042,7 +1042,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (c-do-declarators
      limit list not-top
      (if types 'c-decl-type-start 'c-decl-id-start)
-     (lambda (id-start id-end end-pos not-top is-function init-char)
+     (lambda (id-start _id-end end-pos _not-top is-function init-char)
        (if types
 	   ;; Register and fontify the identifier as a type.
 	   (let ((c-promote-possible-types t))
