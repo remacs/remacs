@@ -816,8 +816,16 @@ If QUIET, do not print a message when there are no attributes for TAG."
 		(symbolp (car (car alist))))
 	    (setq car (car alist)
 		  alist (cdr alist)))
-	(or quiet
-	    (message "No attributes configured."))
+	(unless (or alist quiet)
+	  (message "No attributes configured."))
+        (when alist
+          ;; Add class and id attributes if a) the element has any
+          ;; other attributes configured, and b) they're not already
+          ;; present.
+          (unless (assoc-string "class" alist)
+            (setq alist (cons '("class") alist)))
+          (unless (assoc-string "id" alist)
+            (setq alist (cons '("id") alist))))
 	(if (stringp (car alist))
 	    (progn
 	      (insert (if (eq (preceding-char) ?\s) "" ?\s)
@@ -1795,6 +1803,7 @@ This takes effect when first loading the library.")
     (define-key map "\C-c\C-ci" 'html-image)
     (when html-quick-keys
       (define-key map "\C-c-" 'html-horizontal-rule)
+      (define-key map "\C-cd" 'html-div)
       (define-key map "\C-co" 'html-ordered-list)
       (define-key map "\C-cu" 'html-unordered-list)
       (define-key map "\C-cr" 'html-radio-buttons)
@@ -1802,7 +1811,8 @@ This takes effect when first loading the library.")
       (define-key map "\C-cl" 'html-list-item)
       (define-key map "\C-ch" 'html-href-anchor)
       (define-key map "\C-cn" 'html-name-anchor)
-      (define-key map "\C-ci" 'html-image))
+      (define-key map "\C-ci" 'html-image)
+      (define-key map "\C-cs" 'html-span))
     (define-key map "\C-c\C-s" 'html-autoview-mode)
     (define-key map "\C-c\C-v" 'browse-url-of-buffer)
     (define-key map [menu-bar html] (cons "HTML" menu-map))
@@ -2003,7 +2013,7 @@ This takes effect when first loading the library.")
       ("dd" ,(not sgml-xml-mode))
       ("del" nil ("cite") ("datetime"))
       ("dfn")
-      ("div")
+      ("div" \n ("id") ("class"))
       ("dl" (nil \n
 		 ( "Term: "
 		   "<dt>" str (if sgml-xml-mode "</dt>")
@@ -2489,16 +2499,16 @@ HTML Autoview mode is a buffer-local minor mode for use with
 (define-skeleton html-ordered-list
   "HTML ordered list tags."
   nil
-  "<ol>" \n
+  \n "<ol>" \n
   "<li>" _ (if sgml-xml-mode "</li>") \n
-  "</ol>")
+  "</ol>" > \n)
 
 (define-skeleton html-unordered-list
   "HTML unordered list tags."
   nil
-  "<ul>" \n
+  \n "<ul>" \n
   "<li>" _ (if sgml-xml-mode "</li>") \n
-  "</ul>")
+  "</ul>" > \n)
 
 (define-skeleton html-list-item
   "HTML list item tag."
@@ -2509,8 +2519,17 @@ HTML Autoview mode is a buffer-local minor mode for use with
 (define-skeleton html-paragraph
   "HTML paragraph tag."
   nil
-  (if (bolp) nil ?\n)
-  "<p>" _ (if sgml-xml-mode "</p>"))
+  \n "<p>" _ (if sgml-xml-mode "</p>"))
+
+(define-skeleton html-div
+  "HTML div tag."
+  nil
+  "<div>" > \n _ \n "</div>" >)
+
+(define-skeleton html-span
+  "HTML span tag."
+  nil
+  "<span>" > _ "</span>")
 
 (define-skeleton html-checkboxes
   "Group of connected checkbox inputs."
