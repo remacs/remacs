@@ -1549,7 +1549,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; Fontification".
-  (while (search-forward-regexp c-enum-clause-introduction-re limit t)
+  (while (and (< (point) limit)
+	      (search-forward-regexp c-enum-clause-introduction-re limit t))
     (when (save-excursion
 	    (backward-char)
 	    (c-backward-over-enum-header))
@@ -2850,7 +2851,8 @@ need for `pike-font-lock-extra-types'.")
 			 "\\)\\)\\s *\\)@[A-Za-z_-]+\\(\\s \\|$\\)"))
 	(markup-faces (list c-doc-markup-face-name c-doc-face-name)))
 
-    (while (re-search-forward line-re limit t)
+    (while (and (< (point) limit)
+		(re-search-forward line-re limit t))
       (goto-char (match-end 1))
 
       (if (looking-at autodoc-decl-keywords)
