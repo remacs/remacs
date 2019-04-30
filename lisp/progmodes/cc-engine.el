@@ -1812,7 +1812,7 @@ comment at the start of cc-engine.el for more info."
 	  (setcar c-sws-lit-limits (match-beginning 1))
 	(setq c-sws-lit-limits (cons (match-beginning 1) (match-end 1)))))))
 
-(defun c-invalidate-sws-region-after-del (beg end old-len)
+(defun c-invalidate-sws-region-after-del (beg end _old-len)
   ;; Text has been deleted, OLD-LEN characters of it starting from position
   ;; BEG.  END is typically eq to BEG.  Should there have been a comment or
   ;; CPP construct open at END before the deletion, check whether this
@@ -5475,6 +5475,9 @@ comment at the start of cc-engine.el for more info."
   (setq c-bs-cache-limit
 	(min c-bs-cache-limit pos)))
 
+(defvar c-restricted-<>-arglists)	;FIXME: Move definition here?
+(defvar c-parse-and-markup-<>-arglists)	;FIXME: Move definition here?
+
 (defun c-update-brace-stack (stack from to)
   ;; Given a brace-stack which has the value STACK at position FROM, update it
   ;; to its value at position TO, where TO is after (or equal to) FROM.
@@ -6488,9 +6491,6 @@ comment at the start of cc-engine.el for more info."
 	    (c-clear-<>-pair-props)
 	    (forward-char)))))))
 
-(defvar c-restricted-<>-arglists)	;FIXME: Move definition here?
-(defvar c-parse-and-markup-<>-arglists)	;FIXME: Move definition here?
-
 (defun c-restore-<>-properties (_beg _end _old-len)
   ;; This function is called as an after-change function.  It restores the
   ;; category/syntax-table properties on template/generic <..> pairs between
@@ -6927,7 +6927,7 @@ comment at the start of cc-engine.el for more info."
   ;; This functions is called as an after-change function by virtue of its
   ;; membership of the C++ value of `c-before-font-lock-functions'.
   ;; (when (< beg end)
-    (c-save-buffer-state (found eoll state id found-beg found-end)
+    (c-save-buffer-state (found eoll state id found-beg)
       ;; Has an inserted " swallowed up a R"(, turning it into "...R"(?
       (goto-char end)
       (setq eoll (c-point 'eoll))
