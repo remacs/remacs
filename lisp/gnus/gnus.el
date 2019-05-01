@@ -2892,7 +2892,7 @@ See Info node `(gnus)Formatting Variables'."
 
 (defun gnus-set-info (group info)
   (setcdr (gethash group gnus-newsrc-hashtb)
-	  info))
+	  (list info)))
 
 
 ;;;
