@@ -47,7 +47,7 @@ cd $PD
 cd ../
 [ -d admin ] || die "Could not locate admin directory"
 
-[ -d .git ] || die "No .git directory"
+[ -e .git ] || die "No .git"
 
 usage ()
 {
