@@ -265,17 +265,19 @@ If that doesn't give a function, return nil."
         (condition-case ()
             (save-excursion
               (save-restriction
-                (narrow-to-region (max (point-min)
-                                       (- (point) 1000)) (point-max))
-                ;; Move up to surrounding paren, then after the open.
-                (backward-up-list 1)
-                (forward-char 1)
-                ;; If there is space here, this is probably something
-                ;; other than a real Lisp function call, so ignore it.
-                (if (looking-at "[ \t]")
-                    (error "Probably not a Lisp function call"))
-                (let ((obj (read (current-buffer))))
-                  (and (symbolp obj) (fboundp obj) obj))))
+                (let ((forward-sexp-function nil)) ;Use elisp-mode's value
+                  (narrow-to-region (max (point-min)
+                                         (- (point) 1000))
+                                    (point-max))
+                  ;; Move up to surrounding paren, then after the open.
+                  (backward-up-list 1)
+                  (forward-char 1)
+                  ;; If there is space here, this is probably something
+                  ;; other than a real Lisp function call, so ignore it.
+                  (if (looking-at "[ \t]")
+                      (error "Probably not a Lisp function call"))
+                  (let ((obj (read (current-buffer))))
+                    (and (symbolp obj) (fboundp obj) obj)))))
           (error nil))
         (let* ((str (find-tag-default))
                (sym (if str (intern-soft str))))
