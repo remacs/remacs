@@ -731,7 +731,8 @@ references displayed in the current *xref* buffer."
   (interactive "e")
   (mouse-set-point event)
   (forward-line 0)
-  (xref--search-property 'xref-item)
+  (or (get-text-property (point) 'xref-item)
+      (xref--search-property 'xref-item))
   (xref-show-location-at-point))
 
 (defun xref--insert-xrefs (xref-alist)
