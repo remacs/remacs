@@ -930,16 +930,16 @@ This is always set to nil at the entry to `table-with-cache-buffer' before execu
 ;; refill the table cache.  If the command were not listed fast
 ;; typing can cause unwanted cache refill.
 (defconst table-cell-bindings
-  '(([(control i)]	. table-forward-cell)
-    ([(control I)]	. table-backward-cell)
+  '(([(control ?i)]	. table-forward-cell)
+    ([(control ?I)]	. table-backward-cell)
     ([tab]		. table-forward-cell)
     ([(shift backtab)]	. table-backward-cell) ; for HPUX console keyboard
     ([(shift iso-lefttab)]    . table-backward-cell) ; shift-tab on a microsoft natural keyboard and redhat linux
     ([(shift tab)]	. table-backward-cell)
     ([backtab]          . table-backward-cell) ; for terminals (e.g., xterm)
     ([return]		. *table--cell-newline)
-    ([(control m)]	. *table--cell-newline)
-    ([(control j)]	. *table--cell-newline-and-indent)
+    ([(control ?m)]	. *table--cell-newline)
+    ([(control ?j)]	. *table--cell-newline-and-indent)
     ([mouse-3]		. *table--present-cell-popup-menu)
     ([(control ?>)]	. table-widen-cell)
     ([(control ?<)]	. table-narrow-cell)
