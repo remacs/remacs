@@ -828,20 +828,25 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defun xref--read-identifier (prompt)
   "Return the identifier at point or read it from the minibuffer."
   (let* ((backend (xref-find-backend))
-         (id (xref-backend-identifier-at-point backend)))
+         (def (xref-backend-identifier-at-point backend)))
     (cond ((or current-prefix-arg
-               (not id)
+               (not def)
                (xref--prompt-p this-command))
-           (completing-read (if id
-                                (format "%s (default %s): "
-                                        (substring prompt 0 (string-match
-                                                             "[ :]+\\'" prompt))
-                                        id)
-                              prompt)
-                            (xref-backend-identifier-completion-table backend)
-                            nil nil nil
-                            'xref--read-identifier-history id))
-          (t id))))
+           (let ((id
+                  (completing-read
+                   (if def
+                       (format "%s (default %s): "
+                               (substring prompt 0 (string-match
+                                                    "[ :]+\\'" prompt))
+                               def)
+                     prompt)
+                   (xref-backend-identifier-completion-table backend)
+                   nil nil nil
+                   'xref--read-identifier-history def)))
+             (if (equal id "")
+                 (or def (user-error "There is no defailt identifier"))
+               id)))
+          (t def))))
 
 
 ;;; Commands
