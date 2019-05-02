@@ -45,6 +45,9 @@
 (require 'timer)
 (require 'ucs-normalize)
 
+(declare-function tramp-compat-file-local-name 'tramp-compat)
+(declare-function tramp-compat-file-name-quoted-p 'tramp-compat)
+
 ;; For not existing functions, obsolete functions, or functions with a
 ;; changed argument list, there are compiler warnings.  We want to
 ;; avoid them in cases we know what we do.
@@ -187,43 +190,45 @@ This is a string of ten letters or dashes as in ls -l."
 
 ;; `file-local-name', `file-name-quoted-p', `file-name-quote' and
 ;; `file-name-unquote' are introduced in Emacs 26.
-(eval-and-compile
-  (if (fboundp 'file-local-name)
-      (defalias 'tramp-compat-file-local-name #'file-local-name)
-    (defsubst tramp-compat-file-local-name (name)
-      "Return the local name component of NAME.
+(if (fboundp 'file-local-name)
+    (defalias 'tramp-compat-file-local-name #'file-local-name)
+  (defsubst tramp-compat-file-local-name (name)
+    "Return the local name component of NAME.
 It returns a file name which can be used directly as argument of
 `process-file', `start-file-process', or `shell-command'."
-      (or (file-remote-p name 'localname) name)))
+    (or (file-remote-p name 'localname) name)))
 
-  (if (fboundp 'file-name-quoted-p)
-      (defalias 'tramp-compat-file-name-quoted-p #'file-name-quoted-p)
-    (defsubst tramp-compat-file-name-quoted-p (name &optional top)
-      "Whether NAME is quoted with prefix \"/:\".
+;; `file-name-quoted-p' got a second argument in Emacs 27.1.
+(if (and
+     (fboundp 'file-name-quoted-p)
+     (equal (tramp-compat-funcall 'func-arity #'file-name-quoted-p) '(1 . 2)))
+    (defalias 'tramp-compat-file-name-quoted-p #'file-name-quoted-p)
+  (defsubst tramp-compat-file-name-quoted-p (name &optional top)
+    "Whether NAME is quoted with prefix \"/:\".
 If NAME is a remote file name and TOP is nil, check the local part of NAME."
-      (let ((file-name-handler-alist (unless top file-name-handler-alist)))
-	(string-prefix-p "/:" (tramp-compat-file-local-name name)))))
+    (let ((file-name-handler-alist (unless top file-name-handler-alist)))
+      (string-prefix-p "/:" (tramp-compat-file-local-name name)))))
 
-  (if (fboundp 'file-name-quote)
-      (defalias 'tramp-compat-file-name-quote #'file-name-quote)
-    (defsubst tramp-compat-file-name-quote (name)
-      "Add the quotation prefix \"/:\" to file NAME.
+(if (fboundp 'file-name-quote)
+    (defalias 'tramp-compat-file-name-quote #'file-name-quote)
+  (defsubst tramp-compat-file-name-quote (name)
+    "Add the quotation prefix \"/:\" to file NAME.
 If NAME is a remote file name, the local part of NAME is quoted."
-      (if (tramp-compat-file-name-quoted-p name)
-	  name
-	(concat
-	 (file-remote-p name) "/:" (tramp-compat-file-local-name name)))))
+    (if (tramp-compat-file-name-quoted-p name)
+	name
+      (concat
+       (file-remote-p name) "/:" (tramp-compat-file-local-name name)))))
 
-  (if (fboundp 'file-name-unquote)
-      (defalias 'tramp-compat-file-name-unquote #'file-name-unquote)
-    (defsubst tramp-compat-file-name-unquote (name)
-      "Remove quotation prefix \"/:\" from file NAME.
+(if (fboundp 'file-name-unquote)
+    (defalias 'tramp-compat-file-name-unquote #'file-name-unquote)
+  (defsubst tramp-compat-file-name-unquote (name)
+    "Remove quotation prefix \"/:\" from file NAME.
 If NAME is a remote file name, the local part of NAME is unquoted."
-      (let ((localname (tramp-compat-file-local-name name)))
-	(when (tramp-compat-file-name-quoted-p localname)
-	  (setq
-	   localname (if (= (length localname) 2) "/" (substring localname 2))))
-	(concat (file-remote-p name) localname)))))
+    (let ((localname (tramp-compat-file-local-name name)))
+      (when (tramp-compat-file-name-quoted-p localname)
+	(setq
+	 localname (if (= (length localname) 2) "/" (substring localname 2))))
+      (concat (file-remote-p name) localname))))
 
 ;; `tramp-syntax' has changed its meaning in Emacs 26.  We still
 ;; support old settings.
@@ -241,7 +246,7 @@ If NAME is a remote file name, the local part of NAME is unquoted."
     '(cdr (mapcar #'car (get 'tramp-file-name 'cl-struct-slots)))))
 
 ;; The signature of `tramp-make-tramp-file-name' has been changed.
-;; Therefore, we cannot us `url-tramp-convert-url-to-tramp' prior
+;; Therefore, we cannot use `url-tramp-convert-url-to-tramp' prior
 ;; Emacs 26.1.  We use `temporary-file-directory' as indicator.
 (defconst tramp-compat-use-url-tramp-p (fboundp 'temporary-file-directory)
   "Whether to use url-tramp.el.")
