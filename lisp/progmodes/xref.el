@@ -1064,7 +1064,8 @@ IGNORES is a list of glob patterns."
 IGNORES is a list of glob patterns.  DIR is an absolute
 directory, used as the root of the ignore globs."
   (cl-assert (not (string-match-p "\\`~" dir)))
-  (when ignores
+  (if (not ignores)
+      ""
     (concat
      (shell-quote-argument "(")
      " -path "
