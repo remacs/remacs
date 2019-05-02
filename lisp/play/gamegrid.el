@@ -663,6 +663,7 @@ FILE is created there."
 	      (revert-buffer nil t nil)
 	      (display-buffer buf))
 	  (find-file-read-only target))
+        (view-mode)
         (goto-char (point-min))
         (search-forward (concat (int-to-string score)
 				" " (user-login-name) " "
@@ -691,7 +692,8 @@ FILE is created there."
     (forward-line gamegrid-score-file-length)
     (delete-region (point) (point-max))
     (setq buffer-read-only t)
-    (save-buffer)))
+    (save-buffer)
+    (view-mode)))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
