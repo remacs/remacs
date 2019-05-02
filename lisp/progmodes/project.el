@@ -355,7 +355,7 @@ requires quoting, e.g. `\\[quoted-insert]<space>'."
             (let ((dir (read-directory-name "Base directory: "
                                             nil default-directory t)))
               (project--files-in-directory dir
-                                           (project--dir-ignores pr dir)
+                                           nil
                                            (grep-read-files regexp))))))
     (project--find-regexp-in-files regexp files)))
 
