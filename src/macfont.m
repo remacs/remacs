@@ -1650,7 +1650,7 @@ static unsigned macfont_encode_char (struct font *, int);
 static void macfont_text_extents (struct font *, unsigned int *, int,
                                   struct font_metrics *);
 static int macfont_draw (struct glyph_string *, int, int, int, int, bool);
-static Lisp_Object macfont_shape (Lisp_Object);
+static Lisp_Object macfont_shape (Lisp_Object, Lisp_Object);
 static int macfont_variation_glyphs (struct font *, int c,
                                      unsigned variations[256]);
 static void macfont_filter_properties (Lisp_Object, Lisp_Object);
@@ -3666,7 +3666,7 @@ mac_font_create_line_with_string_and_font (CFStringRef string,
 static CFIndex
 mac_font_shape (CTFontRef font, CFStringRef string,
 		struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len,
-		lgstring_direction dir)
+		enum lgstring_direction dir)
 {
   CFIndex used, result = 0;
   CTLineRef ctline = mac_font_create_line_with_string_and_font (string, font);
