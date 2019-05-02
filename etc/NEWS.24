@@ -1117,6 +1117,8 @@ a non-nil `interactive-only' property.
 The value, if non-nil, is a regexp that specifies what to trim from
 the start and end of each substring.
 
+** New function `delete-consecutive-dups'.
+
 ** Completion
 
 *** The separator used by `completing-read-multiple' is now a regexp.
