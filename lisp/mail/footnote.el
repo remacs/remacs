@@ -164,7 +164,9 @@ left with the first character of footnote text."
   "List of (FN TEXT . POINTERS).
 Where FN is the footnote number, TEXT is a marker pointing to
 the footnote's text, and POINTERS is a list of markers pointing
-to the places from which the footnote is referenced.")
+to the places from which the footnote is referenced.
+TEXT points right *before* the [...] and POINTERS point right
+*after* the [...].")
 
 (defvar footnote-mouse-highlight 'highlight
   ;; FIXME: This `highlight' property is not currently used.
@@ -452,52 +454,41 @@ Conversion is done based upon the current selected style."
 
 (defun footnote--refresh-footnotes (&optional index-regexp)
   "Redraw all footnotes.
-You must call this or arrange to have this called after changing footnote
-styles."
-  (unless index-regexp
-    (setq index-regexp (footnote--current-regexp)))
-  (save-excursion
-    ;; Take care of the pointers first
-    (let ((i 0) locn alist)
-      (while (setq alist (nth i footnote--markers-alist))
-	(setq locn (cddr alist))
-	(while locn
-	  (goto-char (car locn))
+You must call this or arrange to have this called after changing
+footnote styles."
+  (let ((fn-regexp (concat
+		    (regexp-quote footnote-start-tag)
+		    "\\(" (or index-regexp (footnote--current-regexp)) "+\\)"
+		    (regexp-quote footnote-end-tag))))
+    (save-excursion
+      (pcase-dolist (`(,fn ,text . ,pointers) footnote--markers-alist)
+        ;; Take care of the pointers first
+	(dolist (locn pointers)
+	  (goto-char locn)
 	  ;; Try to handle the case where `footnote-start-tag' and
 	  ;; `footnote-end-tag' are the same string.
-	  (when (looking-back (concat
-			       (regexp-quote footnote-start-tag)
-			       "\\(" index-regexp "+\\)"
-			       (regexp-quote footnote-end-tag))
+	  (when (looking-back fn-regexp
 			      (line-beginning-position))
 	    (replace-match
 	     (propertize
 	      (concat
 	       footnote-start-tag
-	       (footnote--index-to-string (1+ i))
+	       (footnote--index-to-string fn)
 	       footnote-end-tag)
-	      'footnote-number (1+ i) footnote-mouse-highlight t)
-	     nil "\\1"))
-	  (setq locn (cdr locn)))
-	(setq i (1+ i))))
+	      'footnote-number fn footnote-mouse-highlight t)
+	     t t)))
 
-    ;; Now take care of the text section
-    (let ((i 0) alist)
-      (while (setq alist (nth i footnote--markers-alist))
-	(goto-char (cadr alist))
-	(when (looking-at (concat
-			   (regexp-quote footnote-start-tag)
-			   "\\(" index-regexp "+\\)"
-			   (regexp-quote footnote-end-tag)))
+        ;; Now take care of the text section
+	(goto-char text)
+	(when (looking-at fn-regexp)
 	  (replace-match
 	   (propertize
 	    (concat
 	     footnote-start-tag
-	     (footnote--index-to-string (1+ i))
+	     (footnote--index-to-string fn)
 	     footnote-end-tag)
-	    'footnote-number (1+ i))
-	   nil "\\1"))
-	(setq i (1+ i))))))
+	    'footnote-number fn)
+	   t t))))))
 
 (defun footnote-cycle-style ()
   "Select next defined footnote style."
@@ -532,31 +523,28 @@ styles."
 
 (defun footnote--renumber (to alist-elem)
   "Renumber a single footnote."
-  (let* ((posn-list (cddr alist-elem)))
-    (setcar alist-elem to)
-    (while posn-list
-      (goto-char (car posn-list))
-      (when (looking-back (concat (regexp-quote footnote-start-tag)
-				  (footnote--current-regexp)
-				  (regexp-quote footnote-end-tag))
-			  (line-beginning-position))
-	(replace-match
-	 (propertize
+  (unless (equal to (car alist-elem))   ;Nothing to do.
+    (let* ((fn-regexp (concat (regexp-quote footnote-start-tag)
+			      (footnote--current-regexp)
+			      (regexp-quote footnote-end-tag))))
+      (setcar alist-elem to)
+      (dolist (posn (cddr alist-elem))
+        (goto-char posn)
+        (when (looking-back fn-regexp (line-beginning-position))
+	  (replace-match
+	   (propertize
+	    (concat footnote-start-tag
+		    (footnote--index-to-string to)
+		    footnote-end-tag)
+	    'footnote-number to footnote-mouse-highlight t))))
+      (goto-char (cadr alist-elem))
+      (when (looking-at fn-regexp)
+        (replace-match
+         (propertize
 	  (concat footnote-start-tag
 		  (footnote--index-to-string to)
 		  footnote-end-tag)
-	  'footnote-number to footnote-mouse-highlight t)))
-      (setq posn-list (cdr posn-list)))
-    (goto-char (cadr alist-elem))
-    (when (looking-at (concat (regexp-quote footnote-start-tag)
-			      (footnote--current-regexp)
-			      (regexp-quote footnote-end-tag)))
-      (replace-match
-       (propertize
-	(concat footnote-start-tag
-		(footnote--index-to-string to)
-		footnote-end-tag)
-	'footnote-number to)))))
+	  'footnote-number to))))))
 
 (defun footnote--narrow-to-footnotes ()
   "Restrict text in buffer to show only text of footnotes."
@@ -652,18 +640,11 @@ Presumes we're within the footnote area already."
   "Return the number of the current footnote if in footnote text.
 Return nil if the cursor is not positioned over the text of
 a footnote."
-  (when (and footnote--markers-alist
-             (<= (footnote--get-area-point-min)
-                 (point)
-                 (footnote--get-area-point-max)))
-    (let ((i 1) alist-txt result)
-      (while (and (setq alist-txt (nth i footnote--markers-alist))
-                  (null result))
-        (when (< (point) (cadr alist-txt))
-          (setq result (car (nth (1- i) footnote--markers-alist))))
-        (setq i (1+ i)))
-      (when (and (null result) (null alist-txt))
-        (setq result (car (nth (1- i) footnote--markers-alist))))
+  (when (<= (point) (footnote--get-area-point-max))
+    (let ((result nil))
+      (pcase-dolist (`(,fn ,text . ,_) footnote--markers-alist)
+        (if (<= text (point))
+            (setq result fn)))
       result)))
 
 (defun footnote--under-cursor ()
@@ -750,11 +731,8 @@ footnote area, returns `point-max'."
 
 (defun footnote--make-hole ()
   (save-excursion
-    (let ((i 0)
-	  (notes (length footnote--markers-alist))
-	  alist-elem rc)
-      (while (< i notes)
-	(setq alist-elem (nth i footnote--markers-alist))
+    (let (rc)
+      (dolist (alist-elem footnote--markers-alist)
 	(when (< (point) (- (cl-caddr alist-elem) 3))
 	  (unless rc
 	    (setq rc (car alist-elem)))
@@ -764,8 +742,7 @@ footnote area, returns `point-max'."
 		     (footnote--index-to-string
 		      (1+ (car alist-elem))))
 	    (footnote--renumber (1+ (car alist-elem))
-			        alist-elem)))
-	(setq i (1+ i)))
+			        alist-elem))))
       rc)))
 
 (defun footnote-add-footnote ()
@@ -778,9 +755,10 @@ by using `footnote-back-to-message'."
   (interactive "*")
   (let ((num
          (if footnote--markers-alist
-             (if (< (point) (cl-caddar (last footnote--markers-alist)))
-                 (footnote--make-hole)
-               (1+ (caar (last footnote--markers-alist))))
+             (let ((last (car (last footnote--markers-alist))))
+               (if (< (point) (cl-caddr last))
+                   (footnote--make-hole)
+                 (1+ (car last))))
            1)))
     (message "Adding footnote %d" num)
     (footnote--insert-footnote num)
@@ -807,20 +785,17 @@ delete the footnote with that number."
   (when (and arg
 	     (or (not footnote-prompt-before-deletion)
 		 (y-or-n-p (format "Really delete footnote %d?" arg))))
-    (let (alist-elem locn)
-      (setq alist-elem (assq arg footnote--markers-alist))
-      (unless alist-elem
-	(error "Can't delete footnote %d" arg))
-      (setq locn (cddr alist-elem))
-      (while (car locn)
+    (let ((alist-elem (or (assq arg footnote--markers-alist)
+                          (error "Can't delete footnote %d" arg)))
+          (fn-regexp (concat (regexp-quote footnote-start-tag)
+			     (footnote--current-regexp)
+			     (regexp-quote footnote-end-tag))))
+      (dolist (locn (cddr alist-elem))
 	(save-excursion
-	  (goto-char (car locn))
-	  (when (looking-back (concat (regexp-quote footnote-start-tag)
-				      (footnote--current-regexp)
-				      (regexp-quote footnote-end-tag))
+	  (goto-char locn)
+	  (when (looking-back fn-regexp
 			      (line-beginning-position))
-	    (delete-region (match-beginning 0) (match-end 0))))
-	(setq locn (cdr locn)))
+	    (delete-region (match-beginning 0) (match-end 0)))))
       (save-excursion
 	(goto-char (cadr alist-elem))
 	(delete-region
@@ -833,8 +808,8 @@ delete the footnote with that number."
 	      (point) 'footnote-number nil (footnote--goto-char-point-max))))))
       (setq footnote--markers-alist
 	    (delq alist-elem footnote--markers-alist))
-      (footnote-renumber-footnotes)
-      (when (null footnote--markers-alist)
+      (if footnote--markers-alist
+          (footnote-renumber-footnotes)
 	(save-excursion
 	  (if (not (string-equal footnote-section-tag ""))
 	      (let* ((end (footnote--goto-char-point-max))
@@ -855,13 +830,9 @@ delete the footnote with that number."
   "Renumber footnotes, starting from 1."
   (interactive "*")
   (save-excursion
-    (let ((i 0)
-	  (notes (length footnote--markers-alist))
-	  alist-elem)
-      (while (< i notes)
-	(setq alist-elem (nth i footnote--markers-alist))
-	(unless (= (1+ i) (car alist-elem))
-	  (footnote--renumber (1+ i) alist-elem))
+    (let ((i 1))
+      (dolist (alist-elem footnote--markers-alist)
+	(footnote--renumber i alist-elem)
 	(setq i (1+ i))))))
 
 (defun footnote-goto-footnote (&optional arg)
@@ -900,13 +871,13 @@ being set it is automatically widened."
 
 (defvar footnote-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "a" 'footnote-add-footnote)
-    (define-key map "b" 'footnote-back-to-message)
-    (define-key map "c" 'footnote-cycle-style)
-    (define-key map "d" 'footnote-delete-footnote)
-    (define-key map "g" 'footnote-goto-footnote)
-    (define-key map "r" 'footnote-renumber-footnotes)
-    (define-key map "s" 'footnote-set-style)
+    (define-key map "a" #'footnote-add-footnote)
+    (define-key map "b" #'footnote-back-to-message)
+    (define-key map "c" #'footnote-cycle-style)
+    (define-key map "d" #'footnote-delete-footnote)
+    (define-key map "g" #'footnote-goto-footnote)
+    (define-key map "r" #'footnote-renumber-footnotes)
+    (define-key map "s" #'footnote-set-style)
     map))
 
 (defvar footnote-minor-mode-map
