@@ -472,10 +472,8 @@ If MODE is not set, try to find mode automatically."
 		       (buffer-string)))
 		    (coding-system
 		     (decode-coding-string text coding-system))
-		    (charset
-		     (mm-decode-string text charset))
-		    (t
-		     text)))
+                    (t
+                     (mm-decode-string text (or charset 'undecided)))))
       (let ((font-lock-verbose nil)     ; font-lock is a bit too verbose.
 	    (enable-local-variables nil))
         ;; We used to set font-lock-mode-hook to nil to avoid enabling
