@@ -287,7 +287,8 @@ otherwise return nil and leave point unchanged.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
-  (let ((here (point)))
+  (let ((here (point))
+	(pause (c-point 'eol)))
     (when c-opt-cpp-prefix
       (if (and (car c-macro-cache)
 	       (>= (point) (car c-macro-cache))
@@ -307,8 +308,23 @@ comment at the start of cc-engine.el for more info."
 	(save-restriction
 	  (if lim (narrow-to-region lim (point-max)))
 	  (beginning-of-line)
-	  (while (eq (char-before (1- (point))) ?\\)
-	    (forward-line -1))
+	  (when (or (null lim)
+		    (>= here lim))
+	    (while
+		(progn
+		  (while (eq (char-before (1- (point))) ?\\)
+		    (forward-line -1))
+		  (when (and c-last-c-comment-end-on-line-re
+			     (re-search-forward
+			      c-last-c-comment-end-on-line-re pause t))
+		    (goto-char (match-end 1))
+		    (if (c-backward-single-comment)
+			(progn
+			  (beginning-of-line)
+			  (setq pause (point)))
+		      (goto-char pause)
+		      nil)))))
+
 	  (back-to-indentation)
 	  (if (and (<= (point) here)
 		   (save-match-data (looking-at c-opt-cpp-start))
@@ -345,12 +361,23 @@ comment at the start of cc-engine.el for more info."
 	      c-macro-cache-start-pos nil
 	      c-macro-cache-syntactic nil
 	      c-macro-cache-no-comment nil))
-      (while (progn
-	       (end-of-line)
-	       (when (and (eq (char-before) ?\\)
-			  (not (eobp)))
-		 (forward-char)
-		 t)))
+      (while
+	  (progn
+	    (while (progn
+		     (end-of-line)
+		     (when (and (eq (char-before) ?\\)
+				(not (eobp)))
+		       (forward-char)
+		       t)))
+	    (if (and c-last-open-c-comment-start-on-line-re
+		     (re-search-backward
+		      c-last-open-c-comment-start-on-line-re
+		      (c-point 'bol) t))
+		(progn
+		  (goto-char (match-beginning 1))
+		  (c-forward-single-comment))
+	      nil)))
+
       (when (and (car c-macro-cache)
 		 (bolp)
 		 (not (eq (char-before (1- (point))) ?\\)))
@@ -2007,6 +2034,10 @@ comment at the start of cc-engine.el for more info."
 	    ;; Take elaborate precautions to detect an open block comment at
 	    ;; the end of a macro.  If we find one, we set `safe-start' to nil
 	    ;; and break off any further scanning of comments.
+	    ;;
+	    ;; (2019-05-02): `c-end-of-macro' now moves completely over block
+	    ;; comments, even multiline ones lacking \s at their EOLs.  So a
+	    ;; lot of the following is probably redundant now.
 	    (let ((com-begin (point)) com-end in-macro)
 	      (when (and (c-forward-single-comment)
 			 (setq com-end (point))

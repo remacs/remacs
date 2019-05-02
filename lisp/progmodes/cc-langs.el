@@ -1589,6 +1589,26 @@ properly."
 (c-lang-defvar c-line-comment-start-regexp
 	       (c-lang-const c-line-comment-start-regexp))
 
+(c-lang-defconst c-last-c-comment-end-on-line-re
+  "Regexp which matches the last block comment ender on the
+current line, if any, or nil in those languages without block
+comments.  When a match is found, submatch 1 contains the comment
+ender."
+  t "\\(\\*/\\)\\([^*]\\|\\*[^/]\\)*$"
+  awk nil)
+(c-lang-defvar c-last-c-comment-end-on-line-re
+	       (c-lang-const c-last-c-comment-end-on-line-re))
+
+(c-lang-defconst c-last-open-c-comment-start-on-line-re
+  "Regexp which matches the last block comment start on the
+current ine, if any, or nil in those languages without block
+comments.  When a match is found, submatch 1 contains the comment
+starter."
+  t "\\(/\\*\\)\\([^*]\\|\\*[^/]\\)*$"
+  awk nil)
+(c-lang-defvar c-last-open-c-comment-start-on-line-re
+	       (c-lang-const c-last-open-c-comment-start-on-line-re))
+
 (c-lang-defconst c-literal-start-regexp
   ;; Regexp to match the start of comments and string literals.
   t (concat (c-lang-const c-comment-start-regexp)
