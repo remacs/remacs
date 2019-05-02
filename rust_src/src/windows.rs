@@ -128,6 +128,8 @@ impl LispWindowRef {
         self.contents.is_window()
     }
 
+    // Equivalent to MINI_WINDOW_P
+    /// True if the the window is a minibuffer.
     pub fn is_minibuffer(self) -> bool {
         self.mini()
     }
@@ -240,6 +242,26 @@ impl LispWindowRef {
         } else {
             cmp::max(width / self.get_frame().column_width, 0)
         }
+    }
+
+    /// Return number of lines of text (not counting mode lines) in the window.
+    pub fn internal_height(self) -> i32 {
+        let mut lines = self.total_lines;
+        if !self.is_minibuffer() {
+            if self.parent.is_not_nil()
+                || self.contents.is_window()
+                || self.next.is_not_nil()
+                || self.prev.is_not_nil()
+                || self.wants_mode_line()
+            {
+                lines -= 1;
+            }
+
+            if self.wants_header_line() {
+                lines -= 1;
+            }
+        }
+        lines
     }
 
     /// The frame x-position at which the text (or left fringe) in
@@ -726,6 +748,11 @@ impl From<LispWindowValidOrSelected> for LispWindowRef {
 #[no_mangle]
 pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
     LispWindowRef::new(window).body_width(pixelwise)
+}
+
+#[no_mangle]
+pub extern "C" fn window_internal_height(w: LispWindowRef) -> i32 {
+    w.internal_height()
 }
 
 #[no_mangle]

@@ -35,6 +35,7 @@ impl LispFrameRef {
         !self.terminal.is_null()
     }
 
+    /// Replaces FRAME_WINDOW_P
     pub fn is_gui_window(self) -> bool {
         match self.output_method() {
             output_method::output_initial | output_method::output_termcap => false,
