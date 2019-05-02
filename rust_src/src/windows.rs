@@ -2011,7 +2011,7 @@ pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected)
 /// selected frame and no others.
 #[lisp_fn(min = "0")]
 pub fn get_buffer_window(buffer_or_name: LispObject, all_frames: LispObject) -> LispObject {
-    let buffer: Option<LispBufferRef> = if buffer_or_name.is_nil() {
+    let buffer = if buffer_or_name.is_nil() {
         Some(ThreadState::current_buffer_unchecked())
     } else {
         Fget_buffer(buffer_or_name).as_buffer()
