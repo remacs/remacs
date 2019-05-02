@@ -5692,7 +5692,10 @@ comment at the start of cc-engine.el for more info."
 	       (setq cfd-re-match cfd-limit)
 	       nil)
 	      ((c-got-face-at
-		(if (setq cfd-re-match (match-end 1))
+		(if (setq cfd-re-match
+			  (or (match-end 1)
+			      (and c-dposr-cpp-macro-depth
+				   (match-end (1+ c-dposr-cpp-macro-depth)))))
 		    ;; Matched the end of a token preceding a decl spot.
 		    (progn
 		      (goto-char cfd-re-match)
@@ -5703,15 +5706,19 @@ comment at the start of cc-engine.el for more info."
 		c-literal-faces)
 	       ;; Pseudo match inside a comment or string literal.  Skip out
 	       ;; of comments and string literals.
-	       (while (progn
-			(unless
-			    (and (match-end 1)
-				 (c-got-face-at (1- (point)) c-literal-faces)
-				 (not (c-got-face-at (point) c-literal-faces)))
-			  (goto-char (c-next-single-property-change
-				      (point) 'face nil cfd-limit)))
-			(and (< (point) cfd-limit)
-			     (c-got-face-at (point) c-literal-faces))))
+	       (while
+		   (progn
+		     (unless
+			 (and
+			  (or (match-end 1)
+			      (and c-dposr-cpp-macro-depth
+				   (match-end (1+ c-dposr-cpp-macro-depth))))
+			  (c-got-face-at (1- (point)) c-literal-faces)
+			  (not (c-got-face-at (point) c-literal-faces)))
+		       (goto-char (c-next-single-property-change
+				   (point) 'face nil cfd-limit)))
+		     (and (< (point) cfd-limit)
+			  (c-got-face-at (point) c-literal-faces))))
 	       t)		      ; Continue the loop over pseudo matches.
 	      ((and c-opt-identifier-concat-key
 		    (match-string 1)
@@ -5863,7 +5870,7 @@ comment at the start of cc-engine.el for more info."
     ;; before the point, and do the first `c-decl-prefix-or-start-re'
     ;; search unless we're at bob.
 
-    (let (start-in-literal start-in-macro syntactic-pos)
+    (let (start-in-literal start-in-macro syntactic-pos hash-define-pos)
       ;; Must back up a bit since we look for the end of the previous
       ;; statement or declaration, which is earlier than the first
       ;; returned match.
@@ -6018,7 +6025,21 @@ comment at the start of cc-engine.el for more info."
 	  ;; The only syntactic ws in macros are comments.
 	  (c-backward-comments)
 	  (or (bobp) (backward-char))
-	  (c-beginning-of-current-token))
+	  (c-beginning-of-current-token)
+	  ;; If we're in a macro without argument parentheses, we could have
+	  ;; now ended up at the macro's identifier.  We need to be at #define
+	  ;; for `c-find-decl-prefix-search' to find the first token of the
+	  ;; macro's expansion.
+	  (when (and (c-on-identifier)
+		     (setq hash-define-pos
+			   (save-excursion
+			     (and
+			      (zerop (c-backward-token-2 2)) ; over define, #
+			      (save-excursion
+				(beginning-of-line)
+				(looking-at c-opt-cpp-macro-define-id))
+			      (point)))))
+	    (goto-char hash-define-pos)))
 
 	 (start-in-literal
 	  ;; If we're in a comment it can only be the closest

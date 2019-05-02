@@ -979,6 +979,14 @@ definition, or nil if the language doesn't have any."
 (c-lang-defvar c-opt-cpp-macro-define-id
   (c-lang-const c-opt-cpp-macro-define-id))
 
+(c-lang-defconst c-anchored-hash-define-no-parens
+  ;; Regexp matching everything up to the end of a cpp define which has no
+  ;; argument parentheses.  Or nil in languages which don't have them.
+  t (if (c-lang-const c-opt-cpp-macro-define)
+	(concat (c-lang-const c-anchored-cpp-prefix)
+		(c-lang-const c-opt-cpp-macro-define)
+		"[ \t]+\\(\\sw\\|_\\)+\\([^(a-zA-Z0-9_]\\|$\\)")))
+
 (c-lang-defconst c-cpp-expr-directives
   "List of cpp directives (without the prefix) that are followed by an
 expression."
@@ -1614,7 +1622,7 @@ starter."
   t (concat (c-lang-const c-comment-start-regexp)
 	    "\\|"
 	    (if (memq 'gen-string-delim c-emacs-features)
-		"\"|"
+		"\"\\|\\s|"
 	      "\"")))
 (c-lang-defvar c-literal-start-regexp (c-lang-const c-literal-start-regexp))
 
@@ -3183,23 +3191,39 @@ constructs."
   ;; token that might precede such a construct, e.g. ';', '}' or '{'.
   ;; It's built from `c-decl-prefix-re'.
   ;;
-  ;; If the first submatch did not match, the match of the whole
-  ;; regexp is taken to be at the first token in the declaration.
-  ;; `c-decl-start-re' is not checked in this case.
+  ;; If the first submatch did not match, we have either a #define construct
+  ;; without parentheses or the match of the whole regexp is taken to be at
+  ;; the first token in the declaration.  `c-decl-start-re' is not checked in
+  ;; these cases.
   ;;
   ;; Design note: The reason the same regexp is used to match both
   ;; tokens that precede declarations and start them is to avoid an
   ;; extra regexp search from the previous declaration spot in
   ;; `c-find-decl-spots'.  Users of `c-find-decl-spots' also count on
-  ;; that it finds all declaration/cast/label starts in approximately
+  ;; it finding all declaration/cast/label starts in approximately
   ;; linear order, so we can't do the searches in two separate passes.
-  t (if (c-lang-const c-decl-start-kwds)
-	(concat (c-lang-const c-decl-prefix-re)
-		"\\|"
-		(c-make-keywords-re t (c-lang-const c-decl-start-kwds)))
-      (c-lang-const c-decl-prefix-re)))
+  t (cond
+     ((and (c-lang-const c-decl-start-kwds)
+	   (c-lang-const c-anchored-hash-define-no-parens))
+      (concat (c-lang-const c-decl-prefix-re)
+	      "\\|" (c-lang-const c-anchored-hash-define-no-parens)
+	      "\\|" (c-make-keywords-re t (c-lang-const c-decl-start-kwds))))
+     ((c-lang-const c-decl-start-kwds)
+      (concat (c-lang-const c-decl-prefix-re)
+	      "\\|" (c-make-keywords-re t (c-lang-const c-decl-start-kwds))))
+     ((c-lang-const c-anchored-hash-define-no-parens)
+      (concat (c-lang-const c-decl-prefix-re)
+	      "\\|" (c-lang-const c-anchored-hash-define-no-parens)))
+     (t (c-lang-const c-decl-prefix-re))))
 (c-lang-defvar c-decl-prefix-or-start-re
   (c-lang-const c-decl-prefix-or-start-re))
+
+(c-lang-defconst c-dposr-cpp-macro-depth
+  ;; The match number of `c-anchored-hash-define-no-parens''s first match
+  ;; within `c-decl-prefix-or-start-re', or nil if there is no such component.
+  t (if (c-lang-const c-anchored-hash-define-no-parens)
+	(1+ (regexp-opt-depth (c-lang-const c-decl-prefix-re)))))
+(c-lang-defvar c-dposr-cpp-macro-depth (c-lang-const c-dposr-cpp-macro-depth))
 
 (c-lang-defconst c-cast-parens
   ;; List containing the paren characters that can open a cast, or nil in
