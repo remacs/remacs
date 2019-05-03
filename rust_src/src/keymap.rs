@@ -8,6 +8,7 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     buffers::current_buffer,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
@@ -28,7 +29,7 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table, Fpurecopy,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
@@ -570,7 +571,7 @@ pub fn define_prefix_command(
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     if string.is_not_nil() {
         let s = if unsafe { globals.Vpurify_flag }.is_not_nil() {
-            unsafe { Fpurecopy(string) }
+            purecopy(string)
         } else {
             string
         };

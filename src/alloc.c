@@ -5364,8 +5364,6 @@ make_pure_c_string (const char *data, ptrdiff_t nchars)
   return string;
 }
 
-static Lisp_Object purecopy (Lisp_Object obj);
-
 /* Return a cons allocated from pure space.  Give it pure copies
    of CAR as car and CDR as cdr.  */
 
@@ -5440,21 +5438,6 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   return pure;
 }
 
-DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
-       doc: /* Make a copy of object OBJ in pure storage.
-Recursively copies contents of vectors and cons cells.
-Does not copy symbols.  Copies strings without text properties.  */)
-  (register Lisp_Object obj)
-{
-  if (NILP (Vpurify_flag))
-    return obj;
-  else if (MARKERP (obj) || OVERLAYP (obj) || SYMBOLP (obj))
-    /* Can't purify those.  */
-    return obj;
-  else
-    return purecopy (obj);
-}
-
 /* Pinned objects are marked before every GC cycle.  */
 static struct pinned_object
 {
@@ -5462,7 +5445,7 @@ static struct pinned_object
   struct pinned_object *next;
 } *pinned_objects;
 
-static Lisp_Object
+Lisp_Object
 purecopy (Lisp_Object obj)
 {
   if (INTEGERP (obj)
@@ -7426,7 +7409,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);
   defsubr (&Smake_finalizer);
-  defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
   defsubr (&Smemory_info);

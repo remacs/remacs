@@ -3682,6 +3682,7 @@ extern void parse_str_as_multibyte (const unsigned char *, ptrdiff_t,
 				    ptrdiff_t *, ptrdiff_t *);
 
 /* Defined in alloc.c.  */
+extern Lisp_Object purecopy (Lisp_Object obj);
 extern void *my_heap_start (void);
 extern void check_pure_size (void);
 extern void free_misc (Lisp_Object);
