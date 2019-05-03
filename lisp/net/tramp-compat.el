@@ -45,8 +45,8 @@
 (require 'timer)
 (require 'ucs-normalize)
 
-(declare-function tramp-compat-file-local-name 'tramp-compat)
-(declare-function tramp-compat-file-name-quoted-p 'tramp-compat)
+(declare-function tramp-compat-file-local-name "tramp-compat")
+(declare-function tramp-compat-file-name-quoted-p "tramp-compat")
 
 ;; For not existing functions, obsolete functions, or functions with a
 ;; changed argument list, there are compiler warnings.  We want to
