@@ -650,11 +650,14 @@ since it could result in memory overflow and make Emacs crash."
                                  "26.1")
 
              (display-fill-column-indicator display-fill-column-indicator
-                                 (choice
-                                  (const :tag "Off (nil)" :value nil)
-                                  (const :tag "On (t)" :value t))
-                                  "27.1")
+                                 boolean "27.1")
              (display-fill-column-indicator-column display-fill-column-indicator
+                                 (choice
+                                  (const :tag "Use fill-column variable"
+                                         :value t)
+                                  (const :tag "Fixed column number"
+                                         :value 70
+                                         :format "%v"))
                                  integer "27.1")
              (display-fill-column-indicator-character display-fill-column-indicator
                                  character "27.1")

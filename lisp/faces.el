@@ -2501,15 +2501,11 @@ unwanted effects."
   :group 'display-line-numbers)
 
 ;; Definition stolen from display-line-numbers.
-(defface fill-column-face
+(defface fill-column-indicator
   '((t :inherit (shadow default)))
-  "Face for displaying fill column indicator line.
+  "Face for displaying fill column indicator.
 This face is used when `display-fill-column-indicator-mode' is
-non-nil.
-
-If you customize the font of this face, make sure it is a
-monospaced font, otherwise the line's characters will not line
-up horizontally."
+non-nil."
   :version "27.1"
   :group 'basic-faces
   :group 'display-fill-column-indicator)

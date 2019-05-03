@@ -340,7 +340,7 @@ longer.
 ** Multicolor fonts such as "Noto Color Emoji" can be displayed on
 Emacs configured with Cairo drawing and linked with cairo >= 1.16.0.
 
----
++++
 ** Emacs now optionally displays a fill column indicator.
 
 This is similar to what 'fill-column-indicator' package provides, but
@@ -354,28 +354,7 @@ The indicator is not displayed at all in minibuffer windows and
 in tooltips, as it is not useful there.
 
 There are 2 new buffer local variables and 1 face to customize this
-mode:
-
-*** 'display-fill-column-indicator-column' is the column where the
-    indicator should be set. It can take positive numerical values for
-    the column or the special value t. Any other value disables the
-    indicator. The default value is t.
-    
-    When the value is t it means that the variable 'fill-column' will
-    be used.
-
-*** 'display-fill-column-indicator-char' is the character used for the
-    indicator. This character can be any valid char including unicode
-    ones if the user's font supports them.
-    
-    When the mode is enabled throw the functions
-    'display-fill-column-indicator-mode' and
-    'global-display-fill-column-indicator-mode', they check if there
-    is a value non-nil for this variable, otherwise the initialization
-    tries to set it to U+2502 or '|'.
-    
-*** 'fill-column-face' is the face used to display the indicator it
-    inherits it default values from shadow and the default faces.
+mode they are described in the manual "(emacs) Display".
 
 
 * Editing Changes in Emacs 27.1

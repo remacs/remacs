@@ -1,6 +1,6 @@
 ;;; display-fill-column-indicator.el --- interface for display-fill-column-indicator -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2019 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
@@ -37,18 +37,18 @@
 ;;; Code:
 
 (defgroup display-fill-column-indicator nil
-  "Display a fill column indicator in th buffer."
+  "Display a fill column indicator in the buffer."
   :group 'convenience
   :group 'display)
 
 
 ;;;###autoload
 (define-minor-mode display-fill-column-indicator-mode
-  "Toggle display fill column indicator.
+  "Toggle display of fill-column indicator.
 This uses `display-fill-column-indicator' internally.
 
-To change the position of the column displayed by default,
-customize `display-fill-column-indicator-column' you can change the
+To change the position of the column displayed by default
+customize `display-fill-column-indicator-column'.  You can change the
 character for the indicator setting `display-fill-column-indicator-character'."
   :lighter nil
   (if display-fill-column-indicator-mode

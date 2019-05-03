@@ -1181,10 +1181,11 @@ When the mode is enabled through the functions
 @code{display-fill-column-indicator-mode} or
 @code{global-display-fill-column-indicator-mode}, the initialization
 functions check if this variable is @code{non-nil}, otherwise the
-initialization tries to set it to U+2502 or '|'.
+initialization tries to set it to U+2502 or @sampl{|}.
 
-@item fill-column-face
-Specifies the face used to display the indicator it inherits its
+@item fill-column-indicator
+@vindex fill-column-indicator
+Specifies the face used to display the indicator.  It inherits its
 default values from shadow and the default face.
 @end table
 
