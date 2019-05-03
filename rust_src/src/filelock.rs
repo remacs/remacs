@@ -171,9 +171,11 @@ fn read_lock_data(path: &Path) -> Result<String> {
         match read_link_as_string(path) {
             ok @ Ok(_) => return ok,
 
-            Err(ref e) if e.kind() == InvalidInput => if let Some(target) = read_nofollow(path, MAX_LOCK_INFO)? {
-                return Ok(target);
-            },
+            Err(ref e) if e.kind() == InvalidInput => {
+                if let Some(target) = read_nofollow(path, MAX_LOCK_INFO)? {
+                    return Ok(target);
+                }
+            }
 
             err => return err,
         }
@@ -190,10 +192,12 @@ fn read_lock_data(path: &Path) -> Result<String> {
 fn read_lock_info(path: &Path) -> Result<Option<LockInfo>> {
     match read_lock_data(path) {
         Ok(data) => {
-            let info = LockInfo::parse(&data).ok_or_else(|| Error::new(
-                InvalidData,
-                format!("Invalid lock information in '{}'", path.display()),
-            ))?;
+            let info = LockInfo::parse(&data).ok_or_else(|| {
+                Error::new(
+                    InvalidData,
+                    format!("Invalid lock information in '{}'", path.display()),
+                )
+            })?;
             Ok(Some(info))
         }
 
