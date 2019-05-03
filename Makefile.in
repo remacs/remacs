@@ -950,17 +950,15 @@ extraclean: $(extraclean_dirs:=_extraclean)
 TAGS tags: lib lib-src # src
 	$(MAKE) -C src tags
 
-.PHONY: have-tests
-have-tests:
-	@if test ! -d test; then \
-	  echo "You do not seem to have the test/ directory."; \
-	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
-	 exit 1; \
-	fi
-
-.PHONY: check check-maybe check-expensive check-all
-check check-maybe check-expensive check-all: have-tests all
+CHECK_TARGETS = check check-maybe check-expensive check-all
+.PHONY: $(CHECK_TARGETS)
+$(CHECK_TARGETS): all
+ifeq ($(wildcard test),test)
 	$(MAKE) -C test $@
+else
+	@echo "You do not seem to have the test/ directory."
+	@echo "Maybe you used a release tarfile that lacks tests."
+endif
 
 dist:
 	cd ${srcdir}; ./make-dist
