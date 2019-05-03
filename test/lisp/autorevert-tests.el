@@ -19,6 +19,33 @@
 
 ;;; Commentary:
 
+;; Some of the tests require access to a remote host files.  Since
+;; this could be problematic, a mock-up connection method "mock" is
+;; used.  Emulating a remote connection, it simply calls "sh -i".
+;; Tramp's file name handlers still run, so this test is sufficient
+;; except for connection establishing.
+
+;; If you want to test a real Tramp connection, set
+;; $REMOTE_TEMPORARY_FILE_DIRECTORY to a suitable value in order to
+;; overwrite the default value.  If you want to skip tests accessing a
+;; remote host, set this environment variable to "/dev/null" or
+;; whatever is appropriate on your system.
+
+;; For the remote file-notify library, Tramp checks for the existence
+;; of a respective command.  The first command found is used.  In
+;; order to use a dedicated one, the environment variable
+;; $REMOTE_FILE_NOTIFY_LIBRARY shall be set, possible values are
+;; "inotifywait", "gio-monitor" and "gvfs-monitor-dir".
+
+;; Local file-notify libraries are auto-detected during Emacs
+;; configuration.  This can be changed with a respective configuration
+;; argument, like
+;;
+;;   --with-file-notification=inotify
+;;   --with-file-notification=kqueue
+;;   --with-file-notification=gfile
+;;   --with-file-notification=w32
+
 ;; A whole test run can be performed calling the command `auto-revert-test-all'.
 
 ;;; Code:
@@ -26,8 +53,14 @@
 (require 'ert)
 (require 'ert-x)
 (require 'autorevert)
-(setq auto-revert-notify-exclude-dir-regexp "nothing-to-be-excluded"
-      auto-revert-stop-on-user-input nil)
+(require 'tramp)
+
+(setq auto-revert-debug nil
+      auto-revert-notify-exclude-dir-regexp "nothing-to-be-excluded"
+      auto-revert-stop-on-user-input nil
+      file-notify-debug nil
+      tramp-verbose 0
+      tramp-message-show-message nil)
 
 (defconst auto-revert--timeout 10
   "Time to wait for a message.")
@@ -35,18 +68,87 @@
 (defvar auto-revert--messages nil
   "Used to collect messages issued during a section of a test.")
 
+;; There is no default value on w32 systems, which could work out of the box.
+(defconst auto-revert-test-remote-temporary-file-directory
+  (cond
+   ((getenv "REMOTE_TEMPORARY_FILE_DIRECTORY"))
+   ((eq system-type 'windows-nt) null-device)
+   (t (add-to-list
+       'tramp-methods
+       '("mock"
+	 (tramp-login-program        "sh")
+	 (tramp-login-args           (("-i")))
+	 (tramp-remote-shell         "/bin/sh")
+	 (tramp-remote-shell-args    ("-c"))
+	 (tramp-connection-timeout   10)))
+      (add-to-list
+       'tramp-default-host-alist
+       `("\\`mock\\'" nil ,(system-name)))
+      ;; Emacs' Makefile sets $HOME to a nonexistent value.  Needed in
+      ;; batch mode only, therefore.  `temporary-file-directory' might
+      ;; be quoted, so we unquote it just in case.
+      (unless (and (null noninteractive) (file-directory-p "~/"))
+        (setenv "HOME" (file-name-unquote temporary-file-directory)))
+      (format "/mock::%s" temporary-file-directory)))
+  "Temporary directory for Tramp tests.")
+
+;; Filter suppressed remote file-notify libraries.
+(when (stringp (getenv "REMOTE_FILE_NOTIFY_LIBRARY"))
+  (dolist (lib '("inotifywait" "gio-monitor" "gvfs-monitor-dir"))
+    (unless (string-equal (getenv "REMOTE_FILE_NOTIFY_LIBRARY") lib)
+      (add-to-list 'tramp-connection-properties `(nil ,lib nil)))))
+
+(defvar auto-revert--test-enabled-remote-checked nil
+  "Cached result of `auto-revert--test-enabled-remote'.
+If the function did run, the value is a cons cell, the `cdr'
+being the result.")
+
+(defun auto-revert--test-enabled-remote ()
+  "Whether remote file access is enabled."
+  (unless (consp auto-revert--test-enabled-remote-checked)
+    (setq
+     auto-revert--test-enabled-remote-checked
+     (cons
+      t (ignore-errors
+	  (and
+	   (file-remote-p auto-revert-test-remote-temporary-file-directory)
+	   (file-directory-p auto-revert-test-remote-temporary-file-directory)
+	   (file-writable-p
+            auto-revert-test-remote-temporary-file-directory))))))
+  ;; Return result.
+  (cdr auto-revert--test-enabled-remote-checked))
+
 (defun auto-revert--wait-for-revert (buffer)
   "Wait until a message reports reversion of BUFFER.
 This expects `auto-revert--messages' to be bound by
 `ert-with-message-capture' before calling."
-  (with-timeout (auto-revert--timeout nil)
-    (while
-        (null (string-match
-               (format-message "Reverting buffer `%s'." (buffer-name buffer))
-               auto-revert--messages))
+  ;; Remote files do not cooperate well with timers.  So we count ourselves.
+  (let ((ct (current-time)))
+    (while (and (< (float-time (time-subtract (current-time) ct))
+                   auto-revert--timeout)
+                (null (string-match
+                       (format-message
+                        "Reverting buffer `%s'\\." (buffer-name buffer))
+                       auto-revert--messages)))
       (if (with-current-buffer buffer auto-revert-use-notify)
           (read-event nil nil 0.1)
         (sleep-for 0.1)))))
+
+(defmacro auto-revert--deftest-remote (test docstring)
+  "Define ert `TEST-remote' for remote files."
+  (declare (indent 1))
+  `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
+     ,docstring
+     :tags '(:expensive-test)
+     (let ((temporary-file-directory
+	    auto-revert-test-remote-temporary-file-directory)
+           (auto-revert-remote-files t)
+	   (ert-test (ert-get-test ',test))
+           vc-handled-backends)
+       (skip-unless (auto-revert--test-enabled-remote))
+       (tramp-cleanup-connection
+	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
+       (funcall (ert-test-body ert-test)))))
 
 (ert-deftest auto-revert-test00-auto-revert-mode ()
   "Check autorevert for a file."
@@ -93,13 +195,16 @@ This expects `auto-revert--messages' to be bound by
         (kill-buffer buf))
       (ignore-errors (delete-file tmpfile)))))
 
+(auto-revert--deftest-remote auto-revert-test00-auto-revert-mode
+  "Check autorevert for a remote file.")
+
 ;; This is inspired by Bug#21841.
 (ert-deftest auto-revert-test01-auto-revert-several-files ()
   "Check autorevert for several files at once."
   :tags '(:expensive-test)
-  (skip-unless (executable-find "cp"))
+  (skip-unless (executable-find "cp" (file-remote-p temporary-file-directory)))
 
-  (let* ((cp (executable-find "cp"))
+  (let* ((cp (executable-find "cp" (file-remote-p temporary-file-directory)))
          (tmpdir1 (make-temp-file "auto-revert-test" 'dir))
          (tmpdir2 (make-temp-file "auto-revert-test" 'dir))
          (tmpfile1
@@ -139,7 +244,9 @@ This expects `auto-revert--messages' to be bound by
           ;; Strange, that `copy-directory' does not work as expected.
           ;; The following shell command is not portable on all
           ;; platforms, unfortunately.
-          (shell-command (format "%s -f %s/* %s" cp tmpdir2 tmpdir1))
+          (shell-command
+           (format "%s -f %s/* %s"
+                   cp (file-local-name tmpdir2) (file-local-name tmpdir1)))
 
           ;; Check, that the buffers have been reverted.
           (dolist (buf (list buf1 buf2))
@@ -154,6 +261,9 @@ This expects `auto-revert--messages' to be bound by
           (kill-buffer buf)))
       (ignore-errors (delete-directory tmpdir1 'recursive))
       (ignore-errors (delete-directory tmpdir2 'recursive)))))
+
+(auto-revert--deftest-remote auto-revert-test01-auto-revert-several-files
+  "Check autorevert for several remote files at once.")
 
 ;; This is inspired by Bug#23276.
 (ert-deftest auto-revert-test02-auto-revert-deleted-file ()
@@ -185,8 +295,8 @@ This expects `auto-revert--messages' to be bound by
             (add-hook
              'before-revert-hook
              (lambda ()
-               ;; Temporarily.
-               (message "%s deleted" buffer-file-name)
+               (when auto-revert-debug
+                 (message "%s deleted" buffer-file-name))
                (delete-file buffer-file-name))
              nil t)
 
@@ -199,7 +309,9 @@ This expects `auto-revert--messages' to be bound by
             ;; polling.
             (should (string-match "any text" (buffer-string)))
             ;; With w32notify, the 'stopped' events are not sent.
+            ;; Same for remote file name handlers.  Why?
             (or (eq file-notify--library 'w32notify)
+                (file-remote-p temporary-file-directory)
                 (should-not auto-revert-notify-watch-descriptor))
 
             ;; Once the file has been recreated, the buffer shall be
@@ -230,6 +342,9 @@ This expects `auto-revert--messages' to be bound by
         (with-current-buffer buf (set-buffer-modified-p nil))
         (kill-buffer buf))
       (ignore-errors (delete-file tmpfile)))))
+
+(auto-revert--deftest-remote auto-revert-test02-auto-revert-deleted-file
+  "Check autorevert for a deleted remote file.")
 
 (ert-deftest auto-revert-test03-auto-revert-tail-mode ()
   "Check autorevert tail mode."
@@ -265,6 +380,9 @@ This expects `auto-revert--messages' to be bound by
       ;; Exit.
       (ignore-errors (kill-buffer buf))
       (ignore-errors (delete-file tmpfile)))))
+
+(auto-revert--deftest-remote auto-revert-test03-auto-revert-tail-mode
+  "Check remote autorevert tail mode.")
 
 (ert-deftest auto-revert-test04-auto-revert-mode-dired ()
   "Check autorevert for dired."
@@ -313,6 +431,9 @@ This expects `auto-revert--messages' to be bound by
         (with-current-buffer buf (set-buffer-modified-p nil))
         (kill-buffer buf))
       (ignore-errors (delete-file tmpfile)))))
+
+(auto-revert--deftest-remote auto-revert-test04-auto-revert-mode-dired
+  "Check remote autorevert for dired.")
 
 (defun auto-revert-test-all (&optional interactive)
   "Run all tests for \\[auto-revert]."

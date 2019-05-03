@@ -195,7 +195,8 @@ Return nil when any other file notification watch is still active."
         file-notify--test-events nil
         file-notify--test-monitors nil))
 
-(setq password-cache-expiry nil
+(setq file-notify-debug nil
+      password-cache-expiry nil
       tramp-verbose 0
       tramp-message-show-message nil)
 
@@ -515,8 +516,9 @@ and the event to `file-notify--test-events'."
     (unless (string-match
 	     (regexp-quote ".#")
 	     (file-notify--event-file-name file-notify--test-event))
-      ;;(message "file-notify--test-event-handler result: %s event: %S"
-               ;;(null (ert-test-failed-p result)) file-notify--test-event)
+      (when file-notify-debug
+        (message "file-notify--test-event-handler result: %s event: %S"
+                 (null (ert-test-failed-p result)) file-notify--test-event))
       (setq file-notify--test-events
 	    (append file-notify--test-events `(,file-notify--test-event))
 	    file-notify--test-results

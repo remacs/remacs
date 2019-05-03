@@ -3444,88 +3444,89 @@ the result will be a local, non-Tramp, file name."
 ;; any other remote command.
 (defun tramp-sh-handle-vc-registered (file)
   "Like `vc-registered' for Tramp files."
-  (with-temp-message ""
-    (with-parsed-tramp-file-name file nil
-      (with-tramp-progress-reporter
-	  v 3 (format-message "Checking `vc-registered' for %s" file)
+  (when vc-handled-backends
+    (with-temp-message ""
+      (with-parsed-tramp-file-name file nil
+        (with-tramp-progress-reporter
+	    v 3 (format-message "Checking `vc-registered' for %s" file)
 
-	;; There could be new files, created by the vc backend.  We
-	;; cannot reuse the old cache entries, therefore.  In
-	;; `tramp-get-file-property', `remote-file-name-inhibit-cache'
-	;; could also be a timestamp as `current-time' returns.  This
-	;; means invalidate all cache entries with an older timestamp.
-	(let (tramp-vc-registered-file-names
-	      (remote-file-name-inhibit-cache (current-time))
-	      (file-name-handler-alist
-	       `((,tramp-file-name-regexp . tramp-vc-file-name-handler))))
+	  ;; There could be new files, created by the vc backend.  We
+	  ;; cannot reuse the old cache entries, therefore.  In
+	  ;; `tramp-get-file-property', `remote-file-name-inhibit-cache'
+	  ;; could also be a timestamp as `current-time' returns.  This
+	  ;; means invalidate all cache entries with an older timestamp.
+	  (let (tramp-vc-registered-file-names
+	        (remote-file-name-inhibit-cache (current-time))
+	        (file-name-handler-alist
+	         `((,tramp-file-name-regexp . tramp-vc-file-name-handler))))
 
-	  ;; Here we collect only file names, which need an operation.
-	  (tramp-with-demoted-errors
-	      v "Error in 1st pass of `vc-registered': %s"
-	    (tramp-run-real-handler #'vc-registered (list file)))
-	  (tramp-message v 10 "\n%s" tramp-vc-registered-file-names)
+	    ;; Here we collect only file names, which need an operation.
+	    (tramp-with-demoted-errors
+	        v "Error in 1st pass of `vc-registered': %s"
+	      (tramp-run-real-handler #'vc-registered (list file)))
+	    (tramp-message v 10 "\n%s" tramp-vc-registered-file-names)
 
-	  ;; Send just one command, in order to fill the cache.
-	  (when tramp-vc-registered-file-names
-	    (tramp-maybe-send-script
-	     v
-	     (format tramp-vc-registered-read-file-names
-		     (tramp-get-file-exists-command v)
-		     (format "%s -r" (tramp-get-test-command v)))
-	     "tramp_vc_registered_read_file_names")
+	    ;; Send just one command, in order to fill the cache.
+	    (when tramp-vc-registered-file-names
+	      (tramp-maybe-send-script
+	       v
+	       (format tramp-vc-registered-read-file-names
+		       (tramp-get-file-exists-command v)
+		       (format "%s -r" (tramp-get-test-command v)))
+	       "tramp_vc_registered_read_file_names")
 
-	    (dolist
-		(elt
-		 (ignore-errors
-		   ;; We cannot use `tramp-send-command-and-read',
-		   ;; because this does not cooperate well with
-		   ;; heredoc documents.
-		   (tramp-send-command
-		    v
-		    (format
-		     "tramp_vc_registered_read_file_names <<'%s'\n%s\n%s\n"
-		     tramp-end-of-heredoc
-		     (mapconcat #'tramp-shell-quote-argument
-				tramp-vc-registered-file-names
-				"\n")
-		     tramp-end-of-heredoc))
-		   (with-current-buffer (tramp-get-connection-buffer v)
-		     ;; Read the expression.
-		     (goto-char (point-min))
-		     (read (current-buffer)))))
+	      (dolist
+		  (elt
+		   (ignore-errors
+		     ;; We cannot use `tramp-send-command-and-read',
+		     ;; because this does not cooperate well with
+		     ;; heredoc documents.
+		     (tramp-send-command
+		      v
+		      (format
+		       "tramp_vc_registered_read_file_names <<'%s'\n%s\n%s\n"
+		       tramp-end-of-heredoc
+		       (mapconcat #'tramp-shell-quote-argument
+				  tramp-vc-registered-file-names
+				  "\n")
+		       tramp-end-of-heredoc))
+		     (with-current-buffer (tramp-get-connection-buffer v)
+		       ;; Read the expression.
+		       (goto-char (point-min))
+		       (read (current-buffer)))))
 
-	      (tramp-set-file-property
-	       v (car elt) (cadr elt) (cadr (cdr elt))))))
+	        (tramp-set-file-property
+	         v (car elt) (cadr elt) (cadr (cdr elt))))))
 
-	;; Second run.  Now all `file-exists-p' or `file-readable-p'
-	;; calls shall be answered from the file cache.  We unset
-	;; `process-file-side-effects' and `remote-file-name-inhibit-cache'
-	;; in order to keep the cache.
-	(let ((vc-handled-backends vc-handled-backends)
-	      remote-file-name-inhibit-cache process-file-side-effects)
-	  ;; Reduce `vc-handled-backends' in order to minimize process calls.
-	  (when (and (memq 'Bzr vc-handled-backends)
-		     (boundp 'vc-bzr-program)
-		     (not (with-tramp-connection-property v vc-bzr-program
-			    (tramp-find-executable
-			     v vc-bzr-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Bzr vc-handled-backends)))
-	  (when (and (memq 'Git vc-handled-backends)
-		     (boundp 'vc-git-program)
-		     (not (with-tramp-connection-property v vc-git-program
-			    (tramp-find-executable
-			     v vc-git-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Git vc-handled-backends)))
-	  (when (and (memq 'Hg vc-handled-backends)
-		     (boundp 'vc-hg-program)
-		     (not (with-tramp-connection-property v vc-hg-program
-			    (tramp-find-executable
-			     v vc-hg-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
-	  ;; Run.
-	  (tramp-with-demoted-errors
-	      v "Error in 2nd pass of `vc-registered': %s"
-	    (tramp-run-real-handler #'vc-registered (list file))))))))
+	  ;; Second run.  Now all `file-exists-p' or `file-readable-p'
+	  ;; calls shall be answered from the file cache.  We unset
+	  ;; `process-file-side-effects' and `remote-file-name-inhibit-cache'
+	  ;; in order to keep the cache.
+	  (let ((vc-handled-backends vc-handled-backends)
+	        remote-file-name-inhibit-cache process-file-side-effects)
+	    ;; Reduce `vc-handled-backends' in order to minimize process calls.
+	    (when (and (memq 'Bzr vc-handled-backends)
+		       (boundp 'vc-bzr-program)
+		       (not (with-tramp-connection-property v vc-bzr-program
+			      (tramp-find-executable
+			       v vc-bzr-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Bzr vc-handled-backends)))
+	    (when (and (memq 'Git vc-handled-backends)
+		       (boundp 'vc-git-program)
+		       (not (with-tramp-connection-property v vc-git-program
+			      (tramp-find-executable
+			       v vc-git-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Git vc-handled-backends)))
+	    (when (and (memq 'Hg vc-handled-backends)
+		       (boundp 'vc-hg-program)
+		       (not (with-tramp-connection-property v vc-hg-program
+			      (tramp-find-executable
+			       v vc-hg-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
+	    ;; Run.
+	    (tramp-with-demoted-errors
+	        v "Error in 2nd pass of `vc-registered': %s"
+	      (tramp-run-real-handler #'vc-registered (list file)))))))))
 
 ;;;###tramp-autoload
 (defun tramp-sh-file-name-handler (operation &rest args)

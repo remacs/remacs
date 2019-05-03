@@ -126,8 +126,6 @@ Global Auto-Revert Mode does so in all buffers."
 
 ;; Variables:
 
-;;; What's this?: ;; Autoload for the benefit of `make-mode-line-mouse-sensitive'.
-;;; What's this?: ;;;###autoload
 (defvar auto-revert-mode nil
   "Non-nil when Auto-Revert Mode is active.
 Never set this variable directly, use the command `auto-revert-mode' instead.")
@@ -364,6 +362,9 @@ buffer.")
 (defvar-local auto-revert-notify-modified-p nil
   "Non-nil when file has been modified on the file system.
 This has been reported by a file notification event.")
+
+(defvar auto-revert-debug nil
+  "Use for debug messages.")
 
 ;; Functions:
 
@@ -634,6 +635,8 @@ system.")
       ;; Since we watch a directory, a file name must be returned.
       (cl-assert (stringp file))
       (when (eq action 'renamed) (cl-assert (stringp file1)))
+      (when auto-revert-debug
+        (message "auto-revert-notify-handler %S" event))
 
       (if (eq action 'stopped)
           ;; File notification has stopped.  Continue with polling.
