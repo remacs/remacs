@@ -832,11 +832,19 @@ This is like `describe-bindings', but displays only Isearch keys."
   'isearch-regexp-function "25.1")
 (defvar isearch-regexp-function nil
   "Regexp-based search mode for words/symbols.
-If the value is a function (e.g. `isearch-symbol-regexp'), it is
-called to convert a plain search string to a regexp used by
-regexp search functions.
+If non-nil, a function to convert a search string to a regexp
+used by regexp search functions.
+
+The function should accept 1 or 2 arguments: the original string
+to convert, and a flag, whose non-nil value means the match
+doesn't have to start or end on a word boundary.  The function
+should return the corresponding regexp, a string.
+
 The symbol property `isearch-message-prefix' put on this function
 specifies the prefix string displayed in the search message.
+
+Existing functions you could use as values are `word-search-regexp',
+`isearch-symbol-regexp', and `char-fold-to-regexp'.
 
 This variable is set and changed during isearch.  To change the
 default behavior used for searches, see `search-default-mode'
