@@ -292,6 +292,12 @@ impl<S: Into<LispObject>, T: Into<LispObject>> From<(S, T)> for LispObject {
     }
 }
 
+impl<S: Into<LispObject>, T: Into<LispObject>> From<(S, T)> for LispCons {
+    fn from(t: (S, T)) -> Self {
+        LispObject::cons(t.0, t.1).into()
+    }
+}
+
 impl From<LispCons> for (LispObject, LispObject) {
     fn from(c: LispCons) -> Self {
         (c.car(), c.cdr())

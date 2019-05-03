@@ -9,9 +9,10 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::LispBufferRef,
     lisp::{ExternalPtr, LispObject},
+    remacs_sys::Lisp_Type,
     remacs_sys::Qthreadp,
     remacs_sys::{
-        current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type, SPECPDL_INDEX,
+        current_thread as current_thread_pointer, pvec_type, thread_state, SPECPDL_INDEX,
     },
     vectors::LispVectorlikeRef,
 };
