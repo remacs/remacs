@@ -18,11 +18,13 @@ use crate::{
     lisp::LispObject,
     lists::{nth, setcdr},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     obarray::intern,
     remacs_sys::{
-        access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
-        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
-        map_keymap_item, maybe_quit, specbind,
+        access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
+        describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
+        map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
+        maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
@@ -30,11 +32,12 @@ use crate::{
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
-        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qt,
+        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
         Qvector_or_char_table_p,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
+    vectors::sort,
 };
 
 pub const fn Ctl(c: char) -> i32 {
@@ -750,6 +753,23 @@ pub fn key_binding(
         }
     }
     value
+}
+
+/// Show all symbols whose names contain match for REGEXP.
+/// If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
+/// for each symbol and a symbol is mentioned only if that returns non-nil.
+/// Return list of symbols found.
+#[lisp_fn(min = "1")]
+pub fn apropos_internal(regexp: LispStringRef, predicate: LispObject) -> LispObject {
+    unsafe {
+        apropos_predicate = predicate;
+        apropos_accumulate = Qnil;
+        map_obarray(globals.Vobarray, Some(apropos_accum), regexp.into());
+        let tem = sort(apropos_accumulate, Qstring_lessp);
+        apropos_accumulate = Qnil;
+        apropos_predicate = Qnil;
+        tem
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
