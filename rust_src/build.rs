@@ -355,18 +355,30 @@ fn env_var(name: &str) -> String {
 }
 
 // What to ignore when walking the list of files
-fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs" || path == "functions.rs"
+fn ignore(path: &str, additional_ignored_paths: &Vec<&str>) -> bool {
+    path == "" || path.starts_with('.') || additional_ignored_paths.contains(&path)
+}
+
+// What files to ignore depending on chosen features
+fn build_ignored_paths() -> Vec<&'static str> {
+    #[allow(unused_mut)]
+    let mut ignored_paths = vec!["lib.rs", "functions.rs"];
+
+    #[cfg(not(feature = "window-system-x11"))]
+    ignored_paths.push("xsettings.rs");
+
+    ignored_paths
 }
 
 fn generate_include_files() -> Result<(), BuildError> {
     let mut modules: Vec<ModuleData> = Vec::new();
+    let ignored_paths = build_ignored_paths();
 
     let in_path: PathBuf = [&env_var("CARGO_MANIFEST_DIR"), "src"].iter().collect();
     for entry in fs::read_dir(in_path)? {
         let mod_path = entry?.path();
 
-        if !ignore(path_as_str(mod_path.file_name())) {
+        if !ignore(path_as_str(mod_path.file_name()), &ignored_paths) {
             if let Some(mod_data) = handle_file(&mod_path)? {
                 modules.push(mod_data);
             }
