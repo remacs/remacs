@@ -6735,7 +6735,7 @@ my_error_exit (j_common_ptr cinfo)
 
 
 /* Init source method for JPEG data source manager.  Called by
-   jpeg_read_header() before any data is actually read.  See
+   jpeg_read_header before any data is actually read.  See
    libjpeg.doc from the JPEG lib distribution.  */
 
 static void
@@ -6745,7 +6745,7 @@ our_common_init_source (j_decompress_ptr cinfo)
 
 
 /* Method to terminate data source.  Called by
-   jpeg_finish_decompress() after all data has been processed.  */
+   jpeg_finish_decompress after all data has been processed.  */
 
 static void
 our_common_term_source (j_decompress_ptr cinfo)
@@ -9456,7 +9456,18 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      See rsvg bug 596114 - "image refs are relative to curdir, not .svg file"
      <https://gitlab.gnome.org/GNOME/librsvg/issues/33>. */
   if (filename)
-    rsvg_handle_set_base_uri(rsvg_handle, filename);
+    rsvg_handle_set_base_uri (rsvg_handle, filename);
+
+  /* Suppress GCC deprecation warnings starting in librsvg 2.45.1 for
+     rsvg_handle_write and rsvg_handle_close.  FIXME: Use functions
+     like rsvg_handle_new_from_gfile_sync on newer librsvg versions,
+     and remove this hack.  */
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic push
+  #endif
+  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
+   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
 
   /* Parse the contents argument and fill in the rsvg_handle.  */
   rsvg_handle_write (rsvg_handle, (unsigned char *) contents, size, &err);
@@ -9466,6 +9477,10 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      for further writes.  */
   rsvg_handle_close (rsvg_handle, &err);
   if (err) goto rsvg_error;
+
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic pop
+  #endif
 
   rsvg_handle_get_dimensions (rsvg_handle, &dimension_data);
   if (! check_image_size (f, dimension_data.width, dimension_data.height))
