@@ -34,11 +34,12 @@ some of the steps manually.  The more detailed description in the other
 sections of this guide will help you do that, so please refer to those
 sections if you need to.
 
-  1. Unpacking the Emacs release requires about 200 MB of free
-  disk space.  Building Emacs uses about another 200 MB of space.
-  The final installed Emacs uses about 150 MB of disk space.
-  This includes the space-saving that comes from automatically
-  compressing the Lisp source files on installation.
+  1.  Obtain and unpack the Emacs release, with commands like this:
+
+		 wget https://ftp.gnu.org/gnu/emacs/emacs-VERSION.tar.xz
+		 tar -xf emacs-VERSION.tar.xz
+
+      where VERSION is the Emacs version number.
 
   2a. 'cd' to the directory where you unpacked Emacs and invoke the
       'configure' script:
@@ -87,7 +88,7 @@ sections if you need to.
 
 		 make install
 
-  You are now ready to use Emacs.  If you wish to conserve disk space,
+  You are now ready to use Emacs.  If you wish to conserve space,
   you may remove the program binaries and object files from the
   directory where you built Emacs:
 
@@ -118,7 +119,7 @@ packages.  Note that if there is a separate 'dev' or 'devel' package,
 for use at compilation time rather than run time, you will need that
 as well as the corresponding run time package; typically the dev
 package will contain header files and a library archive.  Otherwise,
-you can download the libraries from <http://www.nongnu.org/m17n/>.
+you can download the libraries from <https://www.nongnu.org/m17n/>.
 
 Note that Emacs cannot support complex scripts on a TTY, unless the
 terminal includes such a support.
@@ -162,14 +163,14 @@ can be found (in the unlikely event that your distribution does not
 provide them).  By default, libraries marked with an X are required if
 X11 is being used.
 
-    libXaw3d          https://directory.fsf.org/project/xaw3d/
-  X libxpm for XPM:   http://www.x.org/releases/current/src/lib/
+    libXaw3d          https://directory.fsf.org/project/Xaw3d
+  X libxpm for XPM:   https://www.x.org/releases/current/src/lib/
   X libpng for PNG:   http://www.libpng.org/
-    libz (for PNG):   http://www.zlib.net/
-  X libjpeg for JPEG: http://www.ijg.org/
-  X libtiff for TIFF: http://www.remotesensing.org/libtiff/
-  X libgif for GIF:   http://sourceforge.net/projects/giflib/
-    librsvg2 for SVG: http://wiki.gnome.org/action/show/Projects/LibRsvg
+    libz (for PNG):   https://www.zlib.net/
+  X libjpeg for JPEG: https://www.ijg.org/
+  X libtiff for TIFF: http://www.simplesystems.org/libtiff/
+  X libgif for GIF:   http://giflib.sourceforge.net/
+    librsvg2 for SVG: https://wiki.gnome.org/Projects/LibRsvg
 
 If you supply the appropriate --without-LIB option, 'configure' will
 omit the corresponding library from Emacs, even if that makes for a
@@ -213,7 +214,7 @@ DETAILED BUILDING AND INSTALLATION:
 see nextstep/INSTALL.  For non-ancient versions of MS Windows, see
 the file nt/INSTALL.  For MS-DOS and MS Windows 3.X, see msdos/INSTALL.)
 
-1) See the basic installation summary above for the disk space requirements.
+1) See BASIC INSTALLATION above for getting and configuring Emacs.
 
 2) In the unlikely event that 'configure' does not detect your system
 type correctly, consult './etc/MACHINES' to see what --host, --build
@@ -352,7 +353,7 @@ Use --enable-link-time-optimization to enable link-time optimization.
 With GCC, you need GCC 4.5.0 and later, and 'configure' arranges for
 linking to be parallelized if possible.  With Clang, you need GNU
 binutils with the gold linker and plugin support, along with the LLVM
-gold plugin <http://llvm.org/docs/GoldPlugin.html>.  Link time
+gold plugin <https://llvm.org/docs/GoldPlugin.html>.  Link time
 optimization is not the default as it tends to cause crashes and to
 make Emacs slower.
 
