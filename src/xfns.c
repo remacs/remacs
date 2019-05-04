@@ -3774,10 +3774,16 @@ This function is an internal primitive--use `make-frame' instead.  */)
 
 #ifdef USE_CAIRO
   register_font_driver (&ftcrfont_driver, f);
+#ifdef HAVE_HARFBUZZ
+  register_font_driver (&ftcrhbfont_driver, f);
+#endif	/* HAVE_HARFBUZZ */
 #else
 #ifdef HAVE_FREETYPE
 #ifdef HAVE_XFT
   register_font_driver (&xftfont_driver, f);
+#ifdef HAVE_HARFBUZZ
+  register_font_driver (&xfthbfont_driver, f);
+#endif
 #else	/* not HAVE_XFT */
   register_font_driver (&ftxfont_driver, f);
 #endif	/* not HAVE_XFT */

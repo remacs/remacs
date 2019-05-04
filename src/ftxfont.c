@@ -209,21 +209,13 @@ ftxfont_draw_background (struct frame *f, struct font *font, GC gc, int x, int y
 static Lisp_Object
 ftxfont_list (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object list = ftfont_list (f, spec), tail;
-
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    ASET (XCAR (tail), FONT_TYPE_INDEX, Qftx);
-  return list;
+  return ftfont_list2 (f, spec, Qftx);
 }
 
 static Lisp_Object
 ftxfont_match (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object entity = ftfont_match (f, spec);
-
-  if (VECTORP (entity))
-    ASET (entity, FONT_TYPE_INDEX, Qftx);
-  return entity;
+  return ftfont_match2 (f, spec, Qftx);
 }
 
 static Lisp_Object
@@ -362,7 +354,7 @@ struct font_driver const ftxfont_driver =
   .otf_capability = ftfont_otf_capability,
 #endif
   .end_for_frame = ftxfont_end_for_frame,
-#if (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ
+#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS

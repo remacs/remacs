@@ -22,6 +22,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef EMACS_FONT_H
 #define EMACS_FONT_H
 
+#ifdef HAVE_HARFBUZZ
+#include <hb.h>
+#endif	/* HAVE_HARFBUZZ */
+
 struct composition_it;
 struct face;
 struct glyph_string;
@@ -780,6 +784,21 @@ struct font_driver
      relies on this hook to throw away its old XftDraw (which won't
      work after the size change) and get a new one.  */
   void (*drop_xrender_surfaces) (struct frame *f);
+
+#ifdef HAVE_HARFBUZZ
+  /* Optional.
+     Return a HarfBuzz font object for FONT and store to
+     *POSITION_UNIT the scale factor to convert a hb_position_t value
+     to the number of pixels.  Return NULL if HarfBuzz font object is
+     not available for FONT.  */
+  hb_font_t *(*begin_hb_font) (struct font *font, double *position_unit);
+
+  /* Optional.
+     Called when the return value (passed as HB_FONT) of begin_hb_font
+     above is no longer used.  Not called if the return value of
+     begin_hb_font was NULL.  */
+  void (*end_hb_font) (struct font *font, hb_font_t *hb_font);
+#endif	/* HAVE_HARFBUZZ */
 };
 
 
@@ -892,9 +911,9 @@ extern int ftfont_has_char (Lisp_Object, int);
 extern int ftfont_variation_glyphs (struct font *, int, unsigned[256]);
 extern Lisp_Object ftfont_combining_capability (struct font *);
 extern Lisp_Object ftfont_get_cache (struct frame *);
-extern Lisp_Object ftfont_list (struct frame *, Lisp_Object);
+extern Lisp_Object ftfont_list2 (struct frame *, Lisp_Object, Lisp_Object);
 extern Lisp_Object ftfont_list_family (struct frame *);
-extern Lisp_Object ftfont_match (struct frame *, Lisp_Object);
+extern Lisp_Object ftfont_match2 (struct frame *, Lisp_Object, Lisp_Object);
 extern Lisp_Object ftfont_open (struct frame *, Lisp_Object, int);
 extern Lisp_Object ftfont_otf_capability (struct font *);
 extern Lisp_Object ftfont_shape (Lisp_Object, Lisp_Object);
@@ -903,6 +922,11 @@ extern void ftfont_close (struct font *);
 extern void ftfont_filter_properties (Lisp_Object, Lisp_Object);
 extern void ftfont_text_extents (struct font *, unsigned *, int,
 				 struct font_metrics *);
+#ifdef HAVE_HARFBUZZ
+extern Lisp_Object fthbfont_combining_capability (struct font *);
+extern hb_font_t *fthbfont_begin_hb_font (struct font *, double *);
+extern Lisp_Object fthbfont_shape (Lisp_Object, Lisp_Object);
+#endif	/* HAVE_HARFBUZZ */
 extern void syms_of_ftfont (void);
 #endif	/* HAVE_FREETYPE */
 #ifdef HAVE_X_WINDOWS
@@ -912,6 +936,9 @@ extern void syms_of_xfont (void);
 extern void syms_of_ftxfont (void);
 #ifdef HAVE_XFT
 extern struct font_driver const xftfont_driver;
+#ifdef HAVE_HARFBUZZ
+extern struct font_driver xfthbfont_driver;
+#endif	/* HAVE_HARFBUZZ */
 #endif
 #if defined HAVE_FREETYPE || defined HAVE_XFT
 extern struct font_driver const ftxfont_driver;
@@ -933,6 +960,9 @@ extern void syms_of_macfont (void);
 #endif	/* HAVE_NS */
 #ifdef USE_CAIRO
 extern struct font_driver const ftcrfont_driver;
+#ifdef HAVE_HARFBUZZ
+extern struct font_driver ftcrhbfont_driver;
+#endif	/* HAVE_HARFBUZZ */
 extern void syms_of_ftcrfont (void);
 #endif
 
