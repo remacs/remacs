@@ -1014,11 +1014,13 @@ This function could be in the list `eshell-output-filter-functions'."
 		   'eshell-handle-control-codes)
 
 (autoload 'ansi-color-apply-on-region "ansi-color")
+(defvar ansi-color-apply-face-function)
 
 (defun eshell-handle-ansi-color ()
   "Handle ANSI color codes."
-  (ansi-color-apply-on-region eshell-last-output-start
-                              eshell-last-output-end))
+  (let ((ansi-color-apply-face-function #'ansi-color-apply-text-property-face))
+    (ansi-color-apply-on-region eshell-last-output-start
+                                eshell-last-output-end)))
 
 (custom-add-option 'eshell-output-filter-functions
 		   'eshell-handle-ansi-color)
