@@ -2265,11 +2265,12 @@ filter_face_ref (Lisp_Object face_ref,
 }
 
 /* Merge face attributes from the lisp `face reference' FACE_REF on
-   frame F into the face attribute vector TO.  If ERR_MSGS,
-   problems with FACE_REF cause an error message to be shown.  Return
-   true if no errors occurred (regardless of the value of ERR_MSGS).
-   Use NAMED_MERGE_POINTS to detect loops in face inheritance or
-   list structure; it may be 0 for most callers.
+   frame F into the face attribute vector TO as appropriate for
+   window W; W is used only for filtering face specs.  If ERR_MSGS
+   is non-zero, problems with FACE_REF cause an error message to be
+   shown.  Return true if no errors occurred (regardless of the value
+   of ERR_MSGS).  Use NAMED_MERGE_POINTS to detect loops in face
+   inheritance or list structure; it may be 0 for most callers.
 
    FACE_REF may be a single face specification or a list of such
    specifications.  Each face specification can be:
@@ -2286,9 +2287,10 @@ filter_face_ref (Lisp_Object face_ref,
 
    4. Conses of the form
    (:filtered (:window PARAMETER VALUE) FACE-SPECIFICATION),
-   which applies FACE-SPECIFICATION only if the
-   given face attributes are being evaluated in the context of a
-   window with a parameter named PARAMETER being EQ VALUE.
+   which applies FACE-SPECIFICATION only if the given face attributes
+   are being evaluated in the context of a window with a parameter
+   named PARAMETER being EQ VALUE.  In this case, W specifies the window
+   for which the filtered face spec is to be evaluated.
 
    5. nil, which means to merge nothing.
 
