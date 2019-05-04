@@ -1794,17 +1794,24 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
 	if (symbol == NULL)
 	  {
-	    print_c_string ("at ", printcharfun);
-	    enum { pointer_bufsize = sizeof ptr * 16 / CHAR_BIT + 2 + 1 };
-	    char buffer[pointer_bufsize];
-	    int needed = snprintf (buffer, sizeof buffer, "%p", ptr);
-	    const char p0x[] = "0x";
-	    eassert (needed <= sizeof buffer);
-	    /* ANSI C doesn't guarantee that %p produces a string that
-	       begins with a "0x".  */
-	    if (c_strncasecmp (buffer, p0x, sizeof (p0x) - 1) != 0)
-	      print_c_string (p0x, printcharfun);
-	    print_c_string (buffer, printcharfun);
+	    print_c_string ("at 0x", printcharfun);
+            /* See https://stackoverflow.com/a/2741896 for how to
+               portably print a function pointer.  */
+            const unsigned char *p = (const unsigned char *) &ptr;
+            for (size_t i = 0; i < sizeof ptr; ++i)
+              {
+#ifdef WORDS_BIGENDIAN
+                unsigned char b = p[i];
+#else
+                unsigned char b = p[sizeof ptr - i - 1];
+#endif
+                enum { digits = (CHAR_BIT + 4 - 1) / 4 };
+                char buffer[digits + 1];
+                int needed
+                  = snprintf (buffer, sizeof buffer, "%0*hhx", digits, b);
+                eassert (needed == digits);
+                print_c_string (buffer, printcharfun);
+              }
 	  }
 	else
 	  print_c_string (symbol, printcharfun);
