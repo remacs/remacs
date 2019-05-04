@@ -254,8 +254,6 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
-HYBRID_MALLOC = @HYBRID_MALLOC@
-LIBEGNU_ARCHIVE = ../lib/lib$(if $(HYBRID_MALLOC),e)gnu.a
 GMP_LIB = @GMP_LIB@
 GMP_OBJ = $(if @GMP_OBJ@, ../src/@GMP_OBJ@)
 
@@ -267,10 +265,15 @@ MODULE_CFLAGS = -I../src -I$(srcdir)/../lib \
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log src/emacs-module-tests.elc: $(test_module)
-$(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h $(LIBEGNU_ARCHIVE)
+
+# In the compilation command, we can't use any object or archive file
+# as source because those are not compiled with -fPIC.  Therefore we
+# use only source files.
+$(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h
 	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
-	  -o $@ $< $(LIBEGNU_ARCHIVE) $(GMP_LIB) $(GMP_OBJ)
+	  -o $@ $< $(GMP_LIB) $(GMP_OBJ:.o=.c) \
+	  $(srcdir)/../lib/timespec.c $(srcdir)/../lib/gettime.c
 endif
 
 ## Check that there is no 'automated' subdirectory, which would
