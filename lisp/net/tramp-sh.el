@@ -3645,6 +3645,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	(process-put p 'watch-name localname)
 	(set-process-query-on-exit-flag p nil)
 	(set-process-filter p filter)
+	(set-process-sentinel p #'tramp-file-notify-process-sentinel)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(while (tramp-accept-process-output p 0))
@@ -5957,5 +5958,7 @@ function cell is returned to be applied on a buffer."
 ;; * Implement detaching/re-attaching remote sessions.  By this, a
 ;;   session could be reused after a connection loss.  Use dtach, or
 ;;   screen, or tmux, or mosh.
+;;
+;; * Implement `:stderr' of `make-process' as pipe process.
 
 ;;; tramp-sh.el ends here

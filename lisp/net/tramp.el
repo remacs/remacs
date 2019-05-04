@@ -9,6 +9,7 @@
 ;; Package: tramp
 ;; Version: 2.4.2-pre
 ;; Package-Requires: ((emacs "24.1"))
+;; URL: https://savannah.gnu.org/projects/tramp
 
 ;; This file is part of GNU Emacs.
 
@@ -3853,6 +3854,12 @@ of."
 	 (file-exists-p
 	  (concat (file-remote-p default-directory)
 		  (process-get proc 'watch-name))))))
+
+(defun tramp-file-notify-process-sentinel (proc event)
+  "Call `file-notify-rm-watch'."
+  (unless (process-live-p proc)
+    (tramp-message proc 5 "Sentinel called: `%S' `%s'" proc event)
+    (file-notify-rm-watch proc)))
 
 ;;; Functions for establishing connection:
 
