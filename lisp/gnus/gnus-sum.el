@@ -9423,8 +9423,11 @@ With optional ARG, move across that many fields."
   (interactive "p")
   (gnus-summary-select-article)
   (gnus-configure-windows 'article)
-  (select-window (gnus-get-buffer-window gnus-article-buffer))
-  (widget-forward arg))
+  (let ((win (or (gnus-get-buffer-window gnus-article-buffer t)
+                 (error "No article window found"))))
+    (select-window win)
+    (select-frame-set-input-focus (window-frame win))
+    (widget-forward arg)))
 
 (defun gnus-summary-widget-backward (arg)
   "Move point to the previous field or button in the article.
@@ -9432,10 +9435,13 @@ With optional ARG, move across that many fields."
   (interactive "p")
   (gnus-summary-select-article)
   (gnus-configure-windows 'article)
-  (select-window (gnus-get-buffer-window gnus-article-buffer))
-  (unless (widget-at (point))
-    (goto-char (point-max)))
-  (widget-backward arg))
+  (let ((win (or (gnus-get-buffer-window gnus-article-buffer t)
+                 (error "No article window found"))))
+    (select-window win)
+    (select-frame-set-input-focus (window-frame win))
+    (unless (widget-at (point))
+      (goto-char (point-max)))
+    (widget-backward arg)))
 
 (defun gnus-summary-isearch-article (&optional regexp-p)
   "Do incremental search forward on the current article.

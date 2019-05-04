@@ -28,6 +28,7 @@
 
 (require 'gnus)
 (require 'gnus-util)
+(require 'seq)
 
 (defgroup gnus-windows nil
   "Window configuration."
@@ -509,15 +510,15 @@ should have point."
 	      (delq lowest-buf bufs)))))
 
 (defun gnus-get-buffer-window (buffer &optional frame)
-  (cond ((and (null gnus-use-frames-on-any-display)
-	      (memq frame '(t 0 visible)))
-	 (car
-	  (let ((frames (frames-on-display-list)))
-	    (seq-remove (lambda (win) (not (memq (window-frame win)
-						     frames)))
-			    (get-buffer-window-list buffer nil frame)))))
-	(t
-	 (get-buffer-window buffer frame))))
+  "Return a window currently displaying BUFFER, or nil if none.
+Like `get-buffer-window', but respecting
+`gnus-use-frames-on-any-display'."
+  (if (and (not gnus-use-frames-on-any-display)
+           (memq frame '(t 0 visible)))
+      (let ((frames (frames-on-display-list)))
+        (seq-find (lambda (win) (memq (window-frame win) frames))
+                  (get-buffer-window-list buffer nil frame)))
+    (get-buffer-window buffer frame)))
 
 (provide 'gnus-win)
 
