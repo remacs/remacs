@@ -5,3 +5,4 @@
 
 extern char *current_mono_font;
 extern char *current_font;
+extern Lisp_Object current_tool_bar_style;

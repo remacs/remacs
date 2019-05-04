@@ -52,7 +52,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 char *current_mono_font;
 char *current_font;
 static struct x_display_info *first_dpyinfo;
-static Lisp_Object current_tool_bar_style;
+Lisp_Object current_tool_bar_style;
 
 /* Store a config changed event in to the event queue.  */
 
@@ -974,24 +974,6 @@ xsettings_get_system_font (void)
   return current_mono_font;
 }
 
-DEFUN ("tool-bar-get-system-style", Ftool_bar_get_system_style,
-       Stool_bar_get_system_style, 0, 0, 0,
-       doc: /* Get the system tool bar style.
-If no system tool bar style is known, return `tool-bar-style' if set to a
-known style.  Otherwise return image.  */)
-  (void)
-{
-  if (EQ (Vtool_bar_style, Qimage)
-      || EQ (Vtool_bar_style, Qtext)
-      || EQ (Vtool_bar_style, Qboth)
-      || EQ (Vtool_bar_style, Qboth_horiz)
-      || EQ (Vtool_bar_style, Qtext_image_horiz))
-    return Vtool_bar_style;
-  if (!NILP (current_tool_bar_style))
-    return current_tool_bar_style;
-  return Qimage;
-}
-
 void
 syms_of_xsettings (void)
 {
@@ -1029,7 +1011,6 @@ If this variable is nil, Emacs ignores system font changes.  */);
 
   current_tool_bar_style = Qnil;
   DEFSYM (Qtool_bar_style, "tool-bar-style");
-  defsubr (&Stool_bar_get_system_style);
 
   Fprovide (intern_c_string ("dynamic-setting"), Qnil);
 }
