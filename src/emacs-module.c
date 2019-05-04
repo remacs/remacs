@@ -785,10 +785,7 @@ module_extract_big_integer (emacs_env *env, emacs_value value,
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object o = value_to_lisp (value);
   CHECK_INTEGER (o);
-  if (FIXNUMP (o))
-    mpz_set_intmax (result->value, XFIXNUM (o));
-  else
-    mpz_set (result->value, XBIGNUM (o)->value);
+  mpz_set_integer (result->value, o);
 }
 
 static emacs_value
