@@ -316,16 +316,6 @@ Fmod_test_invalid_finalizer (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
 }
 
 static void
-signal_wrong_type_argument (emacs_env *env, const char *predicate,
-                            emacs_value arg)
-{
-  emacs_value symbol = env->intern (env, "wrong-type-argument");
-  emacs_value elements[2] = {env->intern (env, predicate), arg};
-  emacs_value data = env->funcall (env, env->intern (env, "list"), 2, elements);
-  env->non_local_exit_signal (env, symbol, data);
-}
-
-static void
 signal_errno (emacs_env *env, const char *function)
 {
   const char *message = strerror (errno);
@@ -345,16 +335,10 @@ Fmod_test_sleep_until (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
                        void *data)
 {
   assert (nargs == 2);
-  const double until_seconds = env->extract_float (env, args[0]);
+  const struct timespec until = env->extract_time (env, args[0]);
   if (env->non_local_exit_check (env))
     return NULL;
-  if (until_seconds <= 0)
-    {
-      signal_wrong_type_argument (env, "cl-plusp", args[0]);
-      return NULL;
-    }
   const bool process_input = env->is_not_nil (env, args[1]);
-  const struct timespec until = dtotimespec (until_seconds);
   const struct timespec amount = make_timespec(0,  10000000);
   while (true)
     {

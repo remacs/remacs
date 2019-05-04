@@ -313,7 +313,7 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
                          ;; Interactively, run for 5 seconds to give the
                          ;; user time to quit.  In batch mode, run only
                          ;; briefly since the user can't quit.
-                         (float-time (time-add nil (if noninteractive 0.1 5)))
+                         (time-add nil (if noninteractive 0.1 5))
                          ;; should_quit or process_input
                          arg))
                       'finished))
