@@ -266,7 +266,7 @@ MODULE_CFLAGS = -I../src -I$(srcdir)/../lib \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
-src/emacs-module-tests.log: $(test_module)
+src/emacs-module-tests.log src/emacs-module-tests.elc: $(test_module)
 $(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h $(LIBEGNU_ARCHIVE)
 	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
