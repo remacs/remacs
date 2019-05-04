@@ -29,7 +29,7 @@ const char *dynlib_error (void);
 
 ATTRIBUTE_MAY_ALIAS void *dynlib_sym (dynlib_handle_ptr h, const char *sym);
 
-typedef struct dynlib_function_ptr_nonce *(ATTRIBUTE_MAY_ALIAS *dynlib_function_ptr) (void);
+typedef void (ATTRIBUTE_MAY_ALIAS *dynlib_function_ptr) (void);
 dynlib_function_ptr dynlib_func (dynlib_handle_ptr h, const char *sym);
 
 /* Sets *FILE to the file name from which PTR was loaded, and *SYM to

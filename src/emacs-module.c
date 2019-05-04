@@ -101,11 +101,6 @@ To add a new module function, proceed as follows:
 # pragma GCC diagnostic ignored "-Wclobbered"
 #endif
 
-/* This module is lackadaisical about function casts.  */
-#if GNUC_PREREQ (8, 0, 0)
-# pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif
-
 /* We use different strategies for allocating the user-visible objects
    (struct emacs_runtime, emacs_env, emacs_value), depending on
    whether the user supplied the -module-assertions flag.  If
