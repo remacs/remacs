@@ -37,6 +37,7 @@
     "Passphrase for key root@GNU.ORG: " ; plink
     "[sudo] password for user:" ; Ubuntu sudo
     "[sudo] user 的密码：" ; localized
+    "PIN for user:"        ; Bug#35523
     "Password (again):"
     "Enter password:"
     "Enter Auth Password:" ; OpenVPN (Bug#35724)

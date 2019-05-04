@@ -1585,7 +1585,7 @@ for decoding and encoding files, process I/O, etc."
 (aset latin-extra-code-table ?\226 t)
 
 (defcustom password-word-equivalents
-  '("password" "passcode" "passphrase" "pass phrase"
+  '("password" "passcode" "passphrase" "pass phrase" "pin"
     ; These are sorted according to the GNU en_US locale.
     "암호"		; ko
     "パスワード"	; ja
@@ -1636,7 +1636,7 @@ password prompts, including prompts in languages other than
 English.  Different case choices should not be assumed to be
 included; callers should bind `case-fold-search' to t."
   :type '(repeat string)
-  :version "24.4"
+  :version "27.1"
   :group 'processes)
 
 ;; The old code-pages library is obsoleted by coding systems based on
