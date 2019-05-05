@@ -3859,7 +3859,7 @@ of."
   "Call `file-notify-rm-watch'."
   (unless (process-live-p proc)
     (tramp-message proc 5 "Sentinel called: `%S' `%s'" proc event)
-    (file-notify-rm-watch proc)))
+    (tramp-compat-funcall 'file-notify-rm-watch proc)))
 
 ;;; Functions for establishing connection:
 

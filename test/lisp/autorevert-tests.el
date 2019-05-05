@@ -309,9 +309,7 @@ This expects `auto-revert--messages' to be bound by
             ;; polling.
             (should (string-match "any text" (buffer-string)))
             ;; With w32notify, the 'stopped' events are not sent.
-            ;; Same for remote file name handlers.  Why?
             (or (eq file-notify--library 'w32notify)
-                (file-remote-p temporary-file-directory)
                 (should-not auto-revert-notify-watch-descriptor))
 
             ;; Once the file has been recreated, the buffer shall be
