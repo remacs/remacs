@@ -19,7 +19,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 
+#undef NDEBUG
 #include <assert.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
