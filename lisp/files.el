@@ -3590,7 +3590,9 @@ local variables, but directory-local variables may still be applied."
 	result)
     (unless (eq handle-mode t)
       (setq file-local-variables-alist nil)
-      (when (file-remote-p default-directory)
+      (when (and (file-remote-p default-directory)
+                 (fboundp 'hack-connection-local-variables)
+                 (fboundp 'connection-local-criteria-for-default-directory))
         (with-demoted-errors "Connection-local variables error: %s"
 	  ;; Note this is a no-op if enable-local-variables is nil.
 	  (hack-connection-local-variables
