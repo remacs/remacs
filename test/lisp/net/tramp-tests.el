@@ -4192,18 +4192,17 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name)))
 
-      ;; Test `shell-command-width' of `async-shell-command'.
-      ;; Since Emacs 27.1.
-      (when (and (boundp 'shell-command-width)
+      ;; Test `async-shell-command-width'.  Since Emacs 27.1.
+      (when (and (boundp 'async-shell-command-width)
 		 (zerop (call-process "tput" nil nil nil "cols"))
                  (zerop (process-file "tput" nil nil nil "cols")))
-	(let (shell-command-width)
+	(let (async-shell-command-width)
 	  (should
 	   (string-equal
 	    (format "%s\n" (car (process-lines "tput" "cols")))
 	    (tramp--test-shell-command-to-string-asynchronously
 	     "tput cols")))
-	  (setq shell-command-width 1024)
+	  (setq async-shell-command-width 1024)
 	  (should
 	   (string-equal
 	    "1024\n"

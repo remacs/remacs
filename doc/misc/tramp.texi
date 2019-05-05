@@ -3093,9 +3093,9 @@ uses @file{/system/bin/sh}).  Like the variables in the previous
 section, these variables can be changed via connection-local
 variables.
 
-@vindex shell-command-width
+@vindex async-shell-command-width
 @vindex COLUMNS@r{, environment variable}
-If Emacs supports the variable @code{shell-command-width} (since Emacs
+If Emacs supports the variable @code{async-shell-command-width} (since Emacs
 27.1), @value{tramp} cares about its value for asynchronous shell
 commands.  It specifies the number of display columns for command
 output.  For synchronous shell commands, a similar effect can be

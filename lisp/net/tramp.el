@@ -3640,10 +3640,10 @@ support symbolic links."
 
     (if (and (not current-buffer-p) (integerp asynchronous))
 	(let ((tramp-remote-process-environment
-	       ;; `shell-command-width' has been introduced with Emacs 27.1.
-	       (if (natnump (bound-and-true-p shell-command-width))
+	       ;; `async-shell-command-width' has been introduced with Emacs 27.1.
+	       (if (natnump (bound-and-true-p async-shell-command-width))
 		   (cons (format "COLUMNS=%d"
-				 (bound-and-true-p shell-command-width))
+				 (bound-and-true-p async-shell-command-width))
 			 tramp-remote-process-environment)
 		 tramp-remote-process-environment)))
 	  (prog1

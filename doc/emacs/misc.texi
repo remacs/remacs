@@ -775,6 +775,13 @@ documentation for more possibilities.
 displayed only when the command generates output, set
 @code{async-shell-command-display-buffer} to @code{nil}.
 
+@vindex async-shell-command-width
+  The option @code{async-shell-command-width} defines the number of display
+columns available for output of asynchronous shell commands.
+A positive integer tells the shell to use that number of columns for
+command output.  The default value is @code{nil} that means to use
+the same number of columns as provided by the shell.
+
 @kindex M-|
 @findex shell-command-on-region
   @kbd{M-|} (@code{shell-command-on-region}) is like @kbd{M-!}, but
