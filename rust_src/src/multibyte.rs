@@ -121,21 +121,23 @@ impl LispStringRef {
         let mut b = 0;
 
         while i < len {
-            let (chars, bytes, thiswidth) = unsafe {
-                // If there is a composition, get its id.
-                let (cmp_id, end) = match find_composition(i, None, self.into()) {
-                    Some((_, end, val)) => (
+            // If there is a composition, get its id.
+            let (cmp_id, end) = match find_composition(i, None, self.into()) {
+                Some((_, end, val)) => (
+                    unsafe {
                         get_composition_id(
                             i as isize,
                             b as isize,
                             (end - i) as isize,
                             val,
                             self.into(),
-                        ),
-                        end,
-                    ),
-                    None => (-1, 0),
-                };
+                        )
+                    },
+                    end,
+                ),
+                None => (-1, 0),
+            };
+            let (chars, bytes, thiswidth) = unsafe {
                 if cmp_id >= 0 {
                     // Character is a composition, look it up in the composition table.
                     let chars = end - i;
