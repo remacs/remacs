@@ -377,7 +377,11 @@ Fmod_test_nanoseconds (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void 
   struct emacs_mpz nanoseconds;
   assert (LONG_MIN <= time.tv_sec && time.tv_sec <= LONG_MAX);
   mpz_init_set_si (nanoseconds.value, time.tv_sec);
+#ifdef __MINGW32__
+  _Static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
+#else
   static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
+#endif
   mpz_mul_ui (nanoseconds.value, nanoseconds.value, 1000000000);
   assert (0 <= time.tv_nsec && time.tv_nsec <= ULONG_MAX);
   mpz_add_ui (nanoseconds.value, nanoseconds.value, time.tv_nsec);
