@@ -893,8 +893,7 @@ external if displayed external."
 		  (if method
 		      (progn
 			(when (and (boundp 'gnus-summary-buffer)
-				   (bufferp gnus-summary-buffer)
-				   (buffer-name gnus-summary-buffer))
+                                   (buffer-live-p gnus-summary-buffer))
 			  (when attachment-filename
 			    (with-current-buffer mm
 			      (rename-buffer (format "*mm* %s" attachment-filename) t)))
@@ -1152,9 +1151,8 @@ external if displayed external."
 	  (ignore-errors (delete-file (car object)))
 	  (ignore-errors (delete-directory (file-name-directory
 					    (car object)))))
-	 ((bufferp object)
-	  (when (buffer-live-p object)
-	    (kill-buffer object)))))
+         ((buffer-live-p object)
+          (kill-buffer object))))
       (mm-handle-set-undisplayer handle nil))))
 
 (defun mm-display-inline (handle)

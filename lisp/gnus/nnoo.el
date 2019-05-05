@@ -269,8 +269,7 @@
 
 (defun nnoo-server-opened (backend server)
   (and (nnoo-current-server-p backend server)
-       nntp-server-buffer
-       (buffer-name nntp-server-buffer)))
+       (buffer-live-p nntp-server-buffer)))
 
 (defmacro nnoo-define-basics (backend)
   "Define `close-server', `server-opened' and `status-message'."

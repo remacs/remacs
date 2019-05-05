@@ -1743,8 +1743,7 @@ already.  If INFO-UNCHANGED is non-nil, dribble buffer is not updated."
 	     gnus-tmp-header		;Dummy binding for user-defined formats
 	     ;; Get the resulting string.
 	     (modified
-	      (and gnus-dribble-buffer
-		   (buffer-name gnus-dribble-buffer)
+              (and (buffer-live-p gnus-dribble-buffer)
 		   (buffer-modified-p gnus-dribble-buffer)
 		   (with-current-buffer gnus-dribble-buffer
 		     (not (zerop (buffer-size))))))
@@ -4362,15 +4361,13 @@ The hook `gnus-exit-gnus-hook' is called before actually exiting."
 
 (defun gnus--abort-on-unsaved-message-buffers ()
   (dolist (buffer (gnus-buffers))
-    (when (gnus-buffer-exists-p buffer)
-      (with-current-buffer buffer
-	(when (and (derived-mode-p 'message-mode)
-		   (buffer-modified-p)
-		   (not (y-or-n-p
-			 (format "Message buffer %s unsaved, continue exit? "
-				 (buffer-name)))))
-	  (error "Gnus exit aborted due to unsaved %s buffer"
-		 (buffer-name)))))))
+    (with-current-buffer buffer
+      (when (and (derived-mode-p 'message-mode)
+                 (buffer-modified-p)
+                 (not (y-or-n-p
+                       (format "Message buffer %s unsaved, continue exit? "
+                               buffer))))
+        (error "Gnus exit aborted due to unsaved buffer %s" buffer)))))
 
 (defun gnus-group-quit ()
   "Quit reading news without updating .newsrc.eld or .newsrc.
@@ -4754,8 +4751,7 @@ Compacting group %s... (this may take a long time)"
       ;; Invalidate the "original article" buffer which might be out of date.
       ;; #### NOTE: Yes, this might be a bit rude, but since compaction
       ;; #### will not happen very often, I think this is acceptable.
-      (let ((original (get-buffer gnus-original-article-buffer)))
-	(and original (gnus-kill-buffer original)))
+      (gnus-kill-buffer gnus-original-article-buffer)
       ;; Update the group line to reflect new information (art number etc).
       (gnus-group-update-group-line))))
 

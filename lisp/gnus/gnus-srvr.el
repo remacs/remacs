@@ -1086,8 +1086,7 @@ Requesting compaction of %s... (this may take a long time)"
       ;; Invalidate the original article buffer which might be out of date.
       ;; #### NOTE: Yes, this might be a bit rude, but since compaction
       ;; #### will not happen very often, I think this is acceptable.
-      (let ((original (get-buffer gnus-original-article-buffer)))
-	(and original (gnus-kill-buffer original))))))
+      (gnus-kill-buffer gnus-original-article-buffer))))
 
 (defun gnus-server-toggle-cloud-server ()
   "Toggle whether the server under point is replicated in the Emacs Cloud."

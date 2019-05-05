@@ -328,8 +328,7 @@ all.  This may very well take some time.")
 	      (delq inf nnfolder-buffer-alist))
 	(setq nnfolder-current-buffer (cadr inf)
 	      nnfolder-current-group (car inf))))
-    (when (and nnfolder-current-buffer
-	       (buffer-name nnfolder-current-buffer))
+    (when (buffer-live-p nnfolder-current-buffer)
       (with-current-buffer nnfolder-current-buffer
 	;; If the buffer was modified, write the file out now.
 	(nnfolder-save-buffer)
@@ -1110,7 +1109,7 @@ This command does not work if you use short group names."
 (defun nnfolder-save-nov ()
   (save-excursion
     (while nnfolder-nov-buffer-alist
-      (when (buffer-name (cdar nnfolder-nov-buffer-alist))
+      (when (buffer-live-p (cdar nnfolder-nov-buffer-alist))
 	(set-buffer (cdar nnfolder-nov-buffer-alist))
 	(when (buffer-modified-p)
 	  (gnus-make-directory (file-name-directory

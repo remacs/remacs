@@ -1098,7 +1098,7 @@ EXTRA is the possible non-standard header."
   (if (not gnus-current-score-file)
       (error "No current score file")
     (let ((winconf (current-window-configuration)))
-      (when (buffer-name gnus-summary-buffer)
+      (when (buffer-live-p gnus-summary-buffer)
 	(gnus-score-save))
       (gnus-make-directory (file-name-directory file))
       (setq gnus-score-edit-buffer (find-file-noselect file))
@@ -1126,7 +1126,7 @@ EXTRA is the possible non-standard header."
   (interactive
    (list (read-file-name "Edit score file: " gnus-kill-files-directory)))
   (gnus-make-directory (file-name-directory file))
-  (when (buffer-name gnus-summary-buffer)
+  (when (buffer-live-p gnus-summary-buffer)
     (gnus-score-save))
   (let ((winconf (current-window-configuration)))
     (setq gnus-score-edit-buffer (find-file-noselect file))

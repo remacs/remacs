@@ -309,8 +309,7 @@ from the document.")
 
 (deffoo nndoc-close-group (group &optional server)
   (nndoc-possibly-change-buffer group server)
-  (and nndoc-current-buffer
-       (buffer-name nndoc-current-buffer)
+  (and (buffer-live-p nndoc-current-buffer)
        (kill-buffer nndoc-current-buffer))
   (setq nndoc-group-alist (delq (assoc group nndoc-group-alist)
 				nndoc-group-alist))
@@ -335,8 +334,7 @@ from the document.")
   (let (buf)
     (cond
      ;; The current buffer is this group's buffer.
-     ((and nndoc-current-buffer
-	   (buffer-name nndoc-current-buffer)
+     ((and (buffer-live-p nndoc-current-buffer)
 	   (eq nndoc-current-buffer
 	       (setq buf (cdr (assoc group nndoc-group-alist))))))
      ;; We change buffers by taking an old from the group alist.
@@ -344,8 +342,7 @@ from the document.")
      (buf
       (setq nndoc-current-buffer buf))
      ;; It's a totally new group.
-     ((or (and (bufferp nndoc-address)
-	       (buffer-name nndoc-address))
+     ((or (buffer-live-p nndoc-address)
 	  (and (stringp nndoc-address)
 	       (file-exists-p nndoc-address)
 	       (not (file-directory-p nndoc-address))))

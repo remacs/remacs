@@ -772,7 +772,7 @@ article number.  This function is called narrowed to an article."
 (defun nnml-save-incremental-nov ()
   (save-excursion
     (while nnml-incremental-nov-buffer-alist
-      (when (buffer-name (cdar nnml-incremental-nov-buffer-alist))
+      (when (buffer-live-p (cdar nnml-incremental-nov-buffer-alist))
 	(set-buffer (cdar nnml-incremental-nov-buffer-alist))
 	(when (buffer-modified-p)
 	  (nnmail-write-region (point-min) (point-max)
@@ -838,9 +838,7 @@ article number.  This function is called narrowed to an article."
     buffer))
 
 (defun nnml-open-nov (group)
-  (or (let ((buffer (cdr (assoc group nnml-nov-buffer-alist))))
-	(and (buffer-name buffer)
-	     buffer))
+  (or (gnus-buffer-live-p (cdr (assoc group nnml-nov-buffer-alist)))
       (let ((buffer (nnml-get-nov-buffer group)))
 	(push (cons group buffer) nnml-nov-buffer-alist)
 	buffer)))
@@ -848,7 +846,7 @@ article number.  This function is called narrowed to an article."
 (defun nnml-save-nov ()
   (save-excursion
     (while nnml-nov-buffer-alist
-      (when (buffer-name (cdar nnml-nov-buffer-alist))
+      (when (buffer-live-p (cdar nnml-nov-buffer-alist))
 	(set-buffer (cdar nnml-nov-buffer-alist))
 	(when (buffer-modified-p)
 	  (nnmail-write-region (point-min) (point-max)

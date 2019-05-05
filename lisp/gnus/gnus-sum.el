@@ -3519,8 +3519,7 @@ Returns non-nil if the setup was successful."
 	(dead-name (concat "*Dead Summary "
 			   (gnus-group-decoded-name group) "*")))
     ;; If a dead summary buffer exists, we kill it.
-    (when (gnus-buffer-live-p dead-name)
-      (gnus-kill-buffer dead-name))
+    (gnus-kill-buffer dead-name)
     (if (get-buffer buffer)
 	(progn
 	  (set-buffer buffer)
@@ -3622,7 +3621,7 @@ buffer that was in action when the last article was fetched."
 (defun gnus-update-summary-mark-positions ()
   "Compute where the summary marks are to go."
   (save-excursion
-    (when (gnus-buffer-exists-p gnus-summary-buffer)
+    (when (gnus-buffer-live-p gnus-summary-buffer)
       (set-buffer gnus-summary-buffer))
     (let ((spec gnus-summary-line-format-spec)
 	  pos)
@@ -7326,7 +7325,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
       (gnus-summary-update-info))
     (gnus-close-group group)
     ;; Make sure where we were, and go to next newsgroup.
-    (when (buffer-live-p (get-buffer gnus-group-buffer))
+    (when (gnus-buffer-live-p gnus-group-buffer)
       (set-buffer gnus-group-buffer))
     (unless quit-config
       (gnus-group-jump-to-group group))
@@ -7501,8 +7500,7 @@ The state which existed when entering the ephemeral is reset."
 (defun gnus-deaden-summary ()
   "Make the current summary buffer into a dead summary buffer."
   ;; Kill any previous dead summary buffer.
-  (when (and gnus-dead-summary
-	     (buffer-name gnus-dead-summary))
+  (when (buffer-live-p gnus-dead-summary)
     (with-current-buffer gnus-dead-summary
       (when gnus-dead-summary-mode
 	(kill-buffer (current-buffer)))))
@@ -7520,7 +7518,7 @@ The state which existed when entering the ephemeral is reset."
 (defun gnus-kill-or-deaden-summary (buffer)
   "Kill or deaden the summary BUFFER."
   (save-excursion
-    (when (and (buffer-name buffer)
+    (when (and (buffer-live-p buffer)
 	       (not gnus-single-article-buffer))
       (with-current-buffer buffer
 	(gnus-kill-buffer gnus-article-buffer)
@@ -7529,12 +7527,12 @@ The state which existed when entering the ephemeral is reset."
      ;; Kill the buffer.
      (gnus-kill-summary-on-exit
       (when (and gnus-use-trees
-		 (gnus-buffer-exists-p buffer))
+                 (gnus-buffer-live-p buffer))
 	(with-current-buffer buffer
 	  (gnus-tree-close)))
       (gnus-kill-buffer buffer))
      ;; Deaden the buffer.
-     ((gnus-buffer-exists-p buffer)
+     ((gnus-buffer-live-p buffer)
       (with-current-buffer buffer
 	(gnus-deaden-summary))))))
 
@@ -7605,7 +7603,7 @@ previous group instead."
 		       (and unreads (not (zerop unreads))))
  		   (gnus-summary-read-group
  		    target-group nil no-article
- 		    (and (buffer-name current-buffer) current-buffer)
+                    (and (buffer-live-p current-buffer) current-buffer)
  		    nil backward))
 	      (setq entered t)
 	    (setq current-group target-group

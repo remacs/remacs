@@ -1561,8 +1561,7 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 
 (defun nnmail-cache-open ()
   (if (or (not nnmail-treat-duplicates)
-	  (and nnmail-cache-buffer
-	       (buffer-name nnmail-cache-buffer)))
+          (buffer-live-p nnmail-cache-buffer))
       ()				; The buffer is open.
     (with-current-buffer
        (setq nnmail-cache-buffer
@@ -1574,9 +1573,8 @@ See the documentation for the variable `nnmail-split-fancy' for details."
       (current-buffer))))
 
 (defun nnmail-cache-close ()
-  (when (and nnmail-cache-buffer
-	     nnmail-treat-duplicates
-	     (buffer-name nnmail-cache-buffer)
+  (when (and nnmail-treat-duplicates
+             (buffer-live-p nnmail-cache-buffer)
 	     (buffer-modified-p nnmail-cache-buffer))
     (with-current-buffer nnmail-cache-buffer
       ;; Weed out the excess number of Message-IDs.

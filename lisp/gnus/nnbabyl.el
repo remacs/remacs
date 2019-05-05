@@ -145,10 +145,8 @@
 
 (deffoo nnbabyl-server-opened (&optional server)
   (and (nnoo-current-server-p 'nnbabyl server)
-       nnbabyl-mbox-buffer
-       (buffer-name nnbabyl-mbox-buffer)
-       nntp-server-buffer
-       (buffer-name nntp-server-buffer)))
+       (buffer-live-p nnbabyl-mbox-buffer)
+       (buffer-live-p nntp-server-buffer)))
 
 (deffoo nnbabyl-request-article (article &optional newsgroup server buffer)
   (nnbabyl-possibly-change-newsgroup newsgroup server)
@@ -452,8 +450,7 @@
   (when (and server
 	     (not (nnbabyl-server-opened server)))
     (nnbabyl-open-server server))
-  (when (or (not nnbabyl-mbox-buffer)
-	    (not (buffer-name nnbabyl-mbox-buffer)))
+  (unless (buffer-live-p nnbabyl-mbox-buffer)
     (save-excursion (nnbabyl-read-mbox)))
   (unless nnbabyl-group-alist
     (nnmail-activate 'nnbabyl))
@@ -556,8 +553,7 @@
   (nnmail-activate 'nnbabyl)
   (nnbabyl-create-mbox)
 
-  (unless (and nnbabyl-mbox-buffer
-	       (buffer-name nnbabyl-mbox-buffer)
+  (unless (and (buffer-live-p nnbabyl-mbox-buffer)
 	       (with-current-buffer nnbabyl-mbox-buffer
 		 (= (buffer-size) (nnheader-file-size nnbabyl-mbox-file))))
     ;; This buffer has changed since we read it last.  Possibly.
@@ -627,8 +623,7 @@
   (let ((idents (gnus-make-hashtable 1000))
 	id)
     (save-excursion
-      (when (or (not nnbabyl-mbox-buffer)
-		(not (buffer-name nnbabyl-mbox-buffer)))
+      (unless (buffer-live-p nnbabyl-mbox-buffer)
 	(nnbabyl-read-mbox))
       (set-buffer nnbabyl-mbox-buffer)
       (goto-char (point-min))

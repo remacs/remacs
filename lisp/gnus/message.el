@@ -2034,8 +2034,7 @@ see `message-narrow-to-headers-or-head'."
 
 (defmacro message-with-reply-buffer (&rest forms)
   "Evaluate FORMS in the reply buffer, if it exists."
-  `(when (and (bufferp message-reply-buffer)
-	      (buffer-name message-reply-buffer))
+  `(when (buffer-live-p message-reply-buffer)
      (with-current-buffer message-reply-buffer
        ,@forms)))
 
@@ -3229,8 +3228,7 @@ or in the synonym headers, defined by `message-header-synonyms'."
   "Widen the reply to include maximum recipients."
   (interactive)
   (let ((follow-to
-	 (and (bufferp message-reply-buffer)
-	      (buffer-name message-reply-buffer)
+         (and (buffer-live-p message-reply-buffer)
 	      (with-current-buffer message-reply-buffer
 		(message-get-reply-headers t)))))
     (save-excursion
@@ -4027,7 +4025,7 @@ It should typically alter the sending method in some way or other."
   (let ((buf (current-buffer))
 	(actions message-exit-actions))
     (when (and (message-send arg)
-	       (buffer-name buf))
+               (buffer-live-p buf))
       (message-bury buf)
       (if message-kill-buffer-on-exit
 	  (kill-buffer buf))
@@ -4740,7 +4738,7 @@ that instead."
 	      (if (not (zerop (buffer-size)))
 		  (error "Sending...failed to %s"
 			 (buffer-string))))))
-      (when (bufferp errbuf)
+      (when (buffer-live-p errbuf)
 	(kill-buffer errbuf)))))
 
 (defun message-send-mail-with-qmail ()
@@ -6377,8 +6375,7 @@ moved to the beginning "
 (defun message-pop-to-buffer (name &optional switch-function)
   "Pop to buffer NAME, and warn if it already exists and is modified."
   (let ((buffer (get-buffer name)))
-    (if (and buffer
-	     (buffer-name buffer))
+    (if (buffer-live-p buffer)
 	(let ((window (get-buffer-window buffer 0)))
 	  (if window
 	      ;; Raise the frame already displaying the message buffer.
@@ -6409,7 +6406,7 @@ moved to the beginning "
 	      (>= (length message-buffer-list) message-max-buffers))
     ;; Kill the oldest buffer -- unless it has been changed.
     (let ((buffer (pop message-buffer-list)))
-      (when (and (buffer-name buffer)
+      (when (and (buffer-live-p buffer)
 		 (not (buffer-modified-p buffer)))
 	(kill-buffer buffer))))
   ;; Rename the buffer.
@@ -7376,9 +7373,7 @@ Optional DIGEST will use digest to forward."
     (unless (multibyte-string-p contents)
       (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
-	     (if (bufferp forward-buffer)
-		 (buffer-name forward-buffer)
-	       forward-buffer)
+             forward-buffer
 	     (buffer-name)))
     (insert (mm-with-multibyte-buffer
 	      (insert contents)
@@ -7440,9 +7435,7 @@ Optional DIGEST will use digest to forward."
 	  (unless (multibyte-string-p contents)
 	    (error "Attempt to insert unibyte string from the buffer \"%s\"\
  to the multibyte buffer \"%s\""
-		   (if (bufferp forward-buffer)
-		       (buffer-name forward-buffer)
-		     forward-buffer)
+                   forward-buffer
 		   (buffer-name)))
 	  (insert (mm-with-multibyte-buffer
 		    (insert contents)

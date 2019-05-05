@@ -369,7 +369,7 @@ category."))
     (unless (or topic (setq info (gnus-get-info group)))
       (error "Killed group; can't be edited"))
     ;; Ready.
-    (gnus-kill-buffer (gnus-get-buffer-create "*Gnus Customize*"))
+    (gnus-kill-buffer "*Gnus Customize*")
     (switch-to-buffer (gnus-get-buffer-create "*Gnus Customize*"))
     (gnus-custom-mode)
     (make-local-variable 'gnus-custom-group)
@@ -1021,9 +1021,7 @@ articles in the thread.
                         (cons 'agent-low-score gnus-agent-low-score)
                         (cons 'agent-high-score gnus-agent-high-score))))
 
-    (let ((old (get-buffer "*Gnus Agent Category Customize*")))
-      (when old
-        (gnus-kill-buffer old)))
+    (gnus-kill-buffer "*Gnus Agent Category Customize*")
     (switch-to-buffer (gnus-get-buffer-create
                        "*Gnus Agent Category Customize*"))
 
@@ -1051,7 +1049,7 @@ articles in the thread.
            (when (get-buffer gnus-category-buffer)
              (switch-to-buffer (get-buffer gnus-category-buffer))
              (gnus-category-list)))
-                       "Done")
+         "Done")
         (widget-insert
          "\n    Note: Empty fields default to the customizable global\
  variables.\n\n")

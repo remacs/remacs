@@ -722,8 +722,7 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 				   (buffer-string) result))
 		    (error "%s" (buffer-string)))
 		  (setq to nil)))))))
-      (when (and errors
-		 (buffer-name errors))
+      (when (buffer-live-p errors)
 	(kill-buffer errors))
       ;; Return whether we moved successfully or not.
       to)))

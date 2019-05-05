@@ -1015,7 +1015,7 @@ all.  This may very well take some time.")
 (defun nndiary-save-nov ()
   (save-excursion
     (while nndiary-nov-buffer-alist
-      (when (buffer-name (cdar nndiary-nov-buffer-alist))
+      (when (buffer-live-p (cdar nndiary-nov-buffer-alist))
 	(set-buffer (cdar nndiary-nov-buffer-alist))
 	(when (buffer-modified-p)
 	  (nnmail-write-region 1 (point-max) nndiary-nov-buffer-file-name

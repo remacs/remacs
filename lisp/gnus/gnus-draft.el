@@ -94,14 +94,13 @@
       (save-restriction
 	(message-narrow-to-headers)
 	(message-remove-header "date")))
-    (let ((message-draft-headers
-	   (delq 'Date (copy-sequence message-draft-headers))))
+    (let ((message-draft-headers (remq 'Date message-draft-headers)))
       (save-buffer))
     (let ((gnus-verbose-backends nil))
       (gnus-request-expire-articles (list article) group t))
     (push
      `((lambda ()
-	 (when (gnus-buffer-exists-p ,gnus-summary-buffer)
+         (when (gnus-buffer-live-p ,gnus-summary-buffer)
 	   (save-excursion
 	     (set-buffer ,gnus-summary-buffer)
 	     (gnus-cache-possibly-remove-article ,article nil nil nil t)))))

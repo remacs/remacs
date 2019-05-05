@@ -665,26 +665,15 @@ be used directly.")
 (defmacro gnus-kill-buffer (buffer)
   "Kill BUFFER and remove from the list of Gnus buffers."
   `(let ((buf ,buffer))
-     (when (gnus-buffer-exists-p buf)
+     (when (gnus-buffer-live-p buf)
        (kill-buffer buf)
        (gnus-prune-buffers))))
 
-(defun gnus-prune-buffers ()
-  (dolist (buf gnus-buffers)
-    (unless (buffer-live-p buf)
-      (setq gnus-buffers (delete buf gnus-buffers)))))
-
 (defun gnus-buffers ()
   "Return a list of live Gnus buffers."
-  (while (and gnus-buffers
-	      (not (buffer-name (car gnus-buffers))))
-    (pop gnus-buffers))
-  (let ((buffers gnus-buffers))
-    (while (cdr buffers)
-      (if (buffer-name (cadr buffers))
-	  (pop buffers)
-	(setcdr buffers (cddr buffers)))))
-  gnus-buffers)
+  (setq gnus-buffers (seq-filter #'buffer-live-p gnus-buffers)))
+
+(defalias 'gnus-prune-buffers #'gnus-buffers)
 
 ;;; Splash screen.
 
@@ -3638,9 +3627,8 @@ If SYMBOL, return the value of that symbol in the group parameters.
 
 If you call this function inside a loop, consider using the faster
 `gnus-group-fast-parameter' instead."
-  (with-current-buffer (if (buffer-live-p (get-buffer gnus-group-buffer))
-			   gnus-group-buffer
-			 (current-buffer))
+  (with-current-buffer (or (gnus-buffer-live-p gnus-group-buffer)
+                           (current-buffer))
     (if symbol
 	(gnus-group-fast-parameter group symbol allow-list)
       (nconc

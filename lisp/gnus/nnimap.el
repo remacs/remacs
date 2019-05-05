@@ -346,7 +346,7 @@ textual parts.")
   (with-current-buffer
       (generate-new-buffer (format " *nnimap %s %s %s*"
 				   nnimap-address nnimap-server-port
-				   (gnus-buffer-exists-p buffer)))
+                                   buffer))
     (mm-disable-multibyte)
     (buffer-disable-undo)
     (gnus-add-buffer)
@@ -382,7 +382,7 @@ textual parts.")
 (defun nnimap-keepalive ()
   (let ((now (current-time)))
     (dolist (buffer nnimap-process-buffers)
-      (when (buffer-name buffer)
+      (when (buffer-live-p buffer)
 	(with-current-buffer buffer
 	  (when (and nnimap-object
 		     (nnimap-last-command-time nnimap-object)
@@ -1899,7 +1899,7 @@ Return the server's response to the SELECT or EXAMINE command."
   "Find the connection delivering to BUFFER."
   (let ((entry (assoc buffer nnimap-connection-alist)))
     (when entry
-      (if (and (buffer-name (cadr entry))
+      (if (and (buffer-live-p (cadr entry))
 	       (get-buffer-process (cadr entry))
 	       (memq (process-status (get-buffer-process (cadr entry)))
 		     '(open run)))

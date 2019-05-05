@@ -46,8 +46,7 @@
 (defun gnus-backlog-shutdown ()
   "Clear all backlog variables and buffers."
   (interactive)
-  (when (get-buffer gnus-backlog-buffer)
-    (gnus-kill-buffer gnus-backlog-buffer))
+  (gnus-kill-buffer gnus-backlog-buffer)
   (setq gnus-backlog-articles nil))
 
 (defun gnus-backlog-enter-article (group number buffer)

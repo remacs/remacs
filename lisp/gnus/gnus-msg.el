@@ -607,7 +607,7 @@ instead."
   (message-add-action
    `(progn
       (setq gnus-current-window-configuration ',winconf-name)
-      (when (gnus-buffer-exists-p ,buffer)
+      (when (gnus-buffer-live-p ,buffer)
 	(set-window-configuration ,winconf)))
    'exit 'postpone 'kill)
   (let ((to-be-marked (cond
@@ -617,7 +617,7 @@ instead."
 		       (article (if (listp article) article (list article)))
 		       (t nil))))
     (message-add-action
-     `(when (gnus-buffer-exists-p ,buffer)
+     `(when (gnus-buffer-live-p ,buffer)
 	(with-current-buffer ,buffer
 	  ,(when to-be-marked
 	     (if (eq config 'forward)
@@ -902,7 +902,7 @@ header line with the old Message-ID."
       (message-supersede)
       (push
        `((lambda ()
-	   (when (gnus-buffer-exists-p ,gnus-summary-buffer)
+           (when (gnus-buffer-live-p ,gnus-summary-buffer)
 	     (with-current-buffer ,gnus-summary-buffer
 	       (gnus-cache-possibly-remove-article ,article nil nil nil t)
 	       (gnus-summary-mark-as-read ,article gnus-canceled-mark)))))
@@ -922,8 +922,7 @@ header line with the old Message-ID."
     (mm-enable-multibyte))
   (let ((article-buffer (or article-buffer gnus-article-buffer))
 	end beg)
-    (if (not (and (get-buffer article-buffer)
-		  (gnus-buffer-exists-p article-buffer)))
+    (if (not (gnus-buffer-live-p article-buffer))
 	(error "Can't find any article buffer")
       (with-current-buffer article-buffer
 	(let ((gnus-newsgroup-charset (or gnus-article-charset

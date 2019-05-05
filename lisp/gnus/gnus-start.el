@@ -720,11 +720,10 @@ the first newsgroup."
   ;; Kill Gnus buffers.
   (do-auto-save t)
   (dolist (buffer (gnus-buffers))
-    (when (gnus-buffer-exists-p buffer)
-      (with-current-buffer buffer
-	(set-buffer-modified-p nil)
-	(when (local-variable-p 'kill-buffer-hook)
-	  (setq kill-buffer-hook nil))))
+    (with-current-buffer buffer
+      (set-buffer-modified-p nil)
+      (when (local-variable-p 'kill-buffer-hook)
+        (setq kill-buffer-hook nil)))
     (gnus-kill-buffer buffer))
   ;; Remove Gnus frames.
   (gnus-kill-gnus-frames))
@@ -842,8 +841,7 @@ prompt the user for the name of an NNTP server to use."
   "Enter STRING into the dribble buffer.
 If REGEXP is given, lines that match it will be deleted."
   (when (and (not gnus-dribble-ignore)
-	     gnus-dribble-buffer
-	     (buffer-name gnus-dribble-buffer))
+             (buffer-live-p gnus-dribble-buffer))
     (let ((obuf (current-buffer)))
       (set-buffer gnus-dribble-buffer)
       (when regexp
@@ -935,14 +933,13 @@ If REGEXP is given, lines that match it will be deleted."
 	(set-buffer-modified-p nil)))))
 
 (defun gnus-dribble-save ()
-  (when (and gnus-dribble-buffer
-	     (buffer-name gnus-dribble-buffer))
+  (when (buffer-live-p gnus-dribble-buffer)
     (with-current-buffer gnus-dribble-buffer
       (when (> (buffer-size) 0)
 	(save-buffer)))))
 
 (defun gnus-dribble-clear ()
-  (when (gnus-buffer-exists-p gnus-dribble-buffer)
+  (when (gnus-buffer-live-p gnus-dribble-buffer)
     (with-current-buffer gnus-dribble-buffer
       (erase-buffer)
       (set-buffer-modified-p nil)
@@ -2726,8 +2723,7 @@ values from `gnus-newsrc-hashtb', and write a new value of
     (save-excursion
       (if (and (or gnus-use-dribble-file gnus-slave)
 	       (not force)
-	       (or (not gnus-dribble-buffer)
-		   (not (buffer-name gnus-dribble-buffer))
+               (or (not (buffer-live-p gnus-dribble-buffer))
 		   (zerop (with-current-buffer gnus-dribble-buffer
 			    (buffer-size)))))
 	  (gnus-message 4 "(No changes need to be saved)")

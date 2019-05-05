@@ -150,7 +150,7 @@ Return a list of updated types."
 	(let ((buffer (intern (format "gnus-%s-buffer" type))))
 	  (when (and (boundp buffer)
 		     (setq val (symbol-value buffer))
-		     (gnus-buffer-exists-p val))
+                     (gnus-buffer-live-p val))
 	    (set-buffer val))
 	  (setq new-format (symbol-value
 			    (intern (format "gnus-%s-line-format" type)))))

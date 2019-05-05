@@ -400,7 +400,7 @@ retried once before actually displaying the error report."
 	(erase-buffer)))))
 
 (defun nntp-kill-buffer (buffer)
-  (when (buffer-name buffer)
+  (when (buffer-live-p buffer)
     (let ((process (get-buffer-process buffer)))
       (when process
 	(delete-process process)))
@@ -1228,16 +1228,15 @@ If SEND-IF-FORCE, only send authinfo to the server if the
   (with-current-buffer
       (generate-new-buffer
        (format " *server %s %s %s*"
-               nntp-address nntp-port-number
-               (gnus-buffer-exists-p buffer)))
+               nntp-address nntp-port-number buffer))
     (mm-disable-multibyte)
-    (set (make-local-variable 'after-change-functions) nil)
-    (set (make-local-variable 'nntp-process-wait-for) nil)
-    (set (make-local-variable 'nntp-process-callback) nil)
-    (set (make-local-variable 'nntp-process-to-buffer) nil)
-    (set (make-local-variable 'nntp-process-start-point) nil)
-    (set (make-local-variable 'nntp-process-decode) nil)
-    (set (make-local-variable 'nntp-retrieval-in-progress) nil)
+    (setq-local after-change-functions nil)
+    (setq-local nntp-process-wait-for nil)
+    (setq-local nntp-process-callback nil)
+    (setq-local nntp-process-to-buffer nil)
+    (setq-local nntp-process-start-point nil)
+    (setq-local nntp-process-decode nil)
+    (setq-local nntp-retrieval-in-progress nil)
     (current-buffer)))
 
 (defun nntp-open-connection (buffer)
@@ -1290,7 +1289,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
       (setq process nil))
     (unless process
       (nntp-kill-buffer pbuffer))
-    (when (and (buffer-name pbuffer)
+    (when (and (buffer-live-p pbuffer)
 	       process)
       (when (eq (process-type process) 'network)
         ;; Use TCP-keepalive so that connections that pass through a NAT router
@@ -1358,17 +1357,17 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 (defun nntp-async-trigger (process)
   (with-current-buffer (process-buffer process)
     (when nntp-process-callback
-      ;; do we have an error message?
+      ;; Do we have an error message?
       (goto-char nntp-process-start-point)
       (if (memq (following-char) '(?4 ?5))
-	  ;; wants credentials?
-	  (if (looking-at "480")
+          ;; Wants credentials?
+          (if (looking-at-p "480")
 	      (nntp-handle-authinfo process)
-	    ;; report error message.
+            ;; Report error message.
 	    (nntp-snarf-error-message)
 	    (nntp-do-callback nil))
 
-	;; got what we expect?
+        ;; Got what we expect?
 	(goto-char (point-max))
 	(when (re-search-backward
 	       nntp-process-wait-for nntp-process-start-point t)
@@ -1376,8 +1375,8 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 	    (with-current-buffer nntp-server-buffer
 	      (setq nntp-process-response response)))
 	  (nntp-async-stop process)
-	  ;; convert it.
-	  (when (gnus-buffer-exists-p nntp-process-to-buffer)
+          ;; Convert it.
+          (when (gnus-buffer-live-p nntp-process-to-buffer)
 	    (let ((buf (current-buffer))
 		  (start nntp-process-start-point)
 		  (decode nntp-process-decode))
@@ -1388,7 +1387,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 		  (nnheader-insert-buffer-substring buf start)
 		  (when decode
 		    (nntp-decode-text))))))
-	  ;; report it.
+          ;; Report it.
 	  (goto-char (point-max))
 	  (nntp-do-callback
 	   (buffer-name (get-buffer nntp-process-to-buffer))))))))
