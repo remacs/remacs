@@ -1,12 +1,12 @@
-;;; delim-col.el --- prettify all columns in a region or rectangle
+;;; delim-col.el --- prettify all columns in a region or rectangle  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Version: 2.1
-;; Keywords: internal
-;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
+;; Keywords: convenience text
+;; X-URL: https://www.emacswiki.org/emacs/ViniciusJoseLatorre
 
 ;; This file is part of GNU Emacs.
 
@@ -26,11 +26,6 @@
 ;;; Commentary:
 
 ;; delim-col helps to prettify columns in a text region or rectangle.
-;;
-;; To use it, make sure that this file is in load-path and insert in your
-;; .emacs:
-;;
-;;    (require 'delim-col)
 ;;
 ;; If you have, for example, the following columns:
 ;;
@@ -91,9 +86,9 @@
 ;;	aaa	[ <bbb>, <cccc>    ]	dddd
 ;;	aa	[ <bb> , <ccccccc> ]	ddd
 ;;
-;; Note that `delimit-columns-region' operates over all text region
-;; selected, extending the region start to the beginning of line and the
-;; region end to the end of line.  While `delimit-columns-rectangle'
+;; Note that `delimit-columns-region' operates over the entire selected
+;; text region, extending the region start to the beginning of line and
+;; the region end to the end of line.  While `delimit-columns-rectangle'
 ;; operates over the text rectangle selected which rectangle diagonal is
 ;; given by the region start and end.
 ;;
@@ -117,6 +112,7 @@
 
 ;;; Code:
 
+(require 'rect)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Options:
@@ -125,6 +121,7 @@
   "Prettify columns."
   :link '(emacs-library-link :tag "Source Lisp File" "delim-col.el")
   :prefix "delimit-columns-"
+  :group 'convenience
   :group 'text)
 
 (defcustom delimit-columns-str-before ""
@@ -213,10 +210,11 @@ See also `delimit-columns-end' for documentation.
 The following relation must hold:
    0 <= delimit-columns-start <= delimit-columns-end
 
-The column number start from 0 and it's relative to the beginning of selected
-region.  So if you selected a text region, the first column (column 0) is
-located at beginning of line.  If you selected a text rectangle, the first
-column (column 0) is located at left corner."
+The column number starts at 0 and is relative to the beginning of
+the selected region.  So if you select a text region, the first
+column (column 0) is located at the beginning of line.  If you
+select a text rectangle, the first column (column 0) is located
+at the left corner."
   :type '(integer :tag "Column Start")
   :group 'columns)
 
@@ -228,10 +226,11 @@ See also `delimit-columns-start' for documentation.
 The following relation must hold:
    0 <= delimit-columns-start <= delimit-columns-end
 
-The column number start from 0 and it's relative to the beginning of selected
-region.  So if you selected a text region, the first column (column 0) is
-located at beginning of line.  If you selected a text rectangle, the first
-column (column 0) is located at left corner."
+The column number starts at 0 and is relative to the beginning of
+the selected region.  So if you select a text region, the first
+column (column 0) is located at the beginning of line.  If you
+select a text rectangle, the first column (column 0) is located
+at the left corner."
   :type '(integer :tag "Column End")
   :group 'columns)
 
@@ -247,20 +246,20 @@ column (column 0) is located at left corner."
 
 ;;;###autoload
 (defun delimit-columns-customize ()
-  "Customization of `columns' group."
+  "Customize the `columns' group."
   (interactive)
   (customize-group 'columns))
 
 
-(defmacro delimit-columns-str (str)
-  `(if (stringp ,str) ,str ""))
+(defun delimit-columns-str (str)
+  (if (stringp str) str ""))
 
 
 ;;;###autoload
 (defun delimit-columns-region (start end)
   "Prettify all columns in a text region.
 
-START and END delimits the text region."
+START and END delimit the text region."
   (interactive "*r")
   (let ((delimit-columns-str-before
 	 (delimit-columns-str delimit-columns-str-before))
@@ -273,8 +272,7 @@ START and END delimits the text region."
 	(delimit-columns-after
 	 (delimit-columns-str delimit-columns-after))
 	(delimit-columns-start
-	 (if (and (integerp delimit-columns-start)
-		  (>= delimit-columns-start 0))
+         (if (natnump delimit-columns-start)
 	     delimit-columns-start
 	   0))
 	(delimit-columns-end
@@ -309,14 +307,11 @@ START and END delimits the text region."
 	(set-marker the-end nil)))))
 
 
-(require 'rect)
-
-
 ;;;###autoload
 (defun delimit-columns-rectangle (start end)
   "Prettify all columns in a text rectangle.
 
-START and END delimits the corners of text rectangle."
+START and END delimit the corners of the text rectangle."
   (interactive "*r")
   (let ((delimit-columns-str-before
 	 (delimit-columns-str delimit-columns-str-before))
@@ -329,8 +324,7 @@ START and END delimits the corners of text rectangle."
 	(delimit-columns-after
 	 (delimit-columns-str delimit-columns-after))
 	(delimit-columns-start
-	 (if (and (integerp delimit-columns-start)
-		  (>= delimit-columns-start 0))
+         (if (natnump delimit-columns-start)
 	     delimit-columns-start
 	   0))
 	(delimit-columns-end
@@ -344,11 +338,11 @@ START and END delimits the corners of text rectangle."
       ;; get maximum length for each column
       (and delimit-columns-format
 	   (save-excursion
-	     (operate-on-rectangle 'delimit-columns-rectangle-max
+             (operate-on-rectangle #'delimit-columns-rectangle-max
 				   start the-end nil)))
       ;; prettify columns
       (save-excursion
-	(operate-on-rectangle 'delimit-columns-rectangle-line
+        (operate-on-rectangle #'delimit-columns-rectangle-line
 			      start the-end nil))
       ;; nullify markers
       (set-marker delimit-columns-limit nil)
@@ -359,7 +353,7 @@ START and END delimits the corners of text rectangle."
 ;; Internal Variables and Functions:
 
 
-(defun delimit-columns-rectangle-max (startpos &optional _ignore1 _ignore2)
+(defun delimit-columns-rectangle-max (startpos &optional _begextra _endextra)
   (set-marker delimit-columns-limit (point))
   (goto-char startpos)
   (let ((ncol 1)
@@ -392,7 +386,7 @@ START and END delimits the corners of text rectangle."
       (setq values (cdr values)))))
 
 
-(defun delimit-columns-rectangle-line (startpos &optional _ignore1 _ignore2)
+(defun delimit-columns-rectangle-line (startpos &optional _begextra _endextra)
   (let ((len  (length delimit-columns-max))
 	(ncol 0)
 	origin)
@@ -442,8 +436,7 @@ START and END delimits the corners of text rectangle."
 	    ((eq delimit-columns-format 'padding)
 	     (insert spaces delimit-columns-after delimit-columns-str-after))
 	    (t
-	     (insert delimit-columns-after spaces delimit-columns-str-after))
-	    ))
+             (insert delimit-columns-after spaces delimit-columns-str-after))))
     (goto-char (max (point) delimit-columns-limit))))
 
 
@@ -466,8 +459,7 @@ START and END delimits the corners of text rectangle."
 	 (insert delimit-columns-after
 		 delimit-columns-str-separator
 		 spaces
-		 delimit-columns-before))
-	))
+                 delimit-columns-before))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
