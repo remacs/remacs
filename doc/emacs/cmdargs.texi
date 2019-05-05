@@ -39,7 +39,7 @@ corresponding long form.
 
   The long forms with @samp{--} are easier to remember, but longer to
 type.  However, you don't have to spell out the whole option name; any
-unambiguous abbreviation is enough.  When a long option takes an
+unambiguous abbreviation is enough.  When a long option requires an
 argument, you can use either a space or an equal sign to separate the
 option name and the argument.  Thus, for the option @samp{--display},
 you can write either @samp{--display sugar-bombs:0.0} or
