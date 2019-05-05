@@ -684,8 +684,8 @@ delivered."
 		(created deleted stopped)))
              ;; On emba, `deleted' and `stopped' events of the
              ;; directory are not detected.
-;             ((getenv "EMACS_EMBA_CI")
-;              '(created changed deleted))
+             ((getenv "EMACS_EMBA_CI")
+              '(created changed deleted))
 	     ;; There are two `deleted' events, for the file and for
 	     ;; the directory.  Except for cygwin, kqueue and remote
 	     ;; files.  And cygwin does not raise a `changed' event.
@@ -741,8 +741,8 @@ delivered."
 	      '(created changed created changed deleted stopped))
              ;; On emba, `deleted' and `stopped' events of the
              ;; directory are not detected.
-;             ((getenv "EMACS_EMBA_CI")
-;              '(created changed created changed deleted deleted))
+             ((getenv "EMACS_EMBA_CI")
+              '(created changed created changed deleted deleted))
              ;; Remote files return two `deleted' events.
 	     ((file-remote-p temporary-file-directory)
 	      '(created changed created changed deleted deleted stopped))
@@ -792,8 +792,8 @@ delivered."
 		(created deleted stopped)))
              ;; On emba, `deleted' and `stopped' events of the
              ;; directory are not detected.
-;             ((getenv "EMACS_EMBA_CI")
-;              '(created changed renamed deleted))
+             ((getenv "EMACS_EMBA_CI")
+              '(created changed renamed deleted))
 	     ;; There are two `deleted' events, for the file and for
 	     ;; the directory.  Except for cygwin, kqueue and remote
 	     ;; files.  And cygwin raises `created' and `deleted'
@@ -1413,8 +1413,8 @@ the file watch."
                    '())
                   ;; On emba, `deleted' and `stopped' events of the
                   ;; directory are not detected.
-;                  ((getenv "EMACS_EMBA_CI")
-;                   '())
+                  ((getenv "EMACS_EMBA_CI")
+                   '())
                   ;; Remote files send just one `stopped' event.
                   ((file-remote-p temporary-file-directory)
                    '(stopped))
