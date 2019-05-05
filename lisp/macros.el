@@ -36,6 +36,16 @@
 ;;;###autoload
 (defalias 'name-last-kbd-macro #'kmacro-name-last-macro)
 
+(defun macros--insert-vector-macro (definition)
+  "Print DEFINITION, a vector, into the current buffer."
+  (dotimes (i (length definition))
+    (let ((char (aref definition i)))
+      (insert (if (zerop i) ?\[ ?\s))
+      (if (characterp char)
+          (princ (prin1-char char) (current-buffer))
+        (prin1 char (current-buffer)))))
+  (insert ?\]))
+
 ;;;###autoload
 (defun insert-kbd-macro (macroname &optional keys)
   "Insert in buffer the definition of kbd macro MACRONAME, as Lisp code.
@@ -111,19 +121,17 @@ use this command, and then save the file."
 		     (delete-region (point) (1+ (point)))
 		     (insert "\\M-\\C-?"))))))
       (if (vectorp definition)
-	  (let ((len (length definition)) (i 0) char)
-	    (while (< i len)
-	      (insert (if (zerop i) ?\[ ?\s))
-	      (setq char (aref definition i)
-		    i (1+ i))
-	      (if (not (numberp char))
-                  (prin1 char (current-buffer))
-                (princ (prin1-char char) (current-buffer))))
-	    (insert ?\]))
-        ;; FIXME: For kmacros, we shouldn't write the (lambda ...)
-        ;; gunk but instead we should write something more abstract like
-        ;; (kmacro-create [<keys>] 0 "%d").
-	(prin1 definition (current-buffer))))
+          (macros--insert-vector-macro definition)
+        (pcase (kmacro-extract-lambda definition)
+          (`(,vecdef ,counter ,format)
+           (insert "(kmacro-lambda-form ")
+           (macros--insert-vector-macro vecdef)
+           (insert " ")
+           (prin1 counter (current-buffer))
+           (insert " ")
+           (prin1 format (current-buffer))
+           (insert ")"))
+          (_ (prin1 definition (current-buffer))))))
     (insert ")\n")
     (if keys
         (let ((keys (or (where-is-internal (symbol-function macroname)
