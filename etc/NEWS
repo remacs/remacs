@@ -704,6 +704,10 @@ Control whether Flymake starts checking the buffer on save.
 This enables more efficient backends.  See the docstring of
 'flymake-diagnostic-functions' or the Flymake manual for details.
 
++++
+*** The variable 'flymake-start-syntax-check-on-newline' is obsolete
+and renamed to 'flymake-start-on-newline'.
+
 ** Ruby
 
 *** The Rubocop Flymake diagnostic function will only run Lint cops if

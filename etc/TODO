@@ -143,15 +143,6 @@ See the 'test' directory for examples.
 
 * Small but important fixes needed in existing features:
 
-** Flymake's customization mechanism needs to be both simpler (fewer
-levels of indirection) and better documented, so it is easier to
-understand.  I find it quite hard to figure out what compilation
-command it will use.
-
-I suggest totally rewriting that part of Flymake, using the simplest
-mechanism that suffices for the specific needs.  That will be easy
-for users to customize.
-
 ** Distribute a bar cursor of width > 1 evenly between the two glyphs
    on each side of the bar (what to do at the edges?).
 

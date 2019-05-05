@@ -89,7 +89,7 @@ nil;
 
 @item
 a newline character is added to the buffer, unless
-@code{flymake-start-syntax-check-on-newline} is nil;
+@code{flymake-start-on-newline} is nil;
 
 @item
 some changes were made to the buffer more than @code{0.5} seconds ago
@@ -222,7 +222,7 @@ If any changes are made to the buffer, syntax check is automatically
 started after this many seconds, unless the user makes another change,
 which resets the timer.
 
-@item flymake-start-syntax-check-on-newline
+@item flymake-start-on-newline
 A boolean flag indicating whether to start syntax check immediately
 after a newline character is inserted into the buffer.
 
