@@ -3212,9 +3212,10 @@ non-empty directories is allowed."
 	    (if (not failures)
 		(progress-reporter-done progress-reporter)
 	      (dired-log-summary
-	       (format "%d of %d deletion%s failed"
-		       (length failures) count
-		       (dired-plural-s count))
+	       (format (ngettext "%d of %d deletion failed"
+			         "%d of %d deletions failed"
+			         count)
+		       (length failures) count)
 	       failures)))))
       (message "(No deletions performed)")))
   (dired-move-to-filename))
@@ -3267,8 +3268,9 @@ confirmation.  To disable the confirmation, see
     (let ((buf-list (dired-buffers-for-dir (expand-file-name fn))))
       (and buf-list
            (and dired-clean-confirm-killing-deleted-buffers
-                (y-or-n-p (format "Kill Dired buffer%s of %s, too? "
-                                  (dired-plural-s (length buf-list))
+                (y-or-n-p (format (ngettext "Kill Dired buffer of %s, too? "
+			                    "Kill Dired buffers of %s, too? "
+			                    (length buf-list))
                                   (file-name-nondirectory fn))))
            (dolist (buf buf-list)
              (kill-buffer buf))))))
