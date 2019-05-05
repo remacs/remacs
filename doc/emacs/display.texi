@@ -1186,7 +1186,8 @@ initialization tries to set it to U+2502 or @sampl{|}.
 @item fill-column-indicator
 @vindex fill-column-indicator
 Specifies the face used to display the indicator.  It inherits its
-default values from shadow and the default face.
+default values from shadow but without background color.  To change
+the indicator color you need to set only the foreground color of this face.
 @end table
 
 @vindex indicate-buffer-boundaries

@@ -20201,7 +20201,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 		     XFIXNAT (Vdisplay_fill_column_indicator_character);
 	           it->face_id =
 		     merge_faces (it->w, Qfill_column_indicator,
-		                  0, DEFAULT_FACE_ID);
+		                  0, saved_face_id);
 	           face = FACE_FROM_ID(it->f, it->face_id);
 	           goto produce_glyphs;
 	         }
@@ -20494,7 +20494,7 @@ extend_face_to_end_of_line (struct it *it)
 	                XFIXNAT (Vdisplay_fill_column_indicator_character);
 	              it->face_id =
 	                merge_faces (it->w, Qfill_column_indicator,
-	                             0, DEFAULT_FACE_ID);
+	                             0, saved_face_id);
 	              PRODUCE_GLYPHS (it);
 	            }
 
@@ -20656,13 +20656,13 @@ extend_face_to_end_of_line (struct it *it)
 	    {
 	      if (it->current_x == fill_column_indicator_column)
 	        {
-		  const int saved_face = it->face_id;
+		  const int saved_face_id = it->face_id;
 		  it->face_id =
-		    merge_faces (it->w, Qfill_column_indicator, 0, DEFAULT_FACE_ID);
+		    merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
 		  it->c = it->char_to_display =
 		    XFIXNAT (Vdisplay_fill_column_indicator_character);
 		  PRODUCE_GLYPHS (it);
-		  it->face_id = saved_face;
+		  it->face_id = saved_face_id;
 		  it->c = it->char_to_display = ' ';
 	        }
 	      else
