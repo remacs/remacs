@@ -545,7 +545,7 @@ file system), @file{@trampfn{dav,user@@host,/path/to/file}} and
 @cindex google drive
 @cindex method @option{nextcloud}
 @cindex @option{nextcloud} method
-@cindex owncloud
+@cindex nextcloud
 
 GVFS-based methods include also @acronym{GNOME} Online Accounts, which
 support the @option{Files} service.  These are the Google Drive file
@@ -1208,7 +1208,7 @@ directory have the same @code{display-name}, such a situation must be avoided.
 @cindex @acronym{GNOME} Online Accounts
 @cindex method @option{nextcloud}
 @cindex @option{nextcloud} method
-@cindex owncloud
+@cindex nextcloud
 
 As the name indicates, the method @option{nextcloud} allows you to
 access OwnCloud or NextCloud hosted files and directories.  Like the
@@ -3083,6 +3083,8 @@ host.  Example:
 @kbd{M-x auto-revert-tail-mode @key{RET}} runs similarly showing
 continuous output.
 
+@vindex shell-file-name
+@vindex shell-command-switch
 @code{shell-command} uses the variables @code{shell-file-name} and
 @code{shell-command-switch} in order to determine which shell to run.
 For remote hosts, their default values are @file{/bin/sh} and
@@ -3090,6 +3092,15 @@ For remote hosts, their default values are @file{/bin/sh} and
 uses @file{/system/bin/sh}).  Like the variables in the previous
 section, these variables can be changed via connection-local
 variables.
+
+@vindex shell-command-width
+@vindex COLUMNS@r{, environment variable}
+If Emacs supports the variable @code{shell-command-width} (since Emacs
+27.1), @value{tramp} cares about its value for asynchronous shell
+commands.  It specifies the number of display columns for command
+output.  For synchronous shell commands, a similar effect can be
+achieved by adding the environment variable @env{COLUMNS} to
+@code{tramp-remote-process-environment}.
 
 
 @subsection Running @code{eshell} on a remote host
