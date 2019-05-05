@@ -646,7 +646,13 @@ Interactively, the behavior depends on `narrow-to-defun-include-comments'."
       (narrow-to-region beg end))))
 
 (defvar insert-pair-alist
-  '((?\( ?\)) (?\[ ?\]) (?\{ ?\}) (?\< ?\>) (?\" ?\") (?\' ?\') (?\` ?\'))
+  (append '((?\< ?\>) (?\" ?\") (?\' ?\') (?\` ?\'))
+          (let (alist)
+            (map-char-table
+             (lambda (open close)
+               (when (< open close) (push (list open close) alist)))
+             (unicode-property-table-internal 'paired-bracket))
+            (nreverse alist)))
   "Alist of paired characters inserted by `insert-pair'.
 Each element looks like (OPEN-CHAR CLOSE-CHAR) or (COMMAND-CHAR
 OPEN-CHAR CLOSE-CHAR).  The characters OPEN-CHAR and CLOSE-CHAR
