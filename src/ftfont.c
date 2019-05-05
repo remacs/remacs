@@ -2691,7 +2691,7 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 }
 
 Lisp_Object
-ftfont_shape (Lisp_Object lgstring)
+ftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct font_info *ftfont_info = (struct font_info *) font;
@@ -3019,7 +3019,6 @@ Lisp_Object
 fthbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
-  struct font_info *ftfont_info = (struct font_info *) font;
 
   return fthbfont_shape_by_hb (lgstring, font, direction);
 }
@@ -3116,9 +3115,6 @@ static struct font_driver const ftfont_driver =
   .filter_properties = ftfont_filter_properties,
   .combining_capability = ftfont_combining_capability,
   };
-#ifdef HAVE_HARFBUZZ
-static struct font_driver fthbfont_driver;
-#endif	/* HAVE_HARFBUZZ */
 
 void
 syms_of_ftfont (void)
