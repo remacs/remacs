@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::lisp::LispObject;
-use crate::remacs_sys::{bset_update_mode_line, Qnil};
+use crate::remacs_sys::bset_update_mode_line;
 use crate::threads::ThreadState;
 #[cfg(feature = "glyph-debug")]
 use crate::{interactive::InteractiveNumericPrefix, remacs_sys::trace_redisplay_p};
@@ -16,13 +16,12 @@ pub fn set_buffer_redisplay(
     _newval: LispObject,
     _op: LispObject,
     _where: LispObject,
-) -> LispObject {
+) {
     let mut current_buffer = ThreadState::current_buffer_unchecked();
     unsafe {
         bset_update_mode_line(current_buffer.as_mut());
     }
     current_buffer.set_prevent_redisplay_optimizations_p(true);
-    Qnil
 }
 
 /// Toggle tracing of redisplay.
