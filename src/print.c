@@ -1808,7 +1808,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
                 enum { digits = (CHAR_BIT + 4 - 1) / 4 };
                 char buffer[digits + 1];
                 int needed
-                  = snprintf (buffer, sizeof buffer, "%0*hhx", digits, b);
+                  = snprintf (buffer, sizeof buffer, "%0*x", digits, b);
                 eassert (needed == digits);
                 print_c_string (buffer, printcharfun);
               }
