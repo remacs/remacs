@@ -2660,11 +2660,12 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
      Also, room for invalid syntax diagnostic.  */
   size_t len = max (1 + 1 + UINTMAX_WIDTH + 1,
 		    sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT));
-  char *buf = NULL;
+  char *buf = xmalloc (len);
   char *p = buf;
   int valid = -1; /* 1 if valid, 0 if not, -1 if incomplete.  */
 
   ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_protect_ptr (free_contents, &buf);
 
   if (radix < 2 || radix > 36)
     valid = 0;
@@ -2672,8 +2673,6 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
     {
       int c, digit;
 
-      buf = xmalloc (len);
-      record_unwind_protect_ptr (free_contents, &buf);
       p = buf;
 
       c = READCHAR;
