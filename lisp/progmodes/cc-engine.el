@@ -1143,6 +1143,9 @@ comment at the start of cc-engine.el for more info."
 			 ;; Have we moved into a macro?
 			 ((and (not macro-start)
 			       (c-beginning-of-macro))
+			  (save-excursion
+			    (c-backward-syntactic-ws)
+			    (setq before-sws-pos (point)))
 			  ;; Have we crossed a statement boundary?  If not,
 			  ;; keep going back until we find one or a "real" sexp.
 			  (and
