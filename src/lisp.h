@@ -2010,7 +2010,7 @@ INLINE int
 }
 
 /* Placeholder for make-docfile to process.  The actual symbol
-   definition is done by lread.c's defsym.  */
+   definition is done by lread.c's define_symbol.  */
 #define DEFSYM(sym, name) /* empty */
 
 
