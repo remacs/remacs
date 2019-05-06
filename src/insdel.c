@@ -2178,6 +2178,7 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   struct rvoe_arg rvoe_arg;
+  Lisp_Object tmp;
 
   if (inhibit_modification_hooks)
     return;
@@ -2186,7 +2187,16 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
      and there are no before-change functions,
      just record the args that we were going to use.  */
   if (! NILP (Vcombine_after_change_calls)
-      && NILP (Vbefore_change_functions)
+      /* It's OK to defer after-changes even if syntax-ppss-flush-cache
+       * is on before-change-functions, which is common enough to be worth
+       * adding a special case for it.  */
+      && (NILP (Vbefore_change_functions)
+          || (CONSP (Vbefore_change_functions)
+              && EQ (Qt, XCAR (Vbefore_change_functions))
+              && NILP (Fdefault_value (Qbefore_change_functions))
+              && CONSP (tmp = XCDR (Vbefore_change_functions))
+              && NILP (XCDR (tmp))
+              && EQ (XCAR (tmp), Qsyntax_ppss_flush_cache)))
       && !buffer_has_overlays ())
     {
       Lisp_Object elt;
@@ -2343,6 +2353,7 @@ syms_of_insdel (void)
   combine_after_change_buffer = Qnil;
 
   DEFSYM (Qundo_auto__undoable_change, "undo-auto--undoable-change");
+  DEFSYM (Qsyntax_ppss_flush_cache, "syntax-ppss-flush-cache");
 
   DEFVAR_LISP ("combine-after-change-calls", Vcombine_after_change_calls,
 	       doc: /* Used internally by the function `combine-after-change-calls' macro.  */);

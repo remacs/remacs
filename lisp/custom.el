@@ -56,8 +56,14 @@ Otherwise, if symbol has a `saved-value' property, it will evaluate
 the car of that and use it as the default binding for symbol.
 Otherwise, EXP will be evaluated and used as the default binding for
 symbol."
-  (eval `(defvar ,symbol ,(let ((sv (get symbol 'saved-value)))
-                            (if sv (car sv) exp)))))
+  (condition-case nil
+      (default-toplevel-value symbol)   ;Test presence of default value.
+    (void-variable
+     ;; The var is not initialized yet.
+     (set-default-toplevel-value
+      symbol (eval (let ((sv (get symbol 'saved-value)))
+                     (if sv (car sv) exp))
+                   t)))))
 
 (defun custom-initialize-set (symbol exp)
   "Initialize SYMBOL based on EXP.
@@ -188,18 +194,13 @@ set to nil, as the value is no longer rogue."
 		(t
 		 (custom-handle-keyword symbol keyword value
 					'custom-variable))))))
+    ;; Set the docstring, record the var on load-history, as well
+    ;; as set the special-variable-p flag.
+    (internal--define-uninitialized-variable symbol doc)
     (put symbol 'custom-requests requests)
     ;; Do the actual initialization.
     (unless custom-dont-initialize
       (funcall initialize symbol default)))
-  ;; Use defvar to set the docstring as well as the special-variable-p flag.
-  ;; FIXME: We should reproduce more of `defvar's behavior, such as the warning
-  ;; when the var is currently let-bound.
-  (if (not (default-boundp symbol))
-      ;; Don't use defvar to avoid setting a default-value when undesired.
-      (when doc (put symbol 'variable-documentation doc))
-    (eval `(defvar ,symbol nil ,@(when doc (list doc)))))
-  (push symbol current-load-list)
   (run-hooks 'custom-define-hook)
   symbol)
 
