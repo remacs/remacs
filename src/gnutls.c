@@ -753,8 +753,15 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte)
     /* The peer closed the connection. */
     return 0;
   else if (emacs_gnutls_handle_error (state, rtnval))
-    /* non-fatal error */
-    return -1;
+    {
+      /* If we get GNUTLS_E_AGAIN, then set errno appropriately so that
+         wait_reading_process_output retries the correct way instead of
+         erroring out.  */
+      if (rtnval == GNUTLS_E_AGAIN)
+        errno = EAGAIN;
+      /* non-fatal error */
+      return -1;
+    }
   else {
     /* a fatal error occurred */
     return 0;
