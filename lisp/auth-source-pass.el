@@ -77,14 +77,13 @@ See `auth-source-search' for details on SPEC."
 
 (defun auth-source-pass--build-result (host port user)
   "Build auth-source-pass entry matching HOST, PORT and USER."
-  (let ((entry (auth-source-pass--find-match host user port)))
-    (when entry
-      (let* ((entry-data (auth-source-pass-parse-entry entry))
-             (retval (list
-                      :host host
-                      :port (or (auth-source-pass--get-attr "port" entry-data) port)
-                      :user (or (auth-source-pass--get-attr "user" entry-data) user)
-                      :secret (lambda () (auth-source-pass--get-attr 'secret entry-data)))))
+  (let ((entry-data (auth-source-pass--find-match host user port)))
+    (when entry-data
+      (let ((retval (list
+                     :host host
+                     :port (or (auth-source-pass--get-attr "port" entry-data) port)
+                     :user (or (auth-source-pass--get-attr "user" entry-data) user)
+                     :secret (lambda () (auth-source-pass--get-attr 'secret entry-data)))))
         (auth-source-pass--do-debug "return %s as final result (plus hidden password)"
                                     (seq-subseq retval 0 -2)) ;; remove password
         retval))))
@@ -183,33 +182,6 @@ CONTENTS is the contents of a password-store formatted file."
          (cons (concat "auth-source-pass: " (car msg))
                (cdr msg))))
 
-(defun auth-source-pass--select-one-entry (entries user)
-  "Select one entry from ENTRIES by searching for a field matching USER."
-  (let ((number (length entries))
-        (entry-with-user
-         (and user
-              (seq-find (lambda (entry)
-                          (string-equal (auth-source-pass-get "user" entry) user))
-                        entries))))
-    (auth-source-pass--do-debug "found %s matches: %s" number
-                                (mapconcat #'identity entries ", "))
-    (if entry-with-user
-        (progn
-          (auth-source-pass--do-debug "return %s as it contains matching user field"
-                                      entry-with-user)
-          entry-with-user)
-      (auth-source-pass--do-debug "return %s as it is the first one" (car entries))
-      (car entries))))
-
-(defun auth-source-pass--entry-valid-p (entry)
-  "Return t iff ENTRY can be opened.
-Also displays a warning if not.  This function is slow, don't call it too
-often."
-  (if (auth-source-pass-parse-entry entry)
-      t
-    (auth-source-pass--do-debug "entry '%s' is not valid" entry)
-    nil))
-
 ;; TODO: add tests for that when `assess-with-filesystem' is included
 ;; in Emacs
 (defun auth-source-pass-entries ()
@@ -219,37 +191,8 @@ often."
      (lambda (file) (file-name-sans-extension (file-relative-name file store-dir)))
      (directory-files-recursively store-dir "\\.gpg$"))))
 
-(defun auth-source-pass--find-all-by-entry-name (entryname user)
-  "Search the store for all entries either matching ENTRYNAME/USER or ENTRYNAME.
-Only return valid entries as of `auth-source-pass--entry-valid-p'."
-  (seq-filter (lambda (entry)
-                (and
-                 (or
-                  (let ((components-host-user
-                         (member entryname (split-string entry "/"))))
-                    (and (= (length components-host-user) 2)
-                         (string-equal user (cadr components-host-user))))
-                  (string-equal entryname (file-name-nondirectory entry)))
-                 (auth-source-pass--entry-valid-p entry)))
-              (auth-source-pass-entries)))
-
-(defun auth-source-pass--find-one-by-entry-name (entryname user)
-  "Search the store for an entry matching ENTRYNAME.
-If USER is non nil, give precedence to entries containing a user field
-matching USER."
-  (auth-source-pass--do-debug "searching for '%s' in entry names (user: %s)"
-                              entryname
-                              user)
-  (let ((matching-entries (auth-source-pass--find-all-by-entry-name entryname user)))
-    (pcase (length matching-entries)
-      (0 (auth-source-pass--do-debug "no match found")
-         nil)
-      (1 (auth-source-pass--do-debug "found 1 match: %s" (car matching-entries))
-         (car matching-entries))
-      (_ (auth-source-pass--select-one-entry matching-entries user)))))
-
 (defun auth-source-pass--find-match (host user port)
-  "Return a password-store entry name matching HOST, USER and PORT.
+  "Return password-store entry data matching HOST, USER and PORT.
 
 Disambiguate between user provided inside HOST (e.g., user@server.com) and
 inside USER by giving priority to USER.  Same for PORT."
@@ -263,33 +206,123 @@ inside USER by giving priority to USER.  Same for PORT."
      (or port (number-to-string (url-port url))))))
 
 (defun auth-source-pass--find-match-unambiguous (hostname user port)
-  "Return a password-store entry name matching HOSTNAME, USER and PORT.
+  "Return password-store entry data matching HOSTNAME, USER and PORT.
 If many matches are found, return the first one.  If no match is found,
 return nil.
 
 HOSTNAME should not contain any username or port number."
-  (or
-   (and user port (auth-source-pass--find-one-by-entry-name
-                   (format "%s@%s%s%s" user hostname auth-source-pass-port-separator port)
-                   user))
-   (and user port (auth-source-pass--find-one-by-entry-name
-                   (format "%s%s%s" hostname auth-source-pass-port-separator port)
-                   user))
-   (and user (auth-source-pass--find-one-by-entry-name
-              (format "%s@%s" user hostname)
-              user))
-   (and port (auth-source-pass--find-one-by-entry-name
-              (format "%s%s%s" hostname auth-source-pass-port-separator port)
-              nil))
-   (auth-source-pass--find-one-by-entry-name hostname user)
-   ;; if that didn't work, remove subdomain: foo.bar.com -> bar.com
-   (let ((components (split-string hostname "\\.")))
-     (when (= (length components) 3)
-       ;; start from scratch
-       (auth-source-pass--find-match-unambiguous
-        (mapconcat 'identity (cdr components) ".")
-        user
-        port)))))
+  (cl-reduce
+   (lambda (result entries)
+     (or result
+         (pcase (length entries)
+           (0 nil)
+           (1 (auth-source-pass-parse-entry (car entries)))
+           (_ (auth-source-pass--select-from-entries entries user)))))
+   (auth-source-pass--matching-entries hostname user port)
+   :initial-value nil))
+
+(defun auth-source-pass--select-from-entries (entries user)
+  "Return best matching password-store entry data from ENTRIES.
+
+If USER is non nil, give precedence to entries containing a user field
+matching USER."
+  (cl-reduce
+   (lambda (result entry)
+     (let ((entry-data (auth-source-pass-parse-entry entry)))
+       (cond ((equal (auth-source-pass--get-attr "user" result) user)
+              result)
+             ((equal (auth-source-pass--get-attr "user" entry-data) user)
+              entry-data)
+             (t
+              result))))
+   entries
+   :initial-value (auth-source-pass-parse-entry (car entries))))
+
+(defun auth-source-pass--matching-entries (hostname user port)
+  "Return all matching password-store entries for HOSTNAME, USER, & PORT.
+
+The result is a list of lists of password-store entries, where
+each sublist contains entries that actually exist in the
+password-store matching one of the entry name formats that
+auth-source-pass expects, most specific to least specific."
+  (let* ((entries-lists (mapcar
+                         #'cdr
+                         (auth-source-pass--accumulate-matches hostname user port)))
+         (entries (apply #'cl-concatenate (cons 'list entries-lists))))
+    (if entries
+        (auth-source-pass--do-debug (format "found: %S" entries))
+      (auth-source-pass--do-debug "no matches found"))
+    entries-lists))
+
+(defun auth-source-pass--accumulate-matches (hostname user port)
+  "Accumulate matching password-store entries into sublists.
+
+Entries matching supported formats that combine HOSTNAME, USER, &
+PORT are accumulated into sublists where the car of each sublist
+is a regular expression for matching paths in the password-store
+and the remainder is the list of matching entries."
+  (let ((suffix-match-lists
+         (mapcar (lambda (suffix) (list (format "\\(^\\|/\\)%s$" suffix)))
+                 (auth-source-pass--generate-entry-suffixes hostname user port))))
+    (cl-reduce #'auth-source-pass--entry-reducer
+               (auth-source-pass-entries)
+               :initial-value suffix-match-lists)))
+
+(defun auth-source-pass--entry-reducer (match-lists entry)
+  "Match MATCH-LISTS sublists against ENTRY.
+
+The result is a copy of match-lists with the entry added to the
+end of any sublists for which the regular expression at the head
+of the list matches the entry name."
+  (mapcar (lambda (match-list)
+            (if (string-match (car match-list) entry)
+                (append match-list (list entry))
+              match-list))
+          match-lists))
+
+(defun auth-source-pass--generate-entry-suffixes (hostname user port)
+  "Return a list of possible entry path suffixes in the password-store.
+
+Based on the supported pathname patterns for HOSTNAME, USER, &
+PORT, return a list of possible suffixes for matching entries in
+the password-store."
+  (let ((domains (auth-source-pass--domains (split-string hostname "\\."))))
+    (seq-mapcat (lambda (n)
+                  (auth-source-pass--name-port-user-suffixes n user port))
+                domains)))
+
+(defun auth-source-pass--domains (name-components)
+  "Return a list of possible domain names matching the hostname.
+
+This function takes a list of NAME-COMPONENTS, the strings
+separated by periods in the hostname, and returns a list of full
+domain names containing the trailing sequences of those
+components, from longest to shortest."
+  (cl-maplist (lambda (components) (mapconcat #'identity components "."))
+              name-components))
+
+(defun auth-source-pass--name-port-user-suffixes (name user port)
+  "Return a list of possible path suffixes for NAME, USER, & PORT.
+
+The resulting list is ordered from most specifc to least
+specific, with paths matching all of NAME, USER, & PORT first,
+then NAME & USER, then NAME & PORT, then just NAME."
+  (seq-mapcat
+   #'identity
+   (list
+    (when (and user port)
+      (list
+       (format "%s@%s%s%s" user name auth-source-pass-port-separator port)
+       (format "%s%s%s/%s" name auth-source-pass-port-separator port user)))
+    (when user
+      (list
+       (format "%s@%s" user name)
+       (format "%s/%s" name user)))
+    (when port
+      (list
+       (format "%s%s%s" name auth-source-pass-port-separator port)))
+    (list
+     (format "%s" name)))))
 
 (provide 'auth-source-pass)
 ;;; auth-source-pass.el ends here
