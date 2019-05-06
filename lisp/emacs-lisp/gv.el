@@ -392,18 +392,20 @@ The return value is the last VAL in the list.
                                  ,(funcall setter
                                            `(cons (setq ,p (cons ,k ,v))
                                                   ,getter)))))
-                         (cond
-                          ((null remove) set-exp)
-                          ((or (eql v default)
-                               (and (eq (car-safe v) 'quote)
-                                    (eq (car-safe default) 'quote)
-                                    (eql (cadr v) (cadr default))))
-                           `(if ,p ,(funcall setter `(delq ,p ,getter))))
-                          (t
-                           `(cond
-                             ((not (eql ,default ,v)) ,set-exp)
-                             (,p ,(funcall setter
-                                           `(delq ,p ,getter)))))))))))))))
+                         `(progn
+                            ,(cond
+                             ((null remove) set-exp)
+                             ((or (eql v default)
+                                  (and (eq (car-safe v) 'quote)
+                                       (eq (car-safe default) 'quote)
+                                       (eql (cadr v) (cadr default))))
+                              `(if ,p ,(funcall setter `(delq ,p ,getter))))
+                             (t
+                              `(cond
+                                ((not (eql ,default ,v)) ,set-exp)
+                                (,p ,(funcall setter
+                                              `(delq ,p ,getter))))))
+                            ,v))))))))))
 
 
 ;;; Some occasionally handy extensions.
