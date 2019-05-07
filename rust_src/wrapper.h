@@ -59,6 +59,7 @@
 # include "widget.h"
 # include "widgetprv.h"
 # include "xsettings.h"
+# include "tempxsettings.h"
 #endif
 #include "window.h"
 #include "xgselect.h"
