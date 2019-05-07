@@ -27,7 +27,7 @@ use crate::{
         symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
-    remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp, Qt},
+    remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
 };
@@ -412,17 +412,17 @@ pub fn read_char_exclusive(
 /// OBARRAY, if nil, defaults to the value of the variable `obarray'.
 /// usage: (unintern NAME OBARRAY)
 #[lisp_fn(min = "1")]
-pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> LispObject {
+pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bool {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let obarray: LispObarrayRef = check_obarray(obarray.into()).into();
 
     let tem = obarray.lookup(name);
     if tem.is_integer() {
-        return Qnil;
+        return false;
     }
     // If arg was a symbol, don't delete anything but that symbol itself.
     if name.is_symbol() && name != tem {
-        return Qnil;
+        return false;
     }
 
     let mut temp: LispSymbolRef = tem.into();
@@ -450,7 +450,7 @@ pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> Li
         }
     }
 
-    Qt
+    true
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
