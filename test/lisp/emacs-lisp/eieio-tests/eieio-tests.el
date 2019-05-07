@@ -862,8 +862,7 @@ Subclasses to override slot attributes.")
     (should (oref obj1 a-slot))))
 
 (defclass NAMED (eieio-named)
-  ((some-slot :initform nil)
-   )
+  ((some-slot :initform nil))
   "A class inheriting from eieio-named.")
 
 (ert-deftest eieio-test-35-named-object ()
@@ -901,6 +900,18 @@ Subclasses to override slot attributes.")
   "Tests to see whether reftex-auc has been autoloaded"
   (should
    (fboundp 'eieio--defalias)))
+
+(ert-deftest eieio-test-38-clone-named-object ()
+  (let* ((A (NAMED :object-name "aa"))
+         (B (clone A :object-name "bb"))
+         (C (clone A "cc"))
+         (D (clone A))
+         (E (clone D)))
+    (should (string= "aa" (oref A object-name)))
+    (should (string= "bb" (oref B object-name)))
+    (should (string= "cc" (oref C object-name)))
+    (should (string= "aa-1" (oref D object-name)))
+    (should (string= "aa-2" (oref E object-name)))))
 
 
 (provide 'eieio-tests)
