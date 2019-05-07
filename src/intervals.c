@@ -2334,7 +2334,6 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
 
       if (multi_flag)
 	{
-	  ptrdiff_t temp;
 	  left_end_byte
             = advance_to_char_boundary (start_byte + LEFT_TOTAL_LENGTH (i));
 	  left_end = BYTE_TO_CHAR (left_end_byte);
@@ -2355,8 +2354,6 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
 
       if (multi_flag)
 	{
-	  ptrdiff_t temp;
-
 	  right_start_byte
             = advance_to_char_boundary (end_byte - RIGHT_TOTAL_LENGTH (i));
 	  right_start = BYTE_TO_CHAR (right_start_byte);
