@@ -18,7 +18,7 @@ use crate::{
     eval::unbind_to,
     lisp::LispObject,
     multibyte::{char_resolve_modifier_mask, LispSymbolOrString},
-    obarray::{check_obarray, intern, intern_c_string_1, LispObarrayRef},
+    obarray::{intern, intern_c_string_1, LispObarrayRef},
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
@@ -413,8 +413,7 @@ pub fn read_char_exclusive(
 /// usage: (unintern NAME OBARRAY)
 #[lisp_fn(min = "1")]
 pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bool {
-    let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
-    let obarray: LispObarrayRef = check_obarray(obarray.into()).into();
+    let obarray = obarray.unwrap_or_else(LispObarrayRef::global).check();
 
     let tem = obarray.lookup(name);
     if tem.is_integer() {

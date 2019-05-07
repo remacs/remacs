@@ -58,6 +58,12 @@ impl LispObarrayRef {
         }
     }
 
+    /// Get an error if OBARRAY is not an obarray.
+    /// If it is one, return it.
+    pub fn check(&self) -> Self {
+        Self(check_obarray(self.into()))
+    }
+
     /// Intern the string or symbol STRING. That is, return the new or existing
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
