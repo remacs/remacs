@@ -1283,10 +1283,17 @@ automatically updates.  In the buffer, you can use 's q' or 's e' to
 signal a thread with quit or error respectively, or get a snapshot
 backtrace with 'b'.
 
+
+** thingatpt.el
+
 ---
-** thingatpt.el supports a new "thing" called 'uuid'.
+*** 'thing-at-point' supports a new "thing" called 'uuid'.
 A symbol 'uuid' can be passed to 'thing-at-point' and it returns the
 UUID at point.
+
+---
+*** 'word-at-point' and 'sentence-at-point' accept NO-PROPERTIES.
+Just like 'thing-at-point' itself.
 
 ** Interactive automatic highlighting
 
