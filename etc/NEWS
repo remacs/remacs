@@ -329,7 +329,7 @@ and directory-local variables.
 a message about the error locus.
 
 ---
-** New variable 'grep-search-path defines' the directories searched for
+** New variable 'grep-search-path' defines the directories searched for
 grep hits (this used to be controlled by 'compilation-search-path').
 
 ---
@@ -706,8 +706,8 @@ This enables more efficient backends.  See the docstring of
 'flymake-diagnostic-functions' or the Flymake manual for details.
 
 +++
-*** The variable 'flymake-start-syntax-check-on-newline' is obsolete
-and renamed to 'flymake-start-on-newline'.
+*** 'flymake-start-syntax-check-on-newline' is now obsolete,
+use 'post-self-insert-hook' to check on newline.
 
 ** Ruby
 

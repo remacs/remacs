@@ -38,9 +38,9 @@
 ;; The main interactive entry point is the `flymake-mode' minor mode,
 ;; which periodically and automatically initiates checks as the user
 ;; is editing the buffer.  The variables `flymake-no-changes-timeout',
-;; `flymake-start-on-newline' and `flymake-start-on-flymake-mode'
-;; give finer control over the events triggering a check, as does the
-;; interactive command `flymake-start', which immediately starts a check.
+;; `flymake-start-on-flymake-mode' give finer control over the events
+;; triggering a check, as does the interactive command  `flymake-start',
+;; which immediately starts a check.
 ;;
 ;; Shortly after each check, a summary of collected diagnostics should
 ;; appear in the mode-line.  If it doesn't, there might not be a
@@ -177,17 +177,13 @@ See `flymake-error-bitmap' and `flymake-warning-bitmap'."
 		 (const right-fringe)
 		 (const :tag "No fringe indicators" nil)))
 
-(define-obsolete-variable-alias 'flymake-start-syntax-check-on-newline
-  'flymake-start-on-newline "27.1")
-
-(defcustom flymake-start-on-newline t
-  "Start syntax check if newline char was added/removed from the buffer."
-  :type 'boolean)
+(make-obsolete-variable 'flymake-start-syntax-check-on-newline
+		        "can check on newline in post-self-insert-hook"
+                        "27.1")
 
 (defcustom flymake-no-changes-timeout 0.5
   "Time to wait after last change before automatically checking buffer.
-If nil, never start checking buffer automatically like this.
-You may also want to disable `flymake-start-on-newline'."
+If nil, never start checking buffer automatically like this."
   :type '(choice (number :tag "Timeout in seconds")
                  (const :tag "No check on timeout" nil)))
 
@@ -947,9 +943,8 @@ results.
 
 Flymake performs these checks while the user is editing.
 The customization variables `flymake-start-on-flymake-mode',
-`flymake-no-changes-timeout' and `flymake-start-on-newline'
-determine the exact circumstances whereupon Flymake decides
-to initiate a check of the buffer.
+`flymake-no-changes-timeout' determine the exact circumstances
+whereupon Flymake decides to initiate a check of the buffer.
 
 The commands `flymake-goto-next-error' and
 `flymake-goto-prev-error' can be used to navigate among Flymake
@@ -1043,9 +1038,6 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 START and STOP and LEN are as in `after-change-functions'."
   (let((new-text (buffer-substring start stop)))
     (push (list start stop new-text) flymake--recent-changes)
-    (when (and flymake-start-on-newline (equal new-text "\n"))
-      (flymake-log :debug "starting syntax check as new-line has been seen")
-      (flymake-start t))
     (flymake--schedule-timer-maybe)))
 
 (defun flymake-after-save-hook ()
