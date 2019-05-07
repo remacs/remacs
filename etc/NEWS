@@ -1446,6 +1446,13 @@ of an idle Emacs, but may fail on some network file systems; set
 notification is not supported.  The new variable currently has no
 effect in 'global-auto-revert-mode'.  The default value is nil.
 
+*** New variable 'buffer-auto-revert-by-notification'
+A major mode can declare that notification on the buffer's default
+directory is sufficient to know when updates are required, by setting
+the new variable 'buffer-auto-revert-by-notification' to a non-nil
+value.  Auto Revert mode can use this information to avoid polling the
+buffer periodically when 'auto-revert-avoid-polling' is non-nil.
+
 
 * New Modes and Packages in Emacs 27.1
 

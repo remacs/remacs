@@ -35,6 +35,14 @@ the Buffer Menu.)  In this case, Auto Revert does not print any
 messages while reverting, even when @code{auto-revert-verbose} is
 non-@code{nil}.
 
+@vindex buffer-auto-revert-by-notification
+Some non-file buffers can be updated reliably by file notification on
+their default directory; Dired buffers is an example.  The major mode
+can indicate this by setting @code{buffer-auto-revert-by-notification}
+to a non-@code{nil} value in that buffer, allowing Auto Revert to
+avoid periodic polling.  Such notification does not include changes to
+files in that directory, only to the directory itself.
+
 The details depend on the particular types of buffers and are
 explained in the corresponding sections.
 

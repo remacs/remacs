@@ -5890,6 +5890,16 @@ This should not be relied upon.
 For more information on how this variable is used by Auto Revert mode,
 see Info node `(emacs)Supporting additional buffers'.")
 
+(defvar-local buffer-auto-revert-by-notification nil
+  "Whether a buffer can rely on notification in Auto-Revert mode.
+If non-nil, monitoring changes to the directory of the current
+buffer is sufficient for knowing when that buffer needs to be
+updated in Auto Revert Mode.  Such notification does not include
+changes to files in that directory, only to the directory itself.
+
+This variable only applies to buffers where `buffer-file-name' is
+nil; other buffers are tracked by their files.")
+
 (defvar before-revert-hook nil
   "Normal hook for `revert-buffer' to run before reverting.
 The function `revert-buffer--default' runs this.

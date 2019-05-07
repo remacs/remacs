@@ -858,8 +858,12 @@ the timer when no buffers need to be checked."
                   (auto-revert-remove-current-buffer))
               (when (auto-revert-active-p)
                 ;; Enable file notification.
+                ;; Don't bother creating a notifier for non-file buffers
+                ;; unless it explicitly indicates that this works.
                 (when (and auto-revert-use-notify
-                           (not auto-revert-notify-watch-descriptor))
+                           (not auto-revert-notify-watch-descriptor)
+                           (or buffer-file-name
+                               buffer-auto-revert-by-notification))
                   (auto-revert-notify-add-watch))
                 (auto-revert-handler)))))
 	(setq bufs (cdr bufs)))
