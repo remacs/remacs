@@ -1031,6 +1031,9 @@ under version control.  @xref{VC Mode Line}, for Auto Revert
 peculiarities when visiting files under version control.
 
 @ifnottex
+@menu
+* Non-File Buffers::    Auto Reverting Non-File Buffers.
+@end menu
 @include arevert-xtra.texi
 @end ifnottex
 
