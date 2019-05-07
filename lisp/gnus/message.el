@@ -4588,8 +4588,7 @@ This function could be useful in `message-setup-hook'."
 	      (message-generate-headers '(Lines)))
 	    ;; Remove some headers.
 	    (message-remove-header message-ignored-mail-headers t)
-	    (let ((mail-parse-charset message-default-charset))
-	      (mail-encode-encoded-word-buffer)))
+            (mail-encode-encoded-word-buffer))
 	  (goto-char (point-max))
 	  ;; require one newline at the end.
 	  (or (= (preceding-char) ?\n)
@@ -4962,8 +4961,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 		  (message-generate-headers '(Lines)))
 		;; Remove some headers.
 		(message-remove-header message-ignored-news-headers t)
-		(let ((mail-parse-charset message-default-charset))
-		  (mail-encode-encoded-word-buffer)))
+                (mail-encode-encoded-word-buffer))
 	      (goto-char (point-max))
 	      ;; require one newline at the end.
 	      (or (= (preceding-char) ?\n)
@@ -5441,8 +5439,7 @@ The result is a fixnum."
 	  (while (setq file (message-fetch-field "fcc" t))
 	    (push file list)
 	    (message-remove-header "fcc" nil t))
-	  (let ((mail-parse-charset message-default-charset)
-		(rfc2047-header-encoding-alist
+          (let ((rfc2047-header-encoding-alist
 		 (cons '("Newsgroups" . default)
 		       rfc2047-header-encoding-alist)))
 	    (mail-encode-encoded-word-buffer)))
@@ -8101,9 +8098,7 @@ regexp VARSTR."
 
 (defun message-encode-message-body ()
   (unless message-inhibit-body-encoding
-    (let ((mail-parse-charset (or mail-parse-charset
-				  message-default-charset))
-	  (case-fold-search t)
+    (let ((case-fold-search t)
 	  lines content-type-p)
       (message-goto-body)
       (save-restriction

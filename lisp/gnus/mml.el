@@ -48,7 +48,6 @@
 
 (defvar gnus-article-mime-handles)
 (defvar gnus-newsrc-hashtb)
-(defvar message-default-charset)
 (defvar message-deletable-headers)
 (defvar message-options)
 (defvar message-posting-charset)
@@ -1015,8 +1014,7 @@ If HANDLES is non-nil, use it instead reparsing the buffer."
     ;; Skip past any From_ headers.
     (while (looking-at "From ")
       (forward-line 1))
-    (let ((mail-parse-charset message-default-charset))
-      (mail-encode-encoded-word-buffer)))
+    (mail-encode-encoded-word-buffer))
   (message-encode-message-body))
 
 (defun mml-insert-mime (handle &optional no-markup)
