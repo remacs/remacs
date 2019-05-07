@@ -2523,8 +2523,8 @@ particular subset of them, and sorting by various criteria.
 
 Operations on marked buffers:
 \\<ibuffer-mode-map>
-  `\\[ibuffer-do-save]' - Save the marked buffers
-  `\\[ibuffer-do-view]' - View the marked buffers in this frame.
+  `\\[ibuffer-do-save]' - Save the marked buffers.
+  `\\[ibuffer-do-view]' - View the marked buffers in the selected frame.
   `\\[ibuffer-do-view-other-frame]' - View the marked buffers in another frame.
   `\\[ibuffer-do-revert]' - Revert the marked buffers.
   `\\[ibuffer-do-toggle-read-only]' - Toggle read-only state of marked buffers.
@@ -2547,7 +2547,7 @@ Operations on marked buffers:
           buffer's file as an argument.
   `\\[ibuffer-do-eval]' - Evaluate a form in each of the marked buffers.  This
           is a very flexible command.  For example, if you want to make all
-          of the marked buffers read only, try using (read-only-mode 1) as
+          of the marked buffers read-only, try using (read-only-mode 1) as
           the input form.
   `\\[ibuffer-do-view-and-eval]' - As above, but view each buffer while the form
           is evaluated.
@@ -2562,21 +2562,20 @@ Marking commands:
           all unmarked buffers.
   `\\[ibuffer-change-marks]' - Change the mark used on marked buffers.
   `\\[ibuffer-unmark-forward]' - Unmark the buffer at point.
-  `\\[ibuffer-unmark-backward]' - Unmark the buffer at point, and move to the
-          previous line.
+  `\\[ibuffer-unmark-backward]' - Unmark the previous buffer.
   `\\[ibuffer-unmark-all]' - Unmark buffers marked with MARK.
   `\\[ibuffer-unmark-all-marks]' - Unmark all marked buffers.
   `\\[ibuffer-mark-by-mode]' - Mark buffers by major mode.
   `\\[ibuffer-mark-unsaved-buffers]' - Mark all \"unsaved\" buffers.
           This means that the buffer is modified, and has an associated file.
   `\\[ibuffer-mark-modified-buffers]' - Mark all modified buffers,
-          regardless of whether or not they have an associated file.
+          regardless of whether they have an associated file.
   `\\[ibuffer-mark-special-buffers]' - Mark all buffers whose name begins and
           ends with `*'.
   `\\[ibuffer-mark-dissociated-buffers]' - Mark all buffers which have
           an associated file, but that file doesn't currently exist.
   `\\[ibuffer-mark-read-only-buffers]' - Mark all read-only buffers.
-  `\\[ibuffer-mark-dired-buffers]' - Mark buffers in `dired' mode.
+  `\\[ibuffer-mark-dired-buffers]' - Mark buffers in `dired-mode'.
   `\\[ibuffer-mark-help-buffers]' - Mark buffers in `help-mode', `apropos-mode', etc.
   `\\[ibuffer-mark-old-buffers]' - Mark buffers older than `ibuffer-old-time'.
   `\\[ibuffer-mark-for-delete]' - Mark the buffer at point for deletion.
@@ -2655,17 +2654,17 @@ Other commands:
 
 ** Information on Filtering:
 
- You can filter your ibuffer view via different criteria.  Each Ibuffer
+You can filter your Ibuffer view via different criteria.  Each Ibuffer
 buffer has its own stack of active filters.  For example, suppose you
 are working on an Emacs Lisp project.  You can create an Ibuffer
-buffer displays buffers in just `emacs-lisp' modes via
+buffer displaying only `emacs-lisp-mode' buffers via
 `\\[ibuffer-filter-by-mode] emacs-lisp-mode RET'.  In this case, there
 is just one entry on the filtering stack.
 
 You can also combine filters.  The various filtering commands push a
 new filter onto the stack, and the filters combine to show just
 buffers which satisfy ALL criteria on the stack.  For example, suppose
-you only want to see buffers in `emacs-lisp' mode, whose names begin
+you only want to see buffers in `emacs-lisp-mode', whose names begin
 with \"gnus\".  You can accomplish this via:
 
   \\[ibuffer-filter-by-mode] emacs-lisp-mode RET
@@ -2709,8 +2708,8 @@ will not be displayed multiple times if they would be included in
 multiple filter groups; instead, the first filter group is used.  The
 filter groups are displayed in this order of precedence.
 
-You may rearrange filter groups by using the regular
-`\\[ibuffer-kill-line]' and `\\[ibuffer-yank]' pair.  Yanked groups
+You may rearrange filter groups by using the usual pair
+`\\[ibuffer-kill-line]' and `\\[ibuffer-yank]'.  Yanked groups
 will be inserted before the group at point."
   ;; Include state info next to the mode name.
   (set (make-local-variable 'mode-line-process)
