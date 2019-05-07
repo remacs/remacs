@@ -327,6 +327,10 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 #define BYTE_TO_CHAR(bytepos)			\
   (buf_bytepos_to_charpos (current_buffer, bytepos))
 
+/* For those very rare cases where you may have a "random" pointer into
+   the middle of a multibyte char, this moves to the next boundary.  */
+extern ptrdiff_t advance_to_char_boundary (ptrdiff_t byte_pos);
+
 /* Convert PTR, the address of a byte in the buffer, into a byte position.  */
 
 #define PTR_BYTE_POS(ptr) \

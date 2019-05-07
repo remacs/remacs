@@ -2264,7 +2264,7 @@ validate_region (register Lisp_Object *b, register Lisp_Object *e)
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */
 
-static ptrdiff_t
+ptrdiff_t
 advance_to_char_boundary (ptrdiff_t byte_pos)
 {
   int c;
@@ -2702,6 +2702,9 @@ current buffer is cleared.  */)
 
       /* Do this last, so it can calculate the new correspondences
 	 between chars and bytes.  */
+      /* FIXME: Is it worth the trouble, really?  Couldn't we just throw
+         away all the text-properties instead of trying to guess how
+         to adjust them?  AFAICT the result is not reliable anyway.  */
       set_intervals_multibyte (1);
     }
 

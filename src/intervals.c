@@ -2335,22 +2335,10 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
       if (multi_flag)
 	{
 	  ptrdiff_t temp;
-	  left_end_byte = start_byte + LEFT_TOTAL_LENGTH (i);
+	  left_end_byte
+            = advance_to_char_boundary (start_byte + LEFT_TOTAL_LENGTH (i));
 	  left_end = BYTE_TO_CHAR (left_end_byte);
-
-	  temp = CHAR_TO_BYTE (left_end);
-
-	  /* If LEFT_END_BYTE is in the middle of a character,
-	     adjust it and LEFT_END to a char boundary.  */
-	  if (left_end_byte > temp)
-	    {
-	      left_end_byte = temp;
-	    }
-	  if (left_end_byte < temp)
-	    {
-	      left_end--;
-	      left_end_byte = CHAR_TO_BYTE (left_end);
-	    }
+	  eassert (CHAR_TO_BYTE (left_end) == left_end_byte);
 	}
       else
 	{
@@ -2369,22 +2357,10 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
 	{
 	  ptrdiff_t temp;
 
-	  right_start_byte = end_byte - RIGHT_TOTAL_LENGTH (i);
+	  right_start_byte
+            = advance_to_char_boundary (end_byte - RIGHT_TOTAL_LENGTH (i));
 	  right_start = BYTE_TO_CHAR (right_start_byte);
-
-	  /* If RIGHT_START_BYTE is in the middle of a character,
-	     adjust it and RIGHT_START to a char boundary.  */
-	  temp = CHAR_TO_BYTE (right_start);
-
-	  if (right_start_byte < temp)
-	    {
-	      right_start_byte = temp;
-	    }
-	  if (right_start_byte > temp)
-	    {
-	      right_start++;
-	      right_start_byte = CHAR_TO_BYTE (right_start);
-	    }
+	  eassert (CHAR_TO_BYTE (right_start) == right_start_byte);
 	}
       else
 	{
