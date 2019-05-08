@@ -1621,7 +1621,14 @@ be a cons cell (LINENUMBER . COLUMNNUMBER)."
 			      (frame-terminal))))
 		'nomini 'visible (selected-window))))
 	    (condition-case nil
-		(switch-to-buffer next-buffer)
+                ;; If the client specified a new buffer position,
+                ;; treat that as an explicit point-move command, and
+                ;; override switch-to-buffer-preserve-window-point.
+                (let ((switch-to-buffer-preserve-window-point
+                       (if filepos
+                           nil
+                         switch-to-buffer-preserve-window-point)))
+                  (switch-to-buffer next-buffer))
 	      ;; After all the above, we might still have ended up with
 	      ;; a minibuffer/dedicated-window (if there's no other).
 	      (error (pop-to-buffer next-buffer)))))))
