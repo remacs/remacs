@@ -24026,6 +24026,7 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 			       ? string_byte_to_char (elt, bytepos)
 			       : bytepos);
 		    spec = decode_mode_spec (it->w, c, field, &string);
+		    eassert (NILP (string) || STRINGP (string));
 		    multibyte = !NILP (string) && STRING_MULTIBYTE (string);
 
 		    switch (mode_line_target)
