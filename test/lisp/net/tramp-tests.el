@@ -2271,10 +2271,13 @@ This checks also `file-name-as-directory', `file-name-directory',
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))
 
+;; The following test is inspired by Bug#35497.
 (ert-deftest tramp-test10-write-region-file-precious-flag ()
   "Check that `file-precious-flag' is respected with Tramp in use."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  ;; The bug is fixed in Emacs 27.1.
+  (skip-unless (tramp--test-emacs27-p))
 
   (let* ((tmp-name (tramp--test-make-temp-name))
          written-files
