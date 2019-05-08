@@ -9248,6 +9248,11 @@ svg_image_p (Lisp_Object object)
 
 # include <librsvg/rsvg.h>
 
+/* librsvg is too old for us if it doesn't define this macro.  */
+# ifndef LIBRSVG_CHECK_VERSION
+#  define LIBRSVG_CHECK_VERSION(v, w, x) false
+# endif
+
 # ifdef WINDOWSNT
 
 /* Restore the original definition of __MINGW_MAJOR_VERSION.  */
@@ -9465,8 +9470,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
   #if GNUC_PREREQ (4, 6, 0)
    #pragma GCC diagnostic push
   #endif
-  #if defined LIBRSVG_CHECK_VERSION && LIBRSVG_CHECK_VERSION (2, 45, 1) \
-    && GNUC_PREREQ (4, 2, 0)
+  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   #endif
 
