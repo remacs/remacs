@@ -40,7 +40,7 @@ impl LispObarrayRef {
 
     /// Return a reference to the Lisp variable `obarray`.
     pub fn global() -> Self {
-        Self(check_obarray(unsafe { globals.Vobarray }))
+        Self(unsafe { globals.Vobarray }).check()
     }
 
     /// Return the symbol that matches NAME (either a symbol or string). If
@@ -58,10 +58,26 @@ impl LispObarrayRef {
         }
     }
 
-    /// Get an error if OBARRAY is not an obarray.
-    /// If it is one, return it.
-    pub fn check(&self) -> Self {
-        Self(check_obarray(self.into()))
+    /// Ensure that we have a valid obarray.
+    pub fn check(self) -> Self {
+        // We don't want to signal a wrong-type error when we are shutting
+        // down due to a fatal error and we don't want to hit assertions
+        // if the fatal error was during GC.
+        if unsafe { fatal_error_in_progress } {
+            return self;
+        }
+
+        // A valid obarray is a non-empty vector.
+        let v = self.0.as_vector();
+        if v.map_or(0, LispVectorRef::len) == 0 {
+            // If Vobarray is now invalid, force it to be valid.
+            if unsafe { globals.Vobarray }.eq(self.0) {
+                unsafe { globals.Vobarray = initial_obarray };
+            }
+            wrong_type!(Qvectorp, self.0);
+        }
+
+        self
     }
 
     /// Intern the string or symbol STRING. That is, return the new or existing
@@ -88,7 +104,7 @@ impl LispObarrayRef {
 
 impl From<LispObject> for LispObarrayRef {
     fn from(o: LispObject) -> Self {
-        Self::new(check_obarray(o))
+        Self::new(o).check()
     }
 }
 
@@ -127,24 +143,7 @@ pub extern "C" fn loadhist_attach(x: LispObject) {
 /// If it is one, return it.
 #[no_mangle]
 pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
-    // We don't want to signal a wrong-type error when we are shutting
-    // down due to a fatal error and we don't want to hit assertions
-    // if the fatal error was during GC.
-    if unsafe { fatal_error_in_progress } {
-        return obarray;
-    }
-
-    // A valid obarray is a non-empty vector.
-    let v = obarray.as_vector();
-    if v.map_or(0, LispVectorRef::len) == 0 {
-        // If Vobarray is now invalid, force it to be valid.
-        if unsafe { globals.Vobarray }.eq(obarray) {
-            unsafe { globals.Vobarray = initial_obarray };
-        }
-        wrong_type!(Qvectorp, obarray);
-    }
-
-    obarray
+    LispObarrayRef::new(obarray).check().into()
 }
 
 #[no_mangle]
