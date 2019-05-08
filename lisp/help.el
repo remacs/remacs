@@ -480,7 +480,7 @@ To record all your input, use `open-dribble-file'."
         (while (not (eobp))
           (comment-indent)
 	  (forward-line 1)))
-      ;; jidanni wants to see the last keystrokes immediately.
+      ;; Show point near the end of "lossage", as we did in Emacs 24.
       (set-marker help-window-point-marker (point)))))
 
 
