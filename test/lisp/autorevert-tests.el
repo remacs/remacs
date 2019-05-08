@@ -140,6 +140,7 @@ This expects `auto-revert--messages' to be bound by
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
      :tags '(:expensive-test)
+     (condition-case err
      (let ((temporary-file-directory
 	    auto-revert-test-remote-temporary-file-directory)
            (auto-revert-remote-files t)
@@ -148,7 +149,8 @@ This expects `auto-revert--messages' to be bound by
        (skip-unless (auto-revert--test-enabled-remote))
        (tramp-cleanup-connection
 	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
-       (funcall (ert-test-body ert-test)))))
+       (funcall (ert-test-body ert-test)))
+     (error (message "%s" err)))))
 
 (ert-deftest auto-revert-test00-auto-revert-mode ()
   "Check autorevert for a file."
