@@ -64,10 +64,18 @@ SLOT-NAME is the offending slot.  FN is the function signaling the error."
     ;; Throw the regular signal.
     (cl-call-next-method)))
 
-(cl-defmethod clone ((obj eieio-instance-inheritor) &rest _params)
+(cl-defmethod clone ((obj eieio-instance-inheritor) &rest params)
   "Clone OBJ, initializing `:parent' to OBJ.
 All slots are unbound, except those initialized with PARAMS."
-  (let ((nobj (cl-call-next-method)))
+  ;; call next method without params as we makeunbound slots anyhow
+  (let ((nobj  (if (stringp (car params))
+                   (cl-call-next-method obj (pop params))
+                 (cl-call-next-method obj))))
+    (dolist (descriptor (eieio-class-slots (class-of nobj)))
+      (let ((slot (eieio-slot-descriptor-name descriptor)))
+        (slot-makeunbound nobj slot)))
+    (when params
+      (shared-initialize nobj params))
     (oset nobj parent-instance obj)
     nobj))
 
