@@ -41,6 +41,7 @@
 
 ;;; Code:
 
+(require 'cl-seq)
 (require 'dired)
 (require 'ert)
 (require 'ert-x)
@@ -2269,6 +2270,34 @@ This checks also `file-name-as-directory', `file-name-directory',
 
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))
+
+(ert-deftest tramp-test10-write-region-file-precious-flag ()
+  "Check that `file-precious-flag' is respected with Tramp in use."
+  (skip-unless (tramp--test-enabled))
+  (skip-unless (tramp--test-sh-p))
+
+  (let* ((tmp-name (tramp--test-make-temp-name))
+         written-files
+         (advice (lambda (_start _end filename &rest _r)
+                   (push filename written-files))))
+
+    (unwind-protect
+        (with-current-buffer (find-file-noselect tmp-name)
+          ;; Write initial contents.  Adapt `visited-file-modtime'
+          ;; in order to suppress confirmation.
+          (insert "foo")
+          (write-region nil nil tmp-name)
+          (set-visited-file-modtime)
+          ;; Run the test.
+          (advice-add 'write-region :before advice)
+          (setq-local file-precious-flag t)
+          (insert "bar")
+          (should (null (save-buffer)))
+          (should-not (cl-member tmp-name written-files :test #'string=)))
+
+      ;; Cleanup.
+      (ignore-errors (advice-remove 'write-region advice))
+      (ignore-errors (delete-file tmp-name)))))
 
 (ert-deftest tramp-test11-copy-file ()
   "Check `copy-file'."

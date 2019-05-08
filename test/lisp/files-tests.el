@@ -1244,5 +1244,20 @@ See <https://debbugs.gnu.org/35241>."
                     (executable-find (file-name-nondirectory tmpfile))))))
       (delete-file tmpfile))))
 
+(ert-deftest files-tests-dont-rewrite-precious-files ()
+  "Test that `file-precious-flag' forces files to be saved by
+renaming only, rather than modified in-place."
+  (let* ((temp-file-name (make-temp-file "files-tests"))
+         (advice (lambda (_start _end filename &rest _r)
+                   (should-not (string= filename temp-file-name)))))
+    (unwind-protect
+        (with-current-buffer (find-file-noselect temp-file-name)
+          (advice-add #'write-region :before advice)
+          (setq-local file-precious-flag t)
+          (insert "foobar")
+          (should (null (save-buffer))))
+      (ignore-errors (advice-remove #'write-region advice))
+      (ignore-errors (delete-file temp-file-name)))))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here
