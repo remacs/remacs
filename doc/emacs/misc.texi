@@ -1983,6 +1983,9 @@ omitted, @command{emacsclient} connects to the first server it finds.
 If you set @code{server-name} of the Emacs server to an absolute file
 name, give the same absolute file name as @var{server-name} to this
 option to instruct @command{emacsclient} to connect to that server.
+You need to use this option if you started Emacs as daemon
+(@pxref{Initial Options}) and specified the name for the server
+started by the daemon.
 
 Alternatively, you can set the @env{EMACS_SOCKET_NAME} environment
 variable to point to the server socket.  (The command-line option

@@ -64,10 +64,18 @@ SLOT-NAME is the offending slot.  FN is the function signaling the error."
     ;; Throw the regular signal.
     (cl-call-next-method)))
 
-(cl-defmethod clone ((obj eieio-instance-inheritor) &rest _params)
+(cl-defmethod clone ((obj eieio-instance-inheritor) &rest params)
   "Clone OBJ, initializing `:parent' to OBJ.
 All slots are unbound, except those initialized with PARAMS."
-  (let ((nobj (cl-call-next-method)))
+  ;; call next method without params as we makeunbound slots anyhow
+  (let ((nobj  (if (stringp (car params))
+                   (cl-call-next-method obj (pop params))
+                 (cl-call-next-method obj))))
+    (dolist (descriptor (eieio-class-slots (class-of nobj)))
+      (let ((slot (eieio-slot-descriptor-name descriptor)))
+        (slot-makeunbound nobj slot)))
+    (when params
+      (shared-initialize nobj params))
     (oset nobj parent-instance obj)
     nobj))
 
@@ -510,16 +518,18 @@ instance."
 All slots are unbound, except those initialized with PARAMS."
   (let* ((newname (and (stringp (car params)) (pop params)))
          (nobj (apply #'cl-call-next-method obj params))
-         (nm (slot-value obj 'object-name)))
-    (eieio-oset obj 'object-name
+         (nm (slot-value nobj 'object-name)))
+    (eieio-oset nobj 'object-name
                 (or newname
-                    (save-match-data
-                      (if (and nm (string-match "-\\([0-9]+\\)" nm))
-                          (let ((num (1+ (string-to-number
-                                          (match-string 1 nm)))))
-                            (concat (substring nm 0 (match-beginning 0))
-                                    "-" (int-to-string num)))
-                        (concat nm "-1")))))
+                    (if (equal nm (slot-value obj 'object-name))
+                        (save-match-data
+                          (if (and nm (string-match "-\\([0-9]+\\)" nm))
+                              (let ((num (1+ (string-to-number
+                                              (match-string 1 nm)))))
+                                (concat (substring nm 0 (match-beginning 0))
+                                        "-" (int-to-string num)))
+                            (concat nm "-1")))
+                      nm)))
     nobj))
 
 (cl-defmethod make-instance ((class (subclass eieio-named)) &rest args)
