@@ -1501,7 +1501,7 @@ see `font-lock-syntactic-keywords'."
       ;; Flush the syntax-cache.  I believe this is not necessary for
       ;; font-lock's use of syntax-ppss, but I'm not 100% sure and it can
       ;; still be necessary for other users of syntax-ppss anyway.
-      (syntax-ppss-after-change-function start)
+      (syntax-ppss-flush-cache start)
       (cond
        ((not override)
 	;; Cannot override existing fontification.
