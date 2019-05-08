@@ -9465,7 +9465,8 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
   #if GNUC_PREREQ (4, 6, 0)
    #pragma GCC diagnostic push
   #endif
-  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
+  #if defined LIBRSVG_CHECK_VERSION && LIBRSVG_CHECK_VERSION (2, 45, 1) \
+    && GNUC_PREREQ (4, 2, 0)
    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   #endif
 
