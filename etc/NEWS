@@ -1443,8 +1443,7 @@ When set to a non-nil value, buffers in Auto Revert mode are no longer
 polled for changes periodically.  This reduces the power consumption
 of an idle Emacs, but may fail on some network file systems; set
 'auto-revert-notify-exclude-dir-regexp' to match files where
-notification is not supported.  The new variable currently has no
-effect in 'global-auto-revert-mode'.  The default value is nil.
+notification is not supported.  The default value is nil.
 
 *** New variable 'buffer-auto-revert-by-notification'
 A major mode can declare that notification on the buffer's default

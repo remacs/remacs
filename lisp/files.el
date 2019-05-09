@@ -4268,6 +4268,9 @@ However, the mode will not be changed if
   :type 'boolean
   :group 'editing-basics)
 
+(defvar after-set-visited-file-name-hook nil
+  "Normal hook run just after setting visited file name of current buffer.")
+
 (defun set-visited-file-name (filename &optional no-query along-with-file)
   "Change name of file visited in current buffer to FILENAME.
 This also renames the buffer to correspond to the new file.
@@ -4388,7 +4391,8 @@ the old visited file has been renamed to the new name FILENAME."
 	      (set-auto-mode t)
 	      (or (eq old major-mode)
 		  (hack-local-variables))))
-    (error nil))))
+      (error nil))
+    (run-hooks 'after-set-visited-file-name-hook)))
 
 (defun write-file (filename &optional confirm)
   "Write current buffer into file FILENAME.

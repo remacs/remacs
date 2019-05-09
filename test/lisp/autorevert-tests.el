@@ -1,4 +1,4 @@
-;;; auto-revert-tests.el --- Tests of auto-revert
+;;; auto-revert-tests.el --- Tests of auto-revert   -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
@@ -435,6 +435,111 @@ This expects `auto-revert--messages' to be bound by
 
 (auto-revert--deftest-remote auto-revert-test04-auto-revert-mode-dired
   "Check remote autorevert for dired.")
+
+(defun auto-revert-test--write-file (string file)
+  "Write STRING to FILE."
+  (write-region string nil file nil 'no-message))
+
+(defun auto-revert-test--buffer-string (buffer)
+  "Contents of BUFFER as a string."
+  (with-current-buffer buffer
+    (buffer-string)))
+
+(defun auto-revert-test--wait-for (pred max-wait)
+  "Wait until PRED is true, or MAX-WAIT seconds elapsed."
+  (let ((ct (current-time)))
+    (while (and (< (float-time (time-subtract (current-time) ct)) max-wait)
+                (not (funcall pred)))
+      (read-event nil nil 0.1))))
+
+(defun auto-revert-test--wait-for-buffer-text (buffer string max-wait)
+  "Wait until BUFFER has the contents STRING, or MAX-WAIT seconds elapsed."
+  (auto-revert-test--wait-for
+   (lambda () (string-equal (auto-revert-test--buffer-string buffer) string))
+   max-wait))
+
+(ert-deftest auto-revert-test05-global-notify ()
+  "Test `global-auto-revert-mode' without polling."
+  :tags '(:expensive-test)
+  (skip-unless (or file-notify--library
+                   (file-remote-p temporary-file-directory)))
+  (let* ((auto-revert-use-notify t)
+         (auto-revert-avoid-polling t)
+         (was-in-global-auto-revert-mode global-auto-revert-mode)
+         (file-1 (make-temp-file "global-auto-revert-test-1"))
+         (file-2 (make-temp-file "global-auto-revert-test-2"))
+         (file-3 (make-temp-file "global-auto-revert-test-3"))
+         (file-2b (concat file-2 "-b"))
+         buf-1 buf-2 buf-3)
+    (unwind-protect
+        (progn
+          (setq buf-1 (find-file-noselect file-1))
+          (setq buf-2 (find-file-noselect file-2))
+          (auto-revert-test--write-file "1-a" file-1)
+          (should (equal (auto-revert-test--buffer-string buf-1) ""))
+
+          (global-auto-revert-mode 1)   ; Turn it on.
+
+          (should (buffer-local-value
+                   'auto-revert-notify-watch-descriptor buf-1))
+          (should (buffer-local-value
+                   'auto-revert-notify-watch-descriptor buf-2))
+
+          ;; buf-1 should have been reverted immediately when the mode
+          ;; was enabled.
+          (should (equal (auto-revert-test--buffer-string buf-1) "1-a"))
+
+          ;; Alter a file.
+          (auto-revert-test--write-file "2-a" file-2)
+          ;; Allow for some time to handle notification events.
+          (auto-revert-test--wait-for-buffer-text buf-2 "2-a" 1)
+          (should (equal (auto-revert-test--buffer-string buf-2) "2-a"))
+
+          ;; Visit a file, and modify it on disk.
+          (setq buf-3 (find-file-noselect file-3))
+          ;; Newly opened buffers won't be use notification until the
+          ;; first poll cycle; wait for it.
+          (auto-revert-test--wait-for
+           (lambda () (buffer-local-value
+                       'auto-revert-notify-watch-descriptor buf-3))
+           (+ auto-revert-interval 1))
+          (should (buffer-local-value
+                   'auto-revert-notify-watch-descriptor buf-3))
+          (auto-revert-test--write-file "3-a" file-3)
+          (auto-revert-test--wait-for-buffer-text buf-3 "3-a" 1)
+          (should (equal (auto-revert-test--buffer-string buf-3) "3-a"))
+
+          ;; Delete a visited file, and re-create it with new contents.
+          (delete-file file-1)
+          (sleep-for 0.5)
+          (should (equal (auto-revert-test--buffer-string buf-1) "1-a"))
+          (auto-revert-test--write-file "1-b" file-1)
+          (auto-revert-test--wait-for-buffer-text buf-1 "1-b"
+           (+ auto-revert-interval 1))
+          (should (buffer-local-value
+                   'auto-revert-notify-watch-descriptor buf-1))
+
+          ;; Write a buffer to a new file, then modify the new file on disk.
+          (with-current-buffer buf-2
+            (write-file file-2b))
+          (should (equal (auto-revert-test--buffer-string buf-2) "2-a"))
+          (auto-revert-test--write-file "2-b" file-2b)
+          (auto-revert-test--wait-for-buffer-text buf-2 "2-b"
+           (+ auto-revert-interval 1))
+          (should (buffer-local-value
+                   'auto-revert-notify-watch-descriptor buf-2)))
+
+      ;; Clean up.
+      (unless was-in-global-auto-revert-mode
+        (global-auto-revert-mode 0))    ; Turn it off.
+      (dolist (buf (list buf-1 buf-2 buf-3))
+        (ignore-errors (kill-buffer buf)))
+      (dolist (file (list file-1 file-2 file-2b file-3))
+        (ignore-errors (delete-file file)))
+      )))
+
+(auto-revert--deftest-remote auto-revert-test04-auto-revert-mode-dired
+  "Test `global-auto-revert-mode' without polling for remote buffers.")
 
 (defun auto-revert-test-all (&optional interactive)
   "Run all tests for \\[auto-revert]."
