@@ -39,8 +39,7 @@ typedef struct _XGCValues
 #define GCBackground 0x02
 #define GCFont 0x03
 
-typedef HBITMAP Pixmap;
-typedef HBITMAP Bitmap;
+typedef HBITMAP Emacs_Pixmap;
 
 typedef XGCValues * GC;
 typedef HWND Window;

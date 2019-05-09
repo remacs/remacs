@@ -12161,7 +12161,7 @@ x_check_font (struct frame *f, struct font *font)
  ***********************************************************************/
 
 static void
-x_free_pixmap (struct frame *f, Pixmap pixmap)
+x_free_pixmap (struct frame *f, Emacs_Pixmap pixmap)
 {
   XFreePixmap (FRAME_X_DISPLAY (f), pixmap);
 }

@@ -6947,7 +6947,7 @@ w32_toggle_invisible_pointer (struct frame *f, bool invisible)
  ***********************************************************************/
 
 static void
-w32_free_pixmap (struct frame *_f, Pixmap pixmap)
+w32_free_pixmap (struct frame *_f, Emacs_Pixmap pixmap)
 {
   DeleteObject (pixmap);
 }

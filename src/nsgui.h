@@ -96,9 +96,9 @@ typedef XGCValues * GC;
 #define GCFont 0x03
 
 #ifdef __OBJC__
-typedef id Pixmap;
+typedef id Emacs_Pixmap;
 #else
-typedef void *Pixmap;
+typedef void *Emacs_Pixmap;
 #endif
 
 #ifdef __OBJC__

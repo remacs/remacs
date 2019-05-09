@@ -744,7 +744,7 @@ struct terminal
   /* Image hooks */
 #ifdef HAVE_WINDOW_SYSTEM
   /* Free the pixmap PIXMAP on F.  */
-  void (*free_pixmap) (struct frame *f, Pixmap pixmap);
+  void (*free_pixmap) (struct frame *f, Emacs_Pixmap pixmap);
 
 #endif
 

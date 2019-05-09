@@ -228,7 +228,7 @@ image_create_bitmap_from_data (struct frame *f, char *bits,
 
 #ifdef HAVE_NTGUI
   Lisp_Object frame UNINIT;	/* The value is not used.  */
-  Pixmap bitmap;
+  Emacs_Pixmap bitmap;
   bitmap = CreateBitmap (width, height,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_planes,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_cbits,
@@ -412,7 +412,8 @@ typedef void Picture;
 #endif
 
 static bool image_create_x_image_and_pixmap_1 (struct frame *, int, int, int,
-                                               XImagePtr *, Pixmap *, Picture *);
+                                               XImagePtr *, Emacs_Pixmap *,
+                                               Picture *);
 static void image_destroy_x_image (XImagePtr ximg);
 
 #ifdef HAVE_NTGUI
@@ -2036,17 +2037,18 @@ image_check_image_size (XImagePtr ximg, int width, int height)
 }
 
 /* Create an XImage and a pixmap of size WIDTH x HEIGHT for use on
-   frame F.  Set *XIMG and *PIXMAP to the XImage and Pixmap created.
-   Set (*XIMG)->data to a raster of WIDTH x HEIGHT pixels allocated
-   via xmalloc.  Print error messages via image_error if an error
-   occurs.  Value is true if successful.
+   frame F.  Set *XIMG and *PIXMAP to the XImage and Emacs_Pixmap
+   created.  Set (*XIMG)->data to a raster of WIDTH x HEIGHT pixels
+   allocated via xmalloc.  Print error messages via image_error if an
+   error occurs.  Value is true if successful.
 
    On W32, a DEPTH of zero signifies a 24 bit image, otherwise DEPTH
    should indicate the bit depth of the image.  */
 
 static bool
 image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int depth,
-                                   XImagePtr *ximg, Pixmap *pixmap, Picture *picture)
+                                   XImagePtr *ximg, Emacs_Pixmap *pixmap,
+                                   Picture *picture)
 {
 #ifdef HAVE_X_WINDOWS
   Display *display = FRAME_X_DISPLAY (f);
@@ -2256,7 +2258,7 @@ image_destroy_x_image (XImagePtr ximg)
    are width and height of both the image and pixmap.  */
 
 static void
-gui_put_x_image (struct frame *f, XImagePtr ximg, Pixmap pixmap,
+gui_put_x_image (struct frame *f, XImagePtr ximg, Emacs_Pixmap pixmap,
                  int width, int height)
 {
 #ifdef HAVE_X_WINDOWS
@@ -9539,7 +9541,7 @@ gs_load (struct frame *f, struct image *img)
    telling Emacs that Ghostscript has finished drawing.  */
 
 void
-x_kill_gs_process (Pixmap pixmap, struct frame *f)
+x_kill_gs_process (Emacs_Pixmap pixmap, struct frame *f)
 {
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
   ptrdiff_t i;

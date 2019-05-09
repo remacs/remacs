@@ -38,6 +38,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 typedef XColor Emacs_Color;
 typedef Cursor Emacs_Cursor;
 #define No_Cursor (None)
+typedef Pixmap Emacs_Pixmap;
 
 #else /* !HAVE_X_WINDOWS */
 
@@ -86,7 +87,7 @@ typedef HDC XImagePtr_or_DC;
 #define FACE_COLOR_TO_PIXEL(face_color, frame) ns_color_index_to_rgba(face_color, frame)
 /* Following typedef needed to accommodate the MSDOS port, believe it or not.  */
 typedef struct ns_display_info Display_Info;
-typedef Pixmap XImagePtr;
+typedef Emacs_Pixmap XImagePtr;
 typedef XImagePtr XImagePtr_or_DC;
 #else
 #define FACE_COLOR_TO_PIXEL(face_color, frame) face_color
@@ -2960,7 +2961,7 @@ struct image
   struct timespec timestamp;
 
   /* Pixmaps of the image.  */
-  Pixmap pixmap, mask;
+  Emacs_Pixmap pixmap, mask;
 
 #ifdef USE_CAIRO
   void *cr_data;
@@ -3371,7 +3372,7 @@ extern void x_create_bitmap_mask (struct frame *, ptrdiff_t);
 #endif
 extern Lisp_Object image_find_image_file (Lisp_Object);
 
-void x_kill_gs_process (Pixmap, struct frame *);
+void x_kill_gs_process (Emacs_Pixmap, struct frame *);
 struct image_cache *make_image_cache (void);
 void free_image_cache (struct frame *);
 void clear_image_caches (Lisp_Object);

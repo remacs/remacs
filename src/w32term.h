@@ -56,7 +56,7 @@ extern BOOL bUseDflt;
 
 struct w32_bitmap_record
 {
-  Pixmap pixmap;
+  Emacs_Pixmap pixmap;
   char *file;
   HINSTANCE hinst; /* Used to load the file */
   int refcount;

@@ -4972,7 +4972,7 @@ ns_judge_scroll_bars (struct frame *f)
    ========================================================================== */
 
 static void
-ns_free_pixmap (struct frame *_f, Pixmap pixmap)
+ns_free_pixmap (struct frame *_f, Emacs_Pixmap pixmap)
 {
   ns_release_object (pixmap);
 }
