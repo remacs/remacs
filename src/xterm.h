@@ -731,8 +731,6 @@ struct x_output
 #endif
 };
 
-#define No_Cursor (None)
-
 enum
 {
   /* Values for focus_state, used as bit mask.

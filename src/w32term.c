@@ -85,7 +85,7 @@ static int any_help_event_p;
 extern unsigned int msh_mousewheel;
 
 extern int w32_codepage_for_font (char *fontname);
-extern Cursor w32_load_cursor (LPCTSTR name);
+extern HCURSOR w32_load_cursor (LPCTSTR name);
 
 
 /* This is display since w32 does not support multiple ones.  */
@@ -166,7 +166,7 @@ int w32_message_fd = -1;
 
 static void w32_handle_tool_bar_click (struct frame *,
                                        struct input_event *);
-static void w32_define_cursor (Window, Cursor);
+static void w32_define_cursor (Window, Emacs_Cursor);
 
 static void w32_scroll_bar_clear (struct frame *);
 static void w32_raise_frame (struct frame *);
@@ -3429,7 +3429,7 @@ static void w32_horizontal_scroll_bar_report_motion (struct frame **, Lisp_Objec
                                                      Lisp_Object *, Lisp_Object *,
                                                      Time *);
 static void
-w32_define_cursor (Window window, Cursor cursor)
+w32_define_cursor (Window window, Emacs_Cursor cursor)
 {
   PostMessage (window, WM_EMACS_SETCURSOR, (WPARAM) cursor, 0);
 }
@@ -5806,7 +5806,7 @@ w32_draw_bar_cursor (struct window *w, struct glyph_row *row,
 /* RIF: Define cursor CURSOR on frame F.  */
 
 static void
-w32_define_frame_cursor (struct frame *f, Cursor cursor)
+w32_define_frame_cursor (struct frame *f, Emacs_Cursor cursor)
 {
   w32_define_cursor (FRAME_W32_WINDOW (f), cursor);
 }

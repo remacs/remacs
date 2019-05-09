@@ -2576,7 +2576,7 @@ ns_frame_up_to_date (struct frame *f)
 
 
 static void
-ns_define_frame_cursor (struct frame *f, Cursor cursor)
+ns_define_frame_cursor (struct frame *f, Emacs_Cursor cursor)
 /* --------------------------------------------------------------------------
     External (RIF): set frame mouse pointer type.
    -------------------------------------------------------------------------- */

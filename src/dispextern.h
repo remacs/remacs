@@ -36,6 +36,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 
 typedef XColor Emacs_Color;
+typedef Cursor Emacs_Cursor;
+#define No_Cursor (None)
+
 #else /* !HAVE_X_WINDOWS */
 
 /* XColor-like struct used by non-X code.  */
@@ -46,6 +49,8 @@ typedef struct
   unsigned short red, green, blue;
 } Emacs_Color;
 
+/* Accommodate X's usage of None as a null resource ID.  */
+#define No_Cursor (NULL)
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef MSDOS
@@ -93,8 +98,7 @@ typedef XImagePtr XImagePtr_or_DC;
 #endif
 
 #ifndef HAVE_WINDOW_SYSTEM
-typedef int Cursor;
-#define No_Cursor (0)
+typedef void *Emacs_Cursor;
 #endif
 
 #ifndef NativeRectangle
@@ -2889,7 +2893,7 @@ struct redisplay_interface
   void (*draw_glyph_string) (struct glyph_string *s);
 
   /* Define cursor CURSOR on frame F.  */
-  void (*define_frame_cursor) (struct frame *f, Cursor cursor);
+  void (*define_frame_cursor) (struct frame *f, Emacs_Cursor cursor);
 
   /* Clear the area at (X,Y,WIDTH,HEIGHT) of frame F.  */
   void (*clear_frame_area) (struct frame *f, int x, int y,

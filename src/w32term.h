@@ -114,10 +114,10 @@ struct w32_display_info
   Window root_window;
 
   /* The cursor to use for vertical scroll bars.  */
-  Cursor vertical_scroll_bar_cursor;
+  HCURSOR vertical_scroll_bar_cursor;
 
   /* The cursor to use for horizontal scroll bars.  */
-  Cursor horizontal_scroll_bar_cursor;
+  HCURSOR horizontal_scroll_bar_cursor;
 
   /* Resource data base */
   const char *rdb;
@@ -348,27 +348,27 @@ struct w32_output
   COLORREF scroll_bar_background_pixel;
 
   /* Descriptor for the cursor in use for this window.  */
-  Cursor text_cursor;
-  Cursor nontext_cursor;
-  Cursor modeline_cursor;
-  Cursor hand_cursor;
-  Cursor hourglass_cursor;
-  Cursor horizontal_drag_cursor;
-  Cursor vertical_drag_cursor;
-  Cursor left_edge_cursor;
-  Cursor top_left_corner_cursor;
-  Cursor top_edge_cursor;
-  Cursor top_right_corner_cursor;
-  Cursor right_edge_cursor;
-  Cursor bottom_right_corner_cursor;
-  Cursor bottom_edge_cursor;
-  Cursor bottom_left_corner_cursor;
+  HCURSOR text_cursor;
+  HCURSOR nontext_cursor;
+  HCURSOR modeline_cursor;
+  HCURSOR hand_cursor;
+  HCURSOR hourglass_cursor;
+  HCURSOR horizontal_drag_cursor;
+  HCURSOR vertical_drag_cursor;
+  HCURSOR left_edge_cursor;
+  HCURSOR top_left_corner_cursor;
+  HCURSOR top_edge_cursor;
+  HCURSOR top_right_corner_cursor;
+  HCURSOR right_edge_cursor;
+  HCURSOR bottom_right_corner_cursor;
+  HCURSOR bottom_edge_cursor;
+  HCURSOR bottom_left_corner_cursor;
 
   /* Non-zero means hourglass cursor is currently displayed.  */
   unsigned hourglass_p : 1;
 
   /* Non-hourglass cursor that is currently active.  */
-  Cursor current_cursor;
+  HCURSOR current_cursor;
 
   DWORD dwStyle;
 

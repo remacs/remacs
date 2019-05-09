@@ -872,10 +872,10 @@ struct ns_display_info
   Lisp_Object rdb;
 
   /* The cursor to use for vertical scroll bars.  */
-  Cursor vertical_scroll_bar_cursor;
+  Emacs_Cursor vertical_scroll_bar_cursor;
 
   /* The cursor to use for horizontal scroll bars.  */
-  Cursor horizontal_scroll_bar_cursor;
+  Emacs_Cursor horizontal_scroll_bar_cursor;
 
   /* Information about the range of text currently shown in
      mouse-face.  */
@@ -931,24 +931,24 @@ struct ns_output
 #endif
 
   /* NSCursors are initialized in initFrameFromEmacs.  */
-  Cursor text_cursor;
-  Cursor nontext_cursor;
-  Cursor modeline_cursor;
-  Cursor hand_cursor;
-  Cursor hourglass_cursor;
-  Cursor horizontal_drag_cursor;
-  Cursor vertical_drag_cursor;
-  Cursor left_edge_cursor;
-  Cursor top_left_corner_cursor;
-  Cursor top_edge_cursor;
-  Cursor top_right_corner_cursor;
-  Cursor right_edge_cursor;
-  Cursor bottom_right_corner_cursor;
-  Cursor bottom_edge_cursor;
-  Cursor bottom_left_corner_cursor;
+  Emacs_Cursor text_cursor;
+  Emacs_Cursor nontext_cursor;
+  Emacs_Cursor modeline_cursor;
+  Emacs_Cursor hand_cursor;
+  Emacs_Cursor hourglass_cursor;
+  Emacs_Cursor horizontal_drag_cursor;
+  Emacs_Cursor vertical_drag_cursor;
+  Emacs_Cursor left_edge_cursor;
+  Emacs_Cursor top_left_corner_cursor;
+  Emacs_Cursor top_edge_cursor;
+  Emacs_Cursor top_right_corner_cursor;
+  Emacs_Cursor right_edge_cursor;
+  Emacs_Cursor bottom_right_corner_cursor;
+  Emacs_Cursor bottom_edge_cursor;
+  Emacs_Cursor bottom_left_corner_cursor;
 
   /* NS-specific */
-  Cursor current_pointer;
+  Emacs_Cursor current_pointer;
 
   /* lord knows why Emacs needs to know about our Window ids.. */
   Window window_desc, parent_desc;

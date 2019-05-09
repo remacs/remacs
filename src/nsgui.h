@@ -102,12 +102,10 @@ typedef void *Pixmap;
 #endif
 
 #ifdef __OBJC__
-typedef NSCursor * Cursor;
+typedef NSCursor *Emacs_Cursor;
 #else
-typedef void *Cursor;
+typedef void *Emacs_Cursor;
 #endif
-
-#define No_Cursor (0)
 
 typedef int Window;
 

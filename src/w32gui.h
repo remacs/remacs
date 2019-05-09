@@ -45,9 +45,7 @@ typedef HBITMAP Bitmap;
 typedef XGCValues * GC;
 typedef HWND Window;
 typedef HDC Display;  /* HDC so it doesn't conflict with xpm lib.  */
-typedef HCURSOR Cursor;
-
-#define No_Cursor (0)
+typedef HCURSOR Emacs_Cursor;
 
 #define XChar2b wchar_t
 

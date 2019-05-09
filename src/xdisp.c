@@ -31153,7 +31153,7 @@ Returns the alist element for the first matching AREA in MAP.  */)
 
 /* Display frame CURSOR, optionally using shape defined by POINTER.  */
 static void
-define_frame_cursor1 (struct frame *f, Cursor cursor, Lisp_Object pointer)
+define_frame_cursor1 (struct frame *f, Emacs_Cursor cursor, Lisp_Object pointer)
 {
 #ifdef HAVE_WINDOW_SYSTEM
   if (!FRAME_WINDOW_P (f))
@@ -31205,7 +31205,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-  Cursor cursor = No_Cursor;
+  Emacs_Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;
   int dx, dy, width, height;
   ptrdiff_t charpos;
@@ -31518,7 +31518,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
   enum window_part part = ON_NOTHING;
   Lisp_Object window;
   struct window *w;
-  Cursor cursor = No_Cursor;
+  Emacs_Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;  /* Takes precedence over cursor!  */
   struct buffer *b;
 

@@ -2247,15 +2247,15 @@ w32_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 
 /* Subroutines for creating a frame.  */
 
-Cursor w32_load_cursor (LPCTSTR);
+HCURSOR w32_load_cursor (LPCTSTR);
 
-Cursor
+HCURSOR
 w32_load_cursor (LPCTSTR name)
 {
   /* Try first to load cursor from application resource.  */
-  Cursor cursor = LoadImage ((HINSTANCE) GetModuleHandle (NULL),
-			     name, IMAGE_CURSOR, 0, 0,
-			     LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_SHARED);
+  HCURSOR cursor = LoadImage ((HINSTANCE) GetModuleHandle (NULL),
+                              name, IMAGE_CURSOR, 0, 0,
+                              LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_SHARED);
   if (!cursor)
     {
       /* Then try to load a shared predefined cursor.  */
@@ -5217,7 +5217,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_EMACS_SETCURSOR:
       {
-	Cursor cursor = (Cursor) wParam;
+	HCURSOR cursor = (HCURSOR) wParam;
 	f = w32_window_to_frame (dpyinfo, hwnd);
 	if (f && cursor)
 	  {

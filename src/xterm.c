@@ -9356,7 +9356,7 @@ x_draw_bar_cursor (struct window *w, struct glyph_row *row, int width, enum text
 /* RIF: Define cursor CURSOR on frame F.  */
 
 static void
-x_define_frame_cursor (struct frame *f, Cursor cursor)
+x_define_frame_cursor (struct frame *f, Emacs_Cursor cursor)
 {
   if (!f->pointer_invisible
       && f->output_data.x->current_cursor != cursor)
