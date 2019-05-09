@@ -1000,6 +1000,7 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
             bool with_background)
 {
   XFontStruct *xfont = ((struct xfont_info *) s->font)->xfont;
+  Display *display = FRAME_X_DISPLAY (s->f);
   int len = to - from;
   GC gc = s->gc;
   int i;
@@ -1007,7 +1008,7 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
   if (s->gc != s->face->gc)
     {
       block_input ();
-      XSetFont (s->display, gc, xfont->fid);
+      XSetFont (display, gc, xfont->fid);
       unblock_input ();
     }
 
@@ -1022,20 +1023,20 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 	{
 	  if (s->padding_p)
 	    for (i = 0; i < len; i++)
-              XDrawImageString (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+              XDrawImageString (display, FRAME_X_DRAWABLE (s->f),
 				gc, x + i, y, str + i, 1);
 	  else
-            XDrawImageString (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+            XDrawImageString (display, FRAME_X_DRAWABLE (s->f),
 			      gc, x, y, str, len);
 	}
       else
 	{
 	  if (s->padding_p)
 	    for (i = 0; i < len; i++)
-              XDrawString (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+              XDrawString (display, FRAME_X_DRAWABLE (s->f),
 			   gc, x + i, y, str + i, 1);
 	  else
-            XDrawString (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+            XDrawString (display, FRAME_X_DRAWABLE (s->f),
 			 gc, x, y, str, len);
 	}
       unblock_input ();
@@ -1048,20 +1049,20 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
     {
       if (s->padding_p)
 	for (i = 0; i < len; i++)
-          XDrawImageString16 (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+          XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
 			      gc, x + i, y, s->char2b + from + i, 1);
       else
-        XDrawImageString16 (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+        XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
 			    gc, x, y, s->char2b + from, len);
     }
   else
     {
       if (s->padding_p)
 	for (i = 0; i < len; i++)
-          XDrawString16 (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+          XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
 			 gc, x + i, y, s->char2b + from + i, 1);
       else
-        XDrawString16 (FRAME_X_DISPLAY (s->f), FRAME_X_DRAWABLE (s->f),
+        XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
 		       gc, x, y, s->char2b + from, len);
     }
   unblock_input ();

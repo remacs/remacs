@@ -1281,9 +1281,6 @@ struct glyph_string
   /* The window on which the glyph string is drawn.  */
   struct window *w;
 
-  /* X display and window for convenience.  */
-  Display *display;
-
   /* The glyph row for which this string was built.  It determines the
      y-origin and height of the string.  */
   struct glyph_row *row;

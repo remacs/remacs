@@ -25953,7 +25953,6 @@ init_glyph_string (struct glyph_string *s,
 #ifdef HAVE_NTGUI
   s->hdc = hdc;
 #endif
-  s->display = FRAME_X_DISPLAY (s->f);
   s->char2b = char2b;
   s->hl = hl;
   s->row = row;

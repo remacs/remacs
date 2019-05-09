@@ -1454,6 +1454,7 @@ x_set_cursor_gc (struct glyph_string *s)
       /* Cursor on non-default face: must merge.  */
       XGCValues xgcv;
       unsigned long mask;
+      Display *display = FRAME_X_DISPLAY (s->f);
 
       xgcv.background = s->f->output_data.x->cursor_pixel;
       xgcv.foreground = s->face->background;
@@ -1479,11 +1480,11 @@ x_set_cursor_gc (struct glyph_string *s)
       mask = GCForeground | GCBackground | GCGraphicsExposures;
 
       if (FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc)
-	XChangeGC (s->display, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
+	XChangeGC (display, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
 		   mask, &xgcv);
       else
 	FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc
-          = XCreateGC (s->display, FRAME_X_DRAWABLE (s->f), mask, &xgcv);
+          = XCreateGC (display, FRAME_X_DRAWABLE (s->f), mask, &xgcv);
 
       s->gc = FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc;
     }
@@ -1519,6 +1520,7 @@ x_set_mouse_face_gc (struct glyph_string *s)
 	 except for FONT.  */
       XGCValues xgcv;
       unsigned long mask;
+      Display *display = FRAME_X_DISPLAY (s->f);
 
       xgcv.background = s->face->background;
       xgcv.foreground = s->face->foreground;
@@ -1526,11 +1528,11 @@ x_set_mouse_face_gc (struct glyph_string *s)
       mask = GCForeground | GCBackground | GCGraphicsExposures;
 
       if (FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc)
-	XChangeGC (s->display, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
+	XChangeGC (display, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
 		   mask, &xgcv);
       else
 	FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc
-          = XCreateGC (s->display, FRAME_X_DRAWABLE (s->f), mask, &xgcv);
+          = XCreateGC (display, FRAME_X_DRAWABLE (s->f), mask, &xgcv);
 
       s->gc = FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc;
 
@@ -1672,11 +1674,12 @@ x_compute_glyph_string_overhangs (struct glyph_string *s)
 static void
 x_clear_glyph_string_rect (struct glyph_string *s, int x, int y, int w, int h)
 {
+  Display *display = FRAME_X_DISPLAY (s->f);
   XGCValues xgcv;
-  XGetGCValues (s->display, s->gc, GCForeground | GCBackground, &xgcv);
-  XSetForeground (s->display, s->gc, xgcv.background);
+  XGetGCValues (display, s->gc, GCForeground | GCBackground, &xgcv);
+  XSetForeground (display, s->gc, xgcv.background);
   x_fill_rectangle (s->f, s->gc, x, y, w, h);
-  XSetForeground (s->display, s->gc, xgcv.foreground);
+  XSetForeground (display, s->gc, xgcv.foreground);
 }
 
 
@@ -1697,13 +1700,15 @@ x_draw_glyph_string_background (struct glyph_string *s, bool force_p)
 
       if (s->stippled_p)
 	{
+          Display *display = FRAME_X_DISPLAY (s->f);
+
 	  /* Fill background with a stipple pattern.  */
-	  XSetFillStyle (s->display, s->gc, FillOpaqueStippled);
+	  XSetFillStyle (display, s->gc, FillOpaqueStippled);
 	  x_fill_rectangle (s->f, s->gc, s->x,
 			  s->y + box_line_width,
 			  s->background_width,
 			  s->height - 2 * box_line_width);
-	  XSetFillStyle (s->display, s->gc, FillSolid);
+	  XSetFillStyle (display, s->gc, FillSolid);
 	  s->background_filled_p = true;
 	}
       else if (FONT_HEIGHT (s->font) < s->height - 2 * box_line_width
@@ -2591,7 +2596,7 @@ x_setup_relief_colors (struct glyph_string *s)
       XGCValues xgcv;
 
       /* Get the background color of the face.  */
-      XGetGCValues (s->display, s->gc, GCBackground, &xgcv);
+      XGetGCValues (FRAME_X_DISPLAY (s->f), s->gc, GCBackground, &xgcv);
       color = xgcv.background;
     }
 
@@ -2801,10 +2806,11 @@ x_draw_box_rect (struct glyph_string *s,
 		 int left_x, int top_y, int right_x, int bottom_y, int width,
 		 bool left_p, bool right_p, XRectangle *clip_rect)
 {
+  Display *display = FRAME_X_DISPLAY (s->f);
   XGCValues xgcv;
 
-  XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
-  XSetForeground (s->display, s->gc, s->face->box_color);
+  XGetGCValues (display, s->gc, GCForeground, &xgcv);
+  XSetForeground (display, s->gc, s->face->box_color);
   x_set_clip_rectangles (s->f, s->gc, clip_rect, 1);
 
   /* Top.  */
@@ -2825,7 +2831,7 @@ x_draw_box_rect (struct glyph_string *s,
     x_fill_rectangle (s->f, s->gc,
 		    right_x - width + 1, top_y, width, bottom_y - top_y + 1);
 
-  XSetForeground (s->display, s->gc, xgcv.foreground);
+  XSetForeground (display, s->gc, xgcv.foreground);
   x_reset_clip_rectangles (s->f, s->gc);
 }
 
@@ -2888,6 +2894,7 @@ x_composite_image (struct glyph_string *s, Pixmap dest,
                    int srcX, int srcY, int dstX, int dstY,
                    int width, int height)
 {
+  Display *display = FRAME_X_DISPLAY (s->f);
 #ifdef HAVE_XRENDER
   if (s->img->picture)
     {
@@ -2897,27 +2904,27 @@ x_composite_image (struct glyph_string *s, Pixmap dest,
 
       /* FIXME: Should we do this each time or would it make sense to
          store destination in the frame struct?  */
-      default_format = XRenderFindVisualFormat (s->display,
-                                                DefaultVisual (s->display, 0));
-      destination = XRenderCreatePicture (s->display, dest,
+      default_format = XRenderFindVisualFormat (display,
+                                                DefaultVisual (display, 0));
+      destination = XRenderCreatePicture (display, dest,
                                           default_format, 0, &attr);
 
       /* FIXME: It may make sense to use PictOpSrc instead of
          PictOpOver, as I don't know if we care about alpha values too
          much here.  */
-      XRenderComposite (s->display, PictOpOver,
+      XRenderComposite (display, PictOpOver,
                         s->img->picture, s->img->mask_picture, destination,
                         srcX, srcY,
                         srcX, srcY,
                         dstX, dstY,
                         width, height);
 
-      XRenderFreePicture (s->display, destination);
+      XRenderFreePicture (display, destination);
       return;
     }
 #endif
 
-  XCopyArea (s->display, s->img->pixmap,
+  XCopyArea (display, s->img->pixmap,
 	     dest, s->gc,
 	     srcX, srcY,
 	     width, height, dstX, dstY);
@@ -2992,7 +2999,7 @@ x_draw_image_foreground (struct glyph_string *s)
 	  xgcv.clip_x_origin = x;
 	  xgcv.clip_y_origin = y;
 	  xgcv.function = GXcopy;
-	  XChangeGC (s->display, s->gc, mask, &xgcv);
+	  XChangeGC (FRAME_X_DISPLAY (s->f), s->gc, mask, &xgcv);
 
 	  get_glyph_string_clip_rect (s, &clip_rect);
 	  image_rect.x = x;
@@ -3141,6 +3148,8 @@ x_draw_image_foreground_1 (struct glyph_string *s, Pixmap pixmap)
 
   if (s->img->pixmap)
     {
+      Display *display = FRAME_X_DISPLAY (s->f);
+
       if (s->img->mask)
 	{
 	  /* We can't set both a clip mask and use XSetClipRectangles
@@ -3156,16 +3165,16 @@ x_draw_image_foreground_1 (struct glyph_string *s, Pixmap pixmap)
 	  xgcv.clip_x_origin = x - s->slice.x;
 	  xgcv.clip_y_origin = y - s->slice.y;
 	  xgcv.function = GXcopy;
-	  XChangeGC (s->display, s->gc, mask, &xgcv);
+	  XChangeGC (display, s->gc, mask, &xgcv);
 
-	  XCopyArea (s->display, s->img->pixmap, pixmap, s->gc,
+	  XCopyArea (display, s->img->pixmap, pixmap, s->gc,
 		     s->slice.x, s->slice.y,
 		     s->slice.width, s->slice.height, x, y);
-	  XSetClipMask (s->display, s->gc, None);
+	  XSetClipMask (display, s->gc, None);
 	}
       else
 	{
-	  XCopyArea (s->display, s->img->pixmap, pixmap, s->gc,
+	  XCopyArea (display, s->img->pixmap, pixmap, s->gc,
 		     s->slice.x, s->slice.y,
 		     s->slice.width, s->slice.height, x, y);
 
@@ -3200,10 +3209,12 @@ x_draw_glyph_string_bg_rect (struct glyph_string *s, int x, int y, int w, int h)
 {
   if (s->stippled_p)
     {
+      Display *display = FRAME_X_DISPLAY (s->f);
+
       /* Fill background with a stipple pattern.  */
-      XSetFillStyle (s->display, s->gc, FillOpaqueStippled);
+      XSetFillStyle (display, s->gc, FillOpaqueStippled);
       x_fill_rectangle (s->f, s->gc, x, y, w, h);
-      XSetFillStyle (s->display, s->gc, FillSolid);
+      XSetFillStyle (display, s->gc, FillSolid);
     }
   else
     x_clear_glyph_string_rect (s, x, y, w, h);
@@ -3231,6 +3242,7 @@ x_draw_image_glyph_string (struct glyph_string *s)
   int box_line_vwidth = max (s->face->box_line_width, 0);
   int height;
 #ifndef USE_CAIRO
+  Display *display = FRAME_X_DISPLAY (s->f);
   Pixmap pixmap = None;
 #endif
 
@@ -3261,34 +3273,34 @@ x_draw_image_glyph_string (struct glyph_string *s)
 	  int depth = DefaultDepthOfScreen (screen);
 
 	  /* Create a pixmap as large as the glyph string.  */
-          pixmap = XCreatePixmap (s->display, FRAME_X_DRAWABLE (s->f),
+          pixmap = XCreatePixmap (display, FRAME_X_DRAWABLE (s->f),
 				  s->background_width,
 				  s->height, depth);
 
 	  /* Don't clip in the following because we're working on the
 	     pixmap.  */
-	  XSetClipMask (s->display, s->gc, None);
+	  XSetClipMask (display, s->gc, None);
 
 	  /* Fill the pixmap with the background color/stipple.  */
 	  if (s->stippled_p)
 	    {
 	      /* Fill background with a stipple pattern.  */
-	      XSetFillStyle (s->display, s->gc, FillOpaqueStippled);
-	      XSetTSOrigin (s->display, s->gc, - s->x, - s->y);
-	      XFillRectangle (s->display, pixmap, s->gc,
+	      XSetFillStyle (display, s->gc, FillOpaqueStippled);
+	      XSetTSOrigin (display, s->gc, - s->x, - s->y);
+	      XFillRectangle (display, pixmap, s->gc,
 			      0, 0, s->background_width, s->height);
-	      XSetFillStyle (s->display, s->gc, FillSolid);
-	      XSetTSOrigin (s->display, s->gc, 0, 0);
+	      XSetFillStyle (display, s->gc, FillSolid);
+	      XSetTSOrigin (display, s->gc, 0, 0);
 	    }
 	  else
 	    {
 	      XGCValues xgcv;
-	      XGetGCValues (s->display, s->gc, GCForeground | GCBackground,
+	      XGetGCValues (display, s->gc, GCForeground | GCBackground,
 			    &xgcv);
-	      XSetForeground (s->display, s->gc, xgcv.background);
-	      XFillRectangle (s->display, pixmap, s->gc,
+	      XSetForeground (display, s->gc, xgcv.background);
+	      XFillRectangle (display, pixmap, s->gc,
 			      0, 0, s->background_width, s->height);
-	      XSetForeground (s->display, s->gc, xgcv.foreground);
+	      XSetForeground (display, s->gc, xgcv.foreground);
 	    }
 	}
       else
@@ -3320,9 +3332,9 @@ x_draw_image_glyph_string (struct glyph_string *s)
     {
       x_draw_image_foreground_1 (s, pixmap);
       x_set_glyph_string_clipping (s);
-      XCopyArea (s->display, pixmap, FRAME_X_DRAWABLE (s->f), s->gc,
+      XCopyArea (display, pixmap, FRAME_X_DRAWABLE (s->f), s->gc,
 		 0, 0, s->background_width, s->height, s->x, s->y);
-      XFreePixmap (s->display, pixmap);
+      XFreePixmap (display, pixmap);
     }
   else
 #endif	/* ! USE_CAIRO */
@@ -3383,6 +3395,7 @@ x_draw_stretch_glyph_string (struct glyph_string *s)
 	{
 	  int y = s->y;
 	  int w = background_width - width, h = s->height;
+          Display *display = FRAME_X_DISPLAY (s->f);
 	  XRectangle r;
 	  GC gc;
 
@@ -3405,17 +3418,17 @@ x_draw_stretch_glyph_string (struct glyph_string *s)
 	  if (s->face->stipple)
 	    {
 	      /* Fill background with a stipple pattern.  */
-	      XSetFillStyle (s->display, gc, FillOpaqueStippled);
+	      XSetFillStyle (display, gc, FillOpaqueStippled);
 	      x_fill_rectangle (s->f, gc, x, y, w, h);
-	      XSetFillStyle (s->display, gc, FillSolid);
+	      XSetFillStyle (display, gc, FillSolid);
 	    }
 	  else
 	    {
 	      XGCValues xgcv;
-	      XGetGCValues (s->display, gc, GCForeground | GCBackground, &xgcv);
-	      XSetForeground (s->display, gc, xgcv.background);
+	      XGetGCValues (display, gc, GCForeground | GCBackground, &xgcv);
+	      XSetForeground (display, gc, xgcv.background);
 	      x_fill_rectangle (s->f, gc, x, y, w, h);
-	      XSetForeground (s->display, gc, xgcv.foreground);
+	      XSetForeground (display, gc, xgcv.foreground);
 	    }
 
 	  x_reset_clip_rectangles (s->f, gc);
@@ -3470,10 +3483,12 @@ x_get_scale_factor(Display *disp, int *scale_x, int *scale_y)
 static void
 x_draw_underwave (struct glyph_string *s)
 {
+  Display *display = FRAME_X_DISPLAY (s->f);
+
   /* Adjust for scale/HiDPI.  */
   int scale_x, scale_y;
 
-  x_get_scale_factor (s->display, &scale_x, &scale_y);
+  x_get_scale_factor (display, &scale_x, &scale_y);
 
   int wave_height = 3 * scale_y, wave_length = 2 * scale_x;
 
@@ -3503,7 +3518,7 @@ x_draw_underwave (struct glyph_string *s)
   if (!gui_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
     return;
 
-  XSetClipRectangles (s->display, s->gc, 0, 0, &final_clip, 1, Unsorted);
+  XSetClipRectangles (display, s->gc, 0, 0, &final_clip, 1, Unsorted);
 
   /* Draw the waves */
 
@@ -3522,16 +3537,16 @@ x_draw_underwave (struct glyph_string *s)
 
   while (x1 <= xmax)
     {
-      XSetLineAttributes (s->display, s->gc, thickness, LineSolid, CapButt,
+      XSetLineAttributes (display, s->gc, thickness, LineSolid, CapButt,
                           JoinRound);
-      XDrawLine (s->display, FRAME_X_DRAWABLE (s->f), s->gc, x1, y1, x2, y2);
+      XDrawLine (display, FRAME_X_DRAWABLE (s->f), s->gc, x1, y1, x2, y2);
       x1  = x2, y1 = y2;
       x2 += dx, y2 = y0 + odd*dy;
       odd = !odd;
     }
 
   /* Restore previous clipping rectangle(s) */
-  XSetClipRectangles (s->display, s->gc, 0, 0, s->clip, s->num_clips, Unsorted);
+  XSetClipRectangles (display, s->gc, 0, 0, s->clip, s->num_clips, Unsorted);
 #endif	/* not USE_CAIRO */
 }
 
@@ -3648,11 +3663,12 @@ x_draw_glyph_string (struct glyph_string *s)
                 x_draw_underwave (s);
               else
                 {
+                  Display *display = FRAME_X_DISPLAY (s->f);
                   XGCValues xgcv;
-                  XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
-                  XSetForeground (s->display, s->gc, s->face->underline_color);
+                  XGetGCValues (display, s->gc, GCForeground, &xgcv);
+                  XSetForeground (display, s->gc, s->face->underline_color);
                   x_draw_underwave (s);
-                  XSetForeground (s->display, s->gc, xgcv.foreground);
+                  XSetForeground (display, s->gc, xgcv.foreground);
                 }
             }
           else if (s->face->underline_type == FACE_UNDER_LINE)
@@ -3732,12 +3748,13 @@ x_draw_glyph_string (struct glyph_string *s)
                                 s->x, y, s->width, thickness);
               else
                 {
+                  Display *display = FRAME_X_DISPLAY (s->f);
                   XGCValues xgcv;
-                  XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
-                  XSetForeground (s->display, s->gc, s->face->underline_color);
+                  XGetGCValues (display, s->gc, GCForeground, &xgcv);
+                  XSetForeground (display, s->gc, s->face->underline_color);
                   x_fill_rectangle (s->f, s->gc,
                                   s->x, y, s->width, thickness);
-                  XSetForeground (s->display, s->gc, xgcv.foreground);
+                  XSetForeground (display, s->gc, xgcv.foreground);
                 }
             }
         }
@@ -3751,12 +3768,13 @@ x_draw_glyph_string (struct glyph_string *s)
 			    s->width, h);
 	  else
 	    {
+              Display *display = FRAME_X_DISPLAY (s->f);
 	      XGCValues xgcv;
-	      XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
-	      XSetForeground (s->display, s->gc, s->face->overline_color);
+	      XGetGCValues (display, s->gc, GCForeground, &xgcv);
+	      XSetForeground (display, s->gc, s->face->overline_color);
 	      x_fill_rectangle (s->f, s->gc, s->x, s->y + dy,
 			      s->width, h);
-	      XSetForeground (s->display, s->gc, xgcv.foreground);
+	      XSetForeground (display, s->gc, xgcv.foreground);
 	    }
 	}
 
@@ -3780,12 +3798,13 @@ x_draw_glyph_string (struct glyph_string *s)
 			    s->width, h);
 	  else
 	    {
+              Display *display = FRAME_X_DISPLAY (s->f);
 	      XGCValues xgcv;
-	      XGetGCValues (s->display, s->gc, GCForeground, &xgcv);
-	      XSetForeground (s->display, s->gc, s->face->strike_through_color);
+	      XGetGCValues (display, s->gc, GCForeground, &xgcv);
+	      XSetForeground (display, s->gc, s->face->strike_through_color);
 	      x_fill_rectangle (s->f, s->gc, s->x, glyph_y + dy,
 			      s->width, h);
-	      XSetForeground (s->display, s->gc, xgcv.foreground);
+	      XSetForeground (display, s->gc, xgcv.foreground);
 	    }
 	}
 
