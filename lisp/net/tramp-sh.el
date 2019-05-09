@@ -2417,9 +2417,7 @@ The method used must be an out-of-band method."
 	      ;; The default directory must be remote.
 	      (let ((default-directory
 		      (file-name-directory (if t1 filename newname)))
-		    (process-environment (copy-sequence process-environment))
-		    ;; We do not want to run timers.
-		    timer-list timer-idle-list)
+		    (process-environment (copy-sequence process-environment)))
 		;; Set the transfer process properties.
 		(tramp-set-connection-property
 		 v "process-name" (buffer-name (current-buffer)))
@@ -2878,8 +2876,6 @@ the result will be a local, non-Tramp, file name."
 	       ;; has been started several times in `eshell' and
 	       ;; friends.
 	       tramp-current-connection
-	       ;; We do not want to run timers.
-	       timer-list timer-idle-list
 	       p)
 
 	  (while (get-process name1)
@@ -3550,24 +3546,29 @@ Fall back to normal file name handler if no Tramp handler exists."
 	   (tramp-replace-environment-variables
 	    (apply #'tramp-file-name-for-operation operation args)))
 	  (fn (assoc operation tramp-sh-file-name-handler-alist)))
-      (with-parsed-tramp-file-name filename nil
-	(cond
-	 ;; That's what we want: file names, for which checks are
-	 ;; applied.  We assume that VC uses only `file-exists-p' and
-	 ;; `file-readable-p' checks; otherwise we must extend the
-	 ;; list.  We do not perform any action, but return nil, in
-	 ;; order to keep `vc-registered' running.
-	 ((and fn (memq operation '(file-exists-p file-readable-p)))
-	  (add-to-list 'tramp-vc-registered-file-names localname 'append)
-	  nil)
-	 ;; `process-file' and `start-file-process' shall be ignored.
-	 ((and fn (eq operation 'process-file) 0))
-	 ((and fn (eq operation 'start-file-process) nil))
-	 ;; Tramp file name handlers like `expand-file-name'.  They
-	 ;; must still work.
-	 (fn (save-match-data (apply (cdr fn) args)))
-	 ;; Default file name handlers, we don't care.
-	 (t (tramp-run-real-handler operation args)))))))
+      (if (tramp-tramp-file-p filename)
+	  (with-parsed-tramp-file-name filename nil
+	    (cond
+	     ;; That's what we want: file names, for which checks are
+	     ;; applied.  We assume that VC uses only `file-exists-p'
+	     ;; and `file-readable-p' checks; otherwise we must extend
+	     ;; the list.  We do not perform any action, but return
+	     ;; nil, in order to keep `vc-registered' running.
+	     ((and fn (memq operation '(file-exists-p file-readable-p)))
+	      (add-to-list 'tramp-vc-registered-file-names localname 'append)
+	      nil)
+	     ;; `process-file' and `start-file-process' shall be ignored.
+	     ((and fn (eq operation 'process-file) 0))
+	     ((and fn (eq operation 'start-file-process) nil))
+	     ;; Tramp file name handlers like `expand-file-name'.  They
+	     ;; must still work.
+	     (fn (save-match-data (apply (cdr fn) args)))
+	     ;; Default file name handlers, we don't care.
+	     (t (tramp-run-real-handler operation args))))
+
+	;; When `tramp-mode' is not enabled, or the file name is
+	;; quoted, we don't do anything.
+	(tramp-run-real-handler operation args)))))
 
 (defun tramp-sh-handle-file-notify-add-watch (file-name flags _callback)
   "Like `file-notify-add-watch' for Tramp files."

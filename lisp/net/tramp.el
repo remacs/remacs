@@ -3640,7 +3640,8 @@ support symbolic links."
 
     (if (and (not current-buffer-p) (integerp asynchronous))
 	(let ((tramp-remote-process-environment
-	       ;; `async-shell-command-width' has been introduced with Emacs 27.1.
+	       ;; `async-shell-command-width' has been introduced with
+	       ;; Emacs 27.1.
 	       (if (natnump (bound-and-true-p async-shell-command-width))
 		   (cons (format "COLUMNS=%d"
 				 (bound-and-true-p async-shell-command-width))
@@ -4087,15 +4088,7 @@ for process communication also."
   (with-current-buffer (process-buffer proc)
     (let ((inhibit-read-only t)
 	  last-coding-system-used
-	  ;; We do not want to run timers.
-	  (tl timer-list)
-          (stimers (with-timeout-suspend))
-	  timer-list timer-idle-list
 	  result)
-      ;; Enable our progress reporter.
-      (dolist (timer tl)
-	(if (eq (timer--function timer) #'tramp-progress-reporter-update)
-            (push timer timer-list)))
       ;; JUST-THIS-ONE is set due to Bug#12145.
       (tramp-message
        proc 10 "%s %s %s %s\n%s"
@@ -4103,8 +4096,6 @@ for process communication also."
        (with-local-quit
 	 (setq result (accept-process-output proc timeout nil t)))
        (buffer-string))
-      ;; Reenable the timers.
-      (with-timeout-unsuspend stimers)
       result)))
 
 (defun tramp-check-for-regexp (proc regexp)
@@ -4185,20 +4176,12 @@ The STRING is expected to use Unix line-endings, but the lines sent to
 the remote host use line-endings as defined in the variable
 `tramp-rsh-end-of-line'.  The communication buffer is erased before sending."
   (let* ((p (tramp-get-connection-process vec))
-	 (chunksize (tramp-get-connection-property p "chunksize" nil))
-	 ;; We do not want to run timers.
-	 (tl timer-list)
-         (stimers (with-timeout-suspend))
-	 timer-list timer-idle-list)
+	 (chunksize (tramp-get-connection-property p "chunksize" nil)))
     (unless p
       (tramp-error
        vec 'file-error "Can't send string to remote host -- not logged in"))
     (tramp-set-connection-property p "last-cmd-time" (current-time))
     (tramp-message vec 10 "%s" string)
-    ;; Enable our progress reporter.
-    (dolist (timer tl)
-      (if (eq (timer--function timer) #'tramp-progress-reporter-update)
-          (push timer timer-list)))
     (with-current-buffer (tramp-get-connection-buffer vec)
       ;; Clean up the buffer.  We cannot call `erase-buffer' because
       ;; narrowing might be in effect.
@@ -4222,9 +4205,7 @@ the remote host use line-endings as defined in the variable
 		(process-send-string
 		 p (substring string pos (min (+ pos chunksize) end)))
 		(setq pos (+ pos chunksize))))
-	  (process-send-string p string)))
-      ;; Reenable the timers.
-      (with-timeout-unsuspend stimers))))
+	  (process-send-string p string))))))
 
 (defun tramp-process-sentinel (proc event)
   "Flush file caches and remove shell prompt."

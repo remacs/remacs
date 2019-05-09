@@ -452,9 +452,7 @@ pass to the OPERATION."
 			       (expand-file-name
 				tramp-temp-name-prefix
 				(tramp-compat-temporary-file-directory))))
-		   (args      (list (concat "//" host "/" share) "-E"))
-		   ;; We do not want to run timers.
-		   timer-list timer-idle-list)
+		   (args      (list (concat "//" host "/" share) "-E")))
 
 	      (if (not (zerop (length user)))
 		  (setq args (append args (list "-U" user)))
@@ -742,9 +740,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (let* ((share     (tramp-smb-get-share v))
 		 (localname (replace-regexp-in-string
 			     "\\\\" "/" (tramp-smb-get-localname v)))
-		 (args      (list (concat "//" host "/" share) "-E"))
-		 ;; We do not want to run timers.
-		 timer-list timer-idle-list)
+		 (args      (list (concat "//" host "/" share) "-E")))
 
 	    (if (not (zerop (length user)))
 		(setq args (append args (list "-U" user)))
@@ -1218,8 +1214,6 @@ component is used as the target of the symlink."
     (let* ((name (file-name-nondirectory program))
 	   (name1 name)
 	   (i 0)
-	   ;; We do not want to run timers.
-	   timer-list timer-idle-list
 	   input tmpinput outbuf command ret)
 
       ;; Determine input.
@@ -1395,9 +1389,7 @@ component is used as the target of the symlink."
 			   "\\\\" "/" (tramp-smb-get-localname v)))
 	       (args      (list (concat "//" host "/" share) "-E" "-S"
 				(replace-regexp-in-string
-				 "\n" "," acl-string)))
-	       ;; We do not want to run timers.
-	       timer-list timer-idle-list)
+				 "\n" "," acl-string))))
 
 	  (if (not (zerop (length user)))
 	      (setq args (append args (list "-U" user)))
@@ -1477,9 +1469,7 @@ component is used as the target of the symlink."
 	   (command (mapconcat #'identity (cons program args) " "))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
-	   (i 0)
-	   ;; We do not want to run timers.
-	   timer-list timer-idle-list)
+	   (i 0))
       (unwind-protect
 	  (save-excursion
 	    (save-restriction
