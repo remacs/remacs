@@ -41,7 +41,7 @@
 
 ;;; Code:
 
-(require 'cl-seq)
+(require 'cl-lib)
 (require 'dired)
 (require 'ert)
 (require 'ert-x)
