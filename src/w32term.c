@@ -6869,6 +6869,7 @@ w32_wm_set_size_hint (struct frame *f, long flags, bool user_position)
   leave_crit ();
 }
 
+
 /***********************************************************************
 				Fonts
  ***********************************************************************/
@@ -6940,6 +6941,18 @@ w32_toggle_invisible_pointer (struct frame *f, bool invisible)
   unblock_input ();
 }
 
+
+/***********************************************************************
+			     Image Hooks
+ ***********************************************************************/
+
+static void
+w32_free_pixmap (struct frame *_f, Pixmap pixmap)
+{
+  DeleteObject (pixmap);
+}
+
+
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
@@ -7119,6 +7132,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->redeem_scroll_bar_hook = w32_redeem_scroll_bar;
   terminal->judge_scroll_bars_hook = w32_judge_scroll_bars;
   terminal->get_string_resource_hook = w32_get_string_resource;
+  terminal->free_pixmap = w32_free_pixmap;
   terminal->delete_frame_hook = w32_destroy_window;
   terminal->delete_terminal_hook = w32_delete_terminal;
   /* Other hooks are NULL by default.  */

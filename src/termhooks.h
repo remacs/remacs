@@ -741,6 +741,15 @@ struct terminal
                                             const char *name,
                                             const char *class);
 
+  /* Image hooks */
+#ifdef HAVE_WINDOW_SYSTEM
+  /* Free the pixmap PIXMAP on F.  */
+  void (*free_pixmap) (struct frame *f, Pixmap pixmap);
+
+#endif
+
+  /* Deletion hooks */
+
   /* Called to delete the device-specific portions of a frame that is
      on this terminal device. */
   void (*delete_frame_hook) (struct frame *);

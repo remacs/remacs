@@ -997,12 +997,6 @@ struct x_output
 #define FRAME_NS_WINDOW(f) ((f)->output_data.ns->window_desc)
 #define FRAME_NATIVE_WINDOW(f) FRAME_NS_WINDOW (f)
 
-/* This is the `Display *' which frame F is on.  */
-#define FRAME_NS_DISPLAY(f) (0)
-#define FRAME_X_DISPLAY(f) (0)
-#define FRAME_X_SCREEN(f) (0)
-#define FRAME_X_VISUAL(f) FRAME_DISPLAY_INFO(f)->visual
-
 #define FRAME_FOREGROUND_COLOR(f) ((f)->output_data.ns->foreground_color)
 #define FRAME_BACKGROUND_COLOR(f) ((f)->output_data.ns->background_color)
 

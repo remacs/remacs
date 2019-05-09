@@ -115,7 +115,6 @@ typedef NSColor * Color;
 typedef void * Color;
 #endif
 typedef int Window;
-typedef int Display;
 
 
 /* Some sort of attempt to normalize rectangle handling.  Seems a bit

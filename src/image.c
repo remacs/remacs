@@ -1221,26 +1221,6 @@ four_corners_best (XImagePtr_or_DC ximg, int *corners,
   return best;
 }
 
-/* Portability macros */
-
-#ifdef HAVE_NTGUI
-
-#define Free_Pixmap(display, pixmap) \
-  DeleteObject (pixmap)
-
-#elif defined (HAVE_NS)
-
-#define Free_Pixmap(display, pixmap) \
-  ns_release_object (pixmap)
-
-#else
-
-#define Free_Pixmap(display, pixmap) \
-  XFreePixmap (display, pixmap)
-
-#endif /* !HAVE_NTGUI && !HAVE_NS */
-
-
 /* Return the `background' field of IMG.  If IMG doesn't have one yet,
    it is guessed heuristically.  If non-zero, XIMG is an existing
    XImage object (or device context with the image selected on W32) to
@@ -1328,7 +1308,7 @@ image_clear_image_1 (struct frame *f, struct image *img, int flags)
     {
       if (img->pixmap)
 	{
-	  Free_Pixmap (FRAME_X_DISPLAY (f), img->pixmap);
+	  FRAME_TERMINAL (f)->free_pixmap (f, img->pixmap);
 	  img->pixmap = NO_PIXMAP;
 	  /* NOTE (HAVE_NS): background color is NOT an indexed color! */
 	  img->background_valid = 0;
@@ -1347,7 +1327,7 @@ image_clear_image_1 (struct frame *f, struct image *img, int flags)
     {
       if (img->mask)
 	{
-	  Free_Pixmap (FRAME_X_DISPLAY (f), img->mask);
+	  FRAME_TERMINAL (f)->free_pixmap (f, img->mask);
 	  img->mask = NO_PIXMAP;
 	  img->background_transparent_valid = 0;
 	}

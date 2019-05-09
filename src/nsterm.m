@@ -2515,8 +2515,7 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 
   /* Clear the mouse-moved flag for every frame on this display.  */
   FOR_EACH_FRAME (tail, frame)
-    if (FRAME_NS_P (XFRAME (frame))
-        && FRAME_NS_DISPLAY (XFRAME (frame)) == FRAME_NS_DISPLAY (*fp))
+    if (FRAME_NS_P (XFRAME (frame)))
       XFRAME (frame)->mouse_moved = 0;
 
   dpyinfo->last_mouse_scroll_bar = nil;
@@ -4968,6 +4967,18 @@ ns_judge_scroll_bars (struct frame *f)
 
 /* ==========================================================================
 
+    Image Hooks
+
+   ========================================================================== */
+
+static void
+ns_free_pixmap (struct frame *_f, Pixmap pixmap)
+{
+  ns_release_object (pixmap);
+}
+
+/* ==========================================================================
+
     Initialization
 
    ========================================================================== */
@@ -5196,6 +5207,7 @@ ns_create_terminal (struct ns_display_info *dpyinfo)
   terminal->redeem_scroll_bar_hook = ns_redeem_scroll_bar;
   terminal->judge_scroll_bars_hook = ns_judge_scroll_bars;
   terminal->get_string_resource_hook = ns_get_string_resource;
+  terminal->free_pixmap = ns_free_pixmap;
   terminal->delete_frame_hook = ns_destroy_window;
   terminal->delete_terminal_hook = ns_delete_terminal;
   /* Other hooks are NULL by default.  */

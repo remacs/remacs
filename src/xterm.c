@@ -12182,6 +12182,17 @@ x_check_font (struct frame *f, struct font *font)
 
 
 /***********************************************************************
+                             Image Hooks
+ ***********************************************************************/
+
+static void
+x_free_pixmap (struct frame *f, Pixmap pixmap)
+{
+  XFreePixmap (FRAME_X_DISPLAY (f), pixmap);
+}
+
+
+/***********************************************************************
 			    Initialization
  ***********************************************************************/
 
@@ -13257,6 +13268,7 @@ x_create_terminal (struct x_display_info *dpyinfo)
   terminal->redeem_scroll_bar_hook = XTredeem_scroll_bar;
   terminal->judge_scroll_bars_hook = XTjudge_scroll_bars;
   terminal->get_string_resource_hook = x_get_string_resource;
+  terminal->free_pixmap = x_free_pixmap;
   terminal->delete_frame_hook = x_destroy_window;
   terminal->delete_terminal_hook = x_delete_terminal;
   /* Other hooks are NULL by default.  */
