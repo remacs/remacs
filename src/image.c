@@ -1076,10 +1076,10 @@ image_ascent (struct image *img, struct face *face, struct glyph_slice *slice)
 
 #ifdef USE_CAIRO
 static uint32_t
-xcolor_to_argb32 (XColor xc)
+emacs_color_to_argb32 (Emacs_Color *ec)
 {
-  return ((0xffu << 24) | ((xc.red / 256) << 16)
-	  | ((xc.green / 256) << 8) | (xc.blue / 256));
+  return ((0xffu << 24) | ((ec->red / 256) << 16)
+	  | ((ec->green / 256) << 8) | (ec->blue / 256));
 }
 
 static uint32_t
@@ -1087,11 +1087,11 @@ get_spec_bg_or_alpha_as_argb (struct image *img,
                               struct frame *f)
 {
   uint32_t bgcolor = 0;
-  XColor xbgcolor;
+  Emacs_Color xbgcolor;
   Lisp_Object bg = image_spec_value (img->spec, QCbackground, NULL);
 
   if (STRINGP (bg) && x_parse_color (f, SSDATA (bg), &xbgcolor))
-    bgcolor = xcolor_to_argb32 (xbgcolor);
+    bgcolor = emacs_color_to_argb32 (&xbgcolor);
 
   return bgcolor;
 }
@@ -1321,7 +1321,7 @@ static unsigned long
 image_alloc_image_color (struct frame *f, struct image *img,
                          Lisp_Object color_name, unsigned long dflt)
 {
-  XColor color;
+  Emacs_Color color;
   unsigned long result;
 
   eassert (STRINGP (color_name));
@@ -4286,7 +4286,7 @@ xpm_load_image (struct frame *f,
       char *color, *max_color;
       int key, next_key, max_key = 0;
       Lisp_Object symbol_color = Qnil, color_val;
-      XColor cdef;
+      Emacs_Color cdef;
 
       expect (XPM_TK_STRING);
       if (len <= chars_per_pixel || len >= BUFSIZ + chars_per_pixel)
@@ -4772,17 +4772,17 @@ static int laplace_matrix[9] = {
 #define COLOR_INTENSITY(R, G, B) ((2 * (R) + 3 * (G) + (B)) / 6)
 
 
-/* On frame F, return an array of XColor structures describing image
-   IMG->pixmap.  Each XColor structure has its pixel color set.  RGB_P
-   means also fill the red/green/blue members of the XColor
-   structures.  Value is a pointer to the array of XColors structures,
+/* On frame F, return an array of Emacs_Color structures describing image
+   IMG->pixmap.  Each Emacs_Color structure has its pixel color set.  RGB_P
+   means also fill the red/green/blue members of the Emacs_Color
+   structures.  Value is a pointer to the array of Emacs_Color structures,
    allocated with xmalloc; it must be freed by the caller.  */
 
-static XColor *
-image_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
+static Emacs_Color *
+image_to_emacs_colors (struct frame *f, struct image *img, bool rgb_p)
 {
   int x, y;
-  XColor *colors, *p;
+  Emacs_Color *colors, *p;
   XImagePtr_or_DC ximg;
   ptrdiff_t nbytes;
 #ifdef HAVE_NTGUI
@@ -4798,13 +4798,13 @@ image_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
   /* Get the X image or create a memory device context for IMG. */
   ximg = image_get_x_image_or_dc (f, img, 0, &prev);
 
-  /* Fill the `pixel' members of the XColor array.  I wished there
+  /* Fill the `pixel' members of the Emacs_Color array.  I wished there
      were an easy and portable way to circumvent XGetPixel.  */
   p = colors;
   for (y = 0; y < img->height; ++y)
     {
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NTGUI)
-      XColor *row = p;
+      Emacs_Color *row = p;
       for (x = 0; x < img->width; ++x, ++p)
 	p->pixel = GET_PIXEL (ximg, x, y);
       if (rgb_p)
@@ -4878,16 +4878,16 @@ XPutPixel (XImagePtr ximg, int x, int y, COLORREF color)
 
 #endif /* HAVE_NTGUI */
 
-/* Create IMG->pixmap from an array COLORS of XColor structures, whose
+/* Create IMG->pixmap from an array COLORS of Emacs_Color structures, whose
    RGB members are set.  F is the frame on which this all happens.
    COLORS will be freed; an existing IMG->pixmap will be freed, too.  */
 
 static void
-image_from_xcolors (struct frame *f, struct image *img, XColor *colors)
+image_from_emacs_colors (struct frame *f, struct image *img, Emacs_Color *colors)
 {
   int x, y;
   XImagePtr oimg = NULL;
-  XColor *p;
+  Emacs_Color *p;
 
   init_color_table ();
 
@@ -4925,8 +4925,8 @@ static void
 image_detect_edges (struct frame *f, struct image *img,
                     int *matrix, int color_adjust)
 {
-  XColor *colors = image_to_xcolors (f, img, 1);
-  XColor *new, *p;
+  Emacs_Color *colors = image_to_emacs_colors (f, img, 1);
+  Emacs_Color *new, *p;
   int x, y, i, sum;
   ptrdiff_t nbytes;
 
@@ -4969,7 +4969,7 @@ image_detect_edges (struct frame *f, struct image *img,
 	    for (xx = x - 1; xx < x + 2; ++xx, ++i)
 	      if (matrix[i])
 	        {
-	          XColor *t = COLOR (colors, xx, yy);
+	          Emacs_Color *t = COLOR (colors, xx, yy);
 		  r += matrix[i] * t->red;
 		  g += matrix[i] * t->green;
 		  b += matrix[i] * t->blue;
@@ -4983,7 +4983,7 @@ image_detect_edges (struct frame *f, struct image *img,
     }
 
   xfree (colors);
-  image_from_xcolors (f, img, new);
+  image_from_emacs_colors (f, img, new);
 
 #undef COLOR
 }
@@ -5066,8 +5066,8 @@ image_disable_image (struct frame *f, struct image *img)
       /* Color (or grayscale).  Convert to gray, and equalize.  Just
 	 drawing such images with a stipple can look very odd, so
 	 we're using this method instead.  */
-      XColor *colors = image_to_xcolors (f, img, 1);
-      XColor *p, *end;
+      Emacs_Color *colors = image_to_emacs_colors (f, img, 1);
+      Emacs_Color *p, *end;
       const int h = 15000;
       const int l = 30000;
 
@@ -5080,7 +5080,7 @@ image_disable_image (struct frame *f, struct image *img)
 	  p->red = p->green = p->blue = i2;
 	}
 
-      image_from_xcolors (f, img, colors);
+      image_from_emacs_colors (f, img, colors);
     }
 
   /* Draw a cross over the disabled image, if we must or if we
@@ -5522,7 +5522,7 @@ pbm_load (struct frame *f, struct image *img)
       unsigned long fg = FRAME_FOREGROUND_PIXEL (f);
       unsigned long bg = FRAME_BACKGROUND_PIXEL (f);
 #ifdef USE_CAIRO
-      XColor xfg, xbg;
+      Emacs_Color xfg, xbg;
       int fga32, bga32;
 #endif
       /* Parse the image specification.  */
@@ -5542,7 +5542,7 @@ pbm_load (struct frame *f, struct image *img)
           xfg.pixel = fg;
           x_query_colors (f, &xfg, 1);
         }
-      fga32 = xcolor_to_argb32 (xfg);
+      fga32 = emacs_color_to_argb32 (&xfg);
 
       if (! fmt[PBM_BACKGROUND].count
           || ! STRINGP (fmt[PBM_BACKGROUND].value)
@@ -5555,7 +5555,7 @@ pbm_load (struct frame *f, struct image *img)
           xbg.pixel = bg;
           x_query_colors (f, &xbg, 1);
 	}
-      bga32 = xcolor_to_argb32 (xbg);
+      bga32 = emacs_color_to_argb32 (&xbg);
 #else
       if (fmt[PBM_FOREGROUND].count
 	  && STRINGP (fmt[PBM_FOREGROUND].value))
@@ -6180,7 +6180,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       /* png_color_16 *image_bg; */
       Lisp_Object specified_bg
 	= image_spec_value (img->spec, QCbackground, NULL);
-      XColor color;
+      Emacs_Color color;
 
       /* If the user specified a color, try to use it; if not, use the
 	 current frame background, ignoring any default background
@@ -7813,7 +7813,7 @@ gif_load (struct frame *f, struct image *img)
   uint32_t *data32 = (uint32_t *) cairo_image_surface_get_data (surface);
   if (STRINGP (specified_bg))
     {
-      XColor color;
+      Emacs_Color color;
       if (FRAME_TERMINAL (f)->defined_color_hook
           (f, SSDATA (specified_bg), &color, false, false))
         {
@@ -8548,7 +8548,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   /* Retrieve the frame's background color, for use later.  */
   {
-    XColor bgcolor;
+    Emacs_Color bgcolor;
     Lisp_Object specified_bg;
 
     specified_bg = image_spec_value (img->spec, QCbackground, NULL);
@@ -9285,7 +9285,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 
     /* Handle alpha channel by combining the image with a background
        color.  */
-    XColor background;
+    Emacs_Color background;
     Lisp_Object specified_bg = image_spec_value (img->spec, QCbackground, NULL);
     if (!STRINGP (specified_bg)
 	|| !FRAME_TERMINAL (f)->defined_color_hook (f,

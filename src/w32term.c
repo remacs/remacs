@@ -1517,7 +1517,7 @@ w32_alloc_lighter_color (struct frame *f, COLORREF *color,
    colors in COLORS.  On W32, we no longer try to map colors to
    a palette.  */
 static void
-w32_query_colors (struct frame *f, XColor *colors, int ncolors)
+w32_query_colors (struct frame *f, Emacs_Color *colors, int ncolors)
 {
   int i;
 
@@ -1534,7 +1534,7 @@ w32_query_colors (struct frame *f, XColor *colors, int ncolors)
 /* Store F's background color into *BGCOLOR.  */
 
 static void
-w32_query_frame_background_color (struct frame *f, XColor *bgcolor)
+w32_query_frame_background_color (struct frame *f, Emacs_Color *bgcolor)
 {
   bgcolor->pixel = FRAME_BACKGROUND_PIXEL (f);
   w32_query_colors (f, bgcolor, 1);
@@ -7208,7 +7208,7 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
   /* initialize palette with white and black */
   {
-    XColor color;
+    Emacs_Color color;
     w32_defined_color (0, "white", &color, true, false);
     w32_defined_color (0, "black", &color, true, false);
   }

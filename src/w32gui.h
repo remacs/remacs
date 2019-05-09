@@ -43,7 +43,6 @@ typedef HBITMAP Pixmap;
 typedef HBITMAP Bitmap;
 
 typedef XGCValues * GC;
-typedef COLORREF Color;
 typedef HWND Window;
 typedef HDC Display;  /* HDC so it doesn't conflict with xpm lib.  */
 typedef HCURSOR Cursor;

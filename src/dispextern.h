@@ -34,16 +34,17 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef HAVE_XRENDER
 # include <X11/extensions/Xrender.h>
 #endif
+
+typedef XColor Emacs_Color;
 #else /* !HAVE_X_WINDOWS */
 
-/* X-related stuff used by non-X gui code.  */
+/* XColor-like struct used by non-X code.  */
 
-typedef struct {
+typedef struct
+{
   unsigned long pixel;
   unsigned short red, green, blue;
-  char flags;
-  char pad;
-} XColor;
+} Emacs_Color;
 
 #endif /* HAVE_X_WINDOWS */
 
@@ -3410,8 +3411,8 @@ void x_free_colors (struct frame *, unsigned long *, int);
 
 void update_face_from_frame_parameter (struct frame *, Lisp_Object,
                                        Lisp_Object);
-extern bool tty_defined_color (struct frame *f, const char *, XColor *, bool,
-                               bool);
+extern bool tty_defined_color (struct frame *, const char *, Emacs_Color *,
+                               bool, bool);
 
 Lisp_Object tty_color_name (struct frame *, int);
 void clear_face_cache (bool);

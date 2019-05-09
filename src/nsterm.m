@@ -2327,7 +2327,7 @@ ns_color_index_to_rgba(int idx, struct frame *f)
 }
 
 void
-ns_query_color(void *col, XColor *color_def, bool setPixel)
+ns_query_color(void *col, Emacs_Color *color_def, bool setPixel)
 /* --------------------------------------------------------------------------
          Get ARGB values out of NSColor col and put them into color_def.
          If setPixel, set the pixel to a concatenated version.
@@ -2350,7 +2350,7 @@ ns_query_color(void *col, XColor *color_def, bool setPixel)
 bool
 ns_defined_color (struct frame *f,
                   const char *name,
-                  XColor *color_def,
+                  Emacs_Color *color_def,
                   bool alloc,
                   bool makeIndex)
 /* --------------------------------------------------------------------------
@@ -2378,7 +2378,7 @@ ns_defined_color (struct frame *f,
 }
 
 static void
-ns_query_frame_background_color (struct frame *f, XColor *bgcolor)
+ns_query_frame_background_color (struct frame *f, Emacs_Color *bgcolor)
 /* --------------------------------------------------------------------------
      External (hook): Store F's background color into *BGCOLOR
    -------------------------------------------------------------------------- */

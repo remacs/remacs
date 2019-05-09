@@ -109,11 +109,6 @@ typedef void *Cursor;
 
 #define No_Cursor (0)
 
-#ifdef __OBJC__
-typedef NSColor * Color;
-#else
-typedef void * Color;
-#endif
 typedef int Window;
 
 

@@ -1174,7 +1174,7 @@ gamma_correct (struct frame *f, COLORREF *color)
    If ALLOC is nonzero, allocate a new colormap cell.  */
 
 bool
-w32_defined_color (struct frame *f, const char *color, XColor *color_def,
+w32_defined_color (struct frame *f, const char *color, Emacs_Color *color_def,
 		   bool alloc_p, bool _makeIndex)
 {
   register Lisp_Object tem;
@@ -1248,7 +1248,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
 static int
 w32_decode_color (struct frame *f, Lisp_Object arg, int def)
 {
-  XColor cdef;
+  Emacs_Color cdef;
 
   CHECK_STRING (arg);
 
@@ -6100,7 +6100,7 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
        doc: /* SKIP: real doc in xfns.c.  */)
   (Lisp_Object color, Lisp_Object frame)
 {
-  XColor foo;
+  Emacs_Color foo;
   struct frame *f = decode_window_system_frame (frame);
 
   CHECK_STRING (color);
@@ -6115,7 +6115,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
        doc: /* SKIP: real doc in xfns.c.  */)
   (Lisp_Object color, Lisp_Object frame)
 {
-  XColor foo;
+  Emacs_Color foo;
   struct frame *f = decode_window_system_frame (frame);
 
   CHECK_STRING (color);

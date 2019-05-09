@@ -653,7 +653,7 @@ gamma_correct (struct frame *f, XColor *color)
 
 bool
 x_defined_color (struct frame *f, const char *color_name,
-		 XColor *color, bool alloc_p, bool _makeIndex)
+		 Emacs_Color *color, bool alloc_p, bool _makeIndex)
 {
   bool success_p = false;
   Colormap cmap = FRAME_X_COLORMAP (f);

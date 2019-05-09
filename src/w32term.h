@@ -241,7 +241,7 @@ extern void w32_set_scroll_bar_default_height (struct frame *);
 
 extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
-extern bool w32_defined_color (struct frame *, const char *, XColor *,
+extern bool w32_defined_color (struct frame *, const char *, Emacs_Color *,
                                bool, bool);
 extern int w32_display_pixel_height (struct w32_display_info *);
 extern int w32_display_pixel_width (struct w32_display_info *);
@@ -721,7 +721,7 @@ extern void complete_deferred_msg (HWND hwnd, UINT msg, LRESULT result);
 extern BOOL parse_button (int, int, int *, int *);
 
 extern void w32_sys_ring_bell (struct frame *f);
-extern void w32_query_color (struct frame *, XColor *);
+extern void w32_query_color (struct frame *, Emacs_Color *);
 extern void w32_delete_display (struct w32_display_info *dpyinfo);
 
 #define FILE_NOTIFICATIONS_SIZE 16384
