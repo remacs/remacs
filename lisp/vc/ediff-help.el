@@ -1,4 +1,4 @@
-;;; ediff-help.el --- Code related to the contents of Ediff help buffers
+;;; ediff-help.el --- Code related to the contents of Ediff help buffers  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
@@ -30,6 +30,7 @@
 ;; end pacifier
 
 (require 'ediff-init)
+(defvar ediff-multiframe)
 
 ;; Help messages
 

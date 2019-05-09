@@ -1,20 +1,17 @@
-;;; ediff.el --- a comprehensive visual interface to diff & patch
+;;; ediff.el --- a comprehensive visual interface to diff & patch  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Created: February 2, 1994
 ;; Keywords: comparing, merging, patching, vc, tools, unix
-;; Version: 2.81.4
+;; Version: 2.81.6
+(defconst ediff-version "2.81.6" "The current version of Ediff")
 
 ;; Yoni Rabkin <yoni@rabkins.net> contacted the maintainer of this
 ;; file on 20/3/2008, and the maintainer agreed that when a bug is
 ;; filed in the Emacs bug reporting system against this file, a copy
 ;; of the bug report be sent to the maintainer's email address.
-
-(defconst ediff-version "2.81.5" "The current version of Ediff")
-(defconst ediff-date "July 4, 2013" "Date of last update")
-
 
 ;; This file is part of GNU Emacs.
 
@@ -1546,7 +1543,7 @@ When called interactively, displays the version."
           (interactive-p)
         (called-interactively-p 'interactive))
       (message "%s" (ediff-version))
-    (format "Ediff %s of %s" ediff-version ediff-date)))
+    (format "Ediff %s" ediff-version)))
 
 ;; info is run first, and will autoload info.el.
 (declare-function Info-goto-node "info" (nodename &optional fork strict-case))

@@ -1,4 +1,4 @@
-;;; ediff-init.el --- Macros, variables, and defsubsts used by Ediff
+;;; ediff-init.el --- Macros, variables, and defsubsts used by Ediff  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 

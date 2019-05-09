@@ -1,4 +1,4 @@
-;;; ediff-ptch.el --- Ediff's  patch support
+;;; ediff-ptch.el --- Ediff's  patch support  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 

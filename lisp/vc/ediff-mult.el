@@ -1,4 +1,4 @@
-;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff
+;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
@@ -714,7 +714,7 @@ behavior."
 ;; we may visit them recursively.  DIR1 is the directory to inspect.
 ;; MERGE-AUTOSTORE-DIR is the directory where to auto-store the results of
 ;; merges.  Can be nil.
-(defun ediff-get-directory-files-under-revision (jobname
+(defun ediff-get-directory-files-under-revision (_jobname
 						 regexp dir1
 						 &optional merge-autostore-dir)
   (let (lis1 elt common auxdir1)
@@ -760,7 +760,7 @@ behavior."
 				      auxdir1 nil nil
 				      merge-autostore-dir nil)
      (mapcar (lambda (elt) (ediff-make-new-meta-list-element
-			    (expand-file-name (concat auxdir1 elt)) nil nil))
+		       (expand-file-name (concat auxdir1 elt)) nil nil))
 	     common))
     ))
 
@@ -798,8 +798,8 @@ behavior."
 ;; Prepare meta-buffer in accordance with the argument-function and
 ;; redraw-function.  Must return the created  meta-buffer.
 (defun ediff-prepare-meta-buffer (action-func meta-list
-				  meta-buffer-name redraw-function
-				  jobname &optional startup-hooks)
+				              meta-buffer-name redraw-function
+				              jobname &optional _startup-hooks)
   (let* ((meta-buffer-name
 	  (ediff-unique-buffer-name meta-buffer-name "*"))
 	 (meta-buffer (get-buffer-create meta-buffer-name)))
@@ -1583,8 +1583,7 @@ Useful commands:
 
 ;; Returns whether session was marked or unmarked
 (defun ediff-mark-session-for-hiding (info unmark)
-  (let ((session-buf (ediff-get-session-buffer info))
-	ignore)
+  (let (ignore)
     (cond ((eq unmark 'mark) (setq unmark nil))
 	  ((eq (ediff-get-session-status info) ?H) (setq unmark t))
 	  (unmark  ; says unmark, but the marker is different from H
