@@ -80,6 +80,15 @@ impl LispObarrayRef {
         self
     }
 
+    pub fn get(&self, idx: usize) -> LispSymbolRef {
+        LispObject::from(self).as_vector_or_error().get(idx).into()
+    }
+
+    pub fn set(&mut self, idx: usize, item: LispObject) {
+        let mut vec = LispObject::from(&*self).as_vector_or_error();
+        vec.set(idx, item);
+    }
+
     /// Intern the string or symbol STRING. That is, return the new or existing
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol

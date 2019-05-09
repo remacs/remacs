@@ -193,19 +193,14 @@ impl LispSymbolRef {
     }
 
     pub fn get_next(self) -> Option<LispSymbolRef> {
-        let s = unsafe { self.u.s.as_ref() };
-        if s.next.is_null() {
-            None
-        } else {
-            Some(LispSymbolRef::new(s.next))
-        }
+        self.iter().nth(1)
     }
 
     pub fn set_next(mut self, next: Option<LispSymbolRef>) {
         let mut s = unsafe { self.u.s.as_mut() };
-        match next {
-            Some(sym) => s.next = sym.as_ptr() as *mut Lisp_Symbol,
-            None => s.next = ptr::null_mut(),
+        s.next = match next {
+            Some(sym) => sym.as_ptr() as *mut Lisp_Symbol,
+            None => ptr::null_mut(),
         };
     }
 

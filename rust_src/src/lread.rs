@@ -413,7 +413,7 @@ pub fn read_char_exclusive(
 /// usage: (unintern NAME OBARRAY)
 #[lisp_fn(min = "1")]
 pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bool {
-    let obarray = obarray.unwrap_or_else(LispObarrayRef::global).check();
+    let mut obarray = obarray.unwrap_or_else(LispObarrayRef::global).check();
 
     let tem = obarray.lookup(name);
     if tem.is_integer() {
@@ -429,8 +429,7 @@ pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bo
 
     let hash = unsafe { oblookup_last_bucket_number };
 
-    let mut obarray = LispObject::from(obarray).as_vector_or_error();
-    let symbol: LispSymbolRef = obarray.get(hash).into();
+    let symbol = obarray.get(hash);
 
     if symbol == temp {
         match symbol.get_next() {
