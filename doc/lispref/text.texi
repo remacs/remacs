@@ -2245,9 +2245,11 @@ If it is impossible to move to column @var{column} because that is in
 the middle of a multicolumn character such as a tab, point moves to the
 end of that character.  However, if @var{force} is non-@code{nil}, and
 @var{column} is in the middle of a tab, then @code{move-to-column}
-converts the tab into spaces so that it can move precisely to column
-@var{column}.  Other multicolumn characters can cause anomalies despite
-@var{force}, since there is no way to split them.
+either converts the tab into spaces (when @code{indent-tabs-mode} is
+@code{nil}), or inserts enough spaces before it (otherwise), so that
+point can move precisely to column @var{column}.  Other multicolumn
+characters can cause anomalies despite @var{force}, since there is no
+way to split them.
 
 The argument @var{force} also has an effect if the line isn't long
 enough to reach column @var{column}; if it is @code{t}, that means to
