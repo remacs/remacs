@@ -38,18 +38,14 @@ pub fn font_get_system_font() -> LispObject {
 /// known style.  Otherwise return image.
 #[lisp_fn]
 pub fn tool_bar_get_system_style() -> LispObject {
-    let tool_bar_style = unsafe { globals.Vtool_bar_style };
-    if tool_bar_style == Qimage
-        || tool_bar_style == Qtext
-        || tool_bar_style == Qboth
-        || tool_bar_style == Qboth_horiz
-        || tool_bar_style == Qtext_image_horiz
-    {
+    match unsafe { globals.Vtool_bar_style } {
+        tool_bar_style if tool_bar_style.is_nil() => unsafe { current_tool_bar_style },
         tool_bar_style
-    } else if !tool_bar_style.is_nil() {
-        unsafe { current_tool_bar_style }
-    } else {
-        Qimage
+            if [Qimage, Qtext, Qboth, Qboth_horiz, Qtext_image_horiz].contains(&tool_bar_style) =>
+        {
+            tool_bar_style
+        }
+        _ => Qimage,
     }
 }
 
