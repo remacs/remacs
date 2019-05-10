@@ -13,6 +13,7 @@ use crate::{
     lists::{get, put},
     multibyte::LispStringRef,
     remacs_sys::encode_file_name as c_encode_file_name,
+    remacs_sys::code_convert_string as c_code_convert_string,
     remacs_sys::{
         safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
         Qno_conversion, Vcoding_system_hash_table,
@@ -96,6 +97,33 @@ pub fn coding_system_aliases(coding_system: LispObject) -> LispObject {
 /// Wrapper for encode_file_name (NOT PORTED)
 pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
     unsafe { c_encode_file_name(fname.into()) }.into()
+}
+
+/// Decode STRING which is encoded in CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the decoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the decoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the decoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn decode_coding_string(string: LispObject, coding_system: LispObject, nocopy: Option<LispObject>, buffer: Option<LispObject>) -> LispObject {
+    code_convert_string(string, coding_system, buffer, false, nocopy.is_some(), false)
+}
+
+/// Encode STRING to CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the encoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the encoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the encoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn encode_coding_string(string: LispObject, coding_system: LispObject, nocopy: Option<LispObject>, buffer: Option<LispObject>) -> LispObject {
+    code_convert_string(string, coding_system, buffer, true, nocopy.is_some(), false)
+}
+
+// Wrapper for code_convert_string (NOT PORTED)
+pub fn code_convert_string(string: LispObject, coding_system: LispObject, dst_object: Option<LispObject>, encodep: bool, nocopy: bool, norecord: bool) -> LispObject {
+    unsafe { c_code_convert_string(string.into(), coding_system.into(), dst_object.into(), encodep.into(), nocopy.into(), norecord.into()).into() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));
