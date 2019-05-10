@@ -92,16 +92,16 @@ xstrcasecmp (char const *a, char const *b)
 #ifdef HAVE_X_WINDOWS
 #include <X11/Xresource.h> /* for XrmDatabase */
 typedef struct x_display_info Display_Info;
-typedef XImage * XImagePtr;
-typedef XImagePtr XImagePtr_or_DC;
+typedef XImage *Emacs_Pix_Container;
+typedef XImage *Emacs_Pix_Context;
 #define NativeRectangle XRectangle
 #endif
 
 #ifdef HAVE_NTGUI
 #include "w32gui.h"
 typedef struct w32_display_info Display_Info;
-typedef XImage *XImagePtr;
-typedef HDC XImagePtr_or_DC;
+typedef XImage *Emacs_Pix_Container;
+typedef HDC Emacs_Pix_Context;
 #endif
 
 #ifdef HAVE_NS
@@ -109,8 +109,8 @@ typedef HDC XImagePtr_or_DC;
 #define FACE_COLOR_TO_PIXEL(face_color, frame) ns_color_index_to_rgba(face_color, frame)
 /* Following typedef needed to accommodate the MSDOS port, believe it or not.  */
 typedef struct ns_display_info Display_Info;
-typedef Emacs_Pixmap XImagePtr;
-typedef XImagePtr XImagePtr_or_DC;
+typedef Emacs_Pixmap Emacs_Pix_Container;
+typedef Emacs_Pixmap Emacs_Pix_Context;
 #else
 #define FACE_COLOR_TO_PIXEL(face_color, frame) face_color
 #endif
@@ -2996,7 +2996,7 @@ struct image
      Non-NULL means it and its Pixmap counterpart may be out of sync
      and the latter is outdated.  NULL means the X image has been
      synchronized to Pixmap.  */
-  XImagePtr ximg, mask_img;
+  XImage *ximg, *mask_img;
 
 # ifdef HAVE_NATIVE_SCALING
   /* Picture versions of pixmap and mask for compositing.  */
@@ -3417,9 +3417,9 @@ ptrdiff_t lookup_image (struct frame *, Lisp_Object);
 #endif
 
 RGB_PIXEL_COLOR image_background (struct image *, struct frame *,
-                                XImagePtr_or_DC ximg);
+                                  Emacs_Pix_Context img);
 int image_background_transparent (struct image *, struct frame *,
-                                  XImagePtr_or_DC mask);
+                                  Emacs_Pix_Context mask);
 
 int image_ascent (struct image *, struct face *, struct glyph_slice *);
 
