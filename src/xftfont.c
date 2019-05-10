@@ -536,7 +536,7 @@ xftfont_encode_char (struct font *font, int c)
 }
 
 static void
-xftfont_text_extents (struct font *font, unsigned int *code,
+xftfont_text_extents (struct font *font, const unsigned int *code,
 		      int nglyphs, struct font_metrics *metrics)
 {
   struct font_info *xftfont_info = (struct font_info *) font;
@@ -621,8 +621,7 @@ xftfont_draw (struct glyph_string *s, int from, int to, int x, int y,
     }
   code = alloca (sizeof (FT_UInt) * len);
   for (i = 0; i < len; i++)
-    code[i] = ((XCHAR2B_BYTE1 (s->char2b + from + i) << 8)
-	       | XCHAR2B_BYTE2 (s->char2b + from + i));
+    code[i] = s->char2b[from + i];
 
   if (s->padding_p)
     for (i = 0; i < len; i++)

@@ -25914,7 +25914,7 @@ dump_glyph_string (struct glyph_string *s)
 #endif /* GLYPH_DEBUG */
 
 /* Initialize glyph string S.  CHAR2B is a suitably allocated vector
-   of XChar2b structures for S; it can't be allocated in
+   of 2-byte unsigned integers for S; it can't be allocated in
    init_glyph_string because it must be allocated via `alloca'.  W
    is the window on which S is drawn.  ROW and AREA are the glyph row
    and area within the row from which S is constructed.  START is the
@@ -25944,7 +25944,7 @@ init_glyph_string (struct glyph_string *s,
 #ifdef HAVE_NTGUI
 		   HDC hdc,
 #endif
-		   XChar2b *char2b, struct window *w, struct glyph_row *row,
+		   unsigned *char2b, struct window *w, struct glyph_row *row,
 		   enum glyph_row_area area, int start, enum draw_glyphs_face hl)
 {
   memset (s, 0, sizeof *s);
@@ -26023,7 +26023,7 @@ append_glyph_string (struct glyph_string **head, struct glyph_string **tail,
 
 static struct face *
 get_char_face_and_encoding (struct frame *f, int c, int face_id,
-			    XChar2b *char2b, bool display_p)
+			    unsigned *char2b, bool display_p)
 {
   struct face *face = FACE_FROM_ID (f, face_id);
   unsigned code = 0;
@@ -26035,7 +26035,8 @@ get_char_face_and_encoding (struct frame *f, int c, int face_id,
       if (code == FONT_INVALID_CODE)
 	code = 0;
     }
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
 
   /* Make sure X resources of the face are allocated.  */
 #ifdef HAVE_X_WINDOWS
@@ -26056,7 +26057,7 @@ get_char_face_and_encoding (struct frame *f, int c, int face_id,
 
 static struct face *
 get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
-			     XChar2b *char2b)
+			     unsigned *char2b)
 {
   struct face *face;
   unsigned code = 0;
@@ -26078,7 +26079,8 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
 	code = 0;
     }
 
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
   return face;
 }
 
@@ -26087,7 +26089,7 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
    Return true iff FONT has a glyph for C.  */
 
 static bool
-get_char_glyph_code (int c, struct font *font, XChar2b *char2b)
+get_char_glyph_code (int c, struct font *font, unsigned *char2b)
 {
   unsigned code;
 
@@ -26098,7 +26100,9 @@ get_char_glyph_code (int c, struct font *font, XChar2b *char2b)
 
   if (code == FONT_INVALID_CODE)
     return false;
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
   return true;
 }
 
@@ -26211,7 +26215,8 @@ fill_gstring_glyph_string (struct glyph_string *s, int face_id,
       Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
       unsigned code = LGLYPH_CODE (lglyph);
 
-      STORE_XCHAR2B ((s->char2b + i), code >> 8, code & 0xFF);
+      /* Ensure that the code is only 2 bytes wide.  */
+      s->char2b[i] = code & 0xFFFF;
     }
   s->width = composition_gstring_width (lgstring, s->cmp_from, s->cmp_to, NULL);
   return glyph - s->row->glyphs[s->area];
@@ -26390,17 +26395,16 @@ fill_stretch_glyph_string (struct glyph_string *s, int start, int end)
 }
 
 static struct font_metrics *
-get_per_char_metric (struct font *font, XChar2b *char2b)
+get_per_char_metric (struct font *font, const unsigned *char2b)
 {
   static struct font_metrics metrics;
-  unsigned code;
 
   if (! font)
     return NULL;
-  code = (XCHAR2B_BYTE1 (char2b) << 8) | XCHAR2B_BYTE2 (char2b);
-  if (code == FONT_INVALID_CODE)
+  if (*char2b == FONT_INVALID_CODE)
     return NULL;
-  font->driver->text_extents (font, &code, 1, &metrics);
+
+  font->driver->text_extents (font, char2b, 1, &metrics);
   return &metrics;
 }
 
@@ -26418,7 +26422,7 @@ normal_char_ascent_descent (struct font *font, int c, int *ascent, int *descent)
 
   if (FONT_TOO_HIGH (font))
     {
-      XChar2b char2b;
+      unsigned char2b;
 
       /* Get metrics of C, defaulting to a reasonably sized ASCII
 	 character.  */
@@ -26465,7 +26469,7 @@ gui_get_glyph_overhangs (struct glyph *glyph, struct frame *f, int *left, int *r
 
   if (glyph->type == CHAR_GLYPH)
     {
-      XChar2b char2b;
+      unsigned char2b;
       struct face *face = get_glyph_face_and_encoding (f, glyph, &char2b);
       if (face->font)
 	{
@@ -26779,7 +26783,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
      do									   \
        {								   \
 	 int face_id;							   \
-	 XChar2b *char2b;						   \
+	 unsigned *char2b;					   \
 									   \
 	 face_id = (row)->glyphs[area][START].face_id;			   \
 									   \
@@ -26808,7 +26812,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
     struct face *base_face = FACE_FROM_ID (f, face_id);		    \
     ptrdiff_t cmp_id = (row)->glyphs[area][START].u.cmp.id;		    \
     struct composition *cmp = composition_table[cmp_id];		    \
-    XChar2b *char2b;							    \
+    unsigned *char2b;						            \
     struct glyph_string *first_s = NULL;				    \
     int n;								    \
     									    \
@@ -26840,7 +26844,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 #define BUILD_GSTRING_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
   do {									  \
     int face_id;							  \
-    XChar2b *char2b;							  \
+    unsigned *char2b;						          \
     Lisp_Object gstring;						  \
     									  \
     face_id = (row)->glyphs[area][START].face_id;			  \
@@ -28433,7 +28437,7 @@ gui_produce_glyphs (struct it *it)
 
   if (it->what == IT_CHARACTER)
     {
-      XChar2b char2b;
+      unsigned char2b;
       struct face *face = FACE_FROM_ID (it->f, it->face_id);
       struct font *font = face->font;
       struct font_metrics *pcm = NULL;
@@ -28832,7 +28836,7 @@ gui_produce_glyphs (struct it *it)
 	  int lbearing, rbearing;
 	  int i, width, ascent, descent;
 	  int c;
-	  XChar2b char2b;
+	  unsigned char2b;
 	  struct font_metrics *pcm;
 	  ptrdiff_t pos;
 

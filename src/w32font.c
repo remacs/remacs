@@ -433,7 +433,7 @@ w32font_encode_char (struct font *font, int c)
    CODE (length NGLYPHS).  Apparently metrics can be NULL, in this
    case just return the overall width.  */
 void
-w32font_text_extents (struct font *font, unsigned *code,
+w32font_text_extents (struct font *font, const unsigned *code,
 		      int nglyphs, struct font_metrics *metrics)
 {
   int i;

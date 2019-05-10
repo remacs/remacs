@@ -242,7 +242,7 @@ ftcrfont_close (struct font *font)
 
 static void
 ftcrfont_text_extents (struct font *font,
-                       unsigned *code,
+                       const unsigned *code,
                        int nglyphs,
                        struct font_metrics *metrics)
 {
@@ -341,13 +341,12 @@ ftcrfont_draw (struct glyph_string *s,
   glyphs = alloca (sizeof (cairo_glyph_t) * len);
   for (i = 0; i < len; i++)
     {
-      unsigned code = ((XCHAR2B_BYTE1 (s->char2b + from + i) << 8)
-		       | XCHAR2B_BYTE2 (s->char2b + from + i));
-
-      glyphs[i].index = code;
+      glyphs[i].index = s->char2b[from + i];
       glyphs[i].x = x;
       glyphs[i].y = y;
-      x += (s->padding_p ? 1 : ftcrfont_glyph_extents (s->font, code, NULL));
+      x += (s->padding_p ? 1 : ftcrfont_glyph_extents (s->font,
+                                                       glyphs[i].index,
+                                                       NULL));
     }
 
   x_set_cr_source_with_gc_foreground (f, s->gc);

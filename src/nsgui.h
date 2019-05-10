@@ -58,21 +58,6 @@ typedef struct _XCharStruct
   int descent;
 } XCharStruct;
 
-/* Fake structure from Xlib.h to represent two-byte characters.  */
-#ifndef __OBJC__
-typedef unsigned short unichar;
-#endif
-typedef unichar XChar2b;
-
-#define STORE_XCHAR2B(chp, b1, b2) \
-  (*(chp) = ((XChar2b)((((b1) & 0x00ff) << 8) | ((b2) & 0x00ff))))
-
-#define XCHAR2B_BYTE1(chp) \
-  ((*(chp) & 0xff00) >> 8)
-
-#define XCHAR2B_BYTE2(chp) \
-  (*(chp) & 0x00ff)
-
 /* Used in xdisp.c when comparing faces and frame colors.  */
 extern unsigned long ns_color_index_to_rgba(int idx, struct frame *f);
 

@@ -46,18 +46,20 @@ struct xfont_info
 
 /* Prototypes of support functions.  */
 
-static XCharStruct *xfont_get_pcm (XFontStruct *, XChar2b *);
+static XCharStruct *xfont_get_pcm (XFontStruct *, unsigned char2b);
 
 /* Get metrics of character CHAR2B in XFONT.  Value is null if CHAR2B
    is not contained in the font.  */
 
 static XCharStruct *
-xfont_get_pcm (XFontStruct *xfont, XChar2b *char2b)
+xfont_get_pcm (XFontStruct *xfont, unsigned char2b)
 {
   /* The result metric information.  */
   XCharStruct *pcm = NULL;
+  const unsigned char byte1 = char2b >> 8;
+  const unsigned char byte2 = char2b & 0xFF;
 
-  eassert (xfont && char2b);
+  eassert (xfont);
 
   if (xfont->per_char != NULL)
     {
@@ -66,13 +68,13 @@ xfont_get_pcm (XFontStruct *xfont, XChar2b *char2b)
 	  /* min_char_or_byte2 specifies the linear character index
 	     corresponding to the first element of the per_char array,
 	     max_char_or_byte2 is the index of the last character.  A
-	     character with non-zero CHAR2B->byte1 is not in the font.
+	     character with non-zero byte1 is not in the font.
 	     A character with byte2 less than min_char_or_byte2 or
 	     greater max_char_or_byte2 is not in the font.  */
-	  if (char2b->byte1 == 0
-	      && char2b->byte2 >= xfont->min_char_or_byte2
-	      && char2b->byte2 <= xfont->max_char_or_byte2)
-	    pcm = xfont->per_char + char2b->byte2 - xfont->min_char_or_byte2;
+	  if (byte1 == 0
+	      && byte2 >= xfont->min_char_or_byte2
+	      && byte2 <= xfont->max_char_or_byte2)
+	    pcm = xfont->per_char + byte2 - xfont->min_char_or_byte2;
 	}
       else
 	{
@@ -89,14 +91,14 @@ xfont_get_pcm (XFontStruct *xfont, XChar2b *char2b)
 	     D = max_char_or_byte2 - min_char_or_byte2 + 1
 	     / = integer division
 	     \ = integer modulus  */
-	  if (char2b->byte1 >= xfont->min_byte1
-	      && char2b->byte1 <= xfont->max_byte1
-	      && char2b->byte2 >= xfont->min_char_or_byte2
-	      && char2b->byte2 <= xfont->max_char_or_byte2)
+	  if (byte1 >= xfont->min_byte1
+	      && byte1 <= xfont->max_byte1
+	      && byte2 >= xfont->min_char_or_byte2
+	      && byte2 <= xfont->max_char_or_byte2)
 	    pcm = (xfont->per_char
 		   + ((xfont->max_char_or_byte2 - xfont->min_char_or_byte2 + 1)
-		      * (char2b->byte1 - xfont->min_byte1))
-		   + (char2b->byte2 - xfont->min_char_or_byte2));
+		      * (byte1 - xfont->min_byte1))
+		   + (byte2 - xfont->min_char_or_byte2));
 	}
     }
   else
@@ -104,8 +106,8 @@ xfont_get_pcm (XFontStruct *xfont, XChar2b *char2b)
       /* If the per_char pointer is null, all glyphs between the first
 	 and last character indexes inclusive have the same
 	 information, as given by both min_bounds and max_bounds.  */
-      if (char2b->byte2 >= xfont->min_char_or_byte2
-	  && char2b->byte2 <= xfont->max_char_or_byte2)
+      if (byte2 >= xfont->min_char_or_byte2
+	  && byte2 <= xfont->max_char_or_byte2)
 	pcm = &xfont->max_bounds;
     }
 
@@ -193,7 +195,6 @@ xfont_chars_supported (Lisp_Object chars, XFontStruct *xfont,
 	{
 	  int c = XFIXNUM (XCAR (chars));
 	  unsigned code = ENCODE_CHAR (charset, c);
-	  XChar2b char2b;
 
 	  if (code == CHARSET_INVALID_CODE (charset))
 	    break;
@@ -201,9 +202,7 @@ xfont_chars_supported (Lisp_Object chars, XFontStruct *xfont,
 	    continue;
 	  if (code >= 0x10000)
 	    break;
-	  char2b.byte1 = code >> 8;
-	  char2b.byte2 = code & 0xFF;
-	  if (! xfont_get_pcm (xfont, &char2b))
+	  if (! xfont_get_pcm (xfont, code))
 	    break;
 	}
       return (NILP (chars));
@@ -216,7 +215,6 @@ xfont_chars_supported (Lisp_Object chars, XFontStruct *xfont,
 	{
 	  int c = XFIXNUM (AREF (chars, i));
 	  unsigned code = ENCODE_CHAR (charset, c);
-	  XChar2b char2b;
 
 	  if (code == CHARSET_INVALID_CODE (charset))
 	    continue;
@@ -224,9 +222,7 @@ xfont_chars_supported (Lisp_Object chars, XFontStruct *xfont,
 	    break;
 	  if (code >= 0x10000)
 	    continue;
-	  char2b.byte1 = code >> 8;
-	  char2b.byte2 = code & 0xFF;
-	  if (xfont_get_pcm (xfont, &char2b))
+	  if (xfont_get_pcm (xfont, code))
 	    break;
 	}
       return (i >= 0);
@@ -801,11 +797,9 @@ xfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   else
     {
       XCharStruct *pcm;
-      XChar2b char2b;
       Lisp_Object val;
 
-      char2b.byte1 = 0x00, char2b.byte2 = 0x20;
-      pcm = xfont_get_pcm (xfont, &char2b);
+      pcm = xfont_get_pcm (xfont, 0x20);
       if (pcm)
 	font->space_width = pcm->width;
       else
@@ -823,8 +817,8 @@ xfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 	    {
 	      int width = font->space_width, n = pcm != NULL;
 
-	      for (char2b.byte2 = 33; char2b.byte2 <= 126; char2b.byte2++)
-		if ((pcm = xfont_get_pcm (xfont, &char2b)) != NULL)
+	      for (unsigned char2b = 33; char2b <= 126; ++char2b)
+		if ((pcm = xfont_get_pcm (xfont, char2b)) != NULL)
 		  width += pcm->width, n++;
 	      if (n > 0)
 		font->average_width = width / n;
@@ -934,7 +928,6 @@ xfont_encode_char (struct font *font, int c)
   XFontStruct *xfont = ((struct xfont_info *) font)->xfont;
   struct charset *charset;
   unsigned code;
-  XChar2b char2b;
 
   charset = CHARSET_FROM_ID (font->encoding_charset);
   code = ENCODE_CHAR (charset, c);
@@ -946,13 +939,11 @@ xfont_encode_char (struct font *font, int c)
       return (ENCODE_CHAR (charset, c) != CHARSET_INVALID_CODE (charset)
 	      ? code : FONT_INVALID_CODE);
     }
-  char2b.byte1 = code >> 8;
-  char2b.byte2 = code & 0xFF;
-  return (xfont_get_pcm (xfont, &char2b) ? code : FONT_INVALID_CODE);
+  return (xfont_get_pcm (xfont, code) ? code : FONT_INVALID_CODE);
 }
 
 static void
-xfont_text_extents (struct font *font, unsigned int *code,
+xfont_text_extents (struct font *font, const unsigned int *code,
 		    int nglyphs, struct font_metrics *metrics)
 {
   XFontStruct *xfont = ((struct xfont_info *) font)->xfont;
@@ -961,13 +952,11 @@ xfont_text_extents (struct font *font, unsigned int *code,
 
   for (i = 0, first = true; i < nglyphs; i++)
     {
-      XChar2b char2b;
       static XCharStruct *pcm;
 
       if (code[i] >= 0x10000)
 	continue;
-      char2b.byte1 = code[i] >> 8, char2b.byte2 = code[i] & 0xFF;
-      pcm = xfont_get_pcm (xfont, &char2b);
+      pcm = xfont_get_pcm (xfont, code[i]);
       if (! pcm)
 	continue;
       if (first)
@@ -1017,7 +1006,7 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
       USE_SAFE_ALLOCA;
       char *str = SAFE_ALLOCA (len);
       for (i = 0; i < len ; i++)
-	str[i] = XCHAR2B_BYTE2 (s->char2b + from + i);
+	str[i] = s->char2b[from + i] & 0xFF;
       block_input ();
       if (with_background)
 	{
@@ -1049,21 +1038,41 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
     {
       if (s->padding_p)
 	for (i = 0; i < len; i++)
-          XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
-			      gc, x + i, y, s->char2b + from + i, 1);
+          {
+            const unsigned code = s->char2b[from + i];
+            const XChar2b char2b = { .byte1 = code >> 8,
+                                     .byte2 = code & 0xFF };
+            XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
+                                gc, x + i, y, &char2b, 1);
+          }
       else
-        XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
-			    gc, x, y, s->char2b + from, len);
+        {
+          const unsigned code = s->char2b[from];
+          const XChar2b char2b = { .byte1 = code >> 8,
+                                   .byte2 = code & 0xFF };
+          XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
+                              gc, x, y, &char2b, len);
+        }
     }
   else
     {
       if (s->padding_p)
 	for (i = 0; i < len; i++)
-          XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
-			 gc, x + i, y, s->char2b + from + i, 1);
+          {
+            const unsigned code = s->char2b[from + i];
+            const XChar2b char2b = { .byte1 = code >> 8,
+                                     .byte2 = code & 0xFF };
+            XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
+                           gc, x + i, y, &char2b, 1);
+          }
       else
-        XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
-		       gc, x, y, s->char2b + from, len);
+        {
+          const unsigned code = s->char2b[from];
+          const XChar2b char2b = { .byte1 = code >> 8,
+                                   .byte2 = code & 0xFF };
+          XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
+                         gc, x, y, &char2b, len);
+        }
     }
   unblock_input ();
 

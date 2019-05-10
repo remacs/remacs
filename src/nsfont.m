@@ -945,7 +945,7 @@ nsfont_encode_char (struct font *font, int c)
    of METRICS.  The glyphs are specified by their glyph codes in
    CODE (length NGLYPHS).  */
 static void
-nsfont_text_extents (struct font *font, unsigned int *code,
+nsfont_text_extents (struct font *font, const unsigned int *code,
 		     int nglyphs, struct font_metrics *metrics)
 {
   struct nsfont_info *font_info = (struct nsfont_info *)font;

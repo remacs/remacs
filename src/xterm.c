@@ -1599,13 +1599,8 @@ x_compute_glyph_string_overhangs (struct glyph_string *s)
 
       if (s->first_glyph->type == CHAR_GLYPH)
 	{
-	  unsigned *code = alloca (sizeof (unsigned) * s->nchars);
 	  struct font *font = s->font;
-	  int i;
-
-	  for (i = 0; i < s->nchars; i++)
-	    code[i] = (s->char2b[i].byte1 << 8) | s->char2b[i].byte2;
-	  font->driver->text_extents (font, code, s->nchars, &metrics);
+	  font->driver->text_extents (font, s->char2b, s->nchars, &metrics);
 	}
       else
 	{
@@ -1831,7 +1826,7 @@ static void
 x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 {
   struct glyph *glyph = s->first_glyph;
-  XChar2b char2b[8];
+  unsigned char2b[8];
   int x, i, j;
 
   /* If first glyph of S has a left box line, start drawing the text
@@ -1882,14 +1877,10 @@ x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
       if (str)
 	{
 	  int upper_len = (len + 1) / 2;
-	  unsigned code;
 
 	  /* It is assured that all LEN characters in STR is ASCII.  */
 	  for (j = 0; j < len; j++)
-	    {
-	      code = s->font->driver->encode_char (s->font, str[j]);
-	      STORE_XCHAR2B (char2b + j, code >> 8, code & 0xFF);
-	    }
+            char2b[j] = s->font->driver->encode_char (s->font, str[j]) & 0xFFFF;
 	  s->font->driver->draw (s, 0, upper_len,
 				 x + glyph->slice.glyphless.upper_xoff,
 				 s->ybase + glyph->slice.glyphless.upper_yoff,

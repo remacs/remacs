@@ -1353,7 +1353,7 @@ ftfont_encode_char (struct font *font, int c)
 }
 
 void
-ftfont_text_extents (struct font *font, unsigned int *code,
+ftfont_text_extents (struct font *font, const unsigned int *code,
 		     int nglyphs, struct font_metrics *metrics)
 {
   struct font_info *ftfont_info = (struct font_info *) font;

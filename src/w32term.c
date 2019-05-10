@@ -1097,14 +1097,10 @@ w32_compute_glyph_string_overhangs (struct glyph_string *s)
       && s->first_glyph->type == CHAR_GLYPH
       && !s->font_not_found_p)
     {
-      unsigned *code = alloca (sizeof (unsigned) * s->nchars);
       struct font *font = s->font;
       struct font_metrics metrics;
-      int i;
 
-      for (i = 0; i < s->nchars; i++)
-	code[i] = s->char2b[i];
-      font->driver->text_extents (font, code, s->nchars, &metrics);
+      font->driver->text_extents (font, s->char2b, s->nchars, &metrics);
       s->right_overhang = (metrics.rbearing > metrics.width
 			   ? metrics.rbearing - metrics.width : 0);
       s->left_overhang = metrics.lbearing < 0 ? -metrics.lbearing : 0;
@@ -1349,7 +1345,7 @@ static void
 w32_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 {
   struct glyph *glyph = s->first_glyph;
-  XChar2b char2b[8];
+  unsigned char2b[8];
   int x, i, j;
   bool with_background;
 
@@ -1406,16 +1402,12 @@ w32_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 	{
 	  struct font *font = s->font;
 	  int upper_len = (len + 1) / 2;
-	  unsigned code;
 	  HFONT old_font;
 
 	  old_font = SelectObject (s->hdc, FONT_HANDLE (font));
 	  /* It is certain that all LEN characters in STR are ASCII.  */
 	  for (j = 0; j < len; j++)
-	    {
-	      code = font->driver->encode_char (font, str[j]);
-	      STORE_XCHAR2B (char2b + j, code >> 8, code & 0xFF);
-	    }
+            char2b[j] = font->driver->encode_char (font, str[j]) & 0xFFFF;
 	  font->driver->draw (s, 0, upper_len,
 			      x + glyph->slice.glyphless.upper_xoff,
 			      s->ybase + glyph->slice.glyphless.upper_yoff,

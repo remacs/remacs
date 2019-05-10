@@ -1317,7 +1317,7 @@ struct glyph_string
   enum glyph_row_area area;
 
   /* Characters to be drawn, and number of characters.  */
-  XChar2b *char2b;
+  unsigned *char2b;
   int nchars;
 
   /* A face-override for drawing cursors, mouse face and similar.  */
