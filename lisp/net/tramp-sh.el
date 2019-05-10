@@ -4622,21 +4622,19 @@ Goes through the list `tramp-inline-compress-commands'."
 
     ;; Ad-hoc proxy definitions.
     (dolist (proxy (reverse (split-string hops tramp-postfix-hop-regexp 'omit)))
-      (let ((user-domain (tramp-file-name-user-domain item))
-	    (host-port (tramp-file-name-host-port item))
-	    (proxy (concat
-		    tramp-prefix-format proxy tramp-postfix-host-format)))
-	(tramp-message
-	 vec 5 "Add proxy (\"%s\" \"%s\" \"%s\")"
-	 (and (stringp host-port) (regexp-quote host-port))
-	 (and (stringp user-domain) (regexp-quote user-domain))
-	 proxy)
+      (let* ((host-port (tramp-file-name-host-port item))
+	     (user-domain (tramp-file-name-user-domain item))
+	     (proxy (concat
+		     tramp-prefix-format proxy tramp-postfix-host-format))
+	     (entry
+	      (list (and (stringp host-port)
+			 (concat "^" (regexp-quote host-port) "$"))
+		    (and (stringp user-domain)
+			 (concat "^" (regexp-quote user-domain) "$"))
+		    (propertize proxy 'tramp-ad-hoc t))))
+	(tramp-message vec 5 "Add %S to `tramp-default-proxies-alist'" entry)
 	;; Add the hop.
-	(add-to-list
-	 'tramp-default-proxies-alist
-	 (list (and (stringp host-port) (regexp-quote host-port))
-	       (and (stringp user-domain) (regexp-quote user-domain))
-	       (propertize proxy 'tramp-ad-hoc t)))
+	(add-to-list 'tramp-default-proxies-alist entry)
 	(setq item (tramp-dissect-file-name proxy))))
     ;; Save the new value.
     (when (and hops tramp-save-ad-hoc-proxies)
