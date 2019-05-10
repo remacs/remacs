@@ -1001,7 +1001,15 @@ This function is the default value of `uncomment-region-function'."
 		       (re-search-forward sre (line-end-position) t))
 		(replace-match "" t t nil (if (match-end 2) 2 1)))))
 	  ;; Go to the end for the next comment.
-	  (goto-char (point-max))))))
+	  (goto-char (point-max)))
+        ;; Remove any obtrusive spaces left preceding a tab at `spt'.
+        (when (and (eq (char-after spt) ?\t) (eq (char-before spt) ? )
+                   (> tab-width 0))
+          (save-excursion
+            (goto-char spt)
+            (let* ((fcol (current-column))
+                   (slim (- (point) (mod fcol tab-width))))
+              (delete-char (- (skip-chars-backward " " slim)))))))))
   (set-marker end nil))
 
 (defun uncomment-region-default (beg end &optional arg)
