@@ -106,8 +106,8 @@ pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
 /// This function sets `last-coding-system-used` to the precise coding system
 /// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
 #[lisp_fn(min = "1")]
-pub fn decode_coding_string(string: LispObject, coding_system: LispObject, nocopy: Option<LispObject>, buffer: Option<LispObject>) -> LispObject {
-    code_convert_string(string, coding_system, buffer, false, nocopy.is_some(), false)
+pub fn decode_coding_string(string: LispObject, coding_system: LispObject, nocopy: LispObject, buffer: LispObject) -> LispObject {
+    code_convert_string(string, coding_system, buffer, false, nocopy.is_not_nil(), false)
 }
 
 /// Encode STRING to CODING-SYSTEM, and return the result.
@@ -117,13 +117,13 @@ pub fn decode_coding_string(string: LispObject, coding_system: LispObject, nocop
 /// This function sets `last-coding-system-used` to the precise coding system
 /// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
 #[lisp_fn(min = "1")]
-pub fn encode_coding_string(string: LispObject, coding_system: LispObject, nocopy: Option<LispObject>, buffer: Option<LispObject>) -> LispObject {
-    code_convert_string(string, coding_system, buffer, true, nocopy.is_some(), false)
+pub fn encode_coding_string(string: LispObject, coding_system: LispObject, nocopy: LispObject, buffer: LispObject) -> LispObject {
+    code_convert_string(string, coding_system, buffer, true, nocopy.is_not_nil(), false)
 }
 
 // Wrapper for code_convert_string (NOT PORTED)
-pub fn code_convert_string(string: LispObject, coding_system: LispObject, dst_object: Option<LispObject>, encodep: bool, nocopy: bool, norecord: bool) -> LispObject {
-    unsafe { c_code_convert_string(string.into(), coding_system.into(), dst_object.into(), encodep.into(), nocopy.into(), norecord.into()).into() }
+pub fn code_convert_string(string: LispObject, coding_system: LispObject, dst_object: LispObject, encodep: bool, nocopy: bool, norecord: bool) -> LispObject {
+    unsafe { c_code_convert_string(string, coding_system, dst_object, encodep, nocopy, norecord) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));
