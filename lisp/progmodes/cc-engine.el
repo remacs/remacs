@@ -2526,6 +2526,25 @@ comment at the start of cc-engine.el for more info."
 ;; reduced by buffer changes, and increased by invocations of
 ;; `c-state-literal-at'.
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We also maintain a less simple cache of positions which aren't in a
+;; literal, disregarding macros.
+;;
+;; This cache is in two parts: the "near" cache, which is an association list
+;; of a small number (currently six) of positions and the parser states there;
+;; the "far" cache (also known as "the cache"), a list of compressed parser
+;; states going back to the beginning of the buffer, one entry every 3000
+;; characters.
+;;
+;; When searching this cache, `c-state-semi-pp-to-literal' first seeks an
+;; exact match, then a "close" match from the near cache.  If neither of these
+;; succeed, the nearest entry in the far cache is used.
+;;
+;; Because either sub-cache can raise `c-state-semi-nonlit-pos-cache-limit',
+;; both of them are "trimmed" together after a buffer change to ensure
+;; consistency.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defvar c-state-semi-nonlit-pos-cache nil)
 (make-variable-buffer-local 'c-state-semi-nonlit-pos-cache)
 ;; A list of elements which are either buffer positions (when such positions
@@ -2539,11 +2558,61 @@ comment at the start of cc-engine.el for more info."
 ;; is reduced by buffer changes, and increased by invocations of
 ;; `c-parse-ps-state-below'.
 
+(defvar c-state-semi-nonlit-near-cache nil)
+(make-variable-buffer-local 'c-state-semi-nonlit-near-cache)
+;; A list of up to six recent results from `c-state-semi-pp-to-literal'.  Each
+;; element is a cons of the buffer position and the `parse-partial-sexp' state
+;; at that position.
+
 (defsubst c-truncate-semi-nonlit-pos-cache (pos)
   ;; Truncate the upper bound of the cache `c-state-semi-nonlit-pos-cache' to
   ;; POS, if it is higher than that position.
   (setq c-state-semi-nonlit-pos-cache-limit
 	(min c-state-semi-nonlit-pos-cache-limit pos)))
+
+(defun c-state-semi-trim-near-cache ()
+  ;; Remove stale entries in `c-state-semi-nonlit-near-cache', i.e. those
+  ;; whose positions are above `c-state-semi-nonlit-pos-cache-limit'.
+  (let ((nc-list c-state-semi-nonlit-near-cache))
+    (while nc-list
+      (if (> (caar nc-list) c-state-semi-nonlit-pos-cache-limit)
+	  (setq c-state-semi-nonlit-near-cache
+		(delq (car nc-list) c-state-semi-nonlit-near-cache)
+		nc-list c-state-semi-nonlit-near-cache) ; start again in case
+					; of list breakage.
+	(setq nc-list (cdr nc-list))))))
+
+(defun c-state-semi-get-near-cache-entry (here)
+  ;; Return the near cache entry at the highest postion before HERE, if any,
+  ;; or nil.  The near cache entry is of the form (POSITION . STATE), where
+  ;; STATE has the form of a result of `parse-partial-sexp'.
+  (let ((nc-pos-state
+	 (or (assq here c-state-semi-nonlit-near-cache)
+	     (let ((nc-list c-state-semi-nonlit-near-cache)
+		   pos (nc-pos 0) cand-pos-state)
+	       (while nc-list
+		 (setq pos (caar nc-list))
+		 (when (and (<= pos here)
+			    (> pos nc-pos))
+		   (setq nc-pos pos
+			 cand-pos-state (car nc-list)))
+		 (setq nc-list (cdr nc-list)))
+	       cand-pos-state))))
+    (when (and nc-pos-state
+	       (not (eq nc-pos-state (car c-state-semi-nonlit-near-cache))))
+      ;; Move the found cache entry to the front of the list.
+      (setq c-state-semi-nonlit-near-cache
+	    (delq nc-pos-state c-state-semi-nonlit-near-cache))
+      (push nc-pos-state c-state-semi-nonlit-near-cache))
+    nc-pos-state))
+
+(defun c-state-semi-put-near-cache-entry (here state)
+  ;; Put a new near cache entry into the near cache.
+  (while (>= (length c-state-semi-nonlit-near-cache) 6)
+    (setq c-state-semi-nonlit-near-cache
+	  (delq (car (last c-state-semi-nonlit-near-cache))
+		c-state-semi-nonlit-near-cache)))
+  (push (cons here state) c-state-semi-nonlit-near-cache))
 
 (defun c-state-semi-pp-to-literal (here &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from a position in the buffer before HERE which
@@ -2564,12 +2633,28 @@ comment at the start of cc-engine.el for more info."
   (save-excursion
     (save-restriction
       (widen)
+      (c-state-semi-trim-cache)
+      (c-state-semi-trim-near-cache)
+      (setq c-state-semi-nonlit-pos-cache-limit here)
       (save-match-data
-	(let* ((base-and-state (c-parse-ps-state-below here))
+	(let* ((base-and-state (c-state-semi-get-near-cache-entry here))
 	       (base (car base-and-state))
+	       (near-base base)
 	       (s (cdr base-and-state))
-	       (s (parse-partial-sexp base here nil nil s))
-	       ty)
+	       far-base-and-state far-base far-s ty)
+	  (if (or (not base)
+		  (< base (- here 100)))
+	      (progn
+		(setq far-base-and-state (c-parse-ps-state-below here)
+		      far-base (car far-base-and-state)
+		      far-s (cdr far-base-and-state))
+		(when (or (not base) (> far-base base))
+		  (setq base far-base
+			s far-s))))
+	  (when (> here base)
+	    (setq s (parse-partial-sexp base here nil nil s)))
+	  (when (not (eq near-base here))
+	    (c-state-semi-put-near-cache-entry here s))
 	  (cond
 	   ((or (nth 3 s)
 		(and (nth 4 s)
@@ -2612,12 +2697,28 @@ comment at the start of cc-engine.el for more info."
   (save-excursion
     (save-restriction
       (widen)
+      (c-state-semi-trim-cache)
+      (c-state-semi-trim-near-cache)
+      (setq c-state-semi-nonlit-pos-cache-limit here)
       (save-match-data
-	(let* ((base-and-state (c-parse-ps-state-below here))
+	(let* ((base-and-state (c-state-semi-get-near-cache-entry here))
 	       (base (car base-and-state))
+	       (near-base base)
 	       (s (cdr base-and-state))
-	       (s (parse-partial-sexp base here nil nil s))
-	       ty start)
+	       far-base-and-state far-base far-s ty start)
+	  (if (or (not base)
+		  (< base (- here 100)))
+	      (progn
+		(setq far-base-and-state (c-parse-ps-state-below here)
+		      far-base (car far-base-and-state)
+		      far-s (cdr far-base-and-state))
+		(when (or (not base) (> far-base base))
+		  (setq base far-base
+			s far-s))))
+	  (when (> here base)
+	    (setq s (parse-partial-sexp base here nil nil s)))
+	  (when (not (eq near-base here))
+	    (c-state-semi-put-near-cache-entry here s))
 	  (cond
 	   ((or (nth 3 s)
 		(and (nth 4 s)
@@ -2812,6 +2913,14 @@ comment at the start of cc-engine.el for more info."
       elt
     (car elt)))
 
+(defun c-state-semi-trim-cache ()
+  ;; Trim the `c-state-semi-nonlit-pos-cache' to take account of buffer
+  ;; changes, indicated by `c-state-semi-nonlit-pos-cache-limit'.
+  (while (and c-state-semi-nonlit-pos-cache
+	      (> (c-ps-state-cache-pos (car c-state-semi-nonlit-pos-cache))
+		 c-state-semi-nonlit-pos-cache-limit))
+    (setq c-state-semi-nonlit-pos-cache (cdr c-state-semi-nonlit-pos-cache))))
+
 (defun c-parse-ps-state-below (here)
   ;; Given a buffer position HERE, Return a cons (CACHE-POS . STATE), where
   ;; CACHE-POS is a position not very far before HERE for which the
@@ -2822,14 +2931,9 @@ comment at the start of cc-engine.el for more info."
   (save-excursion
     (save-restriction
       (widen)
+      (c-state-semi-trim-cache)
       (let ((c c-state-semi-nonlit-pos-cache)
 	    elt state npos high-elt)
-	;; Trim the cache to take account of buffer changes.
-	(while (and c (> (c-ps-state-cache-pos (car c))
-			 c-state-semi-nonlit-pos-cache-limit))
-	  (setq c (cdr c)))
-	(setq c-state-semi-nonlit-pos-cache c)
-
 	(while (and c (> (c-ps-state-cache-pos (car c)) here))
 	  (setq high-elt (car c))
 	  (setq c (cdr c)))
@@ -5617,7 +5721,7 @@ comment at the start of cc-engine.el for more info."
 	(when (not high-elt)
 	  (setq stack (cdr elt))
 	  (while
-	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
+	      ;; Add an element to `c-bs-cache' each iteration.
 	      (<= (setq npos (+ pos c-bs-interval)) here)
 	    (setq elt (c-update-brace-stack stack pos npos))
 	    (setq npos (car elt))
@@ -6469,44 +6573,52 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; FIXME!!!  This routine ignores the possibility of macros entirely.
   ;; 2010-01-29.
-  (save-excursion
-    (c-save-buffer-state
-	((beg-lit-start (progn (goto-char beg) (c-literal-start)))
-	 (end-lit-limits (progn (goto-char end) (c-literal-limits)))
-	 new-beg new-end beg-limit end-limit)
-      ;; Locate the earliest < after the barrier before the changed region,
-      ;; which isn't already marked as a paren.
-      (goto-char (or beg-lit-start beg))
-      (setq beg-limit (c-determine-limit 512))
+  (when (and (> end beg)
+	     (or
+	      (progn
+		(goto-char beg)
+		(search-backward "<" (max (- (point) 1024) (point-min)) t))
+	      (progn
+		(goto-char end)
+		(search-forward ">" (min (+ (point) 1024) (point-max)) t))))
+    (save-excursion
+      (c-save-buffer-state
+	  ((beg-lit-start (progn (goto-char beg) (c-literal-start)))
+	   (end-lit-limits (progn (goto-char end) (c-literal-limits)))
+	   new-beg new-end beg-limit end-limit)
+	;; Locate the earliest < after the barrier before the changed region,
+	;; which isn't already marked as a paren.
+	(goto-char (or beg-lit-start beg))
+	(setq beg-limit (c-determine-limit 512))
 
-      ;; Remove the syntax-table/category properties from each pertinent <...>
-      ;; pair.  Firstly, the ones with the < before beg and > after beg....
-      (while (progn (c-syntactic-skip-backward "^;{}<" beg-limit)
-		    (eq (char-before) ?<))
-	(c-backward-token-2)
-	(when (eq (char-after) ?<)
-	  (c-clear-<-pair-props-if-match-after beg)
-	  (setq new-beg (point))))
-      (c-forward-syntactic-ws)
+	;; Remove the syntax-table/category properties from each pertinent <...>
+	;; pair.  Firstly, the ones with the < before beg and > after beg....
+	(while (progn (c-syntactic-skip-backward "^;{}<" beg-limit)
+		      (eq (char-before) ?<))
+	  (c-backward-token-2)
+	  (when (eq (char-after) ?<)
+	    (c-clear-<-pair-props-if-match-after beg)
+	    (setq new-beg (point))))
+	(c-forward-syntactic-ws)
 
-      ;; ...Then the ones with < before end and > after end.
-      (goto-char (if end-lit-limits (cdr end-lit-limits) end))
-      (setq end-limit (c-determine-+ve-limit 512))
-      (while (and (c-syntactic-re-search-forward "[;{}>]" end-limit 'end)
-		  (eq (char-before) ?>))
-	(c-end-of-current-token)
-	(when (eq (char-before) ?>)
-	  (c-clear->-pair-props-if-match-before end (1- (point)))
-	  (setq new-end (point))))
-      (c-backward-syntactic-ws)
+	;; ...Then the ones with < before end and > after end.
+	(goto-char (if end-lit-limits (cdr end-lit-limits) end))
+	(setq end-limit (c-determine-+ve-limit 512))
+	(while (and (c-syntactic-re-search-forward "[;{}>]" end-limit 'end)
+		    (eq (char-before) ?>))
+	  (c-end-of-current-token)
+	  (when (eq (char-before) ?>)
+	    (c-clear->-pair-props-if-match-before end (1- (point)))
+	    (setq new-end (point))))
+	(c-backward-syntactic-ws)
 
-      ;; Extend the fontification region, if needed.
-      (and new-beg
-	   (< new-beg c-new-BEG)
-	   (setq c-new-BEG new-beg))
-      (and new-end
-	   (> new-end c-new-END)
-	   (setq c-new-END new-end)))))
+	;; Extend the fontification region, if needed.
+	(and new-beg
+	     (< new-beg c-new-BEG)
+	     (setq c-new-BEG new-beg))
+	(and new-end
+	     (> new-end c-new-END)
+	     (setq c-new-END new-end))))))
 
 (defun c-after-change-check-<>-operators (beg end)
   ;; This is called from `after-change-functions' when
@@ -7123,7 +7235,8 @@ comment at the start of cc-engine.el for more info."
       t)
      ((save-excursion
 	(and
-	 (search-backward-regexp ")\\([^ ()\\\n\r\t]\\{0,16\\}\\)\"\\=" nil t)
+	 (search-backward-regexp ")\\([^ ()\\\n\r\t]\\{0,16\\}\\)\"\\="
+				 (c-point 'bol) t)
 	 (setq id (match-string-no-properties 1))
 	 (let* ((quoted-id (regexp-quote id))
 		(quoted-id-depth (regexp-opt-depth quoted-id)))

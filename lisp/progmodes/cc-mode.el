@@ -1825,28 +1825,30 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; by `c-doc-line-join-re'), return the position of the first line of the
   ;; sequence.  Otherwise, return nil.  Point has no significance at entry to
   ;; and exit from this function.
-  (goto-char pos)
-  (back-to-indentation)
-  (and (or (looking-at c-comment-start-regexp)
-	   (memq (c-literal-type (c-literal-limits)) '(c c++)))
-       (progn
-	 (end-of-line)
-	 (let ((here (point)))
-	   (while (re-search-backward c-doc-line-join-re (c-point 'bopl) t))
-	   (and (not (eq (point) here))
-		(c-point 'bol))))))
+  (when (not (equal c-doc-line-join-re "a\\`"))
+    (goto-char pos)
+    (back-to-indentation)
+    (and (or (looking-at c-comment-start-regexp)
+	     (memq (c-literal-type (c-literal-limits)) '(c c++)))
+	 (progn
+	   (end-of-line)
+	   (let ((here (point)))
+	     (while (re-search-backward c-doc-line-join-re (c-point 'bopl) t))
+	     (and (not (eq (point) here))
+		  (c-point 'bol)))))))
 
 (defun c-doc-fl-decl-end (pos)
   ;; If the line containing POS is continued by a doc comment continuation
   ;; marker (as defined by `c-doc-line-join-re), return the position of
   ;; the BOL at the end of the sequence.  Otherwise, return nil.  Point has no
   ;; significance at entry to and exit from this function.
-  (goto-char pos)
-  (back-to-indentation)
-  (let ((here (point)))
-    (while (re-search-forward c-doc-line-join-re (c-point 'eonl) t))
-    (and (not (eq (point) here))
-	 (c-point 'bonl))))
+  (when (not (equal c-doc-line-join-re "a\\`"))
+    (goto-char pos)
+    (back-to-indentation)
+    (let ((here (point)))
+      (while (re-search-forward c-doc-line-join-re (c-point 'eonl) t))
+      (and (not (eq (point) here))
+	   (c-point 'bonl)))))
 
 (defun c-fl-decl-start (pos)
   ;; If the beginning of the line containing POS is in the middle of a "local"
@@ -1874,13 +1876,10 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
       ;; In C++ Mode, first check if we are within a (possibly nested) lambda
       ;; form capture list.
       (when (c-major-mode-is 'c++-mode)
-	(let ((paren-state (c-parse-state))
-	      opener)
-	  (save-excursion
-	    (while (setq opener (c-pull-open-brace paren-state))
-	      (goto-char opener)
-	      (if (c-looking-at-c++-lambda-capture-list)
-		  (setq capture-opener (point)))))))
+	(save-excursion
+	  (while (and (c-go-up-list-backward nil bod-lim)
+		      (c-looking-at-c++-lambda-capture-list))
+	    (setq capture-opener (point)))))
 
       (while
 	  ;; Go to a less nested declaration each time round this loop.
