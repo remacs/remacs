@@ -5559,22 +5559,19 @@ w32_icon (struct frame *f, Lisp_Object parms)
 static void
 w32_make_gc (struct frame *f)
 {
-  XGCValues gc_values;
+  Emacs_GC gc_values;
 
   block_input ();
 
   /* Create the GC's of this frame.
      Note that many default values are used.  */
 
-  /* Normal video */
-  gc_values.font = FRAME_FONT (f);
-
   /* Cursor has cursor-color background, background-color foreground.  */
   gc_values.foreground = FRAME_BACKGROUND_PIXEL (f);
   gc_values.background = f->output_data.w32->cursor_pixel;
   f->output_data.w32->cursor_gc
     = XCreateGC (NULL, FRAME_W32_WINDOW (f),
-		 (GCFont | GCForeground | GCBackground),
+		 (GCForeground | GCBackground),
 		 &gc_values);
 
   /* Reliefs.  */

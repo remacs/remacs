@@ -27,21 +27,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define local_alloc(n) (HeapAlloc (local_heap, HEAP_ZERO_MEMORY, (n)))
 #define local_free(p) (HeapFree (local_heap, 0, ((LPVOID) (p))))
 
-/* Emulate X GC's by keeping color and font info in a structure.  */
-typedef struct _XGCValues
-{
-  COLORREF foreground;
-  COLORREF background;
-  struct font *font;
-} XGCValues;
-
-#define GCForeground 0x01
-#define GCBackground 0x02
-#define GCFont 0x03
-
 typedef HBITMAP Emacs_Pixmap;
 
-typedef XGCValues * GC;
 typedef HWND Window;
 typedef HDC Display;  /* HDC so it doesn't conflict with xpm lib.  */
 typedef HCURSOR Emacs_Cursor;

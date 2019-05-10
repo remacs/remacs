@@ -40,6 +40,7 @@ typedef Cursor Emacs_Cursor;
 #define No_Cursor (None)
 typedef Pixmap Emacs_Pixmap;
 typedef XRectangle Emacs_Rectangle;
+typedef XGCValues Emacs_GC;
 #else /* !HAVE_X_WINDOWS */
 
 /* XColor-like struct used by non-X code.  */
@@ -59,6 +60,20 @@ typedef struct
   int x, y;
   unsigned width, height;
 } Emacs_Rectangle;
+
+/* XGCValues-like struct used by non-X GUI code.  */
+typedef struct
+{
+  unsigned long foreground;
+  unsigned long background;
+} Emacs_GC;
+
+/* Mask values to select foreground/background.  */
+/* FIXME: The GC handling in w32 really should be redesigned as to not
+   need these.  */
+#define GCForeground 0x01
+#define GCBackground 0x02
+
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef MSDOS
@@ -1363,7 +1378,7 @@ struct glyph_string
   GC gc;
 #endif
 #if defined (HAVE_NTGUI)
-  XGCValues *gc;
+  Emacs_GC *gc;
   HDC hdc;
 #endif
 
@@ -1605,8 +1620,11 @@ struct face
 
   /* If non-zero, this is a GC that we can use without modification for
      drawing the characters in this face.  */
+# ifdef HAVE_X_WINDOWS
   GC gc;
-
+# else
+  Emacs_GC *gc;
+# endif
   /* Background stipple or bitmap used for this face.  This is
      an id as returned from load_pixmap.  */
   ptrdiff_t stipple;

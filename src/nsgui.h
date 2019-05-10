@@ -76,25 +76,6 @@ typedef unichar XChar2b;
 /* Used in xdisp.c when comparing faces and frame colors.  */
 extern unsigned long ns_color_index_to_rgba(int idx, struct frame *f);
 
-/* XXX: xfaces requires these structures, but the question is are we
-        forced to use them?  */
-typedef struct _XGCValues
-{
-  unsigned long foreground;
-  unsigned long background;
-#ifdef __OBJC__
-  struct ns_font *font;
-#else
-  void *font;
-#endif
-} XGCValues;
-
-typedef XGCValues * GC;
-
-#define GCForeground 0x01
-#define GCBackground 0x02
-#define GCFont 0x03
-
 #ifdef __OBJC__
 typedef id Emacs_Pixmap;
 #else

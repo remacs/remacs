@@ -142,7 +142,7 @@ struct w32_display_info
   int smallest_font_height;
 
   /* Reusable Graphics Context for drawing a cursor in a non-default face. */
-  XGCValues *scratch_cursor_gc;
+  Emacs_GC *scratch_cursor_gc;
 
   /* Information about the range of text currently shown in
      mouse-face.  */
@@ -308,7 +308,7 @@ struct w32_output
   HPALETTE old_palette;
 
   /* Here are the Graphics Contexts for the default font.  */
-  XGCValues *cursor_gc;				/* cursor drawing */
+  Emacs_GC *cursor_gc;			/* cursor drawing */
 
   /* The window used for this frame.
      May be zero while the frame object is being created
@@ -388,7 +388,7 @@ struct w32_output
   /* Relief GCs, colors etc.  */
   struct relief
   {
-    XGCValues *gc;
+    Emacs_GC *gc;
     unsigned long pixel;
   }
   black_relief, white_relief;
@@ -805,7 +805,7 @@ typedef struct tagTRACKMOUSEEVENT
 struct image;
 struct face;
 
-XGCValues *XCreateGC (void *, HWND, unsigned long, XGCValues *);
+Emacs_GC *XCreateGC (void *, HWND, unsigned long, Emacs_GC *);
 
 typedef DWORD (WINAPI * ClipboardSequence_Proc) (void);
 typedef BOOL (WINAPI * AppendMenuW_Proc) (
