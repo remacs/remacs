@@ -39,7 +39,7 @@ typedef XColor Emacs_Color;
 typedef Cursor Emacs_Cursor;
 #define No_Cursor (None)
 typedef Pixmap Emacs_Pixmap;
-
+typedef XRectangle Emacs_Rectangle;
 #else /* !HAVE_X_WINDOWS */
 
 /* XColor-like struct used by non-X code.  */
@@ -52,6 +52,13 @@ typedef struct
 
 /* Accommodate X's usage of None as a null resource ID.  */
 #define No_Cursor (NULL)
+
+/* XRectangle-like struct used by non-X GUI code.  */
+typedef struct
+{
+  int x, y;
+  unsigned width, height;
+} Emacs_Rectangle;
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef MSDOS
@@ -1046,7 +1053,7 @@ struct glyph_row
 #ifdef HAVE_WINDOW_SYSTEM
   /* Non-NULL means the current clipping area.  This is temporarily
      set while exposing a region.  Coordinates are frame-relative.  */
-  XRectangle *clip;
+  const Emacs_Rectangle *clip;
 #endif
 };
 
@@ -3317,7 +3324,9 @@ extern void handle_tool_bar_click (struct frame *,
                                    int, int, bool, int);
 
 extern void expose_frame (struct frame *, int, int, int, int);
-extern bool gui_intersect_rectangles (XRectangle *, XRectangle *, XRectangle *);
+extern bool gui_intersect_rectangles (const Emacs_Rectangle *,
+                                      const Emacs_Rectangle *,
+                                      Emacs_Rectangle *);
 #endif	/* HAVE_WINDOW_SYSTEM */
 
 extern void note_mouse_highlight (struct frame *, int, int);

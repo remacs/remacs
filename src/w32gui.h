@@ -106,20 +106,15 @@ extern HINSTANCE hinst;
 #define PBaseSize	(1L << 8) /* program specified base for incrementing */
 #define PWinGravity	(1L << 9) /* program specified window gravity */
 
-typedef struct {
-    int x, y;
-    unsigned width, height;
-} XRectangle;
-
 #define NativeRectangle RECT
 
-#define CONVERT_TO_XRECT(xr,nr)			\
+#define CONVERT_TO_EMACS_RECT(xr,nr)            \
   ((xr).x = (nr).left,				\
    (xr).y = (nr).top,				\
    (xr).width = ((nr).right - (nr).left),	\
    (xr).height = ((nr).bottom - (nr).top))
 
-#define CONVERT_FROM_XRECT(xr,nr)		\
+#define CONVERT_FROM_EMACS_RECT(xr,nr)		\
   ((nr).left = (xr).x,				\
    (nr).top = (xr).y,				\
    (nr).right = ((xr).x + (xr).width),		\

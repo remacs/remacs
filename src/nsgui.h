@@ -109,14 +109,6 @@ typedef void *Emacs_Cursor;
 
 typedef int Window;
 
-
-/* Some sort of attempt to normalize rectangle handling.  Seems a bit
-   much for what is accomplished.  */
-typedef struct {
-      int x, y;
-      unsigned width, height;
-} XRectangle;
-
 #ifndef __OBJC__
 #if defined (__LP64__) && __LP64__
 typedef double CGFloat;
@@ -130,13 +122,13 @@ typedef struct _NSRect  { NSPoint origin; NSSize size; } NSRect;
 
 #define NativeRectangle NSRect
 
-#define CONVERT_TO_XRECT(xr, nr)		\
+#define CONVERT_TO_EMACS_RECT(xr, nr)		\
   ((xr).x     = (nr).origin.x,			\
    (xr).y     = (nr).origin.y,			\
    (xr).width = (nr).size.width,		\
    (xr).height = (nr).size.height)
 
-#define CONVERT_FROM_XRECT(xr, nr)		\
+#define CONVERT_FROM_EMACS_RECT(xr, nr)		\
   ((nr).origin.x    = (xr).x,			\
    (nr).origin.y    = (xr).y,			\
    (nr).size.width  = (xr).width,		\

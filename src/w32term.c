@@ -337,7 +337,7 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
 
   int wave_height = 3 * scale_y, wave_length = 2 * scale_x, thickness = scale_y;
   int dx, dy, x0, y0, width, x1, y1, x2, y2, odd, xmax;
-  XRectangle wave_clip, string_clip, final_clip;
+  Emacs_Rectangle wave_clip, string_clip, final_clip;
   RECT w32_final_clip, w32_string_clip;
   HPEN hp, oldhp;
 
@@ -356,14 +356,14 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
   wave_clip.height = wave_height;
 
   get_glyph_string_clip_rect (s, &w32_string_clip);
-  CONVERT_TO_XRECT (string_clip, w32_string_clip);
+  CONVERT_TO_EMACS_RECT (string_clip, w32_string_clip);
 
   if (!gui_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
     return;
 
   hp = CreatePen (PS_SOLID, thickness, color);
   oldhp = SelectObject (s->hdc, hp);
-  CONVERT_FROM_XRECT (final_clip, w32_final_clip);
+  CONVERT_FROM_EMACS_RECT (final_clip, w32_final_clip);
   w32_set_clip_rectangle (s->hdc, &w32_final_clip);
 
   /* Draw the waves */

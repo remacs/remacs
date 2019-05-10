@@ -1626,7 +1626,7 @@ flush_frame (struct frame *f)
 #ifdef HAVE_WINDOW_SYSTEM
 
 struct MonitorInfo {
-  XRectangle geom, work;
+  Emacs_Rectangle geom, work;
   int mm_width, mm_height;
   char *name;
 };
