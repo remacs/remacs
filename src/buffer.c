@@ -822,71 +822,6 @@ candidate_buffer (Lisp_Object b, Lisp_Object buffer)
 	  && !BUFFER_HIDDEN_P (XBUFFER (b)));
 }
 
-DEFUN ("other-buffer", Fother_buffer, Sother_buffer, 0, 3, 0,
-       doc: /* Return most recently selected buffer other than BUFFER.
-Buffers not visible in windows are preferred to visible buffers, unless
-optional second argument VISIBLE-OK is non-nil.  Ignore the argument
-BUFFER unless it denotes a live buffer.  If the optional third argument
-FRAME specifies a live frame, then use that frame's buffer list instead
-of the selected frame's buffer list.
-
-The buffer is found by scanning the selected or specified frame's buffer
-list first, followed by the list of all buffers.  If no other buffer
-exists, return the buffer `*scratch*' (creating it if necessary).  */)
-  (Lisp_Object buffer, Lisp_Object visible_ok, Lisp_Object frame)
-{
-  struct frame *f = decode_live_frame (frame);
-  Lisp_Object tail = f->buffer_list, pred = f->buffer_predicate;
-  Lisp_Object buf, notsogood = Qnil;
-
-  /* Consider buffers that have been seen in the frame first.  */
-  for (; CONSP (tail); tail = XCDR (tail))
-    {
-      buf = XCAR (tail);
-      if (candidate_buffer (buf, buffer)
-	  /* If the frame has a buffer_predicate, disregard buffers that
-	     don't fit the predicate.  */
-	  && (NILP (pred) || !NILP (call1 (pred, buf))))
-	{
-	  if (!NILP (visible_ok)
-	      || NILP (Fget_buffer_window (buf, Qvisible)))
-	    return buf;
-	  else if (NILP (notsogood))
-	    notsogood = buf;
-	}
-    }
-
-  /* Consider alist of all buffers next.  */
-  FOR_EACH_LIVE_BUFFER (tail, buf)
-    {
-      if (candidate_buffer (buf, buffer)
-	  /* If the frame has a buffer_predicate, disregard buffers that
-	     don't fit the predicate.  */
-	  && (NILP (pred) || !NILP (call1 (pred, buf))))
-	{
-	  if (!NILP (visible_ok)
-	      || NILP (Fget_buffer_window (buf, Qvisible)))
-	    return buf;
-	  else if (NILP (notsogood))
-	    notsogood = buf;
-	}
-    }
-
-  if (!NILP (notsogood))
-    return notsogood;
-  else
-    {
-      AUTO_STRING (scratch, "*scratch*");
-      buf = Fget_buffer (scratch);
-      if (NILP (buf))
-	{
-	  buf = Fget_buffer_create (scratch);
-	  Fset_buffer_major_mode (buf);
-	}
-      return buf;
-    }
-}
-
 /* The following function is a safe variant of Fother_buffer: It doesn't
    pay attention to any frame-local buffer lists, doesn't care about
    visibility of buffers, and doesn't evaluate any frame predicates.  */
@@ -5363,7 +5298,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
-  defsubr (&Sother_buffer);
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);

@@ -18,7 +18,7 @@ use crate::{
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     fns::{copy_sequence, nconc, nreverse},
-    frames::LispFrameRef,
+    frames::{LispFrameLiveOrSelected, LispFrameRef},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists,
@@ -33,7 +33,7 @@ use crate::{
     numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
-    remacs_sys::Fmake_marker,
+    remacs_sys::{Fget_buffer_window, Fmake_marker, Fset_buffer_major_mode},
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
@@ -51,7 +51,7 @@ use crate::{
         buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
         Qbuffer_read_only, Qbufferp, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit,
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
-        Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qt, Qunbound, Qvisible, UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     textprop::get_text_property,
@@ -278,6 +278,10 @@ impl LispBufferRef {
     // Check if buffer is live
     pub fn is_live(self) -> bool {
         self.name_.is_not_nil()
+    }
+
+    pub fn is_hidden(self) -> bool {
+        LispStringRef::from(self.name_).byte_at(0) == b' '
     }
 
     pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
@@ -1841,6 +1845,82 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if charpos - 1 != nchars {
         panic!("byte_char_debug_check failed.")
     }
+}
+
+// True if B can be used as 'other-than-BUFFER' buffer.
+fn candidate_buffer(b: LispObject, buffer: LispObject) -> bool {
+    if let Some(buf) = Option::<LispBufferRef>::from(b) {
+        !b.eq(buffer) && buf.is_live() && !buf.is_hidden()
+    } else {
+        false
+    }
+}
+
+/// Return most recently selected buffer other than BUFFER.
+/// Buffers not visible in windows are preferred to visible buffers, unless
+/// optional second argument VISIBLE-OK is non-nil.  Ignore the argument
+/// BUFFER unless it denotes a live buffer.  If the optional third argument
+/// FRAME specifies a live frame, then use that frame's buffer list instead
+/// of the selected frame's buffer list.
+///
+/// The buffer is found by scanning the selected or specified frame's buffer
+/// list first, followed by the list of all buffers.  If no other buffer
+/// exists, return the buffer `*scratch*' (creating it if necessary).
+#[lisp_fn(min = "0")]
+pub fn other_buffer(buffer: LispObject, visible_ok: LispObject, frame: LispObject) -> LispObject {
+    let f: LispFrameRef = LispFrameLiveOrSelected::from(frame).into();
+    let pred = f.buffer_predicate;
+    let mut notsogood = None;
+
+    let frame_bufs = f
+        .buffer_list
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
+    let all_bufs = LiveBufferIter::new().map(|x| x.into());
+    for buf in frame_bufs.chain(all_bufs) {
+        // If the frame has a buffer_predicate, disregard buffers that
+        // don't fit the predicate.
+        if candidate_buffer(buf, buffer)
+            && pred.map_or_else(|| true, |p| call!(p, buf).is_not_nil())
+        {
+            if visible_ok.is_not_nil() || unsafe { Fget_buffer_window(buf, Qvisible) }.is_nil() {
+                return buf;
+            } else {
+                notsogood = notsogood.or(Some(buf));
+            }
+        }
+    }
+
+    if let Some(buf) = notsogood {
+        buf
+    } else {
+        // TODO: This was AUTO_STRING, which doesn't exist yet in Rust.
+        let scratch = new_unibyte_string!("*scratch*");
+        let mut buf = Fget_buffer(scratch);
+        if buf.is_nil() {
+            buf = Fget_buffer_create(scratch);
+            unsafe { Fset_buffer_major_mode(buf) };
+        }
+        buf
+    }
+}
+
+// The following function is a safe variant of Fother_buffer: It doesn't
+// pay attention to any frame-local buffer lists, doesn't care about
+// visibility of buffers, and doesn't evaluate any frame predicates.
+pub fn other_buffer_safely(buffer: LispObject) -> LispObject {
+    for buf in LiveBufferIter::new().map(|x| x.into()) {
+        if candidate_buffer(buf, buffer) {
+            return buf;
+        }
+    }
+
+    let scratch = new_unibyte_string!("*scratch*");
+    let mut buf = Fget_buffer(scratch);
+    if buf.is_nil() {
+        buf = Fget_buffer_create(scratch);
+        unsafe { Fset_buffer_major_mode(buf) };
+    }
+    buf
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
