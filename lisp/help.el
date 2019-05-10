@@ -745,6 +745,7 @@ If NO-MOUSE-MOVEMENT is non-nil, ignore key sequences starting
 with `mouse-movement' events."
   (let ((enable-disabled-menus-and-buttons t)
         (cursor-in-echo-area t)
+        (side-event nil)
         saved-yank-menu)
     (unwind-protect
         (let (last-modifiers key-list)
@@ -763,7 +764,8 @@ with `mouse-movement' events."
                   (and (memq 'click last-modifiers)
                        (not (sit-for (/ double-click-time 1000.0) t))))
             (let* ((seq (read-key-sequence "\
-Describe the following key, mouse click, or menu item: "))
+Describe the following key, mouse click, or menu item: "
+                                           nil nil 'can-return-switch-frame))
                    (raw-seq (this-single-command-raw-keys))
                    (keyn (when (> (length seq) 0)
                            (aref seq (1- (length seq)))))
@@ -772,11 +774,18 @@ Describe the following key, mouse click, or menu item: "))
               (cond
                ((zerop (length seq)))   ;FIXME: Can this happen?
                ((and no-mouse-movement (eq base 'mouse-movement)) nil)
+               ((memq base '(mouse-movement switch-frame select-window))
+                ;; Mostly ignore these events since it's sometimes difficult to
+                ;; generate the event you care about without also generating
+                ;; these side-events along the way.
+                (setq side-event (cons seq raw-seq)))
                ((eq base 'help-echo) nil)
                (t
                 (setq last-modifiers modifiers)
                 (push (cons seq raw-seq) key-list)))))
-          (nreverse key-list))
+          (if side-event
+              (cons side-event (nreverse key-list))
+            (nreverse key-list)))
       ;; Put yank-menu back as it was, if we changed it.
       (when saved-yank-menu
         (setq yank-menu (copy-sequence saved-yank-menu))
