@@ -14,9 +14,9 @@ use crate::{
     lisp::LispObject,
     obarray::intern,
     remacs_sys::{
-        allocate_vterm, color_to_rgb_string, get_col_offset, refresh_lines, rgb_string_to_color,
-        row_to_linenr, search_command, set_point, utf8_to_codepoint, vterm_output_read,
-        vterm_screen_callbacks, vterm_screen_set_callbacks, VtermScrollbackLine,
+        allocate_vterm, color_to_rgb_string, fetch_cell, is_eol, refresh_lines,
+        rgb_string_to_color, row_to_linenr, search_command, set_point, utf8_to_codepoint,
+        vterm_output_read, vterm_screen_callbacks, vterm_screen_set_callbacks, VtermScrollbackLine,
     },
 
     remacs_sys::{
@@ -169,8 +169,24 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     (*term).invalid_end = -1;
 }
 
-fn get_col_offset(vterm: LispVterminalRef, row: i32, end_col: i32) -> i32 {
-    let (height, width) = vterm.get_size();
+unsafe fn get_col_offset(mut vterm: LispVterminalRef, row: i32, end_col: i32) -> i32 {
+    let mut offset: size_t = 0;
+
+    let mut col: i32 = 0;
+    while col < end_col {
+        let mut cell: VTermScreenCell = std::mem::zeroed();
+        fetch_cell(vterm.as_mut(), row, col, &mut cell);
+
+        if cell.chars[0] > 0 {
+            if cell.width > 0 {
+                offset += cell.width as size_t - 1;
+            }
+        } else if is_eol(vterm.as_mut(), (*vterm).width, row, col) {
+            offset += cell.width as size_t;
+        }
+        col += cell.width as i32;
+    }
+    offset as i32
 }
 
 unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
@@ -184,7 +200,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
     vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum as i32) as EmacsInt);
 
-    let offset = get_col_offset(term.as_mut() as *mut vterminal, pos.row, pos.col);
+    let offset = get_col_offset(term, pos.row, pos.col);
     forward_char(LispObject::from((pos.col - offset as i32) as EmacsInt));
 }
 
@@ -495,6 +511,7 @@ unsafe fn vterminal_redraw(mut vterm: LispVterminalRef) {
     vterm.is_invalidated = false;
 }
 
+/// Delete COUNT lines starting from LINENUM.
 fn vterminal_delete_lines(linenum: i32, count: i32) {
     let mut cur_buf = ThreadState::current_buffer_unchecked();
 
@@ -517,7 +534,7 @@ fn vterminal_delete_lines(linenum: i32, count: i32) {
     }
 }
 
-/// Count lines in current buffer
+/// Count lines in current buffer.
 #[lisp_fn]
 pub fn vterminal_count_lines() -> i32 {
     let cur_buf = ThreadState::current_buffer_unchecked();
@@ -535,7 +552,7 @@ pub fn vterminal_count_lines() -> i32 {
     count
 }
 
-/// Unlike regular `goto-line` this function's arg LINE is an unsigned integer
+/// Unlike regular `goto-line` this function's arg LINE is an unsigned integer.
 #[lisp_fn]
 pub fn vterminal_goto_line(line: EmacsInt) {
     unsafe { set_point(1) };

@@ -14,7 +14,7 @@
 #include "coding.h"
 
 
-static void fetch_cell(vterminal *, int , int , VTermScreenCell *);
+void fetch_cell(vterminal *, int , int , VTermScreenCell *);
 static bool compare_cells(VTermScreenCell *, VTermScreenCell *);
 
 
@@ -180,7 +180,7 @@ int row_to_linenr(vterminal *term, int row) {
   return row != INT_MAX ? row + (int)term->sb_current + 1 : INT_MAX;
 }
 
-static void
+void
 fetch_cell(vterminal *term, int row, int col, VTermScreenCell *cell) {
   if (row < 0) {
     VtermScrollbackLine *sbrow = term->sb_buffer[-row - 1];
@@ -199,7 +199,7 @@ fetch_cell(vterminal *term, int row, int col, VTermScreenCell *cell) {
   }
 }
 
-static bool
+bool
 is_eol(vterminal *term, int end_col, int row, int col) {
   /* This cell is EOL if this and every cell to the right is black */
   if (row >= 0) {
@@ -216,31 +216,6 @@ is_eol(vterminal *term, int end_col, int row, int col) {
     c += sbrow->cells[c].width;
   }
   return 1;
-}
-
-size_t get_col_offset(vterminal *term, int row, int end_col) {
-  int col = 0;
-  size_t offset = 0;
-  unsigned char buf[4];
-  int height;
-  int width;
-  vterm_get_size(term->vt, &height, &width);
-  
-  while (col < end_col) {
-    VTermScreenCell cell;
-    fetch_cell(term, row, col, &cell);
-    if (cell.chars[0]) {
-      if (cell.width > 1) {
-        offset += cell.width - 1;
-      }
-      } else {
-        if (is_eol(term, term->width, row, col)) {
-          offset += cell.width;
-      }
-    }
-    col += cell.width;
-  }
-  return offset;
 }
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {

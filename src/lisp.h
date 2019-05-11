@@ -4982,10 +4982,6 @@ extern int row_to_linenr(vterminal *term, int row);
 
 extern Lisp_Object refresh_lines (vterminal *term, int start_row, int end_row, int end_col);
 
-extern unsigned char * vterm_process_input (unsigned char *key, VTermModifier modifier, ptrdiff_t len);
-
-extern size_t get_col_offset(vterminal *term, int row, int end_col);
-
 extern Lisp_Object vterminal_render_text (char *buffer, int len, VTermScreenCell *cell);
 
 extern int vterminal_movecursor(VTermPos new, VTermPos old, int visible,
@@ -5005,6 +5001,10 @@ extern bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
                               uint32_t *codepoint);
 
 extern int vterminal_resize (int rows, int cols, void *user_data);
+
+extern void fetch_cell(vterminal *, int , int , VTermScreenCell *);
+
+extern bool is_eol(vterminal *term, int end_col, int row, int col);
 
 #endif
 
