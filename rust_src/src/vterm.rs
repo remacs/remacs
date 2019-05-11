@@ -12,7 +12,6 @@ use crate::{
     editfns::line_end_position,
     lisp::ExternalPtr,
     lisp::LispObject,
-    multibyte::LispStringRef,
     obarray::intern,
     remacs_sys::{
         allocate_vterm, color_to_rgb_string, get_col_offset, refresh_lines, rgb_string_to_color,
@@ -28,7 +27,7 @@ use crate::{
 
     // libvterm
     remacs_sys::{
-        vterm_get_size, vterm_input_write, vterm_keyboard_key, vterm_keyboard_unichar, vterm_new,
+        vterm_input_write, vterm_keyboard_key, vterm_keyboard_unichar, vterm_new,
         vterm_obtain_screen, vterm_obtain_state, vterm_output_get_buffer_current,
         vterm_screen_enable_altscreen, vterm_screen_flush_damage, vterm_screen_reset,
         vterm_screen_set_damage_merge, vterm_set_size, vterm_set_utf8, vterm_state_get_cursorpos,
@@ -227,9 +226,7 @@ pub fn vterminal_update(
 ) {
     unsafe {
         if string.is_not_nil() {
-            let mut utf8 = code_convert_string_norecord(string, Qutf_8, true)
-                .as_string()
-                .unwrap();
+            let mut utf8 = code_convert_string_norecord(string, Qutf_8, true).force_string();
             let len = STRING_BYTES(utf8.as_mut()) as usize;
 
             let mut v: Vec<c_uchar> = Vec::with_capacity(len as usize);
@@ -439,12 +436,14 @@ unsafe fn vterminal_flush_output(term: LispVterminalRef) {
 
 /// Send INPUT to terminal VTERM.
 #[lisp_fn(name = "vterm-write-input")]
-pub fn vterminal_write_input(vterm: LispVterminalRef, mut input: LispStringRef) {
+pub fn vterminal_write_input(vterm: LispVterminalRef, string: LispObject) {
     unsafe {
+        let mut utf8 = code_convert_string_norecord(string, Qutf_8, true).force_string();
+
         vterm_input_write(
             (*vterm).vt,
-            input.sdata_ptr(),
-            STRING_BYTES(input.as_mut()) as usize + 1,
+            utf8.sdata_ptr(),
+            STRING_BYTES(utf8.as_mut()) as usize + 1,
         );
         vterm_screen_flush_damage((*vterm).vts);
     }
@@ -487,7 +486,7 @@ unsafe fn vterminal_redraw(mut vterm: LispVterminalRef) {
 fn vterminal_delete_lines(linenum: i32, count: i32) {
     let mut cur_buf = ThreadState::current_buffer_unchecked();
 
-    vterminal_goto_line(linenum as EmacsInt);
+    vterminal_goto_line(linenum as EmacsUint);
 
     unsafe {
         del_range(
