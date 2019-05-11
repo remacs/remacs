@@ -146,11 +146,7 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     if (*term).invalid_end >= (*term).invalid_start {
         let line_start = row_to_linenr(term.as_mut() as *mut vterminal, (*term).invalid_start);
 
-        // call!(
-        //     LispObject::from(intern("goto-line")),
-        //     LispObject::from(line_start)
-        // );
-        vterminal_goto_line(line_start);
+        vterminal_goto_line(line_start as EmacsInt);
 
         vterminal_delete_lines(line_start, (*term).invalid_end - (*term).invalid_start);
 
@@ -174,11 +170,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
     let cursor_lnum = row_to_linenr(term.as_mut() as *mut vterminal, pos.row);
 
-    // call!(
-    //     LispObject::from(intern("goto-line")),
-    //     LispObject::from(cmp::min(cursor_lnum, buffer_lnum))
-    // );
-    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum));
+    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum) as EmacsInt);
 
     let offset = get_col_offset(term.as_mut() as *mut vterminal, pos.row, pos.col);
     forward_char(LispObject::from((pos.col - offset as i32) as EmacsInt));
@@ -199,11 +191,7 @@ unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
         }
 
         let buf_index = buffer_lnum - (*term).height + 1;
-        // call!(
-        //     LispObject::from(intern("goto-line")),
-        //     LispObject::from(buf_index)
-        // );
-        vterminal_goto_line(buf_index);
+        vterminal_goto_line(buf_index as EmacsInt);
 
         refresh_lines(
             term.as_mut() as *mut vterminal,
@@ -496,11 +484,7 @@ unsafe fn vterminal_redraw(mut vterm: LispVterminalRef) {
 fn vterminal_delete_lines(linenum: i32, count: i32) {
     let mut cur_buf = ThreadState::current_buffer_unchecked();
 
-    // call!(
-    //     LispObject::from(intern("goto-line")),
-    //     LispObject::from(linenum)
-    // );
-    vterminal_goto_line(linenum);
+    vterminal_goto_line(linenum as EmacsInt);
 
     unsafe {
         del_range(
@@ -520,6 +504,7 @@ fn vterminal_delete_lines(linenum: i32, count: i32) {
 }
 
 /// Count lines in current buffer
+#[lisp_fn]
 pub fn vterminal_count_lines() -> i32 {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let orig_pt = cur_buf.pt;
@@ -536,19 +521,13 @@ pub fn vterminal_count_lines() -> i32 {
     count
 }
 
-pub fn vterminal_goto_line(line: i32) {
+#[lisp_fn]
+pub fn vterminal_goto_line(line: EmacsInt) {
     let cur_buf = ThreadState::current_buffer_unchecked();
     unsafe { set_point(cur_buf.begv) };
 
-    let mut count: i32 = 1;
     let regexp = unsafe { make_string("\n".as_ptr() as *mut c_char, 1) };
     unsafe { search_command(regexp, Qnil, Qt, LispObject::from(line - 1), 1, 1, false) };
-
-    // only use search_commad with count arg
-    // while line > count {
-    //     unsafe { search_command(regexp, Qnil, Qt, LispObject::from(1), 1, 1, false) };
-    //     count += 1;
-    // }
 }
 
 // vterm_screen_callbacks
