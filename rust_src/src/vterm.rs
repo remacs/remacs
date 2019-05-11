@@ -21,8 +21,8 @@ use crate::{
 
     remacs_sys::{
         buf_charpos_to_bytepos, code_convert_string_norecord, del_range, make_string, pvec_type,
-        send_process, vterminal, EmacsInt, EmacsUint, Fput_text_property, Lisp_Type, Qbold,
-        Qcursor_type, Qface, Qitalic, Qnil, Qnormal, Qt, Qutf_8, Qvtermp, STRING_BYTES,
+        send_process, vterminal, EmacsInt, Fput_text_property, Lisp_Type, Qbold, Qcursor_type,
+        Qface, Qitalic, Qnil, Qnormal, Qt, Qutf_8, Qvtermp, STRING_BYTES,
     },
 
     // libvterm
@@ -95,7 +95,7 @@ pub fn vterminal_new_lisp(
     rows: EmacsInt,
     cols: EmacsInt,
     process: LispObject,
-    scrollback: EmacsUint,
+    scrollback: EmacsInt,
 ) -> LispVterminalRef {
     unsafe {
         let mut term = LispVterminalRef::from_ptr(allocate_vterm() as *mut c_void).unwrap();
@@ -147,7 +147,7 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     if (*term).invalid_end >= (*term).invalid_start {
         let line_start = row_to_linenr(term.as_mut() as *mut vterminal, (*term).invalid_start);
 
-        vterminal_goto_line(line_start as EmacsUint);
+        vterminal_goto_line(line_start as EmacsInt);
 
         vterminal_delete_lines(line_start, (*term).invalid_end - (*term).invalid_start);
 
@@ -171,7 +171,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
     let cursor_lnum = row_to_linenr(term.as_mut() as *mut vterminal, pos.row);
 
-    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum as i32) as EmacsUint);
+    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum as i32) as EmacsInt);
 
     let offset = get_col_offset(term.as_mut() as *mut vterminal, pos.row, pos.col);
     forward_char(LispObject::from((pos.col - offset as i32) as EmacsInt));
@@ -193,7 +193,7 @@ unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
         }
 
         let buf_index = buffer_lnum as i32 - (*term).height + 1;
-        vterminal_goto_line(buf_index as EmacsUint);
+        vterminal_goto_line(buf_index as EmacsInt);
 
         refresh_lines(
             term.as_mut() as *mut vterminal,
@@ -486,7 +486,7 @@ unsafe fn vterminal_redraw(mut vterm: LispVterminalRef) {
 fn vterminal_delete_lines(linenum: i32, count: i32) {
     let mut cur_buf = ThreadState::current_buffer_unchecked();
 
-    vterminal_goto_line(linenum as EmacsUint);
+    vterminal_goto_line(linenum as EmacsInt);
 
     unsafe {
         del_range(
@@ -525,7 +525,7 @@ pub fn vterminal_count_lines() -> u32 {
 
 /// Unlike regular `goto-line` this function's arg LINE is an unsigned integer
 #[lisp_fn]
-pub fn vterminal_goto_line(line: EmacsUint) {
+pub fn vterminal_goto_line(line: EmacsInt) {
     unsafe { set_point(1) };
 
     let regexp = unsafe { make_string("\n".as_ptr() as *mut c_char, 1) };
@@ -562,7 +562,7 @@ pub unsafe extern "C" fn vterminal_invalidate_terminal(
     start_row: i32,
     end_row: i32,
 ) {
-    if !(start_row == -1 || end_row == -1) {
+    if start_row != -1 && end_row != -1 {
         (*term).invalid_start = cmp::min((*term).invalid_start, start_row);
         (*term).invalid_end = cmp::max((*term).invalid_end, end_row);
     }
