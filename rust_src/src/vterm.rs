@@ -139,6 +139,8 @@ pub fn vterminal_new_lisp(
     }
 }
 
+/// Refresh the screen (visible part of the buffer when the terminal is focused)
+/// of a invalidated terminal
 unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     // Term height may have decreased before `invalid_end` reflects it.
     (*term).invalid_end = cmp::min((*term).invalid_end, (*term).height);
@@ -146,7 +148,7 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     if (*term).invalid_end >= (*term).invalid_start {
         let line_start = row_to_linenr(term.as_mut() as *mut vterminal, (*term).invalid_start);
 
-        vterminal_goto_line(line_start as EmacsInt);
+        vterminal_goto_line(line_start as EmacsUint);
 
         vterminal_delete_lines(line_start, (*term).invalid_end - (*term).invalid_start);
 
@@ -170,7 +172,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
     let cursor_lnum = row_to_linenr(term.as_mut() as *mut vterminal, pos.row);
 
-    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum) as EmacsInt);
+    vterminal_goto_line(cmp::min(cursor_lnum, buffer_lnum as i32) as EmacsUint);
 
     let offset = get_col_offset(term.as_mut() as *mut vterminal, pos.row, pos.col);
     forward_char(LispObject::from((pos.col - offset as i32) as EmacsInt));
@@ -178,20 +180,21 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
 /// Refresh the scrollback of an invalidated terminal.
 unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
-    let mut buffer_lnum: i32;
+    let mut buffer_lnum: u32;
 
     if (*term).sb_pending > 0 {
         buffer_lnum = vterminal_count_lines();
 
-        let del_cnt = buffer_lnum - (*term).height - (*term).sb_size as i32 + (*term).sb_pending;
+        let del_cnt =
+            buffer_lnum as i32 - (*term).height - (*term).sb_size as i32 + (*term).sb_pending;
 
         if del_cnt > 0 {
             vterminal_delete_lines(1, del_cnt);
             buffer_lnum = vterminal_count_lines();
         }
 
-        let buf_index = buffer_lnum - (*term).height + 1;
-        vterminal_goto_line(buf_index as EmacsInt);
+        let buf_index = buffer_lnum as i32 - (*term).height + 1;
+        vterminal_goto_line(buf_index as EmacsUint);
 
         refresh_lines(
             term.as_mut() as *mut vterminal,
@@ -206,8 +209,8 @@ unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
     buffer_lnum = vterminal_count_lines();
 
     // Remove extra lines at the bottom
-    if buffer_lnum > max_line_count {
-        vterminal_delete_lines(max_line_count + 1, buffer_lnum - max_line_count + 1);
+    if buffer_lnum as i32 > max_line_count {
+        vterminal_delete_lines(max_line_count + 1, buffer_lnum as i32 - max_line_count + 1);
     }
 }
 
@@ -505,13 +508,13 @@ fn vterminal_delete_lines(linenum: i32, count: i32) {
 
 /// Count lines in current buffer
 #[lisp_fn]
-pub fn vterminal_count_lines() -> i32 {
+pub fn vterminal_count_lines() -> u32 {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let orig_pt = cur_buf.pt;
 
     unsafe { set_point(cur_buf.begv) };
 
-    let mut count: i32 = 1;
+    let mut count: u32 = 1;
     let regexp = unsafe { make_string("\n".as_ptr() as *mut c_char, 1) };
     while unsafe { !search_command(regexp, Qnil, Qt, LispObject::from(1), 1, 1, false).is_nil() } {
         count += 1;
@@ -521,13 +524,15 @@ pub fn vterminal_count_lines() -> i32 {
     count
 }
 
+/// Unlike regular `goto-line` this function's arg LINE is an unsigned integer
 #[lisp_fn]
-pub fn vterminal_goto_line(line: EmacsInt) {
-    let cur_buf = ThreadState::current_buffer_unchecked();
-    unsafe { set_point(cur_buf.begv) };
+pub fn vterminal_goto_line(line: EmacsUint) {
+    unsafe { set_point(1) };
 
     let regexp = unsafe { make_string("\n".as_ptr() as *mut c_char, 1) };
-    unsafe { search_command(regexp, Qnil, Qt, LispObject::from(line - 1), 1, 1, false) };
+    if line > 1 {
+        unsafe { search_command(regexp, Qnil, Qt, LispObject::from(line - 1), 1, 1, false) };
+    }
 }
 
 // vterm_screen_callbacks
