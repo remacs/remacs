@@ -4,6 +4,7 @@
 
 ;; Author: Damien Cassou <damien@cassou.me>,
 ;;         Nicolas Petton <nicolas@petton.fr>
+;;         Keith Amidon <camalot@picnicpark.org>
 ;; Version: 4.0.2
 ;; Package-Requires: ((emacs "25"))
 ;; Url: https://github.com/DamienCassou/auth-password-store
