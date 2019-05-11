@@ -289,66 +289,6 @@ with C-q w."
   (setq ws-last-errormessage string)
   (error string))
 
-(defun ws-set-marker-0 ()
-  "In WordStar mode: Set marker 0 to current cursor position."
-  (interactive)
-  (setq ws-marker-0 (point-marker))
-  (message "Marker 0 set"))
-
-(defun ws-set-marker-1 ()
-  "In WordStar mode: Set marker 1 to current cursor position."
-  (interactive)
-  (setq ws-marker-1 (point-marker))
-  (message "Marker 1 set"))
-
-(defun ws-set-marker-2 ()
-  "In WordStar mode: Set marker 2 to current cursor position."
-  (interactive)
-  (setq ws-marker-2 (point-marker))
-  (message "Marker 2 set"))
-
-(defun ws-set-marker-3 ()
-  "In WordStar mode: Set marker 3 to current cursor position."
-  (interactive)
-  (setq ws-marker-3 (point-marker))
-  (message "Marker 3 set"))
-
-(defun ws-set-marker-4 ()
-  "In WordStar mode: Set marker 4 to current cursor position."
-  (interactive)
-  (setq ws-marker-4 (point-marker))
-  (message "Marker 4 set"))
-
-(defun ws-set-marker-5 ()
-  "In WordStar mode: Set marker 5 to current cursor position."
-  (interactive)
-  (setq ws-marker-5 (point-marker))
-  (message "Marker 5 set"))
-
-(defun ws-set-marker-6 ()
-  "In WordStar mode: Set marker 6 to current cursor position."
-  (interactive)
-  (setq ws-marker-6 (point-marker))
-  (message "Marker 6 set"))
-
-(defun ws-set-marker-7 ()
-  "In WordStar mode: Set marker 7 to current cursor position."
-  (interactive)
-  (setq ws-marker-7 (point-marker))
-  (message "Marker 7 set"))
-
-(defun ws-set-marker-8 ()
-  "In WordStar mode: Set marker 8 to current cursor position."
-  (interactive)
-  (setq ws-marker-8 (point-marker))
-  (message "Marker 8 set"))
-
-(defun ws-set-marker-9 ()
-  "In WordStar mode: Set marker 9 to current cursor position."
-  (interactive)
-  (setq ws-marker-9 (point-marker))
-  (message "Marker 9 set"))
-
 (defun ws-begin-block ()
   "In WordStar mode: Set block begin marker to current cursor position."
   (interactive)
@@ -446,96 +386,6 @@ with C-q w."
     (ws-error (cond (ws-block-begin-marker "Block end marker not set")
 		    (ws-block-end-marker "Block begin marker not set")
 		    (t "Block markers not set")))))
-
-(defun ws-find-marker-0 ()
-  "In WordStar mode: Go to marker 0."
-  (interactive)
-  (if ws-marker-0
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-0))
-    (ws-error "Marker 0 not set")))
-
-(defun ws-find-marker-1 ()
-  "In WordStar mode: Go to marker 1."
-  (interactive)
-  (if ws-marker-1
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-1))
-    (ws-error "Marker 1 not set")))
-
-(defun ws-find-marker-2 ()
-  "In WordStar mode: Go to marker 2."
-  (interactive)
-  (if ws-marker-2
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-2))
-    (ws-error "Marker 2 not set")))
-
-(defun ws-find-marker-3 ()
-  "In WordStar mode: Go to marker 3."
-  (interactive)
-  (if ws-marker-3
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-3))
-    (ws-error "Marker 3 not set")))
-
-(defun ws-find-marker-4 ()
-  "In WordStar mode: Go to marker 4."
-  (interactive)
-  (if ws-marker-4
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-4))
-    (ws-error "Marker 4 not set")))
-
-(defun ws-find-marker-5 ()
-  "In WordStar mode: Go to marker 5."
-  (interactive)
-  (if ws-marker-5
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-5))
-    (ws-error "Marker 5 not set")))
-
-(defun ws-find-marker-6 ()
-  "In WordStar mode: Go to marker 6."
-  (interactive)
-  (if ws-marker-6
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-6))
-    (ws-error "Marker 6 not set")))
-
-(defun ws-find-marker-7 ()
-  "In WordStar mode: Go to marker 7."
-  (interactive)
-  (if ws-marker-7
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-7))
-    (ws-error "Marker 7 not set")))
-
-(defun ws-find-marker-8 ()
-  "In WordStar mode: Go to marker 8."
-  (interactive)
-  (if ws-marker-8
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-8))
-    (ws-error "Marker 8 not set")))
-
-(defun ws-find-marker-9 ()
-  "In WordStar mode: Go to marker 9."
-  (interactive)
-  (if ws-marker-9
-      (progn
-	(setq ws-last-cursorposition (point-marker))
-	(goto-char ws-marker-9))
-    (ws-error "Marker 9 not set")))
 
 (defun ws-goto-block-begin ()
   "In WordStar mode: Go to block begin marker."
@@ -653,6 +503,36 @@ sWith: " )
     (ws-error (cond (ws-block-begin-marker "Block end marker not set")
 		    (ws-block-end-marker "Block begin marker not set")
 		    (t "Block markers not set")))))
+
+(defmacro ws-set-marker (&rest indices)
+  (let (n forms)
+    (while indices
+      (setq n (pop indices))
+      (push `(defun ,(intern (format "ws-set-marker-%d" n)) ()
+               ,(format "In WordStar mode: Set marker %d to current cursor position" n)
+               (interactive)
+               (setq ,(intern (format "ws-marker-%d" n)) (point-marker))
+               (message ,(format "Marker %d set" n)))
+            forms))
+    `(progn ,@(nreverse forms))))
+
+(ws-set-marker 0 1 2 3 4 5 6 7 8 9)
+
+(defmacro ws-find-marker (&rest indices)
+  (let (n forms)
+    (while indices
+      (setq n (pop indices))
+      (push `(defun ,(intern (format "ws-find-marker-%d" n)) ()
+               ,(format "In WordStar mode: Go to marker %d." n)
+               (interactive)
+               (if ,(intern (format "ws-marker-%d" n))
+                   (progn (setq ws-last-cursorposition (point-marker))
+                          (goto-char ,(intern (format "ws-marker-%d" n))))
+                 (ws-error ,(format "Marker %d not set" n))))
+            forms))
+    `(progn ,@(nreverse forms))))
+
+(ws-find-marker 0 1 2 3 4 5 6 7 8 9)
 
 (provide 'ws-mode)
 
