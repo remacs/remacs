@@ -33,7 +33,6 @@ use crate::{
     numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
-    remacs_sys::{Fget_buffer_window, Fmake_marker, Fset_buffer_major_mode},
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
@@ -53,6 +52,7 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, Qvisible, UNKNOWN_MODTIME_NSECS,
     },
+    remacs_sys::{Fget_buffer_window, Fmake_marker, Fset_buffer_major_mode},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
@@ -1849,10 +1849,9 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
 
 // True if B can be used as 'other-than-BUFFER' buffer.
 fn candidate_buffer(b: LispObject, buffer: LispObject) -> bool {
-    if let Some(buf) = Option::<LispBufferRef>::from(b) {
-        !b.eq(buffer) && buf.is_live() && !buf.is_hidden()
-    } else {
-        false
+    match b.as_buffer() {
+        Some(buf) => !b.eq(buffer) && buf.is_live() && !buf.is_hidden(),
+        None => false
     }
 }
 
@@ -1875,7 +1874,7 @@ pub fn other_buffer(buffer: LispObject, visible_ok: LispObject, frame: LispObjec
     let frame_bufs = f
         .buffer_list
         .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
-    let all_bufs = LiveBufferIter::new().map(|x| x.into());
+    let all_bufs = LiveBufferIter::new().map(LispObject::from);
     for buf in frame_bufs.chain(all_bufs) {
         // If the frame has a buffer_predicate, disregard buffers that
         // don't fit the predicate.
@@ -1890,24 +1889,26 @@ pub fn other_buffer(buffer: LispObject, visible_ok: LispObject, frame: LispObjec
         }
     }
 
-    if let Some(buf) = notsogood {
-        buf
-    } else {
-        // TODO: This was AUTO_STRING, which doesn't exist yet in Rust.
-        let scratch = new_unibyte_string!("*scratch*");
-        let mut buf = Fget_buffer(scratch);
-        if buf.is_nil() {
-            buf = Fget_buffer_create(scratch);
-            unsafe { Fset_buffer_major_mode(buf) };
+    match notsogood {
+        Some(buf) => buf,
+        None => {
+            // TODO: This was AUTO_STRING, which doesn't exist yet in Rust.
+            let scratch = new_unibyte_string!("*scratch*");
+            let mut buf = Fget_buffer(scratch);
+            if buf.is_nil() {
+                buf = Fget_buffer_create(scratch);
+                unsafe { Fset_buffer_major_mode(buf) };
+            }
+            buf
         }
-        buf
     }
 }
 
 // The following function is a safe variant of Fother_buffer: It doesn't
 // pay attention to any frame-local buffer lists, doesn't care about
 // visibility of buffers, and doesn't evaluate any frame predicates.
-pub fn other_buffer_safely(buffer: LispObject) -> LispObject {
+#[no_mangle]
+pub extern "C" fn other_buffer_safely(buffer: LispObject) -> LispObject {
     for buf in LiveBufferIter::new().map(|x| x.into()) {
         if candidate_buffer(buf, buffer) {
             return buf;

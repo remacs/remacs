@@ -130,7 +130,7 @@
   (let* ((other (other-buffer)))
     (should (string= (buffer-name other) "*Messages*"))))
 
-;; If we don't allow *Messages*, we end up with "*scratch*"
+;; If we don't allow *Messages*, we end up with a newly-created "*scratch*"
 (ert-deftest test-other-buffer-scratch ()
   ;; *scratch* already exists, force recreation.
   (kill-buffer "*scratch*")
@@ -138,7 +138,7 @@
          (other (other-buffer buf)))
     (should (string= (buffer-name other) "*scratch*"))))
 
-;; If we create several buffers, we end up with the most recent.
+;; If we create several buffers, we end up with the first-created.
 (ert-deftest test-other-buffer-many ()
   (let* ((msgs (get-buffer "*Messages*"))
          (buf1 (get-buffer-create "1"))
@@ -149,6 +149,22 @@
     (kill-buffer buf1)
     (kill-buffer buf2)
     (kill-buffer buf3)))
+
+;; Predicates allow us to skip buffers.
+(ert-deftest test-other-buffer-predicate ()
+  (let* ((f (selected-frame))
+         (msgs (get-buffer "*Messages*"))
+         (buf1 (get-buffer-create "1"))
+         (buf2 (get-buffer-create "2"))
+         (buf3 (get-buffer-create "3"))
+         (pred (lambda (b) (not (eq b buf1)))))
+      (modify-frame-parameters f (list (cons 'buffer-predicate pred)))
+      (let ((other (other-buffer msgs)))
+        (should (string= (buffer-name other ) "2")))
+      (modify-frame-parameters f (list (cons 'buffer-predicate nil)))
+      (kill-buffer buf1)
+      (kill-buffer buf2)
+      (kill-buffer buf3)))
 
 (provide 'buffers-tests)
 

@@ -812,40 +812,6 @@ state of the current buffer.  Use with care.  */)
 }
 
 
-/* True if B can be used as 'other-than-BUFFER' buffer.  */
-
-static bool
-candidate_buffer (Lisp_Object b, Lisp_Object buffer)
-{
-  return (BUFFERP (b) && !EQ (b, buffer)
-	  && BUFFER_LIVE_P (XBUFFER (b))
-	  && !BUFFER_HIDDEN_P (XBUFFER (b)));
-}
-
-/* The following function is a safe variant of Fother_buffer: It doesn't
-   pay attention to any frame-local buffer lists, doesn't care about
-   visibility of buffers, and doesn't evaluate any frame predicates.  */
-
-Lisp_Object
-other_buffer_safely (Lisp_Object buffer)
-{
-  Lisp_Object tail, buf;
-
-  FOR_EACH_LIVE_BUFFER (tail, buf)
-    if (candidate_buffer (buf, buffer))
-      return buf;
-
-  AUTO_STRING (scratch, "*scratch*");
-  buf = Fget_buffer (scratch);
-  if (NILP (buf))
-    {
-      buf = Fget_buffer_create (scratch);
-      Fset_buffer_major_mode (buf);
-    }
-
-  return buf;
-}
-
 /* Truncate undo list and shrink the gap of BUFFER.  */
 
 void
