@@ -158,6 +158,19 @@ Then triggers a redraw from the module."
     (when (buffer-live-p buf)
       (kill-buffer buf))))
 
+(defun vterm-resize-window (frame)
+  "Callback triggered by a size change of the FRAME.
+
+Feeds the size change to the virtual terminal."
+  (dolist (window (window-list frame))
+    (with-current-buffer (window-buffer window)
+      (when vterm--term
+        (let ((height (window-body-height window))
+              (width (window-body-width window))
+              (inhibit-read-only t))
+          (set-process-window-size vterm--process height width)
+          (vterm-set-size vterm--term height width))))))
+
 ;; (defun vterm-resize-window (window)
 ;;   "Callback triggered by a size change of the WINDOW.
 
@@ -171,18 +184,14 @@ Then triggers a redraw from the module."
 ;;         (set-process-window-size vterm--process height width)
 ;;         (vterm--set-size vterm--term height width)))))
 
-(defun vterm-resize-window (frame)
-  "Callback triggered by a size change of the FRAME.
 
-Feeds the size change to the virtual terminal."
-  (dolist (window (window-list frame))
-    (with-current-buffer (window-buffer window)
-      (when vterm--term
-        (let ((height (window-body-height window))
-              (width (window-body-width window))
-              (inhibit-read-only t))
-          (set-process-window-size vterm--process height width)
-          (vterm-set-size vterm--term height width))))))
+;; (defun vterm-resize-window (frame)
+;;   "Callback triggered by a size change of the FRAME.
+
+;; This is only used, when variable `emacs-version' < 27. Calls
+;; `vterm--window-size-change' for every window of FRAME."
+;;   (dolist (window (window-list frame))
+;;     (vterm--window-size-change window)))
 
 (defun vterm-self-insert ()
   "Sends invoking key to libvterm."

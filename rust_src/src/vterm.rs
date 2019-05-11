@@ -27,7 +27,7 @@ use crate::{
 
     // libvterm
     remacs_sys::{
-        vterm_input_write, vterm_keyboard_key, vterm_keyboard_unichar, vterm_new,
+        vterm_get_size, vterm_input_write, vterm_keyboard_key, vterm_keyboard_unichar, vterm_new,
         vterm_obtain_screen, vterm_obtain_state, vterm_output_get_buffer_current,
         vterm_screen_enable_altscreen, vterm_screen_flush_damage, vterm_screen_reset,
         vterm_screen_set_damage_merge, vterm_set_size, vterm_set_utf8, vterm_state_get_cursorpos,
@@ -43,6 +43,13 @@ use crate::{
 pub type LispVterminalRef = ExternalPtr<vterminal>;
 
 impl LispVterminalRef {
+    pub fn get_size(self) -> (i32, i32) {
+        let mut height: i32 = 0;
+        let mut width: i32 = 0;
+        unsafe { vterm_get_size((*self).vt, &mut height, &mut width) };
+        (height, width)
+    }
+
     pub fn set_size(self, rows: i32, cols: i32) {
         unsafe {
             vterm_set_size((*self).vt, rows, cols);
@@ -162,6 +169,10 @@ unsafe fn vterminal_refresh_screen(mut term: LispVterminalRef) {
     (*term).invalid_end = -1;
 }
 
+fn get_col_offset(vterm: LispVterminalRef, row: i32, end_col: i32) -> i32 {
+    let (height, width) = vterm.get_size();
+}
+
 unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
     let buffer_lnum = vterminal_count_lines();
 
@@ -179,7 +190,7 @@ unsafe fn vterminal_adjust_topline(mut term: LispVterminalRef) {
 
 /// Refresh the scrollback of an invalidated terminal.
 unsafe fn vterminal_refresh_scrollback(mut term: LispVterminalRef) {
-    let mut buffer_lnum: u32;
+    let mut buffer_lnum: i32;
 
     if (*term).sb_pending > 0 {
         buffer_lnum = vterminal_count_lines();
@@ -372,7 +383,7 @@ pub unsafe extern "C" fn vterminal_render_text(
     cell: *mut VTermScreenCell,
 ) -> LispObject {
     let text = if len == 0 {
-        make_string("".as_ptr() as *mut c_char, len as isize)
+        make_string("".as_ptr() as *mut c_char, 0)
     } else {
         make_string(buffer, len as isize)
     };
@@ -417,16 +428,17 @@ pub unsafe extern "C" fn vterminal_render_text(
     text
 }
 
-unsafe fn vterminal_flush_output(term: LispVterminalRef) {
-    let len = vterm_output_get_buffer_current((*term).vt);
+/// Send current contents of VTERM to the running shell process
+unsafe fn vterminal_flush_output(vterm: LispVterminalRef) {
+    let len = vterm_output_get_buffer_current((*vterm).vt);
     if len > 0 {
         let mut buffer: Vec<c_char> = Vec::with_capacity(len);
-        let len = vterm_output_read((*term).vt, buffer.as_mut_ptr() as *mut c_char, len);
+        let len = vterm_output_read((*vterm).vt, buffer.as_mut_ptr() as *mut c_char, len);
 
         let lisp_string = make_string(buffer.as_mut_ptr() as *mut c_char, len as isize);
 
         send_process(
-            (*term).process,
+            (*vterm).process,
             buffer.as_mut_ptr() as *mut c_char,
             len as isize,
             lisp_string,
@@ -507,13 +519,13 @@ fn vterminal_delete_lines(linenum: i32, count: i32) {
 
 /// Count lines in current buffer
 #[lisp_fn]
-pub fn vterminal_count_lines() -> u32 {
+pub fn vterminal_count_lines() -> i32 {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let orig_pt = cur_buf.pt;
 
     unsafe { set_point(cur_buf.begv) };
 
-    let mut count: u32 = 1;
+    let mut count: i32 = 1;
     let regexp = unsafe { make_string("\n".as_ptr() as *mut c_char, 1) };
     while unsafe { !search_command(regexp, Qnil, Qt, LispObject::from(1), 1, 1, false).is_nil() } {
         count += 1;
