@@ -222,13 +222,20 @@ size_t get_col_offset(vterminal *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
   unsigned char buf[4];
-
+  int height;
+  int width;
+  vterm_get_size(term->vt, &height, &width);
+  
   while (col < end_col) {
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
     if (cell.chars[0]) {
       if (cell.width > 1) {
         offset += cell.width - 1;
+      }
+      } else {
+        if (is_eol(term, term->width, row, col)) {
+          offset += cell.width;
       }
     }
     col += cell.width;
