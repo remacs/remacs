@@ -334,16 +334,22 @@ default directory."
            (epg-find-configuration 'OpenPGP))
       'allow-unsigned)
   "Non-nil means to check package signatures when installing.
-The value `allow-unsigned' means to still install a package even if
-it is unsigned.
+More specifically the value can be:
+- nil: package signatures are ignored.
+- `allow-unsigned': install a package even if it is unsigned,
+  but if it is signed and we have the key for it, verify the signature.
+- t: accept a package only if it comes with at least one verified signature.
+- `all': same as t, except when the package has several signatures,
+  in which case we verify all the signatures.
 
 This also applies to the \"archive-contents\" file that lists the
 contents of the archive."
   :type '(choice (const nil :tag "Never")
                  (const allow-unsigned :tag "Allow unsigned")
-                 (const t :tag "Check always"))
+                 (const t :tag "Check always")
+                 (const all :tag "Check all signatures"))
   :risky t
-  :version "24.4")
+  :version "27.1")
 
 (defcustom package-unsigned-archives nil
   "List of archives where we do not check for package signatures."
@@ -1257,7 +1263,9 @@ errors."
           (unless (and (eq package-check-signature 'allow-unsigned)
                        (eq (epg-signature-status sig) 'no-pubkey))
             (setq had-fatal-error t))))
-      (when (or (null good-signatures) had-fatal-error)
+      (when (or (null good-signatures)
+                (and (eq package-check-signature 'all)
+                     had-fatal-error))
         (package--display-verify-error context sig-file)
         (signal 'bad-signature (list sig-file)))
       good-signatures)))
