@@ -1417,7 +1417,12 @@ Optional argument OBJECT is the string or buffer containing the text."
 Arguments PROP and VALUE specify the property and value to append to the value
 already in place.  The resulting property values are always lists.
 Optional argument OBJECT is the string or buffer containing the text."
-  (let ((val (if (listp value) value (list value))) next prev)
+  (let ((val (if (and (listp value) (not (keywordp (car value))))
+                 ;; Already a list of faces.
+                 value
+               ;; A single face (e.g. a plist of face properties).
+               (list value)))
+        next prev)
     (while (/= start end)
       (setq next (next-single-property-change start prop object end)
 	    prev (get-text-property start prop object))
