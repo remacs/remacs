@@ -106,6 +106,52 @@
       (should-not (string= random-name buf-name))
       (should (< 0 random-number 999999)))))
 
+(ert-deftest test-kill-buffer-by-buf ()
+  (let ((buf (get-buffer-create "kill-me")))
+    (kill-buffer buf)
+    (should (eq (get-buffer "kill-me") nil))))
+
+(ert-deftest test-kill-buffer-by-name ()
+   (get-buffer-create "kill-me")
+   (kill-buffer "kill-me")
+   (should (eq (get-buffer "kill-me") nil)))
+
+(ert-deftest test-kill-buffer-default ()
+  (let ((buf (get-buffer-create "kill-me")))
+    (with-current-buffer buf (kill-buffer))
+    (should (eq (get-buffer "kill-me") nil))))
+
+(ert-deftest test-kill-buffer-query-fn ()
+  (let ((buf (get-buffer-create "kill-me"))
+        (kill-fns kill-buffer-query-functions))
+    (setq kill-buffer-query-functions
+          (list (lambda ()
+                  (should (eq (current-buffer) buf))
+                  nil)))
+    (kill-buffer buf)
+    (should (eq (get-buffer "kill-me") buf))
+    (setq kill-buffer-query-functions kill-fns)
+    (kill-buffer buf)
+    (should (eq (get-buffer "kill-me") nil))))
+
+(ert-deftest test-kill-buffer-hook-fns ()
+  (let* ((buf (get-buffer-create "kill-me"))
+         (kill-hook-called nil)
+         (kill-hook-fn (lambda ()
+                    (should (eq (current-buffer) buf))
+                    (setq kill-hook-called t)))
+         (update-hook-called nil)
+         (update-hook-fn (lambda ()
+                    (setq update-hook-called t))))
+    (add-hook `kill-buffer-hook kill-hook-fn)
+    (add-hook `buffer-list-update-hook update-hook-fn)
+    (kill-buffer buf)
+    (should (eq (get-buffer "kill-me") nil))
+    (should (eq kill-hook-called t))
+    (should (eq update-hook-called t))
+    (remove-hook `kill-buffer-hook kill-hook-fn)
+    (remove-hook `buffer-list-update-hook update-hook-fn)))
+
 (provide 'buffers-tests)
 
 ;;; buffers-tests.el ends here

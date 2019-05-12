@@ -112,7 +112,6 @@ int last_per_buffer_idx;
 static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     bool after, Lisp_Object arg1,
                                     Lisp_Object arg2, Lisp_Object arg3);
-static void swap_out_buffer_local_variables (struct buffer *b);
 
 extern void drop_overlay (struct buffer *, struct Lisp_Overlay *);
 void unchain_both (struct buffer *, Lisp_Object);
@@ -128,7 +127,6 @@ Lisp_Object buffer_fundamental_string(void)
   return QSFundamental;
 }
 
-static void free_buffer_text (struct buffer *b);
 extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
@@ -947,6 +945,9 @@ compact_buffer (struct buffer *buffer)
     }
 }
 
+extern Lisp_Object Fkill_buffer(Lisp_Object buffer_or_name);
+
+#if 0
 DEFUN ("kill-buffer", Fkill_buffer, Skill_buffer, 0, 1, "bKill buffer: ",
        doc: /* Kill the buffer specified by BUFFER-OR-NAME.
 The argument may be a buffer or the name of an existing buffer.
@@ -1223,6 +1224,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
 
   return Qt;
 }
+#endif
 
 /* Move association for BUFFER to the front of buffer (a)lists.  Since
    we do this each time BUFFER is selected visibly, the more recently
@@ -1983,7 +1985,7 @@ the normal hook `change-major-mode-hook'.  */)
 /* Make sure no local variables remain set up with buffer B
    for their current values.  */
 
-static void
+void
 swap_out_buffer_local_variables (struct buffer *b)
 {
   Lisp_Object oalist, alist, buffer;
@@ -4157,7 +4159,7 @@ enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
 
 /* Free buffer B's text buffer.  */
 
-static void
+void
 free_buffer_text (struct buffer *b)
 {
   block_input ();
@@ -5364,7 +5366,7 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Sother_buffer);
-  defsubr (&Skill_buffer);
+//  defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
   defsubr (&Sbuffer_swap_text);

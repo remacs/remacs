@@ -1444,6 +1444,9 @@ struct infile
 /* Defined in buffer.c.  */
 extern struct infile* infile;
 
+extern void free_buffer_text (struct buffer *b);
+extern void swap_out_buffer_local_variables (struct buffer *b);
+
 /* Defined in lread.c.  */
 extern void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,

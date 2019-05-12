@@ -63,3 +63,4 @@
 #endif
 #include "window.h"
 #include "xgselect.h"
+#include "xwidget.h"

@@ -14,6 +14,7 @@ use crate::{
     character::char_head_p,
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
+    dispnew::is_interactive,
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
@@ -33,31 +34,42 @@ use crate::{
     numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
-    remacs_sys::Fmake_marker,
     remacs_sys::{
-        alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
-        buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
-        buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, make_timespec, marker_position, modify_overlay,
-        notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
-        set_buffer_internal_1, set_per_buffer_value, specbind, unblock_input, unchain_both,
-        unchain_marker, update_mode_lines, windows_or_buffers_changed,
+        all_buffers, alloc_buffer_text, allocate_buffer, allocate_misc, block_input,
+        bset_undo_list, bset_update_mode_line, bset_width_table, buffer_fundamental_string,
+        buffer_intervals, buffer_local_flags, buffer_local_value, buffer_memory_full,
+        buffer_window_count, clear_charpos_cache, del_range, delete_all_overlays, do_yes_or_no_p,
+        frames_discard_buffer, free_buffer_text, free_region_cache, globals, internal_delete_file,
+        kill_buffer_processes, kill_buffer_xwidgets, last_per_buffer_idx, lookup_char_property,
+        make_timespec, marker_position, minibuf_window, modify_overlay, notify_variable_watchers,
+        per_buffer_default, recenter_overlay_lists, record_unwind_protect,
+        replace_buffer_in_windows, replace_buffer_in_windows_safely, run_hook,
+        save_excursion_restore, save_excursion_save, set_buffer_internal, set_buffer_internal_1,
+        set_buffer_intervals, set_interval_object, set_per_buffer_value, specbind,
+        swap_out_buffer_local_variables, thread_check_current_buffer, unblock_input, unchain_both,
+        unchain_marker, unlock_buffer, update_mode_lines, windows_or_buffers_changed,
+        SPECPDL_INDEX,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
+        Lisp_Marker, Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
     remacs_sys::{
         buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
         Qbuffer_read_only, Qbufferp, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit,
-        Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
-        Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qinhibit_read_only, Qkill_buffer_hook, Qkill_buffer_query_functions, Qmakunbound, Qnil,
+        Qoverlayp, Qpermanent_local, Qpermanent_local_hook, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+    },
+    remacs_sys::{
+        Fdelq, Fformat, Fmake_marker, Fother_buffer, Frassq, Frun_hook_with_args_until_failure,
+        Fsymbol_value,
     },
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
     util::clip_to_bounds,
     vectors::LispVectorlikeRef,
+    windows::LispWindowRef,
 };
 
 pub const BEG: ptrdiff_t = 1;
@@ -1841,6 +1853,274 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if charpos - 1 != nchars {
         panic!("byte_char_debug_check failed.")
     }
+}
+
+/// Kill the buffer specified by BUFFER-OR-NAME.
+/// The argument may be a buffer or the name of an existing buffer.
+/// Argument nil or omitted means kill the current buffer.  Return t if the
+/// buffer is actually killed, nil otherwise.
+///
+/// The functions in `kill-buffer-query-functions' are called with the
+/// buffer to be killed as the current buffer.  If any of them returns nil,
+/// the buffer is not killed.  The hook `kill-buffer-hook' is run before the
+/// buffer is actually killed.  The buffer being killed will be current
+/// while the hook is running.  Functions called by any of these hooks are
+/// supposed to not change the current buffer.
+///
+/// Any processes that have this buffer as the `process-buffer' are killed
+/// with SIGHUP.  This function calls `replace-buffer-in-windows' for
+/// cleaning up all windows currently displaying the buffer to be killed.
+#[lisp_fn(min = "0", intspec = "bKill buffer: ")]
+pub fn kill_buffer(buffer_or_name: LispObject) -> LispObject {
+    let mut b = if buffer_or_name.is_nil() {
+        current_buffer().into()
+    } else {
+        LispBufferRef::from(LispBufferOrName::from(buffer_or_name))
+    };
+
+    // Avoid trouble for buffer already dead.
+    if !b.is_live() || unsafe { thread_check_current_buffer(b.as_mut()) } {
+        return Qnil;
+    }
+
+    // Run hooks with the buffer to be killed the current buffer.
+    unsafe {
+        let count = SPECPDL_INDEX();
+
+        record_unwind_protect(Some(save_excursion_restore), save_excursion_save());
+        set_buffer_internal(b.as_mut());
+
+        // First run the query functions; if any query is answered no,
+        // don't kill the buffer.
+        if callN_raw!(
+            Frun_hook_with_args_until_failure,
+            Qkill_buffer_query_functions
+        )
+        .is_nil()
+        {
+            return unbind_to(count, Qnil);
+        }
+
+        // Query if the buffer is still modified.
+        if is_interactive()
+            && b.filename().is_not_nil()
+            && b.modifications() > b.modifications_since_save()
+        {
+            // TODO: This was AUTO_STRING.
+            let format = new_unibyte_string!("Buffer %s modified; kill anyway? ");
+            if do_yes_or_no_p(callN_raw!(Fformat, format, b.name_)).is_nil() {
+                return unbind_to(count, Qnil);
+            }
+        }
+
+        // If the hooks have killed the buffer, exit now.
+        if !b.is_live() {
+            return unbind_to(count, Qt);
+        }
+
+        // Then run the hooks.
+        run_hook(Qkill_buffer_hook);
+        unbind_to(count, Qnil);
+
+        // If the hooks have killed the buffer, exit now.
+        if !b.is_live() {
+            return Qt;
+        }
+
+        // We have no more questions to ask.  Verify that it is valid
+        // to kill the buffer.  This must be done after the questions
+        // since anything can happen within do_yes_or_no_p.
+
+        // Don't kill the minibuffer now current.
+        if LispObject::from(b).eq(LispWindowRef::from(minibuf_window).contents) {
+            return Qnil;
+        }
+
+        // When we kill an ordinary buffer which shares its buffer text
+        // with indirect buffer(s), we must kill indirect buffer(s) too.
+        // We do it at this stage so nothing terrible happens if they
+        // ask questions or their hooks get errors.
+        if b.base_buffer.is_null() && b.indirections > 0 {
+            let mut other = all_buffers;
+            while !other.is_null() {
+                if (*other).base_buffer == b.as_mut() {
+                    Fkill_buffer(LispBufferRef::new(other).into());
+                }
+                other = (*other).next;
+            }
+
+            // Exit if we now have killed the base buffer (Bug#11665).
+            if !b.is_live() {
+                return Qt;
+            }
+        }
+
+        // Run replace_buffer_in_windows before making another buffer current
+        // since set-window-buffer-start-and-point will refuse to make another
+        // buffer current if the selected window does not show the current
+        // buffer (bug#10114).
+        replace_buffer_in_windows(b.into());
+
+        // Exit if replacing the buffer in windows has killed our buffer.
+        if !b.is_live() {
+            return Qt;
+        }
+
+        // Make this buffer not be current.  Exit if it is the sole visible
+        // buffer.
+        if b == current_buffer().into() {
+            Fset_buffer(Fother_buffer(b.into(), Qnil, Qnil));
+            if b == current_buffer().into() {
+                return Qnil;
+            }
+        }
+
+        // If the buffer now current is shown in the minibuffer and our buffer
+        // is the sole other buffer give up.
+        if current_buffer().eq(LispWindowRef::from(minibuf_window).contents)
+            && LispObject::from(b).eq(Fother_buffer(b.into(), Qnil, Qnil))
+        {
+            return Qnil;
+        }
+
+        // Now there is no question: we can kill the buffer.
+
+        // Unlock this buffer's file, if it is locked.
+        unlock_buffer(b.as_mut());
+
+        kill_buffer_processes(b.into());
+        kill_buffer_xwidgets(b.into());
+    }
+
+    // Killing buffer processes may run sentinels which may have killed
+    // our buffer.
+    if !b.is_live() {
+        return Qt;
+    }
+
+    unsafe {
+        // These may run Lisp code and into infinite loops (if someone
+        // insisted on circular lists) so allow quitting here.
+        frames_discard_buffer(b.into());
+
+        clear_charpos_cache(b.as_mut());
+
+        let tmp = globals.Vinhibit_quit;
+        globals.Vinhibit_quit = Qt;
+        // Remove the buffer from the list of all buffers.
+        Vbuffer_alist = Fdelq(Frassq(b.into(), Vbuffer_alist), Vbuffer_alist);
+        // If replace_buffer_in_windows didn't do its job fix that now.
+        replace_buffer_in_windows_safely(b.into());
+        globals.Vinhibit_quit = tmp;
+
+        // Delete any auto-save file, if we saved it in this session.
+        // But not if the buffer is modified.
+        if b.auto_save_file_name_.is_string()
+            && b.auto_save_modified != 0
+            && b.modifications_since_save() < b.auto_save_modified
+            && b.modifications_since_save() < b.modifications()
+            && Fsymbol_value(intern("auto-save-visited-file-name").into()).is_nil()
+            && Fsymbol_value(intern("delete-auto-save-files").into()).is_not_nil()
+        {
+            internal_delete_file(b.auto_save_file_name_);
+        }
+
+        // Deleting an auto-save file could have killed our buffer.
+        if !b.is_live() {
+            return Qt;
+        }
+
+        match b.base_buffer() {
+            Some(base) => {
+                // Unchain all markers that belong to this indirect buffer.
+                // Don't unchain the markers that belong to the base buffer
+                // or its other indirect buffers.
+                let mut mp: &mut *mut Lisp_Marker = &mut (*b.text).markers;
+                while !mp.is_null() {
+                    if (**mp).buffer == b.as_mut() {
+                        (**mp).buffer = ptr::null_mut();
+                        (*mp) = (**mp).next;
+                    } else {
+                        mp = &mut (**mp).next;
+                    }
+                }
+
+                // Intervals should be owned by the base buffer (Bug#16502).
+                let i = buffer_intervals(b.as_mut());
+                if !i.is_null() {
+                    set_interval_object(i, base.into());
+                }
+            }
+            None => {
+                // Unchain all markers of this buffer and its indirect buffers.
+                // and leave them pointing nowhere.
+                let mut m: *mut Lisp_Marker = (*b.text).markers;
+                while !m.is_null() {
+                    let next = (*m).next;
+                    (*m).buffer = ptr::null_mut();
+                    (*m).next = ptr::null_mut();
+                    m = next;
+                }
+                (*b.text).markers = ptr::null_mut();
+                set_buffer_intervals(b.as_mut(), ptr::null_mut());
+
+                // Perhaps we should explicitly free the interval tree here...
+            }
+        }
+
+        // Since we've unlinked the markers, the overlays can't be here any more
+        // either.
+        b.overlays_before = ptr::null_mut();
+        b.overlays_after = ptr::null_mut();
+
+        // Reset the local variables, so that this buffer's local values
+        // won't be protected from GC.  They would be protected
+        // if they happened to remain cached in their symbols.
+        // This gets rid of them for certain.
+        swap_out_buffer_local_variables(b.as_mut());
+        reset_buffer_local_variables(b, true);
+
+        b.name_ = Qnil;
+
+        block_input();
+        if !b.base_buffer.is_null() {
+            // Notify our base buffer that we don't share the text anymore.
+            assert_eq!(b.indirections, -1);
+            (*b.base_buffer).indirections -= 1;
+            assert!((*b.base_buffer).indirections >= 0);
+            // Make sure that we wasn't confused.
+            assert_eq!(b.window_count, -1);
+        } else {
+            // Make sure that no one shows us.
+            assert_eq!(b.window_count, 0);
+            // No one shares our buffer text, can free it.
+            free_buffer_text(b.as_mut());
+        }
+
+        if !b.newline_cache.is_null() {
+            free_region_cache(b.newline_cache);
+            b.newline_cache = ptr::null_mut();
+        }
+        if !b.width_run_cache.is_null() {
+            free_region_cache(b.width_run_cache);
+            b.width_run_cache = ptr::null_mut();
+        }
+        if !b.bidi_paragraph_cache.is_null() {
+            free_region_cache(b.bidi_paragraph_cache);
+            b.bidi_paragraph_cache = ptr::null_mut();
+        }
+
+        bset_width_table(b.as_mut(), Qnil);
+        unblock_input();
+        bset_undo_list(b.as_mut(), Qnil);
+
+        // Run buffer-list-update-hook.
+        if Vrun_hooks.is_not_nil() {
+            call!(Vrun_hooks, Qbuffer_list_update_hook);
+        }
+    }
+
+    Qt
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
