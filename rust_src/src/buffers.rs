@@ -1851,7 +1851,7 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
 fn candidate_buffer(b: LispObject, buffer: LispObject) -> bool {
     match b.as_buffer() {
         Some(buf) => !b.eq(buffer) && buf.is_live() && !buf.is_hidden(),
-        None => false
+        None => false,
     }
 }
 
