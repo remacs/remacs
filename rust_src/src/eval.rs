@@ -27,7 +27,7 @@ use crate::{
         COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fcons, Fdefault_value, Fload, Fpurecopy, Fput},
+    remacs_sys::{Fapply, Fcons, Fdefault_value, Fload},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -1341,19 +1341,19 @@ pub fn condition_case(args: LispCons) -> LispObject {
 type SpecbindingRef = ExternalPtr<specbinding>;
 
 #[no_mangle]
-pub extern "C" fn specpdl_symbol(pdl: &SpecbindingRef) -> LispSymbolRef {
+pub extern "C" fn specpdl_symbol(pdl: SpecbindingRef) -> LispObject {
     debug_assert!(pdl.kind() >= SPECPDL_LET);
-    unsafe { LispSymbolRef::from(pdl.let_.as_ref().symbol) }
+    unsafe { pdl.let_.as_ref().symbol }
 }
 
 #[no_mangle]
-pub extern "C" fn specpdl_old_value(pdl: &SpecbindingRef) -> LispObject {
+pub extern "C" fn specpdl_old_value(pdl: SpecbindingRef) -> LispObject {
     debug_assert!(pdl.kind() >= SPECPDL_LET);
     unsafe { pdl.let_.as_ref().old_value }
 }
 
 #[no_mangle]
-pub extern "C" fn set_specpdl_old_value(pdl: &mut SpecbindingRef, val: LispObject) {
+pub extern "C" fn set_specpdl_old_value(mut pdl: SpecbindingRef, val: LispObject) {
     debug_assert!(pdl.kind() >= SPECPDL_LET);
     unsafe {
         pdl.let_.as_mut().old_value = val;
@@ -1361,7 +1361,7 @@ pub extern "C" fn set_specpdl_old_value(pdl: &mut SpecbindingRef, val: LispObjec
 }
 
 #[no_mangle]
-pub extern "C" fn default_toplevel_binding(symbol: LispSymbolRef) -> SpecbindingRef {
+pub extern "C" fn default_toplevel_binding(symbol: LispObject) -> SpecbindingRef {
     let current_thread = ThreadState::current_thread();
     let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
 
@@ -1374,7 +1374,7 @@ pub extern "C" fn default_toplevel_binding(symbol: LispSymbolRef) -> Specbinding
         }
         match pdl.kind() {
             ref x if [SPECPDL_LET_DEFAULT, SPECPDL_LET].contains(x) => {
-                if symbol == specpdl_symbol(&pdl) {
+                if specpdl_symbol(pdl) == symbol {
                     binding = pdl.clone()
                 }
             }
@@ -1387,10 +1387,7 @@ pub extern "C" fn default_toplevel_binding(symbol: LispSymbolRef) -> Specbinding
                     SPECPDL_BACKTRACE,
                     SPECPDL_LET_LOCAL,
                 ]
-                .contains(x) =>
-            {
-                binding.replace_ptr(std::ptr::null_mut())
-            }
+                .contains(x) => {}
             _ => panic!("Incorrect specpdl kind"),
         }
     }
@@ -1441,9 +1438,9 @@ pub fn defvar(args: LispCons) -> LispObject {
         if tem {
             /* Check if there is really a global binding rather than just a let
             binding that shadows the global unboundness of the var.  */
-            let mut binding = default_toplevel_binding(sym);
-            if !binding.is_null() && (specpdl_old_value(&binding) == Qunbound) {
-                set_specpdl_old_value(&mut binding, unsafe { eval_sub(car(tail)) });
+            let binding = default_toplevel_binding(sym.into());
+            if !binding.is_null() && (specpdl_old_value(binding) == Qunbound) {
+                set_specpdl_old_value(binding, unsafe { eval_sub(car(tail)) });
             }
         } else {
             set_default(sym, unsafe { eval_sub(car(tail)) });
@@ -1452,15 +1449,13 @@ pub fn defvar(args: LispCons) -> LispObject {
         let mut tem = car(cdr(tail));
 
         if tem.is_not_nil() {
-            unsafe {
-                if globals.Vpurify_flag.is_not_nil() {
-                    tem = Fpurecopy(tem);
-                }
-                Fput(sym.into(), Qvariable_documentation, tem);
+            if unsafe { globals.Vpurify_flag }.is_not_nil() {
+                tem = purecopy(tem);
             }
+            put(sym.into(), Qvariable_documentation, tem);
         }
         loadhist_attach(sym.into());
-    } else if unsafe { globals.Vinternal_interpreter_environment.is_not_nil() }
+    } else if unsafe { globals.Vinternal_interpreter_environment }.is_not_nil()
         && !sym.get_declared_special()
     {
         /* A simple (defvar foo) with lexical scoping does "nothing" except
