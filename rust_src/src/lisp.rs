@@ -160,6 +160,12 @@ impl<T> PartialEq for ExternalPtr<T> {
     }
 }
 
+impl<T> PartialOrd for ExternalPtr<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.as_ptr().cmp(&other.as_ptr()))
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the

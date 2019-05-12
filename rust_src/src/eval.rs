@@ -8,26 +8,26 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     alloc::purecopy,
-    data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
+    data::{
+        defalias, default_boundp, fset, indirect_function, indirect_function_lisp, set, set_default,
+    },
     lisp::is_autoload,
-    lisp::{LispObject, LispSubrRef},
+    lisp::{ExternalPtr, LispObject, LispSubrRef},
     lists::{assq, car, cdr, get, memq, nth, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::specbind_tag::{
-        SPECPDL_UNWIND, SPECPDL_UNWIND_INT, SPECPDL_UNWIND_PTR, SPECPDL_UNWIND_VOID,
-    },
+    remacs_sys::specbind_tag::*,
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, funcall_lambda, funcall_subr, globals, grow_specpdl,
         internal_catch, internal_lisp_condition_case, list2, maybe_gc, maybe_quit,
-        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, COMPILEDP,
-        MODULE_FUNCTIONP,
+        record_in_backtrace, record_unwind_save_match_data, signal_or_quit, specbind, specbinding,
+        COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fdefault_value, Fload},
+    remacs_sys::{Fapply, Fcons, Fdefault_value, Fload, Fpurecopy, Fput},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -1336,6 +1336,147 @@ pub fn condition_case(args: LispCons) -> LispObject {
     let (var, consq) = args.into();
     let (bodyform, handlers) = consq.into();
     unsafe { internal_lisp_condition_case(var, bodyform, handlers) }
+}
+
+type SpecbindingRef = ExternalPtr<specbinding>;
+
+#[no_mangle]
+pub extern "C" fn specpdl_symbol(pdl: &SpecbindingRef) -> LispSymbolRef {
+    debug_assert!(pdl.kind() >= SPECPDL_LET);
+    unsafe { LispSymbolRef::from(pdl.let_.as_ref().symbol) }
+}
+
+#[no_mangle]
+pub extern "C" fn specpdl_old_value(pdl: &SpecbindingRef) -> LispObject {
+    debug_assert!(pdl.kind() >= SPECPDL_LET);
+    unsafe { pdl.let_.as_ref().old_value }
+}
+
+#[no_mangle]
+pub extern "C" fn set_specpdl_old_value(pdl: &mut SpecbindingRef, val: LispObject) {
+    debug_assert!(pdl.kind() >= SPECPDL_LET);
+    unsafe {
+        pdl.let_.as_mut().old_value = val;
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn default_toplevel_binding(symbol: LispSymbolRef) -> SpecbindingRef {
+    let current_thread = ThreadState::current_thread();
+    let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
+
+    let mut binding = SpecbindingRef::new(std::ptr::null_mut());
+    let mut pdl = SpecbindingRef::new(current_thread.m_specpdl_ptr);
+
+    while pdl > specpdl {
+        unsafe {
+            pdl.ptr_sub(1);
+        }
+        match pdl.kind() {
+            ref x if [SPECPDL_LET_DEFAULT, SPECPDL_LET].contains(x) => {
+                if symbol == specpdl_symbol(&pdl) {
+                    binding = pdl.clone()
+                }
+            }
+            ref x
+                if [
+                    SPECPDL_UNWIND,
+                    SPECPDL_UNWIND_PTR,
+                    SPECPDL_UNWIND_INT,
+                    SPECPDL_UNWIND_VOID,
+                    SPECPDL_BACKTRACE,
+                    SPECPDL_LET_LOCAL,
+                ]
+                .contains(x) =>
+            {
+                binding.replace_ptr(std::ptr::null_mut())
+            }
+            _ => panic!("Incorrect specpdl kind"),
+        }
+    }
+
+    binding
+}
+
+/// Define SYMBOL as a variable, and return SYMBOL.
+/// You are not required to define a variable in order to use it, but
+/// defining it lets you supply an initial value and documentation, which
+/// can be referred to by the Emacs help facilities and other programming
+/// tools.  The `defvar' form also declares the variable as \"special\",
+/// so that it is always dynamically bound even if `lexical-binding' is t.
+///
+/// If SYMBOL's value is void and the optional argument INITVALUE is
+/// provided, INITVALUE is evaluated and the result used to set SYMBOL's
+/// value.  If SYMBOL is buffer-local, its default value is what is set;
+/// buffer-local values are not affected.  If INITVALUE is missing,
+/// SYMBOL's value is not set.
+///
+/// If SYMBOL has a local binding, then this form affects the local
+/// binding.  This is usually not what you want.  Thus, if you need to
+/// load a file defining variables, with this form or with `defconst' or
+/// `defcustom', you should always load that file _outside_ any bindings
+/// for these variables.  (`defconst' and `defcustom' behave similarly in
+/// this respect.)
+///
+/// The optional argument DOCSTRING is a documentation string for the
+/// variable.
+///
+/// To define a user option, use `defcustom' instead of `defvar'.
+/// usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn defvar(args: LispCons) -> LispObject {
+    let (sym_obj, tail) = args.into();
+    let sym: LispSymbolRef = sym_obj.into();
+
+    if tail.is_not_nil() {
+        if LispCons::from(tail).length() > 2 {
+            error!("Too many arguments");
+        }
+
+        let tem = default_boundp(sym);
+
+        /* Do it before evaluating the initial value, for self-references.  */
+        sym.set_declared_special(true);
+
+        if tem {
+            /* Check if there is really a global binding rather than just a let
+            binding that shadows the global unboundness of the var.  */
+            let mut binding = default_toplevel_binding(sym);
+            if !binding.is_null() && (specpdl_old_value(&binding) == Qunbound) {
+                set_specpdl_old_value(&mut binding, unsafe { eval_sub(car(tail)) });
+            }
+        } else {
+            set_default(sym, unsafe { eval_sub(car(tail)) });
+        }
+
+        let mut tem = car(cdr(tail));
+
+        if tem.is_not_nil() {
+            unsafe {
+                if globals.Vpurify_flag.is_not_nil() {
+                    tem = Fpurecopy(tem);
+                }
+                Fput(sym.into(), Qvariable_documentation, tem);
+            }
+        }
+        loadhist_attach(sym.into());
+    } else if unsafe { globals.Vinternal_interpreter_environment.is_not_nil() }
+        && !sym.get_declared_special()
+    {
+        /* A simple (defvar foo) with lexical scoping does "nothing" except
+        declare that var to be dynamically scoped *locally* (i.e. within
+        the current file or let-block).  */
+        unsafe {
+            globals.Vinternal_interpreter_environment =
+                Fcons(sym.into(), globals.Vinternal_interpreter_environment);
+        }
+    } else {
+        /* Simple (defvar <var>) should not count as a definition at all.
+        It could get in the way of other definitions, and unloading this
+        package could try to make the variable unbound.  */
+    }
+
+    sym.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

@@ -472,86 +472,86 @@ DEFUN ("set-default-toplevel-value", Fset_default_toplevel_value,
   return Qnil;
 }
 
-DEFUN ("defvar", Fdefvar, Sdefvar, 1, UNEVALLED, 0,
-       doc: /* Define SYMBOL as a variable, and return SYMBOL.
-You are not required to define a variable in order to use it, but
-defining it lets you supply an initial value and documentation, which
-can be referred to by the Emacs help facilities and other programming
-tools.  The `defvar' form also declares the variable as \"special\",
-so that it is always dynamically bound even if `lexical-binding' is t.
+/* DEFUN ("defvar", Fdefvar, Sdefvar, 1, UNEVALLED, 0, */
+/*        doc: /\* Define SYMBOL as a variable, and return SYMBOL. */
+/* You are not required to define a variable in order to use it, but */
+/* defining it lets you supply an initial value and documentation, which */
+/* can be referred to by the Emacs help facilities and other programming */
+/* tools.  The `defvar' form also declares the variable as \"special\", */
+/* so that it is always dynamically bound even if `lexical-binding' is t. */
 
-If SYMBOL's value is void and the optional argument INITVALUE is
-provided, INITVALUE is evaluated and the result used to set SYMBOL's
-value.  If SYMBOL is buffer-local, its default value is what is set;
-buffer-local values are not affected.  If INITVALUE is missing,
-SYMBOL's value is not set.
+/* If SYMBOL's value is void and the optional argument INITVALUE is */
+/* provided, INITVALUE is evaluated and the result used to set SYMBOL's */
+/* value.  If SYMBOL is buffer-local, its default value is what is set; */
+/* buffer-local values are not affected.  If INITVALUE is missing, */
+/* SYMBOL's value is not set. */
 
-If SYMBOL has a local binding, then this form affects the local
-binding.  This is usually not what you want.  Thus, if you need to
-load a file defining variables, with this form or with `defconst' or
-`defcustom', you should always load that file _outside_ any bindings
-for these variables.  (`defconst' and `defcustom' behave similarly in
-this respect.)
+/* If SYMBOL has a local binding, then this form affects the local */
+/* binding.  This is usually not what you want.  Thus, if you need to */
+/* load a file defining variables, with this form or with `defconst' or */
+/* `defcustom', you should always load that file _outside_ any bindings */
+/* for these variables.  (`defconst' and `defcustom' behave similarly in */
+/* this respect.) */
 
-The optional argument DOCSTRING is a documentation string for the
-variable.
+/* The optional argument DOCSTRING is a documentation string for the */
+/* variable. */
 
-To define a user option, use `defcustom' instead of `defvar'.
-usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object sym, tem, tail;
+/* To define a user option, use `defcustom' instead of `defvar'. */
+/* usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  *\/) */
+/*   (Lisp_Object args) */
+/* { */
+/*   Lisp_Object sym, tem, tail; */
 
-  sym = XCAR (args);
-  tail = XCDR (args);
+/*   sym = XCAR (args); */
+/*   tail = XCDR (args); */
 
-  if (!NILP (tail))
-    {
-      if (!NILP (XCDR (tail)) && !NILP (XCDR (XCDR (tail))))
-	error ("Too many arguments");
+/*   if (!NILP (tail)) */
+/*     { */
+/*       if (!NILP (XCDR (tail)) && !NILP (XCDR (XCDR (tail)))) */
+/* 	error ("Too many arguments"); */
 
-      tem = Fdefault_boundp (sym);
+/*       tem = Fdefault_boundp (sym); */
 
-      /* Do it before evaluating the initial value, for self-references.  */
-      XSYMBOL (sym)->u.s.declared_special = true;
+/*       /\* Do it before evaluating the initial value, for self-references.  *\/ */
+/*       XSYMBOL (sym)->u.s.declared_special = true; */
 
-      if (NILP (tem))
-	Fset_default (sym, eval_sub (XCAR (tail)));
-      else
-	{ /* Check if there is really a global binding rather than just a let
-	     binding that shadows the global unboundness of the var.  */
-	  union specbinding *binding = default_toplevel_binding (sym);
-	  if (binding && EQ (specpdl_old_value (binding), Qunbound))
-	    {
-	      set_specpdl_old_value (binding, eval_sub (XCAR (tail)));
-	    }
-	}
-      tail = XCDR (tail);
-      tem = Fcar (tail);
-      if (!NILP (tem))
-	{
-	  if (!NILP (Vpurify_flag))
-	    tem = Fpurecopy (tem);
-	  Fput (sym, Qvariable_documentation, tem);
-	}
-      LOADHIST_ATTACH (sym);
-    }
-  else if (!NILP (Vinternal_interpreter_environment)
-	   && !XSYMBOL (sym)->u.s.declared_special)
-    /* A simple (defvar foo) with lexical scoping does "nothing" except
-       declare that var to be dynamically scoped *locally* (i.e. within
-       the current file or let-block).  */
-    Vinternal_interpreter_environment
-      = Fcons (sym, Vinternal_interpreter_environment);
-  else
-    {
-      /* Simple (defvar <var>) should not count as a definition at all.
-	 It could get in the way of other definitions, and unloading this
-	 package could try to make the variable unbound.  */
-    }
+/*       if (NILP (tem)) */
+/* 	Fset_default (sym, eval_sub (XCAR (tail))); */
+/*       else */
+/* 	{ /\* Check if there is really a global binding rather than just a let */
+/* 	     binding that shadows the global unboundness of the var.  *\/ */
+/* 	  union specbinding *binding = default_toplevel_binding (sym); */
+/* 	  if (binding && EQ (specpdl_old_value (binding), Qunbound)) */
+/* 	    { */
+/* 	      set_specpdl_old_value (binding, eval_sub (XCAR (tail))); */
+/* 	    } */
+/* 	} */
+/*       tail = XCDR (tail); */
+/*       tem = Fcar (tail); */
+/*       if (!NILP (tem)) */
+/* 	{ */
+/* 	  if (!NILP (Vpurify_flag)) */
+/* 	    tem = Fpurecopy (tem); */
+/* 	  Fput (sym, Qvariable_documentation, tem); */
+/* 	} */
+/*       LOADHIST_ATTACH (sym); */
+/*     } */
+/*   else if (!NILP (Vinternal_interpreter_environment) */
+/* 	   && !XSYMBOL (sym)->u.s.declared_special) */
+/*     /\* A simple (defvar foo) with lexical scoping does "nothing" except */
+/*        declare that var to be dynamically scoped *locally* (i.e. within */
+/*        the current file or let-block).  *\/ */
+/*     Vinternal_interpreter_environment */
+/*       = Fcons (sym, Vinternal_interpreter_environment); */
+/*   else */
+/*     { */
+/*       /\* Simple (defvar <var>) should not count as a definition at all. */
+/* 	 It could get in the way of other definitions, and unloading this */
+/* 	 package could try to make the variable unbound.  *\/ */
+/*     } */
 
-  return sym;
-}
+/*   return sym; */
+/* } */
 
 /* Assert that E is true, but do not evaluate E.  Use this instead of
    eassert (E) when E contains variables that might be clobbered by a
@@ -2998,7 +2998,6 @@ alist of active lexical bindings.  */);
 
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
-  defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Sthrow);
