@@ -2504,7 +2504,7 @@ unwanted effects."
 (defface fill-column-indicator
   '((t :inherit shadow :weight normal :slant normal
        :underline nil :overline nil :strike-through nil
-       :box nil :invert-video nil :stipple nil))
+       :box nil :inverse-video nil :stipple nil))
   "Face for displaying fill column indicator.
 This face is used when `display-fill-column-indicator-mode' is
 non-nil."
