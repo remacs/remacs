@@ -1016,7 +1016,8 @@ should be shown to the user."
 (defun url-http-simple-after-change-function (_st _nd _length)
   ;; Function used when we do NOT know how long the document is going to be
   ;; Just _very_ simple 'downloaded %d' type of info.
-  (url-lazy-message "Reading %s..." (file-size-human-readable (buffer-size))))
+  (url-lazy-message "Reading %s..."
+                    (file-size-human-readable (buffer-size) 'iec " ")))
 
 (defun url-http-content-length-after-change-function (_st nd _length)
   "Function used when we DO know how long the document is going to be.
@@ -1029,16 +1030,16 @@ the callback to be triggered."
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length)
        url-http-content-type
-       (file-size-human-readable (- nd url-http-end-of-headers))
-       (file-size-human-readable url-http-content-length)
+       (file-size-human-readable (- nd url-http-end-of-headers) 'iec " ")
+       (file-size-human-readable url-http-content-length 'iec " ")
        (url-percentage (- nd url-http-end-of-headers)
 		       url-http-content-length))
     (url-display-percentage
      "Reading... %s of %s (%d%%)"
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)
-     (file-size-human-readable (- nd url-http-end-of-headers))
-     (file-size-human-readable url-http-content-length)
+     (file-size-human-readable (- nd url-http-end-of-headers) 'iec " ")
+     (file-size-human-readable url-http-content-length 'iec " ")
      (url-percentage (- nd url-http-end-of-headers)
 		     url-http-content-length)))
 

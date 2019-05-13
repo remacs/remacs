@@ -1358,7 +1358,7 @@ it means chase no more than that many links and then stop."
 
 ;; A handy function to display file sizes in human-readable form.
 ;; See http://en.wikipedia.org/wiki/Kibibyte for the reference.
-(defun file-size-human-readable (file-size &optional flavor)
+(defun file-size-human-readable (file-size &optional flavor space unit)
   "Produce a string showing FILE-SIZE in human-readable form.
 
 Optional second argument FLAVOR controls the units and the display format:
@@ -1368,24 +1368,36 @@ Optional second argument FLAVOR controls the units and the display format:
  If FLAVOR is `si', each kilobyte is 1000 bytes and the produced suffixes
     are \"k\", \"M\", \"G\", \"T\", etc.
  If FLAVOR is `iec', each kilobyte is 1024 bytes and the produced suffixes
-    are \"KiB\", \"MiB\", \"GiB\", \"TiB\", etc."
+    are \"KiB\", \"MiB\", \"GiB\", \"TiB\", etc.
+
+Optional third argument SPACE is a string put between the number and unit.
+It defaults to the empty string.  We recommend a single space or
+non-breaking space, unless other constraints prohibit a space in that
+position.
+
+Optional fourth argument UNIT is the unit to use.  It defaults to \"B\"
+when FLAVOR is `iec' and the empty string otherwise.  We recommend \"B\"
+in all cases, since that is the standard symbol for byte."
   (let ((power (if (or (null flavor) (eq flavor 'iec))
 		   1024.0
 		 1000.0))
-	(post-fixes
-	 ;; none, kilo, mega, giga, tera, peta, exa, zetta, yotta
-	 (list "" "k" "M" "G" "T" "P" "E" "Z" "Y")))
-    (while (and (>= file-size power) (cdr post-fixes))
+	(prefixes '("" "k" "M" "G" "T" "P" "E" "Z" "Y")))
+    (while (and (>= file-size power) (cdr prefixes))
       (setq file-size (/ file-size power)
-	    post-fixes (cdr post-fixes)))
-    (format (if (> (mod file-size 1.0) 0.05)
-		"%.1f%s%s"
-	      "%.0f%s%s")
-	    file-size
-	    (if (and (eq flavor 'iec) (string= (car post-fixes) "k"))
-		"K"
-	      (car post-fixes))
-	    (if (eq flavor 'iec) "iB" ""))))
+	    prefixes (cdr prefixes)))
+    (let* ((prefix (car prefixes))
+           (prefixed-unit (if (eq flavor 'iec)
+                              (concat
+                               (if (string= prefix "k") "K" prefix)
+                               (if (string= prefix "") "" "i")
+                               (or unit "B"))
+                            (concat prefix unit))))
+      (format (if (> (mod file-size 1.0) 0.05)
+		  "%.1f%s%s"
+	        "%.0f%s%s")
+	      file-size
+              (if (string-empty-p prefixed-unit) "" (or space ""))
+              prefixed-unit))))
 
 (defcustom mounted-file-systems
   (if (memq system-type '(windows-nt cygwin))
@@ -2054,7 +2066,7 @@ think it does, because \"free\" is pretty hard to define in practice."
 (defun files--ask-user-about-large-file (size op-type filename offer-raw)
   (let ((prompt (format "File %s is large (%s), really %s?"
 		        (file-name-nondirectory filename)
-		        (file-size-human-readable size) op-type)))
+		        (file-size-human-readable size 'iec " ") op-type)))
     (if (not offer-raw)
         (if (y-or-n-p prompt) nil 'abort)
       (let* ((use-dialog (and (display-popup-menus-p)
@@ -2106,9 +2118,10 @@ returns nil or exits non-locally."
 exceeds the %S%% of currently available free memory (%s).
 If that fails, try to open it with `find-file-literally'
 \(but note that some characters might be displayed incorrectly)."
-	     (file-size-human-readable size)
+	     (file-size-human-readable size 'iec " ")
 	     out-of-memory-warning-percentage
-	     (file-size-human-readable (* total-free-memory 1024)))))))))
+	     (file-size-human-readable (* total-free-memory 1024)
+                                       'iec " "))))))))
 
 (defun files--message (format &rest args)
   "Like `message', except sometimes don't print to minibuffer.

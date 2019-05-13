@@ -2163,6 +2163,15 @@ The functions 'base64-decode-string' and 'base64-decode-region' now
 accept an optional argument to decode the URL variant of base-64
 encoding.
 
++++
+** The function 'file-size-human-readable' accepts more optional arguments.
+The new third argument is a string put between the number and unit; it
+defaults to the empty string.  The new fourth argument is a string
+representing the unit to use; it defaults to "B" when the second
+argument is 'iec' and the empty string otherwise.  We recomment a
+space or non-breaking space as third argument, and "B" as fourth
+argument, circumstances allowing.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
