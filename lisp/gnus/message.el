@@ -2051,8 +2051,9 @@ see `message-narrow-to-headers-or-head'."
   (let ((regexp (if (stringp gnus-list-identifiers)
 		    gnus-list-identifiers
 		  (mapconcat 'identity gnus-list-identifiers " *\\|"))))
-    (if (string-match (concat "\\(\\(\\(Re: +\\)?\\(" regexp
-			      " *\\)\\)+\\(Re: +\\)?\\)") subject)
+    (if (and (not (equal regexp ""))
+             (string-match (concat "\\(\\(\\(Re: +\\)?\\(" regexp
+                                   " *\\)\\)+\\(Re: +\\)?\\)") subject))
 	(concat (substring subject 0 (match-beginning 1))
 		(or (match-string 3 subject)
 		    (match-string 5 subject))
@@ -6948,21 +6949,12 @@ Useful functions to put in this list include:
   :type '(repeat function))
 
 (defun message-simplify-subject (subject &optional functions)
-  "Return simplified SUBJECT."
-  (unless functions
-    ;; Simplify fully:
-    (setq functions message-simplify-subject-functions))
-  (when (and (memq 'message-strip-list-identifiers functions)
-	     gnus-list-identifiers)
-    (setq subject (message-strip-list-identifiers subject)))
-  (when (memq 'message-strip-subject-re functions)
-    (setq subject (concat "Re: " (message-strip-subject-re subject))))
-  (when (and (memq 'message-strip-subject-trailing-was functions)
-	     message-subject-trailing-was-query)
-    (setq subject (message-strip-subject-trailing-was subject)))
-  (when (memq 'message-strip-subject-encoded-words functions)
-    (setq subject (message-strip-subject-encoded-words subject)))
-  subject)
+  "Return simplified SUBJECT.
+Do so by calling each one-argument function in the list of functions
+specified by FUNCTIONS, if non-nil, or by the variable
+`message-simplify-subject-functions' otherwise."
+  (dolist (fun (or functions message-simplify-subject-functions) subject)
+    (setq subject (funcall fun subject))))
 
 ;;;###autoload
 (defun message-reply (&optional to-address wide switch-function)
@@ -6995,7 +6987,7 @@ Useful functions to put in this list include:
 	    subject (or (message-fetch-field "subject") "none"))
 
       ;; Strip list identifiers, "Re: ", and "was:"
-      (setq subject (message-simplify-subject subject))
+      (setq subject (concat "Re: " (message-simplify-subject subject)))
 
       (when (and (setq gnus-warning (message-fetch-field "gnus-warning"))
 		 (string-match "<[^>]+>" gnus-warning))
@@ -7066,7 +7058,7 @@ If TO-NEWSGROUPS, use that as the new Newsgroups line."
 		   (string-match "world" distribution)))
 	(setq distribution nil))
       ;; Strip list identifiers, "Re: ", and "was:"
-      (setq subject (message-simplify-subject subject))
+      (setq subject (concat "Re: " (message-simplify-subject subject)))
       (widen))
 
     (message-pop-to-buffer (message-buffer-name "followup" from newsgroups))
