@@ -8,8 +8,9 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::LispObject,
     remacs_sys::build_string,
-    remacs_sys::Qnil,
-    remacs_sys::{current_font, current_mono_font},
+    remacs_sys::globals,
+    remacs_sys::{current_font, current_mono_font, current_tool_bar_style},
+    remacs_sys::{Qboth, Qboth_horiz, Qimage, Qnil, Qtext, Qtext_image_horiz},
 };
 
 /// Get the system default application font.
@@ -29,6 +30,20 @@ pub fn font_get_system_font() -> LispObject {
         Qnil
     } else {
         unsafe { build_string(current_mono_font) }
+    }
+}
+
+/// Get the system tool bar style.
+/// If no system tool bar style is known, return `tool-bar-style' if set to a
+/// known style.  Otherwise return image.
+#[lisp_fn]
+pub fn tool_bar_get_system_style() -> LispObject {
+    let style = unsafe { globals.Vtool_bar_style };
+    let current_style = unsafe { current_tool_bar_style };
+    match style {
+        Qimage | Qtext | Qboth | Qboth_horiz | Qtext_image_horiz => style,
+        _ if current_style.is_nil() => Qimage,
+        _ => current_style,
     }
 }
 
