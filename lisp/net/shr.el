@@ -1791,6 +1791,8 @@ The preference is a float determined from `shr-prefer-media-type'."
 (defun shr-mark-fill (start)
   ;; We may not have inserted any text to fill.
   (when (and (/= start (point))
+             ;; Tables insert themselves with the correct indentation,
+             ;; so don't do anything if we're at the start of a table.
              (not (get-text-property start 'shr-table-id)))
     (put-text-property start (1+ start)
 		       'shr-indentation shr-indentation)))
