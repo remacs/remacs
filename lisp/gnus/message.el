@@ -1083,10 +1083,10 @@ If t, insert `message-signature-file'.
 If a function or form, insert its result.
 See `mail-signature' for the recommended format of a signature."
   :version "23.2"
-  :type '(choice string (const :tag "Contents of signature file" t)
-		 function
-		 sexp
-                 (const :tag "None" nil))
+  :type '(choice string
+                 (const :tag "None" nil)
+                 (const :tag "Contents of signature file" t)
+                 function sexp)
   :risky t
   :link '(custom-manual "(message)Insertion Variables")
   :group 'message-insertion)
