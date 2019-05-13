@@ -618,10 +618,11 @@ considered file(s)."
     ;; When TO and FR are the same, or when point is on a line after
     ;; the last entry, look at the previous revision.
     (when (or (string-equal fr to)
-              (>= (point)
+              (>= end
                   (save-excursion
-                    (goto-char (car fr-entry))
-                    (forward-line))))
+                    (goto-char end)
+                    (log-view-end-of-defun)
+                    (point))))
       (setq fr (vc-call-backend log-view-vc-backend 'previous-revision nil fr)))
     (vc-diff-internal
      t (list log-view-vc-backend
