@@ -29,7 +29,7 @@
 (require 'shr)
 (require 'url)
 (require 'url-queue)
-(require 'url-util)			; for url-get-url-at-point
+(require 'thingatpt)
 (require 'mm-url)
 (require 'puny)
 (eval-when-compile (require 'subr-x)) ;; for string-trim
@@ -64,17 +64,17 @@
 ;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
-    url-get-url-at-point
+    thing-at-point-url-at-point
     eww-current-url)
   "List of functions called to form the list of default URIs for `eww'.
 Each of the elements is a function returning either a string or a list
 of strings.  The results will be joined into a single list with
 duplicate entries (if any) removed."
-  :version "25.1"
+  :version "27.1"
   :group 'eww
   :type 'hook
   :options '(eww-links-at-point
-             url-get-url-at-point
+             thing-at-point-url-at-point
              eww-current-url))
 
 (defcustom eww-bookmarks-directory user-emacs-directory
