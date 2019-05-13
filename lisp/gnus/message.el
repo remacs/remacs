@@ -1078,13 +1078,15 @@ point and mark around the citation text as modified."
 
 (defcustom message-signature mail-signature
   "String to be inserted at the end of the message buffer.
-If t, the `message-signature-file' file will be inserted instead.
-If a function, the result from the function will be used instead.
-If a form, the result from the form will be used instead."
+If nil, don't insert a signature.
+If t, insert `message-signature-file'.
+If a function or form, insert its result.
+See `mail-signature' for the recommended format of a signature."
   :version "23.2"
   :type '(choice string (const :tag "Contents of signature file" t)
 		 function
-		 sexp)
+		 sexp
+                 (const :tag "None" nil))
   :risky t
   :link '(custom-manual "(message)Insertion Variables")
   :group 'message-insertion)
