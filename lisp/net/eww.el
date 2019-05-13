@@ -223,6 +223,10 @@ See also `eww-form-checkbox-selected-symbol'."
 (defvar eww-local-regex "localhost"
   "When this regex is found in the URL, it's not a keyword but an address.")
 
+(defvar eww-accept-content-types
+  "text/html, text/plain, text/sgml, text/css, application/xhtml+xml, */*;q=0.01"
+  "Value used for the HTTP 'Accept' header.")
+
 (defvar eww-link-keymap
   (let ((map (copy-keymap shr-map)))
     (define-key map "\r" 'eww-follow-link)
@@ -290,8 +294,9 @@ the default EWW buffer."
   (let ((inhibit-read-only t))
     (insert (format "Loading %s..." url))
     (goto-char (point-min)))
-  (url-retrieve url 'eww-render
-                (list url nil (current-buffer))))
+  (let ((url-mime-accept-string eww-accept-content-types))
+    (url-retrieve url 'eww-render
+                  (list url nil (current-buffer)))))
 
 (defun eww--dwim-expand-url (url)
   (setq url (string-trim url))
@@ -952,8 +957,9 @@ just re-display the HTML already fetched."
 	    (error "No current HTML data")
 	  (eww-display-html 'utf-8 url (plist-get eww-data :dom)
 			    (point) (current-buffer)))
-      (url-retrieve url 'eww-render
-		    (list url (point) (current-buffer) encode)))))
+      (let ((url-mime-accept-string eww-accept-content-types))
+        (url-retrieve url 'eww-render
+		      (list url (point) (current-buffer) encode))))))
 
 ;; Form support.
 
