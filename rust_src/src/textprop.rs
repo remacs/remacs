@@ -47,9 +47,14 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
         object = ThreadState::current_buffer().into();
     }
 
-    let position_pointer = &mut position as *mut LispObject;
-    let i: *mut Lisp_Interval =
-        unsafe { validate_interval_range(object, position_pointer, position_pointer, false) };
+    let i: *mut Lisp_Interval = unsafe {
+        validate_interval_range(
+            object,
+            &mut position as *mut LispObject,
+            &mut position as *mut LispObject,
+            false,
+        )
+    };
 
     if i.is_null() {
         return Qnil;
