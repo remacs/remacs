@@ -39,10 +39,11 @@ pub fn font_get_system_font() -> LispObject {
 #[lisp_fn]
 pub fn tool_bar_get_system_style() -> LispObject {
     let style = unsafe { globals.Vtool_bar_style };
+    let current_style = unsafe { current_tool_bar_style };
     match style {
-        Qnil => unsafe { current_tool_bar_style },
         Qimage | Qtext | Qboth | Qboth_horiz | Qtext_image_horiz => style,
-        _ => Qimage,
+        _ if current_style.is_nil() => Qimage,
+        _ => current_style,
     }
 }
 
