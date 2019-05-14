@@ -1108,7 +1108,6 @@ ftfont_open2 (struct frame *f,
     return Qnil;
   filename = XCAR (val);
   idx = XCDR (val);
-  val = XCDR (cache);
   cache_data = xmint_pointer (XCDR (cache));
   ft_face = cache_data->ft_face;
   if (cache_data->face_refcount > 0)
@@ -1172,20 +1171,38 @@ ftfont_open2 (struct frame *f,
   font->driver = &ftfont_driver;
   font->encoding_charset = font->repertory_charset = -1;
 
+  val = assq_no_quit (QCminspace, AREF (entity, FONT_EXTRA_INDEX));
+  bool no_leading_p = !(CONSP (val) && NILP (XCDR (val)));
   upEM = ft_face->units_per_EM;
   scalable = (FIXNUMP (AREF (entity, FONT_AVGWIDTH_INDEX))
 	      && XFIXNUM (AREF (entity, FONT_AVGWIDTH_INDEX)) == 0);
   if (scalable)
     {
       font->ascent = ft_face->ascender * size / upEM + 0.5;
-      font->descent = - ft_face->descender * size / upEM + 0.5;
-      font->height = ft_face->height * size / upEM + 0.5;
+      if (no_leading_p)
+	{
+	  font->descent = - ft_face->descender * size / upEM + 0.5;
+	  font->height = font->ascent + font->descent;
+	}
+      else
+	{
+	  font->height = ft_face->height * size / upEM + 0.5;
+	  font->descent = font->height - font->ascent;
+	}
     }
   else
     {
       font->ascent = ft_face->size->metrics.ascender >> 6;
-      font->descent = - ft_face->size->metrics.descender >> 6;
-      font->height = ft_face->size->metrics.height >> 6;
+      if (no_leading_p)
+	{
+	  font->descent = - ft_face->size->metrics.descender >> 6;
+	  font->height = font->ascent + font->descent;
+	}
+      else
+	{
+	  font->height = ft_face->size->metrics.height >> 6;
+	  font->descent = font->height - font->ascent;
+	}
     }
   if (FIXNUMP (AREF (entity, FONT_SPACING_INDEX)))
     spacing = XFIXNUM (AREF (entity, FONT_SPACING_INDEX));
@@ -2768,6 +2785,9 @@ syms_of_ftfont (void)
   DEFSYM (Qsans_serif, "sans-serif");
   DEFSYM (Qsans, "sans");
   DEFSYM (Qsans__serif, "sans serif");
+
+  /* The boolean-valued font property key specifying the use of leading.  */
+  DEFSYM (QCminspace, ":minspace");
 
   staticpro (&freetype_font_cache);
   freetype_font_cache = list1 (Qt);

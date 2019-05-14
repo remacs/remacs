@@ -160,8 +160,18 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 	  cairo_font_extents_t extents;
 	  cairo_scaled_font_extents (ftcrfont_info->cr_scaled_font, &extents);
 	  font->ascent = lround (extents.ascent);
-	  font->descent = lround (extents.descent);
-	  font->height = lround (extents.height);
+	  Lisp_Object val = assq_no_quit (QCminspace,
+					  AREF (entity, FONT_EXTRA_INDEX));
+	  if (!(CONSP (val) && NILP (XCDR (val))))
+	    {
+	      font->descent = lround (extents.descent);
+	      font->height = font->ascent + font->descent;
+	    }
+	  else
+	    {
+	      font->height = lround (extents.height);
+	      font->descent = font->height - font->ascent;
+	    }
 
 	  cairo_glyph_t stack_glyph;
 	  int n = 0;
