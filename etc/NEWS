@@ -518,7 +518,10 @@ The mode is automatically enabled in files that start with the
 'function' keyword.
 
 ** project.el
+
 *** New commands 'project-search' and 'project-query-replace-regexp'.
+
+*** New customizable variable 'project-read-file-name-function'.
 
 ** Etags
 
@@ -1986,8 +1989,6 @@ made into a regexp by joining them with '\|'.
 returns a regexp that never matches anything, which is an identity for
 this operation.  Previously, the empty string was returned in this
 case.
-
-** New variable project-read-file-name-function.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

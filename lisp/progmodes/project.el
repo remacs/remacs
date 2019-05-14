@@ -467,11 +467,12 @@ recognized."
 (defcustom project-read-file-name-function #'project--read-file-cpd-relative
   "Function to call to read a file name from a list.
 For the arguments list, see `project--read-file-cpd-relative'."
-  :type '(repeat (choice (const :tag "Read with completion from relative names"
-                                project--read-file-cpd-relative)
-                         (const :tag "Read with completion from absolute names"
-                                project--read-file-absolute)
-                         (function :tag "custom function" nil))))
+  :type '(choice (const :tag "Read with completion from relative names"
+                        project--read-file-cpd-relative)
+                 (const :tag "Read with completion from absolute names"
+                        project--read-file-absolute)
+                 (function :tag "Custom function" nil))
+  :version "27.1")
 
 (defun project--read-file-cpd-relative (prompt
                                         all-files &optional predicate
