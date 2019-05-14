@@ -1983,6 +1983,8 @@ returns a regexp that never matches anything, which is an identity for
 this operation.  Previously, the empty string was returned in this
 case.
 
+** New variable project-read-file-name-function.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
