@@ -295,7 +295,9 @@ or more of these options:
   --without-gif          for GIF image support
   --without-png          for PNG image support
   --without-rsvg         for SVG image support
-  --without-imagemagick  for Imagemagick support
+
+Although ImageMagick support is disabled by default due to security
+and stability concerns, you can enable it with --with-imagemagick.
 
 Use --without-toolkit-scroll-bars to disable Motif or Xaw3d scroll bars.
 

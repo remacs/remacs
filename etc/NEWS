@@ -37,6 +37,10 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
+** Emacs no longer defaults to using ImageMagick to display images,
+due to security and stability concerns.  To override the default, use
+'configure --with-imagemagick'.
+
 ** Several configure options now accept an option-argument 'ifavailable'.
 For example, './configure --with-xpm=ifavailable' now configures Emacs
 to attempt to use libxpm but to continue building even if libxpm is
