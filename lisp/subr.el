@@ -5544,4 +5544,8 @@ returned list are in the same order as in TREE.
 ;; for discoverability:
 (defalias 'flatten-list 'flatten-tree)
 
+;; The initial anchoring is for better performance in searching matches.
+(defconst regexp-unmatchable "\\`a\\`"
+  "Standard regexp guaranteed not to match any string at all.")
+
 ;;; subr.el ends here

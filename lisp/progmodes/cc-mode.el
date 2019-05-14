@@ -1825,7 +1825,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; by `c-doc-line-join-re'), return the position of the first line of the
   ;; sequence.  Otherwise, return nil.  Point has no significance at entry to
   ;; and exit from this function.
-  (when (not (equal c-doc-line-join-re "a\\`"))
+  (when (not (equal c-doc-line-join-re regexp-unmatchable))
     (goto-char pos)
     (back-to-indentation)
     (and (or (looking-at c-comment-start-regexp)
@@ -1842,7 +1842,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; marker (as defined by `c-doc-line-join-re), return the position of
   ;; the BOL at the end of the sequence.  Otherwise, return nil.  Point has no
   ;; significance at entry to and exit from this function.
-  (when (not (equal c-doc-line-join-re "a\\`"))
+  (when (not (equal c-doc-line-join-re regexp-unmatchable))
     (goto-char pos)
     (back-to-indentation)
     (let ((here (point)))

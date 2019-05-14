@@ -144,9 +144,9 @@ usually more efficient than that of a simplified version:
 			    (sort (copy-sequence strings) 'string-lessp)))
 	   (re
             (cond
-             ;; No strings: return a\` which cannot match anything.
+             ;; No strings: return an unmatchable regexp.
              ((null strings)
-              (concat (or open "\\(?:") "a\\`\\)"))
+              (concat (or open "\\(?:") regexp-unmatchable "\\)"))
              ;; If we cannot reorder, give up all attempts at
              ;; optimisation.  There is room for improvement (Bug#34641).
              ((and keep-order (regexp-opt--contains-prefix sorted-strings))

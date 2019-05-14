@@ -1990,6 +1990,10 @@ returns a regexp that never matches anything, which is an identity for
 this operation.  Previously, the empty string was returned in this
 case.
 
+** New constant 'regexp-unmatchable' contains a never-matching regexp.
+It is a convenient and readable way to specify a regexp that should
+not match anything, and is as fast as any such regexp can be.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

@@ -702,7 +702,7 @@ or a superior directory.")
   (remove-hook 'log-view-mode-hook 'vc-bzr-log-view-mode) ;Deactivate the hack.
   (require 'add-log)
   (set (make-local-variable 'log-view-per-file-logs) nil)
-  (set (make-local-variable 'log-view-file-re) "\\`a\\`")
+  (set (make-local-variable 'log-view-file-re) regexp-unmatchable)
   (set (make-local-variable 'log-view-message-re)
        (if (eq vc-log-view-type 'short)
 	   "^ *\\([0-9.]+\\): \\(.*?\\)[ \t]+\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)\\( \\[merge\\]\\)?"
@@ -1319,7 +1319,8 @@ stream.  Standard error output is discarded."
      ((string-match "\\`annotate:" string)
       (completion-table-with-context
        (substring string 0 (match-end 0))
-       (apply-partially #'completion-table-with-terminator '(":" . "\\`a\\`")
+       (apply-partially #'completion-table-with-terminator
+                        (cons ":" regexp-unmatchable)
                         #'completion-file-name-table)
        (substring string (match-end 0)) pred action))
 
