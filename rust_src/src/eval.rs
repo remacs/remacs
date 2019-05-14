@@ -1423,13 +1423,13 @@ pub extern "C" fn default_toplevel_binding(symbol: LispObject) -> SpecbindingRef
 #[lisp_fn(min = "1", unevalled = "true")]
 pub fn defvar(args: LispCons) -> LispObject {
     let (sym_obj, tail) = args.into();
-    let sym: LispSymbolRef = sym_obj.into();
 
     if tail.is_not_nil() {
         if LispCons::from(tail).length() > 2 {
             error!("Too many arguments");
         }
 
+        let sym: LispSymbolRef = sym_obj.into();
         let tem = default_boundp(sym);
 
         /* Do it before evaluating the initial value, for self-references.  */
@@ -1438,7 +1438,7 @@ pub fn defvar(args: LispCons) -> LispObject {
         if tem {
             /* Check if there is really a global binding rather than just a let
             binding that shadows the global unboundness of the var.  */
-            let binding = default_toplevel_binding(sym.into());
+            let binding = default_toplevel_binding(sym_obj);
             if !binding.is_null() && (specpdl_old_value(binding) == Qunbound) {
                 set_specpdl_old_value(binding, unsafe { eval_sub(car(tail)) });
             }
@@ -1452,18 +1452,21 @@ pub fn defvar(args: LispCons) -> LispObject {
             if unsafe { globals.Vpurify_flag }.is_not_nil() {
                 tem = purecopy(tem);
             }
-            put(sym.into(), Qvariable_documentation, tem);
+            put(sym, Qvariable_documentation, tem);
         }
-        loadhist_attach(sym.into());
+        loadhist_attach(sym_obj);
     } else if unsafe { globals.Vinternal_interpreter_environment }.is_not_nil()
-        && !sym.get_declared_special()
+        && sym_obj
+            .as_symbol()
+            .map(|x| !x.get_declared_special())
+            .unwrap_or(false)
     {
         /* A simple (defvar foo) with lexical scoping does "nothing" except
         declare that var to be dynamically scoped *locally* (i.e. within
         the current file or let-block).  */
         unsafe {
             globals.Vinternal_interpreter_environment =
-                Fcons(sym.into(), globals.Vinternal_interpreter_environment);
+                Fcons(sym_obj, globals.Vinternal_interpreter_environment);
         }
     } else {
         /* Simple (defvar <var>) should not count as a definition at all.
@@ -1471,7 +1474,7 @@ pub fn defvar(args: LispCons) -> LispObject {
         package could try to make the variable unbound.  */
     }
 
-    sym.into()
+    sym_obj
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
