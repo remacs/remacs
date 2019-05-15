@@ -4861,10 +4861,9 @@ Only works for Bourne-like shells."
 	 (format "kill -2 -%d" pid))
 	;; Wait, until the process has disappeared.  If it doesn't,
 	;; fall back to the default implementation.
-	(with-timeout (1 (ignore))
-	  (while (tramp-accept-process-output proc))
-	  ;; Report success.
-	  proc)))))
+        (and (tramp-accept-process-output proc 1)
+	     ;; Report success.
+	     proc)))))
 
 ;; `interrupt-process-functions' exists since Emacs 26.1.
 (when (boundp 'interrupt-process-functions)
