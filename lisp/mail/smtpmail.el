@@ -101,9 +101,9 @@ don't define this value."
 
 (defcustom smtpmail-stream-type nil
   "Type of SMTP connections to use.
-This may be either nil (possibly upgraded to STARTTLS if possible),
-or `starttls' (refuse to send if STARTTLS isn't available), or `plain'
-\(never use STARTTLS), or `ssl' (to use TLS/SSL)."
+This may be either nil (upgrade with STARTTLS if possible),
+`starttls' (refuse to send if STARTTLS isn't available),
+`plain' (never use STARTTLS), or `ssl' (to use TLS/SSL)."
   :version "24.1"
   :group 'smtpmail
   :type '(choice (const :tag "Possibly upgrade to STARTTLS" nil)

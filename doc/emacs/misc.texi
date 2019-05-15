@@ -2485,10 +2485,13 @@ automatically back to binary.
 into hex.  This is useful if you visit a file normally and then discover
 it is a binary file.
 
-  Ordinary text characters overwrite in Hexl mode.  This is to reduce
+  Inserting text always overwrites in Hexl mode.  This is to reduce
 the risk of accidentally spoiling the alignment of data in the file.
-There are special commands for insertion.  Here is a list of the
-commands of Hexl mode:
+Ordinary text characters insert themselves (i.e., overwrite with
+themselves).  There are commands for insertion of special characters
+by their code.  Most cursor motion keys, as well as @kbd{C-x C-s}, are
+bound in Hexl mode to commands that produce the same effect.  Here is
+a list of other important commands special to Hexl mode:
 
 @c I don't think individual index entries for these commands are useful--RMS.
 @table @kbd
@@ -2500,6 +2503,12 @@ Insert a byte with a code typed in octal.
 
 @item C-M-x
 Insert a byte with a code typed in hex.
+
+@item C-M-a
+Move to the beginning of a 512-byte page.
+
+@item C-M-e
+Move to the end of a 512-byte page.
 
 @item C-x [
 Move to the beginning of a 1k-byte page.

@@ -1377,6 +1377,28 @@ be applied in the current directory, not in any subdirectories.
 Finally, it specifies a different @file{ChangeLog} file name for any
 file in the @file{src/imported} subdirectory.
 
+If the @file{.dir-locals.el} file contains multiple different values
+for a variable using different mode names or directories, the values
+will be applied in an order such that the values for more specific
+modes take priority over more generic modes.  Values specified under a
+directory have even more priority.  For example:
+
+@example
+((nil . ((fill-column . 40)))
+ (c-mode . ((fill-column . 50)))
+ (prog-mode . ((fill-column . 60)))
+ ("narrow-files" . ((nil . ((fill-column . 20))))))
+@end example
+
+Files that use @code{c-mode} also match @code{prog-mode} because the
+former inherits from the latter.  The value used for
+@code{fill-column} in C files will however be @code{50} because the
+mode name is more specific than @code{prog-mode}.  Files using other
+modes inheriting from @code{prog-mode} will use @code{60}.  Any file
+under the directory @file{narrow-files} will use the value @code{20}
+even if they use @code{c-mode} because directory entries have priority
+over mode entries.
+
 You can specify the variables @code{mode}, @code{eval}, and
 @code{unibyte} in your @file{.dir-locals.el}, and they have the same
 meanings as they would have in file local variables.  @code{coding}
