@@ -99,7 +99,7 @@ struct buffer buffer_local_symbols;
 
 /* Flags indicating which built-in buffer-local variables
    are permanent locals.  */
-static char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
+char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
 
 /* Number of per-buffer variables used.  */
 
@@ -108,7 +108,6 @@ int last_per_buffer_idx;
 static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     bool after, Lisp_Object arg1,
                                     Lisp_Object arg2, Lisp_Object arg3);
-static void reset_buffer_local_variables (struct buffer *, bool);
 
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
@@ -117,11 +116,15 @@ Lisp_Object Vbuffer_alist;
 
 static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 
-static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
-static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
-static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
+
+extern void record_buffer_markers (struct buffer *b);
+extern void fetch_buffer_markers (struct buffer *b);
+
+extern void drop_overlay (struct buffer *b, struct Lisp_Overlay *ov);
+extern void modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end);
 
 static void
 CHECK_OVERLAY (Lisp_Object x)
@@ -3975,7 +3978,7 @@ for the rear of the overlay advance when text is inserted there
 
 /* Mark a section of BUF as needing redisplay because of overlays changes.  */
 
-static void
+void
 modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 {
   if (start > end)
@@ -3994,7 +3997,7 @@ modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 
 /* Remove OVERLAY from LIST.  */
 
-static struct Lisp_Overlay *
+struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 {
   register struct Lisp_Overlay *tail, **prev = &list;
@@ -5072,7 +5075,7 @@ mmap_realloc (void **var, size_t nbytes)
 
 /* Allocate NBYTES bytes for buffer B's text buffer.  */
 
-static void
+void
 alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 {
   void *p;

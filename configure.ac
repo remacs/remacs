@@ -70,6 +70,7 @@ AC_CONFIG_AUX_DIR(build-aux)
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_DEFINE(PORTED_TO_RUST, 1)
+AH_TEMPLATE(PORTED_TO_RUST, [Wraps code ported to Rust])
 
 xcsdkdir=
 AC_CHECK_PROGS(XCRUN, [xcrun])

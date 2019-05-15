@@ -3413,7 +3413,7 @@ allocate_buffer (void)
 /* Allocate a record with COUNT slots.  COUNT must be positive, and
    includes the type slot.  */
 
-static struct Lisp_Vector *
+struct Lisp_Vector *
 allocate_record (EMACS_INT count)
 {
   if (count > PSEUDOVECTOR_SIZE_MASK)
@@ -3671,7 +3671,7 @@ static union Lisp_Misc *misc_free_list;
 
 /* Return a newly allocated Lisp_Misc object of specified TYPE.  */
 
-static Lisp_Object
+Lisp_Object
 allocate_misc (enum Lisp_Misc_Type type)
 {
   Lisp_Object val;
@@ -5505,7 +5505,7 @@ make_pure_c_string (const char *data, ptrdiff_t nchars)
   return string;
 }
 
-static Lisp_Object purecopy (Lisp_Object obj);
+extern Lisp_Object purecopy (Lisp_Object obj);
 
 /* Return a cons allocated from pure space.  Give it pure copies
    of CAR as car and CDR as cdr.  */
@@ -5605,7 +5605,7 @@ static struct pinned_object
   struct pinned_object *next;
 } *pinned_objects;
 
-static Lisp_Object
+Lisp_Object
 purecopy (Lisp_Object obj)
 {
   if (INTEGERP (obj)
@@ -5725,7 +5725,7 @@ inhibit_garbage_collection (void)
 /* Used to avoid possible overflows when
    converting from C to Lisp integers.  */
 
-static Lisp_Object
+Lisp_Object
 bounded_number (EMACS_INT number)
 {
   return make_number (min (MOST_POSITIVE_FIXNUM, number));
@@ -7601,34 +7601,38 @@ The time is in seconds as a floating point value.  */);
               doc: /* Accumulated number of garbage collections done.  */);
 
   defsubr (&Scons);
-  #ifndef PORTED_TO_RUST
+#ifndef PORTED_TO_RUST
   defsubr (&Slist);
-  #endif
+#endif
   defsubr (&Svector);
-  #ifndef PORTED_TO_RUST
+#ifndef PORTED_TO_RUST
   defsubr (&Srecord);
   defsubr (&Sbool_vector);
-  #endif
+#endif
   defsubr (&Smake_byte_code);
+#ifndef PORTED_TO_RUST
   defsubr (&Smake_list);
+#endif
   defsubr (&Smake_vector);
+#ifndef PORTED_TO_RUST
   defsubr (&Smake_record);
+#endif
   defsubr (&Smake_string);
-  #ifndef PORTED_TO_RUST
+#ifndef PORTED_TO_RUST
   defsubr (&Smake_bool_vector);
-  #endif
+#endif
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);
   defsubr (&Smake_finalizer);
-  #ifndef PORTED_TO_RUST
+#ifndef PORTED_TO_RUST
   defsubr (&Spurecopy);
-  #endif
+#endif
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
   defsubr (&Smemory_info);
-  #ifndef PORTED_TO_RUST
+#ifndef PORTED_TO_RUST
   defsubr (&Smemory_use_counts);
-  #endif
+#endif
   defsubr (&Ssuspicious_object);
 }
 
