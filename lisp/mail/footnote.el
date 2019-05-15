@@ -101,7 +101,7 @@ displaying footnotes."
   :type 'integer)
 
 (defcustom footnote-prefix [(control ?c) ?!]
-  "Prefix key to use for Footnote command in Footnote minor mode.
+  "Prefix key to use for Footnote commands in Footnote minor mode.
 The value of this variable is checked as part of loading Footnote mode.
 After that, changing the prefix key requires manipulating keymaps."
   :type 'key-sequence)
@@ -876,8 +876,7 @@ play around with the following keys:
     (add-function :around (local 'adaptive-fill-function)
                   #'footnote--adaptive-fill-function)
 
-    ;; filladapt is an XEmacs package which AFAIK has never been ported
-    ;; to Emacs.
+    ;; Filladapt was an XEmacs package which is now in GNU ELPA.
     (when (boundp 'filladapt-token-table)
       ;; add tokens to filladapt to match footnotes
       ;; 1] xxxxxxxxxxx x x x or [1] x x x x x x x
