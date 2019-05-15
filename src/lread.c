@@ -44,6 +44,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "pdumper.h"
 #include <c-ctype.h>
+#include <vla.h>
 
 #ifdef MSDOS
 #include "msdos.h"
@@ -2640,89 +2641,83 @@ digit_to_number (int character, int base)
   return digit < base ? digit : -1;
 }
 
+static char const invalid_radix_integer_format[] = "integer, radix %"pI"d";
+
+/* Small, as read1 is recursive (Bug#31995).  But big enough to hold
+   the invalid_radix_integer string.  */
+enum { stackbufsize = max (64,
+			   (sizeof invalid_radix_integer_format
+			    - sizeof "%"pI"d"
+			    + INT_STRLEN_BOUND (EMACS_INT) + 1)) };
+
 static void
-free_contents (void *p)
+invalid_radix_integer (EMACS_INT radix, char stackbuf[VLA_ELEMS (stackbufsize)])
 {
-  void **ptr = (void **) p;
-  xfree (*ptr);
+  sprintf (stackbuf, invalid_radix_integer_format, radix);
+  invalid_syntax (stackbuf);
 }
 
 /* Read an integer in radix RADIX using READCHARFUN to read
-   characters.  RADIX must be in the interval [2..36]; if it isn't, a
-   read error is signaled .  Value is the integer read.  Signals an
-   error if encountering invalid read syntax or if RADIX is out of
-   range.  */
+   characters.  RADIX must be in the interval [2..36].  Use STACKBUF
+   for temporary storage as needed.  Value is the integer read.
+   Signal an error if encountering invalid read syntax.  */
 
 static Lisp_Object
-read_integer (Lisp_Object readcharfun, EMACS_INT radix)
+read_integer (Lisp_Object readcharfun, int radix,
+	      char stackbuf[VLA_ELEMS (stackbufsize)])
 {
-  /* Room for sign, leading 0, other digits, trailing NUL byte.
-     Also, room for invalid syntax diagnostic.  */
-  size_t len = max (1 + 1 + UINTMAX_WIDTH + 1,
-		    sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT));
-  char *buf = xmalloc (len);
-  char *p = buf;
+  char *read_buffer = stackbuf;
+  ptrdiff_t read_buffer_size = stackbufsize;
+  char *p = read_buffer;
+  char *heapbuf = NULL;
   int valid = -1; /* 1 if valid, 0 if not, -1 if incomplete.  */
-
   ptrdiff_t count = SPECPDL_INDEX ();
-  record_unwind_protect_ptr (free_contents, &buf);
 
-  if (radix < 2 || radix > 36)
-    valid = 0;
-  else
+  int c = READCHAR;
+  if (c == '-' || c == '+')
     {
-      int c, digit;
-
-      p = buf;
-
+      *p++ = c;
       c = READCHAR;
-      if (c == '-' || c == '+')
-	{
-	  *p++ = c;
-	  c = READCHAR;
-	}
-
-      if (c == '0')
-	{
-	  *p++ = c;
-	  valid = 1;
-
-	  /* Ignore redundant leading zeros, so the buffer doesn't
-	     fill up with them.  */
-	  do
-	    c = READCHAR;
-	  while (c == '0');
-	}
-
-      while ((digit = digit_to_number (c, radix)) >= -1)
-	{
-	  if (digit == -1)
-	    valid = 0;
-	  if (valid < 0)
-	    valid = 1;
-	  /* Allow 1 extra byte for the \0.  */
-	  if (p + 1 == buf + len)
-	    {
-	      ptrdiff_t where = p - buf;
-	      len *= 2;
-	      buf = xrealloc (buf, len);
-	      p = buf + where;
-	    }
-	  *p++ = c;
-	  c = READCHAR;
-	}
-
-      UNREAD (c);
     }
+
+  if (c == '0')
+    {
+      *p++ = c;
+      valid = 1;
+
+      /* Ignore redundant leading zeros, so the buffer doesn't
+	 fill up with them.  */
+      do
+	c = READCHAR;
+      while (c == '0');
+    }
+
+  for (int digit; (digit = digit_to_number (c, radix)) >= -1; )
+    {
+      if (digit == -1)
+	valid = 0;
+      if (valid < 0)
+	valid = 1;
+      /* Allow 1 extra byte for the \0.  */
+      if (p + 1 == read_buffer + read_buffer_size)
+	{
+	  ptrdiff_t offset = p - read_buffer;
+	  read_buffer = grow_read_buffer (read_buffer, offset,
+					  &heapbuf, &read_buffer_size,
+					  count);
+	  p = read_buffer + offset;
+	}
+      *p++ = c;
+      c = READCHAR;
+    }
+
+  UNREAD (c);
 
   if (valid != 1)
-    {
-      sprintf (buf, "integer, radix %"pI"d", radix);
-      invalid_syntax (buf);
-    }
+    invalid_radix_integer (radix, stackbuf);
 
   *p = '\0';
-  return unbind_to (count, string_to_number (buf, radix, 0));
+  return unbind_to (count, string_to_number (read_buffer, radix, NULL));
 }
 
 
@@ -2738,7 +2733,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
   int c;
   bool uninterned_symbol = false;
   bool multibyte;
-  char stackbuf[128];  /* Small, as read1 is recursive (Bug#31995).  */
+  char stackbuf[stackbufsize];
   current_thread->stack_top = stackbuf;
 
   *pch = 0;
@@ -3108,30 +3103,34 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
       /* ## is the empty symbol.  */
       if (c == '#')
 	return Fintern (empty_unibyte_string, Qnil);
-      /* Reader forms that can reuse previously read objects.  */
+
       if (c >= '0' && c <= '9')
 	{
-	  EMACS_INT n = 0;
-	  Lisp_Object tem;
+	  EMACS_INT n = c - '0';
 	  bool overflow = false;
 
 	  /* Read a non-negative integer.  */
-	  while (c >= '0' && c <= '9')
+	  while ('0' <= (c = READCHAR) && c <= '9')
 	    {
 	      overflow |= INT_MULTIPLY_WRAPV (n, 10, &n);
 	      overflow |= INT_ADD_WRAPV (n, c - '0', &n);
-	      c = READCHAR;
 	    }
 
-	  if (!overflow && n <= MOST_POSITIVE_FIXNUM)
+	  if (!overflow)
 	    {
 	      if (c == 'r' || c == 'R')
-		return read_integer (readcharfun, n);
-
-	      if (! NILP (Vread_circle))
 		{
+		  if (! (2 <= n && n <= 36))
+		    invalid_radix_integer (n, stackbuf);
+		  return read_integer (readcharfun, n, stackbuf);
+		}
+
+	      if (n <= MOST_POSITIVE_FIXNUM && ! NILP (Vread_circle))
+		{
+		  /* Reader forms that can reuse previously read objects.  */
+
 		  /* #n=object returns object, but associates it with
-                      n for #n#.  */
+		     n for #n#.  */
 		  if (c == '=')
 		    {
 		      /* Make a placeholder for #n# to use temporarily.  */
@@ -3160,7 +3159,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			hash_put (h, number, placeholder, hash);
 
 		      /* Read the object itself.  */
-		      tem = read0 (readcharfun);
+		      Lisp_Object tem = read0 (readcharfun);
 
 		      /* If it can be recursive, remember it for
 			 future substitutions.  */
@@ -3210,11 +3209,11 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  /* Fall through to error message.  */
 	}
       else if (c == 'x' || c == 'X')
-	return read_integer (readcharfun, 16);
+	return read_integer (readcharfun, 16, stackbuf);
       else if (c == 'o' || c == 'O')
-	return read_integer (readcharfun, 8);
+	return read_integer (readcharfun, 8, stackbuf);
       else if (c == 'b' || c == 'B')
-	return read_integer (readcharfun, 2);
+	return read_integer (readcharfun, 2, stackbuf);
 
       UNREAD (c);
       invalid_syntax ("#");
