@@ -433,7 +433,7 @@ pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bo
 
     if symbol == temp {
         match symbol.get_next() {
-            Some(sym) => obarray.set(hash, sym.into()),
+            Some(sym) => obarray.set(hash, sym),
             None => obarray.set(hash, LispObject::from_natnum(0)),
         };
     } else {

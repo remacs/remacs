@@ -193,6 +193,9 @@ impl LispSymbolRef {
     }
 
     pub fn get_next(self) -> Option<LispSymbolRef> {
+        // `iter().next()` returns the _current_ symbol: we want
+        // another `next()` on the iterator to really get the next
+        // symbol. we use `nth(1)` as a shortcut here.
         self.iter().nth(1)
     }
 
