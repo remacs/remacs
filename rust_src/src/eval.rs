@@ -1373,21 +1373,13 @@ pub extern "C" fn default_toplevel_binding(symbol: LispObject) -> SpecbindingRef
             pdl.ptr_sub(1);
         }
         match pdl.kind() {
-            ref x if [SPECPDL_LET_DEFAULT, SPECPDL_LET].contains(x) => {
+            SPECPDL_LET_DEFAULT | SPECPDL_LET => {
                 if specpdl_symbol(pdl) == symbol {
                     binding = pdl.clone()
                 }
             }
-            ref x
-                if [
-                    SPECPDL_UNWIND,
-                    SPECPDL_UNWIND_PTR,
-                    SPECPDL_UNWIND_INT,
-                    SPECPDL_UNWIND_VOID,
-                    SPECPDL_BACKTRACE,
-                    SPECPDL_LET_LOCAL,
-                ]
-                .contains(x) => {}
+            SPECPDL_UNWIND | SPECPDL_UNWIND_PTR | SPECPDL_UNWIND_INT | SPECPDL_UNWIND_VOID
+            | SPECPDL_BACKTRACE | SPECPDL_LET_LOCAL => {}
             _ => panic!("Incorrect specpdl kind"),
         }
     }
