@@ -1253,12 +1253,20 @@ comment at the start of cc-engine.el for more info."
 		  ;; (including a case label) or something like C++'s "public:"?
 		  ;; A case label might use an expression rather than a token.
 		  (setq after-case:-pos (or tok start))
-		  (if (or (looking-at c-nonlabel-token-key) ; e.g. "while" or "'a'"
+		  (if (or (looking-at c-nonlabel-nonparen-token-key)
+					; e.g. "while" or "'a'"
 			  ;; Catch C++'s inheritance construct "class foo : bar".
 			  (save-excursion
 			    (and
 			     (c-safe (c-backward-sexp) t)
-			     (looking-at c-nonlabel-token-2-key))))
+			     (looking-at c-nonlabel-token-2-key)))
+			  ;; Catch C++'s "case a(1):"
+			  (and (c-major-mode-is 'c++-mode)
+			       (eq (char-after) ?\()
+			       (save-excursion
+				 (not (and
+				       (zerop (c-backward-token-2 2))
+				       (looking-at c-case-kwds-regexp))))))
 		      (setq c-maybe-labelp nil)
 		    (if after-labels-pos ; Have we already encountered a label?
 			(if (not last-label-pos)
