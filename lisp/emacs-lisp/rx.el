@@ -106,15 +106,16 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'cl-extra)
 
 ;; FIXME: support macros.
 
 (defvar rx-constituents              ;Not `const' because some modes extend it.
-  '((and		. (rx-and 1 nil))
+  '((and		. (rx-and 0 nil))
     (seq		. and)		; SRE
     (:			. and)		; SRE
     (sequence		. and)		; sregex
-    (or			. (rx-or 1 nil))
+    (or			. (rx-or 0 nil))
     (|			. or)		; SRE
     (not-newline	. ".")
     (nonl		. not-newline)	; SRE
@@ -390,9 +391,11 @@ FORM is of the form `(and FORM1 ...)'."
   "Parse and produce code from FORM, which is `(or FORM1 ...)'."
   (rx-check form)
   (rx-group-if
-   (if (memq nil (mapcar 'stringp (cdr form)))
-       (mapconcat (lambda (x) (rx-form x '|)) (cdr form) "\\|")
+   (cond
+    ((null (cdr form)) regexp-unmatchable)
+    ((cl-every #'stringp (cdr form))
      (regexp-opt (cdr form) nil t))
+    (t (mapconcat (lambda (x) (rx-form x '|)) (cdr form) "\\|")))
    (and (memq rx-parent '(: * t)) rx-parent)))
 
 
@@ -1121,6 +1124,7 @@ CHAR
 `(seq SEXP1 SEXP2 ...)'
 `(sequence SEXP1 SEXP2 ...)'
      matches what SEXP1 matches, followed by what SEXP2 matches, etc.
+     Without arguments, matches the empty string.
 
 `(submatch SEXP1 SEXP2 ...)'
 `(group SEXP1 SEXP2 ...)'
@@ -1136,7 +1140,7 @@ CHAR
 `(| SEXP1 SEXP2 ...)'
      matches anything that matches SEXP1 or SEXP2, etc.  If all
      args are strings, use `regexp-opt' to optimize the resulting
-     regular expression.
+     regular expression.  Without arguments, never matches anything.
 
 `(minimal-match SEXP)'
      produce a non-greedy regexp for SEXP.  Normally, regexps matching
