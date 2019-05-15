@@ -339,12 +339,21 @@ Any terminating `>' or `/' is not matched.")
      ("--[ \t\n]*\\(>\\)" (1 "> b"))
      ("\\(<\\)[?!]" (1 (prog1 "|>"
                          (sgml-syntax-propertize-inside end))))
-     ;; Quotes outside of tags should not introduce strings.
-     ;; Be careful to call `syntax-ppss' on a position before the one we're
-     ;; going to change, so as not to need to flush the data we just computed.
-     ("[\"']" (0 (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
-                       (goto-char (match-end 0)))
-                     (string-to-syntax ".")))))))
+     ;; Quotes outside of tags should not introduce strings which end up
+     ;; hiding tags.  We used to test every quote and mark it as "."
+     ;; if it's outside of tags, but there are too many quotes and
+     ;; the resulting number of calls to syntax-ppss made it too slow
+     ;; (bug#33887), so we're now careful to leave alone any pair
+     ;; of quotes that doesn't hold a < or > char, which is the vast majority.
+     ("\\(?:\\(1:\"\\)[^\"<>]*[<>\"]\\|\\(1:'\\)[^'<>]*[<>']\\)"
+      (1 (unless (memq (char-before) '(?\' ?\"))
+           ;; Be careful to call `syntax-ppss' on a position before the one
+           ;; we're going to change, so as not to need to flush the data we
+           ;; just computed.
+           (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
+                 (goto-char (1- (match-end 0))))
+               (string-to-syntax ".")))))
+     )))
 
 (defun sgml-syntax-propertize (start end)
   "Syntactic keywords for `sgml-mode'."
