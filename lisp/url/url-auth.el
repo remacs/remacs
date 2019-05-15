@@ -478,6 +478,8 @@ PROMPT is boolean - specifies whether to ask the user for a username/password
        if one cannot be found in the cache"
   (if (not realm)
       (setq realm (cdr-safe (assoc "realm" args))))
+  (if (equal realm "")
+      (setq realm nil))
   (if (stringp url)
       (setq url (url-generic-parse-url url)))
   (if (or (null type) (eq type 'any))
