@@ -270,10 +270,13 @@ or comment."
                   (goto-char before)
                   (condition-case-unless-debug ()
                       (indent-according-to-mode)
-                    (error (throw 'indent-error nil)))
-                  ;; The goal here will be to remove the trailing
-                  ;; whitespace after reindentation of the previous line
-                  ;; because that may have (re)introduced it.
+                    (error (throw 'indent-error nil))))
+                (unless (eq electric-indent-inhibit 'electric-layout-mode)
+                  ;; Unless we're operating under
+                  ;; `electric-layout-mode' (Bug#35254), the goal here
+                  ;; will be to remove the trailing whitespace after
+                  ;; reindentation of the previous line because that
+                  ;; may have (re)introduced it.
                   (goto-char before)
                   ;; We were at EOL in marker `before' before the call
                   ;; to `indent-according-to-mode' but after we may
@@ -451,7 +454,7 @@ If multiple rules match, only first one is executed.")
                       ;; really wants to reindent, then
                       ;; `last-command-event' should be in
                       ;; `electric-indent-chars'.
-                      (let ((electric-indent-inhibit t))
+                      (let ((electric-indent-inhibit 'electric-layout-mode))
                         (funcall nl-after)))))))
             (pcase sym
               ('before (funcall nl-before))

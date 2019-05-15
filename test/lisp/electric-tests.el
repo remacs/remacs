@@ -876,6 +876,25 @@ baz\"\""
       (call-interactively (key-binding `[,last-command-event])))
     (should (equal (buffer-string) "int main () {\n  \n}"))))
 
+(ert-deftest electric-layout-control-reindentation ()
+  "Same as `e-l-int-main-kernel-style', but checking Bug#35254."
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode 1)
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((?\{ . (after))
+                  (?\} . (before))))
+    (insert "int main () ")
+    (let ((last-command-event ?\{))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main () {\n  \n}"))
+    ;; insert an additional newline and check indentation and
+    ;; reindentation
+    (call-interactively 'newline)
+    (should (equal (buffer-string) "int main () {\n\n  \n}"))))
+
 (define-derived-mode plainer-c-mode c-mode "pC"
   "A plainer/saner C-mode with no internal electric machinery."
   (c-toggle-electric-state -1)
