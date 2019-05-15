@@ -437,14 +437,10 @@ pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bo
             None => obarray.set(hash, LispObject::from_natnum(0)),
         };
     } else {
-        for tail in symbol.iter() {
-            if let Some(following) = tail.get_next() {
-                if following == temp {
-                    let next = following.get_next();
-                    tail.set_next(next);
-                    break;
-                }
-            }
+        let tail = symbol.iter().find(|elem| elem.get_next() == Some(temp));
+        if let Some(previous) = tail {
+            let next = temp.get_next();
+            previous.set_next(next);
         }
     }
 
