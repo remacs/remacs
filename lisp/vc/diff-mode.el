@@ -283,6 +283,14 @@ well."
 ;;;; font-lock support
 ;;;;
 
+;; Note: The colors used in a color-rich environments (a GUI or in a
+;; terminal supporting 24 bit colors) doesn't render well in terminal
+;; supporting only 256 colors.  Concretely, both #ffeeee
+;; (diff-removed) and #eeffee (diff-added) are mapped to the same
+;; greyish color.  "min-colors 257" ensures that those colors are not
+;; used terminals supporting only 256 colors.  However, any number
+;; between 257 and 2^24 (16777216) would do.
+
 (defface diff-header
   '((((class color) (min-colors 88) (background light))
      :background "grey85")
@@ -314,8 +322,10 @@ well."
 (defface diff-removed
   '((default
      :inherit diff-changed)
-    (((class color) (min-colors 88) (background light))
+    (((class color) (min-colors 257) (background light))
      :background "#ffeeee")
+    (((class color) (min-colors 88) (background light))
+     :background "#ffdddd")
     (((class color) (min-colors 88) (background dark))
      :background "#553333")
     (((class color))
@@ -325,8 +335,10 @@ well."
 (defface diff-added
   '((default
      :inherit diff-changed)
-    (((class color) (min-colors 88) (background light))
+    (((class color) (min-colors 257) (background light))
      :background "#eeffee")
+    (((class color) (min-colors 88) (background light))
+     :background "#ddffdd")
     (((class color) (min-colors 88) (background dark))
      :background "#335533")
     (((class color))
@@ -2040,8 +2052,10 @@ For use in `add-log-current-defun-function'."
 (defface diff-refine-removed
   '((default
      :inherit diff-refine-changed)
-    (((class color) (min-colors 88) (background light))
+    (((class color) (min-colors 257) (background light))
      :background "#ffcccc")
+    (((class color) (min-colors 88) (background light))
+     :background "#ffbbbb")
     (((class color) (min-colors 88) (background dark))
      :background "#aa2222"))
   "Face used for removed characters shown by `diff-refine-hunk'."
@@ -2050,8 +2064,10 @@ For use in `add-log-current-defun-function'."
 (defface diff-refine-added
   '((default
      :inherit diff-refine-changed)
-    (((class color) (min-colors 88) (background light))
+    (((class color) (min-colors 257) (background light))
      :background "#bbffbb")
+    (((class color) (min-colors 88) (background light))
+     :background "#aaffaa")
     (((class color) (min-colors 88) (background dark))
      :background "#22aa22"))
   "Face used for added characters shown by `diff-refine-hunk'."
