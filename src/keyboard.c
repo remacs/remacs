@@ -9594,7 +9594,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   return t;
 }
 
-static Lisp_Object
+Lisp_Object
 read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
 		      Lisp_Object dont_downcase_last,
 		      Lisp_Object can_return_switch_frame,
@@ -9702,14 +9702,6 @@ will read just one key sequence.  */)
 			       can_return_switch_frame, cmd_loop, true);
 }
 
-DEFUN ("read-key-sequence-vector", Fread_key_sequence_vector,
-       Sread_key_sequence_vector, 1, 5, 0,
-       doc: /* Like `read-key-sequence' but always return a vector.  */)
-  (Lisp_Object prompt, Lisp_Object continue_echo, Lisp_Object dont_downcase_last, Lisp_Object can_return_switch_frame, Lisp_Object cmd_loop)
-{
-  return read_key_sequence_vs (prompt, continue_echo, dont_downcase_last,
-			       can_return_switch_frame, cmd_loop, false);
-}
 
 /* Return true if input events are pending.  */
 
@@ -10966,7 +10958,6 @@ syms_of_keyboard (void)
   defsubr (&Sevent_symbol_parse_modifiers);
   defsubr (&Sevent_convert_list);
   defsubr (&Sread_key_sequence);
-  defsubr (&Sread_key_sequence_vector);
   defsubr (&Strack_mouse);
   defsubr (&Srecent_keys);
   defsubr (&Sthis_command_keys);
