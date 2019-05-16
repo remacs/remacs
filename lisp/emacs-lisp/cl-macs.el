@@ -2145,16 +2145,26 @@ of `cl-symbol-macrolet' to additionally expand symbol macros."
              (let ((symval (assq exp venv)))
                (when symval
                  (setq exp (cadr symval)))))
-            (`(setq . ,_)
+            (`(setq . ,args)
              ;; Convert setq to setf if required by symbol-macro expansion.
-             (let* ((args (mapcar (lambda (f) (macroexpand f env))
-                                  (cdr exp)))
-                    (p args))
-               (while (and p (symbolp (car p))) (setq p (cddr p)))
-               (if p (setq exp (cons 'setf args))
-                 (setq exp (cons 'setq args))
-                 ;; Don't loop further.
-                 nil)))
+             (let ((convert nil)
+                   (rargs nil))
+               (while args
+                 (let ((place (pop args)))
+                   ;; Here, we know `place' should be a symbol.
+                   (while
+                       (let ((symval (assq place venv)))
+                         (when symval
+                           (setq place (cadr symval))
+                           (if (symbolp place)
+                               t        ;Repeat.
+                             (setq convert t)
+                             nil))))
+                   (push place rargs)
+                   (push (pop args) rargs)))
+               (setq exp (cons (if convert 'setf 'setq)
+                               (nreverse rargs)))
+               convert))
             ;; CL's symbol-macrolet used to treat re-bindings as candidates for
             ;; expansion (turning the let into a letf if needed), contrary to
             ;; Common-Lisp where such re-bindings hide the symbol-macro.
