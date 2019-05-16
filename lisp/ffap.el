@@ -1,6 +1,6 @@
 ;;; ffap.el --- find file (or url) at point
 
-;; Copyright (C) 1995-1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1997, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Michelangelo Grigni <mic@mathcs.emory.edu>
 ;; Maintainer: emacs-devel@gnu.org
@@ -104,6 +104,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
 (require 'url-parse)
 (require 'thingatpt)
 

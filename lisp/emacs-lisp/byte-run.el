@@ -1,6 +1,6 @@
 ;;; byte-run.el --- byte-compiler support for inlining  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -116,7 +116,10 @@ If `error-free', drop calls even if `byte-compile-delete-errors' is nil.")
              (if (not (eq (car-safe compiler-function) 'lambda))
                  `(eval-and-compile
                     (function-put ',f 'compiler-macro #',compiler-function))
-               (let ((cfname (intern (concat (symbol-name f) "--anon-cmacro"))))
+               (let ((cfname (intern (concat (symbol-name f) "--anon-cmacro")))
+                     ;; Avoid cadr/cddr so we can use `compiler-macro' before
+                     ;; defining cadr/cddr.
+                     (data (cdr compiler-function)))
                  `(progn
                     (eval-and-compile
                       (function-put ',f 'compiler-macro #',cfname))
@@ -125,8 +128,8 @@ If `error-free', drop calls even if `byte-compile-delete-errors' is nil.")
                     ;; if needed.
                     :autoload-end
                     (eval-and-compile
-                      (defun ,cfname (,@(cadr compiler-function) ,@args)
-                        ,@(cddr compiler-function))))))))
+                      (defun ,cfname (,@(car data) ,@args)
+                        ,@(cdr data))))))))
    (list 'doc-string
          #'(lambda (f _args pos)
              (list 'function-put (list 'quote f)
@@ -420,7 +423,7 @@ variable (this is due to the way `defvaralias' works).
 If provided, WHEN should be a string indicating when the variable
 was first made obsolete, for example a date or a release number.
 
-For the benefit of `custom-set-variables', if OBSOLETE-NAME has
+For the benefit of Customize, if OBSOLETE-NAME has
 any of the following properties, they are copied to
 CURRENT-NAME, if it does not already have them:
 `saved-value', `saved-variable-comment'."
@@ -490,6 +493,21 @@ is enabled."
   (declare (indent 0))
   ;; The implementation for the interpreter is basically trivial.
   (car (last body)))
+
+
+(defun byte-run--unescaped-character-literals-warning ()
+  "Return a warning about unescaped character literals.
+If there were any unescaped character literals in the last form
+read, return an appropriate warning message as a string.
+Otherwise, return nil.  For internal use only."
+  ;; This is called from lread.c and therefore needs to be preloaded.
+  (if lread--unescaped-character-literals
+      (let ((sorted (sort lread--unescaped-character-literals #'<)))
+        (format-message "unescaped character literals %s detected, %s expected!"
+                        (mapconcat (lambda (char) (format "`?%c'" char))
+                                   sorted ", ")
+                        (mapconcat (lambda (char) (format "`?\\%c'" char))
+                                   sorted ", ")))))
 
 
 ;; I nuked this because it's not a good idea for users to think of using it.

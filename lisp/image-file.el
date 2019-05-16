@@ -1,6 +1,6 @@
 ;;; image-file.el --- support for visiting image files
 ;;
-;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Miles Bader <miles@gnu.org>
 ;; Keywords: multimedia
@@ -97,8 +97,9 @@ the variable is set using \\[customize]."
 ;;;###autoload
 (defun insert-image-file (file &optional visit beg end replace)
   "Insert the image file FILE into the current buffer.
-Optional arguments VISIT, BEG, END, and REPLACE are interpreted as for
-the command `insert-file-contents'."
+Optional arguments VISIT, BEG, END, and REPLACE are interpreted
+as for the command `insert-file-contents'.  Return list of
+absolute file name and number of characters inserted."
   (let ((rval
 	 (image-file-call-underlying #'insert-file-contents-literally
 				     'insert-file-contents
@@ -109,11 +110,8 @@ the command `insert-file-contents'."
       (let* ((ibeg (point))
 	     (iend (+ (point) (cadr rval)))
 	     (visitingp (and visit (= ibeg (point-min)) (= iend (point-max))))
-	     (data
-	      (string-make-unibyte
-	       (buffer-substring-no-properties ibeg iend)))
-	     (image
-	      (create-image data nil t))
+             (image (create-image (encode-coding-region ibeg iend 'binary t)
+                                  nil t))
 	     (props
 	      `(display ,image
 			yank-handler
@@ -179,9 +177,6 @@ Optional argument ARGS are the arguments to call FUNCTION with."
 ;;;###autoload
 (define-minor-mode auto-image-file-mode
   "Toggle visiting of image files as images (Auto Image File mode).
-With a prefix argument ARG, enable Auto Image File mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 An image file is one whose name has an extension in
 `image-file-name-extensions', or matches a regexp in

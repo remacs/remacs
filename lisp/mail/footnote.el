@@ -1,6 +1,6 @@
 ;;; footnote.el --- footnote support for message mode  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Steven L Baur <steve@xemacs.org> (1997-2011)
 ;;         Boruch Baum <boruch_baum@gmx.com> (2017-)
@@ -73,50 +73,38 @@
 
 (defcustom footnote-mode-line-string " FN"
   "String to display in modes section of the mode-line."
-  :type 'string
-  :group 'footnote)
-
-(defcustom footnote-mode-hook nil
-  "Hook functions run when footnote-mode is activated."
-  :type 'hook
-  :group 'footnote)
+  :type 'string)
 
 (defcustom footnote-narrow-to-footnotes-when-editing nil
   "If non-nil, narrow to footnote text body while editing a footnote."
-  :type 'boolean
-  :group 'footnote)
+  :type 'boolean)
 
 (defcustom footnote-prompt-before-deletion t
   "If non-nil, prompt before deleting a footnote.
 There is currently no way to undo deletions."
-  :type 'boolean
-  :group 'footnote)
+  :type 'boolean)
 
 (defcustom footnote-spaced-footnotes t
   "If non-nil, insert an empty line between footnotes.
 Customizing this variable has no effect on buffers already
 displaying footnotes."
-  :type 'boolean
-  :group 'footnote)
+  :type 'boolean)
 
 (defcustom footnote-use-message-mode t ; Nowhere used.
   "If non-nil, assume Footnoting will be done in `message-mode'."
-  :type 'boolean
-  :group 'footnote)
+  :type 'boolean)
 
 (defcustom footnote-body-tag-spacing 2
   "Number of spaces separating a footnote body tag and its text.
 Customizing this variable has no effect on buffers already
 displaying footnotes."
-  :type 'integer
-  :group 'footnote)
+  :type 'integer)
 
 (defcustom footnote-prefix [(control ?c) ?!]
   "Prefix key to use for Footnote command in Footnote minor mode.
 The value of this variable is checked as part of loading Footnote mode.
 After that, changing the prefix key requires manipulating keymaps."
-  :type 'key-sequence
-  :group 'footnote)
+  :type 'key-sequence)
 
 ;;; Interface variables that probably shouldn't be changed
 
@@ -127,8 +115,7 @@ value of `footnote-section-tag-regexp' is ignored.  Customizing
 this variable has no effect on buffers already displaying
 footnotes."
   :version "27.1"
-  :type 'string
-  :group 'footnote)
+  :type 'string)
 
 (defcustom footnote-section-tag-regexp
   ;; Even if `footnote-section-tag' has a trailing space, let's not require it
@@ -139,31 +126,27 @@ This variable is disregarded when `footnote-section-tag' is the
 empty string.  Customizing this variable has no effect on buffers
 already displaying footnotes."
   :version "27.1"
-  :type 'regexp
-  :group 'footnote)
+  :type 'regexp)
 
 ;; The following three should be consumed by footnote styles.
 (defcustom footnote-start-tag "["
   "String used to denote start of numbered footnote.
 Should not be set to the empty string.  Customizing this variable
 has no effect on buffers already displaying footnotes."
-  :type 'string
-  :group 'footnote)
+  :type 'string)
 
 (defcustom footnote-end-tag "]"
   "String used to denote end of numbered footnote.
 Should not be set to the empty string.  Customizing this variable
 has no effect on buffers already displaying footnotes."
-  :type 'string
-  :group 'footnote)
+  :type 'string)
 
 (defcustom footnote-signature-separator
   (if (boundp 'message-signature-separator)
       message-signature-separator
     "^-- $")
   "Regexp used by Footnote mode to recognize signatures."
-  :type 'regexp
-  :group 'footnote)
+  :type 'regexp)
 
 (defcustom footnote-align-to-fn-text t
   "How to left-align footnote text.
@@ -187,6 +170,8 @@ left with the first character of footnote text."
 (make-variable-buffer-local 'footnote-pointer-marker-alist)
 
 (defvar footnote-mouse-highlight 'highlight
+  ;; FIXME: This `highlight' property is not currently used.
+  ;; We should use `mouse-face' and make mouse clicks work on them.
   "Text property name to enable mouse over highlight.")
 
 (defvar footnote-mode)
@@ -363,7 +348,9 @@ Use Unicode characters for footnoting."
     ("ק" "ר" "ש" "ת" "תק" "תר" "תש" "תת" "תתק")))
 
 (defconst footnote-hebrew-numeric-regex
-  (concat "[" (apply #'concat (apply #'append footnote-hebrew-numeric)) "']+"))
+  (let ((numchars (string-to-list
+		   (apply #'concat (apply #'append footnote-hebrew-numeric)))))
+    (concat (regexp-opt-charset (cons ?' numchars)) "+")))
 ;; (defconst footnote-hebrew-numeric-regex "\\([אבגדהוזחט]'\\)?\\(ת\\)?\\(ת\\)?\\([קרשת]\\)?\\([טיכלמנסעפצ]\\)?\\([אבגדהוזחט]\\)?")
 
 (defun footnote--hebrew-numeric (n)
@@ -439,27 +426,32 @@ Customizing this variable has no effect on buffers already
 displaying footnotes.  To change the style of footnotes in such a
 buffer use the command `footnote-set-style'."
   :type (cons 'choice (mapcar (lambda (x) (list 'const (car x)))
-			      footnote-style-alist))
-  :group 'footnote)
+			      footnote-style-alist)))
 
 ;;; Style utilities & functions
-(defun footnote--style-p (style)
-  "Return non-nil if style is a valid style known to `footnote-mode'."
-  (assq style footnote-style-alist))
 
 (defun footnote--index-to-string (index)
   "Convert a binary index into a string to display as a footnote.
 Conversion is done based upon the current selected style."
-  (let ((alist (if (footnote--style-p footnote-style)
-		   (assq footnote-style footnote-style-alist)
-		 (nth 0 footnote-style-alist))))
+  (let ((alist (or (assq footnote-style footnote-style-alist)
+		   (nth 0 footnote-style-alist))))
     (funcall (nth 1 alist) index)))
 
 (defun footnote--current-regexp ()
   "Return the regexp of the index of the current style."
-  (concat (nth 2 (or (assq footnote-style footnote-style-alist)
-		     (nth 0 footnote-style-alist)))
-	  "*"))
+  (let ((regexp (nth 2 (or (assq footnote-style footnote-style-alist)
+			   (nth 0 footnote-style-alist)))))
+    (concat
+     ;; Hack to avoid repetition of repetition.
+     ;; FIXME: I'm not sure the added * makes sense at all; there is
+     ;; always a single number within the footnote-{start,end}-tag pairs.
+     ;; Worse, the code goes on and adds yet another + later on, in
+     ;; footnote-refresh-footnotes, just in case. That makes even less sense.
+     ;; Likely, both the * and the extra + should go away.
+     (if (string-match "[^\\]\\\\\\{2\\}*[*+?]\\'" regexp)
+	 (substring regexp 0 -1)
+       regexp)
+     "*")))
 
 (defun footnote--refresh-footnotes (&optional index-regexp)
   "Redraw all footnotes.
@@ -510,41 +502,27 @@ styles."
 	   nil "\\1"))
 	(setq i (1+ i))))))
 
-(defun footnote--assoc-index (key alist)
-  "Give index of key in alist."
-  (let ((i 0) (max (length alist)) rc)
-    (while (and (null rc)
-		(< i max))
-      (when (eq key (car (nth i alist)))
-	(setq rc i))
-      (setq i (1+ i)))
-    rc))
-
 (defun footnote-cycle-style ()
   "Select next defined footnote style."
   (interactive)
-  (let ((old (footnote--assoc-index footnote-style footnote-style-alist))
-	(max (length footnote-style-alist))
-	idx)
-    (setq idx (1+ old))
-    (when (>= idx max)
-      (setq idx 0))
-    (setq footnote-style (car (nth idx footnote-style-alist)))
-    (footnote--refresh-footnotes (nth 2 (nth old footnote-style-alist)))))
+  (let ((old-desc (assq footnote-style footnote-style-alist)))
+    (setq footnote-style (caar (or (cdr (memq old-desc footnote-style-alist))
+                                   footnote-style-alist)))
+    (footnote--refresh-footnotes (nth 2 old-desc))))
 
-(defun footnote-set-style (&optional style)
+(defun footnote-set-style (style)
   "Select a specific style."
   (interactive
    (list (intern (completing-read
 		  "Footnote Style: "
-		  obarray #'footnote--style-p 'require-match))))
-  (let ((old (footnote--assoc-index footnote-style footnote-style-alist)))
+		  footnote-style-alist nil 'require-match))))
+  (let ((old-desc (assq footnote-style footnote-style-alist)))
     (setq footnote-style style)
-    (footnote--refresh-footnotes (nth 2 (nth old footnote-style-alist)))))
+    (footnote--refresh-footnotes (nth 2 old-desc))))
 
 ;; Internal functions
 (defun footnote--insert-numbered-footnote (arg &optional mousable)
-  "Insert numbered footnote at (point)."
+  "Insert numbered footnote at point."
   (let ((string (concat footnote-start-tag
 			(footnote--index-to-string arg)
 			footnote-end-tag)))
@@ -554,7 +532,7 @@ styles."
 	  string 'footnote-number arg footnote-mouse-highlight t)
        (propertize string 'footnote-number arg)))))
 
-(defun footnote--renumber (_from to pointer-alist text-alist)
+(defun footnote--renumber (to pointer-alist text-alist)
   "Renumber a single footnote."
   (let* ((posn-list (cdr pointer-alist)))
     (setcar pointer-alist to)
@@ -663,8 +641,7 @@ styles."
     (footnote--insert-text-marker arg old-point)))
 
 (defun footnote--sort (list)
-  (sort list (lambda (e1 e2)
-	       (< (car e1) (car e2)))))
+  (sort list #'car-less-than-car))
 
 (defun footnote--text-under-cursor ()
   "Return the number of the current footnote if in footnote text.
@@ -783,8 +760,7 @@ footnote area, returns `point-max'."
 		     (footnote--index-to-string (car alist-ptr))
 		     (footnote--index-to-string
 		      (1+ (car alist-ptr))))
-	    (footnote--renumber (car alist-ptr)
-			       (1+ (car alist-ptr))
+	    (footnote--renumber (1+ (car alist-ptr))
 			       alist-ptr
 			       alist-txt)))
 	(setq i (1+ i)))
@@ -888,7 +864,7 @@ delete the footnote with that number."
 	(setq alist-ptr (nth i footnote-pointer-marker-alist))
 	(setq alist-txt (nth i footnote-text-marker-alist))
 	(unless (= (1+ i) (car alist-ptr))
-	  (footnote--renumber (car alist-ptr) (1+ i) alist-ptr alist-txt))
+	  (footnote--renumber (1+ i) alist-ptr alist-txt))
 	(setq i (1+ i))))))
 
 (defun footnote-goto-footnote (&optional arg)
@@ -945,9 +921,6 @@ being set it is automatically widened."
 ;;;###autoload
 (define-minor-mode footnote-mode
   "Toggle Footnote mode.
-With a prefix argument ARG, enable Footnote mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Footnote mode is a buffer-local minor mode.  If enabled, it
 provides footnote support for `message-mode'.  To get started,

@@ -1,6 +1,6 @@
 ;;; url-util.el --- Miscellaneous helper routines for URL library -*- lexical-binding: t -*-
 
-;; Copyright (C) 1996-1999, 2001, 2004-2018 Free Software Foundation,
+;; Copyright (C) 1996-1999, 2001, 2004-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
@@ -61,8 +61,6 @@ If a list, it is a list of the types of messages to be logged."
 
 ;;;###autoload
 (defun url-debug (tag &rest args)
-  (if quit-flag
-      (error "Interrupted!"))
   (if (or (eq url-debug t)
 	  (numberp url-debug)
 	  (and (listp url-debug) (memq tag url-debug)))
@@ -74,7 +72,8 @@ If a list, it is a list of the types of messages to be logged."
 
 ;;;###autoload
 (defun url-parse-args (str &optional nodowncase)
-  ;; Return an assoc list of attribute/value pairs from an RFC822-type string
+  ;; Return an assoc list of attribute/value pairs from a string
+  ;; that uses RFC 822 (or later) format.
   (let (
 	name				; From name=
 	value				; its value
@@ -182,7 +181,7 @@ Will not do anything if `url-show-status' is nil."
 	  (null url-show-status)
 	  (active-minibuffer-window)
 	  (= url-lazy-message-time
-	     (setq url-lazy-message-time (nth 1 (current-time)))))
+	     (setq url-lazy-message-time (encode-time nil 'integer))))
       nil
     (apply 'message args)))
 
@@ -502,7 +501,7 @@ WIDTH defaults to the current frame width."
 	 (urlobj nil))
     ;; The first thing that can go are the search strings
     (if (and (>= str-width fr-width)
-	     (string-match "?" url))
+	     (string-match "\\?" url))
 	(setq url (concat (substring url 0 (match-beginning 0)) "?...")
 	      str-width (length url)))
     (if (< str-width fr-width)
@@ -626,6 +625,34 @@ Creates FILE and its parent directories if they do not exist."
      (if (file-symlink-p file)
          (error "Danger: `%s' is a symbolic link" file))
      (set-file-modes file #o0600))))
+
+(autoload 'puny-encode-domain "puny")
+(autoload 'url-domsuf-cookie-allowed-p "url-domsuf")
+
+;;;###autoload
+(defun url-domain (url)
+  "Return the domain of the host of the URL.
+Return nil if this can't be determined.
+
+For instance, this function will return \"fsf.co.uk\" if the host in URL
+is \"www.fsf.co.uk\"."
+  (let* ((host (puny-encode-domain (url-host url)))
+         (parts (nreverse (split-string host "\\.")))
+         (candidate (pop parts))
+         found)
+    ;; IP addresses aren't domains.
+    (when (string-match "\\`[0-9.]+\\'" host)
+      (setq parts nil))
+    ;; We assume that the top-level domain is never an appropriate
+    ;; thing as "the domain", so we start at the next one (eg.
+    ;; "fsf.org").
+    (while (and parts
+                (not (setq found
+                           (url-domsuf-cookie-allowed-p
+                            (setq candidate (concat (pop parts) "."
+                                                    candidate))))))
+      )
+    (and found candidate)))
 
 (provide 'url-util)
 

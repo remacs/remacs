@@ -1,6 +1,6 @@
 ;;; mml-sec.el --- A package with security functions for MML documents
 
-;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 
@@ -23,7 +23,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 
 (require 'gnus-util)
 (require 'epg)
@@ -167,9 +167,9 @@ You can also customize or set `mml-signencrypt-style-alist' instead."
 	(if (or (eq style 'separate)
 		(eq style 'combined))
 	    ;; valid style setting?
-	    (setf (second style-item) style)
+	    (setf (cadr style-item) style)
 	  ;; otherwise, just return the current value
-	  (second style-item))
+	  (cadr style-item))
       (message "Warning, attempt to set invalid signencrypt style"))))
 
 ;;; Security functions
@@ -554,7 +554,7 @@ customized in this variable."
   "For CONTEXT, USAGE, and NAME record fingerprint(s) of KEYS.
 If optional SAVE is not nil, save customized fingerprints.
 Return keys."
-  (assert keys)
+  (cl-assert keys)
   (let* ((usage-prefs (mml-secure-cust-usage-lookup context usage))
 	 (curr-fprs (cdr (assoc name (cdr usage-prefs))))
 	 (key-fprs (mapcar 'mml-secure-fingerprint keys))
@@ -659,6 +659,8 @@ The passphrase is read and cached."
     (catch 'break
       (dolist (uid uids nil)
 	(if (and (stringp (epg-user-id-string uid))
+                 (car (mail-header-parse-address
+                       (epg-user-id-string uid)))
 		 (equal (downcase (car (mail-header-parse-address
 					(epg-user-id-string uid))))
 			(downcase (car (mail-header-parse-address

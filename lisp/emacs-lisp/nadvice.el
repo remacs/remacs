@@ -1,6 +1,6 @@
 ;;; nadvice.el --- Light-weight advice primitives for Elisp functions  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: extensions, lisp, tools
@@ -36,18 +36,23 @@
 
 ;;; Code:
 
+;; The autoloads.el mechanism which adds package--builtin-versions
+;; maintenance to loaddefs.el doesn't work for preloaded packages (such
+;; as this one), so we have to do it by hand!
+(push (purecopy '(nadvice 1 0)) package--builtin-versions)
+
 ;;;; Lightweight advice/hook
 (defvar advice--where-alist
   '((:around "\300\301\302\003#\207" 5)
     (:before "\300\301\002\"\210\300\302\002\"\207" 4)
     (:after "\300\302\002\"\300\301\003\"\210\207" 5)
-    (:override "\300\301\"\207" 4)
+    (:override "\300\301\002\"\207" 4)
     (:after-until "\300\302\002\"\206\013\000\300\301\002\"\207" 4)
     (:after-while "\300\302\002\"\205\013\000\300\301\002\"\207" 4)
     (:before-until "\300\301\002\"\206\013\000\300\302\002\"\207" 4)
     (:before-while "\300\301\002\"\205\013\000\300\302\002\"\207" 4)
-    (:filter-args "\300\302\301!\"\207" 5)
-    (:filter-return "\301\300\302\"!\207" 5))
+    (:filter-args "\300\302\301\003!\"\207" 5)
+    (:filter-return "\301\300\302\003\"!\207" 5))
   "List of descriptions of how to add a function.
 Each element has the form (WHERE BYTECODE STACK) where:
   WHERE is a keyword indicating where the function is added.
@@ -241,6 +246,8 @@ different, but `function-equal' will hopefully ignore those differences.")
   (if (local-variable-p var) (symbol-value var)
     (setq advice--buffer-local-function-sample
           ;; This function acts like the t special value in buffer-local hooks.
+          ;; FIXME: Provide an `advice-bottom' function that's like
+          ;; `advice-cd*r' but also follows through this proxy.
           (lambda (&rest args) (apply (default-value var) args)))))
 
 (eval-and-compile
@@ -288,6 +295,9 @@ a special meaning:
 If PLACE is a symbol, its `default-value' will be affected.
 Use (local \\='SYMBOL) if you want to apply FUNCTION to SYMBOL buffer-locally.
 Use (var VAR) if you want to apply FUNCTION to the (lexical) VAR.
+If you are trying to modify an existing named function rather
+than a function value, you probably want to use `advice-add'
+instead (see Info node `(elisp) Advising Named Functions').
 
 If one of FUNCTION or OLDFUN is interactive, then the resulting function
 is also interactive.  There are 3 cases:

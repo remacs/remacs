@@ -1,6 +1,6 @@
 ;;; desktop.el --- save partial status of Emacs when killed -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1995, 1997, 2000-2018 Free Software Foundation,
+;; Copyright (C) 1993-1995, 1997, 2000-2019 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Morten Welinder <terra@diku.dk>
@@ -161,9 +161,6 @@ Used at desktop read to provide backward compatibility.")
 ;;;###autoload
 (define-minor-mode desktop-save-mode
   "Toggle desktop saving (Desktop Save mode).
-With a prefix argument ARG, enable Desktop Save mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode if ARG
-is omitted or nil.
 
 When Desktop Save mode is enabled, the state of Emacs is saved from
 one session to another.  In particular, Emacs will save the desktop when
@@ -841,10 +838,12 @@ QUOTE may be `may' (value may be quoted),
     ((or (numberp value) (null value) (eq t value) (keywordp value))
      (cons 'may value))
     ((stringp value)
-     (let ((copy (copy-sequence value)))
-       (set-text-properties 0 (length copy) nil copy)
-       ;; Get rid of text properties because we cannot read them.
-       (cons 'may copy)))
+     ;; Get rid of unreadable text properties.
+     (if (condition-case nil (read (format "%S" value)) (error nil))
+         (cons 'may value)
+       (let ((copy (copy-sequence value)))
+         (set-text-properties 0 (length copy) nil copy)
+         (cons 'may copy))))
     ((symbolp value)
      (cons 'must value))
     ((vectorp value)
@@ -857,6 +856,19 @@ QUOTE may be `may' (value may be quoted),
                                        `',(cdr el) (cdr el)))
                                  pass1)))
 	 (cons 'may `[,@(mapcar #'cdr pass1)]))))
+    ((and (recordp value) (symbolp (aref value 0)))
+     (let* ((pass1 (let ((res ()))
+                     (dotimes (i (length value))
+                       (push (desktop--v2s (aref value i)) res))
+                     (nreverse res)))
+	    (special (assq nil pass1)))
+       (if special
+	   (cons nil `(record
+                       ,@(mapcar (lambda (el)
+                                   (if (eq (car el) 'must)
+                                       `',(cdr el) (cdr el)))
+                                 pass1)))
+	 (cons 'may (apply #'record (mapcar #'cdr pass1))))))
     ((consp value)
      (let ((p value)
 	   newlist
@@ -1032,7 +1044,8 @@ without further confirmation."
   (setq desktop-dirname (file-name-as-directory (expand-file-name dirname)))
   (save-excursion
     (let ((eager desktop-restore-eager)
-	  (new-modtime (nth 5 (file-attributes (desktop-full-file-name)))))
+	  (new-modtime (file-attribute-modification-time
+			(file-attributes (desktop-full-file-name)))))
       (when
 	  (or (not new-modtime)		; nothing to overwrite
 	      (equal desktop-file-modtime new-modtime)
@@ -1135,7 +1148,9 @@ without further confirmation."
 		(write-region (point-min) (point-max) (desktop-full-file-name) nil 'nomessage))
 	      (setq desktop-file-checksum checksum)
 	      ;; We remember when it was modified (which is presumably just now).
-	      (setq desktop-file-modtime (nth 5 (file-attributes (desktop-full-file-name)))))))))))
+	      (setq desktop-file-modtime (file-attribute-modification-time
+					  (file-attributes
+					   (desktop-full-file-name)))))))))))
 
 ;; ----------------------------------------------------------------------------
 ;;;###autoload
@@ -1239,7 +1254,9 @@ Using it may cause conflicts.  Use it anyway? " owner)))))
                           'window-configuration-change-hook)))
 	    (desktop-auto-save-disable)
 	    ;; Evaluate desktop buffer and remember when it was modified.
-	    (setq desktop-file-modtime (nth 5 (file-attributes (desktop-full-file-name))))
+	    (setq desktop-file-modtime (file-attribute-modification-time
+					(file-attributes
+					 (desktop-full-file-name))))
 	    (load (desktop-full-file-name) t t t)
 	    ;; If it wasn't already, mark it as in-use, to bother other
 	    ;; desktop instances.
@@ -1540,10 +1557,10 @@ and try to load that."
           ;; for the sake of `clean-buffer-list': preserving the invariant
           ;; "how much time the user spent in Emacs without looking at this buffer".
           (setq buffer-display-time
-                (if buffer-display-time
-                    (time-add buffer-display-time
-                              (time-subtract nil desktop-file-modtime))
-                  (current-time)))
+		(time-since (if buffer-display-time
+				(time-subtract desktop-file-modtime
+					       buffer-display-time)
+			      0)))
 	  (unless (< desktop-file-version 208) ; Don't misinterpret any old custom args
 	    (dolist (record compacted-vars)
 	      (let*

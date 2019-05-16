@@ -1,11 +1,11 @@
 ;;; org-pcomplete.el --- In-buffer Completion Code -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;;         John Wiegley <johnw at gnu dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -49,10 +49,10 @@
   "Examine the thing at point and let the caller know what it is.
 The return value is a string naming the thing at point."
   (let ((beg1 (save-excursion
-		(skip-chars-backward "[:alnum:]-_@")
+		(skip-chars-backward "-[:alnum:]_@")
 		(point)))
 	(beg (save-excursion
-	       (skip-chars-backward "a-zA-Z0-9-_:$")
+	       (skip-chars-backward "-a-zA-Z0-9_:$")
 	       (point)))
 	(line-to-here (buffer-substring (point-at-bol) (point))))
     (cond
@@ -82,7 +82,7 @@ The return value is a string naming the thing at point."
 	   (not (equal (char-after (point-at-bol)) ?*))
 	   (save-excursion
 	     (move-beginning-of-line 1)
-	     (skip-chars-backward "[ \t\n]")
+	     (skip-chars-backward " \t\n")
 	     ;; org-drawer-regexp matches a whole line but while
 	     ;; looking-back, we just ignore trailing whitespaces
 	     (or (looking-back (substring org-drawer-regexp 0 -1)

@@ -1,6 +1,6 @@
 ;;; nnvirtual.el --- virtual newsgroups access for Gnus
 
-;; Copyright (C) 1994-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
 ;; Author: David Moore <dmoore@ucsd.edu>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -38,7 +38,7 @@
 (require 'gnus-start)
 (require 'gnus-sum)
 (require 'gnus-msg)
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (nnoo-declare nnvirtual)
 
@@ -234,14 +234,12 @@ component group will show up when you enter the virtual group.")
 	  nnvirtual-mapping-marks nil
 	  nnvirtual-info-installed nil)
     (when nnvirtual-component-regexp
-      ;; Go through the newsrc alist and find all component groups.
-      (let ((newsrc (cdr gnus-newsrc-alist))
-	    group)
-	(while (setq group (car (pop newsrc)))
-	  (when (string-match nnvirtual-component-regexp group) ; Match
-	    ;; Add this group to the list of component groups.
-	    (setq nnvirtual-component-groups
-		  (cons group (delete group nnvirtual-component-groups)))))))
+      ;; Go through the list of groups and find all component groups.
+      (dolist (group (cdr gnus-group-list))
+	(when (string-match nnvirtual-component-regexp group) ; Match
+	  ;; Add this group to the list of component groups.
+	  (setq nnvirtual-component-groups
+		(cons group (delete group nnvirtual-component-groups))))))
     (if (not nnvirtual-component-groups)
 	(nnheader-report 'nnvirtual "No component groups: %s" server)
       t)))
@@ -372,7 +370,7 @@ component group will show up when you enter the virtual group.")
 (defun nnvirtual-convert-headers ()
   "Convert HEAD headers into NOV headers."
   (with-current-buffer nntp-server-buffer
-    (let* ((dependencies (make-vector 100 0))
+    (let* ((dependencies (make-hash-table :test #'equal))
 	   (headers (gnus-get-newsgroup-headers dependencies)))
       (erase-buffer)
       (mapc 'nnheader-insert-nov headers))))
@@ -774,13 +772,13 @@ based on the marks on the component groups."
 
     ;; We need to convert the unreads to reads.  We compress the
     ;; sequence as we go, otherwise it could be huge.
-    (while (and (<= (incf i) nnvirtual-mapping-len)
+    (while (and (<= (cl-incf i) nnvirtual-mapping-len)
 		unreads)
       (if (= i (car unreads))
 	  (setq unreads (cdr unreads))
 	;; try to get a range.
 	(setq beg i)
-	(while (and (<= (incf i) nnvirtual-mapping-len)
+	(while (and (<= (cl-incf i) nnvirtual-mapping-len)
 		    (not (= i (car unreads)))))
 	(setq i (- i 1))
 	(if (= i beg)

@@ -1,6 +1,6 @@
 ;;; completion.el --- dynamic word-completion code
 
-;; Copyright (C) 1990, 1993, 1995, 1997, 2001-2018 Free Software
+;; Copyright (C) 1990, 1993, 1995, 1997, 2001-2019 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -409,10 +409,7 @@ Used to decide whether to save completions.")
 (defun cmpl-coerce-string-case (string case-type)
   (cond ((eq case-type :down) (downcase string))
 	((eq case-type :up) (upcase string))
-	((eq case-type :capitalized)
-	 (setq string (downcase string))
-	 (aset string 0 (logand ?\337 (aref string 0)))
-	 string)
+	((eq case-type :capitalized) (capitalize string))
 	(t string)))
 
 (defun cmpl-merge-string-cases (string-to-coerce given-string)
@@ -435,7 +432,7 @@ Used to decide whether to save completions.")
 
 
 (defun cmpl-hours-since-origin ()
-  (floor (float-time) 3600))
+  (floor (encode-time nil 'integer) 3600))
 
 ;;---------------------------------------------------------------------------
 ;; "Symbol" parsing functions
@@ -517,6 +514,9 @@ Used to decide whether to save completions.")
       (dolist (char symbol-chars-ignore)
 	(modify-syntax-entry char "w" table)))
     table))
+
+;; Old name, non-namespace-clean.
+(defvaralias 'cmpl-syntax-table 'completion-syntax-table)
 
 (defvar completion-syntax-table completion-standard-syntax-table
   "This variable holds the current completion syntax table.")
@@ -2225,7 +2225,10 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
       (modify-syntax-entry char "_" table))
     table))
 
+(declare-function cl-set-difference "cl-seq" (cl-list1 cl-list2 &rest cl-keys))
+
 (defun completion-lisp-mode-hook ()
+  (require 'cl-lib)
   (setq completion-syntax-table completion-lisp-syntax-table)
   ;; Lisp Mode diffs
   (setq-local completion-separator-chars
@@ -2269,10 +2272,7 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
 
 ;;;###autoload
 (define-minor-mode dynamic-completion-mode
-  "Toggle dynamic word-completion on or off.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle dynamic word-completion on or off."
   :global t
   :group 'completion
   ;; This is always good, not specific to dynamic-completion-mode.
@@ -2357,8 +2357,7 @@ if ARG is omitted or nil."
 (completion-def-wrapper 'delete-backward-char :backward)
 (completion-def-wrapper 'delete-backward-char-untabify :backward)
 
-;; Old names, non-namespace-clean.
-(defvaralias 'cmpl-syntax-table 'completion-syntax-table)
+;; Old name, non-namespace-clean.
 (defalias 'initialize-completions 'completion-initialize)
 
 (provide 'completion)

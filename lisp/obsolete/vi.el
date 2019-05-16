@@ -132,7 +132,7 @@ command extensions.")
   (define-key vi-com-map "\C-e" 'vi-expose-line-below)
   (define-key vi-com-map "\C-f" 'vi-forward-windowful)
   (define-key vi-com-map "\C-g" 'keyboard-quit)
-  (define-key vi-com-map "\C-i" 'indent-relative-maybe) ; TAB
+  (define-key vi-com-map "\C-i" 'indent-relative-first-indent-point) ; TAB
   (define-key vi-com-map "\C-j" 'vi-next-line) ; LFD
   (define-key vi-com-map "\C-k" 'vi-kill-line) ; extension
   (define-key vi-com-map "\C-l" 'recenter)
@@ -1386,7 +1386,7 @@ l(ines)."
   (interactive "p\nc")
   (cond ((char-equal region ?d) (mark-defun))
 	((char-equal region ?s) (mark-sexp arg))
-	((char-equal region ?b) (mark-whole-buffer))
+	((char-equal region ?b) (with-no-warnings (mark-whole-buffer)))
 	((char-equal region ?p) (mark-paragraph))
 	((char-equal region ?P) (mark-page arg))
 	((char-equal region ?f) (c-mark-function))

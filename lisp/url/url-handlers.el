@@ -1,6 +1,6 @@
 ;;; url-handlers.el --- file-name-handler stuff for URL loading  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2019 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -28,6 +28,7 @@
 ;; (require 'url-util)
 (eval-when-compile (require 'mm-decode))
 ;; (require 'mailcap)
+(eval-when-compile (require 'subr-x))
 ;; The following are autoloaded instead of `require'd to avoid eagerly
 ;; loading all of URL when turning on url-handler-mode in the .emacs.
 (autoload 'url-expand-file-name "url-expand" "Convert url to a fully specified url, and canonicalize it.")
@@ -43,7 +44,7 @@
 (declare-function mail-content-type-get "mail-parse" (ct attribute))
 ;; mm-decode loads mm-bodies, which loads mm-util.
 (declare-function mm-charset-to-coding-system "mm-util"
-                 (charset &optional lbt allow-override silent))
+                  (charset &optional lbt allow-override silent))
 
 ;; Implementation status
 ;; ---------------------
@@ -101,10 +102,7 @@
 
 ;;;###autoload
 (define-minor-mode url-handler-mode
-  "Toggle using `url' library for URL filenames (URL Handler mode).
-With a prefix argument ARG, enable URL Handler mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil."
+  "Toggle using `url' library for URL filenames (URL Handler mode)."
   :global t :group 'url
   ;; Remove old entry, if any.
   (setq file-name-handler-alist
@@ -186,6 +184,7 @@ the arguments that would have been passed to OPERATION."
 (put 'file-name-absolute-p 'url-file-handlers (lambda (&rest ignored) t))
 (put 'expand-file-name 'url-file-handlers 'url-handler-expand-file-name)
 (put 'directory-file-name 'url-file-handlers 'url-handler-directory-file-name)
+(put 'file-name-directory 'url-file-handlers 'url-handler-file-name-directory)
 (put 'unhandled-file-name-directory 'url-file-handlers 'url-handler-unhandled-file-name-directory)
 (put 'file-remote-p 'url-file-handlers 'url-handler-file-remote-p)
 ;; (put 'file-name-as-directory 'url-file-handlers 'url-handler-file-name-as-directory)
@@ -231,6 +230,14 @@ the arguments that would have been passed to OPERATION."
       ;; a local process.
       nil)))
 
+(defun url-handler-file-name-directory (dir)
+  (let ((url (url-generic-parse-url dir)))
+    ;; Do not attempt to handle `file' URLs which are local.
+    (if (and (not (equal (url-type url) "file"))
+	     (string-empty-p (url-filename url)))
+	(url-handler-file-name-directory (concat dir "/"))
+      (url-run-real-handler 'file-name-directory (list dir)))))
+
 (defun url-handler-file-remote-p (filename &optional identification _connected)
   (let ((url (url-generic-parse-url filename)))
     (if (and (url-type url) (not (equal (url-type url) "file")))
@@ -253,15 +260,15 @@ the arguments that would have been passed to OPERATION."
 ;; The actual implementation
 ;;;###autoload
 (defun url-copy-file (url newname &optional ok-if-already-exists
-			  _keep-time _preserve-uid-gid)
+                          _keep-time _preserve-uid-gid _preserve-permissions)
   "Copy URL to NEWNAME.  Both args must be strings.
-Signals a `file-already-exists' error if file NEWNAME already exists,
+Signal a `file-already-exists' error if file NEWNAME already exists,
 unless a third argument OK-IF-ALREADY-EXISTS is supplied and non-nil.
 A number as third arg means request confirmation if NEWNAME already exists.
 This is what happens in interactive use with M-x.
 Fourth arg KEEP-TIME non-nil means give the new file the same
 last-modified time as the old one.  (This works on only some systems.)
-Fifth arg PRESERVE-UID-GID is ignored.
+Args PRESERVE-UID-GID and PRESERVE-PERMISSIONS are ignored.
 A prefix arg makes KEEP-TIME non-nil."
   (if (and (file-exists-p newname)
 	   (not ok-if-already-exists))
@@ -344,7 +351,7 @@ if it had been inserted from a file named URL."
     (unless buffer (signal 'file-error (list url "No Data")))
     (with-current-buffer buffer
       ;; XXX: This is HTTP/S specific and should be moved to url-http
-      ;; instead.  See https://debbugs.gnu.org/17549.
+      ;; instead.  See bug#17549.
       (when (bound-and-true-p url-http-response-status)
         ;; Don't signal an error if VISIT is non-nil, because
         ;; 'insert-file-contents' doesn't.  This is required to
@@ -357,7 +364,7 @@ if it had been inserted from a file named URL."
                          (< url-http-response-status 300)))
           (let ((desc (nth 2 (assq url-http-response-status url-http-codes))))
             (kill-buffer buffer)
-            ;; Signal file-error per https://debbugs.gnu.org/16733.
+            ;; Signal file-error per bug#16733.
             (signal 'file-error (list url desc))))))
     (url-insert-buffer-contents buffer url visit beg end replace)))
 

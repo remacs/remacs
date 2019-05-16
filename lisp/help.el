@@ -1,6 +1,6 @@
 ;;; help.el --- help commands for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2018 Free Software
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2019 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -67,6 +67,7 @@
     (define-key map "\C-n" 'view-emacs-news)
     (define-key map "\C-o" 'describe-distribution)
     (define-key map "\C-p" 'view-emacs-problems)
+    (define-key map "\C-s" 'search-forward-help-for-help)
     (define-key map "\C-t" 'view-emacs-todo)
     (define-key map "\C-w" 'describe-no-warranty)
 
@@ -240,6 +241,7 @@ C-m         How to order printed Emacs manuals.
 C-n         News of recent Emacs changes.
 C-o         Emacs ordering and distribution information.
 C-p         Info about known Emacs problems.
+C-s         Search forward \"help window\".
 C-t         Emacs TODO list.
 C-w         Information on absence of warranty for GNU Emacs."
   help-map)
@@ -263,17 +265,19 @@ If that doesn't give a function, return nil."
         (condition-case ()
             (save-excursion
               (save-restriction
-                (narrow-to-region (max (point-min)
-                                       (- (point) 1000)) (point-max))
-                ;; Move up to surrounding paren, then after the open.
-                (backward-up-list 1)
-                (forward-char 1)
-                ;; If there is space here, this is probably something
-                ;; other than a real Lisp function call, so ignore it.
-                (if (looking-at "[ \t]")
-                    (error "Probably not a Lisp function call"))
-                (let ((obj (read (current-buffer))))
-                  (and (symbolp obj) (fboundp obj) obj))))
+                (let ((forward-sexp-function nil)) ;Use elisp-mode's value
+                  (narrow-to-region (max (point-min)
+                                         (- (point) 1000))
+                                    (point-max))
+                  ;; Move up to surrounding paren, then after the open.
+                  (backward-up-list 1)
+                  (forward-char 1)
+                  ;; If there is space here, this is probably something
+                  ;; other than a real Lisp function call, so ignore it.
+                  (if (looking-at "[ \t]")
+                      (error "Probably not a Lisp function call"))
+                  (let ((obj (read (current-buffer))))
+                    (and (symbolp obj) (fboundp obj) obj)))))
           (error nil))
         (let* ((str (find-tag-default))
                (sym (if str (intern-soft str))))
@@ -423,13 +427,11 @@ is specified by the variable `message-log-max'."
 (defun view-order-manuals ()
   "Display information on how to buy printed copies of Emacs manuals."
   (interactive)
-;;  (view-help-file "ORDERS")
   (info "(emacs)Printed Books"))
 
 (defun view-emacs-FAQ ()
   "Display the Emacs Frequently Asked Questions (FAQ) file."
   (interactive)
-  ;; (find-file-read-only (expand-file-name "FAQ" data-directory))
   (info "(efaq)"))
 
 (defun view-emacs-problems ()
@@ -442,7 +444,8 @@ is specified by the variable `message-log-max'."
   (interactive)
   (view-help-file "DEBUG"))
 
-;; This used to visit MORE.STUFF; maybe it should just be removed.
+;; This used to visit a plain text file etc/MORE.STUFF;
+;; maybe this command should just be removed.
 (defun view-external-packages ()
   "Display info on where to get more Emacs packages."
   (interactive)
@@ -906,6 +909,10 @@ documentation for the major and minor modes of that buffer."
 		   (push (list fmode pretty-minor-mode
 			       (format-mode-line (assq mode minor-mode-alist)))
 			 minor-modes)))))
+	;; Narrowing is not a minor mode, but its indicator is part of
+	;; mode-line-modes.
+	(when (buffer-narrowed-p)
+	  (push '(narrow-to-region "Narrow" " Narrow") minor-modes))
 	(setq minor-modes
 	      (sort minor-modes
 		    (lambda (a b) (string-lessp (cadr a) (cadr b)))))
@@ -965,6 +972,13 @@ documentation for the major and minor modes of that buffer."
   ;; For the sake of IELM and maybe others
   nil)
 
+(defun search-forward-help-for-help ()
+  "Search forward \"help window\"."
+  (interactive)
+  ;; Move cursor to the "help window".
+  (pop-to-buffer " *Metahelp*")
+  ;; Do incremental search forward.
+  (isearch-forward nil t))
 
 (defun describe-minor-mode (minor-mode)
   "Display documentation of a minor mode given as MINOR-MODE.
@@ -1094,9 +1108,6 @@ function is called, the window to be resized is selected."
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
-With a prefix argument ARG, enable Temp Buffer Resize mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Temp Buffer Resize mode is enabled, the windows in which we
 show a temporary buffer are automatically resized in height to
@@ -1309,15 +1320,14 @@ Return VALUE."
 
 ;; (4) A marker (`help-window-point-marker') to move point in the help
 ;;     window to an arbitrary buffer position.
-(defmacro with-help-window (buffer-name &rest body)
-  "Display buffer named BUFFER-NAME in a help window.
-Evaluate the forms in BODY with standard output bound to a buffer
-called BUFFER-NAME (creating it if it does not exist), put that
-buffer in `help-mode', display the buffer in a window (see
-`with-temp-buffer-window' for details) and issue a message how to
-deal with that \"help\" window when it's no more needed.  Select
-the help window if the current value of the user option
-`help-window-select' says so.  Return last value in BODY."
+(defmacro with-help-window (buffer-or-name &rest body)
+  "Evaluate BODY, send output to BUFFER-OR-NAME and show in a help window.
+This construct is like `with-temp-buffer-window' but unlike that
+puts the buffer specified by BUFFER-OR-NAME in `help-mode' and
+displays a message about how to delete the help window when it's no
+longer needed.  The help window will be selected if
+`help-window-select' is non-nil.
+Most of this is done by `help-window-setup', which see."
   (declare (indent 1) (debug t))
   `(progn
      ;; Make `help-window-point-marker' point nowhere.  The only place
@@ -1329,7 +1339,7 @@ the help window if the current value of the user option
 	    (cons 'help-mode-finish temp-buffer-window-show-hook)))
        (setq help-window-old-frame (selected-frame))
        (with-temp-buffer-window
-	,buffer-name nil 'help-window-setup (progn ,@body)))))
+	,buffer-or-name nil 'help-window-setup (progn ,@body)))))
 
 ;; Called from C, on encountering `help-char' when reading a char.
 ;; Don't print to *Help*; that would clobber Help history.

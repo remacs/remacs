@@ -1,6 +1,6 @@
 ;;; org-element.el --- Parser for Org Syntax         -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 ;;
-;; See <http://orgmode.org/worg/dev/org-syntax.html> for details about
+;; See <https://orgmode.org/worg/dev/org-syntax.html> for details about
 ;; Org syntax.
 ;;
 ;; Lisp-wise, a syntax object can be represented as a list.
@@ -2119,7 +2119,7 @@ containing `:key', `:value', `:begin', `:end', `:post-blank' and
     ;; this corner case.
     (let ((begin (or (car affiliated) (point)))
 	  (post-affiliated (point))
-	  (key (progn (looking-at "[ \t]*#\\+\\(\\S-+*\\):")
+	  (key (progn (looking-at "[ \t]*#\\+\\(\\S-*\\):")
 		      (upcase (match-string-no-properties 1))))
 	  (value (org-trim (buffer-substring-no-properties
 			    (match-end 0) (point-at-eol))))
@@ -3065,7 +3065,7 @@ Assume point is at the beginning of the link."
 	(setq path (match-string-no-properties 1))
 	(setq contents-begin (match-beginning 1))
 	(setq contents-end (match-end 1)))
-       ;; Type 2: Standard link, i.e. [[http://orgmode.org][homepage]]
+       ;; Type 2: Standard link, i.e. [[https://orgmode.org][homepage]]
        ((looking-at org-bracket-link-regexp)
 	(setq format 'bracket)
 	(setq contents-begin (match-beginning 3))
@@ -3114,14 +3114,14 @@ Assume point is at the beginning of the link."
 	 (t
 	  (setq type "fuzzy")
 	  (setq path raw-link))))
-       ;; Type 3: Plain link, e.g., http://orgmode.org
+       ;; Type 3: Plain link, e.g., https://orgmode.org
        ((looking-at org-plain-link-re)
 	(setq format 'plain)
 	(setq raw-link (match-string-no-properties 0))
 	(setq type (match-string-no-properties 1))
 	(setq link-end (match-end 0))
 	(setq path (match-string-no-properties 2)))
-       ;; Type 4: Angular link, e.g., <http://orgmode.org>.  Unlike to
+       ;; Type 4: Angular link, e.g., <https://orgmode.org>.  Unlike to
        ;; bracket links, follow RFC 3986 and remove any extra
        ;; whitespace in URI.
        ((looking-at org-angle-link-re)
@@ -4765,13 +4765,13 @@ you want to help debugging the issue.")
 (defvar org-element-cache-sync-idle-time 0.6
   "Length, in seconds, of idle time before syncing cache.")
 
-(defvar org-element-cache-sync-duration (seconds-to-time 0.04)
+(defvar org-element-cache-sync-duration 0.04
   "Maximum duration, as a time value, for a cache synchronization.
 If the synchronization is not over after this delay, the process
 pauses and resumes after `org-element-cache-sync-break'
 seconds.")
 
-(defvar org-element-cache-sync-break (seconds-to-time 0.3)
+(defvar org-element-cache-sync-break 0.3
   "Duration, as a time value, of the pause between synchronizations.
 See `org-element-cache-sync-duration' for more information.")
 
@@ -4856,7 +4856,7 @@ table is cleared once the synchronization is complete."
 (defun org-element--cache-generate-key (lower upper)
   "Generate a key between LOWER and UPPER.
 
-LOWER and UPPER are integers or lists, possibly empty.
+LOWER and UPPER are fixnums or lists of same, possibly empty.
 
 If LOWER and UPPER are equals, return LOWER.  Otherwise, return
 a unique key, as an integer or a list of integers, according to
@@ -5066,7 +5066,7 @@ Assume ELEMENT belongs to cache and that a cache is active."
 TIME-LIMIT is a time value or nil."
   (and time-limit
        (or (input-pending-p)
-	   (time-less-p time-limit (current-time)))))
+	   (time-less-p time-limit nil))))
 
 (defsubst org-element--cache-shift-positions (element offset &optional props)
   "Shift ELEMENT properties relative to buffer positions by OFFSET.
@@ -5120,8 +5120,7 @@ updated before current modification are actually submitted."
 	     (and next (aref next 0))
 	     threshold
 	     (and (not threshold)
-		  (time-add (current-time)
-			    org-element-cache-sync-duration))
+		  (time-add nil org-element-cache-sync-duration))
 	     future-change)
 	    ;; Request processed.  Merge current and next offsets and
 	    ;; transfer ending position.

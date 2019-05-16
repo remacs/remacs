@@ -1,6 +1,6 @@
 ;;; spam.el --- Identifying spam
 
-;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Maintainer: Ted Zlatanov <tzz@lifelogs.com>
@@ -38,8 +38,6 @@
 
 ;;{{{ compilation directives and autoloads/requires
 
-(eval-when-compile (require 'cl))
-
 (require 'message)              ;for the message-fetch-field functions
 (require 'gnus-sum)
 (require 'gnus-uu)                      ; because of key prefix issues
@@ -50,6 +48,8 @@
 
 ;; for nnimap-split-download-body-default
 (eval-when-compile (require 'nnimap))
+
+(eval-when-compile (require 'cl-lib))
 
 ;; autoload query-dig
 (autoload 'query-dig "dig")
@@ -1164,12 +1164,12 @@ backends)."
 (defun spam-article-sort-by-spam-status (h1 h2)
   "Sort articles by score."
   (let (result)
-    (dolist (header (spam-necessary-extra-headers))
+    (cl-dolist (header (spam-necessary-extra-headers))
       (let ((s1 (spam-summary-score h1 header))
             (s2 (spam-summary-score h2 header)))
       (unless (= s1 s2)
         (setq result (< s1 s2))
-        (return))))
+        (cl-return))))
     result))
 
 (defvar spam-spamassassin-score-regexp
@@ -1205,14 +1205,14 @@ Note this has to be fast."
 With SPECIFIC-HEADER, returns only that header's score.
 Will not return a nil score."
   (let (score)
-    (dolist (header
+    (cl-dolist (header
              (if specific-header
                  (list specific-header)
                (spam-necessary-extra-headers)))
       (setq score
             (spam-extra-header-to-number header headers))
       (when score
-        (return)))
+        (cl-return)))
     (or score 0)))
 
 (defun spam-generic-score (&optional recheck)
@@ -1661,10 +1661,10 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
          article-cannot-be-faked)
 
 
-    (dolist (backend methods)
+    (cl-dolist (backend methods)
       (when (spam-backend-statistical-p backend)
         (setq article-cannot-be-faked t)
-        (return)))
+        (cl-return)))
 
     (when (memq 'default methods)
       (setq article-cannot-be-faked t))
@@ -1749,7 +1749,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
           ;; eliminate duplicates
           (dolist (article (copy-sequence ulist))
             (when (memq article rlist)
-              (incf delcount)
+              (cl-incf delcount)
               (setq rlist (delq article rlist))
               (setq ulist (delq article ulist))))
 
@@ -2137,7 +2137,7 @@ See `spam-ifile-database'."
           (apply 'call-process-region
                  (point-min) (point-max) spam-ifile-program
                  nil temp-buffer-name nil "-c"
-                 (if db-param `(,db-param "-q") `("-q"))))
+                 (if db-param `(,db-param "-q") '("-q"))))
         ;; check the return now (we're back in the temp buffer)
         (goto-char (point-min))
         (if (not (eobp))
@@ -2166,7 +2166,7 @@ Uses `gnus-newsgroup-name' if category is nil (for ham registration)."
              (point-min) (point-max) spam-ifile-program
              nil nil nil
              add-or-delete-option category
-             (if db `(,db "-h") `("-h"))))))
+             (if db `(,db "-h") '("-h"))))))
 
 (defun spam-ifile-register-spam-routine (articles &optional unregister)
   (spam-ifile-register-with-ifile articles spam-ifile-spam-category unregister))
@@ -2299,10 +2299,10 @@ With a non-nil REMOVE, remove the ADDRESSES."
   (when (stringp from)
     (spam-filelist-build-cache type)
     (let (found)
-      (dolist (address (gethash type spam-caches))
+      (cl-dolist (address (gethash type spam-caches))
         (when (and address (string-match address from))
           (setq found t)
-          (return)))
+          (cl-return)))
       found)))
 
 ;;; returns t if the sender is in the whitelist, nil or
@@ -2473,7 +2473,7 @@ With a non-nil REMOVE, remove the ADDRESSES."
                      (point-min) (point-max)
                      spam-bogofilter-program
                      nil temp-buffer-name nil
-                     (if db `("-d" ,db "-v") `("-v"))))
+                     (if db `("-d" ,db "-v") '("-v"))))
             (setq return (spam-check-bogofilter-headers score))))
         return)
     (gnus-error 5 "`spam.el' doesn't support obsolete bogofilter versions")))
@@ -2501,7 +2501,7 @@ With a non-nil REMOVE, remove the ADDRESSES."
                      (point-min) (point-max)
                      spam-bogofilter-program
                      nil nil nil switch
-                     (if db `("-d" ,db "-v") `("-v")))))))
+                     (if db `("-d" ,db "-v") '("-v")))))))
     (gnus-error 5 "`spam.el' doesn't support obsolete bogofilter versions")))
 
 (defun spam-bogofilter-register-spam-routine (articles &optional unregister)

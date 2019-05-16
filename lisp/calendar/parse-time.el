@@ -1,6 +1,6 @@
 ;;; parse-time.el --- parsing time strings -*- lexical-binding: t -*-
 
-;; Copyright (C) 1996, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Erik Naggum <erik@naggum.no>
 ;; Keywords: util
@@ -29,8 +29,9 @@
 
 ;; `parse-time-string' parses a time in a string and returns a list of 9
 ;; values, just like `decode-time', where unspecified elements in the
-;; string are returned as nil.  `encode-time' may be applied on these
-;; values to obtain an internal time value.
+;; string are returned as nil (except unspecfied DST is returned as -1).
+;; `encode-time' may be applied on these values to obtain an internal
+;; time value.
 
 ;;; Code:
 
@@ -98,7 +99,7 @@ letters, digits, plus or minus signs or colons."
   `(((6) parse-time-weekdays)
     ((3) (1 31))
     ((4) parse-time-months)
-    ((5) (100 ,most-positive-fixnum))
+    ((5) (100))
     ((2 1 0)
      ,#'(lambda () (and (stringp parse-time-elt)
 			(= (length parse-time-elt) 8)
@@ -146,13 +147,14 @@ letters, digits, plus or minus signs or colons."
 ;;;###autoload
 (defun parse-time-string (string)
   "Parse the time-string STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
-STRING should be on something resembling an RFC2822 string, a la
+STRING should be something resembling an RFC 822 (or later) date-time, e.g.,
 \"Fri, 25 Mar 2016 16:24:56 +0100\", but this function is
 somewhat liberal in what format it accepts, and will attempt to
 return a \"likely\" value even for somewhat malformed strings.
 The values returned are identical to those of `decode-time', but
-any values that are unknown are returned as nil."
-  (let ((time (list nil nil nil nil nil nil nil nil nil))
+any unknown values other than DST are returned as nil, and an
+unknown DST value is returned as -1."
+  (let ((time (list nil nil nil nil nil nil nil -1 nil))
 	(temp (parse-time-tokenize (downcase string))))
     (while temp
       (let ((parse-time-elt (pop temp))
@@ -166,11 +168,12 @@ any values that are unknown are returned as nil."
 	    (when (and (not (nth (car slots) time)) ;not already set
 		       (setq parse-time-val
 			     (cond ((and (consp predicate)
-					 (not (eq (car predicate)
-						  'lambda)))
+					 (not (functionp predicate)))
 				    (and (numberp parse-time-elt)
 					 (<= (car predicate) parse-time-elt)
-					 (<= parse-time-elt (cadr predicate))
+					 (or (not (cdr predicate))
+					     (<= parse-time-elt
+						 (cadr predicate)))
 					 parse-time-elt))
 				   ((symbolp predicate)
 				    (cdr (assoc parse-time-elt
@@ -187,7 +190,7 @@ any values that are unknown are returned as nil."
 					  :end (aref this 1))
 				       (funcall this)))
 				 parse-time-val)))
-		  (rplaca (nthcdr (pop slots) time) new-val))))))))
+		  (setf (nth (pop slots) time) new-val))))))))
     time))
 
 (defconst parse-time-iso8601-regexp
@@ -223,7 +226,7 @@ If DATE-STRING cannot be parsed, it falls back to
 	 (tz-re (nth 2 parse-time-iso8601-regexp))
          re-start
          time seconds minute hour
-         day month year day-of-week dst tz)
+         day month year day-of-week (dst -1) tz)
     ;; We need to populate 'time' with
     ;; (SEC MIN HOUR DAY MON YEAR DOW DST TZ)
 
@@ -239,16 +242,18 @@ If DATE-STRING cannot be parsed, it falls back to
 	      seconds (string-to-number (match-string 3 date-string))
 	      re-start (match-end 0))
 	(when (string-match tz-re date-string re-start)
-          (if (string= "Z" (match-string 1 date-string))
-              (setq tz 0)  ;; UTC timezone indicated by Z
-            (setq tz (+
-                      (* 3600
-                         (string-to-number (match-string 3 date-string)))
-                      (* 60
-                         (string-to-number
-                          (or (match-string 4 date-string) "0")))))
-            (when (string= "-" (match-string 2 date-string))
-              (setq tz (- tz)))))
+          (setq dst nil)
+          (setq tz (if (string= "Z" (match-string 1 date-string))
+                       0  ;; UTC timezone indicated by Z
+                     (let ((tz (+
+                                (* 3600
+                                   (string-to-number
+                                    (match-string 3 date-string)))
+                                (* 60
+                                   (string-to-number
+                                    (or (match-string 4 date-string) "0"))))))
+                       (if (string= "-" (match-string 2 date-string))
+                            (- tz) tz)))))
 	(setq time (list seconds minute hour day month year day-of-week dst tz))))
 
     ;; Fall back to having `parse-time-string' do fancy things for us.
@@ -256,7 +261,7 @@ If DATE-STRING cannot be parsed, it falls back to
       (setq time (parse-time-string date-string)))
 
     (and time
-	 (apply 'encode-time time))))
+	 (encode-time time))))
 
 (provide 'parse-time)
 

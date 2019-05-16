@@ -1,6 +1,6 @@
 ;;; nnmail.el --- mail support functions for the Gnus mail backends
 
-;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news, mail
@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)				; for macro gnus-kill-buffer, at least
 (require 'nnheader)
@@ -488,7 +488,8 @@ Example:
     (to . "to\\|cc\\|apparently-to\\|resent-to\\|resent-cc")
     (from . "from\\|sender\\|resent-from")
     (nato . "to\\|cc\\|resent-to\\|resent-cc")
-    (naany . "from\\|to\\|cc\\|sender\\|resent-from\\|resent-to\\|resent-cc"))
+    (naany . "from\\|to\\|cc\\|sender\\|resent-from\\|resent-to\\|resent-cc")
+    (list . "list-id\\|list-post\\|x-mailing-list\\|x-beenthere\\|x-loop"))
   "Alist of abbreviations allowed in `nnmail-split-fancy'."
   :group 'nnmail-split
   :type '(repeat (cons :format "%v" symbol regexp)))
@@ -662,10 +663,10 @@ nn*-request-list should have been called before calling this function."
 	    (narrow-to-region (point) (point-at-eol))
 	    (setq group (read buffer))
 	    (unless (stringp group)
-	      (setq group (symbol-name group)))
+	      (setq group (encode-coding-string (symbol-name group) 'latin-1)))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
-		(push (list (string-as-unibyte group) (cons min max))
+		(push (list group (cons min max))
 		      group-assoc)))
 	(error nil))
       (widen)
@@ -723,7 +724,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	 ;; Skip all the headers in case there are more "From "s...
 	 (or (search-forward "\n\n" nil t)
 	     (search-forward-regexp "^[^:]*\\( .*\\|\\)$" nil t)
-	     (search-forward ""))
+	     (search-forward "\^_\^L"))
 	 (point)))
       ;; Unquote the ">From " line, if any.
       (goto-char (point-min))
@@ -763,7 +764,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	(if (or (= (+ (point) content-length) (point-max))
 		(save-excursion
 		  (goto-char (+ (point) content-length))
-		  (looking-at "")))
+		  (looking-at "\^_")))
 	    (progn
 	      (goto-char (+ (point) content-length))
 	      (setq do-search nil))
@@ -772,7 +773,7 @@ If SOURCE is a directory spec, try to return the group name component."
       ;; Go to the beginning of the next article - or to the end
       ;; of the buffer.
       (when do-search
-	(if (re-search-forward "^" nil t)
+	(if (re-search-forward "^\^_" nil t)
 	    (goto-char (match-beginning 0))
 	  (goto-char (1- (point-max)))))
       (delete-char 1)			; delete ^_
@@ -781,7 +782,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	  (narrow-to-region start (point))
 	  (goto-char (point-min))
 	  (nnmail-check-duplication message-id func artnum-func)
-	  (incf count)
+	  (cl-incf count)
 	  (setq end (point-max))))
       (goto-char end))
     count))
@@ -927,7 +928,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	  (save-restriction
 	    (narrow-to-region start (point))
 	    (goto-char (point-min))
-	    (incf count)
+	    (cl-incf count)
 	    (nnmail-check-duplication message-id func artnum-func)
 	    (setq end (point-max))))
 	(goto-char end)))
@@ -980,7 +981,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	  (save-restriction
 	    (narrow-to-region start (point))
 	    (goto-char (point-min))
-	    (incf count)
+	    (cl-incf count)
 	    (nnmail-check-duplication message-id func artnum-func junk-func)
 	    (setq end (point-max))))
 	(goto-char end)
@@ -1248,11 +1249,11 @@ Return the number of characters in the body."
 		     (progn (forward-line 1) (point))))
     (insert (format "Xref: %s" (system-name)))
     (while group-alist
-      (insert (if (mm-multibyte-p)
-		  (string-as-multibyte
-		   (format " %s:%d" (caar group-alist) (cdar group-alist)))
-		(string-as-unibyte
-		 (format " %s:%d" (caar group-alist) (cdar group-alist)))))
+      (insert (if enable-multibyte-characters
+		  (format " %s:%d" (caar group-alist) (cdar group-alist))
+		(encode-coding-string
+		 (format " %s:%d" (caar group-alist) (cdar group-alist))
+		 'utf-8)))
       (setq group-alist (cdr group-alist)))
     (insert "\n")))
 
@@ -1533,7 +1534,8 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 	    (and (setq file (ignore-errors
 			      (symbol-value (intern (format "%s-active-file"
 							    backend)))))
-		 (setq file-time (nth 5 (file-attributes file)))
+		 (setq file-time (file-attribute-modification-time
+				  (file-attributes file)))
 		 (or (not
 		      (setq timestamp
 			    (condition-case ()
@@ -1541,11 +1543,8 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 					       (format "%s-active-timestamp"
 						       backend)))
 			      (error 'none))))
-		     (not (consp timestamp))
-		     (equal timestamp '(0 0))
-		     (> (nth 0 file-time) (nth 0 timestamp))
-		     (and (= (nth 0 file-time) (nth 0 timestamp))
-			  (> (nth 1 file-time) (nth 1 timestamp))))))
+		     (eq timestamp 'none)
+		     (time-less-p timestamp file-time))))
 	(save-excursion
 	  (or (eq timestamp 'none)
 	      (set (intern (format "%s-active-timestamp" backend))
@@ -1836,8 +1835,8 @@ be called once per group or once for all groups."
 		      ((error quit)
 		       (message "Mail source %s failed: %s" source cond)
 		       0)))
-	  (incf total new)
-	  (incf i)))
+	  (cl-incf total new)
+	  (cl-incf i)))
       ;; If we did indeed read any incoming spools, we save all info.
       (if (zerop total)
 	  (when mail-source-plugged
@@ -1883,7 +1882,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
 	     (setq days (days-to-time days))
 	     ;; Compare the time with the current time.
 	     (if (null time)
-		 (time-subtract nil days)
+		 (time-since days)
 	       (ignore-errors (time-less-p days (time-since time)))))))))
 
 (declare-function gnus-group-mark-article-read "gnus-group" (group article))
@@ -1899,7 +1898,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
     (unless (eq target 'delete)
       (when (or (gnus-request-group target nil nil (gnus-get-info target))
 		(gnus-request-create-group target))
-	(let ((group-art (gnus-request-accept-article target nil nil t)))
+	(let ((group-art (gnus-request-accept-article target nil t t)))
 	  (when (and (consp group-art)
 		     (cdr group-art))
 	    (gnus-group-mark-article-read target (cdr group-art))))))))

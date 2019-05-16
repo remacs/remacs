@@ -1,6 +1,6 @@
 ;;; find-func.el --- find the definition of the Emacs Lisp function near point  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997, 1999, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Jens Petersen <petersen@kurims.kyoto-u.ac.jp>
 ;; Maintainer: petersen@kurims.kyoto-u.ac.jp
@@ -270,54 +270,6 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
       (error "Can't find source for %s" fun-or-var))
     (cons (current-buffer) (match-beginning 0))))
 
-(defvar find-function-rust-source-directory nil)
-
-(defun find-function-guess-rust-source-directory ()
-  (when source-directory
-    (let ((source-root (directory-file-name source-directory)))
-      (expand-file-name "rust_src/src" source-root))))
-
-(defun find-function-maybe-read-rust-source-directory ()
-  (let ((dir (or find-function-rust-source-directory
-                 (find-function-guess-rust-source-directory)
-                 (read-directory-name "Emacs Rust souce dir: " source-directory nil t))))
-    (setq find-function-rust-source-directory dir)
-    dir))
-
-(defun find-function-rust-source (fun-or-var file type)
-  "Find the source location where FUN-OR-VAR is defined in FILE.
-TYPE should be nil to find a function, or `defvar' to find a variable."
-  (let* ((dir (find-function-maybe-read-rust-source-directory))
-         (file (expand-file-name file dir)))
-    (unless (file-readable-p file)
-      (error "The Rust source file %s is not available" (file-name-nondirectory file)))
-
-    (let* ((name
-            (if type
-                (symbol-name fun-or-var)
-              (subr-name
-               (advice--cd*r
-                (find-function-advised-original
-                 (indirect-function
-                  (find-function-advised-original fun-or-var)))))))
-           (rust-name (replace-regexp-in-string "-" "_" name))
-           (regex
-            (rx-to-string
-             (if type
-                 `(and "defvar_" (+ anything) "\"" ,name "\"")
-               `(and "fn" (+ space) ,rust-name "("))))
-           (lisp-name-regex (rx-to-string
-                             `(and "#[" (* space) "lisp_fn" (* space)
-                                   "(" (* space) "name" (* space) "="
-                                   (* space) "\"" ,name))))
-      (with-current-buffer (find-file-noselect file)
-        (goto-char (point-min))
-        (unless (re-search-forward lisp-name-regex nil t)
-          (unless (re-search-forward regex nil t)
-            (error "Can't find source for %s" fun-or-var)))
-        (cons (current-buffer) (match-beginning 0))))))
-
-
 ;;;###autoload
 (defun find-library (library)
   "Find the Emacs Lisp source of LIBRARY.
@@ -380,50 +332,6 @@ See `find-library' for more details."
                                      (find-library-name library)))
     (run-hooks 'find-function-after-hook)))
 
-(defun find-function-lisp-source (symbol type library)
-  (when (string-match "\\.el\\(c\\)\\'" library)
-    (setq library (substring library 0 (match-beginning 1))))
-  ;; Strip extension from .emacs.el to make sure symbol is searched in
-  ;; .emacs too.
-  (when (string-match "\\.emacs\\(.el\\)" library)
-    (setq library (substring library 0 (match-beginning 1))))
-  (let* ((filename (find-library-name library))
-         (regexp-symbol (cdr (assq type find-function-regexp-alist))))
-    (with-current-buffer (find-file-noselect filename)
-      (let ((regexp (if (functionp regexp-symbol) regexp-symbol
-                      (format (symbol-value regexp-symbol)
-                              ;; Entry for ` (backquote) macro in loaddefs.el,
-                              ;; (defalias (quote \`)..., has a \ but
-                              ;; (symbol-name symbol) doesn't.  Add an
-                              ;; optional \ to catch this.
-                              (concat "\\\\?"
-                                      (regexp-quote (symbol-name symbol))))))
-            (case-fold-search))
-        (save-restriction
-          (widen)
-          (with-syntax-table emacs-lisp-mode-syntax-table
-            (goto-char (point-min))
-            (if (if (functionp regexp)
-                    (funcall regexp symbol)
-                  (or (re-search-forward regexp nil t)
-                      ;; `regexp' matches definitions using known forms like
-                      ;; `defun', or `defvar'.  But some functions/variables
-                      ;; are defined using special macros (or functions), so
-                      ;; if `regexp' can't find the definition, we look for
-                      ;; something of the form "(SOMETHING <symbol> ...)".
-                      ;; This fails to distinguish function definitions from
-                      ;; variable declarations (or even uses thereof), but is
-                      ;; a good pragmatic fallback.
-                      (re-search-forward
-                       (concat "^([^ ]+" find-function-space-re "['(]?"
-                               (regexp-quote (symbol-name symbol))
-                               "\\_>")
-                       nil t)))
-                (progn
-                  (beginning-of-line)
-                  (cons (current-buffer) (point)))
-              (cons (current-buffer) nil))))))))
-
 ;;;###autoload
 (defun find-function-search-for-symbol (symbol type library)
   "Search for SYMBOL's definition of type TYPE in LIBRARY.
@@ -434,19 +342,56 @@ If TYPE is nil, look for a function definition.
 Otherwise, TYPE specifies the kind of definition,
 and it is interpreted via `find-function-regexp-alist'.
 The search is done in the source for library LIBRARY."
-  (unless library
-    (error "Don't know where `%s' is defined" symbol))
+  (if (null library)
+      (error "Don't know where `%s' is defined" symbol))
   ;; Some functions are defined as part of the construct
   ;; that defines something else.
   (while (and (symbolp symbol) (get symbol 'definition-name))
     (setq symbol (get symbol 'definition-name)))
-  (cond
-   ((string-match (rx bos "src/" (group (+ nonl) (or ".c" ".m")) eos) library)
-    (find-function-C-source symbol (match-string 1 library) type))
-   ((string-match (rx bos "rust_src/src/" (group (+ nonl) ".rs") eos) library)
-    (find-function-rust-source symbol (match-string 1 library) type))
-   (t
-    (find-function-lisp-source symbol type library))))
+  (if (string-match "\\`src/\\(.*\\.\\(c\\|m\\)\\)\\'" library)
+      (find-function-C-source symbol (match-string 1 library) type)
+    (when (string-match "\\.el\\(c\\)\\'" library)
+      (setq library (substring library 0 (match-beginning 1))))
+    ;; Strip extension from .emacs.el to make sure symbol is searched in
+    ;; .emacs too.
+    (when (string-match "\\.emacs\\(.el\\)" library)
+      (setq library (substring library 0 (match-beginning 1))))
+    (let* ((filename (find-library-name library))
+	   (regexp-symbol (cdr (assq type find-function-regexp-alist))))
+      (with-current-buffer (find-file-noselect filename)
+	(let ((regexp (if (functionp regexp-symbol) regexp-symbol
+                        (format (symbol-value regexp-symbol)
+                                ;; Entry for ` (backquote) macro in loaddefs.el,
+                                ;; (defalias (quote \`)..., has a \ but
+                                ;; (symbol-name symbol) doesn't.  Add an
+                                ;; optional \ to catch this.
+                                (concat "\\\\?"
+                                        (regexp-quote (symbol-name symbol))))))
+	      (case-fold-search))
+          (save-restriction
+            (widen)
+            (with-syntax-table emacs-lisp-mode-syntax-table
+              (goto-char (point-min))
+              (if (if (functionp regexp)
+                      (funcall regexp symbol)
+                    (or (re-search-forward regexp nil t)
+                        ;; `regexp' matches definitions using known forms like
+                        ;; `defun', or `defvar'.  But some functions/variables
+                        ;; are defined using special macros (or functions), so
+                        ;; if `regexp' can't find the definition, we look for
+                        ;; something of the form "(SOMETHING <symbol> ...)".
+                        ;; This fails to distinguish function definitions from
+                        ;; variable declarations (or even uses thereof), but is
+                        ;; a good pragmatic fallback.
+                        (re-search-forward
+                         (concat "^([^ ]+" find-function-space-re "['(]?"
+                                 (regexp-quote (symbol-name symbol))
+                                 "\\_>")
+                         nil t)))
+                  (progn
+                    (beginning-of-line)
+                    (cons (current-buffer) (point)))
+                (cons (current-buffer) nil)))))))))
 
 (defun find-function-library (function &optional lisp-only verbose)
   "Return the pair (ORIG-FUNCTION . LIBRARY) for FUNCTION.
@@ -521,6 +466,7 @@ If TYPE is nil, defaults using `function-called-at-point',
 otherwise uses `variable-at-point'."
   (let* ((symb1 (cond ((null type) (function-called-at-point))
                       ((eq type 'defvar) (variable-at-point))
+                      ((eq type 'defface) (face-at-point t))
                       (t (variable-at-point t))))
          (symb  (unless (eq symb1 0) symb1))
          (predicate (cdr (assq type '((nil . fboundp)
