@@ -2439,7 +2439,7 @@ modified) original contents, they are first saved to their own file."
           ;; Parse them and see which articles we want to fetch.
           (setq gnus-newsgroup-dependencies
                 (or gnus-newsgroup-dependencies
-                    (make-vector (length articles) 0)))
+                    (gnus-make-hashtable (length articles))))
           (setq gnus-newsgroup-headers
                 (or gnus-newsgroup-headers
                     (gnus-get-newsgroup-headers-xover articles nil nil
