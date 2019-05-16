@@ -606,7 +606,10 @@ The regexp should match at end of buffer."
 
 (defcustom tramp-yesno-prompt-regexp
   (concat
-   (regexp-opt '("Are you sure you want to continue connecting (yes/no)?") t)
+   (regexp-opt
+    '("Are you sure you want to continue connecting (yes/no)?"
+      "Are you sure you want to continue connecting (yes/no/[fingerprint])?")
+    t)
    "\\s-*")
   "Regular expression matching all yes/no queries which need to be confirmed.
 The confirmation should be done with yes or no.
