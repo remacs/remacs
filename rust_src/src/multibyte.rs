@@ -1039,7 +1039,7 @@ pub fn find_composition(
     let limit = limit.map_or(-1, |l| l as isize);
     let mut start = 0;
     let mut end = 0;
-    let mut prop = Qnil;
+    let (mut start, mut end, mut prop) = (0, 0, Qnil);
     unsafe {
         if c_find_composition(pos, limit, &mut start, &mut end, &mut prop, object) {
             Some((start as usize, end as usize, prop))
