@@ -109,9 +109,11 @@ impl LispStringRef {
     /// doesn't exceed `precision`, and the number of characters and bytes it
     /// contains in the returned tuple.
     pub fn display_width(self, precision: Option<usize>) -> (usize, Option<(usize, usize)>) {
-        // Manually determine if string is unibyte.
+        // Manually determine if string is unibyte (lets us ignore multibyte
+        // handling in more cases).
         let len = self.len_chars() as usize;
         let multibyte = self.len_chars() < self.len_bytes();
+        // The buffer display table
         let distab = unsafe { buffer_display_table() };
         // Sum width
         let mut width = 0;
@@ -121,7 +123,7 @@ impl LispStringRef {
         let mut b = 0;
 
         while i < len {
-            // If there is a composition, get its id.
+            // If there is a composition, get its id and end position.
             let (cmp_id, end) = match find_composition(i, None, self.into()) {
                 Some((_, end, val)) => (
                     unsafe {
@@ -137,23 +139,21 @@ impl LispStringRef {
                 ),
                 None => (-1, 0),
             };
-            let (chars, bytes, thiswidth) = unsafe {
-                if cmp_id >= 0 {
-                    // Character is a composition, look it up in the composition table.
-                    let chars = end - i;
-                    let bytes = string_char_to_byte(self.into(), end as isize) - b as isize;
-                    let thiswidth = (*(*composition_table.offset(cmp_id))).width as usize;
-                    (chars, bytes as usize, thiswidth)
+            let (chars, bytes, thiswidth) = if cmp_id >= 0 {
+                // Character is a composition, look it up in the composition table.
+                let chars = end - i;
+                let bytes = unsafe { string_char_to_byte(self.into(), end as isize) } - b as isize;
+                let thiswidth = unsafe { (*(*composition_table.offset(cmp_id))).width } as usize;
+                (chars, bytes as usize, thiswidth)
+            } else {
+                // Character is a single codepoint, calculate it if multibyte, otherwise get
+                // raw byte at b.
+                let (c, bytes) = if multibyte {
+                    string_char_and_length(self.const_data_ptr().add(b))
                 } else {
-                    // Character is a single codepoint, calculate it if multibyte, otherwise get
-                    // raw byte at b.
-                    let (c, bytes) = if multibyte {
-                        string_char_and_length(self.const_data_ptr().add(b))
-                    } else {
-                        (self.as_slice()[b].into(), 1)
-                    };
-                    (1, bytes, char_width(c as i32, distab) as usize)
-                }
+                    (self.as_slice()[b].into(), 1)
+                };
+                (1, bytes, char_width(c as i32, distab) as usize)
             };
 
             // Return if adding character exceeds precision
@@ -171,8 +171,9 @@ impl LispStringRef {
             b += bytes;
         }
 
-        let n = precision.map(|_| (i, b));
-        (width, n)
+        // If precision argument was given, set char and byte width of substring
+        let sizes = precision.map(|_| (i, b));
+        (width, sizes)
     }
 
     pub fn is_empty(self) -> bool {
