@@ -134,9 +134,16 @@ directory of a user whose login name is @var{user-id}.  Any leading
 directory name in front of the @file{~} is ignored: thus,
 @file{/u2/emacs/~/foo/bar.txt} is equivalent to @file{~/foo/bar.txt}.
 
-  On MS-Windows, where a user doesn't always have a
-home directory, Emacs uses several alternatives.  See
-@ref{Windows HOME}.
+  On MS-Windows and MS-DOS systems, where a user doesn't always have a
+home directory, Emacs uses several alternatives.  For MS-Windows, see
+@ref{Windows HOME}; for MS-DOS, see
+@ifnottex
+@ref{MS-DOS File Names}.
+@end ifnottex
+@iftex
+@ref{MS-DOS File Names, HOME on MS-DOS,, emacs, the digital version of
+the Emacs Manual}.
+@end iftex
 On these systems, the @file{~@var{user-id}/} construct is supported
 only for the current user, i.e., only if @var{user-id} is the current
 user's login name.
@@ -209,9 +216,9 @@ window automatically.  The default value is 0.25.
 
   The @kbd{C-M-v} command in the minibuffer scrolls the help text from
 commands that display help text of any sort in another window.  You
-can also scroll the help text with @kbd{M-@key{prior}} and
-@kbd{M-@key{next}} (or, equivalently, @kbd{M-@key{PageUp}} and
-@kbd{M-@key{PageDown}}).  This is especially useful with long lists of
+can also scroll the help text with @kbd{M-@key{PageUp}} and
+@kbd{M-@key{PageDown}} (or, equivalently, @kbd{M-@key{prior}} and
+@kbd{M-@key{next}}).  This is especially useful with long lists of
 possible completions.  @xref{Other Window}.
 
 @vindex enable-recursive-minibuffers
@@ -817,7 +824,7 @@ File ‘foo.el’ exists; overwrite? (y or n)
 Because this query does not actually use the minibuffer, the usual
 minibuffer editing commands cannot be used.  However, you can perform
 some window scrolling operations while the query is active: @kbd{C-l}
-recenters the selected window; @kbd{C-v} (or @key{PageDown} or
+recenters the selected window; @kbd{C-v} (or @key{PageDown}, or
 @key{next}) scrolls forward; @kbd{M-v} (or @key{PageUp}, or
 @key{prior}) scrolls backward; @kbd{C-M-v} scrolls forward in the next
 window; and @kbd{C-M-S-v} scrolls backward in the next window.  Typing

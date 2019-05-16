@@ -205,7 +205,7 @@ function.  @xref{Security Considerations}.
 (shell-quote-argument "foo > bar")
      @result{} "foo\\ \\>\\ bar"
 
-;; @r{This example shows the behavior on MS-Windows.}
+;; @r{This example shows the behavior on MS-DOS and MS-Windows.}
 (shell-quote-argument "foo > bar")
      @result{} "\"foo > bar\""
 @end example
@@ -286,7 +286,8 @@ user can quit by typing @kbd{C-g}.  The first @kbd{C-g} tries to kill
 the subprocess with a @code{SIGINT} signal; but it waits until the
 subprocess actually terminates before quitting.  If during that time the
 user types another @kbd{C-g}, that kills the subprocess instantly with
-@code{SIGKILL} and quits immediately.  @xref{Quitting}.
+@code{SIGKILL} and quits immediately (except on MS-DOS, where killing
+other processes doesn't work).  @xref{Quitting}.
 
   The synchronous subprocess functions return an indication of how the
 process terminated.
@@ -332,6 +333,9 @@ In this case, the process is not truly synchronous, since it can run in
 parallel with Emacs; but you can think of it as synchronous in that
 Emacs is essentially finished with the subprocess as soon as this
 function returns.
+
+MS-DOS doesn't support asynchronous subprocesses, so this option doesn't
+work there.
 
 @item @code{(:file @var{file-name})}
 Send the output to the file name specified, overwriting it if it
@@ -475,7 +479,8 @@ with the output from the subprocess, and whether to update the display
 as it comes in.  For details, see the description of
 @code{call-process}, above.  If @var{destination} is the integer 0,
 @code{call-process-region} discards the output and returns @code{nil}
-immediately, without waiting for the subprocess to finish.
+immediately, without waiting for the subprocess to finish (this only
+works if asynchronous subprocesses are supported; i.e., not on MS-DOS).
 
 The remaining arguments, @var{args}, are strings that specify command
 line arguments for the program.
@@ -676,7 +681,9 @@ a default sentinel will be used, which can be overridden later.
 @item :stderr @var{stderr}
 Associate @var{stderr} with the standard error of the process.  A
 non-@code{nil} value should be either a buffer or a pipe process
-created with @code{make-pipe-process}, described below.
+created with @code{make-pipe-process}, described below.  If
+@var{stderr} is @code{nil}, standard error is mixed with standard
+output, and both are sent to @var{buffer} or @var{filter}.
 @end table
 
 The original argument list, modified with the actual connection

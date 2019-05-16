@@ -317,7 +317,8 @@ list of the form @code{(@var{pattern} @var{body-forms}@dots{})}.
 @var{pattern} of each clause, in textual order.  If the value matches,
 the clause succeeds; @code{pcase} then evaluates its @var{body-forms},
 and returns the value of the last of @var{body-forms}.  Any remaining
-@var{clauses} are ignored.
+@var{clauses} are ignored.  If no clauses match, then the @code{pcase}
+form evaluates to @code{nil}.
 
 The @var{pattern} part of a clause can be of one of two types:
 @dfn{QPattern}, a pattern quoted with a backquote; or a
@@ -702,7 +703,8 @@ This construct executes @var{body} once for each integer from 0
 (inclusive) to @var{count} (exclusive), binding the variable @var{var}
 to the integer for the current iteration.  Then it returns the value
 of evaluating @var{result}, or @code{nil} if @var{result} is omitted.
-Here is an example of using @code{dotimes} to do something 100 times:
+Use of @var{result} is deprecated.  Here is an example of using
+@code{dotimes} to do something 100 times:
 
 @example
 (dotimes (i 100)

@@ -3,12 +3,29 @@
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Microsoft Windows
-@appendix Emacs and Microsoft Windows
+@appendix Emacs and Microsoft Windows/MS-DOS
 @cindex Microsoft Windows
 @cindex MS-Windows, Emacs peculiarities
 
   This section describes peculiarities of using Emacs on Microsoft
-Windows.
+Windows.  Some of these peculiarities are also relevant to Microsoft's
+older MS-DOS operating system.
+However, Emacs features that are relevant @emph{only} to MS-DOS are
+described in a separate
+@iftex
+manual (@pxref{MS-DOS,,, emacs-xtra, Specialized Emacs Features}).
+@end iftex
+@ifnottex
+section (@pxref{MS-DOS}).
+@end ifnottex
+
+  MS-Windows is a non-free operating system; that means it denies its
+users the freedom that every computer user deserves.  That is an
+injustice.  For your freedom's sake, we urge you to switch to a free
+operating system.
+
+  We support GNU Emacs on proprietary operating systems because we
+hope this taste of freedom will inspire users to escape from them.
 
   The behavior of Emacs on MS-Windows is reasonably similar to what is
 documented in the rest of the manual, including support for long file
@@ -29,6 +46,9 @@ here.
 * Windows Printing::    How to specify the printer on MS-Windows.
 * Windows Fonts::       Specifying fonts on MS-Windows.
 * Windows Misc::        Miscellaneous Windows features.
+@ifnottex
+* MS-DOS::              Using Emacs on MS-DOS.
+@end ifnottex
 @end menu
 
 @node Windows Startup
@@ -133,21 +153,22 @@ window.  @xref{emacsclient Options}.
 
 @node Text and Binary
 @section Text Files and Binary Files
-@cindex text and binary files on MS-Windows
+@cindex text and binary files on MS-DOS/MS-Windows
 
   GNU Emacs uses newline characters to separate text lines.  This is the
 convention used on GNU, Unix, and other POSIX-compliant systems.
 
-@cindex end-of-line conversion on MS-Windows
-  By contrast, and MS-Windows normally use carriage-return linefeed,
-a two-character sequence, to separate text lines.  (Linefeed is the same
-character as newline.)  Therefore, convenient editing of typical files
-with Emacs requires conversion of these end-of-line (EOL) sequences.
-And that is what Emacs normally does: it converts carriage-return
-linefeed into newline when reading files, and converts newline into
-carriage-return linefeed when writing files.  The same mechanism that
-handles conversion of international character codes does this conversion
-also (@pxref{Coding Systems}).
+@cindex end-of-line conversion on MS-DOS/MS-Windows
+  By contrast, MS-DOS and MS-Windows normally use carriage return
+followed by linefeed, a two-character sequence, to separate text
+lines.  (Linefeed is the same character as newline.)  Therefore,
+convenient editing of typical files with Emacs requires conversion of
+these end-of-line (EOL) sequences.  And that is what Emacs normally
+does: it converts carriage return followed by linefeed into newline
+when reading files, and converts newline into carriage return followed
+by linefeed when writing files.  The same mechanism that handles
+conversion of international character codes does this conversion also
+(@pxref{Coding Systems}).
 
 @cindex cursor location, on MS-DOS
 @cindex point location, on MS-DOS
@@ -156,11 +177,11 @@ that character positions as reported by Emacs (@pxref{Position Info}) do
 not agree with the file size information known to the operating system.
 
   In addition, if Emacs recognizes from a file's contents that it uses
-newline rather than carriage-return linefeed as its line separator, it
-does not perform EOL conversion when reading or writing that file.
-Thus, you can read and edit files from GNU and Unix systems on MS-DOS
-with no special effort, and they will retain their Unix-style
-end-of-line convention after you edit them.
+newline rather than carriage return followed by linefeed as its line
+separator, it does not perform EOL conversion when reading or writing
+that file.  Thus, you can read and edit files from GNU and Unix
+systems on MS-DOS with no special effort, and they will retain their
+Unix-style end-of-line convention after you edit them.
 
   The mode line indicates whether end-of-line translation was used for
 the current buffer.  If MS-DOS end-of-line translation is in use for the
@@ -168,20 +189,20 @@ buffer, the MS-Windows build of Emacs displays a backslash @samp{\} after
 the coding system mnemonic near the beginning of the mode line
 (@pxref{Mode Line}).  If no EOL translation was performed, the string
 @samp{(Unix)} is displayed instead of the backslash, to alert you that the
-file's EOL format is not the usual carriage-return linefeed.
+file's EOL format is not the usual carriage return followed by linefeed.
 
 @cindex DOS-to-Unix conversion of files
   To visit a file and specify whether it uses DOS-style or Unix-style
 end-of-line, specify a coding system (@pxref{Text Coding}).  For
 example, @kbd{C-x @key{RET} c unix @key{RET} C-x C-f foobar.txt}
 visits the file @file{foobar.txt} without converting the EOLs; if some
-line ends with a carriage-return linefeed pair, Emacs will display
-@samp{^M} at the end of that line.  Similarly, you can direct Emacs to
-save a buffer in a specified EOL format with the @kbd{C-x @key{RET} f}
-command.  For example, to save a buffer with Unix EOL format, type
-@kbd{C-x @key{RET} f unix @key{RET} C-x C-s}.  If you visit a file
-with DOS EOL conversion, then save it with Unix EOL format, that
-effectively converts the file to Unix EOL style, like the
+line ends with a carriage return followed by linefeed pair, Emacs will
+display @samp{^M} at the end of that line.  Similarly, you can direct
+Emacs to save a buffer in a specified EOL format with the @kbd{C-x
+@key{RET} f} command.  For example, to save a buffer with Unix EOL
+format, type @kbd{C-x @key{RET} f unix @key{RET} C-x C-s}.  If you
+visit a file with DOS EOL conversion, then save it with Unix EOL
+format, that effectively converts the file to Unix EOL style, like the
 @code{dos2unix} program.
 
 @cindex untranslated file system
@@ -229,16 +250,16 @@ of using newline at the end of a line.  @xref{Coding Systems}.
 @section File Names on MS-Windows
 @cindex file names on MS-Windows
 
-  MS-Windows normally uses a backslash, @samp{\}, to
+  MS-Windows and MS-DOS normally use a backslash, @samp{\}, to
 separate name units within a file name, instead of the slash used on
-other systems.  Emacs on MS-Windows permits use of either slash or
+other systems.  Emacs on MS-DOS/MS-Windows permits use of either slash or
 backslash, and also knows about drive letters in file names.
 
 @cindex file-name completion, on MS-Windows
-  On MS-Windows, file names are case-insensitive, so Emacs by
+  On MS-DOS/MS-Windows, file names are case-insensitive, so Emacs by
 default ignores letter-case in file names during completion.  To this
 end, the default value of @code{read-file-name-completion-ignore-case}
-is non-@code{nil} on MS-Windows.  @xref{Completion Options}.
+is non-@code{nil} on MS-DOS/MS-Windows.  @xref{Completion Options}.
 
 @vindex w32-get-true-file-attributes
   The variable @code{w32-get-true-file-attributes} controls whether
@@ -297,12 +318,12 @@ names when you want to use the corresponding character device.
 
 @node ls in Lisp
 @section Emulation of @code{ls} on MS-Windows
-@cindex Dired, and MS-Windows
+@cindex Dired, and MS-Windows/MS-DOS
 @cindex @code{ls} emulation
 
   Dired normally uses the external program @code{ls}
 to produce the directory listing displayed in Dired
-buffers (@pxref{Dired}).  However, MS-Windows systems don't
+buffers (@pxref{Dired}).  However, MS-Windows and MS-DOS systems don't
 come with such a program, although several ports of @sc{gnu} @code{ls}
 are available.  Therefore, Emacs on those systems @emph{emulates}
 @code{ls} in Lisp, by using the @file{ls-lisp.el} package.  While
@@ -325,7 +346,7 @@ partially supported (it appends the character that classifies the
 file, but does not prevent symlink following).
 
 @vindex ls-lisp-use-insert-directory-program
-  On MS-Windows, @file{ls-lisp.el} is preloaded when Emacs
+  On MS-Windows and MS-DOS, @file{ls-lisp.el} is preloaded when Emacs
 is built, so the Lisp emulation of @code{ls} is always used on those
 platforms.  If you have a ported @code{ls}, setting
 @code{ls-lisp-use-insert-directory-program} to a non-@code{nil} value
@@ -361,7 +382,7 @@ a non-@code{nil} value.
 
 @vindex ls-lisp-dirs-first
   By default, files and subdirectories are sorted together, to emulate
-the behavior of @code{ls}.  However, native MS-Windows file
+the behavior of @code{ls}.  However, native MS-Windows/MS-DOS file
 managers list the directories before the files; if you want that
 behavior, customize the option @code{ls-lisp-dirs-first} to a
 non-@code{nil} value.
@@ -411,7 +432,7 @@ Any other value of @code{ls-lisp-emulation} means the same as @code{GNU}.
 Customizing this option calls the function @code{ls-lisp-set-options} to
 update the 3 dependent options as needed.  If you change the value of
 this variable without using customize after @file{ls-lisp.el} is loaded
-(note that it is preloaded on MS-Windows), you can call that
+(note that it is preloaded on MS-Windows and MS-DOS), you can call that
 function manually for the same result.
 
 @vindex ls-lisp-support-shell-wildcards
@@ -502,7 +523,8 @@ first line.  Likewise, to visit your init file, type @kbd{C-x C-f
   Your init file can have any name mentioned in @ref{Init File}.
 
 @cindex @file{_emacs} init file, MS-Windows
-  Because older Windows systems made it hard to create files with such names,
+  Because MS-DOS does not allow file names with leading dots, and
+older Windows systems made it hard to create files with such names,
 the Windows port of Emacs supports an init file name @file{_emacs}, if
 such a file exists in the home directory and @file{.emacs} does not.
 This name is considered obsolete, so Emacs will display a warning if
@@ -575,7 +597,7 @@ search string against previously sought strings during incremental
 search.  @code{(w32-register-hot-key [s-])} with
 @code{w32-lwindow-modifier} bound to @code{super} disables all the
 Windows' own Windows key based shortcuts.@footnote{There is one known
-exception: The combination @kbd{@key{Windows}-@key{L}} that locks the
+exception: The combination @kbd{@key{Windows}-L} that locks the
 workstation is handled by the system on a lower level.  For this
 reason, @code{w32-register-hot-key} cannot override this key
 combination - it always locks the computer.}
@@ -585,9 +607,9 @@ combination - it always locks the computer.}
 call.  Thus, you can set @code{w32-lwindow-modifier} as @code{super},
 then call @code{(w32-register-hot-key [s-r])}, and finally set
 @code{w32-rwindow-modifier} as @code{super} as well.  The result is
-that the left Windows key together with @key{R} invokes whichever
+that the left Windows key together with @kbd{R} invokes whichever
 function you have bound for the combination in Emacs, and the right
-Windows key and @key{R} opens the Windows @code{Run} dialog.
+Windows key and @kbd{R} opens the Windows @code{Run} dialog.
 
   The hotkey registrations always also include all the shift and
 control modifier combinations for the given hotkey; that is,
@@ -799,11 +821,11 @@ more details.
 @section Printing and MS-Windows
 
   Printing commands, such as @code{lpr-buffer} (@pxref{Printing}) and
-@code{ps-print-buffer} (@pxref{PostScript}) work in
+@code{ps-print-buffer} (@pxref{PostScript}) work in MS-DOS and
 MS-Windows by sending the output to one of the printer ports, if a
 POSIX-style @code{lpr} program is unavailable.  The same Emacs
 variables control printing on all systems, but in some cases they have
-different default values on MS-Windows.
+different default values on MS-DOS and MS-Windows.
 
   Emacs on MS Windows attempts to determine your default printer
 automatically (using the function @code{default-printer-name}).
@@ -811,7 +833,7 @@ But in some rare cases this can fail, or you may wish to use a different
 printer from within Emacs.  The rest of this section explains how to
 tell Emacs which printer to use.
 
-@vindex printer-name@r{, (MS-Windows)}
+@vindex printer-name@r{, (MS-DOS/MS-Windows)}
   If you want to use your local printer, then set the Lisp variable
 @code{lpr-command} to @code{""} (its default value on Windows) and
 @code{printer-name} to the name of the printer port---for example,
@@ -871,7 +893,7 @@ described below.
 @vindex lpr-headers-switches @r{(MS-DOS)}
   The commands @code{print-buffer} and @code{print-region} call the
 @code{pr} program, or use special switches to the @code{lpr} program, to
-produce headers on each printed page.  MS-Windows doesn't
+produce headers on each printed page.  MS-DOS and MS-Windows don't
 normally have these programs, so by default, the variable
 @code{lpr-headers-switches} is set so that the requests to print page
 headers are silently ignored.  Thus, @code{print-buffer} and
@@ -1091,4 +1113,8 @@ Windows-specific variables in this category.
 non-@code{nil} value causes a frame to grab focus when it is raised.
 The default is @code{t}, which fits well with the Windows default
 click-to-focus policy.
+@end ifnottex
+
+@ifnottex
+@include msdos-xtra.texi
 @end ifnottex

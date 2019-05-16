@@ -1712,9 +1712,9 @@ but surrounds the loop with an implicit @code{nil} block.
 The body is executed with @var{var} bound to the integers
 from zero (inclusive) to @var{count} (exclusive), in turn.  Then
 @c FIXME lispref does not state this part explicitly, could move this there.
-the @code{result} form is evaluated with @var{var} bound to the total
+the @var{result} form is evaluated with @var{var} bound to the total
 number of iterations that were done (i.e., @code{(max 0 @var{count})})
-to get the return value for the loop form.
+to get the return value for the loop form.  Use of @var{result} is deprecated.
 @end defmac
 
 @defmac cl-do-symbols (var [obarray [result]]) forms@dots{}

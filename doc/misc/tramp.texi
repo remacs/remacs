@@ -1408,8 +1408,10 @@ Opening @file{@trampfn{sudo,randomhost.your.domain,}} first connects
 to @samp{randomhost.your.domain} via @code{ssh} under your account
 name, and then performs @code{sudo -u root} on that host.
 
-It is key for the sudo method in the above example to be applied on
-the host after reaching it and not on the local host.
+It is key for the @option{sudo} method in the above example to be
+applied on the host after reaching it and not on the local host.
+@value{tramp} checks therefore, that the host name for such hops
+matches the host name of the previous hop.
 
 @var{host}, @var{user} and @var{proxy} can also take Lisp forms.  These
 forms when evaluated must return either a string or @code{nil}.
@@ -1672,6 +1674,13 @@ file name syntax, must be appended to the machine and login items:
 @example
 machine melancholia#4711 port davs login daniel%BIZARRE password geheim
 @end example
+
+@vindex auth-source-save-behavior
+If there doesn't exist a proper entry, the password is read
+interactively.  After successful login (verification of the password),
+it is offered to save a corresponding entry for further use by
+@code{auth-source} backends which support this.  This could be changed
+by setting the variable @code{auth-source-save-behavior} to @code{nil}.
 
 @vindex auth-source-debug
 Set @code{auth-source-debug} to @code{t} to debug messages.
@@ -3292,6 +3301,7 @@ Keep the file @option{tramp-persistency-file-name}, which is where
 @value{tramp} caches remote information about hosts and files.  Caching
 is enabled by default.  Don't disable it.
 
+@vindex remote-file-name-inhibit-cache
 Set @code{remote-file-name-inhibit-cache} to @code{nil} if remote
 files are not independently updated outside @value{tramp}'s control.
 That cache cleanup will be necessary if the remote directories or
@@ -3423,6 +3433,16 @@ first saving to a temporary file.
 @end group
 @end lisp
 @end itemize
+
+
+@item
+@value{tramp} fails in a chrooted environment
+
+@vindex tramp-local-host-regexp
+When connecting to a local host, @value{tramp} uses some internal
+optimizations.  They fail, when there is a chrooted environment.  In
+order to disable those optimizations, set user option
+@option{tramp-local-host-regexp} to @code{nil}.
 
 
 @item
@@ -3860,7 +3880,7 @@ Then specify a method and user name where needed.  Examples:
 @end group
 @end example
 
-In BBDB buffer, access an entry by pressing the key @key{F}.
+In BBDB buffer, access an entry by pressing the key @kbd{F}.
 
 @end enumerate
 

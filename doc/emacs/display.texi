@@ -68,21 +68,21 @@ Scrolling}).  You can also scroll explicitly with these commands:
 
 @table @kbd
 @item C-v
-@itemx @key{next}
 @itemx @key{PageDown}
+@itemx @key{next}
 Scroll forward by nearly a full window (@code{scroll-up-command}).
 @item M-v
-@itemx @key{prior}
 @itemx @key{PageUp}
+@itemx @key{prior}
 Scroll backward (@code{scroll-down-command}).
 @end table
 
 @kindex C-v
 @kindex M-v
-@kindex next
-@kindex prior
 @kindex PageDown
 @kindex PageUp
+@kindex next
+@kindex prior
 @findex scroll-up-command
 @findex scroll-down-command
   @kbd{C-v} (@code{scroll-up-command}) scrolls forward by nearly the
@@ -90,10 +90,10 @@ whole window height.  The effect is to take the two lines at the
 bottom of the window and put them at the top, followed by lines that
 were not previously visible.  If point was in the text that scrolled
 off the top, it ends up on the window's new topmost line.  The
-@key{next} (or @key{PageDown}) key is equivalent to @kbd{C-v}.
+@key{PageDown} (or @key{next}) key is equivalent to @kbd{C-v}.
 
   @kbd{M-v} (@code{scroll-down-command}) scrolls backward in a similar
-way.  The @key{prior} (or @key{PageUp}) key is equivalent to
+way.  The @key{PageUp} (or @key{prior}) key is equivalent to
 @kbd{M-v}.
 
 @vindex next-screen-context-lines

@@ -673,6 +673,28 @@ of the two strings.  The sign is negative if @var{string1} (or its
 specified portion) is less.
 @end defun
 
+@cindex Levenshtein distance
+@cindex distance between strings
+@cindex edit distance between strings
+@defun string-distance string1 string2 &optional bytecompare
+This function returns the @dfn{Levenshtein distance} between the
+source string @var{string1} and the target string @var{string2}.  The
+Levenshtein distance is the number of single-character
+changes---deletions, insertions, or replacements---required to
+transform the source string into the target string; it is one possible
+definition of the @dfn{edit distance} between strings.
+
+Letter-case of the strings is significant for the computed distance,
+but their text properties are ignored.  If the optional argument
+@var{bytecompare} is non-@code{nil}, the function calculates the
+distance in terms of bytes instead of characters.  The byte-wise
+comparison uses the internal Emacs representation of characters, so it
+will produce inaccurate results for multibyte strings that include raw
+bytes (@pxref{Text Representations}); make the strings unibyte by
+encoding them (@pxref{Explicit Encoding}) if you need accurate results
+with raw bytes.
+@end defun
+
 @defun assoc-string key alist &optional case-fold
 This function works like @code{assoc}, except that @var{key} must be a
 string or symbol, and comparison is done using @code{compare-strings}.

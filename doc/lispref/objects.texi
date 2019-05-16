@@ -2083,6 +2083,10 @@ strings), two arguments with the same contents or elements are not
 necessarily @code{eq} to each other: they are @code{eq} only if they
 are the same object, meaning that a change in the contents of one will
 be reflected by the same change in the contents of the other.
+For other types of objects whose contents cannot be changed (e.g.,
+floats), two arguments with the same contents might or might not be
+the same object, and @code{eq} returns @code{t} or @code{nil}
+depending on whether the Lisp interpreter created one object or two.
 
 @example
 @group
@@ -2093,6 +2097,12 @@ be reflected by the same change in the contents of the other.
 @group
 (eq 456 456)
      @result{} t
+@end group
+
+@group
+(eq 3.0 3.0)
+     @result{} t @r{or} nil
+;; @r{The result is implementation-dependent.}
 @end group
 
 @group

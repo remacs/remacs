@@ -1710,8 +1710,8 @@ customizing @code{reftex-ref-macro-prompt} and relying only on the
 selection facilities provided in the last step.
 
 In the last step, i.e., the label selection, two key bindings are
-provided to set the reference macro.  Type @key{v} in order to cycle
-forward through the list of available macros or @key{V} to cycle
+provided to set the reference macro.  Type @kbd{v} in order to cycle
+forward through the list of available macros or @kbd{V} to cycle
 backward.  The mode line of the selection buffer shows the macro
 currently selected.
 

@@ -1313,8 +1313,11 @@ accomplished with @dfn{directory-local variables}.
 
 @cindex @file{.dir-locals.el} file
   The usual way to define directory-local variables is to put a file
-named @file{.dir-locals.el}
-@footnote{ You can also use @file{.dir-locals-2.el}, which
+named @file{.dir-locals.el}@footnote{ On MS-DOS, the name of this file
+should be @file{_dir-locals.el}, due to limitations of the DOS
+filesystems.  If the filesystem is limited to 8+3 file names, the name
+of the file will be truncated by the OS to @file{_dir-loc.el}.
+}@footnote{ You can also use @file{.dir-locals-2.el}, which
 is loaded in addition.  This is useful when @file{.dir-locals.el} is
 under version control in a shared repository and can't be used for
 personal customizations.  } in a
@@ -1849,10 +1852,10 @@ the corresponding Lisp symbol.  Here are the conventional Lisp names for
 common function keys:
 
 @table @asis
-@item @code{LEFT}, @code{UP}, @code{RIGHT}, @code{DOWN}
+@item @code{left}, @code{up}, @code{right}, @code{down}
 Cursor arrow keys.
 
-@item @code{Begin}, @code{End}, @code{Home}, @code{next}, @code{prior}
+@item @code{begin}, @code{end}, @code{home}, @code{next}, @code{prior}
 Other cursor repositioning keys.
 
 @item @code{select}, @code{print}, @code{execute}, @code{backtab}
@@ -1866,6 +1869,9 @@ Numbered function keys (across the top of the keyboard).
 @item @code{kp-add}, @code{kp-subtract}, @code{kp-multiply}, @code{kp-divide}
 @itemx @code{kp-backtab}, @code{kp-space}, @code{kp-tab}, @code{kp-enter}
 @itemx @code{kp-separator}, @code{kp-decimal}, @code{kp-equal}
+@itemx @code{kp-prior}, @code{kp-next}, @code{kp-end}, @code{kp-home}
+@itemx @code{kp-left}, @code{kp-up}, @code{kp-right}, @code{kp-down}
+@itemx @code{kp-insert }, @code{kp-delete}
 Keypad keys (to the right of the regular keyboard), with names or punctuation.
 
 @item @code{kp-0}, @code{kp-1}, @dots{} @code{kp-9}
@@ -2599,14 +2605,17 @@ Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
 @cindex early init file
 
   Most customizations for Emacs can be put in the normal init file,
-@file{.emacs} or @file{~/.emacs.d/init.el}.  However, it is sometimes
-desirable to have customizations that take effect during Emacs startup
-earlier than the normal init file is processed.  Such customizations
-can be put in the early init file, @file{~/.emacs.d/early-init.el}.
-This file is loaded before the package system is initialized, so in it
-you can customize variables that affect the initialization process,
-such as @code{package-enable-at-startup} and @code{package-load-list}.
-@xref{Package Installation}.
+@file{.emacs} or @file{~/.emacs.d/init.el}.  However, it is sometimes desirable
+to have customizations that take effect during Emacs startup earlier than the
+normal init file is processed.  Such customizations can be put in the early
+init file, @file{~/.emacs.d/early-init.el}.  This file is loaded before the
+package system and GUI is initialized, so in it you can customize variables
+that affect frame appearance as well as the package initialization process,
+such as @code{package-enable-at-startup}, @code{package-load-list}, and
+@code{package-user-dir}.  Note that variables like @code{package-archives}
+which only affect the installation of new packages, and not the process of
+making already-installed packages available, may be customized in the regular
+init file.  @xref{Package Installation}.
 
   For more information on the early init file, @pxref{Init File,,,
 elisp, The Emacs Lisp Reference Manual}.

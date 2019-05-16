@@ -1181,7 +1181,7 @@ become up-to-date as a direct result of a VC command, it is listed.
 
 @noindent
 Two work files have been modified but not committed:
-@file{configure.ac} in the current directory, and @file{foo.c} in the
+@file{configure.ac} in the current directory, and @file{main.c} in the
 @file{src/} subdirectory.  The file named @file{README} has been added
 but is not yet committed, while @file{temp.txt} is not under version
 control (@pxref{Registering}).
@@ -1640,11 +1640,15 @@ entry is considered a page.  This facilitates editing the entries.
 @kbd{C-j} and auto-fill indent each new line like the previous line;
 this is convenient for entering the contents of an entry.
 
-You can use the @code{next-error} command (by default bound to
-@kbd{C-x `}) to move between entries in the Change Log, when Change
-Log mode is on.  You will jump to the actual site in the file that was
-changed, not just to the next Change Log entry.  You can also use
-@code{previous-error} to move back in the same list.
+@findex change-log-goto-source
+  You can use the command @code{change-log-goto-source} (by default
+bound to @kbd{C-c C-c}) to go to the source location of the change log
+entry near point, when Change Log mode is on.  Then subsequent
+invocations of the @code{next-error} command (by default bound to
+@kbd{M-g M-n} and @kbd{C-x `}) will move between entries in the change
+log.  You will jump to the actual site in the file that was changed,
+not just to the next change log entry.  You can also use
+@code{previous-error} to move back through the change log entries.
 
 @findex change-log-merge
   You can use the command @kbd{M-x change-log-merge} to merge other
@@ -1654,7 +1658,7 @@ ordering of entries.
   Version control systems are another way to keep track of changes in
 your program and keep a change log.  In the VC log buffer, typing
 @kbd{C-c C-a} (@code{log-edit-insert-changelog}) inserts the relevant
-Change Log entry, if one exists.  @xref{Log Buffer}.
+change log entry, if one exists.  @xref{Log Buffer}.
 
 @node Format of ChangeLog
 @subsection Format of ChangeLog
@@ -2357,7 +2361,10 @@ newly created tags table to an existing file by using the @samp{--append}
 option.
 
   If the specified files don't exist, @command{etags} looks for
-compressed versions of them and uncompresses them to read them.
+compressed versions of them and uncompresses them to read them.  Under
+MS-DOS, @command{etags} also looks for file names like @file{mycode.cgz}
+if it is given @samp{mycode.c} on the command line and @file{mycode.c}
+does not exist.
 
   If the tags table becomes outdated due to changes in the files
 described in it, you can update it by running the @command{etags}
@@ -2396,7 +2403,7 @@ generally render the file names invalid.
 the tags file will contain absolute file names.  This way, the tags file
 will still refer to the same files even if you move it, as long as the
 source files remain in the same place.  Absolute file names start with
-@samp{/}, or with @samp{@var{device}:/} on MS-Windows.
+@samp{/}, or with @samp{@var{device}:/} on MS-DOS and MS-Windows.
 
    When you want to make a tags table from a great number of files,
 you may have problems listing them on the command line, because some

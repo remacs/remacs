@@ -728,7 +728,7 @@ to every element of @var{sequence} returns non-@code{nil}.
 @result{} t
 @end group
 @group
-(seq-some #'numberp [2 4 "6"])
+(seq-every-p #'numberp [2 4 "6"])
 @result{} nil
 @end group
 @end example
@@ -854,7 +854,7 @@ it is a function of two arguments to use instead of the default @code{equal}.
 @end group
 @group
 (seq-uniq '(1 2 2.0 1.0) #'=)
-@result{} [1 2]
+@result{} (1 2)
 @end group
 @end example
 @end defun

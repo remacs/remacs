@@ -371,8 +371,8 @@ keyword @code{&rest} before one final argument.
 @example
 @group
 (@var{required-vars}@dots{}
- @r{[}&optional @var{optional-vars}@dots{}@r{]}
- @r{[}&rest @var{rest-var}@r{]})
+ @r{[}&optional @r{[}@var{optional-vars}@dots{}@r{]}@r{]}
+ @r{[}&rest @r{[}@var{rest-var}@r{]}@r{]})
 @end group
 @end example
 
@@ -498,6 +498,14 @@ derived from the actual arguments of the function.
 arguments written in a macro definition often do not correspond to the
 way users think of the parts of the macro call.
 
+  Do not use this feature if you want to deprecate the calling
+convention and favor the one you advertise by the above specification.
+Instead, use the @code{advertised-calling-convention} declaration
+(@pxref{Declare Form}) or @code{set-advertised-calling-convention}
+(@pxref{Obsolete Functions}), because these two will cause the byte
+compiler emit a warning message when it compiles Lisp programs which
+use the deprecated calling convention.
+
 @node Function Names
 @section Naming a Function
 @cindex function definition
@@ -611,6 +619,8 @@ Here are some examples:
 @end group
 @end example
 
+@cindex override existing functions
+@cindex redefine existing functions
 Be careful not to redefine existing functions unintentionally.
 @code{defun} redefines even primitive functions such as @code{car}
 without any hesitation or notification.  Emacs does not prevent you
