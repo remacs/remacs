@@ -160,5 +160,12 @@ The point is set to the beginning of the buffer."
       (sgml-quote (point-min) (point-max) t)
       (should (string= "&&" (buffer-string))))))
 
+(ert-deftest sgml-tests--quotes-syntax ()
+  (with-temp-buffer
+    (sgml-mode)
+    (insert "a\"b <tag>c'd</tag>")
+    (should (= 1 (car (syntax-ppss (1- (point-max))))))
+    (should (= 0 (car (syntax-ppss (point-max)))))))
+
 (provide 'sgml-mode-tests)
 ;;; sgml-mode-tests.el ends here
