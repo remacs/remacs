@@ -525,6 +525,9 @@ extern int getpagesize (void);
 
 extern void * memrchr (void const *, int, size_t);
 
+/* Declared here, since we don't use Gnulib's stdlib.h.  */
+extern int mkostemp (char *, int);
+
 #if defined (__MINGW32__)
 
 /* Define to 1 if the system has the type `long long int'. */
