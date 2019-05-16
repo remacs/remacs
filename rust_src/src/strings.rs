@@ -187,6 +187,15 @@ pub fn string_width(string: LispStringRef) -> usize {
     string.width()
 }
 
+macro_rules! new_unibyte_string {
+    ($str:expr) => {{
+        let strg = ::std::ffi::CString::new($str).unwrap();
+        unsafe {
+            crate::remacs_sys::make_unibyte_string(strg.as_ptr(), strg.as_bytes().len() as isize)
+        }
+    }};
+}
+
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 
 #[test]
@@ -216,6 +225,25 @@ fn str_equality() {
     assert!(string_equal(string2, string1));
     assert!(!string_equal(string1, string3));
     assert!(!string_equal(string2, string3));
+}
+
+#[test]
+fn str_foreign_equality() {
+    let lisp_str = mock_unibyte_string!("Hello World").force_string();
+    let rust_str = String::from("Hello World");
+
+    assert_eq!(lisp_str, rust_str);
+    assert_eq!(lisp_str, rust_str.as_str());
+    assert_eq!(lisp_str, rust_str.as_bytes());
+
+    let lisp_utf_str = mock_multibyte_string!("Hëllö Wørld").force_string();
+    let rust_utf_str = "Hëllö Wørld";
+    let lisp_utf_str2 = mock_unibyte_string!("こんにちはｺﾝﾆﾁﾊ").force_string();
+    let rust_utf_str2 = "こんにちはｺﾝﾆﾁﾊ";
+
+    assert_eq!(lisp_utf_str, rust_utf_str);
+    assert_ne!(lisp_utf_str, rust_str);
+    assert_eq!(lisp_utf_str2, rust_utf_str2);
 }
 
 #[test]

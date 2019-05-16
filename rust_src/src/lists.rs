@@ -26,8 +26,14 @@ pub struct LispCons(LispObject);
 
 impl LispObject {
     pub fn check_list(self) {
-        if !(self.is_cons() || self.is_nil()) {
+        if !self.is_list() {
             wrong_type!(Qlistp, self);
+        }
+    }
+
+    pub fn check_list_end(self, list: Self) {
+        if !self.is_nil() {
+            wrong_type!(Qlistp, list);
         }
     }
 
@@ -35,7 +41,7 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
-    pub fn force_cons(self) -> LispCons {
+    pub const fn force_cons(self) -> LispCons {
         LispCons(self)
     }
 
@@ -70,7 +76,7 @@ impl Debug for LispCons {
 }
 
 impl LispObject {
-    pub fn cons(car: impl Into<LispObject>, cdr: impl Into<LispObject>) -> Self {
+    pub fn cons(car: impl Into<Self>, cdr: impl Into<Self>) -> Self {
         unsafe { Fcons(car.into(), cdr.into()) }
     }
 
@@ -175,7 +181,7 @@ impl TailsIter {
         }
     }
 
-    pub fn rest(&self) -> LispObject {
+    pub const fn rest(&self) -> LispObject {
         // This is kind of like Peekable but even when None is returned there
         // might still be a valid item in self.tail.
         self.tail
@@ -241,11 +247,11 @@ impl Iterator for TailsIter {
 pub struct CarIter(TailsIter);
 
 impl CarIter {
-    pub fn new(tails: TailsIter) -> Self {
+    pub const fn new(tails: TailsIter) -> Self {
         Self(tails)
     }
 
-    pub fn rest(&self) -> LispObject {
+    pub const fn rest(&self) -> LispObject {
         self.0.tail
     }
 }
@@ -330,7 +336,7 @@ impl LispCons {
         }
     }
 
-    /// Set the car of the cons cell.
+    /// Set the cdr of the cons cell.
     pub fn set_cdr(self, n: impl Into<LispObject>) {
         unsafe {
             (*self._extract()).u.s.as_mut().u.cdr = n.into();
@@ -433,7 +439,7 @@ pub fn consp(object: LispObject) -> bool {
 /// Otherwise, return nil.
 #[lisp_fn]
 pub fn listp(object: LispObject) -> bool {
-    object.is_nil() || consp(object)
+    object.is_list()
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.

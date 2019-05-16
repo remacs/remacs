@@ -12,7 +12,10 @@ use crate::{
     lisp::LispObject,
     lists::{get, put},
     multibyte::LispStringRef,
-    remacs_sys::{code_convert_string_norecord, encode_file_name as c_encode_file_name, globals},
+    remacs_sys::{
+        code_convert_string as c_code_convert_string, code_convert_string_norecord,
+        encode_file_name as c_encode_file_name, globals,
+    },
     remacs_sys::{
         safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
         Qno_conversion, Qutf_8, Vcoding_system_hash_table,
@@ -108,6 +111,64 @@ pub fn decode_system(input_string: LispStringRef) -> LispStringRef {
     } else {
         unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
     }
+}
+
+/// Decode STRING which is encoded in CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the decoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the decoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the decoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn decode_coding_string(
+    string: LispObject,
+    coding_system: LispObject,
+    nocopy: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    code_convert_string(
+        string,
+        coding_system,
+        buffer,
+        false,
+        nocopy.is_not_nil(),
+        false,
+    )
+}
+
+/// Encode STRING to CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the encoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the encoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the encoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn encode_coding_string(
+    string: LispObject,
+    coding_system: LispObject,
+    nocopy: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    code_convert_string(
+        string,
+        coding_system,
+        buffer,
+        true,
+        nocopy.is_not_nil(),
+        false,
+    )
+}
+
+// Wrapper for code_convert_string (NOT PORTED)
+pub fn code_convert_string(
+    string: LispObject,
+    coding_system: LispObject,
+    dst_object: LispObject,
+    encodep: bool,
+    nocopy: bool,
+    norecord: bool,
+) -> LispObject {
+    unsafe { c_code_convert_string(string, coding_system, dst_object, encodep, nocopy, norecord) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));

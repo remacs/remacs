@@ -24,13 +24,13 @@
   (should(eq (window-dedicated-p (selected-window)) nil)))
 
 (ert-deftest window-dedicated-set-not-nil()
-  ;; set widnow to dedicated
+  ;; set window to dedicated
   (should (eq (set-window-dedicated-p (selected-window) 't) 't))
   (should(eq (window-dedicated-p (selected-window)) 't)))
 
 (ert-deftest window-dedicated-p-default-selected-window()
   (should(eq (window-dedicated-p) nil))
-  ;; set selected widnow to dedicated
+  ;; set selected window to dedicated
   (should (eq (set-window-dedicated-p (selected-window) 't) 't))
   (should(eq (window-dedicated-p) 't)))
 
@@ -107,11 +107,18 @@
   (should (= 1.0 (window-normal-size w2 't)))))
 
 (ert-deftest window-pixel-top ()
-  (skip-unless (display-graphic-p))
   (let ((w1 (selected-window))
         (w2 (split-window-vertically)))
     (should (= (window-pixel-top) (window-pixel-top w1)))
     (should-not (= (window-pixel-top w1) (window-pixel-top w2)))))
+
+(ert-deftest window-left-column ()
+  (let ((w1 (selected-window))
+        (w2 (split-window-vertically))
+        (w3 (split-window-horizontally (/ (window-width) 2))))
+    (should (= 0 (window-left-column w1)))
+    (should (= 0 (window-left-column w2)))
+    (should-not (= 0 (window-left-column w3)))))
 
 (ert-deftest window-fringes ()
   (skip-unless (display-graphic-p))
@@ -145,3 +152,40 @@
     (should (set-window-fringes w1 1 1 nil))
     (should-not (set-window-fringes w1 1 1 nil))
     (should (set-window-fringes w1 1 2 nil))))
+
+(ert-deftest window-hscroll ()
+  "Effectively tests both `window-hscroll' (the getter) and
+  `set-window-hscroll' (the setter)."
+
+  ;; Can we change hscroll on this window?
+  (set-window-hscroll nil 42)
+  (should (= (window-hscroll) 42))
+  (should (= (window-hscroll nil) 42))
+  (set-window-hscroll nil 7)
+  (should (= (window-hscroll) 7))
+  (should (= (window-hscroll nil) 7))
+
+  ;; Can we correctly operate on a different window?
+  (let ((initial-window (selected-window))
+        (other-window (split-window)))
+    (set-window-hscroll initial-window 1337)
+    (set-window-hscroll other-window 4711)
+    (should (= (window-hscroll) 1337))
+    (should (= (window-hscroll initial-window) 1337))
+    (should (= (window-hscroll other-window) 4711))
+    (select-window other-window)
+    (should (= (window-hscroll) 4711))
+    (should (= (window-hscroll initial-window) 1337))
+    (should (= (window-hscroll other-window) 4711))
+    (delete-window other-window)
+    ))
+
+;; TODO: make proper tests for this function when we will be able to change 
+;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
+(ert-deftest window-pixel-width-before-size-change ()
+  (window-pixel-width-before-size-change))
+
+;; TODO: make proper tests for this function when we will be able to change 
+;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
+(ert-deftest window-pixel-height-before-size-change ()
+  (window-pixel-height-before-size-change))

@@ -5,12 +5,13 @@ use cfg_if::cfg_if;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::copy_sequence,
     lisp::LispObject,
-    remacs_sys::{build_string, Fcopy_sequence},
+    remacs_sys::build_string,
     remacs_sys::{daemon_name, globals},
 };
 
-/// Replaces IS_DAEMON
+// Replaces IS_DAEMON
 cfg_if! {
     if #[cfg(windows)] {
         use crate::remacs_sys::w32_daemon_event;
@@ -29,13 +30,13 @@ cfg_if! {
 /// Any directory names are omitted.
 #[lisp_fn]
 pub fn invocation_name() -> LispObject {
-    unsafe { Fcopy_sequence(globals.Vinvocation_name) }
+    copy_sequence(unsafe { globals.Vinvocation_name })
 }
 
 /// Return the directory name in which the Emacs executable was located.
 #[lisp_fn]
 pub fn invocation_directory() -> LispObject {
-    unsafe { Fcopy_sequence(globals.Vinvocation_directory) }
+    copy_sequence(unsafe { globals.Vinvocation_directory })
 }
 
 /// Return non-nil if the current emacs process is a daemon.

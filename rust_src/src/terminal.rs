@@ -82,7 +82,7 @@ impl From<LispObject> for Option<LispLiveTerminal> {
 
 impl From<LispObject> for LispLiveTerminal {
     fn from(obj: LispObject) -> Self {
-        let value: Option<LispLiveTerminal> = obj.into();
+        let value: Option<Self> = obj.into();
         value.unwrap_or_else(|| wrong_type!(Qterminal_live_p, obj))
     }
 }

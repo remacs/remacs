@@ -74,6 +74,10 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
 
+/* Apropos - finding all symbols whose names match a regexp.		*/
+Lisp_Object apropos_predicate;
+Lisp_Object apropos_accumulate;
+
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
@@ -1150,78 +1154,6 @@ like in the respective argument of `key-binding'.  */)
   unbind_to (count, Qnil);
 
   return keymaps;
-}
-
-/* GC is possible in this function if it autoloads a keymap.  */
-
-DEFUN ("key-binding", Fkey_binding, Skey_binding, 1, 4, 0,
-       doc: /* Return the binding for command KEY in current keymaps.
-KEY is a string or vector, a sequence of keystrokes.
-The binding is probably a symbol with a function definition.
-
-Normally, `key-binding' ignores bindings for t, which act as default
-bindings, used when nothing else in the keymap applies; this makes it
-usable as a general function for probing keymaps.  However, if the
-optional second argument ACCEPT-DEFAULT is non-nil, `key-binding' does
-recognize the default bindings, just as `read-key-sequence' does.
-
-Like the normal command loop, `key-binding' will remap the command
-resulting from looking up KEY by looking up the command in the
-current keymaps.  However, if the optional third argument NO-REMAP
-is non-nil, `key-binding' returns the unmapped command.
-
-If KEY is a key sequence initiated with the mouse, the used keymaps
-will depend on the clicked mouse position with regard to the buffer
-and possible local keymaps on strings.
-
-If the optional argument POSITION is non-nil, it specifies a mouse
-position as returned by `event-start' and `event-end', and the lookup
-occurs in the keymaps associated with it instead of KEY.  It can also
-be a number or marker, in which case the keymap properties at the
-specified buffer position instead of point are used.
-  */)
-  (Lisp_Object key, Lisp_Object accept_default, Lisp_Object no_remap, Lisp_Object position)
-{
-  Lisp_Object value;
-
-  if (NILP (position) && VECTORP (key))
-    {
-      Lisp_Object event;
-
-      if (ASIZE (key) == 0)
-	return Qnil;
-
-      /* mouse events may have a symbolic prefix indicating the
-	 scrollbar or mode line */
-      event = AREF (key, SYMBOLP (AREF (key, 0)) && ASIZE (key) > 1 ? 1 : 0);
-
-      /* We are not interested in locations without event data */
-
-      if (EVENT_HAS_PARAMETERS (event) && CONSP (XCDR (event)))
-	{
-	  Lisp_Object kind = EVENT_HEAD_KIND (EVENT_HEAD (event));
-	  if (EQ (kind, Qmouse_click))
-	    position = EVENT_START (event);
-	}
-    }
-
-  value = Flookup_key (Fcons (Qkeymap, Fcurrent_active_maps (Qt, position)),
-		       key, accept_default);
-
-  if (NILP (value) || INTEGERP (value))
-    return Qnil;
-
-  /* If the result of the ordinary keymap lookup is an interactive
-     command, look for a key binding (ie. remapping) for that command.  */
-
-  if (NILP (no_remap) && SYMBOLP (value))
-    {
-      Lisp_Object value1;
-      if (value1 = Fcommand_remapping (value, position, Qnil), !NILP (value1))
-	value = value1;
-    }
-
-  return value;
 }
 
 /* GC is possible in this function if it autoloads a keymap.  */
@@ -2992,11 +2924,8 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
     }
 }
 
-/* Apropos - finding all symbols whose names match a regexp.		*/
-static Lisp_Object apropos_predicate;
-static Lisp_Object apropos_accumulate;
 
-static void
+void
 apropos_accum (Lisp_Object symbol, Lisp_Object string)
 {
   register Lisp_Object tem;
@@ -3008,24 +2937,6 @@ apropos_accum (Lisp_Object symbol, Lisp_Object string)
     apropos_accumulate = Fcons (symbol, apropos_accumulate);
 }
 
-DEFUN ("apropos-internal", Fapropos_internal, Sapropos_internal, 1, 2, 0,
-       doc: /* Show all symbols whose names contain match for REGEXP.
-If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
-for each symbol and a symbol is mentioned only if that returns non-nil.
-Return list of symbols found.  */)
-  (Lisp_Object regexp, Lisp_Object predicate)
-{
-  Lisp_Object tem;
-  CHECK_STRING (regexp);
-  apropos_predicate = predicate;
-  apropos_accumulate = Qnil;
-  map_obarray (Vobarray, apropos_accum, regexp);
-  tem = Fsort (apropos_accumulate, Qstring_lessp);
-  apropos_accumulate = Qnil;
-  apropos_predicate = Qnil;
-  return tem;
-}
-
 void
 syms_of_keymap (void)
 {
@@ -3144,7 +3055,6 @@ be preferred.  */);
   staticpro (&command_remapping_vector);
 
   defsubr (&Scommand_remapping);
-  defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
   defsubr (&Scurrent_minor_mode_maps);
@@ -3155,7 +3065,6 @@ be preferred.  */);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);
   defsubr (&Sdescribe_buffer_bindings);
-  defsubr (&Sapropos_internal);
 }
 
 void

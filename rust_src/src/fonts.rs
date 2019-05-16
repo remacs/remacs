@@ -7,15 +7,17 @@ use remacs_macros::lisp_fn;
 use std::{ffi::CString, mem};
 
 use crate::{
-    data,
+    data, fns,
     frames::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
-    remacs_sys::{font_add_log, font_at, Flist_fonts},
+    remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
     remacs_sys::{
-        pvec_type, Lisp_Font_Object, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX,
+        pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX,
+        FONT_SPEC_MAX,
     },
     remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
     threads::ThreadState,
@@ -30,8 +32,8 @@ use crate::{
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
-    pub fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
-        LispFontRef(v)
+    pub const fn from_vectorlike(v: LispVectorlikeRef) -> Self {
+        Self(v)
     }
 
     pub fn is_font_spec(&self) -> bool {
@@ -94,7 +96,7 @@ pub enum FontExtraType {
 impl FontExtraType {
     // Needed for wrong_type! that is using a safe predicate. This may change in the future.
     #[allow(unused_unsafe)]
-    pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
+    pub fn from_symbol_or_error(extra_type: LispObject) -> Self {
         if extra_type.eq(unsafe { Qfont_spec }) {
             FontExtraType::Spec
         } else if extra_type.eq(unsafe { Qfont_entity }) {
@@ -110,9 +112,9 @@ impl FontExtraType {
 pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
 
 impl LispFontObjectRef {
-    pub fn add_log(self, action: &str, result: LispObject) {
+    pub fn add_log(self, action: &str, result: impl Into<LispObject>) {
         let c_str = CString::new(action).unwrap();
-        unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
+        unsafe { font_add_log(c_str.as_ptr(), self.into(), result.into()) }
     }
 
     pub fn close(mut self, mut _frame: LispFrameRef) {
@@ -120,7 +122,7 @@ impl LispFontObjectRef {
             // Already closed
             return;
         }
-        self.add_log("close", LispObject::from(false));
+        self.add_log("close", false);
         unsafe {
             if let Some(f) = (*self.driver).close {
                 f(self.as_mut())
@@ -142,7 +144,7 @@ impl LispFontObjectRef {
 
 impl From<LispFontObjectRef> for LispObject {
     fn from(f: LispFontObjectRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -165,6 +167,48 @@ impl From<LispObject> for Option<LispFontObjectRef> {
             }
         })
     }
+}
+
+pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
+
+impl From<LispFontSpecRef> for LispObject {
+    fn from(f: LispFontSpecRef) -> Self {
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
+impl From<LispObject> for LispFontSpecRef {
+    fn from(o: LispObject) -> Self {
+        match o.into() {
+            Some(spec) => spec,
+            None => wrong_type!(Qfont_spec, o),
+        }
+    }
+}
+
+impl From<LispObject> for Option<LispFontSpecRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
+                Some(unsafe { mem::transmute(o) })
+            } else {
+                None
+            }
+        })
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn font_vconcat_entity_vectors(list: LispObject) -> LispObject {
+    vconcat_entity_vectors(list.into())
+}
+
+/// Concatenate all elements of LIST into one vector. LIST is a list of font-entity vectors.
+fn vconcat_entity_vectors(list: LispCons) -> LispObject {
+    let mut args: Vec<LispObject> = list
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .collect();
+    fns::vconcat(&mut args)
 }
 
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
@@ -205,8 +249,8 @@ pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
 /// Return a font-entity matching with FONT-SPEC on the current frame.
 /// Optional 2nd argument FRAME, if non-nil, specifies the target frame.
 #[lisp_fn(min = "1")]
-pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
-    let val = unsafe { Flist_fonts(spec, frame, 1.into(), Qnil) };
+pub fn find_font(spec: LispFontSpecRef, frame: LispFrameLiveOrSelected) -> LispObject {
+    let val = list_fonts(spec, frame, Some(1.into()), None);
     match val.into() {
         Some((a, _)) => a,
         None => val,
@@ -263,6 +307,78 @@ pub fn font_at_lisp(
         }
     };
     unsafe { font_at(-1, pos, ptr::null_mut(), w.as_mut(), string) }
+}
+
+/// List available fonts matching FONT-SPEC on the current frame.
+/// Optional 2nd argument FRAME specifies the target frame.
+/// Optional 3rd argument NUM, if non-nil, limits the number of returned fonts.
+/// Optional 4th argument PREFER, if non-nil, is a font-spec to
+/// control the order of the returned list.  Fonts are sorted by
+/// how close they are to PREFER.
+#[lisp_fn(min = "1")]
+pub fn list_fonts(
+    font_spec: LispFontSpecRef,
+    frame: LispFrameLiveOrSelected,
+    num: Option<EmacsInt>,
+    prefer: Option<LispFontSpecRef>,
+) -> LispObject {
+    let mut frame: LispFrameRef = frame.into();
+
+    let n = match num {
+        Some(n) if n < 0 => return Qnil,
+        Some(n) => n,
+        None => 0,
+    } as usize;
+
+    let list = unsafe { font_list_entities(frame.as_mut(), font_spec.into()) };
+    match list.into() {
+        Some((car, cdr)) if cdr.is_nil() => match car.as_vector() {
+            Some(vec) if vec.len() == 1 => return list!(vec.get(0)),
+            _ => (),
+        },
+        _ => return Qnil,
+    }
+
+    let vec = match prefer {
+        None => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
+        Some(_) => vconcat_entity_vectors(list.into()),
+    }
+    .force_vector();
+
+    if n == 0 || n >= vec.len() {
+        fns::append(&mut [vec.into(), Qnil])
+    } else {
+        (0..=n)
+            .rev()
+            .fold(Qnil, |list, n| (vec.get(n), list).into())
+    }
+}
+
+/// Return FRAME's font cache.  Mainly used for debugging.
+/// If FRAME is omitted or nil, use the selected frame.
+#[lisp_fn(min = "0")]
+pub fn frame_font_cache(_frame: LispFrameLiveOrSelected) -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let frame: LispFrameRef = _frame.into();
+        if frame.is_gui_window() {
+            unsafe {
+                #[cfg(feature = "window-system-x11")]
+                let display_info = (*frame.output_data.x).display_info;
+                #[cfg(feature = "window-system-nextstep")]
+                let display_info = (*frame.output_data.ns).display_info;
+                #[cfg(feature = "window-system-w32")]
+                let display_info = (*frame.output_data.w32).display_info;
+                (*display_info).name_list_element
+            }
+        } else {
+            Qnil
+        }
+    }
+    #[cfg(not(feature = "window-system"))]
+    {
+        Qnil
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));

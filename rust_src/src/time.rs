@@ -40,7 +40,7 @@ impl LispTime {
 }
 
 impl PartialEq for LispTime {
-    fn eq(&self, other: &LispTime) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.hi == other.hi && self.lo == other.lo && self.us == other.us && self.ps == other.ps
     }
 }
@@ -48,13 +48,13 @@ impl PartialEq for LispTime {
 impl Eq for LispTime {}
 
 impl PartialOrd for LispTime {
-    fn partial_cmp(&self, other: &LispTime) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for LispTime {
-    fn cmp(&self, other: &LispTime) -> Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         self.hi
             .cmp(&other.hi)
             .then_with(|| self.lo.cmp(&other.lo))
@@ -65,9 +65,9 @@ impl Ord for LispTime {
 
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl Add for LispTime {
-    type Output = LispTime;
+    type Output = Self;
 
-    fn add(self, other: LispTime) -> LispTime {
+    fn add(self, other: Self) -> Self {
         let mut hi = self.hi + other.hi;
         let mut lo = self.lo + other.lo;
         let mut us = self.us + other.us;
@@ -86,15 +86,15 @@ impl Add for LispTime {
             lo -= 1 << LO_TIME_BITS;
         }
 
-        LispTime { hi, lo, us, ps }
+        Self { hi, lo, us, ps }
     }
 }
 
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl Sub for LispTime {
-    type Output = LispTime;
+    type Output = Self;
 
-    fn sub(self, other: LispTime) -> LispTime {
+    fn sub(self, other: Self) -> Self {
         let mut hi = self.hi - other.hi;
         let mut lo = self.lo - other.lo;
         let mut us = self.us - other.us;
@@ -113,7 +113,7 @@ impl Sub for LispTime {
             lo += 1 << LO_TIME_BITS;
         }
 
-        LispTime { hi, lo, us, ps }
+        Self { hi, lo, us, ps }
     }
 }
 

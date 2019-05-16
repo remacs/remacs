@@ -17,12 +17,13 @@ use crate::{
     },
     eval::unbind_to,
     lisp::LispObject,
+    multibyte::char_resolve_modifier_mask,
     obarray::{intern, intern_c_string_1},
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, getc_unlocked, maybe_quit, read_internal_start, readevalloop,
-        specbind, staticpro, symbol_redirect, unblock_input,
+        block_input, build_string, getc_unlocked, maybe_quit, read_filtered_event,
+        read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -51,7 +52,7 @@ use crate::remacs_sys::{clearerr_unlocked, ferror_unlocked};
 #[no_mangle]
 pub unsafe extern "C" fn defvar_int(
     i_fwd: *mut Lisp_Intfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut EmacsInt,
 ) {
     (*i_fwd).ty = Lisp_Fwd_Int;
@@ -68,7 +69,7 @@ pub unsafe extern "C" fn defvar_int(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_bool(
     b_fwd: *mut Lisp_Boolfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut bool,
 ) {
     (*b_fwd).ty = Lisp_Fwd_Bool;
@@ -88,7 +89,7 @@ pub unsafe extern "C" fn defvar_bool(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp_nopro(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     (*o_fwd).ty = Lisp_Fwd_Obj;
@@ -103,7 +104,7 @@ pub unsafe extern "C" fn defvar_lisp_nopro(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_lisp(
     o_fwd: *mut Lisp_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     address: *mut LispObject,
 ) {
     defvar_lisp_nopro(o_fwd, namestring, address);
@@ -115,7 +116,7 @@ pub unsafe extern "C" fn defvar_lisp(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_kboard(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: i32,
 ) {
     defvar_kboard_offset(
@@ -127,7 +128,7 @@ pub unsafe extern "C" fn defvar_kboard(
 
 pub unsafe fn defvar_kboard_offset(
     ko_fwd: *mut Lisp_Kboard_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::kboard, LispObject>,
 ) {
     (*ko_fwd).ty = Lisp_Fwd_Kboard_Obj;
@@ -142,7 +143,7 @@ pub unsafe fn defvar_kboard_offset(
 #[no_mangle]
 pub unsafe extern "C" fn defvar_per_buffer(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {
@@ -151,7 +152,7 @@ pub unsafe extern "C" fn defvar_per_buffer(
 
 pub unsafe fn defvar_per_buffer_offset(
     bo_fwd: *mut Lisp_Buffer_Objfwd,
-    namestring: *const libc::c_schar,
+    namestring: *const libc::c_char,
     offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
     predicate: LispObject,
 ) {
@@ -306,6 +307,100 @@ pub fn eval_region(
             end,
         );
         unbind_to(count, Qnil);
+    }
+}
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the user generates an event which is not a character (i.e. a mouse
+/// click or function key event), `read-char' signals an error.  As an
+/// exception, switch-frame events are put off until non-character events
+/// can be read.
+/// If you want to read non-character events, or ignore them, call
+/// `read-event' or `read-char-exclusive' instead.
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> Option<EmacsInt> {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, true, !inherit_input_method.is_nil(), seconds) };
+
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
+    }
+}
+def_lisp_sym!(Qread_char, "read-char");
+
+/// Read an event object from the input stream.
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_event(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> LispObject {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    unsafe { read_filtered_event(false, false, false, !inherit_input_method.is_nil(), seconds) }
+}
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.  Non-character events are ignored.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char_exclusive(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> Option<EmacsInt> {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, false, !inherit_input_method.is_nil(), seconds) };
+
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
     }
 }
 

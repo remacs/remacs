@@ -6,6 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
+    lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
@@ -16,10 +17,13 @@ use crate::{
 };
 
 #[cfg(feature = "window-system")]
-use crate::remacs_sys::{vertical_scroll_bar_type, x_focus_frame, Fnreverse};
+use crate::{
+    fns::nreverse,
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame},
+};
 
 #[cfg(not(feature = "window-system"))]
-use crate::remacs_sys::Fcopy_sequence;
+use crate::fns::copy_sequence;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -31,9 +35,12 @@ impl LispFrameRef {
         !self.terminal.is_null()
     }
 
-    // Awaiting Wilfred#1264
+    /// Replaces FRAME_WINDOW_P
     pub fn is_gui_window(self) -> bool {
-        cfg!(feature = "window_system")
+        match self.output_method() {
+            output_method::output_initial | output_method::output_termcap => false,
+            _ => true,
+        }
     }
 
     // Pixel-width of internal border lines.
@@ -98,6 +105,13 @@ impl LispFrameRef {
         #[cfg(not(feature = "window-system"))]
         {
             0
+        }
+    }
+
+    pub fn get_param(self, prop: LispObject) -> LispObject {
+        match assq(prop, self.param_alist).as_cons() {
+            Some(cons) => cons.cdr(),
+            None => Qnil,
         }
     }
 }
@@ -185,7 +199,7 @@ pub struct LispFrameLiveOrSelected(LispFrameRef);
 
 impl From<LispObject> for LispFrameLiveOrSelected {
     fn from(obj: LispObject) -> Self {
-        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
+        Self(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
     }
 }
 
@@ -647,11 +661,11 @@ pub fn frame_list() -> LispObject {
     {
         let list = filter_frame_list(|f| !f.has_tooltip());
         // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
-        unsafe { Fnreverse(list) }
+        nreverse(list)
     }
     #[cfg(not(feature = "window-system"))]
     {
-        unsafe { Fcopy_sequence(Vframe_list) }
+        copy_sequence(unsafe { Vframe_list })
     }
 }
 
@@ -659,6 +673,22 @@ pub fn frame_list() -> LispObject {
 #[lisp_fn]
 pub fn visible_frame_list() -> LispObject {
     filter_frame_list(LispFrameRef::is_visible)
+}
+
+/// Return an alist of frame-local faces defined on FRAME.
+/// For internal use only.
+#[lisp_fn(min = "0")]
+pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
+    let frame_ref: LispFrameRef = frame.into();
+    frame_ref.face_alist
+}
+
+/// Return the value of frame parameter PROP in frame FRAME.
+#[no_mangle]
+pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> LispObject {
+    // It should be possible to use this method directly when we port
+    // one of the original function's callers.
+    frame.get_param(prop)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

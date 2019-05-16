@@ -6,13 +6,14 @@ use crate::{
     buffers::current_buffer,
     buffers::LispBufferRef,
     chartable::LispCharTableRef,
+    fns::copy_sequence,
     lisp::LispObject,
     lists::put,
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fcopy_sequence,
-        Fmake_char_table, Fset_char_table_range, CHAR_TABLE_SET,
+        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fmake_char_table,
+        Fset_char_table_range, CHAR_TABLE_SET,
     },
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
     threads::ThreadState,
@@ -21,17 +22,28 @@ use crate::{
 pub struct LispCaseTable(LispCharTableRef);
 
 impl LispCaseTable {
+    pub fn is_valid(&self) -> bool {
+        let (e1, e2, e3) = self.extras();
+        e1.is_char_table() && e2.is_char_table() && e3.is_char_table()
+    }
+
     pub fn extras(&self) -> (LispObject, LispObject, LispObject) {
         let extras = unsafe { self.0.extras.as_slice(3) };
         (extras[0], extras[1], extras[2])
     }
 
-    pub fn from_char_table(table: LispCharTableRef) -> Self {
+    pub const fn from_char_table(table: LispCharTableRef) -> Self {
         Self(table)
     }
 
     pub fn get(&self, idx: isize) -> LispObject {
         self.0.get(idx)
+    }
+}
+
+impl LispObject {
+    pub fn force_case_table(self) -> LispCaseTable {
+        LispCaseTable(self.force_char_table())
     }
 }
 
@@ -264,7 +276,7 @@ pub unsafe extern "C" fn init_casetab_once() {
         CHAR_TABLE_SET(down, i, c.into());
     }
 
-    set_char_table_extras(down, 1, Fcopy_sequence(down));
+    set_char_table_extras(down, 1, copy_sequence(down));
 
     let up = Fmake_char_table(Qcase_table, Qnil);
     set_char_table_extras(down, 0, up);

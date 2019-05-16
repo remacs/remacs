@@ -30,6 +30,14 @@ impl LispObject {
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         self.into()
     }
+
+    pub fn force_char_table(self) -> LispCharTableRef {
+        unsafe { self.to_char_table_unchecked() }
+    }
+
+    pub unsafe fn to_char_table_unchecked(self) -> LispCharTableRef {
+        LispCharTableRef::new(self.get_untaggedptr() as *mut Lisp_Char_Table)
+    }
 }
 
 impl From<LispObject> for LispCharTableRef {
@@ -50,7 +58,7 @@ impl From<LispObject> for Option<LispCharTableRef> {
 
 impl From<LispCharTableRef> for LispObject {
     fn from(ct: LispCharTableRef) -> Self {
-        LispObject::tag_ptr(ct, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(ct, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -256,13 +264,13 @@ impl LispStructuralEqual for LispSubCharTableAsciiRef {
 
 impl From<LispSubCharTableAsciiRef> for LispObject {
     fn from(s: LispSubCharTableAsciiRef) -> Self {
-        LispObject::tag_ptr(s.0, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(s.0, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
 impl From<LispSubCharTableRef> for LispObject {
     fn from(s: LispSubCharTableRef) -> Self {
-        LispObject::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -325,7 +333,7 @@ impl LispStructuralEqual for LispSubCharTableRef {
     }
 }
 
-fn is_ascii(c: isize) -> bool {
+const fn is_ascii(c: isize) -> bool {
     c < 128
 }
 

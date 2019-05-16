@@ -1,6 +1,6 @@
 //! Functions operating on windows.
 
-use std::{cmp, fmt, ptr};
+use std::{cmp, convert::TryFrom, fmt, ptr};
 
 use libc::c_int;
 
@@ -10,12 +10,13 @@ use crate::{
     buffers::{set_buffer, LispBufferRef},
     editfns::{goto_char, point},
     eval::unbind_to,
+    fns::{copy_alist, nreverse},
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
-    numbers::{check_range, LispNumber},
+    numbers::{check_range, LispNumber, MOST_POSITIVE_FIXNUM},
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
@@ -24,17 +25,17 @@ use crate::{
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        set_window_hscroll, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
-        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
+        windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
-    remacs_sys::{Fcopy_alist, Fnreverse},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::{c_specpdl_index, ThreadState},
+    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -99,7 +100,7 @@ impl LispWindowRef {
             matrix_mode_line_height
         } else {
             let mut frame = self.get_frame();
-            let window: LispWindowRef = selected_window().into();
+            let window: Self = selected_window().into();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
@@ -127,6 +128,8 @@ impl LispWindowRef {
         self.contents.is_window()
     }
 
+    // Equivalent to MINI_WINDOW_P
+    /// True if the the window is a minibuffer.
     pub fn is_minibuffer(self) -> bool {
         self.mini()
     }
@@ -239,6 +242,26 @@ impl LispWindowRef {
         } else {
             cmp::max(width / self.get_frame().column_width, 0)
         }
+    }
+
+    /// Return number of lines of text (not counting mode lines) in the window.
+    pub fn internal_height(self) -> i32 {
+        let mut lines = self.total_lines;
+        if !self.is_minibuffer() {
+            if self.parent.is_not_nil()
+                || self.contents.is_window()
+                || self.next.is_not_nil()
+                || self.prev.is_not_nil()
+                || self.wants_mode_line()
+            {
+                lines -= 1;
+            }
+
+            if self.wants_header_line() {
+                lines -= 1;
+            }
+        }
+        lines
     }
 
     /// The frame x-position at which the text (or left fringe) in
@@ -725,6 +748,11 @@ impl From<LispWindowValidOrSelected> for LispWindowRef {
 #[no_mangle]
 pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
     LispWindowRef::new(window).body_width(pixelwise)
+}
+
+#[no_mangle]
+pub extern "C" fn window_internal_height(w: LispWindowRef) -> i32 {
+    w.internal_height()
 }
 
 #[no_mangle]
@@ -1416,7 +1444,7 @@ fn scroll_horizontally(
     arg: Option<InteractiveNumericPrefix>,
     set_minimum: bool,
     left: bool,
-) -> LispObject {
+) -> EmacsInt {
     let mut w: LispWindowRef = selected_window().into();
     let requested_arg = match arg {
         None => EmacsInt::from(w.body_width(false)) - 2,
@@ -1430,7 +1458,7 @@ fn scroll_horizontally(
         }
     };
 
-    let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
+    let result = set_window_hscroll(w, w.hscroll as EmacsInt + requested_arg);
 
     if set_minimum {
         w.min_hscroll = w.hscroll;
@@ -1449,7 +1477,7 @@ fn scroll_horizontally(
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, true)
 }
 
@@ -1462,7 +1490,7 @@ pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> 
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
+pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> EmacsInt {
     scroll_horizontally(arg, set_minimum, false)
 }
 
@@ -1608,6 +1636,47 @@ pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
     win.hscroll as EmacsInt
 }
 
+// Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
+// range, returning the new amount as a fixnum.
+#[no_mangle]
+pub extern "C" fn set_window_hscroll(mut w: LispWindowRef, hscroll: EmacsInt) -> EmacsInt {
+    // Horizontal scrolling has problems with large scroll amounts.
+    // It's too slow with long lines, and even with small lines the
+    // display can be messed up.  For now, though, impose only the limits
+    // required by the internal representation: horizontal scrolling must
+    // fit in fixnum (since it's visible to Elisp) and into isize
+    // (since it's stored in a ptrdiff_t).
+    let hscroll_max = match isize::try_from(MOST_POSITIVE_FIXNUM) {
+        Ok(mpf) => cmp::max(mpf, isize::max_value()),
+        Err(_) => isize::max_value(),
+    };
+    let new_hscroll = clip_to_bounds(0, hscroll, hscroll_max);
+
+    // Prevent redisplay shortcuts when changing the hscroll.
+    if w.hscroll != new_hscroll {
+        let mut buf: LispBufferRef = w.contents.into();
+        buf.set_prevent_redisplay_optimizations_p(true);
+    }
+
+    w.hscroll = new_hscroll;
+    w.set_suspend_auto_hscroll(true);
+
+    // new_hscroll must fit in EmacsInt, since 0 <= new_scroll <= hscroll which is EmacsInt
+    new_hscroll as EmacsInt
+}
+
+/// Set number of columns WINDOW is scrolled from left margin to NCOL.
+/// WINDOW must be a live window and defaults to the selected one.
+/// Clip the number to a reasonable value if out of range.
+/// Return the new number.  NCOL should be zero or positive.
+///
+/// Note that if `automatic-hscrolling' is non-nil, you cannot scroll the
+/// window so that the location of point moves off-window.
+#[lisp_fn(min = "1", name = "set-window-hscroll", c_name = "set_window_hscroll")]
+pub fn set_window_hscroll_lisp(window: LispWindowLiveOrSelected, ncol: EmacsInt) -> EmacsInt {
+    set_window_hscroll(window.into(), ncol)
+}
+
 #[no_mangle]
 pub extern "C" fn window_parameter(w: LispWindowRef, parameter: LispObject) -> LispObject {
     w.get_parameter(parameter)
@@ -1658,7 +1727,7 @@ pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
 #[lisp_fn(min = "0")]
 pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
-    unsafe { Fcopy_alist(win.window_parameters) }
+    copy_alist(win.window_parameters)
 }
 
 /// Return WINDOW's redisplay end trigger value.
@@ -1698,9 +1767,9 @@ pub fn set_window_redisplay_end_trigger(
 /// means that if a line at the bottom of the text area is only partially
 /// visible, that line is not counted.
 #[lisp_fn(min = "0")]
-pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_height(pixelwise).into()
+    window.body_height(pixelwise)
 }
 
 /// Return the width of WINDOW's text area.
@@ -1717,9 +1786,9 @@ pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> 
 /// Note that the returned value includes the column reserved for the
 /// continuation glyph.
 #[lisp_fn(name = "window-body-width", c_name = "window_body_width", min = "0")]
-pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_width(pixelwise).into()
+    window.body_width(pixelwise)
 }
 
 /// Return pixel dimensions of WINDOW's lines.
@@ -1847,15 +1916,35 @@ pub fn window_lines_pixel_dimensions(
         rows = ((width, row.y + row.height - subtract), rows).into();
         unsafe { row.ptr_add(1) };
     }
-    unsafe { Fnreverse(rows) }
+    nreverse(rows)
+}
+
+/// Return left pixel edge of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_left(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_left
 }
 
 /// Return top pixel edge of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
-pub fn window_pixel_top(window: LispWindowValidOrSelected) -> EmacsInt {
+pub fn window_pixel_top(window: LispWindowValidOrSelected) -> i32 {
     let window: LispWindowRef = window.into();
-    window.pixel_top.into()
+    window.pixel_top
+}
+
+/// Return left column of window WINDOW.
+/// This is the distance, in columns, between the left edge of WINDOW and
+/// the left edge of the frame's window area.  For instance, the return
+/// value is 0 if there is no window to the left of WINDOW.
+///
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_left_column(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.left_col
 }
 
 /// Get width of fringes of window WINDOW.
@@ -1897,11 +1986,35 @@ pub fn set_window_fringes_lisp(
         unsafe { set_window_fringes(window.as_mut(), left_width, right_width, outside_margins) };
 
     if !updated_window.is_null() {
-        unsafe { apply_window_adjustment(updated_window.into()) };
+        unsafe { apply_window_adjustment(updated_window) };
         true
     } else {
         false
     }
+}
+
+/// Return pixel width of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel width of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_width_before_size_change
+}
+
+/// Return pixel height of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel height of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_height_before_size_change
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

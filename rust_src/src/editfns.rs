@@ -15,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, record_unwind_protect, unbind_to},
+    fns::copy_sequence,
     indent::invalidate_current_column,
     lisp::LispObject,
     marker::{marker_position_lisp, point_marker, set_point_from_marker},
@@ -36,8 +37,8 @@ use crate::{
         update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
-        Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
-        Fprevious_single_char_property_change, Fx_popup_dialog,
+        Fadd_text_properties, Fget_pos_property, Fnext_single_char_property_change,
+        Fprevious_single_char_property_change, Fsystem_name, Fx_popup_dialog,
     },
     remacs_sys::{
         Qboundary, Qchar_or_string_p, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt,
@@ -421,7 +422,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = LispStringRef::from(*first);
 
-    let copy = unsafe { Fcopy_sequence(*first) };
+    let copy = copy_sequence(*first);
 
     let mut properties = Qnil;
 
@@ -445,7 +446,7 @@ pub fn char_to_string(character: LispObject) -> LispObject {
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
     let len = write_codepoint(&mut buffer[..], c);
 
-    unsafe { make_string_from_bytes(buffer.as_ptr() as *const i8, 1, len as isize) }
+    unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, len as isize) }
 }
 
 /// Convert arg BYTE to a unibyte string containing that byte.
@@ -454,9 +455,9 @@ pub fn byte_to_string(byte: EmacsInt) -> LispObject {
     if byte < 0 || byte > 255 {
         error!("Invalid byte");
     }
-    let byte = byte as i8;
+    let byte = byte as libc::c_char;
 
-    unsafe { make_string_from_bytes(&byte as *const i8, 1, 1) }
+    unsafe { make_string_from_bytes(&byte as *const libc::c_char, 1, 1) }
 }
 
 /// Return the first character in STRING.
@@ -638,11 +639,11 @@ pub fn constrain_to_field(
     if unsafe { globals.Vinhibit_field_text_motion.is_nil() }
         && new_pos != old_pos
         && (get_char_property(
-            new_pos,
+            new_pos.into (),
             Qfield,
             Qnil).is_not_nil()
             || get_char_property(
-                old_pos,
+                old_pos.into (),
                 Qfield,
                 Qnil).is_not_nil()
             // To recognize field boundaries, we must also look at the
@@ -651,11 +652,11 @@ pub fn constrain_to_field(
             // fields (like comint prompts).
             || (new_pos > begv
                 && get_char_property(
-                    prev_new,
+                    prev_new.into (),
                     Qfield,
                     Qnil).is_not_nil())
             || (old_pos > begv
-                && get_char_property(prev_old, Qfield, Qnil).is_not_nil()))
+                && get_char_property(prev_old.into (), Qfield, Qnil).is_not_nil()))
         && (inhibit_capture_property.is_nil()
             // Field boundaries are again a problem; but now we must
             // decide the case exactly, so we need to call
@@ -668,11 +669,11 @@ pub fn constrain_to_field(
             }
                 && (old_pos <= begv
                     || get_char_property(
-                        old_pos,
+                        old_pos.into (),
                         inhibit_capture_property,
                         Qnil).is_nil()
                     || get_char_property(
-                        prev_old,
+                        prev_old.into (),
                         inhibit_capture_property,
                         Qnil).is_nil())))
     // It is possible that NEW_POS is not within the same field as
@@ -950,10 +951,7 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
 /// usage: (message-or-box FORMAT-STRING &rest ARGS)
 #[lisp_fn(min = "1")]
 pub fn message_or_box(args: &mut [LispObject]) -> LispObject {
-    if unsafe {
-        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
-            && globals.use_dialog_box
-    } {
+    if unsafe { globals.last_nonmenu_event.is_list() && globals.use_dialog_box } {
         message_box(args)
     } else {
         message(args)
@@ -1704,6 +1702,11 @@ pub fn insert_before_markers_and_inherit(string: &[u8]) {
             update_compositions(opoint, pt, CHECK_BORDER as i32);
         }
     }
+}
+
+/// Wrapper for Fsystem_name (NOT PORTED)
+pub fn system_name() -> LispStringRef {
+    unsafe { Fsystem_name() }.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

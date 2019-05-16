@@ -7,11 +7,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::aref,
+    fns::copy_sequence,
     lisp::{ExternalPtr, LispObject},
     lists::{list, put},
-    remacs_sys::{
-        gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Fcopy_sequence,
-    },
+    remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table},
     remacs_sys::{
         pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
     },
@@ -33,21 +32,21 @@ impl LispHashTableRef {
         Self::new(ptr::null_mut())
     }
 
-    pub fn allocate() -> LispHashTableRef {
+    pub fn allocate() -> Self {
         let vec_ptr = allocate_pseudovector!(Lisp_Hash_Table, count, pvec_type::PVEC_HASH_TABLE);
-        LispHashTableRef::new(vec_ptr)
+        Self::new(vec_ptr)
     }
 
-    pub unsafe fn copy(&mut self, other: LispHashTableRef) {
+    pub unsafe fn copy(&mut self, other: Self) {
         ptr::copy_nonoverlapping(other.as_ptr(), self.as_mut(), 1);
     }
 
-    pub fn set_next_weak(&mut self, other: LispHashTableRef) {
+    pub fn set_next_weak(&mut self, other: Self) {
         self.next_weak = other.as_ptr() as *mut Lisp_Hash_Table;
     }
 
-    pub fn get_next_weak(self) -> LispHashTableRef {
-        LispHashTableRef::new(self.next_weak)
+    pub fn get_next_weak(self) -> Self {
+        Self::new(self.next_weak)
     }
 
     pub fn set_hash(&mut self, hash: LispObject) {
@@ -130,7 +129,7 @@ impl LispHashTableRef {
         unsafe { hash_clear(self.as_mut()) }
     }
 
-    pub fn check_impure(self, object: LispHashTableRef) {
+    pub fn check_impure(self, object: Self) {
         unsafe { CHECK_IMPURE(object.into(), self.as_ptr() as *mut c_void) };
     }
 }
@@ -138,7 +137,7 @@ impl LispHashTableRef {
 impl From<LispObject> for LispHashTableRef {
     fn from(o: LispObject) -> Self {
         if o.is_hash_table() {
-            LispHashTableRef::new(o.get_untaggedptr() as *mut Lisp_Hash_Table)
+            Self::new(o.get_untaggedptr() as *mut Lisp_Hash_Table)
         } else {
             wrong_type!(Qhash_table_p, o);
         }
@@ -147,7 +146,7 @@ impl From<LispObject> for LispHashTableRef {
 
 impl From<LispHashTableRef> for LispObject {
     fn from(h: LispHashTableRef) -> Self {
-        let object = LispObject::tag_ptr(h, Lisp_Type::Lisp_Vectorlike);
+        let object = Self::tag_ptr(h, Lisp_Type::Lisp_Vectorlike);
         debug_assert!(
             object.is_vectorlike() && object.get_untaggedptr() == h.as_ptr() as *mut c_void
         );
@@ -216,7 +215,7 @@ impl<'a> Iterator for KeyAndValueIter<'a> {
 // The references are necessary to satisfy the lifetime requirements.
 // Otherwise, the iterator would contain a copy which might no longer be valid.
 impl LispHashTableRef {
-    pub fn indices(&self) -> HashTableIter {
+    pub const fn indices(&self) -> HashTableIter {
         HashTableIter {
             table: self,
             current: 0,
@@ -236,10 +235,10 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispHashTableRef {
     unsafe { new_table.copy(table) };
     assert_ne!(new_table.as_ptr(), table.as_ptr());
 
-    let key_and_value = unsafe { Fcopy_sequence(new_table.get_key_and_value()) };
-    let hash = unsafe { Fcopy_sequence(new_table.get_hash()) };
-    let next = unsafe { Fcopy_sequence(new_table.get_next()) };
-    let index = unsafe { Fcopy_sequence(new_table.get_index()) };
+    let key_and_value = copy_sequence(new_table.get_key_and_value());
+    let hash = copy_sequence(new_table.get_hash());
+    let next = copy_sequence(new_table.get_next());
+    let index = copy_sequence(new_table.get_index());
     new_table.set_key_and_value(key_and_value);
     new_table.set_hash(hash);
     new_table.set_next(next);

@@ -239,30 +239,6 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 	    wrong);
 }
 
-/* Set up SYMBOL to refer to its global binding.  This makes it safe
-   to alter the status of other bindings.  BEWARE: this may be called
-   during the mark phase of GC, where we assume that Lisp_Object slots
-   of BLV are marked after this function has changed them.  */
-
-void
-swap_in_global_binding (struct Lisp_Symbol *symbol)
-{
-  struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (symbol);
-
-  /* Unload the previously loaded binding.  */
-  if (blv->fwd)
-    set_blv_value (blv, do_symval_forwarding (blv->fwd));
-
-  /* Select the global binding in the symbol.  */
-  set_blv_valcell (blv, blv->defcell);
-  if (blv->fwd)
-    store_symval_forwarding (blv->fwd, XCDR (blv->defcell), NULL);
-
-  /* Indicate that the global binding is set up now.  */
-  set_blv_where (blv, Qnil);
-  set_blv_found (blv, 0);
-}
-
 /* Set up the buffer-local symbol SYMBOL for validity in the current buffer.
    VALCONTENTS is the contents of its value cell,
    which points to a struct Lisp_Buffer_Local_Value.
@@ -910,85 +886,6 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
   return variable;
 }
 
-/* Lisp functions for creating and removing buffer-local variables.  */
-
-DEFUN ("local-variable-if-set-p", Flocal_variable_if_set_p, Slocal_variable_if_set_p,
-       1, 2, 0,
-       doc: /* Non-nil if VARIABLE is local in buffer BUFFER when set there.
-BUFFER defaults to the current buffer.
-
-More precisely, return non-nil if either VARIABLE already has a local
-value in BUFFER, or if VARIABLE is automatically buffer-local (see
-`make-variable-buffer-local').  */)
-  (register Lisp_Object variable, Lisp_Object buffer)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (variable);
-  sym = XSYMBOL (variable);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Qnil;
-    case SYMBOL_LOCALIZED:
-      {
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	if (blv->local_if_set)
-	  return Qt;
-	XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
-	return Flocal_variable_p (variable, buffer);
-      }
-    case SYMBOL_FORWARDED:
-      /* All BUFFER_OBJFWD slots become local if they are set.  */
-      return (BUFFER_OBJFWDP (SYMBOL_FWD (sym)) ? Qt : Qnil);
-    default: emacs_abort ();
-    }
-}
-
-DEFUN ("variable-binding-locus", Fvariable_binding_locus, Svariable_binding_locus,
-       1, 1, 0,
-       doc: /* Return a value indicating where VARIABLE's current binding comes from.
-If the current binding is buffer-local, the value is the current buffer.
-If the current binding is global (the default), the value is nil.  */)
-  (register Lisp_Object variable)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (variable);
-  sym = XSYMBOL (variable);
-
-  /* Make sure the current binding is actually swapped in.  */
-  find_symbol_value (variable);
-
- start:
-  switch (sym->u.s.redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return Qnil;
-    case SYMBOL_FORWARDED:
-      {
-	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-	if (KBOARD_OBJFWDP (valcontents))
-	  return Fframe_terminal (selected_frame);
-	else if (!BUFFER_OBJFWDP (valcontents))
-	  return Qnil;
-      }
-      FALLTHROUGH;
-    case SYMBOL_LOCALIZED:
-      /* For a local variable, record both the symbol and which
-	 buffer's or frame's value we are saving.  */
-      if (!NILP (Flocal_variable_p (variable, Qnil)))
-	return Fcurrent_buffer ();
-      else if (sym->u.s.redirect == SYMBOL_LOCALIZED
-	       && blv_found (SYMBOL_BLV (sym)))
-	return SYMBOL_BLV (sym)->where;
-      else
-	return Qnil;
-    default: emacs_abort ();
-    }
-}
 
 
 void
@@ -1692,8 +1589,6 @@ syms_of_data (void)
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);
   defsubr (&Skill_local_variable);
-  defsubr (&Slocal_variable_if_set_p);
-  defsubr (&Svariable_binding_locus);
 #if 0                           /* XXX Remove this. --lorentey */
   defsubr (&Sterminal_local_value);
   defsubr (&Sset_terminal_local_value);

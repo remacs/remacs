@@ -131,6 +131,12 @@ macro_rules! list {
     () => { crate::remacs_sys::Qnil };
 }
 
+macro_rules! lisp_concat {
+    ($($tt:tt),+) => {
+        crate::fns::concat(&mut vec![$(($tt).into(), )*])
+    };
+}
+
 /// Macro that expands to nothing, but is used at build time to
 /// generate the starting symbol table. Equivalent to the DEFSYM
 /// macro. See also lib-src/make-docfile.c
@@ -173,7 +179,7 @@ macro_rules! defvar_lisp {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::remacs_sys::defvar_lisp(
                 o_fwd.get_mut(),
-                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                concat!($lisp_name, "\0").as_ptr() as *const libc::c_char,
                 &mut crate::remacs_sys::globals.$field_name,
             );
             crate::remacs_sys::globals.$field_name = $value;
@@ -242,7 +248,7 @@ macro_rules! defvar_kboard {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::lread::defvar_kboard_offset(
                 o_fwd.get_mut(),
-                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                concat!($lisp_name, "\0").as_ptr() as *const libc::c_char,
                 ::field_offset::offset_of!(crate::remacs_sys::kboard => $vname),
             );
         }
@@ -266,7 +272,7 @@ macro_rules! defvar_per_buffer {
                 unsafe { crate::hacks::Hack::uninitialized() };
             crate::lread::defvar_per_buffer_offset(
                 o_fwd.get_mut(),
-                concat!($lname, "\0").as_ptr() as *const i8,
+                concat!($lname, "\0").as_ptr() as *const libc::c_char,
                 ::field_offset::offset_of!(crate::remacs_sys::Lisp_Buffer => $vname),
                 $pred,
             );

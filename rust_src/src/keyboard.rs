@@ -9,6 +9,8 @@ use crate::{
     eval::{record_unwind_protect, unbind_to},
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::LispObject,
+    lists,
+    lists::{car_safe, cdr_safe},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     numbers::IsLispNatnum,
@@ -16,14 +18,14 @@ use crate::{
     remacs_sys::{
         clear_message, command_loop_level, get_input_pending, glyph_row_area,
         interrupt_input_blocked, make_lispy_position, message_log_maybe_newline, minibuf_level,
-        output_method, print_error_message, process_special_events, recursive_edit_1,
-        recursive_edit_unwind, temporarily_switch_to_single_kboard, totally_unblock_input,
-        update_mode_lines, window_box_left_offset,
+        output_method, print_error_message, process_special_events, read_key_sequence_vs,
+        recursive_edit_1, recursive_edit_unwind, temporarily_switch_to_single_kboard,
+        totally_unblock_input, update_mode_lines, window_box_left_offset,
     },
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
-        Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt,
-        Qtop_level, Qvertical_line,
+        Qevent_kind, Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil,
+        Qt, Qtop_level, Qvertical_line,
     },
     threads::c_specpdl_index,
     windows::{selected_window, LispWindowOrSelected},
@@ -31,6 +33,67 @@ use crate::{
 
 #[cfg(feature = "window-system")]
 use crate::remacs_sys::cancel_hourglass;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Event(LispObject);
+
+impl Event {
+    // replaces EVENT_HAS_PARAMETERS
+    /// Checks if the event has data fields describing it (i.e. a mouse click).
+    pub fn has_parameters(self) -> bool {
+        self.0.is_cons()
+    }
+
+    /// Checks if the event's data fields have contents
+    pub fn has_data(self) -> bool {
+        match self.0.as_cons() {
+            Some(cons) => cons.cdr().is_cons(),
+            None => false,
+        }
+    }
+
+    // replaces EVENT_HEAD
+    /// Extract the head from an event.
+    /// This works on composite and simple events.
+    pub fn head(self) -> LispObject {
+        match self.0.as_cons() {
+            Some(cons) => cons.car(),
+            None => self.0,
+        }
+    }
+
+    // replaces EVENT_HEAD_KIND
+    // Note that the C macro expects an event head, this method expects an event
+    // which it exctracts the head from itself.
+    /// Extracts the kind from an event's head.
+    pub fn head_kind(self) -> LispObject {
+        lists::get(self.head().into(), Qevent_kind)
+    }
+
+    // replaces EVENT_START
+    /// Extracts the starting position from a composite event.
+    pub fn start(self) -> LispObject {
+        car_safe(cdr_safe(self.0))
+    }
+
+    // replaces EVENT_END
+    /// Extracts the ending position from a composite event.
+    pub fn end(self) -> LispObject {
+        car_safe(cdr_safe(cdr_safe(self.0)))
+    }
+}
+
+impl From<LispObject> for Event {
+    fn from(o: LispObject) -> Self {
+        Self(o)
+    }
+}
+
+impl From<Event> for LispObject {
+    fn from(o: Event) -> Self {
+        o.0
+    }
+}
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -199,6 +262,7 @@ pub fn recursive_edit() {
     }
 }
 
+#[allow(unused_doc_comments)]
 #[no_mangle]
 pub extern "C" fn rust_syms_of_keyboard() {
     /// The last command executed.
@@ -323,6 +387,27 @@ pub fn top_level() {
         totally_unblock_input();
 
         Fthrow(Qtop_level, Qnil);
+    }
+}
+
+/// Like `read-key-sequence' but always return a vector.
+#[lisp_fn(min = "1")]
+pub fn read_key_sequence_vector(
+    prompt: LispObject,
+    continue_echo: LispObject,
+    dont_downcase_last: LispObject,
+    can_return_switch_frame: LispObject,
+    cmd_loop: LispObject,
+) -> LispObject {
+    unsafe {
+        read_key_sequence_vs(
+            prompt,
+            continue_echo,
+            dont_downcase_last,
+            can_return_switch_frame,
+            cmd_loop,
+            false,
+        )
     }
 }
 

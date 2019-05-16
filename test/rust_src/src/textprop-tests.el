@@ -1,4 +1,4 @@
-;;; textprop-tests.el --- Test suite for text properties.
+;;; textprop-tests.el --- tests for textprops.rs functions
 
 ;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
@@ -23,6 +23,11 @@
 ;;; Code:
 
 (require 'ert)
+
+(ert-deftest get-text-property ()
+  (let* ((string "foobar"))
+    (put-text-property 0 (length string) 'face 'bold string)
+    (should (eq (get-text-property 0 'face string) `bold))))
 
 (ert-deftest textprop-tests-format ()
   "Test `format' with text properties."

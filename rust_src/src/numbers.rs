@@ -37,18 +37,18 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 /// TODO: Recheck these logic in original C code.
 
 impl LispObject {
-    pub fn from_fixnum(n: EmacsInt) -> LispObject {
+    pub fn from_fixnum(n: EmacsInt) -> Self {
         debug_assert!(MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM);
         Self::from_fixnum_truncated(n)
     }
 
-    pub fn from_fixnum_truncated(n: EmacsInt) -> LispObject {
+    pub fn from_fixnum_truncated(n: EmacsInt) -> Self {
         let o = if USE_LSB_TAG {
             (n << Lisp_Bits::INTTYPEBITS) as EmacsUint + Lisp_Type::Lisp_Int0 as EmacsUint
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << Lisp_Bits::VALBITS)
         };
-        LispObject::from_C(o as EmacsInt)
+        Self::from_C(o as EmacsInt)
     }
 
     pub fn is_fixnum(self) -> bool {
@@ -86,9 +86,9 @@ impl LispObject {
     // TODO: the C claims that make_natnum is faster, but it does the same
     // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
     // should remove this in favour of make_number.
-    pub fn from_natnum(n: EmacsUint) -> LispObject {
+    pub fn from_natnum(n: EmacsUint) -> Self {
         debug_assert!(n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
-        LispObject::from_fixnum_truncated(n as EmacsInt)
+        Self::from_fixnum_truncated(n as EmacsInt)
     }
 
     pub fn is_natnum(self) -> bool {
@@ -110,7 +110,7 @@ impl LispObject {
 }
 
 impl LispObject {
-    pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
+    pub fn int_or_float_from_fixnum(n: EmacsInt) -> Self {
         if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
             Self::from_float(n as f64)
         } else {
@@ -147,6 +147,7 @@ impl LispObject {
     }
 }
 
+/// lisp_fn allows markers for LispNumber arguments
 #[derive(Clone, Copy)]
 pub enum LispNumber {
     Fixnum(EmacsInt),
@@ -232,10 +233,10 @@ impl From<LispObject> for Option<LispNumber> {
 }
 
 impl From<LispNumber> for LispObject {
-    fn from(n: LispNumber) -> LispObject {
+    fn from(n: LispNumber) -> Self {
         match n {
             LispNumber::Fixnum(v) => v.into(),
-            LispNumber::Float(v) => LispObject::from_float(v),
+            LispNumber::Float(v) => Self::from_float(v),
         }
     }
 }

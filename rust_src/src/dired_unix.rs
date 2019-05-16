@@ -39,7 +39,7 @@ trait StringExt {
 impl StringExt for String {
     fn to_bstring(&self) -> LispObject {
         let c_str = CString::new(self.as_str()).unwrap();
-        unsafe { build_string(c_str.as_ptr() as *const i8) }
+        unsafe { build_string(c_str.as_ptr() as *const libc::c_char) }
     }
     fn to_cstring(&self) -> *const c_char {
         let c_str = CString::new(self.as_str()).unwrap();
@@ -64,9 +64,9 @@ impl StringExt for String {
             Some(s) => ext = s,
         }
 
-        let dir_s: String;
-        let stem_s: String;
-        let ext_s: String;
+        let dir_s: Self;
+        let stem_s: Self;
+        let ext_s: Self;
         match parent.to_str() {
             None => error!("new parent path is not a valid UTF-8 sequence"),
             Some(s) => dir_s = s.to_string(),
@@ -131,7 +131,7 @@ struct DirReq {
 }
 
 impl DirReq {
-    fn new(
+    const fn new(
         dname: String,
         full: FullPath,
         match_re: Option<LispObject>,

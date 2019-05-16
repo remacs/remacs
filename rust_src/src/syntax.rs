@@ -5,14 +5,15 @@ use remacs_macros::lisp_fn;
 use crate::{
     chartable::LispCharTableRef,
     editfns::constrain_to_field,
+    fns::copy_sequence,
     lisp::LispObject,
     numbers::LispNumber,
+    remacs_sys::Fset_char_table_parent,
     remacs_sys::{
         buffer_defaults, scan_lists, scan_words, set_char_table_defalt, set_point, skip_chars,
         skip_syntaxes,
     },
     remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p},
-    remacs_sys::{Fcopy_sequence, Fset_char_table_parent},
     threads::ThreadState,
 };
 
@@ -104,7 +105,7 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     } else {
         table = buffer_table;
     }
-    let copy: LispCharTableRef = unsafe { Fcopy_sequence(table) }.into();
+    let copy: LispCharTableRef = copy_sequence(table).into();
 
     // Only the standard syntax table should have a default element.
     // Other syntax tables should inherit from parents instead.
@@ -197,6 +198,21 @@ pub fn skip_syntax_forward(syntax: LispObject, lim: LispObject) -> LispObject {
 #[lisp_fn(min = "1")]
 pub fn skip_syntax_backward(syntax: LispObject, lim: LispObject) -> LispObject {
     unsafe { skip_syntaxes(false, syntax, lim) }
+}
+
+/// Scan from character number FROM by COUNT balanced expressions.
+/// If COUNT is negative, scan backwards.
+/// Returns the character number of the position thus found.
+///
+/// Comments are ignored if `parse-sexp-ignore-comments' is non-nil.
+///
+/// If the beginning or end of (the accessible part of) the buffer is reached
+/// in the middle of a parenthetical grouping, an error is signaled.
+/// If the beginning or end is reached between groupings
+/// but before count is used up, nil is returned.
+#[lisp_fn]
+pub fn scan_sexps(from: EmacsInt, count: EmacsInt) -> LispObject {
+    unsafe { scan_lists(from, count, 0, true) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));

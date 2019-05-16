@@ -4,13 +4,14 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     lisp::LispObject,
     multibyte::{LispStringRef, LispSymbolOrString},
+    remacs_sys::Fmake_symbol,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
     },
-    remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
     vectors::LispVectorRef,
@@ -21,25 +22,25 @@ use crate::{
 pub struct LispObarrayRef(LispObject);
 
 impl From<LispObarrayRef> for LispObject {
-    fn from(o: LispObarrayRef) -> LispObject {
+    fn from(o: LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl From<&LispObarrayRef> for LispObject {
-    fn from(o: &LispObarrayRef) -> LispObject {
+    fn from(o: &LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl LispObarrayRef {
-    pub fn new(obj: LispObject) -> LispObarrayRef {
-        LispObarrayRef(obj)
+    pub const fn new(obj: LispObject) -> Self {
+        Self(obj)
     }
 
     /// Return a reference to the Lisp variable `obarray`.
-    pub fn global() -> LispObarrayRef {
-        LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
+    pub fn global() -> Self {
+        Self(check_obarray(unsafe { globals.Vobarray }))
     }
 
     /// Return the symbol that matches NAME (either a symbol or string). If
@@ -70,7 +71,7 @@ impl LispObarrayRef {
             let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
                 // When Emacs is running lisp code to dump to an executable, make
                 // use of pure storage.
-                unsafe { Fpurecopy(string.into()) }
+                purecopy(string.into())
             } else {
                 string.into()
             };
@@ -80,8 +81,8 @@ impl LispObarrayRef {
 }
 
 impl From<LispObject> for LispObarrayRef {
-    fn from(o: LispObject) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(o))
+    fn from(o: LispObject) -> Self {
+        Self::new(check_obarray(o))
     }
 }
 

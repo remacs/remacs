@@ -74,6 +74,14 @@ impl LispObject {
         LispVectorlikeRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike)
     }
 
+    pub unsafe fn as_vectorlike_slots_unchecked(self) -> LispVectorlikeSlotsRef {
+        LispVectorlikeSlotsRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike_With_Slots)
+    }
+
+    pub fn force_vectorlike_slots(self) -> LispVectorlikeSlotsRef {
+        unsafe { self.as_vectorlike_slots_unchecked() }
+    }
+
     pub fn as_vector(self) -> Option<LispVectorRef> {
         self.as_vectorlike().and_then(LispVectorlikeRef::as_vector)
     }
@@ -341,13 +349,17 @@ macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl From<$type> for LispObject {
             fn from(v: $type) -> Self {
-                LispObject::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
+                Self::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
             }
         }
 
         impl $type {
             pub fn len(self) -> usize {
                 (unsafe { self.header.size } & ($size_mask as isize)) as usize
+            }
+
+            pub fn is_empty(self) -> bool {
+                self.len() == 0
             }
 
             pub fn as_slice(&self) -> &[LispObject] {
@@ -459,7 +471,7 @@ More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
 impl From<LispBoolVecRef> for LispObject {
     fn from(b: LispBoolVecRef) -> Self {
-        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -468,13 +480,25 @@ impl LispBoolVecRef {
         self.size as usize
     }
 
+    pub fn is_empty(self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn len_bytes(self) -> usize {
+        (self.len() + BOOL_VECTOR_BITS_PER_CHAR as usize - 1) / BOOL_VECTOR_BITS_PER_CHAR as usize
+    }
+
+    pub fn len_words(self) -> usize {
+        (self.len() + BITS_PER_BITS_WORD as usize - 1) / BITS_PER_BITS_WORD as usize
+    }
+
     pub fn as_slice(&self) -> &[usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_slice(l) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = self.len_words();
         unsafe { self.data.as_mut_slice(l) }
     }
 
@@ -621,7 +645,7 @@ pub fn length(sequence: LispObject) -> usize {
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
 pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
-    if sequence.is_cons() || sequence.is_nil() {
+    if sequence.is_list() {
         nth(n, sequence)
     } else if sequence.is_array() {
         aref(sequence, n)
