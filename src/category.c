@@ -172,6 +172,17 @@ it defaults to the current buffer's category table.  */)
 
 
 /* Category-table staff.  */
+#ifndef PORTED_TO_RUST
+DEFUN ("category-table-p", Fcategory_table_p, Scategory_table_p, 1, 1, 0,
+       doc: /* Return t if ARG is a category table.  */)
+  (Lisp_Object arg)
+{
+  if (CHAR_TABLE_P (arg)
+      && EQ (XCHAR_TABLE (arg)->purpose, Qcategory_table))
+    return Qt;
+  return Qnil;
+}
+#endif
 
 /* If TABLE is nil, return the current category table.  If TABLE is
    not nil, check the validity of TABLE as a category table.  If
@@ -186,6 +197,16 @@ check_category_table (Lisp_Object table)
   CHECK_TYPE (!NILP (Fcategory_table_p (table)), Qcategory_table_p, table);
   return table;
 }
+
+#ifndef PORTED_TO_RUST
+DEFUN ("category-table", Fcategory_table, Scategory_table, 0, 0, 0,
+       doc: /* Return the current category table.
+This is the one specified by the current buffer.  */)
+  (void)
+{
+  return BVAR (current_buffer, category_table);
+}
+#endif
 
 DEFUN ("standard-category-table", Fstandard_category_table,
    Sstandard_category_table, 0, 0, 0,
@@ -486,6 +507,10 @@ See the documentation of the variable `word-combining-categories'.  */);
   defsubr (&Sdefine_category);
   defsubr (&Scategory_docstring);
   defsubr (&Sget_unused_category);
+#ifndef PORTED_TO_RUST
+  defsubr (&Scategory_table_p);
+  defsubr (&Scategory_table);
+#endif
   defsubr (&Sstandard_category_table);
   defsubr (&Scopy_category_table);
   defsubr (&Smake_category_table);
