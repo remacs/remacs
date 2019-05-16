@@ -57,7 +57,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
-   is really just insurance.  */
+   is really just insurance.
+
+   Similarly, msdos defines this as sys_chdir, but we're not linking with the
+   file where that function is defined.  */
 #undef chdir
 #define IS_SLASH(c)  ((c) == '/' || (c) == '\\' || (c) == ':')
 #else  /* not DOS_NT */
@@ -70,12 +73,6 @@ static void scan_c_file (char *filename, const char *mode);
 static void scan_c_stream (FILE *infile);
 static void start_globals (void);
 static void write_globals (void);
-struct global *add_global (int type, char const *name, int value, char const *svalue);
-
-typedef struct global * (*add_global_fn) (int, char const *, int, char const *);
-
-/* Implemented in remacs_lib. */
-void scan_rust_file (char *filename, int generate_globals, add_global_fn add_global);
 
 #include <unistd.h>
 
@@ -126,7 +123,7 @@ memory_exhausted (void)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (ptrdiff_t size)
 {
   void *result = malloc (size);
@@ -233,7 +230,6 @@ put_filename (char *filename)
     }
 
   printf ("\037S%s\n", filename);
-  fflush (stdout);
 }
 
 /* Read file FILENAME and output its doc strings to stdout.
@@ -250,8 +246,6 @@ scan_file (char *filename)
     scan_lisp_file (filename, "rb");
   else if (len > 3 && !strcmp (filename + len - 3, ".el"))
     scan_lisp_file (filename, "r");
-  else if (len > 3 && !strcmp (filename + len - 3, ".rs"))
-    scan_rust_file (filename, generate_globals, add_global);
   else
     scan_c_file (filename, "r");
 }
@@ -601,8 +595,9 @@ static ptrdiff_t num_globals;
 static ptrdiff_t num_globals_allocated;
 static struct global *globals;
 
-struct global *
-add_global (int type, char const *name, int value, char const *svalue)
+static struct global *
+add_global (enum global_type type, char const *name, int value,
+	    char const *svalue)
 {
   /* Ignore the one non-symbol that can occur.  */
   if (strcmp (name, "..."))

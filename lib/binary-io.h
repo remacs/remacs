@@ -34,7 +34,7 @@ _GL_INLINE_HEADER_BEGIN
 #endif
 
 #if O_BINARY
-# if defined __EMX__ || defined __CYGWIN__
+# if defined __EMX__ || defined __DJGPP__ || defined __CYGWIN__
 #  include <io.h> /* declares setmode() */
 #  define __gl_setmode setmode
 # else

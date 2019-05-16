@@ -677,10 +677,10 @@ languages; their names usually start with @samp{iso}.  There are also
 special coding systems, such as @code{no-conversion}, @code{raw-text},
 and @code{emacs-internal}.
 
-@cindex international files from DOS/Windows systems
+@cindex international files from Windows systems
   A special class of coding systems, collectively known as
-@dfn{codepages}, is designed to support text encoded by MS-Windows and
-MS-DOS software.  The names of these coding systems are
+@dfn{codepages}, is designed to support text encoded by MS-Windows
+software.  The names of these coding systems are
 @code{cp@var{nnnn}}, where @var{nnnn} is a 3- or 4-digit number of the
 codepage.  You can use these encodings just like any other coding
 system; for example, to visit a file encoded in codepage 850, type

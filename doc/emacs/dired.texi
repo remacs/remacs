@@ -110,7 +110,7 @@ default) means to perform the check; any other non-@code{nil} value
 means to use the @samp{--dired} option; and @code{nil} means not to
 use the @samp{--dired} option.
 
-  On MS-Windows and MS-DOS systems, and also on some remote systems,
+  On MS-Windows, and also on some remote systems,
 Emacs emulates @command{ls}.  @xref{ls in Lisp}, for options and
 peculiarities of this emulation.
 

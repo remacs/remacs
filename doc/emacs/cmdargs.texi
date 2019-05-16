@@ -485,8 +485,8 @@ initialize the Lisp variable @code{doc-directory}.
 @vindex EMACSLOADPATH@r{, environment variable}
 A colon-separated list of directories@footnote{Here and below,
 whenever we say ``colon-separated list of directories'', it pertains
-to Unix and GNU/Linux systems.  On MS-DOS and MS-Windows, the
-directories are separated by semi-colons instead, since DOS/Windows
+to Unix and GNU/Linux systems.  On MS-Windows, the directories are
+separated by semi-colons instead, since DOS/Windows
 file names might include a colon after a drive letter.} to search for
 Emacs Lisp files.  If set, it modifies the usual initial value of the
 @code{load-path} variable (@pxref{Lisp Libraries}).  An empty element
@@ -519,10 +519,8 @@ otherwise.
 @item HOME
 @vindex HOME@r{, environment variable}
 The location of your files in the directory tree; used for
-expansion of file names starting with a tilde (@file{~}).  On MS-DOS,
-it defaults to the directory from which Emacs was started, with
-@samp{/bin} removed from the end if it was present.  On Windows, the
-default value of @env{HOME} is the @file{Application Data}
+expansion of file names starting with a tilde (@file{~}). On Windows,
+the default value of @env{HOME} is the @file{Application Data}
 subdirectory of the user profile directory (normally, this is
 @file{C:/Documents and Settings/@var{username}/Application Data},
 where @var{username} is your user name), though for backwards
@@ -628,9 +626,7 @@ variable @code{smtpmail-smtp-server} (@pxref{Mail Sending}).
 @item TERM
 @vindex TERM@r{, environment variable}
 The type of the terminal that Emacs is using.  This variable must be
-set unless Emacs is run in batch mode.  On MS-DOS, it defaults to
-@samp{internal}, which specifies a built-in terminal emulation that
-handles the machine's own display.
+set unless Emacs is run in batch mode.
 @item TERMCAP
 @vindex TERMCAP@r{, environment variable}
 The name of the termcap library file describing how to program the
@@ -646,20 +642,17 @@ These environment variables are used to initialize the variable
 @code{temporary-file-directory}, which specifies a directory in which
 to put temporary files (@pxref{Backup}).  Emacs tries to use
 @env{TMPDIR} first.  If that is unset, Emacs normally falls back on
-@file{/tmp}, but on MS-Windows and MS-DOS it instead falls back on
+@file{/tmp}, but on MS-Windows it instead falls back on
 @env{TMP}, then @env{TEMP}, and finally @file{c:/temp}.
 @item TZ
 @vindex TZ@r{, environment variable}
 This specifies the default time zone and possibly also daylight
 saving time information.  @xref{Time Zone Rules,,, elisp, The GNU
-Emacs Lisp Reference Manual}.  On MS-DOS, if @env{TZ} is not set in the
-environment when Emacs starts, Emacs defines a default value as
-appropriate for the country code returned by DOS@.  On MS-Windows, Emacs
+Emacs Lisp Reference Manual}.  On MS-Windows, Emacs
 does not use @env{TZ} at all.
 @item USER
 @vindex USER@r{, environment variable}
-The user's login name.  See also @env{LOGNAME}.  On MS-DOS, this
-defaults to @samp{root}.
+The user's login name.  See also @env{LOGNAME}.
 @item VERSION_CONTROL
 @vindex VERSION_CONTROL@r{, environment variable}
 Used to initialize the @code{version-control} variable (@pxref{Backup
@@ -673,25 +666,10 @@ These variables are used only on particular configurations:
 
 @vtable @env
 @item COMSPEC
-On MS-DOS and MS-Windows, the name of the command interpreter to use
-when invoking batch files and commands internal to the shell.  On MS-DOS
-this is also used to make a default value for the @env{SHELL} environment
-variable.
-
-@item NAME
-On MS-DOS, this variable defaults to the value of the @env{USER}
-variable.
-
-@item EMACSTEST
-On MS-DOS, this specifies a file to use to log the operation of the
-internal terminal emulator.  This feature is useful for submitting bug
-reports.
+On MS-Windows, the name of the command interpreter to use
+when invoking batch files and commands internal to the shell.
 
 @item EMACSCOLORS
-On MS-DOS, this specifies the screen colors.  It is useful to set them
-this way, since otherwise Emacs would display the default colors
-momentarily when it starts up.
-
 The value of this variable should be the two-character encoding of the
 foreground (the first character) and the background (the second
 character) colors of the default face.  Each character should be the

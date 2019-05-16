@@ -821,6 +821,7 @@ getloadavg (double loadavg[], int nelem)
 # endif /* OSF_MIPS */
 
 # if !defined (LDAV_DONE) && defined (WINDOWS32)
+                                                           /* DJGPP */
 #  define LDAV_DONE
 
   /* A faithful emulation is going to have to be saved for a rainy day.  */

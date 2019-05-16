@@ -215,6 +215,10 @@ GNULIB_MKFIFO = @GNULIB_MKFIFO@
 GNULIB_MKFIFOAT = @GNULIB_MKFIFOAT@
 GNULIB_MKNOD = @GNULIB_MKNOD@
 GNULIB_MKNODAT = @GNULIB_MKNODAT@
+GNULIB_MKOSTEMP = @GNULIB_MKOSTEMP@
+GNULIB_MKOSTEMPS = @GNULIB_MKOSTEMPS@
+GNULIB_MKSTEMP = @GNULIB_MKSTEMP@
+GNULIB_MKSTEMPS = @GNULIB_MKSTEMPS@
 GNULIB_MKTIME = @GNULIB_MKTIME@
 GNULIB_NANOSLEEP = @GNULIB_NANOSLEEP@
 GNULIB_NONBLOCKING = @GNULIB_NONBLOCKING@
@@ -435,6 +439,10 @@ HAVE_MKFIFO = @HAVE_MKFIFO@
 HAVE_MKFIFOAT = @HAVE_MKFIFOAT@
 HAVE_MKNOD = @HAVE_MKNOD@
 HAVE_MKNODAT = @HAVE_MKNODAT@
+HAVE_MKOSTEMP = @HAVE_MKOSTEMP@
+HAVE_MKOSTEMPS = @HAVE_MKOSTEMPS@
+HAVE_MKSTEMP = @HAVE_MKSTEMP@
+HAVE_MKSTEMPS = @HAVE_MKSTEMPS@
 HAVE_MODULES = @HAVE_MODULES@
 HAVE_NANOSLEEP = @HAVE_NANOSLEEP@
 HAVE_OPENAT = @HAVE_OPENAT@
@@ -582,6 +590,7 @@ LIBXSM = @LIBXSM@
 LIBXTR6 = @LIBXTR6@
 LIBXT_OTHER = @LIBXT_OTHER@
 LIBX_OTHER = @LIBX_OTHER@
+LIBZ = @LIBZ@
 LIB_ACL = @LIB_ACL@
 LIB_CLOCK_GETTIME = @LIB_CLOCK_GETTIME@
 LIB_EACCESS = @LIB_EACCESS@
@@ -730,6 +739,7 @@ REPLACE_MEMMEM = @REPLACE_MEMMEM@
 REPLACE_MKDIR = @REPLACE_MKDIR@
 REPLACE_MKFIFO = @REPLACE_MKFIFO@
 REPLACE_MKNOD = @REPLACE_MKNOD@
+REPLACE_MKSTEMP = @REPLACE_MKSTEMP@
 REPLACE_MKTIME = @REPLACE_MKTIME@
 REPLACE_NANOSLEEP = @REPLACE_NANOSLEEP@
 REPLACE_NULL = @REPLACE_NULL@
@@ -1110,6 +1120,76 @@ EXTRA_DIST += close-stream.h
 
 endif
 ## end   gnulib module close-stream
+
+## begin gnulib module count-leading-zeros
+ifeq (,$(OMIT_GNULIB_MODULE_count-leading-zeros))
+
+libgnu_a_SOURCES += count-leading-zeros.c
+
+EXTRA_DIST += count-leading-zeros.h
+
+endif
+## end   gnulib module count-leading-zeros
+
+## begin gnulib module count-one-bits
+ifeq (,$(OMIT_GNULIB_MODULE_count-one-bits))
+
+libgnu_a_SOURCES += count-one-bits.c
+
+EXTRA_DIST += count-one-bits.h
+
+endif
+## end   gnulib module count-one-bits
+
+## begin gnulib module count-trailing-zeros
+ifeq (,$(OMIT_GNULIB_MODULE_count-trailing-zeros))
+
+libgnu_a_SOURCES += count-trailing-zeros.c
+
+EXTRA_DIST += count-trailing-zeros.h
+
+endif
+## end   gnulib module count-trailing-zeros
+
+## begin gnulib module crypto/md5
+ifeq (,$(OMIT_GNULIB_MODULE_crypto/md5))
+
+libgnu_a_SOURCES += md5.c
+
+EXTRA_DIST += gl_openssl.h md5.h
+
+endif
+## end   gnulib module crypto/md5
+
+## begin gnulib module crypto/sha1
+ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha1))
+
+libgnu_a_SOURCES += sha1.c
+
+EXTRA_DIST += gl_openssl.h sha1.h
+
+endif
+## end   gnulib module crypto/sha1
+
+## begin gnulib module crypto/sha256
+ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha256))
+
+libgnu_a_SOURCES += sha256.c
+
+EXTRA_DIST += gl_openssl.h sha256.h
+
+endif
+## end   gnulib module crypto/sha256
+
+## begin gnulib module crypto/sha512
+ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha512))
+
+libgnu_a_SOURCES += sha512.c
+
+EXTRA_DIST += gl_openssl.h sha512.h
+
+endif
+## end   gnulib module crypto/sha512
 
 ## begin gnulib module diffseq
 ifeq (,$(OMIT_GNULIB_MODULE_diffseq))
@@ -1729,6 +1809,17 @@ libgnu_a_SOURCES += minmax.h
 endif
 ## end   gnulib module minmax
 
+## begin gnulib module mkostemp
+ifeq (,$(OMIT_GNULIB_MODULE_mkostemp))
+
+
+EXTRA_DIST += mkostemp.c
+
+EXTRA_libgnu_a_SOURCES += mkostemp.c
+
+endif
+## end   gnulib module mkostemp
+
 ## begin gnulib module mktime
 ifeq (,$(OMIT_GNULIB_MODULE_mktime))
 
@@ -1868,6 +1959,17 @@ EXTRA_DIST += root-uid.h
 
 endif
 ## end   gnulib module root-uid
+
+## begin gnulib module sig2str
+ifeq (,$(OMIT_GNULIB_MODULE_sig2str))
+
+
+EXTRA_DIST += sig2str.c sig2str.h
+
+EXTRA_libgnu_a_SOURCES += sig2str.c
+
+endif
+## end   gnulib module sig2str
 
 ## begin gnulib module signal-h
 ifeq (,$(OMIT_GNULIB_MODULE_signal-h))
@@ -2247,6 +2349,10 @@ stdlib.h: stdlib.in.h $(top_builddir)/config.status $(CXXDEFS_H) \
 	      -e 's/@''GNULIB_MALLOC_POSIX''@/$(GNULIB_MALLOC_POSIX)/g' \
 	      -e 's/@''GNULIB_MBTOWC''@/$(GNULIB_MBTOWC)/g' \
 	      -e 's/@''GNULIB_MKDTEMP''@/$(GNULIB_MKDTEMP)/g' \
+	      -e 's/@''GNULIB_MKOSTEMP''@/$(GNULIB_MKOSTEMP)/g' \
+	      -e 's/@''GNULIB_MKOSTEMPS''@/$(GNULIB_MKOSTEMPS)/g' \
+	      -e 's/@''GNULIB_MKSTEMP''@/$(GNULIB_MKSTEMP)/g' \
+	      -e 's/@''GNULIB_MKSTEMPS''@/$(GNULIB_MKSTEMPS)/g' \
 	      -e 's/@''GNULIB_POSIX_OPENPT''@/$(GNULIB_POSIX_OPENPT)/g' \
 	      -e 's/@''GNULIB_PTSNAME''@/$(GNULIB_PTSNAME)/g' \
 	      -e 's/@''GNULIB_PTSNAME_R''@/$(GNULIB_PTSNAME_R)/g' \
@@ -2276,6 +2382,10 @@ stdlib.h: stdlib.in.h $(top_builddir)/config.status $(CXXDEFS_H) \
 	      -e 's|@''HAVE_GRANTPT''@|$(HAVE_GRANTPT)|g' \
 	      -e 's|@''HAVE_DECL_INITSTATE''@|$(HAVE_DECL_INITSTATE)|g' \
 	      -e 's|@''HAVE_MKDTEMP''@|$(HAVE_MKDTEMP)|g' \
+	      -e 's|@''HAVE_MKOSTEMP''@|$(HAVE_MKOSTEMP)|g' \
+	      -e 's|@''HAVE_MKOSTEMPS''@|$(HAVE_MKOSTEMPS)|g' \
+	      -e 's|@''HAVE_MKSTEMP''@|$(HAVE_MKSTEMP)|g' \
+	      -e 's|@''HAVE_MKSTEMPS''@|$(HAVE_MKSTEMPS)|g' \
 	      -e 's|@''HAVE_POSIX_OPENPT''@|$(HAVE_POSIX_OPENPT)|g' \
 	      -e 's|@''HAVE_PTSNAME''@|$(HAVE_PTSNAME)|g' \
 	      -e 's|@''HAVE_PTSNAME_R''@|$(HAVE_PTSNAME_R)|g' \
@@ -2300,6 +2410,7 @@ stdlib.h: stdlib.in.h $(top_builddir)/config.status $(CXXDEFS_H) \
 	      -e 's|@''REPLACE_CANONICALIZE_FILE_NAME''@|$(REPLACE_CANONICALIZE_FILE_NAME)|g' \
 	      -e 's|@''REPLACE_MALLOC''@|$(REPLACE_MALLOC)|g' \
 	      -e 's|@''REPLACE_MBTOWC''@|$(REPLACE_MBTOWC)|g' \
+	      -e 's|@''REPLACE_MKSTEMP''@|$(REPLACE_MKSTEMP)|g' \
 	      -e 's|@''REPLACE_PTSNAME''@|$(REPLACE_PTSNAME)|g' \
 	      -e 's|@''REPLACE_PTSNAME_R''@|$(REPLACE_PTSNAME_R)|g' \
 	      -e 's|@''REPLACE_PUTENV''@|$(REPLACE_PUTENV)|g' \

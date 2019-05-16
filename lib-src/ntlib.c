@@ -39,6 +39,7 @@ char *sys_ctime (const time_t *);
 FILE *sys_fopen (const char *, const char *);
 int sys_mkdir (const char *, mode_t);
 int sys_chdir (const char *);
+int mkostemp (char *, int);
 int sys_rename (const char *, const char *);
 int sys_open (const char *, int, int);
 

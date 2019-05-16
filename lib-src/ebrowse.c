@@ -50,7 +50,7 @@ streq (char const *x, char const *y)
 static bool
 filename_eq (char const *x, char const *y)
 {
-#ifdef WINDOWSNT
+if defined WINDOWSNT
   return stricmp (x, y) == 0;
 #else
   return streq (x, y);
@@ -492,7 +492,7 @@ yyerror (const char *format, const char *s)
 /* Like malloc but print an error and exit if not enough memory is
    available.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t nbytes)
 {
   void *p = malloc (nbytes);

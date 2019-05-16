@@ -99,8 +99,7 @@ EMACS_XTRA= \
 	$(srcdir)/emerge-xtra.texi \
 	$(srcdir)/vc-xtra.texi \
 	$(srcdir)/vc1-xtra.texi \
-	$(srcdir)/fortran-xtra.texi \
-	$(srcdir)/msdos-xtra.texi
+	$(srcdir)/fortran-xtra.texi
 
 EMACSSOURCES= \
 	${srcdir}/emacs.texi \

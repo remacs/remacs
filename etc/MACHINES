@@ -73,12 +73,6 @@ the list at the end of this file.
 
   For installation instructions see the file nt/INSTALL.
 
-** MS-DOS
-
-  For installation instructions see the file msdos/INSTALL.
-  See the "MS-DOS" chapter of the manual for information about using
-  Emacs on MS-DOS.
-
 ** Solaris
 
   On Solaris it is also possible to use either GCC or Solaris Studio

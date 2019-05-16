@@ -1424,13 +1424,14 @@ get_compressor_from_suffix (char *file, char **extptr)
     *extptr = suffix;
   suffix += 1;
   /* Let those poor souls who live with DOS 8+3 file name limits get
-     some solace by treating foo.cgz as if it were foo.c.gz, etc.  */
+     some solace by treating foo.cgz as if it were foo.c.gz, etc.
+     Only the first do loop is run if not MSDOS */
   do
     {
       for (compr = compressors; compr->suffix != NULL; compr++)
 	if (streq (compr->suffix, suffix))
 	  return compr;
-      break;			/* do it only once: not really a loop */
+	break;			/* do it only once: not really a loop */
       if (extptr != NULL)
 	*extptr = ++suffix;
     } while (*suffix != '\0');
@@ -6625,7 +6626,7 @@ get_lispy_tag (register char *bp)
  * newline or CR-NL, if any.  Return the number of characters read from
  * `stream', which is the length of the line including the newline.
  *
- * On DOS or Windows we do not count the CR character, if any before the
+ * On Windows we do not count the CR character, if any before the
  * NL, in the returned length; this mirrors the behavior of Emacs on those
  * platforms (for text files, it translates CR-NL to NL as it reads in the
  * file).
@@ -7055,7 +7056,7 @@ etags_mktmp (void)
 #endif
 
   char *templt = concat (tmpdir, slash, "etXXXXXX");
-  int fd = rust_make_temp (templt, O_CLOEXEC);
+  int fd = mkostemp (templt, O_CLOEXEC);
   if (fd < 0 || close (fd) != 0)
     {
       int temp_errno = errno;
@@ -7278,7 +7279,7 @@ linebuffer_setlen (linebuffer *lbp, int toksize)
 }
 
 /* Like malloc but get fatal error if memory is exhausted. */
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t size)
 {
   void *result = malloc (size);

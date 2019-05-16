@@ -192,7 +192,7 @@ struct option longopts[] =
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t size)
 {
   void *result = malloc (size);
@@ -219,7 +219,7 @@ xrealloc (void *ptr, size_t size)
 }
 
 /* Like strdup but get a fatal error if memory is exhausted. */
-char *xstrdup (const char *);
+char *xstrdup (const char *) ATTRIBUTE_MALLOC;
 
 char *
 xstrdup (const char *s)
@@ -261,7 +261,7 @@ get_current_dir_name (void)
 #endif
       )
     {
-      buf = (char *) xmalloc (strlen (pwd) + 1);
+      buf = xmalloc (strlen (pwd) + 1);
       strcpy (buf, pwd);
     }
   else
@@ -296,7 +296,7 @@ get_current_dir_name (void)
 
 #ifdef WINDOWSNT
 
-#define REG_ROOT "SOFTWARE\\GNU\\Emacs"
+#define REG_ROOT "SOFTWARE\\GNU\\Remacs"
 
 char *w32_get_resource (HKEY, const char *, LPDWORD);
 
@@ -312,12 +312,15 @@ w32_get_resource (HKEY predefined, const char *key, LPDWORD type)
 
   if (RegOpenKeyEx (predefined, REG_ROOT, 0, KEY_READ, &hrootkey) == ERROR_SUCCESS)
     {
-      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData) == ERROR_SUCCESS)
+      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData)
+	  == ERROR_SUCCESS)
 	{
-	  result = (char *) xmalloc (cbData);
+	  result = xmalloc (cbData);
 
-	  if ((RegQueryValueEx (hrootkey, key, NULL, type, (LPBYTE)result, &cbData) != ERROR_SUCCESS)
-	      || (*result == 0))
+	  if ((RegQueryValueEx (hrootkey, key, NULL, type, (LPBYTE) result,
+				&cbData)
+	       != ERROR_SUCCESS)
+	      || *result == 0)
 	    {
 	      free (result);
 	      result = NULL;
@@ -369,7 +372,7 @@ w32_getenv (const char *envvar)
 
       if ((size = ExpandEnvironmentStrings (value, NULL, 0)))
 	{
-	  char *buffer = (char *) xmalloc (size);
+	  char *buffer = xmalloc (size);
 	  if (ExpandEnvironmentStrings (value, buffer, size))
 	    {
 	      /* Found and expanded.  */
@@ -700,7 +703,7 @@ fail (void)
     {
       size_t extra_args_size = (main_argc - optind + 1) * sizeof (char *);
       size_t new_argv_size = extra_args_size;
-      char **new_argv = NULL;
+      char **new_argv = xmalloc (new_argv_size);
       char *s = xstrdup (alternate_editor);
       unsigned toks = 0;
 
@@ -745,7 +748,7 @@ main (int argc, char **argv)
   main_argc = argc;
   main_argv = argv;
   progname = argv[0];
-  message (true, "%s: Sorry, the Emacs server is supported only\n"
+  message (true, "%s: Sorry, the Remacs server is supported only\n"
 	   "on systems with Berkeley sockets.\n",
 	   argv[0]);
   fail ();
@@ -833,7 +836,7 @@ send_to_emacs (HSOCKET s, const char *data)
 static void
 quote_argument (HSOCKET s, const char *str)
 {
-  char *copy = (char *) xmalloc (strlen (str) * 2 + 1);
+  char *copy = xmalloc (strlen (str) * 2 + 1);
   const char *p;
   char *q;
 
@@ -1121,7 +1124,7 @@ find_tty (const char **tty_type, const char **tty_name, int noabort)
       else
 	{
 	  /* This causes nasty, MULTI_KBOARD-related input lockouts. */
-	  message (true, "%s: opening a frame in an Emacs term buffer"
+	  message (true, "%s: opening a frame in an Remacs term buffer"
 		   " is not supported\n", progname);
 	  fail ();
 	}
@@ -1374,7 +1377,7 @@ set_local_socket (const char *local_socket_name)
 	if (saved_errno == ENOENT)
 	  message (true,
 		   "%s: can't find socket; have you started the server?\n\
-To start the server in Emacs, type \"M-x server-start\".\n",
+To start the server in Remacs, type \"M-x server-start\".\n",
 		   progname);
 	else
 	  message (true, "%s: can't stat %s: %s\n",
@@ -1496,7 +1499,7 @@ w32_find_emacs_process (HWND hWnd, LPARAM lParam)
 
   /* Reject any window not of class "Emacs".  */
   if (! get_wc (hWnd, class, sizeof (class))
-      || strcmp (class, "Emacs"))
+      || strcmp (class, "Remacs"))
     return TRUE;
 
   /* We only need the process id, not the thread id.  */
@@ -1557,15 +1560,15 @@ start_daemon_and_retry_set_socket (void)
 
       if ((w == -1) || !WIFEXITED (status) || WEXITSTATUS (status))
 	{
-	  message (true, "Error: Could not start the Emacs daemon\n");
+	  message (true, "Error: Could not start the Remacs daemon\n");
 	  exit (EXIT_FAILURE);
 	}
 
       /* Try connecting, the daemon should have started by now.  */
-      message (true, "Emacs daemon should have started, trying to connect again\n");
+      message (true, "Remacs daemon should have started, trying to connect again\n");
       if ((emacs_socket = set_socket (1)) == INVALID_SOCKET)
 	{
-	  message (true, "Error: Cannot connect even after starting the Emacs daemon\n");
+	  message (true, "Error: Cannot connect even after starting the Remacs daemon\n");
 	  exit (EXIT_FAILURE);
 	}
     }
@@ -1576,10 +1579,10 @@ start_daemon_and_retry_set_socket (void)
     }
   else
     {
-      char remacs[] = "remacs";
+      char emacs[] = "remacs";
       char daemon_option[] = "--daemon";
       char *d_argv[3];
-      d_argv[0] = remacs;
+      d_argv[0] = emacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
       if (socket_name != NULL)
@@ -1843,7 +1846,7 @@ main (int argc, char **argv)
 	       careful to expand <relpath> with the default directory
 	       corresponding to <drive>.  */
 	    {
-	      char *filename = (char *) xmalloc (MAX_PATH);
+	      char *filename = xmalloc (MAX_PATH);
 	      DWORD size;
 
 	      size = GetFullPathName (argv[i], MAX_PATH, filename, NULL);
@@ -1877,7 +1880,7 @@ main (int argc, char **argv)
   /* Wait for an answer. */
   if (!eval && !tty && !nowait && !quiet)
     {
-      printf ("Waiting for Emacs...");
+      printf ("Waiting for Remacs...");
       needlf = 2;
     }
   fflush (stdout);

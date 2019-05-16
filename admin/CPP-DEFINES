@@ -13,9 +13,6 @@ CYGWIN		Compiling the Cygwin port.
 __CYGWIN__	Ditto
 GNU_LINUX
 HPUX
-MSDOS		Compiling the MS-DOS port.
-__MSDOS__	Ditto.
-__DJGPP_MINOR__ Minor version number of the DJGPP library; used only in msdos.c and dosfns.c.
 DOS_NT		Compiling for either the MS-DOS or native MS-Windows port.
 WINDOWSNT	Compiling the native MS-Windows (W32) port.
 __MINGW32__	Compiling the W32 port with the MinGW or MinGW-w64 ports of GCC.
@@ -34,8 +31,7 @@ NS_IMPL_COCOA	Compile support for Cocoa (Apple) implementation of NS GUI API.
 HAVE_X11	Compile support for the X11 GUI.
 HAVE_X_WINDOWS	Compile support for X Window system
   (It looks like, nowadays, if HAVE_X11 is set, HAVE_X_WINDOWS must
-   be, and vice versa.  At least, this is true for configure, and
-   msdos; not sure about nt.)
+   be, and vice versa.  At least, this is true for configure; not sure about nt.)
 HAVE_X11R6
 HAVE_X11R6_XIM
 HAVE_X11XTR6
@@ -47,7 +43,6 @@ USE_GTK		Use the Gtk   toolkit for menus&scrollbars.  Requires HAVE_X11.
 
 FRAME_TERMCAP_P	A tty (character terminal) frame.
 FRAME_X_P	A frame on X Window system.
-FRAME_MSDOS_P	An MS-DOS frame (used only by the DOS port).
 FRAME_W32_P	A frame using native MS-Windows GUI.
 FRAME_WINDOW_P	A GUI frame (like X, w32, etc.)
 
@@ -60,7 +55,7 @@ HAVE_PROCFS     The /proc filesystem is supported.
 REL_ALLOC	Compile in the relocatable memory allocator ralloc.c.
 SYSTEM_MALLOC	Use the system library's malloc.
 subprocesses    System can use subprocesses (for M-x shell for example).
-                Defined by default, only MSDOS undefines it.
+                Defined by default.
 DEBUG_LISP_OBJECT_TYPE Define it in lisp.h enable compile time checks
                        on Lisp_Object use.
 
@@ -74,7 +69,7 @@ SYSTEM_TYPE
 
 ** Misc macros
 USER_FULL_NAME   If defined, overrides the default pw->pw_gecos for
-getting at the full user name.  Only MSDOS overrides the default.
+getting at the full user name.
 
 ** Miscellaneous defines.  Some of these might not be used in the code
 anymore, so they can be removed.
@@ -457,11 +452,6 @@ pipe
 rmdir
 sleep
 unlink
-
-
-MS DOS stuff:
-
-_NAIVE_DOS_REGS
 
 
 MS stuff:

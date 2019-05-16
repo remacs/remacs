@@ -312,7 +312,7 @@ specified (e.g., using @key{DEL}) and hit @key{DEL}.
 @cindex root directory
 @cindex home directory
 To go to the root directory (on the current drive), enter two slashes.
-On MS-DOS or Windows, to select the root of another drive, enter
+On Windows, to select the root of another drive, enter
 @samp{X:/} where @samp{X} is the drive letter.  To go to the home
 directory, enter @samp{~/}.  To enter Dired for this directory, use
 @kbd{C-d}.

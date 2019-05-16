@@ -222,7 +222,7 @@ Appendices
 * X Resources::         X resources for customizing Emacs.
 * Antinews::            Information about Emacs version 25.
 * Mac OS / GNUstep::     Using Emacs under macOS and GNUstep.
-* Microsoft Windows::   Using Emacs on Microsoft Windows and MS-DOS.
+* Microsoft Windows::   Using Emacs on Microsoft Windows.
 * Manifesto::           What's GNU?  Gnu's Not Unix!
 
 * Glossary::            Terms used in this manual.
@@ -1233,7 +1233,7 @@ Emacs and macOS / GNUstep
 * Mac / GNUstep Events::        How window system events are handled.
 * GNUstep Support::             Details on status of GNUstep support.
 
-Emacs and Microsoft Windows/MS-DOS
+Emacs and Microsoft Windows
 
 * Windows Startup::     How to start Emacs on Windows.
 * Text and Binary::     Text files use CRLF to terminate lines.
@@ -1247,19 +1247,6 @@ Emacs and Microsoft Windows/MS-DOS
 * Windows Printing::    How to specify the printer on MS-Windows.
 * Windows Fonts::       Specifying fonts on MS-Windows.
 * Windows Misc::        Miscellaneous Windows features.
-@ifnottex
-* MS-DOS::              Using Emacs on MS-DOS.
-
-Emacs and MS-DOS
-
-* MS-DOS Keyboard::     Keyboard conventions on MS-DOS.
-* MS-DOS Mouse::        Mouse conventions on MS-DOS.
-* MS-DOS Display::      Fonts, frames and display size on MS-DOS.
-* MS-DOS File Names::   File name conventions on MS-DOS.
-* MS-DOS Printing::     Printing specifics on MS-DOS.
-* MS-DOS and MULE::     Support for internationalization on MS-DOS.
-* MS-DOS Processes::    Running subprocesses on MS-DOS.
-@end ifnottex
 
 @end detailmenu
 @end menu
@@ -1599,8 +1586,6 @@ Lisp programming.
 
 @include anti.texi
 @include macos.texi
-@c Includes msdos-xtra.
-@include msdos.texi
 @include gnu.texi
 @include glossary.texi
 @ifnottex
