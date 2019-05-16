@@ -148,12 +148,13 @@ impl LispStringRef {
             } else {
                 // Character is a single codepoint, calculate it if multibyte, otherwise get
                 // raw byte at b.
-                let (c, bytes) = if multibyte {
-                    string_char_and_length(self.const_data_ptr().add(b))
+                let (ch, bytes) = if multibyte {
+                    unsafe { string_char_and_length(self.const_data_ptr().add(b)) }
                 } else {
                     (self.as_slice()[b].into(), 1)
                 };
-                (1, bytes, char_width(c as i32, distab) as usize)
+                let chars = unsafe { char_width(ch as i32, distab) } as usize;
+                (1, bytes, chars)
             };
 
             // Return if adding character exceeds precision
