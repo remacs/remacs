@@ -348,7 +348,7 @@ pset_encoding_buf (struct Lisp_Process *p, Lisp_Object val)
 {
   p->encoding_buf = val;
 }
-static void
+void
 pset_filter (struct Lisp_Process *p, Lisp_Object val)
 {
   p->filter = NILP (val) ? Qinternal_default_process_filter : val;
@@ -378,7 +378,7 @@ pset_plist (struct Lisp_Process *p, Lisp_Object val)
 {
   p->plist = val;
 }
-static void
+void
 pset_sentinel (struct Lisp_Process *p, Lisp_Object val)
 {
   p->sentinel = NILP (val) ? Qinternal_default_process_sentinel : val;
@@ -658,7 +658,7 @@ clear_waiting_thread_info (void)
 
 static Lisp_Object status_convert (int);
 
-static void
+void
 update_status (struct Lisp_Process *p)
 {
   eassert (p->raw_status_new);
@@ -1250,7 +1250,7 @@ DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
 }
 #endif
 
-static void
+void
 set_process_filter_masks (struct Lisp_Process *p)
 {
   if (EQ (p->filter, Qt) && !EQ (p->status, Qlisten))
@@ -6253,7 +6253,7 @@ write_queue_pop (struct Lisp_Process *p, Lisp_Object *obj,
 
    This function can evaluate Lisp code and can garbage collect.  */
 
-static void
+void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object)
 {
@@ -6599,7 +6599,7 @@ process group.  */)
    down the pty.  This allows us to signal inferiors who have changed
    their uid, for which kill would return an EPERM error.  */
 
-static void
+void
 process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 		     bool nomsg)
 {
