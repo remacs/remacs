@@ -67,8 +67,8 @@ impl LockInfo {
         // NOTE: Unlike GNU Emacs, we do not tolerate negative PID values
         // or over/underflow.
         let (pid_str, boot_time_str) =
-            rest.split_at(rest.find(boot_time_sep).unwrap_or(rest.len()));
-        let pid = pid_str[1..].parse::<i32>().ok().filter(|pid| pid > &0)?;
+            rest.split_at(rest.find(boot_time_sep).unwrap_or_else(|| rest.len()));
+        let pid = pid_str[1..].parse::<i32>().ok().filter(|pid| *pid > 0)?;
 
         // After the ':' or equivalent, if there is one, comes the boot time.
         let boot_time = if boot_time_str.is_empty() {
@@ -171,10 +171,11 @@ fn read_lock_data(path: &Path) -> Result<String> {
         match read_link_as_string(path) {
             ok @ Ok(_) => return ok,
 
-            Err(ref e) if e.kind() == InvalidInput => match read_nofollow(path, MAX_LOCK_INFO)? {
-                Some(target) => return Ok(target),
-                None => (),
-            },
+            Err(ref e) if e.kind() == InvalidInput => {
+                if let Some(target) = read_nofollow(path, MAX_LOCK_INFO)? {
+                    return Ok(target);
+                }
+            }
 
             err => return err,
         }
@@ -191,10 +192,12 @@ fn read_lock_data(path: &Path) -> Result<String> {
 fn read_lock_info(path: &Path) -> Result<Option<LockInfo>> {
     match read_lock_data(path) {
         Ok(data) => {
-            let info = LockInfo::parse(&data).ok_or(Error::new(
-                InvalidData,
-                format!("Invalid lock information in '{}'", path.display()),
-            ))?;
+            let info = LockInfo::parse(&data).ok_or_else(|| {
+                Error::new(
+                    InvalidData,
+                    format!("Invalid lock information in '{}'", path.display()),
+                )
+            })?;
             Ok(Some(info))
         }
 

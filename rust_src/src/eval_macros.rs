@@ -133,7 +133,7 @@ macro_rules! list {
 
 macro_rules! lisp_concat {
     ($($tt:tt),+) => {
-        crate::fns::concat(&mut vec![$(($tt).into(), )*])
+        crate::fns::concat(&mut [$(($tt).into(), )*])
     };
 }
 
