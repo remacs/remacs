@@ -311,6 +311,19 @@ enum byte_code_op
 
 #define TOP (*top)
 
+#ifndef PORTED_TO_RUST
+DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0,
+       doc: /* Function used internally in byte-compiled code.
+The first argument, BYTESTR, is a string of byte code;
+the second, VECTOR, a vector of constants;
+the third, MAXDEPTH, the maximum stack depth used in this function.
+If the third argument is incorrect, Emacs may crash.  */)
+  (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth)
+{
+  return exec_byte_code (bytestr, vector, maxdepth, Qnil, 0, NULL);
+}
+#endif
+
 static void
 bcall0 (Lisp_Object f)
 {
@@ -374,9 +387,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
       ptrdiff_t nonrest = at >> 8;
       ptrdiff_t maxargs = rest ? PTRDIFF_MAX : nonrest;
       if (! (mandatory <= nargs && nargs <= maxargs))
-        xsignal2 (Qwrong_number_of_arguments,
-                  Fcons (make_number (mandatory), make_number (nonrest)),
-                  make_number (nargs));
+	Fsignal (Qwrong_number_of_arguments,
+		 list2 (Fcons (make_number (mandatory), make_number (nonrest)),
+			make_number (nargs)));
       ptrdiff_t pushedargs = min (nonrest, nargs);
       for (ptrdiff_t i = 0; i < pushedargs; i++, args++)
 	PUSH (*args);
@@ -1471,6 +1484,10 @@ get_byte_code_arity (Lisp_Object args_template)
 void
 syms_of_bytecode (void)
 {
+#ifndef PORTED_TO_RUST
+  defsubr (&Sbyte_code);
+#endif
+
 #ifdef BYTE_CODE_METER
 
   DEFVAR_LISP ("byte-code-meter", Vbyte_code_meter,
