@@ -1101,36 +1101,38 @@ WIDTH and HEIGHT are the sizes given in the HTML data, if any.
 The size of the displayed image will not exceed
 MAX-WIDTH/MAX-HEIGHT.  If not given, use the current window
 width/height instead."
-  (let* ((edges (window-inside-pixel-edges
-                 (get-buffer-window (current-buffer))))
-         (max-width (truncate (* shr-max-image-proportion
-                                 (or max-width
-                                     (- (nth 2 edges) (nth 0 edges))))))
-         (max-height (truncate (* shr-max-image-proportion
-                                  (or max-height
-                                      (- (nth 3 edges) (nth 1 edges))))))
-         (scaling (image-compute-scaling-factor image-scaling-factor)))
-    (when (or (and width
-                   (> width max-width))
-              (and height
-                   (> height max-height)))
-      (setq width nil
-            height nil))
-    (if (and width height
-             (< (* width scaling) max-width)
-             (< (* height scaling) max-height))
+  (if (not (get-buffer-window (current-buffer)))
+      (create-image data nil t :ascent 100)
+    (let* ((edges (window-inside-pixel-edges
+                   (get-buffer-window (current-buffer))))
+           (max-width (truncate (* shr-max-image-proportion
+                                   (or max-width
+                                       (- (nth 2 edges) (nth 0 edges))))))
+           (max-height (truncate (* shr-max-image-proportion
+                                    (or max-height
+                                        (- (nth 3 edges) (nth 1 edges))))))
+           (scaling (image-compute-scaling-factor image-scaling-factor)))
+      (when (or (and width
+                     (> width max-width))
+                (and height
+                     (> height max-height)))
+        (setq width nil
+              height nil))
+      (if (and width height
+               (< (* width scaling) max-width)
+               (< (* height scaling) max-height))
+          (create-image
+           data nil t
+           :ascent 100
+           :width width
+           :height height
+           :format content-type)
         (create-image
          data nil t
          :ascent 100
-         :width width
-         :height height
-         :format content-type)
-      (create-image
-       data nil t
-       :ascent 100
-       :max-width max-width
-       :max-height max-height
-       :format content-type))))
+         :max-width max-width
+         :max-height max-height
+         :format content-type)))))
 
 ;; url-cache-extract autoloads url-cache.
 (declare-function url-cache-create-filename "url-cache" (url))
