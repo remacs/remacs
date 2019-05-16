@@ -101,6 +101,10 @@ option was useful with modern debugging tools such as AddressSanitizer.
 (See etc/DEBUG for the details of using the modern replacements of the
 removed configure options.)
 
++++
+** The distribution tarball now has test cases; 'make check' runs them.
+This is intended mostly to help developers.
+
 ---
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
 builds respectively.

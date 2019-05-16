@@ -82,6 +82,10 @@ sections if you need to.
 
 		 src/emacs -Q
 
+     To test Emacs further (intended mostly to help developers):
+
+		 make check
+
   6. Assuming that the program 'src/emacs' starts and displays its
      opening screen, you can install the program and its auxiliary
      files into their installation directories:

@@ -115,7 +115,7 @@ General steps (for each step, check for possible errors):
     results against the new tar contents.
 
 7.   tar -xf emacs-NEW.tar; cd emacs-NEW
-     ./configure --prefix=/tmp/emacs && make && make install
+     ./configure --prefix=/tmp/emacs && make check && make install
     Use 'script' or M-x compile to save the compilation log in
     compile-NEW.log and compare it against an old one.  The easiest way
     to do that is to visit the old log in Emacs, change the version
