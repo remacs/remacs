@@ -1,6 +1,6 @@
 use libc::{
-    c_char, c_long, endpwent, getgrgid, getpwent, getpwuid, group, passwd, size_t, ssize_t,
-    timespec as c_timespec,
+    c_char, c_long, endgrent, endpwent, getgrent, getgrgid, getpwent, getpwuid, group, passwd,
+    size_t, ssize_t, timespec as c_timespec,
 };
 
 use std::ffi::{CStr, CString, OsStr};
@@ -12,6 +12,7 @@ use std::ptr::null_mut;
 use std::slice;
 
 use crate::{
+    coding::decode_system,
     fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
@@ -767,4 +768,18 @@ pub fn get_users() -> LispObject {
     }
 
     list(&unames)
+}
+
+pub fn get_groups() -> LispObject {
+    let mut group_names = Vec::new();
+    loop {
+        let group = unsafe { getgrent() };
+        if group.is_null() {
+            break;
+        }
+        let group_name: LispStringRef = unsafe { build_string((*group).gr_name) }.into();
+        group_names.push(decode_system(group_name).into());
+    }
+    unsafe { endgrent() };
+    list(&group_names)
 }

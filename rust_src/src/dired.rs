@@ -4,10 +4,11 @@ use remacs_macros::lisp_fn;
 
 #[cfg(unix)]
 use crate::dired_unix::{
-    directory_files_and_attributes_intro, directory_files_intro, file_attributes_intro, get_users,
+    directory_files_and_attributes_intro, directory_files_intro, file_attributes_intro, get_groups,
+    get_users,
 };
 #[cfg(windows)]
-use dired_windows::{file_attributes_intro, get_users};
+use dired_windows::{file_attributes_intro, get_groups, get_users};
 
 use crate::{lisp::LispObject, lists::car, multibyte::LispStringRef, strings::string_lessp};
 
@@ -118,6 +119,13 @@ pub fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> bool {
 #[lisp_fn]
 pub fn system_users() -> LispObject {
     get_users()
+}
+
+/// Return a list of user group names currently registered in the system.
+/// The value may be nil if not supported on this platform.
+#[lisp_fn]
+pub fn system_groups() -> LispObject {
+    get_groups()
 }
 
 include!(concat!(env!("OUT_DIR"), "/dired_exports.rs"));

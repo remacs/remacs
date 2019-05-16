@@ -12,11 +12,13 @@ use crate::{
     lisp::LispObject,
     lists::{get, put},
     multibyte::LispStringRef,
-    remacs_sys::code_convert_string as c_code_convert_string,
-    remacs_sys::encode_file_name as c_encode_file_name,
+    remacs_sys::{
+        code_convert_string as c_code_convert_string, code_convert_string_norecord,
+        encode_file_name as c_encode_file_name, globals,
+    },
     remacs_sys::{
         safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
-        Qno_conversion, Vcoding_system_hash_table,
+        Qno_conversion, Qutf_8, Vcoding_system_hash_table,
     },
 };
 
@@ -97,6 +99,18 @@ pub fn coding_system_aliases(coding_system: LispObject) -> LispObject {
 /// Wrapper for encode_file_name (NOT PORTED)
 pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
     unsafe { c_encode_file_name(fname.into()) }.into()
+}
+
+/// Implements DECODE_SYSTEM macro
+/// Decode the string `input_string` using the specified coding system
+/// for system functions, if any.
+pub fn decode_system(input_string: LispStringRef) -> LispStringRef {
+    let local_coding_system: LispObject = unsafe { globals.Vlocale_coding_system };
+    if local_coding_system.is_nil() {
+        input_string
+    } else {
+        unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
+    }
 }
 
 /// Decode STRING which is encoded in CODING-SYSTEM, and return the result.
