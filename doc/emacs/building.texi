@@ -1499,6 +1499,12 @@ library lets Emacs properly set up the hyperlinks in the @file{*Help*}
 buffer).  To disable this feature, change the variable
 @code{help-enable-auto-load} to @code{nil}.
 
+@vindex help-enable-completion-auto-load
+Automatic loading also occurs when completing names for
+@code{describe-variable} and @code{describe-function}, based on the
+prefix being completed.  To disable this feature, change the variable
+@code{help-enable-completion-auto-load} to @code{nil}.
+
 @vindex load-dangerous-libraries
 @cindex Lisp files byte-compiled by XEmacs
   By default, Emacs refuses to load compiled Lisp files which were

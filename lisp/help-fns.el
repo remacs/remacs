@@ -89,11 +89,23 @@ The functions will receive the function name as argument.")
       (unless (help--loaded-p file)
         (load file 'noerror 'nomessage)))))
 
+(defcustom help-enable-completion-auto-load t
+  "Whether completion for Help commands can perform autoloading.
+If non-nil, whenever invoking completion for `describe-function'
+or `describe-variable' load files that might contain definitions
+with the current prefix.  The files are chosen according to
+`definition-prefixes'."
+  :type 'boolean
+  :group 'help
+  :version "26.3")
+
 (defun help--symbol-completion-table (string pred action)
-  (let ((prefixes (radix-tree-prefixes (help-definition-prefixes) string)))
-    (help--load-prefixes prefixes))
+  (when help-enable-completion-auto-load
+    (let ((prefixes (radix-tree-prefixes (help-definition-prefixes) string)))
+      (help--load-prefixes prefixes)))
   (let ((prefix-completions
-         (mapcar #'intern (all-completions string definition-prefixes))))
+         (and help-enable-completion-auto-load
+              (mapcar #'intern (all-completions string definition-prefixes)))))
     (complete-with-action action obarray string
                           (if pred (lambda (sym)
                                      (or (funcall pred sym)
