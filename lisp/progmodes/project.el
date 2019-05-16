@@ -477,6 +477,10 @@ For the arguments list, see `project--read-file-cpd-relative'."
 (defun project--read-file-cpd-relative (prompt
                                         all-files &optional predicate
                                         hist default)
+  "Read a file name, prompting with PROMPT.
+ALL-FILES is a list of possible file name completions.
+PREDICATE, HIST, and DEFAULT have the same meaning as in
+`completing-read'."
   (let* ((common-parent-directory
           (let ((common-prefix (try-completion "" all-files)))
             (if (> (length common-prefix) 0)
