@@ -2903,7 +2903,7 @@ non-nil value, that slot cannot be set via `setf'.
 	      ;; and pred-check, so changing it is not straightforward.
 	      (push `(,defsym ,accessor (cl-x)
                        ,(format "Access slot \"%s\" of `%s' struct CL-X."
-                                slot struct)
+                                slot name)
                        (declare (side-effect-free t))
                        ,@(and pred-check
 			      (list `(or ,pred-check
