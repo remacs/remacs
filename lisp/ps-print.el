@@ -12,6 +12,8 @@
 ;; Version: 7.3.5
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
 
+(eval-when-compile (require 'cl-lib))
+
 (defconst ps-print-version "7.3.5"
   "ps-print.el, v 7.3.5 <2009/12/23 vinicius>
 
@@ -5829,7 +5831,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	;; They may be overridden by ps-mule-begin-job.
 	ps-basic-plot-string-function    'ps-basic-plot-string
 	ps-encode-header-string-function nil)
-  (assert (not (multibyte-string-p ps-control-or-escape-regexp)))
+  (cl-assert (not (multibyte-string-p ps-control-or-escape-regexp)))
   ;; initialize page dimensions
   (ps-get-page-dimensions)
   ;; final check
