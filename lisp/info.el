@@ -380,12 +380,6 @@ with wrapping around the current Info node."
   :type 'hook
   :group 'info)
 
-(defvar Info-edit-mode-hook nil
-  "Hook run when `Info-edit-mode' is activated.")
-
-(make-obsolete-variable 'Info-edit-mode-hook
-			"editing Info nodes by hand is not recommended." "24.4")
-
 (defvar-local Info-current-file nil
   "Info file that Info is now looking at, or nil.
 This is the name that was specified in Info, not the actual file name.
@@ -4384,59 +4378,6 @@ Advanced commands:
 		  (copy-marker (marker-position m)))
 	      (make-marker))))))
 
-(define-obsolete-variable-alias 'Info-edit-map 'Info-edit-mode-map "24.1")
-(defvar Info-edit-mode-map (let ((map (make-sparse-keymap)))
-                             (set-keymap-parent map text-mode-map)
-                             (define-key map "\C-c\C-c" 'Info-cease-edit)
-                             map)
-  "Local keymap used within `e' command of Info.")
-
-(make-obsolete-variable 'Info-edit-mode-map
-			"editing Info nodes by hand is not recommended."
-			"24.4")
-
-;; Info-edit mode is suitable only for specially formatted data.
-(put 'Info-edit-mode 'mode-class 'special)
-
-(define-derived-mode Info-edit-mode text-mode "Info Edit"
-  "Major mode for editing the contents of an Info node.
-Like text mode with the addition of `Info-cease-edit'
-which returns to Info mode for browsing."
-  (setq buffer-read-only nil)
-  (force-mode-line-update)
-  (buffer-enable-undo (current-buffer)))
-
-(make-obsolete 'Info-edit-mode
-	       "editing Info nodes by hand is not recommended." "24.4")
-
-(defun Info-edit ()
-  "Edit the contents of this Info node."
-  (interactive)
-  (Info-edit-mode)
-  (message "%s" (substitute-command-keys
-		 "Editing: Type \\<Info-edit-mode-map>\\[Info-cease-edit] to return to info")))
-
-(put 'Info-edit 'disabled "Editing Info nodes by hand is not recommended.
-This feature will be removed in future.")
-
-(make-obsolete 'Info-edit
-	       "editing Info nodes by hand is not recommended." "24.4")
-
-(defun Info-cease-edit ()
-  "Finish editing Info node; switch back to Info proper."
-  (interactive)
-  ;; Do this first, so nothing has changed if user C-g's at query.
-  (and (buffer-modified-p)
-       (y-or-n-p "Save the file? ")
-       (save-buffer))
-  (Info-mode)
-  (force-mode-line-update)
-  (and (marker-position Info-tag-table-marker)
-       (buffer-modified-p)
-       (message "Tags may have changed.  Use Info-tagify if necessary")))
-
-(make-obsolete 'Info-cease-edit
-	       "editing Info nodes by hand is not recommended." "24.4")
 
 (defvar Info-file-list-for-emacs
   '("ediff" "eudc" "forms" "gnus" "info" ("Info" . "info") ("mh" . "mh-e")
