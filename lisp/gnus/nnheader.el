@@ -136,6 +136,7 @@ on your system, you could say something like:
 ;; (That next-to-last entry is defined as "misc" in the NOV format,
 ;; but Gnus uses it for xrefs.)
 
+(defalias 'mail-header-p #'vectorp)     ;For lack of tag, it's all we have.
 (cl-defstruct (mail-header
                (:type vector)
                (:constructor nil)

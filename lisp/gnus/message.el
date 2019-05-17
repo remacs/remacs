@@ -3819,13 +3819,14 @@ This function uses `mail-citation-hook' if that is non-nil."
 	      (narrow-to-region start end)
 	      (message-narrow-to-head-1)
 	      (setq x-no-archive (message-fetch-field "x-no-archive"))
-	      (vector 0
-		      (or (message-fetch-field "subject") "none")
-		      (or (message-fetch-field "from") "nobody")
-		      (message-fetch-field "date")
-		      (message-fetch-field "message-id" t)
-		      (message-fetch-field "references")
-		      0 0 ""))))
+	      (make-full-mail-header
+               0
+	       (or (message-fetch-field "subject") "none")
+	       (or (message-fetch-field "from") "nobody")
+	       (message-fetch-field "date")
+	       (message-fetch-field "message-id" t)
+	       (message-fetch-field "references")
+	       0 0 ""))))
       (mml-quote-region start end)
       (when strip-signature
 	;; Allow undoing.
@@ -6977,8 +6978,8 @@ specified by FUNCTIONS, if non-nil, or by the variable
 	  (if wide to-address nil))
 	 switch-function))
       (setq message-reply-headers
-	    (vector 0 (cdr (assq 'Subject headers))
-		    from date message-id references 0 0 ""))
+	    (make-full-mail-header 0 (cdr (assq 'Subject headers))
+		                   from date message-id references 0 0 ""))
       (message-setup headers cur))))
 
 ;;;###autoload
@@ -7035,7 +7036,8 @@ If TO-NEWSGROUPS, use that as the new Newsgroups line."
     (message-pop-to-buffer (message-buffer-name "followup" from newsgroups))
 
     (setq message-reply-headers
-	  (vector 0 subject from date message-id references 0 0 ""))
+	  (make-full-mail-header
+           0 subject from date message-id references 0 0 ""))
 
     (message-setup
      `((Subject . ,subject)
