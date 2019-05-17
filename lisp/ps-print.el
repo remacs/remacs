@@ -5772,9 +5772,9 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	ps-footer-font-size-internal (ps-get-font-size 'ps-footer-font-size)
 	ps-control-or-escape-regexp
 	(cond ((eq ps-print-control-characters '8-bit)
-	       (string-as-unibyte "[\000-\037\177-\377]"))
+	       "[\000-\037\177-\377]")
 	      ((eq ps-print-control-characters 'control-8-bit)
-	       (string-as-unibyte "[\000-\037\177-\237]"))
+	       "[\000-\037\177-\237]")
 	      ((eq ps-print-control-characters 'control)
 	       "[\000-\037\177]")
 	      (t "[\t\n\f]"))
@@ -5829,6 +5829,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	;; They may be overridden by ps-mule-begin-job.
 	ps-basic-plot-string-function    'ps-basic-plot-string
 	ps-encode-header-string-function nil)
+  (assert (not (multibyte-string-p ps-control-or-escape-regexp)))
   ;; initialize page dimensions
   (ps-get-page-dimensions)
   ;; final check
