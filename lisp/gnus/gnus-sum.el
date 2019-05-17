@@ -50,6 +50,7 @@
 (defvar gnus-tmp-score-char)
 (defvar gnus-tmp-subject)
 (defvar gnus-tmp-subject-or-nil)
+(defvar gnus-tmp-thread)
 (defvar gnus-tmp-unread)
 (defvar gnus-tmp-unread-and-unselected)
 (defvar gnus-tmp-unread-and-unticked)
@@ -1443,15 +1444,17 @@ the normal Gnus MIME machinery."
     (?\< (make-string (max 0 (- 20 gnus-tmp-level)) ? ) ?s)
     (?i gnus-tmp-score ?d)
     (?z gnus-tmp-score-char ?c)
-    (?V (gnus-thread-total-score (and (boundp 'thread) (car thread))) ?d)
+    (?V (gnus-thread-total-score
+         (and (boundp 'gnus-tmp-thread) (car gnus-tmp-thread)))
+        ?d)
     (?U gnus-tmp-unread ?c)
     (?f (gnus-summary-from-or-to-or-newsgroups gnus-tmp-header gnus-tmp-from)
 	?s)
     (?t (gnus-summary-number-of-articles-in-thread
-	 (and (boundp 'thread) (car thread)) gnus-tmp-level)
+	 (and (boundp 'gnus-tmp-thread) (car gnus-tmp-thread)) gnus-tmp-level)
 	?d)
     (?e (gnus-summary-number-of-articles-in-thread
-	 (and (boundp 'thread) (car thread)) gnus-tmp-level t)
+	 (and (boundp 'gnus-tmp-thread) (car gnus-tmp-thread)) gnus-tmp-level t)
 	?c)
     (?u gnus-tmp-user-defined ?s)
     (?P (gnus-pick-line-number) ?d)
@@ -3786,9 +3789,9 @@ buffer that was in action when the last article was fetched."
       (setq gnus-tmp-name gnus-tmp-from))
     (unless (numberp gnus-tmp-lines)
       (setq gnus-tmp-lines -1))
-    (if (= gnus-tmp-lines -1)
-	(setq gnus-tmp-lines "?")
-      (setq gnus-tmp-lines (number-to-string gnus-tmp-lines)))
+    (setq gnus-tmp-lines (if (= gnus-tmp-lines -1)
+	                     "?"
+                           (number-to-string gnus-tmp-lines)))
     (condition-case ()
 	(put-text-property
 	 (point)
@@ -5265,7 +5268,7 @@ or a straight list of headers."
 	gnus-tmp-header gnus-tmp-unread gnus-tmp-downloaded
 	gnus-tmp-replied gnus-tmp-subject-or-nil
 	gnus-tmp-dummy gnus-tmp-indentation gnus-tmp-lines gnus-tmp-score
-	gnus-tmp-score-char gnus-tmp-from gnus-tmp-name
+	gnus-tmp-score-char gnus-tmp-from gnus-tmp-name gnus-tmp-thread
 	gnus-tmp-number gnus-tmp-opening-bracket gnus-tmp-closing-bracket
 	tree-stack)
 
@@ -5516,9 +5519,10 @@ or a straight list of headers."
 	      (setq gnus-tmp-name gnus-tmp-from))
 	    (unless (numberp gnus-tmp-lines)
 	      (setq gnus-tmp-lines -1))
-	    (if (= gnus-tmp-lines -1)
-		(setq gnus-tmp-lines "?")
-	      (setq gnus-tmp-lines (number-to-string gnus-tmp-lines)))
+	    (setq gnus-tmp-lines (if (= gnus-tmp-lines -1)
+		                     "?"
+                                   (number-to-string gnus-tmp-lines)))
+            (setq gnus-tmp-thread thread)
 	    (put-text-property
 	     (point)
 	     (progn (eval gnus-summary-line-format-spec) (point))
