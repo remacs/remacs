@@ -308,8 +308,15 @@ the formats available in the clipboard if TYPE is `CLIPBOARD'."
                           ('STRING 'iso-8859-1)
                           (_ (error "Unknown selection data type: %S"
                                     type))))))
-        (setq data (if coding (decode-coding-string data coding)
-                     (string-to-multibyte data))))
+        (setq data (cond
+                    (coding
+                     (decode-coding-string data coding))
+                    ;; The last two cases are only possible in the
+                    ;; C_STRING case.
+                    ((multibyte-string-p data)
+                     data)
+                    (t
+                     (encode-coding-string data 'eight-bit)))))
       (setq next-selection-coding-system nil)
       (put-text-property 0 (length data) 'foreign-selection data-type data))
     data))
