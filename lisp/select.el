@@ -308,15 +308,12 @@ the formats available in the clipboard if TYPE is `CLIPBOARD'."
                           ('STRING 'iso-8859-1)
                           (_ (error "Unknown selection data type: %S"
                                     type))))))
-        (setq data (cond
-                    (coding
-                     (decode-coding-string data coding))
-                    ;; The last two cases are only possible in the
-                    ;; C_STRING case.
-                    ((multibyte-string-p data)
-                     data)
-                    (t
-                     (encode-coding-string data 'eight-bit)))))
+        (setq data (if coding (decode-coding-string data coding)
+                     ;; This is for C_STRING case.
+                     ;; We want to convert each non-ASCII byte to the
+                     ;; corresponding eight-bit character, which has
+                     ;; a codepoint >= #x3FFF00.
+                     (string-to-multibyte data))))
       (setq next-selection-coding-system nil)
       (put-text-property 0 (length data) 'foreign-selection data-type data))
     data))
@@ -479,6 +476,9 @@ two markers or an overlay.  Otherwise, it is nil."
 	    (setq str (encode-coding-string str coding)))
 
 	   ((eq type 'C_STRING)
+            ;; If STR is unibyte (the normal case), use it; otherwise
+            ;; we assume some of the characters are eight-bit, and
+            ;; take their lower 8 bits.
 	    (setq str (string-make-unibyte str)))
 
 	   (t
