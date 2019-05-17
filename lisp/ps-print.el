@@ -4612,7 +4612,9 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
 (defsubst ps-output-string-prim (string)
   (insert "(")				;insert start-string delimiter
   (save-excursion			;insert string
-    (insert (string-as-unibyte string)))
+    (insert (if (multibyte-string-p string)
+                (encode-coding-string string 'utf-8)
+              string)))
   ;; Find and quote special characters as necessary for PS
   ;; This skips everything except control chars, non-ASCII chars, (, ) and \.
   (while (progn (skip-chars-forward " -'*-[]-~") (not (eobp)))
