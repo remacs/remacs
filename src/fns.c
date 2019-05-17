@@ -1042,10 +1042,8 @@ string the same way whether it is unibyte or multibyte.)  */)
 DEFUN ("string-make-unibyte", Fstring_make_unibyte, Sstring_make_unibyte,
        1, 1, 0,
        doc: /* Return the unibyte equivalent of STRING.
-Multibyte character codes are converted to unibyte according to
-`nonascii-translation-table' or, if that is nil, `nonascii-insert-offset'.
-If the lookup in the translation table fails, this function takes just
-the low 8 bits of each character.  */)
+Multibyte character codes above 255 are converted to unibyte
+by taking just the low 8 bits of each character's code.  */)
   (Lisp_Object string)
 {
   CHECK_STRING (string);

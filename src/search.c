@@ -1341,12 +1341,7 @@ search_buffer (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 	}
       else
 	{
-	  /* Converting multibyte to single-byte.
-
-	     ??? Perhaps this conversion should be done in a special way
-	     by subtracting nonascii-insert-offset from each non-ASCII char,
-	     so that only the multibyte chars which really correspond to
-	     the chosen single-byte character set can possibly match.  */
+	  /* Converting multibyte to single-byte.  */
 	  raw_pattern_size = SCHARS (string);
 	  raw_pattern_size_byte = SCHARS (string);
 	  raw_pattern = SAFE_ALLOCA (raw_pattern_size + 1);
