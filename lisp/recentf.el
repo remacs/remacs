@@ -67,7 +67,8 @@ You should define the options of your own filters in this group."
 A nil value means to save the whole list.
 See the command `recentf-save-list'."
   :group 'recentf
-  :type 'integer)
+  :type '(choice (integer :tag "Entries" :value 1)
+		 (const :tag "No Limit" nil)))
 
 (defcustom recentf-save-file (locate-user-emacs-file "recentf" ".recentf")
   "File to save the recent list into."
