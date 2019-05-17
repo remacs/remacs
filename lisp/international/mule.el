@@ -1345,8 +1345,11 @@ just set the variable `buffer-file-coding-system' directly."
       (setq coding-system
 	    (merge-coding-systems coding-system buffer-file-coding-system)))
   (when (and (called-interactively-p 'interactive)
-	     (not (memq 'emacs (coding-system-get coding-system
-						  :charset-list))))
+             ;; FIXME: For some reason
+             ;;     (coding-system-get 'iso-2022-7bit :charset-list)
+             ;; returns `iso-2022' rather than returning a list!
+             (let ((css (coding-system-get coding-system :charset-list)))
+               (not (and (listp css) (memq 'emacs css)))))
     ;; Check whether save would succeed, and jump to the offending char(s)
     ;; if not.
     (let ((css (find-coding-systems-region (point-min) (point-max))))
