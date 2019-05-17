@@ -2849,6 +2849,8 @@ is part of a file name (i.e., has the text property `dired-filename')."
   (multi-isearch-files-regexp
    (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
 
+(declare-function fileloop-continue "fileloop" ())
+
 ;;;###autoload
 (defun dired-do-search (regexp)
   "Search through all marked files for a match for REGEXP.
