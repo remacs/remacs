@@ -2341,9 +2341,7 @@ score in `gnus-newsgroup-scored' by SCORE."
 				  "references"
 				(symbol-name (caar elem)))
 			      (cdar elem)))
-		(setcar (car elem)
-			`(lambda (h)
-			   (,func h))))
+		(setcar (car elem) func))
 	      (setq elem (cdr elem)))
 	    (setq malist (cdr malist)))
 	  ;; Then we score away.

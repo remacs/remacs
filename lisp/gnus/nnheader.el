@@ -136,97 +136,30 @@ on your system, you could say something like:
 ;; (That next-to-last entry is defined as "misc" in the NOV format,
 ;; but Gnus uses it for xrefs.)
 
-(defmacro mail-header-number (header)
-  "Return article number in HEADER."
-  `(aref ,header 0))
+(cl-defstruct (mail-header
+               (:type vector)
+               (:constructor nil)
+               (:constructor make-full-mail-header
+                (&optional number subject from date id
+			   references chars lines xref
+			   extra)))
+  number
+  subject
+  from
+  date
+  id
+  references
+  chars
+  lines
+  xref
+  extra)
 
-(defmacro mail-header-set-number (header number)
-  "Set article number of HEADER to NUMBER."
-  `(aset ,header 0 ,number))
-
-(defmacro mail-header-subject (header)
-  "Return subject string in HEADER."
-  `(aref ,header 1))
-
-(defmacro mail-header-set-subject (header subject)
-  "Set article subject of HEADER to SUBJECT."
-  `(aset ,header 1 ,subject))
-
-(defmacro mail-header-from (header)
-  "Return author string in HEADER."
-  `(aref ,header 2))
-
-(defmacro mail-header-set-from (header from)
-  "Set article author of HEADER to FROM."
-  `(aset ,header 2 ,from))
-
-(defmacro mail-header-date (header)
-  "Return date in HEADER."
-  `(aref ,header 3))
-
-(defmacro mail-header-set-date (header date)
-  "Set article date of HEADER to DATE."
-  `(aset ,header 3 ,date))
-
-(defalias 'mail-header-message-id 'mail-header-id)
-(defmacro mail-header-id (header)
-  "Return Id in HEADER."
-  `(aref ,header 4))
-
-(defalias 'mail-header-set-message-id 'mail-header-set-id)
-(defmacro mail-header-set-id (header id)
-  "Set article Id of HEADER to ID."
-  `(aset ,header 4 ,id))
-
-(defmacro mail-header-references (header)
-  "Return references in HEADER."
-  `(aref ,header 5))
-
-(defmacro mail-header-set-references (header ref)
-  "Set article references of HEADER to REF."
-  `(aset ,header 5 ,ref))
-
-(defmacro mail-header-chars (header)
-  "Return number of chars of article in HEADER."
-  `(aref ,header 6))
-
-(defmacro mail-header-set-chars (header chars)
-  "Set number of chars in article of HEADER to CHARS."
-  `(aset ,header 6 ,chars))
-
-(defmacro mail-header-lines (header)
-  "Return lines in HEADER."
-  `(aref ,header 7))
-
-(defmacro mail-header-set-lines (header lines)
-  "Set article lines of HEADER to LINES."
-  `(aset ,header 7 ,lines))
-
-(defmacro mail-header-xref (header)
-  "Return xref string in HEADER."
-  `(aref ,header 8))
-
-(defmacro mail-header-set-xref (header xref)
-  "Set article XREF of HEADER to xref."
-  `(aset ,header 8 ,xref))
-
-(defmacro mail-header-extra (header)
-  "Return the extra headers in HEADER."
-  `(aref ,header 9))
-
-(defun mail-header-set-extra (header extra)
-  "Set the extra headers in HEADER to EXTRA."
-  (aset header 9 extra))
+(defalias 'mail-header-message-id #'mail-header-id)
 
 (defsubst make-mail-header (&optional init)
   "Create a new mail header structure initialized with INIT."
-  (make-vector 10 init))
-
-(defsubst make-full-mail-header (&optional number subject from date id
-					   references chars lines xref
-					   extra)
-  "Create a new mail header structure initialized with the parameters given."
-  (vector number subject from date id references chars lines xref extra))
+  (make-full-mail-header init init init init init
+                         init init init init init))
 
 ;; fake message-ids: generation and detection
 

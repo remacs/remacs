@@ -3929,7 +3929,7 @@ If REREAD is not nil, downloaded articles are marked as unread."
 		     (nnheader-insert-file-contents file)
 		     (nnheader-remove-body)
 		     (setq header (nnheader-parse-naked-head)))
-		   (mail-header-set-number header (car downloaded))
+		   (setf (mail-header-number header) (car downloaded))
 		   (if nov-arts
 		       (let ((key (concat "^" (int-to-string (car nov-arts))
 					  "\t")))

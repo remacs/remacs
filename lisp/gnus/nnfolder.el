@@ -1162,15 +1162,15 @@ This command does not work if you use short group names."
       (with-temp-buffer
 	(insert-buffer-substring buf b e)
 	(let ((headers (nnheader-parse-naked-head)))
-	  (mail-header-set-chars headers chars)
-	  (mail-header-set-number headers number)
+	  (setf (mail-header-chars  headers) chars)
+	  (setf (mail-header-number headers) number)
 	  headers)))))
 
 (defun nnfolder-add-nov (group article headers)
   "Add a nov line for the GROUP base."
   (with-current-buffer (nnfolder-open-nov group)
     (goto-char (point-max))
-    (mail-header-set-number headers article)
+    (setf (mail-header-number headers) article)
     (nnheader-insert-nov headers)))
 
 (provide 'nnfolder)

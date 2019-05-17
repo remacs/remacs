@@ -1014,10 +1014,9 @@ following hook:
  (add-hook gnus-select-group-hook
 	   (lambda ()
 	     (mapcar (lambda (header)
-		       (mail-header-set-subject
-			header
-			(gnus-simplify-subject
-			 (mail-header-subject header) \\='re-only)))
+		       (setf (mail-header-subject header)
+		             (gnus-simplify-subject
+		              (mail-header-subject header) \\='re-only)))
 		     gnus-newsgroup-headers)))"
   :group 'gnus-group-select
   :type 'hook)
@@ -4401,7 +4400,7 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
       (setq id-dep (puthash (setq id (nnmail-message-id))
 			    (list header)
 			    dependencies))
-      (mail-header-set-id header id))
+      (setf (mail-header-id header) id))
 
      ;; The last case ignores an existing entry, except it adds any
      ;; additional Xrefs (in case the two articles came from different
@@ -4409,11 +4408,10 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
      ;; Also sets `header' to nil meaning that the `dependencies'
      ;; table was *not* modified.
      (t
-      (mail-header-set-xref
-       (car id-dep)
-       (concat (or (mail-header-xref (car id-dep))
-		   "")
-	       (or (mail-header-xref header) "")))
+      (setf (mail-header-xref (car id-dep))
+            (concat (or (mail-header-xref (car id-dep))
+		        "")
+	            (or (mail-header-xref header) "")))
       (setq header nil)))
 
     (when (and header (not replaced))
@@ -4427,7 +4425,7 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
 	    ;; Yuk!  This is a reference loop.  Make the article be a
 	    ;; root article.
 	    (progn
-	      (mail-header-set-references (car id-dep) "none")
+	      (setf (mail-header-references (car id-dep)) "none")
 	      (setq ref nil)
 	      (setq parent-id nil))
 	  (setq ref (gnus-parent-id (mail-header-references ref-header)))))
@@ -4565,8 +4563,8 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
     (when (and (string= references "")
 	       (setq in-reply-to (mail-header-extra header))
 	       (setq in-reply-to (cdr (assq 'In-Reply-To in-reply-to))))
-      (mail-header-set-references
-       header (gnus-extract-message-id-from-in-reply-to in-reply-to)))
+      (setf (mail-header-references header)
+            (gnus-extract-message-id-from-in-reply-to in-reply-to)))
 
     (when gnus-alter-header-function
       (funcall gnus-alter-header-function header))
@@ -5619,7 +5617,7 @@ or a straight list of headers."
 	    (setq subject
 		  (concat (substring subject 0 (match-beginning 1))
 			  (substring subject (match-end 1)))))
-	  (mail-header-set-subject header subject))))))
+	  (setf (mail-header-subject header) subject))))))
 
 (defun gnus-fetch-headers (articles &optional limit force-new dependencies)
   "Fetch headers of ARTICLES."
@@ -5775,8 +5773,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
       (setq gnus-newsgroup-limit (copy-sequence articles))
       ;; Remove canceled articles from the list of unread articles.
       (setq fetched-articles
-	    (mapcar (lambda (headers) (mail-header-number headers))
-		    gnus-newsgroup-headers))
+	    (mapcar #'mail-header-number gnus-newsgroup-headers))
       (setq gnus-newsgroup-articles fetched-articles)
       (setq gnus-newsgroup-unreads
 	    (gnus-sorted-nintersection
@@ -6642,7 +6639,7 @@ This is meant to be called in `gnus-article-internal-prepare-hook'."
 		      (search-forward "\nXref:" nil t))
 	      (goto-char (1+ (match-end 0)))
 	      (setq xref (buffer-substring (point) (point-at-eol)))
-	      (mail-header-set-xref headers xref)))))))
+	      (setf (mail-header-xref headers) xref)))))))
 
 (defun gnus-summary-insert-subject (id &optional old-header use-old-header)
   "Find article ID and insert the summary line for that article.
@@ -6680,7 +6677,7 @@ too, instead of trying to fetch new headers."
       (let ((gnus-newsgroup-headers (list header)))
         (gnus-summary-remove-list-identifiers))
       (when old-header
-	(mail-header-set-number header (mail-header-number old-header)))
+	(setf (mail-header-number header) (mail-header-number old-header)))
       (setq gnus-newsgroup-sparse
 	    (delq (setq number (mail-header-number header))
 		  gnus-newsgroup-sparse))
@@ -8281,8 +8278,7 @@ If given a prefix, remove all limits."
   (interactive "P")
   (when total
     (setq gnus-newsgroup-limits
-	  (list (mapcar (lambda (h) (mail-header-number h))
-			gnus-newsgroup-headers))))
+	  (list (mapcar #'mail-header-number gnus-newsgroup-headers))))
   (unless gnus-newsgroup-limits
     (error "No limit to pop"))
   (prog1
@@ -8790,8 +8786,7 @@ If ALL, mark even excluded ticked and dormants as read."
   (setq gnus-newsgroup-limit (sort gnus-newsgroup-limit #'<))
   (let ((articles (gnus-sorted-ndifference
 		   (sort
-		    (mapcar (lambda (h) (mail-header-number h))
-			    gnus-newsgroup-headers)
+		    (mapcar #'mail-header-number gnus-newsgroup-headers)
 		    #'<)
 		   gnus-newsgroup-limit))
 	article)
@@ -9580,8 +9575,7 @@ Optional argument BACKWARD means do search for backward.
 This search includes all articles in the current group that Gnus has
 fetched headers for, whether they are displayed or not."
   (let ((articles nil)
-	;; FIXME: Can't η-reduce because it's a macro (make it define-inline)
-	(func `(lambda (h) (,(intern (concat "mail-header-" header)) h)))
+	(func (intern (concat "mail-header-" header)))
 	(case-fold-search t))
     (dolist (header gnus-newsgroup-headers)
       ;; FIXME: when called from gnus-summary-limit-include-thread via
@@ -9612,8 +9606,7 @@ not match REGEXP on HEADER."
 	  (error "%s is an invalid header" header))
       (unless (fboundp (intern (concat "mail-header-" header)))
 	(error "%s is not a valid header" header))
-      ;; FIXME: eta-reduce!
-      (setq func `(lambda (h) (,(intern (concat "mail-header-" header)) h))))
+      (setq func (intern (concat "mail-header-" header))))
     (dolist (d (if (eq backward 'all)
 		   gnus-newsgroup-data
 		 (gnus-data-find-list
@@ -12650,7 +12643,7 @@ If REVERSE, save parts that do not match TYPE."
 	      ;; If we fetched by Message-ID and the article came from
 	      ;; a different group (or server), we fudge some bogus
 	      ;; article numbers for this article.
-	      (mail-header-set-number header gnus-reffed-article-number))
+	      (setf (mail-header-number header) gnus-reffed-article-number))
 	    (with-current-buffer gnus-summary-buffer
 	      (cl-decf gnus-reffed-article-number)
 	      (gnus-remove-header (mail-header-number header))
