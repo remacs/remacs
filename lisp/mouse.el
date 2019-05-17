@@ -2402,6 +2402,10 @@ highlight the original region when
 `mouse-drag-and-drop-region-show-cursor' is non-nil."
   :version "26.1")
 
+(declare-function rectangle-dimensions "rect" (start end))
+(declare-function rectangle-position-as-coordinates "rect" (position))
+(declare-function rectangle-intersect-p "rect" (pos1 size1 pos2 size2))
+
 (defun mouse-drag-and-drop-region (event)
   "Move text in the region to point where mouse is dragged to.
 The transportation of text is also referred as `drag and drop'.
