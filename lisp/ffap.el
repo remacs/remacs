@@ -513,7 +513,9 @@ When using jka-compr (a.k.a. `auto-compression-mode'), the returned
 name may have a suffix added from `ffap-compression-suffixes'.
 The optional NOMODIFY argument suppresses the extra search."
   (cond
-   ((not file) nil)			; quietly reject nil
+   ((or (not file)			; quietly reject nil
+	(zerop (length file)))		; and also ""
+    nil)
    ((file-exists-p file) file)		; try unmodified first
    ;; three reasons to suppress search:
    (nomodify nil)
@@ -1326,6 +1328,7 @@ which may actually result in an URL rather than a filename."
 	 ;; If it contains a colon, get rid of it (and return if exists)
 	 ((and (string-match path-separator name)
 	       (setq name (ffap-string-at-point 'nocolon))
+	       (> (length name) 0)
 	       (ffap-file-exists-string name)))
 	 ;; File does not exist, try the alist:
 	 ((let ((alist ffap-alist) tem try case-fold-search)
