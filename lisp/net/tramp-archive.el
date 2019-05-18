@@ -129,6 +129,8 @@
 (setq tramp-archive-enabled tramp-gvfs-enabled)
 
 ;; <https://github.com/libarchive/libarchive/wiki/LibarchiveFormats>
+;; Note: "arc" and "zoo" are supported by `archive-mode', but they
+;; don't work here.
 ;;;###autoload
 (defconst tramp-archive-suffixes
   ;; "cab", "lzh", "msu" and "zip" are included with lower and upper
