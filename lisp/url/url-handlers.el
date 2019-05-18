@@ -299,7 +299,8 @@ accessible."
 (defun url-insert (buffer &optional beg end)
   "Insert the body of a URL object.
 BUFFER should be a complete URL buffer as returned by `url-retrieve'.
-If the headers specify a coding-system, it is applied to the body before it is inserted.
+If the headers specify a coding-system (and current buffer is multibyte),
+it is applied to the body before it is inserted.
 Returns a list of the form (SIZE CHARSET), where SIZE is the size in bytes
 of the inserted text and CHARSET is the charset that was specified in the header,
 or nil if none was found.
@@ -311,12 +312,13 @@ They count bytes from the beginning of the body."
                      (buffer-substring (+ (point-min) beg)
                                        (if end (+ (point-min) end) (point-max)))
 		   (buffer-string))))
-         (charset (mail-content-type-get (mm-handle-type handle)
-                                          'charset)))
+         (charset (if enable-multibyte-characters
+                      (mail-content-type-get (mm-handle-type handle)
+                                             'charset))))
     (mm-destroy-parts handle)
-    (if charset
-        (insert (mm-decode-string data (mm-charset-to-coding-system charset)))
-      (insert data))
+    (insert (if charset
+                (mm-decode-string data (mm-charset-to-coding-system charset))
+              data))
     (list (length data) charset)))
 
 (defvar url-http-codes)
@@ -349,23 +351,10 @@ if it had been inserted from a file named URL."
 (defun url-insert-file-contents (url &optional visit beg end replace)
   (let ((buffer (url-retrieve-synchronously url)))
     (unless buffer (signal 'file-error (list url "No Data")))
-    (with-current-buffer buffer
+    (when (fboundp 'url-http--insert-file-helper)
       ;; XXX: This is HTTP/S specific and should be moved to url-http
       ;; instead.  See bug#17549.
-      (when (bound-and-true-p url-http-response-status)
-        ;; Don't signal an error if VISIT is non-nil, because
-        ;; 'insert-file-contents' doesn't.  This is required to
-        ;; support, e.g., 'browse-url-emacs', which is a fancy way of
-        ;; visiting the HTML source of a URL: in that case, we want to
-        ;; display a file buffer even if the URL does not exist and
-        ;; 'url-retrieve-synchronously' returns 404 or whatever.
-        (unless (or visit
-                    (and (>= url-http-response-status 200)
-                         (< url-http-response-status 300)))
-          (let ((desc (nth 2 (assq url-http-response-status url-http-codes))))
-            (kill-buffer buffer)
-            ;; Signal file-error per bug#16733.
-            (signal 'file-error (list url desc))))))
+      (url-http--insert-file-helper buffer url visit))
     (url-insert-buffer-contents buffer url visit beg end replace)))
 
 (put 'insert-file-contents 'url-file-handlers 'url-insert-file-contents)
