@@ -32,6 +32,7 @@
 //! `&str`, and this module regrettably contains adapted copies of
 //! stretches of `std::str` functions.
 
+use std::convert::TryFrom;
 use std::fmt;
 use std::ptr;
 use std::slice;
@@ -42,31 +43,284 @@ use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     obarray::LispObarrayRef,
-    remacs_sys::Qstringp,
     remacs_sys::{
         char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval, Lisp_String, Lisp_Type,
     },
     remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
+    remacs_sys::{Qcharacterp, Qstringp},
     symbols::LispSymbolRef,
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
-// cannot use `char`, it takes values out of its range
-pub type Codepoint = u32;
-
 /// Maximum character code
-pub const MAX_CHAR: Codepoint = (1 << char_bits::CHARACTERBITS as usize) - 1;
+pub const MAX_CHAR: u32 = (1 << char_bits::CHARACTERBITS as usize) - 1;
 
-/// Maximum character codes for several encoded lengths
-pub const MAX_1_BYTE_CHAR: Codepoint = 0x7F;
-pub const MAX_2_BYTE_CHAR: Codepoint = 0x7FF;
-pub const MAX_3_BYTE_CHAR: Codepoint = 0xFFFF;
-pub const MAX_4_BYTE_CHAR: Codepoint = 0x1F_FFFF;
-pub const MAX_5_BYTE_CHAR: Codepoint = 0x3F_FF7F;
+// Maximum character codes for several encoded lengths
+/// Maximum value for a single byte codepoint
+pub const MAX_1_BYTE_CHAR: u32 = 0x7F;
+
+/// Minimum value for a two byte codepoint
+pub const MIN_2_BYTE_CHAR: u32 = 0x80;
+/// Minimum value for a two byte codepoint
+pub const MAX_2_BYTE_CHAR: u32 = 0x7FF;
+
+/// Minimum value for a three byte codepoint
+pub const MIN_3_BYTE_CHAR: u32 = 0x800;
+/// Maximum value for a three byte codepoint
+pub const MAX_3_BYTE_CHAR: u32 = 0xFFFF;
+
+/// Minimum value for a four byte codepoint
+pub const MIN_4_BYTE_CHAR: u32 = 0x10000;
+/// Maximum value for a four byte codepoint
+pub const MAX_4_BYTE_CHAR: u32 = 0x1F_FFFF;
+
+/// Minimum value for a five byte codepoint
+pub const MIN_5_BYTE_CHAR: u32 = 0x20_0000;
+/// Maximum value for a five byte codepoint
+pub const MAX_5_BYTE_CHAR: u32 = 0x3F_FF7F;
+
+pub const MIN_BYTE8_CHAR: u32 = 0x3F_FF80;
+pub const MAX_BYTE8_CHAR: u32 = 0x3F_FFFF;
 
 /// Maximum length of a single encoded codepoint
 pub const MAX_MULTIBYTE_LENGTH: usize = 5;
+
+const BYTE8_OFFSET: u32 = 0x3F_FF00;
+
+// cannot use `char`, it takes values out of its range
+#[repr(transparent)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Codepoint(u32);
+
+impl Codepoint {
+    // Equivalent to BYTE8_TO_CHAR
+    /// Create a codepoint from a raw byte. If non-ascii, byte8 encode it.
+    pub fn from_raw(byte: u8) -> Codepoint {
+        match Codepoint::from(byte) {
+            cp if cp.is_ascii() => cp,
+            cp => Codepoint::from(cp.0 + 0x3F_FF00),
+        }
+    }
+
+    // Equivalent to ASCII_CHAR_P
+    /// Whether the character is an ASCII value
+    pub const fn is_ascii(self) -> bool {
+        self.0 < MIN_2_BYTE_CHAR
+    }
+
+    // Equivalent to SINGLE_BYTE_CHAR_P
+    /// Whether the character is a single byte value (i.e. less than 256/0x100)
+    pub const fn is_single_byte(self) -> bool {
+        self.0 < 0x100
+    }
+
+    // Equivalent to CHAR_BYTE8_P
+    /// Whether the character is a byte8 value, i.e. an encoded raw 8bit byte.
+    pub const fn is_byte8(self) -> bool {
+        self.0 >= MIN_BYTE8_CHAR
+    }
+
+    /// The amount of bytes needed to represent the codepoint's multibyte form.
+    pub fn len_bytes(self) -> usize {
+        match self.0 {
+            0..=MAX_1_BYTE_CHAR => 1,
+            MIN_2_BYTE_CHAR..=MAX_2_BYTE_CHAR => 2,
+            MIN_3_BYTE_CHAR..=MAX_3_BYTE_CHAR => 3,
+            MIN_4_BYTE_CHAR..=MAX_4_BYTE_CHAR => 4,
+            MIN_5_BYTE_CHAR..=MAX_5_BYTE_CHAR => 5,
+            MIN_BYTE8_CHAR..=MAX_BYTE8_CHAR => 2,
+            _ => invalid_character(self),
+        }
+    }
+
+    /// Get the integer value of the codepoint
+    pub const fn val(self) -> u32 {
+        self.0
+    }
+
+    // Equivalent to CHAR_TO_BYTE8
+    /// Extract the encoded byte8 or raw byte value.
+    ///
+    /// Note that this does not check if the codepoint is within the
+    /// appropriate range.
+    pub fn to_byte8_unchecked(self) -> u8 {
+        match self.is_byte8() {
+            true => (self.0 - BYTE8_OFFSET) as u8,
+            false => (self.0 & 0xFF) as u8,
+        }
+    }
+
+    // Equivalent to CHAR_TO_BYTE_SAFE
+    /// Return the raw 8-bit byte for the character, or None if it doesn't
+    /// correnspond to a byte.
+    pub fn to_byte8(self) -> Option<u8> {
+        if self.is_ascii() {
+            Some(self.0 as u8)
+        } else if self.is_byte8() {
+            Some((self.0 - BYTE8_OFFSET) as u8)
+        } else {
+            None
+        }
+    }
+
+    // Equivalent to UNIBYTE_TO_CHAR
+    pub fn unibyte_to_char(self) -> Codepoint {
+        match self.is_ascii() {
+            true => self,
+            false => Codepoint::from_raw(self.0 as u8),
+        }
+    }
+
+    // Equivalent to MAKE_CHAR_MULTIBYTE
+    /// Transform an 8-bit codepoint to its byte8 encoded form.
+    pub fn to_multibyte(self) -> Codepoint {
+        debug_assert!(self.is_single_byte());
+        self.unibyte_to_char()
+    }
+
+    // Equivalent to CHAR_STRING
+    /// Write the codepoint to the given slice. The slice needs to be big
+    /// enough to hold the resulting bytes. Returns the amount of bytes written
+    pub fn write_to(self, to: &mut [u8]) -> usize {
+        let cp: u32 = self.into();
+        if cp <= MAX_1_BYTE_CHAR.into() {
+            to[0] = cp as u8;
+            1
+        } else if cp <= MAX_2_BYTE_CHAR {
+            // note: setting later bytes first to avoid multiple bound checks
+            to[1] = 0x80 | (cp & 0x3F) as u8;
+            to[0] = 0xC0 | (cp >> 6) as u8;
+            2
+        } else if cp <= MAX_3_BYTE_CHAR {
+            to[2] = 0x80 | (cp & 0x3F) as u8;
+            to[1] = 0x80 | ((cp >> 6) & 0x3F) as u8;
+            to[0] = 0xE0 | (cp >> 12) as u8;
+            3
+        } else if cp <= MAX_4_BYTE_CHAR {
+            to[3] = 0x80 | (cp & 0x3F) as u8;
+            to[2] = 0x80 | ((cp >> 6) & 0x3F) as u8;
+            to[1] = 0x80 | ((cp >> 12) & 0x3F) as u8;
+            to[0] = 0xF0 | (cp >> 18) as u8;
+            4
+        } else if cp <= MAX_5_BYTE_CHAR {
+            to[4] = 0x80 | (cp & 0x3F) as u8;
+            to[3] = 0x80 | ((cp >> 6) & 0x3F) as u8;
+            to[2] = 0x80 | ((cp >> 12) & 0x3F) as u8;
+            to[1] = 0x80 | ((cp >> 18) & 0x0F) as u8;
+            to[0] = 0xF8;
+            5
+        } else if cp <= MAX_CHAR {
+            let b = Codepoint::from(cp).to_byte8_unchecked();
+            to[1] = 0x80 | (b & 0x3F);
+            to[0] = 0xC0 | ((b >> 6) & 1);
+            2
+        } else {
+            error!("Invalid character: {:#x}", cp)
+        }
+    }
+
+    /// If character code C has modifier masks, reflect them to the character
+    /// code if possible. Return the resulting code.
+    pub fn resolve_modifier_mask(self) -> Codepoint {
+        let mut cp = self.0;
+        // A non-ASCII character can't reflect modifier bits to the code.
+        if !Codepoint::from(cp & !char_bits::CHAR_MODIFIER_MASK).is_ascii() {
+            return Codepoint::from(cp);
+        }
+        let ascii = (cp & 0x7F) as u8;
+        // For Meta, Shift, and Control modifiers, we need special care.
+        if cp & char_bits::CHAR_SHIFT != 0 {
+            let unshifted = cp & !char_bits::CHAR_SHIFT;
+            // Shift modifier is valid only with [A-Za-z].
+            // Shift modifier for control characters and SPC is ignored.
+            if (ascii >= b'A' && ascii <= b'Z') || ascii <= b' ' {
+                cp = unshifted;
+            } else if ascii >= b'a' && ascii <= b'z' {
+                cp = unshifted & !0x20;
+            }
+        }
+        // Simulate the code in lread.c.
+        if cp & char_bits::CHAR_CTL != 0 {
+            // Allow `\C- ' and `\C-?'.
+            if ascii == b' ' {
+                cp &= !0x7F & !char_bits::CHAR_CTL;
+            } else if ascii == b'?' {
+                cp = 0x7F | (cp & !0x7F & !char_bits::CHAR_CTL);
+            } else if ascii >= b'@' && ascii <= b'_' {
+                // ASCII control chars are made from letters (both cases),
+                // as well as the non-letters within 0o100...0o137.
+                cp &= 0x1F | (!0x7F & !char_bits::CHAR_CTL);
+            }
+        }
+        Codepoint::from(cp)
+    }
+}
+
+impl std::fmt::Display for Codepoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        match char::try_from(self.0) {
+            Ok(ch) => std::fmt::Display::fmt(&ch, f),
+            Err(_) => std::fmt::LowerHex::fmt(self, f),
+        }
+    }
+}
+
+impl std::fmt::LowerHex for Codepoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        std::fmt::LowerHex::fmt(&self.0, f)
+    }
+}
+
+impl From<u8> for Codepoint {
+    fn from(u: u8) -> Self {
+        Self(u32::from(u))
+    }
+}
+impl From<u16> for Codepoint {
+    fn from(u: u16) -> Self {
+        Self(u32::from(u))
+    }
+}
+impl From<u32> for Codepoint {
+    fn from(u: u32) -> Self {
+        Self(u)
+    }
+}
+impl From<char> for Codepoint {
+    fn from(c: char) -> Self {
+        Self(u32::from(c))
+    }
+}
+impl From<Codepoint> for u32 {
+    fn from(c: Codepoint) -> Self {
+        c.0
+    }
+}
+impl From<Codepoint> for i64 {
+    fn from(c: Codepoint) -> Self {
+        c.0.into()
+    }
+}
+impl From<Codepoint> for u64 {
+    fn from(c: Codepoint) -> Self {
+        c.0.into()
+    }
+}
+impl From<Codepoint> for LispObject {
+    fn from(c: Codepoint) -> Self {
+        c.0.into()
+    }
+}
+
+impl From<LispObject> for Codepoint {
+    fn from(o: LispObject) -> Self {
+        match o.as_fixnum() {
+            Some(i) if 0 <= i && i <= EmacsInt::from(MAX_CHAR) => Codepoint::from(i as u32),
+            _ => wrong_type!(Qcharacterp, o),
+        }
+    }
+}
 
 // String support (LispType == 4)
 
@@ -424,15 +678,8 @@ impl PartialEq<LispObject> for LispSymbolOrString {
     }
 }
 
-pub const fn is_ascii(c: Codepoint) -> bool {
-    c < 0x80
-}
-
-/// Nonzero iff C is a character of code less than 0x100.
-///
-/// Same as the `SINGLE_BYTE_CHAR_P` macro.
-pub const fn is_single_byte_char(c: Codepoint) -> bool {
-    c < 0x100
+fn invalid_character(cp: Codepoint) -> ! {
+    error!("Invalid character: {:#x}", cp)
 }
 
 fn string_overflow() -> ! {
@@ -446,7 +693,7 @@ fn string_overflow() -> ! {
 pub unsafe extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t {
     let slice = slice::from_raw_parts(ptr, len as usize);
     slice.iter().fold(0, |total, &byte| {
-        let n = if is_ascii(Codepoint::from(byte)) {
+        let n = if Codepoint::from(byte).is_ascii() {
             1
         } else {
             2
@@ -455,121 +702,11 @@ pub unsafe extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdi
     })
 }
 
-/// Same as the `BYTE8_TO_CHAR` macro.
-pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
-    if is_ascii(Codepoint::from(byte)) {
-        Codepoint::from(byte)
-    } else {
-        Codepoint::from(byte) + 0x3F_FF00
-    }
-}
-
-/// Same as the `CHAR_TO_BYTE8` macro.
-pub const fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
-    (cp - 0x3F_FF00) as c_uchar
-}
-
-/// Same as the `CHAR_TO_BYTE_SAFE` macro.
-/// Return the raw 8-bit byte for character CP,
-/// or -1 if CP doesn't correspond to a byte.
-pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
-    if is_ascii(cp) {
-        EmacsInt::from(cp)
-    } else if cp > MAX_5_BYTE_CHAR {
-        EmacsInt::from(raw_byte_from_codepoint(cp))
-    } else {
-        -1
-    }
-}
-
-/// `UNIBYTE_TO_CHAR` macro
-pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
-    if is_ascii(cp) {
-        cp
-    } else {
-        raw_byte_codepoint(cp as c_uchar)
-    }
-}
-
-/// `MAKE_CHAR_MULTIBYTE` macro
-pub fn make_char_multibyte(cp: Codepoint) -> Codepoint {
-    debug_assert!(cp < 256);
-    unibyte_to_char(cp)
-}
-
-/// Same as the `CHAR_STRING` macro.
-pub fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
-    if cp <= MAX_1_BYTE_CHAR {
-        to[0] = cp as c_uchar;
-        1
-    } else if cp <= MAX_2_BYTE_CHAR {
-        // note: setting later bytes first to avoid multiple bound checks
-        to[1] = 0x80 | (cp & 0x3F) as c_uchar;
-        to[0] = 0xC0 | (cp >> 6) as c_uchar;
-        2
-    } else if cp <= MAX_3_BYTE_CHAR {
-        to[2] = 0x80 | (cp & 0x3F) as c_uchar;
-        to[1] = 0x80 | ((cp >> 6) & 0x3F) as c_uchar;
-        to[0] = 0xE0 | (cp >> 12) as c_uchar;
-        3
-    } else if cp <= MAX_4_BYTE_CHAR {
-        to[3] = 0x80 | (cp & 0x3F) as c_uchar;
-        to[2] = 0x80 | ((cp >> 6) & 0x3F) as c_uchar;
-        to[1] = 0x80 | ((cp >> 12) & 0x3F) as c_uchar;
-        to[0] = 0xF0 | (cp >> 18) as c_uchar;
-        4
-    } else if cp <= MAX_5_BYTE_CHAR {
-        to[4] = 0x80 | (cp & 0x3F) as c_uchar;
-        to[3] = 0x80 | ((cp >> 6) & 0x3F) as c_uchar;
-        to[2] = 0x80 | ((cp >> 12) & 0x3F) as c_uchar;
-        to[1] = 0x80 | ((cp >> 18) & 0x0F) as c_uchar;
-        to[0] = 0xF8;
-        5
-    } else if cp <= MAX_CHAR {
-        let b = raw_byte_from_codepoint(cp);
-        to[1] = 0x80 | (b & 0x3F);
-        to[0] = 0xC0 | ((b >> 6) & 1);
-        2
-    } else {
-        error!("Invalid character: {:#x}", cp)
-    }
-}
-
 /// If character code C has modifier masks, reflect them to the
 /// character code if possible.  Return the resulting code.
 #[no_mangle]
 pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
-    let mut cp = ch as Codepoint;
-    // A non-ASCII character can't reflect modifier bits to the code.
-    if !is_ascii(cp & !char_bits::CHAR_MODIFIER_MASK) {
-        return EmacsInt::from(cp);
-    }
-    let ascii = (cp & 0x7F) as u8;
-    // For Meta, Shift, and Control modifiers, we need special care.
-    if cp & char_bits::CHAR_SHIFT != 0 {
-        let unshifted = cp & !char_bits::CHAR_SHIFT;
-        // Shift modifier is valid only with [A-Za-z].
-        // Shift modifier for control characters and SPC is ignored.
-        if (ascii >= b'A' && ascii <= b'Z') || ascii <= b' ' {
-            cp = unshifted;
-        } else if ascii >= b'a' && ascii <= b'z' {
-            cp = unshifted & !0x20;
-        }
-    }
-    // Simulate the code in lread.c.
-    if cp & char_bits::CHAR_CTL != 0 {
-        // Allow `\C- ' and `\C-?'.
-        if ascii == b' ' {
-            cp &= !0x7F & !char_bits::CHAR_CTL;
-        } else if ascii == b'?' {
-            cp = 0x7F | (cp & !0x7F & !char_bits::CHAR_CTL);
-        } else if ascii >= b'@' && ascii <= b'_' {
-            // ASCII control chars are made from letters (both cases),
-            // as well as the non-letters within 0o100...0o137.
-            cp &= 0x1F | (!0x7F & !char_bits::CHAR_CTL);
-        }
-    }
-    EmacsInt::from(cp)
+    Codepoint::from(ch as u32).resolve_modifier_mask().0 as EmacsInt
 }
 
 /// Store multibyte form of character CP at TO.  If CP has modifier bits,
@@ -577,10 +714,10 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
 #[no_mangle]
 pub unsafe extern "C" fn char_string(mut cp: c_uint, to: *mut c_uchar) -> c_int {
     if cp & char_bits::CHAR_MODIFIER_MASK != 0 {
-        cp = char_resolve_modifier_mask(EmacsInt::from(cp)) as Codepoint;
+        cp = char_resolve_modifier_mask(EmacsInt::from(cp)) as c_uint;
         cp &= !char_bits::CHAR_MODIFIER_MASK;
     }
-    write_codepoint(slice::from_raw_parts_mut(to, MAX_MULTIBYTE_LENGTH), cp) as c_int
+    Codepoint::from(cp).write_to(slice::from_raw_parts_mut(to, MAX_MULTIBYTE_LENGTH)) as c_int
 }
 
 /// Convert unibyte text at STR of BYTES bytes to a multibyte text
@@ -599,7 +736,7 @@ pub unsafe extern "C" fn str_to_multibyte(
     // first, search ASCII-only prefix that we can skip processing
     let mut start = 0;
     for (idx, &byte) in slice.iter().enumerate() {
-        if !is_ascii(Codepoint::from(byte)) {
+        if !Codepoint::from(byte).is_ascii() {
             start = idx;
             break;
         }
@@ -620,7 +757,7 @@ pub unsafe extern "C" fn str_to_multibyte(
     let mut to = 0;
     for from in offset..slice.len() {
         let byte = slice[from];
-        to += write_codepoint(&mut slice[to..], raw_byte_codepoint(byte));
+        to += Codepoint::from_raw(byte).write_to(&mut slice[to..]);
     }
     (start + to) as ptrdiff_t
 }
@@ -658,40 +795,33 @@ fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize>
 
 /// Same as the `STRING_CHAR_ADVANCE` macro.
 pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
-    let head = Codepoint::from(slice[0]);
+    let head = u32::from(slice[0]);
     if head & 0x80 == 0 {
-        (head, 1)
+        (head.into(), 1)
     } else if head & 0x20 == 0 {
-        let cp = ((head & 0x1F) << 6) | (Codepoint::from(slice[1]) & 0x3F);
+        let mut cp = ((head & 0x1F) << 6) | (u32::from(slice[1]) & 0x3F);
         if head < 0xC2 {
-            (cp | 0x3F_FF80, 2)
-        } else {
-            (cp, 2)
-        }
+            cp |= 0x3F_FF80
+        };
+        (cp.into(), 2)
     } else if head & 0x10 == 0 {
-        (
-            ((head & 0x0F) << 12)
-                | ((Codepoint::from(slice[1]) & 0x3F) << 6)
-                | (Codepoint::from(slice[2]) & 0x3F),
-            3,
-        )
+        let cp = ((head & 0x0F) << 12)
+            | ((u32::from(slice[1]) & 0x3F) << 6)
+            | (u32::from(slice[2]) & 0x3F);
+        (cp.into(), 3)
     } else if head & 0x08 == 0 {
-        (
-            ((head & 0x07) << 18)
-                | ((Codepoint::from(slice[1]) & 0x3F) << 12)
-                | ((Codepoint::from(slice[2]) & 0x3F) << 6)
-                | (Codepoint::from(slice[3]) & 0x3F),
-            4,
-        )
+        let cp = ((head & 0x07) << 18)
+            | ((u32::from(slice[1]) & 0x3F) << 12)
+            | ((u32::from(slice[2]) & 0x3F) << 6)
+            | (u32::from(slice[3]) & 0x3F);
+        (cp.into(), 4)
     } else {
         // the relevant bytes of "head" are always zero
-        (
-            ((Codepoint::from(slice[1]) & 0x3F) << 18)
-                | ((Codepoint::from(slice[2]) & 0x3F) << 12)
-                | ((Codepoint::from(slice[3]) & 0x3F) << 6)
-                | (Codepoint::from(slice[4]) & 0x3F),
-            5,
-        )
+        let cp = ((u32::from(slice[1]) & 0x3F) << 18)
+            | ((u32::from(slice[2]) & 0x3F) << 12)
+            | ((u32::from(slice[3]) & 0x3F) << 6)
+            | (u32::from(slice[4]) & 0x3F);
+        (cp.into(), 5)
     }
 }
 
@@ -705,20 +835,20 @@ pub unsafe fn string_char_and_length(ptr: *const u8) -> (Codepoint, usize) {
     match multibyte_length_by_head(head) {
         1 => (head.into(), 1),
         2 => {
-            let cp = (Codepoint::from((head & 0x1F) << 6) | Codepoint::from(*ptr.add(1) & 0x3F))
+            let cp = (u32::from((head & 0x1F) << 6) | u32::from(*ptr.add(1) & 0x3F))
                 + if head < 0xC2 { 0x3F_FF_80 } else { 0 };
-            (cp, 2)
+            (cp.into(), 2)
         }
         3 => {
-            let cp = (Codepoint::from(head & 0x0F) << 12)
-                | ((Codepoint::from(*ptr.add(1) & 0x3F)) << 6)
-                | Codepoint::from(*ptr.add(2) & 0x3F);
-            (cp, 3)
+            let cp = (u32::from(head & 0x0F) << 12)
+                | ((u32::from(*ptr.add(1) & 0x3F)) << 6)
+                | u32::from(*ptr.add(2) & 0x3F);
+            (cp.into(), 3)
         }
         _ => {
             let mut len = 0;
             let cp = string_char(ptr, ptr::null_mut(), &mut len);
-            (cp as Codepoint, len as usize)
+            ((cp as u32).into(), len as usize)
         }
     }
 }
@@ -855,7 +985,7 @@ pub unsafe extern "C" fn str_as_multibyte(
                 }
                 None => {
                     let byte = slice[from];
-                    to += write_codepoint(&mut slice[to..], raw_byte_codepoint(byte));
+                    to += Codepoint::from_raw(byte).write_to(&mut slice[to..]);
                     from += 1;
                 }
             }
@@ -923,7 +1053,7 @@ pub unsafe extern "C" fn string_char(
     if !advanced.is_null() {
         *advanced = ptr.add(cplen);
     }
-    cp as c_int
+    cp.0 as c_int
 }
 
 /// Convert eight-bit chars in SRC (in multibyte form) to the
@@ -942,29 +1072,13 @@ pub unsafe extern "C" fn str_to_unibyte(
     for i in 0..chars {
         let (cp, cplen) = multibyte_char_at(srcslice);
         srcslice = &srcslice[cplen..];
-        dstslice[i as usize] = if cp > MAX_5_BYTE_CHAR {
-            raw_byte_from_codepoint(cp)
-        } else if !is_ascii(cp) {
+        dstslice[i as usize] = if cp.val() > MAX_5_BYTE_CHAR {
+            cp.to_byte8_unchecked()
+        } else if !cp.is_ascii() {
             return i;
         } else {
-            cp as c_uchar
+            cp.0 as c_uchar
         };
     }
     chars
-}
-
-pub const fn char_byte8_p(c: Codepoint) -> bool {
-    c > MAX_5_BYTE_CHAR
-}
-
-pub fn char_to_byte8(c: Codepoint) -> u8 {
-    if char_byte8_p(c) {
-        (c - 0x003F_FF00) as u8
-    } else {
-        (c & 0xFF) as u8
-    }
-}
-
-pub const fn single_byte_charp(c: Codepoint) -> bool {
-    c < 0x100
 }

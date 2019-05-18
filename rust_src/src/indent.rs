@@ -107,7 +107,11 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
-                insert_char(' ' as Codepoint, Some((goal - prev_col) as EmacsInt), true);
+                insert_char(
+                    Codepoint::from(' '),
+                    Some((goal - prev_col) as EmacsInt),
+                    true,
+                );
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
@@ -163,13 +167,13 @@ pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
     if unsafe { globals.indent_tabs_mode } {
         let n = mincol / tab_width - fromcol / tab_width;
         if n != 0 {
-            insert_char('\t' as Codepoint, Some(n), true);
+            insert_char(Codepoint::from('\t'), Some(n), true);
             fromcol = (mincol / tab_width) * tab_width;
         }
     }
 
     let missing = mincol - fromcol;
-    insert_char(' ' as Codepoint, Some(missing), true);
+    insert_char(Codepoint::from(' '), Some(missing), true);
 
     unsafe {
         last_known_column = mincol as isize;

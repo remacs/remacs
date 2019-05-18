@@ -19,12 +19,9 @@ use crate::{
     indent::invalidate_current_column,
     lisp::LispObject,
     marker::{marker_position_lisp, point_marker, set_point_from_marker},
-    multibyte::{
-        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, raw_byte_from_codepoint,
-        unibyte_to_char, write_codepoint, MAX_MULTIBYTE_LENGTH,
-    },
-    multibyte::{Codepoint, LispStringRef},
-    numbers::LispNumber,
+    multibyte::MAX_MULTIBYTE_LENGTH,
+    multibyte::{multibyte_char_at, Codepoint, LispStringRef},
+    numbers::{check_range, LispNumber},
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, chars_in_text, current_message, del_range, del_range_1,
@@ -226,16 +223,15 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
 /// from adjoining text, if those properties are sticky.
 #[lisp_fn(min = "2")]
 pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
-    if byte < 0 || byte > 255 {
-        args_out_of_range!(byte, 0, 255)
-    }
+    check_range(byte, 0, 255);
+    let byte = byte as u8;
     let buf = ThreadState::current_buffer_unchecked();
-    let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
-        EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
+    let toinsert = if buf.multibyte_characters_enabled() {
+        Codepoint::from_raw(byte)
     } else {
-        byte
+        Codepoint::from(byte)
     };
-    insert_char(toinsert as Codepoint, count, inherit);
+    insert_char(toinsert, count, inherit);
 }
 
 /// Insert COUNT copies of CHARACTER.
@@ -278,7 +274,7 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
     }
 
     let mut str = [0_u8; MAX_MULTIBYTE_LENGTH];
-    let len = write_codepoint(&mut str[..], character);
+    let len = character.write_to(&mut str[..]);
 
     if BUF_BYTES_MAX / (len as isize) < (count as isize) {
         unsafe { buffer_overflow() };
@@ -444,7 +440,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 pub fn char_to_string(character: LispObject) -> LispObject {
     let c = character.as_character_or_error();
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
-    let len = write_codepoint(&mut buffer[..], c);
+    let len = c.write_to(&mut buffer[..]);
 
     unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, len as isize) }
 }
@@ -783,15 +779,15 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
     // now.  See Bug#17011, and also see casefiddle.c's casify_object,
     // which has a similar problem.
     if cur_buf.multibyte_characters_enabled() {
-        if is_single_byte_char(c1) {
-            c1 = unibyte_to_char(c1);
+        if c1.is_single_byte() {
+            c1 = c1.unibyte_to_char();
         }
-        if is_single_byte_char(c2) {
-            c2 = unibyte_to_char(c2);
+        if c2.is_single_byte() {
+            c2 = c2.unibyte_to_char();
         }
     }
 
-    unsafe { downcase(c1 as c_int) == downcase(c2 as c_int) }
+    unsafe { downcase(c1.val() as c_int) == downcase(c2.val() as c_int) }
 }
 
 /// Return the effective uid of Emacs.
@@ -1591,13 +1587,13 @@ fn general_insert_function<IF, IFSF>(
 {
     for &val in args {
         if val.is_character() {
-            let c = val.as_natnum_or_error() as Codepoint;
+            let c = Codepoint::from(val);
             let mut s = [0 as c_uchar; MAX_MULTIBYTE_LENGTH];
             let multibyte = ThreadState::current_buffer_unchecked().multibyte_characters_enabled();
             let len = if multibyte {
-                write_codepoint(&mut s, c)
+                c.write_to(&mut s)
             } else {
-                s[0] = raw_byte_from_codepoint(c);
+                s[0] = c.to_byte8_unchecked();
                 1
             };
             insert_func(&s[..len]);
