@@ -3643,7 +3643,6 @@ extern void init_fringe_once (void);
 
 /* Defined in image.c.  */
 extern int x_bitmap_mask (struct frame *, ptrdiff_t);
-extern void reset_image_types (void);
 extern void syms_of_image (void);
 
 #ifdef HAVE_JSON

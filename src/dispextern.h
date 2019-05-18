@@ -3036,7 +3036,7 @@ struct image
   int hmargin, vmargin;
 
   /* Reference to the type of the image.  */
-  struct image_type *type;
+  struct image_type const *type;
 
   /* True means that loading the image failed.  Don't try again.  */
   bool load_failed_p;

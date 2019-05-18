@@ -548,82 +548,29 @@ struct image_type
   /* Free resources of image IMG which is used on frame F.  */
   void (*free) (struct frame *f, struct image *img);
 
+#ifdef WINDOWSNT
   /* Initialization function (used for dynamic loading of image
      libraries on Windows), or NULL if none.  */
   bool (*init) (void);
-
-  /* Next in list of all supported image types.  */
-  struct image_type *next;
+  /* An initializer for the init field.  */
+# define IMAGE_TYPE_INIT(f) f
+#else
+# define IMAGE_TYPE_INIT(f)
+#endif
 };
-
-/* List of supported image types.  Use define_image_type to add new
-   types.  Use lookup_image_type to find a type for a given symbol.  */
-
-static struct image_type *image_types;
 
 /* Forward function prototypes.  */
 
-static struct image_type *lookup_image_type (Lisp_Object);
+static struct image_type const *lookup_image_type (Lisp_Object);
 static void image_laplace (struct frame *, struct image *);
 static void image_emboss (struct frame *, struct image *);
 static void image_build_heuristic_mask (struct frame *, struct image *,
                                     Lisp_Object);
-#ifdef WINDOWSNT
-#define CACHE_IMAGE_TYPE(type, status) \
-  do { Vlibrary_cache = Fcons (Fcons (type, status), Vlibrary_cache); } while (0)
-#else
-#define CACHE_IMAGE_TYPE(type, status)
-#endif
 
-#define ADD_IMAGE_TYPE(type) \
-  do { Vimage_types = Fcons (type, Vimage_types); } while (0)
-
-/* Define a new image type from TYPE.  This adds a copy of TYPE to
-   image_types and caches the loading status of TYPE.  */
-
-static struct image_type *
-define_image_type (struct image_type *type)
+static void
+add_image_type (Lisp_Object type)
 {
-  struct image_type *p = NULL;
-  int new_type = type->type;
-  bool type_valid = true;
-
-  block_input ();
-
-  for (p = image_types; p; p = p->next)
-    if (p->type == new_type)
-      goto done;
-
-  if (type->init)
-    {
-#if defined HAVE_NTGUI && defined WINDOWSNT
-      /* If we failed to load the library before, don't try again.  */
-      Lisp_Object tested = Fassq (builtin_lisp_symbol (new_type),
-				  Vlibrary_cache);
-      if (CONSP (tested) && NILP (XCDR (tested)))
-	type_valid = false;
-      else
-#endif
-	{
-	  type_valid = type->init ();
-	  CACHE_IMAGE_TYPE (builtin_lisp_symbol (new_type),
-			    type_valid ? Qt : Qnil);
-	}
-    }
-
-  if (type_valid)
-    {
-      /* Make a copy of TYPE to avoid a bus error in a dumped Emacs.
-         The initialized data segment is read-only.  */
-      p = xmalloc (sizeof *p);
-      *p = *type;
-      p->next = image_types;
-      image_types = p;
-    }
-
- done:
-  unblock_input ();
-  return p;
+  Vimage_types = Fcons (type, Vimage_types);
 }
 
 
@@ -637,29 +584,24 @@ define_image_type (struct image_type *type)
 bool
 valid_image_p (Lisp_Object object)
 {
-  bool valid_p = 0;
-
   if (IMAGEP (object))
     {
-      Lisp_Object tem;
-
-      for (tem = XCDR (object); CONSP (tem); tem = XCDR (tem))
-	if (EQ (XCAR (tem), QCtype))
+      Lisp_Object tail = XCDR (object);
+      FOR_EACH_TAIL_SAFE (tail)
+	if (EQ (XCAR (tail), QCtype))
 	  {
-	    tem = XCDR (tem);
-	    if (CONSP (tem) && SYMBOLP (XCAR (tem)))
+	    tail = XCDR (tail);
+	    if (CONSP (tail))
 	      {
-		struct image_type *type;
-		type = lookup_image_type (XCAR (tem));
+		struct image_type const *type = lookup_image_type (XCAR (tail));
 		if (type)
-		  valid_p = type->valid_p (object);
+		  return type->valid_p (object);
 	      }
-
 	    break;
 	  }
     }
 
-  return valid_p;
+  return false;
 }
 
 
@@ -2575,8 +2517,6 @@ slurp_file (int fd, ptrdiff_t *size)
 			      XBM images
  ***********************************************************************/
 
-static bool xbm_load (struct frame *f, struct image *img);
-static bool xbm_image_p (Lisp_Object object);
 static bool xbm_file_p (Lisp_Object);
 
 
@@ -2618,18 +2558,6 @@ static const struct image_keyword xbm_format[XBM_LAST] =
   {":conversion",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0}
-};
-
-/* Structure describing the image type XBM.  */
-
-static struct image_type xbm_type =
-{
-  SYMBOL_INDEX (Qxbm),
-  xbm_image_p,
-  xbm_load,
-  image_clear_image,
-  NULL,
-  NULL
 };
 
 /* Tokens returned from xbm_scan.  */
@@ -3357,13 +3285,6 @@ xbm_load (struct frame *f, struct image *img)
 			      XPM images
  ***********************************************************************/
 
-#if defined (HAVE_XPM) || defined (HAVE_NS)
-
-static bool xpm_image_p (Lisp_Object object);
-static bool xpm_load (struct frame *f, struct image *img);
-
-#endif /* HAVE_XPM || HAVE_NS */
-
 #ifdef HAVE_XPM
 #ifdef HAVE_NTGUI
 /* Indicate to xpm.h that we don't have Xlib.  */
@@ -3423,24 +3344,6 @@ static const struct image_keyword xpm_format[XPM_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":color-symbols",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_xpm_functions (void);
-#else
-#define init_xpm_functions NULL
-#endif
-
-/* Structure describing the image type XPM.  */
-
-static struct image_type xpm_type =
-{
-  SYMBOL_INDEX (Qxpm),
-  xpm_image_p,
-  xpm_load,
-  image_clear_image,
-  init_xpm_functions,
-  NULL
 };
 
 #ifdef HAVE_X_WINDOWS
@@ -5364,9 +5267,6 @@ image_build_heuristic_mask (struct frame *f, struct image *img,
 		       PBM (mono, gray, color)
  ***********************************************************************/
 
-static bool pbm_image_p (Lisp_Object object);
-static bool pbm_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum pbm_keyword_index
@@ -5402,19 +5302,6 @@ static const struct image_keyword pbm_format[PBM_LAST] =
   {":foreground",	IMAGE_STRING_OR_NIL_VALUE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
-
-/* Structure describing the image type `pbm'.  */
-
-static struct image_type pbm_type =
-{
-  SYMBOL_INDEX (Qpbm),
-  pbm_image_p,
-  pbm_load,
-  image_clear_image,
-  NULL,
-  NULL
-};
-
 
 /* Return true if OBJECT is a valid PBM image specification.  */
 
@@ -5834,11 +5721,6 @@ pbm_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
 
-/* Function prototypes.  */
-
-static bool png_image_p (Lisp_Object object);
-static bool png_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in png_format, below.  */
 
 enum png_keyword_index
@@ -5871,24 +5753,6 @@ static const struct image_keyword png_format[PNG_LAST] =
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_png_functions (void);
-#else
-#define init_png_functions NULL
-#endif
-
-/* Structure describing the image type `png'.  */
-
-static struct image_type png_type =
-{
-  SYMBOL_INDEX (Qpng),
-  png_image_p,
-  png_load,
-  image_clear_image,
-  init_png_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid PNG image specification.  */
@@ -6518,9 +6382,6 @@ png_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_JPEG) || defined (HAVE_NS)
 
-static bool jpeg_image_p (Lisp_Object object);
-static bool jpeg_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum jpeg_keyword_index
@@ -6553,24 +6414,6 @@ static const struct image_keyword jpeg_format[JPEG_LAST] =
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_jpeg_functions (void);
-#else
-#define init_jpeg_functions NULL
-#endif
-
-/* Structure describing the image type `jpeg'.  */
-
-static struct image_type jpeg_type =
-{
-  SYMBOL_INDEX (Qjpeg),
-  jpeg_image_p,
-  jpeg_load,
-  image_clear_image,
-  init_jpeg_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid JPEG image specification.  */
@@ -7150,9 +6993,6 @@ jpeg_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_TIFF) || defined (HAVE_NS)
 
-static bool tiff_image_p (Lisp_Object object);
-static bool tiff_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in tiff_format, below.  */
 
 enum tiff_keyword_index
@@ -7187,24 +7027,6 @@ static const struct image_keyword tiff_format[TIFF_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0},
   {":index",		IMAGE_NON_NEGATIVE_INTEGER_VALUE,	0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_tiff_functions (void);
-#else
-#define init_tiff_functions NULL
-#endif
-
-/* Structure describing the image type `tiff'.  */
-
-static struct image_type tiff_type =
-{
-  SYMBOL_INDEX (Qtiff),
-  tiff_image_p,
-  tiff_load,
-  image_clear_image,
-  init_tiff_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid TIFF image specification.  */
@@ -7634,10 +7456,6 @@ tiff_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_GIF) || defined (HAVE_NS)
 
-static bool gif_image_p (Lisp_Object object);
-static bool gif_load (struct frame *f, struct image *img);
-static void gif_clear_image (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gif_format, below.  */
 
 enum gif_keyword_index
@@ -7672,24 +7490,6 @@ static const struct image_keyword gif_format[GIF_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":index",		IMAGE_NON_NEGATIVE_INTEGER_VALUE,	0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_gif_functions (void);
-#else
-#define init_gif_functions NULL
-#endif
-
-/* Structure describing the image type `gif'.  */
-
-static struct image_type gif_type =
-{
-  SYMBOL_INDEX (Qgif),
-  gif_image_p,
-  gif_load,
-  gif_clear_image,
-  init_gif_functions,
-  NULL
 };
 
 /* Free X resources of GIF image IMG which is used on frame F.  */
@@ -8289,10 +8089,6 @@ gif_load (struct frame *f, struct image *img)
 				 ImageMagick
 ***********************************************************************/
 
-static bool imagemagick_image_p (Lisp_Object);
-static bool imagemagick_load (struct frame *, struct image *);
-static void imagemagick_clear_image (struct frame *, struct image *);
-
 /* Indices of image specification fields in imagemagick_format.  */
 
 enum imagemagick_keyword_index
@@ -8339,25 +8135,6 @@ static struct image_keyword imagemagick_format[IMAGEMAGICK_LAST] =
     {":format",		IMAGE_SYMBOL_VALUE,			0},
     {":rotation",	IMAGE_NUMBER_VALUE,     		0},
     {":crop",		IMAGE_DONT_CHECK_VALUE_TYPE,		0}
-  };
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_imagemagick_functions (void);
-#else
-#define init_imagemagick_functions NULL
-#endif
-
-/* Structure describing the image type for any image handled via
-   ImageMagick.  */
-
-static struct image_type imagemagick_type =
-  {
-    SYMBOL_INDEX (Qimagemagick),
-    imagemagick_image_p,
-    imagemagick_load,
-    imagemagick_clear_image,
-    init_imagemagick_functions,
-    NULL
   };
 
 /* Free X resources of imagemagick image IMG which is used on frame F.  */
@@ -9137,9 +8914,6 @@ and `imagemagick-types-inhibit'.  */)
 
 /* Function prototypes.  */
 
-static bool svg_image_p (Lisp_Object object);
-static bool svg_load (struct frame *f, struct image *img);
-
 static bool svg_load_image (struct frame *, struct image *,
 			    char *, ptrdiff_t, char *);
 
@@ -9176,27 +8950,6 @@ static const struct image_keyword svg_format[SVG_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
-
-# if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_svg_functions (void);
-# else
-#define init_svg_functions NULL
-# endif
-
-/* Structure describing the image type `svg'.  Its the same type of
-   structure defined for all image formats, handled by emacs image
-   functions.  See struct image_type in dispextern.h.  */
-
-static struct image_type svg_type =
-{
-  SYMBOL_INDEX (Qsvg),
-  svg_image_p,
-  svg_load,
-  image_clear_image,
-  init_svg_functions,
-  NULL
-};
-
 
 /* Return true if OBJECT is a valid SVG image specification.  Do
    this by calling parse_image_spec and supplying the keywords that
@@ -9621,10 +9374,6 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 
 #ifdef HAVE_GHOSTSCRIPT
 
-static bool gs_image_p (Lisp_Object object);
-static bool gs_load (struct frame *f, struct image *img);
-static void gs_clear_image (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum gs_keyword_index
@@ -9664,28 +9413,6 @@ static const struct image_keyword gs_format[GS_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
-
-/* Structure describing the image type `ghostscript'.  */
-
-static struct image_type gs_type =
-{
-  SYMBOL_INDEX (Qpostscript),
-  gs_image_p,
-  gs_load,
-  gs_clear_image,
-  NULL,
-  NULL
-};
-
-
-/* Free X resources of Ghostscript image IMG which is used on frame F.  */
-
-static void
-gs_clear_image (struct frame *f, struct image *img)
-{
-  image_clear_image (f, img);
-}
-
 
 /* Return true if OBJECT is a valid Ghostscript image
    specification.  */
@@ -9965,87 +9692,86 @@ the library file(s) specified by `dynamic-library-alist'.  */)
   return lookup_image_type (type) ? Qt : Qnil;
 }
 
+static bool
+initialize_image_type (struct image_type const *type)
+{
+#ifdef WINDOWSNT
+  bool (*init) (void) = type->init;
+
+  if (init)
+    {
+      /* If we failed to load the library before, don't try again.  */
+      Lisp_Object typesym = builtin_lisp_symbol (type->type);
+      Lisp_Object tested = Fassq (typesym, Vlibrary_cache);
+      if (CONSP (tested) && NILP (XCDR (tested)))
+	return false;
+      bool type_valid = init ();
+      Vlibrary_cache = Fcons (Fcons (typesym, type_valid ? Qt : Qnil),
+			      Vlibrary_cache);
+      return type_valid;
+    }
+#endif
+  return true;
+}
+
+/* Array of supported image types.  */
+
+static struct image_type const image_types[] =
+{
+#ifdef HAVE_GHOSTSCRIPT
+ { SYMBOL_INDEX (Qpostscript), gs_image_p, gs_load, image_clear_image },
+#endif
+#ifdef HAVE_IMAGEMAGICK
+ { SYMBOL_INDEX (Qimagemagick), imagemagick_image_p, imagemagick_load,
+   imagemagick_clear_image },
+#endif
+#ifdef HAVE_RSVG
+ { SYMBOL_INDEX (Qsvg), svg_image_p, svg_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_svg_functions) },
+#endif
+#if defined HAVE_PNG || defined HAVE_NS || defined USE_CAIRO
+ { SYMBOL_INDEX (Qpng), png_image_p, png_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_png_functions) },
+#endif
+#if defined HAVE_GIF || defined HAVE_NS
+ { SYMBOL_INDEX (Qgif), gif_image_p, gif_load, gif_clear_image,
+   IMAGE_TYPE_INIT (init_gif_functions) },
+#endif
+#if defined HAVE_TIFF || defined HAVE_NS
+ { SYMBOL_INDEX (Qtiff), tiff_image_p, tiff_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_tiff_functions) },
+#endif
+#if defined HAVE_JPEG || defined HAVE_NS
+ { SYMBOL_INDEX (Qjpeg), jpeg_image_p, jpeg_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_jpeg_functions) },
+#endif
+#if defined HAVE_XPM || defined HAVE_NS
+ { SYMBOL_INDEX (Qxpm), xpm_image_p, xpm_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_xpm_functions) },
+#endif
+ { SYMBOL_INDEX (Qxbm), xbm_image_p, xbm_load, image_clear_image },
+ { SYMBOL_INDEX (Qpbm), pbm_image_p, pbm_load, image_clear_image },
+};
+
 /* Look up image type TYPE, and return a pointer to its image_type
    structure.  Return 0 if TYPE is not a known image type.  */
 
-static struct image_type *
+static struct image_type const *
 lookup_image_type (Lisp_Object type)
 {
-  /* Types pbm and xbm are built-in and always available.  */
-  if (EQ (type, Qpbm))
-    return define_image_type (&pbm_type);
-
-  if (EQ (type, Qxbm))
-    return define_image_type (&xbm_type);
-
-#if defined (HAVE_XPM) || defined (HAVE_NS)
-  if (EQ (type, Qxpm))
-    return define_image_type (&xpm_type);
-#endif
-
-#if defined (HAVE_JPEG) || defined (HAVE_NS)
-  if (EQ (type, Qjpeg))
-    return define_image_type (&jpeg_type);
-#endif
-
-#if defined (HAVE_TIFF) || defined (HAVE_NS)
-  if (EQ (type, Qtiff))
-    return define_image_type (&tiff_type);
-#endif
-
-#if defined (HAVE_GIF) || defined (HAVE_NS)
-  if (EQ (type, Qgif))
-    return define_image_type (&gif_type);
-#endif
-
-#if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
-  if (EQ (type, Qpng))
-    return define_image_type (&png_type);
-#endif
-
-#if defined (HAVE_RSVG)
-  if (EQ (type, Qsvg))
-    return define_image_type (&svg_type);
-#endif
-
-#if defined (HAVE_IMAGEMAGICK)
-  if (EQ (type, Qimagemagick))
-    return define_image_type (&imagemagick_type);
-#endif
-
-#ifdef HAVE_GHOSTSCRIPT
-  if (EQ (type, Qpostscript))
-    return define_image_type (&gs_type);
-#endif
-
+  for (int i = 0; i < ARRAYELTS (image_types); i++)
+    {
+      struct image_type const *r = &image_types[i];
+      if (EQ (type, builtin_lisp_symbol (r->type)))
+	return initialize_image_type (r) ? r : NULL;
+    }
   return NULL;
 }
 
-#if defined HAVE_UNEXEC && defined HAVE_WINDOW_SYSTEM
-
-/* Reset image_types before dumping.
-   Called from Fdump_emacs.  */
-
-void
-reset_image_types (void)
-{
-  while (image_types)
-    {
-      struct image_type *next = image_types->next;
-      xfree (image_types);
-      image_types = next;
-    }
-}
-#endif
 
 void
 syms_of_image (void)
 {
-  /* Initialize this only once; it will be reset before dumping.  */
-  /* The portable dumper will just leave it NULL, so no need to reset.  */
-  image_types = NULL;
-  PDUMPER_IGNORE (image_types);
-
   /* Must be defined now because we're going to update it below, while
      defining the supported image types.  */
   DEFVAR_LISP ("image-types", Vimage_types,
@@ -10096,7 +9822,7 @@ non-numeric, there is no explicit limit on the size of images.  */);
   DEFSYM (QCmax_width, ":max-width");
   DEFSYM (QCmax_height, ":max-height");
 #ifdef HAVE_GHOSTSCRIPT
-  ADD_IMAGE_TYPE (Qpostscript);
+  add_image_type (Qpostscript);
   DEFSYM (QCloader, ":loader");
   DEFSYM (QCpt_width, ":pt-width");
   DEFSYM (QCpt_height, ":pt-height");
@@ -10136,44 +9862,44 @@ non-numeric, there is no explicit limit on the size of images.  */);
 #endif
 
   DEFSYM (Qpbm, "pbm");
-  ADD_IMAGE_TYPE (Qpbm);
+  add_image_type (Qpbm);
 
   DEFSYM (Qxbm, "xbm");
-  ADD_IMAGE_TYPE (Qxbm);
+  add_image_type (Qxbm);
 
 #if defined (HAVE_XPM) || defined (HAVE_NS)
   DEFSYM (Qxpm, "xpm");
-  ADD_IMAGE_TYPE (Qxpm);
+  add_image_type (Qxpm);
 #endif
 
 #if defined (HAVE_JPEG) || defined (HAVE_NS)
   DEFSYM (Qjpeg, "jpeg");
-  ADD_IMAGE_TYPE (Qjpeg);
+  add_image_type (Qjpeg);
 #endif
 
 #if defined (HAVE_TIFF) || defined (HAVE_NS)
   DEFSYM (Qtiff, "tiff");
-  ADD_IMAGE_TYPE (Qtiff);
+  add_image_type (Qtiff);
 #endif
 
 #if defined (HAVE_GIF) || defined (HAVE_NS)
   DEFSYM (Qgif, "gif");
-  ADD_IMAGE_TYPE (Qgif);
+  add_image_type (Qgif);
 #endif
 
 #if defined (HAVE_PNG) || defined (HAVE_NS)
   DEFSYM (Qpng, "png");
-  ADD_IMAGE_TYPE (Qpng);
+  add_image_type (Qpng);
 #endif
 
 #if defined (HAVE_IMAGEMAGICK)
   DEFSYM (Qimagemagick, "imagemagick");
-  ADD_IMAGE_TYPE (Qimagemagick);
+  add_image_type (Qimagemagick);
 #endif
 
 #if defined (HAVE_RSVG)
   DEFSYM (Qsvg, "svg");
-  ADD_IMAGE_TYPE (Qsvg);
+  add_image_type (Qsvg);
 #ifdef HAVE_NTGUI
   /* Other libraries used directly by svg code.  */
   DEFSYM (Qgdk_pixbuf, "gdk-pixbuf");
