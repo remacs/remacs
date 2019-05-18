@@ -22,6 +22,10 @@
 (require 'ert)
 (require 'image)
 
+(defconst image-tests--emacs-images-directory
+  (expand-file-name "../etc/images" (getenv "EMACS_TEST_DIRECTORY"))
+  "Directory containing Emacs images.")
+
 (ert-deftest image--set-property ()
   "Test `image--set-property' behavior."
   (let ((image (list 'image)))
@@ -41,5 +45,12 @@
     (should (equal image '(image :width 8)))
     (setf (image-property image :width) nil)
     (should (equal image '(image)))))
+
+(ert-deftest image-type-from-file-header-test ()
+  "Test image-type-from-file-header."
+  (should (eq 'svg
+	      (image-type-from-file-header
+	       (expand-file-name "splash.svg"
+				 image-tests--emacs-images-directory)))))
 
 ;;; image-tests.el ends here

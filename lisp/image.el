@@ -315,7 +315,7 @@ be determined."
 					(buffer-substring
 					 (point-min)
 					 (min (point-max)
-					      (+ (point-min) 256))))))
+					      (+ (point-min) 8192))))))
 		     (setq image-type (cdr image-type))))
 	    (setq type image-type
 		  types nil)
@@ -339,7 +339,7 @@ be determined."
        (file-readable-p file)
        (with-temp-buffer
 	 (set-buffer-multibyte nil)
-	 (insert-file-contents-literally file nil 0 256)
+	 (insert-file-contents-literally file nil 0 8192)
 	 (image-type-from-buffer))))
 
 
