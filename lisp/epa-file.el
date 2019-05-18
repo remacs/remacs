@@ -105,9 +105,7 @@ encryption is used."
   (if (fboundp 'decode-coding-inserted-region)
       (save-restriction
 	(narrow-to-region (point) (point))
-	(insert (if enable-multibyte-characters
-		    (string-to-multibyte string)
-		  string))
+	(insert string)
 	(decode-coding-inserted-region
 	 (point-min) (point-max)
 	 (substring file 0 (string-match epa-file-name-regexp file))
