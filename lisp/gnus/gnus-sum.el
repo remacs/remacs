@@ -42,6 +42,7 @@
 (defvar gnus-tmp-indentation)
 (defvar gnus-tmp-level)
 (defvar gnus-tmp-lines)
+(defvar gnus-tmp-name)
 (defvar gnus-tmp-number)
 (defvar gnus-tmp-opening-bracket)
 (defvar gnus-tmp-process)
