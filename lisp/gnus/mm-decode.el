@@ -262,15 +262,6 @@ before the external MIME handler is invoked."
     ("text/.*" mm-inline-text identity)
     ("application/x-.?tar\\(-.*\\)?" mm-archive-dissect-and-inline identity)
     ("application/zip" mm-archive-dissect-and-inline identity)
-    ("audio/wav" mm-inline-audio
-     ,(lambda (_handle)
-       (and (fboundp 'device-sound-enabled-p)
-	    (device-sound-enabled-p))))
-    ("audio/au"
-     mm-inline-audio
-     ,(lambda (_handle)
-       (and (fboundp 'device-sound-enabled-p)
-	    (device-sound-enabled-p))))
     ("application/pgp-signature" ignore identity)
     ("application/x-pkcs7-signature" ignore identity)
     ("application/pkcs7-signature" ignore identity)
