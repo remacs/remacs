@@ -3112,8 +3112,8 @@ conform to RFC2919 @code{List-ID}.
 See @code{nnmail-split-abbrev-alist} for the regular expression
 matching mailing-list headers.
 
-See @pxref{Group Mail Splitting} to automatically split on group
-parameters.
+@xref{Group Mail Splitting}, for details on how to automatically split
+on group parameters.
 
 @item (agent parameters)
 If the agent has been enabled, you can set any of its parameters to
