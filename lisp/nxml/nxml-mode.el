@@ -544,6 +544,7 @@ Many aspects this mode can be customized using
   (setq-local syntax-ppss-table sgml-tag-syntax-table)
   (setq-local syntax-propertize-function #'nxml-syntax-propertize)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
+  (add-hook 'after-change-functions #'nxml-maybe-rescan-prolog nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
   ;; transparently to nxml-mode, so there is no longer a need for the below
