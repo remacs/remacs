@@ -161,12 +161,14 @@ EVENT is the cadr of the event in `file-notify-handle-event'
       (while actions
         (let ((action (pop actions)))
           ;; Send pending event, if it doesn't match.
+          ;; We only handle {renamed,moved}-{from,to} pairs when these
+          ;; arrive in order without anything else in-between.
           (when (and file-notify--pending-event
-                     ;; The cookie doesn't match.
-                     (not (equal (file-notify--event-cookie
-                                  (car file-notify--pending-event))
-                                 (file-notify--event-cookie event)))
                      (or
+                      ;; The cookie doesn't match.
+                      (not (equal (file-notify--event-cookie
+                                   (car file-notify--pending-event))
+                                  (file-notify--event-cookie event)))
                       ;; inotify.
                       (and (eq (nth 1 (car file-notify--pending-event))
                                'moved-from)
