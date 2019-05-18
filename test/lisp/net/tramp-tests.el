@@ -2794,7 +2794,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    ;; returns `file-missing'.
 	    (delete-directory tmp-name1 'recursive)
 	    (with-temp-buffer
-	      (should-error (insert-directory tmp-name1 nil))))
+	      (should-error
+	       (insert-directory tmp-name1 nil)
+	       :type tramp-file-missing)))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
@@ -3962,7 +3964,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
-  ;; `make-process' supports file name handlers since Emacs 27.
+  ;; `make-process' has been inserted in Emacs 25.1.  It supports file
+  ;; name handlers since Emacs 27.
   (skip-unless (tramp--test-emacs27-p))
 
   (tramp--test-instrument-test-case 0
@@ -3970,15 +3973,16 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
 	  kill-buffer-query-functions proc)
-      (should-not (make-process))
+      (should-not (with-no-warnings (make-process)))
 
       ;; Simple process.
       (unwind-protect
 	  (with-temp-buffer
 	    (setq proc
-		  (make-process
-		   :name "test1" :buffer (current-buffer) :command '("cat")
-		   :file-handler t))
+		  (with-no-warnings
+		    (make-process
+		     :name "test1" :buffer (current-buffer) :command '("cat")
+		     :file-handler t)))
 	    (should (processp proc))
 	    (should (equal (process-status proc) 'run))
 	    (process-send-string proc "foo")
@@ -4000,10 +4004,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "foo" nil tmp-name)
 	    (should (file-exists-p tmp-name))
 	    (setq proc
-		  (make-process
-		   :name "test2" :buffer (current-buffer)
-		   :command `("cat" ,(file-name-nondirectory tmp-name))
-		   :file-handler t))
+		  (with-no-warnings
+		    (make-process
+		     :name "test2" :buffer (current-buffer)
+		     :command `("cat" ,(file-name-nondirectory tmp-name))
+		     :file-handler t)))
 	    (should (processp proc))
 	    ;; Read output.
 	    (with-timeout (10 (tramp--test-timeout-handler))
@@ -4020,12 +4025,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (unwind-protect
 	  (with-temp-buffer
 	    (setq proc
-		  (make-process
-		   :name "test3" :buffer (current-buffer) :command '("cat")
-		   :filter
-		   (lambda (p s)
-		     (with-current-buffer (process-buffer p) (insert s)))
-		   :file-handler t))
+		  (with-no-warnings
+		    (make-process
+		     :name "test3" :buffer (current-buffer) :command '("cat")
+		     :filter
+		     (lambda (p s)
+		       (with-current-buffer (process-buffer p) (insert s)))
+		     :file-handler t)))
 	    (should (processp proc))
 	    (should (equal (process-status proc) 'run))
 	    (process-send-string proc "foo")
@@ -4045,12 +4051,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (unwind-protect
 	  (with-temp-buffer
 	    (setq proc
-		  (make-process
-		   :name "test4" :buffer (current-buffer) :command '("cat")
-		   :sentinel
-		   (lambda (p s)
-		     (with-current-buffer (process-buffer p) (insert s)))
-		   :file-handler t))
+		  (with-no-warnings
+		    (make-process
+		     :name "test4" :buffer (current-buffer) :command '("cat")
+		     :sentinel
+		     (lambda (p s)
+		       (with-current-buffer (process-buffer p) (insert s)))
+		     :file-handler t)))
 	    (should (processp proc))
 	    (should (equal (process-status proc) 'run))
 	    (process-send-string proc "foo")
@@ -4073,11 +4080,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (unwind-protect
 	      (with-temp-buffer
 		(setq proc
-		      (make-process
-		       :name "test5" :buffer (current-buffer)
-		       :command '("cat" "/")
-		       :stderr stderr
-		       :file-handler t))
+		      (with-no-warnings
+			(make-process
+			 :name "test5" :buffer (current-buffer)
+			 :command '("cat" "/")
+			 :stderr stderr
+			 :file-handler t)))
 		(should (processp proc))
 		;; Read stderr.
 		(with-current-buffer stderr
@@ -5755,7 +5763,7 @@ Since it unloads Tramp, it shall be the last test to run."
 	  (ert-fail (format "`%s' still bound" x)))))
   ;; The defstruct `tramp-file-name' and all its internal functions
   ;; shall be purged.
-  (should-not (cl--find-class 'tramp-file-name))
+  (should-not (with-no-warnings (cl--find-class 'tramp-file-name)))
   (mapatoms
    (lambda (x)
      (and (functionp x)
