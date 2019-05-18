@@ -62,7 +62,7 @@ pub const MAX_1_BYTE_CHAR: u32 = 0x7F;
 
 /// Minimum value for a two byte codepoint
 pub const MIN_2_BYTE_CHAR: u32 = 0x80;
-/// Minimum value for a two byte codepoint
+/// Maximum value for a two byte codepoint
 pub const MAX_2_BYTE_CHAR: u32 = 0x7FF;
 
 /// Minimum value for a three byte codepoint
@@ -99,7 +99,7 @@ impl Codepoint {
     pub fn from_raw(byte: u8) -> Codepoint {
         match Codepoint::from(byte) {
             cp if cp.is_ascii() => cp,
-            cp => Codepoint::from(cp.0 + 0x3F_FF00),
+            cp => Codepoint::from(cp.0 + BYTE8_OFFSET),
         }
     }
 
@@ -184,7 +184,7 @@ impl Codepoint {
     /// enough to hold the resulting bytes. Returns the amount of bytes written
     pub fn write_to(self, to: &mut [u8]) -> usize {
         let cp: u32 = self.into();
-        if cp <= MAX_1_BYTE_CHAR.into() {
+        if cp <= MAX_1_BYTE_CHAR {
             to[0] = cp as u8;
             1
         } else if cp <= MAX_2_BYTE_CHAR {
