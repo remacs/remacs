@@ -78,5 +78,26 @@
       (should-not (equal (get-text-property squote-txt-pos 'face)
                          (get-text-property dquote-att-pos 'face))))))
 
+(ert-deftest nxml-mode-doctype-and-quote-syntax ()
+  (with-temp-buffer
+    (insert "<!DOCTYPE t [\n<!ENTITY f SYSTEM \"f.xml\">\n]>\n<t>'</t>")
+    (nxml-mode)
+    ;; Check that last tag is parsed as a tag.
+    (should (= 1 (car (syntax-ppss (1- (point-max))))))
+    (should (= 0 (car (syntax-ppss (point-max)))))))
+
+(ert-deftest nxml-mode-prolog-comment ()
+  (with-temp-buffer
+    (insert "<?xml version=\"1.0\" encoding=\"utf-8\"?><!-- comment1 -->
+<t><!-- comment2 --></t><!-- comment3 -->")
+    (nxml-mode)
+    ;; Check that all comments are parsed as comments
+    (goto-char (point-min))
+    (search-forward "comment1")
+    (should (nth 4 (syntax-ppss)))
+    (search-forward "comment2")
+    (should (nth 4 (syntax-ppss)))
+    (search-forward "comment3")))
+
 (provide 'nxml-mode-tests)
 ;;; nxml-mode-tests.el ends here
