@@ -9696,15 +9696,15 @@ static bool
 initialize_image_type (struct image_type const *type)
 {
 #ifdef WINDOWSNT
-  bool (*init) (void) = type->init;
+  Lisp_Object typesym = builtin_lisp_symbol (type->type);
+  Lisp_Object tested = Fassq (typesym, Vlibrary_cache);
+  /* If we failed to load the library before, don't try again.  */
+  if (CONSP (tested))
+    return !NILP (XCDR (tested)) ? true : false;
 
+  bool (*init) (void) = type->init;
   if (init)
     {
-      /* If we failed to load the library before, don't try again.  */
-      Lisp_Object typesym = builtin_lisp_symbol (type->type);
-      Lisp_Object tested = Fassq (typesym, Vlibrary_cache);
-      if (CONSP (tested) && NILP (XCDR (tested)))
-	return false;
       bool type_valid = init ();
       Vlibrary_cache = Fcons (Fcons (typesym, type_valid ? Qt : Qnil),
 			      Vlibrary_cache);
