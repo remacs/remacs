@@ -725,8 +725,9 @@ struct x_output
 #ifdef USE_CAIRO
   /* Cairo drawing context.  */
   cairo_t *cr_context;
-  /* Cairo surface for double buffering */
-  cairo_surface_t *cr_surface;
+  /* Width and height reported by the last ConfigureNotify event.
+     They are used when creating the cairo surface next time.  */
+  int cr_surface_desired_width, cr_surface_desired_height;
 #endif
 };
 
@@ -1107,6 +1108,7 @@ extern int x_dispatch_event (XEvent *, Display *);
 #endif
 extern int x_x_to_emacs_modifiers (struct x_display_info *, int);
 #ifdef USE_CAIRO
+extern void x_cr_destroy_frame_context (struct frame *);
 extern cairo_t *x_begin_cr_clip (struct frame *, GC);
 extern void x_end_cr_clip (struct frame *);
 extern void x_set_cr_source_with_gc_foreground (struct frame *, GC);

@@ -2784,6 +2784,9 @@ set_up_x_back_buffer (struct frame *f)
   block_input ();
   if (FRAME_X_WINDOW (f) && !FRAME_X_DOUBLE_BUFFERED_P (f))
     {
+#ifdef USE_CAIRO
+      x_cr_destroy_frame_context (f);
+#endif
       FRAME_X_RAW_DRAWABLE (f) = FRAME_X_WINDOW (f);
       if (FRAME_DISPLAY_INFO (f)->supports_xdbe)
         {
@@ -2813,6 +2816,9 @@ tear_down_x_back_buffer (struct frame *f)
     {
       if (FRAME_X_DOUBLE_BUFFERED_P (f))
         {
+#ifdef USE_CAIRO
+	  x_cr_destroy_frame_context (f);
+#endif
           XdbeDeallocateBackBufferName (FRAME_X_DISPLAY (f),
                                         FRAME_X_DRAWABLE (f));
           FRAME_X_RAW_DRAWABLE (f) = FRAME_X_WINDOW (f);
