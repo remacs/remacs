@@ -517,9 +517,6 @@ Each descriptor is a vector of the form
 ;;; Section: Support functions.
 
 (eval-when-compile
-  (defsubst byte-after (pos)
-    "Like char-after but an eight-bit char is converted to unibyte."
-    (multibyte-char-to-unibyte (char-after pos)))
   (defsubst insert-unibyte (&rest args)
     "Like insert but don't make unibyte string and eight-bit char multibyte."
     (dolist (elt args)
@@ -1492,8 +1489,8 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
         files
 	visual)
     (while (and (< (+ p 29) (point-max))
-		(= (byte-after p) ?\C-z)
-		(> (byte-after (1+ p)) 0))
+		(= (get-byte p) ?\C-z)
+		(> (get-byte (1+ p)) 0))
       (let* ((namefld (buffer-substring (+ p 2) (+ p 2 13)))
 	     (fnlen   (or (string-match "\0" namefld) 13))
 	     (efnname (decode-coding-string (substring namefld 0 fnlen)
@@ -1558,13 +1555,13 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	visual)
     (while (progn (goto-char p)		;beginning of a base header.
 		  (looking-at "\\(.\\|\n\\)\\(.\\|\n\\)-l[hz][0-9ds]-"))
-      (let* ((hsize   (byte-after p))	;size of the base header (level 0 and 1)
+      (let* ((hsize   (get-byte p))	;size of the base header (level 0 and 1)
 	     (csize   (archive-l-e (+ p 7) 4)) ;size of a compressed file to follow (level 0 and 2),
 					;size of extended headers + the compressed file to follow (level 1).
              (ucsize  (archive-l-e (+ p 11) 4))	;size of an uncompressed file.
 	     (time1   (archive-l-e (+ p 15) 2))	;date/time (MSDOS format in level 0, 1 headers
 	     (time2   (archive-l-e (+ p 17) 2))	;and UNIX format in level 2 header.)
-	     (hdrlvl  (byte-after (+ p 20))) ;header level
+	     (hdrlvl  (get-byte (+ p 20))) ;header level
 	     thsize		;total header size (base + extensions)
 	     fnlen efnname osid fiddle ifnname width p2
 	     neh	;beginning of next extension header (level 1 and 2)
@@ -1572,7 +1569,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	     gname uname modtime moddate)
 	(if (= hdrlvl 3) (error "can't handle lzh level 3 header type"))
 	(when (or (= hdrlvl 0) (= hdrlvl 1))
-	  (setq fnlen   (byte-after (+ p 21))) ;filename length
+	  (setq fnlen   (get-byte (+ p 21))) ;filename length
 	  (setq efnname (let ((str (buffer-substring (+ p 22) (+ p 22 fnlen))))	;filename from offset 22
 			(decode-coding-string
 			 str archive-file-name-coding-system)))
@@ -1583,19 +1580,19 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
               (setq neh (+ p 24))))     ;specific to level 2 header
 	(if neh		;if level 1 or 2 we expect extension headers to follow
 	    (let* ((ehsize (archive-l-e neh 2))	;size of the extension header
-		   (etype (byte-after (+ neh 2)))) ;extension type
+		   (etype (get-byte (+ neh 2)))) ;extension type
 	      (while (not (= ehsize 0))
 		  (cond
 		 ((= etype 1)	;file name
 		  (let ((i (+ neh 3)))
 		    (while (< i (+ neh ehsize))
-		      (setq efnname (concat efnname (char-to-string (byte-after i))))
+		      (setq efnname (concat efnname (char-to-string (get-byte i))))
 		      (setq i (1+ i)))))
 		 ((= etype 2)	;directory name
 		  (let ((i (+ neh 3)))
 		    (while (< i (+ neh ehsize))
 				    (setq dir (concat dir
-						       (if (= (byte-after i)
+						       (if (= (get-byte i)
 							      255)
 							   "/"
 							 (char-to-string
@@ -1619,7 +1616,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		   )
 		(setq neh (+ neh ehsize))
 		(setq ehsize (archive-l-e neh 2))
-		(setq etype (byte-after (+ neh 2))))
+		(setq etype (get-byte (+ neh 2))))
 	      ;;get total header size for level 1 and 2 headers
 	      (setq thsize (- neh p))))
 	(if (= hdrlvl 0)  ;total header size
@@ -1706,7 +1703,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
   (let ((sum 0))
     (while (> count 0)
       (setq count (1- count)
-	    sum (+ sum (byte-after p))
+	    sum (+ sum (get-byte p))
 	    p (1+ p)))
     (logand sum 255)))
 
@@ -1715,8 +1712,8 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
     (save-excursion
       (widen)
       (let* ((p        (+ archive-proper-file-start (aref descr 4)))
-	     (oldhsize (byte-after p))
-	     (oldfnlen (byte-after (+ p 21)))
+	     (oldhsize (get-byte p))
+	     (oldfnlen (get-byte (+ p 21)))
 	     (newfnlen (length newname))
 	     (newhsize (+ oldhsize newfnlen (- oldfnlen)))
 	     (inhibit-read-only t))
@@ -1735,10 +1732,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       (widen)
       (dolist (fil files)
 	(let* ((p (+ archive-proper-file-start (aref fil 4)))
-	       (hsize   (byte-after p))
-	       (fnlen   (byte-after (+ p 21)))
+	       (hsize   (get-byte p))
+	       (fnlen   (get-byte (+ p 21)))
 	       (p2      (+ p 22 fnlen))
-	       (creator (if (>= (- hsize fnlen) 24) (byte-after (+ p2 2)) 0))
+	       (creator (if (>= (- hsize fnlen) 24) (get-byte (+ p2 2)) 0))
 	       (inhibit-read-only t))
 	  (if (= creator ?U)
 	      (progn
@@ -1821,7 +1818,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       (setq p (archive-l-e (+ p 48) 8)))
     (setq p (+ p (point-min)))
     (while (string= "PK\001\002" (buffer-substring p (+ p 4)))
-      (let* ((creator (byte-after (+ p 5)))
+      (let* ((creator (get-byte (+ p 5)))
 	     ;; (method  (archive-l-e (+ p 10) 2))
              (modtime (archive-l-e (+ p 12) 2))
              (moddate (archive-l-e (+ p 14) 2))
@@ -1841,7 +1838,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 			     (logior ?\444
 				     (if isdir (logior 16384 ?\111) 0)
 				     (if (zerop
-					  (logand 1 (byte-after (+ p 38))))
+					  (logand 1 (get-byte (+ p 38))))
 					 ?\222 0)))
 			    (t nil)))
 	     (modestr (if mode (archive-int-to-mode mode) "??????????"))
@@ -1918,7 +1915,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       (widen)
       (dolist (fil files)
 	(let* ((p (+ archive-proper-file-start (car (aref fil 4))))
-	       (creator (byte-after (+ p 5)))
+	       (creator (get-byte (+ p 5)))
 	       (oldmode (aref fil 3))
 	       (newval  (archive-calc-mode oldmode newmode t))
 	       (inhibit-read-only t))
@@ -1928,7 +1925,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		 (insert-unibyte (logand newval 255) (ash newval -8)))
 		((memq creator '(0 5 6 7 10 11 15)) ; Dos etc.
 		 (goto-char (+ p 38))
-		 (insert-unibyte (logior (logand (byte-after (point)) 254)
+		 (insert-unibyte (logior (logand (get-byte (point)) 254)
 					 (logand (logxor 1 (ash newval -7)) 1)))
 		 (delete-char 1))
 		(t (message "Don't know how to change mode for this member"))))
@@ -1949,9 +1946,9 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
              (modtime (archive-l-e (+ p 16) 2))
              (ucsize  (archive-l-e (+ p 20) 4))
 	     (namefld (buffer-substring (+ p 38) (+ p 38 13)))
-	     (dirtype (byte-after (+ p 4)))
-	     (lfnlen  (if (= dirtype 2) (byte-after (+ p 56)) 0))
-	     (ldirlen (if (= dirtype 2) (byte-after (+ p 57)) 0))
+	     (dirtype (get-byte (+ p 4)))
+	     (lfnlen  (if (= dirtype 2) (get-byte (+ p 56)) 0))
+	     (ldirlen (if (= dirtype 2) (get-byte (+ p 57)) 0))
 	     (fnlen   (or (string-match "\0" namefld) 13))
 	     (efnname (let ((str
 			     (concat
