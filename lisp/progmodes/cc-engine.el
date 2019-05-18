@@ -4491,6 +4491,30 @@ comment at the start of cc-engine.el for more info."
 		       (goto-char pos))))))
       (< (point) start)))
 
+(defun c-end-of-token (&optional back-limit)
+  ;; Move to the end of the token we're just before or in the middle of.
+  ;; BACK-LIMIT may be used to bound the backward search; if given it's
+  ;; assumed to be at the boundary between two tokens.  Return non-nil if the
+  ;; point is moved, nil otherwise.
+  ;;
+  ;; This function might do hidden buffer changes.
+  (let ((start (point)))
+    (cond ;; ((< (skip-syntax-backward "w_" (1- start)) 0)
+     ;;  (skip-syntax-forward "w_"))
+     ((> (skip-syntax-forward "w_") 0))
+     ((< (skip-syntax-backward ".()" back-limit) 0)
+      (while (< (point) start)
+	(if (looking-at c-nonsymbol-token-regexp)
+	    (goto-char (match-end 0))
+	  ;; `c-nonsymbol-token-regexp' should always match since
+	  ;; we've skipped backward over punctuation or paren
+	  ;; syntax, but move forward in case it doesn't so that
+	  ;; we don't leave point earlier than we started with.
+	  (forward-char))))
+     (t (if (looking-at c-nonsymbol-token-regexp)
+	    (goto-char (match-end 0)))))
+    (> (point) start)))
+
 (defun c-end-of-current-token (&optional back-limit)
   ;; Move to the end of the current token.  Do not move if not in the
   ;; middle of one.  BACK-LIMIT may be used to bound the backward
@@ -5878,9 +5902,14 @@ comment at the start of cc-engine.el for more info."
 	     ;; comment style has removed face properties from a construct,
 	     ;; and is relying on `c-font-lock-declarations' to add them
 	     ;; again.
-	     (and (< (point) cfd-limit)
-		  (looking-at c-doc-line-join-re)
-		  (goto-char (match-end 0)))))
+	     (cond
+	      ((looking-at c-noise-macro-name-re)
+	       (c-forward-noise-clause-not-macro-decl nil)) ; Returns t.
+	      ((looking-at c-noise-macro-with-parens-name-re)
+	       (c-forward-noise-clause-not-macro-decl t)) ; Always returns t.
+	      ((and (< (point) cfd-limit)
+		    (looking-at c-doc-line-join-re))
+	       (goto-char (match-end 0))))))
        ;; Set the position to continue at.  We can avoid going over
        ;; the comments skipped above a second time, but it's possible
        ;; that the comment skipping has taken us past `cfd-prop-match'
@@ -5909,6 +5938,8 @@ comment at the start of cc-engine.el for more info."
   ;; o	The first token after the end of submatch 1 in
   ;;	`c-decl-prefix-or-start-re' when that submatch matches.	 This
   ;;	submatch is typically a (L or R) brace or paren, a ;, or a ,.
+  ;;    As a special case, noise macros are skipped over and the next
+  ;;    token regarded as the spot.
   ;; o	The start of each `c-decl-prefix-or-start-re' match when
   ;;	submatch 1 doesn't match.  This is, for example, the keyword
   ;;	"class" in Pike.
@@ -7437,6 +7468,21 @@ comment at the start of cc-engine.el for more info."
   (if (and (eq (char-after) ?\()
 	   (c-go-list-forward))
       (c-forward-syntactic-ws))
+  t)
+
+(defun c-forward-noise-clause-not-macro-decl (maybe-parens)
+  ;; Point is at a noise macro identifier, which, when MAYBE-PARENS is
+  ;; non-nil, optionally takes paren arguments.  Go forward over this name,
+  ;; and when there may be optional parens, any parenthesis expression which
+  ;; follows it, but DO NOT go over any macro declaration which may come
+  ;; between them.  Always return t.
+  (c-end-of-token)
+  (when maybe-parens
+    (let ((here (point)))
+      (c-forward-comments)
+      (if (not (and (eq (char-after) ?\()
+		    (c-go-list-forward)))
+	  (goto-char here))))
   t)
 
 (defun c-forward-keyword-clause (match)
@@ -9053,7 +9099,10 @@ This function might do hidden buffer changes."
 	   ((and c-opt-cpp-prefix
 		 (looking-at c-noise-macro-with-parens-name-re))
 	    (setq noise-start (point))
-	    (c-forward-noise-clause)
+	    (while
+		(and
+		  (c-forward-noise-clause)
+		  (looking-at c-noise-macro-with-parens-name-re)))
 	    (setq kwd-clause-end (point))))
 
 	  (when (setq found-type (c-forward-type t)) ; brace-block-too
