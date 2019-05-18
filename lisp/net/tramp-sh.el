@@ -4769,8 +4769,8 @@ Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
   (let ((p (tramp-get-connection-process vec))
 	(process-name (tramp-get-connection-property vec "process-name" nil))
-	(process-environment (copy-sequence process-environment))
-	(pos (with-current-buffer (tramp-get-connection-buffer vec) (point))))
+	(pos (with-current-buffer (tramp-get-connection-buffer vec) (point)))
+	tmp-process-environment)
 
     ;; If Tramp opens the same connection within a short time frame,
     ;; there is a problem.  We shall signal this.
@@ -4835,17 +4835,22 @@ connection if a previous connection has died for some reason."
 	      ;; Start new process.
 	      (when (and p (processp p))
 		(delete-process p))
-	      (setenv "TERM" tramp-terminal-type)
-	      (setenv "LC_ALL" (tramp-get-local-locale vec))
-	      (if (stringp tramp-histfile-override)
-		  (setenv "HISTFILE" tramp-histfile-override)
-		(if tramp-histfile-override
-		    (progn
-		      (setenv "HISTFILE")
-		      (setenv "HISTFILESIZE" "0")
-		      (setenv "HISTSIZE" "0"))))
-	      (setenv "PROMPT_COMMAND")
-	      (setenv "PS1" tramp-initial-end-of-output)
+	      ;; Use a temporary `process-environment', in order not
+	      ;; to penetrate local processes.
+	      (let ((process-environment (copy-sequence process-environment)))
+		(setenv "TERM" tramp-terminal-type)
+		(setenv "LC_ALL" (tramp-get-local-locale vec))
+		(if (stringp tramp-histfile-override)
+		    (setenv "HISTFILE" tramp-histfile-override)
+		  (if tramp-histfile-override
+		      (progn
+			(setenv "HISTFILE")
+			(setenv "HISTFILESIZE" "0")
+			(setenv "HISTSIZE" "0"))))
+		(setenv "PROMPT_COMMAND")
+		(setenv "PS1" tramp-initial-end-of-output)
+		(setq tmp-process-environment
+		      (copy-sequence process-environment)))
               (unless (stringp tramp-encoding-shell)
                 (tramp-error vec 'file-error "`tramp-encoding-shell' not set"))
 	      (let* ((current-host (system-name))
@@ -4862,7 +4867,8 @@ connection if a previous connection has died for some reason."
 		     ;; This must be done in order to avoid our file
 		     ;; name handler.
 		     (p (let ((default-directory
-				(tramp-compat-temporary-file-directory)))
+				(tramp-compat-temporary-file-directory))
+			      (process-environment tmp-process-environment))
 			  (apply
 			   #'start-process
 			   (tramp-get-connection-name vec)
