@@ -10292,7 +10292,7 @@ Org mode can contain @LaTeX{} math fragments, and it supports ways to process
 these for several export back-ends.  When exporting to @LaTeX{}, the code is
 left as it is.  When exporting to HTML, Org can use either
 @uref{http://www.mathjax.org, MathJax} (@pxref{Math formatting in HTML
-export}) or transcode the math into images (see @pxref{Previewing @LaTeX{}
+export}) or transcode the math into images (@pxref{Previewing @LaTeX{}
 fragments}).
 
 @LaTeX{} fragments don't need any special marking at all.  The following
@@ -10358,7 +10358,7 @@ or @file{convert} installed@footnote{These are respectively available at
 and from the @file{imagemagick} suite.  Choose the converter by setting the
 variable @code{org-preview-latex-default-process} accordingly.}, @LaTeX{}
 fragments can be processed to produce images of the typeset expressions to be
-used for inclusion while exporting to HTML (see @pxref{@LaTeX{} fragments}),
+used for inclusion while exporting to HTML (@pxref{@LaTeX{} fragments}),
 or for inline previewing within Org mode.
 
 @vindex org-format-latex-options

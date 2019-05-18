@@ -1452,7 +1452,7 @@ Run @var{body} with @var{var} bound to each value that
 @end defmac
 
 The Common Lisp loop facility also contains features for working with
-iterators.  See @xref{Loop Facility,,,cl,Common Lisp Extensions}.
+iterators.  @xref{Loop Facility,,,cl,Common Lisp Extensions}.
 
 The following piece of code demonstrates some important principles of
 working with iterators.

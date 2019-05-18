@@ -3096,7 +3096,7 @@ You can also use regexp expansions in the rules:
 (sieve header :regex "list-id" "<c++std-\\1.accu.org>")
 @end example
 
-See @pxref{Sieve Commands} for commands and variables that might be of
+@xref{Sieve Commands}, for commands and variables that might be of
 interest in relation to the sieve parameter.
 
 The Sieve language is described in RFC 3028.  @xref{Top, Emacs Sieve,
@@ -12837,7 +12837,7 @@ In the case of a string value, if the @code{match} is a regular
 expression, or if it takes the form @code{(header @var{match}
 @var{regexp})}, a @samp{gnus-match-substitute-replacement} is proceed
 on the value to replace the positional parameters @samp{\@var{n}} by
-the corresponding parenthetical matches (see @xref{Replacing Match,,
+the corresponding parenthetical matches (@pxref{Replacing Match,,
 Replacing the Text that Matched, elisp, The Emacs Lisp Reference
 Manual}.)
 
@@ -24197,7 +24197,7 @@ You must read this section to understand how the Spam package works.
 Do not skip, speed-read, or glance through this section.
 
 Make sure you read the section on the @code{spam.el} sequence of
-events.  See @xref{Extending the Spam package}.
+events.  @xref{Extending the Spam package}.
 
 @cindex spam-initialize
 @vindex spam-use-stat

@@ -968,7 +968,7 @@ should not bind @code{dired-x-find-file-other-window} over
 @code{find-file-other-window}.  If you change this variable after
 @file{dired-x.el} is loaded then do @kbd{M-x dired-x-bind-find-file}.  The
 default value of this variable is @code{t}; by default, the binding is not
-done.  See @xref{Optional Installation File At Point}.
+done.  @xref{Optional Installation File At Point}.
 
 @item dired-x-bind-find-file
 @findex dired-x-bind-find-file
@@ -976,7 +976,7 @@ A function, which can be called interactively or in your @file{~/.emacs} file,
 that uses the value of @code{dired-x-hands-off-my-keys} to determine if
 @code{dired-x-find-file} should be bound over @code{find-file} and
 @code{dired-x-find-file-other-window} bound over
-@code{find-file-other-window}.  See @xref{Optional Installation File At Point}.
+@code{find-file-other-window}.  @xref{Optional Installation File At Point}.
 @end table
 
 @node Miscellaneous Commands

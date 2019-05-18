@@ -1060,7 +1060,7 @@ there's a piece of normal text without having to think much about it.
 and so on.
 
 You can configure the exact way comments get filled and broken, and
-where Emacs does auto-filling (see @pxref{Custom Filling and
+where Emacs does auto-filling (@pxref{Custom Filling and
 Breaking}).  Typically, the style system (@pxref{Styles}) will have
 set this up for you, so you probably won't have to bother.
 
@@ -1478,7 +1478,7 @@ normal, with no @kbd{C-u} prefix).
 @end itemize
 
 You can configure the precise circumstances in which newlines get
-inserted (see @pxref{Custom Auto-newlines}).  Typically, the style
+inserted (@pxref{Custom Auto-newlines}).  Typically, the style
 system (@pxref{Styles}) will have set this up for you, so you probably
 won't have to bother.
 
@@ -6731,7 +6731,7 @@ custom line-up function associated with it.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 To configure macros which you invoke without a terminating @samp{;},
-see @xref{Macros with ;}.
+@pxref{Macros with ;}.
 
 Here are the remaining odds and ends regarding indentation:
 

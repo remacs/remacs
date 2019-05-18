@@ -707,7 +707,7 @@ retrieves via POP3?
 
 Yes, if the POP3 server supports the UIDL control (maybe almost servers
 do it nowadays).  To do that, add a @code{:leave VALUE} pair to each
-POP3 mail source.  See @pxref{Mail Source Specifiers} for VALUE.
+POP3 mail source.  @xref{Mail Source Specifiers}, for details on VALUE.
 
 @node FAQ 4 - Reading messages
 @subsection Reading messages

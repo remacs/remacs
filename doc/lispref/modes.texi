@@ -2977,7 +2977,7 @@ Its value should have one of the forms described in this table.
 
 @strong{Warning:} Do not design an element of @code{font-lock-keywords}
 to match text which spans lines; this does not work reliably.
-For details, see @xref{Multiline Font Lock}.
+For details, @pxref{Multiline Font Lock}.
 
 You can use @var{case-fold} in @code{font-lock-defaults} to specify
 the value of @code{font-lock-keywords-case-fold-search} which says
