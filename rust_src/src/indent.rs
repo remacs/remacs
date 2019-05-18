@@ -103,7 +103,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
         let pos_byte = buffer.dec_pos(buffer.pt_byte);
         let c = buffer.fetch_char(pos_byte);
 
-        if c == '\t' as i32 && prev_col < goal {
+        if c == '\t' && prev_col < goal {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);

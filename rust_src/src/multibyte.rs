@@ -257,6 +257,12 @@ impl Codepoint {
     }
 }
 
+impl PartialEq<char> for Codepoint {
+    fn eq(&self, other: &char) -> bool {
+        self.0 == u32::from(*other)
+    }
+}
+
 impl std::fmt::Display for Codepoint {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match char::try_from(self.0) {
@@ -1053,7 +1059,7 @@ pub unsafe extern "C" fn string_char(
     if !advanced.is_null() {
         *advanced = ptr.add(cplen);
     }
-    cp.0 as c_int
+    cp.val() as c_int
 }
 
 /// Convert eight-bit chars in SRC (in multibyte form) to the

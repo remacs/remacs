@@ -8,7 +8,6 @@ use crate::{
     lisp::LispObject,
     multibyte::{Codepoint, MAX_CHAR},
     remacs_sys::EmacsInt,
-    remacs_sys::Qcharacterp,
     threads::ThreadState,
 };
 
@@ -22,10 +21,7 @@ impl LispObject {
     /// Check if Lisp object is a character or not and return the codepoint
     /// Similar to CHECK_CHARACTER
     pub fn as_character_or_error(self) -> Codepoint {
-        if !self.is_character() {
-            wrong_type!(Qcharacterp, self)
-        }
-        Codepoint::from(self.as_fixnum().unwrap() as u32)
+        Codepoint::from(self)
     }
 }
 

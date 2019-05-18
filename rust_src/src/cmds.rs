@@ -142,14 +142,14 @@ pub fn end_of_line(n: Option<EmacsInt>) {
         newpos = line_end_position(Some(num)) as isize;
         unsafe { set_point(newpos) };
         pt = cur_buf.pt;
-        if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' as i32 {
+        if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' {
             // If we skipped over a newline that follows
             // an invisible intangible run,
             // move back to the last tangible position
             // within the line.
             unsafe { set_point(pt - 1) };
             break;
-        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' as i32 {
+        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' {
             // If we skipped something intangible
             // and now we're not really at eol,
             // keep going.
@@ -266,8 +266,8 @@ pub fn self_insert_command(n: EmacsInt) {
                 globals.Vtranslation_table_for_input,
                 globals.last_command_event.as_fixnum_or_error() as i32,
             )
-        };
-        let val = internal_self_insert(Codepoint::from(character as u32), n as usize);
+        } as u32;
+        let val = internal_self_insert(character.into(), n as usize);
         if val == 2 {
             set(Qundo_auto__this_command_amalgamating.into(), Qnil);
         }
@@ -329,7 +329,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // C2 and several characters following C2.
 
         // This is the character after point.
-        let c2 = Codepoint::from(current_buffer.fetch_char(current_buffer.pt_byte) as u32);
+        let c2 = current_buffer.fetch_char(current_buffer.pt_byte);
 
         // Overwriting in binary-mode always replaces C2 by C.
         // Overwriting in textual-mode doesn't always do that.
@@ -362,9 +362,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                         // We will delete too many columns.  Let's fill columns
                         // by spaces so that the remaining text won't move.
                         let actual = unsafe { character::dec_pos(current_buffer.pt_byte) };
-                        if Codepoint::from(current_buffer.fetch_char(actual) as u32)
-                            == Codepoint::from('\t')
-                        {
+                        if current_buffer.fetch_char(actual) == '\t' {
                             // Rather than add spaces, let's just keep the tab.
                             chars_to_delete -= 1;
                         } else {
@@ -451,10 +449,10 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
         if t.get(c.val() as isize).is_not_nil()
-            && (c == Codepoint::from(' ') || c == Codepoint::from('\n'))
+            && (c == ' ' || c == '\n')
             && current_buffer.auto_fill_function_.is_not_nil()
         {
-            if c == Codepoint::from('\n') {
+            if c == '\n' {
                 // After inserting a newline, move to previous line and fill
                 // that.  Must have the newline in place already so filling and
                 // justification, if any, know where the end is going to be.
@@ -464,7 +462,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
             }
             let auto_fill_result = call!(Qinternal_auto_fill);
             // Test PT < ZV in case the auto-fill-function is strange.
-            if c == Codepoint::from('\n') && current_buffer.pt < current_buffer.zv {
+            if c == '\n' && current_buffer.pt < current_buffer.zv {
                 let newpt = current_buffer.pt + 1;
                 let newpt_byte = current_buffer.pt_byte + 1;
                 current_buffer.set_pt_both(newpt, newpt_byte);
