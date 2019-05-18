@@ -99,15 +99,20 @@
 
 (eval-when-compile (require 'cl-lib))
 (require 'tramp)
-
 (require 'dbus)
 (require 'url-parse)
 (require 'url-util)
-(require 'zeroconf)
 
 ;; Pacify byte-compiler.
 (eval-when-compile
   (require 'custom))
+
+(declare-function zeroconf-init "zeroconf")
+(declare-function zeroconf-list-service-types "zeroconf")
+(declare-function zeroconf-list-services "zeroconf")
+(declare-function zeroconf-service-host "zeroconf")
+(declare-function zeroconf-service-port "zeroconf")
+(declare-function zeroconf-service-txt "zeroconf")
 
 ;; We don't call `dbus-ping', because this would load dbus.el.
 (defconst tramp-gvfs-enabled

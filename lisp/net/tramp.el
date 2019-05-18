@@ -1641,8 +1641,6 @@ The outline level is equal to the verbosity of the Tramp message."
       (get-buffer-create (tramp-debug-buffer-name vec))
     (when (bobp)
       (setq buffer-undo-list t)
-      ;; So it does not get loaded while `outline-regexp' is let-bound.
-      (require 'outline)
       ;; Activate `outline-mode'.  This runs `text-mode-hook' and
       ;; `outline-mode-hook'.  We must prevent that local processes
       ;; die.  Yes: I've seen `flyspell-mode', which starts "ispell".
@@ -2142,7 +2140,11 @@ pass to the OPERATION."
 ;; function as well but regexp only.
 (defun tramp-file-name-for-operation (operation &rest args)
   "Return file name related to OPERATION file primitive.
-ARGS are the arguments OPERATION has been called with."
+ARGS are the arguments OPERATION has been called with.
+
+It does not always return a Tramp file name, for example if the
+first argument of `expand-file-name' is absolute and not remote.
+Must be handled by the callers."
   (cond
    ;; FILE resp DIRECTORY.
    ((member operation
@@ -2954,7 +2956,9 @@ Host is always \"localhost\"."
 (defun tramp-parse-netrc (filename)
   "Return a list of (user host) tuples allowed to access.
 User may be nil."
-  (require 'netrc)
+  ;; The declaration is not sufficient at runtime, because netrc.el is
+  ;; not autoloaded.
+  (autoload 'netrc-parse "netrc")
   (mapcar
    (lambda (item)
      (and (assoc "machine" item)
@@ -3387,6 +3391,7 @@ User is always nil."
     (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name (expand-file-name filename) nil
     (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
+      ;; We must load it in order to get the advice around `insert-directory'.
       (require 'ls-lisp)
       (let (ls-lisp-use-insert-directory-program start)
 	(tramp-run-real-handler
@@ -4879,7 +4884,6 @@ Only works for Bourne-like shells."
 ;; - Unload all `tramp-*' packages
 ;; - Reset `file-name-handler-alist'
 ;; - Cleanup hooks where Tramp functions are in
-;; - Cleanup advised functions
 ;; - Cleanup autoloads
 ;;;###autoload
 (defun tramp-unload-tramp ()

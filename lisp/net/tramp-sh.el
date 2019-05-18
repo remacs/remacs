@@ -30,10 +30,6 @@
 (eval-when-compile (require 'cl-lib))
 (require 'tramp)
 
-;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'dired))
-
 (declare-function dired-remove-file "dired-aux")
 (defvar dired-compress-file-suffixes)
 (defvar vc-handled-backends)

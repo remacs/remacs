@@ -31,10 +31,10 @@
 
 ;; Pacify byte-compiler.
 (require 'cl-lib)
+(declare-function recentf-cleanup "recentf")
 (declare-function tramp-dissect-file-name "tramp")
 (declare-function tramp-file-name-equal-p "tramp")
 (declare-function tramp-tramp-file-p "tramp")
-(declare-function recentf-cleanup "recentf")
 (defvar eshell-path-env)
 (defvar recentf-exclude)
 (defvar tramp-current-connection)

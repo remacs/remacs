@@ -35,15 +35,9 @@
 (defun tramp-unload-file-name-handlers ())
 
 (require 'auth-source)
-(require 'advice)
-(require 'cl-lib)
-(require 'custom)
 (require 'format-spec)
 (require 'parse-time)
-(require 'password-cache)
 (require 'shell)
-(require 'timer)
-(require 'ucs-normalize)
 
 (declare-function tramp-handle-temporary-file-directory "tramp")
 
