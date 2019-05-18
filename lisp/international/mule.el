@@ -2498,7 +2498,18 @@ This function is intended to be added to `auto-coding-functions'."
       (when end
 	(if (re-search-forward "encoding=[\"']\\(.+?\\)[\"']" end t)
 	    (let* ((match (match-string 1))
-		   (sym (intern (downcase match))))
+                   (sym-name (downcase match))
+                   (sym-name
+                    ;; https://www.w3.org/TR/xml/#charencoding says:
+                    ;; "Entities encoded in UTF-16 MUST [...] begin
+                    ;; with the Byte Order Mark."  The trick below is
+                    ;; based on the fact that utf-16be/le don't
+                    ;; specify BOM, while utf-16-be/le do.
+                    (cond
+                     ((equal sym-name "utf-16le") "utf-16-le")
+                     ((equal sym-name "utf-16be") "utf-16-be")
+                     (t sym-name)))
+		   (sym (intern sym-name)))
 	      (if (coding-system-p sym)
                   ;; If the encoding tag is UTF-8 and the buffer's
                   ;; encoding is one of the variants of UTF-8, use the
@@ -2587,9 +2598,14 @@ added by processing software."
       (let ((detected
              (with-coding-priority '(utf-8)
                (coding-system-base
-                (detect-coding-region (point-min) (point-max) t)))))
-        ;; Pure ASCII always comes back as undecided.
+                (detect-coding-region (point-min) (point-max) t))))
+            (bom (list (char-after 1) (char-after 2))))
         (cond
+         ((equal bom '(#xFE #xFF))
+          'utf-16be-with-signature)
+         ((equal bom '(#xFF #xFE))
+          'utf-16le-with-signature)
+         ;; Pure ASCII always comes back as undecided.
          ((memq detected '(utf-8 undecided))
           'utf-8)
          ((eq detected 'utf-16le-with-signature) 'utf-16le-with-signature)
