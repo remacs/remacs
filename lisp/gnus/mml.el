@@ -702,9 +702,7 @@ be \"related\" or \"alternate\"."
 				  filename)))))
 	       (t
 		(let ((contents (cdr (assq 'contents cont))))
-		  (if (if (featurep 'xemacs)
-			  (string-match "[^\000-\377]" contents)
-			(multibyte-string-p contents))
+		  (if (multibyte-string-p contents)
 		      (progn
 			(set-buffer-multibyte t)
 			(insert contents)
