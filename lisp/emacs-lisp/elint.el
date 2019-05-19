@@ -937,7 +937,7 @@ Does basic handling of `featurep' tests."
 	  ((and (memq func '(unless or))
 		(equal test '(featurep (quote emacs)))))
 	  ((and (eq func 'if)
-		(or (null test)	      ; eg custom-browse-insert-prefix
+		(or (null test)
 		    (member test '((featurep (quote xemacs))
 				   (not (featurep (quote emacs)))))
 		    (and (eq (car-safe test) 'and)
