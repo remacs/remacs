@@ -238,11 +238,17 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                       (string-equal
                        (file-notify--watch-filename watch)
                        (file-name-nondirectory file))
+
                       ;; Directory matches.
-                      (string-equal
-                       (file-name-nondirectory file)
-                       (file-name-nondirectory
-                        (file-notify--watch-directory watch)))
+                      ;;  FIXME: What purpose would this condition serve?
+                      ;;  Doesn't it just slip through events for files
+                      ;;  having the same name as the last component of the
+                      ;;  directory of the file that we are really watching?
+                      ;;(string-equal
+                      ;; (file-name-nondirectory file)
+                      ;; (file-name-nondirectory
+                      ;;  (file-notify--watch-directory watch)))
+
                       ;; File1 matches.
                       (and (stringp file1)
                            (string-equal
