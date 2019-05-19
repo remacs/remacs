@@ -417,70 +417,66 @@ file.  Archive and member name will be added."
       (substitute-key-definition 'advertised-undo 'archive-undo map global-map)
       (substitute-key-definition 'undo 'archive-undo map global-map))
 
-    (define-key map
-      (if (featurep 'xemacs) 'button2 [mouse-2]) 'archive-extract)
+    (define-key map [mouse-2] 'archive-extract)
 
-    (if (featurep 'xemacs)
-        ()				; out of luck
+    (define-key map [menu-bar immediate]
+      (cons "Immediate" (make-sparse-keymap "Immediate")))
+    (define-key map [menu-bar immediate alternate]
+      '(menu-item "Alternate Display" archive-alternate-display
+                  :enable (boundp (archive-name "alternate-display"))
+                  :help "Toggle alternate file info display"))
+    (define-key map [menu-bar immediate view]
+      '(menu-item "View This File" archive-view
+                  :help "Display file at cursor in View Mode"))
+    (define-key map [menu-bar immediate display]
+      '(menu-item "Display in Other Window" archive-display-other-window
+                  :help "Display file at cursor in another window"))
+    (define-key map [menu-bar immediate find-file-other-window]
+      '(menu-item "Find in Other Window" archive-extract-other-window
+                  :help "Edit file at cursor in another window"))
+    (define-key map [menu-bar immediate find-file]
+      '(menu-item "Find This File" archive-extract
+                  :help "Extract file at cursor and edit it"))
 
-      (define-key map [menu-bar immediate]
-        (cons "Immediate" (make-sparse-keymap "Immediate")))
-      (define-key map [menu-bar immediate alternate]
-        '(menu-item "Alternate Display" archive-alternate-display
-          :enable (boundp (archive-name "alternate-display"))
-          :help "Toggle alternate file info display"))
-      (define-key map [menu-bar immediate view]
-        '(menu-item "View This File" archive-view
-          :help "Display file at cursor in View Mode"))
-      (define-key map [menu-bar immediate display]
-        '(menu-item "Display in Other Window" archive-display-other-window
-          :help "Display file at cursor in another window"))
-      (define-key map [menu-bar immediate find-file-other-window]
-        '(menu-item "Find in Other Window" archive-extract-other-window
-          :help "Edit file at cursor in another window"))
-      (define-key map [menu-bar immediate find-file]
-        '(menu-item "Find This File" archive-extract
-          :help "Extract file at cursor and edit it"))
+    (define-key map [menu-bar mark]
+      (cons "Mark" (make-sparse-keymap "Mark")))
+    (define-key map [menu-bar mark unmark-all]
+      '(menu-item "Unmark All" archive-unmark-all-files
+                  :help "Unmark all marked files"))
+    (define-key map [menu-bar mark deletion]
+      '(menu-item "Flag" archive-flag-deleted
+                  :help "Flag file at cursor for deletion"))
+    (define-key map [menu-bar mark unmark]
+      '(menu-item "Unflag" archive-unflag
+                  :help "Unmark file at cursor"))
+    (define-key map [menu-bar mark mark]
+      '(menu-item "Mark" archive-mark
+                  :help "Mark file at cursor"))
 
-      (define-key map [menu-bar mark]
-        (cons "Mark" (make-sparse-keymap "Mark")))
-      (define-key map [menu-bar mark unmark-all]
-        '(menu-item "Unmark All" archive-unmark-all-files
-          :help "Unmark all marked files"))
-      (define-key map [menu-bar mark deletion]
-        '(menu-item "Flag" archive-flag-deleted
-          :help "Flag file at cursor for deletion"))
-      (define-key map [menu-bar mark unmark]
-        '(menu-item "Unflag" archive-unflag
-          :help "Unmark file at cursor"))
-      (define-key map [menu-bar mark mark]
-        '(menu-item "Mark" archive-mark
-          :help "Mark file at cursor"))
-
-      (define-key map [menu-bar operate]
-        (cons "Operate" (make-sparse-keymap "Operate")))
-      (define-key map [menu-bar operate chown]
-        '(menu-item "Change Owner..." archive-chown-entry
-          :enable (fboundp (archive-name "chown-entry"))
-          :help "Change owner of marked files"))
-      (define-key map [menu-bar operate chgrp]
-        '(menu-item "Change Group..." archive-chgrp-entry
-          :enable (fboundp (archive-name "chgrp-entry"))
-          :help "Change group ownership of marked files"))
-      (define-key map [menu-bar operate chmod]
-        '(menu-item "Change Mode..." archive-chmod-entry
-          :enable (fboundp (archive-name "chmod-entry"))
-          :help "Change mode (permissions) of marked files"))
-      (define-key map [menu-bar operate rename]
-        '(menu-item "Rename to..." archive-rename-entry
-          :enable (fboundp (archive-name "rename-entry"))
-          :help "Rename marked files"))
-      ;;(define-key map [menu-bar operate copy]
-      ;;  '(menu-item "Copy to..." archive-copy))
-      (define-key map [menu-bar operate expunge]
-        '(menu-item "Expunge Marked Files" archive-expunge
-          :help "Delete all flagged files from archive"))
-      map))
+    (define-key map [menu-bar operate]
+      (cons "Operate" (make-sparse-keymap "Operate")))
+    (define-key map [menu-bar operate chown]
+      '(menu-item "Change Owner..." archive-chown-entry
+                  :enable (fboundp (archive-name "chown-entry"))
+                  :help "Change owner of marked files"))
+    (define-key map [menu-bar operate chgrp]
+      '(menu-item "Change Group..." archive-chgrp-entry
+                  :enable (fboundp (archive-name "chgrp-entry"))
+                  :help "Change group ownership of marked files"))
+    (define-key map [menu-bar operate chmod]
+      '(menu-item "Change Mode..." archive-chmod-entry
+                  :enable (fboundp (archive-name "chmod-entry"))
+                  :help "Change mode (permissions) of marked files"))
+    (define-key map [menu-bar operate rename]
+      '(menu-item "Rename to..." archive-rename-entry
+                  :enable (fboundp (archive-name "rename-entry"))
+                  :help "Rename marked files"))
+    ;;(define-key map [menu-bar operate copy]
+    ;;  '(menu-item "Copy to..." archive-copy))
+    (define-key map [menu-bar operate expunge]
+      '(menu-item "Expunge Marked Files" archive-expunge
+                  :help "Delete all flagged files from archive"))
+    map)
   "Local keymap for archive mode listings.")
 (defvar archive-file-name-indent nil "Column where file names start.")
 
@@ -838,13 +834,11 @@ when parsing the archive."
        ;; Using `concat' here copies the text also, so we can add
        ;; properties without problems.
        (let ((text (concat (aref fil 0) "\n")))
-         (if (featurep 'xemacs)
-             ()                         ; out of luck
-           (add-text-properties
-            (aref fil 1) (aref fil 2)
-            '(mouse-face highlight
-              help-echo "mouse-2: extract this file into a buffer")
-            text))
+         (add-text-properties
+          (aref fil 1) (aref fil 2)
+          '(mouse-face highlight
+                       help-echo "mouse-2: extract this file into a buffer")
+          text)
          text))
      files)))
   (setq archive-file-list-end (point-marker)))
