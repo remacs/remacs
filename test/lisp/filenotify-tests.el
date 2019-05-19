@@ -93,6 +93,7 @@
 (defvar file-notify--test-desc2 nil)
 (defvar file-notify--test-results nil)
 (defvar file-notify--test-event nil)
+(defvar file-notify--test-file nil)
 (defvar file-notify--test-events nil)
 (defvar file-notify--test-monitors nil)
 
@@ -203,6 +204,11 @@ Return nil when any other file notification watch is still active."
 ;; This should happen on hydra only.
 (when (getenv "EMACS_HYDRA_CI")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
+(defun file-notify--test-add-watch (file flags callback)
+  "Like `file-notify-add-watch', but also passing FILE to CALLBACK."
+  (file-notify-add-watch file flags
+                         (lambda (event) (funcall callback event file))))
 
 ;; We do not want to try and fail `file-notify-add-watch'.
 (defun file-notify--test-local-enabled ()
@@ -494,26 +500,27 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
 (defun file-notify--test-event-test ()
   "Ert test function to be called by `file-notify--test-event-handler'.
 We cannot pass arguments, so we assume that `file-notify--test-event'
-is bound somewhere."
+and `file-notify--test-file' are bound somewhere."
   ;; Check the descriptor.
   (should (equal (car file-notify--test-event) file-notify--test-desc))
   ;; Check the file name.
   (should
    (string-prefix-p
-    (file-notify--event-watched-file file-notify--test-event)
+    file-notify--test-file
     (file-notify--test-event-file file-notify--test-event)))
   ;; Check the second file name if exists.
   (when (eq (nth 1 file-notify--test-event) 'renamed)
     (should
      (string-prefix-p
-      (file-notify--event-watched-file file-notify--test-event)
+      file-notify--test-file
       (file-notify--test-event-file1 file-notify--test-event)))))
 
-(defun file-notify--test-event-handler (event)
+(defun file-notify--test-event-handler (event file)
   "Run a test over FILE-NOTIFY--TEST-EVENT.
 For later analysis, append the test result to `file-notify--test-results'
 and the event to `file-notify--test-events'."
   (let* ((file-notify--test-event event)
+         (file-notify--test-file file)
          (result
           (ert-run-test (make-ert-test :body 'file-notify--test-event-test))))
     ;; Do not add lock files, this would confuse the checks.
@@ -603,7 +610,7 @@ delivered."
         (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
         (should
          (setq file-notify--test-desc
-               (file-notify-add-watch
+               (file-notify--test-add-watch
                 file-notify--test-tmpfile
                 '(change) #'file-notify--test-event-handler)))
         (file-notify--test-with-events
@@ -637,7 +644,7 @@ delivered."
         (write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
 	(should
 	 (setq file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
         (file-notify--test-with-events
@@ -671,7 +678,7 @@ delivered."
 	(should
 	 (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 	       file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
 	(file-notify--test-with-events
@@ -718,7 +725,7 @@ delivered."
 	 (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 	       file-notify--test-tmpfile1 (file-notify--test-make-temp-name)
 	       file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
 	(file-notify--test-with-events
@@ -775,7 +782,7 @@ delivered."
 	 (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 	       file-notify--test-tmpfile1 (file-notify--test-make-temp-name)
 	       file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
 	(file-notify--test-with-events
@@ -826,7 +833,7 @@ delivered."
 	 "any text" nil file-notify--test-tmpfile nil 'no-message)
 	(should
 	 (setq file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(attribute-change) #'file-notify--test-event-handler)))
 	(file-notify--test-with-events
@@ -991,7 +998,7 @@ delivered."
 	(write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
 	(should
 	 (setq file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
 	(should (file-notify-valid-p file-notify--test-desc))
@@ -1028,7 +1035,7 @@ delivered."
 	  (should
 	   (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 	         file-notify--test-desc
-	         (file-notify-add-watch
+	         (file-notify--test-add-watch
 		  file-notify--test-tmpdir
 		  '(change) #'file-notify--test-event-handler)))
 	  (should (file-notify-valid-p file-notify--test-desc))
@@ -1146,7 +1153,7 @@ delivered."
 	 (make-temp-file "file-notify-test-parent" t)))
   (should
    (setq file-notify--test-desc
-	 (file-notify-add-watch
+	 (file-notify--test-add-watch
 	  file-notify--test-tmpfile
 	  '(change) #'file-notify--test-event-handler)))
   (unwind-protect
@@ -1222,7 +1229,7 @@ delivered."
 	(write-region "any text" nil file-notify--test-tmpfile nil 'no-message)
 	(should
 	 (setq file-notify--test-desc
-	       (file-notify-add-watch
+	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
@@ -1258,7 +1265,7 @@ delivered."
          "any text" nil file-notify--test-tmpfile nil 'no-message)
         (should
          (setq file-notify--test-desc
-               (file-notify-add-watch
+               (file-notify--test-add-watch
                 file-notify--test-tmpfile
                 '(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
@@ -1314,23 +1321,23 @@ the file watch."
   (write-region "any text" nil file-notify--test-tmpfile1 nil 'no-message)
   (unwind-protect
       (cl-flet (;; Directory monitor.
-                (dir-callback (event)
+                (dir-callback (event file)
                  (let ((file-notify--test-desc file-notify--test-desc1))
-                   (file-notify--test-event-handler event)))
+                   (file-notify--test-event-handler event file)))
                 ;; File monitor.
-                (file-callback (event)
+                (file-callback (event file)
                  (let ((file-notify--test-desc file-notify--test-desc2))
-                   (file-notify--test-event-handler event))))
+                   (file-notify--test-event-handler event file))))
         (should
          (setq file-notify--test-desc1
-               (file-notify-add-watch
+               (file-notify--test-add-watch
                 file-notify--test-tmpfile
                 '(change) #'dir-callback)
                ;; This is needed for `file-notify--test-monitor'.
                file-notify--test-desc file-notify--test-desc1))
         (should
          (setq file-notify--test-desc2
-               (file-notify-add-watch
+               (file-notify--test-add-watch
                 file-notify--test-tmpfile1
                 '(change) #'file-callback)))
         (should (file-notify-valid-p file-notify--test-desc1))
