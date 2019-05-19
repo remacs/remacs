@@ -487,6 +487,10 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
 (file-notify--deftest-remote file-notify-test02-rm-watch
   "Check `file-notify-rm-watch' for remote files.")
 
+;; Accessors for the callback argument.
+(defun file-notify--test-event-file (event) (nth 2 event))
+(defun file-notify--test-event-file1 (event) (nth 3 event))
+
 (defun file-notify--test-event-test ()
   "Ert test function to be called by `file-notify--test-event-handler'.
 We cannot pass arguments, so we assume that `file-notify--test-event'
@@ -497,13 +501,13 @@ is bound somewhere."
   (should
    (string-prefix-p
     (file-notify--event-watched-file file-notify--test-event)
-    (file-notify--event-file-name file-notify--test-event)))
+    (file-notify--test-event-file file-notify--test-event)))
   ;; Check the second file name if exists.
   (when (eq (nth 1 file-notify--test-event) 'renamed)
     (should
      (string-prefix-p
       (file-notify--event-watched-file file-notify--test-event)
-      (file-notify--event-file1-name file-notify--test-event)))))
+      (file-notify--test-event-file1 file-notify--test-event)))))
 
 (defun file-notify--test-event-handler (event)
   "Run a test over FILE-NOTIFY--TEST-EVENT.
@@ -515,7 +519,7 @@ and the event to `file-notify--test-events'."
     ;; Do not add lock files, this would confuse the checks.
     (unless (string-match
 	     (regexp-quote ".#")
-	     (file-notify--event-file-name file-notify--test-event))
+	     (file-notify--test-event-file file-notify--test-event))
       (when file-notify-debug
         (message "file-notify--test-event-handler result: %s event: %S"
                  (null (ert-test-failed-p result)) file-notify--test-event))
