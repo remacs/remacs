@@ -121,7 +121,6 @@ on your system, you could say something like:
 
 (autoload 'nnmail-message-id "nnmail")
 (autoload 'mail-position-on-field "sendmail")
-(autoload 'gnus-buffer-live-p "gnus-util")
 
 ;;; Header access macros.
 
