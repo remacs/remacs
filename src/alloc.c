@@ -3724,24 +3724,6 @@ free_save_value (Lisp_Object save)
 
 
 
-DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
-       doc: /* Return a newly allocated marker which does not point at any place.  */)
-  (void)
-{
-  register Lisp_Object val;
-  register struct Lisp_Marker *p;
-
-  val = allocate_misc (Lisp_Misc_Marker);
-  p = XMARKER (val);
-  p->buffer = 0;
-  p->bytepos = 0;
-  p->charpos = 0;
-  p->next = NULL;
-  p->insertion_type = 0;
-  p->need_adjustment = 0;
-  return val;
-}
-
 /* Put MARKER back on the free list after using it temporarily.  */
 
 void
@@ -7407,7 +7389,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Smake_vector);
   defsubr (&Smake_string);
   defsubr (&Smake_symbol);
-  defsubr (&Smake_marker);
   defsubr (&Smake_finalizer);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);

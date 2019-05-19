@@ -1,14 +1,16 @@
 //! Storage allocation and gc
 
 use remacs_macros::lisp_fn;
+use std::ptr;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
+    marker::LispMarkerRef,
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
-        make_uninit_bool_vector, purecopy as c_purecopy,
+        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
+        make_uninit_bool_vector, purecopy as c_purecopy, Lisp_Misc_Type,
     },
     remacs_sys::{EmacsInt, EmacsUint},
 };
@@ -110,6 +112,21 @@ pub fn purecopy(obj: LispObject) -> LispObject {
     } else {
         unsafe { c_purecopy(obj) }
     }
+}
+
+/// Return a newly allocated marker which does not point to any place.
+#[lisp_fn]
+pub fn make_marker() -> LispMarkerRef {
+    let mut marker = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.force_marker();
+
+    // Set the properties of the marker to nothing
+    marker.set_buffer(ptr::null_mut());
+    marker.set_charpos(0isize);
+    marker.set_bytepos(0isize);
+    marker.set_insertion_type(false);
+    marker.set_need_adjustment(false);
+
+    marker
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));
