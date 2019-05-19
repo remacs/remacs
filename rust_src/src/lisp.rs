@@ -20,13 +20,15 @@ use crate::{
     lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
+    remacs_sys::specbind_tag::*,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
-    remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
+    remacs_sys::{specbinding, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
     remacs_sys::{Vbuffer_alist, Vprocess_alist},
+    symbols::LispSymbolRef,
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -282,6 +284,27 @@ impl From<LispObject> for LispSubrRef {
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(ExternalPtr::as_subr)
+    }
+}
+
+pub type SpecbindingRef = ExternalPtr<specbinding>;
+
+impl SpecbindingRef {
+    pub fn specpdl_symbol(&self) -> LispSymbolRef {
+        debug_assert!(self.kind() >= SPECPDL_LET);
+        unsafe { self.let_.as_ref().symbol }.into()
+    }
+
+    pub fn specpdl_old_value(&self) -> LispObject {
+        debug_assert!(self.kind() >= SPECPDL_LET);
+        unsafe { self.let_.as_ref().old_value }
+    }
+
+    pub fn set_specpdl_old_value(&mut self, val: LispObject) {
+        debug_assert!(self.kind() >= SPECPDL_LET);
+        unsafe {
+            self.let_.as_mut().old_value = val;
+        }
     }
 }
 
