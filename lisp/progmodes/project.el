@@ -443,14 +443,14 @@ pattern to search for."
     (read-regexp "Find regexp" (and id (regexp-quote id)))))
 
 ;;;###autoload
-(defun project-find-file ()
+(defun project-find-file (&optional filename)
   "Visit a file (with completion) in the current project's roots.
 The completion default is the filename at point, if one is
 recognized."
   (interactive)
   (let* ((pr (project-current t))
          (dirs (project-roots pr)))
-    (project-find-file-in (thing-at-point 'filename) dirs pr)))
+    (project-find-file-in (or filename (thing-at-point 'filename)) dirs pr)))
 
 ;;;###autoload
 (defun project-or-external-find-file ()
@@ -522,7 +522,7 @@ PREDICATE, HIST, and DEFAULT have the same meaning as in
   ;; removing it when it has no matches.  Neither seems natural
   ;; enough.  Removal is confusing; early expansion makes the prompt
   ;; too long.
-  (let* ((new-prompt (if default
+  (let* ((new-prompt (if (and default (not (string-equal default "")))
                          (format "%s (default %s): " prompt default)
                        (format "%s: " prompt)))
          (res (completing-read new-prompt
