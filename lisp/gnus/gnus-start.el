@@ -583,12 +583,9 @@ Can be used to turn version control on or off."
 
 (defun gnus-subscribe-alphabetically (newgroup)
   "Subscribe new NEWGROUP and insert it in alphabetical order."
-  (let ((groups (cdr gnus-newsrc-alist))
-	before)
-    (while (and (not before) groups)
-      (if (string< newgroup (caar groups))
-	  (setq before (caar groups))
-	(setq groups (cdr groups))))
+  (let ((before (seq-find (lambda (group)
+			    (string< newgroup group))
+			  (cdr gnus-group-list))))
     (gnus-subscribe-newsgroup newgroup before)))
 
 (defun gnus-subscribe-hierarchically (newgroup)
@@ -618,15 +615,15 @@ It is inserted in hierarchical newsgroup order if subscribed.  If not,
 it is killed."
   (if (gnus-y-or-n-p (format "Subscribe new newsgroup %s? " group))
       (gnus-subscribe-hierarchically group)
-    (push group gnus-killed-list)))
+    (gnus-subscribe-killed group)))
 
 (defun gnus-subscribe-zombies (group)
   "Make the new GROUP into a zombie group."
-  (push group gnus-zombie-list))
+  (cl-pushnew group gnus-zombie-list :test #'equal))
 
 (defun gnus-subscribe-killed (group)
   "Make the new GROUP a killed group."
-  (push group gnus-killed-list))
+  (cl-pushnew group gnus-killed-list :test #'equal))
 
 (defun gnus-subscribe-newsgroup (newsgroup &optional next)
   "Subscribe new NEWSGROUP.

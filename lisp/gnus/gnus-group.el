@@ -3300,21 +3300,31 @@ If REVERSE (the prefix), reverse the sorting order."
   (funcall gnus-group-sort-alist-function
 	   (gnus-make-sort-function func) reverse)
   (gnus-group-unmark-all-groups)
+  ;; Redisplay all groups according to the newly-sorted order of
+  ;; `gnus-group-list'.
   (gnus-group-list-groups)
   (gnus-dribble-touch))
 
 (defun gnus-group-sort-flat (func reverse)
-  ;; We peel off the dummy group from the alist.
+  "Sort groups in a flat list using sorting function FUNC.
+If REVERSE is non-nil, reverse the sort order.
+
+This function sets a new value for `gnus-group-list'; its return
+value is disregarded."
   (when func
-    (when (equal (gnus-info-group (car gnus-newsrc-alist)) "dummy.group")
-      (pop gnus-newsrc-alist))
-    ;; Do the sorting.
-    (setq gnus-newsrc-alist
-	  (sort gnus-newsrc-alist func))
-    (when reverse
-      (setq gnus-newsrc-alist (nreverse gnus-newsrc-alist)))
-    ;; Regenerate the hash table.
-    (gnus-make-hashtable-from-newsrc-alist)))
+    (let* ((groups (remove "dummy.group" gnus-group-list))
+	   (sorted-infos
+	    (sort (mapcar (lambda (g)
+			    (gnus-get-info g))
+			  groups)
+		  func)))
+      (setq gnus-group-list
+	    (mapcar (lambda (i)
+		      (gnus-info-group i))
+		    sorted-infos))
+      (when reverse
+	(setq gnus-group-list (nreverse gnus-group-list)))
+      (setq gnus-group-list (cons "dummy.group" gnus-group-list)))))
 
 (defun gnus-group-sort-groups-by-alphabet (&optional reverse)
   "Sort the group buffer alphabetically by group name.
@@ -3377,27 +3387,26 @@ If REVERSE, sort in reverse order."
     (gnus-dribble-touch)))
 
 (defun gnus-group-sort-selected-flat (groups func reverse)
-  (let (entries infos)
-    ;; First find all the group entries for these groups.
-    (while groups
-      (push (nthcdr 2 (gnus-group-entry (pop groups)))
-	    entries))
-    ;; Then sort the infos.
-    (setq infos
-	  (sort
-	   (mapcar
-	    (lambda (entry) (car entry))
-	    (setq entries (nreverse entries)))
-	   func))
+  "Sort only the selected GROUPS, using FUNC.
+If REVERSE is non-nil, reverse the sorting."
+  (let ((infos (sort
+		(mapcar (lambda (g)
+			  (gnus-get-info g))
+			groups)
+		func))
+	sorted-groups)
     (when reverse
       (setq infos (nreverse infos)))
-    ;; Go through all the infos and replace the old entries
-    ;; with the new infos.
-    (while infos
-      (setcar (car entries) (pop infos))
-      (pop entries))
-    ;; Update the hashtable.
-    (gnus-make-hashtable-from-newsrc-alist)))
+    (setq sorted-groups (mapcar (lambda (i) (gnus-info-group i)) infos))
+
+    ;; Find the original locations of GROUPS in `gnus-group-list', and
+    ;; replace each one, in order, with a group from SORTED-GROUPS.
+    (dolist (i (sort (mapcar (lambda (g)
+			       (seq-position gnus-group-list g))
+			     groups)
+		     #'<))
+      (setf (nth i gnus-group-list)
+	    (pop sorted-groups)))))
 
 (defun gnus-group-sort-selected-groups-by-alphabet (&optional n reverse)
   "Sort the group buffer alphabetically by group name.
