@@ -1779,6 +1779,11 @@ This option allows to automatically resize minibuffer-only frames
 similarly to how minibuffer windows are resized on "normal" frames.
 
 +++
+** New buffer display action function 'display-buffer-in-direction'.
+This function allows to specify the location of the window chosen by
+'display-buffer' in various ways.
+
++++
 ** New buffer display action alist entry 'dedicated'.
 Such an entry allows to specify the dedicated status of a window
 created by 'display-buffer'.
@@ -1788,6 +1793,16 @@ created by 'display-buffer'.
 Such an entry allows to specify a minimum height of the window used
 for displaying a buffer.  'display-buffer-below-selected' is the only
 action function to respect it at the moment.
+
++++
+** New buffer display action alist entry 'direction'.
+This entry is used to specify the location of the window chosen by
+'display-buffer-in-direction'.
+
++++
+** Additional meaning of display action alist entry 'window'.
+A 'window' entry can now also specify a reference window for
+'display-buffer-in-direction'.
 
 +++
 ** The function 'assoc-delete-all' now takes an optional predicate argument.
