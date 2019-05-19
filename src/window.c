@@ -3637,7 +3637,7 @@ displaying that buffer.  */)
       return Qt;
     }
 
-  if (WINDOWP (object))
+  if (WINDOW_LIVE_P (object))
     {
       struct window *w = XWINDOW (object);
       mark_window_display_accurate (object, false);
