@@ -21858,14 +21858,14 @@ MENU ENTRY: NODE NAME.
 @end ifnottex
 
 @quotation
-Robert J. Chassell started working with GNU Emacs in 1985.  He wrote
+Robert J. Chassell (1946--2017) started working with GNU Emacs in 1985.  He wrote
 and edited, taught Emacs and Emacs Lisp, and spoke throughout the
 world on software freedom.  Chassell was a founding Director and
 Treasurer of the Free Software Foundation, Inc.  He was co-author of
 the @cite{Texinfo} manual, and edited more than a dozen other
 books.  He graduated from Cambridge University, in England.  He had an
 abiding interest in social and economic history and flew his own
-airplane.  He passed away on 30 June 2017.
+airplane.
 
 @uref{https://www.fsf.org/blogs/community/goodbye-to-bob-chassell,
 "Goodbye to Bob Chassell"}
