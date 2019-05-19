@@ -148,7 +148,9 @@ This expects `auto-revert--messages' to be bound by
        (skip-unless (auto-revert--test-enabled-remote))
        (tramp-cleanup-connection
 	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
-       (funcall (ert-test-body ert-test)))))
+       (condition-case err
+           (funcall (ert-test-body ert-test))
+         (error (message "%s" err) (signal car err cdr err))))))
 
 (ert-deftest auto-revert-test00-auto-revert-mode ()
   "Check autorevert for a file."
