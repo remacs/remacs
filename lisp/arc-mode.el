@@ -516,14 +516,12 @@ Each descriptor is a vector of the form
 ;; -------------------------------------------------------------------------
 ;;; Section: Support functions.
 
-(eval-when-compile
-  (defsubst insert-unibyte (&rest args)
-    "Like insert but don't make unibyte string and eight-bit char multibyte."
-    (dolist (elt args)
-      (if (integerp elt)
-	  (insert (if (< elt 128) elt (decode-char 'eight-bit elt)))
-	(insert (string-to-multibyte elt)))))
-  )
+(defun arc-insert-unibyte (&rest args)
+  "Like insert but don't make unibyte string and eight-bit char multibyte."
+  (dolist (elt args)
+    (if (integerp elt)
+	(insert (if (< elt 128) elt (decode-char 'eight-bit elt)))
+      (insert elt))))
 
 (defsubst archive-name (suffix)
   (intern (concat "archive-" (symbol-name archive-subtype) "-" suffix)))
@@ -1544,7 +1542,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	(widen)
 	(goto-char (+ archive-proper-file-start (aref descr 4) 2))
 	(delete-char 13)
-	(insert-unibyte name)))))
+	(arc-insert-unibyte name)))))
 ;; -------------------------------------------------------------------------
 ;;; Section: Lzh Archives
 
@@ -1722,10 +1720,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	    (error "The file name is too long"))
 	(goto-char (+ p 21))
 	(delete-char (1+ oldfnlen))
-	(insert-unibyte newfnlen newname)
+	(arc-insert-unibyte newfnlen newname)
 	(goto-char p)
 	(delete-char 2)
-	(insert-unibyte newhsize (archive-lzh-resum p newhsize))))))
+	(arc-insert-unibyte newhsize (archive-lzh-resum p newhsize))))))
 
 (defun archive-lzh-ogm (newval files errtxt ofs)
   (save-excursion
@@ -1744,10 +1742,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 		    (setq newval (funcall newval (archive-l-e (+ p2 ofs) 2))))
 		(goto-char (+ p2 ofs))
 		(delete-char 2)
-		(insert-unibyte (logand newval 255) (ash newval -8))
+		(arc-insert-unibyte (logand newval 255) (ash newval -8))
 		(goto-char (1+ p))
 		(delete-char 1)
-		(insert-unibyte (archive-lzh-resum (1+ p) hsize)))
+		(arc-insert-unibyte (archive-lzh-resum (1+ p) hsize)))
 	    (message "Member %s does not have %s field"
 		     (aref fil 1) errtxt)))))))
 
@@ -1923,11 +1921,12 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	  (cond ((memq creator '(2 3)) ; Unix
 		 (goto-char (+ p 40))
 		 (delete-char 2)
-		 (insert-unibyte (logand newval 255) (ash newval -8)))
+		 (arc-insert-unibyte (logand newval 255) (ash newval -8)))
 		((memq creator '(0 5 6 7 10 11 15)) ; Dos etc.
 		 (goto-char (+ p 38))
-		 (insert-unibyte (logior (logand (get-byte (point)) 254)
-					 (logand (logxor 1 (ash newval -7)) 1)))
+		 (arc-insert-unibyte
+                  (logior (logand (get-byte (point)) 254)
+			  (logand (logxor 1 (ash newval -7)) 1)))
 		 (delete-char 1))
 		(t (message "Don't know how to change mode for this member"))))
         ))))
