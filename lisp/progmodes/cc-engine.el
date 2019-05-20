@@ -7245,78 +7245,33 @@ comment at the start of cc-engine.el for more info."
 	  (c-depropertize-raw-strings-in-region found-beg (point))))))
 
 (defun c-maybe-re-mark-raw-string ()
-  ;; When this function is called, point is immediately after a ".  If this "
-  ;; is the characteristic " of of a raw string delimiter, apply the pertinent
-  ;; `syntax-table' text properties to the entire raw string (when properly
-  ;; terminated) or just the delimiter (otherwise).
+  ;; When this function is called, point is immediately after a " which opens
+  ;; a string.  If this " is the characteristic " of of a raw string
+  ;; opener, apply the pertinent `syntax-table' text properties to the
+  ;; entire raw string (when properly terminated) or just the delimiter
+  ;; (otherwise).  In either of these cases, return t, otherwise return nil.
   ;;
-  ;; If the " is in any way part of a raw string, return non-nil.  Otherwise
-  ;; return nil.
   (let ((here (point))
 	in-macro macro-end id Rquote found)
-    (cond
-     ((and
-       (eq (char-before (1- (point))) ?R)
-       (looking-at "\\([^ ()\\\n\r\t]\\{0,16\\}\\)("))
+    (when
+	(and
+	 (eq (char-before (1- (point))) ?R)
+	 (looking-at "\\([^ ()\\\n\r\t]\\{0,16\\}\\)("))
       (save-excursion
 	(setq in-macro (c-beginning-of-macro))
 	(setq macro-end (when in-macro
 			  (c-end-of-macro)
 			  (point) ;; (min (1+ (point)) (point-max))
 			  )))
-      (if (not
+      (when
+	  (not
 	   (c-propertize-raw-string-opener
 	    (match-string-no-properties 1) ; id
 	    (1- (point))		   ; open quote
 	    (match-end 1)		   ; open paren
 	    macro-end))		     ; bound (end of macro) or nil.
-	  (goto-char (or macro-end (point-max))))
-      t)
-     ((save-excursion
-	(and
-	 (search-backward-regexp ")\\([^ ()\\\n\r\t]\\{0,16\\}\\)\"\\="
-				 (c-point 'bol) t)
-	 (setq id (match-string-no-properties 1))
-	 (let* ((quoted-id (regexp-quote id))
-		(quoted-id-depth (regexp-opt-depth quoted-id)))
-	   (while
-	       (and
-		;; Search back for an opening delimiter with identifier `id'.
-		;; A closing delimiter with `id' "blocks" our search.
-		(search-backward-regexp	; This could be slow.
-		 (concat "\\(R\"" quoted-id "(\\)"
-			 "\\|"
-			 "\\()" quoted-id "\"\\)")
-		 nil t)
-		(setq found t)
-		(if (eq (c-in-literal) 'string)
-		    (match-beginning 1)
-		  (match-beginning (+ 2 quoted-id-depth)))))
-	   (and found
-		(null (c-in-literal))
-		(match-beginning 1)))
-	 (setq Rquote (point))))
-      (save-excursion
-	(goto-char Rquote)
-	(setq in-macro (c-beginning-of-macro))
-	(setq macro-end (when in-macro
-			  (c-end-of-macro)
-			  (point))))
-      (if (or (not in-macro)
-	      (<= here macro-end))
-	  (progn
-	    (c-propertize-raw-string-opener
-	     id (1+ (point)) (match-end 1) macro-end)
-	    (goto-char here)
-	    t)
-	(goto-char here)
-	nil))
-
-     (t
-      ;; If the " is in another part of a raw string (whether as part of the
-      ;; identifier, or in the string itself) the `syntax-table' text
-      ;; properties on the raw string will be current.  So, we can use...
-      (c-raw-string-pos)))))
+	(goto-char (or macro-end (point-max))))
+      t)))
 
 
 ;; Handling of small scale constructs like types and names.
