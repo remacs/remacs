@@ -969,10 +969,7 @@ See `find-file-noselect' for the arguments."
   "Strip all \r's from the current buffer."
   (nnheader-skeleton-replace "\r"))
 
-(defalias 'nnheader-cancel-timer 'cancel-timer)
 (define-obsolete-function-alias 'nnheader-cancel-timer 'cancel-timer "27.1")
-
-(defalias 'nnheader-cancel-function-timers 'cancel-function-timers)
 (define-obsolete-function-alias 'nnheader-cancel-function-timers
   'cancel-function-timers "27.1")
 
