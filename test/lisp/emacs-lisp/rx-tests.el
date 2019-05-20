@@ -107,13 +107,7 @@
                    "ab"))
     (should (equal (and (string-match (rx (or "a" "ab" "abc")) s)
                         (match-string 0 s))
-                   "a")))
-  ;; Test zero-argument `or'.
-  (should (equal (rx (or)) regexp-unmatchable)))
-
-(ert-deftest rx-seq ()
-  ;; Test zero-argument `seq'.
-  (should (equal (rx (seq)) "")))
+                   "a"))))
 
 (provide 'rx-tests)
 ;; rx-tests.el ends here.
