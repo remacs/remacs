@@ -126,6 +126,14 @@ impl LispObject {
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.into()
     }
+
+    pub unsafe fn to_marker_unchecked(self) -> LispMarkerRef {
+        LispMarkerRef::new(self.get_untaggedptr() as *mut Lisp_Marker)
+    }
+
+    pub fn force_marker(self) -> LispMarkerRef {
+        unsafe { self.to_marker_unchecked() }
+    }
 }
 
 impl LispMiscRef {
