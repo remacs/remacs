@@ -3,7 +3,6 @@
 ;; Copyright (C) 2001, 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: url, vc
 
 ;; This file is part of GNU Emacs.

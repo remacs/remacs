@@ -5,7 +5,6 @@
 ;; Author: Ilya Zakharevich
 ;;	Bob Olson
 ;;	Jonathan Rockway <jon@jrock.us>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
 ;; This file is part of GNU Emacs.

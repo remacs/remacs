@@ -5,7 +5,6 @@
 
 ;; Author: Erik Naggum <erik@naggum.no>
 ;; Based on a previous version by Howard Gayle
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: i18n
 ;; Package: emacs
 

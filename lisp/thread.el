@@ -3,7 +3,6 @@
 ;; Copyright (C) 2018-2019 Free Software Foundation, Inc.
 
 ;; Author: Gemini Lasswell <gazally@runbox.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: thread, tools
 
 ;; This file is part of GNU Emacs.

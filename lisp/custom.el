@@ -4,7 +4,6 @@
 ;; Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, faces
 ;; Package: emacs
 

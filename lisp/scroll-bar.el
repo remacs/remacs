@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1993-1995, 1999-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: hardware
 ;; Package: emacs
 

@@ -3,7 +3,6 @@
 ;; Copyright (C) 1992, 1996, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Ashwin Ram <ashwin@cc.gatech.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR
 ;; Keywords: bib
 

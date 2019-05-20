@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: multimedia
 ;; Package: emacs
 

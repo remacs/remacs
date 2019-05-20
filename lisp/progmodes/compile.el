@@ -5,7 +5,6 @@
 
 ;; Authors: Roland McGrath <roland@gnu.org>,
 ;;	    Daniel Pfeiffer <occitan@esperanto.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: tools, processes
 
 ;; This file is part of GNU Emacs.

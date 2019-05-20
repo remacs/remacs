@@ -6,9 +6,9 @@
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H14PRO021
 
-;; Author: Kenichi HANDA <handa@etl.go.jp>
-;;	   Naoto TAKAHASHI <ntakahas@etl.go.jp>
-;; Maintainer: Kenichi HANDA <handa@etl.go.jp>
+;; Author: Kenichi Handa <handa@gnu.org>
+;;	   Naoto Takahashi <ntakahas@etl.go.jp>
+;; Maintainer: Kenichi Handa <handa@gnu.org>
 ;; Keywords: mule, multilingual, input method, i18n
 
 ;; This file is part of GNU Emacs.

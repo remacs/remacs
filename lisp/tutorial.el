@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 

@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Olin Shivers <olin.shivers@cs.cmu.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes, lisp
 
 ;; This file is part of GNU Emacs.

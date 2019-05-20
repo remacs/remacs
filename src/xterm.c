@@ -8191,7 +8191,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
              fit in 81 bytes.  So, we must prepare sufficient
              bytes for copy_buffer.  513 bytes (256 chars for
              two-byte character set) seems to be a fairly good
-             approximation.  -- 2000.8.10 handa@etl.go.jp  */
+             approximation.  -- 2000.8.10 handa@gnu.org  */
           unsigned char copy_buffer[513];
           unsigned char *copy_bufptr = copy_buffer;
           int copy_bufsiz = sizeof (copy_buffer);

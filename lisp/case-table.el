@@ -3,7 +3,6 @@
 ;; Copyright (C) 1988, 1994, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Howard Gayle
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: i18n
 ;; Package: emacs
 

@@ -1,7 +1,7 @@
 ;;; mwheel.el --- Wheel mouse support
 
 ;; Copyright (C) 1998, 2000-2019 Free Software Foundation, Inc.
-;; Maintainer: William M. Perry <wmperry@gnu.org>
+;; Maintainer: Bill Perry <wmperry@gnu.org>
 ;; Keywords: mouse
 ;; Package: emacs
 

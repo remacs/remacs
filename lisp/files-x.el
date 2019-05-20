@@ -3,7 +3,6 @@
 ;; Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 ;; Author: Juri Linkov <juri@jurta.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: files
 ;; Package: emacs
 

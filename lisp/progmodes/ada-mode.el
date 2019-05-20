@@ -5,7 +5,7 @@
 ;; Author: Rolf Ebert      <ebert@inf.enst.fr>
 ;;      Markus Heritsch <Markus.Heritsch@studbox.uni-stuttgart.de>
 ;;      Emmanuel Briot  <briot@gnat.com>
-;; Maintainer: Stephen Leake <stephen_leake@member.fsf.org>
+;; Maintainer: Stephen Leake <stephen_leake@stephe-leake.org>
 ;; Keywords: languages ada
 
 ;; This file is part of GNU Emacs.

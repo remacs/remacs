@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcImenu
 

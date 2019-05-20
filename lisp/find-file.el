@@ -1,7 +1,6 @@
 ;;; find-file.el --- find a file corresponding to this one given a pattern
 
 ;; Author: Henry Guillaume <henri@tibco.com, henry@c032.aone.net.au>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: c, matching, tools
 
 ;; Copyright (C) 1994-1995, 2001-2019 Free Software Foundation, Inc.

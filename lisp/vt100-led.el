@@ -3,7 +3,6 @@
 ;; Copyright (C) 1988, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Howard Gayle
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: hardware
 
 ;; This file is part of GNU Emacs.

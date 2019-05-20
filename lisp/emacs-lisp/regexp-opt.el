@@ -3,7 +3,6 @@
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: strings, regexps, extensions
 
 ;; This file is part of GNU Emacs.

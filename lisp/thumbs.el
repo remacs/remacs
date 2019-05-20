@@ -3,7 +3,6 @@
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Jean-Philippe Theberge <jphiltheberge@videotron.ca>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: Multimedia
 
 ;; This file is part of GNU Emacs.

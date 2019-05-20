@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Jon K Hellan <hellan@acm.org>
-;; Maintainer: bugs@gnus.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.

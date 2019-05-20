@@ -4,7 +4,6 @@
 ;; Copyright (C) 1988, 1993, 1997, 2001-2019 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: games
 ;; Created: Jan 1997
 ;; Obsolete-since: 24.3

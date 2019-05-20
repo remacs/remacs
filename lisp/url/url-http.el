@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999, 2001, 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
