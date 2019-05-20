@@ -150,7 +150,7 @@ This expects `auto-revert--messages' to be bound by
 	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
        (condition-case err
            (funcall (ert-test-body ert-test))
-         (error (message "%s" err) (signal car err cdr err))))))
+         (error (message "%s" err) (signal (car err) (cdr err)))))))
 
 (ert-deftest auto-revert-test00-auto-revert-mode ()
   "Check autorevert for a file."
@@ -310,8 +310,9 @@ This expects `auto-revert--messages' to be bound by
             ;; notification should be disabled, falling back to
             ;; polling.
             (should (string-match "any text" (buffer-string)))
-            ;; With w32notify, the 'stopped' events are not sent.
+            ;; With w32notify, and on emba, the `stopped' events are not sent.
             (or (eq file-notify--library 'w32notify)
+                (getenv "EMACS_EMBA_CI")
                 (should-not auto-revert-notify-watch-descriptor))
 
             ;; Once the file has been recreated, the buffer shall be
