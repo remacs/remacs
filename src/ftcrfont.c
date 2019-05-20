@@ -190,7 +190,7 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 		{
 		  if (glyphs != &stack_glyph)
 		    cairo_glyph_free (glyphs);
-		  else
+		  else if (stack_glyph.index)
 		    {
 		      int this_width =
 			ftcrfont_glyph_extents (font, stack_glyph.index, NULL);
