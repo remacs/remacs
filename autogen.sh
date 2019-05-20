@@ -315,8 +315,16 @@ git_config transfer.fsckObjects true
 
 # Configure 'git diff' hunk header format.
 
+# This xfuncname is based on Git's built-in 'cpp' pattern.
+# The first line rejects jump targets and access declarations.
+# The second line matches top-level functions and methods.
+# The third line matches preprocessor and DEFUN macros.
+git_config diff.cpp.xfuncname \
+'!^[ \t]*[A-Za-z_][A-Za-z_0-9]*:[[:space:]]*($|/[/*])
+^((::[[:space:]]*)?[A-Za-z_][A-Za-z_0-9]*[[:space:]]*\(.*)$
+^((#define[[:space:]]|DEFUN).*)$'
 git_config diff.elisp.xfuncname \
-	   '^\(def[^[:space:]]+[[:space:]]+([^()[:space:]]+)'
+           '^\([^[:space:]]*def[^[:space:]]+[[:space:]]+([^()[:space:]]+)'
 git_config 'diff.m4.xfuncname' '^((m4_)?define|A._DEFUN(_ONCE)?)\([^),]*'
 git_config 'diff.make.xfuncname' \
 	   '^([$.[:alnum:]_].*:|[[:alnum:]_]+[[:space:]]*([*:+]?[:?]?|!?)=|define .*)'
