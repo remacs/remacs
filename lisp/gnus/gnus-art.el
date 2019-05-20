@@ -3733,7 +3733,7 @@ is to run."
   "Stop the Date timer."
   (interactive)
   (when article-lapsed-timer
-    (nnheader-cancel-timer article-lapsed-timer)
+    (cancel-timer article-lapsed-timer)
     (setq article-lapsed-timer nil)))
 
 (defun article-date-user (&optional highlight)

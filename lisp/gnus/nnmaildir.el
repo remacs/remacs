@@ -1490,7 +1490,7 @@ This variable is set by `nnmaildir-request-article'.")
 		       'excl)
 	 (when (fboundp 'unix-sync)
 	   (unix-sync)))) ;; no fsync :(
-      (nnheader-cancel-timer 24h)
+      (cancel-timer 24h)
       (condition-case err
 	  (add-name-to-file tmpfile curfile)
 	(error
