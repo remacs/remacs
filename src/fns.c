@@ -3189,7 +3189,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #define IS_ASCII(Character) \
   ((Character) < 128)
 #define IS_BASE64(Character) \
-  (IS_ASCII (Character) && base64_char_to_value[Character] >= 0)
+  (IS_ASCII (Character) && b64_char_to_value[Character] >= 0)
 #define IS_BASE64_IGNORABLE(Character) \
   ((Character) == ' ' || (Character) == '\t' || (Character) == '\n' \
    || (Character) == '\f' || (Character) == '\r')
@@ -3222,6 +3222,17 @@ static const char base64_value_to_char[64] =
   '8', '9', '+', '/'					/* 60-63 */
 };
 
+static const char base64url_value_to_char[64] =
+{
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',	/*  0- 9 */
+  'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',	/* 10-19 */
+  'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',	/* 20-29 */
+  'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',	/* 30-39 */
+  'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',	/* 40-49 */
+  'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7',	/* 50-59 */
+  '8', '9', '-', '_'					/* 60-63 */
+};
+
 /* Table of base64 values for first 128 characters.  */
 static const short base64_char_to_value[128] =
 {
@@ -3238,6 +3249,23 @@ static const short base64_char_to_value[128] =
   29,  30,  31,  32,  33,  34,  35,  36,  37,  38,	/* 100-109 */
   39,  40,  41,  42,  43,  44,  45,  46,  47,  48,	/* 110-119 */
   49,  50,  51,  -1,  -1,  -1,  -1,  -1			/* 120-127 */
+};
+
+static const short base64url_char_to_value[128] =
+{
+  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*   0-  9 */
+  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  10- 19 */
+  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  20- 29 */
+  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  30- 39 */
+  -1,  -1,  -1,  -1,  -1,  62,  -1,  -1,  52,  53,	/*  40- 49 */
+  54,  55,  56,  57,  58,  59,  60,  61,  -1,  -1,	/*  50- 59 */
+  -1,  -1,  -1,  -1,  -1,  0,   1,   2,   3,   4,	/*  60- 69 */
+  5,   6,   7,   8,   9,   10,  11,  12,  13,  14,	/*  70- 79 */
+  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,	/*  80- 89 */
+  25,  -1,  -1,  -1,  -1,  63,  -1,  26,  27,  28,	/*  90- 99 */
+  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,	/* 100-109 */
+  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,	/* 110-119 */
+  49,  50,  51,  -1,  -1,  -1,  -1,  -1                 /* 120-127 */
 };
 
 /* The following diagram shows the logical steps by which three octets
@@ -3259,9 +3287,17 @@ static const short base64_char_to_value[128] =
    base64 characters.  */
 
 
-static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
+static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool,
+				  bool, bool);
 static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
-				  ptrdiff_t *);
+				  bool, ptrdiff_t *);
+
+Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
+				    bool, bool);
+
+Lisp_Object base64_encode_string_1(Lisp_Object, bool,
+				   bool, bool);
+
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
        2, 3, "r",
@@ -3270,6 +3306,26 @@ Return the length of the encoded text.
 Optional third argument NO-LINE-BREAK means do not break long lines
 into shorter lines.  */)
   (Lisp_Object beg, Lisp_Object end, Lisp_Object no_line_break)
+{
+  return base64_encode_region_1(beg, end, NILP (no_line_break), true, false);
+}
+
+
+DEFUN ("base64url-encode-region", Fbase64url_encode_region, Sbase64url_encode_region,
+       2, 3, "r",
+       doc: /* Base64url-encode the region between BEG and END.
+Return the length of the encoded text.
+Optional second argument NO-PAD means do not add padding char =.
+
+This is the variant defined in RFC4648.  */)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object no_pad)
+{
+  return base64_encode_region_1(beg, end, false, NILP(no_pad), true);
+}
+
+Lisp_Object
+base64_encode_region_1 (Lisp_Object beg, Lisp_Object end, bool line_break,
+			bool pad, bool base64url)
 {
   char *encoded;
   ptrdiff_t allength, length;
@@ -3292,7 +3348,8 @@ into shorter lines.  */)
 
   encoded = SAFE_ALLOCA (allength);
   encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg),
-				    encoded, length, NILP (no_line_break),
+				    encoded, length, line_break,
+				    pad, base64url,
 				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
   if (encoded_length > allength)
     emacs_abort ();
@@ -3330,6 +3387,26 @@ Optional second argument NO-LINE-BREAK means do not break long lines
 into shorter lines.  */)
   (Lisp_Object string, Lisp_Object no_line_break)
 {
+
+  return base64_encode_string_1(string, NILP (no_line_break), true, false);
+}
+
+DEFUN ("base64url-encode-string", Fbase64url_encode_string, Sbase64url_encode_string,
+       1, 2, 0,
+       doc: /* Base64url-encode STRING and return the result.
+Optional second argument NO-PAD means do not add padding char =.
+
+This is the variant defined in RFC4648.  */)
+  (Lisp_Object string, Lisp_Object no_pad)
+{
+
+  return base64_encode_string_1(string, false, NILP(no_pad), true);
+}
+
+Lisp_Object
+base64_encode_string_1(Lisp_Object string, bool line_break,
+		       bool pad, bool base64url)
+{
   ptrdiff_t allength, length, encoded_length;
   char *encoded;
   Lisp_Object encoded_string;
@@ -3348,7 +3425,8 @@ into shorter lines.  */)
   encoded = SAFE_ALLOCA (allength);
 
   encoded_length = base64_encode_1 (SSDATA (string),
-				    encoded, length, NILP (no_line_break),
+				    encoded, length, line_break,
+				    pad, base64url,
 				    STRING_MULTIBYTE (string));
   if (encoded_length > allength)
     emacs_abort ();
@@ -3367,7 +3445,8 @@ into shorter lines.  */)
 
 static ptrdiff_t
 base64_encode_1 (const char *from, char *to, ptrdiff_t length,
-		 bool line_break, bool multibyte)
+		 bool line_break, bool pad, bool base64url,
+		 bool multibyte)
 {
   int counter = 0;
   ptrdiff_t i = 0;
@@ -3375,6 +3454,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
   int c;
   unsigned int value;
   int bytes;
+  char const *b64_value_to_char = (base64url) ? base64url_value_to_char : base64_value_to_char;
 
   while (i < length)
     {
@@ -3405,16 +3485,19 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 
       /* Process first byte of a triplet.  */
 
-      *e++ = base64_value_to_char[0x3f & c >> 2];
+      *e++ = b64_value_to_char[0x3f & c >> 2];
       value = (0x03 & c) << 4;
 
       /* Process second byte of a triplet.  */
 
       if (i == length)
 	{
-	  *e++ = base64_value_to_char[value];
-	  *e++ = '=';
-	  *e++ = '=';
+	  *e++ = b64_value_to_char[value];
+	  if (pad)
+	    {
+	      *e++ = '=';
+	      *e++ = '=';
+	    }
 	  break;
 	}
 
@@ -3430,15 +3513,18 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
       else
 	c = from[i++];
 
-      *e++ = base64_value_to_char[value | (0x0f & c >> 4)];
+      *e++ = b64_value_to_char[value | (0x0f & c >> 4)];
       value = (0x0f & c) << 2;
 
       /* Process third byte of a triplet.  */
 
       if (i == length)
 	{
-	  *e++ = base64_value_to_char[value];
-	  *e++ = '=';
+	  *e++ = b64_value_to_char[value];
+	  if (pad)
+	    {
+	      *e++ = '=';
+	    }
 	  break;
 	}
 
@@ -3454,8 +3540,8 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
       else
 	c = from[i++];
 
-      *e++ = base64_value_to_char[value | (0x03 & c >> 6)];
-      *e++ = base64_value_to_char[0x3f & c];
+      *e++ = b64_value_to_char[value | (0x03 & c >> 6)];
+      *e++ = b64_value_to_char[0x3f & c];
     }
 
   return e - to;
@@ -3463,11 +3549,13 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 
 
 DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
-       2, 2, "r",
+       2, 3, "r",
        doc: /* Base64-decode the region between BEG and END.
 Return the length of the decoded text.
-If the region can't be decoded, signal an error and don't modify the buffer.  */)
-  (Lisp_Object beg, Lisp_Object end)
+If the region can't be decoded, signal an error and don't modify the buffer.
+Optional third argument BASE64URL define if base64Url variant will be used
+see RFC4648.  */)
+     (Lisp_Object beg, Lisp_Object end, Lisp_Object base64url)
 {
   ptrdiff_t ibeg, iend, length, allength;
   char *decoded;
@@ -3492,7 +3580,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
   move_gap_both (XFIXNAT (beg), ibeg);
   decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg),
-				    decoded, length,
+				    decoded, length, !NILP (base64url),
 				    multibyte, &inserted_chars);
   if (decoded_length > allength)
     emacs_abort ();
@@ -3526,9 +3614,11 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 }
 
 DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
-       1, 1, 0,
-       doc: /* Base64-decode STRING and return the result.  */)
-  (Lisp_Object string)
+       1, 2, 0,
+       doc: /* Base64-decode STRING and return the result
+Optional argument BASE64URL define if base64Url variant will be used
+see RFC4648.  */)
+     (Lisp_Object string, Lisp_Object base64url)
 {
   char *decoded;
   ptrdiff_t length, decoded_length;
@@ -3543,7 +3633,7 @@ DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
 
   /* The decoded result should be unibyte. */
   decoded_length = base64_decode_1 (SSDATA (string), decoded, length,
-				    0, NULL);
+				    !NILP (base64url), 0, NULL);
   if (decoded_length > length)
     emacs_abort ();
   else if (decoded_length >= 0)
@@ -3565,6 +3655,7 @@ DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
 
 static ptrdiff_t
 base64_decode_1 (const char *from, char *to, ptrdiff_t length,
+		 bool base64url,
 		 bool multibyte, ptrdiff_t *nchars_return)
 {
   ptrdiff_t i = 0;		/* Used inside READ_QUADRUPLET_BYTE */
@@ -3572,6 +3663,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
   unsigned char c;
   unsigned long value;
   ptrdiff_t nchars = 0;
+  short const *b64_char_to_value = (base64url) ? base64url_char_to_value : base64_char_to_value;
 
   while (1)
     {
@@ -3581,7 +3673,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       if (!IS_BASE64 (c))
 	return -1;
-      value = base64_char_to_value[c] << 18;
+      value = b64_char_to_value[c] << 18;
 
       /* Process second byte of a quadruplet.  */
 
@@ -3589,7 +3681,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       if (!IS_BASE64 (c))
 	return -1;
-      value |= base64_char_to_value[c] << 12;
+      value |= b64_char_to_value[c] << 12;
 
       c = (unsigned char) (value >> 16);
       if (multibyte && c >= 128)
@@ -3600,7 +3692,14 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       /* Process third byte of a quadruplet.  */
 
-      READ_QUADRUPLET_BYTE (-1);
+      if (!base64url)
+	{
+	  READ_QUADRUPLET_BYTE (-1);
+	}
+      else
+	{
+	  READ_QUADRUPLET_BYTE (e-to);
+	}
 
       if (c == '=')
 	{
@@ -3613,7 +3712,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       if (!IS_BASE64 (c))
 	return -1;
-      value |= base64_char_to_value[c] << 6;
+      value |= b64_char_to_value[c] << 6;
 
       c = (unsigned char) (0xff & value >> 8);
       if (multibyte && c >= 128)
@@ -3624,14 +3723,21 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       /* Process fourth byte of a quadruplet.  */
 
-      READ_QUADRUPLET_BYTE (-1);
+      if (!base64url)
+	{
+	  READ_QUADRUPLET_BYTE (-1);
+	}
+      else
+	{
+	  READ_QUADRUPLET_BYTE (e-to);
+	}
 
       if (c == '=')
 	continue;
 
       if (!IS_BASE64 (c))
 	return -1;
-      value |= base64_char_to_value[c];
+      value |= b64_char_to_value[c];
 
       c = (unsigned char) (0xff & value);
       if (multibyte && c >= 128)
@@ -5461,6 +5567,8 @@ this variable.  */);
   defsubr (&Sbase64_decode_region);
   defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
+  defsubr (&Sbase64url_encode_region);
+  defsubr (&Sbase64url_encode_string);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash_algorithms);
   defsubr (&Ssecure_hash);
