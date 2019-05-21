@@ -1376,11 +1376,15 @@
                         do (setq last-constant (copy-hash-table e))
                         and return nil)
                ;; Replace all addresses with TAGs.
-               (maphash #'(lambda (value tag)
-                            (let (newtag)
-                              (setq newtag (byte-compile-make-tag))
-                              (push (cons tag newtag) tags)
-                              (puthash value newtag last-constant)))
+               (maphash #'(lambda (value offset)
+                            (let ((match (assq offset tags)))
+                              (puthash value
+                                       (if match
+                                           (cdr match)
+                                         (let ((tag (byte-compile-make-tag)))
+                                           (push (cons offset tag) tags)
+                                           tag))
+                                       last-constant)))
                         last-constant)
                ;; Replace the hash table referenced in the lapcode with our
                ;; modified one.
@@ -1722,13 +1726,10 @@ If FOR-EFFECT is non-nil, the return value is assumed to be of no importance."
 		     keep-going t)
                ;; replace references to tag in jump tables, if any
                (dolist (table byte-compile-jump-tables)
-                 (catch 'break
                    (maphash #'(lambda (value tag)
                                 (when (equal tag lap0)
-                                  ;; each tag occurs only once in the jump table
-                                  (puthash value lap1 table)
-                                  (throw 'break nil)))
-                            table))))
+                                  (puthash value lap1 table)))
+                            table)))
 	      ;;
 	      ;; unused-TAG: --> <deleted>
 	      ;;

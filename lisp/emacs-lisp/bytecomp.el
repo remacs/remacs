@@ -4139,9 +4139,10 @@ VAR is a variable.
 TEST and VAR are the same throughout all conditions.
 VALUE satisfies `macroexp-const-p'.
 
-Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
+Return a list of the form ((TEST . VAR)  ((VALUES BODY) ...))"
   (let ((cases '())
         (ok t)
+        (all-keys nil)
         prev-var prev-test)
     (and (catch 'break
            (dolist (clause (cdr clauses) ok)
@@ -4151,23 +4152,46 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
                             (byte-compile-cond-vars (cadr condition) (cl-caddr condition))))
                     (obj1 (car-safe vars))
                     (obj2 (cdr-safe vars))
-                    (body (cdr-safe clause)))
+                    (body (cdr-safe clause))
+                    equality)
                (unless prev-var
                  (setq prev-var obj1))
-               (unless prev-test
-                 (setq prev-test test))
-               (if (and obj1 (memq test '(eq eql equal))
-                        (eq test prev-test)
-                        (eq obj1 prev-var))
-                   ;; discard duplicate clauses
-                   (unless (assoc obj2 cases test)
-                     (push (list obj2 body) cases))
-                 (if (and (macroexp-const-p condition) condition)
-		     (progn (push (list byte-compile--default-val
-					(or body `(,condition)))
-				  cases)
-                            (throw 'break t))
-                   (setq ok nil)
+               (cond
+                ((and obj1 (memq test '(eq eql equal))
+                      (eq obj1 prev-var)
+                      (or (not prev-test) (eq test prev-test)))
+                 (setq prev-test test)
+                 ;; Discard values already tested for.
+                 (unless (member obj2 all-keys)
+                   (push obj2 all-keys)
+                   (push (list (list obj2) body) cases)))
+
+                ((and obj1 (memq test '(memq memql member))
+                      (eq obj1 prev-var)
+                      (listp obj2)
+                      ;; Require a non-empty body, since the member function
+                      ;; value depends on the switch argument.
+                      body
+                      (setq equality (cdr (assq test '((memq   . eq)
+                                                       (memql  . eql)
+                                                       (member . equal)))))
+                      (or (not prev-test) (eq equality prev-test)))
+                 (setq prev-test equality)
+                 (let ((vals nil))
+                   ;; Discard values already tested for.
+                   (dolist (elem obj2)
+                     (unless (funcall test elem all-keys)
+                       (push elem vals)))
+                   (when vals
+                     (setq all-keys (append vals all-keys))
+                     (push (list vals body) cases))))
+
+                ((and (macroexp-const-p condition) condition)
+		 (push (list byte-compile--default-val
+                             (or body `(,condition)))
+		       cases)
+                 (throw 'break t))
+                (t (setq ok nil)
                    (throw 'break nil))))))
          (list (cons prev-test prev-var) (nreverse cases)))))
 
@@ -4176,18 +4200,20 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
          (test (caar table-info))
          (var (cdar table-info))
          (cases (cadr table-info))
-         jump-table test-obj body tag donetag default-tag default-case)
+         jump-table test-objects body tag donetag default-tag default-case)
     (when (and cases (not (= (length cases) 1)))
       ;; TODO: Once :linear-search is implemented for `make-hash-table'
       ;; set it to `t' for cond forms with a small number of cases.
-      (setq jump-table (make-hash-table
-			:test test
-			:purecopy t
-			:size (if (assq byte-compile--default-val cases)
-				  (1- (length cases))
-				(length cases)))
-            default-tag (byte-compile-make-tag)
-            donetag (byte-compile-make-tag))
+      (let ((nvalues (apply #'+ (mapcar (lambda (case) (length (car case)))
+                                        cases))))
+        (setq jump-table (make-hash-table
+			  :test test
+			  :purecopy t
+			  :size (if (assq byte-compile--default-val cases)
+				    (1- nvalues)
+				  nvalues))))
+      (setq default-tag (byte-compile-make-tag))
+      (setq donetag (byte-compile-make-tag))
       ;; The structure of byte-switch code:
       ;;
       ;; varref var
@@ -4224,10 +4250,11 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
 
       (dolist (case cases)
         (setq tag (byte-compile-make-tag)
-              test-obj (nth 0 case)
+              test-objects (nth 0 case)
               body (nth 1 case))
         (byte-compile-out-tag tag)
-        (puthash test-obj tag jump-table)
+        (dolist (value test-objects)
+          (puthash value tag jump-table))
 
         (let ((byte-compile-depth byte-compile-depth)
               (init-depth byte-compile-depth))
