@@ -51,9 +51,11 @@
 
 (ert-deftest pcase-tests-member ()
   (should (pcase-tests-grep
-           'memql (macroexpand-all '(pcase x ((or 1 2 3) body)))))
+           'memq (macroexpand-all '(pcase x ((or 'a 'b 'c) body)))))
   (should (pcase-tests-grep
-           'member (macroexpand-all '(pcase x ((or "a" 2 3) body)))))
+           'memql (macroexpand-all '(pcase x ((or 1 2 3 'a) body)))))
+  (should (pcase-tests-grep
+           'member (macroexpand-all '(pcase x ((or "a" 2 3 'a) body)))))
   (should-not (pcase-tests-grep
                'memq (macroexpand-all '(pcase x ((or "a" 2 3) body)))))
   (should-not (pcase-tests-grep

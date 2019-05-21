@@ -785,25 +785,26 @@ Otherwise, it defers to REST which is a list of branches of the form
    ((eq 'or (caar matches))
     (let* ((alts (cdar matches))
            (var (if (eq (caar alts) 'match) (cadr (car alts))))
-           (simples '()) (others '()) (memql-ok t))
+           (simples '()) (others '()) (mem-fun 'memq))
       (when var
         (dolist (alt alts)
           (if (and (eq (car alt) 'match) (eq var (cadr alt))
                    (let ((upat (cddr alt)))
                      (eq (car-safe upat) 'quote)))
               (let ((val (cadr (cddr alt))))
-                (unless (or (integerp val) (symbolp val))
-                  (setq memql-ok nil))
-                (push (cadr (cddr alt)) simples))
+                (cond ((integerp val)
+                       (when (eq mem-fun 'memq)
+                         (setq mem-fun 'memql)))
+                      ((not (symbolp val))
+                       (setq mem-fun 'member)))
+                (push val simples))
             (push alt others))))
       (cond
        ((null alts) (error "Please avoid it") (pcase--u rest))
        ;; Yes, we can use `memql' (or `member')!
        ((> (length simples) 1)
         (pcase--u1 (cons `(match ,var
-                                 . (pred (pcase--flip
-                                          ,(if memql-ok #'memql #'member)
-                                          ',simples)))
+                                 . (pred (pcase--flip ,mem-fun ',simples)))
                          (cdr matches))
                    code vars
                    (if (null others) rest
