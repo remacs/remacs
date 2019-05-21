@@ -5802,6 +5802,7 @@ DEF_DLL_FN (png_uint_32, png_get_valid, (png_structp, png_infop, png_uint_32));
 DEF_DLL_FN (void, png_set_strip_16, (png_structp));
 DEF_DLL_FN (void, png_set_expand, (png_structp));
 DEF_DLL_FN (void, png_set_gray_to_rgb, (png_structp));
+DEF_DLL_FN (int, png_set_interlace_handling, (png_structp));
 DEF_DLL_FN (void, png_set_background,
 	    (png_structp, png_color_16p, int, int, double));
 DEF_DLL_FN (png_uint_32, png_get_bKGD,
@@ -5840,6 +5841,7 @@ init_png_functions (void)
   LOAD_DLL_FN (library, png_set_strip_16);
   LOAD_DLL_FN (library, png_set_expand);
   LOAD_DLL_FN (library, png_set_gray_to_rgb);
+  LOAD_DLL_FN (library, png_set_interlace_handling);
   LOAD_DLL_FN (library, png_set_background);
   LOAD_DLL_FN (library, png_get_bKGD);
   LOAD_DLL_FN (library, png_read_update_info);
@@ -5875,6 +5877,7 @@ init_png_functions (void)
 #  undef png_set_background
 #  undef png_set_expand
 #  undef png_set_gray_to_rgb
+#  undef png_set_interlace_handling
 #  undef png_set_longjmp_fn
 #  undef png_set_read_fn
 #  undef png_set_sig_bytes
@@ -5899,6 +5902,7 @@ init_png_functions (void)
 #  define png_set_background fn_png_set_background
 #  define png_set_expand fn_png_set_expand
 #  define png_set_gray_to_rgb fn_png_set_gray_to_rgb
+#  define png_set_interlace_handling fn_png_set_interlace_handling
 #  define png_set_longjmp_fn fn_png_set_longjmp_fn
 #  define png_set_read_fn fn_png_set_read_fn
 #  define png_set_sig_bytes fn_png_set_sig_bytes
@@ -6213,7 +6217,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	}
     }
 
-  /* Update info structure.  */
+  png_set_interlace_handling (png_ptr);
   png_read_update_info (png_ptr, info_ptr);
 
   /* Get number of channels.  Valid values are 1 for grayscale images
