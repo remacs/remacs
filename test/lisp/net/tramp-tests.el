@@ -103,11 +103,6 @@
 (when (getenv "EMACS_HYDRA_CI")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
-(defvar tramp--test-expensive-test
-  (null
-   (string-equal (getenv "SELECTOR") "(quote (not (tag :expensive-test)))"))
-  "Whether expensive tests are run.")
-
 (defvar tramp--test-enabled-checked nil
   "Cached result of `tramp--test-enabled'.
 If the function did run, the value is a cons cell, the `cdr'
@@ -134,6 +129,12 @@ being the result.")
 
   ;; Return result.
   (cdr tramp--test-enabled-checked))
+
+(defsubst tramp--test-expensive-test ()
+  "Whether expensive tests are run."
+  (ert-select-tests
+   (ert--stats-selector ert--current-run-stats)
+   (list (make-ert-test :body nil :tags '(:expensive-test)))))
 
 (defun tramp--test-make-temp-name (&optional local quoted)
   "Return a temporary file name for test.
@@ -186,6 +187,16 @@ handled properly.  BODY shall not contain a timeout."
   (tramp--test-instrument-test-case 10
     (tramp-backtrace
      (tramp-dissect-file-name tramp-test-temporary-file-directory))))
+
+(defmacro tramp--test-print-duration (message &rest body)
+  "Run BODY and print a message with duration, prompted by MESSAGE."
+  (declare (indent 1) (debug (stringp body)))
+  `(let ((start (current-time)))
+     (unwind-protect
+	 (progn ,@body)
+       (tramp--test-message
+	"%s %f sec"
+	,message (float-time (time-subtract (current-time) start))))))
 
 (ert-deftest tramp-test00-availability ()
   "Test availability of Tramp functions."
@@ -1745,8 +1756,8 @@ handled properly.  BODY shall not contain a timeout."
     (substitute-in-file-name "/method:host:/~foo") "/method:host:/~foo"))
   (should
    (string-equal (substitute-in-file-name "/method:host:/path//~foo") "/~foo"))
-  ;; (substitute-in-file-name "/path/~foo") expands only to "/~foo"",
-  ;; if $LOGNAME or $USER is "foo".  Otherwise, it doesn't expand.
+  ;; (substitute-in-file-name "/path/~foo") expands only for a local
+  ;; user "foo" to "/~foo"".  Otherwise, it doesn't expand.
   (should
    (string-equal
     (substitute-in-file-name
@@ -1907,7 +1918,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `file-exist-p', `write-region' and `delete-file'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (should-not (file-exists-p tmp-name))
       (write-region "foo" nil tmp-name)
@@ -1919,7 +1930,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `file-local-copy'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  tmp-name2)
       (unwind-protect
@@ -1951,7 +1962,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `insert-file-contents'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (with-temp-buffer
@@ -1979,7 +1990,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `write-region'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (progn
@@ -2069,7 +2080,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless (tramp--test-enabled))
 
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+  (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -2094,9 +2105,10 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(with-temp-buffer
 		  (insert-file-contents target)
 		  (should (string-equal (buffer-string) "foo")))
-		(should-error
-		 (copy-file source target)
-		 :type 'file-already-exists)
+		(when (tramp--test-expensive-test)
+		  (should-error
+		   (copy-file source target)
+		   :type 'file-already-exists))
 		(copy-file source target 'ok))
 
 	    ;; Cleanup.
@@ -2113,7 +2125,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(make-directory target)
 		(should (file-directory-p target))
 		;; This has been changed in Emacs 26.1.
-		(when (tramp--test-emacs26-p)
+		(when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
 		  (should-error
 		   (copy-file source target)
 		   :type 'file-already-exists))
@@ -2180,7 +2192,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless (tramp--test-enabled))
 
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+  (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -2208,9 +2220,10 @@ This checks also `file-name-as-directory', `file-name-directory',
 		  (should (string-equal (buffer-string) "foo")))
 		(write-region "foo" nil source)
 		(should (file-exists-p source))
-		(should-error
-		 (rename-file source target)
-		 :type 'file-already-exists)
+		(when (tramp--test-expensive-test)
+		  (should-error
+		   (rename-file source target)
+		   :type 'file-already-exists))
 		(rename-file source target 'ok)
 		(should-not (file-exists-p source)))
 
@@ -2226,7 +2239,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(make-directory target)
 		(should (file-directory-p target))
 		;; This has been changed in Emacs 26.1.
-		(when (tramp--test-emacs26-p)
+		(when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
 		  (should-error
 		   (rename-file source target)
 		   :type 'file-already-exists))
@@ -2293,7 +2306,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 This tests also `file-directory-p' and `file-accessible-directory-p'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "foo/bar" tmp-name1)))
       (unwind-protect
@@ -2316,7 +2329,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `delete-directory'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       ;; Delete empty directory.
       (make-directory tmp-name)
@@ -2336,7 +2349,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `copy-directory'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name3 (expand-file-name
@@ -2402,7 +2415,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `directory-files'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "bla" tmp-name1))
 	   (tmp-name3 (expand-file-name "foo" tmp-name1)))
@@ -2435,7 +2448,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `file-expand-wildcards'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "foo" tmp-name1))
 	   (tmp-name3 (expand-file-name "bar" tmp-name1))
@@ -2499,7 +2512,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `insert-directory'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1
             (expand-file-name (tramp--test-make-temp-name nil quoted)))
 	   (tmp-name2 (expand-file-name "foo" tmp-name1))
@@ -2560,7 +2573,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   ;; Since Emacs 26.1.
   (skip-unless (fboundp 'insert-directory-wildcard-in-dir-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name1
 	    (expand-file-name (tramp--test-make-temp-name nil quoted)))
 	   (tmp-name2
@@ -2677,7 +2690,7 @@ This tests also `file-readable-p', `file-regular-p' and
 `file-ownership-preserved-p'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This
     ;; would let the test fail.
@@ -2784,7 +2797,7 @@ This tests also `file-readable-p', `file-regular-p' and
   "Check `directory-files-and-attributes'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     ;; `directory-files-and-attributes' contains also values for
     ;; "../".  Ensure that this doesn't change during tests, for
     ;; example due to handling temporary files.
@@ -2830,7 +2843,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (progn
@@ -2860,7 +2873,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   ;; Remacs: skipped on OSX until fixed upstream.
   (skip-unless (not (eq system-type 'darwin)))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This
     ;; would let the test fail.
@@ -2884,14 +2897,16 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (if quoted 'tramp-compat-file-name-unquote 'identity)
 	       (file-remote-p tmp-name1 'localname))
 	      (file-symlink-p tmp-name2)))
-	    (should-error
-	     (make-symbolic-link tmp-name1 tmp-name2)
-	     :type 'file-already-exists)
-	    ;; A number means interactive case.
-	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	    (when (tramp--test-expensive-test)
 	      (should-error
-	       (make-symbolic-link tmp-name1 tmp-name2 0)
+	       (make-symbolic-link tmp-name1 tmp-name2)
 	       :type 'file-already-exists))
+	    (when (tramp--test-expensive-test)
+	      ;; A number means interactive case.
+	      (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+		(should-error
+		 (make-symbolic-link tmp-name1 tmp-name2 0)
+		 :type 'file-already-exists)))
 	    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (_prompt) t)))
 	      (make-symbolic-link tmp-name1 tmp-name2 0)
 	      (should
@@ -2926,9 +2941,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (string-equal tmp-name1 (file-symlink-p tmp-name3))))
 	    ;; Check directory as newname.
 	    (make-directory tmp-name4)
-	    (should-error
-	     (make-symbolic-link tmp-name1 tmp-name4)
-	     :type 'file-already-exists)
+	    (when (tramp--test-expensive-test)
+	      (should-error
+	       (make-symbolic-link tmp-name1 tmp-name4)
+	       :type 'file-already-exists))
 	    (make-symbolic-link tmp-name1 (file-name-as-directory tmp-name4))
 	    (should
 	     (string-equal
@@ -2950,7 +2966,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
       ;; Check `add-name-to-file'.
       (unwind-protect
-	  (progn
+	  (when (tramp--test-expensive-test)
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
 	    (add-name-to-file tmp-name1 tmp-name2)
@@ -3064,12 +3080,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (string-equal
 		(file-truename tmp-name2)
 		(file-truename tmp-name3)))
-	      (should-error
-	       (with-temp-buffer (insert-file-contents tmp-name2))
-               :type tramp-file-missing)
-	      (should-error
-	       (with-temp-buffer (insert-file-contents tmp-name3))
-               :type tramp-file-missing)
+	      (when (tramp--test-expensive-test)
+		(should-error
+		 (with-temp-buffer (insert-file-contents tmp-name2))
+		 :type tramp-file-missing))
+	      (when (tramp--test-expensive-test)
+		(should-error
+		 (with-temp-buffer (insert-file-contents tmp-name3))
+		 :type tramp-file-missing))
 	      ;; `directory-files' does not show symlinks to
 	      ;; non-existing targets in the "smb" case.  So we remove
 	      ;; the symlinks manually.
@@ -3082,18 +3100,19 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
       ;; Detect cyclic symbolic links.
       (unwind-protect
-	  (tramp--test-ignore-make-symbolic-link-error
-	    (make-symbolic-link tmp-name2 tmp-name1)
-	    (should (file-symlink-p tmp-name1))
-	    (if (tramp-smb-file-name-p tramp-test-temporary-file-directory)
-		;; The symlink command of `smbclient' detects the
-		;; cycle already.
-		(should-error
-		 (make-symbolic-link tmp-name1 tmp-name2)
-		 :type 'file-error)
-	      (make-symbolic-link tmp-name1 tmp-name2)
-	      (should (file-symlink-p tmp-name2))
-	      (should-error (file-truename tmp-name1) :type 'file-error)))
+	  (when (tramp--test-expensive-test)
+	    (tramp--test-ignore-make-symbolic-link-error
+	     (make-symbolic-link tmp-name2 tmp-name1)
+	     (should (file-symlink-p tmp-name1))
+	     (if (tramp-smb-file-name-p tramp-test-temporary-file-directory)
+		 ;; The symlink command of `smbclient' detects the
+		 ;; cycle already.
+		 (should-error
+		  (make-symbolic-link tmp-name1 tmp-name2)
+		  :type 'file-error)
+	       (make-symbolic-link tmp-name1 tmp-name2)
+	       (should (file-symlink-p tmp-name2))
+	       (should-error (file-truename tmp-name1) :type 'file-error))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -3113,7 +3132,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name3 (tramp--test-make-temp-name nil quoted)))
@@ -3147,7 +3166,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `set-visited-file-modtime' and `verify-visited-file-modtime'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (progn
@@ -3170,7 +3189,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (file-acl tramp-test-temporary-file-directory))
 
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+  (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -3248,7 +3267,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       '(nil nil nil nil))))
 
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+  (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -3396,7 +3415,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (unwind-protect
           (dolist
 	      (syntax
-	       (if tramp--test-expensive-test
+	       (if (tramp--test-expensive-test)
 		   (tramp-syntax-values) `(,orig-syntax)))
             (tramp-change-syntax syntax)
             (let ;; This is needed for the `simplified' syntax.
@@ -3447,7 +3466,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
         (tramp-change-syntax orig-syntax))))
 
   (dolist (n-e '(nil t))
-    (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+    (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
       (let ((non-essential n-e)
 	    (tmp-name (tramp--test-make-temp-name nil quoted)))
 
@@ -3509,7 +3528,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `load'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
 	  (progn
@@ -3534,7 +3553,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name (tramp--test-make-temp-name nil quoted))
 	   (fnnd (file-name-nondirectory tmp-name))
 	   (default-directory tramp-test-temporary-file-directory)
@@ -3580,7 +3599,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((default-directory tramp-test-temporary-file-directory)
 	  (tmp-name (tramp--test-make-temp-name nil quoted))
 	  kill-buffer-query-functions proc)
@@ -3672,7 +3691,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted))
 	  (default-directory tramp-test-temporary-file-directory)
 	  ;; Suppress nasty messages.
@@ -3934,7 +3953,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((default-directory tramp-test-temporary-file-directory)
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "foo" tmp-name1))
@@ -4002,7 +4021,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `make-auto-save-file-name'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted)))
 
@@ -4093,7 +4112,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `find-backup-file-name'."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+  (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  ;; These settings are not used by Tramp, so we ignore them.
@@ -4329,7 +4348,7 @@ This requires restrictions of file name syntax."
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
   ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+  (dolist (quoted (if (and (tramp--test-expensive-test) (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This
@@ -4462,7 +4481,7 @@ This requires restrictions of file name syntax."
 		(should-not (file-exists-p file1))))
 
 	    ;; Check, that environment variables are set correctly.
-	    (when (and tramp--test-expensive-test (tramp--test-sh-p))
+	    (when (and (tramp--test-expensive-test) (tramp--test-sh-p))
 	      (dolist (elt files)
 		(let ((envvar (concat "VAR_" (upcase (md5 elt))))
 		      (default-directory tramp-test-temporary-file-directory)
@@ -4492,41 +4511,46 @@ This requires restrictions of file name syntax."
   ;; character on Windows or Cygwin, because the backslash is
   ;; interpreted as a path separator, preventing "\t" from being
   ;; expanded to <TAB>.
-  (tramp--test-check-files
-   (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
-       "foo bar baz"
-     (if (or (tramp--test-adb-p)
-	     (tramp--test-docker-p)
-	     (eq system-type 'cygwin))
-	 " foo bar baz "
-       " foo\tbar baz\t"))
-   "$foo$bar$$baz$"
-   "-foo-bar-baz-"
-   "%foo%bar%baz%"
-   "&foo&bar&baz&"
-   (unless (or (tramp--test-ftp-p)
-	       (tramp--test-gvfs-p)
-	       (tramp--test-windows-nt-or-smb-p))
-     "?foo?bar?baz?")
-   (unless (or (tramp--test-ftp-p)
-	       (tramp--test-gvfs-p)
-	       (tramp--test-windows-nt-or-smb-p))
-     "*foo*bar*baz*")
-   (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
-       "'foo'bar'baz'"
-     "'foo\"bar'baz\"")
-   "#foo~bar#baz~"
-   (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
-       "!foo!bar!baz!"
-     "!foo|bar!baz|")
-   (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
-       ";foo;bar;baz;"
-     ":foo;bar:baz;")
-   (unless (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
-     "<foo>bar<baz>")
-   "(foo)bar(baz)"
-   (unless (or (tramp--test-ftp-p) (tramp--test-gvfs-p)) "[foo]bar[baz]")
-   "{foo}bar{baz}"))
+  (let ((files
+	 (list
+	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	      "foo bar baz"
+	    (if (or (tramp--test-adb-p)
+		    (tramp--test-docker-p)
+		    (eq system-type 'cygwin))
+		" foo bar baz "
+	      " foo\tbar baz\t"))
+	  "$foo$bar$$baz$"
+	  "-foo-bar-baz-"
+	  "%foo%bar%baz%"
+	  "&foo&bar&baz&"
+	  (unless (or (tramp--test-ftp-p)
+		      (tramp--test-gvfs-p)
+		      (tramp--test-windows-nt-or-smb-p))
+	    "?foo?bar?baz?")
+	  (unless (or (tramp--test-ftp-p)
+		      (tramp--test-gvfs-p)
+		      (tramp--test-windows-nt-or-smb-p))
+	    "*foo*bar*baz*")
+	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	      "'foo'bar'baz'"
+	    "'foo\"bar'baz\"")
+	  "#foo~bar#baz~"
+	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	      "!foo!bar!baz!"
+	    "!foo|bar!baz|")
+	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	      ";foo;bar;baz;"
+	    ":foo;bar:baz;")
+	  (unless (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	    "<foo>bar<baz>")
+	  "(foo)bar(baz)"
+	  (unless (or (tramp--test-ftp-p) (tramp--test-gvfs-p)) "[foo]bar[baz]")
+	  "{foo}bar{baz}")))
+    ;; Simplify test in order to speed up.
+    (apply 'tramp--test-check-files
+	   (if (tramp--test-expensive-test)
+	       files (list (mapconcat 'identity files ""))))))
 
 ;; These tests are inspired by Bug#17238.
 (ert-deftest tramp-test38-special-characters ()
@@ -4607,12 +4631,28 @@ Use the `ls' command."
 	 (coding-system-for-write utf8)
 	 (file-name-coding-system
 	  (coding-system-change-eol-conversion utf8 'unix)))
-    (tramp--test-check-files
-     (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
-     (unless (tramp--test-hpux-p)
-       "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
-     "银河系漫游指南系列"
-     "Автостопом по гала́ктике")))
+    (apply
+     'tramp--test-check-files
+     (if (tramp--test-expensive-test)
+	 (delete-dups
+	  (mapcar
+	   ;; Use all available language specific snippets.  Filter
+	   ;; out strings which use unencodable characters.  Remove
+	   ;; slash or newline.  Not Tramp's business.
+	   (lambda (x)
+	     (setq x (eval (cdr (assoc 'sample-text x))))
+	     (unless (or (null x)
+			 (unencodable-char-position
+			  nil nil file-name-coding-system nil x))
+	       (replace-regexp-in-string "[\n/]" "" x)))
+	   language-info-alist))
+
+       (list
+	(unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
+	(unless (tramp--test-hpux-p)
+	  "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
+	"银河系漫游指南系列"
+	"Автостопом по гала́ктике")))))
 
 (ert-deftest tramp-test39-utf8 ()
   "Check UTF8 encoding in file names and file contents."
@@ -4745,11 +4785,11 @@ process sentinels.  They shall not disturb each other."
 	   ;; Number of asynchronous processes for test.  Tests on
 	   ;; some machines handle less parallel processes.
            (number-proc
-            (or
-             (ignore-errors
-               (string-to-number (getenv "REMOTE_PARALLEL_PROCESSES")))
-	     (if (getenv "EMACS_HYDRA_CI") 5)
-             10))
+            (cond
+             ((ignore-errors
+               (string-to-number (getenv "REMOTE_PARALLEL_PROCESSES"))))
+	     ((getenv "EMACS_HYDRA_CI") 5)
+             (t 10)))
            ;; On hydra, timings are bad.
            (timer-repeat
             (cond

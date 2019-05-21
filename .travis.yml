@@ -66,6 +66,7 @@ jobs:
         - PATH="/usr/local/opt/texinfo/bin:$PATH"
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
