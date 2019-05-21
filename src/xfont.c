@@ -1047,11 +1047,16 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
           }
       else
         {
-          const unsigned code = s->char2b[from];
-          const XChar2b char2b = { .byte1 = code >> 8,
-                                   .byte2 = code & 0xFF };
+          USE_SAFE_ALLOCA;
+          const unsigned *code = s->char2b + from;
+          XChar2b *char2b;
+          SAFE_NALLOCA (char2b, 1, len);
+          for (int i = 0; i < len; ++i)
+            char2b[i] = (XChar2b) { .byte1 = code[i] >> 8,
+                                    .byte2 = code[i] & 0xFF };
           XDrawImageString16 (display, FRAME_X_DRAWABLE (s->f),
-                              gc, x, y, &char2b, len);
+                              gc, x, y, char2b, len);
+          SAFE_FREE ();
         }
     }
   else
@@ -1067,11 +1072,16 @@ xfont_draw (struct glyph_string *s, int from, int to, int x, int y,
           }
       else
         {
-          const unsigned code = s->char2b[from];
-          const XChar2b char2b = { .byte1 = code >> 8,
-                                   .byte2 = code & 0xFF };
+          USE_SAFE_ALLOCA;
+          const unsigned *code = s->char2b + from;
+          XChar2b *char2b;
+          SAFE_NALLOCA (char2b, 1, len);
+          for (int i = 0; i < len; ++i)
+            char2b[i] = (XChar2b) { .byte1 = code[i] >> 8,
+                                    .byte2 = code[i] & 0xFF };
           XDrawString16 (display, FRAME_X_DRAWABLE (s->f),
-                         gc, x, y, &char2b, len);
+                         gc, x, y, char2b, len);
+          SAFE_FREE ();
         }
     }
   unblock_input ();
