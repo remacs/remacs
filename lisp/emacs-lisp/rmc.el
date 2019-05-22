@@ -118,7 +118,7 @@ Usage example:
                             choices)))
                   (condition-case nil
                       (let ((cursor-in-echo-area t))
-                        (read-char))
+                        (read-event))
                     (error nil))))
           (setq answer (lookup-key query-replace-map (vector tchar) t))
           (setq tchar
