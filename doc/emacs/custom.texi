@@ -801,6 +801,7 @@ Its value is 70
   Automatically becomes buffer-local when set.
   This variable is safe as a file local variable if its value
   satisfies the predicate ‘integerp’.
+  Probably introduced at or before Emacs version 18.
 
 Documentation:
 Column beyond which automatic line-wrapping should happen.

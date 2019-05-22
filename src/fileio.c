@@ -5802,6 +5802,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 	    && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
 	    && BUF_AUTOSAVE_MODIFF (b) < BUF_MODIFF (b)
 	    /* -1 means we've turned off autosaving for a while--see below.  */
+	    && FIXNUMP (BVAR (b, save_length))
 	    && XFIXNUM (BVAR (b, save_length)) >= 0
 	    && (do_handled_files
 		|| NILP (Ffind_file_name_handler (BVAR (b, auto_save_file_name),
@@ -5815,13 +5816,17 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 		&& before_time.tv_sec - b->auto_save_failure_time < 1200)
 	      continue;
 
+	    enum { growth_factor = 4 };
+	    verify (BUF_BYTES_MAX <= EMACS_INT_MAX / growth_factor);
+
 	    set_buffer_internal (b);
 	    if (NILP (Vauto_save_include_big_deletions)
-		&& (XFIXNAT (BVAR (b, save_length)) * 10
-		    > (BUF_Z (b) - BUF_BEG (b)) * 13)
+		&& FIXNUMP (BVAR (b, save_length))
 		/* A short file is likely to change a large fraction;
 		   spare the user annoying messages.  */
 		&& XFIXNAT (BVAR (b, save_length)) > 5000
+		&& (growth_factor * (BUF_Z (b) - BUF_BEG (b))
+		    < (growth_factor - 1) * XFIXNAT (BVAR (b, save_length)))
 		/* These messages are frequent and annoying for `*mail*'.  */
 		&& !NILP (BVAR (b, filename))
 		&& NILP (no_message))

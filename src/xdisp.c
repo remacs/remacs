@@ -376,17 +376,26 @@ static Lisp_Object list_of_error;
 	       || it->s[IT_BYTEPOS (*it)] == '\t'))			\
        || (IT_BYTEPOS (*it) < ZV_BYTE					\
 	   && (*BYTE_POS_ADDR (IT_BYTEPOS (*it)) == ' '			\
-	       || *BYTE_POS_ADDR (IT_BYTEPOS (*it)) == '\t'))))		\
+	       || *BYTE_POS_ADDR (IT_BYTEPOS (*it)) == '\t'))))
 
-/* Test all the conditions needed to print the fill column indicator.  */
-#define FILL_COLUMN_INDICATOR_NEEDED(it)			\
-  Vdisplay_fill_column_indicator			\
-  && (it->continuation_lines_width == 0)			\
-  && (!NILP (Vdisplay_fill_column_indicator_column))		\
-  && FIXNATP (Vdisplay_fill_column_indicator_character)		\
-  && ((EQ (Vdisplay_fill_column_indicator_column, Qt)		\
-       && FIXNATP (BVAR (current_buffer, fill_column)))		\
-      || (FIXNATP (Vdisplay_fill_column_indicator_column)))
+/* If all the conditions needed to print the fill column indicator are
+   met, return the (nonnegative) column number, else return a negative
+   value.  */
+static int
+fill_column_indicator_column (struct it *it)
+{
+  if (Vdisplay_fill_column_indicator
+      && it->continuation_lines_width == 0
+      && CHARACTERP (Vdisplay_fill_column_indicator_character))
+    {
+      Lisp_Object col = (EQ (Vdisplay_fill_column_indicator_column, Qt)
+			 ? BVAR (current_buffer, fill_column)
+			 : Vdisplay_fill_column_indicator_column);
+      if (RANGED_FIXNUMP (0, col, INT_MAX))
+	return XFIXNUM (col);
+    }
+  return -1;
+}
 
 /* True means print newline to stdout before next mini-buffer message.  */
 
@@ -20160,18 +20169,11 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  /* Corner case for when display-fill-column-indicator-mode
 	     is active and the extra character should be added in the
 	     same place than the line.  */
-	  if ((it->w->pseudo_window_p == 0)
-	      && FILL_COLUMN_INDICATOR_NEEDED(it))
+	  int indicator_column = (it->w->pseudo_window_p == 0
+				  ? fill_column_indicator_column (it)
+				  : -1);
+	  if (0 <= indicator_column)
 	    {
-	       int fill_column_indicator_column = -1;
-
-	       if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	         fill_column_indicator_column =
-		   XFIXNAT (BVAR (current_buffer, fill_column));
-	       else
-		 fill_column_indicator_column =
-		   XFIXNAT (Vdisplay_fill_column_indicator_column);
-
 	       struct font *font =
 	         default_face->font ?
 		   default_face->font : FRAME_FONT (it->f);
@@ -20179,18 +20181,19 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	         font->average_width ?
 		   font->average_width : font->space_width;
 
-	       const int column_x =
-		 char_width * fill_column_indicator_column +
-		   it->lnum_pixel_width;
-
-	       if (it->current_x == column_x)
+	       int column_x;
+	       if (!INT_MULTIPLY_WRAPV (indicator_column, char_width,
+					&column_x)
+		   && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x,
+				      &column_x)
+		   && it->current_x == column_x)
 	         {
 	           it->c = it->char_to_display =
 		     XFIXNAT (Vdisplay_fill_column_indicator_character);
 	           it->face_id =
 		     merge_faces (it->w, Qfill_column_indicator,
 		                  0, saved_face_id);
-	           face = FACE_FROM_ID(it->f, it->face_id);
+	           face = FACE_FROM_ID (it->f, it->face_id);
 	           goto produce_glyphs;
 	         }
 	    }
@@ -20422,30 +20425,22 @@ extend_face_to_end_of_line (struct it *it)
 	  /* Display fill column indicator if not in modeline or
 	     toolbar and display fill column indicator mode is
 	     active.  */
-	  if ((it->w->pseudo_window_p == 0)
-	      && FILL_COLUMN_INDICATOR_NEEDED(it))
+	  int indicator_column = (it->w->pseudo_window_p == 0
+				  ? fill_column_indicator_column (it)
+				  : -1);
+	  if (0 <= indicator_column)
             {
-	       int fill_column_indicator_column = -1;
-
-	       if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	         fill_column_indicator_column =
-		   XFIXNAT (BVAR (current_buffer, fill_column));
-	       else
-		 fill_column_indicator_column =
-		   XFIXNAT (Vdisplay_fill_column_indicator_column);
-
 	      struct font *font =
 	        default_face->font ? default_face->font : FRAME_FONT (f);
 	      const int char_width =
 	        font->average_width ?
 		  font->average_width : font->space_width;
 
-	      const int column_x =
-	        char_width * fill_column_indicator_column +
-	          it->lnum_pixel_width;
-
-	      if ((it->current_x <= column_x)
-	          && (column_x <= it->last_visible_x))
+	      int column_x;
+	      if (!INT_MULTIPLY_WRAPV (indicator_column, char_width, &column_x)
+		  && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x, &column_x)
+		  && it->current_x <= column_x
+		  && column_x <= it->last_visible_x)
 	        {
 	          const char saved_char = it->char_to_display;
 	          const struct text_pos saved_pos = it->position;
@@ -20625,45 +20620,33 @@ extend_face_to_end_of_line (struct it *it)
 	it->face_id = face->id;
 
       /* Display fill-column indicator if needed.  */
-      if (FILL_COLUMN_INDICATOR_NEEDED(it))
+      int indicator_column = fill_column_indicator_column (it);
+      if (0 <= indicator_column
+	  && INT_ADD_WRAPV (it->lnum_pixel_width, indicator_column,
+			    &indicator_column))
+	indicator_column = -1;
+      do
 	{
-	  int fill_column_indicator_column = -1;
-
-	  /* Vdisplay_fill_column_indicator_column accepts the special
-	     value t to use the default fill-column variable.  The
-	     conditions are all defined in the macro
-	     FILL_COLUMN_INDICATOR_NEEDED.  */
-	  if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	    fill_column_indicator_column =
-	      XFIXNAT (BVAR (current_buffer, fill_column)) + it->lnum_pixel_width;
-	  else
-	    fill_column_indicator_column =
-	      XFIXNAT (Vdisplay_fill_column_indicator_column) + it->lnum_pixel_width;
-
-	  do
+	  int saved_face_id;
+	  bool indicate = it->current_x == indicator_column;
+	  if (indicate)
 	    {
-	      if (it->current_x == fill_column_indicator_column)
-	        {
-		  const int saved_face_id = it->face_id;
-		  it->face_id =
-		    merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
-		  it->c = it->char_to_display =
-		    XFIXNAT (Vdisplay_fill_column_indicator_character);
-		  PRODUCE_GLYPHS (it);
-		  it->face_id = saved_face_id;
-		  it->c = it->char_to_display = ' ';
-	        }
-	      else
-		PRODUCE_GLYPHS (it);
-	    } while (it->current_x <= it->last_visible_x);
+	      saved_face_id = it->face_id;
+	      it->face_id =
+		merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
+	      it->c = it->char_to_display =
+		XFIXNAT (Vdisplay_fill_column_indicator_character);
+	    }
+
+	  PRODUCE_GLYPHS (it);
+
+	  if (indicate)
+	    {
+	      it->face_id = saved_face_id;
+	      it->c = it->char_to_display = ' ';
+	    }
 	}
-      else
-	{
-          do
-	    {
-	      PRODUCE_GLYPHS (it);
-            } while (it->current_x <= it->last_visible_x);
-        }
+      while (it->current_x <= it->last_visible_x);
 
       if (WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0
 	  && (it->glyph_row->used[RIGHT_MARGIN_AREA]
