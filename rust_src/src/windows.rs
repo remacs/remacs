@@ -2011,26 +2011,26 @@ pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected)
 /// selected frame and no others.
 #[lisp_fn(min = "0")]
 pub fn get_buffer_window(buffer_or_name: LispObject, all_frames: LispObject) -> LispObject {
-    let buffer = if buffer_or_name.is_nil() {
-        Some(ThreadState::current_buffer_unchecked())
-    } else {
-        Fget_buffer(buffer_or_name).as_buffer()
-    };
+    // let buffer = if buffer_or_name.is_nil() {
+    //     Some(ThreadState::current_buffer_unchecked())
+    // } else {
+    //     Fget_buffer(buffer_or_name).as_buffer()
+    // };
 
-    if let Some(b) = buffer {
-        unsafe { window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames) }
-    } else {
-        Qnil
-    }
-
-    // let buffer: Option<LispBufferRef> = buffer_or_name.into();
-
-    // match buffer {
-    //     Some(b) => unsafe {
-    //         window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames)
-    //     },
-    //     None => Qnil,
+    // if let Some(b) = buffer {
+    //     unsafe { window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames) }
+    // } else {
+    //     Qnil
     // }
+
+    let buffer: Option<LispBufferRef> = buffer_or_name.into();
+
+    match buffer {
+        Some(b) => unsafe {
+            window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames)
+        },
+        None => Qnil,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
