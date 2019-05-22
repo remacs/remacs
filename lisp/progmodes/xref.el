@@ -792,11 +792,19 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
               xref--original-window-intent (assoc-default 'display-action alist))
         (current-buffer)))))
 
+(defun xref--show-defs-buffer (xrefs alist)
+  (cond
+   ((not (cdr xrefs))
+    (xref--pop-to-location (car xrefs)
+                           (assoc-default 'display-action alist)))
+   (t
+    (xref--show-xref-buffer xrefs alist))))
+
 
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
   "Function to display a list of search results.")
 
-(defvar xref-show-definitions-function 'xref--show-xref-buffer
+(defvar xref-show-definitions-function 'xref--show-defs-buffer
   "Function to display a list of definitions.")
 
 (defvar xref--read-identifier-history nil)
@@ -804,22 +812,20 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defvar xref--read-pattern-history nil)
 
 (defun xref--show-xrefs (xrefs display-action)
-  (unless (region-active-p) (push-mark nil t))
-  (xref-push-marker-stack)
+  (xref--push-markers)
   (funcall xref-show-xrefs-function xrefs
            `((window . ,(selected-window))
              (display-action . ,display-action))))
 
 (defun xref--show-defs (xrefs display-action)
+  (xref--push-markers)
+  (funcall xref-show-definitions-function xrefs
+           `((window . ,(selected-window))
+             (display-action . ,display-action))))
+
+(defun xref--push-markers ()
   (unless (region-active-p) (push-mark nil t))
-  (xref-push-marker-stack)
-  (cond
-   ((not (cdr xrefs))
-    (xref--pop-to-location (car xrefs) display-action))
-   (t
-    (funcall xref-show-definitions-function xrefs
-             `((window . ,(selected-window))
-               (display-action . ,display-action))))))
+  (xref-push-marker-stack))
 
 (defun xref--prompt-p (command)
   (or (eq xref-prompt-for-identifier t)
