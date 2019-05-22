@@ -4132,6 +4132,12 @@ that suppresses all warnings during execution of BODY."
 
 (defconst byte-compile--default-val (cons nil nil) "A unique object.")
 
+(defun byte-compile--common-test (test-1 test-2)
+  "Most specific common test of `eq', `eql' and `equal'"
+  (cond ((or (eq test-1 'equal) (eq test-2 'equal)) 'equal)
+        ((or (eq test-1 'eql)   (eq test-2 'eql))   'eql)
+        (t                                          'eq)))
+
 (defun byte-compile-cond-jump-table-info (clauses)
   "If CLAUSES is a `cond' form where:
 The condition for each clause is of the form (TEST VAR VALUE).
@@ -4143,7 +4149,8 @@ Return a list of the form ((TEST . VAR)  ((VALUES BODY) ...))"
   (let ((cases '())
         (ok t)
         (all-keys nil)
-        prev-var prev-test)
+        (prev-test 'eq)
+        prev-var)
     (and (catch 'break
            (dolist (clause (cdr clauses) ok)
              (let* ((condition (car clause))
@@ -4152,15 +4159,13 @@ Return a list of the form ((TEST . VAR)  ((VALUES BODY) ...))"
                             (byte-compile-cond-vars (cadr condition) (cl-caddr condition))))
                     (obj1 (car-safe vars))
                     (obj2 (cdr-safe vars))
-                    (body (cdr-safe clause))
-                    equality)
+                    (body (cdr-safe clause)))
                (unless prev-var
                  (setq prev-var obj1))
                (cond
                 ((and obj1 (memq test '(eq eql equal))
-                      (eq obj1 prev-var)
-                      (or (not prev-test) (eq test prev-test)))
-                 (setq prev-test test)
+                      (eq obj1 prev-var))
+                 (setq prev-test (byte-compile--common-test prev-test test))
                  ;; Discard values already tested for.
                  (unless (member obj2 all-keys)
                    (push obj2 all-keys)
@@ -4171,12 +4176,12 @@ Return a list of the form ((TEST . VAR)  ((VALUES BODY) ...))"
                       (listp obj2)
                       ;; Require a non-empty body, since the member function
                       ;; value depends on the switch argument.
-                      body
-                      (setq equality (cdr (assq test '((memq   . eq)
-                                                       (memql  . eql)
-                                                       (member . equal)))))
-                      (or (not prev-test) (eq equality prev-test)))
-                 (setq prev-test equality)
+                      body)
+                 (setq prev-test
+                       (byte-compile--common-test
+                        prev-test (cdr (assq test '((memq   . eq)
+                                                    (memql  . eql)
+                                                    (member . equal))))))
                  (let ((vals nil))
                    ;; Discard values already tested for.
                    (dolist (elem obj2)
