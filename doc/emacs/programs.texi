@@ -1298,8 +1298,11 @@ count as blocks.
 @findex hs-show-block
 @findex hs-show-region
 @findex hs-hide-level
+@findex hs-toggle-hiding
+@findex hs-mouse-toggle-hiding
 @kindex C-c @@ C-h
 @kindex C-c @@ C-s
+@kindex C-c @@ C-c
 @kindex C-c @@ C-M-h
 @kindex C-c @@ C-M-s
 @kindex C-c @@ C-r
@@ -1312,7 +1315,7 @@ Hide the current block (@code{hs-hide-block}).
 @item C-c @@ C-s
 Show the current block (@code{hs-show-block}).
 @item C-c @@ C-c
-@itemx C-x @@ C-e
+@itemx C-c @@ C-e
 Either hide or show the current block (@code{hs-toggle-hiding}).
 @item S-mouse-2
 Toggle hiding for the block you click on (@code{hs-mouse-toggle-hiding}).
