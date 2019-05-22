@@ -793,30 +793,31 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (current-buffer)))))
 
 
-;; This part of the UI seems fairly uncontroversial: it reads the
-;; identifier and deals with the single definition case.
-;; (FIXME: do we really want this case to be handled like that in
-;; "find references" and "find regexp searches"?)
-;;
-;; The controversial multiple definitions case is handed off to
-;; xref-show-xrefs-function.
-
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
-  "Function to display a list of xrefs.")
+  "Function to display a list of search results.")
+
+(defvar xref-show-definitions-function 'xref--show-xref-buffer
+  "Function to display a list of definitions.")
 
 (defvar xref--read-identifier-history nil)
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (xrefs display-action &optional always-show-list)
+(defun xref--show-xrefs (xrefs display-action)
   (unless (region-active-p) (push-mark nil t))
+  (xref-push-marker-stack)
+  (funcall xref-show-xrefs-function xrefs
+           `((window . ,(selected-window))
+             (display-action . ,display-action))))
+
+(defun xref--show-defs (xrefs display-action)
+  (unless (region-active-p) (push-mark nil t))
+  (xref-push-marker-stack)
   (cond
-   ((and (not (cdr xrefs)) (not always-show-list))
-    (xref-push-marker-stack)
+   ((not (cdr xrefs))
     (xref--pop-to-location (car xrefs) display-action))
    (t
-    (xref-push-marker-stack)
-    (funcall xref-show-xrefs-function xrefs
+    (funcall xref-show-definitions-function xrefs
              `((window . ,(selected-window))
                (display-action . ,display-action))))))
 
@@ -857,11 +858,19 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                         (xref-find-backend)
                         arg)))
     (unless xrefs
-      (user-error "No %s found for: %s" (symbol-name kind) input))
+      (xref--not-found-error kind input))
     (xref--show-xrefs xrefs display-action)))
 
 (defun xref--find-definitions (id display-action)
-  (xref--find-xrefs id 'definitions id display-action))
+  (let ((xrefs (funcall #'xref-backend-definitions
+                        (xref-find-backend)
+                        id)))
+    (unless xrefs
+      (xref--not-found-error 'definitions id))
+    (xref--show-defs xrefs display-action)))
+
+(defun xref--not-found-error (kind input)
+  (user-error "No %s found for: %s" (symbol-name kind) input))
 
 ;;;###autoload
 (defun xref-find-definitions (identifier)

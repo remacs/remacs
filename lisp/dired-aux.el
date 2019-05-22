@@ -2914,7 +2914,7 @@ REGEXP should use constructs supported by your local `grep' command."
                  files)))
     (unless xrefs
       (user-error "No matches for: %s" regexp))
-    (xref--show-xrefs xrefs nil t)))
+    (xref--show-xrefs xrefs nil)))
 
 ;;;###autoload
 (defun dired-do-find-regexp-and-replace (from to)
