@@ -205,4 +205,23 @@ literals (Bug#20852)."
       (should (functionp 'test-eval-region-func))
       (should (boundp 'test-eval-region-var)))))
 
+(ert-deftest unintern-tests ()
+  (let ((obarray (obarray-make 1)))
+    (obarray-put obarray "a")
+    (should (eq (unintern "b" obarray) nil))
+    (should (eq (unintern "a" obarray) t))
+    (should (equal obarray [0])))
+  (let ((obarray (obarray-make 1)))
+    (obarray-put obarray "a")
+    (obarray-put obarray "b")
+    (should (eq (unintern "b" obarray) t))
+    (should (eq (obarray-get obarray "a") (intern "a"))))
+  (let ((obarray (obarray-make 1)))
+    (obarray-put obarray "a")
+    (obarray-put obarray "b")
+    (should (eq (unintern "a" obarray) t))
+    (should (eq (obarray-get obarray "b") (intern "b")))
+    (should (eq (unintern "b" obarray) t))
+    (should (equal obarray [0]))))
+
 ;;; lread-tests.el ends here

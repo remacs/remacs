@@ -3826,7 +3826,7 @@ Lisp_Object initial_obarray;
 
 /* `oblookup' stores the bucket number here, for the sake of Funintern.  */
 
-static size_t oblookup_last_bucket_number;
+size_t oblookup_last_bucket_number;
 
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
@@ -3869,80 +3869,6 @@ define_symbol (Lisp_Object sym, char const *str)
     }
 }
 
-
-DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
-       doc: /* Delete the symbol named NAME, if any, from OBARRAY.
-The value is t if a symbol was found and deleted, nil otherwise.
-NAME may be a string or a symbol.  If it is a symbol, that symbol
-is deleted, if it belongs to OBARRAY--no other symbol is deleted.
-OBARRAY, if nil, defaults to the value of the variable `obarray'.
-usage: (unintern NAME OBARRAY)  */)
-  (Lisp_Object name, Lisp_Object obarray)
-{
-  register Lisp_Object string, tem;
-  size_t hash;
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  if (SYMBOLP (name))
-    string = SYMBOL_NAME (name);
-  else
-    {
-      CHECK_STRING (name);
-      string = name;
-    }
-
-  tem = oblookup (obarray, SSDATA (string),
-		  SCHARS (string),
-		  SBYTES (string));
-  if (INTEGERP (tem))
-    return Qnil;
-  /* If arg was a symbol, don't delete anything but that symbol itself.  */
-  if (SYMBOLP (name) && !EQ (name, tem))
-    return Qnil;
-
-  /* There are plenty of other symbols which will screw up the Emacs
-     session if we unintern them, as well as even more ways to use
-     `setq' or `fset' or whatnot to make the Emacs session
-     unusable.  Let's not go down this silly road.  --Stef  */
-  /* if (EQ (tem, Qnil) || EQ (tem, Qt))
-       error ("Attempt to unintern t or nil"); */
-
-  XSYMBOL (tem)->u.s.interned = SYMBOL_UNINTERNED;
-
-  hash = oblookup_last_bucket_number;
-
-  if (EQ (AREF (obarray, hash), tem))
-    {
-      if (XSYMBOL (tem)->u.s.next)
-	{
-	  Lisp_Object sym;
-	  XSETSYMBOL (sym, XSYMBOL (tem)->u.s.next);
-	  ASET (obarray, hash, sym);
-	}
-      else
-	ASET (obarray, hash, make_number (0));
-    }
-  else
-    {
-      Lisp_Object tail, following;
-
-      for (tail = AREF (obarray, hash);
-	   XSYMBOL (tail)->u.s.next;
-	   tail = following)
-	{
-	  XSETSYMBOL (following, XSYMBOL (tail)->u.s.next);
-	  if (EQ (following, tem))
-	    {
-	      set_symbol_next (tail, XSYMBOL (following)->u.s.next);
-	      break;
-	    }
-	}
-    }
-
-  return Qt;
-}
 
 /* Return the symbol in OBARRAY whose names matches the string
    of SIZE characters (SIZE_BYTE bytes) at PTR.
@@ -4340,7 +4266,6 @@ syms_of_lread (void)
 {
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
-  defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
