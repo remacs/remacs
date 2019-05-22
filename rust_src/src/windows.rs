@@ -2022,6 +2022,15 @@ pub fn get_buffer_window(buffer_or_name: LispObject, all_frames: LispObject) -> 
     } else {
         Qnil
     }
+
+    // let buffer: Option<LispBufferRef> = buffer_or_name.into();
+
+    // match buffer {
+    //     Some(b) => unsafe {
+    //         window_loop_func(window_loop::GET_BUFFER_WINDOW, b.into(), true, all_frames)
+    //     },
+    //     None => Qnil,
+    // }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
