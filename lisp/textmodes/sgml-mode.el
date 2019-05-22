@@ -328,6 +328,24 @@ Any terminating `>' or `/' is not matched.")
 (defvar sgml-font-lock-keywords sgml-font-lock-keywords-1
   "Rules for highlighting SGML code.  See also `sgml-tag-face-alist'.")
 
+(defvar-local sgml--syntax-propertize-ppss nil)
+
+(defun sgml--syntax-propertize-ppss (pos)
+  "Return PPSS at POS, fixing the syntax of any lone `>' along the way."
+  (cl-assert (>= pos (car sgml--syntax-propertize-ppss)))
+  (let ((ppss (parse-partial-sexp (car sgml--syntax-propertize-ppss) pos -1
+                                  nil (cdr sgml--syntax-propertize-ppss))))
+    (while (eq -1 (car ppss))
+      (put-text-property (1- (point)) (point)
+                         'syntax-table (string-to-syntax "."))
+      ;; Hack attack: rather than recompute the ppss from
+      ;; (car sgml--syntax-propertize-ppss), we manually "fix it".
+      (setcar ppss 0)
+      (setq ppss (parse-partial-sexp (point) pos -1 nil ppss)))
+    (setcdr sgml--syntax-propertize-ppss ppss)
+    (setcar sgml--syntax-propertize-ppss pos)
+    ppss))
+
 (eval-and-compile
   (defconst sgml-syntax-propertize-rules
     (syntax-propertize-precompile-rules
@@ -344,23 +362,28 @@ Any terminating `>' or `/' is not matched.")
      ;; the resulting number of calls to syntax-ppss made it too slow
      ;; (bug#33887), so we're now careful to leave alone any pair
      ;; of quotes that doesn't hold a < or > char, which is the vast majority.
-     ("\\(?:\\(?1:\"\\)[^\"<>]*[<>\"]\\|\\(?1:'\\)[^'<>]*[<>']\\)"
-      (1 (unless (memq (char-before) '(?\' ?\"))
+     ("\\(?:\\(?1:\"\\)[^\"<>]*\\|\\(?1:'\\)[^'\"<>]*\\)"
+      (1 (if (eq (char-after) (char-after (match-beginning 0)))
+             (forward-char 1)
            ;; Be careful to call `syntax-ppss' on a position before the one
            ;; we're going to change, so as not to need to flush the data we
            ;; just computed.
-           (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
-                 (goto-char (1- (match-end 0))))
+           (if (zerop (save-excursion
+                        (car (sgml--syntax-propertize-ppss
+                              (match-beginning 0)))))
                (string-to-syntax ".")))))
      )))
 
 (defun sgml-syntax-propertize (start end)
   "Syntactic keywords for `sgml-mode'."
-  (goto-char start)
+  (setq sgml--syntax-propertize-ppss (cons start (syntax-ppss start)))
+  (cl-assert (>= (cadr sgml--syntax-propertize-ppss) 0))
   (sgml-syntax-propertize-inside end)
   (funcall
    (syntax-propertize-rules sgml-syntax-propertize-rules)
-   start end))
+   start end)
+  ;; Catch any '>' after the last quote.
+  (sgml--syntax-propertize-ppss end))
 
 (defun sgml-syntax-propertize-inside (end)
   (let ((ppss (syntax-ppss)))
