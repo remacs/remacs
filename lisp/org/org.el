@@ -863,8 +863,7 @@ depends on, if any."
 
 (defcustom org-support-shift-select nil
   "Non-nil means make shift-cursor commands select text when possible.
-\\<org-mode-map>\
-
+\\<org-mode-map>
 In Emacs 23, when `shift-select-mode' is on, shifted cursor keys
 start selecting a region, or enlarge regions started in this way.
 In Org mode, in special contexts, these same keys are used for
@@ -2259,8 +2258,7 @@ See `org-file-apps'.")
     ("\\.x?html?\\'" . default)
     ("\\.pdf\\'" . default))
   "External applications for opening `file:path' items in a document.
-\\<org-mode-map>\
-
+\\<org-mode-map>
 Org mode uses system defaults for different file types, but
 you can use this variable to set the application for a given file
 extension.  The entries in this list are cons cells where the car identifies

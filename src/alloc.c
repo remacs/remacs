@@ -6384,7 +6384,7 @@ mark_object (Lisp_Object arg)
   do {						\
     CHECK_ALLOCATED ();				\
     CHECK_LIVE (LIVEP);				\
-  } while (0)					\
+  } while (false)
 
   /* Check both of the above conditions, for symbols.  */
 #define CHECK_ALLOCATED_AND_LIVE_SYMBOL()	\
@@ -6394,7 +6394,7 @@ mark_object (Lisp_Object arg)
 	CHECK_ALLOCATED ();			\
 	CHECK_LIVE (live_symbol_p);		\
       }						\
-  } while (0)					\
+  } while (false)
 
 #else /* not GC_CHECK_MARKED_OBJECTS */
 

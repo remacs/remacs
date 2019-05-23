@@ -1480,7 +1480,7 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
     - FRAME_TOTAL_FRINGE_WIDTH (f)					\
     - FRAME_SCROLL_BAR_AREA_WIDTH (f)					\
     - 2 * FRAME_INTERNAL_BORDER_WIDTH (f))				\
-   / FRAME_COLUMN_WIDTH (f))						\
+   / FRAME_COLUMN_WIDTH (f))
 
 #define FRAME_PIXEL_HEIGHT_TO_TEXT_LINES(f, height)			\
   (((height)								\

@@ -4282,7 +4282,7 @@ Yacc_entries (FILE *inf)
   while (perhaps_more_input (file_pointer)				\
 	 && (readline (&(line_buffer), file_pointer),			\
 	     (char_pointer) = (line_buffer).buffer,			\
-	     true))							\
+	     true))
 
 #define LOOKING_AT(cp, kw)  /* kw is the keyword, a literal string */	\
   ((assert ("" kw), true)   /* syntax error if not a literal string */	\
