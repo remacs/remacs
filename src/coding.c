@@ -7782,15 +7782,22 @@ encode_coding (struct coding_system *coding)
   SAFE_FREE ();
 }
 
+/* Code-conversion operations use internal buffers.  There's a single
+   reusable buffer, which is created the first time it is needed, and
+   then never killed.  When this reusable buffer is being used, the
+   reused_workbuf_in_use flag is set.  If we need another conversion
+   buffer while the reusable one is in use (e.g., if code-conversion
+   is reentered when another code-conversion is in progress), we
+   create temporary buffers using the name of the reusable buffer as
+   the base name, see code_conversion_save below.  These temporary
+   buffers are killed when the code-conversion operations that use
+   them return, see code_conversion_restore below.  */
 
-/* Name (or base name) of work buffer for code conversion.  */
+/* A string that serves as name of the reusable work buffer, and as base
+   name of temporary work buffers used for code-conversion operations.  */
 static Lisp_Object Vcode_conversion_workbuf_name;
 
-/* A working buffer used by the top level conversion.  Once it is
-   created, it is never destroyed.  It has the name
-   Vcode_conversion_workbuf_name.  The other working buffers are
-   destroyed after the use is finished, and their names are modified
-   versions of Vcode_conversion_workbuf_name.  */
+/* The reusable working buffer, created once and never killed.  */
 static Lisp_Object Vcode_conversion_reused_workbuf;
 
 /* True iff Vcode_conversion_reused_workbuf is already in use.  */
