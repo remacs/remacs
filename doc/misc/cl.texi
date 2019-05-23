@@ -1359,7 +1359,8 @@ Because of the nature of macros, @code{cl-macrolet} is always lexically
 scoped.  The @code{cl-macrolet} binding will
 affect only calls that appear physically within the body
 @var{forms}, possibly after expansion of other macros in the
-body.
+body.  Calls of @code{cl-macrolet} bound macros are expanded in the
+global environment.
 @end defmac
 
 @defmac cl-symbol-macrolet (bindings@dots{}) forms@dots{}
