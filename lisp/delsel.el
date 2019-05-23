@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Matthieu Devin <devin@lucid.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 14 Jul 92
 ;; Keywords: convenience emulations
 

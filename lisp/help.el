@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985-1986, 1993-1994, 1998-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, internal
 ;; Package: emacs
 
@@ -265,17 +264,19 @@ If that doesn't give a function, return nil."
         (condition-case ()
             (save-excursion
               (save-restriction
-                (narrow-to-region (max (point-min)
-                                       (- (point) 1000)) (point-max))
-                ;; Move up to surrounding paren, then after the open.
-                (backward-up-list 1)
-                (forward-char 1)
-                ;; If there is space here, this is probably something
-                ;; other than a real Lisp function call, so ignore it.
-                (if (looking-at "[ \t]")
-                    (error "Probably not a Lisp function call"))
-                (let ((obj (read (current-buffer))))
-                  (and (symbolp obj) (fboundp obj) obj))))
+                (let ((forward-sexp-function nil)) ;Use elisp-mode's value
+                  (narrow-to-region (max (point-min)
+                                         (- (point) 1000))
+                                    (point-max))
+                  ;; Move up to surrounding paren, then after the open.
+                  (backward-up-list 1)
+                  (forward-char 1)
+                  ;; If there is space here, this is probably something
+                  ;; other than a real Lisp function call, so ignore it.
+                  (if (looking-at "[ \t]")
+                      (error "Probably not a Lisp function call"))
+                  (let ((obj (read (current-buffer))))
+                    (and (symbolp obj) (fboundp obj) obj)))))
           (error nil))
         (let* ((str (find-tag-default))
                (sym (if str (intern-soft str))))
@@ -478,7 +479,7 @@ To record all your input, use `open-dribble-file'."
         (while (not (eobp))
           (comment-indent)
 	  (forward-line 1)))
-      ;; jidanni wants to see the last keystrokes immediately.
+      ;; Show point near the end of "lossage", as we did in Emacs 24.
       (set-marker help-window-point-marker (point)))))
 
 
@@ -743,6 +744,7 @@ If NO-MOUSE-MOVEMENT is non-nil, ignore key sequences starting
 with `mouse-movement' events."
   (let ((enable-disabled-menus-and-buttons t)
         (cursor-in-echo-area t)
+        (side-event nil)
         saved-yank-menu)
     (unwind-protect
         (let (last-modifiers key-list)
@@ -761,7 +763,8 @@ with `mouse-movement' events."
                   (and (memq 'click last-modifiers)
                        (not (sit-for (/ double-click-time 1000.0) t))))
             (let* ((seq (read-key-sequence "\
-Describe the following key, mouse click, or menu item: "))
+Describe the following key, mouse click, or menu item: "
+                                           nil nil 'can-return-switch-frame))
                    (raw-seq (this-single-command-raw-keys))
                    (keyn (when (> (length seq) 0)
                            (aref seq (1- (length seq)))))
@@ -770,11 +773,18 @@ Describe the following key, mouse click, or menu item: "))
               (cond
                ((zerop (length seq)))   ;FIXME: Can this happen?
                ((and no-mouse-movement (eq base 'mouse-movement)) nil)
+               ((memq base '(mouse-movement switch-frame select-window))
+                ;; Mostly ignore these events since it's sometimes difficult to
+                ;; generate the event you care about without also generating
+                ;; these side-events along the way.
+                (setq side-event (cons seq raw-seq)))
                ((eq base 'help-echo) nil)
                (t
                 (setq last-modifiers modifiers)
                 (push (cons seq raw-seq) key-list)))))
-          (nreverse key-list))
+          (if side-event
+              (cons side-event (nreverse key-list))
+            (nreverse key-list)))
       ;; Put yank-menu back as it was, if we changed it.
       (when saved-yank-menu
         (setq yank-menu (copy-sequence saved-yank-menu))

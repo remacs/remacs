@@ -132,17 +132,17 @@ static unsigned long *colors_in_color_table (int *n);
 #ifdef HAVE_NS
 /* Use with images created by ns_image_for_XPM.  */
 static unsigned long
-XGetPixel (XImagePtr ximage, int x, int y)
+XGetPixel (Emacs_Pix_Container image, int x, int y)
 {
-  return ns_get_pixel (ximage, x, y);
+  return ns_get_pixel (image, x, y);
 }
 
 /* Use with images created by ns_image_for_XPM; alpha set to 1;
    pixel is assumed to be in RGB form.  */
 static void
-XPutPixel (XImagePtr ximage, int x, int y, unsigned long pixel)
+XPutPixel (Emacs_Pix_Container image, int x, int y, unsigned long pixel)
 {
-  ns_put_pixel (ximage, x, y, pixel);
+  ns_put_pixel (image, x, y, pixel);
 }
 #endif /* HAVE_NS */
 
@@ -228,7 +228,7 @@ image_create_bitmap_from_data (struct frame *f, char *bits,
 
 #ifdef HAVE_NTGUI
   Lisp_Object frame UNINIT;	/* The value is not used.  */
-  Pixmap bitmap;
+  Emacs_Pixmap bitmap;
   bitmap = CreateBitmap (width, height,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_planes,
 			 FRAME_DISPLAY_INFO (XFRAME (frame))->n_cbits,
@@ -412,17 +412,19 @@ typedef void Picture;
 #endif
 
 static bool image_create_x_image_and_pixmap_1 (struct frame *, int, int, int,
-                                               XImagePtr *, Pixmap *, Picture *);
-static void image_destroy_x_image (XImagePtr ximg);
+                                               Emacs_Pix_Container *,
+                                               Emacs_Pixmap *, Picture *);
+static void image_destroy_x_image (Emacs_Pix_Container);
 
 #ifdef HAVE_NTGUI
-static XImagePtr_or_DC image_get_x_image_or_dc (struct frame *, struct image *,
-						bool, HGDIOBJ *);
-static void image_unget_x_image_or_dc (struct image *, bool, XImagePtr_or_DC,
-				       HGDIOBJ);
+static HDC image_get_x_image_or_dc (struct frame *, struct image *,
+                                    bool, HGDIOBJ *);
+static void image_unget_x_image_or_dc (struct image *, bool,
+                                       HDC, HGDIOBJ);
 #else
-static XImagePtr image_get_x_image (struct frame *, struct image *, bool);
-static void image_unget_x_image (struct image *, bool, XImagePtr);
+static Emacs_Pix_Container image_get_x_image (struct frame *, struct image *,
+                                              bool);
+static void image_unget_x_image (struct image *, bool, Emacs_Pix_Container);
 #define image_get_x_image_or_dc(f, img, mask_p, dummy)	\
   image_get_x_image (f, img, mask_p)
 #define image_unget_x_image_or_dc(img, mask_p, ximg, dummy)	\
@@ -436,7 +438,7 @@ static void image_sync_to_pixmaps (struct frame *, struct image *);
 /* Useful functions defined in the section
    `Image type independent image structures' below. */
 
-static unsigned long four_corners_best (XImagePtr ximg,
+static unsigned long four_corners_best (XImage *ximg,
                                         int *corners,
                                         unsigned long width,
                                         unsigned long height);
@@ -449,7 +451,7 @@ void
 x_create_bitmap_mask (struct frame *f, ptrdiff_t id)
 {
   Pixmap pixmap, mask;
-  XImagePtr ximg, mask_img;
+  XImage *ximg, *mask_img;
   unsigned long width, height;
   bool result;
   unsigned long bg;
@@ -548,82 +550,29 @@ struct image_type
   /* Free resources of image IMG which is used on frame F.  */
   void (*free) (struct frame *f, struct image *img);
 
+#ifdef WINDOWSNT
   /* Initialization function (used for dynamic loading of image
      libraries on Windows), or NULL if none.  */
   bool (*init) (void);
-
-  /* Next in list of all supported image types.  */
-  struct image_type *next;
+  /* An initializer for the init field.  */
+# define IMAGE_TYPE_INIT(f) f
+#else
+# define IMAGE_TYPE_INIT(f)
+#endif
 };
-
-/* List of supported image types.  Use define_image_type to add new
-   types.  Use lookup_image_type to find a type for a given symbol.  */
-
-static struct image_type *image_types;
 
 /* Forward function prototypes.  */
 
-static struct image_type *lookup_image_type (Lisp_Object);
+static struct image_type const *lookup_image_type (Lisp_Object);
 static void image_laplace (struct frame *, struct image *);
 static void image_emboss (struct frame *, struct image *);
 static void image_build_heuristic_mask (struct frame *, struct image *,
                                     Lisp_Object);
-#ifdef WINDOWSNT
-#define CACHE_IMAGE_TYPE(type, status) \
-  do { Vlibrary_cache = Fcons (Fcons (type, status), Vlibrary_cache); } while (0)
-#else
-#define CACHE_IMAGE_TYPE(type, status)
-#endif
 
-#define ADD_IMAGE_TYPE(type) \
-  do { Vimage_types = Fcons (type, Vimage_types); } while (0)
-
-/* Define a new image type from TYPE.  This adds a copy of TYPE to
-   image_types and caches the loading status of TYPE.  */
-
-static struct image_type *
-define_image_type (struct image_type *type)
+static void
+add_image_type (Lisp_Object type)
 {
-  struct image_type *p = NULL;
-  int new_type = type->type;
-  bool type_valid = true;
-
-  block_input ();
-
-  for (p = image_types; p; p = p->next)
-    if (p->type == new_type)
-      goto done;
-
-  if (type->init)
-    {
-#if defined HAVE_NTGUI && defined WINDOWSNT
-      /* If we failed to load the library before, don't try again.  */
-      Lisp_Object tested = Fassq (builtin_lisp_symbol (new_type),
-				  Vlibrary_cache);
-      if (CONSP (tested) && NILP (XCDR (tested)))
-	type_valid = false;
-      else
-#endif
-	{
-	  type_valid = type->init ();
-	  CACHE_IMAGE_TYPE (builtin_lisp_symbol (new_type),
-			    type_valid ? Qt : Qnil);
-	}
-    }
-
-  if (type_valid)
-    {
-      /* Make a copy of TYPE to avoid a bus error in a dumped Emacs.
-         The initialized data segment is read-only.  */
-      p = xmalloc (sizeof *p);
-      *p = *type;
-      p->next = image_types;
-      image_types = p;
-    }
-
- done:
-  unblock_input ();
-  return p;
+  Vimage_types = Fcons (type, Vimage_types);
 }
 
 
@@ -637,29 +586,24 @@ define_image_type (struct image_type *type)
 bool
 valid_image_p (Lisp_Object object)
 {
-  bool valid_p = 0;
-
   if (IMAGEP (object))
     {
-      Lisp_Object tem;
-
-      for (tem = XCDR (object); CONSP (tem); tem = XCDR (tem))
-	if (EQ (XCAR (tem), QCtype))
+      Lisp_Object tail = XCDR (object);
+      FOR_EACH_TAIL_SAFE (tail)
+	if (EQ (XCAR (tail), QCtype))
 	  {
-	    tem = XCDR (tem);
-	    if (CONSP (tem) && SYMBOLP (XCAR (tem)))
+	    tail = XCDR (tail);
+	    if (CONSP (tail))
 	      {
-		struct image_type *type;
-		type = lookup_image_type (XCAR (tem));
+		struct image_type const *type = lookup_image_type (XCAR (tail));
 		if (type)
-		  valid_p = type->valid_p (object);
+		  return type->valid_p (object);
 	      }
-
 	    break;
 	  }
     }
 
-  return valid_p;
+  return false;
 }
 
 
@@ -1134,10 +1078,10 @@ image_ascent (struct image *img, struct face *face, struct glyph_slice *slice)
 
 #ifdef USE_CAIRO
 static uint32_t
-xcolor_to_argb32 (XColor xc)
+emacs_color_to_argb32 (Emacs_Color *ec)
 {
-  return ((0xffu << 24) | ((xc.red / 256) << 16)
-	  | ((xc.green / 256) << 8) | (xc.blue / 256));
+  return ((0xffu << 24) | ((ec->red / 256) << 16)
+	  | ((ec->green / 256) << 8) | (ec->blue / 256));
 }
 
 static uint32_t
@@ -1145,11 +1089,11 @@ get_spec_bg_or_alpha_as_argb (struct image *img,
                               struct frame *f)
 {
   uint32_t bgcolor = 0;
-  XColor xbgcolor;
+  Emacs_Color xbgcolor;
   Lisp_Object bg = image_spec_value (img->spec, QCbackground, NULL);
 
   if (STRINGP (bg) && x_parse_color (f, SSDATA (bg), &xbgcolor))
-    bgcolor = xcolor_to_argb32 (xbgcolor);
+    bgcolor = emacs_color_to_argb32 (&xbgcolor);
 
   return bgcolor;
 }
@@ -1179,10 +1123,10 @@ set_cairo_image_surface (struct image *img, cairo_surface_t *surface)
 /* Image background colors.  */
 
 /* Find the "best" corner color of a bitmap.
-   On W32, XIMG is assumed to a device context with the bitmap selected.  */
+   On W32, PIMG is assumed to a device context with the bitmap selected.  */
 
 static RGB_PIXEL_COLOR
-four_corners_best (XImagePtr_or_DC ximg, int *corners,
+four_corners_best (Emacs_Pix_Context pimg, int *corners,
 		   unsigned long width, unsigned long height)
 {
   RGB_PIXEL_COLOR corner_pixels[4];
@@ -1191,19 +1135,19 @@ four_corners_best (XImagePtr_or_DC ximg, int *corners,
 
   if (corners && corners[BOT_CORNER] >= 0)
     {
-      /* Get the colors at the corner_pixels of ximg.  */
-      corner_pixels[0] = GET_PIXEL (ximg, corners[LEFT_CORNER], corners[TOP_CORNER]);
-      corner_pixels[1] = GET_PIXEL (ximg, corners[RIGHT_CORNER] - 1, corners[TOP_CORNER]);
-      corner_pixels[2] = GET_PIXEL (ximg, corners[RIGHT_CORNER] - 1, corners[BOT_CORNER] - 1);
-      corner_pixels[3] = GET_PIXEL (ximg, corners[LEFT_CORNER], corners[BOT_CORNER] - 1);
+      /* Get the colors at the corner_pixels of pimg.  */
+      corner_pixels[0] = GET_PIXEL (pimg, corners[LEFT_CORNER], corners[TOP_CORNER]);
+      corner_pixels[1] = GET_PIXEL (pimg, corners[RIGHT_CORNER] - 1, corners[TOP_CORNER]);
+      corner_pixels[2] = GET_PIXEL (pimg, corners[RIGHT_CORNER] - 1, corners[BOT_CORNER] - 1);
+      corner_pixels[3] = GET_PIXEL (pimg, corners[LEFT_CORNER], corners[BOT_CORNER] - 1);
     }
   else
     {
-      /* Get the colors at the corner_pixels of ximg.  */
-      corner_pixels[0] = GET_PIXEL (ximg, 0, 0);
-      corner_pixels[1] = GET_PIXEL (ximg, width - 1, 0);
-      corner_pixels[2] = GET_PIXEL (ximg, width - 1, height - 1);
-      corner_pixels[3] = GET_PIXEL (ximg, 0, height - 1);
+      /* Get the colors at the corner_pixels of pimg.  */
+      corner_pixels[0] = GET_PIXEL (pimg, 0, 0);
+      corner_pixels[1] = GET_PIXEL (pimg, width - 1, 0);
+      corner_pixels[2] = GET_PIXEL (pimg, width - 1, height - 1);
+      corner_pixels[3] = GET_PIXEL (pimg, 0, height - 1);
     }
   /* Choose the most frequently found color as background.  */
   for (i = best_count = 0; i < 4; ++i)
@@ -1221,49 +1165,29 @@ four_corners_best (XImagePtr_or_DC ximg, int *corners,
   return best;
 }
 
-/* Portability macros */
-
-#ifdef HAVE_NTGUI
-
-#define Free_Pixmap(display, pixmap) \
-  DeleteObject (pixmap)
-
-#elif defined (HAVE_NS)
-
-#define Free_Pixmap(display, pixmap) \
-  ns_release_object (pixmap)
-
-#else
-
-#define Free_Pixmap(display, pixmap) \
-  XFreePixmap (display, pixmap)
-
-#endif /* !HAVE_NTGUI && !HAVE_NS */
-
-
 /* Return the `background' field of IMG.  If IMG doesn't have one yet,
    it is guessed heuristically.  If non-zero, XIMG is an existing
-   XImage object (or device context with the image selected on W32) to
-   use for the heuristic.  */
+   Emacs_Pix_Context object (device context with the image selected on
+   W32) to use for the heuristic.  */
 
 RGB_PIXEL_COLOR
-image_background (struct image *img, struct frame *f, XImagePtr_or_DC ximg)
+image_background (struct image *img, struct frame *f, Emacs_Pix_Context pimg)
 {
   if (! img->background_valid)
     /* IMG doesn't have a background yet, try to guess a reasonable value.  */
     {
-      bool free_ximg = !ximg;
+      bool free_pimg = !pimg;
 #ifdef HAVE_NTGUI
       HGDIOBJ prev;
 #endif /* HAVE_NTGUI */
 
-      if (free_ximg)
-	ximg = image_get_x_image_or_dc (f, img, 0, &prev);
+      if (free_pimg)
+	pimg = image_get_x_image_or_dc (f, img, 0, &prev);
 
-      img->background = four_corners_best (ximg, img->corners, img->width, img->height);
+      img->background = four_corners_best (pimg, img->corners, img->width, img->height);
 
-      if (free_ximg)
-	image_unget_x_image_or_dc (img, 0, ximg, prev);
+      if (free_pimg)
+	image_unget_x_image_or_dc (img, 0, pimg, prev);
 
       img->background_valid = 1;
     }
@@ -1273,10 +1197,12 @@ image_background (struct image *img, struct frame *f, XImagePtr_or_DC ximg)
 
 /* Return the `background_transparent' field of IMG.  If IMG doesn't
    have one yet, it is guessed heuristically.  If non-zero, MASK is an
-   existing XImage object to use for the heuristic.  */
+   existing Emacs_Pix_Context (XImage* on X) object to use for the
+   heuristic.  */
 
 int
-image_background_transparent (struct image *img, struct frame *f, XImagePtr_or_DC mask)
+image_background_transparent (struct image *img, struct frame *f,
+                              Emacs_Pix_Context mask)
 {
   if (! img->background_transparent_valid)
     /* IMG doesn't have a background yet, try to guess a reasonable value.  */
@@ -1328,7 +1254,7 @@ image_clear_image_1 (struct frame *f, struct image *img, int flags)
     {
       if (img->pixmap)
 	{
-	  Free_Pixmap (FRAME_X_DISPLAY (f), img->pixmap);
+	  FRAME_TERMINAL (f)->free_pixmap (f, img->pixmap);
 	  img->pixmap = NO_PIXMAP;
 	  /* NOTE (HAVE_NS): background color is NOT an indexed color! */
 	  img->background_valid = 0;
@@ -1347,7 +1273,7 @@ image_clear_image_1 (struct frame *f, struct image *img, int flags)
     {
       if (img->mask)
 	{
-	  Free_Pixmap (FRAME_X_DISPLAY (f), img->mask);
+	  FRAME_TERMINAL (f)->free_pixmap (f, img->mask);
 	  img->mask = NO_PIXMAP;
 	  img->background_transparent_valid = 0;
 	}
@@ -1399,7 +1325,7 @@ static unsigned long
 image_alloc_image_color (struct frame *f, struct image *img,
                          Lisp_Object color_name, unsigned long dflt)
 {
-  XColor color;
+  Emacs_Color color;
   unsigned long result;
 
   eassert (STRINGP (color_name));
@@ -2079,7 +2005,7 @@ mark_image_cache (struct image_cache *c)
    WIDTH and HEIGHT must both be positive.
    If XIMG is null, assume it is a bitmap.  */
 static bool
-image_check_image_size (XImagePtr ximg, int width, int height)
+image_check_image_size (Emacs_Pix_Container ximg, int width, int height)
 {
 #ifdef HAVE_X_WINDOWS
   /* Respect Xlib's limits: it cannot deal with images that have more
@@ -2113,18 +2039,20 @@ image_check_image_size (XImagePtr ximg, int width, int height)
 #endif
 }
 
-/* Create an XImage and a pixmap of size WIDTH x HEIGHT for use on
-   frame F.  Set *XIMG and *PIXMAP to the XImage and Pixmap created.
-   Set (*XIMG)->data to a raster of WIDTH x HEIGHT pixels allocated
-   via xmalloc.  Print error messages via image_error if an error
-   occurs.  Value is true if successful.
+/* Create an Emacs_Pix_Container and a pixmap of size WIDTH x
+   HEIGHT for use on frame F.  Set *PIMG and *PIXMAP to the
+   Emacs_Pix_Container and Emacs_Pixmap created.  Set (*PIMG)->data
+   to a raster of WIDTH x HEIGHT pixels allocated via xmalloc.  Print
+   error messages via image_error if an error occurs.  Value is true
+   if successful.
 
    On W32, a DEPTH of zero signifies a 24 bit image, otherwise DEPTH
    should indicate the bit depth of the image.  */
 
 static bool
 image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int depth,
-                                   XImagePtr *ximg, Pixmap *pixmap, Picture *picture)
+                                   Emacs_Pix_Container *pimg,
+                                   Emacs_Pixmap *pixmap, Picture *picture)
 {
 #ifdef HAVE_X_WINDOWS
   Display *display = FRAME_X_DISPLAY (f);
@@ -2135,33 +2063,33 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
 
   if (depth <= 0)
     depth = DefaultDepthOfScreen (screen);
-  *ximg = XCreateImage (display, DefaultVisualOfScreen (screen),
+  *pimg = XCreateImage (display, DefaultVisualOfScreen (screen),
 			depth, ZPixmap, 0, NULL, width, height,
 			depth > 16 ? 32 : depth > 8 ? 16 : 8, 0);
-  if (*ximg == NULL)
+  if (*pimg == NULL)
     {
       image_error ("Unable to allocate X image");
       return 0;
     }
 
-  if (! image_check_image_size (*ximg, width, height))
+  if (! image_check_image_size (*pimg, width, height))
     {
-      image_destroy_x_image (*ximg);
-      *ximg = NULL;
+      image_destroy_x_image (*pimg);
+      *pimg = NULL;
       image_error ("Image too large (%dx%d)",
 		   make_fixnum (width), make_fixnum (height));
       return 0;
     }
 
   /* Allocate image raster.  */
-  (*ximg)->data = xmalloc ((*ximg)->bytes_per_line * height);
+  (*pimg)->data = xmalloc ((*pimg)->bytes_per_line * height);
 
   /* Allocate a pixmap of the same size.  */
   *pixmap = XCreatePixmap (display, drawable, width, height, depth);
   if (*pixmap == NO_PIXMAP)
     {
-      image_destroy_x_image (*ximg);
-      *ximg = NULL;
+      image_destroy_x_image (*pimg);
+      *pimg = NULL;
       image_error ("Unable to create X pixmap");
       return 0;
     }
@@ -2228,10 +2156,10 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
   if (depth < 16)
     palette_colors = 1 << (depth - 1);
 
-  *ximg = xmalloc (sizeof (XImage) + palette_colors * sizeof (RGBQUAD));
+  *pimg = xmalloc (sizeof (XImage) + palette_colors * sizeof (RGBQUAD));
 
-  header = &(*ximg)->info.bmiHeader;
-  memset (&(*ximg)->info, 0, sizeof (BITMAPINFO));
+  header = &(*pimg)->info.bmiHeader;
+  memset (&(*pimg)->info, 0, sizeof (BITMAPINFO));
   header->biSize = sizeof (*header);
   header->biWidth = width;
   header->biHeight = -height;  /* negative indicates a top-down bitmap.  */
@@ -2243,10 +2171,10 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
   /* TODO: fill in palette.  */
   if (depth == 1)
     {
-      (*ximg)->info.bmiColors[0].rgbBlue = 0;
-      (*ximg)->info.bmiColors[0].rgbGreen = 0;
-      (*ximg)->info.bmiColors[0].rgbRed = 0;
-      (*ximg)->info.bmiColors[0].rgbReserved = 0;
+      (*pimg)->info.bmiColors[0].rgbBlue = 0;
+      (*pimg)->info.bmiColors[0].rgbGreen = 0;
+      (*pimg)->info.bmiColors[0].rgbRed = 0;
+      (*pimg)->info.bmiColors[0].rgbReserved = 0;
       /* bmiColors is a variable-length array declared by w32api
 	 headers as bmiColors[1], which triggers a warning under
 	 -Warray-bounds; shut that up.  */
@@ -2254,10 +2182,10 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
 #      pragma GCC push_options
 #      pragma GCC diagnostic ignored "-Warray-bounds"
 #     endif
-      (*ximg)->info.bmiColors[1].rgbBlue = 255;
-      (*ximg)->info.bmiColors[1].rgbGreen = 255;
-      (*ximg)->info.bmiColors[1].rgbRed = 255;
-      (*ximg)->info.bmiColors[1].rgbReserved = 0;
+      (*pimg)->info.bmiColors[1].rgbBlue = 255;
+      (*pimg)->info.bmiColors[1].rgbGreen = 255;
+      (*pimg)->info.bmiColors[1].rgbRed = 255;
+      (*pimg)->info.bmiColors[1].rgbReserved = 0;
 #     if GNUC_PREREQ (4, 4, 0)
 #      pragma GCC pop_options
 #     endif
@@ -2267,10 +2195,10 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
 
   /* Create a DIBSection and raster array for the bitmap,
      and store its handle in *pixmap.  */
-  *pixmap = CreateDIBSection (hdc, &((*ximg)->info),
+  *pixmap = CreateDIBSection (hdc, &((*pimg)->info),
 			      (depth < 16) ? DIB_PAL_COLORS : DIB_RGB_COLORS,
 			      /* casting avoids a GCC warning */
-			      (void **)&((*ximg)->data), NULL, 0);
+			      (void **)&((*pimg)->data), NULL, 0);
 
   /* Realize display palette and garbage all frames. */
   release_frame_dc (f, hdc);
@@ -2282,8 +2210,8 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
       /* All system errors are < 10000, so the following is safe.  */
       XSETINT (errcode, err);
       image_error ("Unable to create bitmap, error code %d", errcode);
-      image_destroy_x_image (*ximg);
-      *ximg = NULL;
+      image_destroy_x_image (*pimg);
+      *pimg = NULL;
       return 0;
     }
 
@@ -2295,69 +2223,70 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
   *pixmap = ns_image_for_XPM (width, height, depth);
   if (*pixmap == 0)
     {
-      *ximg = NULL;
+      *pimg = NULL;
       image_error ("Unable to allocate NSImage for XPM pixmap");
       return 0;
     }
-  *ximg = *pixmap;
+  *pimg = *pixmap;
   return 1;
 #endif
 }
 
 
-/* Destroy XImage XIMG.  Free XIMG->data.  */
+/* Destroy Emacs_Pix_Container PIMG.  Free data associated with PIMG.  */
 
 static void
-image_destroy_x_image (XImagePtr ximg)
+image_destroy_x_image (Emacs_Pix_Container pimg)
 {
   eassert (input_blocked_p ());
-  if (ximg)
+  if (pimg)
     {
 #ifdef HAVE_X_WINDOWS
-      xfree (ximg->data);
-      ximg->data = NULL;
-      XDestroyImage (ximg);
+      xfree (pimg->data);
+      pimg->data = NULL;
+      XDestroyImage (pimg);
 #endif /* HAVE_X_WINDOWS */
 #ifdef HAVE_NTGUI
       /* Data will be freed by DestroyObject.  */
-      ximg->data = NULL;
-      xfree (ximg);
+      pimg->data = NULL;
+      xfree (pimg);
 #endif /* HAVE_NTGUI */
 #ifdef HAVE_NS
-      ns_release_object (ximg);
+      ns_release_object (pimg);
 #endif /* HAVE_NS */
     }
 }
 
 
-/* Put XImage XIMG into pixmap PIXMAP on frame F.  WIDTH and HEIGHT
-   are width and height of both the image and pixmap.  */
+/* Put Emacs_Pix_Container PIMG into pixmap PIXMAP on frame F.
+   WIDTH and HEIGHT are width and height of both the image and
+   pixmap.  */
 
 static void
-gui_put_x_image (struct frame *f, XImagePtr ximg, Pixmap pixmap,
-                 int width, int height)
+gui_put_x_image (struct frame *f, Emacs_Pix_Container pimg,
+                 Emacs_Pixmap pixmap, int width, int height)
 {
 #ifdef HAVE_X_WINDOWS
   GC gc;
 
   eassert (input_blocked_p ());
   gc = XCreateGC (FRAME_X_DISPLAY (f), pixmap, 0, NULL);
-  XPutImage (FRAME_X_DISPLAY (f), pixmap, gc, ximg, 0, 0, 0, 0,
-             ximg->width, ximg->height);
+  XPutImage (FRAME_X_DISPLAY (f), pixmap, gc, pimg, 0, 0, 0, 0,
+             pimg->width, pimg->height);
   XFreeGC (FRAME_X_DISPLAY (f), gc);
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NTGUI
 #if 0  /* I don't think this is necessary looking at where it is used.  */
   HDC hdc = get_frame_dc (f);
-  SetDIBits (hdc, pixmap, 0, height, ximg->data, &(ximg->info), DIB_RGB_COLORS);
+  SetDIBits (hdc, pixmap, 0, height, pimg->data, &(pimg->info), DIB_RGB_COLORS);
   release_frame_dc (f, hdc);
 #endif
 #endif /* HAVE_NTGUI */
 
 #ifdef HAVE_NS
-  eassert (ximg == pixmap);
-  ns_retain_object (ximg);
+  eassert (pimg == pixmap);
+  ns_retain_object (pimg);
 #endif
 }
 
@@ -2367,7 +2296,7 @@ gui_put_x_image (struct frame *f, XImagePtr ximg, Pixmap pixmap,
 static bool
 image_create_x_image_and_pixmap (struct frame *f, struct image *img,
 				 int width, int height, int depth,
-				 XImagePtr *ximg, bool mask_p)
+				 Emacs_Pix_Container *ximg, bool mask_p)
 {
   eassert ((!mask_p ? img->pixmap : img->mask) == NO_PIXMAP);
 
@@ -2380,14 +2309,14 @@ image_create_x_image_and_pixmap (struct frame *f, struct image *img,
                                             picture);
 }
 
-/* Put X image XIMG into image IMG on frame F, as a mask if and only
-   if MASK_P.  On X, this simply records XIMG on a member of IMG, so
+/* Put pixel image PIMG into image IMG on frame F, as a mask if and only
+   if MASK_P.  On X, this simply records PIMG on a member of IMG, so
    it can be put into the pixmap afterwards via image_sync_to_pixmaps.
-   On the other platforms, it puts XIMG into the pixmap, then frees
-   the X image and its buffer.  */
+   On the other platforms, it puts PIMG into the pixmap, then frees
+   the pixel image and its buffer.  */
 
 static void
-image_put_x_image (struct frame *f, struct image *img, XImagePtr ximg,
+image_put_x_image (struct frame *f, struct image *img, Emacs_Pix_Container ximg,
 		   bool mask_p)
 {
 #ifdef HAVE_X_WINDOWS
@@ -2435,12 +2364,12 @@ image_sync_to_pixmaps (struct frame *f, struct image *img)
    currently selected GDI object into *PREV for future restoration by
    image_unget_x_image_or_dc.  */
 
-static XImagePtr_or_DC
+static HDC
 image_get_x_image_or_dc (struct frame *f, struct image *img, bool mask_p,
 			 HGDIOBJ *prev)
 {
   HDC frame_dc = get_frame_dc (f);
-  XImagePtr_or_DC ximg = CreateCompatibleDC (frame_dc);
+  HDC ximg = CreateCompatibleDC (frame_dc);
 
   release_frame_dc (f, frame_dc);
   *prev = SelectObject (ximg, !mask_p ? img->pixmap : img->mask);
@@ -2450,7 +2379,7 @@ image_get_x_image_or_dc (struct frame *f, struct image *img, bool mask_p,
 
 static void
 image_unget_x_image_or_dc (struct image *img, bool mask_p,
-			   XImagePtr_or_DC ximg, HGDIOBJ prev)
+			   HDC ximg, HGDIOBJ prev)
 {
   SelectObject (ximg, prev);
   DeleteDC (ximg);
@@ -2459,11 +2388,11 @@ image_unget_x_image_or_dc (struct image *img, bool mask_p,
 /* Get the X image for IMG on frame F.  The resulting X image data
    should be treated as read-only at least on X.  */
 
-static XImagePtr
+static Emacs_Pix_Container
 image_get_x_image (struct frame *f, struct image *img, bool mask_p)
 {
 #ifdef HAVE_X_WINDOWS
-  XImagePtr ximg_in_img = !mask_p ? img->ximg : img->mask_img;
+  XImage *ximg_in_img = !mask_p ? img->ximg : img->mask_img;
 
   if (ximg_in_img)
     return ximg_in_img;
@@ -2471,7 +2400,7 @@ image_get_x_image (struct frame *f, struct image *img, bool mask_p)
     return XGetImage (FRAME_X_DISPLAY (f), !mask_p ? img->pixmap : img->mask,
 		      0, 0, img->width, img->height, ~0, ZPixmap);
 #elif defined (HAVE_NS)
-  XImagePtr pixmap = !mask_p ? img->pixmap : img->mask;
+  Emacs_Pix_Container pixmap = !mask_p ? img->pixmap : img->mask;
 
   ns_retain_object (pixmap);
   return pixmap;
@@ -2479,10 +2408,10 @@ image_get_x_image (struct frame *f, struct image *img, bool mask_p)
 }
 
 static void
-image_unget_x_image (struct image *img, bool mask_p, XImagePtr ximg)
+image_unget_x_image (struct image *img, bool mask_p, Emacs_Pix_Container ximg)
 {
 #ifdef HAVE_X_WINDOWS
-  XImagePtr ximg_in_img = !mask_p ? img->ximg : img->mask_img;
+  XImage *ximg_in_img = !mask_p ? img->ximg : img->mask_img;
 
   if (ximg_in_img)
     eassert (ximg == ximg_in_img);
@@ -2595,8 +2524,6 @@ slurp_file (int fd, ptrdiff_t *size)
 			      XBM images
  ***********************************************************************/
 
-static bool xbm_load (struct frame *f, struct image *img);
-static bool xbm_image_p (Lisp_Object object);
 static bool xbm_file_p (Lisp_Object);
 
 
@@ -2638,18 +2565,6 @@ static const struct image_keyword xbm_format[XBM_LAST] =
   {":conversion",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0}
-};
-
-/* Structure describing the image type XBM.  */
-
-static struct image_type xbm_type =
-{
-  SYMBOL_INDEX (Qxbm),
-  xbm_image_p,
-  xbm_load,
-  image_clear_image,
-  NULL,
-  NULL
 };
 
 /* Tokens returned from xbm_scan.  */
@@ -3377,13 +3292,6 @@ xbm_load (struct frame *f, struct image *img)
 			      XPM images
  ***********************************************************************/
 
-#if defined (HAVE_XPM) || defined (HAVE_NS)
-
-static bool xpm_image_p (Lisp_Object object);
-static bool xpm_load (struct frame *f, struct image *img);
-
-#endif /* HAVE_XPM || HAVE_NS */
-
 #ifdef HAVE_XPM
 #ifdef HAVE_NTGUI
 /* Indicate to xpm.h that we don't have Xlib.  */
@@ -3443,24 +3351,6 @@ static const struct image_keyword xpm_format[XPM_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":color-symbols",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_xpm_functions (void);
-#else
-#define init_xpm_functions NULL
-#endif
-
-/* Structure describing the image type XPM.  */
-
-static struct image_type xpm_type =
-{
-  SYMBOL_INDEX (Qxpm),
-  xpm_image_p,
-  xpm_load,
-  image_clear_image,
-  init_xpm_functions,
-  NULL
 };
 
 #ifdef HAVE_X_WINDOWS
@@ -4318,7 +4208,7 @@ xpm_load_image (struct frame *f,
 #ifndef HAVE_NS
   bool have_mask = false;
 #endif
-  XImagePtr ximg = NULL, mask_img = NULL;
+  Emacs_Pix_Container ximg = NULL, mask_img = NULL;
 
 #define match() \
      LA1 = xpm_scan (&s, end, &beg, &len)
@@ -4403,7 +4293,7 @@ xpm_load_image (struct frame *f,
       char *color, *max_color;
       int key, next_key, max_key = 0;
       Lisp_Object symbol_color = Qnil, color_val;
-      XColor cdef;
+      Emacs_Color cdef;
 
       expect (XPM_TK_STRING);
       if (len <= chars_per_pixel || len >= BUFSIZ + chars_per_pixel)
@@ -4889,18 +4779,18 @@ static int laplace_matrix[9] = {
 #define COLOR_INTENSITY(R, G, B) ((2 * (R) + 3 * (G) + (B)) / 6)
 
 
-/* On frame F, return an array of XColor structures describing image
-   IMG->pixmap.  Each XColor structure has its pixel color set.  RGB_P
-   means also fill the red/green/blue members of the XColor
-   structures.  Value is a pointer to the array of XColors structures,
+/* On frame F, return an array of Emacs_Color structures describing image
+   IMG->pixmap.  Each Emacs_Color structure has its pixel color set.  RGB_P
+   means also fill the red/green/blue members of the Emacs_Color
+   structures.  Value is a pointer to the array of Emacs_Color structures,
    allocated with xmalloc; it must be freed by the caller.  */
 
-static XColor *
-image_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
+static Emacs_Color *
+image_to_emacs_colors (struct frame *f, struct image *img, bool rgb_p)
 {
   int x, y;
-  XColor *colors, *p;
-  XImagePtr_or_DC ximg;
+  Emacs_Color *colors, *p;
+  Emacs_Pix_Context ximg;
   ptrdiff_t nbytes;
 #ifdef HAVE_NTGUI
   HGDIOBJ prev;
@@ -4915,13 +4805,13 @@ image_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
   /* Get the X image or create a memory device context for IMG. */
   ximg = image_get_x_image_or_dc (f, img, 0, &prev);
 
-  /* Fill the `pixel' members of the XColor array.  I wished there
+  /* Fill the `pixel' members of the Emacs_Color array.  I wished there
      were an easy and portable way to circumvent XGetPixel.  */
   p = colors;
   for (y = 0; y < img->height; ++y)
     {
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NTGUI)
-      XColor *row = p;
+      Emacs_Color *row = p;
       for (x = 0; x < img->width; ++x, ++p)
 	p->pixel = GET_PIXEL (ximg, x, y);
       if (rgb_p)
@@ -4956,7 +4846,7 @@ image_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
    stored in ximg->data.  */
 
 static void
-XPutPixel (XImagePtr ximg, int x, int y, COLORREF color)
+XPutPixel (XImage *ximg, int x, int y, COLORREF color)
 {
   int width = ximg->info.bmiHeader.biWidth;
   unsigned char * pixel;
@@ -4995,16 +4885,16 @@ XPutPixel (XImagePtr ximg, int x, int y, COLORREF color)
 
 #endif /* HAVE_NTGUI */
 
-/* Create IMG->pixmap from an array COLORS of XColor structures, whose
+/* Create IMG->pixmap from an array COLORS of Emacs_Color structures, whose
    RGB members are set.  F is the frame on which this all happens.
    COLORS will be freed; an existing IMG->pixmap will be freed, too.  */
 
 static void
-image_from_xcolors (struct frame *f, struct image *img, XColor *colors)
+image_from_emacs_colors (struct frame *f, struct image *img, Emacs_Color *colors)
 {
   int x, y;
-  XImagePtr oimg = NULL;
-  XColor *p;
+  Emacs_Pix_Container oimg = NULL;
+  Emacs_Color *p;
 
   init_color_table ();
 
@@ -5042,8 +4932,8 @@ static void
 image_detect_edges (struct frame *f, struct image *img,
                     int *matrix, int color_adjust)
 {
-  XColor *colors = image_to_xcolors (f, img, 1);
-  XColor *new, *p;
+  Emacs_Color *colors = image_to_emacs_colors (f, img, 1);
+  Emacs_Color *new, *p;
   int x, y, i, sum;
   ptrdiff_t nbytes;
 
@@ -5086,7 +4976,7 @@ image_detect_edges (struct frame *f, struct image *img,
 	    for (xx = x - 1; xx < x + 2; ++xx, ++i)
 	      if (matrix[i])
 	        {
-	          XColor *t = COLOR (colors, xx, yy);
+	          Emacs_Color *t = COLOR (colors, xx, yy);
 		  r += matrix[i] * t->red;
 		  g += matrix[i] * t->green;
 		  b += matrix[i] * t->blue;
@@ -5100,7 +4990,7 @@ image_detect_edges (struct frame *f, struct image *img,
     }
 
   xfree (colors);
-  image_from_xcolors (f, img, new);
+  image_from_emacs_colors (f, img, new);
 
 #undef COLOR
 }
@@ -5183,8 +5073,8 @@ image_disable_image (struct frame *f, struct image *img)
       /* Color (or grayscale).  Convert to gray, and equalize.  Just
 	 drawing such images with a stipple can look very odd, so
 	 we're using this method instead.  */
-      XColor *colors = image_to_xcolors (f, img, 1);
-      XColor *p, *end;
+      Emacs_Color *colors = image_to_emacs_colors (f, img, 1);
+      Emacs_Color *p, *end;
       const int h = 15000;
       const int l = 30000;
 
@@ -5197,7 +5087,7 @@ image_disable_image (struct frame *f, struct image *img)
 	  p->red = p->green = p->blue = i2;
 	}
 
-      image_from_xcolors (f, img, colors);
+      image_from_emacs_colors (f, img, colors);
     }
 
   /* Draw a cross over the disabled image, if we must or if we
@@ -5275,13 +5165,13 @@ static void
 image_build_heuristic_mask (struct frame *f, struct image *img,
                             Lisp_Object how)
 {
-  XImagePtr_or_DC ximg;
+  Emacs_Pix_Context ximg;
 #ifdef HAVE_NTGUI
   HGDIOBJ prev;
   char *mask_img;
   int row_width;
 #elif !defined HAVE_NS
-  XImagePtr mask_img;
+  Emacs_Pix_Container mask_img;
 #endif
   int x, y;
   bool use_img_background;
@@ -5384,9 +5274,6 @@ image_build_heuristic_mask (struct frame *f, struct image *img,
 		       PBM (mono, gray, color)
  ***********************************************************************/
 
-static bool pbm_image_p (Lisp_Object object);
-static bool pbm_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum pbm_keyword_index
@@ -5422,19 +5309,6 @@ static const struct image_keyword pbm_format[PBM_LAST] =
   {":foreground",	IMAGE_STRING_OR_NIL_VALUE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
-
-/* Structure describing the image type `pbm'.  */
-
-static struct image_type pbm_type =
-{
-  SYMBOL_INDEX (Qpbm),
-  pbm_image_p,
-  pbm_load,
-  image_clear_image,
-  NULL,
-  NULL
-};
-
 
 /* Return true if OBJECT is a valid PBM image specification.  */
 
@@ -5533,7 +5407,7 @@ pbm_load (struct frame *f, struct image *img)
   char *contents = NULL;
   char *end, *p;
 #ifndef USE_CAIRO
-  XImagePtr ximg;
+  Emacs_Pix_Container ximg;
 #endif
 
   specified_file = image_spec_value (img->spec, QCfile, NULL);
@@ -5655,7 +5529,7 @@ pbm_load (struct frame *f, struct image *img)
       unsigned long fg = FRAME_FOREGROUND_PIXEL (f);
       unsigned long bg = FRAME_BACKGROUND_PIXEL (f);
 #ifdef USE_CAIRO
-      XColor xfg, xbg;
+      Emacs_Color xfg, xbg;
       int fga32, bga32;
 #endif
       /* Parse the image specification.  */
@@ -5675,7 +5549,7 @@ pbm_load (struct frame *f, struct image *img)
           xfg.pixel = fg;
           x_query_colors (f, &xfg, 1);
         }
-      fga32 = xcolor_to_argb32 (xfg);
+      fga32 = emacs_color_to_argb32 (&xfg);
 
       if (! fmt[PBM_BACKGROUND].count
           || ! STRINGP (fmt[PBM_BACKGROUND].value)
@@ -5688,7 +5562,7 @@ pbm_load (struct frame *f, struct image *img)
           xbg.pixel = bg;
           x_query_colors (f, &xbg, 1);
 	}
-      bga32 = xcolor_to_argb32 (xbg);
+      bga32 = emacs_color_to_argb32 (&xbg);
 #else
       if (fmt[PBM_FOREGROUND].count
 	  && STRINGP (fmt[PBM_FOREGROUND].value))
@@ -5833,7 +5707,7 @@ pbm_load (struct frame *f, struct image *img)
 #else
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
-    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
@@ -5853,11 +5727,6 @@ pbm_load (struct frame *f, struct image *img)
  ***********************************************************************/
 
 #if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
-
-/* Function prototypes.  */
-
-static bool png_image_p (Lisp_Object object);
-static bool png_load (struct frame *f, struct image *img);
 
 /* Indices of image specification fields in png_format, below.  */
 
@@ -5891,24 +5760,6 @@ static const struct image_keyword png_format[PNG_LAST] =
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_png_functions (void);
-#else
-#define init_png_functions NULL
-#endif
-
-/* Structure describing the image type `png'.  */
-
-static struct image_type png_type =
-{
-  SYMBOL_INDEX (Qpng),
-  png_image_p,
-  png_load,
-  image_clear_image,
-  init_png_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid PNG image specification.  */
@@ -5951,6 +5802,7 @@ DEF_DLL_FN (png_uint_32, png_get_valid, (png_structp, png_infop, png_uint_32));
 DEF_DLL_FN (void, png_set_strip_16, (png_structp));
 DEF_DLL_FN (void, png_set_expand, (png_structp));
 DEF_DLL_FN (void, png_set_gray_to_rgb, (png_structp));
+DEF_DLL_FN (int, png_set_interlace_handling, (png_structp));
 DEF_DLL_FN (void, png_set_background,
 	    (png_structp, png_color_16p, int, int, double));
 DEF_DLL_FN (png_uint_32, png_get_bKGD,
@@ -5989,6 +5841,7 @@ init_png_functions (void)
   LOAD_DLL_FN (library, png_set_strip_16);
   LOAD_DLL_FN (library, png_set_expand);
   LOAD_DLL_FN (library, png_set_gray_to_rgb);
+  LOAD_DLL_FN (library, png_set_interlace_handling);
   LOAD_DLL_FN (library, png_set_background);
   LOAD_DLL_FN (library, png_get_bKGD);
   LOAD_DLL_FN (library, png_read_update_info);
@@ -6024,6 +5877,7 @@ init_png_functions (void)
 #  undef png_set_background
 #  undef png_set_expand
 #  undef png_set_gray_to_rgb
+#  undef png_set_interlace_handling
 #  undef png_set_longjmp_fn
 #  undef png_set_read_fn
 #  undef png_set_sig_bytes
@@ -6048,6 +5902,7 @@ init_png_functions (void)
 #  define png_set_background fn_png_set_background
 #  define png_set_expand fn_png_set_expand
 #  define png_set_gray_to_rgb fn_png_set_gray_to_rgb
+#  define png_set_interlace_handling fn_png_set_interlace_handling
 #  define png_set_longjmp_fn fn_png_set_longjmp_fn
 #  define png_set_read_fn fn_png_set_read_fn
 #  define png_set_sig_bytes fn_png_set_sig_bytes
@@ -6178,7 +6033,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   cairo_surface_t *surface;
   uint32_t *dataptr;
 #else
-  XImagePtr ximg, mask_img = NULL;
+  Emacs_Pix_Container ximg, mask_img = NULL;
 #endif
 
   /* Find out what file to load.  */
@@ -6336,7 +6191,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
       /* png_color_16 *image_bg; */
       Lisp_Object specified_bg
 	= image_spec_value (img->spec, QCbackground, NULL);
-      XColor color;
+      Emacs_Color color;
 
       /* If the user specified a color, try to use it; if not, use the
 	 current frame background, ignoring any default background
@@ -6362,7 +6217,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	}
     }
 
-  /* Update info structure.  */
+  png_set_interlace_handling (png_ptr);
   png_read_update_info (png_ptr, info_ptr);
 
   /* Get number of channels.  Valid values are 1 for grayscale images
@@ -6491,7 +6346,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 #else
   /* Maybe fill in the background field while we have ximg handy.
      Casting avoids a GCC warning.  */
-  IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+  IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
@@ -6501,7 +6356,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
     {
       /* Fill in the background_transparent field while we have the
 	 mask handy.  Casting avoids a GCC warning.  */
-      image_background_transparent (img, f, (XImagePtr_or_DC)mask_img);
+      image_background_transparent (img, f, (Emacs_Pix_Context)mask_img);
 
       image_put_x_image (f, img, mask_img, 1);
     }
@@ -6538,9 +6393,6 @@ png_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_JPEG) || defined (HAVE_NS)
 
-static bool jpeg_image_p (Lisp_Object object);
-static bool jpeg_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in gs_format, below.  */
 
 enum jpeg_keyword_index
@@ -6573,24 +6425,6 @@ static const struct image_keyword jpeg_format[JPEG_LAST] =
   {":heuristic-mask",	IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_jpeg_functions (void);
-#else
-#define init_jpeg_functions NULL
-#endif
-
-/* Structure describing the image type `jpeg'.  */
-
-static struct image_type jpeg_type =
-{
-  SYMBOL_INDEX (Qjpeg),
-  jpeg_image_p,
-  jpeg_load,
-  image_clear_image,
-  init_jpeg_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid JPEG image specification.  */
@@ -6735,7 +6569,7 @@ my_error_exit (j_common_ptr cinfo)
 
 
 /* Init source method for JPEG data source manager.  Called by
-   jpeg_read_header() before any data is actually read.  See
+   jpeg_read_header before any data is actually read.  See
    libjpeg.doc from the JPEG lib distribution.  */
 
 static void
@@ -6745,7 +6579,7 @@ our_common_init_source (j_decompress_ptr cinfo)
 
 
 /* Method to terminate data source.  Called by
-   jpeg_finish_decompress() after all data has been processed.  */
+   jpeg_finish_decompress after all data has been processed.  */
 
 static void
 our_common_term_source (j_decompress_ptr cinfo)
@@ -6942,7 +6776,7 @@ jpeg_load_body (struct frame *f, struct image *img,
   int i, ir, ig, ib;
 #ifndef USE_CAIRO
   unsigned long *colors;
-  XImagePtr ximg = NULL;
+  Emacs_Pix_Container ximg = NULL;
 #endif
 
   /* Open the JPEG file.  */
@@ -7132,7 +6966,7 @@ jpeg_load_body (struct frame *f, struct image *img,
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
-    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
@@ -7170,9 +7004,6 @@ jpeg_load (struct frame *f, struct image *img)
 
 #if defined (HAVE_TIFF) || defined (HAVE_NS)
 
-static bool tiff_image_p (Lisp_Object object);
-static bool tiff_load (struct frame *f, struct image *img);
-
 /* Indices of image specification fields in tiff_format, below.  */
 
 enum tiff_keyword_index
@@ -7207,24 +7038,6 @@ static const struct image_keyword tiff_format[TIFF_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0},
   {":index",		IMAGE_NON_NEGATIVE_INTEGER_VALUE,	0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_tiff_functions (void);
-#else
-#define init_tiff_functions NULL
-#endif
-
-/* Structure describing the image type `tiff'.  */
-
-static struct image_type tiff_type =
-{
-  SYMBOL_INDEX (Qtiff),
-  tiff_image_p,
-  tiff_load,
-  image_clear_image,
-  init_tiff_functions,
-  NULL
 };
 
 /* Return true if OBJECT is a valid TIFF image specification.  */
@@ -7453,7 +7266,7 @@ tiff_load (struct frame *f, struct image *img)
   int width, height, x, y, count;
   uint32 *buf;
   int rc;
-  XImagePtr ximg;
+  Emacs_Pix_Container ximg;
   tiff_memory_source memsrc;
   Lisp_Object image;
 
@@ -7623,7 +7436,7 @@ tiff_load (struct frame *f, struct image *img)
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning on W32.  */
-    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
@@ -7653,10 +7466,6 @@ tiff_load (struct frame *f, struct image *img)
  ***********************************************************************/
 
 #if defined (HAVE_GIF) || defined (HAVE_NS)
-
-static bool gif_image_p (Lisp_Object object);
-static bool gif_load (struct frame *f, struct image *img);
-static void gif_clear_image (struct frame *f, struct image *img);
 
 /* Indices of image specification fields in gif_format, below.  */
 
@@ -7692,24 +7501,6 @@ static const struct image_keyword gif_format[GIF_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":index",		IMAGE_NON_NEGATIVE_INTEGER_VALUE,	0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
-};
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_gif_functions (void);
-#else
-#define init_gif_functions NULL
-#endif
-
-/* Structure describing the image type `gif'.  */
-
-static struct image_type gif_type =
-{
-  SYMBOL_INDEX (Qgif),
-  gif_image_p,
-  gif_load,
-  gif_clear_image,
-  init_gif_functions,
-  NULL
 };
 
 /* Free X resources of GIF image IMG which is used on frame F.  */
@@ -8033,7 +7824,7 @@ gif_load (struct frame *f, struct image *img)
   uint32_t *data32 = (uint32_t *) cairo_image_surface_get_data (surface);
   if (STRINGP (specified_bg))
     {
-      XColor color;
+      Emacs_Color color;
       if (FRAME_TERMINAL (f)->defined_color_hook
           (f, SSDATA (specified_bg), &color, false, false))
         {
@@ -8049,7 +7840,7 @@ gif_load (struct frame *f, struct image *img)
     }
 #else
   /* Create the X image and pixmap.  */
-  XImagePtr ximg;
+  Emacs_Pix_Container ximg;
   if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
     {
       gif_close (gif, NULL);
@@ -8279,7 +8070,7 @@ gif_load (struct frame *f, struct image *img)
   /* Maybe fill in the background field while we have ximg handy. */
   if (NILP (image_spec_value (img->spec, QCbackground, NULL)))
     /* Casting avoids a GCC warning.  */
-    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
@@ -8308,10 +8099,6 @@ gif_load (struct frame *f, struct image *img)
 /***********************************************************************
 				 ImageMagick
 ***********************************************************************/
-
-static bool imagemagick_image_p (Lisp_Object);
-static bool imagemagick_load (struct frame *, struct image *);
-static void imagemagick_clear_image (struct frame *, struct image *);
 
 /* Indices of image specification fields in imagemagick_format.  */
 
@@ -8359,25 +8146,6 @@ static struct image_keyword imagemagick_format[IMAGEMAGICK_LAST] =
     {":format",		IMAGE_SYMBOL_VALUE,			0},
     {":rotation",	IMAGE_NUMBER_VALUE,     		0},
     {":crop",		IMAGE_DONT_CHECK_VALUE_TYPE,		0}
-  };
-
-#if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_imagemagick_functions (void);
-#else
-#define init_imagemagick_functions NULL
-#endif
-
-/* Structure describing the image type for any image handled via
-   ImageMagick.  */
-
-static struct image_type imagemagick_type =
-  {
-    SYMBOL_INDEX (Qimagemagick),
-    imagemagick_image_p,
-    imagemagick_load,
-    imagemagick_clear_image,
-    init_imagemagick_functions,
-    NULL
   };
 
 /* Free X resources of imagemagick image IMG which is used on frame F.  */
@@ -8686,7 +8454,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   size_t image_width, image_height;
   MagickBooleanType status;
 #ifndef USE_CAIRO
-  XImagePtr ximg;
+  Emacs_Pix_Container ximg;
 #endif
   int x, y;
   MagickWand *image_wand;
@@ -8791,7 +8559,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   /* Retrieve the frame's background color, for use later.  */
   {
-    XColor bgcolor;
+    Emacs_Color bgcolor;
     Lisp_Object specified_bg;
 
     specified_bg = image_spec_value (img->spec, QCbackground, NULL);
@@ -9157,9 +8925,6 @@ and `imagemagick-types-inhibit'.  */)
 
 /* Function prototypes.  */
 
-static bool svg_image_p (Lisp_Object object);
-static bool svg_load (struct frame *f, struct image *img);
-
 static bool svg_load_image (struct frame *, struct image *,
 			    char *, ptrdiff_t, char *);
 
@@ -9197,27 +8962,6 @@ static const struct image_keyword svg_format[SVG_LAST] =
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
 
-# if defined HAVE_NTGUI && defined WINDOWSNT
-static bool init_svg_functions (void);
-# else
-#define init_svg_functions NULL
-# endif
-
-/* Structure describing the image type `svg'.  Its the same type of
-   structure defined for all image formats, handled by emacs image
-   functions.  See struct image_type in dispextern.h.  */
-
-static struct image_type svg_type =
-{
-  SYMBOL_INDEX (Qsvg),
-  svg_image_p,
-  svg_load,
-  image_clear_image,
-  init_svg_functions,
-  NULL
-};
-
-
 /* Return true if OBJECT is a valid SVG image specification.  Do
    this by calling parse_image_spec and supplying the keywords that
    identify the SVG format.   */
@@ -9247,6 +8991,11 @@ svg_image_p (Lisp_Object object)
 # endif
 
 # include <librsvg/rsvg.h>
+
+/* librsvg is too old for us if it doesn't define this macro.  */
+# ifndef LIBRSVG_CHECK_VERSION
+#  define LIBRSVG_CHECK_VERSION(v, w, x) false
+# endif
 
 # ifdef WINDOWSNT
 
@@ -9456,7 +9205,18 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      See rsvg bug 596114 - "image refs are relative to curdir, not .svg file"
      <https://gitlab.gnome.org/GNOME/librsvg/issues/33>. */
   if (filename)
-    rsvg_handle_set_base_uri(rsvg_handle, filename);
+    rsvg_handle_set_base_uri (rsvg_handle, filename);
+
+  /* Suppress GCC deprecation warnings starting in librsvg 2.45.1 for
+     rsvg_handle_write and rsvg_handle_close.  FIXME: Use functions
+     like rsvg_handle_new_from_gfile_sync on newer librsvg versions,
+     and remove this hack.  */
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic push
+  #endif
+  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
+   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
 
   /* Parse the contents argument and fill in the rsvg_handle.  */
   rsvg_handle_write (rsvg_handle, (unsigned char *) contents, size, &err);
@@ -9466,6 +9226,10 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      for further writes.  */
   rsvg_handle_close (rsvg_handle, &err);
   if (err) goto rsvg_error;
+
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic pop
+  #endif
 
   rsvg_handle_get_dimensions (rsvg_handle, &dimension_data);
   if (! check_image_size (f, dimension_data.width, dimension_data.height))
@@ -9521,7 +9285,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
     g_object_unref (pixbuf);
 #else
     /* Try to create a x pixmap to hold the svg pixmap.  */
-    XImagePtr ximg;
+    Emacs_Pix_Container ximg;
     if (!image_create_x_image_and_pixmap (f, img, width, height, 0, &ximg, 0))
       {
 	g_object_unref (pixbuf);
@@ -9532,7 +9296,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 
     /* Handle alpha channel by combining the image with a background
        color.  */
-    XColor background;
+    Emacs_Color background;
     Lisp_Object specified_bg = image_spec_value (img->spec, QCbackground, NULL);
     if (!STRINGP (specified_bg)
 	|| !FRAME_TERMINAL (f)->defined_color_hook (f,
@@ -9588,7 +9352,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 
     /* Maybe fill in the background field while we have ximg handy.
        Casting avoids a GCC warning.  */
-    IMAGE_BACKGROUND (img, f, (XImagePtr_or_DC)ximg);
+    IMAGE_BACKGROUND (img, f, (Emacs_Pix_Context)ximg);
 
     /* Put ximg into the image.  */
     image_put_x_image (f, img, ximg, 0);
@@ -9620,10 +9384,6 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_GHOSTSCRIPT
-
-static bool gs_image_p (Lisp_Object object);
-static bool gs_load (struct frame *f, struct image *img);
-static void gs_clear_image (struct frame *f, struct image *img);
 
 /* Indices of image specification fields in gs_format, below.  */
 
@@ -9664,28 +9424,6 @@ static const struct image_keyword gs_format[GS_LAST] =
   {":mask",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0}
 };
-
-/* Structure describing the image type `ghostscript'.  */
-
-static struct image_type gs_type =
-{
-  SYMBOL_INDEX (Qpostscript),
-  gs_image_p,
-  gs_load,
-  gs_clear_image,
-  NULL,
-  NULL
-};
-
-
-/* Free X resources of Ghostscript image IMG which is used on frame F.  */
-
-static void
-gs_clear_image (struct frame *f, struct image *img)
-{
-  image_clear_image (f, img);
-}
-
 
 /* Return true if OBJECT is a valid Ghostscript image
    specification.  */
@@ -9812,7 +9550,7 @@ gs_load (struct frame *f, struct image *img)
    telling Emacs that Ghostscript has finished drawing.  */
 
 void
-x_kill_gs_process (Pixmap pixmap, struct frame *f)
+x_kill_gs_process (Emacs_Pixmap pixmap, struct frame *f)
 {
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
   ptrdiff_t i;
@@ -9842,7 +9580,7 @@ x_kill_gs_process (Pixmap pixmap, struct frame *f)
      img->pixmap.  */
   if (x_mutable_colormap (FRAME_X_VISUAL (f)))
     {
-      XImagePtr ximg;
+      XImage *ximg;
 
       block_input ();
 
@@ -9965,87 +9703,86 @@ the library file(s) specified by `dynamic-library-alist'.  */)
   return lookup_image_type (type) ? Qt : Qnil;
 }
 
+static bool
+initialize_image_type (struct image_type const *type)
+{
+#ifdef WINDOWSNT
+  Lisp_Object typesym = builtin_lisp_symbol (type->type);
+  Lisp_Object tested = Fassq (typesym, Vlibrary_cache);
+  /* If we failed to load the library before, don't try again.  */
+  if (CONSP (tested))
+    return !NILP (XCDR (tested)) ? true : false;
+
+  bool (*init) (void) = type->init;
+  if (init)
+    {
+      bool type_valid = init ();
+      Vlibrary_cache = Fcons (Fcons (typesym, type_valid ? Qt : Qnil),
+			      Vlibrary_cache);
+      return type_valid;
+    }
+#endif
+  return true;
+}
+
+/* Array of supported image types.  */
+
+static struct image_type const image_types[] =
+{
+#ifdef HAVE_GHOSTSCRIPT
+ { SYMBOL_INDEX (Qpostscript), gs_image_p, gs_load, image_clear_image },
+#endif
+#ifdef HAVE_IMAGEMAGICK
+ { SYMBOL_INDEX (Qimagemagick), imagemagick_image_p, imagemagick_load,
+   imagemagick_clear_image },
+#endif
+#ifdef HAVE_RSVG
+ { SYMBOL_INDEX (Qsvg), svg_image_p, svg_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_svg_functions) },
+#endif
+#if defined HAVE_PNG || defined HAVE_NS || defined USE_CAIRO
+ { SYMBOL_INDEX (Qpng), png_image_p, png_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_png_functions) },
+#endif
+#if defined HAVE_GIF || defined HAVE_NS
+ { SYMBOL_INDEX (Qgif), gif_image_p, gif_load, gif_clear_image,
+   IMAGE_TYPE_INIT (init_gif_functions) },
+#endif
+#if defined HAVE_TIFF || defined HAVE_NS
+ { SYMBOL_INDEX (Qtiff), tiff_image_p, tiff_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_tiff_functions) },
+#endif
+#if defined HAVE_JPEG || defined HAVE_NS
+ { SYMBOL_INDEX (Qjpeg), jpeg_image_p, jpeg_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_jpeg_functions) },
+#endif
+#if defined HAVE_XPM || defined HAVE_NS
+ { SYMBOL_INDEX (Qxpm), xpm_image_p, xpm_load, image_clear_image,
+   IMAGE_TYPE_INIT (init_xpm_functions) },
+#endif
+ { SYMBOL_INDEX (Qxbm), xbm_image_p, xbm_load, image_clear_image },
+ { SYMBOL_INDEX (Qpbm), pbm_image_p, pbm_load, image_clear_image },
+};
+
 /* Look up image type TYPE, and return a pointer to its image_type
    structure.  Return 0 if TYPE is not a known image type.  */
 
-static struct image_type *
+static struct image_type const *
 lookup_image_type (Lisp_Object type)
 {
-  /* Types pbm and xbm are built-in and always available.  */
-  if (EQ (type, Qpbm))
-    return define_image_type (&pbm_type);
-
-  if (EQ (type, Qxbm))
-    return define_image_type (&xbm_type);
-
-#if defined (HAVE_XPM) || defined (HAVE_NS)
-  if (EQ (type, Qxpm))
-    return define_image_type (&xpm_type);
-#endif
-
-#if defined (HAVE_JPEG) || defined (HAVE_NS)
-  if (EQ (type, Qjpeg))
-    return define_image_type (&jpeg_type);
-#endif
-
-#if defined (HAVE_TIFF) || defined (HAVE_NS)
-  if (EQ (type, Qtiff))
-    return define_image_type (&tiff_type);
-#endif
-
-#if defined (HAVE_GIF) || defined (HAVE_NS)
-  if (EQ (type, Qgif))
-    return define_image_type (&gif_type);
-#endif
-
-#if defined (HAVE_PNG) || defined (HAVE_NS) || defined (USE_CAIRO)
-  if (EQ (type, Qpng))
-    return define_image_type (&png_type);
-#endif
-
-#if defined (HAVE_RSVG)
-  if (EQ (type, Qsvg))
-    return define_image_type (&svg_type);
-#endif
-
-#if defined (HAVE_IMAGEMAGICK)
-  if (EQ (type, Qimagemagick))
-    return define_image_type (&imagemagick_type);
-#endif
-
-#ifdef HAVE_GHOSTSCRIPT
-  if (EQ (type, Qpostscript))
-    return define_image_type (&gs_type);
-#endif
-
+  for (int i = 0; i < ARRAYELTS (image_types); i++)
+    {
+      struct image_type const *r = &image_types[i];
+      if (EQ (type, builtin_lisp_symbol (r->type)))
+	return initialize_image_type (r) ? r : NULL;
+    }
   return NULL;
 }
 
-#if defined HAVE_UNEXEC && defined HAVE_WINDOW_SYSTEM
-
-/* Reset image_types before dumping.
-   Called from Fdump_emacs.  */
-
-void
-reset_image_types (void)
-{
-  while (image_types)
-    {
-      struct image_type *next = image_types->next;
-      xfree (image_types);
-      image_types = next;
-    }
-}
-#endif
 
 void
 syms_of_image (void)
 {
-  /* Initialize this only once; it will be reset before dumping.  */
-  /* The portable dumper will just leave it NULL, so no need to reset.  */
-  image_types = NULL;
-  PDUMPER_IGNORE (image_types);
-
   /* Must be defined now because we're going to update it below, while
      defining the supported image types.  */
   DEFVAR_LISP ("image-types", Vimage_types,
@@ -10096,7 +9833,7 @@ non-numeric, there is no explicit limit on the size of images.  */);
   DEFSYM (QCmax_width, ":max-width");
   DEFSYM (QCmax_height, ":max-height");
 #ifdef HAVE_GHOSTSCRIPT
-  ADD_IMAGE_TYPE (Qpostscript);
+  add_image_type (Qpostscript);
   DEFSYM (QCloader, ":loader");
   DEFSYM (QCpt_width, ":pt-width");
   DEFSYM (QCpt_height, ":pt-height");
@@ -10136,44 +9873,44 @@ non-numeric, there is no explicit limit on the size of images.  */);
 #endif
 
   DEFSYM (Qpbm, "pbm");
-  ADD_IMAGE_TYPE (Qpbm);
+  add_image_type (Qpbm);
 
   DEFSYM (Qxbm, "xbm");
-  ADD_IMAGE_TYPE (Qxbm);
+  add_image_type (Qxbm);
 
 #if defined (HAVE_XPM) || defined (HAVE_NS)
   DEFSYM (Qxpm, "xpm");
-  ADD_IMAGE_TYPE (Qxpm);
+  add_image_type (Qxpm);
 #endif
 
 #if defined (HAVE_JPEG) || defined (HAVE_NS)
   DEFSYM (Qjpeg, "jpeg");
-  ADD_IMAGE_TYPE (Qjpeg);
+  add_image_type (Qjpeg);
 #endif
 
 #if defined (HAVE_TIFF) || defined (HAVE_NS)
   DEFSYM (Qtiff, "tiff");
-  ADD_IMAGE_TYPE (Qtiff);
+  add_image_type (Qtiff);
 #endif
 
 #if defined (HAVE_GIF) || defined (HAVE_NS)
   DEFSYM (Qgif, "gif");
-  ADD_IMAGE_TYPE (Qgif);
+  add_image_type (Qgif);
 #endif
 
 #if defined (HAVE_PNG) || defined (HAVE_NS)
   DEFSYM (Qpng, "png");
-  ADD_IMAGE_TYPE (Qpng);
+  add_image_type (Qpng);
 #endif
 
 #if defined (HAVE_IMAGEMAGICK)
   DEFSYM (Qimagemagick, "imagemagick");
-  ADD_IMAGE_TYPE (Qimagemagick);
+  add_image_type (Qimagemagick);
 #endif
 
 #if defined (HAVE_RSVG)
   DEFSYM (Qsvg, "svg");
-  ADD_IMAGE_TYPE (Qsvg);
+  add_image_type (Qsvg);
 #ifdef HAVE_NTGUI
   /* Other libraries used directly by svg code.  */
   DEFSYM (Qgdk_pixbuf, "gdk-pixbuf");

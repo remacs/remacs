@@ -3,7 +3,6 @@
 ;; Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Ivan Kanis
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 ;; Package: vc
 
@@ -444,7 +443,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (define-derived-mode vc-hg-log-view-mode log-view-mode "Hg-Log-View"
   (require 'add-log) ;; we need the add-log faces
-  (set (make-local-variable 'log-view-file-re) "\\`a\\`")
+  (set (make-local-variable 'log-view-file-re) regexp-unmatchable)
   (set (make-local-variable 'log-view-per-file-logs) nil)
   (set (make-local-variable 'log-view-message-re)
        (if (eq vc-log-view-type 'short)

@@ -443,9 +443,7 @@ File Handling
 * Visiting::            Visiting a file prepares Emacs to edit the file.
 * Saving::              Saving makes your changes permanent.
 * Reverting::           Reverting cancels all the changes not saved.
-@ifnottex
-* Autorevert::          Auto Reverting non-file buffers.
-@end ifnottex
+* Auto Revert::         Keeping buffers automatically up-to-date.
 * Auto Save::           Auto Save periodically protects against loss of data.
 * File Aliases::        Handling multiple names for one file.
 * Directories::         Creating, deleting, and listing file directories.

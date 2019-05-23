@@ -3,7 +3,6 @@
 ;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
 ;; Author: Nick Roberts <nickrob@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix, tools
 
 ;; This file is part of GNU Emacs.

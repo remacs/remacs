@@ -1101,8 +1101,7 @@ WIDTH and HEIGHT are the sizes given in the HTML data, if any.
 The size of the displayed image will not exceed
 MAX-WIDTH/MAX-HEIGHT.  If not given, use the current window
 width/height instead."
-  (if (or (not (fboundp 'imagemagick-types))
-          (not (get-buffer-window (current-buffer))))
+  (if (not (get-buffer-window (current-buffer)))
       (create-image data nil t :ascent 100)
     (let* ((edges (window-inside-pixel-edges
                    (get-buffer-window (current-buffer))))
@@ -1123,13 +1122,13 @@ width/height instead."
                (< (* width scaling) max-width)
                (< (* height scaling) max-height))
           (create-image
-           data 'imagemagick t
+           data nil t
            :ascent 100
            :width width
            :height height
            :format content-type)
         (create-image
-         data 'imagemagick t
+         data nil t
          :ascent 100
          :max-width max-width
          :max-height max-height
@@ -1790,7 +1789,10 @@ The preference is a float determined from `shr-prefer-media-type'."
 
 (defun shr-mark-fill (start)
   ;; We may not have inserted any text to fill.
-  (unless (= start (point))
+  (when (and (/= start (point))
+             ;; Tables insert themselves with the correct indentation,
+             ;; so don't do anything if we're at the start of a table.
+             (not (get-text-property start 'shr-table-id)))
     (put-text-property start (1+ start)
 		       'shr-indentation shr-indentation)))
 
@@ -2087,7 +2089,8 @@ flags that control whether to collect or render objects."
 			(setq max (max max (nth 2 column))))
 		      max)))
 	(dotimes (_ (max height 1))
-	  (shr-indent)
+          (when (bolp)
+	    (shr-indent))
 	  (insert shr-table-vertical-line "\n"))
 	(dolist (column row)
 	  (when (> (nth 2 column) -1)

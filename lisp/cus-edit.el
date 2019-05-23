@@ -3,7 +3,6 @@
 ;; Copyright (C) 1996-1997, 1999-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help, faces
 ;; Package: emacs
 
@@ -1827,20 +1826,9 @@ item in another window.\n\n"))
 			      (" `-" "bottom")))
 
 (defun custom-browse-insert-prefix (prefix)
-  "Insert PREFIX.  On XEmacs convert it to line graphics."
-  ;; Fixme: do graphics.
-  (if nil ; (featurep 'xemacs)
-      (progn
-	(insert "*")
-	(while (not (string-equal prefix ""))
-	  (let ((entry (substring prefix 0 3)))
-	    (setq prefix (substring prefix 3))
-	    (let ((overlay (make-overlay (1- (point)) (point) nil t nil))
-		  (name (nth 1 (assoc entry custom-browse-alist))))
-	      (overlay-put overlay 'end-glyph (widget-glyph-find name entry))
-	      (overlay-put overlay 'start-open t)
-	      (overlay-put overlay 'end-open t)))))
-    (insert prefix)))
+  "Insert PREFIX."
+  (declare (obsolete insert "27.1"))
+  (insert prefix))
 
 ;;; Modification of Basic Widgets.
 ;;
@@ -4043,7 +4031,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
     (cond ((and (eq custom-buffer-style 'tree)
 		(eq state 'hidden)
 		(or members (custom-unloaded-widget-p widget)))
-	   (custom-browse-insert-prefix prefix)
+	   (insert prefix)
 	   (push (widget-create-child-and-convert
 		  widget 'custom-browse-visibility
 		  :tag "+")
@@ -4056,19 +4044,17 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	   (widget-put widget :buttons buttons))
 	  ((and (eq custom-buffer-style 'tree)
 		(zerop (length members)))
-	   (custom-browse-insert-prefix prefix)
-	   (insert "[ ]-- ")
+	   (insert prefix "[ ]-- ")
 	   (push (widget-create-child-and-convert
 		  widget 'custom-browse-group-tag)
 		 buttons)
 	   (insert " " tag "\n")
 	   (widget-put widget :buttons buttons))
 	  ((eq custom-buffer-style 'tree)
-	   (custom-browse-insert-prefix prefix)
+	   (insert prefix)
 	   (if (zerop (length members))
 	       (progn
-		 (custom-browse-insert-prefix prefix)
-		 (insert "[ ]-- ")
+		 (insert prefix "[ ]-- ")
 		 ;; (widget-glyph-insert nil "[ ]" "empty")
 		 ;; (widget-glyph-insert nil "-- " "horizontal")
 		 (push (widget-create-child-and-convert

@@ -520,7 +520,7 @@ get_utf8_string (const char *str)
 bool
 xg_check_special_colors (struct frame *f,
                          const char *color_name,
-                         XColor *color)
+                         Emacs_Color *color)
 {
   bool success_p = 0;
   bool get_bg = strcmp ("gtk_selection_bg_color", color_name) == 0;

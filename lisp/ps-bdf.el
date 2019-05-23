@@ -9,7 +9,7 @@
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H13PRO009
 
-;; Author: Kenichi Handa <handa@m17n.org>
+;; Author: Kenichi Handa <handa@gnu.org>
 ;; (according to ack.texi)
 ;; Keywords: wp, BDF, font, PostScript
 ;; Package: ps-print

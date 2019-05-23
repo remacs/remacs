@@ -101,11 +101,6 @@ To add a new module function, proceed as follows:
 # pragma GCC diagnostic ignored "-Wclobbered"
 #endif
 
-/* This module is lackadaisical about function casts.  */
-#if GNUC_PREREQ (8, 0, 0)
-# pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif
-
 /* We use different strategies for allocating the user-visible objects
    (struct emacs_runtime, emacs_env, emacs_value), depending on
    whether the user supplied the -module-assertions flag.  If
@@ -223,8 +218,6 @@ static void module_reset_handlerlist (struct handler **);
 static bool value_storage_contains_p (const struct emacs_value_storage *,
                                       emacs_value, ptrdiff_t *);
 static Lisp_Object module_encode (Lisp_Object);
-static Lisp_Object module_decode (Lisp_Object);
-static Lisp_Object module_decode_copy (Lisp_Object);
 
 static bool module_assertions = false;
 
@@ -532,10 +525,7 @@ module_make_function (emacs_env *env, ptrdiff_t min_arity, ptrdiff_t max_arity,
   function->data = data;
 
   if (documentation)
-    {
-      AUTO_STRING (unibyte_doc, documentation);
-      function->documentation = module_decode_copy (unibyte_doc);
-    }
+    function->documentation = build_string_from_utf8 (documentation);
 
   Lisp_Object result;
   XSET_MODULE_FUNCTION (result, function);
@@ -668,8 +658,8 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   MODULE_FUNCTION_BEGIN (NULL);
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     overflow_error ();
-  Lisp_Object lstr = make_unibyte_string (str, length);
-  return lisp_to_value (env, module_decode (lstr));
+  Lisp_Object lstr = make_string_from_utf8 (str, length);
+  return lisp_to_value (env, lstr);
 }
 
 static emacs_value
@@ -790,10 +780,7 @@ module_extract_big_integer (emacs_env *env, emacs_value value,
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object o = value_to_lisp (value);
   CHECK_INTEGER (o);
-  if (FIXNUMP (o))
-    mpz_set_intmax (result->value, XFIXNUM (o));
-  else
-    mpz_set (result->value, XBIGNUM (o)->value);
+  mpz_set_integer (result->value, o);
 }
 
 static emacs_value
@@ -906,6 +893,11 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
       if (! args[i])
 	memory_full (sizeof *args[i]);
     }
+
+  /* The only possibility of getting an error until here is failure to
+     allocate memory for the arguments, but then we already should
+     have signaled an error before.  */
+  eassert (priv.pending_non_local_exit == emacs_funcall_exit_return);
 
   emacs_value ret = func->subr (env, nargs, args, func->data);
 
@@ -1028,18 +1020,6 @@ static Lisp_Object
 module_encode (Lisp_Object string)
 {
   return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
-}
-
-static Lisp_Object
-module_decode (Lisp_Object string)
-{
-  return code_convert_string (string, Qutf_8_unix, Qt, false, true, true);
-}
-
-static Lisp_Object
-module_decode_copy (Lisp_Object string)
-{
-  return code_convert_string (string, Qutf_8_unix, Qt, false, false, true);
 }
 
 

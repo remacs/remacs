@@ -4,7 +4,6 @@
 
 ;; Author: Henry Kautz
 ;; (according to authors.el)
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: bib
 
 ;; This file is part of GNU Emacs.

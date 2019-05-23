@@ -3,7 +3,6 @@
 ;; Copyright (C) 1995-1997, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Michelangelo Grigni <mic@mathcs.emory.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 29 Mar 1993
 ;; Keywords: files, hypermedia, matching, mouse, convenience
 
@@ -513,7 +512,9 @@ When using jka-compr (a.k.a. `auto-compression-mode'), the returned
 name may have a suffix added from `ffap-compression-suffixes'.
 The optional NOMODIFY argument suppresses the extra search."
   (cond
-   ((not file) nil)			; quietly reject nil
+   ((or (not file)			; quietly reject nil
+	(zerop (length file)))		; and also ""
+    nil)
    ((file-exists-p file) file)		; try unmodified first
    ;; three reasons to suppress search:
    (nomodify nil)
@@ -1326,6 +1327,7 @@ which may actually result in an URL rather than a filename."
 	 ;; If it contains a colon, get rid of it (and return if exists)
 	 ((and (string-match path-separator name)
 	       (setq name (ffap-string-at-point 'nocolon))
+	       (> (length name) 0)
 	       (ffap-file-exists-string name)))
 	 ;; File does not exist, try the alist:
 	 ((let ((alist ffap-alist) tem try case-fold-search)
@@ -2042,19 +2044,19 @@ This hook is intended to be put in `file-name-at-point-functions'."
    '((global-set-key [S-mouse-3] 'ffap-at-mouse)
      (global-set-key [C-S-mouse-3] 'ffap-menu)
 
-     (global-set-key "\C-x\C-f" 'find-file-at-point)
-     (global-set-key "\C-x\C-r" 'ffap-read-only)
-     (global-set-key "\C-x\C-v" 'ffap-alternate-file)
+     (global-set-key [remap find-file] 'find-file-at-point)
+     (global-set-key [remap find-file-read-only] 'ffap-read-only)
+     (global-set-key [remap find-alternate-file] 'ffap-alternate-file)
 
-     (global-set-key "\C-x4f"   'ffap-other-window)
-     (global-set-key "\C-x5f"   'ffap-other-frame)
-     (global-set-key "\C-x4r"   'ffap-read-only-other-window)
-     (global-set-key "\C-x5r"   'ffap-read-only-other-frame)
+     (global-set-key [remap find-file-other-window] 'ffap-other-window)
+     (global-set-key [remap find-file-other-frame] 'ffap-other-frame)
+     (global-set-key [remap find-file-read-only-other-window] 'ffap-read-only-other-window)
+     (global-set-key [remap find-file-read-only-other-frame] 'ffap-read-only-other-frame)
 
-     (global-set-key "\C-xd"    'dired-at-point)
-     (global-set-key "\C-x4d"   'ffap-dired-other-window)
-     (global-set-key "\C-x5d"   'ffap-dired-other-frame)
-     (global-set-key "\C-x\C-d" 'ffap-list-directory)
+     (global-set-key [remap dired] 'dired-at-point)
+     (global-set-key [remap dired-other-window] 'ffap-dired-other-window)
+     (global-set-key [remap dired-other-frame] 'ffap-dired-other-frame)
+     (global-set-key [remap list-directory] 'ffap-list-directory)
 
      (add-hook 'gnus-summary-mode-hook 'ffap-gnus-hook)
      (add-hook 'gnus-article-mode-hook 'ffap-gnus-hook)

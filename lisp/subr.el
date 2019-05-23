@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985-1986, 1992, 1994-1995, 1999-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -1238,12 +1237,14 @@ The normal global definition of the character C-x indirects to this keymap.")
 			  c)))
 	    key)))
 
-(defun eventp (obj)
-  "True if the argument is an event object."
-  (when obj
-    (or (integerp obj)
-        (and (symbolp obj) obj (not (keywordp obj)))
-        (and (consp obj) (symbolp (car obj))))))
+(defun eventp (object)
+  "Return non-nil if OBJECT is an input event or event object."
+  (or (integerp object)
+      (and (if (consp object)
+               (setq object (car object))
+             object)
+           (symbolp object)
+           (not (keywordp object)))))
 
 (defun event-modifiers (event)
   "Return a list of symbols representing the modifier keys in event EVENT.
@@ -5541,5 +5542,9 @@ returned list are in the same order as in TREE.
 ;; Technically, `flatten-list' is a misnomer, but we provide it here
 ;; for discoverability:
 (defalias 'flatten-list 'flatten-tree)
+
+;; The initial anchoring is for better performance in searching matches.
+(defconst regexp-unmatchable "\\`a\\`"
+  "Standard regexp guaranteed not to match any string at all.")
 
 ;;; subr.el ends here

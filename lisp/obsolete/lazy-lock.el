@@ -3,7 +3,6 @@
 ;; Copyright (C) 1994-1998, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: faces files
 ;; Version: 2.11
 ;; Obsolete-since: 22.1

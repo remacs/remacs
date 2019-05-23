@@ -1936,40 +1936,6 @@ If you are unsure, use synchronous version of this function
 			    (epg-errors-to-string errors))))))
     (epg-reset context)))
 
-(defun epg-start-sign-keys (context keys &optional local)
-  "Initiate a sign keys operation.
-
-If you use this function, you will need to wait for the completion of
-`epg-gpg-program' by using `epg-wait-for-completion' and call
-`epg-reset' to clear a temporary output file.
-If you are unsure, use synchronous version of this function
-`epg-sign-keys' instead."
-  (declare (obsolete nil "23.1"))
-  (setf (epg-context-operation context) 'sign-keys)
-  (setf (epg-context-result context) nil)
-  (epg--start context (cons (if local
-			       "--lsign-key"
-			     "--sign-key")
-			   (mapcar
-			    (lambda (key)
-			      (epg-sub-key-id
-			       (car (epg-key-sub-key-list key))))
-			    keys))))
-
-(defun epg-sign-keys (context keys &optional local)
-  "Sign KEYS from the key ring."
-  (declare (obsolete nil "23.1"))
-  (unwind-protect
-      (progn
-	(epg-start-sign-keys context keys local)
-	(epg-wait-for-completion context)
-	(let ((errors (epg-context-result-for context 'error)))
-	  (if errors
-	      (signal 'epg-error
-		      (list "Sign keys failed"
-			    (epg-errors-to-string errors))))))
-    (epg-reset context)))
-
 (defun epg-start-generate-key (context parameters)
   "Initiate a key generation.
 PARAMETERS is a string which specifies parameters of the generated key.

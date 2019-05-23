@@ -1070,6 +1070,13 @@ list of characters @var{chars}.
 
 @c Internal functions: regexp-opt-group
 
+@defvar regexp-unmatchable
+This variable contains a regexp that is guaranteed not to match any
+string at all.  It is particularly useful as default value for
+variables that may be set to a pattern that actually matches
+something.
+@end defvar
+
 @node Regexp Search
 @section Regular Expression Searching
 @cindex regular expression searching

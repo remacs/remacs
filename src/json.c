@@ -215,46 +215,10 @@ json_has_suffix (const char *string, const char *suffix)
 
 #endif
 
-/* Create a multibyte Lisp string from the UTF-8 string in
-   [DATA, DATA + SIZE).  If the range [DATA, DATA + SIZE) does not
-   contain a valid UTF-8 string, the returned string will include raw
-   bytes.
-   Note that all callers below either pass only value UTF-8 strings or
-   use this function for formatting error messages; in the latter case
-   correctness isn't critical.  */
-
-static Lisp_Object
-json_make_string (const char *data, ptrdiff_t size)
-{
-  ptrdiff_t chars, bytes;
-  parse_str_as_multibyte ((const unsigned char *) data, size, &chars, &bytes);
-  /* If DATA is a valid UTF-8 string, we can convert it to a Lisp
-     string directly.  Otherwise, we need to decode it.  */
-  if (chars == size || bytes == size)
-    return make_specified_string (data, chars, size, true);
-  else
-    {
-      struct coding_system coding;
-      setup_coding_system (Qutf_8_unix, &coding);
-      coding.mode |= CODING_MODE_LAST_BLOCK;
-      coding.source = (const unsigned char *) data;
-      decode_coding_object (&coding, Qnil, 0, 0, size, size, Qt);
-      return coding.dst_object;
-    }
-}
-
-/* Create a multibyte Lisp string from the NUL-terminated UTF-8
-   string beginning at DATA.  If the string is not a valid UTF-8
-   string, an unspecified string is returned.  Note that all callers
-   below either pass only value UTF-8 strings or use this function for
+/* Note that all callers of make_string_from_utf8 and build_string_from_utf8
+   below either pass only value UTF-8 strings or use the functionf for
    formatting error messages; in the latter case correctness isn't
    critical.  */
-
-static Lisp_Object
-json_build_string (const char *data)
-{
-  return json_make_string (data, strlen (data));
-}
 
 /* Return a unibyte string containing the sequence of UTF-8 encoding
    units of the UTF-8 representation of STRING.  If STRING does not
@@ -303,9 +267,11 @@ json_parse_error (const json_error_t *error)
     symbol = Qjson_parse_error;
 #endif
   xsignal (symbol,
-           list5 (json_build_string (error->text),
-                  json_build_string (error->source), INT_TO_INTEGER (error->line),
-                  INT_TO_INTEGER (error->column), INT_TO_INTEGER (error->position)));
+           list5 (build_string_from_utf8 (error->text),
+                  build_string_from_utf8 (error->source),
+		  INT_TO_INTEGER (error->line),
+                  INT_TO_INTEGER (error->column),
+		  INT_TO_INTEGER (error->position)));
 }
 
 static void
@@ -648,7 +614,7 @@ usage: (json-serialize OBJECT &rest ARGS)  */)
     json_out_of_memory ();
   record_unwind_protect_ptr (json_free, string);
 
-  return unbind_to (count, json_build_string (string));
+  return unbind_to (count, build_string_from_utf8 (string));
 }
 
 struct json_buffer_and_size
@@ -855,8 +821,8 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
     case JSON_REAL:
       return make_float (json_real_value (json));
     case JSON_STRING:
-      return json_make_string (json_string_value (json),
-                               json_string_length (json));
+      return make_string_from_utf8 (json_string_value (json),
+				    json_string_length (json));
     case JSON_ARRAY:
       {
         if (++lisp_eval_depth > max_lisp_eval_depth)
@@ -915,7 +881,7 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
               json_t *value;
               json_object_foreach (json, key_str, value)
                 {
-                  Lisp_Object key = json_build_string (key_str);
+                  Lisp_Object key = build_string_from_utf8 (key_str);
                   EMACS_UINT hash;
                   ptrdiff_t i = hash_lookup (h, key, &hash);
                   /* Keys in JSON objects are unique, so the key can't
@@ -932,7 +898,8 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
               json_t *value;
               json_object_foreach (json, key_str, value)
                 {
-                  Lisp_Object key = Fintern (json_build_string (key_str), Qnil);
+                  Lisp_Object key
+		    = Fintern (build_string_from_utf8 (key_str), Qnil);
                   result
                     = Fcons (Fcons (key, json_to_lisp (value, conf)),
                              result);

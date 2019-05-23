@@ -94,6 +94,18 @@ bignum_integer (mpz_t *tmp, Lisp_Object i)
   return &XBIGNUM (i)->value;
 }
 
+/* Set RESULT to the value stored in the Lisp integer I.  If I is a
+   big integer, copy it to RESULT.  RESULT must already be
+   initialized.  */
+INLINE void
+mpz_set_integer (mpz_t result, Lisp_Object i)
+{
+  if (FIXNUMP (i))
+    mpz_set_intmax (result, XFIXNUM (i));
+  else
+    mpz_set (result, XBIGNUM (i)->value);
+}
+
 INLINE_HEADER_END
 
 #endif /* BIGNUM_H */

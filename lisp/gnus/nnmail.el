@@ -34,8 +34,6 @@
 (require 'mm-util)
 (require 'gnus-int)
 
-(autoload 'gnus-add-buffer "gnus")
-(autoload 'gnus-kill-buffer "gnus")
 (autoload 'mail-send-and-exit "sendmail" nil t)
 
 (defgroup nnmail nil

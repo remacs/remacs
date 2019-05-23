@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985, 1989, 1992-1994, 2000-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -7534,6 +7533,152 @@ be added to ALIST."
       (unless (cdr (assq 'inhibit-switch-frame alist))
 	(window--maybe-raise-frame frame)))))
 
+(defun windows-sharing-edge (&optional window edge within)
+  "Return list of live windows sharing the same edge with WINDOW.
+WINDOW must be a valid window and defaults to the selected one.
+EDGE stands for the edge to share and must be either 'left',
+'above', 'right' or 'below'.  Omitted or nil, EDGE defaults to
+'left'.
+
+WITHIN nil means to find a live window that shares the opposite
+EDGE with WINDOW.  For example, if EDGE equals 'left', WINDOW has
+to share (part of) the right edge of any window returned.  WITHIN
+non-nil means to find all live windows that share the same EDGE
+with WINDOW (Window must be internal in this case).  So if EDGE
+equals 'left', WINDOW's left edge has to fully encompass the left
+edge of any window returned."
+  (setq window (window-normalize-window window))
+  (setq edge (or edge 'left))
+  (when (and within (window-live-p window))
+    (error "Cannot share edge from within live window %s" window))
+  (let ((window-edges (window-edges window nil nil t))
+	(horizontal (memq edge '(left right)))
+	(n (pcase edge
+	     ('left 0) ('above 1) ('right 2) ('below 3))))
+    (unless (numberp n)
+      (error "Invalid EDGE %s" edge))
+    (let ((o (mod (+ 2 n) 4))
+	  (p (if horizontal 1 0))
+	  (q (if horizontal 3 2))
+	  windows)
+      (walk-window-tree
+       (lambda (other)
+	 (let ((other-edges (window-edges other nil nil t)))
+	   (when (and (not (eq window other))
+		      (= (nth n window-edges)
+			 (nth (if within n o) other-edges))
+		      (cond
+		       ((= (nth p window-edges) (nth p other-edges)))
+		       ((< (nth p window-edges) (nth p other-edges))
+			(< (nth p other-edges) (nth q window-edges)))
+		       (t
+			(< (nth p window-edges) (nth q other-edges)))))
+	     (setq windows (cons other windows)))))
+       (window-frame window) nil 'nomini)
+      (reverse windows))))
+
+(defun window--try-to-split-window-in-direction (window direction alist)
+  "Try to split WINDOW in DIRECTION.
+DIRECTION is passed as SIDE argument to `split-window-no-error'.
+ALIST is a buffer display alist."
+  (and (not (frame-parameter (window-frame window) 'unsplittable))
+       (let* ((window-combination-limit
+	       ;; When `window-combination-limit' equals
+	       ;; `display-buffer' or equals `resize-window' and a
+	       ;; `window-height' or `window-width' alist entry are
+	       ;; present, bind it to t so resizing steals space
+	       ;; preferably from the window that was split.
+	       (if (or (eq window-combination-limit 'display-buffer)
+		       (and (eq window-combination-limit 'window-size)
+			    (or (cdr (assq 'window-height alist))
+				(cdr (assq 'window-width alist)))))
+		   t
+		 window-combination-limit))
+	      (new-window (split-window-no-error window nil direction)))
+	 (and (window-live-p new-window) new-window))))
+
+(defun display-buffer-in-direction (buffer alist)
+  "Try to display BUFFER in a direction specified by ALIST.
+ALIST has to contain a 'direction' entry whose value should be
+one of 'left', 'above' (or 'up'), 'right', and 'below' (or
+'down').  Other values are usually interpreted as 'below'.
+
+If ALIST also contains a 'window' entry, its value specifies a
+reference window.  That value can be a special symbol like
+'main' (which stands for the selected frame's main window) or
+'root' (standings for the selected frame's root window) or an
+arbitrary valid window.  Any other value (or omitting the
+'window' entry) means to use the selected window as reference
+window.
+
+This function tries to reuse or split a window such that the
+window produced this way is on the side of the reference window
+specified by the 'direction' entry.
+
+Four special values for 'direction' entries allow to implicitly
+specify the selected frame's main window as reference window:
+'leftmost', 'top', 'rightmost' and 'bottom'.  Hence, instead of
+'(direction . left) (window . main)' one can simply write
+'(direction . leftmost)'."
+  (let ((direction (cdr (assq 'direction alist))))
+    (when direction
+      (let ((window (cdr (assq 'window alist)))
+	    within windows other-window-shows-buffer other-window)
+	;; Sanitize WINDOW.
+	(cond
+	 ((or (eq window 'main)
+              (memq direction '(top bottom leftmost rightmost)))
+	  (setq window (window-main-window)))
+	 ((eq window 'root)
+	  (setq window (frame-root-window)))
+	 ((window-valid-p window))
+	 (t
+	  (setq window (selected-window))))
+	(setq within (not (window-live-p window)))
+	;; Sanitize DIRECTION
+	(cond
+	 ((memq direction '(left above right below)))
+	 ((eq direction 'leftmost)
+	  (setq direction 'left))
+	 ((memq direction '(top up))
+	  (setq direction 'above))
+	 ((eq direction 'rightmost)
+	  (setq direction 'right))
+	 ((memq direction '(bottom down))
+	  (setq direction 'below))
+	 (t
+	  (setq direction 'below)))
+
+	(setq alist
+	      (append alist
+		      `(,(if temp-buffer-resize-mode
+		             '(window-height . resize-temp-buffer-window)
+	                   '(window-height . fit-window-to-buffer))
+	                ,(when temp-buffer-resize-mode
+	                   '(preserve-size . (nil . t))))))
+
+	(setq windows (windows-sharing-edge window direction within))
+	(dolist (other windows)
+	  (cond
+	   ((and (not other-window-shows-buffer)
+		 (eq buffer (window-buffer other)))
+	    (setq other-window-shows-buffer t)
+	    (setq other-window other))
+	   ((not other-window)
+	    (setq other-window other))))
+	(or (and other-window-shows-buffer
+		 (window--display-buffer buffer other-window 'reuse alist))
+	    (and (setq other-window
+		       (window--try-to-split-window-in-direction
+			window direction alist))
+		 (window--display-buffer buffer other-window 'window alist))
+	    (and (setq window other-window)
+		 (not (window-dedicated-p other-window))
+		 (not (window-minibuffer-p other-window))
+		 (window--display-buffer buffer other-window 'reuse alist)))))))
+
+;; This should be rewritten as
+;; (display-buffer-in-direction buffer (cons '(direction . below) alist))
 (defun display-buffer-below-selected (buffer alist)
   "Try displaying BUFFER in a window below the selected window.
 If there is a window below the selected one and that window
@@ -7589,6 +7734,8 @@ must also contain a 'window-height' entry with the same value."
         (display-buffer--maybe-pop-up-frame buffer alist)
         (display-buffer-at-bottom buffer alist))))
 
+;; This should be rewritten as
+;; (display-buffer-in-direction buffer (cons '(direction . bottom) alist))
 (defun display-buffer-at-bottom (buffer alist)
   "Try displaying BUFFER in a window at the bottom of the selected frame.
 This either reuses such a window provided it shows BUFFER

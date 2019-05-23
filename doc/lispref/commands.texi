@@ -1047,12 +1047,9 @@ and meaning of input events in detail.
 This function returns non-@code{nil} if @var{object} is an input event
 or event type.
 
-Note that any symbol might be used as an event or an event type.
-@code{eventp} cannot distinguish whether a symbol is intended by Lisp
-code to be used as an event.  Instead, it distinguishes whether the
-symbol has actually been used in an event that has been read as input in
-the current Emacs session.  If a symbol has not yet been so used,
-@code{eventp} returns @code{nil}.
+Note that any non-@code{nil} symbol might be used as an event or an
+event type; @code{eventp} cannot distinguish whether a symbol is
+intended by Lisp code to be used as an event.
 @end defun
 
 @menu

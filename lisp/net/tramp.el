@@ -9,6 +9,7 @@
 ;; Package: tramp
 ;; Version: 2.4.2-pre
 ;; Package-Requires: ((emacs "24.1"))
+;; URL: https://savannah.gnu.org/projects/tramp
 
 ;; This file is part of GNU Emacs.
 
@@ -605,7 +606,10 @@ The regexp should match at end of buffer."
 
 (defcustom tramp-yesno-prompt-regexp
   (concat
-   (regexp-opt '("Are you sure you want to continue connecting (yes/no)?") t)
+   (regexp-opt
+    '("Are you sure you want to continue connecting (yes/no)?"
+      "Are you sure you want to continue connecting (yes/no/[fingerprint])?")
+    t)
    "\\s-*")
   "Regular expression matching all yes/no queries which need to be confirmed.
 The confirmation should be done with yes or no.
@@ -1637,8 +1641,6 @@ The outline level is equal to the verbosity of the Tramp message."
       (get-buffer-create (tramp-debug-buffer-name vec))
     (when (bobp)
       (setq buffer-undo-list t)
-      ;; So it does not get loaded while `outline-regexp' is let-bound.
-      (require 'outline)
       ;; Activate `outline-mode'.  This runs `text-mode-hook' and
       ;; `outline-mode-hook'.  We must prevent that local processes
       ;; die.  Yes: I've seen `flyspell-mode', which starts "ispell".
@@ -2138,7 +2140,11 @@ pass to the OPERATION."
 ;; function as well but regexp only.
 (defun tramp-file-name-for-operation (operation &rest args)
   "Return file name related to OPERATION file primitive.
-ARGS are the arguments OPERATION has been called with."
+ARGS are the arguments OPERATION has been called with.
+
+It does not always return a Tramp file name, for example if the
+first argument of `expand-file-name' is absolute and not remote.
+Must be handled by the callers."
   (cond
    ;; FILE resp DIRECTORY.
    ((member operation
@@ -2950,7 +2956,9 @@ Host is always \"localhost\"."
 (defun tramp-parse-netrc (filename)
   "Return a list of (user host) tuples allowed to access.
 User may be nil."
-  (require 'netrc)
+  ;; The declaration is not sufficient at runtime, because netrc.el is
+  ;; not autoloaded.
+  (autoload 'netrc-parse "netrc")
   (mapcar
    (lambda (item)
      (and (assoc "machine" item)
@@ -3383,6 +3391,7 @@ User is always nil."
     (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name (expand-file-name filename) nil
     (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
+      ;; We must load it in order to get the advice around `insert-directory'.
       (require 'ls-lisp)
       (let (ls-lisp-use-insert-directory-program start)
 	(tramp-run-real-handler
@@ -3639,10 +3648,11 @@ support symbolic links."
 
     (if (and (not current-buffer-p) (integerp asynchronous))
 	(let ((tramp-remote-process-environment
-	       ;; `shell-command-width' has been introduced with Emacs 27.1.
-	       (if (natnump (bound-and-true-p shell-command-width))
+	       ;; `async-shell-command-width' has been introduced with
+	       ;; Emacs 27.1.
+	       (if (natnump (bound-and-true-p async-shell-command-width))
 		   (cons (format "COLUMNS=%d"
-				 (bound-and-true-p shell-command-width))
+				 (bound-and-true-p async-shell-command-width))
 			 tramp-remote-process-environment)
 		 tramp-remote-process-environment)))
 	  (prog1
@@ -3853,6 +3863,12 @@ of."
 	 (file-exists-p
 	  (concat (file-remote-p default-directory)
 		  (process-get proc 'watch-name))))))
+
+(defun tramp-file-notify-process-sentinel (proc event)
+  "Call `file-notify-rm-watch'."
+  (unless (process-live-p proc)
+    (tramp-message proc 5 "Sentinel called: `%S' `%s'" proc event)
+    (tramp-compat-funcall 'file-notify-rm-watch proc)))
 
 ;;; Functions for establishing connection:
 
@@ -4080,15 +4096,7 @@ for process communication also."
   (with-current-buffer (process-buffer proc)
     (let ((inhibit-read-only t)
 	  last-coding-system-used
-	  ;; We do not want to run timers.
-	  (tl timer-list)
-          (stimers (with-timeout-suspend))
-	  timer-list timer-idle-list
 	  result)
-      ;; Enable our progress reporter.
-      (dolist (timer tl)
-	(if (eq (timer--function timer) #'tramp-progress-reporter-update)
-            (push timer timer-list)))
       ;; JUST-THIS-ONE is set due to Bug#12145.
       (tramp-message
        proc 10 "%s %s %s %s\n%s"
@@ -4096,8 +4104,6 @@ for process communication also."
        (with-local-quit
 	 (setq result (accept-process-output proc timeout nil t)))
        (buffer-string))
-      ;; Reenable the timers.
-      (with-timeout-unsuspend stimers)
       result)))
 
 (defun tramp-check-for-regexp (proc regexp)
@@ -4178,20 +4184,12 @@ The STRING is expected to use Unix line-endings, but the lines sent to
 the remote host use line-endings as defined in the variable
 `tramp-rsh-end-of-line'.  The communication buffer is erased before sending."
   (let* ((p (tramp-get-connection-process vec))
-	 (chunksize (tramp-get-connection-property p "chunksize" nil))
-	 ;; We do not want to run timers.
-	 (tl timer-list)
-         (stimers (with-timeout-suspend))
-	 timer-list timer-idle-list)
+	 (chunksize (tramp-get-connection-property p "chunksize" nil)))
     (unless p
       (tramp-error
        vec 'file-error "Can't send string to remote host -- not logged in"))
     (tramp-set-connection-property p "last-cmd-time" (current-time))
     (tramp-message vec 10 "%s" string)
-    ;; Enable our progress reporter.
-    (dolist (timer tl)
-      (if (eq (timer--function timer) #'tramp-progress-reporter-update)
-          (push timer timer-list)))
     (with-current-buffer (tramp-get-connection-buffer vec)
       ;; Clean up the buffer.  We cannot call `erase-buffer' because
       ;; narrowing might be in effect.
@@ -4215,9 +4213,7 @@ the remote host use line-endings as defined in the variable
 		(process-send-string
 		 p (substring string pos (min (+ pos chunksize) end)))
 		(setq pos (+ pos chunksize))))
-	  (process-send-string p string)))
-      ;; Reenable the timers.
-      (with-timeout-unsuspend stimers))))
+	  (process-send-string p string))))))
 
 (defun tramp-process-sentinel (proc event)
   "Flush file caches and remove shell prompt."
@@ -4870,13 +4866,11 @@ Only works for Bourne-like shells."
 	(tramp-compat-funcall
 	 'tramp-send-command
 	 (process-get proc 'vector)
-	 (format "kill -2 %d" pid))
+	 (format "kill -2 -%d" pid))
 	;; Wait, until the process has disappeared.  If it doesn't,
 	;; fall back to the default implementation.
-	(with-timeout (1 (ignore))
-	  (while (tramp-accept-process-output proc))
-	  ;; Report success.
-	  proc)))))
+        (while (tramp-accept-process-output proc 0))
+	(not (process-live-p proc))))))
 
 ;; `interrupt-process-functions' exists since Emacs 26.1.
 (when (boundp 'interrupt-process-functions)
@@ -4890,7 +4884,6 @@ Only works for Bourne-like shells."
 ;; - Unload all `tramp-*' packages
 ;; - Reset `file-name-handler-alist'
 ;; - Cleanup hooks where Tramp functions are in
-;; - Cleanup advised functions
 ;; - Cleanup autoloads
 ;;;###autoload
 (defun tramp-unload-tramp ()

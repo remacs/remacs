@@ -21858,14 +21858,17 @@ MENU ENTRY: NODE NAME.
 @end ifnottex
 
 @quotation
-Robert J. Chassell has worked with GNU Emacs since 1985.  He writes
-and edits, teaches Emacs and Emacs Lisp, and speaks throughout the
+Robert J. Chassell (1946--2017) started working with GNU Emacs in 1985.  He wrote
+and edited, taught Emacs and Emacs Lisp, and spoke throughout the
 world on software freedom.  Chassell was a founding Director and
-Treasurer of the Free Software Foundation, Inc.  He is co-author of
-the @cite{Texinfo} manual, and has edited more than a dozen other
-books.  He graduated from Cambridge University, in England.  He has an
-abiding interest in social and economic history and flies his own
+Treasurer of the Free Software Foundation, Inc.  He was co-author of
+the @cite{Texinfo} manual, and edited more than a dozen other
+books.  He graduated from Cambridge University, in England.  He had an
+abiding interest in social and economic history and flew his own
 airplane.
+
+@uref{https://www.fsf.org/blogs/community/goodbye-to-bob-chassell,
+"Goodbye to Bob Chassell"}
 @end quotation
 
 @c @page

@@ -1,4 +1,4 @@
-;;; Test GNU Emacs modules.
+;;; emacs-module-tests --- Test GNU Emacs modules.  -*- lexical-binding: t; -*-
 
 ;; Copyright 2015-2019 Free Software Foundation, Inc.
 
@@ -16,6 +16,14 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
+
+;;; Commentary:
+
+;; Unit tests for the dynamic module facility.  See Info node `(elisp)
+;; Writing Dynamic Modules'.  These tests make use of a small test
+;; module in test/data/emacs-module.
+
+;;; Code:
 
 (require 'cl-lib)
 (require 'ert)
@@ -137,8 +145,9 @@ changes."
 ;;
 
 (defun multiply-string (s n)
+  "Return N copies of S concatenated together."
   (let ((res ""))
-    (dotimes (i n)
+    (dotimes (_ n)
       (setq res (concat res s)))
     res))
 
@@ -304,7 +313,7 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
                          ;; Interactively, run for 5 seconds to give the
                          ;; user time to quit.  In batch mode, run only
                          ;; briefly since the user can't quit.
-                         (float-time (time-add nil (if noninteractive 0.1 5)))
+                         (time-add nil (if noninteractive 0.1 5))
                          ;; should_quit or process_input
                          arg))
                       'finished))

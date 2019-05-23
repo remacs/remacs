@@ -1,9 +1,8 @@
-;;; savehist.el --- Save minibuffer history
+;;; savehist.el --- Save minibuffer history  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997, 2005-2019 Free Software Foundation, Inc.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: minibuffer
 ;; Version: 24
 
@@ -62,8 +61,7 @@
   "If non-nil, save all recorded minibuffer histories.
 If you want to save only specific histories, use `savehist-save-hook'
 to modify the value of `savehist-minibuffer-history-variables'."
-  :type 'boolean
-  :group 'savehist)
+  :type 'boolean)
 
 (defcustom savehist-additional-variables ()
   "List of additional variables to save.
@@ -77,13 +75,11 @@ non-nil.
 User options should be saved with the Customize interface.  This
 list is useful for saving automatically updated variables that are not
 minibuffer histories, such as `compile-command' or `kill-ring'."
-  :type '(repeat variable)
-  :group 'savehist)
+  :type '(repeat variable))
 
 (defcustom savehist-ignored-variables nil ;; '(command-history)
   "List of additional variables not to save."
-  :type '(repeat variable)
-  :group 'savehist)
+  :type '(repeat variable))
 
 (defcustom savehist-file
   (locate-user-emacs-file "history" ".emacs-history")
@@ -95,8 +91,7 @@ for more details.
 If you want your minibuffer history shared between Emacs and XEmacs,
 customize this value and make sure that `savehist-coding-system' is
 set to a coding system that exists in both emacsen."
-  :type 'file
-  :group 'savehist)
+  :type 'file)
 
 (defcustom savehist-file-modes #o600
   "Default permissions of the history file.
@@ -104,27 +99,23 @@ This is decimal, not octal.  The default is 384 (0600 in octal).
 Set to nil to use the default permissions that Emacs uses, typically
 mandated by umask.  The default is a bit more restrictive to protect
 the user's privacy."
-  :type 'integer
-  :group 'savehist)
+  :type 'integer)
 
 (defcustom savehist-autosave-interval (* 5 60)
   "The interval between autosaves of minibuffer history.
 If set to nil, disables timer-based autosaving."
   :type '(choice (const :tag "Disabled" nil)
-                 (integer :tag "Seconds"))
-  :group 'savehist)
+                 (integer :tag "Seconds")))
 
 (defcustom savehist-mode-hook nil
   "Hook called when Savehist mode is turned on."
-  :type 'hook
-  :group 'savehist)
+  :type 'hook)
 
 (defcustom savehist-save-hook nil
   "Hook called by `savehist-save' before saving the variables.
 You can use this hook to influence choice and content of variables
 to save."
-  :type 'hook
-  :group 'savehist)
+  :type 'hook)
 
 ;; This should be capable of representing characters used by Emacs.
 ;; We prefer UTF-8 over ISO 2022 because it is well-known outside
@@ -149,12 +140,6 @@ unwise, unless you know what you are doing.")
 The contents of this variable is built while Emacs is running, and saved
 along with minibuffer history.  You can change its value off
 `savehist-save-hook' to influence which variables are saved.")
-
-(defconst savehist-no-conversion (if (featurep 'xemacs) 'binary 'no-conversion)
-  "Coding system without any conversion.
-This is used for calculating an internal checksum.  Should be as fast
-as possible, ideally simply exposing the internal representation of
-buffer text.")
 
 (defvar savehist-loaded nil
   "Whether the history has already been loaded.
@@ -223,8 +208,8 @@ histories, which is probably undesirable."
 Normally invoked by calling `savehist-mode' to set the minor mode.
 Installs `savehist-autosave' in `kill-emacs-hook' and on a timer.
 To undo this, call `savehist-uninstall'."
-  (add-hook 'minibuffer-setup-hook 'savehist-minibuffer-hook)
-  (add-hook 'kill-emacs-hook 'savehist-autosave)
+  (add-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)
+  (add-hook 'kill-emacs-hook #'savehist-autosave)
   ;; Install an invocation of savehist-autosave on a timer.  This
   ;; should not cause noticeable delays for users -- savehist-autosave
   ;; executes in under 5 ms on my system.
@@ -233,16 +218,16 @@ To undo this, call `savehist-uninstall'."
     (setq savehist-timer
 	  (if (featurep 'xemacs)
 	      (start-itimer
-	       "savehist" 'savehist-autosave savehist-autosave-interval
+	       "savehist" #'savehist-autosave savehist-autosave-interval
 	       savehist-autosave-interval)
 	    (run-with-timer savehist-autosave-interval
-			    savehist-autosave-interval 'savehist-autosave)))))
+			    savehist-autosave-interval #'savehist-autosave)))))
 
 (defun savehist-uninstall ()
   "Undo installing savehist.
 Normally invoked by calling `savehist-mode' to unset the minor mode."
-  (remove-hook 'minibuffer-setup-hook 'savehist-minibuffer-hook)
-  (remove-hook 'kill-emacs-hook 'savehist-autosave)
+  (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)
+  (remove-hook 'kill-emacs-hook #'savehist-autosave)
   (when savehist-timer
     (if (featurep 'xemacs)
 	(delete-itimer savehist-timer)
@@ -327,7 +312,7 @@ If AUTO-SAVE is non-nil, compare the saved contents to the one last saved,
 	      (insert ?\n))))))
     ;; If autosaving, avoid writing if nothing has changed since the
     ;; last write.
-    (let ((checksum (md5 (current-buffer) nil nil savehist-no-conversion)))
+    (let ((checksum (md5 (current-buffer) nil nil savehist-coding-system)))
       (unless (and auto-save (equal checksum savehist-last-checksum))
 	;; Set file-precious-flag when saving the buffer because we
 	;; don't want a half-finished write ruining the entire

@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999, 2001, 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
@@ -529,6 +528,23 @@ work correctly."
 
 (declare-function gnutls-peer-status "gnutls.c" (proc))
 (declare-function gnutls-negotiate "gnutls.el" t t)
+
+(defun url-http--insert-file-helper (buffer url &optional visit)
+  (with-current-buffer buffer
+    (when (bound-and-true-p url-http-response-status)
+      ;; Don't signal an error if VISIT is non-nil, because
+      ;; 'insert-file-contents' doesn't.  This is required to
+      ;; support, e.g., 'browse-url-emacs', which is a fancy way of
+      ;; visiting the HTML source of a URL: in that case, we want to
+      ;; display a file buffer even if the URL does not exist and
+      ;; 'url-retrieve-synchronously' returns 404 or whatever.
+      (unless (or visit
+                  (and (>= url-http-response-status 200)
+                       (< url-http-response-status 300)))
+        (let ((desc (nth 2 (assq url-http-response-status url-http-codes))))
+          (kill-buffer buffer)
+          ;; Signal file-error per bug#16733.
+          (signal 'file-error (list url desc)))))))
 
 (defun url-http-parse-headers ()
  "Parse and handle HTTP specific headers.
@@ -1080,10 +1096,16 @@ the end of the document."
 	  (if no-initial-crlf (skip-chars-forward "\r\n"))
 	  (if (not (looking-at regexp))
 	      (progn
-	   ;; Must not have received the entirety of the chunk header,
+	        ;; Must not have received the entirety of the chunk header,
 		;; need to spin some more.
 		(url-http-debug "Did not see start of chunk @ %d!" (point))
 		(setq read-next-chunk nil))
+            ;; The data we got may have started in the middle of the
+            ;; initial chunk header, so move back to the start of the
+            ;; line and re-compute.
+            (when (= url-http-chunked-counter 0)
+              (beginning-of-line)
+              (looking-at regexp))
  	    (add-text-properties (match-beginning 0) (match-end 0)
 				 (list 'start-open t
 				       'end-open t
@@ -1099,8 +1121,7 @@ the end of the document."
 					  (or url-http-chunked-start
 					      (make-marker))
 					  (match-end 0)))
-;	    (if (not url-http-debug)
-		(delete-region (match-beginning 0) (match-end 0));)
+	    (delete-region (match-beginning 0) (match-end 0))
 	    (url-http-debug "Saw start of chunk %d (length=%d, start=%d"
 			    url-http-chunked-counter url-http-chunked-length
 			    (marker-position url-http-chunked-start))

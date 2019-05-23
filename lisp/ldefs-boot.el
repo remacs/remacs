@@ -1799,7 +1799,7 @@ If `global-auto-revert-non-file-buffers' is non-nil, this mode
 may also revert some non-file buffers, as described in the
 documentation of that variable.  It ignores buffers with modes
 matching `global-auto-revert-ignore-modes', and buffers with a
-non-nil vale of `global-auto-revert-ignore-buffer'.
+non-nil value of `global-auto-revert-ignore-buffer'.
 
 When a buffer is reverted, a message is generated.  This can be
 suppressed by setting `auto-revert-verbose' to nil.
@@ -5200,17 +5200,17 @@ If nil, use Emacs default.")
 
 (custom-autoload 'compilation-window-height "compile" t)
 
-(defvar compilation-process-setup-function nil "\
+(defvar compilation-process-setup-function #'ignore "\
 Function to call to customize the compilation process.
 This function is called immediately before the compilation process is
 started.  It can be used to set any variables or functions that are used
 while processing the output of the compilation process.")
 
-(defvar compilation-buffer-name-function nil "\
+(defvar compilation-buffer-name-function #'compilation--default-buffer-name "\
 Function to compute the name of a compilation buffer.
 The function receives one argument, the name of the major mode of the
 compilation buffer.  It should return a string.
-If nil, compute the name with `(concat \"*\" (downcase major-mode) \"*\")'.")
+By default, it returns `(concat \"*\" (downcase name-of-mode) \"*\")'.")
 
 (defvar compilation-finish-functions nil "\
 Functions to call when a compilation process finishes.
@@ -7632,14 +7632,14 @@ Display character C using printable string S.
 (autoload 'standard-display-g1 "disp-table" "\
 Display character C as character SC in the g1 character set.
 This function assumes that your terminal uses the SO/SI characters;
-it is meaningless for an X frame.
+it is meaningless for a graphical frame.
 
 \(fn C SC)" nil nil)
 
 (autoload 'standard-display-graphic "disp-table" "\
 Display character C as character GC in graphics character set.
-This function assumes VT100-compatible escapes; it is meaningless for an
-X frame.
+This function assumes VT100-compatible escapes; it is meaningless
+for a graphical frame.
 
 \(fn C GC)" nil nil)
 
@@ -7734,7 +7734,44 @@ See `display-line-numbers-mode' for more information on Display-Line-Numbers mod
 
 \(fn &optional ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
+(if (fboundp 'register-definition-prefixes)
+    (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
+
+;;;***
+
+;;;### (autoloads nil "display-fill-column-indicator" "display-fill-column-indicator.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from display-fill-column-indicator.el
+
+(autoload 'display-fill-column-indicator-mode "display-fill-column-indicator" "\
+Toggle display fill column indicator.
+This uses `display-fill-column-indicator' internally.
+
+To change the position of the line displayed by default,
+customize `display-fill-column-indicator-column'.
+
+\(fn &optional ARG)" t nil)
+
+(defvar global-display-fill-column-indicator-mode nil "\
+Non-nil if Global Display-fill-column-indicator mode is enabled.
+See the `global-display-fill-column-indicator-mode' command
+for a description of this minor mode.")
+
+(custom-autoload 'global-display-fill-column-indicator-mode
+                 "display-fill-column-indicator" nil)
+
+(autoload 'global-display-fill-column-indicator-mode
+  "display-fill-column-indicator" "\
+Toggle display fill column indicator.
+This uses `display-fill-column-indicator' internally.
+
+To change the position of the line displayed by default,
+customize `display-fill-column-indicator-column'.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes)
+    (register-definition-prefixes "display-fill-column-indicator" '("display-fill-column-indicator-")))
 
 ;;;***
 
@@ -17538,8 +17575,9 @@ Return a regular expression matching image-file filenames." nil nil)
 
 (autoload 'insert-image-file "image-file" "\
 Insert the image file FILE into the current buffer.
-Optional arguments VISIT, BEG, END, and REPLACE are interpreted as for
-the command `insert-file-contents'.
+Optional arguments VISIT, BEG, END, and REPLACE are interpreted
+as for the command `insert-file-contents'.  Return list of
+absolute file name and number of characters inserted.
 
 \(fn FILE &optional VISIT BEG END REPLACE)" nil nil)
 
@@ -18691,15 +18729,17 @@ Major mode for editing JavaScript.
 \(fn)" t nil)
 
 (autoload 'js-jsx-mode "js" "\
-Major mode for editing JSX.
+Major mode for editing JavaScript+JSX.
 
-To customize the indentation for this mode, set the SGML offset
-variables (`sgml-basic-offset', `sgml-attribute-offset' et al.)
-locally, like so:
+Simply makes `js-jsx-syntax' buffer-local and sets it to t.
 
-  (defun set-jsx-indentation ()
-    (setq-local sgml-basic-offset js-indent-level))
-  (add-hook \\='js-jsx-mode-hook #\\='set-jsx-indentation)
+`js-mode' may detect and enable support for JSX automatically if
+it appears to be used in a JavaScript file.  You could also
+customize `js-jsx-regexps' to improve that detection; or, you
+could set `js-jsx-syntax' to t in your init file, or in a
+.dir-locals.el file, or using file variables; or, you could call
+`js-jsx-enable' in `js-mode-hook'.  You may be better served by
+one of the aforementioned options instead of using this mode.
 
 \(fn)" t nil)
  (defalias 'javascript-mode 'js-mode)
@@ -35307,7 +35347,12 @@ first backend that could register the file is used.
 \(fn &optional VC-FILESET COMMENT)" t nil)
 
 (autoload 'vc-version-diff "vc" "\
-Report diffs between REV1 and REV2 revisions of the fileset.
+Report diffs between revisions REV1 and REV2 in the repository history.
+This compares two revisions of the current fileset.
+If REV1 is nil, it defaults to the current revision, i.e. revision
+of the last commit.
+If REV2 is nil, it defaults to the work tree, i.e. the current
+state of each file in the fileset.
 
 \(fn FILES REV1 REV2)" t nil)
 
@@ -35334,8 +35379,14 @@ The merge base is a common ancestor between REV1 and REV2 revisions.
 \(fn FILES REV1 REV2)" t nil)
 
 (autoload 'vc-version-ediff "vc" "\
-Show differences between revisions of the fileset in the
-repository history using ediff.
+Show differences between REV1 and REV2 of FILES using ediff.
+This compares two revisions of the files in FILES.  Currently,
+only a single file's revisions can be compared, i.e. FILES can
+specify only one file name.
+If REV1 is nil, it defaults to the current revision, i.e. revision
+of the last commit.
+If REV2 is nil, it defaults to the work tree, i.e. the current
+state of each file in FILES.
 
 \(fn FILES REV1 REV2)" t nil)
 
@@ -38171,43 +38222,45 @@ Zone out, completely." t nil)
 ;;;;;;  "international/uni-digit.el" "international/uni-lowercase.el"
 ;;;;;;  "international/uni-mirrored.el" "international/uni-name.el"
 ;;;;;;  "international/uni-numeric.el" "international/uni-old-name.el"
-;;;;;;  "international/uni-titlecase.el" "international/uni-uppercase.el"
-;;;;;;  "isearch.el" "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el"
-;;;;;;  "language/cham.el" "language/chinese.el" "language/cyrillic.el"
-;;;;;;  "language/czech.el" "language/english.el" "language/ethiopic.el"
-;;;;;;  "language/european.el" "language/georgian.el" "language/greek.el"
-;;;;;;  "language/hebrew.el" "language/indian.el" "language/japanese.el"
-;;;;;;  "language/khmer.el" "language/korean.el" "language/lao.el"
-;;;;;;  "language/misc-lang.el" "language/romanian.el" "language/sinhala.el"
-;;;;;;  "language/slovak.el" "language/tai-viet.el" "language/thai.el"
-;;;;;;  "language/tibetan.el" "language/utf-8-lang.el" "language/vietnamese.el"
-;;;;;;  "ldefs-boot.el" "leim/ja-dic/ja-dic.el" "leim/leim-list.el"
-;;;;;;  "leim/quail/4Corner.el" "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el"
-;;;;;;  "leim/quail/CTLau-b5.el" "leim/quail/CTLau.el" "leim/quail/ECDICT.el"
-;;;;;;  "leim/quail/ETZY.el" "leim/quail/PY-b5.el" "leim/quail/PY.el"
-;;;;;;  "leim/quail/Punct-b5.el" "leim/quail/Punct.el" "leim/quail/QJ-b5.el"
-;;;;;;  "leim/quail/QJ.el" "leim/quail/SW.el" "leim/quail/TONEPY.el"
-;;;;;;  "leim/quail/ZIRANMA.el" "leim/quail/ZOZY.el" "leim/quail/arabic.el"
-;;;;;;  "leim/quail/croatian.el" "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el"
-;;;;;;  "leim/quail/czech.el" "leim/quail/georgian.el" "leim/quail/greek.el"
-;;;;;;  "leim/quail/hanja-jis.el" "leim/quail/hanja.el" "leim/quail/hanja3.el"
-;;;;;;  "leim/quail/hebrew.el" "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el"
-;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
-;;;;;;  "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
-;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el"
-;;;;;;  "leim/quail/quick-cns.el" "leim/quail/rfc1345.el" "leim/quail/sami.el"
-;;;;;;  "leim/quail/sgml-input.el" "leim/quail/slovak.el" "leim/quail/symbol-ksc.el"
-;;;;;;  "leim/quail/tamil-dvorak.el" "leim/quail/tsang-b5.el" "leim/quail/tsang-cns.el"
-;;;;;;  "leim/quail/vntelex.el" "leim/quail/vnvni.el" "leim/quail/welsh.el"
-;;;;;;  "loadup.el" "mail/blessmail.el" "mail/rmailedit.el" "mail/rmailkwd.el"
-;;;;;;  "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
-;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el"
-;;;;;;  "mh-e/mh-loaddefs.el" "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el"
-;;;;;;  "newcomment.el" "obarray.el" "org/ob-core.el" "org/ob-keys.el"
-;;;;;;  "org/ob-lob.el" "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el"
-;;;;;;  "org/org-archive.el" "org/org-attach.el" "org/org-bbdb.el"
-;;;;;;  "org/org-clock.el" "org/org-datetree.el" "org/org-element.el"
-;;;;;;  "org/org-feed.el" "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
+;;;;;;  "international/uni-special-lowercase.el" "international/uni-special-titlecase.el"
+;;;;;;  "international/uni-special-uppercase.el" "international/uni-titlecase.el"
+;;;;;;  "international/uni-uppercase.el" "isearch.el" "jit-lock.el"
+;;;;;;  "jka-cmpr-hook.el" "language/burmese.el" "language/cham.el"
+;;;;;;  "language/chinese.el" "language/cyrillic.el" "language/czech.el"
+;;;;;;  "language/english.el" "language/ethiopic.el" "language/european.el"
+;;;;;;  "language/georgian.el" "language/greek.el" "language/hebrew.el"
+;;;;;;  "language/indian.el" "language/japanese.el" "language/khmer.el"
+;;;;;;  "language/korean.el" "language/lao.el" "language/misc-lang.el"
+;;;;;;  "language/romanian.el" "language/sinhala.el" "language/slovak.el"
+;;;;;;  "language/tai-viet.el" "language/thai.el" "language/tibetan.el"
+;;;;;;  "language/utf-8-lang.el" "language/vietnamese.el" "ldefs-boot.el"
+;;;;;;  "leim/ja-dic/ja-dic.el" "leim/leim-list.el" "leim/quail/4Corner.el"
+;;;;;;  "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el" "leim/quail/CTLau-b5.el"
+;;;;;;  "leim/quail/CTLau.el" "leim/quail/ECDICT.el" "leim/quail/ETZY.el"
+;;;;;;  "leim/quail/PY-b5.el" "leim/quail/PY.el" "leim/quail/Punct-b5.el"
+;;;;;;  "leim/quail/Punct.el" "leim/quail/QJ-b5.el" "leim/quail/QJ.el"
+;;;;;;  "leim/quail/SW.el" "leim/quail/TONEPY.el" "leim/quail/ZIRANMA.el"
+;;;;;;  "leim/quail/ZOZY.el" "leim/quail/arabic.el" "leim/quail/croatian.el"
+;;;;;;  "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el" "leim/quail/czech.el"
+;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
+;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
+;;;;;;  "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el"
+;;;;;;  "leim/quail/latin-post.el" "leim/quail/latin-pre.el" "leim/quail/persian.el"
+;;;;;;  "leim/quail/programmer-dvorak.el" "leim/quail/py-punct.el"
+;;;;;;  "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el" "leim/quail/quick-cns.el"
+;;;;;;  "leim/quail/rfc1345.el" "leim/quail/sami.el" "leim/quail/sgml-input.el"
+;;;;;;  "leim/quail/slovak.el" "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el"
+;;;;;;  "leim/quail/tsang-b5.el" "leim/quail/tsang-cns.el" "leim/quail/vntelex.el"
+;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
+;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
+;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
+;;;;;;  "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el" "mh-e/mh-loaddefs.el"
+;;;;;;  "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el" "newcomment.el"
+;;;;;;  "obarray.el" "org/ob-core.el" "org/ob-keys.el" "org/ob-lob.el"
+;;;;;;  "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el" "org/org-archive.el"
+;;;;;;  "org/org-attach.el" "org/org-bbdb.el" "org/org-clock.el"
+;;;;;;  "org/org-datetree.el" "org/org-element.el" "org/org-feed.el"
+;;;;;;  "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
 ;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-mobile.el"
 ;;;;;;  "org/org-plot.el" "org/org-table.el" "org/org-timer.el" "org/ox-ascii.el"
 ;;;;;;  "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"

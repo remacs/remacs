@@ -5,7 +5,6 @@
 ;; Author: Jamie Zawinski
 ;;	Richard Stallman
 ;;	Stefan Monnier
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, faces
 ;; Package: emacs
 
@@ -1096,7 +1095,7 @@ accessible portion of the current buffer."
   (lambda (beg end)
     (unless font-lock-fontified
       (save-excursion
-        (font-lock-fontify-region (or beg (point-min)) (or end (point-max))))))
+        (font-lock-fontify-region beg end))))
   "Function to make sure a region has been fontified.
 Called with two arguments BEG and END.")
 
@@ -1387,12 +1386,19 @@ delimit the region to fontify."
 ;; below and given a `font-lock-' prefix.  Those that are not used are defined
 ;; in Lisp below and commented out.  sm.
 
-(defun font-lock-prepend-text-property (start end prop value &optional object)
-  "Prepend to one property of the text from START to END.
-Arguments PROP and VALUE specify the property and value to prepend to the value
-already in place.  The resulting property values are always lists.
-Optional argument OBJECT is the string or buffer containing the text."
-  (let ((val (if (listp value) value (list value))) next prev)
+(defun font-lock--add-text-property (start end prop value object append)
+  "Add an element to a property of the text from START to END.
+Arguments PROP and VALUE specify the property and value to add to
+the value already in place.  The resulting property values are
+always lists.  Argument OBJECT is the string or buffer containing
+the text.  If argument APPEND is non-nil, VALUE will be appended,
+otherwise it will be prepended."
+  (let ((val (if (and (listp value) (not (keywordp (car value))))
+                 ;; Already a list of faces.
+                 value
+               ;; A single face (e.g. a plist of face properties).
+               (list value)))
+        next prev)
     (while (/= start end)
       (setq next (next-single-property-change start prop object end)
 	    prev (get-text-property start prop object))
@@ -1402,30 +1408,26 @@ Optional argument OBJECT is the string or buffer containing the text."
 	   (or (keywordp (car prev))
 	       (memq (car prev) '(foreground-color background-color)))
 	   (setq prev (list prev)))
-      (put-text-property start next prop
-			 (append val (if (listp prev) prev (list prev)))
-			 object)
+      (let* ((list-prev (if (listp prev) prev (list prev)))
+             (new-value (if append
+                           (append list-prev val)
+                         (append val list-prev))))
+        (put-text-property start next prop new-value object))
       (setq start next))))
+
+(defun font-lock-prepend-text-property (start end prop value &optional object)
+  "Prepend to one property of the text from START to END.
+Arguments PROP and VALUE specify the property and value to prepend to the value
+already in place.  The resulting property values are always lists.
+Optional argument OBJECT is the string or buffer containing the text."
+  (font-lock--add-text-property start end prop value object nil))
 
 (defun font-lock-append-text-property (start end prop value &optional object)
   "Append to one property of the text from START to END.
 Arguments PROP and VALUE specify the property and value to append to the value
 already in place.  The resulting property values are always lists.
 Optional argument OBJECT is the string or buffer containing the text."
-  (let ((val (if (listp value) value (list value))) next prev)
-    (while (/= start end)
-      (setq next (next-single-property-change start prop object end)
-	    prev (get-text-property start prop object))
-      ;; Canonicalize old forms of face property.
-      (and (memq prop '(face font-lock-face))
-	   (listp prev)
-	   (or (keywordp (car prev))
-	       (memq (car prev) '(foreground-color background-color)))
-	   (setq prev (list prev)))
-      (put-text-property start next prop
-			 (append (if (listp prev) prev (list prev)) val)
-			 object)
-      (setq start next))))
+  (font-lock--add-text-property start end prop value object t))
 
 (defun font-lock-fillin-text-property (start end prop value &optional object)
   "Fill in one property of the text from START to END.
@@ -1496,7 +1498,7 @@ see `font-lock-syntactic-keywords'."
       ;; Flush the syntax-cache.  I believe this is not necessary for
       ;; font-lock's use of syntax-ppss, but I'm not 100% sure and it can
       ;; still be necessary for other users of syntax-ppss anyway.
-      (syntax-ppss-after-change-function start)
+      (syntax-ppss-flush-cache start)
       (cond
        ((not override)
 	;; Cannot override existing fontification.

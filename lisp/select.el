@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1993-1994, 2001-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.
@@ -309,6 +308,10 @@ the formats available in the clipboard if TYPE is `CLIPBOARD'."
                           (_ (error "Unknown selection data type: %S"
                                     type))))))
         (setq data (if coding (decode-coding-string data coding)
+                     ;; This is for C_STRING case.
+                     ;; We want to convert each non-ASCII byte to the
+                     ;; corresponding eight-bit character, which has
+                     ;; a codepoint >= #x3FFF00.
                      (string-to-multibyte data))))
       (setq next-selection-coding-system nil)
       (put-text-property 0 (length data) 'foreign-selection data-type data))
@@ -472,6 +475,9 @@ two markers or an overlay.  Otherwise, it is nil."
 	    (setq str (encode-coding-string str coding)))
 
 	   ((eq type 'C_STRING)
+            ;; If STR is unibyte (the normal case), use it; otherwise
+            ;; we assume some of the characters are eight-bit, and
+            ;; take their lower 8 bits.
 	    (setq str (string-make-unibyte str)))
 
 	   (t

@@ -348,7 +348,7 @@ static void free_face_cache (struct face_cache *);
 static bool merge_face_ref (struct window *w,
                             struct frame *, Lisp_Object, Lisp_Object *,
 			    bool, struct named_merge_point *);
-static int color_distance (XColor *x, XColor *y);
+static int color_distance (Emacs_Color *x, Emacs_Color *y);
 
 #ifdef HAVE_WINDOW_SYSTEM
 static void set_font_frame_param (Lisp_Object, Lisp_Object);
@@ -513,12 +513,12 @@ x_free_gc (struct frame *f, GC gc)
 #ifdef HAVE_NTGUI
 /* W32 emulation of GCs */
 
-static GC
-x_create_gc (struct frame *f, unsigned long mask, XGCValues *xgcv)
+static Emacs_GC *
+x_create_gc (struct frame *f, unsigned long mask, Emacs_GC *egc)
 {
-  GC gc;
+  Emacs_GC *gc;
   block_input ();
-  gc = XCreateGC (NULL, FRAME_W32_WINDOW (f), mask, xgcv);
+  gc = XCreateGC (NULL, FRAME_W32_WINDOW (f), mask, egc);
   unblock_input ();
   IF_DEBUG (++ngcs);
   return gc;
@@ -528,7 +528,7 @@ x_create_gc (struct frame *f, unsigned long mask, XGCValues *xgcv)
 /* Free GC which was used on frame F.  */
 
 static void
-x_free_gc (struct frame *f, GC gc)
+x_free_gc (struct frame *f, Emacs_GC *gc)
 {
   IF_DEBUG ((--ngcs, eassert (ngcs >= 0)));
   xfree (gc);
@@ -539,18 +539,18 @@ x_free_gc (struct frame *f, GC gc)
 #ifdef HAVE_NS
 /* NS emulation of GCs */
 
-static GC
+static Emacs_GC *
 x_create_gc (struct frame *f,
 	     unsigned long mask,
-	     XGCValues *xgcv)
+	     Emacs_GC *egc)
 {
-  GC gc = xmalloc (sizeof *gc);
-  *gc = *xgcv;
+  Emacs_GC *gc = xmalloc (sizeof *gc);
+  *gc = *egc;
   return gc;
 }
 
 static void
-x_free_gc (struct frame *f, GC gc)
+x_free_gc (struct frame *f, Emacs_GC *gc)
 {
   xfree (gc);
 }
@@ -802,7 +802,7 @@ load_pixmap (struct frame *f, Lisp_Object name)
 
 
 /***********************************************************************
-				X Colors
+                            Color Handling
  ***********************************************************************/
 
 /* Parse RGB_LIST, and fill in the RGB fields of COLOR.
@@ -810,7 +810,7 @@ load_pixmap (struct frame *f, Lisp_Object name)
    Return true iff RGB_LIST is OK.  */
 
 static bool
-parse_rgb_list (Lisp_Object rgb_list, XColor *color)
+parse_rgb_list (Lisp_Object rgb_list, Emacs_Color *color)
 {
 #define PARSE_RGB_LIST_FIELD(field)					\
   if (CONSP (rgb_list) && FIXNUMP (XCAR (rgb_list)))			\
@@ -835,8 +835,8 @@ parse_rgb_list (Lisp_Object rgb_list, XColor *color)
    returned in it.  */
 
 static bool
-tty_lookup_color (struct frame *f, Lisp_Object color, XColor *tty_color,
-		  XColor *std_color)
+tty_lookup_color (struct frame *f, Lisp_Object color, Emacs_Color *tty_color,
+		  Emacs_Color *std_color)
 {
   Lisp_Object frame, color_desc;
 
@@ -897,7 +897,7 @@ tty_lookup_color (struct frame *f, Lisp_Object color, XColor *tty_color,
 
 bool
 tty_defined_color (struct frame *f, const char *color_name,
-		   XColor *color_def, bool alloc, bool _makeIndex)
+		   Emacs_Color *color_def, bool alloc, bool _makeIndex)
 {
   bool status = true;
 
@@ -965,7 +965,7 @@ tty_color_name (struct frame *f, int idx)
 static bool
 face_color_gray_p (struct frame *f, const char *color_name)
 {
-  XColor color;
+  Emacs_Color color;
   bool gray_p;
 
   if (FRAME_TERMINAL (f)->defined_color_hook
@@ -994,7 +994,7 @@ face_color_supported_p (struct frame *f, const char *color_name,
 			bool background_p)
 {
   Lisp_Object frame;
-  XColor not_used;
+  Emacs_Color not_used;
 
   XSETFRAME (frame, f);
   return
@@ -1043,7 +1043,7 @@ COLOR must be a valid color name.  */)
 
 static unsigned long
 load_color2 (struct frame *f, struct face *face, Lisp_Object name,
-             enum lface_attribute_index target_index, XColor *color)
+             enum lface_attribute_index target_index, Emacs_Color *color)
 {
   eassert (STRINGP (name));
   eassert (target_index == LFACE_FOREGROUND_INDEX
@@ -1117,7 +1117,7 @@ unsigned long
 load_color (struct frame *f, struct face *face, Lisp_Object name,
 	    enum lface_attribute_index target_index)
 {
-  XColor color;
+  Emacs_Color color;
   return load_color2 (f, face, name, target_index, &color);
 }
 
@@ -1134,7 +1134,7 @@ load_face_colors (struct frame *f, struct face *face,
 		  Lisp_Object attrs[LFACE_VECTOR_SIZE])
 {
   Lisp_Object fg, bg, dfg;
-  XColor xfg, xbg;
+  Emacs_Color xfg, xbg;
 
   bg = attrs[LFACE_BACKGROUND_INDEX];
   fg = attrs[LFACE_FOREGROUND_INDEX];
@@ -2265,11 +2265,12 @@ filter_face_ref (Lisp_Object face_ref,
 }
 
 /* Merge face attributes from the lisp `face reference' FACE_REF on
-   frame F into the face attribute vector TO.  If ERR_MSGS,
-   problems with FACE_REF cause an error message to be shown.  Return
-   true if no errors occurred (regardless of the value of ERR_MSGS).
-   Use NAMED_MERGE_POINTS to detect loops in face inheritance or
-   list structure; it may be 0 for most callers.
+   frame F into the face attribute vector TO as appropriate for
+   window W; W is used only for filtering face specs.  If ERR_MSGS
+   is non-zero, problems with FACE_REF cause an error message to be
+   shown.  Return true if no errors occurred (regardless of the value
+   of ERR_MSGS).  Use NAMED_MERGE_POINTS to detect loops in face
+   inheritance or list structure; it may be 0 for most callers.
 
    FACE_REF may be a single face specification or a list of such
    specifications.  Each face specification can be:
@@ -2286,9 +2287,10 @@ filter_face_ref (Lisp_Object face_ref,
 
    4. Conses of the form
    (:filtered (:window PARAMETER VALUE) FACE-SPECIFICATION),
-   which applies FACE-SPECIFICATION only if the
-   given face attributes are being evaluated in the context of a
-   window with a parameter named PARAMETER being EQ VALUE.
+   which applies FACE-SPECIFICATION only if the given face attributes
+   are being evaluated in the context of a window with a parameter
+   named PARAMETER being EQ VALUE.  In this case, W specifies the window
+   for which the filtered face spec is to be evaluated.
 
    5. nil, which means to merge nothing.
 
@@ -4138,25 +4140,25 @@ prepare_face_for_display (struct frame *f, struct face *face)
 
   if (face->gc == 0)
     {
-      XGCValues xgcv;
+      Emacs_GC egc;
       unsigned long mask = GCForeground | GCBackground | GCGraphicsExposures;
 
-      xgcv.foreground = face->foreground;
-      xgcv.background = face->background;
+      egc.foreground = face->foreground;
+      egc.background = face->background;
 #ifdef HAVE_X_WINDOWS
-      xgcv.graphics_exposures = False;
+      egc.graphics_exposures = False;
 #endif
 
       block_input ();
 #ifdef HAVE_X_WINDOWS
       if (face->stipple)
 	{
-	  xgcv.fill_style = FillOpaqueStippled;
-	  xgcv.stipple = image_bitmap_pixmap (f, face->stipple);
+	  egc.fill_style = FillOpaqueStippled;
+	  egc.stipple = image_bitmap_pixmap (f, face->stipple);
 	  mask |= GCFillStyle | GCStipple;
 	}
 #endif
-      face->gc = x_create_gc (f, mask, &xgcv);
+      face->gc = x_create_gc (f, mask, &egc);
       if (face->font)
 	font_prepare_for_face (f, face);
       unblock_input ();
@@ -4168,7 +4170,7 @@ prepare_face_for_display (struct frame *f, struct face *face)
 /* Returns the `distance' between the colors X and Y.  */
 
 static int
-color_distance (XColor *x, XColor *y)
+color_distance (Emacs_Color *x, Emacs_Color *y)
 {
   /* This formula is from a paper titled `Colour metric' by Thiadmer Riemersma.
      Quoting from that paper:
@@ -4203,7 +4205,7 @@ two lists of the form (RED GREEN BLUE) aforementioned. */)
    Lisp_Object metric)
 {
   struct frame *f = decode_live_frame (frame);
-  XColor cdef1, cdef2;
+  Emacs_Color cdef1, cdef2;
 
   if (!(CONSP (color1) && parse_rgb_list (color1, &cdef1))
       && !(STRINGP (color1)
@@ -4883,8 +4885,8 @@ tty_supports_face_attributes_p (struct frame *f,
 {
   int weight, slant;
   Lisp_Object val, fg, bg;
-  XColor fg_tty_color, fg_std_color;
-  XColor bg_tty_color, bg_std_color;
+  Emacs_Color fg_tty_color, fg_std_color;
+  Emacs_Color bg_tty_color, bg_std_color;
   unsigned test_caps = 0;
   Lisp_Object *def_attrs = def_face->lface;
 
@@ -4986,7 +4988,7 @@ tty_supports_face_attributes_p (struct frame *f,
       else
 	/* Make sure the color is really different than the default.  */
 	{
-	  XColor def_fg_color;
+	  Emacs_Color def_fg_color;
 	  if (tty_lookup_color (f, def_fg, &def_fg_color, 0)
 	      && (color_distance (&fg_tty_color, &def_fg_color)
 		  <= TTY_SAME_COLOR_THRESHOLD))
@@ -5010,7 +5012,7 @@ tty_supports_face_attributes_p (struct frame *f,
       else
 	/* Make sure the color is really different than the default.  */
 	{
-	  XColor def_bg_color;
+	  Emacs_Color def_bg_color;
 	  if (tty_lookup_color (f, def_bg, &def_bg_color, 0)
 	      && (color_distance (&bg_tty_color, &def_bg_color)
 		  <= TTY_SAME_COLOR_THRESHOLD))

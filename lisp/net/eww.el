@@ -29,7 +29,7 @@
 (require 'shr)
 (require 'url)
 (require 'url-queue)
-(require 'url-util)			; for url-get-url-at-point
+(require 'thingatpt)
 (require 'mm-url)
 (require 'puny)
 (eval-when-compile (require 'subr-x)) ;; for string-trim
@@ -64,17 +64,17 @@
 ;;;###autoload
 (defcustom eww-suggest-uris
   '(eww-links-at-point
-    url-get-url-at-point
+    thing-at-point-url-at-point
     eww-current-url)
   "List of functions called to form the list of default URIs for `eww'.
 Each of the elements is a function returning either a string or a list
 of strings.  The results will be joined into a single list with
 duplicate entries (if any) removed."
-  :version "25.1"
+  :version "27.1"
   :group 'eww
   :type 'hook
   :options '(eww-links-at-point
-             url-get-url-at-point
+             thing-at-point-url-at-point
              eww-current-url))
 
 (defcustom eww-bookmarks-directory user-emacs-directory
@@ -223,6 +223,10 @@ See also `eww-form-checkbox-selected-symbol'."
 (defvar eww-local-regex "localhost"
   "When this regex is found in the URL, it's not a keyword but an address.")
 
+(defvar eww-accept-content-types
+  "text/html, text/plain, text/sgml, text/css, application/xhtml+xml, */*;q=0.01"
+  "Value used for the HTTP 'Accept' header.")
+
 (defvar eww-link-keymap
   (let ((map (copy-keymap shr-map)))
     (define-key map "\r" 'eww-follow-link)
@@ -290,8 +294,9 @@ the default EWW buffer."
   (let ((inhibit-read-only t))
     (insert (format "Loading %s..." url))
     (goto-char (point-min)))
-  (url-retrieve url 'eww-render
-                (list url nil (current-buffer))))
+  (let ((url-mime-accept-string eww-accept-content-types))
+    (url-retrieve url 'eww-render
+                  (list url nil (current-buffer)))))
 
 (defun eww--dwim-expand-url (url)
   (setq url (string-trim url))
@@ -952,8 +957,9 @@ just re-display the HTML already fetched."
 	    (error "No current HTML data")
 	  (eww-display-html 'utf-8 url (plist-get eww-data :dom)
 			    (point) (current-buffer)))
-      (url-retrieve url 'eww-render
-		    (list url (point) (current-buffer) encode)))))
+      (let ((url-mime-accept-string eww-accept-content-types))
+        (url-retrieve url 'eww-render
+		      (list url (point) (current-buffer) encode))))))
 
 ;; Form support.
 
@@ -1519,6 +1525,7 @@ If EXTERNAL is double prefix, browse in new buffer."
 	   (eww-same-page-p url (plist-get eww-data :url)))
       (let ((dom (plist-get eww-data :dom)))
 	(eww-save-history)
+	(plist-put eww-data :url url)
 	(eww-display-html 'utf-8 url dom nil (current-buffer))))
      (t
       (eww-browse-url url external)))))

@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002-2004, 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Alex Schroeder <alex@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: irc
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcAutoJoin
 

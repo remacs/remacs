@@ -195,7 +195,8 @@ Return nil when any other file notification watch is still active."
         file-notify--test-events nil
         file-notify--test-monitors nil))
 
-(setq password-cache-expiry nil
+(setq file-notify-debug nil
+      password-cache-expiry nil
       tramp-verbose 0
       tramp-message-show-message nil)
 
@@ -515,8 +516,9 @@ and the event to `file-notify--test-events'."
     (unless (string-match
 	     (regexp-quote ".#")
 	     (file-notify--event-file-name file-notify--test-event))
-      ;;(message "file-notify--test-event-handler result: %s event: %S"
-               ;;(null (ert-test-failed-p result)) file-notify--test-event)
+      (when file-notify-debug
+        (message "file-notify--test-event-handler result: %s event: %S"
+                 (null (ert-test-failed-p result)) file-notify--test-event))
       (setq file-notify--test-events
 	    (append file-notify--test-events `(,file-notify--test-event))
 	    file-notify--test-results
@@ -680,17 +682,18 @@ delivered."
 	       (file-notify--test-library) "gvfs-monitor-dir.exe")
 	      '((deleted stopped)
 		(created deleted stopped)))
-	     ;; There are two `deleted' events, for the file and for
-	     ;; the directory.  Except for cygwin and kqueue.  And
-	     ;; cygwin does not raise a `changed' event.
-	     ((eq system-type 'cygwin)
-	      '(created deleted stopped))
-	     ((string-equal (file-notify--test-library) "kqueue")
-	      '(created changed deleted stopped))
              ;; On emba, `deleted' and `stopped' events of the
              ;; directory are not detected.
              ((getenv "EMACS_EMBA_CI")
               '(created changed deleted))
+	     ;; There are two `deleted' events, for the file and for
+	     ;; the directory.  Except for cygwin, kqueue and remote
+	     ;; files.  And cygwin does not raise a `changed' event.
+	     ((eq system-type 'cygwin)
+	      '(created deleted stopped))
+	     ((or (string-equal (file-notify--test-library) "kqueue")
+		  (file-remote-p temporary-file-directory))
+	      '(created changed deleted stopped))
 	     (t '(created changed deleted deleted stopped)))
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -740,6 +743,9 @@ delivered."
              ;; directory are not detected.
              ((getenv "EMACS_EMBA_CI")
               '(created changed created changed deleted deleted))
+             ;; Remote files return two `deleted' events.
+	     ((file-remote-p temporary-file-directory)
+	      '(created changed created changed deleted deleted stopped))
 	     (t '(created changed created changed
 		  deleted deleted deleted stopped)))
 	  (write-region
@@ -784,18 +790,19 @@ delivered."
 	       (file-notify--test-library) "gvfs-monitor-dir.exe")
 	      '((deleted stopped)
 		(created deleted stopped)))
-	     ;; There are two `deleted' events, for the file and for
-	     ;; the directory.  Except for cygwin and kqueue.  And
-	     ;; cygwin raises `created' and `deleted' events instead
-	     ;; of a `renamed' event.
-	     ((eq system-type 'cygwin)
-	      '(created created deleted deleted stopped))
-	     ((string-equal (file-notify--test-library) "kqueue")
-	      '(created changed renamed deleted stopped))
              ;; On emba, `deleted' and `stopped' events of the
              ;; directory are not detected.
              ((getenv "EMACS_EMBA_CI")
               '(created changed renamed deleted))
+	     ;; There are two `deleted' events, for the file and for
+	     ;; the directory.  Except for cygwin, kqueue and remote
+	     ;; files.  And cygwin raises `created' and `deleted'
+	     ;; events instead of a `renamed' event.
+	     ((eq system-type 'cygwin)
+	      '(created created deleted deleted stopped))
+	     ((or (string-equal (file-notify--test-library) "kqueue")
+		  (file-remote-p temporary-file-directory))
+	      '(created changed renamed deleted stopped))
 	     (t '(created changed renamed deleted deleted stopped)))
 	  (write-region
 	   "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -1039,11 +1046,12 @@ delivered."
 	        '((deleted stopped)
 	          (created deleted stopped)))
 	       ;; There are two `deleted' events, for the file and for
-	       ;; the directory.  Except for cygwin and kqueue.  And
-	       ;; cygwin does not raise a `changed' event.
+	       ;; the directory.  Except for cygwin, kqueue and remote
+	       ;; files.  And cygwin does not raise a `changed' event.
 	       ((eq system-type 'cygwin)
 	        '(created deleted stopped))
-	       ((string-equal (file-notify--test-library) "kqueue")
+	       ((or (string-equal (file-notify--test-library) "kqueue")
+		    (file-remote-p temporary-file-directory))
 	        '(created changed deleted stopped))
 	       (t '(created changed deleted deleted stopped)))
 	    (write-region
@@ -1259,7 +1267,8 @@ delivered."
         (file-notify--test-with-events
             (cond
              ;; On cygwin we only get the `changed' event.
-             ((eq system-type 'cygwin) '(changed))
+             ((eq system-type 'cygwin)
+              '(changed))
              (t '(renamed created changed)))
           ;; The file is renamed when creating a backup.  It shall
           ;; still be watched.
@@ -1400,11 +1409,15 @@ the file watch."
                  (cond
 		  ;; w32notify does not raise `deleted' and `stopped'
 		  ;; events for the watched directory.
-                  ((string-equal (file-notify--test-library) "w32notify") '())
+                  ((string-equal (file-notify--test-library) "w32notify")
+                   '())
                   ;; On emba, `deleted' and `stopped' events of the
                   ;; directory are not detected.
                   ((getenv "EMACS_EMBA_CI")
                    '())
+                  ;; Remote files send just one `stopped' event.
+                  ((file-remote-p temporary-file-directory)
+                   '(stopped))
                   (t '(deleted stopped))))))
           (delete-directory file-notify--test-tmpfile 'recursive))
         (unless (getenv "EMACS_EMBA_CI")

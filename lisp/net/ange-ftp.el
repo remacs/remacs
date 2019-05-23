@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com)
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
@@ -1989,7 +1988,7 @@ on the gateway machine to do the FTP instead."
   (make-local-variable 'comint-password-prompt-regexp)
   ;; This is a regexp that can't match anything.
   ;; ange-ftp has its own ways of handling passwords.
-  (setq comint-password-prompt-regexp "\\`a\\`")
+  (setq comint-password-prompt-regexp regexp-unmatchable)
   (make-local-variable 'paragraph-start)
   (setq paragraph-start comint-prompt-regexp))
 

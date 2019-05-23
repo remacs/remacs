@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Jay K. Adams <jka@ece.cmu.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: data
 
 ;; This file is part of GNU Emacs.

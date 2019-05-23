@@ -2601,6 +2601,63 @@ window and displaying the buffer in that window.  It can fail if all
 windows are dedicated to other buffers (@pxref{Dedicated Windows}).
 @end defun
 
+@defun display-buffer-in-direction buffer alist
+This function tries to display @var{buffer} at a location specified by
+@var{alist}.  For this purpose, @var{alist} should contain a
+@code{direction} entry whose value is one of @code{left}, @code{above}
+(or @code{up}), @code{right} and @code{below} (or @code{down}).  Other
+values are usually interpreted as @code{below}.
+
+If @var{alist} also contains a @code{window} entry, its value
+specifies a reference window.  That value can be a special symbol like
+@code{main} which stands for the selected frame's main window
+(@pxref{Side Window Options and Functions}) or @code{root} standing
+for the selected frame's root window (@pxref{Windows and Frames}).  It
+can also specify an arbitrary valid window.  Any other value (or
+omitting the @code{window} entry entirely) means to use the selected
+window as reference window.
+
+This function first tries to reuse a window in the specified direction
+that already shows @var{buffer}.  If no such window exists, it tries
+to split the reference window in order to produce a new window in the
+specified direction.  If this fails as well, it will try to display
+@var{buffer} in an existing window in the specified direction.  In
+either case, the window chosen will appear on the side of the
+reference window specified by the @code{direction} entry, sharing at
+least one edge with the reference window.
+
+If the reference window is live, the edge the chosen window will share
+with it is always the opposite of the one specified by the
+@code{direction} entry.  For example, if the value of the
+@code{direction} entry is @code{left}, the chosen window's right edge
+coordinate (@pxref{Coordinates and Windows}) will equal the reference
+window's left edge coordinate.
+
+If the reference window is internal, a reused window must share with
+it the edge specified by the @code{direction} entry.  Hence if, for
+example, the reference window is the frame's root window and the value
+of the @code{direction} entry is @code{left}, a reused window must be
+on the left of the frame.  This means that the left edge coordinate of
+the chosen window and that of the reference window are the same.
+
+A new window, however, will be created by splitting the reference
+window such that the chosen window will share the opposite edge with
+the reference window.  In our example, a new root window would be
+created with a new live window and the reference window as its
+children.  The chosen window's right edge coordinate would then equal
+the left edge coordinate of the reference window.  Its left edge
+coordinate would equal the left edge coordinate of the frame's new
+root window.
+
+Four special values for @code{direction} entries allow to implicitly
+specify the selected frame's main window as the reference window:
+@code{leftmost}, @code{top}, @code{rightmost} and @code{bottom}.  This
+means that instead of, for example, @w{@code{(direction . left)
+(window . main)}} one can just specify @w{@code{(direction
+. leftmost)}}.  An existing @code{window} @var{alist} entry is ignored
+in such cases.
+@end defun
+
 @defun display-buffer-below-selected buffer alist
 This function tries to display @var{buffer} in a window below the
 selected window.  If there is a window below the selected one and that
@@ -2934,12 +2991,20 @@ If non-@code{nil}, the value specifies the slot of the side window
 supposed to display the buffer.  This entry is used only by
 @code{display-buffer-in-side-window}.
 
+@vindex direction@r{, a buffer display action alist entry}
+@item direction
+The value specifies a direction which, together with a @code{window}
+entry, allows @code{display-buffer-in-direction} to determine the
+location of the window to display the buffer.
+
 @vindex window@r{, a buffer display action alist entry}
 @item window
 The value specifies a window that is in some way related to the window
 chosen by @code{display-buffer}.  This entry is currently used by
 @code{display-buffer-in-atom-window} to indicate the window on whose
-side the new window shall be created.
+side the new window shall be created.  It is also used by
+@code{display-buffer-in-direction} to specify the reference window on
+whose side the resulting window shall appear.
 
 @vindex allow-no-window@r{, a buffer display action alist entry}
 @item allow-no-window

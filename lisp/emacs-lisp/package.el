@@ -334,16 +334,22 @@ default directory."
            (epg-find-configuration 'OpenPGP))
       'allow-unsigned)
   "Non-nil means to check package signatures when installing.
-The value `allow-unsigned' means to still install a package even if
-it is unsigned.
+More specifically the value can be:
+- nil: package signatures are ignored.
+- `allow-unsigned': install a package even if it is unsigned,
+  but if it is signed and we have the key for it, verify the signature.
+- t: accept a package only if it comes with at least one verified signature.
+- `all': same as t, except when the package has several signatures,
+  in which case we verify all the signatures.
 
 This also applies to the \"archive-contents\" file that lists the
 contents of the archive."
   :type '(choice (const nil :tag "Never")
                  (const allow-unsigned :tag "Allow unsigned")
-                 (const t :tag "Check always"))
+                 (const t :tag "Check always")
+                 (const all :tag "Check all signatures"))
   :risky t
-  :version "24.4")
+  :version "27.1")
 
 (defcustom package-unsigned-archives nil
   "List of archives where we do not check for package signatures."
@@ -1191,45 +1197,66 @@ errors signaled by ERROR-FORM or by BODY).
   (declare (indent defun) (debug t))
   (while (keywordp (car body))
     (setq body (cdr (cdr body))))
-  (macroexp-let2* nil ((url-1 url)
-                       (noerror-1 noerror))
-    (let ((url-sym (make-symbol "url"))
-          (b-sym (make-symbol "b-sym")))
-      `(cl-macrolet ((unless-error (body-2 &rest before-body)
-                                   (let ((err (make-symbol "err")))
-                                     `(with-temp-buffer
-                                        (when (condition-case ,err
-                                                  (progn ,@before-body t)
-                                                ,(list 'error ',error-form
-                                                       (list 'unless ',noerror-1
-                                                             `(signal (car ,err) (cdr ,err)))))
-                                          ,@body-2)))))
-         (if (string-match-p "\\`https?:" ,url-1)
-             (let ((,url-sym (concat ,url-1 ,file)))
-               (if ,async
-                   (unless-error nil
-                                 (url-retrieve ,url-sym
-                                               (lambda (status)
-                                                 (let ((,b-sym (current-buffer)))
-                                                   (require 'url-handlers)
-                                                   (unless-error ,body
-                                                                 (when-let* ((er (plist-get status :error)))
-                                                                   (error "Error retrieving: %s %S" ,url-sym er))
-                                                                 (with-current-buffer ,b-sym
-                                                                   (goto-char (point-min))
-                                                                   (unless (search-forward-regexp "^\r?\n\r?" nil 'noerror)
-                                                                     (error "Error retrieving: %s %S" ,url-sym "incomprehensible buffer")))
-                                                                 (url-insert-buffer-contents ,b-sym ,url-sym)
-                                                                 (kill-buffer ,b-sym)
-                                                                 (goto-char (point-min)))))
-                                               nil
-                                               'silent))
-                 (unless-error ,body (url-insert-file-contents ,url-sym))))
-           (unless-error ,body
-                         (let ((url (expand-file-name ,file ,url-1)))
-                           (unless (file-name-absolute-p url)
-                             (error "Location %s is not a url nor an absolute file name" url))
-                           (insert-file-contents url))))))))
+  `(package--with-response-buffer-1 ,url (lambda () ,@body)
+                                    :file ,file
+                                    :async ,async
+                                    :error-function (lambda () ,error-form)
+                                    :noerror ,noerror))
+
+(defmacro package--unless-error (body &rest before-body)
+  (declare (debug t) (indent 1))
+  (let ((err (make-symbol "err")))
+    `(with-temp-buffer
+       (set-buffer-multibyte nil)
+       (when (condition-case ,err
+                 (progn ,@before-body t)
+               (error (funcall error-function)
+                      (unless noerror
+                        (signal (car ,err) (cdr ,err)))))
+         (funcall ,body)))))
+
+(cl-defun package--with-response-buffer-1 (url body &key async file error-function noerror &allow-other-keys)
+  (if (string-match-p "\\`https?:" url)
+        (let ((url (concat url file)))
+          (if async
+              (package--unless-error #'ignore
+                (url-retrieve
+                 url
+                 (lambda (status)
+                   (let ((b (current-buffer)))
+                     (require 'url-handlers)
+                     (package--unless-error body
+                       (when-let* ((er (plist-get status :error)))
+                         (error "Error retrieving: %s %S" url er))
+                       (with-current-buffer b
+                         (goto-char (point-min))
+                         (unless (search-forward-regexp "^\r?\n\r?" nil t)
+                           (error "Error retrieving: %s %S"
+                                  url "incomprehensible buffer")))
+                       (url-insert b)
+                       (kill-buffer b)
+                       (goto-char (point-min)))))
+                 nil
+                 'silent))
+            (package--unless-error body
+              ;; Copy&pasted from url-insert-file-contents,
+              ;; except it calls `url-insert' because we want the contents
+              ;; literally (but there's no url-insert-file-contents-literally).
+              (let ((buffer (url-retrieve-synchronously url)))
+                (unless buffer (signal 'file-error (list url "No Data")))
+                (when (fboundp 'url-http--insert-file-helper)
+                  ;; XXX: This is HTTP/S specific and should be moved
+                  ;; to url-http instead.  See bug#17549.
+                  (url-http--insert-file-helper buffer url))
+                (url-insert buffer)
+                (kill-buffer buffer)
+                (goto-char (point-min))))))
+      (package--unless-error body
+        (let ((url (expand-file-name file url)))
+          (unless (file-name-absolute-p url)
+            (error "Location %s is not a url nor an absolute file name"
+                   url))
+          (insert-file-contents-literally url)))))
 
 (define-error 'bad-signature "Failed to verify signature")
 
@@ -1257,7 +1284,9 @@ errors."
           (unless (and (eq package-check-signature 'allow-unsigned)
                        (eq (epg-signature-status sig) 'no-pubkey))
             (setq had-fatal-error t))))
-      (when (or (null good-signatures) had-fatal-error)
+      (when (or (null good-signatures)
+                (and (eq package-check-signature 'all)
+                     had-fatal-error))
         (package--display-verify-error context sig-file)
         (signal 'bad-signature (list sig-file)))
       good-signatures)))
@@ -1286,7 +1315,8 @@ else, even if an error is signaled."
     (package--with-response-buffer location :file sig-file
       :async async :noerror t
       ;; Connection error is assumed to mean "no sig-file".
-      :error-form (let ((allow-unsigned (eq package-check-signature 'allow-unsigned)))
+      :error-form (let ((allow-unsigned
+                         (eq package-check-signature 'allow-unsigned)))
                     (when (and callback allow-unsigned)
                       (funcall callback nil))
                     (when unwind (funcall unwind))
@@ -1295,8 +1325,9 @@ else, even if an error is signaled."
       ;; OTOH, an error here means "bad signature", which we never
       ;; suppress.  (Bug#22089)
       (unwind-protect
-          (let ((sig (package--check-signature-content (buffer-substring (point) (point-max))
-                                                       string sig-file)))
+          (let ((sig (package--check-signature-content
+                      (buffer-substring (point) (point-max))
+                      string sig-file)))
             (when callback (funcall callback sig))
             sig)
         (when unwind (funcall unwind))))))
@@ -1573,15 +1604,18 @@ similar to an entry in `package-alist'.  Save the cached copy to
                 (member name package-unsigned-archives))
             ;; If we don't care about the signature, save the file and
             ;; we're done.
-            (progn (let ((coding-system-for-write 'utf-8))
-                     (write-region content nil local-file nil 'silent))
-                   (package--update-downloads-in-progress archive))
+            (progn
+             (cl-assert (not enable-multibyte-characters))
+             (let ((coding-system-for-write 'binary))
+               (write-region content nil local-file nil 'silent))
+             (package--update-downloads-in-progress archive))
           ;; If we care, check it (perhaps async) and *then* write the file.
           (package--check-signature
            location file content async
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
-             (let ((coding-system-for-write 'utf-8))
+             (cl-assert (not enable-multibyte-characters))
+             (let ((coding-system-for-write 'binary))
                (write-region content nil local-file nil 'silent))
              ;; Write out good signatures into archive-contents.signed file.
              (when good-sigs
@@ -1617,7 +1651,7 @@ downloads in the background."
     (make-directory package-user-dir t))
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
-        (inhibit-message async))
+        (inhibit-message (or inhibit-message async)))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (package-import-keyring default-keyring)
@@ -1895,7 +1929,8 @@ if all the in-between dependencies are also in PACKAGE-LIST."
                ;; Update the old pkg-desc which will be shown on the description buffer.
                (setf (package-desc-signed pkg-desc) t)
                ;; Update the new (activated) pkg-desc as well.
-               (when-let* ((pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist))))
+               (when-let* ((pkg-descs (cdr (assq (package-desc-name pkg-desc)
+                                                 package-alist))))
                  (setf (package-desc-signed (car pkg-descs)) t))))))))))
 
 (defun package-installed-p (package &optional min-version)
@@ -2469,10 +2504,12 @@ The description is read from the installed package files."
               (replace-match ""))))
 
       (if (package-installed-p desc)
-          ;; For installed packages, get the description from the installed files.
+          ;; For installed packages, get the description from the
+          ;; installed files.
           (insert (package--get-description desc))
 
-        ;; For non-built-in, non-installed packages, get description from the archive.
+        ;; For non-built-in, non-installed packages, get description from
+        ;; the archive.
         (let* ((basename (format "%s-readme.txt" name))
                readme-string)
 
@@ -2482,7 +2519,10 @@ The description is read from the installed package files."
               (goto-char (point-max))
               (unless (bolp)
                 (insert ?\n)))
-            (setq readme-string (buffer-string))
+            (cl-assert (not enable-multibyte-characters))
+            (setq readme-string
+                  ;; The readme.txt files are defined to contain utf-8 text.
+                  (decode-coding-region (point-min) (point-max) 'utf-8 t))
             t)
           (insert (or readme-string
                       "This package does not provide a description.")))
@@ -3253,7 +3293,7 @@ objects removed."
     (redisplay 'force)
     (dolist (elt (package--sort-by-dependence delete-list))
       (condition-case-unless-debug err
-          (let ((inhibit-message package-menu-async))
+          (let ((inhibit-message (or inhibit-message package-menu-async)))
             (package-delete elt nil 'nosave))
         (error (message "Error trying to delete `%s': %S"
                  (package-desc-full-name elt)

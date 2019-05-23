@@ -3909,7 +3909,7 @@ kbd_buffer_get_event (KBOARD **kbp,
       case END_SESSION_EVENT:
       case LANGUAGE_CHANGE_EVENT:
 #endif
-#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
+#ifdef HAVE_WINDOW_SYSTEM
       case DELETE_WINDOW_EVENT:
       case ICONIFY_EVENT:
       case DEICONIFY_EVENT:
@@ -5283,7 +5283,7 @@ make_lispy_event (struct input_event *event)
 
   switch (event->kind)
     {
-#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
+#ifdef HAVE_WINDOW_SYSTEM
     case DELETE_WINDOW_EVENT:
       /* Make an event (delete-frame (FRAME)).  */
       return list2 (Qdelete_frame, list1 (event->frame_or_window));
@@ -9968,7 +9968,7 @@ If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
 DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 1, 0,
        doc: /* Return vector of last few events, not counting those from keyboard macros.
 If INCLUDE-CMDS is non-nil, include the commands that were run,
-represented as events of the form (nil . COMMAND).  */)
+represented as pseudo-events of the form (nil . COMMAND).  */)
   (Lisp_Object include_cmds)
 {
   bool cmds = !NILP (include_cmds);

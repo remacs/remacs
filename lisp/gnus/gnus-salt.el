@@ -573,9 +573,9 @@ Two predefined functions are available:
 	 (header (if (vectorp header) header
 		   (progn
 		     (setq header (make-mail-header "*****"))
-		     (mail-header-set-number header 0)
-		     (mail-header-set-lines header 0)
-		     (mail-header-set-chars header 0)
+		     (setf (mail-header-number header) 0)
+		     (setf (mail-header-lines header) 0)
+		     (setf (mail-header-chars header) 0)
 		     header)))
 	 (gnus-tmp-from (mail-header-from header))
 	 (gnus-tmp-subject (mail-header-subject header))

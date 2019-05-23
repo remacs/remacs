@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes
 
 ;; This file is part of GNU Emacs.
@@ -543,6 +542,7 @@ This uses `url-current-object', set locally to the buffer."
 (defun url-get-url-at-point (&optional pt)
   "Get the URL closest to point, but don't change position.
 Has a preference for looking backward when not directly on a symbol."
+  (declare (obsolete thing-at-point-url-at-point "27.1"))
   ;; Not at all perfect - point must be right in the name.
   (save-excursion
     (if pt (goto-char pt))

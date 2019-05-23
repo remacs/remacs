@@ -52,7 +52,7 @@ make_tar=no
 default_gzip=gzip
 newer=""
 with_info=yes
-with_tests=no
+with_tests=yes
 changelog=yes
 verbose=no
 
@@ -110,9 +110,14 @@ while [ $# -gt 0 ]; do
      ;;
 
     ## Include the test/ directory.
-    ## This option is mainly for the hydra build server.
+    ## This is for backward compability to when --no-tests was the default.
     "--tests")
       with_tests=yes
+     ;;
+
+    ## Exclude the test/ directory.
+    "--no-tests")
+      with_tests=no
      ;;
 
     "--verbose")
@@ -131,9 +136,9 @@ while [ $# -gt 0 ]; do
       echo "  --no-update	don't recompile or do analogous things"
       echo "  --no-changelog	don't generate the top-level ChangeLog"
       echo "  --no-info		don't include info files"
+      echo "  --no-tests	don't include the test/ directory"
       echo "  --snapshot	same as --clean-up --no-update --tar --no-check"
       echo "  --tar		make a tar file"
-      echo "  --tests	include the test/ directory"
       echo "  --verbose		noisier output"
       echo ""
       exit 0

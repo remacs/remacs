@@ -3,7 +3,6 @@
 ;; Copyright (C) 1995, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Eric Ding <ericding@alum.mit.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 15 Aug 1995
 ;; Keywords: mh-e, www, mouse, mail
 

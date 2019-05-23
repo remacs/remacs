@@ -107,7 +107,7 @@
 
 ;; Dependencies:
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
 (require 'timer)
 (require 'filenotify)
 
@@ -126,8 +126,6 @@ Global Auto-Revert Mode does so in all buffers."
 
 ;; Variables:
 
-;;; What's this?: ;; Autoload for the benefit of `make-mode-line-mouse-sensitive'.
-;;; What's this?: ;;;###autoload
 (defvar auto-revert-mode nil
   "Non-nil when Auto-Revert Mode is active.
 Never set this variable directly, use the command `auto-revert-mode' instead.")
@@ -302,6 +300,27 @@ You should set this variable through Custom."
   :type 'regexp
   :version "24.4")
 
+(defcustom auto-revert-avoid-polling nil
+  "Non-nil to avoid polling files when notification is available.
+
+Set this variable to a non-nil value to save power by avoiding
+polling when possible.  Files on file-systems that do not support
+change notifications must match `auto-revert-notify-exclude-dir-regexp'
+for Auto-Revert to work properly in this case.  This typically
+includes files on network file systems on Unix-like machines,
+when those files are modified from another computer.
+
+When nil, buffers in Auto-Revert Mode will always be polled for
+changes to their files on disk every `auto-revert-interval'
+seconds, in addition to using notification for those files."
+  :group 'auto-revert
+  :type 'boolean
+  :set (lambda (variable value)
+         (set-default variable value)
+	 (when (fboundp 'auto-revert-set-timer)
+           (auto-revert-set-timer)))
+  :version "27.1")
+
 ;; Internal variables:
 
 (defvar auto-revert-buffer-list ()
@@ -312,6 +331,9 @@ buffers to this list.
 
 The timer function `auto-revert-buffers' is responsible for purging
 the list of old buffers.")
+
+(defvar-local auto-revert--global-mode nil
+  "Non-nil if buffer is handled by Global Auto-Revert mode.")
 
 (defvar auto-revert-remaining-buffers ()
   "Buffers not checked when user input stopped execution.")
@@ -340,6 +362,9 @@ buffer.")
 (defvar-local auto-revert-notify-modified-p nil
   "Non-nil when file has been modified on the file system.
 This has been reported by a file notification event.")
+
+(defvar auto-revert-debug nil
+  "Use for debug messages.")
 
 ;; Functions:
 
@@ -476,11 +501,107 @@ specifies in the mode line."
   :global t :group 'auto-revert :lighter global-auto-revert-mode-text
   (auto-revert-set-timer)
   (if global-auto-revert-mode
-      (auto-revert-buffers)
+      ;; Turn global-auto-revert-mode ON.
+      (progn
+        (dolist (buf (buffer-list))
+          (with-current-buffer buf
+            (auto-revert--global-add-current-buffer)))
+        ;; Make sure future buffers are added as well.
+        (add-hook 'find-file-hook #'auto-revert--global-adopt-current-buffer)
+        (add-hook 'after-set-visited-file-name-hook
+                  #'auto-revert--global-set-visited-file-name)
+        ;; To track non-file buffers, we need to listen in to buffer
+        ;; creation in general.  Listening to major-mode changes is
+        ;; suitable, since we then know whether it's a mode that is tracked.
+        (when global-auto-revert-non-file-buffers
+          (add-hook 'after-change-major-mode-hook
+                    #'auto-revert--global-adopt-current-buffer))
+        (auto-revert-buffers))
+    ;; Turn global-auto-revert-mode OFF.
+    (remove-hook 'after-change-major-mode-hook
+                 #'auto-revert--global-adopt-current-buffer)
+    (remove-hook 'after-set-visited-file-name-hook
+                 #'auto-revert--global-set-visited-file-name)
+    (remove-hook 'find-file-hook #'auto-revert--global-adopt-current-buffer)
     (dolist (buf (buffer-list))
       (with-current-buffer buf
-	(when auto-revert-notify-watch-descriptor
-	  (auto-revert-notify-rm-watch))))))
+        (when auto-revert--global-mode
+          (setq auto-revert--global-mode nil)
+          (when (and auto-revert-notify-watch-descriptor
+                     (not (or auto-revert-mode auto-revert-tail-mode)))
+	    (auto-revert-notify-rm-watch)))))))
+
+(defun auto-revert--global-add-current-buffer ()
+  "Set current buffer to be tracked by Global Auto-Revert if appropriate."
+  (when (and (not auto-revert--global-mode)
+             (or buffer-file-name
+                 (and global-auto-revert-non-file-buffers
+                      (not (string-prefix-p " " (buffer-name)))
+                      ;; Any non-file buffer must have a custom
+                      ;; `buffer-stale-function' to be tracked, since
+                      ;; we wouldn't know when to revert it otherwise.
+                      (not (eq buffer-stale-function
+                               #'buffer-stale--default-function))))
+             (not (memq 'major-mode global-auto-revert-ignore-modes))
+             (not global-auto-revert-ignore-buffer))
+    (setq auto-revert--global-mode t)))
+
+(defun auto-revert--global-adopt-current-buffer ()
+  "Consider tracking current buffer in a running Global Auto-Revert mode."
+  (auto-revert--global-add-current-buffer)
+  (auto-revert-set-timer))
+
+(defun auto-revert--global-set-visited-file-name ()
+  "Update Global Auto-Revert management of the current buffer.
+Called after `set-visited-file-name'."
+  ;; Remove any existing notifier first so that we don't track the
+  ;; wrong file in case the file name was changed.
+  (when auto-revert-notify-watch-descriptor
+    (auto-revert-notify-rm-watch))
+  (auto-revert--global-adopt-current-buffer))
+
+(defun auto-revert--polled-buffers ()
+  "List of buffers that need to be polled."
+  (cond (global-auto-revert-mode
+         (mapcan (lambda (buffer)
+                   (and (not (and auto-revert-avoid-polling
+                                  (buffer-local-value
+                                   'auto-revert-notify-watch-descriptor
+                                   buffer)))
+                        (or (buffer-local-value
+                             'auto-revert--global-mode buffer)
+                            (buffer-local-value 'auto-revert-mode buffer)
+                            (buffer-local-value 'auto-revert-tail-mode buffer))
+                        (list buffer)))
+                 (buffer-list)))
+        (auto-revert-avoid-polling
+         (mapcan (lambda (buffer)
+                   (and (not (buffer-local-value
+                              'auto-revert-notify-watch-descriptor buffer))
+                        (list buffer)))
+                 auto-revert-buffer-list))
+        (t auto-revert-buffer-list)))
+
+;; Same as above in a boolean context, but cheaper.
+(defun auto-revert--need-polling-p ()
+  "Whether periodic polling is required."
+  (cond (global-auto-revert-mode
+         (or (not auto-revert-avoid-polling)
+             (cl-some
+              (lambda (buffer)
+                (and (not (buffer-local-value
+                           'auto-revert-notify-watch-descriptor buffer))
+                     (or (buffer-local-value 'auto-revert--global-mode buffer)
+                         (buffer-local-value 'auto-revert-mode buffer)
+                         (buffer-local-value 'auto-revert-tail-mode buffer))))
+              (buffer-list))))
+        (auto-revert-avoid-polling
+         (not (cl-every
+               (lambda (buffer)
+                 (buffer-local-value
+                  'auto-revert-notify-watch-descriptor buffer))
+               auto-revert-buffer-list)))
+        (t auto-revert-buffer-list)))
 
 (defun auto-revert-set-timer ()
   "Restart or cancel the timer used by Auto-Revert Mode.
@@ -492,10 +613,10 @@ will use an up-to-date value of `auto-revert-interval'"
   (if (timerp auto-revert-timer)
       (cancel-timer auto-revert-timer))
   (setq auto-revert-timer
-	(if (or global-auto-revert-mode auto-revert-buffer-list)
-	    (run-with-timer auto-revert-interval
-			    auto-revert-interval
-			    'auto-revert-buffers))))
+	(and (auto-revert--need-polling-p)
+	     (run-with-timer auto-revert-interval
+			     auto-revert-interval
+			     'auto-revert-buffers))))
 
 (defun auto-revert-notify-rm-watch ()
   "Disable file notification for current buffer's associated file."
@@ -558,24 +679,20 @@ will use an up-to-date value of `auto-revert-interval'"
 ;; often, we want to skip some revert operations so that we don't spend all our
 ;; time reverting the buffer.
 ;;
-;; We do this by reverting immediately in response to the first in a flurry of
-;; notifications. We suppress subsequent notifications until the next time
-;; `auto-revert-buffers' is called (this happens on a timer with a period set by
-;; `auto-revert-interval').
-(defvar auto-revert-buffers-counter 1
-  "Incremented each time `auto-revert-buffers' is called")
-(defvar-local auto-revert-buffers-counter-lockedout 0
-  "Buffer-local value to indicate whether we should immediately
-update the buffer on a notification event or not. If
+;; We do this by reverting immediately in response to the first in a
+;; flurry of notifications. Any notifications during the following
+;; `auto-revert-lockout-interval' seconds are noted but not acted upon
+;; until the end of that interval.
 
-  (= auto-revert-buffers-counter-lockedout
-     auto-revert-buffers-counter)
+(defconst auto-revert--lockout-interval 2.5
+  "Duration, in seconds, of the Auto-Revert Mode notification lockout.
+This is the quiescence after each notification of a file being
+changed during which no automatic reverting takes place, to
+prevent many updates in rapid succession from overwhelming the
+system.")
 
-then the updates are locked out, and we wait until the next call
-of `auto-revert-buffers' to revert the buffer. If no lockout is
-present, then we revert immediately and set the lockout, so that
-no more reverts are possible until the next call of
-`auto-revert-buffers'")
+(defvar-local auto-revert--lockout-timer nil
+  "Timer awaiting the end of the notification lockout interval, or nil.")
 
 (defun auto-revert-notify-handler (event)
   "Handle an EVENT returned from file notification."
@@ -591,6 +708,8 @@ no more reverts are possible until the next call of
       ;; Since we watch a directory, a file name must be returned.
       (cl-assert (stringp file))
       (when (eq action 'renamed) (cl-assert (stringp file1)))
+      (when auto-revert-debug
+        (message "auto-revert-notify-handler %S" event))
 
       (if (eq action 'stopped)
           ;; File notification has stopped.  Continue with polling.
@@ -604,7 +723,10 @@ no more reverts are possible until the next call of
                            (file-name-nondirectory buffer-file-name)))
                      ;; A buffer w/o a file, like dired.
                      (null buffer-file-name))
-                (auto-revert-notify-rm-watch))))
+                (auto-revert-notify-rm-watch)
+                ;; Restart the timer if it wasn't running.
+                (unless auto-revert-timer)
+                  (auto-revert-set-timer))))
 
         ;; Loop over all buffers, in order to find the intended one.
         (cl-dolist (buffer buffers)
@@ -630,19 +752,27 @@ no more reverts are possible until the next call of
                 (setq auto-revert-notify-modified-p t)
 
                 ;; Revert the buffer now if we're not locked out.
-                (when (/= auto-revert-buffers-counter-lockedout
-                          auto-revert-buffers-counter)
+                (unless auto-revert--lockout-timer
                   (auto-revert-handler)
-                  (setq auto-revert-buffers-counter-lockedout
-                        auto-revert-buffers-counter))))))))))
+                  (setq auto-revert--lockout-timer
+                        (run-with-timer
+                         auto-revert--lockout-interval nil
+                         #'auto-revert--end-lockout buffer)))))))))))
+
+(defun auto-revert--end-lockout (buffer)
+  "End the lockout period after a notification.
+If the buffer needs to be reverted, do it now."
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (setq auto-revert--lockout-timer nil)
+      (when auto-revert-notify-modified-p
+        (auto-revert-handler)))))
 
 (defun auto-revert-active-p ()
-  "Check if auto-revert is active (in current buffer or globally)."
+  "Check if auto-revert is active in current buffer."
   (or auto-revert-mode
       auto-revert-tail-mode
-      (and global-auto-revert-mode
-           (not global-auto-revert-ignore-buffer)
-           (not (memq major-mode global-auto-revert-ignore-modes)))))
+      auto-revert--global-mode))
 
 (defun auto-revert-handler ()
   "Revert current buffer, if appropriate.
@@ -755,13 +885,8 @@ This function is also responsible for removing buffers no longer in
 Auto-Revert Mode from `auto-revert-buffer-list', and for canceling
 the timer when no buffers need to be checked."
 
-  (setq auto-revert-buffers-counter
-        (1+ auto-revert-buffers-counter))
-
   (save-match-data
-    (let ((bufs (if global-auto-revert-mode
-		    (buffer-list)
-		  auto-revert-buffer-list))
+    (let ((bufs (auto-revert--polled-buffers))
 	  remaining new)
       ;; Buffers with remote contents shall be reverted only if the
       ;; connection is established already.
@@ -803,15 +928,18 @@ the timer when no buffers need to be checked."
                   (auto-revert-remove-current-buffer))
               (when (auto-revert-active-p)
                 ;; Enable file notification.
+                ;; Don't bother creating a notifier for non-file buffers
+                ;; unless it explicitly indicates that this works.
                 (when (and auto-revert-use-notify
-                           (not auto-revert-notify-watch-descriptor))
+                           (not auto-revert-notify-watch-descriptor)
+                           (or buffer-file-name
+                               buffer-auto-revert-by-notification))
                   (auto-revert-notify-add-watch))
                 (auto-revert-handler)))))
 	(setq bufs (cdr bufs)))
       (setq auto-revert-remaining-buffers bufs)
       ;; Check if we should cancel the timer.
-      (when (and (not global-auto-revert-mode)
-		 (null auto-revert-buffer-list))
+      (unless (auto-revert--need-polling-p)
         (if (timerp auto-revert-timer)
             (cancel-timer auto-revert-timer))
 	(setq auto-revert-timer nil)))))

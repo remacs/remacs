@@ -776,6 +776,7 @@ If kbd macro currently being defined end it before activating it."
 ;; letters and digits, provided that we inhibit the keymap while
 ;; executing the macro later on (but that's controversial...)
 
+;;;###autoload
 (defun kmacro-lambda-form (mac &optional counter format)
   "Create lambda form for macro bound to symbol or key."
   (if counter

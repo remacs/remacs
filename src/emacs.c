@@ -2494,9 +2494,6 @@ You must run Emacs in batch mode in order to dump it.  */)
 # ifdef WINDOWSNT
   Vlibrary_cache = Qnil;
 # endif
-# ifdef HAVE_WINDOW_SYSTEM
-  reset_image_types ();
-# endif
 
   Vpurify_flag = tem;
 

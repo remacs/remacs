@@ -415,7 +415,11 @@ this."
 	;; if the rest of the region should have a face, put it there
 	(funcall ansi-color-apply-face-function
 		 start-marker end-marker (ansi-color--find-face codes))
-	(setq ansi-color-context-region (if codes (list codes)))))))
+	(setq ansi-color-context-region (if codes (list codes)))))
+    ;; Clean up our temporary markers.
+    (unless (eq start-marker (cadr ansi-color-context-region))
+      (set-marker start-marker nil))
+    (set-marker end-marker nil)))
 
 (defun ansi-color-apply-overlay-face (beg end face)
   "Make an overlay from BEG to END, and apply face FACE.
@@ -424,6 +428,12 @@ If FACE is nil, do nothing."
     (ansi-color-set-extent-face
      (ansi-color-make-extent beg end)
      face)))
+
+(defun ansi-color-apply-text-property-face (beg end face)
+  "Set the `font-lock-face' property to FACE in region BEG..END.
+If FACE is nil, do nothing."
+  (when face
+    (put-text-property beg end 'font-lock-face face)))
 
 ;; This function helps you look for overlapping overlays.  This is
 ;; useful in comint-buffers.  Overlapping overlays should not happen!

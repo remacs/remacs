@@ -332,6 +332,10 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
   if (best_above == best_above_byte)
     return bytepos;
 
+  /* Check bytepos is not in the middle of a character. */
+  eassert (bytepos >= BUF_Z_BYTE (b)
+           || CHAR_HEAD_P (BUF_FETCH_BYTE (b, bytepos)));
+
   best_below = BEG;
   best_below_byte = BEG_BYTE;
 

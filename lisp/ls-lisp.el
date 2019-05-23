@@ -4,7 +4,6 @@
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
 ;; Modified by: Francis J. Wright <F.J.Wright@maths.qmw.ac.uk>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix, dired
 ;; Package: emacs
 

@@ -1017,8 +1017,8 @@ If LIMIT is a revision string, use it as an end-revision."
     ;; If the buffer exists from a previous invocation it might be
     ;; read-only.
     (let ((inhibit-read-only t))
-      (with-current-buffer
-          buffer
+      (with-current-buffer buffer
+	(insert "\n")
 	(apply 'vc-git-command buffer
 	       'async files
 	       (append
@@ -1087,7 +1087,7 @@ If LIMIT is a revision string, use it as an end-revision."
 (define-derived-mode vc-git-log-view-mode log-view-mode "Git-Log-View"
   (require 'add-log) ;; We need the faces add-log.
   ;; Don't have file markers, so use impossible regexp.
-  (set (make-local-variable 'log-view-file-re) "\\`a\\`")
+  (set (make-local-variable 'log-view-file-re) regexp-unmatchable)
   (set (make-local-variable 'log-view-per-file-logs) nil)
   (set (make-local-variable 'log-view-message-re)
        (if (not (eq vc-log-view-type 'long))

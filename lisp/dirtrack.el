@@ -179,8 +179,6 @@ and ends with a forward slash."
     dir))
 
 
-(define-obsolete-function-alias 'dirtrack-toggle 'dirtrack-mode "23.1")
-(define-obsolete-variable-alias 'dirtrackp 'dirtrack-mode "23.1")
 ;;;###autoload
 (define-minor-mode dirtrack-mode
   "Toggle directory tracking in shell buffers (Dirtrack mode).

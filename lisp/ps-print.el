@@ -5,12 +5,14 @@
 ;; Author: Jim Thompson (was <thompson@wg2.waii.com>)
 ;;	Jacques Duthen (was <duthen@cegelec-red.fr>)
 ;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
-;;	Kenichi Handa <handa@m17n.org> (multi-byte characters)
-;; Maintainer: Kenichi Handa <handa@m17n.org> (multi-byte characters)
+;;	Kenichi Handa <handa@gnu.org> (multi-byte characters)
+;; Maintainer: Kenichi Handa <handa@gnu.org> (multi-byte characters)
 ;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, print, PostScript
 ;; Version: 7.3.5
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
+
+(eval-when-compile (require 'cl-lib))
 
 (defconst ps-print-version "7.3.5"
   "ps-print.el, v 7.3.5 <2009/12/23 vinicius>
@@ -1403,7 +1405,7 @@ Please send all bug fixes and enhancements to
 ;; prologue code suggestion, for odd/even printing suggestion and for
 ;; `ps-prologue-file' enhancement.
 ;;
-;; Thanks to Ken'ichi Handa <handa@m17n.org> for multi-byte buffer handling.
+;; Thanks to Ken'ichi Handa <handa@gnu.org> for multi-byte buffer handling.
 ;;
 ;; Thanks to Matthew O Persico <Matthew.Persico@lazard.com> for line number on
 ;; empty columns.
@@ -4612,7 +4614,9 @@ page-height == ((floor print-height ((th + ls) * zh)) * ((th + ls) * zh)) - th
 (defsubst ps-output-string-prim (string)
   (insert "(")				;insert start-string delimiter
   (save-excursion			;insert string
-    (insert (string-as-unibyte string)))
+    (insert (if (multibyte-string-p string)
+                (encode-coding-string string 'utf-8)
+              string)))
   ;; Find and quote special characters as necessary for PS
   ;; This skips everything except control chars, non-ASCII chars, (, ) and \.
   (while (progn (skip-chars-forward " -'*-[]-~") (not (eobp)))
@@ -5770,9 +5774,9 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	ps-footer-font-size-internal (ps-get-font-size 'ps-footer-font-size)
 	ps-control-or-escape-regexp
 	(cond ((eq ps-print-control-characters '8-bit)
-	       (string-as-unibyte "[\000-\037\177-\377]"))
+	       "[\000-\037\177-\377]")
 	      ((eq ps-print-control-characters 'control-8-bit)
-	       (string-as-unibyte "[\000-\037\177-\237]"))
+	       "[\000-\037\177-\237]")
 	      ((eq ps-print-control-characters 'control)
 	       "[\000-\037\177]")
 	      (t "[\t\n\f]"))
@@ -5827,6 +5831,7 @@ XSTART YSTART are the relative position for the first page in a sheet.")
 	;; They may be overridden by ps-mule-begin-job.
 	ps-basic-plot-string-function    'ps-basic-plot-string
 	ps-encode-header-string-function nil)
+  (cl-assert (not (multibyte-string-p ps-control-or-escape-regexp)))
   ;; initialize page dimensions
   (ps-get-page-dimensions)
   ;; final check

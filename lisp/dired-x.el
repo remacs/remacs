@@ -159,7 +159,7 @@ See Info node `(dired-x) Omitting Variables' for more information."
 
 (put 'dired-omit-mode 'safe-local-variable 'booleanp)
 
-(defcustom dired-omit-files "^\\.?#\\|^\\.$\\|^\\.\\.$"
+(defcustom dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'"
   "Filenames matching this regexp will not be displayed.
 This only has effect when `dired-omit-mode' is t.  See interactive function
 `dired-omit-mode' (\\[dired-omit-mode]) and variable

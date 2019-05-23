@@ -30,10 +30,6 @@
 (eval-when-compile (require 'cl-lib))
 (require 'tramp)
 
-;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'dired))
-
 (declare-function dired-remove-file "dired-aux")
 (defvar dired-compress-file-suffixes)
 (defvar vc-handled-backends)
@@ -2417,9 +2413,7 @@ The method used must be an out-of-band method."
 	      ;; The default directory must be remote.
 	      (let ((default-directory
 		      (file-name-directory (if t1 filename newname)))
-		    (process-environment (copy-sequence process-environment))
-		    ;; We do not want to run timers.
-		    timer-list timer-idle-list)
+		    (process-environment (copy-sequence process-environment)))
 		;; Set the transfer process properties.
 		(tramp-set-connection-property
 		 v "process-name" (buffer-name (current-buffer)))
@@ -2878,8 +2872,6 @@ the result will be a local, non-Tramp, file name."
 	       ;; has been started several times in `eshell' and
 	       ;; friends.
 	       tramp-current-connection
-	       ;; We do not want to run timers.
-	       timer-list timer-idle-list
 	       p)
 
 	  (while (get-process name1)
@@ -3444,88 +3436,89 @@ the result will be a local, non-Tramp, file name."
 ;; any other remote command.
 (defun tramp-sh-handle-vc-registered (file)
   "Like `vc-registered' for Tramp files."
-  (with-temp-message ""
-    (with-parsed-tramp-file-name file nil
-      (with-tramp-progress-reporter
-	  v 3 (format-message "Checking `vc-registered' for %s" file)
+  (when vc-handled-backends
+    (with-temp-message ""
+      (with-parsed-tramp-file-name file nil
+        (with-tramp-progress-reporter
+	    v 3 (format-message "Checking `vc-registered' for %s" file)
 
-	;; There could be new files, created by the vc backend.  We
-	;; cannot reuse the old cache entries, therefore.  In
-	;; `tramp-get-file-property', `remote-file-name-inhibit-cache'
-	;; could also be a timestamp as `current-time' returns.  This
-	;; means invalidate all cache entries with an older timestamp.
-	(let (tramp-vc-registered-file-names
-	      (remote-file-name-inhibit-cache (current-time))
-	      (file-name-handler-alist
-	       `((,tramp-file-name-regexp . tramp-vc-file-name-handler))))
+	  ;; There could be new files, created by the vc backend.  We
+	  ;; cannot reuse the old cache entries, therefore.  In
+	  ;; `tramp-get-file-property', `remote-file-name-inhibit-cache'
+	  ;; could also be a timestamp as `current-time' returns.  This
+	  ;; means invalidate all cache entries with an older timestamp.
+	  (let (tramp-vc-registered-file-names
+	        (remote-file-name-inhibit-cache (current-time))
+	        (file-name-handler-alist
+	         `((,tramp-file-name-regexp . tramp-vc-file-name-handler))))
 
-	  ;; Here we collect only file names, which need an operation.
-	  (tramp-with-demoted-errors
-	      v "Error in 1st pass of `vc-registered': %s"
-	    (tramp-run-real-handler #'vc-registered (list file)))
-	  (tramp-message v 10 "\n%s" tramp-vc-registered-file-names)
+	    ;; Here we collect only file names, which need an operation.
+	    (tramp-with-demoted-errors
+	        v "Error in 1st pass of `vc-registered': %s"
+	      (tramp-run-real-handler #'vc-registered (list file)))
+	    (tramp-message v 10 "\n%s" tramp-vc-registered-file-names)
 
-	  ;; Send just one command, in order to fill the cache.
-	  (when tramp-vc-registered-file-names
-	    (tramp-maybe-send-script
-	     v
-	     (format tramp-vc-registered-read-file-names
-		     (tramp-get-file-exists-command v)
-		     (format "%s -r" (tramp-get-test-command v)))
-	     "tramp_vc_registered_read_file_names")
+	    ;; Send just one command, in order to fill the cache.
+	    (when tramp-vc-registered-file-names
+	      (tramp-maybe-send-script
+	       v
+	       (format tramp-vc-registered-read-file-names
+		       (tramp-get-file-exists-command v)
+		       (format "%s -r" (tramp-get-test-command v)))
+	       "tramp_vc_registered_read_file_names")
 
-	    (dolist
-		(elt
-		 (ignore-errors
-		   ;; We cannot use `tramp-send-command-and-read',
-		   ;; because this does not cooperate well with
-		   ;; heredoc documents.
-		   (tramp-send-command
-		    v
-		    (format
-		     "tramp_vc_registered_read_file_names <<'%s'\n%s\n%s\n"
-		     tramp-end-of-heredoc
-		     (mapconcat #'tramp-shell-quote-argument
-				tramp-vc-registered-file-names
-				"\n")
-		     tramp-end-of-heredoc))
-		   (with-current-buffer (tramp-get-connection-buffer v)
-		     ;; Read the expression.
-		     (goto-char (point-min))
-		     (read (current-buffer)))))
+	      (dolist
+		  (elt
+		   (ignore-errors
+		     ;; We cannot use `tramp-send-command-and-read',
+		     ;; because this does not cooperate well with
+		     ;; heredoc documents.
+		     (tramp-send-command
+		      v
+		      (format
+		       "tramp_vc_registered_read_file_names <<'%s'\n%s\n%s\n"
+		       tramp-end-of-heredoc
+		       (mapconcat #'tramp-shell-quote-argument
+				  tramp-vc-registered-file-names
+				  "\n")
+		       tramp-end-of-heredoc))
+		     (with-current-buffer (tramp-get-connection-buffer v)
+		       ;; Read the expression.
+		       (goto-char (point-min))
+		       (read (current-buffer)))))
 
-	      (tramp-set-file-property
-	       v (car elt) (cadr elt) (cadr (cdr elt))))))
+	        (tramp-set-file-property
+	         v (car elt) (cadr elt) (cadr (cdr elt))))))
 
-	;; Second run.  Now all `file-exists-p' or `file-readable-p'
-	;; calls shall be answered from the file cache.  We unset
-	;; `process-file-side-effects' and `remote-file-name-inhibit-cache'
-	;; in order to keep the cache.
-	(let ((vc-handled-backends vc-handled-backends)
-	      remote-file-name-inhibit-cache process-file-side-effects)
-	  ;; Reduce `vc-handled-backends' in order to minimize process calls.
-	  (when (and (memq 'Bzr vc-handled-backends)
-		     (boundp 'vc-bzr-program)
-		     (not (with-tramp-connection-property v vc-bzr-program
-			    (tramp-find-executable
-			     v vc-bzr-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Bzr vc-handled-backends)))
-	  (when (and (memq 'Git vc-handled-backends)
-		     (boundp 'vc-git-program)
-		     (not (with-tramp-connection-property v vc-git-program
-			    (tramp-find-executable
-			     v vc-git-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Git vc-handled-backends)))
-	  (when (and (memq 'Hg vc-handled-backends)
-		     (boundp 'vc-hg-program)
-		     (not (with-tramp-connection-property v vc-hg-program
-			    (tramp-find-executable
-			     v vc-hg-program (tramp-get-remote-path v)))))
-	    (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
-	  ;; Run.
-	  (tramp-with-demoted-errors
-	      v "Error in 2nd pass of `vc-registered': %s"
-	    (tramp-run-real-handler #'vc-registered (list file))))))))
+	  ;; Second run.  Now all `file-exists-p' or `file-readable-p'
+	  ;; calls shall be answered from the file cache.  We unset
+	  ;; `process-file-side-effects' and `remote-file-name-inhibit-cache'
+	  ;; in order to keep the cache.
+	  (let ((vc-handled-backends vc-handled-backends)
+	        remote-file-name-inhibit-cache process-file-side-effects)
+	    ;; Reduce `vc-handled-backends' in order to minimize process calls.
+	    (when (and (memq 'Bzr vc-handled-backends)
+		       (boundp 'vc-bzr-program)
+		       (not (with-tramp-connection-property v vc-bzr-program
+			      (tramp-find-executable
+			       v vc-bzr-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Bzr vc-handled-backends)))
+	    (when (and (memq 'Git vc-handled-backends)
+		       (boundp 'vc-git-program)
+		       (not (with-tramp-connection-property v vc-git-program
+			      (tramp-find-executable
+			       v vc-git-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Git vc-handled-backends)))
+	    (when (and (memq 'Hg vc-handled-backends)
+		       (boundp 'vc-hg-program)
+		       (not (with-tramp-connection-property v vc-hg-program
+			      (tramp-find-executable
+			       v vc-hg-program (tramp-get-remote-path v)))))
+	      (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
+	    ;; Run.
+	    (tramp-with-demoted-errors
+	        v "Error in 2nd pass of `vc-registered': %s"
+	      (tramp-run-real-handler #'vc-registered (list file)))))))))
 
 ;;;###tramp-autoload
 (defun tramp-sh-file-name-handler (operation &rest args)
@@ -3549,24 +3542,29 @@ Fall back to normal file name handler if no Tramp handler exists."
 	   (tramp-replace-environment-variables
 	    (apply #'tramp-file-name-for-operation operation args)))
 	  (fn (assoc operation tramp-sh-file-name-handler-alist)))
-      (with-parsed-tramp-file-name filename nil
-	(cond
-	 ;; That's what we want: file names, for which checks are
-	 ;; applied.  We assume that VC uses only `file-exists-p' and
-	 ;; `file-readable-p' checks; otherwise we must extend the
-	 ;; list.  We do not perform any action, but return nil, in
-	 ;; order to keep `vc-registered' running.
-	 ((and fn (memq operation '(file-exists-p file-readable-p)))
-	  (add-to-list 'tramp-vc-registered-file-names localname 'append)
-	  nil)
-	 ;; `process-file' and `start-file-process' shall be ignored.
-	 ((and fn (eq operation 'process-file) 0))
-	 ((and fn (eq operation 'start-file-process) nil))
-	 ;; Tramp file name handlers like `expand-file-name'.  They
-	 ;; must still work.
-	 (fn (save-match-data (apply (cdr fn) args)))
-	 ;; Default file name handlers, we don't care.
-	 (t (tramp-run-real-handler operation args)))))))
+      (if (tramp-tramp-file-p filename)
+	  (with-parsed-tramp-file-name filename nil
+	    (cond
+	     ;; That's what we want: file names, for which checks are
+	     ;; applied.  We assume that VC uses only `file-exists-p'
+	     ;; and `file-readable-p' checks; otherwise we must extend
+	     ;; the list.  We do not perform any action, but return
+	     ;; nil, in order to keep `vc-registered' running.
+	     ((and fn (memq operation '(file-exists-p file-readable-p)))
+	      (add-to-list 'tramp-vc-registered-file-names localname 'append)
+	      nil)
+	     ;; `process-file' and `start-file-process' shall be ignored.
+	     ((and fn (eq operation 'process-file) 0))
+	     ((and fn (eq operation 'start-file-process) nil))
+	     ;; Tramp file name handlers like `expand-file-name'.  They
+	     ;; must still work.
+	     (fn (save-match-data (apply (cdr fn) args)))
+	     ;; Default file name handlers, we don't care.
+	     (t (tramp-run-real-handler operation args))))
+
+	;; When `tramp-mode' is not enabled, or the file name is
+	;; quoted, we don't do anything.
+	(tramp-run-real-handler operation args)))))
 
 (defun tramp-sh-handle-file-notify-add-watch (file-name flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
@@ -3644,6 +3642,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	(process-put p 'watch-name localname)
 	(set-process-query-on-exit-flag p nil)
 	(set-process-filter p filter)
+	(set-process-sentinel p #'tramp-file-notify-process-sentinel)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(while (tramp-accept-process-output p 0))
@@ -4619,21 +4618,19 @@ Goes through the list `tramp-inline-compress-commands'."
 
     ;; Ad-hoc proxy definitions.
     (dolist (proxy (reverse (split-string hops tramp-postfix-hop-regexp 'omit)))
-      (let ((user-domain (tramp-file-name-user-domain item))
-	    (host-port (tramp-file-name-host-port item))
-	    (proxy (concat
-		    tramp-prefix-format proxy tramp-postfix-host-format)))
-	(tramp-message
-	 vec 5 "Add proxy (\"%s\" \"%s\" \"%s\")"
-	 (and (stringp host-port) (regexp-quote host-port))
-	 (and (stringp user-domain) (regexp-quote user-domain))
-	 proxy)
+      (let* ((host-port (tramp-file-name-host-port item))
+	     (user-domain (tramp-file-name-user-domain item))
+	     (proxy (concat
+		     tramp-prefix-format proxy tramp-postfix-host-format))
+	     (entry
+	      (list (and (stringp host-port)
+			 (concat "^" (regexp-quote host-port) "$"))
+		    (and (stringp user-domain)
+			 (concat "^" (regexp-quote user-domain) "$"))
+		    (propertize proxy 'tramp-ad-hoc t))))
+	(tramp-message vec 5 "Add %S to `tramp-default-proxies-alist'" entry)
 	;; Add the hop.
-	(add-to-list
-	 'tramp-default-proxies-alist
-	 (list (and (stringp host-port) (regexp-quote host-port))
-	       (and (stringp user-domain) (regexp-quote user-domain))
-	       (propertize proxy 'tramp-ad-hoc t)))
+	(add-to-list 'tramp-default-proxies-alist entry)
 	(setq item (tramp-dissect-file-name proxy))))
     ;; Save the new value.
     (when (and hops tramp-save-ad-hoc-proxies)
@@ -4772,8 +4769,8 @@ Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
   (let ((p (tramp-get-connection-process vec))
 	(process-name (tramp-get-connection-property vec "process-name" nil))
-	(process-environment (copy-sequence process-environment))
-	(pos (with-current-buffer (tramp-get-connection-buffer vec) (point))))
+	(pos (with-current-buffer (tramp-get-connection-buffer vec) (point)))
+	tmp-process-environment)
 
     ;; If Tramp opens the same connection within a short time frame,
     ;; there is a problem.  We shall signal this.
@@ -4838,17 +4835,22 @@ connection if a previous connection has died for some reason."
 	      ;; Start new process.
 	      (when (and p (processp p))
 		(delete-process p))
-	      (setenv "TERM" tramp-terminal-type)
-	      (setenv "LC_ALL" (tramp-get-local-locale vec))
-	      (if (stringp tramp-histfile-override)
-		  (setenv "HISTFILE" tramp-histfile-override)
-		(if tramp-histfile-override
-		    (progn
-		      (setenv "HISTFILE")
-		      (setenv "HISTFILESIZE" "0")
-		      (setenv "HISTSIZE" "0"))))
-	      (setenv "PROMPT_COMMAND")
-	      (setenv "PS1" tramp-initial-end-of-output)
+	      ;; Use a temporary `process-environment', in order not
+	      ;; to penetrate local processes.
+	      (let ((process-environment (copy-sequence process-environment)))
+		(setenv "TERM" tramp-terminal-type)
+		(setenv "LC_ALL" (tramp-get-local-locale vec))
+		(if (stringp tramp-histfile-override)
+		    (setenv "HISTFILE" tramp-histfile-override)
+		  (if tramp-histfile-override
+		      (progn
+			(setenv "HISTFILE")
+			(setenv "HISTFILESIZE" "0")
+			(setenv "HISTSIZE" "0"))))
+		(setenv "PROMPT_COMMAND")
+		(setenv "PS1" tramp-initial-end-of-output)
+		(setq tmp-process-environment
+		      (copy-sequence process-environment)))
               (unless (stringp tramp-encoding-shell)
                 (tramp-error vec 'file-error "`tramp-encoding-shell' not set"))
 	      (let* ((current-host (system-name))
@@ -4865,7 +4867,8 @@ connection if a previous connection has died for some reason."
 		     ;; This must be done in order to avoid our file
 		     ;; name handler.
 		     (p (let ((default-directory
-				(tramp-compat-temporary-file-directory)))
+				(tramp-compat-temporary-file-directory))
+			      (process-environment tmp-process-environment))
 			  (apply
 			   #'start-process
 			   (tramp-get-connection-name vec)
@@ -5956,5 +5959,7 @@ function cell is returned to be applied on a buffer."
 ;; * Implement detaching/re-attaching remote sessions.  By this, a
 ;;   session could be reused after a connection loss.  Use dtach, or
 ;;   screen, or tmux, or mosh.
+;;
+;; * Implement `:stderr' of `make-process' as pipe process.
 
 ;;; tramp-sh.el ends here

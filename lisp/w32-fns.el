@@ -305,6 +305,9 @@ names."
 
 ;;;; System name and version for emacsbug.el
 
+(declare-function w32-version "w32-win" ())
+(declare-function w32-read-registry "w32fns" (root key name))
+
 (defun w32--os-description ()
   "Return a string describing the underlying OS and its version."
   (let* ((w32ver (car (w32-version)))

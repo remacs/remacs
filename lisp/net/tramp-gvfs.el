@@ -99,20 +99,26 @@
 
 (eval-when-compile (require 'cl-lib))
 (require 'tramp)
-
 (require 'dbus)
 (require 'url-parse)
 (require 'url-util)
-(require 'zeroconf)
 
 ;; Pacify byte-compiler.
 (eval-when-compile
   (require 'custom))
 
+(declare-function zeroconf-init "zeroconf")
+(declare-function zeroconf-list-service-types "zeroconf")
+(declare-function zeroconf-list-services "zeroconf")
+(declare-function zeroconf-service-host "zeroconf")
+(declare-function zeroconf-service-port "zeroconf")
+(declare-function zeroconf-service-txt "zeroconf")
+
 ;; We don't call `dbus-ping', because this would load dbus.el.
 (defconst tramp-gvfs-enabled
   (ignore-errors
     (and (featurep 'dbusbind)
+	 (autoload 'zeroconf-init "zeroconf")
 	 (tramp-compat-funcall 'dbus-get-unique-name :system)
 	 (tramp-compat-funcall 'dbus-get-unique-name :session)
 	 (or (tramp-compat-process-running-p "gvfs-fuse-daemon")
@@ -1187,6 +1193,7 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	(process-put p 'adjust-window-size-function #'ignore)
 	(set-process-query-on-exit-flag p nil)
 	(set-process-filter p #'tramp-gvfs-monitor-process-filter)
+	(set-process-sentinel p #'tramp-file-notify-process-sentinel)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(while (tramp-accept-process-output p 0))

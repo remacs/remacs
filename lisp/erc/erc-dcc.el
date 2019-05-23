@@ -6,7 +6,6 @@
 ;; Author: Ben A. Mesander <ben@gnu.ai.mit.edu>
 ;;         Noah Friedman <friedman@prep.ai.mit.edu>
 ;;         Per Persson <pp@sno.pp.se>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, processes
 ;; Created: 1994-01-23
 

@@ -6,7 +6,6 @@
 ;; Author: Don Morrison
 ;;	Lars Lindberg
 ;; (according to ack.texi)
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 16 Mars 1992
 ;; Lindberg's last update version: 5.7
 ;; Keywords: abbrev expand completion convenience

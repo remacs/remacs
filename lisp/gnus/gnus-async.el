@@ -146,7 +146,7 @@ that was fetched."
 	(when next
 	  (when gnus-async-timer
 	    (ignore-errors
-	      (nnheader-cancel-timer 'gnus-async-timer)))
+	      (cancel-timer 'gnus-async-timer)))
 	  (setq gnus-async-timer
 		(run-with-idle-timer
 		 0.1 nil 'gnus-async-prefetch-article

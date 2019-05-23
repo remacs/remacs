@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Keith Gabryelski <ag@wheaties.ai.mit.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: data
 
 ;; This file is part of GNU Emacs.
@@ -877,17 +876,18 @@ and their encoded form is inserted byte by byte."
 	    "0x%x -- invalid character code; use \\[hexl-insert-hex-string]"
 	    ch))
 	  (t
-	   (let ((encoded (encode-coding-char ch coding))
-		 (internal (string-as-unibyte (char-to-string ch)))
-		 internal-hex)
-	     ;; If encode-coding-char returns nil, it means our character
-	     ;; cannot be safely encoded with buffer-file-coding-system.
-	     ;; In that case, we offer to insert the internal representation
-	     ;; of that character, byte by byte.
-	     (when (null encoded)
-	       (setq internal-hex
-		     (mapconcat (function (lambda (c) (format "%x" c)))
-				internal " "))
+           (let ((encoded (encode-coding-char ch coding))
+	         (internal (char-to-string ch))
+	         internal-hex)
+             ;; If encode-coding-char returns nil, it means our character
+             ;; cannot be safely encoded with buffer-file-coding-system.
+             ;; In that case, we offer to insert the internal representation
+             ;; of that character, byte by byte.
+             (when (null encoded)
+	       (setq internal (encode-coding-string internal 'utf-8-emacs)
+	             internal-hex
+	             (mapconcat (function (lambda (c) (format "%x" c)))
+			        internal " "))
 	       (if (yes-or-no-p
 		    (format-message
 		     "Insert char 0x%x's internal representation \"%s\"? "

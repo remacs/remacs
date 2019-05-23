@@ -86,7 +86,7 @@ instead of the filename inheritance method."
      ((and prompt (not byserv))
       (setq user (or
 		  (url-do-auth-source-search server type :user)
-		  (read-string (url-auth-user-prompt url realm)
+		  (read-string (url-auth-user-prompt href realm)
 			       (or user (user-real-login-name))))
 	    pass (or
 		  (url-do-auth-source-search server type :secret)
@@ -115,7 +115,7 @@ instead of the filename inheritance method."
 	  (progn
 	    (setq user (or
 			(url-do-auth-source-search server type :user)
-			(read-string (url-auth-user-prompt url realm)
+			(read-string (url-auth-user-prompt href realm)
 				     (user-real-login-name)))
 		  pass (or
 			(url-do-auth-source-search server type :secret)
@@ -478,6 +478,8 @@ PROMPT is boolean - specifies whether to ask the user for a username/password
        if one cannot be found in the cache"
   (if (not realm)
       (setq realm (cdr-safe (assoc "realm" args))))
+  (if (equal realm "")
+      (setq realm nil))
   (if (stringp url)
       (setq url (url-generic-parse-url url)))
   (if (or (null type) (eq type 'any))

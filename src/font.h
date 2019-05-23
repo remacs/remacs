@@ -651,7 +651,7 @@ struct font_driver
      the font FONT and the sequence of glyph codes CODE, and store the
      result in METRICS.  */
   void (*text_extents) (struct font *font,
-			unsigned *code, int nglyphs,
+			const unsigned *code, int nglyphs,
 			struct font_metrics *metrics);
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -920,7 +920,7 @@ extern Lisp_Object ftfont_shape (Lisp_Object, Lisp_Object);
 extern unsigned ftfont_encode_char (struct font *, int);
 extern void ftfont_close (struct font *);
 extern void ftfont_filter_properties (Lisp_Object, Lisp_Object);
-extern void ftfont_text_extents (struct font *, unsigned *, int,
+extern void ftfont_text_extents (struct font *, const unsigned *, int,
 				 struct font_metrics *);
 #ifdef HAVE_HARFBUZZ
 extern Lisp_Object fthbfont_combining_capability (struct font *);

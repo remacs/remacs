@@ -731,7 +731,8 @@ references displayed in the current *xref* buffer."
   (interactive "e")
   (mouse-set-point event)
   (forward-line 0)
-  (xref--search-property 'xref-item)
+  (or (get-text-property (point) 'xref-item)
+      (xref--search-property 'xref-item))
   (xref-show-location-at-point))
 
 (defun xref--insert-xrefs (xref-alist)
@@ -828,20 +829,25 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defun xref--read-identifier (prompt)
   "Return the identifier at point or read it from the minibuffer."
   (let* ((backend (xref-find-backend))
-         (id (xref-backend-identifier-at-point backend)))
+         (def (xref-backend-identifier-at-point backend)))
     (cond ((or current-prefix-arg
-               (not id)
+               (not def)
                (xref--prompt-p this-command))
-           (completing-read (if id
-                                (format "%s (default %s): "
-                                        (substring prompt 0 (string-match
-                                                             "[ :]+\\'" prompt))
-                                        id)
-                              prompt)
-                            (xref-backend-identifier-completion-table backend)
-                            nil nil nil
-                            'xref--read-identifier-history id))
-          (t id))))
+           (let ((id
+                  (completing-read
+                   (if def
+                       (format "%s (default %s): "
+                               (substring prompt 0 (string-match
+                                                    "[ :]+\\'" prompt))
+                               def)
+                     prompt)
+                   (xref-backend-identifier-completion-table backend)
+                   nil nil nil
+                   'xref--read-identifier-history def)))
+             (if (equal id "")
+                 (or def (user-error "There is no defailt identifier"))
+               id)))
+          (t def))))
 
 
 ;;; Commands
@@ -1058,7 +1064,8 @@ IGNORES is a list of glob patterns."
 IGNORES is a list of glob patterns.  DIR is an absolute
 directory, used as the root of the ignore globs."
   (cl-assert (not (string-match-p "\\`~" dir)))
-  (when ignores
+  (if (not ignores)
+      ""
     (concat
      (shell-quote-argument "(")
      " -path "

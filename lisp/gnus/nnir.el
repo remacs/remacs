@@ -723,7 +723,7 @@ skips all prompting."
 			       (mail-header-number novitem)))
 		   (art (car (rassq artno articleids))))
 	      (when art
-		(mail-header-set-number novitem art)
+		(setf (mail-header-number novitem) art)
 		(push novitem headers))
 	      (forward-line 1)))))
       (setq headers

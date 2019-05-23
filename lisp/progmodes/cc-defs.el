@@ -81,7 +81,7 @@
   (progn
     (require 'font-lock)
     (let (font-lock-keywords)
-      (font-lock-compile-keywords '("a\\`")) ; doesn't match anything.
+      (font-lock-compile-keywords (list regexp-unmatchable))
       font-lock-keywords))))
 
 
@@ -1890,8 +1890,8 @@ when it's needed.  The default is the current language taken from
 
     ;; Produce a regexp that doesn't match anything.
     (if adorn
-	"\\(a\\`\\)"
-      "a\\`")))
+	(concat "\\(" regexp-unmatchable "\\)")
+      regexp-unmatchable)))
 
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 

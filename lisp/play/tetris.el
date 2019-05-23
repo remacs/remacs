@@ -277,6 +277,7 @@ each one of its four blocks.")
 (defvar tetris-null-map
   (let ((map (make-sparse-keymap 'tetris-null-map)))
     (define-key map "n"		'tetris-start-game)
+    (define-key map "q"         'quit-window)
     map))
 
 ;; ;;;;;;;;;;;;;;;; game functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

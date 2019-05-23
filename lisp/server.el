@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: William Sommerfeld <wesommer@athena.mit.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes
 
 ;; Changes by peck@sun.com and by rms.
@@ -96,7 +95,6 @@
              (unless load-in-progress
                (message "Local sockets unsupported, using TCP sockets")))
            (set-default sym val))
-  :group 'server
   :type 'boolean
   :version "22.1")
 
@@ -108,7 +106,6 @@ DO NOT give this a non-nil value unless you know what you are doing!
 On unsecured networks, accepting remote connections is very dangerous,
 because server-client communication (including session authentication)
 is not encrypted."
-  :group 'server
   :type '(choice
           (string :tag "Name or IP address")
           (const :tag "Local" nil))
@@ -121,7 +118,6 @@ is not encrypted."
 This variable only takes effect when the Emacs server is using
 TCP instead of local sockets.  A nil value means to use a random
 port number."
-  :group 'server
   :type '(choice
           (string :tag "Port number")
           (const :tag "Random" nil))
@@ -138,7 +134,6 @@ NOTE: On FAT32 filesystems, directories are not secure;
 files can be read and modified by any user or process.
 It is strongly suggested to set `server-auth-dir' to a
 directory residing in a NTFS partition instead."
-  :group 'server
   :type 'directory
   :version "22.1")
 ;;;###autoload
@@ -166,7 +161,6 @@ communications are unencrypted, still apply.
 The key must consist of 64 ASCII printable characters except for
 space (this means characters from ! to ~; or from code 33 to
 126).  You can use \\[server-generate-key] to get a random key."
-  :group 'server
   :type '(choice
 	  (const :tag "Random" nil)
 	  (string :tag "Password"))
@@ -174,30 +168,25 @@ space (this means characters from ! to ~; or from code 33 to
 
 (defcustom server-raise-frame t
   "If non-nil, raise frame when switching to a buffer."
-  :group 'server
   :type 'boolean
   :version "22.1")
 
 (defcustom server-visit-hook nil
   "Hook run when visiting a file for the Emacs server."
-  :group 'server
   :type 'hook)
 
 (defcustom server-switch-hook nil
   "Hook run when switching to a buffer for the Emacs server."
-  :group 'server
   :type 'hook)
 
 (defcustom server-after-make-frame-hook nil
   "Hook run when the Emacs server creates a client frame.
 The created frame is selected when the hook is called."
-  :group 'server
   :type 'hook
   :version "27.1")
 
 (defcustom server-done-hook nil
   "Hook run when done editing a buffer for the Emacs server."
-  :group 'server
   :type 'hook)
 
 (defvar server-process nil
@@ -223,7 +212,6 @@ If it is a frame, use the frame's selected window.
 
 It is not meaningful to set this to a specific frame or window with Custom.
 Only programs can do so."
-  :group 'server
   :version "22.1"
   :type '(choice (const :tag "Use selected window"
 			:match (lambda (widget value)
@@ -233,11 +221,10 @@ Only programs can do so."
 		 (function-item :tag "Use pop-to-buffer" pop-to-buffer)
 		 (function :tag "Other function")))
 
-(defcustom server-temp-file-regexp "^/tmp/Re\\|/draft$"
+(defcustom server-temp-file-regexp "\\`/tmp/Re\\|/draft\\'"
   "Regexp matching names of temporary files.
 These are deleted and reused after each edit by the programs that
 invoke the Emacs server."
-  :group 'server
   :type 'regexp)
 
 (defcustom server-kill-new-buffers t
@@ -248,7 +235,6 @@ it with the Emacs server.  If nil, kill only buffers as specified by
 Please note that only buffers that still have a client are killed,
 i.e. buffers visited with \"emacsclient --no-wait\" are never killed
 in this way."
-  :group 'server
   :type 'boolean
   :version "21.1")
 
@@ -278,7 +264,6 @@ If this is an absolute file name, it specifies where the socket
 file will be created.  To have emacsclient connect to the same
 socket, use the \"-s\" switch for local non-TCP sockets, and
 the \"-f\" switch otherwise."
-  :group 'server
   :type 'string
   :version "23.1")
 
@@ -381,7 +366,7 @@ Updates `server-clients'."
 
       (server-log "Deleted" proc))))
 
-(defvar server-log-time-function 'current-time-string
+(defvar server-log-time-function #'current-time-string
   "Function to generate timestamps for `server-buffer'.")
 
 (defconst server-buffer " *server*"
@@ -549,6 +534,16 @@ Creates the directory if necessary and makes sure:
       (cl-letf (((default-file-modes) ?\700)) (make-directory dir t))
       (setq attrs (file-attributes dir 'integer)))
 
+    (let ((olddir (or (getenv "TMPDIR") "/tmp")))
+      (when (and (equal dir (format "%s/emacs" (getenv "XDG_RUNTIME_DIR")))
+                 (file-writable-p olddir))
+        (let ((link (format "%s/emacs%d" olddir (user-uid))))
+          (unless (file-directory-p link)
+            ;; We're using the new location, so try and setup a symlink from
+            ;; the old location, in case we want to use an old emacsclient.
+            ;; FIXME: Check that it's safe to use!
+            (make-symbolic-link dir link t)))))
+
     ;; Check that it's safe for use.
     (let* ((uid (file-attribute-user-id attrs))
 	   (w32 (eq system-type 'windows-nt))
@@ -684,16 +679,16 @@ server or call `\\[server-force-delete]' to forcibly disconnect it."))
 	(when server-process
 	  (server-log (message "Restarting server")))
 	(cl-letf (((default-file-modes) ?\700))
-	  (add-hook 'suspend-tty-functions 'server-handle-suspend-tty)
-	  (add-hook 'delete-frame-functions 'server-handle-delete-frame)
+	  (add-hook 'suspend-tty-functions #'server-handle-suspend-tty)
+	  (add-hook 'delete-frame-functions #'server-handle-delete-frame)
 	  (add-hook 'kill-emacs-query-functions
-                    'server-kill-emacs-query-function)
+                    #'server-kill-emacs-query-function)
           ;; We put server's kill-emacs-hook after the others, so that
           ;; frames are not deleted too early, because doing that
           ;; would severely degrade our abilities to communicate with
           ;; the user, while some hooks may wish to ask the user
           ;; questions (e.g., desktop-kill).
-	  (add-hook 'kill-emacs-hook 'server-force-stop t) ;Cleanup upon exit.
+	  (add-hook 'kill-emacs-hook #'server-force-stop t) ;Cleanup upon exit.
 	  (setq server-process
 		(apply #'make-network-process
 		       :name server-name
@@ -792,7 +787,6 @@ Server mode runs a process that accepts commands from the
 `emacsclient' program.  See Info node `Emacs server' and
 `server-start' for details."
   :global t
-  :group 'server
   :version "22.1"
   ;; Fixme: Should this check for an existing server socket and do
   ;; nothing if there is one (for multiple Emacs sessions)?
@@ -1118,7 +1112,7 @@ The following commands are accepted by the client:
 	    ;; Remove this line from STRING.
 	    (setq string (substring string (match-end 0)))
 	    (setq args-left
-		  (mapcar 'server-unquote-arg (split-string request " " t)))
+		  (mapcar #'server-unquote-arg (split-string request " " t)))
 	    (while args-left
               (pcase (pop args-left)
                 ;; -version CLIENT-VERSION: obsolete at birth.
@@ -1341,7 +1335,7 @@ The following commands are accepted by the client:
                           (when initial-buffer
                             (switch-to-buffer initial-buffer 'norecord))))))
 
-          (mapc 'funcall (nreverse commands))
+          (mapc #'funcall (nreverse commands))
 
           ;; Delete the client if necessary.
           (cond
@@ -1441,7 +1435,7 @@ so don't mark these buffers specially, just visit them normally."
 	  (run-hooks 'post-command-hook))
 	(unless nowait
 	  ;; When the buffer is killed, inform the clients.
-	  (add-hook 'kill-buffer-hook 'server-kill-buffer nil t)
+	  (add-hook 'kill-buffer-hook #'server-kill-buffer nil t)
 	  (push proc server-buffer-clients))
 	(push (current-buffer) client-record)))
     (unless nowait
@@ -1552,8 +1546,8 @@ specifically for the clients and did not exist before their request for it."
   "Ask before exiting Emacs if it has live clients."
   (or (not (let (live-client)
              (dolist (proc server-clients)
-               (when (memq t (mapcar 'buffer-live-p (process-get
-                                                     proc 'buffers)))
+               (when (memq t (mapcar #'buffer-live-p
+                                     (process-get proc 'buffers)))
                  (setq live-client t)))
              live-client))
       (yes-or-no-p "This Emacs session has clients; exit anyway? ")))
@@ -1589,7 +1583,7 @@ starts server process and that is all.  Invoked by \\[server-edit]."
 	(not server-process)
 	(memq (process-status server-process) '(signal exit)))
     (server-mode 1))
-   (server-clients (apply 'server-switch-buffer (server-done)))
+   (server-clients (apply #'server-switch-buffer (server-done)))
    (t (message "No server editing buffers exist"))))
 
 (defun server-switch-buffer (&optional next-buffer killed-one filepos)
@@ -1622,7 +1616,7 @@ be a cons cell (LINENUMBER . COLUMNNUMBER)."
     (if (not (buffer-live-p next-buffer))
 	;; If NEXT-BUFFER is a dead buffer, remove the server records for it
 	;; and try the next surviving server buffer.
-	(apply 'server-switch-buffer (server-buffer-done next-buffer))
+	(apply #'server-switch-buffer (server-buffer-done next-buffer))
       ;; OK, we know next-buffer is live, let's display and select it.
       (if (functionp server-window)
 	  (funcall server-window next-buffer)
@@ -1655,7 +1649,14 @@ be a cons cell (LINENUMBER . COLUMNNUMBER)."
 			      (frame-terminal))))
 		'nomini 'visible (selected-window))))
 	    (condition-case nil
-		(switch-to-buffer next-buffer)
+                ;; If the client specified a new buffer position,
+                ;; treat that as an explicit point-move command, and
+                ;; override switch-to-buffer-preserve-window-point.
+                (let ((switch-to-buffer-preserve-window-point
+                       (if filepos
+                           nil
+                         switch-to-buffer-preserve-window-point)))
+                  (switch-to-buffer next-buffer))
 	      ;; After all the above, we might still have ended up with
 	      ;; a minibuffer/dedicated-window (if there's no other).
 	      (error (pop-to-buffer next-buffer)))))))
@@ -1701,7 +1702,7 @@ only these files will be asked to be saved."
   (save-current-buffer
     (dolist (buffer (buffer-list))
       (set-buffer buffer)
-      (remove-hook 'kill-buffer-hook 'server-kill-buffer t)))
+      (remove-hook 'kill-buffer-hook #'server-kill-buffer t)))
   ;; continue standard unloading
   nil)
 

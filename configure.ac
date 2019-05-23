@@ -432,7 +432,7 @@ OPTION_DEFAULT_ON([lcms2],[don't compile with Little CMS support])
 OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
-OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
+OPTION_DEFAULT_OFF([imagemagick],[compile with ImageMagick image support])
 OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
@@ -3708,6 +3708,8 @@ AC_SUBST_FILE([module_env_snippet_27])
 module_env_snippet_25="$srcdir/src/module-env-25.h"
 module_env_snippet_26="$srcdir/src/module-env-26.h"
 module_env_snippet_27="$srcdir/src/module-env-27.h"
+emacs_major_version="${PACKAGE_VERSION%%.*}"
+AC_SUBST(emacs_major_version)
 
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no
@@ -5736,9 +5738,8 @@ m4_define([subdir_makefiles],
 SUBDIR_MAKEFILES="subdir_makefiles"
 AC_CONFIG_FILES(subdir_makefiles)
 
-dnl test/ is not present in release tarfiles.
+dnl The test/ directory is missing if './make-dist --no-tests' was used.
 opt_makefile=test/Makefile
-
 if test -f "$srcdir/$opt_makefile.in"; then
   SUBDIR_MAKEFILES="$SUBDIR_MAKEFILES $opt_makefile"
   dnl Again, it's best not to use a variable.  Though you can add

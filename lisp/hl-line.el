@@ -3,7 +3,6 @@
 ;; Copyright (C) 1998, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author:  Dave Love <fx@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 1998-09-13
 ;; Keywords: faces, frames, emulations
 

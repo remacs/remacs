@@ -251,6 +251,7 @@ I thought did not need to be mentioned here:
 
 Lisp:
 after-load-functions
+after-set-visited-file-name-hook
 auto-coding-functions
 choose-completion-string-functions
 completing-read-function

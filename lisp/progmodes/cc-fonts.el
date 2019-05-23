@@ -1042,7 +1042,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (c-do-declarators
      limit list not-top
      (if types 'c-decl-type-start 'c-decl-id-start)
-     (lambda (id-start id-end end-pos not-top is-function init-char)
+     (lambda (id-start _id-end end-pos _not-top is-function init-char)
        (if types
 	   ;; Register and fontify the identifier as a type.
 	   (let ((c-promote-possible-types t))
@@ -1549,7 +1549,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; Fontification".
-  (while (search-forward-regexp c-enum-clause-introduction-re limit t)
+  (while (and (< (point) limit)
+	      (search-forward-regexp c-enum-clause-introduction-re limit t))
     (when (save-excursion
 	    (backward-char)
 	    (c-backward-over-enum-header))
@@ -2579,14 +2580,14 @@ need for `pike-font-lock-extra-types'.")
 
 ;;; Doc comments.
 
-(defvar c-doc-line-join-re "a\\`")
+(defvar c-doc-line-join-re regexp-unmatchable)
 ;; Matches a join of two lines in a doc comment.
 ;; This should not be changed directly, but instead set by
 ;; `c-setup-doc-comment-style'.  This variable is used in `c-find-decl-spots'
 ;; in (e.g.) autodoc style comments to bridge the gap between a "@\n" at an
 ;; EOL and the token following "//!" on the next line.
 
-(defvar c-doc-bright-comment-start-re "a\\`")
+(defvar c-doc-bright-comment-start-re regexp-unmatchable)
 ;; Matches the start of a "bright" comment, one whose contents may be
 ;; fontified by, e.g., `c-font-lock-declarations'.
 
@@ -2850,7 +2851,8 @@ need for `pike-font-lock-extra-types'.")
 			 "\\)\\)\\s *\\)@[A-Za-z_-]+\\(\\s \\|$\\)"))
 	(markup-faces (list c-doc-markup-face-name c-doc-face-name)))
 
-    (while (re-search-forward line-re limit t)
+    (while (and (< (point) limit)
+		(re-search-forward line-re limit t))
       (goto-char (match-end 1))
 
       (if (looking-at autodoc-decl-keywords)

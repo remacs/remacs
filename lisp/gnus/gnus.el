@@ -2892,7 +2892,7 @@ See Info node `(gnus)Formatting Variables'."
 
 (defun gnus-set-info (group info)
   (setcdr (gethash group gnus-newsrc-hashtb)
-	  info))
+	  (list info)))
 
 
 ;;;
@@ -3143,7 +3143,7 @@ that that variable is buffer-local to the summary buffers."
 	 t)				    ;is news of course.
 	((not (gnus-member-of-valid 'post-mail group)) ;Non-combined.
 	 nil)				;must be mail then.
-	((vectorp article)		;Has header info.
+	((mail-header-p article)		;Has header info.
 	 (eq (gnus-request-type group (mail-header-id article)) 'news))
 	((null article)			       ;Hasn't header info
 	 (eq (gnus-request-type group) 'news)) ;(unknown ==> mail)

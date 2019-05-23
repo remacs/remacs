@@ -3,7 +3,6 @@
 ;; Copyright (C) 1997-1998, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Bob Glickstein <bobg+sregex@zanshin.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions
 ;; Obsolete-since: 24.1
 

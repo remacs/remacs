@@ -144,11 +144,13 @@ typedef intmax_t printmax_t;
 typedef uintmax_t uprintmax_t;
 # define pMd PRIdMAX
 # define pMu PRIuMAX
+# define pMx PRIxMAX
 #else
 typedef EMACS_INT printmax_t;
 typedef EMACS_UINT uprintmax_t;
 # define pMd pI"d"
 # define pMu pI"u"
+# define pMx pI"x"
 #endif
 
 /* Use pD to format ptrdiff_t values, which suffice for indexes into
@@ -2234,7 +2236,7 @@ INLINE int
 }
 
 /* Placeholder for make-docfile to process.  The actual symbol
-   definition is done by lread.c's defsym.  */
+   definition is done by lread.c's define_symbol.  */
 #define DEFSYM(sym, name) /* empty */
 
 
@@ -2677,7 +2679,7 @@ struct Lisp_Buffer_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Buffer_Obj */
     int offset;
-    /* One of Qnil, Qfixnump, Qsymbolp, Qstringp, Qfloatp or Qnumberp.  */
+    /* One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.  */
     Lisp_Object predicate;
   };
 
@@ -3641,7 +3643,6 @@ extern void init_fringe_once (void);
 
 /* Defined in image.c.  */
 extern int x_bitmap_mask (struct frame *, ptrdiff_t);
-extern void reset_image_types (void);
 extern void syms_of_image (void);
 
 #ifdef HAVE_JSON

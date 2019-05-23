@@ -3,7 +3,6 @@
 ;; Copyright (C) 1996-1997, 1999-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions
 ;; Package: emacs
 

@@ -19,7 +19,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 
+#undef NDEBUG
 #include <assert.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -316,16 +318,6 @@ Fmod_test_invalid_finalizer (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
 }
 
 static void
-signal_wrong_type_argument (emacs_env *env, const char *predicate,
-                            emacs_value arg)
-{
-  emacs_value symbol = env->intern (env, "wrong-type-argument");
-  emacs_value elements[2] = {env->intern (env, predicate), arg};
-  emacs_value data = env->funcall (env, env->intern (env, "list"), 2, elements);
-  env->non_local_exit_signal (env, symbol, data);
-}
-
-static void
 signal_errno (emacs_env *env, const char *function)
 {
   const char *message = strerror (errno);
@@ -345,16 +337,10 @@ Fmod_test_sleep_until (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
                        void *data)
 {
   assert (nargs == 2);
-  const double until_seconds = env->extract_float (env, args[0]);
+  const struct timespec until = env->extract_time (env, args[0]);
   if (env->non_local_exit_check (env))
     return NULL;
-  if (until_seconds <= 0)
-    {
-      signal_wrong_type_argument (env, "cl-plusp", args[0]);
-      return NULL;
-    }
   const bool process_input = env->is_not_nil (env, args[1]);
-  const struct timespec until = dtotimespec (until_seconds);
   const struct timespec amount = make_timespec(0,  10000000);
   while (true)
     {
@@ -393,7 +379,11 @@ Fmod_test_nanoseconds (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void 
   struct emacs_mpz nanoseconds;
   assert (LONG_MIN <= time.tv_sec && time.tv_sec <= LONG_MAX);
   mpz_init_set_si (nanoseconds.value, time.tv_sec);
+#ifdef __MINGW32__
+  _Static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
+#else
   static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
+#endif
   mpz_mul_ui (nanoseconds.value, nanoseconds.value, 1000000000);
   assert (0 <= time.tv_nsec && time.tv_nsec <= ULONG_MAX);
   mpz_add_ui (nanoseconds.value, nanoseconds.value, time.tv_nsec);
@@ -445,6 +435,11 @@ bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 int
 emacs_module_init (struct emacs_runtime *ert)
 {
+  /* Check that EMACS_MAJOR_VERSION is defined and an integral
+     constant.  */
+  char dummy[EMACS_MAJOR_VERSION];
+  assert (27 <= sizeof dummy);
+
   if (ert->size < sizeof *ert)
     {
       fprintf (stderr, "Runtime size of runtime structure (%"pT" bytes) "

@@ -4,7 +4,6 @@
 ;; Foundation, Inc.
 
 ;; Author: James Clark <jjc@jclark.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR, Daniel Pfeiffer <occitan@esperanto.org>,
 ;;             F.Potorti@cnuce.cnr.it
 ;; Keywords: wp, hypermedia, comm, languages
@@ -96,24 +95,20 @@ a DOCTYPE or an XML declaration."
 `text-mode-hook' is run first."
   :type 'hook)
 
-;; As long as Emacs's syntax can't be complemented with predicates to context
-;; sensitively confirm the syntax of characters, we have to live with this
-;; kludgy kind of tradeoff.
-(defvar sgml-specials '(?\")
+;; The official handling of "--" is complicated in SGML, and
+;; historically not well supported by browser HTML parsers.
+;; Recommendations for writing HTML comments is to use <!--...-->
+;; (where ... doesn't contain "--") to avoid the complications
+;; altogether (XML goes even further by requiring this in the spec).
+;; So there is probably no need to handle it "correctly".
+(defvar sgml-specials '(?\" ?\')
   "List of characters that have a special meaning for SGML mode.
 This list is used when first loading the `sgml-mode' library.
-The supported characters and potential disadvantages are:
+The supported characters are ?\\\", ?\\=', and ?-.
 
-  ?\\\"	Makes \" in text start a string.
-  ?\\='	Makes \\=' in text start a string.
-  ?-	Makes -- in text start a comment.
-
-When only one of ?\\\" or ?\\=' are included, \"\\='\" or \\='\"\\=', as can be found in
-DTDs, start a string.  To partially avoid this problem this also makes these
-self insert as named entities depending on `sgml-quick-keys'.
-
-Including ?- has the problem of affecting dashes that have nothing to do
-with comments, so we normally turn it off.")
+Including ?- makes double dashes into comment delimiters, but
+they are really only supposed to delimit comments within DTD
+definitions.  So we normally turn it off.")
 
 (defvar sgml-quick-keys nil
   "Use <, >, &, /, SPC and `sgml-specials' keys \"electrically\" when non-nil.
@@ -333,6 +328,24 @@ Any terminating `>' or `/' is not matched.")
 (defvar sgml-font-lock-keywords sgml-font-lock-keywords-1
   "Rules for highlighting SGML code.  See also `sgml-tag-face-alist'.")
 
+(defvar-local sgml--syntax-propertize-ppss nil)
+
+(defun sgml--syntax-propertize-ppss (pos)
+  "Return PPSS at POS, fixing the syntax of any lone `>' along the way."
+  (cl-assert (>= pos (car sgml--syntax-propertize-ppss)))
+  (let ((ppss (parse-partial-sexp (car sgml--syntax-propertize-ppss) pos -1
+                                  nil (cdr sgml--syntax-propertize-ppss))))
+    (while (eq -1 (car ppss))
+      (put-text-property (1- (point)) (point)
+                         'syntax-table (string-to-syntax "."))
+      ;; Hack attack: rather than recompute the ppss from
+      ;; (car sgml--syntax-propertize-ppss), we manually "fix it".
+      (setcar ppss 0)
+      (setq ppss (parse-partial-sexp (point) pos -1 nil ppss)))
+    (setcdr sgml--syntax-propertize-ppss ppss)
+    (setcar sgml--syntax-propertize-ppss pos)
+    ppss))
+
 (eval-and-compile
   (defconst sgml-syntax-propertize-rules
     (syntax-propertize-precompile-rules
@@ -343,29 +356,34 @@ Any terminating `>' or `/' is not matched.")
      ("--[ \t\n]*\\(>\\)" (1 "> b"))
      ("\\(<\\)[?!]" (1 (prog1 "|>"
                          (sgml-syntax-propertize-inside end))))
-     ;; Double quotes outside of tags should not introduce strings which end up
-     ;; hiding tags.  We used to test every double quote and mark it as "."
-     ;; if it's outside of tags, but there are too many double quotes and
+     ;; Quotes outside of tags should not introduce strings which end up
+     ;; hiding tags.  We used to test every quote and mark it as "."
+     ;; if it's outside of tags, but there are too many quotes and
      ;; the resulting number of calls to syntax-ppss made it too slow
      ;; (bug#33887), so we're now careful to leave alone any pair
      ;; of quotes that doesn't hold a < or > char, which is the vast majority.
-     ("\\(\"\\)[^\"<>]*[<>\"]"
-      (1 (unless (eq ?\" (char-before))
+     ("\\(?:\\(?1:\"\\)[^\"<>]*\\|\\(?1:'\\)[^'\"<>]*\\)"
+      (1 (if (eq (char-after) (char-after (match-beginning 0)))
+             (forward-char 1)
            ;; Be careful to call `syntax-ppss' on a position before the one
            ;; we're going to change, so as not to need to flush the data we
            ;; just computed.
-           (if (prog1 (zerop (car (syntax-ppss (match-beginning 0))))
-                 (goto-char (1- (match-end 0))))
+           (if (zerop (save-excursion
+                        (car (sgml--syntax-propertize-ppss
+                              (match-beginning 0)))))
                (string-to-syntax ".")))))
      )))
 
 (defun sgml-syntax-propertize (start end)
   "Syntactic keywords for `sgml-mode'."
-  (goto-char start)
+  (setq sgml--syntax-propertize-ppss (cons start (syntax-ppss start)))
+  (cl-assert (>= (cadr sgml--syntax-propertize-ppss) 0))
   (sgml-syntax-propertize-inside end)
   (funcall
    (syntax-propertize-rules sgml-syntax-propertize-rules)
-   start end))
+   start end)
+  ;; Catch any '>' after the last quote.
+  (sgml--syntax-propertize-ppss end))
 
 (defun sgml-syntax-propertize-inside (end)
   (let ((ppss (syntax-ppss)))

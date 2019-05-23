@@ -792,14 +792,14 @@ article number.  This function is called narrowed to an article."
   "Add a nov line for the GROUP nov headers, incrementally."
   (with-current-buffer (nnml-open-incremental-nov group)
     (goto-char (point-max))
-    (mail-header-set-number headers article)
+    (setf (mail-header-number headers) article)
     (nnheader-insert-nov headers)))
 
 (defun nnml-add-nov (group article headers)
   "Add a nov line for the GROUP base."
   (with-current-buffer (nnml-open-nov group)
     (goto-char (point-max))
-    (mail-header-set-number headers article)
+    (setf (mail-header-number headers) article)
     (nnheader-insert-nov headers)))
 
 (defsubst nnml-header-value ()
@@ -816,8 +816,8 @@ article number.  This function is called narrowed to an article."
 	     (1- (point))
 	   (point-max))))
       (let ((headers (nnheader-parse-naked-head)))
-	(mail-header-set-chars headers chars)
-	(mail-header-set-number headers number)
+	(setf (mail-header-chars  headers) chars)
+	(setf (mail-header-number headers) number)
 	headers))))
 
 (defun nnml-get-nov-buffer (group &optional incrementalp)

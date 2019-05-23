@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
 ;; Author: Noah Friedman <friedman@splode.com>
-;; Maintainer: friedman@splode.com
+;; Maintainer: Noah Friedman <friedman@splode.com>
 ;; Keywords: extensions
 ;; Created: 1995-10-06
 

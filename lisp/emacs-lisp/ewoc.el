@@ -4,7 +4,7 @@
 
 ;; Author: Per Cederqvist <ceder@lysator.liu.se>
 ;;	Inge Wallin <inge@lysator.liu.se>
-;; Maintainer: monnier@gnu.org
+;; Maintainer: Stefan Monnier <monnier@gnu.org>
 ;; Created: 3 Aug 1992
 ;; Keywords: extensions, lisp
 

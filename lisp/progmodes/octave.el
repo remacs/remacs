@@ -4,7 +4,6 @@
 
 ;; Author: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
 ;;	   John Eaton <jwe@octave.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages
 
 ;; This file is part of GNU Emacs.
@@ -1691,7 +1690,7 @@ code line."
   (eval-and-compile (require 'help-mode))
   ;; Don't highlight `EXAMPLE' as elisp symbols by using a regexp that
   ;; can never match.
-  (setq-local help-xref-symbol-regexp "x\\`"))
+  (setq-local help-xref-symbol-regexp regexp-unmatchable))
 
 (defun octave-help (fn)
   "Display the documentation of FN."

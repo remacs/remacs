@@ -3,8 +3,8 @@
 ;; Copyright (C) 1992-1994, 1997, 1999, 2001-2019 Free Software
 ;; Foundation, Inc.
 
-;; Author: Ken Manheimer <klm@i.am>
-;; Maintainer: Ken Manheimer <klm@i.am>
+;; Author: Ken Manheimer <ken dot manheimer at gmail...>
+;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Created: Mar 1993 Ken Manheimer, klm@nist.gov - first release to usenet
 ;; Keywords: help, abbrev
 

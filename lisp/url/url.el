@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, data, processes, hypermedia
 
 ;; This file is part of GNU Emacs.
@@ -136,9 +135,11 @@ STATUS is a plist representing what happened during the request,
 with most recent events first, or an empty list if no events have
 occurred.  Each pair is one of:
 
-\(:redirect REDIRECTED-TO) - the request was redirected to this URL
-\(:error (ERROR-SYMBOL . DATA)) - an error occurred.  The error can be
-signaled with (signal ERROR-SYMBOL DATA).
+\(:redirect REDIRECTED-TO) - the request was redirected to this URL.
+
+\(:error (error type . DATA)) - an error occurred.  TYPE is a
+symbol that says something about where the error occurred, and
+DATA is a list (possibly nil) that describes the error further.
 
 Return the buffer URL will load into, or nil if the process has
 already completed (i.e. URL was a mailto URL or similar; in this case

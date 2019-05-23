@@ -1361,6 +1361,19 @@ print_prune_string_charset (Lisp_Object string)
   return string;
 }
 
+#ifdef HAVE_MODULES
+/* Return a data pointer equal to FUNCPTR.  */
+
+static void const *
+data_from_funcptr (void (*funcptr) (void))
+{
+  /* The module code, and the POSIX API for dynamic linking, already
+     assume that function and data pointers are represented
+     interchangeably, so it's OK to assume that here too.  */
+  return (void const *) funcptr;
+}
+#endif
+
 static bool
 print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 		  char *buf)
@@ -1788,23 +1801,20 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
       {
 	print_c_string ("#<module function ", printcharfun);
         module_funcptr ptr = module_function_address (XMODULE_FUNCTION (obj));
-        const char *file = NULL;
-	const char *symbol = NULL;
+	char const *file;
+	char const *symbol;
 	dynlib_addr (ptr, &file, &symbol);
 
 	if (symbol == NULL)
 	  {
-	    print_c_string ("at ", printcharfun);
-	    enum { pointer_bufsize = sizeof ptr * 16 / CHAR_BIT + 2 + 1 };
-	    char buffer[pointer_bufsize];
-	    int needed = snprintf (buffer, sizeof buffer, "%p", ptr);
-	    const char p0x[] = "0x";
-	    eassert (needed <= sizeof buffer);
-	    /* ANSI C doesn't guarantee that %p produces a string that
-	       begins with a "0x".  */
-	    if (c_strncasecmp (buffer, p0x, sizeof (p0x) - 1) != 0)
-	      print_c_string (p0x, printcharfun);
-	    print_c_string (buffer, printcharfun);
+	    uintptr_t ui = (uintptr_t) data_from_funcptr (ptr);
+
+	    /* In theory this assignment could lose info on pre-C99
+	       hosts, but in practice it doesn't.  */
+	    uprintmax_t up = ui;
+
+	    int len = sprintf (buf, "at 0x%"pMx, up);
+	    strout (buf, len, len, printcharfun);
 	  }
 	else
 	  print_c_string (symbol, printcharfun);
@@ -1832,7 +1842,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 {
   char buf[max (sizeof "from..to..in " + 2 * INT_STRLEN_BOUND (EMACS_INT),
 		max (sizeof " . #" + INT_STRLEN_BOUND (printmax_t),
-		     40))];
+		     max ((sizeof "at 0x"
+			   + (sizeof (uprintmax_t) * CHAR_BIT + 4 - 1) / 4),
+			  40)))];
   current_thread->stack_top = buf;
   maybe_quit ();
 

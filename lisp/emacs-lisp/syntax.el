@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.
@@ -286,7 +285,7 @@ END) suitable for `syntax-propertize-function'."
 (defun syntax-propertize (pos)
   "Ensure that syntax-table properties are set until POS (a buffer point)."
   (when (< syntax-propertize--done pos)
-    (if (null syntax-propertize-function)
+    (if (memq syntax-propertize-function '(nil ignore))
         (setq syntax-propertize--done (max (point-max) pos))
       ;; (message "Needs to syntax-propertize from %s to %s"
       ;;          syntax-propertize--done pos)
@@ -404,7 +403,8 @@ These are valid when the buffer has no restriction.")
 (defvar-local syntax-ppss-narrow-start nil
   "Start position of the narrowing for `syntax-ppss-narrow'.")
 
-(defalias 'syntax-ppss-after-change-function 'syntax-ppss-flush-cache)
+(define-obsolete-function-alias 'syntax-ppss-after-change-function
+  #'syntax-ppss-flush-cache "27.1")
 (defun syntax-ppss-flush-cache (beg &rest ignored)
   "Flush the cache of `syntax-ppss' starting at position BEG."
   ;; Set syntax-propertize to refontify anything past beg.

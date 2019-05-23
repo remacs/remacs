@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985-1986, 1994, 2000-2019 Free Software Foundation,
 ;; Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, languages
 ;; Package: emacs
 
@@ -645,7 +644,7 @@ Interactively, the behavior depends on `narrow-to-defun-include-comments'."
       (re-search-backward "^\n" (- (point) 1) t)
       (narrow-to-region beg end))))
 
-(defvar insert-pair-alist
+(defcustom insert-pair-alist
   '((?\( ?\)) (?\[ ?\]) (?\{ ?\}) (?\< ?\>) (?\" ?\") (?\' ?\') (?\` ?\'))
   "Alist of paired characters inserted by `insert-pair'.
 Each element looks like (OPEN-CHAR CLOSE-CHAR) or (COMMAND-CHAR
@@ -655,7 +654,16 @@ or without modifiers, are inserted by `insert-pair'.
 
 If COMMAND-CHAR is specified, it is a character that triggers the
 insertion of the open/close pair, and COMMAND-CHAR itself isn't
-inserted.")
+inserted."
+  :type '(repeat (choice (list :tag "Pair"
+                               (character :tag "Open")
+                               (character :tag "Close"))
+                         (list :tag "Triple"
+                               (character :tag "Command")
+                               (character :tag "Open")
+                               (character :tag "Close"))))
+  :group 'lisp
+  :version "27.1")
 
 (defun insert-pair (&optional arg open close)
   "Enclose following ARG sexps in a pair of OPEN and CLOSE characters.

@@ -1078,13 +1078,15 @@ point and mark around the citation text as modified."
 
 (defcustom message-signature mail-signature
   "String to be inserted at the end of the message buffer.
-If t, the `message-signature-file' file will be inserted instead.
-If a function, the result from the function will be used instead.
-If a form, the result from the form will be used instead."
+If nil, don't insert a signature.
+If t, insert `message-signature-file'.
+If a function or form, insert its result.
+See `mail-signature' for the recommended format of a signature."
   :version "23.2"
-  :type '(choice string (const :tag "Contents of signature file" t)
-		 function
-		 sexp)
+  :type '(choice string
+                 (const :tag "None" nil)
+                 (const :tag "Contents of signature file" t)
+                 function sexp)
   :risky t
   :link '(custom-manual "(message)Insertion Variables")
   :group 'message-insertion)
@@ -1599,19 +1601,21 @@ starting with `not' and followed by regexps."
 	(progn (goto-char (match-beginning 0)) (match-end 0)) nil
         (1 'message-header-name)
         (2 'message-header-other nil t)))
-      ,@(if (and mail-header-separator
-		 (not (equal mail-header-separator "")))
-	    `((,(concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
-	       1 'message-separator))
-	  nil)
-      ((lambda (limit)
-	 (re-search-forward (concat "^\\("
-				    message-cite-prefix-regexp
-				    "\\).*")
-			    limit t))
-       (0 'message-cited-text))
-      ("<#/?\\(multipart\\|part\\|external\\|mml\\|secure\\)[^>]*>"
-       (0 'message-mml))))
+      (,(lambda (limit)
+          (and mail-header-separator
+               (not (equal mail-header-separator ""))
+               (re-search-forward
+                (concat "^" (regexp-quote mail-header-separator) "$")
+                limit t)))
+       0 'message-separator)
+      (,(lambda (limit)
+          (re-search-forward (concat "^\\(?:"
+                                     message-cite-prefix-regexp
+                                     "\\).*")
+                             limit t))
+       0 'message-cited-text)
+      ("<#/?\\(?:multipart\\|part\\|external\\|mml\\|secure\\)[^>]*>"
+       0 'message-mml)))
   "Additional expressions to highlight in Message mode.")
 
 (defvar message-face-alist
@@ -2051,8 +2055,9 @@ see `message-narrow-to-headers-or-head'."
   (let ((regexp (if (stringp gnus-list-identifiers)
 		    gnus-list-identifiers
 		  (mapconcat 'identity gnus-list-identifiers " *\\|"))))
-    (if (string-match (concat "\\(\\(\\(Re: +\\)?\\(" regexp
-			      " *\\)\\)+\\(Re: +\\)?\\)") subject)
+    (if (and (not (equal regexp ""))
+             (string-match (concat "\\(\\(\\(Re: +\\)?\\(" regexp
+                                   " *\\)\\)+\\(Re: +\\)?\\)") subject))
 	(concat (substring subject 0 (match-beginning 1))
 		(or (match-string 3 subject)
 		    (match-string 5 subject))
@@ -2894,42 +2899,9 @@ See also `message-forbidden-properties'."
 ;;;###autoload
 (define-derived-mode message-mode text-mode "Message"
   "Major mode for editing mail and news to be sent.
-Like Text Mode but with these additional commands:\\<message-mode-map>
-C-c C-s  `message-send' (send the message)  C-c C-c  `message-send-and-exit'
-C-c C-d  Postpone sending the message       C-c C-k  Kill the message
-C-c C-f  move to a header field (and create it if there isn't):
-	 C-c C-f C-t  move to To	C-c C-f C-s  move to Subject
-	 C-c C-f C-c  move to Cc	C-c C-f C-b  move to Bcc
-	 C-c C-f C-w  move to Fcc	C-c C-f C-r  move to Reply-To
-	 C-c C-f C-u  move to Summary	C-c C-f C-n  move to Newsgroups
-	 C-c C-f C-k  move to Keywords	C-c C-f C-d  move to Distribution
-	 C-c C-f C-o  move to From (\"Originator\")
-	 C-c C-f C-f  move to Followup-To
-	 C-c C-f C-m  move to Mail-Followup-To
-	 C-c C-f C-e  move to Expires
-	 C-c C-f C-i  cycle through Importance values
-	 C-c C-f s    change subject and append \"(was: <Old Subject>)\"
-	 C-c C-f x    crossposting with FollowUp-To header and note in body
-	 C-c C-f t    replace To: header with contents of Cc: or Bcc:
-	 C-c C-f a    Insert X-No-Archive: header and a note in the body
-C-c C-t  `message-insert-to' (add a To header to a news followup)
-C-c C-l  `message-to-list-only' (removes all but list address in to/cc)
-C-c C-n  `message-insert-newsgroups' (add a Newsgroup header to a news reply)
-C-c C-b  `message-goto-body' (move to beginning of message text).
-C-c C-i  `message-goto-signature' (move to the beginning of the signature).
-C-c C-w  `message-insert-signature' (insert `message-signature-file' file).
-C-c C-y  `message-yank-original' (insert current message, if any).
-C-c C-q  `message-fill-yanked-message' (fill what was yanked).
-C-c C-e  `message-elide-region' (elide the text between point and mark).
-C-c C-v  `message-delete-not-region' (remove the text outside the region).
-C-c C-z  `message-kill-to-signature' (kill the text up to the signature).
-C-c C-r  `message-caesar-buffer-body' (rot13 the message body).
-C-c C-a  `mml-attach-file' (attach a file as MIME).
-C-c C-u  `message-insert-or-toggle-importance'  (insert or cycle importance).
-C-c M-n  `message-insert-disposition-notification-to'  (request receipt).
-C-c M-m  `message-mark-inserted-region' (mark region with enclosing tags).
-C-c M-f  `message-mark-insert-file' (insert file marked with enclosing tags).
-M-RET    `message-newline-and-reformat' (break the line and reformat)."
+Like `text-mode', but with these additional commands:
+
+\\{message-mode-map}"
   (set (make-local-variable 'message-reply-buffer) nil)
   (set (make-local-variable 'message-inserted-headers) nil)
   (set (make-local-variable 'message-send-actions) nil)
@@ -3847,13 +3819,14 @@ This function uses `mail-citation-hook' if that is non-nil."
 	      (narrow-to-region start end)
 	      (message-narrow-to-head-1)
 	      (setq x-no-archive (message-fetch-field "x-no-archive"))
-	      (vector 0
-		      (or (message-fetch-field "subject") "none")
-		      (or (message-fetch-field "from") "nobody")
-		      (message-fetch-field "date")
-		      (message-fetch-field "message-id" t)
-		      (message-fetch-field "references")
-		      0 0 ""))))
+	      (make-full-mail-header
+               0
+	       (or (message-fetch-field "subject") "none")
+	       (or (message-fetch-field "from") "nobody")
+	       (message-fetch-field "date")
+	       (message-fetch-field "message-id" t)
+	       (message-fetch-field "references")
+	       0 0 ""))))
       (mml-quote-region start end)
       (when strip-signature
 	;; Allow undoing.
@@ -4588,8 +4561,7 @@ This function could be useful in `message-setup-hook'."
 	      (message-generate-headers '(Lines)))
 	    ;; Remove some headers.
 	    (message-remove-header message-ignored-mail-headers t)
-	    (let ((mail-parse-charset message-default-charset))
-	      (mail-encode-encoded-word-buffer)))
+            (mail-encode-encoded-word-buffer))
 	  (goto-char (point-max))
 	  ;; require one newline at the end.
 	  (or (= (preceding-char) ?\n)
@@ -4962,8 +4934,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 		  (message-generate-headers '(Lines)))
 		;; Remove some headers.
 		(message-remove-header message-ignored-news-headers t)
-		(let ((mail-parse-charset message-default-charset))
-		  (mail-encode-encoded-word-buffer)))
+                (mail-encode-encoded-word-buffer))
 	      (goto-char (point-max))
 	      ;; require one newline at the end.
 	      (or (= (preceding-char) ?\n)
@@ -5441,8 +5412,7 @@ The result is a fixnum."
 	  (while (setq file (message-fetch-field "fcc" t))
 	    (push file list)
 	    (message-remove-header "fcc" nil t))
-	  (let ((mail-parse-charset message-default-charset)
-		(rfc2047-header-encoding-alist
+          (let ((rfc2047-header-encoding-alist
 		 (cons '("Newsgroups" . default)
 		       rfc2047-header-encoding-alist)))
 	    (mail-encode-encoded-word-buffer)))
@@ -6951,21 +6921,12 @@ Useful functions to put in this list include:
   :type '(repeat function))
 
 (defun message-simplify-subject (subject &optional functions)
-  "Return simplified SUBJECT."
-  (unless functions
-    ;; Simplify fully:
-    (setq functions message-simplify-subject-functions))
-  (when (and (memq 'message-strip-list-identifiers functions)
-	     gnus-list-identifiers)
-    (setq subject (message-strip-list-identifiers subject)))
-  (when (memq 'message-strip-subject-re functions)
-    (setq subject (concat "Re: " (message-strip-subject-re subject))))
-  (when (and (memq 'message-strip-subject-trailing-was functions)
-	     message-subject-trailing-was-query)
-    (setq subject (message-strip-subject-trailing-was subject)))
-  (when (memq 'message-strip-subject-encoded-words functions)
-    (setq subject (message-strip-subject-encoded-words subject)))
-  subject)
+  "Return simplified SUBJECT.
+Do so by calling each one-argument function in the list of functions
+specified by FUNCTIONS, if non-nil, or by the variable
+`message-simplify-subject-functions' otherwise."
+  (dolist (fun (or functions message-simplify-subject-functions) subject)
+    (setq subject (funcall fun subject))))
 
 ;;;###autoload
 (defun message-reply (&optional to-address wide switch-function)
@@ -6998,7 +6959,7 @@ Useful functions to put in this list include:
 	    subject (or (message-fetch-field "subject") "none"))
 
       ;; Strip list identifiers, "Re: ", and "was:"
-      (setq subject (message-simplify-subject subject))
+      (setq subject (concat "Re: " (message-simplify-subject subject)))
 
       (when (and (setq gnus-warning (message-fetch-field "gnus-warning"))
 		 (string-match "<[^>]+>" gnus-warning))
@@ -7017,8 +6978,8 @@ Useful functions to put in this list include:
 	  (if wide to-address nil))
 	 switch-function))
       (setq message-reply-headers
-	    (vector 0 (cdr (assq 'Subject headers))
-		    from date message-id references 0 0 ""))
+	    (make-full-mail-header 0 (cdr (assq 'Subject headers))
+		                   from date message-id references 0 0 ""))
       (message-setup headers cur))))
 
 ;;;###autoload
@@ -7069,13 +7030,14 @@ If TO-NEWSGROUPS, use that as the new Newsgroups line."
 		   (string-match "world" distribution)))
 	(setq distribution nil))
       ;; Strip list identifiers, "Re: ", and "was:"
-      (setq subject (message-simplify-subject subject))
+      (setq subject (concat "Re: " (message-simplify-subject subject)))
       (widen))
 
     (message-pop-to-buffer (message-buffer-name "followup" from newsgroups))
 
     (setq message-reply-headers
-	  (vector 0 subject from date message-id references 0 0 ""))
+	  (make-full-mail-header
+           0 subject from date message-id references 0 0 ""))
 
     (message-setup
      `((Subject . ,subject)
@@ -8101,9 +8063,7 @@ regexp VARSTR."
 
 (defun message-encode-message-body ()
   (unless message-inhibit-body-encoding
-    (let ((mail-parse-charset (or mail-parse-charset
-				  message-default-charset))
-	  (case-fold-search t)
+    (let ((case-fold-search t)
 	  lines content-type-p)
       (message-goto-body)
       (save-restriction

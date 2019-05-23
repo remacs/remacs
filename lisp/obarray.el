@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: obarray functions
 ;; Package: emacs
 

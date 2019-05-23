@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1985-1987, 1993-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -3353,7 +3352,7 @@ is output."
   :group 'shell
   :version "26.1")
 
-(defcustom shell-command-width nil
+(defcustom async-shell-command-width nil
   "Number of display columns available for asynchronous shell command output.
 If nil, use the shell default number (usually 80 columns).
 If a positive integer, tell the shell to use that number of columns for
@@ -3627,8 +3626,8 @@ impose the use of a shell (with its need to quote arguments)."
                   (shell-command--save-pos-or-erase)
 		  (setq default-directory directory)
 		  (let ((process-environment
-			 (if (natnump shell-command-width)
-			     (cons (format "COLUMNS=%d" shell-command-width)
+			 (if (natnump async-shell-command-width)
+			     (cons (format "COLUMNS=%d" async-shell-command-width)
 				   process-environment)
 			   process-environment)))
 		    (setq proc
@@ -5612,7 +5611,7 @@ see `region-noncontiguous-p' and `extract-rectangle-bounds'."
   "Return non-nil if the region contains several pieces.
 An example is a rectangular region handled as a list of
 separate contiguous regions for each line."
-  (> (length (region-bounds)) 1))
+  (cdr (region-bounds)))
 
 (defvar redisplay-unhighlight-region-function
   (lambda (rol) (when (overlayp rol) (delete-overlay rol))))

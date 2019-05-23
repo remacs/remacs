@@ -260,6 +260,19 @@ foo = long_function_name(
    (should (eq (car (python-indent-context)) :inside-paren-newline-start))
    (should (= (python-indent-calculate-indentation) 4))))
 
+(ert-deftest python-indent-hanging-close-paren ()
+  "Like first pep8 case, but with hanging close paren." ;; See Bug#20742.
+  (python-tests-with-temp-buffer
+   "\
+foo = long_function_name(var_one, var_two,
+                         var_three, var_four
+                         )
+"
+   (should (= (python-indent-calculate-indentation) 0))
+   (python-tests-look-at ")")
+   (should (eq (car (python-indent-context)) :inside-paren-at-closing-paren))
+   (should (= (python-indent-calculate-indentation) 25))))
+
 (ert-deftest python-indent-base-case ()
   "Check base case does not trigger errors."
   (python-tests-with-temp-buffer

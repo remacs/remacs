@@ -1282,29 +1282,6 @@ If no one is selected, default public key is exported.  ")))
        (epa-display-error context)
        (signal (car error) (cdr error))))))
 
-;; (defun epa-sign-keys (keys &optional local)
-;;   "Sign selected KEYS.
-;; If a prefix-arg is specified, the signature is marked as non exportable.
-
-;; Don't use this command in Lisp programs!"
-;;   (declare (interactive-only t))
-;;   (interactive
-;;    (let ((keys (epa--marked-keys)))
-;;      (unless keys
-;;        (error "No keys selected"))
-;;      (list keys current-prefix-arg)))
-;;   (let ((context (epg-make-context epa-protocol)))
-;;     (epg-context-set-passphrase-callback context
-;; 	                                    #'epa-passphrase-callback-function)
-;;     (epg-context-set-progress-callback context
-;; 	                                  (cons
-;; 	                                    #'epa-progress-callback-function
-;; 	                                    "Signing keys..."))
-;;     (message "Signing keys...")
-;;     (epg-sign-keys context keys local)
-;;     (message "Signing keys...done")))
-;; (make-obsolete 'epa-sign-keys "Do not use.")
-
 (provide 'epa)
 
 ;;; epa.el ends here

@@ -725,12 +725,11 @@ struct x_output
 #ifdef USE_CAIRO
   /* Cairo drawing context.  */
   cairo_t *cr_context;
-  /* Cairo surface for double buffering */
-  cairo_surface_t *cr_surface;
+  /* Width and height reported by the last ConfigureNotify event.
+     They are used when creating the cairo surface next time.  */
+  int cr_surface_desired_width, cr_surface_desired_height;
 #endif
 };
-
-#define No_Cursor (None)
 
 enum
 {
@@ -1107,6 +1106,7 @@ extern int x_dispatch_event (XEvent *, Display *);
 #endif
 extern int x_x_to_emacs_modifiers (struct x_display_info *, int);
 #ifdef USE_CAIRO
+extern void x_cr_destroy_frame_context (struct frame *);
 extern cairo_t *x_begin_cr_clip (struct frame *, GC);
 extern void x_end_cr_clip (struct frame *);
 extern void x_set_cr_source_with_gc_foreground (struct frame *, GC);
@@ -1222,7 +1222,8 @@ extern void destroy_frame_xic (struct frame *);
 extern void xic_set_preeditarea (struct window *, int, int);
 extern void xic_set_statusarea (struct frame *);
 extern void xic_set_xfontset (struct frame *, const char *);
-extern bool x_defined_color (struct frame *, const char *, XColor *, bool, bool);
+extern bool x_defined_color (struct frame *, const char *, Emacs_Color *,
+                             bool, bool);
 #ifdef HAVE_X_I18N
 extern void free_frame_xic (struct frame *);
 # if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
@@ -1260,15 +1261,6 @@ extern void x_session_close (void);
 /* Is the frame embedded into another application? */
 
 #define FRAME_X_EMBEDDED_P(f) (FRAME_X_OUTPUT(f)->explicit_parent != 0)
-
-#define STORE_XCHAR2B(chp, b1, b2) \
-  ((chp)->byte1 = (b1), (chp)->byte2 = (b2))
-
-#define XCHAR2B_BYTE1(chp) \
-  ((chp)->byte1)
-
-#define XCHAR2B_BYTE2(chp) \
-  ((chp)->byte2)
 
 #define STORE_NATIVE_RECT(nr,rx,ry,rwidth,rheight)	\
   ((nr).x = (rx),					\

@@ -32,6 +32,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <gmp.h>
 #endif
 
+#define EMACS_MAJOR_VERSION @emacs_major_version@
+
 #if defined __cplusplus && __cplusplus >= 201103L
 # define EMACS_NOEXCEPT noexcept
 #else

@@ -3,7 +3,6 @@
 ;; Copyright (C) 1997-1998, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author:     Martin Lorentzson  <emwson@emw.ericsson.se>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 ;; Package: vc
 

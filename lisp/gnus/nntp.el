@@ -647,7 +647,7 @@ command whose response triggered the error."
                               (nntp-close-server))
                             (signal 'quit nil))))
                  (when -timer
-                   (nnheader-cancel-timer -timer)))
+                   (cancel-timer -timer)))
                nil))
       (setq nntp--report-1 nntp-report-n))
     nntp-with-open-group-internal))
@@ -1280,7 +1280,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 	     (signal 'quit nil)
 	     nil))))
     (when timer
-      (nnheader-cancel-timer timer))
+      (cancel-timer timer))
     (when (and process
 	       (not (memq (process-status process) '(open run))))
       (with-current-buffer pbuffer
@@ -1339,7 +1339,7 @@ If SEND-IF-FORCE, only send authinfo to the server if the
 (defun nntp-async-stop (proc)
   (setq nntp-async-process-list (delq proc nntp-async-process-list))
   (when (and nntp-async-timer (not nntp-async-process-list))
-    (nnheader-cancel-timer nntp-async-timer)
+    (cancel-timer nntp-async-timer)
     (setq nntp-async-timer nil)))
 
 (defun nntp-after-change-function (beg end len)

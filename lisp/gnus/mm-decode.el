@@ -236,6 +236,7 @@ before the external MIME handler is invoked."
     ("text/x-patch" mm-display-patch-inline identity)
     ;; In case mime.types uses x-diff (as does Debian's mime-support-3.40).
     ("text/x-diff" mm-display-patch-inline identity)
+    ("application/x-patch" mm-display-patch-inline identity)
     ("application/emacs-lisp" mm-display-elisp-inline identity)
     ("application/x-emacs-lisp" mm-display-elisp-inline identity)
     ("application/x-shellscript" mm-display-shell-script-inline identity)
@@ -261,15 +262,6 @@ before the external MIME handler is invoked."
     ("text/.*" mm-inline-text identity)
     ("application/x-.?tar\\(-.*\\)?" mm-archive-dissect-and-inline identity)
     ("application/zip" mm-archive-dissect-and-inline identity)
-    ("audio/wav" mm-inline-audio
-     ,(lambda (_handle)
-       (and (fboundp 'device-sound-enabled-p)
-	    (device-sound-enabled-p))))
-    ("audio/au"
-     mm-inline-audio
-     ,(lambda (_handle)
-       (and (fboundp 'device-sound-enabled-p)
-	    (device-sound-enabled-p))))
     ("application/pgp-signature" ignore identity)
     ("application/x-pkcs7-signature" ignore identity)
     ("application/pkcs7-signature" ignore identity)
@@ -303,8 +295,9 @@ before the external MIME handler is invoked."
 
 (defcustom mm-inlined-types
   '("image/.*" "text/.*" "message/delivery-status" "message/rfc822"
-    "message/partial" "message/external-body" "application/emacs-lisp"
-    "application/x-emacs-lisp"
+    "message/partial" "message/external-body"
+    "application/x-patch"
+    "application/emacs-lisp" "application/x-emacs-lisp"
     "application/pgp-signature" "application/x-pkcs7-signature"
     "application/pkcs7-signature" "application/x-pkcs7-mime"
     "application/pkcs7-mime"
@@ -1118,7 +1111,7 @@ external if displayed external."
 	  (mm-remove-part handle)))))))
 
 (defun mm-destroy-parts (handles)
-  "Remove the displayed MIME parts represented by HANDLES."
+  "Destroy the displayed MIME parts represented by HANDLES."
   (if (and (listp handles)
 	   (bufferp (car handles)))
       (mm-destroy-part handles)

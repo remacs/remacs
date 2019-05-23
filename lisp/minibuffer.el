@@ -846,6 +846,8 @@ styles for specific categories, such as files, buffers, etc."
 (defvar completion-category-defaults
   '((buffer (styles . (basic substring)))
     (unicode-name (styles . (basic substring)))
+    ;; A new style that combines substring and pcm might be better,
+    ;; e.g. one that does not anchor to bos.
     (project-file (styles . (substring)))
     (info-menu (styles . (basic substring))))
   "Default settings for specific completion categories.
@@ -2968,28 +2970,6 @@ or a symbol, see `completion-pcm--merge-completions'."
       ;; An empty string might be erroneously added at the beginning.
       ;; It should be avoided properly, but it's so easy to remove it here.
       (delete "" (nreverse pattern)))))
-
-(defun completion-pcm--optimize-pattern (p)
-  ;; Remove empty strings in a separate phase since otherwise a ""
-  ;; might prevent some other optimization, as in '(any "" any).
-  (setq p (delete "" p))
-  (let ((n '()))
-    (while p
-      (pcase p
-        (`(,(and s1 (pred stringp)) ,(and s2 (pred stringp)) . ,rest)
-         (setq p (cons (concat s1 s2) rest)))
-        (`(,(and p1 (pred symbolp)) ,(and p2 (guard (eq p1 p2))) . ,_)
-         ;; Unused lexical variable warning due to body not using p1, p2.
-         ;; https://debbugs.gnu.org/16771
-         (setq p (cdr p)))
-        (`(star ,(pred symbolp) . ,rest) (setq p `(star . ,rest)))
-        (`(,(pred symbolp) star . ,rest) (setq p `(star . ,rest)))
-        (`(point ,(or 'any 'any-delim) . ,rest) (setq p `(point . ,rest)))
-        (`(,(or 'any 'any-delim) point . ,rest) (setq p `(point . ,rest)))
-        (`(any ,(or 'any 'any-delim) . ,rest) (setq p `(any . ,rest)))
-        (`(,(pred symbolp)) (setq p nil)) ;Implicit terminating `any'.
-        (_ (push (pop p) n))))
-    (nreverse n)))
 
 (defun completion-pcm--pattern->regex (pattern &optional group)
   (let ((re

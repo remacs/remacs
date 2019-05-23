@@ -1062,7 +1062,8 @@ Optional second arg DEF is value to return if user enters an empty line,
 Optional third arg REQUIRE-MATCH has the same meaning as the
  REQUIRE-MATCH argument of `completing-read'.
 Optional arg PREDICATE, if non-nil, is a function limiting the buffers that
-can be considered.  It will be called with each potential candidate, and
+can be considered.  It will be called with each potential candidate, in
+the form of either a string or a cons cell whose `car' is a string, and
 should return non-nil to accept the candidate for completion, nil otherwise.
 If `read-buffer-completion-ignore-case' is non-nil, completion ignores
 case while reading the buffer name.

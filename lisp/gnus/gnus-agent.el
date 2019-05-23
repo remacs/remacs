@@ -2439,7 +2439,7 @@ modified) original contents, they are first saved to their own file."
           ;; Parse them and see which articles we want to fetch.
           (setq gnus-newsgroup-dependencies
                 (or gnus-newsgroup-dependencies
-                    (make-vector (length articles) 0)))
+                    (gnus-make-hashtable (length articles))))
           (setq gnus-newsgroup-headers
                 (or gnus-newsgroup-headers
                     (gnus-get-newsgroup-headers-xover articles nil nil
@@ -3929,7 +3929,7 @@ If REREAD is not nil, downloaded articles are marked as unread."
 		     (nnheader-insert-file-contents file)
 		     (nnheader-remove-body)
 		     (setq header (nnheader-parse-naked-head)))
-		   (mail-header-set-number header (car downloaded))
+		   (setf (mail-header-number header) (car downloaded))
 		   (if nov-arts
 		       (let ((key (concat "^" (int-to-string (car nov-arts))
 					  "\t")))

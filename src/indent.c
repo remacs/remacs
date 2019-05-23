@@ -983,9 +983,10 @@ If specified column is within a character, point goes after that character.
 If it's past end of line, point goes to end of line.
 
 Optional second argument FORCE non-nil means if COLUMN is in the
-middle of a tab character, change it to spaces.
-In addition, if FORCE is t, and the line is too short to reach
-COLUMN, add spaces/tabs to get there.
+middle of a tab character, either change it to spaces (when
+`indent-tabs-mode' is nil), or insert enough spaces before it to reach
+COLUMN (otherwise).  In addition, if FORCE is t, and the line is too short
+to reach COLUMN, add spaces/tabs to get there.
 
 The return value is the current column.  */)
   (Lisp_Object column, Lisp_Object force)

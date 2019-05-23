@@ -140,29 +140,25 @@ main (int argc, char **argv)
     }
   else
     {
-      char *finger = memmem (buf, chunksz, fingerprint, sizeof fingerprint);
-      if (!finger)
+      bool fingered = false;
+
+      for (char *finger = buf;
+	   (finger = memmem (finger, buf + chunksz - finger,
+			     fingerprint, sizeof fingerprint));
+	   finger++)
+	{
+	  if (! (fseeko (f, finger - buf, SEEK_SET) == 0
+		 && fwrite (digest, 1, sizeof digest, f) == sizeof digest))
+	    {
+	      perror (file);
+	      return EXIT_FAILURE;
+	    }
+	  fingered = true;
+	}
+
+      if (!fingered)
 	{
 	  fprintf (stderr, "%s: %s: missing fingerprint\n", prog, file);
-	  return EXIT_FAILURE;
-	}
-      else if (memmem (finger + 1, buf + chunksz - (finger + 1),
-		       fingerprint, sizeof fingerprint))
-	{
-	  fprintf (stderr, "%s: %s: two occurrences of fingerprint\n",
-		   prog, file);
-	  return EXIT_FAILURE;
-	}
-
-      if (fseeko (f, finger - buf, SEEK_SET) != 0)
-	{
-	  perror (file);
-	  return EXIT_FAILURE;
-	}
-
-      if (fwrite (digest, 1, sizeof digest, f) != sizeof digest)
-	{
-	  perror (file);
 	  return EXIT_FAILURE;
 	}
     }

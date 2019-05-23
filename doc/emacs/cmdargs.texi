@@ -39,7 +39,7 @@ corresponding long form.
 
   The long forms with @samp{--} are easier to remember, but longer to
 type.  However, you don't have to spell out the whole option name; any
-unambiguous abbreviation is enough.  When a long option takes an
+unambiguous abbreviation is enough.  When a long option requires an
 argument, you can use either a space or an equal sign to separate the
 option name and the argument.  Thus, for the option @samp{--display},
 you can write either @samp{--display sugar-bombs:0.0} or
@@ -347,13 +347,15 @@ Start Emacs with minimum customizations.  This is similar to using
 @itemx --bg-daemon[=@var{name}]
 @itemx --fg-daemon[=@var{name}]
 Start Emacs as a daemon: after Emacs starts up, it starts the Emacs
-server without opening any frames.
-(Optionally, you can specify an explicit @var{name} for the server.)
-You can then use the @command{emacsclient} command to connect to Emacs
-for editing.  @xref{Emacs Server}, for information about using Emacs
-as a daemon.  A ``background'' daemon disconnects from the terminal
-and runs in the background (@samp{--daemon} is an alias for
-@samp{--bg-daemon}).
+server without opening any frames.  You can then use the
+@command{emacsclient} command to connect to Emacs for editing.
+(Optionally, you can specify an explicit @var{name} for the server; if
+you do, you will need to specify the same @var{name} when you invoke
+@command{emacsclient}, via its @option{--socket-name} option, see
+@ref{emacsclient Options}.)  @xref{Emacs Server}, for information
+about using Emacs as a daemon.  A ``background'' daemon disconnects
+from the terminal and runs in the background (@samp{--daemon} is an
+alias for @samp{--bg-daemon}).
 
 @item --no-desktop
 @opindex --no-desktop

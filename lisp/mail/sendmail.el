@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985-1986, 1992-1996, 1998, 2000-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.
@@ -370,6 +369,7 @@ By default, this is the file specified by `mail-personal-alias-file'." t)
 ;;;###autoload
 (defcustom mail-signature t
   "Text inserted at end of mail buffer when a message is initialized.
+If nil, no signature is inserted.
 If t, it means to insert the contents of the file `mail-signature-file'.
 If a string, that string is inserted.
  (To make a proper signature, the string should begin with \\n\\n-- \\n,

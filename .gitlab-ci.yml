@@ -21,7 +21,7 @@
 # any particular service that uses that protocol.  Also, it is intended for
 # evaluation purposes, thus possibly temporary.
 
-# Maintainer: tzz@lifelogs.com
+# Maintainer: Ted Zlatanov <tzz@lifelogs.com>
 # URL: https://emba.gnu.org/emacs/emacs
 
 image: debian:stretch

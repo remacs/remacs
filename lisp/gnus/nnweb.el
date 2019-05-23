@@ -461,22 +461,21 @@ Valid types include `google', `dejanews', and `gmane'.")
 		    (subject (mail-header-subject header))
 		    (rfc2047-encoding-type 'mime))
 		(when (string-match " \\([^:]+\\)[:/]\\([0-9]+\\)" xref)
-		  (mail-header-set-xref
-		   header
-		   (format "http://article.gmane.org/%s/%s/raw"
-			   (match-string 1 xref)
-			   (match-string 2 xref))))
+		  (setf (mail-header-xref header)
+		        (format "http://article.gmane.org/%s/%s/raw"
+			        (match-string 1 xref)
+			        (match-string 2 xref))))
 
 		;; Add host part to gmane-encrypted addresses
 		(when (string-match "@$" from)
-		  (mail-header-set-from header
-					(concat from "public.gmane.org")))
+		  (setf (mail-header-from header)
+			(concat from "public.gmane.org")))
 
-		(mail-header-set-subject header
-					 (rfc2047-encode-string subject))
+		(setf (mail-header-subject header)
+		      (rfc2047-encode-string subject))
 
 		(unless (nnweb-get-hashtb (mail-header-xref header))
-		  (mail-header-set-number header (cl-incf (cdr active)))
+		  (setf (mail-header-number header) (cl-incf (cdr active)))
 		  (push (list (mail-header-number header) header) map)
 		  (nnweb-set-hashtb (cadar map) (car map))))))
 	  (forward-line 1)))

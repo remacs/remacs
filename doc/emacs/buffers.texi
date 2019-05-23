@@ -568,10 +568,10 @@ mode in this buffer, as long as it is not marked modified.  Global
 Auto Revert mode applies to the @file{*Buffer List*} buffer only if
 @code{global-auto-revert-non-file-buffers} is non-@code{nil}.
 @iftex
-@inforef{Autorevert,, emacs-xtra}, for details.
+@inforef{Auto Reverting the Buffer Menu,, emacs-xtra}, for details.
 @end iftex
 @ifnottex
-@xref{Autorevert, global-auto-revert-non-file-buffers}, for details.
+@xref{Auto Reverting the Buffer Menu, global-auto-revert-non-file-buffers}, for details.
 @end ifnottex
 
 @node Indirect Buffers

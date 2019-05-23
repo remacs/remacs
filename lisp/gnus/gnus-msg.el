@@ -158,9 +158,9 @@ if a regexp and matches the Gcc group name, attach files as external parts;
 if nil, attach files as normal parts."
   :version "22.1"
   :group 'gnus-message
-  :type '(choice (const nil :tag "None")
-		 (const all :tag "Any")
-		 (string :tag "Regexp")))
+  :type '(choice (const :tag "None" nil)
+                 (const :tag "Any"  all)
+                 regexp))
 
 (defcustom gnus-gcc-self-resent-messages 'no-gcc-self
   "Like `gcc-self' group parameter, only for unmodified resent messages.
@@ -232,7 +232,9 @@ List of charsets that are permitted to be unencoded.")
   "Files whose variables will be reported in `gnus-bug'."
   :version "22.1"
   :group 'gnus-message
-  :type '(repeat (string :tag "File")))
+  :type '(repeat file))
+
+(make-obsolete-variable 'gnus-debug-files "it is no longer used." "24.1")
 
 (defcustom gnus-debug-exclude-variables
   '(mm-mime-mule-charset-alist
@@ -240,7 +242,10 @@ List of charsets that are permitted to be unencoded.")
   "Variables that should not be reported in `gnus-bug'."
   :version "22.1"
   :group 'gnus-message
-  :type '(repeat (symbol :tag "Variable")))
+  :type '(repeat variable))
+
+(make-obsolete-variable
+ 'gnus-debug-exclude-variables "it is no longer used." "24.1")
 
 (defcustom gnus-discouraged-post-methods
   '(nndraft nnml nnimap nnmaildir nnmh nnfolder nndir)
@@ -340,7 +345,6 @@ only affect the Gcc copy, but not the original message."
 (defvar gnus-article-yanked-articles nil)
 (defvar gnus-message-buffer "*Mail Gnus*")
 (defvar gnus-article-copy nil)
-(defvar gnus-check-before-posting nil)
 (defvar gnus-last-posting-server nil)
 (defvar gnus-message-group-art nil)
 

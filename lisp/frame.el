@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993-1994, 1996-1997, 2000-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -2682,6 +2681,9 @@ See also `toggle-frame-maximized'."
         display-line-numbers-width
         display-line-numbers-current-absolute
         display-line-numbers-widen
+        display-fill-column-indicator
+        display-fill-column-indicator-column
+        display-fill-column-indicator-character
         bidi-paragraph-direction
         bidi-display-reordering))
 

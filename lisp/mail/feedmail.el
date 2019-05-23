@@ -1657,7 +1657,7 @@ local gurus."
 (declare-function smtp-via-smtp "ext:smtp" (sender recipients smtp-text-buffer))
 (defvar smtp-server)
 
-;; FLIM's smtp.el pointed out to me by Kenichi Handa <handa@etl.go.jp>
+;; FLIM's smtp.el pointed out to me by Kenichi Handa <handa@gnu.org>
 (defun feedmail-buffer-to-smtp (prepped errors-to addr-listoid)
   "Function which actually calls smtp-via-smtp to send buffer as e-mail."
   (feedmail-say-debug ">in-> feedmail-buffer-to-smtp %s" addr-listoid)

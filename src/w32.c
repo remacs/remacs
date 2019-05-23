@@ -2003,6 +2003,13 @@ getloadavg (double loadavg[], int nelem)
       loadavg[elem] = avg;
     }
 
+  /* Always return at least one element, otherwise load-average
+     returns nil, and Lisp programs might decide we cannot measure
+     system load.  For example, jit-lock-stealth-load's defcustom
+     might decide that feature is "unsupported".  */
+  if (elem == 0)
+    loadavg[elem++] = 0.09;	/* < display-time-load-average-threshold */
+
   return elem;
 }
 
@@ -2644,7 +2651,7 @@ unsetenv (const char *name)
   /* It is safe to use 'alloca' with 32K size, since the stack is at
      least 2MB, and we set it to 8MB in the link command line.  */
   var = alloca (name_len + 2);
-  strncpy (var, name, name_len);
+  memcpy (var, name, name_len);
   var[name_len++] = '=';
   var[name_len] = '\0';
   return _putenv (var);
@@ -6054,7 +6061,7 @@ readlink (const char *name, char *buf, size_t buf_size)
 	  lname_size = strlen (resolved) + 1;
 	  if (lname_size <= buf_size)
 	    size_to_copy = lname_size;
-	  strncpy (buf, resolved, size_to_copy);
+	  memcpy (buf, resolved, size_to_copy);
 	  /* Success!  */
 	  retval = size_to_copy;
 	}

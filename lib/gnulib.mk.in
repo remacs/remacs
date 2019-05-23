@@ -1046,6 +1046,7 @@ datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
+emacs_major_version = @emacs_major_version@
 etcdir = @etcdir@
 etcdocdir = @etcdocdir@
 exec_prefix = @exec_prefix@

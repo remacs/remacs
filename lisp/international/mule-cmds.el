@@ -1029,7 +1029,13 @@ It is highly recommended to fix it before writing to a file."
 		 ;; This check perhaps isn't ideal, but is probably
 		 ;; the best thing to do.
 		 (not (auto-coding-alist-lookup (or file buffer-file-name "")))
-		 (not (coding-system-equal coding-system auto-cs)))
+		 (not (coding-system-equal coding-system auto-cs))
+                 ;; coding-system-equal barfs on 'charset'.
+                 (or (equal (coding-system-type auto-cs) 'charset)
+                     (equal (coding-system-type coding-system) 'charset)
+                     (not (coding-system-equal (coding-system-type auto-cs)
+                                               (coding-system-type
+                                                coding-system)))))
 	    (unless (yes-or-no-p
 		     (format "Selected encoding %s disagrees with \
 %s specified by file contents.  Really save (else edit coding cookies \

@@ -1488,10 +1488,11 @@ usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
       tm.tm_mon  = check_tm_member (XCAR (a), 1); a = XCDR (a);
       tm.tm_year = check_tm_member (XCAR (a), TM_YEAR_BASE); a = XCDR (a);
       a = XCDR (a);
-      if (SYMBOLP (XCAR (a)))
-	tm.tm_isdst = !NILP (XCAR (a));
+      Lisp_Object dstflag = XCAR (a);
       a = XCDR (a);
       zone = XCAR (a);
+      if (SYMBOLP (dstflag) && !FIXNUMP (zone) && !CONSP (zone))
+	tm.tm_isdst = !NILP (dstflag);
     }
   else if (nargs < 6)
     xsignal2 (Qwrong_number_of_arguments, Qencode_time, make_fixnum (nargs));

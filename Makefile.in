@@ -320,7 +320,8 @@ SUBDIR_MAKEFILES = $(patsubst ${srcdir}/%,%,${SUBDIR_MAKEFILES_IN:.in=})
 # Non-makefile files created by config.status.
 CONFIG_STATUS_FILES_IN = \
  ${srcdir}/nt/emacs.rc.in ${srcdir}/nt/emacsclient.rc.in \
- ${srcdir}/doc/man/emacs.1.in ${srcdir}/src/emacs-module.h.in
+ ${srcdir}/doc/man/emacs.1.in ${srcdir}/src/emacs-module.h.in \
+ ${srcdir}/src/module-env-*.h
 
 # Subdirectories to install, and where they'll go.  lib-src's and nt's
 # makefiles know how to install them, so we don't do that here.
@@ -949,17 +950,15 @@ extraclean: $(extraclean_dirs:=_extraclean)
 TAGS tags: lib lib-src # src
 	$(MAKE) -C src tags
 
-.PHONY: have-tests
-have-tests:
-	@if test ! -d test; then \
-	  echo "You do not seem to have the test/ directory."; \
-	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
-	 exit 1; \
-	fi
-
-.PHONY: check check-maybe check-expensive check-all
-check check-maybe check-expensive check-all: have-tests all
+CHECK_TARGETS = check check-maybe check-expensive check-all
+.PHONY: $(CHECK_TARGETS)
+$(CHECK_TARGETS): all
+ifeq ($(wildcard test),test)
 	$(MAKE) -C test $@
+else
+	@echo "You do not seem to have the test/ directory."
+	@echo "Maybe you used a release tarfile that lacks tests."
+endif
 
 dist:
 	cd ${srcdir}; ./make-dist

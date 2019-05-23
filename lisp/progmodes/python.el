@@ -6,7 +6,6 @@
 ;; URL: https://github.com/fgallina/python.el
 ;; Version: 0.26.1
 ;; Package-Requires: ((emacs "24.1") (cl-lib "1.0"))
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
 ;; Keywords: languages
 
@@ -1070,12 +1069,18 @@ possibilities can be narrowed to specific indentation points."
         (`(,(or :after-line
                 :after-comment
                 :inside-string
-                :after-backslash
-                :inside-paren-at-closing-paren
-                :inside-paren-at-closing-nested-paren) . ,start)
+                :after-backslash) . ,start)
          ;; Copy previous indentation.
          (goto-char start)
          (current-indentation))
+        (`(,(or :inside-paren-at-closing-paren
+                :inside-paren-at-closing-nested-paren) . ,start)
+         (goto-char (+ 1 start))
+         (if (looking-at "[ \t]*\\(?:#\\|$\\)")
+             ;; Copy previous indentation.
+             (current-indentation)
+           ;; Align with opening paren.
+           (current-column)))
         (`(:inside-docstring . ,start)
          (let* ((line-indentation (current-indentation))
                 (base-indent (progn

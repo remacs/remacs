@@ -3390,7 +3390,9 @@ update_window (struct window *w, bool force_p)
   struct glyph_matrix *desired_matrix = w->desired_matrix;
   bool paused_p;
   int preempt_count = clip_to_bounds (1, baud_rate / 2400 + 1, INT_MAX);
+#ifdef HAVE_WINDOW_SYSTEM
   struct redisplay_interface *rif = FRAME_RIF (XFRAME (WINDOW_FRAME (w)));
+#endif
 #ifdef GLYPH_DEBUG
   /* Check that W's frame doesn't have glyph matrices.  */
   eassert (FRAME_WINDOW_P (XFRAME (WINDOW_FRAME (w))));
@@ -3411,7 +3413,9 @@ update_window (struct window *w, bool force_p)
       bool changed_p = 0, mouse_face_overwritten_p = 0;
       int n_updated = 0;
 
-      rif->update_window_begin_hook (w);
+#ifdef HAVE_WINDOW_SYSTEM
+      gui_update_window_begin (w);
+#endif
       yb = window_text_bottom_y (w);
       row = MATRIX_ROW (desired_matrix, 0);
       end = MATRIX_MODE_LINE_ROW (desired_matrix);
@@ -3533,13 +3537,13 @@ update_window (struct window *w, bool force_p)
 
 #ifdef HAVE_WINDOW_SYSTEM
       update_window_fringes (w, 0);
-#endif
 
       /* End the update of window W.  Don't set the cursor if we
          paused updating the display because in this case,
          set_window_cursor_after_update hasn't been called, and
          W->output_cursor doesn't contain the cursor location.  */
-      rif->update_window_end_hook (w, !paused_p, mouse_face_overwritten_p);
+      gui_update_window_end (w, !paused_p, mouse_face_overwritten_p);
+#endif
     }
   else
     paused_p = 1;
@@ -3555,6 +3559,90 @@ update_window (struct window *w, bool force_p)
   return paused_p;
 }
 
+#ifdef HAVE_WINDOW_SYSTEM
+
+/* Start update of window W.  */
+
+void
+gui_update_window_begin (struct window *w)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+
+  block_input ();
+
+  if (FRAME_RIF (f)->update_window_begin_hook)
+    FRAME_RIF (f)->update_window_begin_hook (w);
+
+  w->output_cursor = w->cursor;
+
+  if (f == hlinfo->mouse_face_mouse_frame)
+    {
+      /* Don't do highlighting for mouse motion during the update.  */
+      hlinfo->mouse_face_defer = true;
+
+      /* If the frame needs to be redrawn, simply forget about any
+	 prior mouse highlighting.  */
+      if (FRAME_GARBAGED_P (f))
+	hlinfo->mouse_face_window = Qnil;
+    }
+
+  unblock_input ();
+}
+
+/* End update of window W.
+
+   Draw vertical borders between horizontally adjacent windows, and
+   display W's cursor if CURSOR_ON_P is non-zero.
+
+   MOUSE_FACE_OVERWRITTEN_P non-zero means that some row containing
+   glyphs in mouse-face were overwritten.  In that case we have to
+   make sure that the mouse-highlight is properly redrawn.  */
+void
+gui_update_window_end (struct window *w, bool cursor_on_p,
+                       bool mouse_face_overwritten_p)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+
+  block_input ();
+
+  /* Pseudo windows don't have cursors, so don't display them here.  */
+  if (!w->pseudo_window_p)
+    {
+
+      if (cursor_on_p)
+	display_and_set_cursor (w, true,
+				w->output_cursor.hpos, w->output_cursor.vpos,
+				w->output_cursor.x, w->output_cursor.y);
+
+      if (draw_window_fringes (w, true))
+	{
+	  if (WINDOW_RIGHT_DIVIDER_WIDTH (w))
+	    gui_draw_right_divider (w);
+	  else
+	    gui_draw_vertical_border (w);
+	}
+    }
+
+  /* If a row with mouse-face was overwritten, arrange for
+     frame_up_to_date_hook to redisplay the mouse highlight.  */
+  if (mouse_face_overwritten_p)
+    {
+      Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+
+      hlinfo->mouse_face_beg_row = hlinfo->mouse_face_beg_col = -1;
+      hlinfo->mouse_face_end_row = hlinfo->mouse_face_end_col = -1;
+      hlinfo->mouse_face_window = Qnil;
+    }
+
+  if (FRAME_RIF (f)->update_window_end_hook)
+    FRAME_RIF (f)->update_window_end_hook (w,
+                                           cursor_on_p,
+                                           mouse_face_overwritten_p);
+  unblock_input ();
+}
+
+#endif /* HAVE_WINDOW_SYSTEM  */
 
 /* Update the display of area AREA in window W, row number VPOS.
    AREA can be either LEFT_MARGIN_AREA or RIGHT_MARGIN_AREA.  */

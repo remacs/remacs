@@ -1122,20 +1122,21 @@ store_symval_forwarding (lispfwd valcontents, Lisp_Object newval,
 	int offset = XBUFFER_OBJFWD (valcontents)->offset;
 	Lisp_Object predicate = XBUFFER_OBJFWD (valcontents)->predicate;
 
-	if (!NILP (newval))
+	if (!NILP (newval) && !NILP (predicate))
 	  {
-	    if (SYMBOLP (predicate))
+	    eassert (SYMBOLP (predicate));
+	    Lisp_Object choiceprop = Fget (predicate, Qchoice);
+	    if (!NILP (choiceprop))
 	      {
-		Lisp_Object prop;
-
-		if ((prop = Fget (predicate, Qchoice), !NILP (prop)))
+		if (NILP (Fmemq (newval, choiceprop)))
+		  wrong_choice (choiceprop, newval);
+	      }
+	    else
+	      {
+		Lisp_Object rangeprop = Fget (predicate, Qrange);
+		if (CONSP (rangeprop))
 		  {
-		    if (NILP (Fmemq (newval, prop)))
-		      wrong_choice (prop, newval);
-		  }
-		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
-		  {
-		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
+		    Lisp_Object min = XCAR (rangeprop), max = XCDR (rangeprop);
 		    if (! NUMBERP (newval)
 			|| NILP (CALLN (Fleq, min, newval, max)))
 		      wrong_range (min, max, newval);
@@ -1301,15 +1302,13 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
               enum Set_Internal_Bind bindflag)
 {
   bool voide = EQ (newval, Qunbound);
-  struct Lisp_Symbol *sym;
-  Lisp_Object tem1;
 
   /* If restoring in a dead buffer, do nothing.  */
   /* if (BUFFERP (where) && NILP (XBUFFER (where)->name))
       return; */
 
   CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
+  struct Lisp_Symbol *sym = XSYMBOL (symbol);
   switch (sym->u.s.trapped_write)
     {
     case SYMBOL_NOWRITE:
@@ -1328,9 +1327,10 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
                                    bindflag == SET_INTERNAL_UNBIND? Qunlet :
                                    voide? Qmakunbound : Qset),
                                   where);
-      /* FALLTHROUGH!  */
+      break;
+
     case SYMBOL_UNTRAPPED_WRITE:
-        break;
+      break;
 
     default: emacs_abort ();
     }
@@ -1363,8 +1363,9 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 
 	    /* Find the new binding.  */
 	    XSETSYMBOL (symbol, sym); /* May have changed via aliasing.  */
-	    tem1 = assq_no_quit (symbol,
-				 BVAR (XBUFFER (where), local_var_alist));
+	    Lisp_Object tem1
+	      = assq_no_quit (symbol,
+			      BVAR (XBUFFER (where), local_var_alist));
 	    set_blv_where (blv, where);
 	    blv->found = true;
 
@@ -1649,10 +1650,8 @@ void
 set_default_internal (Lisp_Object symbol, Lisp_Object value,
                       enum Set_Internal_Bind bindflag)
 {
-  struct Lisp_Symbol *sym;
-
   CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
+  struct Lisp_Symbol *sym = XSYMBOL (symbol);
   switch (sym->u.s.trapped_write)
     {
     case SYMBOL_NOWRITE:
@@ -1669,9 +1668,10 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
           /* Setting due to thread switching doesn't count.  */
           && bindflag != SET_INTERNAL_THREAD_SWITCH)
         notify_variable_watchers (symbol, value, Qset_default, Qnil);
-      /* FALLTHROUGH!  */
+      break;
+
     case SYMBOL_UNTRAPPED_WRITE:
-        break;
+      break;
 
     default: emacs_abort ();
     }

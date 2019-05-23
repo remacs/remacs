@@ -4,7 +4,6 @@
 ;; Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>.
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: files
 ;; Package: emacs
 
@@ -246,9 +245,11 @@ Examples of PREDICATE:
      (lambda ()
        (dired-mark-if
         (member (dired-get-filename nil t) file-list2) nil)))
-    (message "Marked in dir1: %s files, in dir2: %s files"
-             (length file-list1)
-             (length file-list2))))
+    (message "Marked in dir1: %s, in dir2: %s"
+             (format-message (ngettext "%d file" "%d files" (length file-list1))
+                             (length file-list1))
+             (format-message (ngettext "%d file" "%d files" (length file-list2))
+                             (length file-list2)))))
 
 (defun dired-file-set-difference (list1 list2 predicate)
   "Combine LIST1 and LIST2 using a set-difference operation.
@@ -1065,7 +1066,9 @@ and `dired-compress-files-alist'."
                                              (shell-quote-argument (file-name-nondirectory
                                                                     file-desc)))
                                            in-files " "))))))
-             (message "Compressed %d file(s) to %s"
+             (message (ngettext "Compressed %d file to %s"
+			        "Compressed %d files to %s"
+			        (length in-files))
                       (length in-files)
                       (file-name-nondirectory out-file)))))))
 
@@ -1193,12 +1196,14 @@ Return nil if no change in files."
 	     (string (if (eq op-symbol 'compress) "Compress or uncompress"
 		       (capitalize (symbol-name op-symbol)))))
 	(if (not failures)
-	    (message "%s: %d file%s."
-		     string total (dired-plural-s total))
+	    (message (ngettext "%s: %d file." "%s: %d files." total)
+		     string total)
 	  ;; end this bunch of errors:
 	  (dired-log-summary
-	   (format "Failed to %s %d of %d file%s"
-		   (downcase string) count total (dired-plural-s total))
+	   (format (ngettext "Failed to %s %d of %d file"
+                             "Failed to %s %d of %d files"
+                             total)
+		   (downcase string) count total)
 	   failures)))))
 
 ;;;###autoload
@@ -1798,32 +1803,36 @@ ESC or `q' to not overwrite any of the remaining files,
                (progn
                  (push (dired-make-relative from)
                        failures)
-                 (dired-log "%s `%s' to `%s' failed:\n%s\n"
+                 (dired-log "%s: `%s' to `%s' failed:\n%s\n"
                             operation from to err))))))))
     (cond
      (dired-create-files-failures
       (setq failures (nconc failures dired-create-files-failures))
       (dired-log-summary
-       (format "%s failed for %d file%s in %d requests"
-		operation (length failures)
-		(dired-plural-s (length failures))
-		total)
+       (format (ngettext "%s failed for %d file in %d requests"
+			 "%s failed for %d files in %d requests"
+			 (length failures))
+	       operation (length failures) total)
        failures))
      (failures
       (dired-log-summary
-       (format "%s failed for %d of %d file%s"
-		operation (length failures)
-		total (dired-plural-s total))
+       (format (ngettext "%s: %d of %d file failed"
+			 "%s: %d of %d files failed"
+			 total)
+	       operation (length failures) total)
        failures))
      (skipped
       (dired-log-summary
-       (format "%s: %d of %d file%s skipped"
-		operation (length skipped) total
-		(dired-plural-s total))
+       (format (ngettext "%s: %d of %d file skipped"
+			 "%s: %d of %d files skipped"
+			 total)
+	       operation (length skipped) total)
        skipped))
      (t
-      (message "%s: %s file%s"
-	       operation success-count (dired-plural-s success-count)))))
+      (message (ngettext "%s: %d file done"
+			 "%s: %d files done"
+			 success-count)
+	       operation success-count))))
   (dired-move-to-filename))
 
 (defun dired-do-create-files (op-symbol file-creator operation arg
@@ -2838,6 +2847,8 @@ is part of a file name (i.e., has the text property `dired-filename')."
   (interactive)
   (multi-isearch-files-regexp
    (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
+
+(declare-function fileloop-continue "fileloop" ())
 
 ;;;###autoload
 (defun dired-do-search (regexp)

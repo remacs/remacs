@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1986, 2001-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help
 
 ;; This file is part of GNU Emacs.

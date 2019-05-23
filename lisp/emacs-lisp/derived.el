@@ -5,7 +5,6 @@
 ;; Inc.
 
 ;; Author: David Megginson (dmeggins@aix1.uottawa.ca)
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions
 ;; Package: emacs
 

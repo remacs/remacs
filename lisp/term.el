@@ -390,8 +390,16 @@ This emulates (more or less) the behavior of xterm.")
   "A queue of strings whose echo we want suppressed.")
 (defvar term-terminal-undecoded-bytes nil)
 (defvar term-current-face 'term)
-(defvar term-scroll-start 0 "Top-most line (inclusive) of scrolling region.")
-(defvar term-scroll-end) ; Number of line (zero-based) after scrolling region.
+(defvar-local term-scroll-start 0
+  "Top-most line (inclusive) of the scrolling region.
+`term-scroll-start' must be in the range [0,term-height).  In addition, its
+value has to be smaller than `term-scroll-end', i.e. one line scroll regions are
+not allowed.")
+(defvar-local term-scroll-end nil
+  "Bottom-most line (inclusive) of the scrolling region.
+`term-scroll-end' must be in the range [0,term-height).  In addition, its
+value has to be greater than `term-scroll-start', i.e. one line scroll regions are
+not allowed.")
 (defvar term-pager-count nil
   "Number of lines before we need to page; if nil, paging is disabled.")
 (defvar term-saved-cursor nil)
@@ -1075,9 +1083,6 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (make-local-variable 'term-current-column)
   (make-local-variable 'term-current-row)
   (make-local-variable 'term-log-buffer)
-  (make-local-variable 'term-scroll-start)
-  (set (make-local-variable 'term-scroll-end) term-height)
-  (make-local-variable 'term-scroll-with-delete)
   (make-local-variable 'term-pager-count)
   (make-local-variable 'term-pager-old-local-map)
   (make-local-variable 'term-old-mode-map)
@@ -1117,6 +1122,8 @@ Entry to this mode runs the hooks on `term-mode-hook'."
 
   (add-hook 'read-only-mode-hook #'term-line-mode-buffer-read-only-update nil t)
 
+  (term--reset-scroll-region)
+
   (easy-menu-add term-terminal-menu)
   (easy-menu-add term-signals-menu)
   (or term-input-ring
@@ -1132,6 +1139,9 @@ Entry to this mode runs the hooks on `term-mode-hook'."
       (cl-assert (eq ?\n (char-after)))
       (let ((inhibit-read-only t))
         (delete-char 1)))))
+
+(defun term--last-line ()
+  (1- term-height))
 
 (defun term--filter-buffer-substring (content)
   (with-temp-buffer
@@ -1174,7 +1184,7 @@ Entry to this mode runs the hooks on `term-mode-hook'."
       (setq term-start-line-column nil)
       (setq term-current-row nil)
       (setq term-current-column nil)
-      (term-set-scroll-region 0 height)
+      (term--reset-scroll-region)
       ;; `term-set-scroll-region' causes these to be set, we have to
       ;; clear them again since we're changing point (Bug#30544).
       (setq term-start-line-column nil)
@@ -2935,7 +2945,8 @@ See `term-prompt-regexp'."
                       (delete-region (point) (line-end-position))
                       (term-down 1 t)
                       (term-move-columns (- (term-current-column)))
-                      (put-text-property (1- (point)) (point) 'term-line-wrap t)
+                      (add-text-properties (1- (point)) (point)
+                                           '(term-line-wrap t rear-nonsticky t))
                       (setq decoded-substring
                             (substring decoded-substring (- term-width old-column)))
                       (setq old-column 0)))
@@ -3204,7 +3215,7 @@ option is enabled.  See `term-set-goto-process-mark'."
 	(goto-char term-home-marker)
 	(term-vertical-motion (1+ count))
 	(set-marker term-home-marker (point))
-	(setq term-current-row (1- term-height))))))
+	(setq term-current-row (term--last-line))))))
 
 (defun term-reset-terminal ()
   "Reset the terminal, delete all the content and set the face to the default one."
@@ -3212,8 +3223,7 @@ option is enabled.  See `term-set-goto-process-mark'."
   (term-ansi-reset)
   (setq term-current-row 0)
   (setq term-current-column 1)
-  (setq term-scroll-start 0)
-  (setq term-scroll-end term-height)
+  (term--reset-scroll-region)
   (setq term-insert-mode nil)
   ;; FIXME: No idea why this is here, it looks wrong.  --Stef
   (setq term-ansi-face-already-done nil))
@@ -3422,6 +3432,10 @@ option is enabled.  See `term-set-goto-process-mark'."
      (1- (or (nth 1 params) 0))))
    (t)))
 
+(defun term--reset-scroll-region ()
+  "Sets the scroll region to the full height of the terminal."
+  (term-set-scroll-region 0 (term--last-line)))
+
 (defun term-set-scroll-region (top bottom)
   "Set scrolling region.
 TOP is the top-most line (inclusive) of the new scrolling region,
@@ -3432,13 +3446,13 @@ The top-most line is line 0."
 	    0
 	  top))
   (setq term-scroll-end
-	(if (or (<= bottom term-scroll-start) (> bottom term-height))
-	    term-height
+	(if (or (<= bottom term-scroll-start) (> bottom (term--last-line)))
+	    (term--last-line)
 	  bottom))
   (setq term-scroll-with-delete
 	(or (term-using-alternate-sub-buffer)
 	    (not (and (= term-scroll-start 0)
-		      (= term-scroll-end term-height)))))
+                      (= term-scroll-end (term--last-line))))))
   (term-move-columns (- (term-current-column)))
   (term-goto 0 0))
 
@@ -3567,7 +3581,7 @@ The top-most line is line 0."
     (when (> moved lines)
       (backward-char))
     (cond ((<= deficit 0) ;; OK, had enough in the buffer for request.
-	   (recenter (1- term-height)))
+	   (recenter (term--last-line)))
 	  ((term-pager-continue deficit)))))
 
 (defun term-pager-page (arg)
@@ -3581,7 +3595,7 @@ The top-most line is line 0."
   (goto-char (point-min))
   (when (= (vertical-motion term-height) term-height)
     (backward-char))
-  (recenter (1- term-height)))
+  (recenter (term--last-line)))
 
 ;; Pager mode command to go to end of buffer.
 (defun term-pager-eob ()
@@ -3599,7 +3613,7 @@ The top-most line is line 0."
     ;; Move cursor to end of window.
     (vertical-motion term-height)
     (backward-char))
-  (recenter (1- term-height)))
+  (recenter (term--last-line)))
 
 (defun term-pager-back-page (arg)
   (interactive "p")
@@ -3754,7 +3768,8 @@ all pending output has been dealt with."))
   (when (not (bolp))
     (let ((old-point (point)))
       (insert-before-markers ?\n)
-      (put-text-property old-point (point) 'term-line-wrap t))))
+      (add-text-properties old-point (point)
+                           '(term-line-wrap t rear-nonsticky t)))))
 
 (defun term-erase-in-line (kind)
   (when (= kind 1) ;; erase left of point

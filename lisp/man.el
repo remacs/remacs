@@ -4,7 +4,6 @@
 ;; Foundation, Inc.
 
 ;; Author: Barry A. Warsaw <bwarsaw@cen.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help
 ;; Adapted-By: ESR, pot
 
@@ -1206,10 +1205,7 @@ Same for the ANSI bold and normal escape sequences."
   (interactive)
   (goto-char (point-min))
   ;; Fontify ANSI escapes.
-  (let ((ansi-color-apply-face-function
-	 (lambda (beg end face)
-	   (when face
-	     (put-text-property beg end 'face face))))
+  (let ((ansi-color-apply-face-function #'ansi-color-apply-text-property-face)
 	(ansi-color-map Man-ansi-color-map))
     (ansi-color-apply-on-region (point-min) (point-max)))
   ;; Other highlighting.
@@ -1220,31 +1216,33 @@ Same for the ANSI bold and normal escape sequences."
 	  (goto-char (point-min))
 	  (while (and (search-forward "__\b\b" nil t) (not (eobp)))
 	    (backward-delete-char 4)
-	    (put-text-property (point) (1+ (point)) 'face 'Man-underline))
+            (put-text-property (point) (1+ (point))
+                               'font-lock-face 'Man-underline))
 	  (goto-char (point-min))
 	  (while (search-forward "\b\b__" nil t)
 	    (backward-delete-char 4)
-	    (put-text-property (1- (point)) (point) 'face 'Man-underline))))
+            (put-text-property (1- (point)) (point)
+                               'font-lock-face 'Man-underline))))
     (goto-char (point-min))
     (while (and (search-forward "_\b" nil t) (not (eobp)))
       (backward-delete-char 2)
-      (put-text-property (point) (1+ (point)) 'face 'Man-underline))
+      (put-text-property (point) (1+ (point)) 'font-lock-face 'Man-underline))
     (goto-char (point-min))
     (while (search-forward "\b_" nil t)
       (backward-delete-char 2)
-      (put-text-property (1- (point)) (point) 'face 'Man-underline))
+      (put-text-property (1- (point)) (point) 'font-lock-face 'Man-underline))
     (goto-char (point-min))
     (while (re-search-forward "\\(.\\)\\(\b+\\1\\)+" nil t)
       (replace-match "\\1")
-      (put-text-property (1- (point)) (point) 'face 'Man-overstrike))
+      (put-text-property (1- (point)) (point) 'font-lock-face 'Man-overstrike))
     (goto-char (point-min))
     (while (re-search-forward "o\b\\+\\|\\+\bo" nil t)
       (replace-match "o")
-      (put-text-property (1- (point)) (point) 'face 'bold))
+      (put-text-property (1- (point)) (point) 'font-lock-face 'bold))
     (goto-char (point-min))
     (while (re-search-forward "[-|]\\(\b[-|]\\)+" nil t)
       (replace-match "+")
-      (put-text-property (1- (point)) (point) 'face 'bold))
+      (put-text-property (1- (point)) (point) 'font-lock-face 'bold))
     ;; When the header is longer than the manpage name, groff tries to
     ;; condense it to a shorter line interspersed with ^H.  Remove ^H with
     ;; their preceding chars (but don't put Man-overstrike).  (Bug#5566)
@@ -1258,7 +1256,7 @@ Same for the ANSI bold and normal escape sequences."
     (while (re-search-forward Man-heading-regexp nil t)
       (put-text-property (match-beginning 0)
 			 (match-end 0)
-			 'face 'Man-overstrike))))
+			 'font-lock-face 'Man-overstrike))))
 
 (defun Man-highlight-references (&optional xref-man-type)
   "Highlight the references on mouse-over.

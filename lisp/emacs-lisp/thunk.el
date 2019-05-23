@@ -7,8 +7,6 @@
 ;; Version: 1.0
 ;; Package: thunk
 
-;; Maintainer: emacs-devel@gnu.org
-
 ;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify
