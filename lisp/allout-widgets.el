@@ -70,12 +70,7 @@
 (require 'allout)
 (require 'widget)
 (require 'wid-edit)
-
-(eval-when-compile
-  (progn
-    (require 'overlay)
-    (require 'cl)
-    ))
+(eval-when-compile (require 'cl-lib))
 
 ;;;_ : internal variables needed before user-customization variables
 ;;; In order to enable activation of allout-widgets-mode via customization,
@@ -960,7 +955,7 @@ posting threshold criteria."
         (when changes-pending
           (while changes-record
             (setq entry (pop changes-record))
-            (case (car entry)
+            (pcase (car entry)
               (:exposed (push entry exposures))
               (:added (push entry additions))
               (:deleted (push entry deletions))
@@ -1378,34 +1373,34 @@ FROM and TO must be in increasing order, as must be the pairs in RANGES."
 
     ;; fresh:
     (setq ranges nil)
-    (assert (equal (funcall try 3 5) '(nil ((3 5)))))
+    (cl-assert (equal (funcall try 3 5) '(nil ((3 5)))))
     ;; add range at end:
-    (assert (equal (funcall try 10 12) '(nil ((3 5) (10 12)))))
+    (cl-assert (equal (funcall try 10 12) '(nil ((3 5) (10 12)))))
     ;; add range at beginning:
-    (assert (equal (funcall try 1 2) '(nil ((1 2) (3 5) (10 12)))))
+    (cl-assert (equal (funcall try 1 2) '(nil ((1 2) (3 5) (10 12)))))
     ;; insert range somewhere in the middle:
-    (assert (equal (funcall try 7 9) '(nil ((1 2) (3 5) (7 9) (10 12)))))
+    (cl-assert (equal (funcall try 7 9) '(nil ((1 2) (3 5) (7 9) (10 12)))))
     ;; consolidate some:
-    (assert (equal (funcall try 5 8) '(t ((1 2) (3 9) (10 12)))))
+    (cl-assert (equal (funcall try 5 8) '(t ((1 2) (3 9) (10 12)))))
     ;; add more:
-    (assert (equal (funcall try 15 17) '(nil ((1 2) (3 9) (10 12) (15 17)))))
+    (cl-assert (equal (funcall try 15 17) '(nil ((1 2) (3 9) (10 12) (15 17)))))
     ;; add more:
-    (assert (equal (funcall try 20 22)
+    (cl-assert (equal (funcall try 20 22)
                    '(nil ((1 2) (3 9) (10 12) (15 17) (20 22)))))
     ;; encompass more:
-    (assert (equal (funcall try 4 11) '(t ((1 2) (3 12) (15 17) (20 22)))))
+    (cl-assert (equal (funcall try 4 11) '(t ((1 2) (3 12) (15 17) (20 22)))))
     ;; encompass all:
-    (assert (equal (funcall try 2 25) '(t ((1 25)))))
+    (cl-assert (equal (funcall try 2 25) '(t ((1 25)))))
 
     ;; fresh slate:
     (setq ranges nil)
-    (assert (equal (funcall try 20 25) '(nil ((20 25)))))
-    (assert (equal (funcall try 30 35) '(nil ((20 25) (30 35)))))
-    (assert (equal (funcall try 26 28) '(nil ((20 25) (26 28) (30 35)))))
-    (assert (equal (funcall try 15 20) '(t ((15 25) (26 28) (30 35)))))
-    (assert (equal (funcall try 10 30) '(t ((10 35)))))
-    (assert (equal (funcall try 5 6) '(nil ((5 6) (10 35)))))
-    (assert (equal (funcall try 2 100) '(t ((2 100)))))
+    (cl-assert (equal (funcall try 20 25) '(nil ((20 25)))))
+    (cl-assert (equal (funcall try 30 35) '(nil ((20 25) (30 35)))))
+    (cl-assert (equal (funcall try 26 28) '(nil ((20 25) (26 28) (30 35)))))
+    (cl-assert (equal (funcall try 15 20) '(t ((15 25) (26 28) (30 35)))))
+    (cl-assert (equal (funcall try 10 30) '(t ((10 35)))))
+    (cl-assert (equal (funcall try 5 6) '(nil ((5 6) (10 35)))))
+    (cl-assert (equal (funcall try 2 100) '(t ((2 100)))))
 
     (setq ranges nil)
     ))
