@@ -313,6 +313,8 @@ Optional FILE is a fortune file from which a cookie will be selected."
   (with-temp-buffer
     (let ((fortune-buffer-name (current-buffer)))
       (fortune-in-buffer t file)
+      ;; Avoid trailing newline.
+      (if (bolp) (delete-char -1))
       (message "%s" (buffer-string)))))
 
 ;;;###autoload
