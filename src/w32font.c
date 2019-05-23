@@ -704,11 +704,23 @@ w32font_draw (struct glyph_string *s, int from, int to,
       int i;
 
       for (i = 0; i < len; i++)
-	ExtTextOutW (s->hdc, x + i, y, options, NULL,
-		     s->char2b + from + i, 1, NULL);
+	{
+	  WCHAR c = s->char2b[from + i] & 0xFFFF;
+	  ExtTextOutW (s->hdc, x + i, y, options, NULL, &c, 1, NULL);
+	}
     }
   else
-    ExtTextOutW (s->hdc, x, y, options, NULL, s->char2b + from, len, NULL);
+    {
+      /* The number of glyphs in a glyph_string cannot be larger than
+	 the maximum value of the 'used' member of a glyph_row, so we
+	 are OK using alloca here.  */
+      eassert (len <= SHRT_MAX);
+      WCHAR *chars = alloca (len * sizeof (WCHAR));
+      int j;
+      for (j = 0; j < len; j++)
+	chars[j] = s->char2b[from + j] & 0xFFFF;
+      ExtTextOutW (s->hdc, x, y, options, NULL, chars, len, NULL);
+    }
 
   /* Restore clip region.  */
   if (s->num_clips > 0)
