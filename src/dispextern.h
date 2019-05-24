@@ -3396,10 +3396,10 @@ extern void image_destroy_bitmap (struct frame *, ptrdiff_t);
 extern void image_destroy_all_bitmaps (Display_Info *);
 #ifdef HAVE_X_WINDOWS
 extern void x_create_bitmap_mask (struct frame *, ptrdiff_t);
+extern void x_kill_gs_process (Pixmap, struct frame *);
 #endif
 extern Lisp_Object image_find_image_file (Lisp_Object);
 
-void x_kill_gs_process (Emacs_Pixmap, struct frame *);
 struct image_cache *make_image_cache (void);
 void free_image_cache (struct frame *);
 void clear_image_caches (Lisp_Object);

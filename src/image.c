@@ -9550,7 +9550,7 @@ gs_load (struct frame *f, struct image *img)
    telling Emacs that Ghostscript has finished drawing.  */
 
 void
-x_kill_gs_process (Emacs_Pixmap pixmap, struct frame *f)
+x_kill_gs_process (Pixmap pixmap, struct frame *f)
 {
   struct image_cache *c = FRAME_IMAGE_CACHE (f);
   ptrdiff_t i;
