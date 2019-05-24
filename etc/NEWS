@@ -1466,6 +1466,17 @@ buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
 ** Xref
 
+*** New variable 'xref-show-definitions-function'.
+It encapsulates the logic pertinent to showing the result of
+'xref-find-definitions'.  The user can change it to customize its
+behavior and the display of results.
+
+*** Search results show the buffer even for one hit.
+The search-type Xref commands (e.g. 'xref-find-references' or
+'project-find-regexp') now show the results buffer even when there is
+only one hit.  This can be altered by changing
+'xref-show-xrefs-function'.
+
 *** Xref buffers support refreshing the search results.
 A new command 'xref-refresh-results' is bound to 'g'.
 
