@@ -2009,7 +2009,7 @@ all files in those directories.  The list in @var{variables} can be of
 one of the two forms: @code{(@var{major-mode} . @var{alist})} or
 @code{(@var{directory} . @var{list})}.  With the first form, if the
 file's buffer turns on a mode that is derived from @var{major-mode},
-then the all the variables in the associated @var{alist} are applied;
+then all the variables in the associated @var{alist} are applied;
 @var{alist} should be of the form @code{(@var{name} . @var{value})}.
 A special value @code{nil} for @var{major-mode} means the settings are
 applicable to any mode.  In @var{alist}, you can use a special

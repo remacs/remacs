@@ -3,7 +3,6 @@
 ;; Copyright (C) 1988, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Jeff Norden <jeff@colgate.csnet>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 15 Feb 1988
 ;; Keywords: comm
 

@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993-1996, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, abbrev, languages, tools
 
 ;; This file is part of GNU Emacs.

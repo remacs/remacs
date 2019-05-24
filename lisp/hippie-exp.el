@@ -3,7 +3,6 @@
 ;; Copyright (C) 1992, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Anders Holst <aho@sans.kth.se>
-;; Maintainer: emacs-devel@gnu.org
 ;; Version: 1.6
 ;; Keywords: abbrev convenience
 

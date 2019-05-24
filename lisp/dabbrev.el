@@ -6,7 +6,6 @@
 ;; Author: Don Morrison
 ;;	Lars Lindberg
 ;; (according to ack.texi)
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 16 Mars 1992
 ;; Lindberg's last update version: 5.7
 ;; Keywords: abbrev expand completion convenience
@@ -238,8 +237,7 @@ See also `dabbrev-ignored-buffer-names'."
   :version "21.1")
 
 (defcustom dabbrev-check-other-buffers t
-  "Should \\[dabbrev-expand] look in other buffers?\
-
+  "Should \\[dabbrev-expand] look in other buffers?
 nil: Don't look in other buffers.
 t: Also look for expansions in the buffers pointed out by
    `dabbrev-select-buffers-function'.

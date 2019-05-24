@@ -2597,8 +2597,9 @@ rather than all at the end (i.e. like `let*' rather than like `let')."
 ;;;###autoload
 (defmacro cl-callf (func place &rest args)
   "Set PLACE to (FUNC PLACE ARGS...).
-FUNC should be an unquoted function name.  PLACE may be a symbol,
-or any generalized variable allowed by `setf'."
+FUNC should be an unquoted function name or a lambda expression.
+PLACE may be a symbol, or any generalized variable allowed by
+`setf'."
   (declare (indent 2) (debug (cl-function place &rest form)))
   (gv-letplace (getter setter) place
     (let* ((rargs (cons getter args)))

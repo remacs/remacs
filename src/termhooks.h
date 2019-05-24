@@ -496,7 +496,7 @@ struct terminal
 
    If MAKEINDEX (on NS), set COLOR_DEF pixel to ARGB.  */
   bool (*defined_color_hook) (struct frame *f, const char *color_name,
-                              XColor *color_def,
+                              Emacs_Color *color_def,
                               bool alloc,
                               bool makeIndex);
 
@@ -515,13 +515,13 @@ struct terminal
 
   /* This hook is called to store the frame's background color into
      BGCOLOR.  */
-  void (*query_frame_background_color) (struct frame *f, XColor *bgcolor);
+  void (*query_frame_background_color) (struct frame *f, Emacs_Color *bgcolor);
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NTGUI)
   /* On frame F, translate pixel colors to RGB values for the NCOLORS
      colors in COLORS.  Use cached information, if available.  */
 
-  void (*query_colors) (struct frame *f, XColor *colors, int ncolors);
+  void (*query_colors) (struct frame *f, Emacs_Color *colors, int ncolors);
 #endif
   /* Return the current position of the mouse.
 
@@ -744,7 +744,7 @@ struct terminal
   /* Image hooks */
 #ifdef HAVE_WINDOW_SYSTEM
   /* Free the pixmap PIXMAP on F.  */
-  void (*free_pixmap) (struct frame *f, Pixmap pixmap);
+  void (*free_pixmap) (struct frame *f, Emacs_Pixmap pixmap);
 
 #endif
 

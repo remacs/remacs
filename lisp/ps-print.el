@@ -5,8 +5,8 @@
 ;; Author: Jim Thompson (was <thompson@wg2.waii.com>)
 ;;	Jacques Duthen (was <duthen@cegelec-red.fr>)
 ;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
-;;	Kenichi Handa <handa@m17n.org> (multi-byte characters)
-;; Maintainer: Kenichi Handa <handa@m17n.org> (multi-byte characters)
+;;	Kenichi Handa <handa@gnu.org> (multi-byte characters)
+;; Maintainer: Kenichi Handa <handa@gnu.org> (multi-byte characters)
 ;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, print, PostScript
 ;; Version: 7.3.5
@@ -1405,7 +1405,7 @@ Please send all bug fixes and enhancements to
 ;; prologue code suggestion, for odd/even printing suggestion and for
 ;; `ps-prologue-file' enhancement.
 ;;
-;; Thanks to Ken'ichi Handa <handa@m17n.org> for multi-byte buffer handling.
+;; Thanks to Ken'ichi Handa <handa@gnu.org> for multi-byte buffer handling.
 ;;
 ;; Thanks to Matthew O Persico <Matthew.Persico@lazard.com> for line number on
 ;; empty columns.

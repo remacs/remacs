@@ -252,7 +252,7 @@ ftxfont_draw (struct glyph_string *s, int from, int to, int x, int y,
   struct font *font = s->font;
   XPoint p[0x700];
   int n[7];
-  unsigned *code;
+  unsigned *code = s->char2b + from;
   int len = to - from;
   int i;
   GC *gcs;
@@ -260,14 +260,9 @@ ftxfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 
   n[0] = n[1] = n[2] = n[3] = n[4] = n[5] = n[6] = 0;
 
-  USE_SAFE_ALLOCA;
-  SAFE_NALLOCA (code, 1, len);
   block_input ();
   if (with_background)
     ftxfont_draw_background (f, font, s->gc, x, y, s->width);
-  for (i = 0; i < len; i++)
-    code[i] = ((XCHAR2B_BYTE1 (s->char2b + from + i) << 8)
-	       | XCHAR2B_BYTE2 (s->char2b + from + i));
 
   if (face->gc == s->gc)
     {
@@ -312,7 +307,6 @@ ftxfont_draw (struct glyph_string *s, int from, int to, int x, int y,
     }
 
   unblock_input ();
-  SAFE_FREE ();
 
   return len;
 }

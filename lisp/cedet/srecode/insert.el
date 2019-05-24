@@ -1,4 +1,4 @@
-;;; srecode/insert.el --- Insert srecode templates to an output stream.
+;;; srecode/insert.el --- Insert srecode templates to an output stream  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2005, 2007-2019 Free Software Foundation, Inc.
 
@@ -25,9 +25,6 @@
 ;;
 ;; Manage the insertion process for a template.
 ;;
-
-(eval-when-compile
-  (require 'cl)) ;; for `lexical-let'
 
 (require 'srecode/compile)
 (require 'srecode/find)
@@ -1049,21 +1046,20 @@ template where a ^ inserter occurs."
   ;; which implements the wrap insertion behavior in FUNCTION. The
   ;; maximum valid nesting depth is just the current depth + 1.
   (let ((srecode-template-inserter-point-override
-	 (lexical-let ((inserter1 sti))
-	   (cons
-	    ;; DEPTH
-	    (+ (length (oref-default 'srecode-template active)) 1)
-	    ;; FUNCTION
-	    (lambda (dict)
-	      (let ((srecode-template-inserter-point-override nil))
-		(if (srecode-dictionary-lookup-name
-		     dict (oref inserter1 :object-name))
-		    ;; Insert our sectional part with looping.
-		    (srecode-insert-method-helper
-		     inserter1 dict 'template)
-		  ;; Insert our sectional part just once.
-		  (srecode-insert-subtemplate
-		   inserter1 dict 'template))))))))
+	 (cons
+	  ;; DEPTH
+	  (+ (length (oref-default 'srecode-template active)) 1)
+	  ;; FUNCTION
+	  (lambda (dict)
+	    (let ((srecode-template-inserter-point-override nil))
+	      (if (srecode-dictionary-lookup-name
+		   dict (oref sti :object-name))
+		  ;; Insert our sectional part with looping.
+		  (srecode-insert-method-helper
+		   sti dict 'template)
+		;; Insert our sectional part just once.
+		(srecode-insert-subtemplate
+		 sti dict 'template)))))))
     ;; Do a regular insertion for an include, but with our override in
     ;; place.
     (cl-call-next-method)))

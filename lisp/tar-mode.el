@@ -3,7 +3,6 @@
 ;; Copyright (C) 1990-1991, 1993-2019 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: 04 Apr 1990
 ;; Keywords: unix
 

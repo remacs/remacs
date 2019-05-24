@@ -40,7 +40,7 @@ PDF_CZECH = \
 PDF_FRENCH = \
 	fr-dired-ref.pdf \
 	fr-refcard.pdf \
-	fr-survival.pdf \
+	fr-survival.pdf
 
 PDF_GERMAN = de-refcard.pdf
 

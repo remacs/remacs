@@ -4,7 +4,6 @@
 
 ;; Author: Michael D. Ernst <mernst@theory.lcs.mit.edu>
 ;; Created: Jan 1991
-;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 

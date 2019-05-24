@@ -3,7 +3,6 @@
 ;; Copyright (C) 1991-1998, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Mike Williams <mikew@gopher.dosli.govt.nz>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, matching, mouse
 ;; Created: Thu Mar 28 13:48:23 1991
 

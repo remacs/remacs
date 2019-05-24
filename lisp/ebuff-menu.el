@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Richard Mlynarik <mly@ai.mit.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.

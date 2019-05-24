@@ -5,7 +5,7 @@
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H14PRO021
 
-;; Maintainer:  Kenichi Handa <handa@m17n.org>
+;; Maintainer:  Kenichi Handa <handa@gnu.org>
 ;;		KAWABATA, Taichi <kawabata@m17n.org>
 ;; Keywords: 	multilingual, i18n, Indian
 

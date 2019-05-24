@@ -3,7 +3,7 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: code extracted from Emacs-20's simple.el
-;; Maintainer: Stefan Monnier <monnier@iro.umontreal.ca>
+;; Maintainer: Stefan Monnier <monnier@gnu.org>
 ;; Keywords: comment uncomment
 ;; Package: emacs
 

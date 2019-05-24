@@ -85,7 +85,7 @@ static int any_help_event_p;
 extern unsigned int msh_mousewheel;
 
 extern int w32_codepage_for_font (char *fontname);
-extern Cursor w32_load_cursor (LPCTSTR name);
+extern HCURSOR w32_load_cursor (LPCTSTR name);
 
 
 /* This is display since w32 does not support multiple ones.  */
@@ -166,7 +166,7 @@ int w32_message_fd = -1;
 
 static void w32_handle_tool_bar_click (struct frame *,
                                        struct input_event *);
-static void w32_define_cursor (Window, Cursor);
+static void w32_define_cursor (Window, Emacs_Cursor);
 
 static void w32_scroll_bar_clear (struct frame *);
 static void w32_raise_frame (struct frame *);
@@ -237,23 +237,21 @@ record_event (char *locus, int type)
 
 
 static void
-XChangeGC (void *ignore, XGCValues *gc, unsigned long mask,
-	   XGCValues *xgcv)
+XChangeGC (void *ignore, Emacs_GC *gc, unsigned long mask,
+	   Emacs_GC *egc)
 {
   if (mask & GCForeground)
-    gc->foreground = xgcv->foreground;
+    gc->foreground = egc->foreground;
   if (mask & GCBackground)
-    gc->background = xgcv->background;
-  if (mask & GCFont)
-    gc->font = xgcv->font;
+    gc->background = egc->background;
 }
 
-XGCValues *
-XCreateGC (void *ignore, HWND wignore, unsigned long mask, XGCValues *xgcv)
+Emacs_GC *
+XCreateGC (void *ignore, HWND wignore, unsigned long mask, Emacs_GC *egc)
 {
-  XGCValues *gc = xzalloc (sizeof (XGCValues));
+  Emacs_GC *gc = xzalloc (sizeof (*gc));
 
-  XChangeGC (ignore, gc, mask, xgcv);
+  XChangeGC (ignore, gc, mask, egc);
 
   return gc;
 }
@@ -337,7 +335,7 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
 
   int wave_height = 3 * scale_y, wave_length = 2 * scale_x, thickness = scale_y;
   int dx, dy, x0, y0, width, x1, y1, x2, y2, odd, xmax;
-  XRectangle wave_clip, string_clip, final_clip;
+  Emacs_Rectangle wave_clip, string_clip, final_clip;
   RECT w32_final_clip, w32_string_clip;
   HPEN hp, oldhp;
 
@@ -356,14 +354,14 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
   wave_clip.height = wave_height;
 
   get_glyph_string_clip_rect (s, &w32_string_clip);
-  CONVERT_TO_XRECT (string_clip, w32_string_clip);
+  CONVERT_TO_EMACS_RECT (string_clip, w32_string_clip);
 
   if (!gui_intersect_rectangles (&wave_clip, &string_clip, &final_clip))
     return;
 
   hp = CreatePen (PS_SOLID, thickness, color);
   oldhp = SelectObject (s->hdc, hp);
-  CONVERT_FROM_XRECT (final_clip, w32_final_clip);
+  CONVERT_FROM_EMACS_RECT (final_clip, w32_final_clip);
   w32_set_clip_rectangle (s->hdc, &w32_final_clip);
 
   /* Draw the waves */
@@ -396,7 +394,7 @@ w32_draw_underwave (struct glyph_string *s, COLORREF color)
 
 /* Draw a hollow rectangle at the specified position.  */
 static void
-w32_draw_rectangle (HDC hdc, XGCValues *gc, int x, int y,
+w32_draw_rectangle (HDC hdc, Emacs_GC *gc, int x, int y,
                     int width, int height)
 {
   HBRUSH hb, oldhb;
@@ -906,38 +904,37 @@ w32_set_cursor_gc (struct glyph_string *s)
   else
     {
       /* Cursor on non-default face: must merge.  */
-      XGCValues xgcv;
+      Emacs_GC egc;
       unsigned long mask;
 
-      xgcv.background = s->f->output_data.w32->cursor_pixel;
-      xgcv.foreground = s->face->background;
+      egc.background = s->f->output_data.w32->cursor_pixel;
+      egc.foreground = s->face->background;
 
       /* If the glyph would be invisible, try a different foreground.  */
-      if (xgcv.foreground == xgcv.background)
-	xgcv.foreground = s->face->foreground;
-      if (xgcv.foreground == xgcv.background)
-	xgcv.foreground = s->f->output_data.w32->cursor_foreground_pixel;
-      if (xgcv.foreground == xgcv.background)
-	xgcv.foreground = s->face->foreground;
+      if (egc.foreground == egc.background)
+	egc.foreground = s->face->foreground;
+      if (egc.foreground == egc.background)
+	egc.foreground = s->f->output_data.w32->cursor_foreground_pixel;
+      if (egc.foreground == egc.background)
+	egc.foreground = s->face->foreground;
 
       /* Make sure the cursor is distinct from text in this face.  */
-      if (xgcv.background == s->face->background
-	  && xgcv.foreground == s->face->foreground)
+      if (egc.background == s->face->background
+	  && egc.foreground == s->face->foreground)
 	{
-	  xgcv.background = s->face->foreground;
-	  xgcv.foreground = s->face->background;
+	  egc.background = s->face->foreground;
+	  egc.foreground = s->face->background;
 	}
 
       IF_DEBUG (w32_check_font (s->f, s->font));
-      xgcv.font = s->font;
-      mask = GCForeground | GCBackground | GCFont;
+      mask = GCForeground | GCBackground;
 
       if (FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc)
 	XChangeGC (NULL, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
-		   mask, &xgcv);
+		   mask, &egc);
       else
 	FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc
-	  = XCreateGC (NULL, FRAME_W32_WINDOW (s->f), mask, &xgcv);
+	  = XCreateGC (NULL, FRAME_W32_WINDOW (s->f), mask, &egc);
 
       s->gc = FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc;
     }
@@ -972,21 +969,20 @@ w32_set_mouse_face_gc (struct glyph_string *s)
     {
       /* Otherwise construct scratch_cursor_gc with values from FACE
 	 but font FONT.  */
-      XGCValues xgcv;
+      Emacs_GC egc;
       unsigned long mask;
 
-      xgcv.background = s->face->background;
-      xgcv.foreground = s->face->foreground;
+      egc.background = s->face->background;
+      egc.foreground = s->face->foreground;
       IF_DEBUG (w32_check_font (s->f, s->font));
-      xgcv.font = s->font;
-      mask = GCForeground | GCBackground | GCFont;
+      mask = GCForeground | GCBackground;
 
       if (FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc)
 	XChangeGC (NULL, FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc,
-		   mask, &xgcv);
+		   mask, &egc);
       else
 	FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc
-	  = XCreateGC (NULL, FRAME_W32_WINDOW (s->f), mask, &xgcv);
+	  = XCreateGC (NULL, FRAME_W32_WINDOW (s->f), mask, &egc);
 
       s->gc = FRAME_DISPLAY_INFO (s->f)->scratch_cursor_gc;
     }
@@ -1101,14 +1097,10 @@ w32_compute_glyph_string_overhangs (struct glyph_string *s)
       && s->first_glyph->type == CHAR_GLYPH
       && !s->font_not_found_p)
     {
-      unsigned *code = alloca (sizeof (unsigned) * s->nchars);
       struct font *font = s->font;
       struct font_metrics metrics;
-      int i;
 
-      for (i = 0; i < s->nchars; i++)
-	code[i] = s->char2b[i];
-      font->driver->text_extents (font, code, s->nchars, &metrics);
+      font->driver->text_extents (font, s->char2b, s->nchars, &metrics);
       s->right_overhang = (metrics.rbearing > metrics.width
 			   ? metrics.rbearing - metrics.width : 0);
       s->left_overhang = metrics.lbearing < 0 ? -metrics.lbearing : 0;
@@ -1353,7 +1345,7 @@ static void
 w32_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 {
   struct glyph *glyph = s->first_glyph;
-  XChar2b char2b[8];
+  unsigned char2b[8];
   int x, i, j;
   bool with_background;
 
@@ -1410,16 +1402,12 @@ w32_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 	{
 	  struct font *font = s->font;
 	  int upper_len = (len + 1) / 2;
-	  unsigned code;
 	  HFONT old_font;
 
 	  old_font = SelectObject (s->hdc, FONT_HANDLE (font));
 	  /* It is certain that all LEN characters in STR are ASCII.  */
 	  for (j = 0; j < len; j++)
-	    {
-	      code = font->driver->encode_char (font, str[j]);
-	      STORE_XCHAR2B (char2b + j, code >> 8, code & 0xFF);
-	    }
+            char2b[j] = font->driver->encode_char (font, str[j]) & 0xFFFF;
 	  font->driver->draw (s, 0, upper_len,
 			      x + glyph->slice.glyphless.upper_xoff,
 			      s->ybase + glyph->slice.glyphless.upper_yoff,
@@ -1517,7 +1505,7 @@ w32_alloc_lighter_color (struct frame *f, COLORREF *color,
    colors in COLORS.  On W32, we no longer try to map colors to
    a palette.  */
 static void
-w32_query_colors (struct frame *f, XColor *colors, int ncolors)
+w32_query_colors (struct frame *f, Emacs_Color *colors, int ncolors)
 {
   int i;
 
@@ -1534,7 +1522,7 @@ w32_query_colors (struct frame *f, XColor *colors, int ncolors)
 /* Store F's background color into *BGCOLOR.  */
 
 static void
-w32_query_frame_background_color (struct frame *f, XColor *bgcolor)
+w32_query_frame_background_color (struct frame *f, Emacs_Color *bgcolor)
 {
   bgcolor->pixel = FRAME_BACKGROUND_PIXEL (f);
   w32_query_colors (f, bgcolor, 1);
@@ -1551,7 +1539,7 @@ static void
 w32_setup_relief_color (struct frame *f, struct relief *relief, double factor,
 			int delta, COLORREF default_pixel)
 {
-  XGCValues xgcv;
+  Emacs_GC egc;
   struct w32_output *di = f->output_data.w32;
   unsigned long mask = GCForeground;
   COLORREF pixel;
@@ -1563,22 +1551,21 @@ w32_setup_relief_color (struct frame *f, struct relief *relief, double factor,
   /* TODO: Free colors (if using palette)? */
 
   /* Allocate new color.  */
-  xgcv.foreground = default_pixel;
+  egc.foreground = default_pixel;
   pixel = background;
   if (w32_alloc_lighter_color (f, &pixel, factor, delta))
-    xgcv.foreground = relief->pixel = pixel;
+    egc.foreground = relief->pixel = pixel;
 
-  xgcv.font = NULL;	/* avoid compiler warnings */
   if (relief->gc == 0)
     {
 #if 0 /* TODO: stipple */
-      xgcv.stipple = dpyinfo->gray;
+      egc.stipple = dpyinfo->gray;
       mask |= GCStipple;
 #endif
-      relief->gc = XCreateGC (NULL, FRAME_W32_WINDOW (f), mask, &xgcv);
+      relief->gc = XCreateGC (NULL, FRAME_W32_WINDOW (f), mask, &egc);
     }
   else
-    XChangeGC (NULL, relief->gc, mask, &xgcv);
+    XChangeGC (NULL, relief->gc, mask, &egc);
 }
 
 
@@ -1627,7 +1614,7 @@ w32_draw_relief_rect (struct frame *f,
 		      RECT *clip_rect)
 {
   int i;
-  XGCValues gc;
+  Emacs_GC gc;
   HDC hdc = get_frame_dc (f);
 
   if (raised_p)
@@ -2286,7 +2273,7 @@ w32_draw_stretch_glyph_string (struct glyph_string *s)
       /* Clear rest using the GC of the original non-cursor face.  */
       if (width < background_width)
 	{
-	  XGCValues *gc = s->face->gc;
+	  Emacs_GC *gc = s->face->gc;
 	  int y = s->y;
 	  int w = background_width - width, h = s->height;
 	  RECT r;
@@ -3429,7 +3416,7 @@ static void w32_horizontal_scroll_bar_report_motion (struct frame **, Lisp_Objec
                                                      Lisp_Object *, Lisp_Object *,
                                                      Time *);
 static void
-w32_define_cursor (Window window, Cursor cursor)
+w32_define_cursor (Window window, Emacs_Cursor cursor)
 {
   PostMessage (window, WM_EMACS_SETCURSOR, (WPARAM) cursor, 0);
 }
@@ -5806,7 +5793,7 @@ w32_draw_bar_cursor (struct window *w, struct glyph_row *row,
 /* RIF: Define cursor CURSOR on frame F.  */
 
 static void
-w32_define_frame_cursor (struct frame *f, Cursor cursor)
+w32_define_frame_cursor (struct frame *f, Emacs_Cursor cursor)
 {
   w32_define_cursor (FRAME_W32_WINDOW (f), cursor);
 }
@@ -6947,7 +6934,7 @@ w32_toggle_invisible_pointer (struct frame *f, bool invisible)
  ***********************************************************************/
 
 static void
-w32_free_pixmap (struct frame *_f, Pixmap pixmap)
+w32_free_pixmap (struct frame *_f, Emacs_Pixmap pixmap)
 {
   DeleteObject (pixmap);
 }
@@ -7208,7 +7195,7 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 
   /* initialize palette with white and black */
   {
-    XColor color;
+    Emacs_Color color;
     w32_defined_color (0, "white", &color, true, false);
     w32_defined_color (0, "black", &color, true, false);
   }

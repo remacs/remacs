@@ -376,17 +376,26 @@ static Lisp_Object list_of_error;
 	       || it->s[IT_BYTEPOS (*it)] == '\t'))			\
        || (IT_BYTEPOS (*it) < ZV_BYTE					\
 	   && (*BYTE_POS_ADDR (IT_BYTEPOS (*it)) == ' '			\
-	       || *BYTE_POS_ADDR (IT_BYTEPOS (*it)) == '\t'))))		\
+	       || *BYTE_POS_ADDR (IT_BYTEPOS (*it)) == '\t'))))
 
-/* Test all the conditions needed to print the fill column indicator.  */
-#define FILL_COLUMN_INDICATOR_NEEDED(it)			\
-  Vdisplay_fill_column_indicator			\
-  && (it->continuation_lines_width == 0)			\
-  && (!NILP (Vdisplay_fill_column_indicator_column))		\
-  && FIXNATP (Vdisplay_fill_column_indicator_character)		\
-  && ((EQ (Vdisplay_fill_column_indicator_column, Qt)		\
-       && FIXNATP (BVAR (current_buffer, fill_column)))		\
-      || (FIXNATP (Vdisplay_fill_column_indicator_column)))
+/* If all the conditions needed to print the fill column indicator are
+   met, return the (nonnegative) column number, else return a negative
+   value.  */
+static int
+fill_column_indicator_column (struct it *it)
+{
+  if (Vdisplay_fill_column_indicator
+      && it->continuation_lines_width == 0
+      && CHARACTERP (Vdisplay_fill_column_indicator_character))
+    {
+      Lisp_Object col = (EQ (Vdisplay_fill_column_indicator_column, Qt)
+			 ? BVAR (current_buffer, fill_column)
+			 : Vdisplay_fill_column_indicator_column);
+      if (RANGED_FIXNUMP (0, col, INT_MAX))
+	return XFIXNUM (col);
+    }
+  return -1;
+}
 
 /* True means print newline to stdout before next mini-buffer message.  */
 
@@ -2080,7 +2089,7 @@ frame_to_window_pixel_xy (struct window *w, int *x, int *y)
 int
 get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int n)
 {
-  XRectangle r;
+  Emacs_Rectangle r;
 
   if (n <= 0)
     return 0;
@@ -2142,7 +2151,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	 take the intersection with the rectangle of the cursor.  */
       if (s->for_overlaps & OVERLAPS_ERASED_CURSOR)
 	{
-	  XRectangle rc, r_save = r;
+	  Emacs_Rectangle rc, r_save = r;
 
 	  rc.x = WINDOW_TEXT_TO_FRAME_PIXEL_X (s->w, s->w->phys_cursor.x);
 	  rc.y = s->w->phys_cursor.y;
@@ -2208,7 +2217,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 
   if (s->row->clip)
     {
-      XRectangle r_save = r;
+      Emacs_Rectangle r_save = r;
 
       if (! gui_intersect_rectangles (&r_save, s->row->clip, &r))
 	r.width = 0;
@@ -2217,8 +2226,8 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
   if ((s->for_overlaps & OVERLAPS_BOTH) == 0
       || ((s->for_overlaps & OVERLAPS_BOTH) == OVERLAPS_BOTH && n == 1))
     {
-#ifdef CONVERT_FROM_XRECT
-      CONVERT_FROM_XRECT (r, *rects);
+#ifdef CONVERT_FROM_EMACS_RECT
+      CONVERT_FROM_EMACS_RECT (r, *rects);
 #else
       *rects = r;
 #endif
@@ -2230,10 +2239,10 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	 multiple clipping rectangles, we exclude the row of the glyph
 	 string from the clipping rectangle.  This is to avoid drawing
 	 the same text on the environment with anti-aliasing.  */
-#ifdef CONVERT_FROM_XRECT
-      XRectangle rs[2];
+#ifdef CONVERT_FROM_EMACS_RECT
+      Emacs_Rectangle rs[2];
 #else
-      XRectangle *rs = rects;
+      Emacs_Rectangle *rs = rects;
 #endif
       int i = 0, row_y = WINDOW_TO_FRAME_PIXEL_Y (s->w, s->row->y);
 
@@ -2266,9 +2275,9 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	}
 
       n = i;
-#ifdef CONVERT_FROM_XRECT
+#ifdef CONVERT_FROM_EMACS_RECT
       for (i = 0; i < n; i++)
-	CONVERT_FROM_XRECT (rs[i], rects[i]);
+	CONVERT_FROM_EMACS_RECT (rs[i], rects[i]);
 #endif
       return n;
     }
@@ -13986,12 +13995,6 @@ redisplay_internal (void)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS)
   if (popup_activated ())
     {
-#ifdef NS_IMPL_COCOA
-      /* On macOS we may have disabled screen updates due to window
-         resizing.  We should re-enable them so the popup can be
-         displayed.  */
-      ns_enable_screen_updates ();
-#endif
       return;
     }
 #endif
@@ -14794,12 +14797,6 @@ unwind_redisplay (void)
 {
   redisplaying_p = false;
   unblock_buffer_flips ();
-#ifdef NS_IMPL_COCOA
-  /* On macOS we may have disabled screen updates due to window
-     resizing.  When redisplay completes we want to re-enable
-     them.  */
-  ns_enable_screen_updates ();
-#endif
 }
 
 
@@ -20172,18 +20169,11 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  /* Corner case for when display-fill-column-indicator-mode
 	     is active and the extra character should be added in the
 	     same place than the line.  */
-	  if ((it->w->pseudo_window_p == 0)
-	      && FILL_COLUMN_INDICATOR_NEEDED(it))
+	  int indicator_column = (it->w->pseudo_window_p == 0
+				  ? fill_column_indicator_column (it)
+				  : -1);
+	  if (0 <= indicator_column)
 	    {
-	       int fill_column_indicator_column = -1;
-
-	       if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	         fill_column_indicator_column =
-		   XFIXNAT (BVAR (current_buffer, fill_column));
-	       else
-		 fill_column_indicator_column =
-		   XFIXNAT (Vdisplay_fill_column_indicator_column);
-
 	       struct font *font =
 	         default_face->font ?
 		   default_face->font : FRAME_FONT (it->f);
@@ -20191,18 +20181,19 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	         font->average_width ?
 		   font->average_width : font->space_width;
 
-	       const int column_x =
-		 char_width * fill_column_indicator_column +
-		   it->lnum_pixel_width;
-
-	       if (it->current_x == column_x)
+	       int column_x;
+	       if (!INT_MULTIPLY_WRAPV (indicator_column, char_width,
+					&column_x)
+		   && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x,
+				      &column_x)
+		   && it->current_x == column_x)
 	         {
 	           it->c = it->char_to_display =
 		     XFIXNAT (Vdisplay_fill_column_indicator_character);
 	           it->face_id =
 		     merge_faces (it->w, Qfill_column_indicator,
 		                  0, saved_face_id);
-	           face = FACE_FROM_ID(it->f, it->face_id);
+	           face = FACE_FROM_ID (it->f, it->face_id);
 	           goto produce_glyphs;
 	         }
 	    }
@@ -20434,30 +20425,22 @@ extend_face_to_end_of_line (struct it *it)
 	  /* Display fill column indicator if not in modeline or
 	     toolbar and display fill column indicator mode is
 	     active.  */
-	  if ((it->w->pseudo_window_p == 0)
-	      && FILL_COLUMN_INDICATOR_NEEDED(it))
+	  int indicator_column = (it->w->pseudo_window_p == 0
+				  ? fill_column_indicator_column (it)
+				  : -1);
+	  if (0 <= indicator_column)
             {
-	       int fill_column_indicator_column = -1;
-
-	       if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	         fill_column_indicator_column =
-		   XFIXNAT (BVAR (current_buffer, fill_column));
-	       else
-		 fill_column_indicator_column =
-		   XFIXNAT (Vdisplay_fill_column_indicator_column);
-
 	      struct font *font =
 	        default_face->font ? default_face->font : FRAME_FONT (f);
 	      const int char_width =
 	        font->average_width ?
 		  font->average_width : font->space_width;
 
-	      const int column_x =
-	        char_width * fill_column_indicator_column +
-	          it->lnum_pixel_width;
-
-	      if ((it->current_x <= column_x)
-	          && (column_x <= it->last_visible_x))
+	      int column_x;
+	      if (!INT_MULTIPLY_WRAPV (indicator_column, char_width, &column_x)
+		  && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x, &column_x)
+		  && it->current_x <= column_x
+		  && column_x <= it->last_visible_x)
 	        {
 	          const char saved_char = it->char_to_display;
 	          const struct text_pos saved_pos = it->position;
@@ -20637,45 +20620,33 @@ extend_face_to_end_of_line (struct it *it)
 	it->face_id = face->id;
 
       /* Display fill-column indicator if needed.  */
-      if (FILL_COLUMN_INDICATOR_NEEDED(it))
+      int indicator_column = fill_column_indicator_column (it);
+      if (0 <= indicator_column
+	  && INT_ADD_WRAPV (it->lnum_pixel_width, indicator_column,
+			    &indicator_column))
+	indicator_column = -1;
+      do
 	{
-	  int fill_column_indicator_column = -1;
-
-	  /* Vdisplay_fill_column_indicator_column accepts the special
-	     value t to use the default fill-column variable.  The
-	     conditions are all defined in the macro
-	     FILL_COLUMN_INDICATOR_NEEDED.  */
-	  if (EQ (Vdisplay_fill_column_indicator_column, Qt))
-	    fill_column_indicator_column =
-	      XFIXNAT (BVAR (current_buffer, fill_column)) + it->lnum_pixel_width;
-	  else
-	    fill_column_indicator_column =
-	      XFIXNAT (Vdisplay_fill_column_indicator_column) + it->lnum_pixel_width;
-
-	  do
+	  int saved_face_id;
+	  bool indicate = it->current_x == indicator_column;
+	  if (indicate)
 	    {
-	      if (it->current_x == fill_column_indicator_column)
-	        {
-		  const int saved_face_id = it->face_id;
-		  it->face_id =
-		    merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
-		  it->c = it->char_to_display =
-		    XFIXNAT (Vdisplay_fill_column_indicator_character);
-		  PRODUCE_GLYPHS (it);
-		  it->face_id = saved_face_id;
-		  it->c = it->char_to_display = ' ';
-	        }
-	      else
-		PRODUCE_GLYPHS (it);
-	    } while (it->current_x <= it->last_visible_x);
+	      saved_face_id = it->face_id;
+	      it->face_id =
+		merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
+	      it->c = it->char_to_display =
+		XFIXNAT (Vdisplay_fill_column_indicator_character);
+	    }
+
+	  PRODUCE_GLYPHS (it);
+
+	  if (indicate)
+	    {
+	      it->face_id = saved_face_id;
+	      it->c = it->char_to_display = ' ';
+	    }
 	}
-      else
-	{
-          do
-	    {
-	      PRODUCE_GLYPHS (it);
-            } while (it->current_x <= it->last_visible_x);
-        }
+      while (it->current_x <= it->last_visible_x);
 
       if (WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0
 	  && (it->glyph_row->used[RIGHT_MARGIN_AREA]
@@ -25914,7 +25885,7 @@ dump_glyph_string (struct glyph_string *s)
 #endif /* GLYPH_DEBUG */
 
 /* Initialize glyph string S.  CHAR2B is a suitably allocated vector
-   of XChar2b structures for S; it can't be allocated in
+   of 2-byte unsigned integers for S; it can't be allocated in
    init_glyph_string because it must be allocated via `alloca'.  W
    is the window on which S is drawn.  ROW and AREA are the glyph row
    and area within the row from which S is constructed.  START is the
@@ -25944,7 +25915,7 @@ init_glyph_string (struct glyph_string *s,
 #ifdef HAVE_NTGUI
 		   HDC hdc,
 #endif
-		   XChar2b *char2b, struct window *w, struct glyph_row *row,
+		   unsigned *char2b, struct window *w, struct glyph_row *row,
 		   enum glyph_row_area area, int start, enum draw_glyphs_face hl)
 {
   memset (s, 0, sizeof *s);
@@ -26023,7 +25994,7 @@ append_glyph_string (struct glyph_string **head, struct glyph_string **tail,
 
 static struct face *
 get_char_face_and_encoding (struct frame *f, int c, int face_id,
-			    XChar2b *char2b, bool display_p)
+			    unsigned *char2b, bool display_p)
 {
   struct face *face = FACE_FROM_ID (f, face_id);
   unsigned code = 0;
@@ -26035,7 +26006,8 @@ get_char_face_and_encoding (struct frame *f, int c, int face_id,
       if (code == FONT_INVALID_CODE)
 	code = 0;
     }
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
 
   /* Make sure X resources of the face are allocated.  */
 #ifdef HAVE_X_WINDOWS
@@ -26056,7 +26028,7 @@ get_char_face_and_encoding (struct frame *f, int c, int face_id,
 
 static struct face *
 get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
-			     XChar2b *char2b)
+			     unsigned *char2b)
 {
   struct face *face;
   unsigned code = 0;
@@ -26078,7 +26050,8 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
 	code = 0;
     }
 
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
   return face;
 }
 
@@ -26087,7 +26060,7 @@ get_glyph_face_and_encoding (struct frame *f, struct glyph *glyph,
    Return true iff FONT has a glyph for C.  */
 
 static bool
-get_char_glyph_code (int c, struct font *font, XChar2b *char2b)
+get_char_glyph_code (int c, struct font *font, unsigned *char2b)
 {
   unsigned code;
 
@@ -26098,7 +26071,9 @@ get_char_glyph_code (int c, struct font *font, XChar2b *char2b)
 
   if (code == FONT_INVALID_CODE)
     return false;
-  STORE_XCHAR2B (char2b, (code >> 8), (code & 0xFF));
+
+  /* Ensure that the code is only 2 bytes wide.  */
+  *char2b = code & 0xFFFF;
   return true;
 }
 
@@ -26211,7 +26186,8 @@ fill_gstring_glyph_string (struct glyph_string *s, int face_id,
       Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
       unsigned code = LGLYPH_CODE (lglyph);
 
-      STORE_XCHAR2B ((s->char2b + i), code >> 8, code & 0xFF);
+      /* Ensure that the code is only 2 bytes wide.  */
+      s->char2b[i] = code & 0xFFFF;
     }
   s->width = composition_gstring_width (lgstring, s->cmp_from, s->cmp_to, NULL);
   return glyph - s->row->glyphs[s->area];
@@ -26390,17 +26366,16 @@ fill_stretch_glyph_string (struct glyph_string *s, int start, int end)
 }
 
 static struct font_metrics *
-get_per_char_metric (struct font *font, XChar2b *char2b)
+get_per_char_metric (struct font *font, const unsigned *char2b)
 {
   static struct font_metrics metrics;
-  unsigned code;
 
   if (! font)
     return NULL;
-  code = (XCHAR2B_BYTE1 (char2b) << 8) | XCHAR2B_BYTE2 (char2b);
-  if (code == FONT_INVALID_CODE)
+  if (*char2b == FONT_INVALID_CODE)
     return NULL;
-  font->driver->text_extents (font, &code, 1, &metrics);
+
+  font->driver->text_extents (font, char2b, 1, &metrics);
   return &metrics;
 }
 
@@ -26418,7 +26393,7 @@ normal_char_ascent_descent (struct font *font, int c, int *ascent, int *descent)
 
   if (FONT_TOO_HIGH (font))
     {
-      XChar2b char2b;
+      unsigned char2b;
 
       /* Get metrics of C, defaulting to a reasonably sized ASCII
 	 character.  */
@@ -26465,7 +26440,7 @@ gui_get_glyph_overhangs (struct glyph *glyph, struct frame *f, int *left, int *r
 
   if (glyph->type == CHAR_GLYPH)
     {
-      XChar2b char2b;
+      unsigned char2b;
       struct face *face = get_glyph_face_and_encoding (f, glyph, &char2b);
       if (face->font)
 	{
@@ -26779,7 +26754,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
      do									   \
        {								   \
 	 int face_id;							   \
-	 XChar2b *char2b;						   \
+	 unsigned *char2b;					   \
 									   \
 	 face_id = (row)->glyphs[area][START].face_id;			   \
 									   \
@@ -26808,7 +26783,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
     struct face *base_face = FACE_FROM_ID (f, face_id);		    \
     ptrdiff_t cmp_id = (row)->glyphs[area][START].u.cmp.id;		    \
     struct composition *cmp = composition_table[cmp_id];		    \
-    XChar2b *char2b;							    \
+    unsigned *char2b;						            \
     struct glyph_string *first_s = NULL;				    \
     int n;								    \
     									    \
@@ -26840,7 +26815,7 @@ compute_overhangs_and_x (struct glyph_string *s, int x, bool backward_p)
 #define BUILD_GSTRING_GLYPH_STRING(START, END, HEAD, TAIL, HL, X, LAST_X) \
   do {									  \
     int face_id;							  \
-    XChar2b *char2b;							  \
+    unsigned *char2b;						          \
     Lisp_Object gstring;						  \
     									  \
     face_id = (row)->glyphs[area][START].face_id;			  \
@@ -28433,7 +28408,7 @@ gui_produce_glyphs (struct it *it)
 
   if (it->what == IT_CHARACTER)
     {
-      XChar2b char2b;
+      unsigned char2b;
       struct face *face = FACE_FROM_ID (it->f, it->face_id);
       struct font *font = face->font;
       struct font_metrics *pcm = NULL;
@@ -28832,7 +28807,7 @@ gui_produce_glyphs (struct it *it)
 	  int lbearing, rbearing;
 	  int i, width, ascent, descent;
 	  int c;
-	  XChar2b char2b;
+	  unsigned char2b;
 	  struct font_metrics *pcm;
 	  ptrdiff_t pos;
 
@@ -31153,7 +31128,7 @@ Returns the alist element for the first matching AREA in MAP.  */)
 
 /* Display frame CURSOR, optionally using shape defined by POINTER.  */
 static void
-define_frame_cursor1 (struct frame *f, Cursor cursor, Lisp_Object pointer)
+define_frame_cursor1 (struct frame *f, Emacs_Cursor cursor, Lisp_Object pointer)
 {
 #ifdef HAVE_WINDOW_SYSTEM
   if (!FRAME_WINDOW_P (f))
@@ -31205,7 +31180,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-  Cursor cursor = No_Cursor;
+  Emacs_Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;
   int dx, dy, width, height;
   ptrdiff_t charpos;
@@ -31518,7 +31493,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
   enum window_part part = ON_NOTHING;
   Lisp_Object window;
   struct window *w;
-  Cursor cursor = No_Cursor;
+  Emacs_Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;  /* Takes precedence over cursor!  */
   struct buffer *b;
 
@@ -32137,7 +32112,7 @@ cancel_mouse_face (struct frame *f)
    which intersects rectangle R.  R is in window-relative coordinates.  */
 
 static void
-expose_area (struct window *w, struct glyph_row *row, XRectangle *r,
+expose_area (struct window *w, struct glyph_row *row, const Emacs_Rectangle *r,
 	     enum glyph_row_area area)
 {
   struct glyph *first = row->glyphs[area];
@@ -32195,7 +32170,7 @@ expose_area (struct window *w, struct glyph_row *row, XRectangle *r,
    true if mouse-face was overwritten.  */
 
 static bool
-expose_line (struct window *w, struct glyph_row *row, XRectangle *r)
+expose_line (struct window *w, struct glyph_row *row, const Emacs_Rectangle *r)
 {
   eassert (row->enabled_p);
 
@@ -32230,7 +32205,7 @@ static void
 expose_overlaps (struct window *w,
 		 struct glyph_row *first_overlapping_row,
 		 struct glyph_row *last_overlapping_row,
-		 XRectangle *r)
+		 const Emacs_Rectangle *r)
 {
   struct glyph_row *row;
 
@@ -32256,9 +32231,9 @@ expose_overlaps (struct window *w,
 /* Return true if W's cursor intersects rectangle R.  */
 
 static bool
-phys_cursor_in_rect_p (struct window *w, XRectangle *r)
+phys_cursor_in_rect_p (struct window *w, const Emacs_Rectangle *r)
 {
-  XRectangle cr, result;
+  Emacs_Rectangle cr, result;
   struct glyph *cursor_glyph;
   struct glyph_row *row;
 
@@ -32416,10 +32391,10 @@ gui_draw_bottom_divider (struct window *w)
    mouse-face.  */
 
 static bool
-expose_window (struct window *w, XRectangle *fr)
+expose_window (struct window *w, const Emacs_Rectangle *fr)
 {
   struct frame *f = XFRAME (w->frame);
-  XRectangle wr, r;
+  Emacs_Rectangle wr, r;
   bool mouse_face_overwritten_p = false;
 
   /* If window is not yet fully initialized, do nothing.  This can
@@ -32578,7 +32553,7 @@ expose_window (struct window *w, XRectangle *fr)
    true if the exposure overwrites mouse-face.  */
 
 static bool
-expose_window_tree (struct window *w, XRectangle *r)
+expose_window_tree (struct window *w, const Emacs_Rectangle *r)
 {
   struct frame *f = XFRAME (w->frame);
   bool mouse_face_overwritten_p = false;
@@ -32606,7 +32581,7 @@ expose_window_tree (struct window *w, XRectangle *r)
 void
 expose_frame (struct frame *f, int x, int y, int w, int h)
 {
-  XRectangle r;
+  Emacs_Rectangle r;
   bool mouse_face_overwritten_p = false;
 
   TRACE ((stderr, "expose_frame "));
@@ -32693,10 +32668,11 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
    empty.  */
 
 bool
-gui_intersect_rectangles (XRectangle *r1, XRectangle *r2, XRectangle *result)
+gui_intersect_rectangles (const Emacs_Rectangle *r1, const Emacs_Rectangle *r2,
+                          Emacs_Rectangle *result)
 {
-  XRectangle *left, *right;
-  XRectangle *upper, *lower;
+  const Emacs_Rectangle *left, *right;
+  const Emacs_Rectangle *upper, *lower;
   bool intersection_p = false;
 
   /* Rearrange so that R1 is the left-most rectangle.  */

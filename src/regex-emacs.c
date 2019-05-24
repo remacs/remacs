@@ -3432,7 +3432,7 @@ static bool bcmp_translate (re_char *, re_char *, ptrdiff_t,
      {									\
        d = string2;							\
        dend = end_match_2;						\
-     }									\
+     }
 
 /* Test if at very beginning or at very end of the virtual concatenation
    of STRING1 and STRING2.  If only one string, it's STRING2.  */

@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985-1987, 1992, 1994-1995, 2001-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev
 ;; Package: emacs
 

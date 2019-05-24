@@ -56,7 +56,7 @@ extern BOOL bUseDflt;
 
 struct w32_bitmap_record
 {
-  Pixmap pixmap;
+  Emacs_Pixmap pixmap;
   char *file;
   HINSTANCE hinst; /* Used to load the file */
   int refcount;
@@ -114,10 +114,10 @@ struct w32_display_info
   Window root_window;
 
   /* The cursor to use for vertical scroll bars.  */
-  Cursor vertical_scroll_bar_cursor;
+  HCURSOR vertical_scroll_bar_cursor;
 
   /* The cursor to use for horizontal scroll bars.  */
-  Cursor horizontal_scroll_bar_cursor;
+  HCURSOR horizontal_scroll_bar_cursor;
 
   /* Resource data base */
   const char *rdb;
@@ -142,7 +142,7 @@ struct w32_display_info
   int smallest_font_height;
 
   /* Reusable Graphics Context for drawing a cursor in a non-default face. */
-  XGCValues *scratch_cursor_gc;
+  Emacs_GC *scratch_cursor_gc;
 
   /* Information about the range of text currently shown in
      mouse-face.  */
@@ -241,7 +241,7 @@ extern void w32_set_scroll_bar_default_height (struct frame *);
 
 extern struct w32_display_info *w32_term_init (Lisp_Object,
 					       char *, char *);
-extern bool w32_defined_color (struct frame *, const char *, XColor *,
+extern bool w32_defined_color (struct frame *, const char *, Emacs_Color *,
                                bool, bool);
 extern int w32_display_pixel_height (struct w32_display_info *);
 extern int w32_display_pixel_width (struct w32_display_info *);
@@ -308,7 +308,7 @@ struct w32_output
   HPALETTE old_palette;
 
   /* Here are the Graphics Contexts for the default font.  */
-  XGCValues *cursor_gc;				/* cursor drawing */
+  Emacs_GC *cursor_gc;			/* cursor drawing */
 
   /* The window used for this frame.
      May be zero while the frame object is being created
@@ -348,27 +348,27 @@ struct w32_output
   COLORREF scroll_bar_background_pixel;
 
   /* Descriptor for the cursor in use for this window.  */
-  Cursor text_cursor;
-  Cursor nontext_cursor;
-  Cursor modeline_cursor;
-  Cursor hand_cursor;
-  Cursor hourglass_cursor;
-  Cursor horizontal_drag_cursor;
-  Cursor vertical_drag_cursor;
-  Cursor left_edge_cursor;
-  Cursor top_left_corner_cursor;
-  Cursor top_edge_cursor;
-  Cursor top_right_corner_cursor;
-  Cursor right_edge_cursor;
-  Cursor bottom_right_corner_cursor;
-  Cursor bottom_edge_cursor;
-  Cursor bottom_left_corner_cursor;
+  HCURSOR text_cursor;
+  HCURSOR nontext_cursor;
+  HCURSOR modeline_cursor;
+  HCURSOR hand_cursor;
+  HCURSOR hourglass_cursor;
+  HCURSOR horizontal_drag_cursor;
+  HCURSOR vertical_drag_cursor;
+  HCURSOR left_edge_cursor;
+  HCURSOR top_left_corner_cursor;
+  HCURSOR top_edge_cursor;
+  HCURSOR top_right_corner_cursor;
+  HCURSOR right_edge_cursor;
+  HCURSOR bottom_right_corner_cursor;
+  HCURSOR bottom_edge_cursor;
+  HCURSOR bottom_left_corner_cursor;
 
   /* Non-zero means hourglass cursor is currently displayed.  */
   unsigned hourglass_p : 1;
 
   /* Non-hourglass cursor that is currently active.  */
-  Cursor current_cursor;
+  HCURSOR current_cursor;
 
   DWORD dwStyle;
 
@@ -388,7 +388,7 @@ struct w32_output
   /* Relief GCs, colors etc.  */
   struct relief
   {
-    XGCValues *gc;
+    Emacs_GC *gc;
     unsigned long pixel;
   }
   black_relief, white_relief;
@@ -721,7 +721,7 @@ extern void complete_deferred_msg (HWND hwnd, UINT msg, LRESULT result);
 extern BOOL parse_button (int, int, int *, int *);
 
 extern void w32_sys_ring_bell (struct frame *f);
-extern void w32_query_color (struct frame *, XColor *);
+extern void w32_query_color (struct frame *, Emacs_Color *);
 extern void w32_delete_display (struct w32_display_info *dpyinfo);
 
 #define FILE_NOTIFICATIONS_SIZE 16384
@@ -805,7 +805,7 @@ typedef struct tagTRACKMOUSEEVENT
 struct image;
 struct face;
 
-XGCValues *XCreateGC (void *, HWND, unsigned long, XGCValues *);
+Emacs_GC *XCreateGC (void *, HWND, unsigned long, Emacs_GC *);
 
 typedef DWORD (WINAPI * ClipboardSequence_Proc) (void);
 typedef BOOL (WINAPI * AppendMenuW_Proc) (

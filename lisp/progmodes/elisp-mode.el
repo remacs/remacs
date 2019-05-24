@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1985-1986, 1999-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, languages
 ;; Package: emacs
 

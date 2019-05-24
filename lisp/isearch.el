@@ -3,7 +3,6 @@
 ;; Copyright (C) 1992-1997, 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: matching
 ;; Package: emacs
 

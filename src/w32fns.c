@@ -1174,7 +1174,7 @@ gamma_correct (struct frame *f, COLORREF *color)
    If ALLOC is nonzero, allocate a new colormap cell.  */
 
 bool
-w32_defined_color (struct frame *f, const char *color, XColor *color_def,
+w32_defined_color (struct frame *f, const char *color, Emacs_Color *color_def,
 		   bool alloc_p, bool _makeIndex)
 {
   register Lisp_Object tem;
@@ -1248,7 +1248,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
 static int
 w32_decode_color (struct frame *f, Lisp_Object arg, int def)
 {
-  XColor cdef;
+  Emacs_Color cdef;
 
   CHECK_STRING (arg);
 
@@ -2247,15 +2247,15 @@ w32_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 
 /* Subroutines for creating a frame.  */
 
-Cursor w32_load_cursor (LPCTSTR);
+HCURSOR w32_load_cursor (LPCTSTR);
 
-Cursor
+HCURSOR
 w32_load_cursor (LPCTSTR name)
 {
   /* Try first to load cursor from application resource.  */
-  Cursor cursor = LoadImage ((HINSTANCE) GetModuleHandle (NULL),
-			     name, IMAGE_CURSOR, 0, 0,
-			     LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_SHARED);
+  HCURSOR cursor = LoadImage ((HINSTANCE) GetModuleHandle (NULL),
+                              name, IMAGE_CURSOR, 0, 0,
+                              LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_SHARED);
   if (!cursor)
     {
       /* Then try to load a shared predefined cursor.  */
@@ -5217,7 +5217,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_EMACS_SETCURSOR:
       {
-	Cursor cursor = (Cursor) wParam;
+	HCURSOR cursor = (HCURSOR) wParam;
 	f = w32_window_to_frame (dpyinfo, hwnd);
 	if (f && cursor)
 	  {
@@ -5559,22 +5559,19 @@ w32_icon (struct frame *f, Lisp_Object parms)
 static void
 w32_make_gc (struct frame *f)
 {
-  XGCValues gc_values;
+  Emacs_GC gc_values;
 
   block_input ();
 
   /* Create the GC's of this frame.
      Note that many default values are used.  */
 
-  /* Normal video */
-  gc_values.font = FRAME_FONT (f);
-
   /* Cursor has cursor-color background, background-color foreground.  */
   gc_values.foreground = FRAME_BACKGROUND_PIXEL (f);
   gc_values.background = f->output_data.w32->cursor_pixel;
   f->output_data.w32->cursor_gc
     = XCreateGC (NULL, FRAME_W32_WINDOW (f),
-		 (GCFont | GCForeground | GCBackground),
+		 (GCForeground | GCBackground),
 		 &gc_values);
 
   /* Reliefs.  */
@@ -6100,7 +6097,7 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
        doc: /* SKIP: real doc in xfns.c.  */)
   (Lisp_Object color, Lisp_Object frame)
 {
-  XColor foo;
+  Emacs_Color foo;
   struct frame *f = decode_window_system_frame (frame);
 
   CHECK_STRING (color);
@@ -6115,7 +6112,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
        doc: /* SKIP: real doc in xfns.c.  */)
   (Lisp_Object color, Lisp_Object frame)
 {
-  XColor foo;
+  Emacs_Color foo;
   struct frame *f = decode_window_system_frame (frame);
 
   CHECK_STRING (color);

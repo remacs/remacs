@@ -3,7 +3,6 @@
 ;; Copyright (C) 1990, 1993, 1995, 1997, 2001-2019 Free Software
 ;; Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev convenience
 ;; Author: Jim Salem <alem@bbnplanet.com> of Thinking Machines Inc.
 ;;  (ideas suggested by Brewster Kahle)

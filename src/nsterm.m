@@ -160,20 +160,28 @@ char const * nstrace_fullscreen_type_name (int fs_type)
 
 - (NSColor *)colorUsingDefaultColorSpace
 {
-  /* FIXMES: We're checking for colorWithSRGBRed here so this will
-     only work in the same place as in the method above.  It should
-     really be a check whether we're on macOS 10.7 or above.  */
+  /* FIXME: We're checking for colorWithSRGBRed here so this will only
+     work in the same place as in the method above.  It should really
+     be a check whether we're on macOS 10.7 or above.  */
 #if defined (NS_IMPL_COCOA) \
   && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
-  if (ns_use_srgb_colorspace
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
-      && [NSColor respondsToSelector:
-                    @selector(colorWithSRGBRed:green:blue:alpha:)]
+  if ([NSColor respondsToSelector:
+                 @selector(colorWithSRGBRed:green:blue:alpha:)])
 #endif
-      )
-    return [self colorUsingColorSpace: [NSColorSpace sRGBColorSpace]];
+    {
+      if (ns_use_srgb_colorspace)
+        return [self colorUsingColorSpace: [NSColorSpace sRGBColorSpace]];
+      else
+        return [self colorUsingColorSpace: [NSColorSpace deviceRGBColorSpace]];
+    }
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  else
 #endif
+#endif /* NS_IMPL_COCOA && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070  */
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 1070
   return [self colorUsingColorSpaceName: NSCalibratedRGBColorSpace];
+#endif
 }
 
 @end
@@ -283,9 +291,6 @@ static int ns_window_num = 0;
 static BOOL ns_fake_keydown = NO;
 #ifdef NS_IMPL_COCOA
 static BOOL ns_menu_bar_is_hidden = NO;
-
-/* The number of times NSDisableScreenUpdates has been called.  */
-static int disable_screen_updates_count = 0;
 #endif
 /* static int debug_lock = 0; */
 
@@ -686,40 +691,6 @@ ns_release_autorelease_pool (void *pool)
 {
   ns_release_object (pool);
 }
-
-
-#ifdef NS_IMPL_COCOA
-/* Disabling screen updates can be used to make several actions appear
-   "atomic" to the end user.  It seems some actions can still update
-   the display, though.
-
-   When we re-enable screen updates the number of calls to
-   NSEnableScreenUpdates should match the number to
-   NSDisableScreenUpdates.
-
-   We use these functions to prevent the user seeing a blank frame
-   after it has been resized.  ns_set_window_size disables updates and
-   when redisplay completes unwind_redisplay enables them again
-   (bug#30699).  */
-
-static void
-ns_disable_screen_updates (void)
-{
-  NSDisableScreenUpdates ();
-  disable_screen_updates_count++;
-}
-
-void
-ns_enable_screen_updates (void)
-/* Re-enable screen updates.  Called from unwind_redisplay.  */
-{
-  while (disable_screen_updates_count > 0)
-    {
-      NSEnableScreenUpdates ();
-      disable_screen_updates_count--;
-    }
-}
-#endif
 
 
 static BOOL
@@ -1779,15 +1750,6 @@ ns_set_window_size (struct frame *f,
 
   block_input ();
 
-#ifdef NS_IMPL_COCOA
-  /* To prevent showing the user a blank frame, stop updates being
-     flushed to the screen until after redisplay has completed.  This
-     breaks live resize (resizing with a mouse), so don't do it if
-     we're in a live resize loop.  */
-  if (![view inLiveResize])
-    ns_disable_screen_updates ();
-#endif
-
   if (pixelwise)
     {
       pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
@@ -2327,7 +2289,7 @@ ns_color_index_to_rgba(int idx, struct frame *f)
 }
 
 void
-ns_query_color(void *col, XColor *color_def, bool setPixel)
+ns_query_color(void *col, Emacs_Color *color_def, bool setPixel)
 /* --------------------------------------------------------------------------
          Get ARGB values out of NSColor col and put them into color_def.
          If setPixel, set the pixel to a concatenated version.
@@ -2350,7 +2312,7 @@ ns_query_color(void *col, XColor *color_def, bool setPixel)
 bool
 ns_defined_color (struct frame *f,
                   const char *name,
-                  XColor *color_def,
+                  Emacs_Color *color_def,
                   bool alloc,
                   bool makeIndex)
 /* --------------------------------------------------------------------------
@@ -2378,7 +2340,7 @@ ns_defined_color (struct frame *f,
 }
 
 static void
-ns_query_frame_background_color (struct frame *f, XColor *bgcolor)
+ns_query_frame_background_color (struct frame *f, Emacs_Color *bgcolor)
 /* --------------------------------------------------------------------------
      External (hook): Store F's background color into *BGCOLOR
    -------------------------------------------------------------------------- */
@@ -2576,7 +2538,7 @@ ns_frame_up_to_date (struct frame *f)
 
 
 static void
-ns_define_frame_cursor (struct frame *f, Cursor cursor)
+ns_define_frame_cursor (struct frame *f, Emacs_Cursor cursor)
 /* --------------------------------------------------------------------------
     External (RIF): set frame mouse pointer type.
    -------------------------------------------------------------------------- */
@@ -4972,7 +4934,7 @@ ns_judge_scroll_bars (struct frame *f)
    ========================================================================== */
 
 static void
-ns_free_pixmap (struct frame *_f, Pixmap pixmap)
+ns_free_pixmap (struct frame *_f, Emacs_Pixmap pixmap)
 {
   ns_release_object (pixmap);
 }
@@ -5459,14 +5421,14 @@ ns_term_init (Lisp_Object display_name)
 
   NSTRACE_MSG ("Input/output types");
 
-  ns_send_types = [[NSArray arrayWithObjects: NSStringPboardType, nil] retain];
-  ns_return_types = [[NSArray arrayWithObjects: NSStringPboardType, nil]
+  ns_send_types = [[NSArray arrayWithObjects: NSPasteboardTypeString, nil] retain];
+  ns_return_types = [[NSArray arrayWithObjects: NSPasteboardTypeString, nil]
                       retain];
   ns_drag_types = [[NSArray arrayWithObjects:
-                            NSStringPboardType,
-                            NSTabularTextPboardType,
+                            NSPasteboardTypeString,
+                            NSPasteboardTypeTabularText,
                             NSFilenamesPboardType,
-                            NSURLPboardType, nil] retain];
+                            NSPasteboardTypeURL, nil] retain];
 
   /* If fullscreen is in init/default-frame-alist, focus isn't set
      right for fullscreen windows, so set this.  */
@@ -8276,6 +8238,9 @@ not_in_argv (NSString *arg)
     {
       return NO;
     }
+  /* FIXME: NSFilenamesPboardType is deprecated in 10.14, but the
+     NSURL method can only handle one file at a time.  Stick with the
+     existing code at the moment.  */
   else if ([type isEqualToString: NSFilenamesPboardType])
     {
       NSArray *files;
@@ -8370,8 +8335,8 @@ not_in_argv (NSString *arg)
 
   NSTRACE ("[EmacsView writeSelectionToPasteboard:types:]");
 
-  /* We only support NSStringPboardType.  */
-  if ([types containsObject:NSStringPboardType] == NO) {
+  /* We only support NSPasteboardTypeString.  */
+  if ([types containsObject:NSPasteboardTypeString] == NO) {
     return NO;
   }
 
@@ -8385,7 +8350,7 @@ not_in_argv (NSString *arg)
   if (! STRINGP (val))
     return NO;
 
-  typesDeclared = [NSArray arrayWithObject:NSStringPboardType];
+  typesDeclared = [NSArray arrayWithObject:NSPasteboardTypeString];
   [pb declareTypes:typesDeclared owner:nil];
   ns_string_to_pasteboard (pb, val);
   return YES;
@@ -9047,10 +9012,12 @@ not_in_argv (NSString *arg)
       last_hit_part = horizontal ? scroll_bar_before_handle : scroll_bar_above_handle; break;
     case NSScrollerIncrementPage:
       last_hit_part = horizontal ? scroll_bar_after_handle : scroll_bar_below_handle; break;
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 1070
     case NSScrollerDecrementLine:
       last_hit_part = horizontal ? scroll_bar_left_arrow : scroll_bar_up_arrow; break;
     case NSScrollerIncrementLine:
       last_hit_part = horizontal ? scroll_bar_right_arrow : scroll_bar_down_arrow; break;
+#endif
     case NSScrollerKnob:
       last_hit_part = horizontal ? scroll_bar_horizontal_handle : scroll_bar_handle; break;
     case NSScrollerKnobSlot:  /* GNUstep-only */

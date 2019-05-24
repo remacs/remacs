@@ -3,7 +3,6 @@
 ;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 ;; Author: Mark Oteiza <mvoteiza@udel.edu>
-;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 

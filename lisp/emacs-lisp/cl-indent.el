@@ -4,7 +4,6 @@
 
 ;; Author: Richard Mlynarik <mly@eddie.mit.edu>
 ;; Created: July 1987
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, tools
 ;; Package: emacs
 

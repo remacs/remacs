@@ -165,6 +165,10 @@ The point is set to the beginning of the buffer."
     (sgml-mode)
     (insert "a\"b <tag>c'd</tag>")
     (should (= 1 (car (syntax-ppss (1- (point-max))))))
+    (should (= 0 (car (syntax-ppss (point-max)))))
+    (erase-buffer)
+    (insert "<tag>c>d</tag>")
+    (should (= 1 (car (syntax-ppss (1- (point-max))))))
     (should (= 0 (car (syntax-ppss (point-max)))))))
 
 (provide 'sgml-mode-tests)

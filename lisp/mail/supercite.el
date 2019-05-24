@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993, 1997, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: 1993 Barry A. Warsaw <bwarsaw@python.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Created: February 1993
 ;; Keywords: mail, news
 

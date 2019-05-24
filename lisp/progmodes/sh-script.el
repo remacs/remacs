@@ -5,7 +5,6 @@
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
 ;; Version: 2.0f
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, unix
 
 ;; This file is part of GNU Emacs.

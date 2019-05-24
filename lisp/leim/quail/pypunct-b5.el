@@ -5,7 +5,7 @@
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H14PRO021
 
-;; Author: Ken'ichi HANDA <handa@etl.go.jp>
+;; Author: Ken'ichi Handa <handa@gnu.org>
 
 ;; Keywords: multilingual, input method, Chinese
 

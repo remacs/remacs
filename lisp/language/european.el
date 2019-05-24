@@ -525,7 +525,7 @@ method and applying Turkish case rules for the characters i, I, ı, İ.")))
     (set-case-syntax ?ı "w" table)))
 
 ;; Polish ISO 8859-2 environment.
-;; Maintainer: Wlodek Bzyl <matwb@univ.gda.pl>
+;; Maintainer: Włodek Bzyl <matwb@univ.gda.pl>
 ;; Keywords: multilingual, Polish
 
 (set-language-info-alist

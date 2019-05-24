@@ -731,8 +731,6 @@ struct x_output
 #endif
 };
 
-#define No_Cursor (None)
-
 enum
 {
   /* Values for focus_state, used as bit mask.
@@ -1224,7 +1222,8 @@ extern void destroy_frame_xic (struct frame *);
 extern void xic_set_preeditarea (struct window *, int, int);
 extern void xic_set_statusarea (struct frame *);
 extern void xic_set_xfontset (struct frame *, const char *);
-extern bool x_defined_color (struct frame *, const char *, XColor *, bool, bool);
+extern bool x_defined_color (struct frame *, const char *, Emacs_Color *,
+                             bool, bool);
 #ifdef HAVE_X_I18N
 extern void free_frame_xic (struct frame *);
 # if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
@@ -1262,15 +1261,6 @@ extern void x_session_close (void);
 /* Is the frame embedded into another application? */
 
 #define FRAME_X_EMBEDDED_P(f) (FRAME_X_OUTPUT(f)->explicit_parent != 0)
-
-#define STORE_XCHAR2B(chp, b1, b2) \
-  ((chp)->byte1 = (b1), (chp)->byte2 = (b2))
-
-#define XCHAR2B_BYTE1(chp) \
-  ((chp)->byte1)
-
-#define XCHAR2B_BYTE2(chp) \
-  ((chp)->byte2)
 
 #define STORE_NATIVE_RECT(nr,rx,ry,rwidth,rheight)	\
   ((nr).x = (rx),					\

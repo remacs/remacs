@@ -3,7 +3,6 @@
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: Jan Djärv <jan.h.d@swipnet.se>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: window, drag, drop
 ;; Package: emacs
 

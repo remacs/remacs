@@ -111,7 +111,7 @@ marked with SPECIAL."
                                               func idle time))))
             ((and idle (> idle (gnus-demon-idle-since)))
              (when time
-               (nnheader-cancel-timer (plist-get gnus-demon-timers func))
+               (cancel-timer (plist-get gnus-demon-timers func))
                (setq gnus-demon-timers
                      (plist-put gnus-demon-timers func
 				(run-with-idle-timer idle nil
@@ -202,7 +202,7 @@ marked with SPECIAL."
   "Cancel any Gnus daemons."
   (interactive)
   (dotimes (i (/ (length gnus-demon-timers) 2))
-    (nnheader-cancel-timer (nth (1+ (* i 2)) gnus-demon-timers)))
+    (cancel-timer (nth (1+ (* i 2)) gnus-demon-timers)))
   (setq gnus-demon-timers nil))
 
 (defun gnus-demon-add-disconnection ()

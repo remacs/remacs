@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993, 1996, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: rms@gnu.org
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, faces
 
 ;; This file is part of GNU Emacs.

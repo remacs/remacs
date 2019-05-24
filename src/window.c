@@ -3947,8 +3947,8 @@ set_window_buffer (Lisp_Object window, Lisp_Object buffer,
   b->display_error_modiff = 0;
 
   /* Update time stamps of buffer display.  */
-  if (FIXNUMP (BVAR (b, display_count)))
-    bset_display_count (b, make_fixnum (XFIXNUM (BVAR (b, display_count)) + 1));
+  if (INTEGERP (BVAR (b, display_count)))
+    bset_display_count (b, Fadd1 (BVAR (b, display_count)));
   bset_display_time (b, Fcurrent_time ());
 
   w->window_end_pos = 0;
@@ -4089,7 +4089,7 @@ displaying that buffer.  */)
       return Qt;
     }
 
-  if (WINDOWP (object))
+  if (WINDOW_LIVE_P (object))
     {
       struct window *w = XWINDOW (object);
       mark_window_display_accurate (object, false);

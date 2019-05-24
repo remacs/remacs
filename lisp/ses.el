@@ -3,7 +3,7 @@
 ;; Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 ;; Author: Jonathan Yavner <jyavner@member.fsf.org>
-;; Maintainer: Vincent Belaïche  <vincentb1@users.sourceforge.net>
+;; Maintainer: Vincent Belaïche <vincentb1@users.sourceforge.net>
 ;; Keywords: spreadsheet Dijkstra
 
 ;; This file is part of GNU Emacs.

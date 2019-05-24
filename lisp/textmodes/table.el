@@ -590,7 +590,7 @@
 ;; attempt of implementing the table feature to Emacs.  This greatly
 ;; motivated me to follow through to its completion.
 ;;
-;; Kenichi Handa <handa@etl.go.jp> kindly guided me through to
+;; Kenichi Handa <handa@gnu.org> kindly guided me through to
 ;; overcome many technical issues while I was struggling with quail
 ;; related internationalization problems.
 ;;

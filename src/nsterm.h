@@ -872,10 +872,10 @@ struct ns_display_info
   Lisp_Object rdb;
 
   /* The cursor to use for vertical scroll bars.  */
-  Cursor vertical_scroll_bar_cursor;
+  Emacs_Cursor vertical_scroll_bar_cursor;
 
   /* The cursor to use for horizontal scroll bars.  */
-  Cursor horizontal_scroll_bar_cursor;
+  Emacs_Cursor horizontal_scroll_bar_cursor;
 
   /* Information about the range of text currently shown in
      mouse-face.  */
@@ -931,24 +931,24 @@ struct ns_output
 #endif
 
   /* NSCursors are initialized in initFrameFromEmacs.  */
-  Cursor text_cursor;
-  Cursor nontext_cursor;
-  Cursor modeline_cursor;
-  Cursor hand_cursor;
-  Cursor hourglass_cursor;
-  Cursor horizontal_drag_cursor;
-  Cursor vertical_drag_cursor;
-  Cursor left_edge_cursor;
-  Cursor top_left_corner_cursor;
-  Cursor top_edge_cursor;
-  Cursor top_right_corner_cursor;
-  Cursor right_edge_cursor;
-  Cursor bottom_right_corner_cursor;
-  Cursor bottom_edge_cursor;
-  Cursor bottom_left_corner_cursor;
+  Emacs_Cursor text_cursor;
+  Emacs_Cursor nontext_cursor;
+  Emacs_Cursor modeline_cursor;
+  Emacs_Cursor hand_cursor;
+  Emacs_Cursor hourglass_cursor;
+  Emacs_Cursor horizontal_drag_cursor;
+  Emacs_Cursor vertical_drag_cursor;
+  Emacs_Cursor left_edge_cursor;
+  Emacs_Cursor top_left_corner_cursor;
+  Emacs_Cursor top_edge_cursor;
+  Emacs_Cursor top_right_corner_cursor;
+  Emacs_Cursor right_edge_cursor;
+  Emacs_Cursor bottom_right_corner_cursor;
+  Emacs_Cursor bottom_edge_cursor;
+  Emacs_Cursor bottom_left_corner_cursor;
 
   /* NS-specific */
-  Cursor current_pointer;
+  Emacs_Cursor current_pointer;
 
   /* lord knows why Emacs needs to know about our Window ids.. */
   Window window_desc, parent_desc;
@@ -1134,10 +1134,10 @@ extern void ns_set_doc_edited (void);
 extern bool
 ns_defined_color (struct frame *f,
                   const char *name,
-                  XColor *color_def, bool alloc,
+                  Emacs_Color *color_def, bool alloc,
                   bool makeIndex);
 extern void
-ns_query_color (void *col, XColor *color_def, bool setPixel);
+ns_query_color (void *col, Emacs_Color *color_def, bool setPixel);
 
 #ifdef __OBJC__
 extern int ns_lisp_to_color (Lisp_Object color, NSColor **col);
@@ -1164,10 +1164,6 @@ extern void *ns_alloc_autorelease_pool (void);
 extern void ns_release_autorelease_pool (void *);
 extern const char *ns_get_defaults_value (const char *key);
 extern void ns_init_locale (void);
-
-#ifdef NS_IMPL_COCOA
-extern void ns_enable_screen_updates (void);
-#endif
 
 /* in nsmenu */
 extern void update_frame_tool_bar (struct frame *f);
@@ -1335,5 +1331,15 @@ enum NSWindowTabbingMode
 #if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_13)
 /* Deprecated in macOS 10.13.  */
 #define NSPasteboardNameGeneral NSGeneralPboard
+#endif
+
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_14)
+/* Deprecated in macOS 10.14.  */
+#define NSPasteboardTypeString NSStringPboardType
+#define NSPasteboardTypeTabularText NSTabularTextPboardType
+#define NSPasteboardTypeURL NSURLPboardType
+#define NSControlStateValueOn NSOnState
+#define NSControlStateValueOff NSOffState
+#define NSBezelStyleRounded NSRoundedBezelStyle
 #endif
 #endif	/* HAVE_NS */

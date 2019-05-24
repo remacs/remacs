@@ -1111,7 +1111,7 @@ external if displayed external."
 	  (mm-remove-part handle)))))))
 
 (defun mm-destroy-parts (handles)
-  "Remove the displayed MIME parts represented by HANDLES."
+  "Destroy the displayed MIME parts represented by HANDLES."
   (if (and (listp handles)
 	   (bufferp (car handles)))
       (mm-destroy-part handles)

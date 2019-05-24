@@ -3,7 +3,6 @@
 ;; Copyright (C) 2003-2004, 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, processes
 
 ;; This file is part of GNU Emacs.

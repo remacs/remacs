@@ -9,7 +9,7 @@
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
 ;;   Registration Number H13PRO009
 
-;; Author: Kenichi Handa <handa@etl.go.jp>
+;; Author: Kenichi Handa <handa@gnu.org>
 ;; Keywords: multilingual, Cyrillic, i18n
 
 ;; This file is part of GNU Emacs.

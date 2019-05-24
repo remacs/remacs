@@ -595,7 +595,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_BUFFER(W)			\
   (WINDOW_LEAF_P(W)				\
    ? (W)->contents				\
-   : Qnil)					\
+   : Qnil)
 
 /* Return the canonical column width of the frame of window W.  */
 #define WINDOW_FRAME_COLUMN_WIDTH(W) \
@@ -649,7 +649,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_RIGHTMOST_P(W)					\
   (WINDOW_RIGHT_PIXEL_EDGE (W)					\
    == (WINDOW_RIGHT_PIXEL_EDGE					\
-       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))	\
+       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))
 
 /* True if window W has no other windows below it on its frame (the
    minibuffer window is not counted in this respect unless W itself is a
@@ -657,13 +657,13 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_BOTTOMMOST_P(W)					\
   (WINDOW_BOTTOM_PIXEL_EDGE (W)					\
    == (WINDOW_BOTTOM_PIXEL_EDGE					\
-       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))	\
+       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))
 
 /* True if window W takes up the full width of its frame.  */
 #define WINDOW_FULL_WIDTH_P(W)					\
   (WINDOW_PIXEL_WIDTH (W)					\
    == (WINDOW_PIXEL_WIDTH					\
-       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))	\
+       (XWINDOW (FRAME_ROOT_WINDOW (WINDOW_XFRAME (W))))))
 
 /* Width of right divider of window W.  */
 #define WINDOW_RIGHT_DIVIDER_WIDTH(W)				\
@@ -1122,7 +1122,7 @@ struct glyph *get_phys_cursor_glyph (struct window *w);
 
 /* True if WINDOW is a valid window.  */
 #define WINDOW_VALID_P(WINDOW)					\
-  (WINDOWP (WINDOW) && !NILP (XWINDOW (WINDOW)->contents))	\
+  (WINDOWP (WINDOW) && !NILP (XWINDOW (WINDOW)->contents))
 
 /* A window of any sort, leaf or interior, is "valid" if its
    contents slot is non-nil.  */

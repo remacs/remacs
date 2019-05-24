@@ -1,11 +1,11 @@
-;;; tempo.el --- Flexible template insertion
+;;; tempo.el --- Flexible template insertion -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1994-1995, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: David Kågedal <davidk@lysator.liu.se>
 ;; Created: 16 Feb 1994
 ;; Kågedal's last version number: 1.2.4
-;; Keywords: extensions, languages, tools
+;; Keywords: abbrev, extensions, languages, tools
 
 ;; This file is part of GNU Emacs.
 
@@ -152,7 +152,7 @@ setting it to (upcase), for example.")
 (defvar tempo-tags nil
   "An association list with tags and corresponding templates.")
 
-(defvar tempo-local-tags '((tempo-tags . nil))
+(defvar-local tempo-local-tags '((tempo-tags . nil))
   "A list of locally installed tag completion lists.
 It is an association list where the car of every element is a symbol
 whose variable value is a template list.  The cdr part, if non-nil,
@@ -161,16 +161,16 @@ documentation for the function `tempo-complete-tag' for more info.
 
 `tempo-tags' is always in the last position in this list.")
 
-(defvar tempo-collection nil
+(defvar-local tempo-collection nil
   "A collection of all the tags defined for the current buffer.")
 
-(defvar tempo-dirty-collection t
+(defvar-local tempo-dirty-collection t
   "Indicates if the tag collection needs to be rebuilt.")
 
-(defvar tempo-marks nil
+(defvar-local tempo-marks nil
   "A list of marks to jump to with `\\[tempo-forward-mark]' and `\\[tempo-backward-mark]'.")
 
-(defvar tempo-match-finder "\\b\\([[:word:]]+\\)\\="
+(defvar-local tempo-match-finder "\\b\\([[:word:]]+\\)\\="
   "The regexp or function used to find the string to match against tags.
 
 If `tempo-match-finder' is a string, it should contain a regular
@@ -195,22 +195,14 @@ A list of symbols which are bound to functions that take one argument.
 This function should return something to be sent to `tempo-insert' if
 it recognizes the argument, and nil otherwise.")
 
-(defvar tempo-named-insertions nil
+(defvar-local tempo-named-insertions nil
   "Temporary storage for named insertions.")
 
-(defvar tempo-region-start (make-marker)
+(defvar-local tempo-region-start (make-marker)
   "Region start when inserting around the region.")
 
-(defvar tempo-region-stop (make-marker)
+(defvar-local tempo-region-stop (make-marker)
   "Region stop when inserting around the region.")
-
-;; Make some variables local to every buffer
-
-(make-variable-buffer-local 'tempo-marks)
-(make-variable-buffer-local 'tempo-local-tags)
-(make-variable-buffer-local 'tempo-match-finder)
-(make-variable-buffer-local 'tempo-collection)
-(make-variable-buffer-local 'tempo-dirty-collection)
 
 ;;; Functions
 
@@ -268,11 +260,14 @@ The elements in ELEMENTS can be of several types:
  - `n>': Inserts a newline and indents line.
  - `o': Like `%' but leaves the point before the newline.
  - nil: It is ignored.
- - Anything else: It is evaluated and the result is treated as an
-   element to be inserted.  One additional tag is useful for these
-   cases.  If an expression returns a list (l foo bar), the elements
-   after `l' will be inserted according to the usual rules.  This makes
-   it possible to return several elements from one expression."
+ - Anything else: Each function in `tempo-user-elements' is called
+   with it as argument until one of them returns non-nil, and the
+   result is inserted.  If all of them return nil, it is evaluated and
+   the result is treated as an element to be inserted.  One additional
+   tag is useful for these cases.  If an expression returns a list (l
+   foo bar), the elements after `l' will be inserted according to the
+   usual rules.  This makes it possible to return several elements
+   from one expression."
   (let* ((template-name (intern (concat "tempo-template-"
 				       name)))
 	 (command-name template-name))

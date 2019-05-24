@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 1993-1994, 2001-2019 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 
 ;; This file is part of GNU Emacs.

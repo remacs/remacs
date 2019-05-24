@@ -1122,20 +1122,21 @@ store_symval_forwarding (lispfwd valcontents, Lisp_Object newval,
 	int offset = XBUFFER_OBJFWD (valcontents)->offset;
 	Lisp_Object predicate = XBUFFER_OBJFWD (valcontents)->predicate;
 
-	if (!NILP (newval))
+	if (!NILP (newval) && !NILP (predicate))
 	  {
-	    if (SYMBOLP (predicate))
+	    eassert (SYMBOLP (predicate));
+	    Lisp_Object choiceprop = Fget (predicate, Qchoice);
+	    if (!NILP (choiceprop))
 	      {
-		Lisp_Object prop;
-
-		if ((prop = Fget (predicate, Qchoice), !NILP (prop)))
+		if (NILP (Fmemq (newval, choiceprop)))
+		  wrong_choice (choiceprop, newval);
+	      }
+	    else
+	      {
+		Lisp_Object rangeprop = Fget (predicate, Qrange);
+		if (CONSP (rangeprop))
 		  {
-		    if (NILP (Fmemq (newval, prop)))
-		      wrong_choice (prop, newval);
-		  }
-		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
-		  {
-		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
+		    Lisp_Object min = XCAR (rangeprop), max = XCDR (rangeprop);
 		    if (! NUMBERP (newval)
 			|| NILP (CALLN (Fleq, min, newval, max)))
 		      wrong_range (min, max, newval);
