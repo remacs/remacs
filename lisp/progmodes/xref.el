@@ -477,6 +477,9 @@ If SELECT is non-nil, select the target window."
 (defvar-local xref--original-window nil
   "The original window this xref buffer was created from.")
 
+(defvar-local xref--fetcher nil
+  "The original function to call to fetch the list of xrefs.")
+
 (defun xref--show-pos-in-buf (pos buf)
   "Goto and display position POS of buffer BUF in a window.
 Honor `xref--original-window-intent', run `xref-after-jump-hook'
@@ -692,6 +695,7 @@ references displayed in the current *xref* buffer."
     ;; suggested by Johan Claesson "to further reduce finger movement":
     (define-key map (kbd ".") #'xref-next-line)
     (define-key map (kbd ",") #'xref-prev-line)
+    (define-key map (kbd "g") #'xref--revert-xref-buffer)
     map))
 
 (define-derived-mode xref--xref-buffer-mode special-mode "XREF"
@@ -777,8 +781,9 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                     (xref-location-group (xref-item-location x)))
                   #'equal))
 
-(defun xref--show-xref-buffer (xrefs alist)
-  (let ((xref-alist (xref--analyze xrefs)))
+(defun xref--show-xref-buffer (fetcher alist)
+  (let* ((xrefs (if (functionp fetcher) (funcall fetcher) fetcher))
+         (xref-alist (xref--analyze xrefs)))
     (with-current-buffer (get-buffer-create xref-buffer-name)
       (setq buffer-undo-list nil)
       (let ((inhibit-read-only t)
@@ -790,7 +795,27 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (goto-char (point-min))
         (setq xref--original-window (assoc-default 'window alist)
               xref--original-window-intent (assoc-default 'display-action alist))
+        (when (functionp fetcher)
+          (setq xref--fetcher fetcher))
         (current-buffer)))))
+
+(defun xref--revert-xref-buffer ()
+  (interactive)
+  (unless xref--fetcher
+    (user-error "Reverting not supported"))
+  (let ((inhibit-read-only t)
+        (buffer-undo-list t))
+    (save-excursion
+      (erase-buffer)
+      (condition-case err
+          (xref--insert-xrefs
+           (xref--analyze (funcall xref--fetcher)))
+        (user-error
+         (insert
+          (propertize
+           (error-message-string err)
+           'face 'error))))
+      (goto-char (point-min)))))
 
 (defun xref--show-defs-buffer (xrefs alist)
   (cond
@@ -811,9 +836,9 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 (defvar xref--read-pattern-history nil)
 
-(defun xref--show-xrefs (xrefs display-action)
+(defun xref--show-xrefs (fetcher display-action)
   (xref--push-markers)
-  (funcall xref-show-xrefs-function xrefs
+  (funcall xref-show-xrefs-function fetcher
            `((window . ,(selected-window))
              (display-action . ,display-action))))
 
@@ -860,12 +885,20 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;; Commands
 
 (defun xref--find-xrefs (input kind arg display-action)
-  (let ((xrefs (funcall (intern (format "xref-backend-%s" kind))
-                        (xref-find-backend)
-                        arg)))
-    (unless xrefs
-      (xref--not-found-error kind input))
-    (xref--show-xrefs xrefs display-action)))
+  (let* ((orig-buffer (current-buffer))
+         (orig-position (point))
+         (backend (xref-find-backend))
+         (method (intern (format "xref-backend-%s" kind)))
+         (fetcher (lambda ()
+                    (save-excursion
+                      (when (buffer-live-p orig-buffer)
+                        (set-buffer orig-buffer)
+                        (ignore-errors (goto-char orig-position)))
+                      (let ((xrefs (funcall method backend arg)))
+                        (unless xrefs
+                          (xref--not-found-error kind input))
+                        xrefs)))))
+    (xref--show-xrefs fetcher display-action)))
 
 (defun xref--find-definitions (id display-action)
   (let ((xrefs (funcall #'xref-backend-definitions

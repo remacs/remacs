@@ -2906,15 +2906,18 @@ REGEXP should use constructs supported by your local `grep' command."
                           #'file-name-as-directory
                           (rgrep-find-ignored-directories default-directory))
                          grep-find-ignored-files))
-         (xrefs (mapcan
-                 (lambda (file)
-                   (xref-collect-matches regexp "*" file
-                                         (and (file-directory-p file)
-                                              ignores)))
-                 files)))
-    (unless xrefs
-      (user-error "No matches for: %s" regexp))
-    (xref--show-xrefs xrefs nil)))
+         (fetcher
+          (lambda ()
+            (let ((xrefs (mapcan
+                          (lambda (file)
+                            (xref-collect-matches regexp "*" file
+                                                  (and (file-directory-p file)
+                                                       ignores)))
+                          files)))
+              (unless xrefs
+                (user-error "No matches for: %s" regexp))
+              xrefs))))
+    (xref--show-xrefs fetcher nil)))
 
 ;;;###autoload
 (defun dired-do-find-regexp-and-replace (from to)
