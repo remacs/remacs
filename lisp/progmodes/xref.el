@@ -782,7 +782,11 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
                   #'equal))
 
 (defun xref--show-xref-buffer (fetcher alist)
-  (let* ((xrefs (if (functionp fetcher) (funcall fetcher) fetcher))
+  (cl-assert (functionp fetcher))
+  (let* ((xrefs
+          (or
+           (assoc-default 'fetched-xrefs alist)
+           (funcall fetcher)))
          (xref-alist (xref--analyze xrefs)))
     (with-current-buffer (get-buffer-create xref-buffer-name)
       (setq buffer-undo-list nil)
@@ -795,8 +799,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (goto-char (point-min))
         (setq xref--original-window (assoc-default 'window alist)
               xref--original-window-intent (assoc-default 'display-action alist))
-        (when (functionp fetcher)
-          (setq xref--fetcher fetcher))
+        (setq xref--fetcher fetcher)
         (current-buffer)))))
 
 (defun xref--revert-xref-buffer ()
@@ -817,13 +820,16 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
            'face 'error))))
       (goto-char (point-min)))))
 
-(defun xref--show-defs-buffer (xrefs alist)
-  (cond
-   ((not (cdr xrefs))
-    (xref--pop-to-location (car xrefs)
-                           (assoc-default 'display-action alist)))
-   (t
-    (xref--show-xref-buffer xrefs alist))))
+(defun xref--show-defs-buffer (fetcher alist)
+  (let ((xrefs (funcall fetcher)))
+    (cond
+     ((not (cdr xrefs))
+      (xref--pop-to-location (car xrefs)
+                             (assoc-default 'display-action alist)))
+     (t
+      (xref--show-xref-buffer fetcher
+                              (cons (cons 'fetched-xrefs xrefs)
+                                    alist))))))
 
 
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
@@ -885,28 +891,29 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 ;;; Commands
 
 (defun xref--find-xrefs (input kind arg display-action)
+  (xref--show-xrefs
+   (xref--create-fetcher input kind arg)
+   display-action))
+
+(defun xref--find-definitions (id display-action)
+  (xref--show-defs
+   (xref--create-fetcher id 'definitions id)
+   display-action))
+
+(defun xref--create-fetcher (input kind arg)
   (let* ((orig-buffer (current-buffer))
          (orig-position (point))
          (backend (xref-find-backend))
-         (method (intern (format "xref-backend-%s" kind)))
-         (fetcher (lambda ()
-                    (save-excursion
-                      (when (buffer-live-p orig-buffer)
-                        (set-buffer orig-buffer)
-                        (ignore-errors (goto-char orig-position)))
-                      (let ((xrefs (funcall method backend arg)))
-                        (unless xrefs
-                          (xref--not-found-error kind input))
-                        xrefs)))))
-    (xref--show-xrefs fetcher display-action)))
-
-(defun xref--find-definitions (id display-action)
-  (let ((xrefs (funcall #'xref-backend-definitions
-                        (xref-find-backend)
-                        id)))
-    (unless xrefs
-      (xref--not-found-error 'definitions id))
-    (xref--show-defs xrefs display-action)))
+         (method (intern (format "xref-backend-%s" kind))))
+    (lambda ()
+      (save-excursion
+        (when (buffer-live-p orig-buffer)
+          (set-buffer orig-buffer)
+          (ignore-errors (goto-char orig-position)))
+        (let ((xrefs (funcall method backend arg)))
+          (unless xrefs
+            (xref--not-found-error kind input))
+          xrefs)))))
 
 (defun xref--not-found-error (kind input)
   (user-error "No %s found for: %s" (symbol-name kind) input))
