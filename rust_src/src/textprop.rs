@@ -65,11 +65,24 @@ pub fn text_properties_at(mut position: LispObject, mut object: LispObject) -> L
         // it means it's the end of OBJECT.
         // There are no properties at the very end,
         // since no character follows.
-        if EmacsInt::from(position) == (((*i).total_length + (*i).position) as EmacsInt) {
+        let interval_length = total_length(i) - total_length((*i).right) - total_length((*i).left);
+        if EmacsInt::from(position) == (interval_length + (*i).position) as EmacsInt {
             Qnil
         } else {
             (*i).plist
         }
+    }
+}
+
+// A temporary replacement for the TOTAL_LENGTH macro from intervals.h
+// Ideally we would implement a LispIntervalRef type to house this
+// logic, but this function is here for the moment to keep the scope
+// of these changes manageable.
+unsafe fn total_length(interval: *mut Lisp_Interval) -> isize {
+    if interval.is_null() {
+        0
+    } else {
+        (*interval).total_length
     }
 }
 
