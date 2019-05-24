@@ -39,6 +39,7 @@
     "[sudo] user 的密码：" ; localized
     "Password (again):"
     "Enter password:"
+    "Enter Auth Password:" ; OpenVPN (Bug#35724)
     "Mot de Passe :" ; localized (Bug#29729)
     "Passwort:") ; localized
   "List of strings that should match `comint-password-prompt-regexp'.")

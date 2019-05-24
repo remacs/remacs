@@ -349,13 +349,14 @@ This variable is buffer-local."
 ;; Ubuntu's sudo prompts like `[sudo] password for user:'
 ;; Some implementations of passwd use "Password (again)" as the 2nd prompt.
 ;; Something called "perforce" uses "Enter password:".
-;; See M-x comint-testsuite--test-comint-password-prompt-regexp.
+;; OpenVPN prints a prompt like: "Enter Auth Password:".
+;; See ert test `comint-test-password-regexp'.
 (defcustom comint-password-prompt-regexp
   (concat
    "\\(^ *\\|"
    (regexp-opt
     '("Enter" "enter" "Enter same" "enter same" "Enter the" "enter the"
-      "Old" "old" "New" "new" "'s" "login"
+      "Enter Auth" "enter auth" "Old" "old" "New" "new" "'s" "login"
       "Kerberos" "CVS" "UNIX" " SMB" "LDAP" "PEM" "SUDO"
       "[sudo]" "Repeat" "Bad" "Retype")
     t)
