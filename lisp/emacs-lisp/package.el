@@ -1913,9 +1913,12 @@ if all the in-between dependencies are also in PACKAGE-LIST."
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
              ;; Signature checked, unpack now.
-             (with-temp-buffer (insert content)
-                               (let ((save-silently t))
-                                 (package-unpack pkg-desc)))
+             (with-temp-buffer ;FIXME: Just use the previous current-buffer.
+               (set-buffer-multibyte nil)
+               (cl-assert (not (multibyte-string-p content)))
+               (insert content)
+               (let ((save-silently t))
+                 (package-unpack pkg-desc)))
              ;; Here the package has been installed successfully, mark it as
              ;; signed if appropriate.
              (when good-sigs
