@@ -1464,6 +1464,11 @@ the new variable 'buffer-auto-revert-by-notification' to a non-nil
 value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
+** Xref
+
+*** Xref buffers support refreshing the search results.
+A new command 'xref-refresh-results' is bound to 'g'.
+
 
 * New Modes and Packages in Emacs 27.1
 
