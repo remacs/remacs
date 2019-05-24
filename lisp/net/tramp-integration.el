@@ -174,8 +174,11 @@ NAME must be equal to `tramp-current-connection'."
 ;;; Default connection-local variables for Tramp:
 
 (defconst tramp-connection-local-default-profile
-  '((shell-file-name . "/bin/sh")
-    (shell-command-switch . "-c"))
+  ;; `w32-shell-name' is derived from `shell-file-name'.  Don't let it
+  ;; be confused.
+  (unless (eq system-type 'windows-nt)
+    '((shell-file-name . "/bin/sh")
+      (shell-command-switch . "-c")))
   "Default connection-local variables for remote connections.")
 
 ;; `connection-local-set-profile-variables' and
