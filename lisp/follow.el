@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Anders Lindgren
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 1995-05-25
 ;; Keywords: display, window, minor-mode, convenience
 

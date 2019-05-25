@@ -3,6 +3,7 @@
 ;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 ;; Author: Thien-Thi Nguyen <ttn@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
 ;; Package: emacs
 

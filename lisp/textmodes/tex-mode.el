@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1989, 1992, 1994-1999, 2001-2019 Free
 ;; Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: tex
 
 ;; Contributions over the years by William F. Schelter, Dick King,

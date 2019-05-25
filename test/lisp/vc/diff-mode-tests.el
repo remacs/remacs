@@ -1,6 +1,7 @@
 ;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 ;; Author: Dima Kogan <dima@secretsauce.net>
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 

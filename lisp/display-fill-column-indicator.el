@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.

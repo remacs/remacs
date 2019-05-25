@@ -4,6 +4,7 @@
 
 ;; Author: Alexander Pohoyda
 ;;	Alex Schroeder
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: rmail
 

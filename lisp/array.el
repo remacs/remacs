@@ -3,6 +3,7 @@
 ;; Copyright (C) 1987, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: David M. Brown
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.

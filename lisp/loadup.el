@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1992, 1994, 2001-2019 Free Software
 ;; Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 

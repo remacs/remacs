@@ -3,6 +3,7 @@
 ;; Copyright (C) 1990, 1994, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: William F. Mann
+;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR
 ;; Keywords: languages
 

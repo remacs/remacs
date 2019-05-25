@@ -3,6 +3,7 @@
 ;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
 ;; Package: emacs
 

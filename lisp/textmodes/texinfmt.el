@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1988, 1990-1998, 2000-2019 Free Software
 ;; Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint, tex, docs
 
 ;; This file is part of GNU Emacs.

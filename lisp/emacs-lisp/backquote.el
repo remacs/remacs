@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Rick Sladkey <jrs@world.std.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: extensions, internal
 ;; Package: emacs
 

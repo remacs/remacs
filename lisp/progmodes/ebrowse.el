@@ -3,6 +3,7 @@
 ;; Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: C++ tags tools
 
 ;; This file is part of GNU Emacs.

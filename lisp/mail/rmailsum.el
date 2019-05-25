@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985, 1993-1996, 2000-2019 Free Software Foundation,
 ;; Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: rmail
 

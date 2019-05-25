@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Keith Gabryelski <ag@wheaties.ai.mit.edu>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: data
 
 ;; This file is part of GNU Emacs.

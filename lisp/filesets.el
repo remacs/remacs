@@ -3,6 +3,7 @@
 ;; Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 ;; Author: Thomas Link <sanobast-emacs@yahoo.de>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: filesets convenience
 
 ;; This file is part of GNU Emacs.

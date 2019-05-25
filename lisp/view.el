@@ -4,6 +4,7 @@
 ;; Foundation, Inc.
 
 ;; Author: K. Shane Hartman
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: files
 
 ;; This file is part of GNU Emacs.

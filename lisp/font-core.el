@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, faces
 ;; Package: emacs
 

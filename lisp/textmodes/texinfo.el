@@ -5,6 +5,7 @@
 
 ;; Author: Robert J. Chassell
 ;; Date:   [See date below for texinfo-version]
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint, tex, docs
 
 ;; This file is part of GNU Emacs.

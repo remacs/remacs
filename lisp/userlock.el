@@ -4,6 +4,7 @@
 
 ;; Author: Richard King
 ;; (according to authors.el)
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
 ;; Package: emacs
 

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Eli Zaretskii
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: terminals, faces
 
 ;; This file is part of GNU Emacs.

@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Philippe Schnoebelen <phs@lsv.ens-cachan.fr>
+;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR, Daniel Pfeiffer <occitan@esperanto.org>
 ;; Keywords: games
 

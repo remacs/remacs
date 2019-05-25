@@ -3,6 +3,7 @@
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 ;; Author: Markus Triska <markus.triska@gmx.at>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 ;; Version: 0.9x
 

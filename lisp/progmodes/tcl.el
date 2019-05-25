@@ -4,6 +4,7 @@
 
 ;; Author: Tom Tromey <tromey@redhat.com>
 ;;    Chris Lindblad <cjl@lcs.mit.edu>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages tcl modes
 
 ;; This file is part of GNU Emacs.

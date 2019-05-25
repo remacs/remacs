@@ -3,6 +3,7 @@
 ;; Copyright (C) 1996, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Sam Shteingold <shteingd@math.ucla.edu>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
 ;; Obsolete-since: 25.1
 

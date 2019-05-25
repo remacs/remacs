@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1994-1995, 1997, 2001-2019 Free Software
 ;; Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: wp
 
 ;; This file is part of GNU Emacs.

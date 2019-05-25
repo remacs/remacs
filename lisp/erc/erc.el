@@ -10,6 +10,7 @@
 ;;               Gergely Nagy (algernon@midgard.debian.net)
 ;;               David Edmondson (dme@dme.org)
 ;;               Kelvin White (kwhite@gnu.org)
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: IRC, chat, client, Internet
 
 ;; Version: 5.3

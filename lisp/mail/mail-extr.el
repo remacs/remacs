@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Joe Wells <jbw@cs.bu.edu>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: mail-utils
 

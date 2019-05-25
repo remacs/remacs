@@ -3,6 +3,7 @@
 ;; Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 ;; Author: Eli Zaretskii
+;; Maintainer: emacs-devel@gnu.org
 ;; Package: emacs
 
 ;; This program is free software: you can redistribute it and/or modify

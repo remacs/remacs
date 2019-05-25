@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Package: emacs
 
 ;; This file is part of GNU Emacs.

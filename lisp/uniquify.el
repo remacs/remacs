@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Dick King <king@reasoning.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: files
 ;; Created: 15 May 86
 ;; Package: emacs

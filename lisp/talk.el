@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1995, 2001-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: comm, frames
 
 ;; This file is part of GNU Emacs.

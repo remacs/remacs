@@ -4,6 +4,7 @@
 ;; Foundation, Inc.
 
 ;; Author: Howie Kaye
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: unix
 
 ;; This file is part of GNU Emacs.

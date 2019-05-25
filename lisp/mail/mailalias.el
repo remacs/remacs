@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985, 1987, 1995-1997, 2001-2019 Free Software
 ;; Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 
 ;; This file is part of GNU Emacs.

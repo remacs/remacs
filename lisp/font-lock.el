@@ -5,6 +5,7 @@
 ;; Author: Jamie Zawinski
 ;;	Richard Stallman
 ;;	Stefan Monnier
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, faces
 ;; Package: emacs
 

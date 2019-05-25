@@ -1,6 +1,7 @@
 ;;; hanoi.el --- towers of hanoi in Emacs
 
 ;; Author: Damon Anton Permezel
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: games
 
 ; Author (a) 1985, Damon Anton Permezel

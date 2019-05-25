@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1987, 1993-1995, 2000-2019 Free Software
 ;; Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 ;; Package: emacs
 

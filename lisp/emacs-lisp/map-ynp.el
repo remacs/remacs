@@ -3,6 +3,7 @@
 ;; Copyright (C) 1991-1995, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, extensions
 ;; Package: emacs
 

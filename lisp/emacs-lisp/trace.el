@@ -3,6 +3,7 @@
 ;; Copyright (C) 1993, 1998, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Hans Chalupsky <hans@cs.buffalo.edu>
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 15 Dec 1992
 ;; Keywords: tools, lisp
 

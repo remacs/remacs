@@ -3,6 +3,7 @@
 ;; Copyright (C) 1999-2001, 2003-2019 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 29 Mar 1999
 ;; Version: 2.0
 ;; Keywords: data memory todo pim

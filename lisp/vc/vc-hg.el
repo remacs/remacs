@@ -3,6 +3,7 @@
 ;; Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Ivan Kanis
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 ;; Package: vc
 

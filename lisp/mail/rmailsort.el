@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Masanobu UMEDA <umerin@mse.kyutech.ac.jp>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
 ;; Package: rmail
 

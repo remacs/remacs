@@ -4,6 +4,7 @@
 ;; Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com; now jwz@jwz.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 19 Oct 90
 ;; Keywords: mail
 

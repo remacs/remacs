@@ -4,6 +4,7 @@
 
 ;; Author: Andreas Fuchs <asf@void.at>
 ;;         Mario Lang <mlang@delysid.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?ErcFilling
 
 ;; This file is part of GNU Emacs.

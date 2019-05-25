@@ -3,6 +3,7 @@
 ;; Copyright (C) 1993, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Ata Etemadi <ATAE@spva.physics.imperial.ac.uk>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: data
 
 ;; This file is part of GNU Emacs.

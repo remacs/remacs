@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Alan Mackenzie <acm@muc.de> (originally based on awk-mode.el)
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: AWK, cc-mode, unix, languages
 ;; Package: cc-mode
 

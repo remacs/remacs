@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1985, 2001-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail, news
 
 ;; This file is part of GNU Emacs.

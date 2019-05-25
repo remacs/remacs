@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1991, 1994, 2000-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes, unix
 ;; Package: emacs
 

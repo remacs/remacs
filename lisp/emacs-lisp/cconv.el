@@ -3,6 +3,7 @@
 ;; Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
 ;; Author: Igor Kuzmin <kzuminig@iro.umontreal.ca>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp
 ;; Package: emacs
 

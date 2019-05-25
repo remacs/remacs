@@ -3,6 +3,7 @@
 ;; Copyright (C) 1991, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: tools, languages
 
 ;; This file is part of GNU Emacs.

@@ -2,6 +2,8 @@
 
 ;; Copyright (C) 2002-2004, 2006-2019 Free Software Foundation, Inc.
 
+;; Maintainer: emacs-devel@gnu.org
+
 ;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify

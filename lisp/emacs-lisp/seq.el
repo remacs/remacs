@@ -7,6 +7,8 @@
 ;; Version: 2.21
 ;; Package: seq
 
+;; Maintainer: emacs-devel@gnu.org
+
 ;; This file is part of GNU Emacs.
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify

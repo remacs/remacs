@@ -4,6 +4,7 @@
 ;; Foundation, Inc.
 
 ;; Author: Barry A. Warsaw <bwarsaw@cen.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help
 ;; Adapted-By: ESR, pot
 
