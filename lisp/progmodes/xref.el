@@ -842,7 +842,7 @@ FETCHER is a function of no arguments that returns a list of xref
 values.  It must not depend on the current buffer or selected
 window.
 
-ALIST will include the following keys:
+ALIST will include at least the following keys:
 
 WINDOW for the window that was selected before the current
 command was called.
