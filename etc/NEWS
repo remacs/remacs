@@ -783,6 +783,20 @@ where it was invoked.
 ---
 *** New xref faces 'xref-file-header', 'xref-line-number', 'xref-match'.
 
+*** New variable 'xref-show-definitions-function'.
+It encapsulates the logic pertinent to showing the result of
+'xref-find-definitions'.  The user can change it to customize its
+behavior and the display of results.
+
+*** Search results show the buffer even for one hit.
+The search-type Xref commands (e.g. 'xref-find-references' or
+'project-find-regexp') now show the results buffer even when there is
+only one hit.  This can be altered by changing
+'xref-show-xrefs-function'.
+
+*** Xref buffers support refreshing the search results.
+A new command 'xref-refresh-results' is bound to 'g'.
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
@@ -1463,22 +1477,6 @@ directory is sufficient to know when updates are required, by setting
 the new variable 'buffer-auto-revert-by-notification' to a non-nil
 value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
-
-** Xref
-
-*** New variable 'xref-show-definitions-function'.
-It encapsulates the logic pertinent to showing the result of
-'xref-find-definitions'.  The user can change it to customize its
-behavior and the display of results.
-
-*** Search results show the buffer even for one hit.
-The search-type Xref commands (e.g. 'xref-find-references' or
-'project-find-regexp') now show the results buffer even when there is
-only one hit.  This can be altered by changing
-'xref-show-xrefs-function'.
-
-*** Xref buffers support refreshing the search results.
-A new command 'xref-refresh-results' is bound to 'g'.
 
 
 * New Modes and Packages in Emacs 27.1
