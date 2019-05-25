@@ -929,6 +929,12 @@ the xref backend method indicated by KIND and passes ARG to it."
          (method (intern (format "xref-backend-%s" kind))))
     (lambda ()
       (save-excursion
+        ;; Xref methods are generally allowed to depend on the text
+        ;; around point, not just on their explicit arguments.
+        ;;
+        ;; There is only so much we can do, however, to recreate that
+        ;; context, given that the user is free to change the buffer
+        ;; contents freely in the meantime.
         (when (buffer-live-p orig-buffer)
           (set-buffer orig-buffer)
           (ignore-errors (goto-char orig-position)))
