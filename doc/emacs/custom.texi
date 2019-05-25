@@ -380,7 +380,7 @@ lines of code to your initialization file, to set the variable
 file.  For example:
 
 @example
-(setq custom-file "~/.emacs-custom.el")
+(setq custom-file "~/.config/emacs-custom.el")
 (load custom-file)
 @end example
 
@@ -390,14 +390,14 @@ Emacs versions, like this:
 @example
 (cond ((< emacs-major-version 22)
        ;; @r{Emacs 21 customization.}
-       (setq custom-file "~/.custom-21.el"))
+       (setq custom-file "~/.config/custom-21.el"))
       ((and (= emacs-major-version 22)
             (< emacs-minor-version 3))
        ;; @r{Emacs 22 customization, before version 22.3.}
-       (setq custom-file "~/.custom-22.el"))
+       (setq custom-file "~/.config/custom-22.el"))
       (t
        ;; @r{Emacs version 22.3 or later.}
-       (setq custom-file "~/.emacs-custom.el")))
+       (setq custom-file "~/.config/emacs-custom.el")))
 
 (load custom-file)
 @end example
@@ -2215,16 +2215,28 @@ as a function from Lisp programs.
 @cindex init file
 @cindex .emacs file
 @cindex ~/.emacs file
+@cindex ~/.config/emacs file
 @cindex Emacs initialization file
 @cindex startup (init file)
 
   When Emacs is started, it normally tries to load a Lisp program from
 an @dfn{initialization file}, or @dfn{init file} for short.  This
 file, if it exists, specifies how to initialize Emacs for you.  Emacs
-looks for your init file using the filenames @file{~/.emacs},
-@file{~/.emacs.el}, or @file{~/.emacs.d/init.el}; you can choose to
-use any one of these three names (@pxref{Find Init}).  Here, @file{~/}
-stands for your home directory.
+looks for your init file using the filenames
+@file{~/.config/emacs},. @file{~/.emacs}, @file{~/.config/emacs.el},
+@file{~/.emacs.el}, @file{~/.config/emacs.d/init.el} or
+@file{~/.emacs.d/init.el}; you can choose to use any one of these
+names (@pxref{Find Init}).  Here, @file{~/} stands for your home
+directory.
+
+  While the @file{~/.emacs} and @file{~/.emacs.d/init.el} locations
+are backward-compatible to older Emacs versions, and the rest of this
+chapter will use them to name your initialization file, it is better practice
+to group all of your dotfiles under @file{.config} so that if you have
+to troubleshoot a problem that might be due to a bad init file, or
+archive a collection of them, it can be done by renaming or
+copying that directory.  Note that the @file{.config} versions
+don't have a leading dot on the basename part of the file.
 
   You can use the command line switch @samp{-q} to prevent loading
 your init file, and @samp{-u} (or @samp{--user}) to specify a
@@ -2630,14 +2642,16 @@ library.  @xref{Hooks}.
 @node Find Init
 @subsection How Emacs Finds Your Init File
 
-  Normally Emacs uses your home directory to find @file{~/.emacs};
-that's what @samp{~} means in a file name.  @xref{General Variables, HOME}.
-If neither @file{~/.emacs} nor @file{~/.emacs.el} is found, Emacs looks for
-@file{~/.emacs.d/init.el} (which, like @file{~/.emacs.el}, can be
-byte-compiled).
+  Normally Emacs uses your home directory to find
+@file{~/.config/emacs} or @file{~/.emacs}; that's what @samp{~} means
+in a file name.  @xref{General Variables, HOME}.  If none of
+@file{~/.config/emacs}, @file{~/.emacs}, @file{~/.config/emacs.el} nor
+@file{~/.emacs.el} is found, Emacs looks for
+@file{~/.config/emacs.d/init.el} or @file{~/.emacs.d/init.el} (these,
+like @file{~/.emacs.el}, can be byte-compiled).
 
   However, if you run Emacs from a shell started by @code{su}, Emacs
-tries to find your own @file{.emacs}, not that of the user you are
+tries to find your own initialization files, not that of the user you are
 currently pretending to be.  The idea is that you should get your own
 editor customizations even if you are running as the super user.
 
@@ -2688,10 +2702,10 @@ Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
 @cindex early init file
 
   Most customizations for Emacs should be put in the normal init file,
-@file{.emacs} or @file{~/.emacs.d/init.el}.  However, it is sometimes desirable
+@file{.config/emacs} or @file{~/.config/emacs.d/init.el}.  However, it is sometimes desirable
 to have customizations that take effect during Emacs startup earlier than the
 normal init file is processed.  Such customizations can be put in the early
-init file, @file{~/.emacs.d/early-init.el}.  This file is loaded before the
+init file, @file{~/.config/emacs.d/early-init.el} or @file{~/.emacs.d/early-init.el}.  This file is loaded before the
 package system and GUI is initialized, so in it you can customize variables
 that affect frame appearance as well as the package initialization process,
 such as @code{package-enable-at-startup}, @code{package-load-list}, and

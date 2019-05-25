@@ -1,4 +1,4 @@
-;;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
+;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1985-1986, 1992, 1994-2019 Free Software Foundation,
 ;; Inc.
@@ -970,6 +970,15 @@ the `--debug-init' option to view a complete error backtrace."
     (when debug-on-error-should-be-set
       (setq debug-on-error debug-on-error-from-init-file))))
 
+(defun find-init-path (fn)
+  "Look in ~/.config/FOO or ~/.FOO for the dotfile or dot directory FOO.
+It is expected that the output will undergo ~ expansion.  Implements the
+XDG convention for dotfiles."
+  (let* ((xdg-path (concat "~" init-file-user "/.config/" fn))
+        (oldstyle-path (concat "~" init-file-user "/." fn))
+        (found-path (if (file-exists-p xdg-path) xdg-path oldstyle-path)))
+    found-path))
+
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
@@ -1171,7 +1180,7 @@ please check its value")
       ;; "early-init" without an extension, as it does for ".emacs".
       "early-init.el"
       (file-name-as-directory
-       (concat "~" init-file-user "/.emacs.d")))))
+       (find-init-path "emacs.d")))))
   (setq early-init-file user-init-file)
 
   ;; If any package directory exists, initialize the package system.
@@ -1312,7 +1321,7 @@ please check its value")
         ((eq system-type 'ms-dos)
          (concat "~" init-file-user "/_emacs"))
         ((not (eq system-type 'windows-nt))
-         (concat "~" init-file-user "/.emacs"))
+         (find-init-path "emacs"))
         ;; Else deal with the Windows situation.
         ((directory-files "~" nil "^\\.emacs\\(\\.elc?\\)?$")
          ;; Prefer .emacs on Windows.
@@ -1330,7 +1339,7 @@ please check its value")
        (expand-file-name
         "init"
         (file-name-as-directory
-         (concat "~" init-file-user "/.emacs.d"))))
+         (find-init-path "emacs.d"))))
      (not inhibit-default-init))
 
     (when (and deactivate-mark transient-mark-mode)
