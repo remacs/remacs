@@ -1013,7 +1013,7 @@ etc.).
 
 If there is no maintainer line, the person(s) in the Author field
 is/are presumed to be the maintainers.  Some files in Emacs use
-@samp{FSF} for the maintainer.  This means that the original author is
+@samp{emacs-devel@@gnu.org} for the maintainer, which means the author is
 no longer responsible for the file, and that it is maintained as part
 of Emacs.
 
