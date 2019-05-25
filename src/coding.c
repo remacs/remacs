@@ -9398,7 +9398,8 @@ START and END are buffer positions.
 Optional 4th arguments DESTINATION specifies where the decoded text goes.
 If nil, the region between START and END is replaced by the decoded text.
 If buffer, the decoded text is inserted in that buffer after point (point
-does not move).
+does not move).  If that buffer is unibyte, it receives the individual
+bytes of the internal representation of the decoded text.
 In those cases, the length of the decoded text is returned.
 If DESTINATION is t, the decoded text is returned.
 
@@ -9556,7 +9557,9 @@ if the decoding operation is trivial.
 
 Optional fourth arg BUFFER non-nil means that the decoded text is
 inserted in that buffer after point (point does not move).  In this
-case, the return value is the length of the decoded text.
+case, the return value is the length of the decoded text.  If that
+buffer is unibyte, it receives the individual bytes of the internal
+representation of the decoded text.
 
 This function sets `last-coding-system-used' to the precise coding system
 used (which may be different from CODING-SYSTEM if CODING-SYSTEM is
