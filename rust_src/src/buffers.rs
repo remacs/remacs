@@ -1855,6 +1855,17 @@ fn candidate_buffer(b: LispObject, buffer: LispObject) -> bool {
     }
 }
 
+fn get_scratch_buf() -> LispObject {
+    // TODO: This was AUTO_STRING, which doesn't exist yet in Rust.
+    let scratch = new_unibyte_string!("*scratch*");
+    let mut buf = Fget_buffer(scratch);
+    if buf.is_nil() {
+        buf = Fget_buffer_create(scratch);
+        unsafe { Fset_buffer_major_mode(buf) };
+    }
+    buf
+}
+
 /// Return most recently selected buffer other than BUFFER.
 /// Buffers not visible in windows are preferred to visible buffers, unless
 /// optional second argument VISIBLE-OK is non-nil.  Ignore the argument
@@ -1866,8 +1877,12 @@ fn candidate_buffer(b: LispObject, buffer: LispObject) -> bool {
 /// list first, followed by the list of all buffers.  If no other buffer
 /// exists, return the buffer `*scratch*' (creating it if necessary).
 #[lisp_fn(min = "0")]
-pub fn other_buffer(buffer: LispObject, visible_ok: LispObject, frame: LispObject) -> LispObject {
-    let f: LispFrameRef = LispFrameLiveOrSelected::from(frame).into();
+pub fn other_buffer(
+    buffer: LispObject,
+    visible_ok: LispObject,
+    frame: LispFrameLiveOrSelected,
+) -> LispObject {
+    let f: LispFrameRef = frame.into();
     let pred = f.buffer_predicate;
     let mut notsogood = None;
 
@@ -1891,16 +1906,7 @@ pub fn other_buffer(buffer: LispObject, visible_ok: LispObject, frame: LispObjec
 
     match notsogood {
         Some(buf) => buf,
-        None => {
-            // TODO: This was AUTO_STRING, which doesn't exist yet in Rust.
-            let scratch = new_unibyte_string!("*scratch*");
-            let mut buf = Fget_buffer(scratch);
-            if buf.is_nil() {
-                buf = Fget_buffer_create(scratch);
-                unsafe { Fset_buffer_major_mode(buf) };
-            }
-            buf
-        }
+        None => get_scratch_buf(),
     }
 }
 
@@ -1915,13 +1921,7 @@ pub extern "C" fn other_buffer_safely(buffer: LispObject) -> LispObject {
         }
     }
 
-    let scratch = new_unibyte_string!("*scratch*");
-    let mut buf = Fget_buffer(scratch);
-    if buf.is_nil() {
-        buf = Fget_buffer_create(scratch);
-        unsafe { Fset_buffer_major_mode(buf) };
-    }
-    buf
+    get_scratch_buf()
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
