@@ -523,7 +523,8 @@ MODE should be an integer which is a file mode value."
   "Extract all archive members in the tar-file into the current directory."
   (interactive)
   ;; FIXME: make it work even if we're not in tar-mode.
-  (let ((descriptors tar-parse-info))   ;Read the var in its buffer.
+  (let ((descriptors tar-parse-info)    ;Read the var in its buffer.
+        (reporter (make-progress-reporter "Extracting")))
     (with-current-buffer
         (if (tar-data-swapped-p) tar-data-buffer (current-buffer))
       (set-buffer-multibyte nil)          ;Hopefully, a no-op.
@@ -536,17 +537,19 @@ MODE should be an integer which is a file mode value."
                (start (tar-header-data-start descriptor))
                (end (+ start (tar-header-size descriptor))))
           (unless (file-directory-p name)
-            (message "Extracting %s" name)
+            (progress-reporter-update reporter name)
             (if (and dir (not (file-exists-p dir)))
                 (make-directory dir t))
             (unless (file-directory-p name)
-	      (let ((coding-system-for-write 'no-conversion))
+              (let ((coding-system-for-write 'no-conversion)
+                    (write-region-inhibit-fsync t))
                 (when link-desc
                   (lwarn '(tar link) :warning
                          "Extracted `%s', %s, as a normal file"
                          name link-desc))
-		(write-region start end name)))
-            (set-file-modes name (tar-header-mode descriptor))))))))
+                (write-region start end name nil :nomessage)))
+            (set-file-modes name (tar-header-mode descriptor)))))
+      (progress-reporter-done reporter))))
 
 (defun tar-summarize-buffer ()
   "Parse the contents of the tar file in the current buffer."

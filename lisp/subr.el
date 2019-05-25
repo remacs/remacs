@@ -5036,7 +5036,8 @@ to deactivate this transient map, regardless of KEEP-PRED."
 ;;			      MAX-VALUE
 ;;			      MESSAGE
 ;;			      MIN-CHANGE
-;;			      MIN-TIME])
+;;                            MIN-TIME
+;;                            MESSAGE-SUFFIX])
 ;;
 ;; This weirdness is for optimization reasons: we want
 ;; `progress-reporter-update' to be as fast as possible, so
@@ -5046,7 +5047,7 @@ to deactivate this transient map, regardless of KEEP-PRED."
 ;; digits of precision, it doesn't really matter here.  On the other
 ;; hand, it greatly simplifies the code.
 
-(defsubst progress-reporter-update (reporter &optional value)
+(defsubst progress-reporter-update (reporter &optional value suffix)
   "Report progress of an operation in the echo area.
 REPORTER should be the result of a call to `make-progress-reporter'.
 
@@ -5055,14 +5056,17 @@ If REPORTER is a numerical progress reporter---i.e. if it was
  `make-progress-reporter'---then VALUE should be a number between
  MIN-VALUE and MAX-VALUE.
 
-If REPORTER is a non-numerical reporter, VALUE should be nil.
+Optional argument SUFFIX is a string to be displayed after
+REPORTER's main message and progress text.  If REPORTER is a
+non-numerical reporter, then VALUE should be nil, or a string to
+use instead of SUFFIX.
 
 This function is relatively inexpensive.  If the change since
 last update is too small or insufficient time has passed, it does
 nothing."
   (when (or (not (numberp value))      ; For pulsing reporter
 	    (>= value (car reporter))) ; For numerical reporter
-    (progress-reporter-do-update reporter value)))
+    (progress-reporter-do-update reporter value suffix)))
 
 (defun make-progress-reporter (message &optional min-value max-value
 				       current-value min-change min-time)
@@ -5106,26 +5110,28 @@ effectively rounded up."
 		       max-value
 		       message
 		       (if min-change (max (min min-change 50) 1) 1)
-		       min-time))))
+                       min-time
+                       ;; SUFFIX
+                       nil))))
     (progress-reporter-update reporter (or current-value min-value))
     reporter))
 
-(defun progress-reporter-force-update (reporter &optional value new-message)
+(defun progress-reporter-force-update (reporter &optional value new-message suffix)
   "Report progress of an operation in the echo area unconditionally.
 
-The first two arguments are the same as in `progress-reporter-update'.
+REPORTER, VALUE, and SUFFIX are the same as in `progress-reporter-update'.
 NEW-MESSAGE, if non-nil, sets a new message for the reporter."
   (let ((parameters (cdr reporter)))
     (when new-message
       (aset parameters 3 new-message))
     (when (aref parameters 0)
       (aset parameters 0 (float-time)))
-    (progress-reporter-do-update reporter value)))
+    (progress-reporter-do-update reporter value suffix)))
 
 (defvar progress-reporter--pulse-characters ["-" "\\" "|" "/"]
   "Characters to use for pulsing progress reporters.")
 
-(defun progress-reporter-do-update (reporter value)
+(defun progress-reporter-do-update (reporter value &optional suffix)
   (let* ((parameters   (cdr reporter))
 	 (update-time  (aref parameters 0))
 	 (min-value    (aref parameters 1))
@@ -5160,18 +5166,25 @@ NEW-MESSAGE, if non-nil, sets a new message for the reporter."
 	       (setcar reporter (ceiling (car reporter))))
 	     ;; Only print message if enough time has passed
 	     (when enough-time-passed
-	       (if (> percentage 0)
-		   (message "%s%d%%" text percentage)
-		 (message "%s" text)))))
+               (if suffix
+                   (aset parameters 6 suffix)
+                 (setq suffix (or (aref parameters 6) "")))
+               (if (> percentage 0)
+                   (message "%s%d%% %s" text percentage suffix)
+                 (message "%s %s" text suffix)))))
 	  ;; Pulsing indicator
 	  (enough-time-passed
-	   (let ((index (mod (1+ (car reporter)) 4))
-		 (message-log-max nil))
+           (when (and value (not suffix))
+             (setq suffix value))
+           (if suffix
+               (aset parameters 6 suffix)
+             (setq suffix (or (aref parameters 6) "")))
+           (let* ((index (mod (1+ (car reporter)) 4))
+                  (message-log-max nil)
+                  (pulse-char (aref progress-reporter--pulse-characters
+                                    index)))
 	     (setcar reporter index)
-	     (message "%s %s"
-		      text
-		      (aref progress-reporter--pulse-characters
-			    index)))))))
+             (message "%s %s %s" text pulse-char suffix))))))
 
 (defun progress-reporter-done (reporter)
   "Print reporter's message followed by word \"done\" in echo area."
