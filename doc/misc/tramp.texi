@@ -308,11 +308,15 @@ behind the scenes when you open a file with @value{tramp}.
 @node Obtaining @value{tramp}
 @chapter Obtaining @value{tramp}
 @cindex obtaining @value{tramp}
+@cindex GNU ELPA
 
 @value{tramp} is included as part of Emacs (since Emacs 22.1).
 
 @value{tramp} is also freely packaged for download on the Internet at
 @uref{https://ftp.gnu.org/gnu/tramp/}.
+
+@value{tramp} is available as @uref{https://elpa.gnu.org, GNU ELPA}
+package.
 
 @value{tramp} development versions are available on Git servers.
 Development versions contain new and incomplete features.
@@ -3095,11 +3099,11 @@ variables.
 
 @vindex async-shell-command-width
 @vindex COLUMNS@r{, environment variable}
-If Emacs supports the variable @code{async-shell-command-width} (since Emacs
-27.1), @value{tramp} cares about its value for asynchronous shell
-commands.  It specifies the number of display columns for command
-output.  For synchronous shell commands, a similar effect can be
-achieved by adding the environment variable @env{COLUMNS} to
+If Emacs supports the variable @code{async-shell-command-width} (since
+Emacs 27.1), @value{tramp} cares about its value for asynchronous
+shell commands.  It specifies the number of display columns for
+command output.  For synchronous shell commands, a similar effect can
+be achieved by adding the environment variable @env{COLUMNS} to
 @code{tramp-remote-process-environment}.
 
 
