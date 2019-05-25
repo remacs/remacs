@@ -834,10 +834,27 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 
 
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
-  "Function to display a list of search results.")
+  "Function to display a list of search results.
+
+It should accept two arguments: FETCHER and ALIST.
+
+FETCHER is a function of no arguments that returns a list of xref
+values.  It must not depend on the current buffer or selected
+window.
+
+ALIST will include the following keys:
+
+WINDOW for the window that was selected before the current
+command was called.
+
+DISPLAY-ACTION indicates where the target location should be
+displayed.  The possible values are nil, `window' meaning the
+other window, or `frame' meaning the other frame.")
 
 (defvar xref-show-definitions-function 'xref--show-defs-buffer
-  "Function to display a list of definitions.")
+  "Function to display a list of definitions.
+
+Accepts the same arguments as `xref-show-xrefs-function'.")
 
 (defvar xref--read-identifier-history nil)
 
@@ -902,6 +919,10 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
    display-action))
 
 (defun xref--create-fetcher (input kind arg)
+  "Return an xref list fetcher function.
+
+It revisits the saved position and delegates the finding logic to
+the xref backend method indicated by KIND and passes ARG to it."
   (let* ((orig-buffer (current-buffer))
          (orig-position (point))
          (backend (xref-find-backend))
