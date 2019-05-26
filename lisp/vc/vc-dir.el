@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
-;; Author:   Dan Nicolaescu <dann@ics.uci.edu>
+;; Author: Dan Nicolaescu <dann@ics.uci.edu>
 ;; Keywords: vc tools
 ;; Package: vc
 

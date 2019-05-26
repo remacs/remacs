@@ -2421,7 +2421,7 @@ Boris Goldowsky <boris@@cs.rochester.edu> made it possible to highlight
 fine differences in Ediff buffers.  Alastair Burt <burt@@dfki.uni-kl.de>
 ported Ediff to XEmacs, Eric Freudenthal <freudent@@jan.ultra.nyu.edu>
 made it work with VC, Marc Paquette <marcpa@@cam.org> wrote the
-toolbar support package for Ediff, and Hrvoje Niksic <hniksic@@xemacs.org>
+toolbar support package for Ediff, and Hrvoje Nikšić <hniksic@@xemacs.org>
 adapted it to the Emacs customization package.
 
 Many people provided help with bug reports, feature suggestions, and advice.

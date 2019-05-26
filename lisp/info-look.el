@@ -3,8 +3,7 @@
 
 ;; Copyright (C) 1995-1999, 2001-2019 Free Software Foundation, Inc.
 
-;; Author: Ralph Schleicher <rs@nunatak.allgaeu.org>
-;;         (did not show signs of life (Nov 2001)  -stef)
+;; Author: Ralph Schleicher <rs@ralph-schleicher.de>
 ;; Keywords: help languages
 
 ;; This file is part of GNU Emacs.

@@ -5,7 +5,7 @@
 
 ;; This file is part of GNU Emacs.
 
-;; Maintainer: Stephen Gildea <gildea@stop.mail-abuse.org>
+;; Maintainer: Stephen Gildea <stepheng+emacs@gildea.com>
 ;; Keywords: tools
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify

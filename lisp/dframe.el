@@ -781,7 +781,7 @@ Evaluates all cached timer functions in sequence."
 ;; In XEmacs, we make popup menus work on the item over mouse (as
 ;; opposed to where the point happens to be.)  We attain this by
 ;; temporarily moving the point to that place.
-;;    Hrvoje Niksic <hniksic@srce.hr>
+;;    Hrvoje Nikšić <hrvoje.niksic@avl.com>
 (defalias 'dframe-popup-kludge
   (if (featurep 'xemacs)
       (lambda (event)                        ; XEmacs.

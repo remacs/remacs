@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
-;; Author: Per Abhiddenware
+;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 
 ;; This file is part of GNU Emacs.
 

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1998, 2001-2019 Free Software Foundation, Inc.
 
-;; Author:    Dan Nicolaescu <done@ece.arizona.edu>
+;; Author: Dan Nicolaescu <done@ece.arizona.edu>
 ;; Keywords: multilingual, Romanian, i18n
 
 ;; This file is part of GNU Emacs.

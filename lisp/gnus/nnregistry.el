@@ -3,7 +3,7 @@
 
 ;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
-;; Authors: Ludovic Courtès <ludo@gnu.org>
+;; Author: Ludovic Courtès <ludo@gnu.org>
 ;; Keywords: news, mail
 
 ;; This file is part of GNU Emacs.

@@ -27113,7 +27113,7 @@ Richard Mlynarik,
 Lantz Moore,
 Morioka Tomohiko, @c Morioka
 Erik Toubro Nielsen,
-Hrvoje Niksic,
+Hrvoje Nikšić,
 Andy Norman,
 Fred Oberhauser,
 C. R. Oldham,

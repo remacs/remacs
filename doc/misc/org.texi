@@ -9687,7 +9687,7 @@ If you are away from your computer, it can be very useful to have a printed
 version of some agenda views to carry around.  Org mode can export custom
 agenda views as plain text, HTML@footnote{You need to install
 @file{htmlize.el} from @uref{https://github.com/hniksic/emacs-htmlize,Hrvoje
-Niksic's repository.}}, Postscript, PDF@footnote{To create PDF output, the
+Nikšić's repository.}}, Postscript, PDF@footnote{To create PDF output, the
 ghostscript @file{ps2pdf} utility must be installed on the system.  Selecting
 a PDF file will also create the postscript file.}, and iCalendar files.  If
 you want to do this only occasionally, use the command

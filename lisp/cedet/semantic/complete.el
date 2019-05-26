@@ -1551,7 +1551,7 @@ one in the source buffer."
 
 ;;; Tooltip completion lister
 ;;
-;; Written and contributed by Masatake YAMATO <jet@gyve.org>
+;; Written and contributed by Masatake YAMATO <yamato@redhat.com>
 ;;
 ;; Modified by Eric Ludlam for
 ;; * Safe compatibility for tooltip free systems.
@@ -1749,7 +1749,7 @@ Return a cons cell (X . Y)"
   (semantic-displayor-show-request obj)
   )
 
-;; End code contributed by Masatake YAMATO <jet@gyve.org>
+;; End code contributed by Masatake YAMATO <yamato@redhat.com>
 
 
 ;;; Ghost Text displayor

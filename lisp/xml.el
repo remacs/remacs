@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
-;; Author: Emmanuel Briot  <briot@gnat.com>
+;; Author: Emmanuel Briot <briot@gnat.com>
 ;; Maintainer: Mark A. Hershberger <mah@everybody.org>
 ;; Keywords: xml, data
 

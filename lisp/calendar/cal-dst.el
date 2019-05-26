@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1993-1996, 2001-2019 Free Software Foundation, Inc.
 
-;; Author: Paul Eggert <eggert@twinsun.com>
+;; Author: Paul Eggert <eggert@cs.ucla.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
 ;; Maintainer: Glenn Morris <rgm@gnu.org>
 ;; Keywords: calendar

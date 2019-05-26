@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2000, 2007-2019 Free Software Foundation, Inc.
 
-;; Author: Daiki Ueno <ueno@unixuser.org>
+;; Author: Daiki Ueno <ueno@gnu.org>
 ;; Keywords: SASL
 
 ;; This file is part of GNU Emacs.

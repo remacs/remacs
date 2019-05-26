@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996, 1998-1999, 2001, 2004-2005, 2007-2019 Free
 ;; Software Foundation, Inc.
 
-;; Author: Eric M. Ludlam  <zappo@gnu.org>
+;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Version: 0.2
 ;; Keywords: OO, chart, graph
 

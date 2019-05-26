@@ -124,7 +124,7 @@
 ;;            avk@rtsg.mot.com (Andrew V. Klein)     for a dired tip.
 ;;            chris@tecc.co.uk (Chris Boucher)       for a mark tip.
 ;;            f89-kam@nada.kth.se (Klas Mellbourn)   for a mh-e tip.
-;;            kifer@sbkifer.cs.sunysb.edu (M. Kifer) for a bug hunt.
+;;            kifer@cs.stonybrook.edu (M. Kifer)     for a bug hunt.
 ;;            treese@lcs.mit.edu (Win Treese)        for ange-ftp tips.
 ;;            pot@cnuce.cnr.it (Francesco Potortì)  for misc. tips.
 ;; ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996-2000, 2002, 2007-2019 Free Software Foundation,
 ;; Inc.
 
-;; Author: Bill Perry <wmperry@gnu.org>
+;; Author: William M. Perry <wmperry@gnu.org>
 ;;         Dave Love <fx@gnu.org>
 ;; Keywords: comm, firewalls
 

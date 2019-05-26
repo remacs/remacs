@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
-;; Author:     FSF (see vc.el for full credits)
+;; Author: FSF (see vc.el for full credits)
 ;; Maintainer: emacs-devel@gnu.org
 ;; Package: vc
 

@@ -4156,7 +4156,7 @@
 	coreutils.  Reported by Klaus Reichl
 	<Klaus.Reichl@thalesgroup.com>.
 
-2010-11-13  Hrvoje Niksic  <hniksic@xemacs.org>
+2010-11-13  Hrvoje Nikšić  <hniksic@xemacs.org>
 
 	* simple.el (count-words-region): New function.
 

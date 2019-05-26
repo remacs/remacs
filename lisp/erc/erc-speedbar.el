@@ -3,7 +3,7 @@
 ;; Copyright (C) 2001-2004, 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
-;; Contributor: Eric M. Ludlam <eric@siege-engine.com>
+;; Contributor: Eric M. Ludlam <zappo@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
-;; Authors: Didier Verna <didier@xemacs.org> (adding compaction)
+;; Authors: Didier Verna <didier@didierverna.net> (adding compaction)
 ;;	Simon Josefsson <simon@josefsson.org>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;;	Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>

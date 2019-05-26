@@ -1205,8 +1205,8 @@ plaintext name.
 
 @example
 (mail-header-parse-address
- "Hrvoje Niksic <hniksic@@srce.hr>")
-@result{} ("hniksic@@srce.hr" . "Hrvoje Niksic")
+ "Hrvoje Nikšić <hniksic@@srce.hr>")
+@result{} ("hniksic@@srce.hr" . "Hrvoje Nikšić")
 @end example
 
 @item mail-header-parse-addresses
@@ -1216,8 +1216,8 @@ the one described above.
 
 @example
 (mail-header-parse-addresses
- "Hrvoje Niksic <hniksic@@srce.hr>, Steinar Bang <sb@@metis.no>")
-@result{} (("hniksic@@srce.hr" . "Hrvoje Niksic")
+ "Hrvoje Nikšić <hniksic@@srce.hr>, Steinar Bang <sb@@metis.no>")
+@result{} (("hniksic@@srce.hr" . "Hrvoje Nikšić")
      ("sb@@metis.no" . "Steinar Bang"))
 @end example
 

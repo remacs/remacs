@@ -46,7 +46,7 @@
 ;;; Change Log:
 
 ;; Originally by Dick King <king@reasoning.com> 15 May 86
-;; Converted for Emacs 18 by Stephen Gildea <gildea@stop.mail-abuse.org>
+;; Converted for Emacs 18 by Stephen Gildea <stepheng+emacs@gildea.com>
 ;; Make uniquify-min-dir-content 0 truly non-invasive.  gildea 23 May 89
 ;; Some cleanup.  uniquify-min-dir-content default 0.  gildea 01 Jun 89
 ;; Don't rename to "".  Michael Ernst <mernst@theory.lcs.mit.edu> 15 Jun 94

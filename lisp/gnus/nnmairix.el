@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
-;; Author: David Engster <dengste@eml.cc>
+;; Author: David Engster <deng@randomsample.de>
 ;; Keywords: mail searching
 ;; Old-Version: 0.6
 

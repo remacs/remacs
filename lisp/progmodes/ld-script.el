@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
-;; Author: Masatake YAMATO<jet@gyve.org>
+;; Author: Masatake YAMATO <yamato@redhat.com>
 ;; Keywords: languages, faces
 
 ;; This file is part of GNU Emacs.

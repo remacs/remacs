@@ -3,8 +3,8 @@
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 ;; Author: Karl Landstrom <karl.landstrom@brgeight.se>
-;;         Daniel Colascione <dan.colascione@gmail.com>
-;; Maintainer: Daniel Colascione <dan.colascione@gmail.com>
+;;         Daniel Colascione <dancol@dancol.org>
+;; Maintainer: Daniel Colascione <dancol@dancol.org>
 ;; Version: 9
 ;; Date: 2009-07-25
 ;; Keywords: languages, javascript

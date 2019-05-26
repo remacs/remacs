@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
-;; Author:     FSF (see below for full credits)
+;; Author: FSF (see below for full credits)
 ;; Keywords: vc tools
 ;; Package: vc
 

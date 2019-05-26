@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985, 1999-2019 Free Software Foundation, Inc.
 
-;; Maintainer: Didier Verna <didier@xemacs.org>
+;; Maintainer: Didier Verna <didier@didierverna.net>
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -27,7 +27,7 @@
 ;; in the Emacs manual.
 
 ;; ### NOTE: this file was almost completely rewritten by Didier Verna
-;; <didier@xemacs.org> in July 1999.
+;; in July 1999.
 
 ;;; Code:
 

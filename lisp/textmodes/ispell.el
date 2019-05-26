@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1994-1995, 1997-2019 Free Software Foundation, Inc.
 
-;; Author:           Ken Stevens <k.stevens@ieee.org>
+;; Author: Ken Stevens <k.stevens@ieee.org>
 
 ;; This file is part of GNU Emacs.
 

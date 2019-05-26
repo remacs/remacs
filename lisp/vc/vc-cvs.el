@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1995, 1998-2019 Free Software Foundation, Inc.
 
-;; Author:      FSF (see vc.el for full credits)
+;; Author: FSF (see vc.el for full credits)
 ;; Package: vc
 
 ;; This file is part of GNU Emacs.

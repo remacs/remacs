@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
-;; Author: Dave Love  <fx@gnu.org>
+;; Author: Dave Love <fx@gnu.org>
 ;; Keywords: lisp, extensions
 
 ;; This file is part of GNU Emacs.

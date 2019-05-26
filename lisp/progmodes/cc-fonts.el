@@ -1319,7 +1319,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
   (c-skip-comments-and-strings limit)
   (when (< (point) limit)
-  
+
     (save-restriction
       (let (;; The position where `c-find-decl-spots' last stopped.
 	    start-pos
@@ -2773,7 +2773,7 @@ need for `pike-font-lock-extra-types'.")
 			      (copy-marker (1+ start))))
       t)))
 
-;; GtkDoc patterns contributed by Masatake YAMATO <jet@gyve.org>.
+;; GtkDoc patterns contributed by Masatake YAMATO <yamato@redhat.com>.
 
 (defconst gtkdoc-font-lock-doc-comments
   (let ((symbol "[a-zA-Z0-9_]+")

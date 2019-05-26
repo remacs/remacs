@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2014, 2016-2019 Free Software Foundation, Inc.
 
-;; Author:     Michal Nazarewicz <mina86@mina86.com>
+;; Author: Michal Nazarewicz <mina86@mina86.com>
 
 ;; This file is part of GNU Emacs.
 

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
-;; Author: Hrvoje Nikšić <hniksic@xemacs.org>
+;; Author: Hrvoje Nikšić <hrvoje.niksic@avl.com>
 ;; Keywords: i18n
 
 ;; This file is part of GNU Emacs.

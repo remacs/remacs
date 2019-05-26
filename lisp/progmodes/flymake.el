@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
-;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
+;; Author: Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Version: 1.0.6
 ;; Package-Requires: ((emacs "26.1"))

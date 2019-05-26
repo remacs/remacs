@@ -341,7 +341,7 @@ attached to and added to this list before the new frame is initialized."
 		       (symbol :tag "Parameter")
 		       (sexp :tag "Value"))))
 
-;; These values by Hrvoje Niksic <hniksic@srce.hr>
+;; These values by Hrvoje Nikšić <hrvoje.niksic@avl.com>
 (defcustom speedbar-frame-plist
   '(minibuffer nil width 20 border-width 0
 	       internal-border-width 0 unsplittable t

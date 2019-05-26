@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1994-1995, 1997-2019 Free Software Foundation, Inc.
 
-;; Author: Rolf Ebert      <ebert@inf.enst.fr>
+;; Author: Rolf Ebert <ebert@inf.enst.fr>
 ;;      Markus Heritsch <Markus.Heritsch@studbox.uni-stuttgart.de>
 ;;      Emmanuel Briot  <briot@gnat.com>
 ;; Maintainer: Stephen Leake <stephen_leake@stephe-leake.org>

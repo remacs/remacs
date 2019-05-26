@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-1998, 2000-2019 Free Software Foundation, Inc.
 
-;; Author:     FSF (see below for full credits)
+;; Author: FSF (see below for full credits)
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 

@@ -2,7 +2,7 @@
 ;;
 ;; Copyright (C) 1997, 1999, 2001-2019 Free Software Foundation, Inc.
 ;;
-;; Author:  Peter Breton <pbreton@cs.umb.edu>
+;; Author: Peter Breton <pbreton@cs.umb.edu>
 ;; Created: Fri Sep 27 1996
 ;; Keywords: generic, comment, font-lock
 ;; Package: emacs

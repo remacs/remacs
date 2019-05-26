@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
-;; Author:   Werner Lemberg <wl@gnu.org>
+;; Author: Werner Lemberg <wl@gnu.org>
 ;; Keywords: multilingual, input method, Vietnamese
 
 ;; This file is part of GNU Emacs.

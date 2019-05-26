@@ -82,7 +82,7 @@
 ;;  [hymie]	Hyman Rosen <marks!hymie@jyacc.jyacc.com>
 ;;  [burgett]	Steve Burgett <burgett@bizet.eecs.berkeley.edu>
 ;;  [jules]	Julian Gosnell <jules@x.co.uk>
-;;  [kifer]	Michael Kifer <kifer@sbcs.sunysb.edu>
+;;  [kifer]	Michael Kifer <kifer@cs.stonybrook.edu>
 ;;  [ake]	Ake Stenhoff <extaksf@aom.ericsson.se>
 ;;  [alon]	Alon Albert <al%imercury@uunet.uu.net>
 ;;  [tromey]	Tom Tromey <tromey@busco.lanl.gov>

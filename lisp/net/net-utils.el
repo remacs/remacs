@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
-;; Author:  Peter Breton <pbreton@cs.umb.edu>
+;; Author: Peter Breton <pbreton@cs.umb.edu>
 ;; Created: Sun Mar 16 1997
 ;; Keywords: network comm
 

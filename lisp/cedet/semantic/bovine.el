@@ -3,7 +3,7 @@
 ;; Copyright (C) 1999-2004, 2006-2007, 2009-2019 Free Software
 ;; Foundation, Inc.
 
-;; Author: Eric M. Ludlam <eric@siege-engine.com>
+;; Author: Eric M. Ludlam <zappo@gnu.org>
 
 ;; This file is part of GNU Emacs.
 
