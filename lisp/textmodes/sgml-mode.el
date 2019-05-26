@@ -363,9 +363,12 @@ Any terminating `>' or `/' is not matched.")
      ;; the resulting number of calls to syntax-ppss made it too slow
      ;; (bug#33887), so we're now careful to leave alone any pair
      ;; of quotes that doesn't hold a < or > char, which is the vast majority.
-     ("\\(?:\\(?1:\"\\)[^\"<>]*\\|\\(?1:'\\)[^'\"<>]*\\)"
+     ("\\([\"']\\)[^\"'<>]*"
       (1 (if (eq (char-after) (char-after (match-beginning 0)))
              (forward-char 1)
+           ;; Avoid skipping comment ender.
+           (when (eq (char-after) ?>)
+             (skip-chars-backward "-"))
            ;; Be careful to call `syntax-ppss' on a position before the one
            ;; we're going to change, so as not to need to flush the data we
            ;; just computed.

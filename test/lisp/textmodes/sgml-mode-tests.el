@@ -161,15 +161,46 @@ The point is set to the beginning of the buffer."
       (should (string= "&&" (buffer-string))))))
 
 (ert-deftest sgml-tests--quotes-syntax ()
+  (dolist (str '("a\"b <t>c'd</t>"
+                 "a'b <t>c\"d</t>"
+                 "<t>\"a'</t>"
+                 "<t>'a\"</t>"
+                 "<t>\"a'\"</t>"
+                 "<t>'a\"'</t>"
+                 "a\"b <tag>c'd</tag>"
+                 "<tag>c>'d</tag>"
+                 "<t><!-- \" --></t>"
+                 "<t><!-- ' --></t>"
+                 ))
+   (with-temp-buffer
+     (sgml-mode)
+     (insert str)
+     (ert-info ((format "%S" str) :prefix "Test case: ")
+       ;; Check that last tag is parsed as a tag.
+       (should (= 1 (car (syntax-ppss (1- (point-max))))))
+       (should (= 0 (car (syntax-ppss (point-max)))))))))
+
+(ert-deftest sgml-mode-quote-in-long-text ()
   (with-temp-buffer
     (sgml-mode)
-    (insert "a\"b <tag>c'd</tag>")
-    (should (= 1 (car (syntax-ppss (1- (point-max))))))
-    (should (= 0 (car (syntax-ppss (point-max)))))
-    (erase-buffer)
-    (insert "<tag>c>d</tag>")
-    (should (= 1 (car (syntax-ppss (1- (point-max))))))
-    (should (= 0 (car (syntax-ppss (point-max)))))))
+    (insert "<t>"
+            ;; `syntax-propertize-wholelines' extends chunk size based
+            ;; on line length, so newlines are significant!
+            (make-string syntax-propertize-chunk-size ?a) "\n"
+            "'"
+            (make-string syntax-propertize-chunk-size ?a) "\n"
+            "</t>")
+    ;; If we just check (syntax-ppss (point-max)) immediately, then
+    ;; we'll end up propertizing the whole buffer in one chunk (so the
+    ;; test is useless).  Simulate something more like what happens
+    ;; when the buffer is viewed normally.
+    (cl-loop for pos from (point-min) to (point-max)
+             by syntax-propertize-chunk-size
+             do (syntax-ppss pos))
+    (syntax-ppss (point-max))
+    ;; Check that last tag is parsed as a tag.
+    (should (= 1 (- (car (syntax-ppss (1- (point-max))))
+                    (car (syntax-ppss (point-max))))))))
 
 (provide 'sgml-mode-tests)
 ;;; sgml-mode-tests.el ends here
