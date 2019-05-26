@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Maintainer: Dave Pearson <davep@davep.org>
 ;; Created: 1999-05-28
 ;; Keywords: hypermedia
 

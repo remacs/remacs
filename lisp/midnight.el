@@ -3,7 +3,6 @@
 ;; Copyright (C) 1998, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Sam Steingold <sds@gnu.org>
-;; Maintainer: Sam Steingold <sds@gnu.org>
 ;; Created: 1998-05-18
 ;; Keywords: utilities
 

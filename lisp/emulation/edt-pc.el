@@ -4,7 +4,6 @@
 ;; Inc.
 
 ;; Author: Kevin Gallagher <kevin.gal@verizon.net>
-;; Maintainer: Kevin Gallagher <kevin.gal@verizon.net>
 ;; Keywords: emulations
 ;; Package: edt
 

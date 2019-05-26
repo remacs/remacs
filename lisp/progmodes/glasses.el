@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Milan Zamazal <pdm@zamazal.org>
-;; Maintainer: Milan Zamazal <pdm@zamazal.org>
 ;; Keywords: tools
 
 ;; This file is part of GNU Emacs.

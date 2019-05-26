@@ -3,7 +3,6 @@
 ;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Tassilo Horn <tsdh@gnu.org>
-;; Maintainer: Tassilo Horn <tsdh@gnu.org>
 ;; Keywords: files, pdf, ps, dvi
 
 ;; This file is part of GNU Emacs.

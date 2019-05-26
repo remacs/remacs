@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
 ;; Created: 26 Aug 2002
 ;; Keywords: syntax
 ;; X-RCS: $Id: semantic-grammar.wy,v 1.16 2005/09/30 20:20:27 zappo Exp $

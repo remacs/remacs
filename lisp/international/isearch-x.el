@@ -9,7 +9,6 @@
 ;; Keywords: i18n, multilingual, isearch
 
 ;; Author: Kenichi Handa <handa@gnu.org>
-;; Maintainer: Kenichi Handa <handa@gnu.org>
 
 ;; This file is part of GNU Emacs.
 

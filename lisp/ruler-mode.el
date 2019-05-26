@@ -3,7 +3,6 @@
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
 ;; Created: 24 Mar 2001
 ;; Version: 1.6
 ;; Keywords: convenience

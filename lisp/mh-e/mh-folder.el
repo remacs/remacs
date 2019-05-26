@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002-2003, 2005-2019 Free Software Foundation, Inc.
 
 ;; Author: Bill Wohler <wohler@newt.com>
-;; Maintainer: Bill Wohler <wohler@newt.com>
 ;; Keywords: mail
 ;; See: mh-e.el
 

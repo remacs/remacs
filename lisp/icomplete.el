@@ -4,7 +4,6 @@
 ;; Foundation, Inc.
 
 ;; Author: Ken Manheimer <ken dot manheimer at gmail...>
-;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Created: Mar 1993 Ken Manheimer, klm@nist.gov - first release to usenet
 ;; Keywords: help, abbrev
 

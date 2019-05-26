@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
-;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Version: 2.1
 ;; Keywords: convenience text
 ;; X-URL: https://www.emacswiki.org/emacs/ViniciusJoseLatorre

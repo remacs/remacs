@@ -4,8 +4,6 @@
 
 ;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;;	Kenichi Handa <handa@gnu.org> (multi-byte characters)
-;; Maintainer: Kenichi Handa <handa@gnu.org> (multi-byte characters)
-;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, print, PostScript, multibyte, mule
 ;; Package: ps-print
 

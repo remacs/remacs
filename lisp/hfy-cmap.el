@@ -7,7 +7,6 @@
 ;; Filename: hfy-cmap.el
 ;; Keywords: color, rgb
 ;; Author: Vivek Dasmohapatra <vivek@etla.org>
-;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; Created: 2002-01-20
 ;; Description: fallback code for color name -> rgb mapping
 ;; URL: http://rtfm.etla.org/emacs/htmlfontify/

@@ -3,7 +3,6 @@
 ;; Copyright (C) 2019 Free Software Foundation, Inc.
 
 ;; Author: Wojciech S. Gac <wojciech.s.gac@gmail.com>
-;; Maintainer: Wojciech S. Gac <wojciech.s.gac@gmail.com>>
 ;; Keywords: i18n, multilingual, input method, Sámi
 
 ;; This file is part of GNU Emacs.

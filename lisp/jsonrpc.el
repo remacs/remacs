@@ -3,7 +3,6 @@
 ;; Copyright (C) 2018-2019 Free Software Foundation, Inc.
 
 ;; Author: João Távora <joaotavora@gmail.com>
-;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
 ;; Version: 1.0.7

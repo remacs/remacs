@@ -3,7 +3,6 @@
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
 ;; Created: 16 Feb 2001
 ;; Keywords: extensions
 

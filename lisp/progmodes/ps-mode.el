@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author:     Peter Kleiweg <p.c.j.kleiweg@rug.nl>
-;; Maintainer: Peter Kleiweg <p.c.j.kleiweg@rug.nl>
 ;; Created:    20 Aug 1997
 ;; Version:    1.1i
 ;; Keywords:   PostScript, languages

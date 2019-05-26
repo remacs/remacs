@@ -3,7 +3,6 @@
 ;; Copyright (C) 2001-2003, 2006-2019 Free Software Foundation, Inc.
 
 ;; Author: Peter S. Galbraith <psg@debian.org>
-;; Maintainer: Bill Wohler <wohler@newt.com>
 ;; Keywords: mail
 ;; See: mh-e.el
 

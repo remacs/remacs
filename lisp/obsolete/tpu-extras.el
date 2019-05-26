@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993-1995, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Rob Riepel <riepel@networking.stanford.edu>
-;; Maintainer: Rob Riepel <riepel@networking.stanford.edu>
 ;; Keywords: emulations
 ;; Package: tpu-edt
 ;; Obsolete-since: 24.5

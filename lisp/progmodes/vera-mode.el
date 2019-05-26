@@ -3,7 +3,6 @@
 ;; Copyright (C) 1997-2019 Free Software Foundation, Inc.
 
 ;; Author:      Reto Zimmermann <reto@gnu.org>
-;; Maintainer:  Reto Zimmermann <reto@gnu.org>
 ;; Version:     2.28
 ;; Keywords:    languages vera
 ;; WWW:         http://www.iis.ee.ethz.ch/~zimmi/emacs/vera-mode.html

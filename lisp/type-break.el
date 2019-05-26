@@ -3,8 +3,7 @@
 ;; Copyright (C) 1994-1995, 1997, 2000-2019 Free Software Foundation,
 ;; Inc.
 
-;; Author: Noah Friedman
-;; Maintainer: Noah Friedman <friedman@splode.com>
+;; Author: Noah Friedman <friedman@splode.com>
 ;; Keywords: extensions, timers
 ;; Created: 1994-07-13
 

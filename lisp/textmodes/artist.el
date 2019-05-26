@@ -3,7 +3,6 @@
 ;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
 ;; Author:       Tomas Abrahamsson <tab@lysator.liu.se>
-;; Maintainer:   Tomas Abrahamsson <tab@lysator.liu.se>
 ;; Keywords:     mouse
 ;; Version:	 1.2.6
 ;; Release-date: 6-Aug-2004

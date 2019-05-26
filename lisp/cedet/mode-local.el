@@ -3,7 +3,6 @@
 ;; Copyright (C) 2004-2005, 2007-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
 ;; Created: 27 Apr 2004
 ;; Keywords: syntax
 

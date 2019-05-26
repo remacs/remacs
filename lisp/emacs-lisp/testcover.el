@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 ;; Author: Jonathan Yavner <jyavner@member.fsf.org>
-;; Maintainer: Jonathan Yavner <jyavner@member.fsf.org>
 ;; Keywords: lisp utility
 
 ;; This file is part of GNU Emacs.

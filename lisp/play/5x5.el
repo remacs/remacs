@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Maintainer: Dave Pearson <davep@davep.org>
 ;; Created: 1998-10-03
 ;; Keywords: games puzzles
 

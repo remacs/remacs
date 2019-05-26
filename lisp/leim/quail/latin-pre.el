@@ -32,7 +32,6 @@
 ;;
 ;; polish-slash:
 ;; Author: Włodek Bzyl <matwb@univ.gda.pl>
-;; Maintainer: Włodek Bzyl <matwb@univ.gda.pl>
 ;;
 ;; latin-[89]-prefix: Dave Love <fx@gnu.org>
 ;;

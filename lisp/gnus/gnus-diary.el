@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author:        Didier Verna <didier@xemacs.org>
-;; Maintainer:    Didier Verna <didier@xemacs.org>
 ;; Created:       Tue Jul 20 10:42:55 1999
 ;; Keywords:      calendar mail news
 

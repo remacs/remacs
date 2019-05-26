@@ -3,7 +3,6 @@
 ;; Copyright (C) 1993-1997, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Karl Fogel <kfogel@red-bean.com>
-;; Maintainer: Karl Fogel <kfogel@red-bean.com>
 ;; Created: July, 1993
 ;; Keywords: bookmarks, placeholders, annotations
 

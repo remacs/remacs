@@ -4,7 +4,6 @@
 ;; Software Foundation, Inc.
 
 ;; Author: Bill Wohler <wohler@newt.com>
-;; Maintainer: Bill Wohler <wohler@newt.com>
 ;; Version: 8.6+git
 ;; Keywords: mail
 

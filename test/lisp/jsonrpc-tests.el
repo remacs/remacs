@@ -3,7 +3,6 @@
 ;; Copyright (C) 2018-2019 Free Software Foundation, Inc.
 
 ;; Author: João Távora <joaotavora@gmail.com>
-;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: tests
 
 ;; This program is free software; you can redistribute it and/or modify

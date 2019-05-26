@@ -3,7 +3,6 @@
 ;; Copyright (C) 1996-1997, 2000-2019 Free Software Foundation, Inc.
 
 ;; Author: Stephen Eglen <stephen@gnu.org>
-;; Maintainer: Stephen Eglen <stephen@gnu.org>
 ;; Keywords: completion convenience
 ;; Obsolete-since: 24.4
 

@@ -3,8 +3,7 @@
 ;; Copyright (C) 1990-1993, 1996, 1999, 2001-2019 Free Software
 ;; Foundation, Inc.
 
-;; Author: Masanobu Umeda
-;; Maintainer: umerin@mse.kyutech.ac.jp
+;; Author: Masanobu Umeda <umerin@mse.kyutech.ac.jp>
 ;; Keywords: news
 
 ;; This file is part of GNU Emacs.

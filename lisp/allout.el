@@ -3,7 +3,6 @@
 ;; Copyright (C) 1992-1994, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Ken Manheimer <ken dot manheimer at gmail...>
-;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Created: Dec 1991 -- first release to usenet
 ;; Version: 2.3
 ;; Keywords: outlines, wp, languages, PGP, GnuPG

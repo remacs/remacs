@@ -8,7 +8,6 @@
 ;; Version: 0.21
 ;; Keywords: html, hypermedia, markup, etags
 ;; Author: Vivek Dasmohapatra <vivek@etla.org>
-;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; Created: 2002-01-05
 ;; Description: htmlize a buffer/source tree with optional hyperlinks
 ;; URL: http://rtfm.etla.org/emacs/htmlfontify/

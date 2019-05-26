@@ -3,8 +3,7 @@
 ;; Copyright (C) 1992-1995, 1997-1998, 2001-2019 Free Software
 ;; Foundation, Inc.
 
-;; Author: Noah Friedman
-;; Maintainer: Noah Friedman <friedman@splode.com>
+;; Author: Noah Friedman <friedman@splode.com>
 ;; Keywords: unix, comm
 
 ;; This file is part of GNU Emacs.

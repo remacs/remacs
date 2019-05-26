@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002-2005, 2007-2019 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
 
 ;; This file is part of GNU Emacs.
 

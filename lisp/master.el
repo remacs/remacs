@@ -3,7 +3,6 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Alex Schroeder <alex@gnu.org>
-;; Maintainer: Alex Schroeder <alex@gnu.org>
 ;; Version: 1.0.2
 ;; Keywords: comm
 
