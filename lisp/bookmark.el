@@ -136,12 +136,13 @@ This is as opposed to inline text at the top of the buffer."
   :group 'bookmark)
 
 (defconst bookmark-bmenu-inline-header-height 2
-  "Number of lines used for the *Bookmark List* header
-\(only significant when `bookmark-bmenu-use-header-line' is nil).")
+  "Number of lines used for the *Bookmark List* header.
+\(This is only significant when `bookmark-bmenu-use-header-line'
+is nil.)")
 
 (defconst bookmark-bmenu-marks-width 2
-  "Number of columns (chars) used for the *Bookmark List* marks column,
-including the annotations column.")
+  "Number of columns (chars) used for the *Bookmark List* marks column.
+This includes the annotations column.")
 
 (defcustom bookmark-bmenu-file-column 30
   "Column at which to display filenames in a buffer listing bookmarks.
@@ -221,7 +222,7 @@ A non-nil value may result in truncated bookmark names."
   "Keymap containing bindings to bookmark functions.
 It is not bound to any key by default: to bind it
 so that you have a bookmark prefix, just use `global-set-key' and bind a
-key of your choice to `bookmark-map'.  All interactive bookmark
+key of your choice to variable `bookmark-map'.  All interactive bookmark
 functions have a binding in this keymap.")
 
 ;;;###autoload (fset 'bookmark-map bookmark-map)
@@ -301,7 +302,7 @@ This point is in `bookmark-current-buffer'.")
 
 
 (defvar bookmark-quit-flag nil
-  "Non nil make `bookmark-bmenu-search' quit immediately.")
+  "Non-nil means `bookmark-bmenu-search' quits immediately.")
 
 ;; Helper functions and macros.
 
@@ -318,8 +319,8 @@ This point is in `bookmark-current-buffer'.")
 ;; Everyone else should go through them.
 
 (defun bookmark-name-from-full-record (bookmark-record)
-  "Return the name of BOOKMARK-RECORD.  BOOKMARK-RECORD is, e.g.,
-one element from `bookmark-alist'."
+  "Return the name of BOOKMARK-RECORD.
+BOOKMARK-RECORD is, e.g., one element from `bookmark-alist'."
   (car bookmark-record))
 
 
@@ -346,8 +347,8 @@ is already a bookmark record, just return it."
 
 
 (defun bookmark-get-bookmark-record (bookmark-name-or-record)
-  "Return the record portion of the entry for BOOKMARK-NAME-OR-RECORD in
-`bookmark-alist' (that is, all information but the name)."
+  "Return the record portion of BOOKMARK-NAME-OR-RECORD in `bookmark-alist'.
+In other words, return all information but the name."
   (let ((alist (cdr (bookmark-get-bookmark bookmark-name-or-record))))
     ;; The bookmark objects can either look like (NAME ALIST) or
     ;; (NAME . ALIST), so we have to distinguish the two here.
@@ -812,7 +813,7 @@ is ever deleted."
            (cond
             ((eq overwrite-or-push nil)
              (if (bookmark-get-bookmark str t)
-                 (error "A bookmark named \"%s\" already exists." str)
+                 (error "A bookmark named \"%s\" already exists" str)
                (bookmark-store str (cdr record) nil)))
             ((eq overwrite-or-push 'overwrite)
              (bookmark-store str (cdr record) nil))
@@ -937,6 +938,7 @@ It takes one argument, the name of the bookmark, as a string.")
   "Keymap for editing an annotation of a bookmark.")
 
 (defun bookmark-insert-annotation (bookmark-name-or-record)
+  "Insert annotation for BOOKMARK-NAME-OR-RECORD at point."
   (insert (funcall bookmark-edit-annotation-text-func bookmark-name-or-record))
   (let ((annotation (bookmark-get-annotation bookmark-name-or-record)))
     (if (and annotation (not (string-equal annotation "")))
@@ -1066,8 +1068,8 @@ If `bookmark-sort-flag' is non-nil, then return a sorted copy of the alist."
 Useful for example to unhide text in `outline-mode'.")
 
 (defun bookmark--jump-via (bookmark-name-or-record display-function)
-  "Handle BOOKMARK-NAME-OR-RECORD, then call DISPLAY-FUNCTION with
-current buffer as argument.
+  "Handle BOOKMARK-NAME-OR-RECORD, then call DISPLAY-FUNCTION.
+DISPLAY-FUNCTION is called with the current buffer as argument.
 
 After calling DISPLAY-FUNCTION, set window point to the point specified
 by BOOKMARK-NAME-OR-RECORD, if necessary, run `bookmark-after-jump-hook',
@@ -1676,7 +1678,7 @@ deletion, or > if it is flagged for displaying."
 (defalias 'edit-bookmarks 'bookmark-bmenu-list)
 
 (defun bookmark-bmenu-set-header ()
-  "Sets the immutable header line."
+  "Set the immutable header line."
   (let ((header (concat "%% " "Bookmark")))
     (when bookmark-bmenu-toggle-filenames
       (setq header (concat header
@@ -1836,8 +1838,8 @@ last full line, move to the last full line.  The return value is undefined."
 
 
 (defun bookmark-show-annotation (bookmark-name-or-record)
-  "Display the annotation for BOOKMARK-NAME-OR-RECORD in a buffer,
-if an annotation exists."
+  "Display the annotation for BOOKMARK-NAME-OR-RECORD in a buffer.
+If the annotation does not exist, do nothing."
   (let ((annotation (bookmark-get-annotation bookmark-name-or-record)))
     (when (and annotation (not (string-equal annotation "")))
       (save-excursion
@@ -1998,7 +2000,9 @@ The current window remains selected."
     (bookmark--jump-via bookmark fun)))
 
 (defun bookmark-bmenu-other-window-with-mouse (event)
-  "Select bookmark at the mouse pointer in other window, leaving bookmark menu visible."
+  "Jump to bookmark at mouse EVENT position in other window.
+Move point in menu buffer to the position of EVENT and leave
+bookmark menu visible."
   (interactive "e")
   (with-current-buffer (window-buffer (posn-window (event-end event)))
     (save-excursion
@@ -2124,8 +2128,8 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
     (message "%s" (bookmark-location bmrk))))
 
 (defun bookmark-bmenu-relocate ()
-  "Change the file path of the bookmark on the current line,
-  prompting with completion for the new path."
+  "Change the absolute file name of the bookmark on the current line.
+Prompt with completion for the new path."
   (interactive)
   (let ((bmrk (bookmark-bmenu-bookmark))
         (thispoint (point)))
