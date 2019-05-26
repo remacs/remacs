@@ -1,4 +1,4 @@
-;;; paren.el --- highlight matching paren
+;;; paren.el --- highlight matching paren  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1993, 1996, 2001-2019 Free Software Foundation, Inc.
 
@@ -173,7 +173,7 @@ if there's no opener/closer near point, or a list of the form
 Where HERE-BEG..HERE-END is expected to be near point.")
 
 (defun show-paren--default ()
-  "Finds the opener/closer near point and its match.
+  "Find the opener/closer near point and its match.
 
 It is the default value of `show-paren-data-function'."
   (let* ((temp (show-paren--locate-near-paren))
