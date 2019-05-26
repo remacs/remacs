@@ -329,6 +329,12 @@ Any terminating `>' or `/' is not matched.")
 (defvar sgml-font-lock-keywords sgml-font-lock-keywords-1
   "Rules for highlighting SGML code.  See also `sgml-tag-face-alist'.")
 
+(defun sgml-font-lock-syntactic-face (state)
+  "`font-lock-syntactic-face-function' for `sgml-mode'."
+  ;; Don't use string face outside of tags.
+  (cond ((and (nth 9 state) (nth 3 state)) font-lock-string-face)
+        ((nth 4 state) font-lock-comment-face)))
+
 (defvar-local sgml--syntax-propertize-ppss nil)
 
 (defun sgml--syntax-propertize-ppss (pos)
@@ -573,7 +579,7 @@ Do \\[describe-key] on the following bindings to discover what they do.
   ;; This is desirable because SGML discards a newline that appears
   ;; immediately after a start tag or immediately before an end tag.
   (setq-local paragraph-start (concat "[ \t]*$\\|\
-[ \t]*</?\\(" sgml-name-re sgml-attrs-re "\\)?>"))
+\[ \t]*</?\\(" sgml-name-re sgml-attrs-re "\\)?>"))
   (setq-local paragraph-separate (concat paragraph-start "$"))
   (setq-local adaptive-fill-regexp "[ \t]*")
   (add-hook 'fill-nobreak-predicate 'sgml-fill-nobreak nil t)
@@ -591,7 +597,9 @@ Do \\[describe-key] on the following bindings to discover what they do.
   (setq font-lock-defaults '((sgml-font-lock-keywords
 			      sgml-font-lock-keywords-1
 			      sgml-font-lock-keywords-2)
-			     nil t))
+                             nil t nil
+                             (font-lock-syntactic-face-function
+                              . sgml-font-lock-syntactic-face)))
   (setq-local syntax-propertize-function #'sgml-syntax-propertize)
   (setq-local facemenu-add-face-function 'sgml-mode-facemenu-add-face-function)
   (setq-local sgml-xml-mode (sgml-xml-guess))

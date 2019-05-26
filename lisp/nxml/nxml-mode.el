@@ -540,7 +540,9 @@ Many aspects this mode can be customized using
           nil  ; no special syntax table
           (font-lock-extend-region-functions . (nxml-extend-region))
           (jit-lock-contextually . t)
-          (font-lock-unfontify-region-function . nxml-unfontify-region)))
+          (font-lock-unfontify-region-function . nxml-unfontify-region)
+          (font-lock-syntactic-face-function
+           . sgml-font-lock-syntactic-face)))
 
   (with-demoted-errors (rng-nxml-mode-init)))
 
