@@ -7,11 +7,14 @@ or run the shell command 'info "(emacs)Contributing"'.)
 ** The Emacs repository
 
 Emacs development uses Git on Savannah for its main repository.
-Briefly, the following shell commands build and run Emacs from scratch:
+To configure Git for Emacs development, you can run the following:
 
 	git config --global user.name 'Your Name'
 	git config --global user.email 'your.name@example.com'
 	git config --global transfer.fsckObjects true
+
+The following shell commands then build and run Emacs from scratch:
+
 	git clone git://git.sv.gnu.org/emacs.git
 	cd emacs
 	./autogen.sh
