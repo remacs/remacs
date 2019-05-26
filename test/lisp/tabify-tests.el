@@ -24,12 +24,12 @@
 (require 'ert)
 (require 'tabify)
 
-(defun tabify-tests--test-changes (fun changes tab-width)
+(defun tabify-tests--test-changes (fun changes width)
   (with-temp-buffer
-    (let ((tab-width tab-width))
-      (insert (apply 'concat (mapcar 'car changes)))
+    (let ((tab-width width))
+      (insert (mapconcat #'car changes ""))
       (funcall fun (point-min) (point-max))
-      (should (equal (buffer-string) (apply 'concat (mapcar 'cadr changes)))))))
+      (should (equal (buffer-string) (mapconcat #'cadr changes ""))))))
 
 (ert-deftest tabify-tests-untabify ()
   (let ((changes '(("***\n"        "***\n")
@@ -44,7 +44,7 @@
                    (" \t ***\n"    "   ***\n")
                    ("  \t***\n"    "    ***\n")
                    ("   \t***\n"   "    ***\n"))))
-    (tabify-tests--test-changes 'untabify changes 2)))
+    (tabify-tests--test-changes #'untabify changes 2)))
 
 (ert-deftest tabify-tests-tabify ()
   (let ((changes '(("***\n"        "***\n")
@@ -58,7 +58,7 @@
                    ("\t***\n"      "\t***\n")
                    ("\t ***\n"     "\t ***\n")
                    ("\t\t***\n"    "\t\t***\n"))))
-    (tabify-tests--test-changes 'tabify changes 2)))
+    (tabify-tests--test-changes #'tabify changes 2)))
 
 (ert-deftest tabify-tests-tabify/all-spaces-on-line ()
   (with-temp-buffer
