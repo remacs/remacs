@@ -845,6 +845,18 @@ cannot be completed sensibly: `custom-ident',
   (let ((map (make-sparse-keymap)))
     (define-key map [remap info-lookup-symbol] 'css-lookup-symbol)
     (define-key map "\C-c\C-f" 'css-cycle-color-format)
+    (easy-menu-define css-menu map "CSS mode menu"
+      '("CSS"
+        :help "CSS-specific features"
+        ["Reformat block" fill-paragraph
+         :help "Reformat declaration block or fill comment at point"]
+        ["Cycle color format" css-cycle-color-format
+         :help "Cycle color at point between different formats"]
+        "-"
+        ["Describe symbol" css-lookup-symbol
+         :help "Display documentation for a CSS symbol"]
+        ["Complete symbol" complete-symbol
+         :help "Complete symbol before point"]))
     map)
   "Keymap used in `css-mode'.")
 
