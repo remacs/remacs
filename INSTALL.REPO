@@ -1,8 +1,15 @@
 	     Building and Installing Emacs from the Repository
 
-Simply run 'make'.  This should work if your files are freshly checked
-out from the repository, and if you have the proper tools installed.
-If it doesn't work, or if you have special build requirements, the
+The Emacs repository is hosted on Savannah.  The following Git command
+will clone the repository to the 'emacs' subdirectory of the current
+directory on your local machine:
+
+    git clone git://git.sv.gnu.org/emacs.git
+
+To build the repository code, simply run 'make' in the 'emacs'
+directory.  This should work if your files are freshly checked out
+from the repository, and if you have the proper tools installed.  If
+it doesn't work, or if you have special build requirements, the
 following information may be helpful.
 
 Building Emacs from the source-code repository requires some tools
