@@ -1913,7 +1913,7 @@ inserting it.
 
 If decoded text is inserted in some buffer, this command returns the
 length of the decoded text.  If that buffer is a unibyte buffer
-(@pxref{Selecting a Representations}), the internal representation of
+(@pxref{Selecting a Representation}), the internal representation of
 the decoded text (@pxref{Text Representations}) is inserted into the
 buffer as individual bytes.
 
