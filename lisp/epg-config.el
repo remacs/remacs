@@ -31,8 +31,8 @@
 (defconst epg-version-number "1.0.0"
   "Version number of this package.")
 
-(defconst epg-bug-report-address "ueno@unixuser.org"
-  "Report bugs to this address.")
+(define-obsolete-variable-alias 'epg-bug-report-address
+  'report-emacs-bug-address "27.1")
 
 (defgroup epg ()
   "Interface to the GNU Privacy Guard (GnuPG)."

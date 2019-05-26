@@ -214,23 +214,6 @@
                     (setq faces (cdr faces))))
            faces)))))
 
-;;(defun fast-lock-submit-bug-report ()
-;;  "Submit via mail a bug report on fast-lock.el."
-;;  (interactive)
-;;  (let ((reporter-prompt-for-summary-p t))
-;;    (reporter-submit-bug-report "simon@gnu.org" "fast-lock 3.14"
-;;     '(fast-lock-cache-directories fast-lock-minimum-size
-;;       fast-lock-save-others fast-lock-save-events fast-lock-save-faces
-;;       fast-lock-verbose)
-;;     nil nil
-;;     (concat "Hi Si.,
-;;
-;;I want to report a bug.  I've read the `Bugs' section of `Info' on Emacs, so I
-;;know how to make a clear and unambiguous report.  To reproduce the bug:
-;;
-;;Start a fresh editor via `" invocation-name " -no-init-file -no-site-file'.
-;;In the `*scratch*' buffer, evaluate:"))))
-
 (defgroup fast-lock nil
   "Font Lock support mode to cache fontification."
   :load 'fast-lock

@@ -37,13 +37,12 @@
 ;; work for the foreseeable future.
 ;;
 ;; Bug reports and suggestions are always welcome!  (Type M-x
-;; report-calc-bug to send them).
+;; report-emacs-bug to send them).
 
 ;; All functions, macros, and Lisp variables defined here begin with one
 ;; of the prefixes "math", "Math", or "calc", with the exceptions of
 ;; "full-calc", "full-calc-keypad", "another-calc", "quick-calc",
-;; "report-calc-bug", and "defmath".  User-accessible variables begin
-;; with "var-".
+;; and "defmath".  User-accessible variables begin with "var-".
 
 ;;; TODO:
 

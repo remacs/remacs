@@ -202,7 +202,6 @@ https://lists.gnu.org/r/emacs-devel/2007-04/msg00684.html
 Change them to use report-emacs-bug.
 *** Related functions:
 **** gnus-bug
-**** report-calc-bug
 **** org-submit-bug-report
 **** lm-report-bug
 **** tramp-bug
