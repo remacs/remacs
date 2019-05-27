@@ -62,6 +62,9 @@
       tramp-verbose 0
       tramp-message-show-message nil)
 
+(when (getenv "EMACS_HYDRA_CI")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
 (defconst auto-revert--timeout 10
   "Time to wait for a message.")
 
