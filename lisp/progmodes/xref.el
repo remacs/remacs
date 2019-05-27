@@ -805,8 +805,6 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
 (defun xref-refresh-results ()
   "Refresh the search results in the current buffer."
   (interactive)
-  (unless xref--fetcher
-    (user-error "Reverting not supported"))
   (let ((inhibit-read-only t)
         (buffer-undo-list t))
     (save-excursion
@@ -842,7 +840,7 @@ FETCHER is a function of no arguments that returns a list of xref
 values.  It must not depend on the current buffer or selected
 window.
 
-ALIST will include at least the following keys:
+ALIST can include, but limited to, the following keys:
 
 WINDOW for the window that was selected before the current
 command was called.
