@@ -31,7 +31,7 @@
 
 (ert-deftest test-read-multiple-choice ()
   (dolist (char '(?y ?n))
-    (cl-letf* (((symbol-function #'read-char) (lambda () char))
+    (cl-letf* (((symbol-function #'read-event) (lambda () char))
                (str (if (eq char ?y) "yes" "no")))
       (should (equal (list char str)
                      (read-multiple-choice "Do it? " '((?y "yes") (?n "no"))))))))
