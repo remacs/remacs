@@ -1226,6 +1226,11 @@ security reasons.
 Setting this option to an integer causes URLs displayed in Rcirc
 buffers to be truncated to that many characters.
 
+---
+*** The default /quit and /part reasons are now configurable.
+Two new user options are provided for this:
+'rcirc-default-part-reason' and 'rcirc-default-quit-reason'.
+
 ** Register
 
 ---
