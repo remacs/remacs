@@ -2185,12 +2185,21 @@ CHANNELS is a comma- or space-separated string of channel names."
 		 (read-string "Channel: "))))
   (rcirc-send-string process (concat "INVITE " nick-channel)))
 
-;; TODO: /part #channel reason, or consider removing #channel altogether
 (defun-rcirc-command part (channel)
-  "Part CHANNEL."
+  "Part CHANNEL.
+CHANNEL should be a string of the form \"#CHANNEL-NAME REASON\".
+If omitted, CHANNEL-NAME defaults to TARGET, and REASON defaults
+to `rcirc-id-string'."
   (interactive "sPart channel: ")
-  (let ((channel (if (> (length channel) 0) channel target)))
-    (rcirc-send-string process (concat "PART " channel " :" rcirc-id-string))))
+  (let ((channel (if (> (length channel) 0) channel target))
+        (msg rcirc-id-string))
+    (when (string-match "\\`\\([&#+!]\\S-+\\)?\\s-*\\(.+\\)?\\'" channel)
+      (when (match-beginning 2)
+        (setq msg (match-string 2 channel)))
+      (setq channel (if (match-beginning 1)
+                        (match-string 1 channel)
+                      target)))
+    (rcirc-send-string process (concat "PART " channel " :" msg))))
 
 (defun-rcirc-command quit (reason)
   "Send a quit message to server with REASON."
