@@ -435,10 +435,10 @@ is the face used for highlighting."
 		     :on " On " :off " Off ")
 	    face)))
   :get (lambda (symbol)
-	 (mapcar 'gnus-emphasis-custom-value-to-internal
+	 (mapcar #'gnus-emphasis-custom-value-to-internal
 		 (default-value symbol)))
   :set (lambda (symbol value)
-	 (set-default symbol (mapcar 'gnus-emphasis-custom-value-to-external
+	 (set-default symbol (mapcar #'gnus-emphasis-custom-value-to-external
 				     value)))
   :group 'gnus-article-emphasis)
 
@@ -1838,14 +1838,14 @@ Initialized from `text-mode-syntax-table'.")
 				(cond ((stringp gnus-ignored-headers)
 				       gnus-ignored-headers)
 				      ((listp gnus-ignored-headers)
-				       (mapconcat 'identity
+				       (mapconcat #'identity
 						  gnus-ignored-headers
 						  "\\|"))))
 		      visible (cond ((stringp gnus-visible-headers)
 				     gnus-visible-headers)
 				    ((and gnus-visible-headers
 					  (listp gnus-visible-headers))
-				     (mapconcat 'identity
+				     (mapconcat #'identity
 						gnus-visible-headers
 						"\\|")))))
 	  (set-buffer cur))
@@ -1976,11 +1976,11 @@ always hide."
 			  (sort (mapcar
 				 (lambda (x) (downcase (cadr x)))
 				 (mail-extract-address-components from t))
-				'string<)
+				#'string<)
 			  (sort (mapcar
 				 (lambda (x) (downcase (cadr x)))
 				 (mail-extract-address-components reply-to t))
-				'string<))))
+				#'string<))))
 		    (gnus-article-hide-header "reply-to")))))
 	     ((eq elem 'date)
 	      (let ((date (with-current-buffer gnus-original-article-buffer
@@ -2404,7 +2404,7 @@ long lines if and only if arg is positive."
 	      (while faces
 		(when (setq png (gnus-convert-face-to-png (pop faces)))
 		  (setq image
-			(apply 'gnus-create-image png 'png t
+			(apply #'gnus-create-image png 'png t
 			       (cdr (assq 'png gnus-face-properties-alist))))
 		  (goto-char from)
 		  (when image
@@ -4102,7 +4102,7 @@ and the raw article including all headers will be piped."
 		  (get 'gnus-summary-save-in-pipe :decode)))
 	save-buffer default)
     (if article
-	(if (vectorp (gnus-summary-article-header article))
+	(if (mail-header-p (gnus-summary-article-header article))
 	    (save-current-buffer
 	      (gnus-summary-select-article decode decode nil article)
 	      (insert-buffer-substring
@@ -4254,7 +4254,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 	      (forward-line))
 	    (insert "\n-----BEGIN PGP SIGNATURE-----\n")
 	    (insert "Version: " (car items) "\n\n")
-	    (insert (mapconcat 'identity (cddr items) "\n"))
+	    (insert (mapconcat #'identity (cddr items) "\n"))
 	    (insert "\n-----END PGP SIGNATURE-----\n")
 	    (let ((mm-security-handle (list (format "multipart/signed"))))
 	      (mml2015-clean-buffer)
@@ -4317,7 +4317,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 	      (with-current-buffer gnus-article-buffer
 		(if interactive
 		    (call-interactively ',afunc)
-		  (apply ',afunc args))))))))
+		  (apply #',afunc args))))))))
    '(article-hide-headers
      article-verify-x-pgp-sig
      article-verify-cancel-lock
@@ -4656,7 +4656,7 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 		      (gnus-summary-article-header gnus-current-article)
 		      gnus-article-current
 		      (cons gnus-newsgroup-name gnus-current-article))
-		(unless (vectorp gnus-current-headers)
+		(unless (mail-header-p gnus-current-headers)
 		  (setq gnus-current-headers nil))
 		(gnus-summary-goto-subject gnus-current-article)
 		(when (gnus-summary-show-thread)
@@ -5482,7 +5482,7 @@ If no internal viewer is available, use an external viewer."
 (defun gnus-mime-action-on-part (&optional action)
   "Do something with the MIME attachment at (point)."
   (interactive
-   (list (gnus-completing-read "Action" (mapcar 'car gnus-mime-action-alist) t)))
+   (list (gnus-completing-read "Action" (mapcar #'car gnus-mime-action-alist) t)))
   (gnus-article-check-buffer)
   (let ((action-pair (assoc action gnus-mime-action-alist)))
     (if action-pair
@@ -5800,7 +5800,7 @@ all parts."
 	      ;; No subpart is displayed, so we find preferred one.
 	      (setq part
 		    (cdr (assq (mm-preferred-alternative
-				(nreverse (mapcar 'car handles)))
+				(nreverse (mapcar #'car handles)))
 			       handles))))
 	    (if part
 		(goto-char (1+ part))
@@ -5994,11 +5994,11 @@ If nil, don't show those extra buttons."
 
 (defun gnus-mime-part-function (handles)
   (if (stringp (car handles))
-      (mapcar 'gnus-mime-part-function (cdr handles))
+      (mapcar #'gnus-mime-part-function (cdr handles))
     (funcall gnus-article-mime-part-function handles)))
 
 (defun gnus-mime-display-mixed (handles)
-  (mapcar 'gnus-mime-display-part handles))
+  (mapcar #'gnus-mime-display-part handles))
 
 (defun gnus-mime-display-single (handle)
   (let ((type (mm-handle-media-type handle))
@@ -6992,7 +6992,7 @@ If given a prefix, show the hidden text instead."
 			  (delq article gnus-newsgroup-sparse))
 		    (setq article (mail-header-id header))
 		    (setq sparse-header (gnus-read-header article)))
-		   ((vectorp header)
+		   ((mail-header-p header)
 		    ;; It's a real article.
 		    (setq article (mail-header-id header)))
 		   (t
@@ -7003,7 +7003,7 @@ If given a prefix, show the hidden text instead."
 		(let ((method (gnus-find-method-for-group
 			       gnus-newsgroup-name)))
 		  (when (and (eq (car method) 'nneething)
-			     (vectorp header))
+			     (mail-header-p header))
 		    (let ((dir (nneething-get-file-name
 				(mail-header-id header))))
 		      (when (and (stringp dir)
@@ -7027,12 +7027,7 @@ If given a prefix, show the hidden text instead."
 		 (with-current-buffer gnus-original-article-buffer
 		   (and (equal (car gnus-original-article) group)
 			(eq (cdr gnus-original-article) article))))
-            ;; `insert-buffer-substring' would incorrectly use the
-            ;; equivalent of string-make-multibyte which amount to decoding
-            ;; with locale-coding-system, causing failure of
-            ;; subsequent decoding.
-            (insert (with-current-buffer gnus-original-article-buffer
-                      (buffer-substring (point-min) (point-max))))
+            (insert-buffer-substring gnus-original-article-buffer)
 	    'article)
 	   ;; Check the backlog.
 	   ((and gnus-keep-backlog
@@ -8055,7 +8050,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 	  (let ((overlay (make-overlay start end)))
 	    (overlay-put overlay 'evaporate t)
 	    (overlay-put overlay 'gnus-button-url
-			 (list (mapconcat 'identity (nreverse url) "")))
+			 (list (mapconcat #'identity (nreverse url) "")))
 	    (when gnus-article-mouse-face
 	      (overlay-put overlay 'mouse-face gnus-article-mouse-face)))
 	  t)
@@ -8394,7 +8389,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 	(message-position-on-field (caar args)))
       (insert (replace-regexp-in-string
 	       "\r\n" "\n"
-	       (mapconcat 'identity (reverse (cdar args)) ", ") nil t))
+	       (mapconcat #'identity (reverse (cdar args)) ", ") nil t))
       (setq args (cdr args)))
     (if subject
 	(message-goto-body)
@@ -8587,16 +8582,16 @@ For example:
     (eq gnus-treat-condition val))
    ((and (listp val)
 	 (stringp (car val)))
-    (apply 'gnus-or (mapcar `(lambda (s)
+    (apply #'gnus-or (mapcar `(lambda (s)
 			       (string-match s ,(or gnus-newsgroup-name "")))
 			    val)))
    ((listp val)
     (let ((pred (pop val)))
       (cond
        ((eq pred 'or)
-	(apply 'gnus-or (mapcar 'gnus-treat-predicate val)))
+	(apply #'gnus-or (mapcar #'gnus-treat-predicate val)))
        ((eq pred 'and)
-	(apply 'gnus-and (mapcar 'gnus-treat-predicate val)))
+	(apply #'gnus-and (mapcar #'gnus-treat-predicate val)))
        ((eq pred 'not)
 	(not (gnus-treat-predicate (car val))))
        ((eq pred 'typep)
@@ -8624,7 +8619,7 @@ For example:
    (list
     (or gnus-article-encrypt-protocol
 	(gnus-completing-read "Encrypt protocol"
-                              (mapcar 'car gnus-article-encrypt-protocol-alist)
+                              (mapcar #'car gnus-article-encrypt-protocol-alist)
                               t))
     current-prefix-arg))
   ;; User might hit `K E' instead of `K e', so prompt once.
@@ -8671,7 +8666,7 @@ For example:
 	    (message-remove-header "MIME-Version")
 	    (goto-char (point-max))
 	    (setq point (point))
-	    (insert (apply 'concat headers))
+	    (insert (apply #'concat headers))
 	    (widen)
 	    (narrow-to-region point (point-max))
 	    (let ((message-options message-options))
