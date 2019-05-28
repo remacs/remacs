@@ -279,6 +279,51 @@ xg_get_pixbuf_from_pix_and_mask (struct frame *f,
   return icon_buf;
 }
 
+#if defined USE_CAIRO && !defined HAVE_GTK3
+static GdkPixbuf *
+xg_get_pixbuf_from_surface (struct frame *f, cairo_surface_t *surface)
+{
+  int width = cairo_image_surface_get_width (surface);
+  int height = cairo_image_surface_get_height (surface);
+  GdkPixbuf *icon_buf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8,
+					width, height);
+  if (icon_buf)
+    {
+      guchar *pixels = gdk_pixbuf_get_pixels (icon_buf);
+      int rowstride = gdk_pixbuf_get_rowstride (icon_buf);
+      cairo_surface_t *icon_surface
+	= cairo_image_surface_create_for_data (pixels, CAIRO_FORMAT_ARGB32,
+					       width, height, rowstride);
+      cairo_t *cr = cairo_create (icon_surface);
+      cairo_surface_destroy (icon_surface);
+      cairo_set_source_surface (cr, surface, 0, 0);
+      cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
+      for (int y = 0; y < height; y++)
+	{
+	  for (int x = 0; x < width; x++)
+	    {
+	      guint32 argb = ((guint32 *) pixels)[x];
+#ifdef WORDS_BIGENDIAN
+	      /* ARGB -> RGBA (gdk_pixbuf, big endian) */
+	      ((guint32 *) pixels)[x] = (argb << 8) | (argb >> 24);
+#else  /* !WORDS_BIGENDIAN */
+	      /* ARGB -> ABGR (gdk_pixbuf, little endian) */
+	      ((guint32 *) pixels)[x] = ((   argb        & 0xff00ff00)
+					 | ((argb << 16) & 0x00ff0000)
+					 | ((argb >> 16) & 0x000000ff));
+#endif	/* !WORDS_BIGENDIAN */
+	    }
+	  pixels += rowstride;
+	}
+    }
+
+  return icon_buf;
+}
+#endif	/* USE_CAIRO && !HAVE_GTK3 */
+
 static Lisp_Object
 file_for_image (Lisp_Object image)
 {
@@ -311,7 +356,7 @@ xg_get_image_for_pixmap (struct frame *f,
                          GtkWidget *widget,
                          GtkImage *old_widget)
 {
-#if defined USE_CAIRO && defined HAVE_GTK3
+#ifdef USE_CAIRO
   cairo_surface_t *surface;
 #else
   GdkPixbuf *icon_buf;
@@ -343,15 +388,29 @@ xg_get_image_for_pixmap (struct frame *f,
      on a monochrome display, and sometimes bad on all displays with
      certain themes.  */
 
-#if defined USE_CAIRO && defined HAVE_GTK3
+#ifdef USE_CAIRO
   surface = img->cr_data;
 
   if (surface)
     {
+#ifdef HAVE_GTK3
       if (! old_widget)
         old_widget = GTK_IMAGE (gtk_image_new_from_surface (surface));
       else
         gtk_image_set_from_surface (old_widget, surface);
+#else  /* !HAVE_GTK3 */
+      GdkPixbuf *icon_buf = xg_get_pixbuf_from_surface (f, surface);
+
+      if (icon_buf)
+	{
+	  if (! old_widget)
+	    old_widget = GTK_IMAGE (gtk_image_new_from_pixbuf (icon_buf));
+	  else
+	    gtk_image_set_from_pixbuf (old_widget, icon_buf);
+
+	  g_object_unref (G_OBJECT (icon_buf));
+	}
+#endif	/* !HAVE_GTK3 */
     }
 #else
   /* This is a workaround to make icons look good on pseudo color
@@ -4689,7 +4748,7 @@ xg_tool_item_stale_p (GtkWidget *wbutton, const char *stock_name,
     {
       gpointer gold_img = g_object_get_data (G_OBJECT (wimage),
                                              XG_TOOL_BAR_IMAGE_DATA);
-#if defined USE_CAIRO && defined HAVE_GTK3
+#ifdef USE_CAIRO
       void *old_img = (void *) gold_img;
       if (old_img != img->cr_data)
 	return 1;
@@ -4990,7 +5049,7 @@ update_frame_tool_bar (struct frame *f)
           prepare_image_for_display (f, img);
 
           if (img->load_failed_p
-#if defined USE_CAIRO && defined HAVE_GTK3
+#ifdef USE_CAIRO
 	      || img->cr_data == NULL
 #else
 	      || img->pixmap == None
@@ -5045,7 +5104,7 @@ update_frame_tool_bar (struct frame *f)
             {
               w = xg_get_image_for_pixmap (f, img, x->widget, NULL);
               g_object_set_data (G_OBJECT (w), XG_TOOL_BAR_IMAGE_DATA,
-#if defined USE_CAIRO && defined HAVE_GTK3
+#ifdef USE_CAIRO
                                  (gpointer)img->cr_data
 #else
                                  (gpointer)img->pixmap
