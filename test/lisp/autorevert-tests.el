@@ -62,9 +62,6 @@
       tramp-verbose 0
       tramp-message-show-message nil)
 
-(when (getenv "EMACS_HYDRA_CI")
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-
 (defconst auto-revert--timeout 10
   "Time to wait for a message.")
 
@@ -114,6 +111,7 @@ being the result.")
      (cons
       t (ignore-errors
 	  (and
+	   (not (getenv "EMACS_HYDRA_CI"))
 	   (file-remote-p auto-revert-test-remote-temporary-file-directory)
 	   (file-directory-p auto-revert-test-remote-temporary-file-directory)
 	   (file-writable-p
