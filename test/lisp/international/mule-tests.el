@@ -36,6 +36,10 @@
                      (find-auto-coding "" (buffer-size)))
                    '(utf-8 . :coding)))))
 
+(ert-deftest mule-cmds-tests--encode-ebcdic ()
+  (should (equal (encode-coding-char ?a 'ebcdic-int) "\201"))
+  (should (not (multibyte-string-p (encode-coding-char ?a 'utf-8)))))
+
 ;; Stop "Local Variables" above causing confusion when visiting this file.
 
 
