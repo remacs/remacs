@@ -438,6 +438,20 @@ Subtests signal errors if something goes wrong."
     ;; Should not warn that mt--test2 is not known to be defined.
     (should-not (re-search-forward "my--test2" nil t))))
 
+(ert-deftest bytecomp-warn-wrong-args ()
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (let ((inhibit-read-only t)) (erase-buffer))
+    (byte-compile '(remq 1 2 3))
+    (ert-info ((buffer-string) :prefix "buffer: ")
+      (should (re-search-forward "remq.*3.*2")))))
+
+(ert-deftest bytecomp-warn-wrong-args-subr ()
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (let ((inhibit-read-only t)) (erase-buffer))
+    (byte-compile '(safe-length 1 2 3))
+    (ert-info ((buffer-string) :prefix "buffer: ")
+      (should (re-search-forward "safe-length.*3.*1")))))
+
 (ert-deftest test-eager-load-macro-expansion ()
   (test-byte-comp-compile-and-load nil
     '(progn (defmacro abc (arg) 1) (defun def () (abc 2))))
