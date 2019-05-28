@@ -17,12 +17,6 @@ impl LispObject {
         self.as_fixnum()
             .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
     }
-
-    /// Check if Lisp object is a character or not and return the codepoint
-    /// Similar to CHECK_CHARACTER
-    pub fn as_character_or_error(self) -> Codepoint {
-        Codepoint::from(self)
-    }
 }
 
 /// True iff byte starts a character in a multibyte form.

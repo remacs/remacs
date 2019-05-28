@@ -366,13 +366,13 @@ impl LispBufferRef {
             0
         };
 
-        unsafe {
-            let (c, _) = multibyte_char_at(slice::from_raw_parts(
+        let (c, _) = multibyte_char_at(unsafe {
+            slice::from_raw_parts(
                 self.beg_addr().offset(offset + n - self.beg_byte()),
                 MAX_MULTIBYTE_LENGTH,
-            ));
-            c
-        }
+            )
+        });
+        c
     }
 
     pub fn multibyte_characters_enabled(self) -> bool {

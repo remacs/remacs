@@ -338,7 +338,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // or before a tab if it doesn't use the whole width of the tab.  */
         if overwrite == Qoverwrite_mode_binary {
             chars_to_delete = n as usize;
-        } else if c != Codepoint::from('\n') && c2 != Codepoint::from('\n') {
+        } else if c != '\n' && c2 != '\n' {
             let cwidth = unsafe { Fchar_width(c.into()) }.as_fixnum_or_error() as usize;
             if cwidth > 0 {
                 let pos = current_buffer.pt;
@@ -417,8 +417,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         };
         let mut string = unsafe { Fmake_string(n.into(), mc.into(), Qnil) };
         if spaces_to_insert > 0 {
-            let tem =
-                unsafe { Fmake_string(spaces_to_insert.into(), Codepoint::from(' ').into(), Qnil) };
+            let tem = unsafe { Fmake_string(spaces_to_insert.into(), b' '.into(), Qnil) };
             string = unsafe { concat2(string, tem) };
         }
 
