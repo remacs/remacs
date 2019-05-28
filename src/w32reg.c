@@ -143,7 +143,7 @@ w32_get_string_resource_1 (const char *name, const char *class, DWORD dwexptype)
 const char *
 w32_get_string_resource (void *v_rdb, const char *name, const char *class)
 {
-  const char *rdb = v_rdb;
+  const char *rdb = *(char **) v_rdb;
 
   if (rdb)
     {
