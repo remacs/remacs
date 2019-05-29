@@ -41,6 +41,7 @@
 (require 'mm-uu)
 (require 'message)
 (require 'mouse)
+(require 'seq)
 
 (autoload 'gnus-msg-mail "gnus-msg" nil t)
 (autoload 'gnus-button-mailto "gnus-msg")
@@ -8580,11 +8581,9 @@ For example:
     nil)
    (gnus-treat-condition
     (eq gnus-treat-condition val))
-   ((and (listp val)
-	 (stringp (car val)))
-    (apply #'gnus-or (mapcar `(lambda (s)
-			       (string-match s ,(or gnus-newsgroup-name "")))
-			    val)))
+   ((stringp (car-safe val))
+    (let ((name (or gnus-newsgroup-name "")))
+      (seq-some (lambda (s) (string-match-p s name)) val)))
    ((listp val)
     (let ((pred (pop val)))
       (cond

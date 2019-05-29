@@ -34,6 +34,7 @@
 
 (eval-when-compile (require 'cl-lib))
 
+(require 'seq)
 (require 'time-date)
 (require 'text-property-search)
 
@@ -1160,20 +1161,13 @@ ARG is passed to the first function."
       (eq (cadr (memq 'gnus-undeletable (text-properties-at b))) t)
     (text-property-any b e 'gnus-undeletable t)))
 
-(defun gnus-or (&rest elems)
-  "Return non-nil if any of the elements are non-nil."
-  (catch 'found
-    (while elems
-      (when (pop elems)
-	(throw 'found t)))))
+(defun gnus-or (&rest elements)
+  "Return non-nil if any one of ELEMENTS is non-nil."
+  (seq-drop-while #'null elements))
 
-(defun gnus-and (&rest elems)
-  "Return non-nil if all of the elements are non-nil."
-  (catch 'found
-    (while elems
-      (unless (pop elems)
-	(throw 'found nil)))
-    t))
+(defun gnus-and (&rest elements)
+  "Return non-nil if all ELEMENTS are non-nil."
+  (not (memq nil elements)))
 
 ;; gnus.el requires mm-util.
 (declare-function mm-disable-multibyte "mm-util")
