@@ -1,9 +1,9 @@
 //! Functions operating on buffers.
 
-use std::{self, iter, mem, ops, ptr};
+use std::{self, iter, mem, ops, ptr, slice};
 
 use field_offset::FieldOffset;
-use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_char, c_uchar, c_void, ptrdiff_t};
 
 use rand::{thread_rng, Rng};
 
@@ -28,8 +28,9 @@ use crate::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
         LispMarkerRef, MARKER_DEBUG,
     },
-    multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
-    multibyte::{LispStringRef, LispSymbolOrString},
+    multibyte::MAX_MULTIBYTE_LENGTH,
+    multibyte::{multibyte_char_at, multibyte_chars_in_text, multibyte_length_by_head},
+    multibyte::{Codepoint, LispStringRef, LispSymbolOrString},
     numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
@@ -347,31 +348,31 @@ impl LispBufferRef {
 
     /// Return character at byte position POS.  See the caveat WARNING for
     /// FETCH_MULTIBYTE_CHAR below.
-    pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_char(self, n: ptrdiff_t) -> Codepoint {
         if self.multibyte_characters_enabled() {
             self.fetch_multibyte_char(n)
         } else {
-            c_int::from(self.fetch_byte(n))
+            Codepoint::from(self.fetch_byte(n))
         }
     }
 
     /// Return character code of multi-byte form at byte position POS.  If POS
     /// doesn't point the head of valid multi-byte form, only the byte at
     /// POS is returned.  No range checking.
-    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> Codepoint {
         let offset = if n >= self.gpt_byte() && n >= 0 {
             self.gap_size()
         } else {
             0
         };
 
-        unsafe {
-            string_char(
+        let (c, _) = multibyte_char_at(unsafe {
+            slice::from_raw_parts(
                 self.beg_addr().offset(offset + n - self.beg_byte()),
-                ptr::null_mut(),
-                ptr::null_mut(),
+                MAX_MULTIBYTE_LENGTH,
             )
-        }
+        });
+        c
     }
 
     pub fn multibyte_characters_enabled(self) -> bool {

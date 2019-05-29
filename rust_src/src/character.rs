@@ -6,10 +6,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe},
     multibyte::{Codepoint, MAX_CHAR},
     remacs_sys::EmacsInt,
-    remacs_sys::Qcharacterp,
     threads::ThreadState,
 };
 
@@ -18,15 +16,6 @@ impl LispObject {
     pub fn is_character(self) -> bool {
         self.as_fixnum()
             .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
-    }
-
-    /// Check if Lisp object is a character or not and return the codepoint
-    /// Similar to CHECK_CHARACTER
-    pub fn as_character_or_error(self) -> Codepoint {
-        if !self.is_character() {
-            wrong_type!(Qcharacterp, self)
-        }
-        self.as_fixnum().unwrap() as Codepoint
     }
 }
 
@@ -61,7 +50,7 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
 
 /// Return the character of the maximum code.
 #[lisp_fn]
-pub fn max_char() -> LispObject {
+pub fn max_char() -> Codepoint {
     MAX_CHAR.into()
 }
 
@@ -83,25 +72,23 @@ pub fn char_or_string_p(object: LispObject) -> bool {
 
 /// Convert the byte CH to multibyte character.
 #[lisp_fn]
-pub fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
-    let c = ch.as_character_or_error();
-    if c >= 0x100 {
-        error!("Not a unibyte character: {}", c);
+pub fn unibyte_char_to_multibyte(ch: Codepoint) -> Codepoint {
+    if !ch.is_single_byte() {
+        error!("Not a unibyte character: {}", ch);
     }
-    make_char_multibyte(c).into()
+    ch.to_multibyte()
 }
 
 /// Convert the multibyte character CH to a byte.
 /// If the multibyte character does not represent a byte, return -1.
 #[lisp_fn]
-pub fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
-    let c = ch.as_character_or_error();
-    if c < 256 {
+pub fn multibyte_char_to_unibyte(ch: Codepoint) -> EmacsInt {
+    if ch.is_single_byte() {
         // Can't distinguish a byte read from a unibyte buffer from
         // a latin1 char, so let's let it slide.
-        ch
+        ch.into()
     } else {
-        raw_byte_from_codepoint_safe(c).into()
+        ch.to_byte8().map(EmacsInt::from).unwrap_or(-1)
     }
 }
 
