@@ -35,6 +35,7 @@
 ;; Doing this is unnecessary in Emacs 20.  Kept as dummy in case
 ;; external libraries call it.  We save a kb or two of purespace by
 ;; dummying-out such definitions generally.
+(make-obsolete 'define-widget-keywords nil "27.1")
 (defmacro define-widget-keywords (&rest _keys)
   ;; ;; Don't use backquote, since that makes trouble trying to
   ;; ;; re-bootstrap from just the .el files.
