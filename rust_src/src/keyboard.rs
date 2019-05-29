@@ -18,9 +18,9 @@ use crate::{
     remacs_sys::{
         clear_message, command_loop_level, get_input_pending, glyph_row_area,
         interrupt_input_blocked, make_lispy_position, message_log_maybe_newline, minibuf_level,
-        output_method, print_error_message, process_special_events, recursive_edit_1,
-        recursive_edit_unwind, temporarily_switch_to_single_kboard, totally_unblock_input,
-        update_mode_lines, window_box_left_offset,
+        output_method, print_error_message, process_special_events, read_key_sequence_vs,
+        recursive_edit_1, recursive_edit_unwind, temporarily_switch_to_single_kboard,
+        totally_unblock_input, update_mode_lines, window_box_left_offset,
     },
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
@@ -387,6 +387,93 @@ pub fn top_level() {
         totally_unblock_input();
 
         Fthrow(Qtop_level, Qnil);
+    }
+}
+
+/// Like `read-key-sequence' but always return a vector.
+#[lisp_fn(min = "1")]
+pub fn read_key_sequence_vector(
+    prompt: LispObject,
+    continue_echo: LispObject,
+    dont_downcase_last: LispObject,
+    can_return_switch_frame: LispObject,
+    cmd_loop: LispObject,
+) -> LispObject {
+    unsafe {
+        read_key_sequence_vs(
+            prompt,
+            continue_echo,
+            dont_downcase_last,
+            can_return_switch_frame,
+            cmd_loop,
+            false,
+        )
+    }
+}
+
+/// Read a sequence of keystrokes and return as a string or vector.
+/// The sequence is sufficient to specify a non-prefix command in the
+/// current local and global maps.
+///
+/// First arg PROMPT is a prompt string.  If nil, do not prompt specially.
+/// Second (optional) arg CONTINUE-ECHO, if non-nil, means this key echos
+/// as a continuation of the previous key.
+///
+/// The third (optional) arg DONT-DOWNCASE-LAST, if non-nil, means do not
+/// convert the last event to lower case.  (Normally any upper case event
+/// is converted to lower case if the original event is undefined and the lower
+/// case equivalent is defined.)  A non-nil value is appropriate for reading
+/// a key sequence to be defined.
+///
+/// A C-g typed while in this function is treated like any other character,
+/// and `quit-flag' is not set.
+///
+/// If the key sequence starts with a mouse click, then the sequence is read
+/// using the keymaps of the buffer of the window clicked in, not the buffer
+/// of the selected window as normal.
+///
+/// `read-key-sequence' drops unbound button-down events, since you normally
+/// only care about the click or drag events which follow them.  If a drag
+/// or multi-click event is unbound, but the corresponding click event would
+/// be bound, `read-key-sequence' turns the event into a click event at the
+/// drag's starting position.  This means that you don't have to distinguish
+/// between click and drag, double, or triple events unless you want to.
+///
+/// `read-key-sequence' prefixes mouse events on mode lines, the vertical
+/// lines separating windows, and scroll bars with imaginary keys
+/// `mode-line', `vertical-line', and `vertical-scroll-bar'.
+///
+/// Optional fourth argument CAN-RETURN-SWITCH-FRAME non-nil means that this
+/// function will process a switch-frame event if the user switches frames
+/// before typing anything.  If the user switches frames in the middle of a
+/// key sequence, or at the start of the sequence but CAN-RETURN-SWITCH-FRAME
+/// is nil, then the event will be put off until after the current key sequence.
+///
+/// `read-key-sequence' checks `function-key-map' for function key
+/// sequences, where they wouldn't conflict with ordinary bindings.  See
+/// `function-key-map' for more details.
+///
+/// The optional fifth argument CMD-LOOP, if non-nil, means
+/// that this key sequence is being read by something that will
+/// read commands one after another.  It should be nil if the caller
+/// will read just one key sequence.
+#[lisp_fn(min = "1")]
+pub fn read_key_sequence(
+    prompt: LispObject,
+    continue_echo: LispObject,
+    dont_downcase_last: LispObject,
+    can_return_switch_frame: LispObject,
+    cmd_loop: LispObject,
+) -> LispObject {
+    unsafe {
+        read_key_sequence_vs(
+            prompt,
+            continue_echo,
+            dont_downcase_last,
+            can_return_switch_frame,
+            cmd_loop,
+            true,
+        )
     }
 }
 

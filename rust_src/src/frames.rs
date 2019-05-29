@@ -6,6 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
+    lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
@@ -34,9 +35,12 @@ impl LispFrameRef {
         !self.terminal.is_null()
     }
 
-    // Awaiting Wilfred#1264
-    pub const fn is_gui_window(self) -> bool {
-        cfg!(feature = "window_system")
+    /// Replaces FRAME_WINDOW_P
+    pub fn is_gui_window(self) -> bool {
+        match self.output_method() {
+            output_method::output_initial | output_method::output_termcap => false,
+            _ => true,
+        }
     }
 
     // Pixel-width of internal border lines.
@@ -101,6 +105,13 @@ impl LispFrameRef {
         #[cfg(not(feature = "window-system"))]
         {
             0
+        }
+    }
+
+    pub fn get_param(self, prop: LispObject) -> LispObject {
+        match assq(prop, self.param_alist).as_cons() {
+            Some(cons) => cons.cdr(),
+            None => Qnil,
         }
     }
 }
@@ -188,7 +199,7 @@ pub struct LispFrameLiveOrSelected(LispFrameRef);
 
 impl From<LispObject> for LispFrameLiveOrSelected {
     fn from(obj: LispObject) -> Self {
-        LispFrameLiveOrSelected(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
+        Self(obj.map_or_else(selected_frame, LispObject::as_live_frame_or_error))
     }
 }
 
@@ -670,6 +681,14 @@ pub fn visible_frame_list() -> LispObject {
 pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.face_alist
+}
+
+/// Return the value of frame parameter PROP in frame FRAME.
+#[no_mangle]
+pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> LispObject {
+    // It should be possible to use this method directly when we port
+    // one of the original function's callers.
+    frame.get_param(prop)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

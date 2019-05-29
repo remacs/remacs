@@ -4612,8 +4612,6 @@ corresponding character.  */)
 }
 #endif	/* 0 */
 
-#ifdef FONT_DEBUG
-
 DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
        doc: /* Open FONT-ENTITY.  */)
   (Lisp_Object font_entity, Lisp_Object size, Lisp_Object frame)
@@ -4867,23 +4865,6 @@ Type C-l to recover what previously shown.  */)
   return make_number (len);
 }
 #endif
-
-DEFUN ("frame-font-cache", Fframe_font_cache, Sframe_font_cache, 0, 1, 0,
-       doc: /* Return FRAME's font cache.  Mainly used for debugging.
-If FRAME is omitted or nil, use the selected frame.  */)
-  (Lisp_Object frame)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  struct frame *f = decode_live_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return FRAME_DISPLAY_INFO (f)->name_list_element;
-  else
-#endif
-    return Qnil;
-}
-
-#endif	/* FONT_DEBUG */
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -5214,15 +5195,12 @@ syms_of_font (void)
   defsubr (&Sfont_otf_alternates);
 #endif	/* 0 */
 
-#ifdef FONT_DEBUG
   defsubr (&Sopen_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
 #if 0
   defsubr (&Sdraw_string);
 #endif
-  defsubr (&Sframe_font_cache);
-#endif	/* FONT_DEBUG */
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sfont_info);
 #endif

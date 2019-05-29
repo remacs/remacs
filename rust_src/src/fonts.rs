@@ -32,8 +32,8 @@ use crate::{
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
-    pub const fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
-        LispFontRef(v)
+    pub const fn from_vectorlike(v: LispVectorlikeRef) -> Self {
+        Self(v)
     }
 
     pub fn is_font_spec(&self) -> bool {
@@ -96,7 +96,7 @@ pub enum FontExtraType {
 impl FontExtraType {
     // Needed for wrong_type! that is using a safe predicate. This may change in the future.
     #[allow(unused_unsafe)]
-    pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
+    pub fn from_symbol_or_error(extra_type: LispObject) -> Self {
         if extra_type.eq(unsafe { Qfont_spec }) {
             FontExtraType::Spec
         } else if extra_type.eq(unsafe { Qfont_entity }) {
@@ -144,7 +144,7 @@ impl LispFontObjectRef {
 
 impl From<LispFontObjectRef> for LispObject {
     fn from(f: LispFontObjectRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -173,7 +173,7 @@ pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl From<LispFontSpecRef> for LispObject {
     fn from(f: LispFontSpecRef) -> Self {
-        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -351,6 +351,33 @@ pub fn list_fonts(
         (0..=n)
             .rev()
             .fold(Qnil, |list, n| (vec.get(n), list).into())
+    }
+}
+
+/// Return FRAME's font cache.  Mainly used for debugging.
+/// If FRAME is omitted or nil, use the selected frame.
+#[lisp_fn(min = "0")]
+pub fn frame_font_cache(_frame: LispFrameLiveOrSelected) -> LispObject {
+    #[cfg(feature = "window-system")]
+    {
+        let frame: LispFrameRef = _frame.into();
+        if frame.is_gui_window() {
+            unsafe {
+                #[cfg(feature = "window-system-x11")]
+                let display_info = (*frame.output_data.x).display_info;
+                #[cfg(feature = "window-system-nextstep")]
+                let display_info = (*frame.output_data.ns).display_info;
+                #[cfg(feature = "window-system-w32")]
+                let display_info = (*frame.output_data.w32).display_info;
+                (*display_info).name_list_element
+            }
+        } else {
+            Qnil
+        }
+    }
+    #[cfg(not(feature = "window-system"))]
+    {
+        Qnil
     }
 }
 

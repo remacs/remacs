@@ -64,7 +64,7 @@ impl From<LispObject> for LispProcessRef {
 
 impl From<LispProcessRef> for LispObject {
     fn from(p: LispProcessRef) -> Self {
-        LispObject::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -557,6 +557,55 @@ pub fn internal_default_interrupt_process(
 }
 #[rustfmt::skip]
 def_lisp_sym!(Qinternal_default_interrupt_process, "internal-default-interrupt-process");
+
+/// Kill process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn kill_process(process: LispObject, current_group: LispObject) -> LispObject {
+    unsafe {
+        process_send_signal(process, libc::SIGKILL, current_group, false);
+    }
+    process
+}
+
+/// Send QUIT signal to process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+#[lisp_fn(min = "0")]
+pub fn quit_process(process: LispObject, current_group: LispObject) -> LispObject {
+    unsafe {
+        process_send_signal(process, libc::SIGQUIT, current_group, false);
+    }
+    process
+}
+
+/// Stop process PROCESS. May be process or name of one.
+/// See function `interrupt-process' for more details on usage.
+/// If PROCESS is a network or serial or pipe connection, inhibit handling
+/// of incoming traffic.
+#[lisp_fn(min = "0")]
+pub fn stop_process(process: LispObject, current_group: LispObject) -> LispObject {
+    match get_process(process).as_process() {
+        Some(mut p_ref) => {
+            let process_type = p_ref.ptype();
+            if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
+                unsafe {
+                    delete_read_fd(p_ref.infd);
+                    p_ref.command = Qt;
+                }
+            }
+        }
+        None => {
+            #[cfg(windows)]
+            error!("No SIGTSTP support");
+            #[cfg(not(windows))]
+            unsafe {
+                process_send_signal(process, libc::SIGTSTP, current_group, false);
+            }
+        }
+    }
+
+    process
+}
 
 #[allow(unused_doc_comments)]
 #[no_mangle]

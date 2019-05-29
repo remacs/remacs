@@ -1,6 +1,6 @@
 use libc::{
-    c_char, c_long, endpwent, getgrgid, getpwent, getpwuid, group, passwd, size_t, ssize_t,
-    timespec as c_timespec,
+    c_char, c_long, endgrent, endpwent, getgrent, getgrgid, getpwent, getpwuid, group, passwd,
+    size_t, ssize_t, timespec as c_timespec,
 };
 
 use std::ffi::{CStr, CString, OsStr};
@@ -12,6 +12,7 @@ use std::ptr::null_mut;
 use std::slice;
 
 use crate::{
+    coding::decode_system,
     fileio::{expand_file_name, find_file_name_handler},
     lisp::LispObject,
     lists::list,
@@ -63,9 +64,9 @@ impl StringExt for String {
             Some(s) => ext = s,
         }
 
-        let dir_s: String;
-        let stem_s: String;
-        let ext_s: String;
+        let dir_s: Self;
+        let stem_s: Self;
+        let ext_s: Self;
         match parent.to_str() {
             None => error!("new parent path is not a valid UTF-8 sequence"),
             Some(s) => dir_s = s.to_string(),
@@ -244,6 +245,9 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
         fnames.push(dotdot);
     }
 
+    // NOTE: The allow can be dropped when the issue
+    // https://github.com/rust-lang/rust-clippy/issues/3913 is resolved
+    #[allow(clippy::identity_conversion)]
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
         let f_enc = match fname.file_name().into_string() {
@@ -764,4 +768,18 @@ pub fn get_users() -> LispObject {
     }
 
     list(&unames)
+}
+
+pub fn get_groups() -> LispObject {
+    let mut group_names = Vec::new();
+    loop {
+        let group = unsafe { getgrent() };
+        if group.is_null() {
+            break;
+        }
+        let group_name: LispStringRef = unsafe { build_string((*group).gr_name) }.into();
+        group_names.push(decode_system(group_name).into());
+    }
+    unsafe { endgrent() };
+    list(&group_names)
 }

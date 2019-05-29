@@ -17,12 +17,14 @@ use crate::{
     },
     eval::unbind_to,
     lisp::LispObject,
-    obarray::{intern, intern_c_string_1},
+    multibyte::{char_resolve_modifier_mask, LispSymbolOrString},
+    obarray::{intern, intern_c_string_1, LispObarrayRef},
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, getc_unlocked, maybe_quit, read_internal_start, readevalloop,
-        specbind, staticpro, symbol_redirect, unblock_input,
+        block_input, build_string, getc_unlocked, maybe_quit, oblookup_last_bucket_number,
+        read_filtered_event, read_internal_start, readevalloop, specbind, staticpro,
+        symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -307,6 +309,142 @@ pub fn eval_region(
         );
         unbind_to(count, Qnil);
     }
+}
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the user generates an event which is not a character (i.e. a mouse
+/// click or function key event), `read-char' signals an error.  As an
+/// exception, switch-frame events are put off until non-character events
+/// can be read.
+/// If you want to read non-character events, or ignore them, call
+/// `read-event' or `read-char-exclusive' instead.
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> Option<EmacsInt> {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, true, !inherit_input_method.is_nil(), seconds) };
+
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
+    }
+}
+def_lisp_sym!(Qread_char, "read-char");
+
+/// Read an event object from the input stream.
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_event(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> LispObject {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    unsafe { read_filtered_event(false, false, false, !inherit_input_method.is_nil(), seconds) }
+}
+
+/// Read a character from the command input (keyboard or macro).
+/// It is returned as a number.  Non-character events are ignored.
+/// If the character has modifiers, they are resolved and reflected to the
+/// character code if possible (e.g. C-SPC -> 0).
+///
+/// If the optional argument PROMPT is non-nil, display that as a prompt.
+/// If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+/// input method is turned on in the current buffer, that input method
+/// is used for reading a character.
+/// If the optional argument SECONDS is non-nil, it should be a number
+/// specifying the maximum number of seconds to wait for input.  If no
+/// input arrives in that time, return nil.  SECONDS may be a
+/// floating-point value.
+#[lisp_fn(min = "0")]
+pub fn read_char_exclusive(
+    prompt: LispObject,
+    inherit_input_method: LispObject,
+    seconds: LispObject,
+) -> Option<EmacsInt> {
+    if !prompt.is_nil() {
+        message_with_string!("%s", prompt, false);
+    }
+
+    let val =
+        unsafe { read_filtered_event(true, true, false, !inherit_input_method.is_nil(), seconds) };
+
+    match val.into() {
+        Some(num) => Some(char_resolve_modifier_mask(num)),
+        None => None,
+    }
+}
+
+/// Delete the symbol named NAME, if any, from OBARRAY.
+/// The value is t if a symbol was found and deleted, nil otherwise.
+/// NAME may be a string or a symbol.  If it is a symbol, that symbol
+/// is deleted, if it belongs to OBARRAY--no other symbol is deleted.
+/// OBARRAY, if nil, defaults to the value of the variable `obarray'.
+/// usage: (unintern NAME OBARRAY)
+#[lisp_fn(min = "1")]
+pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bool {
+    let mut obarray = obarray.unwrap_or_else(LispObarrayRef::global).check();
+
+    let tem = obarray.lookup(name);
+    if tem.is_integer() {
+        return false;
+    }
+    // If arg was a symbol, don't delete anything but that symbol itself.
+    if name.is_symbol() && name != tem {
+        return false;
+    }
+
+    let mut temp: LispSymbolRef = tem.into();
+    temp.set_uninterned();
+
+    let hash = unsafe { oblookup_last_bucket_number };
+
+    let symbol = obarray.get(hash);
+
+    if symbol == temp {
+        match symbol.get_next() {
+            Some(sym) => obarray.set(hash, sym),
+            None => obarray.set(hash, LispObject::from_natnum(0)),
+        };
+    } else {
+        let tail = symbol.iter().find(|elem| elem.get_next() == Some(temp));
+        if let Some(previous) = tail {
+            let next = temp.get_next();
+            previous.set_next(next);
+        }
+    }
+
+    true
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));

@@ -15,10 +15,7 @@ use crate::{
     keymap::{current_global_map, Ctl},
     lisp::LispObject,
     lists::get,
-    multibyte::{
-        char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
-        MAX_MULTIBYTE_LENGTH,
-    },
+    multibyte::{Codepoint, MAX_MULTIBYTE_LENGTH},
     numbers::MOST_POSITIVE_FIXNUM,
     obarray::intern,
     remacs_sys::EmacsInt,
@@ -145,14 +142,14 @@ pub fn end_of_line(n: Option<EmacsInt>) {
         newpos = line_end_position(Some(num)) as isize;
         unsafe { set_point(newpos) };
         pt = cur_buf.pt;
-        if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' as i32 {
+        if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' {
             // If we skipped over a newline that follows
             // an invisible intangible run,
             // move back to the last tangible position
             // within the line.
             unsafe { set_point(pt - 1) };
             break;
-        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' as i32 {
+        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' {
             // If we skipped something intangible
             // and now we're not really at eol,
             // keep going.
@@ -269,8 +266,8 @@ pub fn self_insert_command(n: EmacsInt) {
                 globals.Vtranslation_table_for_input,
                 globals.last_command_event.as_fixnum_or_error() as i32,
             )
-        };
-        let val = internal_self_insert(character as Codepoint, n as usize);
+        } as u32;
+        let val = internal_self_insert(character.into(), n as usize);
         if val == 2 {
             set(Qundo_auto__this_command_amalgamating.into(), Qnil);
         }
@@ -309,15 +306,15 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     // At first, get multi-byte form of C in STR.
     if current_buffer.multibyte_characters_enabled() {
-        len = write_codepoint(&mut str, c);
+        len = c.write_to(&mut str);
         if len == 1 {
             c = Codepoint::from(str[0]);
         }
     } else {
-        str[0] = if single_byte_charp(c) {
-            c as u8
+        str[0] = if c.is_single_byte() {
+            c.val() as u8
         } else {
-            char_to_byte8(c)
+            c.to_byte8_unchecked()
         };
         len = 1;
     }
@@ -332,7 +329,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // C2 and several characters following C2.
 
         // This is the character after point.
-        let c2 = current_buffer.fetch_char(current_buffer.pt_byte) as Codepoint;
+        let c2 = current_buffer.fetch_char(current_buffer.pt_byte);
 
         // Overwriting in binary-mode always replaces C2 by C.
         // Overwriting in textual-mode doesn't always do that.
@@ -341,7 +338,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // or before a tab if it doesn't use the whole width of the tab.  */
         if overwrite == Qoverwrite_mode_binary {
             chars_to_delete = n as usize;
-        } else if c != '\n' as Codepoint && c2 != '\n' as Codepoint {
+        } else if c != '\n' && c2 != '\n' {
             let cwidth = unsafe { Fchar_width(c.into()) }.as_fixnum_or_error() as usize;
             if cwidth > 0 {
                 let pos = current_buffer.pt;
@@ -365,7 +362,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                         // We will delete too many columns.  Let's fill columns
                         // by spaces so that the remaining text won't move.
                         let actual = unsafe { character::dec_pos(current_buffer.pt_byte) };
-                        if current_buffer.fetch_char(actual) as Codepoint == '\t' as Codepoint {
+                        if current_buffer.fetch_char(actual) == '\t' {
                             // Rather than add spaces, let's just keep the tab.
                             chars_to_delete -= 1;
                         } else {
@@ -378,18 +375,18 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         }
         hairy = 2;
     }
-    synt = unsafe { syntax_property(c as i32, true) };
+    synt = unsafe { syntax_property(c.val() as i32, true) };
 
     let previous_char = if current_buffer.multibyte_characters_enabled() {
-        preceding_char() as Codepoint
+        Codepoint::from(preceding_char() as u32)
     } else {
-        unibyte_to_char(preceding_char() as Codepoint)
+        Codepoint::from(preceding_char() as u32).unibyte_to_char()
     };
     if current_buffer.abbrev_mode_.is_not_nil()
         && synt != syntaxcode::Sword
         && current_buffer.read_only_.is_nil()
         && current_buffer.pt > current_buffer.begv
-        && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
+        && unsafe { syntax_property(previous_char.val() as libc::c_int, true) } == syntaxcode::Sword
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
 
@@ -413,15 +410,14 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if chars_to_delete > 0 {
-        let mc = if current_buffer.multibyte_characters_enabled() && single_byte_charp(c) {
-            unibyte_to_char(c)
+        let mc = if current_buffer.multibyte_characters_enabled() && c.is_single_byte() {
+            c.unibyte_to_char()
         } else {
             c
         };
         let mut string = unsafe { Fmake_string(n.into(), mc.into(), Qnil) };
         if spaces_to_insert > 0 {
-            let tem =
-                unsafe { Fmake_string(spaces_to_insert.into(), (' ' as Codepoint).into(), Qnil) };
+            let tem = unsafe { Fmake_string(spaces_to_insert.into(), b' '.into(), Qnil) };
             string = unsafe { concat2(string, tem) };
         }
 
@@ -451,11 +447,11 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
-        if t.get(c as isize).is_not_nil()
-            && (c == ' ' as Codepoint || c == '\n' as Codepoint)
+        if t.get(c.val() as isize).is_not_nil()
+            && (c == ' ' || c == '\n')
             && current_buffer.auto_fill_function_.is_not_nil()
         {
-            if c == '\n' as Codepoint {
+            if c == '\n' {
                 // After inserting a newline, move to previous line and fill
                 // that.  Must have the newline in place already so filling and
                 // justification, if any, know where the end is going to be.
@@ -465,7 +461,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
             }
             let auto_fill_result = call!(Qinternal_auto_fill);
             // Test PT < ZV in case the auto-fill-function is strange.
-            if c == '\n' as Codepoint && current_buffer.pt < current_buffer.zv {
+            if c == '\n' && current_buffer.pt < current_buffer.zv {
                 let newpt = current_buffer.pt + 1;
                 let newpt_byte = current_buffer.pt_byte + 1;
                 current_buffer.set_pt_both(newpt, newpt_byte);

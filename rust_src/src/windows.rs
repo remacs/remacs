@@ -100,7 +100,7 @@ impl LispWindowRef {
             matrix_mode_line_height
         } else {
             let mut frame = self.get_frame();
-            let window: LispWindowRef = selected_window().into();
+            let window: Self = selected_window().into();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
@@ -128,6 +128,8 @@ impl LispWindowRef {
         self.contents.is_window()
     }
 
+    // Equivalent to MINI_WINDOW_P
+    /// True if the the window is a minibuffer.
     pub fn is_minibuffer(self) -> bool {
         self.mini()
     }
@@ -240,6 +242,26 @@ impl LispWindowRef {
         } else {
             cmp::max(width / self.get_frame().column_width, 0)
         }
+    }
+
+    /// Return number of lines of text (not counting mode lines) in the window.
+    pub fn internal_height(self) -> i32 {
+        let mut lines = self.total_lines;
+        if !self.is_minibuffer() {
+            if self.parent.is_not_nil()
+                || self.contents.is_window()
+                || self.next.is_not_nil()
+                || self.prev.is_not_nil()
+                || self.wants_mode_line()
+            {
+                lines -= 1;
+            }
+
+            if self.wants_header_line() {
+                lines -= 1;
+            }
+        }
+        lines
     }
 
     /// The frame x-position at which the text (or left fringe) in
@@ -726,6 +748,11 @@ impl From<LispWindowValidOrSelected> for LispWindowRef {
 #[no_mangle]
 pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -> i32 {
     LispWindowRef::new(window).body_width(pixelwise)
+}
+
+#[no_mangle]
+pub extern "C" fn window_internal_height(w: LispWindowRef) -> i32 {
+    w.internal_height()
 }
 
 #[no_mangle]
@@ -1740,9 +1767,9 @@ pub fn set_window_redisplay_end_trigger(
 /// means that if a line at the bottom of the text area is only partially
 /// visible, that line is not counted.
 #[lisp_fn(min = "0")]
-pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_height(pixelwise).into()
+    window.body_height(pixelwise)
 }
 
 /// Return the width of WINDOW's text area.
@@ -1759,9 +1786,9 @@ pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> 
 /// Note that the returned value includes the column reserved for the
 /// continuation glyph.
 #[lisp_fn(name = "window-body-width", c_name = "window_body_width", min = "0")]
-pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_width(pixelwise).into()
+    window.body_width(pixelwise)
 }
 
 /// Return pixel dimensions of WINDOW's lines.
@@ -1964,6 +1991,30 @@ pub fn set_window_fringes_lisp(
     } else {
         false
     }
+}
+
+/// Return pixel width of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel width of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_width_before_size_change
+}
+
+/// Return pixel height of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel height of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_height_before_size_change
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

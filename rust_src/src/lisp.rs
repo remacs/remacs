@@ -54,7 +54,7 @@ pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
     pub const fn from_C(n: EmacsInt) -> Self {
-        LispObject(n)
+        Self(n)
     }
 
     pub fn from_C_unsigned(n: EmacsUint) -> Self {
@@ -96,13 +96,13 @@ impl<T> Copy for ExternalPtr<T> {}
 // Derive fails for this type so do it manually
 impl<T> Clone for ExternalPtr<T> {
     fn clone(&self) -> Self {
-        ExternalPtr::new(self.0)
+        Self::new(self.0)
     }
 }
 
 impl<T> ExternalPtr<T> {
     pub const fn new(p: *mut T) -> Self {
-        ExternalPtr(p)
+        Self(p)
     }
 
     pub fn is_null(self) -> bool {
@@ -288,7 +288,7 @@ impl From<()> for LispObject {
 }
 
 impl From<Vec<LispObject>> for LispObject {
-    fn from(v: Vec<LispObject>) -> Self {
+    fn from(v: Vec<Self>) -> Self {
         list(&v)
     }
 }
@@ -297,12 +297,8 @@ impl<T> From<Vec<T>> for LispObject
 where
     LispObject: From<T>,
 {
-    default fn from(v: Vec<T>) -> LispObject {
-        list(
-            &v.into_iter()
-                .map(LispObject::from)
-                .collect::<Vec<LispObject>>(),
-        )
+    default fn from(v: Vec<T>) -> Self {
+        list(&v.into_iter().map(Self::from).collect::<Vec<Self>>())
     }
 }
 
@@ -324,7 +320,7 @@ impl From<bool> for LispObject {
 
 impl From<LispObject> for u32 {
     fn from(o: LispObject) -> Self {
-        o.as_fixnum_or_error() as u32
+        o.as_fixnum_or_error() as Self
     }
 }
 
@@ -363,7 +359,7 @@ impl LispObject {
         unsafe { mem::transmute(res) }
     }
 
-    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
+    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> Self {
         let raw = external.as_ptr() as intptr_t;
         let res = if USE_LSB_TAG {
             let ptr = raw as intptr_t;
@@ -375,7 +371,7 @@ impl LispObject {
             ((tag << Lisp_Bits::VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from_C(res)
+        Self::from_C(res)
     }
 
     pub fn get_untaggedptr(self) -> *mut c_void {
@@ -417,61 +413,61 @@ impl From<LispObject> for Option<EmacsUint> {
 
 impl From<EmacsInt> for LispObject {
     fn from(v: EmacsInt) -> Self {
-        LispObject::from_fixnum(v)
+        Self::from_fixnum(v)
     }
 }
 
 impl From<isize> for LispObject {
     fn from(v: isize) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
+        Self::from_fixnum(v as EmacsInt)
     }
 }
 
 impl From<i32> for LispObject {
     fn from(v: i32) -> Self {
-        LispObject::from_fixnum(EmacsInt::from(v))
+        Self::from_fixnum(EmacsInt::from(v))
     }
 }
 
 impl From<i16> for LispObject {
     fn from(v: i16) -> Self {
-        LispObject::from_fixnum(EmacsInt::from(v))
+        Self::from_fixnum(EmacsInt::from(v))
     }
 }
 
 impl From<i8> for LispObject {
     fn from(v: i8) -> Self {
-        LispObject::from_fixnum(EmacsInt::from(v))
+        Self::from_fixnum(EmacsInt::from(v))
     }
 }
 
 impl From<EmacsUint> for LispObject {
     fn from(v: EmacsUint) -> Self {
-        LispObject::from_natnum(v)
+        Self::from_natnum(v)
     }
 }
 
 impl From<usize> for LispObject {
     fn from(v: usize) -> Self {
-        LispObject::from_natnum(v as EmacsUint)
+        Self::from_natnum(v as EmacsUint)
     }
 }
 
 impl From<u32> for LispObject {
     fn from(v: u32) -> Self {
-        LispObject::from_natnum(EmacsUint::from(v))
+        Self::from_natnum(EmacsUint::from(v))
     }
 }
 
 impl From<u16> for LispObject {
     fn from(v: u16) -> Self {
-        LispObject::from_natnum(EmacsUint::from(v))
+        Self::from_natnum(EmacsUint::from(v))
     }
 }
 
 impl From<u8> for LispObject {
     fn from(v: u8) -> Self {
-        LispObject::from_natnum(EmacsUint::from(v))
+        Self::from_natnum(EmacsUint::from(v))
     }
 }
 
@@ -520,7 +516,7 @@ macro_rules! impl_alistval_iter {
 
         impl $iter_name {
             pub fn new() -> Self {
-                $iter_name($data.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on))
+                Self($data.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on))
             }
         }
 
@@ -573,11 +569,11 @@ impl LispObject {
 
     // The three Emacs Lisp comparison functions.
 
-    pub fn eq(self, other: impl Into<LispObject>) -> bool {
+    pub fn eq(self, other: impl Into<Self>) -> bool {
         self == other.into()
     }
 
-    pub fn eql(self, other: impl Into<LispObject>) -> bool {
+    pub fn eql(self, other: impl Into<Self>) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)
         } else {
@@ -585,7 +581,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal(self, other: impl Into<LispObject>) -> bool {
+    pub fn equal(self, other: impl Into<Self>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
@@ -624,13 +620,13 @@ impl LispObject {
                             // `self' was seen already.
                             let o2s = ht.get_hash_value(idx);
                             if memq(other, o2s).is_nil() {
-                                ht.set_hash_value(idx, LispObject::cons(other, o2s));
+                                ht.set_hash_value(idx, Self::cons(other, o2s));
                             } else {
                                 return true;
                             }
                         }
                         Missing(hash) => {
-                            ht.put(self, LispObject::cons(other, Qnil), hash);
+                            ht.put(self, Self::cons(other, Qnil), hash);
                         }
                     }
                 }
@@ -677,7 +673,7 @@ impl LispObject {
         }
     }
 
-    pub fn equal_no_quit(self, other: impl Into<LispObject>) -> bool {
+    pub fn equal_no_quit(self, other: impl Into<Self>) -> bool {
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
@@ -686,7 +682,7 @@ impl LispObject {
         FUNCTIONP(self)
     }
 
-    pub fn map_or<T>(self, default: T, action: impl FnOnce(LispObject) -> T) -> T {
+    pub fn map_or<T>(self, default: T, action: impl FnOnce(Self) -> T) -> T {
         if self.is_nil() {
             default
         } else {
@@ -694,11 +690,7 @@ impl LispObject {
         }
     }
 
-    pub fn map_or_else<T>(
-        self,
-        default: impl FnOnce() -> T,
-        action: impl FnOnce(LispObject) -> T,
-    ) -> T {
+    pub fn map_or_else<T>(self, default: impl FnOnce() -> T, action: impl FnOnce(Self) -> T) -> T {
         if self.is_nil() {
             default()
         } else {
@@ -749,11 +741,12 @@ extern "C" {
 }
 
 macro_rules! export_lisp_fns {
-    ($($f:ident),+) => {
+    ($($(#[$($meta:meta),*])* $f:ident),+) => {
         pub fn rust_init_syms() {
+            #[allow(unused_unsafe)] // just in case the block is empty
             unsafe {
                 $(
-                    crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
+                    $(#[$($meta),*])* crate::lisp::defsubr(concat_idents!(S, $f).as_ptr());
                 )+
             }
         }

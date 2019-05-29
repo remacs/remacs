@@ -57,7 +57,7 @@ jobs:
         - travis_wait rustup install $(cat rust-toolchain)
       script:
         # The -Wno-error allows MacOS code deprecation warnings to remain warnings.
-        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror -Wno-error=deprecated-declarations' ./configure
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror -Wno-error=deprecated-declarations' ./configure --enable-checking=glyphs
         - make -j 3 && echo '==> Running tests' && make check
     -
       <<: *FULL_TEST
@@ -66,6 +66,7 @@ jobs:
         - PATH="/usr/local/opt/texinfo/bin:$PATH"
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux

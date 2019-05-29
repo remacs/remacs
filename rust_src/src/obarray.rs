@@ -4,13 +4,14 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     lisp::LispObject,
     multibyte::{LispStringRef, LispSymbolOrString},
+    remacs_sys::Fmake_symbol,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
     },
-    remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
     vectors::LispVectorRef,
@@ -21,25 +22,25 @@ use crate::{
 pub struct LispObarrayRef(LispObject);
 
 impl From<LispObarrayRef> for LispObject {
-    fn from(o: LispObarrayRef) -> LispObject {
+    fn from(o: LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl From<&LispObarrayRef> for LispObject {
-    fn from(o: &LispObarrayRef) -> LispObject {
+    fn from(o: &LispObarrayRef) -> Self {
         o.0
     }
 }
 
 impl LispObarrayRef {
-    pub const fn new(obj: LispObject) -> LispObarrayRef {
-        LispObarrayRef(obj)
+    pub const fn new(obj: LispObject) -> Self {
+        Self(obj)
     }
 
     /// Return a reference to the Lisp variable `obarray`.
-    pub fn global() -> LispObarrayRef {
-        LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
+    pub fn global() -> Self {
+        Self(unsafe { globals.Vobarray }).check()
     }
 
     /// Return the symbol that matches NAME (either a symbol or string). If
@@ -57,6 +58,37 @@ impl LispObarrayRef {
         }
     }
 
+    /// Ensure that we have a valid obarray.
+    pub fn check(self) -> Self {
+        // We don't want to signal a wrong-type error when we are shutting
+        // down due to a fatal error and we don't want to hit assertions
+        // if the fatal error was during GC.
+        if unsafe { fatal_error_in_progress } {
+            return self;
+        }
+
+        // A valid obarray is a non-empty vector.
+        let v = self.0.as_vector();
+        if v.map_or(0, LispVectorRef::len) == 0 {
+            // If Vobarray is now invalid, force it to be valid.
+            if unsafe { globals.Vobarray }.eq(self.0) {
+                unsafe { globals.Vobarray = initial_obarray };
+            }
+            wrong_type!(Qvectorp, self.0);
+        }
+
+        self
+    }
+
+    pub fn get(&self, idx: usize) -> LispSymbolRef {
+        LispObject::from(self).force_vector().get(idx).into()
+    }
+
+    pub fn set<O: Into<LispObject>>(&mut self, idx: usize, item: O) {
+        let mut vec = LispObject::from(&*self).force_vector();
+        vec.set(idx, item.into());
+    }
+
     /// Intern the string or symbol STRING. That is, return the new or existing
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
@@ -70,7 +102,7 @@ impl LispObarrayRef {
             let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
                 // When Emacs is running lisp code to dump to an executable, make
                 // use of pure storage.
-                unsafe { Fpurecopy(string.into()) }
+                purecopy(string.into())
             } else {
                 string.into()
             };
@@ -80,8 +112,8 @@ impl LispObarrayRef {
 }
 
 impl From<LispObject> for LispObarrayRef {
-    fn from(o: LispObject) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(o))
+    fn from(o: LispObject) -> Self {
+        Self::new(o).check()
     }
 }
 
@@ -120,24 +152,7 @@ pub extern "C" fn loadhist_attach(x: LispObject) {
 /// If it is one, return it.
 #[no_mangle]
 pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
-    // We don't want to signal a wrong-type error when we are shutting
-    // down due to a fatal error and we don't want to hit assertions
-    // if the fatal error was during GC.
-    if unsafe { fatal_error_in_progress } {
-        return obarray;
-    }
-
-    // A valid obarray is a non-empty vector.
-    let v = obarray.as_vector();
-    if v.map_or(0, LispVectorRef::len) == 0 {
-        // If Vobarray is now invalid, force it to be valid.
-        if unsafe { globals.Vobarray }.eq(obarray) {
-            unsafe { globals.Vobarray = initial_obarray };
-        }
-        wrong_type!(Qvectorp, obarray);
-    }
-
-    obarray
+    LispObarrayRef::new(obarray).check().into()
 }
 
 #[no_mangle]

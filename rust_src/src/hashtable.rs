@@ -32,21 +32,21 @@ impl LispHashTableRef {
         Self::new(ptr::null_mut())
     }
 
-    pub fn allocate() -> LispHashTableRef {
+    pub fn allocate() -> Self {
         let vec_ptr = allocate_pseudovector!(Lisp_Hash_Table, count, pvec_type::PVEC_HASH_TABLE);
-        LispHashTableRef::new(vec_ptr)
+        Self::new(vec_ptr)
     }
 
-    pub unsafe fn copy(&mut self, other: LispHashTableRef) {
+    pub unsafe fn copy(&mut self, other: Self) {
         ptr::copy_nonoverlapping(other.as_ptr(), self.as_mut(), 1);
     }
 
-    pub fn set_next_weak(&mut self, other: LispHashTableRef) {
+    pub fn set_next_weak(&mut self, other: Self) {
         self.next_weak = other.as_ptr() as *mut Lisp_Hash_Table;
     }
 
-    pub fn get_next_weak(self) -> LispHashTableRef {
-        LispHashTableRef::new(self.next_weak)
+    pub fn get_next_weak(self) -> Self {
+        Self::new(self.next_weak)
     }
 
     pub fn set_hash(&mut self, hash: LispObject) {
@@ -129,7 +129,7 @@ impl LispHashTableRef {
         unsafe { hash_clear(self.as_mut()) }
     }
 
-    pub fn check_impure(self, object: LispHashTableRef) {
+    pub fn check_impure(self, object: Self) {
         unsafe { CHECK_IMPURE(object.into(), self.as_ptr() as *mut c_void) };
     }
 }
@@ -137,7 +137,7 @@ impl LispHashTableRef {
 impl From<LispObject> for LispHashTableRef {
     fn from(o: LispObject) -> Self {
         if o.is_hash_table() {
-            LispHashTableRef::new(o.get_untaggedptr() as *mut Lisp_Hash_Table)
+            Self::new(o.get_untaggedptr() as *mut Lisp_Hash_Table)
         } else {
             wrong_type!(Qhash_table_p, o);
         }
@@ -146,7 +146,7 @@ impl From<LispObject> for LispHashTableRef {
 
 impl From<LispHashTableRef> for LispObject {
     fn from(h: LispHashTableRef) -> Self {
-        let object = LispObject::tag_ptr(h, Lisp_Type::Lisp_Vectorlike);
+        let object = Self::tag_ptr(h, Lisp_Type::Lisp_Vectorlike);
         debug_assert!(
             object.is_vectorlike() && object.get_untaggedptr() == h.as_ptr() as *mut c_void
         );

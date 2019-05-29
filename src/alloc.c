@@ -3724,24 +3724,6 @@ free_save_value (Lisp_Object save)
 
 
 
-DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
-       doc: /* Return a newly allocated marker which does not point at any place.  */)
-  (void)
-{
-  register Lisp_Object val;
-  register struct Lisp_Marker *p;
-
-  val = allocate_misc (Lisp_Misc_Marker);
-  p = XMARKER (val);
-  p->buffer = 0;
-  p->bytepos = 0;
-  p->charpos = 0;
-  p->next = NULL;
-  p->insertion_type = 0;
-  p->need_adjustment = 0;
-  return val;
-}
-
 /* Put MARKER back on the free list after using it temporarily.  */
 
 void
@@ -4845,7 +4827,11 @@ mark_memory (void *start, void *end)
   for (pp = start; (void *) pp < end; pp += GC_POINTER_ALIGNMENT)
     {
       mark_maybe_pointer (*(void **) pp);
-      mark_maybe_object (*(Lisp_Object *) pp);
+
+      verify (alignof (Lisp_Object) % GC_POINTER_ALIGNMENT == 0);
+      if (alignof (Lisp_Object) == GC_POINTER_ALIGNMENT
+	  || (uintptr_t) pp % alignof (Lisp_Object) == 0)
+	mark_maybe_object (*(Lisp_Object *) pp);
     }
 }
 
@@ -5364,8 +5350,6 @@ make_pure_c_string (const char *data, ptrdiff_t nchars)
   return string;
 }
 
-static Lisp_Object purecopy (Lisp_Object obj);
-
 /* Return a cons allocated from pure space.  Give it pure copies
    of CAR as car and CDR as cdr.  */
 
@@ -5440,21 +5424,6 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   return pure;
 }
 
-DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
-       doc: /* Make a copy of object OBJ in pure storage.
-Recursively copies contents of vectors and cons cells.
-Does not copy symbols.  Copies strings without text properties.  */)
-  (register Lisp_Object obj)
-{
-  if (NILP (Vpurify_flag))
-    return obj;
-  else if (MARKERP (obj) || OVERLAYP (obj) || SYMBOLP (obj))
-    /* Can't purify those.  */
-    return obj;
-  else
-    return purecopy (obj);
-}
-
 /* Pinned objects are marked before every GC cycle.  */
 static struct pinned_object
 {
@@ -5462,7 +5431,7 @@ static struct pinned_object
   struct pinned_object *next;
 } *pinned_objects;
 
-static Lisp_Object
+Lisp_Object
 purecopy (Lisp_Object obj)
 {
   if (INTEGERP (obj)
@@ -7424,9 +7393,7 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Smake_vector);
   defsubr (&Smake_string);
   defsubr (&Smake_symbol);
-  defsubr (&Smake_marker);
   defsubr (&Smake_finalizer);
-  defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
   defsubr (&Smemory_info);

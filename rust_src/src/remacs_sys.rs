@@ -82,6 +82,7 @@ extern "C" {
     );
     pub fn map_keymap_char_table_item(args: LispObject, key: LispObject, val: LispObject);
     pub static initial_obarray: LispObject;
+    pub static oblookup_last_bucket_number: libc::size_t;
     pub fn scan_lists(
         from: EmacsInt,
         count: EmacsInt,

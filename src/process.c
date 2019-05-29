@@ -6281,51 +6281,6 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
   unblock_child_signal (&oldset);
 }
 
-DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
-       doc: /* Kill process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGKILL, current_group, 0);
-  return process;
-}
-
-DEFUN ("quit-process", Fquit_process, Squit_process, 0, 2, 0,
-       doc: /* Send QUIT signal to process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  process_send_signal (process, SIGQUIT, current_group, 0);
-  return process;
-}
-
-DEFUN ("stop-process", Fstop_process, Sstop_process, 0, 2, 0,
-       doc: /* Stop process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-If PROCESS is a network or serial or pipe connection, inhibit handling
-of incoming traffic.  */)
-  (Lisp_Object process, Lisp_Object current_group)
-{
-  if (PROCESSP (process) && (NETCONN_P (process) || SERIALCONN_P (process)
-			     || PIPECONN_P (process)))
-    {
-      struct Lisp_Process *p;
-
-      p = XPROCESS (process);
-      if (NILP (p->command)
-	  && p->infd >= 0)
-	delete_read_fd (p->infd);
-      pset_command (p, Qt);
-      return process;
-    }
-#ifndef SIGTSTP
-  error ("No SIGTSTP support");
-#else
-  process_send_signal (process, SIGTSTP, current_group, 0);
-#endif
-  return process;
-}
-
 DEFUN ("continue-process", Fcontinue_process, Scontinue_process, 0, 2, 0,
        doc: /* Continue process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
@@ -7491,9 +7446,6 @@ The variable takes effect when `start-process' is called.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
-  defsubr (&Skill_process);
-  defsubr (&Squit_process);
-  defsubr (&Sstop_process);
   defsubr (&Scontinue_process);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);

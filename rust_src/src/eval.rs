@@ -7,6 +7,7 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::is_autoload,
     lisp::{LispObject, LispSubrRef},
@@ -26,7 +27,7 @@ use crate::{
         MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
+    remacs_sys::{Fapply, Fdefault_value, Fload},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -356,14 +357,14 @@ pub fn defconst(args: LispCons) -> LispSymbolRef {
 
     let mut tem = unsafe { eval_sub(car(tail)) };
     if unsafe { globals.Vpurify_flag }.is_not_nil() {
-        tem = unsafe { Fpurecopy(tem) };
+        tem = purecopy(tem);
     }
     let sym_ref: LispSymbolRef = sym.into();
     set_default(sym_ref, tem);
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
         if unsafe { globals.Vpurify_flag }.is_not_nil() {
-            docstring = unsafe { Fpurecopy(docstring) };
+            docstring = purecopy(docstring);
         }
 
         put(sym_ref, Qvariable_documentation, docstring);

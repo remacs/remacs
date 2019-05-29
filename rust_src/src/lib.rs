@@ -123,8 +123,11 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+mod xdisp;
 mod xfaces;
 mod xml;
+#[cfg(feature = "window-system-x11")]
+mod xsettings;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -150,7 +153,7 @@ mod hacks {
 
     impl<T> Hack<T> {
         pub const unsafe fn uninitialized() -> Self {
-            Hack { u: () }
+            Self { u: () }
         }
 
         pub unsafe fn get_mut(&mut self) -> &mut T {

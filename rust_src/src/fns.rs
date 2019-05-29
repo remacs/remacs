@@ -15,7 +15,7 @@ use crate::{
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
-    multibyte::{string_char_and_length, write_codepoint, LispStringRef},
+    multibyte::{string_char_and_length, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -343,7 +343,7 @@ pub fn reverse(seq: LispObject) -> LispObject {
                     let (c, len) = string_char_and_length(p);
                     p = p.add(len);
                     q = q.sub(len);
-                    write_codepoint(slice::from_raw_parts_mut(q, len), c);
+                    c.write_to(slice::from_raw_parts_mut(q, len));
                 }
             }
             new.into()
@@ -499,7 +499,7 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
     }
 
     let yes_or_no: LispObject = "(yes or no) ".into();
-    let prompt = concat(&mut [prompt.into(), yes_or_no]).into();
+    let prompt = lisp_concat!(prompt, yes_or_no).into();
 
     loop {
         let ans: LispStringRef = downcase(read_from_minibuffer(

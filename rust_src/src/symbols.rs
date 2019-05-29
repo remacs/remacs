@@ -62,6 +62,11 @@ impl LispSymbolRef {
         s.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
+    pub fn set_uninterned(&mut self) {
+        let s = unsafe { self.u.s.as_mut() };
+        s.set_interned(symbol_interned::SYMBOL_UNINTERNED);
+    }
+
     pub fn is_alias(self) -> bool {
         let s = unsafe { self.u.s.as_ref() };
         s.redirect() == symbol_redirect::SYMBOL_VARALIAS
@@ -84,7 +89,7 @@ impl LispSymbolRef {
     pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
         let s = self.u.s.as_ref();
-        LispSymbolRef::new(s.val.alias)
+        Self::new(s.val.alias)
     }
 
     pub fn get_declared_special(self) -> bool {
@@ -185,6 +190,21 @@ impl LispSymbolRef {
 
     pub const fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+
+    pub fn get_next(self) -> Option<LispSymbolRef> {
+        // `iter().next()` returns the _current_ symbol: we want
+        // another `next()` on the iterator to really get the next
+        // symbol. we use `nth(1)` as a shortcut here.
+        self.iter().nth(1)
+    }
+
+    pub fn set_next(mut self, next: Option<LispSymbolRef>) {
+        let mut s = unsafe { self.u.s.as_mut() };
+        s.next = match next {
+            Some(sym) => sym.as_ptr() as *mut Lisp_Symbol,
+            None => ptr::null_mut(),
+        };
     }
 
     /// Set up SYMBOL to refer to its global binding.  This makes it safe

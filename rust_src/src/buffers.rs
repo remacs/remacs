@@ -1,9 +1,9 @@
 //! Functions operating on buffers.
 
-use std::{self, iter, mem, ops, ptr};
+use std::{self, iter, mem, ops, ptr, slice};
 
 use field_offset::FieldOffset;
-use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_char, c_uchar, c_void, ptrdiff_t};
 
 use rand::{thread_rng, Rng};
 
@@ -28,8 +28,9 @@ use crate::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
         LispMarkerRef, MARKER_DEBUG,
     },
-    multibyte::{multibyte_chars_in_text, multibyte_length_by_head, string_char},
-    multibyte::{LispStringRef, LispSymbolOrString},
+    multibyte::MAX_MULTIBYTE_LENGTH,
+    multibyte::{multibyte_char_at, multibyte_chars_in_text, multibyte_length_by_head},
+    multibyte::{Codepoint, LispStringRef, LispSymbolOrString},
     numbers::{LispNumber, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
@@ -37,7 +38,7 @@ use crate::{
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
         set_buffer_internal_1, set_per_buffer_value, specbind, unblock_input, unchain_both,
@@ -114,7 +115,7 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
-    pub fn create_new(name: LispStringRef) -> LispBufferRef {
+    pub fn create_new(name: LispStringRef) -> Self {
         if name.is_empty() {
             error!("Empty string for buffer name is not allowed");
         }
@@ -263,7 +264,7 @@ impl LispBufferRef {
         self.filename_
     }
 
-    pub fn base_buffer(self) -> Option<LispBufferRef> {
+    pub fn base_buffer(self) -> Option<Self> {
         Self::from_ptr(self.base_buffer as *mut c_void)
     }
 
@@ -347,31 +348,31 @@ impl LispBufferRef {
 
     /// Return character at byte position POS.  See the caveat WARNING for
     /// FETCH_MULTIBYTE_CHAR below.
-    pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_char(self, n: ptrdiff_t) -> Codepoint {
         if self.multibyte_characters_enabled() {
             self.fetch_multibyte_char(n)
         } else {
-            c_int::from(self.fetch_byte(n))
+            Codepoint::from(self.fetch_byte(n))
         }
     }
 
     /// Return character code of multi-byte form at byte position POS.  If POS
     /// doesn't point the head of valid multi-byte form, only the byte at
     /// POS is returned.  No range checking.
-    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> Codepoint {
         let offset = if n >= self.gpt_byte() && n >= 0 {
             self.gap_size()
         } else {
             0
         };
 
-        unsafe {
-            string_char(
+        let (c, _) = multibyte_char_at(unsafe {
+            slice::from_raw_parts(
                 self.beg_addr().offset(offset + n - self.beg_byte()),
-                ptr::null_mut(),
-                ptr::null_mut(),
+                MAX_MULTIBYTE_LENGTH,
             )
-        }
+        });
+        c
     }
 
     pub fn multibyte_characters_enabled(self) -> bool {
@@ -726,7 +727,7 @@ impl LispBufferRef {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
     }
 
-    pub fn as_live(self) -> Option<LispBufferRef> {
+    pub fn as_live(self) -> Option<Self> {
         if self.is_live() {
             Some(self)
         } else {
@@ -1046,9 +1047,9 @@ impl From<LispBufferOrName> for LispObject {
 impl From<LispObject> for LispBufferOrName {
     fn from(v: LispObject) -> Self {
         if let Some(s) = v.as_string() {
-            LispBufferOrName::Name(s)
+            Self::Name(s)
         } else if let Some(b) = v.as_buffer() {
-            LispBufferOrName::Buffer(b)
+            Self::Buffer(b)
         } else {
             wrong_type!(Qbufferp, v);
         }
@@ -1058,14 +1059,14 @@ impl From<LispObject> for LispBufferOrName {
 impl From<LispBufferRef> for LispBufferOrName {
     #[inline(always)]
     fn from(b: LispBufferRef) -> Self {
-        LispBufferOrName::Buffer(b)
+        Self::Buffer(b)
     }
 }
 
 impl From<LispStringRef> for LispBufferOrName {
     #[inline(always)]
     fn from(n: LispStringRef) -> Self {
-        LispBufferOrName::Name(n)
+        Self::Name(n)
     }
 }
 
@@ -1100,7 +1101,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
 
 impl From<LispBufferOrName> for LispBufferRef {
     fn from(v: LispBufferOrName) -> Self {
-        Option::<LispBufferRef>::from(v).unwrap_or_else(|| nsberror(v.into()))
+        Option::<Self>::from(v).unwrap_or_else(|| nsberror(v.into()))
     }
 }
 
@@ -1121,8 +1122,8 @@ pub enum LispBufferOrCurrent {
 impl From<LispObject> for LispBufferOrCurrent {
     fn from(obj: LispObject) -> Self {
         match obj.as_buffer() {
-            None => LispBufferOrCurrent::Current,
-            Some(buf) => LispBufferOrCurrent::Buffer(buf),
+            None => Self::Current,
+            Some(buf) => Self::Buffer(buf),
         }
     }
 }
@@ -1657,7 +1658,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     let basename = if name.byte_at(0) == b' ' {
         let mut s = format!("-{}", thread_rng().gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
-        let genname = unsafe { concat2(name.into(), suffix) };
+        let genname = lisp_concat!(name, suffix);
         if get_buffer(genname.into()).is_none() {
             return genname.into();
         }
@@ -1670,7 +1671,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     loop {
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
-        let candidate = unsafe { concat2(basename, suffix) }.force_string();
+        let candidate = lisp_concat!(basename, suffix).force_string();
         if string_equal(candidate, ignore) || get_buffer(candidate.into()).is_none() {
             return candidate;
         }
