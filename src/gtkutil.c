@@ -281,7 +281,7 @@ xg_get_pixbuf_from_pix_and_mask (struct frame *f,
 
 #if defined USE_CAIRO && !defined HAVE_GTK3
 static GdkPixbuf *
-xg_get_pixbuf_from_surface (struct frame *f, cairo_surface_t *surface)
+xg_get_pixbuf_from_surface (cairo_surface_t *surface)
 {
   int width = cairo_image_surface_get_width (surface);
   int height = cairo_image_surface_get_height (surface);
@@ -306,15 +306,20 @@ xg_get_pixbuf_from_surface (struct frame *f, cairo_surface_t *surface)
 	  for (int x = 0; x < width; x++)
 	    {
 	      guint32 argb = ((guint32 *) pixels)[x];
-#ifdef WORDS_BIGENDIAN
-	      /* ARGB -> RGBA (gdk_pixbuf, big endian) */
-	      ((guint32 *) pixels)[x] = (argb << 8) | (argb >> 24);
-#else  /* !WORDS_BIGENDIAN */
-	      /* ARGB -> ABGR (gdk_pixbuf, little endian) */
-	      ((guint32 *) pixels)[x] = ((   argb        & 0xff00ff00)
-					 | ((argb << 16) & 0x00ff0000)
-					 | ((argb >> 16) & 0x000000ff));
-#endif	/* !WORDS_BIGENDIAN */
+	      int alpha = argb >> 24;
+
+	      if (alpha == 0)
+		((guint32 *) pixels)[x] = 0;
+	      else
+		{
+		  int red = (argb >> 16) & 0xff, green = (argb >> 8) & 0xff;
+		  int blue = argb & 0xff;
+
+		  pixels[x * 4    ] = red   * 0xff / alpha;
+		  pixels[x * 4 + 1] = green * 0xff / alpha;
+		  pixels[x * 4 + 2] = blue  * 0xff / alpha;
+		  pixels[x * 4 + 3] = alpha;
+		}
 	    }
 	  pixels += rowstride;
 	}
@@ -399,7 +404,7 @@ xg_get_image_for_pixmap (struct frame *f,
       else
         gtk_image_set_from_surface (old_widget, surface);
 #else  /* !HAVE_GTK3 */
-      GdkPixbuf *icon_buf = xg_get_pixbuf_from_surface (f, surface);
+      GdkPixbuf *icon_buf = xg_get_pixbuf_from_surface (surface);
 
       if (icon_buf)
 	{
