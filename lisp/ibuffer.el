@@ -1809,7 +1809,7 @@ If point is on a group name, this function operates on that group."
 (defface ibuffer-locked-buffer
   '((((background dark)) (:foreground "RosyBrown"))
     (t (:foreground "brown4")))
-  "*Face used for locked buffers in Ibuffer."
+  "Face used for locked buffers in Ibuffer."
   :version "26.1"
   :group 'ibuffer
   :group 'font-lock-highlighting-faces)
