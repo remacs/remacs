@@ -437,10 +437,9 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 /// Convert arg CHAR to a string containing that character.
 /// usage: (char-to-string CHAR)
 #[lisp_fn]
-pub fn char_to_string(character: LispObject) -> LispObject {
-    let c = character.as_character_or_error();
+pub fn char_to_string(character: Codepoint) -> LispObject {
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
-    let len = c.write_to(&mut buffer[..]);
+    let len = character.write_to(&mut buffer[..]);
 
     unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, len as isize) }
 }
@@ -757,12 +756,7 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
 /// Both arguments must be characters (i.e. integers).
 /// Case is ignored if `case-fold-search' is non-nil in the current buffer.
 #[lisp_fn]
-pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
-    // Check they're chars, not just integers, otherwise we could get array
-    // bounds violations in downcase.
-    let mut c1 = c1.as_character_or_error();
-    let mut c2 = c2.as_character_or_error();
-
+pub fn char_equal(mut c1: Codepoint, mut c2: Codepoint) -> bool {
     if c1 == c2 {
         return true;
     }
