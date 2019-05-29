@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2019-04-12.13}
+\def\texinfoversion{2019-05-18.15}
 %
 % Copyright 1985, 1986, 1988, 1990-2019 Free Software Foundation, Inc.
 %
@@ -4952,6 +4952,8 @@ end
   \definedummyword\sup
   \definedummyword\textdegree
   %
+  \definedummyword\subentry
+  %
   % We want to disable all macros so that they are not expanded by \write.
   \macrolist
   \let\value\dummyvalue
@@ -5224,10 +5226,10 @@ end
 }
 
 \def\indexwriteseealso#1{
-  \gdef\pagenumbertext{@seealso{#1}}%
+  \gdef\pagenumbertext{\string\seealso{#1}}%
 }
 \def\indexwriteseeentry#1{
-  \gdef\pagenumbertext{@seeentry{#1}}%
+  \gdef\pagenumbertext{\string\seeentry{#1}}%
 }
 
 % The default definitions
@@ -5314,6 +5316,15 @@ end
 % files because the index entries are fully expanded here, and \string uses
 % the current value of \escapechar.
 \def\escapeisbackslash{\escapechar=`\\}
+
+% Use \ in index files by default.  texi2dvi didn't support @ as as the escape 
+% character (as it checked for "\entry" in the files, and not "@entry").  When 
+% the new version of texi2dvi has had a chance to become more prevalent, then 
+% the escape character can change back to @ again.  This should be an easy 
+% change to make now because both @ and \ are only used as escape characters in 
+% index files, never standing for themselves. 
+%
+\set txiindexescapeisbackslash
 
 % Write the entry in \indextext to the index file.
 %

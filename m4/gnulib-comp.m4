@@ -200,7 +200,6 @@ AC_DEFUN([gl_INIT],
   gl_BYTESWAP
   AC_CHECK_FUNCS_ONCE([readlinkat])
   gl_CLOCK_TIME
-  gl_CLOSE_STREAM
   gl_MODULE_INDICATOR([close-stream])
   gl_COUNT_LEADING_ZEROS
   gl_COUNT_ONE_BITS
@@ -996,7 +995,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/builtin-expect.m4
   m4/byteswap.m4
   m4/clock_time.m4
-  m4/close-stream.m4
   m4/count-leading-zeros.m4
   m4/count-one-bits.m4
   m4/count-trailing-zeros.m4
