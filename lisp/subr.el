@@ -1604,12 +1604,23 @@ be a list of the form returned by `event-start' and `event-end'."
 
 ;;;; Hook manipulation functions.
 
-(defun add-hook (hook function &optional append local)
+(defun add-hook (hook function &optional depth local)
+  ;; Note: the -100..100 depth range is arbitrary and was chosen to match the
+  ;; range used in add-function.
   "Add to the value of HOOK the function FUNCTION.
 FUNCTION is not added if already present.
-FUNCTION is added (if necessary) at the beginning of the hook list
-unless the optional argument APPEND is non-nil, in which case
-FUNCTION is added at the end.
+
+The place where the function is added depends on the DEPTH
+parameter.  DEPTH defaults to 0.  By convention, it should be
+a number between -100 and 100 where 100 means that the function
+should be at the very end of the list, whereas -100 means that
+the function should always come first.
+Since nothing is \"always\" true, don't use 100 nor -100.
+When two functions have the same depth, the new one gets added after the
+old one if depth is strictly positive and before otherwise.
+
+For backward compatibility reasons, a symbol other than nil is
+interpreted as a DEPTH of 90.
 
 The optional fourth argument, LOCAL, if non-nil, says to modify
 the hook's buffer-local value rather than its global value.
@@ -1622,6 +1633,7 @@ HOOK is void, it is first set to nil.  If HOOK's value is a single
 function, it is changed to a list of functions."
   (or (boundp hook) (set hook nil))
   (or (default-boundp hook) (set-default hook nil))
+  (unless (numberp depth) (setq depth (if depth 90 0)))
   (if local (unless (local-variable-if-set-p hook)
 	      (set (make-local-variable hook) (list t)))
     ;; Detect the case where make-local-variable was used on a hook
@@ -1634,12 +1646,25 @@ function, it is changed to a list of functions."
       (setq hook-value (list hook-value)))
     ;; Do the actual addition if necessary
     (unless (member function hook-value)
-      (when (stringp function)
+      (when (stringp function)          ;FIXME: Why?
 	(setq function (purecopy function)))
+      (when (or (get hook 'hook--depth-alist) (not (zerop depth)))
+        ;; Note: The main purpose of the above `when' test is to avoid running
+        ;; this `setf' before `gv' is loaded during bootstrap.
+        (setf (alist-get function (get hook 'hook--depth-alist)
+                         0 'remove #'equal)
+              depth))
       (setq hook-value
-	    (if append
+	    (if (< 0 depth)
 		(append hook-value (list function))
-	      (cons function hook-value))))
+	      (cons function hook-value)))
+      (let ((depth-alist (get hook 'hook--depth-alist)))
+        (when depth-alist
+          (setq hook-value
+                (sort (if (< 0 depth) hook-value (copy-sequence hook-value))
+                      (lambda (f1 f2)
+                        (< (alist-get f1 depth-alist 0 nil #'equal)
+                           (alist-get f2 depth-alist 0 nil #'equal))))))))
     ;; Set the actual variable
     (if local
 	(progn

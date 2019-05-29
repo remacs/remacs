@@ -142,7 +142,7 @@ in Lisp Interaction mode:
 (add-hook 'lisp-interaction-mode-hook 'auto-fill-mode)
 @end example
 
-@defun add-hook hook function &optional append local
+@defun add-hook hook function &optional depth local
 This function is the handy way to add function @var{function} to hook
 variable @var{hook}.  You can use it for abnormal hooks as well as for
 normal hooks.  @var{function} can be any Lisp function that can accept
@@ -167,9 +167,18 @@ For a normal hook, hook functions should be designed so that the order
 in which they are executed does not matter.  Any dependence on the order
 is asking for trouble.  However, the order is predictable: normally,
 @var{function} goes at the front of the hook list, so it is executed
-first (barring another @code{add-hook} call).  If the optional argument
-@var{append} is non-@code{nil}, the new hook function goes at the end of
-the hook list and is executed last.
+first (barring another @code{add-hook} call).
+
+In some cases, it is important to control the relative ordering of functions
+on the hook.  The optional argument @var{depth} lets you indicate where the
+function should be inserted in the list: it should then be a number
+between -100 and 100 where the higher the value, the closer to the end of the
+list the function should go.  The @var{depth} defaults to 0 and for backward
+compatibility when @var{depth} is a non-nil symbol it is interpreted as a depth
+of 90.  Furthermore, when @var{depth} is strictly greater than 0 the function
+is added @emph{after} rather than before functions of the same depth.
+One should never use a depth of 100 (or -100), because one can never be
+sure that no other function will ever need to come before (or after) us.
 
 @code{add-hook} can handle the cases where @var{hook} is void or its
 value is a single function; it sets or changes the value to a list of

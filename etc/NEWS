@@ -1508,6 +1508,13 @@ documentation of the new mode and its commands.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
++++
+** add-hook does not always add to the front or the end any more.
+The replacement of `append` with `depth` implies that the function is not
+always added to the very front (when append/depth is nil) or the very end (when
+append/depth is t) any more because other functions on the hook may have
+specified higher/lower depths.
+
 ** In 'compilation-error-regexp-alist' the old undocumented feature
 where 'line' could be a function of 2 arguments has been dropped.
 
@@ -1639,6 +1646,12 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** The 'append' arg of 'add-hook' is generalized to a finer notion of 'depth'
+This makes it possible to control the ordering of functions more precisely,
+as was already possible in 'add-function' and `advice-add`.
+
+---
 ** New 'help-fns-describe-variable-functions' hook.
 Makes it possible to add metadata information to 'describe-variable'.
 

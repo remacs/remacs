@@ -246,7 +246,7 @@ functions when `parse-sexp-lookup-properties' is non-nil.  The
 cache is flushed from position START, defaulting to point."
   (declare (debug ((form &optional form) body)) (indent 1))
   (let ((start-var (make-symbol "start")))
-    `(let ((syntax-propertize-function nil)
+    `(let ((syntax-propertize-function #'ignore)
            (,start-var ,(or start '(point))))
        (unwind-protect
            (with-syntax-table ,table
@@ -564,13 +564,6 @@ happened."
                       (matching-paren (char-after))))
          (save-excursion (newline 1 t)))))))
 
-;; Prioritize this to kick in after
-;; `electric-layout-post-self-insert-function': that considerably
-;; simplifies interoperation when `electric-pair-mode',
-;; `electric-layout-mode' and `electric-indent-mode' are used
-;; together.  Use `vc-region-history' on these lines for more info.
-(put 'electric-pair-post-self-insert-function   'priority  50)
-
 (defun electric-pair-will-use-region ()
   (and (use-region-p)
        (memq (car (electric-pair-syntax-info last-command-event))
@@ -622,8 +615,14 @@ To toggle the mode in a single buffer, use `electric-pair-local-mode'."
   (if electric-pair-mode
       (progn
 	(add-hook 'post-self-insert-hook
-		  #'electric-pair-post-self-insert-function)
-        (electric--sort-post-self-insertion-hook)
+		  #'electric-pair-post-self-insert-function
+                  ;; Prioritize this to kick in after
+                  ;; `electric-layout-post-self-insert-function': that
+                  ;; considerably simplifies interoperation when
+                  ;; `electric-pair-mode', `electric-layout-mode' and
+                  ;; `electric-indent-mode' are used together.
+                  ;; Use `vc-region-history' on these lines for more info.
+                  50)
 	(add-hook 'self-insert-uses-region-functions
 		  #'electric-pair-will-use-region))
     (remove-hook 'post-self-insert-hook

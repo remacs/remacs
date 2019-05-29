@@ -653,6 +653,9 @@ that requires a literal mode spec at compile time."
     (make-local-hook 'after-change-functions))
   (add-hook 'before-change-functions 'c-before-change nil t)
   (setq c-just-done-before-change nil)
+  ;; FIXME: We should use the new `depth' arg in Emacs-27 (e.g. a depth of -10
+  ;; would do since font-lock uses a(n implicit) depth of 0) so we don't need
+  ;; c-after-font-lock-init.
   (add-hook 'after-change-functions 'c-after-change nil t)
   (when (boundp 'font-lock-extend-after-change-region-function)
     (set (make-local-variable 'font-lock-extend-after-change-region-function)

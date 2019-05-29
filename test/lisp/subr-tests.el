@@ -61,6 +61,9 @@
                      (quote
                       (0 font-lock-keyword-face))))))))
 
+(defalias 'subr-tests--parent-mode
+  (if (fboundp 'prog-mode) 'prog-mode 'fundamental-mode))
+
 (ert-deftest provided-mode-derived-p ()
   ;; base case: `derived-mode' directly derives `prog-mode'
   (should (progn
@@ -68,9 +71,7 @@
             (provided-mode-derived-p 'derived-mode 'prog-mode)))
   ;; edge case: `derived-mode' derives an alias of `prog-mode'
   (should (progn
-            (defalias 'parent-mode
-              (if (fboundp 'prog-mode) 'prog-mode 'fundamental-mode))
-            (define-derived-mode derived-mode parent-mode "test")
+            (define-derived-mode derived-mode subr-tests--parent-mode "test")
             (provided-mode-derived-p 'derived-mode 'prog-mode))))
 
 (ert-deftest number-sequence-test ()
@@ -372,6 +373,32 @@ See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19350."
                  nil))
   (should (equal (flatten-tree '(1 ("foo" "bar") 2))
                  '(1 "foo" "bar" 2))))
+
+(defvar subr-tests--hook nil)
+
+(ert-deftest subr-tests-add-hook-depth ()
+  "Test the `depth' arg of `add-hook'."
+  (setq-default subr-tests--hook nil)
+  (add-hook 'subr-tests--hook 'f1)
+  (add-hook 'subr-tests--hook 'f2)
+  (should (equal subr-tests--hook '(f2 f1)))
+  (add-hook 'subr-tests--hook 'f3 t)
+  (should (equal subr-tests--hook '(f2 f1 f3)))
+  (add-hook 'subr-tests--hook 'f4 50)
+  (should (equal subr-tests--hook '(f2 f1 f4 f3)))
+  (add-hook 'subr-tests--hook 'f5 -50)
+  (should (equal subr-tests--hook '(f5 f2 f1 f4 f3)))
+  (add-hook 'subr-tests--hook 'f6)
+  (should (equal subr-tests--hook '(f5 f6 f2 f1 f4 f3)))
+  ;; Make sure `t' is equivalent to 90.
+  (add-hook 'subr-tests--hook 'f7 90)
+  (add-hook 'subr-tests--hook 'f8 t)
+  (should (equal subr-tests--hook '(f5 f6 f2 f1 f4 f3 f7 f8)))
+  ;; Make sue `nil' is equivalent to 0.
+  (add-hook 'subr-tests--hook 'f9 0)
+  (add-hook 'subr-tests--hook 'f10)
+  (should (equal subr-tests--hook '(f5 f10 f9 f6 f2 f1 f4 f3 f7 f8)))
+  )
 
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

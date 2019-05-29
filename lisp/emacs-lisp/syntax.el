@@ -298,7 +298,7 @@ END) suitable for `syntax-propertize-function'."
         ;; between syntax-ppss and syntax-propertize, we also have to make
         ;; sure the flush function is installed here (bug#29767).
         (add-hook 'before-change-functions
-	          #'syntax-ppss-flush-cache t t))
+	          #'syntax-ppss-flush-cache 99 t))
       (save-excursion
         (with-silent-modifications
           (make-local-variable 'syntax-propertize--done) ;Just in case!
@@ -430,7 +430,7 @@ These are valid when the buffer has no restriction.")
        ;; Unregister if there's no cache left.  Sadly this doesn't work
        ;; because `before-change-functions' is temporarily bound to nil here.
        ;; (unless cache
-       ;;   (remove-hook 'before-change-functions 'syntax-ppss-flush-cache t))
+       ;;   (remove-hook 'before-change-functions #'syntax-ppss-flush-cache t))
        (setcar cell last)
        (setcdr cell cache)))
     ))
@@ -534,13 +534,14 @@ running the hook."
 
 	      ;; Setup the before-change function if necessary.
 	      (unless (or ppss-cache ppss-last)
-                ;; We should be either the very last function on
-                ;; before-change-functions or the very first on
-                ;; after-change-functions.
                 ;; Note: combine-change-calls-1 needs to be kept in sync
                 ;; with this!
 		(add-hook 'before-change-functions
-			  'syntax-ppss-flush-cache t t))
+			  #'syntax-ppss-flush-cache
+                          ;; We should be either the very last function on
+                          ;; before-change-functions or the very first on
+                          ;; after-change-functions.
+                          99 t))
 
 	      ;; Use the best of OLD-POS and CACHE.
 	      (if (or (not old-pos) (< old-pos pt-min))
