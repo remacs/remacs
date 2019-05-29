@@ -7794,12 +7794,14 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                reply with "Next" if we received "Page", but we
                currently never do because we are interested in
                images, only, which should have 1 page.  */
-            Pixmap pixmap = (Pixmap) event->xclient.data.l[1];
 	    f = x_window_to_frame (dpyinfo, event->xclient.window);
 	    if (!f)
 	      goto OTHER;
+#ifndef USE_CAIRO
+            Pixmap pixmap = (Pixmap) event->xclient.data.l[1];
             x_kill_gs_process (pixmap, f);
             expose_frame (f, 0, 0, 0, 0);
+#endif	/* !USE_CAIRO */
 	    goto done;
           }
 
@@ -12154,7 +12156,15 @@ x_check_font (struct frame *f, struct font *font)
 static void
 x_free_pixmap (struct frame *f, Emacs_Pixmap pixmap)
 {
+#ifdef USE_CAIRO
+  if (pixmap)
+    {
+      xfree (pixmap->data);
+      xfree (pixmap);
+    }
+#else
   XFreePixmap (FRAME_X_DISPLAY (f), pixmap);
+#endif
 }
 
 

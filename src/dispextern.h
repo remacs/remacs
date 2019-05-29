@@ -38,7 +38,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 typedef XColor Emacs_Color;
 typedef Cursor Emacs_Cursor;
 #define No_Cursor (None)
+#ifndef USE_CAIRO
 typedef Pixmap Emacs_Pixmap;
+#endif
 typedef XRectangle Emacs_Rectangle;
 typedef XGCValues Emacs_GC;
 #else /* !HAVE_X_WINDOWS */
@@ -92,9 +94,24 @@ xstrcasecmp (char const *a, char const *b)
 #ifdef HAVE_X_WINDOWS
 #include <X11/Xresource.h> /* for XrmDatabase */
 typedef struct x_display_info Display_Info;
+#ifndef USE_CAIRO
 typedef XImage *Emacs_Pix_Container;
 typedef XImage *Emacs_Pix_Context;
+#endif	/* !USE_CAIRO */
 #define NativeRectangle XRectangle
+#endif
+
+#ifdef USE_CAIRO
+/* Mininal version of XImage.  */
+typedef struct
+{
+  int width, height;		/* size of image */
+  char *data;			/* pointer to image data */
+  int bytes_per_line;		/* accelarator to next line */
+  int bits_per_pixel;		/* bits per pixel (ZPixmap) */
+} *Emacs_Pix_Container;
+typedef Emacs_Pix_Container Emacs_Pixmap;
+typedef Emacs_Pix_Container Emacs_Pix_Context;
 #endif
 
 #ifdef HAVE_NTGUI
@@ -3396,7 +3413,9 @@ extern void image_destroy_bitmap (struct frame *, ptrdiff_t);
 extern void image_destroy_all_bitmaps (Display_Info *);
 #ifdef HAVE_X_WINDOWS
 extern void x_create_bitmap_mask (struct frame *, ptrdiff_t);
+#ifndef USE_CAIRO
 extern void x_kill_gs_process (Pixmap, struct frame *);
+#endif	/* !USE_CAIRO */
 #endif
 extern Lisp_Object image_find_image_file (Lisp_Object);
 
@@ -3408,7 +3427,7 @@ bool valid_image_p (Lisp_Object);
 void prepare_image_for_display (struct frame *, struct image *);
 ptrdiff_t lookup_image (struct frame *, Lisp_Object);
 
-#if defined (HAVE_X_WINDOWS) ||  defined (HAVE_NS)
+#if defined HAVE_X_WINDOWS || defined USE_CAIRO || defined HAVE_NS
 #define RGB_PIXEL_COLOR unsigned long
 #endif
 
