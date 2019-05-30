@@ -1558,6 +1558,15 @@ properly."
 (c-lang-defvar c-block-comment-ender-regexp
 	       (c-lang-const c-block-comment-ender-regexp))
 
+(c-lang-defconst c-block-comment-awkward-chars
+  "List of characters which, inside a block comment, could be the first
+character of a double character construct.  This doesn't include
+backslash."
+  t (when (> (length (c-lang-const c-block-comment-ender)) 1)
+      (list (aref (c-lang-const c-block-comment-ender) 0))))
+(c-lang-defvar c-block-comment-awkward-chars
+	       (c-lang-const c-block-comment-awkward-chars))
+
 (c-lang-defconst c-font-lock-comment-end-skip
   ;; Regexp which matches whitespace followed by the end of a block comment
   ;; (if such exists in the language).  This is used by font lock to determine

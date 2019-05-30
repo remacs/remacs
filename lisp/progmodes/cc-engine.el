@@ -2555,10 +2555,19 @@ comment at the start of cc-engine.el for more info."
 
 (defvar c-state-semi-nonlit-pos-cache nil)
 (make-variable-buffer-local 'c-state-semi-nonlit-pos-cache)
-;; A list of elements which are either buffer positions (when such positions
-;; are not in literals) or lists of the form (POS TYPE START), where POS is
-;; a buffer position inside a literal, TYPE is the type of the literal
-;; ('string, 'c, or 'c++) and START is the start of the literal.
+;; A list of elements in descending order of POS of one of the forms:
+;;   o - POS (when point is not in a literal);
+;;   o - (POS CHAR-1) (when the last character before point is potentially
+;;       the first of a two-character construct
+;;   o - (POS TYPE STARTING-POS) (when in a literal);
+;;   o - (POS TYPE STARTING-POS CHAR-1) (Combination of the previous two),
+;;
+;; where POS is the position for which the entry is valid, TYPE is the type of
+;; the comment ('c or 'c++) or the character which should close the string
+;; (e.g. ?\") or t for a generic string.  STARTING-POS is the starting
+;; position of the comment or string.  CHAR-1 is either the character
+;; potentially forming the first half of a two-char construct (in Emacs <= 25
+;; and XEmacs) or the syntax of the character (Emacs >= 26).
 
 (defvar c-state-semi-nonlit-pos-cache-limit 1)
 (make-variable-buffer-local 'c-state-semi-nonlit-pos-cache-limit)
@@ -2598,14 +2607,20 @@ comment at the start of cc-engine.el for more info."
 	 (or (assq here c-state-semi-nonlit-near-cache)
 	     (let ((nc-list c-state-semi-nonlit-near-cache)
 		   pos (nc-pos 0) cand-pos-state)
-	       (while nc-list
-		 (setq pos (caar nc-list))
-		 (when (and (<= pos here)
-			    (> pos nc-pos))
-		   (setq nc-pos pos
-			 cand-pos-state (car nc-list)))
-		 (setq nc-list (cdr nc-list)))
-	       cand-pos-state))))
+	       (catch 'found
+		 (while nc-list
+		   (setq pos (caar nc-list))
+		   (when (>= here pos)
+		     (cond
+		      ((and (cdar nc-list)
+			    (nth 8 (cdar nc-list))
+			    (< here (nth 8 (cdar nc-list))))
+		       (throw 'found (car nc-list)))
+		      ((> pos nc-pos)
+		       (setq nc-pos pos
+			     cand-pos-state (car nc-list)))))
+		   (setq nc-list (cdr nc-list)))
+		 cand-pos-state)))))
     (when (and nc-pos-state
 	       (not (eq nc-pos-state (car c-state-semi-nonlit-near-cache))))
       ;; Move the found cache entry to the front of the list.
@@ -2645,23 +2660,36 @@ comment at the start of cc-engine.el for more info."
       (c-state-semi-trim-near-cache)
       (setq c-state-semi-nonlit-pos-cache-limit here)
       (save-match-data
-	(let* ((base-and-state (c-state-semi-get-near-cache-entry here))
-	       (base (car base-and-state))
-	       (near-base base)
-	       (s (cdr base-and-state))
-	       far-base-and-state far-base far-s ty)
-	  (if (or (not base)
-		  (< base (- here 100)))
+	(let* ((pos-and-state (c-state-semi-get-near-cache-entry here))
+	       (pos (car pos-and-state))
+	       (near-pos pos)
+	       (s (cdr pos-and-state))
+	       far-pos-and-state far-pos far-s ty)
+	  (if (or (not pos)
+		  (< pos (- here 100)))
 	      (progn
-		(setq far-base-and-state (c-parse-ps-state-below here)
-		      far-base (car far-base-and-state)
-		      far-s (cdr far-base-and-state))
-		(when (or (not base) (> far-base base))
-		  (setq base far-base
+		(setq far-pos-and-state (c-parse-ps-state-below here)
+		      far-pos (car far-pos-and-state)
+		      far-s (cdr far-pos-and-state))
+		(when (or (not pos) (> far-pos pos))
+		  (setq pos far-pos
 			s far-s))))
-	  (when (> here base)
-	    (setq s (parse-partial-sexp base here nil nil s)))
-	  (when (not (eq near-base here))
+	  (when
+	      (or
+	       (> here pos)
+	       (null (nth 8 s))
+	       (< here (nth 8 s))	; Can't happen, can it?
+	       (not
+		(or
+		 (and (nth 3 s)		; string
+		      (not (eq (char-before here) ?\\)))
+		 (and (nth 4 s) (not (nth 7 s)) ; Block comment
+		      (not (memq (char-before here)
+				 c-block-comment-awkward-chars)))
+		 (and (nth 4 s) (nth 7 s) ; Line comment
+		      (not (memq (char-before here) '(?\\ ?\n)))))))
+	    (setq s (parse-partial-sexp pos here nil nil s)))
+	  (when (not (eq near-pos here))
 	    (c-state-semi-put-near-cache-entry here s))
 	  (cond
 	   ((or (nth 3 s)
@@ -2801,6 +2829,7 @@ comment at the start of cc-engine.el for more info."
 
 	 (t `(,s)))))))
 
+;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
 (defun c-cache-to-parse-ps-state (elt)
   ;; Create a list suitable to use as the old-state parameter to
   ;; `parse-partial-sexp', out of ELT, a member of
@@ -2831,16 +2860,14 @@ comment at the start of cc-engine.el for more info."
 		com-style (if (eq type 'c++) 1 nil)))
 	 (t (c-benign-error "Invalid type %s in c-cache-to-parse-ps-state"
 			    elt)))
+	(goto-char (if char-1
+		       (1- pos)
+		     pos))
 	(if (memq 'pps-extended-state c-emacs-features)
-	    (progn
-	      (goto-char pos)
-	      (list depth containing last
-		    in-string in-comment after-quote
-		    min-depth com-style com-str-start
-		    intermediate char-1))
-	  (goto-char (if char-1
-			 (1- pos)
-		       pos))
+	    (list depth containing last
+		  in-string in-comment nil
+		  min-depth com-style com-str-start
+		  intermediate nil)
 	  (list depth containing last
 		in-string in-comment nil
 		min-depth com-style com-str-start
@@ -2860,6 +2887,7 @@ comment at the start of cc-engine.el for more info."
 		     nil
 		     0 nil nil nil)))))
 
+;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
 (defun c-parse-ps-state-to-cache (state)
   ;; Convert STATE, a `parse-partial-sexp' state valid at POINT, to an element
   ;; for the `c-state-semi-nonlit-pos-cache' cache.  This is one of
@@ -2958,6 +2986,18 @@ comment at the start of cc-engine.el for more info."
 	  (while
 	      (<= (setq npos (+ (point) c-state-nonlit-pos-interval)) here)
 	    (setq state (parse-partial-sexp (point) npos nil nil state))
+	    ;; If we're after a \ or a / or * which might be a comment
+	    ;; delimiter half, move back a character.
+	    (when (or (nth 5 state)	; After a quote character
+		      (and (memq 'pps-extended-state c-emacs-features)
+			   (nth 10 state))) ; in the middle of a 2-char seq.
+	      (setq npos (1- npos))
+	      (backward-char)
+	      (when (nth 10 state)
+		(setcar (nthcdr 10 state) nil))
+	      (when (nth 5 state)
+		(setcar (nthcdr 5 state) nil)))
+
 	    (setq elt (c-parse-ps-state-to-cache state))
 	    (setq c-state-semi-nonlit-pos-cache
 		  (cons elt c-state-semi-nonlit-pos-cache))))
