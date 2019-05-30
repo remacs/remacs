@@ -459,7 +459,7 @@ Preloaded with all known option names from dcl-option-alist")
 ;    ("GOSUB" (, (concat dcl-cmd-r
 ;			"GOSUB[ \t]+\\([A-Za-z0-9_$]+\\)")) 5)
 ;    ("CALL" (, (concat dcl-cmd-r "CALL[ \t]+\\([A-Za-z0-9_$]+\\)")) 5)))
-;  "*Default imenu generic expression for DCL.
+;  "Default imenu generic expression for DCL.
 
 ;The default includes SUBROUTINE labels in the main listing and
 ;sub-listings for other labels, CALL, GOTO and GOSUB statements.

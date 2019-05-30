@@ -616,7 +616,7 @@ DIRNAME omitted or nil means use `desktop-dirname'."
 ";; --------------------------------------------------------------------------
 ;; Desktop File for Emacs
 ;; --------------------------------------------------------------------------
-" "*Header to place in Desktop file.")
+" "Header to place in Desktop file.")
 
 (defvar desktop-delay-hook nil
   "Hooks run after all buffers are loaded; intended for internal use.")

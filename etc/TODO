@@ -122,9 +122,6 @@ It can use the same icons as gud.
 ** Check what minor modes don't use define-minor-mode and convert them
 to use it.
 
-** Convert all defvars with leading '*' in the doc-strings into defcustoms
-of appropriate :type and :group.
-
 ** Remove unnecessary autoload cookies from defcustoms.
 This needs a bit of care, since often people have become used to
 expecting such variables to always be defined, eg when they modify

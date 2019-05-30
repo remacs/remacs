@@ -77,7 +77,13 @@
 
 (require 'shell)
 
-(defvar kermit-esc-char "\C-\\" "*Kermit's escape char.")
+(defgroup kermit nil
+  "Kermit support."
+  :group 'comm)
+
+(defcustom kermit-esc-char "\C-\\"
+  "Kermit's escape char."
+  :type 'string)
 
 (defun kermit-esc ()
   "For sending escape sequences to a kermit running in shell mode."

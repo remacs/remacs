@@ -83,6 +83,7 @@
 (defvar a-defvar (cons 1 2)
   "Variable a")
 
+;; FIXME: This practice is not recommended in recent Emacs.  Remove?
 (defvar a-defvar-star (cons 1 2)
   "*User visible var a")
 
