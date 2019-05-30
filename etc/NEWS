@@ -797,7 +797,7 @@ only one hit.  This can be altered by changing
 'xref-show-xrefs-function'.
 
 *** Xref buffers support refreshing the search results.
-A new command 'xref-refresh-results' is bound to 'g'.
+A new command 'xref-revert-buffer' is bound to 'g'.
 
 ** Ecomplete
 

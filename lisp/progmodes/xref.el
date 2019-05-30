@@ -695,7 +695,7 @@ references displayed in the current *xref* buffer."
     ;; suggested by Johan Claesson "to further reduce finger movement":
     (define-key map (kbd ".") #'xref-next-line)
     (define-key map (kbd ",") #'xref-prev-line)
-    (define-key map (kbd "g") #'xref-refresh-results)
+    (define-key map (kbd "g") #'xref-revert-buffer)
     map))
 
 (define-derived-mode xref--xref-buffer-mode special-mode "XREF"
@@ -802,7 +802,7 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
         (setq xref--fetcher fetcher)
         (current-buffer)))))
 
-(defun xref-refresh-results ()
+(defun xref-revert-buffer ()
   "Refresh the search results in the current buffer."
   (interactive)
   (let ((inhibit-read-only t)
