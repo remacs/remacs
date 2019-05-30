@@ -2270,6 +2270,8 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
   int event_basep, error_basep;
   if (picture && XRenderQueryExtension (display, &event_basep, &error_basep))
     {
+      if (depth <= 0)
+	depth = DefaultDepthOfScreen (FRAME_X_SCREEN (f));
       if (depth == 32 || depth == 24 || depth == 8)
         {
           XRenderPictFormat *format;
