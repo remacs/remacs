@@ -614,7 +614,8 @@
     (should (eq x x))
     (should (eql x y))
     (should (equal x y))
-    (should-not (eql x 0.0e+NaN))))
+    (should-not (eql x 0.0e+NaN))
+    (should (memql x (list y)))))
 
 (ert-deftest test-bignum-hash ()
   "Test that hash tables work for bignums."

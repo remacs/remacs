@@ -1567,18 +1567,32 @@ DEFUN ("memql", Fmemql, Smemql, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
-  if (!FLOATP (elt))
-    return Fmemq (elt, list);
-
-  Lisp_Object tail = list;
-  FOR_EACH_TAIL (tail)
+  if (FLOATP (elt))
     {
-      Lisp_Object tem = XCAR (tail);
-      if (FLOATP (tem) && same_float (elt, tem))
-	return tail;
+      Lisp_Object tail = list;
+      FOR_EACH_TAIL (tail)
+        {
+          Lisp_Object tem = XCAR (tail);
+          if (FLOATP (tem) && same_float (elt, tem))
+            return tail;
+        }
+      CHECK_LIST_END (tail, list);
+      return Qnil;
     }
-  CHECK_LIST_END (tail, list);
-  return Qnil;
+  else if (BIGNUMP (elt))
+    {
+      Lisp_Object tail = list;
+      FOR_EACH_TAIL (tail)
+        {
+          Lisp_Object tem = XCAR (tail);
+          if (equal_no_quit (elt, tem))
+            return tail;
+        }
+      CHECK_LIST_END (tail, list);
+      return Qnil;
+    }
+  else
+    return Fmemq (elt, list);
 }
 
 DEFUN ("assq", Fassq, Sassq, 2, 2, 0,
