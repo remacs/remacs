@@ -346,7 +346,6 @@ xd_signature (char *signature, int dtype, int parent_type, Lisp_Object object)
   int subtype;
   Lisp_Object elt;
   char const *subsig;
-  int subsiglen;
   char x[DBUS_MAXIMUM_SIGNATURE_LENGTH];
 
   elt = object;
@@ -428,10 +427,9 @@ xd_signature (char *signature, int dtype, int parent_type, Lisp_Object object)
 	  elt = CDR_SAFE (XD_NEXT_VALUE (elt));
 	}
 
-      subsiglen = snprintf (signature, DBUS_MAXIMUM_SIGNATURE_LENGTH,
-			    "%c%s", dtype, subsig);
-      if (! (0 <= subsiglen && subsiglen < DBUS_MAXIMUM_SIGNATURE_LENGTH))
-	string_overflow ();
+      signature[0] = dtype;
+      signature[1] = '\0';
+      xd_signature_cat (signature, subsig);
       break;
 
     case DBUS_TYPE_VARIANT:
