@@ -155,6 +155,7 @@ This should only be called after matching against `ruby-here-doc-beg-re'."
     (define-key map (kbd "M-C-n") 'ruby-end-of-block)
     (define-key map (kbd "C-c {") 'ruby-toggle-block)
     (define-key map (kbd "C-c '") 'ruby-toggle-string-quotes)
+    (define-key map (kbd "C-c C-f") 'ruby-find-library-file)
     map)
   "Keymap used in Ruby mode.")
 
@@ -1801,6 +1802,28 @@ If the result is do-end block, it will always be multiline."
         (insert
          (format "%s%s%s" string-quote content string-quote))
         (goto-char orig-point)))))
+
+(defun ruby-find-library-file (&optional feature-name)
+  "Visit a library file denoted by FEATURE-NAME.
+FEATURE-NAME is a relative file name, file extension is optional.
+This commands delegates to 'gem which', which searches both
+installed gems and the standard library.  When called
+interactively, defaults to the feature name in the 'require'
+statement around point."
+  (interactive)
+  (unless feature-name
+    (let ((init (save-excursion
+                  (forward-line 0)
+                  (when (looking-at "require [\"']\\(.?*\\)[\"']")
+                    (match-string 1)))))
+      (setq feature-name (read-string "Feature name: " init))))
+  (let ((out
+         (substring
+          (shell-command-to-string (concat "gem which " feature-name))
+          0 -1)))
+    (if (string-match-p "\\`ERROR" out)
+        (user-error "%s" out)
+      (find-file out))))
 
 (eval-and-compile
   (defconst ruby-percent-literal-beg-re

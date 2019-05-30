@@ -733,6 +733,8 @@ it can't find the config file.
 
 *** Rubocop is called with 'bundle exec' if Gemfile mentions it.
 
+*** New command 'ruby-find-library-file' bound to 'C-c C-f'.
+
 ** Package
 
 *** Change of 'package-check-signature' for packages with multiple sigs
