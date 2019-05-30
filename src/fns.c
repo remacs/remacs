@@ -1521,7 +1521,7 @@ union double_and_words
   EMACS_UINT word[WORDS_PER_DOUBLE];
 };
 
-/* Return true if X and Y are the same floating-point value.
+/* Return true if the floats X and Y have the same value.
    This looks at X's and Y's representation, since (unlike '==')
    it returns true if X and Y are the same NaN.  */
 static bool
@@ -1567,32 +1567,32 @@ DEFUN ("memql", Fmemql, Smemql, 2, 2, 0,
 The value is actually the tail of LIST whose car is ELT.  */)
   (Lisp_Object elt, Lisp_Object list)
 {
+  Lisp_Object tail = list;
+
   if (FLOATP (elt))
     {
-      Lisp_Object tail = list;
       FOR_EACH_TAIL (tail)
         {
           Lisp_Object tem = XCAR (tail);
           if (FLOATP (tem) && same_float (elt, tem))
             return tail;
         }
-      CHECK_LIST_END (tail, list);
-      return Qnil;
     }
   else if (BIGNUMP (elt))
     {
-      Lisp_Object tail = list;
       FOR_EACH_TAIL (tail)
         {
           Lisp_Object tem = XCAR (tail);
-          if (equal_no_quit (elt, tem))
+          if (BIGNUMP (tem)
+	      && mpz_cmp (XBIGNUM (elt)->value, XBIGNUM (tem)->value) == 0)
             return tail;
         }
-      CHECK_LIST_END (tail, list);
-      return Qnil;
     }
   else
     return Fmemq (elt, list);
+
+  CHECK_LIST_END (tail, list);
+  return Qnil;
 }
 
 DEFUN ("assq", Fassq, Sassq, 2, 2, 0,
@@ -2301,7 +2301,9 @@ This differs from numeric comparison: (eql 0.0 -0.0) returns nil and
   if (FLOATP (obj1))
     return FLOATP (obj2) && same_float (obj1, obj2) ? Qt : Qnil;
   else if (BIGNUMP (obj1))
-    return equal_no_quit (obj1, obj2) ? Qt : Qnil;
+    return ((BIGNUMP (obj2)
+	     && mpz_cmp (XBIGNUM (obj1)->value, XBIGNUM (obj2)->value) == 0)
+	    ? Qt : Qnil);
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
 }
