@@ -182,7 +182,7 @@ struct list
   };
 
 /* Free list headers for each fragment size.  */
-extern struct list _fraghead[];
+static struct list _fraghead[BLOCKLOG];
 
 /* List of blocks allocated with aligned_alloc and friends.  */
 struct alignlist
@@ -339,9 +339,6 @@ size_t _heapindex;
 /* Limit of valid info table indices.  */
 size_t _heaplimit;
 
-/* Free lists for each fragment size.  */
-struct list _fraghead[BLOCKLOG];
-
 /* Instrumentation.  */
 size_t _chunks_used;
 size_t _bytes_used;
@@ -350,10 +347,6 @@ size_t _bytes_free;
 
 /* Are you experienced?  */
 int __malloc_initialized;
-
-#else
-
-static struct list _fraghead[BLOCKLOG];
 
 #endif /* HYBRID_MALLOC */
 
