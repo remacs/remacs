@@ -9306,6 +9306,17 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
   if (filename)
     rsvg_handle_set_base_uri(rsvg_handle, filename);
 
+  /* Suppress GCC deprecation warnings starting in librsvg 2.45.1 for
+     rsvg_handle_write and rsvg_handle_close.  FIXME: Use functions
+     like rsvg_handle_new_from_gfile_sync on newer librsvg versions,
+     and remove this hack.  */
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic push
+  #endif
+  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
+   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
+
   /* Parse the contents argument and fill in the rsvg_handle.  */
   rsvg_handle_write (rsvg_handle, (unsigned char *) contents, size, &err);
   if (err) goto rsvg_error;
@@ -9314,6 +9325,10 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      for further writes.  */
   rsvg_handle_close (rsvg_handle, &err);
   if (err) goto rsvg_error;
+
+  #if GNUC_PREREQ (4, 6, 0)
+   #pragma GCC diagnostic pop
+  #endif
 
   rsvg_handle_get_dimensions (rsvg_handle, &dimension_data);
   if (! check_image_size (f, dimension_data.width, dimension_data.height))
