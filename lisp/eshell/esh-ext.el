@@ -74,10 +74,8 @@ but Eshell will be able to understand
   "Search the environment path for NAME."
   (if (file-name-absolute-p name)
       name
-    (let ((list (eshell-parse-colon-path eshell-path-env))
+    (let ((list (eshell-get-path))
 	  suffixes n1 n2 file)
-      (if (eshell-under-windows-p)
-          (push "." list))
       (while list
 	(setq n1 (concat (car list) name))
 	(setq suffixes eshell-binary-suffixes)

@@ -232,6 +232,14 @@ It might be different from \(getenv \"PATH\"), when
 `default-directory' points to a remote host.")
 (make-variable-buffer-local 'eshell-path-env)
 
+(defun eshell-get-path ()
+  "Return $PATH as list.
+Add the current directory on windows."
+  (eshell-parse-colon-path
+   (if (eshell-under-windows-p)
+       (concat "." path-separator eshell-path-env)
+     eshell-path-env)))
+
 (defun eshell-parse-colon-path (path-env)
   "Split string with `parse-colon-path'.
 Prepend remote identification of `default-directory', if any."

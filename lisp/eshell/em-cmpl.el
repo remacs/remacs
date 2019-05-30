@@ -409,13 +409,11 @@ to writing a completion function."
 	  (setq filename (substring filename 1)
 		pcomplete-stub filename
 		glob-name t))
-      (let* ((paths (eshell-parse-colon-path eshell-path-env))
+      (let* ((paths (eshell-get-path))
 	     (cwd (file-name-as-directory
 		   (expand-file-name default-directory)))
 	     (path "") (comps-in-path ())
 	     (file "") (filepath "") (completions ()))
-        (if (eshell-under-windows-p)
-            (push "." paths))
 	;; Go thru each path in the search path, finding completions.
 	(while paths
 	  (setq path (file-name-as-directory
