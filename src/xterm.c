@@ -698,12 +698,39 @@ static void
 x_fill_rectangle (struct frame *f, GC gc, int x, int y, int width, int height)
 {
 #ifdef USE_CAIRO
+  Display *dpy = FRAME_X_DISPLAY (f);
   cairo_t *cr;
+  XGCValues xgcv;
 
   cr = x_begin_cr_clip (f, gc);
-  x_set_cr_source_with_gc_foreground (f, gc);
-  cairo_rectangle (cr, x, y, width, height);
-  cairo_fill (cr);
+  XGetGCValues (dpy, gc, GCFillStyle | GCStipple, &xgcv);
+  if (xgcv.fill_style == FillSolid
+      /* Invalid resource ID (one or more of the three most
+	 significant bits set to 1) is obtained if the GCStipple
+	 component has never been explicitly set.  It should be
+	 regarded as Pixmap of unspecified size filled with ones.  */
+      || (xgcv.stipple & ((Pixmap) 7 << (sizeof (Pixmap) * CHAR_BIT - 3))))
+    {
+      x_set_cr_source_with_gc_foreground (f, gc);
+      cairo_rectangle (cr, x, y, width, height);
+      cairo_fill (cr);
+    }
+  else
+    {
+      eassert (xgcv.fill_style == FillOpaqueStippled);
+      eassert (xgcv.stipple != None);
+      x_set_cr_source_with_gc_background (f, gc);
+      cairo_rectangle (cr, x, y, width, height);
+      cairo_fill_preserve (cr);
+
+      cairo_pattern_t *pattern = x_bitmap_stipple (f, xgcv.stipple);
+      if (pattern)
+	{
+	  x_set_cr_source_with_gc_foreground (f, gc);
+	  cairo_clip (cr);
+	  cairo_mask (cr, pattern);
+	}
+    }
   x_end_cr_clip (f);
 #else
   XFillRectangle (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f),

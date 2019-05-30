@@ -291,6 +291,41 @@ x_bitmap_width (struct frame *f, ptrdiff_t id)
 {
   return FRAME_DISPLAY_INFO (f)->bitmaps[id - 1].width;
 }
+
+#ifdef USE_CAIRO
+cairo_pattern_t *
+x_bitmap_stipple (struct frame *f, Pixmap pixmap)
+{
+  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+  for (ptrdiff_t i = 0; i < dpyinfo->bitmaps_last; i++)
+    {
+      struct x_bitmap_record *bm = dpyinfo->bitmaps + i;
+
+      if (bm->refcount && bm->pixmap == pixmap && bm->depth == 1)
+	{
+	  if (bm->stipple == NULL)
+	    {
+	      cairo_surface_t *surface
+		= cairo_xlib_surface_create_for_bitmap (FRAME_X_DISPLAY (f),
+							pixmap,
+							FRAME_X_SCREEN (f),
+							bm->width, bm->height);
+	      cairo_pattern_t *pattern
+		= cairo_pattern_create_for_surface (surface);
+	      cairo_surface_destroy (surface);
+	      cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
+	      bm->stipple = pattern;
+	    }
+
+	  return bm->stipple;
+	}
+    }
+
+  return NULL;
+}
+
+#endif	/* USE_CAIRO */
 #endif
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NTGUI)
@@ -389,6 +424,9 @@ image_create_bitmap_from_data (struct frame *f, char *bits,
   dpyinfo->bitmaps[id - 1].pixmap = bitmap;
   dpyinfo->bitmaps[id - 1].have_mask = false;
   dpyinfo->bitmaps[id - 1].depth = 1;
+#ifdef USE_CAIRO
+  dpyinfo->bitmaps[id - 1].stipple = NULL;
+#endif	/* USE_CAIRO */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NTGUI
@@ -470,6 +508,9 @@ image_create_bitmap_from_file (struct frame *f, Lisp_Object file)
   dpyinfo->bitmaps[id - 1].depth = 1;
   dpyinfo->bitmaps[id - 1].height = height;
   dpyinfo->bitmaps[id - 1].width = width;
+#ifdef USE_CAIRO
+  dpyinfo->bitmaps[id - 1].stipple = NULL;
+#endif	/* USE_CAIRO */
 
   return id;
 #endif /* HAVE_X_WINDOWS */
@@ -484,6 +525,10 @@ free_bitmap_record (Display_Info *dpyinfo, Bitmap_Record *bm)
   XFreePixmap (dpyinfo->display, bm->pixmap);
   if (bm->have_mask)
     XFreePixmap (dpyinfo->display, bm->mask);
+#ifdef USE_CAIRO
+  if (bm->stipple)
+    cairo_pattern_destroy (bm->stipple);
+#endif	/* USE_CAIRO */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NTGUI
@@ -3843,6 +3888,9 @@ x_create_bitmap_from_xpm_data (struct frame *f, const char **bits)
   dpyinfo->bitmaps[id - 1].width = attrs.width;
   dpyinfo->bitmaps[id - 1].depth = attrs.depth;
   dpyinfo->bitmaps[id - 1].refcount = 1;
+#ifdef USE_CAIRO
+  dpyinfo->bitmaps[id - 1].stipple = NULL;
+#endif	/* USE_CAIRO */
 
 #ifdef ALLOC_XPM_COLORS
   xpm_free_color_cache ();

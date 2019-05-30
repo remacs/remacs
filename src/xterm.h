@@ -130,7 +130,7 @@ struct xim_inst_t
 struct x_bitmap_record
 {
 #ifdef USE_CAIRO
-  void *img;
+  cairo_pattern_t *stipple;
 #endif
   Pixmap pixmap;
   bool have_mask;
@@ -151,6 +151,8 @@ struct x_gc_ext_data
   /* Clipping rectangles.  */
   XRectangle clip_rects[MAX_CLIP_RECTS];
 };
+
+extern cairo_pattern_t *x_bitmap_stipple (struct frame *, Pixmap);
 #endif
 
 
