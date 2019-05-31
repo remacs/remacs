@@ -34,7 +34,8 @@ suitable libgmp is available.
 HarfBuzz text shaping engine.  It is on by default; use './configure
 --without-harfbuzz' to build without it.  The HarfBuzz text shaping is
 available via new font backend drivers 'xfthb' and 'ftcrhb' for Xft
-and Cairo drawings, respectively.
+and Cairo drawings, respectively, and via the 'harfbuzz' backend on
+MS-Windows.
 
 ** The new configure option '--with-json' adds support for JSON using
 the Jansson library.  It is on by default; use './configure
