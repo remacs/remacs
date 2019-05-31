@@ -1379,7 +1379,9 @@ when printing the error message."
 (defun byte-compile-callargs-warn (form)
   (let* ((def (or (byte-compile-fdefinition (car form) nil)
 		  (byte-compile-fdefinition (car form) t)))
-         (sig (byte-compile--function-signature (or def (car form))))
+         (sig (cond (def (byte-compile--function-signature def))
+                    ((subrp (symbol-function (car form)))
+                     (subr-arity (symbol-function (car form))))))
 	 (ncall (length (cdr form))))
     ;; Check many or unevalled from subr-arity.
     (if (and (cdr-safe sig)
