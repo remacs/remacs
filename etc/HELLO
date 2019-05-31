@@ -10,7 +10,7 @@ Non-ASCII examples:
   Europe: <x-charset><param>latin-iso8859-1</param>¡Hola!, Grüß Gott, Hyvää päivää,</x-charset><x-charset><param>latin-iso8859-15</param> Tere õhtust,</x-charset><x-charset><param>latin-iso8859-3</param> Bonġu
           Cześć!,</x-charset><x-charset><param>latin-iso8859-2</param> Dobrý den,</x-charset><x-charset><param>cyrillic-iso8859-5</param> Здравствуйте!,</x-charset><x-charset><param>greek-iso8859-7</param> Γειά σας,</x-charset><x-charset><param>mule-unicode-0100-24ff</param> გამარჯობა</x-charset>
   Africa:<x-charset><param>mule-unicode-0100-24ff</param> </x-charset><x-charset><param>ethiopic</param>ሠላም</x-charset>
-  Middle/Near East:<x-charset><param>hebrew-iso8859-8</param> שלום,</x-charset><x-charset><param>mule-unicode-0100-24ff</param> السّلام عليكم</x-charset>
+  Middle/Near East:<x-charset><param>hebrew-iso8859-8</param> שָׁלוֹם,</x-charset><x-charset><param>mule-unicode-0100-24ff</param> السّلام عليكم</x-charset>
   South Asia:<x-charset><param>mule-unicode-0100-24ff</param> નમસ્તે, नमस्ते, ನಮಸ್ಕಾರ, നമസ്കാരം, ଶୁଣିବେ,
               ආයුබෝවන්, வணக்கம், నమస్కారం,</x-charset><x-charset><param>tibetan</param> བཀྲ་ཤིས་བདེ་ལེགས༎</x-charset>
   South East Asia:<x-charset><param>mule-unicode-0100-24ff</param> ជំរាបសួរ,</x-charset><x-charset><param>lao</param> ສະບາຍດີ,</x-charset><x-charset><param>mule-unicode-0100-24ff</param> မင်္ဂလာပါ,</x-charset><x-charset><param>thai-tis620</param> สวัสดีครับ,</x-charset><x-charset><param>vietnamese-viscii-lower</param> </x-charset><x-charset><param>vietnamese-viscii-upper</param>C</x-charset><x-charset><param>vietnamese-viscii-lower</param>hào bạn</x-charset>
@@ -52,7 +52,7 @@ French (français)	Bonjour / Salut
 </x-charset><x-charset><param>greek-iso8859-7</param>Greek (ελληνικά)	Γειά σας
 </x-charset><x-charset><param>mule-unicode-0100-24ff</param>Greek, ancient (ἑλληνική)	Οὖλέ τε καὶ μέγα χαῖρε
 Gujarati (ગુજરાતી)	નમસ્તે
-</x-charset><x-charset><param>hebrew-iso8859-8</param>Hebrew (עברית)	שלום
+</x-charset><x-charset><param>hebrew-iso8859-8</param>Hebrew (עִבְרִית)	שָׁלוֹם
 </x-charset><x-charset><param>latin-iso8859-2</param>Hungarian (magyar)	Szép jó napot!
 </x-charset><x-charset><param>mule-unicode-0100-24ff</param>Hindi (हिंदी)	नमस्ते / नमस्कार ।
 </x-charset><x-charset><param>unicode</param>Inuktitut (ᐃᓄᒃᑎᑐᑦ)	ᐊᐃ
