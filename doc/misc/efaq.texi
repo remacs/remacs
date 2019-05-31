@@ -1687,11 +1687,21 @@ mode-line-format @key{RET}}) for more information on how to set and use
 this variable.
 
 @cindex Set number capability in @code{vi} emulators
-The @samp{linum} package (distributed with Emacs since version 23.1)
-displays line numbers in the left margin, like the ``set number''
-capability of @code{vi}.  The packages @samp{setnu} and
-@samp{wb-line-number} (not distributed with Emacs) also implement this
-feature.
+The @samp{display-line-numbers} package (added to Emacs in version
+26.1) displays line numbers in the text area, before each line, like
+the ``set number'' capability of @samp{vi}.  Customize the
+buffer-local variable @code{display-line-numbers} to activate this
+optional display.  Alternatively, you can use the
+@code{display-line-numbers-mode} minor mode or the global
+@code{global-display-line-numbers-mode}.  When using these modes,
+customize @code{display-line-numbers-type} with the same value as you
+would use with @code{display-line-numbers}.
+
+There is also the @samp{linum} package (distributed with Emacs since
+version 23.1) which will henceforth become obsolete.  Users and
+developers are encouraged to use @samp{display-line-numbers} instead.
+The packages @samp{setnu} and @samp{wb-line-number} (not distributed
+with Emacs) also implement this feature.
 
 @node Displaying the current file name in the titlebar
 @section How can I modify the titlebar to contain the current file name?
