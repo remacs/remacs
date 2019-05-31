@@ -704,6 +704,16 @@ references displayed in the current *xref* buffer."
   (setq next-error-function #'xref--next-error-function)
   (setq next-error-last-buffer (current-buffer)))
 
+(defvar xref--transient-buffer-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") #'xref-quit-and-goto-xref)
+    (set-keymap-parent map xref--xref-buffer-mode-map)
+    map))
+
+(define-derived-mode xref--transient-buffer-mode
+  xref--xref-buffer-mode
+  "XREF Transient")
+
 (defun xref--next-error-function (n reset?)
   (when reset?
     (goto-char (point-min)))
@@ -725,7 +735,6 @@ references displayed in the current *xref* buffer."
 
 (defvar xref--button-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [(control ?m)] #'xref-goto-xref)
     (define-key map [mouse-1] #'xref-goto-xref)
     (define-key map [mouse-2] #'xref--mouse-2)
     map))
@@ -789,18 +798,21 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
            (funcall fetcher)))
          (xref-alist (xref--analyze xrefs)))
     (with-current-buffer (get-buffer-create xref-buffer-name)
-      (setq buffer-undo-list nil)
-      (let ((inhibit-read-only t)
-            (buffer-undo-list t))
-        (erase-buffer)
-        (xref--insert-xrefs xref-alist)
-        (xref--xref-buffer-mode)
-        (pop-to-buffer (current-buffer))
-        (goto-char (point-min))
-        (setq xref--original-window (assoc-default 'window alist)
-              xref--original-window-intent (assoc-default 'display-action alist))
-        (setq xref--fetcher fetcher)
-        (current-buffer)))))
+      (xref--show-common-initialize xref-alist fetcher alist)
+      (xref--xref-buffer-mode)
+      (pop-to-buffer (current-buffer))
+      (current-buffer))))
+
+(defun xref--show-common-initialize (xref-alist fetcher alist)
+  (setq buffer-undo-list nil)
+  (let ((inhibit-read-only t)
+        (buffer-undo-list t))
+    (erase-buffer)
+    (xref--insert-xrefs xref-alist)
+    (goto-char (point-min))
+    (setq xref--original-window (assoc-default 'window alist)
+          xref--original-window-intent (assoc-default 'display-action alist))
+    (setq xref--fetcher fetcher)))
 
 (defun xref-revert-buffer ()
   "Refresh the search results in the current buffer."
@@ -829,6 +841,24 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
       (xref--show-xref-buffer fetcher
                               (cons (cons 'fetched-xrefs xrefs)
                                     alist))))))
+
+(defun xref--show-defs-buffer-at-bottom (fetcher alist)
+  "Show definitions list in a window at the bottom.
+When there is more than one definition, split the selected window
+and show the list in a small window at the bottom.  And use a
+local keymap that binds `RET' to `xref-quit-and-goto-xref'."
+  (let ((xrefs (funcall fetcher)))
+    (cond
+     ((not (cdr xrefs))
+      (xref--pop-to-location (car xrefs)
+                             (assoc-default 'display-action alist)))
+     (t
+      (with-current-buffer (get-buffer-create xref-buffer-name)
+        (xref--show-common-initialize (xref--analyze xrefs) fetcher alist)
+        (xref--transient-buffer-mode)
+        (pop-to-buffer (current-buffer)
+                       '(display-buffer-in-direction . ((direction . below))))
+        (current-buffer))))))
 
 
 (defvar xref-show-xrefs-function 'xref--show-xref-buffer
