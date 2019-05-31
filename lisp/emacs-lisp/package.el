@@ -1241,6 +1241,17 @@ errors."
         (signal 'bad-signature (list sig-file)))
       good-signatures)))
 
+(defun package--buffer-string ()
+  (let ((string (buffer-string)))
+    (when (and buffer-file-coding-system
+               (> (length string) 0))
+      (put-text-property 0 1 'package--cs buffer-file-coding-system string))
+    string))
+
+(defun package--cs (string)
+  (and (> (length string) 0)
+       (get-text-property 0 'package--cs string)))
+
 (defun package--check-signature (location file &optional string async callback unwind)
   "Check signature of the current buffer.
 Download the signature file from LOCATION by appending \".sig\"
@@ -1260,8 +1271,12 @@ Otherwise, an error is signaled.
 
 UNWIND, if provided, is a function to be called after everything
 else, even if an error is signaled."
-  (let ((sig-file (concat file ".sig"))
-        (string (or string (buffer-string))))
+  (let* ((sig-file (concat file ".sig"))
+         (string (or string (package--buffer-string)))
+         (cs (package--cs string)))
+    ;; Re-encode the downloaded file with the coding-system with which
+    ;; it was decoded, so we (hopefully) get the exact same bytes back.
+    (when cs (setq string (encode-coding-string string cs)))
     (package--with-response-buffer location :file sig-file
       :async async :noerror t
       ;; Connection error is assumed to mean "no sig-file".
@@ -1529,7 +1544,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
     :error-form (package--update-downloads-in-progress archive)
     (let* ((location (cdr archive))
            (name (car archive))
-           (content (buffer-string))
+           (content (package--buffer-string))
            (dir (expand-file-name (format "archives/%s" name) package-user-dir))
            (local-file (expand-file-name file dir)))
       (when (listp (read content))
@@ -1538,7 +1553,8 @@ similar to an entry in `package-alist'.  Save the cached copy to
                 (member name package-unsigned-archives))
             ;; If we don't care about the signature, save the file and
             ;; we're done.
-            (progn (let ((coding-system-for-write 'utf-8))
+            (progn (let ((coding-system-for-write
+                          (or (package--cs content) 'utf-8)))
                      (write-region content nil local-file nil 'silent))
                    (package--update-downloads-in-progress archive))
           ;; If we care, check it (perhaps async) and *then* write the file.
@@ -1546,7 +1562,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
            location file content async
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
-             (let ((coding-system-for-write 'utf-8))
+             (let ((coding-system-for-write (or (package--cs content) 'utf-8)))
                (write-region content nil local-file nil 'silent))
              ;; Write out good signatures into archive-contents.signed file.
              (when good-sigs
@@ -1838,15 +1854,17 @@ if all the in-between dependencies are also in PACKAGE-LIST."
           (let ((save-silently t))
             (package-unpack pkg-desc))
         ;; If we care, check it and *then* write the file.
-        (let ((content (buffer-string)))
+        (let ((content (package--buffer-string)))
           (package--check-signature
            location file content nil
            ;; This function will be called after signature checking.
            (lambda (&optional good-sigs)
              ;; Signature checked, unpack now.
-             (with-temp-buffer (insert content)
-                               (let ((save-silently t))
-                                 (package-unpack pkg-desc)))
+             (with-temp-buffer
+               (insert content)
+               (setq buffer-file-coding-system (package--cs content))
+               (let ((save-silently t))
+                 (package-unpack pkg-desc)))
              ;; Here the package has been installed successfully, mark it as
              ;; signed if appropriate.
              (when good-sigs
