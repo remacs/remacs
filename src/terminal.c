@@ -622,6 +622,7 @@ init_initial_terminal (void)
   initial_terminal->kboard = initial_kboard;
   initial_terminal->delete_terminal_hook = &delete_initial_terminal;
   initial_terminal->delete_frame_hook = &initial_free_frame_resources;
+  initial_terminal->defined_color_hook = &tty_defined_color; /* xfaces.c */
   /* Other hooks are NULL by default.  */
 
   return initial_terminal;
