@@ -29,6 +29,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define _WIN32_WINNT 0x0600
 #include <windows.h>
 #include <usp10.h>
+#ifdef HAVE_HARFBUZZ
+# include <math.h>	/* for lround */
+# include <hb.h>
+# if GNUC_PREREQ (4, 3, 0)
+#  define bswap_32(v)  __builtin_bswap32(v)
+# else
+#  include <byteswap.h>
+# endif
+#endif
 
 #include "lisp.h"
 #include "w32term.h"
@@ -39,10 +48,16 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "pdumper.h"
 #include "w32common.h"
 
+/* Extension of w32font_info used by Uniscribe and HarfBuzz backends.  */
 struct uniscribe_font_info
 {
   struct w32font_info w32_font;
-  SCRIPT_CACHE cache;
+  /* This is used by the Uniscribe backend as a pointer to the script
+     cache, and by the HarfBuzz backend as a pointer to a hb_font_t
+     object.  */
+  void *cache;
+  /* This is used by the HarfBuzz backend to store the font scale.  */
+  double scale;
 };
 
 int uniscribe_available = 0;
@@ -51,6 +66,94 @@ int uniscribe_available = 0;
 static int CALLBACK ALIGN_STACK add_opentype_font_name_to_list (ENUMLOGFONTEX *,
 								NEWTEXTMETRICEX *,
 								DWORD, LPARAM);
+#ifdef HAVE_HARFBUZZ
+
+struct font_driver harfbuzz_font_driver;
+int harfbuzz_available = 0;
+
+/* Typedefs for HarfBuzz functions which we call through function
+   pointers initialized after we load the HarfBuzz DLL.  */
+DEF_DLL_FN (hb_blob_t *, hb_blob_create,
+	    (const char *, unsigned int, hb_memory_mode_t, void *,
+	     hb_destroy_func_t));
+DEF_DLL_FN (hb_face_t *, hb_face_create_for_tables,
+	    (hb_reference_table_func_t, void *, hb_destroy_func_t));
+DEF_DLL_FN (unsigned, hb_face_get_glyph_count, (const hb_face_t *));
+DEF_DLL_FN (hb_font_t *, hb_font_create, (hb_face_t *));
+DEF_DLL_FN (void, hb_font_destroy, (hb_font_t *));
+DEF_DLL_FN (void, hb_face_destroy, (hb_face_t *));
+DEF_DLL_FN (unsigned int, hb_face_get_upem, (hb_face_t *));
+DEF_DLL_FN (hb_bool_t, hb_font_get_nominal_glyph,
+	    (hb_font_t *, hb_codepoint_t, hb_codepoint_t *));
+DEF_DLL_FN (hb_unicode_funcs_t *, hb_unicode_funcs_create,
+	    (hb_unicode_funcs_t *));
+DEF_DLL_FN (hb_unicode_funcs_t *, hb_unicode_funcs_get_default, (void));
+DEF_DLL_FN (void, hb_unicode_funcs_set_combining_class_func,
+	    (hb_unicode_funcs_t *, hb_unicode_combining_class_func_t,
+	     void *, hb_destroy_func_t));
+DEF_DLL_FN (void, hb_unicode_funcs_set_general_category_func,
+	    (hb_unicode_funcs_t *, hb_unicode_general_category_func_t,
+	     void *, hb_destroy_func_t));
+DEF_DLL_FN (void, hb_unicode_funcs_set_mirroring_func,
+	    (hb_unicode_funcs_t *, hb_unicode_mirroring_func_t,
+	     void *, hb_destroy_func_t));
+DEF_DLL_FN (hb_buffer_t *, hb_buffer_create, (void));
+DEF_DLL_FN (void, hb_buffer_set_unicode_funcs,
+	    (hb_buffer_t *, hb_unicode_funcs_t *));
+DEF_DLL_FN (void, hb_buffer_clear_contents, (hb_buffer_t *));
+DEF_DLL_FN (hb_bool_t, hb_buffer_pre_allocate, (hb_buffer_t *, unsigned int));
+DEF_DLL_FN (void, hb_buffer_add, (hb_buffer_t *, hb_codepoint_t, unsigned int));
+DEF_DLL_FN (void, hb_buffer_set_content_type,
+	    (hb_buffer_t *, hb_buffer_content_type_t));
+DEF_DLL_FN (void, hb_buffer_set_cluster_level,
+	    (hb_buffer_t *, hb_buffer_cluster_level_t));
+DEF_DLL_FN (void, hb_buffer_set_direction, (hb_buffer_t *, hb_direction_t));
+DEF_DLL_FN (void, hb_buffer_set_language, (hb_buffer_t *, hb_language_t));
+DEF_DLL_FN (hb_language_t, hb_language_from_string, (const char *, int));
+DEF_DLL_FN (void, hb_buffer_guess_segment_properties, (hb_buffer_t *));
+DEF_DLL_FN (hb_bool_t, hb_shape_full,
+	    (hb_font_t *, hb_buffer_t *, const hb_feature_t *,
+	     unsigned int, const char * const *));
+DEF_DLL_FN (unsigned int, hb_buffer_get_length, (hb_buffer_t *));
+DEF_DLL_FN (hb_direction_t, hb_buffer_get_direction, (hb_buffer_t *));
+DEF_DLL_FN (void, hb_buffer_reverse_clusters, (hb_buffer_t *));
+DEF_DLL_FN (hb_glyph_info_t *, hb_buffer_get_glyph_infos,
+	    (hb_buffer_t *, unsigned int *));
+DEF_DLL_FN (hb_glyph_position_t *, hb_buffer_get_glyph_positions,
+	    (hb_buffer_t *, unsigned int *));
+
+#define hb_blob_create fn_hb_blob_create
+#define hb_face_create_for_tables fn_hb_face_create_for_tables
+#define hb_face_get_glyph_count fn_hb_face_get_glyph_count
+#define hb_font_create fn_hb_font_create
+#define hb_font_destroy fn_hb_font_destroy
+#define hb_face_destroy fn_hb_face_destroy
+#define hb_face_get_upem fn_hb_face_get_upem
+#define hb_font_get_nominal_glyph fn_hb_font_get_nominal_glyph
+#define hb_unicode_funcs_create fn_hb_unicode_funcs_create
+#define hb_unicode_funcs_get_default fn_hb_unicode_funcs_get_default
+#define hb_unicode_funcs_set_combining_class_func fn_hb_unicode_funcs_set_combining_class_func
+#define hb_unicode_funcs_set_general_category_func fn_hb_unicode_funcs_set_general_category_func
+#define hb_unicode_funcs_set_mirroring_func fn_hb_unicode_funcs_set_mirroring_func
+#define hb_buffer_create fn_hb_buffer_create
+#define hb_buffer_set_unicode_funcs fn_hb_buffer_set_unicode_funcs
+#define hb_buffer_clear_contents fn_hb_buffer_clear_contents
+#define hb_buffer_pre_allocate fn_hb_buffer_pre_allocate
+#define hb_buffer_add fn_hb_buffer_add
+#define hb_buffer_set_content_type fn_hb_buffer_set_content_type
+#define hb_buffer_set_cluster_level fn_hb_buffer_set_cluster_level
+#define hb_buffer_set_direction fn_hb_buffer_set_direction
+#define hb_buffer_set_language fn_hb_buffer_set_language
+#define hb_language_from_string fn_hb_language_from_string
+#define hb_buffer_guess_segment_properties fn_hb_buffer_guess_segment_properties
+#define hb_shape_full fn_hb_shape_full
+#define hb_buffer_get_length fn_hb_buffer_get_length
+#define hb_buffer_get_direction fn_hb_buffer_get_direction
+#define hb_buffer_reverse_clusters fn_hb_buffer_reverse_clusters
+#define hb_buffer_get_glyph_infos fn_hb_buffer_get_glyph_infos
+#define hb_buffer_get_glyph_positions fn_hb_buffer_get_glyph_positions
+#endif
+
 /* Used by uniscribe_otf_capability.  */
 static Lisp_Object otf_features (HDC context, const char *table);
 
@@ -117,7 +220,10 @@ uniscribe_open (struct frame *f, Lisp_Object font_entity, int pixel_size)
   struct uniscribe_font_info *uniscribe_font
     = (struct uniscribe_font_info *) XFONT_OBJECT (font_object);
 
-  ASET (font_object, FONT_TYPE_INDEX, Quniscribe);
+  if (!NILP (AREF (font_entity, FONT_TYPE_INDEX)))
+    ASET (font_object, FONT_TYPE_INDEX, AREF (font_entity, FONT_TYPE_INDEX));
+  else	/* paranoia: this should never happen */
+    ASET (font_object, FONT_TYPE_INDEX, Quniscribe);
 
   if (!w32font_open_internal (f, font_entity, pixel_size, font_object))
     {
@@ -127,10 +233,15 @@ uniscribe_open (struct frame *f, Lisp_Object font_entity, int pixel_size)
   /* Initialize the cache for this font.  */
   uniscribe_font->cache = NULL;
 
-  /* Uniscribe backend uses glyph indices.  */
+  /* Uniscribe and HarfBuzz backends use glyph indices.  */
   uniscribe_font->w32_font.glyph_idx = ETO_GLYPH_INDEX;
 
-  uniscribe_font->w32_font.font.driver = &uniscribe_font_driver;
+#ifdef HAVE_HARFBUZZ
+  if (EQ (AREF (font_object, FONT_TYPE_INDEX), Qharfbuzz))
+    uniscribe_font->w32_font.font.driver = &harfbuzz_font_driver;
+  else
+#endif  /* HAVE_HARFBUZZ */
+    uniscribe_font->w32_font.font.driver = &uniscribe_font_driver;
 
   return font_object;
 }
@@ -141,8 +252,16 @@ uniscribe_close (struct font *font)
   struct uniscribe_font_info *uniscribe_font
     = (struct uniscribe_font_info *) font;
 
+#ifdef HAVE_HARFBUZZ
+  if (uniscribe_font->w32_font.font.driver == &harfbuzz_font_driver
+      && uniscribe_font->cache)
+    hb_font_destroy ((hb_font_t *) uniscribe_font->cache);
+  else
+#endif
   if (uniscribe_font->cache)
-    ScriptFreeCache (&(uniscribe_font->cache));
+    ScriptFreeCache ((SCRIPT_CACHE) &(uniscribe_font->cache));
+
+  uniscribe_font->cache = NULL;
 
   w32font_close (font);
 }
@@ -290,7 +409,7 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 
       /* Context may be NULL here, in which case the cache should be
          used without needing to select the font.  */
-      result = ScriptShape (context, &(uniscribe_font->cache),
+      result = ScriptShape (context, (SCRIPT_CACHE) &(uniscribe_font->cache),
 			    chars + items[i].iCharPos, nchars_in_run,
 			    max_glyphs - done_glyphs, &(items[i].a),
 			    glyphs, clusters, attributes, &nglyphs);
@@ -304,7 +423,7 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 	  context = get_frame_dc (f);
 	  old_font = SelectObject (context, FONT_HANDLE (font));
 
-	  result = ScriptShape (context, &(uniscribe_font->cache),
+	  result = ScriptShape (context, (SCRIPT_CACHE) &(uniscribe_font->cache),
 				chars + items[i].iCharPos, nchars_in_run,
 				max_glyphs - done_glyphs, &(items[i].a),
 				glyphs, clusters, attributes, &nglyphs);
@@ -329,7 +448,7 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 	}
       else
 	{
-	  result = ScriptPlace (context, &(uniscribe_font->cache),
+	  result = ScriptPlace (context, (SCRIPT_CACHE) &(uniscribe_font->cache),
 				glyphs, nglyphs, attributes, &(items[i].a),
 				advances, offsets, &overall_metrics);
 	  if (result == E_PENDING && !context)
@@ -339,13 +458,15 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 	      context = get_frame_dc (f);
 	      old_font = SelectObject (context, FONT_HANDLE (font));
 
-	      result = ScriptPlace (context, &(uniscribe_font->cache),
+	      result = ScriptPlace (context,
+				    (SCRIPT_CACHE) &(uniscribe_font->cache),
 				    glyphs, nglyphs, attributes, &(items[i].a),
 				    advances, offsets, &overall_metrics);
 	    }
           if (SUCCEEDED (result))
 	    {
 	      int j, from, to, adj_offset = 0;
+	      int cluster_offset = 0;
 
 	      from = 0;
 	      to = from;
@@ -389,6 +510,7 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 				}
 			    }
 			}
+		      cluster_offset = 0;
 
 		      /* For RTL text, the Uniscribe shaper prepares
 			 the values in ADVANCES array for layout in
@@ -419,8 +541,11 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 			}
 		    }
 
-		  LGLYPH_SET_CHAR (lglyph, chars[items[i].iCharPos
-						 + from]);
+		  int char_idx = items[i].iCharPos + from + cluster_offset;
+		  if (from + cluster_offset > to)
+		    char_idx = items[i].iCharPos + to;
+		  cluster_offset++;
+		  LGLYPH_SET_CHAR (lglyph, chars[char_idx]);
 		  LGLYPH_SET_FROM (lglyph, items[i].iCharPos + from);
 		  LGLYPH_SET_TO (lglyph, items[i].iCharPos + to);
 
@@ -429,18 +554,18 @@ uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 		  LGLYPH_SET_ASCENT (lglyph, font->ascent);
 		  LGLYPH_SET_DESCENT (lglyph, font->descent);
 
-		  result = ScriptGetGlyphABCWidth (context,
-						   &(uniscribe_font->cache),
-						   glyphs[j], &char_metric);
+		  result = ScriptGetGlyphABCWidth
+		    (context, (SCRIPT_CACHE) &(uniscribe_font->cache),
+		     glyphs[j], &char_metric);
 		  if (result == E_PENDING && !context)
 		    {
 		      /* Cache incomplete... */
 		      f = XFRAME (selected_frame);
 		      context = get_frame_dc (f);
 		      old_font = SelectObject (context, FONT_HANDLE (font));
-		      result = ScriptGetGlyphABCWidth (context,
-						       &(uniscribe_font->cache),
-						       glyphs[j], &char_metric);
+		      result = ScriptGetGlyphABCWidth
+			(context, (SCRIPT_CACHE) &(uniscribe_font->cache),
+			 glyphs[j], &char_metric);
 		    }
 
 		  if (SUCCEEDED (result))
@@ -572,7 +697,8 @@ uniscribe_encode_char (struct font *font, int c)
 	     order.  */
 	  items[0].a.fLogicalOrder = 1;
 
-          result = ScriptShape (context, &(uniscribe_font->cache),
+          result = ScriptShape (context,
+				(SCRIPT_CACHE) &(uniscribe_font->cache),
                                 ch, len, 2, &(items[0].a),
                                 glyphs, clusters, attrs, &nglyphs);
 
@@ -583,7 +709,8 @@ uniscribe_encode_char (struct font *font, int c)
               f = XFRAME (selected_frame);
               context = get_frame_dc (f);
               old_font = SelectObject (context, FONT_HANDLE (font));
-              result = ScriptShape (context, &(uniscribe_font->cache),
+              result = ScriptShape (context,
+				    (SCRIPT_CACHE) &(uniscribe_font->cache),
                                     ch, len, 2, &(items[0].a),
                                     glyphs, clusters, attrs, &nglyphs);
             }
@@ -601,7 +728,8 @@ uniscribe_encode_char (struct font *font, int c)
                  when shaped. But we still need the return from here
                  to be valid for the shaping engine to be invoked
                  later.  */
-              result = ScriptGetCMap (context, &(uniscribe_font->cache),
+              result = ScriptGetCMap (context,
+				      (SCRIPT_CACHE) &(uniscribe_font->cache),
                                       ch, len, 0, glyphs);
               if (SUCCEEDED (result) && glyphs[0])
                 code = glyphs[0];
@@ -1148,6 +1276,508 @@ font_table_error:
   return Qnil;
 }
 
+#ifdef HAVE_HARFBUZZ
+
+/* W32 implementation of the 'list' method for HarfBuzz backend.  */
+static Lisp_Object
+w32hb_list (struct frame *f, Lisp_Object font_spec)
+{
+  Lisp_Object fonts = w32font_list_internal (f, font_spec, true);
+  FONT_ADD_LOG ("harfbuzz-list", font_spec, fonts);
+
+  for (Lisp_Object tail = fonts; CONSP (tail); tail = XCDR (tail))
+    ASET (XCAR (tail), FONT_TYPE_INDEX, Qharfbuzz);
+
+  return fonts;
+}
+
+/* W32 implementation of the 'match' method for HarfBuzz backend.  */
+static Lisp_Object
+w32hb_match (struct frame *f, Lisp_Object font_spec)
+{
+  Lisp_Object entity = w32font_match_internal (f, font_spec, true);
+  FONT_ADD_LOG ("harfbuzz-match", font_spec, entity);
+
+  if (! NILP (entity))
+    ASET (entity, FONT_TYPE_INDEX, Qharfbuzz);
+  return entity;
+}
+
+/* Callback function to free memory.  We need this so we could pass it
+   to HarfBuzz as the function to call to destroy objects for which we
+   allocated data by calling our 'malloc' (as opposed to 'malloc' from
+   the MS CRT, against which HarfBuzz was linked).  */
+static void
+free_cb (void *ptr)
+{
+  free (ptr);
+}
+
+/* A function used as reference_table_func for HarfBuzz.  It returns
+   the data of a specified table of a font as a blob.  */
+static hb_blob_t *
+w32hb_get_font_table (hb_face_t *face, hb_tag_t tag, void *data)
+{
+  struct frame *f = XFRAME (selected_frame);
+  HDC context = get_frame_dc (f);
+  HFONT old_font = SelectObject (context, (HFONT) data);
+  char *font_data = NULL;
+  DWORD font_data_size = 0, val;
+  DWORD table = bswap_32 (tag);
+  hb_blob_t *blob = NULL;
+
+  val = GetFontData (context, table, 0, font_data, font_data_size);
+  if (val != GDI_ERROR)
+    {
+      font_data_size = val;
+      /* Don't call xmalloc, because it can signal an error, while
+	 we are inside a critical section established by get_frame_dc.  */
+      font_data = malloc (font_data_size);
+      if (font_data)
+	{
+	  val = GetFontData (context, table, 0, font_data, font_data_size);
+	  if (val != GDI_ERROR)
+	    blob = hb_blob_create (font_data, font_data_size,
+				   HB_MEMORY_MODE_READONLY, font_data, free_cb);
+	}
+    }
+
+  /* Restore graphics context.  */
+  SelectObject (context, old_font);
+  release_frame_dc (f, context);
+
+  return blob;
+}
+
+/* Helper function used by the HarfBuzz implementations of the
+   encode_char, has_char, and begin_hb_font methods.  It creates an
+   hb_font_t object for a given Emacs font.  */
+static hb_font_t *
+w32hb_get_font (struct font *font, double *scale)
+{
+  hb_font_t *hb_font = NULL;
+  HFONT font_handle = FONT_HANDLE (font);
+  hb_face_t *hb_face =
+    hb_face_create_for_tables (w32hb_get_font_table, font_handle, NULL);
+  if (hb_face_get_glyph_count (hb_face) > 0)
+    hb_font = hb_font_create (hb_face);
+
+  struct uniscribe_font_info *uniscribe_font =
+    (struct uniscribe_font_info *) font;
+  unsigned upem = hb_face_get_upem (hb_face);
+  eassert (upem > 0);
+  /* https://support.microsoft.com/en-sg/help/74299/info-calculating-the-logical-height-and-point-size-of-a-font.  */
+  LONG font_point_size =
+    uniscribe_font->w32_font.metrics.tmHeight
+    - uniscribe_font->w32_font.metrics.tmInternalLeading;
+  /* https://docs.microsoft.com/en-us/typography/opentype/spec/ttch01,
+     under "Converting FUnits to pixels".  */
+  *scale = font_point_size * 1.0 / upem;
+
+  hb_face_destroy (hb_face);
+
+  /* FIXME: Can hb_font be non-NULL and yet invalid?  Compare to get_empty?  */
+  return hb_font;
+}
+
+/* W32 implementation of encode_char method for HarfBuzz backend.  */
+static unsigned
+w32hb_encode_char (struct font *font, int c)
+{
+  struct uniscribe_font_info *uniscribe_font
+    = (struct uniscribe_font_info *) font;
+  eassert (uniscribe_font->w32_font.font.driver == &harfbuzz_font_driver);
+  hb_font_t *hb_font = uniscribe_font->cache;
+
+  /* First time we use this font with HarfBuzz, create the hb_font_t
+     object and cache it.  */
+  if (!hb_font)
+    {
+      double scale;
+      hb_font = w32hb_get_font (font, &scale);
+      if (!hb_font)
+	return FONT_INVALID_CODE;
+
+      uniscribe_font->cache = hb_font;
+      eassert (scale > 0.0);
+      uniscribe_font->scale = scale;
+    }
+  hb_codepoint_t glyph;
+  if (hb_font_get_nominal_glyph (hb_font, c, &glyph))
+    return glyph;
+  return FONT_INVALID_CODE;
+}
+
+/* W32 implementation of HarfBuzz begin_hb_font and end_hb_font
+   methods.  */
+
+/* Return a HarfBuzz font object for FONT and store in POSITION_UNIT
+   the scale factor to convert a hb_position_t value to the number of
+   pixels.  Return NULL if HarfBuzz font object is not available for
+   FONT.  */
+static hb_font_t *
+w32hb_begin_font (struct font *font, double *position_unit)
+{
+  struct uniscribe_font_info *uniscribe_font
+    = (struct uniscribe_font_info *) font;
+  eassert (uniscribe_font->w32_font.font.driver == &harfbuzz_font_driver);
+
+  /* First time we use this font with HarfBuzz, create the hb_font_t
+     object and cache it.  */
+  if (!uniscribe_font->cache)
+    {
+      double scale;
+      uniscribe_font->cache = w32hb_get_font (font, &scale);
+      eassert (scale > 0.0);
+      uniscribe_font->scale = scale;
+    }
+  *position_unit = uniscribe_font->scale;
+  return (hb_font_t *) uniscribe_font->cache;
+}
+
+static bool combining_class_loaded = false;
+static Lisp_Object canonical_combining_class_table;
+
+static hb_unicode_combining_class_t
+w32uni_combining (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  /* Load the Unicode table first time it is needed.  */
+  if (!combining_class_loaded)
+    {
+      canonical_combining_class_table =
+	uniprop_table (intern ("canonical-combining-class"));
+      if (NILP (canonical_combining_class_table))
+	emacs_abort ();
+      staticpro (&canonical_combining_class_table);
+      combining_class_loaded = true;
+    }
+
+  Lisp_Object combining =
+    get_unicode_property (canonical_combining_class_table, ch);
+  if (FIXNUMP (combining))
+    return (hb_unicode_combining_class_t) XFIXNUM (combining);
+
+  return HB_UNICODE_COMBINING_CLASS_NOT_REORDERED;
+}
+
+static hb_unicode_general_category_t
+w32uni_general (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, ch);
+
+  if (INTEGERP (category))
+    {
+    switch (XFIXNUM (category))
+      {
+      case UNICODE_CATEGORY_Cc:
+        return HB_UNICODE_GENERAL_CATEGORY_CONTROL;
+      case UNICODE_CATEGORY_Cf:
+        return HB_UNICODE_GENERAL_CATEGORY_FORMAT;
+      case UNICODE_CATEGORY_Cn:
+        return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+      case UNICODE_CATEGORY_Co:
+        return HB_UNICODE_GENERAL_CATEGORY_PRIVATE_USE;
+      case UNICODE_CATEGORY_Cs:
+        return HB_UNICODE_GENERAL_CATEGORY_SURROGATE;
+      case UNICODE_CATEGORY_Ll:
+        return HB_UNICODE_GENERAL_CATEGORY_LOWERCASE_LETTER;
+      case UNICODE_CATEGORY_Lm:
+        return HB_UNICODE_GENERAL_CATEGORY_MODIFIER_LETTER;
+      case UNICODE_CATEGORY_Lo:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_LETTER;
+      case UNICODE_CATEGORY_Lt:
+        return HB_UNICODE_GENERAL_CATEGORY_TITLECASE_LETTER;
+      case UNICODE_CATEGORY_Lu:
+        return HB_UNICODE_GENERAL_CATEGORY_UPPERCASE_LETTER;
+      case UNICODE_CATEGORY_Mc:
+        return HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK;
+      case UNICODE_CATEGORY_Me:
+        return HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK;
+      case UNICODE_CATEGORY_Mn:
+        return HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK;
+      case UNICODE_CATEGORY_Nd:
+        return HB_UNICODE_GENERAL_CATEGORY_DECIMAL_NUMBER;
+      case UNICODE_CATEGORY_Nl:
+        return HB_UNICODE_GENERAL_CATEGORY_LETTER_NUMBER;
+      case UNICODE_CATEGORY_No:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_NUMBER;
+      case UNICODE_CATEGORY_Pc:
+        return HB_UNICODE_GENERAL_CATEGORY_CONNECT_PUNCTUATION;
+      case UNICODE_CATEGORY_Pd:
+        return HB_UNICODE_GENERAL_CATEGORY_DASH_PUNCTUATION;
+      case UNICODE_CATEGORY_Pe:
+        return HB_UNICODE_GENERAL_CATEGORY_CLOSE_PUNCTUATION;
+      case UNICODE_CATEGORY_Pf:
+        return HB_UNICODE_GENERAL_CATEGORY_FINAL_PUNCTUATION;
+      case UNICODE_CATEGORY_Pi:
+        return HB_UNICODE_GENERAL_CATEGORY_INITIAL_PUNCTUATION;
+      case UNICODE_CATEGORY_Po:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_PUNCTUATION;
+      case UNICODE_CATEGORY_Ps:
+        return HB_UNICODE_GENERAL_CATEGORY_OPEN_PUNCTUATION;
+      case UNICODE_CATEGORY_Sc:
+        return HB_UNICODE_GENERAL_CATEGORY_CURRENCY_SYMBOL;
+      case UNICODE_CATEGORY_Sk:
+        return HB_UNICODE_GENERAL_CATEGORY_MODIFIER_SYMBOL;
+      case UNICODE_CATEGORY_Sm:
+        return HB_UNICODE_GENERAL_CATEGORY_MATH_SYMBOL;
+      case UNICODE_CATEGORY_So:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_SYMBOL;
+      case UNICODE_CATEGORY_Zl:
+        return HB_UNICODE_GENERAL_CATEGORY_LINE_SEPARATOR;
+      case UNICODE_CATEGORY_Zp:
+        return HB_UNICODE_GENERAL_CATEGORY_PARAGRAPH_SEPARATOR;
+      case UNICODE_CATEGORY_Zs:
+        return HB_UNICODE_GENERAL_CATEGORY_SPACE_SEPARATOR;
+      case UNICODE_CATEGORY_UNKNOWN:
+        return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+      }
+    }
+
+  return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+}
+
+static hb_codepoint_t
+w32uni_mirroring (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  return bidi_mirror_char (ch);
+}
+
+static hb_unicode_funcs_t *
+get_hb_unicode_funcs (void)
+{
+  /* Subclass HarfBuzz's default Unicode functions and override functions that
+   * use data Emacs can provide. This way changing Emacs data is reflected in
+   * the shaped output. */
+  hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (hb_unicode_funcs_get_default ());
+
+  hb_unicode_funcs_set_combining_class_func (funcs, w32uni_combining, NULL, NULL);
+  hb_unicode_funcs_set_general_category_func (funcs, w32uni_general, NULL, NULL);
+  hb_unicode_funcs_set_mirroring_func (funcs, w32uni_mirroring, NULL, NULL);
+
+  /* Use default implmentation for Unicode composition/decomposition, we might
+   * want to revisit this later.
+  hb_unicode_funcs_set_compose_func (funcs, uni_compose, NULL, NULL);
+  hb_unicode_funcs_set_decompose_func (funcs, uni_decompose, NULL, NULL);
+  */
+
+  /* Emacs own script mapping for characters differs from Unicode, so we want
+   * to keep the default HarfBuzz's implementation here.
+  hb_unicode_funcs_set_script_func (funcs, uni_script, NULL, NULL);
+  */
+
+  return funcs;
+}
+
+/* HarfBuzz implementation of shape for font backend.  See the
+   commentary before uniscribe_shape for the meaning of the
+   arguments.  */
+static Lisp_Object
+w32hb_shape (Lisp_Object lgstring, Lisp_Object direction)
+{
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
+  ptrdiff_t glyph_len = 0, text_len = LGSTRING_GLYPH_LEN (lgstring);
+  ptrdiff_t i;
+
+  hb_glyph_info_t *info;
+  hb_glyph_position_t *pos;
+
+  /* Cache the HarfBuzz buffer for better performance and less allocations.
+   * We intentionally never destroy the buffer. */
+  static hb_buffer_t *hb_buffer = NULL;
+  if (! hb_buffer)
+    {
+      hb_buffer = hb_buffer_create ();
+      hb_unicode_funcs_t* ufuncs = get_hb_unicode_funcs();
+      hb_buffer_set_unicode_funcs(hb_buffer, ufuncs);
+    }
+
+  hb_buffer_clear_contents (hb_buffer);
+  hb_buffer_pre_allocate (hb_buffer, text_len);
+
+  /* Copy the characters in their original logical order, so we can
+     assign them to glyphs correctly after shaping.  */
+  int *chars = alloca (text_len * sizeof (int));
+  for (i = 0; i < text_len; i++)
+    {
+      Lisp_Object g = LGSTRING_GLYPH (lgstring, i);
+      int c;
+
+      if (NILP (g))
+	break;
+      c = LGLYPH_CHAR (g);
+      hb_buffer_add (hb_buffer, c, i);
+      chars[i] = c;
+    }
+
+  text_len = i;
+  if (!text_len)
+    return Qnil;
+
+  hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
+  hb_buffer_set_cluster_level (hb_buffer,
+			       HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES);
+
+  /* If the caller didn't provide a meaningful DIRECTION, let HarfBuzz
+     guess it. */
+  if (!NILP (direction))
+    {
+      hb_direction_t dir = HB_DIRECTION_LTR;
+      if (EQ (direction, QL2R))
+	dir = HB_DIRECTION_LTR;
+      else if (EQ (direction, QR2L))
+	dir = HB_DIRECTION_RTL;
+      hb_buffer_set_direction (hb_buffer, dir);
+    }
+
+  /* Leave the script determination to HarfBuzz, until Emacs has a
+     better idea of the script of LGSTRING.  FIXME. */
+#if 0
+  hb_buffer_set_script (hb_buffer, XXX);
+#endif
+
+  /* FIXME: This can only handle the single global language, which
+     normally comes from the locale.  In addition, if
+     current-iso639-language is a list, we arbitrarily use the first
+     one.  We should instead have a notion of the language of the text
+     being shaped.  */
+  Lisp_Object lang = Vcurrent_iso639_language;
+  if (CONSP (Vcurrent_iso639_language))
+    lang = XCAR (Vcurrent_iso639_language);
+  if (SYMBOLP (lang))
+    {
+      Lisp_Object lang_str = SYMBOL_NAME (lang);
+      hb_buffer_set_language (hb_buffer,
+			      hb_language_from_string (SSDATA (lang_str),
+						       SBYTES (lang_str)));
+    }
+
+  /* Guess the default properties for when they cannot be determined above.
+
+     FIXME: maybe drop this guessing once script and language handling
+     is fixed above; but then will need to guess the direction by
+     ourselves, perhaps by looking at the the characters using
+     bidi_get_type or somesuch.  */
+  hb_buffer_guess_segment_properties (hb_buffer);
+
+  double position_unit;
+  hb_font_t *hb_font
+    = font->driver->begin_hb_font
+    ? font->driver->begin_hb_font (font, &position_unit)
+    : NULL;
+  if (!hb_font)
+    return make_fixnum (0);
+
+  hb_bool_t success = hb_shape_full (hb_font, hb_buffer, NULL, 0, NULL);
+  if (font->driver->end_hb_font)
+    font->driver->end_hb_font (font, hb_font);
+  if (!success)
+    return Qnil;
+
+  glyph_len = hb_buffer_get_length (hb_buffer);
+  /* FIXME: can't we just grow the lgstring in this case? Giving up is an
+   * overly heavy handed solution. */
+  if (glyph_len > LGSTRING_GLYPH_LEN (lgstring))
+    return Qnil;
+
+  /* We need the clusters in logical order.  */
+  bool buf_reversed = false;
+  if (HB_DIRECTION_IS_BACKWARD (hb_buffer_get_direction (hb_buffer)))
+    {
+      buf_reversed = true;
+      hb_buffer_reverse_clusters (hb_buffer);
+    }
+  info = hb_buffer_get_glyph_infos (hb_buffer, NULL);
+  pos = hb_buffer_get_glyph_positions (hb_buffer, NULL);
+  int from = -1, to, cluster_offset = 0;
+  int char_idx, incr = buf_reversed ? -1 : 1;
+  for (i = 0; i < glyph_len; i++)
+    {
+      Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
+      struct font_metrics metrics = {.width = 0};
+      int xoff, yoff, wadjust;
+
+      if (NILP (lglyph))
+	{
+	  lglyph = LGLYPH_NEW ();
+	  LGSTRING_SET_GLYPH (lgstring, i, lglyph);
+	}
+
+      if (info[i].cluster != from)
+	{
+	  int j;
+	  /* Found a new cluster.  Determine its FROM and TO, and the
+	     offset to the first character of the cluster.  */
+	  /* FROM is the index of the first character that contributed
+	     to this cluster.  */
+	  from = info[i].cluster;
+	  /* TO is the index of the last character that contributed to
+	     this cluster.  */
+	  for (j = i; j < glyph_len && info[j].cluster == from; j++)
+	    ;
+	  to = (j == glyph_len) ? text_len - 1 : info[j].cluster - 1;
+	  cluster_offset = 0;
+	  /* For RTL buffers, HarfBuzz produces glyphs in a cluster in
+	     reverse order, so we need to account for that to record
+	     the correct character in each glyph.
+
+	     Implementation note: the character codepoint recorded in
+	     each glyph is not really used, except when we display the
+	     glyphs in descr-text.el.  So this is just an aeasthetic
+	     issue.  */
+	  if (buf_reversed)
+	    cluster_offset = to - from;
+	}
+
+      /* All the glyphs in a cluster have the same values of FROM and TO.  */
+      LGLYPH_SET_FROM (lglyph, from);
+      LGLYPH_SET_TO (lglyph, to);
+
+      /* Not every glyph in a cluster maps directly to a single
+	 character; in general, N characters can yield M glyphs, where
+	 M could be smaller or greater than N.  However, in many cases
+	 there is a one-to-one correspondence, and it would be a pity
+	 to lose that information, even if it's sometimes inaccurate.  */
+      char_idx = from + cluster_offset;
+      cluster_offset += incr;
+      if (char_idx > to)
+	char_idx = to;
+      if (char_idx < from)
+	char_idx = from;
+      LGLYPH_SET_CHAR (lglyph, chars[char_idx]);
+      LGLYPH_SET_CODE (lglyph, info[i].codepoint);
+
+      unsigned code = info[i].codepoint;
+      font->driver->text_extents (font, &code, 1, &metrics);
+      LGLYPH_SET_WIDTH (lglyph, metrics.width);
+      LGLYPH_SET_LBEARING (lglyph, metrics.lbearing);
+      LGLYPH_SET_RBEARING (lglyph, metrics.rbearing);
+      LGLYPH_SET_ASCENT (lglyph, metrics.ascent);
+      LGLYPH_SET_DESCENT (lglyph, metrics.descent);
+
+      xoff = lround (pos[i].x_offset * position_unit);
+      yoff = - lround (pos[i].y_offset * position_unit);
+      wadjust = lround (pos[i].x_advance * position_unit);
+      if (xoff || yoff || wadjust != metrics.width)
+	{
+	  Lisp_Object vec = make_uninit_vector (3);
+	  ASET (vec, 0, make_fixnum (xoff));
+	  ASET (vec, 1, make_fixnum (yoff));
+	  ASET (vec, 2, make_fixnum (wadjust));
+	  LGLYPH_SET_ADJUSTMENT (lglyph, vec);
+	}
+    }
+
+  return make_fixnum (glyph_len);
+}
+
+static Lisp_Object
+w32hb_combining_capability (struct font *font)
+{
+  return Qt;
+}
+#endif	/* HAVE_HARFBUZZ */
+
 #undef OTF_INT16_VAL
 #undef OTF_TAG_VAL
 #undef OTF_TAG
@@ -1196,17 +1826,53 @@ syms_of_w32uniscribe (void)
   pdumper_do_now_and_after_load (syms_of_w32uniscribe_for_pdumper);
 }
 
+#ifdef HAVE_HARFBUZZ
+static bool
+load_harfbuzz_funcs (HMODULE library)
+{
+  LOAD_DLL_FN (library, hb_blob_create);
+  LOAD_DLL_FN (library, hb_face_create_for_tables);
+  LOAD_DLL_FN (library, hb_face_get_glyph_count);
+  LOAD_DLL_FN (library, hb_font_create);
+  LOAD_DLL_FN (library, hb_font_destroy);
+  LOAD_DLL_FN (library, hb_face_get_upem);
+  LOAD_DLL_FN (library, hb_face_destroy);
+  LOAD_DLL_FN (library, hb_font_get_nominal_glyph);
+  LOAD_DLL_FN (library, hb_unicode_funcs_create);
+  LOAD_DLL_FN (library, hb_unicode_funcs_get_default);
+  LOAD_DLL_FN (library, hb_unicode_funcs_set_combining_class_func);
+  LOAD_DLL_FN (library, hb_unicode_funcs_set_general_category_func);
+  LOAD_DLL_FN (library, hb_unicode_funcs_set_mirroring_func);
+  LOAD_DLL_FN (library, hb_buffer_create);
+  LOAD_DLL_FN (library, hb_buffer_set_unicode_funcs);
+  LOAD_DLL_FN (library, hb_buffer_clear_contents);
+  LOAD_DLL_FN (library, hb_buffer_pre_allocate);
+  LOAD_DLL_FN (library, hb_buffer_add);
+  LOAD_DLL_FN (library, hb_buffer_set_content_type);
+  LOAD_DLL_FN (library, hb_buffer_set_cluster_level);
+  LOAD_DLL_FN (library, hb_buffer_set_direction);
+  LOAD_DLL_FN (library, hb_buffer_set_language);
+  LOAD_DLL_FN (library, hb_language_from_string);
+  LOAD_DLL_FN (library, hb_buffer_guess_segment_properties);
+  LOAD_DLL_FN (library, hb_shape_full);
+  LOAD_DLL_FN (library, hb_buffer_get_length);
+  LOAD_DLL_FN (library, hb_buffer_get_direction);
+  LOAD_DLL_FN (library, hb_buffer_reverse_clusters);
+  LOAD_DLL_FN (library, hb_buffer_get_glyph_infos);
+  LOAD_DLL_FN (library, hb_buffer_get_glyph_positions);
+  return true;
+}
+#endif	/* HAVE_HARFBUZZ */
+
 static void
 syms_of_w32uniscribe_for_pdumper (void)
 {
-  HMODULE uniscribe;
-
-  /* Don't init uniscribe when dumping */
+  /* Don't init Uniscribe and HarfBuzz when dumping */
   if (!initialized)
     return;
 
-  /* Don't register if uniscribe is not available.  */
-  uniscribe = GetModuleHandle ("usp10");
+  /* Don't register if Uniscribe is not available.  */
+  HMODULE uniscribe = GetModuleHandle ("usp10");
   if (!uniscribe)
     return;
 
@@ -1226,4 +1892,30 @@ syms_of_w32uniscribe_for_pdumper (void)
     uniscribe_new_apis = true;
   else
     uniscribe_new_apis = false;
+
+#ifdef HAVE_HARFBUZZ
+  /* Currently, HarfBuzz DLLs are always named libharfbuzz-0.dll, as
+     the project keeps the ABI backeard-compatible.  So we can
+     hard-code the name of the library here, for now.  If they ever
+     break ABI compatibility, we may need to load the DLL that
+     corresponds to the HarfBuzz version for which Emacs was built.  */
+  HMODULE harfbuzz = LoadLibrary ("libharfbuzz-0.dll");
+  /* Don't register if HarfBuzz is not available.  */
+  if (!harfbuzz)
+    return;
+
+  if (!load_harfbuzz_funcs (harfbuzz))
+    return;
+
+  harfbuzz_available = 1;
+  harfbuzz_font_driver = uniscribe_font_driver;
+  harfbuzz_font_driver.type = Qharfbuzz;
+  harfbuzz_font_driver.list = w32hb_list;
+  harfbuzz_font_driver.match = w32hb_match;
+  harfbuzz_font_driver.encode_char = w32hb_encode_char;
+  harfbuzz_font_driver.shape = w32hb_shape;
+  harfbuzz_font_driver.combining_capability = w32hb_combining_capability;
+  harfbuzz_font_driver.begin_hb_font = w32hb_begin_font;
+  register_font_driver (&harfbuzz_font_driver, NULL);
+#endif	/* HAVE_HARFBUZZ */
 }

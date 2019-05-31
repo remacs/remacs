@@ -3409,56 +3409,70 @@ if test "${HAVE_X11}" = "yes"; then
     fi
   fi				  # $HAVE_CAIRO != yes
 
-    HAVE_HARFBUZZ=no
-    HAVE_LIBOTF=no
-    if test "${HAVE_FREETYPE}" = "yes"; then
-      AC_DEFINE(HAVE_FREETYPE, 1,
-		[Define to 1 if using the freetype and fontconfig libraries.])
-      if test "${with_harfbuzz}" != "no"; then
-	EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz >= 0.9.42])
-	if test "$HAVE_HARFBUZZ" = "yes"; then
-	  AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if using HarfBuzz.])
+  HAVE_LIBOTF=no
+  if test "${HAVE_FREETYPE}" = "yes"; then
+    AC_DEFINE(HAVE_FREETYPE, 1,
+	      [Define to 1 if using the freetype and fontconfig libraries.])
+    if test "${with_libotf}" != "no"; then
+      EMACS_CHECK_MODULES([LIBOTF], [libotf])
+      if test "$HAVE_LIBOTF" = "yes"; then
+	AC_DEFINE(HAVE_LIBOTF, 1, [Define to 1 if using libotf.])
+	AC_CHECK_LIB(otf, OTF_get_variation_glyphs,
+		     HAVE_OTF_GET_VARIATION_GLYPHS=yes,
+		     HAVE_OTF_GET_VARIATION_GLYPHS=no)
+	if test "${HAVE_OTF_GET_VARIATION_GLYPHS}" = "yes"; then
+	  AC_DEFINE(HAVE_OTF_GET_VARIATION_GLYPHS, 1,
+		    [Define to 1 if libotf has OTF_get_variation_glyphs.])
 	fi
-      fi
-      if test "${with_libotf}" != "no"; then
-	EMACS_CHECK_MODULES([LIBOTF], [libotf])
-	if test "$HAVE_LIBOTF" = "yes"; then
-	  AC_DEFINE(HAVE_LIBOTF, 1, [Define to 1 if using libotf.])
-	  AC_CHECK_LIB(otf, OTF_get_variation_glyphs,
-		       HAVE_OTF_GET_VARIATION_GLYPHS=yes,
-		       HAVE_OTF_GET_VARIATION_GLYPHS=no)
-	  if test "${HAVE_OTF_GET_VARIATION_GLYPHS}" = "yes"; then
-	    AC_DEFINE(HAVE_OTF_GET_VARIATION_GLYPHS, 1,
-		      [Define to 1 if libotf has OTF_get_variation_glyphs.])
-	  fi
-          if ! $PKG_CONFIG --atleast-version=0.9.16 libotf; then
-	    AC_DEFINE(HAVE_OTF_KANNADA_BUG, 1,
+	if ! $PKG_CONFIG --atleast-version=0.9.16 libotf; then
+	  AC_DEFINE(HAVE_OTF_KANNADA_BUG, 1,
 [Define to 1 if libotf is affected by https://debbugs.gnu.org/28110.])
-	  fi
 	fi
       fi
-    dnl FIXME should there be an error if HAVE_FREETYPE != yes?
-    dnl Does the new font backend require it, or can it work without it?
     fi
+  dnl FIXME should there be an error if HAVE_FREETYPE != yes?
+  dnl Does the new font backend require it, or can it work without it?
+  fi
 
-    HAVE_M17N_FLT=no
-    if test "${HAVE_LIBOTF}" = yes; then
-      if test "${with_m17n_flt}" != "no"; then
-	EMACS_CHECK_MODULES([M17N_FLT], [m17n-flt])
-	if test "$HAVE_M17N_FLT" = "yes"; then
-	  AC_DEFINE(HAVE_M17N_FLT, 1, [Define to 1 if using libm17n-flt.])
-	fi
+  HAVE_M17N_FLT=no
+  if test "${HAVE_LIBOTF}" = yes; then
+    if test "${with_m17n_flt}" != "no"; then
+      EMACS_CHECK_MODULES([M17N_FLT], [m17n-flt])
+      if test "$HAVE_M17N_FLT" = "yes"; then
+	AC_DEFINE(HAVE_M17N_FLT, 1, [Define to 1 if using libm17n-flt.])
       fi
     fi
-else
-    HAVE_XFT=no
-    HAVE_FREETYPE=no
-    HAVE_HARFBUZZ=no
-    HAVE_LIBOTF=no
-    HAVE_M17N_FLT=no
+  fi
+else # "${HAVE_X11}" != "yes"
+  HAVE_XFT=no
+  HAVE_FREETYPE=no
+  HAVE_LIBOTF=no
+  HAVE_M17N_FLT=no
+fi   # "${HAVE_X11}" != "yes"
+
+HAVE_HARFBUZZ=no
+if test "${HAVE_X11}" = "yes" && test "${HAVE_FREETYPE}" = "yes" \
+        || test "${HAVE_W32}" = "yes"; then
+  if test "${with_harfbuzz}" != "no"; then
+    ### On MS-Windows we use hb_font_get_nominal_glyph, which appeared
+    ### in HarfBuzz version 1.2.3
+    if test "${HAVE_W32}" = "yes"; then
+      EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz >= 1.2.3])
+    else
+      EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz >= 0.9.42])
+    fi
+    if test "$HAVE_HARFBUZZ" = "yes"; then
+      AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if using HarfBuzz.])
+      ### mingw32 and Cygwin-w32 don't use -lharfbuzz, since they load
+      ### the library dynamically.
+      if test "${HAVE_W32}" = "yes"; then
+        HARFBUZZ_LIBS=
+      fi
+    fi
+  fi
 fi
 
-### End of font-backend (under X11) section.
+### End of font-backend section.
 
 AC_SUBST(FREETYPE_CFLAGS)
 AC_SUBST(FREETYPE_LIBS)

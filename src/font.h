@@ -951,6 +951,9 @@ extern void syms_of_bdffont (void);
 #ifdef HAVE_NTGUI
 extern struct font_driver w32font_driver;
 extern struct font_driver uniscribe_font_driver;
+#ifdef HAVE_HARFBUZZ
+extern struct font_driver harfbuzz_font_driver;
+#endif
 extern void syms_of_w32font (void);
 #endif	/* HAVE_NTGUI */
 #ifdef HAVE_NS

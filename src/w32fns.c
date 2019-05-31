@@ -221,6 +221,7 @@ int menubar_in_use = 0;
 /* From w32uniscribe.c  */
 extern void syms_of_w32uniscribe (void);
 extern int uniscribe_available;
+extern int harfbuzz_available;
 
 #ifdef WINDOWSNT
 /* From w32inevt.c */
@@ -5843,6 +5844,10 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
       specbind (Qx_resource_name, name);
     }
 
+#ifdef HAVE_HARFBUZZ
+  if (harfbuzz_available)
+    register_font_driver (&harfbuzz_font_driver, f);
+#endif
   if (uniscribe_available)
     register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);
@@ -6896,6 +6901,10 @@ w32_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
       specbind (Qx_resource_name, name);
     }
 
+#ifdef HAVE_HARFBUZZ
+  if (harfbuzz_available)
+    register_font_driver (&harfbuzz_font_driver, f);
+#endif
   if (uniscribe_available)
     register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);

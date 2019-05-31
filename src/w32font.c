@@ -2634,6 +2634,7 @@ syms_of_w32font (void)
 {
   DEFSYM (Qgdi, "gdi");
   DEFSYM (Quniscribe, "uniscribe");
+  DEFSYM (Qharfbuzz, "harfbuzz");
   DEFSYM (QCformat, ":format");
 
   /* Generic font families.  */
