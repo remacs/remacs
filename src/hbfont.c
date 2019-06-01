@@ -260,9 +260,7 @@ get_hb_unicode_funcs (void)
   return funcs;
 }
 
-/* HarfBuzz implementation of shape for font backend.  See the
-   commentary before uniscribe_shape for the meaning of the
-   arguments.
+/* HarfBuzz implementation of shape for font backend.
 
    Shape text in LGSTRING.  See the docstring of
    'composition-get-gstring' for the format of LGSTRING.  If the
