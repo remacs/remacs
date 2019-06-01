@@ -86,6 +86,8 @@ DEF_DLL_FN (void, hb_face_destroy, (hb_face_t *));
 DEF_DLL_FN (unsigned int, hb_face_get_upem, (hb_face_t *));
 DEF_DLL_FN (hb_bool_t, hb_font_get_nominal_glyph,
 	    (hb_font_t *, hb_codepoint_t, hb_codepoint_t *));
+DEF_DLL_FN (hb_bool_t, hb_font_get_variation_glyph,
+	    (hb_font_t *, hb_codepoint_t, hb_codepoint_t, hb_codepoint_t *));
 
 #define hb_blob_create fn_hb_blob_create
 #define hb_face_create_for_tables fn_hb_face_create_for_tables
@@ -95,6 +97,7 @@ DEF_DLL_FN (hb_bool_t, hb_font_get_nominal_glyph,
 #define hb_face_destroy fn_hb_face_destroy
 #define hb_face_get_upem fn_hb_face_get_upem
 #define hb_font_get_nominal_glyph fn_hb_font_get_nominal_glyph
+#define hb_font_get_variation_glyph fn_hb_font_get_variation_glyph
 #endif
 
 /* Used by uniscribe_otf_capability.  */
@@ -1377,6 +1380,50 @@ w32hb_begin_font (struct font *font, double *position_unit)
   *position_unit = uniscribe_font->scale;
   return (hb_font_t *) uniscribe_font->cache;
 }
+
+/* W32 implementation of get_variation_glyphs method for HarfBuzz.
+
+   Return the number of variation glyphs of character C supported by
+   FONT.  VARIATIONS is an array of 256 elements.  If the variation
+   selector N (1..256) defines a glyph, that glyph code is stored in
+   the (N-1)th element of VARIATIONS.  */
+static int
+w32hb_get_variation_glyphs (struct font *font, int c, unsigned variations[256])
+{
+  struct uniscribe_font_info *uniscribe_font
+    = (struct uniscribe_font_info *) font;
+  eassert (uniscribe_font->w32_font.font.driver == &harfbuzz_font_driver);
+
+  /* First time we use this font with HarfBuzz, create the hb_font_t
+     object and cache it.  */
+  if (!uniscribe_font->cache)
+    {
+      double scale;
+      uniscribe_font->cache = w32hb_get_font (font, &scale);
+      eassert (scale > 0.0);
+      uniscribe_font->scale = scale;
+    }
+
+  int i, n = 0;
+  hb_font_t *hb_font = uniscribe_font->cache;
+  for (i = 0; i < 16; i++)
+    {
+      if (hb_font_get_variation_glyph (hb_font, c, 0xFE00 + i, &variations[i]))
+	n++;
+      else
+	variations[i] = 0;
+    }
+  for ( ; i < 256; i++)
+    {
+      if (hb_font_get_variation_glyph (hb_font, c, 0xE0100 + (i - 16),
+				       &variations[i]))
+	n++;
+      else
+	variations[i] = 0;
+    }
+
+  return n;
+}
 #endif	/* HAVE_HARFBUZZ */
 
 #undef OTF_INT16_VAL
@@ -1439,6 +1486,7 @@ load_harfbuzz_funcs (HMODULE library)
   LOAD_DLL_FN (library, hb_face_get_upem);
   LOAD_DLL_FN (library, hb_face_destroy);
   LOAD_DLL_FN (library, hb_font_get_nominal_glyph);
+  LOAD_DLL_FN (library, hb_font_get_variation_glyph);
   return hbfont_init_w32_funcs (library);
 }
 #endif	/* HAVE_HARFBUZZ */
@@ -1474,7 +1522,7 @@ syms_of_w32uniscribe_for_pdumper (void)
 
 #ifdef HAVE_HARFBUZZ
   /* Currently, HarfBuzz DLLs are always named libharfbuzz-0.dll, as
-     the project keeps the ABI backeard-compatible.  So we can
+     the project keeps the ABI backward-compatible.  So we can
      hard-code the name of the library here, for now.  If they ever
      break ABI compatibility, we may need to load the DLL that
      corresponds to the HarfBuzz version for which Emacs was built.  */
@@ -1493,6 +1541,7 @@ syms_of_w32uniscribe_for_pdumper (void)
   harfbuzz_font_driver.match = w32hb_match;
   harfbuzz_font_driver.encode_char = w32hb_encode_char;
   harfbuzz_font_driver.shape = hbfont_shape;
+  harfbuzz_font_driver.get_variation_glyphs = w32hb_get_variation_glyphs;
   harfbuzz_font_driver.combining_capability = hbfont_combining_capability;
   harfbuzz_font_driver.begin_hb_font = w32hb_begin_font;
   register_font_driver (&harfbuzz_font_driver, NULL);
