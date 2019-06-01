@@ -2713,7 +2713,7 @@ comment at the start of cc-engine.el for more info."
   ;; whose positions are above `c-lit-pos-cache-limit'.
   (let ((nc-list c-semi-lit-near-cache))
     (while nc-list
-      (if (> (caar nc-list) c-lit-pos-cache-limit)
+      (if (> (caar nc-list) c-semi-near-cache-limit)
 	  (setq c-semi-lit-near-cache
 		(delq (car nc-list) c-semi-lit-near-cache)
 		nc-list c-semi-lit-near-cache) ; start again in case
@@ -2781,7 +2781,6 @@ comment at the start of cc-engine.el for more info."
       (widen)
       (c-trim-lit-pos-cache)
       (c-semi-trim-near-cache)
-      (setq c-lit-pos-cache-limit here)
       (save-match-data
 	(let* ((pos-and-state (c-semi-get-near-cache-entry here))
 	       (pos (car pos-and-state))
@@ -2849,9 +2848,8 @@ comment at the start of cc-engine.el for more info."
 ;; END is the end of the literal enclosing HERE, if any, or nil otherwise.
 
 (defun c-full-trim-near-cache ()
-  ;; Remove stale entries in `c-full-lit-near-cache', i.e. those
-  ;; whose END entries, or positions, are above
-  ;; `c-state-full-nonlit-pos-cache-limit'.
+  ;; Remove stale entries in `c-full-lit-near-cache', i.e. those whose END
+  ;; entries, or positions, are above `c-full-near-cache-limit'.
   (let ((nc-list c-full-lit-near-cache) elt)
     (while nc-list
       (let ((elt (car nc-list)))
@@ -2873,24 +2871,22 @@ comment at the start of cc-engine.el for more info."
   (let ((nc-pos-state
 	 (or (assq here c-full-lit-near-cache)
 	     (let ((nc-list c-full-lit-near-cache)
-		   elt match (nc-pos 0) cand-pos-state)
-	       (setq match
-		     (catch 'found
-		       (while nc-list
-			 (setq elt (car nc-list))
-			 (when
-			     (and (car (cddr elt))
-				  (>= here (nth 8 (cadr elt)))
-				  (< here (car (cddr elt))))
-			   (throw 'found elt))
-			 (when
-			     (and (< (car elt) here)
-				  (> (car elt) nc-pos))
-			   (setq nc-pos (car elt)
-				 cand-pos-state elt))
-			 (setq nc-list (cdr nc-list)))
-		       nil))
-	       (or match cand-pos-state)))))
+		   elt (nc-pos 0) cand-pos-state)
+	       (catch 'found
+		 (while nc-list
+		   (setq elt (car nc-list))
+		   (when
+		       (and (car (cddr elt))
+			    (>= here (nth 8 (cadr elt)))
+			    (< here (car (cddr elt))))
+		     (throw 'found elt))
+		   (when
+		       (and (< (car elt) here)
+			    (> (car elt) nc-pos))
+		     (setq nc-pos (car elt)
+			   cand-pos-state elt))
+		   (setq nc-list (cdr nc-list)))
+		 cand-pos-state)))))
     ;; Move the found cache entry, if any, to the front of the list.
     (when (and nc-pos-state
 	       (not (eq nc-pos-state (car c-full-lit-near-cache))))
@@ -3005,12 +3001,9 @@ comment at the start of cc-engine.el for more info."
 (defsubst c-truncate-lit-pos-cache (pos)
   ;; Truncate the upper bound of each of the three caches to POS, if it is
   ;; higher than that position.
-  (setq c-lit-pos-cache-limit
-	(min c-lit-pos-cache-limit pos)
-	c-semi-near-cache-limit
-	(min c-semi-near-cache-limit pos)
-	c-full-near-cache-limit
-	(min c-full-near-cache-limit pos)))
+  (setq c-lit-pos-cache-limit (min c-lit-pos-cache-limit pos)
+	c-semi-near-cache-limit (min c-semi-near-cache-limit pos)
+	c-full-near-cache-limit (min c-full-near-cache-limit pos)))
 
 
 ;; A system for finding noteworthy parens before the point.
@@ -4044,8 +4037,6 @@ comment at the start of cc-engine.el for more info."
 	c-state-cache-good-pos 1
 	c-state-nonlit-pos-cache nil
 	c-state-nonlit-pos-cache-limit 1
-	c-lit-pos-cache nil
-	c-lit-pos-cache-limit 1
 	c-state-brace-pair-desert nil
 	c-state-point-min 1
 	c-state-point-min-lit-type nil
@@ -4320,8 +4311,6 @@ comment at the start of cc-engine.el for more info."
 	   c-state-cache-good-pos
 	   c-state-nonlit-pos-cache
 	   c-state-nonlit-pos-cache-limit
-	   c-lit-pos-cache
-	   c-lit-pos-cache-limit
 	   c-state-brace-pair-desert
 	   c-state-point-min
 	   c-state-point-min-lit-type

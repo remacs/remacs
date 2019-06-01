@@ -559,6 +559,8 @@ that requires a literal mode spec at compile time."
   ;; doesn't work with filladapt but it's better than nothing.
   (set (make-local-variable 'fill-paragraph-function) 'c-fill-paragraph)
 
+  ;; Initialize the three literal sub-caches.
+  (c-truncate-lit-pos-cache 1)
   ;; Initialize the cache of brace pairs, and opening braces/brackets/parens.
   (c-state-cache-init)
   ;; Initialize the "brace stack" cache.
