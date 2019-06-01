@@ -31,7 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <windows.h>
 #include <usp10.h>
 #ifdef HAVE_HARFBUZZ
-# include <math.h>	/* for lround */
 # include <hb.h>
 # if GNUC_PREREQ (4, 3, 0)
 #  define bswap_32(v)  __builtin_bswap32(v)
