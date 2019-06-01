@@ -5,7 +5,7 @@ use std::{self, iter, mem, ops, ptr, slice};
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_uchar, c_void, ptrdiff_t};
 
-use rand::{thread_rng, Rng};
+use rand::{rngs::OsRng, Rng};
 
 use remacs_macros::lisp_fn;
 
@@ -1656,7 +1656,8 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        let mut s = format!("-{}", thread_rng().gen_range(0, 1_000_000));
+        let mut rng = OsRng::new().unwrap();
+        let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = lisp_concat!(name, suffix);
         if get_buffer(genname.into()).is_none() {
