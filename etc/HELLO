@@ -96,4 +96,5 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;; tab-width: 32
 ;;; bidi-display-reordering: t
 ;;; coding: iso-2022-7bit
+;;; inhibit-compacting-font-caches: t
 ;;; End:
