@@ -1847,6 +1847,11 @@ variables have @code{safe-local-variable} properties; these include
 For boolean-valued variables that are safe, use @code{booleanp} as the
 property value.
 
+  If you want to define @code{safe-local-variable} properties for
+variables defined in C source code, add the names and the properties
+of those variables to the list in the ``Safe local variables'' section
+of @file{files.el}.
+
 @cindex autoload cookie, and safe values of variable
   When defining a user option using @code{defcustom}, you can set its
 @code{safe-local-variable} property by adding the arguments
