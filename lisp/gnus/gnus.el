@@ -2745,12 +2745,12 @@ gnus-registry.el will populate this if it's loaded.")
      (let ((interactive (nth 1 (memq ':interactive package))))
        (mapcar
 	(lambda (function)
-	  (let (keymap)
+	  (let (type)
 	    (when (consp function)
-	      (setq keymap (car (memq 'keymap function)))
+	      (setq type (cadr function))
 	      (setq function (car function)))
 	    (unless (fboundp function)
-	      (autoload function (car package) nil interactive keymap))))
+	      (autoload function (car package) nil interactive type))))
 	(if (eq (nth 1 package) ':interactive)
 	    (nthcdr 3 package)
 	  (cdr package)))))
@@ -2863,8 +2863,8 @@ gnus-registry.el will populate this if it's loaded.")
       gnus-list-of-unread-articles gnus-list-of-read-articles
       gnus-offer-save-summaries gnus-make-thread-indent-array
       gnus-summary-exit gnus-update-read-articles gnus-summary-last-subject
-      gnus-summary-skip-intangible gnus-summary-article-number
-      gnus-data-header gnus-data-find)
+      (gnus-summary-skip-intangible macro) (gnus-summary-article-number macro)
+      (gnus-data-header macro) (gnus-data-find macro))
      ("gnus-group" gnus-group-insert-group-line gnus-group-quit
       gnus-group-list-groups gnus-group-first-unread-group
       gnus-group-set-mode-line gnus-group-set-info gnus-group-save-newsrc
