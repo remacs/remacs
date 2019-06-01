@@ -2378,7 +2378,7 @@ safe.
 A form that creates temporary bindings (@code{condition-case},
 @code{dolist}, @code{dotimes}, @code{lambda}, @code{let}, or
 @code{let*}), if all args are safe and the symbols to be bound are not
-explicitly risky (see @pxref{File Local Variables}).
+explicitly risky (@pxref{File Local Variables}).
 @item
 An assignment using @code{add-to-list}, @code{setq}, @code{push}, or
 @code{pop}, if all args are safe and the symbols to be assigned are

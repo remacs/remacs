@@ -1912,7 +1912,10 @@ the command returns the decoded text as a multibyte string without
 inserting it.
 
 If decoded text is inserted in some buffer, this command returns the
-length of the decoded text.
+length of the decoded text.  If that buffer is a unibyte buffer
+(@pxref{Selecting a Representation}), the internal representation of
+the decoded text (@pxref{Text Representations}) is inserted into the
+buffer as individual bytes.
 
 This command puts a @code{charset} text property on the decoded text.
 The value of the property states the character set used to decode the
@@ -1931,7 +1934,9 @@ contains 8-bit bytes in their multibyte form).
 
 If optional argument @var{buffer} specifies a buffer, the decoded text
 is inserted in that buffer after point (point does not move).  In this
-case, the return value is the length of the decoded text.
+case, the return value is the length of the decoded text.  If that
+buffer is a unibyte buffer, the internal representation of the decoded
+text is inserted into it as individual bytes.
 
 @cindex @code{charset}, text property
 This function puts a @code{charset} text property on the decoded text.

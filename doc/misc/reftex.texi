@@ -3697,7 +3697,7 @@ MicroEmacs at the time).
 Here is a summary of @RefTeX{}'s commands which can be executed from
 @LaTeX{} files.  Command which are executed from the special buffers are
 not described here.  All commands are available from the @code{Ref}
-menu.  See @xref{Key Bindings}.
+menu.  @xref{Key Bindings}.
 
 @deffn Command reftex-toc
 Show the table of contents for the current document.  When called with
