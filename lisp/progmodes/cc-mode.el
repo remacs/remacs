@@ -1219,7 +1219,7 @@ Note that the style variables are always made local to the buffer."
 		     (point-max) t t)
 		    (progn
 		      (c-clear-char-property (1- (point)) 'syntax-table)
-		      (c-truncate-semi-nonlit-pos-cache (1- (point)))
+		      (c-truncate-lit-pos-cache (1- (point)))
 		      (not (memq (char-before) c-string-delims)))))
 	       (memq (char-before) c-string-delims))
 	     (progn
@@ -1257,14 +1257,14 @@ Note that the style variables are always made local to the buffer."
 		(backward-sexp)
 		(c-clear-char-property eoll-1 'syntax-table)
 		(c-clear-char-property (point) 'syntax-table)
-		(c-truncate-semi-nonlit-pos-cache (point)))
+		(c-truncate-lit-pos-cache (point)))
 	    ;; Opening " at EOB.
 	    (c-clear-char-property (1- (point)) 'syntax-table))
 	(when (and (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
 		   (memq (char-after) c-string-delims)) ; Ignore an unterminated raw string's (.
 	  ;; Opening " on last line of text (without EOL).
 	  (c-clear-char-property (point) 'syntax-table)
-	  (c-truncate-semi-nonlit-pos-cache (point))
+	  (c-truncate-lit-pos-cache (point))
 	  (setq c-new-BEG (min c-new-BEG (point))))))
 
      (t (goto-char end)			; point-max
@@ -1273,7 +1273,7 @@ Note that the style variables are always made local to the buffer."
 	     (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
 	     (memq (char-after) c-string-delims))
 	  (c-clear-char-property (point) 'syntax-table)
-	  (c-truncate-semi-nonlit-pos-cache (point)))))
+	  (c-truncate-lit-pos-cache (point)))))
 
     (unless 
 	(or (and
@@ -1285,13 +1285,13 @@ Note that the style variables are always made local to the buffer."
       (when (and (eq end-literal-type 'string)
 		 (not (eq (char-before (cdr end-limits)) ?\()))
 	(c-clear-char-property (1- (cdr end-limits)) 'syntax-table)
-	(c-truncate-semi-nonlit-pos-cache (1- (cdr end-limits)))
+	(c-truncate-lit-pos-cache (1- (cdr end-limits)))
 	(setq c-new-END (max c-new-END (cdr end-limits))))
 
       (when (and (eq beg-literal-type 'string)
 		 (memq (char-after (car beg-limits)) c-string-delims))
 	(c-clear-char-property (car beg-limits) 'syntax-table)
-	(c-truncate-semi-nonlit-pos-cache (car beg-limits))
+	(c-truncate-lit-pos-cache (car beg-limits))
 	(setq c-new-BEG (min c-new-BEG (car beg-limits)))))))
 
 (defun c-after-change-mark-abnormal-strings (beg end _old-len)
@@ -1587,7 +1587,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
     (when (c-search-forward-char-property-with-value-on-char
 	   'syntax-table '(1) ?\' c-new-END)
       (c-invalidate-state-cache (1- (point)))
-      (c-truncate-semi-nonlit-pos-cache (1- (point)))
+      (c-truncate-lit-pos-cache (1- (point)))
       (c-clear-char-property-with-value-on-char
        (1- (point)) c-new-END
        'syntax-table '(1)
@@ -1623,7 +1623,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	       (setq num-beg (match-beginning 0)
 		     num-end (match-end 0))
 	       (c-invalidate-state-cache num-beg)
-	       (c-truncate-semi-nonlit-pos-cache num-beg)
+	       (c-truncate-lit-pos-cache num-beg)
 	       (c-put-char-properties-on-char num-beg num-end
 					      'syntax-table '(1) ?')
 	       (c-put-char-properties-on-char num-beg num-end
@@ -1635,13 +1635,13 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	       (goto-char (match-end 0)))
 	      ((looking-at "\\\\'")	; Anomalous construct.
 	       (c-invalidate-state-cache (1- (point)))
-	       (c-truncate-semi-nonlit-pos-cache (1- (point)))
+	       (c-truncate-lit-pos-cache (1- (point)))
 	       (c-put-char-properties-on-char (1- (point)) (+ (point) 2)
 					      'syntax-table '(1) ?')
 	       (goto-char (match-end 0)))
 	      (t
 	       (c-invalidate-state-cache (1- (point)))
-	       (c-truncate-semi-nonlit-pos-cache (1- (point)))
+	       (c-truncate-lit-pos-cache (1- (point)))
 	       (c-put-char-property (1- (point)) 'syntax-table '(1))))
 	;; Prevent the next `c-quoted-number-straddling-point' getting
 	;; confused by already processed single quotes.
