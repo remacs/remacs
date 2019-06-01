@@ -1,4 +1,4 @@
-;;; timezone.el --- time zone package for GNU Emacs
+;;; timezone.el --- time zone package for GNU Emacs  -- lexical-binding: t -*-
 
 ;; Copyright (C) 1990-1993, 1996, 1999, 2001-2019 Free Software
 ;; Foundation, Inc.
@@ -72,8 +72,7 @@ if nil, the local time zone is assumed."
     (timezone-make-arpa-date (aref new 0) (aref new 1) (aref new 2)
 			     (timezone-make-time-string
 			      (aref new 3) (aref new 4) (aref new 5))
-			     (aref new 6))
-    ))
+			     (aref new 6))))
 
 (defun timezone-make-date-sortable (date &optional local timezone)
   "Convert DATE to a sortable date string.
@@ -84,8 +83,7 @@ if nil, the local time zone is assumed."
   (let ((new (timezone-fix-time date local timezone)))
     (timezone-make-sortable-date (aref new 0) (aref new 1) (aref new 2)
 				 (timezone-make-time-string
-				  (aref new 3) (aref new 4) (aref new 5)))
-    ))
+				  (aref new 3) (aref new 4) (aref new 5)))))
 
 
 ;;
