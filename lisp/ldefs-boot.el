@@ -1199,7 +1199,7 @@ archive.
 
 \(fn &optional FORCE)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "arc-mode" '("archive-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "arc-mode" '("arc")))
 
 ;;;***
 
@@ -5887,7 +5887,7 @@ Major mode to edit Cascading Style Sheets (CSS).
 This mode provides syntax highlighting, indentation, completion,
 and documentation lookup for CSS.
 
-Use `\\[complete-symbol]' to complete CSS properties, property values,
+Use `\\[completion-at-point]' to complete CSS properties, property values,
 pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
 tags, classes and IDs.  Completion candidates for HTML class
 names and IDs are found by looking through open HTML mode
@@ -6792,19 +6792,19 @@ The most useful commands are:
 (push (purecopy '(delim-col 2 1)) package--builtin-versions)
 
 (autoload 'delimit-columns-customize "delim-col" "\
-Customization of `columns' group." t nil)
+Customize the `columns' group." t nil)
 
 (autoload 'delimit-columns-region "delim-col" "\
 Prettify all columns in a text region.
 
-START and END delimits the text region.
+START and END delimit the text region.
 
 \(fn START END)" t nil)
 
 (autoload 'delimit-columns-rectangle "delim-col" "\
 Prettify all columns in a text rectangle.
 
-START and END delimits the corners of text rectangle.
+START and END delimit the corners of the text rectangle.
 
 \(fn START END)" t nil)
 
@@ -7693,6 +7693,51 @@ in `.emacs'.
 
 ;;;***
 
+;;;### (autoloads nil "display-fill-column-indicator" "display-fill-column-indicator.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from display-fill-column-indicator.el
+
+(autoload 'display-fill-column-indicator-mode "display-fill-column-indicator" "\
+Toggle display of fill-column indicator.
+This uses `display-fill-column-indicator' internally.
+
+If called interactively, enable Display-Fill-Column-Indicator mode if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp,
+also enable the mode if ARG is omitted or nil, and toggle it
+if ARG is `toggle'; disable the mode otherwise.
+
+To change the position of the column displayed by default
+customize `display-fill-column-indicator-column'.  You can change the
+character for the indicator setting `display-fill-column-indicator-character'.
+
+\(fn &optional ARG)" t nil)
+
+(defvar global-display-fill-column-indicator-mode nil "\
+Non-nil if Global Display-Fill-Column-Indicator mode is enabled.
+See the `global-display-fill-column-indicator-mode' command
+for a description of this minor mode.
+Setting this variable directly does not take effect;
+either customize it (see the info node `Easy Customization')
+or call the function `global-display-fill-column-indicator-mode'.")
+
+(custom-autoload 'global-display-fill-column-indicator-mode "display-fill-column-indicator" nil)
+
+(autoload 'global-display-fill-column-indicator-mode "display-fill-column-indicator" "\
+Toggle Display-Fill-Column-Indicator mode in all buffers.
+With prefix ARG, enable Global Display-Fill-Column-Indicator mode if ARG is positive;
+otherwise, disable it.  If called from Lisp, enable the mode if
+ARG is omitted or nil.
+
+Display-Fill-Column-Indicator mode is enabled in all buffers where
+`display-fill-column-indicator--turn-on' would do it.
+See `display-fill-column-indicator-mode' for more information on Display-Fill-Column-Indicator mode.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "display-fill-column-indicator" '("display-fill-column-indicator--turn-on")))
+
+;;;***
+
 ;;;### (autoloads nil "display-line-numbers" "display-line-numbers.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from display-line-numbers.el
@@ -7734,44 +7779,7 @@ See `display-line-numbers-mode' for more information on Display-Line-Numbers mod
 
 \(fn &optional ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes)
-    (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
-
-;;;***
-
-;;;### (autoloads nil "display-fill-column-indicator" "display-fill-column-indicator.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from display-fill-column-indicator.el
-
-(autoload 'display-fill-column-indicator-mode "display-fill-column-indicator" "\
-Toggle display fill column indicator.
-This uses `display-fill-column-indicator' internally.
-
-To change the position of the line displayed by default,
-customize `display-fill-column-indicator-column'.
-
-\(fn &optional ARG)" t nil)
-
-(defvar global-display-fill-column-indicator-mode nil "\
-Non-nil if Global Display-fill-column-indicator mode is enabled.
-See the `global-display-fill-column-indicator-mode' command
-for a description of this minor mode.")
-
-(custom-autoload 'global-display-fill-column-indicator-mode
-                 "display-fill-column-indicator" nil)
-
-(autoload 'global-display-fill-column-indicator-mode
-  "display-fill-column-indicator" "\
-Toggle display fill column indicator.
-This uses `display-fill-column-indicator' internally.
-
-To change the position of the line displayed by default,
-customize `display-fill-column-indicator-column'.
-
-\(fn &optional ARG)" t nil)
-
-(if (fboundp 'register-definition-prefixes)
-    (register-definition-prefixes "display-fill-column-indicator" '("display-fill-column-indicator-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "display-line-numbers" '("display-line-numbers-")))
 
 ;;;***
 
@@ -11636,7 +11644,7 @@ fourth arg NOSEP non-nil inhibits this.
 ;;;### (autoloads nil "eww" "net/eww.el" (0 0 0 0))
 ;;; Generated autoloads from net/eww.el
 
-(defvar eww-suggest-uris '(eww-links-at-point url-get-url-at-point eww-current-url) "\
+(defvar eww-suggest-uris '(eww-links-at-point thing-at-point-url-at-point eww-current-url) "\
 List of functions called to form the list of default URIs for `eww'.
 Each of the elements is a function returning either a string or a list
 of strings.  The results will be joined into a single list with
@@ -12811,7 +12819,7 @@ to get the effect of a C-q.
 
 ;;;### (autoloads nil "flymake" "progmodes/flymake.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake.el
-(push (purecopy '(flymake 1 0 5)) package--builtin-versions)
+(push (purecopy '(flymake 1 0 6)) package--builtin-versions)
 
 (autoload 'flymake-log "flymake" "\
 Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -12864,12 +12872,10 @@ Flymake collects diagnostic information from multiple sources,
 called backends, and visually annotates the buffer with the
 results.
 
-Flymake performs these checks while the user is editing.  The
-customization variables `flymake-start-on-flymake-mode',
-`flymake-no-changes-timeout' and
-`flymake-start-syntax-check-on-newline' determine the exact
-circumstances whereupon Flymake decides to initiate a check of
-the buffer.
+Flymake performs these checks while the user is editing.
+The customization variables `flymake-start-on-flymake-mode',
+`flymake-no-changes-timeout' determine the exact circumstances
+whereupon Flymake decides to initiate a check of the buffer.
 
 The commands `flymake-goto-next-error' and
 `flymake-goto-prev-error' can be used to navigate among Flymake
@@ -13499,18 +13505,6 @@ restoration, including those that have been reused or created anew.
 All keyword parameters default to nil.
 
 \(fn FRAMESET &key PREDICATE FILTERS REUSE-FRAMES FORCE-DISPLAY FORCE-ONSCREEN CLEANUP-FRAMES)" nil nil)
-
-(autoload 'frameset--jump-to-register "frameset" "\
-Restore frameset from DATA stored in register.
-Called from `jump-to-register'.  Internal use only.
-
-\(fn DATA)" nil nil)
-
-(autoload 'frameset--print-register "frameset" "\
-Print basic info about frameset stored in DATA.
-Called from `list-registers' and `view-register'.  Internal use only.
-
-\(fn DATA)" nil nil)
 
 (autoload 'frameset-to-register "frameset" "\
 Store the current frameset in register REGISTER.
@@ -16023,7 +16017,7 @@ The value (hs . t) is added to `buffer-invisibility-spec'.
 
 The main commands are: `hs-hide-all', `hs-show-all', `hs-hide-block',
 `hs-show-block', `hs-hide-level' and `hs-toggle-hiding'.  There is also
-`hs-hide-initial-comment-block' and `hs-mouse-toggle-hiding'.
+`hs-hide-initial-comment-block'.
 
 Turning hideshow minor mode off reverts the menu bar and the
 variables to default values and disables the hideshow commands.
@@ -18991,6 +18985,11 @@ If kbd macro currently being defined end it before activating it.
 
 \(fn EVENT)" t nil)
 
+(autoload 'kmacro-lambda-form "kmacro" "\
+Create lambda form for macro bound to symbol or key.
+
+\(fn MAC &optional COUNTER FORMAT)" nil nil)
+
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "kmacro" '("kmacro-")))
 
 ;;;***
@@ -19630,6 +19629,8 @@ and then select the region of un-tablified names and use
 \(fn TOP BOTTOM &optional MACRO)" t nil)
  (define-key ctl-x-map "q" 'kbd-macro-query)
 
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "macros" '("macros--insert-vector-macro")))
+
 ;;;***
 
 ;;;### (autoloads nil "mail-extr" "mail/mail-extr.el" (0 0 0 0))
@@ -20216,42 +20217,9 @@ recursion depth in the minibuffer prompt.  This is only useful if
 
 (autoload 'message-mode "message" "\
 Major mode for editing mail and news to be sent.
-Like Text Mode but with these additional commands:\\<message-mode-map>
-C-c C-s  `message-send' (send the message)  C-c C-c  `message-send-and-exit'
-C-c C-d  Postpone sending the message       C-c C-k  Kill the message
-C-c C-f  move to a header field (and create it if there isn't):
-	 C-c C-f C-t  move to To	C-c C-f C-s  move to Subject
-	 C-c C-f C-c  move to Cc	C-c C-f C-b  move to Bcc
-	 C-c C-f C-w  move to Fcc	C-c C-f C-r  move to Reply-To
-	 C-c C-f C-u  move to Summary	C-c C-f C-n  move to Newsgroups
-	 C-c C-f C-k  move to Keywords	C-c C-f C-d  move to Distribution
-	 C-c C-f C-o  move to From (\"Originator\")
-	 C-c C-f C-f  move to Followup-To
-	 C-c C-f C-m  move to Mail-Followup-To
-	 C-c C-f C-e  move to Expires
-	 C-c C-f C-i  cycle through Importance values
-	 C-c C-f s    change subject and append \"(was: <Old Subject>)\"
-	 C-c C-f x    crossposting with FollowUp-To header and note in body
-	 C-c C-f t    replace To: header with contents of Cc: or Bcc:
-	 C-c C-f a    Insert X-No-Archive: header and a note in the body
-C-c C-t  `message-insert-to' (add a To header to a news followup)
-C-c C-l  `message-to-list-only' (removes all but list address in to/cc)
-C-c C-n  `message-insert-newsgroups' (add a Newsgroup header to a news reply)
-C-c C-b  `message-goto-body' (move to beginning of message text).
-C-c C-i  `message-goto-signature' (move to the beginning of the signature).
-C-c C-w  `message-insert-signature' (insert `message-signature-file' file).
-C-c C-y  `message-yank-original' (insert current message, if any).
-C-c C-q  `message-fill-yanked-message' (fill what was yanked).
-C-c C-e  `message-elide-region' (elide the text between point and mark).
-C-c C-v  `message-delete-not-region' (remove the text outside the region).
-C-c C-z  `message-kill-to-signature' (kill the text up to the signature).
-C-c C-r  `message-caesar-buffer-body' (rot13 the message body).
-C-c C-a  `mml-attach-file' (attach a file as MIME).
-C-c C-u  `message-insert-or-toggle-importance'  (insert or cycle importance).
-C-c M-n  `message-insert-disposition-notification-to'  (request receipt).
-C-c M-m  `message-mark-inserted-region' (mark region with enclosing tags).
-C-c M-f  `message-mark-insert-file' (insert file marked with enclosing tags).
-M-RET    `message-newline-and-reformat' (break the line and reformat).
+Like `text-mode', but with these additional commands:
+
+\\{message-mode-map}
 
 \(fn)" t nil)
 
@@ -22111,7 +22079,7 @@ This command does not work if you use short group names." t nil)
 ;;;### (autoloads nil "nnheader" "gnus/nnheader.el" (0 0 0 0))
 ;;; Generated autoloads from gnus/nnheader.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nnheader" '("gnus-" "mail-header-" "make-" "nnheader-" "nntp-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nnheader" '("gnus-" "mail-header-" "make-mail-header" "nnheader-" "nntp-")))
 
 ;;;***
 
@@ -28153,6 +28121,7 @@ CHAR
 `(seq SEXP1 SEXP2 ...)'
 `(sequence SEXP1 SEXP2 ...)'
      matches what SEXP1 matches, followed by what SEXP2 matches, etc.
+     Without arguments, matches the empty string.
 
 `(submatch SEXP1 SEXP2 ...)'
 `(group SEXP1 SEXP2 ...)'
@@ -28168,7 +28137,7 @@ CHAR
 `(| SEXP1 SEXP2 ...)'
      matches anything that matches SEXP1 or SEXP2, etc.  If all
      args are strings, use `regexp-opt' to optimize the resulting
-     regular expression.
+     regular expression.  Without arguments, never matches anything.
 
 `(minimal-match SEXP)'
      produce a non-greedy regexp for SEXP.  Normally, regexps matching
@@ -29303,6 +29272,7 @@ The default value matches citations like `foo-bar>' plus whitespace.")
 
 (defvar mail-signature t "\
 Text inserted at end of mail buffer when a message is initialized.
+If nil, no signature is inserted.
 If t, it means to insert the contents of the file `mail-signature-file'.
 If a string, that string is inserted.
  (To make a proper signature, the string should begin with \\n\\n-- \\n,
@@ -34398,9 +34368,11 @@ STATUS is a plist representing what happened during the request,
 with most recent events first, or an empty list if no events have
 occurred.  Each pair is one of:
 
-\(:redirect REDIRECTED-TO) - the request was redirected to this URL
-\(:error (ERROR-SYMBOL . DATA)) - an error occurred.  The error can be
-signaled with (signal ERROR-SYMBOL DATA).
+\(:redirect REDIRECTED-TO) - the request was redirected to this URL.
+
+\(:error (error type . DATA)) - an error occurred.  TYPE is a
+symbol that says something about where the error occurred, and
+DATA is a list (possibly nil) that describes the error further.
 
 Return the buffer URL will load into, or nil if the process has
 already completed (i.e. URL was a mailto URL or similar; in this case
@@ -34660,23 +34632,19 @@ if ARG is `toggle'; disable the mode otherwise.
 
 (autoload 'url-file-handler "url-handlers" "\
 Function called from the `file-name-handler-alist' routines.
-OPERATION is what needs to be done (`file-exists-p', etc).  ARGS are
-the arguments that would have been passed to OPERATION.
+OPERATION is what needs to be done (`file-exists-p', etc.).
+ARGS are the arguments that would have been passed to OPERATION.
 
 \(fn OPERATION &rest ARGS)" nil nil)
 
 (autoload 'url-copy-file "url-handlers" "\
-Copy URL to NEWNAME.  Both args must be strings.
-Signal a `file-already-exists' error if file NEWNAME already exists,
-unless a third argument OK-IF-ALREADY-EXISTS is supplied and non-nil.
-A number as third arg means request confirmation if NEWNAME already exists.
-This is what happens in interactive use with M-x.
-Fourth arg KEEP-TIME non-nil means give the new file the same
-last-modified time as the old one.  (This works on only some systems.)
-Args PRESERVE-UID-GID and PRESERVE-PERMISSIONS are ignored.
-A prefix arg makes KEEP-TIME non-nil.
+Copy URL to NEWNAME.  Both arguments must be strings.
+Signal a `file-already-exists' error if file NEWNAME already
+exists, unless a third argument OK-IF-ALREADY-EXISTS is supplied
+and non-nil.  An integer as third argument means request
+confirmation if NEWNAME already exists.
 
-\(fn URL NEWNAME &optional OK-IF-ALREADY-EXISTS KEEP-TIME PRESERVE-UID-GID PRESERVE-PERMISSIONS)" nil nil)
+\(fn URL NEWNAME &optional OK-IF-ALREADY-EXISTS &rest IGNORED)" nil nil)
 
 (autoload 'url-file-local-copy "url-handlers" "\
 Copy URL into a temporary file on this machine.
