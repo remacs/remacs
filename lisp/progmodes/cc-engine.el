@@ -2470,88 +2470,40 @@ comment at the start of cc-engine.el for more info."
 		 (c-skip-ws-forward end+1)
 		 (eq (point) end+1))))))
 
-;; A system for finding noteworthy parens before the point.
-
-(defconst c-state-cache-too-far 5000)
-;; A maximum comfortable scanning distance, e.g. between
-;; `c-state-cache-good-pos' and "HERE" (where we call c-parse-state).  When
-;; this distance is exceeded, we take "emergency measures", e.g. by clearing
-;; the cache and starting again from point-min or a beginning of defun.  This
-;; value can be tuned for efficiency or set to a lower value for testing.
-
-(defvar c-state-cache nil)
-(make-variable-buffer-local 'c-state-cache)
-;; The state cache used by `c-parse-state' to cut down the amount of
-;; searching.  It's the result from some earlier `c-parse-state' call.  See
-;; `c-parse-state''s doc string for details of its structure.
-;;
-;; The use of the cached info is more effective if the next
-;; `c-parse-state' call is on a line close by the one the cached state
-;; was made at; the cache can actually slow down a little if the
-;; cached state was made very far back in the buffer.  The cache is
-;; most effective if `c-parse-state' is used on each line while moving
-;; forward.
-
-(defvar c-state-cache-good-pos 1)
-(make-variable-buffer-local 'c-state-cache-good-pos)
-;; This is a position where `c-state-cache' is known to be correct, or
-;; nil (see below).  It's a position inside one of the recorded unclosed
-;; parens or the top level, but not further nested inside any literal or
-;; subparen that is closed before the last recorded position.
-;;
-;; The exact position is chosen to try to be close to yet earlier than
-;; the position where `c-state-cache' will be called next.  Right now
-;; the heuristic is to set it to the position after the last found
-;; closing paren (of any type) before the line on which
-;; `c-parse-state' was called.  That is chosen primarily to work well
-;; with refontification of the current line.
-;;
-;; 2009-07-28: When `c-state-point-min' and the last position where
-;; `c-parse-state' or for which `c-invalidate-state-cache' was called, are
-;; both in the same literal, there is no such "good position", and
-;; c-state-cache-good-pos is then nil.  This is the ONLY circumstance in which
-;; it can be nil.  In this case, `c-state-point-min-literal' will be non-nil.
-;;
-;; 2009-06-12: In a brace desert, c-state-cache-good-pos may also be in
-;; the middle of the desert, as long as it is not within a brace pair
-;; recorded in `c-state-cache' or a paren/bracket pair.
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; We maintain a simple cache of positions which aren't in a literal, so as to
-;; speed up testing for non-literality.
-(defconst c-state-nonlit-pos-interval 3000)
-;; The approximate interval between entries in `c-state-nonlit-pos-cache'.
+;; We maintain a sopisticated cache of positions which are in a literal,
+;; disregarding macros (i.e. we don't distinguish between "in a macro" and
+;; not).
+;;
+;; This cache is in three parts: two "near" caches, which are association
+;; lists of a small number (currently six) of positions and the parser states
+;; there; the "far" cache (also known as "the cache"), a list of compressed
+;; parser states going back to the beginning of the buffer, one entry every
+;; 3000 characters.
+;;
+;; The two main callable functions embodying this cache are
+;; `c-semi-pp-to-literal', which returns a `parse-partial-sexp' state at a
+;; given position, together with the start of any literal enclosing it, and
+;; `c-full-pp-to-literal', which additionally returns the end of such literal.
+;; One of the above "near" caches is associated with each of these functions.
+;;
+;; When searching this cache, these functions first seek an exact match, then
+;; a "close" match from the assiciated near cache.  If neither of these
+;; succeed, the nearest preceding entry in the far cache is used.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar c-state-nonlit-pos-cache nil)
-(make-variable-buffer-local 'c-state-nonlit-pos-cache)
-;; A list of buffer positions which are known not to be in a literal or a cpp
-;; construct.  This is ordered with higher positions at the front of the list.
-;; Only those which are less than `c-state-nonlit-pos-cache-limit' are valid.
+(defvar c-semi-lit-near-cache nil)
+(make-variable-buffer-local 'c-semi-lit-near-cache)
+;; A list of up to six recent results from `c-semi-pp-to-literal'.  Each
+;; element is a cons of the buffer position and the `parse-partial-sexp' state
+;; at that position.
 
-(defvar c-state-nonlit-pos-cache-limit 1)
-(make-variable-buffer-local 'c-state-nonlit-pos-cache-limit)
-;; An upper limit on valid entries in `c-state-nonlit-pos-cache'.  This is
+(defvar c-semi-near-cache-limit 1)
+(make-variable-buffer-local 'c-semi-near-cache-limit)
+;; An upper limit on valid entries in `c-semi-lit-near-cache'.  This is
 ;; reduced by buffer changes, and increased by invocations of
-;; `c-state-literal-at'.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; We also maintain a less simple cache of positions which aren't in a
-;; literal, disregarding macros.
-;;
-;; This cache is in two parts: the "near" cache, which is an association list
-;; of a small number (currently six) of positions and the parser states there;
-;; the "far" cache (also known as "the cache"), a list of compressed parser
-;; states going back to the beginning of the buffer, one entry every 3000
-;; characters.
-;;
-;; When searching this cache, `c-semi-pp-to-literal' first seeks an
-;; exact match, then a "close" match from the near cache.  If neither of these
-;; succeed, the nearest entry in the far cache is used.
-;;
-;; Because either sub-cache can raise `c-lit-pos-cache-limit',
-;; both of them are "trimmed" together after a buffer change to ensure
-;; consistency.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; `c-semi-pp-to-literal'.
 
 (defvar c-lit-pos-cache nil)
 (make-variable-buffer-local 'c-lit-pos-cache)
@@ -2575,27 +2527,186 @@ comment at the start of cc-engine.el for more info."
 ;; is reduced by buffer changes, and increased by invocations of
 ;; `c-parse-ps-state-below'.
 
-(defvar c-semi-lit-near-cache nil)
-(make-variable-buffer-local 'c-semi-lit-near-cache)
-;; A list of up to six recent results from `c-semi-pp-to-literal'.  Each
-;; element is a cons of the buffer position and the `parse-partial-sexp' state
-;; at that position.
+;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
+(defun c-cache-to-parse-ps-state (elt)
+  ;; Create a list suitable to use as the old-state parameter to
+  ;; `parse-partial-sexp', out of ELT, a member of
+  ;; `c-lit-pos-cache'.  ELT is either just a number, or a list
+  ;; with 2, 3, or 4 members (See `c-parse-ps-state-to-cache').  That number
+  ;; or the car of the list is the "position element" of ELT, the position
+  ;; where ELT is valid.
+  ;;
+  ;; POINT is left at the postition for which the returned state is valid.  It
+  ;; will be either the position element of ELT, or one character before
+  ;; that.  (The latter happens in Emacs <= 25 and XEmacs, when ELT indicates
+  ;; its position element directly follows a potential first character of a
+  ;; two char construct (such as a comment opener or an escaped character).)
+  (if (and (consp elt) (>= (length elt) 3))
+      ;; Inside a string or comment
+      (let ((depth 0) (containing nil) (last nil)
+	    in-string in-comment (after-quote nil)
+	    (min-depth 0) com-style com-str-start (intermediate nil)
+	    (char-1 (nth 3 elt))	; first char of poss. 2-char construct
+	    (pos (car elt))
+	    (type (cadr elt)))
+	(setq com-str-start (car (cddr elt)))
+	(cond
+	 ((or (numberp type) (eq type t)) ; A string
+	  (setq in-string type))
+	 ((memq type '(c c++))		; A comment
+	  (setq in-comment t
+		com-style (if (eq type 'c++) 1 nil)))
+	 (t (c-benign-error "Invalid type %s in c-cache-to-parse-ps-state"
+			    elt)))
+	(goto-char (if char-1
+		       (1- pos)
+		     pos))
+	(if (memq 'pps-extended-state c-emacs-features)
+	    (list depth containing last
+		  in-string in-comment nil
+		  min-depth com-style com-str-start
+		  intermediate nil)
+	  (list depth containing last
+		in-string in-comment nil
+		min-depth com-style com-str-start
+		intermediate)))
 
-(defvar c-semi-near-cache-limit 1)
-(make-variable-buffer-local 'c-semi-near-cache-limit)
-;; An upper limit on valid entries in `c-semi-lit-near-cache'.  This is
-;; reduced by buffer changes, and increased by invocations of
-;; `c-semi-pp-to-literal'.
+    ;; Not in a string or comment.
+    (if (memq 'pps-extended-state c-emacs-features)
+	(progn
+	  (goto-char (if (consp elt) (car elt) elt))
+	  (list 0 nil nil nil nil
+		(and (consp elt) (eq (nth 1 elt) 9)) ; 9 is syntax code for "escape".
+		0 nil nil nil
+		(and (consp elt) (nth 1 elt))))
+      (goto-char (if (consp elt) (car elt) elt))
+      (if (and (consp elt) (cdr elt)) (backward-char))
+      (copy-tree '(0 nil nil nil nil
+		     nil
+		     0 nil nil nil)))))
 
-(defsubst c-truncate-lit-pos-cache (pos)
-  ;; Truncate the upper bound of each of the three caches to POS, if it is
-  ;; higher than that position.
-  (setq c-lit-pos-cache-limit
-	(min c-lit-pos-cache-limit pos)
-	c-semi-near-cache-limit
-	(min c-semi-near-cache-limit pos)
-	c-full-near-cache-limit
-	(min c-full-near-cache-limit pos)))
+;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
+(defun c-parse-ps-state-to-cache (state)
+  ;; Convert STATE, a `parse-partial-sexp' state valid at POINT, to an element
+  ;; for the `c-lit-pos-cache' cache.  This is one of
+  ;;   o - POINT (when point is not in a literal);
+  ;;   o - (POINT CHAR-1) (when the last character before point is potentially
+  ;;       the first of a two-character construct
+  ;;   o - (POINT TYPE STARTING-POS) (when in a literal);
+  ;;   o - (POINT TYPE STARTING-POS CHAR-1) (Combination of the previous two),
+  ;; where TYPE is the type of the literal (either 'c, or 'c++, or the
+  ;; character which closes the string), STARTING-POS is the starting
+  ;; position of the comment or string.  CHAR-1 is either the character
+  ;; potentially forming the first half of a two-char construct (in Emacs <=
+  ;; 25 and XEmacs) or the syntax of the character (in Emacs >= 26).
+  (if (memq 'pps-extended-state c-emacs-features)
+      ;; Emacs >= 26.
+      (let ((basic
+	     (cond
+	      ((nth 3 state)		; A string
+	       (list (point) (nth 3 state) (nth 8 state)))
+	      ((and (nth 4 state)		 ; A comment
+		    (not (eq (nth 7 state) 'syntax-table))) ; but not a psuedo comment.
+	       (list (point)
+		     (if (eq (nth 7 state) 1) 'c++ 'c)
+		     (nth 8 state)))
+	      (t			; Neither string nor comment.
+	       (point)))))
+	(if (nth 10 state)
+	    (append (if (consp basic)
+			basic
+		      (list basic))
+		    (list (nth 10 state)))
+	  basic))
+
+    ;; Emacs <= 25, XEmacs.
+    (cond
+     ((nth 3 state)			; A string
+      (if (eq (char-before) ?\\)
+	  (list (point) (nth 3 state) (nth 8 state) ?\\)
+	(list (point) (nth 3 state) (nth 8 state))))
+     ((and (nth 4 state)		; comment
+	   (not (eq (nth 7 state) 'syntax-table)))
+      (if (and (eq (char-before) ?*)
+	       (> (- (point) (nth 8 state)) 2)) ; not "/*/".
+	  (list (point)
+		(if (eq (nth 7 state) 1) 'c++ 'c)
+		(nth 8 state)
+		?*)
+	(list (point)
+		(if (eq (nth 7 state) 1) 'c++ 'c)
+		(nth 8 state))))
+     (t (if (memq (char-before) '(?/ ?\\))
+	    (list (point) (char-before))
+	  (point))))))
+
+(defsubst c-ps-state-cache-pos (elt)
+  ;; Get the buffer position from ELT, an element from the cache
+  ;; `c-lit-pos-cache'.
+  (if (atom elt)
+      elt
+    (car elt)))
+
+(defun c-trim-lit-pos-cache ()
+  ;; Trim the `c-lit-pos-cache' to take account of buffer
+  ;; changes, indicated by `c-lit-pos-cache-limit'.
+  (while (and c-lit-pos-cache
+	      (> (c-ps-state-cache-pos (car c-lit-pos-cache))
+		 c-lit-pos-cache-limit))
+    (setq c-lit-pos-cache (cdr c-lit-pos-cache))))
+
+(defconst c-state-nonlit-pos-interval 3000)
+;; The approximate interval between entries in `c-state-nonlit-pos-cache'.
+
+(defun c-parse-ps-state-below (here)
+  ;; Given a buffer position HERE, Return a cons (CACHE-POS . STATE), where
+  ;; CACHE-POS is a position not very far before HERE for which the
+  ;; parse-partial-sexp STATE is valid.  Note that the only valid elements of
+  ;; STATE are those concerning comments and strings; STATE is the state of a
+  ;; null `parse-partial-sexp' scan when CACHE-POS is not in a comment or
+  ;; string.
+  (save-excursion
+    (save-restriction
+      (widen)
+      (c-trim-lit-pos-cache)
+      (let ((c c-lit-pos-cache)
+	    elt state npos high-elt)
+	(while (and c (> (c-ps-state-cache-pos (car c)) here))
+	  (setq high-elt (car c))
+	  (setq c (cdr c)))
+	(goto-char (or (and c (c-ps-state-cache-pos (car c)))
+		       (point-min)))
+	(setq state
+	      (if c
+		  (c-cache-to-parse-ps-state (car c))
+		(copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
+
+	(when (not high-elt)
+	  ;; We need to extend the cache.  Add an element to
+	  ;; `c-lit-pos-cache' each iteration of the following.
+	  (while
+	      (<= (setq npos (+ (point) c-state-nonlit-pos-interval)) here)
+	    (setq state (parse-partial-sexp (point) npos nil nil state))
+	    ;; If we're after a \ or a / or * which might be a comment
+	    ;; delimiter half, move back a character.
+	    (when (or (nth 5 state)	; After a quote character
+		      (and (memq 'pps-extended-state c-emacs-features)
+			   (nth 10 state))) ; in the middle of a 2-char seq.
+	      (setq npos (1- npos))
+	      (backward-char)
+	      (when (nth 10 state)
+		(setcar (nthcdr 10 state) nil))
+	      (when (nth 5 state)
+		(setcar (nthcdr 5 state) nil)))
+
+	    (setq elt (c-parse-ps-state-to-cache state))
+	    (setq c-lit-pos-cache
+		  (cons elt c-lit-pos-cache))))
+
+	(if (> (point) c-lit-pos-cache-limit)
+	    (setq c-lit-pos-cache-limit (point)))
+
+	(cons (point) state)))))
 
 (defun c-semi-trim-near-cache ()
   ;; Remove stale entries in `c-semi-lit-near-cache', i.e. those
@@ -2891,6 +3002,78 @@ comment at the start of cc-engine.el for more info."
 	    (c-full-put-near-cache-entry here s nil)
 	    (list s))))))))
 
+(defsubst c-truncate-lit-pos-cache (pos)
+  ;; Truncate the upper bound of each of the three caches to POS, if it is
+  ;; higher than that position.
+  (setq c-lit-pos-cache-limit
+	(min c-lit-pos-cache-limit pos)
+	c-semi-near-cache-limit
+	(min c-semi-near-cache-limit pos)
+	c-full-near-cache-limit
+	(min c-full-near-cache-limit pos)))
+
+
+;; A system for finding noteworthy parens before the point.
+
+(defconst c-state-cache-too-far 5000)
+;; A maximum comfortable scanning distance, e.g. between
+;; `c-state-cache-good-pos' and "HERE" (where we call c-parse-state).  When
+;; this distance is exceeded, we take "emergency measures", e.g. by clearing
+;; the cache and starting again from point-min or a beginning of defun.  This
+;; value can be tuned for efficiency or set to a lower value for testing.
+
+(defvar c-state-cache nil)
+(make-variable-buffer-local 'c-state-cache)
+;; The state cache used by `c-parse-state' to cut down the amount of
+;; searching.  It's the result from some earlier `c-parse-state' call.  See
+;; `c-parse-state''s doc string for details of its structure.
+;;
+;; The use of the cached info is more effective if the next
+;; `c-parse-state' call is on a line close by the one the cached state
+;; was made at; the cache can actually slow down a little if the
+;; cached state was made very far back in the buffer.  The cache is
+;; most effective if `c-parse-state' is used on each line while moving
+;; forward.
+
+(defvar c-state-cache-good-pos 1)
+(make-variable-buffer-local 'c-state-cache-good-pos)
+;; This is a position where `c-state-cache' is known to be correct, or
+;; nil (see below).  It's a position inside one of the recorded unclosed
+;; parens or the top level, but not further nested inside any literal or
+;; subparen that is closed before the last recorded position.
+;;
+;; The exact position is chosen to try to be close to yet earlier than
+;; the position where `c-state-cache' will be called next.  Right now
+;; the heuristic is to set it to the position after the last found
+;; closing paren (of any type) before the line on which
+;; `c-parse-state' was called.  That is chosen primarily to work well
+;; with refontification of the current line.
+;;
+;; 2009-07-28: When `c-state-point-min' and the last position where
+;; `c-parse-state' or for which `c-invalidate-state-cache' was called, are
+;; both in the same literal, there is no such "good position", and
+;; c-state-cache-good-pos is then nil.  This is the ONLY circumstance in which
+;; it can be nil.  In this case, `c-state-point-min-literal' will be non-nil.
+;;
+;; 2009-06-12: In a brace desert, c-state-cache-good-pos may also be in
+;; the middle of the desert, as long as it is not within a brace pair
+;; recorded in `c-state-cache' or a paren/bracket pair.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We maintain a simple cache of positions which aren't in a literal, so as to
+;; speed up testing for non-literality.
+(defvar c-state-nonlit-pos-cache nil)
+(make-variable-buffer-local 'c-state-nonlit-pos-cache)
+;; A list of buffer positions which are known not to be in a literal or a cpp
+;; construct.  This is ordered with higher positions at the front of the list.
+;; Only those which are less than `c-state-nonlit-pos-cache-limit' are valid.
+
+(defvar c-state-nonlit-pos-cache-limit 1)
+(make-variable-buffer-local 'c-state-nonlit-pos-cache-limit)
+;; An upper limit on valid entries in `c-state-nonlit-pos-cache'.  This is
+;; reduced by buffer changes, and increased by invocations of
+;; `c-state-literal-at'.
+
 (defun c-state-pp-to-literal (from to &optional not-in-delimiter)
   ;; Do a parse-partial-sexp from FROM to TO, returning either
   ;;     (STATE TYPE (BEG . END))     if TO is in a literal; or
@@ -2935,184 +3118,6 @@ comment at the start of cc-engine.el for more info."
 	  `(,s ,ty (,co-st . ,(point))))
 
 	 (t `(,s)))))))
-
-;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
-(defun c-cache-to-parse-ps-state (elt)
-  ;; Create a list suitable to use as the old-state parameter to
-  ;; `parse-partial-sexp', out of ELT, a member of
-  ;; `c-lit-pos-cache'.  ELT is either just a number, or a list
-  ;; with 2, 3, or 4 members (See `c-parse-ps-state-to-cache').  That number
-  ;; or the car of the list is the "position element" of ELT, the position
-  ;; where ELT is valid.
-  ;;
-  ;; POINT is left at the position for which the returned state is valid.  It
-  ;; will be either the position element of ELT, or one character before
-  ;; that.  (The latter happens in Emacs <= 25 and XEmacs, when ELT indicates
-  ;; its position element directly follows a potential first character of a
-  ;; two char construct (such as a comment opener or an escaped character).)
-  (if (and (consp elt) (>= (length elt) 3))
-      ;; Inside a string or comment
-      (let ((depth 0) (containing nil) (last nil)
-	    in-string in-comment (after-quote nil)
-	    (min-depth 0) com-style com-str-start (intermediate nil)
-	    (char-1 (nth 3 elt))	; first char of poss. 2-char construct
-	    (pos (car elt))
-	    (type (cadr elt)))
-	(setq com-str-start (car (cddr elt)))
-	(cond
-	 ((or (numberp type) (eq type t)) ; A string
-	  (setq in-string type))
-	 ((memq type '(c c++))		; A comment
-	  (setq in-comment t
-		com-style (if (eq type 'c++) 1 nil)))
-	 (t (c-benign-error "Invalid type %s in c-cache-to-parse-ps-state"
-			    elt)))
-	(goto-char (if char-1
-		       (1- pos)
-		     pos))
-	(if (memq 'pps-extended-state c-emacs-features)
-	    (list depth containing last
-		  in-string in-comment nil
-		  min-depth com-style com-str-start
-		  intermediate nil)
-	  (list depth containing last
-		in-string in-comment nil
-		min-depth com-style com-str-start
-		intermediate)))
-
-    ;; Not in a string or comment.
-    (if (memq 'pps-extended-state c-emacs-features)
-	(progn
-	  (goto-char (if (consp elt) (car elt) elt))
-	  (list 0 nil nil nil nil
-		(and (consp elt) (eq (nth 1 elt) 9)) ; 9 is syntax code for "escape".
-		0 nil nil nil
-		(and (consp elt) (nth 1 elt))))
-      (goto-char (if (consp elt) (car elt) elt))
-      (if (and (consp elt) (cdr elt)) (backward-char))
-      (copy-tree '(0 nil nil nil nil
-		     nil
-		     0 nil nil nil)))))
-
-;; Note that as of 2019-05-27, the forms involving CHAR-1 are no longer used.
-(defun c-parse-ps-state-to-cache (state)
-  ;; Convert STATE, a `parse-partial-sexp' state valid at POINT, to an element
-  ;; for the `c-lit-pos-cache' cache.  This is one of
-  ;;   o - POINT (when point is not in a literal);
-  ;;   o - (POINT CHAR-1) (when the last character before point is potentially
-  ;;       the first of a two-character construct
-  ;;   o - (POINT TYPE STARTING-POS) (when in a literal);
-  ;;   o - (POINT TYPE STARTING-POS CHAR-1) (Combination of the previous two),
-  ;; where TYPE is the type of the literal (either 'c, or 'c++, or the
-  ;; character which closes the string), STARTING-POS is the starting
-  ;; position of the comment or string.  CHAR-1 is either the character
-  ;; potentially forming the first half of a two-char construct (in Emacs <=
-  ;; 25 and XEmacs) or the syntax of the character (in Emacs >= 26).
-  (if (memq 'pps-extended-state c-emacs-features)
-      ;; Emacs >= 26.
-      (let ((basic
-	     (cond
-	      ((nth 3 state)		; A string
-	       (list (point) (nth 3 state) (nth 8 state)))
-	      ((and (nth 4 state)		 ; A comment
-		    (not (eq (nth 7 state) 'syntax-table))) ; but not a pseudo comment.
-	       (list (point)
-		     (if (eq (nth 7 state) 1) 'c++ 'c)
-		     (nth 8 state)))
-	      (t			; Neither string nor comment.
-	       (point)))))
-	(if (nth 10 state)
-	    (append (if (consp basic)
-			basic
-		      (list basic))
-		    (list (nth 10 state)))
-	  basic))
-
-    ;; Emacs <= 25, XEmacs.
-    (cond
-     ((nth 3 state)			; A string
-      (if (eq (char-before) ?\\)
-	  (list (point) (nth 3 state) (nth 8 state) ?\\)
-	(list (point) (nth 3 state) (nth 8 state))))
-     ((and (nth 4 state)		; comment
-	   (not (eq (nth 7 state) 'syntax-table)))
-      (if (and (eq (char-before) ?*)
-	       (> (- (point) (nth 8 state)) 2)) ; not "/*/".
-	  (list (point)
-		(if (eq (nth 7 state) 1) 'c++ 'c)
-		(nth 8 state)
-		?*)
-	(list (point)
-		(if (eq (nth 7 state) 1) 'c++ 'c)
-		(nth 8 state))))
-     (t (if (memq (char-before) '(?/ ?\\))
-	    (list (point) (char-before))
-	  (point))))))
-
-(defsubst c-ps-state-cache-pos (elt)
-  ;; Get the buffer position from ELT, an element from the cache
-  ;; `c-lit-pos-cache'.
-  (if (atom elt)
-      elt
-    (car elt)))
-
-(defun c-trim-lit-pos-cache ()
-  ;; Trim the `c-lit-pos-cache' to take account of buffer
-  ;; changes, indicated by `c-lit-pos-cache-limit'.
-  (while (and c-lit-pos-cache
-	      (> (c-ps-state-cache-pos (car c-lit-pos-cache))
-		 c-lit-pos-cache-limit))
-    (setq c-lit-pos-cache (cdr c-lit-pos-cache))))
-
-(defun c-parse-ps-state-below (here)
-  ;; Given a buffer position HERE, Return a cons (CACHE-POS . STATE), where
-  ;; CACHE-POS is a position not very far before HERE for which the
-  ;; parse-partial-sexp STATE is valid.  Note that the only valid elements of
-  ;; STATE are those concerning comments and strings; STATE is the state of a
-  ;; null `parse-partial-sexp' scan when CACHE-POS is not in a comment or
-  ;; string.
-  (save-excursion
-    (save-restriction
-      (widen)
-      (c-trim-lit-pos-cache)
-      (let ((c c-lit-pos-cache)
-	    elt state npos high-elt)
-	(while (and c (> (c-ps-state-cache-pos (car c)) here))
-	  (setq high-elt (car c))
-	  (setq c (cdr c)))
-	(goto-char (or (and c (c-ps-state-cache-pos (car c)))
-		       (point-min)))
-	(setq state
-	      (if c
-		  (c-cache-to-parse-ps-state (car c))
-		(copy-tree '(0 nil nil nil nil nil 0 nil nil nil nil))))
-
-	(when (not high-elt)
-	  ;; We need to extend the cache.  Add an element to
-	  ;; `c-lit-pos-cache' each iteration of the following.
-	  (while
-	      (<= (setq npos (+ (point) c-state-nonlit-pos-interval)) here)
-	    (setq state (parse-partial-sexp (point) npos nil nil state))
-	    ;; If we're after a \ or a / or * which might be a comment
-	    ;; delimiter half, move back a character.
-	    (when (or (nth 5 state)	; After a quote character
-		      (and (memq 'pps-extended-state c-emacs-features)
-			   (nth 10 state))) ; in the middle of a 2-char seq.
-	      (setq npos (1- npos))
-	      (backward-char)
-	      (when (nth 10 state)
-		(setcar (nthcdr 10 state) nil))
-	      (when (nth 5 state)
-		(setcar (nthcdr 5 state) nil)))
-
-	    (setq elt (c-parse-ps-state-to-cache state))
-	    (setq c-lit-pos-cache
-		  (cons elt c-lit-pos-cache))))
-
-	(if (> (point) c-lit-pos-cache-limit)
-	    (setq c-lit-pos-cache-limit (point)))
-
-	(cons (point) state)))))
 
 (defun c-state-safe-place (here)
   ;; Return a buffer position before HERE which is "safe", i.e. outside any
