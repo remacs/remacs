@@ -5844,11 +5844,45 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
       specbind (Qx_resource_name, name);
     }
 
+  bool register_uniscribe = uniscribe_available;
 #ifdef HAVE_HARFBUZZ
-  if (harfbuzz_available)
+  /* Register Uniscribe only if HarfBuzz is not available or if
+     explicitly requested.  If Uniscribe is registered, register
+     HarfBuzz only if explicitly requested.  */
+  bool register_harfbuzz = harfbuzz_available;
+  if (register_harfbuzz)
+    register_uniscribe = false;
+  Lisp_Object dflt_backends
+    = gui_display_get_arg (dpyinfo, parameters, Qfont_backend,
+			   "fontBackend", "FontBackend", RES_TYPE_STRING);
+  if (!EQ (dflt_backends, Qunbound))
+    {
+      bool harfbuzz_requested = false, uniscribe_requested = false;
+      if (CONSP (dflt_backends))
+	{
+	  if (!NILP (Fmemq (Quniscribe, dflt_backends)))
+	    uniscribe_requested = true;
+	  if (!NILP (Fmemq (Qharfbuzz, dflt_backends)))
+	    harfbuzz_requested = true;
+	}
+      else if (STRINGP (dflt_backends))
+	{
+	  if (strcmp (SSDATA (dflt_backends), "uniscribe") == 0)
+	    uniscribe_requested = true;
+	  else if (strcmp (SSDATA (dflt_backends), "harfbuzz") == 0)
+	    harfbuzz_requested = true;
+	}
+      if (uniscribe_requested)
+	{
+	  register_uniscribe = uniscribe_available;
+	  if (!harfbuzz_requested)
+	    register_harfbuzz = false;
+	}
+    }
+  if (register_harfbuzz)
     register_font_driver (&harfbuzz_font_driver, f);
 #endif
-  if (uniscribe_available)
+  if (register_uniscribe)
     register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);
 
@@ -6901,11 +6935,45 @@ w32_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
       specbind (Qx_resource_name, name);
     }
 
+  bool register_uniscribe = uniscribe_available;
 #ifdef HAVE_HARFBUZZ
-  if (harfbuzz_available)
+  /* Register Uniscribe only if HarfBuzz is not available or if
+     explicitly requested.  If Uniscribe is registered, register
+     HarfBuzz only if explicitly requested.  */
+  bool register_harfbuzz = harfbuzz_available;
+  if (register_harfbuzz)
+    register_uniscribe = false;
+  Lisp_Object dflt_backends
+    = gui_display_get_arg (dpyinfo, parms, Qfont_backend,
+			   "fontBackend", "FontBackend", RES_TYPE_STRING);
+  if (!EQ (dflt_backends, Qunbound))
+    {
+      bool harfbuzz_requested = false, uniscribe_requested = false;
+      if (CONSP (dflt_backends))
+	{
+	  if (!NILP (Fmemq (Quniscribe, dflt_backends)))
+	    uniscribe_requested = true;
+	  if (!NILP (Fmemq (Qharfbuzz, dflt_backends)))
+	    harfbuzz_requested = true;
+	}
+      else if (STRINGP (dflt_backends))
+	{
+	  if (strcmp (SSDATA (dflt_backends), "uniscribe") == 0)
+	    uniscribe_requested = true;
+	  else if (strcmp (SSDATA (dflt_backends), "harfbuzz") == 0)
+	    harfbuzz_requested = true;
+	}
+      if (uniscribe_requested)
+	{
+	  register_uniscribe = uniscribe_available;
+	  if (!harfbuzz_requested)
+	    register_harfbuzz = false;
+	}
+    }
+  if (register_harfbuzz)
     register_font_driver (&harfbuzz_font_driver, f);
 #endif
-  if (uniscribe_available)
+  if (register_uniscribe)
     register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);
 
