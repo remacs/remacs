@@ -996,17 +996,23 @@ HarfBuzz support, and if the HarfBuzz DLL is installed on your system;
 like @code{uniscribe}, this backend supports only TrueType and
 OpenType fonts.  Some languages requiring complex layout can only be
 properly supported by the Uniscribe or HarfBuzz backends.  By default,
-all backends are enabled if supported, with @code{harfbuzz} taking
-priority over @code{uniscribe}, and @code{uniscribe} taking priority
-over @code{gdi}.  To override that and use the GDI backend even if
-Uniscribe is available, invoke Emacs with the @kbd{-xrm
-Emacs.fontBackend:gdi} command-line argument, or add a
-@code{Emacs.fontBackend} resource with the value @code{gdi} in the
-Registry under either the @samp{HKEY_CURRENT_USER\SOFTWARE\GNU\Emacs}
-or the @samp{HKEY_LOCAL_MACHINE\SOFTWARE\GNU\Emacs} key
-(@pxref{Resources}).  Similarly, to use the Uniscribe backend even if
-HarfBuzz is available, use @kbd{-xrm Emacs.fontBackend:uniscribe} on
-the command line that invokes Emacs.
+two backends are enabled for each frame: @code{gdi} and either
+@code{harfbuzz} or @code{uniscribe}, depending on which one is
+available (if both are available, only @code{harfbuzz} is enabled by
+default).  The @code{harfbuzz} and @code{uniscribe} backends take
+priority over @code{gdi} when Emacs looks for a suitable font.  To
+override that and use the GDI backend even if Uniscribe is available,
+invoke Emacs with the @kbd{-xrm Emacs.fontBackend:gdi} command-line
+argument, or add a @code{Emacs.fontBackend} resource with the value
+@code{gdi} in the Registry under either the
+@samp{HKEY_CURRENT_USER\SOFTWARE\GNU\Emacs} or the
+@samp{HKEY_LOCAL_MACHINE\SOFTWARE\GNU\Emacs} key (@pxref{Resources}).
+Similarly, to use the Uniscribe backend even if HarfBuzz is available,
+use @kbd{-xrm Emacs.fontBackend:uniscribe} on the command line that
+invokes Emacs.  You can also request all the 3 backends via the
+@code{font-backend} frame parameter, but be warned that in that case
+font searches for characters for which no fonts are available on the
+system will take longer.
 
 @cindex font properties (MS Windows)
 @noindent
