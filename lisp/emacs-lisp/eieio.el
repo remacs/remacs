@@ -710,6 +710,9 @@ calls `initialize-instance' on that object."
     ;; Call the initialize method on the new object with the slots
     ;; that were passed down to us.
     (initialize-instance new-object slots)
+    (when eieio-backward-compatibility
+      ;; Use symbol as type descriptor, for backwards compatibility.
+      (aset new-object 0 class))
     ;; Return the created object.
     new-object))
 
