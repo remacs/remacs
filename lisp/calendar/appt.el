@@ -4,7 +4,7 @@
 ;; Foundation, Inc.
 
 ;; Author: Neil Mager <neilm@juliet.ll.mit.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Package: calendar
 

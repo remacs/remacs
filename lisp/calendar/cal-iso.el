@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995, 1997, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: ISO calendar, calendar, diary
 ;; Package: calendar

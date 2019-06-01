@@ -5,7 +5,7 @@
 
 ;; Author: Stewart M. Clamen <clamen@cs.cmu.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: Mayan calendar, Maya, calendar, diary
 ;; Package: calendar

@@ -5,7 +5,7 @@
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
 ;;         Denis B. Roegel <Denis.Roegel@loria.fr>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: sunrise, sunset, equinox, solstice, calendar, diary, holidays
 ;; Package: calendar

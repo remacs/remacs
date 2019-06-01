@@ -4,7 +4,7 @@
 
 ;; Author: Steve Fisk <fisk@bowdoin.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: Calendar, LaTeX
 ;; Package: calendar

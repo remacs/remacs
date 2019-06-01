@@ -4,7 +4,7 @@
 
 ;; Author: Nachum Dershowitz <nachum@cs.uiuc.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: Hebrew calendar, calendar, diary
 ;; Package: calendar
