@@ -393,8 +393,8 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
     }
   info = hb_buffer_get_glyph_infos (hb_buffer, NULL);
   pos = hb_buffer_get_glyph_positions (hb_buffer, NULL);
-  int from = -1, to, cluster_offset = 0;
-  int char_idx, incr = buf_reversed ? -1 : 1;
+  ptrdiff_t from = -1, to UNINIT, cluster_offset UNINIT;
+  int incr = buf_reversed ? -1 : 1;
   for (i = 0; i < glyph_len; i++)
     {
       Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
@@ -442,7 +442,7 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 	 M could be smaller or greater than N.  However, in many cases
 	 there is a one-to-one correspondence, and it would be a pity
 	 to lose that information, even if it's sometimes inaccurate.  */
-      char_idx = from + cluster_offset;
+      ptrdiff_t char_idx = from + cluster_offset;
       cluster_offset += incr;
       if (char_idx > to)
 	char_idx = to;
