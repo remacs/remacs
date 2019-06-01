@@ -234,9 +234,9 @@ This includes variable references and calls to functions such as `car'."
   :group 'bytecomp
   :type 'boolean)
 
-(defcustom byte-compile-cond-use-jump-table t
+(defcustom byte-compile-cond-use-jump-table nil
   "Compile `cond' clauses to a jump table implementation (using a hash-table)."
-  :version "26.1"
+  :version "26.3" ;; Disabled due to Bug#35770.
   :group 'bytecomp
   :type 'boolean)
 
