@@ -299,6 +299,7 @@ W32_RES_LINK=@W32_RES_LINK@
 ## xfont.o ftfont.o ftxfont.o if HAVE_FREETYPE
 ## ftfont.o ftcrfont.o if USE_CAIRO
 ## else xfont.o
+## if HAVE_HARFBUZZ, hbfont.o is added regardless of the rest
 FONT_OBJ=@FONT_OBJ@
 
 ## Empty for MinGW, cm.o for the rest.
@@ -431,7 +432,7 @@ SOME_MACHINE_OBJECTS = dosfns.o msdos.o \
   w32.o w32console.o w32cygwinx.o w32fns.o w32heap.o w32inevt.o w32notify.o \
   w32menu.o w32proc.o w32reg.o w32select.o w32term.o w32xfns.o \
   w16select.o widget.o xfont.o ftfont.o xftfont.o ftxfont.o gtkutil.o \
-  xsettings.o xgselect.o termcap.o
+  xsettings.o xgselect.o termcap.o hbfont.o
 
 ## gmalloc.o if !SYSTEM_MALLOC && !DOUG_LEA_MALLOC, else empty.
 GMALLOC_OBJ=@GMALLOC_OBJ@
