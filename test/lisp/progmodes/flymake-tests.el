@@ -111,6 +111,7 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest perl-backend ()
   "Test the perl backend"
   (skip-unless (executable-find "perl"))
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (flymake-tests--with-flymake ("test.pl")
     (flymake-goto-next-error)
     (should (eq 'flymake-warning (face-at-point)))
@@ -170,6 +171,7 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest included-c-header-files ()
   "Test inclusion of .h header files."
   (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (let ((flymake-wrap-around nil))
     (flymake-tests--with-flymake
         ("some-problems.h")
@@ -295,6 +297,7 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest recurrent-backend ()
   "Test a backend that calls REPORT-FN multiple times"
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (with-temp-buffer
     (let (tick)
       (cl-letf
