@@ -742,7 +742,7 @@ Return the sublist of LIST whose car matches.
 			(not (cl--check-test cl-item (car (car cl-alist))))))
 	  (setq cl-alist (cdr cl-alist)))
 	(and cl-alist (car cl-alist)))
-    (if (numberp cl-item)
+    (if (and (numberp cl-item) (not (fixnump cl-item)))
 	(assoc cl-item cl-alist)
       (assq cl-item cl-alist))))
 (autoload 'cl--compiler-macro-assoc "cl-macs")
