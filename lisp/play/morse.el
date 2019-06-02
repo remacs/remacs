@@ -1,4 +1,4 @@
-;;; morse.el --- convert text to morse code and back
+;;; morse.el --- convert text to morse code and back  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1995, 2001-2019 Free Software Foundation, Inc.
 
