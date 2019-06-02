@@ -703,9 +703,7 @@ Return the sublist of LIST whose car is ITEM.
 	(while (and cl-list (not (cl--check-test cl-item (car cl-list))))
 	  (setq cl-list (cdr cl-list)))
 	cl-list)
-    (if (and (numberp cl-item) (not (integerp cl-item)))
-	(member cl-item cl-list)
-      (memq cl-item cl-list))))
+    (memql cl-item cl-list)))
 (autoload 'cl--compiler-macro-member "cl-macs")
 
 ;;;###autoload
@@ -744,7 +742,7 @@ Return the sublist of LIST whose car matches.
 			(not (cl--check-test cl-item (car (car cl-alist))))))
 	  (setq cl-alist (cdr cl-alist)))
 	(and cl-alist (car cl-alist)))
-    (if (and (numberp cl-item) (not (integerp cl-item)))
+    (if (numberp cl-item)
 	(assoc cl-item cl-alist)
       (assq cl-item cl-alist))))
 (autoload 'cl--compiler-macro-assoc "cl-macs")
