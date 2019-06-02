@@ -287,12 +287,12 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-theme-def
   :supertype 'help-xref
-  'help-function 'find-file
+  'help-function #'find-file
   'help-echo (purecopy "mouse-2, RET: visit theme file"))
 
 (define-button-type 'help-theme-edit
   :supertype 'help-xref
-  'help-function 'customize-create-theme
+  'help-function #'customize-create-theme
   'help-echo (purecopy "mouse-2, RET: edit this theme file"))
 
 (define-button-type 'help-dir-local-var-def
@@ -302,7 +302,13 @@ The format is (FUNCTION ARGS...).")
 		   ;; local variable was defined.
 		   (find-file file))
   'help-echo (purecopy "mouse-2, RET: open directory-local variables file"))
-
+(define-button-type 'help-news
+  :supertype 'help-xref
+  'help-function
+  (lambda (file pos)
+    (pop-to-buffer (find-file-noselect file))
+    (goto-char pos))
+  'help-echo (purecopy "mouse-2, RET: show corresponding NEWS announcement"))
 
 (defvar bookmark-make-record-function)
 

@@ -592,6 +592,7 @@ FILE is the file where FUNCTION was probably defined."
   (let* ((name (symbol-name symbol))
          (re (concat "\\_<" (regexp-quote name) "\\_>"))
          (news (directory-files data-directory t "\\`NEWS.[1-9]"))
+         (place nil)
          (first nil))
     (with-temp-buffer
       (dolist (f news)
@@ -600,17 +601,20 @@ FILE is the file where FUNCTION was probably defined."
         (goto-char (point-min))
         (search-forward "\n*")
         (while (re-search-forward re nil t)
-          (save-excursion
-            ;; Almost all entries are of the form "* ... in Emacs NN.MM."
-            ;; but there are also a few in the form "* Emacs NN.MM is a bug
-            ;; fix release ...".
-            (if (not (re-search-backward "^\\*.* Emacs \\([0-9.]+[0-9]\\)"
-                                         nil t))
-                (message "Ref found in non-versioned section in %S"
-                         (file-name-nondirectory f))
-              (let ((version (match-string 1)))
-                (when (or (null first) (version< version first))
-                  (setq first version))))))))
+          (let ((pos (match-beginning 0)))
+            (save-excursion
+              ;; Almost all entries are of the form "* ... in Emacs NN.MM."
+              ;; but there are also a few in the form "* Emacs NN.MM is a bug
+              ;; fix release ...".
+              (if (not (re-search-backward "^\\*.* Emacs \\([0-9.]+[0-9]\\)"
+                                           nil t))
+                  (message "Ref found in non-versioned section in %S"
+                           (file-name-nondirectory f))
+                (let ((version (match-string 1)))
+                  (when (or (null first) (version< version first))
+                    (setq place (list f pos))
+                    (setq first version)))))))))
+    (make-text-button first nil 'type 'help-news 'help-args place)
     first))
 
 (add-hook 'help-fns-describe-function-functions
@@ -620,8 +624,9 @@ FILE is the file where FUNCTION was probably defined."
 (defun help-fns--mention-first-release (object)
   (let ((first (if (symbolp object) (help-fns--first-release object))))
     (when first
-      (princ (format "  Probably introduced at or before Emacs version %s.\n"
-                     first)))))
+      (with-current-buffer standard-output
+        (insert (format "  Probably introduced at or before Emacs version %s.\n"
+                        first))))))
 
 (defun help-fns-short-filename (filename)
   (let* ((abbrev (abbreviate-file-name filename))
