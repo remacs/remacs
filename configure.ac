@@ -3413,13 +3413,6 @@ if test "${HAVE_X11}" = "yes"; then
   if test "${HAVE_FREETYPE}" = "yes"; then
     AC_DEFINE(HAVE_FREETYPE, 1,
 	      [Define to 1 if using the freetype and fontconfig libraries.])
-    OLD_CFLAGS=$CFLAGS
-    OLD_LIBS=$LIBS
-    CFLAGS="$CFLAGS $FREETYPE_CFLAGS"
-    LIBS="$FREETYPE_LIBS $LIBS"
-    AC_CHECK_FUNCS(FT_Face_GetCharVariantIndex)
-    CFLAGS=$OLD_CFLAGS
-    LIBS=$OLD_LIBS
     if test "${with_libotf}" != "no"; then
       EMACS_CHECK_MODULES([LIBOTF], [libotf])
       if test "$HAVE_LIBOTF" = "yes"; then

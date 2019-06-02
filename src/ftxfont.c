@@ -351,7 +351,7 @@ struct font_driver const ftxfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftfont_shape,
 #endif
-#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
+#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
   .get_variation_glyphs = ftfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,

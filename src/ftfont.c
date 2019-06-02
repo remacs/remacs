@@ -2820,41 +2820,21 @@ ftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 
 #endif	/* HAVE_M17N_FLT */
 
-#endif	/* HAVE_LIBOTF */
+#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
 
-#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
 int
 ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 {
   struct font_info *ftfont_info = (struct font_info *) font;
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
   OTF *otf = ftfont_get_otf (ftfont_info);
 
   if (! otf)
     return 0;
   return OTF_get_variation_glyphs (otf, c, variations);
-#else  /* !HAVE_OTF_GET_VARIATION_GLYPHS */
-  FT_Face ft_face = ftfont_info->ft_size->face;
-  int i, n = 0;
-
-  for (i = 0; i < 16; i++)
-    {
-      variations[i] = FT_Face_GetCharVariantIndex (ft_face, c, 0xFE00 + i);
-      if (variations[i])
-	n++;
-    }
-  for (; i < 256; i++)
-    {
-      variations[i] = FT_Face_GetCharVariantIndex (ft_face, c,
-						   0xE0100 + (i - 16));
-      if (variations[i])
-	n++;
-    }
-
-  return n;
-#endif  /* !HAVE_OTF_GET_VARIATION_GLYPHS */
 }
-#endif /* HAVE_OTF_GET_VARIATION_GLYPHS || HAVE_FT_FACE_GETCHARVARIANTINDEX */
+
+#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS */
+#endif	/* HAVE_LIBOTF */
 
 #ifdef HAVE_HARFBUZZ
 
@@ -2956,7 +2936,7 @@ static struct font_driver const ftfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftfont_shape,
 #endif
-#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
+#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
   .get_variation_glyphs = ftfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,
