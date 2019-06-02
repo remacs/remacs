@@ -3157,52 +3157,28 @@ The following commands are available:
 
 ;; Summary data functions.
 
-(defmacro gnus-data-number (data)
-  `(car ,data))
+(cl-defstruct (gnus-data
+               (:constructor nil)
+               (:constructor gnus-data-make (number mark pos header level))
+               (:type list))
+  number mark pos header level)
 
-(defmacro gnus-data-set-number (data number)
-  `(setcar ,data ,number))
+(define-inline gnus-data-unread-p (data)
+  (inline-quote (= (gnus-data-mark ,data) gnus-unread-mark)))
 
-(defmacro gnus-data-mark (data)
-  `(nth 1 ,data))
+(define-inline gnus-data-read-p (data)
+  (inline-quote (/= (gnus-data-mark ,data) gnus-unread-mark)))
 
-(defmacro gnus-data-set-mark (data mark)
-  `(setcar (nthcdr 1 ,data) ,mark))
+(define-inline gnus-data-pseudo-p (data)
+  (inline-quote (consp (gnus-data-header ,data))))
 
-(defmacro gnus-data-pos (data)
-  `(nth 2 ,data))
-
-(defmacro gnus-data-set-pos (data pos)
-  `(setcar (nthcdr 2 ,data) ,pos))
-
-(defmacro gnus-data-header (data)
-  `(nth 3 ,data))
-
-(defmacro gnus-data-set-header (data header)
-  `(setf (nth 3 ,data) ,header))
-
-(defmacro gnus-data-level (data)
-  `(nth 4 ,data))
-
-(defmacro gnus-data-unread-p (data)
-  `(= (nth 1 ,data) gnus-unread-mark))
-
-(defmacro gnus-data-read-p (data)
-  `(/= (nth 1 ,data) gnus-unread-mark))
-
-(defmacro gnus-data-pseudo-p (data)
-  `(consp (nth 3 ,data)))
-
-(defmacro gnus-data-find (number)
-  `(assq ,number gnus-newsgroup-data))
+(define-inline gnus-data-find (number)
+  (inline-quote (assq ,number gnus-newsgroup-data)))
 
 (defmacro gnus-data-find-list (number &optional data)
   `(let ((bdata ,(or data 'gnus-newsgroup-data)))
      (memq (assq ,number bdata)
 	   bdata)))
-
-(defmacro gnus-data-make (number mark pos header level)
-  `(list ,number ,mark ,pos ,header ,level))
 
 (defun gnus-data-enter (after-article number mark pos header level offset)
   (let ((data (gnus-data-find-list after-article)))
@@ -3293,9 +3269,10 @@ The following commands are available:
       (setq data (cdr data)))
     children))
 
-(defmacro gnus-summary-skip-intangible ()
+(defsubst gnus-summary-skip-intangible ()
+  ;; FIXME: Does this really warrant a `defsubst'?
   "If the current article is intangible, then jump to a different article."
-  '(let ((to (get-text-property (point) 'gnus-intangible)))
+   (let ((to (get-text-property (point) 'gnus-intangible)))
      (and to (gnus-summary-goto-subject to))))
 
 (defmacro gnus-summary-article-intangible-p ()
@@ -3304,14 +3281,13 @@ The following commands are available:
 
 ;; Some summary mode macros.
 
-(defmacro gnus-summary-article-number ()
+(defsubst gnus-summary-article-number ()
   "The article number of the article on the current line.
 If there isn't an article number here, then we return the current
 article number."
-  '(progn
-     (gnus-summary-skip-intangible)
-     (or (get-text-property (point) 'gnus-number)
-	 (gnus-summary-last-subject))))
+  (gnus-summary-skip-intangible)
+  (or (get-text-property (point) 'gnus-number)
+      (gnus-summary-last-subject)))
 
 (define-inline gnus-summary-article-header (&optional number)
   "Return the header of article NUMBER."
@@ -3434,7 +3410,7 @@ marks of articles."
 	(while data
 	  (while (get-text-property (point) 'gnus-intangible)
 	    (forward-line 1))
-	  (gnus-data-set-pos (car data) (+ (point) 3))
+	  (setf (gnus-data-pos (car data)) (+ (point) 3))
 	  (setq data (cdr data))
 	  (forward-line 1))))))
 
@@ -4709,7 +4685,7 @@ the id of the parent article (if any)."
 	  (delq thread parent)))
       (if (gnus-summary-insert-subject id header)
 	  ;; Set the (possibly) new article number in the data structure.
-	  (gnus-data-set-number data (gnus-id-to-article id))
+	  (setf (gnus-data-number data) (gnus-id-to-article id))
 	(setcar thread old)
 	nil))))
 
@@ -9811,9 +9787,9 @@ C-u g', show the raw article."
 	    (insert ".\n")
 	    (let ((nntp-server-buffer (current-buffer)))
 	      (setq header (car (gnus-get-newsgroup-headers deps t))))))
-	(gnus-data-set-header
-	 (gnus-data-find (cdr gnus-article-current))
-	 header)
+	(setf (gnus-data-header
+	       (gnus-data-find (cdr gnus-article-current)))
+	      header)
 	(gnus-summary-update-article-line
 	 (cdr gnus-article-current) header)
 	(when (gnus-summary-goto-subject (cdr gnus-article-current) nil t)
@@ -10762,7 +10738,7 @@ groups."
 		    (let ((nntp-server-buffer (current-buffer)))
 		      (setq header (car (gnus-get-newsgroup-headers nil t))))
 		    (with-current-buffer gnus-summary-buffer
-		      (gnus-data-set-header (gnus-data-find article) header)
+		      (setf (gnus-data-header (gnus-data-find article)) header)
 		      (gnus-summary-update-article-line article header)
 		      (if (gnus-summary-goto-subject article nil t)
 			  (gnus-summary-update-secondary-mark article)))))))
@@ -11271,8 +11247,9 @@ If NO-EXPIRE, auto-expiry will be inhibited."
           (insert to-insert))
 	;; Optionally update the marks by some user rule.
 	(when (eq type 'unread)
-	  (gnus-data-set-mark
-	   (gnus-data-find (gnus-summary-article-number)) mark)
+	  (setf (gnus-data-mark
+	         (gnus-data-find (gnus-summary-article-number)))
+                mark)
 	  (gnus-summary-update-line (eq mark gnus-unread-mark)))))))
 
 (defun gnus-mark-article-as-read (article &optional mark)
