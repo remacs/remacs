@@ -455,7 +455,7 @@ ftcrfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 }
 #endif
 
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
 static int
 ftcrfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 {
@@ -470,7 +470,7 @@ ftcrfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 
   return result;
 }
-#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS */
+#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS || HAVE_FT_FACE_GETCHARVARIANTINDEX */
 
 static int
 ftcrfont_draw (struct glyph_string *s,
@@ -583,7 +583,7 @@ struct font_driver const ftcrfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftcrfont_shape,
 #endif
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
   .get_variation_glyphs = ftcrfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,
