@@ -3160,6 +3160,8 @@ The following commands are available:
 (cl-defstruct (gnus-data
                (:constructor nil)
                (:constructor gnus-data-make (number mark pos header level))
+               ;; In gnus-data-find-in, we rely on (car data) returning the
+               ;; number, because we use `assq' on a list of gnus-data.
                (:type list))
   number mark pos header level)
 
@@ -3172,12 +3174,14 @@ The following commands are available:
 (define-inline gnus-data-pseudo-p (data)
   (inline-quote (consp (gnus-data-header ,data))))
 
+(defalias 'gnus-data-find-in #'assq)
+
 (define-inline gnus-data-find (number)
-  (inline-quote (assq ,number gnus-newsgroup-data)))
+  (inline-quote (gnus-data-find-in ,number gnus-newsgroup-data)))
 
 (defmacro gnus-data-find-list (number &optional data)
   `(let ((bdata ,(or data 'gnus-newsgroup-data)))
-     (memq (assq ,number bdata)
+     (memq (gnus-data-find-in ,number bdata)
 	   bdata)))
 
 (defun gnus-data-enter (after-article number mark pos header level offset)
@@ -3314,17 +3318,17 @@ article number."
   `(gnus-data-pos (gnus-data-find
 		   ,(or number '(gnus-summary-article-number)))))
 
-(defalias 'gnus-summary-subject-string 'gnus-summary-article-subject)
-(defmacro gnus-summary-article-subject (&optional number)
+(defalias 'gnus-summary-subject-string #'gnus-summary-article-subject)
+(defsubst gnus-summary-article-subject (&optional number)
+  ;; FIXME: Does this really warrant a defsubst?
   "Return current subject string or nil if nothing."
-  `(let ((headers
-	  ,(if number
-	       `(gnus-data-header (assq ,number gnus-newsgroup-data))
-	     '(gnus-data-header (assq (gnus-summary-article-number)
-				      gnus-newsgroup-data)))))
-     (and headers
-	  (mail-header-p headers)
-	  (mail-header-subject headers))))
+  (let ((headers
+	 (gnus-data-header
+          (gnus-data-find (or number
+	                      (gnus-summary-article-number))))))
+    (and headers
+	 (mail-header-p headers)
+	 (mail-header-subject headers))))
 
 (defmacro gnus-summary-article-score (&optional number)
   "Return current article score."
@@ -3582,6 +3586,9 @@ buffer that was in action when the last article was fetched."
 (defconst gnus--dummy-mail-header
   (make-full-mail-header 0 "" "" "05 Apr 2001 23:33:09 +0400" "" "" 0 0 "" nil))
 
+(defconst gnus--dummy-data-list
+  (list (gnus-data-make 0 nil nil gnus--dummy-mail-header nil)))
+
 (defun gnus-make-thread-indent-array (&optional n)
   (when (or n
 	    (progn (setq n 200) nil)
@@ -3609,6 +3616,9 @@ buffer that was in action when the last article was fetched."
 	      (gnus-score-over-mark ?Z)
 	      (gnus-undownloaded-mark ?Z)
 	      (gnus-summary-line-format-spec spec)
+              ;; Make sure `gnus-data-find' finds a dummy element
+              ;; so we don't call gnus-data-<field> accessors on nil.
+              (gnus-newsgroup-data gnus--dummy-data-list)
 	      (gnus-newsgroup-downloadable '(0))
 	      case-fold-search ignores)
 	  ;; Here, all marks are bound to Z.

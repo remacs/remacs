@@ -109,14 +109,12 @@ that was fetched."
   (setcdr (symbol-value semaphore) nil))
 
 (defmacro gnus-async-with-semaphore (&rest forms)
+  (declare (indent 0) (debug t))
   `(unwind-protect
        (progn
 	 (gnus-async-get-semaphore 'gnus-async-article-semaphore)
 	 ,@forms)
      (gnus-async-release-semaphore 'gnus-async-article-semaphore)))
-
-(put 'gnus-async-with-semaphore 'lisp-indent-function 0)
-(put 'gnus-async-with-semaphore 'edebug-form-spec '(body))
 
 ;;;
 ;;; Article prefetch
@@ -142,15 +140,15 @@ that was fetched."
 	     gnus-asynchronous
 	     (gnus-group-asynchronous-p group))
     (with-current-buffer gnus-summary-buffer
-      (let ((next (caadr (gnus-data-find-list article))))
+      (let ((next (cadr (gnus-data-find-list article))))
 	(when next
 	  (when gnus-async-timer
 	    (ignore-errors
 	      (cancel-timer 'gnus-async-timer)))
 	  (setq gnus-async-timer
 		(run-with-idle-timer
-		 0.1 nil 'gnus-async-prefetch-article
-		 group next summary)))))))
+		 0.1 nil #'gnus-async-prefetch-article
+		 group (gnus-data-number next) summary)))))))
 
 (defun gnus-async-prefetch-article (group article summary &optional next)
   "Possibly prefetch several articles starting with ARTICLE."
