@@ -362,7 +362,7 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 
      FIXME: maybe drop this guessing once script and language handling
      is fixed above; but then will need to guess the direction by
-     ourselves, perhaps by looking at the the characters using
+     ourselves, perhaps by looking at the characters using
      bidi_get_type or somesuch.  */
   hb_buffer_guess_segment_properties (hb_buffer);
 
