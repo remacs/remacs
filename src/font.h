@@ -928,9 +928,7 @@ extern void ftfont_filter_properties (Lisp_Object, Lisp_Object);
 extern void ftfont_text_extents (struct font *, const unsigned *, int,
 				 struct font_metrics *);
 #ifdef HAVE_HARFBUZZ
-extern Lisp_Object fthbfont_combining_capability (struct font *);
 extern hb_font_t *fthbfont_begin_hb_font (struct font *, double *);
-extern Lisp_Object fthbfont_shape (Lisp_Object, Lisp_Object);
 #endif	/* HAVE_HARFBUZZ */
 extern void syms_of_ftfont (void);
 #endif	/* HAVE_FREETYPE */
