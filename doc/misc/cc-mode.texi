@@ -7431,13 +7431,15 @@ could amend your C++ Mode hook like this:
 @emph{How do I stop my C++ lambda expressions being indented way over
 to the right?}
 
-Change the offset associated with @code{inlambda} from its default,
-the function @code{c-lineup-inexpr-block}, to 0.  For example, if you
-are setting offsets in a hook function you might include the following
-line:
+This is now the default, so you don't need to do anything.  To restore
+the previous default, indenting lambda expressions to the right of the
+constructs which introduce them, change the offset associated with
+@code{inlambda} from 0 to @code{c-lineup-inexpr-block}.  For example,
+if you are setting offsets in a hook function you might include the
+following line:
 
 @example
-(c-set-offset 'inlambda 0)
+(c-set-offset 'inlambda 'c-lineup-inexpr-block)
 @end example
 
 For details of the different ways you can make this setting,
