@@ -1545,6 +1545,25 @@ the new variable 'buffer-auto-revert-by-notification' to a non-nil
 value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
+** auth-source-pass
+
++++
+*** New customizable variable 'auth-source-pass-filename'.
+Allows setting the path to the password-store, defaults to
+~/.password-store.
+
++++
+*** New customizable variable 'auth-source-pass-port-separator'.
+Specifies separator between host and port, defaults to colon ":".
+
+---
+*** Minimize the number of decryptions during password lookup.
+This makes the package usable with physical tokens requiring touching
+a sensor for every decryption.
+
+---
+*** 'auth-source-pass-get' is now autoloaded.
+
 ** Bookmarks
 
 ---
