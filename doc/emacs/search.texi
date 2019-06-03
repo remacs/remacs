@@ -828,7 +828,7 @@ Expressions,,, elisp, The Emacs Lisp Reference Manual}, for additional
 features used mainly in Lisp programs.
 
   Regular expressions have a syntax in which a few characters are
-special constructs and the rest are @dfn{ordinary}.  An ordinary
+@dfn{special constructs} and the rest are @dfn{ordinary}.  An ordinary
 character matches that same character and nothing else.  The special
 characters are @samp{$^.*+?[\}.  The character @samp{]} is special if
 it ends a character alternative (see below).  The character @samp{-}
@@ -1465,8 +1465,7 @@ multiple digits, and the value of @samp{\@var{d}} is @code{nil} if the
 @samp{\#} here too stands for the number of already-completed
 replacements.
 
-  Repeating our example to exchange @samp{x} and @samp{y}, we can thus
-do it also this way:
+  For example, we can exchange @samp{x} and @samp{y} this way:
 
 @example
 M-x replace-regexp @key{RET} \(x\)\|y @key{RET}
