@@ -24,11 +24,12 @@
 
 (eval-and-compile (put 'char-fold-table 'char-table-extra-slots 1))
 
-(defconst char-fold-table
-  (eval-when-compile
-    (let ((equiv (make-char-table 'char-fold-table))
-          (equiv-multi (make-char-table 'char-fold-table))
-          (table (unicode-property-table-internal 'decomposition)))
+(eval-and-compile
+  (defun char-fold-make-table ()
+    (let* ((equiv (make-char-table 'char-fold-table))
+           (equiv-multi (make-char-table 'char-fold-table))
+           (search-spaces-regexp nil)   ; workaround for bug#35802
+           (table (unicode-property-table-internal 'decomposition)))
       (set-char-table-extra-slot equiv 0 equiv-multi)
 
       ;; Ensure the table is populated.
@@ -107,13 +108,17 @@
 
       ;; Convert the lists of characters we compiled into regexps.
       (map-char-table
-       (lambda (char dec-list)
-         (let ((re (regexp-opt (cons (char-to-string char) dec-list))))
-           (if (consp char)
+       (lambda (char decomp-list)
+         (let ((re (regexp-opt (cons (char-to-string char) decomp-list))))
+           (if (consp char) ; FIXME: char never is consp?
                (set-char-table-range equiv char re)
              (aset equiv char re))))
        equiv)
-      equiv))
+      equiv)))
+
+(defconst char-fold-table
+  (eval-when-compile
+    (char-fold-make-table))
   "Used for folding characters of the same group during search.
 This is a char-table with the `char-fold-table' subtype.
 
