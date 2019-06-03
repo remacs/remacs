@@ -53,13 +53,14 @@ def extract_deps():
     # This list derives from the features we want Emacs to compile with.
     PKG_REQ='''mingw-w64-x86_64-giflib
 mingw-w64-x86_64-gnutls
+mingw-w64-x86_64-harfbuzz
+mingw-w64-x86_64-lcms2
 mingw-w64-x86_64-libjpeg-turbo
 mingw-w64-x86_64-libpng
 mingw-w64-x86_64-librsvg
 mingw-w64-x86_64-libtiff
 mingw-w64-x86_64-libxml2
-mingw-w64-x86_64-xpm-nox
-mingw-w64-x86_64-lcms2'''.split()
+mingw-w64-x86_64-xpm-nox'''.split()
 
     # Get a list of all dependencies needed for packages mentioned above.
     # Run `pactree -lu' for each element of $PKG_REQ.
