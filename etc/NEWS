@@ -471,6 +471,12 @@ its functions.
 names match certain regular expressions as big.  Ido won't attempt to
 list the contents of such directories when completing file names.
 
+** Minibuffer
+
+---
+*** Minibuffer now uses 'minibuffer-message' to display error messages
+at the end of the active minibuffer.
+
 ** map.el
 *** Now also understands plists.
 *** Now defined via generic functions that can be extended via 'cl-defmethod'.

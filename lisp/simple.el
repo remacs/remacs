@@ -2440,6 +2440,28 @@ Go to the history element by the absolute history position HIST-POS."
   (goto-history-element hist-pos))
 
 
+(add-hook 'minibuffer-setup-hook 'minibuffer-error-initialize)
+
+(defun minibuffer-error-initialize ()
+  "Set up minibuffer error processing."
+  (setq-local command-error-function 'minibuffer-error-function))
+
+(defun minibuffer-error-function (data context caller)
+  "Display error messages in the active minibuffer.
+The same as `command-error-default-function' but display error messages
+at the end of the minibuffer using `minibuffer-message' to not obscure
+the minibuffer contents."
+  (discard-input)
+  (ding)
+  (let ((string (error-message-string data)))
+    ;; If we know from where the error was signaled, show it in
+    ;; *Messages*.
+    (let ((inhibit-message t))
+      (message "%s%s" (if caller (format "%s: " caller) "") string))
+    ;; Display an error message at the end of the minibuffer.
+    (minibuffer-message (concat context string))))
+
+
 ;Put this on C-x u, so we can force that rather than C-_ into startup msg
 (define-obsolete-function-alias 'advertised-undo 'undo "23.2")
 
