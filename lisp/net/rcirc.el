@@ -2545,16 +2545,15 @@ If ARG is given, opens the URL in a new browser window."
     (setq rcirc-server-name sender)
     (setq rcirc-nick (car args))
     (rcirc-update-prompt)
-    (if rcirc-auto-authenticate-flag
-        (if (and rcirc-authenticate-before-join
-		 ;; We have to ensure that there's an authentication
-		 ;; entry for that server.  Else,
-		 ;; rcirc-authenticated-hook won't be triggered, and
-		 ;; autojoin won't happen at all.
-		 (let (auth-required)
-		   (dolist (s rcirc-authinfo auth-required)
-		     (when (string-match (car s) rcirc-server-name)
-		       (setq auth-required t)))))
+    (if (and rcirc-auto-authenticate-flag
+             ;; We have to ensure that there's an authentication
+             ;; entry for that server.  Otherwise,
+             ;; there's no point in calling authenticate.
+             (let (auth-required)
+               (dolist (s rcirc-authinfo auth-required)
+                 (when (string-match (car s) rcirc-server)
+                   (setq auth-required t)))))
+        (if rcirc-authenticate-before-join
             (progn
 	      (add-hook 'rcirc-authenticated-hook 'rcirc-join-channels-post-auth t t)
               (rcirc-authenticate))
