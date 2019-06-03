@@ -1,4 +1,4 @@
-;;; gnus-async.el --- asynchronous support for Gnus
+;;; gnus-async.el --- asynchronous support for Gnus  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
@@ -38,7 +38,6 @@
   "If non-nil, prefetch articles in groups that allow this.
 If a number, prefetch only that many articles forward;
 if t, prefetch as many articles as possible."
-  :group 'gnus-asynchronous
   :type '(choice (const :tag "off" nil)
 		 (const :tag "all" t)
 		 (integer :tag "some" 0)))
@@ -46,7 +45,6 @@ if t, prefetch as many articles as possible."
 (defcustom gnus-asynchronous nil
   "If nil, inhibit all Gnus asynchronicity.
 If non-nil, let the other asynch variables be heeded."
-  :group 'gnus-asynchronous
   :type 'boolean)
 
 (defcustom gnus-prefetched-article-deletion-strategy '(read exit)
@@ -55,28 +53,24 @@ Possible values in this list are `read', which means that
 articles are removed as they are read, and `exit', which means
 that all articles belonging to a group are removed on exit
 from that group."
-  :group 'gnus-asynchronous
   :type '(set (const read) (const exit)))
 
 (defcustom gnus-use-header-prefetch nil
   "If non-nil, prefetch the headers to the next group."
-  :group 'gnus-asynchronous
   :type 'boolean)
 
-(defcustom gnus-async-prefetch-article-p 'gnus-async-unread-p
+(defcustom gnus-async-prefetch-article-p #'gnus-async-unread-p
   "Function called to say whether an article should be prefetched or not.
 The function is called with one parameter -- the article data.
 It should return non-nil if the article is to be prefetched."
-  :group 'gnus-asynchronous
   :type 'function)
 
-(defcustom gnus-async-post-fetch-function nil
+(defcustom gnus-async-post-fetch-function #'ignore
   "Function called after an article has been prefetched.
 The function will be called narrowed to the region of the article
 that was fetched."
-  :version "24.1"
-  :group 'gnus-asynchronous
-  :type '(choice (const nil) function))
+  :version "27.1"
+  :type 'function)
 
 ;;; Internal variables.
 
@@ -212,8 +206,8 @@ that was fetched."
 
 (defun gnus-make-async-article-function (group article mark summary next)
   "Return a callback function."
-  `(lambda (arg)
-     (gnus-async-article-callback arg ,group ,article ,mark ,summary ,next)))
+  (lambda (arg)
+    (gnus-async-article-callback arg group article mark summary next)))
 
 (defun gnus-async-article-callback (arg group article mark summary next)
   "Function called when an async article is done being fetched."
@@ -354,9 +348,9 @@ that was fetched."
 	(erase-buffer)
 	(let ((nntp-server-buffer (current-buffer))
 	      (nnheader-callback-function
-	       `(lambda (arg)
+	       (lambda (_arg)
 		  (setq gnus-async-header-prefetched
-			,(cons group unread)))))
+			(cons group unread)))))
 	  (gnus-retrieve-headers unread group gnus-fetch-old-headers))))))
 
 (defun gnus-async-retrieve-fetched-headers (articles group)
