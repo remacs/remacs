@@ -1307,8 +1307,10 @@ the selected window.
 
 If deleting the window would leave no more windows in the window tree
 (e.g., if it is the only live window in the frame) or all remaining
-windows on @var{window}'s frame are side windows (@pxref{Side Windows}),
-an error is signaled.
+windows on @var{window}'s frame are side windows (@pxref{Side
+Windows}), an error is signaled.  If @var{window} is part of an atomic
+window (@pxref{Atomic Windows}), this function tries to delete the
+root of that atomic window instead.
 
 By default, the space taken up by @var{window} is given to one of its
 adjacent sibling windows, if any.  However, if the variable
@@ -1327,10 +1329,13 @@ Parameters}.
 @end deffn
 
 @deffn Command delete-other-windows &optional window
-This function makes @var{window} fill its frame, deleting other windows
-as necessary.  If @var{window} is omitted or @code{nil}, it defaults to
-the selected window.  An error is signaled if @var{window} is a side
-window (@pxref{Side Windows}).  The return value is @code{nil}.
+This function makes @var{window} fill its frame, deleting other
+windows as necessary.  If @var{window} is omitted or @code{nil}, it
+defaults to the selected window.  An error is signaled if @var{window}
+is a side window (@pxref{Side Windows}).  If @var{window} is part of
+an atomic window (@pxref{Atomic Windows}), this function tries to make
+the root of that atomic window fill its frame.  The return
+value is @code{nil}.
 
 The behavior of this function may be altered by the window parameters of
 @var{window}, so long as the variable @code{ignore-window-parameters} is
@@ -3909,9 +3914,8 @@ described next to deal with the window and its buffer.
 This function handles @var{window} and its buffer after quitting.  The
 optional argument @var{window} must be a live window and defaults to
 the selected one. The function's behavior is determined by the four
-elements of the list specified by the @code{quit-restore} window
-parameter (@pxref{Window Parameters}), which is set to @code{nil}
-afterwards.
+elements of the list specified by @var{window}'s @code{quit-restore}
+parameter (@pxref{Window Parameters}).
 
 The first element of the @code{quit-restore} parameter is one of the
 symbols @code{window}, meaning that the window has been specially
@@ -3920,35 +3924,40 @@ been created; @code{same}, the window has only ever displayed this
 buffer; or @code{other}, the window showed another buffer before.
 @code{frame} and @code{window} affect how the window is quit, while
 @code{same} and @code{other} affect the redisplay of buffers
-previously shown in this window.
+previously shown in @var{window}.
 
-The second element is either one of the symbols @code{window} or
-@code{frame}, or a list whose elements are the buffer shown in the
-window before, that buffer's window start and window point positions,
-and the window's height at that time.  If that buffer is still live
-when the window is quit, then the function @code{quit-restore-window}
-reuses the window to display the buffer.
+The parameter's second element is either one of the symbols
+@code{window} or @code{frame}, or a list whose elements are the buffer
+shown in @var{window} before, that buffer's window start and window
+point positions, and @var{window}'s height at that time.  If that
+buffer is still live when @var{window} is quit, then this function may
+reuse @var{window} to display it.
 
 The third element is the window selected at the time the parameter was
-created.  If @code{quit-restore-window} deletes the window passed to
-it as argument, it then tries to reselect this window.
+created.  If this function deletes @var{window}, it subsequently tries
+to reselect the window named by that element.
 
 The fourth element is the buffer whose display caused the creation of
-this parameter.  @code{quit-restore-window} deletes the specified window
-only if it still shows that buffer.
+this parameter.  This function may delete @var{window} if and only if
+it still shows that buffer.
 
-The window is deleted entirely if: 1) the first element of the
-@code{quit-restore} parameter is one of 'window or 'frame, 2) the
-window has no history of previously-displayed buffers, and 3) the
-displayed buffer matches the one in the fourth element of the
-@code{quit-restore} parameter.  If @var{window} is the
-only window on its frame and there are other frames on the frame's
-terminal, the value of the optional argument @var{bury-or-kill}
-determines how to proceed with the window.  If @var{bury-or-kill}
-equals @code{kill}, the frame is deleted unconditionally.  Otherwise,
-the fate of the frame is determined by calling
-@code{frame-auto-hide-function} (see below) with that frame as sole
-argument.
+This function will try to delete @var{window} if and only if (1) the
+first element of its @code{quit-restore} parameter is either
+@code{window} or @code{frame}, (2) the window has no history of
+previously-displayed buffers and (3) the fourth element of the
+@code{quit-restore} parameter specifies the buffer currently displayed
+in @var{window}.  If @var{window} is part of an atomic window
+(@pxref{Atomic Windows}), it will try to delete the root of that
+atomic window instead.  In either case, it tries to avoid signaling an
+error when @var{window} cannot be deleted.
+
+If @var{window} shall be deleted, is the only window on its frame and
+there are other frames on that frame's terminal, the value of the
+optional argument @var{bury-or-kill} determines how to proceed with
+the window.  If @var{bury-or-kill} equals @code{kill}, the frame is
+deleted unconditionally.  Otherwise, the fate of the frame is
+determined by calling @code{frame-auto-hide-function} (see below) with
+that frame as sole argument.
 
 If the third element of the @code{quit-restore} parameter is a list of
 buffer, window start (@pxref{Window Start and End}), and point
@@ -3959,7 +3968,8 @@ try to restore the original height of @var{window}.
 
 Otherwise, if @var{window} was previously used for displaying other
 buffers (@pxref{Window History}), the most recent buffer in that
-history will be displayed.
+history will be displayed.  In either case, if @var{window} is not
+deleted, its @code{quit-restore} parameter is reset to @code{nil}.
 
 The optional argument @var{bury-or-kill} specifies how to deal with
 @var{window}'s buffer.  The following values are handled:
@@ -4439,6 +4449,11 @@ Note also that the @code{window-atom} parameter is the only window
 parameter assigned by @code{display-buffer-in-atom-window}.  Further
 parameters have to be set by the application explicitly via a
 @code{window-parameters} entry in @var{alist}.
+
+   Atomic windows automatically cease to exist when one of their
+constituents gets deleted.  To dissolve an atomic window manually,
+reset the @code{window-atom} parameter of its constituents---the root
+of the atomic window and all its descendants.
 
    The following code snippet, when applied to a single-window frame,
 first splits the selected window and makes the selected and the new
