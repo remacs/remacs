@@ -816,9 +816,9 @@ more convenient, and they are documented in that command's
 documentation string.
 
   We use the term @dfn{prefix argument} to emphasize that you type
-such arguments before the command, and to distinguish them from
-minibuffer arguments (@pxref{Minibuffer}), which are entered after
-invoking the command.
+such arguments @emph{before} the command, and to distinguish them from
+minibuffer arguments (@pxref{Minibuffer}), which are entered
+@emph{after} invoking the command.
 
   On graphical displays, @kbd{C-0}, @kbd{C-1}, etc.@ act the same as
 @kbd{M-0}, @kbd{M-1}, etc.
