@@ -4593,10 +4593,12 @@ This function could be useful in `message-setup-hook'."
 	    (message-insert-courtesy-copy
 	     (with-current-buffer mailbuf
 	       message-courtesy-message)))
-          ;; Let's make sure we encoded all the body.
-          (cl-assert (save-excursion
-                       (goto-char (point-min))
-                       (not (re-search-forward "[^\000-\377]" nil t))))
+          ;; If this was set, let `sendmail-program' handle the Unicode
+          (unless message-inhibit-body-encoding
+            ;; Let's make sure we encoded all the body.
+            (cl-assert (save-excursion
+                         (goto-char (point-min))
+                         (not (re-search-forward "[^\000-\377]" nil t)))))
           (mm-disable-multibyte)
 	  (if (or (not message-send-mail-partially-limit)
 		  (< (buffer-size) message-send-mail-partially-limit)
