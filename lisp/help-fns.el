@@ -584,7 +584,7 @@ FILE is the file where FUNCTION was probably defined."
             "including the match data.\n")))
 
 (defun help-fns--first-release (symbol)
-  "Return the likely first release that defined SYMBOL."
+  "Return the likely first release that defined SYMBOL, or nil."
   ;; Code below relies on the etc/NEWS* files.
   ;; FIXME: Maybe we should also use the */ChangeLog* files when available.
   ;; FIXME: Maybe we should also look for announcements of the addition
@@ -614,7 +614,8 @@ FILE is the file where FUNCTION was probably defined."
                   (when (or (null first) (version< version first))
                     (setq place (list f pos))
                     (setq first version)))))))))
-    (make-text-button first nil 'type 'help-news 'help-args place)
+    (when first
+      (make-text-button first nil 'type 'help-news 'help-args place))
     first))
 
 (add-hook 'help-fns-describe-function-functions
