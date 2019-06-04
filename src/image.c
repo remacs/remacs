@@ -239,7 +239,7 @@ cr_create_cr_surface_from_image (struct frame *f, struct image *img)
 						  : CAIRO_FORMAT_RGB24),
 						 pimg->width, pimg->height,
 						 pimg->bytes_per_line);
-  static cairo_user_data_key_t key;
+  static const cairo_user_data_key_t key;
   cairo_surface_set_user_data (surface, &key, pimg->data, xfree);
   unblock_input ();
   pimg->data = NULL;
