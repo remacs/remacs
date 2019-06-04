@@ -9014,26 +9014,24 @@ Lisp; it is written in C and is one of the primitives of the GNU Emacs
 system.  Since it is very simple, I will digress briefly from Lisp and
 describe it here.
 
-@c GNU Emacs 24  in src/editfns.c
-@c the DEFUN for  delete-and-extract-region
-
 @need 1500
 Like many of the other Emacs primitives,
 @code{delete-and-extract-region} is written as an instance of a C
 macro, a macro being a template for code.  The complete macro looks
 like this:
 
+@c This is a copy of editfns.c's DEFUN for delete-and-extract-region.
 @smallexample
 @group
 DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
        Sdelete_and_extract_region, 2, 2, 0,
        doc: /* Delete the text between START and END and return it.  */)
-       (Lisp_Object start, Lisp_Object end)
+  (Lisp_Object start, Lisp_Object end)
 @{
   validate_region (&start, &end);
-  if (XINT (start) == XINT (end))
+  if (XFIXNUM (start) == XFIXNUM (end))
     return empty_unibyte_string;
-  return del_range_1 (XINT (start), XINT (end), 1, 1);
+  return del_range_1 (XFIXNUM (start), XFIXNUM (end), 1, 1);
 @}
 @end group
 @end smallexample
@@ -9097,9 +9095,9 @@ consists of the following four lines:
 @smallexample
 @group
 validate_region (&start, &end);
-if (XINT (start) == XINT (end))
+if (XFIXNUM (start) == XFIXNUM (end))
   return empty_unibyte_string;
-return del_range_1 (XINT (start), XINT (end), 1, 1);
+return del_range_1 (XFIXNUM (start), XFIXNUM (end), 1, 1);
 @end group
 @end smallexample
 
@@ -9111,27 +9109,28 @@ then return an empty string.
 The @code{del_range_1} function actually deletes the text.  It is a
 complex function we will not look into.  It updates the buffer and
 does other things.  However, it is worth looking at the two arguments
-passed to @code{del_range_1}.  These are @w{@code{XINT (start)}} and
-@w{@code{XINT (end)}}.
+passed to @code{del_range_1}.  These are @w{@code{XFIXNUM (start)}} and
+@w{@code{XFIXNUM (end)}}.
 
 As far as the C language is concerned, @code{start} and @code{end} are
-two integers that mark the beginning and end of the region to be
-deleted@footnote{More precisely, and requiring more expert knowledge
-to understand, the two integers are of type @code{Lisp_Object}, which can
-also be a C union instead of an integer type.}.
+two opaque values that mark the beginning and end of the region to be
+deleted.  More precisely, and requiring more expert knowledge
+to understand, the two values are of type @code{Lisp_Object}, which
+might be a C pointer, a C integer, or a C @code{struct}; C code
+ordinarily should not care how @code{Lisp_Object} is implemented.
 
-Integer widths depend on the machine, and are typically 32 or 64 bits.
-A few of the bits are used to specify the type of information; the
-remaining bits are used as content.
+@code{Lisp_Object} widths depend on the machine, and are typically 32
+or 64 bits.  A few of the bits are used to specify the type of
+information; the remaining bits are used as content.
 
-@samp{XINT} is a C macro that extracts the relevant number from the
+@samp{XFIXNUM} is a C macro that extracts the relevant integer from the
 longer collection of bits; the type bits are discarded.
 
 @need 800
 The command in @code{delete-and-extract-region} looks like this:
 
 @smallexample
-del_range_1 (XINT (start), XINT (end), 1, 1);
+del_range_1 (XFIXNUM (start), XFIXNUM (end), 1, 1);
 @end smallexample
 
 @noindent

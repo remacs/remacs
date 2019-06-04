@@ -792,13 +792,13 @@ This mainly sets up debugger-related bindings."
 This can be useful after reducing the value of `message-log-max'."
   (with-current-buffer (messages-buffer)
     ;; This is a reimplementation of this part of message_dolog() in xdisp.c:
-    ;; if (NATNUMP (Vmessage_log_max))
+    ;; if (FIXNATP (Vmessage_log_max))
     ;;   {
     ;;     scan_newline (Z, Z_BYTE, BEG, BEG_BYTE,
-    ;;                   -XFASTINT (Vmessage_log_max) - 1, 0);
-    ;;     del_range_both (BEG, BEG_BYTE, PT, PT_BYTE, 0);
+    ;;                   -XFIXNAT (Vmessage_log_max) - 1, false);
+    ;;     del_range_both (BEG, BEG_BYTE, PT, PT_BYTE, false);
     ;;   }
-    (when (and (integerp message-log-max) (>= message-log-max 0))
+    (when (natnump message-log-max)
       (let ((begin (point-min))
             (end (save-excursion
                    (goto-char (point-max))
