@@ -607,11 +607,13 @@ component is used as the target of the symlink."
 
     (with-parsed-tramp-file-name linkname nil
       ;; If TARGET is a Tramp name, use just the localname component.
-      (when (and (tramp-tramp-file-p target)
-		 (tramp-file-name-equal-p v (tramp-dissect-file-name target)))
-	(setq target
-	      (tramp-file-name-localname
-	       (tramp-dissect-file-name (expand-file-name target)))))
+      ;; Don't check for a proper method.
+      (let ((non-essential t))
+	(when (and (tramp-tramp-file-p target)
+		   (tramp-file-name-equal-p v (tramp-dissect-file-name target)))
+	  (setq target
+		(tramp-file-name-localname
+		 (tramp-dissect-file-name (expand-file-name target))))))
 
       ;; If TARGET is still remote, quote it.
       (if (tramp-tramp-file-p target)
@@ -780,7 +782,7 @@ connection if a previous connection has died for some reason."
       (throw 'non-essential 'non-essential))
 
     (let ((p (make-network-process
-	      :name (tramp-buffer-name vec)
+	      :name (tramp-get-connection-name vec)
 	      :buffer (tramp-get-connection-buffer vec)
 	      :server t :host 'local :service t :noquery t)))
       (process-put p 'vector vec)

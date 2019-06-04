@@ -543,7 +543,7 @@ connection if a previous connection has died for some reason."
       ;; we create a dummy process.  Maybe there is a better solution?
       (unless (get-buffer-process (tramp-get-connection-buffer vec))
 	(let ((p (make-network-process
-		  :name (tramp-buffer-name vec)
+		  :name (tramp-get-connection-name vec)
 		  :buffer (tramp-get-connection-buffer vec)
 		  :server t :host 'local :service t :noquery t)))
 	  (process-put p 'vector vec)

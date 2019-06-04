@@ -157,89 +157,93 @@ variables, so we check the Emacs version directly."
   "Check archive file name components."
   (skip-unless tramp-archive-enabled)
 
-  (with-parsed-tramp-archive-file-name tramp-archive-test-archive nil
-    (should (string-equal method tramp-archive-method))
-    (should-not user)
-    (should-not domain)
-    (should
-     (string-equal
-      host
-      (file-remote-p
-       (tramp-archive-gvfs-file-name tramp-archive-test-archive) 'host)))
-    (should
-     (string-equal
-      host
-      (url-hexify-string (concat "file://" tramp-archive-test-file-archive))))
-    (should-not port)
-    (should (string-equal localname "/"))
-    (should (string-equal archive tramp-archive-test-file-archive)))
+  ;; Suppress method name check.
+  (let ((non-essential t))
+    (with-parsed-tramp-archive-file-name tramp-archive-test-archive nil
+      (should (string-equal method tramp-archive-method))
+      (should-not user)
+      (should-not domain)
+      (should
+       (string-equal
+	host
+	(file-remote-p
+	 (tramp-archive-gvfs-file-name tramp-archive-test-archive) 'host)))
+      (should
+       (string-equal
+	host
+	(url-hexify-string (concat "file://" tramp-archive-test-file-archive))))
+      (should-not port)
+      (should (string-equal localname "/"))
+      (should (string-equal archive tramp-archive-test-file-archive)))
 
-  ;; Localname.
-  (with-parsed-tramp-archive-file-name
-      (concat tramp-archive-test-archive "foo") nil
-    (should (string-equal method tramp-archive-method))
-    (should-not user)
-    (should-not domain)
-    (should
-     (string-equal
-      host
-      (file-remote-p
-       (tramp-archive-gvfs-file-name tramp-archive-test-archive) 'host)))
-   (should
-     (string-equal
-      host
-      (url-hexify-string (concat "file://" tramp-archive-test-file-archive))))
-    (should-not port)
-    (should (string-equal localname "/foo"))
-    (should (string-equal archive tramp-archive-test-file-archive)))
+    ;; Localname.
+    (with-parsed-tramp-archive-file-name
+	(concat tramp-archive-test-archive "foo") nil
+      (should (string-equal method tramp-archive-method))
+      (should-not user)
+      (should-not domain)
+      (should
+       (string-equal
+	host
+	(file-remote-p
+	 (tramp-archive-gvfs-file-name tramp-archive-test-archive) 'host)))
+      (should
+       (string-equal
+	host
+	(url-hexify-string (concat "file://" tramp-archive-test-file-archive))))
+      (should-not port)
+      (should (string-equal localname "/foo"))
+      (should (string-equal archive tramp-archive-test-file-archive)))
 
-  ;; File archive in file archive.
-  (let* ((tramp-archive-test-file-archive
-	  (concat tramp-archive-test-archive "baz.tar"))
-	 (tramp-archive-test-archive
-	  (file-name-as-directory tramp-archive-test-file-archive))
-	 (tramp-methods (cons `(,tramp-archive-method) tramp-methods))
-	 (tramp-gvfs-methods tramp-archive-all-gvfs-methods))
-    (unwind-protect
-	(with-parsed-tramp-archive-file-name
-	    (expand-file-name "bar" tramp-archive-test-archive) nil
-	  (should (string-equal method tramp-archive-method))
-	  (should-not user)
-	  (should-not domain)
-	  (should
-	   (string-equal
-	    host
-	    (file-remote-p
-	     (tramp-archive-gvfs-file-name tramp-archive-test-archive) 'host)))
-	  ;; We reimplement the logic of tramp-archive.el here.  Don't
-	  ;; know, whether it is worth the test.
-	  (should
-	   (string-equal
-	    host
-	    (url-hexify-string
-	     (concat
-	      (tramp-gvfs-url-file-name
-	       (tramp-make-tramp-file-name
-		tramp-archive-method
-		;; User and Domain.
-		nil nil
-		;; Host.
-		(url-hexify-string
-		 (concat
-		  "file://"
-		  ;; `directory-file-name' does not leave file archive
-		  ;; boundaries.  So we must cut the trailing slash
-		  ;; ourselves.
-		  (substring
-		   (file-name-directory tramp-archive-test-file-archive) 0 -1)))
-		nil "/"))
-	      (file-name-nondirectory tramp-archive-test-file-archive)))))
-	  (should-not port)
-	  (should (string-equal localname "/bar"))
-	  (should (string-equal archive tramp-archive-test-file-archive)))
+    ;; File archive in file archive.
+    (let* ((tramp-archive-test-file-archive
+	    (concat tramp-archive-test-archive "baz.tar"))
+	   (tramp-archive-test-archive
+	    (file-name-as-directory tramp-archive-test-file-archive))
+	   (tramp-methods (cons `(,tramp-archive-method) tramp-methods))
+	   (tramp-gvfs-methods tramp-archive-all-gvfs-methods))
+      (unwind-protect
+	  (with-parsed-tramp-archive-file-name
+	      (expand-file-name "bar" tramp-archive-test-archive) nil
+	    (should (string-equal method tramp-archive-method))
+	    (should-not user)
+	    (should-not domain)
+	    (should
+	     (string-equal
+	      host
+	      (file-remote-p
+	       (tramp-archive-gvfs-file-name tramp-archive-test-archive)
+	       'host)))
+	    ;; We reimplement the logic of tramp-archive.el here.
+	    ;; Don't know, whether it is worth the test.
+	    (should
+	     (string-equal
+	      host
+	      (url-hexify-string
+	       (concat
+		(tramp-gvfs-url-file-name
+		 (tramp-make-tramp-file-name
+		  tramp-archive-method
+		  ;; User and Domain.
+		  nil nil
+		  ;; Host.
+		  (url-hexify-string
+		   (concat
+		    "file://"
+		    ;; `directory-file-name' does not leave file
+		    ;; archive boundaries.  So we must cut the
+		    ;; trailing slash ourselves.
+		    (substring
+		     (file-name-directory tramp-archive-test-file-archive)
+		     0 -1)))
+		  nil "/"))
+		(file-name-nondirectory tramp-archive-test-file-archive)))))
+	    (should-not port)
+	    (should (string-equal localname "/bar"))
+	    (should (string-equal archive tramp-archive-test-file-archive)))
 
-      ;; Cleanup.
-      (tramp-archive-cleanup-hash))))
+	;; Cleanup.
+	(tramp-archive-cleanup-hash)))))
 
 (ert-deftest tramp-archive-test05-expand-file-name ()
   "Check `expand-file-name'."
