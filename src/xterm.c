@@ -4239,7 +4239,8 @@ x_scroll_run (struct window *w, struct run *run)
 		 width, height,
 		 x, to_y);
       if (cr)
-	cairo_surface_mark_dirty (cairo_get_target (cr));
+	cairo_surface_mark_dirty_rectangle (cairo_get_target (cr),
+					    x, to_y, width, height);
     }
   else if (FRAME_CR_CONTEXT (f))
     {
