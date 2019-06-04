@@ -3,7 +3,6 @@
 ;; Copyright (C) 1995-1996, 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Tomoji Kagatani <kagatani@rbc.ncl.omron.co.jp>
-;; Maintainer: Simon Josefsson <simon@josefsson.org>
 ;; w32 Maintainer: Brian D. Carlstrom <bdc@ai.mit.edu>
 ;; ESMTP support: Simon Leinen <simon@switch.ch>
 ;; Hacked by Mike Taylor, 11th October 1999 to add support for

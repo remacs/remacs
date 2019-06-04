@@ -5,7 +5,6 @@
 ;; Authors:    Kai Grossjohann <Kai.Grossjohann@CS.Uni-Dortmund.DE>
 ;;             Alex Schroeder <alex@gnu.org>
 ;;             Chong Yidong <cyd@stupidchicken.com>
-;; Maintainer: Chong Yidong <cyd@stupidchicken.com>
 ;; Obsolete-since: 24.4
 ;; Keywords: convenience, wp
 

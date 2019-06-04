@@ -4,8 +4,6 @@
 ;; Inc.
 
 ;; Author: Hans Henrik Eriksen <hhe@ifi.uio.no>
-;; Maintainer: simula-mode@ifi.uio.no
-;;   (above email addresses invalid as of April 2008)
 ;; Adapted-By: ESR
 ;; Keywords: languages
 

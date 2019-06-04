@@ -8,7 +8,6 @@
 
 ;; Author: Kenichi Handa <handa@gnu.org>
 ;;	   Naoto Takahashi <ntakahas@etl.go.jp>
-;; Maintainer: Kenichi Handa <handa@gnu.org>
 ;; Keywords: mule, multilingual, input method, i18n
 
 ;; This file is part of GNU Emacs.

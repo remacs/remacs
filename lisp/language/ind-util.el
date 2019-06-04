@@ -2,7 +2,6 @@
 
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
-;; Maintainer:  KAWABATA, Taichi <kawabata@m17n.org>
 ;; Keywords: multilingual, Indian, Devanagari
 
 ;; This file is part of GNU Emacs.

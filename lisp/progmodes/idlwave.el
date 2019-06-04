@@ -5,7 +5,6 @@
 ;; Authors: JD Smith <jd.smith@utoledo.edu>
 ;;          Carsten Dominik <dominik@science.uva.nl>
 ;;          Chris Chase <chase@att.com>
-;; Maintainer: JD Smith <jd.smith@utoledo.edu>
 ;; Version: 6.1.22
 ;; Keywords: languages
 
