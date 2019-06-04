@@ -4593,7 +4593,7 @@ This function could be useful in `message-setup-hook'."
 	    (message-insert-courtesy-copy
 	     (with-current-buffer mailbuf
 	       message-courtesy-message)))
-          ;; If this was set, let `sendmail-program' handle the Unicode
+          ;; If this was set, `sendmail-program' takes care of encoding.
           (unless message-inhibit-body-encoding
             ;; Let's make sure we encoded all the body.
             (cl-assert (save-excursion
