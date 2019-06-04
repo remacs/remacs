@@ -7369,9 +7369,9 @@ The time is in seconds as a floating point value.  */);
               doc: /* Accumulated number of garbage collections done.  */);
 
   DEFVAR_INT ("integer-width", integer_width,
-	      doc: /* Maximum number of bits in bignums.
-Integers outside the fixnum range are limited to absolute values less
-than 2**N, where N is this variable's value.  N should be nonnegative.  */);
+	      doc: /* Maximum number N of bits in safely-calculated integers.
+Integers with absolute values less than 2**N do not signal a range error.
+N should be nonnegative.  */);
 
   defsubr (&Scons);
   defsubr (&Slist);

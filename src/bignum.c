@@ -82,8 +82,11 @@ static Lisp_Object
 make_bignum_bits (size_t bits)
 {
   /* The documentation says integer-width should be nonnegative, so
-     a single comparison suffices even though 'bits' is unsigned.  */
-  if (integer_width < bits)
+     comparing it to BITS works even though BITS is unsigned.  Treat
+     integer-width as if it were at least twice the machine integer width,
+     so that timefns.c can safely use bignums for double-precision
+     timestamps.  */
+  if (integer_width < bits && 2 * max (INTMAX_WIDTH, UINTMAX_WIDTH) < bits)
     overflow_error ();
 
   struct Lisp_Bignum *b = ALLOCATE_PLAIN_PSEUDOVECTOR (struct Lisp_Bignum,
