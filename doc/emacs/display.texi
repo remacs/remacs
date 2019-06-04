@@ -1557,11 +1557,11 @@ curved quotes.  You can influence or inhibit this translation by
 customizing the user option @code{text-quoting-style} (@pxref{Keys in
 Documentation,,, elisp, The Emacs Lisp Reference Manual}).
 
-  If the curved quotes @samp{‘}, @samp{’}, @samp{“}, and @samp{”} are
+  If the curved quotes @t{‘}, @t{’}, @t{“}, and @t{”} are
 known to look just like @acronym{ASCII} characters, they are shown
 with the @code{homoglyph} face.  Curved quotes that are known not to
 be displayable are shown as their @acronym{ASCII} approximations
-@samp{`}, @samp{'}, and @samp{"} with the @code{homoglyph} face.
+@t{`}, @t{'}, and @t{"} with the @code{homoglyph} face.
 
 @node Cursor Display
 @section Displaying the Cursor

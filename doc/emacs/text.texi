@@ -439,8 +439,8 @@ portable; curved quotes are less ambiguous and typically look nicer.
 
 @vindex electric-quote-chars
   Electric Quote mode makes it easier to type curved quotes.  As you
-type characters it optionally converts @t{`} to ‘, @t{'} to ',
-@t{``} to ``, and @t{''} to ''.  It's possible to change the
+type characters it optionally converts @kbd{`} to @t{‘}, @kbd{'} to @t{’},
+@kbd{``} to @t{“}, and @kbd{''} to @t{”}.  It's possible to change the
 default quotes listed above, by customizing the variable
 @code{electric-quote-chars}, a list of four characters, where the
 items correspond to the left single quote, the right single quote, the
