@@ -776,9 +776,7 @@ callback data (if any)."
 	     (user-id (match-string 2 string))
 	     (entry (assoc key-id epg-user-id-alist)))
 	(condition-case nil
-	    (setq user-id (decode-coding-string
-			   (epg--decode-percent-escape user-id)
-			   'utf-8))
+	    (setq user-id (epg--decode-percent-escape-as-utf-8 user-id))
 	  (error))
 	(if entry
 	    (setcdr entry user-id)
@@ -905,9 +903,7 @@ callback data (if any)."
 	(condition-case nil
 	    (if (eq (epg-context-protocol context) 'CMS)
 		(setq user-id (epg-dn-from-string user-id))
-	      (setq user-id (decode-coding-string
-			     (epg--decode-percent-escape user-id)
-			     'utf-8)))
+	      (setq user-id (epg--decode-percent-escape-as-utf-8 user-id)))
 	  (error))
 	(if entry
 	    (setcdr entry user-id)
@@ -1183,9 +1179,7 @@ callback data (if any)."
 	     (user-id (match-string 2 string))
 	     (entry (assoc key-id epg-user-id-alist)))
 	(condition-case nil
-	    (setq user-id (decode-coding-string
-			   (epg--decode-percent-escape user-id)
-			   'utf-8))
+	    (setq user-id (epg--decode-percent-escape-as-utf-8 user-id))
 	  (error))
 	(if entry
 	    (setcdr entry user-id)
@@ -2026,6 +2020,7 @@ If you are unsure, use synchronous version of this function
     (epg-reset context)))
 
 (defun epg--decode-percent-escape (string)
+  (setq string (string-to-unibyte string))
   (let ((index 0))
     (while (string-match "%\\(\\(%\\)\\|\\([0-9A-Fa-f][0-9A-Fa-f]\\)\\)"
 			 string index)
@@ -2033,10 +2028,14 @@ If you are unsure, use synchronous version of this function
 	  (setq string (replace-match "%" t t string)
 		index (1- (match-end 0)))
 	(setq string (replace-match
-		      (string (string-to-number (match-string 3 string) 16))
+		      (byte-to-string
+                       (string-to-number (match-string 3 string) 16))
 		      t t string)
 	      index (- (match-end 0) 2))))
     string))
+
+(defun epg--decode-percent-escape-as-utf-8 (string)
+  (decode-coding-string (epg--decode-percent-escape string) 'utf-8))
 
 (defun epg--decode-hexstring (string)
   (let ((index 0))
