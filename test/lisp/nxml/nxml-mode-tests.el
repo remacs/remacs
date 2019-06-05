@@ -99,5 +99,20 @@
     (should (nth 4 (syntax-ppss)))
     (search-forward "comment3")))
 
+(ert-deftest nxml-mode->-after-quote ()
+  "Reduction from Bug#36092."
+  (with-temp-buffer
+    (insert "<root>\n"
+            (make-string 1794 ?a) "\n"
+            "'>"
+            (make-string 196 ?a) "\n"
+            "</root>")
+    (nxml-mode)
+    (syntax-propertize 2001)
+    (syntax-propertize (point-max))     ; Triggered an assert failure.
+    ;; Check that last tag is parsed as a tag.
+    (should (= 1 (- (car (syntax-ppss (1- (point-max))))
+                    (car (syntax-ppss (point-max))))))))
+
 (provide 'nxml-mode-tests)
 ;;; nxml-mode-tests.el ends here
