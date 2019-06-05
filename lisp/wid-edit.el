@@ -252,7 +252,10 @@ minibuffer."
 	   (define-key map [?\M--] 'negative-argument)
 	   (save-window-excursion
 	     (let ((buf (get-buffer " widget-choose")))
-	       (fit-window-to-buffer (display-buffer buf))
+	       (display-buffer buf
+			       '(display-buffer-in-direction
+				 (direction . bottom)
+				 (window-height . fit-window-to-buffer)))
 	       (let ((cursor-in-echo-area t)
 		     (arg 1))
                  (while (not value)
