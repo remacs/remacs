@@ -2883,10 +2883,7 @@ x_composite_image (struct glyph_string *s, Pixmap dest,
       destination = XRenderCreatePicture (display, dest,
                                           default_format, 0, &attr);
 
-      /* FIXME: It may make sense to use PictOpSrc instead of
-         PictOpOver, as I don't know if we care about alpha values too
-         much here.  */
-      XRenderComposite (display, PictOpOver,
+      XRenderComposite (display, PictOpSrc,
                         s->img->picture, s->img->mask_picture, destination,
                         srcX, srcY,
                         srcX, srcY,

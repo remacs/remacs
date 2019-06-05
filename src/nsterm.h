@@ -632,6 +632,8 @@ typedef id instancetype;
   unsigned char *pixmapData[5]; /* shortcut to access pixel data */
   NSColor *stippleMask;
   unsigned long xbm_fg;
+@public
+  NSAffineTransform *transform;
 }
 + (instancetype)allocInitFromFile: (Lisp_Object)file;
 - (void)dealloc;
@@ -648,7 +650,7 @@ typedef id instancetype;
 - (NSColor *)stippleMask;
 - (Lisp_Object)getMetadata;
 - (BOOL)setFrame: (unsigned int) index;
-- (instancetype)rotate: (double)rotation;
+- (void)setTransform: (double[3][3]) m;
 @end
 
 
@@ -1201,6 +1203,7 @@ extern bool ns_load_image (struct frame *f, struct image *img,
 extern int ns_image_width (void *img);
 extern int ns_image_height (void *img);
 extern void ns_image_set_size (void *img, int width, int height);
+extern void ns_image_set_transform (void *img, double m[3][3]);
 extern unsigned long ns_get_pixel (void *img, int x, int y);
 extern void ns_put_pixel (void *img, int x, int y, unsigned long argb);
 extern void ns_set_alpha (void *img, int x, int y, unsigned char a);

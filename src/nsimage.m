@@ -76,9 +76,8 @@ ns_load_image (struct frame *f, struct image *img,
 {
   EmacsImage *eImg = nil;
   NSSize size;
-  Lisp_Object lisp_index, lisp_rotation;
+  Lisp_Object lisp_index;
   unsigned int index;
-  double rotation;
 
   NSTRACE ("ns_load_image");
 
@@ -86,9 +85,6 @@ ns_load_image (struct frame *f, struct image *img,
 
   lisp_index = Fplist_get (XCDR (img->spec), QCindex);
   index = FIXNUMP (lisp_index) ? XFIXNAT (lisp_index) : 0;
-
-  lisp_rotation = Fplist_get (XCDR (img->spec), QCrotation);
-  rotation = NUMBERP (lisp_rotation) ? XFLOATINT (lisp_rotation) : 0;
 
   if (STRINGP (spec_file))
     {
@@ -119,13 +115,6 @@ ns_load_image (struct frame *f, struct image *img,
 
   img->lisp_data = [eImg getMetadata];
 
-  if (rotation != 0)
-    {
-      EmacsImage *temp = [eImg rotate:rotation];
-      [eImg release];
-      eImg = temp;
-    }
-
   size = [eImg size];
   img->width = size.width;
   img->height = size.height;
@@ -153,6 +142,12 @@ void
 ns_image_set_size (void *img, int width, int height)
 {
   [(EmacsImage *)img setSize:NSMakeSize (width, height)];
+}
+
+void
+ns_image_set_transform (void *img, double m[3][3])
+{
+  [(EmacsImage *)img setTransform:m];
 }
 
 unsigned long
@@ -225,6 +220,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 {
   [stippleMask release];
   [bmRep release];
+  [transform release];
   [super dealloc];
 }
 
@@ -528,42 +524,16 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   return YES;
 }
 
-- (instancetype)rotate: (double)rotation
+- (void)setTransform: (double[3][3]) m
 {
-  EmacsImage *new_image;
-  NSPoint new_origin;
-  NSSize new_size, size = [self size];
-  NSRect rect = { NSZeroPoint, [self size] };
+  transform = [[NSAffineTransform transform] retain];
+  NSAffineTransformStruct tm
+    = { m[0][0], m[0][1], m[1][0], m[1][1], m[2][0], m[2][1]};
+  [transform setTransformStruct:tm];
 
-  /* Create a bezier path of the outline of the image and do the
-   * rotation on it.  */
-  NSBezierPath *bounds_path = [NSBezierPath bezierPathWithRect:rect];
-  NSAffineTransform *transform = [NSAffineTransform transform];
-  [transform rotateByDegrees: rotation * -1];
-  [bounds_path transformUsingAffineTransform:transform];
-
-  /* Now we can find out how large the rotated image needs to be.  */
-  new_size = [bounds_path bounds].size;
-  new_image = [[EmacsImage alloc] initWithSize:new_size];
-
-  new_origin = NSMakePoint((new_size.width - size.width)/2,
-                           (new_size.height - size.height)/2);
-
-  [new_image lockFocus];
-
-  /* Create the final transform.  */
-  transform = [NSAffineTransform transform];
-  [transform translateXBy:new_size.width/2 yBy:new_size.height/2];
-  [transform rotateByDegrees: rotation * -1];
-  [transform translateXBy:-new_size.width/2 yBy:-new_size.height/2];
-
-  [transform concat];
-  [self drawAtPoint:new_origin fromRect:NSZeroRect
-          operation:NSCompositingOperationCopy fraction:1];
-
-  [new_image unlockFocus];
-
-  return new_image;
+  /* Because the transform is applied to the drawing surface, and not
+     the image itself, we need to invert it.  */
+  [transform invert];
 }
 
 @end

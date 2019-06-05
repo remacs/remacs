@@ -2989,7 +2989,25 @@ struct redisplay_interface
 #ifdef HAVE_WINDOW_SYSTEM
 
 # if defined USE_CAIRO || defined HAVE_XRENDER || defined HAVE_NS || defined HAVE_NTGUI
-#  define HAVE_NATIVE_SCALING
+#  define HAVE_NATIVE_TRANSFORMS
+
+#  define INIT_MATRIX(m)                          \
+  for (int i = 0 ; i < 3 ; i++)                   \
+    for (int j = 0 ; j < 3 ; j++)                 \
+      m[i][j] = (i == j) ? 1 : 0;
+
+#  define COPY_MATRIX(a, b)                       \
+  for (int i = 0 ; i < 3 ; i++)                   \
+    for (int j = 0 ; j < 3 ; j++)                 \
+      b[i][j] = a[i][j];
+
+#  define MULT_MATRICES(a, b, result)             \
+  for (int i = 0 ; i < 3 ; i++)                   \
+    for (int j = 0 ; j < 3 ; j++) {               \
+      double sum = 0;                             \
+      for (int k = 0 ; k < 3 ; k++)               \
+        sum += a[k][j] * b[i][k];                 \
+      result[i][j] = sum;}
 # endif
 
 /* Structure describing an image.  Specific image formats like XBM are
@@ -3015,7 +3033,7 @@ struct image
      synchronized to Pixmap.  */
   XImage *ximg, *mask_img;
 
-# ifdef HAVE_NATIVE_SCALING
+# ifdef HAVE_NATIVE_TRANSFORMS
   /* Picture versions of pixmap and mask for compositing.  */
   Picture picture, mask_picture;
 # endif

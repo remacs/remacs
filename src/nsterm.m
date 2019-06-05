@@ -3813,21 +3813,34 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
   /* Draw the image... do we need to draw placeholder if img == nil?  */
   if (img != nil)
     {
-#ifdef NS_IMPL_COCOA
+      /* The idea here is that the clipped area is set in the normal
+         view coordinate system, then we transform the coordinate
+         system so that when we draw the image it is rotated, resized
+         or whatever as required.  This is kind of backwards, but
+         there's no way to apply the transform to the image without
+         creating a whole new bitmap.  */
       NSRect dr = NSMakeRect (x, y, s->slice.width, s->slice.height);
-      NSRect ir = NSMakeRect (s->slice.x,
-                              s->img->height - s->slice.y - s->slice.height,
-                              s->slice.width, s->slice.height);
-      [img drawInRect: dr
-             fromRect: ir
-             operation: NSCompositingOperationSourceOver
-              fraction: 1.0
-           respectFlipped: YES
-                hints: nil];
-#else
-      [img compositeToPoint: NSMakePoint (x, y + s->slice.height)
-                  operation: NSCompositingOperationSourceOver];
-#endif
+      NSRect ir = NSMakeRect (0, 0, [img size].width, [img size].height);
+
+      NSAffineTransform *setOrigin = [NSAffineTransform transform];
+
+      [[NSGraphicsContext currentContext] saveGraphicsState];
+
+      /* Because of the transforms it's far too difficult to work out
+         what portion of the original, untransformed, image will be
+         drawn, so the clipping area will ensure we draw only the
+         correct bit.  */
+      NSRectClip (dr);
+
+      [setOrigin translateXBy:x - s->slice.x yBy:y - s->slice.y];
+      [setOrigin concat];
+      [img->transform concat];
+
+      [img drawInRect:ir fromRect:ir
+            operation:NSCompositingOperationSourceOver
+             fraction:1.0 respectFlipped:YES hints:nil];
+
+      [[NSGraphicsContext currentContext] restoreGraphicsState];
     }
 
   if (s->hl == DRAW_CURSOR)

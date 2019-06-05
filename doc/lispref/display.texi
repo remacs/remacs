@@ -5181,6 +5181,9 @@ values.  If both @code{:scale} and @code{:height}/@code{:width} are
 specified, the height/width will be adjusted by the specified scaling
 factor.
 
+@item :rotation @var{angle}
+Specifies a rotation angle in degrees.
+
 @item :index @var{frame}
 @xref{Multi-Frame Images}.
 
@@ -5323,14 +5326,15 @@ This function returns @code{t} if image @var{spec} has a mask bitmap.
 (@pxref{Input Focus}).
 @end defun
 
-@defun image-scaling-p &optional frame
-This function returns @code{t} if @var{frame} supports image scaling.
-@var{frame} @code{nil} or omitted means to use the selected frame
-(@pxref{Input Focus}).
+@defun image-transforms-p &optional frame
+This function returns @code{t} if @var{frame} supports image scaling
+and rotation.  @var{frame} @code{nil} or omitted means to use the
+selected frame (@pxref{Input Focus}).
 
-If image scaling is not supported, @code{:width}, @code{:height},
-@code{:scale}, @code{:max-width} and @code{:max-height} will only be
-usable through ImageMagick, if available (@pxref{ImageMagick Images}).
+If image transforms are not supported, @code{:rotation},
+@code{:width}, @code{:height}, @code{:scale}, @code{:max-width} and
+@code{:max-height} will only be usable through ImageMagick, if
+available (@pxref{ImageMagick Images}).
 @end defun
 
 @node XBM Images
@@ -5474,9 +5478,6 @@ The value, @var{type}, should be a symbol specifying the type of the
 image data, as found in @code{image-format-suffixes}.  This is used
 when the image does not have an associated file name, to provide a
 hint to ImageMagick to help it detect the image type.
-
-@item :rotation @var{angle}
-Specifies a rotation angle in degrees.
 @end table
 
 @node SVG Images
