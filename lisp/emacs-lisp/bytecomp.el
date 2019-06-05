@@ -2093,8 +2093,9 @@ With argument ARG, insert value in current buffer after the form."
 		 (not (eobp)))
 	  (setq byte-compile-read-position (point)
 		byte-compile-last-position byte-compile-read-position)
-	  (let ((form (read inbuffer))
-                (warning (byte-run--unescaped-character-literals-warning)))
+          (let* ((lread--unescaped-character-literals nil)
+                 (form (read inbuffer))
+                 (warning (byte-run--unescaped-character-literals-warning)))
             (when warning (byte-compile-warn "%s" warning))
 	    (byte-compile-toplevel-file-form form)))
 	;; Compile pending forms at end of file.
