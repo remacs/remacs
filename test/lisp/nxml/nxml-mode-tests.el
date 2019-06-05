@@ -114,5 +114,23 @@
     (should (= 1 (- (car (syntax-ppss (1- (point-max))))
                     (car (syntax-ppss (point-max))))))))
 
+(ert-deftest nxml-mode-edit-prolog ()
+  "Test for Bug#23668."
+  (with-temp-buffer
+    (insert "
+ <t>
+ <sub/>
+</t>")
+    (nxml-mode)
+    ;; The leading "\n " before "<t>" is the prolog, indenting will
+    ;; delete the space hence changing the prolog size.  If that is
+    ;; not taken into account, then the <sub/> tag won't be indented
+    ;; correctly.
+    (indent-region (point-min) (point-max))
+    (should (equal (buffer-string) "
+<t>
+  <sub/>
+</t>"))))
+
 (provide 'nxml-mode-tests)
 ;;; nxml-mode-tests.el ends here

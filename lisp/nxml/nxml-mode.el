@@ -428,25 +428,10 @@ reference.")
 
 (defun nxml-syntax-propertize (start end)
   "Syntactic keywords for `nxml-mode'."
-  ;; Like `sgml-syntax-propertize', but handle `nxml-prolog-regions'.
+  ;; Like `sgml-syntax-propertize', but rescan prolog if needed.
   (when (< start nxml-prolog-end)
-    (catch 'done-prolog
-      (dolist (prolog-elem nxml-prolog-regions)
-        (let ((type (aref prolog-elem 0))
-              (pbeg (aref prolog-elem 1))
-              (pend (aref prolog-elem 2)))
-          (when (eq type 'comment)
-            (put-text-property pbeg (1+ pbeg)
-                               'syntax-table (string-to-syntax "< b"))
-            (put-text-property (1- pend) pend
-                               'syntax-table (string-to-syntax "> b")))
-          (when (> pend end)
-            (throw 'done-prolog t)))))
-    (setq start nxml-prolog-end))
-  (if (>= start end)
-      (goto-char end)
-    (goto-char start)
-    (sgml-syntax-propertize start end)))
+    (nxml-scan-prolog))
+  (sgml-syntax-propertize start end))
 
 (defvar tildify-space-string)
 (defvar tildify-foreach-region-function)
@@ -544,7 +529,6 @@ Many aspects this mode can be customized using
   (setq-local syntax-ppss-table sgml-tag-syntax-table)
   (setq-local syntax-propertize-function #'nxml-syntax-propertize)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
-  (add-hook 'after-change-functions #'nxml-maybe-rescan-prolog nil t)
 
   ;; Emacs 23 handles the encoding attribute on the xml declaration
   ;; transparently to nxml-mode, so there is no longer a need for the below

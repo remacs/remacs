@@ -108,13 +108,6 @@ Return nil if the character at POS is not inside."
     (setq nxml-prolog-regions (xmltok-forward-prolog))
     (setq nxml-prolog-end (point))))
 
-(defun nxml-maybe-rescan-prolog (start _end _length)
-  "Reparse the prolog if START lies within it.
-`nxml-mode' adds this function on `after-change-functions'."
-  (when (<= start nxml-prolog-end)
-    (save-excursion
-      (nxml-scan-prolog))))
-
 ;;; Random access parsing
 
 (defun nxml-token-after ()
