@@ -309,17 +309,33 @@ behind the scenes when you open a file with @value{tramp}.
 @chapter Obtaining @value{tramp}
 @cindex obtaining @value{tramp}
 @cindex GNU ELPA
+@vindex tramp-version
 
 @value{tramp} is included as part of Emacs (since Emacs 22.1).
 
 @value{tramp} is also freely packaged for download on the Internet at
-@uref{https://ftp.gnu.org/gnu/tramp/}.
+@uref{https://ftp.gnu.org/gnu/tramp/}.  The version number of
+@value{tramp} can be obtained by the variable @code{tramp-version}.
+For released @value{tramp} versions, this is a three-number string
+like ``2.4.2''.
 
-@value{tramp} is available as @uref{https://elpa.gnu.org, GNU ELPA}
-package.
+A @value{tramp} release, which is packaged with Emacs, could differ
+slightly from the corresponding standalone release.  This is because
+it isn't always possible to synchronize release dates between Emacs
+and @value{tramp}.  Such version numbers have the Emacs version number
+as suffix, like ``2.3.5.26.2''.  This means @value{tramp} 2.3.5 as
+integrated in Emacs 26.2.
+
+@value{tramp} is also available as @uref{https://elpa.gnu.org, GNU
+ELPA} package.  Besides the standalone releases, further minor version
+of @value{tramp} will appear on GNU ELPA, until the next @value{tramp}
+release appears.  These minor versions have a four-number string, like
+``2.4.2.1''.
 
 @value{tramp} development versions are available on Git servers.
-Development versions contain new and incomplete features.
+Development versions contain new and incomplete features.  The
+development version of @value{tramp} is always the version number of
+the next release, plus the suffix ``-pre'', like ``2.4.3-pre''.
 
 One way to obtain from Git server is to visit the Savannah project
 page at the following URL and then clicking on the Git link in the
@@ -382,7 +398,7 @@ $ autoconf
 
 
 @c Installation chapter is necessary only in case of standalone
-@c installation.  Text taken from trampinst.texi.
+@c installation.
 @ifset installchapter
 @include trampinst.texi
 @end ifset
@@ -4462,6 +4478,7 @@ root-directory, it is most likely sufficient to make the
 
 @node Traces and Profiles
 @chapter How to Customize Traces
+@vindex tramp-verbose
 
 @value{tramp} messages are raised with verbosity levels ranging from 0
 to 10.  @value{tramp} does not display all messages; only those with a
