@@ -283,6 +283,9 @@ END) suitable for `syntax-propertize-function'."
         ;; In case it was eval'd/compiled.
         (setq keywords font-lock-syntactic-keywords)))))
 
+(defvar-local syntax-ppss-table nil
+  "Syntax-table to use during `syntax-ppss', if any.")
+
 (defun syntax-propertize (pos)
   "Ensure that syntax-table properties are set until POS (a buffer point)."
   (when (< syntax-propertize--done pos)
@@ -301,47 +304,48 @@ END) suitable for `syntax-propertize-function'."
 	          #'syntax-ppss-flush-cache 99 t))
       (save-excursion
         (with-silent-modifications
-          (make-local-variable 'syntax-propertize--done) ;Just in case!
-          (let* ((start (max (min syntax-propertize--done (point-max))
-                             (point-min)))
-                 (end (max pos
-                           (min (point-max)
-                                (+ start syntax-propertize-chunk-size))))
-                 (funs syntax-propertize-extend-region-functions))
-            (while funs
-              (let ((new (funcall (pop funs) start end))
-                    ;; Avoid recursion!
-                    (syntax-propertize--done most-positive-fixnum))
-                (if (or (null new)
-                        (and (>= (car new) start) (<= (cdr new) end)))
-                    nil
-                  (setq start (car new))
-                  (setq end (cdr new))
-                  ;; If there's been a change, we should go through the
-                  ;; list again since this new position may
-                  ;; warrant a different answer from one of the funs we've
-                  ;; already seen.
-                  (unless (eq funs
-                              (cdr syntax-propertize-extend-region-functions))
-                    (setq funs syntax-propertize-extend-region-functions)))))
-            ;; Flush ppss cache between the original value of `start' and that
-            ;; set above by syntax-propertize-extend-region-functions.
-            (syntax-ppss-flush-cache start)
-            ;; Move the limit before calling the function, so the function
-            ;; can use syntax-ppss.
-            (setq syntax-propertize--done end)
-            ;; (message "syntax-propertizing from %s to %s" start end)
-            (remove-text-properties start end
-                                    '(syntax-table nil syntax-multiline nil))
-            ;; Avoid recursion!
-            (let ((syntax-propertize--done most-positive-fixnum))
-              (funcall syntax-propertize-function start end))))))))
+          (with-syntax-table syntax-ppss-table
+            (make-local-variable 'syntax-propertize--done) ;Just in case!
+            (let* ((start (max (min syntax-propertize--done (point-max))
+                               (point-min)))
+                   (end (max pos
+                             (min (point-max)
+                                  (+ start syntax-propertize-chunk-size))))
+                   (funs syntax-propertize-extend-region-functions))
+              (while funs
+                (let ((new (funcall (pop funs) start end))
+                      ;; Avoid recursion!
+                      (syntax-propertize--done most-positive-fixnum))
+                  (if (or (null new)
+                          (and (>= (car new) start) (<= (cdr new) end)))
+                      nil
+                    (setq start (car new))
+                    (setq end (cdr new))
+                    ;; If there's been a change, we should go through the
+                    ;; list again since this new position may
+                    ;; warrant a different answer from one of the funs we've
+                    ;; already seen.
+                    (unless (eq funs
+                                (cdr syntax-propertize-extend-region-functions))
+                      (setq funs syntax-propertize-extend-region-functions)))))
+              ;; Flush ppss cache between the original value of `start' and that
+              ;; set above by syntax-propertize-extend-region-functions.
+              (syntax-ppss-flush-cache start)
+              ;; Move the limit before calling the function, so the function
+              ;; can use syntax-ppss.
+              (setq syntax-propertize--done end)
+              ;; (message "syntax-propertizing from %s to %s" start end)
+              (remove-text-properties start end
+                                      '(syntax-table nil syntax-multiline nil))
+              ;; Avoid recursion!
+              (let ((syntax-propertize--done most-positive-fixnum))
+                (funcall syntax-propertize-function start end)))))))))
 
 ;;; Link syntax-propertize with syntax.c.
 
 (defvar syntax-propertize-chunks
   ;; We're not sure how far we'll go.  In my tests, using chunks of 2000
-  ;; brings to overhead to something negligible.  Passing ‘charpos’ directly
+  ;; brings the overhead to something negligible.  Passing ‘charpos’ directly
   ;; also works (basically works line-by-line) but results in an overhead which
   ;; I thought was a bit too high (like around 50%).
   2000)
@@ -449,9 +453,6 @@ These are valid when the buffer has no restriction.")
   (let ((pair (aref syntax-ppss-stats i)))
     (cl-incf (car pair))
     (cl-incf (cdr pair) (- new old))))
-
-(defvar-local syntax-ppss-table nil
-  "Syntax-table to use during `syntax-ppss', if any.")
 
 (defun syntax-ppss--data ()
   (if (eq (point-min) 1)
