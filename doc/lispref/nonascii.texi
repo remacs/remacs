@@ -550,8 +550,8 @@ characters whose @code{Numeric_Type} is @samp{Numeric}.  The value of
 this property is a number.  Examples of characters that have this
 property include fractions, subscripts, superscripts, Roman numerals,
 currency numerators, and encircled numbers.  For example, the value of
-this property for the character @code{U+2155} (@sc{vulgar fraction one
-fifth}) is @code{0.2}.  For characters that don't have any numeric
+this property for the character U+2155 @sc{vulgar fraction one
+fifth} is @code{0.2}.  For characters that don't have any numeric
 value, and for unassigned codepoints, the value is @code{nil}, which
 means @acronym{NaN}.
 
@@ -622,23 +622,24 @@ is @code{nil}, which means the character itself.
 @item special-uppercase
 Corresponds to Unicode language- and context-independent special upper-casing
 rules.  The value of this property is a string (which may be empty).  For
-example mapping for @code{U+00DF} (@sc{latin small letter sharp s}) is
+example mapping for U+00DF @sc{latin small letter sharp s} is
 @code{"SS"}.  For characters with no special mapping, the value is @code{nil}
 which means @code{uppercase} property needs to be consulted instead.
 
 @item special-lowercase
-Corresponds to Unicode language- and context-independent special lower-casing
-rules.  The value of this property is a string (which may be empty).  For
-example mapping for @code{U+0130} (@sc{latin capital letter i with dot above})
-the value is @code{"i\u0307"} (i.e. 2-character string consisting of @sc{latin
-small letter i} followed by @sc{combining dot above}).  For characters with no
-special mapping, the value is @code{nil} which means @code{lowercase} property
-needs to be consulted instead.
+Corresponds to Unicode language- and context-independent special
+lower-casing rules.  The value of this property is a string (which may
+be empty).  For example mapping for U+0130 @sc{latin capital letter i
+with dot above} the value is @code{"i\u0307"} (i.e. 2-character string
+consisting of @sc{latin small letter i} followed by U+0307
+@sc{combining dot above}).  For characters with no special mapping,
+the value is @code{nil} which means @code{lowercase} property needs to
+be consulted instead.
 
 @item special-titlecase
 Corresponds to Unicode unconditional special title-casing rules.  The value of
 this property is a string (which may be empty).  For example mapping for
-@code{U+FB01} (@sc{latin small ligature fi}) the value is @code{"Fi"}.  For
+U+FB01 @sc{latin small ligature fi} the value is @code{"Fi"}.  For
 characters with no special mapping, the value is @code{nil} which means
 @code{titlecase} property needs to be consulted instead.
 @end table
