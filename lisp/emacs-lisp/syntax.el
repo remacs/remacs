@@ -304,7 +304,7 @@ END) suitable for `syntax-propertize-function'."
 	          #'syntax-ppss-flush-cache 99 t))
       (save-excursion
         (with-silent-modifications
-          (with-syntax-table syntax-ppss-table
+          (with-syntax-table (or syntax-ppss-table (syntax-table))
             (make-local-variable 'syntax-propertize--done) ;Just in case!
             (let* ((start (max (min syntax-propertize--done (point-max))
                                (point-min)))
