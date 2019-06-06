@@ -170,6 +170,15 @@ the last file dropped is selected."
 ;; new layout/language selected by the user.
 (global-set-key [language-change] 'ignore)
 
+;; Some Windows applications send the 'noname' (VK_NONAME) pseudo-key
+;; to prevent Windows from sleeping.  We want to ignore these key
+;; events, to avoid annoying users by ringing the bell and announcing
+;; that the key is not bound.
+(global-set-key [noname]   'ignore)
+(global-set-key [C-noname] 'ignore)
+(global-set-key [M-noname] 'ignore)
+
+
 (defvar x-resource-name)
 
 
