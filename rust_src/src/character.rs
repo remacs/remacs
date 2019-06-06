@@ -96,7 +96,7 @@ pub fn multibyte_char_to_unibyte(ch: Codepoint) -> EmacsInt {
 /// The value is a character with modifiers resolved into the character
 /// code.  Unresolved modifiers are kept in the value.
 /// usage: (char-resolve-modifiers CHAR)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
     char_resolve_modifier_mask(character.into())
 }
