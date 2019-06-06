@@ -1942,8 +1942,29 @@ compute_image_size (size_t width, size_t height,
 }
 #endif /* HAVE_IMAGEMAGICK || HAVE_NATIVE_TRANSFORMS */
 
+typedef double matrix3x3[3][3];
+
 static void
-image_set_rotation (struct image *img, double tm[3][3])
+matrix3x3_copy (matrix3x3 a, matrix3x3 b)
+{
+  memcpy (b, a, sizeof (matrix3x3));
+}
+
+static void
+matrix3x3_mult (matrix3x3 a, matrix3x3 b, matrix3x3 result)
+{
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      {
+	double sum = 0;
+	for (int k = 0; k < 3; k++)
+	  sum += a[i][k] * b[k][j];
+	result[i][j] = sum;
+      }
+}
+
+static void
+image_set_rotation (struct image *img, matrix3x3 tm)
 {
 #ifdef HAVE_NATIVE_TRANSFORMS
 # ifdef HAVE_IMAGEMAGICK
@@ -1957,19 +1978,21 @@ image_set_rotation (struct image *img, double tm[3][3])
     return;
 # endif
 
-  Lisp_Object value;
-  double t[3][3], rot[3][3], tmp[3][3], tmp2[3][3];
   int rotation, cos_r, sin_r, width, height;
 
-  value = image_spec_value (img->spec, QCrotation, NULL);
+  Lisp_Object value = image_spec_value (img->spec, QCrotation, NULL);
   if (! NUMBERP (value))
     return;
 
-  rotation = XFLOATINT (value);
-  rotation = rotation % 360;
-
-  if (rotation < 0)
-    rotation += 360;
+  Lisp_Object reduced_angle = Fmod (value, make_fixnum (360));
+  if (! FLOATP (reduced_angle))
+    rotation = XFIXNUM (reduced_angle);
+  else
+    {
+      rotation = XFLOAT_DATA (reduced_angle);
+      if (rotation != XFLOAT_DATA (reduced_angle))
+	goto not_a_multiple_of_90;
+    }
 
   if (rotation == 0)
     return;
@@ -2000,32 +2023,31 @@ image_set_rotation (struct image *img, double tm[3][3])
     }
   else
     {
-      image_error ("Native image rotation only supports multiples of 90 degrees");
+    not_a_multiple_of_90:
+      image_error ("Native image rotation supports "
+		   "only multiples of 90 degrees");
       return;
     }
 
-  /* Translate so (0, 0) is in the centre of the image.  */
-  INIT_MATRIX (t);
-  t[2][0] = img->width/2;
-  t[2][1] = img->height/2;
-
-  MULT_MATRICES (tm, t, tmp);
+  /* Translate so (0, 0) is in the center of the image.  */
+  matrix3x3 t
+    = { [0][0] = 1,
+				  [1][1] = 1,
+	[2][0] = img->width >> 1, [2][1] = img->height >> 1, [2][2] = 1 };
+  matrix3x3 tmp;
+  matrix3x3_mult (t, tm, tmp);
 
   /* Rotate.  */
-  INIT_MATRIX (rot);
-  rot[0][0] = cos_r;
-  rot[1][0] = sin_r;
-  rot[0][1] = - sin_r;
-  rot[1][1] = cos_r;
-
-  MULT_MATRICES (tmp, rot, tmp2);
+  matrix3x3 rot = { [0][0] = cos_r, [0][1] = -sin_r,
+		    [1][0] = sin_r, [1][1] = cos_r,
+						     [2][2] = 1 };
+  matrix3x3 tmp2;
+  matrix3x3_mult (rot, tmp, tmp2);
 
   /* Translate back.  */
-  INIT_MATRIX (t);
-  t[2][0] = - width/2;
-  t[2][1] = - height/2;
-
-  MULT_MATRICES (tmp2, t, tm);
+  t[2][0] = - (width >> 1);
+  t[2][1] = - (height >> 1);
+  matrix3x3_mult (t, tmp2, tm);
 
   img->width = width;
   img->height = height;
@@ -2033,7 +2055,7 @@ image_set_rotation (struct image *img, double tm[3][3])
 }
 
 static void
-image_set_crop (struct image *img, double tm[3][3])
+image_set_crop (struct image *img, matrix3x3 tm)
 {
   int width, height;
   compute_image_size (img->width, img->height, img->spec, &width, &height);
@@ -2052,39 +2074,29 @@ image_set_crop (struct image *img, double tm[3][3])
     return;
 # endif
 
-  double m[3][3], tmp[3][3];
-  int left, top;
-  Lisp_Object x = Qnil;
-  Lisp_Object y = Qnil;
-  Lisp_Object w = Qnil;
-  Lisp_Object h = Qnil;
   Lisp_Object crop = image_spec_value (img->spec, QCcrop, NULL);
 
   if (!CONSP (crop))
     return;
-  else
+
+  Lisp_Object w = XCAR (crop), h = Qnil, x = Qnil, y = Qnil;
+  crop = XCDR (crop);
+  if (CONSP (crop))
     {
-      w = XCAR (crop);
+      h = XCAR (crop);
       crop = XCDR (crop);
       if (CONSP (crop))
 	{
-          h = XCAR (crop);
+	  x = XCAR (crop);
 	  crop = XCDR (crop);
 	  if (CONSP (crop))
-	    {
-              x = XCAR (crop);
-	      crop = XCDR (crop);
-	      if (CONSP (crop))
-                y = XCAR (crop);
-	    }
+	    y = XCAR (crop);
 	}
     }
 
   if (FIXNATP (w) && XFIXNAT (w) < img->width)
     width = XFIXNAT (w);
-  else
-    width = img->width;
-
+  int left;
   if (TYPE_RANGED_FIXNUMP (int, x))
     {
       left = XFIXNUM (x);
@@ -2092,13 +2104,11 @@ image_set_crop (struct image *img, double tm[3][3])
         left = img->width - width + left;
     }
   else
-    left = (img->width - width)/2;
+    left = (img->width - width) >> 1;
 
   if (FIXNATP (h) && XFIXNAT (h) < img->height)
     height = XFIXNAT (h);
-  else
-    height = img->height;
-
+  int top;
   if (TYPE_RANGED_FIXNUMP (int, y))
     {
       top = XFIXNUM (y);
@@ -2106,7 +2116,7 @@ image_set_crop (struct image *img, double tm[3][3])
         top = img->height - height + top;
     }
   else
-    top = (img->height - height)/2;
+    top = (img->height - height) >> 1;
 
   /* Negative values operate from the right and bottom of the image
      instead of the left and top.  */
@@ -2128,12 +2138,11 @@ image_set_crop (struct image *img, double tm[3][3])
   if (height + top > img->height)
     height = img->height - top;
 
-  INIT_MATRIX (m);
-  m[2][0] = left;
-  m[2][1] = top;
-
-  MULT_MATRICES (tm, m, tmp);
-  COPY_MATRIX (tmp, tm);
+  matrix3x3 tmp, m = { [0][0] = 1,
+				      [1][1] = 1,
+		       [2][0] = left, [2][1] = top, [2][2] = 1 };
+  matrix3x3_mult (m, tm, tmp);
+  matrix3x3_copy (tmp, tm);
 
   img->width = width;
   img->height = height;
@@ -2141,7 +2150,7 @@ image_set_crop (struct image *img, double tm[3][3])
 }
 
 static void
-image_set_size (struct image *img, double tm[3][3])
+image_set_size (struct image *img, matrix3x3 tm)
 {
 #ifdef HAVE_NATIVE_TRANSFORMS
 # ifdef HAVE_IMAGEMAGICK
@@ -2160,18 +2169,12 @@ image_set_size (struct image *img, double tm[3][3])
   compute_image_size (img->width, img->height, img->spec, &width, &height);
 
 # if defined (HAVE_NS) || defined (HAVE_XRENDER)
-  double rm[3][3], tmp[3][3];
-  double xscale, yscale;
+  double xscale = img->width / (double) width;
+  double yscale = img->height / (double) height;
 
-  xscale = img->width / (double) width;
-  yscale = img->height / (double) height;
-
-  INIT_MATRIX (rm);
-  rm[0][0] = xscale;
-  rm[1][1] = yscale;
-
-  MULT_MATRICES (tm, rm, tmp);
-  COPY_MATRIX (tmp, tm);
+  matrix3x3 tmp, rm = { [0][0] = xscale, [1][1] = yscale, [2][2] = 1 };
+  matrix3x3_mult (rm, tm, tmp);
+  matrix3x3_copy (tmp, tm);
 
   img->width = width;
   img->height = height;
@@ -2187,7 +2190,7 @@ image_set_size (struct image *img, double tm[3][3])
 }
 
 static void
-image_set_transform (struct frame *f, struct image *img, double matrix[3][3])
+image_set_transform (struct frame *f, struct image *img, matrix3x3 matrix)
 {
   /* TODO: Add MS Windows support.  */
 #ifdef HAVE_NATIVE_TRANSFORMS
@@ -2273,9 +2276,7 @@ lookup_image (struct frame *f, Lisp_Object spec)
 	  int relief_bound;
 
 #ifdef HAVE_NATIVE_TRANSFORMS
-          double transform_matrix[3][3];
-
-          INIT_MATRIX (transform_matrix);
+          matrix3x3 transform_matrix = { [0][0] = 1, [1][1] = 1, [2][2] = 1 };
           image_set_size (img, transform_matrix);
           image_set_crop (img, transform_matrix);
           image_set_rotation (img, transform_matrix);
