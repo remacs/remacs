@@ -331,6 +331,24 @@ _GL_WARN_ON_USE (close, "close does not portably work on sockets - "
 #endif
 
 
+#if @GNULIB_COPY_FILE_RANGE@
+# if !@HAVE_COPY_FILE_RANGE@
+_GL_FUNCDECL_SYS (copy_file_range, ssize_t, (int ifd, off_t *ipos,
+                                             int ofd, off_t *opos,
+                                             size_t len, unsigned flags));
+_GL_CXXALIAS_SYS (copy_file_range, ssize_t, (int ifd, off_t *ipos,
+                                             int ofd, off_t *opos,
+                                             size_t len, unsigned flags));
+# endif
+_GL_CXXALIASWARN (copy_file_range);
+#elif defined GNULIB_POSIXCHECK
+/* Assume copy_file_range is always declared.  */
+_GL_WARN_ON_USE (copy_file_range,
+                 "copy_file_range is unportable - "
+                 "use gnulib module copy_file_range for portability");
+#endif
+
+
 #if @GNULIB_DUP@
 # if @REPLACE_DUP@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
