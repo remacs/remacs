@@ -4487,6 +4487,38 @@ This function could be useful in `message-setup-hook'."
         (unless (y-or-n-p "Send anyway? ")
           (error "Failed to send the message"))))))
 
+(defun message--send-mail-maybe-partially ()
+  (if (or (not message-send-mail-partially-limit)
+          (< (buffer-size) message-send-mail-partially-limit)
+          (not (message-y-or-n-p
+                "The message size is too large, split? "
+                t
+                "\
+The message size, "
+                (/ (buffer-size) 1000) "KB, is too large.
+
+Some mail gateways (MTA's) bounce large messages.  To avoid the
+problem, answer `y', and the message will be split into several
+smaller pieces, the size of each is about "
+                (/ message-send-mail-partially-limit 1000)
+                "KB except the last
+one.
+
+However, some mail readers (MUA's) can't read split messages, i.e.,
+mails in message/partially format. Answer `n', and the message will be
+sent in one piece.
+
+The size limit is controlled by `message-send-mail-partially-limit'.
+If you always want Gnus to send messages in one piece, set
+`message-send-mail-partially-limit' to nil.
+")))
+      (progn
+        (message "Sending via mail...")
+        (if message-send-mail-real-function
+            (funcall message-send-mail-real-function)
+          (message-multi-smtp-send-mail)))
+    (message-send-mail-partially)))
+
 (defun message-send-mail (&optional _)
   (require 'mail-utils)
   (let* ((tembuf (message-generate-new-buffer-clone-locals " message temp"))
@@ -4601,36 +4633,7 @@ This function could be useful in `message-setup-hook'."
                          (goto-char (point-min))
                          (not (re-search-forward "[^\000-\377]" nil t)))))
           (mm-disable-multibyte)
-	  (if (or (not message-send-mail-partially-limit)
-		  (< (buffer-size) message-send-mail-partially-limit)
-		  (not (message-y-or-n-p
-			"The message size is too large, split? "
-			t
-			"\
-The message size, "
-			(/ (buffer-size) 1000) "KB, is too large.
-
-Some mail gateways (MTA's) bounce large messages.  To avoid the
-problem, answer `y', and the message will be split into several
-smaller pieces, the size of each is about "
-			(/ message-send-mail-partially-limit 1000)
-			"KB except the last
-one.
-
-However, some mail readers (MUA's) can't read split messages, i.e.,
-mails in message/partially format. Answer `n', and the message will be
-sent in one piece.
-
-The size limit is controlled by `message-send-mail-partially-limit'.
-If you always want Gnus to send messages in one piece, set
-`message-send-mail-partially-limit' to nil.
-")))
-	      (progn
-		(message "Sending via mail...")
-		(if message-send-mail-real-function
-		    (funcall message-send-mail-real-function)
-		  (message-multi-smtp-send-mail)))
-	    (message-send-mail-partially))
+          (message--send-mail-maybe-partially)
 	  (setq options message-options))
       (kill-buffer tembuf))
     (set-buffer mailbuf)
