@@ -4476,6 +4476,17 @@ This function could be useful in `message-setup-hook'."
 
 (declare-function hashcash-wait-async "hashcash" (&optional buffer))
 
+(defun message--check-continuation-headers ()
+  (message-check 'continuation-headers
+    (goto-char (point-min))
+    (while (re-search-forward "^[^ \t\n][^ \t\n:]*[ \t\n]" nil t)
+      (goto-char (match-beginning 0))
+      (if (y-or-n-p "Fix continuation lines? ")
+          (insert " ")
+        (forward-line 1)
+        (unless (y-or-n-p "Send anyway? ")
+          (error "Failed to send the message"))))))
+
 (defun message-send-mail (&optional _)
   (require 'mail-utils)
   (let* ((tembuf (message-generate-new-buffer-clone-locals " message temp"))
@@ -4527,15 +4538,7 @@ This function could be useful in `message-setup-hook'."
 	     (if news nil message-deletable-headers)))
 	(message-generate-headers headers))
       ;; Check continuation headers.
-      (message-check 'continuation-headers
-	(goto-char (point-min))
-	(while (re-search-forward "^[^ \t\n][^ \t\n:]*[ \t\n]" nil t)
-	  (goto-char (match-beginning 0))
-	  (if (y-or-n-p "Fix continuation lines? ")
-	      (insert " ")
-	    (forward-line 1)
-	    (unless (y-or-n-p "Send anyway? ")
-	      (error "Failed to send the message")))))
+      (message--check-continuation-headers)
       (message--fold-long-headers)
       ;; Let the user do all of the above.
       (run-hooks 'message-header-hook))
@@ -5159,18 +5162,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	   (if (= (length errors) 1) "this" "these")
 	   (if (= (length errors) 1) "" "s")
 	   (mapconcat 'identity errors ", ")))))))
-   ;; Check continuation headers.
-   (message-check 'continuation-headers
-     (goto-char (point-min))
-     (let ((do-posting t))
-       (while (re-search-forward "^[^ \t\n][^ \t\n:]*[ \t\n]" nil t)
-	 (goto-char (match-beginning 0))
-	 (if (y-or-n-p "Fix continuation lines? ")
-	     (insert " ")
-	   (forward-line 1)
-	   (unless (y-or-n-p "Send anyway? ")
-	     (setq do-posting nil))))
-       do-posting))
+   (message--check-continuation-headers)
    ;; Check the Newsgroups & Followup-To headers for syntax errors.
    (message-check 'valid-newsgroups
      (let ((case-fold-search t)
