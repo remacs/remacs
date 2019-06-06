@@ -2035,6 +2035,8 @@ image_set_rotation (struct image *img, double tm[3][3])
 static void
 image_set_crop (struct image *img, double tm[3][3])
 {
+  int width, height;
+  compute_image_size (img->width, img->height, img->spec, &width, &height);
 #ifdef HAVE_NATIVE_TRANSFORMS
 # ifdef HAVE_IMAGEMAGICK
   /* ImageMagick images are already cropped.  */
@@ -2051,7 +2053,7 @@ image_set_crop (struct image *img, double tm[3][3])
 # endif
 
   double m[3][3], tmp[3][3];
-  int left, top, width, height;
+  int left, top;
   Lisp_Object x = Qnil;
   Lisp_Object y = Qnil;
   Lisp_Object w = Qnil;
