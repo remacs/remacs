@@ -3407,7 +3407,8 @@ init_to_row_start (struct it *it, struct window *w, struct glyph_row *row)
 /* Initialize IT for stepping through current_buffer in window W
    starting in the line following ROW, i.e. starting at ROW->end.
    Value is false if there are overlay strings with newlines at ROW's
-   end position.  */
+   end position, or if the following row begins with bidi-reordered
+   characters that could be composed.  */
 
 static bool
 init_to_row_end (struct it *it, struct window *w, struct glyph_row *row)
@@ -3420,7 +3421,20 @@ init_to_row_end (struct it *it, struct window *w, struct glyph_row *row)
 	it->continuation_lines_width
 	  = row->continuation_lines_width + row->pixel_width;
       CHECK_IT (it);
-      success = true;
+      /* Initializing IT in the presense of compositions in reordered
+	 rows is tricky: row->end above will generally cause us to
+	 start at position that is not the first one in the logical
+	 order, and we might therefore miss the composition earlier in
+	 the buffer that affects how glypsh are laid out in this row.
+	 So we punt instead.  Note: the test below works because
+	 get_next_display_element calls get_visually_first_element,
+	 which calls composition_compute_stop_pos, which populates
+	 it->cmp_it.  */
+      if (get_next_display_element (it)
+	  && (it->bidi_it.scan_dir == -1 && it->cmp_it.id >= 0))
+	success = false;
+      else
+	success = true;
     }
 
   return success;
