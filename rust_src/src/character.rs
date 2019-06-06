@@ -6,7 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    multibyte::{Codepoint, MAX_CHAR},
+    multibyte::{char_resolve_modifier_mask, Codepoint, MAX_CHAR},
     remacs_sys::EmacsInt,
     threads::ThreadState,
 };
@@ -90,6 +90,15 @@ pub fn multibyte_char_to_unibyte(ch: Codepoint) -> EmacsInt {
     } else {
         ch.to_byte8().map(EmacsInt::from).unwrap_or(-1)
     }
+}
+
+/// Resolve modifiers in the character CHAR.
+/// The value is a character with modifiers resolved into the character
+/// code.  Unresolved modifiers are kept in the value.
+/// usage: (char-resolve-modifiers CHAR)
+#[lisp_fn]
+pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
+    char_resolve_modifier_mask(character.into())
 }
 
 include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));
