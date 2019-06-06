@@ -3,7 +3,7 @@
 (require 'ert)
 
 (ert-deftest char-resolve-modifiers ()
-    (should (equal (char-resolve-modifiers -1) 4294967295))
+    (should (equal (char-resolve-modifiers -1) #xffffffff))
     (should (equal (char-resolve-modifiers 0) 0))
     (should (equal (char-resolve-modifiers 42) 42))
     (should (equal (char-resolve-modifiers 500000) 500000)))
