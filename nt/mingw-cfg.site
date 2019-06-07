@@ -136,3 +136,8 @@ ac_cv_func_getrlimit=yes
 ac_cv_func_setrlimit=yes
 # GCC warnings that produce too much noise
 gl_cv_warn_c__Wredundant_decls=no
+# We don't want to compile lib/copy-file-range.c because it isn't used
+# on Windows, and because compiling it triggers a warning about a
+# missing prototype, since lib/unistd.h, where Gnulib has its
+# prototype, isn't built on Windows.
+gl_cv_func_copy_file_range=yes
