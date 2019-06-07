@@ -74,6 +74,7 @@
 #  c-strcase \
 #  careadlinkat \
 #  close-stream \
+#  copy-file-range \
 #  count-leading-zeros \
 #  count-one-bits \
 #  count-trailing-zeros \
@@ -1273,6 +1274,17 @@ EXTRA_DIST += close-stream.h
 
 endif
 ## end   gnulib module close-stream
+
+## begin gnulib module copy-file-range
+ifeq (,$(OMIT_GNULIB_MODULE_copy-file-range))
+
+
+EXTRA_DIST += copy-file-range.c
+
+EXTRA_libgnu_a_SOURCES += copy-file-range.c
+
+endif
+## end   gnulib module copy-file-range
 
 ## begin gnulib module count-leading-zeros
 ifeq (,$(OMIT_GNULIB_MODULE_count-leading-zeros))

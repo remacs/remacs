@@ -56,6 +56,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module clock-time:
   # Code from module cloexec:
   # Code from module close-stream:
+  # Code from module copy-file-range:
   # Code from module count-leading-zeros:
   # Code from module count-one-bits:
   # Code from module count-trailing-zeros:
@@ -201,6 +202,11 @@ AC_DEFUN([gl_INIT],
   AC_CHECK_FUNCS_ONCE([readlinkat])
   gl_CLOCK_TIME
   gl_MODULE_INDICATOR([close-stream])
+  gl_FUNC_COPY_FILE_RANGE
+  if test $HAVE_COPY_FILE_RANGE = 0; then
+    AC_LIBOBJ([copy-file-range])
+  fi
+  gl_UNISTD_MODULE_INDICATOR([copy-file-range])
   gl_COUNT_LEADING_ZEROS
   gl_COUNT_ONE_BITS
   gl_COUNT_TRAILING_ZEROS
@@ -846,6 +852,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/cloexec.h
   lib/close-stream.c
   lib/close-stream.h
+  lib/copy-file-range.c
   lib/count-leading-zeros.c
   lib/count-leading-zeros.h
   lib/count-one-bits.c
@@ -995,6 +1002,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/builtin-expect.m4
   m4/byteswap.m4
   m4/clock_time.m4
+  m4/copy-file-range.m4
   m4/count-leading-zeros.m4
   m4/count-one-bits.m4
   m4/count-trailing-zeros.m4

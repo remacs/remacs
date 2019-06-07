@@ -2117,14 +2117,39 @@ permissions.  */)
     newsize = st.st_size;
   else
     {
-      char buf[MAX_ALLOCA];
-      ptrdiff_t n;
-      for (newsize = 0; 0 < (n = emacs_read_quit (ifd, buf, sizeof buf));
-	   newsize += n)
-	if (emacs_write_quit (ofd, buf, n) != n)
-	  report_file_error ("Write error", newname);
-      if (n < 0)
-	report_file_error ("Read error", file);
+      off_t insize = st.st_size;
+      ssize_t copied;
+
+      for (newsize = 0; newsize < insize; newsize += copied)
+	{
+	  /* Copy at most COPY_MAX bytes at a time; this is min
+	     (PTRDIFF_MAX, SIZE_MAX) truncated to a value that is
+	     surely aligned well.  */
+	  ptrdiff_t copy_max = min (PTRDIFF_MAX, SIZE_MAX) >> 30 << 30;
+	  off_t intail = insize - newsize;
+	  ptrdiff_t len = min (intail, copy_max);
+	  copied = copy_file_range (ifd, NULL, ofd, NULL, len, 0);
+	  if (copied <= 0)
+	    break;
+	  maybe_quit ();
+	}
+
+      /* Fall back on read+write if copy_file_range failed, or if the
+	 input is empty and so could be a /proc file.  read+write will
+	 either succeed, or report an error more precisely than
+	 copy_file_range would.  */
+      if (newsize != insize || insize == 0)
+	{
+	  char buf[MAX_ALLOCA];
+	  for (; (copied = emacs_read_quit (ifd, buf, sizeof buf));
+	       newsize += copied)
+	    {
+	      if (copied < 0)
+		report_file_error ("Read error", file);
+	      if (emacs_write_quit (ofd, buf, copied) != copied)
+		report_file_error ("Write error", newname);
+	    }
+	}
     }
 
   /* Truncate any existing output file after writing the data.  This
