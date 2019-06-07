@@ -153,7 +153,7 @@ See the end of the file for license conditions.
   instance, or you want the smallest possible Emacs), then you may use
   the files emacs-VER-x86_64-no-deps.zip or
   emacs-VER-i686-no-deps.zip. The dependency files are also available
-  as emacs-MVER-x86_64-no-deps.zip and emacs-MVER-i686-deps.zip. Source
+  as emacs-MVER-x86_64-deps.zip and emacs-MVER-i686-deps.zip. Source
   code for these dependencies is available as
   emacs-26-deps-mingw-w64-src.zip.
 
