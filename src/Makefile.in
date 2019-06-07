@@ -674,7 +674,9 @@ unittests: $(LIBXMENU) $(ALLOBJS) \
 		unittests.o
 	$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
           -o unittests $(ALLOBJS) unittests.o $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
-	./unittests || true
+        # The || true is there because the unittests binary was being deleted
+        # when it failed.
+	RUST_BACKTRACE=1 ./unittests || true
 
 ## We have to create $(etc) here because init_cmdargs tests its
 ## existence when setting Vinstallation_directory (FIXME?).

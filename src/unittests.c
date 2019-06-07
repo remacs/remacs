@@ -21,6 +21,12 @@ run_test_font_spec ()
   test_font_spec ();
 }
 
+void
+run_test_vectors ()
+{
+  test_vectors ();
+}
+
 int main (int argc, char **argv)
 {
   void *stack_bottom_variable;
@@ -56,5 +62,6 @@ int main (int argc, char **argv)
 
   initialized = true;
 
+  run_test_vectors ();
   run_test_font_spec ();
 }
