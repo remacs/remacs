@@ -4014,11 +4014,11 @@ For internal use only.  */)
 /* Return a hash code for Lisp string STRING with case ignored.  Used
    below in computing a hash value for a Lisp face.  */
 
-static unsigned
+static uintptr_t
 hash_string_case_insensitive (Lisp_Object string)
 {
   const unsigned char *s;
-  unsigned hash = 0;
+  uintptr_t hash = 0;
   eassert (STRINGP (string));
   for (s = SDATA (string); *s; ++s)
     hash = (hash << 1) ^ c_tolower (*s);
@@ -4028,7 +4028,7 @@ hash_string_case_insensitive (Lisp_Object string)
 
 /* Return a hash code for face attribute vector V.  */
 
-static unsigned
+static uintptr_t
 lface_hash (Lisp_Object *v)
 {
   return (hash_string_case_insensitive (v[LFACE_FAMILY_INDEX])
@@ -4370,7 +4370,7 @@ free_face_cache (struct face_cache *c)
    that a requested face is not cached.  */
 
 static void
-cache_face (struct face_cache *c, struct face *face, unsigned int hash)
+cache_face (struct face_cache *c, struct face *face, uintptr_t hash)
 {
   int i = hash % FACE_CACHE_BUCKETS_SIZE;
 
@@ -4467,16 +4467,14 @@ static int
 lookup_face (struct frame *f, Lisp_Object *attr)
 {
   struct face_cache *cache = FRAME_FACE_CACHE (f);
-  unsigned hash;
-  int i;
   struct face *face;
 
   eassert (cache != NULL);
   check_lface_attrs (attr);
 
   /* Look up ATTR in the face cache.  */
-  hash = lface_hash (attr);
-  i = hash % FACE_CACHE_BUCKETS_SIZE;
+  uintptr_t hash = lface_hash (attr);
+  int i = hash % FACE_CACHE_BUCKETS_SIZE;
 
   for (face = cache->buckets[i]; face; face = face->next)
     {

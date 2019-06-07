@@ -1739,7 +1739,7 @@ struct face
 #endif
 
   /* The hash value of this face.  */
-  unsigned hash;
+  uintptr_t hash;
 
   /* Next and previous face in hash collision list of face cache.  */
   struct face *next, *prev;
