@@ -489,10 +489,10 @@ syllable.  In that case, FROM and TO are indexes to STR."
       lao-str)))
 
 ;;;###autoload
-(defun lao-composition-function (gstring)
+(defun lao-composition-function (gstring direction)
   (if (= (lgstring-char-len gstring) 1)
-      (compose-gstring-for-graphic gstring)
-    (or (font-shape-gstring gstring)
+      (compose-gstring-for-graphic gstring direction)
+    (or (font-shape-gstring gstring direction)
 	(let ((glyph-len (lgstring-glyph-len gstring))
 	      (i 0)
 	      glyph)

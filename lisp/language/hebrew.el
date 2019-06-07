@@ -152,7 +152,7 @@ Bidirectional editing is supported.")))
 ;; (3) If the font has precomposed glyphs, use them as far as
 ;; possible.  Adjust the remaining glyphs artificially.
 
-(defun hebrew-shape-gstring (gstring)
+(defun hebrew-shape-gstring (gstring direction)
   (let* ((font (lgstring-font gstring))
 	 (otf (font-get font :otf))
 	 (nchars (lgstring-char-len gstring))
@@ -172,7 +172,7 @@ Bidirectional editing is supported.")))
 
      ((or (assq 'hebr (car otf)) (assq 'hebr (cdr otf)))
       ;; FONT has OpenType features for Hebrew.
-      (font-shape-gstring gstring))
+      (font-shape-gstring gstring direction))
 
      (t
       ;; FONT doesn't have OpenType features for Hebrew.
@@ -217,7 +217,7 @@ Bidirectional editing is supported.")))
 	;; Now IDX is an index to the first non-precomposed glyph.
 	;; Adjust positions of the remaining glyphs artificially.
         (if (font-get font :combining-capability)
-            (font-shape-gstring gstring)
+            (font-shape-gstring gstring direction)
           (setq base-width (lglyph-width (lgstring-glyph gstring 0)))
           (while (< idx nglyphs)
             (setq glyph (lgstring-glyph gstring idx))

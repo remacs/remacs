@@ -4397,18 +4397,22 @@ font_fill_lglyph_metrics (Lisp_Object glyph, Lisp_Object font_object)
 }
 
 
-DEFUN ("font-shape-gstring", Ffont_shape_gstring, Sfont_shape_gstring, 1, 1, 0,
-       doc: /* Shape the glyph-string GSTRING.
+DEFUN ("font-shape-gstring", Ffont_shape_gstring, Sfont_shape_gstring, 2, 2, 0,
+       doc: /* Shape the glyph-string GSTRING subject to bidi DIRECTION.
 Shaping means substituting glyphs and/or adjusting positions of glyphs
 to get the correct visual image of character sequences set in the
 header of the glyph-string.
+
+DIRECTION should be produced by the UBA, the Unicode Bidirectional
+Algorithm, and should be a symbol, either L2R or R2L.  It can also
+be nil if the bidi context is unknown.
 
 If the shaping was successful, the value is GSTRING itself or a newly
 created glyph-string.  Otherwise, the value is nil.
 
 See the documentation of `composition-get-gstring' for the format of
 GSTRING.  */)
-  (Lisp_Object gstring)
+  (Lisp_Object gstring, Lisp_Object direction)
 {
   struct font *font;
   Lisp_Object font_object, n, glyph;
@@ -4427,7 +4431,7 @@ GSTRING.  */)
   /* Try at most three times with larger gstring each time.  */
   for (i = 0; i < 3; i++)
     {
-      n = font->driver->shape (gstring);
+      n = font->driver->shape (gstring, direction);
       if (FIXNUMP (n))
 	break;
       gstring = larger_vector (gstring,
@@ -4478,11 +4482,11 @@ GSTRING.  */)
 
 DEFUN ("font-variation-glyphs", Ffont_variation_glyphs, Sfont_variation_glyphs,
        2, 2, 0,
-       doc: /* Return a list of variation glyphs for CHAR in FONT-OBJECT.
+       doc: /* Return a list of variation glyphs for CHARACTER in FONT-OBJECT.
 Each element of the value is a cons (VARIATION-SELECTOR . GLYPH-ID),
 where
-  VARIATION-SELECTOR is a character code of variation selection
-    (#xFE00..#xFE0F or #xE0100..#xE01EF)
+  VARIATION-SELECTOR is a character code of variation selector
+    (#xFE00..#xFE0F or #xE0100..#xE01EF).
   GLYPH-ID is a glyph code of the corresponding variation glyph,
 a fixnum, if it's small enough, otherwise a bignum.  */)
   (Lisp_Object font_object, Lisp_Object character)
@@ -5350,6 +5354,10 @@ syms_of_font (void)
   DEFSYM (Qko, "ko");
 
   DEFSYM (QCuser_spec, ":user-spec");
+
+  /* For shapers that need to know text directionality.  */
+  DEFSYM (QL2R, "L2R");
+  DEFSYM (QR2L, "R2L");
 
   scratch_font_spec = Ffont_spec (0, NULL);
   staticpro (&scratch_font_spec);

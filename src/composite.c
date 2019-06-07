@@ -865,7 +865,7 @@ fill_gstring_body (Lisp_Object gstring)
 static Lisp_Object
 autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	       ptrdiff_t limit, struct window *win, struct face *face,
-	       Lisp_Object string)
+	       Lisp_Object string, Lisp_Object direction)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object pos = make_fixnum (charpos);
@@ -912,8 +912,9 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
       if (NILP (string))
 	record_unwind_protect (restore_point_unwind,
 			       build_marker (current_buffer, pt, pt_byte));
-      lgstring = safe_call (6, Vauto_composition_function, AREF (rule, 2),
-			    pos, make_fixnum (to), font_object, string);
+      lgstring = safe_call (7, Vauto_composition_function, AREF (rule, 2),
+			    pos, make_fixnum (to), font_object, string,
+			    direction);
     }
   return unbind_to (count, lgstring);
 }
@@ -1158,7 +1159,9 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
    characters to be composed.  FACE, if non-NULL, is a base face of
    the character.  If STRING is not nil, it is a string containing the
    character to check, and CHARPOS and BYTEPOS are indices in the
-   string.  In that case, FACE must not be NULL.
+   string.  In that case, FACE must not be NULL.  BIDI_LEVEL is the bidi
+   embedding level of the current paragraph, and is used to calculate the
+   direction argument to pass to the font shaper.
 
    If the character is composed, setup members of CMP_IT (id, nglyphs,
    from, to, reversed_p), and return true.  Otherwise, update
@@ -1167,7 +1170,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 bool
 composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		       ptrdiff_t bytepos, ptrdiff_t endpos, struct window *w,
-		       struct face *face, Lisp_Object string)
+		       signed char bidi_level, struct face *face, Lisp_Object string)
 {
   if (cmp_it->ch == -2)
     {
@@ -1197,13 +1200,17 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
   else if (w)
     {
       Lisp_Object lgstring = Qnil;
-      Lisp_Object val, elt;
+      Lisp_Object val, elt, direction = Qnil;
 
       val = CHAR_TABLE_REF (Vcomposition_function_table, cmp_it->ch);
       for (EMACS_INT i = 0; i < cmp_it->rule_idx; i++, val = XCDR (val))
 	continue;
       if (charpos < endpos)
 	{
+	  if ((bidi_level & 1) == 0)
+	    direction = QL2R;
+	  else
+	    direction = QR2L;
 	  for (; CONSP (val); val = XCDR (val))
 	    {
 	      elt = XCAR (val);
@@ -1213,7 +1220,7 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	      if (XFIXNAT (AREF (elt, 1)) != cmp_it->lookback)
 		goto no_composition;
 	      lgstring = autocmp_chars (elt, charpos, bytepos, endpos,
-					w, face, string);
+					w, face, string, direction);
 	      if (composition_gstring_p (lgstring))
 		break;
 	      lgstring = Qnil;
@@ -1237,8 +1244,12 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	      else
 		bpos = CHAR_TO_BYTE (cpos);
 	    }
+	  if ((bidi_level & 1) == 0)
+	    direction = QL2R;
+	  else
+	    direction = QR2L;
 	  lgstring = autocmp_chars (elt, cpos, bpos, charpos + 1, w, face,
-				    string);
+				    string, direction);
 	  if (! composition_gstring_p (lgstring)
 	      || cpos + LGSTRING_CHAR_LEN (lgstring) - 1 != charpos)
 	    /* Composition failed or didn't cover the current
@@ -1558,7 +1569,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 		  for (check = cur; check_pos < check.pos; )
 		    BACKWARD_CHAR (check, stop);
 		  *gstring = autocmp_chars (elt, check.pos, check.pos_byte,
-					    tail, w, NULL, string);
+					    tail, w, NULL, string, Qnil);
 		  need_adjustment = 1;
 		  if (NILP (*gstring))
 		    {
@@ -1935,15 +1946,24 @@ Use the command `auto-composition-mode' to change this variable. */);
 
   DEFVAR_LISP ("auto-composition-function", Vauto_composition_function,
 	       doc: /* Function to call to compose characters automatically.
-This function is called from the display routine with four arguments:
-FROM, TO, WINDOW, and STRING.
+This function is called from the display engine with 6 arguments:
+FUNC, FROM, TO, FONT-OBJECT, STRING, and DIRECTION.
+
+FUNC is the function to compose characters.  On text-mode display,
+FUNC is ignored and `compose-gstring-for-terminal' is used instead.
 
 If STRING is nil, the function must compose characters in the region
 between FROM and TO in the current buffer.
 
 Otherwise, STRING is a string, and FROM and TO are indices into the
 string.  In this case, the function must compose characters in the
-string.  */);
+string.
+
+FONT-OBJECT is the font to use, or nil if characters are to be
+composed on a text-mode display.
+
+DIRECTION is the bidi directionality of the text to shape.  It could
+be L2R or R2L, or nil if unknown.  */);
   Vauto_composition_function = Qnil;
 
   DEFVAR_LISP ("composition-function-table", Vcomposition_function_table,

@@ -29,6 +29,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include FT_BDF_H
 #endif
 
+#ifdef HAVE_HARFBUZZ
+#include <hb.h>
+#include <hb-ft.h>
+#endif  /* HAVE_HARFBUZZ */
+
 #ifdef HAVE_LIBOTF
 # include <otf.h>
 #ifdef HAVE_M17N_FLT
@@ -54,6 +59,9 @@ struct font_info
   FT_Size ft_size;
   int index;
   FT_Matrix matrix;
+#ifdef HAVE_HARFBUZZ
+  hb_font_t *hb_font;
+#endif  /* HAVE_HARFBUZZ */
 
 #ifdef USE_CAIRO
   cairo_scaled_font_t *cr_scaled_font;

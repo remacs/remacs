@@ -97,21 +97,13 @@ ftcrfont_glyph_extents (struct font *font,
 static Lisp_Object
 ftcrfont_list (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object list = ftfont_list (f, spec), tail;
-
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    ASET (XCAR (tail), FONT_TYPE_INDEX, Qftcr);
-  return list;
+  return ftfont_list2 (f, spec, Qftcr);
 }
 
 static Lisp_Object
 ftcrfont_match (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object entity = ftfont_match (f, spec);
-
-  if (VECTORP (entity))
-    ASET (entity, FONT_TYPE_INDEX, Qftcr);
-  return entity;
+  return ftfont_match2 (f, spec, Qftcr);
 }
 
 static Lisp_Object
@@ -164,10 +156,16 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   unblock_input ();
 
   font_object = font_build_object (VECSIZE (struct font_info),
-				   Qftcr, entity, size);
+				   AREF (entity, FONT_TYPE_INDEX),
+				   entity, size);
   ASET (font_object, FONT_FILE_INDEX, filename);
   font = XFONT_OBJECT (font_object);
   font->pixel_size = size;
+#ifdef HAVE_HARFBUZZ
+  if (EQ (AREF (font_object, FONT_TYPE_INDEX), Qftcrhb))
+    font->driver = &ftcrhbfont_driver;
+  else
+#endif	/* HAVE_HARFBUZZ */
   font->driver = &ftcrfont_driver;
   font->encoding_charset = font->repertory_charset = -1;
 
@@ -256,6 +254,9 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   ftcrfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   ftcrfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  ftcrfont_info->hb_font = NULL;
+#endif	/* HAVE_HARFBUZZ */
   if (ft_face->units_per_EM)
     ftcrfont_info->bitmap_position_unit = 0;
   else
@@ -287,6 +288,13 @@ ftcrfont_close (struct font *font)
     {
       OTF_close (ftcrfont_info->otf);
       ftcrfont_info->otf = NULL;
+    }
+#endif
+#ifdef HAVE_HARFBUZZ
+  if (ftcrfont_info->hb_font)
+    {
+      hb_font_destroy (ftcrfont_info->hb_font);
+      ftcrfont_info->hb_font = NULL;
     }
 #endif
   for (int i = 0; i < ftcrfont_info->metrics_nrows; i++)
@@ -427,7 +435,7 @@ ftcrfont_otf_capability (struct font *font)
 
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
 static Lisp_Object
-ftcrfont_shape (Lisp_Object lgstring)
+ftcrfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct font_info *ftcrfont_info = (struct font_info *) font;
@@ -439,7 +447,7 @@ ftcrfont_shape (Lisp_Object lgstring)
   FT_Face ft_face = cairo_ft_scaled_font_lock_face (scaled_font);
 
   ftcrfont_info->ft_size = ft_face->size;
-  Lisp_Object result = ftfont_shape (lgstring);
+  Lisp_Object result = ftfont_shape (lgstring, direction);
   cairo_ft_scaled_font_unlock_face (scaled_font);
   ftcrfont_info->ft_size = NULL;
 
@@ -447,7 +455,7 @@ ftcrfont_shape (Lisp_Object lgstring)
 }
 #endif
 
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
 static int
 ftcrfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 {
@@ -462,7 +470,7 @@ ftcrfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 
   return result;
 }
-#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS */
+#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS || HAVE_FT_FACE_GETCHARVARIANTINDEX */
 
 static int
 ftcrfont_draw (struct glyph_string *s,
@@ -510,6 +518,46 @@ ftcrfont_draw (struct glyph_string *s,
   return len;
 }
 
+#ifdef HAVE_HARFBUZZ
+
+static Lisp_Object
+ftcrhbfont_list (struct frame *f, Lisp_Object spec)
+{
+  return ftfont_list2 (f, spec, Qftcrhb);
+}
+
+static Lisp_Object
+ftcrhbfont_match (struct frame *f, Lisp_Object spec)
+{
+  return ftfont_match2 (f, spec, Qftcrhb);
+}
+
+static hb_font_t *
+ftcrhbfont_begin_hb_font (struct font *font, double *position_unit)
+{
+  struct font_info *ftcrfont_info = (struct font_info *) font;
+  cairo_scaled_font_t *scaled_font = ftcrfont_info->cr_scaled_font;
+  FT_Face ft_face = cairo_ft_scaled_font_lock_face (scaled_font);
+
+  ftcrfont_info->ft_size = ft_face->size;
+  hb_font_t *hb_font = fthbfont_begin_hb_font (font, position_unit);
+  if (ftcrfont_info->bitmap_position_unit)
+    *position_unit = ftcrfont_info->bitmap_position_unit;
+
+  return hb_font;
+}
+
+static void
+ftcrhbfont_end_hb_font (struct font *font, hb_font_t *hb_font)
+{
+  struct font_info *ftcrfont_info = (struct font_info *) font;
+  cairo_scaled_font_t *scaled_font = ftcrfont_info->cr_scaled_font;
+
+  cairo_ft_scaled_font_unlock_face (scaled_font);
+  ftcrfont_info->ft_size = NULL;
+}
+
+#endif	/* HAVE_HARFBUZZ */
 
 
 static void syms_of_ftcrfont_for_pdumper (void);
@@ -535,17 +583,23 @@ struct font_driver const ftcrfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftcrfont_shape,
 #endif
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
   .get_variation_glyphs = ftcrfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,
   .combining_capability = ftfont_combining_capability,
   };
+#ifdef HAVE_HARFBUZZ
+struct font_driver ftcrhbfont_driver;
+#endif	/* HAVE_HARFBUZZ */
 
 void
 syms_of_ftcrfont (void)
 {
   DEFSYM (Qftcr, "ftcr");
+#ifdef HAVE_HARFBUZZ
+  DEFSYM (Qftcrhb, "ftcrhb");
+#endif	/* HAVE_HARFBUZZ */
   pdumper_do_now_and_after_load (syms_of_ftcrfont_for_pdumper);
 }
 
@@ -553,4 +607,15 @@ static void
 syms_of_ftcrfont_for_pdumper (void)
 {
   register_font_driver (&ftcrfont_driver, NULL);
+#ifdef HAVE_HARFBUZZ
+  ftcrhbfont_driver = ftcrfont_driver;
+  ftcrhbfont_driver.type = Qftcrhb;
+  ftcrhbfont_driver.list = ftcrhbfont_list;
+  ftcrhbfont_driver.match = ftcrhbfont_match;
+  ftcrhbfont_driver.shape = hbfont_shape;
+  ftcrhbfont_driver.combining_capability = hbfont_combining_capability;
+  ftcrhbfont_driver.begin_hb_font = ftcrhbfont_begin_hb_font;
+  ftcrhbfont_driver.end_hb_font = ftcrhbfont_end_hb_font;
+  register_font_driver (&ftcrhbfont_driver, NULL);
+#endif	/* HAVE_HARFBUZZ */
 }

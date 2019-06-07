@@ -81,4 +81,8 @@ get_proc_addr (HINSTANCE handle, LPCSTR fname)
     }									\
   while (false)
 
+#ifdef HAVE_HARFBUZZ
+extern bool hbfont_init_w32_funcs (HMODULE);
+#endif
+
 #endif /* W32COMMON_H */

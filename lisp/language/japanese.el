@@ -248,7 +248,7 @@ eucJP-ms is defined in <http://www.opengroup.or.jp/jvc/cde/appendix.html>."
   (define-translation-table 'unicode-to-jisx0213
     (char-table-extra-slot table 0)))
 
-(defun compose-gstring-for-variation-glyph (gstring)
+(defun compose-gstring-for-variation-glyph (gstring _direction)
   "Compose glyph-string GSTRING for graphic display.
 GSTRING must have two glyphs; the first is a glyph for a han character,
 and the second is a glyph for a variation selector."

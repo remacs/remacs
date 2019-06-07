@@ -2278,13 +2278,21 @@ variable do not take effect immediately, only when you specify the
 @vindex font-backend@r{, a frame parameter}
 @item font-backend
 A list of symbols, specifying the @dfn{font backends} to use for
-drawing fonts in the frame, in order of priority.  On X, there are
-currently two available font backends: @code{x} (the X core font
-driver) and @code{xft} (the Xft font driver).  On MS-Windows, there are
-currently two available font backends: @code{gdi} and
-@code{uniscribe} (@pxref{Windows Fonts,,, emacs, The GNU Emacs
-Manual}).  On other systems, there is only one available font backend,
-so it does not make sense to modify this frame parameter.
+drawing characters on the frame, in order of priority.  In Emacs built
+without Cairo drawing on X, there are currently three available font
+backends: @code{x} (the X core font driver), @code{xft} (the Xft font
+driver), and @code{xfthb} (the Xft font driver with HarfBuzz text
+shaping).  If built with the Cairo drawing, there are two available
+font backends on X: @code{ftcr} (the FreeType font driver on Cairo)
+and @code{ftcrhb} (the FreeType font driver on Cairo with HarfBuzz
+text shaping).  On MS-Windows, there are currently three available
+font backends: @code{gdi} (the core MS-Windows font driver),
+@code{uniscribe} (font driver for OTF and TTF fonts with text shaping
+by the Uniscribe engine), and @code{harfbuzz} (font driver for OTF and
+TTF fonts with HarfBuzz text shaping) (@pxref{Windows Fonts,,, emacs,
+The GNU Emacs Manual}).  On other systems, there is only one available
+font backend, so it does not make sense to modify this frame
+parameter.
 
 @vindex background-mode@r{, a frame parameter}
 @item background-mode

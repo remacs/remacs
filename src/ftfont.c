@@ -48,6 +48,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "pdumper.h"
 
 static struct font_driver const ftfont_driver;
+#ifdef HAVE_HARFBUZZ
+static struct font_driver fthbfont_driver;
+#endif	/* HAVE_HARFBUZZ */
 
 /* Flag to tell if FcInit is already called or not.  */
 static bool fc_initialized;
@@ -788,7 +791,7 @@ ftfont_spec_pattern (Lisp_Object spec, char *otlayout, struct OpenTypeSpec **ots
   return pattern;
 }
 
-Lisp_Object
+static Lisp_Object
 ftfont_list (struct frame *f, Lisp_Object spec)
 {
   Lisp_Object val = Qnil, family, adstyle;
@@ -988,6 +991,16 @@ ftfont_list (struct frame *f, Lisp_Object spec)
 }
 
 Lisp_Object
+ftfont_list2 (struct frame *f, Lisp_Object spec, Lisp_Object type)
+{
+  Lisp_Object list = ftfont_list (f, spec);
+
+  for (Lisp_Object tail = list; CONSP (tail); tail = XCDR (tail))
+    ASET (XCAR (tail), FONT_TYPE_INDEX, type);
+  return list;
+}
+
+static Lisp_Object
 ftfont_match (struct frame *f, Lisp_Object spec)
 {
   Lisp_Object entity = Qnil;
@@ -1034,6 +1047,16 @@ ftfont_match (struct frame *f, Lisp_Object spec)
   FcPatternDestroy (pattern);
 
   FONT_ADD_LOG ("ftfont-match", spec, entity);
+  return entity;
+}
+
+Lisp_Object
+ftfont_match2 (struct frame *f, Lisp_Object spec, Lisp_Object type)
+{
+  Lisp_Object entity = ftfont_match (f, spec);
+
+  if (! NILP (entity))
+    ASET (entity, FONT_TYPE_INDEX, type);
   return entity;
 }
 
@@ -1292,9 +1315,17 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   ftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   ftfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  ftfont_info->hb_font = NULL;
+#endif	/* HAVE_HARFBUZZ */
   /* This means that there's no need of transformation.  */
   ftfont_info->matrix.xx = 0;
   font->pixel_size = size;
+#ifdef HAVE_HARFBUZZ
+  if (EQ (AREF (font_object, FONT_TYPE_INDEX), Qfreetypehb))
+    font->driver = &fthbfont_driver;
+  else
+#endif	/* HAVE_HARFBUZZ */
   font->driver = &ftfont_driver;
   font->encoding_charset = font->repertory_charset = -1;
 
@@ -1407,6 +1438,10 @@ ftfont_close (struct font *font)
       if (ftfont_info->otf)
 	OTF_close (ftfont_info->otf);
 #endif
+#ifdef HAVE_HARFBUZZ
+      if (ftfont_info->hb_font)
+	hb_font_destroy (ftfont_info->hb_font);
+#endif
       cache_data->ft_face = NULL;
     }
   else
@@ -1454,6 +1489,24 @@ ftfont_encode_char (struct font *font, int c)
   return (code > 0 ? code : FONT_INVALID_CODE);
 }
 
+static bool
+ftfont_glyph_metrics (FT_Face ft_face, int c, int *advance, int *lbearing,
+                      int *rbearing, int *ascent, int *descent)
+{
+  if (FT_Load_Glyph (ft_face, c, FT_LOAD_DEFAULT) == 0)
+    {
+      FT_Glyph_Metrics *m = &ft_face->glyph->metrics;
+      *advance = m->horiAdvance >> 6;
+      *lbearing = m->horiBearingX >> 6;
+      *rbearing = (m->horiBearingX + m->width) >> 6;
+      *ascent = m->horiBearingY >> 6;
+      *descent = (m->height - m->horiBearingY) >> 6;
+      return true;
+    }
+
+  return false;
+}
+
 void
 ftfont_text_extents (struct font *font, const unsigned int *code,
 		     int nglyphs, struct font_metrics *metrics)
@@ -1468,29 +1521,27 @@ ftfont_text_extents (struct font *font, const unsigned int *code,
 
   for (i = 0, first = 1; i < nglyphs; i++)
     {
-      if (FT_Load_Glyph (ft_face, code[i], FT_LOAD_DEFAULT) == 0)
+      int advance, lbearing, rbearing, ascent, descent;
+      if (ftfont_glyph_metrics (ft_face, code[i], &advance, &lbearing,
+                                &rbearing, &ascent, &descent))
 	{
-	  FT_Glyph_Metrics *m = &ft_face->glyph->metrics;
-
 	  if (first)
 	    {
-	      metrics->lbearing = m->horiBearingX >> 6;
-	      metrics->rbearing = (m->horiBearingX + m->width) >> 6;
-	      metrics->ascent = m->horiBearingY >> 6;
-	      metrics->descent = (m->height - m->horiBearingY) >> 6;
+	      metrics->lbearing = lbearing;
+	      metrics->rbearing = rbearing;
+	      metrics->ascent = ascent;
+	      metrics->descent = descent;
 	      first = 0;
 	    }
-	  if (metrics->lbearing > width + (m->horiBearingX >> 6))
-	    metrics->lbearing = width + (m->horiBearingX >> 6);
-	  if (metrics->rbearing
-	      < width + ((m->horiBearingX + m->width) >> 6))
-	    metrics->rbearing
-	      = width + ((m->horiBearingX + m->width) >> 6);
-	  if (metrics->ascent < (m->horiBearingY >> 6))
-	    metrics->ascent = m->horiBearingY >> 6;
-	  if (metrics->descent > ((m->height - m->horiBearingY) >> 6))
-	    metrics->descent = (m->height - m->horiBearingY) >> 6;
-	  width += m->horiAdvance >> 6;
+	  if (metrics->lbearing > width + lbearing)
+	    metrics->lbearing = width + lbearing;
+	  if (metrics->rbearing < width + rbearing)
+	    metrics->rbearing = width + rbearing;
+	  if (metrics->ascent < ascent)
+	    metrics->ascent = ascent;
+	  if (metrics->descent > descent)
+	    metrics->descent = descent;
+	  width += advance;
 	}
       else
 	width += font->space_width;
@@ -2757,7 +2808,7 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
 }
 
 Lisp_Object
-ftfont_shape (Lisp_Object lgstring)
+ftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct font_info *ftfont_info = (struct font_info *) font;
@@ -2769,21 +2820,57 @@ ftfont_shape (Lisp_Object lgstring)
 
 #endif	/* HAVE_M17N_FLT */
 
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#endif	/* HAVE_LIBOTF */
 
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
 int
 ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 {
   struct font_info *ftfont_info = (struct font_info *) font;
+#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
   OTF *otf = ftfont_get_otf (ftfont_info);
 
   if (! otf)
     return 0;
   return OTF_get_variation_glyphs (otf, c, variations);
+#else  /* !HAVE_OTF_GET_VARIATION_GLYPHS */
+  FT_Face ft_face = ftfont_info->ft_size->face;
+  int i, n = 0;
+
+  for (i = 0; i < 16; i++)
+    {
+      variations[i] = FT_Face_GetCharVariantIndex (ft_face, c, 0xFE00 + i);
+      if (variations[i])
+	n++;
+    }
+  for (; i < 256; i++)
+    {
+      variations[i] = FT_Face_GetCharVariantIndex (ft_face, c,
+						   0xE0100 + (i - 16));
+      if (variations[i])
+	n++;
+    }
+
+  return n;
+#endif  /* !HAVE_OTF_GET_VARIATION_GLYPHS */
+}
+#endif /* HAVE_OTF_GET_VARIATION_GLYPHS || HAVE_FT_FACE_GETCHARVARIANTINDEX */
+
+#ifdef HAVE_HARFBUZZ
+
+hb_font_t *
+fthbfont_begin_hb_font (struct font *font, double *position_unit)
+{
+  struct font_info *ftfont_info = (struct font_info *) font;
+
+  *position_unit = 1.0 / (1 << 6);
+  if (! ftfont_info->hb_font)
+    ftfont_info->hb_font
+      = hb_ft_font_create_referenced (ftfont_info->ft_size->face);
+  return ftfont_info->hb_font;
 }
 
-#endif	/* HAVE_OTF_GET_VARIATION_GLYPHS */
-#endif	/* HAVE_LIBOTF */
+#endif /* HAVE_HARFBUZZ */
 
 static const char *const ftfont_booleans [] = {
   ":antialias",
@@ -2869,7 +2956,7 @@ static struct font_driver const ftfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = ftfont_shape,
 #endif
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
   .get_variation_glyphs = ftfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,
@@ -2881,6 +2968,9 @@ syms_of_ftfont (void)
 {
   /* Symbolic type of this font-driver.  */
   DEFSYM (Qfreetype, "freetype");
+#ifdef HAVE_HARFBUZZ
+  DEFSYM (Qfreetypehb, "freetypehb");
+#endif	/* HAVE_HARFBUZZ */
 
   /* Fontconfig's generic families and their aliases.  */
   DEFSYM (Qmonospace, "monospace");
@@ -2918,4 +3008,12 @@ syms_of_ftfont_for_pdumper (void)
 {
   PDUMPER_RESET_LV (ft_face_cache, Qnil);
   register_font_driver (&ftfont_driver, NULL);
+#ifdef HAVE_HARFBUZZ
+  fthbfont_driver = ftfont_driver;
+  fthbfont_driver.type = Qfreetypehb;
+  fthbfont_driver.shape = hbfont_shape;
+  fthbfont_driver.combining_capability = hbfont_combining_capability;
+  fthbfont_driver.begin_hb_font = fthbfont_begin_hb_font;
+  register_font_driver (&fthbfont_driver, NULL);
+#endif	/* HAVE_HARFBUZZ */
 }

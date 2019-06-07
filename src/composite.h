@@ -26,6 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define EMACS_COMPOSITE_H
 
 #include "font.h"
+#include "dispextern.h"
 
 INLINE_HEADER_BEGIN
 
@@ -321,7 +322,7 @@ extern void composition_compute_stop_pos (struct composition_it *,
                                           Lisp_Object);
 extern bool composition_reseat_it (struct composition_it *, ptrdiff_t,
 				   ptrdiff_t, ptrdiff_t, struct window *,
-				   struct face *, Lisp_Object);
+				   signed char, struct face *, Lisp_Object);
 extern int composition_update_it (struct composition_it *,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);
 

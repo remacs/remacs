@@ -108,21 +108,13 @@ xftfont_get_colors (struct frame *f, struct face *face, GC gc,
 static Lisp_Object
 xftfont_list (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object list = ftfont_list (f, spec);
-
-  for (Lisp_Object tail = list; CONSP (tail); tail = XCDR (tail))
-    ASET (XCAR (tail), FONT_TYPE_INDEX, Qxft);
-  return list;
+  return ftfont_list2 (f, spec, Qxft);
 }
 
 static Lisp_Object
 xftfont_match (struct frame *f, Lisp_Object spec)
 {
-  Lisp_Object entity = ftfont_match (f, spec);
-
-  if (! NILP (entity))
-    ASET (entity, FONT_TYPE_INDEX, Qxft);
-  return entity;
+  return ftfont_match2 (f, spec, Qxft);
 }
 
 static FcChar8 ascii_printable[95];
@@ -174,10 +166,16 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   /* We should not destroy PAT here because it is kept in XFTFONT and
      destroyed automatically when XFTFONT is closed.  */
   font_object = font_build_object (VECSIZE (struct font_info),
-				   Qxft, entity, size);
+				   AREF (entity, FONT_TYPE_INDEX),
+				   entity, size);
   ASET (font_object, FONT_FILE_INDEX, filename);
   font = XFONT_OBJECT (font_object);
   font->pixel_size = size;
+#ifdef HAVE_HARFBUZZ
+  if (EQ (AREF (font_object, FONT_TYPE_INDEX), Qxfthb))
+    font->driver = &xfthbfont_driver;
+  else
+#endif	/* HAVE_HARFBUZZ */
   font->driver = &xftfont_driver;
   font->encoding_charset = font->repertory_charset = -1;
 
@@ -273,6 +271,9 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   xftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   xftfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  xftfont_info->hb_font = NULL;
+#endif	/* HAVE_HARFBUZZ */
   xftfont_info->ft_size = ft_face->size;
 
   font->baseline_offset = 0;
@@ -310,6 +311,13 @@ xftfont_close (struct font *font)
     {
       OTF_close (xftfont_info->otf);
       xftfont_info->otf = NULL;
+    }
+#endif
+#ifdef HAVE_HARFBUZZ
+  if (xftfont_info->hb_font)
+    {
+      hb_font_destroy (xftfont_info->hb_font);
+      xftfont_info->hb_font = NULL;
     }
 #endif
 
@@ -503,13 +511,13 @@ xftfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
 static Lisp_Object
-xftfont_shape (Lisp_Object lgstring)
+xftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct font_info *xftfont_info = (struct font_info *) font;
   FT_Face ft_face = XftLockFace (xftfont_info->xftfont);
   xftfont_info->ft_size = ft_face->size;
-  Lisp_Object val = ftfont_shape (lgstring);
+  Lisp_Object val = ftfont_shape (lgstring, direction);
   XftUnlockFace (xftfont_info->xftfont);
   return val;
 }
@@ -591,6 +599,41 @@ xftfont_cached_font_ok (struct frame *f, Lisp_Object font_object,
   return ok;
 }
 
+#ifdef HAVE_HARFBUZZ
+
+static Lisp_Object
+xfthbfont_list (struct frame *f, Lisp_Object spec)
+{
+  return ftfont_list2 (f, spec, Qxfthb);
+}
+
+static Lisp_Object
+xfthbfont_match (struct frame *f, Lisp_Object spec)
+{
+  return ftfont_match2 (f, spec, Qxfthb);
+}
+
+static hb_font_t *
+xfthbfont_begin_hb_font (struct font *font, double *position_unit)
+{
+  struct font_info *xftfont_info = (struct font_info *) font;
+  FT_Face ft_face = XftLockFace (xftfont_info->xftfont);
+
+  xftfont_info->ft_size = ft_face->size;
+
+  return fthbfont_begin_hb_font (font, position_unit);
+}
+
+static void
+xfthbfont_end_hb_font (struct font *font, hb_font_t *hb_font)
+{
+  struct font_info *xftfont_info = (struct font_info *) font;
+
+  XftUnlockFace (xftfont_info->xftfont);
+}
+
+#endif	/* HAVE_HARFBUZZ */
+
 static void syms_of_xftfont_for_pdumper (void);
 
 struct font_driver const xftfont_driver =
@@ -618,7 +661,7 @@ struct font_driver const xftfont_driver =
 #if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
   .shape = xftfont_shape,
 #endif
-#ifdef HAVE_OTF_GET_VARIATION_GLYPHS
+#if defined HAVE_OTF_GET_VARIATION_GLYPHS || defined HAVE_FT_FACE_GETCHARVARIANTINDEX
   .get_variation_glyphs = ftfont_variation_glyphs,
 #endif
   .filter_properties = ftfont_filter_properties,
@@ -626,11 +669,17 @@ struct font_driver const xftfont_driver =
   .combining_capability = ftfont_combining_capability,
   .drop_xrender_surfaces = xftfont_drop_xrender_surfaces,
   };
+#ifdef HAVE_HARFBUZZ
+struct font_driver xfthbfont_driver;
+#endif	/* HAVE_HARFBUZZ */
 
 void
 syms_of_xftfont (void)
 {
   DEFSYM (Qxft, "xft");
+#ifdef HAVE_HARFBUZZ
+  DEFSYM (Qxfthb, "xfthb");
+#endif	/* HAVE_HARFBUZZ */
 
   DEFVAR_BOOL ("xft-font-ascent-descent-override",
 	       xft_font_ascent_descent_override,
@@ -645,4 +694,15 @@ static void
 syms_of_xftfont_for_pdumper (void)
 {
   register_font_driver (&xftfont_driver, NULL);
+#ifdef HAVE_HARFBUZZ
+  xfthbfont_driver = xftfont_driver;
+  xfthbfont_driver.type = Qxfthb;
+  xfthbfont_driver.list = xfthbfont_list;
+  xfthbfont_driver.match = xfthbfont_match;
+  xfthbfont_driver.shape = hbfont_shape;
+  xfthbfont_driver.combining_capability = hbfont_combining_capability;
+  xfthbfont_driver.begin_hb_font = xfthbfont_begin_hb_font;
+  xfthbfont_driver.end_hb_font = xfthbfont_end_hb_font;
+  register_font_driver (&xfthbfont_driver, NULL);
+#endif	/* HAVE_HARFBUZZ */
 }

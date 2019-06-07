@@ -6955,6 +6955,7 @@ static next_element_function const get_next_element[NUM_IT_METHODS] =
    || ((IT)->cmp_it.stop_pos == (CHARPOS)				\
        && composition_reseat_it (&(IT)->cmp_it, CHARPOS, BYTEPOS,	\
 				 END_CHARPOS, (IT)->w,			\
+				 (IT)->bidi_it.resolved_level,		\
 				 FACE_FROM_ID_OR_NULL ((IT)->f,		\
 						       (IT)->face_id),	\
 				 (IT)->string)))

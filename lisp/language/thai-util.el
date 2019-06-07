@@ -225,10 +225,10 @@ positions (integers or markers) specifying the region."
   (thai-compose-region (point-min) (point-max)))
 
 ;;;###autoload
-(defun thai-composition-function (gstring)
+(defun thai-composition-function (gstring direction)
   (if (= (lgstring-char-len gstring) 1)
-      (compose-gstring-for-graphic gstring)
-    (or (font-shape-gstring gstring)
+      (compose-gstring-for-graphic gstring direction)
+    (or (font-shape-gstring gstring direction)
 	(let ((glyph-len (lgstring-glyph-len gstring))
 	      (last-char (lgstring-char gstring
 					(1- (lgstring-char-len gstring))))

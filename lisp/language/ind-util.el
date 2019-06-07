@@ -828,6 +828,9 @@ Returns new end position."
       (let ((pos from) newpos func (max to))
 	(narrow-to-region from to)
 	(while (< pos max)
+          ;; FIXME: The below seems to assume
+          ;; composition-function-table holds functions?  That is no
+          ;; longer true, since long ago.
 	  (setq func (aref composition-function-table (char-after pos)))
 	  (if (fboundp func)
 	      (setq newpos (funcall func pos nil)

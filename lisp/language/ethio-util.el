@@ -1014,7 +1014,7 @@ With ARG, insert that many delimiters."
 ;;
 
 ;;;###autoload
-(defun ethio-composition-function (pos to font-object string)
+(defun ethio-composition-function (pos to font-object string _direction)
   (setq pos (1- pos))
   (let ((pattern "\\ce\\(áŸ\\|ö ‡Š\\)"))
     (if string

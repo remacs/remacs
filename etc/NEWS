@@ -30,6 +30,17 @@ arranges for the included mini-gmp library to be built and used.
 The new 'configure' option '--without-libgmp' uses mini-gmp even if a
 suitable libgmp is available.
 
+** The new configure option '--with-harfbuzz' adds support for the
+HarfBuzz text shaping engine.  It is on by default; use './configure
+--without-harfbuzz' to build without it.  The HarfBuzz text shaping is
+available via new font backend drivers 'xfthb' and 'ftcrhb' for Xft
+and Cairo drawings, respectively, and via the 'harfbuzz' backend on
+MS-Windows.  The Harfbuzz text shaping is preferred to the previously
+supported ones, so the font backends that use older shaping engines
+(FLT on GNU and Unix systems and Uniscribe on MS-Windows) are not
+enabled by default; they can be enabled via the 'font-backend' frame
+parameter or via X resources.
+
 ** The new configure option '--with-json' adds support for JSON using
 the Jansson library.  It is on by default; use './configure
 --with-json=no' to build without Jansson support.  The new JSON

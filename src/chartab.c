@@ -1321,22 +1321,25 @@ and put an element value.  */)
   return Fcdr (Fassq (prop, Vchar_code_property_alist));
 }
 
+Lisp_Object
+get_unicode_property (Lisp_Object char_table, int ch)
+{
+  Lisp_Object val = CHAR_TABLE_REF (char_table, ch);
+  uniprop_decoder_t decoder = uniprop_get_decoder (char_table);
+  return (decoder ? decoder (char_table, val) : val);
+}
+
 DEFUN ("get-unicode-property-internal", Fget_unicode_property_internal,
        Sget_unicode_property_internal, 2, 2, 0,
        doc: /* Return an element of CHAR-TABLE for character CH.
 CHAR-TABLE must be what returned by `unicode-property-table-internal'. */)
   (Lisp_Object char_table, Lisp_Object ch)
 {
-  Lisp_Object val;
-  uniprop_decoder_t decoder;
-
   CHECK_CHAR_TABLE (char_table);
   CHECK_CHARACTER (ch);
   if (! UNIPROP_TABLE_P (char_table))
     error ("Invalid Unicode property table");
-  val = CHAR_TABLE_REF (char_table, XFIXNUM (ch));
-  decoder = uniprop_get_decoder (char_table);
-  return (decoder ? decoder (char_table, val) : val);
+  return get_unicode_property (char_table, XFIXNUM (ch));
 }
 
 DEFUN ("put-unicode-property-internal", Fput_unicode_property_internal,
