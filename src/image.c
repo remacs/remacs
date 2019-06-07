@@ -2057,9 +2057,9 @@ image_set_rotation (struct image *img, matrix3x3 tm)
 static void
 image_set_crop (struct image *img, matrix3x3 tm)
 {
+#ifdef HAVE_NATIVE_TRANSFORMS
   int width, height;
   compute_image_size (img->width, img->height, img->spec, &width, &height);
-#ifdef HAVE_NATIVE_TRANSFORMS
 # ifdef HAVE_IMAGEMAGICK
   /* ImageMagick images are already cropped.  */
   if (EQ (image_spec_value (img->spec, QCtype, NULL), Qimagemagick))
