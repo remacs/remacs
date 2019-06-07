@@ -92,9 +92,7 @@ the mode is on, set `display-line-numbers' directly."
 
 (defun display-line-numbers--turn-on ()
   "Turn on `display-line-numbers-mode'."
-  (unless (or (minibufferp)
-              ;; taken from linum.el
-              (and (daemonp) (null (frame-parameter nil 'client))))
+  (unless (minibufferp)
     (display-line-numbers-mode)))
 
 ;;;###autoload

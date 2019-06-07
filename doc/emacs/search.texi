@@ -847,7 +847,7 @@ Expressions,,, elisp, The Emacs Lisp Reference Manual}, for additional
 features used mainly in Lisp programs.
 
   Regular expressions have a syntax in which a few characters are
-special constructs and the rest are @dfn{ordinary}.  An ordinary
+@dfn{special constructs} and the rest are @dfn{ordinary}.  An ordinary
 character matches that same character and nothing else.  The special
 characters are @samp{$^.*+?[\}.  The character @samp{]} is special if
 it ends a character alternative (see below).  The character @samp{-}
@@ -1328,14 +1328,14 @@ of its accented cousins like @code{@"a} and @code{@'a}, i.e., the
 match disregards the diacritics that distinguish these
 variants.  In addition, @code{a} matches other characters that
 resemble it, or have it as part of their graphical representation,
-such as @sc{u+249c parenthesized latin small letter a} and @sc{u+2100
-account of} (which looks like a small @code{a} over @code{c}).
+such as U+249C @sc{parenthesized latin small letter a} and U+2100
+@sc{account of} (which looks like a small @code{a} over @code{c}).
 Similarly, the @acronym{ASCII} double-quote character @code{"} matches
 all the other variants of double quotes defined by the Unicode
 standard.  Finally, character folding can make a sequence of one or
 more characters match another sequence of a different length: for
-example, the sequence of two characters @code{ff} matches @sc{u+fb00
-latin small ligature ff}.  Character sequences that are not identical,
+example, the sequence of two characters @code{ff} matches U+FB00
+@sc{latin small ligature ff}.  Character sequences that are not identical,
 but match under character folding are known as @dfn{equivalent
 character sequences}.
 
@@ -1483,8 +1483,7 @@ multiple digits, and the value of @samp{\@var{d}} is @code{nil} if the
 @samp{\#} here too stands for the number of already-completed
 replacements.
 
-  Repeating our example to exchange @samp{x} and @samp{y}, we can thus
-do it also this way:
+  For example, we can exchange @samp{x} and @samp{y} this way:
 
 @example
 M-x replace-regexp @key{RET} \(x\)\|y @key{RET}
@@ -1661,8 +1660,9 @@ replacement has already been made, @key{DEL} and @key{SPC} are
 equivalent in this situation; both move to the next occurrence.
 
 You can type @kbd{C-r} at this point (see below) to alter the replaced
-text.  You can also type @kbd{C-x u} to undo the replacement; this exits
-the @code{query-replace}, so if you want to do further replacement you
+text.  You can also undo the replacement with the @code{undo} command
+(e.g., type @kbd{C-x u}; @pxref{Undo}); this exits the
+@code{query-replace}, so if you want to do further replacement you
 must use @kbd{C-x @key{ESC} @key{ESC} @key{RET}} to restart
 (@pxref{Repetition}).
 

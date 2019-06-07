@@ -391,7 +391,7 @@ macro definition is executed.  It is up to you to leave point and the
 text in a state such that the rest of the macro will do what you want.
 @end table
 
-  @kbd{C-u C-x q}, which is @kbd{C-x q} with a numeric argument,
+  @kbd{C-u C-x q}, which is @kbd{C-x q} with a prefix argument,
 performs a completely different function.  It enters a recursive edit
 reading input from the keyboard, both when you type it during the
 definition of the macro, and when it is executed from the macro.  During
@@ -472,7 +472,7 @@ later with @code{load-file} (@pxref{Lisp Libraries}).  If the file you
 save in is your init file @file{~/.emacs} (@pxref{Init File}) then the
 macro will be defined each time you run Emacs.
 
-  If you give @code{insert-kbd-macro} a numeric argument, it makes
+  If you give @code{insert-kbd-macro} a prefix argument, it makes
 additional Lisp code to record the keys (if any) that you have bound
 to @var{macroname}, so that the macro will be reassigned the same keys
 when you load the file.

@@ -199,12 +199,13 @@ screen lines between point and the top or bottom of the window
 (@pxref{Auto Scrolling}).
 
   You can also give @kbd{C-l} a prefix argument.  A plain prefix
-argument, @kbd{C-u C-l}, simply recenters point.  A positive argument
-@var{n} puts point @var{n} lines down from the top of the window.  An
-argument of zero puts point on the topmost line.  A negative argument
-@var{-n} puts point @var{n} lines from the bottom of the window.  When
-given an argument, @kbd{C-l} does not clear the screen or cycle
-through different screen positions.
+argument, @kbd{C-u C-l}, simply recenters the line showing point.  A
+positive argument @var{n} moves line showing point @var{n} lines down
+from the top of the window.  An argument of zero moves point's line to
+the top of the window.  A negative argument @var{-n} moves point's
+line @var{n} lines from the bottom of the window.  When given an
+argument, @kbd{C-l} does not clear the screen or cycle through
+different screen positions.
 
 @vindex recenter-redisplay
   If the variable @code{recenter-redisplay} has a non-@code{nil}
@@ -1535,9 +1536,9 @@ a new line, while the tab character (@code{U+0009}) is displayed as a
 space that extends to the next tab stop column (normally every 8
 columns).  The number of spaces per tab is controlled by the
 buffer-local variable @code{tab-width}, which must have an integer
-value between 1 and 1000, inclusive.  Note that how the tab character
-in the buffer is displayed has nothing to do with the definition of
-@key{TAB} as a command.
+value between 1 and 1000, inclusive.  Note that the way the tab
+character in the buffer is displayed has nothing to do with the
+definition of @key{TAB} as a command.
 
   Other @acronym{ASCII} control characters, whose codes are below
 @code{U+0020} (octal 40, decimal 32), are displayed as a caret
@@ -1607,11 +1608,11 @@ curved quotes.  You can influence or inhibit this translation by
 customizing the user option @code{text-quoting-style} (@pxref{Keys in
 Documentation,,, elisp, The Emacs Lisp Reference Manual}).
 
-  If the curved quotes @samp{‘}, @samp{’}, @samp{“}, and @samp{”} are
+  If the curved quotes @t{‘}, @t{’}, @t{“}, and @t{”} are
 known to look just like @acronym{ASCII} characters, they are shown
 with the @code{homoglyph} face.  Curved quotes that are known not to
 be displayable are shown as their @acronym{ASCII} approximations
-@samp{`}, @samp{'}, and @samp{"} with the @code{homoglyph} face.
+@t{`}, @t{'}, and @t{"} with the @code{homoglyph} face.
 
 @node Cursor Display
 @section Displaying the Cursor

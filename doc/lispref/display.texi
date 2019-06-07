@@ -7328,9 +7328,9 @@ Non-@acronym{ASCII}, non-printing characters @code{U+0080} to
 @samp{\230}).
 
 @item format-control
-Characters of Unicode General Category [Cf], such as @samp{U+200E}
-(Left-to-Right Mark), but excluding characters that have graphic
-images, such as @samp{U+00AD} (Soft Hyphen).
+Characters of Unicode General Category [Cf], such as U+200E
+@sc{left-to-right mark}, but excluding characters that have graphic
+images, such as U+00AD @sc{soft hyphen}.
 
 @item no-font
 Characters for which there is no suitable font, or which cannot be
@@ -7713,12 +7713,12 @@ problem:
 
 @itemize @minus
 @item
-Append the special character @code{U+200E}, LEFT-TO-RIGHT MARK, or
+Append the special character U+200E @sc{left-to-right mark}, or
 @acronym{LRM}, to the end of each field that may have bidirectional
 content, or prepend it to the beginning of the following field.  The
 function @code{bidi-string-mark-left-to-right}, described below, comes
 in handy for this purpose.  (In a right-to-left paragraph, use
-@code{U+200F}, RIGHT-TO-LEFT MARK, or @acronym{RLM}, instead.)  This
+U+200F @sc{right-to-left mark}, or @acronym{RLM}, instead.)  This
 is one of the solutions recommended by the UBA.
 
 @item
