@@ -420,9 +420,9 @@ commands.
   The default behavior of the mark and region, in which setting the
 mark activates it and highlights the region, is called Transient Mark
 mode.  This is a minor mode that is enabled by default.  It can be
-toggled with @kbd{M-x transient-mark-mode}, or with the @samp{Active
-Region Highlighting} menu item in the @samp{Options} menu.  Turning it
-off switches Emacs to an alternative mode of operation:
+toggled with @kbd{M-x transient-mark-mode}, or with the
+@samp{Highlight Active Region} menu item in the @samp{Options} menu.
+Turning it off switches Emacs to an alternative mode of operation:
 
 @itemize @bullet
 @item

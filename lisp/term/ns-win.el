@@ -745,10 +745,6 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
                 (string-to-number (match-string 1 ns-version-string)))))
     ;; Appkit 1138 ~= macOS 10.7.
     (when (>= appkit-version 1138)
-      (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control))))
-      (put 'mouse-wheel-scroll-amount 'customized-value
-           (list (custom-quote (symbol-value 'mouse-wheel-scroll-amount))))
-
       (setq mouse-wheel-progressive-speed nil)
       (put 'mouse-wheel-progressive-speed 'customized-value
            (list (custom-quote
