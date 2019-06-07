@@ -51,6 +51,7 @@
         (buffer-substring-no-properties (point-min) (point-max))))))
 
 (ert-deftest term-simple-lines ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (let ((str "\
 first line\r
 next line\r\n"))
@@ -58,12 +59,14 @@ next line\r\n"))
                    (replace-regexp-in-string "\r" "" str)))))
 
 (ert-deftest term-carriage-return ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (let ((str "\
 first line\r_next line\r\n"))
     (should (equal (term-test-screen-from-input 40 12 str)
                    "_next line\n"))))
 
 (ert-deftest term-line-wrap ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (should (string-match-p
            ;; Don't be strict about trailing whitespace.
            "\\`a\\{40\\}\na\\{20\\} *\\'"
@@ -75,6 +78,7 @@ first line\r_next line\r\n"))
                                                 (list str str))))))
 
 (ert-deftest term-cursor-movement ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   ;; Absolute positioning.
   (should (equal "ab\ncd"
                  (term-test-screen-from-input
@@ -105,6 +109,7 @@ first line\r_next line\r\n"))
                                 "\e[D\e[Da")))))
 
 (ert-deftest term-scrolling-region ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (should (equal "\
 line3
 line4
@@ -256,6 +261,7 @@ line6\r
 line7")))))
 
 (ert-deftest term-set-directory ()
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (let ((term-ansi-at-user (user-real-login-name)))
     (should (equal (term-test-screen-from-input
                     40 12 "\eAnSiTc /foo/\n" 'default-directory)
@@ -271,6 +277,7 @@ A real-life example is the default zsh prompt which writes spaces
 to the end of line (triggering line-wrapping state), and then
 sends a carriage return followed by another space to overwrite
 the first character of the line."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (let* ((width 10)
          (strs (list "x" (make-string (1- width) ?_)
                      "\r_")))
@@ -280,6 +287,7 @@ the first character of the line."
 (ert-deftest term-to-margin ()
   "Test cursor movement at the scroll margin.
 This is a reduced example from GNU nano's initial screen."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (let* ((width 10)
          (x (make-string width ?x))
          (y (make-string width ?y)))
