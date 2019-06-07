@@ -2125,7 +2125,8 @@ permissions.  */)
 	  /* Copy at most COPY_MAX bytes at a time; this is min
 	     (PTRDIFF_MAX, SIZE_MAX) truncated to a value that is
 	     surely aligned well.  */
-	  ptrdiff_t copy_max = min (PTRDIFF_MAX, SIZE_MAX) >> 30 << 30;
+	  ssize_t ssize_max = TYPE_MAXIMUM (ssize_t);
+	  ptrdiff_t copy_max = min (ssize_max, SIZE_MAX) >> 30 << 30;
 	  off_t intail = insize - newsize;
 	  ptrdiff_t len = min (intail, copy_max);
 	  copied = copy_file_range (ifd, NULL, ofd, NULL, len, 0);
