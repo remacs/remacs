@@ -2058,18 +2058,13 @@ static void
 image_set_crop (struct image *img, matrix3x3 tm)
 {
 #ifdef HAVE_NATIVE_TRANSFORMS
-  int width, height;
-  compute_image_size (img->width, img->height, img->spec, &width, &height);
 # ifdef HAVE_IMAGEMAGICK
   /* ImageMagick images are already cropped.  */
   if (EQ (image_spec_value (img->spec, QCtype, NULL), Qimagemagick))
     return;
 # endif
 
-# ifdef USE_CAIRO
-  img->width = width;
-  img->height = height;
-# elif defined HAVE_XRENDER
+# ifdef HAVE_XRENDER
   if (!img->picture)
     return;
 # endif
@@ -2094,6 +2089,7 @@ image_set_crop (struct image *img, matrix3x3 tm)
 	}
     }
 
+  int width = img->width;
   if (FIXNATP (w) && XFIXNAT (w) < img->width)
     width = XFIXNAT (w);
   int left;
@@ -2106,6 +2102,7 @@ image_set_crop (struct image *img, matrix3x3 tm)
   else
     left = (img->width - width) >> 1;
 
+  int height = img->height;
   if (FIXNATP (h) && XFIXNAT (h) < img->height)
     height = XFIXNAT (h);
   int top;
@@ -2168,7 +2165,6 @@ image_set_size (struct image *img, matrix3x3 tm)
 
   compute_image_size (img->width, img->height, img->spec, &width, &height);
 
-# if defined (HAVE_NS) || defined (HAVE_XRENDER)
   double xscale = img->width / (double) width;
   double yscale = img->height / (double) height;
 
@@ -2178,14 +2174,6 @@ image_set_size (struct image *img, matrix3x3 tm)
 
   img->width = width;
   img->height = height;
-# endif
-
-# ifdef HAVE_NTGUI
-  /* Under HAVE_NTGUI, we will scale the image on the fly, when we
-     draw it.  See w32term.c:x_draw_image_foreground.  */
-  img->width = width;
-  img->height = height;
-# endif
 #endif
 }
 
