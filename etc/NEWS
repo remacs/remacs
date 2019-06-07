@@ -30,7 +30,8 @@ arranges for the included mini-gmp library to be built and used.
 The new 'configure' option '--without-libgmp' uses mini-gmp even if a
 suitable libgmp is available.
 
-** The new configure option '--with-harfbuzz' adds support for the
+** Emacs can now use HarfBuzz as its shaping engine.
+The new configure option '--with-harfbuzz' adds support for the
 HarfBuzz text shaping engine.  It is on by default; use './configure
 --without-harfbuzz' to build without it.  The HarfBuzz text shaping is
 available via new font backend drivers 'xfthb' and 'ftcrhb' for Xft
