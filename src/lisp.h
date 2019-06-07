@@ -241,11 +241,11 @@ enum Lisp_Bits
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
     VALBITS = EMACS_INT_WIDTH - GCTYPEBITS,
 
-    /* Number of bits in a Lisp fixnum value, not counting the tag.  */
+    /* Number of bits in a fixnum value, not counting the tag.  */
     FIXNUM_BITS = VALBITS + 1
   };
 
-/* Number of bits in a Lisp fixnum tag; can be used in #if.  */
+/* Number of bits in a fixnum tag; can be used in #if.  */
 DEFINE_GDB_SYMBOL_BEGIN (int, INTTYPEBITS)
 #define INTTYPEBITS (GCTYPEBITS - 1)
 DEFINE_GDB_SYMBOL_END (INTTYPEBITS)
@@ -473,7 +473,7 @@ typedef EMACS_INT Lisp_Word;
    data type, read the comments after Lisp_Fwd_Type definition
    below.  */
 
-/* Lisp integers use 2 tags, to give them one extra bit, thus
+/* Fixnums use 2 tags, to give them one extra bit, thus
    extending their range from, e.g., -2^28..2^28-1 to -2^29..2^29-1.  */
 #define INTMASK (EMACS_INT_MAX >> (INTTYPEBITS - 1))
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
@@ -1160,8 +1160,7 @@ INLINE EMACS_INT
    also work when USE_LSB_TAG; this is to aid future maintenance when
    the lisp_h_* macros are eventually removed.  */
 
-/* Make a Lisp integer representing the value of the low order
-   bits of N.  */
+/* Make a fixnum representing the value of the low order bits of N.  */
 INLINE Lisp_Object
 make_fixnum (EMACS_INT n)
 {
@@ -1207,7 +1206,7 @@ XFIXNAT (Lisp_Object a)
 
 #endif /* ! USE_LSB_TAG */
 
-/* Extract A's value as an unsigned integer.  */
+/* Extract A's value as an unsigned integer in the range 0..INTMASK.  */
 INLINE EMACS_UINT
 XUFIXNUM (Lisp_Object a)
 {
@@ -1215,9 +1214,8 @@ XUFIXNUM (Lisp_Object a)
   return USE_LSB_TAG ? i >> INTTYPEBITS : i & INTMASK;
 }
 
-/* Return A's (Lisp-integer sized) hash.  Happens to be like XUFIXNUM
-   right now, but XUFIXNUM should only be applied to objects we know are
-   integers.  */
+/* Return A's hash, which is in the range 0..INTMASK.  Although XHASH (A) ==
+   XUFIXNUM (A) currently, XUFIXNUM should be applied only to fixnums.  */
 
 INLINE EMACS_INT
 (XHASH) (Lisp_Object a)
@@ -1242,7 +1240,7 @@ INLINE bool
   return lisp_h_EQ (x, y);
 }
 
-/* True if the possibly-unsigned integer I doesn't fit in a Lisp fixnum.  */
+/* True if the possibly-unsigned integer I doesn't fit in a fixnum.  */
 
 #define FIXNUM_OVERFLOW_P(i) \
   (! ((0 <= (i) || MOST_NEGATIVE_FIXNUM <= (i)) && (i) <= MOST_POSITIVE_FIXNUM))
@@ -1315,7 +1313,7 @@ INLINE bool
 #define XSETCONDVAR(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_CONDVAR))
 
 /* Efficiently convert a pointer to a Lisp object and back.  The
-   pointer is represented as a Lisp integer, so the garbage collector
+   pointer is represented as a fixnum, so the garbage collector
    does not know about it.  The pointer should not have both Lisp_Int1
    bits set, which makes this conversion inherently unportable.  */
 
@@ -2410,8 +2408,8 @@ static float const DEFAULT_REHASH_THRESHOLD = 0.8125;
 
 static float const DEFAULT_REHASH_SIZE = 1.5 - 1;
 
-/* Combine two integers X and Y for hashing.  The result might not fit
-   into a Lisp integer.  */
+/* Combine two integers X and Y for hashing.  The result might exceed
+   INTMASK.  */
 
 INLINE EMACS_UINT
 sxhash_combine (EMACS_UINT x, EMACS_UINT y)
@@ -2419,7 +2417,7 @@ sxhash_combine (EMACS_UINT x, EMACS_UINT y)
   return (x << 4) + (x >> (EMACS_INT_WIDTH - 4)) + y;
 }
 
-/* Hash X, returning a value that fits into a fixnum.  */
+/* Hash X, returning a value in the range 0..INTMASK.  */
 
 INLINE EMACS_UINT
 SXHASH_REDUCE (EMACS_UINT x)
@@ -2501,7 +2499,7 @@ struct Lisp_Misc_Ptr
 extern Lisp_Object make_misc_ptr (void *);
 
 /* A mint_ptr object OBJ represents a C-language pointer P efficiently.
-   Preferably (and typically), OBJ is a Lisp integer I such that
+   Preferably (and typically), OBJ is a fixnum I such that
    XFIXNUMPTR (I) == P, as this represents P within a single Lisp value
    without requiring any auxiliary memory.  However, if P would be
    damaged by being tagged as an integer and then untagged via

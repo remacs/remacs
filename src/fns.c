@@ -3866,8 +3866,7 @@ cmpfn_user_defined (struct hash_table_test *ht,
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses
-   `eq' to compare keys.  The hash code returned is guaranteed to fit
-   in a Lisp integer.  */
+   `eq' to compare keys.  The value is at most INTMASK.  */
 
 static EMACS_UINT
 hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
@@ -3876,8 +3875,7 @@ hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses
-   `equal' to compare keys.  The hash code returned is guaranteed to fit
-   in a Lisp integer.  */
+   `equal' to compare keys.  The value is at most INTMASK.  */
 
 EMACS_UINT
 hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
@@ -3886,8 +3884,7 @@ hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses
-   `eql' to compare keys.  The hash code returned is guaranteed to fit
-   in a Lisp integer.  */
+   `eql' to compare keys.  The value is at most INTMASK.  */
 
 EMACS_UINT
 hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
@@ -3898,8 +3895,7 @@ hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses as
-   user-defined function to compare keys.  The hash code returned is
-   guaranteed to fit in a Lisp integer.  */
+   user-defined function to compare keys.  The value is at most INTMASK.  */
 
 static EMACS_UINT
 hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
@@ -4417,7 +4413,7 @@ hash_string (char const *ptr, ptrdiff_t len)
 }
 
 /* Return a hash for string PTR which has length LEN.  The hash
-   code returned is guaranteed to fit in a Lisp integer.  */
+   code returned is at most INTMASK.  */
 
 static EMACS_UINT
 sxhash_string (char const *ptr, ptrdiff_t len)
