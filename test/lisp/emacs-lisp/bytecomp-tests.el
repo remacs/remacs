@@ -334,7 +334,20 @@
                               ((memql x '(9 0.5 1.5 q)) 66)
                               (t 99)))
             '(a b c d (d) (a . b) "X" 0.5 1.5 3.14 9 9.0))
-    )
+    ;; Multi-switch cond form
+    (mapcar (lambda (p) (let ((x (car p)) (y (cadr p)))
+                          (cond ((consp x) 11)
+                                ((eq x 'a) 22)
+                                ((memql x '(b 7 a -3)) 33)
+                                ((equal y "a") 44)
+                                ((memq y '(c d e)) 55)
+                                ((booleanp x) 66)
+                                ((eq x 'q) 77)
+                                ((memq x '(r s)) 88)
+                                ((eq x 't) 99)
+                                (t 999))))
+            '((a c) (b c) (7 c) (-3 c) (nil nil) (t c) (q c) (r c) (s c)
+              (t c) (x "a") (x "c") (x c) (x d) (x e))))
   "List of expression for test.
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")
