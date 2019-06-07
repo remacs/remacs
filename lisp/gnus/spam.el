@@ -1520,7 +1520,7 @@ In the case of mover backends, checks the setting of
 ;;       nil)))
 
 (defun spam-fetch-field-fast (article field &optional prepared-data-header)
-  "Fetch a FIELD for ARTICLE with the internal `gnus-data-list' function.
+  "Fetch a FIELD for ARTICLE with the internal `gnus-data-find' function.
 When PREPARED-DATA-HEADER is given, don't look in the Gnus data.
 When FIELD is 'number, ARTICLE can be any number (since we want
 to find it out)."
@@ -1586,7 +1586,7 @@ to find it out)."
 (defun spam-fetch-article-header (article)
   (with-current-buffer gnus-summary-buffer
     (gnus-read-header article)
-    (nth 3 (assq article gnus-newsgroup-data))))
+    (gnus-data-header (gnus-data-find article))))
 ;;}}}
 
 ;;{{{ Spam determination.

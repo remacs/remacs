@@ -3246,7 +3246,7 @@ The following commands are available:
   "Add OFFSET to the POS of all data entries in DATA."
   (setq gnus-newsgroup-data-reverse nil)
   (while data
-    (setcar (nthcdr 2 (car data)) (+ offset (nth 2 (car data))))
+    (cl-incf (gnus-data-pos (car data)) offset)
     (setq data (cdr data))))
 
 (defun gnus-summary-article-pseudo-p (article)
@@ -3574,7 +3574,7 @@ buffer that was in action when the last article was fetched."
   "Return whether ARTICLE is the first article in the buffer."
   (if (not (setq article (or article (gnus-summary-article-number))))
       nil
-    (eq article (caar gnus-newsgroup-data))))
+    (eq article (gnus-data-number (car gnus-newsgroup-data)))))
 
 (defun gnus-summary-last-article-p (&optional article)
   "Return whether ARTICLE is the last article in the buffer."
@@ -4725,10 +4725,10 @@ If LINE, insert the rebuilt thread starting on line LINE."
 	    (push thr roots))
 	  (setq thread (cdr thread)))
 	;; We now have all (unique) roots.
-	(if (= (length roots) 1)
-	    ;; All the loose roots are now one solid root.
-	    (setq thread (car roots))
-	  (setq thread (cons subject (gnus-sort-threads roots))))))
+	(setq thread (if (= (length roots) 1)
+	                 ;; All the loose roots are now one solid root.
+	                 (car roots)
+                       (cons subject (gnus-sort-threads roots))))))
     (let (threads)
       ;; We then insert this thread into the summary buffer.
       (when line
@@ -4738,6 +4738,7 @@ If LINE, insert the rebuilt thread starting on line LINE."
 	(if gnus-show-threads
 	    (gnus-summary-prepare-threads (gnus-cut-threads (list thread)))
 	  (gnus-summary-prepare-unthreaded thread))
+        ;; FIXME: Why is this `nreverse' safe?  Don't we need `reverse' instead?
 	(setq data (nreverse gnus-newsgroup-data))
 	(setq threads gnus-newsgroup-threads))
       ;; We splice the new data into the data structure.
@@ -10170,7 +10171,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 	  (run-hook-with-args 'gnus-summary-article-delete-hook
 			      action
 			      (gnus-data-header
-			       (assoc article (gnus-data-list nil)))
+			       (gnus-data-find-in article (gnus-data-list nil)))
 			      gnus-newsgroup-name nil
 			      select-method)))
        (t
@@ -10280,8 +10281,7 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 	  ;; run the move/copy/crosspost/respool hook
 	  (run-hook-with-args 'gnus-summary-article-move-hook
 			      action
-			      (gnus-data-header
-			       (assoc article (gnus-data-list nil)))
+			      (gnus-data-header (gnus-data-find article))
 			      gnus-newsgroup-name
 			      to-newsgroup
 			      select-method))
@@ -10524,7 +10524,7 @@ This will be the case if the article has both been mailed and posted."
 		    (run-hook-with-args
 		     'gnus-summary-article-expire-hook
 		     'delete
-		     (gnus-data-header (assoc article (gnus-data-list nil)))
+		     (gnus-data-header (gnus-data-find article))
 		     gnus-newsgroup-name
 		     (cond
 		      ((stringp nnmail-expiry-target) nnmail-expiry-target)
@@ -10588,8 +10588,7 @@ confirmation before the articles are deleted."
 	  (unless (memq (car articles) not-deleted)
 	    (gnus-summary-mark-article (car articles) gnus-canceled-mark)
 	    (let* ((article (car articles))
-		   (ghead  (gnus-data-header
-			    (assoc article (gnus-data-list nil)))))
+		   (ghead  (gnus-data-header (gnus-data-find article))))
 	      (run-hook-with-args 'gnus-summary-article-delete-hook
 				  'delete ghead gnus-newsgroup-name nil
 				  nil)))
@@ -13038,7 +13037,7 @@ If ALL is non-nil, already read articles become readable.
 If ALL is a number, fetch this number of articles."
   (interactive "P")
   (prog1
-      (let ((old (sort (mapcar #'car gnus-newsgroup-data) #'<))
+      (let ((old (sort (mapcar #'gnus-data-number gnus-newsgroup-data) #'<))
 	    older len)
 	(setq older
 	      ;; Some nntp servers lie about their active range.  When
@@ -13108,7 +13107,7 @@ If ALL is a number, fetch this number of articles."
 (defun gnus-summary-insert-new-articles ()
   "Insert all new articles in this group."
   (interactive)
-  (let ((old (sort (mapcar #'car gnus-newsgroup-data) #'<))
+  (let ((old (sort (mapcar #'gnus-data-number gnus-newsgroup-data) #'<))
 	(old-high gnus-newsgroup-highest)
 	(nnmail-fetched-sources (list t))
 	(new-active (gnus-activate-group gnus-newsgroup-name 'scan))

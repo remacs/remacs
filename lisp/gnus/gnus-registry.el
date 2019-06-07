@@ -799,11 +799,9 @@ Overrides existing keywords with FORCE set non-nil."
 
 ;; message field fetchers
 (defun gnus-registry-fetch-message-id-fast (article)
-  "Fetch the Message-ID quickly, using the internal gnus-data-list function."
-  (if (and (numberp article)
-           (assoc article (gnus-data-list nil)))
-      (mail-header-id (gnus-data-header (assoc article (gnus-data-list nil))))
-    nil))
+  "Fetch the Message-ID quickly, using the internal `gnus-data-find' function."
+  (when-let* ((data (and (numberp article) (gnus-data-find article))))
+    (mail-header-id (gnus-data-header data))))
 
 (defun gnus-registry-extract-addresses (text)
   "Extract all the addresses in a normalized way from TEXT.
@@ -830,23 +828,18 @@ Addresses without a name will say \"noname\"."
     nil))
 
 (defun gnus-registry-fetch-simplified-message-subject-fast (article)
-  "Fetch the Subject quickly, using the internal gnus-data-list function."
-  (if (and (numberp article)
-           (assoc article (gnus-data-list nil)))
-      (gnus-string-remove-all-properties
-       (gnus-registry-simplify-subject
-        (mail-header-subject (gnus-data-header
-                              (assoc article (gnus-data-list nil))))))
-    nil))
+  "Fetch the Subject quickly, using the internal `gnus-data-find' function."
+  (when-let* ((data (and (numberp article) (gnus-data-find article))))
+    (gnus-string-remove-all-properties
+     (gnus-registry-simplify-subject
+      (mail-header-subject (gnus-data-header data))))))
 
 (defun gnus-registry-fetch-sender-fast (article)
-  (when-let* ((data (and (numberp article)
-			 (assoc article (gnus-data-list nil)))))
+  (when-let* ((data (and (numberp article) (gnus-data-find article))))
     (mail-header-from (gnus-data-header data))))
 
 (defun gnus-registry-fetch-recipients-fast (article)
-  (when-let* ((data (and (numberp article)
-			 (assoc article (gnus-data-list nil))))
+  (when-let* ((data (and (numberp article) (gnus-data-find article)))
 	      (extra (mail-header-extra (gnus-data-header data))))
     (gnus-registry-sort-addresses
      (or (cdr (assq 'Cc extra)) "")
@@ -887,9 +880,7 @@ FUNCTION should take two parameters, a mark symbol and the cell value."
     (gnus-message 9 "Applying mark %s to %d articles"
                   mark (length articles))
     (dolist (article articles)
-      (gnus-summary-update-article
-       article
-       (assoc article (gnus-data-list nil))))))
+      (gnus-summary-update-article article (gnus-data-find article)))))
 
 ;; This is ugly code, but I don't know how to do it better.
 (defun gnus-registry-install-shortcuts ()
