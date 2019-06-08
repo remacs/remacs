@@ -2062,27 +2062,34 @@ calendar."
 ;;; Diary insertion functions.
 
 ;;;###cal-autoload
-(defun diary-make-entry (string &optional nonmarking file)
+(defun diary-make-entry (string &optional nonmarking file omit-trailing-space
+                                do-not-show)
   "Insert a diary entry STRING which may be NONMARKING in FILE.
 If omitted, NONMARKING defaults to nil and FILE defaults to
-`diary-file'."
-  (let ((pop-up-frames (or pop-up-frames (window-dedicated-p))))
-    (find-file-other-window (or file diary-file)))
-  (when (eq major-mode (default-value 'major-mode)) (diary-mode))
-  (widen)
-  (diary-unhide-everything)
-  (goto-char (point-max))
-  (when (let ((case-fold-search t))
-          (search-backward "Local Variables:"
-                           (max (- (point-max) 3000) (point-min))
-                           t))
-    (beginning-of-line)
-    (insert "\n")
-    (forward-line -1))
-  (insert
-   (if (bolp) "" "\n")
-   (if nonmarking diary-nonmarking-symbol "")
-   string " "))
+`diary-file'.  If OMIT-TRAILING-SPACE is non-nil, then do not add
+a trailing space to the entry.  If DO-NOT-SHOW is non-nil, do not
+show the diary buffer."
+  (with-current-buffer
+      (let ((diary-file-name (or file diary-file)))
+        (if do-not-show
+            (find-file-noselect diary-file-name)
+          (let ((pop-up-frames (or pop-up-frames (window-dedicated-p))))
+            (find-file-other-window diary-file-name))))
+    (when (eq major-mode (default-value 'major-mode)) (diary-mode))
+    (widen)
+    (diary-unhide-everything)
+    (goto-char (point-max))
+    (when (let ((case-fold-search t))
+            (search-backward "Local Variables:"
+                             (max (- (point-max) 3000) (point-min))
+                             t))
+      (beginning-of-line)
+      (insert "\n")
+      (forward-line -1))
+    (insert
+     (if (bolp) "" "\n")
+     (if nonmarking diary-nonmarking-symbol "")
+     string (if omit-trailing-space "" " "))))
 
 ;;;###cal-autoload
 (defun diary-insert-entry (arg &optional event)

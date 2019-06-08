@@ -2502,20 +2502,10 @@ the entry."
     (when summary
       (setq non-marking
             (y-or-n-p (format "Make appointment non-marking? "))))
-    (save-window-excursion
-      (unless diary-filename
-        (setq diary-filename
-              (read-file-name "Add appointment to this diary file: ")))
-      ;; Note: diary-make-entry will add a trailing blank char.... :(
-      (funcall (if (fboundp 'diary-make-entry)
-                   'diary-make-entry
-                 'make-diary-entry)
-               string non-marking diary-filename)))
-  ;; Würgaround to remove the trailing blank char
-  (with-current-buffer (find-file diary-filename)
-    (goto-char (point-max))
-    (if (= (char-before) ? )
-        (delete-char -1)))
+    (unless diary-filename
+      (setq diary-filename
+            (read-file-name "Add appointment to this diary file: ")))
+    (diary-make-entry string non-marking diary-filename t t))
   ;; return diary-filename in case it has been changed interactively
   diary-filename)
 
