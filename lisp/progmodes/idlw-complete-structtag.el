@@ -3,6 +3,7 @@
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@astro.uva.nl>
+;; Maintainer: emacs-devel@gnu.org
 ;; Old-Version: 1.2
 ;; Keywords: languages
 ;; Package: idlwave

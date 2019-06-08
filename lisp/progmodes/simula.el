@@ -4,6 +4,7 @@
 ;; Inc.
 
 ;; Author: Hans Henrik Eriksen <hhe@ifi.uio.no>
+;; Maintainer: emacs-devel@gnu.org
 ;; Adapted-By: ESR
 ;; Keywords: languages
 

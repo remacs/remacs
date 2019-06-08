@@ -3,6 +3,7 @@
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@astro.uva.nl>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes
 ;; Package: idlwave
 

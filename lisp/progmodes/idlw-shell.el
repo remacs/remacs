@@ -5,6 +5,7 @@
 ;; Authors: JD Smith <jd.smith@utoledo.edu>
 ;;          Carsten Dominik <dominik@astro.uva.nl>
 ;;          Chris Chase <chase@att.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: processes
 ;; Package: idlwave
 
