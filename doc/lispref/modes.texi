@@ -363,7 +363,9 @@ it provides a command that does the same job in a way better
 suited to the text this mode is used for.  For example, a major mode
 for editing a programming language might redefine @kbd{C-M-a} to
 move to the beginning of a function in a way that works better for
-that language.
+that language.  The recommended way of tailoring @kbd{C-M-a} to the
+needs of a major mode is to set @code{beginning-of-defun-function}
+(@pxref{List Motion}) to invoke the function specific to the mode.
 
 It is also legitimate for a major mode to rebind a standard key
 sequence whose standard meaning is rarely useful in that mode.  For
