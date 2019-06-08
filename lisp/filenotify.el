@@ -105,10 +105,15 @@ Otherwise, signal a `file-notify-error'."
     (signal 'file-notify-error
 	    (cons "Not a valid file-notify event" event))))
 
+(cl-defstruct (file-notify--rename
+               (:constructor nil)
+               (:constructor
+                file-notify--rename-make (watch desc from-file cookie)))
+  watch desc from-file cookie)
+
 (defvar file-notify--pending-rename nil
   "A pending rename event awaiting the destination file name.
-It is a list on the form (WATCH DESCRIPTOR FROM-FILE COOKIE) or nil,
-where COOKIE is a cookie (if used by the back-end) or nil.")
+It is nil or a `file-notify--rename' where the cookie can be nil.")
 
 (defun file-notify--expand-file-name (watch file)
   "Full file name of FILE reported for WATCH."
@@ -262,16 +267,20 @@ DESC is the back-end descriptor.  ACTIONS is a list of:
           ;; then send the former as a deletion (since we don't know the
           ;; rename destination).
           (when file-notify--pending-rename
-            (let ((pending-cookie (nth 3 file-notify--pending-rename)))
-              (unless (and (equal pending-cookie file1-or-cookie)
-                           (eq action 'renamed-to))
-                (let* ((pending-watch (car file-notify--pending-rename))
-                       (callback (file-notify--watch-callback pending-watch))
-                       (pending-desc (nth 1 file-notify--pending-rename))
-                       (from-file (nth 2 file-notify--pending-rename)))
-                  (when callback
-                    (funcall callback (list pending-desc 'deleted from-file)))
-                  (setq file-notify--pending-rename nil)))))
+            (unless (and (equal (file-notify--rename-cookie
+                                 file-notify--pending-rename)
+                                file1-or-cookie)
+                         (eq action 'renamed-to))
+              (let ((callback (file-notify--watch-callback
+                               (file-notify--rename-watch
+                                file-notify--pending-rename))))
+                (when callback
+                  (funcall callback (list (file-notify--rename-desc
+                                           file-notify--pending-rename)
+                                          'deleted
+                                          (file-notify--rename-from-file
+                                           file-notify--pending-rename))))
+                (setq file-notify--pending-rename nil))))
 
           (let ((file1 nil))
             (cond
@@ -289,24 +298,26 @@ DESC is the back-end descriptor.  ACTIONS is a list of:
              ;; Make the event pending.
              ((eq action 'renamed-from)
               (setq file-notify--pending-rename
-                    (list watch desc file file1-or-cookie))
+                    (file-notify--rename-make watch desc file file1-or-cookie))
               (setq action nil))
              ;; Look for pending event.
              ((eq action 'renamed-to)
               (if file-notify--pending-rename
-                  (let ((pending-watch (car file-notify--pending-rename))
-                        (pending-desc (nth 1 file-notify--pending-rename))
-                        (from-file (nth 2 file-notify--pending-rename)))
+                  (let ((callback (file-notify--watch-callback
+                                   (file-notify--rename-watch
+                                    file-notify--pending-rename)))
+                        (pending-desc (file-notify--rename-desc
+                                       file-notify--pending-rename))
+                        (from-file (file-notify--rename-from-file
+                                    file-notify--pending-rename)))
                     (setq file1 file)
                     (setq file from-file)
                     ;; If the source is handled by another watch, we
                     ;; must fire the rename event there as well.
-                    (let ((callback
-                           (file-notify--watch-callback pending-watch)))
-                      (when (and (not (equal desc pending-desc))
-                                 callback)
-                        (funcall callback
-                                 (list pending-desc 'renamed file file1))))
+                    (when (and (not (equal desc pending-desc))
+                               callback)
+                      (funcall callback
+                               (list pending-desc 'renamed file file1)))
                     (setq file-notify--pending-rename nil)
                     (setq action 'renamed))
                 (setq action 'created))))
