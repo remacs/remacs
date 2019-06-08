@@ -207,12 +207,12 @@ image_pix_container_create_from_bitmap_data (struct frame *f,
 }
 
 static cairo_surface_t *
-cr_create_cr_surface_from_image (struct frame *f, struct image *img)
+cr_create_surface_from_pix_containers (Emacs_Pix_Container pimg,
+				       Emacs_Pix_Container mask)
 {
-  Emacs_Pix_Container pimg = img->pixmap;
   cairo_surface_t *surface;
 
-  if (img->mask)
+  if (mask)
     {
       int x, y;
 
@@ -223,28 +223,47 @@ cr_create_cr_surface_from_image (struct frame *f, struct image *img)
 	    int r, g, b;
 
 	    color = GET_PIXEL (pimg, x, y);
-	    alpha = GET_PIXEL (img->mask, x, y);
+	    alpha = GET_PIXEL (mask, x, y);
 	    r = (RED_FROM_ULONG (color) * alpha + 0x7f) / 0xff;
 	    g = (GREEN_FROM_ULONG (color) * alpha + 0x7f) / 0xff;
 	    b = (BLUE_FROM_ULONG (color) * alpha + 0x7f) / 0xff;
 	    PUT_PIXEL (pimg, x, y, ARGB_TO_ULONG (alpha, r, g, b));
 	  }
-      xfree (img->mask->data);
-      img->mask->data = NULL;
+      xfree (mask->data);
+      mask->data = NULL;
     }
-  block_input ();
   surface = cairo_image_surface_create_for_data ((unsigned char *) pimg->data,
-						 (img->mask
-						  ? CAIRO_FORMAT_ARGB32
+						 (mask ? CAIRO_FORMAT_ARGB32
 						  : CAIRO_FORMAT_RGB24),
 						 pimg->width, pimg->height,
 						 pimg->bytes_per_line);
   static const cairo_user_data_key_t key;
   cairo_surface_set_user_data (surface, &key, pimg->data, xfree);
-  unblock_input ();
   pimg->data = NULL;
 
   return surface;
+}
+
+static void
+cr_put_image_to_cr_data (struct image *img)
+{
+  cairo_pattern_t *pattern = NULL;
+  cairo_surface_t *surface = cr_create_surface_from_pix_containers (img->pixmap,
+								    img->mask);
+  if (surface)
+    {
+      pattern = cairo_pattern_create_for_surface (surface);
+      if (img->cr_data)
+	{
+	  cairo_matrix_t matrix;
+	  cairo_pattern_get_matrix (img->cr_data, &matrix);
+	  cairo_pattern_set_matrix (pattern, &matrix);
+	  cairo_pattern_destroy (img->cr_data);
+	}
+      cairo_surface_destroy (surface);
+    }
+
+  img->cr_data = pattern;
 }
 
 #endif	/* USE_CAIRO */
@@ -1150,7 +1169,7 @@ free_image (struct frame *f, struct image *img)
 
       c->images[img->id] = NULL;
 
-#ifdef HAVE_XRENDER
+#if !defined USE_CAIRO && defined HAVE_XRENDER
       if (img->picture)
         XRenderFreePicture (FRAME_X_DISPLAY (f), img->picture);
       if (img->mask_picture)
@@ -1212,14 +1231,20 @@ prepare_image_for_display (struct frame *f, struct image *img)
     img->load_failed_p = ! img->type->load (f, img);
 
 #ifdef USE_CAIRO
-  if (!img->load_failed_p && img->cr_data == NULL)
+  if (!img->load_failed_p)
     {
-      img->cr_data = cr_create_cr_surface_from_image (f, img);
-      if (img->cr_data == NULL)
+      block_input ();
+      if (img->cr_data == NULL || (cairo_pattern_get_type (img->cr_data)
+				   != CAIRO_PATTERN_TYPE_SURFACE))
 	{
-	  img->load_failed_p = 1;
-	  img->type->free (f, img);
+	  cr_put_image_to_cr_data (img);
+	  if (img->cr_data == NULL)
+	    {
+	      img->load_failed_p = 1;
+	      img->type->free (f, img);
+	    }
 	}
+      unblock_input ();
     }
 #elif defined HAVE_X_WINDOWS
   if (!img->load_failed_p)
@@ -1470,7 +1495,7 @@ image_clear_image_1 (struct frame *f, struct image *img, int flags)
 #ifdef USE_CAIRO
   if (img->cr_data)
     {
-      cairo_surface_destroy ((cairo_surface_t *) img->cr_data);
+      cairo_pattern_destroy (img->cr_data);
       img->cr_data = NULL;
     }
 #endif	/* USE_CAIRO */
@@ -1973,7 +1998,7 @@ image_set_rotation (struct image *img, matrix3x3 tm)
     return;
 # endif
 
-# ifdef HAVE_XRENDER
+# if !defined USE_CAIRO && defined HAVE_XRENDER
   if (!img->picture)
     return;
 # endif
@@ -2064,7 +2089,7 @@ image_set_crop (struct image *img, matrix3x3 tm)
     return;
 # endif
 
-# ifdef HAVE_XRENDER
+# if !defined USE_CAIRO && defined HAVE_XRENDER
   if (!img->picture)
     return;
 # endif
@@ -2156,7 +2181,7 @@ image_set_size (struct image *img, matrix3x3 tm)
     return;
 # endif
 
-# ifdef HAVE_XRENDER
+# if !defined USE_CAIRO && defined HAVE_XRENDER
   if (!img->picture)
     return;
 # endif
@@ -2186,6 +2211,13 @@ image_set_transform (struct frame *f, struct image *img, matrix3x3 matrix)
   /* Under NS the transform is applied to the drawing surface at
      drawing time, so store it for later.  */
   ns_image_set_transform (img->pixmap, matrix);
+# elif defined USE_CAIRO
+  cairo_matrix_t cr_matrix = {matrix[0][0], matrix[0][1], matrix[1][0],
+			      matrix[1][1], matrix[2][0], matrix[2][1]};
+  cairo_pattern_t *pattern = cairo_pattern_create_rgb (0, 0, 0);
+  cairo_pattern_set_matrix (pattern, &cr_matrix);
+  /* Dummy solid color pattern just to record pattern matrix.  */
+  img->cr_data = pattern;
 # elif defined (HAVE_XRENDER)
   if (img->picture)
     {
@@ -2745,7 +2777,7 @@ image_create_x_image_and_pixmap (struct frame *f, struct image *img,
   eassert ((!mask_p ? img->pixmap : img->mask) == NO_PIXMAP);
 
   Picture *picture = NULL;
-#ifdef HAVE_XRENDER
+#if !defined USE_CAIRO && defined HAVE_XRENDER
   picture = !mask_p ? &img->picture : &img->mask_picture;
 #endif
   return image_create_x_image_and_pixmap_1 (f, width, height, depth, ximg,

@@ -3016,7 +3016,7 @@ struct image
      synchronized to Pixmap.  */
   XImage *ximg, *mask_img;
 
-# ifdef HAVE_NATIVE_TRANSFORMS
+# if !defined USE_CAIRO && defined HAVE_XRENDER
   /* Picture versions of pixmap and mask for compositing.  */
   Picture picture, mask_picture;
 # endif

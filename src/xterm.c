@@ -437,13 +437,14 @@ x_set_cr_source_with_gc_background (struct frame *f, GC gc)
 /* Fringe bitmaps.  */
 
 static int max_fringe_bmp = 0;
-static cairo_surface_t **fringe_bmp = 0;
+static cairo_pattern_t **fringe_bmp = 0;
 
 static void
 x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
 {
   int i, stride;
   cairo_surface_t *surface;
+  cairo_pattern_t *pattern;
   unsigned char *data;
 
   if (which >= max_fringe_bmp)
@@ -468,10 +469,12 @@ x_cr_define_fringe_bitmap (int which, unsigned short *bits, int h, int wd)
     }
 
   cairo_surface_mark_dirty (surface);
+  pattern = cairo_pattern_create_for_surface (surface);
+  cairo_surface_destroy (surface);
 
   unblock_input ();
 
-  fringe_bmp[which] = surface;
+  fringe_bmp[which] = pattern;
 }
 
 static void
@@ -483,15 +486,14 @@ x_cr_destroy_fringe_bitmap (int which)
   if (fringe_bmp[which])
     {
       block_input ();
-      cairo_surface_destroy (fringe_bmp[which]);
+      cairo_pattern_destroy (fringe_bmp[which]);
       unblock_input ();
     }
   fringe_bmp[which] = 0;
 }
 
 static void
-x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
-		 int image_width, int image_height,
+x_cr_draw_image (struct frame *f, GC gc, cairo_pattern_t *image,
 		 int src_x, int src_y, int width, int height,
 		 int dest_x, int dest_y, bool overlay_p)
 {
@@ -506,31 +508,22 @@ x_cr_draw_image (struct frame *f, GC gc, cairo_surface_t *image,
       cairo_fill_preserve (cr);
     }
 
-  int orig_image_width = cairo_image_surface_get_width (image);
-  if (image_width == 0) image_width = orig_image_width;
-  int orig_image_height = cairo_image_surface_get_height (image);
-  if (image_height == 0) image_height = orig_image_height;
+  cairo_translate (cr, dest_x - src_x, dest_y - src_y);
 
-  cairo_pattern_t *pattern = cairo_pattern_create_for_surface (image);
-  cairo_matrix_t matrix;
-  cairo_matrix_init_scale (&matrix, orig_image_width / (double) image_width,
-			   orig_image_height / (double) image_height);
-  cairo_matrix_translate (&matrix, src_x - dest_x, src_y - dest_y);
-  cairo_pattern_set_matrix (pattern, &matrix);
-
-  cairo_format_t format = cairo_image_surface_get_format (image);
+  cairo_surface_t *surface;
+  cairo_pattern_get_surface (image, &surface);
+  cairo_format_t format = cairo_image_surface_get_format (surface);
   if (format != CAIRO_FORMAT_A8 && format != CAIRO_FORMAT_A1)
     {
-      cairo_set_source (cr, pattern);
+      cairo_set_source (cr, image);
       cairo_fill (cr);
     }
   else
     {
       x_set_cr_source_with_gc_foreground (f, gc);
       cairo_clip (cr);
-      cairo_mask (cr, pattern);
+      cairo_mask (cr, image);
     }
-  cairo_pattern_destroy (pattern);
 
   x_end_cr_clip (f);
 }
@@ -1352,7 +1345,7 @@ x_draw_fringe_bitmap (struct window *w, struct glyph_row *row, struct draw_fring
 				       : f->output_data.x->cursor_pixel)
 				    : face->foreground));
       XSetBackground (display, gc, face->background);
-      x_cr_draw_image (f, gc, fringe_bmp[p->which], 0, 0, 0, p->dh,
+      x_cr_draw_image (f, gc, fringe_bmp[p->which], 0, p->dh,
 		       p->wd, p->h, p->x, p->y, p->overlay_p);
       XSetForeground (display, gc, gcv.foreground);
       XSetBackground (display, gc, gcv.background);
@@ -2929,8 +2922,7 @@ x_draw_image_foreground (struct glyph_string *s)
   if (s->img->cr_data)
     {
       x_set_glyph_string_clipping (s);
-      x_cr_draw_image (s->f, s->gc,
-		       s->img->cr_data, s->img->width, s->img->height,
+      x_cr_draw_image (s->f, s->gc, s->img->cr_data,
 		       s->slice.x, s->slice.y, s->slice.width, s->slice.height,
 		       x, y, true);
       if (!s->img->mask)

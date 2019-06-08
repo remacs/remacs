@@ -394,7 +394,10 @@ xg_get_image_for_pixmap (struct frame *f,
      certain themes.  */
 
 #ifdef USE_CAIRO
-  surface = img->cr_data;
+  if (cairo_pattern_get_type (img->cr_data) == CAIRO_PATTERN_TYPE_SURFACE)
+    cairo_pattern_get_surface (img->cr_data, &surface);
+  else
+    surface = NULL;
 
   if (surface)
     {
