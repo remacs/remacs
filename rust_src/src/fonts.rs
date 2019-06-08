@@ -173,13 +173,7 @@ pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl From<LispFontSpecRef> for LispObject {
     fn from(f: LispFontSpecRef) -> Self {
-        // Use this if use solution by by @cantsin
-        // conflicts with solution by @ngortheone
         Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
-
-        // Solution by @ngortheone
-        // conflicts with solution by @cantsin
-        // Self::from_C(f.as_ptr() as EmacsInt)
     }
 }
 
@@ -196,11 +190,6 @@ impl From<LispObject> for Option<LispFontSpecRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
-                // use this if using solution by @ngortheone
-                // Some(unsafe { mem::transmute(o) })
-
-                // Solution by @cantsin
-                // conflicts with solution by @ngortheone
                 Some(unsafe { mem::transmute(v) })
             } else {
                 None
@@ -354,7 +343,7 @@ pub fn list_fonts(
 
     let vec = match prefer {
         None => vconcat_entity_vectors(list.into()),
-        Some(_) => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
+        Some(f) => unsafe { font_sort_entities(list, f.into(), frame.as_mut(), 0) },
     }
     .force_vector();
 
