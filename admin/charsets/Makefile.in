@@ -96,7 +96,7 @@ MULE =	MULE-ethiopic.map MULE-ipa.map MULE-is13194.map \
 	MULE-sisheng.map MULE-tibetan.map \
 	MULE-lviscii.map MULE-uviscii.map
 
-SED_SCRIPT = jisx2131-filter
+SED_SCRIPT = $(srcdir)/jisx2131-filter
 
 TRANS_TABLE = cp51932.el eucjp-ms.el
 TRANS_TABLE := $(addprefix ${lispintdir}/,${TRANS_TABLE})
@@ -200,12 +200,13 @@ ${charsetdir}/JISX0208.map: ${GLIBC_CHARMAPS}/EUC-JP.gz ${mapconv}
 ${charsetdir}/JISX0212.map: ${GLIBC_CHARMAPS}/EUC-JP.gz ${mapconv} ${compact}
 	${AM_V_GEN}${run_mapconv} $< '/^<.*[ 	]\/x8f/ s,/x8f,,' GLIBC-2-7 ${compact} > $@
 
-jisx2131-filter: ${mapfiledir}/JISX213A.map
+$(SED_SCRIPT): ${mapfiledir}/JISX213A.map
 	${AM_V_at}sed -n -e '/^#/d' -e 's,.*0x\([0-9A-Z]*\)$$,/0x0*\1$$/d,p' < $< > $@
 
-${charsetdir}/JISX2131.map: ${GLIBC_CHARMAPS}/EUC-JISX0213.gz ${mapconv} jisx2131-filter
+${charsetdir}/JISX2131.map: ${GLIBC_CHARMAPS}/EUC-JISX0213.gz ${mapconv} \
+  $(SED_SCRIPT)
 	${AM_V_GEN}${run_mapconv} $< '/^<.*[ 	]\/x[a-f]/' GLIBC-2-7 \
-	  | sed -f jisx2131-filter \
+	  | sed -f $(SED_SCRIPT) \
 	  | sed -e 's/0x2015/0x2014/' -e 's/0x2299/0x29BF/' > $@
 
 ${charsetdir}/JISX2132.map: ${GLIBC_CHARMAPS}/EUC-JISX0213.gz ${mapconv}
@@ -307,7 +308,6 @@ ${charsetdir}/%.map: ${GLIBC_CHARMAPS}/%.gz ${mapconv} ${compact}
 .PHONY: clean bootstrap-clean distclean maintainer-clean extraclean
 
 clean:
-	rm -f ${SED_SCRIPT}
 
 bootstrap-clean: clean
 
@@ -318,4 +318,4 @@ maintainer-clean: distclean
 
 ## Do not remove these files, even in a bootstrap.  They rarely change.
 extraclean:
-	rm -f ${CHARSETS} ${TRANS_TABLE} ${srcdir}/charsets.stamp
+	rm -f ${CHARSETS} ${SED_SCRIPT} ${TRANS_TABLE} ${srcdir}/charsets.stamp
