@@ -2094,6 +2094,15 @@ case.
 It is a convenient and readable way to specify a regexp that should
 not match anything, and is as fast as any such regexp can be.
 
+++++
+** New functions to handle the URL variant of base-64 encoding.
+New functions 'base64url-encode-string' and 'base64url-encode-region'
+implement the url-variant of base-64 encoding as defined in RFC4648.
+
+The functions 'base64-decode-string' and 'base64-decode-region' now
+accept an optional argument to decode the URL variant of base-64
+encoding.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
