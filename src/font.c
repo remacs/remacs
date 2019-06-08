@@ -5497,10 +5497,10 @@ cause Xft crashes.  Only has an effect in Xft builds.  */);
 #ifdef HAVE_FREETYPE
   syms_of_ftfont ();
 #ifdef HAVE_X_WINDOWS
+  syms_of_xfont ();
 #ifdef USE_CAIRO
   syms_of_ftcrfont ();
 #else
-  syms_of_xfont ();
   syms_of_ftxfont ();
 #ifdef HAVE_XFT
   syms_of_xftfont ();

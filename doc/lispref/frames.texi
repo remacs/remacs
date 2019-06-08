@@ -2282,11 +2282,11 @@ drawing characters on the frame, in order of priority.  In Emacs built
 without Cairo drawing on X, there are currently three available font
 backends: @code{x} (the X core font driver), @code{xft} (the Xft font
 driver), and @code{xfthb} (the Xft font driver with HarfBuzz text
-shaping).  If built with the Cairo drawing, there are two available
-font backends on X: @code{ftcr} (the FreeType font driver on Cairo)
-and @code{ftcrhb} (the FreeType font driver on Cairo with HarfBuzz
-text shaping).  On MS-Windows, there are currently three available
-font backends: @code{gdi} (the core MS-Windows font driver),
+shaping).  If built with the Cairo drawing, there are also three
+available font backends on X: @code{x}, @code{ftcr} (the FreeType font
+driver on Cairo), and @code{ftcrhb} (the FreeType font driver on Cairo
+with HarfBuzz text shaping).  On MS-Windows, there are currently three
+available font backends: @code{gdi} (the core MS-Windows font driver),
 @code{uniscribe} (font driver for OTF and TTF fonts with text shaping
 by the Uniscribe engine), and @code{harfbuzz} (font driver for OTF and
 TTF fonts with HarfBuzz text shaping) (@pxref{Windows Fonts,,, emacs,
