@@ -233,8 +233,8 @@ It might be different from \(getenv \"PATH\"), when
 (make-variable-buffer-local 'eshell-path-env)
 
 (defun eshell-get-path ()
-  "Return $PATH as list.
-Add the current directory on windows."
+  "Return $PATH as a list.
+Add the current directory on MS-Windows."
   (eshell-parse-colon-path
    (if (eshell-under-windows-p)
        (concat "." path-separator eshell-path-env)
