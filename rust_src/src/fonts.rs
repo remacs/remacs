@@ -173,7 +173,7 @@ pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl From<LispFontSpecRef> for LispObject {
     fn from(f: LispFontSpecRef) -> Self {
-        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+        Self::from_C(f.as_ptr() as EmacsInt)
     }
 }
 
