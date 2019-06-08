@@ -173,7 +173,13 @@ pub type LispFontSpecRef = ExternalPtr<Lisp_Font_Spec>;
 
 impl From<LispFontSpecRef> for LispObject {
     fn from(f: LispFontSpecRef) -> Self {
-        Self::from_C(f.as_ptr() as EmacsInt)
+        // Use this if use solution by by @cantsin
+        // conflicts with solution by @ngortheone
+        Self::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
+
+        // Solution by @ngortheone
+        // conflicts with solution by @cantsin
+        // Self::from_C(f.as_ptr() as EmacsInt)
     }
 }
 
@@ -190,7 +196,12 @@ impl From<LispObject> for Option<LispFontSpecRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
-                Some(unsafe { mem::transmute(o) })
+                // use this if using solution by @ngortheone
+                // Some(unsafe { mem::transmute(o) })
+
+                // Solution by @cantsin
+                // conflicts with solution by @ngortheone
+                Some(unsafe { mem::transmute(v) })
             } else {
                 None
             }
@@ -325,23 +336,25 @@ pub fn list_fonts(
     let mut frame: LispFrameRef = frame.into();
 
     let n = match num {
-        Some(n) if n < 0 => return Qnil,
+        Some(n) if n <= 0 => return Qnil,
         Some(n) => n,
         None => 0,
     } as usize;
 
     let list = unsafe { font_list_entities(frame.as_mut(), font_spec.into()) };
+
     match list.into() {
         Some((car, cdr)) if cdr.is_nil() => match car.as_vector() {
             Some(vec) if vec.len() == 1 => return list!(vec.get(0)),
             _ => (),
         },
-        _ => return Qnil,
+        Some(_) => (),
+        None => return Qnil,
     }
 
     let vec = match prefer {
-        None => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
-        Some(_) => vconcat_entity_vectors(list.into()),
+        None => vconcat_entity_vectors(list.into()),
+        Some(_) => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
     }
     .force_vector();
 
