@@ -4541,7 +4541,7 @@ Internet informational document describing a standard.  RFCs are
 usually written by technical experts acting on their own initiative,
 and are traditionally written in a pragmatic, experience-driven
 manner.
-}2045 and also in RFC4648.  This section describes the functions for
+}2045 and also in RFC 4648.  This section describes the functions for
 converting to and from this code.
 
 @deffn Command base64-encode-region beg end &optional no-line-break
@@ -4559,19 +4559,13 @@ the output is just one long line.
 @end deffn
 
 @deffn Command base64url-encode-region beg end &optional no-pad
-This function converts the region from @var{beg} to @var{end} into base
-64 code.  It returns the length of the encoded text.  An error is
-signaled if a character in the region is multibyte, i.e., in a
-multibyte buffer the region must contain only characters from the
-charsets @code{ascii}, @code{eight-bit-control} and
-@code{eight-bit-graphic}.
+This function is like @code{base64-encode-region}, but it implements
+the URL variant if base 64 encoding, per RFC 4648, and it doesn't
+inserts newline characters into the encoded text, so the output is
+just one long line.
 
-Contrary to the function @code{base64-encode-region}, this function
-doesnt inserts newline characters into the encoded text, so the output
-is just one long line.
-
-If the optional argument @var{no-pad} is non-@code{nil} then padding
-(@code{=}) isn't generated.
+If the optional argument @var{no-pad} is non-@code{nil} then this
+function doesn't generate the padding (@code{=}).
 @end deffn
 
 @defun base64-encode-string string &optional no-line-break
@@ -4587,17 +4581,12 @@ the result string is just one long line.
 @end defun
 
 @defun base64url-encode-string string &optional no-pad
-This function converts the string @var{string} into base 64 url code
-(see RFC4648).  It returns a string containing the encoded text.  As
-for @code{base64url-encode-region}, an error is signaled if a
-character in the string is multibyte.
+Like @code{base64-encode-string}, but generates the URL variant of
+base 64, and doesn't insert newline characters into the encoded text,
+so the result is just one long line.
 
-Contrary to @code{base64-encode-string}, this function doesnt inserts
-newline characters into the encoded text, so the result string is just
-one long line.
-
-If the optional argument @var{no-pad} is non-@code{nil} then padding
-(@code{=}) isn't generated.
+If the optional argument @var{no-pad} is non-@code{nil} then this
+function doesn't generate the padding.
 @end defun
 
 @deffn Command base64-decode-region beg end &optional base64url
@@ -4607,8 +4596,8 @@ the decoded text.
 
 The decoding functions ignore newline characters in the encoded text.
 
-If optional argument @var{base64url} is is non-@code{nil} then padding
-become optionnal and url variant is used (see RFC4648).
+If optional argument @var{base64url} is is non-@code{nil}, then padding
+is optional, and the URL variant of base 64 encoding is used.
 @end deffn
 
 @defun base64-decode-string string &optional base64url
@@ -4618,8 +4607,9 @@ decoded text.
 
 The decoding functions ignore newline characters in the encoded text.
 
-If optional argument @var{base64url} is is non-@code{nil} then padding
-become optionnal and url variant is used (see RFC4648).
+
+If optional argument @var{base64url} is is non-@code{nil}, then padding
+is optional, and the URL variant of base 64 encoding is used.
 @end defun
 
 @node Checksum/Hash
