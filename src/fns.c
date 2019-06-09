@@ -3186,33 +3186,11 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 
 #define MIME_LINE_LENGTH 76
 
-#define IS_ASCII(Character) \
-  ((Character) < 128)
-#define IS_BASE64(Character) \
-  (IS_ASCII (Character) && b64_char_to_value[Character] >= 0)
-#define IS_BASE64_IGNORABLE(Character) \
-  ((Character) == ' ' || (Character) == '\t' || (Character) == '\n' \
-   || (Character) == '\f' || (Character) == '\r')
-
-/* Used by base64_decode_1 to retrieve a non-base64-ignorable
-   character or return retval if there are no characters left to
-   process. */
-#define READ_QUADRUPLET_BYTE(retval)	\
-  do					\
-    {					\
-      if (i == length)			\
-	{				\
-	  if (nchars_return)		\
-	    *nchars_return = nchars;	\
-	  return (retval);		\
-	}				\
-      c = from[i++];			\
-    }					\
-  while (IS_BASE64_IGNORABLE (c))
-
-/* Table of characters coding the 64 values.  */
-static const char base64_value_to_char[64] =
+/* Tables of characters coding the 64 values.  */
+static char const base64_value_to_char[2][64] =
 {
+ /* base64 */
+ {
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',	/*  0- 9 */
   'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',	/* 10-19 */
   'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',	/* 20-29 */
@@ -3220,10 +3198,9 @@ static const char base64_value_to_char[64] =
   'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',	/* 40-49 */
   'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7',	/* 50-59 */
   '8', '9', '+', '/'					/* 60-63 */
-};
-
-static const char base64url_value_to_char[64] =
-{
+ },
+ /* base64url */
+ {
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',	/*  0- 9 */
   'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',	/* 10-19 */
   'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',	/* 20-29 */
@@ -3231,41 +3208,47 @@ static const char base64url_value_to_char[64] =
   'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',	/* 40-49 */
   'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7',	/* 50-59 */
   '8', '9', '-', '_'					/* 60-63 */
+ }
 };
 
-/* Table of base64 values for first 128 characters.  */
-static const short base64_char_to_value[128] =
+/* Tables of base64 values for bytes.  -1 means ignorable, 0 invalid,
+   positive means 1 + the represented value.  */
+static signed char const base64_char_to_value[2][UCHAR_MAX] =
 {
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*   0-  9 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  10- 19 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  20- 29 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  30- 39 */
-  -1,  -1,  -1,  62,  -1,  -1,  -1,  63,  52,  53,	/*  40- 49 */
-  54,  55,  56,  57,  58,  59,  60,  61,  -1,  -1,	/*  50- 59 */
-  -1,  -1,  -1,  -1,  -1,  0,   1,   2,   3,   4,	/*  60- 69 */
-  5,   6,   7,   8,   9,   10,  11,  12,  13,  14,	/*  70- 79 */
-  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,	/*  80- 89 */
-  25,  -1,  -1,  -1,  -1,  -1,  -1,  26,  27,  28,	/*  90- 99 */
-  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,	/* 100-109 */
-  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,	/* 110-119 */
-  49,  50,  51,  -1,  -1,  -1,  -1,  -1			/* 120-127 */
-};
-
-static const short base64url_char_to_value[128] =
-{
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*   0-  9 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  10- 19 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  20- 29 */
-  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,	/*  30- 39 */
-  -1,  -1,  -1,  -1,  -1,  62,  -1,  -1,  52,  53,	/*  40- 49 */
-  54,  55,  56,  57,  58,  59,  60,  61,  -1,  -1,	/*  50- 59 */
-  -1,  -1,  -1,  -1,  -1,  0,   1,   2,   3,   4,	/*  60- 69 */
-  5,   6,   7,   8,   9,   10,  11,  12,  13,  14,	/*  70- 79 */
-  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,	/*  80- 89 */
-  25,  -1,  -1,  -1,  -1,  63,  -1,  26,  27,  28,	/*  90- 99 */
-  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,	/* 100-109 */
-  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,	/* 110-119 */
-  49,  50,  51,  -1,  -1,  -1,  -1,  -1                 /* 120-127 */
+ /* base64 */
+ {
+  ['\t']= -1, ['\n']= -1, ['\f']= -1, ['\r']= -1, [' '] = -1,
+  ['A'] =  1, ['B'] =  2, ['C'] =  3, ['D'] =  4, ['E'] =  5,
+  ['F'] =  6, ['G'] =  7, ['H'] =  8, ['I'] =  9, ['J'] = 10,
+  ['K'] = 11, ['L'] = 12, ['M'] = 13, ['N'] = 14, ['O'] = 15,
+  ['P'] = 16, ['Q'] = 17, ['R'] = 18, ['S'] = 19, ['T'] = 20,
+  ['U'] = 21, ['V'] = 22, ['W'] = 23, ['X'] = 24, ['Y'] = 25, ['Z'] = 26,
+  ['a'] = 27, ['b'] = 28, ['c'] = 29, ['d'] = 30, ['e'] = 31,
+  ['f'] = 32, ['g'] = 33, ['h'] = 34, ['i'] = 35, ['j'] = 36,
+  ['k'] = 37, ['l'] = 38, ['m'] = 39, ['n'] = 40, ['o'] = 41,
+  ['p'] = 42, ['q'] = 43, ['r'] = 44, ['s'] = 45, ['t'] = 46,
+  ['u'] = 47, ['v'] = 48, ['w'] = 49, ['x'] = 50, ['y'] = 51, ['z'] = 52,
+  ['0'] = 53, ['1'] = 54, ['2'] = 55, ['3'] = 56, ['4'] = 57,
+  ['5'] = 58, ['6'] = 59, ['7'] = 60, ['8'] = 61, ['9'] = 62,
+  ['+'] = 63, ['/'] = 64
+ },
+ /* base64url */
+ {
+  ['\t']= -1, ['\n']= -1, ['\f']= -1, ['\r']= -1, [' '] = -1,
+  ['A'] =  1, ['B'] =  2, ['C'] =  3, ['D'] =  4, ['E'] =  5,
+  ['F'] =  6, ['G'] =  7, ['H'] =  8, ['I'] =  9, ['J'] = 10,
+  ['K'] = 11, ['L'] = 12, ['M'] = 13, ['N'] = 14, ['O'] = 15,
+  ['P'] = 16, ['Q'] = 17, ['R'] = 18, ['S'] = 19, ['T'] = 20,
+  ['U'] = 21, ['V'] = 22, ['W'] = 23, ['X'] = 24, ['Y'] = 25, ['Z'] = 26,
+  ['a'] = 27, ['b'] = 28, ['c'] = 29, ['d'] = 30, ['e'] = 31,
+  ['f'] = 32, ['g'] = 33, ['h'] = 34, ['i'] = 35, ['j'] = 36,
+  ['k'] = 37, ['l'] = 38, ['m'] = 39, ['n'] = 40, ['o'] = 41,
+  ['p'] = 42, ['q'] = 43, ['r'] = 44, ['s'] = 45, ['t'] = 46,
+  ['u'] = 47, ['v'] = 48, ['w'] = 49, ['x'] = 50, ['y'] = 51, ['z'] = 52,
+  ['0'] = 53, ['1'] = 54, ['2'] = 55, ['3'] = 56, ['4'] = 57,
+  ['5'] = 58, ['6'] = 59, ['7'] = 60, ['8'] = 61, ['9'] = 62,
+  ['-'] = 63, ['_'] = 64
+ }
 };
 
 /* The following diagram shows the logical steps by which three octets
@@ -3454,7 +3437,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
   int c;
   unsigned int value;
   int bytes;
-  char const *b64_value_to_char = (base64url) ? base64url_value_to_char : base64_value_to_char;
+  char const *b64_value_to_char = base64_value_to_char[base64url];
 
   while (i < length)
     {
@@ -3632,8 +3615,9 @@ the base 64 encoding, as defined in RFC 4648.  */)
   decoded = SAFE_ALLOCA (length);
 
   /* The decoded result should be unibyte. */
+  ptrdiff_t decoded_chars;
   decoded_length = base64_decode_1 (SSDATA (string), decoded, length,
-				    !NILP (base64url), 0, NULL);
+				    !NILP (base64url), 0, &decoded_chars);
   if (decoded_length > length)
     emacs_abort ();
   else if (decoded_length >= 0)
@@ -3650,41 +3634,60 @@ the base 64 encoding, as defined in RFC 4648.  */)
 
 /* Base64-decode the data at FROM of LENGTH bytes into TO.  If
    MULTIBYTE, the decoded result should be in multibyte
-   form.  If NCHARS_RETURN is not NULL, store the number of produced
-   characters in *NCHARS_RETURN.  */
+   form.  Store the number of produced characters in *NCHARS_RETURN.  */
 
 static ptrdiff_t
 base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 		 bool base64url,
 		 bool multibyte, ptrdiff_t *nchars_return)
 {
-  ptrdiff_t i = 0;		/* Used inside READ_QUADRUPLET_BYTE */
+  char const *f = from;
+  char const *flim = from + length;
   char *e = to;
-  unsigned char c;
-  unsigned long value;
   ptrdiff_t nchars = 0;
-  short const *b64_char_to_value = (base64url) ? base64url_char_to_value : base64_char_to_value;
+  signed char const *b64_char_to_value = base64_char_to_value[base64url];
+  unsigned char multibyte_bit = multibyte << 7;
 
-  while (1)
+  while (true)
     {
+      unsigned char c;
+      int v1;
+
       /* Process first byte of a quadruplet. */
 
-      READ_QUADRUPLET_BYTE (e-to);
+      do
+	{
+	  if (f == flim)
+	    {
+	      *nchars_return = nchars;
+	      return e - to;
+	    }
+	  c = *f++;
+	  v1 = b64_char_to_value[c];
+	}
+      while (v1 < 0);
 
-      if (!IS_BASE64 (c))
+      if (v1 == 0)
 	return -1;
-      value = b64_char_to_value[c] << 18;
+      unsigned int value = (v1 - 1) << 18;
 
       /* Process second byte of a quadruplet.  */
 
-      READ_QUADRUPLET_BYTE (-1);
+      do
+	{
+	  if (f == flim)
+	    return -1;
+	  c = *f++;
+	  v1 = b64_char_to_value[c];
+	}
+      while (v1 < 0);
 
-      if (!IS_BASE64 (c))
+      if (v1 == 0)
 	return -1;
-      value |= b64_char_to_value[c] << 12;
+      value += (v1 - 1) << 12;
 
-      c = (unsigned char) (value >> 16);
-      if (multibyte && c >= 128)
+      c = value >> 16 & 0xff;
+      if (c & multibyte_bit)
 	e += BYTE8_STRING (c, e);
       else
 	*e++ = c;
@@ -3692,26 +3695,41 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       /* Process third byte of a quadruplet.  */
 
-      if (!base64url)
-	READ_QUADRUPLET_BYTE (-1);
-      else
-	READ_QUADRUPLET_BYTE (e-to);
+      do
+	{
+	  if (f == flim)
+	    {
+	      if (!base64url)
+		return -1;
+	      *nchars_return = nchars;
+	      return e - to;
+	    }
+	  c = *f++;
+	  v1 = b64_char_to_value[c];
+	}
+      while (v1 < 0);
 
       if (c == '=')
 	{
-	  READ_QUADRUPLET_BYTE (-1);
+	  do
+	    {
+	      if (f == flim)
+		return -1;
+	      c = *f++;
+	    }
+	  while (b64_char_to_value[c] < 0);
 
 	  if (c != '=')
 	    return -1;
 	  continue;
 	}
 
-      if (!IS_BASE64 (c))
+      if (v1 == 0)
 	return -1;
-      value |= b64_char_to_value[c] << 6;
+      value += (v1 - 1) << 6;
 
-      c = (unsigned char) (0xff & value >> 8);
-      if (multibyte && c >= 128)
+      c = value >> 8 & 0xff;
+      if (c & multibyte_bit)
 	e += BYTE8_STRING (c, e);
       else
 	*e++ = c;
@@ -3719,20 +3737,29 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 
       /* Process fourth byte of a quadruplet.  */
 
-      if (!base64url)
-	READ_QUADRUPLET_BYTE (-1);
-      else
-	READ_QUADRUPLET_BYTE (e-to);
+      do
+	{
+	  if (f == flim)
+	    {
+	      if (!base64url)
+		return -1;
+	      *nchars_return = nchars;
+	      return e - to;
+	    }
+	  c = *f++;
+	  v1 = b64_char_to_value[c];
+	}
+      while (v1 < 0);
 
       if (c == '=')
 	continue;
 
-      if (!IS_BASE64 (c))
+      if (v1 < 0)
 	return -1;
-      value |= b64_char_to_value[c];
+      value += v1 - 1;
 
-      c = (unsigned char) (0xff & value);
-      if (multibyte && c >= 128)
+      c = value & 0xff;
+      if (c & multibyte_bit)
 	e += BYTE8_STRING (c, e);
       else
 	*e++ = c;
