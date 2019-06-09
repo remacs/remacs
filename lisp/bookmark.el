@@ -776,7 +776,6 @@ onto the bookmark alist.  The `push' behavior means that among
 bookmarks named NAME, this most recently set one becomes the one in
 effect, but the others are still there, in order, if the topmost one
 is ever deleted."
-  (interactive (list nil current-prefix-arg))
   (unwind-protect
        (let* ((record (bookmark-make-record))
               ;; `defaults' is a transient element of the
