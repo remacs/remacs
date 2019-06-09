@@ -208,6 +208,9 @@ This is desirable in modes where blank lines are the paragraph delimiters."
   :type 'boolean)
 (put 'paragraph-ignore-fill-prefix 'safe-local-variable 'booleanp)
 
+;; Silence the compiler.
+(defvar multiple-lines)
+
 (defun forward-paragraph (&optional arg)
   "Move forward to end of paragraph.
 With argument ARG, do it ARG times;
