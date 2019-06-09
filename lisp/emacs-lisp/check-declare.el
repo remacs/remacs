@@ -33,7 +33,7 @@
 ;;; TODO:
 
 ;; 1. Warn about functions marked as obsolete, eg
-;; password-read-and-add in smime.el.
+;; password-read-and-add in password-cache.el.
 ;; 2. defmethod, defclass argument checking.
 ;; 3. defclass also defines -p and -child-p.
 

@@ -1,10 +1,10 @@
-;;; password-cache.el --- Read passwords, possibly using a password cache.
+;;; password-cache.el --- Read passwords, possibly using a password cache.  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1999-2000, 2003-2019 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Created: 2003-12-21
-;; Keywords: password cache passphrase key
+;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.
 
