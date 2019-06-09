@@ -429,7 +429,7 @@ this"}.  Another common way is the curved quote convention, which uses
 left and right single or double quotation marks `@t{like this}' or
 ``@t{like this}''@footnote{
 The curved single quote characters are U+2018 @sc{left single quotation
-mark} and U+2018 @sc{right single quotation mark}; the curved double quotes
+mark} and U+2019 @sc{right single quotation mark}; the curved double quotes
 are U+201C @sc{left double quotation mark} and U+201D @sc{right double
 quotation mark}.  On text terminals which cannot display these
 characters, the Info reader might show them as the typewriter ASCII
