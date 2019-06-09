@@ -2425,7 +2425,6 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 
     case Lisp_Vectorlike:
       {
-	register int i;
 	ptrdiff_t size = ASIZE (o1);
 	/* Pseudovectors have the type encoded in the size field, so this test
 	   actually checks that the objects have the same type as well as the
@@ -2479,7 +2478,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	      return false;
 	    size &= PSEUDOVECTOR_SIZE_MASK;
 	  }
-	for (i = 0; i < size; i++)
+	for (ptrdiff_t i = 0; i < size; i++)
 	  {
 	    Lisp_Object v1, v2;
 	    v1 = AREF (o1, i);
