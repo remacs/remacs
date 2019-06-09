@@ -27,7 +27,7 @@ use crate::{
         MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fcons, Fdefault_value, Fload},
+    remacs_sys::{Fapply, Fdefault_value, Fload},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -1340,48 +1340,22 @@ pub fn condition_case(args: LispCons) -> LispObject {
 
 #[no_mangle]
 pub extern "C" fn specpdl_symbol(pdl: SpecbindingRef) -> LispObject {
-    pdl.specpdl_symbol().into()
+    pdl.symbol().into()
 }
 
 #[no_mangle]
 pub extern "C" fn specpdl_old_value(pdl: SpecbindingRef) -> LispObject {
-    pdl.specpdl_old_value()
+    pdl.old_value()
 }
 
 #[no_mangle]
 pub extern "C" fn set_specpdl_old_value(mut pdl: SpecbindingRef, val: LispObject) {
-    pdl.set_specpdl_old_value(val)
-}
-
-pub fn default_toplevel_binding_rust(symbol: LispSymbolRef) -> SpecbindingRef {
-    let current_thread = ThreadState::current_thread();
-    let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
-
-    let mut binding = SpecbindingRef::new(std::ptr::null_mut());
-    let mut pdl = SpecbindingRef::new(current_thread.m_specpdl_ptr);
-
-    while pdl > specpdl {
-        unsafe {
-            pdl.ptr_sub(1);
-        }
-        match pdl.kind() {
-            SPECPDL_LET_DEFAULT | SPECPDL_LET => {
-                if pdl.specpdl_symbol() == symbol {
-                    binding = pdl.clone()
-                }
-            }
-            SPECPDL_UNWIND | SPECPDL_UNWIND_PTR | SPECPDL_UNWIND_INT | SPECPDL_UNWIND_VOID
-            | SPECPDL_BACKTRACE | SPECPDL_LET_LOCAL => {}
-            _ => panic!("Incorrect specpdl kind"),
-        }
-    }
-
-    binding
+    pdl.set_old_value(val)
 }
 
 #[no_mangle]
 pub extern "C" fn default_toplevel_binding(symbol: LispObject) -> SpecbindingRef {
-    default_toplevel_binding_rust(symbol.into())
+    LispSymbolRef::from(symbol).default_toplevel_binding_rust()
 }
 
 /// Define SYMBOL as a variable, and return SYMBOL.
@@ -1413,49 +1387,48 @@ pub extern "C" fn default_toplevel_binding(symbol: LispObject) -> SpecbindingRef
 pub fn defvar(args: LispCons) -> LispObject {
     let (sym_obj, tail) = args.into();
 
-    if tail.is_not_nil() {
-        if LispCons::from(tail).length() > 2 {
+    if let Some(tail) = tail.as_cons() {
+        if tail.length() > 2 {
             error!("Too many arguments");
         }
 
         let sym: LispSymbolRef = sym_obj.into();
-        let tem = default_boundp(sym);
+        let has_default = default_boundp(sym);
 
         // Do it before evaluating the initial value, for self-references.
         sym.set_declared_special(true);
 
-        if tem {
+        if has_default {
             // Check if there is really a global binding rather than just a let
             // binding that shadows the global unboundness of the var.
-            let mut binding = default_toplevel_binding_rust(sym);
-            if !binding.is_null() && (binding.specpdl_old_value() == Qunbound) {
-                binding.set_specpdl_old_value(unsafe { eval_sub(car(tail)) });
+            let mut binding = sym.default_toplevel_binding_rust();
+            if !binding.is_null() && (binding.old_value() == Qunbound) {
+                binding.set_old_value(unsafe { eval_sub(tail.car()) });
             }
         } else {
-            set_default(sym, unsafe { eval_sub(car(tail)) });
+            set_default(sym, unsafe { eval_sub(tail.car()) });
         }
 
-        let mut tem = car(cdr(tail));
+        let mut documentation = car(tail.cdr());
 
-        if tem.is_not_nil() {
+        if documentation.is_not_nil() {
             if unsafe { globals.Vpurify_flag }.is_not_nil() {
-                tem = purecopy(tem);
+                documentation = purecopy(documentation);
             }
-            put(sym, Qvariable_documentation, tem);
+            put(sym, Qvariable_documentation, documentation);
         }
         loadhist_attach(sym_obj);
     } else if unsafe { globals.Vinternal_interpreter_environment }.is_not_nil()
         && sym_obj
             .as_symbol()
-            .map(|x| !x.get_declared_special())
-            .unwrap_or(false)
+            .map_or(false, |x| !x.get_declared_special())
     {
         // A simple (defvar foo) with lexical scoping does "nothing" except
         // declare that var to be dynamically scoped *locally* (i.e. within
         // the current file or let-block).
         unsafe {
             globals.Vinternal_interpreter_environment =
-                Fcons(sym_obj, globals.Vinternal_interpreter_environment);
+                LispObject::cons(sym_obj, globals.Vinternal_interpreter_environment);
         }
     } else {
         // Simple (defvar <var>) should not count as a definition at all.

@@ -290,17 +290,17 @@ impl From<LispObject> for Option<LispSubrRef> {
 pub type SpecbindingRef = ExternalPtr<specbinding>;
 
 impl SpecbindingRef {
-    pub fn specpdl_symbol(&self) -> LispSymbolRef {
+    pub fn symbol(&self) -> LispSymbolRef {
         debug_assert!(self.kind() >= SPECPDL_LET);
         unsafe { self.let_.as_ref().symbol }.into()
     }
 
-    pub fn specpdl_old_value(&self) -> LispObject {
+    pub fn old_value(&self) -> LispObject {
         debug_assert!(self.kind() >= SPECPDL_LET);
         unsafe { self.let_.as_ref().old_value }
     }
 
-    pub fn set_specpdl_old_value(&mut self, val: LispObject) {
+    pub fn set_old_value(&mut self, val: LispObject) {
         debug_assert!(self.kind() >= SPECPDL_LET);
         unsafe {
             self.let_.as_mut().old_value = val;
