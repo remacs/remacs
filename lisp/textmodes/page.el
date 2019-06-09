@@ -141,7 +141,9 @@ thus showing a page other than the one point was originally in."
       (setq total (count-lines beg end)
 	    before (count-lines beg opoint)
 	    after (count-lines opoint end))
-      (message "Page has %d lines (%d + %d)" total before after))))
+      (message (ngettext "Page has %d line (%d + %d)"
+			 "Page has %d lines (%d + %d)" total)
+	       total before after))))
 
 (defun what-page ()
   "Print page and line number of point."
