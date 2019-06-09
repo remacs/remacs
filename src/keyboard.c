@@ -8297,6 +8297,19 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
   if (CONSP (get_keymap (PROP (TOOL_BAR_ITEM_BINDING), 0, 1)))
     return 0;
 
+  /* If there is a key binding, add it to the help, which will be
+     displayed as a tooltip for this entry. */
+  Lisp_Object binding = PROP (TOOL_BAR_ITEM_BINDING);
+  Lisp_Object keys = Fwhere_is_internal (binding, Qnil, Qt, Qnil, Qnil);
+  if (!NILP (keys))
+    {
+      AUTO_STRING (beg, "  (");
+      AUTO_STRING (end, ")");
+      Lisp_Object orig = PROP (TOOL_BAR_ITEM_HELP);
+      Lisp_Object desc = Fkey_description (keys, Qnil);
+      set_prop (TOOL_BAR_ITEM_HELP, CALLN (Fconcat, orig, beg, desc, end));
+    }
+
   /* Enable or disable selection of item.  */
   if (!EQ (PROP (TOOL_BAR_ITEM_ENABLED_P), Qt))
     set_prop (TOOL_BAR_ITEM_ENABLED_P,

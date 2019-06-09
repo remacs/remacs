@@ -176,8 +176,6 @@ See the 'test' directory for examples.
 ** In Emacs Info, examples of using Customize should be clickable
    and they should create Custom buffers.
 
-** The toolbar should show keyboard equivalents in its tooltips.
-
 ** Add function to redraw the tool bar.
 
 ** Redesign the load-history data structure so it can cope better
