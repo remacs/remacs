@@ -423,7 +423,7 @@ value."
     (set-buffer (marker-buffer marker))
     (xref--goto-char marker)))
 
-(defun xref--pop-to-location (item &optional action)
+(defun xref-pop-to-location (item &optional action)
   "Go to the location of ITEM and display the buffer.
 ACTION controls how the buffer is displayed:
   nil      -- switch-to-buffer
@@ -835,8 +835,8 @@ Return an alist of the form ((FILENAME . (XREF ...)) ...)."
   (let ((xrefs (funcall fetcher)))
     (cond
      ((not (cdr xrefs))
-      (xref--pop-to-location (car xrefs)
-                             (assoc-default 'display-action alist)))
+      (xref-pop-to-location (car xrefs)
+                            (assoc-default 'display-action alist)))
      (t
       (xref--show-xref-buffer fetcher
                               (cons (cons 'fetched-xrefs xrefs)
@@ -850,8 +850,8 @@ local keymap that binds `RET' to `xref-quit-and-goto-xref'."
   (let ((xrefs (funcall fetcher)))
     (cond
      ((not (cdr xrefs))
-      (xref--pop-to-location (car xrefs)
-                             (assoc-default 'display-action alist)))
+      (xref-pop-to-location (car xrefs)
+                            (assoc-default 'display-action alist)))
      (t
       (with-current-buffer (get-buffer-create xref-buffer-name)
         (xref--show-common-initialize (xref--analyze xrefs) fetcher alist)
