@@ -78,8 +78,8 @@ To specify the file in which to save them, modify the variable
   :group 'bookmark)
 
 
-(defconst bookmark-old-default-file "~/.emacs-bkmrks"
-  "The `.emacs.bmk' file used to be called this name.")
+(define-obsolete-variable-alias 'bookmark-old-default-file
+  'bookmark-default-file "27.1")
 
 
 (define-obsolete-variable-alias 'bookmark-file 'bookmark-default-file "27.1")
@@ -1024,17 +1024,6 @@ it to the name of the bookmark currently being set, advancing
   "If bookmarks have not been loaded from the default place, load them."
   (and (not bookmarks-already-loaded)
        (null bookmark-alist)
-       (prog2
-           (and
-            ;; Possibly the old bookmark file, "~/.emacs-bkmrks", needs
-            ;; to be renamed.
-            (file-exists-p bookmark-old-default-file)
-            (not (file-exists-p bookmark-default-file))
-            (rename-file bookmark-old-default-file
-                         bookmark-default-file))
-           ;; return t so the `and' will continue...
-           t)
-
        (file-readable-p bookmark-default-file)
        (bookmark-load bookmark-default-file t t)
        (setq bookmarks-already-loaded t)))
