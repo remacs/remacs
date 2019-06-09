@@ -8035,7 +8035,7 @@ tool_bar_items (Lisp_Object reuse, int *nitems)
     {
       /* No, so use major and minor mode keymaps and keymap property.
 	 Note that tool-bar bindings in the local-map and keymap
-	 properties may not work reliable, as they are only
+	 properties may not work reliably, as they are only
 	 recognized when the tool-bar (or mode-line) is updated,
 	 which does not normally happen after every command.  */
       ptrdiff_t nminor = current_minor_maps (NULL, &tmaps);
