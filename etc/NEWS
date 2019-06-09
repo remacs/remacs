@@ -1507,6 +1507,12 @@ the new variable 'buffer-auto-revert-by-notification' to a non-nil
 value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
+** Bookmarks
+
++++
+*** 'bookmark-file' is now an obsolete alias of
+'bookmark-default-file'.
+
 
 * New Modes and Packages in Emacs 27.1
 

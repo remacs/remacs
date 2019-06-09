@@ -82,15 +82,9 @@ To specify the file in which to save them, modify the variable
   "The `.emacs.bmk' file used to be called this name.")
 
 
-;; defvared to avoid a compilation warning:
-(defvar bookmark-file nil
-  "Old name for `bookmark-default-file'.")
-
+(define-obsolete-variable-alias 'bookmark-file 'bookmark-default-file "27.1")
 (defcustom bookmark-default-file
-  (if bookmark-file
-      ;; In case user set `bookmark-file' in her .emacs:
-      bookmark-file
-    (locate-user-emacs-file "bookmarks" ".emacs.bmk"))
+  (locate-user-emacs-file "bookmarks" ".emacs.bmk")
   "File in which to save bookmarks by default."
   :type 'file
   :group 'bookmark)
