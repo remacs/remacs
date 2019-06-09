@@ -3948,26 +3948,19 @@ HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
   return XFIXNUM (AREF (h->index, idx));
 }
 
-/* Compare KEY1 and KEY2 in hash table HT using `eql'.  Value is true
-   if KEY1 and KEY2 are the same.  KEY1 and KEY2 must not be eq.  */
+/* Ignore HT and compare KEY1 and KEY2 using 'eql'.
+   Value is true if KEY1 and KEY2 are the same.  */
 
 static bool
 cmpfn_eql (struct hash_table_test *ht,
 	   Lisp_Object key1,
 	   Lisp_Object key2)
 {
-  if (FLOATP (key1)
-      && FLOATP (key2)
-      && same_float (key1, key2))
-    return true;
-  return (BIGNUMP (key1)
-	  && BIGNUMP (key2)
-	  && mpz_cmp (XBIGNUM (key1)->value, XBIGNUM (key2)->value) == 0);
+  return !NILP (Feql (key1, key2));
 }
 
-
-/* Compare KEY1 and KEY2 in hash table HT using `equal'.  Value is
-   true if KEY1 and KEY2 are the same.  */
+/* Ignore HT and compare KEY1 and KEY2 using 'equal'.
+   Value is true if KEY1 and KEY2 are the same.  */
 
 static bool
 cmpfn_equal (struct hash_table_test *ht,
@@ -3978,7 +3971,7 @@ cmpfn_equal (struct hash_table_test *ht,
 }
 
 
-/* Compare KEY1 and KEY2 in hash table HT using HT->user_cmp_function.
+/* Given HT, compare KEY1 and KEY2 using HT->user_cmp_function.
    Value is true if KEY1 and KEY2 are the same.  */
 
 static bool
@@ -3989,8 +3982,8 @@ cmpfn_user_defined (struct hash_table_test *ht,
   return !NILP (call2 (ht->user_cmp_function, key1, key2));
 }
 
-/* Value is a hash code for KEY for use in hash table H which uses
-   `eq' to compare keys.  The value is at most INTMASK.  */
+/* Ignore HT and return a hash code for KEY which uses 'eq' to compare keys.
+   The hash code is at most INTMASK.  */
 
 static EMACS_UINT
 hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
@@ -3998,8 +3991,8 @@ hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
   return XHASH (key) ^ XTYPE (key);
 }
 
-/* Value is a hash code for KEY for use in hash table H which uses
-   `equal' to compare keys.  The value is at most INTMASK.  */
+/* Ignore HT and return a hash code for KEY which uses 'equal' to compare keys.
+   The hash code is at most INTMASK.  */
 
 EMACS_UINT
 hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
@@ -4007,8 +4000,8 @@ hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
   return sxhash (key, 0);
 }
 
-/* Value is a hash code for KEY for use in hash table H which uses
-   `eql' to compare keys.  The value is at most INTMASK.  */
+/* Ignore HT and return a hash code for KEY which uses 'eql' to compare keys.
+   The hash code is at most INTMASK.  */
 
 EMACS_UINT
 hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
@@ -4018,8 +4011,8 @@ hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
 	  : hashfn_eq (ht, key));
 }
 
-/* Value is a hash code for KEY for use in hash table H which uses as
-   user-defined function to compare keys.  The value is at most INTMASK.  */
+/* Given HT, return a hash code for KEY which uses a user-defined
+   function to compare keys.  The hash code is at most INTMASK.  */
 
 static EMACS_UINT
 hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
