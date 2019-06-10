@@ -192,6 +192,11 @@ crxft_font_open_name (Display *dpy, int screen, const char *name)
 	}
       FcPatternDestroy (pattern);
     }
+  if (pub && pub->height <= 0)
+    {
+      crxft_font_close (pub);
+      pub = NULL;
+    }
   return pub;
 }
 
