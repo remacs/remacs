@@ -539,7 +539,7 @@ This expects `auto-revert--messages' to be bound by
         (ignore-errors (delete-file file)))
       )))
 
-(auto-revert--deftest-remote auto-revert-test04-auto-revert-mode-dired
+(auto-revert--deftest-remote auto-revert-test05-global-notify
   "Test `global-auto-revert-mode' without polling for remote buffers.")
 
 (defun auto-revert-test-all (&optional interactive)
