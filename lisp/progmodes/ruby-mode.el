@@ -1814,7 +1814,7 @@ statement around point."
   (unless feature-name
     (let ((init (save-excursion
                   (forward-line 0)
-                  (when (looking-at "require [\"']\\(.?*\\)[\"']")
+                  (when (looking-at "require [\"']\\(.*\\)[\"']")
                     (match-string 1)))))
       (setq feature-name (read-string "Feature name: " init))))
   (let ((out
