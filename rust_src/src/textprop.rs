@@ -7,8 +7,9 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::LispObject,
     numbers::LispNumber,
+    remacs_sys::Qt,
     remacs_sys::Ftext_properties_at,
-    remacs_sys::{get_char_property_and_overlay, textget},
+    remacs_sys::{get_char_property_and_overlay, textget, set_text_properties},
 };
 
 /// Return the value of POSITION's property PROP, in OBJECT.
@@ -33,4 +34,8 @@ pub fn get_text_property(position: LispNumber, prop: LispObject, object: LispObj
     unsafe { textget(Ftext_properties_at(position.into(), object), prop) }
 }
 
+#[lisp_fn(c_name = "set_text_properties", name = "set-text-properties", min = "3")]
+pub fn set_text_properties_lisp(start: LispObject, end: LispObject, properties: LispObject, object: LispObject) -> LispObject {
+    unsafe { set_text_properties(start, end, properties, object, Qt) }
+}
 include!(concat!(env!("OUT_DIR"), "/textprop_exports.rs"));
