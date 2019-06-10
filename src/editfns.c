@@ -2840,12 +2840,12 @@ usage: (save-restriction &rest BODY)  */)
 /* i18n (internationalization).  */
 
 DEFUN ("ngettext", Fngettext, Sngettext, 3, 3, 0,
-       doc: /* Return the translation of MSGID (plural MSGID_PLURAL) depending on N.
+       doc: /* Return the translation of MSGID (plural MSGID-PLURAL) depending on N.
 MSGID is the singular form of the string to be converted;
 use it as the key for the search in the translation catalog.
-MSGID_PLURAL is the plural form.  Use N to select the proper translation.
+MSGID-PLURAL is the plural form.  Use N to select the proper translation.
 If no message catalog is found, MSGID is returned if N is equal to 1,
-otherwise MSGID_PLURAL.  */)
+otherwise MSGID-PLURAL.  */)
   (Lisp_Object msgid, Lisp_Object msgid_plural, Lisp_Object n)
 {
   CHECK_STRING (msgid);
