@@ -1240,13 +1240,6 @@ This regexp is assumed to not match any non-operator identifier."
 (c-lang-defvar c-opt-op-identifier-prefix
   (c-lang-const c-opt-op-identifier-prefix))
 
-;; Note: the following alias is an old name which was a mis-spelling.  It has
-;; been corrected above and throughout cc-engine.el.  It will be removed at
-;; some release very shortly in the future.  ACM, 2006-04-14.
-(defvaralias 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix)
-(make-obsolete-variable 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix
-			"CC Mode 5.31.4, 2006-04-14")
-
 (c-lang-defconst c-ambiguous-overloadable-or-identifier-prefixes
   ;; A list of strings which can be either overloadable operators or
   ;; identifier prefixes.
