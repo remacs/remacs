@@ -1033,7 +1033,6 @@ systems support modifying change comments.
 Visit the revision indicated at the current line.
 
 @item d
-@itemx =
 Display a diff between the revision at point and the next earlier
 revision, for the specific file.
 
@@ -1047,16 +1046,6 @@ In a compact-style log buffer (e.g., the one created by @kbd{C-x v
 L}), toggle between showing and hiding the full log entry for the
 revision at point.
 @end table
-
-To compare two arbitrary revisions, activate the region: set the
-beginning of the region to the line with the first revision and the
-end of the region to the line with the second revision to compare,
-then type @kbd{d} or @kbd{=}.  When the beginning of the region is on
-the top line that has no revision, it uses the current working revision
-as the first revision to compare.  When the end of the region is on
-the bottom non-revision line after the last revision line, then it
-uses the next earlier revision after the last displayed revision as
-the second revision to compare.
 
 @vindex vc-log-show-limit
 Because fetching many log entries can be slow, the

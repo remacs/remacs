@@ -1017,8 +1017,8 @@ If LIMIT is a revision string, use it as an end-revision."
     ;; If the buffer exists from a previous invocation it might be
     ;; read-only.
     (let ((inhibit-read-only t))
-      (with-current-buffer buffer
-	(insert "\n")
+      (with-current-buffer
+          buffer
 	(apply 'vc-git-command buffer
 	       'async files
 	       (append

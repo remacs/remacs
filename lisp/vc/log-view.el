@@ -585,13 +585,6 @@ point, get the diff between the revision at point and its
 previous revision.  Otherwise, get the diff between the revisions
 where the region starts and ends.
 
-When the beginning of the region is on the top line that has no revision,
-use the current working revision as the first revision to compare.
-
-When the end of the region is on the bottom non-revision line after
-the last revision line, use the previous revision of the last
-displayed revision as the second revision to compare.
-
 Unlike `log-view-diff-changeset', this function only shows the
 part of the changeset which affected the currently considered
 file(s)."
@@ -606,13 +599,6 @@ If the region is inactive or the mark is on the revision at
 point, get the diff between the revision at point and its
 previous revision.  Otherwise, get the diff between the revisions
 where the region starts and ends.
-
-When the beginning of the region is on the top line that has no revision,
-use the current working revision as the first revision to compare.
-
-When the end of the region is on the bottom non-revision line after
-the last revision line, use the previous revision of the last
-displayed revision as the second revision to compare.
 
 Unlike `log-view-diff' this function shows the whole changeset,
 including changes affecting other files than the currently
