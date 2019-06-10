@@ -135,8 +135,10 @@ This setting has precedence over `auto-save-file-name-transforms'."
   :type '(choice (const :tag "Use default" nil)
 		 (directory :tag "Auto save directory name")))
 
+;; Suppress `shell-file-name' for w32 systems.
 (defcustom tramp-encoding-shell
-  (or (tramp-compat-funcall 'w32-shell-name) "/bin/sh")
+  (let (shell-file-name)
+    (or (tramp-compat-funcall 'w32-shell-name) "/bin/sh"))
   "Use this program for encoding and decoding commands on the local host.
 This shell is used to execute the encoding and decoding command on the
 local host, so if you want to use `~' in those commands, you should
@@ -159,15 +161,19 @@ use for the remote host."
   :group 'tramp
   :type '(file :must-match t))
 
+;; Suppress `shell-file-name' for w32 systems.
 (defcustom tramp-encoding-command-switch
-  (if (tramp-compat-funcall 'w32-shell-dos-semantics) "/c" "-c")
+  (let (shell-file-name)
+    (if (tramp-compat-funcall 'w32-shell-dos-semantics) "/c" "-c"))
   "Use this switch together with `tramp-encoding-shell' for local commands.
 See the variable `tramp-encoding-shell' for more information."
   :group 'tramp
   :type 'string)
 
+;; Suppress `shell-file-name' for w32 systems.
 (defcustom tramp-encoding-command-interactive
-  (unless (tramp-compat-funcall 'w32-shell-dos-semantics) "-i")
+  (let (shell-file-name)
+    (unless (tramp-compat-funcall 'w32-shell-dos-semantics) "-i"))
   "Use this switch together with `tramp-encoding-shell' for interactive shells.
 See the variable `tramp-encoding-shell' for more information."
   :version "24.1"
@@ -4391,13 +4397,13 @@ If FILENAME is remote, a file name handler is called."
   (let ((handler (find-file-name-handler filename 'tramp-set-file-uid-gid)))
     (if handler
 	(funcall handler #'tramp-set-file-uid-gid filename uid gid)
-      ;; On W32 "chown" does not work.
+      ;; On W32 systems, "chown" does not work.
       (unless (memq system-type '(ms-dos windows-nt))
 	(let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
 	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
 	  (tramp-call-process
-	   nil "chown" nil nil nil
-	   (format "%d:%d" uid gid) (shell-quote-argument filename)))))))
+	   nil "chown" nil nil nil (format "%d:%d" uid gid)
+	   (tramp-unquote-shell-quote-argument filename)))))))
 
 (defun tramp-get-local-uid (id-format)
   "The uid of the local user, in ID-FORMAT.
@@ -4815,8 +4821,11 @@ T1 and T2 are time values (as returned by `current-time' for example)."
   (float-time (time-subtract t1 t2)))
 
 (defun tramp-unquote-shell-quote-argument (s)
-  "Remove quotation prefix \"/:\" from string S, and quote it then for shell."
-  (shell-quote-argument (tramp-compat-file-name-unquote s)))
+  "Remove quotation prefix \"/:\" from string S, and quote it then for shell.
+Suppress `shell-file-name'.  This is needed on w32 systems, which
+would use a wrong quoting for local file names.  See `w32-shell-name'."
+  (let (shell-file-name)
+    (shell-quote-argument (tramp-compat-file-name-unquote s))))
 
 ;; Currently (as of Emacs 20.5), the function `shell-quote-argument'
 ;; does not deal well with newline characters.  Newline is replaced by

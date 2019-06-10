@@ -468,7 +468,8 @@ pass to the OPERATION."
 			(append args
 				(list "-D" (tramp-unquote-shell-quote-argument
 					    localname)
-				      "-c" (shell-quote-argument "tar qc - *")
+				      "-c" (tramp-unquote-shell-quote-argument
+					    "tar qc - *")
 				      "|" "tar" "xfC" "-"
 				      (tramp-unquote-shell-quote-argument
 				       tmpdir)))
@@ -479,7 +480,8 @@ pass to the OPERATION."
 			      args
 			      (list "-D" (tramp-unquote-shell-quote-argument
 					  localname)
-				    "-c" (shell-quote-argument "tar qx -")))))
+				    "-c" (tramp-unquote-shell-quote-argument
+					  "tar qx -")))))
 
 	      (unwind-protect
 		  (with-temp-buffer

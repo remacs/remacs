@@ -1294,11 +1294,8 @@ connection if a previous connection has died for some reason."
 
 ;; Default settings for connection-local variables.
 (defconst tramp-adb-connection-local-default-profile
-  ;; `w32-shell-name' is derived from `shell-file-name'.  Don't let it
-  ;; be confused.
-  (unless (eq system-type 'windows-nt)
-    '((shell-file-name . "/system/bin/sh")
-      (shell-command-switch . "-c")))
+  '((shell-file-name . "/system/bin/sh")
+    (shell-command-switch . "-c"))
   "Default connection-local variables for remote adb connections.")
 
 ;; `connection-local-set-profile-variables' and
