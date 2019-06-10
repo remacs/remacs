@@ -347,6 +347,8 @@ the list of old buffers.")
 
 (add-hook 'find-file-hook
 	  #'auto-revert-find-file-function)
+(add-hook 'after-set-visited-file-name-hook
+          #'auto-revert-set-visited-file-name)
 
 (defvar auto-revert--buffers-by-watch-descriptor
   (make-hash-table :test 'equal)
@@ -508,8 +510,6 @@ specifies in the mode line."
             (auto-revert--global-add-current-buffer)))
         ;; Make sure future buffers are added as well.
         (add-hook 'find-file-hook #'auto-revert--global-adopt-current-buffer)
-        (add-hook 'after-set-visited-file-name-hook
-                  #'auto-revert--global-set-visited-file-name)
         ;; To track non-file buffers, we need to listen in to buffer
         ;; creation in general.  Listening to major-mode changes is
         ;; suitable, since we then know whether it's a mode that is tracked.
@@ -520,8 +520,6 @@ specifies in the mode line."
     ;; Turn global-auto-revert-mode OFF.
     (remove-hook 'after-change-major-mode-hook
                  #'auto-revert--global-adopt-current-buffer)
-    (remove-hook 'after-set-visited-file-name-hook
-                 #'auto-revert--global-set-visited-file-name)
     (remove-hook 'find-file-hook #'auto-revert--global-adopt-current-buffer)
     (dolist (buf (buffer-list))
       (with-current-buffer buf
@@ -551,14 +549,17 @@ specifies in the mode line."
   (auto-revert--global-add-current-buffer)
   (auto-revert-set-timer))
 
-(defun auto-revert--global-set-visited-file-name ()
-  "Update Global Auto-Revert management of the current buffer.
+(defun auto-revert-set-visited-file-name ()
+  "Update Auto-Revert management of the current buffer.
 Called after `set-visited-file-name'."
-  ;; Remove any existing notifier first so that we don't track the
-  ;; wrong file in case the file name was changed.
   (when auto-revert-notify-watch-descriptor
+    ;; Remove any existing notifier so that we don't track the wrong
+    ;; file in case the file name was changed.
     (auto-revert-notify-rm-watch))
-  (auto-revert--global-adopt-current-buffer))
+    (cond (global-auto-revert-mode
+           (auto-revert--global-adopt-current-buffer))
+          ((or auto-revert-mode auto-revert-tail-mode)
+           (auto-revert-set-timer))))
 
 (defun auto-revert--polled-buffers ()
   "List of buffers that need to be polled."

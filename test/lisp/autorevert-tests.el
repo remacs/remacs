@@ -542,6 +542,40 @@ This expects `auto-revert--messages' to be bound by
 (auto-revert--deftest-remote auto-revert-test05-global-notify
   "Test `global-auto-revert-mode' without polling for remote buffers.")
 
+(ert-deftest auto-revert-test06-write-file ()
+  "Verify that notification follows `write-file' correctly."
+  :tags '(:expensive-test)
+  (skip-unless (or file-notify--library
+                   (file-remote-p temporary-file-directory)))
+  (let* ((auto-revert-use-notify t)
+         (file-1 (make-temp-file "auto-revert-test"))
+         (file-2 (concat file-1 "-2"))
+         (buf nil))
+    (unwind-protect
+        (progn
+          (setq buf (find-file-noselect file-1))
+          (with-current-buffer buf
+            (insert "A")
+            (save-buffer)
+
+            (auto-revert-mode 1)
+
+            (insert "B")
+            (write-file file-2)
+
+            (auto-revert-test--write-file "C" file-2)
+            (auto-revert-test--wait-for-buffer-text
+             buf "C" (+ auto-revert-interval 1))
+            (should (equal (buffer-string) "C"))))
+
+      ;; Clean up.
+      (ignore-errors (kill-buffer buf))
+      (ignore-errors (delete-file file-1))
+      (ignore-errors (delete-file file-2)))))
+
+(auto-revert--deftest-remote auto-revert-test06-write-file
+  "Test `write-file' in `auto-revert-mode' for remote buffers.")
+
 (defun auto-revert-test-all (&optional interactive)
   "Run all tests for \\[auto-revert]."
   (interactive "p")
