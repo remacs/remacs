@@ -645,7 +645,10 @@ mark_threads_callback (void *ignore)
       Lisp_Object thread_obj;
 
       XSETTHREAD (thread_obj, iter);
-      mark_object (thread_obj);
+      /* Don't mark main_thread, since it is not allocated
+	 dynamically, thus nothing would unmark it.  */
+      if (iter != &main_thread)
+	mark_object (thread_obj);
       mark_one_thread (iter);
     }
 }
