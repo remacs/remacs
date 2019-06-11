@@ -101,7 +101,7 @@ previous match.  If all these successive searches succeed, the
 function call succeeds, moving point and returning its new value.
 Otherwise the function call fails, with results depending on the value
 of @var{noerror}, as described above.  If @var{count} is a negative
-number -@var{n}, the search is done @var{n} times in the opposite
+number @minus{}@var{n}, the search is done @var{n} times in the opposite
 (backward) direction.
 @end deffn
 
@@ -1091,7 +1091,7 @@ previous match.  If all these successive searches succeed, the
 function call succeeds, moving point and returning its new value.
 Otherwise the function call fails, with results depending on the value
 of @var{noerror}, as described above.  If @var{count} is a negative
-number -@var{n}, the search is done @var{n} times in the opposite
+number @minus{}@var{n}, the search is done @var{n} times in the opposite
 (backward) direction.
 
 In the following example, point is initially before the @samp{T}.
