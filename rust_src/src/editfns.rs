@@ -1137,7 +1137,7 @@ pub extern "C" fn save_excursion_save() -> LispObject {
 /// `save-mark-and-excursion'.
 ///
 /// usage: (save-excursion &rest BODY)
-#[lisp_fn(unevalled = "true")]
+#[lisp_fn(min = "0", unevalled = "true")]
 pub fn save_excursion(args: LispObject) -> LispObject {
     let count = c_specpdl_index();
 
@@ -1149,7 +1149,7 @@ pub fn save_excursion(args: LispObject) -> LispObject {
 /// Record which buffer is current; execute BODY; make that buffer current.
 /// BODY is executed just like `progn'.
 /// usage: (save-current-buffer &rest BODY)
-#[lisp_fn(unevalled = "true")]
+#[lisp_fn(min = "0", unevalled = "true")]
 pub fn save_current_buffer(args: LispObject) -> LispObject {
     let count = c_specpdl_index();
 
@@ -1174,7 +1174,7 @@ pub fn save_current_buffer(args: LispObject) -> LispObject {
 /// (save-excursion (save-restriction ...))
 ///
 /// usage: (save-restriction &rest BODY)
-#[lisp_fn(unevalled = "true")]
+#[lisp_fn(min = "0", unevalled = "true")]
 pub fn save_restriction(body: LispObject) -> LispObject {
     let count = c_specpdl_index();
 
