@@ -4560,8 +4560,8 @@ the output is just one long line.
 
 @deffn Command base64url-encode-region beg end &optional no-pad
 This function is like @code{base64-encode-region}, but it implements
-the URL variant if base 64 encoding, per RFC 4648, and it doesn't
-inserts newline characters into the encoded text, so the output is
+the URL variant of base 64 encoding, per RFC 4648, and it doesn't
+insert newline characters into the encoded text, so the output is
 just one long line.
 
 If the optional argument @var{no-pad} is non-@code{nil} then this
