@@ -4287,9 +4287,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	(ignore-errors (delete-file tmp-name)))
 
       ;; Test `async-shell-command-width'.  Since Emacs 27.1.
-      (when (and (boundp 'async-shell-command-width)
-		 (zerop (call-process "tput" nil nil nil "cols"))
-                 (zerop (process-file "tput" nil nil nil "cols")))
+      (when (ignore-errors
+	      (and (boundp 'async-shell-command-width)
+		   (zerop (call-process "tput" nil nil nil "cols"))
+                   (zerop (process-file "tput" nil nil nil "cols"))))
 	(let (async-shell-command-width)
 	  (should
 	   (string-equal
@@ -5535,12 +5536,14 @@ process sentinels.  They shall not disturb each other."
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
 	   (shell-file-name (if (tramp--test-adb-p) "/system/bin/sh" "/bin/sh"))
+	   ;; It doesn't work on w32 systems.
 	   (watchdog
-            (start-process-shell-command
-             "*watchdog*" nil
-             (format
-	      "sleep %d; kill -USR1 %d"
-	      tramp--test-asynchronous-requests-timeout (emacs-pid))))
+	    (unless (tramp--test-windows-nt)
+              (start-process-shell-command
+               "*watchdog*" nil
+               (format
+		"sleep %d; kill -USR1 %d"
+		tramp--test-asynchronous-requests-timeout (emacs-pid)))))
            (tmp-name (tramp--test-make-temp-name))
            (default-directory tmp-name)
            ;; Do not cache Tramp properties.
