@@ -4102,7 +4102,8 @@ Also, delete any process that is exited or signaled."
                       (null (process-thread p))
                       (not (fboundp 'thread-name))) "--")
                     ((eq (process-thread p) main-thread) "Main")
-                    ((thread-name (process-thread p)))))
+		    ((thread-name (process-thread p)))
+		    (t "--")))
 		  (cmd
 		   (if (memq type '(network serial))
 		       (let ((contact (process-contact p t)))
