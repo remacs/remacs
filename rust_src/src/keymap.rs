@@ -23,13 +23,13 @@ use crate::{
     obarray::intern,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
-        describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-        map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind,
+        current_minor_maps, describe_vector, make_save_funcptr_ptr_obj, map_char_table,
+        map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
+        map_obarray, maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Flist, Fmake_char_table,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
@@ -773,4 +773,15 @@ pub fn apropos_internal(regexp: LispStringRef, predicate: LispObject) -> LispObj
     }
 }
 
+/// Return a list of keymaps for the minor modes of the current buffer.
+#[lisp_fn]
+pub fn current_minor_mode_maps() -> LispObject {
+    // maps is initialized to null to silence the borrow checker. If this is
+    // not done then it will not compile since maps is not initialized
+    let mut maps: *mut LispObject = ptr::null_mut();
+    unsafe {
+        let num_of_maps = current_minor_maps(ptr::null_mut(), &mut maps);
+        Flist(num_of_maps, maps)
+    }
+}
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
