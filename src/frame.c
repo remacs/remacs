@@ -2867,42 +2867,6 @@ list, but are otherwise ignored.  */)
     }
   return Qnil;
 }
-
-DEFUN ("frame-char-height", Fframe_char_height, Sframe_char_height,
-       0, 1, 0,
-       doc: /* Height in pixels of a line in the font in frame FRAME.
-If FRAME is omitted or nil, the selected frame is used.
-For a terminal frame, the value is always 1.  */)
-  (Lisp_Object frame)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  struct frame *f = decode_any_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return make_number (FRAME_LINE_HEIGHT (f));
-  else
-#endif
-    return make_number (1);
-}
-
-
-DEFUN ("frame-char-width", Fframe_char_width, Sframe_char_width,
-       0, 1, 0,
-       doc: /* Width in pixels of characters in the font in frame FRAME.
-If FRAME is omitted or nil, the selected frame is used.
-On a graphical screen, the width is the standard width of the default font.
-For a terminal screen, the value is always 1.  */)
-  (Lisp_Object frame)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  struct frame *f = decode_any_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return make_number (FRAME_COLUMN_WIDTH (f));
-  else
-#endif
-    return make_number (1);
-}
 
 DEFUN ("frame-native-width", Fframe_native_width,
        Sframe_native_width, 0, 1, 0,
@@ -5613,8 +5577,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);
-  defsubr (&Sframe_char_height);
-  defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
   defsubr (&Stool_bar_pixel_width);
