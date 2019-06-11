@@ -18,7 +18,7 @@ use crate::{
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::specbind_tag::*,
+    remacs_sys::specbind_tag,
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
         do_one_unbind, eval_sub, funcall_lambda, funcall_subr, globals, grow_specpdl,
@@ -52,7 +52,7 @@ pub unsafe extern "C" fn record_unwind_protect(
     let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
         .unwind
         .as_mut();
-    unwind.set_kind(SPECPDL_UNWIND);
+    unwind.set_kind(specbind_tag::SPECPDL_UNWIND);
     unwind.func = function;
     unwind.arg = arg;
     grow_specpdl();
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn record_unwind_protect_ptr(
     let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
         .unwind_ptr
         .as_mut();
-    unwind.set_kind(SPECPDL_UNWIND_PTR);
+    unwind.set_kind(specbind_tag::SPECPDL_UNWIND_PTR);
     unwind.func = function;
     unwind.arg = arg;
     grow_specpdl();
@@ -80,7 +80,7 @@ pub unsafe extern "C" fn record_unwind_protect_int(
     let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
         .unwind_int
         .as_mut();
-    unwind.set_kind(SPECPDL_UNWIND_INT);
+    unwind.set_kind(specbind_tag::SPECPDL_UNWIND_INT);
     unwind.func = function;
     unwind.arg = arg;
     grow_specpdl();
@@ -91,7 +91,7 @@ pub unsafe extern "C" fn record_unwind_protect_void(function: Option<unsafe exte
     let unwind = (*ThreadState::current_thread().m_specpdl_ptr)
         .unwind_void
         .as_mut();
-    unwind.set_kind(SPECPDL_UNWIND_VOID);
+    unwind.set_kind(specbind_tag::SPECPDL_UNWIND_VOID);
     unwind.func = function;
     grow_specpdl();
 }

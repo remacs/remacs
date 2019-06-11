@@ -19,7 +19,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, SpecbindingRef},
     lists::LispCons,
     multibyte::LispStringRef,
-    remacs_sys::specbind_tag::*,
+    remacs_sys::specbind_tag,
     remacs_sys::Fframe_terminal,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
@@ -227,13 +227,17 @@ impl LispSymbolRef {
                 pdl.ptr_sub(1);
             }
             match pdl.kind() {
-                SPECPDL_LET_DEFAULT | SPECPDL_LET => {
+                specbind_tag::SPECPDL_LET_DEFAULT | specbind_tag::SPECPDL_LET => {
                     if pdl.symbol() == *self {
                         binding = pdl.clone()
                     }
                 }
-                SPECPDL_UNWIND | SPECPDL_UNWIND_PTR | SPECPDL_UNWIND_INT | SPECPDL_UNWIND_VOID
-                | SPECPDL_BACKTRACE | SPECPDL_LET_LOCAL => {}
+                specbind_tag::SPECPDL_UNWIND
+                | specbind_tag::SPECPDL_UNWIND_PTR
+                | specbind_tag::SPECPDL_UNWIND_INT
+                | specbind_tag::SPECPDL_UNWIND_VOID
+                | specbind_tag::SPECPDL_BACKTRACE
+                | specbind_tag::SPECPDL_LET_LOCAL => {}
                 _ => panic!("Incorrect specpdl kind"),
             }
         }
