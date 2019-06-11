@@ -7473,8 +7473,11 @@ selected frame if `display-buffer-reuse-frames' and
 terminal if either of those variables is non-nil.
 
 If ALIST has a `previous-window' entry, the window specified by
-that entry will override any other window found by the methods
-above, even if that window never showed BUFFER before."
+that entry may override any other window found by the methods
+above, even if that window never showed BUFFER before.
+
+Avoid using the selected window if another eligible window has
+shown BUFFER before."
   (let* ((alist-entry (assq 'reusable-frames alist))
 	 (inhibit-same-window
 	  (cdr (assq 'inhibit-same-window alist)))

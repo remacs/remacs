@@ -2597,6 +2597,9 @@ If @var{alist} has a @code{previous-window} entry and the window
 specified by that entry is live and not dedicated to another buffer,
 that window will be preferred, even if it never showed @var{buffer}
 before.
+
+This function will not choose the selected window if it finds another
+eligible window that has shown @var{buffer} previously.
 @end defun
 
 @defun display-buffer-use-some-window buffer alist
