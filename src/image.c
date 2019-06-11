@@ -1967,6 +1967,87 @@ compute_image_size (size_t width, size_t height,
 }
 #endif /* HAVE_IMAGEMAGICK || HAVE_NATIVE_TRANSFORMS */
 
+/* image_set_rotation, image_set_crop, image_set_size and
+   image_set_transform use affine transformation matrices to perform
+   various transforms on the image.  The matrix is a 2D array of
+   doubles.  It is laid out like this:
+
+   m[0][0] = m11 | m[1][0] = m12 | m[2][0] = tx
+   --------------+---------------+-------------
+   m[0][1] = m21 | m[1][1] = m22 | m[2][1] = ty
+   --------------+---------------+-------------
+   m[0][2] = 0   | m[1][2] = 0   | m[2][2] = 1
+
+   tx and ty represent translations, m11 and m22 represent scaling
+   transforms and m21 and m12 represent shear transforms.  Most
+   graphics toolkits don't require the third row, however it is
+   necessary for multiplication.
+
+   Transforms are done by creating a matrix for each action we wish to
+   take, then multiplying the transformation matrix by each of those
+   matrices in order (matrix multiplication is not commutative).
+   After we’ve done that we can use our modified transformation matrix
+   to transform points.  We take the x and y coordinates and convert
+   them into a 3x1 matrix and multiply that by the transformation
+   matrix and it gives us a new, transformed, set of coordinates:
+
+       [m11 m12 tx]   [x]   [m11*x+m12*y+tx*1]   [x']
+       [m21 m22 ty] X [y] = [m21*x+m22*y+ty*1] = [y']
+       [  0   0  1]   [1]   [     0*x+0*y+1*1]   [ 1]
+
+   We don’t have to worry about the last step as the graphics toolkit
+   will do it for us.
+
+   The three transforms we are concerned with are translation, scaling
+   and rotation.  The translation matrix looks like this:
+
+       [1 0 tx]
+       [0 1 ty]
+       [0 0  1]
+
+   Where tx and ty are the amount to translate the origin in the x and
+   y coordinates, respectively.  Since we are translating the origin
+   and not the image data itself, it can appear backwards in use, for
+   example to move the image 10 pixels to the right, you would set tx
+   to -10.
+
+   To scale we use:
+
+       [x 0 0]
+       [0 y 0]
+       [0 0 1]
+
+   Where x and y are the amounts to scale in the x and y dimensions.
+   Values smaller than 1 make the image larger, values larger than 1
+   make it smaller.  Negative values flip the image.  For example to
+   double the image size set x and y to 0.5.
+
+   To rotate we use:
+
+       [ cos(r) sin(r) 0]
+       [-sin(r) cos(r) 0]
+       [      0      0 1]
+
+   Where r is the angle of rotation required.  Rotation occurs around
+   the origin, not the centre of the image.  Note that this is
+   normally considered a counter-clockwise rotation, however because
+   our y axis is reversed, (0, 0) at the top left, it works as a
+   clockwise rotation.
+
+   The full process of rotating an image is to move the origin to the
+   centre of the image (width/2, height/2), perform the rotation, and
+   finally move the origin back to the top left of the image, which
+   may now be a different corner.
+
+   Cropping is easier as we just move the origin to the top left of
+   where we want to crop and set the width and height accordingly.
+   The matrices don’t know anything about width and height.
+
+   It's possible to pre-calculate the matrix multiplications and just
+   generate one transform matrix that will do everything we need in a
+   single step, but the maths for each element is much more complex
+   and I thought it was better to perform the steps separately.  */
+
 typedef double matrix3x3[3][3];
 
 static void

@@ -5181,8 +5181,29 @@ values.  If both @code{:scale} and @code{:height}/@code{:width} are
 specified, the height/width will be adjusted by the specified scaling
 factor.
 
+@item :crop @var{geometry}
+This should be a list of the form @code{(@var{width} @var{height}
+@var{x} @var{y})}.  @var{width} and @var{height} specify the width
+and height of the cropped image.  If @var{x} is a positive number it
+specifies the offset of the cropped area from the left of the original
+image, and if negative the offset from the right.  If @var{y} is a
+positive number it specifies the offset from the top of the original
+image, and if negative from the bottom.  If @var{x} or @var{y} are
+@code{nil} or unspecified the crop area will be centred on the
+original image.
+
+If the crop area is outside or overlaps the edge of the image it will
+be reduced to exclude any areas outside of the image.  This means it
+is not possible to use @code{:crop} to increase the size of the image
+by entering large @var{width} or @var{height} values.
+
+Cropping is performed after scaling but before rotation.
+
 @item :rotation @var{angle}
-Specifies a rotation angle in degrees.
+Specifies a rotation angle in degrees.  Only multiples of 90 degrees
+are supported, unless the image type is @code{imagemagick}.  Positive
+values rotate clockwise, negative values counter-clockwise.  Rotation
+is performed after scaling and cropping.
 
 @item :index @var{frame}
 @xref{Multi-Frame Images}.
