@@ -979,10 +979,11 @@ recently selected windows nor the buffer list."
   ;; Move mouse cursor if necessary.
   (cond
    (mouse-autoselect-window
-    (let ((edges (window-inside-edges (frame-selected-window frame))))
+    (let ((edges (window-edges (frame-selected-window frame)
+                               t nil t)))
       ;; Move mouse cursor into FRAME's selected window to avoid that
       ;; Emacs mouse-autoselects another window.
-      (set-mouse-position frame (nth 2 edges) (nth 1 edges))))
+      (set-mouse-pixel-position frame (1- (nth 2 edges)) (nth 1 edges))))
    (focus-follows-mouse
     ;; Move mouse cursor into FRAME to avoid that another frame gets
     ;; selected by the window manager.
