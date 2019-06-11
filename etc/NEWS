@@ -580,6 +580,11 @@ remapped to these, respectively.
 +++
 *** New command 'dired-create-empty-file'.
 
+** Find-Dired
+
+*** New customizable variable 'find-dired-refine-function'.
+The default value is 'find-dired-sort-by-filename'.
+
 ** Change Logs and VC
 
 *** Recording ChangeLog entries doesn't require an actual file.

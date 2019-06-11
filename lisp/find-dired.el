@@ -117,6 +117,14 @@ find also ignores case.  Otherwise, -name is used."
   :group 'find-dired
   :version "22.2")
 
+(defcustom find-dired-refine-function #'find-dired-sort-by-filename
+  "If non-nil, a function for refining the *Find* buffer of `find-dired'.
+This function takes no arguments.  The *Find* buffer is narrowed to the
+output of `find' (one file per line) when this function is called."
+  :version "27.1"
+  :group 'find-dired
+  :type 'function)
+
 (defvar find-args nil
   "Last arguments given to `find' by \\[find-dired].")
 
@@ -334,28 +342,43 @@ specifies what to use in place of \"-ls\" as the final argument."
       (delete-process proc))))
 
 (defun find-dired-sentinel (proc state)
-  ;; Sentinel for \\[find-dired] processes.
-  (let ((buf (process-buffer proc))
-	(inhibit-read-only t))
+  "Sentinel for \\[find-dired] processes."
+  (let ((buf (process-buffer proc)))
     (if (buffer-name buf)
 	(with-current-buffer buf
-	  (let ((buffer-read-only nil))
+	  (let ((inhibit-read-only t))
 	    (save-excursion
-	      (goto-char (point-max))
-	      (let ((point (point)))
-		(insert "\n  find " state)
-		(forward-char -1)		;Back up before \n at end of STATE.
-		(insert " at " (substring (current-time-string) 0 19))
-		(dired-insert-set-properties point (point)))
-	      (setq mode-line-process
-		    (concat ":"
-			    (symbol-name (process-status proc))))
+              (save-restriction
+                (widen)
+                (when (boundp 'find-dired-refine-function)
+                  ;; `find-dired-filter' puts two whitespace characters
+                  ;; at the beginning of every line.
+                  (narrow-to-region (point) (- (point-max) 2))
+                  (funcall find-dired-refine-function)
+                  (widen))
+                (let ((point (point-max)))
+                  (goto-char point)
+                  (insert "\n  find "
+                          (substring state 0 -1) ; omit \n at end of STATE.
+                          " at " (substring (current-time-string) 0 19))
+                  (dired-insert-set-properties point (point))))
+              (setq mode-line-process
+		    (format ":%s" (process-status proc)))
 	      ;; Since the buffer and mode line will show that the
 	      ;; process is dead, we can delete it now.  Otherwise it
-	      ;; will stay around until M-x list-processes.
+	      ;; will stay around until M-x `list-processes'.
 	      (delete-process proc)
-	      (force-mode-line-update)))
-	  (message "find-dired %s finished." (current-buffer))))))
+	      (force-mode-line-update))))
+	  (message "find-dired %s finished." buf))))
+
+(defun find-dired-sort-by-filename ()
+  "Sort entries in *Find* buffer by file name lexicographically."
+  (sort-subr nil 'forward-line 'end-of-line
+             (lambda ()
+               (buffer-substring-no-properties
+                (next-single-property-change
+                 (point) 'dired-filename)
+                (line-end-position)))))
 
 
 (provide 'find-dired)
