@@ -3632,7 +3632,45 @@ compute_stop_pos (struct it *it)
       /* Set up variables for computing the stop position from text
          property changes.  */
       XSETBUFFER (object, current_buffer);
-      limit = make_fixnum (IT_CHARPOS (*it) + TEXT_PROP_DISTANCE_LIMIT);
+      pos = charpos + TEXT_PROP_DISTANCE_LIMIT;
+      /* Make sure the above arbitrary limit position is not in the
+	 middle of composable text, so we don't break compositions by
+	 submitting the composable text to the shaper in separate
+	 chunks.  We play safe here by assuming that only SPC, TAB,
+	 FF, and NL cannot be in some composition; in particular, most
+	 ASCII punctuation characters could be composed into ligatures.  */
+      if (!NILP (BVAR (current_buffer, enable_multibyte_characters))
+	  && !NILP (Vauto_composition_mode))
+	{
+	  ptrdiff_t endpos = charpos + 10 * TEXT_PROP_DISTANCE_LIMIT;
+	  bool found = false;
+
+	  if (pos > ZV)
+	    pos = ZV;
+	  if (endpos > ZV)
+	    endpos = ZV;
+	  ptrdiff_t bpos = CHAR_TO_BYTE (pos);
+	  while (pos < endpos)
+	    {
+	      int ch;
+	      FETCH_CHAR_ADVANCE_NO_CHECK (ch, pos, bpos);
+	      if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\f')
+		{
+		  found = true;
+		  break;
+		}
+	    }
+	  if (found)
+	    pos--;
+	  else if (it->stop_charpos < endpos)
+	    pos = it->stop_charpos;
+	  else
+	    {
+	      /* Give up and use the original arbitrary limit.  */
+	      pos = charpos + TEXT_PROP_DISTANCE_LIMIT;
+	    }
+	}
+      limit = make_fixnum (pos);
     }
 
   /* Get the interval containing IT's position.  Value is a null
