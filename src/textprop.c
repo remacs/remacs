@@ -2339,7 +2339,6 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   defsubr (&Sprevious_single_property_change);
   defsubr (&Sadd_text_properties);
   defsubr (&Sput_text_property);
-  defsubr (&Sset_text_properties);
   defsubr (&Sadd_face_text_property);
   defsubr (&Sremove_text_properties);
   defsubr (&Sremove_list_of_text_properties);
