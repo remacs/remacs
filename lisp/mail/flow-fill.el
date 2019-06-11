@@ -165,74 +165,15 @@ RFC 2646 suggests 66 characters for readability."
 	       (forward-line 1)
 	       nil))))))))
 
-;; Test vectors.
-
-(defvar show-trailing-whitespace)
-
-(defvar fill-flowed-encode-tests
-  `(
-    ;; The syntax of each list element is:
-    ;; (INPUT . EXPECTED-OUTPUT)
-    (,(concat
-       "> Thou villainous ill-breeding spongy dizzy-eyed \n"
-       "> reeky elf-skinned pigeon-egg! \n"
-       ">> Thou artless swag-bellied milk-livered \n"
-       ">> dismal-dreaming idle-headed scut!\n"
-       ">>> Thou errant folly-fallen spleeny reeling-ripe \n"
-       ">>> unmuzzled ratsbane!\n"
-       ">>>> Henceforth, the coding style is to be strictly \n"
-       ">>>> enforced, including the use of only upper case.\n"
-       ">>>>> I've noticed a lack of adherence to the coding \n"
-       ">>>>> styles, of late.\n"
-       ">>>>>> Any complaints?")
-     .
-     ,(concat
-       "> Thou villainous ill-breeding spongy dizzy-eyed reeky elf-skinned\n"
-       "> pigeon-egg! \n"
-       ">> Thou artless swag-bellied milk-livered dismal-dreaming idle-headed\n"
-       ">> scut!\n"
-       ">>> Thou errant folly-fallen spleeny reeling-ripe unmuzzled ratsbane!\n"
-       ">>>> Henceforth, the coding style is to be strictly enforced,\n"
-       ">>>> including the use of only upper case.\n"
-       ">>>>> I've noticed a lack of adherence to the coding styles, of late.\n"
-       ">>>>>> Any complaints?\n"
-       ))
-    ;; (,(concat
-    ;;    "\n"
-    ;;    "> foo\n"
-    ;;    "> \n"
-    ;;    "> \n"
-    ;;    "> bar\n")
-    ;;  .
-    ;;  ,(concat
-    ;;    "\n"
-    ;;    "> foo bar\n"))
-    ))
+(make-obsolete-variable 'fill-flowed-encode-tests nil "27.1")
+(defvar fill-flowed-encode-tests)
 
 (defun fill-flowed-test ()
   (interactive "")
-  (switch-to-buffer (get-buffer-create "*Format=Flowed test output*"))
-  (erase-buffer)
-  (setq show-trailing-whitespace t)
-  (dolist (test fill-flowed-encode-tests)
-    (let (start output)
-      (insert "***** BEGIN TEST INPUT *****\n")
-      (insert (car test))
-      (insert "***** END TEST INPUT *****\n\n")
-      (insert "***** BEGIN TEST OUTPUT *****\n")
-      (setq start (point))
-      (insert (car test))
-      (save-restriction
-	(narrow-to-region start (point))
-	(fill-flowed))
-      (setq output (buffer-substring start (point-max)))
-      (insert "***** END TEST OUTPUT *****\n")
-      (unless (string= output (cdr test))
-	(insert "\n***** BEGIN TEST EXPECTED OUTPUT *****\n")
-	(insert (cdr test))
-	(insert "***** END TEST EXPECTED OUTPUT *****\n"))
-      (insert "\n\n")))
-  (goto-char (point-max)))
+  (declare (obsolete nil "27.1"))
+  (user-error (concat "This function is obsolete.  Please see "
+                      "test/lisp/mail/flow-fill-tests.el "
+                      "in the Emacs source tree")))
 
 (provide 'flow-fill)
 
