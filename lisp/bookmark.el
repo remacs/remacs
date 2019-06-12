@@ -176,12 +176,6 @@ A non-nil value may result in truncated bookmark names."
 
 ;;; No user-serviceable parts beyond this point.
 
-;; Added  for lucid emacs  compatibility, db
-(or (fboundp 'defalias)  (fset 'defalias 'fset))
-
-;; suggested for lucid compatibility by david hughes:
-(or (fboundp 'frame-height)  (defalias 'frame-height 'screen-height))
-
 
 ;;; Keymap stuff:
 
