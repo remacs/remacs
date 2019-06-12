@@ -355,7 +355,10 @@ will select it.)"
 (defun electric-help-execute-extended (_prefixarg)
   (interactive "p")
   (setq electric-help-form-to-execute
-        (lambda () (execute-extended-command nil)))
+        (lambda ()
+          (with-suppressed-warnings ((interactive-only
+                                      execute-extended-command))
+            (execute-extended-command nil))))
   (electric-help-retain))
 
 ;; This is to be buond to C-x in ehelp mode. Retains ehelp buffer and then
