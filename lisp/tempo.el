@@ -294,11 +294,8 @@ TEMPLATE is the template to be inserted.  If ON-REGION is non-nil the
 mode, ON-REGION is ignored and assumed true if the region is active."
   (unwind-protect
       (progn
-	(if (or (and (boundp 'transient-mark-mode) ; For Emacs
-		     transient-mark-mode
-		     mark-active)
-		(if (featurep 'xemacs)
-		    (and zmacs-regions (mark))))
+	(if (or (and transient-mark-mode
+		     mark-active))
 	    (setq on-region t))
 	(and on-region
 	     (set-marker tempo-region-start (min (mark) (point)))
@@ -313,9 +310,7 @@ mode, ON-REGION is ignored and assumed true if the region is active."
 	  (tempo-insert-mark (point-marker)))
 	(tempo-forward-mark))
     (tempo-forget-insertions)
-    ;; Should I check for zmacs here too???
-    (and (boundp 'transient-mark-mode)
-	 transient-mark-mode
+    (and transient-mark-mode
 	 (deactivate-mark))))
 
 ;;;
