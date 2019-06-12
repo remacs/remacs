@@ -2570,7 +2570,8 @@ try matching its doc string against `custom-guess-doc-alist'."
 
     ;; If we don't know the state, see if we need to edit it in lisp form.
     (unless state
-      (setq state (if (custom-show type value) 'unknown 'hidden)))
+      (with-suppressed-warnings ((obsolete custom-show))
+        (setq state (if (custom-show type value) 'unknown 'hidden))))
     (when (eq state 'unknown)
       (unless (widget-apply conv :match value)
 	(setq form 'mismatch)))
