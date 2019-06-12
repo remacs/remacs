@@ -1084,18 +1084,10 @@ See the documentation for `pcomplete-here'."
   (setq pcomplete-last-window-config nil
 	pcomplete-window-restore-timer nil))
 
-;; Abstractions so that the code below will work for both Emacs 20 and
-;; XEmacs 21
+(define-obsolete-function-alias 'pcomplete-event-matches-key-specifier-p
+  'eq "27.1")
 
-(defalias 'pcomplete-event-matches-key-specifier-p
-  (if (featurep 'xemacs)
-      'event-matches-key-specifier-p
-  'eq))
-
-(defun pcomplete-read-event (&optional prompt)
-  (if (fboundp 'read-event)
-      (read-event prompt)
-    (aref (read-key-sequence prompt) 0)))
+(define-obsolete-function-alias 'pcomplete-read-event 'read-event "27.1")
 
 (defun pcomplete-show-completions (completions)
   "List in help buffer sorted COMPLETIONS.
@@ -1112,15 +1104,15 @@ Typing SPC flushes the help buffer."
     (prog1
         (catch 'done
           (while (with-current-buffer (get-buffer "*Completions*")
-                   (setq event (pcomplete-read-event)))
+                   (setq event (read-event)))
             (cond
-             ((pcomplete-event-matches-key-specifier-p event ?\s)
+             ((eq event ?\s)
               (set-window-configuration pcomplete-last-window-config)
               (setq pcomplete-last-window-config nil)
               (throw 'done nil))
-             ((or (pcomplete-event-matches-key-specifier-p event 'tab)
+             ((or (eq event 'tab)
                   ;; Needed on a terminal
-                  (pcomplete-event-matches-key-specifier-p event 9))
+                  (eq event 9))
               (let ((win (or (get-buffer-window "*Completions*" 0)
                              (display-buffer "*Completions*"
                                              'not-this-window))))
