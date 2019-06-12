@@ -698,7 +698,7 @@ literals (Bug#20852)."
       (unless match
         (error "%s" (buffer-string)))
       (goto-char (point-min))
-      (should (re-search-forward match nil t)))
+      (should (string-match match (buffer-string))))
     ;; And that it's gone now.
     (with-current-buffer byte-compile-log-buffer
       (let ((inhibit-read-only t))
@@ -708,7 +708,7 @@ literals (Bug#20852)."
         ,form))
     (with-current-buffer byte-compile-log-buffer
       (goto-char (point-min))
-      (should-not (re-search-forward match nil t)))
+      (should-not (string-match match (buffer-string))))
     ;; Also check that byte compiled forms are identical.
     (should (equal (byte-compile form)
                    (byte-compile
