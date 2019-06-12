@@ -1036,7 +1036,8 @@ See documentation of variable `tags-file-name'."
   (declare (obsolete xref-find-definitions-other-frame "25.1"))
   (interactive (find-tag-interactive "Find tag other frame: "))
   (let ((pop-up-frames t))
-    (find-tag-other-window tagname next-p)))
+    (with-suppressed-warnings ((obsolete find-tag-other-window))
+      (find-tag-other-window tagname next-p))))
 
 ;;;###autoload
 (defun find-tag-regexp (regexp &optional next-p other-window)
