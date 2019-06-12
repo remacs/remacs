@@ -1693,6 +1693,10 @@ valid event type.
 * Lisp Changes in Emacs 27.1
 
 +++
+** The new macro `with-suppressed-warnings' can be used to suppress
+specific byte-compile warnings.
+
++++
 ** The 'append' arg of 'add-hook' is generalized to a finer notion of 'depth'
 This makes it possible to control the ordering of functions more precisely,
 as was already possible in 'add-function' and `advice-add`.

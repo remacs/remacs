@@ -331,18 +331,27 @@ suppress.  For example, (not mapcar) will suppress warnings about mapcar."
                       ,@(mapcar (lambda (x) `(const ,x))
                                 byte-compile-warning-types))))
 
+(defvar byte-compile--suppressed-warnings nil
+  "Dynamically bound by `with-suppressed-warnings' to suppress warnings.")
+
 ;;;###autoload
 (put 'byte-compile-warnings 'safe-local-variable
      (lambda (v)
        (or (symbolp v)
            (null (delq nil (mapcar (lambda (x) (not (symbolp x))) v))))))
 
-(defun byte-compile-warning-enabled-p (warning)
+(defun byte-compile-warning-enabled-p (warning &optional symbol)
   "Return non-nil if WARNING is enabled, according to `byte-compile-warnings'."
-  (or (eq byte-compile-warnings t)
-      (if (eq (car byte-compile-warnings) 'not)
-          (not (memq warning byte-compile-warnings))
-        (memq warning byte-compile-warnings))))
+  (let ((suppress nil))
+    (dolist (elem byte-compile--suppressed-warnings)
+      (when (and (eq (car elem) warning)
+                 (memq symbol (cdr elem)))
+        (setq suppress t)))
+    (and (not suppress)
+         (or (eq byte-compile-warnings t)
+             (if (eq (car byte-compile-warnings) 'not)
+                 (not (memq warning byte-compile-warnings))
+               (memq warning byte-compile-warnings))))))
 
 ;;;###autoload
 (defun byte-compile-disable-warning (warning)
@@ -502,7 +511,16 @@ Return the compile-time value of FORM."
                                       form
                                       macroexpand-all-environment)))
                                 (eval expanded lexical-binding)
-                                expanded))))))
+                                expanded)))))
+    (with-suppressed-warnings
+        . ,(lambda (warnings &rest body)
+             ;; This function doesn't exist, but is just a placeholder
+             ;; symbol to hook up with the
+             ;; `byte-hunk-handler'/`byte-defop-compiler-1' machinery.
+             `(internal--with-suppressed-warnings
+               ',warnings
+               ,(macroexpand-all `(progn ,@body)
+                                 macroexpand-all-environment)))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
@@ -1268,7 +1286,7 @@ function directly; use `byte-compile-warn' or
 
 (defun byte-compile-warn-obsolete (symbol)
   "Warn that SYMBOL (a variable or function) is obsolete."
-  (when (byte-compile-warning-enabled-p 'obsolete)
+  (when (byte-compile-warning-enabled-p 'obsolete symbol)
     (let* ((funcp (get symbol 'byte-obsolete-info))
            (msg (macroexp--obsolete-warning
                  symbol
@@ -2423,7 +2441,7 @@ list that represents a doc string reference.
 (defun byte-compile--declare-var (sym)
   (when (and (symbolp sym)
              (not (string-match "[-*/:$]" (symbol-name sym)))
-             (byte-compile-warning-enabled-p 'lexical))
+             (byte-compile-warning-enabled-p 'lexical sym))
     (byte-compile-warn "global/dynamic var `%s' lacks a prefix"
                        sym))
   (when (memq sym byte-compile-lexical-variables)
@@ -2521,6 +2539,15 @@ list that represents a doc string reference.
     (mapc 'byte-compile-file-form (cdr form))
     nil))
 
+(put 'internal--with-suppressed-warnings 'byte-hunk-handler
+     'byte-compile-file-form-with-suppressed-warnings)
+(defun byte-compile-file-form-with-suppressed-warnings (form)
+  ;; cf byte-compile-file-form-progn.
+  (let ((byte-compile--suppressed-warnings
+         (append (cadadr form) byte-compile--suppressed-warnings)))
+    (mapc 'byte-compile-file-form (cddr form))
+    nil))
+
 ;; Automatically evaluate define-obsolete-function-alias etc at top-level.
 (put 'make-obsolete 'byte-hunk-handler 'byte-compile-file-form-make-obsolete)
 (defun byte-compile-file-form-make-obsolete (form)
@@ -2559,7 +2586,7 @@ not to take responsibility for the actual compilation of the code."
             (setq byte-compile-call-tree
                   (cons (list name nil nil) byte-compile-call-tree))))
 
-    (if (byte-compile-warning-enabled-p 'redefine)
+    (if (byte-compile-warning-enabled-p 'redefine name)
         (byte-compile-arglist-warn name arglist macro))
 
     (if byte-compile-verbose
@@ -2571,7 +2598,7 @@ not to take responsibility for the actual compilation of the code."
            ;; This also silences "multiple definition" warnings for defmethods.
            nil)
           (that-one
-           (if (and (byte-compile-warning-enabled-p 'redefine)
+           (if (and (byte-compile-warning-enabled-p 'redefine name)
                     ;; Don't warn when compiling the stubs in byte-run...
                     (not (assq name byte-compile-initial-macro-environment)))
                (byte-compile-warn
@@ -2579,7 +2606,7 @@ not to take responsibility for the actual compilation of the code."
                 name))
            (setcdr that-one nil))
           (this-one
-           (when (and (byte-compile-warning-enabled-p 'redefine)
+           (when (and (byte-compile-warning-enabled-p 'redefine name)
                       ;; Hack: Don't warn when compiling the magic internal
                       ;; byte-compiler macros in byte-run.el...
                       (not (assq name byte-compile-initial-macro-environment)))
@@ -2588,7 +2615,7 @@ not to take responsibility for the actual compilation of the code."
                                 name)))
           ((eq (car-safe (symbol-function name))
                (if macro 'lambda 'macro))
-           (when (byte-compile-warning-enabled-p 'redefine)
+           (when (byte-compile-warning-enabled-p 'redefine name)
              (byte-compile-warn "%s `%s' being redefined as a %s"
                                 (if macro "function" "macro")
                                 name
@@ -3153,7 +3180,7 @@ for symbols generated by the byte compiler itself."
         (when (and (byte-compile-warning-enabled-p 'suspicious)
                    (macroexp--const-symbol-p fn))
           (byte-compile-warn "`%s' called as a function" fn))
-	(when (and (byte-compile-warning-enabled-p 'interactive-only)
+	(when (and (byte-compile-warning-enabled-p 'interactive-only fn)
 		   interactive-only)
 	  (byte-compile-warn "`%s' is for interactive use only%s"
 			     fn
@@ -3194,8 +3221,8 @@ for symbols generated by the byte compiler itself."
         (byte-compile-discard))))
 
 (defun byte-compile-normal-call (form)
-  (when (and (byte-compile-warning-enabled-p 'callargs)
-             (symbolp (car form)))
+  (when (and (symbolp (car form))
+             (byte-compile-warning-enabled-p 'callargs (car form)))
     (if (memq (car form)
               '(custom-declare-group custom-declare-variable
                                      custom-declare-face))
@@ -3204,7 +3231,7 @@ for symbols generated by the byte compiler itself."
   (if byte-compile-generate-call-tree
       (byte-compile-annotate-call-tree form))
   (when (and byte-compile--for-effect (eq (car form) 'mapcar)
-             (byte-compile-warning-enabled-p 'mapcar))
+             (byte-compile-warning-enabled-p 'mapcar 'mapcar))
     (byte-compile-set-symbol-position 'mapcar)
     (byte-compile-warn
      "`mapcar' called for effect; use `mapc' or `dolist' instead"))
@@ -3340,7 +3367,8 @@ for symbols generated by the byte compiler itself."
   (when (symbolp var)
     (byte-compile-set-symbol-position var))
   (cond ((or (not (symbolp var)) (macroexp--const-symbol-p var))
-	 (when (byte-compile-warning-enabled-p 'constants)
+	 (when (byte-compile-warning-enabled-p 'constants
+                                               (and (symbolp var) var))
 	   (byte-compile-warn (if (eq access-type 'let-bind)
 				  "attempt to let-bind %s `%s'"
 				"variable reference to %s `%s'")
@@ -3377,7 +3405,7 @@ for symbols generated by the byte compiler itself."
 	;; VAR is lexically bound
         (byte-compile-stack-ref (cdr lex-binding))
       ;; VAR is dynamically bound
-      (unless (or (not (byte-compile-warning-enabled-p 'free-vars))
+      (unless (or (not (byte-compile-warning-enabled-p 'free-vars var))
 		  (boundp var)
 		  (memq var byte-compile-bound-variables)
 		  (memq var byte-compile-free-references))
@@ -3393,7 +3421,7 @@ for symbols generated by the byte compiler itself."
 	;; VAR is lexically bound.
         (byte-compile-stack-set (cdr lex-binding))
       ;; VAR is dynamically bound.
-      (unless (or (not (byte-compile-warning-enabled-p 'free-vars))
+      (unless (or (not (byte-compile-warning-enabled-p 'free-vars var))
 		  (boundp var)
 		  (memq var byte-compile-bound-variables)
 		  (memq var byte-compile-free-assignments))
@@ -3878,7 +3906,7 @@ discarding."
 (defun byte-compile-function-form (form)
   (let ((f (nth 1 form)))
     (when (and (symbolp f)
-               (byte-compile-warning-enabled-p 'callargs))
+               (byte-compile-warning-enabled-p 'callargs f))
       (byte-compile-function-warn f t (byte-compile-fdefinition f nil)))
 
     (byte-compile-constant (if (eq 'lambda (car-safe f))
@@ -3948,7 +3976,8 @@ discarding."
         (let ((var (car-safe (cdr varexp))))
           (and (or (not (symbolp var))
 	           (macroexp--const-symbol-p var t))
-               (byte-compile-warning-enabled-p 'constants)
+               (byte-compile-warning-enabled-p 'constants
+                                               (and (symbolp var) var))
                (byte-compile-warn
 	        "variable assignment to %s `%s'"
 	        (if (symbolp var) "constant" "nonvariable")
@@ -4609,7 +4638,7 @@ binding slots have been popped."
 
 (defun byte-compile-save-excursion (form)
   (if (and (eq 'set-buffer (car-safe (car-safe (cdr form))))
-           (byte-compile-warning-enabled-p 'suspicious))
+           (byte-compile-warning-enabled-p 'suspicious 'set-buffer))
       (byte-compile-warn
        "Use `with-current-buffer' rather than save-excursion+set-buffer"))
   (byte-compile-out 'byte-save-excursion 0)
@@ -4650,7 +4679,7 @@ binding slots have been popped."
   ;; This is not used for file-level defvar/consts.
   (when (and (symbolp (nth 1 form))
              (not (string-match "[-*/:$]" (symbol-name (nth 1 form))))
-             (byte-compile-warning-enabled-p 'lexical))
+             (byte-compile-warning-enabled-p 'lexical (nth 1 form)))
     (byte-compile-warn "global/dynamic var `%s' lacks a prefix"
                        (nth 1 form)))
   (let ((fun (nth 0 form))
@@ -4766,6 +4795,13 @@ binding slots have been popped."
 (defun byte-compile-no-warnings (form)
   (let (byte-compile-warnings)
     (byte-compile-form (cons 'progn (cdr form)))))
+
+(byte-defop-compiler-1 internal--with-suppressed-warnings
+                       byte-compile-suppressed-warnings)
+(defun byte-compile-suppressed-warnings (form)
+  (let ((byte-compile--suppressed-warnings
+         (append (cadadr form) byte-compile--suppressed-warnings)))
+    (byte-compile-form (macroexp-progn (cddr form)))))
 
 ;; Warn about misuses of make-variable-buffer-local.
 (byte-defop-compiler-1 make-variable-buffer-local

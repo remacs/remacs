@@ -686,6 +686,96 @@ literals (Bug#20852)."
       (should-not (member '(byte-constant 333) lap))
       (should (member '(byte-constant 444) lap)))))
 
+(defun test-suppression (form suppress match)
+  (let ((lexical-binding t)
+        (byte-compile-log-buffer (generate-new-buffer " *Compile-Log*")))
+    ;; Check that we get a warning without suppression.
+    (with-current-buffer byte-compile-log-buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)))
+    (test-byte-comp-compile-and-load t form)
+    (with-current-buffer byte-compile-log-buffer
+      (unless match
+        (error "%s" (buffer-string)))
+      (goto-char (point-min))
+      (should (re-search-forward match nil t)))
+    ;; And that it's gone now.
+    (with-current-buffer byte-compile-log-buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)))
+    (test-byte-comp-compile-and-load t
+     `(with-suppressed-warnings ,suppress
+        ,form))
+    (with-current-buffer byte-compile-log-buffer
+      (goto-char (point-min))
+      (should-not (re-search-forward match nil t)))
+    ;; Also check that byte compiled forms are identical.
+    (should (equal (byte-compile form)
+                   (byte-compile
+                    `(with-suppressed-warnings ,suppress ,form))))))
+
+(ert-deftest bytecomp-test--with-suppressed-warnings ()
+  (test-suppression
+   '(defvar prefixless)
+   '((lexical prefixless))
+   "global/dynamic var .prefixless. lacks")
+
+  (test-suppression
+   '(defun foo()
+      (let ((nil t))
+        (message-mail)))
+   '((constants nil))
+   "Warning: attempt to let-bind constant .nil.")
+
+  (test-suppression
+   '(progn
+      (defun obsolete ()
+        (declare (obsolete foo "22.1")))
+      (defun zot ()
+        (obsolete)))
+   '((obsolete obsolete))
+   "Warning: .obsolete. is an obsolete function")
+
+  (test-suppression
+   '(progn
+      (defun wrong-params (foo &optional unused)
+        (ignore unused)
+        foo)
+      (defun zot ()
+        (wrong-params 1 2 3)))
+   '((callargs wrong-params))
+   "Warning: wrong-params called with")
+
+  (test-byte-comp-compile-and-load nil
+    (defvar obsolete-variable nil)
+    (make-obsolete-variable 'obsolete-variable nil "24.1"))
+  (test-suppression
+   '(defun zot ()
+      obsolete-variable)
+   '((obsolete obsolete-variable))
+   "obsolete")
+
+  (test-suppression
+   '(defun zot ()
+      (mapcar #'list '(1 2 3))
+      nil)
+   '((mapcar mapcar))
+   "Warning: .mapcar. called for effect")
+
+  (test-suppression
+   '(defun zot ()
+      free-variable)
+   '((free-vars free-variable))
+   "Warning: reference to free variable")
+
+  (test-suppression
+   '(defun zot ()
+      (save-excursion
+        (set-buffer (get-buffer-create "foo"))
+        nil))
+   '((suspicious set-buffer))
+   "Warning: Use .with-current-buffer. rather than"))
+
 ;; Local Variables:
 ;; no-byte-compile: t
 ;; End:

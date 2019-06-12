@@ -494,6 +494,34 @@ is enabled."
   ;; The implementation for the interpreter is basically trivial.
   (car (last body)))
 
+(defmacro with-suppressed-warnings (_warnings &rest body)
+  "Like `progn', but prevents compiler WARNINGS in BODY.
+
+WARNINGS is an associative list where the first element of each
+item is a warning type, and the rest of the elements in each item
+are symbols they apply to.  For instance, if you want to suppress
+byte compilation warnings about the two obsolete functions `foo'
+and `bar', as well as the function `zot' being called with the
+wrong number of parameters, say
+
+\(with-suppressed-warnings ((obsolete foo bar)
+                           (callargs zot))
+  (foo (bar))
+  (zot 1 2))
+
+The warnings that can be suppressed are a subset of the warnings
+in `byte-compile-warning-types'; see this variable for a fuller
+explanation of the warning types.  The types that can be
+suppressed with this macro are `free-vars', `callargs',
+`redefine', `obsolete', `interactive-only', `lexical', `mapcar',
+`constants' and `suspicious'.
+
+For the `mapcar' case, only the `mapcar' function can be used in
+the symbol list.  For `suspicious', only `set-buffer' can be used."
+  (declare (debug (sexp &optional body)) (indent 1))
+  ;; The implementation for the interpreter is basically trivial.
+  `(progn ,@body))
+
 
 (defun byte-run--unescaped-character-literals-warning ()
   "Return a warning about unescaped character literals.
