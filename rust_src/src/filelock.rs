@@ -25,7 +25,6 @@ use crate::{
     remacs_sys::{Qnil, Qstringp, Qt},
     threads::ThreadState,
 };
-use LockState::*;
 
 /// An arbitrary limit on lock contents length when it is stored in the
 /// contents of the lock file.  8 K should be plenty big enough in practice.
@@ -47,7 +46,7 @@ struct LockInfo {
 impl LockInfo {
     /// Parses a string like `USER@HOST.PID:BOOT_TIME` into a [`LockInfo`].
     /// Returns [`None`] if the parse fails.
-    fn parse(data: &str) -> Option<LockInfo> {
+    fn parse(data: &str) -> Option<Self> {
         // Treat "\357\200\242" (U+F022 in UTF-8) as if it were ":" (Bug#24656).
         // This works around a bug in the Linux CIFS kernel client, which can
         // mistakenly transliterate ':' to U+F022 in symlink contents.
@@ -86,7 +85,7 @@ impl LockInfo {
             )
         };
 
-        Some(LockInfo {
+        Some(Self {
             user,
             host,
             pid,
@@ -244,22 +243,22 @@ fn current_lock_owner(path: &Path) -> Result<LockState> {
             if info.host.as_bytes() == system_name().as_slice() {
                 if info.pid == std::process::id() as i32 {
                     // We own it.
-                    LockedByUs
+                    LockState::LockedByUs
                 } else if process_exists(info.pid) && boot_time_within_one_second(&info) {
                     // An existing process on this machine owns it.
-                    LockedBy(info)
+                    LockState::LockedBy(info)
                 } else {
                     // The owner process is dead or has a strange pid, so try to
                     // zap the lockfile.
                     remove_file(path)?;
-                    NotLocked
+                    LockState::NotLocked
                 }
             } else {
-                LockedBy(info)
+                LockState::LockedBy(info)
             }
         }
 
-        None => NotLocked,
+        None => LockState::NotLocked,
     };
 
     Ok(result)
@@ -329,9 +328,9 @@ pub fn file_locked_p(filename: LispStringRef) -> LispObject {
     let path = make_lock_name(expand_file_name(filename, None));
 
     match current_lock_owner(&path) {
-        Ok(NotLocked) | Err(_) => Qnil,
-        Ok(LockedByUs) => Qt,
-        Ok(LockedBy(info)) => LispObject::from(info.user.as_str()),
+        Ok(LockState::NotLocked) | Err(_) => Qnil,
+        Ok(LockState::LockedByUs) => Qt,
+        Ok(LockState::LockedBy(info)) => LispObject::from(info.user.as_str()),
     }
 }
 

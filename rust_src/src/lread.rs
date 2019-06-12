@@ -207,10 +207,10 @@ pub unsafe extern "C" fn readbyte_from_stdio() -> i32 {
 
     unblock_input();
 
-    if c != libc::EOF {
-        c
-    } else {
+    if c == libc::EOF {
         -1
+    } else {
+        c
     }
 }
 

@@ -88,7 +88,7 @@ pub fn multibyte_char_to_unibyte(ch: Codepoint) -> EmacsInt {
         // a latin1 char, so let's let it slide.
         ch.into()
     } else {
-        ch.to_byte8().map(EmacsInt::from).unwrap_or(-1)
+        ch.to_byte8().map_or(-1, EmacsInt::from)
     }
 }
 

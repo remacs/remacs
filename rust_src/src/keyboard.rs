@@ -360,10 +360,10 @@ pub fn input_pending_p(check_timers: bool) -> bool {
         // Process non-user-visible events (Bug#10195).
         process_special_events();
 
-        let val = if !check_timers {
-            0
-        } else {
+        let val = if check_timers {
             READABLE_EVENTS_DO_TIMERS_NOW
+        } else {
+            0
         };
 
         get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)

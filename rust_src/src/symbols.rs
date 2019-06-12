@@ -194,14 +194,14 @@ impl LispSymbolRef {
         LispSymbolIter { current: self }
     }
 
-    pub fn get_next(self) -> Option<LispSymbolRef> {
+    pub fn get_next(self) -> Option<Self> {
         // `iter().next()` returns the _current_ symbol: we want
         // another `next()` on the iterator to really get the next
         // symbol. we use `nth(1)` as a shortcut here.
         self.iter().nth(1)
     }
 
-    pub fn set_next(mut self, next: Option<LispSymbolRef>) {
+    pub fn set_next(mut self, next: Option<Self>) {
         let mut s = unsafe { self.u.s.as_mut() };
         s.next = match next {
             Some(sym) => sym.as_ptr() as *mut Lisp_Symbol,
@@ -235,7 +235,7 @@ impl LispSymbolRef {
         blv.set_found(false);
     }
 
-    pub fn default_toplevel_binding_rust(&self) -> SpecbindingRef {
+    pub fn default_toplevel_binding_rust(self) -> SpecbindingRef {
         let current_thread = ThreadState::current_thread();
         let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
 
@@ -248,8 +248,8 @@ impl LispSymbolRef {
             }
             match pdl.kind() {
                 specbind_tag::SPECPDL_LET_DEFAULT | specbind_tag::SPECPDL_LET => {
-                    if pdl.symbol() == *self {
-                        binding = pdl.clone()
+                    if pdl.symbol() == self {
+                        binding = pdl
                     }
                 }
                 specbind_tag::SPECPDL_UNWIND
@@ -546,12 +546,6 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
 /// If the current binding is global (the default), the value is nil.
 #[lisp_fn]
 pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
-    // Make sure the current binding is actually swapped in.
-    unsafe {
-        symbol.find_value();
-    }
-    symbol = symbol.get_indirect_variable();
-
     fn localized_handler(sym: LispSymbolRef) -> LispObject {
         // For a local variable, record both the symbol and which
         // buffer's or frame's value we are saving.
@@ -566,16 +560,22 @@ pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
         }
     }
 
+    // Make sure the current binding is actually swapped in.
+    unsafe {
+        symbol.find_value();
+    }
+    symbol = symbol.get_indirect_variable();
+
     match symbol.get_redirect() {
         symbol_redirect::SYMBOL_PLAINVAL => Qnil,
         symbol_redirect::SYMBOL_FORWARDED => unsafe {
             let fwd = symbol.get_fwd();
             if is_kboard_objfwd(fwd) {
                 Fframe_terminal(selected_frame().into())
-            } else if !is_buffer_objfwd(fwd) {
-                Qnil
-            } else {
+            } else if is_buffer_objfwd(fwd) {
                 localized_handler(symbol)
+            } else {
+                Qnil
             }
         },
         symbol_redirect::SYMBOL_LOCALIZED => localized_handler(symbol),
