@@ -1768,6 +1768,7 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 
 ;;; Internal variables.
 
+(defvar message-inhibit-body-encoding nil)
 (defvar message-sending-message "Sending...")
 (defvar message-buffer-list nil)
 (defvar message-this-is-news nil)
@@ -7577,8 +7578,6 @@ is for the internal use."
   (setq rmail-enable-mime-composing t)
   (setq rmail-insert-mime-forwarded-message-function
 	'message-forward-rmail-make-body))
-
-(defvar message-inhibit-body-encoding nil)
 
 ;;;###autoload
 (defun message-resend (address)
