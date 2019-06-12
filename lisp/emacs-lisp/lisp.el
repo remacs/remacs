@@ -370,8 +370,9 @@ is called as a function to find the defun's beginning."
 	  (arg-+ve (> arg 0)))
       (save-restriction
 	(widen)
-	(let ((ppss (let (syntax-begin-function)
-		      (syntax-ppss)))
+	(let ((ppss (with-suppressed-warnings ((obsolete syntax-begin-function))
+                      (let (syntax-begin-function)
+		        (syntax-ppss))))
 	      ;; position of least enclosing paren, or nil.
 	      encl-pos)
 	  ;; Back out of any comment/string, so that encl-pos will always
