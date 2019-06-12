@@ -99,8 +99,7 @@
       (aset ipad i (logxor rfc2104-ipad c))
       (aset opad i (logxor rfc2104-opad c)))
     ;; Perform inner hash.
-    (setq partial (string-make-unibyte
-		   (funcall hash (concat ipad text))))
+    (setq partial (funcall hash (concat ipad text)))
     ;; Pack latter part of opad.
     (cl-do ((r 0 (+ 2 r))
             (w block-length (1+ w)))
@@ -109,7 +108,7 @@
             (+ (* 16 (aref rfc2104-nybbles (aref partial     r)))
                (      aref rfc2104-nybbles (aref partial (1+ r))))))
     ;; Perform outer hash.
-    (string-make-unibyte (funcall hash opad))))
+    (funcall hash opad)))
 
 (provide 'rfc2104)
 
