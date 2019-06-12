@@ -28,13 +28,7 @@
 ;; windows) so that the changes can be "undone" using the command
 ;; `winner-undo'.  By default this one is bound to the key sequence
 ;; ctrl-c left.  If you change your mind (while undoing), you can
-;; press ctrl-c right (calling `winner-redo').  Even though it uses
-;; some features of Emacs20.3, winner.el should also work with
-;; Emacs19.34 and XEmacs20, provided that the installed version of
-;; custom is not obsolete.
-
-;; Winner mode was improved August 1998.
-;; Further improvements February 2002.
+;; press ctrl-c right (calling `winner-redo').
 
 ;;; Code:
 
