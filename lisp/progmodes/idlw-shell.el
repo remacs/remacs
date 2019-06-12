@@ -601,9 +601,7 @@ TYPE is either 'pro' or 'rinfo', and `idlwave-shell-temp-pro-file' or
 		     (setq file
 			   (make-temp-name
 			    (expand-file-name prefix temp-file-dir)))
-		     (if (featurep 'xemacs)
-			 (write-region "" nil file nil 'silent nil)
-		       (write-region "" nil file nil 'silent nil 'excl))
+		     (write-region "" nil file nil 'silent nil 'excl)
 		     nil)
 		 (file-already-exists t))
 	  ;; the file was somehow created by someone else between
@@ -667,9 +665,7 @@ the directory stack.")
  ((eq idlwave-shell-mark-stop-line 'face)
   ;; Try to use a face.  If not possible, arrow will be used anyway
   ;; So who can display faces?
-  (when (or (featurep 'xemacs)            ; XEmacs can do also ttys
-	    (fboundp 'tty-defined-colors) ; Emacs 21 as well
-	    window-system)                ; Window systems always
+  (when window-system
     (progn
       (setq idlwave-shell-stop-line-overlay (make-overlay 1 1))
       (overlay-put idlwave-shell-stop-line-overlay
@@ -2757,8 +2753,6 @@ Runs to the last statement and then steps 1 statement.  Use the .out command."
   (interactive "P")
   (idlwave-shell-print arg 'help))
 
-(defvar zmacs-regions)
-
 (defmacro idlwave-shell-mouse-examine (help &optional ev)
   "Create a function for generic examination of expressions."
   `(lambda (event)
@@ -2766,16 +2760,11 @@ Runs to the last statement and then steps 1 statement.  Use the .out command."
      (interactive "e")
      (let* ((drag-track (fboundp 'mouse-drag-track))
 	    (transient-mark-mode t)
-	    (zmacs-regions t)
-	    (tracker (if (featurep 'xemacs)
-			 (if (fboundp
-			      'default-mouse-track-event-is-with-button)
-			     'idlwave-xemacs-hack-mouse-track
-			   'mouse-track)
-		       ;; Emacs 22 no longer completes the drag with
-		       ;; mouse-drag-region, without an additional
-		       ;; event.  mouse-drag-track does so.
-		       (if drag-track 'mouse-drag-track 'mouse-drag-region))))
+	    (tracker
+	     ;; Emacs 22 no longer completes the drag with
+	     ;; mouse-drag-region, without an additional
+	     ;; event.  mouse-drag-track does so.
+	     (if drag-track 'mouse-drag-track 'mouse-drag-region)))
        (funcall tracker event)
        (idlwave-shell-print (if (idlwave-region-active-p) '(4) nil)
 			    ,help ,ev))))
@@ -2785,16 +2774,8 @@ Runs to the last statement and then steps 1 statement.  Use the .out command."
 (defun idlwave-default-mouse-track-event-is-with-button (_event _n)
   t)
 
-(defun idlwave-xemacs-hack-mouse-track (event)
-  (if (featurep 'xemacs)
-      (let ((oldfunc (symbol-function
-		      'default-mouse-track-event-is-with-button)))
-	(unwind-protect
-	    (progn
-	      (fset 'default-mouse-track-event-is-with-button
-		    'idlwave-default-mouse-track-event-is-with-button)
-	      (mouse-track event))
-	  (fset 'default-mouse-track-event-is-with-button oldfunc)))))
+(defun idlwave-xemacs-hack-mouse-track (_event)
+  (declare (obsolete featurep "27.1")))
 ;;; End terrible hack section
 
 (defun idlwave-shell-mouse-print (event)
@@ -3294,28 +3275,23 @@ Does not work for a region with multiline blocks - use
 	(error nil))))
 
 (defun idlwave-display-buffer (buf not-this-window-p &optional frame)
-  (if (featurep 'xemacs)
-      ;; The XEmacs version enforces the frame
-      (display-buffer buf not-this-window-p frame)
-    ;; For Emacs, we need to force the frame ourselves.
-    (let ((this-frame (selected-frame)))
-      (save-excursion ;; make sure we end up in the same buffer
-	(if (frame-live-p frame)
-	    (select-frame frame))
-	(if (eq this-frame (selected-frame))
-	    ;; same frame:  use display buffer, to make sure the current
-	    ;; window stays.
-	    (display-buffer buf)
-	  ;; different frame
-	  (if (one-window-p)
-	      ;; only window:  switch
-	      (progn
-		(switch-to-buffer buf)
-		(selected-window))   ; must return the window.
-	    ;; several windows - use display-buffer
-	    (display-buffer buf not-this-window-p)))))))
-;  (if (not (frame-live-p frame)) (setq frame nil))
-;  (display-buffer buf not-this-window-p frame))
+  ;; Force the frame ourselves.
+  (let ((this-frame (selected-frame)))
+    (save-excursion ;; make sure we end up in the same buffer
+      (if (frame-live-p frame)
+	  (select-frame frame))
+      (if (eq this-frame (selected-frame))
+	  ;; same frame:  use display buffer, to make sure the current
+	  ;; window stays.
+	  (display-buffer buf)
+	;; different frame
+	(if (one-window-p)
+	    ;; only window:  switch
+	    (progn
+	      (switch-to-buffer buf)
+	      (selected-window))        ; must return the window.
+	  ;; several windows - use display-buffer
+	  (display-buffer buf not-this-window-p))))))
 
 (defvar idlwave-shell-bp-buffer " *idlwave-shell-bp*"
   "Scratch buffer for parsing IDL breakpoint lists and other stuff.")
@@ -3577,8 +3553,7 @@ considered the new breakpoint if the file name of frame matches."
 (defvar idlwave-shell-bp-glyph)
 
 (defvar idlwave-shell-debug-line-map (make-sparse-keymap))
-(define-key idlwave-shell-debug-line-map
-  (if (featurep 'xemacs) [button3] [mouse-3])
+(define-key idlwave-shell-debug-line-map [mouse-3]
   'idlwave-shell-mouse-active-bp)
 
 (defun idlwave-shell-update-bp-overlays ()
@@ -3692,60 +3667,33 @@ only for glyphs)."
 	(face (if disabled
 		  idlwave-shell-disabled-breakpoint-face
 		idlwave-shell-breakpoint-face)))
-    (if (featurep 'xemacs)
-	;; This is XEmacs
-	(progn
-	  (when idlwave-shell-breakpoint-popup-menu
-	    (set-extent-property ov 'mouse-face 'highlight)
-	    (set-extent-property ov 'keymap idlwave-shell-debug-line-map))
+    (when idlwave-shell-breakpoint-popup-menu
+      (overlay-put ov 'mouse-face 'highlight)
+      (overlay-put ov 'keymap idlwave-shell-debug-line-map))
+    (cond
+     (window-system
+      (if use-glyph
+	  (let ((image-props (cdr (assq type idlwave-shell-bp-glyph)))
+		string)
 
-	  (cond
-	   ;; tty's cannot display glyphs
-	   ((eq (console-type) 'tty)
-	    (set-extent-property ov 'face face))
+	    (if disabled (setq image-props
+			       (append image-props
+				       (list :conversion 'disabled))))
+	    (setq string
+		  (propertize "@"
+			      'display
+			      (list (list 'margin 'left-margin)
+				    image-props)))
+	    (overlay-put ov 'before-string string))
+	;; just the face
+	(overlay-put ov 'face face)))
 
-	   ;; use the glyph
-	   (use-glyph
-	    (let ((glyph (cdr (assq type idlwave-shell-bp-glyph))))
-	      (if disabled (setq glyph (car glyph)) (setq glyph (nth 1 glyph)))
-	      (set-extent-property ov 'begin-glyph glyph)
-	      (set-extent-property ov 'begin-glyph-layout 'outside-margin)))
+     ;; use a face
+     (idlwave-shell-mark-breakpoints
+      (overlay-put ov 'face face))
 
-	   ;; use the face
-	   (idlwave-shell-mark-breakpoints
-	    (set-extent-property ov 'face face))
-
-	   ;; no marking
-	   (t nil))
-	  (set-extent-priority ov -1))  ; make stop line face prevail
-      ;; This is Emacs
-      (when idlwave-shell-breakpoint-popup-menu
-	(overlay-put ov 'mouse-face 'highlight)
-	(overlay-put ov 'keymap idlwave-shell-debug-line-map))
-      (cond
-       (window-system
-	(if use-glyph
-	    (let ((image-props (cdr (assq type idlwave-shell-bp-glyph)))
-		  string)
-
-	      (if disabled (setq image-props
-				 (append image-props
-					 (list :conversion 'disabled))))
-	      (setq string
-		   (propertize "@"
-			       'display
-			       (list (list 'margin 'left-margin)
-				     image-props)))
-	      (overlay-put ov 'before-string string))
-	  ;; just the face
-	  (overlay-put ov 'face face)))
-
-       ;; use a face
-       (idlwave-shell-mark-breakpoints
-	(overlay-put ov 'face face))
-
-       ;; No marking
-       (t nil)))
+     ;; No marking
+     (t nil))
     ov))
 
 (defun idlwave-shell-mouse-active-bp (ev)
@@ -4081,8 +4029,7 @@ Otherwise, just expand the file name."
       'idlwave-shell-debug-map)
     (define-key map [(up)]  'idlwave-shell-up-or-history)
     (define-key map [(down)] 'idlwave-shell-down-or-history)
-    (define-key idlwave-shell-mode-map
-      (if (featurep 'xemacs) [(shift button3)] [(shift mouse-3)])
+    (define-key idlwave-shell-mode-map [(shift mouse-3)]
       'idlwave-mouse-context-help)
     map)
   "Keymap for `idlwave-mode'.")
@@ -4118,28 +4065,18 @@ Otherwise, just expand the file name."
 (define-key idlwave-mode-map "\C-c\C-x" 'idlwave-shell-send-char)
 
 ;; The mouse bindings for PRINT and HELP
-(idlwave-shell-define-key-both
- (if (featurep 'xemacs)
-     [(shift button2)]
-   [(shift down-mouse-2)])
- 'idlwave-shell-mouse-print)
-(idlwave-shell-define-key-both
- (if (featurep 'xemacs)
-     [(control meta button2)]
-   [(control meta down-mouse-2)])
-  'idlwave-shell-mouse-help)
-(idlwave-shell-define-key-both
- (if (featurep 'xemacs)
-     [(control shift button2)]
-   [(control shift down-mouse-2)])
- 'idlwave-shell-examine-select)
-;; Add this one from the idlwave-mode-map
-;; For Emacs, we need to turn off the button release events.
+(idlwave-shell-define-key-both [(shift down-mouse-2)]
+                               'idlwave-shell-mouse-print)
+(idlwave-shell-define-key-both [(control meta down-mouse-2)]
+                               'idlwave-shell-mouse-help)
+(idlwave-shell-define-key-both [(control shift down-mouse-2)]
+                               'idlwave-shell-examine-select)
 
-(unless (featurep 'xemacs)
-  (idlwave-shell-define-key-both [(shift mouse-2)] 'ignore)
-  (idlwave-shell-define-key-both [(shift control mouse-2)] 'ignore)
-  (idlwave-shell-define-key-both [(control meta mouse-2)] 'ignore))
+;; We need to turn off the button release events.
+
+(idlwave-shell-define-key-both [(shift mouse-2)] 'ignore)
+(idlwave-shell-define-key-both [(shift control mouse-2)] 'ignore)
+(idlwave-shell-define-key-both [(control meta mouse-2)] 'ignore)
 
 
 ;; The following set of bindings is used to bind the debugging keys.
@@ -4594,16 +4531,7 @@ static char * file[] = {
 \"              \"};"))) im-cons im)
 
   (while (setq im-cons (pop image-alist))
-    (setq im (cond ((and (featurep 'xemacs)
-			 (featurep 'xpm))
-		    (list
-		     (let ((data (cdr im-cons)))
-		       (string-match "#FFFF00000000" data)
-		       (setq data (replace-match "#8F8F8F8F8F8F" t t data))
-		       (make-glyph data))
-		     (make-glyph (cdr im-cons))))
-		   ((and (not (featurep 'xemacs))
-			 (fboundp 'image-type-available-p)
+    (setq im (cond ((and (fboundp 'image-type-available-p)
 			 (image-type-available-p 'xpm))
 		    (list 'image :type 'xpm :data (cdr im-cons)
 			  :ascent 'center))
