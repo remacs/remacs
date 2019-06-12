@@ -1237,7 +1237,6 @@ See Info node `(emacs-mime)Composing'.
 \\{mml-mode-map}"
   :lighter " MML" :keymap mml-mode-map
   (when mml-mode
-    (easy-menu-add mml-menu mml-mode-map)
     (when (boundp 'dnd-protocol-alist)
       (set (make-local-variable 'dnd-protocol-alist)
 	   (append mml-dnd-protocol-alist dnd-protocol-alist)))))
