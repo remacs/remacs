@@ -995,7 +995,8 @@ See the reason described in the `epa-verify-region' documentation."
 			       nil t))
 	  (unless cleartext-end
 	    (error "No cleartext tail"))
-	  (epa-verify-region cleartext-start cleartext-end))))))
+          (with-suppressed-warnings ((interactive-only epa-verify-region))
+	    (epa-verify-region cleartext-start cleartext-end)))))))
 
 ;;;###autoload
 (defun epa-sign-region (start end signers mode)
