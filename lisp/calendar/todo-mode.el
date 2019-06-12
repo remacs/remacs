@@ -874,6 +874,7 @@ category."
   (todo-forward-category t))
 
 (defvar todo-categories-buffer)
+(declare-function hl-line-highlight "hl-line" ())
 
 (defun todo-jump-to-category (&optional file where)
   "Prompt for a category in a todo file and jump to it.
