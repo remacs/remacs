@@ -123,11 +123,11 @@
   :version "22.1"
   :group 'widgets)
 
-(defcustom tree-widget-image-enable (if (fboundp 'display-images-p)
-                                        (display-images-p))
+(defcustom tree-widget-image-enable t
   "Non-nil means that tree-widget will try to use images."
   :type  'boolean
-  :group 'tree-widget)
+  :group 'tree-widget
+  :version "27.1")
 
 (defvar tree-widget-themes-load-path
   '(load-path
