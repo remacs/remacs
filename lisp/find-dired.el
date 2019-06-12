@@ -350,7 +350,7 @@ specifies what to use in place of \"-ls\" as the final argument."
 	    (save-excursion
               (save-restriction
                 (widen)
-                (when (boundp 'find-dired-refine-function)
+                (when find-dired-refine-function
                   ;; `find-dired-filter' puts two whitespace characters
                   ;; at the beginning of every line.
                   (narrow-to-region (point) (- (point-max) 2))
