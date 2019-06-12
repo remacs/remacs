@@ -1093,6 +1093,16 @@ element is the data blob and the second element is the content-type."
 	image)
     (insert (or alt ""))))
 
+(defun shr--image-type ()
+  "Emacs image type to use when displaying images.
+If Emacs has native image scaling support, that's used, but if
+not, `imagemagick' is preferred if it's present."
+  (if (or (and (fboundp 'image-transforms-p)
+	       (image-transforms-p))
+	  (not (fboundp 'imagemagick-types)))
+      nil
+    'imagemagick))
+
 (defun shr-rescale-image (data content-type width height
                                &optional max-width max-height)
   "Rescale DATA, if too big, to fit the current buffer.
@@ -1122,13 +1132,13 @@ width/height instead."
                (< (* width scaling) max-width)
                (< (* height scaling) max-height))
           (create-image
-           data nil t
+           data (shr--image-type) t
            :ascent 100
            :width width
            :height height
            :format content-type)
         (create-image
-         data nil t
+         data (shr--image-type) t
          :ascent 100
          :max-width max-width
          :max-height max-height
