@@ -2774,8 +2774,7 @@ Runs to the last statement and then steps 1 statement.  Use the .out command."
 (defun idlwave-default-mouse-track-event-is-with-button (_event _n)
   t)
 
-(defun idlwave-xemacs-hack-mouse-track (_event)
-  (declare (obsolete featurep "27.1")))
+(define-obsolete-function-alias 'idlwave-xemacs-hack-mouse-track 'ignore "27.1")
 ;;; End terrible hack section
 
 (defun idlwave-shell-mouse-print (event)
