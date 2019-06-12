@@ -888,6 +888,12 @@ Note that the style variables are always made local to the buffer."
 
 
 ;;; Change hooks, linking with Font Lock and electric-indent-mode.
+(defvar c-syntax-table-hwm most-positive-fixnum)
+;; A workaround for `syntax-ppss''s failure to take account of changes in
+;; syntax-table text properties.  This variable gets set to the lowest
+;; position where the syntax-table text property is changed, and that value
+;; gets supplied to `syntax-ppss-flush-cache' just before a font locking is
+;; due to take place.
 
 (defun c-called-from-text-property-change-p ()
   ;; Is the primitive which invoked `before-change-functions' or
@@ -1672,6 +1678,10 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
     ;; (c-new-BEG c-new-END) will be the region to fontify.
     (setq c-new-BEG beg  c-new-END end)
     (setq c-maybe-stale-found-type nil)
+    ;; A workaround for syntax-ppss's failure to notice syntax-table text
+    ;; property changes.
+    (when (fboundp 'syntax-ppss)
+      (setq c-syntax-table-hwm most-positive-fixnum))
     (save-restriction
       (save-match-data
 	(widen)
@@ -1823,7 +1833,11 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	  (save-excursion
 	    (mapc (lambda (fn)
 		    (funcall fn beg end old-len))
-		  c-before-font-lock-functions)))))))
+		  c-before-font-lock-functions))))))
+  ;; A workaround for syntax-ppss's failure to notice syntax-table text
+  ;; property changes.
+  (when (fboundp 'syntax-ppss)
+    (syntax-ppss-flush-cache c-syntax-table-hwm)))
 
 (defun c-doc-fl-decl-start (pos)
   ;; If the line containing POS is in a doc comment continued line (as defined

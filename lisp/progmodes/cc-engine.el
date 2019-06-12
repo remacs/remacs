@@ -155,6 +155,7 @@
 (defvar c-doc-line-join-re)
 (defvar c-doc-bright-comment-start-re)
 (defvar c-doc-line-join-end-ch)
+(defvar c-syntax-table-hwm)
 
 
 ;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
@@ -3003,7 +3004,13 @@ comment at the start of cc-engine.el for more info."
   ;; higher than that position.
   (setq c-lit-pos-cache-limit (min c-lit-pos-cache-limit pos)
 	c-semi-near-cache-limit (min c-semi-near-cache-limit pos)
-	c-full-near-cache-limit (min c-full-near-cache-limit pos)))
+	c-full-near-cache-limit (min c-full-near-cache-limit pos))
+  (when (fboundp 'syntax-ppss)
+    ;; Also keep track of where we need to truncate `syntax-ppss''s cache to.
+    ;; Actually we shouldn't have to touch this thing (which we do not use),
+    ;; but its design forces us to.  Hopefully this will be fixed in a future
+    ;; version of Emacs.
+    (setq c-syntax-table-hwm (min c-syntax-table-hwm pos))))
 
 
 ;; A system for finding noteworthy parens before the point.
