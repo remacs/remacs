@@ -1163,7 +1163,8 @@ then offer interactively to relocate BOOKMARK-NAME-OR-RECORD."
     (setq bookmark-current-bookmark bookmark-name-or-record))
   nil)
 
-(define-error 'bookmark-errors nil)
+(define-error 'bookmark-errors
+  "Bookmark error")
 (define-error 'bookmark-error-no-filename
   "Bookmark has no associated file (or directory)" 'bookmark-errors)
 
