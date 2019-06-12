@@ -14,7 +14,7 @@ use crate::{
     buffers::LispBufferRef,
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
-    frames::LispFrameRef,
+    frame::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},

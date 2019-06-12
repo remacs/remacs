@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::LispFrameRef,
+    frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
     objects::equal,
     remacs_sys::Qwindow_configuration_p,

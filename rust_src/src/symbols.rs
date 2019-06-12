@@ -14,7 +14,7 @@ use crate::{
         as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd,
         is_kboard_objfwd, set, store_symval_forwarding,
     },
-    frames::selected_frame,
+    frame::selected_frame,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     lists::LispCons,

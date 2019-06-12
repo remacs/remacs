@@ -8,7 +8,7 @@ use std::{ffi::CString, mem};
 
 use crate::{
     data, fns,
-    frames::{LispFrameLiveOrSelected, LispFrameRef},
+    frame::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,

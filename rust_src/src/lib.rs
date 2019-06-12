@@ -53,7 +53,7 @@ mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
-mod frames;
+mod frame;
 #[macro_use]
 mod strings;
 #[macro_use]

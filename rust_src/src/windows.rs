@@ -11,7 +11,7 @@ use crate::{
     editfns::{goto_char, point},
     eval::unbind_to,
     fns::{copy_alist, nreverse},
-    frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
+    frame::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
