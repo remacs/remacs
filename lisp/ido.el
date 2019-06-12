@@ -1259,8 +1259,7 @@ Only used if `ido-use-virtual-buffers' is non-nil.")
   (if merge
       ido-use-merged-list
     (and (boundp 'ido-completing-read)
-	 (or (featurep 'xemacs)
-	     (= ido-use-mycompletion-depth (minibuffer-depth))))))
+	 (= ido-use-mycompletion-depth (minibuffer-depth)))))
 
 (defvar ido-trace-enable nil)
 
@@ -4035,17 +4034,8 @@ If `ido-change-word-sub' cannot be found in WORD, return nil."
 				   (t
 				    (copy-sequence (or ido-matches ido-cur-list))))
 				  #'ido-file-lessp)))
-	    (if (featurep 'xemacs)
-		;; XEmacs extents are put on by default, doesn't seem to be
-		;; any way of switching them off.
-                (display-completion-list
-                 completion-list
-                 :help-string "ido "
-                 :activate-callback
-                 (lambda (&rest _) (message "Doesn't work yet, sorry!")))
-	      ;; else running Emacs
-	      ;;(add-hook 'completion-setup-hook 'completion-setup-function)
-	      (display-completion-list completion-list)))))))
+	    ;;(add-hook 'completion-setup-hook 'completion-setup-function)
+	    (display-completion-list completion-list))))))
 
 ;;; KILL CURRENT BUFFER
 (defun ido-kill-buffer-at-head ()
@@ -4818,9 +4808,6 @@ Modified from `icomplete-completions'."
   (when (ido-active)
     (add-hook 'pre-command-hook 'ido-tidy nil t)
     (add-hook 'post-command-hook 'ido-exhibit nil t)
-    (when (featurep 'xemacs)
-      (ido-exhibit)
-      (goto-char (point-min)))
     (run-hooks 'ido-minibuffer-setup-hook)
     (when ido-initial-position
       (goto-char (+ (minibuffer-prompt-end) ido-initial-position))
