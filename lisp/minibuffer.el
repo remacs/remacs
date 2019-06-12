@@ -1738,7 +1738,8 @@ It can find the completion buffer in `standard-output'."
       (with-temp-buffer
 	(let ((standard-output (current-buffer))
 	      (completion-setup-hook nil))
-	  (display-completion-list completions common-substring))
+          (with-suppressed-warnings ((callargs display-completion-list))
+	    (display-completion-list completions common-substring)))
 	(princ (buffer-string)))
 
     (with-current-buffer standard-output
