@@ -724,25 +724,18 @@ Only one `%' is removed, and it has to be in the first column."
 
 (defun ps-mode-octal-region (begin end)
   "Change 8-bit characters to octal codes in region."
-  (interactive "r")
-  (if buffer-read-only
-      (progn
-	(ding)
-	(message "Buffer is read only"))
-    (save-excursion
-      (let (endm i)
-        (setq endm (make-marker))
-        (set-marker endm end)
-        (goto-char begin)
-        (setq i 0)
-        (while (re-search-forward "[\200-\377]" (marker-position endm) t)
-          (setq i (1+ i))
-          (replace-match (format "\\%03o"
-                                 (multibyte-char-to-unibyte
-                                  (char-after (1- (point)))))
-                         t t))
-        (message "%d change%s made" i (if (= i 1) "" "s"))
-        (set-marker endm nil)))))
+  (interactive "*r")
+  (save-excursion
+    (let ((endm (copy-marker end))
+          (i 0))
+      (goto-char begin)
+      (while (re-search-forward "[\200-\377]" (marker-position endm) t)
+        (setq i (1+ i))
+        (replace-match (format "\\%03o"
+                               (multibyte-char-to-unibyte (char-before)))
+                       t t))
+      (message "%d change%s made" i (if (= i 1) "" "s"))
+      (set-marker endm nil))))
 
 
 ;; Cookbook.
@@ -952,11 +945,11 @@ This mode is invoked from `ps-mode' and should not be called directly."
       (delete-process "ps-run"))
     (erase-buffer)
     (setq command (append command init-file))
-    (insert (mapconcat 'identity command " ") "\n")
-    (apply 'make-comint "ps-run" (car command) nil (cdr command))
+    (insert (mapconcat #'identity command " ") "\n")
+    (apply #'make-comint "ps-run" (car command) nil (cdr command))
     (with-current-buffer "*ps-run*"
       (use-local-map ps-run-mode-map)
-      (setq comint-prompt-regexp ps-run-prompt))
+      (setq-local comint-prompt-regexp ps-run-prompt))
     (select-window oldwin)))
 
 (defun ps-run-quit ()
