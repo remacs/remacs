@@ -697,6 +697,7 @@ literals (Bug#20852)."
     (with-current-buffer byte-compile-log-buffer
       (unless match
         (error "%s" (buffer-string)))
+      (setq match (replace-regexp-in-string " " "[ \n]+" match nil t))
       (goto-char (point-min))
       (should (string-match match (buffer-string))))
     ;; And that it's gone now.
