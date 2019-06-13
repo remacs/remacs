@@ -297,7 +297,7 @@ included.")
 (defun nneething-decode-file-name (file &optional coding-system)
   "Decode the name of the FILE is encoded in CODING-SYSTEM."
   (let ((pos 0) buf)
-    (while (string-match "%\\([0-9a-fA-F][0-9a-fA-F]\\)" file pos)
+    (while (string-match "%\\([[:xdigit:]][[:xdigit:]]\\)" file pos)
       (setq buf (cons (string (string-to-number (match-string 1 file) 16))
 		      (cons (substring file pos (match-beginning 0)) buf))
 	    pos (match-end 0)))

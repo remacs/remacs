@@ -223,7 +223,7 @@ These look like:
     (mm-with-unibyte-buffer
       (insert value)
       (goto-char (point-min))
-      (while (re-search-forward "%\\([0-9A-Fa-f][0-9A-Fa-f]\\)" nil t)
+      (while (re-search-forward "%\\([[:xdigit:]][[:xdigit:]]\\)" nil t)
 	(insert
 	 (prog1
 	     (string-to-number (match-string 1) 16)

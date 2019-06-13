@@ -138,7 +138,7 @@ Return nil if URI is not a local file."
 
 (defsubst dnd-unescape-uri (uri)
   (replace-regexp-in-string
-   "%[A-Fa-f0-9][A-Fa-f0-9]"
+   "%[[:xdigit:]][[:xdigit:]]"
    (lambda (arg)
      (let ((str (make-string 1 0)))
        (aset str 0 (string-to-number (substring arg 1) 16))

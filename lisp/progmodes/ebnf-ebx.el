@@ -658,7 +658,7 @@ See documentation for variable `ebnf-ebx-lex'."
       (or no-error
 	  (error "Invalid hexadecimal character"))
     (forward-char)
-    (or (> (skip-chars-forward "0-9A-Fa-f" ebnf-limit) 0)
+    (or (> (skip-chars-forward "[:xdigit:]" ebnf-limit) 0)
 	(error "Invalid hexadecimal character"))))
 
 

@@ -635,7 +635,7 @@ Adapted from `font-lock-match-c-style-declaration-item-and-skip-to-next'."
    (list (concat "^\\s-*" vera-rvm-types-regexp "\\s-*\\(\\[[^]]+\\]\\s-+\\)?")
 	 '(vera-font-lock-match-item nil nil (1 font-lock-variable-name-face)))
    ;; highlight numbers
-   '("\\([0-9]*'[bdoh][0-9a-fA-FxXzZ_]+\\)" 1 vera-font-lock-number)
+   '("\\([0-9]*'[bdoh][[:xdigit:]xXzZ_]+\\)" 1 vera-font-lock-number)
    ;; highlight filenames in #include directives
    '("^#\\s-*include\\s-*\\(<[^>\"\n]*>?\\)"
      1 font-lock-string-face)

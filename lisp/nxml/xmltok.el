@@ -413,7 +413,7 @@ and VALUE-END, otherwise a STRING giving the value."
 		   (xmltok-g decimal-ref-close ";") opt))
 	 (hex-ref
 	  (xmltok+ "x" open
-		   (xmltok-g hex "[0-9a-fA-F]" +)
+		   (xmltok-g hex "[[:xdigit:]]" +)
 		   (xmltok-g hex-ref-close ";") opt
 		   close opt))
 	 (char-ref

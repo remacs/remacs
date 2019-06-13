@@ -1302,7 +1302,7 @@ With prefix argument UNQUOTEP, unquote the region.  All numeric entities,
     (if unquotep
 	;; FIXME: We should unquote other named character references as well.
 	(while (re-search-forward
-		"\\(&\\(amp\\|quot\\|lt\\|gt\\|#\\([0-9]+\\|[xX][0-9a-fA-F]+\\)\\)\\)\\([][<>&;\n\t \"%!'(),/=?]\\|$\\)"
+		"\\(&\\(amp\\|quot\\|lt\\|gt\\|#\\([0-9]+\\|[xX][[:xdigit:]]+\\)\\)\\)\\([][<>&;\n\t \"%!'(),/=?]\\|$\\)"
 		nil t)
           (replace-match
            (string

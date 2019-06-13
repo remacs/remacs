@@ -702,7 +702,7 @@ Code is inserted into the current buffer."
   (with-current-buffer (find-file-noselect file)
     (goto-char (point-min))
     (mapc (lambda (x) (put x 'xsdre-ranges nil)) xsdre-gen-categories)
-    (while (re-search-forward "^\\([0-9A-Fa-f]*\\);[^;]*;\\([A-Z][a-z]\\);"
+    (while (re-search-forward "^\\([[:xdigit:]]*\\);[^;]*;\\([A-Z][a-z]\\);"
 			      nil
 			      t)
       (let* ((sym (intern (match-string-no-properties 2)))

@@ -1071,7 +1071,7 @@ VERSION is of the format (Major . Minor)"
      ;; Supposedly, ISO-Prolog wants \NNN\ for octal and \xNNN\ for hexadecimal
      ;; escape sequences in atoms, so be careful not to let the terminating \
      ;; escape a subsequent quote.
-     ("\\\\[x0-7][0-9a-fA-F]*\\(\\\\\\)" (1 "_"))
+     ("\\\\[x0-7][[:xdigit:]]*\\(\\\\\\)" (1 "_"))
      )))
 
 (defun prolog-mode-variables ()

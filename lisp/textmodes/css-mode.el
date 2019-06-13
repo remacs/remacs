@@ -873,7 +873,7 @@ cannot be completed sensibly: `custom-ident',
    (css--uri-re (1 "|") (2 "|"))))
 
 (defconst css-escapes-re
-  "\\\\\\(?:[^\000-\037\177]\\|[0-9a-fA-F]+[ \n\t\r\f]?\\)")
+  "\\\\\\(?:[^\000-\037\177]\\|[[:xdigit:]]+[ \n\t\r\f]?\\)")
 (defconst css-nmchar-re (concat "\\(?:[-[:alnum:]]\\|" css-escapes-re "\\)"))
 (defconst css-nmstart-re (concat "\\(?:[[:alpha:]]\\|" css-escapes-re "\\)"))
 (defconst css-ident-re ;; (concat css-nmstart-re css-nmchar-re "*")
@@ -1079,10 +1079,10 @@ This recognizes CSS-color-4 extensions."
    (regexp-opt (mapcar #'car css--color-map) 'symbols)
    "\\|"
    ;; Short hex.  css-color-4 adds alpha.
-   "\\(#[0-9a-fA-F]\\{3,4\\}\\b\\)"
+   "\\(#[[:xdigit:]]\\{3,4\\}\\b\\)"
    "\\|"
    ;; Long hex.  css-color-4 adds alpha.
-   "\\(#\\(?:[0-9a-fA-F][0-9a-fA-F]\\)\\{3,4\\}\\b\\)"
+   "\\(#\\(?:[[:xdigit:]][[:xdigit:]]\\)\\{3,4\\}\\b\\)"
    "\\|"
    ;; RGB.
    "\\(\\_<rgba?(\\)"

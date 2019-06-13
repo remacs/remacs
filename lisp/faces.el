@@ -1997,7 +1997,7 @@ resulting color name in the echo area."
       (when (and convert-to-RGB
 		 (not (string-equal color "")))
 	(let ((components (x-color-values color)))
-	  (unless (string-match-p "^#\\(?:[a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]\\)+$" color)
+	  (unless (string-match-p "^#\\(?:[[:xdigit:]][[:xdigit:]][[:xdigit:]]\\)+$" color)
 	    (setq color (format "#%04X%04X%04X"
 				(logand 65535 (nth 0 components))
 				(logand 65535 (nth 1 components))

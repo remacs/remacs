@@ -60,7 +60,7 @@
     (should (eq 0
                 (string-match
                  (concat "#<module function "
-                         "\\(at \\(0x\\)?[0-9a-fA-F]+\\( from .*\\)?"
+                         "\\(at \\(0x\\)?[[:xdigit:]]+\\( from .*\\)?"
                          "\\|Fmod_test_sum from .*\\)>")
                  (prin1-to-string (nth 1 descr)))))
     (should (= (nth 2 descr) 3)))

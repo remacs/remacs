@@ -640,7 +640,7 @@ See documentation for variable `ebnf-abn-lex'."
      (let* ((char  (following-char))
 	    (chars (cond ((or (= char ?B) (= char ?b)) "01")
 			 ((or (= char ?D) (= char ?d)) "0-9")
-			 ((or (= char ?X) (= char ?x)) "0-9A-Fa-f")
+			 ((or (= char ?X) (= char ?x)) "[:xdigit:]")
 			 (t (error "Invalid terminal value")))))
        (forward-char)
        (or (> (skip-chars-forward chars ebnf-limit) 0)

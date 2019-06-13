@@ -3079,7 +3079,7 @@ as names, not numbers."
 	 (char
           (cond
            ((char-from-name input t))
-           ((string-match-p "\\`[0-9a-fA-F]+\\'" input)
+           ((string-match-p "\\`[[:xdigit:]]+\\'" input)
             (ignore-errors (string-to-number input 16)))
            ((string-match-p "\\`#\\([bBoOxX]\\|[0-9]+[rR]\\)[0-9a-zA-Z]+\\'"
                             input)

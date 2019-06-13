@@ -1127,7 +1127,7 @@ The length of STRING need not be the same as the rectangle width."
   (cua--rectangle-operation 'keep nil t 1 nil
      (lambda (_s e _l _r)
         (cond
-         ((re-search-forward "0x\\([0-9a-fA-F]+\\)" e t)
+         ((re-search-forward "0x\\([[:xdigit:]]+\\)" e t)
           (let* ((txt (cua--filter-buffer-noprops (match-beginning 1) (match-end 1)))
                  (n (string-to-number txt 16))
                  (fmt (format "0x%%0%dx" (length txt))))

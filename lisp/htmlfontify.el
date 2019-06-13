@@ -566,7 +566,7 @@ therefore no longer care about) will be invalid at any time.\n
 (defvar hfy-tmpfont-stack nil
   "An alist of derived fonts resulting from overlays.")
 
-(defconst hfy-hex-regex "[0-9A-Fa-f]")
+(defconst hfy-hex-regex "[[:xdigit:]]")
 
 (defconst hfy-triplet-regex
   (concat

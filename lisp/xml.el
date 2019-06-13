@@ -194,13 +194,13 @@ See also `xml-get-attribute-or-nil'."
 ;; [8] Nmtokens ::= Nmtoken (#x20 Nmtoken)*
 (defconst xml-nmtokens-re (concat xml-nmtoken-re "\\(?: " xml-name-re "\\)*"))
 
-;; [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
-(defconst xml-char-ref-re  "\\(?:&#[0-9]+;\\|&#x[0-9a-fA-F]+;\\)")
+;; [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [[:xdigit:]]+ ';'
+(defconst xml-char-ref-re  "\\(?:&#[0-9]+;\\|&#x[[:xdigit:]]+;\\)")
 
 ;; [68] EntityRef   ::= '&' Name ';'
 (defconst xml-entity-ref (concat "&" xml-name-re ";"))
 
-(defconst xml-entity-or-char-ref-re (concat "&\\(?:#\\(x\\)?\\([0-9a-fA-F]+\\)\\|\\("
+(defconst xml-entity-or-char-ref-re (concat "&\\(?:#\\(x\\)?\\([[:xdigit:]]+\\)\\|\\("
 					    xml-name-re "\\)\\);"))
 
 ;; [69] PEReference ::= '%' Name ';'
@@ -889,7 +889,7 @@ This follows the rule [28] in the XML specifications."
 The replacement text is obtained by replacing character
 references and parameter-entity references."
   (let ((ref-re (eval-when-compile
-		  (concat "\\(?:&#\\([0-9]+\\)\\|&#x\\([0-9a-fA-F]+\\)\\|%\\("
+		  (concat "\\(?:&#\\([0-9]+\\)\\|&#x\\([[:xdigit:]]+\\)\\|%\\("
 			  xml-name-re "\\)\\);")))
 	children)
     (while (string-match ref-re string)

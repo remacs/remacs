@@ -243,7 +243,7 @@
 (put 'pascal 'math-lang-read-symbol
      '((?\$
         (eq (string-match
-             "\\(\\$[0-9a-fA-F]+\\)\\($\\|[^0-9a-zA-Zα-ωΑ-Ω]\\)"
+             "\\(\\$[[:xdigit:]]+\\)\\($\\|[^0-9a-zA-Zα-ωΑ-Ω]\\)"
              math-exp-str math-exp-pos)
             math-exp-pos)
         (setq math-exp-token 'number

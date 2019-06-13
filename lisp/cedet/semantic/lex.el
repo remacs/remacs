@@ -596,7 +596,7 @@ may need to be overridden for some special languages.")
             "\\|"
             "\\<[0-9]+[eE][-+]?[0-9]+[fFdD]?\\>"
             "\\|"
-            "\\<0[xX][0-9a-fA-F]+[lL]?\\>"
+            "\\<0[xX][[:xdigit:]]+[lL]?\\>"
             "\\|"
             "\\<[0-9]+[lLfFdD]?\\>"
             "\\)"
@@ -609,7 +609,7 @@ DECIMAL_LITERAL:
     [1-9][0-9]*
   ;
 HEX_LITERAL:
-    0[xX][0-9a-fA-F]+
+    0[xX][[:xdigit:]]+
   ;
 OCTAL_LITERAL:
     0[0-7]*

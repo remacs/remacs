@@ -472,7 +472,7 @@ agenda view showing the flagged items."
 		     (concat (shell-quote-argument org-mobile-checksum-binary)
 			     " "
 			     (shell-quote-argument (expand-file-name file)))))
-	(when (string-match "[a-fA-F0-9]\\{30,40\\}" check)
+	(when (string-match "[[:xdigit:]]\\{30,40\\}" check)
 	  (push (cons link-name (match-string 0 check))
 		org-mobile-checksum-files))))
 
@@ -761,7 +761,7 @@ If nothing new has been added, return nil."
 	 (buffer (find-file-noselect file)))
     (when buffer
       (with-current-buffer buffer
-	(when (re-search-forward (concat "\\([0-9a-fA-F]\\{30,\\}\\).*?"
+	(when (re-search-forward (concat "\\([[:xdigit:]]\\{30,\\}\\).*?"
 					 (regexp-quote org-mobile-capture-file)
 					 "[ \t]*$") nil t)
 	  (goto-char (match-beginning 1))

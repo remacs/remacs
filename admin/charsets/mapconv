@@ -118,7 +118,7 @@ elif [ "$3" = "IANA" ] ; then
     # Source format is:
     #   0xXX	0xYYYY
     sed -n -e "${2}p" < $1 \
-	| sed -e 's/\(0x[0-9A-Fa-f]*\)[^0]*\(0x[0-9A-Fa-f]*\).*/\1 \2/' \
+	| sed -e 's/\(0x[[:xdigit:]]*\)[^0]*\(0x[[:xdigit:]]*\).*/\1 \2/' \
 	| sort | ${AWKPROG}
 elif [ "$3" = "UNICODE" ] ; then
     # Source format is:

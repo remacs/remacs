@@ -235,7 +235,7 @@ Like rgb() or hsl()."
     (cond
      ;; Hexadecimal color: #abc or #aabbcc
      ((string-match
-       "\\(#[0-9a-fA-F]\\{3\\}[0-9a-fA-F]\\{3\\}?\\)"
+       "\\(#[[:xdigit:]]\\{3\\}[[:xdigit:]]\\{3\\}?\\)"
        color)
       (match-string 1 color))
      ;; rgb() or rgba() colors

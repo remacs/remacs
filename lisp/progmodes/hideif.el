@@ -540,7 +540,7 @@ that form should be displayed.")
 
 (defconst hif-token-regexp
   (concat (regexp-opt (mapcar 'car hif-token-alist))
-          "\\|0x[0-9a-fA-F]+\\.?[0-9a-fA-F]*"
+          "\\|0x[[:xdigit:]]+\\.?[[:xdigit:]]*"
           "\\|[0-9]+\\.?[0-9]*"  ;; decimal/octal
           "\\|\\w+"))
 
@@ -595,7 +595,7 @@ that form should be displayed.")
                    ;; 1. postfix 'l', 'll', 'ul' and 'ull'
                    ;; 2. floating number formats (like 1.23e4)
                    ;; 3. 098 is interpreted as octal conversion error
-                   (if (string-match "0x\\([0-9a-fA-F]+\\.?[0-9a-fA-F]*\\)"
+                   (if (string-match "0x\\([[:xdigit:]]+\\.?[[:xdigit:]]*\\)"
                                      token)
                        (hif-string-to-number (match-string 1 token) 16)) ;; hex
                    (if (string-match "\\`0[0-9]+\\(\\.[0-9]+\\)?\\'" token)

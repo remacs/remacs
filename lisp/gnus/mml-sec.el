@@ -725,7 +725,7 @@ Otherwise, NAME is treated as user ID, for which no keys are returned if it
 is expired or revoked.
 If optional JUSTONE is not nil, return the first key instead of a list."
   (let* ((keys (epg-list-keys context name))
-	 (iskeyid (string-match "\\(0x\\)?\\([0-9a-fA-F]\\{8,\\}\\)" name))
+	 (iskeyid (string-match "\\(0x\\)?\\([[:xdigit:]]\\{8,\\}\\)" name))
 	 (fingerprint (match-string 2 name))
 	 result)
     (when (and iskeyid (>= (length keys) 2))
