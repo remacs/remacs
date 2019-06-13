@@ -36,6 +36,7 @@
 ;;; Code:
 
 (require 'macroexp)
+(require 'cl-lib)
 
 ;; The variable byte-code-vector is defined by the new bytecomp.el.
 ;; The function byte-decompile-lapcode is defined in byte-opt.el.
