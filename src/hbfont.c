@@ -435,7 +435,17 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 
       /* All the glyphs in a cluster have the same values of FROM and TO.  */
       LGLYPH_SET_FROM (lglyph, from);
-      LGLYPH_SET_TO (lglyph, to);
+      /* This heuristic is for when the Lisp shape-gstring function
+	 substitutes known precomposed characters for decomposed
+	 sequences.  E.g., hebrew.el does that.  This makes TEXT_LEN
+	 be smaller than the original length of the composed character
+	 sequence.  In that case, we must not alter the largest TO,
+	 because the display engine must know that all the characters
+	 in the original sequence were processed by the composition.
+	 If we don't do this, some of the composed characters will be
+	 displayed again as separate glyphs.  */
+      if (!(to == text_len - 1 && LGLYPH_TO (lglyph) > to))
+	LGLYPH_SET_TO (lglyph, to);
 
       /* Not every glyph in a cluster maps directly to a single
 	 character; in general, N characters can yield M glyphs, where
