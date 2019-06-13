@@ -1256,7 +1256,6 @@ Note that the style variables are always made local to the buffer."
       (re-search-forward "[\n\r]?\\(\\\\\\(.\\|\n\\)\\|[^\\\n\r]\\)*"
 			 nil t)
       ;; We're at an EOLL or point-max.
-      (setq c-new-END (max c-new-END (min (1+ (point)) (point-max))))
       (if (equal (c-get-char-property (point) 'syntax-table) '(15))
 	  (if (memq (char-after) '(?\n ?\r))
 	      ;; Normally terminated invalid string.
@@ -1363,6 +1362,16 @@ Note that the style variables are always made local to the buffer."
 		     (cdr (assq (char-before) c-string-innards-re-alist)) nil t)
 		    (1+ (point)))))
 	   (cll)))
+	 (end-hwm ; the highest position which could possibly be affected by
+		   ; insertion/deletion of string delimiters.
+	  (max
+	   (progn
+	     (goto-char (min (1+ end)	; 1+, in case a NL has become escaped.
+			     (point-max)))
+	     (re-search-forward "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*"
+				nil t)
+	     (point))
+	   c-new-END))
 	 s)
       (goto-char
        (cond ((null beg-literal-type)
@@ -1374,13 +1383,13 @@ Note that the style variables are always made local to the buffer."
       ;; Handle one string each time around the next while loop.
       (while
 	  (and
-	   (< (point) c-new-END)
+	   (< (point) end-hwm)
 	   (progn
 	     ;; Skip over any comments before the next string.
 	     (while (progn
-		      (setq s (parse-partial-sexp (point) c-new-END nil
+		      (setq s (parse-partial-sexp (point) end-hwm nil
 						  nil s 'syntax-table))
-		      (and (< (point) c-new-END)
+		      (and (< (point) end-hwm)
 			   (or (not (nth 3 s))
 			       (not (memq (char-before) c-string-delims))))))
 	     ;; We're at the start of a string.

@@ -380,6 +380,8 @@ comment at the start of cc-engine.el for more info."
 	      nil)))
 
       (when (and (car c-macro-cache)
+		 (> (point) (car c-macro-cache)) ; in case we have a
+						 ; zero-sized region.
 		 (bolp)
 		 (not (eq (char-before (1- (point))) ?\\)))
 	(setcdr c-macro-cache (point))
@@ -5646,6 +5648,7 @@ comment at the start of cc-engine.el for more info."
     (let ((pos (or start-pos (point)))
 	  (count how-far)
 	  (s (parse-partial-sexp (point) (point)))) ; null state
+      (goto-char pos)
       (while (and (not (eobp))
 		  (> count 0))
 	;; Scan over counted characters.
@@ -8609,53 +8612,56 @@ comment at the start of cc-engine.el for more info."
        (throw 'level nil))
      (c-backward-syntactic-ws)))
 
-(defun c-back-over-member-initializers ()
+(defun c-back-over-member-initializers (&optional limit)
   ;; Test whether we are in a C++ member initializer list, and if so, go back
   ;; to the introducing ":", returning the position of the opening paren of
   ;; the function's arglist.  Otherwise return nil, leaving point unchanged.
-  (let ((here (point))
-	(paren-state (c-parse-state))
-	pos level-plausible at-top-level res)
-    ;; Assume tentatively that we're at the top level.  Try to go back to the
-    ;; colon we seek.
-    (setq res
-	  (catch 'done
-	    (setq level-plausible
-		  (catch 'level
-		    (c-backward-syntactic-ws)
-		    (when (memq (char-before) '(?\) ?}))
-		      (when (not (c-go-list-backward))
-			(throw 'done nil))
-		      (c-backward-syntactic-ws))
-		    (when (c-back-over-compound-identifier)
-		      (c-backward-syntactic-ws))
-		    (c-back-over-list-of-member-inits)
-		    (and (eq (char-before) ?:)
-			 (save-excursion
-			   (c-backward-token-2)
-			   (not (looking-at c-:$-multichar-token-regexp)))
-			 (c-just-after-func-arglist-p))))
-
-	    (while (and (not (and level-plausible
-				  (setq at-top-level (c-at-toplevel-p))))
-			(setq pos (c-pull-open-brace paren-state))) ; might be a paren.
+  ;; LIMIT, if non-nil, is a limit for the backward search.
+  (save-restriction
+    (if limit (narrow-to-region limit (point)))
+    (let ((here (point))
+	  (paren-state (c-parse-state))
+	  pos level-plausible at-top-level res)
+      ;; Assume tentatively that we're at the top level.  Try to go back to the
+      ;; colon we seek.
+      (setq res
+	    (catch 'done
 	      (setq level-plausible
 		    (catch 'level
-		      (goto-char pos)
 		      (c-backward-syntactic-ws)
-		      (when (not (c-back-over-compound-identifier))
-			(throw 'level nil))
-		      (c-backward-syntactic-ws)
+		      (when (memq (char-before) '(?\) ?}))
+			(when (not (c-go-list-backward))
+			  (throw 'done nil))
+			(c-backward-syntactic-ws))
+		      (when (c-back-over-compound-identifier)
+			(c-backward-syntactic-ws))
 		      (c-back-over-list-of-member-inits)
 		      (and (eq (char-before) ?:)
 			   (save-excursion
 			     (c-backward-token-2)
 			     (not (looking-at c-:$-multichar-token-regexp)))
-			   (c-just-after-func-arglist-p)))))
+			   (c-just-after-func-arglist-p))))
 
-	    (and at-top-level level-plausible)))
-    (or res (goto-char here))
-    res))
+	      (while (and (not (and level-plausible
+				    (setq at-top-level (c-at-toplevel-p))))
+			  (setq pos (c-pull-open-brace paren-state))) ; might be a paren.
+		(setq level-plausible
+		      (catch 'level
+			(goto-char pos)
+			(c-backward-syntactic-ws)
+			(when (not (c-back-over-compound-identifier))
+			  (throw 'level nil))
+			(c-backward-syntactic-ws)
+			(c-back-over-list-of-member-inits)
+			(and (eq (char-before) ?:)
+			     (save-excursion
+			       (c-backward-token-2)
+			       (not (looking-at c-:$-multichar-token-regexp)))
+			     (c-just-after-func-arglist-p)))))
+
+	      (and at-top-level level-plausible)))
+      (or res (goto-char here))
+      res)))
 
 (defun c-forward-class-decl ()
   "From the beginning of a struct/union, etc. move forward to

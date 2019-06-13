@@ -1204,7 +1204,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ((save-excursion
 	     (goto-char match-pos)
 	     (and (memq (char-before match-pos) '(?\( ?\,))
-		  (c-go-up-list-backward match-pos)
+		  (c-go-up-list-backward match-pos (c-determine-limit 500))
 		  (eq (char-after) ?\()
 		  (let ((type (c-get-char-property (point) 'c-type)))
 		    (or (memq type '(c-decl-arg-start c-decl-type-start))
@@ -1605,7 +1605,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  c-recognize-knr-p)		; Strictly speaking, bogus, but it
 					; speeds up lisp.h tremendously.
       (save-excursion
-	(when (not (c-back-over-member-initializers))
+	(when (not (c-back-over-member-initializers (c-determine-limit 2000)))
 	  (unless (or (eobp)
 		      (looking-at "\\s(\\|\\s)"))
 	    (forward-char))
