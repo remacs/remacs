@@ -40,6 +40,7 @@
 (require 'semantic/ctxt)
 (require 'semantic/format)
 (require 'semantic/tag)
+(require 'semantic/analyze)
 (require 'timer)
 ;;(require 'working)
 
@@ -48,7 +49,6 @@
 
 (defvar eldoc-last-message)
 (declare-function eldoc-message "eldoc")
-(declare-function semantic-analyze-interesting-tag "semantic/analyze")
 (declare-function semantic-analyze-unsplit-name "semantic/analyze/fcn")
 (declare-function semantic-complete-analyze-inline-idle "semantic/complete")
 (declare-function semanticdb-deep-find-tags-by-name "semantic/db-find")
@@ -682,7 +682,6 @@ Use the semantic analyzer to find the symbol information."
 		      (semantic-analyze-current-context (point))
 		    (error nil))))
     (when analysis
-      (require 'semantic/analyze)
       (semantic-analyze-interesting-tag analysis))))
 
 (defun semantic-idle-summary-current-symbol-info-default ()
