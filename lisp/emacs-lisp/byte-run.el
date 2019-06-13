@@ -45,13 +45,12 @@ So far, FUNCTION can only be a symbol, not a lambda expression."
 ;; `macro-declaration-function' are both obsolete (as marked at the end of this
 ;; file) but used in many .elc files.
 
-(with-suppressed-warnings ((obsolete macro-declaration-function))
-  (defvar macro-declaration-function #'macro-declaration-function
-    "Function to process declarations in a macro definition.
+(defvar macro-declaration-function #'macro-declaration-function
+  "Function to process declarations in a macro definition.
 The function will be called with two args MACRO and DECL.
 MACRO is the name of the macro being defined.
 DECL is a list `(declare ...)' containing the declarations.
-The value the function returns is not used."))
+The value the function returns is not used.")
 
 (defalias 'macro-declaration-function
   #'(lambda (macro decl)
