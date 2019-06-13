@@ -738,7 +738,8 @@ Only one `%' is removed, and it has to be in the first column."
         (while (re-search-forward "[\200-\377]" (marker-position endm) t)
           (setq i (1+ i))
           (backward-char)
-          (insert (format "\\%03o" (string-to-char (string-make-unibyte (buffer-substring (point) (1+ (point)))))))
+          (insert (format "\\%03o" (string-to-char
+                                    (buffer-substring (point) (1+ (point))))))
           (delete-char 1))
         (message "%d change%s made" i (if (= i 1) "" "s"))
         (set-marker endm nil)))))
