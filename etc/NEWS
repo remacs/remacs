@@ -1514,15 +1514,9 @@ buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
 ** Bookmarks
 
-+++
-*** 'bookmark-file' is now an obsolete alias of
-'bookmark-default-file'.
-
-** Bookmarks
-
 ---
-*** 'bookmark-old-default-file' is now an obsolete alias of
-'bookmark-default-file'.
+*** 'bookmark-file' and 'bookmark-old-default-file' are now obsolete
+aliases of 'bookmark-default-file'.
 
 
 * New Modes and Packages in Emacs 27.1
