@@ -502,10 +502,7 @@ exists in `bookmark-alist', record the new bookmark without throwing away the
 old one."
   (bookmark-maybe-load-default-file)
   (let ((stripped-name (copy-sequence name)))
-    (or (featurep 'xemacs)
-        ;; XEmacs's `set-text-properties' doesn't work on
-        ;; free-standing strings, apparently.
-        (set-text-properties 0 (length stripped-name) nil stripped-name))
+    (set-text-properties 0 (length stripped-name) nil stripped-name)
     (if (and (not no-overwrite)
              (bookmark-get-bookmark stripped-name 'noerror))
         ;; already existing bookmark under that name and
