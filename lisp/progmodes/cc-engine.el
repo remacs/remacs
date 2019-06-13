@@ -2494,18 +2494,6 @@ comment at the start of cc-engine.el for more info."
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar c-semi-lit-near-cache nil)
-(make-variable-buffer-local 'c-semi-lit-near-cache)
-;; A list of up to six recent results from `c-semi-pp-to-literal'.  Each
-;; element is a cons of the buffer position and the `parse-partial-sexp' state
-;; at that position.
-
-(defvar c-semi-near-cache-limit 1)
-(make-variable-buffer-local 'c-semi-near-cache-limit)
-;; An upper limit on valid entries in `c-semi-lit-near-cache'.  This is
-;; reduced by buffer changes, and increased by invocations of
-;; `c-semi-pp-to-literal'.
-
 (defvar c-lit-pos-cache nil)
 (make-variable-buffer-local 'c-lit-pos-cache)
 ;; A list of elements in descending order of POS of one of the forms:
@@ -2708,6 +2696,18 @@ comment at the start of cc-engine.el for more info."
 	    (setq c-lit-pos-cache-limit (point)))
 
 	(cons (point) state)))))
+
+(defvar c-semi-lit-near-cache nil)
+(make-variable-buffer-local 'c-semi-lit-near-cache)
+;; A list of up to six recent results from `c-semi-pp-to-literal'.  Each
+;; element is a cons of the buffer position and the `parse-partial-sexp' state
+;; at that position.
+
+(defvar c-semi-near-cache-limit 1)
+(make-variable-buffer-local 'c-semi-near-cache-limit)
+;; An upper limit on valid entries in `c-semi-lit-near-cache'.  This is
+;; reduced by buffer changes, and increased by invocations of
+;; `c-semi-pp-to-literal'.
 
 (defun c-semi-trim-near-cache ()
   ;; Remove stale entries in `c-semi-lit-near-cache', i.e. those
@@ -7354,7 +7354,7 @@ comment at the start of cc-engine.el for more info."
 	(goto-char (cadr c-old-beg-rs))
 	(when (looking-at c-c++-raw-string-opener-1-re)
 	  (setq id (match-string-no-properties 1))
-	  (when (re-search-forward (concat ")" id "\"") nil t) ; No bound.
+	  (when (search-forward (concat ")" id "\"") nil t) ; No bound.
 	    (setq c-new-END (point-max))
 	    (c-clear-char-properties (cadr c-old-beg-rs) c-new-END
 				     'syntax-table)
