@@ -595,7 +595,7 @@ on disk, but a database table of tags has been associated with it.
 This means that the include will still be used to find tags for
 searches, but you cannot visit this include.\n\n")
       (princ "This Header is now represented by the following database table:\n\n  ")
-      (princ (object-print table))
+      (princ (cl-print-object table))
       )))
 
 (defun semantic-decoration-fileless-include-menu (event)
@@ -749,17 +749,17 @@ Argument EVENT describes the event that caused this function to be called."
 	(princ (substitute-command-keys
 		"  This file's project include search is handled by the EDE object:\n"))
 	(princ "    Buffer Target:  ")
-	(princ (object-print ede-object))
+	(princ (cl-print-object ede-object))
 	(princ "\n")
 	(when (not (eq ede-object ede-object-project))
 	  (princ "    Buffer Project: ")
-	  (princ (object-print ede-object-project))
+	  (princ (cl-print-object ede-object-project))
 	  (princ "\n")
 	  )
 	(when ede-object-project
 	  (let ((loc (ede-get-locator-object ede-object-project)))
 	    (princ "    Backup in-project Locator: ")
-	    (princ (object-print loc))
+	    (princ (cl-print-object loc))
 	    (princ "\n")))
 	(let ((syspath (ede-system-include-path ede-object-project)))
 	  (if (not syspath)
