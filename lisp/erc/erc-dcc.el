@@ -47,9 +47,6 @@
 ;;  /dcc get nick [file] - Accept DCC offer from nick
 ;;  /dcc list - List all DCC offers/connections
 ;;  /dcc send nick file - Offer DCC SEND to nick
-;;
-;; Please note that offering DCC connections (offering chats and sending
-;; files) is only supported with Emacs 22.
 
 ;;; Code:
 
@@ -920,10 +917,7 @@ filter and a process sentinel, and making the connection."
       (buffer-disable-undo (current-buffer))
       ;; This is necessary to have the buffer saved as-is in GNU
       ;; Emacs.
-      ;; XEmacs change: We don't have `set-buffer-multibyte', setting
-      ;; coding system to 'binary below takes care of us.
-      (when (fboundp 'set-buffer-multibyte)
-        (set-buffer-multibyte nil))
+      (set-buffer-multibyte nil)
 
       (setq mode-line-process '(":%s")
             buffer-read-only t)
