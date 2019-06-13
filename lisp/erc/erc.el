@@ -5443,6 +5443,8 @@ This returns non-nil only if we actually send anything."
     (let ((str input)
           (erc-insert-this t))
       (setq erc-send-this t)
+      ;; The calling convention of `erc-send-pre-hook' is that it
+      ;; should change the dynamic variable `str'.
       (run-hook-with-args 'erc-send-pre-hook input)
       (when erc-send-this
         (if (or (string-match "\n" str)
