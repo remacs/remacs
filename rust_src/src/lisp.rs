@@ -20,7 +20,7 @@ use crate::{
     lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
-    remacs_sys::specbind_tag::*,
+    remacs_sys::specbind_tag,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
@@ -291,17 +291,17 @@ pub type SpecbindingRef = ExternalPtr<specbinding>;
 
 impl SpecbindingRef {
     pub fn symbol(&self) -> LispSymbolRef {
-        debug_assert!(self.kind() >= SPECPDL_LET);
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
         unsafe { self.let_.as_ref().symbol }.into()
     }
 
     pub fn old_value(&self) -> LispObject {
-        debug_assert!(self.kind() >= SPECPDL_LET);
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
         unsafe { self.let_.as_ref().old_value }
     }
 
     pub fn set_old_value(&mut self, val: LispObject) {
-        debug_assert!(self.kind() >= SPECPDL_LET);
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
         unsafe {
             self.let_.as_mut().old_value = val;
         }
