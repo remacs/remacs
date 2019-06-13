@@ -59,7 +59,8 @@
                           (format "%s" repeat))))
                       ;; Function.
                       (let ((cl-print-compiled 'static)
-                            (cl-print-compiled-button nil))
+                            (cl-print-compiled-button nil)
+                            (print-escape-newlines t))
                         (cl-prin1-to-string (aref timer 5)))))
       (put-text-property (line-beginning-position)
                          (1+ (line-beginning-position))
