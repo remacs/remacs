@@ -866,7 +866,6 @@ reverse-lookup that name, and recurse with the associated slot value."
 	(if fn
             ;; Accessing a slot via its :initarg is accepted by EIEIO
             ;; (but not CLOS) but is a bad idea (for one: it's slower).
-            ;; FIXME: We should emit a compile-time warning when this happens!
             (eieio--slot-name-index class fn)
           nil)))))
 
