@@ -170,7 +170,7 @@ These buffers are brought into view when layout occurs.")
 (cl-defmethod semantic-debug-highlight-lexical-token ((iface semantic-debug-interface) token)
   "For IFACE, highlight TOKEN in the source buffer .
 TOKEN is a lexical token."
-  (set-buffer (oref iface :source-buffer))
+  (set-buffer (oref iface source-buffer))
 
   (object-add-to-list iface 'overlays
 		      (semantic-lex-highlight-token token))
@@ -183,7 +183,7 @@ TOKEN is a lexical token."
 NONTERM is the name of the rule currently being processed that shows up
 as a nonterminal (or tag) in the source buffer.
 If RULE and MATCH indices are specified, highlight those also."
-  (set-buffer (oref iface :parser-buffer))
+  (set-buffer (oref iface parser-buffer))
 
   (let* ((rules (semantic-find-tags-by-class 'nonterminal (current-buffer)))
 	 (nt (semantic-find-first-tag-by-name nonterm rules))

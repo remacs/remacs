@@ -205,7 +205,7 @@ Some useful functions are found in `semantic-format-tag-functions'."
     (erase-buffer)
     ;; Insert the contents.
     (let ((lastfile nil))
-      (dolist (T (oref results :hit-tags))
+      (dolist (T (oref results hit-tags))
 	(unless (equal lastfile (semantic-tag-file-name T))
 	  (setq lastfile (semantic-tag-file-name T))
 	  (insert-button lastfile
@@ -402,8 +402,8 @@ cursor to the beginning of that symbol, then record a macro as if
 {kmacro-end-macro} to end the macro, and return to the symbol found list."
   (interactive)
   (let* ((oldsym (oref (oref semantic-symref-current-results
-			    :created-by)
-		      :searchfor))
+			    created-by)
+		      searchfor))
 	 (ol (save-excursion
 	       (end-of-line)
 	       (car (semantic-overlays-at (1- (point))))))
@@ -448,8 +448,8 @@ Closed items will be skipped."
   (interactive
    (list (read-string "Rename to: "
 		      (oref (oref semantic-symref-current-results
-				  :created-by)
-			    :searchfor))))
+				  created-by)
+			    searchfor))))
   (let ((count (semantic-symref-list-map-open-hits
 		(lambda () (replace-match newname nil t)))))
     (semantic-symref-list-update-open-hits)
@@ -469,8 +469,8 @@ Return the number of occurrences FUNCTION was operated upon."
   ;;               class members. (Not Done)
 
   (let ((oldsym (oref (oref semantic-symref-current-results
-			    :created-by)
-		      :searchfor))
+			    created-by)
+		      searchfor))
 	(count 0))
     (save-excursion
       (goto-char (point-min))

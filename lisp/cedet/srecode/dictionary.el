@@ -122,7 +122,7 @@ Makes sure that :value is compiled."
 
     (cl-call-next-method this (nreverse newfields))
     (when (not (slot-boundp this 'compiled))
-      (let ((val (oref this :value))
+      (let ((val (oref this value))
 	    (comp nil))
 	(while val
 	  (let ((nval (car val))
@@ -141,7 +141,7 @@ Makes sure that :value is compiled."
 		   (error "Don't know how to handle variable value %S" nval)))
 	    )
 	  (setq val (cdr val)))
-	(oset this :compiled (nreverse comp))))))
+	(oset this compiled (nreverse comp))))))
 
 ;;; DICTIONARY METHODS
 ;;
@@ -223,7 +223,7 @@ TPL is an object representing a compiled template file."
     ;; Tables are sorted with highest priority first, useful for looking
     ;; up templates, but this means we need to install the variables in
     ;; reverse order so higher priority variables override lower ones.
-    (let ((tabs (reverse (oref tpl :tables))))
+    (let ((tabs (reverse (oref tpl tables))))
       (require 'srecode/find) ; For srecode-template-table-in-project-p
       (while tabs
 	(when (srecode-template-table-in-project-p (car tabs))
@@ -518,7 +518,7 @@ inserted with a new editable field.")
     (let* ((dv (oref cp defaultvalue))
 	   (sti (oref cp firstinserter))
 	   (start (point))
-	   (name (oref sti :object-name)))
+	   (name (oref sti object-name)))
 
       (cond
        ;; No default value.

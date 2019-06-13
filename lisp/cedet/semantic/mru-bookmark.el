@@ -315,7 +315,7 @@ non-nil if the minor mode is enabled."
 	(al nil))
     (while (< idx len)
       (let ((r (ring-ref ring idx)))
-	(setq al (cons (cons (oref r :object-name) r)
+	(setq al (cons (cons (oref r object-name) r)
 		       al)))
       (setq idx (1+ idx)))
     (nreverse al)))

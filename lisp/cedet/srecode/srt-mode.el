@@ -502,10 +502,10 @@ section or ? for an ask variable."
 		 )
 	    (when inserter
 	      (let ((base
-		     (cons (oref inserter :object-name)
+		     (cons (oref inserter object-name)
 			   (if (and (slot-boundp inserter :secondname)
-				    (oref inserter :secondname))
-			       (split-string (oref inserter :secondname)
+				    (oref inserter secondname))
+			       (split-string (oref inserter secondname)
 					     ":")
 			     nil)))
 		    (key (oref inserter key)))
@@ -627,7 +627,7 @@ section or ? for an ask variable."
   srecode-template-mode (context)
   "Return a list of possible completions based on NONTEXT."
   (with-current-buffer (oref context buffer)
-    (let* ((prefix (car (last (oref context :prefix))))
+    (let* ((prefix (car (last (oref context prefix))))
 	   (prefixstr (cond ((stringp prefix)
 			     prefix)
 			    ((semantic-tag-p prefix)
@@ -638,7 +638,7 @@ section or ? for an ask variable."
 ;				prefix)
 ;			       ((stringp (car prefix))
 ;				(car prefix))))
-	   (argtype (car (oref context :argument)))
+	   (argtype (car (oref context argument)))
 	   (matches nil))
 
       ;; Depending on what the analyzer is, we have different ways

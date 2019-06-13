@@ -279,7 +279,7 @@ Each directory needs a project file to control it.")
   "Make sure the :file is fully expanded."
   ;; Add ourselves to the master list
   (cl-call-next-method)
-  (let ((f (expand-file-name (oref this :file))))
+  (let ((f (expand-file-name (oref this file))))
     ;; Remove any previous entries from the main list.
     (let ((old (eieio-instance-tracker-find (file-name-directory f)
 					    :directory 'ede-cpp-root-project-list)))
@@ -292,8 +292,8 @@ Each directory needs a project file to control it.")
 	      (file-directory-p f))
       (delete-instance this)
       (error ":file for ede-cpp-root-project must be a file"))
-    (oset this :file f)
-    (oset this :directory (file-name-directory f))
+    (oset this file f)
+    (oset this directory (file-name-directory f))
     (ede-project-directory-remove-hash (file-name-directory f))
     ;; NOTE: We must add to global list here because these classes are not
     ;;       created via the typical loader, but instead via calls from a .emacs
@@ -301,7 +301,7 @@ Each directory needs a project file to control it.")
     (ede-add-project-to-global-list this)
 
     (unless (slot-boundp this 'targets)
-      (oset this :targets nil))
+      (oset this targets nil))
     ))
 
 ;;; SUBPROJ Management.
@@ -455,8 +455,8 @@ This is for project include paths and spp source files."
   "Compile the entire current project PROJ.
 Argument COMMAND is the command to use when compiling."
   ;; we need to be in the proj root dir for this to work
-  (let* ((cmd (oref proj :compile-command))
-	 (ov (oref proj :local-variables))
+  (let* ((cmd (oref proj compile-command))
+	 (ov (oref proj local-variables))
 	 (lcmd (when ov (cdr (assoc 'compile-command ov))))
 	 (cmd-str (cond
 		   ((stringp cmd) cmd)
@@ -470,8 +470,8 @@ Argument COMMAND is the command to use when compiling."
 (cl-defmethod project-compile-target ((obj ede-cpp-root-target) &optional command)
   "Compile the current target OBJ.
 Argument COMMAND is the command to use for compiling the target."
-  (when (oref obj :project)
-    (project-compile-project (oref obj :project) command)))
+  (when (oref obj project)
+    (project-compile-project (oref obj project) command)))
 
 
 (cl-defmethod project-rescan ((this ede-cpp-root-project))
