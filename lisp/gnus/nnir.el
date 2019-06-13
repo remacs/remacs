@@ -969,6 +969,7 @@ details on the language and supported extensions."
          (mapcar
           #'(lambda (group)
             (let (artlist)
+	      (setq group (nnimap-decode-gnus-group group))
               (condition-case ()
                   (when (nnimap-change-group
                          (gnus-group-short-name group) server)
