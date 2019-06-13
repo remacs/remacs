@@ -33,9 +33,7 @@
 ;; * Add website
 
 (require 'ede)
-(declare-function semanticdb-file-table-object "semantic/db")
-(declare-function semanticdb-needs-refresh-p "semantic/db")
-(declare-function semanticdb-refresh-table "semantic/db")
+(require 'semantic/db)
 
 ;;; Code:
 

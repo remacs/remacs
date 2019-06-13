@@ -55,6 +55,7 @@
 
 ;;; Code:
 (require 'ede)
+(require 'semantic/db)
 
 ;;; CONFIG
 ;;
@@ -359,11 +360,6 @@ parsed again."))
   "Class to mix into a project for C/C++ support.
 This target brings in methods used by Semantic to query
 the preprocessor map, and include paths.")
-
-(declare-function semanticdb-file-table-object "semantic/db"
-		  (file &optional dontload))
-(declare-function semanticdb-needs-refresh-p "semantic/db" (arg &rest args))
-(declare-function semanticdb-refresh-table "semantic/db" (arg &rest args))
 
 (cl-defmethod ede-preprocessor-map ((this ede-target-with-config-c))
   "Get the pre-processor map for some generic C code."

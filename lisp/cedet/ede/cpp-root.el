@@ -150,12 +150,10 @@
 ;;   up the differences (the "include summary" reported the same include paths).
 
 (require 'ede)
+(require 'semantic/db)
 
 (defvar semantic-lex-spp-project-macro-symbol-obarray)
 (declare-function semantic-lex-make-spp-table "semantic/lex-spp")
-(declare-function semanticdb-file-table-object "semantic/db")
-(declare-function semanticdb-needs-refresh-p "semantic/db")
-(declare-function semanticdb-refresh-table "semantic/db")
 
 ;;; Code:
 

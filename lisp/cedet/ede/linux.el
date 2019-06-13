@@ -34,11 +34,8 @@
 
 (require 'ede)
 (require 'ede/make)
+(require 'semantic/db)
 (eval-when-compile (require 'cl-lib))
-
-(declare-function semanticdb-file-table-object "semantic/db")
-(declare-function semanticdb-needs-refresh-p "semantic/db")
-(declare-function semanticdb-refresh-table "semantic/db")
 
 ;;; Code:
 (defgroup project-linux nil
