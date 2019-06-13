@@ -20,13 +20,15 @@ use crate::{
     lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
+    remacs_sys::specbind_tag,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
-    remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
+    remacs_sys::{specbinding, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
     remacs_sys::{Vbuffer_alist, Vprocess_alist},
+    symbols::LispSymbolRef,
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -160,6 +162,12 @@ impl<T> PartialEq for ExternalPtr<T> {
     }
 }
 
+impl<T> PartialOrd for ExternalPtr<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.as_ptr().cmp(&other.as_ptr()))
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
@@ -276,6 +284,27 @@ impl From<LispObject> for LispSubrRef {
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(ExternalPtr::as_subr)
+    }
+}
+
+pub type SpecbindingRef = ExternalPtr<specbinding>;
+
+impl SpecbindingRef {
+    pub fn symbol(&self) -> LispSymbolRef {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe { self.let_.as_ref().symbol }.into()
+    }
+
+    pub fn old_value(&self) -> LispObject {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe { self.let_.as_ref().old_value }
+    }
+
+    pub fn set_old_value(&mut self, val: LispObject) {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe {
+            self.let_.as_mut().old_value = val;
+        }
     }
 }
 

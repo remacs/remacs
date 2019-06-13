@@ -16,9 +16,10 @@ use crate::{
     },
     frames::selected_frame,
     hashtable::LispHashTableRef,
-    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual, SpecbindingRef},
     lists::LispCons,
     multibyte::LispStringRef,
+    remacs_sys::specbind_tag,
     remacs_sys::Fframe_terminal,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
@@ -27,6 +28,7 @@ use crate::{
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
     remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsymbolp, Qunbound},
+    threads::ThreadState,
 };
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
@@ -231,6 +233,36 @@ impl LispSymbolRef {
         // Indicate that the global binding is set up now.
         blv.where_ = Qnil;
         blv.set_found(false);
+    }
+
+    pub fn default_toplevel_binding_rust(&self) -> SpecbindingRef {
+        let current_thread = ThreadState::current_thread();
+        let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
+
+        let mut binding = SpecbindingRef::new(std::ptr::null_mut());
+        let mut pdl = SpecbindingRef::new(current_thread.m_specpdl_ptr);
+
+        while pdl > specpdl {
+            unsafe {
+                pdl.ptr_sub(1);
+            }
+            match pdl.kind() {
+                specbind_tag::SPECPDL_LET_DEFAULT | specbind_tag::SPECPDL_LET => {
+                    if pdl.symbol() == *self {
+                        binding = pdl.clone()
+                    }
+                }
+                specbind_tag::SPECPDL_UNWIND
+                | specbind_tag::SPECPDL_UNWIND_PTR
+                | specbind_tag::SPECPDL_UNWIND_INT
+                | specbind_tag::SPECPDL_UNWIND_VOID
+                | specbind_tag::SPECPDL_BACKTRACE
+                | specbind_tag::SPECPDL_LET_LOCAL => {}
+                _ => panic!("Incorrect specpdl kind"),
+            }
+        }
+
+        binding
     }
 }
 
