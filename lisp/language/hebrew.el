@@ -238,8 +238,9 @@ Bidirectional editing is supported.")))
             (setq idx (1+ idx)))))))
     gstring))
 
-(let* ((base "[\u05D0-\u05F2]")
-       (combining "[\u0591-\u05BD\u05BF\u05C1-\u05C2\u05C4-\u05C5\u05C7]+")
+(let* ((base "[\u05D0-\u05F2\uFB1D\uFB1F-\uFB28\uFB2A-\uFB4F]")
+       (combining
+        "[\u0591-\u05BD\u05BF\u05C1-\u05C2\u05C4-\u05C5\u05C7\uFB1E]+")
        (pattern1 (concat base combining))
        (pattern2 (concat base "\u200D" combining)))
   (set-char-table-range
