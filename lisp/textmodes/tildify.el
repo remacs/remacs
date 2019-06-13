@@ -261,7 +261,9 @@ Call CALLBACK on each region outside of environment to ignore.  Stop scanning
 the region as soon as CALLBACK returns nil.  Environments to ignore are
 defined by deprecated `tildify-ignored-environments-alist'.   CALLBACK may be
 called on portions of the buffer outside of [BEG END)."
-  (let ((pairs (tildify--pick-alist-entry tildify-ignored-environments-alist)))
+  (let ((pairs (with-suppressed-warnings ((obsolete tildify--pick-alist-entry))
+                 (tildify--pick-alist-entry
+                  tildify-ignored-environments-alist))))
     (if pairs
         (tildify-foreach-ignore-environments pairs callback beg end)
       (funcall callback beg end))))
@@ -355,7 +357,9 @@ replacements done and response is one of symbols: t (all right), nil
     (goto-char beg)
     (let ((regexp tildify-pattern)
           (match-number 1)
-          (tilde (or (tildify--pick-alist-entry tildify-string-alist)
+          (tilde (or (with-suppressed-warnings ((obsolete
+                                                 tildify--pick-alist-entry))
+                       (tildify--pick-alist-entry tildify-string-alist))
                      tildify-space-string))
           (end-marker (copy-marker end))
           answer
@@ -365,7 +369,9 @@ replacements done and response is one of symbols: t (all right), nil
           (message-log-max nil)
           (count 0))
       ;; For the time being, tildify-pattern-alist overwrites tildify-pattern
-      (let ((alist (tildify--pick-alist-entry tildify-pattern-alist)))
+      (let ((alist (with-suppressed-warnings ((obsolete
+                                               tildify--pick-alist-entry))
+                     (tildify--pick-alist-entry tildify-pattern-alist))))
         (when alist
           (setq regexp (car alist) match-number (cadr alist))))
       (while (and (not quit)
@@ -491,7 +497,9 @@ representation for current major mode, the `tildify-space-string' buffer-local
 variable will be set to the representation."
   nil " ~" nil
   (when tildify-mode
-    (let ((space (tildify--pick-alist-entry tildify-string-alist)))
+    (let ((space (with-suppressed-warnings ((obsolete
+                                             tildify--pick-alist-entry))
+                   (tildify--pick-alist-entry tildify-string-alist))))
       (if (not (string-equal " " (or space tildify-space-string)))
           (when space
             (setq tildify-space-string space))
