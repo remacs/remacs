@@ -331,6 +331,8 @@ DIRS must contain directory names."
 (declare-function xref--show-xrefs "xref")
 (declare-function xref-backend-identifier-at-point "xref")
 (declare-function xref--find-ignores-arguments "xref")
+(declare-function xref--regexp-to-extended "xref")
+(declare-function xref--convert-hits "xref")
 
 ;;;###autoload
 (defun project-find-regexp (regexp)
