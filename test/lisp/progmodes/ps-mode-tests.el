@@ -24,10 +24,21 @@
 (require 'ert)
 (require 'ps-mode)
 
-(ert-deftest ps-mode-test-octal-region ()
+(ert-deftest ps-mode-test-octal-region-unibyte ()
   (with-temp-buffer
     (set-buffer-multibyte nil)
     (insert "foo" #x90 #x91 #x92 "bar")
+    (ps-mode-octal-region (point-min) (point-max))
+    (should (equal (buffer-string)
+                   "foo\\220\\221\\222bar"))))
+
+(ert-deftest ps-mode-test-octal-region-multibyte ()
+  (with-temp-buffer
+    (insert "foo"
+            (unibyte-char-to-multibyte #x90)
+            (unibyte-char-to-multibyte #x91)
+            (unibyte-char-to-multibyte #x92)
+            "bar")
     (ps-mode-octal-region (point-min) (point-max))
     (should (equal (buffer-string)
                    "foo\\220\\221\\222bar"))))
