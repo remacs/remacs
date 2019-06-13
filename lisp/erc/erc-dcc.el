@@ -354,7 +354,6 @@ created subprocess, or nil."
                                         :buffer nil
                                         :host (erc-dcc-host)
                                         :service port
-                                        :nowait t
                                         :noquery nil
                                         :filter filter
                                         :sentinel sentinel
