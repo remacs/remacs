@@ -503,10 +503,6 @@ Tassilo Horn wrote DocView mode, allowing viewing of PDF, PostScript and
 DVI documents.
 
 @item
-Tom Houlder wrote @file{mantemp.el}, which generates manual C@t{++}
-template instantiations.
-
-@item
 Joakim Hove wrote @file{html2text.el}, a html to plain text converter.
 
 @item

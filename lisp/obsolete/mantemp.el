@@ -5,6 +5,7 @@
 ;; Author: Tom Houlder <thoulder@icor.fr>
 ;; Created: 10 Dec 1996
 ;; Keywords: g++, templates
+;; Obsolete-since: 27.1
 
 ;; This file is part of GNU Emacs.
 
@@ -22,6 +23,9 @@
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
+;; This file is obsolete.  For more information, see:
+;; https://debbugs.gnu.org/34789
 
 ;; The following is a typical error message from g++ using STL (here
 ;; with split lines):
