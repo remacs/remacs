@@ -813,8 +813,8 @@ bytes sent."
          ?s (number-to-string (- sent-marker (point-min))))
         (setq erc-dcc-list (delete elt erc-dcc-list))
         (set-buffer-modified-p nil)
-        (kill-buffer (current-buffer))
-        (delete-process proc))
+        (delete-process proc)
+        (kill-buffer (current-buffer)))
        ((<= confirmed-marker sent-marker)
         (while (and (< (- sent-marker confirmed-marker)
                        (or erc-dcc-pump-bytes
@@ -827,8 +827,8 @@ bytes sent."
                  (marker-position confirmed-marker)
                  (marker-position sent-marker)))
         (set-buffer-modified-p nil)
-        (kill-buffer (current-buffer))
-        (delete-process proc))))))
+        (delete-process proc)
+        (kill-buffer (current-buffer)))))))
 
 (defun erc-dcc-display-send (proc)
   (erc-display-message
@@ -978,8 +978,9 @@ rather than every 1024 byte block, but nobody seems to care."
     (let ((inhibit-read-only t)
           received-bytes)
       (goto-char (point-max))
-      (if str
-          (insert (string-make-unibyte str)))
+      (when str
+        (cl-assert (not (multibyte-string-p str)))
+        (insert str))
 
       (when (> (point-max) erc-dcc-receive-cache)
         (erc-dcc-append-contents (current-buffer) erc-dcc-file-name))
