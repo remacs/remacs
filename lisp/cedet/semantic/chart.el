@@ -29,6 +29,8 @@
 (require 'chart)
 (require 'semantic/db)
 (require 'semantic/find)
+(require 'semantic/db-typecache)
+(require 'semantic/scope)
 
 ;;; Code:
 
@@ -140,14 +142,9 @@ items are charted.  TAGTABLE is passed to
 		       nums "Complexity (Lines of code)")
     ))
 
-(declare-function semanticdb-get-typecache "semantic/db-typecache")
-(declare-function semantic-calculate-scope "semantic/scope")
-
 (defun semantic-chart-analyzer ()
   "Chart the extent of the context analysis."
   (interactive)
-  (require 'semantic/db-typecache)
-  (require 'semantic/scope)
   (let* ((p (semanticdb-find-translate-path nil nil))
 	 (plen (length p))
 	 (tab semanticdb-current-table)
