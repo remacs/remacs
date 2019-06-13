@@ -506,6 +506,13 @@ preferably use the `c-mode-menu' language constant directly."
 ;; and `after-change-functions'.  Note that this variable is not set when
 ;; `c-before-change' is invoked by a change to text properties.
 
+(defvar c-syntax-table-hwm most-positive-fixnum)
+;; A workaround for `syntax-ppss''s failure to take account of changes in
+;; syntax-table text properties.  This variable gets set to the lowest
+;; position where the syntax-table text property is changed, and that value
+;; gets supplied to `syntax-ppss-flush-cache' just before a font locking is
+;; due to take place.
+
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
 and the line breaking/filling code.  Intended to be used by other
@@ -888,13 +895,6 @@ Note that the style variables are always made local to the buffer."
 
 
 ;;; Change hooks, linking with Font Lock and electric-indent-mode.
-(defvar c-syntax-table-hwm most-positive-fixnum)
-;; A workaround for `syntax-ppss''s failure to take account of changes in
-;; syntax-table text properties.  This variable gets set to the lowest
-;; position where the syntax-table text property is changed, and that value
-;; gets supplied to `syntax-ppss-flush-cache' just before a font locking is
-;; due to take place.
-
 (defun c-called-from-text-property-change-p ()
   ;; Is the primitive which invoked `before-change-functions' or
   ;; `after-change-functions' one which merely changes text properties?  This
