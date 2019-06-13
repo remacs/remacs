@@ -36,6 +36,7 @@
 (require 'semantic/ctxt)
 (require 'semantic/decorate)
 (require 'semantic/format)
+(require 'semantic/analyze)
 
 (eval-when-compile (require 'semantic/find))
 
@@ -43,7 +44,6 @@
 
 (declare-function semantic-analyze-tag-references "semantic/analyze/refs")
 (declare-function semantic-analyze-refs-impl "semantic/analyze/refs")
-(declare-function semantic-analyze-find-tag "semantic/analyze")
 (declare-function semantic-analyze-tag-type "semantic/analyze/fcn")
 (declare-function semantic-tag-external-class "semantic/sort")
 (declare-function imenu--mouse-menu "imenu")
@@ -594,7 +594,6 @@ Makes C/C++ language like assumptions."
 
 	;; Get the data type, and try to find that.
         ((semantic-tag-type tag)
-	 (require 'semantic/analyze)
 	 (let ((scope (semantic-calculate-scope (point))))
 	   (semantic-analyze-tag-type tag scope))
 	 )
