@@ -1051,6 +1051,17 @@ Note that it's useless to set `erc-send-this' to nil and
 anyway."
   :group 'erc-hooks
   :type 'hook)
+(make-obsolete-variable 'erc-send-pre-hook 'erc-pre-send-function "27.1")
+
+(defcustom erc-pre-send-function nil
+  "Function called to possibly alter the string that is sent.
+It's called with one argument, the string, and should return a
+string.
+
+To suppress the string completely, return nil."
+  :group 'erc
+  :type 'function
+  :version "27.1")
 
 (defvar erc-insert-this t
   "Insert the text into the target buffer or not.
@@ -1061,6 +1072,7 @@ if they wish to avoid insertion of a particular string.")
   "Send the text to the target or not.
 Functions on `erc-send-pre-hook' can set this variable to nil
 if they wish to avoid sending of a particular string.")
+(make-obsolete-variable 'erc-send-pre-hook 'erc-pre-send-function "27.1")
 
 (defcustom erc-insert-modify-hook ()
   "Insertion hook for functions that will change the text's appearance.
@@ -5439,14 +5451,24 @@ This returns non-nil only if we actually send anything."
       (beep))
     nil)
    (t
-    (defvar str) ;; FIXME: Make it obey the "erc-" prefix convention.
+    ;; This dynamic variable is used by `erc-send-pre-hook'.  It's
+    ;; obsolete, and when it's finally removed, this binding should
+    ;; also be removed.
+    (with-suppressed-warnings ((lexical str))
+      (defvar str))
     (let ((str input)
           (erc-insert-this t))
       (setq erc-send-this t)
       ;; The calling convention of `erc-send-pre-hook' is that it
-      ;; should change the dynamic variable `str'.
+      ;; should change the dynamic variable `str' or set
+      ;; `erc-send-this' to nil.  This has now been deprecated:
+      ;; Instead `erc-pre-send-function' is used as a filter to do
+      ;; allow both changing and suppressing the string.
       (run-hook-with-args 'erc-send-pre-hook input)
-      (when erc-send-this
+      (when erc-pre-send-function
+	(setq str (funcall erc-pre-send-function str)))
+      (when (and erc-send-this
+		 str)
         (if (or (string-match "\n" str)
                 (not (string-match erc-command-regexp str)))
             (mapc

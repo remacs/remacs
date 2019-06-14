@@ -882,6 +882,11 @@ This option controls whether and how to use Gnus search groups as
 *** 'erc-button-google-url' has been renamed to 'erc-button-search-url'
 and its value has been changed to Duck Duck Go.
 
+---
+*** `erc-send-pre-hook' and `erc-send-this' have been obsoleted.  The
+variable to use instead to alter text to be sent is now
+`erc-pre-send-function'.
+
 ** EUDC
 
 *** XEmacs support has been removed.
