@@ -28,11 +28,11 @@
 (require 'semantic)
 (require 'semantic/analyze)
 (require 'semantic/wisent)
-(require 'srecode/insert)
 (eval-when-compile
   (require 'semantic/find))
 
 (declare-function srecode-create-dictionary "srecode/dictionary")
+(declare-function srecode-resolve-argument-list "srecode/insert")
 
 ;;; Code:
 (defvar srecode-template-mode-syntax-table
@@ -429,6 +429,7 @@ Moves to the end of one named section."
 (define-mode-local-override semantic-get-local-arguments
   srecode-template-mode (&optional point)
   "Get local arguments from an SRecode template."
+  (require 'srecode/insert)
   (save-excursion
     (when point (goto-char (point)))
     (let* ((tag (semantic-current-tag))
