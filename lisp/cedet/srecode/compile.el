@@ -398,8 +398,7 @@ ESCAPE_START and ESCAPE_END are regexps that indicate the beginning
 escape character, and end escape character pattern for expandable
 macro names.
 Optional argument END-NAME specifies the name of a token upon which
-parsing should stop.
-If END-NAME is specified, and the input string"
+parsing should stop."
   (let* ((what str)
 	 (end-token nil)
 	 (comp nil)
