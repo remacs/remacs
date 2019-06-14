@@ -3699,10 +3699,6 @@ Fall back to normal file name handler if no Tramp handler exists."
 	       (concat remote-prefix file)
 	       (when file1 (concat remote-prefix file1)))))
 	(setq string (replace-match "" nil nil string))
-	;; Remove watch when file or directory to be watched is deleted.
-	(when (and (member (cl-caadr object) '(moved deleted))
-		   (string-equal file (process-get proc 'watch-name)))
-	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
@@ -3754,10 +3750,6 @@ file-notify events."
 	       (concat remote-prefix file)
 	       (when file1 (concat remote-prefix file1)))))
 	(setq string (replace-match "" nil nil string))
-	;; Remove watch when file or directory to be watched is deleted.
-	(when (and (member (cl-caadr object) '(moved deleted))
-		   (string-equal file (process-get proc 'watch-name)))
-	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
@@ -3794,9 +3786,6 @@ file-notify events."
 		  (replace-regexp-in-string "_" "-" (downcase x))))
 	       (split-string (match-string 1 line) "," 'omit))
 	      (match-string 3 line))))
-	;; Remove watch when file or directory to be watched is deleted.
-	(when (member (cl-caadr object) '(move-self delete-self ignored))
-	  (delete-process proc))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
