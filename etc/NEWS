@@ -2067,11 +2067,11 @@ The history of variable names read by 'read-variable' is recorded in
 the new variable 'custom-variable-history'.
 
 ---
-** The function 'string-to-unibyte' is no longer declared obsolete.
-We have found that there are legitimate use cases for this function,
-where there's no better alternative.  We believe that the incorrect
-uses of this function all but disappeared by now, so we are
-un-obsoleting it.
+** The function 'string-to-unibyte' and `string-to-multibyte' are no
+longer declared obsolete.  We have found that there are legitimate use
+cases for these functions, where there's no better alternative.  We
+believe that the incorrect uses of these functions all but disappeared
+by now, so we are un-obsoleting it.
 
 +++
 ** New function 'group-name' returns a group name corresponding to GID.
