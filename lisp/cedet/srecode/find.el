@@ -27,8 +27,7 @@
 (require 'srecode/ctxt)
 (require 'srecode/table)
 (require 'srecode/map)
-
-(declare-function srecode-compile-file "srecode/compile")
+(require 'srecode/compile)
 
 ;;; Code:
 
@@ -58,7 +57,6 @@ Templates are found in the SRecode Template Map.
 See `srecode-get-maps' for more.
 APPNAME is the name of an application.  In this case,
 all template files for that application will be loaded."
-  (require 'srecode/compile)
   (let ((files
 	 (if appname
 	     (apply 'append
