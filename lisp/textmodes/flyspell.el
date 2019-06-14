@@ -423,9 +423,10 @@ like <img alt=\"Some thing.\">."
 
 (defun flyspell-generic-progmode-verify ()
   "Used for `flyspell-generic-check-word-predicate' in programming modes."
-  ;; (point) is next char after the word. Must check one char before.
-  (let ((f (get-text-property (- (point) 1) 'face)))
-    (memq f flyspell-prog-text-faces)))
+  (unless (eql (point) (point-min))
+    ;; (point) is next char after the word. Must check one char before.
+    (let ((f (get-text-property (1- (point)) 'face)))
+      (memq f flyspell-prog-text-faces))))
 
 ;; Records the binding of M-TAB in effect before flyspell was activated.
 (defvar flyspell--prev-meta-tab-binding)
