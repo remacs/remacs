@@ -907,7 +907,7 @@ STR occurs in the current buffer between BEG and END."
 	    (push str semantic-lex-spp-expanded-macro-stack)
 	    )
 
-	  (semantic-lex-spp-anlyzer-do-replace sym val beg end))
+	  (semantic-lex-spp-analyzer-do-replace sym val beg end))
 
 	))
      ;; Anything else.
