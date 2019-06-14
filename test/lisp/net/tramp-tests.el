@@ -2346,6 +2346,7 @@ This checks also `file-name-as-directory', `file-name-directory',
           ;; Run the test.
           (advice-add 'write-region :before advice)
           (setq-local file-precious-flag t)
+          (setq-local backup-inhibited t)
           (insert "bar")
           (should (null (save-buffer)))
           (should-not (cl-member tmp-name written-files :test #'string=)))
