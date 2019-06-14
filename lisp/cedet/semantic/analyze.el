@@ -819,6 +819,58 @@ CONTEXT's content is described in `semantic-analyze-current-context'."
    (get-buffer-window "*Semantic Context Analysis*"))
   )
 
+
+;;; Completion At Point functions
+(defun semantic-analyze-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions'.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions ctxt)))
+
+      ;; The return from this is either:
+      ;; nil - not applicable here.
+      ;; A list: (START END COLLECTION . PROPS)
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
+
+(defun semantic-analyze-notc-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions',
+but with the `no-tc' option passed in, which means constraints based
+on what is being assigned to are ignored.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions ctxt 'no-tc)))
+
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
+
+(defun semantic-analyze-nolongprefix-completion-at-point-function ()
+  "Return possible analysis completions at point.
+The completions provided are via `semantic-analyze-possible-completions',
+but with the `no-tc' and `no-longprefix' option passed in, which means
+constraints resulting in a long multi-symbol dereference are ignored.
+This function can be used by `completion-at-point-functions'."
+  (when (semantic-active-p)
+    (let* ((ctxt (semantic-analyze-current-context))
+           (possible (semantic-analyze-possible-completions
+                      ctxt 'no-tc 'no-longprefix)))
+
+      (when possible
+        (list (car (oref ctxt bounds))
+              (cdr (oref ctxt bounds))
+              possible))
+      )))
+
 (provide 'semantic/analyze)
 
 ;; Local variables:
