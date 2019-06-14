@@ -172,7 +172,7 @@ associated with a buffer or parent."
 	      initfrombuff t))
 
        ;; Parent is another dictionary
-       ((srecode-dictionary-child-p buffer-or-parent)
+       ((cl-typep buffer-or-parent 'srecode-dictionary)
 	(setq parent buffer-or-parent
 	      buffer (oref buffer-or-parent buffer)
 	      origin (concat (eieio-object-name buffer-or-parent) " in "
@@ -356,7 +356,7 @@ values but STATE is nil."
 	(srecode-dictionary-set-value dict name value))
 
        ;; Value is a dictionary; insert as child dictionary.
-       ((srecode-dictionary-child-p value)
+       ((cl-typep value 'srecode-dictionary)
 	(srecode-dictionary-merge
 	 (srecode-dictionary-add-section-dictionary dict name)
 	 value t))
@@ -523,7 +523,7 @@ inserted with a new editable field.")
        ;; No default value.
        ((not dv) (insert name))
        ;; A compound value as the default?  Recurse.
-       ((srecode-dictionary-compound-value-child-p dv)
+       ((cl-typep dv 'srecode-dictionary-compound-value)
 	(srecode-compound-toString dv function dictionary))
        ;; A string that is empty?  Use the name.
        ((and (stringp dv) (string= dv ""))
@@ -659,7 +659,7 @@ STATE is the current compiler state."
 			))
 		    (princ "\n")
 		    )
-		   ((srecode-dictionary-compound-value-child-p entry)
+		   ((cl-typep entry 'srecode-dictionary-compound-value)
 		    (srecode-dump entry indent)
 		    (princ "\n")
 		    )

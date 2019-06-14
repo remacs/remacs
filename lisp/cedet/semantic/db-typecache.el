@@ -114,7 +114,7 @@ Said object must support `semantic-reset' methods.")
 (defun semanticdb-typecache-length (thing)
   "How long is THING?
 Debugging function."
-  (cond ((semanticdb-typecache-child-p thing)
+  (cond ((cl-typep thing 'semanticdb-typecache)
 	 (length (oref thing stream)))
 	((semantic-tag-p thing)
 	 (length (semantic-tag-type-members thing)))

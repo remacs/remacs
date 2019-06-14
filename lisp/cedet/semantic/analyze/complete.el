@@ -89,7 +89,7 @@ in a buffer."
   ;;(semantic-refresh-tags-safe)
   (if (semantic-active-p)
     (with-syntax-table semantic-lex-syntax-table
-      (let* ((context (if (semantic-analyze-context-child-p context)
+      (let* ((context (if (cl-typep context 'semantic-analyze-context)
 			  context
 			(semantic-analyze-current-context context)))
 	     (ans (if (not context)

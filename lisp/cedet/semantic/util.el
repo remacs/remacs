@@ -119,7 +119,7 @@ buffer, or a filename.  If SOMETHING is nil return nil."
    ((and (featurep 'semantic/db)
 	 (require 'semantic/db-mode)
 	 (semanticdb-minor-mode-p)
-	 (semanticdb-abstract-table-child-p something))
+	 (cl-typep something 'semanticdb-abstract-table))
     (semanticdb-refresh-table something)
     (semanticdb-get-tags something))
    ;; Semanticdb find-results

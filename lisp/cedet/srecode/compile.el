@@ -617,7 +617,7 @@ Argument INDENT specifies the indentation level for the list."
       (princ ") ")
       (cond ((stringp (car code))
 	     (prin1 (car code)))
-	    ((srecode-template-inserter-child-p (car code))
+	    ((cl-typep (car code) 'srecode-template-inserter)
 	     (srecode-dump (car code) indent))
 	    (t
 	     (princ "Unknown Code: ")

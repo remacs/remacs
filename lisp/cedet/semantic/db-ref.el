@@ -88,7 +88,7 @@ refers to DBT will be removed."
     (while refs
       (let* ((ok t)
 	     (db (car refs))
-	     (f (when (semanticdb-table-child-p db)
+	     (f (when (cl-typep db 'semanticdb-table)
 		  (semanticdb-full-filename db)))
 	     )
 

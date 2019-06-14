@@ -362,7 +362,7 @@ Default action as described in `semanticdb-find-translate-path'."
   "Are there any incomplete entries in CACHE?"
   (let ((ans nil))
     (dolist (tab cache)
-      (when (and (semanticdb-table-child-p tab)
+      (when (and (cl-typep tab 'semanticdb-table)
 		 (not (number-or-marker-p (oref tab pointmax))))
 	(setq ans t))
       )
@@ -402,7 +402,7 @@ Default action as described in `semanticdb-find-translate-path'."
 		      (semantic-buffer-local-value 'semanticdb-current-table path))
 		     ((and (stringp path) (file-exists-p path))
 		      (semanticdb-file-table-object path t))
-		     ((semanticdb-abstract-table-child-p path)
+		     ((cl-typep path 'semanticdb-abstract-table)
 		      path)
 		     (t nil))))
     (if table
@@ -910,7 +910,7 @@ This query only really tests the first entry in the list that is RESULTP,
 but should be good enough for debugging assertions."
   (and (listp resultp)
        (listp (car resultp))
-       (semanticdb-abstract-table-child-p (car (car resultp)))
+       (cl-typep (car (car resultp)) 'semanticdb-abstract-table)
        (or (semantic-tag-p (car (cdr (car resultp))))
 	   (null (car (cdr (car resultp)))))))
 
@@ -938,7 +938,7 @@ but should be good enough for debugging assertions."
   (and (listp resultp)
        (listp (car resultp))
        (let ((tag-to-test (car-safe (cdr (car resultp)))))
-	 (or (and (semanticdb-abstract-table-child-p (car (car resultp)))
+	 (or (and (cl-typep (car (car resultp)) 'semanticdb-abstract-table)
 		  (or (semantic-tag-p tag-to-test)
 		      (null tag-to-test)))
 	     (and (null (car (car resultp)))
