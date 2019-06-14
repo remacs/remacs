@@ -115,5 +115,46 @@
   ;; Test zero-argument `seq'.
   (should (equal (rx (seq)) "")))
 
+(defmacro rx-tests--match (regexp string &optional match)
+  (macroexp-let2 nil strexp string
+    `(ert-info ((format "Matching %S to %S" ',regexp ,strexp))
+       (should (string-match ,regexp ,strexp))
+       ,@(when match
+           `((should (equal (match-string 0 ,strexp) ,match)))))))
+
+(ert-deftest rx-nonstring-expr ()
+  (let ((bee "b")
+        (vowel "[aeiou]"))
+    (rx-tests--match (rx "a" (literal bee) "c") "abc")
+    (rx-tests--match (rx "a" (regexp bee) "c") "abc")
+    (rx-tests--match (rx "a" (or (regexp bee) "xy") "c") "abc")
+    (rx-tests--match (rx "a" (or "xy" (regexp bee)) "c") "abc")
+    (should-not (string-match (rx (or (regexp bee) "xy")) ""))
+    (rx-tests--match (rx "a" (= 3 (regexp bee)) "c") "abbbc")
+    (rx-tests--match (rx "x" (= 3 (regexp vowel)) "z") "xeoez")
+    (should-not (string-match (rx "x" (= 3 (regexp vowel)) "z") "xe[]z"))
+    (rx-tests--match (rx "x" (= 3 (literal vowel)) "z")
+                     "x[aeiou][aeiou][aeiou]z")
+    (rx-tests--match (rx "x" (repeat 1 (regexp vowel)) "z") "xaz")
+    (rx-tests--match (rx "x" (repeat 1 2 (regexp vowel)) "z") "xaz")
+    (rx-tests--match (rx "x" (repeat 1 2 (regexp vowel)) "z") "xauz")
+    (rx-tests--match (rx "x" (>= 1 (regexp vowel)) "z") "xaiiz")
+    (rx-tests--match (rx "x" (** 1 2 (regexp vowel)) "z") "xaiz")
+    (rx-tests--match (rx "x" (group (regexp vowel)) "z") "xaz")
+    (rx-tests--match (rx "x" (group-n 1 (regexp vowel)) "z") "xaz")
+    (rx-tests--match (rx "x" (? (regexp vowel)) "z") "xz")))
+
+(ert-deftest rx-nonstring-expr-non-greedy ()
+  "`rx's greediness can't affect runtime regexp parts."
+  (let ((ad-min "[ad]*?")
+        (ad-max "[ad]*")
+        (ad "[ad]"))
+    (rx-tests--match (rx "c" (regexp ad-min) "a") "cdaaada" "cda")
+    (rx-tests--match (rx "c" (regexp ad-max) "a") "cdaaada" "cdaaada")
+    (rx-tests--match (rx "c" (minimal-match (regexp ad-max)) "a") "cdaaada" "cdaaada")
+    (rx-tests--match (rx "c" (maximal-match (regexp ad-min)) "a") "cdaaada" "cda")
+    (rx-tests--match (rx "c" (minimal-match (0+ (regexp ad))) "a") "cdaaada" "cda")
+    (rx-tests--match (rx "c" (maximal-match (0+ (regexp ad))) "a") "cdaaada" "cdaaada")))
+
 (provide 'rx-tests)
 ;; rx-tests.el ends here.

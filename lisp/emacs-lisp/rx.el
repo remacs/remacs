@@ -47,57 +47,58 @@
 
 ;; Rx translates a sexp notation for regular expressions into the
 ;; usual string notation.  The translation can be done at compile-time
-;; by using the `rx' macro.  It can be done at run-time by calling
-;; function `rx-to-string'.  See the documentation of `rx' for a
-;; complete description of the sexp notation.
+;; by using the `rx' macro.  The `regexp' and `literal' forms accept
+;; non-constant expressions, in which case `rx' will translate to a
+;; `concat' expression.  Translation can be done fully at run time by
+;; calling function `rx-to-string'.  See the documentation of `rx' for
+;; a complete description of the sexp notation.
 ;;
 ;; Some examples of string regexps and their sexp counterparts:
 ;;
 ;; "^[a-z]*"
-;; (rx (and line-start (0+ (in "a-z"))))
+;; (rx line-start (0+ (in "a-z")))
 ;;
 ;; "\n[^ \t]"
-;; (rx (and "\n" (not (any " \t"))))
+;; (rx ?\n (not (in " \t")))
 ;;
 ;; "\\*\\*\\* EOOH \\*\\*\\*\n"
 ;; (rx "*** EOOH ***\n")
 ;;
 ;; "\\<\\(catch\\|finally\\)\\>[^_]"
-;; (rx (and word-start (submatch (or "catch" "finally")) word-end
-;;          (not (any ?_))))
+;; (rx word-start (submatch (or "catch" "finally")) word-end
+;;     (not (in ?_)))
 ;;
-;; "[ \t\n]*:\\([^:]+\\|$\\)"
-;; (rx (and (zero-or-more (in " \t\n")) ":"
-;;          (submatch (or line-end (one-or-more (not (any ?:)))))))
+;; "[ \t\n]*:\\($\\|[^:]+\\)"
+;; (rx (* (in " \t\n")) ":"
+;;     (submatch (or line-end (+ (not (in ?:))))))
 ;;
-;; "^content-transfer-encoding:\\(\n?[\t ]\\)*quoted-printable\\(\n?[\t ]\\)*"
-;; (rx (and line-start
-;;          "content-transfer-encoding:"
-;;          (+ (? ?\n)) (any " \t")
-;;	    "quoted-printable"
-;;	    (+ (? ?\n)) (any " \t"))
+;; "^content-transfer-encoding:\\(?:\n?[\t ]\\)*quoted-printable\\(?:\n?[\t ]\\)*"
+;; (rx line-start
+;;     "content-transfer-encoding:"
+;;     (* (? ?\n) (in " \t"))
+;;     "quoted-printable"
+;;     (* (? ?\n) (in " \t")))
 ;;
 ;; (concat "^\\(?:" something-else "\\)")
-;; (rx (and line-start (eval something-else))), statically or
-;; (rx-to-string '(and line-start ,something-else)), dynamically.
+;; (rx line-start (regexp something-else))
 ;;
 ;; (regexp-opt '(STRING1 STRING2 ...))
 ;; (rx (or STRING1 STRING2 ...)), or in other words, `or' automatically
 ;; calls `regexp-opt' as needed.
 ;;
 ;; "^;;\\s-*\n\\|^\n"
-;; (rx (or (and line-start ";;" (0+ space) ?\n)
-;;         (and line-start ?\n)))
+;; (rx (or (seq line-start ";;" (0+ space) ?\n)
+;;         (seq line-start ?\n)))
 ;;
 ;; "\\$[I]d: [^ ]+ \\([^ ]+\\) "
-;; (rx (and "$Id: "
-;;          (1+ (not (in " ")))
-;;          " "
-;;          (submatch (1+ (not (in " "))))
-;;          " "))
+;; (rx "$Id: "
+;;     (1+ (not (in " ")))
+;;     " "
+;;     (submatch (1+ (not (in " "))))
+;;     " ")
 ;;
 ;; "\\\\\\\\\\[\\w+"
-;; (rx (and ?\\ ?\\ ?\[ (1+ word)))
+;; (rx "\\\\[" (1+ word))
 ;;
 ;; etc.
 
@@ -176,6 +177,7 @@
     (not-syntax		. (rx-not-syntax 1 1)) ; sregex
     (category		. (rx-category 1 1 rx-check-category))
     (eval		. (rx-eval 1 1))
+    (literal		. (rx-literal 1 1 stringp))
     (regexp		. (rx-regexp 1 1 stringp))
     (regex		. regexp)       ; sregex
     (digit		. "[[:digit:]]")
@@ -302,6 +304,10 @@ regular expression strings.")
   "Non-nil means produce greedy regular expressions for `zero-or-one',
 `zero-or-more', and `one-or-more'.  Dynamically bound.")
 
+(defvar rx--compile-to-lisp nil
+  "Nil means return a regexp as a string.
+Non-nil means we may return a lisp form which produces a
+string (used for `rx' macro).")
 
 (defun rx-info (op head)
   "Return parsing/code generation info for OP.
@@ -344,7 +350,7 @@ a standalone symbol."
 	       (> nargs max-args))
       (error "rx form `%s' accepts at most %d args"
 	     (car form) max-args))
-    (when (not (null type-pred))
+    (when type-pred
       (dolist (sub-form (cdr form))
 	(unless (funcall type-pred sub-form)
 	  (error "rx form `%s' requires args satisfying `%s'"
@@ -360,8 +366,9 @@ is non-nil."
    ;; for concatenation
    ((eq group ':)
     (if (rx-atomic-p
-	 (if (string-match
-	      "\\(?:[?*+]\\??\\|\\\\{[0-9]*,?[0-9]*\\\\}\\)\\'" regexp)
+         (if (and (stringp regexp)
+                  (string-match
+                   "\\(?:[?*+]\\??\\|\\\\{[0-9]*,?[0-9]*\\\\}\\)\\'" regexp))
 	     (substring regexp 0 (match-beginning 0))
 	   regexp))
 	(setq group nil)))
@@ -370,9 +377,10 @@ is non-nil."
    ;; do anyway
    ((eq group t))
    ((rx-atomic-p regexp t) (setq group nil)))
-  (if group
-      (concat "\\(?:" regexp "\\)")
-    regexp))
+  (cond ((and group (stringp regexp))
+         (concat "\\(?:" regexp "\\)"))
+        (group `("\\(?:" ,@regexp "\\)"))
+        (t regexp)))
 
 
 (defvar rx-parent)
@@ -384,7 +392,7 @@ is non-nil."
 FORM is of the form `(and FORM1 ...)'."
   (rx-check form)
   (rx-group-if
-   (mapconcat (lambda (x) (rx-form x ':)) (cdr form) nil)
+   (rx--subforms (cdr form) ':)
    (and (memq rx-parent '(* t)) rx-parent)))
 
 
@@ -396,7 +404,7 @@ FORM is of the form `(and FORM1 ...)'."
     ((null (cdr form)) regexp-unmatchable)
     ((cl-every #'stringp (cdr form))
      (regexp-opt (cdr form) nil t))
-    (t (mapconcat (lambda (x) (rx-form x '|)) (cdr form) "\\|")))
+    (t (rx--subforms (cdr form) '| "\\|")))
    (and (memq rx-parent '(: * t)) rx-parent)))
 
 
@@ -669,7 +677,10 @@ If SKIP is non-nil, allow that number of items after the head, i.e.
   (unless (and (integerp (nth 1 form))
 	       (> (nth 1 form) 0))
     (error "rx `=' requires positive integer first arg"))
-  (format "%s\\{%d\\}" (rx-form (nth 2 form) '*) (nth 1 form)))
+  (let ((subform (rx-form (nth 2 form) '*)))
+    (if (stringp subform)
+        (format "%s\\{%d\\}" subform (nth 1 form))
+      `(,@subform ,(format "\\{%d\\}" (nth 1 form))))))
 
 
 (defun rx->= (form)
@@ -679,7 +690,10 @@ If SKIP is non-nil, allow that number of items after the head, i.e.
   (unless (and (integerp (nth 1 form))
 	       (> (nth 1 form) 0))
     (error "rx `>=' requires positive integer first arg"))
-  (format "%s\\{%d,\\}" (rx-form (nth 2 form) '*) (nth 1 form)))
+  (let ((subform (rx-form (nth 2 form) '*)))
+    (if (stringp subform)
+        (format "%s\\{%d,\\}" subform (nth 1 form))
+      `(,@subform ,(format "\\{%d,\\}" (nth 1 form))))))
 
 
 (defun rx-** (form)
@@ -700,7 +714,10 @@ FORM is either `(repeat N FORM1)' or `(repeat N M FORMS...)'."
 	 (unless (and (integerp (nth 1 form))
 		      (> (nth 1 form) 0))
 	   (error "rx `repeat' requires positive integer first arg"))
-	 (format "%s\\{%d\\}" (rx-form (nth 2 form) '*) (nth 1 form)))
+         (let ((subform (rx-form (nth 2 form) '*)))
+           (if (stringp subform)
+               (format "%s\\{%d\\}" subform (nth 1 form))
+             `(,@subform ,(format "\\{%d\\}" (nth 1 form))))))
 	((or (not (integerp (nth 2 form)))
 	     (< (nth 2 form) 0)
 	     (not (integerp (nth 1 form)))
@@ -708,32 +725,28 @@ FORM is either `(repeat N FORM1)' or `(repeat N M FORMS...)'."
 	     (< (nth 2 form) (nth 1 form)))
 	 (error "rx `repeat' range error"))
 	(t
-	 (format "%s\\{%d,%d\\}" (rx-form (nth 3 form) '*)
-		 (nth 1 form) (nth 2 form)))))
+         (let ((subform (rx-form (nth 3 form) '*)))
+           (if (stringp subform)
+               (format "%s\\{%d,%d\\}" subform (nth 1 form) (nth 2 form))
+             `(,@subform ,(format "\\{%d,%d\\}" (nth 1 form) (nth 2 form))))))))
 
 
 (defun rx-submatch (form)
   "Parse and produce code from FORM, which is `(submatch ...)'."
-  (concat "\\("
-          (if (= 2 (length form))
-              ;; Only one sub-form.
-              (rx-form (cadr form))
-            ;; Several sub-forms implicitly concatenated.
-            (mapconcat (lambda (re) (rx-form re ':)) (cdr form) nil))
-          "\\)"))
+  (let ((subforms (rx--subforms (cdr form) ':)))
+    (if (stringp subforms)
+        (concat "\\(" subforms "\\)")
+      `("\\(" ,@subforms "\\)"))))
 
 (defun rx-submatch-n (form)
   "Parse and produce code from FORM, which is `(submatch-n N ...)'."
-  (let ((n (nth 1 form)))
+  (let ((n (nth 1 form))
+        (subforms (rx--subforms (cddr form) ':)))
     (unless (and (integerp n) (> n 0))
       (error "rx `submatch-n' argument must be positive"))
-    (concat "\\(?" (number-to-string n) ":"
-	    (if (= 3 (length form))
-		;; Only one sub-form.
-		(rx-form (nth 2 form))
-	      ;; Several sub-forms implicitly concatenated.
-	      (mapconcat (lambda (re) (rx-form re ':)) (cddr form) nil))
-	    "\\)")))
+    (if (stringp subforms)
+        (concat "\\(?" (number-to-string n) ":" subforms "\\)")
+      `("\\(?" ,(number-to-string n) ":" ,@subforms "\\)"))))
 
 (defun rx-backref (form)
   "Parse and produce code from FORM, which is `(backref N)'."
@@ -761,9 +774,12 @@ is non-nil."
 		      (t "?")))
 	(op (cond ((memq (car form) '(* *? 0+ zero-or-more)) "*")
 		  ((memq (car form) '(+ +? 1+ one-or-more))  "+")
-		  (t "?"))))
+                  (t "?")))
+        (subform (rx-form (cadr form) '*)))
     (rx-group-if
-     (concat (rx-form (cadr form) '*) op suffix)
+     (if (stringp subform)
+         (concat subform op suffix)
+       `(,@subform ,(concat op suffix)))
      (and (memq rx-parent '(t *)) rx-parent))))
 
 
@@ -791,15 +807,18 @@ regexps that are atomic but end in operators, such as
 be detected without much effort.  A guarantee of no false
 negatives would require a theoretic specification of the set
 of all atomic regexps."
-  (let ((l (length r)))
-    (cond
-     ((<= l 1))
-     ((= l 2) (= (aref r 0) ?\\))
-     ((= l 3) (string-match "\\`\\(?:\\\\[cCsS_]\\|\\[[^^]\\]\\)" r))
-     ((null lax)
+  (if (and rx--compile-to-lisp
+           (not (stringp r)))
+      nil ;; Runtime value, we must assume non-atomic.
+    (let ((l (length r)))
       (cond
-       ((string-match "\\`\\[\\^?]?\\(?:\\[:[a-z]+:]\\|[^]]\\)*]\\'" r))
-       ((string-match "\\`\\\\(\\(?:[^\\]\\|\\\\[^)]\\)*\\\\)\\'" r)))))))
+       ((<= l 1))
+       ((= l 2) (= (aref r 0) ?\\))
+       ((= l 3) (string-match "\\`\\(?:\\\\[cCsS_]\\|\\[[^^]\\]\\)" r))
+       ((null lax)
+        (cond
+         ((string-match "\\`\\[\\^?]?\\(?:\\[:[a-z]+:]\\|[^]]\\)*]\\'" r))
+         ((string-match "\\`\\\\(\\(?:[^\\]\\|\\\\[^)]\\)*\\\\)\\'" r))))))))
 
 
 (defun rx-syntax (form)
@@ -855,9 +874,23 @@ If FORM is `(minimal-match FORM1)', non-greedy versions of `*',
 
 (defun rx-regexp (form)
   "Parse and produce code from FORM, which is `(regexp STRING)'."
-  (rx-check form)
-  (rx-group-if (cadr form) rx-parent))
+  (cond ((stringp form)
+         (rx-group-if (cadr form) rx-parent))
+        (rx--compile-to-lisp
+         ;; Always group non-string forms, since we can't be sure they
+         ;; are atomic.
+         (rx-group-if (cdr form) t))
+        (t (rx-check form))))
 
+(defun rx-literal (form)
+  "Parse and produce code from FORM, which is `(literal STRING-EXP)'."
+  (cond ((stringp form)
+         ;; This is allowed, but makes little sense, you could just
+         ;; use STRING directly.
+         (rx-group-if (regexp-quote (cadr form)) rx-parent))
+        (rx--compile-to-lisp
+         (rx-group-if `((regexp-quote ,(cadr form))) rx-parent))
+        (t (rx-check form))))
 
 (defun rx-form (form &optional parent)
   "Parse and produce code for regular expression FORM.
@@ -888,12 +921,38 @@ shy groups around the result and some more in other functions."
      (t
       (error "rx syntax error at `%s'" form)))))
 
+(defun rx--subforms (subforms &optional parent separator)
+  "Produce code for regular expressions SUBFORMS.
+SUBFORMS is a list of regular expression sexps.
+PARENT controls grouping, as in `rx-form'.
+Insert SEPARATOR between the code from each of SUBFORMS."
+  (if (null (cdr subforms))
+      ;; Zero or one forms, no need for grouping.
+      (and subforms (rx-form (car subforms)))
+    (let ((listify (lambda (x)
+                     (if (listp x) (copy-sequence x)
+                       (list x)))))
+      (setq subforms (mapcar (lambda (x) (rx-form x parent)) subforms))
+      (cond ((or (not rx--compile-to-lisp)
+                 (cl-every #'stringp subforms))
+             (mapconcat #'identity subforms separator))
+            (separator
+             (nconc (funcall listify (car subforms))
+                    (mapcan (lambda (x)
+                              (cons separator (funcall listify x)))
+                            (cdr subforms))))
+            (t (mapcan listify subforms))))))
+
 
 ;;;###autoload
 (defun rx-to-string (form &optional no-group)
   "Parse and produce code for regular expression FORM.
 FORM is a regular expression in sexp form.
-NO-GROUP non-nil means don't put shy groups around the result."
+NO-GROUP non-nil means don't put shy groups around the result.
+
+In contrast to the `rx' macro, subforms `literal' and `regexp'
+will not accept non-string arguments, i.e., (literal STRING)
+becomes just a more verbose version of STRING."
   (rx-group-if (rx-form form) (null no-group)))
 
 
@@ -903,8 +962,12 @@ NO-GROUP non-nil means don't put shy groups around the result."
 REGEXPS is a non-empty sequence of forms of the sort listed below.
 
 Note that `rx' is a Lisp macro; when used in a Lisp program being
-compiled, the translation is performed by the compiler.
-See `rx-to-string' for how to do such a translation at run-time.
+compiled, the translation is performed by the compiler.  The
+`literal' and `regexp' forms accept subforms that will evaluate
+to strings, in addition to constant strings.  If REGEXPS include
+such forms, then the result is an expression which returns a
+regexp string, rather than a regexp string directly.  See
+`rx-to-string' for performing translation completely at run time.
 
 The following are valid subforms of regular expressions in sexp
 notation.
@@ -1204,18 +1267,29 @@ enclosed in `(and ...)'.
 `(backref N)'
      matches what was matched previously by submatch N.
 
+`(literal STRING-EXPR)'
+     matches STRING-EXPR literally, where STRING-EXPR is any lisp
+     expression that evaluates to a string.
+
+`(regexp REGEXP-EXPR)'
+     include REGEXP-EXPR in string notation in the result, where
+     REGEXP-EXPR is any lisp expression that evaluates to a
+     string containing a valid regexp.
+
 `(eval FORM)'
      evaluate FORM and insert result.  If result is a string,
-     `regexp-quote' it.
-
-`(regexp REGEXP)'
-     include REGEXP in string notation in the result."
-  (cond ((null regexps)
-	 (error "No regexp"))
-	((cdr regexps)
-	 (rx-to-string `(and ,@regexps) t))
-	(t
-	 (rx-to-string (car regexps) t))))
+     `regexp-quote' it.  Note that FORM is evaluated during
+     macroexpansion."
+  (let* ((rx--compile-to-lisp t)
+         (re (cond ((null regexps)
+                    (error "No regexp"))
+                   ((cdr regexps)
+                    (rx-to-string `(and ,@regexps) t))
+                   (t
+                    (rx-to-string (car regexps) t)))))
+    (if (stringp re)
+        re
+      `(concat ,@re))))
 
 
 (pcase-defmacro rx (&rest regexps)
@@ -1276,14 +1350,6 @@ string as argument to `match-string'."
           ,@(cl-loop for i from 1
                      for var in vars
                      collect `(app (match-string ,i) ,var)))))
-
-;; ;; sregex.el replacement
-
-;; ;;;###autoload (provide 'sregex)
-;; ;;;###autoload (autoload 'sregex "rx")
-;; (defalias 'sregex 'rx-to-string)
-;; ;;;###autoload (autoload 'sregexq "rx" nil nil 'macro)
-;; (defalias 'sregexq 'rx)
 
 (provide 'rx)
 
