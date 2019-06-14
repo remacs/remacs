@@ -1051,16 +1051,17 @@ Note that it's useless to set `erc-send-this' to nil and
 anyway."
   :group 'erc-hooks
   :type 'hook)
-(make-obsolete-variable 'erc-send-pre-hook 'erc-pre-send-function "27.1")
+(make-obsolete-variable 'erc-send-pre-hook 'erc-pre-send-functions "27.1")
 
-(defcustom erc-pre-send-function nil
-  "Function called to possibly alter the string that is sent.
-It's called with one argument, the string, and should return a
-string.
+(defcustom erc-pre-send-functions nil
+  "List of functions called to possibly alter the string that is sent.
+The functions are called with one argument, the string, and
+should return a string.
 
-To suppress the string completely, return nil."
+To suppress the string completely, one of the functions should
+return nil."
   :group 'erc
-  :type 'function
+  :type '(repeat function)
   :version "27.1")
 
 (defvar erc-insert-this t
@@ -1072,7 +1073,7 @@ if they wish to avoid insertion of a particular string.")
   "Send the text to the target or not.
 Functions on `erc-send-pre-hook' can set this variable to nil
 if they wish to avoid sending of a particular string.")
-(make-obsolete-variable 'erc-send-pre-hook 'erc-pre-send-function "27.1")
+(make-obsolete-variable 'erc-insert-this 'erc-pre-send-functions "27.1")
 
 (defcustom erc-insert-modify-hook ()
   "Insertion hook for functions that will change the text's appearance.
@@ -5462,11 +5463,13 @@ This returns non-nil only if we actually send anything."
       ;; The calling convention of `erc-send-pre-hook' is that it
       ;; should change the dynamic variable `str' or set
       ;; `erc-send-this' to nil.  This has now been deprecated:
-      ;; Instead `erc-pre-send-function' is used as a filter to do
+      ;; Instead `erc-pre-send-functions' is used as a filter to do
       ;; allow both changing and suppressing the string.
       (run-hook-with-args 'erc-send-pre-hook input)
-      (when erc-pre-send-function
-	(setq str (funcall erc-pre-send-function str)))
+      (dolist (func erc-pre-send-functions)
+	;; The functions can return nil to inhibit sending.
+	(when str
+	  (setq str (funcall func str))))
       (when (and erc-send-this
 		 str)
         (if (or (string-match "\n" str)
