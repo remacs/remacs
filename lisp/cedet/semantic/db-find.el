@@ -1085,7 +1085,7 @@ Returns result."
   "Log that TABLE has been searched and RESULT was found."
   (when semanticdb-find-log-flag
     (with-current-buffer semanticdb-find-log-buffer-name
-      (insert "Table: " (cl-print-object table)
+      (insert "Table: " (cl-prin1-to-string table)
 	      " Result: " (int-to-string (length result)) " tags"
 	      "\n")
       )

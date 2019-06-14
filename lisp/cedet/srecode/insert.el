@@ -464,7 +464,7 @@ If SECONDNAME is nil, return VALUE."
 	  (srecode-insert-report-error
 	   dictionary
 	   "Variable inserter %s: second argument `%s' is not a function"
-	   (cl-print-object sti) secondname)))
+	   (cl-prin1-to-string sti) secondname)))
     value))
 
 (cl-defmethod srecode-insert-method ((sti srecode-template-inserter-variable)
