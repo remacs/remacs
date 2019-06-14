@@ -529,12 +529,8 @@ To get complete usage, invoke:
   `(defconst skkdic-okuri-nasi
      ',(let ((l entries)
 	     (map '(skdic-okuri-nasi))
-	     (count 0)
 	     entry)
 	 (while l
-	   (setq count (1+ count))
-	   (if (= (% count 10000) 0)
-	       (message "%d entries" count))
 	   (setq entry (skkdic-extract-conversion-data (car l)))
 	   (set-nested-alist (car entry) (cdr entry) map)
 	   (setq l (cdr l)))
