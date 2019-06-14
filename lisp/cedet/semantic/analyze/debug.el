@@ -28,6 +28,7 @@
 (require 'semantic/analyze)
 (require 'semantic/analyze/complete)
 (require 'semantic/db-typecache)
+(require 'pulse)
 
 ;; For semantic-find-tags-by-class:
 (eval-when-compile (require 'semantic/find))
