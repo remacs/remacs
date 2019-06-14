@@ -313,7 +313,8 @@ Prefix argument ARG will make the entry nonmarking."
                         diary-bahai-entry-symbol
                         'calendar-bahai-from-absolute))
 
-(defvar date)
+(with-suppressed-warnings ((lexical date))
+  (defvar date))
 
 ;; To be called from diary-list-sexp-entries, where DATE is bound.
 ;;;###diary-autoload
