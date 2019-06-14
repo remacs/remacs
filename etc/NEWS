@@ -885,7 +885,7 @@ and its value has been changed to Duck Duck Go.
 ---
 *** `erc-send-pre-hook' and `erc-send-this' have been obsoleted.  The
 variable to use instead to alter text to be sent is now
-`erc-pre-send-function'.
+`erc-pre-send-functions'.
 
 ** EUDC
 
