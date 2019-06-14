@@ -32,6 +32,7 @@
 (require 'cl-generic)
 (require 'srecode)
 (require 'srecode/table)
+(require 'srecode/fields)
 (eval-when-compile (require 'semantic))
 
 (declare-function srecode-compile-parse-inserter "srecode/compile")
@@ -41,7 +42,6 @@
 (declare-function srecode-insert-code-stream "srecode/insert")
 (declare-function data-debug-new-buffer "data-debug")
 (declare-function data-debug-insert-object-slots "eieio-datadebug")
-(declare-function srecode-field "srecode/fields")
 
 (defclass srecode-dictionary ()
   ((namehash :initarg :namehash
@@ -505,7 +505,6 @@ inserted with a new editable field.")
 				     function
 				     dictionary)
   "Convert this field into an insertable string."
-  (require 'srecode/fields)
   ;; If we are not in a buffer, then this is not supported.
   (when (not (bufferp standard-output))
     (error "FIELDS invoked while inserting template to non-buffer"))
