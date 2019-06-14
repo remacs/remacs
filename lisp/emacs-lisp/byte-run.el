@@ -45,7 +45,10 @@ So far, FUNCTION can only be a symbol, not a lambda expression."
 ;; `macro-declaration-function' are both obsolete (as marked at the end of this
 ;; file) but used in many .elc files.
 
-(defvar macro-declaration-function #'macro-declaration-function
+;; We don't use #' here, because it's an obsolete function, and we
+;; can't use `with-suppressed-errors' here due to how this file is
+;; used in the bootstrapping process.
+(defvar macro-declaration-function 'macro-declaration-function
   "Function to process declarations in a macro definition.
 The function will be called with two args MACRO and DECL.
 MACRO is the name of the macro being defined.
