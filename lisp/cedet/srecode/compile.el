@@ -131,18 +131,6 @@ STATE is the current compilation state."
   "For the template inserter INS, apply information from STATE."
   nil)
 
-(cl-defmethod srecode-inserter-prin-example ((ins (subclass srecode-template-inserter))
-						  escape-start escape-end)
-  "Insert an example using inserter INS.
-Arguments ESCAPE-START and ESCAPE-END are the current escape sequences in use."
-  (princ "   ")
-  (princ escape-start)
-  (when (and (slot-exists-p ins 'key) (oref ins key))
-    (princ (format "%c" (oref ins key))))
-  (princ "VARNAME")
-  (princ escape-end)
-  (terpri)
-  )
 
 
 ;;; Compile State

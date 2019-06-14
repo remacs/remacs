@@ -1063,6 +1063,19 @@ template where a ^ inserter occurs."
     ;; place.
     (cl-call-next-method)))
 
+(cl-defmethod srecode-inserter-prin-example ((ins (subclass srecode-template-inserter))
+						  escape-start escape-end)
+  "Insert an example using inserter INS.
+Arguments ESCAPE-START and ESCAPE-END are the current escape sequences in use."
+  (princ "   ")
+  (princ escape-start)
+  (when (and (slot-exists-p ins 'key) (oref ins key))
+    (princ (format "%c" (oref ins key))))
+  (princ "VARNAME")
+  (princ escape-end)
+  (terpri)
+  )
+
 (provide 'srecode/insert)
 
 ;; Local variables:
