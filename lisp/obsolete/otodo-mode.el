@@ -925,8 +925,9 @@ If INCLUDE-SEP is non-nil, return point after the separator."
   "Major mode for editing TODO lists."
   (easy-menu-add todo-menu))
 
-(defvar date)
-(defvar entry)
+(with-suppressed-warnings ((lexical date entry))
+  (defvar date)
+  (defvar entry))
 
 ;; t-c should be used from diary code, which requires calendar.
 (declare-function calendar-current-date "calendar" (&optional offset))
