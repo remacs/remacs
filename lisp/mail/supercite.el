@@ -702,7 +702,11 @@ the list should be unique."
   "Regi frame for glomming mail header information.")
 (put 'sc-mail-glom-frame 'risky-local-variable t)
 
-(defvar curline)			; dynamic bondage
+;; This variable is bound dynamically before calling the forms in the
+;; `sc-mail-glom-frame' variable, and is part of the advertised
+;; interface.
+(with-suppressed-warnings ((lexical curline))
+  (defvar curline))
 
 ;; regi functions
 
