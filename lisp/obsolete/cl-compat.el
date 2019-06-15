@@ -142,7 +142,7 @@
     (Values (mapcar* 'list newsyms oldforms) newsyms)))
 
 (defun zip-lists (evens odds)
-  (mapcan 'list evens odds))
+  (cl-mapcan 'list evens odds))
 
 (defun unzip-lists (list)
   (let ((e nil) (o nil))
