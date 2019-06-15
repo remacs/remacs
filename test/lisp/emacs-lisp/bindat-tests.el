@@ -37,34 +37,37 @@
     (data vec (length))
     (align 4)))
 
+(defvar packet-bindat-spec
+  '((header struct header-bindat-spec)
+    (items u8)
+    (fill 3)
+    (item repeat (items)
+          (struct data-bindat-spec))))
+
+(defvar struct-bindat
+  '((header
+     (dest-ip . [192 168 1 100])
+     (src-ip . [192 168 1 101])
+     (dest-port . 284)
+     (src-port . 5408))
+    (items . 2)
+    (item ((data . [1 2 3 4 5])
+           (id . "ABCDEF")
+           (length . 5)
+           (opcode . 3)
+           (type . 2))
+          ((data . [6 7 8 9 10 11 12])
+           (id . "BCDEFG")
+           (length . 7)
+           (opcode . 4)
+           (type . 1)))))
+
 (ert-deftest bindat-test-pack ()
-  (let* ((packet-bindat-spec
-          '((header struct header-bindat-spec)
-            (items u8)
-            (fill 3)
-            (item repeat (items)
-                  (struct data-bindat-spec))))
-         (struct
-          '((header
-             (dest-ip . [192 168 1 100])
-             (src-ip . [192 168 1 101])
-             (dest-port . 284)
-             (src-port . 5408))
-            (items . 2)
-            (item ((data . [1 2 3 4 5])
-                   (id . "ABCDEF")
-                   (length . 5)
-                   (opcode . 3)
-                   (type . 2))
-                  ((data . [6 7 8 9 10 11 12])
-                   (id . "BCDEFG")
-                   (length . 7)
-                   (opcode . 4)
-                   (type . 1))))))
-    (should (equal
-             (cl-map 'vector #'identity (bindat-pack packet-bindat-spec struct))
-             [ 192 168 1 100 192 168 1 101 01 28 21 32 2 0 0 0
-                   2 3 5 0 ?A ?B ?C ?D ?E ?F 0 0 1 2 3 4 5 0 0 0
-                   1 4 7 0 ?B ?C ?D ?E ?F ?G 0 0 6 7 8 9 10 11 12 0 ]))))
+  (should (equal
+           (cl-map 'vector #'identity
+                   (bindat-pack packet-bindat-spec struct-bindat))
+           [ 192 168 1 100 192 168 1 101 01 28 21 32 2 0 0 0
+                 2 3 5 0 ?A ?B ?C ?D ?E ?F 0 0 1 2 3 4 5 0 0 0
+                 1 4 7 0 ?B ?C ?D ?E ?F ?G 0 0 6 7 8 9 10 11 12 0 ])))
 
 ;;; bindat-tests.el ends here
