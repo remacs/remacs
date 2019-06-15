@@ -290,6 +290,14 @@ A nil value for either argument stands for the current time."
 		 tree))
 	(nreverse elems)))))
 
+;; `progress-reporter-update' got argument SUFFIX in Emacs 27.1.
+(defalias 'tramp-compat-progress-reporter-update
+  (if (equal (tramp-compat-funcall 'func-arity #'progress-reporter-update)
+	     '(1 . 3))
+      #'progress-reporter-update
+    (lambda (reporter &optional value _suffix)
+      (progress-reporter-update reporter value))))
+
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (unload-feature 'tramp-loaddefs 'force)
