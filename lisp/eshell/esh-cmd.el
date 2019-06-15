@@ -113,6 +113,8 @@
   (require 'cl-lib)
   (require 'pcomplete))
 
+(declare-function pcomplete--here "pcomplete"
+		  (&optional form stub paring form-only))
 
 (defgroup eshell-cmd nil
   "Executing an Eshell command is as simple as typing it in and
