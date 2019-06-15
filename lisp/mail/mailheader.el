@@ -99,7 +99,8 @@ value."
   headers)
 
 ;; Advertised part of the interface; see mail-header, mail-header-set.
-(defvar headers)
+(with-suppressed-warnings ((lexical headers))
+  (defvar headers))
 
 (defsubst mail-header (header &optional header-alist)
   "Return the value associated with header HEADER in HEADER-ALIST.
