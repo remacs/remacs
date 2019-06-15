@@ -4393,51 +4393,53 @@ x_scroll_run (struct window *w, struct run *run)
   gui_clear_cursor (w);
 
 #ifdef USE_CAIRO
-  if (FRAME_X_DOUBLE_BUFFERED_P (f))
+  if (FRAME_CR_CONTEXT (f))
     {
-      cairo_t *cr = FRAME_CR_CONTEXT (f);
-      if (cr)
-	cairo_surface_flush (cairo_get_target (cr));
-      XCopyArea (FRAME_X_DISPLAY (f),
-		 FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
-		 f->output_data.x->normal_gc,
-		 x, from_y,
-		 width, height,
-		 x, to_y);
-      if (cr)
-	cairo_surface_mark_dirty_rectangle (cairo_get_target (cr),
-					    x, to_y, width, height);
-    }
-  else if (FRAME_CR_CONTEXT (f))
-    {
-      cairo_surface_t *s = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-						       width, height);
-      cairo_t *cr = cairo_create (s);
-      cairo_set_source_surface (cr, cairo_get_target (FRAME_CR_CONTEXT (f)),
-				-x, -from_y);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      cairo_surface_t *surface = cairo_get_target (FRAME_CR_CONTEXT (f));
+      if (cairo_surface_get_type (surface) == CAIRO_SURFACE_TYPE_XLIB)
+	{
+	  eassert (cairo_xlib_surface_get_display (surface)
+		   == FRAME_X_DISPLAY (f));
+	  eassert (cairo_xlib_surface_get_drawable (surface)
+		   == FRAME_X_RAW_DRAWABLE (f));
+	  cairo_surface_flush (surface);
+	  XCopyArea (FRAME_X_DISPLAY (f),
+		     FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
+		     f->output_data.x->normal_gc,
+		     x, from_y,
+		     width, height,
+		     x, to_y);
+	  cairo_surface_mark_dirty_rectangle (surface, x, to_y, width, height);
+	}
+      else
+	{
+	  cairo_surface_t *s
+	    = cairo_surface_create_similar (surface,
+					    cairo_surface_get_content (surface),
+					    width, height);
+	  cairo_t *cr = cairo_create (s);
+	  cairo_set_source_surface (cr, surface, -x, -from_y);
+	  cairo_paint (cr);
+	  cairo_destroy (cr);
 
-      cr = FRAME_CR_CONTEXT (f);
-      cairo_save (cr);
-      cairo_set_source_surface (cr, s, x, to_y);
-      cairo_rectangle (cr, x, to_y, width, height);
-      cairo_fill (cr);
-      cairo_restore (cr);
-      cairo_surface_destroy (s);
+	  cr = FRAME_CR_CONTEXT (f);
+	  cairo_save (cr);
+	  cairo_set_source_surface (cr, s, x, to_y);
+	  cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+	  cairo_rectangle (cr, x, to_y, width, height);
+	  cairo_fill (cr);
+	  cairo_restore (cr);
+	  cairo_surface_destroy (s);
+	}
     }
   else
-    {
-      SET_FRAME_GARBAGED (f);
-    }
-#else
-  XCopyArea (FRAME_X_DISPLAY (f),
-             FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
-	     f->output_data.x->normal_gc,
-	     x, from_y,
-	     width, height,
-	     x, to_y);
-#endif
+#endif	/* USE_CAIRO */
+    XCopyArea (FRAME_X_DISPLAY (f),
+	       FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
+	       f->output_data.x->normal_gc,
+	       x, from_y,
+	       width, height,
+	       x, to_y);
 
   unblock_input ();
 }
