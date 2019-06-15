@@ -333,6 +333,11 @@ and equal-looking objects are considered the same key.
 (make-hash-table :test 'contents-hash)
 @end example
 
+Lisp programs should @emph{not} rely on hash codes being preserved
+between Emacs sessions, as the implementation of the hash functions
+uses some details of the object storage that can change between
+sessions and between different architectures.
+
 @node Other Hash
 @section Other Hash Table Functions
 
