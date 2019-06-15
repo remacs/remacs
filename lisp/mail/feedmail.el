@@ -2168,9 +2168,7 @@ you can set `feedmail-queue-reminder-alist' to nil."
 	       (let ((inhibit-quit t) (cursor-in-echo-area t) (echo-keystrokes 0))
 		 (read-char-exclusive))))
 	  (if (= user-sez help-char)
-              ;; FIXME: This seems to want to refer to the `helper' argument,
-              ;; but it's quoted so the `helper' arg ends up unused!
-	      (setq answer '(^ . helper))
+	      (setq answer (cons '^ helper))
 	    (if (or (eq user-sez ?\C-m) (eq user-sez ?\C-j) (eq user-sez ?y))
 		(setq user-sez d-char))
 	    ;; these char-to-int things are because of some
