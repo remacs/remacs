@@ -305,9 +305,13 @@ Prefix argument ARG makes the entry nonmarking."
                         diary-islamic-entry-symbol
                         'calendar-islamic-from-absolute))
 
-(defvar date)
+;; The function below is designed to be used in sexp diary entries,
+;; and may be present in users' diary files, so suppress the warning
+;; about this prefix-less dynamic variable.  It's called from
+;; `diary-list-sexp-entries', which binds the variable.
+(with-suppressed-warnings ((lexical date))
+  (defvar date))
 
-;; To be called from diary-sexp-entry, where DATE, ENTRY are bound.
 ;;;###diary-autoload
 (defun diary-islamic-date ()
   "Islamic calendar equivalent of date diary entry."

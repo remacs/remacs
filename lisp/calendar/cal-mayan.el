@@ -353,9 +353,13 @@ Echo Mayan date unless NOECHO is non-nil."
     (calendar-mayan-long-count-to-absolute date)))
   (or noecho (calendar-mayan-print-date)))
 
-(defvar date)
+;; The function below is designed to be used in sexp diary entries,
+;; and may be present in users' diary files, so suppress the warning
+;; about this prefix-less dynamic variable.  It's called from
+;; `diary-list-sexp-entries', which binds the variable.
+(with-suppressed-warnings ((lexical date))
+  (defvar date))
 
-;; To be called from diary-list-sexp-entries, where DATE is bound.
 ;;;###diary-autoload
 (defun diary-mayan-date ()
   "Show the Mayan long count, haab, and tzolkin dates as a diary entry."

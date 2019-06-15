@@ -183,9 +183,13 @@ Echo astronomical (Julian) day number unless NOECHO is non-nil."
   (or noecho (calendar-astro-print-day-number)))
 
 
-(defvar date)
+;; The function below is designed to be used in sexp diary entries,
+;; and may be present in users' diary files, so suppress the warning
+;; about this prefix-less dynamic variable.  It's called from
+;; `diary-list-sexp-entries', which binds the variable.
+(with-suppressed-warnings ((lexical date))
+  (defvar date))
 
-;; To be called from diary-list-sexp-entries, where DATE is bound.
 ;;;###diary-autoload
 (defun diary-julian-date ()
   "Julian calendar equivalent of date diary entry."

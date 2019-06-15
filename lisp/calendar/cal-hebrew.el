@@ -748,9 +748,13 @@ from the cursor position."
       ;; or the corresponding day in years without that date.
       (+ (calendar-hebrew-to-absolute (list b-month 1 year)) b-day -1))))
 
-(defvar date)
+;; The function below is designed to be used in sexp diary entries,
+;; and may be present in users' diary files, so suppress the warning
+;; about this prefix-less dynamic variable.  It's called from
+;; `diary-list-sexp-entries', which binds the variable.
+(with-suppressed-warnings ((lexical date))
+  (defvar date))
 
-;; To be called from diary-list-sexp-entries, where DATE is bound.
 ;;;###diary-autoload
 (defun diary-hebrew-date ()
   "Hebrew calendar equivalent of date diary entry."
