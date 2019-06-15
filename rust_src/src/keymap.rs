@@ -25,16 +25,16 @@ use crate::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
         describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind, call2, safe_call1,
+        maybe_quit, specbind, call2, safe_call1, 
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt,},
     remacs_sys::{
         Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
-        Fset_char_table_range, Fterpri,
+        Fset_char_table_range, Fterpri, 
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
-        Qvector_or_char_table_p, Qkeymap_canonicalize,
+        Qvector_or_char_table_p, Qkeymap_canonicalize, Qmenu_item
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
@@ -62,6 +62,7 @@ pub extern "C" fn set_where_is_cache(val: LispObject) {
     }
 }
 
+// TODO Change this wherever it is used in rust to this implementation
 // This function has an extra argument called dummy but it is not used.
 // original signature is :
 // map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
@@ -74,13 +75,42 @@ pub extern "C" fn _map_keymap_call(key: LispObject, val: LispObject, fun: LispOb
     }
 }
 
+// TODO Change this wherever it is used in rust to this implementation
 // Same as map_keymap, but does it right, properly eliminating duplicate
 // bindings due to inheritance.
-//#[no_mangle]
+#[no_mangle]
 pub extern "C" fn _map_keymap_canonical(map: LispObject, fun: map_keymap_function_t, args: LispObject, data: *mut c_void){
     unsafe{
         let map = safe_call1(Qkeymap_canonicalize, map);
         map_keymap_internal(map, fun, args, data);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject {
+    loop {
+        
+        if object.is_not_cons(){
+           break object;
+        }
+        // Store the lisp object as a lisp cons type to check its members
+        let consObject = object.as_cons().unwrap();
+
+        if consObject.car().eq(Qmenu_item){
+
+            if consObject.cdr().is_cons(){
+                let object = consObject
+            }
+            else {
+                break object;
+            }
+        }
+        else if consObject.cdr().is_string() {
+            let object = consObject;
+        }
+        else{
+            break object;
+        }
     }
 }
 

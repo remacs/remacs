@@ -41,6 +41,10 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
+    pub fn is_not_cons(self) -> bool {
+        self.get_type() != Lisp_Type::Lisp_Cons
+    }
+
     pub const fn force_cons(self) -> LispCons {
         LispCons(self)
     }
