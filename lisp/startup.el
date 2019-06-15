@@ -2413,7 +2413,9 @@ nil default-directory" name)
                             (read-data (read-from-string str-expr))
                             (expr (car read-data))
                             (end (cdr read-data)))
-                       (unless (= end (length str-expr))
+                       ;; Allow same trailing chars as minibuf.c's
+                       ;; `string_to_object'.
+                       (unless (string-match-p "[\s\t\n]*\\'" str-expr end)
                          (error "Trailing garbage following expression: %s"
                                 (substring str-expr end)))
                        (eval expr t)))
