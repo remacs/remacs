@@ -25,7 +25,7 @@ use crate::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
         describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind, call2, safe_call1, 
+        maybe_quit, specbind, call2, safe_call1, list2, menu_item_eval_property,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt,},
     remacs_sys::{
@@ -34,7 +34,7 @@ use crate::{
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
-        Qvector_or_char_table_p, Qkeymap_canonicalize, Qmenu_item
+        Qvector_or_char_table_p, Qkeymap_canonicalize, Qmenu_item, QCfilter, Qquote,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
@@ -86,6 +86,7 @@ pub extern "C" fn _map_keymap_canonical(map: LispObject, fun: map_keymap_functio
     }
 }
 
+// Scopes are all messed up
 #[no_mangle]
 pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject {
     loop {
@@ -93,13 +94,37 @@ pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject 
         if object.is_not_cons(){
            break object;
         }
+
         // Store the lisp object as a lisp cons type to check its members
         let consObject = object.as_cons().unwrap();
+        // TODO Perhaps check if this is indeed a lisp cons(check if as_cons returns nil/none)
+        // rather than trusting it
 
         if consObject.car().eq(Qmenu_item){
-
             if consObject.cdr().is_cons(){
-                let object = consObject
+                // set object to (cdr (cdr object))
+                let object = consObject.cdr().as_cons().unwrap().cdr();
+
+                if object.is_cons() {
+                    let object = object.as_cons().unwrap().car();
+                    let object_iter = object.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::on);
+
+                    // Iterate over every element in the list
+                    for val in object_iter{
+                       if val.eq(QCfilter) && autoload {
+                           // Get the next object in the list
+                           let filter = val.as_cons().unwrap().cdr();
+
+                           unsafe{
+                             let filter_list = list2(filter, list2(Qquote, object));
+                             let object = menu_item_eval_property(filter);
+                           }
+                           break;
+                       } 
+                    }
+                   
+                    
+                }
             }
             else {
                 break object;
