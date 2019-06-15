@@ -70,4 +70,30 @@
                  2 3 5 0 ?A ?B ?C ?D ?E ?F 0 0 1 2 3 4 5 0 0 0
                  1 4 7 0 ?B ?C ?D ?E ?F ?G 0 0 6 7 8 9 10 11 12 0 ])))
 
+(ert-deftest bindat-test-unpack ()
+  (should (equal
+           (bindat-unpack packet-bindat-spec
+                          (bindat-pack packet-bindat-spec struct-bindat))
+           '((item
+              ((data .
+	             [1 2 3 4 5])
+               (id . "ABCDEF")
+               (length . 5)
+               (opcode . 3)
+               (type . 2))
+              ((data .
+	             [6 7 8 9 10 11 12])
+               (id . "BCDEFG")
+               (length . 7)
+               (opcode . 4)
+               (type . 1)))
+             (items . 2)
+             (header
+              (src-port . 5408)
+              (dest-port . 284)
+              (src-ip .
+	              [192 168 1 101])
+              (dest-ip .
+	               [192 168 1 100]))))))
+
 ;;; bindat-tests.el ends here
