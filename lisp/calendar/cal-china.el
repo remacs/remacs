@@ -654,7 +654,10 @@ Echo Chinese date unless NOECHO is non-nil."
 (autoload 'diary-make-date         "diary-lib")
 (autoload 'diary-ordinal-suffix    "diary-lib")
 (defvar diary-sexp-entry-symbol)
-(defvar entry)                    ;used by `diary-chinese-anniversary'
+;; `diary-chinese-anniversary' can be used in users' diary files, and
+;; `entry' har to be dynamically bound when that is called.
+(with-suppressed-warnings ((lexical entry))
+  (defvar entry))                    ;used by `diary-chinese-anniversary'
 
 (defvar calendar-chinese-month-name-array
   ["正月" "二月" "三月" "四月" "五月" "六月"

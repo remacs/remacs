@@ -760,7 +760,10 @@ from the cursor position."
   "Hebrew calendar equivalent of date diary entry."
   (format "Hebrew date (until sunset): %s" (calendar-hebrew-date-string date)))
 
-(defvar entry)
+;; `diary-hebrew-birthday' can be used in users' diary files, and
+;; `entry' has to be dynamically bound when that is used.
+(with-suppressed-warnings ((lexical entry))
+  (defvar entry))
 (declare-function diary-ordinal-suffix "diary-lib" (n))
 
 ;;;###diary-autoload
