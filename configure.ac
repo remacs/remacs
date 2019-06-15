@@ -3316,7 +3316,7 @@ fi
 HAVE_CAIRO=no
 if test "${HAVE_X11}" = "yes"; then
   if test "${with_cairo}" != "no"; then
-    CAIRO_REQUIRED=1.12.0
+    CAIRO_REQUIRED=1.8.0
     CAIRO_MODULE="cairo >= $CAIRO_REQUIRED"
     EMACS_CHECK_MODULES(CAIRO, $CAIRO_MODULE)
     if test $HAVE_CAIRO = yes; then
