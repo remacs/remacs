@@ -2979,9 +2979,10 @@ vip-s-string"
     (vip-change-mode-to-emacs)
     (condition-case conditions
 	(progn
-	  (if (string= tag "")
-	      (find-tag ex-tag t)
-	    (find-tag-other-window ex-tag))
+          (with-suppressed-warnings ((obsolete find-tag find-tag-other-window))
+	    (if (string= tag "")
+	        (find-tag ex-tag t)
+	      (find-tag-other-window ex-tag)))
 	  (vip-change-mode-to-vi))
       (error
        (vip-change-mode-to-vi)
