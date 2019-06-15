@@ -827,7 +827,6 @@ ns_row_rect (struct window *w, struct glyph_row *row,
                enum glyph_row_area area)
 /* Get the row as an NSRect.  */
 {
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
   NSRect rect;
   int window_x, window_y, window_width;
 
