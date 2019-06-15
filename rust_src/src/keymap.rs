@@ -30,7 +30,7 @@ use crate::{
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt,},
     remacs_sys::{
         Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
-        Fset_char_table_range, Fterpri, 
+        Fset_char_table_range, Fterpri, Fcons, 
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
@@ -86,7 +86,7 @@ pub extern "C" fn _map_keymap_canonical(map: LispObject, fun: map_keymap_functio
     }
 }
 
-// Scopes are all messed up
+// Scopes are all messed up. Double check those
 #[no_mangle]
 pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject {
     loop {
@@ -137,6 +137,55 @@ pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject 
             break object;
         }
     }
+}
+
+#[no_mangle]
+pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
+    if elt.is_not_cons(){
+        elt;
+    }
+
+    let mut elt = elt.as_cons().unwrap();
+    let mut res = elt;
+    let mut tem = elt;
+
+    // Check if this is a new format menu item
+    if tem.car().eq(Qmenu_item){
+        // Copy the cell with menu-item marker
+        unsafe{
+            res = Fcons(tem.car(), tem.cdr()).as_cons().unwrap();
+            elt = Fcons(tem.car(), tem.cdr()).as_cons().unwrap();
+
+            // Check if the next cell is a cons
+            if elt.cdr().is_cons(){
+               // Copy the cell with menu-item name 
+               elt.set_cdr(Fcons(tem.car(), tem.cdr()));
+               elt = elt.cdr().as_cons().unwrap();
+               tem = elt.cdr().as_cons().unwrap();
+            }
+        }
+    }
+    else{
+        if tem.car().is_string(){
+            unsafe{
+                res = Fcons(tem.car(), tem.cdr()).as_cons().unwrap();
+                elt = Fcons(tem.car(), tem.cdr()).as_cons().unwrap();
+                // Copy the cell since copy-alist iddn't go this deep
+                if tem.car().is_string(){
+                    elt.set_cdr(Fcons(tem.car(), tem.cdr()));
+                    elt = elt.cdr().as_cons().unwrap();
+                    tem = elt.cdr().as_cons().unwrap();
+                }
+                if tem.car().eq(Qkeymap){
+                    elt.set_cdr(copy_keymap(tem.into()));
+                }
+                else if tem.car().eq(Qkeymap){
+                    res = copy_keymap(elt.into()).as_cons().unwrap();
+                }
+            }
+        }
+    }
+    res.into()
 }
 
 // Which keymaps are reverse-stored in the cache.
