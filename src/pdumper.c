@@ -2305,7 +2305,7 @@ static dump_off
 dump_fwd_buffer_obj (struct dump_context *ctx,
                      const struct Lisp_Buffer_Objfwd *buffer_objfwd)
 {
-#if CHECK_STRUCTS && !defined (HASH_Lisp_Buffer_Objfwd_13CA6B04FC)
+#if CHECK_STRUCTS && !defined (HASH_Lisp_Buffer_Objfwd_611EBD13FF)
 # error "Lisp_Buffer_Objfwd changed. See CHECK_STRUCTS comment in config.h."
 #endif
   struct Lisp_Buffer_Objfwd out;
