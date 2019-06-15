@@ -2126,7 +2126,7 @@ considered big.  The default value is 200.  If the group has more
 (unread and/or ticked) articles than this, Gnus will query the user
 before entering the group.  The user can then specify how many
 articles should be fetched from the server.  If the user specifies a
-negative number (@var{-n}), the @var{n} oldest articles will be
+negative number (@minus{}@var{n}), the @var{n} oldest articles will be
 fetched.  If it is positive, the @var{n} articles that have arrived
 most recently will be fetched.
 

@@ -202,7 +202,7 @@ screen lines between point and the top or bottom of the window
 argument, @kbd{C-u C-l}, simply recenters the line showing point.  A
 positive argument @var{n} moves line showing point @var{n} lines down
 from the top of the window.  An argument of zero moves point's line to
-the top of the window.  A negative argument @var{-n} moves point's
+the top of the window.  A negative argument @minus{}@var{n} moves point's
 line @var{n} lines from the bottom of the window.  When given an
 argument, @kbd{C-l} does not clear the screen or cycle through
 different screen positions.

@@ -193,8 +193,8 @@ located before point, @kbd{M-@@} moves the mark backwards from its
 current position one word at a time.
 
   This command also accepts a numeric argument @var{n}, which tells it
-to advance the mark by @var{n} words.  A negative argument moves the
-mark back by @var{n} words.
+to advance the mark by @var{n} words.  A negative argument
+@minus{}@var{n} moves the mark back by @var{n} words.
 
 @kindex C-M-@@
 @findex mark-sexp

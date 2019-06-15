@@ -7767,10 +7767,13 @@ selected frame."
 (defun display-buffer-in-previous-window (buffer alist)
   "Display BUFFER in a window previously showing it.
 If ALIST has a non-nil `inhibit-same-window' entry, the selected
-window is not eligible for reuse.
+window is not usable.  A dedicated window is usable only if it
+already shows BUFFER.  If ALIST contains a `previous-window'
+entry, the window specified by that entry is usable even if it
+never showed BUFFER before.
 
 If ALIST contains a `reusable-frames' entry, its value determines
-which frames to search for a reusable window:
+which frames to search for a usable window:
   nil -- the selected frame (actually the last non-minibuffer frame)
   A frame   -- just that frame
   `visible' -- all visible frames
@@ -7782,12 +7785,17 @@ selected frame if `display-buffer-reuse-frames' and
 `pop-up-frames' are both nil; search all frames on the current
 terminal if either of those variables is non-nil.
 
-If ALIST has a `previous-window' entry, the window specified by
-that entry may override any other window found by the methods
-above, even if that window never showed BUFFER before.
+If more than one window is usable according to these rules,
+apply the following order of preference:
 
-Avoid using the selected window if another eligible window has
-shown BUFFER before."
+- Use the window specified by any 'previous-window' ALIST entry,
+  provided it is not the selected window.
+
+- Use a window that showed BUFFER before, provided it is not the
+  selected window.
+
+- Use the selected window if it is either specified by a
+  'previous-window' ALIST entry or showed BUFFER before."
   (let* ((alist-entry (assq 'reusable-frames alist))
 	 (inhibit-same-window
 	  (cdr (assq 'inhibit-same-window alist)))
