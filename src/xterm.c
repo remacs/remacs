@@ -385,15 +385,12 @@ x_begin_cr_clip (struct frame *f, GC gc)
     {
       int width = FRAME_CR_SURFACE_DESIRED_WIDTH (f);
       int height = FRAME_CR_SURFACE_DESIRED_HEIGHT (f);
-      cairo_surface_t *surface;
-      if (FRAME_X_DOUBLE_BUFFERED_P (f))
-	surface = cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
-					     FRAME_X_RAW_DRAWABLE (f),
-					     FRAME_X_VISUAL (f),
-					     width, height);
-      else
-	surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-					      width, height);
+      cairo_surface_t *surface
+	= cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
+				     FRAME_X_RAW_DRAWABLE (f),
+				     FRAME_X_VISUAL (f),
+				     width, height);
+
       cr = FRAME_CR_CONTEXT (f) = cairo_create (surface);
       cairo_surface_destroy (surface);
     }
@@ -1242,38 +1239,6 @@ x_update_end (struct frame *f)
 {
   /* Mouse highlight may be displayed again.  */
   MOUSE_HL_INFO (f)->mouse_face_defer = false;
-
-#ifdef USE_CAIRO
-  if (!FRAME_X_DOUBLE_BUFFERED_P (f))
-    {
-      block_input ();
-      cairo_surface_t *source_surface = cairo_get_target (FRAME_CR_CONTEXT (f));
-      if (source_surface)
-	{
-	  cairo_t *cr;
-	  cairo_surface_t *surface;
-	  int width, height;
-
-	  width = FRAME_PIXEL_WIDTH (f);
-	  height = FRAME_PIXEL_HEIGHT (f);
-	  if (! FRAME_EXTERNAL_TOOL_BAR (f))
-	    height += FRAME_TOOL_BAR_HEIGHT (f);
-	  if (! FRAME_EXTERNAL_MENU_BAR (f))
-	    height += FRAME_MENU_BAR_HEIGHT (f);
-	  surface = cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
-					       FRAME_X_DRAWABLE (f),
-					       FRAME_X_VISUAL (f),
-					       width, height);
-	  cr = cairo_create (surface);
-	  cairo_surface_destroy (surface);
-
-	  cairo_set_source_surface (cr, source_surface, 0, 0);
-	  cairo_paint (cr);
-	  cairo_destroy (cr);
-	}
-      unblock_input ();
-    }
-#endif
 
 #ifndef XFlush
   block_input ();
