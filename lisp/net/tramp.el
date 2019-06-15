@@ -1928,12 +1928,12 @@ If VAR is nil, then we bind `v' to the structure and `method', `user',
 (put 'with-parsed-tramp-file-name 'edebug-form-spec '(form symbolp body))
 (font-lock-add-keywords 'emacs-lisp-mode '("\\<with-parsed-tramp-file-name\\>"))
 
-(defun tramp-progress-reporter-update (reporter &optional value)
+(defun tramp-progress-reporter-update (reporter &optional value suffix)
   "Report progress of an operation for Tramp."
   (let* ((parameters (cdr reporter))
 	 (message (aref parameters 3)))
     (when (string-match-p message (or (current-message) ""))
-      (progress-reporter-update reporter value))))
+      (tramp-compat-progress-reporter-update reporter value suffix))))
 
 (defmacro with-tramp-progress-reporter (vec level message &rest body)
   "Executes BODY, spinning a progress reporter with MESSAGE.
@@ -3865,6 +3865,8 @@ of."
   ;; The descriptor must be a process object.
   (unless (processp proc)
     (tramp-error proc 'file-notify-error "Not a valid descriptor %S" proc))
+  ;; There might be pending output.
+  (while (tramp-accept-process-output proc 0))
   (tramp-message proc 6 "Kill %S" proc)
   (delete-process proc))
 
