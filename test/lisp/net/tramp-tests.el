@@ -4682,6 +4682,7 @@ process sentinels.  They shall not disturb each other."
 ;; This test is inspired by Bug#29163.
 (ert-deftest tramp-test42-auto-load ()
   "Check that Tramp autoloads properly."
+  :expected-result (if (tramp--test-enabled) :passed :failed)
   (let ((default-directory (expand-file-name temporary-file-directory))
 	(code
 	 (format
