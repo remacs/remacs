@@ -33,6 +33,7 @@
 
 (declare-function srecode-create-dictionary "srecode/dictionary")
 (declare-function srecode-resolve-argument-list "srecode/insert")
+(declare-function srecode-inserter-prin-example "srecode/insert")
 
 ;;; Code:
 (defvar srecode-template-mode-syntax-table
@@ -232,6 +233,7 @@ we can tell font lock about them.")
 (defun srecode-macro-help ()
   "Provide help for working with macros in a template."
   (interactive)
+  (require 'srecode/insert)
   (let* ((root 'srecode-template-inserter)
 	 (chl (eieio-class-children root))
 	 (ess (srecode-template-get-escape-start))
