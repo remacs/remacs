@@ -25,16 +25,16 @@ use crate::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
         describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind,
+        maybe_quit, specbind, call2, safe_call1,
     },
-    remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
+    remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt,},
     remacs_sys::{
         Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
-        Qvector_or_char_table_p,
+        Qvector_or_char_table_p, Qkeymap_canonicalize,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
@@ -59,6 +59,28 @@ pub extern "C" fn get_where_is_cache() -> LispObject {
 pub extern "C" fn set_where_is_cache(val: LispObject) {
     unsafe {
         where_is_cache = val;
+    }
+}
+
+// This function has an extra argument called dummy but it is not used.
+// original signature is :
+// map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
+// Is this function used anywhere? ripgrep cannot seem to find it
+// For now, this is simply ported and the dummy argument is ommitted
+#[no_mangle]
+pub extern "C" fn _map_keymap_call(key: LispObject, val: LispObject, fun: LispObject) {
+    unsafe{
+        call2(fun, key, val);
+    }
+}
+
+// Same as map_keymap, but does it right, properly eliminating duplicate
+// bindings due to inheritance.
+//#[no_mangle]
+pub extern "C" fn _map_keymap_canonical(map: LispObject, fun: map_keymap_function_t, args: LispObject, data: *mut c_void){
+    unsafe{
+        let map = safe_call1(Qkeymap_canonicalize, map);
+        map_keymap_internal(map, fun, args, data);
     }
 }
 
