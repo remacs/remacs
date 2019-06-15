@@ -475,17 +475,19 @@ name is kept in slot `hop'"
 
 (defun tramp-archive-cleanup-hash ()
   "Remove local copies of archives, used by GVFS."
-  (maphash
-   (lambda (key value)
-     ;; Unmount local copy.
-     (ignore-errors
-       (tramp-message (car value) 3 "Unmounting %s" (or (cdr value) key))
-       (tramp-gvfs-unmount (car value)))
-     ;; Delete local copy.
-     (ignore-errors (delete-file (cdr value)))
-     (remhash key tramp-archive-hash))
-   tramp-archive-hash)
-  (clrhash tramp-archive-hash))
+  ;; Don't check for a proper method.
+  (let ((non-essential t))
+    (maphash
+     (lambda (key value)
+       ;; Unmount local copy.
+       (ignore-errors
+	 (tramp-message (car value) 3 "Unmounting %s" (or (cdr value) key))
+	 (tramp-gvfs-unmount (car value)))
+       ;; Delete local copy.
+       (ignore-errors (delete-file (cdr value)))
+       (remhash key tramp-archive-hash))
+     tramp-archive-hash)
+    (clrhash tramp-archive-hash)))
 
 (add-hook 'tramp-cleanup-all-connections-hook #'tramp-archive-cleanup-hash)
 (add-hook 'kill-emacs-hook #'tramp-archive-cleanup-hash)
