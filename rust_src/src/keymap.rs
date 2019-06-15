@@ -25,12 +25,12 @@ use crate::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
         describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind, call2, safe_call1, list2, menu_item_eval_property,
+        maybe_quit, specbind, call2, safe_call1, list2, menu_item_eval_property, 
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt,},
     remacs_sys::{
         Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
-        Fset_char_table_range, Fterpri, Fcons, 
+        Fset_char_table_range, Fterpri, Fcons, Flength,
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
@@ -186,6 +186,29 @@ pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
         }
     }
     res.into()
+}
+
+// TODO Finish this
+#[no_mangle]
+pub extern "C" fn _preferred_sequence_p(seq: LispObject) -> i64 {
+    unsafe{
+        let mut i: i64 = 0;
+        let len:EmacsInt = Flength(seq).as_fixnum_coerce_marker_or_error();
+        let result: i8 = 1;
+        for i in 0..len {
+            unsafe{
+                let elt:LispObject = aref(seq, i);
+                if elt.is_not_integer() {
+                    0 as i64;
+                }
+                else {
+                    let modifiers = & (char_bits::CHAR_MODIFIER_MASK & !char_bits::CHAR_META);
+                }
+            }
+        }
+    }
+    // Make compiler shut up for now
+    0 as i64
 }
 
 // Which keymaps are reverse-stored in the cache.

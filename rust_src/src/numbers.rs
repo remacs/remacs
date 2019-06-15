@@ -145,6 +145,11 @@ impl LispObject {
     pub fn is_integer(self) -> bool {
         self.is_fixnum()
     }
+
+    /// TODO: Bignum support? (Current Emacs doesn't have it)
+    pub fn is_not_integer(self) -> bool {
+        !self.is_fixnum()
+    }
 }
 
 /// lisp_fn allows markers for LispNumber arguments
