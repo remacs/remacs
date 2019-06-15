@@ -511,7 +511,8 @@ If NAME is nil, return the full server list of capabilities."
 
 (defun sieve-manage-parse-capability (str)
   "Parse managesieve capability string `STR'.
-Set variable `sieve-manage-capability' to "
+Return alist of capabilities, suitable for assignment
+to local variable `sieve-manage-capability'."
   (let ((capas (delq nil
                      (mapcar #'split-string-and-unquote
                              (split-string str "\n")))))
