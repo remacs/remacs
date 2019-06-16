@@ -155,8 +155,7 @@ are not abstract."
 	  (insert "\n\n[Class description not available until class definition is loaded.]\n")
 	(save-excursion
 	  (insert (propertize "\n\nClass description:\n" 'face 'bold))
-	  (eieio-help-class ctr))
-	))))
+	  (cl--describe-class ctr))))))
 
 
 ;;; METHOD STATS
