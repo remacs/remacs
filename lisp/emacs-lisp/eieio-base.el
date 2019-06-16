@@ -71,7 +71,7 @@ All slots are unbound, except those initialized with PARAMS."
   (let ((nobj  (if (stringp (car params))
                    (cl-call-next-method obj (pop params))
                  (cl-call-next-method obj))))
-    (dolist (descriptor (eieio-class-slots (class-of nobj)))
+    (dolist (descriptor (eieio-class-slots (eieio-object-class nobj)))
       (let ((slot (eieio-slot-descriptor-name descriptor)))
         (slot-makeunbound nobj slot)))
     (when params
