@@ -8611,10 +8611,11 @@ comment at the start of cc-engine.el for more info."
   ;; the function's arglist.  Otherwise return nil, leaving point unchanged.
   ;; LIMIT, if non-nil, is a limit for the backward search.
   (save-restriction
-    (if limit (narrow-to-region limit (point)))
     (let ((here (point))
-	  (paren-state (c-parse-state))
+	  (paren-state (c-parse-state))	; Do this outside the narrowing for
+					; performance reasons.
 	  pos level-plausible at-top-level res)
+      (if limit (narrow-to-region limit (point)))
       ;; Assume tentatively that we're at the top level.  Try to go back to the
       ;; colon we seek.
       (setq res
@@ -8637,7 +8638,8 @@ comment at the start of cc-engine.el for more info."
 
 	      (while (and (not (and level-plausible
 				    (setq at-top-level (c-at-toplevel-p))))
-			  (setq pos (c-pull-open-brace paren-state))) ; might be a paren.
+			  (setq pos (c-pull-open-brace paren-state)) ; might be a paren.
+			  (or (null limit) (>= pos limit)))
 		(setq level-plausible
 		      (catch 'level
 			(goto-char pos)
