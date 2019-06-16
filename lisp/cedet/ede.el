@@ -791,7 +791,7 @@ Optional argument NAME is the name to give this project."
 		 ))
 	 (inits (oref obj initializers)))
     ;; Force the name to match for new objects.
-    (setf (slot-value nobj 'object-name) (oref nobj name))
+    (eieio-object-set-name-string nobj (oref nobj name))
     ;; Handle init args.
     (while inits
       (eieio-oset nobj (car inits) (car (cdr inits)))
