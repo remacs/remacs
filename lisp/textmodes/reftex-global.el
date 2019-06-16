@@ -27,6 +27,8 @@
 (eval-when-compile (require 'cl-lib))
 (provide 'reftex-global)
 (require 'reftex)
+
+(declare-function fileloop-continue "fileloop")
 ;;;
 
 ;;;###autoload
@@ -98,8 +100,11 @@ No active TAGS table is required."
     (unless to
       (setq to (read-string (format "Replace regexp %s with: " from))))
     (reftex-access-scan-info current-prefix-arg)
-    (tags-query-replace from to (or delimited current-prefix-arg)
-                        (list 'reftex-all-document-files))))
+    (fileloop-initialize-replace
+     from to (reftex-all-document-files)
+     (if (equal from (downcase from)) nil 'default)
+     (or delimited current-prefix-arg))
+    (fileloop-continue)))
 
 (defvar TeX-master)
 (defvar isearch-next-buffer-function)
