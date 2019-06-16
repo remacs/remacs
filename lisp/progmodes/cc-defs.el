@@ -107,6 +107,13 @@ not known.")
 ;; survives the initialization of the derived mode.
 (put 'c-buffer-is-cc-mode 'permanent-local t)
 
+(defvar c-syntax-table-hwm most-positive-fixnum)
+;; A workaround for `syntax-ppss''s failure to take account of changes in
+;; syntax-table text properties.  This variable gets set to the lowest
+;; position where the syntax-table text property is changed, and that value
+;; gets supplied to `syntax-ppss-flush-cache' just before a font locking is
+;; due to take place.
+
 
 ;; The following is used below during compilation.
 (eval-and-compile
@@ -1089,6 +1096,9 @@ MODE is either a mode symbol or a list of mode symbols."
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
+       ,@(when (and (fboundp 'syntax-ppss)
+		    (eq `,property 'syntax-table))
+	   `((setq c-syntax-table-hwm (min c-syntax-table-hwm -pos-))))
        (put-text-property -pos- (1+ -pos-) ',property ,value))))
 
 (defmacro c-get-char-property (pos property)
@@ -1134,11 +1144,28 @@ MODE is either a mode symbol or a list of mode symbols."
 	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
+	    ,@(when (and (fboundp 'syntax-ppss)
+			 (eq `,property 'syntax-table))
+		    `((setq c-syntax-table-hwm (min c-syntax-table-hwm pos))))
 	    (remove-text-properties pos (1+ pos)
 				    '(,property nil))))
 	(t
 	 ;; Emacs < 21.
 	 `(c-clear-char-property-fun ,pos ',property))))
+
+(defmacro c-min-property-position (from to property)
+  ;; Return the first position in the range [FROM to) where the text property
+  ;; PROPERTY is set, or `most-positive-fixnum' if there is no such position.
+  ;; PROPERTY should be a quoted constant.
+  `(let ((-from- ,from) (-to- ,to) pos)
+     (cond
+      ((and (< -from- -to-)
+	    (get-text-property -from- ,property))
+       -from-)
+      ((< (setq pos (next-single-property-change -from- ,property nil -to-))
+	  -to-)
+       pos)
+      (most-positive-fixnum))))
 
 (defmacro c-clear-char-properties (from to property)
   ;; Remove all the occurrences of the given property in the given
@@ -1158,7 +1185,14 @@ MODE is either a mode symbol or a list of mode symbols."
 		      (delete-extent ext))
 		    nil ,from ,to nil nil ',property)
     ;; Emacs.
-    `(remove-text-properties ,from ,to '(,property nil))))
+    (if (and (fboundp 'syntax-ppss)
+	     (eq `,property 'syntax-table))
+	`(let ((-from- ,from) (-to- ,to))
+	   (setq c-syntax-table-hwm
+		 (min c-syntax-table-hwm
+		      (c-min-property-position -from- -to- ',property)))
+	   (remove-text-properties -from- -to- '(,property nil)))
+      `(remove-text-properties ,from ,to '(,property nil)))))
 
 (defmacro c-search-forward-char-property (property value &optional limit)
   "Search forward for a text-property PROPERTY having value VALUE.
@@ -1217,6 +1251,8 @@ been put there by c-put-char-property.  POINT remains unchanged."
 	       (not (equal (get-text-property place property) value)))
 	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
+      (when (and (fboundp 'syntax-ppss) (eq property 'syntax-table))
+	(setq c-syntax-table-hwm (min c-syntax-table-hwm place)))
       (setq end-place (c-next-single-property-change place property nil to))
       (remove-text-properties place end-place (cons property nil))
       ;; Do we have to do anything with stickiness here?
@@ -1303,7 +1339,10 @@ property, or nil."
 	  (< place to))
       (when (eq (char-after place) char)
 	(remove-text-properties place (1+ place) (cons property nil))
-	(or first (setq first place)))
+	(or first
+	    (progn (setq first place)
+		   (when (eq property 'syntax-table)
+		     (setq c-syntax-table-hwm (min c-syntax-table-hwm place))))))
       ;; Do we have to do anything with stickiness here?
       (setq place (1+ place)))
     first))
@@ -1344,8 +1383,11 @@ with value CHAR in the region [FROM to)."
        (goto-char ,from)
        (while (progn (skip-chars-forward skip-string -to-)
 		     (< (point) -to-))
-	   (c-put-char-property (point) ,property ,value)
-	   (forward-char)))))
+	 ,@(when (and (fboundp 'syntax-ppss)
+		      (eq (eval property) 'syntax-table))
+	     `((setq c-syntax-table-hwm (min c-syntax-table-hwm (point)))))
+	 (c-put-char-property (point) ,property ,value)
+	 (forward-char)))))
 
 ;; Macros to put overlays (Emacs) or extents (XEmacs) on buffer text.
 ;; For our purposes, these are characterized by being possible to
@@ -1423,6 +1465,7 @@ with value CHAR in the region [FROM to)."
 (def-edebug-spec c-put-char-property t)
 (def-edebug-spec c-get-char-property t)
 (def-edebug-spec c-clear-char-property t)
+(def-edebug-spec c-min-property-position nil) ; invoked only by macros
 (def-edebug-spec c-clear-char-property-with-value t)
 (def-edebug-spec c-clear-char-property-with-value-on-char t)
 (def-edebug-spec c-put-char-properties-on-char t)
