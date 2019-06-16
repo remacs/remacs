@@ -45,6 +45,8 @@
 ;;; Code:
 (eval-when-compile (require 'cl-lib))
 
+(declare-function fileloop-continue "fileloop")
+
 (defcustom vc-dir-mode-hook nil
   "Normal hook run by `vc-dir-mode'.
 See `run-hooks'."
@@ -823,8 +825,11 @@ with the command \\[tags-loop-continue]."
       (if (and buffer (with-current-buffer buffer
 			buffer-read-only))
 	  (error "File `%s' is visited read-only" file))))
-  (tags-query-replace from to delimited
-		      '(mapcar 'car (vc-dir-marked-only-files-and-states))))
+  (fileloop-initialize-replace
+   from to (mapcar 'car (vc-dir-marked-only-files-and-states))
+   (if (equal from (downcase from)) nil 'default)
+   delimited)
+  (fileloop-continue))
 
 (defun vc-dir-ignore ()
   "Ignore the current file."
