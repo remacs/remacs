@@ -31,6 +31,9 @@
 (require 'eieio)
 (require 'find-func)
 (require 'speedbar)
+
+;; We require cl-extra here instead of cl-lib because we need the
+;; internal `cl--describe-class' function.
 (require 'cl-extra)
 
 ;;; Code:
