@@ -352,6 +352,7 @@ Expands the abbreviation after defining it."
   (let (name exp start end)
     (save-excursion
       (forward-word (1+ (- arg)))
+      (skip-syntax-backward "^w")
       (setq end (point))
       (backward-word 1)
       (setq start (point)
