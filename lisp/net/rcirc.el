@@ -620,13 +620,12 @@ If ARG is non-nil, instead prompt for connection parameters."
 (defun rcirc-prompt-for-encryption (server-plist)
   "Prompt the user for the encryption method to use.
 SERVER-PLIST is the property list for the server."
-  (let ((msg "Encryption (default %s): ")
-        (choices '("plain" "tls"))
+  (let ((choices '("plain" "tls"))
         (default (or (plist-get server-plist :encryption)
-                     'plain)))
+                     "plain")))
     (intern
-     (completing-read (format msg default)
-                      choices nil t nil nil (symbol-name default)))))
+     (completing-read (format "Encryption (default %s): " default)
+                      choices nil t nil nil default))))
 
 (defun rcirc-keepalive ()
   "Send keep alive pings to active rcirc processes.
