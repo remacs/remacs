@@ -101,8 +101,6 @@
 (eval-when-compile (require 'cl-macs))  ;For cl--find-class.
 (eval-when-compile (require 'pcase))
 
-(declare-function gv-setter "gv" (name))
-
 (cl-defstruct (cl--generic-generalizer
                (:constructor nil)
                (:constructor cl-generic-make-generalizer
@@ -240,6 +238,7 @@ DEFAULT-BODY, if present, is used as the body of a default method.
       (push `(,args ,@options-and-methods) methods))
     (when (eq 'setf (car-safe name))
       (require 'gv)
+      (declare-function gv-setter "gv" (name))
       (setq name (gv-setter (cadr name))))
     `(prog1
          (progn
@@ -445,6 +444,7 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
       (setq args (pop body)))
     (when (eq 'setf (car-safe name))
       (require 'gv)
+      (declare-function gv-setter "gv" (name))
       (setq name (gv-setter (cadr name))))
     (pcase-let* ((`(,uses-cnm . ,fun) (cl--generic-lambda args body)))
       `(progn
