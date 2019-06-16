@@ -323,8 +323,14 @@ A @value{tramp} release, which is packaged with Emacs, could differ
 slightly from the corresponding standalone release.  This is because
 it isn't always possible to synchronize release dates between Emacs
 and @value{tramp}.  Such version numbers have the Emacs version number
-as suffix, like ``2.3.5.26.2''.  This means @value{tramp} 2.3.5 as
-integrated in Emacs 26.2.
+as suffix, like ``2.3.5.26.3''.  This means @value{tramp} 2.3.5 as
+integrated in Emacs 26.3.  A complete list of @value{tramp} versions
+packaged with Emacs can be retrieved by
+
+@vindex customize-package-emacs-version-alist
+@lisp
+(assoc 'Tramp customize-package-emacs-version-alist)
+@end lisp
 
 @value{tramp} is also available as @uref{https://elpa.gnu.org, GNU
 ELPA} package.  Besides the standalone releases, further minor version
@@ -337,9 +343,9 @@ Development versions contain new and incomplete features.  The
 development version of @value{tramp} is always the version number of
 the next release, plus the suffix ``-pre'', like ``2.4.3-pre''.
 
-One way to obtain from Git server is to visit the Savannah project
-page at the following URL and then clicking on the Git link in the
-navigation bar at the top.
+One way to obtain @value{tramp} from Git server is to visit the
+Savannah project page at the following URL and then clicking on the
+Git link in the navigation bar at the top.
 
 @noindent
 @uref{https://savannah.gnu.org/projects/tramp/}
