@@ -247,9 +247,10 @@ we can tell font lock about them.")
 	(let* ((C (car chl))
 	       (name (symbol-name C))
 	       (key (when (slot-exists-p C 'key)
-		      (oref C key)))
-	       (showexample t)
-	       )
+                      ;; This avoids a compilation warning, but we
+                      ;; know that 'key exists here.
+		      (slot-value C (intern "key" obarray))))
+	       (showexample t))
 	  (setq chl (cdr chl))
 	  (setq chl (append (eieio-class-children C) chl))
 
