@@ -101,6 +101,8 @@
 (eval-when-compile (require 'cl-macs))  ;For cl--find-class.
 (eval-when-compile (require 'pcase))
 
+(declare-function gv-setter "gv" (name))
+
 (cl-defstruct (cl--generic-generalizer
                (:constructor nil)
                (:constructor cl-generic-make-generalizer
