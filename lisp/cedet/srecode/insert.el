@@ -183,8 +183,7 @@ Buffer based features related to change hooks is handled one level up."
 	       )
       (let ((reg
 	     ;; Create the field-driven editable area.
-	     (srecode-template-inserted-region
-	      "TEMPLATE" :start start :end (point))))
+	     (srecode-template-inserted-region :start start :end (point))))
 	(srecode-overlaid-activate reg))
       )
     ;; We return with 'point being the end of the template insertion

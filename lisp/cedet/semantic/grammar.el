@@ -1898,7 +1898,6 @@ Optional argument COLOR determines if color is added to the text."
 
       (setq context-return
 	    (semantic-analyze-context
-	     "context-for-semantic-grammar"
 	     :buffer (current-buffer)
 	     :scope nil
 	     :bounds bounds
