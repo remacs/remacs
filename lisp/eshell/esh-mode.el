@@ -1015,9 +1015,12 @@ This function could be in the list `eshell-output-filter-functions'."
 
 (autoload 'ansi-color-apply-on-region "ansi-color")
 (defvar ansi-color-apply-face-function)
+(declare-function ansi-color-apply-text-property-face "ansi-color"
+                  (BEG END FACE))
 
 (defun eshell-handle-ansi-color ()
   "Handle ANSI color codes."
+  (require 'ansi-color)
   (let ((ansi-color-apply-face-function #'ansi-color-apply-text-property-face))
     (ansi-color-apply-on-region eshell-last-output-start
                                 eshell-last-output-end)))
