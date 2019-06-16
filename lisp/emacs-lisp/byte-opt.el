@@ -850,6 +850,33 @@
                           ',list)))))
     (byte-optimize-predicate form)))
 
+(defun byte-optimize-concat (form)
+  "Merge adjacent constant arguments to `concat'."
+  (let ((args (cdr form))
+        (newargs nil))
+    (while args
+      (let ((strings nil)
+            val)
+        (while (and args (macroexp-const-p (car args))
+                    (progn
+                      (setq val (eval (car args)))
+                      (and (or (stringp val)
+                               (and (or (listp val) (vectorp val))
+                                    (not (memq nil
+                                               (mapcar #'characterp val))))))))
+          (push val strings)
+          (setq args (cdr args)))
+        (when strings
+          (let ((s (apply #'concat (nreverse strings))))
+            (when (not (zerop (length s)))
+              (push s newargs)))))
+      (when args
+        (push (car args) newargs)
+        (setq args (cdr args))))
+    (if (= (length newargs) (length (cdr form)))
+        form          ; No improvement.
+      (cons 'concat (nreverse newargs)))))
+
 (put 'identity 'byte-optimizer 'byte-optimize-identity)
 (put 'memq 'byte-optimizer 'byte-optimize-memq)
 
@@ -891,6 +918,8 @@
 (put 'cdr 'byte-optimizer 'byte-optimize-predicate)
 (put 'car-safe 'byte-optimizer 'byte-optimize-predicate)
 (put 'cdr-safe 'byte-optimizer 'byte-optimize-predicate)
+
+(put 'concat 'byte-optimizer 'byte-optimize-concat)
 
 ;; I'm not convinced that this is necessary.  Doesn't the optimizer loop
 ;; take care of this? - Jamie
