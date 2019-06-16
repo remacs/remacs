@@ -86,7 +86,11 @@ only the name before the link arrow."
     (let ((buf (find-file-noselect test-dir)))
       (unwind-protect
 	  (with-current-buffer buf
-            (make-symbolic-link "./bar/baz" link-name)
+            (skip-unless
+             ;; This check is for wdired, not symbolic links, so skip
+             ;; it when make-symbolic-link fails for any reason (like
+             ;; insufficient privileges).
+             (ignore-errors (make-symbolic-link "./bar/baz" link-name) t))
             (revert-buffer)
             (let* ((file-name (dired-get-filename))
                    (dir-part (file-name-directory file-name))
