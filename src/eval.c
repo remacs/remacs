@@ -220,7 +220,7 @@ void
 init_eval_once (void)
 {
   /* Don't forget to update docs (lispref node "Local Variables").  */
-  max_specpdl_size = 1300; /* 1000 is not enough for CEDET's c-by.el.  */
+  max_specpdl_size = 1500; /* 1300 is not enough for cl-generic.el.  */
   max_lisp_eval_depth = 800;
   Vrun_hooks = Qnil;
   pdumper_do_now_and_after_load (init_eval_once_for_pdumper);
