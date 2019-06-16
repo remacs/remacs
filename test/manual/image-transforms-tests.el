@@ -25,9 +25,6 @@
 
 ;; Type M-x test-transforms RET to generate the test buffer.
 
-;; There is a difference in how librsvg and ImageMagick draw some of
-;; the images.  This results in what looks like a one pixel difference.
-
 ;;; Code:
 
 (defun test-rotation ()
@@ -45,6 +42,36 @@
 
     ;; This should log a message and display the unrotated image.
     (insert-test "45" up up '(:rotation 45)))
+  (insert "\n\n"))
+
+(defun test-cropping ()
+  (let ((image "<svg height='30' width='30'>
+                  <rect x='0' y='0' width='10' height='10'/>
+                  <rect x='10' y='10' width='10' height='10'
+                        style='fill:none;stroke-width:1;stroke:#000'/>
+                  <line x1='10' y1='10' x2='20' y2='20' style='stroke:#000'/>
+                  <line x1='20' y1='10' x2='10' y2='20' style='stroke:#000'/>
+                  <rect x='20' y='20' width='10' height='10'
+                        style='fill:none;stroke-width:1;stroke:#000'/>
+                </svg>")
+        (top-left "<svg height='10' width='10'>
+                     <rect x='0' y='0' width='10' height='10'/>
+                   </svg>")
+        (middle "<svg height='10' width='10'>
+                   <rect x='0' y='0' width='10' height='10'
+                         style='fill:none;stroke-width:1;stroke:#000'/>
+                   <line x1='0' y1='0' x2='10' y2='10' style='stroke:#000'/>
+                   <line x1='10' y1='0' x2='0' y2='10' style='stroke:#000'/>
+                 </svg>")
+        (bottom-right "<svg height='10' width='10'>
+                         <rect x='0' y='0' width='10' height='10'
+                               style='fill:none;stroke-width:1;stroke:#000'/>
+                       </svg>"))
+    (insert-header "Test Crop: cropping an image")
+    (insert-test "all params" top-left image '(:crop (10 10 0 0)))
+    (insert-test "width/height only" middle image '(:crop (10 10)))
+    (insert-test "negative x y" middle image '(:crop (10 10 -10 -10)))
+    (insert-test "all params" bottom-right image '(:crop (10 10 20 20))))
   (insert "\n\n"))
 
 (defun test-scaling ()
@@ -143,6 +170,7 @@
     (unless #'imagemagick-types
       (insert "ImageMagick not detected.  ImageMagick tests will be skipped.\n\n"))
     (test-rotation)
+    (test-cropping)
     (test-scaling)
     (test-scaling-rotation)
     (goto-char (point-min))))

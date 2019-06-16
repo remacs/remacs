@@ -1967,7 +1967,8 @@ compute_image_size (size_t width, size_t height,
 }
 #endif /* HAVE_IMAGEMAGICK || HAVE_NATIVE_TRANSFORMS */
 
-/* image_set_transform uses affine transformation matrices to perform
+/* image_set_rotation, image_set_crop, image_set_size and
+   image_set_transform use affine transformation matrices to perform
    various transforms on the image.  The matrix is a 2D array of
    doubles.  It is laid out like this:
 
@@ -2038,6 +2039,10 @@ compute_image_size (size_t width, size_t height,
    finally move the origin back to the top left of the image, which
    may now be a different corner.
 
+   Cropping is easier as we just move the origin to the top left of
+   where we want to crop and set the width and height accordingly.
+   The matrices don’t know anything about width and height.
+
    It's possible to pre-calculate the matrix multiplications and just
    generate one transform matrix that will do everything we need in a
    single step, but the maths for each element is much more complex
@@ -2065,7 +2070,7 @@ matrix3x3_mult (matrix3x3 a, matrix3x3 b, matrix3x3 result)
 }
 
 static void
-image_set_transform (struct frame *f, struct image *img)
+image_set_rotation (struct image *img, matrix3x3 tm)
 {
 #ifdef HAVE_NATIVE_TRANSFORMS
 # ifdef HAVE_IMAGEMAGICK
@@ -2079,112 +2084,217 @@ image_set_transform (struct frame *f, struct image *img)
     return;
 # endif
 
-  /* This is the transformation matrix we will use through all the
-     calculations.  */
-  matrix3x3 tm = { [0][0] = 1, [1][1] = 1, [2][2] = 1 };
+  int rotation, cos_r, sin_r, width, height;
 
-  /* Calculate image rotation.  */
   Lisp_Object value = image_spec_value (img->spec, QCrotation, NULL);
-  if (NUMBERP (value))
+  if (! NUMBERP (value))
+    return;
+
+  Lisp_Object reduced_angle = Fmod (value, make_fixnum (360));
+  if (! FLOATP (reduced_angle))
+    rotation = XFIXNUM (reduced_angle);
+  else
     {
-      int rotation, cos_r, sin_r, width, height;
-
-      Lisp_Object reduced_angle = Fmod (value, make_fixnum (360));
-      if (! FLOATP (reduced_angle))
-        rotation = XFIXNUM (reduced_angle);
-      else
-        {
-          rotation = XFLOAT_DATA (reduced_angle);
-          if (rotation != XFLOAT_DATA (reduced_angle))
-            goto not_a_multiple_of_90;
-        }
-
-      if (rotation != 0)
-        {
-          if (rotation == 90)
-            {
-              width = img->height;
-              height = img->width;
-
-              cos_r = 0;
-              sin_r = 1;
-            }
-          else if (rotation == 180)
-            {
-              width = img->width;
-              height = img->height;
-
-              cos_r = -1;
-              sin_r = 0;
-            }
-          else if (rotation == 270)
-            {
-              width = img->height;
-              height = img->width;
-
-              cos_r = 0;
-              sin_r = -1;
-            }
-          else
-            {
-            not_a_multiple_of_90:
-              image_error ("Native image rotation supports "
-                           "only multiples of 90 degrees");
-              return;
-            }
-
-          /* Translate so (0, 0) is in the center of the image.  */
-          matrix3x3 t
-            = { [0][0] = 1,             [2][0] = img->width >> 1,
-                            [1][1] = 1, [2][1] = img->height >> 1,
-                                        [2][2] = 1 };
-          matrix3x3 tmp;
-          matrix3x3_mult (t, tm, tmp);
-
-          /* Rotate.  */
-          matrix3x3 rot = { [0][0] = cos_r,  [1][0] = sin_r,
-                            [0][1] = -sin_r, [1][1] = cos_r,
-                                                             [2][2] = 1 };
-          matrix3x3 tmp2;
-          matrix3x3_mult (rot, tmp, tmp2);
-
-          /* Translate back.  */
-          t[2][0] = - (width >> 1);
-          t[2][1] = - (height >> 1);
-          matrix3x3_mult (t, tmp2, tm);
-
-          img->width = width;
-          img->height = height;
-        }
+      rotation = XFLOAT_DATA (reduced_angle);
+      if (rotation != XFLOAT_DATA (reduced_angle))
+	goto not_a_multiple_of_90;
     }
 
-  /* Calculate final image size.  */
-  {
-    int width, height;
+  if (rotation == 0)
+    return;
 
-    compute_image_size (img->width, img->height, img->spec, &width, &height);
+  if (rotation == 90)
+    {
+      width = img->height;
+      height = img->width;
 
-    if (img->width != width || img->height != height)
-      {
-        double xscale = img->width / (double) width;
-        double yscale = img->height / (double) height;
+      cos_r = 0;
+      sin_r = 1;
+    }
+  else if (rotation == 180)
+    {
+      width = img->width;
+      height = img->height;
 
-        matrix3x3 tmp, rm = { [0][0] = xscale, [1][1] = yscale, [2][2] = 1 };
-        matrix3x3_mult (rm, tm, tmp);
-        matrix3x3_copy (tmp, tm);
+      cos_r = -1;
+      sin_r = 0;
+    }
+  else if (rotation == 270)
+    {
+      width = img->height;
+      height = img->width;
 
-        img->width = width;
-        img->height = height;
-      }
-  }
+      cos_r = 0;
+      sin_r = -1;
+    }
+  else
+    {
+    not_a_multiple_of_90:
+      image_error ("Native image rotation supports "
+		   "only multiples of 90 degrees");
+      return;
+    }
 
+  /* Translate so (0, 0) is in the center of the image.  */
+  matrix3x3 t
+    = { [0][0] = 1,
+				  [1][1] = 1,
+	[2][0] = img->width >> 1, [2][1] = img->height >> 1, [2][2] = 1 };
+  matrix3x3 tmp;
+  matrix3x3_mult (t, tm, tmp);
+
+  /* Rotate.  */
+  matrix3x3 rot = { [0][0] = cos_r, [0][1] = -sin_r,
+		    [1][0] = sin_r, [1][1] = cos_r,
+						     [2][2] = 1 };
+  matrix3x3 tmp2;
+  matrix3x3_mult (rot, tmp, tmp2);
+
+  /* Translate back.  */
+  t[2][0] = - (width >> 1);
+  t[2][1] = - (height >> 1);
+  matrix3x3_mult (t, tmp2, tm);
+
+  img->width = width;
+  img->height = height;
+#endif
+}
+
+static void
+image_set_crop (struct image *img, matrix3x3 tm)
+{
+#ifdef HAVE_NATIVE_TRANSFORMS
+# ifdef HAVE_IMAGEMAGICK
+  /* ImageMagick images are already cropped.  */
+  if (EQ (image_spec_value (img->spec, QCtype, NULL), Qimagemagick))
+    return;
+# endif
+
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+  if (!img->picture)
+    return;
+# endif
+
+  Lisp_Object crop = image_spec_value (img->spec, QCcrop, NULL);
+
+  if (!CONSP (crop))
+    return;
+
+  Lisp_Object w = XCAR (crop), h = Qnil, x = Qnil, y = Qnil;
+  crop = XCDR (crop);
+  if (CONSP (crop))
+    {
+      h = XCAR (crop);
+      crop = XCDR (crop);
+      if (CONSP (crop))
+	{
+	  x = XCAR (crop);
+	  crop = XCDR (crop);
+	  if (CONSP (crop))
+	    y = XCAR (crop);
+	}
+    }
+
+  int width = img->width;
+  if (FIXNATP (w) && XFIXNAT (w) < img->width)
+    width = XFIXNAT (w);
+  int left;
+  if (TYPE_RANGED_FIXNUMP (int, x))
+    {
+      left = XFIXNUM (x);
+      if (left < 0)
+        left = img->width - width + left;
+    }
+  else
+    left = (img->width - width) >> 1;
+
+  int height = img->height;
+  if (FIXNATP (h) && XFIXNAT (h) < img->height)
+    height = XFIXNAT (h);
+  int top;
+  if (TYPE_RANGED_FIXNUMP (int, y))
+    {
+      top = XFIXNUM (y);
+      if (top < 0)
+        top = img->height - height + top;
+    }
+  else
+    top = (img->height - height) >> 1;
+
+  /* Negative values operate from the right and bottom of the image
+     instead of the left and top.  */
+  if (left < 0)
+    {
+      width = img->width + left;
+      left = 0;
+    }
+
+  if (width + left > img->width)
+    width = img->width - left;
+
+  if (top < 0)
+    {
+      height = img->height + top;
+      top = 0;
+    }
+
+  if (height + top > img->height)
+    height = img->height - top;
+
+  matrix3x3 tmp, m = { [0][0] = 1,
+				      [1][1] = 1,
+		       [2][0] = left, [2][1] = top, [2][2] = 1 };
+  matrix3x3_mult (m, tm, tmp);
+  matrix3x3_copy (tmp, tm);
+
+  img->width = width;
+  img->height = height;
+#endif
+}
+
+static void
+image_set_size (struct image *img, matrix3x3 tm)
+{
+#ifdef HAVE_NATIVE_TRANSFORMS
+# ifdef HAVE_IMAGEMAGICK
+  /* ImageMagick images are already the correct size.  */
+  if (EQ (image_spec_value (img->spec, QCtype, NULL), Qimagemagick))
+    return;
+# endif
+
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+  if (!img->picture)
+    return;
+# endif
+
+  int width, height;
+
+  compute_image_size (img->width, img->height, img->spec, &width, &height);
+
+  double xscale = img->width / (double) width;
+  double yscale = img->height / (double) height;
+
+  matrix3x3 tmp, rm = { [0][0] = xscale, [1][1] = yscale, [2][2] = 1 };
+  matrix3x3_mult (rm, tm, tmp);
+  matrix3x3_copy (tmp, tm);
+
+  img->width = width;
+  img->height = height;
+#endif
+}
+
+static void
+image_set_transform (struct frame *f, struct image *img, matrix3x3 matrix)
+{
+  /* TODO: Add MS Windows support.  */
+#ifdef HAVE_NATIVE_TRANSFORMS
 # if defined (HAVE_NS)
   /* Under NS the transform is applied to the drawing surface at
      drawing time, so store it for later.  */
-  ns_image_set_transform (img->pixmap, tm);
+  ns_image_set_transform (img->pixmap, matrix);
 # elif defined USE_CAIRO
-  cairo_matrix_t cr_matrix = {tm[0][0], tm[0][1], tm[1][0],
-			      tm[1][1], tm[2][0], tm[2][1]};
+  cairo_matrix_t cr_matrix = {matrix[0][0], matrix[0][1], matrix[1][0],
+			      matrix[1][1], matrix[2][0], matrix[2][1]};
   cairo_pattern_t *pattern = cairo_pattern_create_rgb (0, 0, 0);
   cairo_pattern_set_matrix (pattern, &cr_matrix);
   /* Dummy solid color pattern just to record pattern matrix.  */
@@ -2193,15 +2303,15 @@ image_set_transform (struct frame *f, struct image *img)
   if (img->picture)
     {
       XTransform tmat
-	= {{{XDoubleToFixed (tm[0][0]),
-             XDoubleToFixed (tm[1][0]),
-             XDoubleToFixed (tm[2][0])},
-	    {XDoubleToFixed (tm[0][1]),
-             XDoubleToFixed (tm[1][1]),
-             XDoubleToFixed (tm[2][1])},
-	    {XDoubleToFixed (tm[0][2]),
-             XDoubleToFixed (tm[1][2]),
-             XDoubleToFixed (tm[2][2])}}};
+	= {{{XDoubleToFixed (matrix[0][0]),
+             XDoubleToFixed (matrix[1][0]),
+             XDoubleToFixed (matrix[2][0])},
+	    {XDoubleToFixed (matrix[0][1]),
+             XDoubleToFixed (matrix[1][1]),
+             XDoubleToFixed (matrix[2][1])},
+	    {XDoubleToFixed (matrix[0][2]),
+             XDoubleToFixed (matrix[1][2]),
+             XDoubleToFixed (matrix[2][2])}}};
 
       XRenderSetPictureFilter (FRAME_X_DISPLAY (f), img->picture, FilterBest,
 			       0, 0);
@@ -2267,7 +2377,11 @@ lookup_image (struct frame *f, Lisp_Object spec)
 	  int relief_bound;
 
 #ifdef HAVE_NATIVE_TRANSFORMS
-          image_set_transform (f, img);
+          matrix3x3 transform_matrix = { [0][0] = 1, [1][1] = 1, [2][2] = 1 };
+          image_set_size (img, transform_matrix);
+          image_set_crop (img, transform_matrix);
+          image_set_rotation (img, transform_matrix);
+          image_set_transform (f, img, transform_matrix);
 #endif
 
 	  ascent = image_spec_value (spec, QCascent, NULL);
