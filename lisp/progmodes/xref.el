@@ -492,13 +492,14 @@ and finally return the window."
           (cond ((eq xref--original-window-intent 'frame)
                  t)
                 ((eq xref--original-window-intent 'window)
-                 '(display-buffer-same-window))
+                 `((xref--display-buffer-in-other-window)
+                   (window . ,xref--original-window)))
                 ((and
                   (window-live-p xref--original-window)
                   (or (not (window-dedicated-p xref--original-window))
                       (eq (window-buffer xref--original-window) buf)))
-                 `((display-buffer-in-previous-window)
-                   (previous-window . ,xref--original-window))))))
+                 `((xref--display-buffer-in-window)
+                   (window . ,xref--original-window))))))
     (with-selected-window (display-buffer buf action)
       (xref--goto-char pos)
       (run-hooks 'xref-after-jump-hook)
@@ -506,6 +507,19 @@ and finally return the window."
         (with-current-buffer xref-buf
           (setq-local other-window-scroll-buffer buf)))
       (selected-window))))
+
+(defun xref--display-buffer-in-other-window (buffer alist)
+  (let ((window (assoc-default 'window alist)))
+    (cl-assert window)
+    (xref--with-dedicated-window
+     (with-selected-window window
+       (display-buffer buffer t)))))
+
+(defun xref--display-buffer-in-window (buffer alist)
+  (let ((window (assoc-default 'window alist)))
+    (cl-assert window)
+    (with-selected-window window
+      (display-buffer buffer '(display-buffer-same-window)))))
 
 (defun xref--show-location (location &optional select)
   "Help `xref-show-xref' and `xref-goto-xref' do their job.
