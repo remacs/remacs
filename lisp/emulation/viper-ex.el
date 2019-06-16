@@ -2017,7 +2017,7 @@ Please contact your system administrator. "
 	(progn
 	  (if (string= tag "")
 	      (find-tag ex-tag t)
-	    (find-tag-other-window ex-tag))
+	    (xref-find-definitions-other-window ex-tag))
 	  (viper-change-state-to-vi))
       (error
        (viper-change-state-to-vi)
