@@ -31,6 +31,7 @@
 (require 'eieio)
 (require 'find-func)
 (require 'speedbar)
+(require 'cl-extra)
 
 ;;; Code:
 ;;;###autoload
