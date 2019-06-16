@@ -360,6 +360,11 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
+AM_V_NO_PD = $(am__v_NO_PD_@AM_V@)
+am__v_NO_PD_ = $(am__v_NO_PD_@AM_DEFAULT_V@)
+am__v_NO_PD_0 = --no-print-directory
+am__v_NO_PD_1 =
+
 bootstrap_exe = ../src/bootstrap-emacs$(EXEEXT)
 ifeq ($(DUMPING),pdumper)
 bootstrap_pdmp := bootstrap-emacs.pdmp # Keep in sync with loadup.el
@@ -776,12 +781,8 @@ tags: TAGS ../lisp/TAGS $(lwlibdir)/TAGS
 ## bootstrap-emacs$(EXEEXT) as an order-only prerequisite.
 
 %.elc: %.el | bootstrap-emacs$(EXEEXT) $(bootstrap_pdmp)
-ifeq (@AM_V@,1)
-	@$(MAKE) -C ../lisp EMACS="$(bootstrap_exe)" THEFILE=$< $<c
-else
-	@$(MAKE) --no-print-directory\
-		-C ../lisp EMACS="$(bootstrap_exe)" THEFILE=$< $<c
-endif
+	@$(MAKE) $(AM_V_NO_PD) -C ../lisp EMACS="$(bootstrap_exe)"\
+		THEFILE=$< $<c
 
 ## VCSWITNESS points to the file that holds info about the current checkout.
 ## We use it as a heuristic to decide when to rebuild loaddefs.el.
