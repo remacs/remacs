@@ -67,7 +67,7 @@ system, including many technical ones.  Examples:
     (and (characterp char) (< char 128)))
 
   (defmacro latin-ltx--define-rules (&rest rules)
-    (load "uni-name")
+    (load "uni-name" nil t)
     (let ((newrules ()))
       (dolist (rule rules)
         (pcase rule
