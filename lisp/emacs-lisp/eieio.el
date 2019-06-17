@@ -853,8 +853,11 @@ to prepend a space."
 
 (cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
   "Default printer for EIEIO objects."
-  ;; Fallback to the old `object-print'.
-  (princ (object-print object) stream))
+  ;; Fallback to the old `object-print'.  There should be no
+  ;; `object-print' methods in the Emacs tree, but there may be some
+  ;; out-of-tree.
+  (with-suppressed-warnings ((obsolete object-print))
+    (princ (object-print object) stream)))
 
 (defvar eieio-print-depth 0
   "The current indentation depth while printing.
