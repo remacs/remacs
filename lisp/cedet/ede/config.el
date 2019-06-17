@@ -406,13 +406,14 @@ java class path.")
   ()
   "Class to mix into a project to support java.")
 
+(eieio-declare-slots classpath)
+
 (cl-defmethod ede-java-classpath ((proj ede-project-with-config-java))
   "Return the classpath for this project."
   ;; The `classpath' slot only exists in the Java parts of cedet, and
   ;; those have not been merged into Emacs.  Suppress the warning
   ;; about the unknown slot by using `intern'.
-  (slot-value (ede-config-get-configuration proj)
-              (intern "classpath" obarray)))
+  (oref (ede-config-get-configuration proj) classpath))
 
 ;; Local variables:
 ;; generated-autoload-file: "loaddefs.el"

@@ -229,6 +229,7 @@ we can tell font lock about them.")
 	(insert ee))))
   )
 
+(eieio-declare-slots key)
 
 (defun srecode-macro-help ()
   "Provide help for working with macros in a template."
@@ -247,9 +248,7 @@ we can tell font lock about them.")
 	(let* ((C (car chl))
 	       (name (symbol-name C))
 	       (key (when (slot-exists-p C 'key)
-                      ;; This avoids a compilation warning, but we
-                      ;; know that 'key exists here.
-		      (slot-value C (intern "key" obarray))))
+		      (oref C key)))
 	       (showexample t))
 	  (setq chl (cdr chl))
 	  (setq chl (append (eieio-class-children C) chl))
@@ -512,9 +511,7 @@ section or ? for an ask variable."
 					     ":")
 			     nil)))
 		    (key  (when (slot-exists-p inserter 'key)
-                            ;; This avoids a compilation warning, but we
-                            ;; know that 'key exists here.
-		            (slot-value inserter (intern "key" obarray)))))
+		            (oref inserter key))))
 		(cond ((null key)
 		       ;; A plain variable
 		       (cons nil base))
