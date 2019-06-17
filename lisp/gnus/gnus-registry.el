@@ -307,33 +307,40 @@ This is not required after changing `gnus-registry-cache-file'."
     (gnus-message 4 "Remaking the Gnus registry")
     (setq gnus-registry-db (gnus-registry-make-db))))
 
-(defun gnus-registry-load ()
-  "Load the registry from the cache file."
+(defun gnus-registry-load (&optional force)
+  "Load the registry from the cache file.
+If the registry is already loaded, don't reload unless FORCE is
+non-nil."
   (interactive)
-  (let ((file gnus-registry-cache-file))
-    (condition-case nil
-        (gnus-registry-read file)
-      (file-error
-       ;; Fix previous mis-naming of the registry file.
-       (let ((old-file-name
-	      (concat (file-name-sans-extension
-		      gnus-registry-cache-file)
-		     ".eioio")))
-	 (if (and (file-exists-p old-file-name)
-		  (yes-or-no-p
-		   (format "Rename registry file from %s to %s? "
-			   old-file-name file)))
-	     (progn
-	       (gnus-registry-read old-file-name)
-	       (setf (oref gnus-registry-db file) file)
-	       (gnus-message 1 "Registry filename changed to %s" file))
-	   (gnus-registry-remake-db t))))
-      (error
-       (gnus-message
-        1
-        "The Gnus registry could not be loaded from %s, creating a new one"
-        file)
-       (gnus-registry-remake-db t)))))
+  (when (or force
+	    ;; The registry is loaded by both
+	    ;; `gnus-registry-initialize' and the read-newsrc hook.
+	    ;; Don't load twice.
+	    (null (eieio-object-p gnus-registry-db)))
+    (let ((file gnus-registry-cache-file))
+      (condition-case nil
+          (gnus-registry-read file)
+	(file-error
+	 ;; Fix previous mis-naming of the registry file.
+	 (let ((old-file-name
+		(concat (file-name-sans-extension
+			 gnus-registry-cache-file)
+			".eioio")))
+	   (if (and (file-exists-p old-file-name)
+		    (yes-or-no-p
+		     (format "Rename registry file from %s to %s? "
+			     old-file-name file)))
+	       (progn
+		 (gnus-registry-read old-file-name)
+		 (setf (oref gnus-registry-db file) file)
+		 (gnus-message 1 "Registry filename changed to %s" file))
+	     (gnus-registry-remake-db t))))
+	(error
+	 (gnus-message
+          1
+          "The Gnus registry could not be loaded from %s, creating a new one"
+          file)
+	 (gnus-registry-remake-db t))))))
 
 (defun gnus-registry-read (file)
   "Do the actual reading of the registry persistence file."
@@ -1101,6 +1108,12 @@ only the last one's marks are returned."
               (setq val (list val)))
             (gnus-registry-set-id-key id key val))))
       (message "Import done, collected %d entries" count))))
+
+(defun gnus-registry-clear ()
+  "Clear the registry."
+  (setq gnus-registry-db nil))
+
+(gnus-add-shutdown 'gnus-registry-clear 'gnus)
 
 ;;;###autoload
 (defun gnus-registry-initialize ()
