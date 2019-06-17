@@ -691,13 +691,14 @@ literals (Bug#20852)."
         (byte-compile-log-buffer (generate-new-buffer " *Compile-Log*")))
     ;; Check that we get a warning without suppression.
     (with-current-buffer byte-compile-log-buffer
+      (setq-local fill-column 9999)
+      (setq-local warning-fill-column fill-column)
       (let ((inhibit-read-only t))
         (erase-buffer)))
     (test-byte-comp-compile-and-load t form)
     (with-current-buffer byte-compile-log-buffer
       (unless match
         (error "%s" (buffer-string)))
-      (setq match (replace-regexp-in-string " " "[ \n]+" match nil t))
       (goto-char (point-min))
       (should (string-match match (buffer-string))))
     ;; And that it's gone now.
