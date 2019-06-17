@@ -77,7 +77,9 @@
 
 ;;; Code:
 
-(require 'iswitchb)                     ;FIXME: Don't rely on iswitchb!
+;; FIXME: Don't rely on iswitchb!  See bug#36260.
+(with-suppressed-warnings ((obsolete iswitchb))
+  (require 'iswitchb))
 
 (defgroup isearchb nil
   "Switch between buffers using a mechanism like isearch."
