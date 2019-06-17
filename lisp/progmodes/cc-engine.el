@@ -7259,9 +7259,7 @@ comment at the start of cc-engine.el for more info."
 	    ;; (c-put-char-property open-paren 'syntax-table '(1))
 	    )
 	  (goto-char bound))
-	nil)
-  ;; Ensure the opening delimiter will get refontified.
-    (c-font-lock-flush (1- open-quote) (1+ open-paren))))
+	nil)))
 
 (defun c-after-change-unmark-raw-strings (beg end _old-len)
   ;; This function removes `syntax-table' text properties from any raw strings
