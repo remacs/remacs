@@ -511,7 +511,10 @@ section or ? for an ask variable."
 			       (split-string (oref inserter secondname)
 					     ":")
 			     nil)))
-		    (key (oref inserter key)))
+		    (key  (when (slot-exists-p inserter 'key)
+                            ;; This avoids a compilation warning, but we
+                            ;; know that 'key exists here.
+		            (slot-value inserter (intern "key" obarray)))))
 		(cond ((null key)
 		       ;; A plain variable
 		       (cons nil base))
