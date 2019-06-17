@@ -128,6 +128,25 @@
 ;   '
 (require 'cc-fonts) ;)
 
+;; The following three really belong to cc-fonts.el, but they are required
+;; even when cc-fonts.el hasn't been loaded (this happens in XEmacs when
+;; font-lock-mode is nil).
+
+(defvar c-doc-line-join-re regexp-unmatchable)
+;; Matches a join of two lines in a doc comment.
+;; This should not be changed directly, but instead set by
+;; `c-setup-doc-comment-style'.  This variable is used in `c-find-decl-spots'
+;; in (e.g.) autodoc style comments to bridge the gap between a "@\n" at an
+;; EOL and the token following "//!" on the next line.
+
+(defvar c-doc-bright-comment-start-re regexp-unmatchable)
+;; Matches the start of a "bright" comment, one whose contents may be
+;; fontified by, e.g., `c-font-lock-declarations'.
+
+(defvar c-doc-line-join-end-ch nil)
+;; A list of characters, each being a last character of a doc comment marker,
+;; e.g. the ! from pike autodoc's "//!".
+
 
 ;; Other modes and packages which depend on CC Mode should do the
 ;; following to make sure everything is loaded and available for their
