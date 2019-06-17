@@ -105,10 +105,11 @@ system, including many technical ones.  Examples:
                   (setq rules (delq c rules)))
                 (message "Conflict for %S: %S"
                          (car rule) (apply #'string conflicts)))))))
-      (let ((inputs (mapcar #'car newrules)))
-        (setq inputs (delete-dups inputs))
-        (message "latin-ltx: %d rules (+ %d conflicts)!"
-                 (length inputs) (- (length newrules) (length inputs))))
+      (let* ((inputs (delete-dups (mapcar #'car newrules)))
+             (conflicts (- (length newrules) (length inputs))))
+        (unless (zerop conflicts)
+          (message "latin-ltx: %d rules (+ %d conflicts)!"
+                   (length inputs) conflicts)))
       `(quail-define-rules ,@(nreverse newrules)))))
 
 (latin-ltx--define-rules
