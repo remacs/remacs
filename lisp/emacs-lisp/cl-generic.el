@@ -450,7 +450,7 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
       `(progn
          ,(and (get name 'byte-obsolete-info)
                (or (not (fboundp 'byte-compile-warning-enabled-p))
-                   (byte-compile-warning-enabled-p 'obsolete))
+                   (byte-compile-warning-enabled-p 'obsolete name))
                (let* ((obsolete (get name 'byte-obsolete-info)))
                  (macroexp--warn-and-return
                   (macroexp--obsolete-warning name obsolete "generic function")
