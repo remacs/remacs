@@ -46,7 +46,7 @@
 ;; The TARGET is an entity in a project that knows about files
 ;; and features of those files.
 
-(defclass ede-target (eieio-speedbar-directory-button)
+(defclass ede-target (eieio-speedbar-directory-button eieio-named)
   ((buttonface :initform speedbar-file-face) ;override for superclass
    (name :initarg :name
 	 :type string

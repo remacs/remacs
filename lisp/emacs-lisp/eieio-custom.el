@@ -317,7 +317,8 @@ Optional argument IGNORE is an extraneous parameter."
                             (car (widget-apply (car chil) :value-inline))))
               (setq chil (cdr chil))))))
     ;; Set any name updates on it.
-    (if name (eieio-object-set-name-string obj name))
+    (when name
+      (setf (slot-value obj 'object-name) name))
     ;; This is the same object we had before.
     obj))
 
