@@ -123,7 +123,8 @@ This function takes no arguments.  The *Find* buffer is narrowed to the
 output of `find' (one file per line) when this function is called."
   :version "27.1"
   :group 'find-dired
-  :type 'function)
+  :type '(choice (function :tag "Function")
+                 (const :tag "None" nil)))
 
 (defvar find-args nil
   "Last arguments given to `find' by \\[find-dired].")
