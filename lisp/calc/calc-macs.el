@@ -1,4 +1,4 @@
-;;; calc-macs.el --- important macros for Calc
+;;; calc-macs.el --- important macros for Calc  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1990-1993, 2001-2019 Free Software Foundation, Inc.
 
