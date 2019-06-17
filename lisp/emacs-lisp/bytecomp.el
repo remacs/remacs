@@ -1050,7 +1050,7 @@ The value nil as an element means to try the default directory."
 			 (string :tag "Directory"))))
 
 (define-compilation-mode emacs-lisp-compilation-mode "elisp-compile"
-  "The variant of `compilation-mode' used for emacs-lisp error buffers")
+  "The variant of `compilation-mode' used for emacs-lisp compilation buffers.")
 
 (defvar byte-compile-current-form nil)
 (defvar byte-compile-dest-file nil)
@@ -1749,8 +1749,8 @@ that already has a `.elc' file."
   (with-current-buffer (get-buffer-create byte-compile-log-buffer)
     (setq default-directory (expand-file-name directory))
     ;; compilation-mode copies value of default-directory.
-    (unless (eq major-mode 'compilation-mode)
-      (compilation-mode))
+    (unless (derived-mode-p 'compilation-mode)
+      (emacs-lisp-compilation-mode))
     (let ((directories (list default-directory))
 	  (default-directory default-directory)
 	  (skip-count 0)
