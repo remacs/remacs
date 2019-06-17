@@ -1601,7 +1601,10 @@ extra args."
 	   (while syms
 	     (setq s (symbol-name (pop syms))
 		   L (+ L (length s) 2))
-	     (if (< L (1- fill-column))
+	     (if (< L (1- (buffer-local-value 'fill-column
+                                              (or (get-buffer
+                                                   byte-compile-log-buffer)
+                                                  (current-buffer)))))
 		 (setq str (concat str " " s (and syms ",")))
 	       (setq str (concat str "\n    " s (and syms ","))
 		     L (+ (length s) 4))))
