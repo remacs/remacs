@@ -1566,6 +1566,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 (declare-function vc-dir-refresh "vc-dir" ())
 
 (defun vc-git-stash-delete-at-point ()
+  "Delete the stash at point."
   (interactive)
   (let ((stash (vc-git-stash-get-at-point (point))))
     (when (y-or-n-p (format "Remove stash %s ? " stash))
@@ -1573,16 +1574,19 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
       (vc-dir-refresh))))
 
 (defun vc-git-stash-show-at-point ()
+  "Show the stash at point."
   (interactive)
   (vc-git-stash-show (format "stash@%s" (vc-git-stash-get-at-point (point)))))
 
 (defun vc-git-stash-apply-at-point ()
+  "Apply the stash at point."
   (interactive)
   (let (vc-dir-buffers) ; Small optimization.
     (vc-git-stash-apply (format "stash@%s" (vc-git-stash-get-at-point (point)))))
   (vc-dir-refresh))
 
 (defun vc-git-stash-pop-at-point ()
+  "Pop the stash at point."
   (interactive)
   (let (vc-dir-buffers) ; Likewise.
     (vc-git-stash-pop (format "stash@%s" (vc-git-stash-get-at-point (point)))))
