@@ -398,7 +398,14 @@ contents of field NAME is matched against PAT, or they can be of
 If EXTRA, include that in the string returned to represent the symbol."
   (cl-check-type obj eieio-object)
   (format "#<%s %s%s>" (eieio-object-class obj)
-	  (eieio-object-name-string obj) (or extra "")))
+	  (eieio-object-name-string obj)
+          (cond
+           ((null extra)
+            "")
+           ((listp extra)
+            (concat " " (mapconcat #'identity extra " ")))
+           (t
+            extra))))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
 (cl-defgeneric eieio-object-set-name-string (obj name)
