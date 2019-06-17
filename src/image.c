@@ -2151,8 +2151,8 @@ image_set_rotation (struct image *img, matrix3x3 tm)
   matrix3x3_mult (rot, tmp, tmp2);
 
   /* Translate back.  */
-  t[2][0] = - (width * .5);
-  t[2][1] = - (height * .5);
+  t[2][0] = width * -.5;
+  t[2][1] = height * -.5;
   matrix3x3_mult (t, tmp2, tm);
 
   img->width = width;
