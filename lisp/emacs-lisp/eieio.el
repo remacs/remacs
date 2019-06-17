@@ -408,14 +408,6 @@ If EXTRA, include that in the string returned to represent the symbol."
             extra))))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
-(cl-defgeneric eieio-object-set-name-string (obj name)
-  "Set the string which is OBJ's NAME."
-  (declare (obsolete "inherit from `eieio-named' and use (setf (slot-value OBJ \\='object-name) NAME) instead" "25.1"))
-  (cl-check-type name string)
-  (setf (gethash obj eieio--object-names) name))
-(define-obsolete-function-alias
-  'object-set-name-string 'eieio-object-set-name-string "24.4")
-
 (defun eieio-object-class (obj)
   "Return the class struct defining OBJ."
   ;; FIXME: We say we return a "struct" but we return a symbol instead!
