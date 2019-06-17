@@ -1176,8 +1176,8 @@ with that name."
 These collectors track themselves on a per-buffer basis."
   :abstract t)
 
-(cl-defmethod constructor ((this (subclass semantic-collector-buffer-abstract))
-				newname &rest fields)
+(cl-defmethod make-instance ((this (subclass semantic-collector-buffer-abstract))
+			     &rest args)
   "Reuse previously created objects of this type in buffer."
   (let ((old nil)
 	(bl semantic-collector-per-buffer-list))
