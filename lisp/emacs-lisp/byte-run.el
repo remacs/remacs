@@ -540,6 +540,10 @@ Otherwise, return nil.  For internal use only."
                         (mapconcat (lambda (char) (format "`?\\%c'" char))
                                    sorted ", ")))))
 
+(defun byte-compile-info-message (&rest args)
+  "Message format ARGS in a way that looks pleasing in the compilation output."
+  (message "%s" (concat "  INFO     " (apply #'format args))))
+
 
 ;; I nuked this because it's not a good idea for users to think of using it.
 ;; These options are a matter of installation preference, and have nothing to

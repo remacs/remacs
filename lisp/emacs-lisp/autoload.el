@@ -1061,6 +1061,7 @@ write its autoloads into the specified file instead."
          ;; Files with no autoload cookies or whose autoloads go to other
          ;; files because of file-local autoload-generated-file settings.
 	 (no-autoloads nil)
+         (file-count 0)
          (autoload-modified-buffers nil)
 	 (generated-autoload-file
 	  (if (called-interactively-p 'interactive)
@@ -1126,6 +1127,10 @@ write its autoloads into the specified file instead."
       ;; Elements remaining in FILES have no existing autoload sections yet.
       (let ((no-autoloads-time (or last-time '(0 0 0 0))) file-time)
 	(dolist (file files)
+          (setq file-count (1+ file-count))
+          (when (zerop (mod file-count 100))
+            (byte-compile-info-message "Scraped autoloads from %d files"
+                                       file-count))
 	  (cond
 	   ;; Passing nil as second argument forces
 	   ;; autoload-generate-file-autoloads to look for the right
