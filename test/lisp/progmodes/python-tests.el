@@ -137,7 +137,7 @@ default to `point-min' and `point-max' respectively."
 (defun python-virt-bin (&optional virt-root)
   "Return the virtualenv bin dir, starting from VIRT-ROOT.
 If nil, VIRT-ROOT defaults to `python-shell-virtualenv-root'.
-POSIX and Windows systems have different defauls."
+The name of this directory depends on `system-type'."
   (expand-file-name
    (concat
     (file-name-as-directory (or virt-root
