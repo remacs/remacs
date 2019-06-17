@@ -134,6 +134,16 @@ default to `point-min' and `point-max' respectively."
                            (overlay-end overlay))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
+(defun python-virt-bin (&optional virt-root)
+  "Return the virtualenv bin dir, starting from VIRT-ROOT.
+If nil, VIRT-ROOT defaults to `python-shell-virtualenv-root'.
+POSIX and Windows systems have different defauls."
+  (expand-file-name
+   (concat
+    (file-name-as-directory (or virt-root
+                                python-shell-virtualenv-root))
+    (if (eq system-type 'windows-nt) "Scripts" "bin"))))
+
 
 ;;; Tests for your tests, so you can test while you test.
 
@@ -2664,7 +2674,7 @@ if x:
          (python-shell-virtualenv-root "/env")
          (new-exec-path (python-shell-calculate-exec-path)))
     (should (equal new-exec-path
-                   (list (expand-file-name "/env/bin") "/path0")))))
+                   (list (python-virt-bin) "/path0")))))
 
 (ert-deftest python-shell-calculate-exec-path-3 ()
   "Test complete `python-shell-virtualenv-root' modification."
@@ -2673,7 +2683,7 @@ if x:
          (python-shell-virtualenv-root "/env")
          (new-exec-path (python-shell-calculate-exec-path)))
     (should (equal new-exec-path
-                   (list (expand-file-name "/env/bin")
+                   (list (python-virt-bin)
                          "/path1" "/path2" "/path0")))))
 
 (ert-deftest python-shell-calculate-exec-path-4 ()
@@ -2684,7 +2694,7 @@ if x:
          (python-shell-virtualenv-root "/env")
          (new-exec-path (python-shell-calculate-exec-path)))
     (should (equal new-exec-path
-                   (list (expand-file-name "/env/bin")
+                   (list (python-virt-bin)
                          "/path1" "/path2" "/path0")))))
 
 (ert-deftest python-shell-calculate-exec-path-5 ()
@@ -2714,7 +2724,7 @@ if x:
          (python-shell-virtualenv-root "/env"))
     (python-shell-with-environment
      (should (equal exec-path
-                    (list (expand-file-name "/env/bin")
+                    (list (python-virt-bin)
                           "/path1" "/path2" "/path0")))
       (should (not (getenv "PYTHONHOME")))
       (should (string= (getenv "VIRTUAL_ENV") "/env")))
@@ -2730,7 +2740,7 @@ if x:
          (python-shell-virtualenv-root "/env"))
     (python-shell-with-environment
       (should (equal (python-shell-calculate-exec-path)
-                     (list (expand-file-name "/env/bin")
+                     (list (python-virt-bin)
                            "/path1" "/path2" "/remote1" "/remote2")))
       (let ((process-environment (python-shell-calculate-process-environment)))
         (should (not (getenv "PYTHONHOME")))
