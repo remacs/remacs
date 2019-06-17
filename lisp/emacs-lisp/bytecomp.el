@@ -1397,7 +1397,8 @@ when printing the error message."
 
 (defun byte-compile-function-warn (f nargs def)
   (byte-compile-set-symbol-position f)
-  (when (get f 'byte-obsolete-info)
+  (when (and (get f 'byte-obsolete-info)
+             (byte-compile-warning-enabled-p 'obsolete f))
     (byte-compile-warn-obsolete f))
 
   ;; Check to see if the function will be available at runtime
