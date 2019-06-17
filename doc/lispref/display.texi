@@ -775,6 +775,10 @@ When this variable is non-@code{nil}, it specifies a fill prefix to
 use for filling each warning's text.
 @end defvar
 
+@defvar warning-fill-column
+The column at which to fill warnings.
+@end defvar
+
 @defvar warning-type-format
 This variable specifies the format for displaying the warning type
 in the warning message.  The result of formatting the type this way

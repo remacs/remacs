@@ -515,6 +515,9 @@ In the current follow group of windows, "ghost" cursors are no longer
 displayed in the non-selected follow windows.  To get the old behavior
 back, customize 'follow-hide-ghost-cursors' to nil.
 
++++
+** New variable 'warning-fill-column' for 'display-warning'.
+
 ** Windmove
 
 *** 'windmove-create-window' when non-nil makes a new window on moving off
