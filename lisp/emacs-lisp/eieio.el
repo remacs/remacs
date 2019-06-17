@@ -851,12 +851,12 @@ to prepend a space."
   (eieio-object-name this (apply #'concat strings)))
 
 
-(cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
-  "Default printer for EIEIO objects."
-  ;; Fallback to the old `object-print'.  There should be no
-  ;; `object-print' methods in the Emacs tree, but there may be some
-  ;; out-of-tree.
-  (with-suppressed-warnings ((obsolete object-print))
+(with-suppressed-warnings ((obsolete object-print))
+  (cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
+    "Default printer for EIEIO objects."
+    ;; Fallback to the old `object-print'.  There should be no
+    ;; `object-print' methods in the Emacs tree, but there may be some
+    ;; out-of-tree.
     (princ (object-print object) stream)))
 
 (defvar eieio-print-depth 0
