@@ -1085,6 +1085,10 @@ method invocation orders of the involved classes."
 These match if the argument is the name of a subclass of CLASS."
   (list eieio--generic-subclass-generalizer))
 
+(defun eieio-declare-slots (&rest slots)
+  "Declare that SLOTS are known eieio object slot names."
+  (setq eieio--known-slot-names (append slots eieio--known-slot-names)))
+
 (provide 'eieio-core)
 
 ;;; eieio-core.el ends here
