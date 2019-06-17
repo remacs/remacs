@@ -827,15 +827,6 @@ first and modify the returned object.")
   ;; No cleanup... yet.
   nil)
 
-(cl-defgeneric object-print (this &rest _strings)
-  "Pretty printer for object THIS.
-
-It is sometimes useful to put a summary of the object into the
-default #<notation> string when using EIEIO browsing tools.
-Implement this method to customize the summary."
-  (declare (obsolete cl-print-object "26.1"))
-  (format "%S" this))
-
 (cl-defmethod object-print ((this eieio-default-superclass) &rest strings)
   "Pretty printer for object THIS.  Call function `object-name' with STRINGS.
 The default method for printing object THIS is to use the
@@ -850,6 +841,14 @@ When passing in extra strings from child classes, always remember
 to prepend a space."
   (eieio-object-name this (apply #'concat strings)))
 
+(cl-defgeneric object-print (this &rest _strings)
+  "Pretty printer for object THIS.
+
+It is sometimes useful to put a summary of the object into the
+default #<notation> string when using EIEIO browsing tools.
+Implement this method to customize the summary."
+  (declare (obsolete cl-print-object "26.1"))
+  (format "%S" this))
 
 (with-suppressed-warnings ((obsolete object-print))
   (cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
@@ -858,6 +857,7 @@ to prepend a space."
     ;; `object-print' methods in the Emacs tree, but there may be some
     ;; out-of-tree.
     (princ (object-print object) stream)))
+
 
 (defvar eieio-print-depth 0
   "The current indentation depth while printing.
