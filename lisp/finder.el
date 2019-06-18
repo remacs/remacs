@@ -189,11 +189,11 @@ from; the default is `load-path'."
   (setq package--builtins nil)
   (setq finder-keywords-hash (make-hash-table :test 'eq))
   (let ((el-file-regexp "^\\([^=].*\\)\\.el\\(\\.\\(gz\\|Z\\)\\)?$")
+        (file-count 0)
 	package-override files base-name ; processed
 	summary keywords package version entry desc)
     (dolist (d (or dirs load-path))
       (when (file-exists-p (directory-file-name d))
-	(message "Scanning %s for finder" d)
 	(setq package-override
 	      (intern-soft
 	       (cdr-safe
@@ -201,6 +201,10 @@ from; the default is `load-path'."
 		       finder--builtins-alist))))
 	(setq files (directory-files d nil el-file-regexp))
 	(dolist (f files)
+          (setq file-count (1+ file-count))
+          (when (zerop (mod file-count 100))
+            (byte-compile-info-message "Scanned %s files for finder"
+                                       file-count))
 	  (unless (or (string-match finder-no-scan-regexp f)
 		      (null (setq base-name
 				  (and (string-match el-file-regexp f)

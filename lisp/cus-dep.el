@@ -55,12 +55,12 @@ ldefs-boot\\|cus-load\\|finder-inf\\|esh-groups\\|subdirs\\)\\.el$\\)"
 Usage: emacs -batch -l ./cus-dep.el -f custom-make-dependencies DIRS"
   (let ((enable-local-eval nil)
 	(enable-local-variables :safe)
+        (file-count 0)
 	subdir)
     (with-temp-buffer
       ;; Use up command-line-args-left else Emacs can try to open
       ;; the args as directories after we are done.
       (while (setq subdir (pop command-line-args-left))
-        (message "Scanning %s for custom" subdir)
         (let ((files (directory-files subdir nil "\\`[^=.].*\\.el\\'"))
               (default-directory
                 (file-name-as-directory (expand-file-name subdir)))
@@ -68,6 +68,10 @@ Usage: emacs -batch -l ./cus-dep.el -f custom-make-dependencies DIRS"
                                  (regexp-opt preloaded-file-list t)
                                  "\\.el\\'")))
           (dolist (file files)
+            (setq file-count (1+ file-count))
+            (when (zerop (mod file-count 100))
+              (byte-compile-info-message "Scanned %s files for custom"
+                                         file-count))
             (unless (or (string-match custom-dependencies-no-scan-regexp file)
                         (string-match preloaded (format "%s/%s" subdir file))
                         (not (file-exists-p file)))
@@ -115,7 +119,8 @@ Usage: emacs -batch -l ./cus-dep.el -f custom-make-dependencies DIRS"
                                                          "variable"
                                                        type)))))))))))
                   (error nil)))))))))
-  (message "Generating %s..." generated-custom-dependencies-file)
+  (byte-compile-info-message "Generating %s..."
+                             generated-custom-dependencies-file)
   (set-buffer (find-file-noselect generated-custom-dependencies-file))
   (setq buffer-undo-list t)
   (erase-buffer)
@@ -204,7 +209,8 @@ elements the files that have variables or faces that contain that
 version.  These files should be loaded before showing the customization
 buffer that `customize-changed-options' generates.\")\n\n"))
   (save-buffer)
-  (message "Generating %s...done" generated-custom-dependencies-file))
+  (byte-compile-info-message "Generating %s...done"
+                             generated-custom-dependencies-file))
 
 
 (provide 'cus-dep)
