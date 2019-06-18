@@ -2264,24 +2264,28 @@ there are any reduce/reduce conflicts."
   :group 'wisent
   :type '(choice (const nil) integer))
 
+(declare-function semantic-grammar-expected-conflicts "semantic/grammar")
+
 (defun wisent-total-conflicts ()
   "Report the total number of conflicts."
+  (require 'semantic/grammar)
   (unless (and (zerop rrc-total)
                (or (zerop src-total)
                    (= src-total (or wisent-expected-conflicts 0))))
     (let* ((src (wisent-source))
            (src (if src (concat " in " src) ""))
            (msg (format "Grammar%s contains" src)))
-      (if (> src-total 0)
-          (setq msg (format "%s %d shift/reduce conflict%s"
-                            msg src-total (if (> src-total 1)
-                                              "s" ""))))
+      (when (and (> src-total 0)
+                 (not (= rrc-total (semantic-grammar-expected-conflicts))))
+        (setq msg (format "%s %d shift/reduce conflict%s"
+                          msg src-total (if (> src-total 1)
+                                            "s" ""))))
       (if (and (> src-total 0) (> rrc-total 0))
           (setq msg (format "%s and" msg)))
       (if (> rrc-total 0)
-        (setq msg (format "%s %d reduce/reduce conflict%s"
-                          msg rrc-total (if (> rrc-total 1)
-                                            "s" ""))))
+          (setq msg (format "%s %d reduce/reduce conflict%s"
+                            msg rrc-total (if (> rrc-total 1)
+                                              "s" ""))))
       (message msg))))
 
 (defun wisent-print-conflicts ()
