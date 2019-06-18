@@ -679,6 +679,7 @@ syms_of_xftfont (void)
   DEFSYM (Qxft, "xft");
 #ifdef HAVE_HARFBUZZ
   DEFSYM (Qxfthb, "xfthb");
+  Fput (Qxft, Qfont_driver_superseded_by, Qxfthb);
 #endif	/* HAVE_HARFBUZZ */
 
   DEFVAR_BOOL ("xft-font-ascent-descent-override",

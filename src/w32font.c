@@ -2821,6 +2821,8 @@ versions of Windows) characters.  */);
 
   defsubr (&Sx_select_font);
 
+  Fput (Quniscribe, Qfont_driver_superseded_by, Qharfbuzz);
+
   pdumper_do_now_and_after_load (syms_of_w32font_for_pdumper);
 }
 
