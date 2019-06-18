@@ -251,7 +251,6 @@ SPC, 6, 3, 4, or 7 specifying a tone (SPC:陰平, 6:陽平, 3:上聲, 4:去聲,
 ;; Analyze header part of TIT dictionary and generate an appropriate
 ;; `quail-define-package' function call.
 (defun tit-process-header (filename)
-  (message "Processing header part...")
   (goto-char (point-min))
 
   ;; At first, generate header part of the Quail package while
@@ -416,7 +415,6 @@ SPC, 6, 3, 4, or 7 specifying a tone (SPC:陰平, 6:陽平, 3:上聲, 4:去聲,
 ;; Convert body part of TIT dictionary into `quail-define-rules'
 ;; function call.
 (defun tit-process-body ()
-  (message "Formatting translation rules...")
   (let* ((prev-key "")
 	 ch key translations pos)
     (princ "(quail-define-rules\n")
@@ -494,7 +492,6 @@ the generated Quail package is saved."
 	    (if (not slot)
 		(error "Invalid ENCODE: value in TIT dictionary"))
 	    (setq coding-system (nth 1 slot))
-	    (message "Decoding with coding system %s..." coding-system)
 	    (goto-char (point-min))
 	    (decode-coding-region (point-min) (point-max) coding-system)
 	    ;; Explicitly set eol format to `unix'.
@@ -556,7 +553,6 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\"."
 	  (when (or force
 		    (file-newer-than-file-p
 		     file (tit-make-quail-package-file-name file targetdir)))
-	    (message "Converting %s to quail-package..." file)
 	    (titdic-convert file targetdir))
 	  (setq files (cdr files)))
 	(setq command-line-args-left (cdr command-line-args-left)))))
@@ -1141,7 +1137,6 @@ the generated Quail package is saved."
 	      coding (nth 3 slot)
 	      converter (nth 5 slot)
 	      copyright (nth 6 slot))
-	(message "Converting %s to %s..." dicfile quailfile)
 	;; Explicitly set eol format to `unix'.
 	(setq coding-system-for-write 'utf-8-unix)
 	(with-temp-file (expand-file-name quailfile dirname)
@@ -1173,8 +1168,7 @@ the generated Quail package is saved."
 		  ";; version-control: never\n"
 		  ";; no-update-autoloads: t\n"
 		  ";; End:\n\n"
-		  ";;; " quailfile " ends here\n"))
-	(message "Converting %s to %s...done" dicfile quailfile))
+		  ";;; " quailfile " ends here\n")))
       (setq tail (cdr tail)))))
 
 (defun batch-miscdic-convert ()

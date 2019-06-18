@@ -3060,7 +3060,6 @@ of each directory."
       (when dirname
 	(setq pkg-list (directory-files dirname 'full "\\.el$"))
 	(while pkg-list
-	  (message "Checking %s ..." (car pkg-list))
 	  (with-temp-buffer
 	    (insert-file-contents (car pkg-list))
 	    (goto-char (point-min))
