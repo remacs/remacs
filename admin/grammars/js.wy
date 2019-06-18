@@ -296,18 +296,10 @@ FormalParameterList: OPEN_PARENTHESIS
 		     ()
 		   ;
 
-StatementList : Statement
-              | StatementList Statement
-              ;
-
 Block : BRACE_BLOCK
      ;; If you want to parse the body of the function
      ;; ( EXPANDFULL $1 BlockExpand )
       ;
-
-BlockExpand: START_BLOCK StatementList END_BLOCK
-	   | START_BLOCK END_BLOCK
-	   ;
 
 VariableStatement : VAR VariableDeclarationList SEMICOLON
 		    (VARIABLE-TAG $2 nil nil)
