@@ -775,13 +775,13 @@
 (defvar is13194-to-ucs-kannada-hashtbl nil)
 (defvar is13194-to-ucs-kannada-regexp nil)
 
-(defvar ucs-to-is13194-regexp
+(defvar indian-ucs-to-is13194-regexp
   ;; only Devanagari is supported now.
   (concat "[" (char-to-string #x0900)
           "-" (char-to-string #x097f) "]")
   "Regexp that matches to conversion")
 
-(defun ucs-to-iscii-region (from to)
+(defun indian-ucs-to-iscii-region (from to)
   "Converts the indian UCS characters in the region to ISCII.
 Returns new end position."
   (interactive "r")
@@ -791,13 +791,13 @@ Returns new end position."
       (narrow-to-region from to)
       (goto-char (point-min))
       (let* ((current-repertory is13194-default-repertory))
-	(while (re-search-forward ucs-to-is13194-regexp nil t)
+	(while (re-search-forward indian-ucs-to-is13194-regexp nil t)
 	  (replace-match
 	   (get-char-code-property (string-to-char (match-string 0))
 				   'iscii))))
       (point-max))))
 
-(defun iscii-to-ucs-region (from to)
+(defun indian-iscii-to-ucs-region (from to)
   "Converts the ISCII characters in the region to UCS.
 Returns new end position."
   (interactive "r")
@@ -848,7 +848,7 @@ Returns new end position."
 ;;;###autoload
 (defun in-is13194-post-read-conversion (len)
   (let ((pos (point)) endpos)
-    (setq endpos (iscii-to-ucs-region pos (+ pos len)))
+    (setq endpos (indian-iscii-to-ucs-region pos (+ pos len)))
     (- endpos pos)))
 
 ;;;###autoload
@@ -858,7 +858,7 @@ Returns new end position."
     (if (stringp from)
 	(insert from)
       (insert-buffer-substring buf from to))
-    (ucs-to-iscii-region (point-min) (point-max))
+    (indian-ucs-to-iscii-region (point-min) (point-max))
     nil))
 
 
