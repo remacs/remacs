@@ -534,7 +534,8 @@ To get complete usage, invoke:
 	 (while l
 	   (setq count (1+ count))
 	   (if (= (% count 10000) 0)
-	       (message "%d entries" count))
+	       (byte-compile-info-message "Extracted %d Okuri Nasi entries"
+                                          count))
 	   (setq entry (skkdic-extract-conversion-data (car l)))
 	   (set-nested-alist (car entry) (cdr entry) map)
 	   (setq l (cdr l)))
