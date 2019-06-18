@@ -88,7 +88,6 @@
 
 %package wisent-python-wy
 %provide semantic/wisent/python-wy
-%expectedconflicts 4
 
 %{
 (declare-function wisent-python-reconstitute-function-tag
