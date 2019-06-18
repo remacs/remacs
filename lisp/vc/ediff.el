@@ -1,4 +1,4 @@
-;;; ediff.el --- a comprehensive visual interface to diff & patch  -*- lexical-binding: t; -*-
+;;; ediff.el --- a comprehensive visual interface to diff & patch  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 

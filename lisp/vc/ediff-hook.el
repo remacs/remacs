@@ -1,4 +1,4 @@
-;;; ediff-hook.el --- setup for Ediff's menus and autoloads  -*- lexical-binding: t; -*-
+;;; ediff-hook.el --- setup for Ediff's menus and autoloads  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 

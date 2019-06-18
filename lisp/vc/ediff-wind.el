@@ -1,4 +1,4 @@
-;;; ediff-wind.el --- window manipulation utilities  -*- lexical-binding: t; -*-
+;;; ediff-wind.el --- window manipulation utilities  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1994-1997, 2000-2019 Free Software Foundation, Inc.
 

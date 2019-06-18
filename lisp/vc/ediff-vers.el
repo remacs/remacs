@@ -1,4 +1,4 @@
-;;; ediff-vers.el --- version control interface to Ediff  -*- lexical-binding: t; -*-
+;;; ediff-vers.el --- version control interface to Ediff  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1995-1997, 2001-2019 Free Software Foundation, Inc.
 

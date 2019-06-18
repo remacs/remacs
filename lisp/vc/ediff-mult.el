@@ -1,4 +1,4 @@
-;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff  -*- lexical-binding: t; -*-
+;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 

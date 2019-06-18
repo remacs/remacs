@@ -1,4 +1,4 @@
-;;; ediff-help.el --- Code related to the contents of Ediff help buffers  -*- lexical-binding: t; -*-
+;;; ediff-help.el --- Code related to the contents of Ediff help buffers  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 

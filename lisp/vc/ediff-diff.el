@@ -1,4 +1,4 @@
-;;; ediff-diff.el --- diff-related utilities  -*- lexical-binding: t; -*-
+;;; ediff-diff.el --- diff-related utilities  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 

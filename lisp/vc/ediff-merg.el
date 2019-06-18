@@ -1,4 +1,4 @@
-;;; ediff-merg.el --- merging utilities  -*- lexical-binding: t; -*-
+;;; ediff-merg.el --- merging utilities  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
