@@ -277,6 +277,13 @@ foo.by it is foo-by."
              (i    (string-match (format "\\([.]\\)%s\\'" ext) file)))
         (concat (substring file 0 i) "-" ext))))
 
+(defun semantic-grammar-expected-conflicts ()
+  "Return the number of expected shift/reduce conflicts in the package."
+  (let ((conflicts (semantic-grammar-tag-symbols 'expectedconflicts)))
+    (if conflicts
+        (string-to-number conflicts)
+      0)))
+
 (defsubst semantic-grammar-languagemode ()
   "Return the %languagemode value as a list of symbols or nil."
   (semantic-grammar-tag-symbols 'languagemode))
@@ -987,7 +994,7 @@ Return non-nil if there were no errors, nil if errors."
 		       (vc-handled-backends nil))
 		   (setq semanticdb-new-database-class 'semanticdb-project-database)
 		   (semantic-mode 1)
-		   (semantic-grammar-create-package)))
+		   (semantic-grammar-create-package t)))
              (error
               (message "%s" (error-message-string err))
               nil))))
