@@ -1701,6 +1701,10 @@ valid event type.
 ** The new macro `with-suppressed-warnings' can be used to suppress
 specific byte-compile warnings.
 
+---
+** The new function `byte-compile-info-message' can be used to output
+informational messages that look pleasing during the Emacs build.
+
 +++
 ** The 'append' arg of 'add-hook' is generalized to a finer notion of 'depth'
 This makes it possible to control the ordering of functions more precisely,

@@ -540,9 +540,13 @@ Otherwise, return nil.  For internal use only."
                         (mapconcat (lambda (char) (format "`?\\%c'" char))
                                    sorted ", ")))))
 
+(defun byte-compile-info-string (&rest args)
+  "Format ARGS in a way that looks pleasing in the compilation output."
+  (format "  %-9s%s" "INFO" (apply #'format args)))
+
 (defun byte-compile-info-message (&rest args)
   "Message format ARGS in a way that looks pleasing in the compilation output."
-  (message "  %-9s%s" "INFO" (apply #'format args)))
+  (message "%s" (apply #'byte-compile-info-string args)))
 
 
 ;; I nuked this because it's not a good idea for users to think of using it.
