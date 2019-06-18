@@ -1533,6 +1533,7 @@ syms_of_w32uniscribe_for_pdumper (void)
   if (!load_harfbuzz_funcs (harfbuzz))
     return;
 
+  Fput (Quniscribe, Qfont_driver_superseded_by, Qharfbuzz);
   harfbuzz_available = 1;
   harfbuzz_font_driver = uniscribe_font_driver;
   harfbuzz_font_driver.type = Qharfbuzz;

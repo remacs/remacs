@@ -5845,7 +5845,8 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
     }
 
 #ifdef HAVE_HARFBUZZ
-  register_font_driver (&harfbuzz_font_driver, f);
+  if (harfbuzz_available)
+    register_font_driver (&harfbuzz_font_driver, f);
 #endif
   register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);
@@ -6900,7 +6901,8 @@ w32_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
     }
 
 #ifdef HAVE_HARFBUZZ
-  register_font_driver (&harfbuzz_font_driver, f);
+  if (harfbuzz_available)
+    register_font_driver (&harfbuzz_font_driver, f);
 #endif
   register_font_driver (&uniscribe_font_driver, f);
   register_font_driver (&w32font_driver, f);
