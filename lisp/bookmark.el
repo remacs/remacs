@@ -272,12 +272,12 @@ a bookmark as its single argument.
 A function `bookmark-make-record-function' may define additional entries
 in PARAM-LIST that can be used by HANDLER.")
 
+(define-obsolete-variable-alias 'bookmarks-already-loaded
+  'bookmark-bookmarks-timestamp "27.1")
 (defvar bookmark-bookmarks-timestamp nil
   "Timestamp of current default bookmark file.
 The value is actually (FILE . MODTIME), where FILE is a bookmark file that
 defaults to `bookmark-default-file' and MODTIME is its modification time.")
-(define-obsolete-variable-alias 'bookmarks-already-loaded
-  'bookmark-bookmarks-timestamp "27.1")
 
 (defvar bookmark-file-coding-system nil
   "The coding-system of the last loaded or saved bookmark file.")
