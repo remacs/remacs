@@ -1147,16 +1147,17 @@ fpdef
  ;;    (identity $2)
   ;
 
-;; fplist: fpdef (',' fpdef)* [',']
-fplist
-  : fpdef_list comma_opt
-  ;
+;; These rules are now useless because the above rule doesn't refer to them.
+;; ;; fplist: fpdef (',' fpdef)* [',']
+;; fplist
+;;   : fpdef_list comma_opt
+;;   ;
 
-;; fpdef (',' fpdef)*
-fpdef_list
-  : fpdef
-  | fpdef_list COMMA fpdef
-  ;
+;; ;; fpdef (',' fpdef)*
+;; fpdef_list
+;;   : fpdef
+;;   | fpdef_list COMMA fpdef
+;;   ;
 
 ;; ['=' test]
 eq_test_opt
