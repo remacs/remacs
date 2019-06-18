@@ -236,9 +236,9 @@
 %token <number>      NUMBER
 
 
-%token FALSE
-%token TRUE
-%token QUERY
+%token <false> FALSE
+%token <true> TRUE
+%token <query> QUERY
 
 
 %token NULL_TOKEN
