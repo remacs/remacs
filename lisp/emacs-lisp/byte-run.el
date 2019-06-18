@@ -542,7 +542,7 @@ Otherwise, return nil.  For internal use only."
 
 (defun byte-compile-info-message (&rest args)
   "Message format ARGS in a way that looks pleasing in the compilation output."
-  (message "%s" (concat "  INFO     " (apply #'format args))))
+  (message "  %-9s%s" "INFO" (apply #'format args)))
 
 
 ;; I nuked this because it's not a good idea for users to think of using it.
