@@ -1526,6 +1526,9 @@ buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 *** 'bookmark-file' and 'bookmark-old-default-file' are now obsolete
 aliases of 'bookmark-default-file'.
 
+*** New user option 'bookmark-watch-bookmark-file'.
+When non-nil, watch whether the bookmark file has changed on disk.
+
 
 * New Modes and Packages in Emacs 27.1
 
