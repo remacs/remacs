@@ -227,14 +227,10 @@ the correct column."
 	  (integer :tag "Column number")
 	  (const :tag "Unspecified" nil)))
 
-(defcustom erc-timestamp-use-align-to (and (not (featurep 'xemacs))
-					   (>= emacs-major-version 22)
-					   (eq window-system 'x))
+(defcustom erc-timestamp-use-align-to (eq window-system 'x)
   "If non-nil, use the :align-to display property to align the stamp.
 This gives better results when variable-width characters (like
 Asian language characters and math symbols) precede a timestamp.
-Unfortunately, it only works in Emacs 22 and when using the X
-Window System.
 
 A side effect of enabling this is that there will only be one
 space before a right timestamp in any saved logs."

@@ -59,11 +59,7 @@
   ((remove-hook 'erc-insert-modify-hook 'erc-button-add-buttons)
    (remove-hook 'erc-send-modify-hook 'erc-button-add-buttons)
    (remove-hook 'erc-complete-functions 'erc-button-next-function)
-   (remove-hook 'erc-mode-hook 'erc-button-setup)
-   (when (featurep 'xemacs)
-     (dolist (buffer (erc-buffer-list))
-       (with-current-buffer buffer
-         (kill-local-variable 'widget-button-face))))))
+   (remove-hook 'erc-mode-hook 'erc-button-setup)))
 
 ;;; Variables
 
@@ -218,9 +214,7 @@ PAR is a number of a regexp grouping whose text will be passed to
 (defvar erc-button-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'erc-button-press-button)
-    (if (featurep 'xemacs)
-        (define-key map (kbd "<button2>") 'erc-button-click-button)
-      (define-key map (kbd "<mouse-2>") 'erc-button-click-button))
+    (define-key map (kbd "<mouse-2>") 'erc-button-click-button)
     (define-key map (kbd "TAB") 'erc-button-next)
     (define-key map (kbd "<backtab>") 'erc-button-previous)
     (define-key map [follow-link] 'mouse-face)
@@ -255,8 +249,6 @@ global-level ERC button keys yet.")
 (defun erc-button-setup ()
   "Add ERC mode-level button movement keys.  This is only done once."
   ;; Make XEmacs use `erc-button-face'.
-  (when (featurep 'xemacs)
-    (set (make-local-variable 'widget-button-face) nil))
   ;; Add keys.
   (unless erc-button-keys-added
     (define-key erc-mode-map (kbd "<backtab>") 'erc-button-previous)
@@ -374,18 +366,7 @@ REGEXP is the regular expression which matched for this button."
           (list 'erc-callback fun)
           (list 'keymap erc-button-keymap)
           (list 'rear-nonsticky t)
-          (and data (list 'erc-data data))))
-  (when (featurep 'xemacs)
-    (widget-convert-button 'link from to :action 'erc-button-press-button
-                           :suppress-face t
-                           ;; Make XEmacs use our faces.
-                           :button-face (if nick-p
-                                            erc-button-nickname-face
-                                          erc-button-face)
-                           ;; Make XEmacs behave with mouse-clicks, for
-                           ;; some reason, widget stuff overrides the
-                           ;; 'keymap text-property.
-                           :mouse-down-action 'erc-button-click-button)))
+          (and data (list 'erc-data data)))))
 
 (defun erc-button-add-face (from to face)
   "Add FACE to the region between FROM and TO."
