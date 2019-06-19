@@ -240,20 +240,11 @@ format."
 
 ;; ;;;;;;;;;;;;;;;; miscellaneous functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defsubst gamegrid-characterp (arg)
-  (if (fboundp 'characterp)
-      (characterp arg)
-    (integerp arg)))
-
 (defsubst gamegrid-event-x (event)
-  (if (fboundp 'event-x)
-      (event-x event)
-    (car (posn-col-row (event-end event)))))
+  (car (posn-col-row (event-end event))))
 
 (defsubst gamegrid-event-y (event)
-  (if (fboundp 'event-y)
-      (event-y event)
-    (cdr (posn-col-row (event-end event)))))
+  (cdr (posn-col-row (event-end event))))
 
 ;; ;;;;;;;;;;;;; display functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -365,7 +356,7 @@ format."
 (defun gamegrid-make-glyph (data-spec-list color-spec-list)
   (let ((data (gamegrid-match-spec-list data-spec-list))
 	(color (gamegrid-match-spec-list color-spec-list)))
-    (cond ((gamegrid-characterp data)
+    (cond ((characterp data)
 	   (vector data))
 	  ((eq data 'colorize)
 	   (gamegrid-colorize-glyph color))
@@ -398,15 +389,6 @@ format."
 	 'mono-tty)
 	(t
 	   'emacs-tty)))
-
-(defun gamegrid-set-display-table ()
-  (if (featurep 'xemacs)
-      (add-spec-to-specifier current-display-table
-			     gamegrid-display-table
-			     (current-buffer)
-			     nil
-			     'remove-locale)
-    (setq buffer-display-table gamegrid-display-table)))
 
 (declare-function image-size "image.c" (spec &optional pixels frame))
 
@@ -444,7 +426,7 @@ format."
       (aset gamegrid-face-table c face)
       (aset gamegrid-display-table c glyph)))
   (gamegrid-setup-default-font)
-  (gamegrid-set-display-table)
+  (setq buffer-display-table gamegrid-display-table)
   (setq cursor-type nil))
 
 
@@ -506,34 +488,19 @@ format."
 
 (defun gamegrid-start-timer (period func)
   (setq gamegrid-timer
-	(if (featurep 'xemacs)
-	    (start-itimer "Gamegrid"
-			  func
-			  period
-			  period
-			  nil
-			  t
-			  (current-buffer))
-	  (run-with-timer period
-			  period
-			  func
-			  (current-buffer)))))
+	(run-with-timer period period func (current-buffer))))
 
 (defun gamegrid-set-timer (delay)
   (if gamegrid-timer
-      (if (fboundp 'set-itimer-restart)
-	  (set-itimer-restart gamegrid-timer delay)
-	(timer-set-time gamegrid-timer
-			(list (aref gamegrid-timer 1)
-			      (aref gamegrid-timer 2)
-			      (aref gamegrid-timer 3))
-			delay))))
+      (timer-set-time gamegrid-timer
+		      (list (aref gamegrid-timer 1)
+			    (aref gamegrid-timer 2)
+			    (aref gamegrid-timer 3))
+		      delay)))
 
 (defun gamegrid-kill-timer ()
   (if gamegrid-timer
-      (if (featurep 'xemacs)
-          (delete-itimer gamegrid-timer)
-        (cancel-timer gamegrid-timer)))
+      (cancel-timer gamegrid-timer))
   (setq gamegrid-timer nil))
 
 ;; ;;;;;;;;;;;;;;; high score functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -627,13 +594,7 @@ FILE is created there."
 	(errbuf (generate-new-buffer " *update-game-score loss*"))
         (marker-string (concat
 			(user-full-name)
-			" <"
-			(cond ((fboundp 'user-mail-address)
-			       (user-mail-address))
-			      ((boundp 'user-mail-address)
-			       user-mail-address)
-			      (t ""))
-			">  "
+			" <" user-mail-address ">  "
 			(current-time-string))))
     ;; This can be called from a timer, so enable local quits.
     (with-local-quit
@@ -681,11 +642,7 @@ FILE is created there."
 		    score
 		    (current-time-string)
 		    (user-full-name)
-		    (cond ((fboundp 'user-mail-address)
-			   (user-mail-address))
-			  ((boundp 'user-mail-address)
-			   user-mail-address)
-			  (t ""))))
+		    user-mail-address))
     (sort-fields 1 (point-min) (point-max))
     (reverse-region (point-min) (point-max))
     (goto-char (point-min))
