@@ -586,23 +586,20 @@ OLD-DEFAULT hours are set for every day that has no number indicated."
 (defvar timeclock-last-project nil)
 
 (defun timeclock-completing-read (prompt alist &optional default)
-  "A version of `completing-read' that works on both Emacs and XEmacs.
+  "A version of `completing-read.
 PROMPT, ALIST and DEFAULT are used for the PROMPT, COLLECTION and DEF
 arguments of `completing-read'."
-  (if (featurep 'xemacs)
-      (let ((str (completing-read prompt alist)))
-	(if (or (null str) (zerop (length str)))
-	    default
-	  str))
-    (completing-read prompt alist nil nil nil nil default)))
+  (declare (obsolete completing-read "27.1"))
+  (completing-read prompt alist nil nil nil nil default))
 
 (defun timeclock-ask-for-project ()
   "Ask the user for the project they are clocking into."
-  (timeclock-completing-read
+  (completing-read
    (format "Clock into which project (default %s): "
 	   (or timeclock-last-project
 	       (car timeclock-project-list)))
    timeclock-project-list
+   nil nil nil nil
    (or timeclock-last-project
        (car timeclock-project-list))))
 
@@ -610,8 +607,7 @@ arguments of `completing-read'."
 
 (defun timeclock-ask-for-reason ()
   "Ask the user for the reason they are clocking out."
-  (timeclock-completing-read "Reason for clocking out: "
-			     timeclock-reason-list))
+  (completing-read "Reason for clocking out: " timeclock-reason-list))
 
 (define-obsolete-function-alias 'timeclock-update-modeline
   'timeclock-update-mode-line "24.3")
