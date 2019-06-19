@@ -37,11 +37,6 @@
 
 ;;; Compatibility
 
-;; (eval-and-compile
-;;   (if (featurep 'xemacs)
-;;       (defalias 'eieio-overlay-lists (lambda () (list (extent-list))))
-;;     (defalias 'eieio-overlay-lists 'overlay-lists)))
-
 ;;; Code:
 (defclass eieio-widget-test-class nil
   ((a-string :initarg :a-string
