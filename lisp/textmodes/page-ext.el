@@ -276,28 +276,30 @@ Used by `pages-directory-for-addresses' function."
 
 ;;; Key bindings for page handling functions
 
-(global-unset-key "\C-x\C-p")
-
-(defvar ctl-x-ctl-p-map (make-sparse-keymap)
+(defvar pages--ctl-x-ctl-p-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-n" 'pages-next-page)
+    (define-key map "\C-p" 'pages-previous-page)
+    (define-key map "\C-a" 'pages-add-new-page)
+    (define-key map "\C-m" 'pages-mark-page)
+    (define-key map "\C-s" 'pages-search)
+    (define-key map "s"    'pages-sort-buffer)
+    (define-key map "\C-l" 'pages-set-delimiter)
+    (define-key map "\C-d" 'pages-directory)
+    (define-key map "d"    'pages-directory-for-addresses)
+    map)
   "Keymap for subcommands of C-x C-p, which are for page handling.")
 
-(define-key ctl-x-map "\C-p" 'ctl-x-ctl-p-prefix)
-(fset 'ctl-x-ctl-p-prefix ctl-x-ctl-p-map)
-
-(define-key ctl-x-ctl-p-map "\C-n" 'pages-next-page)
-(define-key ctl-x-ctl-p-map "\C-p" 'pages-previous-page)
-(define-key ctl-x-ctl-p-map "\C-a" 'pages-add-new-page)
-(define-key ctl-x-ctl-p-map "\C-m" 'pages-mark-page)
-(define-key ctl-x-ctl-p-map "\C-s" 'pages-search)
-(define-key ctl-x-ctl-p-map "s"    'pages-sort-buffer)
-(define-key ctl-x-ctl-p-map "\C-l" 'pages-set-delimiter)
-(define-key ctl-x-ctl-p-map "\C-d" 'pages-directory)
-(define-key ctl-x-ctl-p-map "d"    'pages-directory-for-addresses)
+;; FIXME: Merely loading a package shouldn't have this kind of side-effects!
+(global-unset-key "\C-x\C-p")
+(define-key ctl-x-map "\C-p" 'pages-ctl-x-ctl-p-prefix)
+(define-obsolete-function-alias 'ctl-x-ctl-p-prefix 'pages-ctl-x-ctl-p-prefix "27.1")
+(defalias 'pages-ctl-x-ctl-p-prefix pages--ctl-x-ctl-p-map)
 
 
 ;;; Page movement function definitions
 
-(define-obsolete-function-alias 'next-page 'pages-next-page "27.1")
+(define-obsolete-function-alias 'next-page #'pages-next-page "27.1")
 (defun pages-next-page (&optional count)
   "Move to the next page bounded by the `page-delimiter' variable.
 With arg (prefix if interactive), move that many pages."
@@ -324,7 +326,7 @@ With arg (prefix if interactive), move that many pages."
   (goto-char (point-min))
   (recenter 0))
 
-(define-obsolete-function-alias 'previous-page 'pages-previous-page "27.1")
+(define-obsolete-function-alias 'previous-page #'pages-previous-page "27.1")
 (defun pages-previous-page (&optional count)
   "Move to the previous page bounded by the `page-delimiter' variable.
 With arg (prefix if interactive), move that many pages."
@@ -335,7 +337,7 @@ With arg (prefix if interactive), move that many pages."
 
 ;;; Adding and searching pages
 
-(define-obsolete-function-alias 'add-new-page 'pages-add-new-page "27.1")
+(define-obsolete-function-alias 'add-new-page #'pages-add-new-page "27.1")
 (defun pages-add-new-page (header-line)
   "Insert new page.  Prompt for header line.
 
@@ -389,7 +391,7 @@ Point is left in the body of page."
 (defvar pages-last-search nil
   "Value of last regexp searched for.  Initially, nil.")
 
-(define-obsolete-function-alias 'search-pages 'pages-search "27.1")
+(define-obsolete-function-alias 'search-pages #'pages-search "27.1")
 (defun pages-search (regexp)
   "Search for REGEXP, starting from point, and narrow to page it is in."
   (interactive (list
@@ -406,9 +408,7 @@ Point is left in the body of page."
 
 ;;; Sorting pages
 
-(autoload 'sort-subr "sort" "Primary function for sorting." t nil)
-
-(define-obsolete-function-alias 'sort-pages-in-region 'pages-sort-region "27.1")
+(define-obsolete-function-alias 'sort-pages-in-region #'pages-sort-region "27.1")
 (defun pages-sort-region (reverse beg end)
   "Sort pages in region alphabetically.  Prefix arg means reverse order.
 
@@ -444,7 +444,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
                                (goto-char (match-beginning 0))
                              (goto-char (point-max))))))))
 
-(define-obsolete-function-alias 'sort-pages-buffer 'sort-pages-buffer "27.1")
+(define-obsolete-function-alias 'sort-pages-buffer #'sort-pages-buffer "27.1")
 (defun pages-sort-buffer (&optional reverse)
   "Sort pages alphabetically in buffer.  Prefix arg means reverse order.
 \(Non-nil arg if not interactive.)"
@@ -489,8 +489,8 @@ contain matches to the regexp.)")
 (defvar pages-original-delimiter "^\f"
   "Default page delimiter.")
 
-(define-obsolete-function-alias 'set-page-delimiter 'pages-set-delimiter "27.1")
-(defun pages-set-delimiter (regexp reset-p)
+(define-obsolete-function-alias 'set-page-delimiter #'pages-set-delimiter "27.1")
+(defun pages-set-delimiter (regexp reset-p &optional interactively)
   "Set buffer local value of page-delimiter to REGEXP.
 Called interactively with a prefix argument, reset `page-delimiter' to
 its original value.
@@ -500,17 +500,14 @@ resets the page-delimiter to the original value."
 
   (interactive
    (if current-prefix-arg
-       (list pages-original-delimiter "^\f")
-     (list (read-string "Set page-delimiter to regexp: " page-delimiter)
-           nil)))
-  (make-local-variable 'pages-original-delimiter)
-  (make-local-variable 'page-delimiter)
-  (setq pages-original-delimiter
-        (or pages-original-delimiter page-delimiter))
-  (if (not reset-p)
-      (setq page-delimiter regexp)
-    (setq page-delimiter pages-original-delimiter))
-  (if (called-interactively-p 'interactive)
+       (list pages-original-delimiter t t)
+     (list (read-regexp "Set page-delimiter to regexp: " page-delimiter)
+           nil t)))
+  (setq-local pages-original-delimiter
+              (or pages-original-delimiter page-delimiter))
+  (setq-local page-delimiter
+              (if (not reset-p) regexp pages-original-delimiter))
+  (if interactively
       (message "The value of `page-delimiter' is now: %s" page-delimiter)))
 
 
@@ -703,7 +700,7 @@ Used by `pages-directory' function."
 
 Move point to one of the lines in this buffer, then use \\[pages-directory-goto] to go
 to the same line in the pages buffer."
-  (make-local-variable 'pages-directory-buffer-narrowing-p))
+  )
 
 (defun pages-directory-goto (&optional event)
   "Go to the corresponding line in the pages buffer."
@@ -768,8 +765,8 @@ directory."
         ;; by RJC, 2006 Jun 11: including this causes failure; it results in
         ;;  the message "Buffer in which pages were found is deleted"
         ;;        (pages-directory-address-mode)
-        (setq pages-directory-buffer-narrowing-p
-              pages-directory-for-addresses-goto-narrowing-p)
+        (setq-local pages-directory-buffer-narrowing-p
+                    pages-directory-for-addresses-goto-narrowing-p)
         (or pages-directory-for-addresses-buffer-keep-windows-p
             (delete-other-windows))
         (save-excursion
