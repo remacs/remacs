@@ -1014,6 +1014,15 @@ invokes Emacs.  You can also request all the 3 backends via the
 font searches for characters for which no fonts are available on the
 system will take longer.
 
+Alternatively, you could specify a font backend for a frame via the
+@code{font-backend} frame parameter, using
+@code{modify-frame-parameters} (@pxref{Parameter Access,,, elisp, The
+Emacs Lisp Reference Manual}).  You can also request specific font
+backend(s) for all your frames via @code{default-frame-alist} and
+@code{initial-frame-alist} (@pxref{Frame Parameters}).  Note that the
+value of the @code{font-backend} parameter should be a list of
+symbols, as in @code{(uniscribe)} or @w{@code{(harfbuzz uniscribe gdi)}}.
+
 @cindex font properties (MS Windows)
 @noindent
 Optional properties common to all font backends on MS-Windows are:
