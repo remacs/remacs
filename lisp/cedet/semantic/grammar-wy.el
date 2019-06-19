@@ -41,6 +41,7 @@
    '(("%default-prec" . DEFAULT-PREC)
      ("%no-default-prec" . NO-DEFAULT-PREC)
      ("%keyword" . KEYWORD)
+     ("%expectedconflicts" . EXPECTEDCONFLICTS)
      ("%languagemode" . LANGUAGEMODE)
      ("%left" . LEFT)
      ("%nonassoc" . NONASSOC)
@@ -110,7 +111,7 @@
     (eval-when-compile
       (require 'semantic/wisent/comp))
     (wisent-compile-grammar
-     '((DEFAULT-PREC NO-DEFAULT-PREC KEYWORD LANGUAGEMODE LEFT NONASSOC PACKAGE PROVIDE PREC PUT QUOTEMODE RIGHT SCOPESTART START TOKEN TYPE USE-MACROS STRING SYMBOL PERCENT_PERCENT CHARACTER PREFIXED_LIST SEXP PROLOGUE EPILOGUE PAREN_BLOCK BRACE_BLOCK LPAREN RPAREN LBRACE RBRACE COLON SEMI OR LT GT)
+     '((DEFAULT-PREC NO-DEFAULT-PREC KEYWORD LANGUAGEMODE EXPECTEDCONFLICTS LEFT NONASSOC PACKAGE PROVIDE PREC PUT QUOTEMODE RIGHT SCOPESTART START TOKEN TYPE USE-MACROS STRING SYMBOL PERCENT_PERCENT CHARACTER PREFIXED_LIST SEXP PROLOGUE EPILOGUE PAREN_BLOCK BRACE_BLOCK LPAREN RPAREN LBRACE RBRACE COLON SEMI OR LT GT)
        nil
        (grammar
 	((prologue))
@@ -133,6 +134,7 @@
 	((default_prec_decl))
 	((no_default_prec_decl))
 	((languagemode_decl))
+	((expectedconflicts_decl))
 	((package_decl))
 	((provide_decl))
 	((precedence_decl))
@@ -159,6 +161,11 @@
 	 `(wisent-raw-tag
 	   (semantic-tag ',(car $2)
 			 'languagemode :rest ',(cdr $2)))))
+       (expectedconflicts_decl
+	((EXPECTEDCONFLICTS symbols)
+	 `(wisent-raw-tag
+	   (semantic-tag ',(car $2)
+			 'expectedconflicts :rest ',(cdr $2)))))
        (package_decl
 	((PACKAGE SYMBOL)
 	 `(wisent-raw-tag

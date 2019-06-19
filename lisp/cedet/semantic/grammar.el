@@ -277,6 +277,10 @@ foo.by it is foo-by."
              (i    (string-match (format "\\([.]\\)%s\\'" ext) file)))
         (concat (substring file 0 i) "-" ext))))
 
+(defun semantic-grammar-expected-conflicts ()
+  "Return the number of expected shift/reduce conflicts in the package."
+  (semantic-grammar-tag-symbols 'expectedconflicts))
+
 (defsubst semantic-grammar-languagemode ()
   "Return the %languagemode value as a list of symbols or nil."
   (semantic-grammar-tag-symbols 'languagemode))
@@ -529,6 +533,14 @@ Also load the specified macro libraries."
   "Insert declaration of constant NAME with VALUE and DOCSTRING."
   (let ((start (point)))
     (insert (format "(defconst %s\n%s%S)\n\n" name value docstring))
+    (save-excursion
+      (goto-char start)
+      (indent-sexp))))
+
+(defun semantic-grammar-insert-defconst-with-eval (name value docstring)
+  "Insert declaration of constant NAME with VALUE and DOCSTRING."
+  (let ((start (point)))
+    (insert (format "(eval-and-compile (defconst %s\n%s%S))\n\n" name value docstring))
     (save-excursion
       (goto-char start)
       (indent-sexp))))
@@ -890,6 +902,12 @@ Lisp code."
 
         (insert "\n;;; Declarations\n;;\n")
 
+        (semantic-grammar-insert-defconst-with-eval
+         (concat semantic--grammar-package "--expected-conflicts")
+         (with-current-buffer semantic--grammar-input-buffer
+           (format "%s\n" (car (semantic-grammar-expected-conflicts))))
+         "The number of expected shift/reduce conflicts in this grammar.")
+
         ;; `eval-defun' is not necessary to reset `defconst' values.
         (semantic-grammar-insert-defconst
          (semantic-grammar-keywordtable)
@@ -987,7 +1005,7 @@ Return non-nil if there were no errors, nil if errors."
 		       (vc-handled-backends nil))
 		   (setq semanticdb-new-database-class 'semanticdb-project-database)
 		   (semantic-mode 1)
-		   (semantic-grammar-create-package)))
+		   (semantic-grammar-create-package t)))
              (error
               (message "%s" (error-message-string err))
               nil))))
