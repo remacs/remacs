@@ -142,7 +142,6 @@ If you change this, you might want to set `byte-compile-dest-file-function'.
 \(Note that the assumption of a \".elc\" suffix for compiled files
 is hard-coded in various places in Emacs.)"
   ;; Eg is_elc in Fload.
-  :group 'bytecomp
   :type 'regexp)
 
 (defcustom byte-compile-dest-file-function nil
@@ -152,7 +151,6 @@ file name, and return the name of the compiled file.
 \(Note that the assumption that the source and compiled files
 are found in the same directory is hard-coded in various places in Emacs.)"
   ;; Eg load-prefer-newer, documentation lookup IIRC.
-  :group 'bytecomp
   :type '(choice (const nil) function)
   :version "23.2")
 
@@ -206,7 +204,6 @@ otherwise adds \".elc\"."
 (defcustom byte-compile-verbose
   (and (not noninteractive) (> baud-rate search-slow-speed))
   "Non-nil means print messages describing progress of byte-compiler."
-  :group 'bytecomp
   :type 'boolean)
 
 (defcustom byte-optimize t
@@ -216,7 +213,6 @@ Possible values are:
   t        - all optimizations
   `source' - source-level optimizations only
   `byte'   - code-level optimizations only"
-  :group 'bytecomp
   :type '(choice (const :tag "none" nil)
 		 (const :tag "all" t)
 		 (const :tag "source-level" source)
@@ -225,13 +221,11 @@ Possible values are:
 (defcustom byte-compile-delete-errors nil
   "If non-nil, the optimizer may delete forms that may signal an error.
 This includes variable references and calls to functions such as `car'."
-  :group 'bytecomp
   :type 'boolean)
 
 (defcustom byte-compile-cond-use-jump-table t
   "Compile `cond' clauses to a jump table implementation (using a hash-table)."
   :version "26.1"
-  :group 'bytecomp
   :type 'boolean)
 
 (defvar byte-compile-dynamic nil
@@ -267,7 +261,6 @@ in the source file.  For example, add this to the first line:
 You can also set the variable globally.
 
 This option is enabled by default because it reduces Emacs memory usage."
-  :group 'bytecomp
   :type 'boolean)
 ;;;###autoload(put 'byte-compile-dynamic-docstrings 'safe-local-variable 'booleanp)
 
@@ -279,7 +272,6 @@ This option is enabled by default because it reduces Emacs memory usage."
 If this is `source', then only source-level optimizations will be logged.
 If it is `byte', then only byte-level optimizations will be logged.
 The information is logged to `byte-compile-log-buffer'."
-  :group 'bytecomp
   :type '(choice (const :tag "none" nil)
 		 (const :tag "all" t)
 		 (const :tag "source-level" source)
@@ -287,7 +279,6 @@ The information is logged to `byte-compile-log-buffer'."
 
 (defcustom byte-compile-error-on-warn nil
   "If true, the byte-compiler reports warnings with `error'."
-  :group 'bytecomp
   :type 'boolean)
 ;; This needs to be autoloaded because it needs to be available to
 ;; Emacs before the byte compiler is loaded, otherwise Emacs will not
@@ -325,7 +316,6 @@ Elements of the list may be:
 
 If the list begins with `not', then the remaining elements specify warnings to
 suppress.  For example, (not mapcar) will suppress warnings about mapcar."
-  :group 'bytecomp
   :type `(choice (const :tag "All" t)
 		 (set :menu-tag "Some"
                       ,@(mapcar (lambda (x) `(const ,x))
@@ -414,7 +404,6 @@ not reported.
 The call tree also lists those functions which are not known to be called
 \(that is, to which no calls have been compiled).  Functions which can be
 invoked interactively are excluded from this list."
-  :group 'bytecomp
   :type '(choice (const :tag "Yes" t) (const :tag "No" nil)
 		 (other :tag "Ask" lambda)))
 
@@ -432,7 +421,6 @@ FUNCTION.")
   "If non-nil, sort the call tree.
 The values `name', `callers', `calls', `calls+callers'
 specify different fields to sort on."
-  :group 'bytecomp
   :type '(choice (const name) (const callers) (const calls)
 		 (const calls+callers) (const nil)))
 
@@ -514,13 +502,20 @@ Return the compile-time value of FORM."
                                 expanded)))))
     (with-suppressed-warnings
         . ,(lambda (warnings &rest body)
-             ;; This function doesn't exist, but is just a placeholder
-             ;; symbol to hook up with the
-             ;; `byte-hunk-handler'/`byte-defop-compiler-1' machinery.
-             `(internal--with-suppressed-warnings
-               ',warnings
-               ,(macroexpand-all `(progn ,@body)
-                                 macroexpand-all-environment)))))
+             ;; We let-bind `byte-compile--suppressed-warnings' here in order
+             ;; to affect warnings emitted during macroexpansion.
+             ;; Later `internal--with-suppressed-warnings' binds it again, this
+             ;; time in order to affect warnings emitted during the
+             ;; compilation itself.
+             (let ((byte-compile--suppressed-warnings
+                    (append warnings byte-compile--suppressed-warnings)))
+               ;; This function doesn't exist, but is just a placeholder
+               ;; symbol to hook up with the
+               ;; `byte-hunk-handler'/`byte-defop-compiler-1' machinery.
+               `(internal--with-suppressed-warnings
+                 ',warnings
+                 ,(macroexpand-all `(progn ,@body)
+                                   macroexpand-all-environment))))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
@@ -1044,7 +1039,6 @@ we go into emacs-lisp-compilation-mode.")
   "Search path for byte-compile error messages.
 Elements should be directory names, not file names of directories.
 The value nil as an element means to try the default directory."
-  :group 'bytecomp
   :version "27.1"
   :type '(repeat (choice (const :tag "Default" nil)
 			 (string :tag "Directory"))))
