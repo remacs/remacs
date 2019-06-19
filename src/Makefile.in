@@ -297,7 +297,7 @@ W32_RES_LINK=@W32_RES_LINK@
 ## Empty if !HAVE_X_WINDOWS
 ## xfont.o ftfont.o xftfont.o ftxfont.o if HAVE_XFT
 ## xfont.o ftfont.o ftxfont.o if HAVE_FREETYPE
-## ftfont.o ftcrfont.o if USE_CAIRO
+## xfont.o ftfont.o ftcrfont.o if USE_CAIRO
 ## else xfont.o
 ## if HAVE_HARFBUZZ, hbfont.o is added regardless of the rest
 FONT_OBJ=@FONT_OBJ@
