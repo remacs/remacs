@@ -49,6 +49,10 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
+** The configure option --with-cairo is no longer experimental.
+This builds Emacs with Cairo drawing, and supports built-in printing
+when Emacs is built with GTK+.
+
 ** Emacs no longer defaults to using ImageMagick to display images,
 due to security and stability concerns.  To override the default, use
 'configure --with-imagemagick'.
