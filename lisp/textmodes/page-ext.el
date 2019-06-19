@@ -284,20 +284,21 @@ Used by `pages-directory-for-addresses' function."
 (define-key ctl-x-map "\C-p" 'ctl-x-ctl-p-prefix)
 (fset 'ctl-x-ctl-p-prefix ctl-x-ctl-p-map)
 
-(define-key ctl-x-ctl-p-map "\C-n" 'next-page)
-(define-key ctl-x-ctl-p-map "\C-p" 'previous-page)
-(define-key ctl-x-ctl-p-map "\C-a" 'add-new-page)
-(define-key ctl-x-ctl-p-map "\C-m" 'mark-page)
-(define-key ctl-x-ctl-p-map "\C-s" 'search-pages)
-(define-key ctl-x-ctl-p-map "s"    'sort-pages-buffer)
-(define-key ctl-x-ctl-p-map "\C-l" 'set-page-delimiter)
+(define-key ctl-x-ctl-p-map "\C-n" 'pages-next-page)
+(define-key ctl-x-ctl-p-map "\C-p" 'pages-previous-page)
+(define-key ctl-x-ctl-p-map "\C-a" 'pages-add-new-page)
+(define-key ctl-x-ctl-p-map "\C-m" 'pages-mark-page)
+(define-key ctl-x-ctl-p-map "\C-s" 'pages-search)
+(define-key ctl-x-ctl-p-map "s"    'pages-sort-buffer)
+(define-key ctl-x-ctl-p-map "\C-l" 'pages-set-delimiter)
 (define-key ctl-x-ctl-p-map "\C-d" 'pages-directory)
 (define-key ctl-x-ctl-p-map "d"    'pages-directory-for-addresses)
 
 
 ;;; Page movement function definitions
 
-(defun next-page (&optional count)
+(define-obsolete-function-alias 'next-page 'pages-next-page "27.1")
+(defun pages-next-page (&optional count)
   "Move to the next page bounded by the `page-delimiter' variable.
 With arg (prefix if interactive), move that many pages."
   (interactive "p")
@@ -323,17 +324,19 @@ With arg (prefix if interactive), move that many pages."
   (goto-char (point-min))
   (recenter 0))
 
-(defun previous-page (&optional count)
+(define-obsolete-function-alias 'previous-page 'pages-previous-page "27.1")
+(defun pages-previous-page (&optional count)
   "Move to the previous page bounded by the `page-delimiter' variable.
 With arg (prefix if interactive), move that many pages."
   (interactive "p")
   (or count (setq count 1))
-  (next-page (- count)))
+  (pages-next-page (- count)))
 
 
 ;;; Adding and searching pages
 
-(defun add-new-page (header-line)
+(define-obsolete-function-alias 'add-new-page 'pages-add-new-page "27.1")
+(defun pages-add-new-page (header-line)
   "Insert new page.  Prompt for header line.
 
 If point is in the pages directory buffer, insert the new page in the
@@ -386,7 +389,8 @@ Point is left in the body of page."
 (defvar pages-last-search nil
   "Value of last regexp searched for.  Initially, nil.")
 
-(defun search-pages (regexp)
+(define-obsolete-function-alias 'search-pages 'pages-search "27.1")
+(defun pages-search (regexp)
   "Search for REGEXP, starting from point, and narrow to page it is in."
   (interactive (list
                 (read-string
@@ -404,7 +408,8 @@ Point is left in the body of page."
 
 (autoload 'sort-subr "sort" "Primary function for sorting." t nil)
 
-(defun sort-pages-in-region (reverse beg end)
+(define-obsolete-function-alias 'sort-pages-in-region 'pages-sort-region "27.1")
+(defun pages-sort-region (reverse beg end)
   "Sort pages in region alphabetically.  Prefix arg means reverse order.
 
 Called from a program, there are three arguments:
@@ -439,7 +444,8 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
                                (goto-char (match-beginning 0))
                              (goto-char (point-max))))))))
 
-(defun sort-pages-buffer (&optional reverse)
+(define-obsolete-function-alias 'sort-pages-buffer 'sort-pages-buffer "27.1")
+(defun pages-sort-buffer (&optional reverse)
   "Sort pages alphabetically in buffer.  Prefix arg means reverse order.
 \(Non-nil arg if not interactive.)"
 
@@ -448,7 +454,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (widen)
   (let ((beginning (point-min))
         (end (point-max)))
-    (sort-pages-in-region reverse beginning end)))
+    (pages-sort-region reverse beginning end)))
 
 
 ;;; Pages directory ancillary definitions
@@ -480,10 +486,11 @@ contain matches to the regexp.)")
     map)
   "Keymap for the pages-directory-buffer.")
 
-(defvar original-page-delimiter "^\f"
+(defvar pages-original-delimiter "^\f"
   "Default page delimiter.")
 
-(defun set-page-delimiter (regexp reset-p)
+(define-obsolete-function-alias 'set-page-delimiter 'pages-set-delimiter "27.1")
+(defun pages-set-delimiter (regexp reset-p)
   "Set buffer local value of page-delimiter to REGEXP.
 Called interactively with a prefix argument, reset `page-delimiter' to
 its original value.
@@ -493,16 +500,16 @@ resets the page-delimiter to the original value."
 
   (interactive
    (if current-prefix-arg
-       (list original-page-delimiter "^\f")
+       (list pages-original-delimiter "^\f")
      (list (read-string "Set page-delimiter to regexp: " page-delimiter)
            nil)))
-  (make-local-variable 'original-page-delimiter)
+  (make-local-variable 'pages-original-delimiter)
   (make-local-variable 'page-delimiter)
-  (setq original-page-delimiter
-        (or original-page-delimiter page-delimiter))
+  (setq pages-original-delimiter
+        (or pages-original-delimiter page-delimiter))
   (if (not reset-p)
       (setq page-delimiter regexp)
-    (setq page-delimiter original-page-delimiter))
+    (setq page-delimiter pages-original-delimiter))
   (if (called-interactively-p 'interactive)
       (message "The value of `page-delimiter' is now: %s" page-delimiter)))
 
