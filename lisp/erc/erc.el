@@ -5480,24 +5480,24 @@ This returns non-nil only if we actually send anything."
 	;; The functions can return nil to inhibit sending.
 	(funcall func state))
       (when (and (erc-input-sendp state)
-		 erc-send-this))
-      (let ((string (erc-input-string state)))
-        (if (or (string-match "\n" string)
-                (not (string-match erc-command-regexp string)))
-            (mapc
-             (lambda (line)
-	       (mapc
-                (lambda (line)
-                  ;; Insert what has to be inserted for this.
-		  (when (erc-input-insertp state)
-                    (erc-display-msg line))
-                  (erc-process-input-line (concat line "\n")
-                                          (null erc-flood-protect) t))
-                (or (and erc-flood-protect (erc-split-line line))
-                    (list line))))
-             (split-string string "\n"))
-          (erc-process-input-line (concat string "\n") t nil))
-        t)))))
+		 erc-send-this)
+	(let ((string (erc-input-string state)))
+          (if (or (string-match "\n" string)
+                  (not (string-match erc-command-regexp string)))
+              (mapc
+               (lambda (line)
+		 (mapc
+                  (lambda (line)
+                    ;; Insert what has to be inserted for this.
+		    (when (erc-input-insertp state)
+                      (erc-display-msg line))
+                    (erc-process-input-line (concat line "\n")
+                                            (null erc-flood-protect) t))
+                  (or (and erc-flood-protect (erc-split-line line))
+                      (list line))))
+               (split-string string "\n"))
+            (erc-process-input-line (concat string "\n") t nil))
+          t))))))
 
 (defun erc-display-command (line)
   (when erc-insert-this
