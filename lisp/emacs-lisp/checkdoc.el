@@ -1174,9 +1174,8 @@ TEXT, START, END and UNFIXABLE conform to
     ;; Override some bindings
     (define-key map "\C-\M-x" 'checkdoc-eval-defun)
     (define-key map "\C-x`" 'checkdoc-continue)
-    (if (not (featurep 'xemacs))
-	(define-key map [menu-bar emacs-lisp eval-buffer]
-	  'checkdoc-eval-current-buffer))
+    (define-key map [menu-bar emacs-lisp eval-buffer]
+      'checkdoc-eval-current-buffer)
     ;; Add some new bindings under C-c ?
     (define-key pmap "x" 'checkdoc-defun)
     (define-key pmap "X" 'checkdoc-ispell-defun)
@@ -1229,10 +1228,7 @@ TEXT, START, END and UNFIXABLE conform to
     ["Check Defun" checkdoc-defun t]
     ["Check and Spell Defun" checkdoc-ispell-defun t]
     ["Check and Evaluate Defun" checkdoc-eval-defun t]
-    ["Check and Evaluate Buffer" checkdoc-eval-current-buffer t]
-    ))
-;; XEmacs requires some weird stuff to add this menu in a minor mode.
-;; What is it?
+    ["Check and Evaluate Buffer" checkdoc-eval-current-buffer t]))
 
 ;;;###autoload
 (define-minor-mode checkdoc-minor-mode
