@@ -678,7 +678,7 @@ reversed."
       (viper-get-ex-token)
       (cond ((memq ex-token-type '(command end-mark))
 	     (if address (setq ex-addresses (cons address ex-addresses)))
-	     (viper-deactivate-mark)
+	     (deactivate-mark)
 	     (let ((cmd (ex-cmd-assoc ex-token ex-token-alist)))
 	       (if (null cmd)
 		   (error "`%s': %s" ex-token viper-BadExCommand))
@@ -881,9 +881,7 @@ reversed."
 	     (if (null ex-token)
 		 (exchange-point-and-mark)
 	       (goto-char
-		(viper-register-to-point
-		 (1+ (- ex-token ?a)))
-                'enforce-buffer))
+		(viper-register-to-point (1+ (- ex-token ?a)) 'enforce-buffer)))
 	     (setq address (point-marker)))))
     address))
 
@@ -1175,7 +1173,7 @@ reversed."
 	    (princ "\n=============\n")
 	    (princ "\nThe numbers can be given as counts to :next. ")
 	    (princ "\n\nPress any key to continue...\n\n"))
-	  (viper-read-event))))))
+	  (read-event))))))
 
 ;; Ex cd command.  Default directory of this buffer changes
 (defun ex-cd ()
@@ -2242,7 +2240,7 @@ Type `mak ' (including the space) to run make with no args."
 	(with-output-to-temp-buffer " *viper-info*"
 	  (princ (concat "\n" file "\n\n\t" info "\n\n")))
 	(let ((inhibit-quit t))
-	  (viper-set-unread-command-events (viper-read-event)))
+	  (viper-set-unread-command-events (read-event)))
 	(kill-buffer " *viper-info*")))
     ))
 

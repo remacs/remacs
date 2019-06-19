@@ -874,7 +874,7 @@ mistakes in macro names to be passed to this function is to use
       ;; read-key then events will be converted to keys, and sometimes
       ;; (e.g., (control \[)) those keys differ from the corresponding events.
       ;; So, do not use (setq next-event (read-key))
-      (setq next-event (viper-read-event))
+      (setq next-event (read-event))
       (or (viper-mouse-event-p next-event)
 	  (setq lis (vconcat lis (vector next-event)))))
     lis))
