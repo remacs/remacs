@@ -1062,7 +1062,9 @@ and downcased.  Sets up `cmpl-db-prefix-symbol'."
 (defvar inside-locate-completion-entry nil)
 ;; used to trap lossage in silent error correction
 
-(defun locate-completion-entry (completion-entry prefix-entry)
+(define-obsolete-function-alias 'locate-completion-entry
+  #'completion-locate-entry "27.1")
+(defun completion-locate-entry (completion-entry prefix-entry)
   "Locate the completion entry.
 Returns a pointer to the element before the completion entry or nil if
 the completion entry is at the head.
@@ -1085,14 +1087,16 @@ Must be called after `find-exact-completion'."
 		     cmpl--completion-string))
 	     (inside-locate-completion-entry
 	      ;; recursive error: really scrod
-	      (locate-completion-db-error))
+	      (completion-locate-db-error))
 	     (t
 	       ;; Patch out
 	       (set cmpl-db-symbol nil)
 	       ;; Retry
-	       (locate-completion-entry-retry completion-entry)))))))
+	       (completion-locate-entry-retry completion-entry)))))))
 
-(defun locate-completion-entry-retry (old-entry)
+(define-obsolete-function-alias 'locate-completion-entry-retry
+  #'completion-locate-entry-retry "27.1")
+(defun completion-locate-entry-retry (old-entry)
   (let ((inside-locate-completion-entry t))
     (add-completion (completion-string old-entry)
 		    (completion-num-uses old-entry)
@@ -1105,11 +1109,13 @@ Must be called after `find-exact-completion'."
 			     0 completion-prefix-min-length)))))
       (if (and cmpl-entry pref-entry)
 	  ;; try again
-	  (locate-completion-entry cmpl-entry pref-entry)
+	  (completion-locate-entry cmpl-entry pref-entry)
 	  ;; still losing
-	  (locate-completion-db-error)))))
+	  (completion-locate-db-error)))))
 
-(defun locate-completion-db-error ()
+(define-obsolete-function-alias 'locate-completion-db-error
+  #'completion-locate-db-error "27.1")
+(defun completion-locate-db-error ()
   ;; recursive error: really scrod
   (error "Completion database corrupted.  Try M-x clear-all-completions.  Send bug report"))
 
@@ -1158,7 +1164,7 @@ Returns the completion entry."
         (let* ((prefix-entry (find-cmpl-prefix-entry
                               (substring cmpl-db-downcase-string 0
                                          completion-prefix-min-length)))
-               (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry))
+               (splice-ptr (completion-locate-entry cmpl-db-entry prefix-entry))
                (cmpl-ptr (cdr splice-ptr)))
           ;; update entry
           (set-completion-string cmpl-db-entry completion-string)
@@ -1202,7 +1208,8 @@ String must be longer than `completion-prefix-min-length'."
         (let* ((prefix-entry (find-cmpl-prefix-entry
                               (substring cmpl-db-downcase-string 0
                                          completion-prefix-min-length)))
-               (splice-ptr (locate-completion-entry cmpl-db-entry prefix-entry)))
+               (splice-ptr (completion-locate-entry
+                            cmpl-db-entry prefix-entry)))
           ;; delete symbol reference
           (set cmpl-db-symbol nil)
           ;; remove from prefix list
