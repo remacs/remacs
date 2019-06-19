@@ -72,12 +72,11 @@ Call this function when setting up the mode."
     (setq erc-input-ring (make-ring comint-input-ring-size)))
   (setq erc-input-ring-index nil))
 
-(defun erc-add-to-input-ring (s)
+(defun erc-add-to-input-ring (state)
   "Add string S to the input ring and reset history position."
   (unless erc-input-ring (erc-input-ring-setup))
-  (ring-insert erc-input-ring s)
-  (setq erc-input-ring-index nil)
-  s)
+  (ring-insert erc-input-ring (erc-input-string state))
+  (setq erc-input-ring-index nil))
 
 (defun erc-clear-input-ring ()
   "Remove all entries from the input ring, then call garbage-collect.
