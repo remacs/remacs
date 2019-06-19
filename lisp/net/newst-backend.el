@@ -435,40 +435,6 @@ buffers *newsticker-wget-<feed>* will not be closed."
   :group 'newsticker-miscellaneous)
 
 ;; ======================================================================
-;;; Compatibility section, XEmacs, Emacs
-;; ======================================================================
-
-;; FIXME It is bad practice to define compat functions with such generic names.
-
-(unless (fboundp 'match-string-no-properties)
-  (defalias 'match-string-no-properties 'match-string))
-
-(when (featurep 'xemacs)
-  (unless (fboundp 'replace-regexp-in-string)
-    (defun replace-regexp-in-string (re rp st)
-      (save-match-data ;; apparently XEmacs needs save-match-data
-	(replace-in-string st re rp)))))
-
-;; copied from subr.el
-(unless (fboundp 'add-to-invisibility-spec)
-  (defun add-to-invisibility-spec (arg)
-    "Add elements to `buffer-invisibility-spec'.
-See documentation for `buffer-invisibility-spec' for the kind of elements
-that can be added."
-    (if (eq buffer-invisibility-spec t)
-        (setq buffer-invisibility-spec (list t)))
-    (setq buffer-invisibility-spec
-          (cons arg buffer-invisibility-spec))))
-
-;; copied from subr.el
-(unless (fboundp 'remove-from-invisibility-spec)
-  (defun remove-from-invisibility-spec (arg)
-    "Remove elements from `buffer-invisibility-spec'."
-    (if (consp buffer-invisibility-spec)
-        (setq buffer-invisibility-spec
-              (delete arg buffer-invisibility-spec)))))
-
-;; ======================================================================
 ;;; Internal variables
 ;; ======================================================================
 (defvar newsticker--buffer-uptodate-p nil
@@ -591,11 +557,6 @@ name/timer pair to `newsticker--retrieval-timer-list'."
       ;; do not repeat retrieval if interval not positive
       (if (<= interval 0)
           (setq interval nil))
-      ;; Suddenly XEmacs doesn't like start-time 0
-      (if (or (not start-time)
-              (and (numberp start-time) (= start-time 0)))
-          (setq start-time 1))
-      ;; (message "start-time %s" start-time)
       (setq timer (run-at-time start-time interval
                                'newsticker-get-news feed-name))
       (if interval
