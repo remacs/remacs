@@ -291,7 +291,6 @@ You should bind this variable with `let', but do not set it globally.")
   (setq truncate-lines t
 	buffer-read-only t)
   (setq-local font-lock-defaults '(epa-font-lock-keywords t))
-  (font-lock-set-defaults)
   (make-local-variable 'epa-exit-buffer-function)
   (setq-local revert-buffer-function #'epa--key-list-revert-buffer))
 
@@ -301,7 +300,6 @@ You should bind this variable with `let', but do not set it globally.")
   (setq truncate-lines t
 	buffer-read-only t)
   (setq-local font-lock-defaults '(epa-font-lock-keywords t))
-  (font-lock-set-defaults)
   (make-local-variable 'epa-exit-buffer-function))
 
 (define-derived-mode epa-info-mode special-mode "Info"
