@@ -116,14 +116,14 @@ Calc user interface as before (either C-x * C or C-x * K; initially C-x * C).
 		  (while (progn
 			   (message "Calc options: Calc, Keypad, ...  %s"
 				    "press SPC, DEL to scroll, C-g to cancel")
-			   (memq (car (setq key (calc-read-key t)))
+			   (memq (setq key (read-event))
 				 '(?  ?\C-h ?\C-? ?\C-v ?\M-v)))
 		    (condition-case err
-			(if (memq (car key) '(?  ?\C-v))
+			(if (memq key '(?  ?\C-v))
 			    (scroll-up)
 			  (scroll-down))
 		      (error (beep))))
-		      (calc-unread-command (cdr key))))))
+		      (calc-unread-command key)))))
 	(calc-do-dispatch nil))
     (let ((calc-dispatch-help t))
       (calc-do-dispatch arg))))

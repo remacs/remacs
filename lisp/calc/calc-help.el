@@ -77,14 +77,14 @@ C-w  Describe how there is no warranty for Calc."
 	  (select-window (get-buffer-window "*Help*"))
 	  (while (progn
 		   (message "Calc Help options: Help, Info, ...  press SPC, DEL to scroll, C-g to cancel")
-		   (memq (car (setq key (calc-read-key t)))
+		   (memq (setq key (read-event))
 			 '(?  ?\C-h ?\C-? ?\C-v ?\M-v)))
 	    (condition-case err
-		(if (memq (car key) '(?  ?\C-v))
+		(if (memq key '(? ?\C-v))
 		    (scroll-up)
 		  (scroll-down))
 	      (error (beep)))))
-	(calc-unread-command (cdr key))
+	(calc-unread-command key)
 	(calc-help-prefix nil))
     (let ((calc-dispatch-help t))
       (calc-help-prefix arg))))
@@ -255,8 +255,8 @@ C-w  Describe how there is no warranty for Calc."
 			   msg
 			   (if (equal notes "") ""
 			     (format "  (?=notes %s)" notes)))
-		  (let ((key (calc-read-key t)))
-		    (if (eq (car key) ??)
+		  (let ((key (read-event)))
+		    (if (eq key ??)
 			(if (equal notes "")
 			    (message "No notes for this command")
 			  (while (string-match "," notes)
@@ -280,7 +280,7 @@ C-w  Describe how there is no warranty for Calc."
 				(princ (buffer-substring pt (point))))
 			      (setq notes (cdr notes)))
 			    (help-print-return-message)))
-		      (calc-unread-command (cdr key)))))
+		      (calc-unread-command key))))
 	      (if (or (null defn) (integerp defn))
 		  (message "%s is undefined" desc)
 		(message "%s runs the command %s"

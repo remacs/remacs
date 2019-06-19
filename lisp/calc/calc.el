@@ -1113,15 +1113,7 @@ Used by `calc-user-invocation'.")
 	(ignore-errors
           (define-key calc-digit-map x 'calcDigit-backspace)
           (define-key calc-mode-map x 'calc-pop)
-          (define-key calc-mode-map
-            (if (and (vectorp x) (featurep 'xemacs))
-                (if (= (length x) 1)
-                    (vector (if (consp (aref x 0))
-                                (cons 'meta (aref x 0))
-                              (list 'meta (aref x 0))))
-                  "\e\C-d")
-              (vconcat "\e" x))
-            'calc-pop-above)))
+          (define-key calc-mode-map (vconcat "\e" x) 'calc-pop-above)))
       (if calc-scan-for-dels
 	  (append (where-is-internal 'delete-backward-char global-map)
 		  (where-is-internal 'backward-delete-char global-map)
@@ -1230,9 +1222,9 @@ Used by `calc-user-invocation'.")
   (let ((glob (current-global-map))
 	(loc (current-local-map)))
     (or (input-pending-p) (message "%s" prompt))
-    (let ((key (calc-read-key t))
+    (let ((key (read-event))
 	  (input-method-function nil))
-      (calc-unread-command (cdr key))
+      (calc-unread-command key)
       (unwind-protect
 	  (progn
 	    (use-global-map map)
@@ -2333,21 +2325,14 @@ the United States."
 	    (calc-prev-char nil)
 	    (calc-prev-prev-char nil)
 	    (calc-buffer (current-buffer))
-	    (buf (if (featurep 'xemacs)
-		     (catch 'calc-foo
-		       (catch 'execute-kbd-macro
-			 (throw 'calc-foo
-				(read-from-minibuffer
-				 "Calc: " "" calc-digit-map)))
-		       (error "XEmacs requires RET after %s"
-			      "digit entry in kbd macro"))
-		   (let ((old-esc (lookup-key global-map "\e")))
-		     (unwind-protect
-			 (progn
-			   (define-key global-map "\e" nil)
-			   (read-from-minibuffer
-                            "Calc: " (calc-digit-start-entry) calc-digit-map))
-		       (define-key global-map "\e" old-esc))))))
+	    (buf
+	     (let ((old-esc (lookup-key global-map "\e")))
+	       (unwind-protect
+		   (progn
+		     (define-key global-map "\e" nil)
+		     (read-from-minibuffer
+                      "Calc: " (calc-digit-start-entry) calc-digit-map))
+		 (define-key global-map "\e" old-esc)))))
        (or calc-digit-value (setq calc-digit-value (math-read-number buf)))
        (if (stringp calc-digit-value)
 	   (calc-alg-entry calc-digit-value)
@@ -3883,29 +3868,16 @@ See Info node `(calc)Defining Functions'."
   (require 'calc-ext)
   (math-do-defmath func args body))
 
-;;; Functions needed for Lucid Emacs support.
-
-(defun calc-read-key (&optional optkey)
-  (cond ((featurep 'xemacs)
-	 (let ((event (next-command-event)))
-	   (let ((key (event-to-character event t t)))
-	     (or key optkey (error "Expected a plain keystroke"))
-	     (cons key event))))
-	(t
-	 (let ((key (read-event)))
-	   (cons key key)))))
+(defun calc-read-key (&optional _optkey)
+  (declare (obsolete read-event "27.1"))
+  (let ((key (read-event)))
+    (cons key key)))
 
 (defun calc-unread-command (&optional input)
-  (if (featurep 'xemacs)
-      (setq unread-command-event
-	    (if (integerp input) (character-to-event input)
-	      (or input last-command-event)))
-    (push (or input last-command-event) unread-command-events)))
+  (push (or input last-command-event) unread-command-events))
 
 (defun calc-clear-unread-commands ()
-  (if (featurep 'xemacs)
-      (setq unread-command-event nil)
-    (setq unread-command-events nil)))
+  (setq unread-command-events nil))
 
 (defcalcmodevar math-2-word-size
   (math-read-number-simple "4294967296")
