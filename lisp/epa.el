@@ -291,8 +291,6 @@ You should bind this variable with `let', but do not set it globally.")
   (setq truncate-lines t
 	buffer-read-only t)
   (setq-local font-lock-defaults '(epa-font-lock-keywords t))
-  ;; In XEmacs, auto-initialization of font-lock is not effective
-  ;; if buffer-file-name is not set.
   (font-lock-set-defaults)
   (make-local-variable 'epa-exit-buffer-function)
   (setq-local revert-buffer-function #'epa--key-list-revert-buffer))
@@ -303,8 +301,6 @@ You should bind this variable with `let', but do not set it globally.")
   (setq truncate-lines t
 	buffer-read-only t)
   (setq-local font-lock-defaults '(epa-font-lock-keywords t))
-  ;; In XEmacs, auto-initialization of font-lock is not effective
-  ;; if buffer-file-name is not set.
   (font-lock-set-defaults)
   (make-local-variable 'epa-exit-buffer-function))
 
@@ -872,16 +868,13 @@ For example:
 			     (epg-context-result-for context 'verify)))))))
 
 (defun epa--find-coding-system-for-mime-charset (mime-charset)
-  (if (featurep 'xemacs)
-      (if (fboundp 'find-coding-system)
-	  (find-coding-system mime-charset))
-    ;; Find the first coding system which corresponds to MIME-CHARSET.
-    (let ((pointer (coding-system-list)))
-      (while (and pointer
-		  (not (eq (coding-system-get (car pointer) 'mime-charset)
-			   mime-charset)))
-	(setq pointer (cdr pointer)))
-      (car pointer))))
+  ;; Find the first coding system which corresponds to MIME-CHARSET.
+  (let ((pointer (coding-system-list)))
+    (while (and pointer
+		(not (eq (coding-system-get (car pointer) 'mime-charset)
+			 mime-charset)))
+      (setq pointer (cdr pointer)))
+    (car pointer)))
 
 ;;;###autoload
 (defun epa-decrypt-armor-in-region (start end)
