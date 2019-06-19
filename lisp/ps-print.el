@@ -47,7 +47,7 @@ Please send all bug fixes and enhancements to
 ;;
 ;; This package provides printing of Emacs buffers on PostScript printers; the
 ;; buffer's bold and italic text attributes are preserved in the printer
-;; output.  ps-print is intended for use with Emacs or XEmacs, together with a
+;; output.  ps-print is intended for use with Emacs, together with a
 ;; fontifying package such as font-lock or hilit.
 ;;
 ;; ps-print uses the same face attributes defined through font-lock or hilit to
@@ -1464,16 +1464,7 @@ Please send all bug fixes and enhancements to
 
 (require 'lpr)
 
-
-(if (featurep 'xemacs)
-    (or (featurep 'lisp-float-type)
-	(error "`ps-print' requires floating point support"))
-  (unless (and (boundp 'emacs-major-version)
-	       (>= emacs-major-version 23))
-    (error "`ps-print' only supports Emacs 23 and higher")))
-
-
-;; Load XEmacs/Emacs definitions
+;; Load Emacs definitions
 (require 'ps-def)
 
 ;; autoloads for secondary file
@@ -2951,13 +2942,8 @@ Either a float or a cons of floats (LANDSCAPE-SIZE . PORTRAIT-SIZE)."
 ;;; Colors
 
 ;; Printing color requires x-color-values.
-;; XEmacs change: Need autoload for the "Options->Printing->Color Printing"
-;;                widget to work.
 ;;;###autoload
-(defcustom ps-print-color-p
-  (or (fboundp 'x-color-values)		; Emacs
-      (fboundp 'color-instance-rgb-components))
-					; XEmacs
+(defcustom ps-print-color-p (fboundp 'x-color-values)
   "Specify how buffer's text color is printed.
 
 Valid values are:
@@ -3381,13 +3367,7 @@ It's like the very first character of buffer (or region) is ^L (\\014)."
   :version "20"
   :group 'ps-print-headers)
 
-(defcustom ps-postscript-code-directory
-  (cond ((fboundp 'locate-data-directory) ; XEmacs
-         (locate-data-directory "ps-print"))
-        ((boundp 'data-directory)       ; XEmacs and Emacs.
-         data-directory)
-        (t                              ; don't know what to do
-         (error "`ps-postscript-code-directory' isn't set properly")))
+(defcustom ps-postscript-code-directory data-directory
   "Directory where it's located the PostScript prologue file used by ps-print.
 By default, this directory is the same as in the variable `data-directory'."
   :type 'directory
@@ -3632,8 +3612,7 @@ The table depends on the current ps-print setup."
     (mapconcat
      #'ps-print-quote
      (list
-      (concat "\n;;; (" (if (featurep 'xemacs) "XEmacs" "Emacs")
-	      ") ps-print version " ps-print-version "\n")
+      (concat "\n;;; (Emacs) ps-print version " ps-print-version "\n")
       ";; internal vars"
       (ps-comment-string "emacs-version     " emacs-version)
       (ps-comment-string "lpr-windows-system" lpr-windows-system)
