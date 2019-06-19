@@ -586,7 +586,7 @@ OLD-DEFAULT hours are set for every day that has no number indicated."
 (defvar timeclock-last-project nil)
 
 (defun timeclock-completing-read (prompt alist &optional default)
-  "A version of `completing-read.
+  "A version of `completing-read'.
 PROMPT, ALIST and DEFAULT are used for the PROMPT, COLLECTION and DEF
 arguments of `completing-read'."
   (declare (obsolete completing-read "27.1"))
