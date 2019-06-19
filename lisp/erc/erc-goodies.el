@@ -177,9 +177,8 @@ does not appear in the ERC buffer after the user presses ENTER.")
   "This mode distinguishes non-commands.
 Commands listed in `erc-insert-this' know how to display
 themselves."
-  ((cl-pushnew 'erc-send-distinguish-noncommands erc-pre-send-functions))
-  ((setq erc-pre-send-functions (delq 'erc-send-distinguish-noncommands
-                                      erc-pre-send-functions))))
+  ((add-hook 'erc-pre-send-functions 'erc-send-distinguish-noncommands))
+  ((remove-hook 'erc-pre-send-functions 'erc-send-distinguish-noncommands)))
 
 (defun erc-send-distinguish-noncommands (state)
   "If STR is an ERC non-command, set `insertp' in STATE to nil."
