@@ -815,12 +815,7 @@ mistakes in macro names to be passed to this function is to use
 
 ;; convert strings or arrays of characters to Viper macro form
 (defun viper-char-array-to-macro (array)
-  (let ((vec (vconcat array))
-	macro)
-    (if (featurep 'xemacs)
-	(setq macro (mapcar 'character-to-event vec))
-      (setq macro vec))
-    (vconcat (mapcar 'viper-event-key macro))))
+  (vconcat (mapcar 'viper-event-key (vconcat array))))
 
 ;; For macros bodies and names, goes over MACRO and checks if all members are
 ;; names of keys (actually, it only checks if they are symbols or lists
