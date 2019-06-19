@@ -177,7 +177,7 @@ does not appear in the ERC buffer after the user presses ENTER.")
   "This mode distinguishes non-commands.
 Commands listed in `erc-insert-this' know how to display
 themselves."
-  ((push 'erc-send-distinguish-noncommands erc-pre-send-functions))
+  ((cl-pushnew 'erc-send-distinguish-noncommands erc-pre-send-functions))
   ((setq erc-pre-send-functions (delq 'erc-send-distinguish-noncommands
                                       erc-pre-send-functions))))
 

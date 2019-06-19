@@ -46,7 +46,7 @@
 (define-erc-module ring nil
   "Stores input in a ring so that previous commands and messages can
 be recalled using M-p and M-n."
-  ((push 'erc-add-to-input-ring erc-pre-send-functions)
+  ((cl-pushnew 'erc-add-to-input-ring erc-pre-send-functions)
    (define-key erc-mode-map "\M-p" 'erc-previous-command)
    (define-key erc-mode-map "\M-n" 'erc-next-command))
   ((setq erc-pre-send-functions (delq 'erc-add-to-input-ring
