@@ -48,7 +48,7 @@
 (defvar ja-dic-filename "ja-dic.el")
 
 (defun skkdic-convert-okuri-ari (skkbuf buf)
-  (message "Processing OKURI-ARI entries ...")
+  (byte-compile-info-message "Processing OKURI-ARI entries")
   (goto-char (point-min))
   (with-current-buffer buf
     (insert ";; Setting okuri-ari entries.\n"
@@ -97,7 +97,7 @@
     ("ゆき" "行")))
 
 (defun skkdic-convert-postfix (skkbuf buf)
-  (message "Processing POSTFIX entries ...")
+  (byte-compile-info-message "Processing POSTFIX entries")
   (goto-char (point-min))
   (with-current-buffer buf
     (insert ";; Setting postfix entries.\n"
@@ -151,7 +151,7 @@
 (defconst skkdic-prefix-list '(skkdic-prefix-list))
 
 (defun skkdic-convert-prefix (skkbuf buf)
-  (message "Processing PREFIX entries ...")
+  (byte-compile-info-message "Processing PREFIX entries")
   (goto-char (point-min))
   (with-current-buffer buf
     (insert ";; Setting prefix entries.\n"
@@ -272,9 +272,10 @@
 
 (defun skkdic-collect-okuri-nasi ()
   (save-excursion
-    (let ((progress (make-progress-reporter "Collecting OKURI-NASI entries"
-                                            (point) (point-max)
-                                            nil 10)))
+    (let ((progress (make-progress-reporter
+                     (byte-compile-info-message "Collecting OKURI-NASI entries")
+                     (point) (point-max)
+                     nil 10)))
       (while (re-search-forward "^\\(\\cH+\\) \\(/\\cj.*\\)/$"
 				nil t)
         (let ((kana (match-string-no-properties 1))
@@ -299,9 +300,10 @@
     (insert ";; Setting okuri-nasi entries.\n"
 	    "(skkdic-set-okuri-nasi\n")
     (let ((l (nreverse skkdic-okuri-nasi-entries))
-          (progress (make-progress-reporter "Processing OKURI-NASI entries"
-                                            0 skkdic-okuri-nasi-entries-count
-                                            nil 10))
+          (progress (make-progress-reporter
+                     (byte-compile-info-message "Processing OKURI-NASI entries")
+                     0 skkdic-okuri-nasi-entries-count
+                     nil 10))
           (count 0))
       (while l
 	(let ((kana (car (car l)))
@@ -327,7 +329,6 @@ Optional argument DIRNAME if specified is the directory name under which
 the generated Emacs Lisp is saved.
 The name of generated file is specified by the variable `ja-dic-filename'."
   (interactive "FSKK dictionary file: ")
-  (message "Reading file \"%s\" ..." filename)
   (let* ((coding-system-for-read 'euc-japan)
 	 (skkbuf (get-buffer-create " *skkdic-unannotated*"))
 	 (buf (get-buffer-create "*skkdic-work*")))
@@ -529,16 +530,18 @@ To get complete usage, invoke:
   `(defconst skkdic-okuri-nasi
      ',(let ((l entries)
 	     (map '(skdic-okuri-nasi))
+             (progress (make-progress-reporter
+                        (byte-compile-info-message
+                         "Extracting OKURI-NASI entries")
+                        0 (length entries)))
 	     (count 0)
 	     entry)
 	 (while l
-	   (setq count (1+ count))
-	   (if (= (% count 10000) 0)
-	       (byte-compile-info-message "Extracted %d Okuri Nasi entries"
-                                          count))
+           (progress-reporter-update progress (setq count (1+ count)))
 	   (setq entry (skkdic-extract-conversion-data (car l)))
 	   (set-nested-alist (car entry) (cdr entry) map)
 	   (setq l (cdr l)))
+         (progress-reporter-done progress)
 	 map)))
 
 (provide 'ja-dic-cnv)
