@@ -415,7 +415,7 @@ If SCOPE is nil, the user is asked to specify the scope."
 		  t)))
 	  (if (y-or-n-p
 	       (format "Save this macro in %s? "
-		       (viper-abbreviate-file-name viper-custom-file-name)))
+		       (abbreviate-file-name viper-custom-file-name)))
 	      (viper-save-string-in-file
 	       (format "\n(viper-record-kbd-macro %S '%S %s '%S)"
 		       (viper-display-macro macro-name)

@@ -700,8 +700,6 @@ It also can't undo some Viper settings."
       (and (fboundp 'add-to-ordered-list) (boundp 'emulation-mode-map-alists))
     (viper-delocalize-var 'minor-mode-map-alist))
   (viper-delocalize-var 'require-final-newline)
-  (if (featurep 'xemacs) (viper-delocalize-var 'bar-cursor))
-
 
   ;; deactivate all advices done by Viper.
   (viper--deactivate-advice-list)
@@ -787,8 +785,6 @@ It also can't undo some Viper settings."
   ;; In emacs, we have to advice handle-switch-frame
   ;; This advice is undone earlier, when all advices matching "viper-" are
   ;; deactivated.
-  (if (featurep 'xemacs)
-      (remove-hook 'mouse-leave-frame-hook #'viper-remember-current-frame))
   ) ; end viper-go-away
 
 
@@ -935,15 +931,7 @@ Two differences:
    (lambda (orig-fun &rest args)
     ;; FIXME: Use remapping?
     (if (and (eq viper-current-state 'vi-state)
-	     ;; Do not use called-interactively-p here. XEmacs does not have it
-	     ;; and interactive-p is just fine.
-             (if (featurep 'xemacs)
-                 (interactive-p)
-               ;; Respect the spirit of the above comment, though it
-               ;; seems pointless, since XE doesn't have advice-add or
-               ;; lexical binding or any other of the newer features
-               ;; this file uses.
-               (called-interactively-p 'interactive)))
+             (called-interactively-p 'interactive))
 	(beep 1)
       (apply orig-fun args))))
 
@@ -1083,13 +1071,11 @@ This may be needed if the previous `:map' command terminated abnormally."
 
   ;; catch frame switching event
   (if (viper-window-display-p)
-      (if (featurep 'xemacs)
-	  (add-hook 'mouse-leave-frame-hook
-		    #'viper-remember-current-frame)
-	(viper--advice-add 'handle-switch-frame :before
-	 (lambda (&rest _)
-	  "Remember the selected frame before the switch-frame event."
-	  (viper-remember-current-frame (selected-frame))))))
+      (viper--advice-add
+       'handle-switch-frame :before
+       (lambda (&rest _)
+	 "Remember the selected frame before the switch-frame event."
+	 (viper-remember-current-frame (selected-frame)))))
 
   ) ; end viper-non-hook-settings
 

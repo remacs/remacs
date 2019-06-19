@@ -642,12 +642,8 @@ Arguments: (major-mode viper-state keymap)"
 
 (defun viper-add-keymap (mapsrc mapdst)
   "Add contents of mapsrc to mapdst.  It is assumed that mapsrc is sparse."
-  (if (featurep 'xemacs)
-      ;; Emacs 22 has map-keymap.
-      (map-keymap (lambda (key binding) (define-key mapdst key binding))
-		  mapsrc)
-    (mapc (lambda (p) (define-key mapdst (vector (car p)) (cdr p)))
-	  (cdr mapsrc))))
+  (mapc (lambda (p) (define-key mapdst (vector (car p)) (cdr p)))
+	(cdr mapsrc)))
 
 (defun viper-modify-keymap (map alist)
    "Modifies MAP with bindings specified in the ALIST.  The alist has the
