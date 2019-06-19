@@ -510,9 +510,7 @@ This puts the mark at the end, and point at the beginning."
   (push-mark)
   (pascal-end-of-defun)
   (push-mark)
-  (pascal-beg-of-defun)
-  (when (featurep 'xemacs)
-    (zmacs-activate-region)))
+  (pascal-beg-of-defun))
 
 (defun pascal-comment-area (start end)
   "Put the region into a Pascal comment.\\<pascal-mode-map>
