@@ -592,6 +592,8 @@ remapped to these, respectively.
 *** New customizable variable 'find-dired-refine-function'.
 The default value is 'find-dired-sort-by-filename'.
 
+*** New sorting options for the variable 'find-ls-option'.
+
 ** Change Logs and VC
 
 *** Recording ChangeLog entries doesn't require an actual file.
@@ -1111,6 +1113,8 @@ Clicking on the button with ellipsis unhides it.
 The abbreviation can be disabled by the new option
 'grep-find-abbreviate'.  The new command
 'grep-find-toggle-abbreviation' toggles it interactively.
+
+*** 'grep-find-use-xargs' is now customizable with sorting options.
 
 ** ERT
 

@@ -511,14 +511,24 @@ See `grep-find-use-xargs'.
 This variable's value takes effect when `grep-compute-defaults' is called.")
 
 ;;;###autoload
-(defvar grep-find-use-xargs nil
+(defcustom grep-find-use-xargs nil
   "How to invoke find and grep.
 If `exec', use `find -exec {} ;'.
 If `exec-plus' use `find -exec {} +'.
 If `gnu', use `find -print0' and `xargs -0'.
+If `gnu-sort', use `find -print0', `sort -z' and `xargs -0'.
 Any other value means to use `find -print' and `xargs'.
 
-This variable's value takes effect when `grep-compute-defaults' is called.")
+This variable's value takes effect when `grep-compute-defaults' is called."
+  :type '(choice (const :tag "find -exec {} ;" exec)
+                 (const :tag "find -exec {} +" exec-plus)
+                 (const :tag "find -print0 | xargs -0" gnu)
+                 (const :tag "find -print0 | sort -z | xargs -0'" gnu-sort)
+                 string
+		 (const :tag "Not Set" nil))
+  :set 'grep-apply-setting
+  :version "27.1"
+  :group 'grep)
 
 ;; History of grep commands.
 ;;;###autoload
@@ -728,6 +738,9 @@ This function is called from `compilation-filter-hook'."
 		       ;; forward slashes as directory separators.
 		       (format "%s . -type f -print0 | \"%s\" -0 %s"
 			       find-program xargs-program grep-command))
+		      ((eq grep-find-use-xargs 'gnu-sort)
+		       (format "%s . -type f -print0 | sort -z | \"%s\" -0 %s"
+			       find-program xargs-program grep-command))
 		      ((memq grep-find-use-xargs '(exec exec-plus))
 		       (let ((cmd0 (format "%s . -type f -exec %s"
 					   find-program grep-command))
@@ -751,6 +764,9 @@ This function is called from `compilation-filter-hook'."
 			      "")))
 		  (cond ((eq grep-find-use-xargs 'gnu)
 			 (format "%s <D> <X> -type f <F> -print0 | \"%s\" -0 %s"
+				 find-program xargs-program gcmd))
+			((eq grep-find-use-xargs 'gnu-sort)
+			 (format "%s <D> <X> -type f <F> -print0 | sort -z | \"%s\" -0 %s"
 				 find-program xargs-program gcmd))
 			((eq grep-find-use-xargs 'exec)
 			 (format "%s <D> <X> -type f <F> -exec %s %s %s%s"

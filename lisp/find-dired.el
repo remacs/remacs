@@ -51,19 +51,23 @@ than the latter."
   :group 'find-dired
   :type 'string)
 
+(defvar find-ls-option-default-ls
+  (cons "-ls" (if (eq system-type 'berkeley-unix) "-gilsb" "-dilsb")))
+
+(defvar find-ls-option-default-exec
+  (cons (format "-exec ls -ld {} %s" find-exec-terminator) "-ld"))
+
+(defvar find-ls-option-default-xargs
+  (cons "-print0 | sort -z | xargs -0 -e ls -ld" "-ld"))
+
 ;; find's -ls corresponds to these switches.
 ;; Note -b, at least GNU find quotes spaces etc. in filenames
 (defcustom find-ls-option
   (if (eq 0
 	  (ignore-errors
 	    (process-file find-program nil nil nil null-device "-ls")))
-      (cons "-ls"
-	    (if (eq system-type 'berkeley-unix)
-		"-gilsb"
-	      "-dilsb"))
-    (cons
-     (format "-exec ls -ld {} %s" find-exec-terminator)
-     "-ld"))
+      find-ls-option-default-ls
+    find-ls-option-default-exec)
   "A pair of options to produce and parse an `ls -l'-type list from `find'.
 This is a cons of two strings (FIND-OPTION . LS-SWITCHES).
 FIND-OPTION is the option (or options) passed to `find' to produce
@@ -77,10 +81,26 @@ For example, to use human-readable file sizes with GNU ls:
 To use GNU find's inbuilt \"-ls\" option to list files:
    (\"-ls\" . \"-dilsb\")
 since GNU find's output has the same format as using GNU ls with
-the options \"-dilsb\"."
-  :version "24.1"	       ; add tests for -ls and -exec + support
-  :type '(cons (string :tag "Find Option")
-	       (string :tag "Ls Switches"))
+the options \"-dilsb\".
+
+While the option `find -ls' often produces unsorted output, the option
+`find -exec ls -ld' maintains the sorting order only on short output,
+whereas `find -print | sort | xargs' produced sorted output even
+on the large number of files."
+  :version "27.1"            ; add choice of predefined set of options
+  :type `(choice
+          (cons :tag "find -ls"
+                (string ,(car find-ls-option-default-ls))
+                (string ,(cdr find-ls-option-default-ls)))
+          (cons :tag "find -exec ls -ld"
+                (string ,(car find-ls-option-default-exec))
+                (string ,(cdr find-ls-option-default-exec)))
+          (cons :tag "find -print | sort | xargs"
+                (string ,(car find-ls-option-default-xargs))
+                (string ,(cdr find-ls-option-default-xargs)))
+          (cons :tag "Other values"
+                (string :tag "Find Option")
+                (string :tag "Ls Switches")))
   :group 'find-dired)
 
 (defcustom find-ls-subdir-switches
@@ -123,8 +143,10 @@ This function takes no arguments.  The *Find* buffer is narrowed to the
 output of `find' (one file per line) when this function is called."
   :version "27.1"
   :group 'find-dired
-  :type '(choice (function :tag "Function")
-                 (const :tag "None" nil)))
+  :type '(choice (const :tag "Sort file names lexicographically"
+                        find-dired-sort-by-filename)
+                 (function :tag "Refining function")
+                 (const :tag "No refining" nil)))
 
 (defvar find-args nil
   "Last arguments given to `find' by \\[find-dired].")
