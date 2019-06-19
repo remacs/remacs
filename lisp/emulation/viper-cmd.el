@@ -293,12 +293,6 @@
   ;; desirable that viper-pre-command-sentinel is the last hook and
   ;; viper-post-command-sentinel is the first hook.
 
-  (when (featurep 'xemacs)
-    (make-local-hook 'viper-after-change-functions)
-    (make-local-hook 'viper-before-change-functions)
-    (make-local-hook 'viper-post-command-hooks)
-    (make-local-hook 'viper-pre-command-hooks))
-
   (remove-hook 'post-command-hook 'viper-post-command-sentinel)
   (add-hook 'post-command-hook 'viper-post-command-sentinel)
   (remove-hook 'pre-command-hook 'viper-pre-command-sentinel)
@@ -764,21 +758,15 @@ Vi's prefix argument will be used.  Otherwise, the prefix argument passed to
 
 	  ;; this-command, last-command-char, last-command-event
 	  (setq this-command com)
-	  (if (featurep 'xemacs)
-	      ;; XEmacs represents key sequences as vectors
-	      (setq last-command-event
-		    (viper-copy-event (viper-seq-last-elt key))
-		    last-command-char (event-to-character last-command-event))
-	    ;; Emacs represents them as sequences (str or vec)
-	    (setq last-command-event
-		  (viper-copy-event (viper-seq-last-elt key))))
+	  ;; Emacs represents key sequences as sequences (str or vec)
+	  (setq last-command-event
+		(viper-copy-event (viper-seq-last-elt key)))
 
 	  (if (commandp com)
 	      ;; pretend that current state is the state we escaped to
 	      (let ((viper-current-state state))
 		(setq prefix-arg (or prefix-arg arg))
-		(command-execute com)))
-	  )
+		(command-execute com))))
       (quit (ding))
       (error (beep 1))))
   ;; set state in the new buffer
@@ -826,30 +814,7 @@ Vi's prefix argument will be used.  Otherwise, the prefix argument passed to
 		   (insert quail-current-str))
 		 (setq ch (or ch
 			      (aref quail-current-str
-				    (1- (length quail-current-str)))))
-		 ))
-	      ((and viper-special-input-method
-		    (featurep 'xemacs)
-		    (fboundp 'quail-start-translation))
-	       ;; same as above but for XEmacs, which doesn't have
-	       ;; quail-input-method
-	       (let (unread-command-events)
-		 (setq ch (read-char-exclusive))
-		 ;; replace ^M with the newline
-		 (if (eq ch ?\C-m) (setq ch ?\n))
-		 ;; Make sure ^V and ^Q work as quotation chars
-		 (if (memq ch '(?\C-v ?\C-q))
-		     (setq ch (read-char-exclusive)))
-		 (viper-set-unread-command-events ch)
-		 (quail-start-translation nil)
-
-		 (if (and ch (string= quail-current-str ""))
-		     (insert ch)
-		   (insert quail-current-str))
-		 (setq ch (or ch
-			      (aref quail-current-str
-				    (1- (length quail-current-str)))))
-		 ))
+				    (1- (length quail-current-str)))))))
 	      ((and (boundp 'iso-accents-mode) iso-accents-mode)
 	       (setq ch (aref (read-key-sequence nil) 0))
 	       ;; replace ^M with the newline
@@ -859,25 +824,14 @@ Vi's prefix argument will be used.  Otherwise, the prefix argument passed to
 		   (setq ch (aref (read-key-sequence nil) 0)))
 	       (insert ch))
 	      (t
-	       ;;(setq ch (read-char-exclusive))
 	       (setq ch (aref (read-key-sequence nil) 0))
-	       (if (featurep 'xemacs)
-		   (setq ch (event-to-character ch)))
 	       ;; replace ^M with the newline
 	       (if (eq ch ?\C-m) (setq ch ?\n))
 	       ;; Make sure ^V and ^Q work as quotation chars
 	       (if (memq ch '(?\C-v ?\C-q))
-		   (progn
-		     ;;(setq ch (read-char-exclusive))
-		     (setq ch (aref (read-key-sequence nil) 0))
-		     (if (featurep 'xemacs)
-			 (setq ch (event-to-character ch))))
-		 )
-	       (insert ch))
-	      )
-	(setq last-command-event
-	      (viper-copy-event (if (featurep 'xemacs)
-				    (character-to-event ch) ch)))
+		   (setq ch (aref (read-key-sequence nil) 0)))
+	       (insert ch)))
+	(setq last-command-event (viper-copy-event ch))
 	) ; let
     (error nil)
     ) ; condition-case
@@ -1096,10 +1050,7 @@ as a Meta key and any number of multiple escapes are allowed."
 		((eq event-char 'delete) (setq event-char ?\C-?))
 		((eq event-char 'backspace) (setq event-char ?\C-h))
 		((eq event-char 'space) (setq event-char ?\ )))
-	  (setq last-command-event
-		(if (featurep 'xemacs)
-		    (character-to-event (or com event-char))
-		  (or com event-char)))
+	  (setq last-command-event (or com event-char))
 	  (setq func (viper-exec-form-in-vi
 		      `(key-binding (char-to-string ,event-char))))
 	  (funcall func prefix-arg)
@@ -1203,9 +1154,7 @@ as a Meta key and any number of multiple escapes are allowed."
 
     (if cmd-to-exec-at-end
 	(progn
-	  (setq last-command-event
-		(viper-copy-event
-		 (if (featurep 'xemacs) (character-to-event char) char)))
+	  (setq last-command-event (viper-copy-event char))
 	  (condition-case err
 	      (funcall cmd-to-exec-at-end cmd-info)
 	    (error
@@ -1732,18 +1681,9 @@ invokes the command before that, etc."
     (message " `.' runs  `%s'%s"
 	     (viper-array-to-string keys)
 	     (viper-abbreviate-string
-	      (if (featurep 'xemacs)
-		  (replace-in-string ; xemacs
-		   (cond ((characterp text) (char-to-string text))
-			 ((stringp text) text)
-			 (t ""))
-		   "\n" "^J")
-		text ; emacs
-		)
-	      max-text-len
+	      text max-text-len
 	      (format-message "  inserting  `") (format-message "'")
-	      "    ......."))
-    ))
+	      "    ......."))))
 
 
 ;; don't change viper-d-com if it was viper-repeat command invoked with `.'
@@ -2053,15 +1993,10 @@ To turn this feature off, set this variable to nil."
 		  (setq cmd
 			(key-binding (setq key (read-key-sequence nil))))
 		  (cond ((eq cmd 'self-insert-command)
-			 (if (featurep 'xemacs)
-			     (insert (events-to-keys key)) ; xemacs
-			   (insert key) ; emacs
-			   ))
+			 (insert key))
 			((memq cmd '(exit-minibuffer viper-exit-minibuffer))
 			 nil)
-			(t (command-execute cmd)))
-		  )))
-	  ))))
+			(t (command-execute cmd))))))))))
 
 
 (defun viper-minibuffer-trim-tail ()
@@ -3351,9 +3286,7 @@ controlled by the sign of prefix numeric value."
 ;; (which is called from viper-search-forward/backward/next).  If the value of
 ;; viper-search-scroll-threshold is negative - don't scroll.
 (defun viper-adjust-window ()
-  (let ((win-height (if (featurep 'xemacs)
-			(window-displayed-height)
-		      (1- (window-height)))) ; adjust for mode line
+  (let ((win-height (1- (window-height))) ; adjust for mode line
 	(pt (point))
 	at-top-p at-bottom-p
 	min-scroll direction)
@@ -3671,9 +3604,7 @@ If MODE is set, set the macros only in that major mode."
 	       "///" 'vi-state
 	       [2 (meta x) v i p e r - t o g g l e - s e a r c h - s t y l e return]
 	       scope)
-	      (if (if (featurep 'xemacs)
-		      (interactive-p)
-		    (called-interactively-p 'interactive))
+	      (if (called-interactively-p 'interactive)
 		  (message
 		   "// and /// now toggle case-sensitivity and regexp search")))
 	  (viper-unrecord-kbd-macro "//" 'vi-state)
@@ -3696,9 +3627,7 @@ With a prefix argument, unsets the macro."
 	     "%%%" 'vi-state
 	     [(meta x) v i p e r - t o g g l e - p a r s e - s e x p - i g n o r e - c o m m e n t s return]
 	     't)
-	    (if (if (featurep 'xemacs)
-		    (interactive-p)
-		  (called-interactively-p 'interactive))
+	    (if (called-interactively-p 'interactive)
 		(message
 		 "%%%%%% now toggles whether comments should be parsed for matching parentheses")))
 	(viper-unrecord-kbd-macro "%%%" 'vi-state))))
@@ -3727,9 +3656,7 @@ the macros are set in the current major mode.
 	     "///" 'emacs-state
 	     [2 (meta x) v i p e r - t o g g l e - s e a r c h - s t y l e return]
 	     (or arg-majormode major-mode))
-	    (if (if (featurep 'xemacs)
-		    (interactive-p)
-		  (called-interactively-p 'interactive))
+	    (if (called-interactively-p 'interactive)
 		(message
 		 "// and /// now toggle case-sensitivity and regexp search.")))
 	(viper-unrecord-kbd-macro "//" 'emacs-state)
