@@ -819,8 +819,18 @@ first and modify the returned object.")
   ;; No cleanup... yet.
   nil)
 
-(cl-defmethod object-print ((this eieio-default-superclass) &rest strings)
-  "Pretty printer for object THIS.  Call function `object-name' with STRINGS.
+(cl-defgeneric object-print (this &rest _strings)
+  "Pretty printer for object THIS.
+
+It is sometimes useful to put a summary of the object into the
+default #<notation> string when using EIEIO browsing tools.
+Implement this method to customize the summary."
+  (declare (obsolete cl-print-object "26.1"))
+  (format "%S" this))
+
+(with-suppressed-warnings ((obsolete object-print))
+  (cl-defmethod object-print ((this eieio-default-superclass) &rest strings)
+    "Pretty printer for object THIS.  Call function `object-name' with STRINGS.
 The default method for printing object THIS is to use the
 function `object-name'.
 
@@ -831,16 +841,7 @@ Implement this function and specify STRINGS in a call to
 `call-next-method' to provide additional summary information.
 When passing in extra strings from child classes, always remember
 to prepend a space."
-  (eieio-object-name this (apply #'concat strings)))
-
-(cl-defgeneric object-print (this &rest _strings)
-  "Pretty printer for object THIS.
-
-It is sometimes useful to put a summary of the object into the
-default #<notation> string when using EIEIO browsing tools.
-Implement this method to customize the summary."
-  (declare (obsolete cl-print-object "26.1"))
-  (format "%S" this))
+    (eieio-object-name this (apply #'concat strings))))
 
 (with-suppressed-warnings ((obsolete object-print))
   (cl-defmethod cl-print-object ((object eieio-default-superclass) stream)
