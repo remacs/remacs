@@ -152,7 +152,7 @@ get_boot_time (void)
     mib[1] = KERN_BOOTTIME;
     size = sizeof (boottime_val);
 
-    if (sysctl (mib, 2, &boottime_val, &size, NULL, 0) >= 0)
+    if (sysctl (mib, 2, &boottime_val, &size, NULL, 0) >= 0 && size != 0)
       {
 	boot_time = boottime_val.tv_sec;
 	return boot_time;

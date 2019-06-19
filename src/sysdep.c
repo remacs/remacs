@@ -3014,11 +3014,11 @@ list_system_processes (void)
 
   Lisp_Object proclist = Qnil;
 
-  if (sysctl (mib, 3, NULL, &len, NULL, 0) != 0)
+  if (sysctl (mib, 3, NULL, &len, NULL, 0) != 0 || len == 0)
     return proclist;
 
   procs = xmalloc (len);
-  if (sysctl (mib, 3, procs, &len, NULL, 0) != 0)
+  if (sysctl (mib, 3, procs, &len, NULL, 0) != 0 || len == 0)
     {
       xfree (procs);
       return proclist;
@@ -3618,7 +3618,7 @@ system_process_attributes (Lisp_Object pid)
   CONS_TO_INTEGER (pid, int, proc_id);
   mib[3] = proc_id;
 
-  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0)
+  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0 || proclen == 0)
     return attrs;
 
   attrs = Fcons (Fcons (Qeuid, make_fixnum_or_float (proc.ki_uid)), attrs);
@@ -3740,7 +3740,7 @@ system_process_attributes (Lisp_Object pid)
 
   mib[2] = KERN_PROC_ARGS;
   len = MAXPATHLEN;
-  if (sysctl (mib, 4, args, &len, NULL, 0) == 0)
+  if (sysctl (mib, 4, args, &len, NULL, 0) == 0 && len != 0)
     {
       int i;
       for (i = 0; i < len; i++)
@@ -3798,7 +3798,7 @@ system_process_attributes (Lisp_Object pid)
   CONS_TO_INTEGER (pid, int, proc_id);
   mib[3] = proc_id;
 
-  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0)
+  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0 || proclen == 0)
     return attrs;
 
   uid = proc.kp_eproc.e_ucred.cr_uid;
