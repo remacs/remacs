@@ -127,7 +127,6 @@ distclean bootstrap-clean: mostlyclean
 maintainer-clean: distclean
 	rm -f TAGS gnulib.mk
 extraclean: distclean
-	-[ -d sys ] && rmdir --ignore-fail-on-non-empty sys
 
 .PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean
 
