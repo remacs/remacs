@@ -122,14 +122,17 @@ such as `edebug-defun' to work with such inputs."
   :type 'hook
   :group 'ielm)
 
-;; Most recent value evaluated in IELM.
+;; We define these symbols (that are only used buffer-locally in ielm
+;; buffers) this way to avoid having them be defined in the global
+;; Emacs namespace.
 (defvar *)
+(put '* 'variable-documentation "Most recent value evaluated in IELM.")
 
-;; Second-most-recent value evaluated in IELM.
 (defvar **)
+(put '** 'variable-documentation "Second-most-recent value evaluated in IELM.")
 
-;; Third-most-recent value evaluated in IELM.
 (defvar ***)
+(put '*** 'variable-documentation "Third-most-recent value evaluated in IELM.")
 
 (defvar ielm-match-data nil
   "Match data saved at the end of last command.")
