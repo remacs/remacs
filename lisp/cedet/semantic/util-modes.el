@@ -607,7 +607,7 @@ to indicate a parse in progress."
   )
 
 (defcustom semantic-stickyfunc-indent-string
-  (if (and window-system (not (featurep 'xemacs)))
+  (if window-system
       (concat
        (condition-case nil
 	   ;; Test scroll bar location
@@ -677,13 +677,10 @@ when it lands in the sticky line."
   "Value of the header line when entering stickyfunc mode.")
 
 (defconst semantic-stickyfunc-header-line-format
-  (cond ((featurep 'xemacs)
-	 nil)
-	(t
-	 '(:eval (list
-		  ;; Magic bit I found on emacswiki.
-		  (propertize " " 'display '((space :align-to 0)))
-		  (semantic-stickyfunc-fetch-stickyline)))))
+  '(:eval (list
+	   ;; Magic bit I found on emacswiki.
+	   (propertize " " 'display '((space :align-to 0)))
+	   (semantic-stickyfunc-fetch-stickyline)))
   "The header line format used by stickyfunc mode.")
 
 ;;;###autoload
@@ -845,10 +842,8 @@ Argument EVENT describes the event that caused this function to be called."
   :type 'hook)
 
 (defvar semantic-highlight-func-mode-map
-  (let ((km (make-sparse-keymap))
-	(m3  (if (featurep 'xemacs) [ button3 ] [ mouse-3 ]))
-	)
-    (define-key km m3 'semantic-highlight-func-menu)
+  (let ((km (make-sparse-keymap)))
+    (define-key km [mouse-3] 'semantic-highlight-func-menu)
     km)
   "Keymap for highlight-func minor mode.")
 

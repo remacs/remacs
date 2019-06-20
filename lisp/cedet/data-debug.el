@@ -49,25 +49,9 @@
 
 ;;; Compatibility
 ;;
-(if (featurep 'xemacs)
-    (eval-and-compile
-      (defalias 'data-debug-overlay-properties 'extent-properties)
-      (defalias 'data-debug-overlay-p 'extentp)
-      (if (not (fboundp 'propertize))
-	  (defun dd-propertize (string &rest properties)
-	    "Mimic `propertize' in from Emacs 23."
-	    (add-text-properties 0 (length string) properties string)
-	    string
-	    )
-	(defalias 'dd-propertize 'propertize))
-      )
-  ;; Regular Emacs
-  (eval-and-compile
-    (defalias 'data-debug-overlay-properties 'overlay-properties)
-    (defalias 'data-debug-overlay-p 'overlayp)
-    (defalias 'dd-propertize 'propertize)
-    )
-  )
+(defalias 'data-debug-overlay-properties 'overlay-properties)
+(defalias 'data-debug-overlay-p 'overlayp)
+(defalias 'dd-propertize 'propertize)
 
 ;;; GENERIC STUFF
 ;;

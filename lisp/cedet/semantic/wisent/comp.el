@@ -161,12 +161,6 @@ If optional LEFT is non-nil insert spaces on left."
   (not (zerop (logand (aref x (/ i wisent-BITS-PER-WORD))
                       (ash 1 (% i wisent-BITS-PER-WORD))))))
 
-(defsubst wisent-noninteractive ()
-  "Return non-nil if running without interactive terminal."
-  (if (featurep 'xemacs)
-      (noninteractive)
-    noninteractive))
-
 (defvar wisent-debug-flag nil
   "Non-nil means enable some debug stuff.")
 
@@ -2662,7 +2656,7 @@ Report detailed information if `wisent-verbose-flag' or
     (wisent-print-grammar)
     (wisent-print-states))
   ;; Append output to log file when running in batch mode
-  (when (wisent-noninteractive)
+  (when noninteractive
     (wisent-append-to-log-file)
     (wisent-clear-log)))
 

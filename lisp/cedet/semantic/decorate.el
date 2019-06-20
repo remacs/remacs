@@ -105,21 +105,15 @@ Optional argument WRITABLE should be non-nil to make the text writable
 instead of read-only."
   (let ((o (semantic-tag-overlay tag))
 	(hook (if writable nil '(semantic-overlay-signal-read-only))))
-    (if (featurep 'xemacs)
-        ;; XEmacs extents have a 'read-only' property.
-        (semantic-overlay-put o 'read-only (not writable))
-      (semantic-overlay-put o 'modification-hooks hook)
-      (semantic-overlay-put o 'insert-in-front-hooks hook)
-      (semantic-overlay-put o 'insert-behind-hooks hook))))
+    (semantic-overlay-put o 'modification-hooks hook)
+    (semantic-overlay-put o 'insert-in-front-hooks hook)
+    (semantic-overlay-put o 'insert-behind-hooks hook)))
 
 (defun semantic-tag-read-only-p (tag)
   "Return non-nil if the current TAG is marked read only."
   (let ((o (semantic-tag-overlay tag)))
-    (if (featurep 'xemacs)
-        ;; XEmacs extents have a 'read-only' property.
-        (semantic-overlay-get o 'read-only)
-      (member 'semantic-overlay-signal-read-only
-              (semantic-overlay-get o 'modification-hooks)))))
+    (member 'semantic-overlay-signal-read-only
+            (semantic-overlay-get o 'modification-hooks))))
 
 ;;; Secondary overlays
 ;;

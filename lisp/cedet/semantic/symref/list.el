@@ -126,31 +126,23 @@ Display the references in `semantic-symref-results-mode'."
 (defvar semantic-symref-list-menu-entries
   (list
    "Symref"
-   (semantic-menu-item
-    ["Toggle Line Open"
-     semantic-symref-list-toggle-showing
-     :active t
-     :help "Toggle the current line open or closed."
-     ])
-   (semantic-menu-item
-    ["Expand All Entries"
-     semantic-symref-list-expand-all
-     :active t
-     :help "Expand every expandable entry."
-     ])
-   (semantic-menu-item
-    ["Contract All Entries"
-     semantic-symref-list-contract-all
-     :active t
-     :help "Close every expandable entry."
-     ])
-   (semantic-menu-item
-    ["Rename Symbol in Open hits"
-     semantic-symref-list-rename-open-hits
-     :active t
-     :help "Rename the searched for symbol in all hits that are currently open."
-     ])
-   )
+   ["Toggle Line Open"
+    semantic-symref-list-toggle-showing
+    :active t
+    :help "Toggle the current line open or closed." ]
+   ["Expand All Entries"
+    semantic-symref-list-expand-all
+    :active t
+    :help "Expand every expandable entry." ]
+   ["Contract All Entries"
+    semantic-symref-list-contract-all
+    :active t
+    :help "Close every expandable entry." ]
+   ["Rename Symbol in Open hits"
+    semantic-symref-list-rename-open-hits
+    :active t
+    :help "Rename the searched for symbol in all hits that are currently open."
+    ])
   "Menu entries for the Semantic Symref list mode.")
 
 (defvar semantic-symref-list-menu nil

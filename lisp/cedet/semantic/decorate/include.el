@@ -42,7 +42,7 @@
 ;;; Code:
 
 ;;; FACES AND KEYMAPS
-(defvar semantic-decoration-mouse-3 (if (featurep 'xemacs) [ button3 ] [ mouse-3 ])
+(defvar semantic-decoration-mouse-3 [ mouse-3 ]
   "The keybinding Lisp object to use for binding the right mouse button.")
 
 ;;; Includes that are in a happy state!
@@ -69,47 +69,35 @@ Used by the decoration style: `semantic-decoration-on-includes'."
   "Include Menu"
   (list
    "Include"
-   (semantic-menu-item
-    ["What Is This?" semantic-decoration-include-describe
-     :active t
-     :help "Describe why this include has been marked this way." ])
-   (semantic-menu-item
-    ["Visit This Include" semantic-decoration-include-visit
-     :active t
-     :help "Visit this include file." ])
+   ["What Is This?" semantic-decoration-include-describe
+    :active t
+    :help "Describe why this include has been marked this way." ]
+   ["Visit This Include" semantic-decoration-include-visit
+    :active t
+    :help "Visit this include file." ]
    "---"
-   (semantic-menu-item
-    ["Summarize includes current buffer" semantic-decoration-all-include-summary
-     :active t
-     :help "Show a summary for the current buffer containing this include." ])
-   (semantic-menu-item
-    ["List found includes (load unparsed)" semanticdb-find-test-translate-path
-     :active t
-     :help "List all includes found for this file, and parse unparsed files." ])
-   (semantic-menu-item
-    ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
-     :active t
-     :help "List all includes found for this file, do not parse unparsed files." ])
-   (semantic-menu-item
-    ["List all unknown includes" semanticdb-find-adebug-lost-includes
-     :active t
-     :help "Show a list of all includes semantic cannot find for this file." ])
+   ["Summarize includes current buffer" semantic-decoration-all-include-summary
+    :active t
+    :help "Show a summary for the current buffer containing this include." ]
+   ["List found includes (load unparsed)" semanticdb-find-test-translate-path
+    :active t
+    :help "List all includes found for this file, and parse unparsed files." ]
+   ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
+    :active t
+    :help "List all includes found for this file, do not parse unparsed files." ]
+   ["List all unknown includes" semanticdb-find-adebug-lost-includes
+    :active t
+    :help "Show a list of all includes semantic cannot find for this file." ]
    "---"
-   (semantic-menu-item
-    ["Customize System Include Path" semantic-customize-system-include-path
-     :active (get 'semantic-dependency-system-include-path major-mode)
-     :help "Run customize for the system include path for this major mode." ])
-   (semantic-menu-item
-    ["Add a System Include Path" semantic-add-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   (semantic-menu-item
-    ["Remove a System Include Path" semantic-remove-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   ;;["" semantic-decoration-include-
-   ;; :active t
-   ;; :help "" ]
+   ["Customize System Include Path" semantic-customize-system-include-path
+    :active (get 'semantic-dependency-system-include-path major-mode)
+    :help "Run customize for the system include path for this major mode." ]
+   ["Add a System Include Path" semantic-add-system-include
+    :active t
+    :help "Add an include path for this session." ]
+   ["Remove a System Include Path" semantic-remove-system-include
+    :active t
+    :help "Add an include path for this session." ]
    ))
 
 ;;; Unknown Includes!
@@ -139,40 +127,32 @@ Used by the decoration style: `semantic-decoration-on-unknown-includes'."
   "Unknown Include Menu"
   (list
    "Unknown Include"
-   (semantic-menu-item
-    ["What Is This?" semantic-decoration-unknown-include-describe
-     :active t
-     :help "Describe why this include has been marked this way." ])
-   (semantic-menu-item
-    ["List all unknown includes" semanticdb-find-adebug-lost-includes
-     :active t
-     :help "Show a list of all includes semantic cannot find for this file." ])
+   ["What Is This?" semantic-decoration-unknown-include-describe
+    :active t
+    :help "Describe why this include has been marked this way." ]
+   ["List all unknown includes" semanticdb-find-adebug-lost-includes
+    :active t
+    :help "Show a list of all includes semantic cannot find for this file." ]
    "---"
-   (semantic-menu-item
-    ["Summarize includes current buffer" semantic-decoration-all-include-summary
-     :active t
-     :help "Show a summary for the current buffer containing this include." ])
-   (semantic-menu-item
-    ["List found includes (load unparsed)" semanticdb-find-test-translate-path
-     :active t
-     :help "List all includes found for this file, and parse unparsed files." ])
-   (semantic-menu-item
-    ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
-     :active t
-     :help "List all includes found for this file, do not parse unparsed files." ])
+   ["Summarize includes current buffer" semantic-decoration-all-include-summary
+    :active t
+    :help "Show a summary for the current buffer containing this include." ]
+   ["List found includes (load unparsed)" semanticdb-find-test-translate-path
+    :active t
+    :help "List all includes found for this file, and parse unparsed files." ]
+   ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
+    :active t
+    :help "List all includes found for this file, do not parse unparsed files." ]
    "---"
-   (semantic-menu-item
-    ["Customize System Include Path" semantic-customize-system-include-path
-     :active (get 'semantic-dependency-system-include-path major-mode)
-     :help "Run customize for the system include path for this major mode." ])
-   (semantic-menu-item
-    ["Add a System Include Path" semantic-add-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   (semantic-menu-item
-    ["Remove a System Include Path" semantic-remove-system-include
-     :active t
-     :help "Add an include path for this session." ])
+   ["Customize System Include Path" semantic-customize-system-include-path
+    :active (get 'semantic-dependency-system-include-path major-mode)
+    :help "Run customize for the system include path for this major mode." ]
+   ["Add a System Include Path" semantic-add-system-include
+    :active t
+    :help "Add an include path for this session." ]
+   ["Remove a System Include Path" semantic-remove-system-include
+    :active t
+    :help "Add an include path for this session." ]
    ))
 
 ;;; Includes with no file, but a table
@@ -202,40 +182,32 @@ Used by the decoration style: `semantic-decoration-on-fileless-includes'."
   "Fileless Include Menu"
   (list
    "Fileless Include"
-   (semantic-menu-item
-    ["What Is This?" semantic-decoration-fileless-include-describe
-     :active t
-     :help "Describe why this include has been marked this way." ])
-   (semantic-menu-item
-    ["List all unknown includes" semanticdb-find-adebug-lost-includes
-     :active t
-     :help "Show a list of all includes semantic cannot find for this file." ])
+   ["What Is This?" semantic-decoration-fileless-include-describe
+    :active t
+    :help "Describe why this include has been marked this way." ]
+   ["List all unknown includes" semanticdb-find-adebug-lost-includes
+    :active t
+    :help "Show a list of all includes semantic cannot find for this file." ]
    "---"
-   (semantic-menu-item
-    ["Summarize includes current buffer" semantic-decoration-all-include-summary
-     :active t
-     :help "Show a summary for the current buffer containing this include." ])
-   (semantic-menu-item
-    ["List found includes (load unparsed)" semanticdb-find-test-translate-path
-     :active t
-     :help "List all includes found for this file, and parse unparsed files." ])
-   (semantic-menu-item
-    ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
-     :active t
-     :help "List all includes found for this file, do not parse unparsed files." ])
+   ["Summarize includes current buffer" semantic-decoration-all-include-summary
+    :active t
+    :help "Show a summary for the current buffer containing this include." ]
+   ["List found includes (load unparsed)" semanticdb-find-test-translate-path
+    :active t
+    :help "List all includes found for this file, and parse unparsed files." ]
+   ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
+    :active t
+    :help "List all includes found for this file, do not parse unparsed files." ]
    "---"
-   (semantic-menu-item
-    ["Customize System Include Path" semantic-customize-system-include-path
-     :active (get 'semantic-dependency-system-include-path major-mode)
-     :help "Run customize for the system include path for this major mode." ])
-   (semantic-menu-item
-    ["Add a System Include Path" semantic-add-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   (semantic-menu-item
-    ["Remove a System Include Path" semantic-remove-system-include
-     :active t
-     :help "Add an include path for this session." ])
+   ["Customize System Include Path" semantic-customize-system-include-path
+    :active (get 'semantic-dependency-system-include-path major-mode)
+    :help "Run customize for the system include path for this major mode." ]
+   ["Add a System Include Path" semantic-add-system-include
+    :active t
+    :help "Add an include path for this session." ]
+   ["Remove a System Include Path" semantic-remove-system-include
+    :active t
+    :help "Add an include path for this session." ]
    ))
 
 ;;; Includes that need to be parsed.
@@ -265,56 +237,41 @@ Used by the decoration style: `semantic-decoration-on-unparsed-includes'."
   "Unparsed Include Menu"
   (list
    "Unparsed Include"
-   (semantic-menu-item
-    ["What Is This?" semantic-decoration-unparsed-include-describe
-     :active t
-     :help "Describe why this include has been marked this way." ])
-   (semantic-menu-item
-    ["Visit This Include" semantic-decoration-include-visit
-     :active t
-     :help "Visit this include file so that header file's tags can be used." ])
-   (semantic-menu-item
-    ["Parse This Include" semantic-decoration-unparsed-include-parse-include
-     :active t
-     :help "Parse this include file so that header file's tags can be used." ])
-   (semantic-menu-item
-    ["Parse All Includes" semantic-decoration-unparsed-include-parse-all-includes
-     :active t
-     :help "Parse all the includes so the contents can be used." ])
+   ["What Is This?" semantic-decoration-unparsed-include-describe
+    :active t
+    :help "Describe why this include has been marked this way." ]
+   ["Visit This Include" semantic-decoration-include-visit
+    :active t
+    :help "Visit this include file so that header file's tags can be used." ]
+   ["Parse This Include" semantic-decoration-unparsed-include-parse-include
+    :active t
+    :help "Parse this include file so that header file's tags can be used." ]
+   ["Parse All Includes" semantic-decoration-unparsed-include-parse-all-includes
+    :active t
+    :help "Parse all the includes so the contents can be used." ]
    "---"
-   (semantic-menu-item
-    ["Summarize includes current buffer" semantic-decoration-all-include-summary
-     :active t
-     :help "Show a summary for the current buffer containing this include." ])
-   (semantic-menu-item
-    ["List found includes (load unparsed)" semanticdb-find-test-translate-path
-     :active t
-     :help "List all includes found for this file, and parse unparsed files." ])
-   (semantic-menu-item
-    ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
-     :active t
-     :help "List all includes found for this file, do not parse unparsed files." ])
-   (semantic-menu-item
-    ["List all unknown includes" semanticdb-find-adebug-lost-includes
-     :active t
-     :help "Show a list of all includes semantic cannot find for this file." ])
+   ["Summarize includes current buffer" semantic-decoration-all-include-summary
+    :active t
+    :help "Show a summary for the current buffer containing this include." ]
+   ["List found includes (load unparsed)" semanticdb-find-test-translate-path
+    :active t
+    :help "List all includes found for this file, and parse unparsed files." ]
+   ["List found includes (no loading)" semanticdb-find-test-translate-path-no-loading
+    :active t
+    :help "List all includes found for this file, do not parse unparsed files." ]
+   ["List all unknown includes" semanticdb-find-adebug-lost-includes
+    :active t
+    :help "Show a list of all includes semantic cannot find for this file." ]
    "---"
-   (semantic-menu-item
-    ["Customize System Include Path" semantic-customize-system-include-path
-     :active (get 'semantic-dependency-system-include-path major-mode)
-     :help "Run customize for the system include path for this major mode." ])
-   (semantic-menu-item
-    ["Add a System Include Path" semantic-add-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   (semantic-menu-item
-    ["Remove a System Include Path" semantic-remove-system-include
-     :active t
-     :help "Add an include path for this session." ])
-   ;;["" semantic-decoration-unparsed-include-
-   ;; :active t
-   ;; :help "" ]
-   ))
+   ["Customize System Include Path" semantic-customize-system-include-path
+    :active (get 'semantic-dependency-system-include-path major-mode)
+    :help "Run customize for the system include path for this major mode." ]
+   ["Add a System Include Path" semantic-add-system-include
+    :active t
+    :help "Add an include path for this session." ]
+   ["Remove a System Include Path" semantic-remove-system-include
+    :active t
+    :help "Add an include path for this session." ]))
 
 
 ;;; MODES

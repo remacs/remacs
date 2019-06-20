@@ -209,11 +209,7 @@ That is tag names plus names defined in tag attribute `:rest'."
 (defsubst semantic-grammar-item-value (item)
   "Return symbol or character value of ITEM string."
   (if (string-match semantic-grammar-lex-c-char-re item)
-      (let ((c (read (concat "?" (substring item 1 -1)))))
-        (if (featurep 'xemacs)
-            ;; Handle characters as integers in XEmacs like in GNU Emacs.
-            (char-int c)
-          c))
+      (read (concat "?" (substring item 1 -1)))
     (intern item)))
 
 (defun semantic-grammar-prologue ()
@@ -833,12 +829,6 @@ Block definitions are read from the current table of lexical types."
   :group 'semantic
   :type 'regexp)
 
-(defsubst semantic-grammar-noninteractive ()
-  "Return non-nil if running without interactive terminal."
-  (if (featurep 'xemacs)
-      (noninteractive)
-    noninteractive))
-
 (defun semantic-grammar-create-package (&optional force uptodate)
   "Create package Lisp code from grammar in current buffer.
 If the Lisp code seems up to date, do nothing (if UPTODATE
@@ -951,7 +941,7 @@ Lisp code."
 
       ;; If running in batch mode, there is nothing more to do.
       ;; Save the generated file and quit.
-      (if (semantic-grammar-noninteractive)
+      (if noninteractive
           (let ((version-control t)
                 (delete-old-versions t)
                 (make-backup-files t)
@@ -1032,7 +1022,7 @@ For example, to process grammar files in current directory, invoke:
   \"emacs -batch -f semantic-grammar-batch-build-packages .\".
 
 See also the variable `semantic-grammar-file-regexp'."
-  (or (semantic-grammar-noninteractive)
+  (or noninteractive
       (error "\
 `semantic-grammar-batch-build-packages' must be used with -batch"
              ))
@@ -1281,10 +1271,8 @@ common grammar menu."
   "Setup a mode local grammar menu.
 MODE-MENU is an optional specific menu whose items are appended to the
 common grammar menu."
-  (let ((menu (intern (format "%s-menu" major-mode))))
-    (if (featurep 'xemacs)
-        (semantic-grammar-setup-menu-xemacs menu mode-menu)
-      (semantic-grammar-setup-menu-emacs menu mode-menu))))
+  (semantic-grammar-setup-menu-emacs
+   (intern (format "%s-menu" major-mode)) mode-menu))
 
 (defsubst semantic-grammar-in-lisp-p ()
   "Return non-nil if point is in Lisp code."

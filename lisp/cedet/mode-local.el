@@ -296,8 +296,7 @@ Elements are (SYMBOL . PREVIOUS-VALUE), describing one variable."
   ;; Hack -
   ;; do not do this if we are inside set-auto-mode as we may be in
   ;; an initialization race condition.
-  (if (or  (and (featurep 'emacs) (boundp 'keep-mode-if-same))
-	   (and (featurep 'xemacs) (boundp 'just-from-file-name)))
+  (if (boundp 'keep-mode-if-same)
       ;; We are inside set-auto-mode, as this is an argument that is
       ;; vaguely unique.
 

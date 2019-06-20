@@ -69,62 +69,44 @@
 (defvar srecode-menu-bar
   (list
    "SRecoder"
-   (semantic-menu-item
-    ["Insert Template"
-     srecode-insert
-     :active t
-     :help "Insert a template by name."
-     ])
-   (semantic-menu-item
-    ["Insert Template Again"
-     srecode-insert-again
-     :active t
-     :help "Run the same template as last time again."
-     ])
-   (semantic-menu-item
-    ["Edit Template"
-     srecode-edit
-     :active t
-     :help "Edit a template for this language by name."
-     ])
+   ["Insert Template"
+    srecode-insert
+    :active t
+    :help "Insert a template by name."]
+   ["Insert Template Again"
+    srecode-insert-again
+    :active t
+    :help "Run the same template as last time again."]
+     ["Edit Template"
+    srecode-edit
+    :active t
+    :help "Edit a template for this language by name."]
    "---"
    '( "Insert ..." :filter srecode-minor-mode-templates-menu )
    '( "Generate ..." :filter srecode-minor-mode-generate-menu )
    "---"
-   (semantic-menu-item
-    ["Customize..."
-     (customize-group "srecode")
-     :active t
-     :help "Customize SRecode options"
-     ])
+   ["Customize..."
+    (customize-group "srecode")
+    :active t
+    :help "Customize SRecode options"]
    (list
     "Debugging Tools..."
-    (semantic-menu-item
-     ["Dump Template MAP"
-      srecode-get-maps
-      :active t
-      :help "Calculate (if needed) and display the current template file map."
-      ])
-    (semantic-menu-item
-     ["Dump Tables"
-      srecode-dump-templates
-      :active t
-      :help "Dump the current template table."
-      ])
-    (semantic-menu-item
-     ["Dump Dictionary"
-      srecode-dictionary-dump
-      :active t
-      :help "Calculate and dump a dictionary for point."
-      ])
-    (semantic-menu-item
-     ["Show Macro Help"
-      srecode-macro-help
-      :active t
-      :help "Display the different types of macros available."
-      ])
-    )
-   )
+    ["Dump Template MAP"
+     srecode-get-maps
+     :active t
+     :help "Calculate (if needed) and display the current template file map."]
+    ["Dump Tables"
+     srecode-dump-templates
+     :active t
+     :help "Dump the current template table."]
+    ["Dump Dictionary"
+     srecode-dictionary-dump
+     :active t
+     :help "Calculate and dump a dictionary for point."]
+    ["Show Macro Help"
+     srecode-macro-help
+     :active t
+     :help "Display the different types of macros available."]))
   "Menu for srecode minor mode.")
 
 (defvar srecode-minor-menu nil

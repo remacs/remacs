@@ -1114,65 +1114,61 @@ be called."
   "Semantic Breadcrumbs Mode Menu"
   (list
    "Breadcrumb Tag"
-   (semantic-menu-item
-    (vector
-     "Go to Tag"
-     (semantic-idle-breadcrumbs--tag-function
-      semantic-go-to-tag)
-     :active t
-     :help  "Jump to this tag"))
+   (vector
+    "Go to Tag"
+    (semantic-idle-breadcrumbs--tag-function
+     semantic-go-to-tag)
+    :active t
+    :help  "Jump to this tag")
    ;; TODO these entries need minor changes (optional tag argument) in
    ;; senator-copy-tag etc
-  ;;  (semantic-menu-item
-  ;;   (vector
-  ;;    "Copy Tag"
-  ;;    (semantic-idle-breadcrumbs--tag-function
-  ;;     senator-copy-tag)
-  ;;    :active t
-  ;;    :help   "Copy this tag"))
-  ;;   (semantic-menu-item
-  ;;    (vector
-  ;;     "Kill Tag"
-  ;;     (semantic-idle-breadcrumbs--tag-function
-  ;;      senator-kill-tag)
-  ;;     :active t
-  ;;     :help   "Kill tag text to the kill ring, and copy the tag to
-  ;; the tag ring"))
-  ;;   (semantic-menu-item
-  ;;    (vector
-  ;;     "Copy Tag to Register"
-  ;;     (semantic-idle-breadcrumbs--tag-function
-  ;;      senator-copy-tag-to-register)
-  ;;     :active t
-  ;;     :help   "Copy this tag"))
-  ;;   (semantic-menu-item
-  ;;    (vector
-  ;;     "Narrow to Tag"
-  ;;     (semantic-idle-breadcrumbs--tag-function
-  ;;      senator-narrow-to-defun)
-  ;;     :active t
-  ;;     :help   "Narrow to the bounds of the current tag"))
-  ;;   (semantic-menu-item
-  ;;    (vector
-  ;;     "Fold Tag"
-  ;;     (semantic-idle-breadcrumbs--tag-function
-  ;;      senator-fold-tag-toggle)
-  ;;     :active   t
-  ;;     :style    'toggle
-  ;;     :selected '(let ((tag (semantic-current-tag)))
-  ;;		   (and tag (semantic-tag-folded-p tag)))
-  ;;     :help     "Fold the current tag to one line"))
-    "---"
-    (semantic-menu-item
-     (vector
-      "About this Header Line"
-      (lambda ()
-	(interactive)
-	(describe-function 'semantic-idle-breadcrumbs-mode))
-      :active t
-      :help   "Display help about this header line."))
-    )
-  )
+   ;;  (semantic-menu-item
+   ;;   (vector
+   ;;    "Copy Tag"
+   ;;    (semantic-idle-breadcrumbs--tag-function
+   ;;     senator-copy-tag)
+   ;;    :active t
+   ;;    :help   "Copy this tag"))
+   ;;   (semantic-menu-item
+   ;;    (vector
+   ;;     "Kill Tag"
+   ;;     (semantic-idle-breadcrumbs--tag-function
+   ;;      senator-kill-tag)
+   ;;     :active t
+   ;;     :help   "Kill tag text to the kill ring, and copy the tag to
+   ;; the tag ring"))
+   ;;   (semantic-menu-item
+   ;;    (vector
+   ;;     "Copy Tag to Register"
+   ;;     (semantic-idle-breadcrumbs--tag-function
+   ;;      senator-copy-tag-to-register)
+   ;;     :active t
+   ;;     :help   "Copy this tag"))
+   ;;   (semantic-menu-item
+   ;;    (vector
+   ;;     "Narrow to Tag"
+   ;;     (semantic-idle-breadcrumbs--tag-function
+   ;;      senator-narrow-to-defun)
+   ;;     :active t
+   ;;     :help   "Narrow to the bounds of the current tag"))
+   ;;   (semantic-menu-item
+   ;;    (vector
+   ;;     "Fold Tag"
+   ;;     (semantic-idle-breadcrumbs--tag-function
+   ;;      senator-fold-tag-toggle)
+   ;;     :active   t
+   ;;     :style    'toggle
+   ;;     :selected '(let ((tag (semantic-current-tag)))
+   ;;		   (and tag (semantic-tag-folded-p tag)))
+   ;;     :help     "Fold the current tag to one line"))
+   "---"
+   (vector
+    "About this Header Line"
+    (lambda ()
+      (interactive)
+      (describe-function 'semantic-idle-breadcrumbs-mode))
+    :active t
+    :help   "Display help about this header line.")))
 
 (define-semantic-idle-service semantic-idle-breadcrumbs
   "Display breadcrumbs for the tag under point and its parents."
