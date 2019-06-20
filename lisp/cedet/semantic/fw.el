@@ -34,25 +34,29 @@
 
 ;;; Compatibility
 ;;
-(defalias 'semantic-overlay-live-p          'overlay-buffer)
-(defalias 'semantic-make-overlay            'make-overlay)
-(defalias 'semantic-overlay-put             'overlay-put)
-(defalias 'semantic-overlay-get             'overlay-get)
-(defalias 'semantic-overlay-properties      'overlay-properties)
-(defalias 'semantic-overlay-move            'move-overlay)
-(defalias 'semantic-overlay-delete          'delete-overlay)
-(defalias 'semantic-overlays-at             'overlays-at)
-(defalias 'semantic-overlays-in             'overlays-in)
-(defalias 'semantic-overlay-buffer          'overlay-buffer)
-(defalias 'semantic-overlay-start           'overlay-start)
-(defalias 'semantic-overlay-end             'overlay-end)
-(defalias 'semantic-overlay-next-change     'next-overlay-change)
-(defalias 'semantic-overlay-previous-change 'previous-overlay-change)
-(defalias 'semantic-overlay-lists           'overlay-lists)
-(defalias 'semantic-overlay-p               'overlayp)
-(defalias 'semantic-read-event              'read-event)
-(defalias 'semantic-popup-menu              'popup-menu)
-(defalias 'semantic-buffer-local-value 'buffer-local-value)
+(define-obsolete-function-alias 'semantic-overlay-live-p 'overlay-buffer "27.1")
+(define-obsolete-function-alias 'semantic-make-overlay 'make-overlay "27.1")
+(define-obsolete-function-alias 'semantic-overlay-put 'overlay-put "27.1")
+(define-obsolete-function-alias 'semantic-overlay-get 'overlay-get "27.1")
+(define-obsolete-function-alias 'semantic-overlay-properties
+  'overlay-properties "27.1")
+(define-obsolete-function-alias 'semantic-overlay-move 'move-overlay "27.1")
+(define-obsolete-function-alias 'semantic-overlay-delete 'delete-overlay "27.1")
+(define-obsolete-function-alias 'semantic-overlays-at 'overlays-at "27.1")
+(define-obsolete-function-alias 'semantic-overlays-in 'overlays-in "27.1")
+(define-obsolete-function-alias 'semantic-overlay-buffer 'overlay-buffer "27.1")
+(define-obsolete-function-alias 'semantic-overlay-start 'overlay-start "27.1")
+(define-obsolete-function-alias 'semantic-overlay-end 'overlay-end "27.1")
+(define-obsolete-function-alias 'semantic-overlay-next-change
+  'next-overlay-change "27.1")
+(define-obsolete-function-alias 'semantic-overlay-previous-change
+  'previous-overlay-change "27.1")
+(define-obsolete-function-alias 'semantic-overlay-lists 'overlay-lists "27.1")
+(define-obsolete-function-alias 'semantic-overlay-p 'overlayp "27.1")
+(define-obsolete-function-alias 'semantic-read-event 'read-event "27.1")
+(define-obsolete-function-alias 'semantic-popup-menu 'popup-menu "27.1")
+(define-obsolete-function-alias 'semantic-buffer-local-value
+  'buffer-local-value "27.1")
 
 (defun semantic-event-window (event)
   "Extract the window from EVENT."
