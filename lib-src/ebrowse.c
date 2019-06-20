@@ -3573,21 +3573,15 @@ usage (int error)
 }
 
 
-/* Display version and copyright info.  The VERSION macro is set
-   from config.h and contains the Emacs version.  */
-
-#ifndef VERSION
-# define VERSION "21"
-#endif
+/* Display version and copyright info.  */
 
 static _Noreturn void
 version (void)
 {
-  char emacs_copyright[] = COPYRIGHT;
-
-  printf ("ebrowse %s\n", VERSION);
-  puts (emacs_copyright);
-  puts ("This program is distributed under the same terms as Emacs.");
+  fputs (("ebrowse " PACKAGE_VERSION "\n"
+	  COPYRIGHT "\n"
+	  "This program is distributed under the same terms as Emacs.\n"),
+	 stdout);
   exit (EXIT_SUCCESS);
 }
 

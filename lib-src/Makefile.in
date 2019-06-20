@@ -362,23 +362,21 @@ TAGS: etags${EXEEXT} ${tagsfiles}
 	$(MAKE) -C ../lib all
 
 etags_deps = ${srcdir}/etags.c $(NTLIB) $(config_h)
-etags_cflags = -DEMACS_NAME="\"GNU Emacs\"" -DVERSION="\"${version}\"" -o $@
 etags_libs = $(NTLIB) $(LOADLIBES)
 
 etags${EXEEXT}: ${etags_deps}
-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(etags_cflags) $< $(etags_libs)
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -o $@ $< $(etags_libs)
 
 ## ctags.c is distinct from etags.c so that parallel makes do not write two
 ## etags.o files on top of each other.
 ## FIXME?
 ## Can't we use a wrapper that calls 'etags --ctags'?
 ctags${EXEEXT}: ${srcdir}/ctags.c ${etags_deps}
-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(etags_cflags) $< $(etags_libs)
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -o $@ $< $(etags_libs)
 
 ebrowse${EXEEXT}: ${srcdir}/ebrowse.c ${srcdir}/../lib/min-max.h $(NTLIB) \
                    $(config_h)
-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -DVERSION="\"${version}\"" \
-	  $< $(NTLIB) $(LOADLIBES) -o $@
+	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -o $@ $< $(NTLIB) $(LOADLIBES)
 
 make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
@@ -395,12 +393,12 @@ pop.o: ${srcdir}/pop.c ${srcdir}/pop.h ${srcdir}/../lib/min-max.h $(config_h)
 
 emacsclient${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
-	   -DVERSION="\"${version}\"" $(NTLIB) $(LOADLIBES) \
+	   $(NTLIB) $(LOADLIBES) \
 	   $(LIB_WSOCK32) $(LIB_EACCESS) $(LIBS_ECLIENT) -o $@
 
 emacsclientw${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(CLIENTRES) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(CLIENTRES) -mwindows $< \
-	   -DVERSION="\"${version}\"" $(LOADLIBES) \
+	   $(LOADLIBES) \
 	   $(LIB_WSOCK32) $(LIB_EACCESS) $(LIBS_ECLIENT) -o $@
 
 NTINC = ${srcdir}/../nt/inc

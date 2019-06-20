@@ -867,21 +867,18 @@ For detailed help on a given language use, for example,\n\
 etags --help --lang=ada.");
 }
 
-#ifndef EMACS_NAME
-# define EMACS_NAME "standalone"
-#endif
-#ifndef VERSION
-# define VERSION "17.38.1.4"
+#if CTAGS
+# define PROGRAM_NAME "ctags"
+#else
+# define PROGRAM_NAME "etags"
 #endif
 static _Noreturn void
 print_version (void)
 {
-  char emacs_copyright[] = COPYRIGHT;
-
-  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
-  puts (emacs_copyright);
-  puts ("This program is distributed under the terms in ETAGS.README");
-
+  fputs ((PROGRAM_NAME " (" PACKAGE_NAME " " PACKAGE_VERSION ")\n"
+	  COPYRIGHT "\n"
+	  "This program is distributed under the terms in ETAGS.README\n"),
+	 stdout);
   exit (EXIT_SUCCESS);
 }
 

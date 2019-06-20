@@ -84,10 +84,6 @@ char *w32_getenv (const char *);
 #include <min-max.h>
 #include <unlocked-io.h>
 
-#ifndef VERSION
-#define VERSION "unspecified"
-#endif
-
 /* Work around GCC bug 88251.  */
 #if GNUC_PREREQ (7, 0, 0)
 # pragma GCC diagnostic ignored "-Wformat-truncation=2"
@@ -546,7 +542,7 @@ decode_options (int argc, char **argv)
 	  break;
 
 	case 'V':
-	  message (false, "emacsclient %s\n", VERSION);
+	  message (false, "emacsclient %s\n", PACKAGE_VERSION);
 	  exit (EXIT_SUCCESS);
 	  break;
 
