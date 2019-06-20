@@ -10845,11 +10845,11 @@ vmessage (const char *m, va_list ap)
       if (m)
 	{
 	  if (noninteractive_need_newline)
-	    putc ('\n', stderr);
+	    fputc ('\n', stderr);
 	  noninteractive_need_newline = false;
 	  vfprintf (stderr, m, ap);
 	  if (!cursor_in_echo_area)
-	    fprintf (stderr, "\n");
+	    fputc ('\n', stderr);
 	  fflush (stderr);
 	}
     }
