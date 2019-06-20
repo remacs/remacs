@@ -1405,7 +1405,8 @@ print_paths_to_root_1 (struct dump_context *ctx,
       Lisp_Object repr = Fprin1_to_string (referrer, Qnil);
       for (int i = 0; i < level; ++i)
         fputc (' ', stderr);
-      fprintf (stderr, "%s\n", SDATA (repr));
+      fwrite (SDATA (repr), 1, SBYTES (repr), stderr);
+      fputc ('\n', stderr);
       print_paths_to_root_1 (ctx, referrer, level + 1);
     }
 }
