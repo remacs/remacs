@@ -710,7 +710,9 @@ font_prop_validate (int idx, Lisp_Object prop, Lisp_Object val)
 
 
 /* Store VAL as a value of extra font property PROP in FONT while
-   keeping the sorting order.  Don't check the validity of VAL.  */
+   keeping the sorting order.  Don't check the validity of VAL.  If
+   VAL is Qunbound, delete the slot for PROP from the list of extra
+   properties.  */
 
 Lisp_Object
 font_put_extra (Lisp_Object font, Lisp_Object prop, Lisp_Object val)
@@ -722,6 +724,8 @@ font_put_extra (Lisp_Object font, Lisp_Object prop, Lisp_Object val)
     {
       Lisp_Object prev = Qnil;
 
+      if (EQ (val, Qunbound))
+	return val;
       while (CONSP (extra)
 	     && NILP (Fstring_lessp (prop, XCAR (XCAR (extra)))))
 	prev = extra, extra = XCDR (extra);
@@ -734,7 +738,7 @@ font_put_extra (Lisp_Object font, Lisp_Object prop, Lisp_Object val)
       return val;
     }
   XSETCDR (slot, val);
-  if (NILP (val))
+  if (EQ (val, Qunbound))
     ASET (font, FONT_EXTRA_INDEX, Fdelq (slot, extra));
   return val;
 }
@@ -3055,7 +3059,7 @@ font_clear_prop (Lisp_Object *attrs, enum font_property_index prop)
   if (! NILP (Ffont_get (font, QCname)))
     {
       font = copy_font_spec (font);
-      font_put_extra (font, QCname, Qnil);
+      font_put_extra (font, QCname, Qunbound);
     }
 
   if (NILP (AREF (font, prop))
