@@ -159,7 +159,7 @@ maintainer-clean: distclean bootstrap-clean
 
 ## We do not delete ja-dic, even in a bootstrap, because it rarely
 ## changes and is slow to regenerate.
-extraclean:
+extraclean: bootstrap-clean
 	rm -rf ${leimdir}/ja-dic
 
 ### Makefile.in ends here

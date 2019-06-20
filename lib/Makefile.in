@@ -126,6 +126,9 @@ distclean bootstrap-clean: mostlyclean
 	rm -fr $(DEPDIR)
 maintainer-clean: distclean
 	rm -f TAGS gnulib.mk
+extraclean: distclean
+	-[ -d sys ] && rmdir --ignore-fail-on-non-empty sys
+
 .PHONY: mostlyclean clean distclean bootstrap-clean maintainer-clean
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
