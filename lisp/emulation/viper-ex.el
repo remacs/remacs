@@ -2013,8 +2013,10 @@ Please contact your system administrator. "))))))
     (condition-case conds
 	(progn
 	  (if (string= tag "")
-	      (find-tag ex-tag t)
-	    (find-tag-other-window ex-tag))
+              ;; If we have an *xref* window, `next-error' will take
+              ;; us to the next definition.
+	      (next-error)
+	    (xref-find-definitions-other-window ex-tag))
 	  (viper-change-state-to-vi))
       (error
        (viper-change-state-to-vi)
