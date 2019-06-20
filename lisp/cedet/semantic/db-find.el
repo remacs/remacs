@@ -399,7 +399,7 @@ Default action as described in `semanticdb-find-translate-path'."
   (let ((table (cond ((null path)
 		      semanticdb-current-table)
 		     ((bufferp path)
-		      (semantic-buffer-local-value 'semanticdb-current-table path))
+		      (buffer-local-value 'semanticdb-current-table path))
 		     ((and (stringp path) (file-exists-p path))
 		      (semanticdb-file-table-object path t))
 		     ((cl-typep path 'semanticdb-abstract-table)

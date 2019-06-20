@@ -1092,7 +1092,7 @@ and variable state from the current buffer."
 	;; the originating buffer we are parsing.  We need to do this every time
 	;; since the state changes.
 	(dolist (V important-vars)
-	  (set V (semantic-buffer-local-value V origbuff)))
+	  (set V (buffer-local-value V origbuff)))
 	(insert text)
 	(goto-char (point-min))
 

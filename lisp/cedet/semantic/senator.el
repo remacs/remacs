@@ -148,14 +148,14 @@ Return nil otherwise."
   "Return the tag before POS or one of its parent where to step."
   (let (ol tag)
     (while (and pos (> pos (point-min)) (not tag))
-      (setq pos (semantic-overlay-previous-change pos))
+      (setq pos (previous-overlay-change pos))
       (when pos
         ;; Get overlays at position
-        (setq ol (semantic-overlays-at pos))
+        (setq ol (overlays-at pos))
         ;; find the overlay that belongs to semantic
         ;; and STARTS or ENDS at the found position.
         (while (and ol (not tag))
-          (setq tag (semantic-overlay-get (car ol) 'semantic))
+          (setq tag (overlay-get (car ol) 'semantic))
           (unless (and tag (semantic-tag-p tag)
                        (or (= (semantic-tag-start tag) pos)
                            (= (semantic-tag-end   tag) pos)))

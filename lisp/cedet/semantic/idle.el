@@ -849,18 +849,18 @@ visible, then highlight it."
 	 ;; just the stable version.
 	 (pulse-flag nil)
 	 )
-    (cond ((semantic-overlay-p region)
-	   (with-current-buffer (semantic-overlay-buffer region)
+    (cond ((overlayp region)
+	   (with-current-buffer (overlay-buffer region)
 	     (save-excursion
-	       (goto-char (semantic-overlay-start region))
+	       (goto-char (overlay-start region))
 	       (when (pos-visible-in-window-p
 		      (point) (get-buffer-window (current-buffer) 'visible))
-		 (if (< (semantic-overlay-end region) (point-at-eol))
+		 (if (< (overlay-end region) (point-at-eol))
 		     (pulse-momentary-highlight-overlay
 		      region semantic-idle-symbol-highlight-face)
 		   ;; Not the same
 		   (pulse-momentary-highlight-region
-		    (semantic-overlay-start region)
+		    (overlay-start region)
 		    (point-at-eol)
 		    semantic-idle-symbol-highlight-face))))
 	     ))
@@ -1074,7 +1074,7 @@ be called."
   (let ((old-window (selected-window))
 	(window     (semantic-event-window event)))
     (select-window window t)
-    (semantic-popup-menu semantic-idle-breadcrumbs-popup-menu)
+    (popup-menu semantic-idle-breadcrumbs-popup-menu)
     (select-window old-window)))
 
 (defmacro semantic-idle-breadcrumbs--tag-function (function)

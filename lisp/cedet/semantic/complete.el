@@ -127,8 +127,8 @@
 (defun semantic-completion-inline-active-p ()
   "Non-nil if inline completion is active."
   (when (and semantic-complete-inline-overlay
-	     (not (semantic-overlay-live-p semantic-complete-inline-overlay)))
-    (semantic-overlay-delete semantic-complete-inline-overlay)
+	     (not (overlay-buffer semantic-complete-inline-overlay)))
+    (delete-overlay semantic-complete-inline-overlay)
     (setq semantic-complete-inline-overlay nil))
   semantic-complete-inline-overlay)
 
@@ -574,8 +574,8 @@ The face is used in `semantic-complete-inline-tag-engine'."
 (defun semantic-complete-inline-text ()
   "Return the text that is being completed inline.
 Similar to `minibuffer-contents' when completing in the minibuffer."
-  (let ((s (semantic-overlay-start semantic-complete-inline-overlay))
-	(e (semantic-overlay-end semantic-complete-inline-overlay)))
+  (let ((s (overlay-start semantic-complete-inline-overlay))
+	(e (overlay-end semantic-complete-inline-overlay)))
     (if (= s e)
 	""
       (buffer-substring-no-properties s e ))))
@@ -583,8 +583,8 @@ Similar to `minibuffer-contents' when completing in the minibuffer."
 (defun semantic-complete-inline-delete-text ()
   "Delete the text currently being completed in the current buffer."
   (delete-region
-   (semantic-overlay-start semantic-complete-inline-overlay)
-   (semantic-overlay-end semantic-complete-inline-overlay)))
+   (overlay-start semantic-complete-inline-overlay)
+   (overlay-end semantic-complete-inline-overlay)))
 
 (defun semantic-complete-inline-done ()
   "This completion thing is DONE, OR, insert a newline."
@@ -630,11 +630,11 @@ Similar to `minibuffer-contents' when completing in the minibuffer."
 	  (semantic-displayor-cleanup semantic-completion-display-engine))
 
 	(when semantic-complete-inline-overlay
-	  (let ((wc (semantic-overlay-get semantic-complete-inline-overlay
+	  (let ((wc (overlay-get semantic-complete-inline-overlay
 					  'window-config-start))
-		(buf (semantic-overlay-buffer semantic-complete-inline-overlay))
+		(buf (overlay-buffer semantic-complete-inline-overlay))
 		)
-	    (semantic-overlay-delete semantic-complete-inline-overlay)
+	    (delete-overlay semantic-complete-inline-overlay)
 	    (setq semantic-complete-inline-overlay nil)
 	    ;; DONT restore the window configuration if we just
 	    ;; switched windows!
@@ -680,10 +680,10 @@ a reasonable distance."
 	    ;;(message "Inline Hook installed, but overlay deleted.")
 	    (semantic-complete-inline-exit))
 	;; Exit if commands caused us to exit the area of interest
-	(let ((os (semantic-overlay-get semantic-complete-inline-overlay 'semantic-original-start))
-	      (s (semantic-overlay-start semantic-complete-inline-overlay))
-	      (e (semantic-overlay-end semantic-complete-inline-overlay))
-	      (b (semantic-overlay-buffer semantic-complete-inline-overlay))
+	(let ((os (overlay-get semantic-complete-inline-overlay 'semantic-original-start))
+	      (s (overlay-start semantic-complete-inline-overlay))
+	      (e (overlay-end semantic-complete-inline-overlay))
+	      (b (overlay-buffer semantic-complete-inline-overlay))
 	      (txt nil)
 	      )
 	  (cond
@@ -758,17 +758,17 @@ END is at the end of the current symbol being completed."
 	semantic-completion-display-engine displayor)
   ;; Create an overlay
   (setq semantic-complete-inline-overlay
-	(semantic-make-overlay start end buffer nil t))
-  (semantic-overlay-put semantic-complete-inline-overlay
-			'face
-			'semantic-complete-inline-face)
-  (semantic-overlay-put semantic-complete-inline-overlay
-			'window-config-start
-			(current-window-configuration))
+	(make-overlay start end buffer nil t))
+  (overlay-put semantic-complete-inline-overlay
+	       'face
+	       'semantic-complete-inline-face)
+  (overlay-put semantic-complete-inline-overlay
+	       'window-config-start
+	       (current-window-configuration))
   ;; Save the original start.  We need to exit completion if START
   ;; moves.
-  (semantic-overlay-put semantic-complete-inline-overlay
-			'semantic-original-start start)
+  (overlay-put semantic-complete-inline-overlay
+	       'semantic-original-start start)
   ;; Install our command hooks
   (add-hook 'pre-command-hook 'semantic-complete-pre-command-hook)
   (add-hook 'post-command-hook 'semantic-complete-post-command-hook)
@@ -1783,7 +1783,7 @@ text using overlay options.")
 (cl-defmethod semantic-displayor-cleanup ((obj semantic-displayor-ghost))
   "Clean up any mess this displayor may have."
   (when (slot-boundp obj 'ghostoverlay)
-    (semantic-overlay-delete (oref obj ghostoverlay)))
+    (delete-overlay (oref obj ghostoverlay)))
   )
 
 (cl-defmethod semantic-displayor-set-completions ((obj semantic-displayor-ghost)
@@ -1824,9 +1824,9 @@ completion text in ghost text."
       ;; Display the focus completion as ghost text after the current
       ;; inline text.
       (when (or (not (slot-boundp obj 'ghostoverlay))
-		(not (semantic-overlay-live-p (oref obj ghostoverlay))))
+		(not (overlay-buffer (oref obj ghostoverlay))))
 	(oset obj ghostoverlay
-	      (semantic-make-overlay (point) (1+ (point)) (current-buffer) t)))
+	      (make-overlay (point) (1+ (point)) (current-buffer) t)))
 
       (let* ((lp (semantic-completion-text))
 	     (os (substring (semantic-tag-name tag) (length lp)))
@@ -1835,7 +1835,7 @@ completion text in ghost text."
 
 	(put-text-property 0 (length os) 'face 'region os)
 
-	(semantic-overlay-put
+	(overlay-put
 	 ol 'display (concat os (buffer-substring (point) (1+ (point)))))
 	)
       ;; Calculate text difference between contents and the focus item.

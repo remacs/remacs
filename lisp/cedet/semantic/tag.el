@@ -148,15 +148,15 @@ That function is for internal use only."
 (defsubst semantic-tag-start (tag)
   "Return the start location of TAG."
   (let ((o (semantic-tag-overlay tag)))
-    (if (semantic-overlay-p o)
-        (semantic-overlay-start o)
+    (if (overlayp o)
+        (overlay-start o)
       (aref o 0))))
 
 (defsubst semantic-tag-end (tag)
   "Return the end location of TAG."
   (let ((o (semantic-tag-overlay tag)))
-    (if (semantic-overlay-p o)
-        (semantic-overlay-end o)
+    (if (overlayp o)
+        (overlay-end o)
       (aref o 1))))
 
 (defsubst semantic-tag-bounds (tag)
@@ -167,8 +167,8 @@ That function is for internal use only."
 (defun semantic-tag-set-bounds (tag start end)
   "In TAG, set the START and END location of data it describes."
   (let ((o (semantic-tag-overlay tag)))
-    (if (semantic-overlay-p o)
-        (semantic-overlay-move o start end)
+    (if (overlayp o)
+        (move-overlay o start end)
       (semantic--tag-set-overlay tag (vector start end)))))
 
 (defun semantic-tag-in-buffer-p (tag)
@@ -176,9 +176,9 @@ That function is for internal use only."
 If a tag is not in a buffer, return nil."
   (let ((o (semantic-tag-overlay tag)))
      ;; TAG is currently linked to a buffer, return it.
-    (when (and (semantic-overlay-p o)
-	       (semantic-overlay-live-p o))
-      (semantic-overlay-buffer o))))
+    (when (and (overlayp o)
+	       (overlay-buffer o))
+      (overlay-buffer o))))
 
 (defsubst semantic--tag-get-property (tag property)
   "From TAG, extract the value of PROPERTY.
@@ -344,8 +344,8 @@ struct or union."
   "Return non-nil if TAG has positional information."
   (and (semantic-tag-p tag)
        (let ((o (semantic-tag-overlay tag)))
-	 (or (and (semantic-overlay-p o)
-		  (semantic-overlay-live-p o))
+	 (or (and (overlayp o)
+		  (overlay-buffer o))
              (arrayp o)))))
 
 (defun semantic-equivalent-tag-p (tag1 tag2)
@@ -647,7 +647,7 @@ This runs the tag hook `unlink-copy-hook'."
 
       ;; Call the unlink-copy hook.  This should tell tools that
       ;; this tag is not part of any buffer.
-      (when (semantic-overlay-p (semantic-tag-overlay tag))
+      (when (overlayp (semantic-tag-overlay tag))
 	(semantic--tag-run-hooks copy 'unlink-copy-hook))
       )
     copy))
@@ -1114,11 +1114,11 @@ This function is for internal use only."
 This function is for internal use only."
   (when (semantic-tag-p tag)
     (let ((o (semantic-tag-overlay tag)))
-      (when (semantic-overlay-p o)
+      (when (overlayp o)
         (semantic--tag-set-overlay
-         tag (vector (semantic-overlay-start o)
-                     (semantic-overlay-end o)))
-        (semantic-overlay-delete o))
+         tag (vector (overlay-start o)
+                     (overlay-end o)))
+        (delete-overlay o))
       ;; Look for a link hook on TAG.
       (semantic--tag-run-hooks tag 'unlink-hook)
       ;; Fix the sub-tags which contain overlays.
@@ -1136,10 +1136,9 @@ This function is for internal use only."
   (when (semantic-tag-p tag)
     (let ((o (semantic-tag-overlay tag)))
       (when (and (vectorp o) (= (length o) 2))
-        (setq o (semantic-make-overlay (aref o 0) (aref o 1)
-                                       (current-buffer)))
+        (setq o (make-overlay (aref o 0) (aref o 1) (current-buffer)))
         (semantic--tag-set-overlay tag o)
-        (semantic-overlay-put o 'semantic tag)
+        (overlay-put o 'semantic tag)
         ;; Clear the :filename property
         (semantic--tag-put-property tag :filename nil))
       ;; Look for a link hook on TAG.

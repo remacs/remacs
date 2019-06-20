@@ -74,7 +74,7 @@
 (defun semanticdb-table-oob-sanity-check (cache)
   "Validate that CACHE tags do not have any overlays in them."
   (while cache
-    (when (semantic-overlay-p (semantic-tag-overlay cache))
+    (when (overlayp (semantic-tag-overlay cache))
       (message "Tag %s has an erroneous overlay!"
 	       (semantic-format-tag-summarize (car cache))))
     (semanticdb-table-oob-sanity-check

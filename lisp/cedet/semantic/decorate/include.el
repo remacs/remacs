@@ -336,13 +336,10 @@ This mode provides a nice context menu on the include statements."
       (let ((ol (semantic-decorate-tag tag
 				       (semantic-tag-start tag)
 				       (semantic-tag-end tag)
-				       face))
-	    )
-	(semantic-overlay-put ol 'mouse-face 'highlight)
-	(semantic-overlay-put ol 'keymap map)
-	(semantic-overlay-put ol 'help-echo
-			      "Header File : mouse-3 - Context menu")
-	))))
+				       face)))
+	(overlay-put ol 'mouse-face 'highlight)
+	(overlay-put ol 'keymap map)
+	(overlay-put ol 'help-echo "Header File : mouse-3 - Context menu")))))
 
 ;;; Regular Include Functions
 ;;
@@ -441,7 +438,7 @@ Argument EVENT describes the event that caused this function to be called."
       ;(goto-char (window-start win))
       (mouse-set-point event)
       (sit-for 0)
-      (semantic-popup-menu semantic-decoration-on-include-menu)
+      (popup-menu semantic-decoration-on-include-menu)
       )
     (select-window startwin)))
 
@@ -525,7 +522,7 @@ Argument EVENT describes the event that caused this function to be called."
       ;(goto-char (window-start win))
       (mouse-set-point event)
       (sit-for 0)
-      (semantic-popup-menu semantic-decoration-on-unknown-include-menu)
+      (popup-menu semantic-decoration-on-unknown-include-menu)
       )
     (select-window startwin)))
 
@@ -568,7 +565,7 @@ Argument EVENT describes the event that caused this function to be called."
       ;(goto-char (window-start win))
       (mouse-set-point event)
       (sit-for 0)
-      (semantic-popup-menu semantic-decoration-on-fileless-include-menu)
+      (popup-menu semantic-decoration-on-fileless-include-menu)
       )
     (select-window startwin)))
 
@@ -632,7 +629,7 @@ Argument EVENT describes the event that caused this function to be called."
       ;(goto-char (window-start win))
       (mouse-set-point event)
       (sit-for 0)
-      (semantic-popup-menu semantic-decoration-on-unparsed-include-menu)
+      (popup-menu semantic-decoration-on-unparsed-include-menu)
       )
     (select-window startwin)))
 

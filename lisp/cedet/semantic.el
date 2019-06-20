@@ -510,7 +510,7 @@ is requested."
   (semantic-clear-parser-warnings)
   ;; Nuke all semantic overlays.  This is faster than deleting based
   ;; on our data structure.
-  (let ((l (semantic-overlay-lists)))
+  (let ((l (overlay-lists)))
     (mapc 'semantic-delete-overlay-maybe (car l))
     (mapc 'semantic-delete-overlay-maybe (cdr l))
     )

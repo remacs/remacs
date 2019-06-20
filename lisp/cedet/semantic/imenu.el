@@ -155,7 +155,7 @@ By default, a `type' has interesting children.  In Texinfo, however, a
 If TAG doesn't have an overlay, and instead as a vector of positions,
 concoct a combination of file name, and position."
   (let ((o (semantic-tag-overlay tag)))
-    (if (not (semantic-overlay-p o))
+    (if (not (overlayp o))
 	(let ((v (make-vector 3 nil)))
 	  (aset v 0 semantic-imenu-directory-current-file)
 	  (aset v 1 (aref o 0))
@@ -170,9 +170,9 @@ Used to override function `imenu-default-goto-function' so that
 we can continue to use overlays to maintain the current position.
 Optional argument REST is some extra stuff."
   (require 'pulse)
-  (if (semantic-overlay-p position)
-      (let ((os (semantic-overlay-start position))
-	    (ob (semantic-overlay-buffer position)))
+  (if (overlayp position)
+      (let ((os (overlay-start position))
+	    (ob (overlay-buffer position)))
 	(if os
 	    (progn
 	      (if (not (eq ob (current-buffer)))

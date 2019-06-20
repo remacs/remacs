@@ -76,8 +76,8 @@
 
 (defun semantic-delete-overlay-maybe (overlay)
   "Delete OVERLAY if it is a semantic token overlay."
-  (if (semantic-overlay-get overlay 'semantic)
-      (semantic-overlay-delete overlay)))
+  (if (overlay-get overlay 'semantic)
+      (delete-overlay overlay)))
 
 ;;; Menu Item compatibility
 ;;
@@ -104,10 +104,10 @@ Possible Lifespans are:
   (or (memq lifespan '(end-of-command exit-cache-zone))
       (error "semantic-cache-data-to-buffer: Unknown LIFESPAN: %s"
              lifespan))
-  (let ((o (semantic-make-overlay start end buffer)))
-    (semantic-overlay-put o 'cache-name   name)
-    (semantic-overlay-put o 'cached-value value)
-    (semantic-overlay-put o 'lifespan     lifespan)
+  (let ((o (make-overlay start end buffer)))
+    (overlay-put o 'cache-name   name)
+    (overlay-put o 'cached-value value)
+    (overlay-put o 'lifespan     lifespan)
     (setq semantic-cache-data-overlays
           (cons o semantic-cache-data-overlays))
     ;;(message "Adding to cache: %s" o)
@@ -121,14 +121,14 @@ Remove self from `post-command-hook' if it is empty."
         (oldcache semantic-cache-data-overlays))
     (while oldcache
       (let* ((o    (car oldcache))
-             (life (semantic-overlay-get o 'lifespan))
+             (life (overlay-get o 'lifespan))
              )
         (if (or (eq life 'end-of-command)
                 (and (eq life 'exit-cache-zone)
-                     (not (member o (semantic-overlays-at (point))))))
+                     (not (member o (overlays-at (point))))))
             (progn
               ;;(message "Removing from cache: %s" o)
-              (semantic-overlay-delete o)
+              (delete-overlay o)
               )
           (setq newcache (cons o newcache))))
       (setq oldcache (cdr oldcache)))
@@ -143,14 +143,14 @@ Remove self from `post-command-hook' if it is empty."
   "Get cached data with NAME from optional POINT."
   (save-excursion
     (if point (goto-char point))
-    (let ((o (semantic-overlays-at (point)))
+    (let ((o (overlays-at (point)))
           (ans nil))
       (while (and (not ans) o)
-        (if (equal (semantic-overlay-get (car o) 'cache-name) name)
+        (if (equal (overlay-get (car o) 'cache-name) name)
             (setq ans (car o))
           (setq o (cdr o))))
       (when ans
-        (semantic-overlay-get ans 'cached-value)))))
+        (overlay-get ans 'cached-value)))))
 
 (defun semantic-test-data-cache ()
   "Test the data cache."

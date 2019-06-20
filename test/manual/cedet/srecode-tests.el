@@ -68,13 +68,13 @@ It is filled with some text."
       (when (or (not (slot-boundp f 'overlay)) (not (oref f overlay)))
 	(error "Field test: Overlay info not created for field"))
 
-      (when (and (overlay-p (oref f overlay))
+      (when (and (overlayp (oref f overlay))
 		 (not (overlay-get (oref f overlay) 'srecode-init-only)))
 	(error "Field creation overlay is not tagged w/ init flag"))
 
       (srecode-overlaid-activate f)
 
-      (when (or (not (overlay-p (oref f overlay)))
+      (when (or (not (overlayp (oref f overlay)))
 		(overlay-get (oref f overlay) 'srecode-init-only))
 	(error "New field overlay not created during activation"))
 

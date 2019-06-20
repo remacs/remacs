@@ -379,8 +379,8 @@ BUTTON is the button that was clicked."
 Hits are the line of code from the buffer, not the tag summar or file lines."
   (save-excursion
     (end-of-line)
-    (let* ((ol (car (semantic-overlays-at (1- (point)))))) ;; trust this for now
-      (when ol (semantic-overlay-get ol 'line)))))
+    (let* ((ol (car (overlays-at (1- (point)))))) ;; trust this for now
+      (when ol (overlay-get ol 'line)))))
 
 
 ;;; Keyboard Macros on a Hit
@@ -398,9 +398,9 @@ cursor to the beginning of that symbol, then record a macro as if
 		      searchfor))
 	 (ol (save-excursion
 	       (end-of-line)
-	       (car (semantic-overlays-at (1- (point))))))
-	 (tag (when ol (semantic-overlay-get ol 'tag)))
-	 (line (when ol (semantic-overlay-get ol 'line))))
+	       (car (overlays-at (1- (point))))))
+	 (tag (when ol (overlay-get ol 'tag)))
+	 (line (when ol (overlay-get ol 'line))))
     (when (not line)
       (error "Cannot create macro on a non-hit line"))
     ;; Go there, and do something useful.
@@ -468,9 +468,9 @@ Return the number of occurrences FUNCTION was operated upon."
       (goto-char (point-min))
       (while (not (eobp))
 	;; Is this line a "hit" line?
-	(let* ((ol (car (semantic-overlays-at (1- (point))))) ;; trust this for now
-	       (tag (when ol (semantic-overlay-get ol 'tag)))
-	       (line (when ol (semantic-overlay-get ol 'line))))
+	(let* ((ol (car (overlays-at (1- (point))))) ;; trust this for now
+	       (tag (when ol (overlay-get ol 'tag)))
+	       (line (when ol (overlay-get ol 'line))))
 	  (when line
 	    ;; The "line" means we have an open hit.
 	    (with-current-buffer (semantic-tag-buffer tag)
@@ -493,8 +493,8 @@ Return the number of occurrences FUNCTION was operated upon."
     (goto-char (point-min))
     (while (re-search-forward "\\[-\\]" nil t)
       (end-of-line)
-      (let* ((ol (car (semantic-overlays-at (1- (point))))) ;; trust this for now
-	     (tag (when ol (semantic-overlay-get ol 'tag))))
+      (let* ((ol (car (overlays-at (1- (point))))) ;; trust this for now
+	     (tag (when ol (overlay-get ol 'tag))))
 	;; If there is a tag, then close/open it.
 	(when tag
 	  (semantic-symref-list-toggle-showing)

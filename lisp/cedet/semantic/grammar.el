@@ -1292,9 +1292,9 @@ the change bounds to encompass the whole nonterminal tag."
                      (semantic-edits-os overlay)
                      (semantic-edits-oe overlay)))))
     (if (semantic-tag-of-class-p outer 'nonterminal)
-        (semantic-overlay-move overlay
-                               (semantic-tag-start outer)
-                               (semantic-tag-end outer)))))
+        (move-overlay overlay
+                      (semantic-tag-start outer)
+                      (semantic-tag-end outer)))))
 
 (define-derived-mode semantic-grammar-mode
   fundamental-mode "Semantic Grammar Framework"

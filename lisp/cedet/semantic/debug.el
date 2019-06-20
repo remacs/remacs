@@ -193,12 +193,12 @@ If RULE and MATCH indices are specified, highlight those also."
       ;; I know it is the first symbol appearing in the body of this token.
       (goto-char (semantic-tag-start nt))
 
-      (setq o (semantic-make-overlay (point) (progn (forward-sexp 1) (point))))
-      (semantic-overlay-put o 'face 'highlight)
+      (setq o (make-overlay (point) (progn (forward-sexp 1) (point))))
+      (overlay-put o 'face 'highlight)
 
       (object-add-to-list iface 'overlays o)
 
-      (semantic-debug-set-parser-location iface (semantic-overlay-start o))
+      (semantic-debug-set-parser-location iface (overlay-start o))
 
       (when (and rule match)
 
@@ -215,20 +215,20 @@ If RULE and MATCH indices are specified, highlight those also."
 	  (setq match (1- match)))
 
 	;; Now highlight the thingy we find there.
-	(setq o (semantic-make-overlay (point) (progn (forward-sexp 1) (point))))
-	(semantic-overlay-put o 'face 'highlight)
+	(setq o (make-overlay (point) (progn (forward-sexp 1) (point))))
+	(overlay-put o 'face 'highlight)
 
 	(object-add-to-list iface 'overlays o)
 
 	;; If we have a match for a sub-rule, have the parser position
 	;; move so we can see it in the output window for very long rules.
-	(semantic-debug-set-parser-location iface (semantic-overlay-start o))
+	(semantic-debug-set-parser-location iface (overlay-start o))
 
 	))))
 
 (cl-defmethod semantic-debug-unhighlight ((iface semantic-debug-interface))
   "Remove all debugging overlays."
-  (mapc 'semantic-overlay-delete (oref iface overlays))
+  (mapc #'delete-overlay (oref iface overlays))
   (oset iface overlays nil))
 
 ;; Call from the parser at a breakpoint
