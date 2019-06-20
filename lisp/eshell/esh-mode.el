@@ -326,10 +326,6 @@ and the hook `eshell-exit-hook'."
   (setq-local eshell-command-map (symbol-function eshell-command-prefix))
   (define-key eshell-mode-map [(control ?c)] eshell-command-prefix)
 
-  ;; without this, find-tag complains about read-only text being
-  ;; modified
-  (if (eq (key-binding [(meta ?.)]) 'find-tag)
-      (define-key eshell-mode-map [(meta ?.)] 'eshell-find-tag))
   (define-key eshell-command-map [(meta ?o)] 'eshell-mark-output)
   (define-key eshell-command-map [(meta ?d)] 'eshell-toggle-direct-send)
 
@@ -490,13 +486,15 @@ and the hook `eshell-exit-hook'."
 
 (defun eshell-find-tag (&optional tagname next-p regexp-p)
   "A special version of `find-tag' that ignores whether the text is read-only."
+  (declare (obsolete xref-find-definition "27.1"))
   (interactive)
   (require 'etags)
   (let ((inhibit-read-only t)
 	(no-default (eobp))
 	(find-tag-default-function 'ignore))
     (setq tagname (car (find-tag-interactive "Find tag: " no-default)))
-    (find-tag tagname next-p regexp-p)))
+    (with-suppressed-warnings ((obsolete find-tag))
+      (find-tag tagname next-p regexp-p))))
 
 (defun eshell-move-argument (limit func property arg)
   "Move forward ARG arguments."
