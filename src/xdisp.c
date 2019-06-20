@@ -5000,6 +5000,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
   Lisp_Object form;
   Lisp_Object location, value;
   struct text_pos start_pos = *position;
+  void *itdata = NULL;
 
   /* If SPEC is a list of the form `(when FORM . VALUE)', evaluate FORM.
      If the result is non-nil, use VALUE instead of SPEC.  */
@@ -5029,7 +5030,11 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
       specbind (Qobject, object);
       specbind (Qposition, make_fixnum (CHARPOS (*position)));
       specbind (Qbuffer_position, make_fixnum (bufpos));
+      /* Save and restore the bidi cache, since FORM could be crazy
+	 enough to re-enter redisplay, e.g., by calling 'message'.  */
+      itdata = bidi_shelve_cache ();
       form = safe_eval (form);
+      bidi_unshelve_cache (itdata, false);
       form = unbind_to (count, form);
     }
 
@@ -5069,8 +5074,10 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		     Value is the new height.  */
 		  struct face *face = FACE_FROM_ID (it->f, it->face_id);
 		  Lisp_Object height;
+		  itdata = bidi_shelve_cache ();
 		  height = safe_call1 (it->font_height,
 				       face->lface[LFACE_HEIGHT_INDEX]);
+		  bidi_unshelve_cache (itdata, false);
 		  if (NUMBERP (height))
 		    new_height = XFLOATINT (height);
 		}
@@ -5092,7 +5099,9 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  struct face *face = FACE_FROM_ID (it->f, it->face_id);
 
 		  specbind (Qheight, face->lface[LFACE_HEIGHT_INDEX]);
+		  itdata = bidi_shelve_cache ();
 		  value = safe_eval (it->font_height);
+		  bidi_unshelve_cache (itdata, false);
 		  value = unbind_to (count, value);
 
 		  if (NUMBERP (value))
