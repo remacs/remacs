@@ -804,7 +804,9 @@ For marked directories, use the files displayed from those directories.
 Stops when a match is found.
 To continue searching for next match, use command \\[tags-loop-continue]."
   (interactive "sSearch marked files (regexp): ")
-  (tags-search regexp '(mapcar 'car (vc-dir-marked-only-files-and-states))))
+  (tags-search regexp
+               (lambda ()
+                 (mapcar #'car (vc-dir-marked-only-files-and-states)))))
 
 (defun vc-dir-query-replace-regexp (from to &optional delimited)
   "Do `query-replace-regexp' of FROM with TO, on all marked files.
