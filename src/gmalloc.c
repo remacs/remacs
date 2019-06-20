@@ -2013,7 +2013,6 @@ mabort (enum mcheck_status status)
   __libc_fatal (msg);
 #else
   fprintf (stderr, "mcheck: %s\n", msg);
-  fflush (stderr);
   emacs_abort ();
 #endif
 }
