@@ -1240,6 +1240,15 @@ x_update_end (struct frame *f)
   /* Mouse highlight may be displayed again.  */
   MOUSE_HL_INFO (f)->mouse_face_defer = false;
 
+#ifdef USE_CAIRO
+  if (!FRAME_X_DOUBLE_BUFFERED_P (f) && FRAME_CR_CONTEXT (f))
+    {
+      block_input ();
+      cairo_surface_flush (cairo_get_target (FRAME_CR_CONTEXT (f)));
+      unblock_input ();
+    }
+#endif
+
 #ifndef XFlush
   block_input ();
   XFlush (FRAME_X_DISPLAY (f));
