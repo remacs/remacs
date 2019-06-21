@@ -112,10 +112,11 @@ distclean: clean
 	rm -f Makefile
 
 maintainer-clean: distclean
+	rm -f ${top_srcdir}/src/macuvs.h
 
 ## Do not remove these files, even in a bootstrap, because they rarely
 ## change and it slows down bootstrap (a tiny bit).
 ## Cf leim/ja-dic (which is much slower).
-extraclean: distclean
-	rm -f ${top_srcdir}/src/macuvs.h ${unidir}/charscript.el*
+extraclean: maintainer-clean
+	rm -f ${unidir}/charscript.el*
 	rm -f ${unifiles} ${unidir}/charprop.el
