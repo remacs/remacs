@@ -345,7 +345,7 @@ x_cr_destroy_frame_context (struct frame *f)
     }
 }
 
-static void
+void
 x_cr_update_surface_desired_size (struct frame *f, int width, int height)
 {
   if (FRAME_CR_SURFACE_DESIRED_WIDTH (f) != width

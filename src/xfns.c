@@ -6956,6 +6956,10 @@ Text larger than the specified size is clipped.  */)
   XMapRaised (FRAME_X_DISPLAY (tip_f), FRAME_X_WINDOW (tip_f));
   unblock_input ();
 
+#ifdef USE_CAIRO
+  x_cr_update_surface_desired_size (tip_f, width, height);
+#endif	/* USE_CAIRO */
+
   w->must_be_updated_p = true;
   update_single_window (w);
   set_buffer_internal_1 (old_buffer);
