@@ -938,7 +938,6 @@ Outputs to the current buffer."
 (run-hooks 'cl-extra-load-hook)
 
 ;; Local variables:
-;; byte-compile-dynamic: t
 ;; generated-autoload-file: "cl-loaddefs.el"
 ;; End:
 

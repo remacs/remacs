@@ -1,4 +1,4 @@
-;;; executable.el --- base functionality for executable interpreter scripts -*- byte-compile-dynamic: t -*-
+;;; executable.el --- base functionality for executable interpreter scripts
 
 ;; Copyright (C) 1994-1996, 2000-2019 Free Software Foundation, Inc.
 

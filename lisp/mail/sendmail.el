@@ -2078,9 +2078,4 @@ you can move to one of them and type C-c C-c to recover that one."
 ;; Do not add anything but external entries on this page.
 
 (provide 'sendmail)
-
-;; Local Variables:
-;; byte-compile-dynamic: t
-;; End:
-
 ;;; sendmail.el ends here

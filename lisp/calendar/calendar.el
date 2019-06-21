@@ -212,8 +212,7 @@ update the calendar display to reflect the change, otherwise
 movement commands will not work correctly."
   :type 'integer
   ;; Change the initialize so that if you reload calendar.el, it will not
-  ;; cause a redraw (which may fail, e.g. with "invalid byte-code in
-  ;; calendar.elc" because of the "byte-compile-dynamic").
+  ;; cause a redraw.
   :initialize 'custom-initialize-default
   :set (lambda (sym val)
          (set sym val)
@@ -2665,9 +2664,5 @@ If called by a mouse-event, pops up a menu with the result."
 (run-hooks 'calendar-load-hook)
 
 (provide 'calendar)
-
-;; Local variables:
-;; byte-compile-dynamic: t
-;; End:
 
 ;;; calendar.el ends here

@@ -1,4 +1,4 @@
-;;; wid-edit.el --- Functions for creating and using widgets -*-byte-compile-dynamic: t; lexical-binding:t -*-
+;;; wid-edit.el --- Functions for creating and using widgets -*- lexical-binding:t -*-
 ;;
 ;; Copyright (C) 1996-1997, 1999-2019 Free Software Foundation, Inc.
 ;;

@@ -1598,7 +1598,6 @@ If `current-prefix-arg' is non-nil, uses name at point as guess."
 (provide 'dired-x)
 
 ;; Local Variables:
-;; byte-compile-dynamic: t
 ;; generated-autoload-file: "dired-loaddefs.el"
 ;; End:
 

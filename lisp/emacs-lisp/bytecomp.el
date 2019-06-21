@@ -240,6 +240,7 @@ For example, add  -*-byte-compile-dynamic: t;-*- on the first line.
 
 When this option is true, if you load the compiled file and then move it,
 the functions you loaded will not be able to run.")
+(make-obsolete-variable 'byte-compile-dynamic "not worthwhile any more." "27.1")
 ;;;###autoload(put 'byte-compile-dynamic 'safe-local-variable 'booleanp)
 
 (defvar byte-compile-disable-print-circle nil
@@ -1031,7 +1032,7 @@ If STR is something like \"Buffer foo.el\", return #<buffer foo.el>
     str))
 
 (defconst emacs-lisp-compilation-parse-errors-filename-function
-  'emacs-lisp-compilation-file-name-or-buffer
+  #'emacs-lisp-compilation-file-name-or-buffer
   "The value for `compilation-parse-errors-filename-function' for when
 we go into emacs-lisp-compilation-mode.")
 

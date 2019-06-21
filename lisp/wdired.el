@@ -913,9 +913,4 @@ Like original function but it skips read-only words."
     (cons changes errors)))
 
 (provide 'wdired)
-
-;; Local Variables:
-;; byte-compile-dynamic: t
-;; End:
-
 ;;; wdired.el ends here

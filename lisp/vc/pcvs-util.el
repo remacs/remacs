@@ -1,4 +1,4 @@
-;;; pcvs-util.el --- utility functions for PCL-CVS  -*- byte-compile-dynamic: t -*-
+;;; pcvs-util.el --- utility functions for PCL-CVS
 
 ;; Copyright (C) 1991-2019 Free Software Foundation, Inc.
 

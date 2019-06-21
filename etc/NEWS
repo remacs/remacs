@@ -472,6 +472,12 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** byte compiler
+*** byte-compile-dynamic is now obsolete
+This is because on the one hand it suffers from various misbehaviors in corner
+cases that have plagued it for years, and on the other experiments indicated
+that it doesn't bring any measurable benefit.
+
 ** compile.el
 ---
 *** In 'compilation-error-regexp-alist', 'line' (and 'end-line') can
