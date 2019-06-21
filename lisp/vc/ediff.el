@@ -1,4 +1,4 @@
-;;; ediff.el --- a comprehensive visual interface to diff & patch  -*- lexical-binding: nil; -*-
+;;; ediff.el --- a comprehensive visual interface to diff & patch  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
@@ -107,8 +107,6 @@
 
 ;;; Code:
 
-(provide 'ediff)
-
 (require 'ediff-util)
 ;; end pacifier
 
@@ -123,8 +121,7 @@
 
 (defcustom ediff-use-last-dir nil
   "If t, Ediff will use previous directory as default when reading file name."
-  :type 'boolean
-  :group 'ediff)
+  :type 'boolean)
 
 ;; Last directory used by an Ediff command for file-A.
 (defvar ediff-last-dir-A nil)
@@ -197,7 +194,7 @@ arguments after setting up the Ediff buffers."
 					   ediff-last-dir-B
 					 (file-name-directory f)))
 				 (progn
-				   (ediff-add-to-history
+				   (add-to-history
 				    'file-name-history
 				    (ediff-abbreviate-file-name
 				     (expand-file-name
@@ -235,7 +232,7 @@ arguments after setting up the Ediff buffers."
 						    ediff-last-dir-B
 						  (file-name-directory f)))
 					  (progn
-					    (ediff-add-to-history
+					    (add-to-history
 					     'file-name-history
 					     (ediff-abbreviate-file-name
 					      (expand-file-name
@@ -247,7 +244,7 @@ arguments after setting up the Ediff buffers."
 						 ediff-last-dir-C
 					       (file-name-directory ff)))
 				 (progn
-				   (ediff-add-to-history
+				   (add-to-history
 				    'file-name-history
 				    (ediff-abbreviate-file-name
 				     (expand-file-name
@@ -270,20 +267,24 @@ arguments after setting up the Ediff buffers."
 ;;;###autoload
 (defalias 'ediff3 'ediff-files3)
 
+(defvar-local ediff--magic-file-name nil
+  "Name of file where buffer's content was saved.
+Only non-nil in \"magic\" buffers such as those of remote files.")
 
-(defun ediff-find-file (file-var buffer-name &optional last-dir hooks-var)
+(defvar ediff--startup-hook nil)
+
+(defun ediff-find-file (file &optional last-dir)
   "Visit FILE and arrange its buffer to Ediff's liking.
-FILE-VAR is actually a variable symbol whose value must contain a true
-file name.
-BUFFER-NAME is a variable symbol, which will get the buffer object into
-which FILE is read.
+FILE is the file name.
 LAST-DIR is the directory variable symbol where FILE's
-directory name should be returned.  HOOKS-VAR is a variable symbol that will
-be assigned the hook to be executed after `ediff-startup' is finished.
+directory name should be returned.  May push to `ediff--startup-hook'
+functions to be executed after `ediff-startup' is finished.
 `ediff-find-file' arranges that the temp files it might create will be
-deleted."
-  (let* ((file (symbol-value file-var))
-	 (file-magic (ediff-filename-magic-p file))
+deleted.
+Returns the buffer into which the file is visited.
+Also sets `ediff--magic-file-name' to indicate where the file's content
+has been saved (if not in `buffer-file-name')."
+  (let* ((file-magic (ediff-filename-magic-p file))
 	 (temp-file-name-prefix (file-name-nondirectory file)))
     (cond ((not (file-readable-p file))
 	   (user-error "File `%s' does not exist or is not readable" file))
@@ -298,58 +299,61 @@ deleted."
 	(set last-dir (expand-file-name (file-name-directory file))))
 
     ;; Setup the buffer
-    (set buffer-name (find-file-noselect file))
-
-    (ediff-with-current-buffer (symbol-value buffer-name)
-      (widen) ; Make sure the entire file is seen
-      (cond (file-magic  ;   file has a handler, such as jka-compr-handler or
-	     		 ;;; ange-ftp-hook-function--arrange for temp file
+    (with-current-buffer (find-file-noselect file)
+      (widen)                           ; Make sure the entire file is seen
+      (setq ediff--magic-file-name nil)
+      (cond (file-magic    ; File has a handler, such as jka-compr-handler or
+                           ; ange-ftp-hook-function--arrange for temp file
 	     (ediff-verify-file-buffer 'magic)
-	     (setq file
-		   (ediff-make-temp-file
-		    (current-buffer) temp-file-name-prefix))
-	     (set hooks-var (cons `(lambda () (delete-file ,file))
-				  (symbol-value hooks-var))))
+	     (let ((file
+		    (ediff-make-temp-file
+		     (current-buffer) temp-file-name-prefix)))
+	       (add-hook 'ediff--startup-hook (lambda () (delete-file file)))
+               (setq ediff--magic-file-name file)))
 	    ;; file processed via auto-mode-alist, a la uncompress.el
 	    ((not (equal (file-truename file)
-			 (file-truename (buffer-file-name))))
-	     (setq file
-		   (ediff-make-temp-file
-		    (current-buffer) temp-file-name-prefix))
-	     (set hooks-var (cons `(lambda () (delete-file ,file))
-				  (symbol-value hooks-var))))
+			 (file-truename buffer-file-name)))
+	     (let ((file
+		    (ediff-make-temp-file
+		     (current-buffer) temp-file-name-prefix)))
+	       (add-hook 'ediff--startup-hook (lambda () (delete-file file)))
+               (setq ediff--magic-file-name file)))
 	    (t ;; plain file---just check that the file matches the buffer
-	     (ediff-verify-file-buffer))))
-    (set file-var file)))
+	     (ediff-verify-file-buffer)))
+      (current-buffer))))
+
+(defun ediff--buffer-file-name (buf)
+  (when buf
+    (with-current-buffer buf (or ediff--magic-file-name buffer-file-name))))
 
 ;; MERGE-BUFFER-FILE is the file to be associated with the merge buffer
 (defun ediff-files-internal (file-A file-B file-C startup-hooks job-name
 				    &optional merge-buffer-file)
-  (let (buf-A buf-B buf-C)
-    (if (string= file-A file-B)
-	(error "Files A and B are the same"))
-    (if (stringp file-C)
-	(or (and (string= file-A file-C) (error "Files A and C are the same"))
-	    (and (string= file-B file-C) (error "Files B and C are the same"))))
+  (if (string= file-A file-B)
+      (error "Files A and B are the same"))
+  (if (stringp file-C)
+      (or (and (string= file-A file-C) (error "Files A and C are the same"))
+          (and (string= file-B file-C) (error "Files B and C are the same"))))
+  (let ((ediff--startup-hook startup-hooks)
+        buf-A buf-B buf-C)
+
     (message "Reading file %s ... " file-A)
     ;;(sit-for 0)
-    (ediff-find-file 'file-A 'buf-A 'ediff-last-dir-A 'startup-hooks)
+    (setq buf-A (ediff-find-file file-A 'ediff-last-dir-A))
     (message "Reading file %s ... " file-B)
     ;;(sit-for 0)
-    (ediff-find-file 'file-B 'buf-B 'ediff-last-dir-B 'startup-hooks)
-    (if (stringp file-C)
-	(progn
-	  (message "Reading file %s ... " file-C)
-	  ;;(sit-for 0)
-	  (ediff-find-file
-	   'file-C 'buf-C
-	   (if (eq job-name 'ediff-merge-files-with-ancestor)
-	       'ediff-last-dir-ancestor 'ediff-last-dir-C)
-	   'startup-hooks)))
-    (ediff-setup buf-A file-A
-		 buf-B file-B
-		 buf-C file-C
-		 startup-hooks
+    (setq buf-B (ediff-find-file file-B 'ediff-last-dir-B))
+    (when (stringp file-C)
+      (message "Reading file %s ... " file-C)
+      ;;(sit-for 0)
+      (setq buf-C (ediff-find-file
+	           file-C
+	           (if (eq job-name 'ediff-merge-files-with-ancestor)
+	               'ediff-last-dir-ancestor 'ediff-last-dir-C))))
+    (ediff-setup buf-A (ediff--buffer-file-name buf-A)
+		 buf-B (ediff--buffer-file-name buf-B)
+		 buf-C (ediff--buffer-file-name buf-C)
+		 ediff--startup-hook
 		 (list (cons 'ediff-job-name job-name))
 		 merge-buffer-file)))
 
@@ -515,10 +519,10 @@ symbol describing the Ediff job type; it defaults to
 		       (get-buffer buf-B) file-B
 		       (if buf-C-is-alive (get-buffer buf-C))
 		       file-C
-		       (cons `(lambda ()
-				(delete-file ,file-A)
-				(delete-file ,file-B)
-				(if (stringp ,file-C) (delete-file ,file-C)))
+		       (cons (lambda ()
+			       (delete-file file-A)
+			       (delete-file file-B)
+			       (if (stringp file-C) (delete-file file-C)))
 			     startup-hooks)
 		       (list (cons 'ediff-job-name job-name))
 		       merge-buffer-file))
@@ -572,7 +576,7 @@ expression; only file names that match the regexp are considered."
 	    (eval ediff-default-filtering-regexp))
 	   )))
   (ediff-directories-internal
-   dir1 dir2 nil regexp 'ediff-files 'ediff-directories
+   dir1 dir2 nil regexp #'ediff-files 'ediff-directories
    ))
 
 ;;;###autoload
@@ -638,7 +642,7 @@ regular expression; only file names that match the regexp are considered."
 	    (eval ediff-default-filtering-regexp))
 	   )))
   (ediff-directories-internal
-   dir1 dir2 dir3 regexp 'ediff-files3 'ediff-directories3
+   dir1 dir2 dir3 regexp #'ediff-files3 'ediff-directories3
    ))
 
 ;;;###autoload
@@ -671,7 +675,7 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files."
 	    (eval ediff-default-filtering-regexp))
 	   )))
   (ediff-directories-internal
-   dir1 dir2 nil regexp 'ediff-merge-files 'ediff-merge-directories
+   dir1 dir2 nil regexp #'ediff-merge-files 'ediff-merge-directories
    nil merge-autostore-dir
    ))
 
@@ -714,7 +718,7 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files."
 	   )))
   (ediff-directories-internal
    dir1 dir2 ancestor-dir regexp
-   'ediff-merge-files-with-ancestor 'ediff-merge-directories-with-ancestor
+   #'ediff-merge-files-with-ancestor 'ediff-merge-directories-with-ancestor
    nil merge-autostore-dir
    ))
 
@@ -844,21 +848,20 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files."
     (setq dir-diff-struct (ediff-intersect-directories
 			   jobname
 			   regexp dir1 dir2 dir3 merge-autostore-dir))
-    (setq startup-hooks
-	  ;; this sets various vars in the meta buffer inside
-	  ;; ediff-prepare-meta-buffer
-	  (cons `(lambda ()
-		   ;; tell what to do if the user clicks on a session record
-		   (setq ediff-session-action-function (quote ,action))
-		   ;; set ediff-dir-difference-list
-		   (setq ediff-dir-difference-list
-			 (cdr (quote ,dir-diff-struct))))
-		startup-hooks))
+    ;; this sets various vars in the meta buffer inside
+    ;; ediff-prepare-meta-buffer
+    (push (lambda ()
+	    ;; tell what to do if the user clicks on a session record
+	    (setq ediff-session-action-function action)
+	    ;; set ediff-dir-difference-list
+	    (setq ediff-dir-difference-list
+		  (cdr dir-diff-struct)))
+	  startup-hooks)
     (setq meta-buf (ediff-prepare-meta-buffer
-		    'ediff-filegroup-action
+		    #'ediff-filegroup-action
 		    (car dir-diff-struct)
 		    "*Ediff Session Group Panel"
-		    'ediff-redraw-directory-group-buffer
+		    #'ediff-redraw-directory-group-buffer
 		    jobname
 		    startup-hooks))
     (ediff-show-meta-buffer meta-buf)
@@ -897,18 +900,17 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files."
     (setq file-list
 	  (ediff-get-directory-files-under-revision
 	   jobname regexp dir1 merge-autostore-dir))
-    (setq startup-hooks
-	  ;; this sets various vars in the meta buffer inside
-	  ;; ediff-prepare-meta-buffer
-	  (cons `(lambda ()
-		   ;; tell what to do if the user clicks on a session record
-		   (setq ediff-session-action-function (quote ,action)))
-		startup-hooks))
+    ;; this sets various vars in the meta buffer inside
+    ;; ediff-prepare-meta-buffer
+    (push (lambda ()
+	    ;; tell what to do if the user clicks on a session record
+	    (setq ediff-session-action-function action))
+	  startup-hooks)
     (setq meta-buf (ediff-prepare-meta-buffer
-		    'ediff-filegroup-action
+		    #'ediff-filegroup-action
 		    file-list
 		    "*Ediff Session Group Panel"
-		    'ediff-redraw-directory-group-buffer
+		    #'ediff-redraw-directory-group-buffer
 		    jobname
 		    startup-hooks))
     (ediff-show-meta-buffer meta-buf)
@@ -1121,9 +1123,9 @@ arguments after setting up the Ediff buffers."
 	  (ediff-setup buffer-A file-A
 		       buffer-B file-B
 		       nil nil	    ; buffer & file C
-		       (cons `(lambda ()
-				(delete-file ,file-A)
-				(delete-file ,file-B))
+		       (cons (lambda ()
+			       (delete-file file-A)
+			       (delete-file file-B))
 			     startup-hooks)
 		       (append
 			(list (cons 'ediff-word-mode  word-mode)
@@ -1176,7 +1178,7 @@ is the name of the file to be associated with the merge buffer.."
 					   ediff-last-dir-B
 					 (file-name-directory f)))
 				 (progn
-				   (ediff-add-to-history
+				   (add-to-history
 				    'file-name-history
 				    (ediff-abbreviate-file-name
 				     (expand-file-name
@@ -1225,7 +1227,7 @@ the file to be associated with the merge buffer."
 						    ediff-last-dir-B
 						  (file-name-directory f)))
 					  (progn
-					    (ediff-add-to-history
+					    (add-to-history
 					     'file-name-history
 					     (ediff-abbreviate-file-name
 					      (expand-file-name
@@ -1238,7 +1240,7 @@ the file to be associated with the merge buffer."
 					   ediff-last-dir-ancestor
 					 (file-name-directory ff)))
 				 (progn
-				   (ediff-add-to-history
+				   (add-to-history
 				    'file-name-history
 				    (ediff-abbreviate-file-name
 				     (expand-file-name
@@ -1650,17 +1652,7 @@ With optional NODE, goes to that node."
     (setq command-line-args-left (nthcdr 4 command-line-args-left))
     (ediff-merge-directories-with-ancestor file-a file-b ancestor regexp)))
 
-
-
-(require 'ediff-util)
-
 (run-hooks 'ediff-load-hook)
 
-
-;; Local Variables:
-;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;; eval: (put 'ediff-with-current-buffer 'lisp-indent-hook 1)
-;; eval: (put 'ediff-with-current-buffer 'edebug-form-spec '(form body))
-;; End:
-
+(provide 'ediff)
 ;;; ediff.el ends here

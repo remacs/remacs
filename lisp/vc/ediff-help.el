@@ -1,4 +1,4 @@
-;;; ediff-help.el --- Code related to the contents of Ediff help buffers  -*- lexical-binding: nil; -*-
+;;; ediff-help.el --- Code related to the contents of Ediff help buffers  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
@@ -270,8 +270,7 @@ the value of this variable and the variables `ediff-help-message-*' in
 (defun ediff-set-help-message ()
   (setq ediff-long-help-message
 	(cond ((and ediff-long-help-message-function
-		    (or (symbolp ediff-long-help-message-function)
-			(consp ediff-long-help-message-function)))
+		    (functionp ediff-long-help-message-function))
 	       (funcall ediff-long-help-message-function))
 	      (ediff-word-mode
 	       (concat ediff-long-help-message-head
@@ -295,8 +294,7 @@ the value of this variable and the variables `ediff-help-message-*' in
 		       ediff-long-help-message-tail))))
   (setq ediff-brief-help-message
 	(cond ((and ediff-brief-help-message-function
-		    (or (symbolp ediff-brief-help-message-function)
-			(consp ediff-brief-help-message-function)))
+                    (functionp ediff-brief-help-message-function))
 	       (funcall ediff-brief-help-message-function))
 	      ((stringp ediff-brief-help-message-function)
 	       ediff-brief-help-message-function)
@@ -316,6 +314,4 @@ the value of this variable and the variables `ediff-help-message-*' in
 
 
 (provide 'ediff-help)
-
-
 ;;; ediff-help.el ends here

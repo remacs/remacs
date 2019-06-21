@@ -1,4 +1,4 @@
-;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff  -*- lexical-binding: nil; -*-
+;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
@@ -103,8 +103,6 @@
 ;;; Code:
 
 
-(provide 'ediff-mult)
-
 (defgroup ediff-mult nil
   "Multi-file and multi-buffer processing in Ediff."
   :prefix "ediff-"
@@ -147,7 +145,20 @@ Useful commands (type ? to hide them and free up screen):
 
 (ediff-defvar-local ediff-meta-buffer-map nil
   "The keymap for the meta buffer.")
-(defvar ediff-dir-diffs-buffer-map (make-sparse-keymap)
+(defvar ediff-dir-diffs-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (define-key map "q" 'ediff-bury-dir-diffs-buffer)
+    (define-key map " " 'next-line)
+    (define-key map "n" 'next-line)
+    (define-key map "\C-?" 'previous-line)
+    (define-key map "p" 'previous-line)
+    (define-key map "C" 'ediff-dir-diff-copy-file)
+    (define-key map (if (featurep 'emacs) [mouse-2] [button2])
+      'ediff-dir-diff-copy-file)
+    (define-key map [delete] 'previous-line)
+    (define-key map [backspace] 'previous-line)
+    map)
   "The keymap to be installed in the buffer showing differences between
 directories.")
 
@@ -175,8 +186,7 @@ directories.")
   "The default regular expression used as a filename filter in multifile comparisons.
 Should be a sexp.  For instance (car ediff-filtering-regexp-history) or nil."
   :type 'sexp                           ; yuck - why not just a regexp?
-  :risky t
-  :group 'ediff-mult)
+  :risky t)
 
 ;; This has the form ((meta-buf regexp dir1 dir2 dir3 merge-auto-store-dir)
 ;; (ctl-buf session-status (file1 . eq-status) (file2 . eq-status) (file3
@@ -202,18 +212,15 @@ Should be a sexp.  For instance (car ediff-filtering-regexp-history) or nil."
 (defcustom ediff-meta-truncate-filenames t
   "If non-nil, truncate long file names in the session group buffers.
 This can be toggled with `ediff-toggle-filename-truncation'."
-  :type 'boolean
-  :group 'ediff-mult)
+  :type 'boolean)
 
 (defcustom ediff-meta-mode-hook nil
   "Hooks run just after setting up meta mode."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 
 (defcustom ediff-registry-setup-hook nil
   "Hooks run just after the registry control panel is set up."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 
 (defcustom ediff-before-session-group-setup-hooks
   nil ;FIXME: Bad name (should be -hook or -functions) and never run??
@@ -226,27 +233,22 @@ on `ediff-quit', `ediff-suspend', or `ediff-quit-session-group-hook'."
 (defcustom ediff-after-session-group-setup-hook nil
   "Hooks run just after a meta-buffer controlling a session group, such as
 ediff-directories, is run."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 (defcustom ediff-quit-session-group-hook nil
   "Hooks run just before exiting a session group."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 (defcustom ediff-show-registry-hook nil
   "Hooks run just after the registry buffer is shown."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 (defcustom ediff-show-session-group-hook '(delete-other-windows)
   "Hooks run just after a session group buffer is shown."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 (defcustom ediff-meta-buffer-keymap-setup-hook nil
   "Hooks run just after setting up the `ediff-meta-buffer-map'.
 This keymap controls key bindings in the meta buffer and is a local variable.
 This means that you can set different bindings for different kinds of meta
 buffers."
-  :type 'hook
-  :group 'ediff-mult)
+  :type 'hook)
 
 ;; Buffer holding the multi-file patch.  Local to the meta buffer
 (ediff-defvar-local ediff-meta-patchbufer nil "")
@@ -436,7 +438,7 @@ Toggled by ediff-toggle-verbose-help-meta-buffer" )
   (run-hooks 'ediff-meta-buffer-keymap-setup-hook))
 
 
-(defun ediff-meta-mode ()
+(define-derived-mode ediff-meta-mode nil "MetaEdiff"
   "This mode controls all operations on Ediff session groups.
 It is entered through one of the following commands:
 	`ediff-directories'
@@ -455,28 +457,7 @@ It is entered through one of the following commands:
 	`edir-merge-revisions-with-ancestor'
 
 Commands:
-\\{ediff-meta-buffer-map}"
-  ;; FIXME: Use define-derived-mode.
-  (kill-all-local-variables)
-  (setq major-mode 'ediff-meta-mode)
-  (setq mode-name "MetaEdiff")
-  ;; don't use run-mode-hooks here!
-  (run-hooks 'ediff-meta-mode-hook))
-
-
-;; the keymap for the buffer showing directory differences
-(suppress-keymap ediff-dir-diffs-buffer-map)
-(define-key ediff-dir-diffs-buffer-map "q" 'ediff-bury-dir-diffs-buffer)
-(define-key ediff-dir-diffs-buffer-map " " 'next-line)
-(define-key ediff-dir-diffs-buffer-map "n" 'next-line)
-(define-key ediff-dir-diffs-buffer-map "\C-?" 'previous-line)
-(define-key ediff-dir-diffs-buffer-map "p" 'previous-line)
-(define-key ediff-dir-diffs-buffer-map "C" 'ediff-dir-diff-copy-file)
-(if (featurep 'emacs)
-    (define-key ediff-dir-diffs-buffer-map [mouse-2] 'ediff-dir-diff-copy-file)
-  (define-key ediff-dir-diffs-buffer-map [button2] 'ediff-dir-diff-copy-file))
-(define-key ediff-dir-diffs-buffer-map [delete] 'previous-line)
-(define-key ediff-dir-diffs-buffer-map [backspace] 'previous-line)
+\\{ediff-meta-buffer-map}")
 
 (defun ediff-next-meta-item (count)
   "Move to the next item in Ediff registry or session group buffer.
@@ -598,8 +579,7 @@ behavior."
 (defun ediff-intersect-directories (jobname
 				    regexp dir1 dir2
 				    &optional
-				    dir3 merge-autostore-dir comparison-func)
-  (setq comparison-func (or comparison-func 'string=))
+				    dir3 merge-autostore-dir)
   (let (lis1 lis2 lis3 common auxdir1 auxdir2 auxdir3 common-part difflist)
 
     (setq auxdir1	(file-name-as-directory dir1)
@@ -632,24 +612,24 @@ behavior."
     (if (ediff-nonempty-string-p merge-autostore-dir)
 	(setq merge-autostore-dir
 	      (file-name-as-directory merge-autostore-dir)))
-    (setq common (ediff-intersection lis1 lis2 comparison-func))
+    (setq common (ediff-intersection lis1 lis2 #'string=))
 
     ;; In merge with ancestor jobs, we don't intersect with lis3.
     ;; If there is no ancestor, we'll offer to merge without the ancestor.
     ;; So, we intersect with lis3 only when we are doing 3-way file comparison
     (if (and lis3 (ediff-comparison-metajob3 jobname))
-	(setq common (ediff-intersection common lis3 comparison-func)))
+	(setq common (ediff-intersection common lis3 #'string=)))
 
     ;; copying is needed because sort sorts via side effects
     (setq common (sort (ediff-copy-list common) 'string-lessp))
 
     ;; compute difference list
     (setq difflist (ediff-set-difference
-		    (ediff-union (ediff-union lis1 lis2 comparison-func)
+		    (ediff-union (ediff-union lis1 lis2 #'string=)
 				 lis3
-				 comparison-func)
+				 #'string=)
 		    common
-		    comparison-func)
+		    #'string=)
 	  difflist (delete "."  difflist)
 	  ;; copying is needed because sort sorts via side effects
 	  difflist (sort (ediff-copy-list (delete ".." difflist))
@@ -679,7 +659,7 @@ behavior."
 		    (ediff-make-new-meta-list-header regexp
 						     auxdir1 auxdir2 auxdir3
 						     merge-autostore-dir
-						     comparison-func)
+						     #'string=)
 		    difflist))
 
     (setq common-part
@@ -688,7 +668,7 @@ behavior."
 	   (ediff-make-new-meta-list-header regexp
 					    auxdir1 auxdir2 auxdir3
 					    merge-autostore-dir
-					    comparison-func)
+					    #'string=)
 	   (mapcar
 	    (lambda (elt)
 	      (ediff-make-new-meta-list-element
@@ -767,9 +747,9 @@ behavior."
 
 ;; If file groups selected by patterns will ever be implemented, this
 ;; comparison function might become useful.
-;;;; uses external variables PAT1 PAT2 to compare str1/2
-;;;; patterns must be of the form ???*???? where ??? are strings of chars
-;;;; containing no *.
+;; ;; uses external variables PAT1 PAT2 to compare str1/2
+;; ;; patterns must be of the form ???*???? where ??? are strings of chars
+;; ;; containing no *.
 ;;(defun ediff-pattern= (str1 str2)
 ;;  (let (pos11 pos12 pos21 pos22 len1 len2)
 ;;    (setq pos11 0
@@ -799,7 +779,7 @@ behavior."
 ;; redraw-function.  Must return the created  meta-buffer.
 (defun ediff-prepare-meta-buffer (action-func meta-list
 				              meta-buffer-name redraw-function
-				              jobname &optional _startup-hooks)
+				              jobname &optional startup-hooks)
   (let* ((meta-buffer-name
 	  (ediff-unique-buffer-name meta-buffer-name "*"))
 	 (meta-buffer (get-buffer-create meta-buffer-name)))
@@ -841,7 +821,7 @@ behavior."
       (setq buffer-read-only t)
       (set-buffer-modified-p nil)
 
-      (run-hooks 'startup-hooks)
+      (mapc #'funcall startup-hooks)
 
       ;; Arrange to show directory contents differences
       ;; Must be after run startup-hooks, since ediff-dir-difference-list is
@@ -1009,7 +989,7 @@ behavior."
       ;; was redrawn
       (if (featurep 'xemacs)
 	  (map-extents 'delete-extent)
-	(mapc 'delete-overlay (overlays-in 1 1)))
+	(mapc #'delete-overlay (overlays-in 1 1)))
 
       (setq regexp (ediff-get-group-regexp meta-list)
 	    merge-autostore-dir
@@ -1455,7 +1435,7 @@ Useful commands:
       ;; was redrawn
       (if (featurep 'xemacs)
 	  (map-extents 'delete-extent)
-       (mapc 'delete-overlay (overlays-in 1 1)))
+       (mapc #'delete-overlay (overlays-in 1 1)))
 
       (insert (substitute-command-keys "\
 This is a registry of all active Ediff sessions.
@@ -1757,7 +1737,7 @@ all marked sessions must be active."
     (ediff-with-current-buffer ediff-meta-diff-buffer
 			       (setq buffer-read-only nil)
 			       (erase-buffer))
-    (if (> (ediff-operate-on-marked-sessions 'ediff-append-custom-diff) 0)
+    (if (> (ediff-operate-on-marked-sessions #'ediff-append-custom-diff) 0)
 	;; did something
 	(progn
 	  (display-buffer ediff-meta-diff-buffer 'not-this-window)
@@ -1812,7 +1792,7 @@ all marked sessions must be active."
 	 (info (ediff-get-meta-info meta-buf pos))
 	 (session-buf (ediff-get-session-buffer info))
 	 (session-number (ediff-get-session-number-at-pos pos meta-buf))
-	 (default-regexp (eval ediff-default-filtering-regexp))
+	 (default-regexp (eval ediff-default-filtering-regexp t))
 	 merge-autostore-dir file1 file2 file3 regexp)
 
     (setq file1 (ediff-get-session-objA-name info)
@@ -1850,7 +1830,7 @@ all marked sessions must be active."
 			"Filter filenames through regular expression: ")
 		      nil
 		      'ediff-filtering-regexp-history
-		      (eval ediff-default-filtering-regexp)))
+		      (eval ediff-default-filtering-regexp t)))
 	       (ediff-directories-internal
 		file1 file2 file3 regexp
 		ediff-session-action-function
@@ -2198,10 +2178,10 @@ all marked sessions must be active."
     (if (ediff-buffer-live-p ediff-registry-buffer)
 	(ediff-redraw-registry-buffer)
       (ediff-prepare-meta-buffer
-       'ediff-registry-action
+       #'ediff-registry-action
        ediff-session-registry
        "*Ediff Registry"
-       'ediff-redraw-registry-buffer
+       #'ediff-redraw-registry-buffer
        'ediff-registry))
     ))
 
@@ -2474,12 +2454,5 @@ for operation, or simply indicate which are equal files.  If it is nil, then
 	  ))
     ))
 
-
-
-;; Local Variables:
-;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;; eval: (put 'ediff-with-current-buffer 'lisp-indent-hook 1)
-;; eval: (put 'ediff-with-current-buffer 'edebug-form-spec '(form body))
-;; End:
-
+(provide 'ediff-mult)
 ;;; ediff-mult.el ends here

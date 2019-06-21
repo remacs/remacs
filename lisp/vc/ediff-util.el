@@ -25,7 +25,7 @@
 ;;; Code:
 
 
-(provide 'ediff-util)
+(provide 'ediff-util)    ;FIXME: Break cyclic dependencies and move to the end!
 
 ;; Compiler pacifier
 (defvar ediff-use-toolbar-p)
@@ -390,8 +390,8 @@ to invocation.")
       ;; parameters are processed.
       (setq ediff-setup-diff-regions-function
 	    (if ediff-diff3-job
-		'ediff-setup-diff-regions3
-	      'ediff-setup-diff-regions))
+		#'ediff-setup-diff-regions3
+	      #'ediff-setup-diff-regions))
 
       (setq ediff-wide-bounds
 	    (list (ediff-make-bullet-proof-overlay
@@ -885,8 +885,8 @@ Does nothing if file-A and file-B are in different frames."
 		    (eq frame-A frame-C) (eq frame-B frame-C))))
 	(setq ediff-split-window-function
 	      (if (eq ediff-split-window-function 'split-window-vertically)
-		  'split-window-horizontally
-		'split-window-vertically))
+		  #'split-window-horizontally
+		#'split-window-vertically))
       (message "Buffers being compared are in different frames"))
     (ediff-recenter 'no-rehighlight)))
 
@@ -1300,25 +1300,25 @@ which see."
 	(user-error "%sEmacs is not running as a window application"
 	       (if (featurep 'emacs) "" "X")))
 
-  (cond ((eq ediff-window-setup-function 'ediff-setup-windows-multiframe)
+  (cond ((eq ediff-window-setup-function #'ediff-setup-windows-multiframe)
 	 (setq ediff-multiframe nil)
-	 (setq window-setup-func 'ediff-setup-windows-plain)
+	 (setq window-setup-func #'ediff-setup-windows-plain)
          (message "ediff is now in 'plain' mode"))
-	((eq ediff-window-setup-function 'ediff-setup-windows-plain)
+	((eq ediff-window-setup-function #'ediff-setup-windows-plain)
 	 (if (ediff-in-control-buffer-p)
 	     (ediff-kill-bottom-toolbar))
 	 (if (and (ediff-buffer-live-p ediff-control-buffer)
 		  (window-live-p ediff-control-window))
 	     (set-window-dedicated-p ediff-control-window nil))
 	 (setq ediff-multiframe t)
-	 (setq window-setup-func 'ediff-setup-windows-multiframe)
+	 (setq window-setup-func #'ediff-setup-windows-multiframe)
          (message "ediff is now in 'multiframe' mode"))
 	(t
 	 (if (and (ediff-buffer-live-p ediff-control-buffer)
 		  (window-live-p ediff-control-window))
 	     (set-window-dedicated-p ediff-control-window nil))
 	 (setq ediff-multiframe t)
-	 (setq window-setup-func 'ediff-setup-windows-multiframe))
+	 (setq window-setup-func #'ediff-setup-windows-multiframe))
          (message "ediff is now in 'multiframe' mode"))
 
   ;; change default
@@ -1340,6 +1340,7 @@ which see."
 Works only in versions of Emacs that support toolbars.
 To change the default, set the variable `ediff-use-toolbar-p', which see."
   (interactive)
+  ;; FIXME: Make it work in Emacs!
   (if (featurep 'ediff-tbar)
       (progn
 	(or (ediff-window-display-p)
@@ -1544,8 +1545,8 @@ the one half of the height of window-A."
 
   (ediff-operate-on-windows
    (if (memq (ediff-last-command-char) '(?v ?\C-v))
-       'scroll-up
-     'scroll-down)
+       #'scroll-up
+     #'scroll-down)
    ;; calculate argument to scroll-up/down
    ;; if there is an explicit argument
    (if (and arg (not (equal arg '-)))
@@ -1601,10 +1602,10 @@ the width of the A/B/C windows."
    (if (= (ediff-last-command-char) ?<)
        (lambda (arg)
 	 (let ((prefix-arg arg))
-	   (call-interactively 'scroll-left)))
+	   (call-interactively #'scroll-left)))
      (lambda (arg)
        (let ((prefix-arg arg))
-	 (call-interactively 'scroll-right))))
+	 (call-interactively #'scroll-right))))
    ;; calculate argument to scroll-left/right
    ;; if there is an explicit argument
    (if (and arg (not (equal arg '-)))
@@ -1718,9 +1719,9 @@ the width of the A/B/C windows."
   (ediff-with-current-buffer (or ctl-buf ediff-control-buffer)
     (if (ediff-valid-difference-p n)
 	(let* ((func (cond ((eq op 'scroll-down)
-			    'ediff-get-lines-to-region-start)
+			    #'ediff-get-lines-to-region-start)
 			   ((eq op 'scroll-up)
-			    'ediff-get-lines-to-region-end)
+			    #'ediff-get-lines-to-region-end)
 			   (t (lambda (_a _b _c) 0))))
 	       (max-lines (max (funcall func 'A n ctl-buf)
 			       (funcall func 'B n ctl-buf)
@@ -2077,7 +2078,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
 		     (ediff-save-diff-region n to-buf-type reg-to-delete))))
 	    (error (message "ediff-copy-diff: %s %s"
 			    (car conds)
-			    (mapconcat 'prin1-to-string (cdr conds) " "))
+			    (mapconcat #'prin1-to-string (cdr conds) " "))
 		   (beep 1)
 		   (sit-for 2) ; let the user see the error msg
 		   (setq saved-p nil)
@@ -2178,7 +2179,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
 	    ))
       (error (message "ediff-pop-diff: %s %s"
 		      (car conds)
-		      (mapconcat 'prin1-to-string (cdr conds) " "))
+		      (mapconcat #'prin1-to-string (cdr conds) " "))
 	     (beep 1)))
 
     ;; Clearing fine diffs is necessary for
@@ -2241,7 +2242,7 @@ a regular expression typed in by the user."
 		   ediff-hide-regexp-matches-function)
 	       (eq (ediff-last-command-char) ?h)))
       (message "Selective browsing by regexp turned off")
-      (setq ediff-skip-diff-region-function 'ediff-show-all-diffs))
+      (setq ediff-skip-diff-region-function #'ediff-show-all-diffs))
      ((eq (ediff-last-command-char) ?h)
       (setq ediff-skip-diff-region-function ediff-hide-regexp-matches-function
 	    regexp-A
@@ -2929,7 +2930,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	(princ
 	 "\nSkipping merge regions that differ from default setting"))
 
-    (cond ((eq ediff-skip-diff-region-function 'ediff-show-all-diffs)
+    (cond ((eq ediff-skip-diff-region-function #'ediff-show-all-diffs)
 	   (princ "\nSelective browsing by regexp is off\n"))
 	  ((eq ediff-skip-diff-region-function
 	       ediff-hide-regexp-matches-function)
@@ -3314,7 +3315,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 		 (buffer-name)
 		 buffer-file-name))
 	(progn
-	  (if file-magic
+	  (if file-magic                ;FIXME: Why?
 	      (erase-buffer))
 	  (revert-buffer t t))
       (user-error "Buffer out of sync for file %s" buffer-file-name))))
@@ -3573,12 +3574,12 @@ Ediff Control Panel to restore highlighting."
 			(t (beep 1)
 			   (message
 			    "Valid values are %s"
-			    (mapconcat 'char-to-string possibilities " or "))
+			    (mapconcat #'char-to-string possibilities " or "))
 			   (sit-for 2)
 			   t))
 	     (let ((cursor-in-echo-area t))
 	       (message "Enter the 1st buffer you want to compare (%s): "
-			(mapconcat 'char-to-string possibilities " or "))
+			(mapconcat #'char-to-string possibilities " or "))
 	       (setq answer (capitalize (read-char-exclusive)))))
 	   (setq answer "") ; silence error msg
 	   (while (cond ((memq answer possibilities)
@@ -3592,12 +3593,12 @@ Ediff Control Panel to restore highlighting."
 			(t (beep 1)
 			   (message
 			    "Valid values are %s"
-			    (mapconcat 'char-to-string possibilities " or "))
+			    (mapconcat #'char-to-string possibilities " or "))
 			   (sit-for 2)
 			   t))
 	     (let ((cursor-in-echo-area t))
 	       (message "Enter the 2nd buffer you want to compare (%s): "
-			(mapconcat 'char-to-string possibilities "/"))
+			(mapconcat #'char-to-string possibilities "/"))
 	       (setq answer (capitalize (read-char-exclusive))))))
 	  (t ; 2way comparison
 	   (setq bufA ediff-buffer-A
@@ -4110,27 +4111,12 @@ Mail anyway? (y or n) ")
   (if (featurep 'xemacs)
       (zmacs-activate-region)
     (make-local-variable 'transient-mark-mode)
-    (setq mark-active t transient-mark-mode t)))
+    (setq mark-active 'ediff-util transient-mark-mode t)))
 
 (defun ediff-nuke-selective-display ()
   (if (featurep 'xemacs)
       (nuke-selective-display)
-    (save-excursion
-      (save-restriction
-	(widen)
-	(goto-char (point-min))
-	(let ((mod-p (buffer-modified-p))
-	      buffer-read-only end)
-	  (and (eq t selective-display)
-	       (while (search-forward "\^M" nil t)
-		 (end-of-line)
-		 (setq end (point))
-		 (beginning-of-line)
-		 (while (search-forward "\^M" end t)
-		   (delete-char -1)
-		   (insert "\^J"))))
-	  (set-buffer-modified-p mod-p)
-	  (setq selective-display nil))))))
+    ))
 
 
 ;; The next two are modified versions from emerge.el.
@@ -4244,7 +4230,7 @@ Mail anyway? (y or n) ")
 	      ;; fine-diff-vector
 	      (if (= (length (aref overl-vec 1)) 0)
 		  "none\n"
-		(mapconcat 'prin1-to-string
+		(mapconcat #'prin1-to-string
 			   (aref overl-vec 1) "\n\t\t\t    "))
 	      (aref overl-vec 2) ; no fine diff flag
 	      (aref overl-vec 3) ; state-of-diff
@@ -4320,10 +4306,7 @@ Mail anyway? (y or n) ")
       (setq lis1 (cdr lis1)))
     (cdr result)))
 
-(defun ediff-add-to-history (history-var newelt)
-  (if (fboundp 'add-to-history)
-      (add-to-history history-var newelt)
-    (set history-var (cons newelt (symbol-value history-var)))))
+(define-obsolete-function-alias 'ediff-add-to-history #'add-to-history "27.1")
 
 (defalias 'ediff-copy-list 'copy-sequence)
 
@@ -4332,12 +4315,5 @@ Mail anyway? (y or n) ")
 ;;(ediff-load-version-control 'silent)
 
 (run-hooks 'ediff-load-hook)
-
-
-;; Local Variables:
-;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;; eval: (put 'ediff-with-current-buffer 'lisp-indent-hook 1)
-;; eval: (put 'ediff-with-current-buffer 'edebug-form-spec '(form body))
-;; End:
 
 ;;; ediff-util.el ends here

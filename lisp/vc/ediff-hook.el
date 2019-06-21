@@ -1,4 +1,4 @@
-;;; ediff-hook.el --- setup for Ediff's menus and autoloads  -*- lexical-binding: nil; -*-
+;;; ediff-hook.el --- setup for Ediff's menus and autoloads  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
@@ -43,7 +43,6 @@
 ;; end pacifier
 
 ;; allow menus to be set up without ediff-wind.el being loaded
-(defvar ediff-window-setup-function)
 
 ;; This autoload is useless in Emacs because ediff-hook.el is dumped with
 ;; emacs, but it is needed in XEmacs
@@ -114,10 +113,8 @@
 	  ["Use separate frame for Ediff control buffer"
 	   ediff-toggle-multiframe
 	   :style toggle
-	   :selected (if (and (featurep 'ediff-util)
-			      (boundp 'ediff-window-setup-function))
-			 (eq ediff-window-setup-function
-			     'ediff-setup-windows-multiframe))]
+	   :selected (eq (bound-and-true-p ediff-window-setup-function)
+			 #'ediff-setup-windows-multiframe)]
 	  ["Use a toolbar with Ediff control buffer"
 	   ediff-toggle-use-toolbar
 	   :style toggle
@@ -133,14 +130,14 @@
   (defvar menu-bar-ediff-misc-menu
     (make-sparse-keymap "Ediff Miscellanea"))
   (fset 'menu-bar-ediff-misc-menu
-	(symbol-value 'menu-bar-ediff-misc-menu))
+	menu-bar-ediff-misc-menu)
   (defvar menu-bar-epatch-menu (make-sparse-keymap "Apply Patch"))
-  (fset 'menu-bar-epatch-menu (symbol-value 'menu-bar-epatch-menu))
+  (fset 'menu-bar-epatch-menu menu-bar-epatch-menu)
   (defvar menu-bar-ediff-merge-menu (make-sparse-keymap "Merge"))
   (fset 'menu-bar-ediff-merge-menu
-	(symbol-value 'menu-bar-ediff-merge-menu))
+	menu-bar-ediff-merge-menu)
   (defvar menu-bar-ediff-menu (make-sparse-keymap "Compare"))
-  (fset 'menu-bar-ediff-menu (symbol-value 'menu-bar-ediff-menu))
+  (fset 'menu-bar-ediff-menu menu-bar-ediff-menu)
 
   ;; define ediff compare menu
   (define-key menu-bar-ediff-menu [ediff-misc]
@@ -245,7 +242,15 @@
   (define-key menu-bar-ediff-misc-menu [emultiframe]
     `(menu-item ,(purecopy "Use separate control buffer frame")
       ediff-toggle-multiframe
-      :help ,(purecopy "Switch between the single-frame presentation mode and the multi-frame mode")))
+      :help ,(purecopy "Switch between the single-frame presentation mode and the multi-frame mode")
+      :button (:toggle . (eq (bound-and-true-p ediff-window-setup-function)
+		             #'ediff-setup-windows-multiframe))))
+  ;; FIXME: Port XEmacs's toolbar support!
+  ;; ["Use a toolbar with Ediff control buffer"
+  ;;  ediff-toggle-use-toolbar
+  ;;  :style toggle
+  ;;  :selected (if (featurep 'ediff-tbar)
+  ;;       	 (ediff-use-toolbar-p))]
   (define-key menu-bar-ediff-misc-menu [eregistry]
     `(menu-item ,(purecopy "List Ediff Sessions") ediff-show-registry
 		:help ,(purecopy "List all active Ediff sessions; it is a convenient way to find and resume such a session")))
@@ -257,6 +262,4 @@
 		:help ,(purecopy "Bring up the Ediff manual"))))
 
 (provide 'ediff-hook)
-
-
 ;;; ediff-hook.el ends here

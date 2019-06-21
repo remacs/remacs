@@ -1,4 +1,4 @@
-;;; ediff-wind.el --- window manipulation utilities  -*- lexical-binding: nil; -*-
+;;; ediff-wind.el --- window manipulation utilities  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1994-1997, 2000-2019 Free Software Foundation, Inc.
 
@@ -94,7 +94,6 @@ provided functions are written."
 		 (const :tag "Multi Frame" ediff-setup-windows-multiframe)
 		 (const :tag "Single Frame" ediff-setup-windows-plain)
 		 (function :tag "Other function"))
-  :group 'ediff-window
   :version "24.3")
 
 ;; indicates if we are in a multiframe setup
@@ -138,8 +137,7 @@ In this case, Ediff will use those frames to display these buffers."
   :type '(choice
 	  (const :tag "Split vertically" split-window-vertically)
 	  (const :tag "Split horizontally" split-window-horizontally)
-	  function)
-  :group 'ediff-window)
+	  function))
 
 (defcustom ediff-merge-split-window-function #'split-window-horizontally
   "The function used to split the main window between buffer-A and buffer-B.
@@ -151,8 +149,7 @@ In this case, Ediff will use those frames to display these buffers."
   :type '(choice
 	  (const :tag "Split vertically" split-window-vertically)
 	  (const :tag "Split horizontally" split-window-horizontally)
-	  function)
-  :group 'ediff-window)
+	  function))
 
 ;; Definitions hidden from the compiler by compat wrappers.
 (declare-function ediff-display-pixel-width "ediff-init")
@@ -205,16 +202,14 @@ Used internally---not a user option.")
 If `maybe', Ediff will do it sometimes, but not after operations that require
 relatively long time.  If nil, the mouse will be entirely user's
 responsibility."
-  :type 'boolean
-  :group 'ediff-window)
+  :type 'boolean)
 
 (defcustom ediff-control-frame-position-function #'ediff-make-frame-position
   "Function to call to determine the desired location for the control panel.
 Expects three parameters: the control buffer, the desired width and height
 of the control frame.  It returns an association list
 of the form \((top . <position>) \(left . <position>))"
-  :type 'function
-  :group 'ediff-window)
+  :type 'function)
 
 (defcustom ediff-control-frame-upward-shift 42
   "The upward shift of control frame from the top of buffer A's frame.
@@ -222,8 +217,7 @@ Measured in pixels.
 This is used by the default control frame positioning function,
 `ediff-make-frame-position'.  This variable is provided for easy
 customization of the default control frame positioning."
-  :type 'integer
-  :group 'ediff-window)
+  :type 'integer)
 
 (defcustom ediff-narrow-control-frame-leftward-shift (if (featurep 'xemacs) 7 3)
   "The leftward shift of control frame from the right edge of buf A's frame.
@@ -232,8 +226,7 @@ This is used by the default control frame positioning function,
 `ediff-make-frame-position' to adjust the position of the control frame
 when it shows the short menu.  This variable is provided for easy
 customization of the default."
-  :type 'integer
-  :group 'ediff-window)
+  :type 'integer)
 
 (defcustom ediff-wide-control-frame-rightward-shift 7
   "The rightward shift of control frame from the left edge of buf A's frame.
@@ -242,8 +235,7 @@ This is used by the default control frame positioning function,
 `ediff-make-frame-position' to adjust the position of the control frame
 when it shows the full menu.  This variable is provided for easy
 customization of the default."
-  :type 'integer
-  :group 'ediff-window)
+  :type 'integer)
 
 
 ;; Wide frame display
@@ -276,8 +268,7 @@ This is only useful in Emacs and only for certain kinds of window managers,
 such as TWM and its derivatives, since the window manager must permit
 keyboard input to go into icons.  XEmacs completely ignores keyboard input
 into icons, regardless of the window manager."
-  :type 'boolean
-  :group 'ediff-window)
+  :type 'boolean)
 
 ;;; Functions
 
@@ -342,8 +333,8 @@ into icons, regardless of the window manager."
 
 (defun ediff-setup-windows-default (buffer-A buffer-B buffer-C control-buffer)
   (funcall (if (display-graphic-p)
-	       'ediff-setup-windows-multiframe
-	     'ediff-setup-windows-plain)
+	       #'ediff-setup-windows-multiframe
+	     #'ediff-setup-windows-plain)
 	   buffer-A buffer-B buffer-C control-buffer))
 
 ;; Just set up 3 windows.
@@ -524,7 +515,7 @@ into icons, regardless of the window manager."
 
   ;;   Skip dedicated or iconified frames.
   ;;   Unsplittable frames are taken care of later.
-  (ediff-skip-unsuitable-frames 'ok-unsplittable)
+  ;; (ediff-skip-unsuitable-frames 'ok-unsplittable)
 
   (let* ((window-min-height 1)
 	 (wind-A (ediff-get-visible-buffer-window buf-A))
