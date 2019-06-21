@@ -129,8 +129,10 @@ regexp incremental search.  If the value is nil, or
 then each space you type matches literally, against one space.
 
 You might want to use something like \"[ \\t\\r\\n]+\" instead.
-In the Customization buffer, that is `[' followed by a space,
-a tab, a carriage return (control-M), a newline, and `]+'."
+In the Customization buffer, that is `[' followed by a space, a
+tab, a carriage return (control-M), a newline, and `]+'.  Don't
+add any capturing groups into this value; that can change the
+numbering of existing capture groups in unexpected ways."
   :type '(choice (const :tag "Match Spaces Literally" nil)
 		 regexp)
   :version "24.3")
@@ -3263,25 +3265,31 @@ Can be changed via `isearch-search-fun-function' for special needs."
 (defun isearch-search-fun-default ()
   "Return default functions to use for the search."
   (lambda (string &optional bound noerror count)
-    ;; Use lax versions to not fail at the end of the word while
-    ;; the user adds and removes characters in the search string
-    ;; (or when using nonincremental word isearch)
-    (let ((search-spaces-regexp (when (cond
-                                       (isearch-regexp isearch-regexp-lax-whitespace)
-                                       (t isearch-lax-whitespace))
+    (let (;; Evaluate this before binding `search-spaces-regexp' which
+          ;; can break all sorts of regexp searches.  In particular,
+          ;; calling `isearch-regexp-function' can trigger autoloading
+          ;; (Bug#35802).
+          (regexp
+           (cond (isearch-regexp-function
+                  (let ((lax (and (not bound)
+                                  (isearch--lax-regexp-function-p))))
+                    (when lax
+                      (setq isearch-adjusted t))
+                    (if (functionp isearch-regexp-function)
+                        (funcall isearch-regexp-function string lax)
+                      (word-search-regexp string lax))))
+                 (isearch-regexp string)
+                 (t (regexp-quote string))))
+          ;; Use lax versions to not fail at the end of the word while
+          ;; the user adds and removes characters in the search string
+          ;; (or when using nonincremental word isearch)
+          (search-spaces-regexp (when (if isearch-regexp
+                                          isearch-regexp-lax-whitespace
+                                        isearch-lax-whitespace)
                                   search-whitespace-regexp)))
       (funcall
        (if isearch-forward #'re-search-forward #'re-search-backward)
-       (cond (isearch-regexp-function
-              (let ((lax (and (not bound) (isearch--lax-regexp-function-p))))
-                (when lax
-                  (setq isearch-adjusted t))
-                (if (functionp isearch-regexp-function)
-                    (funcall isearch-regexp-function string lax)
-                  (word-search-regexp string lax))))
-             (isearch-regexp string)
-             (t (regexp-quote string)))
-       bound noerror count))))
+       regexp bound noerror count))))
 
 (defun isearch-search-string (string bound noerror)
   "Search for the first occurrence of STRING or its translation.

@@ -3390,7 +3390,9 @@ syms_of_search (void)
 Some commands use this for user-specified regexps.
 Spaces that occur inside character classes or repetition operators
 or other such regexp constructs are not replaced with this.
-A value of nil (which is the normal value) means treat spaces literally.  */);
+A value of nil (which is the normal value) means treat spaces
+literally.  Note that a value with capturing groups can change the
+numbering of existing capture groups in unexpected ways.  */);
   Vsearch_spaces_regexp = Qnil;
 
   DEFSYM (Qinhibit_changing_match_data, "inhibit-changing-match-data");

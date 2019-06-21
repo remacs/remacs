@@ -124,13 +124,5 @@
         ;; Ensure it took less than a second.
         (should (< (- (time-to-seconds) time) 1))))))
 
-(ert-deftest char-fold--test-bug-35802 ()
-  (let* ((char-code-property-alist      ; initial value
-          (cons '(decomposition . "uni-decomposition.el")
-                char-code-property-alist))
-         (search-spaces-regexp "\\(\\s-\\|\n\\)+")
-         (char-fold-table (char-fold-make-table)))
-    (char-fold--test-match-exactly "ä" "ä")))
-
 (provide 'char-fold-tests)
 ;;; char-fold-tests.el ends here

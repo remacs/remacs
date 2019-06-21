@@ -28,7 +28,6 @@
   (defun char-fold-make-table ()
     (let* ((equiv (make-char-table 'char-fold-table))
            (equiv-multi (make-char-table 'char-fold-table))
-           (search-spaces-regexp nil)   ; workaround for bug#35802
            (table (unicode-property-table-internal 'decomposition)))
       (set-char-table-extra-slot equiv 0 equiv-multi)
 
