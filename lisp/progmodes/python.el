@@ -5379,6 +5379,7 @@ REPORT-FN is Flymake's callback function."
   (set (make-local-variable 'paragraph-start) "\\s-*$")
   (set (make-local-variable 'fill-paragraph-function)
        #'python-fill-paragraph)
+  (set (make-local-variable 'fill-indent-according-to-mode) t) ; Bug#36056.
 
   (set (make-local-variable 'beginning-of-defun-function)
        #'python-nav-beginning-of-defun)

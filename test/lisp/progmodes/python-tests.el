@@ -1341,6 +1341,24 @@ this is an arbitrarily
                       expected)))))
 
 
+;;; Autofill
+
+(ert-deftest python-auto-fill-docstring ()
+  (python-tests-with-temp-buffer
+   "\
+def some_function(arg1,
+                  arg2):
+    \"\"\"
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+   (auto-fill-mode +1)
+   (goto-char (point-max))
+   (newline)
+   (search-backward "Lorem")
+   (let ((docindent (current-indentation)))
+     (forward-line 1)
+     (should (= docindent (current-indentation))))))
+
+
 ;;; Mark
 
 (ert-deftest python-mark-defun-1 ()
