@@ -8834,7 +8834,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       if (f && FRAME_X_DOUBLE_BUFFERED_P (f))
         font_drop_xrender_surfaces (f);
       unblock_input ();
-#ifdef USE_CAIRO
+#if defined USE_CAIRO && !defined USE_GTK
       if (f)
 	x_cr_update_surface_desired_size (f, configureEvent.xconfigure.width,
 					  configureEvent.xconfigure.height);
