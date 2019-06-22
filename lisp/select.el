@@ -485,7 +485,7 @@ two markers or an overlay.  Otherwise, it is nil."
             ;; are eight-bit and ensure they are converted to their
             ;; single-byte representation.
             (or (null (multibyte-string-p str))
-                (setq str (encode-coding-string 'raw-text-unix str))))
+                (setq str (encode-coding-string str 'raw-text-unix))))
 
 	   (t
 	    (error "Unknown selection type: %S" type)))))
