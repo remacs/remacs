@@ -194,7 +194,6 @@ executed inside the container.
 
 ```
 $ ./autogen.sh
-$ ./configure --enable-rust-debug
 $ make
 ```
 
