@@ -49,16 +49,17 @@ the current system default encoding on 9x/Me, `utf-16le-dos'
 
 For X Windows:
 When sending text via selection and clipboard, if the target
-data-type matches with the type of this coding system, it is used
-for encoding the text.  Otherwise (including the case that this
-variable is nil), a proper coding system is used as below:
+data-type matches this coding system according to the table
+below, it is used for encoding the text.  Otherwise (including
+the case that this variable is nil), a proper coding system is
+selected as below:
 
 data-type	coding system
 ---------	-------------
 UTF8_STRING	utf-8
 COMPOUND_TEXT	compound-text-with-extensions
 STRING		iso-latin-1
-C_STRING	no-conversion
+C_STRING	raw-text-unix
 
 When receiving text, if this coding system is non-nil, it is used
 for decoding regardless of the data-type.  If this is nil, a
@@ -476,10 +477,15 @@ two markers or an overlay.  Otherwise, it is nil."
 	    (setq str (encode-coding-string str coding)))
 
 	   ((eq type 'C_STRING)
-            ;; If STR is unibyte (the normal case), use it; otherwise
-            ;; we assume some of the characters are eight-bit, and
-            ;; take their lower 8 bits.
-	    (setq str (string-make-unibyte str)))
+            ;; According to ICCCM Protocol v2.0 (para 2.7.1), C_STRING
+            ;; is a zero-terminated sequence of raw bytes that
+            ;; shouldn't be interpreted as text in any encoding.
+            ;; Therefore, if STR is unibyte (the normal case), we use
+            ;; it as-is; otherwise we assume some of the characters
+            ;; are eight-bit and ensure they are converted to their
+            ;; single-byte representation.
+            (or (null (multibyte-string-p str))
+                (setq str (encode-coding-string 'raw-text-unix str))))
 
 	   (t
 	    (error "Unknown selection type: %S" type)))))
