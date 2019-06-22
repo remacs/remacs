@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "xterm.h"
 #include "blockinput.h"
+#include "charset.h"
 #include "composite.h"
 #include "font.h"
 #include "ftfont.h"
@@ -307,6 +308,17 @@ ftcrfont_has_char (Lisp_Object font, int c)
 {
   if (FONT_ENTITY_P (font))
     return ftfont_has_char (font, c);
+
+  struct charset *cs = NULL;
+
+  if (EQ (AREF (font, FONT_ADSTYLE_INDEX), Qja)
+      && charset_jisx0208 >= 0)
+    cs = CHARSET_FROM_ID (charset_jisx0208);
+  else if (EQ (AREF (font, FONT_ADSTYLE_INDEX), Qko)
+      && charset_ksc5601 >= 0)
+    cs = CHARSET_FROM_ID (charset_ksc5601);
+  if (cs)
+    return (ENCODE_CHAR (cs, c) != CHARSET_INVALID_CODE (cs));
 
   return -1;
 }
