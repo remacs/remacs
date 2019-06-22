@@ -507,14 +507,15 @@ Instead, use this:
   :type '(repeat (string))
   :group 'nnir)
 
-(defcustom nnir-notmuch-remove-prefix (concat (getenv "HOME") "/Mail/")
+(defcustom nnir-notmuch-remove-prefix
+  (regexp-quote (or (getenv "MAILDIR") (expand-file-name "~/Mail")))
   "The prefix to remove from each file name returned by notmuch
 in order to get a group name (albeit with / instead of .).  This is a
 regular expression.
 
 This variable is very similar to `nnir-namazu-remove-prefix', except
 that it is for notmuch, not Namazu."
-  :version "24.1"
+  :version "27.1"
   :type '(regexp)
   :group 'nnir)
 
