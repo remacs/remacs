@@ -110,11 +110,6 @@ the second with the current group name."
   :options '(message-remove-blank-cited-lines)
   :type 'hook)
 
-(defcustom gnus-bug-create-help-buffer t
-  "Should we create the *Gnus Help Bug* buffer?"
-  :group 'gnus-message
-  :type 'boolean)
-
 (defcustom gnus-posting-styles nil
   "Alist of styles to use when posting.
 See Info node `(gnus)Posting Styles'."
@@ -349,27 +344,6 @@ only affect the Gcc copy, but not the original message."
 (defvar gnus-message-group-art nil)
 
 (defvar gnus-msg-force-broken-reply-to nil)
-
-(defconst gnus-bug-message
-  "Sending a bug report to the Gnus Towers.
-========================================
-
-The buffer below is a mail buffer.  When you press `C-c C-c', it will
-be sent to the Gnus Bug Exterminators.
-
-The thing near the bottom of the buffer is how the environment
-settings will be included in the mail.  Please do not delete that.
-They will tell the Bug People what your environment is, so that it
-will be easier to locate the bugs.
-
-If you have found a bug that makes Emacs go \"beep\", set
-debug-on-error to t (`M-x set-variable RET debug-on-error RET t RET')
-and include the backtrace in your bug report.
-
-Please describe the bug in annoying, painstaking detail.
-
-Thank you for your help in stamping out bugs.
-")
 
 (autoload 'gnus-uu-post-news "gnus-uu" nil t)
 
@@ -1523,44 +1497,13 @@ If YANK is non-nil, include the original article."
       (when yank
 	(gnus-inews-yank-articles (list (cdr gnus-article-current)))))))
 
-(defvar nntp-server-type)
-(defun gnus-bug ()
-  "Send a bug report to the Gnus maintainers."
-  (interactive)
-  (unless (gnus-alive-p)
-    (error "Gnus has been shut down"))
-  (gnus-setup-message (if (message-mail-user-agent) 'message 'bug)
-    (unless (message-mail-user-agent)
-      (when gnus-bug-create-help-buffer
-	(switch-to-buffer "*Gnus Help Bug*")
-	(erase-buffer)
-	(insert gnus-bug-message)
-	(goto-char (point-min)))
-      (message-pop-to-buffer "*Gnus Bug*"))
-    (let ((message-this-is-mail t))
-      (message-setup `((To . ,gnus-maintainer)
-                       (Subject . "")
-                       (X-Debbugs-Package
-                        . ,(format "%s" gnus-bug-package))
-                       (X-Debbugs-Version
-                        . ,(format "%s" (gnus-continuum-version))))))
-    (when gnus-bug-create-help-buffer
-      (push '(gnus-bug-kill-buffer) message-send-actions))
+(defun gnus-bug (subject)
+  "Send a bug report to the Emacs maintainers."
+  (interactive "sBug Subject: ")
+  (report-emacs-bug subject)
+  (save-excursion
     (goto-char (point-min))
-    (message-goto-body)
-    (insert "\n\n\n\n\n")
-    (insert (gnus-version) "\n"
-	    (emacs-version) "\n")
-    (when (and (boundp 'nntp-server-type)
-	       (stringp nntp-server-type))
-      (insert nntp-server-type))
-    (goto-char (point-min))
-    (search-forward "Subject: " nil t)
-    (message "")))
-
-(defun gnus-bug-kill-buffer ()
-  (when (get-buffer "*Gnus Help Bug*")
-    (kill-buffer "*Gnus Help Bug*")))
+    (insert (format "X-Debbugs-Package: %s\n" gnus-bug-package))))
 
 (defun gnus-summary-yank-message (buffer n)
   "Yank the current article into a composed message."

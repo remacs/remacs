@@ -26704,12 +26704,6 @@ Overall, a casual user who hasn't written much code that depends on
 @sc{gnus} internals should suffer no problems.  If problems occur,
 please let me know by issuing that magic command @kbd{M-x gnus-bug}.
 
-@vindex gnus-bug-create-help-buffer
-If you are in the habit of sending bug reports @emph{very} often, you
-may find the helpful help buffer annoying after a while.  If so, set
-@code{gnus-bug-create-help-buffer} to @code{nil} to avoid having it pop
-up at you.
-
 
 @node Conformity
 @subsection Conformity
