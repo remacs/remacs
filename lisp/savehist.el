@@ -48,8 +48,6 @@
 ;;; Code:
 
 (require 'custom)
-(eval-when-compile
-  (if (featurep 'xemacs) (require 'cl)))
 
 ;; User variables
 
@@ -120,12 +118,8 @@ to save."
 
 ;; This should be capable of representing characters used by Emacs.
 ;; We prefer UTF-8 over ISO 2022 because it is well-known outside
-;; Mule.  XEmacs prior to 21.5 had UTF-8 provided by an external
-;; package which may not be loaded, which is why we check for version.
-(defvar savehist-coding-system (if (and (featurep 'xemacs)
-					(<= emacs-major-version 21)
-					(< emacs-minor-version 5))
-				   'iso-2022-8 'utf-8-unix)
+;; Mule.
+(defvar savehist-coding-system 'utf-8-unix
   "The coding system Savehist uses for saving the minibuffer history.
 Changing this value while Emacs is running is supported, but considered
 unwise, unless you know what you are doing.")
@@ -147,10 +141,6 @@ along with minibuffer history.  You can change its value off
 This prevents toggling Savehist mode from destroying existing
 minibuffer history.")
 
-(when (featurep 'xemacs)
-  ;; Must declare this under XEmacs, which doesn't have built-in
-  ;; minibuffer history truncation.
-  (defvar history-length 100))
 
 ;; Functions.
 
@@ -217,12 +207,8 @@ To undo this, call `savehist-uninstall'."
   (when (and savehist-autosave-interval
 	     (null savehist-timer))
     (setq savehist-timer
-	  (if (featurep 'xemacs)
-	      (start-itimer
-	       "savehist" #'savehist-autosave savehist-autosave-interval
-	       savehist-autosave-interval)
-	    (run-with-timer savehist-autosave-interval
-			    savehist-autosave-interval #'savehist-autosave)))))
+	  (run-with-timer savehist-autosave-interval
+			  savehist-autosave-interval #'savehist-autosave))))
 
 (defun savehist-uninstall ()
   "Undo installing savehist.
@@ -230,14 +216,8 @@ Normally invoked by calling `savehist-mode' to unset the minor mode."
   (remove-hook 'minibuffer-setup-hook #'savehist-minibuffer-hook)
   (remove-hook 'kill-emacs-hook #'savehist-autosave)
   (when savehist-timer
-    (if (featurep 'xemacs)
-	(delete-itimer savehist-timer)
-      (cancel-timer savehist-timer))
+    (cancel-timer savehist-timer)
     (setq savehist-timer nil)))
-
-;; From XEmacs?
-(defvar print-readably)
-(defvar print-string-length)
 
 (defun savehist-save (&optional auto-save)
   "Save the values of minibuffer history variables.
@@ -255,9 +235,7 @@ If AUTO-SAVE is non-nil, compare the saved contents to the one last saved,
       savehist-coding-system))
     (run-hooks 'savehist-save-hook)
     (let ((print-length nil)
-	  (print-string-length nil)
 	  (print-level nil)
-	  (print-readably t)
 	  (print-quoted t))
       ;; Save the minibuffer histories, along with the value of
       ;; savehist-minibuffer-history-variables itself.
@@ -269,7 +247,7 @@ If AUTO-SAVE is non-nil, compare the saved contents to the one last saved,
 	(dolist (symbol savehist-minibuffer-history-variables)
 	  (when (and (boundp symbol)
 		     (not (memq symbol savehist-ignored-variables)))
-	    (let ((value (savehist-trim-history (symbol-value symbol)))
+	    (let ((value (symbol-value symbol))
 		  excess-space)
 	      (when value		; Don't save empty histories.
 		(insert "(setq ")
@@ -334,17 +312,7 @@ Does nothing if Savehist mode is off."
   (when savehist-mode
     (savehist-save t)))
 
-(defun savehist-trim-history (value)
-  "Retain only the first `history-length' items in VALUE.
-Only used under XEmacs, which doesn't (yet) implement automatic
-trimming of history lists to `history-length' items."
-  (if (and (featurep 'xemacs)
-	   (natnump history-length)
-	   (> (length value) history-length))
-      ;; Equivalent to `(subseq value 0 history-length)', but doesn't
-      ;; need cl-extra at run-time.
-      (loop repeat history-length collect (pop value))
-    value))
+(define-obsolete-function-alias 'savehist-trim-history #'identity "27.1")
 
 (defun savehist-printable (value)
   "Return non-nil if VALUE is printable."
@@ -359,20 +327,22 @@ trimming of history lists to `history-length' items."
     ;; For others, check explicitly.
     (with-temp-buffer
       (condition-case nil
-	  (let ((print-readably t) (print-level nil))
-	  ;; Print the value into a buffer...
-	  (prin1 value (current-buffer))
-	  ;; ...and attempt to read it.
-	  (read (point-min-marker))
-	  ;; The attempt worked: the object is printable.
-	  t)
+	  (let ((print-level nil))
+	    ;; Print the value into a buffer...
+	    (prin1 value (current-buffer))
+	    ;; ...and attempt to read it.
+	    (read (point-min-marker))
+	    ;; The attempt worked: the object is printable.
+	    t)
 	;; The attempt failed: the object is not printable.
 	(error nil))))))
 
 (defun savehist-minibuffer-hook ()
   (unless (or (eq minibuffer-history-variable t)
-	      ;; XEmacs sets minibuffer-history-variable to t to mean "no
-	      ;; history is being recorded".
+	      ;; If `read-string' is called with a t HISTORY argument
+	      ;; (which `read-password' does),
+	      ;; `minibuffer-history-variable' is bound to t to mean
+	      ;; "no history is being recorded".
 	      (memq minibuffer-history-variable savehist-ignored-variables))
     (add-to-list 'savehist-minibuffer-history-variables
 		 minibuffer-history-variable)))
