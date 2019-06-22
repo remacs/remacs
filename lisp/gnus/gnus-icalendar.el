@@ -480,14 +480,13 @@ Return nil for non-recurring EVENT."
                 (org-entry-put (point) (car prop) (cdr prop)))
               props))
 
-      (when description
-        (save-restriction
-          (narrow-to-region (point) (point))
-          (insert (gnus-icalendar-event:org-timestamp event)
-                  "\n\n"
-                  description)
-          (indent-region (point-min) (point-max) 2)
-          (fill-region (point-min) (point-max))))
+      (save-restriction
+        (narrow-to-region (point) (point))
+        (insert (gnus-icalendar-event:org-timestamp event)
+                "\n\n"
+                description)
+        (indent-region (point-min) (point-max) 2)
+        (fill-region (point-min) (point-max)))
 
       (buffer-string))))
 
