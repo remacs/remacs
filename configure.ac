@@ -1960,9 +1960,9 @@ CFLAGS="$CFLAGS -x objective-c"
 GNU_OBJC_CFLAGS=
 LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
-  # macfont.o requires macuvs.h which is absent in the repository,
+  # macfont.o requires macuvs.h which is absent after 'make extraclean',
   # so avoid NS_IMPL_COCOA if macuvs.h is absent.
-  # Even a headless Emacs can build macuvs.h, so this lets you bootstrap.
+  # Even a headless Emacs can build macuvs.h, so this should let you bootstrap.
   if test "${opsys}" = darwin && test -f "$srcdir/src/macuvs.h"; then
      NS_IMPL_COCOA=yes
      ns_appdir=`pwd`/nextstep/Emacs.app
