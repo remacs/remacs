@@ -82,5 +82,22 @@
     (narrow-to-page -1)
     (should (equal (buffer-string) "bar\n"))))
 
-(provide 'page-tests)
+(ert-deftest page-tests-count-lines-page ()
+  (with-temp-buffer
+    (insert "foo\n\nbar\n\nbaz")
+    (goto-char (point-min))
+    (should (equal (page--count-lines-page) '(1 0 1)))
+    (goto-char (point-max))
+    (should (equal (page--count-lines-page) '(2 2 0)))))
+
+(ert-deftest page-tests-what-page ()
+  (with-temp-buffer
+    (insert "foo\n\nbar\n\nbaz")
+    (goto-char (point-min))
+    (should (equal (page--what-page) '(1 1)))
+    (forward-page)
+    (should (equal (page--what-page) '(2 2)))
+    (forward-page)
+    (should (equal (page--what-page) '(3 4)))))
+
 ;;; page-tests.el ends here
