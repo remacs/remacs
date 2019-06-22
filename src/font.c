@@ -4360,7 +4360,7 @@ the consecutive wildcards are folded into one.  */)
 
       while ((p1 = strstr (p0, "-*-*")))
 	{
-	  strcpy (p1, p1 + 2);
+	  memmove (p1, p1 + 2, (name + namelen + 1) - (p1 + 2));
 	  namelen -= 2;
 	  p0 = p1;
 	}
