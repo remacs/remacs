@@ -1543,6 +1543,11 @@ aliases of 'bookmark-default-file'.
 *** New user option 'bookmark-watch-bookmark-file'.
 When non-nil, watch whether the bookmark file has changed on disk.
 
+---
+** The mantemp.el library is now marked obsolete.
+This library generates manual C++ template instantiations.  It should
+no longer be useful on modern compilers, which do this automatically.
+
 
 * New Modes and Packages in Emacs 27.1
 
