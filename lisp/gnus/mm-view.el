@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
 (require 'mail-parse)
 (require 'mailcap)
 (require 'mm-bodies)
@@ -359,8 +359,8 @@
       (save-restriction
 	(narrow-to-region b (point))
 	(goto-char b)
-	(fill-flowed nil (equal (cdr (assoc 'delsp (mm-handle-type handle)))
-				"yes"))
+	(fill-flowed nil (cl-equalp (cdr (assoc 'delsp (mm-handle-type handle)))
+				    "yes"))
 	(goto-char (point-max))))
     (save-restriction
       (narrow-to-region b (point))
