@@ -242,12 +242,6 @@ init_standard_fds (void)
   force_open (STDIN_FILENO, O_WRONLY);
   force_open (STDOUT_FILENO, O_RDONLY);
   force_open (STDERR_FILENO, O_RDONLY);
-
-  /* Line-buffer stderr.  However, leave stderr unbuffered on
-     MS-Windows, where setvbuf treats _IOLBF like _IOFBF.  */
-#ifndef DOS_NT
-  setvbuf (stderr, NULL, _IOLBF, 0);
-#endif
 }
 
 /* Return the current working directory.  The result should be freed
