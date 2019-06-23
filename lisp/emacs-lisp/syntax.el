@@ -371,6 +371,10 @@ itself at the outermost level), return nil."
       (nth 8 ppss)))
 
 (defsubst syntax-ppss-context (ppss)
+  "Say whether PPSS is a string, a comment, or something else.
+If PPSS is a string, the symbol `string' is returned.  If it's a
+comment, the symbol `comment' is returned.  If it's something
+else, nil is returned."
   (cond
    ((nth 3 ppss) 'string)
    ((nth 4 ppss) 'comment)

@@ -882,6 +882,11 @@ The value is @code{nil} if @var{state} represents a parse which has
 arrived at a top level position.
 @end defun
 
+@defun syntax-ppss-context state
+Return @code{string} if @var{state} is a string and @code{comment} if
+it's a comment.
+@end defun
+
 @node Low-Level Parsing
 @subsection Low-Level Parsing
 
