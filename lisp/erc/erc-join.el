@@ -161,6 +161,10 @@ This function is run from `erc-nickserv-identified-hook'."
 	      ;; Only auto-join the channels that we aren't already in
 	      ;; using a different nick.
 	      (when (or (not buffer)
+			;; If the same channel is joined on another
+			;; server the best-effort is to just join
+			(not (string-match (car l)
+					   (process-name erc-server-process)))
 			(not (with-current-buffer buffer
 			       (erc-server-process-alive))))
 		(erc-server-join-channel server chan))))))))
