@@ -10154,6 +10154,17 @@ partial article, and want to see the complete article instead, then
 the @kbd{A C} command (@code{gnus-summary-show-complete-article}) will
 do so.
 
+@item w
+@itemx A w
+@kindex w @r{(Summary)}
+@kindex A w @r{(Summary)}
+@cindex web
+@cindex url
+@findex gnus-summary-browse-url
+Scan the article buffer for links, and offer them to the user for
+browsing with @code{browse-url}.  By default, only scan the article
+body; with a prefix arg, also scan the article headers.
+
 @end table
 
 

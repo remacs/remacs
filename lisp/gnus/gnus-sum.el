@@ -1983,6 +1983,7 @@ increase the score of each group you read."
   "s" gnus-summary-isearch-article
   "\t" gnus-summary-widget-forward
   [backtab] gnus-summary-widget-backward
+  "w" gnus-summary-browse-url
   "t" gnus-summary-toggle-header
   "g" gnus-summary-show-article
   "l" gnus-summary-goto-last-article
@@ -2149,6 +2150,7 @@ increase the score of each group you read."
   "s" gnus-summary-isearch-article
   "\t" gnus-summary-widget-forward
   [backtab] gnus-summary-widget-backward
+  "w" gnus-summary-browse-url
   "P" gnus-summary-print-article
   "S" gnus-sticky-article
   "M" gnus-mailing-list-insinuate
@@ -9431,6 +9433,44 @@ With optional ARG, move across that many fields."
     (unless (widget-at (point))
       (goto-char (point-max)))
     (widget-backward arg)))
+
+(defun gnus-summary-browse-url (arg)
+  "Scan the current article body for links, and offer to browse them.
+With prefix ARG, also collect links from message headers.
+
+Links are opened using `browse-url'.  If only one link is found,
+browse that directly, otherwise use completion to select a link."
+  (interactive "P")
+  (let (pt urls target)
+    (gnus-summary-select-article)
+    (gnus-configure-windows 'article)
+    (gnus-with-article-buffer
+      (if arg
+	  (goto-char (point-min))
+	(article-goto-body)
+	;; Back up a char, in case body starts with a widget.
+	(backward-char))
+      (setq pt (point))
+      (while (progn (widget-forward 1)
+		    ;; `widget-forward' wraps around to top of
+		    ;; buffer.
+		    (> (point) pt))
+	(setq pt (point))
+	(when-let ((u (or (get-text-property (point) 'shr-url)
+			  (get-text-property (point) 'gnus-string))))
+	  (when (string-match-p "\\`[[:alpha:]]+://" u)
+	    (push u urls))))
+      (setq target
+	    (cond ((= (length urls) 1)
+		   (car urls))
+		  ((> (length urls) 1)
+		   (completing-read
+		    "URL to browse: "
+		    (setq urls (nreverse (delete-dups urls)))
+		    nil t))))
+      (if target
+	  (browse-url target)
+	(message "No URLs found.")))))
 
 (defun gnus-summary-isearch-article (&optional regexp-p)
   "Do incremental search forward on the current article.
