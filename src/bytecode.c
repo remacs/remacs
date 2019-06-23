@@ -884,12 +884,12 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
 	CASE (Blist3):
 	  DISCARD (2);
-	  TOP = Flist (3, &TOP);
+	  TOP = list3 (TOP, top[1], top[2]);
 	  NEXT;
 
 	CASE (Blist4):
 	  DISCARD (3);
-	  TOP = Flist (4, &TOP);
+	  TOP = list4 (TOP, top[1], top[2], top[3]);
 	  NEXT;
 
 	CASE (BlistN):
