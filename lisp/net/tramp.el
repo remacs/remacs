@@ -3127,9 +3127,8 @@ User is always nil."
   ;; Native `file-equalp-p' calls `file-truename', which requires a
   ;; remote connection.  This can be avoided, if FILENAME1 and
   ;; FILENAME2 are not located on the same remote host.
-  (when (string-equal
-	 (file-remote-p (expand-file-name filename1))
-	 (file-remote-p (expand-file-name filename2)))
+  (when (tramp-equal-remote
+	 (expand-file-name filename1) (expand-file-name filename2))
     (tramp-run-real-handler #'file-equal-p (list filename1 filename2))))
 
 (defun tramp-handle-file-exists-p (filename)
@@ -3141,9 +3140,8 @@ User is always nil."
   ;; Native `file-in-directory-p' calls `file-truename', which
   ;; requires a remote connection.  This can be avoided, if FILENAME
   ;; and DIRECTORY are not located on the same remote host.
-  (when (string-equal
-	 (file-remote-p (expand-file-name filename))
-	 (file-remote-p (expand-file-name directory)))
+  (when (tramp-equal-remote
+	 (expand-file-name filename) (expand-file-name directory))
     (tramp-run-real-handler #'file-in-directory-p (list filename directory))))
 
 (defun tramp-handle-file-local-copy (filename)

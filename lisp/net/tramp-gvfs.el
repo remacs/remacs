@@ -933,76 +933,74 @@ file names."
 
 (defun tramp-gvfs-get-directory-attributes (directory)
   "Return GVFS attributes association list of all files in DIRECTORY."
-  (ignore-errors
-    ;; Don't modify `last-coding-system-used' by accident.
-    (let ((last-coding-system-used last-coding-system-used)
-	  result)
-      (with-parsed-tramp-file-name directory nil
-	(with-tramp-file-property v localname "directory-attributes"
-	  (tramp-message v 5 "directory gvfs attributes: %s" localname)
-	  ;; Send command.
-	  (tramp-gvfs-send-command
-	   v "gvfs-ls" "-h" "-n" "-a"
-	   (mapconcat #'identity tramp-gvfs-file-attributes ",")
-	   (tramp-gvfs-url-file-name directory))
-	  ;; Parse output.
-	  (with-current-buffer (tramp-get-connection-buffer v)
-	    (goto-char (point-min))
-	    (while (looking-at
-		    (concat "^\\(.+\\)[[:blank:]]"
-			    "\\([[:digit:]]+\\)[[:blank:]]"
-			    "(\\(.+?\\))"
-			    tramp-gvfs-file-attributes-with-gvfs-ls-regexp))
-	      (let ((item (list (cons "type" (match-string 3))
-				(cons "standard::size" (match-string 2))
-				(cons "name" (match-string 1)))))
-		(goto-char (1+ (match-end 3)))
-		(while (looking-at
-			(concat
-			 tramp-gvfs-file-attributes-with-gvfs-ls-regexp
-			 "\\(" tramp-gvfs-file-attributes-with-gvfs-ls-regexp
-			 "\\|" "$" "\\)"))
-		  (push (cons (match-string 1) (match-string 2)) item)
-		  (goto-char (match-end 2)))
-		;; Add display name as head.
-		(push
-		 (cons (cdr (or (assoc "standard::display-name" item)
-				(assoc "name" item)))
-		       (nreverse item))
-		 result))
-	      (forward-line)))
-	  result)))))
+  ;; Don't modify `last-coding-system-used' by accident.
+  (let ((last-coding-system-used last-coding-system-used)
+	result)
+    (with-parsed-tramp-file-name directory nil
+      (with-tramp-file-property v localname "directory-attributes"
+	(tramp-message v 5 "directory gvfs attributes: %s" localname)
+	;; Send command.
+	(tramp-gvfs-send-command
+	 v "gvfs-ls" "-h" "-n" "-a"
+	 (mapconcat #'identity tramp-gvfs-file-attributes ",")
+	 (tramp-gvfs-url-file-name directory))
+	;; Parse output.
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (goto-char (point-min))
+	  (while (looking-at
+		  (concat "^\\(.+\\)[[:blank:]]"
+			  "\\([[:digit:]]+\\)[[:blank:]]"
+			  "(\\(.+?\\))"
+			  tramp-gvfs-file-attributes-with-gvfs-ls-regexp))
+	    (let ((item (list (cons "type" (match-string 3))
+			      (cons "standard::size" (match-string 2))
+			      (cons "name" (match-string 1)))))
+	      (goto-char (1+ (match-end 3)))
+	      (while (looking-at
+		      (concat
+		       tramp-gvfs-file-attributes-with-gvfs-ls-regexp
+		       "\\(" tramp-gvfs-file-attributes-with-gvfs-ls-regexp
+		       "\\|" "$" "\\)"))
+		(push (cons (match-string 1) (match-string 2)) item)
+		(goto-char (match-end 2)))
+	      ;; Add display name as head.
+	      (push
+	       (cons (cdr (or (assoc "standard::display-name" item)
+			      (assoc "name" item)))
+		     (nreverse item))
+	       result))
+	    (forward-line)))
+	result))))
 
 (defun tramp-gvfs-get-root-attributes (filename &optional file-system)
   "Return GVFS attributes association list of FILENAME.
 If FILE-SYSTEM is non-nil, return file system attributes."
-  (ignore-errors
-    ;; Don't modify `last-coding-system-used' by accident.
-    (let ((last-coding-system-used last-coding-system-used)
-	  result)
-      (with-parsed-tramp-file-name filename nil
-	(with-tramp-file-property
-	    v localname
-	    (if file-system "file-system-attributes" "file-attributes")
-	  (tramp-message
-	   v 5 "file%s gvfs attributes: %s"
-	   (if file-system " system" "") localname)
-	  ;; Send command.
-	  (if file-system
-	      (tramp-gvfs-send-command
-	       v "gvfs-info" "--filesystem" (tramp-gvfs-url-file-name filename))
+  ;; Don't modify `last-coding-system-used' by accident.
+  (let ((last-coding-system-used last-coding-system-used)
+	result)
+    (with-parsed-tramp-file-name filename nil
+      (with-tramp-file-property
+	  v localname
+	  (if file-system "file-system-attributes" "file-attributes")
+	(tramp-message
+	 v 5 "file%s gvfs attributes: %s"
+	 (if file-system " system" "") localname)
+	;; Send command.
+	(if file-system
 	    (tramp-gvfs-send-command
-	     v "gvfs-info" (tramp-gvfs-url-file-name filename)))
-	  ;; Parse output.
-	  (with-current-buffer (tramp-get-connection-buffer v)
-	    (goto-char (point-min))
-	    (while (re-search-forward
-		    (if file-system
-			tramp-gvfs-file-system-attributes-regexp
-		      tramp-gvfs-file-attributes-with-gvfs-info-regexp)
-		    nil t)
-	      (push (cons (match-string 1) (match-string 2)) result))
-	    result))))))
+	     v "gvfs-info" "--filesystem" (tramp-gvfs-url-file-name filename))
+	  (tramp-gvfs-send-command
+	   v "gvfs-info" (tramp-gvfs-url-file-name filename)))
+	;; Parse output.
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (goto-char (point-min))
+	  (while (re-search-forward
+		  (if file-system
+		      tramp-gvfs-file-system-attributes-regexp
+		    tramp-gvfs-file-attributes-with-gvfs-info-regexp)
+		  nil t)
+	    (push (cons (match-string 1) (match-string 2)) result))
+	  result)))))
 
 (defun tramp-gvfs-get-file-attributes (filename)
   "Return GVFS attributes association list of FILENAME."
@@ -1020,123 +1018,122 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 (defun tramp-gvfs-handle-file-attributes (filename &optional id-format)
   "Like `file-attributes' for Tramp files."
   (unless id-format (setq id-format 'integer))
-  (ignore-errors
-    (let ((attributes (tramp-gvfs-get-file-attributes filename))
-	  dirp res-symlink-target res-numlinks res-uid res-gid res-access
-	  res-mod res-change res-size res-filemodes res-inode res-device)
-      (when attributes
-	;; ... directory or symlink
-	(setq dirp (if (equal "directory" (cdr (assoc "type" attributes))) t))
+  (let ((attributes (tramp-gvfs-get-file-attributes filename))
+	dirp res-symlink-target res-numlinks res-uid res-gid res-access
+	res-mod res-change res-size res-filemodes res-inode res-device)
+    (when attributes
+      ;; ... directory or symlink
+      (setq dirp (if (equal "directory" (cdr (assoc "type" attributes))) t))
+      (setq res-symlink-target
+	    (cdr (assoc "standard::symlink-target" attributes)))
+      (when (stringp res-symlink-target)
 	(setq res-symlink-target
-	      (cdr (assoc "standard::symlink-target" attributes)))
-	(when (stringp res-symlink-target)
-	  (setq res-symlink-target
-		;; Parse unibyte codes "\xNN".  We assume they are
-		;; non-ASCII codepoints in the range #x80 through #xff.
-		;; Convert them to multibyte.
-		(decode-coding-string
-		 (replace-regexp-in-string
-		  "\\\\x\\([[:xdigit:]]\\{2\\}\\)"
-		  (lambda (x)
-		    (unibyte-string (string-to-number (match-string 1 x) 16)))
-		  res-symlink-target)
-		 'utf-8)))
-	;; ... number links
-	(setq res-numlinks
-	      (string-to-number
-	       (or (cdr (assoc "unix::nlink" attributes)) "0")))
-	;; ... uid and gid
-	(setq res-uid
-	      (if (eq id-format 'integer)
-		  (string-to-number
-		   (or (cdr (assoc "unix::uid" attributes))
-		       (eval-when-compile
-			 (format "%s" tramp-unknown-id-integer))))
-		(or (cdr (assoc "owner::user" attributes))
-		    (cdr (assoc "unix::uid" attributes))
-		    tramp-unknown-id-string)))
-	(setq res-gid
-	      (if (eq id-format 'integer)
-		  (string-to-number
-		   (or (cdr (assoc "unix::gid" attributes))
-		       (eval-when-compile
-			 (format "%s" tramp-unknown-id-integer))))
-		(or (cdr (assoc "owner::group" attributes))
-		    (cdr (assoc "unix::gid" attributes))
-		    tramp-unknown-id-string)))
-	;; ... last access, modification and change time
-	(setq res-access
-	      (seconds-to-time
-	       (string-to-number
-		(or (cdr (assoc "time::access" attributes)) "0"))))
-	(setq res-mod
-	      (seconds-to-time
-	       (string-to-number
-		(or (cdr (assoc "time::modified" attributes)) "0"))))
-	(setq res-change
-	      (seconds-to-time
-	       (string-to-number
-		(or (cdr (assoc "time::changed" attributes)) "0"))))
-	;; ... size
-	(setq res-size
-	      (string-to-number
-	       (or (cdr (assoc "standard::size" attributes)) "0")))
-	;; ... file mode flags
-	(setq res-filemodes
-	      (let ((n (cdr (assoc "unix::mode" attributes))))
-		(if n
-		    (tramp-file-mode-from-int (string-to-number n))
-		  (format
-		   "%s%s%s%s------"
-		   (if dirp "d" (if res-symlink-target "l" "-"))
-		   (if (equal (cdr (assoc "access::can-read" attributes))
-			      "FALSE")
-		       "-" "r")
-		   (if (equal (cdr (assoc "access::can-write" attributes))
-			      "FALSE")
-		       "-" "w")
-		   (if (equal (cdr (assoc "access::can-execute" attributes))
-			      "FALSE")
-		       "-" "x")))))
-	;; ... inode and device
-	(setq res-inode
-	      (let ((n (cdr (assoc "unix::inode" attributes))))
-		(if n
-		    (string-to-number n)
-		  (tramp-get-inode (tramp-dissect-file-name filename)))))
-	(setq res-device
-	      (let ((n (cdr (assoc "unix::device" attributes))))
-		(if n
-		    (string-to-number n)
-		  (tramp-get-device (tramp-dissect-file-name filename)))))
+	      ;; Parse unibyte codes "\xNN".  We assume they are
+	      ;; non-ASCII codepoints in the range #x80 through #xff.
+	      ;; Convert them to multibyte.
+	      (decode-coding-string
+	       (replace-regexp-in-string
+		"\\\\x\\([[:xdigit:]]\\{2\\}\\)"
+		(lambda (x)
+		  (unibyte-string (string-to-number (match-string 1 x) 16)))
+		res-symlink-target)
+	       'utf-8)))
+      ;; ... number links
+      (setq res-numlinks
+	    (string-to-number
+	     (or (cdr (assoc "unix::nlink" attributes)) "0")))
+      ;; ... uid and gid
+      (setq res-uid
+	    (if (eq id-format 'integer)
+		(string-to-number
+		 (or (cdr (assoc "unix::uid" attributes))
+		     (eval-when-compile
+		       (format "%s" tramp-unknown-id-integer))))
+	      (or (cdr (assoc "owner::user" attributes))
+		  (cdr (assoc "unix::uid" attributes))
+		  tramp-unknown-id-string)))
+      (setq res-gid
+	    (if (eq id-format 'integer)
+		(string-to-number
+		 (or (cdr (assoc "unix::gid" attributes))
+		     (eval-when-compile
+		       (format "%s" tramp-unknown-id-integer))))
+	      (or (cdr (assoc "owner::group" attributes))
+		  (cdr (assoc "unix::gid" attributes))
+		  tramp-unknown-id-string)))
+      ;; ... last access, modification and change time
+      (setq res-access
+	    (seconds-to-time
+	     (string-to-number
+	      (or (cdr (assoc "time::access" attributes)) "0"))))
+      (setq res-mod
+	    (seconds-to-time
+	     (string-to-number
+	      (or (cdr (assoc "time::modified" attributes)) "0"))))
+      (setq res-change
+	    (seconds-to-time
+	     (string-to-number
+	      (or (cdr (assoc "time::changed" attributes)) "0"))))
+      ;; ... size
+      (setq res-size
+	    (string-to-number
+	     (or (cdr (assoc "standard::size" attributes)) "0")))
+      ;; ... file mode flags
+      (setq res-filemodes
+	    (let ((n (cdr (assoc "unix::mode" attributes))))
+	      (if n
+		  (tramp-file-mode-from-int (string-to-number n))
+		(format
+		 "%s%s%s%s------"
+		 (if dirp "d" (if res-symlink-target "l" "-"))
+		 (if (equal (cdr (assoc "access::can-read" attributes))
+			    "FALSE")
+		     "-" "r")
+		 (if (equal (cdr (assoc "access::can-write" attributes))
+			    "FALSE")
+		     "-" "w")
+		 (if (equal (cdr (assoc "access::can-execute" attributes))
+			    "FALSE")
+		     "-" "x")))))
+      ;; ... inode and device
+      (setq res-inode
+	    (let ((n (cdr (assoc "unix::inode" attributes))))
+	      (if n
+		  (string-to-number n)
+		(tramp-get-inode (tramp-dissect-file-name filename)))))
+      (setq res-device
+	    (let ((n (cdr (assoc "unix::device" attributes))))
+	      (if n
+		  (string-to-number n)
+		(tramp-get-device (tramp-dissect-file-name filename)))))
 
-	;; Return data gathered.
-	(list
-	 ;; 0. t for directory, string (name linked to) for
-	 ;; symbolic link, or nil.
-	 (or dirp res-symlink-target)
-	 ;; 1. Number of links to file.
-	 res-numlinks
-	 ;; 2. File uid.
-	 res-uid
-	 ;; 3. File gid.
-	 res-gid
-	 ;; 4. Last access time, as a list of integers.
-	 ;; 5. Last modification time, likewise.
-	 ;; 6. Last status change time, likewise.
-	 res-access res-mod res-change
-	 ;; 7. Size in bytes (-1, if number is out of range).
-	 res-size
-	 ;; 8. File modes.
-	 res-filemodes
-	 ;; 9. t if file's gid would change if file were deleted
-	 ;; and recreated.
-	 nil
-	 ;; 10. Inode number.
-	 res-inode
-	 ;; 11. Device number.
-	 res-device
-	 )))))
+      ;; Return data gathered.
+      (list
+       ;; 0. t for directory, string (name linked to) for
+       ;; symbolic link, or nil.
+       (or dirp res-symlink-target)
+       ;; 1. Number of links to file.
+       res-numlinks
+       ;; 2. File uid.
+       res-uid
+       ;; 3. File gid.
+       res-gid
+       ;; 4. Last access time, as a list of integers.
+       ;; 5. Last modification time, likewise.
+       ;; 6. Last status change time, likewise.
+       res-access res-mod res-change
+       ;; 7. Size in bytes (-1, if number is out of range).
+       res-size
+       ;; 8. File modes.
+       res-filemodes
+       ;; 9. t if file's gid would change if file were deleted
+       ;; and recreated.
+       nil
+       ;; 10. Inode number.
+       res-inode
+       ;; 11. Device number.
+       res-device
+       ))))
 
 (defun tramp-gvfs-handle-file-executable-p (filename)
   "Like `file-executable-p' for Tramp files."
@@ -1744,13 +1741,7 @@ This is relevant for GNOME Online Accounts."
     ;; Ensure that GNOME Online Accounts are cached.
     (when (member (tramp-file-name-method vec) tramp-goa-methods)
       (tramp-get-goa-accounts vec))
-    (tramp-get-connection-property
-     (make-tramp-goa-name
-      :method (tramp-file-name-method vec)
-      :user (tramp-file-name-user vec)
-      :host (tramp-file-name-host vec)
-      :port (tramp-file-name-port vec))
-     "prefix" "/")))
+    (tramp-get-connection-property (tramp-make-goa-name vec) "prefix" "/")))
 
 (defun tramp-gvfs-maybe-open-connection (vec)
   "Maybe open a connection VEC.
@@ -1781,15 +1772,24 @@ connection if a previous connection has died for some reason."
 
       (when (and (string-equal method "afp")
 		 (string-equal localname "/"))
-	(tramp-error vec 'file-error "Filename must contain an AFP volume"))
+	(tramp-user-error vec "Filename must contain an AFP volume"))
 
       (when (and (string-match-p "davs?" method)
 		 (string-equal localname "/"))
-	(tramp-error vec 'file-error "Filename must contain a WebDAV share"))
+	(tramp-user-error vec "Filename must contain a WebDAV share"))
 
       (when (and (string-equal method "smb")
 		 (string-equal localname "/"))
-	(tramp-error vec 'file-error "Filename must contain a Windows share"))
+	(tramp-user-error vec "Filename must contain a Windows share"))
+
+      (when (member method tramp-goa-methods)
+	;; Ensure that GNOME Online Accounts are cached.
+	(tramp-get-goa-accounts vec)
+	(when (tramp-get-connection-property
+	       (tramp-make-goa-name vec) "FilesDisabled" t)
+	  (tramp-user-error
+	   vec "There is no Online Account `%s'"
+	   (tramp-make-tramp-file-name vec 'noloc))))
 
       (with-tramp-progress-reporter
 	  vec 3
@@ -1910,6 +1910,15 @@ is applied, and it returns t if the return code is zero."
 
 ;; D-Bus GNOME Online Accounts functions.
 
+(defun tramp-make-goa-name (vec)
+  "Transform VEC into a `tramp-goa-name' structure."
+  (when (tramp-file-name-p vec)
+    (make-tramp-goa-name
+     :method (tramp-file-name-method vec)
+     :user (tramp-file-name-user vec)
+     :host (tramp-file-name-host vec)
+     :port (tramp-file-name-port vec))))
+
 (defun tramp-get-goa-accounts (vec)
   "Retrieve GNOME Online Accounts, and cache them.
 The hash key is a `tramp-goa-name' structure.  The value is an
@@ -1917,52 +1926,55 @@ alist of the properties of `tramp-goa-interface-account' and
 `tramp-goa-interface-files' of the corresponding GNOME online
 account.  Additionally, a property \"prefix\" is added.
 VEC is used only for traces."
-  (dolist
-      (object-path
-       (mapcar
-	#'car
-	(tramp-dbus-function
-	 vec #'dbus-get-all-managed-objects
-	 `(:session ,tramp-goa-service ,tramp-goa-path))))
-    (let* ((account-properties
-	    (with-tramp-dbus-get-all-properties vec
-	      :session tramp-goa-service object-path
-	      tramp-goa-interface-account))
-	   (files-properties
-	    (with-tramp-dbus-get-all-properties vec
-	      :session tramp-goa-service object-path
-	      tramp-goa-interface-files))
-	   (identity
-	    (or (cdr (assoc "PresentationIdentity" account-properties)) ""))
-	   key)
-      ;; Only accounts which matter.
-      (when (and
-	     (not (cdr (assoc "FilesDisabled" account-properties)))
-	     (member
-	      (cdr (assoc "ProviderType" account-properties))
-	      '("google" "owncloud"))
-	     (string-match tramp-goa-identity-regexp identity))
-	(setq key (make-tramp-goa-name
-		   :method (cdr (assoc "ProviderType" account-properties))
-		   :user (match-string 1 identity)
-		   :host (match-string 2 identity)
-		   :port (match-string 3 identity)))
-	(when (string-equal (tramp-goa-name-method key) "google")
-	  (setf (tramp-goa-name-method key) "gdrive"))
-	(when (string-equal (tramp-goa-name-method key) "owncloud")
-	  (setf (tramp-goa-name-method key) "nextcloud"))
-	;; Cache all properties.
-	(dolist (prop (nconc account-properties files-properties))
-	  (tramp-set-connection-property key (car prop) (cdr prop)))
-	;; Cache "prefix".
-	(tramp-message
-	 vec 10 "%s prefix %s" key
-	 (tramp-set-connection-property
-	  key "prefix"
-	  (directory-file-name
-	   (url-filename
-	    (url-generic-parse-url
-	     (tramp-get-connection-property key "Uri" "file:///"))))))))))
+  (with-tramp-connection-property (tramp-make-goa-name vec) "goa-accounts"
+    (dolist
+	(object-path
+	 (mapcar
+	  #'car
+	  (tramp-dbus-function
+	   vec #'dbus-get-all-managed-objects
+	   `(:session ,tramp-goa-service ,tramp-goa-path))))
+      (let* ((account-properties
+	      (with-tramp-dbus-get-all-properties vec
+		:session tramp-goa-service object-path
+		tramp-goa-interface-account))
+	     (files-properties
+	      (with-tramp-dbus-get-all-properties vec
+		:session tramp-goa-service object-path
+		tramp-goa-interface-files))
+	     (identity
+	      (or (cdr (assoc "PresentationIdentity" account-properties)) ""))
+	     key)
+	;; Only accounts which matter.
+	(when (and
+	       (not (cdr (assoc "FilesDisabled" account-properties)))
+	       (member
+		(cdr (assoc "ProviderType" account-properties))
+		'("google" "owncloud"))
+	       (string-match tramp-goa-identity-regexp identity))
+	  (setq key (make-tramp-goa-name
+		     :method (cdr (assoc "ProviderType" account-properties))
+		     :user (match-string 1 identity)
+		     :host (match-string 2 identity)
+		     :port (match-string 3 identity)))
+	  (when (string-equal (tramp-goa-name-method key) "google")
+	    (setf (tramp-goa-name-method key) "gdrive"))
+	  (when (string-equal (tramp-goa-name-method key) "owncloud")
+	    (setf (tramp-goa-name-method key) "nextcloud"))
+	  ;; Cache all properties.
+	  (dolist (prop (nconc account-properties files-properties))
+	    (tramp-set-connection-property key (car prop) (cdr prop)))
+	  ;; Cache "prefix".
+	  (tramp-message
+	   vec 10 "%s prefix %s" key
+	   (tramp-set-connection-property
+	    key "prefix"
+	    (directory-file-name
+	     (url-filename
+	      (url-generic-parse-url
+	       (tramp-get-connection-property key "Uri" "file:///")))))))))
+    ;; Mark, that goa accounts have been cached.
+    "cached"))
 
 
 ;; D-Bus zeroconf functions.
