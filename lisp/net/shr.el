@@ -1401,9 +1401,13 @@ ones, in case fg and bg are nil."
 (defun shr-tag-u (dom)
   (shr-fontize-dom dom 'underline))
 
-(defun shr-tag-tt (dom)
+(defun shr-tag-code (dom)
   (let ((shr-current-font 'default))
     (shr-generic dom)))
+
+(defun shr-tag-tt (dom)
+  ;; The `tt' tag is deprecated in favor of `code'.
+  (shr-tag-code dom))
 
 (defun shr-tag-ins (cont)
   (let* ((start (point))
