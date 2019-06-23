@@ -875,7 +875,8 @@ Fifth arg HIST, if non-nil, specifies a history list and optionally
   HISTPOS is the initial position for use by the minibuffer history
   commands.  For consistency, you should also specify that element of
   the history as the value of INITIAL-CONTENTS.  Positions are counted
-  starting from 1 at the beginning of the list.
+  starting from 1 at the beginning of the list.  If HIST is the symbol
+  `t', history is not recorded.
 
 Sixth arg DEFAULT-VALUE, if non-nil, should be a string, which is used
   as the default to `read' if READ is non-nil and the user enters
@@ -2037,8 +2038,11 @@ If the value is `confirm-after-completion', the user may exit with an
 	       doc: /* History list symbol to add minibuffer values to.
 Each string of minibuffer input, as it appears on exit from the minibuffer,
 is added with
+
   (set minibuffer-history-variable
-  (cons STRING (symbol-value minibuffer-history-variable)))  */);
+       (cons STRING (symbol-value minibuffer-history-variable)))
+
+ If the variable is the symbol `t', no history is recorded.  */);
   XSETFASTINT (Vminibuffer_history_variable, 0);
 
   DEFVAR_LISP ("minibuffer-history-position", Vminibuffer_history_position,
