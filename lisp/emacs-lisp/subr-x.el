@@ -158,8 +158,9 @@ are non-nil, then the result is non-nil."
 
 (defmacro if-let (spec then &rest else)
   "Bind variables according to SPEC and evaluate THEN or ELSE.
-Evaluate each binding in turn, stopping if a binding value is nil.
-If all are non-nil return the value of THEN, otherwise the last form in ELSE.
+Evaluate each binding in turn, as in `let*', stopping if a
+binding value is nil.  If all are non-nil return the value of
+THEN, otherwise the last form in ELSE.
 
 Each element of SPEC is a list (SYMBOL VALUEFORM) that binds
 SYMBOL to the value of VALUEFORM.  An element can additionally be
