@@ -22,8 +22,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
-;; Beware: while this file has tag `utf-8', before it's compiled, it gets
-;; loaded as "raw-text", so non-ASCII chars won't work right during bootstrap.
 
 
 ;; declare-function's args use &rest, not &optional, for compatibility
