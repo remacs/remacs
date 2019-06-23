@@ -1651,7 +1651,8 @@ The default handler is `hfy-end-span'.")
 SRCDIR, if set, is the directory being htmlfontified.
 FILE, if set, is the file name."
   (if srcdir (setq srcdir (directory-file-name srcdir)))
-  (let* ( (html-buffer        (hfy-buffer))
+  (let* ( (inhibit-read-only             t)
+          (html-buffer        (hfy-buffer))
           (css-sheet                   nil)
           (css-map                     nil)
           (invis-ranges                nil)
