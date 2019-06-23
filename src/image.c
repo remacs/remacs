@@ -1986,7 +1986,7 @@ compute_image_size (size_t width, size_t height,
    Transforms are done by creating a matrix for each action we wish to
    take, then multiplying the transformation matrix by each of those
    matrices in order (matrix multiplication is not commutative).
-   After we’ve done that we can use our modified transformation matrix
+   After we've done that we can use our modified transformation matrix
    to transform points.  We take the x and y coordinates and convert
    them into a 3x1 matrix and multiply that by the transformation
    matrix and it gives us a new, transformed, set of coordinates:
@@ -1995,7 +1995,7 @@ compute_image_size (size_t width, size_t height,
        [m21 m22 ty] X [y] = [m21*x+m22*y+ty*1] = [y']
        [  0   0  1]   [1]   [     0*x+0*y+1*1]   [ 1]
 
-   We don’t have to worry about the last step as the graphics toolkit
+   We don't have to worry about the last step as the graphics toolkit
    will do it for us.
 
    The three transforms we are concerned with are translation, scaling
@@ -2029,19 +2029,19 @@ compute_image_size (size_t width, size_t height,
        [      0      0 1]
 
    Where r is the angle of rotation required.  Rotation occurs around
-   the origin, not the centre of the image.  Note that this is
+   the origin, not the center of the image.  Note that this is
    normally considered a counter-clockwise rotation, however because
    our y axis is reversed, (0, 0) at the top left, it works as a
    clockwise rotation.
 
    The full process of rotating an image is to move the origin to the
-   centre of the image (width/2, height/2), perform the rotation, and
+   center of the image (width/2, height/2), perform the rotation, and
    finally move the origin back to the top left of the image, which
    may now be a different corner.
 
    Cropping is easier as we just move the origin to the top left of
    where we want to crop and set the width and height accordingly.
-   The matrices don’t know anything about width and height.
+   The matrices don't know anything about width and height.
 
    It's possible to pre-calculate the matrix multiplications and just
    generate one transform matrix that will do everything we need in a
