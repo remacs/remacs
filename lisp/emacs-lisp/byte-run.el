@@ -46,7 +46,7 @@ So far, FUNCTION can only be a symbol, not a lambda expression."
 ;; file) but used in many .elc files.
 
 ;; We don't use #' here, because it's an obsolete function, and we
-;; can't use `with-suppressed-errors' here due to how this file is
+;; can't use `with-suppressed-warnings' here due to how this file is
 ;; used in the bootstrapping process.
 (defvar macro-declaration-function 'macro-declaration-function
   "Function to process declarations in a macro definition.
@@ -497,7 +497,7 @@ is enabled."
   ;; The implementation for the interpreter is basically trivial.
   (car (last body)))
 
-(defmacro with-suppressed-warnings (_warnings &rest body)
+(defmacro with-suppressed-warnings (warnings &rest body)
   "Like `progn', but prevents compiler WARNINGS in BODY.
 
 WARNINGS is an associative list where the first element of each
@@ -521,10 +521,22 @@ suppressed with this macro are `free-vars', `callargs',
 
 For the `mapcar' case, only the `mapcar' function can be used in
 the symbol list.  For `suspicious', only `set-buffer' can be used."
+  ;; Note: during compilation, this definition is overridden by the one in
+  ;; byte-compile-initial-macro-environment.
   (declare (debug (sexp &optional body)) (indent 1))
-  ;; The implementation for the interpreter is basically trivial.
-  `(progn ,@body))
-
+  (if (not (and (featurep 'macroexp)
+                (boundp 'byte-compile--suppressed-warnings)))
+      ;; If `macroexp' is not yet loaded, we're in the middle of
+      ;; bootstrapping, so better risk emitting too many warnings
+      ;; than risk breaking the bootstrap.
+      `(progn ,@body)
+    ;; We need to let-bind byte-compile--suppressed-warnings here, so as to
+    ;; silence warnings emitted during macro-expansion performed outside of
+    ;; byte-compilation.
+    (let ((byte-compile--suppressed-warnings
+           (append warnings byte-compile--suppressed-warnings)))
+      (macroexpand-all (macroexp-progn body)
+                       macroexpand-all-environment))))
 
 (defun byte-run--unescaped-character-literals-warning ()
   "Return a warning about unescaped character literals.
