@@ -889,6 +889,11 @@ See the concept index in the Gnus manual for the 'match-list' entry.
 article(s) to a pre-existing Message buffer, or create a new Message
 buffer with the article(s) attached.
 
++++
+*** A new Gnus summary mode command, 'w'
+('gnus-summary-browse-url') scans the article buffer for URLs, and
+offers them to the user to open with 'browse-url'.
+
 ---
 *** New option 'nnir-notmuch-filter-group-names-function'.
 This option controls whether and how to use Gnus search groups as
