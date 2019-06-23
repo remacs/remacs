@@ -488,6 +488,8 @@ not contain `d', so that a full listing is expected."
 
 (defun ls-lisp--dired (orig-fun dir-or-list &optional switches)
   (interactive (dired-read-dir-and-switches ""))
+  (unless dir-or-list
+    (setq dir-or-list default-directory))
   (if (consp dir-or-list)
       (funcall orig-fun dir-or-list switches)
     (let ((dir-wildcard (insert-directory-wildcard-in-dir-p
