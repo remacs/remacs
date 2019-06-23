@@ -736,8 +736,7 @@ was inserted."
 	 ;; If we have a `fit-width' or a `fit-height', don't limit
 	 ;; the size of the image to the window size.
 	 (edges (and (null image-transform-resize)
-		     (window-inside-pixel-edges
-		      (get-buffer-window (current-buffer)))))
+		     (window-inside-pixel-edges (get-buffer-window))))
 	 (type (if (image--imagemagick-wanted-p filename)
 		   'imagemagick
 		 (image-type file-or-data nil data-p)))
@@ -1150,6 +1149,7 @@ compiled with ImageMagick support."
     ;; Note: `image-size' looks up and thus caches the untransformed
     ;; image.  There's no easy way to prevent that.
     (let* ((size (image-size spec t))
+           (edges (window-inside-pixel-edges (get-buffer-window)))
 	   (resized
 	    (cond
 	     ((numberp image-transform-resize)
@@ -1159,13 +1159,11 @@ compiled with ImageMagick support."
 	     ((eq image-transform-resize 'fit-width)
 	      (image-transform-fit-width
 	       (car size) (cdr size)
-	       (- (nth 2 (window-inside-pixel-edges))
-		  (nth 0 (window-inside-pixel-edges)))))
+	       (- (nth 2 edges) (nth 0 edges))))
 	     ((eq image-transform-resize 'fit-height)
 	      (let ((res (image-transform-fit-width
 			  (cdr size) (car size)
-			  (- (nth 3 (window-inside-pixel-edges))
-			     (nth 1 (window-inside-pixel-edges))))))
+			  (- (nth 3 edges) (nth 1 edges)))))
 		(cons (cdr res) (car res)))))))
       `(,@(when (car resized)
 	    (list :width (car resized)))
