@@ -90,7 +90,7 @@ Examples of image filename patterns to match:
   (interactive "P")
   (iimage-mode-buffer nil)
   (iimage-mode-buffer t)
-  (recenter arg))
+  (recenter-top-bottom arg))
 
 ;;;###autoload
 (define-obsolete-function-alias 'turn-on-iimage-mode 'iimage-mode "24.1")
