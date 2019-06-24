@@ -519,7 +519,7 @@ static compressor compressors[] =
   { "GZ", "gzip -d -c"},
   { "bz2", "bzip2 -d -c" },
   { "xz", "xz -d -c" },
-  { "zst", "zstd -d -c -q" },
+  { "zst", "zstd -d -c" },
   { NULL }
 };
 
