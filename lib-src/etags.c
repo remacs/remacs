@@ -519,6 +519,7 @@ static compressor compressors[] =
   { "GZ", "gzip -d -c"},
   { "bz2", "bzip2 -d -c" },
   { "xz", "xz -d -c" },
+  { "zst", "zstd -d -c -q" },
   { NULL }
 };
 
@@ -861,7 +862,7 @@ followed by the name of an interpreter.  If no such sequence is found,\n\
 Fortran is tried first; if no tags are found, C is tried next.\n\
 When parsing any C file, a \"class\" or \"template\" keyword\n\
 switches to C++.");
-  puts ("Compressed files are supported using gzip, bzip2, and xz.\n\
+  puts ("Compressed files are supported using gzip, bzip2, xz, and zstd.\n\
 \n\
 For detailed help on a given language use, for example,\n\
 etags --help --lang=ada.");

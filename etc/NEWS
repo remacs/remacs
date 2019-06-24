@@ -584,6 +584,9 @@ The mode is automatically enabled in files that start with the
 use the new 'fileloop-initialize' and 'fileloop-continue' functions
 instead.
 
++++
+*** etags is now able to read Zstandard-compressed files.
+
 ** bibtex
 
 ---
