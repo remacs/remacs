@@ -695,10 +695,10 @@ pub extern "C" fn get_frame_param(frame: LispFrameRef, prop: LispObject) -> Lisp
 /// If FRAME is omitted or nil, the selected frame is used.
 /// For a terminal frame, the value is always 1.
 #[lisp_fn(min = "0")]
-pub fn frame_char_height(frame: LispFrameLiveOrSelected) -> i32 {
+pub fn frame_char_height(_frame: LispFrameLiveOrSelected) -> i32 {
     #[cfg(feature = "window-system")]
     {
-        let frame_ref: LispFrameRef = frame.into();
+        let frame_ref: LispFrameRef = _frame.into();
 
         if frame_ref.is_gui_window() {
             frame_ref.line_height
@@ -717,10 +717,10 @@ pub fn frame_char_height(frame: LispFrameLiveOrSelected) -> i32 {
 /// On a graphical screen, the width is the standard width of the default font.
 /// For a terminal screen, the value is always 1.
 #[lisp_fn(min = "0")]
-pub fn frame_char_width(frame: LispFrameLiveOrSelected) -> i32 {
+pub fn frame_char_width(_frame: LispFrameLiveOrSelected) -> i32 {
     #[cfg(feature = "window-system")]
     {
-        let frame_ref: LispFrameRef = frame.into();
+        let frame_ref: LispFrameRef = _frame.into();
 
         if frame_ref.is_gui_window() {
             frame_ref.column_width
