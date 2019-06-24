@@ -475,6 +475,9 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** tex-mode
+*** 'latex-noindent-commands' stops indenting arguments of \emph and friends
+
 ** byte compiler
 *** byte-compile-dynamic is now obsolete
 This is because on the one hand it suffers from various misbehaviors in corner

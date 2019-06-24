@@ -2803,9 +2803,19 @@ Runs the shell command defined by `tex-show-queue-command'."
 (defvar tex-indent-basic 2)
 (defvar tex-indent-item tex-indent-basic)
 (defvar tex-indent-item-re "\\\\\\(bib\\)?item\\>")
-(defvar latex-noindent-environments '("document"))
-(put 'latex-noindent-environments 'safe-local-variable
-     (lambda (x) (null (delq t (mapcar #'stringp x)))))
+(defcustom latex-noindent-environments '("document")
+  "Environments whose content is not indented by `tex-indent-basic'."
+  :type '(repeat string)
+  :safe (lambda (x) (lambda (x) (memq nil (mapcar #'stringp x))))
+  :group 'tex-file
+  :version "27.1")
+
+(defcustom latex-noindent-commands '("emph" "footnote")
+  "Commands for which `tex-indent-basic' should not be used."
+  :type '(repeat string)
+  :safe (lambda (x) (memq nil (mapcar #'stringp x)))
+  :group 'tex-file
+  :version "27.1")
 
 (defvar tex-latex-indent-syntax-table
   (let ((st (make-syntax-table tex-mode-syntax-table)))
@@ -2912,9 +2922,17 @@ There might be text before point."
 	       (current-column)
 	     ;; We're the first element after a hanging brace.
 	     (goto-char up-list-pos)
-	     (+ (if (and (looking-at "\\\\begin *{\\([^\n}]+\\)")
+	     (+ (if (if (eq (char-after) ?\{)
+                        (save-excursion
+                          (skip-chars-backward " \t")
+                          (let ((end (point)))
+                            (skip-chars-backward "a-zA-Z")
+                            (and (eq (char-before) ?\\)
+                                 (member (buffer-substring (point) end)
+                                         latex-noindent-commands))))
+                      (and (looking-at "\\\\begin *{\\([^\n}]+\\)")
 			 (member (match-string 1)
-				 latex-noindent-environments))
+				 latex-noindent-environments)))
 		    0 tex-indent-basic)
 		indent (latex-find-indent 'virtual))))
 	  ;; We're now at the "beginning" of a line.
