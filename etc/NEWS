@@ -812,6 +812,9 @@ early init file.
 
 *** New function 'package-activate-all'.
 
+---
+*** Imenu support has been added to `package-menu-mode'.
+
 ** Info
 
 ---

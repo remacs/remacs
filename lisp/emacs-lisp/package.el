@@ -2640,7 +2640,11 @@ Letters do not insert themselves; instead, they are commands.
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
-  (tabulated-list-init-header))
+  (tabulated-list-init-header)
+  (setf imenu-prev-index-position-function
+        #'package--imenu-prev-index-position-function)
+  (setf imenu-extract-index-name-function
+        #'package--imenu-extract-index-name-function))
 
 (defmacro package--push (pkg-desc status listname)
   "Convenience macro for `package-menu--generate'.
@@ -3670,6 +3674,24 @@ activations need to be changed, such as when `package-load-list' is modified."
 ;; no-update-autoloads: t
 ;; End:
 "))))
+
+(defun package--imenu-prev-index-position-function ()
+  "Move point to previous line in package-menu buffer.
+This function is used as a value for
+`imenu-prev-index-position-function'."
+  (unless (bobp)
+    (forward-line -1)))
+
+(defun package--imenu-extract-index-name-function ()
+  "Return imenu name for line at point.
+This function is used as a value for
+`imenu-extract-index-name-function'.  Point should be at the
+beginning of the line."
+  (let ((package-desc (tabulated-list-get-id)))
+    (format "%s (%s): %s"
+            (package-desc-name package-desc)
+            (package-version-join (package-desc-version package-desc))
+            (package-desc-summary package-desc))))
 
 (provide 'package)
 
