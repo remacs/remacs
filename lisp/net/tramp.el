@@ -64,7 +64,6 @@
 (require 'cl-lib)
 (declare-function netrc-parse "netrc")
 (defvar auto-save-file-name-transforms)
-(defvar ls-lisp-use-insert-directory-program)
 (defvar outline-regexp)
 
 ;;; User Customizable Internal Variables:
@@ -1221,7 +1220,9 @@ means to use always cached values for the directory contents."
 ;;; Internal Variables:
 
 (defvar tramp-current-connection nil
-  "Last connection timestamp.")
+  "Last connection timestamp.
+It is a cons cell of the actual `tramp-file-name-structure', and
+the (optional) timestamp of last activity on this connection.")
 
 (defvar tramp-password-save-function nil
   "Password save function.
@@ -1713,11 +1714,11 @@ ARGUMENTS to actually emit the message (if applicable)."
 		      (regexp-opt
 		       '("tramp-backtrace"
 			 "tramp-compat-funcall"
-			 "tramp-condition-case-unless-debug"
 			 "tramp-debug-message"
 			 "tramp-error"
 			 "tramp-error-with-buffer"
 			 "tramp-message"
+			 "tramp-signal-hook-function"
 			 "tramp-user-error")
 		       t)
 		      "$"))
@@ -1805,7 +1806,7 @@ function is meant for debugging purposes."
 VEC-OR-PROC identifies the connection to use, SIGNAL is the
 signal identifier to be raised, remaining arguments passed to
 `tramp-message'.  Finally, signal SIGNAL is raised."
-  (let (tramp-message-show-message)
+  (let (tramp-message-show-message signal-hook-function)
     (tramp-backtrace vec-or-proc)
     (unless arguments
       ;; FMT-STRING could be just a file name, as in
@@ -1893,6 +1894,12 @@ the resulting error message."
     `(condition-case-unless-debug ,err
          (progn ,@body)
        (error (tramp-message ,vec-or-proc 3 ,format ,err) nil))))
+
+;; This function provides traces in case of errors not triggered by
+;; Tramp functions.
+(defun tramp-signal-hook-function (error-symbol data)
+  "Funtion to be called via `signal-hook-function'."
+  (tramp-error (car tramp-current-connection) error-symbol "%s" data))
 
 (defmacro with-parsed-tramp-file-name (filename var &rest body)
   "Parse a Tramp filename and make components available in the body.
@@ -2140,7 +2147,8 @@ pass to the OPERATION."
 	    .
 	    ,(and (eq inhibit-file-name-operation operation)
 		  inhibit-file-name-handlers)))
-	 (inhibit-file-name-operation operation))
+	 (inhibit-file-name-operation operation)
+	 signal-hook-function)
     (apply operation args)))
 
 ;; We handle here all file primitives.  Most of them have the file
@@ -2250,16 +2258,6 @@ Must be handled by the callers."
 		res (cdr elt))))
       res)))
 
-(defvar tramp-debug-on-error nil
-  "Like `debug-on-error' but used Tramp internal.")
-
-(defmacro tramp-condition-case-unless-debug
-  (var bodyform &rest handlers)
-  "Like `condition-case-unless-debug' but `tramp-debug-on-error'."
-  (declare (debug condition-case) (indent 2))
-  `(let ((debug-on-error tramp-debug-on-error))
-     (condition-case-unless-debug ,var ,bodyform ,@handlers)))
-
 ;; In Emacs, there is some concurrency due to timers.  If a timer
 ;; interrupts Tramp and wishes to use the same connection buffer as
 ;; the "main" Emacs, then garbage might occur in the connection
@@ -2299,100 +2297,84 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 	(save-match-data
           (setq filename (tramp-replace-environment-variables filename))
           (with-parsed-tramp-file-name filename nil
-            (let ((completion (tramp-completion-mode-p))
+            (let ((current-connection tramp-current-connection)
 		  (foreign
 		   (tramp-find-foreign-file-name-handler filename operation))
+		  (signal-hook-function #'tramp-signal-hook-function)
 		  result)
+	      ;; Set `tramp-current-connection'.
+	      (unless
+		  (tramp-file-name-equal-p v (car tramp-current-connection))
+		(setq tramp-current-connection (list v)))
+
 	      ;; Call the backend function.
-	      (if foreign
-		  (tramp-condition-case-unless-debug err
-		    (let ((sf (symbol-function foreign)))
-		      ;; Some packages set the default directory to a
-		      ;; remote path, before respective Tramp packages
-		      ;; are already loaded.  This results in
-		      ;; recursive loading.  Therefore, we load the
-		      ;; Tramp packages locally.
-		      (when (autoloadp sf)
-			(let ((default-directory
-				(tramp-compat-temporary-file-directory))
-			      file-name-handler-alist)
-			  (load (cadr sf) 'noerror 'nomessage)))
-;;		      (tramp-message
-;;		       v 4 "Running `%s'..." (cons operation args))
-		      ;; If `non-essential' is non-nil, Tramp shall
-		      ;; not open a new connection.
-		      ;; If Tramp detects that it shouldn't continue
-		      ;; to work, it throws the `suppress' event.
-		      ;; This could happen for example, when Tramp
-		      ;; tries to open the same connection twice in a
-		      ;; short time frame.
-		      ;; In both cases, we try the default handler then.
-		      (setq result
-			    (catch 'non-essential
-			      (catch 'suppress
-				(when (and tramp-locked (not tramp-locker))
-				  (setq tramp-locked nil)
-				  (tramp-error
-				   (car-safe tramp-current-connection)
-				   'file-error
-				   "Forbidden reentrant call of Tramp"))
-				(let ((tl tramp-locked))
-				  (setq tramp-locked t)
-				  (unwind-protect
-				      (let ((tramp-locker t))
-					(apply foreign operation args))
-				    (setq tramp-locked tl))))))
-;;		      (tramp-message
-;;		       v 4 "Running `%s'...`%s'" (cons operation args) result)
-		      (cond
-		       ((eq result 'non-essential)
-			(tramp-message
-			 v 5 "Non-essential received in operation %s"
-			 (cons operation args))
-			(tramp-run-real-handler operation args))
-		       ((eq result 'suppress)
-			(let (tramp-message-show-message)
+	      (unwind-protect
+	          (if foreign
+		      (let ((sf (symbol-function foreign)))
+		        ;; Some packages set the default directory to
+		        ;; a remote path, before respective Tramp
+		        ;; packages are already loaded.  This results
+		        ;; in recursive loading.  Therefore, we load
+		        ;; the Tramp packages locally.
+		        (when (autoloadp sf)
+			  (let ((default-directory
+				  (tramp-compat-temporary-file-directory))
+			        file-name-handler-alist)
+			    (load (cadr sf) 'noerror 'nomessage)))
+                        ;; (tramp-message
+                        ;;  v 4 "Running `%s'..." (cons operation args))
+                        ;; If `non-essential' is non-nil, Tramp shall
+		        ;; not open a new connection.
+		        ;; If Tramp detects that it shouldn't continue
+		        ;; to work, it throws the `suppress' event.
+		        ;; This could happen for example, when Tramp
+		        ;; tries to open the same connection twice in
+		        ;; a short time frame.
+		        ;; In both cases, we try the default handler then.
+		        (setq result
+			      (catch 'non-essential
+			        (catch 'suppress
+				  (when (and tramp-locked (not tramp-locker))
+				    (setq tramp-locked nil)
+				    (tramp-error
+				     v 'file-error
+				     "Forbidden reentrant call of Tramp"))
+				  (let ((tl tramp-locked))
+				    (setq tramp-locked t)
+				    (unwind-protect
+				        (let ((tramp-locker t))
+					  (apply foreign operation args))
+				      (setq tramp-locked tl))))))
+                        ;; (tramp-message
+                        ;;  v 4 "Running `%s'...`%s'" (cons operation args) result)
+		        (cond
+		         ((eq result 'non-essential)
 			  (tramp-message
-			   v 1 "Suppress received in operation %s"
+			   v 5 "Non-essential received in operation %s"
 			   (cons operation args))
-			  (tramp-cleanup-connection v t)
-			  (tramp-run-real-handler operation args)))
-		       (t result)))
+			  (tramp-run-real-handler operation args))
+		         ((eq result 'suppress)
+			  (let (tramp-message-show-message)
+			    (tramp-message
+			     v 1 "Suppress received in operation %s"
+			     (cons operation args))
+			    (tramp-cleanup-connection v t)
+			    (tramp-run-real-handler operation args)))
+		         (t result)))
 
-		    ;; Trace that somebody has interrupted the operation.
-		    ((debug quit)
-		     (let (tramp-message-show-message)
-		       (tramp-message
-			v 1 "Interrupt received in operation %s"
-			(cons operation args)))
-		     ;; Propagate the signal.
-		     (signal (car err) (cdr err)))
+		    ;; Nothing to do for us.  However, since we are in
+		    ;; `tramp-mode', we must suppress the volume
+		    ;; letter on MS Windows.
+		    (setq result (tramp-run-real-handler operation args))
+		    (if (stringp result)
+		        (tramp-drop-volume-letter result)
+		      result))
 
-		    ;; When we are in completion mode, some failed
-		    ;; operations shall return at least a default
-		    ;; value in order to give the user a chance to
-		    ;; correct the file name in the minibuffer.
-		    ;; In order to get a full backtrace, one could apply
-		    ;;   (setq tramp-debug-on-error t)
-		    (error
-		     (cond
-		      ((and completion (zerop (length localname))
-			    (memq operation '(file-exists-p file-directory-p)))
-		       t)
-		      ((and completion (zerop (length localname))
-			    (memq operation
-				  '(expand-file-name file-name-as-directory)))
-		       filename)
-		      ;; Propagate the error.
-		      (t (signal (car err) (cdr err))))))
-
-		;; Nothing to do for us.  However, since we are in
-		;; `tramp-mode', we must suppress the volume letter on
-		;; MS Windows.
-		(setq result (tramp-run-real-handler operation args))
-		(if (stringp result)
-		    (tramp-drop-volume-letter result)
-		  result)))))
+		;; Reset `tramp-current-connection'.
+		(unless
+		    (tramp-file-name-equal-p
+		     (car current-connection) (car tramp-current-connection))
+		  (setq tramp-current-connection current-connection))))))
 
       ;; When `tramp-mode' is not enabled, or the file name is quoted,
       ;; we don't do anything.
@@ -3403,9 +3385,9 @@ User is always nil."
     (access-file filename "Reading directory"))
   (with-parsed-tramp-file-name (expand-file-name filename) nil
     (with-tramp-progress-reporter v 0 (format "Opening directory %s" filename)
-      ;; We must load it in order to get the advice around `insert-directory'.
-      (require 'ls-lisp)
       (let (ls-lisp-use-insert-directory-program start)
+	;; Silence byte compiler.
+	ls-lisp-use-insert-directory-program
 	(tramp-run-real-handler
 	 #'insert-directory
 	 (list filename switches wildcard full-directory-p))
@@ -4074,7 +4056,9 @@ performed successfully.  Any other value means an error."
 	  (widen)
 	  (tramp-message vec 6 "\n%s" (buffer-string)))
 	(if (eq exit 'ok)
-	    (ignore-errors (funcall tramp-password-save-function))
+	    (ignore-errors
+	      (and (functionp tramp-password-save-function)
+		   (funcall tramp-password-save-function)))
 	  ;; Not successful.
 	  (tramp-clear-passwd vec)
 	  (delete-process proc)
@@ -4268,10 +4252,12 @@ Example:
 
 would yield t.  On the other hand, the following check results in nil:
 
-  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")"
-  (and (tramp-tramp-file-p file1)
-       (tramp-tramp-file-p file2)
-       (string-equal (file-remote-p file1) (file-remote-p file2))))
+  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")
+
+If both files are local, the function returns t."
+  (or (and (null (file-remote-p file1)) (null (file-remote-p file2)))
+      (and (tramp-tramp-file-p file1) (tramp-tramp-file-p file2)
+	   (string-equal (file-remote-p file1) (file-remote-p file2)))))
 
 (defun tramp-mode-string-to-int (mode-string)
   "Converts a ten-letter `drwxrwxrwx'-style mode string into mode bits."

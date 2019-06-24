@@ -36,6 +36,7 @@
 
 (require 'auth-source)
 (require 'format-spec)
+(require 'ls-lisp)  ;; Due to `tramp-handle-insert-directory'.
 (require 'parse-time)
 (require 'shell)
 

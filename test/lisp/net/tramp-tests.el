@@ -169,7 +169,6 @@ properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
   `(let ((tramp-verbose (max (or ,verbose 0) (or tramp-verbose 0)))
 	 (tramp-message-show-message t)
-	 (tramp-debug-on-error t)
 	 (debug-ignored-errors
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
 	 inhibit-message)
@@ -178,9 +177,8 @@ properly.  BODY shall not contain a timeout."
        ;; Unwind forms.
        (when (and (null tramp--test-instrument-test-case-p) (> tramp-verbose 3))
 	 (dolist (buf (tramp-list-tramp-buffers))
-	   (message ";; %s" buf)
 	   (with-current-buffer buf
-	     (message "%s" (buffer-string))))))))
+	     (message ";; %s\n%s" buf (buffer-string))))))))
 
 (defsubst tramp--test-message (fmt-string &rest arguments)
   "Emit a message into ERT *Messages*."
@@ -2960,17 +2958,16 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	(ignore-errors (delete-directory tmp-name2 'recursive))))))
 
 ;; Method "smb" supports `make-symbolic-link' only if the remote host
-;; has CIFS capabilities.  tramp-adb.el and tramp-gvfs.el do not
-;; support symbolic links at all.
+;; has CIFS capabilities.  tramp-adb.el, tramp-gvfs.el and
+;; tramp-rclone.el do not support symbolic links at all.
 (defmacro tramp--test-ignore-make-symbolic-link-error (&rest body)
   "Run BODY, ignoring \"make-symbolic-link not supported\" file error."
   (declare (indent defun) (debug (body)))
   `(condition-case err
        (progn ,@body)
-     ((error quit debug)
-      (unless (and (eq (car err) 'file-error)
-		   (string-equal (error-message-string err)
-				 "make-symbolic-link not supported"))
+     (file-error
+      (unless (string-equal (error-message-string err)
+			    "make-symbolic-link not supported")
 	(signal (car err) (cdr err))))))
 
 (ert-deftest tramp-test18-file-attributes ()
