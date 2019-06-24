@@ -999,6 +999,9 @@ command with a prefix argument (the value does not matter)."
     ("\\.bz2\\'" "" "bunzip2")
     ("\\.xz\\'" "" "unxz")
     ("\\.zip\\'" "" "unzip -o -d %o %i")
+    ("\\.tar\\.zst\\'" "" "unzstd -c %i | tar -xf -")
+    ("\\.tzst\\'" "" "unzstd -c %i | tar -xf -")
+    ("\\.zst\\'" "" "unzstd --rm")
     ("\\.7z\\'" "" "7z x -aoa -o%o %i")
     ;; This item controls naming for compression.
     ("\\.tar\\'" ".tgz" nil)
@@ -1023,6 +1026,7 @@ ARGS are command switches passed to PROGRAM.")
   '(("\\.tar\\.gz\\'" . "tar -cf - %i | gzip -c9 > %o")
     ("\\.tar\\.bz2\\'" . "tar -cf - %i | bzip2 -c9 > %o")
     ("\\.tar\\.xz\\'" . "tar -cf - %i | xz -c9 > %o")
+    ("\\.tar\\.zst\\'" . "tar -cf - %i | zstd -19 -o %o")
     ("\\.zip\\'" . "zip %o -r --filesync %i"))
   "Control the compression shell command for `dired-do-compress-to'.
 
@@ -1108,12 +1112,17 @@ Return nil if no change in files."
                     nil t)
                    nil t)))
              ;; We found an uncompression rule.
-             (when (not
-                    (dired-check-process
-                     (concat "Uncompressing " file)
-                     command
-                     file))
-               newname)))
+             (let ((match (string-match " " command))
+                   (msg (concat "Uncompressing " file)))
+               (unless (if match
+                           (dired-check-process msg
+                                                (substring command 0 match)
+                                                (substring command (1+ match))
+                                                file)
+                         (dired-check-process msg
+                                              command
+                                              file))
+                 newname))))
           (t
            ;; We don't recognize the file as compressed, so compress it.
            ;; Try gzip; if we don't have that, use compress.

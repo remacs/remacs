@@ -606,6 +606,10 @@ The default value is 'find-dired-sort-by-filename'.
 
 *** New sorting options for the variable 'find-ls-option'.
 
+---
+*** Zstandard compression is now supported for 'dired-do-compress' and
+'dired-do-compress-to'.
+
 ** Change Logs and VC
 
 *** Recording ChangeLog entries doesn't require an actual file.
