@@ -3441,18 +3441,21 @@ Shell archives
 @cindex @file{shar} file archive suffix
 @cindex file archive suffix @file{shar}
 
-@item @samp{.tar}, @samp{.tbz}, @samp{.tgz}, @samp{.tlz}, @samp{.txz} ---
+@item @samp{.tar}, @samp{.tbz}, @samp{.tgz}, @samp{.tlz}, @samp{.txz},
+@samp{.tzst} ---
 (Compressed) tape archives
 @cindex @file{tar} file archive suffix
 @cindex @file{tbz} file archive suffix
 @cindex @file{tgz} file archive suffix
 @cindex @file{tlz} file archive suffix
 @cindex @file{txz} file archive suffix
+@cindex @file{tzst} file archive suffix
 @cindex file archive suffix @file{tar}
 @cindex file archive suffix @file{tbz}
 @cindex file archive suffix @file{tgz}
 @cindex file archive suffix @file{tlz}
 @cindex file archive suffix @file{txz}
+@cindex file archive suffix @file{tzst}
 
 @item @samp{.warc} ---
 Web archives
@@ -3487,8 +3490,8 @@ File archives could also be compressed, identified by an additional
 compression suffix.  Valid compression suffixes are listed in the
 constant @code{tramp-archive-compression-suffixes}.  They are
 @samp{.bz2}, @samp{.gz}, @samp{.lrz}, @samp{.lz}, @samp{.lz4},
-@samp{.lzma}, @samp{.lzo}, @samp{.uu}, @samp{.xz} and @samp{.Z}.  A
-valid archive file name would be
+@samp{.lzma}, @samp{.lzo}, @samp{.uu}, @samp{.xz}, @samp{.Z}, and
+@samp{.zst}.  A valid archive file name would be
 @file{/path/to/dir/file.tar.gz/dir/file}.  Even several suffixes in a
 row are possible, like @file{/path/to/dir/file.tar.gz.uu/dir/file}.
 

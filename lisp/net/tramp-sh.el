@@ -4533,6 +4533,7 @@ means discard it)."
     ("env GZIP= gzip" "env GZIP= gzip -d")
     ("bzip2" "bzip2 -d")
     ("xz" "xz -d")
+    ("zstd --rm" "zstd -d --rm")
     ("compress" "compress -d"))
   "List of compress and decompress commands for inline transfer.
 Each item is a list that looks like this:

@@ -1286,6 +1286,10 @@ names are adjusted to the host name from the previous hop.
 timeout, after which the underlying session is disabled.  This is for
 security reasons.
 
++++
+*** Zstandard compression is now supported when using libarchive 3.3
+or newer.
+
 ** Rcirc
 
 ---

@@ -77,8 +77,8 @@
 ;; File archives could also be compressed, identified by an additional
 ;; compression suffix.  Valid compression suffixes are listed in the
 ;; constant `tramp-archive-compression-suffixes'.  They are ".bz2",
-;; ".gz", ".lrz", ".lz", ".lz4", ".lzma", ".lzo", ".uu", ".xz" and
-;; ".Z".  A valid archive file name would be
+;; ".gz", ".lrz", ".lz", ".lz4", ".lzma", ".lzo", ".uu", ".xz",".Z",
+;; and .zst.  A valid archive file name would be
 ;; "/path/to/dir/file.tar.gz/dir/file".  Even several suffixes in a
 ;; row are possible, like "/path/to/dir/file.tar.gz.uu/dir/file".
 
@@ -154,7 +154,7 @@
     "rar" ;; RAR archives.
     "rpm" ;; Red Hat packages.
     "shar" ;; Shell archives.  Not in libarchive testsuite.
-    "tar" "tbz" "tgz" "tlz" "txz" ;; (Compressed) tape archives.
+    "tar" "tbz" "tgz" "tlz" "txz" ".tzst" ;; (Compressed) tape archives.
     "warc" ;; Web archives.
     "xar" ;; macOS XAR archives.  Not in libarchive testsuite.
     "xpi" ;; XPInstall Mozilla addons.  Not in libarchive testsuite.
@@ -169,7 +169,7 @@ It must be supported by libarchive(3).")
 
 ;;;###autoload
 (defconst tramp-archive-compression-suffixes
-  '("bz2" "gz" "lrz" "lz" "lz4" "lzma" "lzo" "uu" "xz" "Z")
+  '("bz2" "gz" "lrz" "lz" "lz4" "lzma" "lzo" "uu" "xz" "Z" "zst")
   "List of suffixes which indicate a compressed file.
 It must be supported by libarchive(3).")
 
