@@ -130,5 +130,27 @@ The point is set to the beginning of the buffer."
    (sgml-delete-tag 1)
    (should (string= "Winter is comin'" (buffer-string)))))
 
+(ert-deftest sgml-tests--quotes-syntax ()
+  (dolist (str '("a\"b <t>c'd</t>"
+                 "a'b <t>c\"d</t>"
+                 "<t>\"a'</t>"
+                 "<t>'a\"</t>"
+                 "<t>\"a'\"</t>"
+                 "<t>'a\"'</t>"
+                 "a\"b <tag>c'd</tag>"
+                 ;;"<tag>c>'d</tag>" Fixed in master.
+                 "<t><!-- \" --></t>"
+                 "<t><!-- ' --></t>"
+                 "<t>(')</t>"
+                 "<t>(\")</t>"
+                 ))
+   (with-temp-buffer
+     (sgml-mode)
+     (insert str)
+     (ert-info ((format "%S" str) :prefix "Test case: ")
+       ;; Check that last tag is parsed as a tag.
+       (should (= 1 (car (syntax-ppss (1- (point-max))))))
+       (should (= 0 (car (syntax-ppss (point-max)))))))))
+
 (provide 'sgml-mode-tests)
 ;;; sgml-mode-tests.el ends here

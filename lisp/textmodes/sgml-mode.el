@@ -357,10 +357,11 @@ Any terminating `>' or `/' is not matched.")
 (defun sgml-syntax-propertize (start end)
   "Syntactic keywords for `sgml-mode'."
   (goto-char start)
-  (sgml-syntax-propertize-inside end)
-  (funcall
-   (syntax-propertize-rules sgml-syntax-propertize-rules)
-   start end))
+  (with-syntax-table (or syntax-ppss-table (syntax-table))
+    (sgml-syntax-propertize-inside end)
+    (funcall
+     (syntax-propertize-rules sgml-syntax-propertize-rules)
+     start end)))
 
 (defun sgml-syntax-propertize-inside (end)
   (let ((ppss (syntax-ppss)))
@@ -568,6 +569,7 @@ Do \\[describe-key] on the following bindings to discover what they do.
 			      sgml-font-lock-keywords-2)
 			     nil t))
   (setq-local syntax-propertize-function #'sgml-syntax-propertize)
+  (setq-local syntax-ppss-table sgml-tag-syntax-table)
   (setq-local facemenu-add-face-function 'sgml-mode-facemenu-add-face-function)
   (setq-local sgml-xml-mode (sgml-xml-guess))
   (unless sgml-xml-mode
