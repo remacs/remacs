@@ -1163,7 +1163,7 @@ When enabled, it automatically turns on `font-lock-mode'."
   nil ;; init-value
   "" ;; lighter
   nil ;; keymap
-  (when (eq major-mode 'message-mode)   ;FIXME: Use derived-mode-p.
+  (when (derived-mode-p 'message-mode)
     ;; FIXME: Use font-lock-add-keywords!
     (let ((defaults (car font-lock-defaults))
 	  default keywords)
