@@ -195,6 +195,8 @@ If ADVANCE is non-nil, move forward by one line afterwards."
     (define-key map "n" 'next-line)
     (define-key map "p" 'previous-line)
     (define-key map "S" 'tabulated-list-sort)
+    (define-key map "e" 'tabulated-list-widen-current-column)
+    (define-key map "s" 'tabulated-list-narrow-current-column)
     (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'mouse-select-window)
     map)
@@ -644,6 +646,39 @@ With a numeric prefix argument N, sort the Nth column."
       (setq tabulated-list-sort-key (cons name nil)))
     (tabulated-list-init-header)
     (tabulated-list-print t)))
+
+(defun tabulated-list-widen-current-column (&optional n)
+  "Widen the current tabulated-list column by N chars.
+Interactively, N is the prefix numeric argument, and defaults to
+1."
+  (interactive "p")
+  (let ((start (current-column))
+        (nb-cols (length tabulated-list-format))
+        (col-nb 0)
+        (total-width 0)
+        (found nil)
+        col-width)
+    (while (and (not found)
+                (< col-nb nb-cols))
+      (if (> start
+             (setq total-width
+                   (+ total-width
+                      (setq col-width
+                            (cadr (aref tabulated-list-format
+                                        col-nb))))))
+          (setq col-nb (1+ col-nb))
+        (setq found t)
+        (setf (cadr (aref tabulated-list-format col-nb))
+              (max 1 (+ col-width n)))
+        (tabulated-list-print t)
+        (tabulated-list-init-header)))))
+
+(defun tabulated-list-narrow-current-column (&optional n)
+  "Narrow the current tabulated list column by N chars.
+Interactively, N is the prefix numeric argument, and defaults to
+1."
+  (interactive "p")
+  (tabulated-list-widen-current-column (- n)))
 
 (defvar tabulated-list--current-lnum-width nil)
 (defun tabulated-list-watch-line-number-width (_window)

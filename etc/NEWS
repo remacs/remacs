@@ -1448,6 +1448,11 @@ near the current column in Tabulated Lists (see variables
 'tabulated-list-tty-sort-indicator-asc', and
 'tabulated-list-tty-sort-indicator-desc').
 
++++
+*** Two new commands and keystrokes have been added to the tabulated
+list mode: `w' (which widens the current column) and `c' which makes
+the current column contract.
+
 ** Text mode
 
 +++
