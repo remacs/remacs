@@ -1,9 +1,11 @@
 ;;; svg.el --- SVG image creation functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: image
+;; Version: 1.0
+;; Package-Requires: ((emacs "25"))
 
 ;; This file is part of GNU Emacs.
 
@@ -22,12 +24,41 @@
 
 ;;; Commentary:
 
+;; This package allows creating SVG images in Emacs.  SVG images are
+;; vector-based XML files, really, so you could create them directly
+;; as XML.  However, that's really tedious, as there are some fiddly
+;; bits.
+
+;; In addition, the `svg-insert-image' function allows inserting an
+;; SVG image into a buffer that's updated "on the fly" as you
+;; add/alter elements to the image, which is useful when composing the
+;; images.
+
+;; Here are some usage examples:
+
+;; Create the base image structure, add a gradient spec, and insert it
+;; into the buffer:
+;;
+;;     (setq svg (svg-create 800 800 :stroke "orange" :stroke-width 5))
+;;     (svg-gradient svg "gradient" 'linear '(0 . "red") '(100 . "blue"))
+;;     (save-excursion (goto-char (point-max)) (svg-insert-image svg))
+
+;; Then add various elements to the structure:
+;;
+;;     (svg-rectangle svg 100 100 500 500 :gradient "gradient" :id "rec1")
+;;     (svg-circle svg 500 500 100 :id "circle1")
+;;     (svg-ellipse svg 100 100 50 90 :stroke "red" :id "ellipse1")
+;;     (svg-line svg 100 190 50 100 :id "line1" :stroke "yellow")
+;;     (svg-polyline svg '((200 . 100) (500 . 450) (80 . 100))
+;;                   :stroke "green" :id "poly1")
+;;     (svg-polygon svg '((100 . 100) (200 . 150) (150 . 90))
+;;                  :stroke "blue" :fill "red" :id "gon1")
+
 ;;; Code:
 
 (require 'cl-lib)
 (require 'xml)
 (require 'dom)
-(eval-when-compile (require 'subr-x))
 
 (defun svg-create (width height &rest args)
   "Create a new, empty SVG image with dimensions WIDTH x HEIGHT.
@@ -102,7 +133,7 @@ X/Y denote the center of the ellipse."
 	       ,@(svg--arguments svg args)))))
 
 (defun svg-line (svg x1 y1 x2 y2 &rest args)
-  "Create a line of starting in X1/Y1, ending at X2/Y2 in SVG."
+  "Create a line starting in X1/Y1, ending at X2/Y2 on SVG."
   (svg--append
    svg
    (dom-node 'line
@@ -185,6 +216,9 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
                              (concat "\\`" (regexp-quote (dom-attr node 'id))
                                      "\\'")))))
     (if old
+        ;; FIXME: This was (dom-set-attributes old (dom-attributes node))
+        ;; and got changed by commit f7ea7aa11f6211b5142bbcfc41c580d75485ca56
+        ;; without any explanation.
 	(setcdr (car old) (cdr node))
       (dom-append-child svg node)))
   (svg-possibly-update-image svg))
@@ -284,11 +318,11 @@ If the SVG is later changed, the image will also be updated."
 
 (defun svg-remove (svg id)
   "Remove the element identified by ID from SVG."
-  (when-let* ((node (car (dom-by-id
-                          svg
-                          (concat "\\`" (regexp-quote id)
-                                  "\\'")))))
-    (dom-remove-node svg node)))
+  (let* ((node (car (dom-by-id
+                     svg
+                     (concat "\\`" (regexp-quote id)
+                             "\\'")))))
+    (when node (dom-remove-node svg node))))
 
 (provide 'svg)
 
