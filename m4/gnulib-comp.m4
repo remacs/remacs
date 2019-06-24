@@ -52,6 +52,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module byteswap:
   # Code from module c-ctype:
   # Code from module c-strcase:
+  # Code from module canonicalize-lgpl:
   # Code from module careadlinkat:
   # Code from module clock-time:
   # Code from module cloexec:
@@ -113,6 +114,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module limits-h:
   # Code from module localtime-buffer:
   # Code from module lstat:
+  # Code from module malloca:
   # Code from module manywarnings:
   # Code from module memmem-simple:
   # Code from module memrchr:
@@ -125,6 +127,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module nstrftime:
   # Code from module open:
   # Code from module openat-h:
+  # Code from module pathmax:
   # Code from module pipe2:
   # Code from module pselect:
   # Code from module pthread_sigmask:
@@ -199,6 +202,13 @@ AC_DEFUN([gl_INIT],
   gl_FUNC_ALLOCA
   gl___BUILTIN_EXPECT
   gl_BYTESWAP
+  gl_CANONICALIZE_LGPL
+  if test $HAVE_CANONICALIZE_FILE_NAME = 0 || test $REPLACE_CANONICALIZE_FILE_NAME = 1; then
+    AC_LIBOBJ([canonicalize-lgpl])
+  fi
+  gl_MODULE_INDICATOR([canonicalize-lgpl])
+  gl_STDLIB_MODULE_INDICATOR([canonicalize_file_name])
+  gl_STDLIB_MODULE_INDICATOR([realpath])
   AC_CHECK_FUNCS_ONCE([readlinkat])
   gl_CLOCK_TIME
   gl_MODULE_INDICATOR([close-stream])
@@ -447,9 +457,11 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1=false
   gl_gnulib_enabled_21ee726a3540c09237a8e70c0baf7467=false
   gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9=false
+  gl_gnulib_enabled_malloca=false
   gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=false
   gl_gnulib_enabled_open=false
   gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=false
+  gl_gnulib_enabled_pathmax=false
   gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
   gl_gnulib_enabled_strtoll=false
   gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=false
@@ -561,6 +573,14 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9=true
     fi
   }
+  func_gl_gnulib_m4code_malloca ()
+  {
+    if ! $gl_gnulib_enabled_malloca; then
+      gl_MALLOCA
+      gl_gnulib_enabled_malloca=true
+      func_gl_gnulib_m4code_682e609604ccaac6be382e4ee3a4eaec
+    fi
+  }
   func_gl_gnulib_m4code_5264294aa0a5557541b53c8c741f7f31 ()
   {
     if ! $gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31; then
@@ -593,6 +613,13 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=true
     fi
   }
+  func_gl_gnulib_m4code_pathmax ()
+  {
+    if ! $gl_gnulib_enabled_pathmax; then
+      gl_PATHMAX
+      gl_gnulib_enabled_pathmax=true
+    fi
+  }
   func_gl_gnulib_m4code_6099e9737f757db36c47fa9d9f02e88c ()
   {
     if ! $gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c; then
@@ -617,6 +644,12 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=true
     fi
   }
+  if test $HAVE_CANONICALIZE_FILE_NAME = 0 || test $REPLACE_CANONICALIZE_FILE_NAME = 1; then
+    func_gl_gnulib_m4code_malloca
+  fi
+  if test $HAVE_CANONICALIZE_FILE_NAME = 0 || test $REPLACE_CANONICALIZE_FILE_NAME = 1; then
+    func_gl_gnulib_m4code_pathmax
+  fi
   if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
   fi
@@ -676,9 +709,11 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_a9786850e999ae65a836a6041e8e5ed1], [$gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_21ee726a3540c09237a8e70c0baf7467], [$gl_gnulib_enabled_21ee726a3540c09237a8e70c0baf7467])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_2049e887c7e5308faad27b3f894bb8c9], [$gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_malloca], [$gl_gnulib_enabled_malloca])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31], [$gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_open], [$gl_gnulib_enabled_open])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7], [$gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_pathmax], [$gl_gnulib_enabled_pathmax])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoll], [$gl_gnulib_enabled_strtoll])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec], [$gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec])
@@ -845,6 +880,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/c-strcase.h
   lib/c-strcasecmp.c
   lib/c-strncasecmp.c
+  lib/canonicalize-lgpl.c
   lib/careadlinkat.c
   lib/careadlinkat.h
   lib/cdefs.h
@@ -915,6 +951,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/localtime-buffer.c
   lib/localtime-buffer.h
   lib/lstat.c
+  lib/malloca.c
+  lib/malloca.h
   lib/md5.c
   lib/md5.h
   lib/memmem.c
@@ -928,6 +966,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/openat-priv.h
   lib/openat-proc.c
   lib/openat.h
+  lib/pathmax.h
   lib/pipe2.c
   lib/pselect.c
   lib/pthread_sigmask.c
@@ -1001,6 +1040,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/alloca.m4
   m4/builtin-expect.m4
   m4/byteswap.m4
+  m4/canonicalize.m4
   m4/clock_time.m4
   m4/copy-file-range.m4
   m4/count-leading-zeros.m4
@@ -1009,6 +1049,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/d-type.m4
   m4/dirent_h.m4
   m4/dirfd.m4
+  m4/double-slash-root.m4
   m4/dup2.m4
   m4/eealloc.m4
   m4/environ.m4
@@ -1048,6 +1089,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/localtime-buffer.m4
   m4/longlong.m4
   m4/lstat.m4
+  m4/malloca.m4
   m4/manywarnings-c++.m4
   m4/manywarnings.m4
   m4/mbstate_t.m4
@@ -1064,6 +1106,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/off_t.m4
   m4/open-cloexec.m4
   m4/open.m4
+  m4/pathmax.m4
   m4/pipe2.m4
   m4/pselect.m4
   m4/pthread_sigmask.m4

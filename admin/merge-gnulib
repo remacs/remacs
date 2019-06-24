@@ -29,6 +29,7 @@ GNULIB_MODULES='
   alloca-opt binary-io byteswap c-ctype c-strcase
   careadlinkat close-stream copy-file-range
   count-leading-zeros count-one-bits count-trailing-zeros
+  canonicalize-lgpl
   crypto/md5-buffer crypto/sha1-buffer crypto/sha256-buffer crypto/sha512-buffer
   d-type diffseq dosname dtoastr dtotimespec dup2
   environ execinfo explicit_bzero faccessat

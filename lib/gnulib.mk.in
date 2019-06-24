@@ -72,6 +72,7 @@
 #  byteswap \
 #  c-ctype \
 #  c-strcase \
+#  canonicalize-lgpl \
 #  careadlinkat \
 #  close-stream \
 #  copy-file-range \
@@ -484,6 +485,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_OBJ = @GTK_OBJ@
 GZIP_PROG = @GZIP_PROG@
+HARFBUZZ_CFLAGS = @HARFBUZZ_CFLAGS@
+HARFBUZZ_LIBS = @HARFBUZZ_LIBS@
 HAVE_ALLOCA_H = @HAVE_ALLOCA_H@
 HAVE_ALPHASORT = @HAVE_ALPHASORT@
 HAVE_ATOLL = @HAVE_ATOLL@
@@ -1105,6 +1108,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -1242,6 +1246,17 @@ libgnu_a_SOURCES += c-strcase.h c-strcasecmp.c c-strncasecmp.c
 
 endif
 ## end   gnulib module c-strcase
+
+## begin gnulib module canonicalize-lgpl
+ifeq (,$(OMIT_GNULIB_MODULE_canonicalize-lgpl))
+
+
+EXTRA_DIST += canonicalize-lgpl.c
+
+EXTRA_libgnu_a_SOURCES += canonicalize-lgpl.c
+
+endif
+## end   gnulib module canonicalize-lgpl
 
 ## begin gnulib module careadlinkat
 ifeq (,$(OMIT_GNULIB_MODULE_careadlinkat))
@@ -1980,6 +1995,18 @@ EXTRA_libgnu_a_SOURCES += lstat.c
 endif
 ## end   gnulib module lstat
 
+## begin gnulib module malloca
+ifeq (,$(OMIT_GNULIB_MODULE_malloca))
+
+ifneq (,$(gl_GNULIB_ENABLED_malloca))
+libgnu_a_SOURCES += malloca.c
+
+endif
+EXTRA_DIST += malloca.h
+
+endif
+## end   gnulib module malloca
+
 ## begin gnulib module memmem-simple
 ifeq (,$(OMIT_GNULIB_MODULE_memmem-simple))
 
@@ -2078,6 +2105,17 @@ EXTRA_DIST += openat.h
 
 endif
 ## end   gnulib module openat-h
+
+## begin gnulib module pathmax
+ifeq (,$(OMIT_GNULIB_MODULE_pathmax))
+
+ifneq (,$(gl_GNULIB_ENABLED_pathmax))
+
+endif
+EXTRA_DIST += pathmax.h
+
+endif
+## end   gnulib module pathmax
 
 ## begin gnulib module pipe2
 ifeq (,$(OMIT_GNULIB_MODULE_pipe2))

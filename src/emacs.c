@@ -709,9 +709,6 @@ load_pdump (int argc, char **argv)
 {
   const char *const suffix = ".pdmp";
   enum pdumper_load_result result;
-#ifdef WINDOWSNT
-  size_t argv0_len;
-#endif
 
   /* TODO: maybe more thoroughly scrub process environment in order to
      make this use case (loading a pdumper image in an unexeced emacs)
@@ -747,17 +744,23 @@ load_pdump (int argc, char **argv)
     }
 
   /* Look for a dump file in the same directory as the executable; it
-     should have the same basename.  */
+     should have the same basename.  If the directory name is, however,
+     a symbolic link, resolve the symbolic symbolic link first.  */
 
-  dump_file = alloca (strlen (argv[0]) + strlen (suffix) + 1);
+  char* argv0 = realpath (argv[0], NULL);
+  if (!argv0)
+    fatal ("could not resolve realpath of \"%s\": %s",
+           argv0, strerror (errno));
+
+  dump_file = alloca (strlen (argv0) + strlen (suffix) + 1);
 #ifdef DOS_NT
   /* Remove the .exe extension if present.  */
-  argv0_len = strlen (argv[0]);
-  if (argv0_len >= 4 && c_strcasecmp (argv[0] + argv0_len - 4, ".exe") == 0)
-    sprintf (dump_file, "%.*s%s", (int)(argv0_len - 4), argv[0], suffix);
+  size_t argv0_len = strlen (argv0);
+  if (argv0_len >= 4 && c_strcasecmp (argv0 + argv0_len - 4, ".exe") == 0)
+    sprintf (dump_file, "%.*s%s", (int)(argv0_len - 4), argv0, suffix);
   else
 #endif
-  sprintf (dump_file, "%s%s", argv[0], suffix);
+  sprintf (dump_file, "%s%s", argv0, suffix);
 
   result = pdumper_load (dump_file);
   if (result == PDUMPER_LOAD_SUCCESS)
@@ -790,17 +793,17 @@ load_pdump (int argc, char **argv)
 
   if (result == PDUMPER_LOAD_FILE_NOT_FOUND)
     {
-      /* Finally, look for basename(argv[0])+".pdmp" in PATH_EXEC.
+      /* Finally, look for basename(argv0)+".pdmp" in PATH_EXEC.
 	 This way, they can rename both the executable and its pdump
 	 file in PATH_EXEC, and have several Emacs configurations in
 	 the same versioned libexec subdirectory.  */
       char *p, *last_sep = NULL;
-      for (p = argv[0]; *p; p++)
+      for (p = argv0; *p; p++)
 	{
 	  if (IS_DIRECTORY_SEP (*p))
 	    last_sep = p;
 	}
-      argv0_base = last_sep ? last_sep + 1 : argv[0];
+      argv0_base = last_sep ? last_sep + 1 : argv0;
       dump_file = alloca (strlen (path_exec)
 			  + 1
 			  + strlen (argv0_base)
