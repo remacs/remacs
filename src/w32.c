@@ -9988,6 +9988,21 @@ w32_relocate (const char *epath_dir)
   return epath_dir;
 }
 
+/* Return the full absolute name of the running executable.
+
+   Note: this function is called early during startup, when Unicode
+   file name are not yet supported.  */
+char *
+w32_my_exename (void)
+{
+  static char exename[MAX_PATH];
+  if (!GetModuleFileNameA (NULL, exename, MAX_PATH))
+    return NULL;
+  /* FIXME: Resolve possible symlinks in the last component of
+     exename, i.e. if the executable itself is a symlink.  */
+  return exename;
+}
+
 /*
 	globals_of_w32 is used to initialize those global variables that
 	must always be initialized on startup even when the global variable

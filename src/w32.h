@@ -185,6 +185,7 @@ extern MultiByteToWideChar_Proc pMultiByteToWideChar;
 extern WideCharToMultiByte_Proc pWideCharToMultiByte;
 extern DWORD multiByteToWideCharFlags;
 
+extern char *w32_my_exename (void);
 extern const char *w32_relocate (const char *);
 
 extern void init_environment (char **);

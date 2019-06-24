@@ -715,6 +715,24 @@ static enum pdumper_load_result
 load_pdump_find_executable (const char* argv0, char **exename)
 {
   enum pdumper_load_result result;
+#ifdef WINDOWSNT
+  result = PDUMPER_LOAD_ERROR;
+  *exename = NULL;
+  char *prog_fname = w32_my_exename ();
+  if (prog_fname)
+    {
+      result = PDUMPER_LOAD_OOM;
+      /* Use xstrdup, so as to call our private implementation of
+	 malloc, since the caller calls our free.  */
+      char *ret = xstrdup (prog_fname);
+      if (ret)
+	{
+	  *exename = ret;
+	  result = PDUMPER_LOAD_SUCCESS;
+	}
+    }
+  return result;
+#else  /* !WINDOWSNT */
   char *candidate = NULL;
 
   /* If the executable name contains a slash, we have some kind of
@@ -784,6 +802,7 @@ load_pdump_find_executable (const char* argv0, char **exename)
  out:
   free (candidate);
   return result;
+#endif	/* !WINDOWSNT */
 }
 
 static enum pdumper_load_result
@@ -848,10 +867,15 @@ load_pdump (int argc, char **argv)
      the dump in the hardcoded location.  */
   if (exename)
     {
+#ifdef WINDOWSNT
+      real_exename = exename;
+      exename = NULL;
+#else
       real_exename = realpath (exename, NULL);
       if (!real_exename)
         fatal ("could not resolve realpath of \"%s\": %s",
                exename, strerror (errno));
+#endif
       size_t real_exename_length = strlen (real_exename);
       if (strip_suffix)
         {
@@ -920,7 +944,7 @@ load_pdump (int argc, char **argv)
 			  + strlen (suffix)
 			  + 1);
 #ifdef DOS_NT
-      argv0_len = strlen (argv0_base);
+      size_t argv0_len = strlen (argv0_base);
       if (argv0_len >= 4
 	  && c_strcasecmp (argv0_base + argv0_len - 4, ".exe") == 0)
 	sprintf (dump_file, "%s%c%.*s%s", path_exec, DIRECTORY_SEP,
