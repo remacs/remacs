@@ -3353,6 +3353,8 @@ if test "${HAVE_X11}" = "yes"; then
     EMACS_CHECK_MODULES([FONTCONFIG], [fontconfig >= 2.2.0])
 
     test "$HAVE_FONTCONFIG" = "no" && AC_MSG_ERROR(cairo requires libfontconfig)
+    dnl For the "Does Emacs use" message at the end.
+    HAVE_XFT=no
   else
     ## Use -lXft if available, unless '--with-xft=no'.
     HAVE_XFT=maybe
