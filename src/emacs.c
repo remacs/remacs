@@ -26,6 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <close-stream.h>
@@ -704,11 +705,101 @@ dump_error_to_string (enum pdumper_load_result result)
     }
 }
 
+/* Find a path (absolute or relative) to the Emacs executable.
+   Called early in initialization by portable dump loading code, so we
+   can't use lisp and associated machinery.  On success, *EXENAME is
+   set to a heap-allocated string giving a path to the Emacs
+   executable or to NULL if we can't determine the path immediately.
+ */
+static enum pdumper_load_result
+load_pdump_find_executable (const char* argv0, char **exename)
+{
+  enum pdumper_load_result result;
+  char *candidate = NULL;
+
+  /* If the executable name contains a slash, we have some kind of
+     path already, so just copy it.  */
+  eassert (argv0);
+  if (strchr (argv0, DIRECTORY_SEP))
+    {
+      result = PDUMPER_LOAD_OOM;
+      char *ret = strdup (argv0);
+      if (!ret)
+        goto out;
+      result = PDUMPER_LOAD_SUCCESS;
+      *exename = ret;
+      goto out;
+    }
+  size_t argv0_length = strlen (argv0);
+
+  const char *path = getenv ("PATH");
+  if (!path)
+    {
+      /* Default PATH is implementation-defined, so we don't know how
+         to conduct the search.  */
+      result = PDUMPER_LOAD_SUCCESS;
+      *exename = NULL;
+      goto out;
+    }
+
+  /* Actually try each concatenation of a path element and the
+     executable basename.  */
+  const char path_sep[] = { SEPCHAR, '\0' };
+  do
+    {
+      size_t path_part_length = strcspn (path, path_sep);
+      const char *path_part = path;
+      path += path_part_length;
+      if (path_part_length == 0)
+        {
+          path_part = ".";
+          path_part_length = 1;
+        }
+      size_t candidate_length = path_part_length + 1 + argv0_length;
+      {
+        char *new_candidate = realloc (candidate, candidate_length + 1);
+        if (!new_candidate)
+          {
+            result = PDUMPER_LOAD_OOM;
+            goto out;
+          }
+        candidate = new_candidate;
+      }
+      memcpy (candidate + 0, path_part, path_part_length);
+      candidate[path_part_length] = DIRECTORY_SEP;
+      memcpy (candidate + path_part_length + 1, argv0, argv0_length + 1);
+      struct stat st;
+      if (!access (candidate, X_OK) &&
+          !stat (candidate, &st) &&
+          S_ISREG (st.st_mode))
+        {
+          *exename = candidate;
+          candidate = NULL;
+          break;
+        }
+    } while ((path++)[0] != '\0');
+
+  result = PDUMPER_LOAD_SUCCESS;
+
+ out:
+  free (candidate);
+  return result;
+}
+
 static enum pdumper_load_result
 load_pdump (int argc, char **argv)
 {
   const char *const suffix = ".pdmp";
   enum pdumper_load_result result;
+  char *exename = NULL;
+  char *real_exename = NULL;
+  const char* strip_suffix =
+#ifdef DOS_NT
+    ".exe"
+#else
+    NULL
+#endif
+    ;
 
   /* TODO: maybe more thoroughly scrub process environment in order to
      make this use case (loading a pdumper image in an unexeced emacs)
@@ -744,31 +835,50 @@ load_pdump (int argc, char **argv)
     }
 
   /* Look for a dump file in the same directory as the executable; it
-     should have the same basename.  If the directory name is, however,
-     a symbolic link, resolve the symbolic symbolic link first.  */
-
-  char* argv0 = realpath (argv[0], NULL);
-  if (!argv0)
-    fatal ("could not resolve realpath of \"%s\": %s",
-           argv0, strerror (errno));
-
-  dump_file = alloca (strlen (argv0) + strlen (suffix) + 1);
-#ifdef DOS_NT
-  /* Remove the .exe extension if present.  */
-  size_t argv0_len = strlen (argv0);
-  if (argv0_len >= 4 && c_strcasecmp (argv0 + argv0_len - 4, ".exe") == 0)
-    sprintf (dump_file, "%.*s%s", (int)(argv0_len - 4), argv0, suffix);
-  else
-#endif
-  sprintf (dump_file, "%s%s", argv0, suffix);
-
-  result = pdumper_load (dump_file);
-  if (result == PDUMPER_LOAD_SUCCESS)
+     should have the same basename.  Take care to search PATH to find
+     the executable if needed.  We're too early in init to use Lisp,
+     so we can't use decode_env_path.  We're working in whatever
+     encoding the system natively uses for filesystem access, so
+     there's no need for character set conversion.  */
+  result = load_pdump_find_executable (argv[0], &exename);
+  if (result != PDUMPER_LOAD_SUCCESS)
     goto out;
 
-  if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
-    fatal ("could not load dump file \"%s\": %s",
-           dump_file, dump_error_to_string (result));
+  /* If we couldn't find our executable, go straight to looking for
+     the dump in the hardcoded location.  */
+  if (exename)
+    {
+      real_exename = realpath (exename, NULL);
+      if (!real_exename)
+        fatal ("could not resolve realpath of \"%s\": %s",
+               exename, strerror (errno));
+      size_t real_exename_length = strlen (real_exename);
+      if (strip_suffix)
+        {
+          size_t strip_suffix_length = strlen (strip_suffix);
+          if (real_exename_length >= strip_suffix_length)
+            {
+              size_t prefix_length =
+                real_exename_length - strip_suffix_length;
+              if (!memcmp (&real_exename[prefix_length],
+                           strip_suffix,
+                           strip_suffix_length))
+                  real_exename_length = prefix_length;
+            }
+        }
+      dump_file = alloca (real_exename_length + strlen (suffix) + 1);
+      memcpy (dump_file, real_exename, real_exename_length);
+      memcpy (dump_file + real_exename_length,
+              suffix,
+              strlen (suffix) + 1);
+      result = pdumper_load (dump_file);
+      if (result == PDUMPER_LOAD_SUCCESS)
+        goto out;
+
+      if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
+        fatal ("could not load dump file \"%s\": %s",
+               dump_file, dump_error_to_string (result));
+    }
 
 #ifdef WINDOWSNT
   /* On MS-Windows, PATH_EXEC normally starts with a literal
@@ -798,12 +908,12 @@ load_pdump (int argc, char **argv)
 	 file in PATH_EXEC, and have several Emacs configurations in
 	 the same versioned libexec subdirectory.  */
       char *p, *last_sep = NULL;
-      for (p = argv0; *p; p++)
+      for (p = argv[0]; *p; p++)
 	{
 	  if (IS_DIRECTORY_SEP (*p))
 	    last_sep = p;
 	}
-      argv0_base = last_sep ? last_sep + 1 : argv0;
+      argv0_base = last_sep ? last_sep + 1 : argv[0];
       dump_file = alloca (strlen (path_exec)
 			  + 1
 			  + strlen (argv0_base)
@@ -831,6 +941,8 @@ load_pdump (int argc, char **argv)
     }
 
  out:
+  free (exename);
+  free (real_exename);
   return result;
 }
 #endif /* HAVE_PDUMPER */
