@@ -1361,7 +1361,8 @@ files in that subdirectory.
 
 @example
 ((nil . ((indent-tabs-mode . t)
-         (fill-column . 80)))
+         (fill-column . 80)
+         (mode . auto-fill)))
  (c-mode . ((c-file-style . "BSD")
             (subdirs . nil)))
  ("src/imported"
@@ -1370,13 +1371,16 @@ files in that subdirectory.
 @end example
 
 @noindent
-This sets @samp{indent-tabs-mode} and @code{fill-column} for any file
-in the directory tree, and the indentation style for any C source
-file.  The special @code{subdirs} element is not a variable, but a
-special keyword which indicates that the C mode settings are only to
-be applied in the current directory, not in any subdirectories.
-Finally, it specifies a different @file{ChangeLog} file name for any
-file in the @file{src/imported} subdirectory.
+This sets the variables @samp{indent-tabs-mode} and @code{fill-column}
+for any file in the directory tree, and the indentation style for any
+C source file.  The special @code{mode} element specifies the minor
+mode to be enabled.  So @code{(mode . auto-fill)} specifies that the
+minor mode @code{auto-fill-mode} needs to be enabled.  The special
+@code{subdirs} element is not a variable, but a special keyword which
+indicates that the C mode settings are only to be applied in the
+current directory, not in any subdirectories.  Finally, it specifies a
+different @file{ChangeLog} file name for any file in the
+@file{src/imported} subdirectory.
 
 If the @file{.dir-locals.el} file contains multiple different values
 for a variable using different mode names or directories, the values
