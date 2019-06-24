@@ -77,34 +77,35 @@ Point is at the end of the segment of this line within the rectangle."
   ;; At this stage, we don't know which of start/end is point/mark :-(
   ;; And in case start=end, it might still be that point and mark have
   ;; different crutches!
-  (let ((cw (window-parameter window 'rectangle--point-crutches)))
-    (cond
-     ((eq start (car cw))
-      (let ((sc (cdr cw))
-            (ec (if (eq end (car rectangle--mark-crutches))
-                    (cdr rectangle--mark-crutches)
-                  (if rectangle--mark-crutches
-                      (setq rectangle--mark-crutches nil))
-                  (goto-char end) (current-column))))
-        (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
-     ((eq end (car cw))
-      (if (eq start (car rectangle--mark-crutches))
-          (cons (cdr rectangle--mark-crutches) (cdr cw))
+  (save-excursion
+    (let ((cw (window-parameter window 'rectangle--point-crutches)))
+      (cond
+       ((eq start (car cw))
+        (let ((sc (cdr cw))
+              (ec (if (eq end (car rectangle--mark-crutches))
+                      (cdr rectangle--mark-crutches)
+                    (if rectangle--mark-crutches
+                        (setq rectangle--mark-crutches nil))
+                    (goto-char end) (current-column))))
+          (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
+       ((eq end (car cw))
+        (if (eq start (car rectangle--mark-crutches))
+            (cons (cdr rectangle--mark-crutches) (cdr cw))
+          (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
+          (cons (progn (goto-char start) (current-column)) (cdr cw))))
+       ((progn
+          (if cw (setf (window-parameter nil 'rectangle--point-crutches) nil))
+          (eq start (car rectangle--mark-crutches)))
+        (let ((sc (cdr rectangle--mark-crutches))
+              (ec (progn (goto-char end) (current-column))))
+          (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
+       ((eq end (car rectangle--mark-crutches))
+        (cons (progn (goto-char start) (current-column))
+              (cdr rectangle--mark-crutches)))
+       (t
         (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
-        (cons (progn (goto-char start) (current-column)) (cdr cw))))
-     ((progn
-        (if cw (setf (window-parameter nil 'rectangle--point-crutches) nil))
-        (eq start (car rectangle--mark-crutches)))
-      (let ((sc (cdr rectangle--mark-crutches))
-            (ec (progn (goto-char end) (current-column))))
-        (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
-     ((eq end (car rectangle--mark-crutches))
-      (cons (progn (goto-char start) (current-column))
-            (cdr rectangle--mark-crutches)))
-     (t
-      (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
-      (cons (progn (goto-char start) (current-column))
-            (progn (goto-char end) (current-column)))))))
+        (cons (progn (goto-char start) (current-column))
+              (progn (goto-char end) (current-column))))))))
 
 (defun rectangle--col-pos (col kind)
   (let ((c (move-to-column col)))
