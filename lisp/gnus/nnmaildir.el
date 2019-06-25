@@ -1396,7 +1396,8 @@ This variable is set by `nnmaildir-request-article'.")
       (with-current-buffer buffer
 	(write-region (point-min) (point-max) tmpfile nil 'no-message nil
 		      'excl))
-      (unix-sync) ;; no fsync :(
+      (when (fboundp 'unix-sync)
+	(unix-sync)) ;; no fsync :(
       (rename-file tmpfile (concat (nnmaildir--cur dir) file suffix) 'replace)
       t)))
 
