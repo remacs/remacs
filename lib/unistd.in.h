@@ -52,7 +52,10 @@
 #define _@GUARD_PREFIX@_UNISTD_H
 
 /* NetBSD 5.0 mis-defines NULL.  Also get size_t.  */
-#include <stddef.h>
+/* But avoid namespace pollution on glibc systems.  */
+#ifndef __GLIBC__
+# include <stddef.h>
+#endif
 
 /* mingw doesn't define the SEEK_* or *_FILENO macros in <unistd.h>.  */
 /* MSVC declares 'unlink' in <stdio.h>, not in <unistd.h>.  We must include
@@ -124,15 +127,9 @@
 
 /* MSVC defines off_t in <sys/types.h>.
    May also define off_t to a 64-bit type on native Windows.  */
-#if !@HAVE_UNISTD_H@ || @WINDOWS_64_BIT_OFF_T@
-/* Get off_t.  */
-# include <sys/types.h>
-#endif
-
-#if (@GNULIB_READ@ || @GNULIB_WRITE@ \
-     || @GNULIB_READLINK@ || @GNULIB_READLINKAT@ \
-     || @GNULIB_PREAD@ || @GNULIB_PWRITE@ || defined GNULIB_POSIXCHECK)
-/* Get ssize_t.  */
+/* But avoid namespace pollution on glibc systems.  */
+#ifndef __GLIBC__
+/* Get off_t, ssize_t.  */
 # include <sys/types.h>
 #endif
 
