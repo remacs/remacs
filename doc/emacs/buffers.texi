@@ -550,14 +550,14 @@ Sort the Buffer Menu entries according to their values in the column
 at point.  With a numeric prefix argument @var{n}, sort according to
 the @var{n}-th column (@code{tabulated-list-sort}).
 
-@item }
-@kindex } @r{(Buffer Menu)}
+@item @}
+@kindex @} @r{(Buffer Menu)}
 @findex tabulated-list-widen-current-column
 Widen the current column width by @var{n} (the prefix numeric
 argument) characters.
 
-@item {
-@kindex { @r{(Buffer Menu)}
+@item @{
+@kindex @{ @r{(Buffer Menu)}
 @findex tabulated-list-narrow-current-column
 Narrow the current column width by @var{n} (the prefix numeric
 argument) characters.
