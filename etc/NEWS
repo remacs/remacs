@@ -482,9 +482,9 @@ should be ignored have been added via the
 
 +++
 ** tex-mode
-*** 'latex-noindent-commands' controls indentation of certain environments.
+*** 'latex-noindent-commands' controls indentation of certain commands.
 You can use this new variable to control indentation of arguments of
-\emph, \footnote, and similar environments.
+\emph, \footnote, and similar commands.
 
 ** byte compiler
 *** byte-compile-dynamic is now obsolete
