@@ -346,6 +346,8 @@ Only works for tags in the global namespace."
 	     (if (semantic-tag-prototype-p tag) "implementation" "prototype")))
 
     (push-mark)
+    (when (fboundp 'xref-push-marker-stack)
+      (xref-push-marker-stack))
     (semantic-go-to-tag target)
     (pop-to-buffer-same-window (current-buffer))
     (semantic-momentary-highlight-tag target))

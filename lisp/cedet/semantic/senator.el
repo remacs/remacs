@@ -526,6 +526,8 @@ Some tags such as includes have other reference features."
     (if (not result)
         (error "No up reference found")
       (push-mark)
+      (when (fboundp 'xref-push-marker-stack)
+        (xref-push-marker-stack))
       (cond
        ;; A tag
        ((semantic-tag-p result)

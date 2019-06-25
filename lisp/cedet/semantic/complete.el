@@ -2100,6 +2100,8 @@ completion works."
   (let ((tag (semantic-complete-read-tag-buffer-deep "Jump to symbol: ")))
     (when (semantic-tag-p tag)
       (push-mark)
+      (when (fboundp 'xref-push-marker-stack)
+        (xref-push-marker-stack))
       (goto-char (semantic-tag-start tag))
       (semantic-momentary-highlight-tag tag)
       (message "%S: %s "
@@ -2114,6 +2116,8 @@ completion works."
   (let* ((tag (semantic-complete-read-tag-project "Jump to symbol: ")))
     (when (semantic-tag-p tag)
       (push-mark)
+      (when (fboundp 'xref-push-marker-stack)
+        (xref-push-marker-stack))
       (semantic-go-to-tag tag)
       (pop-to-buffer-same-window (current-buffer))
       (semantic-momentary-highlight-tag tag)
@@ -2133,6 +2137,8 @@ completion works."
 	(unless start
 	  (error "Tag %s has no location" (semantic-format-tag-prototype tag)))
 	(push-mark)
+        (when (fboundp 'xref-push-marker-stack)
+          (xref-push-marker-stack))
 	(goto-char start)
 	(semantic-momentary-highlight-tag tag)
 	(message "%S: %s "
