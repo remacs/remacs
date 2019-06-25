@@ -138,8 +138,8 @@ The Lisp code is executed when the node is selected.")
 
 (defface info-emphasis
   '((t (:inherit italic)))
-  "*Face for emphasized text (enclosed with underscores)."
-  :version "25.1"
+  "Face for emphasized text (enclosed with underscores)."
+  :version "27.1"
   :group 'info)
 
 (defcustom Info-fontify-visited-nodes t
