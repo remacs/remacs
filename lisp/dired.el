@@ -538,7 +538,7 @@ Subexpression 2 must end right before the \\n.")
 ;;; Macros must be defined before they are used, for the byte compiler.
 
 (defmacro dired-mark-if (predicate msg)
-  "Mark all files for which PREDICATE evals to non-nil.
+  "Mark files for PREDICATE, according to `dired-marker-char'.
 PREDICATE is evaluated on each line, with point at beginning of line.
 MSG is a noun phrase for the type of files being marked.
 It should end with a noun that can be pluralized by adding `s'.
@@ -558,13 +558,13 @@ Return value is the number of files marked, or nil if none were marked."
 		   "")))
       (goto-char (point-min))
       (while (not (eobp))
-        (if ,predicate
-            (progn
-              (delete-char 1)
-              (insert dired-marker-char)
-              (setq count (1+ count))))
+        (when ,predicate
+          (unless (looking-at-p (char-to-string dired-marker-char))
+            (delete-char 1)
+            (insert dired-marker-char)
+            (setq count (1+ count))))
         (forward-line 1))
-      (if ,msg (message "%s %s%s %s%s."
+      (when ,msg (message "%s %s%s %s%s"
                         count
                         ,msg
                         (dired-plural-s count)

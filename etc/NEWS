@@ -611,6 +611,9 @@ remapped to these, respectively.
 *** New command and keystroke `dired-number-of-marked-files' bound to
 `* N'.
 
+*** The marking commands now report how many files were marked by the
+command itself, not how many files are marked in total.
+
 ** Find-Dired
 
 *** New customizable variable 'find-dired-refine-function'.
