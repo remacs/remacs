@@ -44,6 +44,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'diff)				;For diff-check-labels.
 (require 'diff-mode)                    ;For diff-refine.
 (require 'newcomment)
 
@@ -1243,9 +1244,12 @@ spacing of the \"Lower\" chunk."
 	    (let ((status
 		   (apply 'call-process diff-command nil t nil
 			  (append smerge-diff-switches
-				  (list "-L" (concat name1 "/" file)
-					"-L" (concat name2 "/" file)
-					file1 file2)))))
+				  (and (diff-check-labels)
+				       (list "--label"
+					     (concat name1 "/" file)
+					     "--label"
+					     (concat name2 "/" file)))
+				  (list file1 file2)))))
 	      (if (eq status 0) (insert "No differences found.\n"))))
 	  (goto-char (point-min))
 	  (diff-mode)

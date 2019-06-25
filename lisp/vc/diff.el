@@ -123,6 +123,15 @@ Possible values are:
 
 (defvar diff-default-directory)
 
+(defun diff-check-labels (&optional force)
+  (if (not (or force (eq 'check diff-use-labels)))
+      diff-use-labels
+    (setq diff-use-labels
+	  (with-temp-buffer
+	    (when (ignore-errors
+		    (call-process diff-command nil t nil "--help"))
+	      (if (search-backward "--label" nil t) t))))))
+
 (defun diff-no-select (old new &optional switches no-async buf)
   ;; Noninteractive helper for creating and reverting diff buffers
   (unless (bufferp new) (setq new (expand-file-name new)))
@@ -130,11 +139,7 @@ Possible values are:
   (or switches (setq switches diff-switches)) ; If not specified, use default.
   (unless (listp switches) (setq switches (list switches)))
   (or buf (setq buf (get-buffer-create "*Diff*")))
-  (when (eq 'check diff-use-labels)
-    (setq diff-use-labels
-	  (with-temp-buffer
-	    (when (ignore-errors (call-process diff-command nil t nil "--help"))
-	      (if (search-backward "--label" nil t) t)))))
+  (diff-check-labels)
   (let* ((old-alt (diff-file-local-copy old))
 	 (new-alt (diff-file-local-copy new))
 	 (command
