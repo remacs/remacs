@@ -1141,7 +1141,13 @@ subshells can nest."
     ;; metacharacters.  The list of special chars is taken from
     ;; the single-unix spec of the shell command language (under
     ;; `quoting') but with `$' removed.
-    ("\\(?:[^|&;<>()`\\\"' \t\n]\\|\\${\\)\\(#+\\)" (1 "_"))
+    ("\\(?:[^|&;<>(`\\\"' \t\n]\\|\\${\\)\\(#+\\)" (1 "_"))
+    ;; In addition, `#' at the beginning of closed parentheses
+    ;; does not start a comment if the parentheses are not isolated
+    ;; by metacharacters, excluding [()].
+    ;; (e.g. `foo(#q/)' and `(#b)foo' in zsh)
+    ("[^|&;<>(`\\\"' \t\n](\\(#+\\)" (1 "_"))
+    ("(\\(#\\)[^)]+?)[^|&;<>)`\\\"' \t\n]" (1 "_"))
     ;; In a '...' the backslash is not escaping.
     ("\\(\\\\\\)'" (1 (sh-font-lock-backslash-quote)))
     ;; Make sure $@ and $? are correctly recognized as sexps.
