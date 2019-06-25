@@ -2857,11 +2857,7 @@ set_socket_option (int s, Lisp_Object opt, Lisp_Object val)
 	   This should work on all systems.   KFS. 2003-09-23.  */
 	memset (devname, 0, sizeof devname);
 	if (STRINGP (val))
-	  {
-	    char *arg = SSDATA (val);
-	    int len = min (strlen (arg), IFNAMSIZ);
-	    memcpy (devname, arg, len);
-	  }
+	  memcpy (devname, SDATA (val), min (SBYTES (val), IFNAMSIZ));
 	else if (!NILP (val))
 	  error ("Bad option value for %s", name);
 	ret = setsockopt (s, sopt->optlevel, sopt->optnum,

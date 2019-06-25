@@ -4400,7 +4400,7 @@ vfatal (const char *str, va_list ap)
 {
   fprintf (stderr, "emacs: ");
   vfprintf (stderr, str, ap);
-  if (!(strlen (str) > 0 && str[strlen (str) - 1] == '\n'))
+  if (! (str[0] && str[strlen (str) - 1] == '\n'))
     fprintf (stderr, "\n");
   exit (1);
 }

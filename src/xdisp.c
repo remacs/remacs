@@ -24341,9 +24341,7 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
 
   if (string != NULL)
     {
-      len = strlen (string);
-      if (precision > 0 && len > precision)
-	len = precision;
+      len = strnlen (string, precision <= 0 ? SIZE_MAX : precision);
       lisp_string = make_string (string, len);
       if (NILP (props))
 	props = mode_line_string_face_prop;

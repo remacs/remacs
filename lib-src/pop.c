@@ -285,7 +285,7 @@ pop_open (char *host, char *username, char *password, int flags)
   /*
    * I really shouldn't use the pop_error variable like this, but....
    */
-  if (strlen (username) > ERROR_MAX - 6)
+  if (strnlen (username, ERROR_MAX - 6 + 1) == ERROR_MAX - 6 + 1)
     {
       pop_close (server);
       strcpy (pop_error,
@@ -299,7 +299,7 @@ pop_open (char *host, char *username, char *password, int flags)
       return (0);
     }
 
-  if (strlen (password) > ERROR_MAX - 6)
+  if (strnlen (password, ERROR_MAX - 6 + 1) == ERROR_MAX - 6 + 1)
     {
       pop_close (server);
       strcpy (pop_error,

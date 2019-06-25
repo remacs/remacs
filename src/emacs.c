@@ -1520,8 +1520,8 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
               }
 
             /* In exec'd: parse special dname into pipe and name info. */
-            if (!dname_arg || !strchr (dname_arg, '\n')
-                || strlen (dname_arg) < 1 || strlen (dname_arg) > 70)
+            if (!dname_arg || !*dname_arg || strnlen (dname_arg, 71) == 71
+		|| !strchr (dname_arg, '\n'))
           {
             fprintf (stderr, "emacs daemon: daemon name absent or too long\n");
             exit (EXIT_CANNOT_INVOKE);

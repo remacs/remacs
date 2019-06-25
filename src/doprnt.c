@@ -357,8 +357,8 @@ doprnt (char *buffer, ptrdiff_t bufsize, const char *format,
 	      if (fmtcpy[1] != 's')
 		minlen = atoi (&fmtcpy[1]);
 	      string = va_arg (ap, char *);
-	      tem = strlen (string);
-	      if (STRING_BYTES_BOUND < tem)
+	      tem = strnlen (string, STRING_BYTES_BOUND + 1);
+	      if (tem == STRING_BYTES_BOUND + 1)
 		error ("String for %%s or %%S format is too long");
 	      width = strwidth (string, tem);
 	      goto doit1;

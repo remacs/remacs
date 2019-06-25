@@ -281,7 +281,7 @@ get_current_dir_name_or_unreachable (void)
       pwd = get_current_dir_name ();
       if (pwd)
 	{
-	  if (strlen (pwd) < dirsize_max)
+	  if (strnlen (pwd, dirsize_max) < dirsize_max)
 	    return pwd;
 	  free (pwd);
 	  errno = ERANGE;
@@ -298,7 +298,7 @@ get_current_dir_name_or_unreachable (void)
      sometimes a nicer name, and using it may avoid a fatal error if a
      parent directory is searchable but not readable.  */
   if (pwd
-      && (pwdlen = strlen (pwd)) < bufsize_max
+      && (pwdlen = strnlen (pwd, bufsize_max)) < bufsize_max
       && IS_DIRECTORY_SEP (pwd[pwdlen && IS_DEVICE_SEP (pwd[1]) ? 2 : 0])
       && stat (pwd, &pwdstat) == 0
       && stat (".", &dotstat) == 0

@@ -9298,7 +9298,7 @@ ns_xlfd_to_fontname (const char *xlfd)
     sscanf (xlfd, "-%*[^-]-%179[^-]-", name);
 
   /* stopgap for malformed XLFD input */
-  if (strlen (name) == 0)
+  if (!*name)
     strcpy (name, "Monaco");
 
   /* undo hack in ns_fontname_to_xlfd, converting '$' to '-', '_' to ' '

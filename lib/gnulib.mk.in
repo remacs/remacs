@@ -136,6 +136,7 @@
 #  stddef \
 #  stdio \
 #  stpcpy \
+#  strnlen \
 #  strtoimax \
 #  symlink \
 #  sys_stat \
@@ -1075,7 +1076,6 @@ gl_GNULIB_ENABLED_getdtablesize = @gl_GNULIB_ENABLED_getdtablesize@
 gl_GNULIB_ENABLED_getgroups = @gl_GNULIB_ENABLED_getgroups@
 gl_GNULIB_ENABLED_malloca = @gl_GNULIB_ENABLED_malloca@
 gl_GNULIB_ENABLED_open = @gl_GNULIB_ENABLED_open@
-gl_GNULIB_ENABLED_pathmax = @gl_GNULIB_ENABLED_pathmax@
 gl_GNULIB_ENABLED_strtoll = @gl_GNULIB_ENABLED_strtoll@
 gl_LIBOBJS = @gl_LIBOBJS@
 gl_LTLIBOBJS = @gl_LTLIBOBJS@
@@ -1110,7 +1110,6 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -2810,6 +2809,17 @@ EXTRA_DIST += string.in.h
 
 endif
 ## end   gnulib module string
+
+## begin gnulib module strnlen
+ifeq (,$(OMIT_GNULIB_MODULE_strnlen))
+
+
+EXTRA_DIST += strnlen.c
+
+EXTRA_libgnu_a_SOURCES += strnlen.c
+
+endif
+## end   gnulib module strnlen
 
 ## begin gnulib module strtoimax
 ifeq (,$(OMIT_GNULIB_MODULE_strtoimax))

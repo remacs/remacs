@@ -40,7 +40,7 @@ GNULIB_MODULES='
   manywarnings memmem-simple memrchr minmax mkostemp mktime nstrftime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat regex
   sig2str socklen stat-time std-gnu11 stdalign stddef stdio
-  stpcpy strtoimax symlink sys_stat sys_time
+  stpcpy strnlen strtoimax symlink sys_stat sys_time
   tempname time time_r time_rz timegm timer-time timespec-add timespec-sub
   update-copyright unlocked-io utimens
   vla warnings

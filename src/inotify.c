@@ -181,8 +181,7 @@ inotifyevent_to_event (Lisp_Object watch, struct inotify_event const *ev)
 
   if (ev->len > 0)
     {
-      size_t const len = strlen (ev->name);
-      name = make_unibyte_string (ev->name, min (len, ev->len));
+      name = make_unibyte_string (ev->name, strnlen (ev->name, ev->len));
       name = DECODE_FILE (name);
     }
   else

@@ -1811,7 +1811,7 @@ find_entries (FILE *inf)
 	}
       *cp = '\0';
 
-      if (strlen (lp) > 0)
+      if (*lp)
 	{
 	  lang = get_language_from_interpreter (lp);
 	  if (lang != NULL && lang->function != NULL)
@@ -2012,7 +2012,7 @@ pfnote (char *name, bool is_func, char *linestart, int linelen, int lno,
   np->left = np->right = NULL;
   if (CTAGS && !cxref_style)
     {
-      if (strlen (linestart) < 50)
+      if (strnlen (linestart, 50) < 50)
 	np->regex = concat (linestart, "$", "");
       else
 	np->regex = savenstr (linestart, 50);
@@ -5883,20 +5883,15 @@ HTML_labels (FILE *inf)
  * Original code by Sunichirou Sugou (1989)
  * Rewritten by Anders Lindgren (1996)
  */
-static size_t prolog_pr (char *, char *);
+static ptrdiff_t prolog_pr (char *, char *, ptrdiff_t);
 static void prolog_skip_comment (linebuffer *, FILE *);
 static size_t prolog_atom (char *, size_t);
 
 static void
 Prolog_functions (FILE *inf)
 {
-  char *cp, *last;
-  size_t len;
-  size_t allocated;
-
-  allocated = 0;
-  len = 0;
-  last = NULL;
+  char *cp, *last = NULL;
+  ptrdiff_t lastlen = 0, allocated = 0;
 
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
@@ -5906,17 +5901,22 @@ Prolog_functions (FILE *inf)
 	continue;
       else if (cp[0] == '/' && cp[1] == '*')	/* comment. */
 	prolog_skip_comment (&lb, inf);
-      else if ((len = prolog_pr (cp, last)) > 0)
+      else
 	{
-	  /* Predicate or rule.  Store the function name so that we
-	     only generate a tag for the first clause.  */
-	  if (last == NULL)
-	    last = xnew (len + 1, char);
-	  else if (len + 1 > allocated)
-	    xrnew (last, len + 1, char);
-	  allocated = len + 1;
-	  memcpy (last, cp, len);
-	  last[len] = '\0';
+	  ptrdiff_t len = prolog_pr (cp, last, lastlen);
+	  if (0 < len)
+	    {
+	      /* Store the predicate name to avoid generating duplicate
+		 tags later.  */
+	      if (allocated <= len)
+		{
+		  xrnew (last, len + 1, char);
+		  allocated = len + 1;
+		}
+	      memcpy (last, cp, len);
+	      last[len] = '\0';
+	      lastlen = len;
+	    }
 	}
     }
   free (last);
@@ -5949,33 +5949,25 @@ prolog_skip_comment (linebuffer *plb, FILE *inf)
  * Return the size of the name of the predicate or rule, or 0 if no
  * header was found.
  */
-static size_t
-prolog_pr (char *s, char *last)
-
-                		/* Name of last clause. */
+static ptrdiff_t
+prolog_pr (char *s, char *last, ptrdiff_t lastlen)
 {
-  size_t pos;
-  size_t len;
-
-  pos = prolog_atom (s, 0);
-  if (! pos)
+  ptrdiff_t len = prolog_atom (s, 0);
+  if (len == 0)
     return 0;
+  ptrdiff_t pos = skip_spaces (s + len) - s;
 
-  len = pos;
-  pos = skip_spaces (s + pos) - s;
-
+  /* Save only the first clause.  */
   if ((s[pos] == '.'
        || (s[pos] == '(' && (pos += 1))
        || (s[pos] == ':' && s[pos + 1] == '-' && (pos += 2)))
-      && (last == NULL		/* save only the first clause */
-	  || len != strlen (last)
-	  || !strneq (s, last, len)))
-	{
-	  make_tag (s, len, true, s, pos, lineno, linecharno);
-	  return len;
-	}
-  else
-    return 0;
+      && ! (lastlen == len && memcmp (s, last, len) == 0))
+    {
+      make_tag (s, len, true, s, pos, lineno, linecharno);
+      return len;
+    }
+
+  return 0;
 }
 
 /*
@@ -6043,21 +6035,15 @@ prolog_atom (char *s, size_t pos)
  * Assumes that Erlang functions start at column 0.
  * Original code by Anders Lindgren (1996)
  */
-static int erlang_func (char *, char *, int *);
+static int erlang_func (char *, char *, ptrdiff_t, ptrdiff_t *);
 static void erlang_attribute (char *);
 static int erlang_atom (char *);
 
 static void
 Erlang_functions (FILE *inf)
 {
-  char *cp, *last;
-  int len;
-  int allocated;
-  int name_offset = 0;
-
-  allocated = 0;
-  len = 0;
-  last = NULL;
+  char *cp, *last = NULL;
+  ptrdiff_t lastlen = 0, allocated = 0;
 
   LOOP_ON_INPUT_LINES (inf, lb, cp)
     {
@@ -6078,19 +6064,23 @@ Erlang_functions (FILE *inf)
 	      last = NULL;
 	    }
 	}
-      else if ((len = erlang_func (cp, last, &name_offset)) > 0)
+      else
 	{
-	  /*
-	   * Function.  Store the function name so that we only
-	   * generates a tag for the first clause.
-	   */
-	  if (last == NULL)
-	    last = xnew (len + 1, char);
-	  else if (len + 1 > allocated)
-	    xrnew (last, len + 1, char);
-	  allocated = len + 1;
-	  memcpy (last, cp + name_offset, len);
-	  last[len] = '\0';
+	  ptrdiff_t name_offset;
+	  ptrdiff_t len = erlang_func (cp, last, lastlen, &name_offset);
+	  if (0 < len)
+	    {
+	      /* Store the function name to avoid generating duplicate
+		 tags later.  */
+	      if (allocated <= len)
+		{
+		  xrnew (last, len + 1, char);
+		  allocated = len + 1;
+		}
+	      memcpy (last, cp + name_offset, len);
+	      last[len] = '\0';
+	      lastlen = len;
+	    }
 	}
     }
   free (last);
@@ -6108,40 +6098,27 @@ Erlang_functions (FILE *inf)
  * was found.
  */
 static int
-erlang_func (char *s, char *last, int *name_offset)
-
-                		/* Name of last clause. */
+erlang_func (char *s, char *last, ptrdiff_t lastlen, ptrdiff_t *name_offset)
 {
-  int pos;
-  int len;
   char *name = s;
-
-  pos = erlang_atom (s);
-  if (pos < 1)
+  ptrdiff_t len = erlang_atom (s);
+  if (len == 0)
     return 0;
-
-  len = pos;
-  pos = skip_spaces (s + pos) - s;
+  ptrdiff_t pos = skip_spaces (s + len) - s;
 
   /* If the name is quoted, the quotes are not part of the name. */
-  if (len > 2 && name[0] == '\'' && name[len - 1] == '\'')
-    {
-      *name_offset = 1;
-      name++;
-      len -= 2;
-    }
-  else
-    *name_offset = 0;
+  bool quoted = 2 < len && name[0] == '\'' && name[len - 1] == '\'';
+  name += quoted;
+  len -= 2 * quoted;
 
   /* Save only the first clause. */
   if (s[pos++] == '('
-      && (last == NULL
-	  || len != (int)strlen (last)
-	  || !strneq (name, last, len)))
-	{
-	  make_tag (name, len, true, s, pos, lineno, linecharno);
-	  return len;
-	}
+      && ! (lastlen == len && memcmp (name, last, len) == 0))
+    {
+      make_tag (s, len, true, s, pos, lineno, linecharno);
+      *name_offset = quoted;
+      return len;
+    }
 
   return 0;
 }
@@ -6363,7 +6340,7 @@ add_regex (char *regexp_pattern, language *lang)
     single_line = false;	/* dot does not match newline */
 
 
-  if (strlen (regexp_pattern) < 3)
+  if (strnlen (regexp_pattern, 3) < 3)
     {
       error ("null regexp");
       return;

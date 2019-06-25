@@ -154,6 +154,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module stdlib:
   # Code from module stpcpy:
   # Code from module string:
+  # Code from module strnlen:
   # Code from module strtoimax:
   # Code from module strtoll:
   # Code from module symlink:
@@ -403,6 +404,12 @@ AC_DEFUN([gl_INIT],
   fi
   gl_STRING_MODULE_INDICATOR([stpcpy])
   gl_HEADER_STRING_H
+  gl_FUNC_STRNLEN
+  if test $HAVE_DECL_STRNLEN = 0 || test $REPLACE_STRNLEN = 1; then
+    AC_LIBOBJ([strnlen])
+    gl_PREREQ_STRNLEN
+  fi
+  gl_STRING_MODULE_INDICATOR([strnlen])
   gl_FUNC_STRTOIMAX
   if test $HAVE_DECL_STRTOIMAX = 0 || test $REPLACE_STRTOIMAX = 1; then
     AC_LIBOBJ([strtoimax])
@@ -1003,6 +1010,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/str-two-way.h
   lib/strftime.h
   lib/string.in.h
+  lib/strnlen.c
   lib/strtoimax.c
   lib/strtol.c
   lib/strtoll.c
@@ -1131,6 +1139,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdlib_h.m4
   m4/stpcpy.m4
   m4/string_h.m4
+  m4/strnlen.m4
   m4/strtoimax.m4
   m4/strtoll.m4
   m4/symlink.m4

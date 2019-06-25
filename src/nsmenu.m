@@ -611,7 +611,7 @@ ns_activate_menubar (struct frame *f)
   const char *tpos = key;
   keyEquivModMask = NSEventModifierFlagCommand;
 
-  if (!key || !strlen (key))
+  if (!key || !*key)
     return @"";
 
   while (*tpos == ' ' || *tpos == '(')

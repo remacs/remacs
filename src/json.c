@@ -197,9 +197,7 @@ init_json (void)
 static bool
 json_has_prefix (const char *string, const char *prefix)
 {
-  size_t string_len = strlen (string);
-  size_t prefix_len = strlen (prefix);
-  return string_len >= prefix_len && memcmp (string, prefix, prefix_len) == 0;
+  return strncmp (string, prefix, strlen (prefix)) == 0;
 }
 
 /* Return whether STRING ends with SUFFIX.  */
