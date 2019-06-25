@@ -30,6 +30,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 
 #include <c-ctype.h>
+#include <pathmax.h>
 #include <utimens.h>
 
 #include "lisp.h"
@@ -262,10 +263,10 @@ get_current_dir_name_or_unreachable (void)
   ptrdiff_t dirsize_max = min (PTRDIFF_MAX, SIZE_MAX) - 1;
 
   /* The maximum size of a buffer for a file name, including the
-     terminating NUL.  This is bounded by MAXPATHLEN, if available.  */
+     terminating NUL.  This is bounded by PATH_MAX, if available.  */
   ptrdiff_t bufsize_max = dirsize_max;
-#ifdef MAXPATHLEN
-  bufsize_max = min (bufsize_max, MAXPATHLEN);
+#ifdef PATH_MAX
+  bufsize_max = min (bufsize_max, PATH_MAX);
 #endif
 
 # if HAVE_GET_CURRENT_DIR_NAME && !BROKEN_GET_CURRENT_DIR_NAME

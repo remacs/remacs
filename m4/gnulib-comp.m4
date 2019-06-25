@@ -347,6 +347,7 @@ AC_DEFUN([gl_INIT],
   gl_TIME_MODULE_INDICATOR([mktime])
   gl_MULTIARCH
   gl_FUNC_GNU_STRFTIME
+  gl_PATHMAX
   gl_FUNC_PIPE2
   gl_UNISTD_MODULE_INDICATOR([pipe2])
   gl_FUNC_PSELECT
@@ -468,7 +469,6 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=false
   gl_gnulib_enabled_open=false
   gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=false
-  gl_gnulib_enabled_pathmax=false
   gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
   gl_gnulib_enabled_strtoll=false
   gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=false
@@ -620,13 +620,6 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=true
     fi
   }
-  func_gl_gnulib_m4code_pathmax ()
-  {
-    if ! $gl_gnulib_enabled_pathmax; then
-      gl_PATHMAX
-      gl_gnulib_enabled_pathmax=true
-    fi
-  }
   func_gl_gnulib_m4code_6099e9737f757db36c47fa9d9f02e88c ()
   {
     if ! $gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c; then
@@ -653,9 +646,6 @@ AC_DEFUN([gl_INIT],
   }
   if test $HAVE_CANONICALIZE_FILE_NAME = 0 || test $REPLACE_CANONICALIZE_FILE_NAME = 1; then
     func_gl_gnulib_m4code_malloca
-  fi
-  if test $HAVE_CANONICALIZE_FILE_NAME = 0 || test $REPLACE_CANONICALIZE_FILE_NAME = 1; then
-    func_gl_gnulib_m4code_pathmax
   fi
   if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
@@ -720,7 +710,6 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31], [$gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_open], [$gl_gnulib_enabled_open])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7], [$gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7])
-  AM_CONDITIONAL([gl_GNULIB_ENABLED_pathmax], [$gl_gnulib_enabled_pathmax])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoll], [$gl_gnulib_enabled_strtoll])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_682e609604ccaac6be382e4ee3a4eaec], [$gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec])

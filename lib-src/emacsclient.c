@@ -74,6 +74,7 @@ char *w32_getenv (const char *);
 #include <signal.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -82,6 +83,7 @@ char *w32_getenv (const char *);
 #include <dosname.h>
 #include <intprops.h>
 #include <min-max.h>
+#include <pathmax.h>
 #include <unlocked-io.h>
 
 /* Work around GCC bug 88251.  */
@@ -238,6 +240,17 @@ char *get_current_dir_name (void);
 char *
 get_current_dir_name (void)
 {
+  /* The maximum size of a directory name, including the terminating NUL.
+     Leave room so that the caller can append a trailing slash.  */
+  ptrdiff_t dirsize_max = min (PTRDIFF_MAX, SIZE_MAX) - 1;
+
+  /* The maximum size of a buffer for a file name, including the
+     terminating NUL.  This is bounded by PATH_MAX, if available.  */
+  ptrdiff_t bufsize_max = dirsize_max;
+#ifdef PATH_MAX
+  bufsize_max = min (bufsize_max, PATH_MAX);
+#endif
+
   char *buf;
   struct stat dotstat, pwdstat;
   /* If PWD is accurate, use it instead of calling getcwd.  PWD is
@@ -245,15 +258,12 @@ get_current_dir_name (void)
      parent directory is searchable but not readable.  */
   char const *pwd = egetenv ("PWD");
   if (pwd
-      && (IS_DIRECTORY_SEP (*pwd) || (*pwd && IS_DEVICE_SEP (pwd[1])))
+      && (pwdlen = strnlen (pwd, bufsize_max)) < bufsize_max
+      && IS_DIRECTORY_SEP (pwd[pwdlen && IS_DEVICE_SEP (pwd[1]) ? 2 : 0])
       && stat (pwd, &pwdstat) == 0
       && stat (".", &dotstat) == 0
       && dotstat.st_ino == pwdstat.st_ino
-      && dotstat.st_dev == pwdstat.st_dev
-# ifdef MAXPATHLEN
-      && strlen (pwd) < MAXPATHLEN
-# endif
-      )
+      && dotstat.st_dev == pwdstat.st_dev)
     {
       buf = xmalloc (strlen (pwd) + 1);
       strcpy (buf, pwd);
