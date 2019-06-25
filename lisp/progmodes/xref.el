@@ -875,7 +875,7 @@ local keymap that binds `RET' to `xref-quit-and-goto-xref'."
         (current-buffer))))))
 
 
-(defvar xref-show-xrefs-function 'xref--show-xref-buffer
+(defcustom xref-show-xrefs-function 'xref--show-xref-buffer
   "Function to display a list of search results.
 
 It should accept two arguments: FETCHER and ALIST.
@@ -891,12 +891,14 @@ command was called.
 
 DISPLAY-ACTION indicates where the target location should be
 displayed.  The possible values are nil, `window' meaning the
-other window, or `frame' meaning the other frame.")
+other window, or `frame' meaning the other frame."
+  :type 'function)
 
-(defvar xref-show-definitions-function 'xref--show-defs-buffer
+(defcustom xref-show-definitions-function 'xref--show-defs-buffer
   "Function to display a list of definitions.
 
-Accepts the same arguments as `xref-show-xrefs-function'.")
+Accepts the same arguments as `xref-show-xrefs-function'."
+  :type 'function)
 
 (defvar xref--read-identifier-history nil)
 
