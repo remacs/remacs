@@ -59,6 +59,7 @@
 
 ;;; Code:
 
+(require 'seq)
 (require 'thingatpt)
 (autoload 'browse-url-url-at-point "browse-url")
 
@@ -101,23 +102,32 @@ A value of t means there is no limit--fontify regardless of the size."
   "[-a-zA-Z0-9=._+]+@\\([-a-zA-Z0-9_]+\\.\\)+[a-zA-Z0-9]+"
   "A regular expression probably matching an e-mail address.")
 
+(defvar goto-address-uri-schemes-ignored
+  ;; By default we exclude `mailto:' (email addresses are matched
+  ;; by `goto-address-mail-regexp') and also `data:', as it is not
+  ;; terribly useful to follow those URIs, and leaving them causes
+  ;; `use Data::Dumper;' to be fontified oddly in Perl files.
+  '("mailto:" "data:")
+  "List of URI schemes to exclude from `goto-address-uri-schemes'.
+
+Customisations to this variable made after goto-addr is loaded
+will have no effect.")
+
+(defvar goto-address-uri-schemes
+  ;; We use `thing-at-point-uri-schemes', with a few exclusions,
+  ;; as listed in `goto-address-uri-schemes-ignored'.
+  (seq-reduce (lambda (accum elt) (delete elt accum))
+              goto-address-uri-schemes-ignored
+              (copy-sequence thing-at-point-uri-schemes))
+  "List of URI schemes matched by `goto-address-url-regexp'.
+
+Customisations to this variable made after goto-addr is loaded
+will have no effect.")
+
 (defvar goto-address-url-regexp
-  (concat
-   "\\<\\("
-   (mapconcat 'identity
-              (delete "mailto:"
-		      ;; Remove `data:', as it's not terribly useful to follow
-		      ;; those.  Leaving them causes `use Data::Dumper;' to be
-		      ;; fontified oddly in Perl files.
-                      (delete "data:"
-                              (copy-sequence thing-at-point-uri-schemes)))
-              "\\|")
-   "\\)"
-   thing-at-point-url-path-regexp)
-  ;; (concat "\\b\\(s?https?\\|ftp\\|file\\|gopher\\|news\\|"
-  ;; 	  "telnet\\|wais\\):\\(//[-a-zA-Z0-9_.]+:"
-  ;; 	  "[0-9]*\\)?[-a-zA-Z0-9_=?#$@~`%&*+|\\/.,]*"
-  ;; 	  "[-a-zA-Z0-9_=#$@~`%&*+|\\/]")
+  (concat "\\<"
+          (regexp-opt goto-address-uri-schemes t)
+          thing-at-point-url-path-regexp)
   "A regular expression probably matching a URL.")
 
 (defvar goto-address-highlight-keymap

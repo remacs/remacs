@@ -475,6 +475,11 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** goto-addr
+*** A way to more conveniently specify what URI address schemes that
+should be ignored have been added via the
+`goto-address-uri-schemes-ignored' variable.
+
 ** tex-mode
 *** 'latex-noindent-commands' stops indenting arguments of \emph and friends
 
