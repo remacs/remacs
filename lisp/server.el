@@ -833,7 +833,7 @@ This handles splitting the command if it would be bigger than
       (setq prefix "-print-nonl "))
     (server-send-string proc (concat prefix qtext "\n"))))
 
-(defun server-create-tty-frame (tty type proc)
+(defun server-create-tty-frame (tty type proc &optional parameters)
   (unless tty
     (error "Invalid terminal device"))
   (unless type
@@ -866,7 +866,8 @@ This handles splitting the command if it would be bigger than
                          ;; envvars, and then to change the
                          ;; C functions `child_setup' and
                          ;; `getenv_internal' accordingly.
-                         (environment . ,(process-get proc 'env)))))))
+                         (environment . ,(process-get proc 'env))
+                         ,@parameters)))))
 
     ;; ttys don't use the `display' parameter, but callproc.c does to set
     ;; the DISPLAY environment on subprocesses.
