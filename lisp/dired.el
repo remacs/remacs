@@ -559,7 +559,7 @@ Return value is the number of files marked, or nil if none were marked."
       (goto-char (point-min))
       (while (not (eobp))
         (when ,predicate
-          (unless (looking-at-p (char-to-string dired-marker-char))
+          (unless (= (following-char) dired-marker-char)
             (delete-char 1)
             (insert dired-marker-char)
             (setq count (1+ count))))
