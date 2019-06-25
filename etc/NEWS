@@ -607,6 +607,10 @@ remapped to these, respectively.
 +++
 *** New command 'dired-create-empty-file'.
 
++++
+*** New command and keystroke `dired-number-of-marked-files' bound to
+`* N'.
+
 ** Find-Dired
 
 *** New customizable variable 'find-dired-refine-function'.

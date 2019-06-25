@@ -435,6 +435,12 @@ the previous @minus{}@var{n} files).  If invoked on a subdirectory
 header line (@pxref{Subdirectories in Dired}), this command marks all
 the files in that subdirectory.
 
+@item * N
+@kindex * N @r{(Dired)}
+@findex dired-number-of-marked-files
+Report what the number and size of the marked files are
+(@code{dired-number-of-marked-files}).
+
 @item * *
 @kindex * * @r{(Dired)}
 @findex dired-mark-executables
