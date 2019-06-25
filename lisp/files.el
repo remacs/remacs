@@ -1396,7 +1396,7 @@ in all cases, since that is the standard symbol for byte."
 		  "%.1f%s%s"
 	        "%.0f%s%s")
 	      file-size
-              (if (string-empty-p prefixed-unit) "" (or space ""))
+              (if (string= prefixed-unit "") "" (or space ""))
               prefixed-unit))))
 
 (defcustom mounted-file-systems
