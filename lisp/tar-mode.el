@@ -523,24 +523,29 @@ MODE should be an integer which is a file mode value."
   "Extract all archive members in the tar-file into the current directory."
   (interactive)
   ;; FIXME: make it work even if we're not in tar-mode.
-  (let ((descriptors tar-parse-info)    ;Read the var in its buffer.
+  (let ((data-buf (if (tar-data-swapped-p) tar-data-buffer
+                    (current-buffer)))
         (reporter (make-progress-reporter "Extracting")))
-    (with-current-buffer
-        (if (tar-data-swapped-p) tar-data-buffer (current-buffer))
-      (set-buffer-multibyte nil)          ;Hopefully, a no-op.
-      (dolist (descriptor descriptors)
-        (let* ((name (tar-header-name descriptor))
-               (dir (if (eq (tar-header-link-type descriptor) 5)
-                        name
-                      (file-name-directory name)))
-               (link-desc (tar--describe-as-link descriptor))
-               (start (tar-header-data-start descriptor))
-               (end (+ start (tar-header-size descriptor))))
+    (with-current-buffer data-buf
+      (cl-assert (not enable-multibyte-characters)))
+    (dolist (descriptor tar-parse-info)
+      (let* ((orig (tar-header-name descriptor))
+	     ;; Note that default-directory may have different values
+	     ;; in the tar-mode and data buffers, so we stick to the
+	     ;; absolute file name from now on.
+	     (name (expand-file-name orig))
+             (dir (if (eq (tar-header-link-type descriptor) 5)
+                      name
+                    (file-name-directory name)))
+             (link-desc (tar--describe-as-link descriptor))
+             (start (tar-header-data-start descriptor))
+             (end (+ start (tar-header-size descriptor))))
+        (unless (file-directory-p name)
+          (progress-reporter-update reporter name)
+          (if (and dir (not (file-exists-p dir)))
+              (make-directory dir t))
           (unless (file-directory-p name)
-            (progress-reporter-update reporter name)
-            (if (and dir (not (file-exists-p dir)))
-                (make-directory dir t))
-            (unless (file-directory-p name)
+	    (with-current-buffer data-buf
               (let ((coding-system-for-write 'no-conversion)
                     (write-region-inhibit-fsync t))
                 (when link-desc
@@ -548,8 +553,8 @@ MODE should be an integer which is a file mode value."
                          "Extracted `%s', %s, as a normal file"
                          name link-desc))
                 (write-region start end name nil :nomessage)))
-            (set-file-modes name (tar-header-mode descriptor)))))
-      (progress-reporter-done reporter))))
+            (set-file-modes name (tar-header-mode descriptor))))))
+    (progress-reporter-done reporter)))
 
 (defun tar-summarize-buffer ()
   "Parse the contents of the tar file in the current buffer."
