@@ -2489,7 +2489,9 @@ See also `toggle-frame-maximized'."
 (mapc (lambda (var)
         ;; Using symbol-function here tells the watcher machinery to
         ;; call the C function set-buffer-redisplay directly, thus
-        ;; avoiding a potential GC.
+        ;; avoiding a potential GC.  This isn't strictly necessary,
+        ;; but it's a nice way to exercise the direct subr-calling
+        ;; machinery.
         (add-variable-watcher var (symbol-function 'set-buffer-redisplay)))
       '(line-spacing
         overline-margin
