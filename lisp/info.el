@@ -136,6 +136,12 @@ The Lisp code is executed when the node is selected.")
   :version "22.1"
   :group 'info)
 
+(defface info-emphasis
+  '((t (:inherit italic)))
+  "*Face for emphasized text (enclosed with underscores)."
+  :version "25.1"
+  :group 'info)
+
 (defcustom Info-fontify-visited-nodes t
   "Non-nil to fontify references to visited nodes in `info-xref-visited' face."
   :version "22.1"
@@ -4687,6 +4693,17 @@ first line or header line, and for breadcrumb links.")
 		   header-end t)
 		  (put-text-property (match-beginning 1) (match-end 1)
 				     'invisible t)))))))
+
+      ;; Fontify emphasis: _..._
+      (goto-char (point-min))
+      (when (and font-lock-mode  not-fontified-p)
+        (while (re-search-forward "_\\(\\sw+\\)_" nil t)
+          (add-text-properties (match-beginning 0) (1+ (match-beginning 0))
+                               '(invisible t front-sticky nil rear-nonsticky t))
+          (add-text-properties (1- (match-end 0)) (match-end 0)
+                               '(invisible t front-sticky nil rear-nonsticky t))
+          (put-text-property (match-beginning 1) (match-end 1)
+                             'font-lock-face 'info-emphasis)))
 
       ;; Fontify titles
       (goto-char (point-min))
