@@ -475,6 +475,11 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** telnet-mode
+*** Reverting a buffer in `telnet-mode' will restart a closed
+connection.
+
 ** goto-addr
 *** A way to more conveniently specify what URI address schemes that
 should be ignored have been added via the
