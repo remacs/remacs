@@ -180,9 +180,10 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
   :type '(coding-system :tag "Coding system to decode Git log output")
   :version "25.1")
 
-(defcustom vc-git-grep-template "git --no-pager grep -n -e <R> -- <F>"
+(defcustom vc-git-grep-template "git --no-pager grep -n <C> -e <R> -- <F>"
   "The default command to run for \\[vc-git-grep].
 The following place holders should be present in the string:
+ <C> - place to put the options like -i.
  <F> - file names and wildcards to search.
  <R> - the regular expression searched for."
   :type 'string
