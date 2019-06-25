@@ -552,7 +552,11 @@ value unless you are sure you know what it does."
 			 (setq prefixes nil)
 			 (delete-region (point-min) (point)))
 		     (setq prefixes (cdr prefixes))))))
-	   (subst-char-in-region (point-min) (point-max) ?- ?\s t)
+	   (goto-char (point-min))
+           ;; Translate characters commonly used as delimiters between
+           ;; words in symbols into space; e.g. foo:bar-zot/thing.
+	   (while (re-search-forward "[-:/]+" nil t)
+	     (replace-match " "))
 	   (capitalize-region (point-min) (point-max))
 	   (unless no-suffix
 	     (goto-char (point-max))
