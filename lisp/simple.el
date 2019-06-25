@@ -5261,24 +5261,14 @@ If ARG is zero, move to the beginning of the current line."
 		  (signal 'end-of-buffer nil))
 	      ;; If the newline we just skipped is invisible,
 	      ;; don't count it.
-	      (let ((prop
-		     (get-char-property (1- (point)) 'invisible)))
-		(if (if (eq buffer-invisibility-spec t)
-			prop
-		      (or (memq prop buffer-invisibility-spec)
-			  (assq prop buffer-invisibility-spec)))
-		    (setq arg (1+ arg))))
+	      (if (invisible-p (1- (point)))
+		  (setq arg (1+ arg)))
 	      (setq arg (1- arg)))
 	    ;; If invisible text follows, and it is a number of complete lines,
 	    ;; skip it.
 	    (let ((opoint (point)))
 	      (while (and (not (eobp))
-			  (let ((prop
-				 (get-char-property (point) 'invisible)))
-			    (if (eq buffer-invisibility-spec t)
-				prop
-			      (or (memq prop buffer-invisibility-spec)
-				  (assq prop buffer-invisibility-spec)))))
+			  (invisible-p (point)))
 		(goto-char
 		 (if (get-text-property (point) 'invisible)
 		     (or (next-single-property-change (point) 'invisible)
@@ -5295,24 +5285,14 @@ If ARG is zero, move to the beginning of the current line."
 	    ;; If the newline we just moved to is invisible,
 	    ;; don't count it.
 	    (unless (bobp)
-	      (let ((prop
-		     (get-char-property (1- (point)) 'invisible)))
-		(unless (if (eq buffer-invisibility-spec t)
-			    prop
-			  (or (memq prop buffer-invisibility-spec)
-			      (assq prop buffer-invisibility-spec)))
-		  (setq arg (1+ arg)))))
+	      (unless (invisible-p (1- (point)))
+		(setq arg (1+ arg))))
 	    (setq first nil))
 	  ;; If invisible text follows, and it is a number of complete lines,
 	  ;; skip it.
 	  (let ((opoint (point)))
 	    (while (and (not (bobp))
-			(let ((prop
-			       (get-char-property (1- (point)) 'invisible)))
-			  (if (eq buffer-invisibility-spec t)
-			      prop
-			    (or (memq prop buffer-invisibility-spec)
-				(assq prop buffer-invisibility-spec)))))
+			(invisible-p (1- (point))))
 	      (goto-char
 	       (if (get-text-property (1- (point)) 'invisible)
 		   (or (previous-single-property-change (point) 'invisible)
@@ -5332,12 +5312,7 @@ If ARG is zero, move to the beginning of the current line."
   (while (and (not (eobp))
 	      (save-excursion
 		(skip-chars-forward "^\n")
-		(let ((prop
-		       (get-char-property (point) 'invisible)))
-		  (if (eq buffer-invisibility-spec t)
-		      prop
-		    (or (memq prop buffer-invisibility-spec)
-			(assq prop buffer-invisibility-spec))))))
+		(invisible-p (point))))
     (skip-chars-forward "^\n")
     (if (get-text-property (point) 'invisible)
 	(goto-char (or (next-single-property-change (point) 'invisible)
