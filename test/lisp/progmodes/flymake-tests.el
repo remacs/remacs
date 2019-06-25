@@ -123,6 +123,7 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest ruby-backend ()
   "Test the ruby backend"
   (skip-unless (executable-find "ruby"))
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   ;; Some versions of ruby fail if HOME doesn't exist (bug#29187).
   (let* ((tempdir (make-temp-file "flymake-tests-ruby" t))
          (process-environment (cons (format "HOME=%s" tempdir)
