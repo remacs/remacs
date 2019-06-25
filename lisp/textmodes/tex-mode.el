@@ -251,7 +251,7 @@ Normally set to either `plain-tex-mode' or `latex-mode'."
   :type 'boolean
   :group 'tex
   :version "23.1")
-(put 'tex-fontify-script 'safe-local-variable 'booleanp)
+(put 'tex-fontify-script 'safe-local-variable #'booleanp)
 
 (defcustom tex-font-script-display '(-0.2 0.2)
   "How much to lower and raise subscript and superscript content.
@@ -670,7 +670,7 @@ An alternative value is \" . \", if you use a font with a narrow period."
 (defvar tex-verbatim-environments
   '("verbatim" "verbatim*"))
 (put 'tex-verbatim-environments 'safe-local-variable
-     (lambda (x) (null (delq t (mapcar #'stringp x)))))
+     (lambda (x) (not (memq nil (mapcar #'stringp x)))))
 
 (eval-when-compile
   (defconst tex-syntax-propertize-rules
@@ -2806,14 +2806,14 @@ Runs the shell command defined by `tex-show-queue-command'."
 (defcustom latex-noindent-environments '("document")
   "Environments whose content is not indented by `tex-indent-basic'."
   :type '(repeat string)
-  :safe (lambda (x) (lambda (x) (memq nil (mapcar #'stringp x))))
+  :safe (lambda (x) (not (memq nil (mapcar #'stringp x))))
   :group 'tex-file
   :version "27.1")
 
 (defcustom latex-noindent-commands '("emph" "footnote")
   "Commands for which `tex-indent-basic' should not be used."
   :type '(repeat string)
-  :safe (lambda (x) (memq nil (mapcar #'stringp x)))
+  :safe (lambda (x) (not (memq nil (mapcar #'stringp x))))
   :group 'tex-file
   :version "27.1")
 
