@@ -1752,9 +1752,12 @@ modified, and the length of the pre-change text replaced by that range.
 length is the number of characters deleted, and the post-change
 beginning and end are equal.)
 
-If these functions modify the buffer, they should bind
-@code{inhibit-modification-hooks} to @code{t} around doing so, to
-avoid confusing the internal mechanism that calls these hooks.
+When these functions are called, @code{inhibit-modification-hooks} is
+bound to non-@code{nil}.  If the functions modify the buffer, you
+might want to bind @code{inhibit-modification-hooks} to @code{nil}, so
+as to cause the change hooks to run for these modifications.  However,
+doing this may call your own change hook recursively, so be sure to
+prepare for that.  @xref{Change Hooks}.
 
 Text properties also support the @code{modification-hooks} property,
 but the details are somewhat different (@pxref{Special Properties}).

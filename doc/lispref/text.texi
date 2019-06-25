@@ -3621,9 +3621,12 @@ Furthermore, insertion will not modify any existing character, so this
 hook will only be run when removing some characters, replacing them
 with others, or changing their text-properties.
 
-If these functions modify the buffer, they should bind
-@code{inhibit-modification-hooks} to @code{t} around doing so, to
-avoid confusing the internal mechanism that calls these hooks.
+Unlike with other similar hooks, when Emacs calls these functions,
+@code{inhibit-modification-hooks} does @emph{not} get bound to
+non-@code{nil}.  If the functions modify the buffer, you should
+consider binding this variable to non-@code{nil} to prevent any buffer
+changes running the change hooks.  Otherwise, you must be prepared for
+recursive calls.  @xref{Change Hooks}.
 
 Overlays also support the @code{modification-hooks} property, but the
 details are somewhat different (@pxref{Overlay Properties}).
@@ -3638,6 +3641,13 @@ character and in the @code{insert-behind-hooks} property of the
 preceding character.  These functions receive two arguments, the
 beginning and end of the inserted text.  The functions are called
 @emph{after} the actual insertion takes place.
+
+When these functions are called, @code{inhibit-modification-hooks} is
+bound to non-@code{nil}.  If the functions modify the buffer, you
+might want to bind @code{inhibit-modification-hooks} to @code{nil}, so
+as to cause the change hooks to run for these modifications.  However,
+doing this may call your own change hook recursively, so be sure to
+prepare for that.
 
 See also @ref{Change Hooks}, for other hooks that are called
 when you change text in a buffer.
@@ -5650,5 +5660,8 @@ same hook variables, so that by default modifying the buffer from
 a modification hook does not cause other modification hooks to be run.
 If you do want modification hooks to be run in a particular piece of
 code that is itself run from a modification hook, then rebind locally
-@code{inhibit-modification-hooks} to @code{nil}.
+@code{inhibit-modification-hooks} to @code{nil}.  However, doing this
+may cause recursive calls to the modification hooks, so be sure to
+prepare for that (for example, by binding some variable which tells
+your hook to do nothing).
 @end defvar
