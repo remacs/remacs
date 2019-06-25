@@ -480,8 +480,11 @@ current and the previous or the next line, as before.
 should be ignored have been added via the
 `goto-address-uri-schemes-ignored' variable.
 
++++
 ** tex-mode
-*** 'latex-noindent-commands' stops indenting arguments of \emph and friends
+*** 'latex-noindent-commands' controls indentation of certain environments.
+You can use this new variable to control indentation of arguments of
+\emph, \footnote, and similar environments.
 
 ** byte compiler
 *** byte-compile-dynamic is now obsolete
