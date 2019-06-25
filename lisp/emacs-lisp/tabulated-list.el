@@ -73,6 +73,11 @@ frames."
   :type 'character
   :version "27.1")
 
+(defface tabulated-list-fake-header
+  '((t :overline t :underline t :weight bold))
+  "Face used on fake header lines."
+  :version "27.1")
+
 ;; The reason `tabulated-list-format' and other variables are
 ;; permanent-local is to make it convenient to switch to a different
 ;; major mode, switch back, and have the original Tabulated List data
@@ -308,7 +313,6 @@ Populated by `tabulated-list-init-header'.")
     (setq cols (apply 'concat (nreverse cols)))
     (if tabulated-list-use-header-line
 	(setq header-line-format cols)
-      (setq header-line-format nil)
       (setq-local tabulated-list--header-string cols))))
 
 (defun tabulated-list-print-fake-header ()
@@ -322,7 +326,8 @@ Do nothing if `tabulated-list--header-string' is nil."
           (move-overlay tabulated-list--header-overlay (point-min) (point))
         (setq-local tabulated-list--header-overlay
                     (make-overlay (point-min) (point))))
-      (overlay-put tabulated-list--header-overlay 'face 'underline))))
+      (overlay-put tabulated-list--header-overlay
+                   'face 'tabulated-list-fake-header))))
 
 (defsubst tabulated-list-header-overlay-p (&optional pos)
   "Return non-nil if there is a fake header.
