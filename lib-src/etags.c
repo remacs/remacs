@@ -6043,7 +6043,7 @@ prolog_atom (char *s, size_t pos)
  * Assumes that Erlang functions start at column 0.
  * Original code by Anders Lindgren (1996)
  */
-static int erlang_func (char *, char *);
+static int erlang_func (char *, char *, int *);
 static void erlang_attribute (char *);
 static int erlang_atom (char *);
 
@@ -6053,6 +6053,7 @@ Erlang_functions (FILE *inf)
   char *cp, *last;
   int len;
   int allocated;
+  int name_offset = 0;
 
   allocated = 0;
   len = 0;
@@ -6077,7 +6078,7 @@ Erlang_functions (FILE *inf)
 	      last = NULL;
 	    }
 	}
-      else if ((len = erlang_func (cp, last)) > 0)
+      else if ((len = erlang_func (cp, last, &name_offset)) > 0)
 	{
 	  /*
 	   * Function.  Store the function name so that we only
@@ -6088,7 +6089,7 @@ Erlang_functions (FILE *inf)
 	  else if (len + 1 > allocated)
 	    xrnew (last, len + 1, char);
 	  allocated = len + 1;
-	  memcpy (last, cp, len);
+	  memcpy (last, cp + name_offset, len);
 	  last[len] = '\0';
 	}
     }
@@ -6107,12 +6108,13 @@ Erlang_functions (FILE *inf)
  * was found.
  */
 static int
-erlang_func (char *s, char *last)
+erlang_func (char *s, char *last, int *name_offset)
 
                 		/* Name of last clause. */
 {
   int pos;
   int len;
+  char *name = s;
 
   pos = erlang_atom (s);
   if (pos < 1)
@@ -6121,13 +6123,23 @@ erlang_func (char *s, char *last)
   len = pos;
   pos = skip_spaces (s + pos) - s;
 
+  /* If the name is quoted, the quotes are not part of the name. */
+  if (len > 2 && name[0] == '\'' && name[len - 1] == '\'')
+    {
+      *name_offset = 1;
+      name++;
+      len -= 2;
+    }
+  else
+    *name_offset = 0;
+
   /* Save only the first clause. */
   if (s[pos++] == '('
       && (last == NULL
 	  || len != (int)strlen (last)
-	  || !strneq (s, last, len)))
+	  || !strneq (name, last, len)))
 	{
-	  make_tag (s, len, true, s, pos, lineno, linecharno);
+	  make_tag (name, len, true, s, pos, lineno, linecharno);
 	  return len;
 	}
 
@@ -6148,13 +6160,25 @@ static void
 erlang_attribute (char *s)
 {
   char *cp = s;
+  int pos;
+  int len;
 
   if ((LOOKING_AT (cp, "-define") || LOOKING_AT (cp, "-record"))
       && *cp++ == '(')
     {
-      int len = erlang_atom (skip_spaces (cp));
+      cp = skip_spaces (cp);
+      len = erlang_atom (cp);
+      pos = cp + len - s;
       if (len > 0)
-	make_tag (cp, len, true, s, cp + len - s, lineno, linecharno);
+	{
+	  /* If the name is quoted, the quotes are not part of the name. */
+	  if (len > 2 && cp[0] == '\'' && cp[len - 1] == '\'')
+	    {
+	      cp++;
+	      len -= 2;
+	    }
+	  make_tag (cp, len, true, s, pos, lineno, linecharno);
+	}
     }
   return;
 }
