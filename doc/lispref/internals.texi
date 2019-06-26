@@ -825,10 +825,14 @@ the type explicitly using a suitable predicate (@pxref{Type Predicates}).
 @code{args} refers to objects controlled by Emacs's stack-marking
 garbage collector.  Although the garbage collector does not reclaim
 objects reachable from C @code{Lisp_Object} stack variables, it may
-move non-object components of an object, such as string contents; so
-functions that access non-object components must take care to refetch
-their addresses after performing Lisp evaluation.  Lisp evaluation can
-occur via calls to @code{eval_sub} or @code{Feval}, either directly or
+move some of the components of an object, such as the contents of a
+string or the text of a buffer.  Therefore, functions that access
+these components must take care to refetch their addresses after
+performing Lisp evaluation.  This means that instead of keeping C
+pointers to string contents or buffer text, the code should keep the
+buffer or string position, and recompute the C pointer from the
+position after performing Lisp evaluation.  Lisp evaluation can occur
+via calls to @code{eval_sub} or @code{Feval}, either directly or
 indirectly.
 
 @cindex @code{maybe_quit}, use in Lisp primitives
