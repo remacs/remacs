@@ -868,6 +868,8 @@ load_pdump (int argc, char **argv)
   if (exename)
     {
 #ifdef WINDOWSNT
+      /* w32_my_exename resolves symlinks internally, so no need to
+	 call realpath.  */
       real_exename = exename;
       exename = NULL;
 #else
