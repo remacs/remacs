@@ -2138,7 +2138,7 @@ calc-kill calc-kill-region calc-yank))))
 (defalias 'math-numberp #'Math-numberp)
 
 ;;; True if A is a complex number or angle.  [P x] [Public]
-(defalias 'math-scalarp #'#'Math-scalarp)
+(defalias 'math-scalarp #'Math-scalarp)
 
 ;;; True if A is a vector.  [P x] [Public]
 (defalias 'math-vectorp #'Math-vectorp)
