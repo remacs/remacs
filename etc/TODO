@@ -193,7 +193,6 @@ https://lists.gnu.org/r/emacs-devel/2007-04/msg00684.html
 ** Check for any included packages that define obsolete bug-reporting commands.
 Change them to use report-emacs-bug.
 *** Related functions:
-**** gnus-bug
 **** org-submit-bug-report
 **** lm-report-bug
 **** tramp-bug
