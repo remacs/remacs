@@ -156,5 +156,9 @@
     (rx-tests--match (rx "c" (minimal-match (0+ (regexp ad))) "a") "cdaaada" "cda")
     (rx-tests--match (rx "c" (maximal-match (0+ (regexp ad))) "a") "cdaaada" "cdaaada")))
 
+(ert-deftest rx-to-string-lisp-forms ()
+  (rx-tests--match (rx-to-string '(seq "a" (literal "b") "c")) "abc")
+  (rx-tests--match (rx-to-string '(seq "a" (regexp "b") "c")) "abc"))
+
 (provide 'rx-tests)
 ;; rx-tests.el ends here.

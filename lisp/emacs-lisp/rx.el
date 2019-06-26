@@ -874,7 +874,7 @@ If FORM is `(minimal-match FORM1)', non-greedy versions of `*',
 
 (defun rx-regexp (form)
   "Parse and produce code from FORM, which is `(regexp STRING)'."
-  (cond ((stringp form)
+  (cond ((stringp (cadr form))
          (rx-group-if (cadr form) rx-parent))
         (rx--compile-to-lisp
          ;; Always group non-string forms, since we can't be sure they
@@ -884,7 +884,7 @@ If FORM is `(minimal-match FORM1)', non-greedy versions of `*',
 
 (defun rx-literal (form)
   "Parse and produce code from FORM, which is `(literal STRING-EXP)'."
-  (cond ((stringp form)
+  (cond ((stringp (cadr form))
          ;; This is allowed, but makes little sense, you could just
          ;; use STRING directly.
          (rx-group-if (regexp-quote (cadr form)) rx-parent))
