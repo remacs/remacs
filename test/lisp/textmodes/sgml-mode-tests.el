@@ -171,6 +171,8 @@ The point is set to the beginning of the buffer."
                  "<tag>c>'d</tag>"
                  "<t><!-- \" --></t>"
                  "<t><!-- ' --></t>"
+                 "<t>(')</t>"
+                 "<t>(\")</t>"
                  ))
    (with-temp-buffer
      (sgml-mode)

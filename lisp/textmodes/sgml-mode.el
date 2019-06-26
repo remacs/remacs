@@ -614,6 +614,7 @@ Do \\[describe-key] on the following bindings to discover what they do.
                              (font-lock-syntactic-face-function
                               . sgml-font-lock-syntactic-face)))
   (setq-local syntax-propertize-function #'sgml-syntax-propertize)
+  (setq-local syntax-ppss-table sgml-tag-syntax-table)
   (setq-local facemenu-add-face-function 'sgml-mode-facemenu-add-face-function)
   (setq-local sgml-xml-mode (sgml-xml-guess))
   (unless sgml-xml-mode
