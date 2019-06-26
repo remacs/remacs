@@ -141,7 +141,7 @@ usually more efficient than that of a simplified version:
 	   (completion-regexp-list nil)
 	   (open (cond ((stringp paren) paren) (paren "\\(")))
 	   (sorted-strings (delete-dups
-			    (sort (copy-sequence strings) 'string-lessp)))
+			    (sort (copy-sequence strings) #'string-lessp)))
 	   (re
             (cond
              ;; No strings: return an unmatchable regexp.

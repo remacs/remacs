@@ -2221,7 +2221,7 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
 (defun completion-before-command ()
   (funcall (or (and (symbolp this-command)
 		    (get this-command 'completion-function))
-	       'use-completion-under-or-before-point)))
+	       #'use-completion-under-or-before-point)))
 
 ;; Lisp mode diffs.
 

@@ -1537,7 +1537,7 @@ Return the input string."
   (quail-terminate-translation))
 
 (defun quail-update-translation (control-flag)
-"Update the current translation status according to CONTROL-FLAG.
+  "Update the current translation status according to CONTROL-FLAG.
 If CONTROL-FLAG is integer value, it is the number of keys in the
 head `quail-current-key' which can be translated.  The remaining keys
 are put back to `unread-command-events' to be handled again.  If

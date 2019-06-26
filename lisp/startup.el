@@ -980,6 +980,13 @@ XDG convention for dotfiles."
         (found-path (if (file-exists-p xdg-path) xdg-path oldstyle-path)))
     found-path))
 
+(defcustom gc-cons-opportunistic-idle-time 5
+  "Number of seconds before trying an opportunistic GC.
+After this number of seconds of idle time, Emacs tries to collect
+garbage more eagerly (i.e. with thresholds halved) in the hope
+to avoid running the GC later during non-idle time."
+  :type 'integer)
+
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
@@ -1376,6 +1383,16 @@ please check its value")
     (unless (and (eq scalable-fonts-allowed old-scalable-fonts-allowed)
 		 (eq face-ignored-fonts old-face-ignored-fonts))
       (clear-face-cache)))
+
+  ;; Start opportunistic GC (after loading the init file, so we obey
+  ;; its settings).  This is desirable for two reason:
+  ;; - It reduces the number of times we have to GC in the middle of
+  ;;   an operation.
+  ;; - It means we GC when the C stack is short, reducing the risk of false
+  ;;   positives from the conservative stack scanning.
+  (when gc-cons-opportunistic-idle-time
+    (run-with-idle-timer gc-cons-opportunistic-idle-time t
+                         #'garbage-collect-maybe 2))
 
   (setq after-init-time (current-time))
   ;; Display any accumulated warnings after all functions in

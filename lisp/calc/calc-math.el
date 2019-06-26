@@ -31,9 +31,8 @@
 (require 'calc-macs)
 
 
-;;; Find out how many 9s in 9.9999... will give distinct Emacs floats,
-;;; then back off by one.
-
+;; Find out how many 9s in 9.9999... will give distinct Emacs floats,
+;; then back off by one.
 (defvar math-emacs-precision
   (let* ((n 1)
          (x 9)
@@ -46,9 +45,9 @@
     (1- n))
   "The number of digits in an Emacs float.")
 
-;;; Find the largest power of 10 which is an Emacs float,
-;;; then back off by one so that any float d.dddd...eN
-;;; is an Emacs float, for acceptable d.dddd....
+;; Find the largest power of 10 which is an Emacs float,
+;; then back off by one so that any float d.dddd...eN
+;; is an Emacs float, for acceptable d.dddd....
 
 (defvar math-largest-emacs-expt
   (let ((x 1)
@@ -367,9 +366,9 @@ If this can't be done, return NIL."
    (message "Angles measured in radians")))
 
 
-;;; Compute the integer square-root floor(sqrt(A)).  A > 0.  [I I] [Public]
-;;; This method takes advantage of the fact that Newton's method starting
-;;; with an overestimate always works, even using truncating integer division!
+;; Compute the integer square-root floor(sqrt(A)).  A > 0.  [I I] [Public]
+;; This method takes advantage of the fact that Newton's method starting
+;; with an overestimate always works, even using truncating integer division!
 (defun math-isqrt (a)
   (cond ((Math-zerop a) a)
 	((not (natnump a))

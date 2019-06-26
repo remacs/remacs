@@ -30,7 +30,7 @@
 ;; To use pcomplete with shell-mode, for example, you will need the
 ;; following in your init file:
 ;;
-;;   (add-hook 'shell-mode-hook 'pcomplete-shell-setup)
+;;   (add-hook 'shell-mode-hook #'pcomplete-shell-setup)
 ;;
 ;; Most of the code below simply provides support mechanisms for
 ;; writing completion functions.  Completion functions themselves are
@@ -129,31 +129,26 @@
 
 (defcustom pcomplete-file-ignore nil
   "A regexp of filenames to be disregarded during file completion."
-  :type '(choice regexp (const :tag "None" nil))
-  :group 'pcomplete)
+  :type '(choice regexp (const :tag "None" nil)))
 
 (defcustom pcomplete-dir-ignore nil
   "A regexp of names to be disregarded during directory completion."
-  :type '(choice regexp (const :tag "None" nil))
-  :group 'pcomplete)
+  :type '(choice regexp (const :tag "None" nil)))
 
 (defcustom pcomplete-ignore-case (memq system-type '(ms-dos windows-nt cygwin))
   ;; FIXME: the doc mentions file-name completion, but the code
   ;; seems to apply it to all completions.
   "If non-nil, ignore case when doing filename completion."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (defcustom pcomplete-autolist nil
   "If non-nil, automatically list possibilities on partial completion.
 This mirrors the optional behavior of tcsh."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (defcustom pcomplete-suffix-list (list ?/ ?:)
   "A list of characters which constitute a proper suffix."
-  :type '(repeat character)
-  :group 'pcomplete)
+  :type '(repeat character))
 (make-obsolete-variable 'pcomplete-suffix-list nil "24.1")
 
 (defcustom pcomplete-recexact nil
@@ -161,25 +156,22 @@ This mirrors the optional behavior of tcsh."
 This mirrors the optional behavior of tcsh.
 
 A non-nil value is useful if `pcomplete-autolist' is non-nil too."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (define-obsolete-variable-alias
   'pcomplete-arg-quote-list 'comint-file-name-quote-list "24.3")
 
-(defcustom pcomplete-man-function 'man
+(defcustom pcomplete-man-function #'man
   "A function to that will be called to display a manual page.
 It will be passed the name of the command to document."
-  :type 'function
-  :group 'pcomplete)
+  :type 'function)
 
-(defcustom pcomplete-compare-entry-function 'string-lessp
+(defcustom pcomplete-compare-entry-function #'string-lessp
   "This function is used to order file entries for completion.
 The behavior of most all shells is to sort alphabetically."
   :type '(radio (function-item string-lessp)
 		(function-item file-newer-than-file-p)
-		(function :tag "Other"))
-  :group 'pcomplete)
+		(function :tag "Other")))
 
 (defcustom pcomplete-help nil
   "A string or function (or nil) used for context-sensitive help.
@@ -188,8 +180,7 @@ If non-nil, it must a sexp that will be evaluated, and whose
 result will be shown in the minibuffer.
 If nil, the function `pcomplete-man-function' will be called with the
 current command argument."
-  :type '(choice string sexp (const :tag "Use man page" nil))
-  :group 'pcomplete)
+  :type '(choice string sexp (const :tag "Use man page" nil)))
 
 (defcustom pcomplete-expand-before-complete nil
   "If non-nil, expand the current argument before completing it.
@@ -199,11 +190,10 @@ resolved first, and the resultant value that will be completed against
 to be inserted in the buffer.  Note that exactly what gets expanded
 and how is entirely up to the behavior of the
 `pcomplete-parse-arguments-function'."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (defcustom pcomplete-parse-arguments-function
-  'pcomplete-parse-buffer-arguments
+  #'pcomplete-parse-buffer-arguments
   "A function to call to parse the current line's arguments.
 It should be called with no parameters, and with point at the position
 of the argument that is to be completed.
@@ -218,8 +208,7 @@ representation of that argument), and BEG-POS gives the beginning
 position of each argument, as it is seen by the user.  The establishes
 a relationship between the fully resolved value of the argument, and
 the textual representation of the argument."
-  :type 'function
-  :group 'pcomplete)
+  :type 'function)
 
 (defcustom pcomplete-cycle-completions t
   "If non-nil, hitting the TAB key cycles through the completion list.
@@ -230,8 +219,7 @@ it acts more like zsh or 4nt, showing the first maximal match first,
 followed by any further matches on each subsequent pressing of the TAB
 key.  \\[pcomplete-list] is the key to press if the user wants to see
 the list of possible completions."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (defcustom pcomplete-cycle-cutoff-length 5
   "If the number of completions is greater than this, don't cycle.
@@ -246,8 +234,7 @@ has already entered enough input to disambiguate most of the
 possibilities, and therefore they are probably most interested in
 cycling through the candidates.  Set this value to nil if you want
 cycling to always be enabled."
-  :type '(choice integer (const :tag "Always cycle" nil))
-  :group 'pcomplete)
+  :type '(choice integer (const :tag "Always cycle" nil)))
 
 (defcustom pcomplete-restore-window-delay 1
   "The number of seconds to wait before restoring completion windows.
@@ -258,15 +245,13 @@ displayed will be restored), after this many seconds of idle time.  If
 set to nil, completion windows will be left on second until the user
 removes them manually.  If set to 0, they will disappear immediately
 after the user enters a key other than TAB."
-  :type '(choice integer (const :tag "Never restore" nil))
-  :group 'pcomplete)
+  :type '(choice integer (const :tag "Never restore" nil)))
 
 (defcustom pcomplete-try-first-hook nil
   "A list of functions which are called before completing an argument.
 This can be used, for example, for completing things which might apply
 to all arguments, such as variable names after a $."
-  :type 'hook
-  :group 'pcomplete)
+  :type 'hook)
 
 (defsubst pcomplete-executables (&optional regexp)
   "Complete amongst a list of directories and executables."
@@ -310,13 +295,11 @@ generate the completions list.  This means that the hook
    (lambda ()
      (pcomplete-here (pcomplete-executables))))
   "Function called for completing the initial command argument."
-  :type 'function
-  :group 'pcomplete)
+  :type 'function)
 
-(defcustom pcomplete-command-name-function 'pcomplete-command-name
+(defcustom pcomplete-command-name-function #'pcomplete-command-name
   "Function called for determining the current command name."
-  :type 'function
-  :group 'pcomplete)
+  :type 'function)
 
 (defcustom pcomplete-default-completion-function
   (function
@@ -324,16 +307,14 @@ generate the completions list.  This means that the hook
      (while (pcomplete-here (pcomplete-entries)))))
   "Function called when no completion rule can be found.
 This function is used to generate completions for every argument."
-  :type 'function
-  :group 'pcomplete)
+  :type 'function)
 
 (defcustom pcomplete-use-paring t
   "If t, pare alternatives that have already been used.
 If nil, you will always see the completion set of possible options, no
 matter which of those options have already been used in previous
 command arguments."
-  :type 'boolean
-  :group 'pcomplete)
+  :type 'boolean)
 
 (defcustom pcomplete-termination-string " "
   "A string that is inserted after any completion or expansion.
@@ -342,8 +323,7 @@ words separated by spaces.  However, if your list uses a different
 separator character, or if the completion occurs in a word that is
 already terminated by a character, this variable should be locally
 modified to be an empty string, or the desired separation string."
-  :type 'string
-  :group 'pcomplete)
+  :type 'string)
 
 ;;; Internal Variables:
 
@@ -459,7 +439,7 @@ Same as `pcomplete' but using the standard completion UI."
       ;; between pcomplete-stub and the buffer's text is simply due to
       ;; some chars removed by unquoting.  Again, this is not
       ;; indispensable but reduces the reliance on c-t-subvert and
-      ;; improves corner case behaviors.
+      ;; improves corner case behaviors.  See e.g. bug#34888.
       (while (progn (setq buftext (pcomplete-unquote-argument
                                    (buffer-substring beg (point))))
                     (and (> beg argbeg)
@@ -501,6 +481,10 @@ Same as `pcomplete' but using the standard completion UI."
             (setq table (completion-table-case-fold table)))
           (list beg (point) table
                 :predicate pred
+                ;; FIXME: This might be useful even if `completions' is nil!
+                :context-help-function
+                (let ((ph pcomplete-help)) ;;Preserve the current value.
+                  (lambda () (let ((pcomplete-help ph)) (pcomplete--help))))
                 :exit-function
 		;; If completion is finished, add a terminating space.
 		;; We used to also do this if STATUS is `sole', but
@@ -528,6 +512,7 @@ Same as `pcomplete' but using the standard completion UI."
   "Support extensible programmable completion.
 To use this function, just bind the TAB key to it, or add it to your
 completion functions list (it should occur fairly early in the list)."
+  (declare (obsolete "use `completion-at-point' with `pcomplete-completions-at-point' instead" "27.1"))
   (interactive "p")
   (if (and interactively
 	   pcomplete-cycle-completions
@@ -570,6 +555,7 @@ completion functions list (it should occur fairly early in the list)."
 ;;;###autoload
 (defun pcomplete-reverse ()
   "If cycling completion is in use, cycle backwards."
+  (declare (obsolete ?? "27.1"))
   (interactive)
   (call-interactively 'pcomplete))
 
@@ -577,6 +563,7 @@ completion functions list (it should occur fairly early in the list)."
 (defun pcomplete-expand-and-complete ()
   "Expand the textual value of the current argument.
 This will modify the current buffer."
+  (declare (obsolete "use pcomplete-expand and completion-at-point" "27.1"))
   (interactive)
   (let ((pcomplete-expand-before-complete t))
     (pcomplete)))
@@ -584,6 +571,8 @@ This will modify the current buffer."
 ;;;###autoload
 (defun pcomplete-continue ()
   "Complete without reference to any cycling completions."
+  ;; It doesn't seem to be used, so it's OK if we don't have a substitute.
+  (declare (obsolete nil "27.1"))
   (interactive)
   (setq pcomplete-current-completions nil
 	pcomplete-last-completion-raw nil)
@@ -594,30 +583,41 @@ This will modify the current buffer."
   "Expand the textual value of the current argument.
 This will modify the current buffer."
   (interactive)
-  (let ((pcomplete-expand-before-complete t)
-	(pcomplete-expand-only-p t))
-    (pcomplete)
-    (when (and pcomplete-current-completions
-	       (> (length pcomplete-current-completions) 0)) ;??
-      (delete-char (- pcomplete-last-completion-length))
-      (while pcomplete-current-completions
-	(unless (pcomplete-insert-entry
-		 "" (car pcomplete-current-completions) t
-                 pcomplete-last-completion-raw)
-	  (insert-and-inherit pcomplete-termination-string))
-	(setq pcomplete-current-completions
-	      (cdr pcomplete-current-completions))))))
+  (setq pcomplete-current-completions nil
+	pcomplete-last-completion-raw nil)
+  (catch 'pcompleted
+    (let* ((pcomplete-stub)
+	   pcomplete-seen pcomplete-norm-func
+	   pcomplete-args pcomplete-last pcomplete-index
+	   (pcomplete-autolist pcomplete-autolist)
+	   (pcomplete-suffix-list pcomplete-suffix-list)
+           (pcomplete-expand-only-p t))
+      (pcomplete-parse-arguments 'expand-before-complete)))
+  ;; FIXME: What is this doing?
+  (when (and pcomplete-current-completions
+	     (> (length pcomplete-current-completions) 0)) ;??
+    (delete-char (- pcomplete-last-completion-length))
+    (dolist (c (prog1 pcomplete-current-completions
+                 (setq pcomplete-current-completions nil)))
+      (unless (pcomplete-insert-entry "" c t
+               pcomplete-last-completion-raw)
+	(insert-and-inherit pcomplete-termination-string)))))
 
 ;;;###autoload
 (defun pcomplete-help ()
   "Display any help information relative to the current argument."
-  (interactive)
-  (let ((pcomplete-show-help t))
-    (pcomplete)))
+  (interactive)        ;FIXME!
+  ;; (declare (obsolete ?? "27.1"))
+  (let* ((data (pcomplete-completions-at-point))
+         (helpfun (plist-get (nthcdr 3 data) :context-help-function)))
+    (if helpfun
+        (funcall helpfun)
+      (message "No context-sensitive help available"))))
 
 ;;;###autoload
 (defun pcomplete-list ()
   "Show the list of possible completions for the current argument."
+  (declare (obsolete completion-help-at-point "27.1"))
   (interactive)
   (when (and pcomplete-cycle-completions
 	     pcomplete-current-completions
@@ -751,9 +751,9 @@ COMPLETEF-SYM should be the symbol where the
 dynamic-complete-functions are kept.  For comint mode itself,
 this is `comint-dynamic-complete-functions'."
   (set (make-local-variable 'pcomplete-parse-arguments-function)
-       'pcomplete-parse-comint-arguments)
+       #'pcomplete-parse-comint-arguments)
   (add-hook 'completion-at-point-functions
-            'pcomplete-completions-at-point nil 'local)
+            #'pcomplete-completions-at-point nil 'local)
   (set (make-local-variable completef-sym)
        (copy-sequence (symbol-value completef-sym)))
   (let* ((funs (symbol-value completef-sym))
@@ -915,12 +915,12 @@ component, `default-directory' is used as the basis for completion."
                       (or (eq action t)
                           (eq (car-safe action) 'boundaries))))
             (let ((newstring
-                   (mapconcat 'identity (nreverse (cons string strings)) "")))
+                   (mapconcat #'identity (nreverse (cons string strings)) "")))
               ;; FIXME: We could also try to return unexpanded envvars.
               (complete-with-action action table newstring pred))
           (let* ((envpos (apply #'+ (mapcar #' length strings)))
                  (newstring
-                  (mapconcat 'identity (nreverse (cons string strings)) ""))
+                  (mapconcat #'identity (nreverse (cons string strings)) ""))
                  (bounds (completion-boundaries newstring table pred
                                                 (or (cdr-safe action) ""))))
             (if (>= (car bounds) envpos)
@@ -1181,12 +1181,12 @@ extra checking, and munging of the COMPLETIONS list."
     ;; pare it down, if applicable
     (when (and pcomplete-use-paring pcomplete-seen)
       (setq pcomplete-seen
-            (mapcar 'directory-file-name pcomplete-seen))
+            (mapcar #'directory-file-name pcomplete-seen))
       (dolist (p pcomplete-seen)
         (add-to-list 'pcomplete-seen
                      (funcall pcomplete-norm-func p)))
       (setq completions
-            (apply-partially 'completion-table-with-predicate
+            (apply-partially #'completion-table-with-predicate
                              completions
                              (when pcomplete-seen
                                (lambda (f)
@@ -1262,20 +1262,21 @@ See also `pcomplete-filename'."
 (defun pcomplete--help ()
   "Produce context-sensitive help for the current argument.
 If specific documentation can't be given, be generic."
-  (if (and pcomplete-help
-	   (or (and (stringp pcomplete-help)
-		    (fboundp 'Info-goto-node))
-	       (listp pcomplete-help)))
-      (if (listp pcomplete-help)
-	  (message "%s" (eval pcomplete-help))
-	(save-window-excursion (info))
-	(switch-to-buffer-other-window "*info*")
-	(funcall (symbol-function 'Info-goto-node) pcomplete-help))
+  (cond
+   ((functionp pcomplete-help) (funcall pcomplete-help))
+   ((consp pcomplete-help)
+    (message "%s" (eval pcomplete-help t)))
+   ((and (stringp pcomplete-help)
+	 (fboundp 'Info-goto-node))
+    (save-window-excursion (info))
+    (switch-to-buffer-other-window "*info*")
+    (Info-goto-node pcomplete-help))
+   (t
     (if pcomplete-man-function
 	(let ((cmd (funcall pcomplete-command-name-function)))
 	  (if (and cmd (> (length cmd) 0))
 	      (funcall pcomplete-man-function cmd)))
-      (message "No context-sensitive help available"))))
+      (message "No context-sensitive help available")))))
 
 ;; general utilities
 
@@ -1292,12 +1293,12 @@ If specific documentation can't be given, be generic."
   l)
 (define-obsolete-function-alias
   'pcomplete-uniqify-list
-  'pcomplete-uniquify-list "27.1")
+  #'pcomplete-uniquify-list "27.1")
 
 (defun pcomplete-process-result (cmd &rest args)
   "Call CMD using `call-process' and return the simplest result."
   (with-temp-buffer
-    (apply 'call-process cmd nil t nil args)
+    (apply #'call-process cmd nil t nil args)
     (skip-chars-backward "\n")
     (buffer-substring (point-min) (point))))
 

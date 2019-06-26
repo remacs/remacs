@@ -591,7 +591,7 @@ FILE is the file where FUNCTION was probably defined."
   ;; of the *packages* in which the function is defined.
   (let* ((name (symbol-name symbol))
          (re (concat "\\_<" (regexp-quote name) "\\_>"))
-         (news (directory-files data-directory t "\\`NEWS.[1-9]"))
+         (news (directory-files data-directory t "\\`NEWS"))
          (place nil)
          (first nil))
     (with-temp-buffer
@@ -606,7 +606,7 @@ FILE is the file where FUNCTION was probably defined."
               ;; Almost all entries are of the form "* ... in Emacs NN.MM."
               ;; but there are also a few in the form "* Emacs NN.MM is a bug
               ;; fix release ...".
-              (if (not (re-search-backward "^\\*.* Emacs \\([0-9.]+[0-9]\\)"
+              (if (not (re-search-backward "^\\* .* Emacs \\([0-9.]+[0-9]\\)"
                                            nil t))
                   (message "Ref found in non-versioned section in %S"
                            (file-name-nondirectory f))
@@ -615,8 +615,7 @@ FILE is the file where FUNCTION was probably defined."
                     (setq place (list f pos))
                     (setq first version)))))))))
     (when first
-      (make-text-button first nil 'type 'help-news 'help-args place))
-    first))
+      (make-text-button first nil 'type 'help-news 'help-args place))))
 
 (add-hook 'help-fns-describe-function-functions
           #'help-fns--mention-first-release)

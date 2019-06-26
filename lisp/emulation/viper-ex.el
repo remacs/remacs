@@ -1239,7 +1239,7 @@ reversed."
 		(read-string "[Hit return to confirm] ")
 	      (quit
 	       (save-excursion (kill-buffer " *delete text*"))
-	       (user-error viper-ViperBell)))
+	       (viper--user-error)))
 	    (save-excursion (kill-buffer " *delete text*")))
 	(if ex-buffer
 	    (cond ((viper-valid-register ex-buffer '(Letter))

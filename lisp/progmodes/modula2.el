@@ -33,12 +33,11 @@
 ;;; Added by Tom Perrine (TEP)
 (defvar m2-mode-syntax-table
   (let ((table (make-syntax-table)))
+    ;; FIXME: nesting!
+    ;; FIXME: `comment-indent' just inserts "(**)" whereas the old code
+    ;; resulted in a nicer "(*  *)"!
+    (comment-set-syntax table '(("(*" . "*)") ("//" . "\n")))
     (modify-syntax-entry ?\\ "\\" table)
-    (modify-syntax-entry ?/ ". 12" table)
-    (modify-syntax-entry ?\n ">" table)
-    (modify-syntax-entry ?\( "()1" table)
-    (modify-syntax-entry ?\) ")(4" table)
-    (modify-syntax-entry ?* ". 23nb" table)
     (modify-syntax-entry ?+ "." table)
     (modify-syntax-entry ?- "." table)
     (modify-syntax-entry ?= "." table)
@@ -204,10 +203,11 @@
       (let ((tok (smie-default-backward-token)))
         (cond
          ((zerop (length tok))
-          (let ((forward-sexp-function nil))
-            (condition-case nil
-                (forward-sexp -1)
-              (scan-error (setq res ":")))))
+          (if (bobp) (setq res ":")
+            (let ((forward-sexp-function nil))
+              (condition-case nil
+                  (forward-sexp -1)
+                (scan-error (setq res ":"))))))
          ((member tok '("|" "OF" "..")) (setq res ":-case"))
          ((member tok '(":" "END" ";" "BEGIN" "VAR" "RECORD" "PROCEDURE"))
           (setq res ":")))))
@@ -311,9 +311,6 @@ followed by the first character of the construct.
   (set (make-local-variable 'paragraph-start) (concat "$\\|" page-delimiter))
   (set (make-local-variable 'paragraph-separate) paragraph-start)
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
-  (set (make-local-variable 'comment-start) "(* ")
-  (set (make-local-variable 'comment-end) " *)")
-  (set (make-local-variable 'comment-start-skip) "\\(?:(\\*+\\|//+\\) *")
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'font-lock-defaults)
 	'((m3-font-lock-keywords

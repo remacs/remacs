@@ -3885,7 +3885,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
-
+  (defvar tramp-display-escape-sequence-regexp) ;Defined in tramp-sh.el
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let* ((tmp-name (tramp--test-make-temp-name nil quoted))
 	   (fnnd (file-name-nondirectory tmp-name))

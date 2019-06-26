@@ -5453,7 +5453,7 @@ This returns non-nil only if we actually send anything."
     ;; obsolete, and when it's finally removed, this binding should
     ;; also be removed.
     (with-suppressed-warnings ((lexical str))
-      (defvar str))
+      (defvar str))  ;FIXME: Obey the "erc-" prefix convention.
     (let ((str input)
           (erc-insert-this t)
 	  (erc-send-this t)

@@ -439,7 +439,8 @@ and VALUE-END, otherwise a STRING giving the value."
 	 (comment
 	  (xmltok+ (xmltok-g markup-declaration "!")
 		   (xmltok-g comment-first-dash "-"
-			     (xmltok-g comment-open "-") opt) opt))
+			     (xmltok-g comment-open "-") opt)
+                   opt))
 	 (cdata-section
 	  (xmltok+ "!"
 		  (xmltok-g marked-section-open "\\[")
@@ -540,7 +541,9 @@ and VALUE-END, otherwise a STRING giving the value."
 		       "%" (xmltok-g param-entity-ref
 				     ncname
 				     (xmltok-g param-entity-ref-close
-					       ";") opt) opt))
+					       ";")
+                                     opt)
+                       opt))
 	    (starts-with-nmtoken-not-name
 	     (xmltok-g nmtoken
 		       (xmltok-p name-continue-not-start-char or ":")
@@ -571,7 +574,8 @@ and VALUE-END, otherwise a STRING giving the value."
 		       "!" (xmltok-p (xmltok-g comment-first-dash "-"
 					       (xmltok-g comment-open "-") opt)
 				     or (xmltok-g named-markup-declaration
-						 ncname)) opt))
+                                                  ncname))
+                       opt))
 	    (after-lt
 	     (xmltok+ markup-declaration
 		      or (xmltok-g processing-instruction-question

@@ -109,7 +109,7 @@ folder. This is useful for folders that are easily regenerated."
       (let ((folder mh-current-folder)
             (window-config mh-previous-window-config))
         (mh-set-folder-modified-p t)    ; lock folder to kill it
-        (mh-exec-cmd-daemon "rmf" 'mh-rmf-daemon folder)
+        (mh-exec-cmd-daemon "rmf" #'mh-rmf-daemon folder)
         (when (boundp 'mh-speed-folder-map)
           (mh-speed-invalidate-map folder))
         (mh-remove-from-sub-folders-cache folder)
@@ -123,7 +123,7 @@ folder. This is useful for folders that are easily regenerated."
         (message "Folder %s removed" folder))
     (message "Folder not removed")))
 
-(defun mh-rmf-daemon (process output)
+(defun mh-rmf-daemon (_process output)
   "The rmf PROCESS puts OUTPUT in temporary buffer.
 Display the results only if something went wrong."
   (set-buffer (get-buffer-create mh-temp-buffer))

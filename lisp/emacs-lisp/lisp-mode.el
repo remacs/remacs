@@ -237,6 +237,7 @@
             (eval-when-compile
               (concat "(\\(" lisp-mode-symbol-regexp "\\)\\_>"))
             limit t)
+      ;; FIXME: If it's indented like `defun' then highlight the first arg!
       (let ((sym (intern-soft (match-string 1))))
 	(when (or (special-form-p sym)
 		  (and (macrop sym)

@@ -825,11 +825,11 @@ Example:
   "Return a copy of SEQ with all occurrences of ELT removed.
 SEQ must be a list, vector, or string.  The comparison is done with `equal'."
   (declare (side-effect-free t))
-  (if (nlistp seq)
-      ;; If SEQ isn't a list, there's no need to copy SEQ because
-      ;; `delete' will return a new object.
-      (delete elt seq)
-    (delete elt (copy-sequence seq))))
+  (delete elt (if (nlistp seq)
+                  ;; If SEQ isn't a list, there's no need to copy SEQ because
+                  ;; `delete' will return a new object.
+                  seq
+                (copy-sequence seq))))
 
 (defun remq (elt list)
   "Return LIST with all occurrences of ELT removed.
@@ -851,10 +851,10 @@ This is the same format used for saving keyboard macros (see
 `edmacro-mode').
 
 For an approximate inverse of this, see `key-description'."
+  (declare (pure t))
   ;; Don't use a defalias, since the `pure' property is only true for
   ;; the calling convention of `kbd'.
   (read-kbd-macro keys))
-(put 'kbd 'pure t)
 
 (defun undefined ()
   "Beep to tell the user this binding is undefined."
@@ -5586,6 +5586,17 @@ returned list are in the same order as in TREE.
 (defalias 'flatten-list 'flatten-tree)
 
 ;; The initial anchoring is for better performance in searching matches.
+(defun internal--opportunistic-gc ()
+  "Run the GC during idle time."
+  (let ((gc-cons-threshold (/ gc-cons-threshold 2))
+        ;; FIXME: This doesn't work because it's only consulted at the end
+        ;; of a GC in order to set the next `gc_relative_threshold'!
+        (gc-cons-percentage (/ gc-cons-percentage 2)))
+    ;; HACK ATTACK: the purpose of this dummy call to `eval' is to call
+    ;; `maybe_gc', so we will trigger a GC if we allocated half of the maximum
+    ;; allowed before the GC is forced upon us.
+    (eval 1 t)))
+
 (defconst regexp-unmatchable "\\`a\\`"
   "Standard regexp guaranteed not to match any string at all.")
 

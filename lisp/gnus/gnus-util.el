@@ -38,7 +38,7 @@
 (require 'time-date)
 (require 'text-property-search)
 
-(defcustom gnus-completing-read-function 'gnus-emacs-completing-read
+(defcustom gnus-completing-read-function #'gnus-emacs-completing-read
   "Function use to do completing read."
   :version "24.1"
   :group 'gnus-meta
@@ -87,6 +87,7 @@ This is a compatibility function for different Emacsen."
 
 (defmacro gnus-eval-in-buffer-window (buffer &rest forms)
   "Pop to BUFFER, evaluate FORMS, and then return to the original window."
+  (declare (indent 1) (debug (form body)))
   (let ((tempvar (make-symbol "GnusStartBufferWindow"))
 	(w (make-symbol "w"))
 	(buf (make-symbol "buf")))
@@ -102,9 +103,6 @@ This is a compatibility function for different Emacsen."
 	       (pop-to-buffer ,buf))
 	     ,@forms)
 	 (select-window ,tempvar)))))
-
-(put 'gnus-eval-in-buffer-window 'lisp-indent-function 1)
-(put 'gnus-eval-in-buffer-window 'edebug-form-spec '(form body))
 
 (defsubst gnus-goto-char (point)
   (and point (goto-char point)))
@@ -302,25 +300,23 @@ Symbols are also allowed; their print names are used instead."
 
 (defmacro gnus-local-set-keys (&rest plist)
   "Set the keys in PLIST in the current keymap."
+  (declare (indent 1))
   `(gnus-define-keys-1 (current-local-map) ',plist))
 
 (defmacro gnus-define-keys (keymap &rest plist)
   "Define all keys in PLIST in KEYMAP."
+  (declare (indent 1))
   `(gnus-define-keys-1 (quote ,keymap) (quote ,plist)))
 
 (defmacro gnus-define-keys-safe (keymap &rest plist)
   "Define all keys in PLIST in KEYMAP without overwriting previous definitions."
+  (declare (indent 1))
   `(gnus-define-keys-1 (quote ,keymap) (quote ,plist) t))
-
-(put 'gnus-define-keys 'lisp-indent-function 1)
-(put 'gnus-define-keys-safe 'lisp-indent-function 1)
-(put 'gnus-local-set-keys 'lisp-indent-function 1)
 
 (defmacro gnus-define-keymap (keymap &rest plist)
   "Define all keys in PLIST in KEYMAP."
+  (declare (indent 1))
   `(gnus-define-keys-1 ,keymap (quote ,plist)))
-
-(put 'gnus-define-keymap 'lisp-indent-function 1)
 
 (defun gnus-define-keys-1 (keymap plist &optional safe)
   (when (null keymap)
@@ -444,7 +440,7 @@ displayed in the echo area."
       `(let (str time)
 	 (cond ((eq gnus-add-timestamp-to-message 'log)
 		(setq str (let (message-log-max)
-			    (apply 'message ,format-string ,args)))
+			    (apply #'message ,format-string ,args)))
 		(when (and message-log-max
 			   (> message-log-max 0)
 			   (/= (length str) 0))
@@ -462,7 +458,7 @@ displayed in the echo area."
 	       (gnus-add-timestamp-to-message
 		(if (or (and (null ,format-string) (null ,args))
 			(progn
-			  (setq str (apply 'format ,format-string ,args))
+			  (setq str (apply #'format ,format-string ,args))
 			  (zerop (length str))))
 		    (prog1
 			(and ,format-string str)
@@ -471,7 +467,7 @@ displayed in the echo area."
 		  (message "%s" (concat ,timestamp str))
 		  str))
 	       (t
-		(apply 'message ,format-string ,args)))))))
+		(apply #'message ,format-string ,args)))))))
 
 (defvar gnus-action-message-log nil)
 
@@ -490,9 +486,10 @@ that take a long time, 7 - not very important messages on stuff, 9 - messages
 inside loops."
   (if (<= level gnus-verbose)
       (let ((message
-	     (if gnus-add-timestamp-to-message
-		 (apply 'gnus-message-with-timestamp args)
-	       (apply 'message args))))
+	     (apply (if gnus-add-timestamp-to-message
+		        #'gnus-message-with-timestamp
+	              #'message)
+                    args)))
 	(when (and (consp gnus-action-message-log)
 		   (<= level 3))
 	  (push message gnus-action-message-log))
@@ -500,7 +497,7 @@ inside loops."
     ;; We have to do this format thingy here even if the result isn't
     ;; shown - the return value has to be the same as the return value
     ;; from `message'.
-    (apply 'format args)))
+    (apply #'format args)))
 
 (defun gnus-final-warning ()
   (when (and (consp gnus-action-message-log)
@@ -513,7 +510,7 @@ inside loops."
   "Beep an error if LEVEL is equal to or less than `gnus-verbose'.
 ARGS are passed to `message'."
   (when (<= (floor level) gnus-verbose)
-    (apply 'message args)
+    (apply #'message args)
     (ding)
     (let (duration)
       (when (and (floatp level)
@@ -688,18 +685,20 @@ Lisp objects are loadable.  Bind `print-quoted' and `print-readably'
 to t, and `print-escape-multibyte', `print-escape-newlines',
 `print-escape-nonascii', `print-length', `print-level' and
 `print-string-length' to nil."
-  `(let ((print-quoted t)
-	 (print-readably t)
-	 ;;print-circle
-	 ;;print-continuous-numbering
-	 print-escape-multibyte
-	 print-escape-newlines
-	 print-escape-nonascii
-	 ;;print-gensym
-	 print-length
-	 print-level
-	 print-string-length)
-     ,@forms))
+  `(progn
+     (defvar print-string-length) (defvar print-readably)
+     (let ((print-quoted t)
+	   (print-readably t)
+	   ;;print-circle
+	   ;;print-continuous-numbering
+	   print-escape-multibyte
+	   print-escape-newlines
+	   print-escape-nonascii
+	   ;;print-gensym
+	   print-length
+	   print-level
+	   print-string-length)
+       ,@forms)))
 
 (defun gnus-prin1 (form)
   "Use `prin1' on FORM in the current buffer.
@@ -852,10 +851,9 @@ the user are disabled, it is recommended that only the most minimal
 operations are performed by FORMS.  If you wish to assign many
 complicated values atomically, compute the results into temporary
 variables and then do only the assignment atomically."
+  (declare (indent 0))
   `(let ((inhibit-quit gnus-atomic-be-safe))
      ,@forms))
-
-(put 'gnus-atomic-progn 'lisp-indent-function 0)
 
 (defmacro gnus-atomic-progn-assign (protect &rest forms)
   "Evaluate FORMS, but ensure that the variables listed in PROTECT
@@ -866,6 +864,7 @@ It is safe to use gnus-atomic-progn-assign with long computations.
 Note that if any of the symbols in PROTECT were unbound, they will be
 set to nil on a successful assignment.  In case of an error or other
 non-local exit, it will still be unbound."
+  (declare (indent 1)) ;;(debug (sexp body))
   (let* ((temp-sym-map (mapcar (lambda (x) (list (make-symbol
 						  (concat (symbol-name x)
 							  "-tmp"))
@@ -878,8 +877,8 @@ non-local exit, it will still be unbound."
 						       ,(cadr x))))
 			       temp-sym-map))
 	 (sym-temp-let sym-temp-map)
-	 (temp-sym-assign (apply 'append temp-sym-map))
-	 (sym-temp-assign (apply 'append sym-temp-map))
+	 (temp-sym-assign (apply #'append temp-sym-map))
+	 (sym-temp-assign (apply #'append sym-temp-map))
 	 (result (make-symbol "result-tmp")))
     `(let (,@temp-sym-let
 	   ,result)
@@ -889,9 +888,6 @@ non-local exit, it will still be unbound."
        (let ((inhibit-quit gnus-atomic-be-safe))
 	 (setq ,@sym-temp-assign))
        ,result)))
-
-(put 'gnus-atomic-progn-assign 'lisp-indent-function 1)
-;(put 'gnus-atomic-progn-assign 'edebug-form-spec '(sexp body))
 
 (defmacro gnus-atomic-setq (&rest pairs)
   "Similar to setq, except that the real symbols are only assigned when
@@ -1102,16 +1098,16 @@ ARG is passed to the first function."
 (defun gnus-run-hooks (&rest funcs)
   "Does the same as `run-hooks', but saves the current buffer."
   (save-current-buffer
-    (apply 'run-hooks funcs)))
+    (apply #'run-hooks funcs)))
 
 (defun gnus-run-hook-with-args (hook &rest args)
   "Does the same as `run-hook-with-args', but saves the current buffer."
   (save-current-buffer
-    (apply 'run-hook-with-args hook args)))
+    (apply #'run-hook-with-args hook args)))
 
 (defun gnus-run-mode-hooks (&rest funcs)
   "Run `run-mode-hooks', saving the current buffer."
-  (save-current-buffer (apply 'run-mode-hooks funcs)))
+  (save-current-buffer (apply #'run-mode-hooks funcs)))
 
 ;;; Various
 
@@ -1194,6 +1190,7 @@ ARG is passed to the first function."
 
 ;; Fixme: Why not use `with-output-to-temp-buffer'?
 (defmacro gnus-with-output-to-file (file &rest body)
+  (declare (indent 1) (debug (form body)))
   (let ((buffer (make-symbol "output-buffer"))
         (size (make-symbol "output-buffer-size"))
         (leng (make-symbol "output-buffer-length"))
@@ -1215,9 +1212,6 @@ ARG is passed to the first function."
          (let ((coding-system-for-write 'no-conversion))
 	 (write-region (substring ,buffer 0 ,leng) nil ,file
 		       ,append 'no-msg))))))
-
-(put 'gnus-with-output-to-file 'lisp-indent-function 1)
-(put 'gnus-with-output-to-file 'edebug-form-spec '(form body))
 
 (defun gnus-add-text-properties-when
   (property value start end properties &optional object)
@@ -1306,7 +1300,7 @@ sure of changing the value of `foo'."
      (setq gnus-info-buffer (current-buffer))
      (gnus-configure-windows 'info)))
 
-(defun gnus-not-ignore (&rest args)
+(defun gnus-not-ignore (&rest _)
   t)
 
 (defvar gnus-directory-sep-char-regexp "/"
@@ -1358,7 +1352,7 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
     `(,spec elem))
    ((listp spec)
     (if (memq (car spec) '(or and not))
-	`(,(car spec) ,@(mapcar 'gnus-make-predicate-1 (cdr spec)))
+	`(,(car spec) ,@(mapcar #'gnus-make-predicate-1 (cdr spec)))
       (error "Invalid predicate specifier: %s" spec)))))
 
 (defun gnus-completing-read (prompt collection &optional require-match
@@ -1397,6 +1391,8 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
   ;; Make sure iswitchb is loaded before we let-bind its variables.
   ;; If it is loaded inside the let, variables can become unbound afterwards.
   (require 'iswitchb)
+  (declare-function iswitchb-minibuffer-setup "iswitchb" ())
+  (defvar iswitchb-make-buflist-hook)
   (let ((iswitchb-make-buflist-hook
          (lambda ()
            (setq iswitchb-temp-buflist
@@ -1410,16 +1406,14 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
     (unwind-protect
         (progn
           (or iswitchb-mode
-	      (add-hook 'minibuffer-setup-hook 'iswitchb-minibuffer-setup))
+	      (add-hook 'minibuffer-setup-hook #'iswitchb-minibuffer-setup))
           (iswitchb-read-buffer prompt def require-match))
       (or iswitchb-mode
-	  (remove-hook 'minibuffer-setup-hook 'iswitchb-minibuffer-setup)))))
-
-(put 'gnus-parse-without-error 'lisp-indent-function 0)
-(put 'gnus-parse-without-error 'edebug-form-spec '(body))
+	  (remove-hook 'minibuffer-setup-hook #'iswitchb-minibuffer-setup)))))
 
 (defmacro gnus-parse-without-error (&rest body)
   "Allow continuing onto the next line even if an error occurs."
+  (declare (indent 0) (debug (body)))
   `(while (not (eobp))
      (condition-case ()
 	 (progn
@@ -1510,18 +1504,17 @@ Return nil otherwise."
 
 (defvar tool-bar-mode)
 
-(defun gnus-tool-bar-update (&rest ignore)
+(defun gnus-tool-bar-update (&rest _)
   "Update the tool bar."
-  (when (and (boundp 'tool-bar-mode)
-	     tool-bar-mode)
+  (when (bound-and-true-p tool-bar-mode)
     (let* ((args nil)
 	   (func (cond ((fboundp 'tool-bar-update)
-			'tool-bar-update)
+			#'tool-bar-update)
 		       ((fboundp 'force-window-update)
-			'force-window-update)
+			#'force-window-update)
 		       ((fboundp 'redraw-frame)
 			(setq args (list (selected-frame)))
-			'redraw-frame)
+			#'redraw-frame)
 		       (t 'ignore))))
       (apply func args))))
 
@@ -1536,7 +1529,7 @@ sequence, this is like `mapcar'.  With several, it is like the Common Lisp
   (if seqs2_n
       (let* ((seqs (cons seq1 seqs2_n))
 	     (cnt 0)
-	     (heads (mapcar (lambda (seq)
+	     (heads (mapcar (lambda (_seq)
 			      (make-symbol (concat "head"
 						   (int-to-string
 						    (setq cnt (1+ cnt))))))
@@ -1569,8 +1562,7 @@ sequence, this is like `mapcar'.  With several, it is like the Common Lisp
 			  system-configuration)
 			 ((memq 'type lst)
 			  (symbol-name system-type))
-			 (t nil)))
-	 codename)
+			 (t nil))))
     (cond
      ((not (memq 'emacs lst))
       nil)
@@ -1586,9 +1578,7 @@ sequence, this is like `mapcar'.  With several, it is like the Common Lisp
 empty directories from OLD-PATH."
   (when (file-exists-p old-path)
     (let* ((old-dir (file-name-directory old-path))
-	   (old-name (file-name-nondirectory old-path))
 	   (new-dir (file-name-directory new-path))
-	   (new-name (file-name-nondirectory new-path))
 	   temp)
       (gnus-make-directory new-dir)
       (rename-file old-path new-path t)
@@ -1693,7 +1683,7 @@ lists of strings."
       (setq props (plist-put props :foreground (face-foreground face)))
       (setq props (plist-put props :background (face-background face))))
     (ignore-errors
-      (apply 'create-image file type data-p props))))
+      (apply #'create-image file type data-p props))))
 
 (defun gnus-put-image (glyph &optional string category)
   (let ((point (point)))

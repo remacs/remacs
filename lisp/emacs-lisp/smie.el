@@ -239,7 +239,7 @@ be either:
   ;; (exp (exp (or "+" "*" "=" ..) exp)).
   ;; Basically, make it EBNF (except for the specification of a separator in
   ;; the repetition, maybe).
-  (let* ((nts (mapcar 'car bnf))        ;Non-terminals.
+  (let* ((nts (mapcar #'car bnf))        ;Non-terminals.
          (first-ops-table ())
          (last-ops-table ())
          (first-nts-table ())
@@ -258,7 +258,7 @@ be either:
                 (push resolver precs))
                (t (error "Unknown resolver %S" resolver))))
             (apply #'smie-merge-prec2s over
-                   (mapcar 'smie-precs->prec2 precs))))
+                   (mapcar #'smie-precs->prec2 precs))))
          again)
     (dolist (rules bnf)
       (let ((nt (car rules))
@@ -489,7 +489,7 @@ CSTS is a list of pairs representing arcs in a graph."
                      res))
                  cycle)))
     (mapconcat
-     (lambda (elems) (mapconcat 'identity elems "="))
+     (lambda (elems) (mapconcat #'identity elems "="))
      (append names (list (car names)))
      " < ")))
 
@@ -559,7 +559,7 @@ PREC2 is a table as returned by `smie-precs->prec2' or
     ;; Then eliminate trivial constraints iteratively.
     (let ((i 0))
       (while csts
-        (let ((rhvs (mapcar 'cdr csts))
+        (let ((rhvs (mapcar #'cdr csts))
               (progress nil))
           (dolist (cst csts)
             (unless (memq (car cst) rhvs)

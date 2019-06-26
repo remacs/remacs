@@ -117,7 +117,7 @@
 ;; `follow-mode'.
 ;;
 ;; Example:
-;; (add-hook 'follow-mode-hook 'my-follow-mode-hook)
+;; (add-hook 'follow-mode-hook #'my-follow-mode-hook)
 ;;
 ;; (defun my-follow-mode-hook ()
 ;;    (define-key follow-mode-map "\C-ca" 'your-favorite-function)
@@ -307,8 +307,8 @@ are \" Fw\", or simply \"\"."
   :group 'follow
   :set (lambda (symbol value)
 	 (if value
-	     (add-hook 'find-file-hook 'follow-find-file-hook t)
-	   (remove-hook 'find-file-hook 'follow-find-file-hook))
+	     (add-hook 'find-file-hook #'follow-find-file-hook t)
+	   (remove-hook 'find-file-hook #'follow-find-file-hook))
 	 (set-default symbol value)))
 
 (defcustom follow-hide-ghost-cursors t  ; Maybe this should be nil.
@@ -370,7 +370,7 @@ This is typically set by explicit scrolling commands.")
 (defsubst follow-debug-message (&rest args)
   "Like `message', but only active when `follow-debug' is non-nil."
   (if (and (boundp 'follow-debug) follow-debug)
-      (apply 'message args)))
+      (apply #'message args)))
 
 ;;; Cache
 
@@ -428,27 +428,28 @@ Keys specific to Follow mode:
   :keymap follow-mode-map
   (if follow-mode
       (progn
-	(add-hook 'compilation-filter-hook 'follow-align-compilation-windows t t)
-        (add-function :before pre-redisplay-function 'follow-pre-redisplay-function)
-	(add-hook 'window-size-change-functions 'follow-window-size-change t)
-        (add-hook 'after-change-functions 'follow-after-change nil t)
-        (add-hook 'isearch-update-post-hook 'follow-post-command-hook nil t)
-        (add-hook 'replace-update-post-hook 'follow-post-command-hook nil t)
-        (add-hook 'ispell-update-post-hook 'follow-post-command-hook nil t)
+	(add-hook 'compilation-filter-hook
+                  #'follow-align-compilation-windows t t)
+        (add-function :before pre-redisplay-function #'follow-pre-redisplay-function)
+	(add-hook 'window-size-change-functions #'follow-window-size-change t)
+        (add-hook 'after-change-functions #'follow-after-change nil t)
+        (add-hook 'isearch-update-post-hook #'follow-post-command-hook nil t)
+        (add-hook 'replace-update-post-hook #'follow-post-command-hook nil t)
+        (add-hook 'ispell-update-post-hook #'follow-post-command-hook nil t)
 
         (when isearch-lazy-highlight
           (setq-local isearch-lazy-highlight 'all-windows))
         (when follow-hide-ghost-cursors
           (setq-local cursor-in-non-selected-windows nil))
 
-        (setq window-group-start-function 'follow-window-start)
-        (setq window-group-end-function 'follow-window-end)
-        (setq set-window-group-start-function 'follow-set-window-start)
-        (setq recenter-window-group-function 'follow-recenter)
+        (setq window-group-start-function #'follow-window-start)
+        (setq window-group-end-function #'follow-window-end)
+        (setq set-window-group-start-function #'follow-set-window-start)
+        (setq recenter-window-group-function #'follow-recenter)
         (setq pos-visible-in-window-group-p-function
-              'follow-pos-visible-in-window-p)
-        (setq selected-window-group-function 'follow-all-followers)
-        (setq move-to-window-group-line-function 'follow-move-to-window-line))
+              #'follow-pos-visible-in-window-p)
+        (setq selected-window-group-function #'follow-all-followers)
+        (setq move-to-window-group-line-function #'follow-move-to-window-line))
 
     ;; Remove globally-installed hook functions only if there is no
     ;; other Follow mode buffer.
@@ -458,8 +459,8 @@ Keys specific to Follow mode:
 	(setq following (buffer-local-value 'follow-mode (car buffers))
 	      buffers (cdr buffers)))
       (unless following
-        (remove-function pre-redisplay-function 'follow-pre-redisplay-function)
-	(remove-hook 'window-size-change-functions 'follow-window-size-change)))
+        (remove-function pre-redisplay-function #'follow-pre-redisplay-function)
+	(remove-hook 'window-size-change-functions #'follow-window-size-change)))
 
     (kill-local-variable 'move-to-window-group-line-function)
     (kill-local-variable 'selected-window-group-function)
@@ -471,11 +472,11 @@ Keys specific to Follow mode:
 
     (kill-local-variable 'cursor-in-non-selected-windows)
 
-    (remove-hook 'ispell-update-post-hook 'follow-post-command-hook t)
-    (remove-hook 'replace-update-post-hook 'follow-post-command-hook t)
-    (remove-hook 'isearch-update-post-hook 'follow-post-command-hook t)
-    (remove-hook 'after-change-functions 'follow-after-change t)
-    (remove-hook 'compilation-filter-hook 'follow-align-compilation-windows t)))
+    (remove-hook 'ispell-update-post-hook #'follow-post-command-hook t)
+    (remove-hook 'replace-update-post-hook #'follow-post-command-hook t)
+    (remove-hook 'isearch-update-post-hook #'follow-post-command-hook t)
+    (remove-hook 'after-change-functions #'follow-after-change t)
+    (remove-hook 'compilation-filter-hook #'follow-align-compilation-windows t)))
 
 (defun follow-find-file-hook ()
   "Find-file hook for Follow mode.  See the variable `follow-auto'."
@@ -1051,16 +1052,16 @@ returned by `follow-windows-start-end'."
 (defun follow-select-if-visible (dest win-start-end)
   "Select and return a window, if DEST is visible in it.
 Return the selected window."
-  (let (win wse)
+  (let (win)
     (while (and (not win) win-start-end)
       ;; Don't select a window that was just moved. This makes it
       ;; possible to later select the last window after a
       ;; `end-of-buffer' command.
-      (setq wse (car win-start-end))
-      (when (follow-pos-visible dest (car wse) win-start-end)
-	(setq win (car wse))
-	(select-window win))
-      (setq win-start-end (cdr win-start-end)))
+      (let ((wse (car win-start-end)))
+        (when (follow-pos-visible dest (car wse) win-start-end)
+	  (setq win (car wse))
+	  (select-window win))
+        (setq win-start-end (cdr win-start-end))))
     win))
 
 ;; Lets select a window showing the end. Make sure we only select it if
@@ -1217,29 +1218,29 @@ should be a member of WINDOWS, starts at position START."
   (setq win (or win (selected-window)))
   (setq start (or start (window-start win)))
   (save-excursion
-    (let (done win-start res opoint)
-      ;; Always calculate what happens when no line is displayed in the first
-      ;; window. (The `previous' res is needed below!)
-      (goto-char guess)
-      (vertical-motion 0 (car windows))
-      (setq res (point))
+    ;; Always calculate what happens when no line is displayed in the first
+    ;; window. (The `previous' res is needed below!)
+    (goto-char guess)
+    (vertical-motion 0 (car windows))
+    (let ((res (point))
+          done)
       (while (not done)
-	(setq opoint (point))
-	(if (not (= (vertical-motion -1 (car windows)) -1))
-	    ;; Hit roof!
-	    (setq done t res (point-min))
-	  (setq win-start (follow-calc-win-start windows (point) win))
-	  (cond ((>= (point) opoint)
-		 ;; In some pathological cases, vertical-motion may
-		 ;; return -1 even though point has not decreased.  In
-		 ;; that case, avoid looping forever.
-		 (setq done t res (point)))
-		((= win-start start)	; Perfect match, use this value
-		 (setq done t res (point)))
-		((< win-start start)	; Walked to far, use previous result
-		 (setq done t))
-		(t			; Store result for next iteration
-		 (setq res (point))))))
+	(let ((opoint (point)))
+	  (if (not (= (vertical-motion -1 (car windows)) -1))
+	      ;; Hit roof!
+	      (setq done t res (point-min))
+	    (let ((win-start (follow-calc-win-start windows (point) win)))
+	      (cond ((>= (point) opoint)
+		     ;; In some pathological cases, vertical-motion may
+		     ;; return -1 even though point has not decreased.  In
+		     ;; that case, avoid looping forever.
+		     (setq done t res (point)))
+		    ((= win-start start) ; Perfect match, use this value
+		     (setq done t res (point)))
+		    ((< win-start start) ; Walked to far, use previous result
+		     (setq done t))
+		    (t			; Store result for next iteration
+		     (setq res (point))))))))
       res)))
 
 ;;; Avoid tail recenter
@@ -1316,6 +1317,8 @@ follow-mode is not necessarily enabled in this buffer.")
       ;; Work in the selected window, not in the current buffer.
       (with-current-buffer (window-buffer win)
 	(unless (and (symbolp this-command)
+                     ;; FIXME: Why not compare buffer-modified-tick and
+                     ;; selected-window to their old value, instead?
 		     (get this-command 'follow-mode-use-cache))
 	  (setq follow-windows-start-end-cache nil))
         (follow-adjust-window win)))))
@@ -1323,7 +1326,7 @@ follow-mode is not necessarily enabled in this buffer.")
 ;; NOTE: to debug follow-mode with edebug, it is helpful to add
 ;; `follow-post-command-hook' to `post-command-hook' temporarily.  Do
 ;; this locally to the target buffer with, say,:
-;; M-: (add-hook 'post-command-hook 'follow-post-command-hook t t)
+;; M-: (add-hook 'post-command-hook #'follow-post-command-hook t t)
 ;; .
 
 (defun follow-adjust-window (win)
@@ -1511,15 +1514,12 @@ follow-mode is not necessarily enabled in this buffer.")
   "Make a highlighted region stretching multiple windows look good."
   (let* ((all (follow-split-followers windows win))
 	 (pred (car all))
-	 (succ (cdr all))
-	 data)
-    (while pred
-      (setq data (assq (car pred) win-start-end))
-      (set-window-point (car pred) (max (nth 1 data) (- (nth 2 data) 1)))
-      (setq pred (cdr pred)))
-    (while succ
-      (set-window-point (car succ) (nth 1 (assq (car succ) win-start-end)))
-      (setq succ (cdr succ)))))
+	 (succ (cdr all)))
+    (dolist (w pred)
+      (let ((data (assq w win-start-end)))
+        (set-window-point w (max (nth 1 data) (- (nth 2 data) 1)))))
+    (dolist (w succ)
+      (set-window-point w (nth 1 (assq w win-start-end))))))
 
 ;;; Scroll bar
 
@@ -1616,7 +1616,7 @@ follow-mode is not necessarily enabled in this buffer.")
             (select-window picked-window 'norecord)))
         (select-frame orig-frame)))))
 
-(add-hook 'window-scroll-functions 'follow-avoid-tail-recenter t)
+(add-hook 'window-scroll-functions #'follow-avoid-tail-recenter t)
 
 ;;; Low level window start and end.
 
@@ -1690,9 +1690,8 @@ of the actual window containing it.  The remaining elements are
 omitted if the character after POS is fully visible; otherwise, RTOP
 and RBOT are the number of pixels off-window at the top and bottom of
 the screen line (\"row\") containing POS, ROWH is the visible height
-of that row, and VPOS is the row number \(zero-based)."
-  (let* ((windows (follow-all-followers window))
-         (last (car (last windows))))
+of that row, and VPOS is the row number (zero-based)."
+  (let* ((windows (follow-all-followers window)))
     (when follow-start-end-invalid
       (follow-redisplay windows (car windows)))
     (let* ((cache (follow-windows-start-end windows))
@@ -1703,10 +1702,9 @@ of that row, and VPOS is the row number \(zero-based)."
                 last-elt
               (setq our-pos (or pos (point)))
               (catch 'element
-                (while cache
-                  (when (< our-pos (nth 2 (car cache)))
-                    (throw 'element (car cache)))
-                  (setq cache (cdr cache)))
+                (dolist (ce cache)
+                  (when (< our-pos (nth 2 ce))
+                    (throw 'element ce)))
                 last-elt)))
       (pos-visible-in-window-p our-pos (car pertinent-elt) partially))))
 
@@ -1720,7 +1718,7 @@ zero means top of the first window in the group, negative means
          (start-end (follow-windows-start-end windows))
          (rev-start-end (reverse start-end))
          (lines 0)
-         middle-window elt count)
+         elt count)
     (select-window
      (cond
       ((null arg)

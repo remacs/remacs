@@ -7430,7 +7430,6 @@ a block.  Return a non-nil value when toggling is successful."
 	  (org-defkey map [(right)]  'org-goto-right)
 	  (org-defkey map [(control ?g)] 'org-goto-quit)
 	  (org-defkey map "\C-i" 'org-cycle)
-	  (org-defkey map [(tab)] 'org-cycle)
 	  (org-defkey map [(down)] 'outline-next-visible-heading)
 	  (org-defkey map [(up)] 'outline-previous-visible-heading)
 	  (if org-goto-auto-isearch
@@ -12999,8 +12998,7 @@ Returns the new TODO keyword, or nil if no state change should occur."
 	      (and (= c ?q) (not (rassoc c fulltable))))
 	  (setq quit-flag t))
 	 ((= c ?\ ) nil)
-	 ((setq e (rassoc c fulltable) tg (car e))
-	  tg)
+	 ((car (rassoc c fulltable)))
 	 (t (setq quit-flag t)))))))
 
 (defun org-entry-is-todo-p ()
@@ -15213,11 +15211,11 @@ Returns the new tags string, or nil to not change the current settings."
 			(setq current (delete tg current))
 		      (push tg current)))
 		  (when exit-after-next (setq exit-after-next 'now)))
-		 ((setq e (rassoc c todo-table) tg (car e))
+		 ((setq tg (car (rassoc c todo-table)))
 		  (with-current-buffer buf
 		    (save-excursion (org-todo tg)))
 		  (when exit-after-next (setq exit-after-next 'now)))
-		 ((setq e (rassoc c ntable) tg (car e))
+		 ((setq tg (car (rassoc c ntable)))
 		  (if (member tg current)
 		      (setq current (delete tg current))
 		    (cl-loop for g in groups do
@@ -17616,27 +17614,28 @@ D may be an absolute day number, or a calendar-type list (month day year)."
 
 (defun org-diary-sexp-entry (sexp entry d)
   "Process a SEXP diary ENTRY for date D."
+  ;; FIXME: Consolidate with diary-sexp-entry!
   (require 'diary-lib)
   ;; `org-anniversary' and alike expect ENTRY and DATE to be bound
   ;; dynamically.
-  (let* ((sexp `(let ((entry ,entry)
-		      (date ',d))
-		  ,(car (read-from-string sexp))))
+  (let* ((user-sexp (car (read-from-string sexp)))
+         (sexp `(let ((entry ,entry) (date ',d)) ,user-sexp))
 	 (result (if calendar-debug-sexp (eval sexp)
-		   (condition-case nil
+		   (condition-case err
 		       (eval sexp)
 		     (error
 		      (beep)
-		      (message "Bad sexp at line %d in %s: %s"
+		      (message "Bad sexp at line %d in %s: %S\nError: %S"
 			       (org-current-line)
-			       (buffer-file-name) sexp)
+			       (buffer-file-name) user-sexp err)
 		      (sleep-for 2))))))
     (cond ((stringp result) (split-string result "; "))
 	  ((and (consp result)
 		(not (consp (cdr result)))
-		(stringp (cdr result))) (cdr result))
-	  ((and (consp result)
-		(stringp (car result))) result)
+		(stringp (cdr result)))
+           (cdr result))
+	  ((and (consp result) (stringp (car result)))
+           result)
 	  (result entry))))
 
 (defun org-diary-to-ical-string (frombuf)
@@ -23287,7 +23286,7 @@ major mode."
     (if (looking-at "\\s-*$") (delete-region (point) (point-at-eol))
       (open-line 1))
     (org-indent-line)
-    (insert "# ")))
+    (insert comment-start)))
 
 (defvar comment-empty-lines)		; From newcomment.el.
 (defun org-comment-or-uncomment-region (beg end &rest _)

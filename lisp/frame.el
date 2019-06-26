@@ -26,6 +26,7 @@
 
 ;;; Code:
 (eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'subr-x))   ;For string-trim-right
 
 (cl-defgeneric frame-creation-function (params)
   "Method for window-system dependent functions to create a new frame.
@@ -2501,14 +2502,34 @@ command starts, by installing a pre-command hook."
   (when (and (> blink-cursor-blinks 0)
              (<= (* 2 blink-cursor-blinks) blink-cursor-blinks-done))
     (blink-cursor-suspend)
-    (add-hook 'post-command-hook 'blink-cursor-check)))
+    (add-hook 'post-command-hook #'blink-cursor-check))
+  ;; FIXME: Under TTYs, apparently redisplay only obeys internal-show-cursor
+  ;; when there is something else to update on the screen.  This is arguably
+  ;; a bug, but in the meantime we can circumvent it here by causing an
+  ;; artificial update which thus "forces" a cursor update.
+  (when (null window-system)
+    (let* ((message-log-max nil)
+           (msg (current-message))
+           ;; Construct a dummy temp message different from the current one.
+           ;; This message usually flashes by too quickly to be visible, but
+           ;; occasionally it can be noticed, so make it "inconspicuous".
+           ;; Not too "inconspicuous", tho: just adding or removing a SPC at the
+           ;; end doesn't cause an update, for example.
+           (dummymsg (concat (if (> (length msg) 40)
+                                 (let ((msg (string-trim-right msg)))
+                                   (if (> (length msg) 2)
+                                       (substring msg 0 -2)
+                                     msg))
+                               msg) "-")))
+      (message "%s" dummymsg)
+      (if msg (message "%s" msg) (message nil)))))
 
 (defun blink-cursor-end ()
   "Stop cursor blinking.
 This is installed as a pre-command hook by `blink-cursor-start'.
 When run, it cancels the timer `blink-cursor-timer' and removes
 itself as a pre-command hook."
-  (remove-hook 'pre-command-hook 'blink-cursor-end)
+  (remove-hook 'pre-command-hook #'blink-cursor-end)
   (internal-show-cursor nil t)
   (when blink-cursor-timer
     (cancel-timer blink-cursor-timer)
@@ -2527,15 +2548,7 @@ frame receives focus."
 (defun blink-cursor--should-blink ()
   "Determine whether we should be blinking.
 Returns whether we have any focused non-TTY frame."
-  (and blink-cursor-mode
-       (let ((frame-list (frame-list))
-             (any-graphical-focused nil))
-         (while frame-list
-           (let ((frame (pop frame-list)))
-             (when (and (display-graphic-p frame) (frame-focus-state frame))
-               (setf any-graphical-focused t)
-               (setf frame-list nil))))
-         any-graphical-focused)))
+  blink-cursor-mode)
 
 (defun blink-cursor-check ()
   "Check if cursor blinking shall be restarted.
@@ -2544,7 +2557,7 @@ stopped by `blink-cursor-suspend'.  Internally calls
 `blink-cursor--should-blink' and returns its result."
   (let ((should-blink (blink-cursor--should-blink)))
     (when (and should-blink (not blink-cursor-idle-timer))
-      (remove-hook 'post-command-hook 'blink-cursor-check)
+      (remove-hook 'post-command-hook #'blink-cursor-check)
       (blink-cursor--start-idle-timer))
     should-blink))
 

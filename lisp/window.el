@@ -6485,7 +6485,7 @@ pass the elements of (cdr ARGS) as the remaining arguments."
 	 (set-window-dedicated-p window t)
 	 window)))))
 
-(defcustom special-display-function 'special-display-popup-frame
+(defcustom special-display-function #'special-display-popup-frame
   "Function to call for displaying special buffers.
 This function is called with two arguments - the buffer and,
 optionally, a list - and should return a window displaying that

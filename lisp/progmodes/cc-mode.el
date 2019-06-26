@@ -525,6 +525,8 @@ preferably use the `c-mode-menu' language constant directly."
 ;; and `after-change-functions'.  Note that this variable is not set when
 ;; `c-before-change' is invoked by a change to text properties.
 
+(defvar c--use-syntax-propertize t)
+
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
 and the line breaking/filling code.  Intended to be used by other
@@ -669,15 +671,20 @@ that requires a literal mode spec at compile time."
 
   ;; Install the functions that ensure that various internal caches
   ;; don't become invalid due to buffer changes.
-  (when (featurep 'xemacs)
-    (make-local-hook 'before-change-functions)
-    (make-local-hook 'after-change-functions))
-  (add-hook 'before-change-functions 'c-before-change nil t)
-  (setq c-just-done-before-change nil)
-  ;; FIXME: We should use the new `depth' arg in Emacs-27 (e.g. a depth of -10
-  ;; would do since font-lock uses a(n implicit) depth of 0) so we don't need
-  ;; c-after-font-lock-init.
-  (add-hook 'after-change-functions 'c-after-change nil t)
+  (if c--use-syntax-propertize
+      (setq-local syntax-propertize-function
+		  (lambda (start end)
+		    (c-before-change start (point-max))
+		    (c-after-change start end (- end start))))
+    (when (featurep 'xemacs)
+      (make-local-hook 'before-change-functions)
+      (make-local-hook 'after-change-functions))
+    (add-hook 'before-change-functions 'c-before-change nil t)
+    (setq c-just-done-before-change nil)
+    ;; FIXME: We should use the new `depth' arg in Emacs-27 (e.g. a depth of -10
+    ;; would do since font-lock uses a(n implicit) depth of 0) so we don't need
+    ;; c-after-font-lock-init.
+    (add-hook 'after-change-functions 'c-after-change nil t))
   (when (boundp 'font-lock-extend-after-change-region-function)
     (set (make-local-variable 'font-lock-extend-after-change-region-function)
          'c-extend-after-change-region))) ; Currently (2009-05) used by all
@@ -735,15 +742,17 @@ compatible with old code; callers should always specify it."
     (widen)
     (setq c-new-BEG (point-min))
     (setq c-new-END (point-max))
-    (save-excursion
-      (let (before-change-functions after-change-functions)
-	(mapc (lambda (fn)
-		(funcall fn (point-min) (point-max)))
-	      c-get-state-before-change-functions)
-	(mapc (lambda (fn)
-		(funcall fn (point-min) (point-max)
-			 (- (point-max) (point-min))))
-	      c-before-font-lock-functions))))
+    (unless c--use-syntax-propertize
+      (save-excursion
+	(let (before-change-functions after-change-functions)
+	  (mapc (lambda (fn)
+		  (funcall fn (point-min) (point-max)))
+		c-get-state-before-change-functions)
+	  (mapc (lambda (fn)
+		  (funcall fn (point-min) (point-max)
+			   (- (point-max) (point-min))))
+		c-before-font-lock-functions)
+	  ))))
 
   (set (make-local-variable 'outline-regexp) "[^#\n\^M]")
   (set (make-local-variable 'outline-level) 'c-outline-level)
@@ -2050,6 +2059,12 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; Type a space in the first blank line, and the fontification of the next
   ;; line was fouled up by context fontification.
+  (when c--use-syntax-propertize
+    ;; This should also update c-new-END and c-new-BEG.
+    (syntax-propertize end)
+    ;; FIXME: Apparently `c-new-END' may be left unchanged to a stale value,
+    ;; presumably when the buffer gets truncated.
+    (if (> c-new-END (point-max)) (setq c-new-END (point-max))))
   (let (new-beg new-end new-region case-fold-search)
     (if (and c-in-after-change-fontification
 	     (< beg c-new-END) (> end c-new-BEG))
@@ -2088,7 +2103,8 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 (defun c-after-font-lock-init ()
   ;; Put on `font-lock-mode-hook'.  This function ensures our after-change
   ;; function will get executed before the font-lock one.
-  (when (memq #'c-after-change after-change-functions)
+  (when (and c--use-syntax-propertize
+	     (memq #'c-after-change after-change-functions))
     (remove-hook 'after-change-functions #'c-after-change t)
     (add-hook 'after-change-functions #'c-after-change nil t)))
 
@@ -2142,11 +2158,14 @@ This function is called from `c-common-init', once per mode initialization."
   (when (eq font-lock-support-mode 'jit-lock-mode)
     (save-restriction
       (widen)
+      ;; FIXME: This presumes that c-new-BEG and c-new-END have been set
+      ;; I guess from the before-change-function.
       (c-save-buffer-state () ; Protect the undo-list from put-text-property.
 	(if (< c-new-BEG beg)
 	    (put-text-property c-new-BEG beg 'fontified nil))
 	(if (> c-new-END end)
-	    (put-text-property end c-new-END 'fontified nil)))))
+	    (put-text-property end (min c-new-END (point-max))
+			       'fontified nil)))))
   (cons c-new-BEG c-new-END))
 
 ;; Emacs < 22 and XEmacs

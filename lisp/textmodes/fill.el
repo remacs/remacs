@@ -900,6 +900,12 @@ region, instead of just filling the current paragraph."
                  (equal hash (buffer-hash)))
         (set-buffer-modified-p nil)))))
 
+(defun unfill-paragraph ()
+  "That thing."
+  (interactive)
+  (let ((fill-column (/ most-positive-fixnum 2)))
+    (fill-paragraph)))
+
 (declare-function comment-search-forward "newcomment" (limit &optional noerror))
 (declare-function comment-string-strip "newcomment" (str beforep afterp))
 

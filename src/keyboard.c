@@ -2728,7 +2728,7 @@ read_char (int commandflag, Lisp_Object map,
 
       /* If there is still no input available, ask for GC.  */
       if (!detect_input_pending_run_timers (0))
-	maybe_gc ();
+	maybe_gc (); /* FIXME: Why?  */
     }
 
   /* Notify the caller if an autosave hook, or a timer, sentinel or

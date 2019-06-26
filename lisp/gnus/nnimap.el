@@ -1,4 +1,4 @@
-;;; nnimap.el --- IMAP interface for Gnus
+;;; nnimap.el --- IMAP interface for Gnus  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 

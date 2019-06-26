@@ -1871,11 +1871,11 @@ This function does not alter the INPUT string."
 	     (setq global-mode-string
 		   (append global-mode-string '(rcirc-activity-string))))
 	(add-hook 'window-configuration-change-hook
-		  'rcirc-window-configuration-change))
+		  #'rcirc-window-configuration-change))
     (setq global-mode-string
 	  (delete 'rcirc-activity-string global-mode-string))
     (remove-hook 'window-configuration-change-hook
-		 'rcirc-window-configuration-change)))
+		 #'rcirc-window-configuration-change)))
 
 (or (assq 'rcirc-ignore-buffer-activity-flag minor-mode-alist)
     (setq minor-mode-alist

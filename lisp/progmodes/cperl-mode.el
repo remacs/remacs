@@ -480,8 +480,7 @@ Older version of this page was called `perl5', newer `perl'."
   :type 'string
   :group 'cperl-help-system)
 
-(defcustom cperl-use-syntax-table-text-property
-  (boundp 'parse-sexp-lookup-properties)
+(defcustom cperl-use-syntax-table-text-property t
   "Non-nil means CPerl sets up and uses `syntax-table' text property."
   :type 'boolean
   :group 'cperl-speed)
@@ -700,55 +699,7 @@ install choose-color.el, available from
 
 `fill-paragraph' on a comment may leave the point behind the
 paragraph.  It also triggers a bug in some versions of Emacs (CPerl tries
-to detect it and bulk out).
-
-See documentation of a variable `cperl-problems-old-emaxen' for the
-problems which disappear if you upgrade Emacs to a reasonably new
-version (20.3 for Emacs, and those of 2004 for XEmacs).")
-
-(defvar cperl-problems-old-emaxen 'please-ignore-this-line
-  "Description of problems in CPerl mode specific for older Emacs versions.
-
-Emacs had a _very_ restricted syntax parsing engine until version
-20.1.  Most problems below are corrected starting from this version of
-Emacs, and all of them should be fixed in version 20.3.  (Or apply
-patches to Emacs 19.33/34 - see tips.)  XEmacs was very backward in
-this respect (until 2003).
-
-Note that even with newer Emacsen in some very rare cases the details
-of interaction of `font-lock' and syntaxification may be not cleaned
-up yet.  You may get slightly different colors basing on the order of
-fontification and syntaxification.  Say, the initial faces is correct,
-but editing the buffer breaks this.
-
-Even with older Emacsen CPerl mode tries to corrects some Emacs
-misunderstandings, however, for efficiency reasons the degree of
-correction is different for different operations.  The partially
-corrected problems are: POD sections, here-documents, regexps.  The
-operations are: highlighting, indentation, electric keywords, electric
-braces.
-
-This may be confusing, since the regexp s#//#/#; may be highlighted
-as a comment, but it will be recognized as a regexp by the indentation
-code.  Or the opposite case, when a POD section is highlighted, but
-may break the indentation of the following code (though indentation
-should work if the balance of delimiters is not broken by POD).
-
-The main trick (to make $ a \"backslash\") makes constructions like
-${aaa} look like unbalanced braces.  The only trick I can think of is
-to insert it as $ {aaa} (valid in perl5, not in perl4).
-
-Similar problems arise in regexps, when /(\\s|$)/ should be rewritten
-as /($|\\s)/.  Note that such a transposition is not always possible.
-
-The solution is to upgrade your Emacs or patch an older one.  Note
-that Emacs 20.2 has some bugs related to `syntax-table' text
-properties.  Patches are available on the main CPerl download site,
-and on CPAN.
-
-If these bugs cannot be fixed on your machine (say, you have an inferior
-environment and cannot recompile), you may still disable all the fancy stuff
-via `cperl-use-syntax-table-text-property'.")
+to detect it and bulk out).")
 
 (defvar cperl-praise 'please-ignore-this-line
   "Advantages of CPerl mode.

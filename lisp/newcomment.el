@@ -334,6 +334,92 @@ terminated by the end of line (i.e., `comment-end' is empty)."
                  (const :tag "EOL-terminated" eol))
   :group 'comment)
 
+;;;; Setup syntax from "high-level" description of comment syntax
+
+;; This defines `comment-set-syntax' so a major mode can just call
+;; this one function to setup the comment syntax both in the syntax-table
+;; and in the various comment-* variables.
+
+(defvar comment--set-table
+  ;; We want to associate extra properties with syntax-table, but syntax-tables
+  ;; don't have "properties", so we use an eq-hash-table indexed by
+  ;; syntax-tables instead.
+  (make-hash-table :test #'eq))
+
+(defun comment--set-comment-syntax (st comment-list)
+  "Set up comment functionality for generic mode."
+  (let ((chars nil)
+	(comstyles)
+        (comment-start nil))
+
+    ;; Go through all the comments.
+    (pcase-dolist (`(,start ,end . ,props) comment-list)
+      (let ((nested (if (plist-get props :nested) "n"))
+            (comstyle
+             ;; Reuse comstyles if necessary.
+             (or (cdr (assoc start comstyles))
+                 (cdr (assoc end comstyles))
+                 ;; Otherwise, use a style not yet in use.
+                 (if (not (rassoc "" comstyles)) "")
+                 (if (not (rassoc "b" comstyles)) "b")
+                 "c")))
+       (push (cons start comstyle) comstyles)
+       (push (cons end comstyle) comstyles)
+
+	;; Setup the syntax table.
+	(if (= (length start) 1)
+	    (modify-syntax-entry (aref start 0)
+				 (concat "< " comstyle nested) st)
+	  (let ((c0 (aref start 0)) (c1 (aref start 1)))
+	    ;; Store the relevant info but don't update yet.
+	    (push (cons c0 (concat (cdr (assoc c0 chars)) "1")) chars)
+	    (push (cons c1 (concat (cdr (assoc c1 chars))
+				   (concat "2" comstyle)))
+                  chars)))
+	(if (= (length end) 1)
+	    (modify-syntax-entry (aref end 0)
+				 (concat "> " comstyle nested) st)
+	  (let ((c0 (aref end 0)) (c1 (aref end 1)))
+	    ;; Store the relevant info but don't update yet.
+	    (push (cons c0 (concat (cdr (assoc c0 chars))
+				   (concat "3" comstyle)))
+                  chars)
+	    (push (cons c1 (concat (cdr (assoc c1 chars)) "4")) chars)))))
+
+    ;; Process the chars that were part of a 2-char comment marker
+    (with-syntax-table st               ;For `char-syntax'.
+      (dolist (cs (nreverse chars))
+        (modify-syntax-entry (car cs)
+                             (concat (char-to-string (char-syntax (car cs)))
+                                     " " (cdr cs))
+                             st)))))
+
+(defun comment--set-comment-vars (comment-list)
+  (when comment-list
+    (let ((first (car comment-list)))
+      (setq-local comment-start (car first))
+      (setq-local comment-end
+                  (let ((end (cadr first)))
+                    (if (string-equal end "\n") "" end))))
+    (unless comment-start-skip          ;Don't override manual setup.
+      (setq-local comment-start-skip
+                  (concat (regexp-opt (mapcar #'car comment-list))
+                          "+[ \t]*")))
+    (unless comment-end-skip            ;Don't override manual setup.
+      (setq-local comment-end-skip
+                  (concat "[ \t]*"
+                          (regexp-opt (mapcar #'cadr comment-list)))))))
+
+(defun comment-set-syntax (st comment-list)
+  (comment--set-comment-syntax st comment-list)
+  (setf (gethash st comment--set-table) comment-list))
+
+(defun comment-get-syntax (&optional st)
+  (unless st (setq st (syntax-table)))
+  (or (gethash st comment--set-table)
+      (let ((parent (char-table-parent st)))
+        (when parent (comment-get-syntax parent)))))
+
 ;;;;
 ;;;; Helpers
 ;;;;
@@ -358,11 +444,14 @@ functions work correctly.  Lisp callers of any other `comment-*'
 function should first call this function explicitly."
   (unless (and (not comment-start) noerror)
     (unless comment-start
-      (let ((cs (read-string "No comment syntax is defined.  Use: ")))
-	(if (zerop (length cs))
-	    (error "No comment syntax defined")
-	  (set (make-local-variable 'comment-start) cs)
-	  (set (make-local-variable 'comment-start-skip) cs))))
+      (let ((comment-list (comment-get-syntax)))
+        (if comment-list
+            (comment--set-comment-vars comment-list)
+          (let ((cs (read-string "No comment syntax is defined.  Use: ")))
+            (if (zerop (length cs))
+                (error "No comment syntax defined")
+              (set (make-local-variable 'comment-start) cs)
+              (set (make-local-variable 'comment-start-skip) cs))))))
     ;; comment-use-syntax
     (when (eq comment-use-syntax 'undecided)
       (set (make-local-variable 'comment-use-syntax)

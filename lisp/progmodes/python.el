@@ -628,7 +628,8 @@ builtins.")
            ;; OS specific
            "VMSError" "WindowsError"
            )
-          symbol-end) . font-lock-type-face)
+          symbol-end)
+     . font-lock-type-face)
     ;; assignments
     ;; support for a = b = c = 5
     (,(lambda (limit)
@@ -678,6 +679,7 @@ Which one will be chosen depends on the value of
    ((rx (or "\"\"\"" "'''"))
     (0 (ignore (python-syntax-stringify))))))
 
+;; Always define the alias(es) *before* the variable.
 (define-obsolete-variable-alias 'python--prettify-symbols-alist
   'python-prettify-symbols-alist "26.1")
 

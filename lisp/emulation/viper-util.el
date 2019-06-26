@@ -64,6 +64,8 @@
 (define-obsolete-function-alias 'viper-iconify
   'iconify-or-deiconify-frame "27.1")
 
+(defun viper--user-error () (user-error "Viper bell"))
+(defun viper--user-error () (user-error "Viper bell"))
 
 ;; CHAR is supposed to be a char or an integer (positive or negative)
 ;; LIST is a list of chars, nil, and negative numbers
