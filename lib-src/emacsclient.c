@@ -253,6 +253,7 @@ get_current_dir_name (void)
 
   char *buf;
   struct stat dotstat, pwdstat;
+  size_t pwdlen;
   /* If PWD is accurate, use it instead of calling getcwd.  PWD is
      sometimes a nicer name, and using it may avoid a fatal error if a
      parent directory is searchable but not readable.  */
