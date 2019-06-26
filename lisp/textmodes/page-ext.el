@@ -47,12 +47,12 @@
 
 ;; New page handling commands:
 
-;;     next-page                        C-x C-p C-n
-;;     previous-page                    C-x C-p C-p
-;;     search-pages                     C-x C-p C-s
-;;     add-new-page                     C-x C-p C-a
-;;     sort-pages-buffer                C-x C-p s
-;;     set-page-delimiter               C-x C-p C-l
+;;     pages-next-page                  C-x C-p C-n
+;;     pages-previous-page              C-x C-p C-p
+;;     pages-search                     C-x C-p C-s
+;;     pages-add-new-page               C-x C-p C-a
+;;     pages-sort-buffer                C-x C-p s
+;;     pages-set-delimiter              C-x C-p C-l
 ;;     pages-directory                  C-x C-p C-d
 ;;     pages-directory-for-addresses    C-x C-p d
 ;;        pages-directory-goto          C-c C-c
@@ -156,11 +156,11 @@
 ;;     George Lakoff
 ;;     OBI (On line text collection.)
 
-;; The `C-x C-p s' (sort-pages-buffer) command sorts the entries in the
+;; The `C-x C-p s' (pages-sort-buffer) command sorts the entries in the
 ;; buffer alphabetically.
 
-;; You may use any of the page commands, including the `next-page',
-;; `previous-page', `add-new-page', `mark-page', and `search-pages'
+;; You may use any of the page commands, including the `pages-next-page',
+;; `pages-previous-page', `pages-add-new-page', `mark-page', and `pages-search'
 ;; commands.
 
 ;; You may use either the `C-x C-p d' (pages-directory-for-addresses)
@@ -171,7 +171,7 @@
 ;; and type `C-c C-c' (pages-directory-goto) to go to the entry to
 ;; which it refers in the pages buffer.
 
-;; You can type `C-c C-p C-a' (add-new-page) to add a new entry in the
+;; You can type `C-c C-p C-a' (pages-add-new-page) to add a new entry in the
 ;; pages buffer or address file.  This is the same command you use to
 ;; add a new entry when you are in the pages buffer or address file.
 
@@ -278,21 +278,21 @@ Used by `pages-directory-for-addresses' function."
 
 (defvar pages--ctl-x-ctl-p-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-n" 'pages-next-page)
-    (define-key map "\C-p" 'pages-previous-page)
-    (define-key map "\C-a" 'pages-add-new-page)
-    (define-key map "\C-m" 'pages-mark-page)
-    (define-key map "\C-s" 'pages-search)
-    (define-key map "s"    'pages-sort-buffer)
-    (define-key map "\C-l" 'pages-set-delimiter)
-    (define-key map "\C-d" 'pages-directory)
-    (define-key map "d"    'pages-directory-for-addresses)
+    (define-key map "\C-n" #'pages-next-page)
+    (define-key map "\C-p" #'pages-previous-page)
+    (define-key map "\C-a" #'pages-add-new-page)
+    (define-key map "\C-m" #'mark-page)
+    (define-key map "\C-s" #'pages-search)
+    (define-key map "s"    #'pages-sort-buffer)
+    (define-key map "\C-l" #'pages-set-delimiter)
+    (define-key map "\C-d" #'pages-directory)
+    (define-key map "d"    #'pages-directory-for-addresses)
     map)
   "Keymap for subcommands of C-x C-p, which are for page handling.")
 
 ;; FIXME: Merely loading a package shouldn't have this kind of side-effects!
 (global-unset-key "\C-x\C-p")
-(define-key ctl-x-map "\C-p" 'pages-ctl-x-ctl-p-prefix)
+(define-key ctl-x-map "\C-p" #'pages-ctl-x-ctl-p-prefix)
 (define-obsolete-function-alias 'ctl-x-ctl-p-prefix 'pages-ctl-x-ctl-p-prefix "27.1")
 (defalias 'pages-ctl-x-ctl-p-prefix pages--ctl-x-ctl-p-map)
 
@@ -444,7 +444,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
                                (goto-char (match-beginning 0))
                              (goto-char (point-max))))))))
 
-(define-obsolete-function-alias 'sort-pages-buffer #'sort-pages-buffer "27.1")
+(define-obsolete-function-alias 'sort-pages-buffer #'pages-sort-buffer "27.1")
 (defun pages-sort-buffer (&optional reverse)
   "Sort pages alphabetically in buffer.  Prefix arg means reverse order.
 \(Non-nil arg if not interactive.)"
@@ -479,10 +479,10 @@ contain matches to the regexp.)")
   'pages-directory-mode-map "26.1")
 (defvar pages-directory-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c\C-c" 'pages-directory-goto)
-    (define-key map "\C-m" 'pages-directory-goto)
-    (define-key map "\C-c\C-p\C-a" 'add-new-page)
-    (define-key map [mouse-2] 'pages-directory-goto)
+    (define-key map "\C-c\C-c"     #'pages-directory-goto)
+    (define-key map "\C-m"         #'pages-directory-goto)
+    (define-key map "\C-c\C-p\C-a" #'pages-add-new-page)
+    (define-key map [mouse-2]      #'pages-directory-goto)
     map)
   "Keymap for the pages-directory-buffer.")
 
