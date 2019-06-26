@@ -196,7 +196,8 @@ When called from lisp, FUNCTION may also be a function object."
 ;;;###autoload
 (defun help-C-file-name (subr-or-var kind)
   "Return the name of the C file where SUBR-OR-VAR is defined.
-KIND should be `var' for a variable or `subr' for a subroutine."
+KIND should be `var' for a variable or `subr' for a subroutine.
+If we can't find the file name, nil is returned."
   (let ((docbuf (get-buffer-create " *DOC*"))
 	(name (if (eq 'var kind)
 		  (concat "V" (symbol-name subr-or-var))
@@ -208,19 +209,24 @@ KIND should be `var' for a variable or `subr' for a subroutine."
 	   (expand-file-name internal-doc-file-name doc-directory)))
       (let ((file (catch 'loop
 		    (while t
-		      (let ((pnt (search-forward (concat "\^_" name "\n"))))
-			(re-search-backward "\^_S\\(.*\\)")
-			(let ((file (match-string 1)))
-			  (if (member file build-files)
-			      (throw 'loop file)
-			    (goto-char pnt))))))))
-	(if (string-match "^ns.*\\(\\.o\\|obj\\)\\'" file)
-	    (setq file (replace-match ".m" t t file 1))
-	  (if (string-match "\\.\\(o\\|obj\\)\\'" file)
-	      (setq file (replace-match ".c" t t file))))
-	(if (string-match "\\.\\(c\\|m\\)\\'" file)
-	    (concat "src/" file)
-	  file)))))
+		      (let ((pnt (search-forward (concat "\^_" name "\n")
+                                                 nil t)))
+                        (if (not pnt)
+                            (throw 'loop nil)
+			  (re-search-backward "\^_S\\(.*\\)")
+			  (let ((file (match-string 1)))
+			    (if (member file build-files)
+			        (throw 'loop file)
+			      (goto-char pnt)))))))))
+        (if (not file)
+            nil
+	  (if (string-match "^ns.*\\(\\.o\\|obj\\)\\'" file)
+	      (setq file (replace-match ".m" t t file 1))
+	    (if (string-match "\\.\\(o\\|obj\\)\\'" file)
+	        (setq file (replace-match ".c" t t file))))
+	  (if (string-match "\\.\\(c\\|m\\)\\'" file)
+	      (concat "src/" file)
+	    file))))))
 
 (defcustom help-downcase-arguments nil
   "If non-nil, argument names in *Help* buffers are downcased."
