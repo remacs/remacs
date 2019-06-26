@@ -62,11 +62,11 @@ An existing calc stack is reused, otherwise a new one is created."
 	(calc-top-n 1))
     (calc-pop 0)))
 
-(ert-deftest test-math-bignum ()
-  ;; bug#17556
-  (let ((n (math-bignum most-negative-fixnum)))
-    (should (math-negp n))
-    (should (cl-notany #'cl-minusp (cdr n)))))
+;; (ert-deftest test-math-bignum ()
+;;   ;; bug#17556
+;;   (let ((n (math-bignum most-negative-fixnum)))
+;;     (should (math-negp n))
+;;     (should (cl-notany #'cl-minusp (cdr n)))))
 
 (ert-deftest test-calc-remove-units ()
   (should (calc-tests-equal (calc-tests-simple #'calc-remove-units "-1 m") -1)))
@@ -95,7 +95,7 @@ An existing calc stack is reused, otherwise a new one is created."
 
 (ert-deftest test-calc-23889 ()
   "Test for https://debbugs.gnu.org/23889 and 25652."
-  (skip-unless (>= math-bignum-digit-length 9))
+  (skip-unless t) ;; (>= math-bignum-digit-length 9))
   (dolist (mode '(deg rad))
     (let ((calc-angle-mode mode))
       ;; If user inputs angle units, then should ignore `calc-angle-mode'.
