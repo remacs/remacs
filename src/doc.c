@@ -436,8 +436,20 @@ aren't strings.  */)
  documentation_property:
 
   tem = Fget (symbol, prop);
+
+  /* If we don't have any documentation for this symbol, try to see whether
+     it's an indirect variable and get the documentation from there instead. */
+  if (NILP (tem))
+    {
+      Lisp_Object indirect = Findirect_variable (symbol);
+      if (!NILP (indirect))
+	tem = Fget (indirect, prop);
+    }
+
   if (EQ (tem, make_fixnum (0)))
     tem = Qnil;
+
+  /* See if we want to look for the string in the DOC file. */
   if (FIXNUMP (tem) || (CONSP (tem) && FIXNUMP (XCDR (tem))))
     {
       Lisp_Object doc = tem;
