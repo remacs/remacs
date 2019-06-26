@@ -211,8 +211,8 @@
   (calc-invert-func)
   (calc-next-prime iters))
 
-(defun calc-prime-factors (iters)
-  (interactive "p")
+(defun calc-prime-factors (&optional _iters)
+  (interactive)
   (calc-slow-wrapper
    (let ((res (calcFunc-prfac (calc-top-n 1))))
      (if (not math-prime-factors-finished)
@@ -806,7 +806,6 @@
 		  ((Math-integer-negp n)
 		   '(nil))
 		  ((Math-natnum-lessp n 8000000)
-		   (setq n (math-fixnum n))
 		   (let ((i -1) v)
 		     (while (and (> (% n (setq v (aref math-primes-table
 						       (setq i (1+ i)))))

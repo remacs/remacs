@@ -82,7 +82,7 @@
 			       " ")
 		shortbuf buf)
 	  (if (and (= (length alg-exp) 1)
-		   (memq (car-safe (car alg-exp)) '(nil bigpos bigneg))
+		   (memq (car-safe (car alg-exp)) '(nil))
 		   (< (length buf) 20)
 		   (= calc-number-radix 10))
 	      (setq buf (concat buf "  ("
