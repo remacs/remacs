@@ -4208,7 +4208,8 @@ Return a new string containing the replacements.
 
 Optional arguments FIXEDCASE, LITERAL and SUBEXP are like the
 arguments with the same names of function `replace-match'.  If START
-is non-nil, start replacements at that index in STRING.
+is non-nil, start replacements at that index in STRING, and omit
+the first START characters of STRING from the return value.
 
 REP is either a string used as the NEWTEXT arg of `replace-match' or a
 function.  If it is a function, it is called with the actual text of each

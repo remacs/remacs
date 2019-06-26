@@ -1790,8 +1790,10 @@ this.
 This function copies @var{string} and searches it for matches for
 @var{regexp}, and replaces them with @var{rep}.  It returns the
 modified copy.  If @var{start} is non-@code{nil}, the search for
-matches starts at that index in @var{string}, so matches starting
-before that index are not changed.
+matches starts at that index in @var{string}, and the returned value
+does not include the first @var{start} characters of @var{string}.
+To get the whole transformed string, concatenate the first
+@var{start} characters of @var{string} with the return value.
 
 This function uses @code{replace-match} to do the replacement, and it
 passes the optional arguments @var{fixedcase}, @var{literal} and
