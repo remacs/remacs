@@ -644,14 +644,7 @@ articles in the topic and its subtopics."
 	(add-text-properties
 	 (point)
 	 (prog1 (1+ (point))
-	   (eval gnus-topic-line-format-spec
-                 `((indentation . ,indentation)
-                   (visible . ,visible)
-                   (name . ,name)
-                   (level . ,level)
-                   (number-of-groups . ,number-of-groups)
-                   (total-number-of-articles . ,total-number-of-articles)
-                   (entries . ,entries))))
+	   (eval gnus-topic-line-format-spec))
 	 (list 'gnus-topic name
 	       'gnus-topic-level level
 	       'gnus-topic-unread unread

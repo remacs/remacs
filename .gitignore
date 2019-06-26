@@ -251,6 +251,7 @@ gnustmp*
 
 # Version control and locks.
 *.orig
+*.rej
 *.swp
 *~
 .#*

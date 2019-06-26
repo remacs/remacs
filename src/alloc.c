@@ -5989,28 +5989,6 @@ garbage_collect (void)
   garbage_collect_1 (&gcst);
 }
 
-DEFUN ("garbage-collect-maybe", Fgarbage_collect_maybe, Sgarbage_collect_maybe, 1, 1, "",
-       doc: /* Call `garbage-collect' if enough allocation happened.
-FACTOR determines what "enough" means here:
-a FACTOR of N means to run the GC if more than 1/Nth of the allocations
-needed to triger automatic allocation took place.  */)
-  (Lisp_Object factor)
-{
-  CHECK_FIXNAT (factor);
-  EMACS_INT fact = XFIXNAT (factor);
-  byte_ct new_csgc = consing_since_gc * fact;
-  if (new_csgc / fact != consing_since_gc)
-    /* Overflow!  */
-    garbage_collect ();
-  else
-    {
-      consing_since_gc = new_csgc;
-      maybe_gc ();
-      consing_since_gc /= fact;
-    }
-  return Qnil;
-}
-
 DEFUN ("garbage-collect", Fgarbage_collect, Sgarbage_collect, 0, 0, "",
        doc: /* Reclaim storage for Lisp objects no longer needed.
 Garbage collection happens automatically if you cons more than
@@ -7411,7 +7389,6 @@ N should be nonnegative.  */);
   defsubr (&Smake_finalizer);
   defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
-  defsubr (&Sgarbage_collect_maybe);
   defsubr (&Smemory_info);
   defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);

@@ -293,15 +293,15 @@
   ;; desirable that viper-pre-command-sentinel is the last hook and
   ;; viper-post-command-sentinel is the first hook.
 
-  (remove-hook 'post-command-hook #'viper-post-command-sentinel)
-  (add-hook 'post-command-hook #'viper-post-command-sentinel)
-  (remove-hook 'pre-command-hook #'viper-pre-command-sentinel)
-  (add-hook 'pre-command-hook #'viper-pre-command-sentinel t)
+  (remove-hook 'post-command-hook 'viper-post-command-sentinel)
+  (add-hook 'post-command-hook 'viper-post-command-sentinel)
+  (remove-hook 'pre-command-hook 'viper-pre-command-sentinel)
+  (add-hook 'pre-command-hook 'viper-pre-command-sentinel t)
   ;; These hooks will be added back if switching to insert/replace mode
   (remove-hook 'viper-post-command-hooks
-	       #'viper-insert-state-post-command-sentinel 'local)
+	       'viper-insert-state-post-command-sentinel 'local)
   (remove-hook 'viper-pre-command-hooks
-	       #'viper-insert-state-pre-command-sentinel 'local)
+	       'viper-insert-state-pre-command-sentinel 'local)
   (setq viper-intermediate-command nil)
   (cond ((eq new-state 'vi-state)
 	 (cond ((member viper-current-state '(insert-state replace-state))
@@ -344,9 +344,9 @@
 	 (viper-move-marker-locally
 	  'viper-last-posn-while-in-insert-state (point))
 	 (add-hook 'viper-post-command-hooks
-		   #'viper-insert-state-post-command-sentinel t 'local)
+		   'viper-insert-state-post-command-sentinel t 'local)
 	 (add-hook 'viper-pre-command-hooks
-		   #'viper-insert-state-pre-command-sentinel t 'local))
+		   'viper-insert-state-pre-command-sentinel t 'local))
 	) ; outermost cond
 
   ;; Nothing needs to be done to switch to emacs mode! Just set some
@@ -1074,7 +1074,7 @@ as a Meta key and any number of multiple escapes are allowed."
 	  ;; it is an error.
 	  (progn
 	    ;; new com is (CHAR . OLDCOM)
-	    (if (viper-memq-char char '(?# ?\")) (viper--user-error))
+	    (if (viper-memq-char char '(?# ?\")) (user-error viper-ViperBell))
 	    (setq com (cons char com))
 	    (setq cont nil))
 	;; If com is nil we set com as char, and read more.  Again, if char is
@@ -1093,7 +1093,7 @@ as a Meta key and any number of multiple escapes are allowed."
 	       (let ((reg (read-char)))
 		 (if (viper-valid-register reg)
 		     (setq viper-use-register reg)
-		   (viper--user-error))
+		   (user-error viper-ViperBell))
 		 (setq char (read-char))))
 	      (t
 	       (setq com char)
@@ -1115,7 +1115,7 @@ as a Meta key and any number of multiple escapes are allowed."
 	      (viper-regsuffix-command-p char)
 	      (viper= char ?!) ; bang command
 	      (viper= char ?g) ; the gg command (like G0)
-	      (viper--user-error))
+	      (user-error viper-ViperBell))
 	  (setq cmd-to-exec-at-end
 		(viper-exec-form-in-vi
 		 `(key-binding (char-to-string ,char)))))
@@ -1149,7 +1149,7 @@ as a Meta key and any number of multiple escapes are allowed."
 	 ((equal com '(?= . ?=)) (viper-line (cons value ?=)))
 	 ;; gg  acts as G0
 	 ((equal (car com) ?g)   (viper-goto-line 0))
-	 (t (viper--user-error)))))
+	 (t (user-error viper-ViperBell)))))
 
     (if cmd-to-exec-at-end
 	(progn
@@ -1432,25 +1432,23 @@ as a Meta key and any number of multiple escapes are allowed."
   (setq viper-intermediate-command 'viper-exec-buffer-search)
   (viper-search viper-s-string viper-s-forward 1))
 
-(defvar viper-exec-array
-  (let ((a (make-vector 128 nil)))
+(defvar viper-exec-array (make-vector 128 nil))
 
-    ;; Using a dispatch array allows adding functions like buffer search
-    ;; without affecting other functions.  Buffer search can now be bound
-    ;; to any character.
+;; Using a dispatch array allows adding functions like buffer search
+;; without affecting other functions.  Buffer search can now be bound
+;; to any character.
 
-    (aset a ?c 'viper-exec-change)
-    (aset a ?C 'viper-exec-Change)
-    (aset a ?d 'viper-exec-delete)
-    (aset a ?D 'viper-exec-Delete)
-    (aset a ?y 'viper-exec-yank)
-    (aset a ?Y 'viper-exec-Yank)
-    (aset a ?r 'viper-exec-dummy)
-    (aset a ?! 'viper-exec-bang)
-    (aset a ?< 'viper-exec-shift)
-    (aset a ?> 'viper-exec-shift)
-    (aset a ?= 'viper-exec-equals)
-    a))
+(aset viper-exec-array ?c 'viper-exec-change)
+(aset viper-exec-array ?C 'viper-exec-Change)
+(aset viper-exec-array ?d 'viper-exec-delete)
+(aset viper-exec-array ?D 'viper-exec-Delete)
+(aset viper-exec-array ?y 'viper-exec-yank)
+(aset viper-exec-array ?Y 'viper-exec-Yank)
+(aset viper-exec-array ?r 'viper-exec-dummy)
+(aset viper-exec-array ?! 'viper-exec-bang)
+(aset viper-exec-array ?< 'viper-exec-shift)
+(aset viper-exec-array ?> 'viper-exec-shift)
+(aset viper-exec-array ?= 'viper-exec-equals)
 
 
 
@@ -1589,7 +1587,7 @@ invokes the command before that, etc."
 (defun viper-undo-sentinel (beg end length)
   (run-hook-with-args 'viper-undo-functions beg end length))
 
-(add-hook 'after-change-functions #'viper-undo-sentinel)
+(add-hook 'after-change-functions 'viper-undo-sentinel)
 
 ;; Hook used in viper-undo
 (defun viper-after-change-undo-hook (beg end _len)
@@ -1599,7 +1597,7 @@ invokes the command before that, etc."
     ;; some other hooks may be changing various text properties in
     ;; the buffer in response to 'undo'; so remove this hook to avoid
     ;; its repeated invocation
-    (remove-hook 'viper-undo-functions #'viper-after-change-undo-hook 'local)
+    (remove-hook 'viper-undo-functions 'viper-after-change-undo-hook 'local)
   ))
 
 (defun viper-undo ()
@@ -1610,7 +1608,7 @@ invokes the command before that, etc."
 	undo-beg-posn undo-end-posn)
 
     ;; the viper-after-change-undo-hook removes itself after the 1st invocation
-    (add-hook 'viper-undo-functions #'viper-after-change-undo-hook nil 'local)
+    (add-hook 'viper-undo-functions 'viper-after-change-undo-hook nil 'local)
 
     (undo-start)
     (undo-more 2)
@@ -1882,8 +1880,8 @@ Undo previous insertion and inserts new."
 ;;; Minibuffer business
 
 (defsubst viper-set-minibuffer-style ()
-  (add-hook 'minibuffer-setup-hook #'viper-minibuffer-setup-sentinel)
-  (add-hook 'post-command-hook #'viper-minibuffer-post-command-hook))
+  (add-hook 'minibuffer-setup-hook 'viper-minibuffer-setup-sentinel)
+  (add-hook 'post-command-hook 'viper-minibuffer-post-command-hook))
 
 
 (defun viper-minibuffer-setup-sentinel ()
@@ -2229,22 +2227,22 @@ problems."
 	viper-sitting-in-replace t
 	viper-replace-chars-to-delete 0)
   (add-hook
-   'viper-after-change-functions #'viper-replace-mode-spy-after t 'local)
+   'viper-after-change-functions 'viper-replace-mode-spy-after t 'local)
   (add-hook
-   'viper-before-change-functions #'viper-replace-mode-spy-before t 'local)
+   'viper-before-change-functions 'viper-replace-mode-spy-before t 'local)
   ;; this will get added repeatedly, but no harm
-  (add-hook 'after-change-functions #'viper-after-change-sentinel t)
-  (add-hook 'before-change-functions #'viper-before-change-sentinel t)
+  (add-hook 'after-change-functions 'viper-after-change-sentinel t)
+  (add-hook 'before-change-functions 'viper-before-change-sentinel t)
   (viper-move-marker-locally
    'viper-last-posn-in-replace-region (viper-replace-start))
   (add-hook
-   'viper-post-command-hooks #'viper-replace-state-post-command-sentinel
+   'viper-post-command-hooks 'viper-replace-state-post-command-sentinel
    t 'local)
   (add-hook
-   'viper-pre-command-hooks #'viper-replace-state-pre-command-sentinel t 'local)
+   'viper-pre-command-hooks 'viper-replace-state-pre-command-sentinel t 'local)
   ;; guard against a smarty who switched from R-replace to normal replace
   (remove-hook
-   'viper-post-command-hooks #'viper-R-state-post-command-sentinel 'local)
+   'viper-post-command-hooks 'viper-R-state-post-command-sentinel 'local)
   (if overwrite-mode (overwrite-mode -1))
   )
 
@@ -2318,13 +2316,13 @@ problems."
 ;; Don't delete anything if current point is past the end of the overlay.
 (defun viper-finish-change ()
   (remove-hook
-   'viper-after-change-functions #'viper-replace-mode-spy-after 'local)
+   'viper-after-change-functions 'viper-replace-mode-spy-after 'local)
   (remove-hook
-   'viper-before-change-functions #'viper-replace-mode-spy-before 'local)
+   'viper-before-change-functions 'viper-replace-mode-spy-before 'local)
   (remove-hook
-   'viper-post-command-hooks #'viper-replace-state-post-command-sentinel 'local)
+   'viper-post-command-hooks 'viper-replace-state-post-command-sentinel 'local)
   (remove-hook
-   'viper-pre-command-hooks #'viper-replace-state-pre-command-sentinel 'local)
+   'viper-pre-command-hooks 'viper-replace-state-pre-command-sentinel 'local)
   (viper-restore-cursor-color 'after-replace-mode)
   (setq viper-sitting-in-replace nil) ; just in case we'll need to know it
   (save-excursion
@@ -2354,21 +2352,21 @@ problems."
 
 (defun viper-finish-R-mode ()
   (remove-hook
-   'viper-post-command-hooks #'viper-R-state-post-command-sentinel 'local)
+   'viper-post-command-hooks 'viper-R-state-post-command-sentinel 'local)
   (remove-hook
-   'viper-pre-command-hooks #'viper-replace-state-pre-command-sentinel 'local)
+   'viper-pre-command-hooks 'viper-replace-state-pre-command-sentinel 'local)
   (viper-downgrade-to-insert))
 
 (defun viper-start-R-mode ()
   ;; Leave arg as 1, not t: XEmacs insists that it must be a pos number
   (overwrite-mode 1)
   (add-hook
-   'viper-post-command-hooks #'viper-R-state-post-command-sentinel t 'local)
+   'viper-post-command-hooks 'viper-R-state-post-command-sentinel t 'local)
   (add-hook
-   'viper-pre-command-hooks #'viper-replace-state-pre-command-sentinel t 'local)
+   'viper-pre-command-hooks 'viper-replace-state-pre-command-sentinel t 'local)
   ;; guard against a smarty who switched from R-replace to normal replace
   (remove-hook
-   'viper-post-command-hooks #'viper-replace-state-post-command-sentinel 'local)
+   'viper-post-command-hooks 'viper-replace-state-post-command-sentinel 'local)
   )
 
 
@@ -2543,9 +2541,9 @@ On reaching end of line, stop and signal error."
 	  ;; the forward motion before the 'viper-execute-com', but, of
 	  ;; course, 'dl' doesn't work on an empty line, so we have to
 	  ;; catch that condition before 'viper-execute-com'
-	  (if (and (eolp) (bolp)) (viper--user-error) (forward-char val))
+	  (if (and (eolp) (bolp)) (user-error viper-ViperBell) (forward-char val))
 	  (if com (viper-execute-com 'viper-forward-char val com))
-	  (if (eolp) (progn (backward-char 1) (viper--user-error))))
+	  (if (eolp) (progn (backward-char 1) (user-error viper-ViperBell))))
       (forward-char val)
       (if com (viper-execute-com 'viper-forward-char val com)))))
 
@@ -2559,7 +2557,7 @@ On reaching beginning of line, stop and signal error."
     (if com (viper-move-marker-locally 'viper-com-point (point)))
     (if viper-ex-style-motion
 	(progn
-	  (if (bolp) (viper--user-error) (backward-char val))
+	  (if (bolp) (user-error viper-ViperBell) (backward-char val))
 	  (if com (viper-execute-com 'viper-backward-char val com)))
       (backward-char val)
       (if com (viper-execute-com 'viper-backward-char val com)))))
@@ -2876,7 +2874,7 @@ On reaching beginning of line, stop and signal error."
     (if com (viper-execute-com 'viper-goto-col val com))
     (save-excursion
       (end-of-line)
-      (if (> val (current-column)) (viper--user-error)))
+      (if (> val (current-column)) (user-error viper-ViperBell)))
     ))
 
 
@@ -3003,7 +3001,7 @@ If point is on a widget or a button, simulate clicking on that widget/button."
 ;; If FORWARD then search is forward, otherwise backward.  OFFSET is used to
 ;; adjust point after search.
 (defun viper-find-char (arg char forward offset)
-  (or (char-or-string-p char) (viper--user-error))
+  (or (char-or-string-p char) (user-error viper-ViperBell))
   (let ((arg (if forward arg (- arg)))
 	(cmd (if (eq viper-intermediate-command 'viper-repeat)
 		 (nth 5 viper-d-com)
@@ -3337,7 +3335,7 @@ controlled by the sign of prefix numeric value."
 	     (if com (viper-move-marker-locally 'viper-com-point (point)))
 	     (backward-sexp 1)
 	     (if com (viper-execute-com 'viper-paren-match nil com)))
-	    (t (viper--user-error))))))
+	    (t (user-error viper-ViperBell))))))
 
 (defun viper-toggle-parse-sexp-ignore-comments ()
   (interactive)
@@ -3908,7 +3906,7 @@ Null string will repeat previous search."
 	    (let ((reg viper-use-register))
 	      (setq viper-use-register nil)
 	      (error viper-EmptyRegister reg))
-	  (viper--user-error)))
+	  (user-error viper-ViperBell)))
     (setq viper-use-register nil)
     (if (viper-end-with-a-newline-p text)
 	(progn
@@ -3958,7 +3956,7 @@ Null string will repeat previous search."
 	    (let ((reg viper-use-register))
 	      (setq viper-use-register nil)
 	      (error viper-EmptyRegister reg))
-	  (viper--user-error)))
+	  (user-error viper-ViperBell)))
     (setq viper-use-register nil)
     (if (viper-end-with-a-newline-p text) (beginning-of-line))
     (viper-set-destructive-command
@@ -4003,7 +4001,7 @@ Null string will repeat previous search."
 	     (> val (viper-chars-in-region (point) (viper-line-pos 'end))))
 	(setq val (viper-chars-in-region (point) (viper-line-pos 'end))))
     (if (and viper-ex-style-motion (eolp))
-	(if (bolp) (viper--user-error) (setq val 0))) ; not bol---simply back 1 ch
+	(if (bolp) (user-error viper-ViperBell) (setq val 0))) ; not bol---simply back 1 ch
     (save-excursion
       (viper-forward-char-carefully val)
       (setq end-del-pos (point)))
@@ -4273,7 +4271,7 @@ and regexp replace."
 	  ((viper= char ?,) (viper-cycle-through-mark-ring))
 	  ((viper= char ?^) (push-mark viper-saved-mark t t))
 	  ((viper= char ?D) (mark-defun))
-	  (t (viper--user-error))
+	  (t (user-error viper-ViperBell))
 	  )))
 
 ;; Algorithm: If first invocation of this command save mark on ring, goto
@@ -4372,7 +4370,7 @@ One can use \\=`\\=` and \\='\\=' to temporarily jump 1 step back."
 		 (switch-to-buffer buff)
 		 (goto-char viper-com-point)
 		 (viper-change-state-to-vi)
-		 (viper--user-error)))))
+		 (user-error viper-ViperBell)))))
 	((and (not skip-white) (viper= char ?`))
 	 (if com (viper-move-marker-locally 'viper-com-point (point)))
 	 (if (and (viper-same-line (point) viper-last-jump)

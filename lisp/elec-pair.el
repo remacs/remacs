@@ -551,8 +551,7 @@ happened."
                          (goto-char pos)
                          (funcall electric-pair-inhibit-predicate
                                   last-command-event)))))
-         (let ((electric-indent--destination (point-marker)))
-           (save-excursion (electric-pair--insert pair))))))
+         (save-excursion (electric-pair--insert pair)))))
       (_
        (when (and (if (functionp electric-pair-open-newline-between-pairs)
                       (funcall electric-pair-open-newline-between-pairs)

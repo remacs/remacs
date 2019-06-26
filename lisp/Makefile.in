@@ -63,8 +63,7 @@ EMACS = ../src/emacs${EXEEXT}
 EMACSOPT = -batch --no-site-file --no-site-lisp
 
 # Extra flags to pass to the byte compiler
-BYTE_COMPILE_EXTRA_FLAGS = --eval '(setq byte-compile-force-lexical-warnings t)'
-
+BYTE_COMPILE_EXTRA_FLAGS =
 # For example to not display the undefined function warnings you can use this:
 # BYTE_COMPILE_EXTRA_FLAGS = --eval '(setq byte-compile-warnings (quote (not unresolved)))'
 # The example above is just for developers, it should not be used by default.
@@ -86,7 +85,7 @@ AUTOGENEL = ${loaddefs} ${srcdir}/cus-load.el ${srcdir}/finder-inf.el \
 
 # Set load-prefer-newer for the benefit of the non-bootstrappers.
 BYTE_COMPILE_FLAGS = \
-  --eval '(setq load-prefer-newer t byte-compile-force-lexical-warnings t)' $(BYTE_COMPILE_EXTRA_FLAGS)
+  --eval '(setq load-prefer-newer t)' $(BYTE_COMPILE_EXTRA_FLAGS)
 
 # Files to compile before others during a bootstrap.  This is done to
 # speed up the bootstrap process.  They're ordered by size, so we use
@@ -317,7 +316,7 @@ compile-targets: $(TARGETS)
 # Compile all the Elisp files that need it.  Beware: it approximates
 # 'no-byte-compile', so watch out for false-positives!
 compile-main: gen-lisp compile-clean
-	@(cd $(lisp) && \
+	@(cd $(lisp) && 			     \
 	els=`echo "${SUBDIRS_REL} " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.el |g'`; \
 	for el in ${MAIN_FIRST} $$els; do            \
 	  test -f $$el || continue; 		     \

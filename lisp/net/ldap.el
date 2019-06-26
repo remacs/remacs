@@ -1,4 +1,4 @@
-;;; ldap.el --- client interface to LDAP for Emacs  -*- lexical-binding:t -*-
+;;; ldap.el --- client interface to LDAP for Emacs
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
@@ -419,12 +419,12 @@ RFC2798 Section 9.1.1")
   (encode-coding-string str ldap-coding-system))
 
 (defun ldap-decode-address (str)
-  (mapconcat #'ldap-decode-string
+  (mapconcat 'ldap-decode-string
 	     (split-string str "\\$")
 	     "\n"))
 
 (defun ldap-encode-address (str)
-  (mapconcat #'ldap-encode-string
+  (mapconcat 'ldap-encode-string
 	     (split-string str "\n")
 	     "$"))
 
@@ -566,9 +566,9 @@ its distinguished name DN.
 The function returns a list of matching entries.  Each entry is itself
 an alist of attribute/value pairs."
   (let* ((buf (get-buffer-create " *ldap-search*"))
-	 (bufval (get-buffer-create " *ldap-value*"))
-	 (host (or (plist-get search-plist 'host)
-		   ldap-default-host))
+	(bufval (get-buffer-create " *ldap-value*"))
+	(host (or (plist-get search-plist 'host)
+		  ldap-default-host))
          ;; find entries with port "ldap" that match the requested host if any
          (asfound (when (plist-get search-plist 'auth-source)
                     (nth 0 (auth-source-search :host (or host t)
@@ -592,60 +592,59 @@ an alist of attribute/value pairs."
          (base (or (plist-get search-plist 'base)
                    (plist-get asfound :base)
                    ldap-default-base))
-	 (filter (plist-get search-plist 'filter))
-	 (attributes (plist-get search-plist 'attributes))
-	 (attrsonly (plist-get search-plist 'attrsonly))
-	 (scope (plist-get search-plist 'scope))
-         (auth (plist-get search-plist 'auth))
-	 (deref (plist-get search-plist 'deref))
-	 (timelimit (plist-get search-plist 'timelimit))
-	 (sizelimit (plist-get search-plist 'sizelimit))
-	 (withdn (plist-get search-plist 'withdn))
-	 (numres 0)
-	 (arglist
-          (append
-           (if (and host
-	            (not (equal "" host)))
-	       (list (format
-		      ;; Use -H if host is a new-style LDAP URI.
-		      (if (string-match "\\`[a-zA-Z]+://" host)
-			  "-H%s"
-			"-h%s")
-		      host)))
-           (if (and attrsonly
-	            (not (equal "" attrsonly)))
-               (list "-A"))
-           (if (and base
-	            (not (equal "" base)))
-               (list (format "-b%s" base)))
-           (if (and scope
-	            (not (equal "" scope)))
-               (list (format "-s%s" scope)))
-           (if (and binddn
-	            (not (equal "" binddn)))
-               (list (format "-D%s" binddn)))
-           (if (and auth
-	            (equal 'simple auth))
-               (list "-x"))
-           ;; Allow passwd to be set to "", representing a blank password.
-           (if passwd
-               (list "-W"))
-           (if (and deref
-	            (not (equal "" deref)))
-               (list (format "-a%s" deref)))
-           (if (and timelimit
-	            (not (equal "" timelimit)))
-               (list (format "-l%s" timelimit)))
-           (if (and sizelimit
-	            (not (equal "" sizelimit)))
-               (list (format "-z%s" sizelimit)))))
-         dn name value record result)
+	(filter (plist-get search-plist 'filter))
+	(attributes (plist-get search-plist 'attributes))
+	(attrsonly (plist-get search-plist 'attrsonly))
+	(scope (plist-get search-plist 'scope))
+        (auth (plist-get search-plist 'auth))
+	(deref (plist-get search-plist 'deref))
+	(timelimit (plist-get search-plist 'timelimit))
+	(sizelimit (plist-get search-plist 'sizelimit))
+	(withdn (plist-get search-plist 'withdn))
+	(numres 0)
+	arglist dn name value record result proc)
     (if (or (null filter)
 	    (equal "" filter))
 	(error "No search filter"))
     (setq filter (cons filter attributes))
     (with-current-buffer buf
       (erase-buffer)
+      (if (and host
+	       (not (equal "" host)))
+	  (setq arglist (nconc arglist
+			       (list (format
+				      ;; Use -H if host is a new-style LDAP URI.
+				      (if (string-match "^[a-zA-Z]+://" host)
+					  "-H%s"
+					"-h%s")
+				      host)))))
+      (if (and attrsonly
+	       (not (equal "" attrsonly)))
+	  (setq arglist (nconc arglist (list "-A"))))
+      (if (and base
+	       (not (equal "" base)))
+	  (setq arglist (nconc arglist (list (format "-b%s" base)))))
+      (if (and scope
+	       (not (equal "" scope)))
+	  (setq arglist (nconc arglist (list (format "-s%s" scope)))))
+      (if (and binddn
+	       (not (equal "" binddn)))
+	  (setq arglist (nconc arglist (list (format "-D%s" binddn)))))
+      (if (and auth
+	       (equal 'simple auth))
+	  (setq arglist (nconc arglist (list "-x"))))
+      ;; Allow passwd to be set to "", representing a blank password.
+      (if passwd
+	  (setq arglist (nconc arglist (list "-W"))))
+      (if (and deref
+	       (not (equal "" deref)))
+	  (setq arglist (nconc arglist (list (format "-a%s" deref)))))
+      (if (and timelimit
+	       (not (equal "" timelimit)))
+	  (setq arglist (nconc arglist (list (format "-l%s" timelimit)))))
+      (if (and sizelimit
+	       (not (equal "" sizelimit)))
+	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
       (if passwd
 	  ;; Leave process-connection-type at its default value.  See
 	  ;; discussion in Bug#33050.
@@ -673,7 +672,7 @@ an alist of attribute/value pairs."
 				   " bind distinguished name (binddn)"))
 		  (error "Failed ldapsearch invocation: %s \"%s\""
 			 ldap-ldapsearch-prog
-			 (mapconcat #'identity proc-args "\" \""))))))
+			 (mapconcat 'identity proc-args "\" \""))))))
 	(apply #'call-process ldap-ldapsearch-prog
 	       ;; Ignore stderr, which can corrupt results
 	       nil (list buf nil) nil

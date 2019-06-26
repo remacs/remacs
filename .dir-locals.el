@@ -1,6 +1,6 @@
 ((nil . ((tab-width . 8)
          (sentence-end-double-space . t)
-         (fill-column . 79)
+         (fill-column . 70)
          (bug-reference-url-format . "https://debbugs.gnu.org/%s")))
  (c-mode . ((c-file-style . "GNU")
             (c-noise-macro-names . ("INLINE" "ATTRIBUTE_NO_SANITIZE_UNDEFINED" "UNINIT" "CALLBACK" "ALIGN_STACK"))

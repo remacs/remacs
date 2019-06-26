@@ -156,9 +156,9 @@ If DATE lacks timezone information, GMT is assumed."
      (let ((overflow-error '(error "Specified time is not representable")))
        (if (equal err overflow-error)
 	   (signal (car err) (cdr err))
-	 (condition-case-unless-debug err
+	 (condition-case err
 	     (encode-time (parse-time-string
-	                   (timezone-make-date-arpa-standard date)))
+			   (timezone-make-date-arpa-standard date)))
 	   (error
 	    (if (equal err overflow-error)
 		(signal (car err) (cdr err))

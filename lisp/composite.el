@@ -1,4 +1,4 @@
-;;; composite.el --- support character composition  -*- lexical-binding:t -*-
+;;; composite.el --- support character composition
 
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
@@ -588,6 +588,7 @@ All non-spacing characters have this function in
 		       (as (lglyph-ascent glyph))
 		       (de (lglyph-descent glyph))
 		       (ce (/ (+ lb rb) 2))
+		       (w (lglyph-width glyph))
 		       xoff yoff)
 		  (cond
 		   ((and class (>= class 200) (<= class 240))
@@ -688,7 +689,9 @@ All non-spacing characters have this function in
 
 (defun compose-gstring-for-dotted-circle (gstring direction)
   (let* ((dc (lgstring-glyph gstring 0)) ; glyph of dotted-circle
+	 (dc-id (lglyph-code dc))
 	 (fc (lgstring-glyph gstring 1)) ; glyph of the following char
+	 (fc-id (lglyph-code fc))
 	 (gstr (and nil (font-shape-gstring gstring direction))))
     (if (and gstr
 	     (or (= (lgstring-glyph-len gstr) 1)

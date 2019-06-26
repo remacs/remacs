@@ -306,7 +306,8 @@ Prepend remote identification of `default-directory', if any."
       (setq m (cdr m))))
   l)
 (define-obsolete-function-alias
-  'eshell-uniqify-list #'eshell-uniquify-list "27.1")
+  'eshell-uniqify-list
+  'eshell-uniquify-list "27.1")
 
 (defun eshell-stringify (object)
   "Convert OBJECT into a string value."
@@ -325,11 +326,11 @@ Prepend remote identification of `default-directory', if any."
 
 (defsubst eshell-stringify-list (args)
   "Convert each element of ARGS into a string value."
-  (mapcar #'eshell-stringify args))
+  (mapcar 'eshell-stringify args))
 
 (defsubst eshell-flatten-and-stringify (&rest args)
   "Flatten and stringify all of the ARGS into a single string."
-  (mapconcat #'eshell-stringify (flatten-tree args) " "))
+  (mapconcat 'eshell-stringify (flatten-tree args) " "))
 
 (defsubst eshell-directory-files (regexp &optional directory)
   "Return a list of files in the given DIRECTORY matching REGEXP."
@@ -525,7 +526,7 @@ Unless optional argument INPLACE is non-nil, return a new string."
 
 (defsubst eshell-copy-environment ()
   "Return an unrelated copy of `process-environment'."
-  (mapcar #'concat process-environment))
+  (mapcar 'concat process-environment))
 
 (defun eshell-subgroups (groupsym)
   "Return all of the subgroups of GROUPSYM."

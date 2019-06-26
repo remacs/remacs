@@ -84,7 +84,7 @@ http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)."
 	  (setf (terminal-parameter nil 'xterm-mouse-last-down) nil)
 	  (cond
 	   ((null down)
-	    ;; This is an "up-only" event.  Pretend there was a down-event
+	    ;; This is an "up-only" event.  Pretend there was an up-event
 	    ;; right before and keep the up-event for later.
 	    (push event unread-command-events)
 	    (vector (cons (intern (replace-regexp-in-string

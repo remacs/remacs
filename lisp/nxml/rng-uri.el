@@ -83,11 +83,10 @@ Signal an error if URI is not a valid file URL."
     (cond ((not scheme)
 	   (unless pattern
 	     (rng-uri-error "URI `%s' does not have a scheme" uri)))
-	  ((not (member (downcase scheme) '("file" "http")))
-	   (rng-uri-error "URI `%s' does not use the `file:' or `http:' scheme" uri)))
-    (when (and (equal (downcase scheme) "file")
-               (not (member authority
-                            (cons (system-name) '(nil "" "localhost")))))
+	  ((not (string= (downcase scheme) "file"))
+	   (rng-uri-error "URI `%s' does not use the `file:' scheme" uri)))
+    (when (not (member authority
+		       (cons (system-name) '(nil "" "localhost"))))
       (rng-uri-error "URI `%s' does not start with `file:///' or `file://localhost/'"
 	     uri))
     (when query

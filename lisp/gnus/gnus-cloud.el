@@ -1,4 +1,4 @@
-;;; gnus-cloud.el --- storing and retrieving data via IMAP  -*- lexical-binding:t -*-
+;;; gnus-cloud.el --- storing and retrieving data via IMAP
 
 ;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
@@ -52,12 +52,14 @@ Each element may be either a string or a property list.
 The latter should have a :directory element whose value is a string,
 and a :match element whose value is a regular expression to match
 against the basename of files in said directory."
+  :group 'gnus-cloud
   :type '(repeat (choice (string :tag "File")
                          (plist :tag "Property list"))))
 
 (defcustom gnus-cloud-storage-method (if (featurep 'epg) 'epg 'base64-gzip)
   "Storage method for cloud data, defaults to EPG if that's available."
   :version "26.1"
+  :group 'gnus-cloud
   :type '(radio (const :tag "No encoding" nil)
                 (const :tag "Base64" base64)
                 (const :tag "Base64+gzip" base64-gzip)
@@ -66,6 +68,7 @@ against the basename of files in said directory."
 (defcustom gnus-cloud-interactive t
   "Whether Gnus Cloud changes should be confirmed."
   :version "26.1"
+  :group 'gnus-cloud
   :type 'boolean)
 
 (defvar gnus-cloud-group-name "Emacs-Cloud")
@@ -78,6 +81,7 @@ against the basename of files in said directory."
   "The IMAP select method used to store the cloud data.
 See also `gnus-server-set-cloud-method-server' for an
 easy interactive way to set this from the Server buffer."
+  :group 'gnus-cloud
   :type '(radio (const :tag "Not set" nil)
                 (string :tag "A Gnus server name as a string")))
 
@@ -127,7 +131,8 @@ easy interactive way to set this from the Server buffer."
     (base64-encode-region (point-min) (point-max)))
 
    ((eq gnus-cloud-storage-method 'epg)
-    (let ((context (epg-make-context 'OpenPGP)))
+    (let ((context (epg-make-context 'OpenPGP))
+          cipher)
       (setf (epg-context-armor context) t)
       (setf (epg-context-textmode context) t)
       (let ((data (epg-encrypt-string context
@@ -348,7 +353,6 @@ Use old data if FORCE-OLDER is not nil."
                   (group &optional previous method))
 
 (defun gnus-cloud-ensure-cloud-group ()
-  ;; FIXME: `method' is not used!?
   (let ((method (if (stringp gnus-cloud-method)
                     (gnus-server-to-method gnus-cloud-method)
                   gnus-cloud-method)))

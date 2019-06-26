@@ -648,8 +648,7 @@ either a single abbrev table or a list of abbrev tables."
   ;; to treat the distinction between a single table and a list of tables.
   (cond
    ((consp tables) tables)
-   ((abbrev-table-p tables) (list tables))
-   (tables (signal 'wrong-type-argument (list 'abbrev-table-p tables)))
+   ((vectorp tables) (list tables))
    (t
     (let ((tables (if (listp local-abbrev-table)
                       (append local-abbrev-table

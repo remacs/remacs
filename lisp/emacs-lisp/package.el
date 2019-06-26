@@ -1163,6 +1163,26 @@ The return result is a `package-desc'."
           (insert (format "Error while verifying signature %s:\n" sig-file)))
         (insert "\nCommand output:\n" (epg-context-error-output context))))))
 
+(defmacro package--with-work-buffer (location file &rest body)
+  "Run BODY in a buffer containing the contents of FILE at LOCATION.
+LOCATION is the base location of a package archive, and should be
+one of the URLs (or file names) specified in `package-archives'.
+FILE is the name of a file relative to that base location.
+
+This macro retrieves FILE from LOCATION into a temporary buffer,
+and evaluates BODY while that buffer is current.  This work
+buffer is killed afterwards.  Return the last value in BODY."
+  (declare (indent 2) (debug t)
+           (obsolete package--with-response-buffer "25.1"))
+  `(with-temp-buffer
+     (if (string-match-p "\\`https?:" ,location)
+         (url-insert-file-contents (concat ,location ,file))
+       (unless (file-name-absolute-p ,location)
+         (error "Archive location %s is not an absolute file name"
+           ,location))
+       (insert-file-contents (expand-file-name ,file ,location)))
+     ,@body))
+
 (cl-defmacro package--with-response-buffer (url &rest body &key async file error-form noerror &allow-other-keys)
   "Access URL and run BODY in a buffer containing the response.
 Point is after the headers when BODY runs.

@@ -1,4 +1,4 @@
-;;; format-spec.el --- functions for formatting arbitrary formatting strings  -*- lexical-binding:t -*-
+;;; format-spec.el --- functions for formatting arbitrary formatting strings
 
 ;; Copyright (C) 1999-2019 Free Software Foundation, Inc.
 

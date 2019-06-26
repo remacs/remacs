@@ -97,34 +97,11 @@
 (declare-function get-edebug-spec "edebug" (symbol))
 (declare-function edebug-match "edebug" (cursor specs))
 
-(defun pcase--get-macroexpander (s)
-  "Return the macroexpander for pcase pattern head S, or nil"
-  (let ((em (assoc s (assq :pcase-macroexpander macroexpand-all-environment))))
-    (if em (cdr em)
-      (get s 'pcase-macroexpander))))
-
-(defmacro pcase-macrolet (bindings &rest body)
-  (let ((new-macros (if (consp (car-safe bindings))
-                        (mapcar (lambda (binding)
-                                  (cons (car binding)
-                                        (eval (if (cddr binding)
-                                                  `(lambda ,(cadr binding)
-                                                     ,@(cddr binding))
-                                                (cadr binding))
-                                              lexical-binding)))
-                                bindings)
-                      (eval bindings lexical-binding)))
-        (old-pme (assq :pcase-macroexpander macroexpand-all-environment)))
-    (macroexpand-all (macroexp-progn body)
-                     (cons (cons :pcase-macroexpander
-                                 (append new-macros old-pme))
-                macroexpand-all-environment))))
-
 (defun pcase--edebug-match-macro (cursor)
   (let (specs)
     (mapatoms
      (lambda (s)
-       (let ((m (pcase--get-macroexpander s)))
+       (let ((m (get s 'pcase-macroexpander)))
 	 (when (and m (get-edebug-spec m))
 	   (push (cons (symbol-name s) (get-edebug-spec m))
 		 specs)))))
@@ -216,7 +193,7 @@ Emacs Lisp manual for more information and examples."
       (let (more)
         ;; Collect all the extensions.
         (mapatoms (lambda (symbol)
-                    (let ((me (pcase--get-macroexpander symbol)))
+                    (let ((me (get symbol 'pcase-macroexpander)))
                       (when me
                         (push (cons symbol me)
                               more)))))
@@ -442,7 +419,7 @@ of the elements of LIST is performed as if by `pcase-let'.
      ((eq head 'let) `(let ,(pcase--macroexpand (cadr pat)) ,@(cddr pat)))
      ((eq head 'app) `(app ,(nth 1 pat) ,(pcase--macroexpand (nth 2 pat))))
      (t
-      (let* ((expander (pcase--get-macroexpander head))
+      (let* ((expander (get head 'pcase-macroexpander))
              (npat (if expander (apply expander (cdr pat)))))
         (if (null npat)
             (error (if expander

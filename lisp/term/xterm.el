@@ -1107,7 +1107,6 @@ versions of xterm."
        (t (error "Unsupported number of xterm colors (%d)" (+ 16 ncolors)))))
     ;; Modifying color mappings means realized faces don't use the
     ;; right colors, so clear them.
-    ;; FIXME: Only for the selected frame!
     (clear-face-cache)))
 
 (defun xterm-maybe-set-dark-background-mode (redc greenc bluec)

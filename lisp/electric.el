@@ -220,14 +220,6 @@ If `indent-line-function' is one of those, then `electric-indent-mode' will
 not try to reindent lines.  It is normally better to make the major
 mode set `electric-indent-inhibit', but this can be used as a workaround.")
 
-(defun electric-indent--inhibited-p ()
-  (or electric-indent-inhibit
-      (memq indent-line-function
-            electric-indent-functions-without-reindent)))
-
-(defvar electric-indent--destination nil
-  "If non-nil, position to which point will be later restored.")
-
 (defun electric-indent-post-self-insert-function ()
   "Function that `electric-indent-mode' adds to `post-self-insert-hook'.
 This indents if the hook `electric-indent-functions' returns non-nil,
@@ -269,26 +261,26 @@ or comment."
           (when at-newline
             (let ((before (copy-marker (1- pos) t)))
               (save-excursion
-                (unless (electric-indent--inhibited-p)
+                (unless
+                    (or (memq indent-line-function
+                              electric-indent-functions-without-reindent)
+                        electric-indent-inhibit)
                   ;; Don't reindent the previous line if the
                   ;; indentation function is not a real one.
                   (goto-char before)
                   (condition-case-unless-debug ()
                       (indent-according-to-mode)
-                    (error (throw 'indent-error nil))))
-                ;; The goal here will be to remove the trailing
-                ;; whitespace after reindentation of the previous line
-                ;; because that may have (re)introduced it.
-                (goto-char before)
-                ;; We were at EOL in marker `before' before the call
-                ;; to `indent-according-to-mode' but after we may
-                ;; not be (Bug#15767).
-                (when (and (eolp)
-                           ;; Don't delete "trailing space" before point!
-                           (not (and electric-indent--destination
-                                     (= (point) electric-indent--destination))))
-                  (delete-horizontal-space t)))))
-          (unless (and (electric-indent--inhibited-p)
+                    (error (throw 'indent-error nil)))
+                  ;; The goal here will be to remove the trailing
+                  ;; whitespace after reindentation of the previous line
+                  ;; because that may have (re)introduced it.
+                  (goto-char before)
+                  ;; We were at EOL in marker `before' before the call
+                  ;; to `indent-according-to-mode' but after we may
+                  ;; not be (Bug#15767).
+                  (when (and (eolp))
+                    (delete-horizontal-space t))))))
+          (unless (and electric-indent-inhibit
                        (not at-newline))
             (condition-case-unless-debug ()
                 (indent-according-to-mode)

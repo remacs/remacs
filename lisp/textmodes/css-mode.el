@@ -1115,7 +1115,7 @@ to exclude some SCSS constructs."
       (goto-char start-point)
       (forward-comment (- (point)))
       (skip-chars-backward "@[:alpha:]")
-      (unless (looking-at-p "@\\(?:mixin\\|include\\)")
+      (unless (looking-at-p "@\\(mixin\\|include\\)")
         (cdr color)))))
 
 (defun css--compute-color (start-point match)

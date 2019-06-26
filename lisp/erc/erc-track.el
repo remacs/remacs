@@ -536,17 +536,17 @@ keybindings will not do anything useful."
   ((when (boundp 'erc-track-when-inactive)
      (if erc-track-when-inactive
 	 (progn
-	   (add-hook 'window-configuration-change-hook #'erc-user-is-active)
-	   (add-hook 'erc-send-completed-hook #'erc-user-is-active)
-	   (add-hook 'erc-server-001-functions #'erc-user-is-active))
+	   (add-hook 'window-configuration-change-hook 'erc-user-is-active)
+	   (add-hook 'erc-send-completed-hook 'erc-user-is-active)
+	   (add-hook 'erc-server-001-functions 'erc-user-is-active))
        (erc-track-add-to-mode-line erc-track-position-in-mode-line)
        (erc-update-mode-line)
        (add-hook 'window-configuration-change-hook
-		 #'erc-window-configuration-change)
-       (add-hook 'erc-insert-post-hook #'erc-track-modified-channels)
-       (add-hook 'erc-disconnected-hook #'erc-modified-channels-update))
+		 'erc-window-configuration-change)
+       (add-hook 'erc-insert-post-hook 'erc-track-modified-channels)
+       (add-hook 'erc-disconnected-hook 'erc-modified-channels-update))
      ;; enable the tracking keybindings
-     (add-hook 'erc-connect-pre-hook #'erc-track-minor-mode-maybe)
+     (add-hook 'erc-connect-pre-hook 'erc-track-minor-mode-maybe)
      (erc-track-minor-mode-maybe)))
   ;; Disable:
   ((when (boundp 'erc-track-when-inactive)
@@ -554,15 +554,14 @@ keybindings will not do anything useful."
      (if erc-track-when-inactive
 	 (progn
 	   (remove-hook 'window-configuration-change-hook
-			#'erc-user-is-active)
-	   (remove-hook 'erc-send-completed-hook #'erc-user-is-active)
-	   (remove-hook 'erc-server-001-functions #'erc-user-is-active)
-	   ;; FIXME: Never added!?
-	   (remove-hook 'erc-timer-hook #'erc-user-is-active))
+			'erc-user-is-active)
+	   (remove-hook 'erc-send-completed-hook 'erc-user-is-active)
+	   (remove-hook 'erc-server-001-functions 'erc-user-is-active)
+	   (remove-hook 'erc-timer-hook 'erc-user-is-active))
        (remove-hook 'window-configuration-change-hook
-		    #'erc-window-configuration-change)
-       (remove-hook 'erc-disconnected-hook #'erc-modified-channels-update)
-       (remove-hook 'erc-insert-post-hook #'erc-track-modified-channels))
+		    'erc-window-configuration-change)
+       (remove-hook 'erc-disconnected-hook 'erc-modified-channels-update)
+       (remove-hook 'erc-insert-post-hook 'erc-track-modified-channels))
      ;; disable the tracking keybindings
      (remove-hook 'erc-connect-pre-hook 'erc-track-minor-mode-maybe)
      (when erc-track-minor-mode

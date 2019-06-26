@@ -234,13 +234,73 @@ Some generic modes are defined in `generic-x.el'."
 	(cond
 	 ((characterp end)   (setq end (char-to-string end)))
 	 ((zerop (length end)) (setq end "\n")))
-        (push (list start end) normalized)))
+        (push (cons start end) normalized)))
     (nreverse normalized)))
+
+(defun generic-set-comment-syntax (st comment-list)
+  "Set up comment functionality for generic mode."
+  (let ((chars nil)
+	(comstyles)
+        (comstyle "")
+        (comment-start nil))
+
+    ;; Go through all the comments.
+    (pcase-dolist (`(,start . ,end) comment-list)
+      (let ((comstyle
+             ;; Reuse comstyles if necessary.
+             (or (cdr (assoc start comstyles))
+                 (cdr (assoc end comstyles))
+                 ;; Otherwise, use a style not yet in use.
+                 (if (not (rassoc "" comstyles)) "")
+                 (if (not (rassoc "b" comstyles)) "b")
+                 "c")))
+       (push (cons start comstyle) comstyles)
+       (push (cons end comstyle) comstyles)
+
+	;; Setup the syntax table.
+	(if (= (length start) 1)
+	    (modify-syntax-entry (aref start 0)
+				 (concat "< " comstyle) st)
+	  (let ((c0 (aref start 0)) (c1 (aref start 1)))
+	    ;; Store the relevant info but don't update yet.
+	    (push (cons c0 (concat (cdr (assoc c0 chars)) "1")) chars)
+	    (push (cons c1 (concat (cdr (assoc c1 chars))
+				   (concat "2" comstyle))) chars)))
+	(if (= (length end) 1)
+	    (modify-syntax-entry (aref end 0)
+				 (concat ">" comstyle) st)
+	  (let ((c0 (aref end 0)) (c1 (aref end 1)))
+	    ;; Store the relevant info but don't update yet.
+	    (push (cons c0 (concat (cdr (assoc c0 chars))
+				   (concat "3" comstyle))) chars)
+	    (push (cons c1 (concat (cdr (assoc c1 chars)) "4")) chars)))))
+
+    ;; Process the chars that were part of a 2-char comment marker
+    (with-syntax-table st               ;For `char-syntax'.
+    (dolist (cs (nreverse chars))
+      (modify-syntax-entry (car cs)
+			   (concat (char-to-string (char-syntax (car cs)))
+				   " " (cdr cs))
+                             st)))))
+
+(defun generic-set-comment-vars (comment-list)
+  (when comment-list
+    (setq-local comment-start (caar comment-list))
+    (setq-local comment-end
+                (let ((end (cdar comment-list)))
+                  (if (string-equal end "\n") "" end)))
+    (setq-local comment-start-skip
+                (concat (regexp-opt (mapcar #'car comment-list))
+                        "+[ \t]*"))
+    (setq-local comment-end-skip
+                (concat "[ \t]*" (regexp-opt (mapcar #'cdr comment-list))))))
 
 (defun generic-mode-set-comments (comment-list)
   "Set up comment functionality for generic mode."
-  (let ((st (make-syntax-table)))
-    (comment-set-syntax st comment-list)
+  (let ((st (make-syntax-table))
+        (comment-list (generic--normalize-comments comment-list)))
+    (generic-set-comment-syntax st comment-list)
+    (generic-set-comment-vars comment-list)
     (set-syntax-table st)))
 
 (defun generic-bracket-support ()

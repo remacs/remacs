@@ -1225,45 +1225,6 @@ scroll the window of possible completions."
     (if (eq (car bounds) base) md-at-point
       (completion-metadata (substring string 0 base) table pred))))
 
-(defun completion-score-sort (completions)
-  (sort completions
-        (lambda (x y)
-          (> (or (get-text-property 0 'completion-score x) 0)
-             (or (get-text-property 0 'completion-score y) 0)))))
-
-(defun completion-sort (all &optional prefer-regular table-sort-fun)
-  "Sort ALL, which is the list of all the completion strings we found.
-If PREFER-REGULAR, then give a bit more importance to returning
-an ordering that is easy to scan quickly (e.g. lexicographic) rather
-then trying to minimize the expected position of the completion
-actually desired.
-TABLE-SORT-FUN is the sorting function specified by the completion table,
-if applicable.
-The sort is performed in a destructive way."
-  (cond
-   (table-sort-fun
-    ;; I feel like we should slowly deprecate table-sort-fun (probably
-    ;; replacing it with a way for the completion table to provide scores),
-    ;; so let's not try to be clever here.
-    (funcall table-sort-fun all))
-   (t
-    ;; Prefer shorter completions, by default.
-    (if prefer-regular
-        (setq all (sort all #'string-lessp))
-      (setq all (sort all (lambda (c1 c2) (< (length c1) (length c2)))))
-      (if (minibufferp)
-          ;; Prefer recently used completions and put the default, if
-          ;; it exists, on top.
-          (let ((hist (symbol-value minibuffer-history-variable)))
-            (setq all (sort all
-                            (lambda (c1 c2)
-                              (cond ((equal c1 minibuffer-default) t)
-                                    ((equal c2 minibuffer-default) nil)
-                                    (t (> (length (member c1 hist))
-                                          (length (member c2 hist)))))))))))
-    (setq all (completion-score-sort all))
-    all)))
-
 (defun completion-all-sorted-completions (&optional start end)
   (or completion-all-sorted-completions
       (let* ((start (or start (minibuffer-prompt-end)))
@@ -1293,7 +1254,23 @@ The sort is performed in a destructive way."
           (setq all (delete-dups all))
           (setq last (last all))
 
-          (setq all (completion-sort all nil sort-fun))
+          (cond
+           (sort-fun
+            (setq all (funcall sort-fun all)))
+           (t
+            ;; Prefer shorter completions, by default.
+            (setq all (sort all (lambda (c1 c2) (< (length c1) (length c2)))))
+            (if (minibufferp)
+                ;; Prefer recently used completions and put the default, if
+                ;; it exists, on top.
+                (let ((hist (symbol-value minibuffer-history-variable)))
+                  (setq all
+                        (sort all
+                              (lambda (c1 c2)
+                                (cond ((equal c1 minibuffer-default) t)
+                                      ((equal c2 minibuffer-default) nil)
+                                      (t (> (length (member c1 hist))
+                                            (length (member c2 hist))))))))))))
           ;; Cache the result.  This is not just for speed, but also so that
           ;; repeated calls to minibuffer-force-complete can cycle through
           ;; all possibilities.
@@ -1910,7 +1887,9 @@ variables.")
                 ;; not always.
                 (let ((sort-fun (completion-metadata-get
                                  all-md 'display-sort-function)))
-                  (completion-sort completions 'prefer-regular sort-fun)))
+                  (if sort-fun
+                      (funcall sort-fun completions)
+                    (sort completions 'string-lessp))))
           (when afun
             (setq completions
                   (mapcar (lambda (s)
@@ -2891,9 +2870,7 @@ Return the new suffix."
                             'point
                             (substring afterpoint 0 (cdr bounds)))))
          (all (completion-pcm--all-completions prefix pattern table pred)))
-    (when all
-      (nconc (completion-pcm--hilit-commonality pattern all)
-             (car bounds)))))
+    (completion-hilit-commonality all point (car bounds))))
 
 ;;; Partial-completion-mode style completion.
 
@@ -3056,8 +3033,8 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 	    (when (string-match-p regex c) (push c poss)))
 	  (nreverse poss))))))
 
-(defvar completion-score-match-tightness 100
-  "Controls how the completion style scores its matches.
+(defvar flex-score-match-tightness 100
+  "Controls how the `flex' completion style scores its matches.
 
 Value is a positive number.  Values smaller than one make the
 scoring formula value matches scattered along the string, while
@@ -3102,7 +3079,7 @@ latter (which has two).")
                 ;; For the numerator, we use the number of +, i.e. the
                 ;; length of the pattern.  For the denominator, it
                 ;; sums (1+ (/ (grouplen - 1)
-                ;; completion-score-match-tightness)) across all groups of
+                ;; flex-score-match-tightness)) across all groups of
                 ;; -, sums one to that total, and then multiples by
                 ;; the length of the string.
                 (score-numerator 0)
@@ -3118,7 +3095,7 @@ latter (which has two).")
                       score-denominator (+ score-denominator
                                            1
                                            (/ (- a last-b 1)
-                                              completion-score-match-tightness
+                                              flex-score-match-tightness
                                               1.0))))
                    (setq
                     last-b              b))))

@@ -152,8 +152,7 @@ Used to gray out relevant toolbar icons.")
 					(bound-and-true-p
 					 gdb-active-process)))))
     ([go]	menu-item (if (bound-and-true-p gdb-active-process)
-			      "Continue" "Run")
-                  gud-go
+			      "Continue" "Run") gud-go
 		  :visible (and (eq gud-minor-mode 'gdbmi)
                                 (gdb-show-run-p)))
     ([stop]	menu-item "Stop" gud-stop-subjob
@@ -191,8 +190,7 @@ Used to gray out relevant toolbar icons.")
 				(eq gud-minor-mode 'gdbmi)))
     ([print*]	menu-item (if (eq gud-minor-mode 'jdb)
 			      "Dump object"
-			    "Print Dereference")
-                  gud-pstar
+			    "Print Dereference") gud-pstar
                   :enable (not gud-running)
 		  :visible (memq gud-minor-mode '(gdbmi gdb jdb)))
     ([print]	menu-item "Print Expression" gud-print
