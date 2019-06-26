@@ -437,9 +437,11 @@ aren't strings.  */)
 
   tem = Fget (symbol, prop);
 
-  /* If we don't have any documentation for this symbol, try to see whether
-     it's an indirect variable and get the documentation from there instead. */
-  if (NILP (tem))
+  /* If we don't have any documentation for this symbol (and we're asking for
+     the variable documentation), try to see whether it's an indirect variable
+     and get the documentation from there instead. */
+  if (EQ (prop, Qvariable_documentation)
+      && NILP (tem))
     {
       Lisp_Object indirect = Findirect_variable (symbol);
       if (!NILP (indirect))
