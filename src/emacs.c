@@ -813,7 +813,7 @@ load_pdump (int argc, char **argv)
   char *exename = NULL;
   char *real_exename = NULL;
   const char* strip_suffix =
-#ifdef DOS_NT
+#if defined DOS_NT || defined CYGWIN
     ".exe"
 #else
     NULL
