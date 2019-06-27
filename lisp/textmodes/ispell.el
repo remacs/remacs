@@ -2973,6 +2973,9 @@ With CLEAR, buffer session localwords are cleaned."
     (message "Ispell process killed")
     nil))
 
+(defvar ispell-change-dictionary-hook nil
+  "Hook run after changing dictionary.")
+
 ;; ispell-change-dictionary is set in some people's hooks.  Maybe this should
 ;;  call ispell-init-process rather than wait for a spell checking command?
 
@@ -2998,7 +3001,8 @@ By just answering RET you can find out what the current dictionary is."
 	 (ispell-internal-change-dictionary)
 	 (message "Using %s dictionary"
 		  (or (and (not arg) ispell-local-dictionary)
-		      ispell-dictionary "default")))
+		      ispell-dictionary "default"))
+         (run-hooks 'ispell-change-dictionary-hook))
 	((equal dict (or (and (not arg) ispell-local-dictionary)
 			 ispell-dictionary "default"))
 	 ;; Specified dictionary is the default already. Could reload
@@ -3020,7 +3024,8 @@ By just answering RET you can find out what the current dictionary is."
 	 (setq ispell-buffer-session-localwords nil)
 	 (message "%s Ispell dictionary set to %s"
 		  (if arg "Global" "Local")
-		  dict))))
+		  dict)
+         (run-hooks 'ispell-change-dictionary-hook))))
 
 (defun ispell-internal-change-dictionary ()
   "Update the dictionary and the personal dictionary used by Ispell.

@@ -1630,6 +1630,14 @@ When non-nil, watch whether the bookmark file has changed on disk.
 This library generates manual C++ template instantiations.  It should
 no longer be useful on modern compilers, which do this automatically.
 
+** Ispell
+
+---
+*** New hook 'ispell-change-dictionary-hook'.
+This runs after changing the dictionary and could be used to
+automatically spellcheck a buffer when changing language without
+needing to advice 'ispell-change-dictionary'.
+
 
 * New Modes and Packages in Emacs 27.1
 
