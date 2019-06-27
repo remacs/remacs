@@ -5852,7 +5852,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 		   spare the user annoying messages.  */
 		&& XFIXNUM (BVAR (b, save_length)) > 5000
 		&& (growth_factor * (BUF_Z (b) - BUF_BEG (b))
-		    < (growth_factor - 1) * XFIXNAT (BVAR (b, save_length)))
+		    < (growth_factor - 1) * XFIXNUM (BVAR (b, save_length)))
 		/* These messages are frequent and annoying for `*mail*'.  */
 		&& !NILP (BVAR (b, filename))
 		&& NILP (no_message))

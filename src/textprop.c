@@ -799,10 +799,10 @@ last valid position in OBJECT.  */)
       else
 	CHECK_FIXNUM_COERCE_MARKER (limit);
 
-      if (XFIXNAT (position) >= XFIXNUM (limit))
+      if (XFIXNUM (position) >= XFIXNUM (limit))
 	{
 	  position = limit;
-	  if (XFIXNAT (position) > ZV)
+	  if (XFIXNUM (position) > ZV)
 	    XSETFASTINT (position, ZV);
 	}
       else

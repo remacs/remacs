@@ -2385,18 +2385,18 @@ lookup_image (struct frame *f, Lisp_Object spec)
 #endif
 
 	  ascent = image_spec_value (spec, QCascent, NULL);
-	  if (RANGED_FIXNUMP (0, ascent, INT_MAX))
-	    img->ascent = XFIXNAT (ascent);
+	  if (FIXNUMP (ascent))
+	    img->ascent = XFIXNUM (ascent);
 	  else if (EQ (ascent, Qcenter))
 	    img->ascent = CENTERED_IMAGE_ASCENT;
 
 	  margin = image_spec_value (spec, QCmargin, NULL);
-	  if (RANGED_FIXNUMP (0, margin, INT_MAX))
-	    img->vmargin = img->hmargin = XFIXNAT (margin);
+	  if (FIXNUMP (margin))
+	    img->vmargin = img->hmargin = XFIXNUM (margin);
 	  else if (CONSP (margin))
 	    {
-	      img->hmargin = XFIXNAT (XCAR (margin));
-	      img->vmargin = XFIXNAT (XCDR (margin));
+	      img->hmargin = XFIXNUM (XCAR (margin));
+	      img->vmargin = XFIXNUM (XCDR (margin));
 	    }
 
 	  relief = image_spec_value (spec, QCrelief, NULL);
