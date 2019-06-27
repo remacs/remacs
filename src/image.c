@@ -873,7 +873,7 @@ struct image_keyword
   bool mandatory_p;
 
   /* Used to recognize duplicate keywords in a property list.  */
-  int count;
+  bool count;
 
   /* The value that was found.  */
   Lisp_Object value;
@@ -894,7 +894,7 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
   Lisp_Object plist;
 
   if (!IMAGEP (spec))
-    return 0;
+    return false;
 
   plist = XCDR (spec);
   while (CONSP (plist))
@@ -905,11 +905,11 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
       key = XCAR (plist);
       plist = XCDR (plist);
       if (!SYMBOLP (key))
-	return 0;
+	return false;
 
       /* There must follow a value.  */
       if (!CONSP (plist))
-	return 0;
+	return false;
       value = XCAR (plist);
       plist = XCDR (plist);
 
@@ -921,34 +921,34 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
       if (i == nkeywords)
 	continue;
 
-      /* Record that we recognized the keyword.  If a keywords
+      /* Record that we recognized the keyword.  If a keyword
 	 was found more than once, it's an error.  */
       keywords[i].value = value;
-      if (keywords[i].count > 1)
-	return 0;
-      ++keywords[i].count;
+      if (keywords[i].count)
+	return false;
+      keywords[i].count = true;
 
       /* Check type of value against allowed type.  */
       switch (keywords[i].type)
 	{
 	case IMAGE_STRING_VALUE:
 	  if (!STRINGP (value))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_STRING_OR_NIL_VALUE:
 	  if (!STRINGP (value) && !NILP (value))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_SYMBOL_VALUE:
 	  if (!SYMBOLP (value))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_POSITIVE_INTEGER_VALUE:
 	  if (! RANGED_FIXNUMP (1, value, INT_MAX))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_NON_NEGATIVE_INTEGER_VALUE_OR_PAIR:
@@ -958,21 +958,21 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 	      && RANGED_FIXNUMP (0, XCAR (value), INT_MAX)
 	      && RANGED_FIXNUMP (0, XCDR (value), INT_MAX))
 	    break;
-	  return 0;
+	  return false;
 
 	case IMAGE_ASCENT_VALUE:
 	  if (SYMBOLP (value) && EQ (value, Qcenter))
 	    break;
 	  else if (RANGED_FIXNUMP (0, value, 100))
 	    break;
-	  return 0;
+	  return false;
 
 	case IMAGE_NON_NEGATIVE_INTEGER_VALUE:
 	  /* Unlike the other integer-related cases, this one does not
 	     verify that VALUE fits in 'int'.  This is because callers
 	     want EMACS_INT.  */
 	  if (!FIXNUMP (value) || XFIXNUM (value) < 0)
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_DONT_CHECK_VALUE_TYPE:
@@ -982,21 +982,21 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 	  value = indirect_function (value);
 	  if (FUNCTIONP (value))
 	    break;
-	  return 0;
+	  return false;
 
 	case IMAGE_NUMBER_VALUE:
 	  if (! NUMBERP (value))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_INTEGER_VALUE:
 	  if (! TYPE_RANGED_FIXNUMP (int, value))
-	    return 0;
+	    return false;
 	  break;
 
 	case IMAGE_BOOL_VALUE:
 	  if (!NILP (value) && !EQ (value, Qt))
-	    return 0;
+	    return false;
 	  break;
 
 	default:
@@ -1005,13 +1005,13 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 	}
 
       if (EQ (key, QCtype) && !EQ (type, value))
-	return 0;
+	return false;
     }
 
   /* Check that all mandatory fields are present.  */
   for (i = 0; i < nkeywords; ++i)
-    if (keywords[i].mandatory_p && keywords[i].count == 0)
-      return 0;
+    if (keywords[i].count < keywords[i].mandatory_p)
+      return false;
 
   return NILP (plist);
 }
@@ -4175,7 +4175,7 @@ xpm_image_p (Lisp_Object object)
 	  && fmt[XPM_FILE].count + fmt[XPM_DATA].count == 1
 	  /* Either no `:color-symbols' or it's a list of conses
 	     whose car and cdr are strings.  */
-	  && (fmt[XPM_COLOR_SYMBOLS].count == 0
+	  && (! fmt[XPM_COLOR_SYMBOLS].count
 	      || xpm_valid_color_symbols_p (fmt[XPM_COLOR_SYMBOLS].value)));
 }
 
