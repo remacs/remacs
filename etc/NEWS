@@ -1790,6 +1790,11 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
+** defcustom now takes a :local keyword that can be either t or
+`permanent', which mean that the variable should be automatically
+buffer-local.  `permanent' also sets the variable's
+`permanent-local' property.
+
 +++
 ** The new macro `with-suppressed-warnings' can be used to suppress
 specific byte-compile warnings.

@@ -181,6 +181,11 @@ set to nil, as the value is no longer rogue."
 		 (put symbol 'risky-local-variable value))
 		((eq keyword :safe)
 		 (put symbol 'safe-local-variable value))
+                ((eq keyword :local)
+                 (when (memq value '(t permanent))
+                   (make-variable-buffer-local symbol))
+                 (when (eq value 'permanent)
+                   (put symbol 'permanent-local t)))
 		((eq keyword :type)
 		 (put symbol 'custom-type (purecopy value)))
 		((eq keyword :options)
@@ -251,6 +256,9 @@ The following keywords are meaningful:
 :risky	Set SYMBOL's `risky-local-variable' property to VALUE.
 :safe	Set SYMBOL's `safe-local-variable' property to VALUE.
         See Info node `(elisp) File Local Variables'.
+:local  If VALUE is t, mark SYMBOL as automatically buffer-local.
+        If VALUE is `permanent', also set SYMBOL's `permanent-local'
+        property to t.
 
 The following common keywords are also meaningful.
 
