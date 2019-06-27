@@ -2851,11 +2851,12 @@ cell interval, and the justification of the text in each cell.
 @findex table-generate-source
   @kbd{M-x table-generate-source} generates a table formatted for a
 specific markup language.  It asks for a language (which must be one
-of @code{html}, @code{latex}, or @code{cals}), a destination buffer in
-which to put the result, and a table caption, and then inserts the
-generated table into the specified buffer.  The default destination
-buffer is @code{table.@var{lang}}, where @var{lang} is the language
-you specified.
+of @code{html}, @code{latex}, @code{cals}, @code{wiki} or
+@code{mediawiki}), a destination buffer in which to put the result,
+and a table caption, and then inserts the generated table into the
+specified buffer.  The default destination buffer is
+@code{table.@var{lang}}, where @var{lang} is the language you
+specified.
 
 @node Two-Column
 @section Two-Column Editing

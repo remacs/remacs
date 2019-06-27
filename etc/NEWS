@@ -475,6 +475,10 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** table
+** `table-generate-source' and friends now support outputting wiki and
+mediawiki format tables.
+
 ---
 ** telnet-mode
 *** Reverting a buffer in `telnet-mode' will restart a closed
