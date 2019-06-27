@@ -183,6 +183,12 @@ loads files during completion of 'C-h f' and 'C-h v' according to
 
 ** emacsclient
 
+*** Previously, when an alternate editor is started
+(--alternate-editor/-a), and there was an --eval switch, these
+parameters were used as file names for the alternate editor.
+emacsclient will now instead start the alternate editor without these
+parameters.
+
 +++
 *** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
 The behavior is identical to 'EMACS_SERVER_FILE', in that the
