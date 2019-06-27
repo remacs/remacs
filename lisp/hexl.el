@@ -374,6 +374,8 @@ You can use \\[hexl-find-file] to visit a file in Hexl mode.
 			  "hexl-current-address")
 
     (if hexl-follow-ascii (hexl-follow-ascii-mode 1)))
+  (when global-font-lock-mode
+    (font-lock-ensure))
   (run-mode-hooks 'hexl-mode-hook))
 
 
