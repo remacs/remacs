@@ -2675,7 +2675,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 	  for (i = 0; i < len; i++)
 	    if (FIXNUMP (p->contents[i]))
 	      {
-		int j = XFIXNAT (p->contents[i]) & 0xffff;
+		int j = XFIXNUM (p->contents[i]) & 0xffff;
 		ip6[i] = ntohs (j);
 	      }
 	  sa->sa_family = family;

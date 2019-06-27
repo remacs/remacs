@@ -2928,7 +2928,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
   ptrdiff_t argnum = 0;
   /* Set ACCUM to VAL's value if it is a fixnum, otherwise to some
      ignored value to avoid using an uninitialized variable later.  */
-  intmax_t accum = XFIXNUM (val);
+  intmax_t accum = XFIXNUM_RAW (val);
 
   if (FIXNUMP (val))
     while (true)

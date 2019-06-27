@@ -2464,7 +2464,7 @@ w32_draw_glyph_string (struct glyph_string *s)
 		    = buffer_local_value (Qunderline_minimum_offset,
 					s->w->contents);
 		  if (FIXNUMP (val))
-		    minimum_offset = XFIXNAT (val);
+		    minimum_offset = max (0, XFIXNUM (val));
 		  else
 		    minimum_offset = 1;
 		  val = buffer_local_value (Qx_underline_at_descent_line,

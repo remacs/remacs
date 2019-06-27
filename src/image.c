@@ -2385,13 +2385,13 @@ lookup_image (struct frame *f, Lisp_Object spec)
 #endif
 
 	  ascent = image_spec_value (spec, QCascent, NULL);
-	  if (FIXNUMP (ascent))
+	  if (RANGED_FIXNUMP (0, ascent, INT_MAX))
 	    img->ascent = XFIXNAT (ascent);
 	  else if (EQ (ascent, Qcenter))
 	    img->ascent = CENTERED_IMAGE_ASCENT;
 
 	  margin = image_spec_value (spec, QCmargin, NULL);
-	  if (FIXNUMP (margin))
+	  if (RANGED_FIXNUMP (0, margin, INT_MAX))
 	    img->vmargin = img->hmargin = XFIXNAT (margin);
 	  else if (CONSP (margin))
 	    {

@@ -4720,7 +4720,7 @@ by calling `format-decode', which see.  */)
 	      Lisp_Object tem = XCAR (old_undo);
 	      if (CONSP (tem) && FIXNUMP (XCAR (tem))
 		  && FIXNUMP (XCDR (tem))
-		  && XFIXNAT (XCDR (tem)) == PT + old_inserted)
+		  && XFIXNUM (XCDR (tem)) == PT + old_inserted)
 		XSETCDR (tem, make_fixnum (PT + inserted));
 	    }
 	}
@@ -5392,7 +5392,7 @@ a_write (int desc, Lisp_Object string, ptrdiff_t pos,
       tem = Fcar_safe (Fcar (*annot));
       nextpos = pos - 1;
       if (FIXNUMP (tem))
-	nextpos = XFIXNAT (tem);
+	nextpos = XFIXNUM (tem);
 
       /* If there are no more annotations in this range,
 	 output the rest of the range all at once.  */
@@ -5850,7 +5850,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 		&& FIXNUMP (BVAR (b, save_length))
 		/* A short file is likely to change a large fraction;
 		   spare the user annoying messages.  */
-		&& XFIXNAT (BVAR (b, save_length)) > 5000
+		&& XFIXNUM (BVAR (b, save_length)) > 5000
 		&& (growth_factor * (BUF_Z (b) - BUF_BEG (b))
 		    < (growth_factor - 1) * XFIXNAT (BVAR (b, save_length)))
 		/* These messages are frequent and annoying for `*mail*'.  */

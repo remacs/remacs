@@ -799,7 +799,7 @@ last valid position in OBJECT.  */)
       else
 	CHECK_FIXNUM_COERCE_MARKER (limit);
 
-      if (XFIXNAT (position) >= XFIXNAT (limit))
+      if (XFIXNAT (position) >= XFIXNUM (limit))
 	{
 	  position = limit;
 	  if (XFIXNAT (position) > ZV)
@@ -881,16 +881,17 @@ first valid position in OBJECT.  */)
       else
 	CHECK_FIXNUM_COERCE_MARKER (limit);
 
-      if (XFIXNAT (position) <= XFIXNAT (limit))
+      if (XFIXNUM (position) <= XFIXNUM (limit))
 	{
 	  position = limit;
-	  if (XFIXNAT (position) < BEGV)
+	  if (XFIXNUM (position) < BEGV)
 	    XSETFASTINT (position, BEGV);
 	}
       else
 	{
 	  Lisp_Object initial_value
-	    = Fget_char_property (make_fixnum (XFIXNAT (position) - 1),
+	    = Fget_char_property (make_fixnum (XFIXNUM (position)
+					       - (0 <= XFIXNUM (position))),
 				  prop, object);
 
 	  while (true)
@@ -970,13 +971,13 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
   next = next_interval (i);
 
   while (next && intervals_equal (i, next)
-	 && (NILP (limit) || next->position < XFIXNAT (limit)))
+	 && (NILP (limit) || next->position < XFIXNUM (limit)))
     next = next_interval (next);
 
   if (!next
       || (next->position
 	  >= (FIXNUMP (limit)
-	      ? XFIXNAT (limit)
+	      ? XFIXNUM (limit)
 	      : (STRINGP (object)
 		 ? SCHARS (object)
 		 : BUF_ZV (XBUFFER (object))))))
@@ -1019,13 +1020,13 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
   next = next_interval (i);
   while (next
 	 && EQ (here_val, textget (next->plist, prop))
-	 && (NILP (limit) || next->position < XFIXNAT (limit)))
+	 && (NILP (limit) || next->position < XFIXNUM (limit)))
     next = next_interval (next);
 
   if (!next
       || (next->position
 	  >= (FIXNUMP (limit)
-	      ? XFIXNAT (limit)
+	      ? XFIXNUM (limit)
 	      : (STRINGP (object)
 		 ? SCHARS (object)
 		 : BUF_ZV (XBUFFER (object))))))
@@ -1069,13 +1070,13 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
   previous = previous_interval (i);
   while (previous && intervals_equal (previous, i)
 	 && (NILP (limit)
-	     || (previous->position + LENGTH (previous) > XFIXNAT (limit))))
+	     || (previous->position + LENGTH (previous) > XFIXNUM (limit))))
     previous = previous_interval (previous);
 
   if (!previous
       || (previous->position + LENGTH (previous)
 	  <= (FIXNUMP (limit)
-	      ? XFIXNAT (limit)
+	      ? XFIXNUM (limit)
 	      : (STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object))))))
     return limit;
   else
@@ -1122,13 +1123,13 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
   while (previous
 	 && EQ (here_val, textget (previous->plist, prop))
 	 && (NILP (limit)
-	     || (previous->position + LENGTH (previous) > XFIXNAT (limit))))
+	     || (previous->position + LENGTH (previous) > XFIXNUM (limit))))
     previous = previous_interval (previous);
 
   if (!previous
       || (previous->position + LENGTH (previous)
 	  <= (FIXNUMP (limit)
-	      ? XFIXNAT (limit)
+	      ? XFIXNUM (limit)
 	      : (STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object))))))
     return limit;
   else
@@ -1353,8 +1354,8 @@ set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
   /* If we want no properties for a whole string,
      get rid of its intervals.  */
   if (NILP (properties) && STRINGP (object)
-      && XFIXNAT (start) == 0
-      && XFIXNAT (end) == SCHARS (object))
+      && EQ (start, make_fixnum (0))
+      && EQ (end, make_fixnum (SCHARS (object))))
     {
       if (!string_intervals (object))
 	return Qnil;

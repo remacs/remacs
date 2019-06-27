@@ -414,12 +414,11 @@ typedef EMACS_INT Lisp_Word;
 #define lisp_h_XCDR(c) XCONS (c)->u.s.u.cdr
 #define lisp_h_XCONS(a) \
    (eassert (CONSP (a)), XUNTAG (a, Lisp_Cons, struct Lisp_Cons))
-#define lisp_h_XHASH(a) XUFIXNUM (a)
+#define lisp_h_XHASH(a) XUFIXNUM_RAW (a)
 #if USE_LSB_TAG
 # define lisp_h_make_fixnum(n) \
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
-# define lisp_h_XFIXNAT(a) XFIXNUM (a)
-# define lisp_h_XFIXNUM(a) (XLI (a) >> INTTYPEBITS)
+# define lisp_h_XFIXNUM_RAW(a) (XLI (a) >> INTTYPEBITS)
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
 #endif
 
@@ -460,8 +459,7 @@ typedef EMACS_INT Lisp_Word;
 # define XHASH(a) lisp_h_XHASH (a)
 # if USE_LSB_TAG
 #  define make_fixnum(n) lisp_h_make_fixnum (n)
-#  define XFIXNAT(a) lisp_h_XFIXNAT (a)
-#  define XFIXNUM(a) lisp_h_XFIXNUM (a)
+#  define XFIXNUM_RAW(a) lisp_h_XFIXNUM_RAW (a)
 #  define XTYPE(a) lisp_h_XTYPE (a)
 # endif
 #endif
@@ -1141,17 +1139,9 @@ INLINE Lisp_Object
 }
 
 INLINE EMACS_INT
-(XFIXNUM) (Lisp_Object a)
+(XFIXNUM_RAW) (Lisp_Object a)
 {
-  return lisp_h_XFIXNUM (a);
-}
-
-INLINE EMACS_INT
-(XFIXNAT) (Lisp_Object a)
-{
-  EMACS_INT n = lisp_h_XFIXNAT (a);
-  eassume (0 <= n);
-  return n;
+  return lisp_h_XFIXNUM_RAW (a);
 }
 
 #else /* ! USE_LSB_TAG */
@@ -1179,9 +1169,11 @@ make_fixnum (EMACS_INT n)
   return XIL (n);
 }
 
-/* Extract A's value as a signed integer.  */
+/* Extract A's value as a signed integer.  Unlike XFIXNUM, this works
+   on any Lisp object, although the resulting integer is useful only
+   for things like hashing when A is not a fixnum.  */
 INLINE EMACS_INT
-XFIXNUM (Lisp_Object a)
+XFIXNUM_RAW (Lisp_Object a)
 {
   EMACS_INT i = XLI (a);
   if (! USE_LSB_TAG)
@@ -1192,31 +1184,36 @@ XFIXNUM (Lisp_Object a)
   return i >> INTTYPEBITS;
 }
 
-/* Like XFIXNUM (A), but may be faster.  A must be nonnegative.
-   If ! USE_LSB_TAG, this takes advantage of the fact that Lisp
-   integers have zero-bits in their tags.  */
-INLINE EMACS_INT
-XFIXNAT (Lisp_Object a)
+#endif /* ! USE_LSB_TAG */
+
+INLINE bool
+(FIXNUMP) (Lisp_Object x)
 {
-  EMACS_INT int0 = Lisp_Int0;
-  EMACS_INT n = USE_LSB_TAG ? XFIXNUM (a) : XLI (a) - (int0 << VALBITS);
-  eassume (0 <= n);
-  return n;
+  return lisp_h_FIXNUMP (x);
 }
 
-#endif /* ! USE_LSB_TAG */
+INLINE EMACS_INT
+XFIXNUM (Lisp_Object a)
+{
+  eassume (FIXNUMP (a));
+  return XFIXNUM_RAW (a);
+}
 
 /* Extract A's value as an unsigned integer in the range 0..INTMASK.  */
 INLINE EMACS_UINT
-XUFIXNUM (Lisp_Object a)
+XUFIXNUM_RAW (Lisp_Object a)
 {
   EMACS_UINT i = XLI (a);
   return USE_LSB_TAG ? i >> INTTYPEBITS : i & INTMASK;
 }
+INLINE EMACS_UINT
+XUFIXNUM (Lisp_Object a)
+{
+  eassume (FIXNUMP (a));
+  return XUFIXNUM_RAW (a);
+}
 
-/* Return A's hash, which is in the range 0..INTMASK.  Although XHASH (A) ==
-   XUFIXNUM (A) currently, XUFIXNUM should be applied only to fixnums.  */
-
+/* Return A's hash, which is in the range 0..INTMASK.  */
 INLINE EMACS_INT
 (XHASH) (Lisp_Object a)
 {
@@ -1259,12 +1256,6 @@ make_lisp_ptr (void *ptr, enum Lisp_Type type)
   Lisp_Object a = TAG_PTR (type, ptr);
   eassert (TAGGEDP (a, type) && XUNTAG (a, type, char) == ptr);
   return a;
-}
-
-INLINE bool
-(FIXNUMP) (Lisp_Object x)
-{
-  return lisp_h_FIXNUMP (x);
 }
 
 #define XSETINT(a, b) ((a) = make_fixnum (b))
@@ -2832,6 +2823,16 @@ FIXNATP (Lisp_Object x)
 {
   return FIXNUMP (x) && 0 <= XFIXNUM (x);
 }
+
+/* Like XFIXNUM (A), but may be faster.  A must be nonnegative.  */
+INLINE EMACS_INT
+XFIXNAT (Lisp_Object a)
+{
+  eassume (FIXNATP (a));
+  EMACS_INT int0 = Lisp_Int0;
+  return USE_LSB_TAG ? XFIXNUM (a) : XLI (a) - (int0 << VALBITS);
+}
+
 INLINE bool
 NUMBERP (Lisp_Object x)
 {

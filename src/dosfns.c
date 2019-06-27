@@ -72,7 +72,7 @@ REGISTERS should be a vector produced by `make-register' and
   if (no < 0 || no > 0xff || ASIZE (registers) != 8)
     return Qnil;
   for (i = 0; i < 8; i++)
-    CHECK_FIXNUM (AREF (registers, i));
+    CHECK_FIXNAT (AREF (registers, i));
 
   inregs.x.ax    = (unsigned long) XFIXNAT (AREF (registers, 0));
   inregs.x.bx    = (unsigned long) XFIXNAT (AREF (registers, 1));
@@ -139,7 +139,7 @@ DEFUN ("msdos-memput", Fdos_memput, Sdos_memput, 2, 2, 0,
 
   for (i = 0; i < len; i++)
     {
-      CHECK_FIXNUM (AREF (vector, i));
+      CHECK_FIXNAT (AREF (vector, i));
       buf[i] = (unsigned char) XFIXNAT (AREF (vector, i)) & 0xFF;
     }
 

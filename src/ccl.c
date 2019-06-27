@@ -2064,9 +2064,9 @@ usage: (ccl-execute-on-string CCL-PROGRAM STATUS STRING &optional CONTINUE UNIBY
     }
   if (FIXNUMP (AREF (status, i)))
     {
-      i = XFIXNAT (AREF (status, 8));
-      if (ccl.ic < i && i < ccl.size)
-	ccl.ic = i;
+      EMACS_INT ic = XFIXNUM (AREF (status, i));
+      if (ccl.ic < ic && ic < ccl.size)
+	ccl.ic = ic;
     }
 
   buf_magnification = ccl.buf_magnification ? ccl.buf_magnification : 1;
