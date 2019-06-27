@@ -980,7 +980,7 @@ This minor mode only takes effect if Semantic is active and
 
 When enabled, Emacs displays a list of possible completions at
 idle time.  The method for displaying completions is given by
-`semantic-complete-inline-analyzer-idle-displayor-class'; the
+`semantic-complete-inline-analyzer-idle-displayer-class'; the
 default is to show completions inline.
 
 While a completion is displayed, RET accepts the completion; M-n
