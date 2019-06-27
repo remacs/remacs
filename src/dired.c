@@ -41,6 +41,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 
+#ifdef __CYGWIN__
+# undef O_PATH /* Buggy in Cygwin 3.0.0 through 3.0.7.  */
+#endif
+
 #ifdef MSDOS
 #include "msdos.h"	/* for fstatat */
 #endif
