@@ -72,16 +72,16 @@ REGISTERS should be a vector produced by `make-register' and
   if (no < 0 || no > 0xff || ASIZE (registers) != 8)
     return Qnil;
   for (i = 0; i < 8; i++)
-    CHECK_FIXNAT (AREF (registers, i));
+    CHECK_FIXNUM (AREF (registers, i));
 
-  inregs.x.ax    = (unsigned long) XFIXNAT (AREF (registers, 0));
-  inregs.x.bx    = (unsigned long) XFIXNAT (AREF (registers, 1));
-  inregs.x.cx    = (unsigned long) XFIXNAT (AREF (registers, 2));
-  inregs.x.dx    = (unsigned long) XFIXNAT (AREF (registers, 3));
-  inregs.x.si    = (unsigned long) XFIXNAT (AREF (registers, 4));
-  inregs.x.di    = (unsigned long) XFIXNAT (AREF (registers, 5));
-  inregs.x.cflag = (unsigned long) XFIXNAT (AREF (registers, 6));
-  inregs.x.flags = (unsigned long) XFIXNAT (AREF (registers, 7));
+  inregs.x.ax    = (unsigned long) XFIXNUM (AREF (registers, 0));
+  inregs.x.bx    = (unsigned long) XFIXNUM (AREF (registers, 1));
+  inregs.x.cx    = (unsigned long) XFIXNUM (AREF (registers, 2));
+  inregs.x.dx    = (unsigned long) XFIXNUM (AREF (registers, 3));
+  inregs.x.si    = (unsigned long) XFIXNUM (AREF (registers, 4));
+  inregs.x.di    = (unsigned long) XFIXNUM (AREF (registers, 5));
+  inregs.x.cflag = (unsigned long) XFIXNUM (AREF (registers, 6));
+  inregs.x.flags = (unsigned long) XFIXNUM (AREF (registers, 7));
 
   int86 (no, &inregs, &outregs);
 
@@ -139,8 +139,8 @@ DEFUN ("msdos-memput", Fdos_memput, Sdos_memput, 2, 2, 0,
 
   for (i = 0; i < len; i++)
     {
-      CHECK_FIXNAT (AREF (vector, i));
-      buf[i] = (unsigned char) XFIXNAT (AREF (vector, i)) & 0xFF;
+      CHECK_FIXNUM (AREF (vector, i));
+      buf[i] = (unsigned char) XFIXNUM (AREF (vector, i)) & 0xFF;
     }
 
   dosmemput (buf, len, offs);

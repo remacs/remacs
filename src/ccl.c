@@ -2062,9 +2062,9 @@ usage: (ccl-execute-on-string CCL-PROGRAM STATUS STRING &optional CONTINUE UNIBY
       if (TYPE_RANGED_FIXNUMP (int, AREF (status, i)))
 	ccl.reg[i] = XFIXNUM (AREF (status, i));
     }
-  if (FIXNUMP (AREF (status, i)))
+  if (FIXNUMP (AREF (status, 8)))
     {
-      EMACS_INT ic = XFIXNUM (AREF (status, i));
+      EMACS_INT ic = XFIXNUM (AREF (status, 8));
       if (ccl.ic < ic && ic < ccl.size)
 	ccl.ic = ic;
     }

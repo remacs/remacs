@@ -1195,7 +1195,7 @@ INLINE bool
 INLINE EMACS_INT
 XFIXNUM (Lisp_Object a)
 {
-  eassume (FIXNUMP (a));
+  eassert (FIXNUMP (a));
   return XFIXNUM_RAW (a);
 }
 
@@ -1209,7 +1209,7 @@ XUFIXNUM_RAW (Lisp_Object a)
 INLINE EMACS_UINT
 XUFIXNUM (Lisp_Object a)
 {
-  eassume (FIXNUMP (a));
+  eassert (FIXNUMP (a));
   return XUFIXNUM_RAW (a);
 }
 
@@ -2828,9 +2828,11 @@ FIXNATP (Lisp_Object x)
 INLINE EMACS_INT
 XFIXNAT (Lisp_Object a)
 {
-  eassume (FIXNATP (a));
+  eassert (FIXNUMP (a));
   EMACS_INT int0 = Lisp_Int0;
-  return USE_LSB_TAG ? XFIXNUM (a) : XLI (a) - (int0 << VALBITS);
+  EMACS_INT result = USE_LSB_TAG ? XFIXNUM (a) : XLI (a) - (int0 << VALBITS);
+  eassume (0 <= result);
+  return result;
 }
 
 INLINE bool
