@@ -404,7 +404,6 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp,
               tail = XCDR (tail);
               CHECK_CONS (tail);
               value = XCAR (tail);
-              if (EQ (tail, li.tortoise)) circular_list (lisp);
             }
           else
             {
