@@ -869,61 +869,25 @@ Each line is tagged with the revision number, which has a `help-echo'
 property containing author and date information."
   (apply #'vc-bzr-command "annotate" buffer 'async file "--long" "--all"
          (append (vc-switches 'bzr 'annotate)
-		 (if revision (list "-r" revision))))
-  (let ((table (make-hash-table :test 'equal)))
-    (set-process-filter
-     (get-buffer-process buffer)
-     (lambda (proc string)
-       (when (process-buffer proc)
-         (with-current-buffer (process-buffer proc)
-           (setq string (concat (process-get proc :vc-left-over) string))
-           ;; Eg: 102020      Gnus developers          20101020 | regexp."
-           ;; As of bzr 2.2.2, no email address in whoami (which can
-           ;; lead to spaces in the author field) is allowed but discouraged.
-           ;; See bug#7792.
-           (while (string-match "^\\( *[0-9.]+ *\\) \\(.+?\\) +\\([0-9]\\{8\\}\\)\\( |.*\n\\)" string)
-             (let* ((rev (match-string 1 string))
-                    (author (match-string 2 string))
-                    (date (match-string 3 string))
-                    (key (substring string (match-beginning 0)
-                                    (match-beginning 4)))
-                    (line (match-string 4 string))
-                    (tag (gethash key table))
-                    (inhibit-read-only t))
-               (setq string (substring string (match-end 0)))
-	       (unless tag
-		 (setq tag
-		       (propertize
-			(format "%s %-7.7s" rev author)
-			'help-echo (format "Revision: %d, author: %s, date: %s"
-					   (string-to-number rev)
-					   author date)
-			'mouse-face 'highlight))
-                 (puthash key tag table))
-               (goto-char (process-mark proc))
-               (insert tag line)
-               (move-marker (process-mark proc) (point))))
-           (process-put proc :vc-left-over string)))))))
+		 (if revision (list "-r" revision)))))
 
 (declare-function vc-annotate-convert-time "vc-annotate" (&optional time))
 
 (defun vc-bzr-annotate-time ()
-  (when (re-search-forward "^ *[0-9.]+ +.+? +|" nil t)
-    (let ((prop (get-text-property (line-beginning-position) 'help-echo)))
-      (string-match "[0-9]+\\'" prop)
-      (let ((str (match-string-no-properties 0 prop)))
+  (when (re-search-forward "^[0-9.]+ +[^\n ]* +\\([0-9]\\{8\\}\\) |" nil t)
+    (let ((str (match-string-no-properties 1)))
       (vc-annotate-convert-time
        (encode-time 0 0 0
-                      (string-to-number (substring str 6 8))
-                      (string-to-number (substring str 4 6))
-                      (string-to-number (substring str 0 4))))))))
+                    (string-to-number (substring str 6 8))
+                    (string-to-number (substring str 4 6))
+                    (string-to-number (substring str 0 4)))))))
 
 (defun vc-bzr-annotate-extract-revision-at-line ()
   "Return revision for current line of annotation buffer, or nil.
 Return nil if current line isn't annotated."
   (save-excursion
     (beginning-of-line)
-    (if (looking-at "^ *\\([0-9.]+\\) +.* +|")
+    (if (looking-at "^\\([0-9.]+\\) +[^\n ]* +\\([0-9]\\{8\\}\\) |")
         (match-string-no-properties 1))))
 
 (defun vc-bzr-command-discarding-stderr (command &rest args)
