@@ -1860,7 +1860,7 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 
 ;; We must make it a defun, because it is used earlier already.
 (defun tramp-user-error (vec-or-proc fmt-string &rest arguments)
-  "Signal a user error."
+  "Signal a user error (or \"pilot error\")."
   (unwind-protect
       (apply
        #'tramp-error vec-or-proc

@@ -325,31 +325,30 @@ This function accepts any number of arguments, but ignores them."
 ;; Signal a compile-error if the first arg is missing.
 (defun error (&rest args)
   "Signal an error, making a message by passing ARGS to `format-message'.
+Errors cause entry to the debugger when `debug-on-error' is non-nil.
+This can be overridden by `debug-ignored-errors'.
+
+To signal with MESSAGE without interpreting format characters
+like `%', `\\=`' and `\\='', use (error \"%s\" MESSAGE).
 In Emacs, the convention is that error messages start with a capital
 letter but *do not* end with a period.  Please follow this convention
-for the sake of consistency.
-Errors cause entry to the debugger when `debug-on-error' is
-non-nil.  This can be overridden by `debug-ignored-errors'.
-
-Note: (error \"%s\" VALUE) makes the message VALUE without
-interpreting format characters like `%', `\\=`', and `\\=''."
+for the sake of consistency."
   (declare (advertised-calling-convention (string &rest args) "23.1"))
   (signal 'error (list (apply #'format-message args))))
 
 (defun user-error (format &rest args)
   "Signal a user error, making a message by passing ARGS to `format-message'.
-This is just like `error' except that `user-error's are expected to be the
-result of an incorrect manipulation on the part of the user, rather than the
-result of an actual problem.
-In Emacs, the convention is that error messages start with a capital
-letter but *do not* end with a period.  Please follow this convention
-for the sake of consistency.
+This is like `error' except that a user error (or \"pilot error\") comes
+from an incorrect manipulation by the user, not from an actual problem.
 In contrast with other errors, user errors normally do not cause
 entry to the debugger, even when `debug-on-error' is non-nil.
 This can be overridden by `debug-ignored-errors'.
 
-Note: (user-error \"%s\" VALUE) makes the message VALUE without
-interpreting format characters like `%', `\\=`', and `\\=''."
+To signal with MESSAGE without interpreting format characters
+like `%', `\\=`' and `\\='', use (error \"%s\" MESSAGE).
+In Emacs, the convention is that error messages start with a capital
+letter but *do not* end with a period.  Please follow this convention
+for the sake of consistency."
   (signal 'user-error (list (apply #'format-message format args))))
 
 (defun define-error (name message &optional parent)
