@@ -475,6 +475,10 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
++++
+** winner
+*** A new variable, `winner-boring-buffers-regexp', has been added.
+
 ** table
 ** `table-generate-source' and friends now support outputting wiki and
 mediawiki format tables.

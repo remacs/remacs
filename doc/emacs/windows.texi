@@ -538,6 +538,7 @@ Reference Manual}), and cannot exceed the size of the containing frame.
 @vindex winner-dont-bind-my-keys
 @vindex winner-ring-size
 @vindex winner-boring-buffers
+@vindex winner-boring-buffers-regexp
 @cindex Winner mode
 @cindex mode, Winner
 @cindex undoing window configuration changes
@@ -556,7 +557,8 @@ non-@code{nil} value.  By default, Winner mode stores a maximum of 200
 window configurations per frame, but you can change that by modifying
 the variable @code{winner-ring-size}.  If there are some buffers whose
 windows you wouldn't want Winner mode to restore, add their names to
-the list variable @code{winner-boring-buffers}.
+the list variable @code{winner-boring-buffers} or to the regexp
+@code{winner-boring-buffers-regexp}.
 
   Follow mode (@kbd{M-x follow-mode}) synchronizes several windows on
 the same buffer so that they always display adjacent sections of that
