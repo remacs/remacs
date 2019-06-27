@@ -181,7 +181,7 @@ complex processing.")
 	 (setq refill-doit nil)))
       ((or 'quoted-insert 'fill-paragraph 'fill-region) nil)
       ((or 'newline 'newline-and-indent 'open-line 'indent-new-comment-line
-           'reindent-then-newline-and-indent)
+           'default-indent-new-line 'reindent-then-newline-and-indent)
        ;; Don't zap what was just inserted.
        (save-excursion
 	 (beginning-of-line)		; for newline-and-indent

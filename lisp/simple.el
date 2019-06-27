@@ -7318,7 +7318,7 @@ indicating whether it should use soft newlines.")
 
 (defun default-indent-new-line (&optional soft)
   "Break line at point and indent.
-If a comment syntax is defined, call `comment-indent-new-line'.
+If a comment syntax is defined, call `comment-line-break-function'.
 
 The inserted newline is marked hard if variable `use-hard-newlines' is true,
 unless optional argument SOFT is non-nil."
