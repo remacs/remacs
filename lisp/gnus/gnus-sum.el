@@ -9434,6 +9434,19 @@ With optional ARG, move across that many fields."
       (goto-char (point-max)))
     (widget-backward arg)))
 
+(defun gnus-collect-urls ()
+  "Return the list of URLs in the buffer after (point)."
+  (let ((pt (point)) urls)
+    (while (progn (widget-forward 1)
+		  ;; `widget-forward' wraps around to top of buffer.
+		  (> (point) pt))
+      (setq pt (point))
+      (when-let ((u (or (get-text-property (point) 'shr-url)
+			(get-text-property (point) 'gnus-string))))
+	(when (string-match-p "\\`[[:alpha:]]+://" u)
+	  (push u urls))))
+    (nreverse (delete-dups urls))))
+
 (defun gnus-summary-browse-url (arg)
   "Scan the current article body for links, and offer to browse them.
 With prefix ARG, also collect links from message headers.
@@ -9441,7 +9454,7 @@ With prefix ARG, also collect links from message headers.
 Links are opened using `browse-url'.  If only one link is found,
 browse that directly, otherwise use completion to select a link."
   (interactive "P")
-  (let (pt urls target)
+  (let (urls target)
     (gnus-summary-select-article)
     (gnus-configure-windows 'article)
     (gnus-with-article-buffer
@@ -9450,24 +9463,12 @@ browse that directly, otherwise use completion to select a link."
 	(article-goto-body)
 	;; Back up a char, in case body starts with a widget.
 	(backward-char))
-      (setq pt (point))
-      (while (progn (widget-forward 1)
-		    ;; `widget-forward' wraps around to top of
-		    ;; buffer.
-		    (> (point) pt))
-	(setq pt (point))
-	(when-let ((u (or (get-text-property (point) 'shr-url)
-			  (get-text-property (point) 'gnus-string))))
-	  (when (string-match-p "\\`[[:alpha:]]+://" u)
-	    (push u urls))))
+      (setq urls (gnus-collect-urls))
       (setq target
 	    (cond ((= (length urls) 1)
 		   (car urls))
 		  ((> (length urls) 1)
-		   (completing-read
-		    "URL to browse: "
-		    (setq urls (nreverse (delete-dups urls)))
-		    nil t))))
+		   (completing-read "URL to browse: " urls nil t))))
       (if target
 	  (browse-url target)
 	(message "No URLs found.")))))
