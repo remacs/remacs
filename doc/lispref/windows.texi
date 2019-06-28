@@ -3779,7 +3779,7 @@ should be a list of the same form as that returned by
 @code{window-prev-buffers}.
 @end defun
 
-In addition, each buffer maintains a list of @dfn{next buffers}, which
+In addition, each window maintains a list of @dfn{next buffers}, which
 is a list of buffers re-shown by @code{switch-to-prev-buffer} (see
 below).  This list is mainly used by @code{switch-to-prev-buffer} and
 @code{switch-to-next-buffer} for choosing buffers to switch to.
