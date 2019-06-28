@@ -141,8 +141,15 @@ that was fetched."
 	      (cancel-timer 'gnus-async-timer)))
 	  (setq gnus-async-timer
 		(run-with-idle-timer
-		 0.1 nil #'gnus-async-prefetch-article
-		 group (gnus-data-number next) summary)))))))
+		 0.1 nil
+		 (lambda ()
+		   ;; When running from a timer, `C-g' is inhibited.
+		   ;; But the prefetch action may (when there's a
+		   ;; network problem or the like) hang (or take a
+		   ;; long time), so allow quitting anyway.
+		   (let ((inhibit-quit nil))
+		     (gnus-async-prefetch-article
+		      group (gnus-data-number next) summary))))))))))
 
 (defun gnus-async-prefetch-article (group article summary &optional next)
   "Possibly prefetch several articles starting with ARTICLE."
