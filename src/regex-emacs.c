@@ -441,7 +441,8 @@ extract_number_and_incr (re_char **source)
 static int regex_emacs_debug = -100000;
 
 # define DEBUG_STATEMENT(e) e
-# define DEBUG_PRINT(...) if (regex_emacs_debug > 0) printf (__VA_ARGS__)
+# define DEBUG_PRINT(...)                                       \
+  if (regex_emacs_debug > 0) fprintf (stderr, __VA_ARGS__)
 # define DEBUG_COMPILES_ARGUMENTS
 # define DEBUG_PRINT_COMPILED_PATTERN(p, s, e)				\
   if (regex_emacs_debug > 0) print_partial_compiled_pattern (s, e)
@@ -462,7 +463,7 @@ print_fastmap (char *fastmap)
       if (fastmap[i++])
 	{
 	  was_a_range = false;
-	  putchar (i - 1);
+	  fputc (i - 1, stderr);
 	  while (i < (1 << BYTEWIDTH)  &&  fastmap[i])
 	    {
 	      was_a_range = true;
@@ -470,12 +471,12 @@ print_fastmap (char *fastmap)
 	    }
 	  if (was_a_range)
 	    {
-	      printf ("-");
-	      putchar (i - 1);
+	      fprintf (stderr, "-");
+	      fputc (i - 1, stderr);
 	    }
 	}
     }
-  putchar ('\n');
+  fputc ('\n', stderr);
 }
 
 
@@ -733,19 +734,19 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   re_char *buffer = bufp->buffer;
 
   print_partial_compiled_pattern (buffer, buffer + bufp->used);
-  printf ("%tu bytes used/%tu bytes allocated.\n",
-	  bufp->used, bufp->allocated);
+  fprintf (stderr, "%tu bytes used/%tu bytes allocated.\n",
+           bufp->used, bufp->allocated);
 
   if (bufp->fastmap_accurate && bufp->fastmap)
     {
-      printf ("fastmap: ");
+      fprintf (stderr, "fastmap: ");
       print_fastmap (bufp->fastmap);
     }
 
-  printf ("re_nsub: %tu\t", bufp->re_nsub);
-  printf ("regs_alloc: %d\t", bufp->regs_allocated);
-  printf ("can_be_null: %d\t", bufp->can_be_null);
-  fflush (stdout);
+  fprintf (stderr, "re_nsub: %tu\t", bufp->re_nsub);
+  fprintf (stderr, "regs_alloc: %d\t", bufp->regs_allocated);
+  fprintf (stderr, "can_be_null: %d\t", bufp->can_be_null);
+  fflush (stderr);
   /* Perhaps we should print the translate table?  */
 }
 
@@ -755,16 +756,16 @@ print_double_string (re_char *where, re_char *string1, ptrdiff_t size1,
 		     re_char *string2, ptrdiff_t size2)
 {
   if (where == NULL)
-    printf ("(null)");
+    fprintf (stderr, "(null)");
   else
     {
       if (FIRST_STRING_P (where))
 	{
-	  fwrite_unlocked (where, 1, string1 + size1 - where, stdout);
+	  fwrite_unlocked (where, 1, string1 + size1 - where, stderr);
 	  where = string2;
 	}
 
-      fwrite_unlocked (where, 1, string2 + size2 - where, stdout);
+      fwrite_unlocked (where, 1, string2 + size2 - where, stderr);
     }
 }
 
@@ -1734,8 +1735,8 @@ regex_compile (re_char *pattern, ptrdiff_t size,
   if (regex_emacs_debug > 0)
     {
       for (ptrdiff_t debug_count = 0; debug_count < size; debug_count++)
-	putchar (pattern[debug_count]);
-      putchar ('\n');
+	fputc (pattern[debug_count], stderr);
+      fputc ('\n', stderr);
     }
 #endif
 
