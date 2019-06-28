@@ -232,7 +232,6 @@ absolute file names."
 	  (file-times (tramp-compat-file-attribute-modification-time
 		       (file-attributes filename)))
 	  (file-modes (tramp-default-file-modes filename))
-	  ;; `file-extended-attributes' exists since Emacs 24.4.
 	  (attributes (and preserve-extended-attributes
 			   (apply #'file-extended-attributes (list filename))))
 	  (sudoedit-operation
@@ -284,7 +283,6 @@ absolute file names."
 
 	;; Handle `preserve-extended-attributes'.  We ignore possible
 	;; errors, because ACL strings could be incompatible.
-	;; `set-file-extended-attributes' exists since Emacs 24.4.
 	(when attributes
 	  (ignore-errors
 	    (apply #'set-file-extended-attributes (list newname attributes))))
@@ -660,8 +658,7 @@ component is used as the target of the symlink."
   (with-parsed-tramp-file-name (expand-file-name filename) nil
     (when (and (stringp acl-string) (tramp-sudoedit-remote-acl-p v))
       ;; Massage `acl-string'.
-      (setq acl-string
-	    (mapconcat #'identity (split-string acl-string "\n" 'omit) ","))
+      (setq acl-string (string-join (split-string acl-string "\n" 'omit) ","))
       (prog1
 	  (tramp-sudoedit-send-command
 	   v "setfacl" "-m"
@@ -830,7 +827,7 @@ in case of error, t otherwise."
 	   (tramp-verbose (if (= tramp-verbose 3) 2 tramp-verbose))
 	   ;; We do not want to save the password.
 	   auth-source-save-behavior)
-      (tramp-message vec 6 "%s" (mapconcat #'identity (process-command p) " "))
+      (tramp-message vec 6 "%s" (string-join (process-command p) " "))
       ;; Avoid process status message in output buffer.
       (set-process-sentinel p #'ignore)
       (process-put p 'vector vec)

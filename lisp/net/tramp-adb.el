@@ -257,17 +257,15 @@ pass to the OPERATION."
 	      (setq thisstep (pop steps))
 	      (tramp-message
 	       v 5 "Check %s"
-	       (mapconcat #'identity
-			  (append '("") (reverse result) (list thisstep))
-			  "/"))
+	       (string-join
+		(append '("") (reverse result) (list thisstep)) "/"))
 	      (setq symlink-target
 		    (tramp-compat-file-attribute-type
 		     (file-attributes
 		      (tramp-make-tramp-file-name
-		       v (mapconcat #'identity
-				    (append
-				     '("") (reverse result) (list thisstep))
-				    "/")))))
+		       v
+		       (string-join
+			(append '("") (reverse result) (list thisstep)) "/")))))
 	      (cond ((string= "." thisstep)
 		     (tramp-message v 5 "Ignoring step `.'"))
 		    ((string= ".." thisstep)
@@ -302,9 +300,9 @@ pass to the OPERATION."
 	    ;; Combine list to form string.
 	    (setq result
 		  (if result
-		      (mapconcat #'identity (cons "" result) "/")
+		      (string-join (cons "" result) "/")
 		    "/"))
-	    (when (and is-dir (or (string= "" result)
+	    (when (and is-dir (or (string-empty-p result)
 				  (not (string= (substring result -1) "/"))))
 	      (setq result (concat result "/"))))
 
@@ -479,7 +477,7 @@ Emacs dired can't find files."
 		 #'tramp-adb-ls-output-time-less-p
 	       #'tramp-adb-ls-output-name-less-p))))
       (delete-region (point-min) (point-max))
-      (insert "  " (mapconcat #'identity sorted-lines "\n  ")))
+      (insert "  " (string-join sorted-lines "\n  ")))
     ;; Add final newline.
     (goto-char (point-max))
     (unless (bolp) (insert "\n"))))
@@ -1232,7 +1230,7 @@ connection if a previous connection has died for some reason."
 		 (prompt (md5 (concat (prin1-to-string process-environment)
 				      (current-time-string)))))
 	    (tramp-message
-	     vec 6 "%s" (mapconcat #'identity (process-command p) " "))
+	     vec 6 "%s" (string-join (process-command p) " "))
 	    ;; Wait for initial prompt.  On some devices, it needs an
 	    ;; initial RET, in order to get it.
             (sleep-for 0.1)
@@ -1300,16 +1298,16 @@ connection if a previous connection has died for some reason."
 
 ;; `connection-local-set-profile-variables' and
 ;; `connection-local-set-profiles' exists since Emacs 26.1.
-(eval-after-load "shell"
-  '(progn
-     (tramp-compat-funcall
-      'connection-local-set-profile-variables
-      'tramp-adb-connection-local-default-profile
-      tramp-adb-connection-local-default-profile)
-     (tramp-compat-funcall
-      'connection-local-set-profiles
-      `(:application tramp :protocol ,tramp-adb-method)
-      'tramp-adb-connection-local-default-profile)))
+(with-eval-after-load 'shell
+  (progn
+    (tramp-compat-funcall
+     'connection-local-set-profile-variables
+     'tramp-adb-connection-local-default-profile
+     tramp-adb-connection-local-default-profile)
+    (tramp-compat-funcall
+     'connection-local-set-profiles
+     `(:application tramp :protocol ,tramp-adb-method)
+     'tramp-adb-connection-local-default-profile)))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

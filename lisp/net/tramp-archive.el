@@ -372,14 +372,14 @@ pass to the OPERATION."
 ;; `tramp-archive-file-name-handler' must be placed before `url-file-handler'.
 (when url-handler-mode (tramp-register-file-name-handlers))
 
-(eval-after-load 'url-handler
-  '(progn
-     (add-hook 'url-handler-mode-hook #'tramp-register-file-name-handlers)
-     (add-hook
-      'tramp-archive-unload-hook
-      (lambda ()
-	(remove-hook
-	 'url-handler-mode-hook #'tramp-register-file-name-handlers)))))
+(with-eval-after-load 'url-handler
+  (progn
+    (add-hook 'url-handler-mode-hook #'tramp-register-file-name-handlers)
+    (add-hook
+     'tramp-archive-unload-hook
+     (lambda ()
+       (remove-hook
+	'url-handler-mode-hook #'tramp-register-file-name-handlers)))))
 
 
 ;; File name conversions.

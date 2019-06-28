@@ -8,7 +8,7 @@
 ;; Keywords: comm, processes
 ;; Package: tramp
 ;; Version: 2.4.2-pre
-;; Package-Requires: ((emacs "24.1"))
+;; Package-Requires: ((emacs "24.4"))
 ;; URL: https://savannah.gnu.org/projects/tramp
 
 ;; This file is part of GNU Emacs.
@@ -572,10 +572,7 @@ This regexp must match both `tramp-initial-end-of-output' and
   :type 'regexp)
 
 (defcustom tramp-password-prompt-regexp
-  (format "^.*\\(%s\\).*:\^@? *"
-	  ;; `password-word-equivalents' has been introduced with Emacs 24.4.
-          (regexp-opt (or (bound-and-true-p password-word-equivalents)
-                          '("password" "passphrase"))))
+  (format "^.*\\(%s\\).*:\^@? *" (regexp-opt password-word-equivalents))
   "Regexp matching password-like prompts.
 The regexp should match at end of buffer.
 
@@ -1862,10 +1859,7 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 (defun tramp-user-error (vec-or-proc fmt-string &rest arguments)
   "Signal a user error (or \"pilot error\")."
   (unwind-protect
-      (apply
-       #'tramp-error vec-or-proc
-       ;; `user-error' has appeared in Emacs 24.3.
-       (if (fboundp 'user-error) 'user-error 'error) fmt-string arguments)
+      (apply #'tramp-error vec-or-proc 'user-error fmt-string arguments)
     ;; Save exit.
     (when (and tramp-message-show-message
 	       (not (zerop tramp-verbose))
@@ -2103,21 +2097,7 @@ value of `default-file-modes', without execute permissions."
 (defun tramp-replace-environment-variables (filename)
  "Replace environment variables in FILENAME.
 Return the string with the replaced variables."
- (or (ignore-errors
-       ;; Optional arg has been introduced with Emacs 24.4.
-       (tramp-compat-funcall 'substitute-env-vars filename 'only-defined))
-     ;; We need an own implementation.
-     (save-match-data
-       (let ((idx (string-match "\\$\\(\\w+\\)" filename)))
-	 ;; `$' is coded as `$$'.
-	 (when (and idx
-		    (or (zerop idx) (not (eq ?$ (aref filename (1- idx)))))
-		    (getenv (match-string 1 filename)))
-	   (setq filename
-		 (replace-match
-		  (substitute-in-file-name (match-string 0 filename))
-		  t nil filename)))
-	 filename))))
+ (substitute-env-vars filename 'only-defined))
 
 (defun tramp-find-file-name-coding-system-alist (filename tmpname)
   "Like `find-operation-coding-system' for Tramp filenames.
@@ -4149,31 +4129,34 @@ Erase echoed commands if exists."
 Expects the output of PROC to be sent to the current buffer.  Returns
 the string that matched, or nil.  Waits indefinitely if TIMEOUT is
 nil."
-  (with-current-buffer (process-buffer proc)
-    (let ((found (tramp-check-for-regexp proc regexp)))
-      (cond (timeout
-	     (with-timeout (timeout)
-	       (while (not found)
-		 (tramp-accept-process-output proc)
-		 (unless (process-live-p proc)
-		   (tramp-error-with-buffer
-		    nil proc 'file-error "Process has died"))
-		 (setq found (tramp-check-for-regexp proc regexp)))))
-	    (t
+  (let ((found (tramp-check-for-regexp proc regexp)))
+    (cond (timeout
+	   (with-timeout (timeout)
 	     (while (not found)
 	       (tramp-accept-process-output proc)
 	       (unless (process-live-p proc)
 		 (tramp-error-with-buffer
 		  nil proc 'file-error "Process has died"))
 	       (setq found (tramp-check-for-regexp proc regexp)))))
-      (tramp-message proc 6 "\n%s" (buffer-string))
-      (unless found
-	(if timeout
-	    (tramp-error
-	     proc 'file-error "[[Regexp `%s' not found in %d secs]]"
-	     regexp timeout)
-	  (tramp-error proc 'file-error "[[Regexp `%s' not found]]" regexp)))
-      found)))
+	  (t
+	   (while (not found)
+	     (tramp-accept-process-output proc)
+	     (unless (process-live-p proc)
+	       (tramp-error-with-buffer
+		nil proc 'file-error "Process has died"))
+	     (setq found (tramp-check-for-regexp proc regexp)))))
+    ;; The process could have timed out, for example due to session
+    ;; timeout of sudo.  The process buffer does not exist any longer then.
+    (ignore-errors
+      (with-current-buffer (process-buffer proc)
+	(tramp-message proc 6 "\n%s" (buffer-string))))
+    (unless found
+      (if timeout
+	  (tramp-error
+	   proc 'file-error "[[Regexp `%s' not found in %d secs]]"
+	   regexp timeout)
+	(tramp-error proc 'file-error "[[Regexp `%s' not found]]" regexp)))
+    found))
 
 ;; It seems that Tru64 Unix does not like it if long strings are sent
 ;; to it in one go.  (This happens when sending the Perl
@@ -4200,7 +4183,7 @@ the remote host use line-endings as defined in the variable
       (setq string
 	    (mapconcat
 	     #'identity (split-string string "\n") tramp-rsh-end-of-line))
-      (unless (or (string= string "")
+      (unless (or (string-empty-p string)
 		  (string-equal (substring string -1) tramp-rsh-end-of-line))
 	(setq string (concat string tramp-rsh-end-of-line)))
       ;; Send the string.
@@ -4408,12 +4391,10 @@ ID-FORMAT valid values are `string' and `integer'."
   ;; We use key nil for local connection properties.
   (with-tramp-connection-property nil (format "gid-%s" id-format)
     (cond
-     ;; `group-gid' has been introduced with Emacs 24.4.
-     ((and (fboundp 'group-gid) (equal id-format 'integer))
-      (tramp-compat-funcall 'group-gid))
+     ((equal id-format 'integer) (group-gid))
      ;; `group-name' has been introduced with Emacs 27.1.
      ((and (fboundp 'group-name) (equal id-format 'string))
-      (tramp-compat-funcall 'group-name (tramp-compat-funcall 'group-gid)))
+      (tramp-compat-funcall 'group-name (group-gid)))
      ((tramp-compat-file-attribute-group-id
        (file-attributes "~/" id-format))))))
 
@@ -4647,7 +4628,7 @@ are written with verbosity of 6."
 	output error result)
     (tramp-message
      vec 6 "`%s %s' %s %s"
-     program (mapconcat #'identity args " ") infile destination)
+     program (string-join args " ") infile destination)
     (condition-case err
 	(with-temp-buffer
 	  (setq result
@@ -4680,7 +4661,7 @@ are written with verbosity of 6."
 	result)
     (tramp-message
      vec 6 "`%s %s' %s %s %s %s"
-     program (mapconcat #'identity args " ") start end delete buffer)
+     program (string-join args " ") start end delete buffer)
     (condition-case err
 	(progn
 	  (setq result
@@ -4709,7 +4690,7 @@ verbosity of 6."
 	(vec (or vec (car tramp-current-connection)))
 	result)
     (if args
-	(tramp-message vec 6 "%s %s" program (mapconcat #'identity args " "))
+	(tramp-message vec 6 "%s %s" program (string-join args " "))
       (tramp-message vec 6 "%s" program))
     (setq result
 	  (condition-case err

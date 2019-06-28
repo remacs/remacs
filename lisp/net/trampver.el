@@ -63,7 +63,7 @@
   "The repository revision of the Tramp sources.")
 
 ;; Check for Emacs version.
-(let ((x   (if (not (string-lessp emacs-version "24.1"))
+(let ((x   (if (not (string-lessp emacs-version "24.4"))
       "ok"
     (format "Tramp 2.4.2-pre is not fit for %s"
             (replace-regexp-in-string "\n" "" (emacs-version))))))

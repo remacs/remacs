@@ -53,8 +53,8 @@ present for backward compatibility."
     (setq file-name-handler-alist
 	  (delete a1 (delete a2 file-name-handler-alist)))))
 
-(eval-after-load "ange-ftp"
-  '(tramp-disable-ange-ftp))
+(with-eval-after-load 'ange-ftp
+  (tramp-disable-ange-ftp))
 
 ;;;###tramp-autoload
 (defun tramp-ftp-enable-ange-ftp ()

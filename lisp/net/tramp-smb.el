@@ -513,7 +513,7 @@ pass to the OPERATION."
 			       tramp-smb-program args)))
 
 		      (tramp-message
-		       v 6 "%s" (mapconcat #'identity (process-command p) " "))
+		       v 6 "%s" (string-join (process-command p) " "))
 		      (process-put p 'vector v)
 		      (process-put p 'adjust-window-size-function #'ignore)
 		      (set-process-query-on-exit-flag p nil)
@@ -774,7 +774,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 			    tramp-smb-acl-program args)))
 
 		    (tramp-message
-		     v 6 "%s" (mapconcat #'identity (process-command p) " "))
+		     v 6 "%s" (string-join (process-command p) " "))
 		    (process-put p 'vector v)
 		    (process-put p 'adjust-window-size-function #'ignore)
 		    (set-process-query-on-exit-flag p nil)
@@ -1258,7 +1258,7 @@ component is used as the target of the symlink."
 	(setq outbuf (current-buffer))))
 
       ;; Construct command.
-      (setq command (mapconcat #'identity (cons program args) " ")
+      (setq command (string-join (cons program args) " ")
 	    command (if input
 			(format
 			 "get-content %s | & %s"
@@ -1425,8 +1425,7 @@ component is used as the target of the symlink."
 			  (tramp-get-connection-buffer v)
 			  tramp-smb-acl-program args)))
 
-		  (tramp-message
-		   v 6 "%s" (mapconcat #'identity (process-command p) " "))
+		  (tramp-message v 6 "%s" (string-join (process-command p) " "))
 		  (process-put p 'vector v)
 		  (process-put p 'adjust-window-size-function #'ignore)
 		  (set-process-query-on-exit-flag p nil)
@@ -1470,7 +1469,7 @@ component is used as the target of the symlink."
 		(get-buffer-create buffer)
 	      ;; BUFFER can be nil.  We use a temporary buffer.
 	      (generate-new-buffer tramp-temp-buffer-name)))
-	   (command (mapconcat #'identity (cons program args) " "))
+	   (command (string-join (cons program args) " "))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
 	   (i 0))
@@ -1965,8 +1964,7 @@ If ARGUMENT is non-nil, use it as argument for
 				   tramp-smb-winexe-program tramp-smb-program)
 			       args))))
 
-	      (tramp-message
-	       vec 6 "%s" (mapconcat #'identity (process-command p) " "))
+	      (tramp-message vec 6 "%s" (string-join (process-command p) " "))
 	      (process-put p 'vector vec)
 	      (process-put p 'adjust-window-size-function #'ignore)
 	      (set-process-query-on-exit-flag p nil)
@@ -2039,8 +2037,8 @@ Removes smb prompt.  Returns nil if an error message has appeared."
 
       ;; Read pending output.
       (while (not (re-search-forward tramp-smb-prompt nil t))
-	(while (tramp-accept-process-output p 0)
-	  (goto-char (point-min))))
+	(while (tramp-accept-process-output p 0))
+	(goto-char (point-min)))
       (tramp-message vec 6 "\n%s" (buffer-string))
 
       ;; Remove prompt.

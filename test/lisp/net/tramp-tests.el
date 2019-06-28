@@ -19,8 +19,6 @@
 
 ;;; Commentary:
 
-;; The tests require a recent ert.el from Emacs 24.4.
-
 ;; Some of the tests require access to a remote host files.  Since
 ;; this could be problematic, a mock-up connection method "mock" is
 ;; used.  Emulating a remote connection, it simply calls "sh -i".
@@ -410,9 +408,6 @@ properly.  BODY shall not contain a timeout."
 
 (ert-deftest tramp-test02-file-name-dissect ()
   "Check remote file name components."
-  ;; `user-error' has appeared in Emacs 24.3.
-  (skip-unless (fboundp 'user-error))
-
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
@@ -863,9 +858,6 @@ properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test02-file-name-dissect-simplified ()
   "Check simplified file name components."
   :tags '(:expensive-test)
-  ;; `user-error' has appeared in Emacs 24.3.
-  (skip-unless (fboundp 'user-error))
-
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
@@ -1197,9 +1189,6 @@ properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test02-file-name-dissect-separate ()
   "Check separate file name components."
   :tags '(:expensive-test)
-  ;; `user-error' has appeared in Emacs 24.3.
-  (skip-unless (fboundp 'user-error))
-
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
@@ -1889,8 +1878,6 @@ properly.  BODY shall not contain a timeout."
   "Check host name rules for host-less methods."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
-  ;; `user-error' has appeared in Emacs 24.3.
-  (skip-unless (fboundp 'user-error))
 
   ;; Host names must match rules in case the command template of a
   ;; method doesn't use them.
@@ -1914,8 +1901,6 @@ properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test03-file-name-method-rules ()
   "Check file name rules for some methods."
   (skip-unless (tramp--test-enabled))
-  ;; `user-error' has appeared in Emacs 24.3.
-  (skip-unless (fboundp 'user-error))
 
   ;; Multi hops are allowed for inline methods only.
   (should-error

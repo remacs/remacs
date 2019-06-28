@@ -1135,19 +1135,15 @@ component is used as the target of the symlink."
 		  (setq thisstep (pop steps))
 		  (tramp-message
 		   v 5 "Check %s"
-		   (mapconcat #'identity
-			      (append '("") (reverse result) (list thisstep))
-			      "/"))
+		   (string-join
+		    (append '("") (reverse result) (list thisstep)) "/"))
 		  (setq symlink-target
 			(tramp-compat-file-attribute-type
 			 (file-attributes
 			  (tramp-make-tramp-file-name
 			   v
-			   (mapconcat #'identity
-				      (append '("")
-					      (reverse result)
-					      (list thisstep))
-				      "/")
+			   (string-join
+			    (append '("") (reverse result) (list thisstep)) "/")
 			   'nohop))))
 		  (cond ((string= "." thisstep)
 			 (tramp-message v 5 "Ignoring step `.'"))
@@ -1173,12 +1169,8 @@ component is used as the target of the symlink."
 		   "Maximum number (%d) of symlinks exceeded" numchase-limit))
 		(setq result (reverse result))
 		;; Combine list to form string.
-		(setq result
-		      (if result
-			  (mapconcat #'identity (cons "" result) "/")
-			"/"))
-		(when (string= "" result)
-		  (setq result "/")))))
+		(setq result (if result (string-join (cons "" result) "/") "/"))
+		(when (string-empty-p result) (setq result "/")))))
 
 	  ;; Detect cycle.
 	  (when (and (file-symlink-p filename)
@@ -1993,7 +1985,6 @@ file names."
 	  (t2 (tramp-tramp-file-p newname))
 	  (length (tramp-compat-file-attribute-size
 		   (file-attributes (file-truename filename))))
-	  ;; `file-extended-attributes' exists since Emacs 24.4.
 	  (attributes (and preserve-extended-attributes
 			   (apply #'file-extended-attributes (list filename)))))
 
@@ -2065,7 +2056,6 @@ file names."
 
 	  ;; Handle `preserve-extended-attributes'.  We ignore possible
 	  ;; errors, because ACL strings could be incompatible.
-	  ;; `set-file-extended-attributes' exists since Emacs 24.4.
 	  (when attributes
 	    (ignore-errors
 	      (apply #'set-file-extended-attributes (list newname attributes))))
@@ -2364,7 +2354,7 @@ The method used must be an out-of-band method."
 	       (mapcar
 		(lambda (x)
 		  (setq x (mapcar (lambda (y) (format-spec y spec)) x))
-		  (unless (member "" x) (mapconcat #'identity x " ")))
+		  (unless (member "" x) (string-join x " ")))
 		(tramp-get-method-parameter v 'tramp-copy-env)))
 
 	      remote-copy-program
@@ -3636,8 +3626,8 @@ Fall back to normal file name handler if no Tramp handler exists."
 	  (tramp-error
 	   v 'file-notify-error
 	   "`%s' failed to start on remote host"
-	   (mapconcat #'identity sequence " "))
-	(tramp-message v 6 "Run `%s', %S" (mapconcat #'identity sequence " ") p)
+	   (string-join sequence " "))
+	(tramp-message v 6 "Run `%s', %S" (string-join sequence " ") p)
 	(process-put p 'vector v)
 	;; Needed for process filter.
 	(process-put p 'events events)
@@ -3928,7 +3918,7 @@ This function expects to be in the right *tramp* buffer."
 			   "%s\n%s"))
 		 progname progname progname
 		 tramp-end-of-heredoc
-		 (mapconcat #'identity dirlist "\n")
+		 (string-join dirlist "\n")
 		 tramp-end-of-heredoc))
 	(goto-char (point-max))
 	(when (search-backward "tramp_executable " nil t)
@@ -3946,8 +3936,8 @@ I.e., for each directory in `tramp-remote-path', it is tested
 whether it exists and if so, it is added to the environment
 variable PATH."
   (let ((command
-	 (format "PATH=%s; export PATH"
-		 (mapconcat #'identity (tramp-get-remote-path vec) ":")))
+	 (format
+	  "PATH=%s; export PATH" (string-join (tramp-get-remote-path vec) ":")))
 	(pipe-buf
 	 (or (with-tramp-connection-property vec "pipe-buf"
 	       (tramp-send-command-and-read
@@ -4290,7 +4280,7 @@ process to set up.  VEC specifies the connection."
 		     (append `(,(tramp-get-remote-locale vec))
 			     (copy-sequence tramp-remote-process-environment))))
 	(setq item (split-string item "=" 'omit))
-	(setcdr item (mapconcat #'identity (cdr item) "="))
+	(setcdr item (string-join (cdr item) "="))
 	(if (and (stringp (cdr item)) (not (string-equal (cdr item) "")))
 	    (push (format "%s %s" (car item) (cdr item)) vars)
 	  (push (car item) unset)))
@@ -4300,12 +4290,12 @@ process to set up.  VEC specifies the connection."
 	 (format
 	  "while read var val; do export $var=\"$val\"; done <<'%s'\n%s\n%s"
 	  tramp-end-of-heredoc
-	  (mapconcat #'identity vars "\n")
+	  (string-join vars "\n")
 	  tramp-end-of-heredoc)
 	 t))
       (when unset
 	(tramp-send-command
-	 vec (format "unset %s" (mapconcat #'identity unset " ")) t)))))
+	 vec (format "unset %s" (string-join unset " ")) t)))))
 
 ;; Old text from documentation of tramp-methods:
 ;; Using a uuencode/uudecode inline method is discouraged, please use one
@@ -4873,8 +4863,7 @@ connection if a previous connection has died for some reason."
 		(set-process-query-on-exit-flag p nil)
 		(setq tramp-current-connection (cons vec (current-time)))
 
-		(tramp-message
-		 vec 6 "%s" (mapconcat #'identity (process-command p) " "))
+		(tramp-message vec 6 "%s" (string-join (process-command p) " "))
 
 		;; Check whether process is alive.
 		(tramp-barf-if-no-shell-prompt
@@ -4951,7 +4940,7 @@ connection if a previous connection has died for some reason."
 		       (mapcar
 			(lambda (x)
 			  (setq x (mapcar (lambda (y) (format-spec y spec)) x))
-			  (unless (member "" x) (mapconcat #'identity x " ")))
+			  (unless (member "" x) (string-join x " ")))
 			login-env))
 		      (while login-env
 			(setq command
@@ -4980,7 +4969,7 @@ connection if a previous connection has died for some reason."
 		      (mapconcat
 		       (lambda (x)
 			 (setq x (mapcar (lambda (y) (format-spec y spec)) x))
-			 (unless (member "" x) (mapconcat #'identity x " ")))
+			 (unless (member "" x) (string-join x " ")))
 		       login-args " ")
 		      ;; Local shell could be a Windows COMSPEC.  It
 		      ;; doesn't know the ";" syntax, but we must exit
@@ -5041,7 +5030,7 @@ function waits for output unless NOOUTPUT is set."
       ;; `tramp-echo-mark', so the remote shell sees two consecutive
       ;; trailing line endings and sends two prompts after executing
       ;; the command, which confuses `tramp-wait-for-output'.
-      (when (and (not (string= command ""))
+      (when (and (not (string-empty-p command))
 		 (string-equal (substring command -1) "\n"))
 	(setq command (substring command 0 -1)))
       ;; No need to restore a trailing newline here since `tramp-send-string'

@@ -116,6 +116,12 @@ When called interactively, a Tramp connection has to be selected."
       (delete-process (tramp-get-connection-process vec)))
     (tramp-flush-connection-properties vec)
 
+    ;; Cancel timer.
+    (dolist (timer timer-list)
+      (when (and (eq (timer--function timer) 'tramp-timeout-session)
+		 (tramp-file-name-equal-p vec (car (timer--args timer))))
+	(cancel-timer timer)))
+
     ;; Remove buffers.
     (dolist
 	(buf (list (get-buffer (tramp-buffer-name vec))
@@ -163,9 +169,12 @@ This includes password cache, file cache, connection cache, buffers."
 		(delete (car proxies) tramp-default-proxies-alist)
 		proxies tramp-default-proxies-alist)
 	(setq proxies (cdr proxies)))))
-    (when (and tramp-default-proxies-alist tramp-save-ad-hoc-proxies)
-      (customize-save-variable
-       'tramp-default-proxies-alist tramp-default-proxies-alist))
+  (when (and tramp-default-proxies-alist tramp-save-ad-hoc-proxies)
+    (customize-save-variable
+     'tramp-default-proxies-alist tramp-default-proxies-alist))
+
+  ;; Cancel timers.
+  (cancel-function-timers 'tramp-timeout-session)
 
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))

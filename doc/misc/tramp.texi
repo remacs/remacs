@@ -4204,10 +4204,8 @@ directory to the cache:
 
 @lisp
 @group
-@c `with-eval-after-load' has been introduced with Emacs 24.4.  Shall
-@c be used when appropriate.
-(eval-after-load "filecache"
-  '(file-cache-add-directory
+(with-eval-after-load 'filecache
+  (file-cache-add-directory
     "@trampfn{ssh,news@@news.my.domain,/opt/news/etc/}"))
 @end group
 @end lisp

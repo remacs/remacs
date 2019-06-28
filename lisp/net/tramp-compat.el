@@ -39,6 +39,7 @@
 (require 'ls-lisp)  ;; Due to `tramp-handle-insert-directory'.
 (require 'parse-time)
 (require 'shell)
+(require 'subr-x)
 
 (declare-function tramp-handle-temporary-file-directory "tramp")
 
@@ -81,7 +82,7 @@ Add the extension of F, if existing."
      ((fboundp 'w32-window-exists-p)
       (tramp-compat-funcall 'w32-window-exists-p process-name process-name))
 
-     ;; GNU Emacs 23.
+     ;; GNU Emacs 23+.
      ((and (fboundp 'list-system-processes) (fboundp 'process-attributes))
       (let (result)
 	(dolist (pid (tramp-compat-funcall 'list-system-processes) result)
@@ -96,10 +97,6 @@ Add the extension of F, if existing."
                                     (concat "^" (regexp-quote comm))
                                     process-name))))
 	      (setq result t)))))))))
-
-;; `default-toplevel-value' has been declared in Emacs 24.4.
-(unless (fboundp 'default-toplevel-value)
-  (defalias 'default-toplevel-value #'symbol-value))
 
 ;; `file-attribute-*' are introduced in Emacs 25.1.
 
@@ -305,10 +302,5 @@ A nil value for either argument stands for the current time."
 	    (unload-feature 'tramp-compat 'force)))
 
 (provide 'tramp-compat)
-
-;;; TODO:
-
-;; * When we get rid of Emacs 24, replace "(mapconcat #'identity" by
-;;   "(string-join".
 
 ;;; tramp-compat.el ends here
