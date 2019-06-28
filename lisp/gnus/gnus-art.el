@@ -4559,10 +4559,7 @@ commands:
 	  (current-buffer))))))
 
 (defun gnus-article-stop-animations ()
-  (dolist (timer (and (boundp 'timer-list)
-		      timer-list))
-    (when (eq (timer--function timer) 'image-animate-timeout)
-      (cancel-timer timer))))
+  (cancel-function-timers 'image-animate-timeout))
 
 (defun gnus-stop-downloads ()
   (when (boundp 'url-queue)
