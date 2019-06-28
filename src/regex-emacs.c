@@ -2794,6 +2794,7 @@ static int
 analyze_first (re_char *p, re_char *pend, char *fastmap, bool multibyte)
 {
   int j, k;
+  int nbits;
   bool not;
 
   /* If all elements for base leading-codes in fastmap is set, this
@@ -2854,7 +2855,14 @@ analyze_first (re_char *p, re_char *pend, char *fastmap, bool multibyte)
 		 each byte is a character.  Thus, this works in both
 		 cases. */
 	      fastmap[p[1]] = 1;
-	      if (! multibyte)
+	      if (multibyte)
+		{
+		  /* Cover the case of matching a raw char in a
+		     multibyte regexp against unibyte.	*/
+		  if (CHAR_BYTE8_HEAD_P (p[1]))
+		    fastmap[CHAR_TO_BYTE8 (STRING_CHAR (p + 1))] = 1;
+		}
+	      else
 		{
 		  /* For the case of matching this unibyte regex
 		     against multibyte, we must set a leading code of
@@ -2886,10 +2894,17 @@ analyze_first (re_char *p, re_char *pend, char *fastmap, bool multibyte)
 	case charset:
 	  if (!fastmap) break;
 	  not = (re_opcode_t) *(p - 1) == charset_not;
-	  for (j = CHARSET_BITMAP_SIZE (&p[-1]) * BYTEWIDTH - 1, p++;
-	       j >= 0; j--)
+	  nbits = CHARSET_BITMAP_SIZE (&p[-1]) * BYTEWIDTH;
+	  p++;
+	  for (j = 0; j < nbits; j++)
 	    if (!!(p[j / BYTEWIDTH] & (1 << (j % BYTEWIDTH))) ^ not)
 	      fastmap[j] = 1;
+
+	  /* To match raw bytes (in the 80..ff range) against multibyte
+	     strings, add their leading bytes to the fastmap.  */
+	  for (j = 0x80; j < nbits; j++)
+	    if (!!(p[j / BYTEWIDTH] & (1 << (j % BYTEWIDTH))) ^ not)
+	      fastmap[CHAR_LEADING_CODE (BYTE8_TO_CHAR (j))] = 1;
 
 	  if (/* Any leading code can possibly start a character
 		 which doesn't match the specified set of characters.  */
@@ -4251,8 +4266,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
 		  }
 		p += pat_charlen;
 		d++;
+		mcnt -= pat_charlen;
 	      }
-	    while (--mcnt);
+	    while (mcnt > 0);
 
 	  break;
 
