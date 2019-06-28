@@ -449,6 +449,14 @@ static int regex_emacs_debug = -100000;
 # define DEBUG_PRINT_DOUBLE_STRING(w, s1, sz1, s2, sz2)			\
   if (regex_emacs_debug > 0) print_double_string (w, s1, sz1, s2, sz2)
 
+static void
+debug_putchar (int c)
+{
+  if (c >= 32 && c <= 126)
+    fputc (c, stderr);
+  else
+    fprintf (stderr, "{%02x}", c);
+}
 
 /* Print the fastmap in human-readable form.  */
 
@@ -463,7 +471,7 @@ print_fastmap (char *fastmap)
       if (fastmap[i++])
 	{
 	  was_a_range = false;
-	  fputc (i - 1, stderr);
+	  debug_putchar (i - 1);
 	  while (i < (1 << BYTEWIDTH)  &&  fastmap[i])
 	    {
 	      was_a_range = true;
@@ -472,7 +480,7 @@ print_fastmap (char *fastmap)
 	  if (was_a_range)
 	    {
 	      fprintf (stderr, "-");
-	      fputc (i - 1, stderr);
+	      debug_putchar (i - 1);
 	    }
 	}
     }
@@ -516,7 +524,8 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  fprintf (stderr, "/exactn/%d", mcnt);
 	  do
 	    {
-	      fprintf (stderr, "/%c", *p++);
+	      fprintf (stderr, "/");
+	      debug_putchar (*p++);
 	    }
 	  while (--mcnt);
 	  break;
@@ -564,18 +573,18 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 		  /* Have we broken a range?  */
 		  else if (last + 1 != c && in_range)
 		    {
-		      fprintf (stderr, "%c", last);
+		      debug_putchar (last);
 		      in_range = false;
 		    }
 
 		  if (! in_range)
-		    fprintf (stderr, "%c", c);
+		    debug_putchar (c);
 
 		  last = c;
 	      }
 
 	    if (in_range)
-	      fprintf (stderr, "%c", last);
+	      debug_putchar (last);
 
 	    fprintf (stderr, "]");
 
@@ -759,13 +768,16 @@ print_double_string (re_char *where, re_char *string1, ptrdiff_t size1,
     fprintf (stderr, "(null)");
   else
     {
+      int i;
       if (FIRST_STRING_P (where))
 	{
-	  fwrite_unlocked (where, 1, string1 + size1 - where, stderr);
+	  for (i = 0; i < string1 + size1 - where; i++)
+	    debug_putchar (where[i]);
 	  where = string2;
 	}
 
-      fwrite_unlocked (where, 1, string2 + size2 - where, stderr);
+      for (i = 0; i < string2 + size2 - where; i++)
+        debug_putchar (where[i]);
     }
 }
 
@@ -1735,7 +1747,7 @@ regex_compile (re_char *pattern, ptrdiff_t size,
   if (regex_emacs_debug > 0)
     {
       for (ptrdiff_t debug_count = 0; debug_count < size; debug_count++)
-	fputc (pattern[debug_count], stderr);
+	debug_putchar (pattern[debug_count]);
       fputc ('\n', stderr);
     }
 #endif
@@ -3997,7 +4009,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
       dend = end_match_1;
     }
 
-  DEBUG_PRINT ("The compiled pattern is: ");
+  DEBUG_PRINT ("The compiled pattern is:\n");
   DEBUG_PRINT_COMPILED_PATTERN (bufp, p, pend);
   DEBUG_PRINT ("The string to match is: \"");
   DEBUG_PRINT_DOUBLE_STRING (d, string1, size1, string2, size2);
