@@ -1246,23 +1246,35 @@ automatically."
 
 (defun gnus-summary-wide-reply-with-original (n)
   "Start composing a wide reply mail to the current message.
-The original article will be yanked.
+The original article(s) will be yanked.
 Uses the process/prefix convention."
   (interactive "P")
   (gnus-summary-reply-with-original n t))
 
 (defun gnus-summary-very-wide-reply (&optional yank)
-  "Start composing a very wide reply mail to the current message.
-If prefix argument YANK is non-nil, the original article is yanked
-automatically."
+  "Start composing a very wide reply mail to a set of messages.
+
+Uses the process/prefix convention.
+
+The reply will include all From/Cc headers from the original
+messages as the To/Cc headers.
+
+If prefix argument YANK is non-nil, the original article(s) will
+be yanked automatically."
   (interactive
    (list (and current-prefix-arg
 	      (gnus-summary-work-articles 1))))
   (gnus-summary-reply yank t (gnus-summary-work-articles yank)))
 
 (defun gnus-summary-very-wide-reply-with-original (n)
-  "Start composing a very wide reply mail to the current message.
-The original article will be yanked."
+  "Start composing a very wide reply mail a set of messages.
+
+Uses the process/prefix convention.
+
+The reply will include all From/Cc headers from the original
+messages as the To/Cc headers.
+
+The original article(s) will be yanked."
   (interactive "P")
   (gnus-summary-reply
    (gnus-summary-work-articles n) t (gnus-summary-work-articles n)))
