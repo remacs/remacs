@@ -36,9 +36,6 @@
 
 ;;; Misc comments:
 ;;
-;; If variable bookmark-use-annotations is non-nil, an annotation is
-;; queried for when setting a bookmark.
-;;
 ;; The bookmark list is sorted lexically by default, but you can turn
 ;; this off by setting bookmark-sort-flag to nil.  If it is nil, then
 ;; the list will be presented in the order it is recorded
@@ -52,7 +49,7 @@
 
 
 (defcustom bookmark-use-annotations nil
-  "If non-nil, saving a bookmark queries for an annotation in a buffer."
+  "If non-nil, setting a bookmark queries for an annotation in a buffer."
   :type 'boolean
   :group 'bookmark)
 
