@@ -626,7 +626,7 @@ This may also be a list of regexps."
 		 regexp))
 
 (defcustom message-forward-included-headers
-  '("^From:" "^Subject:" "^Date:" "^To:" "^CC:")
+  '("^From:" "^Subject:" "^Date:" "^To:" "^Cc:")
   "If non-nil, delete non-matching headers when forwarding a message.
 Only headers that match this regexp will be included.  This
 variable should be a regexp or a list of regexps."
