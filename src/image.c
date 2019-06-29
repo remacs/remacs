@@ -57,10 +57,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
 
-#ifdef HAVE_NATIVE_TRANSFORMS
-#include <float.h>	/* for FLT_MIN */
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -2054,12 +2050,6 @@ compute_image_size (size_t width, size_t height,
 typedef double matrix3x3[3][3];
 
 static void
-matrix3x3_copy (matrix3x3 a, matrix3x3 b)
-{
-  memcpy (b, a, sizeof (matrix3x3));
-}
-
-static void
 matrix3x3_mult (matrix3x3 a, matrix3x3 b, matrix3x3 result)
 {
   for (int i = 0; i < 3; i++)
@@ -2089,6 +2079,16 @@ compute_image_rotation (struct image *img, double *rotation)
     *rotation = XFIXNUM (reduced_angle);
 }
 
+static double
+divide_double (double a, double b)
+{
+#if !IEEE_FLOATING_POINT
+  if (b == 0)
+    return DBL_MAX;
+#endif
+  return a / b;
+}
+
 static void
 image_set_transform (struct frame *f, struct image *img)
 {
@@ -2103,8 +2103,6 @@ image_set_transform (struct frame *f, struct image *img)
     return;
 # endif
 
-  matrix3x3 matrix = { [0][0] = 1, [1][1] = 1, [2][2] = 1 };
-
   /* Determine size.  */
   int width, height;
   compute_image_size (img->width, img->height, img->spec, &width, &height);
@@ -2115,99 +2113,106 @@ image_set_transform (struct frame *f, struct image *img)
 
   /* Perform scale transformation.  */
 
-  double xscale = (double) width / img->width;
-  double yscale =  (double) height / img->height;
-
+  matrix3x3 matrix
+    = {
 # if defined USE_CAIRO || defined HAVE_XRENDER
-  /* Avoid division by zero.  */
-  xscale = max (xscale, FLT_MIN);
-  matrix3x3 tmp, rm =
-    { [0][0] = 1.0 / xscale, [1][1] = 1.0 / yscale, [2][2] = 1 };
-  matrix3x3_mult (rm, matrix, tmp);
+	[0][0] = divide_double (img->width, width),
+	[1][1] = divide_double (img->height, height),
 # elif defined HAVE_NTGUI || defined HAVE_NS
-  matrix3x3 tmp, rm = { [0][0] = xscale, [1][1] = yscale, [2][2] = 1 };
-  matrix3x3_mult (matrix, rm, tmp);
+	[0][0] = divide_double (width, img->width),
+	[1][1] = divide_double (height, img->height),
+# else
+	[0][0] = 1, [1][1] = 1,
 # endif
+	[2][2] = 1 };
   img->width = width;
   img->height = height;
 
   /* Perform rotation transformation.  */
 
-  int cos_r, sin_r;
+  int rotate_flag = -1;
   if (rotation == 0)
-    matrix3x3_copy (tmp, matrix);
-  else if (rotation == 90 || rotation == 180 || rotation == 270)
+    rotate_flag = 0;
+  else
     {
+# if (defined USE_CAIRO || defined HAVE_XRENDER \
+      || defined HAVE_NTGUI || defined HAVE_NS)
+      int cos_r, sin_r;
       if (rotation == 90)
 	{
 	  width = img->height;
 	  height = img->width;
-
 	  cos_r = 0;
 	  sin_r = 1;
+	  rotate_flag = 1;
 	}
       else if (rotation == 180)
 	{
-	  width = img->width;
-	  height = img->height;
-
 	  cos_r = -1;
 	  sin_r = 0;
+	  rotate_flag = 1;
 	}
       else if (rotation == 270)
 	{
 	  width = img->height;
 	  height = img->width;
-
 	  cos_r = 0;
 	  sin_r = -1;
+	  rotate_flag = 1;
 	}
-# if defined USE_CAIRO || defined HAVE_XRENDER
-      /* 1. Translate so (0, 0) is in the center of the image.  */
-      matrix3x3 t
-	= { [0][0] = 1,
-				      [1][1] = 1,
-	    [2][0] = img->width * .5, [2][1] = img->height * .5, [2][2] = 1 };
-      matrix3x3 tmp2;
-      matrix3x3_mult (t, tmp, tmp2);
 
-      /* 2. Rotate.  */
-      matrix3x3 rot = { [0][0] = cos_r, [0][1] = -sin_r,
-			[1][0] = sin_r, [1][1] = cos_r,
-							 [2][2] = 1 };
-      matrix3x3 tmp3;
-      matrix3x3_mult (rot, tmp2, tmp3);
+      if (0 < rotate_flag)
+	{
+#  if defined USE_CAIRO || defined HAVE_XRENDER
+	  /* 1. Translate so (0, 0) is in the center of the image.  */
+	  matrix3x3 t
+	    = { [0][0] = 1,
+					[1][1] = 1,
+		[2][0] = img->width*.5, [2][1] = img->height*.5, [2][2] = 1 };
+	  matrix3x3 u;
+	  matrix3x3_mult (t, matrix, u);
 
-      /* 3. Translate back.  */
-      t[2][0] = width * -.5;
-      t[2][1] = height * -.5;
-      matrix3x3_mult (t, tmp3, matrix);
-# elif defined HAVE_NTGUI || defined HAVE_NS
-      /* 1. Translate so (0, 0) is in the center of the image.  */
-      matrix3x3 t
-	= { [0][0] = 1,
-				       [1][1] = 1,
-	    [2][0] = -img->width * .5, [2][1] = -img->height * .5, [2][2] = 1 };
-      matrix3x3 tmp2;
-      matrix3x3_mult (tmp, t, tmp2);
+	  /* 2. Rotate.  */
+	  matrix3x3 rot = { [0][0] = cos_r, [0][1] = -sin_r,
+			    [1][0] = sin_r, [1][1] = cos_r,
+							     [2][2] = 1 };
+	  matrix3x3 v;
+	  matrix3x3_mult (rot, u, v);
 
-      /* 2. Rotate.  */
-      matrix3x3 rot = { [0][0] = cos_r,  [0][1] = sin_r,
-			[1][0] = -sin_r, [1][1] = cos_r,
-							  [2][2] = 1 };
-      matrix3x3 tmp3;
-      matrix3x3_mult (tmp2, rot, tmp3);
+	  /* 3. Translate back.  */
+	  t[2][0] = width * -.5;
+	  t[2][1] = height * -.5;
+	  matrix3x3_mult (t, v, matrix);
+#  else
+	  /* 1. Translate so (0, 0) is in the center of the image.  */
+	  matrix3x3 t
+	    = { [0][0] = 1,
+					 [1][1] = 1,
+		[2][0] = img->width*-.5, [2][1] = img->height*-.5, [2][2] = 1 };
+	  matrix3x3 u;
+	  matrix3x3_mult (matrix, t, u);
 
-      /* 3. Translate back.  */
-      t[2][0] = width * .5;
-      t[2][1] = height * .5;
-      matrix3x3_mult (tmp3, t, matrix);
+	  /* 2. Rotate.  */
+	  matrix3x3 rot = { [0][0] = cos_r,  [0][1] = sin_r,
+			    [1][0] = -sin_r, [1][1] = cos_r,
+							     [2][2] = 1 };
+	  matrix3x3 v;
+	  matrix3x3_mult (u, rot, v);
+
+	  /* 3. Translate back.  */
+	  t[2][0] = width * .5;
+	  t[2][1] = height * .5;
+	  matrix3x3_mult (v, t, matrix);
+#  endif
+	  img->width = width;
+	  img->height = height;
+	}
 # endif
-      img->width = width;
-      img->height = height;
     }
-  else
-    image_error ("Native image rotation supports only multiples of 90 degrees");
+
+  if (rotate_flag < 0)
+    image_error ("No native support for rotation by %g degrees",
+		 make_float (rotation));
 
 # if defined (HAVE_NS)
   /* Under NS the transform is applied to the drawing surface at
