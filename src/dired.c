@@ -41,10 +41,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 
-#ifdef __CYGWIN__
-# undef O_PATH /* Buggy in Cygwin 3.0.0 through 3.0.7.  */
-#endif
-
 #ifdef MSDOS
 #include "msdos.h"	/* for fstatat */
 #endif
@@ -941,7 +937,7 @@ file_attributes (int fd, char const *name,
 
   int err = EINVAL;
 
-#ifdef O_PATH
+#if defined O_PATH && !defined HAVE_CYGWIN_O_PATH_BUG
   int namefd = openat (fd, name, O_PATH | O_CLOEXEC | O_NOFOLLOW);
   if (namefd < 0)
     err = errno;
