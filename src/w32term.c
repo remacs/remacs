@@ -117,6 +117,10 @@ typedef struct tagGLYPHSET
 /* Dynamic linking to SetLayeredWindowAttribute (only since 2000).  */
 BOOL (WINAPI *pfnSetLayeredWindowAttributes) (HWND, COLORREF, BYTE, DWORD);
 
+/* PlgBlt is available since Windows 2000.  */
+BOOL (WINAPI *pfnPlgBlt) (HDC, const POINT *, HDC, int, int, int, int, HBITMAP, int, int);
+
+
 #ifndef LWA_ALPHA
 #define LWA_ALPHA 0x02
 #endif
@@ -1753,6 +1757,26 @@ w32_draw_glyph_string_box (struct glyph_string *s)
     }
 }
 
+bool
+w32_image_rotations_p (void)
+{
+  return pfnPlgBlt != NULL;
+}
+
+static POINT
+transform (int x0, int y0, int x, int y, XFORM *xform)
+{
+  POINT pt;
+
+  /* See https://docs.microsoft.com/en-us/windows/desktop/api/Wingdi/nf-wingdi-setworldtransform */
+  pt.x =
+    x0 + (x - x0) * xform->eM11 + (y - y0) * xform->eM21 + xform->eDx + 0.5f;
+  pt.y =
+    y0 + (x - x0) * xform->eM12 + (y - y0) * xform->eM22 + xform->eDy + 0.5f;
+
+  return pt;
+}
+
 
 /* Draw foreground of image glyph string S.  */
 
@@ -1798,20 +1822,31 @@ w32_draw_image_foreground (struct glyph_string *s)
 	}
       else
 	{
-	  DebPrint (("w32_draw_image_foreground: GetObject failed!\n"));
+	  DebPrint (("w32_draw_image_foreground: GetObject(pixmap) failed!\n"));
 	  orig_width = s->slice.width;
 	  orig_height = s->slice.height;
 	}
 
       double w_factor = 1.0, h_factor = 1.0;
-      bool scaled = false;
+      bool scaled = false, need_xform = false;
       int orig_slice_width  = s->slice.width,
 	  orig_slice_height = s->slice.height;
       int orig_slice_x = s->slice.x, orig_slice_y = s->slice.y;
-      /* For scaled images we need to restore the original slice's
-	 dimensions and origin coordinates, from before the scaling.  */
-      if (s->img->width != orig_width || s->img->height != orig_height)
+      POINT corner[3];
+      if ((s->img->xform.eM12 != 0 || s->img->xform.eM21 != 0
+	   || s->img->xform.eDx != 0 || s->img->xform.eDy != 0)
+	  /* PlgBlt is not available on Windows 9X.  */
+	  && pfnPlgBlt)
 	{
+	  need_xform = true;
+	  corner[0] = transform (x, y, x, y, &s->img->xform);
+	  corner[1] = transform (x, y, x + orig_width, y, &s->img->xform);
+	  corner[2] = transform (x, y, x, y + orig_height, &s->img->xform);
+	}
+      else if (s->img->width != orig_width || s->img->height != orig_height)
+	{
+	  /* For scaled images we need to restore the original slice's
+	     dimensions and origin coordinates, from before the scaling.  */
 	  scaled = true;
 	  w_factor = (double) orig_width  / (double) s->img->width;
 	  h_factor = (double) orig_height / (double) s->img->height;
@@ -1828,7 +1863,15 @@ w32_draw_image_foreground (struct glyph_string *s)
 
 	  SetTextColor (s->hdc, RGB (255, 255, 255));
 	  SetBkColor (s->hdc, RGB (0, 0, 0));
-	  if (!scaled)
+	  if (need_xform)
+	    {
+	      if (!pfnPlgBlt (s->hdc, corner, compat_hdc,
+			      s->slice.x, s->slice.y,
+			      orig_width, orig_height,
+			      s->img->mask, s->slice.x, s->slice.y))
+		DebPrint (("PlgBlt failed!"));
+	    }
+	  else if (!scaled)
 	    {
 	      BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
 		      compat_hdc, s->slice.x, s->slice.y, SRCINVERT);
@@ -1865,7 +1908,14 @@ w32_draw_image_foreground (struct glyph_string *s)
 	{
 	  SetTextColor (s->hdc, s->gc->foreground);
 	  SetBkColor (s->hdc, s->gc->background);
-	  if (!scaled)
+	  if (need_xform)
+	    {
+	      if (!pfnPlgBlt (s->hdc, corner, compat_hdc,
+			      s->slice.x, s->slice.y,
+			      orig_width, orig_height, NULL, 0, 0))
+		DebPrint (("PlgBlt failed!"));
+	    }
+	  else if (!scaled)
 	    BitBlt (s->hdc, x, y, s->slice.width, s->slice.height,
 		    compat_hdc, s->slice.x, s->slice.y, SRCCOPY);
 	  else
@@ -7353,6 +7403,11 @@ w32_initialize (void)
 #define LOAD_PROC(lib, fn) pfn##fn = (void *) GetProcAddress (lib, #fn)
 
     LOAD_PROC (user_lib, SetLayeredWindowAttributes);
+
+    /* PlgBlt is not available on Windows 9X.  */
+    HMODULE hgdi = LoadLibrary ("gdi32.dll");
+    if (hgdi)
+      LOAD_PROC (hgdi, PlgBlt);
 
 #undef LOAD_PROC
 

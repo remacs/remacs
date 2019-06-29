@@ -743,6 +743,8 @@ extern int handle_file_notifications (struct input_event *);
 extern void w32_initialize_display_info (Lisp_Object);
 extern void initialize_w32_display (struct terminal *, int *, int *);
 
+extern bool w32_image_rotations_p (void);
+
 #ifdef WINDOWSNT
 /* Keyboard hooks.  */
 extern void setup_w32_kbdhook (void);

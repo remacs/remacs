@@ -530,10 +530,6 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   NSAffineTransformStruct tm
     = { m[0][0], m[0][1], m[1][0], m[1][1], m[2][0], m[2][1]};
   [transform setTransformStruct:tm];
-
-  /* Because the transform is applied to the drawing surface, and not
-     the image itself, we need to invert it.  */
-  [transform invert];
 }
 
 @end

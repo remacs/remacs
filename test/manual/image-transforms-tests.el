@@ -67,7 +67,7 @@
                          <rect x='0' y='0' width='10' height='10'
                                style='fill:none;stroke-width:1;stroke:#000'/>
                        </svg>"))
-    (insert-header "Test Crop: cropping an image")
+    (insert-header "Test Crop: cropping an image (only works with ImageMagick)")
     (insert-test "all params" top-left image '(:crop (10 10 0 0)))
     (insert-test "width/height only" middle image '(:crop (10 10)))
     (insert-test "negative x y" middle image '(:crop (10 10 -10 -10)))

@@ -3020,6 +3020,9 @@ struct image
   /* Picture versions of pixmap and mask for compositing.  */
   Picture picture, mask_picture;
 # endif
+#endif	/* HAVE_X_WINDOWS */
+#ifdef HAVE_NTGUI
+  XFORM xform;
 #endif
 
   /* Colors allocated for this image, if any.  Allocated via xmalloc.  */
