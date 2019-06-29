@@ -76,8 +76,8 @@
   (should (equal (json-serialize '(abc [1 2 t] :def :null))
                  "{\"abc\":[1,2,true],\"def\":null}"))
   (should-error (json-serialize '#1=(:a 1 . #1#)) :type 'circular-list)
-  (should-error (json-serialize '#1=(:a 1 :b . #1#)):type '(circular-list
-                                                            wrong-type-argument))
+  (should-error (json-serialize '#1=(:a 1 :b . #1#))
+                :type '(circular-list wrong-type-argument))
   (should-error (json-serialize '(:foo "bar" (unexpected-alist-key . 1)))
                 :type 'wrong-type-argument)
   (should-error (json-serialize '((abc . "abc") :unexpected-plist-key "key"))
