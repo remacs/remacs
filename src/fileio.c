@@ -61,10 +61,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include <linux/fs.h>
 #endif
 
-#ifdef __CYGWIN__
-# undef O_PATH /* Buggy in Cygwin 3.0.0 through 3.0.7.  */
-#endif
-
 #ifdef WINDOWSNT
 #define NOMINMAX 1
 #include <windows.h>
