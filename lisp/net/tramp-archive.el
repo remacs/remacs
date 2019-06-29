@@ -373,13 +373,12 @@ pass to the OPERATION."
 (when url-handler-mode (tramp-register-file-name-handlers))
 
 (with-eval-after-load 'url-handler
-  (progn
-    (add-hook 'url-handler-mode-hook #'tramp-register-file-name-handlers)
-    (add-hook
-     'tramp-archive-unload-hook
-     (lambda ()
-       (remove-hook
-	'url-handler-mode-hook #'tramp-register-file-name-handlers)))))
+  (add-hook 'url-handler-mode-hook #'tramp-register-file-name-handlers)
+  (add-hook
+   'tramp-archive-unload-hook
+   (lambda ()
+     (remove-hook
+      'url-handler-mode-hook #'tramp-register-file-name-handlers))))
 
 
 ;; File name conversions.

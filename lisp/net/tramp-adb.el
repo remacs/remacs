@@ -1299,15 +1299,14 @@ connection if a previous connection has died for some reason."
 ;; `connection-local-set-profile-variables' and
 ;; `connection-local-set-profiles' exists since Emacs 26.1.
 (with-eval-after-load 'shell
-  (progn
-    (tramp-compat-funcall
-     'connection-local-set-profile-variables
-     'tramp-adb-connection-local-default-profile
-     tramp-adb-connection-local-default-profile)
-    (tramp-compat-funcall
-     'connection-local-set-profiles
-     `(:application tramp :protocol ,tramp-adb-method)
-     'tramp-adb-connection-local-default-profile)))
+  (tramp-compat-funcall
+   'connection-local-set-profile-variables
+   'tramp-adb-connection-local-default-profile
+   tramp-adb-connection-local-default-profile)
+  (tramp-compat-funcall
+   'connection-local-set-profiles
+   `(:application tramp :protocol ,tramp-adb-method)
+   'tramp-adb-connection-local-default-profile))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

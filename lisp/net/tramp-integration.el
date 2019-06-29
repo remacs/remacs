@@ -124,17 +124,16 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 	 #'identity (butlast (tramp-compat-exec-path)) path-separator)))
 
 (with-eval-after-load 'esh-util
-  (progn
-    (add-hook 'eshell-mode-hook
-	      #'tramp-eshell-directory-change)
-    (add-hook 'eshell-directory-change-hook
-	      #'tramp-eshell-directory-change)
-    (add-hook 'tramp-integration-unload-hook
-	      (lambda ()
-		(remove-hook 'eshell-mode-hook
-			     #'tramp-eshell-directory-change)
-		(remove-hook 'eshell-directory-change-hook
-			     #'tramp-eshell-directory-change)))))
+  (add-hook 'eshell-mode-hook
+	    #'tramp-eshell-directory-change)
+  (add-hook 'eshell-directory-change-hook
+	    #'tramp-eshell-directory-change)
+  (add-hook 'tramp-integration-unload-hook
+	    (lambda ()
+	      (remove-hook 'eshell-mode-hook
+			   #'tramp-eshell-directory-change)
+	      (remove-hook 'eshell-directory-change-hook
+			   #'tramp-eshell-directory-change))))
 
 ;;; Integration of recentf.el:
 
@@ -159,17 +158,16 @@ NAME must be equal to `tramp-current-connection'."
       (recentf-cleanup))))
 
 (with-eval-after-load 'recentf
-  (progn
-    (add-hook 'tramp-cleanup-connection-hook
-	      #'tramp-recentf-cleanup)
-    (add-hook 'tramp-cleanup-all-connections-hook
-	      #'tramp-recentf-cleanup-all)
-    (add-hook 'tramp-integration-unload-hook
-	      (lambda ()
-		(remove-hook 'tramp-cleanup-connection-hook
-			     #'tramp-recentf-cleanup)
-		(remove-hook 'tramp-cleanup-all-connections-hook
-			     #'tramp-recentf-cleanup-all)))))
+  (add-hook 'tramp-cleanup-connection-hook
+	    #'tramp-recentf-cleanup)
+  (add-hook 'tramp-cleanup-all-connections-hook
+	    #'tramp-recentf-cleanup-all)
+  (add-hook 'tramp-integration-unload-hook
+	    (lambda ()
+	      (remove-hook 'tramp-cleanup-connection-hook
+			   #'tramp-recentf-cleanup)
+	      (remove-hook 'tramp-cleanup-all-connections-hook
+			   #'tramp-recentf-cleanup-all))))
 
 ;;; Default connection-local variables for Tramp:
 
@@ -181,15 +179,14 @@ NAME must be equal to `tramp-current-connection'."
 ;; `connection-local-set-profile-variables' and
 ;; `connection-local-set-profiles' exists since Emacs 26.1.
 (with-eval-after-load 'shell
-  (progn
-    (tramp-compat-funcall
-     'connection-local-set-profile-variables
-     'tramp-connection-local-default-profile
-     tramp-connection-local-default-profile)
-    (tramp-compat-funcall
-     'connection-local-set-profiles
-     `(:application tramp)
-     'tramp-connection-local-default-profile)))
+  (tramp-compat-funcall
+   'connection-local-set-profile-variables
+   'tramp-connection-local-default-profile
+   tramp-connection-local-default-profile)
+  (tramp-compat-funcall
+   'connection-local-set-profiles
+   `(:application tramp)
+   'tramp-connection-local-default-profile))
 
 (add-hook 'tramp-unload-hook
 	  (lambda () (unload-feature 'tramp-integration 'force)))
