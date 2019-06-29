@@ -279,7 +279,9 @@ Merges keywords to avoid backtracking in Emacs's regexp matcher."
 
 (defun regexp-opt-charset (chars)
   "Return a regexp to match a character in CHARS.
-CHARS should be a list of characters."
+CHARS should be a list of characters.
+If CHARS is the empty list, the return value is a regexp that
+never matches anything."
   ;; The basic idea is to find character ranges.  Also we take care in the
   ;; position of character set meta characters in the character set regexp.
   ;;
@@ -326,13 +328,15 @@ CHARS should be a list of characters."
 	(while (>= end start)
 	  (setq charset (format "%s%c" charset start))
 	  (setq start (1+ start)))))
-    ;;
-    ;; Make sure a caret is not first and a dash is first or last.
-    (if (and (string-equal charset "") (string-equal bracket ""))
-	(if (string-equal dash "")
-            "\\^"                       ; [^] is not a valid regexp
-          (concat "[" dash caret "]"))
-      (concat "[" bracket charset caret dash "]"))))
+
+    ;; Make sure that ] is first, ^ is not first, - is first or last.
+    (let ((all (concat bracket charset caret dash)))
+      (pcase (length all)
+        (0 regexp-unmatchable)
+        (1 (regexp-quote all))
+        (_ (if (string-equal all "^-")
+               "[-^]"
+             (concat "[" all "]")))))))
 
 
 (defun regexp-opt--contains-prefix (strings)
