@@ -22528,6 +22528,15 @@ display_line (struct it *it, int cursor_vpos)
   it->right_user_fringe_bitmap = 0;
   it->right_user_fringe_face_id = 0;
 
+  /* When they turn off tooltip-mode on a GUI frame, we call 'message'
+     with message-truncate-lines bound to non-nil, which produces
+     truncation bitmaps on the fringe.  Force redrawing of the fringes
+     in that case, to make sure the fringe bitmaps are removed when a
+     shorter message is displayed.  */
+  if (MINI_WINDOW_P (it->w) && it->line_wrap == TRUNCATE
+      && FRAME_WINDOW_P (it->f) && !cursor_in_echo_area)
+    row->redraw_fringe_bitmaps_p = true;
+
   /* Maybe set the cursor.  */
   cvpos = it->w->cursor.vpos;
   if ((cvpos < 0
