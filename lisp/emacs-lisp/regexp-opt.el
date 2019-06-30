@@ -140,21 +140,34 @@ usually more efficient than that of a simplified version:
 	   (completion-ignore-case nil)
 	   (completion-regexp-list nil)
 	   (open (cond ((stringp paren) paren) (paren "\\(")))
-	   (sorted-strings (delete-dups
-			    (sort (copy-sequence strings) 'string-lessp)))
 	   (re
             (cond
              ;; No strings: return an unmatchable regexp.
              ((null strings)
               (concat (or open "\\(?:") regexp-unmatchable "\\)"))
-             ;; If we cannot reorder, give up all attempts at
-             ;; optimisation.  There is room for improvement (Bug#34641).
-             ((and keep-order (regexp-opt--contains-prefix sorted-strings))
-              (concat (or open "\\(?:")
-                      (mapconcat #'regexp-quote strings "\\|")
-                      "\\)"))
+
+             ;; The algorithm will generate a pattern that matches
+             ;; longer strings in the list before shorter.  If the
+             ;; list order matters, then no string must come after a
+             ;; proper prefix of that string.  To check this, verify
+             ;; that a straight or-pattern matches each string
+             ;; entirely.
+             ((and keep-order
+                   (let* ((case-fold-search nil)
+                          (alts (mapconcat #'regexp-quote strings "\\|")))
+                     (and (let ((s strings))
+                            (while (and s
+                                        (string-match alts (car s))
+                                        (= (match-end 0) (length (car s))))
+                              (setq s (cdr s)))
+                            ;; If we exited early, we found evidence that
+                            ;; regexp-opt-group cannot be used.
+                            s)
+                          (concat (or open "\\(?:") alts "\\)")))))
              (t
-              (regexp-opt-group sorted-strings (or open t) (not open))))))
+              (regexp-opt-group
+               (delete-dups (sort (copy-sequence strings) 'string-lessp))
+               (or open t) (not open))))))
       (cond ((eq paren 'words)
 	     (concat "\\<" re "\\>"))
 	    ((eq paren 'symbols)
@@ -337,21 +350,6 @@ never matches anything."
         (_ (if (string-equal all "^-")
                "[-^]"
              (concat "[" all "]")))))))
-
-
-(defun regexp-opt--contains-prefix (strings)
-  "Whether STRINGS contains a proper prefix of one of its other elements.
-STRINGS must be a list of sorted strings without duplicates."
-  (let ((s strings))
-    ;; In a lexicographically sorted list, a string always immediately
-    ;; succeeds one of its prefixes.
-    (while (and (cdr s)
-                (not (string-equal
-                      (car s)
-                      (substring (cadr s) 0 (min (length (car s))
-                                                 (length (cadr s)))))))
-      (setq s (cdr s)))
-    (cdr s)))
 
 
 (provide 'regexp-opt)
