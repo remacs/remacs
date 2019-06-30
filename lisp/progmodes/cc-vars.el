@@ -563,7 +563,8 @@ variable in a mode hook."
 (defcustom-c-stylevar c-doc-comment-style
   '((java-mode . javadoc)
     (pike-mode . autodoc)
-    (c-mode    . gtkdoc))
+    (c-mode    . gtkdoc)
+    (c++-mode  . gtkdoc))
   "Specifies documentation comment style(s) to recognize.
 This is primarily used to fontify doc comments and the markup within
 them, e.g. Javadoc comments.
@@ -573,7 +574,7 @@ comment styles:
 
  javadoc -- Javadoc style for \"/** ... */\" comments (default in Java mode).
  autodoc -- Pike autodoc style for \"//! ...\" comments (default in Pike mode).
- gtkdoc  -- GtkDoc style for \"/** ... **/\" comments (default in C mode).
+ gtkdoc  -- GtkDoc style for \"/** ... **/\" comments (default in C and C++ modes).
 
 The value may also be a list of doc comment styles, in which case all
 of them are recognized simultaneously (presumably with markup cues
