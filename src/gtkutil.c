@@ -2277,26 +2277,19 @@ xg_get_font (struct frame *f, const char *default_name)
 
       if (desc)
 	{
-	  const char *name   = pango_font_description_get_family (desc);
+	  const char *family = pango_font_description_get_family (desc);
 	  gint        size   = pango_font_description_get_size (desc);
 	  PangoWeight weight = pango_font_description_get_weight (desc);
 	  PangoStyle  style  = pango_font_description_get_style (desc);
 
-#ifdef USE_CAIRO
-#define FONT_TYPE_WANTED (Qftcr)
-#else
-#define FONT_TYPE_WANTED (Qxft)
-#endif
 	  font = CALLN (Ffont_spec,
-			QCname, build_string (name),
+			QCfamily, build_string (family),
 			QCsize, make_float (pango_units_to_double (size)),
 			QCweight, XG_WEIGHT_TO_SYMBOL (weight),
-			QCslant, XG_STYLE_TO_SYMBOL (style),
-			QCtype,
-                        FONT_TYPE_WANTED);
+			QCslant, XG_STYLE_TO_SYMBOL (style));
 
 	  pango_font_description_free (desc);
-	  dupstring (&x_last_font_name, name);
+	  dupstring (&x_last_font_name, family);
 	}
 
 #else /* Use old font selector, which just returns the font name.  */
