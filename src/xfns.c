@@ -6288,6 +6288,10 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
 
   f->output_data.x->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
 
+  gui_default_parameter (f, parms, Qinhibit_double_buffering, Qnil,
+                         "inhibitDoubleBuffering", "InhibitDoubleBuffering",
+                         RES_TYPE_BOOLEAN);
+
   gui_figure_window_size (f, parms, false, &x_width, &x_height);
 
   {
