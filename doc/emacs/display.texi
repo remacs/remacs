@@ -1172,8 +1172,8 @@ used.
 
 Any other value disables the indicator.  The default value is @code{t}.
 
-@item display-fill-column-indicator-char
-@vindex display-fill-column-indicator-char
+@item display-fill-column-indicator-character
+@vindex display-fill-column-indicator-character
 Specifies the character used for the indicator.  This character can be
 any valid char including unicode ones if the actual font supports
 them.
