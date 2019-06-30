@@ -863,6 +863,7 @@ Also, if MODE is `mem' or `cpu+mem', then memory profiler will be started."
 
 (defun profiler-report ()
   "Report profiling results."
+  (interactive)
   (when (and (fboundp 'profiler-cpu-running-p) (profiler-cpu-running-p))
     (setq profiler-cpu-log (profiler-cpu-log)))
   (when (profiler-memory-running-p)
