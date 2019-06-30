@@ -753,6 +753,7 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map [?\C-\M-%] 'isearch-query-replace-regexp)
     (define-key map "\M-so" 'isearch-occur)
     (define-key map "\M-shr" 'isearch-highlight-regexp)
+    (define-key map "\M-shl" 'isearch-highlight-lines-matching-regexp)
 
     ;; The key translations defined in the C-x 8 prefix should add
     ;; characters to the search string.  See iso-transl.el.
@@ -1039,6 +1040,9 @@ Type \\[isearch-occur] to run `occur' that shows\
  the last search string.
 Type \\[isearch-highlight-regexp] to run `highlight-regexp'\
  that highlights the last search string.
+Type \\[isearch-highlight-lines-matching-regexp] to run
+ `highlight-lines-matching-regexp'\ that highlights lines
+ matching the last search string.
 
 Type \\[isearch-describe-bindings] to display all Isearch key bindings.
 Type \\[isearch-describe-key] to display documentation of Isearch key.
@@ -2343,12 +2347,12 @@ characters in that string."
 
 (declare-function hi-lock-read-face-name "hi-lock" ())
 
-(defun isearch-highlight-regexp ()
-  "Run `highlight-regexp' with regexp from the current search string.
-It exits Isearch mode and calls `hi-lock-face-buffer' with its regexp
-argument from the last search regexp or a quoted search string,
-and reads its face argument using `hi-lock-read-face-name'."
-  (interactive)
+(defun isearch--highlight-regexp-or-lines (hi-lock-func)
+  "Run HI-LOCK-FUNC to exit isearch, leaving the matches highlighted.
+This is the internal function used by `isearch-highlight-regexp'
+and `isearch-highlight-lines-matching-regexp' to invoke
+HI-LOCK-FUNC (either `highlight-regexp' or
+`highlight-lines-matching-regexp' respectively)."
   (let (
 	;; Set `isearch-recursive-edit' to nil to prevent calling
 	;; `exit-recursive-edit' in `isearch-done' that terminates
@@ -2377,8 +2381,22 @@ and reads its face argument using `hi-lock-read-face-name'."
 			      (regexp-quote s))))
 			isearch-string ""))
 		      (t (regexp-quote isearch-string)))))
-    (hi-lock-face-buffer regexp (hi-lock-read-face-name)))
+    (funcall hi-lock-func regexp (hi-lock-read-face-name)))
   (and isearch-recursive-edit (exit-recursive-edit)))
+
+(defun isearch-highlight-regexp ()
+  "Exit Isearch mode, and call `highlight-regexp' with its regexp
+argument from the last search, and the face from
+`hi-lock-read-face-name'."
+  (interactive)
+  (isearch--highlight-regexp-or-lines 'highlight-regexp))
+
+(defun isearch-highlight-lines-matching-regexp ()
+  "Exit Isearch mode, and call `highlight-lines-matching-regexp'
+with its regexp argument from the last search, and the face from
+`hi-lock-read-face-name'."
+  (interactive)
+  (isearch--highlight-regexp-or-lines 'highlight-lines-matching-regexp))
 
 
 (defun isearch-delete-char ()

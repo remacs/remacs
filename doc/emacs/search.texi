@@ -453,13 +453,16 @@ key sequence if you want to use it (@pxref{Rebinding}).
 
 @kindex M-s h r @r{(Incremental Search)}
 @findex isearch-highlight-regexp
-  You can exit the search while leaving the matches for the last
-search string highlighted on display.  To this end, type @kbd{M-s h r}
-(@code{isearch-highlight-regexp}), which will run
-@code{highlight-regexp} (@pxref{Highlight Interactively}) passing
-it the regexp derived from the last search string and prompting you
-for the face to use for highlighting.  To remove the highlighting,
-type @kbd{M-s h u} (@code{unhighlight-regexp}).
+@kindex M-s h l @r{(Incremental Search)}
+@findex isearch-highlight-lines-matching-regexp
+  You can exit the search while leaving the matches highlighted by
+typing @kbd{M-s h r} (@code{isearch-highlight-regexp}).  This runs
+@code{highlight-regexp} (@pxref{Highlight Interactively}), passing it
+the regexp derived from the search string and prompting you for the face
+to use for highlighting.  To highlight @emph{whole lines} containing
+matches (rather than @emph{just} the matches), type @kbd{M-s h l}
+(@code{isearch-highlight-lines-matching-regexp}).  In either case, to
+remove the highlighting, type @kbd{M-s h u} (@code{unhighlight-regexp}).
 
 @cindex incremental search, help on special keys
 @kindex C-h C-h @r{(Incremental Search)}

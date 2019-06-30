@@ -1123,6 +1123,12 @@ highlight in one iteration while processing the full buffer.
 'C-M-d'.
 
 +++
+'M-s h l' invokes highlight-lines-matching-regexp using the search
+string to highlight lines matching the search string. This is similar
+to the existing binding 'M-s h r' (highlight-regexp) that highlights
+JUST the search string.
+
++++
 *** New variable 'isearch-yank-on-move' provides options 't' and 'shift'
 to extend the search string by yanking text that ends at the new
 position after moving point in the current buffer.  'shift' extends
