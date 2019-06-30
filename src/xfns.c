@@ -6962,6 +6962,7 @@ Text larger than the specified size is clipped.  */)
 
   w->must_be_updated_p = true;
   update_single_window (w);
+  flush_frame (tip_f);
   set_buffer_internal_1 (old_buffer);
   unbind_to (count_1, Qnil);
   windows_or_buffers_changed = old_windows_or_buffers_changed;
