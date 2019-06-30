@@ -2079,16 +2079,6 @@ compute_image_rotation (struct image *img, double *rotation)
     *rotation = XFIXNUM (reduced_angle);
 }
 
-static double
-divide_double (double a, double b)
-{
-#if !IEEE_FLOATING_POINT
-  if (b == 0)
-    return DBL_MAX;
-#endif
-  return a / b;
-}
-
 static void
 image_set_transform (struct frame *f, struct image *img)
 {
@@ -2116,11 +2106,15 @@ image_set_transform (struct frame *f, struct image *img)
   matrix3x3 matrix
     = {
 # if defined USE_CAIRO || defined HAVE_XRENDER
-	[0][0] = divide_double (img->width, width),
-	[1][1] = divide_double (img->height, height),
+	[0][0] = (!IEEE_FLOATING_POINT && width == 0 ? DBL_MAX
+		  : img->width / (double) width),
+	[1][1] = (!IEEE_FLOATING_POINT && height == 0 ? DBL_MAX
+		  : img->height / (double) height),
 # elif defined HAVE_NTGUI || defined HAVE_NS
-	[0][0] = divide_double (width, img->width),
-	[1][1] = divide_double (height, img->height),
+	[0][0] = (!IEEE_FLOATING_POINT && img->width == 0 ? DBL_MAX
+		  : width / (double) img->width),
+	[1][1] = (!IEEE_FLOATING_POINT && img->height == 0 ? DBL_MAX
+		  : height / (double) img->height),
 # else
 	[0][0] = 1, [1][1] = 1,
 # endif
@@ -2161,7 +2155,7 @@ image_set_transform (struct frame *f, struct image *img)
 	  rotate_flag = 1;
 	}
 
-      if (rotate_flag > 0)
+      if (0 < rotate_flag)
 	{
 #  if defined USE_CAIRO || defined HAVE_XRENDER
 	  /* 1. Translate so (0, 0) is in the center of the image.  */
