@@ -24,9 +24,22 @@
 
 ;;; Commentary:
 
-;; ibuffer.el is an advanced replacement for the `buffer-menu' which
-;; is normally distributed with Emacs.  Its interface is intended to
-;; be analogous to that of Dired.
+;; Ibuffer is an advanced replacement for the `buffer-menu' which is
+;; distributed with Emacs.  It lets you operate on buffers in a
+;; Dired-like way, with the ability to sort, mark by regular
+;; expression, and filter displayed buffers by various criteria.  Its
+;; interface is intended to be analogous to that of Dired.
+;;
+;; To start using it, type `M-x ibuffer'.  If you use it regularly,
+;; you might be interested in replacing the default `list-buffers' key
+;; binding by adding the following to your init file:
+;;
+;;     (global-set-key (kbd "C-x C-b") 'ibuffer)
+;;
+;; See also the various customization options, not least the
+;; documentation for `ibuffer-formats'.
+;;
+;; For more help, type `?' in the "*Ibuffer*" buffer.
 
 ;;; Code:
 
@@ -139,15 +152,13 @@ value for this variable would be
 Using \\[ibuffer-switch-format], you can rotate the display between
 the specified formats in the list."
   :version "26.1"
-  :type '(repeat sexp)
-  :group 'ibuffer)
+  :type '(repeat sexp))
 
 (defcustom ibuffer-always-compile-formats (featurep 'bytecomp)
   "If non-nil, then use the byte-compiler to optimize `ibuffer-formats'.
 This will increase the redisplay speed, at the cost of loading the
 elisp byte-compiler."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-fontification-alist
   '((10 buffer-read-only font-lock-constant-face)
@@ -174,34 +185,28 @@ recreate it for the change to take effect."
   :type '(repeat
 	  (list (integer :tag "Priority")
 		(sexp :tag "Test Form")
-		face))
-  :group 'ibuffer)
+                face)))
 
 (defcustom ibuffer-use-other-window nil
   "If non-nil, display Ibuffer in another window by default."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-default-shrink-to-minimum-size nil
   "If non-nil, minimize the size of the Ibuffer window by default."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 (defvar ibuffer-shrink-to-minimum-size nil)
 
 (defcustom ibuffer-display-summary t
   "If non-nil, summarize Ibuffer columns."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-truncate-lines t
   "If non-nil, do not display continuation lines."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-case-fold-search case-fold-search
   "If non-nil, ignore case when searching."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-default-sorting-mode 'recency
   "The criteria by which to sort the buffers.
@@ -213,21 +218,18 @@ view of the buffers."
 		 (const :tag "Lexicographic" :value alphabetic)
 		 (const :tag "Buffer size" :value size)
 		 (const :tag "File name" :value filename/process)
-		 (const :tag "Major mode" :value major-mode))
-  :group 'ibuffer)
+                 (const :tag "Major mode" :value major-mode)))
 (defvar ibuffer-sorting-mode nil)
 (defvar ibuffer-last-sorting-mode nil)
 
 (defcustom ibuffer-default-sorting-reversep nil
   "If non-nil, reverse the default sorting order."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 (defvar ibuffer-sorting-reversep nil)
 
 (defcustom ibuffer-eliding-string "..."
   "The string to use for eliding long columns."
-  :type 'string
-  :group 'ibuffer)
+  :type 'string)
 
 (defcustom ibuffer-maybe-show-predicates `(,(lambda (buf)
 					      (and (string-match "^ " (buffer-name buf))
@@ -243,13 +245,11 @@ Viewing of buffers hidden because of these predicates may be customized
 via `ibuffer-default-display-maybe-show-predicates' and is toggled by
 giving a non-nil prefix argument to `ibuffer-update'.
 Note that this specialized filtering occurs before real filtering."
-  :type '(repeat (choice regexp function))
-  :group 'ibuffer)
+  :type '(repeat (choice regexp function)))
 
 (defcustom ibuffer-default-display-maybe-show-predicates nil
   "Non-nil means show buffers that match `ibuffer-maybe-show-predicates'."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defvar ibuffer-display-maybe-show-predicates nil)
 
@@ -257,47 +257,39 @@ Note that this specialized filtering occurs before real filtering."
 
 (defcustom ibuffer-movement-cycle t
   "If non-nil, then forward and backwards movement commands cycle."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-modified-char ?*
   "The character to display for modified buffers."
-  :type 'character
-  :group 'ibuffer)
+  :type 'character)
 
 (defcustom ibuffer-read-only-char ?%
   "The character to display for read-only buffers."
-  :type 'character
-  :group 'ibuffer)
+  :type 'character)
 
 (defcustom ibuffer-marked-char ?>
   "The character to display for marked buffers."
-  :type 'character
-  :group 'ibuffer)
+  :type 'character)
 
 (defcustom ibuffer-locked-char ?L
   "The character to display for locked buffers."
   :version "26.1"
-  :type 'character
-  :group 'ibuffer)
+  :type 'character)
 
 (defcustom ibuffer-deletion-char ?D
   "The character to display for buffers marked for deletion."
-  :type 'character
-  :group 'ibuffer)
+  :type 'character)
 
 (defcustom ibuffer-expert nil
   "If non-nil, don't ask for confirmation of \"dangerous\" operations."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-view-ibuffer nil
   "If non-nil, display the current Ibuffer buffer itself.
 Note that this has a drawback - the data about the current Ibuffer
 buffer will most likely be inaccurate.  This includes modification
 state, size, etc."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-always-show-last-buffer nil
   "If non-nil, always display the previous buffer.
@@ -305,19 +297,16 @@ This variable takes precedence over filtering, and even
 `ibuffer-never-show-predicates'."
   :type '(choice (const :tag "Always" :value t)
 		 (const :tag "Never" :value nil)
-		 (const :tag "Always except minibuffer" :value :nomini))
-  :group 'ibuffer)
+                 (const :tag "Always except minibuffer" :value :nomini)))
 
 (defcustom ibuffer-jump-offer-only-visible-buffers nil
   "If non-nil, only offer buffers visible in the Ibuffer buffer
 in completion lists of the `ibuffer-jump-to-buffer' command."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-use-header-line (boundp 'header-line-format)
   "If non-nil, display a header line containing current filters."
-  :type 'boolean
-  :group 'ibuffer)
+  :type 'boolean)
 
 (defcustom ibuffer-default-directory nil
   "The default directory to use for a new Ibuffer buffer.
@@ -325,65 +314,54 @@ If nil, inherit the directory of the buffer in which `ibuffer' was
 called.  Otherwise, this variable should be a string naming a
 directory, like `default-directory'."
   :type '(choice (const :tag "Inherit" :value nil)
-		 string)
-  :group 'ibuffer)
+                 string))
 
 (defcustom ibuffer-help-buffer-modes
   '(help-mode apropos-mode Info-mode Info-edit-mode)
   "List of \"Help\" major modes."
-  :type '(repeat function)
-  :group 'ibuffer)
+  :type '(repeat function))
 
 (defcustom ibuffer-compressed-file-name-regexp
   "\\.\\(arj\\|bgz\\|bz2\\|gz\\|lzh\\|taz\\|tgz\\|xz\\|zip\\|z\\)$"
   "Regexp to match compressed file names."
   :version "24.1"                       ; added xz
-  :type 'regexp
-  :group 'ibuffer)
+  :type 'regexp)
 
 (defcustom ibuffer-hook nil
   "Hook run when `ibuffer' is called."
-  :type 'hook
-  :group 'ibuffer)
+  :type 'hook)
 
 (defcustom ibuffer-mode-hook nil
   "Hook run upon entry into `ibuffer-mode'."
   :type 'hook
-  :options '(ibuffer-auto-mode)
-  :group 'ibuffer)
+  :options '(ibuffer-auto-mode))
 
 (defcustom ibuffer-load-hook nil
   "Hook run when Ibuffer is loaded."
-  :type 'hook
-  :group 'ibuffer)
+  :type 'hook)
 
 (defcustom ibuffer-marked-face 'warning
   "Face used for displaying marked buffers."
-  :type 'face
-  :group 'ibuffer)
+  :type 'face)
 
 (defcustom ibuffer-deletion-face 'error
   "Face used for displaying buffers marked for deletion."
-  :type 'face
-  :group 'ibuffer)
+  :type 'face)
 
 (defcustom ibuffer-title-face 'font-lock-type-face
   "Face used for the title string."
-  :type 'face
-  :group 'ibuffer)
+  :type 'face)
 
 (defcustom ibuffer-filter-group-name-face 'bold
   "Face used for displaying filtering group names."
-  :type 'face
-  :group 'ibuffer)
+  :type 'face)
 
 (defcustom ibuffer-directory-abbrev-alist nil
   "An alist of file name abbreviations like `directory-abbrev-alist'."
   :type '(repeat (cons :format "%v"
 		       :value ("" . "")
 		       (regexp :tag "From")
-		       (regexp :tag "To")))
-  :group 'ibuffer)
+                       (regexp :tag "To"))))
 
 (defvar ibuffer-mode-groups-popup
   (let ((groups-map (make-sparse-keymap "Filter Groups")))
