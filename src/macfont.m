@@ -1824,7 +1824,7 @@ macfont_get_open_type_spec (Lisp_Object otf_spec)
               unsigned int tag;
 
               OTF_SYM_TAG (XCAR (val), tag);
-              spec->features[i][j++] = negative ? tag & 0x80000000 : tag;
+              spec->features[i][j++] = negative ? tag | 0x80000000 : tag;
             }
         }
       spec->nfeatures[i] = j;
