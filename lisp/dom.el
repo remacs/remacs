@@ -81,17 +81,15 @@ A typical attribute is `href'."
   (if (eq (dom-tag node) 'script)
       ""
     (mapconcat
-     'identity
-     (mapcar
-      (lambda (elem)
-        (cond
-         ((stringp elem)
-	  elem)
-         ((eq (dom-tag elem) 'script)
-          "")
-         (t
-	  (dom-texts elem separator))))
-      (dom-children node))
+     (lambda (elem)
+       (cond
+        ((stringp elem)
+         elem)
+        ((eq (dom-tag elem) 'script)
+         "")
+        (t
+         (dom-texts elem separator))))
+     (dom-children node)
      (or separator " "))))
 
 (defun dom-child-by-tag (dom tag)
