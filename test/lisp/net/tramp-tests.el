@@ -168,7 +168,10 @@ properly.  BODY shall not contain a timeout."
   `(let ((tramp-verbose (max (or ,verbose 0) (or tramp-verbose 0)))
 	 (tramp-message-show-message t)
 	 (debug-ignored-errors
-	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
+	  (append
+	   '("^make-symbolic-link not supported$"
+	     "^error with add-name-to-file")
+	   debug-ignored-errors))
 	 inhibit-message)
      (unwind-protect
 	 (let ((tramp--test-instrument-test-case-p t)) ,@body)
@@ -3162,10 +3165,9 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   (declare (indent defun) (debug (body)))
   `(condition-case err
        (progn ,@body)
-     ((error quit debug)
-      (unless (and (eq (car err) 'file-error)
-		   (string-match "^error with add-name-to-file"
-				 (error-message-string err)))
+     (file-error
+      (unless (string-match "^error with add-name-to-file"
+			    (error-message-string err))
 	(signal (car err) (cdr err))))))
 
 (ert-deftest tramp-test21-file-links ()
