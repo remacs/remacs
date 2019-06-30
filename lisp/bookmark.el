@@ -4,7 +4,7 @@
 
 ;; Author: Karl Fogel <kfogel@red-bean.com>
 ;; Created: July, 1993
-;; Keywords: bookmarks, placeholders, annotations
+;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.
 
@@ -50,8 +50,7 @@
 
 (defcustom bookmark-use-annotations nil
   "If non-nil, setting a bookmark queries for an annotation in a buffer."
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 
 (defcustom bookmark-save-flag t
@@ -71,14 +70,11 @@ behavior.)
 
 To specify the file in which to save them, modify the variable
 `bookmark-default-file'."
-  :type '(choice (const nil) integer (other t))
-  :group 'bookmark)
+  :type '(choice (const nil) integer (other t)))
 
 
 (define-obsolete-variable-alias 'bookmark-old-default-file
   'bookmark-default-file "27.1")
-
-
 (define-obsolete-variable-alias 'bookmark-file 'bookmark-default-file "27.1")
 (defcustom bookmark-default-file
   (locate-user-emacs-file "bookmarks" ".emacs.bmk")
@@ -86,8 +82,7 @@ To specify the file in which to save them, modify the variable
   ;; The current default file is defined via the internal variable
   ;; `bookmark-bookmarks-timestamp'.  This does not affect the value
   ;; of `bookmark-default-file'.
-  :type 'file
-  :group 'bookmark)
+  :type 'file)
 
 (defcustom bookmark-watch-bookmark-file t
   "If non-nil watch the default bookmark file.
@@ -108,35 +103,30 @@ just use the value of `version-control'."
   :type '(choice (const :tag "If existing" nil)
                  (const :tag "Never" never)
                  (const :tag "Use value of option `version-control'" nospecial)
-                 (other :tag "Always" t))
-  :group 'bookmark)
+                 (other :tag "Always" t)))
 
 
 (defcustom bookmark-completion-ignore-case t
   "Non-nil means bookmark functions ignore case in completion."
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 
 (defcustom bookmark-sort-flag t
   "Non-nil means that bookmarks will be displayed sorted by bookmark name.
 Otherwise they will be displayed in LIFO order (that is, most
 recently set ones come first, oldest ones come last)."
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 
 (defcustom bookmark-automatically-show-annotations t
   "Non-nil means show annotations when jumping to a bookmark."
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 (defcustom bookmark-bmenu-use-header-line t
   "Non-nil means to use an immovable header line.
 This is as opposed to inline text at the top of the buffer."
   :version "24.4"
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 (defconst bookmark-bmenu-inline-header-height 2
   "Number of lines used for the *Bookmark List* header.
@@ -150,36 +140,30 @@ This includes the annotations column.")
 (defcustom bookmark-bmenu-file-column 30
   "Column at which to display filenames in a buffer listing bookmarks.
 You can toggle whether files are shown with \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-toggle-filenames]."
-  :type 'integer
-  :group 'bookmark)
+  :type 'integer)
 
 
 (defcustom bookmark-bmenu-toggle-filenames t
   "Non-nil means show filenames when listing bookmarks.
 A non-nil value may result in truncated bookmark names."
-  :type 'boolean
-  :group 'bookmark)
+  :type 'boolean)
 
 (defface bookmark-menu-bookmark
   '((t (:weight bold)))
-  "Face used to highlight bookmark names in bookmark menu buffers."
-  :group 'bookmark)
+  "Face used to highlight bookmark names in bookmark menu buffers.")
 
 (defcustom bookmark-menu-length 70
   "Maximum length of a bookmark name displayed on a popup menu."
-  :type 'integer
-  :group 'bookmark)
+  :type 'integer)
 
 ;; FIXME: Is it really worth a customization option?
 (defcustom bookmark-search-delay 0.2
   "Time before `bookmark-bmenu-search' updates the display."
-  :group 'bookmark
   :type  'number)
 
 (defface bookmark-menu-heading
   '((t (:inherit font-lock-type-face)))
   "Face used to highlight the heading in bookmark menu buffers."
-  :group 'bookmark
   :version "22.1")
 
 
@@ -278,8 +262,6 @@ defaults to `bookmark-default-file' and MODTIME is its modification time.")
 
 (defvar bookmark-file-coding-system nil
   "The coding-system of the last loaded or saved bookmark file.")
-
-;; more stuff added by db.
 
 (defvar bookmark-current-bookmark nil
   "Name of bookmark most recently used in the current file.
@@ -937,6 +919,8 @@ It takes one argument, the name of the bookmark, as a string.")
 
 (defun bookmark-insert-annotation (bookmark-name-or-record)
   "Insert annotation for BOOKMARK-NAME-OR-RECORD at point."
+  (when (not (bookmark-get-bookmark bookmark-name-or-record t))
+    (error "Invalid bookmark: %s" bookmark-name-or-record))
   (insert (funcall bookmark-edit-annotation-text-func bookmark-name-or-record))
   (let ((annotation (bookmark-get-annotation bookmark-name-or-record)))
     (if (and annotation (not (string-equal annotation "")))
@@ -1449,7 +1433,7 @@ for a file, defaulting to the file defined by variable
 	;; Apparently `pp' has a poor algorithmic complexity, so this
 	;; scales a lot better.  bug#4485.
 	(dolist (i bookmark-alist) (pp i (current-buffer)))
-	(insert ")")
+	(insert ")\n")
 	;; Make sure the specified encoding can safely encode the
 	;; bookmarks.  If it cannot, suggest utf-8-emacs as default.
 	(with-coding-priority '(utf-8-emacs)
