@@ -20206,6 +20206,7 @@ compute_line_metrics (struct it *it)
 static bool
 append_space_for_newline (struct it *it, bool default_face_p)
 {
+#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (it->f))
     {
       int n = it->glyph_row->used[TEXT_AREA];
@@ -20246,27 +20247,27 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  int indicator_column = (it->w->pseudo_window_p == 0
 				  ? fill_column_indicator_column (it)
 				  : -1);
-	  if (0 <= indicator_column)
+	  if (indicator_column >= 0)
 	    {
-	       struct font *font =
-	         default_face->font ?
-		   default_face->font : FRAME_FONT (it->f);
-	       const int char_width =
-	         font->average_width ?
-		   font->average_width : font->space_width;
-
+	       struct font *font = (default_face->font
+				    ? default_face->font
+				    : FRAME_FONT (it->f));
+	       const int char_width = (font->average_width
+				       ? font->average_width
+				       : font->space_width);
 	       int column_x;
+
 	       if (!INT_MULTIPLY_WRAPV (indicator_column, char_width,
 					&column_x)
 		   && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x,
 				      &column_x)
 		   && it->current_x == column_x)
 	         {
-	           it->c = it->char_to_display =
-		     XFIXNAT (Vdisplay_fill_column_indicator_character);
-	           it->face_id =
-		     merge_faces (it->w, Qfill_column_indicator,
-		                  0, saved_face_id);
+	           it->c = it->char_to_display
+		     = XFIXNAT (Vdisplay_fill_column_indicator_character);
+	           it->face_id
+		     = merge_faces (it->w, Qfill_column_indicator,
+				    0, saved_face_id);
 	           face = FACE_FROM_ID (it->f, it->face_id);
 	           goto produce_glyphs;
 	         }
@@ -20296,7 +20297,6 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	produce_glyphs:
 	  PRODUCE_GLYPHS (it);
 
-#ifdef HAVE_WINDOW_SYSTEM
 	  /* Make sure this space glyph has the right ascent and
 	     descent values, or else cursor at end of line will look
 	     funny, and height of empty lines will be incorrect.  */
@@ -20375,7 +20375,6 @@ append_space_for_newline (struct it *it, bool default_face_p)
 
 	  g->ascent = it->max_ascent;
 	  g->descent = it->max_descent;
-#endif
 
 	  it->override_ascent = -1;
 	  it->constrain_row_ascent_descent_p = false;
@@ -20391,6 +20390,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  return true;
 	}
     }
+#endif
 
   return false;
 }
@@ -20460,6 +20460,7 @@ extend_face_to_end_of_line (struct it *it)
       it->face_id = FACE_FOR_CHAR (f, face, 0, -1, Qnil);
     }
 
+#ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (f))
     {
       /* If the row is empty, add a space with the current face of IT,
@@ -20473,7 +20474,7 @@ extend_face_to_end_of_line (struct it *it)
       /* Mode line and the header line don't have margins, and
 	 likewise the frame's tool-bar window, if there is any.  */
       if (!(it->glyph_row->mode_line_p
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
+#ifndef HAVE_EXT_TOOL_BAR
 	    || (WINDOWP (f->tool_bar_window)
 		&& it->w == XWINDOW (f->tool_bar_window))
 #endif
@@ -20502,18 +20503,19 @@ extend_face_to_end_of_line (struct it *it)
 	  int indicator_column = (it->w->pseudo_window_p == 0
 				  ? fill_column_indicator_column (it)
 				  : -1);
-	  if (0 <= indicator_column)
+	  if (indicator_column >= 0)
             {
-	      struct font *font =
-	        default_face->font ? default_face->font : FRAME_FONT (f);
-	      const int char_width =
-	        font->average_width ?
-		  font->average_width : font->space_width;
-
+	      struct font *font = (default_face->font
+				   ? default_face->font
+				   : FRAME_FONT (f));
+	      const int char_width = (font->average_width
+				      ? font->average_width
+				      : font->space_width);
 	      int column_x;
+
 	      if (!INT_MULTIPLY_WRAPV (indicator_column, char_width, &column_x)
 		  && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x, &column_x)
-		  && it->current_x <= column_x
+		  && column_x >= it->current_x
 		  && column_x <= it->last_visible_x)
 	        {
 	          const char saved_char = it->char_to_display;
@@ -20525,8 +20527,8 @@ extend_face_to_end_of_line (struct it *it)
 
 	          /* The stretch width needs to considet the latter
 	             added glyph.  */
-	          const int stretch_width =
-	            column_x - it->current_x - char_width;
+	          const int stretch_width
+		    = column_x - it->current_x - char_width;
 
 	          memset (&it->position, 0, sizeof it->position);
 	          it->avoid_cursor_p = true;
@@ -20547,11 +20549,11 @@ extend_face_to_end_of_line (struct it *it)
 	             append_space_for_newline didn't already.  */
 	          if (it->current_x < column_x)
 	            {
-		      it->char_to_display =
-	                XFIXNAT (Vdisplay_fill_column_indicator_character);
-	              it->face_id =
-	                merge_faces (it->w, Qfill_column_indicator,
-	                             0, saved_face_id);
+		      it->char_to_display
+			= XFIXNAT (Vdisplay_fill_column_indicator_character);
+	              it->face_id
+			= merge_faces (it->w, Qfill_column_indicator,
+				       0, saved_face_id);
 	              PRODUCE_GLYPHS (it);
 	            }
 
@@ -20572,7 +20574,6 @@ extend_face_to_end_of_line (struct it *it)
 	        }
             }
 	}
-#ifdef HAVE_WINDOW_SYSTEM
       if (it->glyph_row->reversed_p)
 	{
 	  /* Prepend a stretch glyph to the row, such that the
@@ -20636,9 +20637,9 @@ extend_face_to_end_of_line (struct it *it)
 	  if (stretch_width < 0)
 	    it->glyph_row->x = stretch_width;
 	}
-#endif	/* HAVE_WINDOW_SYSTEM */
     }
   else
+#endif	/* HAVE_WINDOW_SYSTEM */
     {
       /* Save some values that must not be changed.  */
       int saved_x = it->current_x;
@@ -20695,7 +20696,7 @@ extend_face_to_end_of_line (struct it *it)
 
       /* Display fill-column indicator if needed.  */
       int indicator_column = fill_column_indicator_column (it);
-      if (0 <= indicator_column
+      if (indicator_column >= 0
 	  && INT_ADD_WRAPV (it->lnum_pixel_width, indicator_column,
 			    &indicator_column))
 	indicator_column = -1;
@@ -20706,10 +20707,10 @@ extend_face_to_end_of_line (struct it *it)
 	  if (indicate)
 	    {
 	      saved_face_id = it->face_id;
-	      it->face_id =
-		merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
-	      it->c = it->char_to_display =
-		XFIXNAT (Vdisplay_fill_column_indicator_character);
+	      it->face_id
+		= merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
+	      it->c = it->char_to_display
+		= XFIXNAT (Vdisplay_fill_column_indicator_character);
 	    }
 
 	  PRODUCE_GLYPHS (it);
@@ -33481,8 +33482,8 @@ either `relative' or `visual'.  */);
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator);
 
   DEFVAR_LISP ("display-fill-column-indicator-column", Vdisplay_fill_column_indicator_column,
-    doc: /* Column for indicator when `display-fill-column-indicator'
-is non-nil.  The default value is t which means that the indicator
+    doc: /* Column for indicator when `display-fill-column-indicator' is non-nil.
+The default value is t which means that the indicator
 will use the `fill-column' variable.  If it is set to an integer the
 indicator will be drawn in that column.  */);
   Vdisplay_fill_column_indicator_column = Qt;
@@ -33490,10 +33491,9 @@ indicator will be drawn in that column.  */);
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator_column);
 
   DEFVAR_LISP ("display-fill-column-indicator-character", Vdisplay_fill_column_indicator_character,
-    doc: /* Character to draw the indicator when
-`display-fill-column-indicator' is non-nil.  The default is U+2502 but
-a good alternative is (ascii 124) if the font in fill-column-indicator
-face does not support Unicode characters.  */);
+    doc: /* Character to draw the indicator when `display-fill-column-indicator' is non-nil.
+The default is U+2502 but a good alternative is (ascii 124)
+if the font in fill-column-indicator face does not support Unicode characters.  */);
   Vdisplay_fill_column_indicator_character = Qnil;
   DEFSYM (Qdisplay_fill_column_indicator_character, "display-fill-column-indicator-character");
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator_character);

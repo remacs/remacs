@@ -2161,7 +2161,7 @@ image_set_transform (struct frame *f, struct image *img)
 	  rotate_flag = 1;
 	}
 
-      if (0 < rotate_flag)
+      if (rotate_flag > 0)
 	{
 #  if defined USE_CAIRO || defined HAVE_XRENDER
 	  /* 1. Translate so (0, 0) is in the center of the image.  */
@@ -2680,10 +2680,10 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
 
   /* Create a DIBSection and raster array for the bitmap,
      and store its handle in *pixmap.  */
-  *pixmap = CreateDIBSection (hdc, &((*pimg)->info),
+  *pixmap = CreateDIBSection (hdc, &(*pimg)->info,
 			      (depth < 16) ? DIB_PAL_COLORS : DIB_RGB_COLORS,
 			      /* casting avoids a GCC warning */
-			      (void **)&((*pimg)->data), NULL, 0);
+			      (void **) &(*pimg)->data, NULL, 0);
 
   /* Realize display palette and garbage all frames. */
   release_frame_dc (f, hdc);
