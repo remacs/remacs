@@ -575,7 +575,7 @@ fontset_find_font (Lisp_Object fontset, int c, struct face *face,
 	      break;
 	    repertory = FONT_DEF_REPERTORY (RFONT_DEF_FONT_DEF (rfont_def));
 
-	    if (XFIXNUM (repertory) == charset_id)
+	    if (FIXNUMP (repertory) && XFIXNUM_RAW (repertory) == charset_id)
 	      {
 		charset_matched = i;
 		break;
