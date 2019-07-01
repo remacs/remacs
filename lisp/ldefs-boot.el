@@ -1535,10 +1535,25 @@ let-binding.")
 ;;;### (autoloads nil "auth-source-pass" "auth-source-pass.el" (0
 ;;;;;;  0 0 0))
 ;;; Generated autoloads from auth-source-pass.el
-(push (purecopy '(auth-source-pass 4 0 1)) package--builtin-versions)
+(push (purecopy '(auth-source-pass 5 0 0)) package--builtin-versions)
 
 (autoload 'auth-source-pass-enable "auth-source-pass" "\
 Enable auth-source-password-store." nil nil)
+
+(autoload 'auth-source-pass-get "auth-source-pass" "\
+Return the value associated to KEY in the password-store entry ENTRY.
+
+ENTRY is the name of a password-store entry.
+The key used to retrieve the password is the symbol `secret'.
+
+The convention used as the format for a password-store file is
+the following (see http://www.passwordstore.org/#organization):
+
+secret
+key1: value1
+key2: value2
+
+\(fn KEY ENTRY)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "auth-source-pass" '("auth-source-pass-")))
 
@@ -2251,7 +2266,7 @@ a reflection.
 Keymap containing bindings to bookmark functions.
 It is not bound to any key by default: to bind it
 so that you have a bookmark prefix, just use `global-set-key' and bind a
-key of your choice to `bookmark-map'.  All interactive bookmark
+key of your choice to variable `bookmark-map'.  All interactive bookmark
 functions have a binding in this keymap.")
  (fset 'bookmark-map bookmark-map)
 
@@ -2406,30 +2421,27 @@ Write bookmarks to a file (reading the file name with the minibuffer)." t nil)
 (function-put 'bookmark-write 'interactive-only 'bookmark-save)
 
 (autoload 'bookmark-save "bookmark" "\
-Save currently defined bookmarks.
-Saves by default in the file defined by the variable
-`bookmark-default-file'.  With a prefix arg, save it in file FILE
-\(second argument).
-
-If you are calling this from Lisp, the two arguments are PARG and
-FILE, and if you just want it to write to the default file, then
-pass no arguments.  Or pass in nil and FILE, and it will save in FILE
-instead.  If you pass in one argument, and it is non-nil, then the
-user will be interactively queried for a file to save in.
+Save currently defined bookmarks in FILE.
+FILE defaults to `bookmark-default-file'.
+With prefix PARG, query user for a file to save in.
+If MAKE-DEFAULT is non-nil (interactively with prefix C-u C-u)
+the file we save in becomes the new default in the current Emacs
+session (without affecting the value of `bookmark-default-file'.).
 
 When you want to load in the bookmarks from a file, use
 `bookmark-load', \\[bookmark-load].  That function will prompt you
 for a file, defaulting to the file defined by variable
 `bookmark-default-file'.
 
-\(fn &optional PARG FILE)" t nil)
+\(fn &optional PARG FILE MAKE-DEFAULT)" t nil)
 
 (autoload 'bookmark-load "bookmark" "\
 Load bookmarks from FILE (which must be in bookmark format).
-Appends loaded bookmarks to the front of the list of bookmarks.  If
-optional second argument OVERWRITE is non-nil, existing bookmarks are
-destroyed.  Optional third arg NO-MSG means don't display any messages
-while loading.
+Appends loaded bookmarks to the front of the list of bookmarks.
+If argument OVERWRITE is non-nil, existing bookmarks are destroyed.
+Optional third arg NO-MSG means don't display any messages while loading.
+If DEFAULT is non-nil make FILE the new bookmark file to watch.
+Interactively, a prefix arg makes OVERWRITE and DEFAULT non-nil.
 
 If you load a file that doesn't contain a proper bookmark alist, you
 will corrupt Emacs's bookmark list.  Generally, you should only load
@@ -2442,7 +2454,7 @@ If you load a file containing bookmarks with the same names as
 bookmarks already present in your Emacs, the new bookmarks will get
 unique numeric suffixes \"<2>\", \"<3>\", etc.
 
-\(fn FILE &optional OVERWRITE NO-MSG)" t nil)
+\(fn FILE &optional OVERWRITE NO-MSG DEFAULT)" t nil)
 
 (autoload 'bookmark-bmenu-list "bookmark" "\
 Display a list of existing bookmarks.
@@ -2461,7 +2473,7 @@ Incremental search of bookmarks, hiding the non-matches as we go." t nil)
 
 (defalias 'menu-bar-bookmark-map menu-bar-bookmark-map)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "bookmark" '("bookmark" "with-buffer-modified-unmodified")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "bookmark" '("bookmark-" "with-buffer-modified-unmodified")))
 
 ;;;***
 
@@ -5387,7 +5399,7 @@ if ARG is `toggle'; disable the mode otherwise.
 
 \(fn &optional ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "completion" '("*c-def-regexp*" "*lisp-def-regexp*" "accept-completion" "add-" "cdabbrev-" "check-completion-length" "clear-all-completions" "cmpl-" "complet" "current-completion-source" "delete-completion" "enable-completion" "find-" "initialize-completions" "inside-locate-completion-entry" "interactive-completion-string-reader" "kill-" "list-all-completions" "make-c" "next-cdabbrev" "num-cmpl-sources" "reset-cdabbrev" "save" "set-c" "symbol-" "use-completion-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "completion" '("*c-def-regexp*" "*lisp-def-regexp*" "accept-completion" "add-" "cdabbrev-" "check-completion-length" "clear-all-completions" "cmpl-" "complet" "current-completion-source" "delete-completion" "enable-completion" "find-" "initialize-completions" "inside-locate-completion-entry" "interactive-completion-string-reader" "kill-" "list-all-completions" "load-completions-from-file" "make-c" "next-cdabbrev" "num-cmpl-sources" "reset-cdabbrev" "save" "set-c" "symbol-" "use-completion-")))
 
 ;;;***
 
@@ -6537,7 +6549,7 @@ Create a new data-debug buffer with NAME.
 
 \(fn NAME)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "data-debug" '("data-debug-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "data-debug" '("data-debug-" "dd-propertize")))
 
 ;;;***
 
@@ -9117,7 +9129,7 @@ Toggle edebugging of all forms." t nil)
 
 ;;;### (autoloads nil "ediff" "vc/ediff.el" (0 0 0 0))
 ;;; Generated autoloads from vc/ediff.el
-(push (purecopy '(ediff 2 81 4)) package--builtin-versions)
+(push (purecopy '(ediff 2 81 6)) package--builtin-versions)
 
 (autoload 'ediff-files "ediff" "\
 Run Ediff on a pair of files, FILE-A and FILE-B.
@@ -11461,7 +11473,7 @@ With ARG, insert that many delimiters.
 (autoload 'ethio-composition-function "ethio-util" "\
 
 
-\(fn POS TO FONT-OBJECT STRING)" nil nil)
+\(fn POS TO FONT-OBJECT STRING DIRECTION)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ethio-util" '("ethio-" "exit-ethiopic-environment")))
 
@@ -14879,9 +14891,12 @@ How to invoke find and grep.
 If `exec', use `find -exec {} ;'.
 If `exec-plus' use `find -exec {} +'.
 If `gnu', use `find -print0' and `xargs -0'.
+If `gnu-sort', use `find -print0', `sort -z' and `xargs -0'.
 Any other value means to use `find -print' and `xargs'.
 
 This variable's value takes effect when `grep-compute-defaults' is called.")
+
+(custom-autoload 'grep-find-use-xargs "grep" nil)
 
 (defvar grep-history nil "\
 History list for grep.")
@@ -15438,6 +15453,7 @@ When called from lisp, FUNCTION may also be a function object.
 (autoload 'help-C-file-name "help-fns" "\
 Return the name of the C file where SUBR-OR-VAR is defined.
 KIND should be `var' for a variable or `subr' for a subroutine.
+If we can't find the file name, nil is returned.
 
 \(fn SUBR-OR-VAR KIND)" nil nil)
 
@@ -17815,7 +17831,7 @@ Convert old Emacs Devanagari characters to UCS.
 
 \(fn FROM TO)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ind-util" '("indian-" "ucs-to-is")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ind-util" '("indian-" "is13194-")))
 
 ;;;***
 
@@ -19036,7 +19052,7 @@ Transcribe Romanized Lao string STR to Lao character string.
 (autoload 'lao-composition-function "lao-util" "\
 
 
-\(fn GSTRING)" nil nil)
+\(fn GSTRING DIRECTION)" nil nil)
 
 (autoload 'lao-compose-region "lao-util" "\
 
@@ -19051,7 +19067,7 @@ Transcribe Romanized Lao string STR to Lao character string.
 ;;;;;;  0 0))
 ;;; Generated autoloads from international/latexenc.el
 
-(defvar latex-inputenc-coding-alist (purecopy '(("ansinew" . windows-1252) ("applemac" . mac-roman) ("ascii" . us-ascii) ("cp1250" . windows-1250) ("cp1252" . windows-1252) ("cp1257" . cp1257) ("cp437de" . cp437) ("cp437" . cp437) ("cp850" . cp850) ("cp852" . cp852) ("cp858" . cp858) ("cp865" . cp865) ("latin1" . iso-8859-1) ("latin2" . iso-8859-2) ("latin3" . iso-8859-3) ("latin4" . iso-8859-4) ("latin5" . iso-8859-5) ("latin9" . iso-8859-15) ("next" . next) ("utf8" . utf-8) ("utf8x" . utf-8))) "\
+(defvar latex-inputenc-coding-alist (purecopy '(("ansinew" . windows-1252) ("applemac" . mac-roman) ("ascii" . us-ascii) ("cp1250" . windows-1250) ("cp1252" . windows-1252) ("cp1257" . cp1257) ("cp437de" . cp437) ("cp437" . cp437) ("cp850" . cp850) ("cp852" . cp852) ("cp858" . cp858) ("cp865" . cp865) ("latin1" . iso-8859-1) ("latin2" . iso-8859-2) ("latin3" . iso-8859-3) ("latin4" . iso-8859-4) ("latin5" . iso-8859-9) ("latin9" . iso-8859-15) ("latin10" . iso-8859-16) ("next" . next) ("utf8" . utf-8) ("utf8x" . utf-8))) "\
 Mapping from LaTeX encodings in \"inputenc.sty\" to Emacs coding systems.
 LaTeX encodings are specified with \"\\usepackage[encoding]{inputenc}\".
 Used by the function `latexenc-find-file-coding-system'.")
@@ -20125,13 +20141,6 @@ Default bookmark handler for Man buffers.
 \(fn BOOKMARK)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "man" '("Man-" "man")))
-
-;;;***
-
-;;;### (autoloads nil "mantemp" "progmodes/mantemp.el" (0 0 0 0))
-;;; Generated autoloads from progmodes/mantemp.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mantemp" '("mantemp-")))
 
 ;;;***
 
@@ -24154,7 +24163,7 @@ The return value is a string (or nil in case we can't find it)." nil nil)
 ;;;### (autoloads nil "page-ext" "textmodes/page-ext.el" (0 0 0 0))
 ;;; Generated autoloads from textmodes/page-ext.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "page-ext" '("add-new-page" "ctl-x-ctl-p-map" "next-page" "original-page-delimiter" "pages-" "previous-page" "sort-pages-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "page-ext" '("pages-")))
 
 ;;;***
 
@@ -25682,6 +25691,13 @@ The default value is (\"/usr/local/share/emacs/fonts/bdf\").")
 
 ;;;***
 
+;;;### (autoloads nil "ps-def" "ps-def.el" (0 0 0 0))
+;;; Generated autoloads from ps-def.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ps-def" '("ps-")))
+
+;;;***
+
 ;;;### (autoloads nil "ps-mode" "progmodes/ps-mode.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/ps-mode.el
 (push (purecopy '(ps-mode 1 1 9)) package--builtin-versions)
@@ -25755,7 +25771,7 @@ example `letter', `legal' or `a4'.")
 
 (custom-autoload 'ps-paper-type "ps-print" t)
 
-(defvar ps-print-color-p (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) "\
+(defvar ps-print-color-p (fboundp 'x-color-values) "\
 Specify how buffer's text color is printed.
 
 Valid values are:
@@ -27890,6 +27906,10 @@ Parse and produce code for regular expression FORM.
 FORM is a regular expression in sexp form.
 NO-GROUP non-nil means don't put shy groups around the result.
 
+In contrast to the `rx' macro, subforms `literal' and `regexp'
+will not accept non-string arguments, i.e., (literal STRING)
+becomes just a more verbose version of STRING.
+
 \(fn FORM &optional NO-GROUP)" nil nil)
 
 (autoload 'rx "rx" "\
@@ -27897,8 +27917,12 @@ Translate regular expressions REGEXPS in sexp form to a regexp string.
 REGEXPS is a non-empty sequence of forms of the sort listed below.
 
 Note that `rx' is a Lisp macro; when used in a Lisp program being
-compiled, the translation is performed by the compiler.
-See `rx-to-string' for how to do such a translation at run-time.
+compiled, the translation is performed by the compiler.  The
+`literal' and `regexp' forms accept subforms that will evaluate
+to strings, in addition to constant strings.  If REGEXPS include
+such forms, then the result is an expression which returns a
+regexp string, rather than a regexp string directly.  See
+`rx-to-string' for performing translation completely at run time.
 
 The following are valid subforms of regular expressions in sexp
 notation.
@@ -28198,12 +28222,19 @@ enclosed in `(and ...)'.
 `(backref N)'
      matches what was matched previously by submatch N.
 
+`(literal STRING-EXPR)'
+     matches STRING-EXPR literally, where STRING-EXPR is any lisp
+     expression that evaluates to a string.
+
+`(regexp REGEXP-EXPR)'
+     include REGEXP-EXPR in string notation in the result, where
+     REGEXP-EXPR is any lisp expression that evaluates to a
+     string containing a valid regexp.
+
 `(eval FORM)'
      evaluate FORM and insert result.  If result is a string,
-     `regexp-quote' it.
-
-`(regexp REGEXP)'
-     include REGEXP in string notation in the result.
+     `regexp-quote' it.  Note that FORM is evaluated during
+     macroexpansion.
 
 \(fn &rest REGEXPS)" nil t)
 
@@ -31585,6 +31616,7 @@ and `sc-post-hook' is run after the guts of this function." nil nil)
 
 ;;;### (autoloads nil "svg" "svg.el" (0 0 0 0))
 ;;; Generated autoloads from svg.el
+(push (purecopy '(svg 1 0)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "svg" '("svg-")))
 
@@ -32921,7 +32953,7 @@ Compose Thai characters in the current buffer." t nil)
 (autoload 'thai-composition-function "thai-util" "\
 
 
-\(fn GSTRING)" nil nil)
+\(fn GSTRING DIRECTION)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "thai-util" '("exit-thai-language-environment-internal" "setup-thai-language-environment-internal" "thai-")))
 
@@ -33805,7 +33837,7 @@ the output buffer or changing the window configuration.
 
 ;;;### (autoloads nil "tramp" "net/tramp.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp.el
-(push (purecopy '(tramp 2 4 2 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 4 2)) package--builtin-versions)
 
 (defvar tramp-mode t "\
 Whether Tramp is enabled.
@@ -33868,11 +33900,11 @@ Discard Tramp from loading remote files." t nil)
 (defvar tramp-archive-enabled (featurep 'dbusbind) "\
 Non-nil when file archive support is available.")
 
-(defconst tramp-archive-suffixes '("7z" "apk" "ar" "cab" "CAB" "cpio" "deb" "depot" "exe" "iso" "jar" "lzh" "LZH" "msu" "MSU" "mtree" "odb" "odf" "odg" "odp" "ods" "odt" "pax" "rar" "rpm" "shar" "tar" "tbz" "tgz" "tlz" "txz" "warc" "xar" "xpi" "xps" "zip" "ZIP") "\
+(defconst tramp-archive-suffixes '("7z" "apk" "ar" "cab" "CAB" "cpio" "deb" "depot" "exe" "iso" "jar" "lzh" "LZH" "msu" "MSU" "mtree" "odb" "odf" "odg" "odp" "ods" "odt" "pax" "rar" "rpm" "shar" "tar" "tbz" "tgz" "tlz" "txz" "tzst" "warc" "xar" "xpi" "xps" "zip" "ZIP") "\
 List of suffixes which indicate a file archive.
 It must be supported by libarchive(3).")
 
-(defconst tramp-archive-compression-suffixes '("bz2" "gz" "lrz" "lz" "lz4" "lzma" "lzo" "uu" "xz" "Z") "\
+(defconst tramp-archive-compression-suffixes '("bz2" "gz" "lrz" "lz" "lz4" "lzma" "lzo" "uu" "xz" "Z" "zst") "\
 List of suffixes which indicate a compressed file.
 It must be supported by libarchive(3).")
 
@@ -34019,7 +34051,7 @@ resumed later.
 (autoload 'tai-viet-composition-function "tv-util" "\
 
 
-\(fn FROM TO FONT-OBJECT STRING)" nil nil)
+\(fn FROM TO FONT-OBJECT STRING DIRECTION)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tv-util" '("tai-viet-")))
 
@@ -37060,8 +37092,9 @@ has to create the buffer, it disables undo in the buffer.
 
 See the `warnings' custom group for user customization features.
 
-See also `warning-series', `warning-prefix-function' and
-`warning-fill-prefix' for additional programming features.
+See also `warning-series', `warning-prefix-function',
+`warning-fill-prefix', and `warning-fill-column' for additional
+programming features.
 
 \(fn TYPE MESSAGE &optional LEVEL BUFFER-NAME)" nil nil)
 
@@ -38234,12 +38267,11 @@ Zone out, completely." t nil)
 ;;;;;;  "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"
 ;;;;;;  "org/ox-latex.el" "org/ox-man.el" "org/ox-md.el" "org/ox-odt.el"
 ;;;;;;  "org/ox-org.el" "org/ox-publish.el" "org/ox-texinfo.el" "org/ox.el"
-;;;;;;  "progmodes/elisp-mode.el" "progmodes/prog-mode.el" "ps-def.el"
-;;;;;;  "ps-mule.el" "register.el" "replace.el" "rfn-eshadow.el"
-;;;;;;  "select.el" "simple.el" "startup.el" "subdirs.el" "subr.el"
-;;;;;;  "textmodes/fill.el" "textmodes/page.el" "textmodes/paragraphs.el"
-;;;;;;  "textmodes/reftex-auc.el" "textmodes/reftex-cite.el" "textmodes/reftex-dcr.el"
-;;;;;;  "textmodes/reftex-global.el" "textmodes/reftex-index.el"
+;;;;;;  "progmodes/elisp-mode.el" "progmodes/prog-mode.el" "ps-mule.el"
+;;;;;;  "register.el" "replace.el" "rfn-eshadow.el" "select.el" "simple.el"
+;;;;;;  "startup.el" "subdirs.el" "subr.el" "textmodes/fill.el" "textmodes/page.el"
+;;;;;;  "textmodes/paragraphs.el" "textmodes/reftex-auc.el" "textmodes/reftex-cite.el"
+;;;;;;  "textmodes/reftex-dcr.el" "textmodes/reftex-global.el" "textmodes/reftex-index.el"
 ;;;;;;  "textmodes/reftex-parse.el" "textmodes/reftex-ref.el" "textmodes/reftex-sel.el"
 ;;;;;;  "textmodes/reftex-toc.el" "textmodes/text-mode.el" "uniquify.el"
 ;;;;;;  "vc/ediff-hook.el" "vc/vc-hooks.el" "version.el" "widget.el"
