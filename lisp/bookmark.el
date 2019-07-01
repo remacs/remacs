@@ -675,18 +675,17 @@ affect point."
 (defun bookmark-upgrade-file-format-from-0 ()
   "Upgrade a bookmark file of format 0 (the original format) to format 1.
 This expects to be called from `point-min' in a bookmark file."
-  (message "Upgrading bookmark format from 0 to %d..."
-           bookmark-file-format-version)
-  (let* ((old-list (bookmark-alist-from-buffer))
+  (let* ((reporter (make-progress-reporter
+                    (format "Upgrading bookmark format from 0 to %d..."
+                     bookmark-file-format-version)))
+         (old-list (bookmark-alist-from-buffer))
          (new-list (bookmark-upgrade-version-0-alist old-list)))
     (delete-region (point-min) (point-max))
     (bookmark-insert-file-format-version-stamp buffer-file-coding-system)
     (pp new-list (current-buffer))
-    (save-buffer))
-  (goto-char (point-min))
-  (message "Upgrading bookmark format from 0 to %d...done"
-           bookmark-file-format-version)
-  )
+    (save-buffer)
+    (goto-char (point-min))
+    (progress-reporter-done reporter)))
 
 
 (defun bookmark-grok-file-format-version ()
@@ -2109,8 +2108,8 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
 (defun bookmark-bmenu-execute-deletions ()
   "Delete bookmarks flagged `D'."
   (interactive)
-  (message "Deleting bookmarks...")
-  (let ((o-point  (point))
+  (let ((reporter (make-progress-reporter "Deleting bookmarks..."))
+        (o-point  (point))
         (o-str    (save-excursion
                     (beginning-of-line)
                     (unless (= (following-char) ?D)
@@ -2132,8 +2131,7 @@ To carry out the deletions that you've marked, use \\<bookmark-bmenu-mode-map>\\
           (forward-char o-col))
       (goto-char o-point))
     (beginning-of-line)
-    (message "Deleting bookmarks...done")
-    ))
+    (progress-reporter-done reporter)))
 
 
 (defun bookmark-bmenu-rename ()
