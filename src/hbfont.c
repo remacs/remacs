@@ -19,6 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <math.h>
 #include <hb.h>
+#include <hb-ot.h>
 
 #include "lisp.h"
 #include "frame.h"
@@ -69,6 +70,18 @@ DEF_DLL_FN (hb_glyph_info_t *, hb_buffer_get_glyph_infos,
 	    (hb_buffer_t *, unsigned int *));
 DEF_DLL_FN (hb_glyph_position_t *, hb_buffer_get_glyph_positions,
 	    (hb_buffer_t *, unsigned int *));
+DEF_DLL_FN (void, hb_tag_to_string, (hb_tag_t, char *));
+DEF_DLL_FN (hb_face_t *, hb_font_get_face, (hb_font_t *font));
+DEF_DLL_FN (unsigned int, hb_ot_layout_table_get_script_tags,
+	    (hb_face_t *, hb_tag_t, unsigned int, unsigned int *, hb_tag_t *));
+DEF_DLL_FN (unsigned int, hb_ot_layout_table_get_feature_tags,
+	    (hb_face_t *, hb_tag_t, unsigned int, unsigned int *, hb_tag_t *));
+DEF_DLL_FN (unsigned int, hb_ot_layout_script_get_language_tags,
+	    (hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *,
+	     hb_tag_t *));
+DEF_DLL_FN (unsigned int, hb_ot_layout_language_get_feature_tags,
+	    (hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int,
+	     unsigned int *, hb_tag_t *));
 
 #define hb_unicode_funcs_create fn_hb_unicode_funcs_create
 #define hb_unicode_funcs_get_default fn_hb_unicode_funcs_get_default
@@ -92,6 +105,12 @@ DEF_DLL_FN (hb_glyph_position_t *, hb_buffer_get_glyph_positions,
 #define hb_buffer_reverse_clusters fn_hb_buffer_reverse_clusters
 #define hb_buffer_get_glyph_infos fn_hb_buffer_get_glyph_infos
 #define hb_buffer_get_glyph_positions fn_hb_buffer_get_glyph_positions
+#define hb_tag_to_string fn_hb_tag_to_string
+#define hb_font_get_face fn_hb_font_get_face
+#define hb_ot_layout_table_get_script_tags fn_hb_ot_layout_table_get_script_tags
+#define hb_ot_layout_table_get_feature_tags fn_hb_ot_layout_table_get_feature_tags
+#define hb_ot_layout_script_get_language_tags fn_hb_ot_layout_script_get_language_tags
+#define hb_ot_layout_language_get_feature_tags fn_hb_ot_layout_language_get_feature_tags
 
 /* This function is called from syms_of_w32uniscribe_for_pdumper to
    initialize the above function pointers.  */
@@ -120,9 +139,102 @@ hbfont_init_w32_funcs (HMODULE library)
   LOAD_DLL_FN (library, hb_buffer_reverse_clusters);
   LOAD_DLL_FN (library, hb_buffer_get_glyph_infos);
   LOAD_DLL_FN (library, hb_buffer_get_glyph_positions);
+  LOAD_DLL_FN (library, hb_tag_to_string);
+  LOAD_DLL_FN (library, hb_font_get_face);
+  LOAD_DLL_FN (library, hb_ot_layout_table_get_script_tags);
+  LOAD_DLL_FN (library, hb_ot_layout_table_get_feature_tags);
+  LOAD_DLL_FN (library, hb_ot_layout_script_get_language_tags);
+  LOAD_DLL_FN (library, hb_ot_layout_language_get_feature_tags);
   return true;
 }
 #endif	/* HAVE_NTGUI */
+
+static Lisp_Object
+hbfont_otf_features (hb_face_t *face, hb_tag_t table_tag)
+{
+  hb_tag_t *language_tags = NULL, *feature_tags = NULL;
+  char buf[4];
+  unsigned int script_count
+    = hb_ot_layout_table_get_script_tags (face, table_tag, 0, NULL, NULL);
+  hb_tag_t *script_tags = xnmalloc (script_count, sizeof *script_tags);
+  hb_ot_layout_table_get_script_tags (face, table_tag, 0, &script_count,
+				      script_tags);
+  Lisp_Object scripts = Qnil;
+  for (int i = script_count - 1; i >= 0; i--)
+    {
+      unsigned int language_count
+	= hb_ot_layout_script_get_language_tags (face, table_tag, i, 0,
+						 NULL, NULL);
+      language_tags = xnrealloc (language_tags, language_count,
+				 sizeof *language_tags);
+      hb_ot_layout_script_get_language_tags (face, table_tag, i, 0,
+					     &language_count, language_tags);
+      Lisp_Object langsyses = Qnil;
+      for (int j = language_count - 1; j >= -1; j--)
+	{
+	  unsigned int language_index
+	    = j >= 0 ? j : HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX;
+	  unsigned int feature_count
+	    = hb_ot_layout_language_get_feature_tags (face, table_tag,
+						      i, language_index, 0,
+						      NULL, NULL);
+	  if (feature_count == 0)
+	    continue;
+	  feature_tags = xnrealloc (feature_tags, feature_count,
+				    sizeof *feature_tags);
+	  hb_ot_layout_language_get_feature_tags (face, table_tag,
+						  i, language_index, 0,
+						  &feature_count, feature_tags);
+	  Lisp_Object features = Qnil;
+	  for (int k = feature_count - 1; k >= 0; k--)
+	    {
+	      hb_tag_to_string (feature_tags[k], buf);
+	      features = Fcons (font_intern_prop (buf, 4, 1), features);
+	    }
+
+	  Lisp_Object sym = Qnil;
+	  if (j >= 0)
+	    {
+	      hb_tag_to_string (language_tags[j], buf);
+	      sym = font_intern_prop (buf, 4, 1);
+	    }
+	  langsyses = Fcons (Fcons (sym, features), langsyses);
+	}
+
+      hb_tag_to_string (script_tags[i], buf);
+      scripts = Fcons (Fcons (font_intern_prop (buf, 4, 1), langsyses),
+		       scripts);
+    }
+  xfree (feature_tags);
+  xfree (language_tags);
+  xfree (script_tags);
+
+  return scripts;
+}
+
+Lisp_Object
+hbfont_otf_capability (struct font *font)
+{
+  double position_unit;
+  hb_font_t *hb_font
+    = font->driver->begin_hb_font
+    ? font->driver->begin_hb_font (font, &position_unit)
+    : NULL;
+  if (!hb_font)
+    return Qnil;
+
+  Lisp_Object gsub_gpos = Fcons (Qnil, Qnil);
+  hb_face_t *face = hb_font_get_face (hb_font);
+  if (hb_ot_layout_table_get_feature_tags (face, HB_OT_TAG_GSUB, 0, NULL, NULL))
+    XSETCAR (gsub_gpos, hbfont_otf_features (face, HB_OT_TAG_GSUB));
+  if (hb_ot_layout_table_get_feature_tags (face, HB_OT_TAG_GPOS, 0, NULL, NULL))
+    XSETCDR (gsub_gpos, hbfont_otf_features (face, HB_OT_TAG_GPOS));
+
+  if (font->driver->end_hb_font)
+    font->driver->end_hb_font (font, hb_font);
+
+  return gsub_gpos;
+}
 
 /* Support functions for HarfBuzz shaper.  */
 

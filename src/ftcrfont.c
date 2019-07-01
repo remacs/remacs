@@ -621,6 +621,7 @@ syms_of_ftcrfont_for_pdumper (void)
   ftcrhbfont_driver.type = Qftcrhb;
   ftcrhbfont_driver.list = ftcrhbfont_list;
   ftcrhbfont_driver.match = ftcrhbfont_match;
+  ftcrhbfont_driver.otf_capability = hbfont_otf_capability,
   ftcrhbfont_driver.shape = hbfont_shape;
   ftcrhbfont_driver.combining_capability = hbfont_combining_capability;
   ftcrhbfont_driver.begin_hb_font = ftcrhbfont_begin_hb_font;

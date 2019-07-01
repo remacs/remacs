@@ -891,6 +891,7 @@ extern Lisp_Object font_put_extra (Lisp_Object font, Lisp_Object prop,
                                    Lisp_Object val);
 
 #ifdef HAVE_HARFBUZZ
+extern Lisp_Object hbfont_otf_capability (struct font *);
 extern Lisp_Object hbfont_shape (Lisp_Object, Lisp_Object);
 extern Lisp_Object hbfont_combining_capability (struct font *);
 #endif
