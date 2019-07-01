@@ -1836,6 +1836,16 @@ aliases of 'bookmark-default-file'.
 When non-nil, watch whether the bookmark file has changed on disk.
 
 ---
+*** The old bookmark file format is no longer supported.
+This bookmark file format has not been used in Emacs since at least
+version 19.34, released in 1996, and will no longer be automatically
+converted to the new bookmark file format.
+
+The following functions are now declared obsolete:
+bookmark-grok-file-format-version, bookmark-maybe-upgrade-file-format,
+bookmark-upgrade-file-format-from-0, bookmark-upgrade-version-0-alist
+
+---
 ** The mantemp.el library is now marked obsolete.
 This library generates manual C++ template instantiations.  It should
 no longer be useful on modern compilers, which do this automatically.
