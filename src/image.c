@@ -9940,30 +9940,26 @@ FRAME defaults to the selected frame.
 The list of capabilities can include one or more of the following:
 
  - the symbol `scale' if FRAME supports image scaling
- - the symbol `rotate' if FRAME supports image rotation by arbitrary angles
  - the symbol `rotate90' if FRAME supports image rotation only by angles
-    that are integral multiples of 90 degrees
- - the symbol `crop' if FRAME supports image cropping.  */)
+    that are integral multiples of 90 degrees.  */)
      (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
   if (FRAME_WINDOW_P (f))
     {
 #ifdef HAVE_NATIVE_TRANSFORMS
-# if defined HAVE_IMAGEMAGICK
-      return list4 (Qscale, Qrotate90, Qrotate, Qcrop);
-# elif defined (USE_CAIRO) || defined (HAVE_NS)
+# if defined HAVE_IMAGEMAGICK || defined (USE_CAIRO) || defined (HAVE_NS)
       return list2 (Qscale, Qrotate90);
-# elif defined (HAVE_NTGUI)
-      return (w32_image_rotations_p ()
-	      ? list2 (Qscale, Qrotate90)
-	      : list1 (Qscale));
 # elif defined (HAVE_X_WINDOWS) && defined (HAVE_XRENDER)
       int event_basep, error_basep;
 
       if (XRenderQueryExtension (FRAME_X_DISPLAY (f),
 				 &event_basep, &error_basep))
 	return list2 (Qscale, Qrotate90);
+# elif defined (HAVE_NTGUI)
+      return (w32_image_rotations_p ()
+	      ? list2 (Qscale, Qrotate90)
+	      : list1 (Qscale));
 # endif
 #endif
     }

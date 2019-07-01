@@ -5350,10 +5350,6 @@ Image scaling is supported by @var{frame} via the @code{:scale},
 @item rotate90
 Image rotation is supported by @var{frame} if the rotation angle is an
 integral multiple of 90 degrees.
-@item rotate
-Image rotation by arbitrary angles is supported by @var{frame}.
-@item crop
-Image cropping is supported by @var{frame}.
 @end table
 
 If image transforms are not supported, @code{:rotation}, @code{:crop},
