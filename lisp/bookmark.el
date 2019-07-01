@@ -293,6 +293,8 @@ This point is in `bookmark-current-buffer'.")
 
 (defvar bookmark-quit-flag nil
   "Non-nil means `bookmark-bmenu-search' quits immediately.")
+(make-obsolete-variable 'bookmark-quit-flag "no longer used" "27.1")
+
 
 ;; Helper functions and macros.
 
