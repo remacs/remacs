@@ -2254,7 +2254,7 @@ will be deleted."
                                  "Describe package: ")
                                packages nil t nil nil (when guess
                                                         (symbol-name guess)))))
-         (list (intern val))))))
+         (list (and (> (length val) 0) (intern val)))))))
   (if (not (or (package-desc-p package) (and package (symbolp package))))
       (message "No package specified")
     (help-setup-xref (list #'describe-package package)
