@@ -564,23 +564,25 @@ fontset_find_font (Lisp_Object fontset, int c, struct face *face,
 	   or the charset priorities were changed.  */
 	reorder_font_vector (font_group, face->ascii_face->font);
       if (charset_id >= 0)
-	/* Find a spec matching with CHARSET_ID to try it at
-	   first.  */
-	for (i = 0; i < ASIZE (vec); i++)
-	  {
-	    Lisp_Object repertory;
+	{
+	  Lisp_Object lcsetid = make_fixnum (charset_id);
+	  /* Find a spec matching with CHARSET_ID to try it at first.  */
+	  for (i = 0; i < ASIZE (vec); i++)
+	    {
+	      Lisp_Object repertory;
 
-	    rfont_def = AREF (vec, i);
-	    if (NILP (rfont_def))
-	      break;
-	    repertory = FONT_DEF_REPERTORY (RFONT_DEF_FONT_DEF (rfont_def));
-
-	    if (FIXNUMP (repertory) && XFIXNUM_RAW (repertory) == charset_id)
-	      {
-		charset_matched = i;
+	      rfont_def = AREF (vec, i);
+	      if (NILP (rfont_def))
 		break;
-	      }
-	  }
+	      repertory = FONT_DEF_REPERTORY (RFONT_DEF_FONT_DEF (rfont_def));
+
+	      if (EQ (repertory, lcsetid))
+		{
+		  charset_matched = i;
+		  break;
+		}
+	    }
+	}
     }
 
   /* Find the first available font in the vector of RFONT-DEF.  If

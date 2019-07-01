@@ -512,9 +512,11 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
       Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
       struct font_metrics metrics = {.width = 0};
       int xoff, yoff, wadjust;
+      bool new_lglyph = false;
 
       if (NILP (lglyph))
 	{
+	  new_lglyph = true;
 	  lglyph = LGLYPH_NEW ();
 	  LGSTRING_SET_GLYPH (lgstring, i, lglyph);
 	}
@@ -556,7 +558,9 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 	 in the original sequence were processed by the composition.
 	 If we don't do this, some of the composed characters will be
 	 displayed again as separate glyphs.  */
-      if (!(to == text_len - 1 && LGLYPH_TO (lglyph) > to))
+      if (!(!new_lglyph
+	    && to == text_len - 1
+	    && LGLYPH_TO (lglyph) > to))
 	LGLYPH_SET_TO (lglyph, to);
 
       /* Not every glyph in a cluster maps directly to a single
