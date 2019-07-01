@@ -402,12 +402,15 @@ $ autoconf
 @end group
 @end example
 
-
+@ifset installchapter
 @c Installation chapter is necessary only in case of standalone
 @c installation.
-@ifset installchapter
 @include trampinst.texi
 @end ifset
+@ifclear installchapter
+See the file @file{INSTALL} in that directory for further information
+how to install @value{tramp}.
+@end ifclear
 
 
 @node Quick Start Guide
@@ -3269,10 +3272,13 @@ This command flushes all connection related objects.  @option{vec} is
 the internal representation of a remote connection.  When called
 interactively, this command lists active remote connections in the
 minibuffer.  Each connection is of the format
-@file{@trampfn{method,user@@host,}}.  Flushing remote connections also
-cleans the password cache (@pxref{Password handling}), file cache,
-connection cache (@pxref{Connection caching}), recentf cache
-(@pxref{File Conveniences, , , emacs}), and connection buffers.
+@file{@trampfn{method,user@@host,}}.
+
+Flushing remote connections also cleans the password cache
+(@pxref{Password handling}), file cache, connection cache
+(@pxref{Connection caching}), and recentf cache (@pxref{File
+Conveniences, , , emacs}).  It also deletes session timers
+(@pxref{Predefined connection information}) and connection buffers.
 @end deffn
 
 @deffn Command tramp-cleanup-this-connection
@@ -3290,7 +3296,7 @@ proxy definitions (@pxref{Ad-hoc multi-hops}).
 @deffn Command tramp-cleanup-all-buffers
 Just as for @code{tramp-cleanup-all-connections}, all remote
 connections and ad-hoc proxy definition are cleaned up in addition to
-killing buffers related to that remote connection.
+killing all buffers related to remote connections.
 @end deffn
 
 
