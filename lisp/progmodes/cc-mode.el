@@ -1262,11 +1262,31 @@ Note that the style variables are always made local to the buffer."
 	  (setq c-new-BEG (min (car beg-limits) c-new-BEG))))
 
      ((< end (point-max))
-      (goto-char (1+ end))	; might be a newline.
-      ;; In the following regexp, the initial \n caters for a newline getting
-      ;; joined to a preceding \ by the removal of what comes between.
-      (re-search-forward "[\n\r]?\\(\\\\\\(.\\|\n\\)\\|[^\\\n\r]\\)*"
-			 nil t)
+      ;; Have we just escaped a newline by deleting characters?
+      (if (and (eq end-literal-type 'string)
+	       (memq (char-after end) '(?\n ?\r)))
+	  (cond
+	   ;; Are we escaping a newline by deleting stuff between \ and \n?
+	   ((and (> end beg)
+		 (progn
+		   (goto-char end)
+		   (eq (logand (skip-chars-backward "\\\\" beg) 1) 1)))
+	    (c-clear-char-property end 'syntax-table)
+	    (c-truncate-lit-pos-cache end)
+	    (goto-char (1+ end)))
+	   ;; Are we unescaping a newline by inserting stuff between \ and \n?
+	   ((and (eq end beg)
+		 (progn
+		   (goto-char end)
+		   (eq (logand (skip-chars-backward "\\\\") 1) 1)))
+	    (goto-char (1+ end))) ; To after the NL which is being unescaped.
+	   (t
+	    (goto-char end)))
+	(goto-char end))
+
+      ;; Move to end of logical line (as it will be after the change, or as it
+      ;; was before unescaping a NL.)
+      (re-search-forward "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*" nil t)
       ;; We're at an EOLL or point-max.
       (if (equal (c-get-char-property (point) 'syntax-table) '(15))
 	  (if (memq (char-after) '(?\n ?\r))
@@ -1425,6 +1445,54 @@ Note that the style variables are always made local to the buffer."
 	    ))
 	  (goto-char (min (1+ (match-end 0)) (point-max))))
 	(setq s nil)))))
+
+(defun c-after-change-escape-NL-in-string (beg end _old_len)
+  ;; If a backslash has just been inserted into a string, and this quotes an
+  ;; existing newline, remove the string fence syntax-table text properties
+  ;; on what has become the tail of the string.
+  ;;
+  ;; POINT is undefined both at entry to and exit from this function, the
+  ;; buffer will have been widened, and match data will have been saved.
+  ;;
+  ;; This function is called exclusively as an after-change function via
+  ;; `c-before-font-lock-functions'.  In C++ Mode, it should come before
+  ;; `c-after-change-unmark-raw-strings' in that lang variable.
+  (let (lit-start)		       ; Don't calculate this till we have to.
+    (when
+	(and (> end beg)
+	     (memq (char-after end) '(?\n ?\r))
+	     (progn (goto-char end)
+		    (eq (logand (skip-chars-backward "\\\\") 1) 1))
+	     (progn (goto-char end)
+		    (setq lit-start (c-literal-start)))
+	     (memq (char-after lit-start) c-string-delims)
+	     (or (not (c-major-mode-is 'c++-mode))
+		 (progn
+		   (goto-char lit-start)
+		   (and (not (and (eq (char-before) ?R)
+				  (looking-at c-c++-raw-string-opener-1-re)))
+			(not (and (eq (char-after) ?\()
+				  (equal (c-get-char-property
+					  (point) 'syntax-table)
+					 '(15))))))
+		 (save-excursion
+		   (c-beginning-of-macro))))
+      (goto-char (1+ end))		; After the \
+      ;; Search forward for a closing ".
+      (when (and (re-search-forward "\\(\\\\\\(.\\|\n\\)\\|[^\"\\\n\r]\\)*"
+				    nil t)
+		 (eq (char-after) ?\")
+		 (equal (c-get-char-property (point) 'syntax-table) '(15)))
+	(c-clear-char-property end 'syntax-table)
+	(c-truncate-lit-pos-cache end)
+	(c-clear-char-property (point) 'syntax-table)
+	(forward-char)			; to after the "
+	(when
+	    (and
+	     ;; Search forward for an end of logical line.
+	     (re-search-forward "\\(\\\\\\(.\\|\n\\)\\|[^\\\n\r]\\)*" nil t)
+	     (memq (char-after) '(?\n ?\r)))
+	  (c-clear-char-property (point) 'syntax-table))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parsing of quotes.

@@ -478,7 +478,7 @@ so that all identifiers are recognized as words.")
 		    (list fs)))
   "If non-nil, a list of functions called from c-before-change-hook.
 Typically these will record enough state to allow
-`c-before-font-lock-function' to extend the region to fontify,
+`c-before-font-lock-functions' to extend the region to fontify,
 and may do such things as removing text-properties which must be
 recalculated.
 
@@ -497,15 +497,18 @@ parameters \(point-min) and \(point-max).")
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
   t '(c-depropertize-new-text
+      c-after-change-escape-NL-in-string
       c-after-change-mark-abnormal-strings
       c-change-expand-fl-region)
   (c objc) '(c-depropertize-new-text
+	     c-after-change-escape-NL-in-string
 	     c-parse-quotes-after-change
 	     c-after-change-mark-abnormal-strings
 	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
+	c-after-change-escape-NL-in-string
 	c-after-change-unmark-raw-strings
 	c-parse-quotes-after-change
 	c-after-change-mark-abnormal-strings
@@ -514,6 +517,7 @@ parameters \(point-min) and \(point-max).")
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
+	 c-after-change-escape-NL-in-string
 	 c-parse-quotes-after-change
 	 c-after-change-mark-abnormal-strings
 	 c-restore-<>-properties
