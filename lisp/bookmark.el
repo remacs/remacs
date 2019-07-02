@@ -746,18 +746,23 @@ CODING is the symbol of the coding-system in which the file is encoded."
     map))
 
 (defun bookmark-set-internal (prompt name overwrite-or-push)
-  "Interactively set a bookmark named NAME at the current location.
+  "Set a bookmark using specified NAME or prompting with PROMPT.
+The bookmark is set at the current location.
 
-Begin the interactive prompt with PROMPT, followed by a space, a
-generated default name in parentheses, a colon and a space.
+If NAME is non-nil, use it as the name of the new bookmark.  In
+this case, the value of PROMPT is ignored.
 
-If OVERWRITE-OR-PUSH is nil, then error if there is already a
-bookmark named NAME; if `overwrite', then replace any existing
-bookmark if there is one; if `push' then push the new bookmark
-onto the bookmark alist.  The `push' behavior means that among
-bookmarks named NAME, this most recently set one becomes the one in
-effect, but the others are still there, in order, if the topmost one
-is ever deleted."
+Otherwise, prompt the user for the bookmark name.  Begin the
+interactive prompt with PROMPT, followed by a space, a generated
+default name in parentheses, a colon and a space.
+
+OVERWRITE-OR-PUSH controls what happens if there is already a
+bookmark with the same name: nil means signal an error;
+`overwrite' means replace any existing bookmark; `push' means
+push the new bookmark onto the bookmark alist.  The `push'
+behavior means that among bookmarks with the same name, this most
+recently set one becomes the one in effect, but the others are
+still there, in order, if the topmost one is ever deleted."
   (unwind-protect
        (let* ((record (bookmark-make-record))
               ;; `defaults' is a transient element of the
