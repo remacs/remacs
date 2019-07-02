@@ -769,7 +769,7 @@ usage: (json-insert OBJECT &rest ARGS)  */)
 	  Z_BYTE -= inserted_bytes;
 	  ZV -= inserted_bytes;
 	  Z -= inserted_bytes;
-	  decode_coding_gap (&coding, inserted_bytes, inserted_bytes);
+	  decode_coding_gap (&coding, inserted_bytes);
 	  inserted = coding.produced_char;
 	}
       else

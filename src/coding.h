@@ -697,8 +697,7 @@ extern Lisp_Object coding_inherit_eol_type (Lisp_Object, Lisp_Object);
 extern Lisp_Object complement_process_encoding_system (Lisp_Object);
 extern Lisp_Object make_string_from_utf8 (const char *, ptrdiff_t);
 
-extern void decode_coding_gap (struct coding_system *,
-			       ptrdiff_t, ptrdiff_t);
+extern void decode_coding_gap (struct coding_system *, ptrdiff_t);
 extern void decode_coding_object (struct coding_system *,
                                   Lisp_Object, ptrdiff_t, ptrdiff_t,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);

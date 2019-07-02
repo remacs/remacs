@@ -7892,23 +7892,26 @@ coding_restore_undo_list (Lisp_Object arg)
   bset_undo_list (buf, undo_list);
 }
 
+/* Decode the *last* BYTES of the gap and insert them at point.  */
 void
-decode_coding_gap (struct coding_system *coding,
-		   ptrdiff_t chars, ptrdiff_t bytes)
+decode_coding_gap (struct coding_system *coding, ptrdiff_t bytes)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object attrs;
 
+  eassert (GPT_BYTE == PT_BYTE);
+
   coding->src_object = Fcurrent_buffer ();
-  coding->src_chars = chars;
+  coding->src_chars = bytes;
   coding->src_bytes = bytes;
-  coding->src_pos = -chars;
+  coding->src_pos = -bytes;
   coding->src_pos_byte = -bytes;
-  coding->src_multibyte = chars < bytes;
+  coding->src_multibyte = false;
   coding->dst_object = coding->src_object;
   coding->dst_pos = PT;
   coding->dst_pos_byte = PT_BYTE;
-  coding->dst_multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
+  eassert (coding->dst_multibyte
+           == !NILP (BVAR (current_buffer, enable_multibyte_characters)));
 
   coding->head_ascii = -1;
   coding->detected_utf8_bytes = coding->detected_utf8_chars = -1;
@@ -7922,7 +7925,7 @@ decode_coding_gap (struct coding_system *coding,
       && NILP (CODING_ATTR_POST_READ (attrs))
       && NILP (get_translation_table (attrs, 0, NULL)))
     {
-      chars = coding->head_ascii;
+      ptrdiff_t chars = coding->head_ascii;
       if (chars < 0)
 	chars = check_ascii (coding);
       if (chars != bytes)
