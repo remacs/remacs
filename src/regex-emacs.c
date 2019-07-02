@@ -455,7 +455,10 @@ debug_putchar (int c)
   if (c >= 32 && c <= 126)
     fputc (c, stderr);
   else
-    fprintf (stderr, "{%02x}", c);
+    {
+      unsigned int uc = c;
+      fprintf (stderr, "{%02x}", uc);
+    }
 }
 
 /* Print the fastmap in human-readable form.  */
@@ -743,7 +746,7 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   re_char *buffer = bufp->buffer;
 
   print_partial_compiled_pattern (buffer, buffer + bufp->used);
-  fprintf (stderr, "%tu bytes used/%tu bytes allocated.\n",
+  fprintf (stderr, "%td bytes used/%td bytes allocated.\n",
            bufp->used, bufp->allocated);
 
   if (bufp->fastmap_accurate && bufp->fastmap)
@@ -752,9 +755,9 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
       print_fastmap (bufp->fastmap);
     }
 
-  fprintf (stderr, "re_nsub: %tu\t", bufp->re_nsub);
+  fprintf (stderr, "re_nsub: %td\t", bufp->re_nsub);
   fprintf (stderr, "regs_alloc: %d\t", bufp->regs_allocated);
-  fprintf (stderr, "can_be_null: %d\t", bufp->can_be_null);
+  fprintf (stderr, "can_be_null: %d\n", bufp->can_be_null);
   fflush (stderr);
   /* Perhaps we should print the translate table?  */
 }
@@ -968,8 +971,8 @@ typedef struct
 while (REMAINING_AVAIL_SLOTS <= space) {				\
   if (!GROW_FAIL_STACK (fail_stack))					\
     return -2;								\
-  DEBUG_PRINT ("\n  Doubled stack; size now: %tu\n", fail_stack.size);	\
-  DEBUG_PRINT ("	 slots available: %tu\n", REMAINING_AVAIL_SLOTS);\
+  DEBUG_PRINT ("\n  Doubled stack; size now: %td\n", fail_stack.size);	\
+  DEBUG_PRINT ("	 slots available: %td\n", REMAINING_AVAIL_SLOTS);\
 }
 
 /* Push register NUM onto the stack.  */
@@ -1058,14 +1061,14 @@ do {									\
   char *destination;							\
   DEBUG_STATEMENT (nfailure_points_pushed++);				\
   DEBUG_PRINT ("\nPUSH_FAILURE_POINT:\n");				\
-  DEBUG_PRINT ("  Before push, next avail: %tu\n", fail_stack.avail);	\
-  DEBUG_PRINT ("			size: %tu\n", fail_stack.size);	\
+  DEBUG_PRINT ("  Before push, next avail: %td\n", fail_stack.avail);	\
+  DEBUG_PRINT ("			size: %td\n", fail_stack.size);	\
 									\
   ENSURE_FAIL_STACK (NUM_NONREG_ITEMS);					\
 									\
   DEBUG_PRINT ("\n");							\
 									\
-  DEBUG_PRINT ("  Push frame index: %tu\n", fail_stack.frame);		\
+  DEBUG_PRINT ("  Push frame index: %td\n", fail_stack.frame);		\
   PUSH_FAILURE_INT (fail_stack.frame);					\
 									\
   DEBUG_PRINT ("  Push string %p: \"", string_place);			\
@@ -1107,8 +1110,8 @@ do {									\
 									\
   /* Remove failure points and point to how many regs pushed.  */	\
   DEBUG_PRINT ("POP_FAILURE_POINT:\n");					\
-  DEBUG_PRINT ("  Before pop, next avail: %tu\n", fail_stack.avail);	\
-  DEBUG_PRINT ("		     size: %tu\n", fail_stack.size);	\
+  DEBUG_PRINT ("  Before pop, next avail: %td\n", fail_stack.avail);	\
+  DEBUG_PRINT ("		     size: %td\n", fail_stack.size);	\
 									\
   /* Pop the saved registers.  */					\
   while (fail_stack.frame < fail_stack.avail)				\
@@ -1127,7 +1130,7 @@ do {									\
   DEBUG_PRINT ("\"\n");							\
 									\
   fail_stack.frame = POP_FAILURE_INT ();				\
-  DEBUG_PRINT ("  Popping  frame index: %zu\n", fail_stack.frame);	\
+  DEBUG_PRINT ("  Popping  frame index: %td\n", fail_stack.frame);	\
 									\
   eassert (fail_stack.avail >= 0);					\
   eassert (fail_stack.frame <= fail_stack.avail);			\
@@ -2650,7 +2653,7 @@ regex_compile (re_char *pattern, ptrdiff_t size,
   if (regex_emacs_debug > 0)
     {
       re_compile_fastmap (bufp);
-      DEBUG_PRINT ("\nCompiled pattern: \n");
+      DEBUG_PRINT ("\nCompiled pattern:\n");
       print_compiled_pattern (bufp);
     }
   regex_emacs_debug--;
@@ -3941,7 +3944,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp,
   ptrdiff_t num_regs_pushed = 0;
 #endif
 
-  DEBUG_PRINT ("\n\nEntering re_match_2.\n");
+  DEBUG_PRINT ("\nEntering re_match_2.\n");
 
   REGEX_USE_SAFE_ALLOCA;
 
