@@ -8291,7 +8291,7 @@ not_in_argv (NSString *arg)
     }
   else
     {
-      fprintf (stderr, "Invalid data type in dragging pasteboard");
+      fprintf (stderr, "Invalid data type in dragging pasteboard\n");
       return NO;
     }
 
