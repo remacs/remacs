@@ -165,10 +165,10 @@
   (should (string-equal (format "%d" -18446744073709551616.0)
                         "-18446744073709551616")))
 
-;;; Perhaps Emacs will be improved someday to return the correct
-;;; answer for positive numbers instead of overflowing; in
-;;; that case these tests will need to be changed.  In the meantime make
-;;; sure Emacs is reporting the overflow correctly.
+;; Perhaps Emacs will be improved someday to return the correct
+;; answer for positive numbers instead of overflowing; in
+;; that case these tests will need to be changed.  In the meantime make
+;; sure Emacs is reporting the overflow correctly.
 (ert-deftest format-%x-large-float ()
   (should-error (format "%x" 18446744073709551616.0)
                 :type 'overflow-error))
@@ -351,10 +351,10 @@
                    "-0x000000003ffffffffffffffe000000000000000        "))))
 
 (ert-deftest test-group-name ()
-  ;; FIXME: Actually my GID in one of my systems has no associated entry
-  ;; in /etc/group so there's no name for it and `group-name' correctly
-  ;; returns nil!
-  (should (stringp (group-name (group-gid))))
+  (let ((group-name (group-name (group-gid))))
+    ;; If the GID has no associated entry in /etc/group there's no
+    ;; name for it and `group-name' should return nil!
+    (should (or (null group-name) (stringp group-name))))
   (should-error (group-name 'foo))
   (cond
    ((memq system-type '(windows-nt ms-dos))
