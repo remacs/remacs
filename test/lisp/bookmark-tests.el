@@ -186,6 +186,18 @@ the lexically-bound variable `buffer'."
        ;; 3. bookmark-set-internal
        (should-error (bookmark-set-internal "foo" "bar" t))))))
 
+(ert-deftest bookmark-tests-set/bookmark-use-annotations-t ()
+  (with-bookmark-test-file
+   (let ((bookmark-use-annotations t))
+     (save-window-excursion
+       (switch-to-buffer buffer)
+       ;; Should jump to edit annotation buffer
+       (bookmark-set "foo")
+       (should (equal major-mode 'bookmark-edit-annotation-mode))
+       ;; Should return to the original buffer
+       (bookmark-send-edited-annotation)
+       (should (equal (current-buffer) buffer))))))
+
 (ert-deftest bookmark-tests-kill-line ()
   (with-temp-buffer
     (insert "foobar\n")
@@ -313,7 +325,42 @@ that saves and then loads the bookmark file."
                     (list bookmark-tests-bookmark
                           (cons "name<2>" (cdr bookmark-tests-bookmark))))))))
 
-;; TODO: Add tests for bookmark-bmenu.
+;; TODO: Add more tests for bookmark-bmenu.
+
+(defmacro with-bookmark-bmenu-test (&rest body)
+  "Create environment for testing `bookmark-bmenu-list' and evaluate BODY.
+Same as `with-bookmark-test' but with additions suitable for
+testing `bookmark-bmenu-list'."
+  `(with-bookmark-test
+    (let ((bookmark-bmenu-buffer "*Bookmark List - Testing*"))
+      (unwind-protect
+          (save-window-excursion
+            (bookmark-bmenu-list)
+            ,@body)
+        (kill-buffer bookmark-bmenu-buffer)))))
+
+(ert-deftest bookmark-bmenu.enu-edit-annotation/show-annotation ()
+  (with-bookmark-bmenu-test
+   (bookmark-set-annotation "name" "foo")
+   (bookmark-bmenu-edit-annotation)
+   (should (string-match "foo" (buffer-string)))
+   (kill-buffer (current-buffer))))
+
+(ert-deftest bookmark-bmenu-send-edited-annotation ()
+  (with-bookmark-bmenu-test
+   (bookmark-bmenu-edit-annotation)
+   (insert "foo")
+   (bookmark-send-edited-annotation)
+   (should (equal (bookmark-get-annotation "name") "foo"))))
+
+(ert-deftest bookmark-bmenu-send-edited-annotation/restore-focus ()
+  "Test for https://debbugs.gnu.org/20150 ."
+  (with-bookmark-bmenu-test
+   (bookmark-bmenu-edit-annotation)
+   (insert "foo")
+   (bookmark-send-edited-annotation)
+   (should (equal (buffer-name (current-buffer)) bookmark-bmenu-buffer))
+   (should (looking-at "name"))))
 
 (provide 'bookmark-tests)
 ;;; bookmark-tests.el ends here

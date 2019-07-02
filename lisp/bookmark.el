@@ -32,6 +32,7 @@
 ;;; Code:
 
 (require 'pp)
+(require 'text-property-search)
 (eval-when-compile (require 'cl-lib))
 
 ;;; Misc comments:
@@ -121,6 +122,9 @@ recently set ones come first, oldest ones come last)."
 (defcustom bookmark-automatically-show-annotations t
   "Non-nil means show annotations when jumping to a bookmark."
   :type 'boolean)
+
+(defconst bookmark-bmenu-buffer "*Bookmark List*"
+  "Name of buffer used for Bookmark List.")
 
 (defcustom bookmark-bmenu-use-header-line t
   "Non-nil means to use an immovable header line.
@@ -889,13 +893,13 @@ Does not affect the kill ring."
     (when (and newline-too (= (following-char) ?\n))
       (delete-char 1))))
 
-
-;; Defvars to avoid compilation warnings:
 (defvar bookmark-annotation-name nil
-  "Variable holding the name of the bookmark.
-This is used in `bookmark-edit-annotation' to record the bookmark
-whose annotation is being edited.")
+  "Name of bookmark under edit in `bookmark-edit-annotation-mode'.")
+(make-variable-buffer-local 'bookmark-annotation-name)
 
+(defvar bookmark--annotation-from-bookmark-list nil
+  "If non-nil, `bookmark-edit-annotation-mode' should return to bookmark list.")
+(make-variable-buffer-local 'bookmark--annotation-from-bookmark-list)
 
 (defun bookmark-default-annotation-text (bookmark-name)
   "Return default annotation text for BOOKMARK-NAME.
@@ -937,7 +941,7 @@ It takes one argument, the name of the bookmark, as a string.")
 (define-derived-mode bookmark-edit-annotation-mode
   text-mode "Edit Bookmark Annotation"
   "Mode for editing the annotation of bookmarks.
-When you have finished composing, type \\[bookmark-send-annotation].
+When you have finished composing, type \\[bookmark-send-edited-annotation].
 
 \\{bookmark-edit-annotation-mode-map}")
 
@@ -955,21 +959,31 @@ Lines beginning with `#' are ignored."
       (forward-line 1)))
   ;; Take no chances with text properties.
   (let ((annotation (buffer-substring-no-properties (point-min) (point-max)))
-	(bookmark-name bookmark-annotation-name))
+        (bookmark-name bookmark-annotation-name)
+        (from-bookmark-list bookmark--annotation-from-bookmark-list)
+        (old-buffer (current-buffer)))
     (bookmark-set-annotation bookmark-name annotation)
     (setq bookmark-alist-modification-count
           (1+ bookmark-alist-modification-count))
-    (bookmark-bmenu-surreptitiously-rebuild-list))
-  (kill-buffer (current-buffer)))
+    (message "Annotation updated for \"%s\"" bookmark-name)
+    (quit-window)
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (when from-bookmark-list
+      (pop-to-buffer (get-buffer bookmark-bmenu-buffer))
+      (goto-char (point-min))
+      (text-property-search-forward 'bookmark-name-prop bookmark-name))
+    (kill-buffer old-buffer)))
 
 
-(defun bookmark-edit-annotation (bookmark-name-or-record)
-  "Pop up a buffer for editing bookmark BOOKMARK-NAME-OR-RECORD's annotation."
+(defun bookmark-edit-annotation (bookmark-name-or-record &optional from-bookmark-list)
+  "Pop up a buffer for editing bookmark BOOKMARK-NAME-OR-RECORD's annotation.
+If optional argument FROM-BOOKMARK-LIST is non-nil, return to the
+bookmark list when editing is done."
   (pop-to-buffer (generate-new-buffer-name "*Bookmark Annotation Compose*"))
   (bookmark-insert-annotation bookmark-name-or-record)
   (bookmark-edit-annotation-mode)
-  (set (make-local-variable 'bookmark-annotation-name)
-       bookmark-name-or-record))
+  (setq bookmark--annotation-from-bookmark-list from-bookmark-list)
+  (setq bookmark-annotation-name bookmark-name-or-record))
 
 
 (defun bookmark-buffer-name ()
@@ -1555,9 +1569,8 @@ unique numeric suffixes \"<2>\", \"<3>\", etc."
 	(progress-reporter-done reporter)))))
 
 
-;;; Code supporting the dired-like bookmark menu.
+;;; Code supporting the dired-like bookmark list.
 ;; Prefix is "bookmark-bmenu" for "buffer-menu":
-
 
 (defvar bookmark-bmenu-hidden-bookmarks ())
 
@@ -1642,7 +1655,7 @@ unique numeric suffixes \"<2>\", \"<3>\", etc."
 (defun bookmark-bmenu-surreptitiously-rebuild-list ()
   "Rebuild the Bookmark List if it exists.
 Don't affect the buffer ring order."
-  (if (get-buffer "*Bookmark List*")
+  (if (get-buffer bookmark-bmenu-buffer)
       (save-excursion
         (save-window-excursion
           (bookmark-bmenu-list)))))
@@ -1656,7 +1669,7 @@ The leftmost column displays a D if the bookmark is flagged for
 deletion, or > if it is flagged for displaying."
   (interactive)
   (bookmark-maybe-load-default-file)
-  (let ((buf (get-buffer-create "*Bookmark List*")))
+  (let ((buf (get-buffer-create bookmark-bmenu-buffer)))
     (if (called-interactively-p 'interactive)
         (switch-to-buffer buf)
       (set-buffer buf)))
@@ -2059,7 +2072,7 @@ bookmark menu visible."
   "Edit the annotation for the current bookmark in another window."
   (interactive)
   (let ((bookmark (bookmark-bmenu-bookmark)))
-    (bookmark-edit-annotation bookmark)))
+    (bookmark-edit-annotation bookmark t)))
 
 
 (defun bookmark-bmenu-unmark (&optional backup)
