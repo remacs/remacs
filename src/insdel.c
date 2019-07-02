@@ -115,7 +115,7 @@ gap_left (ptrdiff_t charpos, ptrdiff_t bytepos, bool newgap)
   i = GPT_BYTE;
   to = GAP_END_ADDR;
   from = GPT_ADDR;
-  new_s1 = GPT_BYTE;
+  new_s1 = GPT_BYTE; /* May point in the middle of multibyte sequences.  */
 
   /* Now copy the characters.  To move the gap down,
      copy characters up.  */
@@ -133,11 +133,17 @@ gap_left (ptrdiff_t charpos, ptrdiff_t bytepos, bool newgap)
 	 make_gap_smaller set inhibit-quit.  */
       if (QUITP)
 	{
+          /* FIXME: This can point in the middle of a multibyte character.  */
 	  bytepos = new_s1;
 	  charpos = BYTE_TO_CHAR (bytepos);
 	  break;
 	}
       /* Move at most 32000 chars before checking again for a quit.  */
+      /* FIXME: This 32KB chunk size dates back to before 1991.
+         Maybe we should bump it to reflect the >1000x increase
+         in memory size and bandwidth since that time.
+         Is it even worthwhile checking `quit` within this loop?
+         Especially since make_gap_smaller/larger binds inhibit-quit anyway!  */
       if (i > 32000)
 	i = 32000;
       new_s1 -= i;
@@ -164,7 +170,7 @@ gap_right (ptrdiff_t charpos, ptrdiff_t bytepos)
 {
   register unsigned char *to, *from;
   register ptrdiff_t i;
-  ptrdiff_t new_s1;
+  ptrdiff_t new_s1; /* May point in the middle of multibyte sequences.  */
 
   BUF_COMPUTE_UNCHANGED (current_buffer, charpos, GPT);
 
@@ -189,6 +195,7 @@ gap_right (ptrdiff_t charpos, ptrdiff_t bytepos)
 	 make_gap_smaller set inhibit-quit.  */
       if (QUITP)
 	{
+          /* FIXME: This can point in the middle of a multibyte character.  */
 	  bytepos = new_s1;
 	  charpos = BYTE_TO_CHAR (bytepos);
 	  break;
@@ -1072,6 +1079,34 @@ insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 
 /* Insert a sequence of NCHARS chars which occupy NBYTES bytes
    starting at GAP_END_ADDR - NBYTES (if text_at_gap_tail) and at
+   GPT_ADDR (if not text_at_gap_tail).
+   Contrary to insert_from_gap, this does not invalidate any cache,
+   nor update any markers, nor record any buffer modification information
+   of any sort.  */
+void
+insert_from_gap_1 (ptrdiff_t nchars, ptrdiff_t nbytes, bool text_at_gap_tail)
+{
+  eassert (NILP (BVAR (current_buffer, enable_multibyte_characters))
+           ? nchars == nbytes : nchars <= nbytes);
+
+  GAP_SIZE -= nbytes;
+  if (! text_at_gap_tail)
+    {
+      GPT += nchars;
+      GPT_BYTE += nbytes;
+    }
+  ZV += nchars;
+  Z += nchars;
+  ZV_BYTE += nbytes;
+  Z_BYTE += nbytes;
+
+  /* Put an anchor to ensure multi-byte form ends at gap.  */
+  if (GAP_SIZE > 0) *(GPT_ADDR) = 0;
+  eassert (GPT <= GPT_BYTE);
+}
+
+/* Insert a sequence of NCHARS chars which occupy NBYTES bytes
+   starting at GAP_END_ADDR - NBYTES (if text_at_gap_tail) and at
    GPT_ADDR (if not text_at_gap_tail).  */
 
 void
@@ -1090,19 +1125,7 @@ insert_from_gap (ptrdiff_t nchars, ptrdiff_t nbytes, bool text_at_gap_tail)
   record_insert (GPT, nchars);
   modiff_incr (&MODIFF);
 
-  GAP_SIZE -= nbytes;
-  if (! text_at_gap_tail)
-    {
-      GPT += nchars;
-      GPT_BYTE += nbytes;
-    }
-  ZV += nchars;
-  Z += nchars;
-  ZV_BYTE += nbytes;
-  Z_BYTE += nbytes;
-  if (GAP_SIZE > 0) *(GPT_ADDR) = 0; /* Put an anchor.  */
-
-  eassert (GPT <= GPT_BYTE);
+  insert_from_gap_1 (nchars, nbytes, text_at_gap_tail);
 
   adjust_overlays_for_insert (ins_charpos, nchars);
   adjust_markers_for_insert (ins_charpos, ins_bytepos,

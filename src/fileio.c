@@ -4436,17 +4436,7 @@ by calling `format-decode', which see.  */)
     report_file_error ("Read error", orig_filename);
 
   /* Make the text read part of the buffer.  */
-  GAP_SIZE -= inserted;
-  GPT      += inserted;
-  GPT_BYTE += inserted;
-  ZV       += inserted;
-  ZV_BYTE  += inserted;
-  Z        += inserted;
-  Z_BYTE   += inserted;
-
-  if (GAP_SIZE > 0)
-    /* Put an anchor to ensure multi-byte form ends at gap.  */
-    *GPT_ADDR = 0;
+  insert_from_gap_1 (inserted, inserted, false);
 
  notfound:
 

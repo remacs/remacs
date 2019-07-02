@@ -740,17 +740,7 @@ usage: (json-insert OBJECT &rest ARGS)  */)
   if (inserted_bytes > 0)
     {
       /* Make the inserted text part of the buffer, as unibyte text.  */
-      GAP_SIZE -= inserted_bytes;
-      GPT      += inserted_bytes;
-      GPT_BYTE += inserted_bytes;
-      ZV       += inserted_bytes;
-      ZV_BYTE  += inserted_bytes;
-      Z        += inserted_bytes;
-      Z_BYTE   += inserted_bytes;
-
-      if (GAP_SIZE > 0)
-	/* Put an anchor to ensure multi-byte form ends at gap.  */
-	*GPT_ADDR = 0;
+      insert_from_gap_1 (inserted_bytes, inserted_bytes, false);
 
       /* If required, decode the stuff we've read into the gap.  */
       struct coding_system coding;
