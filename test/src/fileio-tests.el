@@ -107,3 +107,22 @@ Also check that an encoding error can appear in a symlink."
       (setenv "HOME" "x:foo")
       (should (equal (expand-file-name "~/bar") "x:/foo/bar")))
     (setenv "HOME" old-home)))
+
+(ert-deftest fileio-tests--insert-file-interrupt ()
+  (let ((text "-*- coding: binary -*-\n\xc3\xc3help")
+        f)
+    (unwind-protect
+        (progn
+          (setq f (make-temp-file "ftifi"))
+          (write-region text nil f nil 'silent)
+          (with-temp-buffer
+            (catch 'toto
+              (let ((set-auto-coding-function (lambda (&rest _) (throw 'toto nil))))
+                (insert-file-contents f)))
+            (goto-char (point-min))
+            (forward-line 1)
+            (let ((c1 (char-after)))
+              (forward-char 1)
+              (should (equal c1 (char-before)))
+              (should (equal c1 (char-after))))))
+      (if f (delete-file f)))))

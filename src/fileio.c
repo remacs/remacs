@@ -3459,42 +3459,6 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
 
 enum { READ_BUF_SIZE = MAX_ALLOCA };
 
-/* This function is called after Lisp functions to decide a coding
-   system are called, or when they cause an error.  Before they are
-   called, the current buffer is set unibyte and it contains only a
-   newly inserted text (thus the buffer was empty before the
-   insertion).
-
-   The functions may set markers, overlays, text properties, or even
-   alter the buffer contents, change the current buffer.
-
-   Here, we reset all those changes by:
-	o set back the current buffer.
-	o move all markers and overlays to BEG.
-	o remove all text properties.
-	o set back the buffer multibyteness.  */
-
-static void
-decide_coding_unwind (Lisp_Object unwind_data)
-{
-  Lisp_Object multibyte, undo_list, buffer;
-
-  multibyte = XCAR (unwind_data);
-  unwind_data = XCDR (unwind_data);
-  undo_list = XCAR (unwind_data);
-  buffer = XCDR (unwind_data);
-
-  set_buffer_internal (XBUFFER (buffer));
-  adjust_markers_for_delete (BEG, BEG_BYTE, Z, Z_BYTE);
-  adjust_overlays_for_delete (BEG, Z - BEG);
-  set_buffer_intervals (current_buffer, NULL);
-  TEMP_SET_PT_BOTH (BEG, BEG_BYTE);
-
-  /* Now we are safe to change the buffer's multibyteness directly.  */
-  bset_enable_multibyte_characters (current_buffer, multibyte);
-  bset_undo_list (current_buffer, undo_list);
-}
-
 /* Read from a non-regular file.  Return the number of bytes read.  */
 
 union read_non_regular
@@ -4457,15 +4421,14 @@ by calling `format-decode', which see.  */)
 	     enable-multibyte-characters directly here without taking
 	     care of marker adjustment.  By this way, we can run Lisp
 	     program safely before decoding the inserted text.  */
-	  Lisp_Object unwind_data;
+          Lisp_Object multibyte
+            = BVAR (current_buffer, enable_multibyte_characters);
+          Lisp_Object undo_list = BVAR (current_buffer, undo_list);
 	  ptrdiff_t count1 = SPECPDL_INDEX ();
 
-	  unwind_data = Fcons (BVAR (current_buffer, enable_multibyte_characters),
-			       Fcons (BVAR (current_buffer, undo_list),
-				      Fcurrent_buffer ()));
 	  bset_enable_multibyte_characters (current_buffer, Qnil);
 	  bset_undo_list (current_buffer, Qt);
-	  record_unwind_protect (decide_coding_unwind, unwind_data);
+	  record_unwind_protect (restore_buffer, Fcurrent_buffer ());
 
 	  if (inserted > 0 && ! NILP (Vset_auto_coding_function))
 	    {
@@ -4484,8 +4447,24 @@ by calling `format-decode', which see.  */)
 		coding_system = XCAR (coding_system);
 	    }
 	  unbind_to (count1, Qnil);
-	  inserted = Z_BYTE - BEG_BYTE;
-	}
+          /* We're about to "delete" the text by moving it back into the gap
+             (right before calling decode_coding_gap).
+             So move markers that set-auto-coding might have created to BEG,
+             just in case.  */
+          adjust_markers_for_delete (BEG, BEG_BYTE, Z, Z_BYTE);
+          adjust_overlays_for_delete (BEG, Z - BEG);
+          set_buffer_intervals (current_buffer, NULL);
+          TEMP_SET_PT_BOTH (BEG, BEG_BYTE);
+
+          /* Change the buffer's multibyteness directly.  We used to do this
+             from within unbind_to, but it was unsafe since the bytes
+             may contain invalid sequences for a multibyte buffer (which is OK
+             here since we'll decode them before anyone else gets to see
+             them, but is dangerous when we're doing a non-local exit).  */
+          bset_enable_multibyte_characters (current_buffer, multibyte);
+          bset_undo_list (current_buffer, undo_list);
+          inserted = Z_BYTE - BEG_BYTE;
+        }
 
       if (NILP (coding_system))
 	coding_system = Qundecided;
