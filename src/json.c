@@ -739,9 +739,6 @@ usage: (json-insert OBJECT &rest ARGS)  */)
   ptrdiff_t inserted_bytes = data.inserted_bytes;
   if (inserted_bytes > 0)
     {
-      /* Make the inserted text part of the buffer, as unibyte text.  */
-      insert_from_gap_1 (inserted_bytes, inserted_bytes, false);
-
       /* If required, decode the stuff we've read into the gap.  */
       struct coding_system coding;
       /* JSON strings are UTF-8 encoded strings.  If for some reason
@@ -753,17 +750,19 @@ usage: (json-insert OBJECT &rest ARGS)  */)
 	!NILP (BVAR (current_buffer, enable_multibyte_characters));
       if (CODING_MAY_REQUIRE_DECODING (&coding))
 	{
-	  move_gap_both (PT, PT_BYTE);
-	  GAP_SIZE += inserted_bytes;
-	  ZV_BYTE -= inserted_bytes;
-	  Z_BYTE -= inserted_bytes;
-	  ZV -= inserted_bytes;
-	  Z -= inserted_bytes;
+          /* Now we have all the new bytes at the beginning of the gap,
+             but `decode_coding_gap` needs them at the end of the gap, so
+             we need to move them.  */
+          memmove (GAP_END_ADDR - inserted_bytes, GPT_ADDR, inserted_bytes);
 	  decode_coding_gap (&coding, inserted_bytes);
 	  inserted = coding.produced_char;
 	}
       else
 	{
+          /* Make the inserted text part of the buffer, as unibyte text.  */
+          eassert (NILP (BVAR (current_buffer, enable_multibyte_characters)));
+          insert_from_gap_1 (inserted_bytes, inserted_bytes, false);
+
 	  /* The target buffer is unibyte, so we don't need to decode.  */
 	  invalidate_buffer_caches (current_buffer,
 				    PT, PT + inserted_bytes);
