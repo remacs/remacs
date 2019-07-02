@@ -9212,7 +9212,7 @@ move_it_in_display_line_to (struct it *it,
 		      atx_it.sp = -1;
 		    }
 
-		  TRACE_MOVE ((stderr, "move_it_in: continued at %d\n",
+		  TRACE_MOVE ((stderr, "move_it_in: continued at %td\n",
 			       IT_CHARPOS (*it)));
 		  result = MOVE_LINE_CONTINUED;
 		  break;
@@ -9577,10 +9577,10 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
 		  break;
 		}
 	      SAVE_IT (it_backup, *it, backup_data);
-	      TRACE_MOVE ((stderr, "move_it: from %d\n", IT_CHARPOS (*it)));
+	      TRACE_MOVE ((stderr, "move_it: from %td\n", IT_CHARPOS (*it)));
 	      skip2 = move_it_in_display_line_to (it, to_charpos, -1,
 						  op & MOVE_TO_POS);
-	      TRACE_MOVE ((stderr, "move_it: to %d\n", IT_CHARPOS (*it)));
+	      TRACE_MOVE ((stderr, "move_it: to %td\n", IT_CHARPOS (*it)));
 	      line_height = it->max_ascent + it->max_descent;
 	      TRACE_MOVE ((stderr, "move_it: line_height = %d\n", line_height));
 
@@ -9959,10 +9959,10 @@ move_it_vertically (struct it *it, int dy)
     move_it_vertically_backward (it, -dy);
   else
     {
-      TRACE_MOVE ((stderr, "move_it_v: from %d, %d\n", IT_CHARPOS (*it), dy));
+      TRACE_MOVE ((stderr, "move_it_v: from %td, %d\n", IT_CHARPOS (*it), dy));
       move_it_to (it, ZV, -1, it->current_y + dy, -1,
 		  MOVE_TO_POS | MOVE_TO_Y);
-      TRACE_MOVE ((stderr, "move_it_v: to %d\n", IT_CHARPOS (*it)));
+      TRACE_MOVE ((stderr, "move_it_v: to %td\n", IT_CHARPOS (*it)));
 
       /* If buffer ends in ZV without a newline, move to the start of
 	 the line to satisfy the post-condition.  */
