@@ -666,23 +666,45 @@ This function may be passed to `add-variable-watcher'.  */)
   return Qnil;
 }
 
+/* redisplay_trace is for displaying traces of redisplay.
+   If Emacs was compiled with GLYPH_DEBUG defined, the variable
+   trace_redisplay_p can be set to a non-zero value in debugging
+   sessions to activate traces.  */
 #ifdef GLYPH_DEBUG
-
-/* True means print traces of redisplay if compiled with
-   GLYPH_DEBUG defined.  */
-
+extern bool trace_redisplay_p EXTERNALLY_VISIBLE;
 bool trace_redisplay_p;
-
-#endif /* GLYPH_DEBUG */
+#else
+enum { trace_redisplay_p = false };
+#endif
+static void ATTRIBUTE_FORMAT_PRINTF (1, 2)
+redisplay_trace (char const *fmt, ...)
+{
+  if (trace_redisplay_p)
+    {
+      va_list ap;
+      va_start (ap, fmt);
+      vprintf (fmt, ap);
+      va_end (ap);
+    }
+}
 
 #ifdef DEBUG_TRACE_MOVE
-/* True means trace with TRACE_MOVE to stderr.  */
-static bool trace_move;
-
-#define TRACE_MOVE(x)	if (trace_move) fprintf x; else (void) 0
+extern bool trace_move EXTERNALLY_VISIBLE;
+bool trace_move;
 #else
-#define TRACE_MOVE(x)	(void) 0
+enum { trace_move = false };
 #endif
+static void ATTRIBUTE_FORMAT_PRINTF (1, 2)
+move_trace (char const *fmt, ...)
+{
+  if (trace_move)
+    {
+      va_list ap;
+      va_start (ap, fmt);
+      vprintf (fmt, ap);
+      va_end (ap);
+    }
+}
 
 /* Buffer being redisplayed -- for redisplay_window_error.  */
 
@@ -9212,8 +9234,8 @@ move_it_in_display_line_to (struct it *it,
 		      atx_it.sp = -1;
 		    }
 
-		  TRACE_MOVE ((stderr, "move_it_in: continued at %td\n",
-			       IT_CHARPOS (*it)));
+		  move_trace ("move_it_in: continued at %td\n",
+			      IT_CHARPOS (*it));
 		  result = MOVE_LINE_CONTINUED;
 		  break;
 		}
@@ -9577,12 +9599,12 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
 		  break;
 		}
 	      SAVE_IT (it_backup, *it, backup_data);
-	      TRACE_MOVE ((stderr, "move_it: from %td\n", IT_CHARPOS (*it)));
+	      move_trace ("move_it: from %td\n", IT_CHARPOS (*it));
 	      skip2 = move_it_in_display_line_to (it, to_charpos, -1,
 						  op & MOVE_TO_POS);
-	      TRACE_MOVE ((stderr, "move_it: to %td\n", IT_CHARPOS (*it)));
+	      move_trace ("move_it: to %td\n", IT_CHARPOS (*it));
 	      line_height = it->max_ascent + it->max_descent;
-	      TRACE_MOVE ((stderr, "move_it: line_height = %d\n", line_height));
+	      move_trace ("move_it: line_height = %d\n", line_height);
 
 	      if (to_y >= it->current_y
 		  && to_y < it->current_y + line_height)
@@ -9614,7 +9636,7 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
 	    {
 	      /* Check whether TO_Y is in this line.  */
 	      line_height = it->max_ascent + it->max_descent;
-	      TRACE_MOVE ((stderr, "move_it: line_height = %d\n", line_height));
+	      move_trace ("move_it: line_height = %d\n", line_height);
 
 	      if (to_y >= it->current_y
 		  && to_y < it->current_y + line_height)
@@ -9774,7 +9796,7 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
   if (backup_data)
     bidi_unshelve_cache (backup_data, true);
 
-  TRACE_MOVE ((stderr, "move_it_to: reached %d\n", reached));
+  move_trace ("move_it_to: reached %d\n", reached);
 
   return max_current_x;
 }
@@ -9917,8 +9939,8 @@ move_it_vertically_backward (struct it *it, int dy)
 	      > min (window_box_height (it->w), line_height * 2 / 3))
 	  && IT_CHARPOS (*it) > BEGV)
 	{
-	  TRACE_MOVE ((stderr, "  not far enough -> move_vert %d\n",
-		       target_y - it->current_y));
+	  move_trace ("  not far enough -> move_vert %d\n",
+		      target_y - it->current_y);
 	  dy = it->current_y - target_y;
 	  goto move_further_back;
 	}
@@ -9959,10 +9981,10 @@ move_it_vertically (struct it *it, int dy)
     move_it_vertically_backward (it, -dy);
   else
     {
-      TRACE_MOVE ((stderr, "move_it_v: from %td, %d\n", IT_CHARPOS (*it), dy));
+      move_trace ("move_it_v: from %td, %d\n", IT_CHARPOS (*it), dy);
       move_it_to (it, ZV, -1, it->current_y + dy, -1,
 		  MOVE_TO_POS | MOVE_TO_Y);
-      TRACE_MOVE ((stderr, "move_it_v: to %td\n", IT_CHARPOS (*it)));
+      move_trace ("move_it_v: to %td\n", IT_CHARPOS (*it));
 
       /* If buffer ends in ZV without a newline, move to the start of
 	 the line to satisfy the post-condition.  */
@@ -14048,7 +14070,7 @@ redisplay_internal (void)
   /* True means redisplay has to redisplay the miniwindow.  */
   bool update_miniwindow_p = false;
 
-  TRACE ((stderr, "redisplay_internal %d\n", redisplaying_p));
+  redisplay_trace ("redisplay_internal %d\n", redisplaying_p);
 
   /* No redisplay if running in batch mode or frame is not yet fully
      initialized, or redisplay is explicitly turned off by setting
@@ -14321,7 +14343,7 @@ redisplay_internal (void)
 	  if (it.current_x != this_line_start_x)
 	    goto cancel;
 
-	  TRACE ((stderr, "trying display optimization 1\n"));
+	  redisplay_trace ("trying display optimization 1\n");
 	  w->cursor.vpos = -1;
 	  overlay_arrow_seen = false;
 	  it.vpos = this_line_vpos;
@@ -14840,7 +14862,7 @@ unwind_redisplay_preserve_echo_area (void)
 void
 redisplay_preserve_echo_area (int from_where)
 {
-  TRACE ((stderr, "redisplay_preserve_echo_area (%d)\n", from_where));
+  redisplay_trace ("redisplay_preserve_echo_area (%d)\n", from_where);
 
   block_input ();
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -18753,7 +18775,7 @@ try_window_id (struct window *w)
 #if false
 #define GIVE_UP(X)						\
   do {								\
-    TRACE ((stderr, "try_window_id give up %d\n", (X)));	\
+    redisplay_trace ("try_window_id give up %d\n", X);		\
     return 0;							\
   } while (false)
 #else
@@ -19595,7 +19617,7 @@ dump_glyph (struct glyph_row *row, struct glyph *glyph, int area)
       eassume (false);
 #else
       fprintf (stderr,
-	       "  %5d %4c %6d %c %3d 0x%05x %c %4d %1.1d%1.1d\n",
+	       "  %5td %4c %6td %c %3d %7p %c %4d %1.1d%1.1d\n",
 	       glyph - row->glyphs[TEXT_AREA],
 	       'X',
 	       glyph->charpos,
@@ -25947,6 +25969,7 @@ get_font_ascent_descent (struct font *font, int *ascent, int *descent)
 
 #ifdef GLYPH_DEBUG
 
+extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 void
 dump_glyph_string (struct glyph_string *s)
 {
@@ -32507,8 +32530,8 @@ expose_window (struct window *w, const Emacs_Rectangle *fr)
       struct glyph_row *row;
       struct glyph_row *first_overlapping_row, *last_overlapping_row;
 
-      TRACE ((stderr, "expose_window (%d, %d, %d, %d)\n",
-	      r.x, r.y, r.width, r.height));
+      redisplay_trace ("expose_window (%d, %d, %d, %d)\n",
+		       r.x, r.y, r.width, r.height);
 
       /* Convert to window coordinates.  */
       r.x -= WINDOW_LEFT_EDGE_X (w);
@@ -32666,11 +32689,9 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
   Emacs_Rectangle r;
   bool mouse_face_overwritten_p = false;
 
-  TRACE ((stderr, "expose_frame "));
-
   if (FRAME_GARBAGED_P (f))
     {
-      TRACE ((stderr, " garbaged\n"));
+      redisplay_trace ("expose_frame garbaged\n");
       return;
     }
 
@@ -32680,7 +32701,7 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
   if (FRAME_FACE_CACHE (f) == NULL
       || FRAME_FACE_CACHE (f)->used < BASIC_FACE_ID_SENTINEL)
     {
-      TRACE ((stderr, " no faces\n"));
+      redisplay_trace ("expose_frame no faces\n");
       return;
     }
 
@@ -32698,7 +32719,8 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
       r.height = h;
     }
 
-  TRACE ((stderr, "(%d, %d, %d, %d)\n", r.x, r.y, r.width, r.height));
+  redisplay_trace ("expose_frame (%d, %d, %d, %d)\n",
+		   r.x, r.y, r.width, r.height);
   mouse_face_overwritten_p = expose_window_tree (XWINDOW (f->root_window), &r);
 
 #ifndef HAVE_EXT_TOOL_BAR

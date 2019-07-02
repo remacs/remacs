@@ -196,29 +196,6 @@ enum window_part
 #else
 #define IF_DEBUG(X)	((void) 0)
 #endif
-
-/* Macro for displaying traces of redisplay.  If Emacs was compiled
-   with GLYPH_DEBUG defined, the variable trace_redisplay_p can be set to
-   a non-zero value in debugging sessions to activate traces.  */
-
-#ifdef GLYPH_DEBUG
-
-extern bool trace_redisplay_p EXTERNALLY_VISIBLE;
-#include <stdio.h>
-
-#define TRACE(X)				\
-   do {						\
-     if (trace_redisplay_p)			\
-       fprintf X;				\
-   } while (false)
-
-#else /* not GLYPH_DEBUG */
-
-#define TRACE(X)	((void) 0)
-
-#endif /* GLYPH_DEBUG */
-
-
 
 /***********************************************************************
 			    Text positions
@@ -3323,10 +3300,6 @@ extern void forget_escape_and_glyphless_faces (void);
 extern void get_font_ascent_descent (struct font *, int *, int *);
 
 #ifdef HAVE_WINDOW_SYSTEM
-
-#ifdef GLYPH_DEBUG
-extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
-#endif
 
 extern void gui_get_glyph_overhangs (struct glyph *, struct frame *,
                                      int *, int *);
