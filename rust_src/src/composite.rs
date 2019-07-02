@@ -32,7 +32,7 @@ pub fn compose_string_internal(
         compose_text(from, to, components, modification_func, string);
     }
 
-    return string;
+    string
 }
 
 include!(concat!(env!("OUT_DIR"), "/composite_exports.rs"));
