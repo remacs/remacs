@@ -4,12 +4,9 @@
 
 (require 'ert)
 
-(ert-deftest composite-test--compose-string-internal ()
+(ert-deftest compose-string-internal ()
   ;; All arguments, used negative to move backwards through index
-  (should (eq
-           (compose-string-internal "hello world" 1 -5 "h" (+ 3 3))
-           #("hello world" 1 6 (composition ((5 . "h") . 6)))
-           ))
+  (should (compose-string-internal "hello world" 1 -5 "h" (+ 3 3)))
   
   ;; END should be greater than START
   (should-error (compose-string-internal "hello world" 1 0))
