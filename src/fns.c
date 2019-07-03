@@ -4224,6 +4224,12 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
 {
   ptrdiff_t size = HASH_TABLE_SIZE (h);
 
+  /* These structures may have been purecopied and shared
+     (bug#36447).  */
+  h->next = Fcopy_sequence (h->next);
+  h->index = Fcopy_sequence (h->index);
+  h->hash = Fcopy_sequence (h->hash);
+
   /* Recompute the actual hash codes for each entry in the table.
      Order is still invalid.  */
   for (ptrdiff_t i = 0; i < size; ++i)
