@@ -2065,7 +2065,10 @@ matrix3x3_mult (matrix3x3 a, matrix3x3 b, matrix3x3 result)
 static void
 compute_image_rotation (struct image *img, double *rotation)
 {
-  Lisp_Object value = image_spec_value (img->spec, QCrotation, NULL);
+  bool foundp = false;
+  Lisp_Object value = image_spec_value (img->spec, QCrotation, &foundp);
+  if (!foundp)
+    return;
   if (! NUMBERP (value))
     {
       image_error ("Invalid image `:rotation' parameter");
