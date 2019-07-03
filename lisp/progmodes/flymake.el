@@ -4,7 +4,7 @@
 
 ;; Author: Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0.6
+;; Version: 1.0.7
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
@@ -697,6 +697,14 @@ backend is operating normally.")
   "Tell if Flymake has running backends in this buffer"
   (flymake-running-backends))
 
+;; FIXME: clone of `isearch-intesects-p'! Make this an util.
+(defun flymake--intersects-p (start0 end0 start1 end1)
+  "Return t if regions START0..END0 and START1..END1 intersect."
+  (or (and (>= start0 start1) (<  start0 end1))
+      (and (>  end0 start1)   (<= end0 end1))
+      (and (>= start1 start0) (<  start1 end0))
+      (and (>  end1 start0)   (<= end1 end0))))
+
 (cl-defun flymake--handle-report (backend token report-action
                                           &key explanation force region
                                           &allow-other-keys)
@@ -744,9 +752,12 @@ report applies to that region."
           (cond
            (region
             (cl-loop for diag in (flymake--backend-state-diags state)
-                     if (or (> (flymake--diag-end diag) (car region))
-                            (< (flymake--diag-beg diag) (cdr region)))
-                     do (delete-overlay (flymake--diag-overlay diag))
+                     for ov = (flymake--diag-overlay diag)
+                     if (or (not (overlay-buffer ov))
+                            (flymake--intersects-p
+                             (overlay-start ov) (overlay-end ov)
+                             (car region) (cdr region)))
+                     do (delete-overlay ov)
                      else collect diag into surviving
                      finally (setf (flymake--backend-state-diags state)
                                    surviving)))
