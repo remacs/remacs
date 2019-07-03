@@ -32530,7 +32530,7 @@ expose_window (struct window *w, const Emacs_Rectangle *fr)
       struct glyph_row *row;
       struct glyph_row *first_overlapping_row, *last_overlapping_row;
 
-      redisplay_trace ("expose_window (%d, %d, %d, %d)\n",
+      redisplay_trace ("expose_window (%d, %d, %u, %u)\n",
 		       r.x, r.y, r.width, r.height);
 
       /* Convert to window coordinates.  */
@@ -32719,7 +32719,7 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
       r.height = h;
     }
 
-  redisplay_trace ("expose_frame (%d, %d, %d, %d)\n",
+  redisplay_trace ("expose_frame (%d, %d, %u, %u)\n",
 		   r.x, r.y, r.width, r.height);
   mouse_face_overwritten_p = expose_window_tree (XWINDOW (f->root_window), &r);
 
