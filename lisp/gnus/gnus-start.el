@@ -1271,15 +1271,15 @@ string name) to insert this group after."
 	     (consp entry))
 	(setq oldlevel (gnus-info-level (nth 1 entry)))
       (setq oldlevel (or oldlevel gnus-level-killed)))
-    (when (stringp previous)
-      (setq previous (gnus-group-entry previous)))
     ;; Group is already subscribed.
     (unless (and (>= oldlevel gnus-level-zombie)
 		 (gnus-group-entry group))
       (unless (gnus-ephemeral-group-p group)
 	(gnus-dribble-enter
 	 (format "(gnus-group-change-level %S %S %S %S %S)"
-		 group level oldlevel previous fromkilled)))
+		 group level oldlevel
+		 (cadr (member previous gnus-group-list))
+		 fromkilled)))
 
       ;; Then we remove the newgroup from any old structures, if needed.
       ;; If the group was killed, we remove it from the killed or zombie
@@ -1341,6 +1341,8 @@ string name) to insert this group after."
 	  ;; at the head of `gnus-newsrc-alist'.
 	  (push info (cdr gnus-newsrc-alist))
 	  (puthash group (list num info) gnus-newsrc-hashtb)
+	  (when (stringp previous)
+	    (setq previous (gnus-group-entry previous)))
 	  (let* ((prev-idx (seq-position gnus-group-list (caadr previous)))
 		 (idx (if prev-idx
 			  (1+ prev-idx)
