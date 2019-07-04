@@ -36,6 +36,7 @@
     (define-key map [remap previous-line] 'scroll-lock-previous-line)
     (define-key map [remap forward-paragraph] 'scroll-lock-forward-paragraph)
     (define-key map [remap backward-paragraph] 'scroll-lock-backward-paragraph)
+    (define-key map [S-down] 'scroll-lock-next-line-always-scroll)
     map)
   "Keymap for Scroll Lock mode.")
 
@@ -80,6 +81,16 @@ boundaries during scrolling."
 			   (window-width)))))
       (move-to-column column)
     (forward-char (min column (- (line-end-position) (point))))))
+
+(defun scroll-lock-next-line-always-scroll (&optional arg)
+  "Scroll up ARG lines keeping point fixed."
+  (interactive "p")
+  (or arg (setq arg 1))
+  (scroll-lock-update-goal-column)
+  (condition-case nil
+      (scroll-up arg)
+    (end-of-buffer (goto-char (point-max)) (recenter 1)))
+  (scroll-lock-move-to-column scroll-lock-temporary-goal-column))
 
 (defun scroll-lock-next-line (&optional arg)
   "Scroll up ARG lines keeping point fixed."

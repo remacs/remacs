@@ -1684,6 +1684,13 @@ This runs after changing the dictionary and could be used to
 automatically spellcheck a buffer when changing language without
 needing to advice 'ispell-change-dictionary'.
 
+** scroll-lock
+
+---
+*** New command 'scroll-lock-next-line-always-scroll'.
+This command is bound to 'S-down' and scrolls the buffer up in
+particular when the end of the buffer is visible in the window.
+
 
 * New Modes and Packages in Emacs 27.1
 
