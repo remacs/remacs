@@ -82,6 +82,14 @@
       (set-char-table-extra-slot char-fold-table 0 multi)
       (char-fold--test-match-exactly (car it) (cdr it)))))
 
+(ert-deftest char-fold--test-multi-lax ()
+ (dolist (it '(("f" . "ﬁ") ("f" . "ﬀ")))
+   (with-temp-buffer
+     (insert (cdr it))
+     (goto-char (point-min))
+     (should (search-forward-regexp
+              (char-fold-to-regexp (car it) 'lax) nil 'noerror)))))
+
 (ert-deftest char-fold--test-fold-to-regexp ()
   (let ((char-fold-table (make-char-table 'char-fold-table))
         (multi  (make-char-table 'char-fold-table)))
