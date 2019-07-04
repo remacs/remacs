@@ -155,7 +155,9 @@ cid: URL as the argument.")
 
 (defface shr-selected-link
   '((t :inherit shr-link :background "red"))
-  "Face for link elements."
+  "Temporary face for externally visited link elements.
+When a link is visited with an external browser, the link
+temporarily blinks with this face."
   :version "27.1"
   :group 'shr)
 
