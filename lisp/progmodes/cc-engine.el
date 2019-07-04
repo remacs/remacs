@@ -310,20 +310,21 @@ comment at the start of cc-engine.el for more info."
 	  (beginning-of-line)
 	  (when (or (null lim)
 		    (>= here lim))
-	    (while
-		(progn
-		  (while (eq (char-before (1- (point))) ?\\)
-		    (forward-line -1))
-		  (when (and c-last-c-comment-end-on-line-re
-			     (re-search-forward
-			      c-last-c-comment-end-on-line-re pause t))
-		    (goto-char (match-end 1))
-		    (if (c-backward-single-comment)
-			(progn
-			  (beginning-of-line)
-			  (setq pause (point)))
-		      (goto-char pause)
-		      nil)))))
+	    (save-match-data
+	      (while
+		  (progn
+		    (while (eq (char-before (1- (point))) ?\\)
+		      (forward-line -1))
+		    (when (and c-last-c-comment-end-on-line-re
+			       (re-search-forward
+				c-last-c-comment-end-on-line-re pause t))
+		      (goto-char (match-end 1))
+		      (if (c-backward-single-comment)
+			  (progn
+			    (beginning-of-line)
+			    (setq pause (point)))
+			(goto-char pause)
+			nil))))))
 
 	  (back-to-indentation)
 	  (if (and (<= (point) here)
@@ -361,22 +362,25 @@ comment at the start of cc-engine.el for more info."
 	      c-macro-cache-start-pos nil
 	      c-macro-cache-syntactic nil
 	      c-macro-cache-no-comment nil))
-      (while
-	  (progn
-	    (while (progn
-		     (end-of-line)
-		     (when (and (eq (char-before) ?\\)
-				(not (eobp)))
-		       (forward-char)
-		       t)))
-	    (if (and c-last-open-c-comment-start-on-line-re
-		     (re-search-backward
-		      c-last-open-c-comment-start-on-line-re
-		      (c-point 'bol) t))
-		(progn
-		  (goto-char (match-beginning 1))
-		  (c-forward-single-comment))
-	      nil)))
+      (save-match-data
+	(while
+	    (progn
+	      (while (progn
+		       (end-of-line)
+		       (when (and (eq (char-before) ?\\)
+				  (not (eobp)))
+			 (forward-char)
+			 t)))
+	      (let ((cand-EOM (point)))
+		(if (and c-last-open-c-comment-start-on-line-re
+			 (re-search-backward
+			  c-last-open-c-comment-start-on-line-re
+			  (c-point 'bol) t))
+		    (progn
+		      (goto-char (match-beginning 1))
+		      (and (c-forward-single-comment)
+			   (> (point) cand-EOM)))
+		  nil)))))
 
       (when (and (car c-macro-cache)
 		 (> (point) (car c-macro-cache)) ; in case we have a

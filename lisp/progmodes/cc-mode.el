@@ -934,7 +934,8 @@ Note that the style variables are always made local to the buffer."
       (goto-char (match-beginning 1))
       (setq m-beg (point))
       (c-end-of-macro)
-      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
+      (when (c-major-mode-is 'c++-mode)
+	(save-excursion (c-depropertize-raw-strings-in-region m-beg (point))))
       (c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
 
     (while (and (< (point) end)
@@ -944,7 +945,8 @@ Note that the style variables are always made local to the buffer."
       (setq m-beg (point))
       (c-end-of-macro))
     (when (and ss-found (> (point) end))
-      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
+      (when (c-major-mode-is 'c++-mode)
+	(save-excursion (c-depropertize-raw-strings-in-region m-beg (point))))
       (c-clear-char-property-with-value m-beg (point) 'syntax-table '(1)))
 
     (while (and (< (point) c-new-END)
@@ -952,7 +954,8 @@ Note that the style variables are always made local to the buffer."
       (goto-char (match-beginning 1))
       (setq m-beg (point))
       (c-end-of-macro)
-      (save-excursion (c-depropertize-raw-strings-in-region m-beg (point)))
+      (when (c-major-mode-is 'c++-mode)
+	(save-excursion (c-depropertize-raw-strings-in-region m-beg (point))))
       (c-clear-char-property-with-value
        m-beg (point) 'syntax-table '(1)))))
 

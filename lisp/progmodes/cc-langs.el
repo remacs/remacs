@@ -1608,7 +1608,7 @@ backslash."
 current line, if any, or nil in those languages without block
 comments.  When a match is found, submatch 1 contains the comment
 ender."
-  t "\\(\\*/\\)\\([^*]\\|\\*[^/]\\)*$"
+  t "\\(\\*/\\)\\([^*]\\|\\*+[^/]\\)*$"
   awk nil)
 (c-lang-defvar c-last-c-comment-end-on-line-re
 	       (c-lang-const c-last-c-comment-end-on-line-re))
@@ -1618,7 +1618,7 @@ ender."
 current ine, if any, or nil in those languages without block
 comments.  When a match is found, submatch 1 contains the comment
 starter."
-  t "\\(/\\*\\)\\([^*]\\|\\*[^/]\\)*$"
+  t "\\(/\\*\\)\\([^*]\\|\\*+[^/]\\)*$"
   awk nil)
 (c-lang-defvar c-last-open-c-comment-start-on-line-re
 	       (c-lang-const c-last-open-c-comment-start-on-line-re))
