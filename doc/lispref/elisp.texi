@@ -1298,6 +1298,9 @@ Regular Expressions
 
 * Syntax of Regexps::       Rules for writing regular expressions.
 * Regexp Example::          Illustrates regular expression syntax.
+@ifnottex
+* Rx Notation::             An alternative, structured regexp notation.
+@end ifnottex
 * Regexp Functions::        Functions for operating on regular expressions.
 
 Syntax of Regular Expressions

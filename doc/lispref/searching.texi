@@ -254,6 +254,9 @@ it easier to verify even very complex regexps.
 @menu
 * Syntax of Regexps::       Rules for writing regular expressions.
 * Regexp Example::          Illustrates regular expression syntax.
+@ifnottex
+* Rx Notation::             An alternative, structured regexp notation.
+@end ifnottex
 * Regexp Functions::        Functions for operating on regular expressions.
 @end menu
 
@@ -359,6 +362,7 @@ is a postfix operator, similar to @samp{*} except that it must match the
 preceding expression either once or not at all.  For example,
 @samp{ca?r} matches @samp{car} or @samp{cr}; nothing else.
 
+@anchor{Non-greedy repetition}
 @item @samp{*?}, @samp{+?}, @samp{??}
 @cindex non-greedy repetition characters in regexp
 These are @dfn{non-greedy} variants of the operators @samp{*}, @samp{+}
@@ -950,6 +954,575 @@ used to match the end of a line.
 Finally, the last part of the pattern matches any additional whitespace
 beyond the minimum needed to end a sentence.
 @end table
+
+@ifnottex
+In the @code{rx} notation (@pxref{Rx Notation}), the regexp could be written
+
+@example
+@group
+(rx (any ".?!")                    ; Punctuation ending sentence.
+    (zero-or-more (any "\"')]@}"))  ; Closing quotes or brackets.
+    (or line-end
+        (seq " " line-end)
+        "\t"
+        "  ")                      ; Two spaces.
+    (zero-or-more (any "\t\n ")))  ; Optional extra whitespace.
+@end group
+@end example
+
+Since @code{rx} regexps are just S-expressions, they can be formatted
+and commented as such.
+@end ifnottex
+
+@ifnottex
+@node Rx Notation
+@subsection The @code{rx} Structured Regexp Notation
+@cindex rx
+@cindex regexp syntax
+
+  As an alternative to the string-based syntax, Emacs provides the
+structured @code{rx} notation based on Lisp S-expressions.  This
+notation is usually easier to read, write and maintain than regexp
+strings, and can be indented and commented freely.  It requires a
+conversion into string form since that is what regexp functions
+expect, but that conversion typically takes place during
+byte-compilation rather than when the Lisp code using the regexp is
+run.
+
+  Here is an @code{rx} regexp@footnote{It could be written much
+simpler with non-greedy operators (how?), but that would make the
+example less interesting.} that matches a block comment in the C
+programming language:
+
+@example
+@group
+(rx "/*"                          ; Initial /*
+    (zero-or-more
+     (or (not (any "*"))          ;  Either non-*,
+         (seq "*"                 ;  or * followed by
+              (not (any "/")))))  ;  non-/
+    (one-or-more "*")             ; At least one star,
+    "/")                          ; and the final /
+@end group
+@end example
+
+@noindent
+or, using shorter synonyms and written more compactly,
+
+@example
+@group
+(rx "/*"
+    (* (| (not (any "*"))
+          (: "*" (not (any "/")))))
+    (+ "*") "/")
+@end group
+@end example
+
+@noindent
+In conventional string syntax, it would be written
+
+@example
+"/\\*\\(?:[^*]\\|\\*[^/]\\)*\\*+/"
+@end example
+
+The @code{rx} notation is mainly useful in Lisp code; it cannot be
+used in most interactive situations where a regexp is requested, such
+as when running @code{query-replace-regexp} or in variable
+customisation.
+
+@menu
+* Rx Constructs::       Constructs valid in rx forms.
+* Rx Functions::        Functions and macros that use rx forms.
+@end menu
+
+@node Rx Constructs
+@subsubsection Constructs in @code{rx} regexps
+
+The various forms in @code{rx} regexps are described below.  The
+shorthand @var{rx} represents any @code{rx} form, and @var{rx}@dots{}
+means one or more @code{rx} forms.  Where the corresponding string
+regexp syntax is given, @var{A}, @var{B}, @dots{} are string regexp
+subexpressions.
+@c With the new implementation of rx, this can be changed from
+@c 'one or more' to 'zero or more'.
+
+@subsubheading Literals
+
+@table @asis
+@item @code{"some-string"}
+Match the string @samp{some-string} literally.  There are no
+characters with special meaning, unlike in string regexps.
+
+@item @code{?C}
+Match the character @samp{C} literally.
+@end table
+
+@subsubheading Sequence and alternative
+
+@table @asis
+@item @code{(seq @var{rx}@dots{})}
+@cindex @code{seq} in rx
+@itemx @code{(sequence @var{rx}@dots{})}
+@cindex @code{sequence} in rx
+@itemx @code{(: @var{rx}@dots{})}
+@cindex @code{:} in rx
+@itemx @code{(and @var{rx}@dots{})}
+@cindex @code{and} in rx
+Match the @var{rx}s in sequence.  Without arguments, the expression
+matches the empty string.@*
+Corresponding string regexp: @samp{@var{A}@var{B}@dots{}}
+(subexpressions in sequence).
+
+@item @code{(or @var{rx}@dots{})}
+@cindex @code{or} in rx
+@itemx @code{(| @var{rx}@dots{})}
+@cindex @code{|} in rx
+Match exactly one of the @var{rx}s, trying from left to right.
+Without arguments, the expression will not match anything at all.@*
+Corresponding string regexp: @samp{@var{A}\|@var{B}\|@dots{}}.
+@end table
+
+@subsubheading Repetition
+
+Normally, repetition forms are greedy, in that they attempt to match
+as many times as possible.  Some forms are non-greedy; they try to
+match as few times as possible (@pxref{Non-greedy repetition}).
+
+@table @code
+@item (zero-or-more @var{rx}@dots{})
+@cindex @code{zero-or-more} in rx
+@itemx (0+ @var{rx}@dots{})
+@cindex @code{0+} in rx
+Match the @var{rx}s zero or more times.  Greedy by default.@*
+Corresponding string regexp: @samp{@var{A}*} (greedy),
+@samp{@var{A}*?} (non-greedy)
+
+@item (one-or-more @var{rx}@dots{})
+@cindex @code{one-or-more} in rx
+@itemx (1+ @var{rx}@dots{})
+@cindex @code{1+} in rx
+Match the @var{rx}s one or more times.  Greedy by default.@*
+Corresponding string regexp: @samp{@var{A}+} (greedy),
+@samp{@var{A}+?} (non-greedy)
+
+@item (zero-or-one @var{rx}@dots{})
+@cindex @code{zero-or-one} in rx
+@itemx (optional @var{rx}@dots{})
+@cindex @code{optional} in rx
+@itemx (opt @var{rx}@dots{})
+@cindex @code{opt} in rx
+Match the @var{rx}s once or an empty string.  Greedy by default.@*
+Corresponding string regexp: @samp{@var{A}?} (greedy),
+@samp{@var{A}??} (non-greedy).
+
+@item (* @var{rx}@dots{})
+@cindex @code{*} in rx
+Match the @var{rx}s zero or more times.  Greedy.@*
+Corresponding string regexp: @samp{@var{A}*}
+
+@item (+ @var{rx}@dots{})
+@cindex @code{+} in rx
+Match the @var{rx}s one or more times.  Greedy.@*
+Corresponding string regexp: @samp{@var{A}+}
+
+@item (? @var{rx}@dots{})
+@cindex @code{?} in rx
+Match the @var{rx}s once or an empty string.  Greedy.@*
+Corresponding string regexp: @samp{@var{A}?}
+
+@item (*? @var{rx}@dots{})
+@cindex @code{*?} in rx
+Match the @var{rx}s zero or more times.  Non-greedy.@*
+Corresponding string regexp: @samp{@var{A}*?}
+
+@item (+? @var{rx}@dots{})
+@cindex @code{+?} in rx
+Match the @var{rx}s one or more times.  Non-greedy.@*
+Corresponding string regexp: @samp{@var{A}+?}
+
+@item (?? @var{rx}@dots{})
+@cindex @code{??} in rx
+Match the @var{rx}s or an empty string.  Non-greedy.@*
+Corresponding string regexp: @samp{@var{A}??}
+
+@item (= @var{n} @var{rx}@dots{})
+@cindex @code{=} in rx
+@itemx (repeat @var{n} @var{rx})
+Match the @var{rx}s exactly @var{n} times.@*
+Corresponding string regexp: @samp{@var{A}\@{@var{n}\@}}
+
+@item (>= @var{n} @var{rx}@dots{})
+@cindex @code{>=} in rx
+Match the @var{rx}s @var{n} or more times.  Greedy.@*
+Corresponding string regexp: @samp{@var{A}\@{@var{n},\@}}
+
+@item (** @var{n} @var{m} @var{rx}@dots{})
+@cindex @code{**} in rx
+@itemx (repeat @var{n} @var{m} @var{rx}@dots{})
+@cindex @code{repeat} in rx
+Match the @var{rx}s at least @var{n} but no more than @var{m} times.  Greedy.@*
+Corresponding string regexp: @samp{@var{A}\@{@var{n},@var{m}\@}}
+@end table
+
+The greediness of some repetition forms can be controlled using the
+following constructs.  However, it is usually better to use the
+explicit non-greedy forms above when such matching is required.
+
+@table @code
+@item (minimal-match @var{rx})
+@cindex @code{minimal-match} in rx
+Match @var{rx}, with @code{zero-or-more}, @code{0+},
+@code{one-or-more}, @code{1+}, @code{zero-or-one}, @code{opt} and
+@code{option} using non-greedy matching.
+
+@item (maximal-match @var{rx})
+@cindex @code{maximal-match} in rx
+Match @var{rx}, with @code{zero-or-more}, @code{0+},
+@code{one-or-more}, @code{1+}, @code{zero-or-one}, @code{opt} and
+@code{option} using non-greedy matching.  This is the default.
+@end table
+
+@subsubheading Matching single characters
+
+@table @asis
+@item @code{(any @var{set}@dots{})}
+@cindex @code{any} in rx
+@itemx @code{(char @var{set}@dots{})}
+@cindex @code{char} in rx
+@itemx @code{(in @var{set}@dots{})}
+@cindex @code{in} in rx
+@cindex character class in rx
+Match a single character from one of the @var{set}s.  Each @var{set}
+is a character, a string representing the set of its characters, a
+range or a character class (see below).  A range is either a
+hyphen-separated string like @code{"A-Z"}, or a cons of characters
+like @code{(?A . ?Z)}.
+
+Note that hyphen (@code{-}) is special in strings in this construct,
+since it acts as a range separator.  To include a hyphen, add it as a
+separate character or single-character string.@*
+Corresponding string regexp: @samp{[@dots{}]}
+
+@item @code{(not @var{charspec})}
+@cindex @code{not} in rx
+Match a character not included in @var{charspec}.  @var{charspec} can
+be an @code{any}, @code{syntax} or @code{category} form, or a
+character class.@*
+Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
+@samp{\C@var{code}}
+
+@item @code{not-newline}, @code{nonl}
+@cindex @code{not-newline} in rx
+@cindex @code{nonl} in rx
+Match any character except a newline.@*
+Corresponding string regexp: @samp{.} (dot)
+
+@item @code{anything}
+@cindex @code{anything} in rx
+Match any character.@*
+Corresponding string regexp: @samp{.\|\n} (for example)
+
+@item character class
+@cindex character class in rx
+Match a character from a named character class:
+
+@table @asis
+@item @code{alpha}, @code{alphabetic}, @code{letter}
+Match alphabetic characters.  More precisely, match characters whose
+Unicode @samp{general-category} property indicates that they are
+alphabetic.
+
+@item @code{alnum}, @code{alphanumeric}
+Match alphabetic characters and digits.  More precisely, match
+characters whose Unicode @samp{general-category} property indicates
+that they are alphabetic or decimal digits.
+
+@item @code{digit}, @code{numeric}, @code{num}
+Match the digits @samp{0}--@samp{9}.
+
+@item @code{xdigit}, @code{hex-digit}, @code{hex}
+Match the hexadecimal digits @samp{0}--@samp{9}, @samp{A}--@samp{F}
+and @samp{a}--@samp{f}.
+
+@item @code{cntrl}, @code{control}
+Match any character whose code is in the range 0--31.
+
+@item @code{blank}
+Match horizontal whitespace.  More precisely, match characters whose
+Unicode @samp{general-category} property indicates that they are
+spacing separators.
+
+@item @code{space}, @code{whitespace}, @code{white}
+Match any character that has whitespace syntax
+(@pxref{Syntax Class Table}).
+
+@item @code{lower}, @code{lower-case}
+Match anything lower-case, as determined by the current case table.
+If @code{case-fold-search} is non-nil, this also matches any
+upper-case letter.
+
+@item @code{upper}, @code{upper-case}
+Match anything upper-case, as determined by the current case table.
+If @code{case-fold-search} is non-nil, this also matches any
+lower-case letter.
+
+@item @code{graph}, @code{graphic}
+Match any character except whitespace, @acronym{ASCII} and
+non-@acronym{ASCII} control characters, surrogates, and codepoints
+unassigned by Unicode, as indicated by the Unicode
+@samp{general-category} property.
+
+@item @code{print}, @code{printing}
+Match whitespace or a character matched by @code{graph}.
+
+@item @code{punct}, @code{punctuation}
+Match any punctuation character.  (At present, for multibyte
+characters, anything that has non-word syntax.)
+
+@item @code{word}, @code{wordchar}
+Match any character that has word syntax (@pxref{Syntax Class Table}).
+
+@item @code{ascii}
+Match any @acronym{ASCII} character (codes 0--127).
+
+@item @code{nonascii}
+Match any non-@acronym{ASCII} character (but not raw bytes).
+@end table
+
+Corresponding string regexp: @samp{[[:@var{class}:]]}
+
+@item @code{(syntax @var{syntax})}
+@cindex @code{syntax} in rx
+Match a character with syntax @var{syntax}, being one of the following
+names:
+
+@multitable {@code{close-parenthesis}} {Syntax character}
+@headitem Syntax name          @tab Syntax character
+@item @code{whitespace}        @tab @code{-}
+@item @code{punctuation}       @tab @code{.}
+@item @code{word}              @tab @code{w}
+@item @code{symbol}            @tab @code{_}
+@item @code{open-parenthesis}  @tab @code{(}
+@item @code{close-parenthesis} @tab @code{)}
+@item @code{expression-prefix} @tab @code{'}
+@item @code{string-quote}      @tab @code{"}
+@item @code{paired-delimiter}  @tab @code{$}
+@item @code{escape}            @tab @code{\}
+@item @code{character-quote}   @tab @code{/}
+@item @code{comment-start}     @tab @code{<}
+@item @code{comment-end}       @tab @code{>}
+@item @code{string-delimiter}  @tab @code{|}
+@item @code{comment-delimiter} @tab @code{!}
+@end multitable
+
+For details, @pxref{Syntax Class Table}.  Please note that
+@code{(syntax punctuation)} is @emph{not} equivalent to the character class
+@code{punctuation}.@*
+Corresponding string regexp: @samp{\s@var{code}}
+
+@item @code {(category @var{category})}
+@cindex @code{category} in rx
+Match a character in category @var{category}, which is either one of
+the names below or its category character.
+
+@multitable {@code{vowel-modifying-diacritical-mark}} {Category character}
+@headitem Category name                       @tab Category character
+@item @code{space-for-indent}                 @tab space
+@item @code{base}                             @tab @code{.}
+@item @code{consonant}                        @tab @code{0}
+@item @code{base-vowel}                       @tab @code{1}
+@item @code{upper-diacritical-mark}           @tab @code{2}
+@item @code{lower-diacritical-mark}           @tab @code{3}
+@item @code{tone-mark}                        @tab @code{4}
+@item @code{symbol}                           @tab @code{5}
+@item @code{digit}                            @tab @code{6}
+@item @code{vowel-modifying-diacritical-mark} @tab @code{7}
+@item @code{vowel-sign}                       @tab @code{8}
+@item @code{semivowel-lower}                  @tab @code{9}
+@item @code{not-at-end-of-line}               @tab @code{<}
+@item @code{not-at-beginning-of-line}         @tab @code{>}
+@item @code{alpha-numeric-two-byte}           @tab @code{A}
+@item @code{chinese-two-byte}                 @tab @code{C}
+@item @code{greek-two-byte}                   @tab @code{G}
+@item @code{japanese-hiragana-two-byte}       @tab @code{H}
+@item @code{indian-two-byte}                  @tab @code{I}
+@item @code{japanese-katakana-two-byte}       @tab @code{K}
+@item @code{strong-left-to-right}             @tab @code{L}
+@item @code{korean-hangul-two-byte}           @tab @code{N}
+@item @code{strong-right-to-left}             @tab @code{R}
+@item @code{cyrillic-two-byte}                @tab @code{Y}
+@item @code{combining-diacritic}              @tab @code{^}
+@item @code{ascii}                            @tab @code{a}
+@item @code{arabic}                           @tab @code{b}
+@item @code{chinese}                          @tab @code{c}
+@item @code{ethiopic}                         @tab @code{e}
+@item @code{greek}                            @tab @code{g}
+@item @code{korean}                           @tab @code{h}
+@item @code{indian}                           @tab @code{i}
+@item @code{japanese}                         @tab @code{j}
+@item @code{japanese-katakana}                @tab @code{k}
+@item @code{latin}                            @tab @code{l}
+@item @code{lao}                              @tab @code{o}
+@item @code{tibetan}                          @tab @code{q}
+@item @code{japanese-roman}                   @tab @code{r}
+@item @code{thai}                             @tab @code{t}
+@item @code{vietnamese}                       @tab @code{v}
+@item @code{hebrew}                           @tab @code{w}
+@item @code{cyrillic}                         @tab @code{y}
+@item @code{can-break}                        @tab @code{|}
+@end multitable
+
+For more information about currently defined categories, run the
+command @kbd{M-x describe-categories @key{RET}}.  For how to define
+new categories, @pxref{Categories}.@*
+Corresponding string regexp: @samp{\c@var{code}}
+@end table
+
+@subsubheading Zero-width assertions
+
+These all match the empty string, but only in specific places.
+
+@table @asis
+@item @code{line-start}, @code{bol}
+@cindex @code{line-start} in rx
+@cindex @code{bol} in rx
+Match at the beginning of a line.@*
+Corresponding string regexp: @samp{^}
+
+@item @code{line-end}, @code{eol}
+@cindex @code{line-end} in rx
+@cindex @code{eol} in rx
+Match at the end of a line.@*
+Corresponding string regexp: @samp{$}
+
+@item @code{string-start}, @code{bos}, @code{buffer-start}, @code{bot}
+@cindex @code{string-start} in rx
+@cindex @code{bos} in rx
+@cindex @code{buffer-start} in rx
+@cindex @code{bot} in rx
+Match at the start of the string or buffer being matched against.@*
+Corresponding string regexp: @samp{\`}
+
+@item @code{string-end}, @code{eos}, @code{buffer-end}, @code{eot}
+@cindex @code{string-end} in rx
+@cindex @code{eos} in rx
+@cindex @code{buffer-end} in rx
+@cindex @code{eot} in rx
+Match at the end of the string or buffer being matched against.@*
+Corresponding string regexp: @samp{\'}
+
+@item @code{point}
+@cindex @code{point} in rx
+Match at point.@*
+Corresponding string regexp: @samp{\=}
+
+@item @code{word-start}
+@cindex @code{word-start} in rx
+Match at the beginning of a word.@*
+Corresponding string regexp: @samp{\<}
+
+@item @code{word-end}
+@cindex @code{word-end} in rx
+Match at the end of a word.@*
+Corresponding string regexp: @samp{\>}
+
+@item @code{word-boundary}
+@cindex @code{word-boundary} in rx
+Match at the beginning or end of a word.@*
+Corresponding string regexp: @samp{\b}
+
+@item @code{not-word-boundary}
+@cindex @code{not-word-boundary} in rx
+Match anywhere but at the beginning or end of a word.@*
+Corresponding string regexp: @samp{\B}
+
+@item @code{symbol-start}
+@cindex @code{symbol-start} in rx
+Match at the beginning of a symbol.@*
+Corresponding string regexp: @samp{\_<}
+
+@item @code{symbol-end}
+@cindex @code{symbol-end} in rx
+Match at the end of a symbol.@*
+Corresponding string regexp: @samp{\_>}
+@end table
+
+@subsubheading Capture groups
+
+@table @code
+@item (group @var{rx}@dots{})
+@cindex @code{group} in rx
+@itemx (submatch @var{rx}@dots{})
+@cindex @code{submatch} in rx
+Match the @var{rx}s, making the matched text and position accessible
+in the match data.  The first group in a regexp is numbered 1;
+subsequent groups will be numbered one higher than the previous
+group.@*
+Corresponding string regexp: @samp{\(@dots{}\)}
+
+@item (group-n @var{n} @var{rx}@dots{})
+@cindex @code{group-n} in rx
+@itemx (submatch-n @var{n} @var{rx}@dots{})
+@cindex @code{submatch-n} in rx
+Like @code{group}, but explicitly assign the group number @var{n}.
+@var{n} must be positive.@*
+Corresponding string regexp: @samp{\(?@var{n}:@dots{}\)}
+
+@item (backref @var{n})
+@cindex @code{backref} in rx
+Match the text previously matched by group number @var{n}.
+@var{n} must be in the range 1--9.@*
+Corresponding string regexp: @samp{\@var{n}}
+@end table
+
+@subsubheading Dynamic inclusion
+
+@table @code
+@item (literal @var{expr})
+@cindex @code{literal} in rx
+Match the literal string that is the result from evaluating the Lisp
+expression @var{expr}.  The evaluation takes place at call time, in
+the current lexical environment.
+
+@item (regexp @var{expr})
+@cindex @code{regexp} in rx
+@itemx (regex @var{expr})
+@cindex @code{regex} in rx
+Match the string regexp that is the result from evaluating the Lisp
+expression @var{expr}.  The evaluation takes place at call time, in
+the current lexical environment.
+
+@item (eval @var{expr})
+@cindex @code{eval} in rx
+Match the rx form that is the result from evaluating the Lisp
+expression @var{expr}.  The evaluation takes place at macro-expansion
+time for @code{rx}, at call time for @code{rx-to-string},
+in the current global environment.
+@end table
+
+@node Rx Functions
+@subsubsection Functions and macros using @code{rx} regexps
+
+@defmac rx rx-expr@dots{}
+Translate the @var{rx-expr}s to a string regexp, as if they were the
+body of a @code{(seq @dots{})} form.  The @code{rx} macro expands to a
+string constant, or, if @code{literal} or @code{regexp} forms are
+used, a Lisp expression that evaluates to a string.
+@end defmac
+
+@defun rx-to-string rx-expr &optional no-group
+Translate @var{rx-expr} to a string regexp which is returned.
+If @var{no-group} is absent or nil, bracket the result in a
+non-capturing group, @samp{\(?:@dots{}\)}, if necessary to ensure that
+a postfix operator appended to it will apply to the whole expression.
+
+Arguments to @code{literal} and @code{regexp} forms in @var{rx-expr}
+must be string literals.
+@end defun
+
+The @code{pcase} macro can use @code{rx} expressions as patterns
+directly; @pxref{rx in pcase}.
+@end ifnottex
 
 @node Regexp Functions
 @subsection Regular Expression Functions

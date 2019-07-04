@@ -618,6 +618,31 @@ To present a consistent environment (@pxref{Intro Eval})
 to @var{body-forms} (thus avoiding an evaluation error on match),
 if any of the sub-patterns let-binds a set of symbols,
 they @emph{must} all bind the same set of symbols.
+
+@ifnottex
+@anchor{rx in pcase}
+@item (rx @var{rx-expr}@dots{})
+Matches strings against the regexp @var{rx-expr}@dots{}, using the
+@code{rx} regexp notation (@pxref{Rx Notation}), as if by
+@code{string-match}.
+
+In addition to the usual @code{rx} syntax, @var{rx-expr}@dots{} can
+contain the following constructs:
+
+@table @code
+@item (let @var{ref} @var{rx-expr}@dots{})
+Bind the symbol @var{ref} to a submatch that matches
+@var{rx-expr}@enddots{}.  @var{ref} is bound in @var{body-forms} to
+the string of the submatch or nil, but can also be used in
+@code{backref}.
+
+@item (backref @var{ref})
+Like the standard @code{backref} construct, but @var{ref} can here
+also be a name introduced by a previous @code{(let @var{ref} @dots{})}
+construct.
+@end table
+@end ifnottex
+
 @end table
 
 @anchor{pcase-example-0}
