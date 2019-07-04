@@ -2459,7 +2459,8 @@ the minibuffer contents."
     (let ((inhibit-message t))
       (message "%s%s" (if caller (format "%s: " caller) "") string))
     ;; Display an error message at the end of the minibuffer.
-    (minibuffer-message (concat context string))))
+    (minibuffer-message (apply #'propertize (format " [%s%s]" context string)
+                               minibuffer-prompt-properties))))
 
 
 ;Put this on C-x u, so we can force that rather than C-_ into startup msg

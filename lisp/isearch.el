@@ -1992,13 +1992,17 @@ Turning on character-folding turns off regexp mode.")
   (setq isearch-regexp (not isearch-regexp))
   (if isearch-regexp (setq isearch-regexp-function nil)))
 
+(defvar isearch-message-properties minibuffer-prompt-properties
+  "Text properties that are added to the isearch prompt.")
+
 (defun isearch--momentary-message (string)
   "Print STRING at the end of the isearch prompt for 1 second"
   (let ((message-log-max nil))
     (message "%s%s%s"
              (isearch-message-prefix nil isearch-nonincremental)
              isearch-message
-             (propertize (format " [%s]" string) 'face 'minibuffer-prompt)))
+             (apply #'propertize (format " [%s]" string)
+                    isearch-message-properties)))
   (sit-for 1))
 
 (isearch-define-mode-toggle lax-whitespace " " nil
@@ -3202,18 +3206,18 @@ the word mode."
 			(concat " [" current-input-method-title "]: "))
 		     ": ")
 		   )))
-    (propertize (concat (isearch-lazy-count-format)
+    (apply #'propertize (concat (isearch-lazy-count-format)
                         (upcase (substring m 0 1)) (substring m 1))
-		'face 'minibuffer-prompt)))
+	   isearch-message-properties)))
 
 (defun isearch-message-suffix (&optional c-q-hack)
-  (propertize (concat (if c-q-hack "^Q" "")
+  (apply #'propertize (concat (if c-q-hack "^Q" "")
 		      (isearch-lazy-count-format 'suffix)
 		      (if isearch-error
 			  (concat " [" isearch-error "]")
 			"")
 		      (or isearch-message-suffix-add ""))
-	      'face 'minibuffer-prompt))
+	 isearch-message-properties))
 
 (defun isearch-lazy-count-format (&optional suffix-p)
   "Format the current match number and the total number of matches.

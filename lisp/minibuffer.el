@@ -693,6 +693,9 @@ for use at QPOS."
   :link '(custom-manual "(emacs)Minibuffer")
   :group 'environment)
 
+(defvar minibuffer-message-properties nil
+  "Text properties added to the text shown by `minibuffer-message'.")
+
 (defun minibuffer-message (message &rest args)
   "Temporarily display MESSAGE at the end of the minibuffer.
 The text is displayed for `minibuffer-message-timeout' seconds,
@@ -714,6 +717,10 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
                       (copy-sequence message)
                     (concat " [" message "]")))
     (when args (setq message (apply #'format-message message args)))
+    (unless (or (null minibuffer-message-properties)
+                ;; Don't overwrite the face properties the caller has set
+                (text-properties-at 0 message))
+      (setq message (apply #'propertize message minibuffer-message-properties)))
     (let ((ol (make-overlay (point-max) (point-max) nil t t))
           ;; A quit during sit-for normally only interrupts the sit-for,
           ;; but since minibuffer-message is used at the end of a command,
