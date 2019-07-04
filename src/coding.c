@@ -7324,9 +7324,13 @@ produce_annotation (struct coding_system *coding, ptrdiff_t pos)
    In this case, if CODING->src_pos is positive, it is a position of
    the source text in the buffer, otherwise, the source text is in the
    gap area of the buffer, and CODING->src_pos specifies the offset of
-   the text from GPT (which must be the same as PT).  If this is the
-   same buffer as CODING->dst_object, CODING->src_pos must be
-   negative.
+   the text from the end of the gap (and GPT must be equal to PT).
+
+   When the text is taken from the gap, it can't be at the beginning
+   of the gap because the new decoded text is progressively acumulated
+   at the beginning of the gap before it gets inserted at PT (this way,
+   as the output grows, the input shrinks, so we only need to allocate
+   enough space for `max(IN, OUT)` instead of `IN + OUT`).
 
    If CODING->src_object is a string, CODING->src_pos is an index to
    that string.
