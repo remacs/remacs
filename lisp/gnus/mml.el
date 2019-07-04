@@ -295,6 +295,14 @@ part.  This is for the internal use, you should never modify the value.")
 			(t
 			 (mm-find-mime-charset-region point (point)
 						      mm-hack-charsets))))
+	;; If the user has inserted a Content-Type header, then
+	;; respect that instead of overwriting with "text/plain".
+	(save-restriction
+	  (narrow-to-region point (point))
+	  (let ((content-type (mail-fetch-field "content-type")))
+	    (when (and content-type
+		       (eq (car tag) 'part))
+	      (setcdr (assq 'type tag) content-type))))
 	(when (and (not raw) (memq nil charsets))
 	  (if (or (memq 'unknown-encoding mml-confirmation-set)
 		  (message-options-get 'unknown-encoding)
