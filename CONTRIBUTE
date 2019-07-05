@@ -263,18 +263,22 @@ them right the first time, so here are guidelines for formatting them:
 
 ** Generating ChangeLog entries
 
-- You can use Emacs functions to write ChangeLog entries; see
+- If you use Emacs VC, you can use 'C-c C-w' to generate formatted
+  blank ChangeLog entries from the diff being committed, then use
+  'M-q' to combine and fill them.  See 'info "(emacs) Log Buffer"'.
+
+- Alternatively, you can use Emacs functions for ChangeLog files; see
   https://www.gnu.org/software/emacs/manual/html_node/emacs/Change-Log-Commands.html
   or run 'info "(emacs)Change Log Commands"'.
 
-- If you use Emacs VC, one way to format ChangeLog entries is to create
-  a top-level ChangeLog file manually, and update it with 'C-x 4 a' as
-  usual.  Do not register the ChangeLog file under git; instead, use
-  'C-c C-a' to insert its contents into your *vc-log* buffer.
-  Or if 'log-edit-hook' includes 'log-edit-insert-changelog' (which it
-  does by default), they will be filled in for you automatically.
+  To format ChangeLog entries with Emacs VC, create a top-level
+  ChangeLog file manually, and update it with 'C-x 4 a' as usual.  Do
+  not register the ChangeLog file under git; instead, use 'C-c C-a' to
+  insert its contents into your *vc-log* buffer.  Or if
+  'log-edit-hook' includes 'log-edit-insert-changelog' (which it does
+  by default), they will be filled in for you automatically.
 
-- Alternatively, you can use the vc-dwim command to maintain commit
+- Instead of Emacs VC, you can use the vc-dwim command to maintain commit
   messages.  When you create a source directory, run the shell command
   'git-changelog-symlink-init' to create a symbolic link from
   ChangeLog to .git/c/ChangeLog.  Edit this ChangeLog via its symlink

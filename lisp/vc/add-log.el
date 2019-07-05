@@ -36,6 +36,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defgroup change-log nil
   "Change log maintenance."
   :group 'tools
@@ -308,6 +310,43 @@ a case simply use the directory containing the changed file."
 	  ;; We must be before any file name, look forward.
 	  (re-search-forward change-log-file-names-re nil t)
 	  (match-string-no-properties 2))))))
+
+(defconst change-log-unindented-file-names-re "^[*] \\([^ ,:([\n]+\\)")
+
+(defun change-log-read-entries (&optional end)
+  "Read ChangeLog entries at point until END.
+Move point to the end of entries that were read.  Return a list
+in the same form as `diff-add-log-current-defuns'."
+  (cl-loop while (and (or (not end) (< (point) end))
+                      (looking-at change-log-unindented-file-names-re))
+           do (goto-char (match-end 0))
+           collect (cons (match-string-no-properties 1)
+                         (change-log-read-defuns end))))
+
+(defvar change-log-tag-re) ; add-log.el
+(defun change-log-read-defuns (&optional end)
+  "Read ChangeLog formatted function names at point until END.
+Move point to the end of names read and return the function names
+as a list of strings."
+  (cl-loop while (and (skip-chars-forward ":\n[:blank:]" end)
+                      (or (not end) (< (point) end))
+                      (looking-at change-log-tag-re))
+           do (goto-char (match-end 0))
+           nconc (split-string (match-string-no-properties 1)
+                               ",[[:blank:]]*" t)
+           finally do (skip-chars-backward "\n[:blank:]")))
+
+(defun change-log-insert-entries (changelogs)
+  "Format and insert CHANGELOGS into current buffer.
+CHANGELOGS is a list in the form returned by
+`diff-add-log-current-defuns'."
+  (cl-loop for (file . defuns) in changelogs do
+           (insert "* " file)
+           (if (not defuns)
+               (insert ":\n")
+             (insert " ")
+             (cl-loop for def in defuns
+                      do (insert "(" def "):\n")))))
 
 (defun change-log-find-file ()
   "Visit the file for the change under point."

@@ -396,8 +396,9 @@ policy, which you should follow.
 for each change just once, then put it into both logs.  You can write
 the entry in @file{ChangeLog}, then copy it to the log buffer with
 @kbd{C-c C-a} when committing the change (@pxref{Log Buffer}).  Or you
-can write the entry in the log buffer while committing the change, and
-later use the @kbd{C-x v a} command to copy it to @file{ChangeLog}
+can write the entry in the log buffer while committing the change
+(with the help of @kbd{C-c C-w}), and later use the @kbd{C-x v a}
+command to copy it to @file{ChangeLog}
 @iftex
 (@pxref{Change Logs and VC,,,emacs-xtra, Specialized Emacs Features}).
 @end iftex
@@ -676,6 +677,14 @@ type @w{@kbd{C-c C-f}} (@code{log-edit-show-files}).  To view a diff
 of changes between the VC fileset and the version from which you
 started editing (@pxref{Old Revisions}), type @kbd{C-c C-d}
 (@code{log-edit-show-diff}).
+
+@kindex C-c C-w @r{(Log Edit mode)}
+@findex log-edit-generate-changelog
+  To help generate ChangeLog entries, type @kbd{C-c C-w}
+(@code{log-edit-generate-changelog}), to generate skeleton ChangeLog
+entries, listing all changed file and function names based on the diff
+of the VC fileset.  Consecutive entries left empty will be combined by
+@kbd{C-q} (@code{fill-paragraph}).
 
 @kindex C-c C-a @r{(Log Edit mode)}
 @findex log-edit-insert-changelog
