@@ -2316,7 +2316,11 @@ It is called with three arguments, as if it were
 	    (isearch-forward (not backward))
 	    (isearch-other-end match-beg)
 	    (isearch-error nil))
-	(isearch-lazy-highlight-new-loop range-beg range-end))))
+	(save-match-data
+	  ;; Preserve match-data for perform-replace since
+	  ;; isearch-lazy-highlight-new-loop calls `sit-for' that
+	  ;; does redisplay that might clobber match data (bug#36328).
+	  (isearch-lazy-highlight-new-loop range-beg range-end)))))
 
 (defun replace-dehighlight ()
   (when replace-overlay

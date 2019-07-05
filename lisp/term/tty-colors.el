@@ -820,7 +820,7 @@ Value is the modified color alist for FRAME."
   "Return COLOR in canonical form.
 A canonicalized color name is all-lower case, with any blanks removed."
   (let ((case-fold-search nil))
-    (if (string-match "[A-Z ]" color)
+    (if (string-match-p "[A-Z ]" color)
 	(replace-regexp-in-string " +" "" (downcase color))
       color)))
 
