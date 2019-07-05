@@ -63,16 +63,6 @@
 (require 'thingatpt)
 (autoload 'browse-url-url-at-point "browse-url")
 
-;; XEmacs needs the following definitions.
-(unless (fboundp 'overlays-in)
-  (require 'overlay))
-(unless (fboundp 'line-beginning-position)
-  (defalias 'line-beginning-position 'point-at-bol))
-(unless (fboundp 'line-end-position)
-  (defalias 'line-end-position 'point-at-eol))
-(unless (fboundp 'match-string-no-properties)
-  (defalias 'match-string-no-properties 'match-string))
-
 (defgroup goto-address nil
   "Click to browse URL or to send to e-mail address."
   :group 'mouse
