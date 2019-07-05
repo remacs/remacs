@@ -4231,6 +4231,11 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
     }
 }
 
+/* Recompute the hashes (and hence also the "next" pointers).
+   Normally there's never a need to recompute hashes.
+   This is done only on first-access to a hash-table loaded from
+   the "pdump", because the object's addresses may have changed, thus
+   affecting their hash.  */
 void
 hash_table_rehash (struct Lisp_Hash_Table *h)
 {
