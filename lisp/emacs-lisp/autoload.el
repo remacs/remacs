@@ -370,7 +370,11 @@ FILE's name."
 	    ";;\n"
 	    ";;; Code:\n\n"
 	    (if lp
-		;; `load-path' should contain only directory names.
+                ;; Use the `#$' to indicate current file, from which
+                ;; we extract the directory name.  Note that
+                ;; `package-quickstart-refresh' specifically replaces
+                ;; `#$', so any other tricks (e.g., `load-file-name')
+                ;; will not work for that case.
 		"(add-to-list 'load-path (directory-file-name
                          (or (file-name-directory #$) (car load-path))))\n\n")
 	    "\n"
@@ -381,7 +385,7 @@ FILE's name."
 			  (file-name-sans-extension basename))))
 	    ";; Local Variables:\n"
 	    ";; version-control: never\n"
-	    ";; no-byte-compile: t\n"
+            ";; no-byte-compile: t\n" ;; #$ is byte-compiled into nil.
 	    ";; no-update-autoloads: t\n"
 	    ";; coding: utf-8\n"
 	    ";; End:\n"
