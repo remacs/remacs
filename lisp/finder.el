@@ -240,7 +240,8 @@ from; the default is `load-path'."
 			       (lm-synopsis))
 		  version  (lm-header "version")))
 	  (when summary
-	    (setq version (ignore-errors (version-to-list version)))
+	    (setq version (or (ignore-errors (version-to-list version))
+                              (alist-get package package--builtin-versions)))
 	    (setq entry (assq package package--builtins))
 	    (cond ((null entry)
 		   (push (cons package
