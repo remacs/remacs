@@ -2762,7 +2762,7 @@ find the errors."
    "\\s-*\\(\\<\\(reg\\|wire\\)\\>\\s-*\\)?\\(\\<\\(un\\)?signed\\>\\s-*\\)?\\(" verilog-range-re "\\)?"))
 (defconst verilog-macroexp-re "`\\sw+")
 
-(defconst verilog-delay-re "#\\s-*\\(\\([0-9_]+\\('s?[hdxbo][[:xdigit:]_xz]+\\)?\\)\\|\\(([^()]*)\\)\\|\\(\\sw+\\)\\)")
+(defconst verilog-delay-re "#\\s-*\\(\\([0-9_]+\\('s?[hdxbo][0-9a-fA-F_xz]+\\)?\\)\\|\\(([^()]*)\\)\\|\\(\\sw+\\)\\)")
 (defconst verilog-declaration-re-2-no-macro
   (concat "\\s-*" verilog-declaration-re
           "\\s-*\\(\\(" verilog-optional-signed-range-re "\\)\\|\\(" verilog-delay-re "\\)"
@@ -3292,7 +3292,7 @@ See also `verilog-font-lock-extra-types'.")
                                                       'font-lock-preprocessor-face
                                                     'font-lock-type-face))
 		 ;; Fontify delays/numbers
-		 '("\\(@\\)\\|\\([ \t\n\f\r]#\\s-*\\(\\([0-9_.]+\\('s?[hdxbo][[:xdigit:]_xz]*\\)?\\)\\|\\(([^()]+)\\|\\sw+\\)\\)\\)"
+		 '("\\(@\\)\\|\\([ \t\n\f\r]#\\s-*\\(\\([0-9_.]+\\('s?[hdxbo][0-9a-fA-F_xz]*\\)?\\)\\|\\(([^()]+)\\|\\sw+\\)\\)\\)"
 		   0 font-lock-type-face append)
      ;; Fontify property/sequence cycle delays - these start with '##'
      '("\\(##\\(\\sw+\\|\\[[^]]+\\]\\)\\)"
@@ -9182,7 +9182,7 @@ TEMP-NEXT is true to ignore next token, fake from inside case statement."
 	      (setq end-else-check t))
 	    (forward-char 1))
 	   ((equal keywd "'")
-	    (cond ((looking-at "'[sS]?[hdxboHDXBO]?[ \t]*[[:xdigit:]_xzXZ?]+")
+	    (cond ((looking-at "'[sS]?[hdxboHDXBO]?[ \t]*[0-9a-fA-F_xzXZ?]+")
                    (goto-char (match-end 0)))
                   ((looking-at "'{")
                    (forward-char 2)
@@ -9872,7 +9872,7 @@ Allows version control to check out the file if need be."
   "Return true if SYMBOL is number-like."
   (or (string-match "^[0-9 \t:]+$" symbol)
       (string-match "^[---]*[0-9]+$" symbol)
-      (string-match "^[0-9 \t]+'s?[hdxbo][[:xdigit:]_xz? \t]*$" symbol)))
+      (string-match "^[0-9 \t]+'s?[hdxbo][0-9a-fA-F_xz? \t]*$" symbol)))
 
 (defun verilog-symbol-detick (symbol wing-it)
   "Return an expanded SYMBOL name without any defines.
