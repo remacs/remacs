@@ -987,7 +987,7 @@ This attribute is meant to tell screen readers to ignore a tag.
 *** 'shr-tag-ol' now respects the ordered list 'start' attribute.
 
 ---
-*** The <code ...> tag is now handled.
+*** The following tags are now handled: <code>, <abbr>, and <acronym>.
 
 ** Htmlfontify
 
