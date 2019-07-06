@@ -702,8 +702,8 @@ appearance.)
 @smallexample
 @group
 DEFUN ("or", For, Sor, 0, UNEVALLED, 0,
-  doc: /* Eval args until one of them yields non-nil, then return
-that value.
+       doc: /* Eval args until one of them yields non-nil,
+then return that value.
 The remaining args are not evalled at all.
 If all args return nil, return nil.
 @end group
@@ -777,7 +777,7 @@ less than 8.
 This is an interactive specification, a string such as might be used
 as the argument of @code{interactive} in a Lisp function
 (@pxref{Using Interactive}).  In the case
-of @code{or}, it is 0 (a null pointer), indicating that @code{or}
+of @code{or}, it is @code{0} (a null pointer), indicating that @code{or}
 cannot be called interactively.  A value of @code{""} indicates a
 function that should receive no arguments when called interactively.
 If the value begins with a @samp{"(}, the string is evaluated as a
@@ -785,11 +785,11 @@ Lisp form.  For example:
 
 @example
 @group
-DEFUN ("foo", Ffoo, Sfoo, 0, UNEVALLED, 0
+DEFUN ("foo", Ffoo, Sfoo, 0, 3,
        "(list (read-char-by-name \"Insert character: \")\
               (prefix-numeric-value current-prefix-arg)\
-              t))",
-  doc: /* @dots{} */)
+              t)",
+       doc: /* @dots{} */)
 @end group
 @end example
 
@@ -826,8 +826,8 @@ this:
 @example
 @group
 DEFUN ("bar", Fbar, Sbar, 0, UNEVALLED, 0
-  doc: /* @dots{} */
-  attributes: @var{attr1} @var{attr2} @dots{})
+       doc: /* @dots{} */
+       attributes: @var{attr1} @var{attr2} @dots{})
 @end group
 @end example
 
@@ -863,15 +863,18 @@ arguments.  If the primitive accepts a fixed maximum number of Lisp
 arguments, there must be one C argument for each Lisp argument, and
 each argument must be of type @code{Lisp_Object}.  (Various macros and
 functions for creating values of type @code{Lisp_Object} are declared
-in the file @file{lisp.h}.)  If the primitive has no upper limit on
-the number of Lisp arguments, it must have exactly two C arguments:
-the first is the number of Lisp arguments, and the second is the
-address of a block containing their values.  These have types
-@code{int} and @w{@code{Lisp_Object *}} respectively.  Since
-@code{Lisp_Object} can hold any Lisp object of any data type, you
-can determine the actual data type only at run time; so if you want
-a primitive to accept only a certain type of argument, you must check
-the type explicitly using a suitable predicate (@pxref{Type Predicates}).
+in the file @file{lisp.h}.)  If the primitive is a special form, it
+must accept a Lisp list containing its unevaluated Lisp arguments as a
+single argument of type @code{Lisp_Object}.  If the primitive has no
+upper limit on the number of evaluated Lisp arguments, it must have
+exactly two C arguments: the first is the number of Lisp arguments,
+and the second is the address of a block containing their values.
+These have types @code{ptrdiff_t} and @w{@code{Lisp_Object *}},
+respectively.  Since @code{Lisp_Object} can hold any Lisp object of
+any data type, you can determine the actual data type only at run
+time; so if you want a primitive to accept only a certain type of
+argument, you must check the type explicitly using a suitable
+predicate (@pxref{Type Predicates}).
 @cindex type checking internals
 
 @cindex garbage collection protection
@@ -880,10 +883,14 @@ the type explicitly using a suitable predicate (@pxref{Type Predicates}).
 @code{args} refers to objects controlled by Emacs's stack-marking
 garbage collector.  Although the garbage collector does not reclaim
 objects reachable from C @code{Lisp_Object} stack variables, it may
-move non-object components of an object, such as string contents; so
-functions that access non-object components must take care to refetch
-their addresses after performing Lisp evaluation.  Lisp evaluation can
-occur via calls to @code{eval_sub} or @code{Feval}, either directly or
+move some of the components of an object, such as the contents of a
+string or the text of a buffer.  Therefore, functions that access
+these components must take care to refetch their addresses after
+performing Lisp evaluation.  This means that instead of keeping C
+pointers to string contents or buffer text, the code should keep the
+buffer or string position, and recompute the C pointer from the
+position after performing Lisp evaluation.  Lisp evaluation can occur
+via calls to @code{eval_sub} or @code{Feval}, either directly or
 indirectly.
 
 @cindex @code{maybe_quit}, use in Lisp primitives
@@ -957,9 +964,9 @@ of macros and functions to manipulate Lisp objects.
 @smallexample
 @group
 DEFUN ("coordinates-in-window-p", Fcoordinates_in_window_p,
-  Scoordinates_in_window_p, 2, 2, 0,
-  doc: /* Return non-nil if COORDINATES are in WINDOW.
-  ...
+       Scoordinates_in_window_p, 2, 2, 0,
+       doc: /* Return non-nil if COORDINATES are in WINDOW.
+  @dots{}
 @end group
 @group
   or `right-margin' is returned.  */)
@@ -972,16 +979,15 @@ DEFUN ("coordinates-in-window-p", Fcoordinates_in_window_p,
 @end group
 
 @group
-  CHECK_LIVE_WINDOW (window);
-  w = XWINDOW (window);
+  w = decode_live_window (window);
   f = XFRAME (w->frame);
   CHECK_CONS (coordinates);
   lx = Fcar (coordinates);
   ly = Fcdr (coordinates);
-  CHECK_NUMBER_OR_FLOAT (lx);
-  CHECK_NUMBER_OR_FLOAT (ly);
-  x = FRAME_PIXEL_X_FROM_CANON_X (f, lx) + FRAME_INTERNAL_BORDER_WIDTH(f);
-  y = FRAME_PIXEL_Y_FROM_CANON_Y (f, ly) + FRAME_INTERNAL_BORDER_WIDTH(f);
+  CHECK_NUMBER (lx);
+  CHECK_NUMBER (ly);
+  x = FRAME_PIXEL_X_FROM_CANON_X (f, lx) + FRAME_INTERNAL_BORDER_WIDTH (f);
+  y = FRAME_PIXEL_Y_FROM_CANON_Y (f, ly) + FRAME_INTERNAL_BORDER_WIDTH (f);
 @end group
 
 @group
@@ -991,14 +997,14 @@ DEFUN ("coordinates-in-window-p", Fcoordinates_in_window_p,
       return Qnil;
 @end group
 
-    ...
+    @dots{}
 
 @group
     case ON_MODE_LINE:          /* In mode line of window.  */
       return Qmode_line;
 @end group
 
-    ...
+    @dots{}
 
 @group
     case ON_SCROLL_BAR:         /* On scroll-bar of window.  */
@@ -1008,7 +1014,7 @@ DEFUN ("coordinates-in-window-p", Fcoordinates_in_window_p,
 
 @group
     default:
-      abort ();
+      emacs_abort ();
     @}
 @}
 @end group

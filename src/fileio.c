@@ -2666,7 +2666,7 @@ On Unix, absolute file names start with `/'.  */)
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
-       doc: /* Return t if file FILENAME exists (whether or not you can read it.)
+       doc: /* Return t if file FILENAME exists (whether or not you can read it).
 See also `file-readable-p' and `file-attributes'.
 This returns nil for a symlink to a nonexistent file.
 Use `file-symlink-p' to test for such links.  */)
