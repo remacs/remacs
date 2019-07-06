@@ -40,9 +40,6 @@
 
 ;; For other options, see "User-visible variables", below.
 
-;; A version of uniquify.el that works under Emacs 18, Emacs 19, XEmacs,
-;; and InfoDock is available from the maintainer.
-
 ;;; Change Log:
 
 ;; Originally by Dick King <king@reasoning.com> 15 May 86
