@@ -605,10 +605,9 @@ This command does not alter the kill ring.
 @kindex M-mouse-1
 @item M-mouse-1
 Set one endpoint for the @dfn{secondary selection}
-(@code{mouse-start-secondary}).  Use @kbd{M-mouse-3} to set the other
-end and complete the selection.  This command can also cancel any
-existing secondary selection without starting a new one, if you click
-@kbd{M-mouse-1} on the mode line or on the header line.
+(@code{mouse-start-secondary}); use @kbd{M-mouse-3} to set the other
+end and complete the selection.  This command cancels any existing
+secondary selection, when it starts a new one.
 
 @findex mouse-secondary-save-then-kill
 @kindex M-mouse-3
