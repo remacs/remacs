@@ -22,9 +22,12 @@
 #define _GL_INCLUDING_UNISTD_H
 #include <config.h>
 
+/* Specification.  */
 #include <unistd.h>
+
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #undef _GL_INCLUDING_UNISTD_H

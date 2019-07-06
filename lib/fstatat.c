@@ -49,6 +49,7 @@ orig_fstatat (int fd, char const *filename, struct stat *buf, int flags)
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if HAVE_FSTATAT && HAVE_WORKING_FSTATAT_ZERO_FLAG

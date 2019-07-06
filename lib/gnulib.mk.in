@@ -1077,7 +1077,6 @@ gl_GNULIB_ENABLED_getdtablesize = @gl_GNULIB_ENABLED_getdtablesize@
 gl_GNULIB_ENABLED_getgroups = @gl_GNULIB_ENABLED_getgroups@
 gl_GNULIB_ENABLED_malloca = @gl_GNULIB_ENABLED_malloca@
 gl_GNULIB_ENABLED_open = @gl_GNULIB_ENABLED_open@
-gl_GNULIB_ENABLED_pathmax = @gl_GNULIB_ENABLED_pathmax@
 gl_GNULIB_ENABLED_strtoll = @gl_GNULIB_ENABLED_strtoll@
 gl_LIBOBJS = @gl_LIBOBJS@
 gl_LTLIBOBJS = @gl_LTLIBOBJS@

@@ -1,4 +1,4 @@
-# pthread_sigmask.m4 serial 17
+# pthread_sigmask.m4 serial 18
 dnl Copyright (C) 2011-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -75,10 +75,6 @@ AC_DEFUN([gl_FUNC_PTHREAD_SIGMASK],
       else
         dnl pthread_sigmask may exist but does not interoperate with the chosen
         dnl multithreading facility.
-        dnl If "$gl_threads_api" = pth, we could use the function pth_sigmask,
-        dnl but it is equivalent to sigprocmask, so we choose to emulate
-        dnl pthread_sigmask with sigprocmask also in this case. This yields
-        dnl fewer link dependencies.
         if test $ac_cv_func_pthread_sigmask = yes; then
           REPLACE_PTHREAD_SIGMASK=1
         else

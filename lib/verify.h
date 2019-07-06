@@ -259,9 +259,11 @@ template <int w>
 # define __has_builtin(x) 0
 #endif
 
-/* Assume that R always holds.  This lets the compiler optimize
-   accordingly.  R should not have side-effects; it may or may not be
-   evaluated.  Behavior is undefined if R is false.  */
+/* Assume that R always holds.  Behavior is undefined if R is false,
+   fails to evaluate, or has side effects.  Although assuming R can
+   help a compiler generate better code or diagnostics, performance
+   can suffer if R uses hard-to-optimize features such as function
+   calls not inlined by the compiler.  */
 
 #if (__has_builtin (__builtin_unreachable) \
      || 4 < __GNUC__ + (5 <= __GNUC_MINOR__))
