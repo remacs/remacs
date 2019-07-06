@@ -5055,7 +5055,10 @@ Every image descriptor must include this property.
 
 @item :file @var{file}
 This says to load the image from file @var{file}.  If @var{file} is
-not an absolute file name, it is expanded in @code{data-directory}.
+not an absolute file name, it is expanded relative to the
+@file{images} subdirectory of @code{data-directory}, and failing that,
+relative to the directories listed by @code{x-bitmap-file-path}
+(@pxref{Face Attributes}).
 
 @item :data @var{data}
 This specifies the raw image data.  Each image descriptor must have
