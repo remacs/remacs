@@ -417,12 +417,16 @@ With argument, display info only for the selected version."
 
 (defun view-echo-area-messages ()
   "View the log of recent echo-area messages: the `*Messages*' buffer.
-The number of messages retained in that buffer
-is specified by the variable `message-log-max'."
+The number of messages retained in that buffer is specified by
+the variable `message-log-max'."
   (interactive)
   (with-current-buffer (messages-buffer)
     (goto-char (point-max))
-    (display-buffer (current-buffer))))
+    (let ((win (display-buffer (current-buffer))))
+      ;; If the buffer is already displayed, we need to forcibly set
+      ;; the window point to scroll to the end of the buffer.
+      (set-window-point win (point))
+      win)))
 
 (defun view-order-manuals ()
   "Display information on how to buy printed copies of Emacs manuals."
