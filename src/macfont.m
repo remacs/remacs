@@ -2076,7 +2076,7 @@ macfont_supports_charset_and_languages_p (CTFontDescriptorRef desc,
               ptrdiff_t j;
 
               for (j = 0; j < ASIZE (chars); j++)
-                if (TYPE_RANGED_FIXNUMP (UTF32Char, AREF (chars, j))
+                if (RANGED_FIXNUMP (0, AREF (chars, j), MAX_UNICODE_CHAR)
                     && CFCharacterSetIsLongCharacterMember (desc_charset,
                                                             XFIXNAT (AREF (chars, j))))
                   break;
@@ -2709,6 +2709,9 @@ macfont_has_char (Lisp_Object font, int c)
 {
   int result;
   CFCharacterSetRef charset;
+
+  if (c < 0 || c > MAX_UNICODE_CHAR)
+    return false;
 
   block_input ();
   if (FONT_ENTITY_P (font))
