@@ -4,6 +4,7 @@
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: image
+;; Version: 0.5
 
 ;; This file is part of GNU Emacs.
 
