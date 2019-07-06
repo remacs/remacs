@@ -7,6 +7,7 @@
 ;;      Emmanuel Briot  <briot@gnat.com>
 ;; Maintainer: Stephen Leake <stephen_leake@stephe-leake.org>
 ;; Keywords: languages ada
+;; Version: 4.0
 
 ;; This file is part of GNU Emacs.
 
