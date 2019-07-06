@@ -2423,7 +2423,7 @@ Valid input formats include:
 (defcustom gnus-bug-group-download-format-alist
   '((emacs . "https://debbugs.gnu.org/cgi/bugreport.cgi?bug=%s;mboxmaint=yes;mboxstat=yes")
     (debian
-     . "http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=%s&mbox=yes;mboxmaint=yes"))
+     . "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=%s&mbox=yes;mboxmaint=yes"))
   "Alist of symbols for bug trackers and the corresponding URL format string.
 The URL format string must contain a single \"%s\", specifying
 the bug number, and browsing the URL must return mbox output."
@@ -2434,90 +2434,116 @@ the bug number, and browsing the URL must return mbox output."
   :version "24.1"
   :type '(repeat (cons (symbol) (string :tag "URL format string"))))
 
+(autoload 'thing-at-point-looking-at "thingatpt")
+(defvar bug-reference-bug-regexp)
+
+(defun gnus-group--read-bug-ids ()
+  "Return a list of bug IDs read in the minibuffer."
+  (require 'bug-reference)
+  (let ((def (cond ((thing-at-point-looking-at bug-reference-bug-regexp 500)
+                    (match-string 2))
+                   ((number-at-point)))))
+    ;; Pass DEF as the value of COLLECTION instead of DEF because:
+    ;; a) null input should not cause DEF to be returned and
+    ;; b) TAB and M-n still work this way.
+    (completing-read-multiple "Bug IDs: " (and def (list (format "%s" def))))))
+
 (defun gnus-read-ephemeral-bug-group (ids mbox-url &optional window-conf)
-  "Browse bug NUMBER as ephemeral group."
-  (interactive (list (read-string "Enter bug number: "
-				  (thing-at-point 'word) nil)
-		     ;; FIXME: Add completing-read from
-		     ;; `gnus-emacs-bug-group-download-format' ...
-		     (cdr (assoc 'emacs gnus-bug-group-download-format-alist))))
-  (when (stringp ids)
-    (setq ids (string-to-number ids)))
-  (unless (listp ids)
-    (setq ids (list ids)))
+  "Browse bug reports with IDS in an ephemeral group.
+IDS can be either a single bug ID (a number or string), or a list
+thereof.  MBOX-URL is a URL format string identifying the bug
+tracker; see `gnus-bug-group-download-format-alist' for details.
+Interactively, read multiple bug IDS in the minibuffer and
+default to the MBOX-URL for the Emacs bug tracker.  WINDOW-CONF
+is the name of the Gnus window configuration to use when exiting
+the ephemeral group."
+  (interactive
+   (list (gnus-group--read-bug-ids)
+         (alist-get 'emacs gnus-bug-group-download-format-alist)))
+  (or ids (user-error "No bug IDs specified"))
+  (setq ids (mapcar (lambda (id) (format "%s" id))
+                    (if (consp ids) ids (list ids))))
   (let ((tmpfile (make-temp-file "gnus-temp-group-")))
-    (let ((coding-system-for-write 'binary)
-	  (coding-system-for-read 'binary))
-      (with-temp-file tmpfile
-	(mm-disable-multibyte)
-	(dolist (id ids)
-	  (let ((file (format "~/.emacs.d/debbugs-cache/%s" id)))
-	    (if (and (not gnus-plugged)
-		     (file-exists-p file))
-		(insert-file-contents file)
-	      (url-insert-file-contents (format mbox-url id) t))))
+    (unwind-protect
 	;; Add the debbugs address so that we can respond to reports easily.
-	(let ((address
-	       (format "%s@%s" (car ids)
-                       (url-host (url-generic-parse-url mbox-url)))))
-	  (goto-char (point-min))
-	  (while (re-search-forward (concat "^" message-unix-mail-delimiter)
-				    nil t)
-	    (narrow-to-region (point)
-			      (if (search-forward "\n\n" nil t)
-				  (1- (point))
-				(point-max)))
-	    (unless (string-match (concat "\\(?:\\`\\|[ ,<]\\)"
-					  (regexp-quote address)
-					  "\\(?:\\'\\|[ ,>]\\)")
-				  (concat (message-fetch-field "to") " "
-					  (message-fetch-field "cc")))
+        (let* ((address (format "%s@%s" (car ids)
+                                (url-host (url-generic-parse-url mbox-url))))
+               (address-re (concat "\\(?:\\`\\|[ ,<]\\)"
+                                   (regexp-quote address)
+                                   "\\(?:\\'\\|[ ,>]\\)"))
+               (delim (concat "^" message-unix-mail-delimiter)))
+          (let ((coding-system-for-write 'binary)
+                (coding-system-for-read 'binary))
+            (with-temp-file tmpfile
+              (mm-disable-multibyte)
+              (dolist (id ids)
+                (let ((file (concat "~/.emacs.d/debbugs-cache/" id)))
+                  (if (and (not gnus-plugged)
+                           (file-exists-p file))
+                      (insert-file-contents file)
+                    ;; Pass non-nil VISIT to avoid errors with non-nil
+                    ;; `url-automatic-caching' (bug#26063, bug#29008)
+                    ;; and immediately unvisit.
+                    ;; FIXME: This masks real errors!
+                    (url-insert-file-contents (format mbox-url id) t)
+                    (setq buffer-file-name nil))))
 	      (goto-char (point-min))
-	      (if (re-search-forward "^To:" nil t)
-		  (progn
+              ;; Throw an informative error early instead of passing nonsense
+              ;; to `gnus-group-read-ephemeral-group' (bug#36433).
+              (unless (save-excursion (re-search-forward delim nil t))
+                (error "Invalid mbox format for bug IDs: %s"
+                       (string-join ids ", ")))
+              (while (re-search-forward delim nil t)
+                (narrow-to-region (point)
+                                  (if (search-forward "\n\n" nil t)
+                                      (1- (point))
+                                    (point-max)))
+                (unless (string-match-p address-re
+                                        (concat (message-fetch-field "to") " "
+                                                (message-fetch-field "cc")))
+                  (goto-char (point-min))
+                  (if (not (re-search-forward "^To:" nil t))
+                      (insert "To: " address "\n")
 		    (message-next-header)
 		    (skip-chars-backward "\t\n ")
-		    (insert ", " address))
-		(insert "To: " address "\n")))
-	    (goto-char (point-max))
-	    (widen)))
-	;; `url-insert-file-contents' sets this because of the 2nd arg.
-	(setq buffer-file-name nil)))
-    (gnus-group-read-ephemeral-group
-     (format "nndoc+ephemeral:bug#%s"
-	     (mapconcat 'number-to-string ids ","))
-     `(nndoc ,tmpfile
-	     (nndoc-article-type mbox))
-     nil window-conf)
-    (delete-file tmpfile)))
+                    (insert ", " address)))
+                (goto-char (point-max))
+                (widen))))
+          (gnus-group-read-ephemeral-group
+           (concat "nndoc+ephemeral:bug#" (string-join ids ","))
+           `(nndoc ,tmpfile
+                   (nndoc-article-type mbox))
+           nil window-conf))
+      (delete-file tmpfile))))
 
-(defun gnus-read-ephemeral-debian-bug-group (number)
-  "Browse Debian bug NUMBER as ephemeral group."
-  (interactive (list (read-string "Enter bug number: "
-				  (thing-at-point 'word) nil)))
+(defun gnus-read-ephemeral-debian-bug-group (ids &optional window-conf)
+  "Browse Debian bug reports with IDS in an ephemeral group.
+The arguments have the same meaning as those of
+`gnus-read-ephemeral-bug-group', which see."
+  (interactive (list (gnus-group--read-bug-ids)))
   (gnus-read-ephemeral-bug-group
-   number
-   (cdr (assoc 'debian gnus-bug-group-download-format-alist))))
+   ids
+   (alist-get 'debian gnus-bug-group-download-format-alist)
+   window-conf))
 
 (defvar debbugs-gnu-bug-number)		; debbugs-gnu
 
 (defun gnus-read-ephemeral-emacs-bug-group (ids &optional window-conf)
-  "Browse Emacs bugs IDS as an ephemeral group."
-  (interactive (list (string-to-number
-		      (read-string "Enter bug number: "
-				   (thing-at-point 'word) nil))))
-  (when (stringp ids)
-    (setq ids (string-to-number ids)))
-  (unless (listp ids)
-    (setq ids (list ids)))
+  "Browse Emacs bug reports with IDS in an ephemeral group.
+The arguments have the same meaning as those of
+`gnus-read-ephemeral-bug-group', which see."
+  (interactive (list (gnus-group--read-bug-ids)))
   (gnus-read-ephemeral-bug-group
    ids
-   (cdr (assoc 'emacs gnus-bug-group-download-format-alist))
+   (alist-get 'emacs gnus-bug-group-download-format-alist)
    window-conf)
-  (when (fboundp 'debbugs-gnu-summary-mode)
+  (when (and (require 'debbugs-gnu nil t)
+             (fboundp 'debbugs-gnu-summary-mode))
     (with-current-buffer (window-buffer (selected-window))
       (debbugs-gnu-summary-mode 1)
-      (set (make-local-variable 'debbugs-gnu-bug-number) (car ids)))))
+      (let ((id (or (car-safe ids) ids)))
+        (if (stringp id) (setq id (string-to-number id)))
+        (setq-local debbugs-gnu-bug-number id)))))
 
 (defun gnus-group-jump-to-group (group &optional prompt)
   "Jump to newsgroup GROUP.

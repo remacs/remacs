@@ -2716,9 +2716,10 @@ given @acronym{URL}.  Supported @acronym{URL} formats include:
 
 @item gnus-read-ephemeral-emacs-bug-group
 @findex gnus-read-ephemeral-emacs-bug-group
-Read an Emacs bug report in an ephemeral group.  Gnus will prompt for a
-bug number.  The default is the number at point.  The @acronym{URL} is
-specified in @code{gnus-bug-group-download-format-alist}.
+Read an Emacs bug report in an ephemeral group.  Gnus will prompt for
+multiple bug numbers.  The default is the number at point.  The
+@acronym{URL} template is specified in
+@code{gnus-bug-group-download-format-alist}.
 
 @item gnus-read-ephemeral-debian-bug-group
 @findex gnus-read-ephemeral-debian-bug-group
