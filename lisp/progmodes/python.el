@@ -2274,7 +2274,7 @@ Do not set this variable directly, instead use
 (defvar python-shell--prompt-calculated-output-regexp nil
   "Calculated output prompt regexp for inferior python shell.
 Do not set this variable directly, instead use
-`python-shell-set-prompt-regexp'.")
+`python-shell-prompt-set-calculated-regexps'.")
 
 (defun python-shell-prompt-detect ()
   "Detect prompts for the current `python-shell-interpreter'.
