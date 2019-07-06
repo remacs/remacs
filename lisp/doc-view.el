@@ -152,9 +152,15 @@
   :group 'multimedia
   :prefix "doc-view-")
 
-(defcustom doc-view-ghostscript-program "gs"
+(defcustom doc-view-ghostscript-program
+  (cond
+   ((memq system-type '(windows-nt ms-dos))
+    "gswin32c")
+   (t
+    "gs"))
   "Program to convert PS and PDF files to PNG."
-  :type 'file)
+  :type 'file
+  :version "27.1")
 
 (defcustom doc-view-pdfdraw-program
   (cond
