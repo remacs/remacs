@@ -552,7 +552,19 @@ struct OpenTypeSpec
     OTF_TAG_STR (TAG, str);			\
     (SYM) = font_intern_prop (str, 4, 1);	\
   } while (0)
-#endif
+#elif defined HAVE_HARFBUZZ
+/* Libotf emulations on HarfBuzz for the functions called from
+   ftfont_list.  They are a bit slower than the original ones, so used
+   as fallbacks when libotf is not available.  */
+typedef hb_face_t OTF;
+typedef unsigned int OTF_tag;
+static OTF *hbotf_open (const char *);
+static int hbotf_check_features (OTF *, int, OTF_tag, OTF_tag,
+				 const OTF_tag *, int);
+#define OTF_open hbotf_open
+#define OTF_close hb_face_destroy
+#define OTF_check_features hbotf_check_features
+#endif	/* !HAVE_LIBOTF && HAVE_HARFBUZZ */
 
 
 static struct OpenTypeSpec *
@@ -915,7 +927,7 @@ ftfont_list (struct frame *f, Lisp_Object spec)
 	    continue;
 	}
 #endif	/* FC_CAPABILITY */
-#ifdef HAVE_LIBOTF
+#if defined HAVE_LIBOTF || defined HAVE_HARFBUZZ
       if (otspec)
 	{
 	  FcChar8 *file;
@@ -940,7 +952,7 @@ ftfont_list (struct frame *f, Lisp_Object spec)
 	  if (!passed)
 	    continue;
 	}
-#endif	/* HAVE_LIBOTF */
+#endif	/* HAVE_LIBOTF || HAVE_HARFBUZZ */
       if (VECTORP (chars))
 	{
 	  ptrdiff_t j;
@@ -2870,6 +2882,91 @@ fthbfont_begin_hb_font (struct font *font, double *position_unit)
   return ftfont_info->hb_font;
 }
 
+#ifndef HAVE_LIBOTF
+#include <hb-ot.h>
+
+static OTF *
+hbotf_open (const char *name)
+{
+  FT_Face ft_face;
+
+  if (! ft_library
+      && FT_Init_FreeType (&ft_library) != 0)
+    return NULL;
+  if (FT_New_Face (ft_library, name, 0, &ft_face)
+      != 0)
+    return NULL;
+
+  hb_face_t *face = hb_ft_face_create_referenced (ft_face);
+  FT_Done_Face (ft_face);
+
+  return face;
+}
+
+static int
+hbotf_check_features (OTF *otf, int gsubp,
+		      OTF_tag script, OTF_tag language,
+		      const OTF_tag *features, int n_features)
+{
+  hb_face_t *face = otf;
+  hb_tag_t table_tag = gsubp ? HB_OT_TAG_GSUB : HB_OT_TAG_GPOS;
+  hb_tag_t script_tag = script, language_tag = language;
+
+  unsigned int script_count
+    = hb_ot_layout_table_get_script_tags (face, table_tag, 0, NULL, NULL);
+  hb_tag_t *script_tags = xnmalloc (script_count, sizeof *script_tags);
+  hb_ot_layout_table_get_script_tags (face, table_tag, 0, &script_count,
+				      script_tags);
+  unsigned int script_index;
+  for (script_index = 0; script_index < script_count; script_index++)
+    if (script_tags[script_index] == script_tag)
+      break;
+  xfree (script_tags);
+  if (script_index == script_count)
+    return 0;
+
+  unsigned int language_index;
+  if (language_tag == 0)
+    language_index = HB_OT_LAYOUT_DEFAULT_LANGUAGE_INDEX;
+  else
+    {
+      unsigned int language_count
+	= hb_ot_layout_script_get_language_tags (face, table_tag, script_index,
+						 0, NULL, NULL);
+      hb_tag_t *language_tags = xnmalloc (language_count,
+					  sizeof *language_tags);
+      hb_ot_layout_script_get_language_tags (face, table_tag, script_index, 0,
+					     &language_count, language_tags);
+      for (language_index = 0; language_index < script_count; language_index++)
+	if (language_tags[language_index] == language_tag)
+	  break;
+      xfree (language_tags);
+      if (language_index == language_count)
+	return 0;
+    }
+
+  for (int j = 0; j < n_features; j++)
+    {
+      hb_tag_t feature_tag = features[j];
+      hb_bool_t negate = 0;
+
+      if (feature_tag == 0)
+	continue;
+      if (feature_tag & 0x80000000)
+	{
+	  feature_tag &= 0x7FFFFFFF;
+	  negate = 1;
+	}
+
+      unsigned int feature_index;
+      if (hb_ot_layout_language_find_feature (face, table_tag, script_index,
+					      language_index, feature_tag,
+					      &feature_index) == negate)
+	return 0;
+    }
+  return 1;
+}
+#endif	/* !HAVE_LIBOTF */
 #endif /* HAVE_HARFBUZZ */
 
 static const char *const ftfont_booleans [] = {
