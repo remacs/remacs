@@ -650,7 +650,9 @@ affect point."
             (forward-char -1)
             (read (current-buffer)))
         ;; Else no hope of getting information here.
-        (error "Not bookmark format")))))
+        (if buffer-file-name
+            (error "File not in bookmark format: %s" buffer-file-name)
+          (error "Buffer not in bookmark format: %s" (buffer-name)))))))
 
 
 (defun bookmark-upgrade-version-0-alist (old-list)
