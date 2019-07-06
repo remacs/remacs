@@ -2800,7 +2800,7 @@ functions to examine the properties of a number of characters at once.
 
   These functions handle both strings and buffers.  Keep in mind that
 positions in a string start from 0, whereas positions in a buffer start
-from 1.
+from 1.  Passing a buffer other than the current buffer may be slow.
 
 @defun get-text-property pos prop &optional object
 This function returns the value of the @var{prop} property of the

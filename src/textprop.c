@@ -1142,6 +1142,18 @@ static Lisp_Object
 add_text_properties_1 (Lisp_Object start, Lisp_Object end,
 		       Lisp_Object properties, Lisp_Object object,
 		       enum property_set_type set_type) {
+  /* Ensure we run the modification hooks for the right buffer,
+     without switching buffers twice (bug 36190).  FIXME: Switching
+     buffers is slow and often unnecessary.  */
+  if (BUFFERP (object) && XBUFFER (object) != current_buffer)
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_current_buffer ();
+      set_buffer_internal (XBUFFER (object));
+      return unbind_to (count, add_text_properties_1 (start, end, properties,
+						      object, set_type));
+    }
+
   INTERVAL i, unchanged;
   ptrdiff_t s, len;
   bool modified = false;
@@ -1343,6 +1355,19 @@ Lisp_Object
 set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
 		     Lisp_Object object, Lisp_Object coherent_change_p)
 {
+  /* Ensure we run the modification hooks for the right buffer,
+     without switching buffers twice (bug 36190).  FIXME: Switching
+     buffers is slow and often unnecessary.  */
+  if (BUFFERP (object) && XBUFFER (object) != current_buffer)
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_current_buffer ();
+      set_buffer_internal (XBUFFER (object));
+      return unbind_to (count,
+			set_text_properties (start, end, properties,
+					     object, coherent_change_p));
+    }
+
   INTERVAL i;
   bool first_time = true;
 
@@ -1413,6 +1438,20 @@ void
 set_text_properties_1 (Lisp_Object start, Lisp_Object end,
 		       Lisp_Object properties, Lisp_Object object, INTERVAL i)
 {
+  /* Ensure we run the modification hooks for the right buffer,
+     without switching buffers twice (bug 36190).  FIXME: Switching
+     buffers is slow and often unnecessary.  */
+  if (BUFFERP (object) && XBUFFER (object) != current_buffer)
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_current_buffer ();
+      set_buffer_internal (XBUFFER (object));
+
+      set_text_properties_1 (start, end, properties, object, i);
+      unbind_to (count, Qnil);
+      return;
+    }
+
   INTERVAL prev_changed = NULL;
   ptrdiff_t s = XFIXNUM (start);
   ptrdiff_t len = XFIXNUM (end) - s;
@@ -1495,6 +1534,19 @@ Return t if any property was actually removed, nil otherwise.
 Use `set-text-properties' if you want to remove all text properties.  */)
   (Lisp_Object start, Lisp_Object end, Lisp_Object properties, Lisp_Object object)
 {
+  /* Ensure we run the modification hooks for the right buffer,
+     without switching buffers twice (bug 36190).  FIXME: Switching
+     buffers is slow and often unnecessary.  */
+  if (BUFFERP (object) && XBUFFER (object) != current_buffer)
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_current_buffer ();
+      set_buffer_internal (XBUFFER (object));
+      return unbind_to (count,
+			Fremove_text_properties (start, end, properties,
+						 object));
+    }
+
   INTERVAL i, unchanged;
   ptrdiff_t s, len;
   bool modified = false;
@@ -1607,6 +1659,20 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.
 Return t if any property was actually removed, nil otherwise.  */)
   (Lisp_Object start, Lisp_Object end, Lisp_Object list_of_properties, Lisp_Object object)
 {
+  /* Ensure we run the modification hooks for the right buffer,
+     without switching buffers twice (bug 36190).  FIXME: Switching
+     buffers is slow and often unnecessary.  */
+  if (BUFFERP (object) && XBUFFER (object) != current_buffer)
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_current_buffer ();
+      set_buffer_internal (XBUFFER (object));
+      return unbind_to (count,
+			Fremove_list_of_text_properties (start, end,
+							 list_of_properties,
+							 object));
+    }
+
   INTERVAL i, unchanged;
   ptrdiff_t s, len;
   bool modified = false;
