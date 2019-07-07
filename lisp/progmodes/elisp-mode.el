@@ -219,6 +219,18 @@ Comments in the form will be lost."
   :type 'hook
   :group 'lisp)
 
+(defun emacs-lisp-set-electric-text-pairs ()
+  "Set `electric-pair-text-pairs' for all `emacs-lisp-mode' buffers."
+  (defvar electric-pair-text-pairs)
+  (let ((elisp-pairs (append '((?\` . ?\') (?‘ . ?’))
+                             electric-pair-text-pairs)))
+    (save-current-buffer
+      (dolist (buf (buffer-list))
+        (set-buffer buf)
+        (when (derived-mode-p 'emacs-lisp-mode)
+          (setq-local electric-pair-text-pairs elisp-pairs)))))
+  (remove-hook 'electric-pair-mode-hook #'emacs-lisp-set-electric-text-pairs))
+
 ;;;###autoload
 (define-derived-mode emacs-lisp-mode prog-mode "Emacs-Lisp"
   "Major mode for editing Lisp code to run in Emacs.
@@ -231,12 +243,12 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (defvar project-vc-external-roots-function)
   (lisp-mode-variables nil nil 'elisp)
   (add-hook 'after-load-functions #'elisp--font-lock-flush-elisp-buffers)
-  (unless noninteractive
-    (require 'elec-pair)
-    (defvar electric-pair-text-pairs)
-    (setq-local electric-pair-text-pairs
-                (append '((?\` . ?\') (?‘ . ?’)) electric-pair-text-pairs))
-    (setq-local electric-quote-string t))
+  (if (boundp 'electric-pair-text-pairs)
+      (setq-local electric-pair-text-pairs
+                  (append '((?\` . ?\') (?‘ . ?’))
+                          electric-pair-text-pairs))
+    (add-hook 'electric-pair-mode-hook #'emacs-lisp-set-electric-text-pairs))
+  (setq-local electric-quote-string t)
   (setq imenu-case-fold-search nil)
   (add-function :before-until (local 'eldoc-documentation-function)
                 #'elisp-eldoc-documentation-function)
