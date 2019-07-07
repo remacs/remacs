@@ -2316,11 +2316,7 @@ It is called with three arguments, as if it were
 	    (isearch-forward (not backward))
 	    (isearch-other-end match-beg)
 	    (isearch-error nil))
-	(save-match-data
-	  ;; Preserve match-data for perform-replace since
-	  ;; isearch-lazy-highlight-new-loop calls `sit-for' that
-	  ;; does redisplay that might clobber match data (bug#36328).
-	  (isearch-lazy-highlight-new-loop range-beg range-end)))))
+	(isearch-lazy-highlight-new-loop range-beg range-end))))
 
 (defun replace-dehighlight ()
   (when replace-overlay
@@ -2582,10 +2578,14 @@ characters."
 	    (if (not query-flag)
 		(progn
 		  (unless (or literal noedit)
-		    (replace-highlight
-		     (nth 0 real-match-data) (nth 1 real-match-data)
-		     start end search-string
-		     regexp-flag delimited-flag case-fold-search backward))
+		    (save-match-data
+		      ;; replace-highlight calls isearch-lazy-highlight-new-loop
+		      ;; and `sit-for' whose redisplay might clobber match data.
+		      ;; (Bug#36328)
+		      (replace-highlight
+		       (nth 0 real-match-data) (nth 1 real-match-data)
+		       start end search-string
+		       regexp-flag delimited-flag case-fold-search backward)))
 		  (setq noedit
 			(replace-match-maybe-edit
 			 next-replacement nocasify literal
@@ -2602,10 +2602,11 @@ characters."
 		(while (not done)
 		  (set-match-data real-match-data)
                   (run-hooks 'replace-update-post-hook) ; Before `replace-highlight'.
-                  (replace-highlight
-		   (match-beginning 0) (match-end 0)
-		   start end search-string
-		   regexp-flag delimited-flag case-fold-search backward)
+		  (save-match-data
+		    (replace-highlight
+		     (match-beginning 0) (match-end 0)
+		     start end search-string
+		     regexp-flag delimited-flag case-fold-search backward))
                   ;; Obtain the matched groups: needed only when
                   ;; regexp-flag non nil.
                   (when (and last-was-undo regexp-flag)
