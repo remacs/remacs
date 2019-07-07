@@ -3500,7 +3500,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      *f++ = '*';
 	      if (! (float_conversion || conversion == 'c'))
 		{
-		  memcpy (f, pMd, pMlen);
+		  memcpy (f, PRIdMAX, pMlen);
 		  f += pMlen;
 		  zero_flag &= ! precision_given;
 		}
