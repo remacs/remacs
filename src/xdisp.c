@@ -10540,7 +10540,7 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
       if (nlflag)
 	{
 	  ptrdiff_t this_bol, this_bol_byte, prev_bol, prev_bol_byte;
-	  printmax_t dups;
+	  intmax_t dups;
 
           /* Since we call del_range_both passing false for PREPARE,
              we aren't prepared to run modification hooks (we could
@@ -10572,11 +10572,12 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
 		  if (dups > 1)
 		    {
 		      char dupstr[sizeof " [ times]"
-				  + INT_STRLEN_BOUND (printmax_t)];
+				  + INT_STRLEN_BOUND (dups)];
 
 		      /* If you change this format, don't forget to also
 			 change message_log_check_duplicate.  */
-		      int duplen = sprintf (dupstr, " [%"pMd" times]", dups);
+		      int duplen = sprintf (dupstr, " [%"PRIdMAX" times]",
+					    dups);
 		      TEMP_SET_PT_BOTH (Z - 1, Z_BYTE - 1);
 		      insert_1_both (dupstr, duplen, duplen,
 				     true, false, true);

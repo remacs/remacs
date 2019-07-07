@@ -2662,13 +2662,10 @@ signed, unless this assumption is known to be safe.  For example,
 although @code{off_t} is always signed, @code{time_t} need not be.
 
 @item
-Prefer the Emacs-defined type @code{printmax_t} for representing
-values that might be any signed integer that can be printed,
-using a @code{printf}-family function.
-
-@item
 Prefer @code{intmax_t} for representing values that might be any
 signed integer value.
+A @code{printf}-family function can print such a value
+via a format like @code{"%"PRIdMAX}.
 
 @item
 Prefer @code{bool}, @code{false} and @code{true} for booleans.

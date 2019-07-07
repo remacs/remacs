@@ -1017,8 +1017,8 @@ float_to_string (char *buf, double data)
   if (isnan (data))
     {
       union ieee754_double u = { .d = data };
-      uprintmax_t hi = u.ieee_nan.mantissa0;
-      return sprintf (buf, &"-%"pMu".0e+NaN"[!u.ieee_nan.negative],
+      uintmax_t hi = u.ieee_nan.mantissa0;
+      return sprintf (buf, &"-%"PRIuMAX".0e+NaN"[!u.ieee_nan.negative],
 		      (hi << 31 << 1) + u.ieee_nan.mantissa1);
     }
 #endif
@@ -1811,9 +1811,9 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
 	    /* In theory this assignment could lose info on pre-C99
 	       hosts, but in practice it doesn't.  */
-	    uprintmax_t up = ui;
+	    uintmax_t up = ui;
 
-	    int len = sprintf (buf, "at 0x%"pMx, up);
+	    int len = sprintf (buf, "at 0x%"PRIxMAX, up);
 	    strout (buf, len, len, printcharfun);
 	  }
 	else
@@ -1841,9 +1841,9 @@ static void
 print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 {
   char buf[max (sizeof "from..to..in " + 2 * INT_STRLEN_BOUND (EMACS_INT),
-		max (sizeof " . #" + INT_STRLEN_BOUND (printmax_t),
+		max (sizeof " . #" + INT_STRLEN_BOUND (intmax_t),
 		     max ((sizeof "at 0x"
-			   + (sizeof (uprintmax_t) * CHAR_BIT + 4 - 1) / 4),
+			   + (sizeof (uintmax_t) * CHAR_BIT + 4 - 1) / 4),
 			  40)))];
   current_thread->stack_top = buf;
   maybe_quit ();
@@ -2096,11 +2096,11 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	  /* Negative values of print-length are invalid in CL.
 	     Treat them like nil, as CMUCL does.  */
-	  printmax_t print_length = (FIXNATP (Vprint_length)
-				     ? XFIXNAT (Vprint_length)
-				     : TYPE_MAXIMUM (printmax_t));
+	  intmax_t print_length = (FIXNATP (Vprint_length)
+				   ? XFIXNAT (Vprint_length)
+				   : INTMAX_MAX);
 
-	  printmax_t i = 0;
+	  intmax_t i = 0;
 	  while (CONSP (obj))
 	    {
 	      /* Detect circular list.  */
@@ -2109,7 +2109,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		  /* Simple but incomplete way.  */
 		  if (i != 0 && EQ (obj, halftail))
 		    {
-		      int len = sprintf (buf, " . #%"pMd, i / 2);
+		      int len = sprintf (buf, " . #%"PRIdMAX, i >> 1);
 		      strout (buf, len, len, printcharfun);
 		      goto end_of_list;
 		    }

@@ -3477,8 +3477,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    error ("Format specifier doesn't match argument type");
 	  else
 	    {
-	      /* Length of pM (that is, of pMd without the trailing "d").  */
-	      enum { pMlen = sizeof pMd - 2 };
+	      /* Length of PRIdMAX without the trailing "d".  */
+	      enum { pMlen = sizeof PRIdMAX - 2 };
 
 	      /* Avoid undefined behavior in underlying sprintf.  */
 	      if (conversion == 'd' || conversion == 'i')
@@ -3487,7 +3487,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      /* Create the copy of the conversion specification, with
 		 any width and precision removed, with ".*" inserted,
 		 with "L" possibly inserted for floating-point formats,
-		 and with pM inserted for integer formats.
+		 and with PRIdMAX (sans "d") inserted for integer formats.
 		 At most two flags F can be specified at once.  */
 	      char convspec[sizeof "%FF.*d" + max (sizeof "L" - 1, pMlen)];
 	      char *f = convspec;
@@ -3616,7 +3616,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		{
 		  if (FIXNUMP (arg))
 		    {
-		      printmax_t x = XFIXNUM (arg);
+		      intmax_t x = XFIXNUM (arg);
 		      sprintf_bytes = sprintf (p, convspec, prec, x);
 		    }
 		  else
@@ -3636,7 +3636,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      else
 		{
-		  uprintmax_t x;
+		  uintmax_t x;
 		  bool negative;
 		  if (FIXNUMP (arg))
 		    {
@@ -3655,8 +3655,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
-		      double uprintmax = TYPE_MAXIMUM (uprintmax_t);
-		      if (! (0 <= d && d < uprintmax + 1))
+		      double uintmax = UINTMAX_MAX;
+		      if (! (0 <= d && d < uintmax + 1))
 			xsignal1 (Qoverflow_error, arg);
 		      x = d;
 		      negative = false;

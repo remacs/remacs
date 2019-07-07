@@ -150,7 +150,7 @@ bool display_arg;
 
 #if defined GNU_LINUX && defined HAVE_UNEXEC
 /* The gap between BSS end and heap start as far as we can tell.  */
-static uprintmax_t heap_bss_diff;
+static uintmax_t heap_bss_diff;
 #endif
 
 /* To run as a background daemon under Cocoa or Windows,
@@ -2548,7 +2548,8 @@ You must run Emacs in batch mode in order to dump it.  */)
     {
       fprintf (stderr, "**************************************************\n");
       fprintf (stderr, "Warning: Your system has a gap between BSS and the\n");
-      fprintf (stderr, "heap (%"pMu" bytes).  This usually means that exec-shield\n",
+      fprintf (stderr, ("heap (%"PRIuMAX" bytes).  "
+			"This usually means that exec-shield\n"),
                heap_bss_diff);
       fprintf (stderr, "or something similar is in effect.  The dump may\n");
       fprintf (stderr, "fail because of this.  See the section about\n");

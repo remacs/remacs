@@ -71,7 +71,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
      %<flags><width><precision><length>character
 
    where flags is [+ -0], width is [0-9]+, precision is .[0-9]+, and length
-   is empty or l or the value of the pD or pI or pMd (sans "d") macros.
+   is empty or l or the value of the pD or pI or PRIdMAX (sans "d") macros.
    Also, %% in a format stands for a single % in the output.  A % that
    does not introduce a valid %-sequence causes undefined behavior.
 
@@ -88,7 +88,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    the respective argument is to be treated as `long int' or `unsigned long
    int'.  Similarly, the value of the pD macro means to use ptrdiff_t,
    the value of the pI macro means to use EMACS_INT or EMACS_UINT, the
-   value of the pMd etc. macros means to use intmax_t or uintmax_t,
+   value of the PRIdMAX etc. macros means to use intmax_t or uintmax_t,
    and the empty length modifier means `int' or `unsigned int'.
 
    The width specifier supplies a lower limit for the length of the printed
@@ -179,7 +179,7 @@ doprnt (char *buffer, ptrdiff_t bufsize, const char *format,
 	  enum {
 	    pDlen = sizeof pD - 1,
 	    pIlen = sizeof pI - 1,
-	    pMlen = sizeof pMd - 2
+	    pMlen = sizeof PRIdMAX - 2
 	  };
 	  enum {
 	    no_modifier, long_modifier, pD_modifier, pI_modifier, pM_modifier
@@ -234,7 +234,7 @@ doprnt (char *buffer, ptrdiff_t bufsize, const char *format,
 		length_modifier = pD_modifier;
 	      if (mlen == pIlen && memcmp (fmt, pI, pIlen) == 0)
 		length_modifier = pI_modifier;
-	      if (mlen == pMlen && memcmp (fmt, pMd, pMlen) == 0)
+	      if (mlen == pMlen && memcmp (fmt, PRIdMAX, pMlen) == 0)
 		length_modifier = pM_modifier;
 	    }
 

@@ -1295,14 +1295,12 @@ font_unparse_xlfd (Lisp_Object font, int pixel_size, char *name, int nbytes)
   if (INTEGERP (val))
     {
       intmax_t v;
-      if (! (integer_to_intmax (val, &v)
-	     && 0 < v && v <= TYPE_MAXIMUM (uprintmax_t)))
+      if (! (integer_to_intmax (val, &v) && 0 < v))
 	v = pixel_size;
       if (v > 0)
 	{
-	  uprintmax_t u = v;
 	  f[XLFD_PIXEL_INDEX] = p = font_size_index_buf;
-	  sprintf (p, "%"pMu"-*", u);
+	  sprintf (p, "%"PRIdMAX"-*", v);
 	}
       else
 	f[XLFD_PIXEL_INDEX] = "*-*";

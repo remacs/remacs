@@ -2098,8 +2098,8 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
   SAFE_FREE ();
   return list2 (output, actual_iv);
 # else
-  printmax_t print_gca = gca;
-  error ("GnuTLS AEAD cipher %"pMd" is invalid or not found", print_gca);
+  intmax_t print_gca = gca;
+  error ("GnuTLS AEAD cipher %"PRIdMAX" is invalid or not found", print_gca);
 # endif
 }
 

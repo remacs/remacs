@@ -187,7 +187,8 @@ verify ((! TYPE_SIGNED (ElfW (Half))
 	&& TYPE_MAXIMUM (ElfW (Half)) <= PTRDIFF_MAX);
 
 #ifdef UNEXELF_DEBUG
-# define DEBUG_LOG(expr) fprintf (stderr, #expr " 0x%jx\n", (uintmax_t) (expr))
+# define DEBUG_LOG(expr) fprintf (stderr, #expr " 0x%"PRIxMAX"\n", \
+				  (uintmax_t) (expr))
 #endif
 
 /* Get the address of a particular section or program header entry,

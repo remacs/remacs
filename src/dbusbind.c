@@ -661,8 +661,8 @@ xd_append_arg (int dtype, Lisp_Object object, DBusMessageIter *iter)
 	    xd_extract_signed (object,
 			       TYPE_MINIMUM (dbus_int64_t),
 			       TYPE_MAXIMUM (dbus_int64_t));
-	  printmax_t pval = val;
-	  XD_DEBUG_MESSAGE ("%c %"pMd, dtype, pval);
+	  intmax_t pval = val;
+	  XD_DEBUG_MESSAGE ("%c %"PRIdMAX, dtype, pval);
 	  if (!dbus_message_iter_append_basic (iter, dtype, &val))
 	    XD_SIGNAL2 (build_string ("Unable to append argument"), object);
 	  return;
@@ -673,8 +673,8 @@ xd_append_arg (int dtype, Lisp_Object object, DBusMessageIter *iter)
 	  dbus_uint64_t val =
 	    xd_extract_unsigned (object,
 				 TYPE_MAXIMUM (dbus_uint64_t));
-	  uprintmax_t pval = val;
-	  XD_DEBUG_MESSAGE ("%c %"pMu, dtype, pval);
+	  uintmax_t pval = val;
+	  XD_DEBUG_MESSAGE ("%c %"PRIuMAX, dtype, pval);
 	  if (!dbus_message_iter_append_basic (iter, dtype, &val))
 	    XD_SIGNAL2 (build_string ("Unable to append argument"), object);
 	  return;
@@ -867,20 +867,18 @@ xd_retrieve_arg (int dtype, DBusMessageIter *iter)
     case DBUS_TYPE_INT64:
       {
 	dbus_int64_t val;
-	printmax_t pval;
 	dbus_message_iter_get_basic (iter, &val);
-	pval = val;
-	XD_DEBUG_MESSAGE ("%c %"pMd, dtype, pval);
+	intmax_t pval = val;
+	XD_DEBUG_MESSAGE ("%c %"PRIdMAX, dtype, pval);
 	return INT_TO_INTEGER (val);
       }
 
     case DBUS_TYPE_UINT64:
       {
 	dbus_uint64_t val;
-	uprintmax_t pval;
 	dbus_message_iter_get_basic (iter, &val);
-	pval = val;
-	XD_DEBUG_MESSAGE ("%c %"pMu, dtype, pval);
+	uintmax_t pval = val;
+	XD_DEBUG_MESSAGE ("%c %"PRIuMAX, dtype, pval);
 	return INT_TO_INTEGER (val);
       }
 

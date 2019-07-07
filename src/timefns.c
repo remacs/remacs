@@ -1573,9 +1573,9 @@ without consideration for daylight saving time.  */)
   static char const mon_name[][4] =
     { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-  printmax_t year_base = TM_YEAR_BASE;
+  intmax_t year_base = TM_YEAR_BASE;
   char buf[sizeof "Mon Apr 30 12:49:17 " + INT_STRLEN_BOUND (int) + 1];
-  int len = sprintf (buf, "%s %s%3d %02d:%02d:%02d %"pMd,
+  int len = sprintf (buf, "%s %s%3d %02d:%02d:%02d %"PRIdMAX,
 		     wday_name[tm.tm_wday], mon_name[tm.tm_mon], tm.tm_mday,
 		     tm.tm_hour, tm.tm_min, tm.tm_sec,
 		     tm.tm_year + year_base);

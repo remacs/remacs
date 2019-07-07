@@ -1048,7 +1048,7 @@ make_minibuffer_frame (void)
 
 /* Construct a frame that refers to a terminal.  */
 
-static printmax_t tty_frame_count;
+static intmax_t tty_frame_count;
 
 struct frame *
 make_initial_frame (void)
@@ -1108,7 +1108,7 @@ make_terminal_frame (struct terminal *terminal)
 {
   register struct frame *f;
   Lisp_Object frame;
-  char name[sizeof "F" + INT_STRLEN_BOUND (printmax_t)];
+  char name[sizeof "F" + INT_STRLEN_BOUND (tty_frame_count)];
 
   if (!terminal->name)
     error ("Terminal is not live, can't create new frames on it");
@@ -1118,7 +1118,7 @@ make_terminal_frame (struct terminal *terminal)
   XSETFRAME (frame, f);
   Vframe_list = Fcons (frame, Vframe_list);
 
-  fset_name (f, make_formatted_string (name, "F%"pMd, ++tty_frame_count));
+  fset_name (f, make_formatted_string (name, "F%"PRIdMAX, ++tty_frame_count));
 
   SET_FRAME_VISIBLE (f, 1);
 
@@ -2920,14 +2920,14 @@ set_term_frame_name (struct frame *f, Lisp_Object name)
   /* If NAME is nil, set the name to F<num>.  */
   if (NILP (name))
     {
-      char namebuf[sizeof "F" + INT_STRLEN_BOUND (printmax_t)];
+      char namebuf[sizeof "F" + INT_STRLEN_BOUND (tty_frame_count)];
 
       /* Check for no change needed in this very common case
 	 before we do any consing.  */
       if (frame_name_fnn_p (SSDATA (f->name), SBYTES (f->name)))
 	return;
 
-      name = make_formatted_string (namebuf, "F%"pMd, ++tty_frame_count);
+      name = make_formatted_string (namebuf, "F%"PRIdMAX, ++tty_frame_count);
     }
   else
     {
@@ -4201,7 +4201,7 @@ void
 gui_report_frame_params (struct frame *f, Lisp_Object *alistptr)
 {
   Lisp_Object tem;
-  uprintmax_t w;
+  uintmax_t w;
   char buf[INT_BUFSIZE_BOUND (w)];
 
   /* Represent negative positions (off the top or left screen edge)
@@ -4249,7 +4249,7 @@ gui_report_frame_params (struct frame *f, Lisp_Object *alistptr)
      warnings.  */
   w = (uintptr_t) FRAME_NATIVE_WINDOW (f);
   store_in_alist (alistptr, Qwindow_id,
-		  make_formatted_string (buf, "%"pMu, w));
+		  make_formatted_string (buf, "%"PRIuMAX, w));
 #ifdef HAVE_X_WINDOWS
 #ifdef USE_X_TOOLKIT
   /* Tooltip frame may not have this widget.  */
@@ -4257,7 +4257,7 @@ gui_report_frame_params (struct frame *f, Lisp_Object *alistptr)
 #endif
     w = (uintptr_t) FRAME_OUTER_WINDOW (f);
   store_in_alist (alistptr, Qouter_window_id,
-		  make_formatted_string (buf, "%"pMu, w));
+		  make_formatted_string (buf, "%"PRIuMAX, w));
 #endif
   store_in_alist (alistptr, Qicon_name, f->icon_name);
   store_in_alist (alistptr, Qvisibility,
