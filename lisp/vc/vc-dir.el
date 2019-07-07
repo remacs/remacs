@@ -786,6 +786,11 @@ that share the same state."
   (display-buffer (find-file-noselect (vc-dir-current-file))
 		  t))
 
+(defun vc-dir-view-file ()
+  "Examine a file on the current line in view mode."
+  (interactive)
+  (view-file (vc-dir-current-file)))
+
 (defun vc-dir-isearch ()
   "Search for a string through all marked buffers using Isearch."
   (interactive)

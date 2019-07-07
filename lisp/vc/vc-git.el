@@ -1048,7 +1048,6 @@ If LIMIT is a revision string, use it as an end-revision."
 		'("--")))))))
 
 (defun vc-git-log-outgoing (buffer remote-location)
-  (interactive)
   (vc-setup-buffer buffer)
   (vc-git-command
    buffer 'async nil
@@ -1062,7 +1061,6 @@ If LIMIT is a revision string, use it as an end-revision."
 	   "..HEAD")))
 
 (defun vc-git-log-incoming (buffer remote-location)
-  (interactive)
   (vc-setup-buffer buffer)
   (vc-git-command nil 0 nil "fetch")
   (vc-git-command
