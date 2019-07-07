@@ -1320,7 +1320,7 @@ For details, @pxref{Syntax Class Table}.  Please note that
 @code{punctuation}.@*
 Corresponding string regexp: @samp{\s@var{code}}
 
-@item @code {(category @var{category})}
+@item @code{(category @var{category})}
 @cindex @code{category} in rx
 Match a character in category @var{category}, which is either one of
 the names below or its category character.
