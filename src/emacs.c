@@ -29,8 +29,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <close-stream.h>
-
 #define MAIN_PROGRAM
 #include "lisp.h"
 #include "sysstdio.h"
@@ -659,24 +657,6 @@ argmatch (char **argv, int argc, const char *sstr, const char *lstr,
     {
       return 0;
     }
-}
-
-/* Close standard output and standard error, reporting any write
-   errors as best we can.  This is intended for use with atexit.  */
-static void
-close_output_streams (void)
-{
-  if (close_stream (stdout) != 0)
-    {
-      emacs_perror ("Write error to standard output");
-      _exit (EXIT_FAILURE);
-    }
-
-  /* Do not close stderr if addresses are being sanitized, as the
-     sanitizer might report to stderr after this function is
-     invoked.  */
-  if (!ADDRESS_SANITIZER && close_stream (stderr) != 0)
-    _exit (EXIT_FAILURE);
 }
 
 #ifdef HAVE_PDUMPER

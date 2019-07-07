@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 
 extern FILE *emacs_fopen (char const *, char const *);
+extern void close_output_streams (void);
 
 #if O_BINARY
 # define FOPEN_BINARY "b"

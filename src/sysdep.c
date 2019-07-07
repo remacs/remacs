@@ -30,6 +30,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 
 #include <c-ctype.h>
+#include <close-stream.h>
 #include <pathmax.h>
 #include <utimens.h>
 
@@ -2766,6 +2767,25 @@ safe_strsignal (int code)
     signame = "Unknown signal";
 
   return signame;
+}
+
+/* Close standard output and standard error, reporting any write
+   errors as best we can.  This is intended for use with atexit.  */
+void
+close_output_streams (void)
+{
+  if (close_stream (stdout) != 0)
+    {
+      emacs_perror ("Write error to standard output");
+      _exit (EXIT_FAILURE);
+    }
+
+  /* Do not close stderr if addresses are being sanitized, as the
+     sanitizer might report to stderr after this function is invoked.  */
+  if (ADDRESS_SANITIZER
+      ? fflush_unlocked (stderr) != 0 || ferror (stderr)
+      : close_stream (stderr) != 0)
+    _exit (EXIT_FAILURE);
 }
 
 #ifndef DOS_NT
