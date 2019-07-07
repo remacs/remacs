@@ -743,18 +743,19 @@ invocations return to earlier marks."
     (setq backward (not backward) lines (- lines)))
   (when (and maxdefault lines (> lines (view-window-size)))
     (setq lines nil))
-  (cond (backward (scroll-down lines))
+  (cond (backward (scroll-down-command lines))
 	((view-really-at-end)
 	 (if view-scroll-auto-exit
 	     (View-quit)
 	   (ding)
 	   (view-end-message)))
-	(t (scroll-up lines)
+	(t (scroll-up-command lines)
 	   (if (view-really-at-end) (view-end-message)))))
 
 (defun view-really-at-end ()
   ;; Return true if buffer end visible.  Maybe revert buffer and test.
-  (and (pos-visible-in-window-p (point-max))
+  (and (or (null scroll-error-top-bottom) (eobp))
+       (pos-visible-in-window-p (point-max))
        (let ((buf (current-buffer))
 	     (bufname (buffer-name))
 	     (file (buffer-file-name)))
