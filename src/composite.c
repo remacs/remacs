@@ -612,25 +612,6 @@ make_composition_value_copy (Lisp_Object list)
     }
 }
 
-
-/* Make text in the region between START and END a composition that
-   has COMPONENTS and MODIFICATION-FUNC.
-
-   If STRING is non-nil, then operate on characters contained between
-   indices START and END in STRING.  */
-
-void
-compose_text (ptrdiff_t start, ptrdiff_t end, Lisp_Object components,
-	      Lisp_Object modification_func, Lisp_Object string)
-{
-  Lisp_Object prop;
-
-  prop = Fcons (Fcons (make_number (end - start), components),
-		modification_func);
-  Fput_text_property  (make_number (start), make_number (end),
-		       Qcomposition, prop, string);
-}
-
 /* Lisp glyph-string handlers.  */
 
 /* Hash table for automatic composition.  The key is a header of a

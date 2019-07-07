@@ -1,12 +1,14 @@
 //! Composite sequence support.
 
-use libc::ptrdiff_t;
+use std::convert::TryInto;
 
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::validate_subarray_rust,
     lisp::LispObject,
-    remacs_sys::{compose_text, validate_subarray, CHECK_STRING, SCHARS},
+    multibyte::LispStringRef,
+    remacs_sys::{EmacsInt, Fcons, Fput_text_property, Qcomposition},
 };
 
 /// Internal use only.
@@ -23,16 +25,65 @@ pub fn compose_string_internal(
     components: LispObject,
     modification_func: LispObject,
 ) -> LispObject {
-    let mut from: ptrdiff_t = 0;
-    let mut to: ptrdiff_t = 0;
+    let string = LispStringRef::from(string);
 
+    let (from, to) =
+        validate_subarray_rust(LispObject::from(string), start, end, string.len_chars());
+
+    compose_text_rust(
+        from,
+        to,
+        components,
+        modification_func,
+        LispObject::from(string),
+    );
+
+    LispObject::from(string)
+}
+
+/// Make text in the region between START and END a composition that
+/// has COMPONENTS and MODIFICATION-FUNC.
+///
+/// If STRING is non-nil, then operate on characters contained between
+/// indices START and END in STRING.
+pub fn compose_text_rust(
+    start: EmacsInt,
+    end: EmacsInt,
+    components: LispObject,
+    modification_function: LispObject,
+    string: LispObject,
+) {
     unsafe {
-        CHECK_STRING(string);
-        validate_subarray(string, start, end, SCHARS(string), &mut from, &mut to);
-        compose_text(from, to, components, modification_func, string);
-    }
+        let prop = Fcons(
+            Fcons(LispObject::from(end - start), components),
+            modification_function,
+        );
 
-    string
+        Fput_text_property(
+            LispObject::from(start),
+            LispObject::from(end),
+            Qcomposition,
+            prop,
+            string,
+        );
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn compose_text(
+    start: isize,
+    end: isize,
+    components: LispObject,
+    modification_function: LispObject,
+    string: LispObject,
+) {
+    compose_text_rust(
+        start.try_into().unwrap(),
+        end.try_into().unwrap(),
+        components,
+        modification_function,
+        string,
+    );
 }
 
 include!(concat!(env!("OUT_DIR"), "/composite_exports.rs"));
