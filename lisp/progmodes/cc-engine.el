@@ -9472,6 +9472,7 @@ This function might do hidden buffer changes."
 			   (not got-prefix)
 			   (or (eq context 'top) make-top)
 			   (eq (char-after) ?\))
+			   after-paren-pos
 			   (or (memq at-type '(nil maybe))
 			       (not got-identifier)
 			       (save-excursion
@@ -9508,7 +9509,7 @@ This function might do hidden buffer changes."
 	    ;; (con|de)structors in C++ and `c-typeless-decl-kwds'
 	    ;; style declarations.  That isn't applicable in an
 	    ;; arglist context, though.
-	    (when (and (> paren-depth 0)
+	    (when (and (> paren-depth 0) ; ensures `after-paren-pos' is non-nil
 		       (not got-prefix-before-parens)
 		       (not (eq at-type t))
 		       (or backup-at-type
