@@ -410,7 +410,8 @@ into the minibuffer."
 Type M-n to pull the file attributes of the file at point
 into the minibuffer."
   (interactive "P")
-  (if (memq system-type '(ms-dos windows-nt))
+  (if (and (memq system-type '(ms-dos windows-nt))
+           (not (file-remote-p default-directory)))
       (error "chgrp not supported on this system"))
   (dired-do-chxxx "Group" "chgrp" 'chgrp arg))
 
@@ -420,7 +421,8 @@ into the minibuffer."
 Type M-n to pull the file attributes of the file at point
 into the minibuffer."
   (interactive "P")
-  (if (memq system-type '(ms-dos windows-nt))
+  (if (and (memq system-type '(ms-dos windows-nt))
+           (not (file-remote-p default-directory)))
       (error "chown not supported on this system"))
   (dired-do-chxxx "Owner" dired-chown-program 'chown arg))
 
