@@ -1777,7 +1777,8 @@ determined by the variable @code{tex-dvi-print-command}.  The variable
 extension for viewing and printing @TeX{}-compiled files.  For
 example, you can set it to @file{.pdf}, and update
 @code{tex-dvi-view-command} and @code{tex-dvi-print-command}
-accordingly.
+accordingly, as well as @code{latex-run-command} or
+@code{tex-run-command}.
 
   Normally, Emacs automatically appends the output file name to the
 shell command strings described in the preceding paragraph.  For
