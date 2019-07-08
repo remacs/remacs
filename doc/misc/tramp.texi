@@ -3137,9 +3137,9 @@ be achieved by adding the environment variable @env{COLUMNS} to
 
 @value{tramp} is integrated into @file{eshell.el}, which enables
 interactive eshell sessions on remote hosts at the command prompt.
-You must add the module @code{em-tramp} to @code{eshell-modules-list}.
-Here's a sample interaction after opening @kbd{M-x eshell @key{RET}}
-on a remote host:
+You must add the module @code{eshell-tramp} to
+@code{eshell-modules-list}.  Here's a sample interaction after opening
+@kbd{M-x eshell @key{RET}} on a remote host:
 
 @example
 @group
