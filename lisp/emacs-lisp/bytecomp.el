@@ -223,7 +223,8 @@ Possible values are:
 This includes variable references and calls to functions such as `car'."
   :type 'boolean)
 
-(defcustom byte-compile-cond-use-jump-table t
+;; Switch to back to t after solving Bug#36447.
+(defcustom byte-compile-cond-use-jump-table nil
   "Compile `cond' clauses to a jump table implementation (using a hash-table)."
   :version "26.1"
   :type 'boolean)
