@@ -21,7 +21,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <limits.h>
-#include <stdio.h>      /* termhooks.h needs this */
+#include <stdio.h>      /* TRACE_SELECTION needs this.  */
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
