@@ -149,7 +149,7 @@ type         The type of entry.  Valid types are:
                            first plain list at the target
                            location.
                checkitem   a checkbox item.  This differs from the
-                           plain list item only is so far as it uses a
+                           plain list item only in so far as it uses a
                            different default template.
                table-line  a new line in the first table at target location.
                plain       text to be inserted as it is.
