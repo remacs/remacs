@@ -1752,8 +1752,7 @@ See the command \\[hungry-electric-delete]."
  ;; The indicator for the mode line.
  " Hungry"
  ;; The minor mode bindings.
- '(([C-backspace] . hungry-electric-delete))
- :group 'hunger)
+ '(([C-backspace] . hungry-electric-delete)))
 @end smallexample
 
 @noindent
@@ -1762,9 +1761,8 @@ This defines a minor mode named ``Hungry mode'', a command named
 which indicates whether the mode is enabled, and a variable named
 @code{hungry-mode-map} which holds the keymap that is active when the
 mode is enabled.  It initializes the keymap with a key binding for
-@kbd{C-@key{DEL}}.  It puts the variable @code{hungry-mode} into
-custom group @code{hunger}.  There are no @var{body} forms---many
-minor modes don't need any.
+@kbd{C-@key{DEL}}.  There are no @var{body} forms---many minor modes
+don't need any.
 
   Here's an equivalent way to write it:
 
@@ -1782,8 +1780,7 @@ minor modes don't need any.
    ([C-M-backspace]
     . (lambda ()
         (interactive)
-        (hungry-electric-delete t))))
- :group 'hunger)
+        (hungry-electric-delete t)))))
 @end smallexample
 
 @defmac define-globalized-minor-mode global-mode mode turn-on keyword-args@dots{}
