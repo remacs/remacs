@@ -126,3 +126,8 @@ Also check that an encoding error can appear in a symlink."
               (should (equal c1 (char-before)))
               (should (equal c1 (char-after))))))
       (if f (delete-file f)))))
+
+(ert-deftest fileio-tests--relative-default-directory ()
+  "Test expand-file-name when default-directory is relative."
+  (let ((default-directory "some/relative/name"))
+    (should (file-name-absolute-p (expand-file-name "foo")))))
