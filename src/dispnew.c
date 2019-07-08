@@ -6142,7 +6142,8 @@ init_display_interactive (void)
      using the window system.
 
      If the DISPLAY environment variable is set and nonempty,
-     try to use X, and die with an error message if that doesn't work.  */
+     try to use X, and if that fails output a line to stderr
+     reporting that -nw will be simulated.  */
 
 #ifdef HAVE_X_WINDOWS
   if (! inhibit_window_system && ! display_arg)
