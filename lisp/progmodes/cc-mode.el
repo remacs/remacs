@@ -226,6 +226,15 @@ control).  See \"cc-mode.el\" for more info."
 	    (if (boundp 'c-comment-continuation-stars)
 		(setq c-block-comment-prefix c-comment-continuation-stars))
 	    (add-hook 'change-major-mode-hook 'c-leave-cc-mode-mode)
+	    ;; Connect up with Emacs's electric-pair-mode
+	    (eval-after-load "elec-pair"
+	      '(when (boundp 'electric-pair-inhibit-predicate)
+		 (dolist (buf (buffer-list))
+		   (with-current-buffer buf
+		     (when c-buffer-is-cc-mode
+		       (make-local-variable 'electric-pair-inhibit-predicate)
+		       (setq electric-pair-inhibit-predicate
+			     #'c-electric-pair-inhibit-predicate))))))
 	    (setq c-initialization-ok t)
 	    ;; Connect up with Emacs's electric-indent-mode, for >= Emacs 24.4
             (when (fboundp 'electric-indent-local-mode)
@@ -552,6 +561,17 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
   (make-local-variable 'fill-paragraph-handle-comment)
+
+  (setq c-buffer-is-cc-mode mode)
+
+  ;; Prepare for the use of `electric-pair-mode'.  Note: if this mode is not
+  ;; yet loaded, `electric-pair-inhibit-predicate' will get set from an
+  ;; `eval-after-load' form in `c-initialize-cc-mode' when elec-pair.elc is
+  ;; loaded.
+  (when (boundp 'electric-pair-inhibit-predicate)
+    (make-local-variable 'electric-pair-inhibit-predicate)
+    (setq electric-pair-inhibit-predicate
+	  #'c-electric-pair-inhibit-predicate))
 
   ;; now set their values
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
@@ -2253,6 +2273,26 @@ This function is called from `c-common-init', once per mode initialization."
   (when c-buffer-is-cc-mode
     (setq c-electric-flag electric-indent-mode)
     (c-update-modeline)))
+
+
+;; Connection with Emacs's electric-pair-mode
+(defun c-electric-pair-inhibit-predicate (char)
+  "Return t to inhibit the insertion of a second copy of CHAR.
+
+At the time of call, point is just after the newly inserted CHAR.
+
+When CHAR is \", t will be returned unless the \" is marked with
+a string fence syntax-table text property.  For other characters,
+the default value of `electric-pair-inhibit-predicate' is called
+and its value returned.
+
+This function is the appropriate value of
+`electric-pair-inhibit-predicate' for CC Mode modes, which mark
+invalid strings with such a syntax table text property on the
+opening \" and the next unescaped end of line."
+  (if (eq char ?\")
+      (not (equal (get-text-property (1- (point)) 'syntax-table) '(15)))
+    (funcall (default-value 'electric-pair-inhibit-predicate) char)))
 
 
 ;; Support for C
