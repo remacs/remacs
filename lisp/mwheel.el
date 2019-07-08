@@ -21,21 +21,21 @@
 
 ;;; Commentary:
 
-;; This code will enable the use of the infamous 'wheel' on the new
-;; crop of mice.  Under XFree86 and the XSuSE X Servers, the wheel
-;; events are sent as button4/button5 events.
+;; This enables the use of the mouse wheel (or scroll wheel) in Emacs.
+;; Under X11/X.Org, the wheel events are sent as button4/button5
+;; events.
 
+;; It is already enabled by default on most graphical displays.  You
+;; can toggle it with M-x mouse-wheel-mode.
+
+;;; Code:
+
+;; Implementation note:
+;;
 ;; I for one would prefer some way of converting the button4/button5
 ;; events into different event types, like 'mwheel-up' or
 ;; 'mwheel-down', but I cannot find a way to do this very easily (or
 ;; portably), so for now I just live with it.
-
-;; To enable this code, simply put this at the top of your .emacs
-;; file:
-;;
-;; (mouse-wheel-mode 1)
-
-;;; Code:
 
 (require 'custom)
 (require 'timer)
@@ -334,6 +334,7 @@ non-Windows systems."
 ;; preloaded ;;;###autoload
 (defun mwheel-install (&optional uninstall)
   "Enable mouse wheel support."
+  (declare (obsolete mouse-wheel-mode "27.1"))
   (mouse-wheel-mode (if uninstall -1 1)))
 
 (provide 'mwheel)

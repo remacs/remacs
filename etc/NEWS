@@ -1701,6 +1701,13 @@ needing to advice 'ispell-change-dictionary'.
 This command is bound to 'S-down' and scrolls the buffer up in
 particular when the end of the buffer is visible in the window.
 
+** mwheel.el
+
+---
+*** 'mwheel-install' is now obsolete.
+Use 'mouse-wheel-mode' instead.  Note that 'mouse-wheel-mode' is
+already enabled by default on most graphical displays.
+
 
 * New Modes and Packages in Emacs 27.1
 
