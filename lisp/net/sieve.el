@@ -215,9 +215,8 @@ require \"fileinto\";
     (setq sieve-buffer-script-name name)
     (goto-char (point-min))
     (set-buffer-modified-p nil)
-    (message
-     (substitute-command-keys
-      "Press \\[sieve-upload] to upload script to server."))))
+    (message "Press %s to upload script to server."
+             (substitute-command-keys "\\[sieve-upload]"))))
 
 (defmacro sieve-change-region (&rest body)
   "Turns off sieve-region before executing BODY, then re-enables it after.
@@ -256,8 +255,10 @@ Used to bracket operations which move point in the sieve-buffer."
   (if (eq last-command 'sieve-help)
       ;; would need minor-mode for log-edit-mode
       (describe-function 'sieve-mode)
-    (message "%s" (substitute-command-keys
-	      "`\\[sieve-edit-script]':edit `\\[sieve-activate]':activate `\\[sieve-deactivate]':deactivate `\\[sieve-remove]':remove `\\[sieve-manage-quit]':quit"))))
+    (message "%s" (substitute-command-keys "\
+`\\[sieve-edit-script]':edit `\\[sieve-activate]':activate \
+`\\[sieve-deactivate]':deactivate `\\[sieve-remove]':remove \
+`\\[sieve-manage-quit]':quit"))))
 
 ;; Create buffer:
 
@@ -312,20 +313,20 @@ Used to bracket operations which move point in the sieve-buffer."
     (delete-region (or sieve-buffer-header-end (point-max)) (point-max))
     (goto-char (point-max))
     ;; get list of script names and print them
-    (let ((scripts (sieve-manage-listscripts sieve-manage-buffer)))
-      (if (null scripts)
-	  (insert
-           (substitute-command-keys
-            (format
-             "No scripts on server, press \\[sieve-edit-script] on %s to create a new script.\n"
-             sieve-new-script)))
-	(insert
-         (substitute-command-keys
-          (format (concat "%d script%s on server, press \\[sieve-edit-script] on a script "
-                          "name edits it, or\npress \\[sieve-edit-script] on %s to create "
-                          "a new script.\n") (length scripts)
-                          (if (eq (length scripts) 1) "" "s")
-                          sieve-new-script))))
+    (let* ((scripts (sieve-manage-listscripts sieve-manage-buffer))
+           (count (length scripts))
+           (keys (substitute-command-keys "\\[sieve-edit-script]")))
+      (insert
+       (if (null scripts)
+           (format
+            "No scripts on server, press %s on %s to create a new script.\n"
+            keys sieve-new-script)
+         (format (concat (ngettext "%d script on server"
+                                   "%d scripts on server"
+                                   count)
+                         ", press %s on a script name to edit it, or"
+                         "\npress %s on %s to create a new script.\n")
+                 count keys keys sieve-new-script)))
       (save-excursion
 	(sieve-insert-scripts (list sieve-new-script))
 	(sieve-insert-scripts scripts)))
@@ -354,12 +355,11 @@ Used to bracket operations which move point in the sieve-buffer."
 	(setq err (sieve-manage-putscript
                    (or name sieve-buffer-script-name script-name)
                    script sieve-manage-buffer))
-	(if (sieve-manage-ok-p err)
-            (progn
-	      (message (substitute-command-keys
-		        "Sieve upload done.  Use \\[sieve-manage] to manage scripts."))
-              (set-buffer-modified-p nil))
-	  (message "Sieve upload failed: %s" (nth 2 err)))))))
+        (if (not (sieve-manage-ok-p err))
+            (message "Sieve upload failed: %s" (nth 2 err))
+          (message "Sieve upload done.  Use %s to manage scripts."
+                   (substitute-command-keys "\\[sieve-manage]"))
+          (set-buffer-modified-p nil))))))
 
 ;;;###autoload
 (defun sieve-upload-and-bury (&optional name)
