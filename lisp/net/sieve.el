@@ -137,15 +137,14 @@ require \"fileinto\";
   '("Manage Sieve"
     ["Edit script" sieve-edit-script t]
     ["Activate script" sieve-activate t]
-    ["Deactivate script" sieve-deactivate t]))
+    ["Deactivate script" sieve-deactivate t]
+    ["Quit and close connection" sieve-manage-quit t]))
 
-(define-derived-mode sieve-manage-mode fundamental-mode "Sieve-manage"
+(define-derived-mode sieve-manage-mode special-mode "Sieve-manage"
   "Mode used for sieve script management."
   (buffer-disable-undo (current-buffer))
   (setq truncate-lines t)
   (easy-menu-add sieve-manage-mode-menu sieve-manage-mode-map))
-
-(put 'sieve-manage-mode 'mode-class 'special)
 
 ;; Commands used in sieve-manage mode:
 
@@ -215,6 +214,7 @@ require \"fileinto\";
     (sieve-mode)
     (setq sieve-buffer-script-name name)
     (goto-char (point-min))
+    (set-buffer-modified-p nil)
     (message
      (substitute-command-keys
       "Press \\[sieve-upload] to upload script to server."))))
@@ -257,7 +257,7 @@ Used to bracket operations which move point in the sieve-buffer."
       ;; would need minor-mode for log-edit-mode
       (describe-function 'sieve-mode)
     (message "%s" (substitute-command-keys
-	      "`\\[sieve-edit-script]':edit `\\[sieve-activate]':activate `\\[sieve-deactivate]':deactivate `\\[sieve-remove]':remove"))))
+	      "`\\[sieve-edit-script]':edit `\\[sieve-activate]':activate `\\[sieve-deactivate]':deactivate `\\[sieve-remove]':remove `\\[sieve-manage-quit]':quit"))))
 
 ;; Create buffer:
 
@@ -355,8 +355,10 @@ Used to bracket operations which move point in the sieve-buffer."
                    (or name sieve-buffer-script-name script-name)
                    script sieve-manage-buffer))
 	(if (sieve-manage-ok-p err)
-	    (message (substitute-command-keys
-		      "Sieve upload done.  Use \\[sieve-manage] to manage scripts."))
+            (progn
+	      (message (substitute-command-keys
+		        "Sieve upload done.  Use \\[sieve-manage] to manage scripts."))
+              (set-buffer-modified-p nil))
 	  (message "Sieve upload failed: %s" (nth 2 err)))))))
 
 ;;;###autoload
