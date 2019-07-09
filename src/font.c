@@ -44,6 +44,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+/* Avoid macro definition of `open' in generated lib/fcntl.h to mess up
+   use of it as a struct member.  */
+#undef open
+
 #define DEFAULT_ENCODING Qiso8859_1
 
 /* Vector of Vfont_weight_table, Vfont_slant_table, and Vfont_width_table. */
