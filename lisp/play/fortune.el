@@ -244,12 +244,14 @@ the value of `fortune-file'.  This currently cannot handle directories."
   (let* ((fortune-file (expand-file-name (substitute-in-file-name file)))
 	 (fortune-dat (expand-file-name
 		       (substitute-in-file-name
-			(concat fortune-file fortune-database-extension)))))
+			(concat fortune-file fortune-database-extension))))
+         (strfile (or (executable-find fortune-strfile)
+                      (error "Can't find strfile program %s" fortune-strfile))))
   (cond ((file-exists-p fortune-file)
          (cond ((file-newer-than-file-p fortune-file fortune-dat)
                 (message "Compiling new fortune database %s" fortune-dat)
                 (shell-command
-                 (concat fortune-strfile fortune-strfile-options
+                 (concat strfile fortune-strfile-options
                          " " fortune-file fortune-quiet-strfile-options)))))
 	(t (error "Can't compile fortune file %s" fortune-file)))))
 
