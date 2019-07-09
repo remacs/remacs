@@ -46,7 +46,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Avoid macro definition of `open' in generated lib/fcntl.h to mess up
    use of it as a struct member.  */
+#ifndef WINDOWSNT
 #undef open
+#endif
 
 #define DEFAULT_ENCODING Qiso8859_1
 
