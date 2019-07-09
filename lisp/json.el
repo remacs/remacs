@@ -734,8 +734,8 @@ you will get the following structure returned:
   "Return a JSON representation of OBJECT as a string.
 
 OBJECT should have a structure like one returned by `json-read'.
-If an error is detected during encoding, this function signals
-an error based on `json-error'."
+If an error is detected during encoding, an error based on
+`json-error' is signalled."
   (cond ((memq object (list t json-null json-false))
          (json-encode-keyword object))
         ((stringp object)      (json-encode-string object))
@@ -762,6 +762,7 @@ With prefix argument MINIMIZE, minimize it instead."
 The function `json-pretty-print' uses `replace-region-contents'
 (which see) passing the value of this variable as argument
 MAX-SECS.")
+(make-obsolete-variable 'json-pretty-print-max-secs nil "27.1")
 
 (defun json-pretty-print (begin end &optional minimize)
   "Pretty-print selected region.
@@ -771,14 +772,17 @@ With prefix argument MINIMIZE, minimize it instead."
         ;; Distinguish an empty objects from 'null'
         (json-null :json-null)
         ;; Ensure that ordering is maintained
-        (json-object-type 'alist))
-    (replace-region-contents
-     begin end
-     (lambda () (json-encode (json-read)))
-     json-pretty-print-max-secs
-     ;; FIXME: What's a good value here?  Can we use something better,
-     ;; e.g., by deriving a value from the size of the region?
-     64)))
+        (json-object-type 'alist)
+        json)
+    (save-restriction
+      (narrow-to-region begin end)
+      (goto-char begin)
+      (while (setq json (condition-case _
+                            (json-read)
+                          (json-error nil)))
+        (delete-region begin (point))
+        (insert (json-encode json))
+        (setq begin (point))))))
 
 (defun json-pretty-print-buffer-ordered (&optional minimize)
   "Pretty-print current buffer with object keys ordered.
