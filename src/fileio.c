@@ -3474,6 +3474,67 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
 
 enum { READ_BUF_SIZE = MAX_ALLOCA };
 
+/* This function is called after Lisp functions to decide a coding
+   system are called, or when they cause an error.  Before they are
+   called, the current buffer is set unibyte and it contains only a
+   newly inserted text (thus the buffer was empty before the
+   insertion).
+
+   The functions may set markers, overlays, text properties, or even
+   alter the buffer contents, change the current buffer.
+
+   Here, we reset all those changes by:
+	o set back the current buffer.
+	o move all markers and overlays to BEG.
+	o remove all text properties.
+	o set back the buffer multibyteness.  */
+
+static void
+decide_coding_unwind (Lisp_Object unwind_data)
+{
+  Lisp_Object multibyte = XCAR (unwind_data);
+  Lisp_Object tmp = XCDR (unwind_data);
+  Lisp_Object undo_list = XCAR (tmp);
+  Lisp_Object buffer = XCDR (tmp);
+
+  set_buffer_internal (XBUFFER (buffer));
+
+  /* We're about to "delete" the text by moving it back into the gap.
+     So move markers that set-auto-coding might have created to BEG,
+     just in case.  */
+  adjust_markers_for_delete (BEG, BEG_BYTE, Z, Z_BYTE);
+  adjust_overlays_for_delete (BEG, Z - BEG);
+  set_buffer_intervals (current_buffer, NULL);
+  TEMP_SET_PT_BOTH (BEG, BEG_BYTE);
+
+  /* In case of a non-local exit from set_auto_coding_function, in order not
+     to end up with potentially invalid byte sequences in a multibyte buffer,
+     we have the following options:
+     1- decode the bytes in some arbitrary coding-system.
+     2- erase the buffer.
+     3- leave the buffer unibyte (which is actually the same as option (1)
+        where the coding-system is `raw-text-unix`).
+     Here we choose 2.  */
+
+  /* Move the bytes back to (the beginning of) the gap.
+     In general this may have to move all the bytes, but here
+     this can't move more bytes than were moved during the execution
+     of Vset_auto_coding_function, which is normally 0 (because it
+     normally doesn't modify the buffer).  */
+  move_gap_both (Z, Z_BYTE);
+  ptrdiff_t inserted = Z_BYTE - BEG_BYTE;
+  GAP_SIZE += inserted;
+  ZV = Z = GPT = BEG;
+  ZV_BYTE = Z_BYTE = GPT_BYTE = BEG_BYTE;
+
+  /* Pass the new `inserted` back.  */
+  XSETCAR (unwind_data, make_fixnum (inserted));
+
+  /* Now we are safe to change the buffer's multibyteness directly.  */
+  bset_enable_multibyte_characters (current_buffer, multibyte);
+  bset_undo_list (current_buffer, undo_list);
+}
+
 /* Read from a non-regular file.  Return the number of bytes read.  */
 
 union read_non_regular
@@ -3720,6 +3781,7 @@ by calling `format-decode', which see.  */)
 	  CHECK_CODING_SYSTEM (Vcoding_system_for_read);
 	  Fset (Qbuffer_file_coding_system, Vcoding_system_for_read);
 	}
+      eassert (inserted == 0);
       goto notfound;
     }
 
@@ -3746,7 +3808,10 @@ by calling `format-decode', which see.  */)
       not_regular = 1;
 
       if (! NILP (visit))
-	goto notfound;
+        {
+          eassert (inserted == 0);
+	  goto notfound;
+        }
 
       if (! NILP (replace) || ! NILP (beg) || ! NILP (end))
 	xsignal2 (Qfile_error,
@@ -4414,9 +4479,6 @@ by calling `format-decode', which see.  */)
   if (how_much < 0)
     report_file_error ("Read error", orig_filename);
 
-  /* Make the text read part of the buffer.  */
-  insert_from_gap_1 (inserted, inserted, false);
-
  notfound:
 
   if (NILP (coding_system))
@@ -4426,6 +4488,7 @@ by calling `format-decode', which see.  */)
 
 	 Note that we can get here only if the buffer was empty
 	 before the insertion.  */
+      eassert (Z == BEG);
 
       if (!NILP (Vcoding_system_for_read))
 	coding_system = Vcoding_system_for_read;
@@ -4438,12 +4501,18 @@ by calling `format-decode', which see.  */)
 	     program safely before decoding the inserted text.  */
           Lisp_Object multibyte
             = BVAR (current_buffer, enable_multibyte_characters);
-          Lisp_Object undo_list = BVAR (current_buffer, undo_list);
+          Lisp_Object unwind_data
+            = Fcons (multibyte,
+                     Fcons (BVAR (current_buffer, undo_list),
+			    Fcurrent_buffer ()));
 	  ptrdiff_t count1 = SPECPDL_INDEX ();
 
 	  bset_enable_multibyte_characters (current_buffer, Qnil);
 	  bset_undo_list (current_buffer, Qt);
-	  record_unwind_protect (restore_buffer, Fcurrent_buffer ());
+	  record_unwind_protect (decide_coding_unwind, unwind_data);
+
+          /* Make the text read part of the buffer.  */
+          insert_from_gap_1 (inserted, inserted, false);
 
 	  if (inserted > 0 && ! NILP (Vset_auto_coding_function))
 	    {
@@ -4461,24 +4530,9 @@ by calling `format-decode', which see.  */)
 	      if (CONSP (coding_system))
 		coding_system = XCAR (coding_system);
 	    }
+          /* Move the text back to the gap.  */
 	  unbind_to (count1, Qnil);
-          /* We're about to "delete" the text by moving it back into the gap
-             (right before calling decode_coding_gap).
-             So move markers that set-auto-coding might have created to BEG,
-             just in case.  */
-          adjust_markers_for_delete (BEG, BEG_BYTE, Z, Z_BYTE);
-          adjust_overlays_for_delete (BEG, Z - BEG);
-          set_buffer_intervals (current_buffer, NULL);
-          TEMP_SET_PT_BOTH (BEG, BEG_BYTE);
-
-          /* Change the buffer's multibyteness directly.  We used to do this
-             from within unbind_to, but it was unsafe since the bytes
-             may contain invalid sequences for a multibyte buffer (which is OK
-             here since we'll decode them before anyone else gets to see
-             them, but is dangerous when we're doing a non-local exit).  */
-          bset_enable_multibyte_characters (current_buffer, multibyte);
-          bset_undo_list (current_buffer, undo_list);
-          inserted = Z_BYTE - BEG_BYTE;
+          inserted = XFIXNUM (XCAR (unwind_data));
         }
 
       if (NILP (coding_system))
@@ -4512,22 +4566,27 @@ by calling `format-decode', which see.  */)
 	}
     }
 
-  coding.dst_multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
+  eassert (PT == GPT);
+
+  coding.dst_multibyte
+    = !NILP (BVAR (current_buffer, enable_multibyte_characters));
   if (CODING_MAY_REQUIRE_DECODING (&coding)
       && (inserted > 0 || CODING_REQUIRE_FLUSHING (&coding)))
     {
-      move_gap_both (PT, PT_BYTE);
-      GAP_SIZE += inserted;
-      ZV_BYTE -= inserted;
-      Z_BYTE -= inserted;
-      ZV -= inserted;
-      Z -= inserted;
+      /* Now we have all the new bytes at the beginning of the gap,
+         but `decode_coding_gap` can't have them at the beginning of the gap,
+         so we need to move them.  */
+      memmove (GAP_END_ADDR - inserted, GPT_ADDR, inserted);
       decode_coding_gap (&coding, inserted);
       inserted = coding.produced_char;
       coding_system = CODING_ID_NAME (coding.id);
     }
   else if (inserted > 0)
     {
+      /* Make the text read part of the buffer.  */
+      eassert (NILP (BVAR (current_buffer, enable_multibyte_characters)));
+      insert_from_gap_1 (inserted, inserted, false);
+
       invalidate_buffer_caches (current_buffer, PT, PT + inserted);
       adjust_after_insert (PT, PT_BYTE, PT + inserted, PT_BYTE + inserted,
 			   inserted);
