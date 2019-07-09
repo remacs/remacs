@@ -1578,8 +1578,26 @@ primitives being @code{add-function} and @code{remove-function}) and another
 set layered on top of it for named functions (with the main primitives being
 @code{advice-add} and @code{advice-remove}).
 
-For example, in order to trace the calls to the process filter of a process
-@var{proc}, you could use:
+As a trivial example, here's how to add advice that'll modify the
+return value of a function every time it's called:
+
+@example
+(defun my-double (x)
+  (* x 2))
+(defun my-increase (x)
+  (+ x 1))
+(advice-add 'my-double :filter-return #'my-increase)
+@end example
+
+After adding this advice, if you call @code{my-double} with @samp{3},
+the return value will be @samp{7}.  To remove this advice, say
+
+@example
+(advice-remove 'my-double #'my-increase)
+@end example
+
+A more advanced example would be to trace the calls to the process
+filter of a process @var{proc}:
 
 @example
 (defun my-tracing-function (proc string)
