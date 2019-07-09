@@ -24,6 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    Emacs.  This way, we have a unique value that we can use to pair
    data files (like a portable dump image) with a specific build of
    Emacs.  */
-extern unsigned char const fingerprint[32];
+extern volatile unsigned char fingerprint[32];
 
 #endif

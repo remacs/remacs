@@ -4101,7 +4101,8 @@ types.  */)
   ctx->header.magic[0] = '!'; /* Note that dump is incomplete.  */
 
   verify (sizeof (fingerprint) == sizeof (ctx->header.fingerprint));
-  memcpy (ctx->header.fingerprint, fingerprint, sizeof (fingerprint));
+  memcpy (ctx->header.fingerprint, (unsigned char *) fingerprint,
+	  sizeof (fingerprint));
 
   const dump_off header_start = ctx->offset;
   dump_fingerprint ("dumping fingerprint", ctx->header.fingerprint);
@@ -5359,9 +5360,10 @@ pdumper_load (const char *dump_filename)
 
   err = PDUMPER_LOAD_VERSION_MISMATCH;
   verify (sizeof (header->fingerprint) == sizeof (fingerprint));
-  if (memcmp (header->fingerprint, fingerprint, sizeof (fingerprint)) != 0)
+  if (memcmp (header->fingerprint, (unsigned char *) fingerprint,
+	      sizeof (fingerprint)) != 0)
     {
-      dump_fingerprint ("desired fingerprint", fingerprint);
+      dump_fingerprint ("desired fingerprint", (unsigned char *) fingerprint);
       dump_fingerprint ("found fingerprint", header->fingerprint);
       goto out;
     }
