@@ -2720,6 +2720,8 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|CBR\\|7Z\\)\\'" . archive-mo
      ("\\.dtd\\'" . sgml-mode)
      ("\\.ds\\(ss\\)?l\\'" . dsssl-mode)
      ("\\.js[mx]?\\'" . javascript-mode)
+     ;; https://en.wikipedia.org/wiki/.har
+     ("\\.har\\'" . javascript-mode)
      ("\\.json\\'" . javascript-mode)
      ("\\.[ds]?vh?\\'" . verilog-mode)
      ("\\.by\\'" . bovine-grammar-mode)
