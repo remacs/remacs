@@ -1286,8 +1286,7 @@ otherwise, insert URL-TITLE followed by URL in parentheses."
     ;; if url-title
     (if (nth 1 args)
         (insert  (nth 1 args) " (" (nth 0 args) ")")
-      (insert "`" (nth 0 args) "'"))
-    (goto-char texinfo-command-start)))
+      (insert "`" (nth 0 args) "'"))))
 
 
 ;;; Section headings
