@@ -272,9 +272,8 @@ The MIME charset corresponding to the most preferred coding system is
 given priority 1 and the rest are given priority 0.5.")
 
 (defun url-set-mime-charset-string ()
+  (declare (obsolete nil "27.1"))
   (setq url-mime-charset-string (url-mime-charset-string)))
-;; Regenerate if the language environment changes.
-(add-hook 'set-language-environment-hook 'url-set-mime-charset-string)
 
 ;; Fixme: set from the locale.
 (defcustom url-mime-language-string nil
