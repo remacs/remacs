@@ -18,7 +18,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <stdio.h>
 #include <math.h>
 #include <cairo-ft.h>
 

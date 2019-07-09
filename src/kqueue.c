@@ -19,7 +19,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>

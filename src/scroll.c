@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
-#include <stdio.h>
 
 #include "lisp.h"
 #include "termchar.h"

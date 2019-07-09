@@ -284,7 +284,6 @@ encode_coding_XXX (struct coding_system *coding)
 /*** 1. Preamble ***/
 
 #include <config.h>
-#include <stdio.h>
 
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>

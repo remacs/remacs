@@ -21,7 +21,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "lisp.h"
 #include "blockinput.h"

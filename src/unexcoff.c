@@ -96,7 +96,6 @@ struct aouthdr
 #ifndef makedev			/* Try to detect types.h already loaded */
 #include <sys/types.h>
 #endif /* makedev */
-#include <stdio.h>
 #include <errno.h>
 
 #include <sys/file.h>
