@@ -49,8 +49,6 @@
 ;; 2008-02-21 - Installed in GNU Emacs.
 ;; 2011-10-17 - Patch `json-alist-p' and `json-plist-p' to avoid recursion -tzz
 ;; 2012-10-25 - Added pretty-printed reformatting -Ryan Crum (ryan@ryancrum.org)
-;; 2019-02-02 - Pretty-printing now uses replace-region-contents and support for
-;;              minimization -tsdh
 
 ;;; Code:
 
@@ -756,13 +754,6 @@ If an error is detected during encoding, an error based on
 With prefix argument MINIMIZE, minimize it instead."
   (interactive "P")
   (json-pretty-print (point-min) (point-max) minimize))
-
-(defvar json-pretty-print-max-secs 2.0
-  "Maximum time for `json-pretty-print's comparison.
-The function `json-pretty-print' uses `replace-region-contents'
-(which see) passing the value of this variable as argument
-MAX-SECS.")
-(make-obsolete-variable 'json-pretty-print-max-secs nil "27.1")
 
 (defun json-pretty-print (begin end &optional minimize)
   "Pretty-print selected region.
