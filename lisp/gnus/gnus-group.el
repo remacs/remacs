@@ -2528,6 +2528,7 @@ The arguments have the same meaning as those of
 
 (defvar debbugs-gnu-bug-number)		; debbugs-gnu
 
+;;;###autoload
 (defun gnus-read-ephemeral-emacs-bug-group (ids &optional window-conf)
   "Browse Emacs bug reports with IDS in an ephemeral group.
 The arguments have the same meaning as those of
