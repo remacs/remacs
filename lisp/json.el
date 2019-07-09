@@ -734,8 +734,8 @@ you will get the following structure returned:
   "Return a JSON representation of OBJECT as a string.
 
 OBJECT should have a structure like one returned by `json-read'.
-If an error is detected during encoding, an error based on
-`json-error' is signalled."
+If an error is detected during encoding, this function signals
+an error based on `json-error'."
   (cond ((memq object (list t json-null json-false))
          (json-encode-keyword object))
         ((stringp object)      (json-encode-string object))
