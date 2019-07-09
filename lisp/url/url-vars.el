@@ -249,26 +249,22 @@ Should be an assoc list of headers/contents.")
   "String to send in the Accept-encoding: field in HTTP requests.")
 
 (defvar mm-mime-mule-charset-alist)
-(declare-function mm-coding-system-p "mm-util" (cs))
 
 ;; Perhaps the first few should actually be given decreasing `q's and
 ;; the list should be trimmed significantly.
-;; Fixme: do something sane if we don't have `sort-coding-systems'
-;; (Emacs 20, XEmacs).
 (defun url-mime-charset-string ()
   "Generate a list of preferred MIME charsets for HTTP requests.
 Generated according to current coding system priorities."
   (require 'mm-util)
-  (if (fboundp 'sort-coding-systems)
-      (let ((ordered (sort-coding-systems
-		      (let (accum)
-			(dolist (elt mm-mime-mule-charset-alist)
-			  (if (mm-coding-system-p (car elt))
-			      (push (car elt) accum)))
-			(nreverse accum)))))
-	(concat (format "%s;q=1, " (pop ordered))
-		(mapconcat 'symbol-name ordered ";q=0.5, ")
-		";q=0.5"))))
+  (let ((ordered (sort-coding-systems
+		  (let (accum)
+		    (dolist (elt mm-mime-mule-charset-alist)
+		      (if (coding-system-p (car elt))
+			  (push (car elt) accum)))
+		    (nreverse accum)))))
+    (concat (format "%s;q=1, " (pop ordered))
+	    (mapconcat 'symbol-name ordered ";q=0.5, ")
+	    ";q=0.5")))
 
 (defvar url-mime-charset-string nil
   "String to send in the Accept-charset: field in HTTP requests.
