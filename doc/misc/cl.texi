@@ -3820,8 +3820,7 @@ are compared by @code{eql} by default; you can use the @code{:test},
 
 The standard Emacs lisp function @code{member} uses @code{equal} for
 comparisons; it is equivalent to @code{(cl-member @var{item} @var{list}
-:test 'equal)}.  With no keyword arguments, @code{cl-member} is
-equivalent to @code{memq}.
+:test 'equal)}.
 @end defun
 
 @findex cl-member-if
