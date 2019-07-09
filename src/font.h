@@ -627,7 +627,7 @@ struct font_driver
                             int pixel_size);
 
   /* Close FONT.  NOTE: this can be called by GC.  */
-  void (*close) (struct font *font);
+  void (*close_font) (struct font *font);
 
   /* Prepare FACE for displaying characters by FONT on frame F by
      storing some data in FACE->extra.  */
