@@ -436,7 +436,7 @@ extract_number_and_incr (re_char **source)
 #ifdef REGEX_EMACS_DEBUG
 
 /* Use standard I/O for debugging.  */
-# include <stdio.h>
+# include "sysstdio.h"
 
 static int regex_emacs_debug = -100000;
 
@@ -453,7 +453,7 @@ static void
 debug_putchar (int c)
 {
   if (c >= 32 && c <= 126)
-    fputc (c, stderr);
+    putc (c, stderr);
   else
     {
       unsigned int uc = c;
@@ -482,12 +482,12 @@ print_fastmap (char *fastmap)
 	    }
 	  if (was_a_range)
 	    {
-	      fprintf (stderr, "-");
+	      debug_putchar ('-');
 	      debug_putchar (i - 1);
 	    }
 	}
     }
-  fputc ('\n', stderr);
+  putc ('\n', stderr);
 }
 
 
@@ -503,7 +503,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 
   if (start == NULL)
     {
-      fprintf (stderr, "(null)\n");
+      fputs ("(null)\n", stderr);
       return;
     }
 
@@ -515,11 +515,11 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
       switch ((re_opcode_t) *p++)
 	{
 	case no_op:
-	  fprintf (stderr, "/no_op");
+	  fputs ("/no_op", stderr);
 	  break;
 
 	case succeed:
-	  fprintf (stderr, "/succeed");
+	  fputs ("/succeed", stderr);
 	  break;
 
 	case exactn:
@@ -527,7 +527,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  fprintf (stderr, "/exactn/%d", mcnt);
 	  do
 	    {
-	      fprintf (stderr, "/");
+	      debug_putchar ('/');
 	      debug_putchar (*p++);
 	    }
 	  while (--mcnt);
@@ -546,7 +546,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  break;
 
 	case anychar:
-	  fprintf (stderr, "/anychar");
+	  fputs ("/anychar", stderr);
 	  break;
 
 	case charset:
@@ -561,7 +561,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 		     (re_opcode_t) *(p - 1) == charset_not ? "^" : "");
 
 	    if (p + *p >= pend)
-	      fprintf (stderr, " !extends past end of pattern! ");
+	      fputs (" !extends past end of pattern! ", stderr);
 
 	    for (c = 0; c < 256; c++)
 	      if (c / 8 < length
@@ -570,7 +570,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 		  /* Are we starting a range?  */
 		  if (last + 1 == c && ! in_range)
 		    {
-		      fprintf (stderr, "-");
+		      debug_putchar ('-');
 		      in_range = true;
 		    }
 		  /* Have we broken a range?  */
@@ -589,14 +589,14 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	    if (in_range)
 	      debug_putchar (last);
 
-	    fprintf (stderr, "]");
+	    debug_putchar (']');
 
 	    p += 1 + length;
 
 	    if (has_range_table)
 	      {
 		int count;
-		fprintf (stderr, "has-range-table");
+		fputs ("has-range-table", stderr);
 
 		/* ??? Should print the range table; for now, just skip it.  */
 		p += 2;		/* skip range table bits */
@@ -607,11 +607,11 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  break;
 
 	case begline:
-	  fprintf (stderr, "/begline");
+	  fputs ("/begline", stderr);
 	  break;
 
 	case endline:
-	  fprintf (stderr, "/endline");
+	  fputs ("/endline", stderr);
 	  break;
 
 	case on_failure_jump:
@@ -670,70 +670,70 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  break;
 
 	case wordbound:
-	  fprintf (stderr, "/wordbound");
+	  fputs ("/wordbound", stderr);
 	  break;
 
 	case notwordbound:
-	  fprintf (stderr, "/notwordbound");
+	  fputs ("/notwordbound", stderr);
 	  break;
 
 	case wordbeg:
-	  fprintf (stderr, "/wordbeg");
+	  fputs ("/wordbeg", stderr);
 	  break;
 
 	case wordend:
-	  fprintf (stderr, "/wordend");
+	  fputs ("/wordend", stderr);
 	  break;
 
 	case symbeg:
-	  fprintf (stderr, "/symbeg");
+	  fputs ("/symbeg", stderr);
 	  break;
 
 	case symend:
-	  fprintf (stderr, "/symend");
+	  fputs ("/symend", stderr);
 	  break;
 
 	case syntaxspec:
-	  fprintf (stderr, "/syntaxspec");
+	  fputs ("/syntaxspec", stderr);
 	  mcnt = *p++;
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
 
 	case notsyntaxspec:
-	  fprintf (stderr, "/notsyntaxspec");
+	  fputs ("/notsyntaxspec", stderr);
 	  mcnt = *p++;
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
 
 	case at_dot:
-	  fprintf (stderr, "/at_dot");
+	  fputs ("/at_dot", stderr);
 	  break;
 
 	case categoryspec:
-	  fprintf (stderr, "/categoryspec");
+	  fputs ("/categoryspec", stderr);
 	  mcnt = *p++;
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
 
 	case notcategoryspec:
-	  fprintf (stderr, "/notcategoryspec");
+	  fputs ("/notcategoryspec", stderr);
 	  mcnt = *p++;
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
 
 	case begbuf:
-	  fprintf (stderr, "/begbuf");
+	  fputs ("/begbuf", stderr);
 	  break;
 
 	case endbuf:
-	  fprintf (stderr, "/endbuf");
+	  fputs ("/endbuf", stderr);
 	  break;
 
 	default:
 	  fprintf (stderr, "?%d", *(p-1));
 	}
 
-      fprintf (stderr, "\n");
+      putc ('\n', stderr);
     }
 
   fprintf (stderr, "%td:\tend of pattern.\n", p - start);
@@ -751,14 +751,13 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
 
   if (bufp->fastmap_accurate && bufp->fastmap)
     {
-      fprintf (stderr, "fastmap: ");
+      fputs ("fastmap: ", stderr);
       print_fastmap (bufp->fastmap);
     }
 
   fprintf (stderr, "re_nsub: %td\t", bufp->re_nsub);
   fprintf (stderr, "regs_alloc: %d\t", bufp->regs_allocated);
   fprintf (stderr, "can_be_null: %d\n", bufp->can_be_null);
-  fflush (stderr);
   /* Perhaps we should print the translate table?  */
 }
 
@@ -768,7 +767,7 @@ print_double_string (re_char *where, re_char *string1, ptrdiff_t size1,
 		     re_char *string2, ptrdiff_t size2)
 {
   if (where == NULL)
-    fprintf (stderr, "(null)");
+    fputs ("(null)", stderr);
   else
     {
       int i;
@@ -1751,7 +1750,7 @@ regex_compile (re_char *pattern, ptrdiff_t size,
     {
       for (ptrdiff_t debug_count = 0; debug_count < size; debug_count++)
 	debug_putchar (pattern[debug_count]);
-      fputc ('\n', stderr);
+      putc ('\n', stderr);
     }
 #endif
 

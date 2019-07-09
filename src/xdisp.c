@@ -302,7 +302,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    buffer_posn_from_coords in dispnew.c for how this is handled.  */
 
 #include <config.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
@@ -311,6 +310,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "atimer.h"
 #include "composite.h"
 #include "keyboard.h"
+#include "sysstdio.h"
 #include "systime.h"
 #include "frame.h"
 #include "window.h"
@@ -10714,7 +10714,7 @@ message_to_stderr (Lisp_Object m)
   if (noninteractive_need_newline)
     {
       noninteractive_need_newline = false;
-      fputc ('\n', stderr);
+      putc ('\n', stderr);
     }
   if (STRINGP (m))
     {
@@ -10728,7 +10728,7 @@ message_to_stderr (Lisp_Object m)
       else
 	s = m;
 
-      /* We want to write this out with a single fwrite call so that
+      /* We want to write this out with a single call so that
 	 output doesn't interleave with other processes writing to
 	 stderr at the same time. */
       {
@@ -10742,9 +10742,7 @@ message_to_stderr (Lisp_Object m)
       }
     }
   else if (!cursor_in_echo_area)
-    fputc ('\n', stderr);
-
-  fflush (stderr);
+    putc ('\n', stderr);
 }
 
 /* The non-logging version of message3.
@@ -10889,11 +10887,11 @@ vmessage (const char *m, va_list ap)
       if (m)
 	{
 	  if (noninteractive_need_newline)
-	    fputc ('\n', stderr);
+	    putc ('\n', stderr);
 	  noninteractive_need_newline = false;
 	  vfprintf (stderr, m, ap);
 	  if (!cursor_in_echo_area)
-	    fputc ('\n', stderr);
+	    putc ('\n', stderr);
 	  fflush (stderr);
 	}
     }
@@ -19648,9 +19646,9 @@ dump_glyph_row (struct glyph_row *row, int vpos, int glyphs)
 {
   if (glyphs != 1)
     {
-      fprintf (stderr, "Row     Start       End Used oE><\\CTZFesm     X    Y    W    H    V    A    P\n");
-      fprintf (stderr, "==============================================================================\n");
-
+      fputs (("Row     Start       End Used oE><\\CTZFesm     X    Y    W    H    V    A    P\n"
+	      "==============================================================================\n"),
+	     stderr);
       fprintf (stderr, "%3d %9"pD"d %9"pD"d %4d %1.1d%1.1d%1.1d%1.1d\
 %1.1d%1.1d%1.1d%1.1d%1.1d%1.1d%1.1d%1.1d  %4d %4d %4d %4d %4d %4d %4d\n",
 	       vpos,
@@ -19701,7 +19699,8 @@ dump_glyph_row (struct glyph_row *row, int vpos, int glyphs)
 	    ++glyph_end;
 
 	  if (glyph < glyph_end)
-	    fprintf (stderr, " Glyph#  Type       Pos   O   W     Code      C Face LR\n");
+	    fputs (" Glyph#  Type       Pos   O   W     Code      C Face LR\n",
+		   stderr);
 
 	  for (; glyph < glyph_end; ++glyph)
 	    dump_glyph (row, glyph, area);
@@ -19761,7 +19760,7 @@ with numeric argument, its value is passed as the GLYPHS flag.  */)
 	   BUF_PT (buffer), BUF_BEGV (buffer), BUF_ZV (buffer));
   fprintf (stderr, "Cursor x = %d, y = %d, hpos = %d, vpos = %d\n",
 	   w->cursor.x, w->cursor.y, w->cursor.hpos, w->cursor.vpos);
-  fprintf (stderr, "=============================================\n");
+  fputs ("=============================================\n", stderr);
   dump_glyph_matrix (w->current_matrix,
 		     TYPE_RANGED_FIXNUMP (int, glyphs) ? XFIXNUM (glyphs) : 0);
   return Qnil;
@@ -19778,7 +19777,7 @@ Only text-mode frames have frame glyph matrices.  */)
   if (f->current_matrix)
     dump_glyph_matrix (f->current_matrix, 1);
   else
-    fprintf (stderr, "*** This frame doesn't have a frame glyph matrix ***\n");
+    fputs ("*** This frame doesn't have a frame glyph matrix ***\n", stderr);
   return Qnil;
 }
 
@@ -25974,7 +25973,7 @@ extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 void
 dump_glyph_string (struct glyph_string *s)
 {
-  fprintf (stderr, "glyph string\n");
+  fputs ("glyph string\n", stderr);
   fprintf (stderr, "  x, y, w, h = %d, %d, %d, %d\n",
 	   s->x, s->y, s->width, s->height);
   fprintf (stderr, "  ybase = %d\n", s->ybase);

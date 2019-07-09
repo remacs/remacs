@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "font.h"
 #include "sysselect.h"
+#include "sysstdio.h"
 
 #ifdef HAVE_NS
 #ifdef __OBJC__
@@ -180,7 +181,7 @@ char const * nstrace_fullscreen_type_name (int);
                    __FILE__, __LINE__, nstrace_num++,                       \
                    2*nstrace_depth, "  | | | | | | | | | | | | | | | ..");  \
           fprintf (stderr, __VA_ARGS__);                                    \
-          fprintf (stderr, "\n");                                           \
+	  putc ('\n', stderr);						    \
         }                                                                   \
     }                                                                       \
   while(0)

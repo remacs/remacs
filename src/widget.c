@@ -31,10 +31,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include "widget.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "lisp.h"
+#include "sysstdio.h"
 #include "xterm.h"
 #include "frame.h"
 
@@ -364,8 +364,7 @@ EmacsFrameInitialize (Widget request, Widget new, ArgList dum1, Cardinal *dum2)
 
   if (!ew->emacs_frame.frame)
     {
-      fprintf (stderr,
-	       "can't create an emacs frame widget without a frame\n");
+      fputs ("can't create an emacs frame widget without a frame\n", stderr);
       exit (1);
     }
 

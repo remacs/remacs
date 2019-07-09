@@ -26,6 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "frame.h"
 #include "keyboard.h"
 #include "gtkutil.h"
+#include "sysstdio.h"
 
 #include <webkit2/webkit2.h>
 #include <JavaScriptCore/JavaScript.h>
@@ -690,7 +691,8 @@ x_draw_xwidget_glyph_string (struct glyph_string *s)
   struct xwidget *xw = XXWIDGET (xwidget);				\
   if (!xw->widget_osr || !WEBKIT_IS_WEB_VIEW (xw->widget_osr))		\
     {									\
-      printf ("ERROR xw->widget_osr does not hold a webkit instance\n"); \
+      fputs ("ERROR xw->widget_osr does not hold a webkit instance\n",	\
+	     stdout);							\
       return Qnil;							\
     }
 

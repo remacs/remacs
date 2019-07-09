@@ -212,7 +212,7 @@ ns_descriptor_to_entity (NSFontDescriptor *desc,
 
     if (NSFONT_TRACE)
       {
-	fprintf (stderr, "created font_entity:\n    ");
+	fputs ("created font_entity:\n    ", stderr);
 	debug_print (font_entity);
       }
 
@@ -1472,16 +1472,13 @@ ns_dump_glyphstring (struct glyph_string *s)
 {
   int i;
 
-  fprintf (stderr, "Glyph string len = %d at (%d, %d) overhang (%d, %d),"
-"overlap = %d, bg_filled = %d:",
+  fprintf (stderr, ("Glyph string len = %d at (%d, %d) overhang (%d, %d),"
+		    "overlap = %d, bg_filled = %d:"),
            s->nchars, s->x, s->y, s->left_overhang, s->right_overhang,
            s->row->overlapping_p, s->background_filled_p);
   for (i =0; i<s->nchars; i++)
-    {
-      int c = s->first_glyph[i].u.ch;
-      fprintf (stderr, "%c", c);
-    }
-  fprintf (stderr, "\n");
+    putc (s->first_glyph[i].u.ch, stderr);
+  putc ('\n', stderr);
 }
 
 static void syms_of_nsfont_for_pdumper (void);

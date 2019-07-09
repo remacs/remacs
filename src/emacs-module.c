@@ -81,7 +81,6 @@ To add a new module function, proceed as follows:
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -91,6 +90,7 @@ To add a new module function, proceed as follows:
 #include "coding.h"
 #include "keyboard.h"
 #include "syssignal.h"
+#include "sysstdio.h"
 #include "thread.h"
 
 #include <intprops.h>
@@ -1304,7 +1304,7 @@ module_abort (const char *format, ...)
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
-  fputc ('\n', stderr);
+  putc ('\n', stderr);
   fflush (NULL);
   emacs_abort ();
 }

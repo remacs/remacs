@@ -206,15 +206,15 @@ read_minibuf_noninteractive (Lisp_Object prompt, bool expflag,
       suppress_echo_on_tty (STDIN_FILENO);
     }
 
-  fwrite_unlocked (SDATA (prompt), 1, SBYTES (prompt), stdout);
-  fflush_unlocked (stdout);
+  fwrite (SDATA (prompt), 1, SBYTES (prompt), stdout);
+  fflush (stdout);
 
   val = Qnil;
   size = 100;
   len = 0;
   line = xmalloc (size);
 
-  while ((c = getchar_unlocked ()) != '\n' && c != '\r')
+  while ((c = getchar ()) != '\n' && c != '\r')
     {
       if (c == EOF)
 	{
@@ -224,7 +224,7 @@ read_minibuf_noninteractive (Lisp_Object prompt, bool expflag,
       else
 	{
 	  if (hide_char)
-	    fprintf (stdout, "%c", hide_char);
+	    putchar (hide_char);
 	  if (len == size)
 	    line = xpalloc (line, &size, 1, -1, sizeof *line);
 	  line[len++] = c;
@@ -234,7 +234,7 @@ read_minibuf_noninteractive (Lisp_Object prompt, bool expflag,
   /* Reset tty.  */
   if (hide_char)
     {
-      fprintf (stdout, "\n");
+      putc ('\n', stdout);
       if (etty_valid)
 	{
 	  emacs_set_tty (STDIN_FILENO, &etty, 0);

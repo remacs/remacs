@@ -3311,7 +3311,7 @@ record_char (Lisp_Object c)
       if (FIXNUMP (c))
 	{
 	  if (XUFIXNUM (c) < 0x100)
-	    putc_unlocked (XUFIXNUM (c), dribble);
+	    putc (XUFIXNUM (c), dribble);
 	  else
 	    fprintf (dribble, " 0x%"pI"x", XUFIXNUM (c));
 	}
@@ -3324,15 +3324,14 @@ record_char (Lisp_Object c)
 
 	  if (SYMBOLP (dribblee))
 	    {
-	      putc_unlocked ('<', dribble);
-	      fwrite_unlocked (SDATA (SYMBOL_NAME (dribblee)), sizeof (char),
-			       SBYTES (SYMBOL_NAME (dribblee)),
-			       dribble);
-	      putc_unlocked ('>', dribble);
+	      putc ('<', dribble);
+	      fwrite (SDATA (SYMBOL_NAME (dribblee)), sizeof (char),
+		      SBYTES (SYMBOL_NAME (dribblee)), dribble);
+	      putc ('>', dribble);
 	    }
 	}
 
-      fflush_unlocked (dribble);
+      fflush (dribble);
       unblock_input ();
     }
 }
@@ -3769,7 +3768,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	 detaching from the terminal.  */
       || (IS_DAEMON && DAEMON_RUNNING))
     {
-      int c = getchar_unlocked ();
+      int c = getchar ();
       XSETINT (obj, c);
       *kbp = current_kboard;
       return obj;
@@ -10394,7 +10393,7 @@ handle_interrupt (bool in_signal_handler)
 	  sigemptyset (&blocked);
 	  sigaddset (&blocked, SIGINT);
 	  pthread_sigmask (SIG_BLOCK, &blocked, 0);
-	  fflush_unlocked (stdout);
+	  fflush (stdout);
 	}
 
       reset_all_sys_modes ();

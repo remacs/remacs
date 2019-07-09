@@ -2466,7 +2466,7 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 
   if (*fp == NULL)
     {
-      fprintf (stderr, "Warning: ns_mouse_position () called with null *fp.\n");
+      fputs ("Warning: ns_mouse_position () called with null *fp.\n", stderr);
       return;
     }
 
@@ -5613,7 +5613,7 @@ ns_term_shutdown (int sig)
 
   if (type == NSEventTypeCursorUpdate && window == nil)
     {
-      fprintf (stderr, "Dropping external cursor update event.\n");
+      fputs ("Dropping external cursor update event.\n", stderr);
       return;
     }
 
@@ -6333,7 +6333,7 @@ not_in_argv (NSString *arg)
      https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html.  */
 
   if (NS_KEYLOG && !processingCompose)
-    fprintf (stderr, "keyDown: Begin compose sequence.\n");
+    fputs ("keyDown: Begin compose sequence.\n", stderr);
 
   /* FIXME: interpretKeyEvents doesn’t seem to send insertText if ⌘ is
      used as shift-like modifier, at least on El Capitan.  Mask it
@@ -8291,7 +8291,7 @@ not_in_argv (NSString *arg)
     }
   else
     {
-      fprintf (stderr, "Invalid data type in dragging pasteboard\n");
+      fputs ("Invalid data type in dragging pasteboard\n", stderr);
       return NO;
     }
 

@@ -233,7 +233,7 @@ printchar_to_stream (unsigned int ch, FILE *stream)
     {
       if (ASCII_CHAR_P (ch))
 	{
-	  putc_unlocked (ch, stream);
+	  putc (ch, stream);
 #ifdef WINDOWSNT
 	  /* Send the output to a debugger (nothing happens if there
 	     isn't one).  */
@@ -251,7 +251,7 @@ printchar_to_stream (unsigned int ch, FILE *stream)
 	  if (encode_p)
 	    encoded_ch = code_convert_string_norecord (encoded_ch,
 						       coding_system, true);
-	  fwrite_unlocked (SSDATA (encoded_ch), 1, SBYTES (encoded_ch), stream);
+	  fwrite (SSDATA (encoded_ch), 1, SBYTES (encoded_ch), stream);
 #ifdef WINDOWSNT
 	  if (print_output_debug_flag && stream == stderr)
 	    OutputDebugString (SSDATA (encoded_ch));
@@ -303,7 +303,7 @@ printchar (unsigned int ch, Lisp_Object fun)
 	  if (DISP_TABLE_P (Vstandard_display_table))
 	    printchar_to_stream (ch, stdout);
 	  else
-	    fwrite_unlocked (str, 1, len, stdout);
+	    fwrite (str, 1, len, stdout);
 	  noninteractive_need_newline = 1;
 	}
       else
@@ -374,7 +374,7 @@ strout (const char *ptr, ptrdiff_t size, ptrdiff_t size_byte,
 	    }
 	}
       else
-	fwrite_unlocked (ptr, 1, size_byte, stdout);
+	fwrite (ptr, 1, size_byte, stdout);
 
       noninteractive_need_newline = 1;
     }
@@ -825,7 +825,7 @@ append to existing target file.  */)
 	report_file_error ("Cannot open debugging output stream", file);
     }
 
-  fflush_unlocked (stderr);
+  fflush (stderr);
   if (dup2 (fd, STDERR_FILENO) < 0)
     report_file_error ("dup2", file);
   if (fd != stderr_dup)
@@ -840,7 +840,7 @@ void
 debug_print (Lisp_Object arg)
 {
   Fprin1 (arg, Qexternal_debugging_output);
-  fprintf (stderr, "\r\n");
+  fputs ("\r\n", stderr);
 }
 
 void safe_debug_print (Lisp_Object) EXTERNALLY_VISIBLE;

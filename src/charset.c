@@ -415,23 +415,23 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 static unsigned
 read_hex (FILE *fp, int lookahead, int *terminator, bool *overflow)
 {
-  int c = lookahead < 0 ? getc_unlocked (fp) : lookahead;
+  int c = lookahead < 0 ? getc (fp) : lookahead;
 
   while (true)
     {
       if (c == '#')
 	do
-	  c = getc_unlocked (fp);
+	  c = getc (fp);
 	while (0 <= c && c != '\n');
       else if (c == '0')
 	{
-	  c = getc_unlocked (fp);
+	  c = getc (fp);
 	  if (c < 0 || c == 'x')
 	    break;
 	}
       if (c < 0)
 	break;
-      c = getc_unlocked (fp);
+      c = getc (fp);
     }
 
   unsigned n = 0;
@@ -440,7 +440,7 @@ read_hex (FILE *fp, int lookahead, int *terminator, bool *overflow)
   if (0 <= c)
     while (true)
       {
-	c = getc_unlocked (fp);
+	c = getc (fp);
 	int digit = char_hexdigit (c);
 	if (digit < 0)
 	  break;

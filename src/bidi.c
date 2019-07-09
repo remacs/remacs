@@ -238,13 +238,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    necessary.  */
 
 #include <config.h>
-#include <stdio.h>
 
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
 #include "dispextern.h"
 #include "region-cache.h"
+#include "sysstdio.h"
 
 static bool bidi_initialized = 0;
 
@@ -3586,7 +3586,7 @@ bidi_dump_cached_states (void)
 
   if (bidi_cache_idx == 0)
     {
-      fprintf (stderr, "The cache is empty.\n");
+      fputs ("The cache is empty.\n", stderr);
       return;
     }
   fprintf (stderr, "Total of  %"pD"d state%s in cache:\n",
@@ -3597,13 +3597,11 @@ bidi_dump_cached_states (void)
   fputs ("ch  ", stderr);
   for (i = 0; i < bidi_cache_idx; i++)
     fprintf (stderr, "%*c", ndigits, bidi_cache[i].ch);
-  fputs ("\n", stderr);
-  fputs ("lvl ", stderr);
+  fputs ("\nlvl ", stderr);
   for (i = 0; i < bidi_cache_idx; i++)
     fprintf (stderr, "%*d", ndigits, bidi_cache[i].resolved_level);
-  fputs ("\n", stderr);
-  fputs ("pos ", stderr);
+  fputs ("\npos ", stderr);
   for (i = 0; i < bidi_cache_idx; i++)
     fprintf (stderr, "%*"pD"d", ndigits, bidi_cache[i].charpos);
-  fputs ("\n", stderr);
+  putc ('\n', stderr);
 }

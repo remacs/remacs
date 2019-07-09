@@ -418,21 +418,18 @@ DEFUN ("dump-colors", Fdump_colors, Sdump_colors, 0, 0, 0,
 {
   int i, n;
 
-  fputc ('\n', stderr);
+  putc ('\n', stderr);
 
   for (i = n = 0; i < ARRAYELTS (color_count); ++i)
     if (color_count[i])
       {
 	fprintf (stderr, "%3d: %5d", i, color_count[i]);
 	++n;
-	if (n % 5 == 0)
-	  fputc ('\n', stderr);
-	else
-	  fputc ('\t', stderr);
+	putc (n % 5 == 0 ? '\n' : '\t', stderr);
       }
 
   if (n % 5 != 0)
-    fputc ('\n', stderr);
+    putc ('\n', stderr);
   return Qnil;
 }
 
@@ -6363,7 +6360,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
       int red, green, blue;
       int num;
 
-      while (fgets_unlocked (buf, sizeof (buf), fp) != NULL) {
+      while (fgets (buf, sizeof (buf), fp) != NULL)
 	if (sscanf (buf, "%d %d %d %n", &red, &green, &blue, &num) == 3)
 	  {
 #ifdef HAVE_NTGUI
@@ -6377,7 +6374,6 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
 	    cmap = Fcons (Fcons (make_string (name, len), make_fixnum (color)),
 			  cmap);
 	  }
-      }
       fclose (fp);
     }
   unblock_input ();
@@ -6429,14 +6425,14 @@ DEFUN ("dump-face", Fdump_face, Sdump_face, 0, 1, 0, doc: /* */)
     {
       int i;
 
-      fprintf (stderr, "font selection order: ");
+      fputs ("font selection order: ", stderr);
       for (i = 0; i < ARRAYELTS (font_sort_order); ++i)
 	fprintf (stderr, "%d ", font_sort_order[i]);
-      fprintf (stderr, "\n");
+      putc ('\n', stderr);
 
-      fprintf (stderr, "alternative fonts: ");
+      fputs ("alternative fonts: ", stderr);
       debug_print (Vface_alternative_font_family_alist);
-      fprintf (stderr, "\n");
+      putc ('\n', stderr);
 
       for (i = 0; i < FRAME_FACE_CACHE (SELECTED_FRAME ())->used; ++i)
 	Fdump_face (make_fixnum (i));

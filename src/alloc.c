@@ -22,7 +22,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>		/* For CHAR_BIT.  */
 #include <signal.h>		/* For SIGABRT, SIGDANGER.  */
@@ -38,6 +37,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "ptr-bounds.h"
 #include "puresize.h"
 #include "sheap.h"
+#include "sysstdio.h"
 #include "systime.h"
 #include "character.h"
 #include "buffer.h"
@@ -4813,10 +4813,10 @@ test_setjmp (void)
          taking place, or the setjmp just didn't save the register.  */
 
       if (x == 1)
-	fprintf (stderr, SETJMP_WILL_LIKELY_WORK);
+	fputs (SETJMP_WILL_LIKELY_WORK, stderr);
       else
 	{
-	  fprintf (stderr, SETJMP_WILL_NOT_WORK);
+	  fputs (SETJMP_WILL_NOT_WORK, stderr);
 	  exit (1);
 	}
     }

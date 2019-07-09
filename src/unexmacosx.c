@@ -97,9 +97,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "unexec.h"
 #include "lisp.h"
+#include "sysstdio.h"
 
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -303,9 +303,9 @@ unexec_error (const char *format, ...)
   va_list ap;
 
   va_start (ap, format);
-  fprintf (stderr, "unexec: ");
+  fputs ("unexec: ", stderr);
   vfprintf (stderr, format, ap);
-  fprintf (stderr, "\n");
+  putc ('\n', stderr);
   va_end (ap);
   exit (1);
 }

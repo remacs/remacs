@@ -21,12 +21,12 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 /* Xt features made by Fred Pierresteguy.  */
 
 #include <config.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include "lisp.h"
 #include "blockinput.h"
+#include "sysstdio.h"
 
 /* This may include sys/types.h, and that somehow loses
    if this is not done before the other system files.  */
@@ -13441,8 +13441,8 @@ x_initialize (void)
 #if THREADS_ENABLED
   /* This must be called before any other Xlib routines.  */
   if (XInitThreads () == 0)
-    fprintf (stderr,
-	     "Warning: An error occurred initializing X11 thread support!\n");
+    fputs ("Warning: An error occurred initializing X11 thread support!\n",
+	   stderr);
 #endif
 
 #ifdef USE_X_TOOLKIT

@@ -1125,12 +1125,12 @@ main (int argc, char **argv)
 	  tem2 = Fsymbol_value (intern_c_string ("emacs-copyright"));
 	  if (!STRINGP (tem))
 	    {
-	      fprintf (stderr, "Invalid value of 'emacs-version'\n");
+	      fputs ("Invalid value of 'emacs-version'\n", stderr);
 	      exit (1);
 	    }
 	  if (!STRINGP (tem2))
 	    {
-	      fprintf (stderr, "Invalid value of 'emacs-copyright'\n");
+	      fputs ("Invalid value of 'emacs-copyright'\n", stderr);
 	      exit (1);
 	    }
 	  else
@@ -1144,13 +1144,14 @@ main (int argc, char **argv)
 	  version = emacs_version;
 	  copyright = emacs_copyright;
 	}
-      printf ("%s %s\n", PACKAGE_NAME, version);
-      printf ("%s\n", copyright);
-      printf ("%s comes with ABSOLUTELY NO WARRANTY.\n", PACKAGE_NAME);
-      printf ("You may redistribute copies of %s\n", PACKAGE_NAME);
-      printf ("under the terms of the GNU General Public License.\n");
-      printf ("For more information about these matters, ");
-      printf ("see the file named COPYING.\n");
+      printf (("%s %s\n"
+	       "%s\n"
+	       "%s comes with ABSOLUTELY NO WARRANTY.\n"
+	       "You may redistribute copies of %s\n"
+	       "under the terms of the GNU General Public License.\n"
+	       "For more information about these matters, "
+	       "see the file named COPYING.\n"),
+	      PACKAGE_NAME, version, copyright, PACKAGE_NAME, PACKAGE_NAME);
       exit (0);
     }
 
@@ -1246,7 +1247,7 @@ main (int argc, char **argv)
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
-  clearerr_unlocked (stdin);
+  clearerr (stdin);
 
   emacs_backtrace (-1);
 
@@ -1344,7 +1345,7 @@ main (int argc, char **argv)
       int i;
       printf ("Usage: %s [OPTION-OR-FILENAME]...\n", argv[0]);
       for (i = 0; i < ARRAYELTS (usage_message); i++)
-	fputs_unlocked (usage_message[i], stdout);
+	fputs (usage_message[i], stdout);
       exit (0);
     }
 
@@ -1402,7 +1403,7 @@ main (int argc, char **argv)
              before exiting.  */
           if (emacs_pipe (daemon_pipe) != 0)
             {
-              fprintf (stderr, "Cannot pipe!\n");
+              fputs ("Cannot pipe!\n", stderr);
               exit (1);
             }
         } /* daemon_type == 2 */
@@ -1412,10 +1413,10 @@ main (int argc, char **argv)
       int systemd_socket = sd_listen_fds (1);
 
       if (systemd_socket > 1)
-        fprintf (stderr,
-		 ("\n"
-		  "Warning: systemd passed more than one socket to Emacs.\n"
-		  "Try 'Accept=false' in the Emacs socket unit file.\n"));
+        fputs (("\n"
+		"Warning: systemd passed more than one socket to Emacs.\n"
+		"Try 'Accept=false' in the Emacs socket unit file.\n"),
+	       stderr);
       else if (systemd_socket == 1
 	       && (0 < sd_is_socket (SD_LISTEN_FDS_START,
 				     AF_UNSPEC, SOCK_STREAM, 1)))
@@ -1423,9 +1424,10 @@ main (int argc, char **argv)
 #endif /* HAVE_LIBSYSTEMD */
 
 #ifdef USE_GTK
-      fprintf (stderr, "\nWarning: due to a long standing Gtk+ bug\nhttps://gitlab.gnome.org/GNOME/gtk/issues/221\n\
+      fputs ("\nWarning: due to a long standing Gtk+ bug\nhttps://gitlab.gnome.org/GNOME/gtk/issues/221\n\
 Emacs might crash when run in daemon mode and the X11 connection is unexpectedly lost.\n\
-Using an Emacs configured with --with-x-toolkit=lucid does not have this problem.\n");
+Using an Emacs configured with --with-x-toolkit=lucid does not have this problem.\n",
+	     stderr);
 #endif /* USE_GTK */
 
       if (daemon_type == 2)
@@ -1457,12 +1459,12 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
               if (retval < 0)
                 {
-                  fprintf (stderr, "Error reading status from child\n");
+                  fputs ("Error reading status from child\n", stderr);
                   exit (1);
                 }
               else if (retval == 0)
                 {
-                  fprintf (stderr, "Error: server did not start correctly\n");
+                  fputs ("Error: server did not start correctly\n", stderr);
                   exit (1);
                 }
 
@@ -1488,7 +1490,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
                 if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
                   {
-                    fprintf (stderr, "daemon: child name too long\n");
+                    fputs ("daemon: child name too long\n", stderr);
                     exit (EXIT_CANNOT_INVOKE);
                   }
 
@@ -1504,10 +1506,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
             /* In exec'd: parse special dname into pipe and name info. */
             if (!dname_arg || !*dname_arg || strnlen (dname_arg, 71) == 71
 		|| !strchr (dname_arg, '\n'))
-          {
-            fprintf (stderr, "emacs daemon: daemon name absent or too long\n");
-            exit (EXIT_CANNOT_INVOKE);
-          }
+	      {
+		fputs ("emacs daemon: daemon name absent or too long\n",
+		       stderr);
+		exit (EXIT_CANNOT_INVOKE);
+	      }
             dname_arg2[0] = '\0';
             sscanf (dname_arg, "\n%d,%d\n%s", &(daemon_pipe[0]), &(daemon_pipe[1]),
                     dname_arg2);
@@ -1531,7 +1534,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
           exit (1);
         }
 #else /* MSDOS */
-      fprintf (stderr, "This platform does not support daemon mode.\n");
+      fputs ("This platform does not support daemon mode.\n", stderr);
       exit (1);
 #endif /* MSDOS */
       if (dname_arg)
@@ -2545,16 +2548,15 @@ You must run Emacs in batch mode in order to dump it.  */)
 #  define MAX_HEAP_BSS_DIFF (1024 * 1024)
 
   if (heap_bss_diff > MAX_HEAP_BSS_DIFF)
-    {
-      fprintf (stderr, "**************************************************\n");
-      fprintf (stderr, "Warning: Your system has a gap between BSS and the\n");
-      fprintf (stderr, ("heap (%"PRIuMAX" bytes).  "
-			"This usually means that exec-shield\n"),
-               heap_bss_diff);
-      fprintf (stderr, "or something similar is in effect.  The dump may\n");
-      fprintf (stderr, "fail because of this.  See the section about\n");
-      fprintf (stderr, "exec-shield in etc/PROBLEMS for more information.\n");
-      fprintf (stderr, "**************************************************\n");
+    fprintf (stderr,
+	     ("**************************************************\n"
+	      "Warning: Your system has a gap between BSS and the\n"
+	      "heap (%"PRIuMAX" bytes). This usually means that exec-shield\n"
+	      "or something similar is in effect.  The dump may\n"
+	      "fail because of this.  See the section about\n"
+	      "exec-shield in etc/PROBLEMS for more information.\n"
+	      "**************************************************\n"),
+	     heap_bss_diff);
     }
 # endif
 
@@ -2591,7 +2593,7 @@ You must run Emacs in batch mode in order to dump it.  */)
   }
 # endif
 
-  fflush_unlocked (stdout);
+  fflush (stdout);
   /* Tell malloc where start of impure now is.  */
   /* Also arrange for warnings when nearly out of space.  */
 # if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC && !defined WINDOWSNT

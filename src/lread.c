@@ -490,13 +490,12 @@ readbyte_from_stdio (void)
   block_input ();
 
   /* Interrupted reads have been observed while reading over the network.  */
-  while ((c = getc_unlocked (instream)) == EOF && errno == EINTR
-	 && ferror_unlocked (instream))
+  while ((c = getc (instream)) == EOF && errno == EINTR && ferror (instream))
     {
       unblock_input ();
       maybe_quit ();
       block_input ();
-      clearerr_unlocked (instream);
+      clearerr (instream);
     }
 
   unblock_input ();
@@ -3063,7 +3062,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  = c = infile->buf[--infile->lookahead];
 	      block_input ();
 	      for (; i < nskip && 0 <= c; i++)
-		saved_doc_string[i] = c = getc_unlocked (instream);
+		saved_doc_string[i] = c = getc (instream);
 	      unblock_input ();
 
 	      saved_doc_string_length = i;
