@@ -3019,7 +3019,7 @@ cleanup_vector (struct Lisp_Vector *vector)
 	    {
 	      /* Attempt to catch subtle bugs like Bug#16140.  */
 	      eassert (valid_font_driver (drv));
-	      drv->close (font);
+	      drv->close_font (font);
 	    }
 	}
     }

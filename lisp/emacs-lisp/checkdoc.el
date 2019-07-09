@@ -929,7 +929,10 @@ don't move point."
   (pcase (save-excursion (condition-case nil
                              (read (current-buffer))
                            ;; Conservatively skip syntax errors.
-                           (invalid-read-syntax)))
+                           (invalid-read-syntax)
+                           ;; Don't bug out if the file is empty (or a
+                           ;; definition ends prematurely.
+                           (end-of-file)))
     (`(,(or 'defun 'defvar 'defcustom 'defmacro 'defconst 'defsubst 'defadvice)
        ,(pred symbolp)
        ;; Require an initializer, i.e. ignore single-argument `defvar'
@@ -2250,7 +2253,10 @@ Code:, and others referenced in the style guide."
 		    (re-search-forward "^(require" nil t)
 		    (re-search-forward "^(" nil t))
 		(beginning-of-line))
-	       (t (re-search-forward ";;; .* --- .*\n")))
+	       ((not (re-search-forward ";;; .* --- .*\n" nil t))
+                (checkdoc-create-error
+                 "You should have a summary line (\";;; .* --- .*\")"
+                 nil nil t)))
 	      (if (checkdoc-y-or-n-p
 		   "You should have a \";;; Commentary:\", add one? ")
 		  (insert "\n;;; Commentary:\n;; \n\n")

@@ -29,7 +29,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
    by a fingerprint of the temporary Emacs executable that was built
    along the way.  */
 
-unsigned char const fingerprint[] =
+volatile unsigned char fingerprint[] =
   {
    0xDE,
    0x86,

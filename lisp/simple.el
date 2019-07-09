@@ -1784,14 +1784,18 @@ to get different commands to edit and resubmit."
 (defcustom suggest-key-bindings t
   "Non-nil means show the equivalent key-binding when M-x command has one.
 The value can be a length of time to show the message for.
-If the value is non-nil and not a number, we wait 2 seconds."
+If the value is non-nil and not a number, we wait 2 seconds.
+
+Also see `extended-command-suggest-shorter'."
   :group 'keyboard
   :type '(choice (const :tag "off" nil)
                  (integer :tag "time" 2)
                  (other :tag "on")))
 
 (defcustom extended-command-suggest-shorter t
-  "If non-nil, show a shorter M-x invocation when there is one."
+  "If non-nil, show a shorter M-x invocation when there is one.
+
+Also see `suggest-key-bindings'."
   :group 'keyboard
   :type 'boolean
   :version "26.1")
@@ -3624,12 +3628,12 @@ impose the use of a shell (with its need to quote arguments)."
 		    ;; If will kill a process, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Kill it? ")
 			(kill-process proc)
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'confirm-new-buffer)
 		    ;; If will create a new buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Use a new buffer? ")
                         (setq buffer (generate-new-buffer bname))
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'new-buffer)
 		    ;; It will create a new buffer.
                     (setq buffer (generate-new-buffer bname)))
@@ -3640,7 +3644,7 @@ impose the use of a shell (with its need to quote arguments)."
 			  (with-current-buffer buffer
 			    (rename-uniquely))
                           (setq buffer (get-buffer-create bname)))
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'rename-buffer)
 		    ;; It will rename the buffer.
 		    (with-current-buffer buffer

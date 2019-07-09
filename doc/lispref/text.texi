@@ -1408,6 +1408,10 @@ Where a command affects the contents of several buffers, as may happen,
 for example, when a function on the @code{post-command-hook} affects a
 buffer other than the @code{current-buffer}, then @code{undo-boundary}
 will be called in each of the affected buffers.
+
+This function can be called before an amalgamating command.  It
+removes the previous @code{undo-boundary} if a series of such calls
+have been made.
 @end defun
 
 @defvar undo-auto-current-boundary-timer

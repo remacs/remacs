@@ -48,7 +48,7 @@
 
 (ert-deftest image-type-from-file-header-test ()
   "Test image-type-from-file-header."
-  (should (eq 'svg
+  (should (eq (if (image-type-available-p 'svg) 'svg)
 	      (image-type-from-file-header
 	       (expand-file-name "splash.svg"
 				 image-tests--emacs-images-directory)))))

@@ -44,10 +44,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-/* Avoid macro definition of `open' in generated lib/fcntl.h to mess up
-   use of it as a struct member.  */
-#undef open
-
 #define DEFAULT_ENCODING Qiso8859_1
 
 /* Vector of Vfont_weight_table, Vfont_slant_table, and Vfont_width_table. */
@@ -2646,7 +2642,7 @@ font_clear_cache (struct frame *f, Lisp_Object cache,
 		      if (! NILP (AREF (val, FONT_TYPE_INDEX)))
 			{
 			  eassert (font && driver == font->driver);
-			  driver->close (font);
+			  driver->close_font (font);
 			}
 		    }
 		  if (driver->free_entity)
@@ -2906,7 +2902,7 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
      width and height.  */
   for (psize = pixel_size; ; psize++)
     {
-      font_object = driver_list->driver->open (f, entity, psize);
+      font_object = driver_list->driver->open_font (f, entity, psize);
       if (NILP (font_object))
 	return Qnil;
       font = XFONT_OBJECT (font_object);
@@ -2966,7 +2962,7 @@ font_close_object (struct frame *f, Lisp_Object font_object)
     /* Already closed.  */
     return;
   FONT_ADD_LOG ("close", font_object, Qnil);
-  font->driver->close (font);
+  font->driver->close_font (font);
 #ifdef HAVE_WINDOW_SYSTEM
   eassert (FRAME_DISPLAY_INFO (f)->n_fonts);
   FRAME_DISPLAY_INFO (f)->n_fonts--;

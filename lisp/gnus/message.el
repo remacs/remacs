@@ -8108,7 +8108,13 @@ From headers in the original article."
 	 (emails
 	  (message-tokenize-header
 	   (mail-strip-quoted-names
-	    (mapconcat 'message-fetch-reply-field fields ","))))
+	    (mapconcat
+	     #'identity
+	     (cl-loop for field in fields
+		      for value = (message-fetch-reply-field field)
+		      when value
+		      collect value)
+	     ","))))
 	 (email
           (cond ((functionp message-alternative-emails)
                  (car (cl-remove-if-not message-alternative-emails emails)))

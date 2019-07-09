@@ -11153,7 +11153,7 @@ If NO-EXPIRE, auto-expiry will be inhibited."
 	t
       (if (<= article 0)
 	  (progn
-	    (gnus-error 1 "Can't mark negative article numbers")
+	    (gnus-error 1 "Gnus doesn't know the article number; can't mark")
 	    nil)
 	(setq gnus-newsgroup-marked (delq article gnus-newsgroup-marked))
 	(setq gnus-newsgroup-spam-marked
@@ -11326,7 +11326,7 @@ If NO-EXPIRE, auto-expiry will be inhibited."
   (let ((mark (or mark gnus-ticked-mark)))
     (if (<= article 0)
 	(progn
-	  (gnus-error 1 "Can't mark negative article numbers")
+	  (gnus-error 1 "Gnus doesn't know the article number; can't mark")
 	  nil)
       (setq gnus-newsgroup-marked (delq article gnus-newsgroup-marked)
 	    gnus-newsgroup-spam-marked (delq article gnus-newsgroup-spam-marked)
@@ -12188,11 +12188,15 @@ performed."
 	(save-window-excursion
 	  (gnus-summary-select-article decode decode nil article)
 	  (gnus-summary-goto-subject article))
-	(with-current-buffer save-buffer
-	  (erase-buffer)
-	  (insert-buffer-substring (if decode
-				       gnus-article-buffer
-				     gnus-original-article-buffer)))
+	;; The article may have expired.
+	(let ((art-buf (if decode
+			   gnus-article-buffer
+			 gnus-original-article-buffer)))
+	  (when (zerop (buffer-size (get-buffer art-buf)))
+	    (error "Couldn't select article %s" article))
+	  (with-current-buffer save-buffer
+	    (erase-buffer)
+	    (insert-buffer-substring art-buf)))
 	(setq file (gnus-article-save save-buffer file num))
 	(gnus-summary-remove-process-mark article)
 	(unless not-saved

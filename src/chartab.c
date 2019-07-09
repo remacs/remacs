@@ -1288,7 +1288,7 @@ uniprop_table (Lisp_Object prop)
   if (STRINGP (table))
     {
       AUTO_STRING (intl, "international/");
-      result = Fload (concat2 (intl, table), Qt, Qt, Qt, Qt);
+      result = save_match_data_load (concat2 (intl, table), Qt, Qt, Qt, Qt);
       if (NILP (result))
 	return Qnil;
       table = XCDR (val);

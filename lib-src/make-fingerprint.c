@@ -144,7 +144,8 @@ main (int argc, char **argv)
 
       for (char *finger = buf;
 	   (finger = memmem (finger, buf + chunksz - finger,
-			     fingerprint, sizeof fingerprint));
+			     (unsigned char *) fingerprint,
+			     sizeof fingerprint));
 	   finger++)
 	{
 	  if (! (fseeko (f, finger - buf, SEEK_SET) == 0

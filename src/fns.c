@@ -2984,8 +2984,9 @@ suppressed.  */)
       Vautoload_queue = Qt;
 
       /* Load the file.  */
-      tem = Fload (NILP (filename) ? Fsymbol_name (feature) : filename,
-		   noerror, Qt, Qnil, (NILP (filename) ? Qt : Qnil));
+      tem = save_match_data_load
+	(NILP (filename) ? Fsymbol_name (feature) : filename,
+	 noerror, Qt, Qnil, (NILP (filename) ? Qt : Qnil));
 
       /* If load failed entirely, return nil.  */
       if (NILP (tem))
