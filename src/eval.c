@@ -2049,9 +2049,6 @@ it defines a macro.  */)
 
   CHECK_SYMBOL (funname);
 
-  /* Preserve the match data.  */
-  record_unwind_save_match_data ();
-
   /* If autoloading gets an error (which includes the error of failing
      to define the function being called), we use Vautoload_queue
      to undo function definitions and `provide' calls made by
@@ -2067,7 +2064,7 @@ it defines a macro.  */)
      so don't signal an error if autoloading fails.  */
   Lisp_Object ignore_errors
     = (EQ (kind, Qt) || EQ (kind, Qmacro)) ? Qnil : macro_only;
-  Fload (Fcar (Fcdr (fundef)), ignore_errors, Qt, Qnil, Qt);
+  save_match_data_load (Fcar (Fcdr (fundef)), ignore_errors, Qt, Qnil, Qt);
 
   /* Once loading finishes, don't undo it.  */
   Vautoload_queue = Qt;

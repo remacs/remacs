@@ -302,7 +302,7 @@ reread_doc_file (Lisp_Object file)
   if (NILP (file))
     Fsnarf_documentation (Vdoc_file_name);
   else
-    Fload (file, Qt, Qt, Qt, Qnil);
+    save_match_data_load (file, Qt, Qt, Qt, Qnil);
 
   return 1;
 }

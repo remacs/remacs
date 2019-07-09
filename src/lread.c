@@ -1508,6 +1508,17 @@ Return t if the file exists and loads successfully.  */)
 
   return Qt;
 }
+
+Lisp_Object
+save_match_data_load (Lisp_Object file, Lisp_Object noerror,
+		      Lisp_Object nomessage, Lisp_Object nosuffix,
+		      Lisp_Object must_suffix)
+{
+  ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_save_match_data ();
+  Lisp_Object result = Fload (file, noerror, nomessage, nosuffix, must_suffix);
+  return unbind_to (count, result);
+}
 
 static bool
 complete_filename_p (Lisp_Object pathname)
