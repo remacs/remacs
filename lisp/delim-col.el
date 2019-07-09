@@ -258,7 +258,25 @@ at the left corner."
 (defun delimit-columns-region (start end)
   "Prettify all columns in a text region.
 
-START and END delimit the text region."
+START and END delimit the text region.
+
+If you have, for example, the following columns:
+
+       a       b       c       d
+       aaaa    bb      ccc     ddddd
+
+Depending on your settings (see below), you then obtain the
+following result:
+
+       [ a   , b  , c      , d     ]
+       [ aaaa, bb , ccc    , ddddd ]
+
+See the `delimit-columns-str-before',
+`delimit-columns-str-after', `delimit-columns-str-separator',
+`delimit-columns-before', `delimit-columns-after',
+`delimit-columns-separator', `delimit-columns-format' and
+`delimit-columns-extra' variables for customization of the
+look. "
   (interactive "*r")
   (if rectangle-mark-mode
       ;; Delegate to delimit-columns-rectangle when called with a
@@ -313,6 +331,8 @@ START and END delimit the text region."
 ;;;###autoload
 (defun delimit-columns-rectangle (start end)
   "Prettify all columns in a text rectangle.
+
+See `delimit-columns-region' for what this entails.
 
 START and END delimit the corners of the text rectangle."
   (interactive "*r")
