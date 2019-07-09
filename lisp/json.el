@@ -691,7 +691,19 @@ become JSON objects."
 
 (defun json-read ()
   "Parse and return the JSON object following point.
-Advances point just past JSON object."
+Advances point just past JSON object.
+
+If called with the following JSON after point
+
+  {\"a\": [1, 2, {\"c\": false}],
+   \"b\": \"foo\"}
+
+you will get the following structure returned:
+
+  ((a .
+      [1 2
+         ((c . :json-false))])
+   (b . \"foo\"))"
   (json-skip-whitespace)
   (let ((char (json-peek)))
     (if (zerop char)
@@ -719,7 +731,11 @@ Advances point just past JSON object."
 ;;; JSON encoder
 
 (defun json-encode (object)
-  "Return a JSON representation of OBJECT as a string."
+  "Return a JSON representation of OBJECT as a string.
+
+OBJECT should have a structure like one returned by `json-read'.
+If an error is detected during encoding, an error based on
+`json-error' is signalled."
   (cond ((memq object (list t json-null json-false))
          (json-encode-keyword object))
         ((stringp object)      (json-encode-string object))
