@@ -686,6 +686,7 @@ literals (Bug#20852)."
 
 (ert-deftest bytecomp-test--switch-duplicates ()
   "Check that duplicates in switches are eliminated correctly (bug#35770)."
+  :expected-result (if byte-compile-cond-use-jump-table :passed :failed)
   (dolist (params
            '(((lambda (x)
                 (cond ((eq x 'a) 111)
