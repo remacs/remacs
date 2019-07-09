@@ -455,7 +455,7 @@ matching parts of the target buffer will be highlighted."
     (setq re (substring re 1 (1- (length re))))
     (setq re (replace-regexp-in-string "\n" "\\n" re nil t))
     (kill-new re)
-    (message "Regexp copied to kill-ring")))
+    (message "Copied regexp `%s' to kill-ring" re)))
 
 ;; The subexpression mode is not electric because the number of
 ;; matches should be seen rather than a prompt.
