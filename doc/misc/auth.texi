@@ -97,8 +97,7 @@ machine @var{mymachine} login @var{myloginname} password @var{mypassword} port @
 @end example
 
 The @code{machine} is the server (either a DNS name or an IP address).
-It's known as @var{:host} in @code{auth-source-search} queries.  You
-can also use @code{host}.
+It's known as @var{:host} in @code{auth-source-search} queries.
 
 The @code{port} is the connection port or protocol.  It's known as
 @var{:port} in @code{auth-source-search} queries.
