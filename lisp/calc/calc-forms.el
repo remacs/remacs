@@ -1491,7 +1491,7 @@ second, the number of seconds offset for daylight savings."
                     (calendar-current-time-zone)
                     calendar-current-time-zone-cache)))
       (setq math-calendar-tzinfo
-            (list (* 60 (abs (nth 0 tzinfo)))
+            (list (* 60 (- (nth 0 tzinfo)))
                   (* 60 (nth 1 tzinfo)))))))
 
 (defun calcFunc-tzone (&optional zone date)
