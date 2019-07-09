@@ -58,7 +58,7 @@ INLINE_HEADER_BEGIN
 	Lisp object encapsulating "struct font".  This corresponds to
 	an opened font.
 
-	Note: Only the method `open' of a font-driver can create this
+	Note: Only the method `open_font' of a font-driver can create this
 	object, and it should never be modified by Lisp.  */
 
 
@@ -594,9 +594,9 @@ struct font_driver
      :weight, :slant, :width, :size, :dpi, :spacing, :avgwidth.  If
      the font is scalable, :size and :avgwidth must be 0.
 
-     The `open' method of the same font-backend is called with one of
+     The `open_font' method of the same font-backend is called with one of
      the returned font-entities.  If the backend needs additional
-     information to be used in `open' method, this method can add any
+     information to be used in `open_font' method, this method can add any
      Lispy value using the property :font-entity to the entities.
 
      This and the following `match' are the only APIs that allocate
@@ -623,8 +623,8 @@ struct font_driver
 
   /* Open a font specified by FONT_ENTITY on frame F.  If the font is
      scalable, open it with PIXEL_SIZE.  */
-  Lisp_Object (*open) (struct frame *f, Lisp_Object font_entity,
-                       int pixel_size);
+  Lisp_Object (*open_font) (struct frame *f, Lisp_Object font_entity,
+                            int pixel_size);
 
   /* Close FONT.  NOTE: this can be called by GC.  */
   void (*close) (struct font *font);
