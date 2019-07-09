@@ -3628,12 +3628,12 @@ impose the use of a shell (with its need to quote arguments)."
 		    ;; If will kill a process, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Kill it? ")
 			(kill-process proc)
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'confirm-new-buffer)
 		    ;; If will create a new buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Use a new buffer? ")
                         (setq buffer (generate-new-buffer bname))
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'new-buffer)
 		    ;; It will create a new buffer.
                     (setq buffer (generate-new-buffer bname)))
@@ -3644,7 +3644,7 @@ impose the use of a shell (with its need to quote arguments)."
 			  (with-current-buffer buffer
 			    (rename-uniquely))
                           (setq buffer (get-buffer-create bname)))
-		      (error "Shell command in progress")))
+		      (user-error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'rename-buffer)
 		    ;; It will rename the buffer.
 		    (with-current-buffer buffer
