@@ -4643,11 +4643,11 @@ If you always want Gnus to send messages in one piece, set
 
 (defun message--fold-long-headers ()
   "Fold too-long header lines.
-They should be no longer than 998 octets long."
+Each line should be no more than 79 characters long."
   (goto-char (point-min))
   (while (not (eobp))
     (when (and (looking-at "[^:]+:")
-               (> (- (line-end-position) (point)) 998))
+               (> (- (line-end-position) (point)) 79))
       (mail-header-fold-field))
     (forward-line 1)))
 
