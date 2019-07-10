@@ -1472,9 +1472,6 @@ as measured in the integer number of days before December 31, 1 BC (Gregorian)."
 
 (defvar var-TimeZone nil)
 
-;; From cal-dst
-(defvar calendar-current-time-zone-cache)
-
 (defvar math-calendar-tzinfo
   nil
   "Information about the timezone, retrieved from the calendar.")
@@ -1487,9 +1484,7 @@ second, the number of seconds offset for daylight savings."
   (if math-calendar-tzinfo
       math-calendar-tzinfo
     (require 'cal-dst)
-    (let ((tzinfo (progn
-                    (calendar-current-time-zone)
-                    calendar-current-time-zone-cache)))
+    (let ((tzinfo (calendar-current-time-zone)))
       (setq math-calendar-tzinfo
             (list (* 60 (- (nth 0 tzinfo)))
                   (* 60 (nth 1 tzinfo)))))))
