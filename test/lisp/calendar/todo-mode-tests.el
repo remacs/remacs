@@ -572,7 +572,7 @@ for todo-insert-item for use in automatic testing."
              (lambda (_prompt) item))
             ((symbol-function 'read-number) ; For todo-set-item-priority
              (lambda (_prompt &optional _default) (or priority 1))))
-    (todo-insert-item--basic)))
+    (todo-insert-item--basic nil diary-type date-type time where)))
 
 (ert-deftest todo-test-toggle-item-header07 () ; bug#27609
   "Test display of hidden item header under todo-insert-item."
