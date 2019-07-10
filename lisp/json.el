@@ -764,13 +764,15 @@ With prefix argument MINIMIZE, minimize it instead."
         (json-null :json-null)
         ;; Ensure that ordering is maintained
         (json-object-type 'alist)
+        (err (gensym))
         json)
     (save-restriction
       (narrow-to-region begin end)
       (goto-char begin)
-      (while (setq json (condition-case _
-                            (json-read)
-                          (json-error nil)))
+      (while (not (eq (setq json (condition-case _
+                                     (json-read)
+                                   (json-error err)))
+                      err))
         (delete-region begin (point))
         (insert (json-encode json))
         (setq begin (point))))))
