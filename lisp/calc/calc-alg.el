@@ -842,11 +842,13 @@ and should return the simplified expression to use (or nil)."
       (and (eq calc-angle-mode 'rad)
 	   (let ((n (math-linear-in (nth 1 expr) '(var pi var-pi))))
 	     (and n
-		  (math-div 1 (math-known-sin (car n) (nth 1 n) 120 300)))))
+                  (let ((s (math-known-sin (car n) (nth 1 n) 120 300)))
+                    (and s (math-div 1 s))))))
       (and (eq calc-angle-mode 'deg)
 	   (let ((n (math-integer-plus (nth 1 expr))))
 	     (and n
-                  (math-div 1 (math-known-sin (car n) (nth 1 n) '(frac 2 3) 300)))))
+                  (let ((s (math-known-sin (car n) (nth 1 n) '(frac 2 3) 300)))
+                    (and s (math-div 1 s))))))
       (and (eq (car-safe (nth 1 expr)) 'calcFunc-arcsin)
            (math-div
             1
@@ -867,11 +869,13 @@ and should return the simplified expression to use (or nil)."
       (and (eq calc-angle-mode 'rad)
 	   (let ((n (math-linear-in (nth 1 expr) '(var pi var-pi))))
 	     (and n
-                  (math-div 1 (math-known-sin (car n) (nth 1 n) 120 0)))))
+                  (let ((s (math-known-sin (car n) (nth 1 n) 120 0)))
+                    (and s (math-div 1 s))))))
       (and (eq calc-angle-mode 'deg)
 	   (let ((n (math-integer-plus (nth 1 expr))))
 	     (and n
-                  (math-div 1 (math-known-sin (car n) (nth 1 n) '(frac 2 3) 0)))))
+                  (let ((s (math-known-sin (car n) (nth 1 n) '(frac 2 3) 0)))
+                    (and s (math-div 1 s))))))
       (and (eq (car-safe (nth 1 expr)) 'calcFunc-arcsin)
 	   (math-div 1 (nth 1 (nth 1 expr))))
       (and (eq (car-safe (nth 1 expr)) 'calcFunc-arccos)
@@ -972,11 +976,13 @@ and should return the simplified expression to use (or nil)."
       (and (eq calc-angle-mode 'rad)
 	   (let ((n (math-linear-in (nth 1 expr) '(var pi var-pi))))
 	     (and n
-                  (math-div 1 (math-known-tan (car n) (nth 1 n) 120)))))
+                  (let ((tn (math-known-tan (car n) (nth 1 n) 120)))
+                    (and tn (math-div 1 tn))))))
       (and (eq calc-angle-mode 'deg)
 	   (let ((n (math-integer-plus (nth 1 expr))))
 	     (and n
-                  (math-div 1 (math-known-tan (car n) (nth 1 n) '(frac 2 3))))))
+                  (let ((tn (math-known-tan (car n) (nth 1 n) '(frac 2 3))))
+                    (and tn (math-div 1 tn))))))
       (and (eq (car-safe (nth 1 expr)) 'calcFunc-arcsin)
 	   (math-div (list 'calcFunc-sqrt
 			   (math-sub 1 (math-sqr (nth 1 (nth 1 expr)))))
