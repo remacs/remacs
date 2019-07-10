@@ -1,4 +1,4 @@
-;;; help-fns.el --- tests for help-fns.el
+;;; help-fns-tests.el --- tests for help-fns.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
@@ -123,4 +123,4 @@ Return first line of the output of (describe-function-1 FUNC)."
     (goto-char (point-min))
     (should (looking-at "^font-lock-comment-face is "))))
 
-;;; help-fns.el ends here
+;;; help-fns-tests.el ends here
