@@ -370,13 +370,16 @@ Expands the abbreviation after defining it."
 
 (defun abbrev-prefix-mark (&optional arg)
   "Mark current point as the beginning of an abbrev.
-Abbrev to be expanded starts here rather than at beginning of word.
-This way, you can expand an abbrev with a prefix: insert the prefix,
-use this command, then insert the abbrev.  This command inserts a
-temporary hyphen after the prefix (until the intended abbrev
-expansion occurs).
-If the prefix is itself an abbrev, this command expands it, unless
-ARG is non-nil.  Interactively, ARG is the prefix argument."
+The abbrev to be expanded starts here rather than at beginning of
+word.  This way, you can expand an abbrev with a prefix: insert
+the prefix, use this command, then insert the abbrev.
+
+This command a hyphen after the prefix, and if the abbrev is
+subsequently expanded, this hyphen will be removed.
+
+If the prefix is itself an abbrev, this command expands it,
+unless ARG is non-nil.  Interactively, ARG is the prefix
+argument."
   (interactive "P")
   (or arg (expand-abbrev))
   (setq abbrev-start-location (point-marker)
