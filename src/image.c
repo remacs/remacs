@@ -9300,14 +9300,23 @@ svg_image_p (Lisp_Object object)
 # endif
 
 /* SVG library functions.  */
+#  if LIBRSVG_CHECK_VERSION (2, 32, 0)
+DEF_DLL_FN (GFile *, g_file_new_for_path, (char const *));
+DEF_DLL_FN (GInputStream *, g_memory_input_stream_new_from_data,
+	    (void const *, gssize, GDestroyNotify));
+DEF_DLL_FN (RsvgHandle *, rsvg_handle_new_from_stream_sync,
+	    (GInputStream *, GFile *, RsvgHandleFlags, GCancellable *,
+	     GError **error));
+#  else
 DEF_DLL_FN (RsvgHandle *, rsvg_handle_new, (void));
-DEF_DLL_FN (void, rsvg_handle_get_dimensions,
-	    (RsvgHandle *, RsvgDimensionData *));
+DEF_DLL_FN (void, rsvg_handle_set_base_uri, (RsvgHandle *, const char *));
 DEF_DLL_FN (gboolean, rsvg_handle_write,
 	    (RsvgHandle *, const guchar *, gsize, GError **));
 DEF_DLL_FN (gboolean, rsvg_handle_close, (RsvgHandle *, GError **));
+#endif
+DEF_DLL_FN (void, rsvg_handle_get_dimensions,
+	    (RsvgHandle *, RsvgDimensionData *));
 DEF_DLL_FN (GdkPixbuf *, rsvg_handle_get_pixbuf, (RsvgHandle *));
-DEF_DLL_FN (void, rsvg_handle_set_base_uri, (RsvgHandle *, const char *));
 
 DEF_DLL_FN (int, gdk_pixbuf_get_width, (const GdkPixbuf *));
 DEF_DLL_FN (int, gdk_pixbuf_get_height, (const GdkPixbuf *));
@@ -9340,12 +9349,18 @@ init_svg_functions (void)
       return 0;
     }
 
+#if LIBRSVG_CHECK_VERSION (2, 32, 0)
+  LOAD_DLL_FN (glib, g_file_new_for_path);
+  LOAD_DLL_FN (glib, g_memory_input_stream_new_from_data);
+  LOAD_DLL_FN (library, rsvg_handle_new_from_stream_sync);
+#else
   LOAD_DLL_FN (library, rsvg_handle_new);
-  LOAD_DLL_FN (library, rsvg_handle_get_dimensions);
+  LOAD_DLL_FN (library, rsvg_handle_set_base_uri);
   LOAD_DLL_FN (library, rsvg_handle_write);
   LOAD_DLL_FN (library, rsvg_handle_close);
+#endif
+  LOAD_DLL_FN (library, rsvg_handle_get_dimensions);
   LOAD_DLL_FN (library, rsvg_handle_get_pixbuf);
-  LOAD_DLL_FN (library, rsvg_handle_set_base_uri);
 
   LOAD_DLL_FN (gdklib, gdk_pixbuf_get_width);
   LOAD_DLL_FN (gdklib, gdk_pixbuf_get_height);
@@ -9379,12 +9394,18 @@ init_svg_functions (void)
 #  undef g_clear_error
 #  undef g_object_unref
 #  undef g_type_init
-#  undef rsvg_handle_close
 #  undef rsvg_handle_get_dimensions
 #  undef rsvg_handle_get_pixbuf
-#  undef rsvg_handle_new
-#  undef rsvg_handle_set_base_uri
-#  undef rsvg_handle_write
+#  if LIBRSVG_CHECK_VERSION (2, 32, 0)
+#   undef g_file_new_for_path
+#   undef g_memory_input_stream_new_from_data
+#   undef rsvg_handle_new_from_stream_sync
+#  else
+#   undef rsvg_handle_close
+#   undef rsvg_handle_new
+#   undef rsvg_handle_set_base_uri
+#   undef rsvg_handle_write
+#  endif
 
 #  define gdk_pixbuf_get_bits_per_sample fn_gdk_pixbuf_get_bits_per_sample
 #  define gdk_pixbuf_get_colorspace fn_gdk_pixbuf_get_colorspace
@@ -9399,12 +9420,19 @@ init_svg_functions (void)
 #  if ! GLIB_CHECK_VERSION (2, 36, 0)
 #   define g_type_init fn_g_type_init
 #  endif
-#  define rsvg_handle_close fn_rsvg_handle_close
 #  define rsvg_handle_get_dimensions fn_rsvg_handle_get_dimensions
 #  define rsvg_handle_get_pixbuf fn_rsvg_handle_get_pixbuf
-#  define rsvg_handle_new fn_rsvg_handle_new
-#  define rsvg_handle_set_base_uri fn_rsvg_handle_set_base_uri
-#  define rsvg_handle_write fn_rsvg_handle_write
+#  if LIBRSVG_CHECK_VERSION (2, 32, 0)
+#   define g_file_new_for_path fn_g_file_new_for_path
+#   define g_memory_input_stream_new_from_data \
+	fn_g_memory_input_stream_new_from_data
+#   define rsvg_handle_new_from_stream_sync fn_rsvg_handle_new_from_stream_sync
+#  else
+#   define rsvg_handle_close fn_rsvg_handle_close
+#   define rsvg_handle_new fn_rsvg_handle_new
+#   define rsvg_handle_set_base_uri fn_rsvg_handle_set_base_uri
+#   define rsvg_handle_write fn_rsvg_handle_write
+#  endif
 
 # endif /* !WINDOWSNT  */
 
@@ -9489,6 +9517,18 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
   g_type_init ();
 #endif
 
+#if LIBRSVG_CHECK_VERSION (2, 32, 0)
+  GInputStream *input_stream
+    = g_memory_input_stream_new_from_data (contents, size, NULL);
+  GFile *base_file = filename ? g_file_new_for_path (filename) : NULL;
+  rsvg_handle = rsvg_handle_new_from_stream_sync (input_stream, base_file,
+						  RSVG_HANDLE_FLAGS_NONE,
+						  NULL, &err);
+  if (base_file)
+    g_object_unref (base_file);
+  g_object_unref (input_stream);
+  if (err) goto rsvg_error;
+#else
   /* Make a handle to a new rsvg object.  */
   rsvg_handle = rsvg_handle_new ();
 
@@ -9498,17 +9538,6 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
   if (filename)
     rsvg_handle_set_base_uri (rsvg_handle, filename);
 
-  /* Suppress GCC deprecation warnings starting in librsvg 2.45.1 for
-     rsvg_handle_write and rsvg_handle_close.  FIXME: Use functions
-     like rsvg_handle_new_from_gfile_sync on newer librsvg versions,
-     and remove this hack.  */
-  #if GNUC_PREREQ (4, 6, 0)
-   #pragma GCC diagnostic push
-  #endif
-  #if LIBRSVG_CHECK_VERSION (2, 45, 1) && GNUC_PREREQ (4, 2, 0)
-   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-  #endif
-
   /* Parse the contents argument and fill in the rsvg_handle.  */
   rsvg_handle_write (rsvg_handle, (unsigned char *) contents, size, &err);
   if (err) goto rsvg_error;
@@ -9517,10 +9546,7 @@ svg_load_image (struct frame *f, struct image *img, char *contents,
      for further writes.  */
   rsvg_handle_close (rsvg_handle, &err);
   if (err) goto rsvg_error;
-
-  #if GNUC_PREREQ (4, 6, 0)
-   #pragma GCC diagnostic pop
-  #endif
+#endif
 
   rsvg_handle_get_dimensions (rsvg_handle, &dimension_data);
   if (! check_image_size (f, dimension_data.width, dimension_data.height))
