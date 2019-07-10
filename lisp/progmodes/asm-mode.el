@@ -113,7 +113,7 @@ Features a private abbrev table and the following bindings:
 
 \\[asm-colon]\toutdent a preceding label, tab to next tab stop.
 \\[tab-to-tab-stop]\ttab to next tab stop.
-\\[asm-newline]\tnewline, then tab to next tab stop.
+\\[newline-and-indent]\tnewline, then tab to next tab stop.
 \\[asm-comment]\tsmart placement of assembler comments.
 
 The character used for making comments is set by the variable
