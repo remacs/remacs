@@ -895,15 +895,6 @@ baz\"\""
     (call-interactively 'newline)
     (should (equal (buffer-string) "int main () {\n\n  \n}"))))
 
-(define-derived-mode plainer-c-mode c-mode "pC"
-  "A plainer/saner C-mode with no internal electric machinery."
-  (c-toggle-electric-state -1)
-  (setq-local electric-indent-local-mode-hook nil)
-  (setq-local electric-indent-mode-hook nil)
-  (electric-indent-local-mode 1)
-  (dolist (key '(?\" ?\' ?\{ ?\} ?\( ?\) ?\[ ?\]))
-    (local-set-key (vector key) 'self-insert-command)))
-
 (ert-deftest electric-modes-int-main-allman-style ()
   (ert-with-test-buffer ()
     (plainer-c-mode)
