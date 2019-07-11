@@ -11392,16 +11392,16 @@ resize_mini_window (struct window *w, bool exact_p)
   if (!NILP (Vinhibit_redisplay))
     return false;
 
+  /* By default, start display at the beginning.  */
+  set_marker_both (w->start, w->contents,
+		   BUF_BEGV (XBUFFER (w->contents)),
+		   BUF_BEGV_BYTE (XBUFFER (w->contents)));
+
   /* Nil means don't try to resize.  */
   if ((NILP (Vresize_mini_windows)
        && (NILP (resize_mini_frames) || !FRAME_MINIBUF_ONLY_P (f)))
       || (FRAME_X_P (f) && FRAME_OUTPUT_DATA (f) == NULL))
     return false;
-
-  /* By default, start display at the beginning.  */
-  set_marker_both (w->start, w->contents,
-		   BUF_BEGV (XBUFFER (w->contents)),
-		   BUF_BEGV_BYTE (XBUFFER (w->contents)));
 
   if (FRAME_MINIBUF_ONLY_P (f))
     {
