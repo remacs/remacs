@@ -26,7 +26,9 @@ use crate::{
 #[cfg(feature = "window-system")]
 use crate::{
     fns::nreverse,
-    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible, x_make_frame_visible},
+    remacs_sys::{
+        vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible, x_make_frame_visible,
+    },
 };
 
 #[cfg(not(feature = "window-system"))]
@@ -719,7 +721,9 @@ pub fn make_frame_visible(frame: LispObject) {
     #[cfg(feature = "window-system")]
     {
         if frame_ref.is_gui_window() {
-            unsafe { x_make_frame_visible(frame_ref.as_mut()); }
+            unsafe {
+                x_make_frame_visible(frame_ref.as_mut());
+            }
         }
     }
     make_frame_visible_1(frame_ref.root_window());
