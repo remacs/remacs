@@ -1179,7 +1179,11 @@ POS specifies the starting position where EXP was found and defaults to point."
           (let ((var (intern (match-string 1))))
             (and (not (special-variable-p var))
                  (save-excursion
-                   (zerop (car (syntax-ppss (match-beginning 0)))))
+                   (let ((syntax (syntax-ppss (match-beginning 0))))
+                     ;; Top-level.
+                     (and (zerop (car syntax))
+                          ;; Not in a comment or string.
+                          (null (nth 8 syntax)))))
                  (push var vars))))
         `(progn ,@(mapcar (lambda (v) `(defvar ,v)) vars) ,exp)))))
 
