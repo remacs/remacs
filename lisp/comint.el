@@ -760,16 +760,24 @@ Returns the (possibly newly created) process buffer."
   (apply #'make-comint-in-buffer name nil program startfile switches))
 
 ;;;###autoload
-(defun comint-run (program)
-  "Run PROGRAM in a Comint buffer and switch to it.
+(defun comint-run (program &optional switches)
+  "Run PROGRAM in a Comint buffer and switch to that buffer.
+
+If SWITCHES are supplied, they are passed to PROGRAM.  With prefix argument
+\\[universal-argument] prompt for SWITCHES as well as PROGRAM.
+
 The buffer name is made by surrounding the file name of PROGRAM with `*'s.
 The file name is used to make a symbol name, such as `comint-sh-hook', and any
 hooks on this symbol are run in the buffer.
+
 See `make-comint' and `comint-exec'."
   (declare (interactive-only make-comint))
-  (interactive "sRun program: ")
+  (interactive
+   (list (read-string "Run program: ")
+         (and (consp current-prefix-arg)
+              (split-string-and-unquote (read-string "Switches: ")))))
   (let ((name (file-name-nondirectory program)))
-    (switch-to-buffer (make-comint name program))
+    (switch-to-buffer (apply #'make-comint name program nil switches))
     (run-hooks (intern-soft (concat "comint-" name "-hook")))))
 
 (defun comint-exec (buffer name command startfile switches)

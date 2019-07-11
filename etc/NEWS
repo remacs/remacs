@@ -754,6 +754,10 @@ better emulate 'M-.' in both Bash and zsh, since the former counts
 from the beginning of the arguments, while the latter counts from the
 end.
 
++++
+*** 'comint-run' can now accept a list of switches to pass to the program.
+'C-u M-x comint-run' will prompt for the switches interactively.
+
 ** SQL
 
 *** SQL Indent Minor Mode

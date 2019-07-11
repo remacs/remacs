@@ -1099,7 +1099,8 @@ the directory tracking feature, and a few user commands.
 @findex comint-run
   You can use @kbd{M-x comint-run} to execute any program of your choice
 in a subprocess using unmodified Comint mode---without the
-specializations of Shell mode.
+specializations of Shell mode.  To pass arguments to the program, use
+@kbd{C-u M-x comint-run}.
 
 @node Shell Prompts
 @subsection Shell Prompts
