@@ -31,10 +31,7 @@
                  "foo        bar zot")))
 
 (ert-deftest test-format-unknown ()
-  (should (eq (condition-case _
-                  (format-spec "foo %b %z zot" '((?b . "bar")))
-                (error :error))
-              :error))
+  (should-error (format-spec "foo %b %z zot" '((?b . "bar"))))
   (should (equal (format-spec "foo %b %z zot" '((?b . "bar")) t)
                  "foo bar %z zot"))
   (should (equal (format-spec "foo %b %z %% zot" '((?b . "bar")) t)
