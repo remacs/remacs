@@ -9336,22 +9336,26 @@ DEF_DLL_FN (void, g_clear_error, (GError **));
 static bool
 init_svg_functions (void)
 {
-  HMODULE library, gdklib = NULL, glib = NULL, gobject = NULL;
+  HMODULE library, gdklib = NULL, glib = NULL, gobject = NULL, giolib = NULL;
 
   if (!(glib = w32_delayed_load (Qglib))
       || !(gobject = w32_delayed_load (Qgobject))
+#  if LIBRSVG_CHECK_VERSION (2, 32, 0)
+      || !(giolib = w32_delayed_load (Qgio))
+#  endif
       || !(gdklib = w32_delayed_load (Qgdk_pixbuf))
       || !(library = w32_delayed_load (Qsvg)))
     {
       if (gdklib)  FreeLibrary (gdklib);
+      if (giolib)  FreeLibrary (giolib);
       if (gobject) FreeLibrary (gobject);
       if (glib)    FreeLibrary (glib);
       return 0;
     }
 
 #if LIBRSVG_CHECK_VERSION (2, 32, 0)
-  LOAD_DLL_FN (glib, g_file_new_for_path);
-  LOAD_DLL_FN (glib, g_memory_input_stream_new_from_data);
+  LOAD_DLL_FN (giolib, g_file_new_for_path);
+  LOAD_DLL_FN (giolib, g_memory_input_stream_new_from_data);
   LOAD_DLL_FN (library, rsvg_handle_new_from_stream_sync);
 #else
   LOAD_DLL_FN (library, rsvg_handle_new);
@@ -10229,6 +10233,9 @@ non-numeric, there is no explicit limit on the size of images.  */);
   /* Other libraries used directly by svg code.  */
   DEFSYM (Qgdk_pixbuf, "gdk-pixbuf");
   DEFSYM (Qglib, "glib");
+# if LIBRSVG_CHECK_VERSION (2, 32, 0)
+  DEFSYM (Qgio,  "gio");
+# endif
   DEFSYM (Qgobject, "gobject");
 #endif /* HAVE_NTGUI  */
 #endif /* HAVE_RSVG  */
