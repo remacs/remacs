@@ -465,11 +465,12 @@ finder directory, \\[finder-exit] = quit, \\[finder-summary] = help")))
 
 (defun finder-exit ()
   "Exit Finder mode.
-Delete the window and kill all Finder-related buffers."
+Quit the window and kill all Finder-related buffers."
   (interactive)
-  (ignore-errors (delete-window))
   (let ((buf "*Finder*"))
-    (and (get-buffer buf) (kill-buffer buf))))
+    (if (equal (current-buffer) buf)
+        (quit-window t)
+      (and (get-buffer buf) (kill-buffer buf)))))
 
 (defun finder-unload-function ()
   "Unload the Finder library."
