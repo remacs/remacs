@@ -5,6 +5,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    buffers::LispBufferRef,
     lisp::{ExternalPtr, LispObject},
     lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
@@ -17,6 +18,7 @@ use crate::{
         minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
     },
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    time::current_time,
     vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
@@ -24,7 +26,7 @@ use crate::{
 #[cfg(feature = "window-system")]
 use crate::{
     fns::nreverse,
-    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible},
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible, x_make_frame_visible},
 };
 
 #[cfg(not(feature = "window-system"))]
@@ -686,6 +688,41 @@ pub fn visible_frame_list() -> LispObject {
 pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.face_alist
+}
+
+/// Update the display_time slot of the buffers shown in WINDOW and all its descendants.
+fn make_frame_visible_1(mut window: LispWindowRef) {
+    if window.is_null() {
+        return;
+    }
+    loop {
+        let contents: LispObject = window.contents.into();
+        if contents.is_window() {
+            make_frame_visible_1(contents.into());
+        } else {
+            let mut buffer: LispBufferRef = contents.into();
+            buffer.set_display_time(current_time());
+        }
+        if window.next.is_nil() {
+            break;
+        } else {
+            window = window.next.into();
+        }
+    }
+}
+
+/// Make the frame FRAME visible (assuming it is an X window).
+/// If omitted, FRAME defaults to the currently selected frame.
+#[lisp_fn(min = "0")]
+pub fn make_frame_visible(frame: LispObject) {
+    let mut frame_ref = window_frame_live_or_selected(frame);
+    #[cfg(feature = "window-system")]
+    {
+        if frame_ref.is_gui_window() {
+            unsafe { x_make_frame_visible(frame_ref.as_mut()); }
+        }
+    }
+    make_frame_visible_1(frame_ref.root_window());
 }
 
 /// Make the frame FRAME invisible.

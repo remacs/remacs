@@ -2219,49 +2219,6 @@ before calling this function on it, like this.
 
   return Qnil;
 }
-
-static void make_frame_visible_1 (Lisp_Object);
-
-DEFUN ("make-frame-visible", Fmake_frame_visible, Smake_frame_visible,
-       0, 1, "",
-       doc: /* Make the frame FRAME visible (assuming it is an X window).
-If omitted, FRAME defaults to the currently selected frame.  */)
-  (Lisp_Object frame)
-{
-  struct frame *f = decode_live_frame (frame);
-
-  /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
-  if (FRAME_WINDOW_P (f))
-    x_make_frame_visible (f);
-#endif
-
-  make_frame_visible_1 (f->root_window);
-
-  /* Make menu bar update for the Buffers and Frames menus.  */
-  /* windows_or_buffers_changed = 15; FIXME: Why?  */
-
-  XSETFRAME (frame, f);
-  return frame;
-}
-
-/* Update the display_time slot of the buffers shown in WINDOW
-   and all its descendants.  */
-
-static void
-make_frame_visible_1 (Lisp_Object window)
-{
-  struct window *w;
-
-  for (; !NILP (window); window = w->next)
-    {
-      w = XWINDOW (window);
-      if (WINDOWP (w->contents))
-	make_frame_visible_1 (w->contents);
-      else
-	bset_display_time (XBUFFER (w->contents), Fcurrent_time ());
-    }
-}
 
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
        0, 1, "",
@@ -5569,7 +5526,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_configuration);
   defsubr (&Srestore_frame_configuration);
 #endif
-  defsubr (&Smake_frame_visible);
   defsubr (&Siconify_frame);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);

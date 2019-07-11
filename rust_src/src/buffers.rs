@@ -887,6 +887,10 @@ impl LispBufferRef {
             }
         }
     }
+
+    pub fn set_display_time(&mut self, time: LispObject) {
+        self.display_time_ = time;
+    }
 }
 
 impl LispObject {
