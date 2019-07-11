@@ -23,11 +23,21 @@
 (require 'format-spec)
 
 (ert-deftest test-format-spec ()
-  (should (equal (format-spec "foo %b zot" '((?b . "bar")))
+  (should (equal (format-spec "foo %b zot" `((?b . "bar")))
                  "foo bar zot"))
   (should (equal (format-spec "foo %-10b zot" '((?b . "bar")))
                  "foo bar        zot"))
   (should (equal (format-spec "foo %10b zot" '((?b . "bar")))
                  "foo        bar zot")))
+
+(ert-deftest test-format-unknown ()
+  (should (eq (condition-case _
+                  (format-spec "foo %b %z zot" '((?b . "bar")))
+                (error :error))
+              :error))
+  (should (equal (format-spec "foo %b %z zot" '((?b . "bar")) t)
+                 "foo bar %z zot"))
+  (should (equal (format-spec "foo %b %z %% zot" '((?b . "bar")) t)
+                 "foo bar %z %% zot")))
 
 ;;; format-spec-tests.el ends here

@@ -24,40 +24,55 @@
 
 ;;; Code:
 
-(defun format-spec (format specification)
+(defun format-spec (format specification &optional only-present)
   "Return a string based on FORMAT and SPECIFICATION.
-FORMAT is a string containing `format'-like specs like \"bash %u %k\",
+FORMAT is a string containing `format'-like specs like \"su - %u %k\",
 while SPECIFICATION is an alist mapping from format spec characters
-to values.  Any text properties on a %-spec itself are propagated to
-the text that it generates."
+to values.
+
+For instance:
+
+  (format-spec \"su - %u %k\"
+               `((?u . ,(user-login-name))
+                 (?k . \"ls\")))
+
+Any text properties on a %-spec itself are propagated to the text
+that it generates.
+
+If ONLY-PRESENT, format spec characters not present in
+SPECIFICATION are ignored, and the \"%\" characters are left
+where they are, including \"%%\" strings."
   (with-temp-buffer
     (insert format)
     (goto-char (point-min))
     (while (search-forward "%" nil t)
       (cond
-       ;; Quoted percent sign.
-       ((eq (char-after) ?%)
-	(delete-char 1))
-       ;; Valid format spec.
-       ((looking-at "\\([-0-9.]*\\)\\([a-zA-Z]\\)")
-	(let* ((num (match-string 1))
-	       (spec (string-to-char (match-string 2)))
-	       (val (assq spec specification)))
-	  (unless val
-	    (error "Invalid format character: `%%%c'" spec))
-	  (setq val (cdr val))
-	  ;; Pad result to desired length.
-	  (let ((text (format (concat "%" num "s") val)))
-	    ;; Insert first, to preserve text properties.
-	    (insert-and-inherit text)
-	    ;; Delete the specifier body.
-            (delete-region (+ (match-beginning 0) (length text))
-                           (+ (match-end 0) (length text)))
-            ;; Delete the percent sign.
-            (delete-region (1- (match-beginning 0)) (match-beginning 0)))))
-       ;; Signal an error on bogus format strings.
-       (t
-	(error "Invalid format string"))))
+        ;; Quoted percent sign.
+        ((eq (char-after) ?%)
+         (unless only-present
+	   (delete-char 1)))
+        ;; Valid format spec.
+        ((looking-at "\\([-0-9.]*\\)\\([a-zA-Z]\\)")
+	 (let* ((num (match-string 1))
+	        (spec (string-to-char (match-string 2)))
+	        (val (assq spec specification)))
+	   (if (not val)
+               (unless only-present
+	         (error "Invalid format character: `%%%c'" spec))
+	     (setq val (cdr val))
+	     ;; Pad result to desired length.
+	     (let ((text (format (concat "%" num "s") val)))
+	       ;; Insert first, to preserve text properties.
+	       (insert-and-inherit text)
+	       ;; Delete the specifier body.
+               (delete-region (+ (match-beginning 0) (length text))
+                              (+ (match-end 0) (length text)))
+               ;; Delete the percent sign.
+               (delete-region (1- (match-beginning 0)) (match-beginning 0))))))
+        ;; Signal an error on bogus format strings.
+        (t
+          (unless only-present
+	    (error "Invalid format string")))))
     (buffer-string)))
 
 (defun format-spec-make (&rest pairs)
