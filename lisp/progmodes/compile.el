@@ -2245,6 +2245,8 @@ and runs `compilation-filter-hook'."
               (unless comint-inhibit-carriage-motion
                 (comint-carriage-motion (process-mark proc) (point)))
               (set-marker (process-mark proc) (point))
+              ;; Update the number of errors in compilation-mode-line-errors
+              (font-lock-ensure compilation-filter-start (point))
               ;; (set (make-local-variable 'compilation-buffer-modtime)
               ;;      (current-time))
               (run-hooks 'compilation-filter-hook))
