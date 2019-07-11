@@ -2092,7 +2092,9 @@ and how to display message."
 ;;; Commands and button actions for the results buffer.
 
 (define-derived-mode ert-results-mode special-mode "ERT-Results"
-  "Major mode for viewing results of ERT test runs.")
+  "Major mode for viewing results of ERT test runs."
+  (setq-local revert-buffer-function
+              (lambda (&rest _) (ert-results-rerun-all-tests))))
 
 (cl-loop for (key binding) in
          '( ;; Stuff that's not in the menu.
