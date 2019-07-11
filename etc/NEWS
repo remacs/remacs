@@ -1814,6 +1814,9 @@ never worked reliably, and now causes an error.
 This is consistent with the fact that nil, though a symbol, is not a
 valid event type.
 
+---
+** The obsolete package xesam.el (since Emacs 24) has been removed.
+
 
 * Lisp Changes in Emacs 27.1
 
