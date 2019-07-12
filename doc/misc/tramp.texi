@@ -712,25 +712,28 @@ Inline methods can work in situations where an external transfer
 program is unavailable.  Inline methods also work when transferring
 files between different @emph{user identities} on the same host.
 
-@cindex @command{uuencode}
-@cindex @command{mimencode}
 @cindex base-64 encoding
-
+@cindex base-64 encoding
+@cindex uu encoding
+@vindex tramp-remote-coding-commands
 @value{tramp} checks the remote host for the availability and
-usability of @command{mimencode} (part of the @command{metamail}
-package) or @command{uuencode}.  @value{tramp} uses the first reliable
-command it finds.  @value{tramp}'s search path can be customized, see
-@ref{Remote programs}.
+usability of one of the commands defined in
+@code{tramp-remote-coding-commands}.  @value{tramp} uses the first
+reliable command it finds.  @value{tramp}'s search path can be
+customized, see @ref{Remote programs}.
 
-In case both @command{mimencode} and @command{uuencode} are
-unavailable, @value{tramp} first transfers a small Perl program to the
-remote host, and then tries that program for encoding and decoding.
+In case none of the commands are unavailable, @value{tramp} first
+transfers a small Perl program to the remote host, and then tries that
+program for encoding and decoding.
 
 @vindex tramp-inline-compress-start-size
+@vindex tramp-inline-compress-commands
 To increase transfer speeds for large text files, use compression
 before encoding.  The user option
 @code{tramp-inline-compress-start-size} specifies the file size for
-such optimization.
+such optimization.  This feature depends on the availability and
+usability of one of the commands defined in
+@code{tramp-inline-compress-commands}.
 
 @table @asis
 @item @option{rsh}
