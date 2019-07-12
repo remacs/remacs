@@ -743,18 +743,9 @@ Point moves to the end of the region."
 		   (> (- (point) bol) 76))
           ;; We have a line longer than 76 characters, so break the
           ;; line.
-	  (goto-char (or break qword-break))
-	  (setq break nil
-		qword-break nil)
-	  (skip-chars-backward " \t")
-	  (if (looking-at "[ \t]")
-	      (insert ?\n)
-	    (insert "\n "))
-	  (setq bol (1- (point)))
-	  ;; Don't break before the first non-LWSP characters.
-	  (skip-chars-forward " \t")
-	  (unless (eobp)
-	    (forward-char 1)))
+          (setq bol (rfc2047--break-line break qword-break)
+                break nil
+		qword-break nil))
         ;; See whether we're at a point where we can break the line
         ;; (if it turns out to be too long).
 	(cond
@@ -791,22 +782,25 @@ Point moves to the end of the region."
 	 (t
 	  (skip-chars-forward "^ \t\n\r")))
 	(setq first nil))
-      ;; Finally, after the loop, we have a line longer than 76
-      ;; characters, so break the line.
       (when (and (or break qword-break)
 		 (> (- (point) bol) 76))
-	(goto-char (or break qword-break))
-	(setq break nil
-	      qword-break nil)
-	(if (or (> 0 (skip-chars-backward " \t"))
-		(looking-at "[ \t]"))
-	    (insert ?\n)
-	  (insert "\n "))
-	(setq bol (1- (point)))
-	;; Don't break before the first non-LWSP characters.
-	(skip-chars-forward " \t")
-	(unless (eobp)
-	  (forward-char 1))))))
+        ;; Finally, after the loop, we have a line longer than 76
+        ;; characters, so break the line.
+        (rfc2047--break-line break qword-break)))))
+
+(defun rfc2047--break-line (break qword-break)
+  (goto-char (or break qword-break))
+  (skip-chars-backward " \t")
+  (if (looking-at "[ \t]")
+      (insert ?\n)
+    (insert "\n "))
+  (prog1
+      ;; Return beginning-of-line.
+      (1- (point))
+    ;; Don't break before the first non-LWSP characters.
+    (skip-chars-forward " \t")
+    (unless (eobp)
+      (forward-char 1))))
 
 (defun rfc2047-unfold-field ()
   "Fold the current line."
