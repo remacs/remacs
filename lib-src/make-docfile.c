@@ -642,7 +642,7 @@ compare_globals (const void *a, const void *b)
 
   /* Consider "nil" to be the least, so that iQnil is zero.  That
      way, Qnil's internal representation is zero, which is a bit faster.
-     Similarly, consideer "t" to be the second-least, and so forth.  */
+     Similarly, consider "t" to be the second-least, and so forth.  */
   if (ga->type == SYMBOL)
     {
       /* Common symbols in decreasing popularity order.  */
