@@ -1524,16 +1524,10 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
     (message "\nSUMMARY OF TEST RESULTS")
     (message "-----------------------")
     (message "Files examined: %d" nlogs)
-    (message "Ran %d tests%s, %d results as expected%s%s"
+    (message "Ran %d tests%s, %d results as expected, %d unexpected, %d skipped"
              nrun
              (if (zerop nnotrun) "" (format ", %d failed to run" nnotrun))
-             nexpected
-             (if (zerop nunexpected)
-                 ""
-               (format ", %d unexpected" nunexpected))
-             (if (zerop nskipped)
-                 ""
-               (format ", %d skipped" nskipped)))
+             nexpected nunexpected nskipped)
     (when notests
       (message "%d files did not contain any tests:" (length notests))
       (mapc (lambda (l) (message "  %s" l)) notests))
