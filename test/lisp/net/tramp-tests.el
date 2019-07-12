@@ -2394,7 +2394,10 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
 		  (should-error
 		   (copy-file source target)
-		   :type 'file-already-exists))
+		   :type 'file-already-exists)
+		  (should-error
+		   (copy-file source target 'ok)
+		   :type 'file-error))
 		(copy-file source (file-name-as-directory target))
 		(should
 		 (file-exists-p
@@ -2508,7 +2511,10 @@ This checks also `file-name-as-directory', `file-name-directory',
 		(when (and (tramp--test-expensive-test) (tramp--test-emacs26-p))
 		  (should-error
 		   (rename-file source target)
-		   :type 'file-already-exists))
+		   :type 'file-already-exists)
+		  (should-error
+		   (rename-file source target 'ok)
+		   :type 'file-error))
 		(rename-file source (file-name-as-directory target))
 		(should-not (file-exists-p source))
 		(should

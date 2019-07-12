@@ -709,15 +709,16 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname)))
       (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(when (and (not ok-if-already-exists) (file-exists-p newname))
+	  (tramp-error v 'file-already-exists newname))
+	(when (and (file-directory-p newname) (not (directory-name-p newname)))
+	  (tramp-error v 'file-error "File is a directory %s" newname))
+
 	(with-tramp-progress-reporter
 	    v 0 (format "Copying %s to %s" filename newname)
-
 	  (if (and t1 t2 (tramp-equal-remote filename newname))
 	      (let ((l1 (tramp-compat-file-local-name filename))
 		    (l2 (tramp-compat-file-local-name newname)))
-		(when (and (not ok-if-already-exists)
-			   (file-exists-p newname))
-		  (tramp-error v 'file-already-exists newname))
 		;; We must also flush the cache of the directory,
 		;; because `file-attributes' reads the values from
 		;; there.
@@ -788,17 +789,18 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname)))
       (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(when (and (not ok-if-already-exists) (file-exists-p newname))
+	  (tramp-error v 'file-already-exists newname))
+	(when (and (file-directory-p newname) (not (directory-name-p newname)))
+	  (tramp-error v 'file-error "File is a directory %s" newname))
+
 	(with-tramp-progress-reporter
 	    v 0 (format "Renaming %s to %s" filename newname)
-
 	  (if (and t1 t2
 		   (tramp-equal-remote filename newname)
 		   (not (file-directory-p filename)))
 	      (let ((l1 (tramp-compat-file-local-name filename))
 		    (l2 (tramp-compat-file-local-name newname)))
-		(when (and (not ok-if-already-exists)
-			   (file-exists-p newname))
-		  (tramp-error v 'file-already-exists newname))
 		;; We must also flush the cache of the directory, because
 		;; `file-attributes' reads the values from there.
 		(tramp-flush-file-properties v (file-name-directory l1))

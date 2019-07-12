@@ -244,6 +244,8 @@ absolute file names."
       (with-parsed-tramp-file-name (if t1 filename newname) nil
 	(when (and (not ok-if-already-exists) (file-exists-p newname))
 	  (tramp-error v 'file-already-exists newname))
+	(when (and (file-directory-p newname) (not (directory-name-p newname)))
+	  (tramp-error v 'file-error "File is a directory %s" newname))
 
 	(if (or (and (file-remote-p filename) (not t1))
 		(and (file-remote-p newname)  (not t2)))
