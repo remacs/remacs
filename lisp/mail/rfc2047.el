@@ -732,12 +732,19 @@ Point moves to the end of the region."
   (save-restriction
     (narrow-to-region b e)
     (goto-char (point-min))
-    (let ((break nil)
-	  (qword-break nil)
-	  (first t)
-	  (bol (save-restriction
-		 (widen)
-		 (point-at-bol))))
+    (let* ((break nil)
+	   (qword-break nil)
+	   (bol (save-restriction
+		  (widen)
+		  (line-beginning-position)))
+           ;; This function is either called with the Header: name in
+           ;; the region or not.  If it's not in the region, then we
+           ;; may already have a space.
+	   (first (or (= bol (point))
+                      (save-restriction
+                        (widen)
+                        (save-excursion
+                          (not (re-search-backward "[ \t]" bol t)))))))
       (while (not (eobp))
 	(when (and (or break qword-break)
 		   (> (- (point) bol) 76))
