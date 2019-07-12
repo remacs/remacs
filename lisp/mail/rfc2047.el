@@ -765,7 +765,9 @@ Point moves to the end of the region."
          ;; Whitespace -- possible break point.
 	 ((memq (char-after) '(?  ?\t))
 	  (skip-chars-forward " \t")
-	  (unless first ;; Don't break just after the header name.
+          ;; Don't break just after the header name.
+	  (if first
+              (setq first nil)
 	    (setq break (point))))
          ;; If the header has been encoded (with RFC2047 encoding,
          ;; which looks like "=?utf-8?Q?F=C3=B3?=".
@@ -780,8 +782,7 @@ Point moves to the end of the region."
 	    (skip-chars-forward "^ \t\n\r")))
          ;; Look for the next LWSP (i.e., whitespace character).
 	 (t
-	  (skip-chars-forward "^ \t\n\r")))
-	(setq first nil))
+	  (skip-chars-forward "^ \t\n\r"))))
       (when (and (or break qword-break)
 		 (> (- (point) bol) 76))
         ;; Finally, after the loop, we have a line longer than 76
