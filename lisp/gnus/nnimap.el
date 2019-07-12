@@ -570,7 +570,8 @@ textual parts.")
 	(base64-encode-string
 	 (concat user " "
 		 (rfc2104-hash 'md5 64 16 password
-			       (base64-decode-string challenge))))
+			       (base64-decode-string challenge)))
+	 t)
 	"\r\n"))
       (nnimap-wait-for-response sequence)))
    ((and (not (nnimap-capability "LOGINDISABLED"))
@@ -586,7 +587,8 @@ textual parts.")
      (base64-encode-string
       (format "\000%s\000%s"
 	      (nnimap-quote-specials user)
-	      (nnimap-quote-specials password)))))))
+	      (nnimap-quote-specials password))
+      t)))))
 
 (defun nnimap-quote-specials (string)
   (with-temp-buffer
