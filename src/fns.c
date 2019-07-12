@@ -403,7 +403,14 @@ Symbols are also allowed; their print names are used instead.  */)
     string2 = SYMBOL_NAME (string2);
   CHECK_STRING (string1);
   CHECK_STRING (string2);
+  return string_version_cmp (string1, string2) < 0 ? Qt : Qnil;
+}
 
+/* Return negative, 0, positive if STRING1 is <, =, > STRING2 as per
+   string-version-lessp.  */
+int
+string_version_cmp (Lisp_Object string1, Lisp_Object string2)
+{
   char *p1 = SSDATA (string1);
   char *p2 = SSDATA (string2);
   char *lim1 = p1 + SBYTES (string1);
@@ -415,15 +422,18 @@ Symbols are also allowed; their print names are used instead.  */)
       /* If the strings are identical through their first NUL bytes,
 	 skip past identical prefixes and try again.  */
       ptrdiff_t size = strlen (p1) + 1;
+      eassert (size == strlen (p2) + 1);
       p1 += size;
       p2 += size;
-      if (lim1 < p1)
-	return lim2 < p2 ? Qnil : Qt;
-      if (lim2 < p2)
-	return Qnil;
+      bool more1 = p1 <= lim1;
+      bool more2 = p2 <= lim2;
+      if (!more1)
+	return more2;
+      if (!more2)
+	return -1;
     }
 
-  return cmp < 0 ? Qt : Qnil;
+  return cmp;
 }
 
 DEFUN ("string-collate-lessp", Fstring_collate_lessp, Sstring_collate_lessp, 2, 4, 0,

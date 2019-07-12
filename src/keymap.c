@@ -3100,9 +3100,7 @@ describe_map_compare (const void *aa, const void *bb)
   if (SYMBOLP (a->event) && SYMBOLP (b->event))
     /* Sort the keystroke names in the "natural" way, with (for
        instance) "<f2>" coming between "<f1>" and "<f11>".  */
-    return (!NILP (Fstring_version_lessp (a->event, b->event)) ? -1
-	    : !NILP (Fstring_version_lessp (b->event, a->event)) ? 1
-	    : 0);
+    return string_version_cmp (SYMBOL_NAME (a->event), SYMBOL_NAME (b->event));
   return 0;
 }
 
