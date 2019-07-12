@@ -1987,6 +1987,8 @@ is used by default."
 
 (defun message-fetch-field (header &optional not-all)
   "The same as `mail-fetch-field', only remove all newlines.
+Surrounding whitespace is also removed.
+
 The buffer is expected to be narrowed to just the header of the message;
 see `message-narrow-to-headers-or-head'."
   (let* ((inhibit-point-motion-hooks t)
@@ -1994,7 +1996,9 @@ see `message-narrow-to-headers-or-head'."
     (when value
       (while (string-match "\n[\t ]+" value)
 	(setq value (replace-match " " t t value)))
-      value)))
+      ;; If the initial or final line is blank (just a newline), then
+      ;; we have initial or trailing white space; remove it.
+      (string-trim value))))
 
 (defun message-field-value (header &optional not-all)
   "The same as `message-fetch-field', only narrow to the headers first."
