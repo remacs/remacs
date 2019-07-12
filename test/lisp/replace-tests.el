@@ -441,7 +441,7 @@ Return the last evalled form in BODY."
          ;; If `replace-tests-bind-read-string' is non-nil, then
          ;; bind `read-string' as well.
          (cl-letf (((symbol-function 'read-event)
-                    (lambda (&rest args)
+                    (lambda (&rest _args)
                       (cl-incf ,count)
                       (pcase ,count ; Build the clauses from CHAR-NUMS
                         ,@(append
@@ -456,8 +456,13 @@ Return the last evalled form in BODY."
                            `((_ ,def-chr))))))
                    ((symbol-function 'read-string)
                     (if replace-tests-bind-read-string
-                        (lambda (&rest args) replace-tests-bind-read-string)
-                      (symbol-function 'read-string))))
+                        (lambda (&rest _args) replace-tests-bind-read-string)
+                      (symbol-function 'read-string)))
+                   ;; Emulate replace-highlight clobbering match-data via
+                   ;; isearch-lazy-highlight-new-loop and sit-for (bug#36328)
+                   ((symbol-function 'replace-highlight)
+                    (lambda (&rest _args)
+                      (string-match "[A-Z ]" "ForestGreen"))))
            (perform-replace ,from ,to t t nil))
          ,@body))))
 
