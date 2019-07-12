@@ -38,12 +38,14 @@
 (defvar vc-hg-program)
 
 ;;;###tramp-autoload
-(defcustom tramp-inline-compress-start-size 4096
+(defcustom tramp-inline-compress-start-size
+  (unless (memq system-type '(windows-nt)) 4096)
   "The minimum size of compressing where inline transfer.
 When inline transfer, compress transferred data of file
 whose size is this value or above (up to `tramp-copy-size-limit').
 If it is nil, no compression at all will be applied."
   :group 'tramp
+  :version "26.3"
   :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
