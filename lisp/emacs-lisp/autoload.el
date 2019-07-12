@@ -370,11 +370,6 @@ FILE's name."
 	    ";;\n"
 	    ";;; Code:\n\n"
 	    (if lp
-                ;; Use the `#$' to indicate current file, from which
-                ;; we extract the directory name.  Note that
-                ;; `package-quickstart-refresh' specifically replaces
-                ;; `#$', so any other tricks (e.g., `load-file-name')
-                ;; will not work for that case.
 		"(add-to-list 'load-path (directory-file-name
                          (or (file-name-directory #$) (car load-path))))\n\n")
 	    "\n"
