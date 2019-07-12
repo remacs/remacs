@@ -82,7 +82,7 @@ instead of the filename inheritance method."
     (cond
      ((and user pass)
       ;; Explicit http://user:pass@foo/ URL.  Just return the credentials.
-      (setq retval (base64-encode-string (format "%s:%s" user pass))))
+      (setq retval (base64-encode-string (format "%s:%s" user pass) t)))
      ((and prompt (not byserv))
       (setq user (or
 		  (url-do-auth-source-search server type :user)
@@ -97,7 +97,8 @@ instead of the filename inheritance method."
 			     (setq retval
 				   (base64-encode-string
 				    (format "%s:%s" user
-					    (encode-coding-string pass 'utf-8))))))
+					    (encode-coding-string pass 'utf-8))
+                                    t))))
 		 (symbol-value url-basic-auth-storage))))
      (byserv
       (setq retval (cdr-safe (assoc file byserv)))
@@ -120,7 +121,7 @@ instead of the filename inheritance method."
 		  pass (or
 			(url-do-auth-source-search server type :secret)
 			(read-passwd "Password: "))
-		  retval (base64-encode-string (format "%s:%s" user pass))
+		  retval (base64-encode-string (format "%s:%s" user pass) t)
 		  byserv (assoc server (symbol-value url-basic-auth-storage)))
 	    (setcdr byserv
 		    (cons (cons file retval) (cdr byserv))))))
