@@ -42,6 +42,7 @@
 (defconst tramp-rclone-method "rclone"
   "When this method name is used, forward all calls to rclone mounts.")
 
+;;;###tramp-autoload
 (defcustom tramp-rclone-program "rclone"
   "Name of the rclone program."
   :group 'tramp

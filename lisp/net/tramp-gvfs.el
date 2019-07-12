@@ -161,6 +161,7 @@
    (add-to-list 'tramp-default-host-alist
 	        '("\\`gdrive\\'" nil ,(match-string 2 user-mail-address)))))
 
+;;;###tramp-autoload
 (defcustom tramp-gvfs-zeroconf-domain "local"
   "Zeroconf domain to be used for discovering services, like host names."
   :group 'tramp
