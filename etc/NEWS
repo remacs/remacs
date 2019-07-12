@@ -626,6 +626,13 @@ If the region is active, the command joins all the lines in the
 region.  When there's no active region, the command works on the
 current and the previous or the next line, as before.
 
+---
+** New customizable variable 'jit-lock-antiblink-grace'.
+When typing strings, this helps avoid "blinking", an oscillation
+between string and non-string fontification.  The variable holds a
+number of seconds (default is 2) before a potentially unwanted
+fontification starts.  Set to nil to get back the old behavior.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
