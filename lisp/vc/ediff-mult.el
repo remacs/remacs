@@ -230,6 +230,10 @@ This hook can be used to save the previous window config, which can be restored
 on `ediff-quit', `ediff-suspend', or `ediff-quit-session-group-hook'."
   :type 'hook
   :group 'ediff-hook)
+;; Because this variable is apparently never used, it's marked as
+;; obsolete without replacement.
+(make-obsolete-variable 'ediff-before-session-group-setup-hooks nil "27.1")
+
 (defcustom ediff-after-session-group-setup-hook nil
   "Hooks run just after a meta-buffer controlling a session group, such as
 ediff-directories, is run."
