@@ -1997,6 +1997,7 @@ But if NO-TRUNCATE is non-nil, include them."
 
 (define-widget 'text 'editable-field
   "A multiline text area."
+  :format "%{%t%}: %v"
   :keymap widget-text-keymap)
 
 ;;; The `menu-choice' Widget.
