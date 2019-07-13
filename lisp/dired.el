@@ -2697,7 +2697,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
        ((null (buffer-name buf))
 	;; Buffer is killed - clean up:
 	(setq dired-buffers (delq elt dired-buffers)))
-       ((dired-in-this-tree dir (car elt))
+       ((dired-in-this-tree-p dir (car elt))
 	(with-current-buffer buf
 	  (and (assoc dir dired-subdir-alist)
 	       (or (null file)
@@ -2770,10 +2770,12 @@ You can then feed the file name(s) to other commands with \\[yank]."
 
 ;;; utility functions
 
-(defun dired-in-this-tree (file dir)
+(defun dired-in-this-tree-p (file dir)
   ;;"Is FILE part of the directory tree starting at DIR?"
   (let (case-fold-search)
     (string-match-p (concat "^" (regexp-quote dir)) file)))
+(define-obsolete-function-alias 'dired-in-this-tree
+  'dired-in-this-tree-p "27.1")
 
 (defun dired-normalize-subdir (dir)
   ;; Prepend default-directory to DIR if relative file name.
