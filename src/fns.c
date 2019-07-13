@@ -2161,9 +2161,13 @@ merge (Lisp_Object org_l1, Lisp_Object org_l2, Lisp_Object pred)
 DEFUN ("plist-get", Fplist_get, Splist_get, 2, 2, 0,
        doc: /* Extract a value from a property list.
 PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not one of the
-properties on the list.  This function never signals an error.  */)
+\(PROP1 VALUE1 PROP2 VALUE2...).
+
+This function returns the value corresponding to the given PROP, or
+nil if PROP is not one of the properties on the list.  The comparison
+with PROP is done using `eq'.
+
+This function never signals an error.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
   Lisp_Object tail = plist;
@@ -2239,10 +2243,8 @@ It can be retrieved with `(get SYMBOL PROPNAME)'.  */)
 
 DEFUN ("lax-plist-get", Flax_plist_get, Slax_plist_get, 2, 2, 0,
        doc: /* Extract a value from a property list, comparing with `equal'.
-PLIST is a property list, which is a list of the form
-\(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-corresponding to the given PROP, or nil if PROP is not
-one of the properties on the list.  */)
+This function is otherwise like `plist-get', but may signal an error
+if PLIST isn't a valid plist.  */)
   (Lisp_Object plist, Lisp_Object prop)
 {
   Lisp_Object tail = plist;
