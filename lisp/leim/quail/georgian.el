@@ -78,10 +78,8 @@
  ("i1" ?ჲ)
  ("w" ?ჳ)
  ("f" ?ჶ)
- ;; Presumably, these are GEORGIAN LETTER YN, GEORGIAN LETTER ELIFI,
- ;; accepted for U+10F7, U+10F8  -- fx
- ("y" ?) ;; Letter not in Unicode (private use code).
- ("e1" ?) ;; Letter not in Unicode (private use code).
+ ("y" ?ჷ)
+ ("e1" ?ჸ)
  )
 
 (quail-define-package
