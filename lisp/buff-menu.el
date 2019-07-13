@@ -279,7 +279,11 @@ The remaining columns show the buffer name, the buffer size in
 characters, its major mode, and the visited file name (if any).
 
 See `Buffer-menu-mode' for the keybindings available the Buffer
-Menu."
+Menu.
+
+The width of the various columns can be customized by changing
+the `Buffer-menu-name-width', `Buffer-menu-size-width' and
+`Buffer-menu-mode-width' variables."
   (interactive "P")
   (switch-to-buffer (list-buffers-noselect arg))
   (message
