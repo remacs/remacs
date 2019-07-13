@@ -566,6 +566,12 @@ using different case (i.e. mailing-list@domain vs Mailing-List@Domain)."
   :group 'nnmail
   :type 'boolean)
 
+(defcustom nnmail-debug-splitting nil
+  "If non-nil, record mail splitting actions.
+These will be logged to the \"*nnmail split*\" buffer."
+  :type 'boolean
+  :version "27.1")
+
 ;;; Internal variables.
 
 (defvar nnmail-article-buffer " *nnmail incoming*"
@@ -1359,14 +1365,12 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 
      ;; A group name.  Do the \& and \N subs into the string.
      ((stringp split)
-      (when nnmail-split-tracing
-	(push split nnmail-split-trace))
+      (nnmail-log-split split)
       (list (nnmail-expand-newtext split t)))
 
      ;; Junk the message.
      ((eq split 'junk)
-      (when nnmail-split-tracing
-	(push "junk" nnmail-split-trace))
+      (nnmail-log-split "junk")
       (list 'junk))
 
      ;; Builtin & operation.
@@ -1383,8 +1387,7 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 
      ;; Builtin : operation.
      ((eq (car split) ':)
-      (when nnmail-split-tracing
-	(push split nnmail-split-trace))
+      (nnmail-log-split split)
       (nnmail-split-it (save-excursion (eval (cdr split)))))
 
      ;; Builtin ! operation.
@@ -1402,8 +1405,7 @@ See the documentation for the variable `nnmail-split-fancy' for details."
 	(while (and (goto-char end-point)
 		    (re-search-backward (cdr cached-pair) nil t))
 	  (setq match-data (match-data))
-	  (when nnmail-split-tracing
-	    (push split nnmail-split-trace))
+	  (nnmail-log-split split)
 	  (let ((split-rest (cddr split))
 		(end (match-end 0))
 		;; The searched regexp is \(\(FIELD\).*\)\(VALUE\).
@@ -2051,6 +2053,17 @@ Doesn't change point."
     (save-excursion
       (and (nnmail-search-unix-mail-delim-backward)
 	   (not (search-forward "\n\n" pos t))))))
+
+(defun nnmail-log-split (split)
+  (when nnmail-split-tracing
+    (push split nnmail-split-trace))
+  (when nnmail-debug-splitting
+    (with-current-buffer (get-buffer-create "*nnmail split*")
+      (goto-char (point-max))
+      (insert (format-time-string "%FT%T")
+	      " "
+	      (format "%S" split)
+	      "\n"))))
 
 (run-hooks 'nnmail-load-hook)
 

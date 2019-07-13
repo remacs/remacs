@@ -15594,6 +15594,9 @@ outgoing messages are written to an ``outgoing'' group, you could set
 Otherwise, answers to all your messages would end up in the
 ``outgoing'' group.
 
+If @code{nnmail-debug-splitting} is non-@code{nil}, the mail splitting
+code will log all splitting decisions to the @samp{*nnmail split*} buffer.
+
 
 @node Group Mail Splitting
 @subsection Group Mail Splitting
