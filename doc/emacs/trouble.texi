@@ -152,6 +152,7 @@ Emacs.
 * Crashing::              What Emacs does when it crashes.
 * After a Crash::         Recovering editing in an Emacs session that crashed.
 * Emergency Escape::      What to do if Emacs stops responding.
+* Long Lines::            Mitigating slowness due to extremely long lines.
 @end menu
 
 @node DEL Does Not Delete
@@ -457,6 +458,30 @@ program.
 emergency escape---but there are cases where it won't work, when a
 system call hangs or when Emacs is stuck in a tight loop in C code.
 
+@node Long Lines
+@subsection Long Lines
+@cindex long lines
+
+  For a variety of reasons (some of which are fundamental to the Emacs
+redisplay code and the complex range of possibilities it handles;
+others of which are due to modes and features which do not scale well
+in unusual circumstances), Emacs can perform poorly when extremely
+long lines are present (where ``extremely long'' usually means at
+least many thousands of characters).
+
+  A particular problem is that Emacs may ``hang'' for a long time at
+the point of visiting a file with extremely long lines, and this case
+can be mitigated by enabling the @file{so-long} library, which detects
+when a visited file contains abnormally long lines, and takes steps to
+disable features which are liable to cause slowness in that situation.
+
+  This library can also significantly improve performance when moving
+and editing in such a buffer -- performance is still likely to degrade
+as you get deeper into the long lines, but the improvements can
+nevertheless be substantial.
+
+  Use @kbd{M-x so-long-commentary} to view the documentation for this
+library and learn how to enable and configure it.
 @node Bugs
 @section Reporting Bugs
 

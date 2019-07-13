@@ -1176,6 +1176,7 @@ Dealing with Emacs Trouble
 * Crashing::            What Emacs does when it crashes.
 * After a Crash::       Recovering editing in an Emacs session that crashed.
 * Emergency Escape::    What to do if Emacs stops responding.
+* Long Lines::          Mitigating slowness due to extremely long lines.
 
 Reporting Bugs
 
