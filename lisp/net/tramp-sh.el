@@ -4583,11 +4583,11 @@ Goes through the list `tramp-inline-compress-commands'."
 	  (unless (tramp-send-command-and-check
 		   vec (format "echo %s | %s | %s" magic compress decompress) t)
 	    (throw 'next nil))
-  (with-current-buffer (tramp-get-buffer vec)
-    (goto-char (point-min))
-    (unless (looking-at (regexp-quote magic))
-      (throw 'next nil)))
-  (setq found t)))
+	  (with-current-buffer (tramp-get-buffer vec)
+	    (goto-char (point-min))
+	    (unless (looking-at (regexp-quote magic))
+	      (throw 'next nil)))
+	  (setq found t)))
 
       ;; Did we find something?
       (if found
