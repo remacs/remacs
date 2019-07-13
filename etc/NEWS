@@ -304,6 +304,9 @@ regular expression was previously invalid, but is now accepted:
 ** New input methods 'hawaiian-postfix' and 'hawaiian-prefix'.
 
 ---
+** New input methods 'georgian-qwerty' and 'georgian-nuskhuri'.
+
+---
 ** New input methods for several variants of the Sami language.
 The Sami input methods include: 'norwegian-sami-prefix',
 'bergsland-hasselbrink-sami-prefix', 'southern-sami-prefix',
