@@ -8008,7 +8008,12 @@ For a variable defined with `defcustom', it does not pay attention to
 any :set property that the variable might have (if you want that, use
 \\[customize-set-variable] instead).
 
-With a prefix argument, set VARIABLE to VALUE buffer-locally."
+With a prefix argument, set VARIABLE to VALUE buffer-locally.
+
+When called interactively, the user is prompted for VARIABLE and
+then VALUE.  The current value of VARIABLE will be put in the
+minibuffer history so that it can be accessed with `M-n', which
+makes it easier to edit it."
   (interactive
    (let* ((default-var (variable-at-point))
           (var (if (custom-variable-p default-var)
