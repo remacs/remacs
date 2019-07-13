@@ -726,7 +726,7 @@ they are in Emacs core, GNU ELPA, or elsewhere."
   :group 'so-long)
 
 (defcustom so-long-variable-overrides
-  '((bidi-display-reordering . nil)
+  '((bidi-paragraph-direction . left-to-right)
     (buffer-read-only . t)
     (global-hl-line-mode . nil)
     (line-move-visual . t)
@@ -742,7 +742,9 @@ If `so-long-revert' is subsequently invoked, then the variables are restored
 to their original states."
   :type '(alist :key-type (variable :tag "Variable")
                 :value-type (sexp :tag "Value"))
-  :options '((bidi-display-reordering boolean)
+  :options '((bidi-paragraph-direction (choice (const left-to-right)
+                                               (const right-to-left)
+                                               (const nil)))
              (buffer-read-only boolean)
              (global-hl-line-mode boolean)
              (line-move-visual boolean)
