@@ -5040,18 +5040,27 @@ returns nil, then (funcall TEST x1 x2) also returns nil.  */)
 #include "sha256.h"
 #include "sha512.h"
 
-static Lisp_Object
-make_digest_string (Lisp_Object digest, int digest_size)
+/* Store into HEXBUF an unterminated hexadecimal character string
+   representing DIGEST, which is binary data of size DIGEST_SIZE bytes.
+   HEXBUF might equal DIGEST.  */
+void
+hexbuf_digest (char *hexbuf, void const *digest, int digest_size)
 {
-  unsigned char *p = SDATA (digest);
+  unsigned char const *p = digest;
 
   for (int i = digest_size - 1; i >= 0; i--)
     {
       static char const hexdigit[16] = "0123456789abcdef";
       int p_i = p[i];
-      p[2 * i] = hexdigit[p_i >> 4];
-      p[2 * i + 1] = hexdigit[p_i & 0xf];
+      hexbuf[2 * i] = hexdigit[p_i >> 4];
+      hexbuf[2 * i + 1] = hexdigit[p_i & 0xf];
     }
+}
+
+static Lisp_Object
+make_digest_string (Lisp_Object digest, int digest_size)
+{
+  hexbuf_digest (SSDATA (digest), SDATA (digest), digest_size);
   return digest;
 }
 
