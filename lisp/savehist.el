@@ -299,7 +299,11 @@ If AUTO-SAVE is non-nil, compare the saved contents to the one last saved,
 	;; kill-emacs-hook, and also that multiple Emacs instances
 	;; could write to this file at once.
 	(let ((file-precious-flag t)
-	      (coding-system-for-write savehist-coding-system))
+	      (coding-system-for-write savehist-coding-system)
+              (dir (file-name-directory savehist-file)))
+          ;; Ensure that the directory exists before saving.
+          (unless (file-exists-p dir)
+            (make-directory dir t))
 	  (write-region (point-min) (point-max) savehist-file nil
 			(unless (called-interactively-p 'interactive) 'quiet)))
 	(when savehist-file-modes
