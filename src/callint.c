@@ -54,10 +54,12 @@ Usually the argument of `interactive' is a string containing a code
  arguments to the command, concatenate the individual strings,
  separating them by newline characters.
 
-Prompts are passed to `format', and may use % escapes to print the
+Prompts are passed to `format', and may use %s escapes to print the
  arguments that have already been read.
+
 If the argument is not a string, it is evaluated to get a list of
  arguments to pass to the command.
+
 Just `(interactive)' means pass no arguments to the command when
  calling interactively.
 
