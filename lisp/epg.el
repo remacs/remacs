@@ -208,6 +208,7 @@
   progress-callback
   edit-callback
   signers
+  sender
   sig-notations
   process
   output-file
@@ -1616,6 +1617,9 @@ If you are unsure, use synchronous version of this function
 				     (epg-sub-key-id
 				      (car (epg-key-sub-key-list signer)))))
 			     (epg-context-signers context)))
+                     (let ((sender (epg-context-sender context)))
+                       (when (stringp sender)
+                         (list "--sender" sender)))
 		     (epg--args-from-sig-notations
 		      (epg-context-sig-notations context))
 		     (if (epg-data-file plain)
@@ -1711,6 +1715,10 @@ If you are unsure, use synchronous version of this function
 						signer)))))
 				 (epg-context-signers context))))
 		     (if sign
+                         (let ((sender (epg-context-sender context)))
+                           (when (stringp sender)
+                             (list "--sender" sender))))
+                     (if sign
 			 (epg--args-from-sig-notations
 			  (epg-context-sig-notations context)))
 		     (apply #'nconc

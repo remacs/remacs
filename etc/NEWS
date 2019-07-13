@@ -1379,6 +1379,22 @@ are formatted as MIME digests.
 *** 'message-forward-included-headers' has changed its default to
 exclude most headers when forwarding.
 
+*** 'mml-secure-openpgp-sign-with-sender' sets also "gpg --sender"
+When 'mml-secure-openpgp-sign-with-sender' is non-nil message sender's
+email address (in addition to its old behaviour) will also be used to
+set gpg's "--sender email@domain" option.
+
+The option is useful for two reasons when verifying the signature:
+
+ 1. GnuPG's TOFU statistics are updated for the specific user id
+    (email) only. See gpg(1) man page about "--sender".
+
+ 2. GnuPG's --auto-key-retrieve functionality can use WKD (web key
+    directory) method for finding the signer's key. You need GnuPG
+    2.2.17 to fully benefit from this feature. See gpg(1) man page for
+    "--auto-key-retrieve".
+
+---
 ** EasyPG
 
 ---
@@ -1391,6 +1407,13 @@ It now applies to epg functions as well as epa functions.
 been removed.  Use 'encode-coding-string', 'decode-coding-string', and
 'select-safe-coding-system' instead.
 
+*** 'epg-context' structure supports now 'sender' slot
+The value of the new 'sender' slot (if a string) is used to set gpg's
+--sender option. This feature is used by
+'mml-secure-openpgp-sign-with-sender'. See gpg(1) manual page about
+"--sender" for more information.
+
+---
 ** Rmail
 
 +++
