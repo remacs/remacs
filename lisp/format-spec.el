@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'subr-x)
+
 (defun format-spec (format specification &optional only-present)
   "Return a string based on FORMAT and SPECIFICATION.
 FORMAT is a string containing `format'-like specs like \"su - %u %k\",
@@ -32,9 +34,22 @@ to values.
 
 For instance:
 
-  (format-spec \"su - %u %k\"
+  (format-spec \"su - %u %l\"
                `((?u . ,(user-login-name))
-                 (?k . \"ls\")))
+                 (?l . \"ls\")))
+
+Each format spec can have modifiers, where \"%<010b\" means \"if
+the expansion is shorter than ten characters, zero-pad it, and if
+it's longer, chop off characters from the left size\".
+
+The following modifiers are allowed:
+
+* 0: Use zero-padding.
+* -: Pad to the right.
+* ^: Upper-case the expansion.
+* _: Lower-case the expansion.
+* <: Limit the length by removing chars from the left.
+* >: Limit the length by removing chars from the right.
 
 Any text properties on a %-spec itself are propagated to the text
 that it generates.
@@ -52,16 +67,31 @@ where they are, including \"%%\" strings."
          (unless only-present
 	   (delete-char 1)))
         ;; Valid format spec.
-        ((looking-at "\\([-0-9.]*\\)\\([a-zA-Z]\\)")
-	 (let* ((num (match-string 1))
-	        (spec (string-to-char (match-string 2)))
+        ((looking-at "\\([-0 _^<>]*\\)\\([0-9.]*\\)\\([a-zA-Z]\\)")
+	 (let* ((modifiers (match-string 1))
+                (num (match-string 2))
+	        (spec (string-to-char (match-string 3)))
 	        (val (assq spec specification)))
 	   (if (not val)
                (unless only-present
 	         (error "Invalid format character: `%%%c'" spec))
-	     (setq val (cdr val))
+	     (setq val (cdr val)
+                   modifiers (format-spec--parse-modifiers modifiers))
 	     ;; Pad result to desired length.
-	     (let ((text (format (concat "%" num "s") val)))
+	     (let ((text (format "%s" val)))
+               (when num
+                 (setq num (string-to-number num))
+                 (setq text (format-spec--pad text num modifiers))
+                 (when (> (length text) num)
+                   (cond
+                    ((memq :chop-left modifiers)
+                     (setq text (substring text (- (length text) num))))
+                    ((memq :chop-right modifiers)
+                     (setq text (substring text 0 num))))))
+               (when (memq :uppercase modifiers)
+                 (setq text (upcase text)))
+               (when (memq :lowercase modifiers)
+                 (setq text (downcase text)))
 	       ;; Insert first, to preserve text properties.
 	       (insert-and-inherit text)
 	       ;; Delete the specifier body.
@@ -74,6 +104,34 @@ where they are, including \"%%\" strings."
           (unless only-present
 	    (error "Invalid format string")))))
     (buffer-string)))
+
+(defun format-spec--pad (text total-length modifiers)
+  (if (> (length text) total-length)
+      ;; The text is longer than the specified length; do nothing.
+      text
+    (let ((padding (make-string (- total-length (length text))
+                                (if (memq :zero-pad modifiers)
+                                    ?0
+                                  ?\s))))
+      (if (memq :right-pad modifiers)
+          (concat text padding)
+        (concat padding text)))))
+
+(defun format-spec--parse-modifiers (modifiers)
+  (let ((elems nil))
+    (mapc (lambda (char)
+            (when-let ((modifier
+                        (pcase char
+                          (?0 :zero-pad)
+                          (?\s :space-pad)
+                          (?^ :uppercase)
+                          (?_ :lowercase)
+                          (?- :right-pad)
+                          (?< :chop-left)
+                          (?> :chop-right))))
+              (push modifier elems)))
+          modifiers)
+    elems))
 
 (defun format-spec-make (&rest pairs)
   "Return an alist suitable for use in `format-spec' based on PAIRS.

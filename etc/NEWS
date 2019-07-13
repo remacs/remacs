@@ -2293,6 +2293,13 @@ argument is 'iec' and the empty string otherwise.  We recomment a
 space or non-breaking space as third argument, and "B" as fourth
 argument, circumstances allowing.
 
++++
+** `format-spec' has been expanded with several modifiers to allow
+greater flexibility when customizing variables.  The modifiers include
+zero-padding, upper- and lower-casing, and limiting the length of the
+interpolated strings.  The function has now also been documented in
+the Emacs Lisp manual.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

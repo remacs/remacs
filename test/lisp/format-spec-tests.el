@@ -37,4 +37,22 @@
   (should (equal (format-spec "foo %b %z %% zot" '((?b . "bar")) t)
                  "foo bar %z %% zot")))
 
+(ert-deftest test-format-modifiers ()
+  (should (equal (format-spec "foo %10b zot" '((?b . "bar")))
+                 "foo        bar zot"))
+  (should (equal (format-spec "foo % 10b zot" '((?b . "bar")))
+                 "foo        bar zot"))
+  (should (equal (format-spec "foo %-010b zot" '((?b . "bar")))
+                 "foo bar0000000 zot"))
+  (should (equal (format-spec "foo %0-10b zot" '((?b . "bar")))
+                 "foo bar0000000 zot"))
+  (should (equal (format-spec "foo %^10b zot" '((?b . "bar")))
+                 "foo        BAR zot"))
+  (should (equal (format-spec "foo %_10b zot" '((?b . "BAR")))
+                 "foo        bar zot"))
+  (should (equal (format-spec "foo %<4b zot" '((?b . "longbar")))
+                 "foo gbar zot"))
+  (should (equal (format-spec "foo %>4b zot" '((?b . "longbar")))
+                 "foo long zot")))
+
 ;;; format-spec-tests.el ends here
