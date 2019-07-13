@@ -3061,10 +3061,7 @@ dump_object (struct dump_context *ctx, Lisp_Object object)
 #if CHECK_STRUCTS && !defined (HASH_Lisp_Type_E2AD97D3F7)
 # error "Lisp_Type changed. See CHECK_STRUCTS comment in config.h."
 #endif
-#ifdef ENABLE_CHECKING
-  /* Vdead is extern only when ENABLE_CHECKING.  */
-  eassert (!EQ (object, Vdead));
-#endif
+  eassert (!EQ (object, dead_object ()));
 
   dump_off offset = dump_recall_object (ctx, object);
   if (offset > 0)

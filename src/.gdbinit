@@ -382,7 +382,7 @@ define pwinx
   xgetptr $w->contents
   set $tem = (struct buffer *) $ptr
   xgetptr $tem->name_
-  printf "%s", ((struct Lisp_String *) $ptr)->u.s.data
+  printf "%s", $ptr ? (char *) ((struct Lisp_String *) $ptr)->u.s.data : "DEAD"
   printf "\n"
   xgetptr $w->start
   set $tem = (struct Lisp_Marker *) $ptr
@@ -508,7 +508,12 @@ define pgx
   xgettype ($g.object)
   if ($type == Lisp_String)
     xgetptr $g.object
-    printf " str=0x%x[%d]", ((struct Lisp_String *)$ptr)->u.s.data, $g.charpos
+    if ($ptr)
+      printf " str=0x%x", ((struct Lisp_String *)$ptr)->u.s.data
+    else
+      printf " str=DEAD"
+    end
+    printf "[%d]", $g.charpos
   else
     printf " pos=%d", $g.charpos
   end
@@ -879,7 +884,7 @@ define xbuffer
   xgetptr $
   print (struct buffer *) $ptr
   xgetptr $->name_
-  output ((struct Lisp_String *) $ptr)->u.s.data
+  output $ptr ? (char *) ((struct Lisp_String *) $ptr)->u.s.data : "DEAD"
   echo \n
 end
 document xbuffer
@@ -1046,13 +1051,17 @@ Print $ as a lisp object of any type.
 end
 
 define xprintstr
-  set $data = (char *) $arg0->u.s.data
-  set $strsize = ($arg0->u.s.size_byte < 0) ? ($arg0->u.s.size & ~ARRAY_MARK_FLAG) : $arg0->u.s.size_byte
-  # GDB doesn't like zero repetition counts
-  if $strsize == 0
-    output ""
+  if (! $arg0)
+    output "DEAD"
   else
-    output ($arg0->u.s.size > 1000) ? 0 : ($data[0])@($strsize)
+    set $data = (char *) $arg0->u.s.data
+    set $strsize = ($arg0->u.s.size_byte < 0) ? ($arg0->u.s.size & ~ARRAY_MARK_FLAG) : $arg0->u.s.size_byte
+    # GDB doesn't like zero repetition counts
+    if $strsize == 0
+      output ""
+    else
+      output ($arg0->u.s.size > 1000) ? 0 : ($data[0])@($strsize)
+    end
   end
 end
 

@@ -420,14 +420,11 @@ enum mem_type
   MEM_TYPE_SPARE
 };
 
-/* A unique object in pure space used to make some Lisp objects
-   on free lists recognizable in O(1).  */
-
-#ifndef ENABLE_CHECKING
-static
-#endif
-Lisp_Object Vdead;
-#define DEADP(x) EQ (x, Vdead)
+static bool
+deadp (Lisp_Object x)
+{
+  return EQ (x, dead_object ());
+}
 
 #ifdef GC_MALLOC_CHECK
 
@@ -498,10 +495,6 @@ static void mem_rotate_right (struct mem_node *);
 static void mem_delete (struct mem_node *);
 static void mem_delete_fixup (struct mem_node *);
 static struct mem_node *mem_find (void *);
-
-#ifndef DEADP
-# define DEADP(x) 0
-#endif
 
 /* Addresses of staticpro'd variables.  Initialize it to a nonzero
    value if we might unexec; otherwise some compilers put it into
@@ -2548,7 +2541,7 @@ void
 free_cons (struct Lisp_Cons *ptr)
 {
   ptr->u.s.u.chain = cons_free_list;
-  ptr->u.s.car = Vdead;
+  ptr->u.s.car = dead_object ();
   cons_free_list = ptr;
   consing_since_gc -= sizeof *ptr;
   gcstat.total_free_conses++;
@@ -4374,7 +4367,7 @@ live_cons_holding (struct mem_node *m, void *p)
 	{
 	  cp = ptr_bounds_copy (cp, b);
 	  struct Lisp_Cons *s = p = cp -= offset % sizeof b->conses[0];
-	  if (!EQ (s->u.s.car, Vdead))
+	  if (!deadp (s->u.s.car))
 	    return make_lisp_ptr (s, Lisp_Cons);
 	}
     }
@@ -4410,7 +4403,7 @@ live_symbol_holding (struct mem_node *m, void *p)
 	{
 	  cp = ptr_bounds_copy (cp, b);
 	  struct Lisp_Symbol *s = p = cp -= offset % sizeof b->symbols[0];
-	  if (!EQ (s->u.s.function, Vdead))
+	  if (!deadp (s->u.s.function))
 	    return make_lisp_symbol (s);
 	}
     }
@@ -6717,7 +6710,7 @@ sweep_conses (void)
                       this_free++;
                       cblk->conses[pos].u.s.u.chain = cons_free_list;
                       cons_free_list = &cblk->conses[pos];
-                      cons_free_list->u.s.car = Vdead;
+                      cons_free_list->u.s.car = dead_object ();
                     }
                   else
                     {
@@ -6883,7 +6876,7 @@ sweep_symbols (void)
                 }
               sym->u.s.next = symbol_free_list;
               symbol_free_list = sym;
-              symbol_free_list->u.s.function = Vdead;
+              symbol_free_list->u.s.function = dead_object ();
               ++this_free;
             }
           else
@@ -7072,7 +7065,7 @@ which_symbols (Lisp_Object obj, EMACS_INT find_max)
    ptrdiff_t gc_count = inhibit_garbage_collection ();
    Lisp_Object found = Qnil;
 
-   if (! DEADP (obj))
+   if (! deadp (obj))
      {
        for (int i = 0; i < ARRAYELTS (lispsym); i++)
 	 {
@@ -7251,7 +7244,6 @@ init_alloc_once_for_pdumper (void)
   purebeg = PUREBEG;
   pure_size = PURESIZE;
   mem_init ();
-  Vdead = make_pure_string ("DEAD", 4, 4, 0);
 
 #ifdef DOUG_LEA_MALLOC
   mallopt (M_TRIM_THRESHOLD, 128 * 1024); /* Trim threshold.  */

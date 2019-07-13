@@ -1247,6 +1247,15 @@ make_lisp_ptr (void *ptr, enum Lisp_Type type)
 #define XSETSYMBOL(a, b) ((a) = make_lisp_symbol (b))
 #define XSETFLOAT(a, b) ((a) = make_lisp_ptr (b, Lisp_Float))
 
+/* Return a Lisp_Object value that does not correspond to any object.
+   This can make some Lisp objects on free lists recognizable in O(1).  */
+
+INLINE Lisp_Object
+dead_object (void)
+{
+  return make_lisp_ptr (NULL, Lisp_String);
+}
+
 /* Pseudovector types.  */
 
 #define XSETPVECTYPE(v, code)						\
@@ -3758,9 +3767,6 @@ extern byte_ct gc_relative_threshold;
 extern byte_ct const memory_full_cons_threshold;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
-#endif
-#ifdef ENABLE_CHECKING
-extern Lisp_Object Vdead;
 #endif
 extern Lisp_Object list1 (Lisp_Object);
 extern Lisp_Object list2 (Lisp_Object, Lisp_Object);
