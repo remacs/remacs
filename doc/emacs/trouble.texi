@@ -469,19 +469,30 @@ in unusual circumstances), Emacs can perform poorly when extremely
 long lines are present (where ``extremely long'' usually means at
 least many thousands of characters).
 
+@cindex @code{so-long} mode
+@findex global-so-long-mode
+@vindex so-long-action
   A particular problem is that Emacs may ``hang'' for a long time at
-the point of visiting a file with extremely long lines, and this case
-can be mitigated by enabling the @file{so-long} library, which detects
-when a visited file contains abnormally long lines, and takes steps to
+the point of visiting a file with extremely long lines.  This can be
+mitigated by enabling the @file{so-long} library, which detects when a
+visited file contains abnormally long lines, and takes steps to
 disable features which are liable to cause slowness in that situation.
+To enable this library, type @kbd{M-x global-so-long-mode @key{RET}},
+or turn on the @code{global-so-long-mode} in your init file
+(@pxref{Init File}), or customize the @code{global-so-long-mode}
+option.  You can tailor this mode's operation by customizing the
+variable @code{so-long-action}.
 
-  This library can also significantly improve performance when moving
-and editing in such a buffer -- performance is still likely to degrade
-as you get deeper into the long lines, but the improvements can
-nevertheless be substantial.
+  The @file{so-long} library can also significantly improve
+performance when moving and editing in a buffer with long lines.
+Performance is still likely to degrade as you get deeper into the long
+lines, but the improvements from using this library can nevertheless
+be substantial.
 
+@findex so-long-commentary
   Use @kbd{M-x so-long-commentary} to view the documentation for this
-library and learn how to enable and configure it.
+library and learn more about how to enable and configure it.
+
 @node Bugs
 @section Reporting Bugs
 
