@@ -10714,7 +10714,7 @@ message_to_stderr (Lisp_Object m)
   if (noninteractive_need_newline)
     {
       noninteractive_need_newline = false;
-      putc ('\n', stderr);
+      errputc ('\n');
     }
   if (STRINGP (m))
     {
@@ -10728,21 +10728,10 @@ message_to_stderr (Lisp_Object m)
       else
 	s = m;
 
-      /* We want to write this out with a single call so that
-	 output doesn't interleave with other processes writing to
-	 stderr at the same time. */
-      {
-	int length = min (INT_MAX, SBYTES (s) + 1);
-	char *string = xmalloc (length);
-
-	memcpy (string, SSDATA (s), length - 1);
-	string[length - 1] = '\n';
-	fwrite (string, 1, length, stderr);
-	xfree (string);
-      }
+      errwrite (SDATA (s), SBYTES (s));
     }
-  else if (!cursor_in_echo_area)
-    putc ('\n', stderr);
+  if (STRINGP (m) || !cursor_in_echo_area)
+    errputc ('\n');
 }
 
 /* The non-logging version of message3.

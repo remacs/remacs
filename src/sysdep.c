@@ -232,6 +232,10 @@ force_open (int fd, int flags)
     }
 }
 
+/* A stream that is like stderr, except line buffered.  It is NULL
+   during startup, or if line buffering is not in use.  */
+static FILE *buferr;
+
 /* Make sure stdin, stdout, and stderr are open to something, so that
    their file descriptors are not hijacked by later system calls.  */
 void
@@ -244,6 +248,14 @@ init_standard_fds (void)
   force_open (STDIN_FILENO, O_WRONLY);
   force_open (STDOUT_FILENO, O_RDONLY);
   force_open (STDERR_FILENO, O_RDONLY);
+
+  /* Set buferr if possible on platforms defining _PC_PIPE_BUF, as
+     they support the notion of atomic writes to pipes.  */
+  #ifdef _PC_PIPE_BUF
+    buferr = fdopen (STDERR_FILENO, "w");
+    if (buferr)
+      setvbuf (buferr, NULL, _IOLBF, 0);
+  #endif
 }
 
 /* Return the current working directory.  The result should be freed
@@ -2769,6 +2781,46 @@ safe_strsignal (int code)
   return signame;
 }
 
+/* Output to stderr.  */
+
+/* Return the error output stream.  */
+static FILE *
+errstream (void)
+{
+  FILE *err = buferr;
+  if (!err)
+    return stderr;
+  fflush_unlocked (stderr);
+  return err;
+}
+
+/* These functions are like fputc, vfprintf, and fwrite,
+   except that they output to stderr and buffer better on
+   platforms that support line buffering.  This avoids interleaving
+   output when Emacs and other processes write to stderr
+   simultaneously, so long as the lines are short enough.  When a
+   single diagnostic is emitted via a sequence of calls of one or more
+   of these functions, the caller should arrange for the last called
+   function to output a newline at the end.  */
+
+void
+errputc (int c)
+{
+  fputc_unlocked (c, errstream ());
+}
+
+void
+verrprintf (char const *fmt, va_list ap)
+{
+  vfprintf (errstream (), fmt, ap);
+}
+
+void
+errwrite (void const *buf, ptrdiff_t nbuf)
+{
+  fwrite_unlocked (buf, 1, nbuf, errstream ());
+}
+
 /* Close standard output and standard error, reporting any write
    errors as best we can.  This is intended for use with atexit.  */
 void
@@ -2782,9 +2834,10 @@ close_output_streams (void)
 
   /* Do not close stderr if addresses are being sanitized, as the
      sanitizer might report to stderr after this function is invoked.  */
-  if (ADDRESS_SANITIZER
-      ? fflush (stderr) != 0 || ferror (stderr)
-      : close_stream (stderr) != 0)
+  bool err = buferr && (fflush (buferr) != 0 || ferror (buferr));
+  if (err | (ADDRESS_SANITIZER
+	     ? fflush (stderr) != 0 || ferror (stderr)
+	     : close_stream (stderr) != 0))
     _exit (EXIT_FAILURE);
 }
 
