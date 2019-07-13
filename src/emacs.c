@@ -2454,23 +2454,29 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 
   /* If we are controlling the terminal, reset terminal modes.  */
 #ifndef DOS_NT
-  {
-    pid_t pgrp = getpgrp ();
-    pid_t tpgrp = tcgetpgrp (0);
-    if ((tpgrp != -1) && tpgrp == pgrp)
-      {
-	reset_all_sys_modes ();
-	if (sig && sig != SIGTERM)
-	  {
-	    static char const format[] = "Fatal error %d: ";
-	    char buf[sizeof format - 2 + INT_STRLEN_BOUND (int)];
-	    int buflen = sprintf (buf, format, sig);
-	    char const *sig_desc = safe_strsignal (sig);
+  pid_t tpgrp = tcgetpgrp (STDIN_FILENO);
+  if (tpgrp != -1 && tpgrp == getpgrp ())
+    {
+      reset_all_sys_modes ();
+      if (sig && sig != SIGTERM)
+	{
+	  static char const fmt[] = "Fatal error %d: %n%s\n";
+	  char buf[max ((sizeof fmt - sizeof "%d%n%s\n"
+			 + INT_STRLEN_BOUND (int) + 1),
+			min (PIPE_BUF, MAX_ALLOCA))];
+	  char const *sig_desc = safe_strsignal (sig);
+	  int nlen;
+	  int buflen = snprintf (buf, sizeof buf, fmt, sig, &nlen, sig_desc);
+	  if (0 <= buflen && buflen < sizeof buf)
 	    emacs_write (STDERR_FILENO, buf, buflen);
-	    emacs_write (STDERR_FILENO, sig_desc, strlen (sig_desc));
-	  }
-      }
-  }
+	  else
+	    {
+	      emacs_write (STDERR_FILENO, buf, nlen);
+	      emacs_write (STDERR_FILENO, sig_desc, strlen (sig_desc));
+	      emacs_write (STDERR_FILENO, fmt + sizeof fmt - 2, 1);
+	    }
+	}
+    }
 #else
   fflush (stdout);
   reset_all_sys_modes ();

@@ -2436,7 +2436,7 @@ emacs_backtrace (int backtrace_limit)
 
   if (npointers)
     {
-      emacs_write (STDERR_FILENO, "\nBacktrace:\n", 12);
+      emacs_write (STDERR_FILENO, "Backtrace:\n", 11);
       backtrace_symbols_fd (buffer, npointers, STDERR_FILENO);
       if (bounded_limit < npointers)
 	emacs_write (STDERR_FILENO, "...\n", 4);
