@@ -2362,6 +2362,7 @@ FROM-MENU-BAR, if non-nil, means we are dropping one of menu-bar's menus."
   (let* ((map (cond
 	       ((keymapp menu) menu)
 	       ((and (listp menu) (keymapp (car menu))) menu)
+               ((not (listp menu)) nil)
 	       (t (let* ((map (easy-menu-create-menu (car menu) (cdr menu)))
 			 (filter (when (symbolp map)
 				   (plist-get (get map 'menu-prop) :filter))))
@@ -2459,9 +2460,12 @@ first (leftmost) menu-bar item; you can select other items by typing
 
 This is meant to be used only for debugging TTY menus.")
 
-(defun menu-bar-open (&optional frame)
+(defun menu-bar-open (&optional frame initial-x)
   "Start key navigation of the menu bar in FRAME.
 
+Optional argument INITIAL-X gives the X coordinate of the
+first TTY menu-bar menu to be dropped down.  Interactively,
+this is the numeric argument to the command.
 This function decides which method to use to access the menu
 depending on FRAME's terminal device.  On X displays, it calls
 `x-menu-bar-open'; on Windows, `w32-menu-bar-open'; otherwise it
@@ -2469,7 +2473,8 @@ calls either `popup-menu' or `tmm-menubar' depending on whether
 `tty-menu-open-use-tmm' is nil or not.
 
 If FRAME is nil or not given, use the selected frame."
-  (interactive)
+  (interactive
+   (list nil (prefix-numeric-value current-prefix-arg)))
   (let ((type (framep (or frame (selected-frame)))))
     (cond
      ((eq type 'x) (x-menu-bar-open frame))
@@ -2482,7 +2487,7 @@ If FRAME is nil or not given, use the selected frame."
       ;; menu item that should be removed when we exit the minibuffer.
       (force-mode-line-update)
       (redisplay)
-      (let* ((x tty-menu--initial-menu-x)
+      (let* ((x (max initial-x tty-menu--initial-menu-x))
 	     (menu (menu-bar-menu-at-x-y x 0 frame)))
 	(popup-menu (or
 		     (lookup-key-ignore-too-long
