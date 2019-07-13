@@ -2711,8 +2711,10 @@ You can use the accessors to set the corresponding slots, via `setf'.
 
 NAME may instead take the form (NAME OPTIONS...), where each
 OPTION is either a single keyword or (KEYWORD VALUE) where
-KEYWORD can be one of :conc-name, :constructor, :copier, :predicate,
-:type, :named, :initial-offset, :print-function, :noinline, or :include.
+KEYWORD can be one of `:conc-name', `:constructor', `:copier',
+`:predicate', `:type', `:named', `:initial-offset',
+`:print-function', `:noinline', or `:include'.  See Info
+node `(cl)Structures' for the description of the options.
 
 Each SLOT may instead take the form (SNAME SDEFAULT SOPTIONS...), where
 SDEFAULT is the default value of that slot and SOPTIONS are keyword-value
@@ -2720,7 +2722,7 @@ pairs for that slot.
 Currently, only one keyword is supported, `:read-only'.  If this has a
 non-nil value, that slot cannot be set via `setf'.
 
-It's optional DOC-STRING is optional.
+It's DOC-STRING is optional.
 
 \(fn NAME &optional DOCSTRING &rest SLOTS)"
   (declare (doc-string 2) (indent 1)
