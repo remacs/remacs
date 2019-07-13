@@ -582,7 +582,7 @@ This is buffer-local in every such buffer.")
     ;; actually spaces are only supported in let/(( ... ))
     (ksh88 . ,(concat "\\<\\([[:alnum:]_]+\\)\\(\\[.+\\]\\)?"
                       "[ \t]*\\(?:[-+*/%&|~^]\\|<<\\|>>\\)?="))
-    (bash . "\\<\\([[:alnum:]_]+\\)\\([.+]\\)?\\+?=")
+    (bash . "\\<\\([[:alnum:]_]+\\)\\(\\[.+\\]\\)?\\+?=")
     (rc . "\\<\\([[:alnum:]_*]+\\)[ \t]*=")
     (sh . "\\<\\([[:alnum:]_]+\\)="))
   "Regexp for the variable name and what may follow in an assignment.
