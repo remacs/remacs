@@ -5628,7 +5628,10 @@ This variable is never applied to a way of decoding a file while reading it.  */
 		     &BVAR (current_buffer, bidi_display_reordering), Qnil,
 		     doc: /* Non-nil means reorder bidirectional text for display in the visual order.
 Setting this to nil is intended for use in debugging the display code.
-Don't set to nil in normal sessions, as that is not supported.  */);
+Don't set to nil in normal sessions, as that is not supported.
+See also `bidi-paragraph-direction'; setting that might speed up
+redisplay.  */);
+
   DEFVAR_PER_BUFFER ("bidi-paragraph-start-re",
 		     &BVAR (current_buffer, bidi_paragraph_start_re), Qnil,
 		     doc: /* If non-nil, a regexp matching a line that starts OR separates paragraphs.
