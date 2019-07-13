@@ -657,8 +657,9 @@ since it could result in memory overflow and make Emacs crash."
                                          :value t)
                                   (const :tag "Fixed column number"
                                          :value 70
-                                         :format "%v"))
-                                 integer "27.1")
+                                         :format "%v")
+                                  integer)
+                                 "27.1")
              (display-fill-column-indicator-character display-fill-column-indicator
                                  character "27.1")
 	     ;; xfaces.c
