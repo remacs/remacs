@@ -38,14 +38,13 @@
 (defvar vc-hg-program)
 
 ;;;###tramp-autoload
-(defcustom tramp-inline-compress-start-size
-  (unless (memq system-type '(windows-nt)) 4096)
+(defcustom tramp-inline-compress-start-size 4096
   "The minimum size of compressing where inline transfer.
-When inline transfer, compress transferred data of file
-whose size is this value or above (up to `tramp-copy-size-limit').
+When inline transfer, compress transferred data of file whose
+size is this value or above (up to `tramp-copy-size-limit' for
+out-of-band methods).
 If it is nil, no compression at all will be applied."
   :group 'tramp
-  :version "26.3"
   :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
@@ -4557,30 +4556,38 @@ Goes through the list `tramp-inline-compress-commands'."
 	   vec 5
 	   "Checking local compress commands `%s', `%s' for sanity"
 	   compress decompress)
-	  (unless
-	      (zerop
-	       (tramp-call-local-coding-command
-		(format
-		 "echo %s | %s | %s" magic
-		 ;; Windows shells need the program file name after
-		 ;; the pipe symbol be quoted if they use forward
-		 ;; slashes as directory separators.
-		 (mapconcat
-		  #'tramp-unquote-shell-quote-argument
-		  (split-string compress) " ")
-		 (mapconcat
-		  #'tramp-unquote-shell-quote-argument
-		  (split-string decompress) " "))
-		nil nil))
-	    (throw 'next nil))
-	  (tramp-message
+          (with-temp-buffer
+            (unless
+                (and
+	         (zerop
+	          (tramp-call-local-coding-command
+	           (format
+	            "echo %s | %s | %s" magic
+	            ;; Windows shells need the program file name after
+	            ;; the pipe symbol be quoted if they use forward
+	            ;; slashes as directory separators.
+	            (mapconcat
+	             #'tramp-unquote-shell-quote-argument
+                     (split-string compress) " ")
+	            (mapconcat
+	             #'tramp-unquote-shell-quote-argument
+                     (split-string decompress) " "))
+	           nil t))
+	         (string-match
+	          (concat "^" (regexp-quote magic) "$") (buffer-string)))
+              (throw 'next nil)))
+          (tramp-message
 	   vec 5
 	   "Checking remote compress commands `%s', `%s' for sanity"
 	   compress decompress)
 	  (unless (tramp-send-command-and-check
 		   vec (format "echo %s | %s | %s" magic compress decompress) t)
 	    (throw 'next nil))
-	  (setq found t)))
+  (with-current-buffer (tramp-get-buffer vec)
+    (goto-char (point-min))
+    (unless (looking-at (regexp-quote magic))
+      (throw 'next nil)))
+  (setq found t)))
 
       ;; Did we find something?
       (if found
