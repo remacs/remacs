@@ -240,7 +240,7 @@ directories to reflect your edits.
 
 See `wdired-mode'."
   (interactive)
-  (unless (eq major-mode 'dired-mode)
+  (unless (derived-mode-p 'dired-mode)
     (error "Not a Dired buffer"))
   (set (make-local-variable 'wdired-old-content)
        (buffer-substring (point-min) (point-max)))
