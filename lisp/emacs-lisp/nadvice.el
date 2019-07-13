@@ -87,8 +87,9 @@ Each element has the form (WHERE BYTECODE STACK) where:
   "Build the raw docstring for FUNCTION, presumably advised."
   (let* ((flist (indirect-function function))
          (docfun nil)
+         (macrop (eq 'macro (car-safe flist)))
          (docstring nil))
-    (if (eq 'macro (car-safe flist)) (setq flist (cdr flist)))
+    (if macrop (setq flist (cdr flist)))
     (while (advice--p flist)
       (let ((doc (aref flist 4))
             (where (advice--where flist)))
@@ -100,10 +101,11 @@ Each element has the form (WHERE BYTECODE STACK) where:
         (setq docstring
               (concat
                docstring
-               (propertize (format "%s advice: " where)
-                           'face 'warning)
+               (format "This %s has %s advice: "
+                       (if macrop "macro" "function")
+                       where)
                (let ((fun (advice--car flist)))
-                 (if (symbolp fun) (format-message "`%S'" fun)
+                 (if (symbolp fun) (format-message "`%S'." fun)
                    (let* ((name (cdr (assq 'name (advice--props flist))))
                           (doc (documentation fun t))
                           (usage (help-split-fundoc doc function)))
