@@ -2711,10 +2711,10 @@ emacs_perror (char const *message)
 			 ? initial_argv[0] : "emacs");
   /* Write it out all at once, if it's short; this is less likely to
      be interleaved with other output.  */
-  char buf[BUFSIZ];
+  char buf[min (PIPE_BUF, MAX_ALLOCA)];
   int nbytes = snprintf (buf, sizeof buf, "%s: %s: %s\n",
 			 command, message, error_string);
-  if (0 <= nbytes && nbytes < BUFSIZ)
+  if (0 <= nbytes && nbytes < sizeof buf)
     emacs_write (STDERR_FILENO, buf, nbytes);
   else
     {

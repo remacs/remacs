@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define EMACS_SYSSTDIO_H
 
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include "unlocked-io.h"
 
@@ -36,6 +37,10 @@ extern void close_output_streams (void);
 #else
 # define FOPEN_BINARY ""
 # define FOPEN_TEXT ""
+#endif
+
+#ifndef PIPE_BUF
+ #define PIPE_BUF MAX_ALLOCA
 #endif
 
 #endif /* EMACS_SYSSTDIO_H */
