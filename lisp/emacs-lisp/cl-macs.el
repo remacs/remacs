@@ -2720,7 +2720,9 @@ pairs for that slot.
 Currently, only one keyword is supported, `:read-only'.  If this has a
 non-nil value, that slot cannot be set via `setf'.
 
-\(fn NAME SLOTS...)"
+It's optional DOC-STRING is optional.
+
+\(fn NAME &optional DOCSTRING &rest SLOTS)"
   (declare (doc-string 2) (indent 1)
            (debug
             (&define                    ;Makes top-level form not be wrapped.
