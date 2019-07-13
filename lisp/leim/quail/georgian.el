@@ -22,8 +22,12 @@
 
 ;;; Commentary:
 
-;; Georgian input following the Yudit map from Mark Leisher
-;; <mleisher@crl.nmsu.edu>.
+;; This file defines the following Georgian keyboards:
+;;
+;; - Georgian input following the Yudit map from Mark Leisher
+;;   <mleisher@crl.nmsu.edu>.
+;;
+;; - QWERTY-based Georgian.
 
 ;;; Code:
 
@@ -78,6 +82,55 @@
  ;; accepted for U+10F7, U+10F8  -- fx
  ("y" ?) ;; Letter not in Unicode (private use code).
  ("e1" ?) ;; Letter not in Unicode (private use code).
+ )
+
+(quail-define-package
+ "georgian-qwerty" "Georgian" "ქ" t
+ "Georgian input based on QWERTY keyboard."
+ nil t nil nil t nil nil nil nil nil t)
+
+(quail-define-rules
+ ("a" ?ა)
+ ("b" ?ბ)
+ ("g" ?გ)
+ ("d" ?დ)
+ ("e" ?ე)
+ ("v" ?ვ)
+ ("z" ?ზ)
+ ("T" ?თ)
+ ("i" ?ი)
+ ("k" ?კ)
+ ("l" ?ლ)
+ ("m" ?მ)
+ ("n" ?ნ)
+ ("o" ?ო)
+ ("p" ?პ)
+ ("J" ?ჟ)
+ ("r" ?რ)
+ ("s" ?ს)
+ ("t" ?ტ)
+ ("u" ?უ)
+ ("f" ?ფ)
+ ("q" ?ქ)
+ ("R" ?ღ)
+ ("y" ?ყ)
+ ("S" ?შ)
+ ("C" ?ჩ)
+ ("c" ?ც)
+ ("Z" ?ძ)
+ ("w" ?წ)
+ ("W" ?ჭ)
+ ("x" ?ხ)
+ ("j" ?ჯ)
+ ("h" ?ჰ)
+ ("X" ?ჴ)
+ ("H" ?ჱ)
+ ("K" ?ჵ)
+ ("I" ?ჲ)
+ ("V" ?ჳ)
+ ("F" ?ჶ)
+ ("Y" ?ჸ)
+ ("G" ?ჷ)
  )
 
 ;;; georgian.el ends here
