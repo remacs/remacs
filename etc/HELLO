@@ -47,7 +47,7 @@ Emoji	👋
 </x-charset><x-charset><param>latin-iso8859-15</param>Estonian (eesti keel)	Tere päevast / Tere õhtust
 </x-charset><x-charset><param>latin-iso8859-1</param>Finnish (suomi)	Hei / Hyvää päivää
 French (français)	Bonjour / Salut
-</x-charset><x-charset><param>mule-unicode-0100-24ff</param>Georgian (ქართველი)	გამარჯობა
+</x-charset><x-charset><param>mule-unicode-0100-24ff</param>Georgian (ქართული)	გამარჯობა
 </x-charset><x-charset><param>latin-iso8859-1</param>German (Deutsch)	Guten Tag / Grüß Gott
 </x-charset><x-charset><param>greek-iso8859-7</param>Greek (ελληνικά)	Γειά σας
 </x-charset><x-charset><param>mule-unicode-0100-24ff</param>Greek, ancient (ἑλληνική)	Οὖλέ τε καὶ μέγα χαῖρε
