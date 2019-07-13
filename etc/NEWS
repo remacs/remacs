@@ -1711,6 +1711,14 @@ expansion to backtrace buffers produced by the Lisp debugger, Edebug
 and ERT.  See the node "(elisp) Backtraces" in the Elisp manual for
 documentation of the new mode and its commands.
 
++++
+** so-long.el helps to mitigate performance problems with long lines.
+When 'global-so-long-mode' has been enabled, visiting a file with very
+long lines will (subject to configuration) cause the user's preferred
+'so-long-action' to be automatically invoked (by default, the buffer's
+major mode is replaced by 'so-long-mode').  In extreme cases this can
+prevent delays of several minutes, and make Emacs responsive almost
+immediately.  Type 'M-x so-long-commentary' for full documentation.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
