@@ -180,6 +180,9 @@ See `run-hooks'."
     (define-key map [open]
       '(menu-item "Open File" vc-dir-find-file
 		  :help "Find the file on the current line"))
+    (define-key map [delete]
+      '(menu-item "Delete" vc-dir-delete-files-no-vc
+		  :help "Delete the marked files"))
     (define-key map [sepvcdet] '("--"))
     ;; FIXME: This needs a key binding.  And maybe a better name
     ;; ("Insert" like PCL-CVS uses does not sound that great either)...
@@ -264,6 +267,7 @@ See `run-hooks'."
     ;;                                     bound by `special-mode'.
     ;; Marking.
     (define-key map "m" 'vc-dir-mark)
+    (define-key map "d" 'vc-dir-delete-files-no-vc)
     (define-key map "M" 'vc-dir-mark-all-files)
     (define-key map "u" 'vc-dir-unmark)
     (define-key map "U" 'vc-dir-unmark-all-files)
@@ -762,8 +766,21 @@ that share the same state."
   (interactive "e")
   (vc-dir-at-event e (vc-dir-mark-unmark 'vc-dir-toggle-mark-file)))
 
+(defun vc-dir-delete-files-no-vc ()
+  "Delete the marked files, or the current file if no marks.
+The files will not be marked as deleted in the version control
+system; see `vc-dir-delete-file'."
+  (interactive)
+  (map-y-or-n-p "Delete %s? "
+                #'delete-file
+                (or (vc-dir-marked-files)
+                    (list (vc-dir-current-file))))
+  (revert-buffer))
+
 (defun vc-dir-delete-file ()
-  "Delete the marked files, or the current file if no marks."
+  "Delete the marked files, or the current file if no marks.
+The files will also be marked as deleted in the version control
+system."
   (interactive)
   (mapc 'vc-delete-file (or (vc-dir-marked-files)
                             (list (vc-dir-current-file)))))

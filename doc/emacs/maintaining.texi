@@ -1349,7 +1349,14 @@ Prompt for the name of a branch and display the change history of that
 branch (@code{vc-print-branch-log}).
 
 @item B s
-Switch to a branch (@code{vc-retrieve-tag}).  @xref{Switching Branches}.
+Switch to a branch (@code{vc-retrieve-tag}).  @xref{Switching
+Branches}.
+
+@item d
+Delete the marked files, or the current file if no marks
+(@code{vc-dir-delete-files-no-vc)}.  The files will not be marked as
+deleted in the version control system, so this function is mostly
+useful for unregistered files.
 @end table
 
 @cindex stashes in version control
