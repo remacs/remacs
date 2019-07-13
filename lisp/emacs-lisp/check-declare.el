@@ -148,7 +148,7 @@ is a string giving details of the error."
           (setq re (format (if cflag
                                "^[ \t]*\\(DEFUN\\)[ \t]*([ \t]*\"%s\""
                              "^[ \t]*(\\(fset[ \t]+'\\|\
-cl-def\\(?:generic\\|method\\)\\|\
+cl-def\\(?:generic\\|method\\|un\\)\\|\
 def\\(?:un\\|subst\\|foo\\|method\\|class\\|\
 ine-\\(?:derived\\|generic\\|\\(?:global\\(?:ized\\)?-\\)?minor\\)-mode\\|\
 \\(?:ine-obsolete-function-\\)?alias[ \t]+'\\|\
