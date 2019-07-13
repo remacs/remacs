@@ -577,6 +577,10 @@ an unquoted @samp{[} is special again and a @samp{]} not.
 @node Char Classes
 @subsubsection Character Classes
 @cindex character classes in regexp
+@cindex ascii character class, regexp
+@cindex alnum character class, regexp
+@cindex alpha character class, regexp
+@cindex xdigit character class, regexp
 
   Here is a table of the classes you can use in a character alternative,
 and what they mean:
