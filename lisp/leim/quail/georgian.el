@@ -28,6 +28,8 @@
 ;;   <mleisher@crl.nmsu.edu>.
 ;;
 ;; - QWERTY-based Georgian.
+;;
+;; - QWERTY-based Nuskhuri script.
 
 ;;; Code:
 
@@ -129,6 +131,52 @@
  ("F" ?ჶ)
  ("Y" ?ჸ)
  ("G" ?ჷ)
+ )
+
+(quail-define-package
+ "georgian-nuskhuri" "Georgian" "ⴌ" t
+ "Nuskhuri Georgian (QWERTY-based)."
+ nil t nil nil t nil nil nil nil nil t)
+
+(quail-define-rules
+ ("a" ?ⴀ)
+ ("b" ?ⴁ)
+ ("g" ?ⴂ)
+ ("d" ?ⴃ)
+ ("e" ?ⴄ)
+ ("v" ?ⴅ)
+ ("z" ?ⴆ)
+ ("T" ?ⴇ)
+ ("i" ?ⴈ)
+ ("k" ?ⴉ)
+ ("l" ?ⴊ)
+ ("m" ?ⴋ)
+ ("n" ?ⴌ)
+ ("o" ?ⴍ)
+ ("p" ?ⴎ)
+ ("J" ?ⴏ)
+ ("r" ?ⴐ)
+ ("s" ?ⴑ)
+ ("t" ?ⴒ)
+ ("u" ?ⴓ)
+ ("f" ?ⴔ)
+ ("q" ?ⴕ)
+ ("R" ?ⴖ)
+ ("y" ?ⴗ)
+ ("S" ?ⴘ)
+ ("C" ?ⴙ)
+ ("c" ?ⴚ)
+ ("Z" ?ⴛ)
+ ("w" ?ⴜ)
+ ("W" ?ⴝ)
+ ("x" ?ⴞ)
+ ("j" ?ⴟ)
+ ("h" ?ⴠ)
+ ("X" ?ⴤ)
+ ("H" ?ⴡ)
+ ("K" ?ⴥ)
+ ("I" ?ⴢ)
+ ("V" ?ⴣ)
  )
 
 ;;; georgian.el ends here
