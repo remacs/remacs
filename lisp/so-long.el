@@ -739,7 +739,12 @@ The variables are given buffer-local values.  By default this happens if
 `so-long-action' is set to either `so-long-mode' or `so-long-minor-mode'.
 
 If `so-long-revert' is subsequently invoked, then the variables are restored
-to their original states."
+to their original states.
+
+The combination of `line-move-visual' (enabled) and `truncate-lines' (disabled)
+is important for avoiding performance hits when moving vertically between
+excessively long lines, as otherwise the full length of the line may need to be
+scanned to find the next position."
   :type '(alist :key-type (variable :tag "Variable")
                 :value-type (sexp :tag "Value"))
   :options '((bidi-paragraph-direction (choice (const left-to-right)
