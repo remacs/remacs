@@ -252,7 +252,9 @@ number from the archive with the highest priority is
 selected.  When higher versions are available from archives with
 lower priorities, the user has to select those manually.
 
-Archives not in this list have the priority 0.
+Archives not in this list have the priority 0, as have packages
+that are already installed.  If you use negative priorities for
+the archives, they will not be upgraded automatically.
 
 See also `package-menu-hide-low-priority'."
   :type '(alist :key-type (string :tag "Archive name")
