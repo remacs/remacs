@@ -694,7 +694,7 @@ print diffs and logs between the merge base (common ancestor) of two
 given revisions.
 
 +++
-*** The new `d' command (`vc-dir-delete-files-no-vc') in `vc-dir-mode'
+*** The new `d' command (`vc-dir-clean-files') in `vc-dir-mode'
 buffers will delete the marked files (or if no files are marked, the
 file under point).  This command does not notify the VC backend, and
 is mostly useful for unregistered files.
