@@ -1915,13 +1915,13 @@ pub fn other_buffer(
 // visibility of buffers, and doesn't evaluate any frame predicates.
 #[no_mangle]
 pub extern "C" fn other_buffer_safely(buffer: LispObject) -> LispObject {
-    for buf in LiveBufferIter::new().map(|x| x.into()) {
-        if candidate_buffer(buf, buffer) {
-            return buf;
-        }
+    let found = LiveBufferIter::new()
+        .map(|x| x.into())
+        .find(|buf| candidate_buffer(*buf, buffer));
+    match found {
+        Some(buf) => buf,
+        None => get_scratch_buf(),
     }
-
-    get_scratch_buf()
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
