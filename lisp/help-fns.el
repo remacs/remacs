@@ -860,15 +860,14 @@ If ANY-SYMBOL is non-nil, don't insist the symbol be bound."
                 (and (or any-symbol (boundp sym)) sym)))))
         0)))
 
-(defun describe-variable-custom-version-info (variable &optional type)
+(defun describe-variable-custom-version-info (variable)
   (let ((custom-version (get variable 'custom-version))
 	(cpv (get variable 'custom-package-version))
-        (type (or type "variable"))
 	(output nil))
     (if custom-version
 	(setq output
-	      (format "This %s was introduced, or its default value was changed, in\nversion %s of Emacs.\n"
-                      type custom-version))
+	      (format "This variable was introduced, or its default value was changed, in\nversion %s of Emacs.\n"
+		      custom-version))
       (when cpv
 	(let* ((package (car-safe cpv))
 	       (version (if (listp (cdr-safe cpv))
@@ -878,11 +877,11 @@ If ANY-SYMBOL is non-nil, don't insist the symbol be bound."
 	       (emacsv (cdr (assoc version pkg-versions))))
 	  (if (and package version)
 	      (setq output
-		    (format (concat "This %s was introduced, or its default value was changed, in\nversion %s of the %s package"
+		    (format (concat "This variable was introduced, or its default value was changed, in\nversion %s of the %s package"
 				    (if emacsv
 					(format " that is part of Emacs %s" emacsv))
 				    ".\n")
-			    type version package))))))
+			    version package))))))
     output))
 
 ;;;###autoload

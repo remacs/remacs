@@ -25,8 +25,6 @@
 
 ;;; Code:
 
-(require 'subr-x)
-
 (defcustom term-file-prefix (purecopy "term/")
   "If non-nil, Emacs startup performs terminal-specific initialization.
 It does this by: (load (concat term-file-prefix (getenv \"TERM\")))
@@ -1418,8 +1416,6 @@ argument, prompt for a regular expression using `read-regexp'."
 	(dolist (face (face-list))
 	  (copy-face face face frame disp-frame)))))
 
-(declare-function describe-variable-custom-version-info "help-fns"
-                  (variable &optional type))
 
 (defun describe-face (face &optional frame)
   "Display the properties of face FACE on FRAME.
@@ -1432,7 +1428,6 @@ If FRAME is omitted or nil, use the selected frame."
   (interactive (list (read-face-name "Describe face"
                                      (or (face-at-point t) 'default)
                                      t)))
-  (require 'help-fns)
   (let* ((attrs '((:family . "Family")
 		  (:foundry . "Foundry")
 		  (:width . "Width")
@@ -1529,11 +1524,7 @@ If FRAME is omitted or nil, use the selected frame."
 			  (re-search-backward ": \\([^:]+\\)" nil t)
 			  (help-xref-button 1 'help-face attr)))
 		    (insert "\n")))))
-	    (terpri)
-            (when-let ((version-info (describe-variable-custom-version-info
-                                      f 'face)))
-              (insert version-info))
-            (terpri)))))))
+	    (terpri)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
