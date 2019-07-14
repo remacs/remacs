@@ -1282,5 +1282,32 @@ renaming only, rather than modified in-place."
   (should (equal (file-size-human-readable 10000 'si " " "bit") "10 kbit"))
   (should (equal (file-size-human-readable 10000 'iec " " "bit") "9.8 Kibit")))
 
+(ert-deftest files-test-magic-mode-alist-re-baseline ()
+  "Test magic-mode-alist with RE, expected behaviour for match."
+  (let ((magic-mode-alist '(("my-tag" . text-mode))))
+    (with-temp-buffer
+      (insert "my-tag")
+      (normal-mode)
+      (should (eq major-mode 'text-mode)))))
+
+(ert-deftest files-test-magic-mode-alist-re-no-match ()
+  "Test magic-mode-alist with RE, expected behaviour for no match."
+  (let ((magic-mode-alist '(("my-tag" . text-mode))))
+    (with-temp-buffer
+      (insert "not-my-tag")
+      (normal-mode)
+      (should (not (eq major-mode 'text-mode))))))
+
+(ert-deftest files-test-magic-mode-alist-re-case-diff ()
+  "Test that regexps in magic-mode-alist are case-sensitive.
+See <https://debbugs.gnu.org/36401>."
+  (let ((case-fold-search t)
+        (magic-mode-alist '(("my-tag" . text-mode))))
+    (with-temp-buffer
+      (goto-char (point-min))
+      (insert "My-Tag")
+      (normal-mode)
+      (should (not (eq major-mode 'text-mode))))))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here
