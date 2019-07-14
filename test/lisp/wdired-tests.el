@@ -128,6 +128,8 @@ wdired-mode."
 	    (kill-buffer buf)))
 	(delete-directory test-dir t)))))
 
+(defvar server-socket-dir)
+
 (ert-deftest wdired-test-bug34915 ()
   "Test editing when dired-listing-switches includes -F.
 Appended file indicators should not count as part of the file
@@ -150,6 +152,7 @@ wdired-get-filename before and after editing."
             (require 'dired-x)
             (dired-smart-shell-command "mkfifo foopipe")
             (server-force-delete)
+            ;; FIXME?  This seems a heavy-handed way of making a socket.
             (server-start)              ; Add a socket file.
             (kill-buffer buf))
           (dired test-dir)
