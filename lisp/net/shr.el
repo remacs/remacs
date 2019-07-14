@@ -735,7 +735,7 @@ size, and full-buffer size."
         (when (= (preceding-char) ?\s)
 	  (delete-char -1))
         (let ((gap-start (point)))
-	  (insert "\n")
+          (insert "\n")
 	  (shr-indent)
           (when (and (> (1- gap-start) (point-min))
                      ;; The link on both sides of the newline are the
@@ -746,10 +746,12 @@ size, and full-buffer size."
             ;; not visually.  This makes navigation between links work
             ;; well, but avoids underscores before the link on the next
             ;; line when indented.
-            (let ((props (copy-sequence (text-properties-at (point)))))
+            (let* ((props (copy-sequence (text-properties-at (point))))
+                   (face (plist-get props 'face)))
               ;; We don't want to use the faces on the indentation, because
-              ;; that's ugly.
-              (setq props (plist-put props 'face nil))
+              ;; that's ugly, but we do want to use the background colour.
+              (when face
+                (setq props (plist-put props 'face (shr-face-background face))))
 	      (add-text-properties gap-start (point) props))))
         (setq start (point))
         (shr-vertical-motion shr-internal-width)
