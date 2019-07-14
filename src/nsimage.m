@@ -309,8 +309,8 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   if (bmRep == nil || color == nil)
     return self;
 
-  if ([color colorSpace] != [NSColorSpace deviceRGBColorSpace])
-    rgbColor = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+  if ([color colorSpace] != [NSColorSpace genericRGBColorSpace])
+    rgbColor = [color colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
   else
     rgbColor = color;
 
