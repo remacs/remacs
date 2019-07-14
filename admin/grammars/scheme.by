@@ -72,6 +72,8 @@ scheme-in-list: DEFINE symbol expression
 		(INCLUDE-TAG (file-name-nondirectory (read $2)) (read $2) )
 	      | symbol sequence
 		(CODE-TAG $1 nil)
+	      | ;; No match, error
+		(TAG "Bad Tag in Sexp" 'error)
 	      ;
 
 name-args: semantic-list
