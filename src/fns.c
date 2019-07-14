@@ -4875,7 +4875,9 @@ DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
        doc: /* Return the number of elements in TABLE.  */)
   (Lisp_Object table)
 {
-  return make_fixnum (check_hash_table (table)->count);
+  struct Lisp_Hash_Table *h = check_hash_table (table);
+  hash_rehash_if_needed (h);
+  return make_fixnum (h->count);
 }
 
 
