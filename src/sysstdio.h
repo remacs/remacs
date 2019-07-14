@@ -20,6 +20,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef EMACS_SYSSTDIO_H
 #define EMACS_SYSSTDIO_H
 
+#include <stdarg.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
