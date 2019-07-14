@@ -2332,7 +2332,7 @@ Here is what it does:
 @itemize
 @item
 First, it checks whether Transient Mark mode is enabled and the region
-is active.  If so, it called @code{indent-region} to indent all the
+is active.  If so, it calls @code{indent-region} to indent all the
 text in the region (@pxref{Region Indent}).
 
 @item
