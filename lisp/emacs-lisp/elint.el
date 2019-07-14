@@ -554,6 +554,7 @@ Return nil if there are no more forms, t otherwise."
     (defcustom . elint-check-defcustom-form)
     (macro . elint-check-macro-form)
     (condition-case . elint-check-condition-case-form)
+    (condition-case-unless-debug . elint-check-condition-case-form)
     (if . elint-check-conditional-form)
     (when . elint-check-conditional-form)
     (unless . elint-check-conditional-form)
