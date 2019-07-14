@@ -2278,7 +2278,8 @@ struct Lisp_Hash_Table
      'index' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
 
-  /* Number of key/value entries in the table.  */
+  /* Number of key/value entries in the table.  This number is
+     negated if the table needs rehashing.  */
   ptrdiff_t count;
 
   /* Index of first free entry in free list, or -1 if none.  */
