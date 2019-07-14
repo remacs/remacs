@@ -780,8 +780,9 @@ system; see `vc-dir-delete-file'."
                                  'unregistered)))
                       files)))
     (when tracked
-      (user-error "Trying to clean tracked file%s: %s"
-                  (if (= (length tracked) 1) "" "s")
+      (user-error (ngettext "Trying to clean tracked file: %s"
+                            "Trying to clean tracked files: %s"
+                            (length tracked))
                   (mapconcat #'file-name-nondirectory tracked ", ")))
     (map-y-or-n-p "Delete %s? " #'delete-file files)
     (revert-buffer)))
