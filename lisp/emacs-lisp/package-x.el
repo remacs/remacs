@@ -47,6 +47,8 @@
 
 (defcustom package-archive-upload-base "/path/to/archive"
   "The base location of the archive to which packages are uploaded.
+The commands in the package-x library will use this as base
+location.
 This should be an absolute directory name.  If the archive is on
 another machine, you may specify a remote name in the usual way,
 e.g. \"/ssh:foo@example.com:/var/www/packages/\".
@@ -273,7 +275,9 @@ if it exists."
 (defun package-upload-buffer ()
   "Upload the current buffer as a single-file Emacs Lisp package.
 If `package-archive-upload-base' does not specify a valid upload
-destination, prompt for one."
+destination, prompt for one.
+Signal an error if the current buffer is not visiting a simple
+package (a \".el\" file)."
   (interactive)
   (save-excursion
     (save-restriction
@@ -286,8 +290,13 @@ destination, prompt for one."
 Interactively, prompt for FILE.  The package is considered a
 single-file package if FILE ends in \".el\", and a multi-file
 package if FILE ends in \".tar\".
+Automatically extract package attributes and update the archive's
+contents list with this information.
 If `package-archive-upload-base' does not specify a valid upload
-destination, prompt for one."
+destination, prompt for one.  If the directory does not exist, it
+is created.  The directory need not have any initial contents
+\(i.e., you can use this command to populate an initially empty
+archive)."
   (interactive "fPackage file name: ")
   (with-temp-buffer
     (insert-file-contents file)
