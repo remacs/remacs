@@ -183,18 +183,14 @@ loads files during completion of 'C-h f' and 'C-h v' according to
 
 ** emacsclient
 
-*** Previously, when an alternate editor is started
-(--alternate-editor/-a), and there was an --eval switch, these
-parameters were used as file names for the alternate editor.
-emacsclient will now instead start the alternate editor without these
-parameters.
+*** emacsclient no longer passes --eval arguments to an alternate editor.
+Previously, --eval arguments were passed as file names to any
+alternate editor started by --alternate-editor/-a.
 
 +++
-*** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
-The behavior is identical to 'EMACS_SERVER_FILE', in that the
-command-line value specified via '--socket-name' will override the
-environment, and the natural default to 'TMPDIR', then "/tmp", continues
-to apply.
+*** emacsclient now supports an 'EMACS_SOCKET_NAME' environment variable.
+The command-line argument '--socket-name' overrides it.
+(The same behavior as for the pre-existing 'EMACS_SERVER_FILE' variable.)
 
 +++
 *** Emacs and emacsclient now default to "$XDG_RUNTIME_DIR/emacs"
