@@ -69,7 +69,6 @@
 
 (require 'macroexp)
 
-(def-edebug-spec inline-quote (backquote-form))
 (defmacro inline-quote (_exp)
   "Similar to backquote, but quotes code and only accepts , and not ,@."
   (declare (debug t))
@@ -101,7 +100,6 @@
   ;; inline-letevals, so signal the error in terms of the user's code.
   (error "inline-letevals can only be used within define-inline"))
 
-(def-edebug-spec inline-letevals '(sexp body))
 (defmacro inline-letevals (vars &rest body)
   "Make sure the expressions in VARS are evaluated.
 VARS should be a list of elements of the form (VAR EXP) or just VAR, in case
