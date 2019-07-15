@@ -231,8 +231,9 @@ textual parts.")
     'headers))
 
 (defun nnimap-transform-headers ()
+  "Transform server's FETCH response into parseable headers."
   (goto-char (point-min))
-  (let (article lines size string labels)
+  (let (seen-articles article lines size string labels)
     (cl-block nil
       (while (not (eobp))
 	(while (not (looking-at "\\* [0-9]+ FETCH"))
@@ -261,45 +262,57 @@ textual parts.")
 	      (and (re-search-forward "UID \\([0-9]+\\)" (line-end-position)
 				      t)
 		   (match-string 1)))
-	(setq lines nil)
-	(beginning-of-line)
-	(setq size
-	      (and (re-search-forward "RFC822.SIZE \\([0-9]+\\)"
-				      (line-end-position)
-				      t)
-		   (match-string 1)))
-	(beginning-of-line)
-	(when (search-forward "X-GM-LABELS" (line-end-position) t)
-	  (setq labels (ignore-errors (read (current-buffer)))))
-	(beginning-of-line)
-	(when (search-forward "BODYSTRUCTURE" (line-end-position) t)
-	  (let ((structure (ignore-errors
-			     (read (current-buffer)))))
-	    (while (and (consp structure)
-			(not (atom (car structure))))
-	      (setq structure (car structure)))
-	    (setq lines (if (and
-			     (stringp (car structure))
-			     (equal (upcase (nth 0 structure)) "MESSAGE")
-			     (equal (upcase (nth 1 structure)) "RFC822"))
-			    (nth 9 structure)
-			  (nth 7 structure)))))
-	(delete-region (line-beginning-position) (line-end-position))
-	(insert (format "211 %s Article retrieved." article))
-	(forward-line 1)
-	(when size
-	  (insert (format "Chars: %s\n" size)))
-	(when lines
-	  (insert (format "Lines: %s\n" lines)))
-	(when labels
-	  (insert (format "X-GM-LABELS: %s\n" labels)))
-	;; Most servers have a blank line after the headers, but
-	;; Davmail doesn't.
-	(unless (re-search-forward "^\r$\\|^)\r?$" nil t)
-	  (goto-char (point-max)))
-	(delete-region (line-beginning-position) (line-end-position))
-	(insert ".")
-	(forward-line 1)))))
+	;; If we've already got headers for this article, or this
+	;; FETCH line doesn't provide headers for the article, skip
+	;; it.  See bug#35433.
+	(if (or (member article seen-articles)
+		(save-excursion
+		  (forward-line)
+		  (null (looking-at-p
+			 ;; We're expecting a mail header.
+			 "^[!-9;-~]+: "))))
+	    (delete-region (line-beginning-position)
+			   (1+ (line-end-position)))
+	  (setq lines nil)
+	  (beginning-of-line)
+	  (setq size
+		(and (re-search-forward "RFC822.SIZE \\([0-9]+\\)"
+					(line-end-position)
+					t)
+		     (match-string 1)))
+	  (beginning-of-line)
+	  (when (search-forward "X-GM-LABELS" (line-end-position) t)
+	    (setq labels (ignore-errors (read (current-buffer)))))
+	  (beginning-of-line)
+	  (when (search-forward "BODYSTRUCTURE" (line-end-position) t)
+	    (let ((structure (ignore-errors
+			       (read (current-buffer)))))
+	      (while (and (consp structure)
+			  (not (atom (car structure))))
+		(setq structure (car structure)))
+	      (setq lines (if (and
+			       (stringp (car structure))
+			       (equal (upcase (nth 0 structure)) "MESSAGE")
+			       (equal (upcase (nth 1 structure)) "RFC822"))
+			      (nth 9 structure)
+			    (nth 7 structure)))))
+	  (delete-region (line-beginning-position) (line-end-position))
+	  (insert (format "211 %s Article retrieved." article))
+	  (forward-line 1)
+	  (when size
+	    (insert (format "Chars: %s\n" size)))
+	  (when lines
+	    (insert (format "Lines: %s\n" lines)))
+	  (when labels
+	    (insert (format "X-GM-LABELS: %s\n" labels)))
+	  ;; Most servers have a blank line after the headers, but
+	  ;; Davmail doesn't.
+	  (unless (re-search-forward "^\r$\\|^)\r?$" nil t)
+	    (goto-char (point-max)))
+	  (delete-region (line-beginning-position) (line-end-position))
+	  (insert ".")
+	  (forward-line 1)
+	  (push article seen-articles))))))
 
 (defun nnimap-unfold-quoted-lines ()
   ;; Unfold quoted {number} strings.
