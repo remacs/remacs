@@ -1,6 +1,6 @@
 //! Random utility Lisp functions.
 
-use std::{convert::TryInto, mem, ptr, slice};
+use std::{mem, ptr, slice};
 
 use libc;
 
@@ -19,7 +19,6 @@ use crate::{
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::args_out_of_range_3,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
         concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
@@ -611,7 +610,7 @@ pub fn validate_subarray_rust(
     size: isize,
 ) -> (EmacsInt, EmacsInt) {
     // convert from, to and size to Emacs Int
-    let int_size = EmacsInt::from(LispObject::from(size));
+    let int_size = size as EmacsInt;
     let mut int_from = from.map_or(0, EmacsInt::from);
     let mut int_to = to.map_or(int_size, EmacsInt::from);
 
@@ -624,10 +623,8 @@ pub fn validate_subarray_rust(
     }
 
     // check if from is less than to, or if from or to are out of range.
-    if !(0 <= int_from && int_from <= int_to && int_to <= int_size) {
-        unsafe {
-            args_out_of_range_3(array, LispObject::from(int_from), LispObject::from(int_to));
-        }
+    if 0 > int_from || int_from > int_to || int_to > int_size {
+        args_out_of_range!(array, LispObject::from(int_from), LispObject::from(int_to));
     }
 
     (int_from, int_to)
@@ -645,8 +642,8 @@ pub extern "C" fn validate_subarray(
     let (f, t) = validate_subarray_rust(array, from, to, size);
 
     unsafe {
-        *new_from = f.try_into().unwrap();
-        *new_to = t.try_into().unwrap();
+        *new_from = f as isize;
+        *new_to = t as isize;
     }
 }
 

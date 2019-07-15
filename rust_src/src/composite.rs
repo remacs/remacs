@@ -1,14 +1,12 @@
 //! Composite sequence support.
 
-use std::convert::TryInto;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
     fns::validate_subarray_rust,
     lisp::LispObject,
     multibyte::LispStringRef,
-    remacs_sys::{EmacsInt, Fcons, Fput_text_property, Qcomposition},
+    remacs_sys::{EmacsInt, Fput_text_property, Qcomposition},
 };
 
 /// Internal use only.
@@ -19,24 +17,16 @@ use crate::{
 /// for the composition.  See `compose-string' for more details.
 #[lisp_fn(min = "3")]
 pub fn compose_string_internal(
-    string: LispObject,
-    start: LispObject,
-    end: LispObject,
+    string: LispStringRef,
+    start: EmacsInt,
+    end: EmacsInt,
     components: LispObject,
     modification_func: LispObject,
 ) -> LispObject {
-    let string = LispStringRef::from(string);
-
     let (from, to) =
-        validate_subarray_rust(LispObject::from(string), start, end, string.len_chars());
+        validate_subarray_rust(string.into(), start.into(), end.into(), string.len_chars());
 
-    compose_text_rust(
-        from,
-        to,
-        components,
-        modification_func,
-        LispObject::from(string),
-    );
+    compose_text_rust(from, to, components, modification_func, string);
 
     LispObject::from(string)
 }
@@ -51,20 +41,20 @@ pub fn compose_text_rust(
     end: EmacsInt,
     components: LispObject,
     modification_function: LispObject,
-    string: LispObject,
+    string: LispStringRef,
 ) {
-    unsafe {
-        let prop = Fcons(
-            Fcons(LispObject::from(end - start), components),
-            modification_function,
-        );
+    let prop = (
+        (LispObject::from(end - start), components),
+        modification_function,
+    );
 
+    unsafe {
         Fput_text_property(
-            LispObject::from(start),
-            LispObject::from(end),
+            start.into(),
+            end.into(),
             Qcomposition,
-            prop,
-            string,
+            prop.into(),
+            string.into(),
         );
     }
 }
@@ -78,11 +68,11 @@ pub extern "C" fn compose_text(
     string: LispObject,
 ) {
     compose_text_rust(
-        start.try_into().unwrap(),
-        end.try_into().unwrap(),
+        start as EmacsInt,
+        end as EmacsInt,
         components,
         modification_function,
-        string,
+        string.into(),
     );
 }
 
