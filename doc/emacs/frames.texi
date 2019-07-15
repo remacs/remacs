@@ -531,8 +531,10 @@ the mouse cursor to the chosen frame.
 @cindex fonts
 
   By default, Emacs displays text on graphical displays using a
-10-point monospace font.  There are several different ways to specify
-a different font:
+10-point monospace font, and the font size can be changed
+interactively (@pxref{Text Scale}).
+
+  There are several different ways to specify a different font:
 
 @itemize
 @item
