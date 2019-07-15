@@ -5736,6 +5736,9 @@ circle:
   (insert-image (svg-image svg)))
 @end lisp
 
+@menu
+* SVG Path Commands::
+@end menu
 
 @node SVG Path Commands
 @subsubsection SVG Path Commands
