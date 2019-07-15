@@ -1973,7 +1973,7 @@ a large number if you prefer a mixed multitude.  The default is 4."
 (defvar mouse-buffer-menu-mode-groups
   (mapcar (lambda (arg) (cons  (purecopy (car arg)) (purecopy (cdr arg))))
   '(("Info\\|Help\\|Apropos\\|Man" . "Help")
-    ("\\bVM\\b\\|\\bMH\\b\\|Message\\|Mail\\|Group\\|Score\\|Summary\\|Article"
+    ("\\bVM\\b\\|\\bMH\\b\\|Message\\b\\|Mail\\|Group\\|Score\\|Summary\\|Article"
      . "Mail/News")
     ("\\<C\\>" . "C")
     ("ObjC" . "C")
