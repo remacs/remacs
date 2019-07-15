@@ -193,8 +193,11 @@ If nil, use function `isearch-message'.")
 
 (defvar isearch-wrap-function nil
   "Function to call to wrap the search when search is failed.
-If nil, move point to the beginning of the buffer for a forward search,
-or to the end of the buffer for a backward search.")
+The function is called with no parameters, and would typically
+move point.
+
+If nil, move point to the beginning of the buffer for a forward
+search, or to the end of the buffer for a backward search.")
 
 (defvar isearch-push-state-function nil
   "Function to save a function restoring the mode-specific Isearch state
