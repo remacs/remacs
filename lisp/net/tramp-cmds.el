@@ -212,39 +212,38 @@ This includes password cache, file cache, connection cache, buffers."
 (defun tramp-bug ()
   "Submit a bug report to the Tramp developers."
   (interactive)
-  (catch 'dont-send
-    (let ((reporter-prompt-for-summary-p t)
-	  ;; In rare cases, it could contain the password.  So we make it nil.
-	  tramp-password-save-function)
-      (reporter-submit-bug-report
-       tramp-bug-report-address	  ; to-address
-       (format "tramp (%s %s/%s)" ; package name and version
-	       tramp-version tramp-repository-branch tramp-repository-version)
-       (sort
-	(delq nil (mapcar
-	  (lambda (x)
-	    (and x (boundp x) (cons x 'tramp-reporter-dump-variable)))
-	  (append
-	   (mapcar #'intern (all-completions "tramp-" obarray #'boundp))
-	   ;; Non-tramp variables of interest.
-	   '(shell-prompt-pattern
-	     backup-by-copying
-	     backup-by-copying-when-linked
-	     backup-by-copying-when-mismatch
-	     backup-by-copying-when-privileged-mismatch
-	     backup-directory-alist
-	     password-cache
-	     password-cache-expiry
-	     remote-file-name-inhibit-cache
-	     connection-local-profile-alist
-	     connection-local-criteria-alist
-	     file-name-handler-alist))))
-	(lambda (x y) (string< (symbol-name (car x)) (symbol-name (car y)))))
+  (let ((reporter-prompt-for-summary-p t)
+	;; In rare cases, it could contain the password.  So we make it nil.
+	tramp-password-save-function)
+    (reporter-submit-bug-report
+     tramp-bug-report-address	  ; to-address
+     (format "tramp (%s %s/%s)" ; package name and version
+	     tramp-version tramp-repository-branch tramp-repository-version)
+     (sort
+      (delq nil (mapcar
+	(lambda (x)
+	  (and x (boundp x) (cons x 'tramp-reporter-dump-variable)))
+	(append
+	 (mapcar #'intern (all-completions "tramp-" obarray #'boundp))
+	 ;; Non-tramp variables of interest.
+	 '(shell-prompt-pattern
+	   backup-by-copying
+	   backup-by-copying-when-linked
+	   backup-by-copying-when-mismatch
+	   backup-by-copying-when-privileged-mismatch
+	   backup-directory-alist
+	   password-cache
+	   password-cache-expiry
+	   remote-file-name-inhibit-cache
+	   connection-local-profile-alist
+	   connection-local-criteria-alist
+	   file-name-handler-alist))))
+      (lambda (x y) (string< (symbol-name (car x)) (symbol-name (car y)))))
 
-       'tramp-load-report-modules	; pre-hook
-       'tramp-append-tramp-buffers	; post-hook
-       (propertize
-	"\n" 'display "\
+     'tramp-load-report-modules	; pre-hook
+     'tramp-append-tramp-buffers	; post-hook
+     (propertize
+      "\n" 'display "\
 Enter your bug report in this message, including as much detail
 as you possibly can about the problem, what you did to cause it
 and what the local and remote machines are.
@@ -267,7 +266,7 @@ contents of the *tramp/foo* buffer and the *debug tramp/foo*
 buffer in your bug report.
 
 --bug report follows this line--
-")))))
+"))))
 
 (defun tramp-reporter-dump-variable (varsym mailbuf)
   "Pretty-print the value of the variable in symbol VARSYM."
@@ -398,28 +397,21 @@ the debug buffer(s).")
 	(setq buffer-read-only t)
 	(goto-char (point-min))
 
-	(if (y-or-n-p "Do you want to append the buffer(s)? ")
-	    ;; OK, let's send.  First we delete the buffer list.
-	    (progn
-	      (kill-buffer nil)
-	      (switch-to-buffer curbuf)
-	      (goto-char (point-max))
-	      (insert (propertize "\n" 'display "\n\
+	(when (y-or-n-p "Do you want to append the buffer(s)? ")
+	  ;; OK, let's send.  First we delete the buffer list.
+	  (kill-buffer nil)
+	  (switch-to-buffer curbuf)
+	  (goto-char (point-max))
+	  (insert (propertize "\n" 'display "\n\
 This is a special notion of the `gnus/message' package.  If you
 use another mail agent (by copying the contents of this buffer)
 please ensure that the buffers are attached to your email.\n\n"))
-	      (dolist (buffer buffer-list)
-		(mml-insert-empty-tag
-		 'part 'type "text/plain"
-		 'encoding "base64" 'disposition "attachment" 'buffer buffer
-		 'description buffer))
-	      (set-buffer-modified-p nil))
-
-	  ;; Don't send.  Delete the message buffer.
-	  (set-buffer curbuf)
-	  (set-buffer-modified-p nil)
-	  (kill-buffer nil)
-	  (throw 'dont-send nil))))))
+	  (dolist (buffer buffer-list)
+	    (mml-insert-empty-tag
+	     'part 'type "text/plain"
+	     'encoding "base64" 'disposition "attachment" 'buffer buffer
+	     'description buffer))
+	  (set-buffer-modified-p nil))))))
 
 (defalias 'tramp-submit-bug #'tramp-bug)
 
