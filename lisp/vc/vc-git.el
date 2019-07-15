@@ -1073,6 +1073,22 @@ If LIMIT is a revision string, use it as an end-revision."
 			"@{upstream}"
 		      remote-location))))
 
+(defun vc-git-log-search (buffer pattern)
+  (let ((args `("log" "--no-color" "-i"
+                ,(format "--grep=%s"
+                         (or (and pattern (shell-quote-argument pattern))
+                             "")))))
+    (when current-prefix-arg
+      (setq args (cdr (split-string
+		       (read-shell-command
+                        "Search log with command: "
+                        (format "%s %s" vc-git-program
+                                (mapconcat 'identity args " "))
+                        'vc-git-history)
+		       " " t))))
+    (vc-setup-buffer buffer)
+    (apply 'vc-git-command buffer 'async nil args)))
+
 (defun vc-git-mergebase (rev1 &optional rev2)
   (unless rev2 (setq rev2 "HEAD"))
   (string-trim-right (vc-git--run-command-string nil "merge-base" rev1 rev2)))
@@ -1089,7 +1105,7 @@ If LIMIT is a revision string, use it as an end-revision."
   (set (make-local-variable 'log-view-file-re) regexp-unmatchable)
   (set (make-local-variable 'log-view-per-file-logs) nil)
   (set (make-local-variable 'log-view-message-re)
-       (if (not (eq vc-log-view-type 'long))
+       (if (not (memq vc-log-view-type '(long log-search)))
 	   (cadr vc-git-root-log-format)
 	 "^commit *\\([0-9a-z]+\\)"))
   ;; Allow expanding short log entries.
@@ -1098,7 +1114,7 @@ If LIMIT is a revision string, use it as an end-revision."
     (set (make-local-variable 'log-view-expanded-log-entry-function)
 	 'vc-git-expanded-log-entry))
   (set (make-local-variable 'log-view-font-lock-keywords)
-       (if (not (eq vc-log-view-type 'long))
+       (if (not (memq vc-log-view-type '(long log-search)))
 	   (list (cons (nth 1 vc-git-root-log-format)
 		       (nth 2 vc-git-root-log-format)))
 	 (append

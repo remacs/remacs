@@ -695,6 +695,14 @@ buffers will delete the marked files (or if no files are marked, the
 file under point).  This command does not notify the VC backend, and
 is mostly useful for unregistered files.
 
+*** New command 'vc-log-search' asks for a pattern string, searches
+it in the revision log, and displays matched log entries in the
+log buffer.  For example, 'M-x vc-log-search RET bug#36644 RET'
+displays all entries whose log messages match the bug number.
+With a prefix argument asks for a command, so for example,
+'C-u M-x vc-log-search RET git log -1 f302475 RET' will display
+just one log entry found by its revision number.
+
 ** Diff mode
 +++
 *** Hunks are now automatically refined by font-lock.

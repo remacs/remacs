@@ -337,6 +337,10 @@
 ;;   Insert in BUFFER the revision log for the changes that will be
 ;;   received when performing a pull operation from REMOTE-LOCATION.
 ;;
+;; - log-search (pattern)
+;;
+;;   Search for string PATTERN in the revision log.
+;;
 ;; - log-view-mode ()
 ;;
 ;;   Mode to use for the output of print-log.  This defaults to
@@ -2525,6 +2529,20 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
       (error "Buffer is not version controlled"))
     (vc-incoming-outgoing-internal backend (or remote-location "")
                                    "*vc-outgoing*" 'log-outgoing)))
+
+;;;###autoload
+(defun vc-log-search (pattern)
+  "Search a log of changes for PATTERN string.
+Display all entries that match log messages in long format.
+With a prefix argument, ask for a command to run that will output
+log entries."
+  (interactive (list (unless current-prefix-arg
+                       (read-regexp "Search log with pattern: "))))
+  (let ((backend (vc-deduce-backend)))
+    (unless backend
+      (error "Buffer is not version controlled"))
+    (vc-incoming-outgoing-internal backend pattern
+                                   "*vc-search-log*" 'log-search)))
 
 ;;;###autoload
 (defun vc-log-mergebase (_files rev1 rev2)
