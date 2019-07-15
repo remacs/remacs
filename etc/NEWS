@@ -2326,6 +2326,10 @@ zero-padding, upper- and lower-casing, and limiting the length of the
 interpolated strings.  The function has now also been documented in
 the Emacs Lisp manual.
 
++++
+** `directory-files-recursively' can now take an optional PREDICATE
+parameter to control descending into subdirectories.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

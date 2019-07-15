@@ -2911,7 +2911,7 @@ An error is signaled if @var{directory} is not the name of a directory
 that can be read.
 @end defun
 
-@defun directory-files-recursively directory regexp &optional include-directories
+@defun directory-files-recursively directory regexp &optional include-directories predicate
 Return all files under @var{directory} whose names match @var{regexp}.
 This function searches the specified @var{directory} and its
 sub-directories, recursively, for files whose basenames (i.e., without
@@ -2925,6 +2925,13 @@ alphabetically by their basenames.  By default, directories whose
 names match @var{regexp} are omitted from the list, but if the
 optional argument @var{include-directories} is non-@code{nil}, they
 are included.
+
+By default, all subdirectories are descended into.  If @var{predicate}
+is @code{t}, errors when trying to descend into a subdirectory (for
+instance, if it's not readable by this user) are ignored.  If it's
+neither @code{nil} nor @code{t}, it should be a function that takes
+one parameter (the subdirectory name) and should return non-@code{nil}
+if the directory is to be descended into.
 @end defun
 
 @defun directory-files-and-attributes directory &optional full-name match-regexp nosort id-format

@@ -812,13 +812,22 @@ The path separator is colon in GNU and GNU-like systems."
                  (lambda (f) (and (file-directory-p f) 'dir-ok)))
     (error "No such directory found via CDPATH environment variable"))))
 
-(defun directory-files-recursively (dir regexp &optional include-directories)
+(defun directory-files-recursively (dir regexp
+                                        &optional include-directories predicate)
   "Return list of all files under DIR that have file names matching REGEXP.
-This function works recursively.  Files are returned in \"depth first\"
-order, and files from each directory are sorted in alphabetical order.
-Each file name appears in the returned list in its absolute form.
-Optional argument INCLUDE-DIRECTORIES non-nil means also include in the
-output directories whose names match REGEXP."
+This function works recursively.  Files are returned in \"depth
+first\" order, and files from each directory are sorted in
+alphabetical order.  Each file name appears in the returned list
+in its absolute form.
+
+Optional argument INCLUDE-DIRECTORIES non-nil means also include
+in the output directories whose names match REGEXP.
+
+PREDICATE can be either nil (which means that all subdirectories
+are descended into), t (which means that subdirectories that
+can't be read are ignored), or a function (which is called with
+name name of the subdirectory and should return non-nil if the
+subdirectory is to be descended into)."
   (let* ((result nil)
 	 (files nil)
          (dir (directory-file-name dir))
@@ -832,10 +841,20 @@ output directories whose names match REGEXP."
 	    (let* ((leaf (substring file 0 (1- (length file))))
 		   (full-file (concat dir "/" leaf)))
 	      ;; Don't follow symlinks to other directories.
-	      (unless (file-symlink-p full-file)
-		(setq result
-		      (nconc result (directory-files-recursively
-				     full-file regexp include-directories))))
+	      (when (and (not (file-symlink-p full-file))
+                         ;; Allow filtering subdirectories.
+                         (or (eq predicate nil)
+                             (eq predicate t)
+                             (funcall predicate full-file)))
+                (let ((sub-files
+                       (if (eq predicate t)
+                           (condition-case _
+                               (directory-files-recursively
+				full-file regexp include-directories)
+                             (file-error nil))
+                         (directory-files-recursively
+			  full-file regexp include-directories))))
+		  (setq result (nconc result sub-files))))
 	      (when (and include-directories
 			 (string-match regexp leaf))
 		(setq result (nconc result (list full-file)))))
