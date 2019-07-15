@@ -67,7 +67,7 @@ COLOR indicates that the generated text should be colored using
 
 (defvar semantic-format-tag-custom-list
   (append '(radio)
-	  (mapcar (lambda (f) (list 'const f))
+	  (mapcar (lambda (f) (list 'function-item f))
 		  semantic-format-tag-functions)
 	  '(function))
   "A List used by customizable variables to choose a tag to text function.
