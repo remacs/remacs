@@ -131,4 +131,8 @@ Also check that an encoding error can appear in a symlink."
 (ert-deftest fileio-tests--relative-default-directory ()
   "Test expand-file-name when default-directory is relative."
   (let ((default-directory "some/relative/name"))
-    (should (file-name-absolute-p (expand-file-name "foo")))))
+    (should (file-name-absolute-p (expand-file-name "foo"))))
+  (let* ((default-directory "~foo")
+         (name (expand-file-name "bar")))
+    (should (and (file-name-absolute-p name)
+                 (not (eq (aref name 0) ?~))))))

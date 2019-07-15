@@ -737,6 +737,13 @@ For that reason, you should normally use `make-temp-file' instead.  */)
 				   empty_unibyte_string, Qnil);
 }
 
+/* NAME must be a string.  */
+static bool
+file_name_absolute_no_tilde_p (Lisp_Object name)
+{
+  return IS_ABSOLUTE_FILE_NAME (SSDATA (name));
+}
+
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
        doc: /* Convert filename NAME to absolute, and canonicalize it.
 Second arg DEFAULT-DIRECTORY is directory to start with if NAME is relative
@@ -807,41 +814,54 @@ the root directory.  */)
       error ("Invalid handler in `file-name-handler-alist'");
     }
 
+  /* As a last resort, we may have to use the root as
+     default_directory below.  */
+  Lisp_Object root;
+#ifdef DOS_NT
+      /* "/" is not considered a root directory on DOS_NT, so using it
+	 as default_directory causes an infinite recursion in, e.g.,
+	 the following:
+
+            (let (default-directory)
+	      (expand-file-name "a"))
+
+	 To avoid this, we use the root of the current drive.  */
+      root = build_string (emacs_root_dir ());
+#else
+      root = build_string ("/");
+#endif
 
   /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
   if (NILP (default_directory))
     {
       Lisp_Object dir = BVAR (current_buffer, directory);
-      /* The buffer's default-directory should be absolute.  If it
-	 isn't, try to expand it relative to invocation-directory.
-	 But we have to be careful to avoid an infinite loop, because
-	 the code in emacs.c that sets Vinvocation_directory might
-	 call Fexpand_file_name.  */
+      /* The buffer's default-directory should be absolute or should
+	 start with `~'.  If it isn't absolute, we replace it by its
+	 expansion relative to a known absolute name ABSDIR, which is
+	 the invocation-directory if the latter is absolute, or the
+	 root otherwise.
+
+	 In case default-directory starts with `~' or `~user', where
+	 USER is a valid user name, this correctly expands it (and
+	 ABSDIR plays no role).  If USER is not a valid user name, the
+	 leading `~' loses its special meaning and is retained as part
+	 of the expanded name.  */
       if (STRINGP (dir))
 	{
-	  if (!NILP (Ffile_name_absolute_p (dir)))
+	  if (file_name_absolute_no_tilde_p (dir))
 	    default_directory = dir;
-	  else if (STRINGP (Vinvocation_directory)
-		   && !NILP (Ffile_name_absolute_p (Vinvocation_directory)))
-	    default_directory = Fexpand_file_name (dir, Vinvocation_directory);
+	  else
+	    {
+	      Lisp_Object absdir
+		= STRINGP (Vinvocation_directory)
+		&& file_name_absolute_no_tilde_p (Vinvocation_directory)
+		? Vinvocation_directory : root;
+	      default_directory = Fexpand_file_name (dir, absdir);
+	    }
 	}
     }
   if (! STRINGP (default_directory))
-    {
-#ifdef DOS_NT
-      /* "/" is not considered a root directory on DOS_NT, so using "/"
-	 here causes an infinite recursion in, e.g., the following:
-
-            (let (default-directory)
-	      (expand-file-name "a"))
-
-	 To avoid this, we set default_directory to the root of the
-	 current drive.  */
-      default_directory = build_string (emacs_root_dir ());
-#else
-      default_directory = build_string ("/");
-#endif
-    }
+    default_directory = root;
 
   handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
   if (!NILP (handler))
