@@ -1905,7 +1905,14 @@ If INITIAL is non-nil, it specifies the initial input string."
        )
 
     (ido-setup-completion-map)
-    (setq ido-text-init initial)
+
+    (setq ido-text-init
+          (if (consp initial)
+              (cons (car initial)
+                    ;; `completing-read' uses 0-based index while
+                    ;; `read-from-minibuffer' uses 1-based index.
+                    (1+ (cdr initial)))
+            initial))
     (setq ido-input-stack nil)
 
     (run-hooks 'ido-setup-hook)
