@@ -1,8 +1,8 @@
 //! Keymap support
 
 use std;
-use std::ptr;
 use std::convert::TryInto;
+use std::ptr;
 
 use libc::{c_void, ptrdiff_t};
 
@@ -20,20 +20,19 @@ use crate::{
     lisp::LispObject,
     lists::{nth, setcdr},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    marker::marker_position,
     multibyte::LispStringRef,
     obarray::intern,
-    marker::marker_position,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, call2,
         copy_keymap_item, describe_vector, list2, make_save_funcptr_ptr_obj, map_char_table,
         map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
-        map_obarray, maybe_quit, menu_item_eval_property, safe_call1,
-    specbind, 
+        map_obarray, maybe_quit, menu_item_eval_property, safe_call1, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
         Fcommand_remapping, Fcons, Fcurrent_active_maps, Fevent_convert_list, Flength,
-        Fmake_char_table, Fset_char_table_range, Fterpri, 
+        Fmake_char_table, Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
         QCfilter, Qautoload, Qkeymap, Qkeymap_canonicalize, Qkeymapp, Qmenu_item, Qmouse_click,
@@ -98,18 +97,18 @@ pub extern "C" fn _map_keymap_canonical(
 // Scopes are all messed up. Double check those
 
 /* Given OBJECT which was found in a slot in a keymap,
-   trace indirect definitions to get the actual definition of that slot.
-   An indirect definition is a list of the form
-   (KEYMAP . INDEX), where KEYMAP is a keymap or a symbol defined as one
-   and INDEX is the object to look up in KEYMAP to yield the definition.
+trace indirect definitions to get the actual definition of that slot.
+An indirect definition is a list of the form
+(KEYMAP . INDEX), where KEYMAP is a keymap or a symbol defined as one
+and INDEX is the object to look up in KEYMAP to yield the definition.
 
-   Also if OBJECT has a menu string as the first element,
-   remove that.  Also remove a menu help string as second element.
+Also if OBJECT has a menu string as the first element,
+remove that.  Also remove a menu help string as second element.
 
-   If AUTOLOAD, load autoloadable keymaps
-   that are referred to with indirection.
+If AUTOLOAD, load autoloadable keymaps
+that are referred to with indirection.
 
-   This can GC because menu_item_eval_property calls Feval.  */
+This can GC because menu_item_eval_property calls Feval.  */
 #[no_mangle]
 pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject {
     loop {
@@ -132,31 +131,30 @@ pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject 
                 if localObject.is_cons() {
                     localObject = localObject.as_cons().unwrap().car();
                 }
-                    let object_iter =
-                        localObject.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on);
+                let object_iter =
+                    localObject.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on);
 
-                    // Iterate over every element in the list
-                    for val in object_iter {
-                        if val.eq(QCfilter) && autoload {
-                            // Get the next object in the list
-                            let mut filter = val.as_cons().unwrap().cdr();
+                // Iterate over every element in the list
+                for val in object_iter {
+                    if val.eq(QCfilter) && autoload {
+                        // Get the next object in the list
+                        let mut filter = val.as_cons().unwrap().cdr();
 
-                            unsafe {
-                                filter = list2(filter, list2(Qquote, localObject));
-                                localObject = menu_item_eval_property(filter);
-                            }
-                            break;
+                        unsafe {
+                            filter = list2(filter, list2(Qquote, localObject));
+                            localObject = menu_item_eval_property(filter);
                         }
+                        break;
                     }
-            }
-            else {
+                }
+            } else {
                 // Return since object must be an invalid keymap
                 break localObject;
             }
         }
         /* If the keymap contents looks like (STRING . DEFN), use DEFN.
-	Keymap alist elements like (CHAR MENUSTRING . DEFN)
-	will be used by HierarKey menus.  */
+        Keymap alist elements like (CHAR MENUSTRING . DEFN)
+        will be used by HierarKey menus.  */
         else if consObject.cdr().is_string() {
             localObject = consObject.into();
         } else {
@@ -238,25 +236,36 @@ pub extern "C" fn _preferred_sequence_p(seq: LispObject) -> i64 {
 }
 
 /* Return the offset of POSITION, a click position, in the style of
-   the respective argument of Fkey_binding.  */
+the respective argument of Fkey_binding.  */
 pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
-    let mut curr_pos: EmacsInt;
+    let curr_pos: EmacsInt;
 
-    if position.is_integer(){
-       curr_pos = position.into();
-    }
-    else if position.is_marker(){
+    if position.is_integer() {
+        curr_pos = position.into();
+    } else if position.is_marker() {
         curr_pos = marker_position(position).try_into().unwrap();
-    }
-    else{
-        curr_pos = ThreadState::current_buffer_unchecked().get_pt().try_into().unwrap();
+    } else {
+        curr_pos = ThreadState::current_buffer_unchecked()
+            .get_pt()
+            .try_into()
+            .unwrap();
     };
 
-    if ThreadState::current_buffer_unchecked().beg() <=
-        curr_pos.try_into().unwrap() && curr_pos as ptrdiff_t <= ThreadState::current_buffer_unchecked().get_zv(){
+    if ThreadState::current_buffer_unchecked().beg() <= curr_pos.try_into().unwrap()
+        && curr_pos as ptrdiff_t <= ThreadState::current_buffer_unchecked().get_zv()
+    {
         return curr_pos as ptrdiff_t;
     }
     args_out_of_range!(ThreadState::current_buffer_unchecked(), position);
+}
+
+// Help functions for describing and documenting keymaps
+struct _accessible_keymaps_data {
+    maps: LispObject,
+    this_seq: LispObject,
+    tail: LispObject,
+    // Does the current sequence end in the meta-prefix-char?
+    is_metized: bool,
 }
 
 // Which keymaps are reverse-stored in the cache.
