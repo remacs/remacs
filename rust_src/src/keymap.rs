@@ -2,8 +2,9 @@
 
 use std;
 use std::ptr;
+use std::convert::TryInto;
 
-use libc::c_void;
+use libc::{c_void, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
@@ -21,16 +22,18 @@ use crate::{
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::intern,
+    marker::marker_position,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, call2,
         copy_keymap_item, describe_vector, list2, make_save_funcptr_ptr_obj, map_char_table,
         map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
-        map_obarray, maybe_quit, menu_item_eval_property, safe_call1, specbind,
+        map_obarray, maybe_quit, menu_item_eval_property, safe_call1,
+    specbind, 
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
         Fcommand_remapping, Fcons, Fcurrent_active_maps, Fevent_convert_list, Flength,
-        Fmake_char_table, Fset_char_table_range, Fterpri,
+        Fmake_char_table, Fset_char_table_range, Fterpri, 
     },
     remacs_sys::{
         QCfilter, Qautoload, Qkeymap, Qkeymap_canonicalize, Qkeymapp, Qmenu_item, Qmouse_click,
@@ -162,12 +165,15 @@ pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject 
     }
 }
 
+// TODO: Fix this mess with all the unwrap
+// TODO: Avoid using FCONS?
 #[no_mangle]
 pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
     if elt.is_not_cons() {
         elt;
     }
 
+    // Turn elt into a cons cell in order to use its car
     let mut elt = elt.as_cons().unwrap();
     let mut res = elt;
     let mut tem = elt;
@@ -229,6 +235,28 @@ pub extern "C" fn _preferred_sequence_p(seq: LispObject) -> i64 {
     }
     // Make compiler shut up for now
     0 as i64
+}
+
+/* Return the offset of POSITION, a click position, in the style of
+   the respective argument of Fkey_binding.  */
+pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
+    let mut curr_pos: EmacsInt;
+
+    if position.is_integer(){
+       curr_pos = position.into();
+    }
+    else if position.is_marker(){
+        curr_pos = marker_position(position).try_into().unwrap();
+    }
+    else{
+        curr_pos = ThreadState::current_buffer_unchecked().get_pt().try_into().unwrap();
+    };
+
+    if ThreadState::current_buffer_unchecked().beg() <=
+        curr_pos.try_into().unwrap() && curr_pos as ptrdiff_t <= ThreadState::current_buffer_unchecked().get_zv(){
+        return curr_pos as ptrdiff_t;
+    }
+    args_out_of_range!(ThreadState::current_buffer_unchecked(), position);
 }
 
 // Which keymaps are reverse-stored in the cache.
