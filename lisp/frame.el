@@ -666,10 +666,7 @@ Return nil if we don't know how to interpret DISPLAY."
 The optional argument PARAMETERS specifies additional frame parameters."
   (interactive (list (completing-read
                       (format "Make frame on display: ")
-                      (delete-dups
-                       (mapcar (lambda (frame)
-                                 (frame-parameter frame 'display))
-                               (frame-list))))))
+                      (x-display-list))))
   (make-frame (cons (cons 'display display) parameters)))
 
 (defun make-frame-on-monitor (monitor &optional display parameters)
