@@ -149,11 +149,6 @@ unencrypted."
 	     (not (nsm-new-fingerprint-ok-p host port status)))
 	(delete-process process)
 	nil)
-       ((>= (nsm-level network-security-level) (nsm-level 'high))
-	;; Save the host fingerprint so that we can check it the
-	;; next time we connect.
-	(nsm-save-host host port status 'fingerprint 'always)
-	process)
        (t
 	process)))
 
