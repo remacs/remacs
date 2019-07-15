@@ -10131,11 +10131,14 @@ DEFUN ("recursion-depth", Frecursion_depth, Srecursion_depth, 0, 0, 0,
 DEFUN ("open-dribble-file", Fopen_dribble_file, Sopen_dribble_file, 1, 1,
        "FOpen dribble file: ",
        doc: /* Start writing input events to a dribble file called FILE.
-If FILE is nil, close any open dribble file.
-The file will be closed when Emacs exits.
+Any previously open dribble file will be closed first.  If FILE is
+nil, just close the dribble file, if any.
+
+If the file is still open when Emacs exits, it will be closed then.
 
 The events written to the file include keyboard and mouse input
-events, but not events from executing keyboard macros.
+events, but not events from executing keyboard macros.  The events are
+written to the dribble file immediately without line buffering.
 
 Be aware that this records ALL characters you type!
 This may include sensitive information such as passwords.  */)
