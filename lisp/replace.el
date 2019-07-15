@@ -1751,7 +1751,7 @@ See also `multi-occur'."
 				     (append
 				      (when prefix-face
 				        `(font-lock-face ,prefix-face))
-				      `(occur-prefix t mouse-face (highlight)
+				      `(occur-prefix t
 				                     ;; Allow insertion of text
 				                     ;; at the end of the prefix
 				                     ;; (for Occur Edit mode).
@@ -1764,23 +1764,26 @@ See also `multi-occur'."
 			      ;; We don't put `mouse-face' on the newline,
 			      ;; because that loses.  And don't put it
 			      ;; on context lines to reduce flicker.
-			      (propertize curstring 'mouse-face (list 'highlight)
+			      (propertize curstring
 					  'occur-target marker
 					  'follow-link t
 					  'help-echo
 					  "mouse-2: go to this occurrence"))
 			     (out-line
-			      (concat
-			       match-prefix
-			       ;; Add non-numeric prefix to all non-first lines
-			       ;; of multi-line matches.
+			      ;; Add non-numeric prefix to all non-first lines
+			      ;; of multi-line matches.
+                              (concat
 			       (replace-regexp-in-string
 			        "\n"
 			        (if prefix-face
 				    (propertize
 				     "\n       :" 'font-lock-face prefix-face)
 				  "\n       :")
-			        match-str)
+                                ;; Add mouse face in one section to
+                                ;; ensure the prefix and the string
+                                ;; get a contiguous highlight.
+			        (propertize (concat match-prefix match-str)
+                                            'mouse-face 'highlight))
 			       ;; Add marker at eol, but no mouse props.
 			       (propertize "\n" 'occur-target marker)))
 			     (data
