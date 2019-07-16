@@ -677,8 +677,7 @@ says how many lines to move; default is one line."
 				 'rear-nonsticky '(read-only))
 	      (put-text-property (match-beginning 1)
 				 (match-end 1) 'read-only nil)))
-        (forward-line)
-	(beginning-of-line)))))
+        (forward-line)))))
 
 
 (defun wdired-get-previous-link (&optional old move)
