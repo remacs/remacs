@@ -506,18 +506,9 @@
 	      a (/ a calc-number-radix)))
       s)))
 
-(defconst math-binary-digits ["000" "001" "010" "011"
-			      "100" "101" "110" "111"])
 (defun math-format-binary (a)   ; [X S]
-  (if (< a 8)
-      (if (< a 0)
-	  (concat "-" (math-format-binary (- a)))
-	(aref math-binary-digits a))
-    (let ((s ""))
-      (while (> a 7)
-	(setq s (concat (aref math-binary-digits (% a 8)) s)
-	      a (/ a 8)))
-      (concat (math-format-binary a) s))))
+  (let ((calc-number-radix 2))
+    (math-format-radix a)))
 
 ;;; Decompose into integer and fractional parts, without depending
 ;;; on calc-internal-prec.

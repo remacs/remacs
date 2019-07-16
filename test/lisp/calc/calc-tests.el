@@ -168,6 +168,32 @@ An existing calc stack is reused, otherwise a new one is created."
       (should (equal (math-simplify '(calcFunc-cot (/ (var pi var-pi) 3)))
                      '(calcFunc-cot (/ (var pi var-pi) 3)))))))
 
+(ert-deftest calc-test-format-radix ()
+  "Test integer formatting (bug#36689)."
+  (let ((calc-group-digits nil))
+    (let ((calc-number-radix 10))
+      (should (equal (math-format-number 12345678901) "12345678901")))
+    (let ((calc-number-radix 2))
+      (should (equal (math-format-number 12345) "2#11000000111001")))
+    (let ((calc-number-radix 8))
+      (should (equal (math-format-number 12345678901) "8#133767016065")))
+    (let ((calc-number-radix 16))
+      (should (equal (math-format-number 12345678901) "16#2DFDC1C35")))
+    (let ((calc-number-radix 36))
+      (should (equal (math-format-number 12345678901) "36#5O6AQT1"))))
+  (let ((calc-group-digits t))
+    (let ((calc-number-radix 10))
+      (should (equal (math-format-number 12345678901) "12,345,678,901")))
+    (let ((calc-number-radix 2))
+      (should (equal (math-format-number 12345) "2#11,0000,0011,1001")))
+    (let ((calc-number-radix 8))
+      (should (equal (math-format-number 12345678901) "8#133,767,016,065")))
+    (let ((calc-number-radix 16))
+      (should (equal (math-format-number 12345678901) "16#2,DFDC,1C35")))
+    (let ((calc-number-radix 36))
+      (should (equal (math-format-number 12345678901) "36#5,O6A,QT1")))))
+
+
 (provide 'calc-tests)
 ;;; calc-tests.el ends here
 

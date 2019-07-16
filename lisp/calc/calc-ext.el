@@ -64,8 +64,6 @@
 (declare-function math-compose-expr "calccomp" (a prec &optional div))
 (declare-function math-abs "calc-arith" (a))
 (declare-function math-format-binary "calc-bin" (a))
-(declare-function math-format-octal "calc-bin" (a))
-(declare-function math-format-hex "calc-bin" (a))
 (declare-function math-format-radix "calc-bin" (a))
 (declare-function math-compute-max-digits "calc-bin" (w r))
 (declare-function math-map-vec "calc-vec" (f a))
@@ -3402,15 +3400,9 @@ If X is not an error form, return 1."
     a))
 
 (defun math--format-integer-fancy (a)   ; [I]
-  (let ((str (cond ((= calc-number-radix 10)
-		    (number-to-string a))
-		   ((= calc-number-radix 2)
-		    (math-format-binary a))
-		   ((= calc-number-radix 8)
-		    (math-format-octal a))
-		   ((= calc-number-radix 16)
-		    (math-format-hex a))
-		   (t (math-format-radix a)))))
+  (let ((str (if (= calc-number-radix 10)
+		 (number-to-string a)
+	       (math-format-radix a))))
     (if calc-leading-zeros
 	(let* ((calc-internal-prec 6)
 	       (digs (math-compute-max-digits (math-abs calc-word-size)
