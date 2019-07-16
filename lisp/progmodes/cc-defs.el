@@ -269,7 +269,9 @@ to it is returned.  This function does not modify the point or the mark."
 		     (not (eobp))
 		     (progn
 		       (end-of-line)
-		       (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1))))
+		       (c-is-escaped (point))
+		       ;; (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1))
+		       ))
 	       (forward-line))
 	     (end-of-line)
 	     (point)))
@@ -405,6 +407,25 @@ to it is returned.  This function does not modify the point or the mark."
         (goto-char (point-min))
         (forward-sexp)
         (= (point) (+ 4 (point-min)))))))
+
+(defmacro c-is-escaped (pos)
+  ;; Are there an odd number of backslashes before POS?
+  `(save-excursion
+     (goto-char ,pos)
+     (not (zerop (logand (skip-chars-backward "\\\\") 1)))))
+
+(defmacro c-will-be-escaped (pos beg end)
+  ;; Will the character after POS be escaped after the removal of (BEG END)?
+  ;; It is assumed that (>= POS END).
+  `(save-excursion
+     (let ((-end- ,end)
+	   count)
+       (goto-char ,pos)
+       (setq count (skip-chars-backward "\\\\" -end-))
+       (when (eq (point) -end-)
+	 (goto-char ,beg)
+	 (setq count (+ count (skip-chars-backward "\\\\"))))
+       (not (zerop (logand count 1))))))
 
 (defvar c-use-extents)
 
@@ -1019,6 +1040,15 @@ MODE is either a mode symbol or a list of mode symbols."
 ;; properties set on a single character and that never spread to any
 ;; other characters.
 
+(defmacro c-put-syn-tab (pos value)
+  ;; Set both the syntax-table and the c-fl-syn-tab text properties at POS to
+  ;; VALUE (which should not be nil).
+  `(let ((-pos- ,pos)
+	 (-value- ,value))
+     (c-put-char-property -pos- 'syntax-table -value-)
+     (c-put-char-property -pos- 'c-fl-syn-tab -value-)
+     (c-truncate-lit-pos-cache -pos-)))
+
 (eval-and-compile
   ;; Constant used at compile time to decide whether or not to use
   ;; XEmacs extents.  Check all the extent functions we'll use since
@@ -1146,6 +1176,13 @@ MODE is either a mode symbol or a list of mode symbols."
 	 ;; Emacs < 21.
 	 `(c-clear-char-property-fun ,pos ',property))))
 
+(defmacro c-clear-syn-tab (pos)
+  ;; Remove both the 'syntax-table and `c-fl-syn-tab properties at POS.
+  `(let ((-pos- ,pos))
+     (c-clear-char-property -pos- 'syntax-table)
+     (c-clear-char-property -pos- 'c-fl-syn-tab)
+     (c-truncate-lit-pos-cache -pos-)))
+
 (defmacro c-min-property-position (from to property)
   ;; Return the first position in the range [FROM to) where the text property
   ;; PROPERTY is set, or `most-positive-fixnum' if there is no such position.
@@ -1187,6 +1224,13 @@ MODE is either a mode symbol or a list of mode symbols."
 	   (remove-text-properties -from- -to- '(,property nil)))
       `(remove-text-properties ,from ,to '(,property nil)))))
 
+(defmacro c-clear-syn-tab-properties (from to)
+  ;; Remove all occurrences of the `syntax-table' and `c-fl-syn-tab' text
+  ;; properties between FROM and TO.
+  `(let ((-from- ,from) (-to- ,to))
+     (c-clear-char-properties -from- -to- 'syntax-table)
+     (c-clear-char-properties -from- -to- 'c-fl-syn-tab)))
+
 (defmacro c-search-forward-char-property (property value &optional limit)
   "Search forward for a text-property PROPERTY having value VALUE.
 LIMIT bounds the search.  The comparison is done with `equal'.
@@ -1203,7 +1247,7 @@ nil; point is then left undefined."
 		    place ,property nil ,(or limit '(point-max)))))
      (when (< place ,(or limit '(point-max)))
        (goto-char place)
-       (search-forward-regexp ".")	; to set the match-data.
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defmacro c-search-backward-char-property (property value &optional limit)
@@ -1227,7 +1271,7 @@ point is then left undefined."
 		    place ,property nil ,(or limit '(point-min)))))
      (when (> place ,(or limit '(point-min)))
        (goto-char place)
-       (search-backward-regexp ".")	; to set the match-data.
+       (search-backward-regexp "\\(n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defun c-clear-char-property-with-value-function (from to property value)
@@ -1286,7 +1330,7 @@ nil; point is then left undefined."
 	  (not (equal (c-get-char-property (point) ,property) -value-)))
        (forward-char))
      (when (< (point) -limit-)
-       (search-forward-regexp ".")	; to set the match-data.
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defmacro c-search-forward-char-property-without-value-on-char
@@ -1309,7 +1353,7 @@ nil; point is then left undefined."
 	  (equal (c-get-char-property (point) ,property) -value-))
        (forward-char))
      (when (< (point) -limit-)
-       (search-forward-regexp ".")	; to set the match-data.
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defun c-clear-char-property-with-value-on-char-function (from to property
@@ -1381,6 +1425,29 @@ with value CHAR in the region [FROM to)."
 	     `((setq c-syntax-table-hwm (min c-syntax-table-hwm (point)))))
 	 (c-put-char-property (point) ,property ,value)
 	 (forward-char)))))
+
+(defmacro c-with-extended-string-fences (beg end &rest body)
+  ;; If needed, extend the region with "mirrored" c-fl-syn-tab properties to
+  ;; contain the region (BEG END), then evaluate BODY.  If this mirrored
+  ;; region was initially empty, restore it afterwards.
+  `(let ((-beg- ,beg)
+	 (-end- ,end)
+	 )
+     (cond
+      ((null c-fl-syn-tab-region)
+       (unwind-protect
+	   (progn
+	     (c-restore-string-fences -beg- -end-)
+	     ,@body)
+	 (c-clear-string-fences)))
+      ((and (>= -beg- (car c-fl-syn-tab-region))
+	    (<= -end- (cdr c-fl-syn-tab-region)))
+       ,@body)
+      (t				; Crudely extend the mirrored region.
+       (setq -beg- (min -beg- (car c-fl-syn-tab-region))
+	     -end- (max -end- (cdr c-fl-syn-tab-region)))
+       (c-restore-string-fences -beg- -end-)
+       ,@body))))
 
 ;; Macros to put overlays (Emacs) or extents (XEmacs) on buffer text.
 ;; For our purposes, these are characterized by being possible to
@@ -1421,6 +1488,8 @@ with value CHAR in the region [FROM to)."
 (def-edebug-spec c--intersection (form form &rest [symbolp form]))
 (def-edebug-spec c--delete-duplicates (form &rest [symbolp form]))
 (def-edebug-spec c-point t)
+(def-edebug-spec c-is-escaped t)
+(def-edebug-spec c-will-be-escaped t)
 (def-edebug-spec c-next-single-property-change t)
 (def-edebug-spec c-delete-and-extract-region t)
 (def-edebug-spec c-set-region-active t)
@@ -1456,13 +1525,18 @@ with value CHAR in the region [FROM to)."
 (def-edebug-spec c-search-forward-char-property t)
 (def-edebug-spec c-search-backward-char-property t)
 (def-edebug-spec c-put-char-property t)
+(def-edebug-spec c-put-syn-tab t)
 (def-edebug-spec c-get-char-property t)
 (def-edebug-spec c-clear-char-property t)
-(def-edebug-spec c-min-property-position nil) ; invoked only by macros
+(def-edebug-spec c-clear-syn-tab t)
+;;(def-edebug-spec c-min-property-position nil) ; invoked only by macros
+(def-edebug-spec c-min-property-position t) ; Now invoked from functions (2019-07)
 (def-edebug-spec c-clear-char-property-with-value t)
 (def-edebug-spec c-clear-char-property-with-value-on-char t)
 (def-edebug-spec c-put-char-properties-on-char t)
 (def-edebug-spec c-clear-char-properties t)
+(def-edebug-spec c-clear-syn-tab-properties t)
+(def-edebug-spec c-with-extended-string-fences (form form body))
 (def-edebug-spec c-put-overlay t)
 (def-edebug-spec c-delete-overlay t)
 (def-edebug-spec c-mark-<-as-paren t)
