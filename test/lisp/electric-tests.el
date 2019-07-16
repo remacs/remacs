@@ -397,16 +397,6 @@ baz\"\""
    "\" ( \n		\n  )  \"" 4 41 "\" ()  \"" 5 'c++-mode
    '((electric-pair-skip-whitespace . chomp))
    (lambda () (electric-pair-mode 1))))
-;; A test failure introduced by:
-;;
-;;    bb591f139f: Enhance CC Mode's fontification, etc., of unterminated strings.
-;;
-;; Hopefully CC mode will sort this out eventually.  See
-;; https://lists.gnu.org/archive/html/emacs-devel/2018-06/msg00535.html
-(setf
- (ert-test-expected-result-type
-  (ert-get-test 'electric-pair-whitespace-chomping-2-at-point-4-in-c++-mode-in-strings))
- :failed)
 
 (define-electric-pair-test whitespace-chomping-dont-cross-comments
   " ( \n\t\t\n  )  " "--)------" :expected-string " () \n\t\t\n  )  "
