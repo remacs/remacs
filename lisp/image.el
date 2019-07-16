@@ -1028,16 +1028,20 @@ default is 20%."
         (display-width (car (image-size image t))))
     (/ (float display-width) image-width)))
 
-(defun image-rotate ()
-  "Rotate the image under point by 90 degrees clockwise."
-  (interactive)
+(defun image-rotate (&optional angle)
+  "Rotate the image under point by ANGLE degrees clockwise.
+If nil, ANGLE defaults to 90.  Interactively, rotate the image 90
+degrees clockwise with no prefix argument, and counter-clockwise
+with a prefix argument.  Note that most image types support
+rotations by only multiples of 90 degrees."
+  (interactive (and current-prefix-arg '(-90)))
   (let ((image (image--get-imagemagick-and-warn)))
-    (plist-put (cdr image) :rotation
-               (float (mod (+ (or (plist-get (cdr image) :rotation) 0) 90)
-                           ;; We don't want to exceed 360 degrees
-                           ;; rotation, because it's not seen as valid
-                           ;; in exif data.
-                           360)))))
+    (setf (image-property image :rotation)
+          (float (mod (+ (or (image-property image :rotation) 0)
+                         (or angle 90))
+                      ;; We don't want to exceed 360 degrees rotation,
+                      ;; because it's not seen as valid in Exif data.
+                      360)))))
 
 (defun image-save ()
   "Save the image under point."

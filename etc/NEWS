@@ -2257,6 +2257,11 @@ The image parameters 'image-transform-rotation',
 buffer-local, so each buffer could have its own values for these
 parameters.
 
++++
+*** The command 'image-rotate' now accepts a prefix argument.
+With a prefix argument, 'image-rotate' now rotates the image at point
+90 degrees counter-clockwise, instead of the default clockwise.
+
 ** Modules
 
 *** The function 'load' now behaves correctly when loading modules.

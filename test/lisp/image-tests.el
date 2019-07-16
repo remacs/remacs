@@ -21,6 +21,8 @@
 
 (require 'ert)
 (require 'image)
+(eval-when-compile
+  (require 'cl-lib))
 
 (defconst image-tests--emacs-images-directory
   (expand-file-name "../etc/images" (getenv "EMACS_TEST_DIRECTORY"))
@@ -52,5 +54,26 @@
 	      (image-type-from-file-header
 	       (expand-file-name "splash.svg"
 				 image-tests--emacs-images-directory)))))
+
+(ert-deftest image-rotate ()
+  "Test `image-rotate'."
+  (cl-letf* ((image (list 'image))
+             ((symbol-function 'image--get-imagemagick-and-warn)
+              (lambda () image)))
+    (let ((current-prefix-arg '(4)))
+      (call-interactively #'image-rotate))
+    (should (equal image '(image :rotation 270.0)))
+    (call-interactively #'image-rotate)
+    (should (equal image '(image :rotation 0.0)))
+    (image-rotate)
+    (should (equal image '(image :rotation 90.0)))
+    (image-rotate 0)
+    (should (equal image '(image :rotation 90.0)))
+    (image-rotate 1)
+    (should (equal image '(image :rotation 91.0)))
+    (image-rotate 1234.5)
+    (should (equal image '(image :rotation 245.5)))
+    (image-rotate -154.5)
+    (should (equal image '(image :rotation 91.0)))))
 
 ;;; image-tests.el ends here

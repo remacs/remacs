@@ -5992,7 +5992,8 @@ Decrease the image size (@code{image-increase-size}).  A prefix value
 of @samp{4} means to decrease the size by 40%.  The default is 20%.
 
 @item r
-Rotate the image by 90 degrees (@code{image-rotate}).
+Rotate the image by 90 degrees clockwise (@code{image-rotate}).
+A prefix means to rotate by 90 degrees counter-clockwise instead.
 
 @item o
 Save the image to a file (@code{image-save}).
