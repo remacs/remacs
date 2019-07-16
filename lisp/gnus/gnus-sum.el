@@ -9435,17 +9435,24 @@ With optional ARG, move across that many fields."
     (widget-backward arg)))
 
 (defun gnus-collect-urls ()
-  "Return the list of URLs in the buffer after (point)."
-  (let ((pt (point)) urls)
-    (while (progn (widget-forward 1)
-		  ;; `widget-forward' wraps around to top of buffer.
+  "Return the list of URLs in the buffer after (point).
+The 1st element is the one named 'Link', if any."
+  (let ((pt (point)) urls link)
+    (while (progn (widget-move 1)
+		  ;; `widget-move' wraps around to top of buffer.
 		  (> (point) pt))
       (setq pt (point))
-      (when-let ((u (or (get-text-property (point) 'shr-url)
-			(get-text-property (point) 'gnus-string))))
+      (when-let ((w (widget-at pt))
+                 (u (or (widget-value w)
+                        (get-text-property pt 'gnus-string))))
 	(when (string-match-p "\\`[[:alpha:]]+://" u)
-	  (push u urls))))
-    (nreverse (delete-dups urls))))
+          (if (and (null link) (string= "Link" (widget-text w)))
+              (setq link u)
+	    (push u urls)))))
+    (setq urls (nreverse urls))
+    (when link
+      (push link urls))
+    (delete-dups urls)))
 
 (defun gnus-summary-browse-url (arg)
   "Scan the current article body for links, and offer to browse them.
@@ -9468,7 +9475,7 @@ browse that directly, otherwise use completion to select a link."
 	    (cond ((= (length urls) 1)
 		   (car urls))
 		  ((> (length urls) 1)
-		   (completing-read "URL to browse: " urls nil t))))
+		   (completing-read "URL to browse: " urls nil t (car urls)))))
       (if target
 	  (browse-url target)
 	(message "No URLs found.")))))
