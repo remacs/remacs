@@ -98,6 +98,12 @@ This is typically the filename.")
 
 ;;;; Commonly needed location classes are defined here:
 
+(defcustom xref-file-name-display 'abs
+  "Style of file name display in *xref* buffers."
+  :type '(choice (const :tag "absolute file name" abs)
+                 (const :tag "nondirectory file name" nondirectory))
+  :version "27.1")
+
 ;; FIXME: might be useful to have an optional "hint" i.e. a string to
 ;; search for in case the line number is slightly out of date.
 (defclass xref-file-location (xref-location)
@@ -126,7 +132,9 @@ Line numbers start from 1 and columns from 0.")
           (point-marker))))))
 
 (cl-defmethod xref-location-group ((l xref-file-location))
-  (oref l file))
+  (cl-ecase xref-file-name-display
+    (abs (oref l file))
+    (nondirectory (file-name-nondirectory (oref l file)))))
 
 (defclass xref-buffer-location (xref-location)
   ((buffer :type buffer :initarg :buffer)

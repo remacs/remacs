@@ -397,6 +397,9 @@ mode they are described in the manual "(emacs) Display".
 +++
 ** 'progress-reporter-update' accepts a suffix string to display.
 
+---
+** New variable 'xref-file-name-display' controls the display of file
+names in xref buffers.
 
 
 * Editing Changes in Emacs 27.1
