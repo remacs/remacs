@@ -69,4 +69,13 @@
               "struct template {"
               "#include <string.h>")))))
 
+(ert-deftest c-mode-macro-comment ()
+  "Test for bug#36484."
+  (dolist (macro-string '("#define /***/f"
+                          "#define x /***/5"
+                          "#define a(x)get/***/x/***/id())"))
+    (with-temp-buffer
+      (insert macro-string)
+      (c-mode))))
+
 ;;; cc-mode-tests.el ends here
