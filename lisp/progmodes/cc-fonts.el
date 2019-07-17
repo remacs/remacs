@@ -2798,7 +2798,7 @@ need for `pike-font-lock-extra-types'.")
 
 (defconst gtkdoc-font-lock-keywords
   `((,(lambda (limit)
-	(c-font-lock-doc-comments "/\\*\\*\\([^\\*].*\\)?$" limit
+	(c-font-lock-doc-comments "/\\*\\*\\([^*\n\r].*\\)?$" limit
 	  gtkdoc-font-lock-doc-comments)
 	(c-font-lock-doc-comments "/\\*< " limit
 	  gtkdoc-font-lock-doc-protection)
