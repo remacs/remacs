@@ -2900,11 +2900,12 @@ See `term-prompt-regexp'."
                           ;; next time.
                           (when (= funny str-length)
                             (let ((partial 0))
-                              (while (eq (char-charset (aref decoded-substring
-                                                             (- count 1 partial)))
-                                         'eight-bit)
+                              (while (and (< partial count)
+                                          (eq (char-charset (aref decoded-substring
+                                                                  (- count 1 partial)))
+                                              'eight-bit))
                                 (cl-incf partial))
-                              (when (> partial 0)
+                              (when (> count partial 0)
                                 (setq term-terminal-undecoded-bytes
                                       (substring decoded-substring (- partial)))
                                 (setq decoded-substring

@@ -144,6 +144,25 @@ This is a reduced example from GNU nano's initial screen."
                     `("\e[1;3r" "\e[2;1H" ,x "\r\e[1A" ,y))
                    (concat y "\n" x)))))
 
+(ert-deftest term-decode-partial () ;; Bug#25288.
+  "Test multibyte characters sent into multiple chunks."
+  ;; Set `locale-coding-system' so test will be deterministic.
+  (let* ((locale-coding-system 'utf-8-unix)
+         (string (make-string 7 ?ш))
+         (bytes (encode-coding-string string locale-coding-system)))
+    (should (equal string
+                   (term-test-screen-from-input
+                    40 1 `(,(substring bytes 0 (/ (length bytes) 2))
+                           ,(substring bytes (/ (length bytes) 2))))))))
+
+(ert-deftest term-undecodable-input () ;; Bug#29918.
+  "Undecodable bytes should be passed through without error."
+  (let* ((locale-coding-system 'utf-8-unix) ; As above.
+         (bytes "\376\340\360\370")
+         (string (decode-coding-string bytes locale-coding-system)))
+    (should (equal string
+                   (term-test-screen-from-input
+                    40 1 bytes)))))
 
 (provide 'term-tests)
 
