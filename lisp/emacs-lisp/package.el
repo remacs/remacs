@@ -3086,12 +3086,15 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
   "`package-archive-contents' before the latest refresh.")
 
 (defun package-menu-refresh ()
-  "Download the Emacs Lisp package archive.
-This fetches the contents of each archive specified in
-`package-archives', and then refreshes the package menu."
+  "In Package Menu, download the Emacs Lisp package archive.
+Fetch the contents of each archive specified in
+`package-archives', and then refresh the package menu.  Signal a
+user-error if there is already a refresh running asynchronously."
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
+  (when (and package-menu-async package--downloads-in-progress)
+    (user-error "Package refresh is already in progress, please wait..."))
   (setq package-menu--old-archive-contents package-archive-contents)
   (setq package-menu--new-package-list nil)
   (package-refresh-contents package-menu-async))
