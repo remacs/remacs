@@ -545,25 +545,28 @@ Do not try substituting your own definition of
 loop handles this function specially.
 @end deffn
 
-@deffn Command newline &optional number-of-newlines
+@deffn Command newline &optional number-of-newlines interactive
 This command inserts newlines into the current buffer before point.
 If @var{number-of-newlines} is supplied, that many newline characters
-are inserted.
+are inserted.  In an interactive call, @var{number-of-newlines} is the
+numeric prefix argument.
 
 @cindex newline and Auto Fill mode
-This function calls @code{auto-fill-function} if the current column
-number is greater than the value of @code{fill-column} and
-@var{number-of-newlines} is @code{nil}.  Typically what
+This command calls @code{self-insert-command} to insert newlines,
+which may subsequently break the preceding line by calling
+@code{auto-fill-function} (@pxref{Auto Filling}).  Typically what
 @code{auto-fill-function} does is insert a newline; thus, the overall
 result in this case is to insert two newlines at different places: one
 at point, and another earlier in the line.  @code{newline} does not
 auto-fill if @var{number-of-newlines} is non-@code{nil}.
 
+This command does not run the hook @code{post-self-insert-hook} unless
+called interactively or @var{interactive} is non-@code{nil}.
+
 This command indents to the left margin if that is not zero.
 @xref{Margins}.
 
-The value returned is @code{nil}.  In an interactive call, @var{count}
-is the numeric prefix argument.
+The value returned is @code{nil}.
 @end deffn
 
 @defvar overwrite-mode

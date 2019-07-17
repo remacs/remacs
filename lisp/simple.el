@@ -500,17 +500,18 @@ If `electric-indent-mode' is enabled, this indents the final new line
 that it adds, and reindents the preceding line.  To just insert
 a newline, use \\[electric-indent-just-newline].
 
-Calls `auto-fill-function' if the current column number is greater
-than the value of `fill-column' and ARG is nil.
+If `auto-fill-mode' is enabled, this may cause automatic line
+breaking of the preceding line.  A non-nil ARG inhibits this.
+
 A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
   (interactive "*P\np")
   (barf-if-buffer-read-only)
-  ;; Call self-insert so that auto-fill, abbrev expansion etc. happens.
+  ;; Call self-insert so that auto-fill, abbrev expansion etc. happen.
   ;; Set last-command-event to tell self-insert what to insert.
   (let* ((was-page-start (and (bolp) (looking-at page-delimiter)))
          (beforepos (point))
          (last-command-event ?\n)
-         ;; Don't auto-fill if we have a numeric argument.
+         ;; Don't auto-fill if we have a prefix argument.
          (auto-fill-function (if arg nil auto-fill-function))
          (arg (prefix-numeric-value arg))
          (postproc
