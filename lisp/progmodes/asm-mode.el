@@ -1,4 +1,4 @@
-;;; asm-mode.el --- mode for editing assembler code
+;;; asm-mode.el --- mode for editing assembler code  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 1991, 2001-2019 Free Software Foundation, Inc.
 
@@ -54,8 +54,7 @@
 
 (defcustom asm-comment-char ?\;
   "The `comment-start' character assumed by Asm mode."
-  :type 'character
-  :group 'asm)
+  :type 'character)
 
 (defvar asm-mode-syntax-table
   (let ((st (make-syntax-table)))
@@ -127,10 +126,10 @@ Turning on Asm mode runs the hook `asm-mode-hook' at the end of initialization.
 Special commands:
 \\{asm-mode-map}"
   (setq local-abbrev-table asm-mode-abbrev-table)
-  (set (make-local-variable 'font-lock-defaults) '(asm-font-lock-keywords))
-  (set (make-local-variable 'indent-line-function) 'asm-indent-line)
+  (setq-local font-lock-defaults '(asm-font-lock-keywords))
+  (setq-local indent-line-function #'asm-indent-line)
   ;; Stay closer to the old TAB behavior (was tab-to-tab-stop).
-  (set (make-local-variable 'tab-always-indent) nil)
+  (setq-local tab-always-indent nil)
 
   (run-hooks 'asm-mode-set-comment-hook)
   ;; Make our own local child of asm-mode-map
@@ -140,12 +139,11 @@ Special commands:
   (set-syntax-table (make-syntax-table asm-mode-syntax-table))
   (modify-syntax-entry	asm-comment-char "< b")
 
-  (set (make-local-variable 'comment-start) (string asm-comment-char))
-  (set (make-local-variable 'comment-add) 1)
-  (set (make-local-variable 'comment-start-skip)
-       "\\(?:\\s<+\\|/[/*]+\\)[ \t]*")
-  (set (make-local-variable 'comment-end-skip) "[ \t]*\\(\\s>\\|\\*+/\\)")
-  (set (make-local-variable 'comment-end) "")
+  (setq-local comment-start (string asm-comment-char))
+  (setq-local comment-add 1)
+  (setq-local comment-start-skip "\\(?:\\s<+\\|/[/*]+\\)[ \t]*")
+  (setq-local comment-end-skip "[ \t]*\\(\\s>\\|\\*+/\\)")
+  (setq-local comment-end "")
   (setq fill-prefix "\t"))
 
 (defun asm-indent-line ()
@@ -172,7 +170,7 @@ Special commands:
    ;; Simple `;' comments go to the comment-column.
    (and (looking-at "\\s<\\(\\S<\\|\\'\\)") comment-column)
    ;; The rest goes at the first tab stop.
-   (or (indent-next-tab-stop 0))))
+   (indent-next-tab-stop 0)))
 
 (defun asm-colon ()
   "Insert a colon; if it follows a label, delete the label's indentation."
