@@ -535,16 +535,6 @@ Creates the directory if necessary and makes sure:
       (cl-letf (((default-file-modes) ?\700)) (make-directory dir t))
       (setq attrs (file-attributes dir 'integer)))
 
-    (let ((olddir (or (getenv "TMPDIR") "/tmp")))
-      (when (and (equal dir (format "%s/emacs" (getenv "XDG_RUNTIME_DIR")))
-                 (file-writable-p olddir))
-        (let ((link (format "%s/emacs%d" olddir (user-uid))))
-          (unless (file-directory-p link)
-            ;; We're using the new location, so try and setup a symlink from
-            ;; the old location, in case we want to use an old emacsclient.
-            ;; FIXME: Check that it's safe to use!
-            (make-symbolic-link dir link t)))))
-
     ;; Check that it's safe for use.
     (let* ((uid (file-attribute-user-id attrs))
 	   (w32 (eq system-type 'windows-nt))
