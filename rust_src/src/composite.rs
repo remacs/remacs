@@ -18,17 +18,16 @@ use crate::{
 #[lisp_fn(min = "3")]
 pub fn compose_string_internal(
     string: LispStringRef,
-    start: EmacsInt,
-    end: EmacsInt,
+    start: Option<EmacsInt>,
+    end: Option<EmacsInt>,
     components: LispObject,
-    modification_func: LispObject,
-) -> LispObject {
-    let (from, to) =
-        validate_subarray_rust(string.into(), start.into(), end.into(), string.len_chars());
+    modification_function: LispObject,
+) -> LispStringRef {
+    let (from, to) = validate_subarray_rust(string.into(), start, end, string.len_chars());
 
-    compose_text_rust(from, to, components, modification_func, string);
+    compose_text_rust(from, to, components, modification_function, string);
 
-    LispObject::from(string)
+    string
 }
 
 /// Make text in the region between START and END a composition that

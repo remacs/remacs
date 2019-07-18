@@ -605,14 +605,14 @@ pub fn copy_sequence(mut arg: LispObject) -> LispObject {
 /// Set *IFROM and *ITO to the two indexes used.
 pub fn validate_subarray_rust(
     array: LispObject,
-    from: LispObject,
-    to: LispObject,
+    from: Option<EmacsInt>,
+    to: Option<EmacsInt>,
     size: isize,
 ) -> (EmacsInt, EmacsInt) {
-    // convert from, to and size to Emacs Int
+    // change from, to and size to EmacsInt
     let int_size = size as EmacsInt;
-    let mut int_from = from.map_or(0, EmacsInt::from);
-    let mut int_to = to.map_or(int_size, EmacsInt::from);
+    let mut int_from = from.unwrap_or(0);
+    let mut int_to = to.unwrap_or(int_size);
 
     // make negative numbers reverse array
     if int_from < 0 {
@@ -639,7 +639,7 @@ pub extern "C" fn validate_subarray(
     new_from: *mut isize,
     new_to: *mut isize,
 ) {
-    let (f, t) = validate_subarray_rust(array, from, to, size);
+    let (f, t) = validate_subarray_rust(array, from.into(), to.into(), size);
 
     unsafe {
         *new_from = f as isize;
