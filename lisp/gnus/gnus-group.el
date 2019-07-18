@@ -3814,7 +3814,7 @@ group line."
      (newsrc
       ;; Toggle subscription flag.
       (gnus-group-change-level
-       newsrc (if level level (if (<= (gnus-info-level (nth 2 newsrc))
+       newsrc (if level level (if (<= (gnus-info-level (nth 1 newsrc))
 				      gnus-level-subscribed)
 				  (1+ gnus-level-subscribed)
 				gnus-level-default-subscribed)))
