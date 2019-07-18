@@ -374,8 +374,8 @@ The abbrev to be expanded starts here rather than at beginning of
 word.  This way, you can expand an abbrev with a prefix: insert
 the prefix, use this command, then insert the abbrev.
 
-This command a hyphen after the prefix, and if the abbrev is
-subsequently expanded, this hyphen will be removed.
+This command inserts a hyphen after the prefix, and if the abbrev
+is subsequently expanded, this hyphen will be removed.
 
 If the prefix is itself an abbrev, this command expands it,
 unless ARG is non-nil.  Interactively, ARG is the prefix
