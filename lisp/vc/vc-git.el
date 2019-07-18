@@ -1075,9 +1075,7 @@ If LIMIT is a revision string, use it as an end-revision."
 
 (defun vc-git-log-search (buffer pattern)
   (let ((args `("log" "--no-color" "-i"
-                ,(format "--grep=%s"
-                         (or (and pattern (shell-quote-argument pattern))
-                             "")))))
+                ,(format "--grep=%s" (or pattern "")))))
     (when current-prefix-arg
       (setq args (cdr (split-string
 		       (read-shell-command
