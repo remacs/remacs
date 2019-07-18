@@ -1798,19 +1798,17 @@ If LIMIT, first try to limit the search to the N last articles."
 		 (goto-char start)
 		 (setq permanent-flags
 		       (if (equal command "SELECT")
-			   (and (search-forward "PERMANENTFLAGS "
-						(or end (point-min)) t)
+			   (and (search-forward "PERMANENTFLAGS " end t)
 				(read (current-buffer)))
 			 'not-scanned))
 		 (goto-char start)
 		 (setq uidnext
-		       (and (search-forward "UIDNEXT "
-					    (or end (point-min)) t)
+		       (and (search-forward "UIDNEXT " end t)
 			    (read (current-buffer))))
 		 (goto-char start)
 		 (setq uidvalidity
 		       (and (re-search-forward "UIDVALIDITY \\([0-9]+\\)"
-					       (or end (point-min)) t)
+					       end t)
 			    ;; Store UIDVALIDITY as a string, as it's
 			    ;; too big for 32-bit Emacsen, usually.
 			    (match-string 1)))
@@ -1818,12 +1816,12 @@ If LIMIT, first try to limit the search to the N last articles."
 		 (setq vanished
 		       (and (eq flag-sequence 'qresync)
 			    (re-search-forward "^\\* VANISHED .*? \\([0-9:,]+\\)"
-					       (or end (point-min)) t)
+					       end t)
 			    (match-string 1)))
 		 (goto-char start)
 		 (setq highestmodseq
 		       (and (re-search-forward "HIGHESTMODSEQ \\([0-9]+\\)"
-					    (or end (point-min)) t)
+					       end t)
 			    (match-string 1)))
 		 (goto-char end)
 		 (forward-line -1))
