@@ -3704,7 +3704,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	;; once.  Therefore, we apply the handler directly.
 	(when (member (cl-caadr object) events)
 	  (tramp-compat-funcall
-	   (cdr (assq 'file-notify special-event-map))
+	   (lookup-key special-event-map [file-notify])
 	   `(file-notify ,object file-notify-callback)))))
 
     ;; Save rest of the string.
@@ -3755,7 +3755,7 @@ file-notify events."
 	;; once.  Therefore, we apply the handler directly.
 	(when (member (cl-caadr object) events)
 	  (tramp-compat-funcall
-	   (cdr (assq 'file-notify special-event-map))
+	   (lookup-key special-event-map [file-notify])
 	   `(file-notify ,object file-notify-callback)))))
 
     ;; Save rest of the string.
@@ -3791,7 +3791,7 @@ file-notify events."
 	;; once.  Therefore, we apply the handler directly.
 	(when (member (cl-caadr object) events)
 	  (tramp-compat-funcall
-	   (cdr (assq 'file-notify special-event-map))
+	   (lookup-key special-event-map [file-notify])
 	   `(file-notify ,object file-notify-callback)))))))
 
 (defun tramp-sh-handle-file-system-info (filename)
