@@ -13,7 +13,7 @@ use crate::{
 ///
 /// Compose text between indices START and END of STRING, where
 /// START and END are treated as in `substring'.  Optional 4th
-/// and 5th arguments are COMPONENTS and MODIFICATION-FUNC
+/// and 5th arguments are COMPONENTS and MODIFICATION-FUNCTION
 /// for the composition.  See `compose-string' for more details.
 #[lisp_fn(min = "3")]
 pub fn compose_string_internal(
