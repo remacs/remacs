@@ -6696,13 +6696,21 @@ This variable is obsolete; Emacs no longer uses it."
 			"ignored, as Emacs uses `file-system-info' instead"
 			"27.1")
 
+(defcustom file-size-function #'file-size-human-readable
+  "Function that transforms the number of bytes into a human-readable string."
+  :type '(choice
+          (const :tag "default" file-size-human-readable)
+          (const :tag "iec"
+           (lambda (size) (file-size-human-readable size 'iec " ")))
+          (function :tag "Custom function")))
+
 (defun get-free-disk-space (dir)
   "String describing the amount of free space on DIR's file system.
 If DIR's free space cannot be obtained, this function returns nil."
   (save-match-data
     (let ((avail (nth 2 (file-system-info dir))))
       (if avail
-          (file-size-human-readable avail 'iec " ")))))
+          (funcall file-size-function avail)))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
