@@ -2536,7 +2536,8 @@ to another buffer (@pxref{Dedicated Windows}).  It also fails if
 
 @defun display-buffer-reuse-window buffer alist
 This function tries to display @var{buffer} by finding a window that
-is already displaying it.
+is already displaying it.  Windows on the selected frame are preferred
+to windows on other frames.
 
 If @var{alist} has a non-@code{nil} @code{inhibit-same-window} entry,
 the selected window is not eligible for reuse.  The set of frames to

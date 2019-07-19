@@ -7332,25 +7332,26 @@ return nil."
 
 (defun display-buffer-reuse-window (buffer alist)
   "Return a window that is already displaying BUFFER.
-Return nil if no usable window is found.
+Preferably use a window on the selected frame if such a window
+exists.  Return nil if no usable window is found.
 
-If ALIST has a non-nil `inhibit-same-window' entry, the selected
+If ALIST has a non-nil 'inhibit-same-window' entry, the selected
 window is not eligible for reuse.
 
-If ALIST contains a `reusable-frames' entry, its value determines
+If ALIST contains a 'reusable-frames' entry, its value determines
 which frames to search for a reusable window:
   nil -- the selected frame (actually the last non-minibuffer frame)
   A frame   -- just that frame
-  `visible' -- all visible frames
+  'visible' -- all visible frames
   0   -- all frames on the current terminal
   t   -- all frames.
 
-If ALIST contains no `reusable-frames' entry, search just the
+If ALIST contains no 'reusable-frames' entry, search just the
 selected frame if `display-buffer-reuse-frames' and
 `pop-up-frames' are both nil; search all frames on the current
 terminal if either of those variables is non-nil.
 
-If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
+If ALIST has a non-nil 'inhibit-switch-frame' entry, then in the
 event that a window on another frame is chosen, avoid raising
 that frame."
   (let* ((alist-entry (assq 'reusable-frames alist))
@@ -7364,9 +7365,21 @@ that frame."
 	 (window (if (and (eq buffer (window-buffer))
 			  (not (cdr (assq 'inhibit-same-window alist))))
 		     (selected-window)
-		   (car (delq (selected-window)
-			      (get-buffer-window-list buffer 'nomini
-						      frames))))))
+                   ;; Preferably use a window on the selected frame,
+                   ;; if such a window exists (Bug#36680).
+                   (let* ((windows (delq (selected-window)
+                                         (get-buffer-window-list
+                                          buffer 'nomini frames)))
+                          (first (car windows))
+                          (this-frame (selected-frame)))
+                     (cond
+                      ((eq (window-frame first) this-frame)
+                       first)
+                      ((catch 'found
+                         (dolist (next (cdr windows))
+                           (when (eq (window-frame next) this-frame)
+                             (throw 'found next)))))
+                      (t first))))))
     (when (window-live-p window)
       (prog1 (window--display-buffer buffer window 'reuse alist)
 	(unless (cdr (assq 'inhibit-switch-frame alist))
