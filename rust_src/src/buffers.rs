@@ -180,7 +180,7 @@ impl LispBufferRef {
         let mut name: LispStringRef = copy_sequence(name.into()).force_string();
         name.set_intervals(ptr::null_mut());
         b.name_ = name.into();
-        b.undo_list_ = if name.byte_at(0) != b' ' { Qnil } else { Qt };
+        b.undo_list_ = (name.byte_at(0) == b' ').into();
 
         b.reset();
         b.reset_local_variables(true);
@@ -1409,7 +1409,7 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
 /// for positions far away from POS).
 #[lisp_fn]
 pub fn overlay_recenter(pos: LispNumber) {
-    let p = clip_to_bounds(std::isize::MIN, pos.to_fixnum(), std::isize::MAX);
+    let p = clip_to_bounds(isize::min_value(), pos.to_fixnum(), isize::max_value());
     unsafe {
         recenter_overlay_lists(ThreadState::current_buffer_unchecked().as_mut(), p);
     }

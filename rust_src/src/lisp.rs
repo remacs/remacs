@@ -290,12 +290,12 @@ impl From<LispObject> for Option<LispSubrRef> {
 pub type SpecbindingRef = ExternalPtr<specbinding>;
 
 impl SpecbindingRef {
-    pub fn symbol(&self) -> LispSymbolRef {
+    pub fn symbol(self) -> LispSymbolRef {
         debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
         unsafe { self.let_.as_ref().symbol }.into()
     }
 
-    pub fn old_value(&self) -> LispObject {
+    pub fn old_value(self) -> LispObject {
         debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
         unsafe { self.let_.as_ref().old_value }
     }

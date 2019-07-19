@@ -17,7 +17,6 @@
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
-#![feature(type_alias_enum_variants)]
 #![feature(untagged_unions)]
 
 extern crate errno;

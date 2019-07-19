@@ -386,7 +386,7 @@ pub unsafe extern "C" fn lisp_time_struct(
         invalid_time();
     }
 
-    let mut t: lisp_time = Default::default();
+    let mut t: lisp_time = lisp_time::default();
     let val = decode_time_components(high, low, usec, psec, &mut t, ptr::null_mut());
     check_time_validity(val);
     if !plen.is_null() {

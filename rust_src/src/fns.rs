@@ -591,10 +591,10 @@ pub fn copy_sequence(mut arg: LispObject) -> LispObject {
         let mut new = unsafe { make_uninit_bool_vector(nbits).force_bool_vector() };
         new.as_mut_slice().copy_from_slice(boolvec.as_slice());
         new.into()
-    } else if !(arg.is_cons() || arg.is_vector() || arg.is_string()) {
-        wrong_type!(Qsequencep, arg);
-    } else {
+    } else if arg.is_cons() || arg.is_vector() || arg.is_string() {
         unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
+    } else {
+        wrong_type!(Qsequencep, arg);
     }
 }
 

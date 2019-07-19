@@ -561,17 +561,20 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1
+    bytepos = if bytepos == -1
         || !position
             .as_marker()
             .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = buf.charpos_to_bytepos(charpos);
+        buf.charpos_to_bytepos(charpos)
     } else {
-        let beg = buf.buffer_beg_byte(restricted);
-        let end = buf.buffer_end_byte(restricted);
-        bytepos = clip_to_bounds(beg, bytepos as EmacsInt, end);
-    }
+        clip_to_bounds(
+            buf.buffer_beg_byte(restricted),
+            bytepos as EmacsInt,
+            buf.buffer_end_byte(restricted),
+        )
+    };
+
     attach_marker(marker.as_mut(), buf.as_mut(), charpos, bytepos);
 }
 

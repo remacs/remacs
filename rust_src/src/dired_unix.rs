@@ -92,9 +92,9 @@ impl StringExt for String {
         // So here make sure just one '/' between dir&file.
         let last_char = dir.as_str().chars().last().unwrap();
         if last_char == '/' {
-            dir + &self
+            dir + self
         } else {
-            dir + "/" + &self
+            dir + "/" + self
         }
     }
 }
@@ -245,9 +245,6 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
         fnames.push(dotdot);
     }
 
-    // NOTE: The allow can be dropped when the issue
-    // https://github.com/rust-lang/rust-clippy/issues/3913 is resolved
-    #[allow(clippy::identity_conversion)]
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
         let f_enc = match fname.file_name().into_string() {
