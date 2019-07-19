@@ -6697,15 +6697,12 @@ This variable is obsolete; Emacs no longer uses it."
 			"27.1")
 
 (defun get-free-disk-space (dir)
-  "Return the amount of free space on directory DIR's file system.
-The return value is a string describing the amount of free
-space (normally, the number of free 1KB blocks).
-
+  "String describing the amount of free space on DIR's file system.
 If DIR's free space cannot be obtained, this function returns nil."
   (save-match-data
     (let ((avail (nth 2 (file-system-info dir))))
       (if avail
-          (file-size-human-readable avail)))))
+          (file-size-human-readable avail 'iec " ")))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
