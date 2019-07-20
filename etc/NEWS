@@ -923,6 +923,7 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 
 ** Gnus
 
++++
 *** There's a new value for `gnus-article-date-headers',
 `combined-local-lapsed', which will show both the time (in the local
 timezone) and the lapsed time.
