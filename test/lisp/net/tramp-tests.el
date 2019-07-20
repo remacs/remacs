@@ -2827,7 +2827,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	       (looking-at-p
 		(concat
 		 ;; There might be a summary line.
-		 "\\(total.+[[:digit:]]+[KMGTPEZY]?\n\\)?"
+		 "\\(total.+[[:digit:]]+ ?[kKMGTPEZY]?i?B?\n\\)?"
 		 ;; We don't know in which order ".", ".." and "foo" appear.
 		 (format
 		  "\\(.+ %s\\( ->.+\\)?\n\\)\\{%d\\}"
