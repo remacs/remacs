@@ -6700,11 +6700,12 @@ This variable is obsolete; Emacs no longer uses it."
 
 (defcustom file-size-function #'file-size-human-readable
   "Function that transforms the number of bytes into a human-readable string."
-  :type '(choice
-          (const :tag "default" file-size-human-readable)
-          (const :tag "iec"
-           (lambda (size) (file-size-human-readable size 'iec " ")))
-          (function :tag "Custom function")))
+  :type `(radio
+          (function-item :tag "Default" file-size-human-readable)
+          (function-item :tag "IEC"
+                         ,(lambda (size) (file-size-human-readable size 'iec " ")))
+          (function :tag "Custom function"))
+  :version "27.1")
 
 (defun get-free-disk-space (dir)
   "String describing the amount of free space on DIR's file system.
