@@ -12040,6 +12040,10 @@ The time elapsed since the message was posted.
 @item combined-lapsed
 Both the original date header and a (shortened) elapsed time.
 
+@item combined-local-lapsed
+Both the time in the user's local time zone a (shortened) elapsed
+time.
+
 @item original
 The original date header.
 

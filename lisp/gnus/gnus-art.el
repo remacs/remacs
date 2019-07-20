@@ -999,6 +999,7 @@ on parts -- for instance, adding Vcard info to a database."
 Valid formats are `ut' (Universal Time), `local' (local time
 zone), `english' (readable English), `lapsed' (elapsed time),
 `combined-lapsed' (both the original date and the elapsed time),
+`combined-local-lapsed' (both the local time and the elapsed time),
 `original' (the original date header), `iso8601' (ISO8601
 format), and `user-defined' (a user-defined format defined by the
 `gnus-article-time-format' variable).
@@ -1014,6 +1015,7 @@ Some of these headers are updated automatically.  See
 	  (const :tag "Readable English" english)
 	  (const :tag "Elapsed time" lapsed)
 	  (const :tag "Original and elapsed time" combined-lapsed)
+	  (const :tag "Local and elapsed time" combined-local-lapsed)
 	  (const :tag "Original date header" original)
 	  (const :tag "ISO8601 format" iso8601)
 	  (const :tag "User-defined" user-defined)))
@@ -3528,10 +3530,28 @@ possible values."
 	    (put-text-property (match-beginning 1) (match-end 1)
 			       'face eface)))))))
 
+(defun article-make-date-combine-with-lapsed (date time type)
+  "Return type of date with lapsed time added."
+  (let ((date-string (article-make-date-line date type))
+	(segments 3)
+	lapsed-string)
+    (while (and
+            time
+	    (setq lapsed-string
+		  (concat " (" (article-lapsed-string time segments) ")"))
+	    (> (+ (length date-string)
+		  (length lapsed-string))
+	       (+ fill-column 6))
+	    (> segments 0))
+      (setq segments (1- segments)))
+    (if (> segments 0)
+	(concat date-string lapsed-string)
+      date-string)))
+
 (defun article-make-date-line (date type)
   "Return a DATE line of TYPE."
   (unless (memq type '(local ut original user-defined iso8601 lapsed english
-			     combined-lapsed))
+			     combined-lapsed combined-local-lapsed))
     (error "Unknown conversion type: %s" type))
   (condition-case ()
       (let ((time (ignore-errors (date-to-time date))))
@@ -3569,21 +3589,10 @@ possible values."
 	  (concat "Date: " (article-lapsed-string time)))
 	 ;; A combined date/lapsed format.
 	 ((eq type 'combined-lapsed)
-	  (let ((date-string (article-make-date-line date 'original))
-		(segments 3)
-		lapsed-string)
-	    (while (and
-                    time
-		    (setq lapsed-string
-			  (concat " (" (article-lapsed-string time segments) ")"))
-		    (> (+ (length date-string)
-			  (length lapsed-string))
-		       (+ fill-column 6))
-		    (> segments 0))
-	      (setq segments (1- segments)))
-	    (if (> segments 0)
-		(concat date-string lapsed-string)
-	      date-string)))
+          (article-make-date-combine-with-lapsed date time 'original))
+         ;; A combined local/lapsed format.
+         ((eq type 'combined-local-lapsed)
+          (article-make-date-combine-with-lapsed date time 'local))
 	 ;; Display the date in proper English
 	 ((eq type 'english)
 	  (let ((dtime (decode-time time)))
