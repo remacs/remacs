@@ -289,6 +289,7 @@ Non-nil means always go to the next Octave code line after sending."
         ("methods" exp "endmethods")
         ("properties" exp "endproperties")
         ("classdef" exp "endclassdef")
+        ("spmd" exp "endspmd")
         ))
 
      (bnf-table
