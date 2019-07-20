@@ -24,7 +24,8 @@
 
 ;;; Code:
 
-(require 'subr-x)
+(eval-when-compile
+  (require 'subr-x))
 
 (defun format-spec (format specification &optional only-present)
   "Return a string based on FORMAT and SPECIFICATION.
@@ -118,8 +119,7 @@ where they are, including \"%%\" strings."
         (concat padding text)))))
 
 (defun format-spec--parse-modifiers (modifiers)
-  (let ((elems nil))
-    (mapc (lambda (char)
+  (mapcan (lambda (char)
             (when-let ((modifier
                         (pcase char
                           (?0 :zero-pad)
@@ -129,9 +129,8 @@ where they are, including \"%%\" strings."
                           (?- :right-pad)
                           (?< :chop-left)
                           (?> :chop-right))))
-              (push modifier elems)))
-          modifiers)
-    elems))
+              (list modifier)))
+          modifiers))
 
 (defun format-spec-make (&rest pairs)
   "Return an alist suitable for use in `format-spec' based on PAIRS.
