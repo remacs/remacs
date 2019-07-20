@@ -2964,7 +2964,7 @@ associated with that interpreter in `interpreter-mode-alist'.")
   "Alist of buffer beginnings vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (MATCH-FUNCTION . FUNCTION).
 After visiting a file, if REGEXP matches the text at the beginning of the
-buffer (respecting case), or calling MATCH-FUNCTION returns non-nil,
+buffer (case-sensitively), or calling MATCH-FUNCTION returns non-nil,
 `normal-mode' will call FUNCTION rather than allowing `auto-mode-alist' to
 decide the buffer's major mode.
 
@@ -2998,7 +2998,7 @@ If FUNCTION is nil, then it is not called.  (That is a way of saying
   "Like `magic-mode-alist' but has lower priority than `auto-mode-alist'.
 Each element looks like (REGEXP . FUNCTION) or (MATCH-FUNCTION . FUNCTION).
 After visiting a file, if REGEXP matches the text at the beginning of the
-buffer (respecting case), or calling MATCH-FUNCTION returns non-nil,
+buffer (case-sensitively), or calling MATCH-FUNCTION returns non-nil,
 `normal-mode' will call FUNCTION, provided that `magic-mode-alist' and
 `auto-mode-alist' have not specified a mode for this file.
 

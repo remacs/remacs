@@ -1747,6 +1747,10 @@ immediately.  Type 'M-x so-long-commentary' for full documentation.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+---
+** The REGEXP in 'magic-mode-alist' is now matched case-sensitively.
+Likewise for 'magic-fallback-mode-alist'.
+
 +++
 ** add-hook does not always add to the front or the end any more.
 The replacement of `append` with `depth` implies that the function is not
