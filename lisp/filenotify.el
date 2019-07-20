@@ -120,10 +120,11 @@ It is nil or a `file-notify--rename' where the cookie can be nil.")
   (directory-file-name
    (expand-file-name file (file-notify--watch-directory watch))))
 
-(defun file-notify--callback-inotify (event)
+(cl-defun file-notify--callback-inotify ((desc actions file
+                                          &optional file1-or-cookie))
   "Notification callback for inotify."
   (file-notify--handle-event
-   (car event)
+   desc
    (delq nil (mapcar (lambda (action)
                        (cond
                         ((eq action 'create) 'created)
@@ -133,14 +134,14 @@ It is nil or a `file-notify--rename' where the cookie can be nil.")
                         ((eq action 'moved-from) 'renamed-from)
                         ((eq action 'moved-to) 'renamed-to)
                         ((eq action 'ignored) 'stopped)))
-                     (nth 1 event)))
-   (nth 2 event)
-   (nth 3 event)))
+                     actions))
+   file file1-or-cookie))
 
-(defun file-notify--callback-kqueue (event)
+(cl-defun file-notify--callback-kqueue ((desc actions file
+                                         &optional file1-or-cookie))
   "Notification callback for kqueue."
   (file-notify--handle-event
-   (car event)
+   desc
    (delq nil (mapcar (lambda (action)
                        (cond
                         ((eq action 'create) 'created)
@@ -148,30 +149,26 @@ It is nil or a `file-notify--rename' where the cookie can be nil.")
                         ((memq action '(attrib link)) 'attribute-changed)
                         ((eq action 'delete) 'deleted)
                         ((eq action 'rename) 'renamed)))
-                     (nth 1 event)))
-   (nth 2 event)
-   (nth 3 event)))
+                     actions))
+   file file1-or-cookie))
 
-(defun file-notify--callback-w32notify (event)
+(cl-defun file-notify--callback-w32notify ((desc actions file
+                                            &optional file1-or-cookie))
   "Notification callback for w32notify."
-  (let ((action (pcase (nth 1 event)
+  (let ((action (pcase actions
                  ('added 'created)
                  ('modified 'changed)
                  ('removed 'deleted)
                  ('renamed-from 'renamed-from)
                  ('renamed-to 'renamed-to))))
     (when action
-      (file-notify--handle-event
-       (car event)
-       (list action)
-       (nth 2 event)
-       (nth 3 event)))))
+      (file-notify--handle-event desc (list action) file file1-or-cookie))))
 
-(defun file-notify--callback-gfilenotify (event)
+(cl-defun file-notify--callback-gfilenotify ((desc actions file
+                                              &optional file1-or-cookie))
   "Notification callback for gfilenotify."
-  (let ((actions (nth 1 event)))
   (file-notify--handle-event
-   (car event)
+   desc
    (delq nil (mapcar (lambda (action)
                        (cond
                         ((memq action
@@ -179,17 +176,12 @@ It is nil or a `file-notify--rename' where the cookie can be nil.")
                          action)
                         ((eq action 'moved) 'renamed)))
                      (if (consp actions) actions (list actions))))
-   (nth 2 event)
-   (nth 3 event))))
+   file file1-or-cookie))
 
-;; Called by file name handlers to deliver a notification.
-(defun file-notify-callback (event)
-  "Handle an EVENT returned from file notification.
-EVENT is the cadr of the event in `file-notify-handle-event'
-\(DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE])."
-  (let ((actions (nth 1 event)))
+(cl-defun file-notify-callback ((desc actions file &optional file1-or-cookie))
+  "Notification callback for file name handlers."
   (file-notify--handle-event
-   (car event)
+   desc
    ;; File name handlers use gfilenotify or inotify actions.
    (delq nil (mapcar
               (lambda (action)
@@ -207,8 +199,7 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                  ((eq action 'moved-to) 'renamed-to)
                  ((eq action 'ignored) 'stopped)))
               (if (consp actions) actions (list actions))))
-   (nth 2 event)
-   (nth 3 event))))
+   file file1-or-cookie))
 
 (defun file-notify--call-handler (watch desc action file file1)
   "Call the handler of WATCH with the arguments DESC, ACTION, FILE and FILE1."
