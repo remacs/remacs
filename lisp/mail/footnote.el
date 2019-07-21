@@ -695,6 +695,15 @@ footnote area, returns `point-max'."
    ;; If not within a footnote's text, fallback to the default.
    (funcall orig-fun)))
 
+(defun footnote--fill-paragraph (justify)
+  (when (footnote--text-under-cursor)
+    (let ((fill-paragraph-function nil)
+          (fill-prefix (if footnote-align-to-fn-text
+                           (footnote--fill-prefix-string)
+                         ""))
+          (paragraph-start "\\["))
+      (fill-paragraph justify))))
+
 ;;; User functions
 
 (defun footnote--make-hole ()
@@ -875,6 +884,7 @@ play around with the following keys:
     (make-local-variable 'adaptive-fill-function)
     (add-function :around (local 'adaptive-fill-function)
                   #'footnote--adaptive-fill-function)
+    (setq-local fill-paragraph-function #'footnote--fill-paragraph)
 
     ;; Filladapt was an XEmacs package which is now in GNU ELPA.
     (when (boundp 'filladapt-token-table)
