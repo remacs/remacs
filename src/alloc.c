@@ -292,6 +292,10 @@ static ptrdiff_t pure_bytes_used_lisp;
 
 static ptrdiff_t pure_bytes_used_non_lisp;
 
+/* If positive, garbage collection is inhibited.  Otherwise, zero.  */
+
+static intptr_t garbage_collection_inhibited;
+
 /* If nonzero, this is a warning delivered by malloc and not yet
    displayed.  */
 
@@ -5120,6 +5124,10 @@ pure_alloc (size_t size, int type)
   pure_bytes_used_before_overflow += pure_bytes_used - size;
   pure_bytes_used = 0;
   pure_bytes_used_lisp = pure_bytes_used_non_lisp = 0;
+
+  /* Can't GC if pure storage overflowed because we can't determine
+     if something is a pure object or not.  */
+  garbage_collection_inhibited++;
   goto again;
 }
 
@@ -5486,12 +5494,19 @@ staticpro (Lisp_Object const *varaddress)
 
 /* Temporarily prevent garbage collection.  */
 
+static void
+allow_garbage_collection (void)
+{
+  garbage_collection_inhibited--;
+}
+
 ptrdiff_t
 inhibit_garbage_collection (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  specbind (Qgc_cons_threshold, make_fixnum (MOST_POSITIVE_FIXNUM));
+  record_unwind_protect_void (allow_garbage_collection);
+  garbage_collection_inhibited++;
   return count;
 }
 
@@ -5779,9 +5794,7 @@ garbage_collect_1 (struct gcstat *gcst)
 
   eassert (weak_hash_tables == NULL);
 
-  /* Can't GC if pure storage overflowed because we can't determine
-     if something is a pure object or not.  */
-  if (pure_bytes_used_before_overflow)
+  if (garbage_collection_inhibited)
     return false;
 
   /* Record this function, so it appears on the profiler's backtraces.  */
