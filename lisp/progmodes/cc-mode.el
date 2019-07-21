@@ -2158,9 +2158,11 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; count as being in a declarator (on pragmatic grounds).
   (goto-char pos)
   (let ((lit-start (c-literal-start))
-	pos1)
+	enclosing-attribute pos1)
     (unless lit-start
       (c-backward-syntactic-ws)
+      (when (setq enclosing-attribute (c-slow-enclosing-c++-attribute))
+	(goto-char (car enclosing-attribute))) ; Only happens in C++ Mode.
       (when (setq pos1 (c-on-identifier))
 	(goto-char pos1)
 	(let ((lim (save-excursion
