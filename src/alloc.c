@@ -5501,11 +5501,14 @@ staticpro (Lisp_Object const *varaddress)
 			  Protection from GC
  ***********************************************************************/
 
-/* Temporarily prevent garbage collection.  */
+/* Temporarily prevent garbage collection.  Temporarily bump
+   consing_until_gc to speed up maybe_gc when GC is inhibited.  */
 
 static void
-allow_garbage_collection (void)
+allow_garbage_collection (void *ptr)
 {
+  object_ct *p = ptr;
+  consing_until_gc = *p;
   garbage_collection_inhibited--;
 }
 
@@ -5513,9 +5516,10 @@ ptrdiff_t
 inhibit_garbage_collection (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect_void (allow_garbage_collection);
+  object_ct consing = consing_until_gc;
+  record_unwind_protect_ptr (allow_garbage_collection, &consing);
   garbage_collection_inhibited++;
+  consing_until_gc = OBJECT_CT_MAX;
   return count;
 }
 
