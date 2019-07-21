@@ -629,9 +629,12 @@ Optional fifth argument CASE-FOLD-P specifies the value of
   (let ((dired-marker-char (if unflag-p ?\s dired-marker-char)))
     (dired-mark-if
      (and
-      ;; not already marked
-      (= (following-char) ?\s)
-      ;; uninteresting
+      (if unflag-p
+          ;; Already marked.
+          (not (= (following-char) ?\s))
+        ;; Not already marked.
+        (= (following-char) ?\s))
+      ;; Interesting.
       (let ((fn (dired-get-filename localp t))
             ;; Match patterns case-insensitively on case-insensitive
             ;; systems
