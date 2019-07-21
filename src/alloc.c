@@ -5329,7 +5329,7 @@ static struct Lisp_Hash_Table *
 purecopy_hash_table (struct Lisp_Hash_Table *table)
 {
   eassert (NILP (table->weak));
-  eassert (table->pure);
+  eassert (table->purecopy);
 
   struct Lisp_Hash_Table *pure = pure_alloc (sizeof *pure, Lisp_Vectorlike);
   struct hash_table_test pure_test = table->test;
@@ -5346,7 +5346,7 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   pure->index = purecopy (table->index);
   pure->count = table->count;
   pure->next_free = table->next_free;
-  pure->pure = table->pure;
+  pure->purecopy = table->purecopy;
   pure->rehash_threshold = table->rehash_threshold;
   pure->rehash_size = table->rehash_size;
   pure->key_and_value = purecopy (table->key_and_value);
@@ -5410,7 +5410,7 @@ purecopy (Lisp_Object obj)
       /* Do not purify hash tables which haven't been defined with
          :purecopy as non-nil or are weak - they aren't guaranteed to
          not change.  */
-      if (!NILP (table->weak) || !table->pure)
+      if (!NILP (table->weak) || !table->purecopy)
         {
           /* Instead, add the hash table to the list of pinned objects,
              so that it will be marked during GC.  */

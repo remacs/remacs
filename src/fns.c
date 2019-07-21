@@ -4055,7 +4055,7 @@ allocate_hash_table (void)
 Lisp_Object
 make_hash_table (struct hash_table_test test, EMACS_INT size,
 		 float rehash_size, float rehash_threshold,
-		 Lisp_Object weak, bool pure)
+		 Lisp_Object weak, bool purecopy)
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
@@ -4094,7 +4094,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->next = make_vector (size, make_fixnum (-1));
   h->index = make_vector (index_size, make_fixnum (-1));
   h->next_weak = NULL;
-  h->pure = pure;
+  h->purecopy = purecopy;
 
   /* Set up the free list.  */
   for (i = 0; i < size - 1; ++i)
@@ -4748,7 +4748,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   Lisp_Object test, weak;
-  bool pure;
+  bool purecopy;
   struct hash_table_test testdesc;
   ptrdiff_t i;
   USE_SAFE_ALLOCA;
@@ -4784,7 +4784,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   /* See if there's a `:purecopy PURECOPY' argument.  */
   i = get_key_arg (QCpurecopy, nargs, args, used);
-  pure = i && !NILP (args[i]);
+  purecopy = i && !NILP (args[i]);
   /* See if there's a `:size SIZE' argument.  */
   i = get_key_arg (QCsize, nargs, args, used);
   Lisp_Object size_arg = i ? args[i] : Qnil;
@@ -4835,7 +4835,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
 
   SAFE_FREE ();
   return make_hash_table (testdesc, size, rehash_size, rehash_threshold, weak,
-                          pure);
+			  purecopy);
 }
 
 

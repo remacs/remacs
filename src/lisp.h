@@ -2287,7 +2287,7 @@ struct Lisp_Hash_Table
 
   /* True if the table can be purecopied.  The table cannot be
      changed afterwards.  */
-  bool pure;
+  bool purecopy;
 
   /* Resize hash table when number of entries / table size is >= this
      ratio.  */
