@@ -674,6 +674,7 @@ default_toplevel_binding (Lisp_Object symbol)
 	case SPECPDL_UNWIND_ARRAY:
 	case SPECPDL_UNWIND_PTR:
 	case SPECPDL_UNWIND_INT:
+	case SPECPDL_UNWIND_INTMAX:
 	case SPECPDL_UNWIND_EXCURSION:
 	case SPECPDL_UNWIND_VOID:
 	case SPECPDL_BACKTRACE:
@@ -3395,6 +3396,15 @@ record_unwind_protect_int (void (*function) (int), int arg)
 }
 
 void
+record_unwind_protect_intmax (void (*function) (intmax_t), intmax_t arg)
+{
+  specpdl_ptr->unwind_intmax.kind = SPECPDL_UNWIND_INTMAX;
+  specpdl_ptr->unwind_intmax.func = function;
+  specpdl_ptr->unwind_intmax.arg = arg;
+  grow_specpdl ();
+}
+
+void
 record_unwind_protect_excursion (void)
 {
   specpdl_ptr->unwind_excursion.kind = SPECPDL_UNWIND_EXCURSION;
@@ -3447,6 +3457,9 @@ do_one_unbind (union specbinding *this_binding, bool unwinding,
       break;
     case SPECPDL_UNWIND_INT:
       this_binding->unwind_int.func (this_binding->unwind_int.arg);
+      break;
+    case SPECPDL_UNWIND_INTMAX:
+      this_binding->unwind_intmax.func (this_binding->unwind_intmax.arg);
       break;
     case SPECPDL_UNWIND_VOID:
       this_binding->unwind_void.func ();
@@ -3784,6 +3797,7 @@ backtrace_eval_unrewind (int distance)
 	case SPECPDL_UNWIND_ARRAY:
 	case SPECPDL_UNWIND_PTR:
 	case SPECPDL_UNWIND_INT:
+	case SPECPDL_UNWIND_INTMAX:
 	case SPECPDL_UNWIND_VOID:
 	case SPECPDL_BACKTRACE:
 	  break;
@@ -3917,6 +3931,7 @@ NFRAMES and BASE specify the activation frame to use, as in `backtrace-frame'.  
 	  case SPECPDL_UNWIND_ARRAY:
 	  case SPECPDL_UNWIND_PTR:
 	  case SPECPDL_UNWIND_INT:
+	  case SPECPDL_UNWIND_INTMAX:
 	  case SPECPDL_UNWIND_EXCURSION:
 	  case SPECPDL_UNWIND_VOID:
 	  case SPECPDL_BACKTRACE:
@@ -3979,6 +3994,7 @@ mark_specpdl (union specbinding *first, union specbinding *ptr)
 
 	case SPECPDL_UNWIND_PTR:
 	case SPECPDL_UNWIND_INT:
+	case SPECPDL_UNWIND_INTMAX:
         case SPECPDL_UNWIND_VOID:
 	  break;
 

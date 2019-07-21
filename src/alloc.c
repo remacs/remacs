@@ -5505,10 +5505,9 @@ staticpro (Lisp_Object const *varaddress)
    consing_until_gc to speed up maybe_gc when GC is inhibited.  */
 
 static void
-allow_garbage_collection (void *ptr)
+allow_garbage_collection (intmax_t consing)
 {
-  object_ct *p = ptr;
-  consing_until_gc = *p;
+  consing_until_gc = consing;
   garbage_collection_inhibited--;
 }
 
@@ -5516,8 +5515,7 @@ ptrdiff_t
 inhibit_garbage_collection (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  object_ct consing = consing_until_gc;
-  record_unwind_protect_ptr (allow_garbage_collection, &consing);
+  record_unwind_protect_intmax (allow_garbage_collection, consing_until_gc);
   garbage_collection_inhibited++;
   consing_until_gc = OBJECT_CT_MAX;
   return count;
