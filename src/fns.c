@@ -2373,7 +2373,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	case Lisp_Cons: case Lisp_Vectorlike:
 	  {
 	    struct Lisp_Hash_Table *h = XHASH_TABLE (ht);
-	    EMACS_UINT hash;
+	    Lisp_Object hash;
 	    ptrdiff_t i = hash_lookup (h, o1, &hash);
 	    if (i >= 0)
 	      { /* `o1' was seen already.  */
@@ -3934,74 +3934,67 @@ HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 /* Ignore HT and compare KEY1 and KEY2 using 'eql'.
    Value is true if KEY1 and KEY2 are the same.  */
 
-static bool
-cmpfn_eql (struct hash_table_test *ht,
-	   Lisp_Object key1,
-	   Lisp_Object key2)
+static Lisp_Object
+cmpfn_eql (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
 {
-  return !NILP (Feql (key1, key2));
+  return Feql (key1, key2);
 }
 
 /* Ignore HT and compare KEY1 and KEY2 using 'equal'.
    Value is true if KEY1 and KEY2 are the same.  */
 
-static bool
-cmpfn_equal (struct hash_table_test *ht,
-	     Lisp_Object key1,
-	     Lisp_Object key2)
+static Lisp_Object
+cmpfn_equal (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
 {
-  return !NILP (Fequal (key1, key2));
+  return Fequal (key1, key2);
 }
 
 
 /* Given HT, compare KEY1 and KEY2 using HT->user_cmp_function.
    Value is true if KEY1 and KEY2 are the same.  */
 
-static bool
-cmpfn_user_defined (struct hash_table_test *ht,
-		    Lisp_Object key1,
-		    Lisp_Object key2)
+static Lisp_Object
+cmpfn_user_defined (Lisp_Object key1, Lisp_Object key2,
+		    struct hash_table_test *ht)
 {
-  return !NILP (call2 (ht->user_cmp_function, key1, key2));
+  return call2 (ht->user_cmp_function, key1, key2);
 }
 
-/* Ignore HT and return a hash code for KEY which uses 'eq' to compare keys.
-   The hash code is at most INTMASK.  */
+/* Ignore HT and return a hash code for KEY which uses 'eq' to compare
+   keys.  */
 
-static EMACS_UINT
-hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
+static Lisp_Object
+hashfn_eq (Lisp_Object key, struct hash_table_test *ht)
 {
-  return XHASH (key) ^ XTYPE (key);
+  return make_fixnum (XHASH (key) ^ XTYPE (key));
 }
 
 /* Ignore HT and return a hash code for KEY which uses 'equal' to compare keys.
    The hash code is at most INTMASK.  */
 
-EMACS_UINT
-hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
+Lisp_Object
+hashfn_equal (Lisp_Object key, struct hash_table_test *ht)
 {
-  return sxhash (key, 0);
+  return make_fixnum (sxhash (key, 0));
 }
 
 /* Ignore HT and return a hash code for KEY which uses 'eql' to compare keys.
    The hash code is at most INTMASK.  */
 
-EMACS_UINT
-hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
+Lisp_Object
+hashfn_eql (Lisp_Object key, struct hash_table_test *ht)
 {
-  return ((FLOATP (key) || BIGNUMP (key))
-	  ? hashfn_equal (ht, key)
-	  : hashfn_eq (ht, key));
+  return (FLOATP (key) || BIGNUMP (key) ? hashfn_equal : hashfn_eq) (key, ht);
 }
 
 /* Given HT, return a hash code for KEY which uses a user-defined
-   function to compare keys.  The hash code is at most INTMASK.  */
+   function to compare keys.  */
 
-static EMACS_UINT
-hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
+static Lisp_Object
+hashfn_user_defined (Lisp_Object key, struct hash_table_test *ht)
 {
   Lisp_Object hash = call1 (ht->user_hash_function, key);
-  return hashfn_eq (ht, hash);
+  return hashfn_eq (hash, ht);
 }
 
 struct hash_table_test const
@@ -4224,8 +4217,8 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
     if (!NILP (HASH_HASH (h, i)))
       {
         Lisp_Object key = HASH_KEY (h, i);
-        EMACS_UINT hash_code = h->test.hashfn (&h->test, key);
-        set_hash_hash_slot (h, i, make_fixnum (hash_code));
+	Lisp_Object hash_code = h->test.hashfn (key, &h->test);
+	set_hash_hash_slot (h, i, hash_code);
       }
 
   /* Reset the index so that any slot we don't fill below is marked
@@ -4256,25 +4249,23 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
    matching KEY, or -1 if not found.  */
 
 ptrdiff_t
-hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
+hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object *hash)
 {
-  EMACS_UINT hash_code;
   ptrdiff_t start_of_bucket, i;
 
   hash_rehash_if_needed (h);
 
-  hash_code = h->test.hashfn (&h->test, key);
-  eassert ((hash_code & ~INTMASK) == 0);
+  Lisp_Object hash_code = h->test.hashfn (key, &h->test);
   if (hash)
     *hash = hash_code;
 
-  start_of_bucket = hash_code % ASIZE (h->index);
+  start_of_bucket = XUFIXNUM (hash_code) % ASIZE (h->index);
 
   for (i = HASH_INDEX (h, start_of_bucket); 0 <= i; i = HASH_NEXT (h, i))
     if (EQ (key, HASH_KEY (h, i))
 	|| (h->test.cmpfn
-	    && hash_code == XUFIXNUM (HASH_HASH (h, i))
-	    && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
+	    && EQ (hash_code, HASH_HASH (h, i))
+	    && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), &h->test))))
       break;
 
   return i;
@@ -4287,13 +4278,11 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
 
 ptrdiff_t
 hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
-	  EMACS_UINT hash)
+	  Lisp_Object hash)
 {
   ptrdiff_t start_of_bucket, i;
 
   hash_rehash_if_needed (h);
-
-  eassert ((hash & ~INTMASK) == 0);
 
   /* Increment count after resizing because resizing may fail.  */
   maybe_resize_hash_table (h);
@@ -4306,10 +4295,10 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
   set_hash_value_slot (h, i, value);
 
   /* Remember its hash code.  */
-  set_hash_hash_slot (h, i, make_fixnum (hash));
+  set_hash_hash_slot (h, i, hash);
 
   /* Add new entry to its collision chain.  */
-  start_of_bucket = hash % ASIZE (h->index);
+  start_of_bucket = XUFIXNUM (hash) % ASIZE (h->index);
   set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
   set_hash_index_slot (h, start_of_bucket, i);
   return i;
@@ -4321,9 +4310,8 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 void
 hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  EMACS_UINT hash_code = h->test.hashfn (&h->test, key);
-  eassert ((hash_code & ~INTMASK) == 0);
-  ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
+  Lisp_Object hash_code = h->test.hashfn (key, &h->test);
+  ptrdiff_t start_of_bucket = XUFIXNUM (hash_code) % ASIZE (h->index);
   ptrdiff_t prev = -1;
 
   hash_rehash_if_needed (h);
@@ -4334,8 +4322,8 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
     {
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->test.cmpfn
-	      && hash_code == XUFIXNUM (HASH_HASH (h, i))
-	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
+	      && EQ (hash_code, HASH_HASH (h, i))
+	      && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), &h->test))))
 	{
 	  /* Take entry out of collision chain.  */
 	  if (prev < 0)
@@ -4685,7 +4673,7 @@ If (eq A B), then (= (sxhash-eq A) (sxhash-eq B)).
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
   (Lisp_Object obj)
 {
-  return make_fixnum (hashfn_eq (NULL, obj));
+  return hashfn_eq (obj, NULL);
 }
 
 DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
@@ -4695,7 +4683,7 @@ If (eql A B), then (= (sxhash-eql A) (sxhash-eql B)).
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
   (Lisp_Object obj)
 {
-  return make_fixnum (hashfn_eql (NULL, obj));
+  return hashfn_eql (obj, NULL);
 }
 
 DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
@@ -4705,7 +4693,7 @@ If (equal A B), then (= (sxhash-equal A) (sxhash-equal B)).
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
   (Lisp_Object obj)
 {
-  return make_fixnum (hashfn_equal (NULL, obj));
+  return hashfn_equal (obj, NULL);
 }
 
 DEFUN ("make-hash-table", Fmake_hash_table, Smake_hash_table, 0, MANY, 0,
@@ -4951,9 +4939,8 @@ VALUE.  In any case, return VALUE.  */)
   struct Lisp_Hash_Table *h = check_hash_table (table);
   CHECK_IMPURE (table, h);
 
-  ptrdiff_t i;
-  EMACS_UINT hash;
-  i = hash_lookup (h, key, &hash);
+  Lisp_Object hash;
+  ptrdiff_t i = hash_lookup (h, key, &hash);
   if (i >= 0)
     set_hash_value_slot (h, i, value);
   else

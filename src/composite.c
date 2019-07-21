@@ -164,11 +164,10 @@ ptrdiff_t
 get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 		    Lisp_Object prop, Lisp_Object string)
 {
-  Lisp_Object id, length, components, key, *key_contents;
+  Lisp_Object id, length, components, key, *key_contents, hash_code;
   ptrdiff_t glyph_len;
   struct Lisp_Hash_Table *hash_table = XHASH_TABLE (composition_hash_table);
   ptrdiff_t hash_index;
-  EMACS_UINT hash_code;
   enum composition_method method;
   struct composition *cmp;
   ptrdiff_t i;
@@ -656,7 +655,7 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
   struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
   hash_rehash_if_needed (h);
   Lisp_Object header = LGSTRING_HEADER (gstring);
-  EMACS_UINT hash = h->test.hashfn (&h->test, header);
+  Lisp_Object hash = h->test.hashfn (header, &h->test);
   if (len < 0)
     {
       ptrdiff_t glyph_len = LGSTRING_GLYPH_LEN (gstring);

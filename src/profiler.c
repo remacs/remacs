@@ -36,11 +36,9 @@ saturated_add (EMACS_INT a, EMACS_INT b)
 
 typedef struct Lisp_Hash_Table log_t;
 
-static bool cmpfn_profiler (
-  struct hash_table_test *, Lisp_Object, Lisp_Object);
-
-static EMACS_UINT hashfn_profiler (
-  struct hash_table_test *, Lisp_Object);
+static Lisp_Object cmpfn_profiler (Lisp_Object, Lisp_Object,
+				   struct hash_table_test *);
+static Lisp_Object hashfn_profiler (Lisp_Object, struct hash_table_test *);
 
 static const struct hash_table_test hashtest_profiler =
   {
@@ -165,7 +163,7 @@ record_backtrace (log_t *log, EMACS_INT count)
        careful to avoid memory allocation since we're in a signal
        handler, and we optimize the code to try and avoid computing the
        hash+lookup twice.  See fns.c:Fputhash for reference.  */
-    EMACS_UINT hash;
+    Lisp_Object hash;
     ptrdiff_t j = hash_lookup (log, backtrace, &hash);
     if (j >= 0)
       {
@@ -529,30 +527,30 @@ the same lambda expression, or are really unrelated function.  */)
   return res ? Qt : Qnil;
 }
 
-static bool
-cmpfn_profiler (struct hash_table_test *t,
-		Lisp_Object bt1, Lisp_Object bt2)
+static Lisp_Object
+cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct hash_table_test *t)
 {
   if (VECTORP (bt1) && VECTORP (bt2))
     {
       ptrdiff_t l = ASIZE (bt1);
       if (l != ASIZE (bt2))
-	return false;
+	return Qnil;
       for (ptrdiff_t i = 0; i < l; i++)
 	if (NILP (Ffunction_equal (AREF (bt1, i), AREF (bt2, i))))
-	  return false;
-      return true;
+	  return Qnil;
+      return Qt;
     }
   else
-    return EQ (bt1, bt2);
+    return EQ (bt1, bt2) ? Qt : Qnil;
 }
 
-static EMACS_UINT
-hashfn_profiler (struct hash_table_test *ht, Lisp_Object bt)
+static Lisp_Object
+hashfn_profiler (Lisp_Object bt, struct hash_table_test *ht)
 {
+  EMACS_UINT hash;
   if (VECTORP (bt))
     {
-      EMACS_UINT hash = 0;
+      hash = 0;
       ptrdiff_t l = ASIZE (bt);
       for (ptrdiff_t i = 0; i < l; i++)
 	{
@@ -563,10 +561,10 @@ hashfn_profiler (struct hash_table_test *ht, Lisp_Object bt)
 	       ? XHASH (XCDR (XCDR (f))) : XHASH (f));
 	  hash = sxhash_combine (hash, hash1);
 	}
-      return SXHASH_REDUCE (hash);
     }
   else
-    return XHASH (bt);
+    hash = XHASH (bt);
+  return make_fixnum (SXHASH_REDUCE (hash));
 }
 
 static void syms_of_profiler_for_pdumper (void);

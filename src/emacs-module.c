@@ -362,8 +362,7 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
 {
   MODULE_FUNCTION_BEGIN (NULL);
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
-  Lisp_Object new_obj = value_to_lisp (ref);
-  EMACS_UINT hashcode;
+  Lisp_Object new_obj = value_to_lisp (ref), hashcode;
   ptrdiff_t i = hash_lookup (h, new_obj, &hashcode);
 
   if (i >= 0)

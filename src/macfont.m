@@ -986,8 +986,7 @@ macfont_set_family_cache (Lisp_Object symbol, CFStringRef string)
 {
   struct Lisp_Hash_Table *h;
   ptrdiff_t i;
-  EMACS_UINT hash;
-  Lisp_Object value;
+  Lisp_Object hash, value;
 
   if (!HASH_TABLE_P (macfont_family_cache))
     macfont_family_cache = CALLN (Fmake_hash_table, QCtest, Qeq);

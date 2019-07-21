@@ -2237,10 +2237,10 @@ struct hash_table_test
   Lisp_Object user_cmp_function;
 
   /* C function to compare two keys.  */
-  bool (*cmpfn) (struct hash_table_test *t, Lisp_Object, Lisp_Object);
+  Lisp_Object (*cmpfn) (Lisp_Object, Lisp_Object, struct hash_table_test *t);
 
   /* C function to compute hash code.  */
-  EMACS_UINT (*hashfn) (struct hash_table_test *t, Lisp_Object);
+  Lisp_Object (*hashfn) (Lisp_Object, struct hash_table_test *t);
 };
 
 struct Lisp_Hash_Table
@@ -3591,13 +3591,13 @@ extern void hexbuf_digest (char *, void const *, int);
 extern char *extract_data_from_object (Lisp_Object, ptrdiff_t *, ptrdiff_t *);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-EMACS_UINT hashfn_eql (struct hash_table_test *ht, Lisp_Object key);
-EMACS_UINT hashfn_equal (struct hash_table_test *ht, Lisp_Object key);
+Lisp_Object hashfn_eql (Lisp_Object, struct hash_table_test *);
+Lisp_Object hashfn_equal (Lisp_Object, struct hash_table_test *);
 Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
                              Lisp_Object, bool);
-ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
+ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object *);
 ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
-		    EMACS_UINT);
+		    Lisp_Object);
 void hash_remove_from_table (struct Lisp_Hash_Table *, Lisp_Object);
 extern struct hash_table_test const hashtest_eq, hashtest_eql, hashtest_equal;
 extern void validate_subarray (Lisp_Object, Lisp_Object, Lisp_Object,

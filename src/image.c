@@ -4606,8 +4606,7 @@ xpm_put_color_table_h (Lisp_Object color_table,
                        Lisp_Object color)
 {
   struct Lisp_Hash_Table *table = XHASH_TABLE (color_table);
-  EMACS_UINT hash_code;
-  Lisp_Object chars = make_unibyte_string (chars_start, chars_len);
+  Lisp_Object chars = make_unibyte_string (chars_start, chars_len), hash_code;
 
   hash_lookup (table, chars, &hash_code);
   hash_put (table, chars, color, hash_code);

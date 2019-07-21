@@ -3161,8 +3161,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      Lisp_Object placeholder = Fcons (Qnil, Qnil);
 		      struct Lisp_Hash_Table *h
 			= XHASH_TABLE (read_objects_map);
-		      EMACS_UINT hash;
-		      Lisp_Object number = make_fixnum (n);
+		      Lisp_Object number = make_fixnum (n), hash;
 
 		      ptrdiff_t i = hash_lookup (h, number, &hash);
 		      if (i >= 0)
