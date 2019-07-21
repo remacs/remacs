@@ -3804,34 +3804,14 @@ CHECK_HASH_TABLE (Lisp_Object x)
 }
 
 static void
-set_hash_key_and_value (struct Lisp_Hash_Table *h, Lisp_Object key_and_value)
-{
-  h->key_and_value = key_and_value;
-}
-static void
-set_hash_next (struct Lisp_Hash_Table *h, Lisp_Object next)
-{
-  h->next = next;
-}
-static void
 set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
 {
   gc_aset (h->next, idx, make_fixnum (val));
 }
 static void
-set_hash_hash (struct Lisp_Hash_Table *h, Lisp_Object hash)
-{
-  h->hash = hash;
-}
-static void
 set_hash_hash_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 {
   gc_aset (h->hash, idx, val);
-}
-static void
-set_hash_index (struct Lisp_Hash_Table *h, Lisp_Object index)
-{
-  h->index = index;
 }
 static void
 set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
@@ -4159,10 +4139,8 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
   if (h->next_free < 0)
     {
       ptrdiff_t old_size = HASH_TABLE_SIZE (h);
-      EMACS_INT new_size, index_size, nsize;
-      ptrdiff_t i;
+      EMACS_INT new_size;
       double rehash_size = h->rehash_size;
-      double index_float;
 
       if (rehash_size < 0)
 	new_size = old_size - rehash_size;
@@ -4177,50 +4155,38 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       if (new_size <= old_size)
 	new_size = old_size + 1;
       double threshold = h->rehash_threshold;
-      index_float = new_size / threshold;
-      index_size = (index_float < INDEX_SIZE_BOUND + 1
-		    ? next_almost_prime (index_float)
-		    : INDEX_SIZE_BOUND + 1);
-      nsize = max (index_size, 2 * new_size);
-      if (INDEX_SIZE_BOUND < nsize)
+      double index_float = new_size / threshold;
+      EMACS_INT index_size = (index_float < INDEX_SIZE_BOUND + 1
+			      ? next_almost_prime (index_float)
+			      : INDEX_SIZE_BOUND + 1);
+      if (INDEX_SIZE_BOUND < max (index_size, 2 * new_size))
 	error ("Hash table too large to resize");
 
-#ifdef ENABLE_CHECKING
-      if (HASH_TABLE_P (Vpurify_flag)
-	  && XHASH_TABLE (Vpurify_flag) == h)
-	message ("Growing hash table to: %"pI"d", new_size);
-#endif
-
-      set_hash_key_and_value (h, larger_vector (h->key_and_value,
-						2 * (new_size - old_size), -1));
-      set_hash_hash (h, larger_vector (h->hash, new_size - old_size, -1));
-      set_hash_index (h, make_vector (index_size, make_fixnum (-1)));
-      set_hash_next (h, larger_vecalloc (h->next, new_size - old_size, -1));
+      /* Allocate all the new vectors before updating *H, to
+	 avoid problems if memory is exhausted.  larger_vecalloc
+	 finishes computing the size of the replacement vectors.  */
+      Lisp_Object next = larger_vecalloc (h->next, new_size - old_size, -1);
+      ptrdiff_t next_size = ASIZE (next);
+      Lisp_Object key_and_value
+	= larger_vector (h->key_and_value, 2 * (next_size - old_size),
+			 2 * next_size);
+      Lisp_Object hash = larger_vector (h->hash, next_size - old_size,
+					next_size);
+      h->index = make_vector (index_size, make_fixnum (-1));
+      h->key_and_value = key_and_value;
+      h->hash = hash;
+      h->next = next;
 
       /* Update the free list.  Do it so that new entries are added at
          the end of the free list.  This makes some operations like
          maphash faster.  */
-      for (i = old_size; i < new_size - 1; ++i)
+      for (ptrdiff_t i = old_size; i < next_size - 1; i++)
 	set_hash_next_slot (h, i, i + 1);
-      set_hash_next_slot (h, i, -1);
-
-      if (h->next_free < 0)
-	h->next_free = old_size;
-      else
-	{
-	  ptrdiff_t last = h->next_free;
-	  while (true)
-	    {
-	      ptrdiff_t next = HASH_NEXT (h, last);
-	      if (next < 0)
-		break;
-	      last = next;
-	    }
-	  set_hash_next_slot (h, last, old_size);
-	}
+      set_hash_next_slot (h, next_size - 1, -1);
+      h->next_free = old_size;
 
       /* Rehash.  */
-      for (i = 0; i < old_size; ++i)
+      for (ptrdiff_t i = 0; i < old_size; i++)
 	if (!NILP (HASH_HASH (h, i)))
 	  {
 	    EMACS_UINT hash_code = XUFIXNUM (HASH_HASH (h, i));
@@ -4228,6 +4194,11 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	    set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
 	    set_hash_index_slot (h, start_of_bucket, i);
 	  }
+
+#ifdef ENABLE_CHECKING
+      if (HASH_TABLE_P (Vpurify_flag) && XHASH_TABLE (Vpurify_flag) == h)
+	message ("Growing hash table to: %"pD"d", new_size);
+#endif
     }
 }
 
