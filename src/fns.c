@@ -4042,9 +4042,14 @@ allocate_hash_table (void)
 }
 
 /* An upper bound on the size of a hash table index.  It must fit in
-   ptrdiff_t and be a valid Emacs fixnum.  */
+   ptrdiff_t and be a valid Emacs fixnum.  This is an upper bound on
+   VECTOR_ELTS_MAX (see alloc.c) and gets as close as we can without
+   violating modularity.  */
 #define INDEX_SIZE_BOUND \
-  ((ptrdiff_t) min (MOST_POSITIVE_FIXNUM, PTRDIFF_MAX / word_size))
+  ((ptrdiff_t) min (MOST_POSITIVE_FIXNUM, \
+		    ((min (PTRDIFF_MAX, SIZE_MAX) \
+		      - header_size - GCALIGNMENT) \
+		     / word_size)))
 
 /* Create and initialize a new hash table.
 
@@ -4169,11 +4174,13 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       else
 	{
 	  double float_new_size = old_size * (rehash_size + 1);
-	  if (float_new_size < INDEX_SIZE_BOUND + 1)
+	  if (float_new_size < EMACS_INT_MAX)
 	    new_size = float_new_size;
 	  else
-	    new_size = INDEX_SIZE_BOUND + 1;
+	    new_size = EMACS_INT_MAX;
 	}
+      if (PTRDIFF_MAX < new_size)
+	new_size = PTRDIFF_MAX;
       if (new_size <= old_size)
 	new_size = old_size + 1;
 
@@ -4181,7 +4188,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	 avoid problems if memory is exhausted.  larger_vecalloc
 	 finishes computing the size of the replacement vectors.  */
       Lisp_Object next = larger_vecalloc (h->next, new_size - old_size,
-					  INDEX_SIZE_BOUND / 2);
+					  PTRDIFF_MAX / 2);
       ptrdiff_t next_size = ASIZE (next);
       for (ptrdiff_t i = old_size; i < next_size - 1; i++)
 	gc_aset (next, i, make_fixnum (i + 1));
@@ -4216,7 +4223,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 
 #ifdef ENABLE_CHECKING
       if (HASH_TABLE_P (Vpurify_flag) && XHASH_TABLE (Vpurify_flag) == h)
-	message ("Growing hash table to: %"pD"d", new_size);
+	message ("Growing hash table to: %"pD"d", next_size);
 #endif
     }
 }
