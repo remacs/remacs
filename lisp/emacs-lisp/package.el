@@ -547,8 +547,8 @@ name (a symbol) and DESC is a `package--bi-desc' structure.")
 (defvar package-alist nil
   "Alist of all packages available for activation.
 Each element has the form (PKG . DESCS), where PKG is a package
-name (a symbol) and DESCS is a non-empty list of `package-desc' structure,
-sorted by decreasing versions.
+name (a symbol) and DESCS is a non-empty list of `package-desc'
+structures, sorted by decreasing versions.
 
 This variable is set automatically by `package-load-descriptor',
 called via `package-initialize'.  To change which packages are
