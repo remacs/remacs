@@ -846,4 +846,16 @@
   (should (not (proper-list-p (make-bool-vector 0 nil))))
   (should (not (proper-list-p (make-symbol "a")))))
 
+(ert-deftest test-hash-function-that-mutates-hash-table ()
+  (define-hash-table-test 'badeq 'eq 'bad-hash)
+  (let ((h (make-hash-table :test 'badeq :size 1 :rehash-size 1)))
+    (defun bad-hash (k)
+      (if (eq k 100)
+	  (clrhash h))
+      (sxhash-eq k))
+    (should-error
+     (dotimes (k 200)
+       (puthash k k h)))
+    (should (= 100 (hash-table-count h)))))
+
 (provide 'fns-tests)

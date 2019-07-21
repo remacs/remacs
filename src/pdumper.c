@@ -2742,6 +2742,7 @@ dump_hash_table (struct dump_context *ctx,
   DUMP_FIELD_COPY (out, hash, count);
   DUMP_FIELD_COPY (out, hash, next_free);
   DUMP_FIELD_COPY (out, hash, purecopy);
+  DUMP_FIELD_COPY (out, hash, mutable);
   DUMP_FIELD_COPY (out, hash, rehash_threshold);
   DUMP_FIELD_COPY (out, hash, rehash_size);
   dump_field_lv (ctx, out, hash, &hash->key_and_value, WEIGHT_STRONG);

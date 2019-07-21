@@ -37,8 +37,8 @@ saturated_add (EMACS_INT a, EMACS_INT b)
 typedef struct Lisp_Hash_Table log_t;
 
 static Lisp_Object cmpfn_profiler (Lisp_Object, Lisp_Object,
-				   struct hash_table_test *);
-static Lisp_Object hashfn_profiler (Lisp_Object, struct hash_table_test *);
+				   struct Lisp_Hash_Table *);
+static Lisp_Object hashfn_profiler (Lisp_Object, struct Lisp_Hash_Table *);
 
 static const struct hash_table_test hashtest_profiler =
   {
@@ -528,7 +528,7 @@ the same lambda expression, or are really unrelated function.  */)
 }
 
 static Lisp_Object
-cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct hash_table_test *t)
+cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct Lisp_Hash_Table *h)
 {
   if (VECTORP (bt1) && VECTORP (bt2))
     {
@@ -545,7 +545,7 @@ cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct hash_table_test *t)
 }
 
 static Lisp_Object
-hashfn_profiler (Lisp_Object bt, struct hash_table_test *ht)
+hashfn_profiler (Lisp_Object bt, struct Lisp_Hash_Table *h)
 {
   EMACS_UINT hash;
   if (VECTORP (bt))

@@ -1410,14 +1410,13 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
 		Lisp_Object hash_code
-		  = h->test.cmpfn ? h->test.hashfn (v1, &h->test) : Qnil;
+		  = h->test.cmpfn ? h->test.hashfn (v1, h) : Qnil;
 
                 for (i = h->count; 0 <= --i; )
                   if (EQ (v1, HASH_KEY (h, i))
                       || (h->test.cmpfn
                           && EQ (hash_code, HASH_HASH (h, i))
-			  && !NILP (h->test.cmpfn (v1, HASH_KEY (h, i),
-						   &h->test))))
+			  && !NILP (h->test.cmpfn (v1, HASH_KEY (h, i), h))))
                     break;
               }
             else

@@ -3931,11 +3931,37 @@ HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
   return XFIXNUM (AREF (h->index, idx));
 }
 
+/* Restore a hash table's mutability after the critical section exits.  */
+
+static void
+restore_mutability (void *ptr)
+{
+  struct Lisp_Hash_Table *h = ptr;
+  h->mutable = true;
+}
+
+/* Return the result of calling a user-defined hash or comparison
+   function ARGS[0] with arguments ARGS[1] through ARGS[NARGS - 1].
+   Signal an error if the function attempts to modify H, which
+   otherwise might lead to undefined behavior.  */
+
+static Lisp_Object
+hash_table_user_defined_call (ptrdiff_t nargs, Lisp_Object *args,
+			      struct Lisp_Hash_Table *h)
+{
+  if (!h->mutable)
+    return Ffuncall (nargs, args);
+  ptrdiff_t count = inhibit_garbage_collection ();
+  record_unwind_protect_ptr (restore_mutability, h);
+  h->mutable = false;
+  return unbind_to (count, Ffuncall (nargs, args));
+}
+
 /* Ignore HT and compare KEY1 and KEY2 using 'eql'.
    Value is true if KEY1 and KEY2 are the same.  */
 
 static Lisp_Object
-cmpfn_eql (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
+cmpfn_eql (Lisp_Object key1, Lisp_Object key2, struct Lisp_Hash_Table *h)
 {
   return Feql (key1, key2);
 }
@@ -3944,7 +3970,7 @@ cmpfn_eql (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
    Value is true if KEY1 and KEY2 are the same.  */
 
 static Lisp_Object
-cmpfn_equal (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
+cmpfn_equal (Lisp_Object key1, Lisp_Object key2, struct Lisp_Hash_Table *h)
 {
   return Fequal (key1, key2);
 }
@@ -3955,16 +3981,17 @@ cmpfn_equal (Lisp_Object key1, Lisp_Object key2, struct hash_table_test *ht)
 
 static Lisp_Object
 cmpfn_user_defined (Lisp_Object key1, Lisp_Object key2,
-		    struct hash_table_test *ht)
+		    struct Lisp_Hash_Table *h)
 {
-  return call2 (ht->user_cmp_function, key1, key2);
+  Lisp_Object args[] = { h->test.user_cmp_function, key1, key2 };
+  return hash_table_user_defined_call (ARRAYELTS (args), args, h);
 }
 
 /* Ignore HT and return a hash code for KEY which uses 'eq' to compare
    keys.  */
 
 static Lisp_Object
-hashfn_eq (Lisp_Object key, struct hash_table_test *ht)
+hashfn_eq (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
   return make_fixnum (XHASH (key) ^ XTYPE (key));
 }
@@ -3973,7 +4000,7 @@ hashfn_eq (Lisp_Object key, struct hash_table_test *ht)
    The hash code is at most INTMASK.  */
 
 Lisp_Object
-hashfn_equal (Lisp_Object key, struct hash_table_test *ht)
+hashfn_equal (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
   return make_fixnum (sxhash (key, 0));
 }
@@ -3982,19 +4009,19 @@ hashfn_equal (Lisp_Object key, struct hash_table_test *ht)
    The hash code is at most INTMASK.  */
 
 Lisp_Object
-hashfn_eql (Lisp_Object key, struct hash_table_test *ht)
+hashfn_eql (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
-  return (FLOATP (key) || BIGNUMP (key) ? hashfn_equal : hashfn_eq) (key, ht);
+  return (FLOATP (key) || BIGNUMP (key) ? hashfn_equal : hashfn_eq) (key, h);
 }
 
 /* Given HT, return a hash code for KEY which uses a user-defined
    function to compare keys.  */
 
 static Lisp_Object
-hashfn_user_defined (Lisp_Object key, struct hash_table_test *ht)
+hashfn_user_defined (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
-  Lisp_Object hash = call1 (ht->user_hash_function, key);
-  return hashfn_eq (hash, ht);
+  Lisp_Object args[] = { h->test.user_hash_function, key };
+  return hash_table_user_defined_call (ARRAYELTS (args), args, h);
 }
 
 struct hash_table_test const
@@ -4088,6 +4115,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->index = make_vector (index_size, make_fixnum (-1));
   h->next_weak = NULL;
   h->purecopy = purecopy;
+  h->mutable = true;
 
   /* Set up the free list.  */
   for (i = 0; i < size - 1; ++i)
@@ -4113,6 +4141,7 @@ copy_hash_table (struct Lisp_Hash_Table *h1)
 
   h2 = allocate_hash_table ();
   *h2 = *h1;
+  h2->mutable = true;
   h2->key_and_value = Fcopy_sequence (h1->key_and_value);
   h2->hash = Fcopy_sequence (h1->hash);
   h2->next = Fcopy_sequence (h1->next);
@@ -4217,7 +4246,7 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
     if (!NILP (HASH_HASH (h, i)))
       {
         Lisp_Object key = HASH_KEY (h, i);
-	Lisp_Object hash_code = h->test.hashfn (key, &h->test);
+	Lisp_Object hash_code = h->test.hashfn (key, h);
 	set_hash_hash_slot (h, i, hash_code);
       }
 
@@ -4255,7 +4284,7 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object *hash)
 
   hash_rehash_if_needed (h);
 
-  Lisp_Object hash_code = h->test.hashfn (key, &h->test);
+  Lisp_Object hash_code = h->test.hashfn (key, h);
   if (hash)
     *hash = hash_code;
 
@@ -4265,12 +4294,19 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object *hash)
     if (EQ (key, HASH_KEY (h, i))
 	|| (h->test.cmpfn
 	    && EQ (hash_code, HASH_HASH (h, i))
-	    && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), &h->test))))
+	    && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), h))))
       break;
 
   return i;
 }
 
+static void
+check_mutable_hash_table (Lisp_Object obj, struct Lisp_Hash_Table *h)
+{
+  if (!h->mutable)
+    signal_error ("hash table test modifies table", obj);
+  eassert (!PURE_P (h));
+}
 
 /* Put an entry into hash table H that associates KEY with VALUE.
    HASH is a previously computed hash code of KEY.
@@ -4310,7 +4346,7 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 void
 hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 {
-  Lisp_Object hash_code = h->test.hashfn (key, &h->test);
+  Lisp_Object hash_code = h->test.hashfn (key, h);
   ptrdiff_t start_of_bucket = XUFIXNUM (hash_code) % ASIZE (h->index);
   ptrdiff_t prev = -1;
 
@@ -4323,7 +4359,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->test.cmpfn
 	      && EQ (hash_code, HASH_HASH (h, i))
-	      && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), &h->test))))
+	      && !NILP (h->test.cmpfn (key, HASH_KEY (h, i), h))))
 	{
 	  /* Take entry out of collision chain.  */
 	  if (prev < 0)
@@ -4912,7 +4948,7 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   (Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
+  check_mutable_hash_table (table, h);
   hash_clear (h);
   /* Be compatible with XEmacs.  */
   return table;
@@ -4937,7 +4973,7 @@ VALUE.  In any case, return VALUE.  */)
   (Lisp_Object key, Lisp_Object value, Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
+  check_mutable_hash_table (table, h);
 
   Lisp_Object hash;
   ptrdiff_t i = hash_lookup (h, key, &hash);
@@ -4955,7 +4991,7 @@ DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
   (Lisp_Object key, Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
+  check_mutable_hash_table (table, h);
   hash_remove_from_table (h, key);
   return Qnil;
 }

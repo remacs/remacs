@@ -5352,6 +5352,7 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   pure->count = table->count;
   pure->next_free = table->next_free;
   pure->purecopy = table->purecopy;
+  eassert (!pure->mutable);
   pure->rehash_threshold = table->rehash_threshold;
   pure->rehash_size = table->rehash_size;
   pure->key_and_value = purecopy (table->key_and_value);

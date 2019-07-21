@@ -2225,6 +2225,8 @@ INLINE int
 
 /* The structure of a Lisp hash table.  */
 
+struct Lisp_Hash_Table;
+
 struct hash_table_test
 {
   /* Name of the function used to compare keys.  */
@@ -2237,10 +2239,10 @@ struct hash_table_test
   Lisp_Object user_cmp_function;
 
   /* C function to compare two keys.  */
-  Lisp_Object (*cmpfn) (Lisp_Object, Lisp_Object, struct hash_table_test *t);
+  Lisp_Object (*cmpfn) (Lisp_Object, Lisp_Object, struct Lisp_Hash_Table *);
 
   /* C function to compute hash code.  */
-  Lisp_Object (*hashfn) (Lisp_Object, struct hash_table_test *t);
+  Lisp_Object (*hashfn) (Lisp_Object, struct Lisp_Hash_Table *);
 };
 
 struct Lisp_Hash_Table
@@ -2288,6 +2290,11 @@ struct Lisp_Hash_Table
   /* True if the table can be purecopied.  The table cannot be
      changed afterwards.  */
   bool purecopy;
+
+  /* True if the table is mutable.  Ordinarily tables are mutable, but
+     pure tables are not, and while a table is being mutated it is
+     immutable for recursive attempts to mutate it.  */
+  bool mutable;
 
   /* Resize hash table when number of entries / table size is >= this
      ratio.  */
@@ -3591,8 +3598,8 @@ extern void hexbuf_digest (char *, void const *, int);
 extern char *extract_data_from_object (Lisp_Object, ptrdiff_t *, ptrdiff_t *);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object hashfn_eql (Lisp_Object, struct hash_table_test *);
-Lisp_Object hashfn_equal (Lisp_Object, struct hash_table_test *);
+Lisp_Object hashfn_eql (Lisp_Object, struct Lisp_Hash_Table *);
+Lisp_Object hashfn_equal (Lisp_Object, struct Lisp_Hash_Table *);
 Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
                              Lisp_Object, bool);
 ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object *);
