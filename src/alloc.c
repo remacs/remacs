@@ -222,13 +222,9 @@ my_heap_start (void)
 /* Global variables.  */
 struct emacs_globals globals;
 
-/* Number of bytes of consing done since the last gc.  */
+/* maybe_gc collects garbage if this goes negative.  */
 
-byte_ct consing_since_gc;
-
-/* Similar minimum, computed from Vgc_cons_percentage.  */
-
-byte_ct gc_relative_threshold;
+object_ct consing_until_gc;
 
 #ifdef HAVE_PDUMPER
 /* Number of finalizers run: used to loop over GC until we stop
@@ -240,10 +236,9 @@ int number_finalizers_run;
 
 bool gc_in_progress;
 
-/* Type of object counts reported by GC.  Unlike byte_ct, this can be
-   signed, e.g., it is less than 2**31 on a typical 32-bit machine.  */
+/* System byte counts reported by GC.  */
 
-typedef intptr_t object_ct;
+typedef uintptr_t byte_ct;
 
 /* Number of live and free conses etc.  */
 
@@ -1373,7 +1368,7 @@ make_interval (void)
 
   MALLOC_UNBLOCK_INPUT;
 
-  consing_since_gc += sizeof (struct interval);
+  consing_until_gc -= sizeof (struct interval);
   intervals_consed++;
   gcstat.total_free_intervals--;
   RESET_INTERVAL (val);
@@ -1745,7 +1740,7 @@ allocate_string (void)
   gcstat.total_free_strings--;
   gcstat.total_strings++;
   ++strings_consed;
-  consing_since_gc += sizeof *s;
+  consing_until_gc -= sizeof *s;
 
 #ifdef GC_CHECK_STRING_BYTES
   if (!noninteractive)
@@ -1865,7 +1860,7 @@ allocate_string_data (struct Lisp_String *s,
       old_data->string = NULL;
     }
 
-  consing_since_gc += needed;
+  consing_until_gc -= needed;
 }
 
 
@@ -2471,7 +2466,7 @@ make_float (double float_value)
 
   XFLOAT_INIT (val, float_value);
   eassert (!XFLOAT_MARKED_P (XFLOAT (val)));
-  consing_since_gc += sizeof (struct Lisp_Float);
+  consing_until_gc -= sizeof (struct Lisp_Float);
   floats_consed++;
   gcstat.total_free_floats--;
   return val;
@@ -2521,7 +2516,7 @@ struct cons_block
 /* Minimum number of bytes of consing since GC before next GC,
    when memory is full.  */
 
-byte_ct const memory_full_cons_threshold = sizeof (struct cons_block);
+enum { memory_full_cons_threshold = sizeof (struct cons_block) };
 
 /* Current cons_block.  */
 
@@ -2543,7 +2538,8 @@ free_cons (struct Lisp_Cons *ptr)
   ptr->u.s.u.chain = cons_free_list;
   ptr->u.s.car = dead_object ();
   cons_free_list = ptr;
-  consing_since_gc -= sizeof *ptr;
+  if (INT_ADD_WRAPV (consing_until_gc, sizeof *ptr, &consing_until_gc))
+    consing_until_gc = OBJECT_CT_MAX;
   gcstat.total_free_conses++;
 }
 
@@ -2594,7 +2590,7 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
   XSETCAR (val, car);
   XSETCDR (val, cdr);
   eassert (!XCONS_MARKED_P (XCONS (val)));
-  consing_since_gc += sizeof (struct Lisp_Cons);
+  consing_until_gc -= sizeof (struct Lisp_Cons);
   gcstat.total_free_conses--;
   cons_cells_consed++;
   return val;
@@ -3176,7 +3172,7 @@ allocate_vectorlike (ptrdiff_t len)
   if (find_suspicious_object_in_range (p, (char *) p + nbytes))
     emacs_abort ();
 
-  consing_since_gc += nbytes;
+  consing_until_gc -= nbytes;
   vector_cells_consed += len;
 
   MALLOC_UNBLOCK_INPUT;
@@ -3462,7 +3458,7 @@ Its value is void, and its function definition and property list are nil.  */)
   MALLOC_UNBLOCK_INPUT;
 
   init_symbol (val, name);
-  consing_since_gc += sizeof (struct Lisp_Symbol);
+  consing_until_gc -= sizeof (struct Lisp_Symbol);
   symbols_consed++;
   gcstat.total_free_symbols--;
   return val;
@@ -3862,6 +3858,7 @@ memory_full (size_t nbytes)
   if (! enough_free_memory)
     {
       Vmemory_full = Qt;
+      consing_until_gc = memory_full_cons_threshold;
 
       /* The first time we get here, free the spare memory.  */
       for (int i = 0; i < ARRAYELTS (spare_memory); i++)
@@ -5802,7 +5799,7 @@ garbage_collect_1 (struct gcstat *gcst)
 
   /* In case user calls debug_print during GC,
      don't let that cause a recursive GC.  */
-  consing_since_gc = 0;
+  consing_until_gc = OBJECT_CT_MAX;
 
   /* Save what's currently displayed in the echo area.  Don't do that
      if we are GC'ing because we've run out of memory, since
@@ -5913,23 +5910,26 @@ garbage_collect_1 (struct gcstat *gcst)
 
   unblock_input ();
 
-  consing_since_gc = 0;
-  if (gc_cons_threshold < GC_DEFAULT_THRESHOLD / 10)
-    gc_cons_threshold = GC_DEFAULT_THRESHOLD / 10;
-
-  gc_relative_threshold = 0;
-  if (FLOATP (Vgc_cons_percentage))
-    { /* Set gc_cons_combined_threshold.  */
-      double tot = total_bytes_of_live_objects ();
-
-      tot *= XFLOAT_DATA (Vgc_cons_percentage);
-      if (0 < tot)
+  if (!NILP (Vmemory_full))
+    consing_until_gc = memory_full_cons_threshold;
+  else
+    {
+      intptr_t threshold = min (max (GC_DEFAULT_THRESHOLD,
+				     gc_cons_threshold >> 3),
+				OBJECT_CT_MAX);
+      if (FLOATP (Vgc_cons_percentage))
 	{
-	  if (tot < UINTPTR_MAX)
-	    gc_relative_threshold = tot;
-	  else
-	    gc_relative_threshold = UINTPTR_MAX;
+	  double tot = (XFLOAT_DATA (Vgc_cons_percentage)
+			* total_bytes_of_live_objects ());
+	  if (threshold < tot)
+	    {
+	      if (tot < OBJECT_CT_MAX)
+		threshold = tot;
+	      else
+		threshold = OBJECT_CT_MAX;
+	    }
 	}
+      consing_until_gc = threshold;
     }
 
   if (garbage_collection_messages && NILP (Vmemory_full))

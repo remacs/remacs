@@ -3763,10 +3763,9 @@ extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern void garbage_collect (void);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-typedef uintptr_t byte_ct;  /* System byte counts reported by GC.  */
-extern byte_ct consing_since_gc;
-extern byte_ct gc_relative_threshold;
-extern byte_ct const memory_full_cons_threshold;
+typedef intptr_t object_ct; /* Signed type of object counts reported by GC.  */
+#define OBJECT_CT_MAX INTPTR_MAX
+extern object_ct consing_until_gc;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
 #endif
@@ -4993,10 +4992,7 @@ struct for_each_tail_internal
 INLINE void
 maybe_gc (void)
 {
-  if ((consing_since_gc > gc_cons_threshold
-       && consing_since_gc > gc_relative_threshold)
-      || (!NILP (Vmemory_full)
-	  && consing_since_gc > memory_full_cons_threshold))
+  if (consing_until_gc < 0)
     garbage_collect ();
 }
 
