@@ -5086,7 +5086,13 @@ valid_lisp_object_p (Lisp_Object obj)
 /* Allocate room for SIZE bytes from pure Lisp storage and return a
    pointer to it.  TYPE is the Lisp type for which the memory is
    allocated.  TYPE < 0 means it's not used for a Lisp object,
-   and that the result should have an alignment of -TYPE.  */
+   and that the result should have an alignment of -TYPE.
+
+   The bytes are initially zero.
+
+   If pure space is exhausted, allocate space from the heap.  This is
+   merely an expedient to let Emacs warn that pure space was exhausted
+   and that Emacs should be rebuilt with a larger pure space.  */
 
 static void *
 pure_alloc (size_t size, int type)
@@ -5119,8 +5125,10 @@ pure_alloc (size_t size, int type)
   /* Don't allocate a large amount here,
      because it might get mmap'd and then its address
      might not be usable.  */
-  purebeg = xmalloc (10000);
-  pure_size = 10000;
+  int small_amount = 10000;
+  eassert (size <= small_amount - LISP_ALIGNMENT);
+  purebeg = xzalloc (small_amount);
+  pure_size = small_amount;
   pure_bytes_used_before_overflow += pure_bytes_used - size;
   pure_bytes_used = 0;
   pure_bytes_used_lisp = pure_bytes_used_non_lisp = 0;
