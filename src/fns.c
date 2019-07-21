@@ -4700,7 +4700,7 @@ sxhash (Lisp_Object obj, int depth)
  ***********************************************************************/
 
 DEFUN ("sxhash-eq", Fsxhash_eq, Ssxhash_eq, 1, 1, 0,
-       doc: /* Return an integer hash code for OBJ suitable for `eq'.
+       doc: /* Return a fixnum hash code for OBJ suitable for `eq'.
 If (eq A B), then (= (sxhash-eq A) (sxhash-eq B)).
 
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
@@ -4710,7 +4710,7 @@ Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
 }
 
 DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
-       doc: /* Return an integer hash code for OBJ suitable for `eql'.
+       doc: /* Return a fixnum hash code for OBJ suitable for `eql'.
 If (eql A B), then (= (sxhash-eql A) (sxhash-eql B)).
 
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
@@ -4720,7 +4720,7 @@ Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
 }
 
 DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
-       doc: /* Return an integer hash code for OBJ suitable for `equal'.
+       doc: /* Return a fixnum hash code for OBJ suitable for `equal'.
 If (equal A B), then (= (sxhash-equal A) (sxhash-equal B)).
 
 Hash codes are not guaranteed to be preserved across Emacs sessions.  */)
@@ -4744,7 +4744,7 @@ keys.  Default is `eql'.  Predefined are the tests `eq', `eql', and
 Default is 65.
 
 :rehash-size REHASH-SIZE - Indicates how to expand the table when it
-fills up.  If REHASH-SIZE is an integer, increase the size by that
+fills up.  If REHASH-SIZE is a fixnum, increase the size by that
 amount.  If it is a float, it must be > 1.0, and the new size is the
 old size multiplied by that factor.  Default is 1.5.
 
