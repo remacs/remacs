@@ -4176,19 +4176,23 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	}
       if (new_size <= old_size)
 	new_size = old_size + 1;
-      double threshold = h->rehash_threshold;
-      double index_float = new_size / threshold;
-      EMACS_INT index_size = (index_float < INDEX_SIZE_BOUND + 1
-			      ? next_almost_prime (index_float)
-			      : INDEX_SIZE_BOUND + 1);
-      if (INDEX_SIZE_BOUND < max (index_size, 2 * new_size))
-	error ("Hash table too large to resize");
 
       /* Allocate all the new vectors before updating *H, to
 	 avoid problems if memory is exhausted.  larger_vecalloc
 	 finishes computing the size of the replacement vectors.  */
-      Lisp_Object next = larger_vecalloc (h->next, new_size - old_size, -1);
+      Lisp_Object next = larger_vecalloc (h->next, new_size - old_size,
+					  INDEX_SIZE_BOUND / 2);
       ptrdiff_t next_size = ASIZE (next);
+      for (ptrdiff_t i = old_size; i < next_size - 1; i++)
+	gc_aset (next, i, make_fixnum (i + 1));
+      gc_aset (next, next_size - 1, make_fixnum (-1));
+      double threshold = h->rehash_threshold;
+      double index_float = next_size / threshold;
+      EMACS_INT index_size = (index_float < INDEX_SIZE_BOUND + 1
+			      ? next_almost_prime (index_float)
+			      : INDEX_SIZE_BOUND + 1);
+      if (INDEX_SIZE_BOUND < index_size)
+	error ("Hash table too large to resize");
       Lisp_Object key_and_value
 	= larger_vector (h->key_and_value, 2 * (next_size - old_size),
 			 2 * next_size);
@@ -4198,13 +4202,6 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       h->key_and_value = key_and_value;
       h->hash = hash;
       h->next = next;
-
-      /* Update the free list.  Do it so that new entries are added at
-         the end of the free list.  This makes some operations like
-         maphash faster.  */
-      for (ptrdiff_t i = old_size; i < next_size - 1; i++)
-	set_hash_next_slot (h, i, i + 1);
-      set_hash_next_slot (h, next_size - 1, -1);
       h->next_free = old_size;
 
       /* Rehash.  */
