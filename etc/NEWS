@@ -405,7 +405,8 @@ mode they are described in the manual "(emacs) Display".
 ** New variable 'xref-file-name-display' controls the display of file
 names in xref buffers.
 
-** New variable 'file-size-function' controls how file sizes are displayed.
+** New customizable variable 'byte-count-to-string-function'.
+It is used for displaying file sizes and disk space in some cases.
 
 +++
 ** Emacs now interprets RGB triplets like HTML, SVG, and CSS do.

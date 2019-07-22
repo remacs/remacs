@@ -1426,6 +1426,21 @@ in all cases, since that is the standard symbol for byte."
               (if (string= prefixed-unit "") "" (or space ""))
               prefixed-unit))))
 
+(defun file-size-human-readable-iec (size)
+  "Human-readable string for SIZE bytes, using IEC prefixes."
+  (file-size-human-readable size 'iec " "))
+
+(defcustom byte-count-to-string-function #'file-size-human-readable-iec
+  "Function that turns a number of bytes into a human-readable string.
+It is for use when displaying file sizes and disk space where other
+constraints do not force a specific format."
+  :type '(radio
+          (function-item file-size-human-readable-iec)
+          (function-item file-size-human-readable)
+          (function :tag "Custom function" :value number-to-string))
+  :group 'files
+  :version "27.1")
+
 (defcustom mounted-file-systems
   (if (memq system-type '(windows-nt cygwin))
       "^//[^/]+/"
@@ -2093,7 +2108,7 @@ think it does, because \"free\" is pretty hard to define in practice."
 (defun files--ask-user-about-large-file (size op-type filename offer-raw)
   (let ((prompt (format "File %s is large (%s), really %s?"
 		        (file-name-nondirectory filename)
-		        (file-size-human-readable size 'iec " ") op-type)))
+		        (funcall byte-count-to-string-function size) op-type)))
     (if (not offer-raw)
         (if (y-or-n-p prompt) nil 'abort)
       (let* ((use-dialog (and (display-popup-menus-p)
@@ -2145,10 +2160,10 @@ returns nil or exits non-locally."
 exceeds the %S%% of currently available free memory (%s).
 If that fails, try to open it with `find-file-literally'
 \(but note that some characters might be displayed incorrectly)."
-	     (file-size-human-readable size 'iec " ")
+	     (funcall byte-count-to-string-function size)
 	     out-of-memory-warning-percentage
-	     (file-size-human-readable (* total-free-memory 1024)
-                                       'iec " "))))))))
+	     (funcall byte-count-to-string-function
+                      (* total-free-memory 1024)))))))))
 
 (defun files--message (format &rest args)
   "Like `message', except sometimes don't print to minibuffer.
@@ -6705,22 +6720,13 @@ This variable is obsolete; Emacs no longer uses it."
 			"ignored, as Emacs uses `file-system-info' instead"
 			"27.1")
 
-(defcustom file-size-function #'file-size-human-readable
-  "Function that transforms the number of bytes into a human-readable string."
-  :type `(radio
-          (function-item :tag "Default" file-size-human-readable)
-          (function-item :tag "IEC"
-                         ,(lambda (size) (file-size-human-readable size 'iec " ")))
-          (function :tag "Custom function"))
-  :version "27.1")
-
 (defun get-free-disk-space (dir)
   "String describing the amount of free space on DIR's file system.
 If DIR's free space cannot be obtained, this function returns nil."
   (save-match-data
     (let ((avail (nth 2 (file-system-info dir))))
       (if avail
-          (funcall file-size-function avail)))))
+          (funcall byte-count-to-string-function avail)))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp

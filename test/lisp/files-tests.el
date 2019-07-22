@@ -1280,7 +1280,12 @@ renaming only, rather than modified in-place."
   (should (equal (file-size-human-readable 4294967296 'iec " ") "4 GiB"))
   (should (equal (file-size-human-readable 10000 nil " " "bit") "9.8 kbit"))
   (should (equal (file-size-human-readable 10000 'si " " "bit") "10 kbit"))
-  (should (equal (file-size-human-readable 10000 'iec " " "bit") "9.8 Kibit")))
+  (should (equal (file-size-human-readable 10000 'iec " " "bit") "9.8 Kibit"))
+
+  (should (equal (file-size-human-readable-iec 0) "0 B"))
+  (should (equal (file-size-human-readable-iec 1) "1 B"))
+  (should (equal (file-size-human-readable-iec 9621) "9.4 KiB"))
+  (should (equal (file-size-human-readable-iec 72528034765) "67.5 GiB")))
 
 (ert-deftest files-test-magic-mode-alist-re-baseline ()
   "Test magic-mode-alist with RE, expected behaviour for match."
