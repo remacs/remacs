@@ -1788,6 +1788,22 @@ particular when the end of the buffer is visible in the window.
 Use 'mouse-wheel-mode' instead.  Note that 'mouse-wheel-mode' is
 already enabled by default on most graphical displays.
 
+** Gravatar
+
++++
+*** 'gravatar-cache-ttl' is now a number of seconds.
+The previously used timestamp format of a list of integers is still
+supported, but is deprecated.  The default value has not changed.
+
++++
+*** 'gravatar-size' can now be nil.
+This results in the use of Gravatar's default size of 80 pixels.
+
++++
+*** The default fallback gravatar is now configurable.
+This is possible using the new user options 'gravatar-default-image'
+and 'gravatar-force-default'.
+
 
 * New Modes and Packages in Emacs 27.1
 

@@ -39,12 +39,13 @@
   :type 'boolean
   :group 'gravatar)
 
-;; FIXME a time value is not the nicest format for a custom variable.
-(defcustom gravatar-cache-ttl (days-to-time 30)
-  "Time to live for gravatar cache entries.
+(defcustom gravatar-cache-ttl 2592000
+  "Time to live in seconds for gravatar cache entries.
 If a requested gravatar has been cached for longer than this, it
-is retrieved anew."
-  :type '(repeat integer)
+is retrieved anew.  The default value is 30 days."
+  :type 'integer
+  ;; Restricted :type to number of seconds.
+  :version "27.1"
   :group 'gravatar)
 
 (defcustom gravatar-rating "g"
@@ -64,17 +65,61 @@ of increasing explicitness, the following:
 Each level covers itself as well as all less explicit levels.
 For example, setting this variable to \"pg\" will allow gravatars
 rated either \"g\" or \"pg\"."
-  :type 'string
+  :type '(choice (const :tag "General Audience" "g")
+                 (const :tag "Parental Guidance" "pg")
+                 (const :tag "Restricted" "r")
+                 (const :tag "Explicit" "x"))
+  ;; Restricted :type to ratings recognized by Gravatar.
+  :version "27.1"
   :group 'gravatar)
 
 (defcustom gravatar-size 32
   "Gravatar size in pixels to request.
-Valid sizes range from 1 to 2048 inclusive."
-  :type 'integer
+Valid sizes range from 1 to 2048 inclusive.  If nil, use the
+Gravatar default (usually 80)."
+  :type '(choice (const :tag "Gravatar default" nil)
+                 (integer :tag "Pixels"))
+  :version "27.1"
+  :group 'gravatar)
+
+(defcustom gravatar-default-image "404"
+  "Default gravatar to use when none match the request.
+This happens when no gravatar satisfying `gravatar-rating' exists
+for a given email address.  The following options are supported:
+
+nil         - Default placeholder.
+\"404\"       - No placeholder.
+\"mp\"        - Mystery Person: generic avatar outline.
+\"identicon\" - Geometric pattern based on email address.
+\"monsterid\" - Generated \"monster\" with different colors, faces, etc.
+\"wavatar\"   - Generated faces with different features and backgrounds.
+\"retro\"     - Generated 8-bit arcade-style pixelated faces.
+\"robohash\"  - Generated robot with different colors, faces, etc.
+\"blank\"     - Transparent PNG image.
+URL         - Custom image URL."
+  :type '(choice (const :tag "Default" nil)
+                 (const :tag "None" "404")
+                 (const :tag "Mystery person" "mp")
+                 (const :tag "Geometric patterns" "identicon")
+                 (const :tag "Monsters" "monsterid")
+                 (const :tag "Faces" "wavatar")
+                 (const :tag "Retro" "retro")
+                 (const :tag "Robots" "robohash")
+                 (const :tag "Blank" "blank")
+                 (string :tag "Custom URL"))
+  :version "27.1"
+  :group 'gravatar)
+
+(defcustom gravatar-force-default nil
+  "Whether to force use of `gravatar-default-image'.
+Non-nil means use `gravatar-default-image' even when there exists
+a gravatar for a given email address."
+  :type 'boolean
+  :version "27.1"
   :group 'gravatar)
 
 (defconst gravatar-base-url
-  "http://www.gravatar.com/avatar"
+  "https://www.gravatar.com/avatar"
   "Base URL for getting gravatars.")
 
 (defun gravatar-hash (mail-address)
@@ -82,13 +127,24 @@ Valid sizes range from 1 to 2048 inclusive."
   ;; https://gravatar.com/site/implement/hash/
   (md5 (downcase (string-trim mail-address))))
 
+(defun gravatar--query-string ()
+  "Return URI-encoded query string for Gravatar."
+  (url-build-query-string
+   `((r ,gravatar-rating)
+     ,@(and gravatar-default-image
+            `((d ,gravatar-default-image)))
+     ,@(and gravatar-force-default
+            '((f y)))
+     ,@(and gravatar-size
+            `((s ,gravatar-size))))))
+
 (defun gravatar-build-url (mail-address)
-  "Return a URL to retrieve MAIL-ADDRESS gravatar."
-  (format "%s/%s?d=404&r=%s&s=%d"
+  "Return the URL of a gravatar for MAIL-ADDRESS."
+  ;; https://gravatar.com/site/implement/images/
+  (format "%s/%s?%s"
           gravatar-base-url
           (gravatar-hash mail-address)
-          gravatar-rating
-          gravatar-size))
+          (gravatar--query-string)))
 
 (defun gravatar-get-data ()
   "Return body of current URL buffer, or nil on failure."
