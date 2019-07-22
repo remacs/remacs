@@ -1690,7 +1690,8 @@ See `add-log-current-defun-function'."
     (when (eq (char-before) ?\})
       (delete-char -1)
       (when (save-excursion
-              (skip-chars-backward " \t")
+              (let ((n (skip-chars-backward " \t")))
+                (if (< n 0) (delete-char (- n))))
               (not (bolp)))
         (insert "\n"))
       (insert "end")
