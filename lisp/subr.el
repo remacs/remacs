@@ -681,14 +681,12 @@ of course, also replace TO with a slightly larger value
     (when (zerop inc) (error "The increment can not be zero"))
     (let (seq (n 0) (next from) (last from))
       (if (> inc 0)
-          ;; The (>= next last) condition protects against integer
-          ;; overflow in computing NEXT.
-          (while (and (>= next last) (<= next to))
+          (while (<= next to)
             (setq seq (cons next seq)
                   n (1+ n)
                   last next
                   next (+ from (* n inc))))
-        (while (and (<= next last) (>= next to))
+        (while (>= next to)
           (setq seq (cons next seq)
                 n (1+ n)
                 next (+ from (* n inc)))))

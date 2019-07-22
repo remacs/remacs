@@ -420,14 +420,7 @@ not contain `d', so that a full listing is expected."
 		  attr (cdr elt)
 		  file-size (file-attribute-size attr))
 	    (and attr
-		 (setq sum (+ file-size
-			      ;; Even if neither SUM nor file's size
-			      ;; overflow, their sum could.
-			      (if (or (< sum (- 134217727 file-size))
-				      (floatp sum)
-				      (floatp file-size))
-				  sum
-				(float sum))))
+		 (setq sum (+ file-size sum))
 		 (insert (ls-lisp-format short attr file-size
 					 switches time-index))))
 	  ;; Insert total size of all files:
