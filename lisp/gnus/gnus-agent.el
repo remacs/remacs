@@ -1909,21 +1909,8 @@ article numbers will be returned."
 (defsubst gnus-agent-read-article-number ()
   "Reads the article number at point.  Returns nil when a valid article number can not be read."
 
-  ;; It is unfortunate but the read function quietly overflows
-  ;; integer.  As a result, I have to use string operations to test
-  ;; for overflow BEFORE calling read.
   (when (looking-at "[0-9]+\t")
-    (let ((len (- (match-end 0) (match-beginning 0))))
-      (cond ((< len 9)
-	     (read (current-buffer)))
-	    ((= len 9)
-	     ;; Many 9 digit base-10 numbers can be represented in a 27-bit int
-	     ;; Back convert from int to string to ensure that this is one of them.
-	     (let* ((str1 (buffer-substring (match-beginning 0) (1- (match-end 0))))
-		    (num (read (current-buffer)))
-		    (str2 (int-to-string num)))
-	       (when (equal str1 str2)
-		 num)))))))
+    (read (current-buffer))))
 
 (defsubst gnus-agent-copy-nov-line (article)
   "Copy the indicated ARTICLE from the overview buffer to the nntp server buffer."

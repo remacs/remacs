@@ -49,9 +49,7 @@ from a scroll bar event, then (scroll-bar-scale SCROLL-BAR-POS
 \(buffer-size)) is the position in the current buffer corresponding to
 that scroll bar position."
   ;; We multiply before we divide to maintain precision.
-  ;; We use floating point because the product of a large buffer size
-  ;; with a large scroll bar portion can easily overflow a lisp int.
-  (truncate (/ (* (float (car num-denom)) whole) (cdr num-denom))))
+  (truncate (* (car num-denom) whole) (cdr num-denom)))
 
 (defun scroll-bar-columns (side)
   "Return the width, measured in columns, of the vertical scrollbar on SIDE.

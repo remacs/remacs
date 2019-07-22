@@ -1037,12 +1037,8 @@ is supplied, or Transient Mark mode is enabled and the mark is active."
       (push-mark))
   (let ((size (- (point-max) (point-min))))
     (goto-char (if (and arg (not (consp arg)))
-		   (+ (point-min)
-		      (if (> size 10000)
-			  ;; Avoid overflow for large buffer sizes!
-			  (* (prefix-numeric-value arg)
-			     (/ size 10))
-			(/ (+ 10 (* size (prefix-numeric-value arg))) 10)))
+		   (+ (point-min) 1
+		      (/ (* size (prefix-numeric-value arg)) 10))
 		 (point-min))))
   (if (and arg (not (consp arg))) (forward-line 1)))
 
@@ -1060,11 +1056,7 @@ is supplied, or Transient Mark mode is enabled and the mark is active."
   (let ((size (- (point-max) (point-min))))
     (goto-char (if (and arg (not (consp arg)))
 		   (- (point-max)
-		      (if (> size 10000)
-			  ;; Avoid overflow for large buffer sizes!
-			  (* (prefix-numeric-value arg)
-			     (/ size 10))
-			(/ (* size (prefix-numeric-value arg)) 10)))
+		      (/ (* size (prefix-numeric-value arg)) 10))
 		 (point-max))))
   ;; If we went to a place in the middle of the buffer,
   ;; adjust it to the beginning of a line.
