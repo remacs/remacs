@@ -358,6 +358,10 @@ Thus, this does not include the shell's current directory.")
     ("^\\[[1-9][0-9]*\\]" . font-lock-string-face))
   "Additional expressions to highlight in Shell mode.")
 
+(defvar-local shell--start-prog nil
+  "Shell file name started in `shell'.")
+(put 'shell--start-prog 'permanent-local t)
+
 ;;; Basic Procedures
 
 (defun shell--unquote&requote-argument (qstr &optional upos)
@@ -573,20 +577,26 @@ buffer."
   (setq list-buffers-directory (expand-file-name default-directory))
   ;; shell-dependent assignments.
   (when (ring-empty-p comint-input-ring)
-    (let ((shell (if (get-buffer-process (current-buffer))
-                     (file-name-nondirectory
-                      (car (process-command (get-buffer-process (current-buffer)))))
-                   ""))
-	  (hsize (getenv "HISTSIZE")))
+    (let ((remote (file-remote-p default-directory))
+          (shell (or shell--start-prog ""))
+          (hsize (getenv "HISTSIZE"))
+          (hfile (getenv "HISTFILE")))
+      (when remote
+        ;; `shell-snarf-envar' does not work trustworthy.
+        (setq hsize (shell-command-to-string "echo -n $HISTSIZE")
+              hfile (shell-command-to-string "echo -n $HISTFILE")))
+      (and (string-equal hfile "") (setq hfile nil))
       (and (stringp hsize)
 	   (integerp (setq hsize (string-to-number hsize)))
 	   (> hsize 0)
 	   (set (make-local-variable 'comint-input-ring-size) hsize))
       (setq comint-input-ring-file-name
-	    (or (getenv "HISTFILE")
-		(cond ((string-equal shell "bash") "~/.bash_history")
-		      ((string-equal shell "ksh") "~/.sh_history")
-		      (t "~/.history"))))
+            (concat
+             remote
+	     (or hfile
+		 (cond ((string-equal shell "bash") "~/.bash_history")
+		       ((string-equal shell "ksh") "~/.sh_history")
+		       (t "~/.history")))))
       (if (or (equal comint-input-ring-file-name "")
 	      (equal (file-truename comint-input-ring-file-name)
 		     (file-truename "/dev/null")))
@@ -746,6 +756,7 @@ Otherwise, one argument `-i' is passed to the shell.
               (xargs-name (intern-soft (concat "explicit-" name "-args"))))
          (unless (file-exists-p startfile)
            (setq startfile (concat user-emacs-directory "init_" name ".sh")))
+         (setq-local shell--start-prog (file-name-nondirectory prog))
          (apply #'make-comint-in-buffer "shell" buffer prog
                 (if (file-exists-p startfile) startfile)
                 (if (and xargs-name (boundp xargs-name))
