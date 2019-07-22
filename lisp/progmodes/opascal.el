@@ -1177,8 +1177,11 @@ routine.")
           (throw 'done (opascal-stmt-line-indent-of
                         (or last-token token) opascal-indent-level)))
 
-         ;; We indent relative to an enclosing declaration section.
-         ((opascal-is token-kind opascal-decl-sections)
+         ;; We indent relative to an enclosing declaration section,
+         ;; unless this is within the a delimited expression
+         ;; (bug#36348).
+         ((and (not expr-delimited)
+               (opascal-is token-kind opascal-decl-sections))
           (throw 'done (opascal-indent-of (if last-token last-token token)
                                          opascal-indent-level)))
 
