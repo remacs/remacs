@@ -2381,6 +2381,8 @@ x_query_frame_background_color (struct frame *f, XColor *bgcolor)
   x_query_colors (f, bgcolor, 1);
 }
 
+#define HEX_COLOR_NAME_LENGTH 32
+
 /* On frame F, translate the color name to RGB values.  Use cached
    information, if possible.
 
@@ -2398,9 +2400,36 @@ Status x_parse_color (struct frame *f, const char *color_name,
 
   if (color_name[0] == '#')
     {
-      /* The hex form is parsed directly by XParseColor without
+      /* Don't pass #RGB strings directly to XParseColor, because that
+	 follows the X convention of zero-extending each channel
+	 value: #f00 means #f00000.  We want the convention of scaling
+	 channel values, so #f00 means #ff0000, just as it does for
+	 HTML, SVG, and CSS.
+
+	 So we translate #f00 to rgb:f/0/0, which X handles
+	 differently. */
+      char rgb_color_name[HEX_COLOR_NAME_LENGTH];
+      int len = strlen (color_name);
+      int digits_per_channel;
+      if (len == 4)
+	digits_per_channel = 1;
+      else if (len == 7)
+	digits_per_channel = 2;
+      else if (len == 10)
+	digits_per_channel = 3;
+      else if (len == 13)
+	digits_per_channel = 4;
+      else
+	return 0;
+
+      snprintf (rgb_color_name, sizeof rgb_color_name, "rgb:%.*s/%.*s/%.*s",
+		digits_per_channel, color_name + 1,
+		digits_per_channel, color_name + digits_per_channel + 1,
+		digits_per_channel, color_name + 2 * digits_per_channel + 1);
+
+      /* The rgb form is parsed directly by XParseColor without
 	 talking to the X server.  No need for caching.  */
-      return XParseColor (dpy, cmap, color_name, color);
+      return XParseColor (dpy, cmap, rgb_color_name, color);
     }
 
   for (cache_entry = FRAME_DISPLAY_INFO (f)->color_names; cache_entry;

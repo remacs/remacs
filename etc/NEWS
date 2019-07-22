@@ -407,6 +407,12 @@ names in xref buffers.
 
 ** New variable `file-size-function' controls how file sizes are displayed.
 
++++
+** Emacs now interprets RGB triplets like HTML, SVG, and CSS do.
+
+The X convention previously used differed slightly, particularly for
+RGB triplets with a single hexadecimal digit per component.
+
 
 * Editing Changes in Emacs 27.1
 
@@ -1508,7 +1514,6 @@ See the current list of live threads in a tabulated-list buffer which
 automatically updates.  In the buffer, you can use 's q' or 's e' to
 signal a thread with quit or error respectively, or get a snapshot
 backtrace with 'b'.
-
 
 ** thingatpt.el
 
