@@ -95,14 +95,6 @@ Valid sizes range from 1 to 2048 inclusive."
          (search-forward "\n\n" nil t)
          (buffer-substring (point) (point-max)))))
 
-(defun gravatar-data->image ()
-  "Get data of current buffer and return an image.
-If no image available, return 'error."
-  (let ((data (gravatar-get-data)))
-    (if data
-	(create-image data nil t)
-      'error)))
-
 ;;;###autoload
 (defun gravatar-retrieve (mail-address callback &optional cbargs)
   "Asynchronously retrieve a gravatar for MAIL-ADDRESS.
@@ -112,11 +104,8 @@ where GRAVATAR is either an image descriptor, or the symbol
   (let ((url (gravatar-build-url mail-address)))
     (if (url-cache-expired url gravatar-cache-ttl)
         (url-retrieve url #'gravatar-retrieved (list callback cbargs) t)
-      (apply callback
-             (with-temp-buffer
-               (url-cache-extract (url-cache-create-filename url))
-               (gravatar-data->image))
-             cbargs))))
+      (with-current-buffer (url-fetch-from-cache url)
+        (gravatar-retrieved () callback cbargs)))))
 
 ;;;###autoload
 (defun gravatar-retrieve-synchronously (mail-address)
@@ -124,26 +113,23 @@ where GRAVATAR is either an image descriptor, or the symbol
 Value is either an image descriptor, or the symbol `error' if the
 retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
-    (if (url-cache-expired url gravatar-cache-ttl)
-        (with-current-buffer (url-retrieve-synchronously url)
-	  (when gravatar-automatic-caching
-            (url-store-in-cache (current-buffer)))
-          (prog1 (gravatar-data->image)
-            (kill-buffer (current-buffer))))
-      (with-temp-buffer
-        (url-cache-extract (url-cache-create-filename url))
-        (gravatar-data->image)))))
+    (with-current-buffer (if (url-cache-expired url gravatar-cache-ttl)
+                             (url-retrieve-synchronously url)
+                           (url-fetch-from-cache url))
+      (gravatar-retrieved () #'identity))))
 
 (defun gravatar-retrieved (status cb &optional cbargs)
-  "Callback function used by `gravatar-retrieve'."
-  ;; Store gravatar?
-  (when gravatar-automatic-caching
-    (url-store-in-cache (current-buffer)))
-  (if (plist-get status :error)
-      ;; Error happened.
-      (apply cb 'error cbargs)
-    (apply cb (gravatar-data->image) cbargs))
-  (kill-buffer (current-buffer)))
+  "Handle Gravatar response data in current buffer.
+Return the result of (apply CB DATA CBARGS), where DATA is either
+an image descriptor, or the symbol `error' on failure.
+This function is intended as a callback for `url-retrieve'."
+  (let ((data (unless (plist-get status :error)
+                (gravatar-get-data))))
+    (and url-current-object        ; Only cache if not already cached.
+         gravatar-automatic-caching
+         (url-store-in-cache))
+    (prog1 (apply cb (if data (create-image data nil t) 'error) cbargs)
+      (kill-buffer))))
 
 (provide 'gravatar)
 
