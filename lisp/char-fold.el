@@ -78,6 +78,25 @@
                               (cons (char-to-string char)
                                     (aref equiv (car decomp))))))))
                (funcall make-decomp-match-char decomp char)
+               ;; Check to see if the first char of the decomposition
+               ;; has a further decomposition.  If so, add a mapping
+               ;; back from that second decomposition to the original
+               ;; character.  This allows e.g. 'ι' (GREEK SMALL LETTER
+               ;; IOTA) to match both the Basic Greek block and
+               ;; Extended Greek block variants of IOTA +
+               ;; diacritical(s).  Repeat until there are no more
+               ;; decompositions.
+               (let ((dec decomp)
+                     next-decomp)
+                   (while dec
+                     (setq next-decomp (char-table-range table (car dec)))
+                     (when (consp next-decomp)
+                       (when (symbolp (car next-decomp))
+                         (setq next-decomp (cdr next-decomp)))
+                       (if (not (eq (car dec)
+                                    (car next-decomp)))
+                           (funcall make-decomp-match-char (list (car next-decomp)) char)))
+                     (setq dec next-decomp)))
                ;; Do it again, without the non-spacing characters.
                ;; This allows 'a' to match 'ä'.
                (let ((simpler-decomp nil)

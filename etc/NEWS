@@ -1167,6 +1167,14 @@ and case-sensitivity together with search strings in the search ring.
 +++
 *** 'flush-lines' prints and returns the number of deleted matching lines.
 
+---
+*** 'char-fold-to-regexp' now matches more variants of a base character.
+The table used to check for equivalence of characters is now built
+using the complete chain of unicode decompositions of a character,
+rather than stopping after one level, such that searching for
+e.g. GREEK SMALL LETTER IOTA will now also find GREEK SMALL LETTER
+IOTA WITH OXIA.
+
 ** Debugger
 
 +++
