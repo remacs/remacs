@@ -59,12 +59,13 @@ static void select_window_1 (Lisp_Object, bool);
 static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_fringes (struct window *, Lisp_Object,
-					  Lisp_Object, Lisp_Object);
+					  Lisp_Object, Lisp_Object,
+					  Lisp_Object);
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
 static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object, Lisp_Object,
-					      Lisp_Object);
+					      Lisp_Object, Lisp_Object);
 static void apply_window_adjustment (struct window *);
 
 /* This is the window in which the terminal's cursor should
@@ -3983,14 +3984,18 @@ set_window_buffer (Lisp_Object window, Lisp_Object buffer,
 
   if (!keep_margins_p)
     {
-      /* Set left and right marginal area width etc. from buffer.  */
-      set_window_fringes (w, BVAR (b, left_fringe_width),
-			  BVAR (b, right_fringe_width),
-			  BVAR (b, fringes_outside_margins));
-      set_window_scroll_bars (w, BVAR (b, scroll_bar_width),
-			      BVAR (b, vertical_scroll_bar_type),
-			      BVAR (b, scroll_bar_height),
-			      BVAR (b, horizontal_scroll_bar_type));
+      /* Set fringes and scroll bars from buffer unless they have been
+	 declared as persistent.  */
+      if (!w->fringes_persistent)
+	set_window_fringes (w, BVAR (b, left_fringe_width),
+			    BVAR (b, right_fringe_width),
+			    BVAR (b, fringes_outside_margins), Qnil);
+      if (!w->scroll_bars_persistent)
+	set_window_scroll_bars (w, BVAR (b, scroll_bar_width),
+				BVAR (b, vertical_scroll_bar_type),
+				BVAR (b, scroll_bar_height),
+				BVAR (b, horizontal_scroll_bar_type), Qnil);
+      /* Set left and right marginal area width from buffer.  */
       set_window_margins (w, BVAR (b, left_margin_cols),
 			  BVAR (b, right_margin_cols));
       apply_window_adjustment (w);
@@ -4661,78 +4666,49 @@ values.  */)
 }
 
 
-/* Resize frame F's windows when F's width or height is set to SIZE.
-   If HORFLAG is zero, F's width was set to SIZE, otherwise its height
-   was set.  SIZE is interpreted in F's canonical character units
-   (a.k.a. "columns" or "lines"), unless PIXELWISE is non-zero, which
-   means to interpret SIZE in pixel units.  */
+/**
+Resize frame F's windows when F's inner height (inner width if HORFLAG
+is true) has been set to SIZE pixels.  */
 void
-resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
+resize_frame_windows (struct frame *f, int size, bool horflag)
 {
   Lisp_Object root = f->root_window;
   struct window *r = XWINDOW (root);
-  Lisp_Object mini = f->minibuffer_window;
-  struct window *m;
-  /* old_size is the old size of the frame's root window.  */
-  int old_size = horflag ? r->total_cols : r->total_lines;
   int old_pixel_size = horflag ? r->pixel_width : r->pixel_height;
-  /* new_size is the new size of the frame's root window.  */
   int new_size, new_pixel_size;
   int unit = horflag ? FRAME_COLUMN_WIDTH (f) : FRAME_LINE_HEIGHT (f);
+  Lisp_Object mini = f->minibuffer_window;
+  struct window *m = WINDOWP (mini) ? XWINDOW (mini) : NULL;
+  int mini_height = ((FRAME_HAS_MINIBUF_P (f) && !FRAME_MINIBUF_ONLY_P (f))
+		     ? unit + m->pixel_height - window_body_height (m, true)
+		     : 0);
 
-  /* Don't let the size drop below one unit.  This is more comforting
-     when we are called from *_set_tool_bar_lines since the latter may
-     have implicitly given us a zero or negative height.  */
-  if (pixelwise)
-    {
-      /* Note: This does not include the size for internal borders
-	 since these are not part of the frame's text area.  */
-      new_pixel_size = max (horflag
-			    ? size
-			    : (size
-			       - ((FRAME_HAS_MINIBUF_P (f)
-				   && !FRAME_MINIBUF_ONLY_P (f))
-				  ? FRAME_LINE_HEIGHT (f) : 0)),
-			    unit);
-      new_size = new_pixel_size / unit;
-    }
-  else
-    {
-      new_size = max (size - (!horflag
-			      && FRAME_HAS_MINIBUF_P (f)
-			      && !FRAME_MINIBUF_ONLY_P (f)),
-		      1);
-      new_pixel_size = new_size * unit;
-    }
+  new_pixel_size = max (horflag ? size : size - mini_height, unit);
+  new_size = new_pixel_size / unit;
 
   if (new_pixel_size == old_pixel_size
       && (horflag || r->pixel_top == FRAME_TOP_MARGIN_HEIGHT (f)))
     ;
   else if (WINDOW_LEAF_P (r))
-    /* For a leaf root window just set the size.  */
-    if (horflag)
-      {
-	bool changed = r->pixel_width != new_pixel_size;
+    {
+      /* For a leaf root window just set the size.  */
+      if (horflag)
+	{
+	  r->total_cols = new_size;
+	  r->pixel_width = new_pixel_size;
+	}
+      else
+	{
+	  r->top_line = FRAME_TOP_MARGIN (f);
+	  r->pixel_top = FRAME_TOP_MARGIN_HEIGHT (f);
 
-	r->total_cols = new_size;
-	r->pixel_width = new_pixel_size;
+	  r->total_lines = new_size;
+	  r->pixel_height = new_pixel_size;
+	}
 
-	if (changed && !WINDOW_PSEUDO_P (r))
-	  FRAME_WINDOW_CHANGE (f) = true;
-      }
-    else
-      {
-	bool changed = r->pixel_height != new_pixel_size;
-
-	r->top_line = FRAME_TOP_MARGIN (f);
-	r->pixel_top = FRAME_TOP_MARGIN_HEIGHT (f);
-
-	r->total_lines = new_size;
-	r->pixel_height = new_pixel_size;
-
-	if (changed && !WINDOW_PSEUDO_P (r))
-	  FRAME_WINDOW_CHANGE (f) = true;
-      }
+      FRAME_WINDOW_CHANGE (f)
+	= !WINDOW_PSEUDO_P (r) && new_pixel_size != old_pixel_size;
+    }
   else
     {
       Lisp_Object delta;
@@ -4743,14 +4719,10 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 	  r->pixel_top = FRAME_TOP_MARGIN_HEIGHT (f);
 	}
 
-      if (pixelwise)
-	XSETINT (delta, new_pixel_size - old_pixel_size);
-      else
-	XSETINT (delta, new_size - old_size);
+      XSETINT (delta, new_pixel_size - old_pixel_size);
 
       /* Try a "normal" resize first.  */
-      resize_root_window (root, delta, horflag ? Qt : Qnil, Qnil,
-			  pixelwise ? Qt : Qnil);
+      resize_root_window (root, delta, horflag ? Qt : Qnil, Qnil, Qt);
       if (window_resize_check (r, horflag)
 	  && new_pixel_size == XFIXNUM (r->new_pixel))
 	{
@@ -4760,8 +4732,7 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
       else
 	{
 	  /* Try with "reasonable" minimum sizes next.  */
-	  resize_root_window (root, delta, horflag ? Qt : Qnil, Qt,
-			      pixelwise ? Qt : Qnil);
+	  resize_root_window (root, delta, horflag ? Qt : Qnil, Qt, Qt);
 	  if (window_resize_check (r, horflag)
 	      && new_pixel_size == XFIXNUM (r->new_pixel))
 	    {
@@ -4781,9 +4752,8 @@ resize_frame_windows (struct frame *f, int size, bool horflag, bool pixelwise)
 	}
       else
 	{
-	  /* Are we sure we always want 1 line here?  */
-	  m->total_lines = 1;
-	  m->pixel_height = FRAME_LINE_HEIGHT (f);
+	  m->total_lines = mini_height / unit;
+	  m->pixel_height = mini_height;
 	  m->top_line = r->top_line + r->total_lines;
 	  m->pixel_top = r->pixel_top + r->pixel_height;
 	}
@@ -5211,17 +5181,11 @@ void
 grow_mini_window (struct window *w, int delta)
 {
   struct frame *f = XFRAME (w->frame);
-  int old_height = WINDOW_PIXEL_HEIGHT (w);
-  int min_height = FRAME_LINE_HEIGHT (f);
+  int old_height = window_body_height (w, true);
 
   eassert (MINI_WINDOW_P (w));
 
-  if (old_height + delta < min_height)
-    /* Never shrink mini-window to less than its minimum
-       height.  */
-    delta = old_height > min_height ? min_height - old_height : 0;
-
-  if (delta != 0)
+  if ((delta != 0) && (old_height + delta >= FRAME_LINE_HEIGHT (f)))
     {
       Lisp_Object root = FRAME_ROOT_WINDOW (f);
       struct window *r = XWINDOW (root);
@@ -5246,7 +5210,7 @@ void
 shrink_mini_window (struct window *w)
 {
   struct frame *f = XFRAME (w->frame);
-  int delta = WINDOW_PIXEL_HEIGHT (w) - FRAME_LINE_HEIGHT (f);
+  int delta = window_body_height (w, true) - FRAME_LINE_HEIGHT (f);
 
   eassert (MINI_WINDOW_P (w));
 
@@ -5263,6 +5227,11 @@ shrink_mini_window (struct window *w)
       if (FIXNUMP (grow) && window_resize_check (r, false))
 	resize_mini_window_apply (w, -XFIXNUM (grow));
     }
+  else if (delta < 0)
+    /* delta can be less than zero after adding horizontal scroll
+       bar.  */
+    grow_mini_window (w, -delta);
+
 }
 
 DEFUN ("resize-mini-window-internal", Fresize_mini_window_internal,
@@ -6740,9 +6709,11 @@ struct saved_window
   Lisp_Object start_at_line_beg;
   Lisp_Object display_table;
   Lisp_Object left_margin_cols, right_margin_cols;
-  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
-  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
+  Lisp_Object left_fringe_width, right_fringe_width;
+  Lisp_Object fringes_outside_margins, fringes_persistent;
+  Lisp_Object scroll_bar_width, vertical_scroll_bar_type;
   Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
+  Lisp_Object scroll_bars_persistent, dedicated;
   Lisp_Object combination_limit, window_parameters;
 };
 
@@ -6957,8 +6928,10 @@ the return value is nil.  Otherwise the value is t.  */)
 	  w->left_fringe_width = XFIXNUM (p->left_fringe_width);
 	  w->right_fringe_width = XFIXNUM (p->right_fringe_width);
 	  w->fringes_outside_margins = !NILP (p->fringes_outside_margins);
+	  w->fringes_persistent = !NILP (p->fringes_persistent);
 	  w->scroll_bar_width = XFIXNUM (p->scroll_bar_width);
 	  w->scroll_bar_height = XFIXNUM (p->scroll_bar_height);
+	  w->scroll_bars_persistent = !NILP (p->scroll_bars_persistent);
 	  wset_vertical_scroll_bar_type (w, p->vertical_scroll_bar_type);
 	  wset_horizontal_scroll_bar_type (w, p->horizontal_scroll_bar_type);
 	  wset_dedicated (w, p->dedicated);
@@ -7279,8 +7252,10 @@ save_window_save (Lisp_Object window, struct Lisp_Vector *vector, ptrdiff_t i)
       p->left_fringe_width = make_fixnum (w->left_fringe_width);
       p->right_fringe_width = make_fixnum (w->right_fringe_width);
       p->fringes_outside_margins = w->fringes_outside_margins ? Qt : Qnil;
+      p->fringes_persistent = w->fringes_persistent ? Qt : Qnil;
       p->scroll_bar_width = make_fixnum (w->scroll_bar_width);
       p->scroll_bar_height = make_fixnum (w->scroll_bar_height);
+      p->scroll_bars_persistent = w->scroll_bars_persistent ? Qt : Qnil;
       p->vertical_scroll_bar_type = w->vertical_scroll_bar_type;
       p->horizontal_scroll_bar_type = w->horizontal_scroll_bar_type;
       p->dedicated = w->dedicated;
@@ -7516,49 +7491,71 @@ as nil.  */)
  ***********************************************************************/
 
 static struct window *
-set_window_fringes (struct window *w, Lisp_Object left_width,
-		    Lisp_Object right_width, Lisp_Object outside_margins)
+set_window_fringes (struct window *w,
+		    Lisp_Object left_width, Lisp_Object right_width,
+		    Lisp_Object outside_margins, Lisp_Object persistent)
 {
-  bool outside = !NILP (outside_margins);
-  int left = extract_dimension (left_width);
-  int right = extract_dimension (right_width);
-
-  /* Do nothing on a tty or if nothing to actually change.  */
-  if (FRAME_WINDOW_P (WINDOW_XFRAME (w))
-      && (w->left_fringe_width != left
-	  || w->right_fringe_width != right
-	  || w->fringes_outside_margins != outside))
+  /* Do nothing on a tty.  */
+  if (!FRAME_WINDOW_P (WINDOW_XFRAME (w)))
+    return NULL;
+  else
     {
-      if (left > 0 || right > 0)
+      struct frame *f = XFRAME (WINDOW_FRAME (w));
+      int old_left = WINDOW_LEFT_FRINGE_WIDTH (w);
+      int old_right = WINDOW_RIGHT_FRINGE_WIDTH (w);
+      int new_left = extract_dimension (left_width);
+      int new_right = extract_dimension (right_width);
+      bool outside = !NILP (outside_margins);
+      bool changed = false;
+      bool failed = false;
+
+      /* Check dimensions of new fringes.  Make changes only if they
+	 fit the window's dimensions.  */
+      if ((WINDOW_PIXEL_WIDTH (w)
+	   - WINDOW_MARGINS_WIDTH (w)
+	   - WINDOW_SCROLL_BAR_AREA_WIDTH (w)
+	   - WINDOW_RIGHT_DIVIDER_WIDTH (w)
+	   - (new_left == -1 ? FRAME_LEFT_FRINGE_WIDTH (f) : new_left)
+	   - (new_right == -1 ? FRAME_RIGHT_FRINGE_WIDTH (f) : new_right))
+	  >= MIN_SAFE_WINDOW_PIXEL_WIDTH (w))
 	{
-	  /* Don't change anything if new fringes don't fit.  */
-	  if ((WINDOW_PIXEL_WIDTH (w)
-	       - WINDOW_MARGINS_WIDTH (w)
-	       - WINDOW_SCROLL_BAR_AREA_WIDTH (w)
-	       - max (left, 0) - max (right, 0))
-	      < MIN_SAFE_WINDOW_PIXEL_WIDTH (w))
-	    return NULL;
+	  w->left_fringe_width = new_left;
+	  w->right_fringe_width = new_right;
+	  changed = new_left != old_left || new_right != old_right;
+	}
+      else
+	failed = true;
+
+      /* Placing fringes ouside margins.  */
+      if (outside != w->fringes_outside_margins)
+	{
+	  w->fringes_outside_margins = outside;
+	  changed = true;
 	}
 
-      w->left_fringe_width = left;
-      w->right_fringe_width = right;
-      w->fringes_outside_margins = outside;
+      /* Make settings persistent unless we failed to apply some
+	 changes.  */
+      if (!failed)
+	w->fringes_persistent = !NILP (persistent);
 
       /* This is needed to trigger immediate redisplay of the window
 	 when its fringes are changed, because fringes are redrawn
 	 only if update_window is called, so we must trigger that even
 	 if the window's glyph matrices did not change at all.  */
-      windows_or_buffers_changed = 35;
-      return w;
+      if (changed)
+	{
+	  windows_or_buffers_changed = 35;
+	  return w;
+	}
+      else
+	return NULL;
     }
-  else
-    return NULL;
 }
 
 DEFUN ("set-window-fringes", Fset_window_fringes, Sset_window_fringes,
-       2, 4, 0,
-       doc: /* Set the fringe widths of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
+       2, 5, 0,
+       doc: /* Set fringes of specified WINDOW.
+WINDOW must specify a live window and defaults to the selected one.
 
 Second arg LEFT-WIDTH specifies the number of pixels to reserve for
 the left fringe.  Optional third arg RIGHT-WIDTH specifies the right
@@ -7570,32 +7567,40 @@ If optional fourth arg OUTSIDE-MARGINS is non-nil, draw the fringes
 outside of the display margins.  By default, fringes are drawn between
 display marginal areas and the text area.
 
+Optional fifth argument PERSISTENT non-nil means that fringe settings
+for WINDOW are persistent, i.e., remain unchanged when another buffer
+is shown in WINDOW.  PERSISTENT nil means that fringes are reset from
+buffer local values when 'set-window-buffer' is called on WINDOW with
+the argument KEEP-MARGINS nil.
+
 Leave fringes unchanged if WINDOW is not large enough to accommodate
 fringes of the desired width.  Return t if any fringe was actually
 changed and nil otherwise.  */)
-  (Lisp_Object window, Lisp_Object left_width,
-   Lisp_Object right_width, Lisp_Object outside_margins)
+  (Lisp_Object window, Lisp_Object left_width, Lisp_Object right_width,
+   Lisp_Object outside_margins, Lisp_Object persistent)
 {
   struct window *w
-    = set_window_fringes (decode_live_window (window),
-			  left_width, right_width, outside_margins);
+    = set_window_fringes (decode_live_window (window), left_width,
+			  right_width, outside_margins, persistent);
   return w ? (apply_window_adjustment (w), Qt) : Qnil;
 }
 
 
 DEFUN ("window-fringes", Fwindow_fringes, Swindow_fringes,
        0, 1, 0,
-       doc: /* Get width of fringes of window WINDOW.
+       doc: /* Return fringe settings for specified WINDOW.
 WINDOW must be a live window and defaults to the selected one.
 
-Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS).  */)
+Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS
+PERSISTENT), see `set-window-fringes'.  */)
   (Lisp_Object window)
 {
   struct window *w = decode_live_window (window);
 
-  return list3 (make_fixnum (WINDOW_LEFT_FRINGE_WIDTH (w)),
+  return list4 (make_fixnum (WINDOW_LEFT_FRINGE_WIDTH (w)),
 		make_fixnum (WINDOW_RIGHT_FRINGE_WIDTH (w)),
-		WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w) ? Qt : Qnil);
+		WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w) ? Qt : Qnil,
+		w->fringes_persistent ? Qt : Qnil);
 }
 
 
@@ -7607,105 +7612,127 @@ Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS).  */)
 static struct window *
 set_window_scroll_bars (struct window *w, Lisp_Object width,
 			Lisp_Object vertical_type, Lisp_Object height,
-			Lisp_Object horizontal_type)
+			Lisp_Object horizontal_type, Lisp_Object persistent)
 {
-  int iwidth = extract_dimension (width);
-  bool changed = false;
-
-  if (iwidth == 0)
-    vertical_type = Qnil;
-
-  if (!(NILP (vertical_type)
-	|| EQ (vertical_type, Qleft)
-	|| EQ (vertical_type, Qright)
-	|| EQ (vertical_type, Qt)))
-    error ("Invalid type of vertical scroll bar");
-
-  if (w->scroll_bar_width != iwidth
-      || !EQ (w->vertical_scroll_bar_type, vertical_type))
+  /* Do nothing on a tty.  */
+  if (!FRAME_WINDOW_P (WINDOW_XFRAME (w)))
+    return NULL;
+  else
     {
-      /* Don't change anything if new scroll bar won't fit.  */
+      struct frame *f = XFRAME (WINDOW_FRAME (w));
+      int new_width = extract_dimension (width);
+      bool changed = false;
+      bool failed = false;
+
+      if (new_width == 0)
+	vertical_type = Qnil;
+      else if (!(NILP (vertical_type)
+		 || EQ (vertical_type, Qleft)
+		 || EQ (vertical_type, Qright)
+		 || EQ (vertical_type, Qt)))
+	error ("Invalid type of vertical scroll bar");
+
+      /* Check dimension of new scroll bar.  Make changes only if it
+	 fit the window's dimensions.  */
       if ((WINDOW_PIXEL_WIDTH (w)
 	   - WINDOW_MARGINS_WIDTH (w)
 	   - WINDOW_FRINGES_WIDTH (w)
-	   - max (iwidth, 0))
+	   - WINDOW_RIGHT_DIVIDER_WIDTH (w)
+	   - (new_width == -1 ? FRAME_SCROLL_BAR_AREA_WIDTH (f) : new_width))
 	  >= MIN_SAFE_WINDOW_PIXEL_WIDTH (w))
 	{
-	  w->scroll_bar_width = iwidth;
+	  changed = (!EQ (vertical_type, w->vertical_scroll_bar_type)
+		     || new_width != WINDOW_SCROLL_BAR_AREA_WIDTH (w));
 	  wset_vertical_scroll_bar_type (w, vertical_type);
-	  changed = true;
+	  w->scroll_bar_width = new_width;
 	}
-    }
+      else
+	failed = true;
 
 #if USE_HORIZONTAL_SCROLL_BARS
-  {
-    int iheight = extract_dimension (height);
+      int new_height = extract_dimension (height);
 
-    if (MINI_WINDOW_P (w) || iheight == 0)
-      horizontal_type = Qnil;
+      if ((MINI_WINDOW_P (w) && !EQ (horizontal_type, Qbottom))
+	  || new_height == 0)
+	horizontal_type = Qnil;
 
-    if (!(NILP (horizontal_type)
-	  || EQ (horizontal_type, Qbottom)
-	  || EQ (horizontal_type, Qt)))
-      error ("Invalid type of horizontal scroll bar");
+      if (!(NILP (horizontal_type)
+	    || EQ (horizontal_type, Qbottom)
+	    || EQ (horizontal_type, Qt)))
+	error ("Invalid type of horizontal scroll bar");
 
-    if (w->scroll_bar_height != iheight
-	|| !EQ (w->horizontal_scroll_bar_type, horizontal_type))
-      {
-	/* Don't change anything if new scroll bar won't fit.  */
-	if ((WINDOW_PIXEL_HEIGHT (w)
-	     - WINDOW_HEADER_LINE_HEIGHT (w)
-	     - WINDOW_MODE_LINE_HEIGHT (w)
-	     - max (iheight, 0))
-	    >= MIN_SAFE_WINDOW_PIXEL_HEIGHT (w))
-	  {
-	    w->scroll_bar_height = iheight;
-	    wset_horizontal_scroll_bar_type (w, horizontal_type);
-	    changed = true;
-	  }
-      }
-  }
+      /* Don't change anything if new scroll bar won't fit.  */
+      if ((WINDOW_PIXEL_HEIGHT (w)
+	   - WINDOW_HEADER_LINE_HEIGHT (w)
+	   - WINDOW_MODE_LINE_HEIGHT (w)
+	   - (new_height == -1 ? FRAME_SCROLL_BAR_AREA_HEIGHT (f) : new_height))
+	  >= MIN_SAFE_WINDOW_PIXEL_HEIGHT (w))
+	{
+	  changed = (changed
+		     || !EQ (horizontal_type, w->horizontal_scroll_bar_type)
+		     || new_height != WINDOW_SCROLL_BAR_AREA_HEIGHT (w));
+	  wset_horizontal_scroll_bar_type (w, horizontal_type);
+	  w->scroll_bar_height = new_height;
+	}
+      else
+	failed = true;
 #else
-  wset_horizontal_scroll_bar_type (w, Qnil);
+      wset_horizontal_scroll_bar_type (w, Qnil);
 #endif
 
-  /* This is needed to trigger immediate redisplay of the window when
-     scroll bars are changed, because scroll bars are redisplayed only
-     if more than a single window needs to be considered, see
-     redisplay_internal.  */
-  if (changed)
-    windows_or_buffers_changed = 31;
-  return changed ? w : NULL;
+      /* Make settings persistent unless we failed to apply some
+	 changes.  */
+      if (!failed)
+	w->scroll_bars_persistent = !NILP (persistent);
+
+      /* This is needed to trigger immediate redisplay of the window when
+	 scroll bars are changed, because scroll bars are redisplayed only
+	 if more than a single window needs to be considered, see
+	 redisplay_internal.  */
+      if (changed)
+	windows_or_buffers_changed = 31;
+
+      return changed ? w : NULL;
+    }
 }
 
 DEFUN ("set-window-scroll-bars", Fset_window_scroll_bars,
-       Sset_window_scroll_bars, 1, 5, 0,
-       doc: /* Set width and type of scroll bars of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
+       Sset_window_scroll_bars, 1, 6, 0,
+       doc: /* Set width and type of scroll bars of specified WINDOW.
+WINDOW must specify a live window and defaults to the selected one.
 
-Second parameter WIDTH specifies the pixel width for the vertical scroll
+Second argument WIDTH specifies the pixel width for the vertical scroll
 bar.  If WIDTH is nil, use the scroll bar width of WINDOW's frame.
-Third parameter VERTICAL-TYPE specifies the type of the vertical scroll
+Third argument VERTICAL-TYPE specifies the type of the vertical scroll
 bar: left, right, nil or t where nil means to not display a vertical
 scroll bar on WINDOW and t means to use WINDOW frame's vertical scroll
 bar type.
 
-Fourth parameter HEIGHT specifies the pixel height for the horizontal
+Fourth argument HEIGHT specifies the pixel height for the horizontal
 scroll bar.  If HEIGHT is nil, use the scroll bar height of WINDOW's
-frame.  Fifth parameter HORIZONTAL-TYPE specifies the type of the
-horizontal scroll bar: bottom, nil, or t where nil means to not display
-a horizontal scroll bar on WINDOW and t means to use WINDOW frame's
-horizontal scroll bar type.
+frame.  Fifth argument HORIZONTAL-TYPE specifies the type of the
+horizontal scroll bar: bottom, nil, or t where nil means to not
+display a horizontal scroll bar on WINDOW and t means to use WINDOW
+frame's horizontal scroll bar type.  If WINDOW is a mini window, t
+effectively behaves like nil.  HORIZONTAL-TYPE must equal bottom in
+order to show a scroll bar for mini windows.
+
+Optional sixth argument PERSISTENT non-nil means that scroll bar
+settings for WINDOW are persistent, i.e., remain unchanged when
+another buffer is shown in WINDOW.  PERSISTENT nil means that scroll
+bars are reset from buffer local values when 'set-window-buffer' is
+called on WINDOW with the argument KEEP-MARGINS nil.
 
 If WINDOW is not large enough to accommodate a scroll bar of the
 desired dimension, leave the corresponding scroll bar unchanged.
 Return t if scroll bars were actually changed and nil otherwise.  */)
   (Lisp_Object window, Lisp_Object width, Lisp_Object vertical_type,
-   Lisp_Object height, Lisp_Object horizontal_type)
+   Lisp_Object height, Lisp_Object horizontal_type, Lisp_Object persistent)
 {
   struct window *w
     = set_window_scroll_bars (decode_live_window (window),
-			      width, vertical_type, height, horizontal_type);
+			      width, vertical_type, height,
+			      horizontal_type, persistent);
   return w ? (apply_window_adjustment (w), Qt) : Qnil;
 }
 
@@ -7716,9 +7743,9 @@ DEFUN ("window-scroll-bars", Fwindow_scroll_bars, Swindow_scroll_bars,
 WINDOW must be a live window and defaults to the selected one.
 
 Value is a list of the form (WIDTH COLUMNS VERTICAL-TYPE HEIGHT LINES
-HORIZONTAL-TYPE).  If WIDTH or HEIGHT is nil or VERTICAL-TYPE or
-HORIZONTAL-TYPE is t, the window is using the frame's corresponding
-value.  */)
+HORIZONTAL-TYPE PERSISTENT), see `set-window-scroll-bars'.  If WIDTH
+or HEIGHT is nil or VERTICAL-TYPE or HORIZONTAL-TYPE is t, WINDOW is
+using the frame's corresponding value.  */)
   (Lisp_Object window)
 {
   struct window *w = decode_live_window (window);
@@ -7726,13 +7753,14 @@ value.  */)
   return Fcons (((w->scroll_bar_width >= 0)
 		 ? make_fixnum (w->scroll_bar_width)
 		 : Qnil),
-		list5 (make_fixnum (WINDOW_SCROLL_BAR_COLS (w)),
-		       w->vertical_scroll_bar_type,
-		       ((w->scroll_bar_height >= 0)
-			? make_fixnum (w->scroll_bar_height)
-			: Qnil),
-		       make_fixnum (WINDOW_SCROLL_BAR_LINES (w)),
-		       w->horizontal_scroll_bar_type));
+		Fcons (make_fixnum (WINDOW_SCROLL_BAR_COLS (w)),
+		       list5 (w->vertical_scroll_bar_type,
+			      ((w->scroll_bar_height >= 0)
+			       ? make_fixnum (w->scroll_bar_height)
+			       : Qnil),
+			      make_fixnum (WINDOW_SCROLL_BAR_LINES (w)),
+			      w->horizontal_scroll_bar_type,
+			      w->scroll_bars_persistent ? Qt : Qnil)));
 }
 
 /***********************************************************************
@@ -7927,10 +7955,12 @@ compare_window_configurations (Lisp_Object configuration1,
 	  || !EQ (sw1->left_fringe_width, sw2->left_fringe_width)
 	  || !EQ (sw1->right_fringe_width, sw2->right_fringe_width)
 	  || !EQ (sw1->fringes_outside_margins, sw2->fringes_outside_margins)
+	  || !EQ (sw1->fringes_persistent, sw2->fringes_persistent)
 	  || !EQ (sw1->scroll_bar_width, sw2->scroll_bar_width)
 	  || !EQ (sw1->scroll_bar_height, sw2->scroll_bar_height)
 	  || !EQ (sw1->vertical_scroll_bar_type, sw2->vertical_scroll_bar_type)
-	  || !EQ (sw1->horizontal_scroll_bar_type, sw2->horizontal_scroll_bar_type))
+	  || !EQ (sw1->horizontal_scroll_bar_type, sw2->horizontal_scroll_bar_type)
+	  || !EQ (sw1->scroll_bars_persistent, sw2->scroll_bars_persistent))
 	return false;
     }
 

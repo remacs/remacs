@@ -3959,7 +3959,7 @@ showing the buffer, unless you call @code{set-window-buffer} again in
 each affected window.  You can also use @code{set-window-fringes} to
 control the fringe display in individual windows.
 
-@defun set-window-fringes window left &optional right outside-margins
+@defun set-window-fringes window left &optional right outside-margins persistent
 This function sets the fringe widths of window @var{window}.
 If @var{window} is @code{nil}, the selected window is used.
 
@@ -3974,14 +3974,18 @@ desired width, this leaves the fringes of @var{window} unchanged.
 
 The values specified here may be later overridden by invoking
 @code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
-with its @var{keep-margins} argument @code{nil} or omitted.
+with its @var{keep-margins} argument @code{nil} or omitted.  However,
+if the optional fifth argument @var{persistent} is non-@code{nil} and
+the other arguments are processed successfully, the values specified
+here unconditionally survive subsequent invocations of
+@code{set-window-buffer}.
 @end defun
 
 @defun window-fringes &optional window
 This function returns information about the fringes of a window
 @var{window}.  If @var{window} is omitted or @code{nil}, the selected
 window is used.  The value has the form @code{(@var{left-width}
-@var{right-width} @var{outside-margins})}.
+@var{right-width} @var{outside-margins} @var{persistent})}.
 @end defun
 
 
@@ -4375,7 +4379,7 @@ This function returns the height of horizontal scroll bars of
 You can override the frame specific settings for individual windows by
 using the following function:
 
-@defun set-window-scroll-bars window &optional width vertical-type height horizontal-type
+@defun set-window-scroll-bars window &optional width vertical-type height horizontal-type persistent
 This function sets the width and/or height and the types of scroll bars
 for window @var{window}.  If @var{window} is @code{nil}, the selected
 window is used.
@@ -4387,18 +4391,26 @@ if so, where.  The possible values are @code{left}, @code{right},
 @code{t}, which means to use the frame's default, and @code{nil} for no
 vertical scroll bar.
 
-@var{height} specifies the height of the horizontal scroll bar in pixels
-(@code{nil} means use the height specified for the frame).
-@var{horizontal-type} specifies whether to have a horizontal scroll bar.
-The possible values are @code{bottom}, @code{t}, which means to use the
-frame's default, and @code{nil} for no horizontal scroll bar.
+@var{height} specifies the height of the horizontal scroll bar in
+pixels (@code{nil} means use the height specified for the frame).
+@var{horizontal-type} specifies whether to have a horizontal scroll
+bar.  The possible values are @code{bottom}, @code{t}, which means to
+use the frame's default, and @code{nil} for no horizontal scroll bar.
+Note that for a mini window the value @code{t} has the same meaning as
+@code{nil}, namely to not show a horizontal scroll bar.  You have to
+explicitly specify @code{bottom} in order to show a horizontal scroll
+bar in a mini window.
 
 If @var{window} is not large enough to accommodate a scroll bar of the
 desired dimension, this leaves the corresponding scroll bar unchanged.
 
 The values specified here may be later overridden by invoking
 @code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
-with its @var{keep-margins} argument @code{nil} or omitted.
+with its @var{keep-margins} argument @code{nil} or omitted.  However,
+if the optional fifth argument @var{persistent} is non-@code{nil} and
+the other arguments are processed successfully, the values specified
+here unconditionally survive subsequent invocations of
+@code{set-window-buffer}.
 @end defun
 
 The following four functions take as argument a live window which
@@ -4407,7 +4419,7 @@ defaults to the selected one.
 @defun window-scroll-bars &optional window
 This function returns a list of the form @code{(@var{width}
 @var{columns} @var{vertical-type} @var{height} @var{lines}
-@var{horizontal-type})}.
+@var{horizontal-type} @var{persistent})}.
 
 The value @var{width} is the value that was specified for the width of
 the vertical scroll bar (which may be @code{nil}); @var{columns} is the
@@ -4418,6 +4430,10 @@ The value @var{height} is the value that was specified for the height of
 the horizontal scroll bar (which may be @code{nil}); @var{lines} is the
 (possibly rounded) number of lines that the horizontally scroll bar
 actually occupies.
+
+The value of @var{persistent} is the value specified for @var{window}
+with the last successful invocation of @code{set-window-scroll-bars},
+@code{nil} if there never was one.
 @end defun
 
 @defun window-current-scroll-bars &optional window
@@ -4438,7 +4454,7 @@ This function returns the height in pixels of @var{window}'s horizontal
 scrollbar.
 @end defun
 
-If you don't specify these values for a window with
+If you do not specify a window's scroll bar settings via
 @code{set-window-scroll-bars}, the buffer-local variables
 @code{vertical-scroll-bar}, @code{horizontal-scroll-bar},
 @code{scroll-bar-width} and @code{scroll-bar-height} in the buffer being

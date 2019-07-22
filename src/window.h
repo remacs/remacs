@@ -422,6 +422,14 @@ struct window
        Otherwise draw them between margin areas and text.  */
     bool_bf fringes_outside_margins : 1;
 
+    /* True if this window's fringe specifications are persistent,
+       i.e., always survive Fset_window_buffer.  */
+    bool_bf fringes_persistent : 1;
+
+    /* True if this window's croll bar specifications are persistent,
+       i.e., always survive Fset_window_buffer.  */
+    bool_bf scroll_bars_persistent : 1;
+
     /* True if window_end_pos and window_end_vpos are truly valid.
        This is false if nontrivial redisplay is preempted since in that case
        the frame image that window_end_pos did not get onto the frame.  */
@@ -860,7 +868,9 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    W.  Horizontal scrollbars exist for toolkit versions only.  */
 #if USE_HORIZONTAL_SCROLL_BARS
 #define WINDOW_HAS_HORIZONTAL_SCROLL_BAR(W)			\
-  ((WINDOW_PSEUDO_P (W) || MINI_NON_ONLY_WINDOW_P (W))		\
+  ((WINDOW_PSEUDO_P (W)						\
+    || (MINI_WINDOW_P (W)					\
+	&& !EQ (W->horizontal_scroll_bar_type, Qbottom)))	\
    ? false							\
    : EQ (W->horizontal_scroll_bar_type, Qt)			\
    ? FRAME_HAS_HORIZONTAL_SCROLL_BARS (WINDOW_XFRAME (W))	\
@@ -1059,7 +1069,7 @@ extern Lisp_Object minibuf_selected_window;
 extern Lisp_Object make_window (void);
 extern Lisp_Object window_from_coordinates (struct frame *, int, int,
                                             enum window_part *, bool);
-extern void resize_frame_windows (struct frame *, int, bool, bool);
+extern void resize_frame_windows (struct frame *, int, bool);
 extern void restore_window_configuration (Lisp_Object);
 extern void delete_all_child_windows (Lisp_Object);
 extern void grow_mini_window (struct window *, int);

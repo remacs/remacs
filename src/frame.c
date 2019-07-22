@@ -712,7 +712,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 
   if (new_windows_width != old_windows_width)
     {
-      resize_frame_windows (f, new_windows_width, 1, 1);
+      resize_frame_windows (f, new_windows_width, true);
 
       /* MSDOS frames cannot PRETEND, as they change frame size by
 	 manipulating video hardware.  */
@@ -737,7 +737,7 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 	 left edges.  */
       || WINDOW_TOP_PIXEL_EDGE (r) != FRAME_TOP_MARGIN_HEIGHT (f))
     {
-      resize_frame_windows (f, new_windows_height, 0, 1);
+      resize_frame_windows (f, new_windows_height, false);
 
       /* MSDOS frames cannot PRETEND, as they change frame size by
 	 manipulating video hardware.  */
@@ -931,15 +931,11 @@ make_frame (bool mini_p)
   }
 
   if (mini_p)
-    {
-      set_window_buffer (mini_window,
-			 (NILP (Vminibuffer_list)
-			  ? get_minibuffer (0)
-			  : Fcar (Vminibuffer_list)),
-			 0, 0);
-      /* No horizontal scroll bars in minibuffers.  */
-      wset_horizontal_scroll_bar (mw, Qnil);
-    }
+    set_window_buffer (mini_window,
+		       (NILP (Vminibuffer_list)
+			? get_minibuffer (0)
+			: Fcar (Vminibuffer_list)),
+		       0, 0);
 
   fset_root_window (f, root_window);
   fset_selected_window (f, root_window);

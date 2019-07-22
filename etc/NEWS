@@ -2076,6 +2076,12 @@ See the section "(elisp) Window Hooks" in the Elisp manual for a
 detailed explanation of the new behavior.
 
 +++
+** Making scroll bar and fringe settings persistent for windows.
+The functions 'set-window-scroll-bars' and 'set-window-fringes' now
+have a new optional argument that makes the settings they produce
+reliably survive subsequent invocations of 'set-window-buffer'.
+
++++
 ** New option 'resize-mini-frames'.
 This option allows to automatically resize minibuffer-only frames
 similarly to how minibuffer windows are resized on "normal" frames.
