@@ -1,9 +1,9 @@
-;;; gravatar.el --- Get Gravatars
+;;; gravatar.el --- Get Gravatars -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 ;; Author: Julien Danjou <julien@danjou.info>
-;; Keywords: news
+;; Keywords: comm, multimedia
 
 ;; This file is part of GNU Emacs.
 
@@ -26,10 +26,9 @@
 
 (require 'url)
 (require 'url-cache)
-(require 'image)
 
 (defgroup gravatar nil
-  "Gravatar."
+  "Gravatars."
   :version "24.1"
   :group 'comm)
 
@@ -88,22 +87,13 @@ Valid sizes range from 1 to 2048 inclusive."
           gravatar-rating
           gravatar-size))
 
-(defun gravatar-cache-expired (url)
-  "Check if URL is cached for more than `gravatar-cache-ttl'."
-  (cond (url-standalone-mode
-         (not (file-exists-p (url-cache-create-filename url))))
-        (t (let ((cache-time (url-is-cached url)))
-             (if cache-time
-                 (time-less-p (time-add cache-time gravatar-cache-ttl) nil)
-               t)))))
-
 (defun gravatar-get-data ()
-  "Get data from current buffer."
+  "Return body of current URL buffer, or nil on failure."
   (save-excursion
     (goto-char (point-min))
-    (when (re-search-forward "^HTTP/.+ 200 OK$" nil (line-end-position))
-      (when (search-forward "\n\n" nil t)
-        (buffer-substring (point) (point-max))))))
+    (and (re-search-forward "^HTTP/.+ 200 OK$" nil (line-end-position))
+         (search-forward "\n\n" nil t)
+         (buffer-substring (point) (point-max)))))
 
 (defun gravatar-data->image ()
   "Get data of current buffer and return an image.
@@ -113,29 +103,20 @@ If no image available, return 'error."
 	(create-image data nil t)
       'error)))
 
-(autoload 'help-function-arglist "help-fns")
-
 ;;;###autoload
-(defun gravatar-retrieve (mail-address cb &optional cbargs)
+(defun gravatar-retrieve (mail-address callback &optional cbargs)
   "Asynchronously retrieve a gravatar for MAIL-ADDRESS.
-When finished, call CB as (apply CB GRAVATAR CBARGS),
+When finished, call CALLBACK as (apply CALLBACK GRAVATAR CBARGS),
 where GRAVATAR is either an image descriptor, or the symbol
 `error' if the retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
-    (if (gravatar-cache-expired url)
-	(let ((args (list url
-			  'gravatar-retrieved
-			  (list cb (when cbargs cbargs)))))
-	  (when (> (length (help-function-arglist 'url-retrieve))
-                   4)
-	    (setq args (nconc args (list t))))
-	  (apply #'url-retrieve args))
-      (apply cb
-               (with-temp-buffer
-                 (set-buffer-multibyte nil)
-                 (url-cache-extract (url-cache-create-filename url))
-                 (gravatar-data->image))
-               cbargs))))
+    (if (url-cache-expired url gravatar-cache-ttl)
+        (url-retrieve url #'gravatar-retrieved (list callback cbargs) t)
+      (apply callback
+             (with-temp-buffer
+               (url-cache-extract (url-cache-create-filename url))
+               (gravatar-data->image))
+             cbargs))))
 
 ;;;###autoload
 (defun gravatar-retrieve-synchronously (mail-address)
@@ -143,18 +124,15 @@ where GRAVATAR is either an image descriptor, or the symbol
 Value is either an image descriptor, or the symbol `error' if the
 retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
-    (if (gravatar-cache-expired url)
+    (if (url-cache-expired url gravatar-cache-ttl)
         (with-current-buffer (url-retrieve-synchronously url)
 	  (when gravatar-automatic-caching
             (url-store-in-cache (current-buffer)))
-          (let ((data (gravatar-data->image)))
-            (kill-buffer (current-buffer))
-            data))
+          (prog1 (gravatar-data->image)
+            (kill-buffer (current-buffer))))
       (with-temp-buffer
-        (set-buffer-multibyte nil)
         (url-cache-extract (url-cache-create-filename url))
         (gravatar-data->image)))))
-
 
 (defun gravatar-retrieved (status cb &optional cbargs)
   "Callback function used by `gravatar-retrieve'."
