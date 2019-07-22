@@ -26,6 +26,8 @@
 
 (require 'url)
 (require 'url-cache)
+(eval-when-compile
+  (require 'subr-x))
 
 (defgroup gravatar nil
   "Gravatars."
@@ -76,8 +78,9 @@ Valid sizes range from 1 to 2048 inclusive."
   "Base URL for getting gravatars.")
 
 (defun gravatar-hash (mail-address)
-  "Create a hash from MAIL-ADDRESS."
-  (md5 (downcase mail-address)))
+  "Return the Gravatar hash for MAIL-ADDRESS."
+  ;; https://gravatar.com/site/implement/hash/
+  (md5 (downcase (string-trim mail-address))))
 
 (defun gravatar-build-url (mail-address)
   "Return a URL to retrieve MAIL-ADDRESS gravatar."
@@ -114,7 +117,7 @@ Value is either an image descriptor, or the symbol `error' if the
 retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
     (with-current-buffer (if (url-cache-expired url gravatar-cache-ttl)
-                             (url-retrieve-synchronously url)
+                             (url-retrieve-synchronously url t)
                            (url-fetch-from-cache url))
       (gravatar-retrieved () #'identity))))
 
@@ -125,7 +128,8 @@ an image descriptor, or the symbol `error' on failure.
 This function is intended as a callback for `url-retrieve'."
   (let ((data (unless (plist-get status :error)
                 (gravatar-get-data))))
-    (and url-current-object        ; Only cache if not already cached.
+    (and data                      ; Only cache on success.
+         url-current-object        ; Only cache if not already cached.
          gravatar-automatic-caching
          (url-store-in-cache))
     (prog1 (apply cb (if data (create-image data nil t) 'error) cbargs)
