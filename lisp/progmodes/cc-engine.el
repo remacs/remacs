@@ -2977,6 +2977,7 @@ comment at the start of cc-engine.el for more info."
 ;; element is a list (HERE STATE END)), where HERE is the buffer position the
 ;; function was called for, STATE is the `parse-partial-sexp' state there, and
 ;; END is the end of the literal enclosing HERE, if any, or nil otherwise.
+;; N.B. END will be nil if the literal ends at EOB without a delimiter.
 
 (defun c-full-trim-near-cache ()
   ;; Remove stale entries in `c-full-lit-near-cache', i.e. those whose END
@@ -3045,7 +3046,8 @@ comment at the start of cc-engine.el for more info."
   ;; (STATE)                    otherwise,
   ;; where STATE is the parsing state at HERE, TYPE is the type of the literal
   ;; enclosing HERE, (one of 'string, 'c, 'c++) and (BEG . END) is the
-  ;; boundaries of that literal (including the delimiters).
+  ;; boundaries of that literal (including the delimiters), with END being nil
+  ;; if there is no end delimiter (i.e. the literal ends at EOB).
   ;;
   ;; Unless NOT-IN-DELIMITER is non-nil, when TO is inside a two-character
   ;; comment opener, this is recognized as being in a comment literal.
@@ -3064,6 +3066,7 @@ comment at the start of cc-engine.el for more info."
 	       (base (car elt))
 	       (near-base base)
 	       (s (cadr elt))
+	       s1
 	       (end (car (cddr elt)))
 	       far-base-and-state far-base far-s ty start)
 	  (if (or
@@ -3104,12 +3107,17 @@ comment at the start of cc-engine.el for more info."
 		      (t 'c)))
 	    (setq start (nth 8 s))
 	    (unless end
-	      (parse-partial-sexp here (point-max)
-				  nil	     ; TARGETDEPTH
-				  nil	     ; STOPBEFORE
-				  s	     ; OLDSTATE
-				  'syntax-table) ; stop at end of literal
-	      (setq end (point)))
+	      (setq s1 (parse-partial-sexp here (point-max)
+					   nil		  ; TARGETDEPTH
+					   nil		  ; STOPBEFORE
+					   s		  ; OLDSTATE
+					   'syntax-table)); stop at EO literal
+	      (unless (or (nth 3 s1)			  ; still in a string
+			  (and (nth 4 s1)
+			       (not (eq (nth 7 s1) 'syntax-table)))) ; still
+								     ; in a
+								     ; comment
+		(setq end (point))))
 	    (unless (eq near-base here)
 	      (c-full-put-near-cache-entry here s end))
 	    (list s ty (cons start end)))
@@ -5555,8 +5563,11 @@ comment at the start of cc-engine.el for more info."
 						   s
 						   'syntax-table)
 			       (point)))))
-	    (let ((pp-to-lit (c-full-pp-to-literal pos not-in-delimiter)))
-	      (car (cddr pp-to-lit))))))
+	    (let* ((pp-to-lit (c-full-pp-to-literal pos not-in-delimiter))
+		   (limits (car (cddr pp-to-lit))))
+	      (if (and limits (null (cdr limits)))
+		  (cons (car limits) (point-max))
+		limits)))))
       (cond
        (lit-limits)
 
