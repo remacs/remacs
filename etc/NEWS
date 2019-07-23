@@ -92,17 +92,21 @@ and in particular better supports the Address Space Layout
 Randomization (ASLR) feature, a security technique used by most modern
 operating systems.
 
-Portable dumping can be disabled at configure time via the configure
-option '--with-dumping=unexec' (but we don't recommend that, unless
-the portable dumping doesn't work on your system for some
-reason---please report such systems to the Emacs developers as bugs).
-
 When built with the portable dumping support (which is the default),
 Emacs looks for the 'emacs.pdmp' file, generated during the build, in
 its data directory at startup, and loads the dumped state from there.
 The new command-line argument '--dump-file=FILE' allows to specify a
 non-default '.pdmp' file to load the state from; see the node "Initial
 Options" in the Emacs manual for more information.
+
+An Emacs started via a dump file can create a new dump file only if it
+was invoked with the -batch option.
+
+Although the portable dumper has been tested, it may have a bug on
+unusual platforms.  If you require traditional unexec dumping you can
+use the configure-time option '--with-dumping=unexec'; however, please
+file a bug report describing the situation, as unexec dumping is
+deprecated.
 
 +++
 ** The new configure option '--enable-checking=structs' attempts to

@@ -686,7 +686,7 @@ dump_error_to_string (enum pdumper_load_result result)
 }
 
 /* Find a path (absolute or relative) to the Emacs executable.
-   Called early in initialization by portable dump loading code, so we
+   Called early in initialization by portable dumper loading code, so we
    can't use lisp and associated machinery.  On success, *EXENAME is
    set to a heap-allocated string giving a path to the Emacs
    executable or to NULL if we can't determine the path immediately.
@@ -801,12 +801,12 @@ load_pdump (int argc, char **argv)
     ;
 
   /* TODO: maybe more thoroughly scrub process environment in order to
-     make this use case (loading a pdumper image in an unexeced emacs)
+     make this use case (loading a dump file in an unexeced emacs)
      possible?  Right now, we assume that things we don't touch are
      zero-initialized, and in an unexeced Emacs, this assumption
      doesn't hold.  */
   if (initialized)
-    fatal ("cannot load pdumper image in unexeced Emacs");
+    fatal ("cannot load dump file in unexeced Emacs");
 
   /* Look for an explicitly-specified dump file.  */
   const char *path_exec = PATH_EXEC;

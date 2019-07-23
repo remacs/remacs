@@ -4531,9 +4531,9 @@ mark_maybe_object (Lisp_Object obj)
 
   void *po = XPNTR (obj);
 
-  /* If the pointer is in the dumped image and the dump has a record
+  /* If the pointer is in the dump image and the dump has a record
      of the object starting at the place where the pointer points, we
-     definitely have an object.  If the pointer is in the dumped image
+     definitely have an object.  If the pointer is in the dump image
      and the dump has no idea what the pointer is pointing at, we
      definitely _don't_ have an object.  */
   if (pdumper_object_p (po))

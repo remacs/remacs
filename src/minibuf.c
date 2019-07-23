@@ -1885,7 +1885,7 @@ init_minibuf_once_for_pdumper (void)
   PDUMPER_IGNORE (minibuf_prompt_width);
 
   /* We run this function on first initialization and whenever we
-     restore from a pdumper image.  pdumper doesn't try to preserve
+     restore from a dump file.  pdumper doesn't try to preserve
      frames, windows, and so on, so reset everything related here.  */
   Vminibuffer_list = Qnil;
   minibuf_level = 0;
