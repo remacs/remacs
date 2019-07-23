@@ -2628,6 +2628,8 @@ dump_vectorlike_generic (struct dump_context *ctx,
 static bool
 dump_hash_table_stable_p (const struct Lisp_Hash_Table *hash)
 {
+  if (hash->test.hashfn == hashfn_user_defined)
+    error ("cannot dump hash tables with user-defined tests");  /* Bug#36769 */
   bool is_eql = hash->test.hashfn == hashfn_eql;
   bool is_equal = hash->test.hashfn == hashfn_equal;
   ptrdiff_t size = HASH_TABLE_SIZE (hash);

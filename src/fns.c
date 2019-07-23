@@ -4017,7 +4017,7 @@ hashfn_eql (Lisp_Object key, struct Lisp_Hash_Table *h)
 /* Given HT, return a hash code for KEY which uses a user-defined
    function to compare keys.  */
 
-static Lisp_Object
+Lisp_Object
 hashfn_user_defined (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
   Lisp_Object args[] = { h->test.user_hash_function, key };
