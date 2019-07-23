@@ -4023,7 +4023,7 @@ hashfn_user_defined (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
   Lisp_Object args[] = { h->test.user_hash_function, key };
   Lisp_Object hash = hash_table_user_defined_call (ARRAYELTS (args), args, h);
-  return BIGNUMP (hash) ? make_fixnum (sxhash_bignum (XBIGNUM (hash))) : hash;
+  return FIXNUMP (hash) ? hash : make_fixnum (sxhash (hash, 0));
 }
 
 struct hash_table_test const
