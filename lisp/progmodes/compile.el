@@ -107,9 +107,30 @@ and a string describing how the process finished.")
 
 (defvar compilation-in-progress nil
   "List of compilation processes now running.")
-(or (assq 'compilation-in-progress minor-mode-alist)
-    (setq minor-mode-alist (cons '(compilation-in-progress " Compiling")
-				 minor-mode-alist)))
+(or (assq 'compilation-in-progress mode-line-modes)
+    (add-to-list 'mode-line-modes
+                 (list 'compilation-in-progress
+                       (propertize "[Compiling] "
+	                           'help-echo "Compiling; mouse-2: Goto Buffer"
+                                   'mouse-face 'mode-line-highlight
+                                   'local-map
+                                   (make-mode-line-mouse-map
+                                    'mouse-2
+			            #'compilation-goto-in-progress-buffer)))))
+
+(defun compilation-goto-in-progress-buffer ()
+  "Switch to the compilation buffer."
+  (interactive)
+  (cond
+   ((> (length compilation-in-progress) 1)
+    (switch-to-buffer (completing-read
+                       "Several compilation buffers; switch to: "
+                       (mapcar #'buffer-name compilation-in-progress)
+                       nil t)))
+   (compilation-in-progress
+    (switch-to-buffer (process-buffer (car compilation-in-progress))))
+   (t
+    (error "No ongoing compilations"))))
 
 (defvar compilation-error "error"
   "Stem of message to print when no matches are found.")
