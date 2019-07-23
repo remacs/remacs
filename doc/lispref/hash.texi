@@ -132,7 +132,7 @@ When you add an association to a hash table and the table is full,
 it grows automatically.  This value specifies how to make the hash table
 larger, at that time.
 
-If @var{rehash-size} is a fixnum, it should be positive and the hash
+If @var{rehash-size} is an integer, it should be positive, and the hash
 table grows by adding approximately that much to the nominal size.  If
 @var{rehash-size} is floating point, it had better be greater
 than 1, and the hash table grows by multiplying the old size by
@@ -239,8 +239,8 @@ to understand how hash tables work, and what a @dfn{hash code} means.
 
   You can think of a hash table conceptually as a large array of many
 slots, each capable of holding one association.  To look up a key,
-@code{gethash} first computes a fixnum, the hash code, from the key.
-It reduces this fixnum modulo the length of the array, to produce an
+@code{gethash} first computes an integer, the hash code, from the key.
+It can reduce this integer modulo the length of the array, to produce an
 index in the array.  Then it looks in that slot, and if necessary in
 other nearby slots, to see if it has found the key being sought.
 
@@ -265,7 +265,7 @@ The function @var{test-fn} should accept two arguments, two keys, and
 return non-@code{nil} if they are considered the same.
 
 The function @var{hash-fn} should accept one argument, a key, and return
-a fixnum that is the hash code of that key.  For good results, the
+an integer that is the hash code of that key.  For good results, the
 function should use the whole range of fixnums for hash codes,
 including negative fixnums.
 
@@ -276,12 +276,12 @@ under the property @code{hash-table-test}; the property value's form is
 
 @defun sxhash-equal obj
 This function returns a hash code for Lisp object @var{obj}.
-This is a fixnum that reflects the contents of @var{obj}
+This is an integer that reflects the contents of @var{obj}
 and the other Lisp objects it points to.
 
 If two objects @var{obj1} and @var{obj2} are @code{equal}, then
 @code{(sxhash-equal @var{obj1})} and @code{(sxhash-equal @var{obj2})}
-are the same fixnum.
+are the same integer.
 
 If the two objects are not @code{equal}, the values returned by
 @code{sxhash-equal} are usually different, but not always; once in a
@@ -299,7 +299,7 @@ result reflects identity of @var{obj}, but not its contents.
 
 If two objects @var{obj1} and @var{obj2} are @code{eq}, then
 @code{(sxhash-eq @var{obj1})} and @code{(sxhash-eq @var{obj2})} are
-the same fixnum.
+the same integer.
 @end defun
 
 @defun sxhash-eql obj
@@ -310,7 +310,7 @@ in which case a hash code is generated for the value.
 
 If two objects @var{obj1} and @var{obj2} are @code{eql}, then
 @code{(sxhash-eql @var{obj1})} and @code{(sxhash-eql @var{obj2})} are
-the same fixnum.
+the same integer.
 @end defun
 
   This example creates a hash table whose keys are strings that are
