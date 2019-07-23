@@ -1354,10 +1354,21 @@ folding, but only for that search.  (Replace commands have a different
 default, controlled by a separate option; see @ref{Replacement and Lax
 Matches}.)
 
-  Like with case folding, typing an explicit variant of a character,
-such as @code{@"a}, as part of the search string disables character
-folding for that search.  If you delete such a character from the
-search string, this effect ceases.
+@vindex char-fold-symmetric
+  By default, typing an explicit variant of a character, such as
+@code{@"a}, as part of the search string doesn't match its base
+character, such as @code{a}.  But if you customize the variable
+@code{char-fold-symmetric} to @code{t}, then search commands treat
+equivalent characters the same and use of any of a set of equivalent
+characters in a search string finds any of them in the text being
+searched, so typing an accented character @code{@"a} matches the
+letter @code{a} as well as all the other variants like @code{@'a}.
+
+@vindex char-fold-include
+@vindex char-fold-exclude
+  You can add new foldings using the customizable variable
+@code{char-fold-include}, or remove the existing ones using the
+customizable variable @code{char-fold-exclude}.
 
 @node Replace
 @section Replacement Commands

@@ -1175,6 +1175,15 @@ rather than stopping after one level, such that searching for
 e.g. GREEK SMALL LETTER IOTA will now also find GREEK SMALL LETTER
 IOTA WITH OXIA.
 
++++
+*** New char-folding options: 'char-fold-include' lets you add ad hoc
+foldings, 'char-fold-exclude' to remove foldings from default decomposition,
+and 'char-fold-symmetric' to search for any of an equivalence class of
+characters.  For example, with a 'nil' value of 'char-fold-symmetric'
+you can search for "e" to find "é", but not vice versa.  With a non-nil
+value you can search for either, for example, you can search for "é"
+to find "e".
+
 ** Debugger
 
 +++
