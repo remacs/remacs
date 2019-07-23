@@ -5507,7 +5507,7 @@ staticpro (Lisp_Object const *varaddress)
 static void
 allow_garbage_collection (intmax_t consing)
 {
-  consing_until_gc = consing;
+  consing_until_gc -= OBJECT_CT_MAX - consing;
   garbage_collection_inhibited--;
 }
 
