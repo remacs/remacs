@@ -4964,15 +4964,6 @@ flush_stack_call_func (void (*func) (void *arg), void *arg)
   eassert (current_thread == self);
 }
 
-static bool
-c_symbol_p (struct Lisp_Symbol *sym)
-{
-  char *lispsym_ptr = (char *) lispsym;
-  char *sym_ptr = (char *) sym;
-  ptrdiff_t lispsym_offset = sym_ptr - lispsym_ptr;
-  return 0 <= lispsym_offset && lispsym_offset < sizeof lispsym;
-}
-
 /* Determine whether it is safe to access memory at address P.  */
 static int
 valid_pointer_p (void *p)

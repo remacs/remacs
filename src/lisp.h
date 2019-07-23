@@ -1024,6 +1024,20 @@ builtin_lisp_symbol (int index)
   return make_lisp_symbol (&lispsym[index]);
 }
 
+INLINE bool
+c_symbol_p (struct Lisp_Symbol *sym)
+{
+  char *bp = (char *) lispsym;
+  char *sp = (char *) sym;
+  if (PTRDIFF_MAX < INTPTR_MAX)
+    return bp <= sp && sp < bp + sizeof lispsym;
+  else
+    {
+      ptrdiff_t offset = sp - bp;
+      return 0 <= offset && offset < sizeof lispsym;
+    }
+}
+
 INLINE void
 (CHECK_SYMBOL) (Lisp_Object x)
 {

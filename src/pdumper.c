@@ -719,12 +719,7 @@ emacs_offset (const void *emacs_ptr)
 static bool
 dump_builtin_symbol_p (Lisp_Object object)
 {
-  if (!SYMBOLP (object))
-    return false;
-  char *bp = (char *) lispsym;
-  struct Lisp_Symbol *s = XSYMBOL (object);
-  char *sp = (char *) s;
-  return bp <= sp && sp < bp + sizeof (lispsym);
+  return SYMBOLP (object) && c_symbol_p (XSYMBOL (object));
 }
 
 /* Return whether OBJECT has the same bit pattern in all Emacs
