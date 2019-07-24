@@ -9434,10 +9434,16 @@ With optional ARG, move across that many fields."
       (goto-char (point-max)))
     (widget-backward arg)))
 
+(defcustom gnus-collect-urls-primary-text "Link"
+  "The widget text for the default link in `gnus-summary-browse-url'."
+  :version "27.1"
+  :type 'string
+  :group 'gnus-article-various)
+
 (defun gnus-collect-urls ()
   "Return the list of URLs in the buffer after (point).
-The 1st element is the one named 'Link', if any."
-  (let ((pt (point)) urls link)
+The 1st element is the widget named by `gnus-collect-urls-primary-text'."
+  (let ((pt (point)) urls primary)
     (while (progn (widget-move 1 t) ; no echo
 		  ;; `widget-move' wraps around to top of buffer.
 		  (> (point) pt))
@@ -9446,12 +9452,13 @@ The 1st element is the one named 'Link', if any."
                  (u (or (widget-value w)
                         (get-text-property pt 'gnus-string))))
 	(when (string-match-p "\\`[[:alpha:]]+://" u)
-          (if (and (null link) (string= "Link" (widget-text w)))
-              (setq link u)
+          (if (and gnus-collect-urls-primary-text (null primary)
+                   (string= gnus-collect-urls-primary-text (widget-text w)))
+              (setq primary u)
 	    (push u urls)))))
     (setq urls (nreverse urls))
-    (when link
-      (push link urls))
+    (when primary
+      (push primary urls))
     (delete-dups urls)))
 
 (defun gnus-summary-browse-url (arg)
@@ -9459,7 +9466,9 @@ The 1st element is the one named 'Link', if any."
 With prefix ARG, also collect links from message headers.
 
 Links are opened using `browse-url'.  If only one link is found,
-browse that directly, otherwise use completion to select a link."
+browse that directly, otherwise use completion to select a link.
+The first link marked in the article text with
+`gnus-collect-urls-primary-text' is the default."
   (interactive "P")
   (let (urls target)
     (gnus-summary-select-article)
