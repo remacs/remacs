@@ -29,7 +29,8 @@ use crate::{
         map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
         map_obarray, maybe_quit, menu_item_eval_property, safe_call1, specbind,
     },
-    remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
+    remacs_sys::{char_bits, current_global_map as _current_global_map,
+    globals, EmacsInt, PURE_P},
     remacs_sys::{
         Fcommand_remapping, Fcons, Fcurrent_active_maps, Fevent_convert_list, Flength,
         Fmake_char_table, Fset_char_table_range, Fterpri,
@@ -64,6 +65,8 @@ pub extern "C" fn set_where_is_cache(val: LispObject) {
     }
 }
 
+// Start here **************************
+
 // TODO Change this wherever it is used in rust to this implementation
 // TODO: Is this function used anywhere? ripgrep cannot seem to find it
 
@@ -79,8 +82,9 @@ pub extern "C" fn _map_keymap_call(key: LispObject, val: LispObject, fun: LispOb
 }
 
 // TODO Change this wherever it is used in rust to this implementation
-// Same as map_keymap, but does it right, properly eliminating duplicate
-// bindings due to inheritance.
+//
+/// Same as map_keymap, but does it right, properly eliminating duplicate
+/// bindings due to inheritance.
 #[no_mangle]
 pub extern "C" fn _map_keymap_canonical(
     map: LispObject,
@@ -163,7 +167,7 @@ pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject 
     }
 }
 
-// TODO: Fix this mess with all the unwrap
+// TODO: Fix this mess with all the unwrap but how?
 // TODO: Avoid using FCONS?
 #[no_mangle]
 pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
@@ -213,28 +217,6 @@ pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
     res.into()
 }
 
-// TODO Finish this
-#[no_mangle]
-pub extern "C" fn _preferred_sequence_p(seq: LispObject) -> i64 {
-    unsafe {
-        let mut i: i64 = 0;
-        let len: EmacsInt = Flength(seq).as_fixnum_coerce_marker_or_error();
-        let result: i8 = 1;
-        for i in 0..len {
-            unsafe {
-                let elt: LispObject = aref(seq, i);
-                if elt.is_not_integer() {
-                    0 as i64;
-                } else {
-                    let modifiers = &(char_bits::CHAR_MODIFIER_MASK & !char_bits::CHAR_META);
-                }
-            }
-        }
-    }
-    // Make compiler shut up for now
-    0 as i64
-}
-
 /* Return the offset of POSITION, a click position, in the style of
 the respective argument of Fkey_binding.  */
 pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
@@ -259,6 +241,8 @@ pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
     args_out_of_range!(ThreadState::current_buffer_unchecked(), position);
 }
 
+//pub unsafe fn _store_in_keymap(keymap: LispObject, idx: LispObject, def: LispObject){
+
 // Help functions for describing and documenting keymaps
 struct _accessible_keymaps_data {
     maps: LispObject,
@@ -267,6 +251,8 @@ struct _accessible_keymaps_data {
     // Does the current sequence end in the meta-prefix-char?
     is_metized: bool,
 }
+
+// End here *************************************
 
 // Which keymaps are reverse-stored in the cache.
 declare_GC_protected_static!(where_is_cache_keymaps, Qt);
