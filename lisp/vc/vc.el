@@ -339,7 +339,7 @@
 ;;
 ;; - log-search (pattern)
 ;;
-;;   Search for string PATTERN in the revision log.
+;;   Search for PATTERN in the revision log.
 ;;
 ;; - log-view-mode ()
 ;;
@@ -2532,7 +2532,12 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
 
 ;;;###autoload
 (defun vc-log-search (pattern)
-  "Search a log of changes for PATTERN string.
+  "Search the log of changes for PATTERN.
+
+PATTERN is usually interpreted as a regular expression.  However, its
+exact semantics is up to the backend's log search command; some can
+only match fixed strings.
+
 Display all entries that match log messages in long format.
 With a prefix argument, ask for a command to run that will output
 log entries."

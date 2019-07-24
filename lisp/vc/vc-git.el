@@ -74,6 +74,9 @@
 ;; - steal-lock (file &optional revision)          NOT NEEDED
 ;; HISTORY FUNCTIONS
 ;; * print-log (files buffer &optional shortlog start-revision limit)   OK
+;; * log-outgoing (buffer remote-location)         OK
+;; * log-incoming (buffer remote-location)         OK
+;; - log-search (buffer pattern)                   OK
 ;; - log-view-mode ()                              OK
 ;; - show-log-entry (revision)                     OK
 ;; - comment-history (file)                        ??
@@ -1074,6 +1077,13 @@ If LIMIT is a revision string, use it as an end-revision."
 		      remote-location))))
 
 (defun vc-git-log-search (buffer pattern)
+  "Search the log of changes for PATTERN and output results into BUFFER.
+
+PATTERN is a basic regular expression by default in Git.
+
+Display all entries that match log messages in long format.
+With a prefix argument, ask for a command to run that will output
+log entries."
   (let ((args `("log" "--no-color" "-i"
                 ,(format "--grep=%s" (or pattern "")))))
     (when current-prefix-arg
