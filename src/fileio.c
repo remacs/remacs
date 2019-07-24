@@ -1778,20 +1778,18 @@ get_homedir (void)
 static char *
 search_embedded_absfilename (char *nm, char *endp)
 {
-  char *p, *s;
-
-  for (p = nm + 1; p < endp; p++)
+  char *p = nm + 1;
+#ifdef DOUBLE_SLASH_IS_DISTINCT_ROOT
+  p += (IS_DIRECTORY_SEP (p[-1]) && IS_DIRECTORY_SEP (p[0])
+	&& !IS_DIRECTORY_SEP (p[1]));
+#endif
+  for (; p < endp; p++)
     {
-      if (IS_DIRECTORY_SEP (p[-1])
-	  && file_name_absolute_p (p)
-#if defined (WINDOWSNT) || defined (CYGWIN)
-	  /* // at start of file name is meaningful in Apollo,
-	     WindowsNT and Cygwin systems.  */
-	  && !(IS_DIRECTORY_SEP (p[0]) && p - 1 == nm)
-#endif /* not (WINDOWSNT || CYGWIN) */
-	  )
+      if (IS_DIRECTORY_SEP (p[-1]) && file_name_absolute_p (p))
 	{
-	  for (s = p; *s && !IS_DIRECTORY_SEP (*s); s++);
+	  char *s;
+	  for (s = p; *s && !IS_DIRECTORY_SEP (*s); s++)
+	    continue;
 	  if (p[0] == '~' && s > p + 1)	/* We've got "/~something/".  */
 	    {
 	      USE_SAFE_ALLOCA;
