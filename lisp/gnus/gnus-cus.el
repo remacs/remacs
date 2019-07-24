@@ -254,7 +254,10 @@ DOC is a documentation string for the parameter.")
 (defconst gnus-extra-group-parameters
   '((uidvalidity (string :tag "IMAP uidvalidity") "\
 Server-assigned value attached to IMAP groups, used to maintain consistency.")
-    (modseq (string :tag "modseq") "modseq")
+    (modseq (choice :tag "modseq"
+		    (const :tag "None" nil)
+		    (string :tag "Sequence number"))
+	    "Modification seqence number")
     (active (cons :tag "active" (integer :tag "min") (integer :tag "max"))
 	    "active")
     (permanent-flags (repeat :tag "Permanent Flags" (symbol :tag "Flag"))
