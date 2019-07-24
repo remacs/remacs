@@ -1352,14 +1352,25 @@ See also `soap-wsdl-resolve-references'."
 
 (defun soap-encode-xs-simple-type-attributes (value type)
   "Encode the XML attributes for VALUE according to TYPE.
-The xsi:type and an optional xsi:nil attributes are added.  The
-attributes are inserted in the current buffer at the current
-position.
+The attributes are inserted in the current buffer at the current
+position.  If TYPE has no attributes, the xsi:type attribute and
+an optional xsi:nil attribute are added.
 
 This is a specialization of `soap-encode-attributes' for
 `soap-xs-simple-type' objects."
-  (insert " xsi:type=\"" (soap-element-fq-name type) "\"")
-  (unless value (insert " xsi:nil=\"true\"")))
+  (let ((attributes (soap-get-xs-attributes type)))
+    (dolist (a attributes)
+      (let ((element-name (soap-element-name a)))
+        (if (soap-xs-attribute-default a)
+            (insert " " element-name
+                    "=\"" (soap-xs-attribute-default a) "\"")
+          (dolist (value-pair value)
+            (when (equal element-name (symbol-name (car-safe value-pair)))
+              (insert " " element-name
+                      "=\"" (cdr value-pair) "\""))))))
+    (unless attributes
+      (insert " xsi:type=\"" (soap-element-fq-name type) "\"")
+      (unless value (insert " xsi:nil=\"true\"")))))
 
 (defun soap-encode-xs-simple-type (value type)
   "Encode the VALUE according to TYPE.
