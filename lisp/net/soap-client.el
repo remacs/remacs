@@ -464,8 +464,14 @@ position.
 
 This is a specialization of `soap-encode-value' for
 `soap-xs-basic-type' objects."
-  (let ((kind (soap-xs-basic-type-kind type)))
-
+  (let ((kind (soap-xs-basic-type-kind type))
+        ;; Handle conversions of this form:
+        ;; (Element (AttrA . "A") (AttrB . "B") "Value here")
+        ;; to:
+        ;; <ns:Element AttrA="A" AttrB="B">Value here</ns:Element>
+        ;; by assuming that if this is a list, it must have attributes
+        ;; preceding the basic value.
+        (value (if (listp value) (progn (car (last value))) value)))
     (when (eq kind 'anyType)
       (cond ((stringp value)
              (setq kind 'string))
