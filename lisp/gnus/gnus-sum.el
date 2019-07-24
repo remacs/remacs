@@ -9438,7 +9438,7 @@ With optional ARG, move across that many fields."
   "Return the list of URLs in the buffer after (point).
 The 1st element is the one named 'Link', if any."
   (let ((pt (point)) urls link)
-    (while (progn (widget-move 1)
+    (while (progn (widget-move 1 t) ; no echo
 		  ;; `widget-move' wraps around to top of buffer.
 		  (> (point) pt))
       (setq pt (point))
