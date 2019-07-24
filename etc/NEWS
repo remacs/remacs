@@ -1815,6 +1815,9 @@ relative to the 'default-directory' of the current buffer.  We recommend
 always setting "$HOME" to an absolute file name, so that its meaning is
 independent of where Emacs was started.
 
+** file-name-absolute-p no longer considers "~foo" to be an absolute
+file name if there is no user named "foo".
+
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
 

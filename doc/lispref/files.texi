@@ -2154,12 +2154,20 @@ backslash, or with a drive specification @samp{@var{x}:/}, where
 
 @defun file-name-absolute-p filename
 This function returns @code{t} if file @var{filename} is an absolute
-file name or begins with @samp{~}, @code{nil} otherwise.
+file name, @code{nil} otherwise.  A file name is considered to be
+absolute if its first component is @samp{~}, or is @samp{~@var{user}}
+where @var{user} is a valid login name.  In the following examples,
+assume that there is a user named @samp{rms} but no user named
+@samp{nosuchuser}.
 
 @example
 @group
 (file-name-absolute-p "~rms/foo")
      @result{} t
+@end group
+@group
+(file-name-absolute-p "~nosuchuser/foo")
+     @result{} nil
 @end group
 @group
 (file-name-absolute-p "rms/foo")

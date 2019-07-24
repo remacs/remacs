@@ -136,3 +136,14 @@ Also check that an encoding error can appear in a symlink."
          (name (expand-file-name "bar")))
     (should (and (file-name-absolute-p name)
                  (not (eq (aref name 0) ?~))))))
+
+(ert-deftest fileio-tests--no-such-user ()
+  "Test file-name-absolute-p on ~nosuchuser."
+  (unless (user-full-name "nosuchuser")
+    (should (not (file-name-absolute-p "~nosuchuser")))
+    (should (not (file-name-absolute-p "~nosuchuser/")))
+    (should (not (file-name-absolute-p "~nosuchuser//")))
+    (should (not (file-name-absolute-p "~nosuchuser/foo")))
+    (should (not (file-name-absolute-p "~nosuchuser/foo/")))
+    (should (not (file-name-absolute-p "~nosuchuser/foo//")))
+    (should (not (file-name-absolute-p "~nosuchuser/foo/bar")))))
