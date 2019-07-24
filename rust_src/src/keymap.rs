@@ -241,8 +241,6 @@ pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
     args_out_of_range!(ThreadState::current_buffer_unchecked(), position);
 }
 
-//pub unsafe fn _store_in_keymap(keymap: LispObject, idx: LispObject, def: LispObject){
-
 // Help functions for describing and documenting keymaps
 struct _accessible_keymaps_data {
     maps: LispObject,
