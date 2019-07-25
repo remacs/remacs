@@ -473,6 +473,7 @@ this variable directly.")
 		       (fboundp entry))
 		  (propertize (symbol-name entry)
 			      'face 'link
+                              'follow-link "\r"
 			      'mouse-face 'highlight
 			      'help-echo "\
 mouse-2: jump to definition\n\
@@ -534,9 +535,9 @@ RET: expand or collapse"))
     (define-key map "\r"    'profiler-report-toggle-entry)
     (define-key map "\t"    'profiler-report-toggle-entry)
     (define-key map "i"     'profiler-report-toggle-entry)
-    (define-key map [mouse-1] 'profiler-report-toggle-entry)
     (define-key map "f"     'profiler-report-find-entry)
     (define-key map "j"     'profiler-report-find-entry)
+    (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'profiler-report-find-entry)
     (define-key map "d"	    'profiler-report-describe-entry)
     (define-key map "C"	    'profiler-report-render-calltree)
