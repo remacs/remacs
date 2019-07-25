@@ -125,7 +125,10 @@ and a string describing how the process finished.")
    ((> (length compilation-in-progress) 1)
     (switch-to-buffer (completing-read
                        "Several compilation buffers; switch to: "
-                       (mapcar #'buffer-name compilation-in-progress)
+                       (mapcar
+                        (lambda (process)
+                          (buffer-name (process-buffer process)))
+                        compilation-in-progress)
                        nil t)))
    (compilation-in-progress
     (switch-to-buffer (process-buffer (car compilation-in-progress))))
