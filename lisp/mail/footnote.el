@@ -867,7 +867,7 @@ advice, and FUNCTION is what'll be added as an :around advice."
      (unless ,variable
        ;; nil and `ignore' have the same semantics for adaptive-fill-function,
        ;; but only `ignore' behaves correctly with add/remove-function.
-       (setq ,variable #'ignore))
+       (setq-local ,variable #'ignore))
      (remove-function (local ',variable) #'function)
      (when ,mode
        (add-function :around (local ',variable)
