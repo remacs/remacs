@@ -695,8 +695,11 @@ its argument list allows full Common Lisp conventions."
   "Bind the variables in ARGS to the result of EXPR and execute BODY."
   (declare (indent 2)
            (debug (&define cl-macro-list1 def-form cl-declarations def-body)))
-  (let* ((cl--bind-lets nil) (cl--bind-forms nil)
-	 (cl--bind-defs nil) (cl--bind-block 'cl-none) (cl--bind-enquote nil))
+  (let* ((cl--bind-lets nil)
+         (cl--bind-forms nil)
+	 (cl--bind-defs nil)
+         (cl--bind-block args)
+         (cl--bind-enquote nil))
     (cl--do-arglist (or args '(&aux)) expr)
     (macroexp-let* (nreverse cl--bind-lets)
                    (macroexp-progn (append (nreverse cl--bind-forms) body)))))
