@@ -404,7 +404,8 @@ mode they are described in the manual "(emacs) Display".
 ---
 ** New variable 'xref-file-name-display' controls the display of file
 names in xref buffers.
-** New variable `file-size-function' controls how file sizes are displayed
+
+** New variable `file-size-function' controls how file sizes are displayed.
 
 
 * Editing Changes in Emacs 27.1
