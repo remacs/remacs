@@ -695,8 +695,9 @@ footnote area, returns `point-max'."
    ;; If not within a footnote's text, fallback to the default.
    (funcall orig-fun)))
 
-(defun footnote--fill-paragraph (justify)
-  (when (footnote--text-under-cursor)
+(defun footnote--fill-paragraph (orig-fun justify)
+  (if (not (footnote--text-under-cursor))
+      (funcall orig-fun justify)
     (let ((fill-paragraph-function nil)
           (fill-prefix (if footnote-align-to-fn-text
                            (footnote--fill-prefix-string)
@@ -855,6 +856,23 @@ being set it is automatically widened."
     map)
   "Keymap used for binding footnote minor mode.")
 
+(defmacro footnote--local-advice (mode variable function)
+  "Add advice to a variable holding buffer-local functions.
+Typical use would be to advice variables like
+`fill-paragraph-function' from minor modes.
+
+MODE is the minor mode symbol, VARIABLE is the variable to get
+advice, and FUNCTION is what'll be added as an :around advice."
+  `(progn
+     (unless ,variable
+       ;; nil and `ignore' have the same semantics for adaptive-fill-function,
+       ;; but only `ignore' behaves correctly with add/remove-function.
+       (setq ,variable #'ignore))
+     (remove-function (local ',variable) #'function)
+     (when ,mode
+       (add-function :around (local ',variable)
+                     #',function))))
+
 ;;;###autoload
 (define-minor-mode footnote-mode
   "Toggle Footnote mode.
@@ -865,13 +883,10 @@ play around with the following keys:
 \\{footnote-minor-mode-map}"
   :lighter    footnote-mode-line-string
   :keymap     footnote-minor-mode-map
-  ;; (filladapt-mode t)
-  (unless adaptive-fill-function
-    ;; nil and `ignore' have the same semantics for adaptive-fill-function,
-    ;; but only `ignore' behaves correctly with add/remove-function.
-    (setq adaptive-fill-function #'ignore))
-  (remove-function (local 'adaptive-fill-function)
-                   #'footnote--adaptive-fill-function)
+  (footnote--local-advice footnote-mode adaptive-fill-function
+                          footnote--adaptive-fill-function)
+  (footnote--local-advice footnote-mode fill-paragraph-function
+                          footnote--fill-paragraph)
   (when footnote-mode
     ;; (footnote-setup-keybindings)
     (make-local-variable 'footnote-style)
@@ -882,9 +897,6 @@ play around with the following keys:
     (make-local-variable 'footnote-start-tag)
     (make-local-variable 'footnote-end-tag)
     (make-local-variable 'adaptive-fill-function)
-    (add-function :around (local 'adaptive-fill-function)
-                  #'footnote--adaptive-fill-function)
-    (setq-local fill-paragraph-function #'footnote--fill-paragraph)
 
     ;; Filladapt was an XEmacs package which is now in GNU ELPA.
     (when (boundp 'filladapt-token-table)
