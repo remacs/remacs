@@ -1614,8 +1614,9 @@ with bindings made in the minor mode, local, or global keymaps.  I.e.,
 the remapping only applies if the original key sequence would
 otherwise not have any binding.
 
-@code{local-function-key-map} inherits from @code{function-key-map},
-but the latter should not be used directly.
+@code{local-function-key-map} inherits from @code{function-key-map}.
+The latter should only be altered if you want the binding to apply in
+all terminals, so using the former is almost always preferred.
 @end defvar
 
 @defvar key-translation-map

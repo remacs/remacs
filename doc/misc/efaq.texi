@@ -3890,7 +3890,7 @@ The only way to affect the behavior of keys within Emacs is through
 @code{local-function-key-map} map.  For instance,
 
 @lisp
-(define-key local-function-key-map [M-@key{TAB}] [?\M-\t])
+(define-key function-key-map [M-@key{TAB}] [?\M-\t])
 @end lisp
 
 @noindent
@@ -4099,7 +4099,7 @@ generates @key{ESC}.  If not, the following form can be used to bind it:
 
 @lisp
 ;; F11 is the documented ESC replacement on DEC terminals.
-(define-key local-function-key-map [f11] [?\e])
+(define-key function-key-map [f11] [?\e])
 @end lisp
 
 @node Compose Character
