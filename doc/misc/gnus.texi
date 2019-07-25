@@ -10163,8 +10163,8 @@ do so.
 @cindex url
 @findex gnus-summary-browse-url
 Scan the article buffer for links, and offer them to the user for
-browsing with @code{browse-url}.  By default, only scan the article
-body; with a prefix arg, also scan the article headers.
+browsing with @code{browse-url}.  With a prefix argument, browse with
+@code{shr-external-browser} instead.
 
 @end table
 
