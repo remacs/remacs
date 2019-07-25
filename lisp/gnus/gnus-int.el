@@ -63,6 +63,8 @@ server denied."
 		 (const :tag "Deny server" denied)
 		 (const :tag "Unplug Agent" offline)))
 
+;; Note: When this option is finally removed, also remove the entire
+;; `gnus-start-news-server' function.
 (defcustom gnus-nntp-server nil
   "The name of the host running the NNTP server."
   :group 'gnus-server
