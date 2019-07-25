@@ -452,6 +452,11 @@ specified message types for the respective specified targets.
 *** Nick completion is now case-insensitive again after inadvertently
 being made case-sensitive in Emacs 24.2.
 
+** Rcirc
+
+*** Rcirc now supports automatic reconnection.
+Set new user option 'rcirc-reconnect-delay' to non-zero to enable it.
+
 ** MPC
 
 *** New commands, key binds, and menu items.
