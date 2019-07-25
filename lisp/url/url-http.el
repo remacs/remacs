@@ -959,7 +959,7 @@ should be shown to the user."
                   (start end &optional allow-partial))
 
 (defun url-handle-content-transfer-encoding ()
-  (let ((encoding (mail-fetch-field "content-encoding")))
+  (let ((encoding (mail-fetch-field "content-encoding" nil nil nil t)))
     (when (and encoding
 	       (fboundp 'zlib-available-p)
 	       (zlib-available-p)

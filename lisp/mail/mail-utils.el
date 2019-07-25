@@ -284,11 +284,13 @@ comma-separated list, and return the pruned list."
 
 
 ;;;###autoload
-(defun mail-fetch-field (field-name &optional last all list)
+(defun mail-fetch-field (field-name &optional last all list delete)
   "Return the value of the header field whose type is FIELD-NAME.
 If second arg LAST is non-nil, use the last field of type FIELD-NAME.
 If third arg ALL is non-nil, concatenate all such fields with commas between.
 If 4th arg LIST is non-nil, return a list of all such fields.
+If 5th arg DELETE is non-nil, delete all header lines that are
+included in the result.
 The buffer should be narrowed to just the header, else false
 matches may be returned from the message body."
   (save-excursion
@@ -311,7 +313,9 @@ matches may be returned from the message body."
 		  (setq value (concat value
 				      (if (string= value "") "" ", ")
 				      (buffer-substring-no-properties
-				       opoint (point)))))))
+				       opoint (point)))))
+                (if delete
+                    (delete-region (point-at-bol) (point)))))
 	    (if list
 		value
 	      (and (not (string= value "")) value)))
@@ -324,7 +328,10 @@ matches may be returned from the message body."
 		;; Back up over newline, then trailing spaces or tabs
 		(forward-char -1)
 		(skip-chars-backward " \t" opoint)
-		(buffer-substring-no-properties opoint (point)))))))))
+                (prog1
+                    (buffer-substring-no-properties opoint (point))
+                  (if delete
+                      (delete-region (point-at-bol) (1+ (point))))))))))))
 
 ;; Parse a list of tokens separated by commas.
 ;; It runs from point to the end of the visible part of the buffer.
