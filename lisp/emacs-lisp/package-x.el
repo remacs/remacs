@@ -281,6 +281,7 @@ destination, prompt for one."
       (let ((pkg-desc (package-buffer-info)))
 	(package-upload-buffer-internal pkg-desc "el")))))
 
+;;;###autoload
 (defun package-upload-file (file)
   "Upload the Emacs Lisp package FILE to the package archive.
 Interactively, prompt for FILE.  The package is considered a
