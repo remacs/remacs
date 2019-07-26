@@ -70,34 +70,29 @@
 (defcustom smtpmail-default-smtp-server nil
   "Specify default SMTP server.
 This only has effect if you specify it before loading the smtpmail library."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-smtp-server
   (or (getenv "SMTPSERVER") smtpmail-default-smtp-server)
   "The name of the host running SMTP server."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-smtp-service 25
   "SMTP service port number.
 The default value would be \"smtp\" or 25."
-  :type '(choice (integer :tag "Port") (string :tag "Service"))
-  :group 'smtpmail)
+  :type '(choice (integer :tag "Port") (string :tag "Service")))
 
 (defcustom smtpmail-smtp-user nil
   "User name to use when looking up credentials in the authinfo file.
 If non-nil, only consider credentials for the specified user."
   :version "24.1"
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-local-domain nil
   "Local domain name without a host name.
 If the function `system-name' returns the full internet address,
 don't define this value."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-stream-type nil
   "Type of SMTP connections to use.
@@ -105,7 +100,6 @@ This may be either nil (upgrade with STARTTLS if possible),
 `starttls' (refuse to send if STARTTLS isn't available),
 `plain' (never use STARTTLS), or `ssl' (to use TLS/SSL)."
   :version "24.1"
-  :group 'smtpmail
   :type '(choice (const :tag "Possibly upgrade to STARTTLS" nil)
 		 (const :tag "Always use STARTTLS" starttls)
 		 (const :tag "Never use STARTTLS" plain)
@@ -119,55 +113,56 @@ not include an @-sign, so that each RCPT TO address is fully qualified.
 
 Don't bother to set this unless you have get an error like:
 	Sending failed; 501 <someone>: recipient address must contain a domain."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-debug-info nil
   "Whether to print info in buffer *trace of SMTP session to <somewhere>*.
 See also `smtpmail-debug-verb' which determines if the SMTP protocol should
 be verbose as well."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-debug-verb nil
   "Whether this library sends the SMTP VERB command or not.
 The commands enables verbose information from the SMTP server."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-code-conv-from nil
   "Coding system for encoding outgoing mail.
 Used for the value of `sendmail-coding-system' when
 `select-message-coding-system' is called."
-  :type 'coding-system
-  :group 'smtpmail)
+  :type 'coding-system)
 
 (defcustom smtpmail-queue-mail nil
   "Non-nil means mail is queued; otherwise it is sent immediately.
 If queued, it is stored in the directory `smtpmail-queue-dir'
 and sent with `smtpmail-send-queued-mail'."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-queue-dir "~/Mail/queued-mail/"
   "Directory where `smtpmail.el' stores queued mail.
 This directory should not be writable by other users."
-  :type 'directory
-  :group 'smtpmail)
+  :type 'directory)
 
 (defcustom smtpmail-warn-about-unknown-extensions nil
   "If set, print warnings about unknown SMTP extensions.
 This is mainly useful for development purposes, to learn about
 new SMTP extensions that might be useful to support."
   :type 'boolean
-  :version "21.1"
-  :group 'smtpmail)
+  :version "21.1")
 
 (defcustom smtpmail-queue-index-file "index"
   "File name of queued mail index.
 This is relative to `smtpmail-queue-dir'."
-  :type 'string
-  :group 'smtpmail)
+  :type 'string)
+
+(defcustom smtpmail-servers-requiring-authorization nil
+  "Regexp matching servers that require authorization.
+Normally smtpmail will try first to send emails via SMTP without
+user/password credentials, and then retry using credentials if
+the server says that it requires it.  If the server name matches
+this regexp, smtpmail will send over the credentials on the first
+attempt."
+  :type '(choice regexp (const :tag "None" nil)))
 
 ;; End of customizable variables.
 
@@ -679,6 +674,12 @@ Returns an error if the server cannot be contacted."
 	result
 	auth-mechanisms
 	(supported-extensions '()))
+
+    (when (and smtpmail-servers-requiring-authorization
+               (string-match-p smtpmail-servers-requiring-authorization
+                               smtpmail-smtp-server))
+      (setq ask-for-password t))
+
     (unwind-protect
 	(catch 'done
 	  ;; get or create the trace buffer
