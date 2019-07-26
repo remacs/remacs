@@ -2919,7 +2919,7 @@ An error is signaled if @var{directory} is not the name of a directory
 that can be read.
 @end defun
 
-@defun directory-files-recursively directory regexp &optional include-directories predicate
+@defun directory-files-recursively directory regexp &optional include-directories predicate follow-symlinks
 Return all files under @var{directory} whose names match @var{regexp}.
 This function searches the specified @var{directory} and its
 sub-directories, recursively, for files whose basenames (i.e., without
@@ -2940,6 +2940,9 @@ instance, if it's not readable by this user) are ignored.  If it's
 neither @code{nil} nor @code{t}, it should be a function that takes
 one parameter (the subdirectory name) and should return non-@code{nil}
 if the directory is to be descended into.
+
+Symbolic links to subdirectories are not followed by default, but if
+@var{follow-symlinks} is non-@code{nil}, they are followed.
 @end defun
 
 @defun directory-files-and-attributes directory &optional full-name match-regexp nosort id-format

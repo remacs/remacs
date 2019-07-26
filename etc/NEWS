@@ -2407,7 +2407,9 @@ the Emacs Lisp manual.
 
 +++
 ** `directory-files-recursively' can now take an optional PREDICATE
-parameter to control descending into subdirectories.
+parameter to control descending into subdirectories, and a
+FOLLOW-SYMLINK parameter to say that symbolic links that point to
+other directories should be followed.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
