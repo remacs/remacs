@@ -4119,7 +4119,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->rehash_threshold = rehash_threshold;
   h->rehash_size = rehash_size;
   h->count = 0;
-  h->key_and_value = make_nil_vector (2 * size);
+  h->key_and_value = make_vector (2 * size, Qunbound);
   h->hash = make_nil_vector (size);
   h->next = make_vector (size, make_fixnum (-1));
   h->index = make_vector (hash_index_size (h, size), make_fixnum (-1));
@@ -4199,9 +4199,16 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	gc_aset (next, i, make_fixnum (i + 1));
       gc_aset (next, next_size - 1, make_fixnum (-1));
       ptrdiff_t index_size = hash_index_size (h, next_size);
+
+      /* Build the new&larger key_and_value vector, making sure the new
+         fields are initialized to `unbound`.  */
       Lisp_Object key_and_value
-	= larger_vector (h->key_and_value, 2 * (next_size - old_size),
-			 2 * next_size);
+	= larger_vecalloc (h->key_and_value, 2 * (next_size - old_size),
+			   2 * next_size);
+      for (ptrdiff_t i = ASIZE (h->key_and_value);
+            i < ASIZE (key_and_value); i++)
+        ASET (key_and_value, i, Qunbound);
+
       Lisp_Object hash = larger_vector (h->hash, next_size - old_size,
 					next_size);
       h->index = make_vector (index_size, make_fixnum (-1));
@@ -4241,17 +4248,16 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
      (bug#36447).  */
   h->next = Fcopy_sequence (h->next);
   h->index = Fcopy_sequence (h->index);
-  h->hash = Fcopy_sequence (h->hash);
+  h->hash = make_nil_vector (size);
 
   /* Recompute the actual hash codes for each entry in the table.
      Order is still invalid.  */
   for (ptrdiff_t i = 0; i < size; ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      {
-        Lisp_Object key = HASH_KEY (h, i);
-	Lisp_Object hash_code = h->test.hashfn (key, h);
-	set_hash_hash_slot (h, i, hash_code);
-      }
+    {
+      Lisp_Object key = HASH_KEY (h, i);
+      if (!EQ (key, Qunbound))
+	set_hash_hash_slot (h, i, h->test.hashfn (key, h));
+    }
 
   /* Reset the index so that any slot we don't fill below is marked
      invalid.  */
@@ -4271,7 +4277,7 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
   /* Finally, mark the hash table as having a valid hash order.
      Do this last so that if we're interrupted, we retry on next
      access. */
-  eassert (h->count < 0);
+  eassert (hash_rehash_needed_p (h));
   h->count = -h->count;
   eassert (!hash_rehash_needed_p (h));
 }
@@ -4329,6 +4335,8 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 
   /* Store key/value in the key_and_value vector.  */
   i = h->next_free;
+  eassert (NILP (HASH_HASH (h, i)));
+  eassert (EQ (Qunbound, (HASH_KEY (h, i))));
   h->next_free = HASH_NEXT (h, i);
   set_hash_key_slot (h, i, key);
   set_hash_value_slot (h, i, value);
@@ -4372,7 +4380,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 
 	  /* Clear slots in key_and_value and add the slots to
 	     the free list.  */
-	  set_hash_key_slot (h, i, Qnil);
+	  set_hash_key_slot (h, i, Qunbound);
 	  set_hash_value_slot (h, i, Qnil);
 	  set_hash_hash_slot (h, i, Qnil);
 	  set_hash_next_slot (h, i, h->next_free);
@@ -4399,7 +4407,7 @@ hash_clear (struct Lisp_Hash_Table *h)
       for (i = 0; i < size; ++i)
 	{
 	  set_hash_next_slot (h, i, i < size - 1 ? i + 1 : -1);
-	  set_hash_key_slot (h, i, Qnil);
+	  set_hash_key_slot (h, i, Qunbound);
 	  set_hash_value_slot (h, i, Qnil);
 	  set_hash_hash_slot (h, i, Qnil);
 	}
@@ -4458,6 +4466,8 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 
 	  if (remove_entries_p)
 	    {
+              eassert (!remove_p
+                       == (key_known_to_survive_p && value_known_to_survive_p));
 	      if (remove_p)
 		{
 		  /* Take out of collision chain.  */
@@ -4471,7 +4481,7 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 		  h->next_free = i;
 
 		  /* Clear key, value, and hash.  */
-		  set_hash_key_slot (h, i, Qnil);
+		  set_hash_key_slot (h, i, Qunbound);
 		  set_hash_value_slot (h, i, Qnil);
                   set_hash_hash_slot (h, i, Qnil);
 
@@ -5009,8 +5019,11 @@ FUNCTION is called with two arguments, KEY and VALUE.
   struct Lisp_Hash_Table *h = check_hash_table (table);
 
   for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      call2 (function, HASH_KEY (h, i), HASH_VALUE (h, i));
+    {
+      Lisp_Object k = HASH_KEY (h, i);
+      if (!EQ (k, Qunbound))
+        call2 (function, k, HASH_VALUE (h, i));
+    }
 
   return Qnil;
 }
