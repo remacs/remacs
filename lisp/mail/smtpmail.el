@@ -162,7 +162,8 @@ user/password credentials, and then retry using credentials if
 the server says that it requires it.  If the server name matches
 this regexp, smtpmail will send over the credentials on the first
 attempt."
-  :type '(choice regexp (const :tag "None" nil)))
+  :type '(choice regexp (const :tag "None" nil))
+  :version "27.1")
 
 ;; End of customizable variables.
 
