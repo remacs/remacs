@@ -508,7 +508,6 @@ functions are annotated with \"<f>\" via the
                           (and (memq (char-syntax (char-after)) '(?w ?_))
                                (read (current-buffer))))
                       (error nil))))
-      (message "sym: %s %s %s %s" fun-sym funpos beg end)
       (when (and end (or (not (nth 8 (syntax-ppss)))
                          (memq (char-before beg) '(?` ?‘))))
         (let ((table-etc
