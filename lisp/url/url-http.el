@@ -453,6 +453,14 @@ Return the number of characters removed."
 	auth
 	(strength 0))
 
+    ;; If we're here, then we got a 40x Unauthorized response from the
+    ;; server.  If we already have "Authorization" in the extra
+    ;; headers, then this means that we've already tried sending
+    ;; credentials to the server, and they were wrong, so just give
+    ;; up.
+    (when (assoc "Authorization" url-http-extra-headers)
+      (error "Wrong authorization used for %s" url))
+
     ;; find strongest supported auth
     (dolist (this-auth auths)
       (setq this-auth (url-eat-trailing-space
