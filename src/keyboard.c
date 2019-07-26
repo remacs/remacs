@@ -11324,7 +11324,8 @@ syms_of_keyboard (void)
   defsubr (&Sposn_at_x_y);
 
   DEFVAR_LISP ("last-command-event", last_command_event,
-		     doc: /* Last input event that was part of a command.  */);
+		     doc: /* Last input event that was part of a command key sequence.
+See Info node `(elisp)Command Loop Info'.*/);
 
   DEFVAR_LISP ("last-nonmenu-event", last_nonmenu_event,
 	       doc: /* Last input event in a command, except for mouse menu events.
