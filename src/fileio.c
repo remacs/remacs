@@ -2690,7 +2690,8 @@ file_name_absolute_p (char const *filename)
 {
   return (IS_ABSOLUTE_FILE_NAME (filename)
 	  || (filename[0] == '~'
-	      && (!filename[1] || user_homedir (&filename[1]))));
+	      && (!filename[1] || IS_DIRECTORY_SEP (filename[1])
+		  || user_homedir (&filename[1]))));
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
