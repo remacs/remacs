@@ -3314,7 +3314,7 @@ or \"* [3 files]\"."
 
 (defun dired-pop-to-buffer (buf)
   "Pop up buffer BUF in a way suitable for Dired."
-  (declare (obsolete dired-mark-pop-up "24.3"))
+  (declare (obsolete nil "24.3"))
   (let ((split-window-preferred-function
 	 (lambda (window)
 	   (or (and (let ((split-height-threshold 0))
