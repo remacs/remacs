@@ -44,9 +44,18 @@
 (defcustom epg-gpg-program (if (executable-find "gpg2")
                                "gpg2"
                              "gpg")
-  "The `gpg' executable.
-Setting this variable directly does not take effect;
-instead use \\[customize] (see the info node `Easy Customization')."
+  "Say what gpg program to prefer (if it satisfies minimum requirements).
+
+If this variable is \"gpg2\", but the version of gpg2 installed
+is less than `epg-gpg2-minimum-version', then version 1 of
+GnuPG (i.e., \"gpg\") will be used instead.  If the version of
+version 1 is less than `epg-gpg-minimum-version', then that won't
+be used either.
+
+If you want to explicitly specify what gpg program to use, you
+have to use \\[customize] instead (see the info node `Easy
+Customization').  Setting this variable without \\[customize] has
+no effect."
   :version "25.1"
   :type 'string)
 
