@@ -118,10 +118,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # endif
 #endif
 
-/* We require an architecture in which all pointers are the same size
-   and have the same layout, where pointers are either 32 or 64 bits
-   long, and where bytes have eight bits --- that is, a
-   general-purpose computer made after 1990.  */
+/* Require an architecture in which pointers, ptrdiff_t and intptr_t
+   are the same size and have the same layout, and where bytes have
+   eight bits --- that is, a general-purpose computer made after 1990.
+   Also require Lisp_Object to be at least as wide as pointers.  */
 verify (sizeof (ptrdiff_t) == sizeof (void *));
 verify (sizeof (intptr_t) == sizeof (ptrdiff_t));
 verify (sizeof (void (*) (void)) == sizeof (void *));
@@ -2634,8 +2634,10 @@ dump_hash_table_stable_p (const struct Lisp_Hash_Table *hash)
         Lisp_Object key =  HASH_KEY (hash, i);
 	bool key_stable = (dump_builtin_symbol_p (key)
 			   || FIXNUMP (key)
-			   || (is_equal && STRINGP (key))
-			   || ((is_equal || is_eql) && FLOATP (key)));
+			   || (is_equal
+			       && (STRINGP (key) || BOOL_VECTOR_P (key)))
+			   || ((is_equal || is_eql)
+			       && (FLOATP (key) || BIGNUMP (key))));
         if (!key_stable)
           return false;
       }
@@ -3654,8 +3656,7 @@ dump_check_overlap_dump_reloc (Lisp_Object lreloc_a,
 static struct emacs_reloc
 decode_emacs_reloc (struct dump_context *ctx, Lisp_Object lreloc)
 {
-  struct emacs_reloc reloc;
-  memset (&reloc, 0, sizeof (reloc));
+  struct emacs_reloc reloc = {0};
   ALLOW_IMPLICIT_CONVERSION;
   int type = XFIXNUM (dump_pop (&lreloc));
   DISALLOW_IMPLICIT_CONVERSION;
@@ -3814,8 +3815,7 @@ drain_reloc_list (struct dump_context *ctx,
   *reloc_list = Qnil;
   dump_align_output (ctx, max (alignof (struct dump_reloc),
 			       alignof (struct emacs_reloc)));
-  struct dump_table_locator locator;
-  memset (&locator, 0, sizeof (locator));
+  struct dump_table_locator locator = {0};
   locator.offset = ctx->offset;
   for (; !NILP (relocs); locator.nr_entries += 1)
     {
@@ -4025,9 +4025,8 @@ types.  */)
   filename = Fexpand_file_name (filename, Qnil);
   filename = ENCODE_FILE (filename);
 
-  struct dump_context ctx_buf;
+  struct dump_context ctx_buf = {0};
   struct dump_context *ctx = &ctx_buf;
-  memset (ctx, 0, sizeof (*ctx));
   ctx->fd = -1;
 
   ctx->objects_dumped = make_eq_hash_table ();
@@ -4920,9 +4919,7 @@ dump_bitset_set_bit (struct dump_bitset *bitset, size_t bit_number)
 static void
 dump_bitset_clear (struct dump_bitset *bitset)
 {
-  int xword_size = sizeof (bitset->bits[0]);
-  if (bitset->number_words)
-    memset (bitset->bits, 0, bitset->number_words * xword_size);
+  memset (bitset->bits, 0, bitset->number_words * sizeof bitset->bits[0]);
 }
 
 struct pdumper_loaded_dump_private
