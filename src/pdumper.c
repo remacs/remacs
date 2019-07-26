@@ -2666,7 +2666,7 @@ check_hash_table_rehash (Lisp_Object table_orig)
   hash_rehash_if_needed (XHASH_TABLE (table_orig));
   Lisp_Object table_rehashed = Fcopy_hash_table (table_orig);
   eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
-  XHASH_TABLE (table_rehashed)->count *= -1;
+  XHASH_TABLE (table_rehashed)->hash = Qnil;
   eassert (count == 0 || hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   hash_rehash_if_needed (XHASH_TABLE (table_rehashed));
   eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
@@ -2733,7 +2733,13 @@ dump_hash_table (struct dump_context *ctx,
      the need to rehash-on-access if we can load the dump where we
      want.  */
   if (hash->count > 0 && !is_stable)
-    hash->count = -hash->count;
+    /* Hash codes will have to be recomputed anyway, so let's not dump them.
+       Also set `hash` to nil for hash_rehash_needed_p.
+       We could also refrain from dumping the `next' and `index' vectors,
+       except that `next' is currently used for HASH_TABLE_SIZE and
+       we'd have to rebuild the next_free list as well as adjust
+       sweep_weak_hash_table for the case where there's no `index'.  */
+    hash->hash = Qnil;
 
   START_DUMP_PVEC (ctx, &hash->header, struct Lisp_Hash_Table, out);
   dump_pseudovector_lisp_fields (ctx, &out->header, &hash->header);

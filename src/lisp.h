@@ -2388,7 +2388,7 @@ void hash_table_rehash (struct Lisp_Hash_Table *h);
 INLINE bool
 hash_rehash_needed_p (const struct Lisp_Hash_Table *h)
 {
-  return h->count < 0;
+  return NILP (h->hash);
 }
 
 INLINE void

@@ -4246,9 +4246,9 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
 
   /* These structures may have been purecopied and shared
      (bug#36447).  */
+  Lisp_Object hash = make_nil_vector (size);
   h->next = Fcopy_sequence (h->next);
   h->index = Fcopy_sequence (h->index);
-  h->hash = make_nil_vector (size);
 
   /* Recompute the actual hash codes for each entry in the table.
      Order is still invalid.  */
@@ -4256,7 +4256,7 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
     {
       Lisp_Object key = HASH_KEY (h, i);
       if (!EQ (key, Qunbound))
-	set_hash_hash_slot (h, i, h->test.hashfn (key, h));
+        ASET (hash, i, h->test.hashfn (key, h));
     }
 
   /* Reset the index so that any slot we don't fill below is marked
@@ -4265,9 +4265,9 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
 
   /* Rebuild the collision chains.  */
   for (ptrdiff_t i = 0; i < size; ++i)
-    if (!NILP (HASH_HASH (h, i)))
+    if (!NILP (AREF (hash, i)))
       {
-        EMACS_UINT hash_code = XUFIXNUM (HASH_HASH (h, i));
+        EMACS_UINT hash_code = XUFIXNUM (AREF (hash, i));
         ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
         set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
         set_hash_index_slot (h, start_of_bucket, i);
@@ -4278,7 +4278,7 @@ hash_table_rehash (struct Lisp_Hash_Table *h)
      Do this last so that if we're interrupted, we retry on next
      access. */
   eassert (hash_rehash_needed_p (h));
-  h->count = -h->count;
+  h->hash = hash;
   eassert (!hash_rehash_needed_p (h));
 }
 
@@ -4483,7 +4483,8 @@ sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
 		  /* Clear key, value, and hash.  */
 		  set_hash_key_slot (h, i, Qunbound);
 		  set_hash_value_slot (h, i, Qnil);
-                  set_hash_hash_slot (h, i, Qnil);
+                  if (!NILP (h->hash))
+                    set_hash_hash_slot (h, i, Qnil);
 
                   eassert (h->count != 0);
                   h->count += h->count > 0 ? -1 : 1;
@@ -4889,7 +4890,7 @@ DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
   (Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  hash_rehash_if_needed (h);
+  eassert (h->count >= 0);
   return make_fixnum (h->count);
 }
 
