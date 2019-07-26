@@ -500,16 +500,27 @@ functions are annotated with \"<f>\" via the
 		(scan-error pos))))
            ;; t if in function position.
            (funpos (eq (char-before beg) ?\())
-           (quoted (elisp--form-quoted-p beg)))
+           (quoted (elisp--form-quoted-p beg))
+           (fun-sym (condition-case nil
+                        (save-excursion
+                          (up-list -1)
+                          (forward-char 1)
+                          (and (memq (char-syntax (char-after)) '(?w ?_))
+                               (read (current-buffer))))
+                      (error nil))))
+      (message "sym: %s %s %s %s" fun-sym funpos beg end)
       (when (and end (or (not (nth 8 (syntax-ppss)))
                          (memq (char-before beg) '(?` ?‘))))
         (let ((table-etc
                (if (or (not funpos) quoted)
-                   ;; FIXME: We could look at the first element of the list and
-                   ;; use it to provide a more specific completion table in some
-                   ;; cases.  E.g. filter out keywords that are not understood by
-                   ;; the macro/function being called.
                    (cond
+                    ;; FIXME: We could look at the first element of
+                    ;; the current form and use it to provide a more
+                    ;; specific completion table in more cases.
+                    ((eq fun-sym 'ignore-error)
+                     (list t obarray
+                           :predicate (lambda (sym)
+                                        (get sym 'error-conditions))))
                     ((elisp--expect-function-p beg)
                      (list nil obarray
                            :predicate #'fboundp
@@ -568,6 +579,11 @@ functions are annotated with \"<f>\" via the
                                         (< (point) beg)))))
                         (list t obarray
                               :predicate (lambda (sym) (get sym 'error-conditions))))
+                       ;; `ignore-error' with a list CONDITION parameter.
+                       ('ignore-error
+                        (list t obarray
+                              :predicate (lambda (sym)
+                                           (get sym 'error-conditions))))
                        ((and (or ?\( 'let 'let*)
                              (guard (save-excursion
                                       (goto-char (1- beg))

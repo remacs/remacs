@@ -2154,6 +2154,18 @@ Here's the example at the beginning of this subsection rewritten using
 @end example
 @end defmac
 
+@defmac ignore-error condition body@dots{}
+This macro is like @code{ignore-errors}, but will only ignore the
+specific error condition specified.
+
+@example
+  (ignore-error end-of-file
+    (read ""))
+@end example
+
+@var{condition} can also be a list of error conditions.
+@end defmac
+
 @defmac with-demoted-errors format body@dots{}
 This macro is like a milder version of @code{ignore-errors}.  Rather
 than suppressing errors altogether, it converts them into messages.

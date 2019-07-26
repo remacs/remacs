@@ -1937,6 +1937,11 @@ buffer-local.  `permanent' also sets the variable's
 ** The new macro `with-suppressed-warnings' can be used to suppress
 specific byte-compile warnings.
 
++++
+** The new macro `ignore-error' is like `ignore-errors', but takes a
+specific error condition, and will only ignore that condition.  (This
+can also be a list of conditions.)
+
 ---
 ** The new function `byte-compile-info-message' can be used to output
 informational messages that look pleasing during the Emacs build.

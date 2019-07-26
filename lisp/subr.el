@@ -302,6 +302,14 @@ See also `with-demoted-errors' that does something similar
 without silencing all errors."
   (declare (debug t) (indent 0))
   `(condition-case nil (progn ,@body) (error nil)))
+
+(defmacro ignore-error (condition &rest body)
+  "Execute BODY; if the error CONDITION occurs, return nil.
+Otherwise, return result of last form in BODY.
+
+CONDITION can also be a list of error conditions."
+  (declare (debug t) (indent 1))
+  `(condition-case nil (progn ,@body) (,condition nil)))
 
 ;;;; Basic Lisp functions.
 
