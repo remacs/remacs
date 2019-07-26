@@ -1044,8 +1044,12 @@ restored when the file is visited.
 
 ** Smtpmail
 
-Authentication mechanisms can be added via external packages, by
+*** Authentication mechanisms can be added via external packages, by
 defining new 'cl-defmethod' of 'smtpmail-try-auth-method'.
+
+*** To always force smtpmail to send credentials over on the first
+attempt when communicating with the SMTP server(s), the
+`smtpmail-servers-requiring-authorization' variable can be used.
 
 ** Footnote mode
 
