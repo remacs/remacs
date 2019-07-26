@@ -981,7 +981,7 @@ command with a prefix argument (the value does not matter)."
 	  (goto-char start)
 	  ;; Now replace the current line with an entry for NEW-FILE.
 	  (dired-update-file-line new-file) nil)
-      (dired-log (concat "Failed to compress " from-file))
+      (dired-log (concat "Failed to (un)compress " from-file))
       from-file)))
 
 (defvar dired-compress-file-suffixes
