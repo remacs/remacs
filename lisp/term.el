@@ -205,7 +205,7 @@
 ;;
 ;; There are actually two methods for directory tracking, one
 ;; implemented in `term-command-hook' which sets the directory
-;; according to an escape sequence of the form "\032<directory>\n".
+;; according to an escape sequence of the form "\032/<directory>\n".
 ;; Some shells like bash will already send this escape sequence when
 ;; they detect they are running in Emacs.  This can be configured or
 ;; disabled on the Emacs side by setting `term-command-hook' to
