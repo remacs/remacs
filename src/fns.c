@@ -4053,6 +4053,19 @@ allocate_hash_table (void)
 		      - header_size - GCALIGNMENT) \
 		     / word_size)))
 
+static ptrdiff_t
+hash_index_size (struct Lisp_Hash_Table *h, ptrdiff_t size)
+{
+  double threshold = h->rehash_threshold;
+  double index_float = size / threshold;
+  ptrdiff_t index_size = (index_float < INDEX_SIZE_BOUND + 1
+	                  ? next_almost_prime (index_float)
+	                  : INDEX_SIZE_BOUND + 1);
+  if (INDEX_SIZE_BOUND < index_size)
+    error ("Hash table too large");
+  return index_size;
+}
+
 /* Create and initialize a new hash table.
 
    TEST specifies the test the hash table will use to compare keys.
@@ -4086,9 +4099,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
 {
   struct Lisp_Hash_Table *h;
   Lisp_Object table;
-  EMACS_INT index_size;
   ptrdiff_t i;
-  double index_float;
 
   /* Preconditions.  */
   eassert (SYMBOLP (test.name));
@@ -4098,14 +4109,6 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
 
   if (size == 0)
     size = 1;
-
-  double threshold = rehash_threshold;
-  index_float = size / threshold;
-  index_size = (index_float < INDEX_SIZE_BOUND + 1
-		? next_almost_prime (index_float)
-		: INDEX_SIZE_BOUND + 1);
-  if (INDEX_SIZE_BOUND < max (index_size, 2 * size))
-    error ("Hash table too large");
 
   /* Allocate a table and initialize it.  */
   h = allocate_hash_table ();
@@ -4119,7 +4122,7 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->key_and_value = make_nil_vector (2 * size);
   h->hash = make_nil_vector (size);
   h->next = make_vector (size, make_fixnum (-1));
-  h->index = make_vector (index_size, make_fixnum (-1));
+  h->index = make_vector (hash_index_size (h, size), make_fixnum (-1));
   h->next_weak = NULL;
   h->purecopy = purecopy;
   h->mutable = true;
@@ -4195,13 +4198,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       for (ptrdiff_t i = old_size; i < next_size - 1; i++)
 	gc_aset (next, i, make_fixnum (i + 1));
       gc_aset (next, next_size - 1, make_fixnum (-1));
-      double threshold = h->rehash_threshold;
-      double index_float = next_size / threshold;
-      EMACS_INT index_size = (index_float < INDEX_SIZE_BOUND + 1
-			      ? next_almost_prime (index_float)
-			      : INDEX_SIZE_BOUND + 1);
-      if (INDEX_SIZE_BOUND < index_size)
-	error ("Hash table too large to resize");
+      ptrdiff_t index_size = hash_index_size (h, next_size);
       Lisp_Object key_and_value
 	= larger_vector (h->key_and_value, 2 * (next_size - old_size),
 			 2 * next_size);

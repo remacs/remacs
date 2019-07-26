@@ -2662,13 +2662,14 @@ hash_table_contents (Lisp_Object table)
 static void
 check_hash_table_rehash (Lisp_Object table_orig)
 {
+  ptrdiff_t count = XHASH_TABLE (table_orig)->count;
   hash_rehash_if_needed (XHASH_TABLE (table_orig));
   Lisp_Object table_rehashed = Fcopy_hash_table (table_orig);
-  eassert (XHASH_TABLE (table_rehashed)->count >= 0);
+  eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   XHASH_TABLE (table_rehashed)->count *= -1;
-  eassert (XHASH_TABLE (table_rehashed)->count <= 0);
+  eassert (count == 0 || hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   hash_rehash_if_needed (XHASH_TABLE (table_rehashed));
-  eassert (XHASH_TABLE (table_rehashed)->count >= 0);
+  eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   Lisp_Object expected_contents = hash_table_contents (table_orig);
   while (!NILP (expected_contents))
     {
