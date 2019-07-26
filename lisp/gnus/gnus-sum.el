@@ -9487,7 +9487,6 @@ default."
   (interactive "P")
   (let (urls target)
     (gnus-summary-select-article)
-    (gnus-configure-windows 'article)
     (gnus-with-article-buffer
       (article-goto-body)
       ;; Back up a char, in case body starts with a widget.
