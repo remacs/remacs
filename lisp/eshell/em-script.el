@@ -90,7 +90,6 @@ This includes when running `eshell-command'."
 (defun eshell-source-file (file &optional args subcommand-p)
   "Execute a series of Eshell commands in FILE, passing ARGS.
 Comments begin with `#'."
-  (interactive "f")
   (let ((orig (point))
 	(here (point-max))
 	(inhibit-point-motion-hooks t))
