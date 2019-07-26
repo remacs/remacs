@@ -4190,7 +4190,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 	 avoid problems if memory is exhausted.  larger_vecalloc
 	 finishes computing the size of the replacement vectors.  */
       Lisp_Object next = larger_vecalloc (h->next, new_size - old_size,
-					  PTRDIFF_MAX / 2);
+					  new_size);
       ptrdiff_t next_size = ASIZE (next);
       for (ptrdiff_t i = old_size; i < next_size - 1; i++)
 	gc_aset (next, i, make_fixnum (i + 1));
