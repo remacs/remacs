@@ -859,6 +859,12 @@ Now 't' only checks that at least one signature is valid and the new 'all'
 value needs to be used if you want to enforce that all signatures
 are valid.  This only affects packages with multiple signatures.
 
++++
+*** The meaning of `allow-unsigned' in `package-check-signature' has
+changed slightly: If a usable OpenPGP configuration can't be found
+(for instance, if gpg isn't installed), it now has the same meaning as
+nil.
+
 *** New function 'package-get-version' lets packages query their own version.
 Example use in auctex.el: '(defconst auctex-version (package-get-version))'
 

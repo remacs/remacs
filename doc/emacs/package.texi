@@ -214,9 +214,11 @@ in the @file{etc/package-keyring.gpg}.  Emacs uses it automatically.
 @vindex package-unsigned-archives
   If the user option @code{package-check-signature} is non-@code{nil},
 Emacs attempts to verify signatures when you install packages.  If the
-option has the value @code{allow-unsigned}, you can still install a
-package that is not signed.  If you use some archives that do not sign
-their packages, you can add them to the list @code{package-unsigned-archives}.
+option has the value @code{allow-unsigned}, and a usable OpenPGP
+configuration is found, signed packages will be checked, but you can
+still install a package that is not signed.  If you use some archives
+that do not sign their packages, you can add them to the list
+@code{package-unsigned-archives}.
 
   For more information on cryptographic keys and signing,
 @pxref{Top,, GnuPG, gnupg, The GNU Privacy Guard Manual}.
