@@ -2629,18 +2629,20 @@ dump_hash_table_stable_p (const struct Lisp_Hash_Table *hash)
   bool is_equal = hash->test.hashfn == hashfn_equal;
   ptrdiff_t size = HASH_TABLE_SIZE (hash);
   for (ptrdiff_t i = 0; i < size; ++i)
-    if (!NILP (HASH_HASH (hash, i)))
-      {
-        Lisp_Object key =  HASH_KEY (hash, i);
-	bool key_stable = (dump_builtin_symbol_p (key)
-			   || FIXNUMP (key)
-			   || (is_equal
-			       && (STRINGP (key) || BOOL_VECTOR_P (key)))
-			   || ((is_equal || is_eql)
-			       && (FLOATP (key) || BIGNUMP (key))));
-        if (!key_stable)
-          return false;
-      }
+    {
+      Lisp_Object key =  HASH_KEY (hash, i);
+      if (!EQ (key, Qunbound))
+        {
+	  bool key_stable = (dump_builtin_symbol_p (key)
+			     || FIXNUMP (key)
+			     || (is_equal
+			         && (STRINGP (key) || BOOL_VECTOR_P (key)))
+			     || ((is_equal || is_eql)
+			         && (FLOATP (key) || BIGNUMP (key))));
+          if (!key_stable)
+            return false;
+        }
+    }
 
   return true;
 }
@@ -2652,8 +2654,11 @@ hash_table_contents (Lisp_Object table)
   Lisp_Object contents = Qnil;
   struct Lisp_Hash_Table *h = XHASH_TABLE (table);
   for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      dump_push (&contents, Fcons (HASH_KEY (h, i), HASH_VALUE (h, i)));
+    {
+      Lisp_Object key =  HASH_KEY (h, i);
+      if (!EQ (key, Qunbound))
+        dump_push (&contents, Fcons (key, HASH_VALUE (h, i)));
+    }
   return Fnreverse (contents);
 }
 
