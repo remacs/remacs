@@ -1613,6 +1613,11 @@ If nil, ask to kill it."
   :type 'boolean
   :version "24.3")
 
+(defun compilation--update-in-progress-mode-line ()
+  ;; `compilation-in-progress' affects the mode-line of all
+  ;; buffers when it changes from nil to non-nil or vice-versa.
+  (unless compilation-in-progress (force-mode-line-update t)))
+
 ;;;###autoload
 (defun compilation-start (command &optional mode name-function highlight-regexp)
   "Run compilation command COMMAND (low level interface).
@@ -1806,8 +1811,8 @@ Returns the compilation buffer created."
 		  ;; The process may have exited already.
 		  (error nil)))
 	      (run-hook-with-args 'compilation-start-hook proc)
-              (setq compilation-in-progress
-		    (cons proc compilation-in-progress)))
+              (compilation--update-in-progress-mode-line)
+	      (push proc compilation-in-progress))
 	  ;; No asynchronous processes available.
 	  (message "Executing `%s'..." command)
 	  ;; Fake mode line display as if `start-process' were run.
@@ -2240,7 +2245,8 @@ commands of Compilation major mode are available.  See
 	    ;; process is dead, we can delete it now.  Otherwise it
 	    ;; will stay around until M-x list-processes.
 	    (delete-process proc)))
-	(setq compilation-in-progress (delq proc compilation-in-progress)))))
+        (setq compilation-in-progress (delq proc compilation-in-progress))
+        (compilation--update-in-progress-mode-line))))
 
 (defun compilation-filter (proc string)
   "Process filter for compilation buffers.
