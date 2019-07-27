@@ -1125,7 +1125,10 @@ write its autoloads into the specified file instead."
       ;; Elements remaining in FILES have no existing autoload sections yet.
       (let ((no-autoloads-time (or last-time '(0 0 0 0)))
             (progress (make-progress-reporter
-                       (byte-compile-info-string "Scraping files for autoloads")
+                       (byte-compile-info-string
+                        (concat "Scraping files for "
+                                (file-relative-name
+                                 generated-autoload-file)))
                        0 (length files) nil 10))
             (file-count 0)
             file-time)
