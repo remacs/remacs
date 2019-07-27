@@ -588,9 +588,8 @@ process}.  After an asynchronous process is created, it runs in
 parallel with Emacs, and Emacs can communicate with it using the
 functions described in the following sections (@pxref{Input to
 Processes}, and @pxref{Output from Processes}).  Note that process
-communication is only partially asynchronous: Emacs sends data to the
-process only when certain functions are called, and Emacs accepts data
-from the process only while waiting for input or for a time delay.
+communication is only partially asynchronous: Emacs sends and receives
+data to and from a process only when those functions are called.
 
 @cindex pty, when to use for subprocess communications
 @cindex pipe, when to use for subprocess communications
@@ -1200,8 +1199,9 @@ the defaulting mechanism (@pxref{Default Coding Systems}).
 because the input buffer is full.  When this happens, the send functions
 wait a short while, accepting output from subprocesses, and then try
 again.  This gives the subprocess a chance to read more of its pending
-input and make space in the buffer.  It also allows filters, sentinels
-and timers to run---so take account of that in writing your code.
+input and make space in the buffer.  It also allows filters (including
+the one currently running), sentinels and timers to run---so take
+account of that in writing your code.
 
   In these functions, the @var{process} argument can be a process or
 the name of a process, or a buffer or buffer name (which stands
@@ -1416,9 +1416,10 @@ output, Emacs won't receive that output.
 
   Output from a subprocess can arrive only while Emacs is waiting: when
 reading terminal input (see the function @code{waiting-for-user-input-p}),
-in @code{sit-for} and @code{sleep-for} (@pxref{Waiting}), and in
-@code{accept-process-output} (@pxref{Accepting Output}).  This
-minimizes the problem of timing errors that usually plague parallel
+in @code{sit-for} and @code{sleep-for} (@pxref{Waiting}), in
+@code{accept-process-output} (@pxref{Accepting Output}), and in
+functions which send data to processes (@pxref{Input to Processes}).
+This minimizes the problem of timing errors that usually plague parallel
 programming.  For example, you can safely create a process and only
 then specify its buffer or filter function; no output can arrive
 before you finish, if the code in between does not call any primitive
@@ -1594,14 +1595,10 @@ outputs directly to the process buffer.
   By default, the error output from the process, if any, is also
 passed to the filter function, unless the destination for the standard
 error stream of the process was separated from the standard output
-when the process was created (@pxref{Output from Processes}).
-
-  The filter function can only be called when Emacs is waiting for
-something, because process output arrives only at such times.  Emacs
-waits when reading terminal input (see the function
-@code{waiting-for-user-input-p}), in @code{sit-for} and
-@code{sleep-for} (@pxref{Waiting}), and in
-@code{accept-process-output} (@pxref{Accepting Output}).
+when the process was created.  Emacs will only call the filter
+function during certain function calls.  @xref{Output from Processes}.
+Note that if any of those functions are called by the filter, the
+filter may be called recursively.
 
   A filter function must accept two arguments: the associated process
 and a string, which is output just received from it.  The function is
