@@ -194,7 +194,7 @@ not align (only setting space according to `conf-assignment-space')."
      (1 'font-lock-variable-name-face)
      (2 'font-lock-constant-face nil t))
     ;; section { ... } (do this last because some assign ...{...)
-    ("^[ \t]*\\([^=:\n]+?\\)[ \t\n]*{[^{}]*?$" 1 'font-lock-type-face prepend))
+    ("^[ \t]*\\([^#=:\n]+?\\)[ \t\n]*{[^{}]*?$" 1 'font-lock-type-face prepend))
   "Keywords to highlight in Conf mode.")
 
 (defvar conf-javaprop-font-lock-keywords
