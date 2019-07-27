@@ -5614,13 +5614,6 @@ separate contiguous regions for each line."
   (lambda (rol) (when (overlayp rol) (delete-overlay rol))))
 
 (defvar redisplay-highlight-region-function
-  "Function to move the highlight overlay.
-This function is called with four parameters, START, END, WINDOW
-and OVERLAY.  If OVERLAY is nil, a new overlay is created.  In
-any case, the overlay is adjusted to reflect the other three
-parameters.
-
-The overlay is returned by the function."
   (lambda (start end window rol)
     (if (not (overlayp rol))
         (let ((nrol (make-overlay start end)))
@@ -5637,7 +5630,14 @@ The overlay is returned by the function."
                    (eq (overlay-start rol) start)
                    (eq (overlay-end rol) end))
         (move-overlay rol start end (current-buffer)))
-      rol)))
+      rol))
+  "Function to move the region-highlight overlay.
+This function is called with four parameters, START, END, WINDOW
+and OVERLAY.  If OVERLAY is nil, a new overlay is created.  In
+any case, the overlay is adjusted to reflect the other three
+parameters.
+
+The overlay is returned by the function.")
 
 (defun redisplay--update-region-highlight (window)
   (let ((rol (window-parameter window 'internal-region-overlay)))
