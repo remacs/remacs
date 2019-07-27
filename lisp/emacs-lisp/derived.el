@@ -123,11 +123,11 @@ PARENT:    the name of the command for the parent mode (e.g. `text-mode')
 NAME:      a string which will appear in the status line (e.g. \"Hypertext\")
 DOCSTRING: an optional documentation string--if you do not supply one,
            the function will attempt to invent something useful.
+KEYWORDS:  optional keywords.
 BODY:      forms to execute just before running the
            hooks for the new mode.  Do not use `interactive' here.
 
-BODY can start with keyword arguments; the following keywords are
-currently supported:
+The following keywords are currently supported:
 
 :group GROUP
 	Declare the customization group that corresponds to this mode.
@@ -163,7 +163,9 @@ been generated automatically, with a reference to the keymap.
 The new mode runs the hook constructed by the function
 `derived-mode-hook-name'.
 
-See Info node `(elisp)Derived Modes' for more details."
+See Info node `(elisp)Derived Modes' for more details.
+
+\(fn CHILD PARENT NAME [DOCSTRING] [KEYWORDS...] &rest BODY)"
   (declare (debug (&define name symbolp sexp [&optional stringp]
 			   [&rest keywordp sexp] def-body))
 	   (doc-string 4)
