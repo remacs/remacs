@@ -1428,7 +1428,7 @@ contains a circular object."
   ;; Create initial coverage vector.
   ;; Only need one per expression, but it is simpler to use stop points.
   (put name 'edebug-coverage
-       (make-vector (length edebug-offset-list) 'unknown)))
+       (make-vector (length edebug-offset-list) 'edebug-unknown)))
 
 
 (defun edebug-form (cursor)
@@ -2470,12 +2470,12 @@ See `edebug-behavior-alist' for implementations.")
 (defun edebug--update-coverage (after-index value)
   (let ((old-result (aref edebug-coverage after-index)))
     (cond
-     ((eq 'ok-coverage old-result))
-     ((eq 'unknown old-result)
+     ((eq 'edebug-ok-coverage old-result))
+     ((eq 'edebug-unknown old-result)
       (aset edebug-coverage after-index value))
      ;; Test if a different result.
      ((not (eq value old-result))
-      (aset edebug-coverage after-index 'ok-coverage)))))
+      (aset edebug-coverage after-index 'edebug-ok-coverage)))))
 
 
 ;; Dynamically declared unbound variables.
@@ -4204,7 +4204,7 @@ reinstrument it."
 		     (max 0 (- col (- (point) start-of-count-line))) ?\s)
 		    (if (and (< 0 count)
 			     (not (memq coverage
-					'(unknown ok-coverage))))
+					'(edebug-unknown edebug-ok-coverage))))
 			"=" "")
 		    (if (= count last-count) "" (int-to-string count))
 		    " ")
