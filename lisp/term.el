@@ -4395,18 +4395,26 @@ Try to be nice by providing useful defaults and history."
     x))
 
 ;;;###autoload
-(defun serial-term (port speed)
+(defun serial-term (port speed &optional line-mode)
   "Start a terminal-emulator for a serial port in a new buffer.
 PORT is the path or name of the serial port.  For example, this
 could be \"/dev/ttyS0\" on Unix.  On Windows, this could be
 \"COM1\" or \"\\\\.\\COM10\".
+
 SPEED is the speed of the serial port in bits per second.  9600
 is a common value.  SPEED can be nil, see
 `serial-process-configure' for details.
+
+Usually `term-char-mode' is used, but if LINE-MODE (the prefix
+when used interactively) is non-nil, `term-line-mode' is used
+instead.
+
 The buffer is in Term mode; see `term-mode' for the commands to
 use in that buffer.
+
 \\<term-raw-map>Type \\[switch-to-buffer] to switch to another buffer."
-  (interactive (list (serial-read-name) (serial-read-speed)))
+  (interactive (list (serial-read-name) (serial-read-speed)
+                     current-prefix-arg))
   (serial-supported-or-barf)
   (let* ((process (make-serial-process
                    :port port
@@ -4416,7 +4424,8 @@ use in that buffer.
          (buffer (process-buffer process)))
     (with-current-buffer buffer
       (term-mode)
-      (term-char-mode)
+      (unless line-mode
+        (term-char-mode))
       (goto-char (point-max))
       (set-marker (process-mark process) (point))
       (set-process-filter process #'term-emulate-terminal)

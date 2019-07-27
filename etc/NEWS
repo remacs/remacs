@@ -830,6 +830,10 @@ be encrypted with GPG by adding an additional '.gpg' suffix.
 ---
 *** 'term-read-noecho' is now obsolete, use 'read-passwd' instead.
 
++++
+*** `serial-term' now takes an optional parameter to leave the
+emulator in line mode.
+
 ** Flymake
 
 +++
