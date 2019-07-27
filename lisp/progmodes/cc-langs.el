@@ -1409,15 +1409,17 @@ operators."
 (c-lang-defvar c->-op-without->-cont-regexp
   (c-lang-const c->-op-without->-cont-regexp))
 
-(c-lang-defconst c-multichar->-op-not->>-regexp
-  ;; Regexp matching multichar tokens containing ">", except ">>"
+(c-lang-defconst c-multichar->-op-not->>->>>-regexp
+  ;; Regexp matching multichar tokens containing ">", except ">>" and ">>>"
   t (c-make-keywords-re nil
-      (delete ">>"
-	      (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
-			    t
-			    "\\(.>\\|>.\\)"))))
-(c-lang-defvar c-multichar->-op-not->>-regexp
-  (c-lang-const c-multichar->-op-not->>-regexp))
+      (c--set-difference
+       (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		     t
+		     "\\(.>\\|>.\\)")
+       '(">>" ">>>")
+       :test 'string-equal)))
+(c-lang-defvar c-multichar->-op-not->>->>>-regexp
+  (c-lang-const c-multichar->-op-not->>->>>-regexp))
 
 (c-lang-defconst c-:-op-cont-tokens
   ;; A list of second and subsequent characters of all multicharacter tokens

@@ -7983,7 +7983,7 @@ comment at the start of cc-engine.el for more info."
 
 		  (if (save-excursion
 			(c-backward-token-2)
-			(looking-at c-multichar->-op-not->>-regexp))
+			(looking-at c-multichar->-op-not->>->>>-regexp))
 		      (progn
 			(goto-char (match-end 0))
 			t)		; Continue the loop.
