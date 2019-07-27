@@ -1696,6 +1696,11 @@ the new variable 'buffer-auto-revert-by-notification' to a non-nil
 value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
+---
+*** `global-auto-revert-ignore-buffer' can now also be a predicate
+function that can be used for more fine-grained control of which
+buffers to auto-revert.
+
 ** auth-source-pass
 
 +++

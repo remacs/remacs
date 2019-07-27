@@ -266,7 +266,10 @@ buffers.  CPU usage depends on the version control system."
 
 (defvar-local global-auto-revert-ignore-buffer nil
   "When non-nil, Global Auto-Revert Mode will not revert this buffer.
-This variable becomes buffer local when set in any fashion.")
+This variable can also be a predicate function, in which case
+it'll be called with one parameter (the buffer in question), and
+it should return non-nil to make Global Auto-Revert Mode not
+revert this buffer.")
 
 (defcustom auto-revert-remote-files nil
   "If non-nil remote files are also reverted."
@@ -541,7 +544,11 @@ specifies in the mode line."
                       (not (eq buffer-stale-function
                                #'buffer-stale--default-function))))
              (not (memq 'major-mode global-auto-revert-ignore-modes))
-             (not global-auto-revert-ignore-buffer))
+             (or (null global-auto-revert-ignore-buffer)
+                 (if (functionp global-auto-revert-ignore-buffer)
+                     (not (funcall global-auto-revert-ignore-buffer
+                                   (current-buffer)))
+                   nil)))
     (setq auto-revert--global-mode t)))
 
 (defun auto-revert--global-adopt-current-buffer ()
