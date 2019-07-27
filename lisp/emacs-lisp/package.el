@@ -3543,9 +3543,15 @@ shown."
 (defun package-menu-filter (keyword)
   "Filter the *Packages* buffer.
 Show only those items that relate to the specified KEYWORD.
+
 KEYWORD can be a string or a list of strings.  If it is a list, a
 package will be displayed if it matches any of the keywords.
 Interactively, it is a list of strings separated by commas.
+
+KEYWORD can also be used to filter by status or archive name by
+using keywords like \"arc:gnu\" and \"status:available\".
+Statuses available include \"incompat\", \"available\",
+\"built-in\" and \"installed\".
 
 To restore the full package list, type `q'."
   (interactive
