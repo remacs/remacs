@@ -770,7 +770,7 @@ links to most ordinary special-mode buffers that display text that
 have URLs embedded.  'browse-url-button-regexp' controls what's
 considered a button.
 
-*** A new variable, 'browse-url-external-browser', has been added.
+*** A new variable, 'browse-url-secondary-browser-function', has been added.
 ** Comint
 
 +++
@@ -1045,7 +1045,7 @@ This attribute is meant to tell screen readers to ignore a tag.
 
 +++
 *** 'shr-external-browser' has been made into an obsolete alias
-of 'browse-url-external-browser'.
+of 'browse-url-secondary-browser-function'.
 
 ---
 *** 'shr-tag-ol' now respects the ordered list 'start' attribute.

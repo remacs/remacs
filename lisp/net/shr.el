@@ -112,7 +112,7 @@ Alternative suggestions are:
   :type 'string)
 
 (define-obsolete-variable-alias 'shr-external-browser
-  'browse-url-external-browser "27.1")
+  'browse-url-secondary-browser-function "27.1")
 
 (defcustom shr-image-animate t
   "Non nil means that images that can be animated will be."
@@ -954,7 +954,7 @@ size, and full-buffer size."
 (defun shr-browse-url (&optional external mouse-event)
   "Browse the URL at point using `browse-url'.
 If EXTERNAL is non-nil (interactively, the prefix argument), browse
-the URL using `browse-url-external-browser'.
+the URL using `browse-url-secondary-browser-function'.
 If this function is invoked by a mouse click, it will browse the URL
 at the position of the click.  Optional argument MOUSE-EVENT describes
 the mouse click event."
@@ -969,7 +969,7 @@ the mouse click event."
      (t
       (if external
           (progn
-	    (funcall browse-url-external-browser url)
+	    (funcall browse-url-secondary-browser-function url)
             (shr--blink-link))
 	(browse-url url))))))
 

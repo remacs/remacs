@@ -173,12 +173,12 @@ regexp should probably be \".\" to specify a default browser."
   :type browse-url--browser-defcustom-type
   :version "24.1")
 
-(defcustom browse-url-external-browser 'browse-url-default-browser
-  "Function used to launch an external browser.
-This can actually be any browser, internal or external, used as
-the secondary browser choice, and is typically used when giving a
-prefix argument to the URL-opening command (in those modes that
-support this (for instance, eww/shr)."
+(defcustom browse-url-secondary-browser-function 'browse-url-default-browser
+  "Function used to launch an alternative browser.
+This should usually be an external browser (that is, not eww or
+w3m), used as the secondary browser choice, and is typically used
+when giving a prefix argument to the URL-opening command (in
+those modes that support this (for instance, eww/shr)."
   :version "27.1"
   :type browse-url--browser-defcustom-type)
 
@@ -1687,7 +1687,7 @@ external browser instead of the default one."
     (unless url
       (error "No URL under point"))
     (if external
-        (funcall browse-url-external-browser url)
+        (funcall browse-url-secondary-browser-function url)
       (browse-url url))))
 
 (defun browse-url-button-copy ()
