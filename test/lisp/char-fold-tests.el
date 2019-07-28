@@ -150,47 +150,57 @@
 (ert-deftest char-fold--test-without-customization ()
   (let* ((matches
           '(
+            ("'" "’")
             ("e" "ℯ" "ḗ" "ë" "ë")
             ("ι"
              "ί" ;; 1 level decomposition
              "ί" ;; 2 level decomposition
-             ;; FIXME:
-             ;; "ΐ" ;; 3 level decomposition
+             "ΐ" ;; 3 level decomposition
              )
+            ("ß" "ss")
+            ))
+         (no-matches
+          '(
+            ("и" "й")
             )))
     (dolist (strings matches)
-      (apply 'char-fold--test-match-exactly strings))))
+      (apply 'char-fold--test-match-exactly strings))
+    (dolist (strings no-matches)
+      (apply 'char-fold--test-no-match-exactly strings))))
 
 (ert-deftest char-fold--test-with-customization ()
   :tags '(:expensive-test)
+  ;; FIXME: move some language-specific settings to defaults
   (let* ((char-fold-include
-          '(
-            (?ß "ss") ;; de
-            (?o "ø")  ;; da no nb nn
-            (?l "ł")  ;; pl
-            ))
-         ;; FIXME: move language-specific settings to defaults
+          (append char-fold-include
+                  '(
+                    (?o "ø") ;; da no nb nn
+                    (?l "ł") ;; pl
+                    (?æ "ae")
+                    (?→ "->")
+                    (?⇒ "=>")
+                    )))
          (char-fold-exclude
-          '(
-            (?a "å") ;; sv da no nb nn
-            (?a "ä") ;; sv fi et
-            (?o "ö") ;; sv fi et
-            (?n "ñ") ;; es
-            (?и "й") ;; ru
-            ))
+          (append char-fold-exclude
+                  '(
+                    (?a "å") ;; da no nb nn sv
+                    (?a "ä") ;; et fi sv
+                    (?o "ö") ;; et fi sv
+                    (?n "ñ") ;; es
+                    )))
          (char-fold-symmetric t)
          (char-fold-table (char-fold-make-table))
          (matches
           '(
             ("e" "ℯ" "ḗ" "ë" "ë")
             ("е" "ё" "ё")
-            ("ι" "ί" "ί"
-             ;; FIXME: "ΐ"
-             )
+            ("ι" "ί" "ί" "ΐ")
             ("ß" "ss")
             ("o" "ø")
             ("l" "ł")
-
+            ("æ" "ae")
+            ("→" "->")
+            ("⇒" "=>")
             ))
          (no-matches
           '(

@@ -27,12 +27,20 @@
   (defconst char-fold--default-include
     '((?\" "＂" "“" "”" "”" "„" "⹂" "〞" "‟" "‟" "❞" "❝" "❠" "“" "„" "〝" "〟" "🙷" "🙶" "🙸" "«" "»")
       (?' "❟" "❛" "❜" "‘" "’" "‚" "‛" "‚" "󠀢" "❮" "❯" "‹" "›")
-      (?` "❛" "‘" "‛" "󠀢" "❮" "‹")))
-  (defconst char-fold--default-exclude nil)
+      (?` "❛" "‘" "‛" "󠀢" "❮" "‹")
+      (?ß "ss") ;; de
+      (?ι "ΐ")  ;; el for (?ΐ "ΐ") decomposition
+      (?υ "ΰ")  ;; el for (?ΰ "ΰ") decomposition
+      ))
+  (defconst char-fold--default-exclude
+    '(
+      (?и "й")  ;; ru
+      ))
   (defconst char-fold--default-symmetric nil)
-  (defconst char-fold--previous (list char-fold--default-include
-                                      char-fold--default-exclude
-                                      char-fold--default-symmetric)))
+  (defvar char-fold--previous
+    (list char-fold--default-include
+          char-fold--default-exclude
+          char-fold--default-symmetric)))
 
 
 (eval-and-compile
@@ -221,12 +229,13 @@ Exceptionally for the space character (32), ALIST is ignored.")
 
 
 (defun char-fold-update-table ()
+  "Update char-fold-table only when one of the options changes its value."
   (let ((new (list (or (bound-and-true-p char-fold-include)
                        char-fold--default-include)
                    (or (bound-and-true-p char-fold-exclude)
                        char-fold--default-exclude)
                    (or (bound-and-true-p char-fold-symmetric)
-                      char-fold--default-symmetric))))
+                       char-fold--default-symmetric))))
     (unless (equal char-fold--previous new)
       (setq char-fold-table (char-fold-make-table)
             char-fold--previous new))))
