@@ -173,6 +173,7 @@ features that use them will also give you trouble.  This includes the
 indentation commands (@pxref{Program Indent}) and Font Lock mode
 (@pxref{Font Lock}).
 
+@cindex \( in strings
   The most likely problem case is when you want an opening delimiter
 at the start of a line inside a string.  To avoid trouble, put an
 escape character (@samp{\}, in C and Emacs Lisp, @samp{/} in some
