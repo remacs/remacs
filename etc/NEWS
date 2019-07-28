@@ -765,6 +765,12 @@ start of a sentence or at '(point-min)', else '@ref'.
 It now treats the optional 2nd argument to mean that the URL should be
 shown in the currently selected window.
 
+*** A new function, 'browse-url-add-buttons' can be used to add clickable
+links to most ordinary special-mode buffers that display text that
+have URLs embedded.  'browse-url-button-regexp' controls what's
+considered a button.
+
+*** A new variable, 'browse-url-external-browser', has been added.
 ** Comint
 
 +++
@@ -1036,6 +1042,10 @@ has been executed.
 *** New option 'shr-discard-aria-hidden'.
 If set, shr will not render tags with attribute 'aria-hidden="true"'.
 This attribute is meant to tell screen readers to ignore a tag.
+
++++
+*** 'shr-external-browser' has been made into an obsolete alias
+of 'browse-url-external-browser'.
 
 ---
 *** 'shr-tag-ol' now respects the ordered list 'start' attribute.
