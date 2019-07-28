@@ -44,7 +44,7 @@
 
 
 (eval-and-compile
-  (defun char-fold-make-table ()
+  (defun char-fold--make-table ()
     (let* ((equiv (make-char-table 'char-fold-table))
            (equiv-multi (make-char-table 'char-fold-table))
            (table (unicode-property-table-internal 'decomposition)))
@@ -204,7 +204,7 @@
 
 (defconst char-fold-table
   (eval-when-compile
-    (char-fold-make-table))
+    (char-fold--make-table))
   "Used for folding characters of the same group during search.
 This is a char-table with the `char-fold-table' subtype.
 
@@ -237,7 +237,7 @@ Exceptionally for the space character (32), ALIST is ignored.")
                    (or (bound-and-true-p char-fold-symmetric)
                        char-fold--default-symmetric))))
     (unless (equal char-fold--previous new)
-      (setq char-fold-table (char-fold-make-table)
+      (setq char-fold-table (char-fold--make-table)
             char-fold--previous new))))
 
 (defcustom char-fold-include char-fold--default-include

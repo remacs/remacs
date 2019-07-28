@@ -171,45 +171,47 @@
 (ert-deftest char-fold--test-with-customization ()
   :tags '(:expensive-test)
   ;; FIXME: move some language-specific settings to defaults
-  (let* ((char-fold-include
-          (append char-fold-include
-                  '(
-                    (?o "ø") ;; da no nb nn
-                    (?l "ł") ;; pl
-                    (?æ "ae")
-                    (?→ "->")
-                    (?⇒ "=>")
-                    )))
-         (char-fold-exclude
-          (append char-fold-exclude
-                  '(
-                    (?a "å") ;; da no nb nn sv
-                    (?a "ä") ;; et fi sv
-                    (?o "ö") ;; et fi sv
-                    (?n "ñ") ;; es
-                    )))
-         (char-fold-symmetric t)
-         (char-fold-table (char-fold-make-table))
-         (matches
-          '(
-            ("e" "ℯ" "ḗ" "ë" "ë")
-            ("е" "ё" "ё")
-            ("ι" "ί" "ί" "ΐ")
-            ("ß" "ss")
-            ("o" "ø")
-            ("l" "ł")
-            ("æ" "ae")
-            ("→" "->")
-            ("⇒" "=>")
-            ))
-         (no-matches
-          '(
-            ("a" "å")
-            ("a" "ä")
-            ("o" "ö")
-            ("n" "ñ")
-            ("и" "й")
-            )))
+  (let ((char-fold-include
+         (append char-fold-include
+                 '(
+                   (?o "ø")  ;; da no nb nn
+                   (?l "ł")  ;; pl
+                   (?æ "ae")
+                   (?→ "->")
+                   (?⇒ "=>")
+                   )))
+        (char-fold-exclude
+         (append char-fold-exclude
+                 '(
+                   (?a "å")  ;; da no nb nn sv
+                   (?a "ä")  ;; et fi sv
+                   (?o "ö")  ;; et fi sv
+                   (?n "ñ")  ;; es
+                   )))
+        (char-fold-symmetric t)
+        (matches
+         '(
+           ("e" "ℯ" "ḗ" "ë" "ë")
+           ("е" "ё" "ё")
+           ("ι" "ί" "ί" "ΐ")
+           ("ß" "ss")
+           ("o" "ø")
+           ("l" "ł")
+           ("æ" "ae")
+           ("→" "->")
+           ("⇒" "=>")
+           ))
+        (no-matches
+         '(
+           ("a" "å")
+           ("a" "ä")
+           ("o" "ö")
+           ("n" "ñ")
+           ("и" "й")
+           ))
+        ;; Don't override global value by char-fold-update-table below
+        char-fold-table)
+    (char-fold-update-table)
     (dolist (strings matches)
       (dolist (permutation (char-fold--permutation strings))
         (apply 'char-fold--test-match-exactly permutation)))
