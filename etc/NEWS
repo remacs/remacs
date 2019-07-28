@@ -49,7 +49,7 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
-** The configure option --with-cairo is no longer experimental.
+** The configure option '--with-cairo' is no longer experimental.
 This builds Emacs with Cairo drawing, and supports built-in printing
 when Emacs is built with GTK+.
 
@@ -100,7 +100,7 @@ non-default '.pdmp' file to load the state from; see the node "Initial
 Options" in the Emacs manual for more information.
 
 An Emacs started via a dump file can create a new dump file only if it
-was invoked with the -batch option.
+was invoked with the '-batch' option.
 
 Although the portable dumper has been tested, it may have a bug on
 unusual platforms.  If you require traditional unexec dumping you can
@@ -187,9 +187,9 @@ loads files during completion of 'C-h f' and 'C-h v' according to
 
 ** emacsclient
 
-*** emacsclient no longer passes --eval arguments to an alternate editor.
-Previously, --eval arguments were passed as file names to any
-alternate editor started by --alternate-editor/-a.
+*** emacsclient no longer passes '--eval' arguments to an alternate editor.
+Previously, '--eval' arguments were passed as file names to any
+alternate editor started by '--alternate-editor'.
 
 +++
 *** emacsclient now supports an 'EMACS_SOCKET_NAME' environment variable.
@@ -405,7 +405,7 @@ mode they are described in the manual "(emacs) Display".
 ** New variable 'xref-file-name-display' controls the display of file
 names in xref buffers.
 
-** New variable `file-size-function' controls how file sizes are displayed.
+** New variable 'file-size-function' controls how file sizes are displayed.
 
 +++
 ** Emacs now interprets RGB triplets like HTML, SVG, and CSS do.
@@ -498,21 +498,20 @@ current and the previous or the next line, as before.
 
 +++
 ** winner
-*** A new variable, `winner-boring-buffers-regexp', has been added.
+*** A new variable, 'winner-boring-buffers-regexp', has been added.
 
 ** table
-** `table-generate-source' and friends now support outputting wiki and
+** 'table-generate-source' and friends now support outputting wiki and
 mediawiki format tables.
 
 ---
 ** telnet-mode
-*** Reverting a buffer in `telnet-mode' will restart a closed
-connection.
+*** Reverting a buffer in 'telnet-mode' will restart a closed connection.
 
 ** goto-addr
 *** A way to more conveniently specify what URI address schemes that
 should be ignored have been added via the
-`goto-address-uri-schemes-ignored' variable.
+'goto-address-uri-schemes-ignored' variable.
 
 +++
 ** tex-mode
@@ -521,7 +520,7 @@ You can use this new variable to control indentation of arguments of
 \emph, \footnote, and similar commands.
 
 ** byte compiler
-*** byte-compile-dynamic is now obsolete
+*** 'byte-compile-dynamic' is now obsolete.
 This is because on the one hand it suffers from various misbehaviors in corner
 cases that have plagued it for years, and on the other experiments indicated
 that it doesn't bring any measurable benefit.
@@ -537,8 +536,7 @@ be functions.
 its functions.
 
 ---
-*** `cl-values-list' will now signal an error if its argument isn't a
-list.
+*** 'cl-values-list' will now signal an error if its argument isn't a list.
 
 ** doc-view.el
 *** New commands 'doc-view-presentation' and 'doc-view-fit-window-to-page'.
@@ -649,14 +647,14 @@ remapped to these, respectively.
 *** New command 'dired-create-empty-file'.
 
 +++
-*** New command and keystroke `dired-number-of-marked-files' bound to
-`* N'.
+*** New command and keystroke 'dired-number-of-marked-files' bound to
+'* N'.
 
 *** The marking commands now report how many files were marked by the
 command itself, not how many files are marked in total.
 
 ---
-*** A new face, `dired-socket', is used to highlight sockets, names
+*** A new face, 'dired-socket', is used to highlight sockets, named
 pipes, block devices and character devices.
 
 ** Find-Dired
@@ -713,7 +711,7 @@ print diffs and logs between the merge base (common ancestor) of two
 given revisions.
 
 +++
-*** The new `d' command (`vc-dir-clean-files') in `vc-dir-mode'
+*** The new 'd' command ('vc-dir-clean-files') in 'vc-dir-mode'
 buffers will delete the marked files (or if no files are marked, the
 file under point).  This command does not notify the VC backend, and
 is mostly useful for unregistered files.
@@ -839,7 +837,7 @@ be encrypted with GPG by adding an additional '.gpg' suffix.
 *** 'term-read-noecho' is now obsolete, use 'read-passwd' instead.
 
 +++
-*** `serial-term' now takes an optional parameter to leave the
+*** 'serial-term' now takes an optional parameter to leave the
 emulator in line mode.
 
 ** Flymake
@@ -878,7 +876,7 @@ value needs to be used if you want to enforce that all signatures
 are valid.  This only affects packages with multiple signatures.
 
 +++
-*** The meaning of `allow-unsigned' in `package-check-signature' has
+*** The meaning of 'allow-unsigned' in 'package-check-signature' has
 changed slightly: If a usable OpenPGP configuration can't be found
 (for instance, if gpg isn't installed), it now has the same meaning as
 nil.
@@ -898,7 +896,7 @@ early init file.
 *** New function 'package-activate-all'.
 
 ---
-*** Imenu support has been added to `package-menu-mode'.
+*** Imenu support has been added to 'package-menu-mode'.
 
 ** Info
 
@@ -953,8 +951,8 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 ** Gnus
 
 +++
-*** There's a new value for `gnus-article-date-headers',
-`combined-local-lapsed', which will show both the time (in the local
+*** There's a new value for 'gnus-article-date-headers',
+'combined-local-lapsed', which will show both the time (in the local
 timezone) and the lapsed time.
 
 ---
@@ -1009,9 +1007,9 @@ This option controls whether and how to use Gnus search groups as
 and its value has been changed to Duck Duck Go.
 
 ---
-*** `erc-send-pre-hook' and `erc-send-this' have been obsoleted.  The
-variable to use instead to alter text to be sent is now
-`erc-pre-send-functions'.
+*** 'erc-send-pre-hook' and 'erc-send-this' have been obsoleted.
+The variable to use instead to alter text to be sent is now
+'erc-pre-send-functions'.
 
 ** EUDC
 
@@ -1043,7 +1041,7 @@ This attribute is meant to tell screen readers to ignore a tag.
 *** 'shr-tag-ol' now respects the ordered list 'start' attribute.
 
 ---
-*** The following tags are now handled: <code>, <abbr>, and <acronym>.
+*** The following tags are now handled: '<code>', '<abbr>', and '<acronym>'.
 
 ** Htmlfontify
 
@@ -1067,7 +1065,7 @@ defining new 'cl-defmethod' of 'smtpmail-try-auth-method'.
 
 *** To always force smtpmail to send credentials over on the first
 attempt when communicating with the SMTP server(s), the
-`smtpmail-servers-requiring-authorization' variable can be used.
+'smtpmail-servers-requiring-authorization' variable can be used.
 
 ** Footnote mode
 
@@ -1172,9 +1170,9 @@ highlight in one iteration while processing the full buffer.
 'C-M-d'.
 
 +++
-'M-s h l' invokes highlight-lines-matching-regexp using the search
+'M-s h l' invokes 'highlight-lines-matching-regexp' using the search
 string to highlight lines matching the search string.  This is similar
-to the existing binding 'M-s h r' (highlight-regexp) that highlights
+to the existing binding 'M-s h r' ('highlight-regexp') that highlights
 JUST the search string.
 
 +++
@@ -1201,8 +1199,8 @@ and case-sensitivity together with search strings in the search ring.
 The table used to check for equivalence of characters is now built
 using the complete chain of unicode decompositions of a character,
 rather than stopping after one level, such that searching for
-e.g. GREEK SMALL LETTER IOTA will now also find GREEK SMALL LETTER
-IOTA WITH OXIA.
+e.g. "GREEK SMALL LETTER IOTA" will now also find "GREEK SMALL LETTER
+IOTA WITH OXIA".
 
 +++
 *** New char-folding options: 'char-fold-include' lets you add ad hoc
@@ -1417,7 +1415,7 @@ Setting this option to an integer causes URLs displayed in Rcirc
 buffers to be truncated to that many characters.
 
 ---
-*** The default /quit and /part reasons are now configurable.
+*** The default '/quit' and '/part' reasons are now configurable.
 Two new user options are provided for this:
 'rcirc-default-part-reason' and 'rcirc-default-quit-reason'.
 
@@ -1467,10 +1465,10 @@ The option is useful for two reasons when verifying the signature:
  1. GnuPG's TOFU statistics are updated for the specific user id
     (email) only. See gpg(1) man page about "--sender".
 
- 2. GnuPG's --auto-key-retrieve functionality can use WKD (web key
+ 2. GnuPG's '--auto-key-retrieve' functionality can use WKD (web key
     directory) method for finding the signer's key. You need GnuPG
     2.2.17 to fully benefit from this feature. See gpg(1) man page for
-    "--auto-key-retrieve".
+    '--auto-key-retrieve'.
 
 ---
 ** EasyPG
@@ -1485,11 +1483,11 @@ It now applies to epg functions as well as epa functions.
 been removed.  Use 'encode-coding-string', 'decode-coding-string', and
 'select-safe-coding-system' instead.
 
-*** 'epg-context' structure supports now 'sender' slot
+*** 'epg-context' structure supports now 'sender' slot.
 The value of the new 'sender' slot (if a string) is used to set gpg's
---sender option. This feature is used by
+'--sender' option. This feature is used by
 'mml-secure-openpgp-sign-with-sender'. See gpg(1) manual page about
-"--sender" for more information.
+'--sender' for more information.
 
 ---
 ** Rmail
@@ -1601,7 +1599,7 @@ near the current column in Tabulated Lists (see variables
 
 +++
 *** Two new commands and keystrokes have been added to the tabulated
-list mode: `w' (which widens the current column) and `c' which makes
+list mode: 'w' (which widens the current column) and 'c' which makes
 the current column contract.
 
 ** Text mode
@@ -1709,7 +1707,7 @@ value.  Auto Revert mode can use this information to avoid polling the
 buffer periodically when 'auto-revert-avoid-polling' is non-nil.
 
 ---
-*** `global-auto-revert-ignore-buffer' can now also be a predicate
+*** 'global-auto-revert-ignore-buffer' can now also be a predicate
 function that can be used for more fine-grained control of which
 buffers to auto-revert.
 
@@ -1718,7 +1716,7 @@ buffers to auto-revert.
 +++
 *** New customizable variable 'auth-source-pass-filename'.
 Allows setting the path to the password-store, defaults to
-~/.password-store.
+"~/.password-store".
 
 +++
 *** New customizable variable 'auth-source-pass-port-separator'.
@@ -1811,11 +1809,14 @@ immediately.  Type 'M-x so-long-commentary' for full documentation.
 Likewise for 'magic-fallback-mode-alist'.
 
 +++
-** add-hook does not always add to the front or the end any more.
-The replacement of `append` with `depth` implies that the function is not
-always added to the very front (when append/depth is nil) or the very end (when
-append/depth is t) any more because other functions on the hook may have
-specified higher/lower depths.
+** 'add-hook' does not always add to the front or the end any more.
+The replacement of 'append' with 'depth' implies that the function is
+not always added to the very front (when append/depth is nil) or the
+very end (when append/depth is t) any more because other functions on
+the hook may have specified higher/lower depths.  This makes it
+possible to control the ordering of functions more precisely, as was
+already possible in 'add-function' and 'advice-add'.
+
 
 ** In 'compilation-error-regexp-alist' the old undocumented feature
 where 'line' could be a function of 2 arguments has been dropped.
@@ -1848,7 +1849,7 @@ relative to the 'default-directory' of the current buffer.  We recommend
 always setting "$HOME" to an absolute file name, so that its meaning is
 independent of where Emacs was started.
 
-** file-name-absolute-p no longer considers "~foo" to be an absolute
+** 'file-name-absolute-p' no longer considers "~foo" to be an absolute
 file name if there is no user named "foo".
 
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
@@ -1954,28 +1955,23 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
-** defcustom now takes a :local keyword that can be either t or
-`permanent', which mean that the variable should be automatically
-buffer-local.  `permanent' also sets the variable's
-`permanent-local' property.
+** 'defcustom' now takes a ':local' keyword that can be either t or
+'permanent', which mean that the variable should be automatically
+buffer-local.  'permanent' also sets the variable's 'permanent-local'
+property.
 
 +++
-** The new macro `with-suppressed-warnings' can be used to suppress
+** The new macro 'with-suppressed-warnings' can be used to suppress
 specific byte-compile warnings.
 
 +++
-** The new macro `ignore-error' is like `ignore-errors', but takes a
+** The new macro 'ignore-error' is like 'ignore-errors', but takes a
 specific error condition, and will only ignore that condition.  (This
 can also be a list of conditions.)
 
 ---
-** The new function `byte-compile-info-message' can be used to output
+** The new function 'byte-compile-info-message' can be used to output
 informational messages that look pleasing during the Emacs build.
-
-+++
-** The 'append' arg of 'add-hook' is generalized to a finer notion of 'depth'
-This makes it possible to control the ordering of functions more precisely,
-as was already possible in 'add-function' and `advice-add`.
 
 ---
 ** New 'help-fns-describe-variable-functions' hook.
@@ -2355,11 +2351,11 @@ The history of variable names read by 'read-variable' is recorded in
 the new variable 'custom-variable-history'.
 
 ---
-** The function 'string-to-unibyte' and `string-to-multibyte' are no
+** The functions 'string-to-unibyte' and 'string-to-multibyte' are no
 longer declared obsolete.  We have found that there are legitimate use
 cases for these functions, where there's no better alternative.  We
 believe that the incorrect uses of these functions all but disappeared
-by now, so we are un-obsoleting it.
+by now, so we are un-obsoleting them.
 
 +++
 ** New function 'group-name' returns a group name corresponding to GID.
@@ -2421,14 +2417,14 @@ space or non-breaking space as third argument, and "B" as fourth
 argument, circumstances allowing.
 
 +++
-** `format-spec' has been expanded with several modifiers to allow
+** 'format-spec' has been expanded with several modifiers to allow
 greater flexibility when customizing variables.  The modifiers include
 zero-padding, upper- and lower-casing, and limiting the length of the
 interpolated strings.  The function has now also been documented in
 the Emacs Lisp manual.
 
 +++
-** `directory-files-recursively' can now take an optional PREDICATE
+** 'directory-files-recursively' can now take an optional PREDICATE
 parameter to control descending into subdirectories, and a
 FOLLOW-SYMLINK parameter to say that symbolic links that point to
 other directories should be followed.
