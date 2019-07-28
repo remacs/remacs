@@ -549,7 +549,7 @@ height of the image; integer values are taken as pixel values."
 			 `(display ,(if slice
 					(list (cons 'slice slice) image)
 				      image)
-                                   rear-nonsticky (display)
+                                   rear-nonsticky t
                                    keymap ,image-map))))
 
 
