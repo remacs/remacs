@@ -651,6 +651,10 @@ remapped to these, respectively.
 *** The marking commands now report how many files were marked by the
 command itself, not how many files are marked in total.
 
+---
+*** A new face, `dired-socket', is used to highlight sockets, names
+pipes, block devices and character devices.
+
 ** Find-Dired
 
 *** New customizable variable 'find-dired-refine-function'.

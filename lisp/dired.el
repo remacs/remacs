@@ -340,7 +340,8 @@ The directory name must be absolute, but need not be fully expanded.")
 ;; DOS/Windows-style drive letters in directory names, like in "d:/foo".
 (defvar dired-re-dir (concat dired-re-maybe-mark dired-re-inode-size "d[^:]"))
 (defvar dired-re-sym (concat dired-re-maybe-mark dired-re-inode-size "l[^:]"))
-(defvar dired-re-socket (concat dired-re-maybe-mark dired-re-inode-size "[sp][^:]"))
+(defvar dired-re-socket (concat dired-re-maybe-mark dired-re-inode-size
+                                "[bcsp][^:]"))
 (defvar dired-re-exe;; match ls permission string of an executable file
   (mapconcat (lambda (x)
 		(concat dired-re-maybe-mark dired-re-inode-size x))
@@ -448,7 +449,7 @@ Subexpression 2 must end right before the \\n.")
 
 (defface dired-socket
   '((t (:inherit font-lock-variable-name-face)))
-  "Face used for sockets and pipes."
+  "Face used for sockets, pipes, block devices and char devices."
   :group 'dired-faces
   :version "27.1")
 
@@ -507,7 +508,7 @@ Subexpression 2 must end right before the \\n.")
    (list dired-re-sym
 	 '(".+" (dired-move-to-filename) nil (0 dired-symlink-face)))
    ;;
-   ;; Sockets and pipes
+   ;; Sockets, pipes, block devices, char devices.
    (list dired-re-socket
 	 '(".+" (dired-move-to-filename) nil (0 'dired-socket)))
    ;;
