@@ -433,11 +433,6 @@ usually do not have translators for other languages.\n\n")))
     (unless (or report-emacs-bug-no-confirmation
 		(yes-or-no-p
 		 "Send this bug report to the Emacs maintainers? "))
-      (goto-char (point-min))
-      (if (search-forward "To: ")
-          (delete-region (point) (line-end-position)))
-      (if report-emacs-bug-send-hook
-          (kill-local-variable report-emacs-bug-send-hook))
       (with-output-to-temp-buffer "*Bug Help*"
 	(princ (substitute-command-keys
                 (format "\
