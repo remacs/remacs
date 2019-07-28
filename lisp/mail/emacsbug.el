@@ -430,9 +430,10 @@ usually do not have translators for other languages.\n\n")))
                        report-emacs-bug-orig-text)
          (error "No text entered in bug report"))
     ;; Warning for novice users.
-    (unless (or report-emacs-bug-no-confirmation
-		(yes-or-no-p
-		 "Send this bug report to the Emacs maintainers? "))
+    (when (and (string-match "bug-gnu-emacs@gnu\\.org" (mail-fetch-field "to"))
+               (not report-emacs-bug-no-confirmation)
+	       (not (yes-or-no-p
+		     "Send this bug report to the Emacs maintainers? ")))
       (with-output-to-temp-buffer "*Bug Help*"
 	(princ (substitute-command-keys
                 (format "\
