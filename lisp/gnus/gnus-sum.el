@@ -9478,7 +9478,7 @@ The 1st element is the widget named by `gnus-collect-urls-primary-text'."
   "Scan the current article body for links, and offer to browse them.
 
 Links are opened using `browse-url' unless a prefix argument is
-given: Then `shr-external-browser' is used instead.
+given: Then `browse-url-external-browser' is used instead.
 
 If only one link is found, browse that directly, otherwise use
 completion to select a link.  The first link marked in the
@@ -9502,7 +9502,7 @@ default."
 				    (car urls)))))
       (if target
 	  (if external
-	      (funcall shr-external-browser target)
+	      (funcall browse-url-external-browser target)
 	    (browse-url target))
 	(message "No URLs found.")))))
 

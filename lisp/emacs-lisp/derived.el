@@ -113,9 +113,9 @@
 
 ;;;###autoload
 (defmacro define-derived-mode (child parent name &optional docstring &rest body)
-  "Create a new mode as a variant of an existing mode.
+  "Create a new mode CHILD which is a variant of an existing mode PARENT.
 
-The arguments to this command are as follow:
+The arguments are as follows:
 
 CHILD:     the name of the command for the derived mode.
 PARENT:    the name of the command for the parent mode (e.g. `text-mode')
@@ -123,24 +123,27 @@ PARENT:    the name of the command for the parent mode (e.g. `text-mode')
 NAME:      a string which will appear in the status line (e.g. \"Hypertext\")
 DOCSTRING: an optional documentation string--if you do not supply one,
            the function will attempt to invent something useful.
-KEYWORDS:  optional keywords.
+KEYWORD-ARGS:
+           optional arguments in the form of pairs of keyword and value.
+           The following keyword arguments are currently supported:
+
+           :group GROUP
+                   Declare the customization group that corresponds
+                   to this mode.  The command `customize-mode' uses this.
+           :syntax-table TABLE
+                   Use TABLE instead of the default (CHILD-syntax-table).
+                   A nil value means to simply use the same syntax-table
+                   as the parent.
+           :abbrev-table TABLE
+                   Use TABLE instead of the default (CHILD-abbrev-table).
+                   A nil value means to simply use the same abbrev-table
+                   as the parent.
+           :after-hook FORM
+                   A single lisp form which is evaluated after the mode
+                   hooks have been run.  It should not be quoted.
+
 BODY:      forms to execute just before running the
            hooks for the new mode.  Do not use `interactive' here.
-
-The following keywords are currently supported:
-
-:group GROUP
-	Declare the customization group that corresponds to this mode.
-	The command `customize-mode' uses this.
-:syntax-table TABLE
-	Use TABLE instead of the default (CHILD-syntax-table).
-	A nil value means to simply use the same syntax-table as the parent.
-:abbrev-table TABLE
-	Use TABLE instead of the default (CHILD-abbrev-table).
-	A nil value means to simply use the same abbrev-table as the parent.
-:after-hook FORM
-	A single lisp form which is evaluated after the mode hooks have been
-	run.  It should not be quoted.
 
 Here is how you could define LaTeX-Thesis mode as a variant of LaTeX mode:
 
@@ -165,7 +168,7 @@ The new mode runs the hook constructed by the function
 
 See Info node `(elisp)Derived Modes' for more details.
 
-\(fn CHILD PARENT NAME [DOCSTRING] [KEYWORDS...] &rest BODY)"
+\(fn CHILD PARENT NAME [DOCSTRING] [KEYWORD-ARGS...] &rest BODY)"
   (declare (debug (&define name symbolp sexp [&optional stringp]
 			   [&rest keywordp sexp] def-body))
 	   (doc-string 4)
