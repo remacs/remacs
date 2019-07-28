@@ -135,7 +135,7 @@ not align (only setting space according to `conf-assignment-space')."
     (modify-syntax-entry ?_  "_" table)
     (modify-syntax-entry ?-  "_" table)
     (modify-syntax-entry ?.  "_" table)
-    (modify-syntax-entry ?\' "\"" table)
+    (modify-syntax-entry ?' "\"" table)
     (modify-syntax-entry ?\; "<" table)
     (modify-syntax-entry ?\n ">" table)
     (modify-syntax-entry ?\r ">" table)
