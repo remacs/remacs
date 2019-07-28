@@ -57,6 +57,7 @@ Semantic, and Ansi-Color faces are included.")
 	      (,class
 	       (:foreground ,alum-1 :background "black"))))
    `(cursor ((,class (:background ,butter-1))))
+   `(header-line ((,class (:background "#666"))))
    ;; Highlighting faces
    `(fringe ((,class (:background ,alum-7))))
    `(highlight ((,class (:foreground ,alum-6 :background ,butter-2))))
