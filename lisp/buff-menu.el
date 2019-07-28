@@ -703,7 +703,8 @@ means list those buffers and no others."
 (defun Buffer-menu--pretty-file-name (file)
   (cond (file
 	 (abbreviate-file-name file))
-	((bound-and-true-p list-buffers-directory))
+	((bound-and-true-p list-buffers-directory)
+         (abbreviate-file-name list-buffers-directory))
 	(t "")))
 
 ;;; buff-menu.el ends here
