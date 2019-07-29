@@ -24,7 +24,7 @@ modify this GNU manual.''
 
 @dircategory Emacs lisp libraries
 @direntry
-* CL: (cl).                     Partial Common Lisp support for Emacs Lisp.
+* CL-Lib: (cl).                 Partial Common Lisp support for Emacs Lisp.
 @end direntry
 
 @finalout
@@ -4036,12 +4036,6 @@ is either a slot symbol or a list of the form @samp{(@var{slot-name}
 is a Lisp form that is evaluated any time an instance of the
 structure type is created without specifying that slot's value.
 
-Common Lisp defines several slot options, but the only one
-implemented in this package is @code{:read-only}.  A non-@code{nil}
-value for this option means the slot should not be @code{setf}-able;
-the slot's value is determined when the object is created and does
-not change afterward.
-
 @example
 (cl-defstruct person
      (name nil :read-only t)
@@ -4049,7 +4043,23 @@ not change afterward.
      (sex 'unknown))
 @end example
 
-Any slot options other than @code{:read-only} are ignored.
+@var{slot-options} is a list of keyword-value pairs, where the
+following keywords can be used:
+
+@table @code
+@item :read-only
+A non-nil value means the slot should not be @code{setf}-able;
+the slot's value is determined when the object is created and does
+not change afterward.
+
+@item :type
+The expected type of the values held in this slot.
+
+@item :documentation
+A documentation string describing the slot.
+@end table
+
+Other slot options are currently ignored.
 
 For obscure historical reasons, structure options take a different
 form than slot options.  A structure option is either a keyword

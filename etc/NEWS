@@ -535,6 +535,9 @@ be functions.
 *** 'cl-defstruct' has a new ':noinline' argument to prevent inlining
 its functions.
 
++++
+*** `cl-defstruct' slots accept a ':documentation' property
+
 ---
 *** 'cl-values-list' will now signal an error if its argument isn't a list.
 

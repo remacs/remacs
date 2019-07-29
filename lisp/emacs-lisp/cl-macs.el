@@ -2722,8 +2722,10 @@ node `(cl)Structures' for the description of the options.
 Each SLOT may instead take the form (SNAME SDEFAULT SOPTIONS...), where
 SDEFAULT is the default value of that slot and SOPTIONS are keyword-value
 pairs for that slot.
-Currently, only one keyword is supported, `:read-only'.  If this has a
-non-nil value, that slot cannot be set via `setf'.
+Supported keywords for slots are:
+- `:read-only':  If this has a non-nil value, that slot cannot be set via `setf'.
+- `:documentation': this is a docstring describing the slot.
+- `:type': the type of the field; currently unused.
 
 \(fn NAME &optional DOCSTRING &rest SLOTS)"
   (declare (doc-string 2) (indent 1)
@@ -2902,14 +2904,17 @@ non-nil value, that slot cannot be set via `setf'.
 			 defaults))
 	    (if (assq slot descp)
 		(error "Duplicate slots named %s in %s" slot name))
-	    (let ((accessor (intern (format "%s%s" conc-name slot))))
+	    (let ((accessor (intern (format "%s%s" conc-name slot)))
+                  (default-value (pop desc))
+                  (doc (plist-get desc :documentation)))
 	      (push slot slots)
-	      (push (pop desc) defaults)
+	      (push default-value defaults)
 	      ;; The arg "cl-x" is referenced by name in eg pred-form
 	      ;; and pred-check, so changing it is not straightforward.
 	      (push `(,defsym ,accessor (cl-x)
-                       ,(format "Access slot \"%s\" of `%s' struct CL-X."
-                                slot name)
+                       ,(format "Access slot \"%s\" of `%s' struct CL-X.%s"
+                                slot name
+                                (if doc (concat "\n" doc) ""))
                        (declare (side-effect-free t))
                        ,@(and pred-check
 			      (list `(or ,pred-check
