@@ -2056,6 +2056,15 @@ TICKS is an integer and HZ is a positive integer denoting a clock
 frequency.  The old 'encode-time' API is still supported.
 
 +++
+*** A new package to parse ISO 8601 time, date, durations and
+intervals has been added.  The main function to use is
+'iso8601-parse', but there's also 'iso8601-parse-date',
+'iso8601-parse-time', 'iso8601-parse-duration' and
+'iso8601-parse-interval'.  All these functions return decoded time
+structures, except the final one, which returns three of them (start,
+end and duration).
+
++++
 *** 'time-add', 'time-subtract', and 'time-less-p' now accept
 infinities and NaNs too, and propagate them or return nil like
 floating-point operators do.

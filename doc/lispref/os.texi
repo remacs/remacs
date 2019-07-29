@@ -1622,6 +1622,19 @@ ISO 8601 string, like ``Fri, 25 Mar 2016 16:24:56 +0100'' or
 less well-formed time strings as well.
 @end defun
 
+@vindex ISO 8601 date/time strings
+@defun iso8601-parse string
+For a more strict function (that will error out upon invalid input),
+this function can be used instead.  It's able to parse all variants of
+the ISO 8601 standard, so in addition to the formats mentioned above,
+it also parses things like ``1998W45-3'' (week number) and
+``1998-245'' (ordinal day number).  To parse durations, there's
+@code{iso8601-parse-duration}, and to parse intervals, there's
+@code{iso8601-parse-interval}.  All these functions return decoded
+time structures, except the final one, which returns three of them
+(the start, the end, and the duration).
+@end defun
+
 @defun format-time-string format-string &optional time zone
 
 This function converts @var{time} (or the current time, if
