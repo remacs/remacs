@@ -1326,6 +1326,12 @@ the TZ environment variable.  It can also be a list (as from
 `current-time-zone') or an integer (the UTC offset in seconds) applied
 without consideration for daylight saving time.
 
+To access (or alter) the elements in the time value, the
+`decoded-time-second', `decoded-time-minute', `decoded-time-hour',
+`decoded-time-day', `decoded-time-month', `decoded-time-year',
+`decoded-time-weekday', `decoded-time-dst' and `decoded-time-zone'
+accessors can be used.
+
 The list has the following nine members: SEC is an integer between 0
 and 60; SEC is 60 for a leap second, which only some operating systems
 support.  MINUTE is an integer between 0 and 59.  HOUR is an integer

@@ -2069,6 +2069,21 @@ that acts like the '0' flag but also puts a '+' before nonnegative
 years containing more than four digits.  This is for compatibility
 with POSIX.1-2017.
 
++++
+*** To access (or alter) the elements a decoded time value, the
+'decoded-time-second', 'decoded-time-minute', 'decoded-time-hour',
+'decoded-time-day', 'decoded-time-month', 'decoded-time-year',
+'decoded-time-weekday', 'decoded-time-dst' and 'decoded-time-zone'
+accessors can be used.
+
++++
+*** The new functions `date-days-in-month' (which will say how many
+days there are in a month in a specific year), `date-ordinal-to-time'
+(that computes the date of an ordinal day), `decoded-time-add' for
+doing computations on a decoded time structure), and
+`make-decoded-time' (for making a decoded time structure with only the
+given keywords filled out) have been added.
+
 ** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++
