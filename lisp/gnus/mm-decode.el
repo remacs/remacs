@@ -896,11 +896,11 @@ external if displayed external."
                                    (buffer-live-p gnus-summary-buffer))
 			  (when attachment-filename
 			    (with-current-buffer mm
-			      (rename-buffer (format "*mm* %s" attachment-filename) t)))
+			      (rename-buffer
+			       (format "*mm* %s" attachment-filename) t)))
 			  ;; So that we pop back to the right place, sort of.
 			  (switch-to-buffer gnus-summary-buffer)
 			  (switch-to-buffer mm))
-			(delete-other-windows)
 			(funcall method))
 		    (mm-save-part handle))
 		(when (and (not non-viewer)
