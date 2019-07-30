@@ -525,12 +525,14 @@ whose cdr is the list of file attributes."
 		" " (format-time-string
 		     (concat
 		      eshell-ls-date-format " "
-		      (if (= (nth 5 (decode-time))
-			     (nth 5 (decode-time
-				     (nth (cond
-					   ((eq sort-method 'by-atime) 4)
-					   ((eq sort-method 'by-ctime) 6)
-					   (t 5)) attrs))))
+		      (if (= (decoded-time-year (decode-time))
+			     (decoded-time-year
+                              (decode-time
+			       (nth (cond
+				     ((eq sort-method 'by-atime) 4)
+				     ((eq sort-method 'by-ctime) 6)
+				     (t 5))
+                                    attrs))))
 			  "%H:%M"
 			" %Y")) (nth (cond
 			((eq sort-method 'by-atime) 4)
