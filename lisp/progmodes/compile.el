@@ -677,8 +677,9 @@ of `my-compilation-root' here."
 ;;;###autoload
 (defcustom compilation-search-path '(nil)
   "List of directories to search for source files named in error messages.
-Elements should be directory names, not file names of directories.
-The value nil as an element means to try the default directory."
+Elements should be directory names, not file names of
+directories.  The value nil as an element means the error
+message buffer `default-directory'."
   :type '(repeat (choice (const :tag "Default" nil)
 			 (string :tag "Directory"))))
 

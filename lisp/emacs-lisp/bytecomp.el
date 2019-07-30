@@ -1037,9 +1037,10 @@ If STR is something like \"Buffer foo.el\", return #<buffer foo.el>
 we go into emacs-lisp-compilation-mode.")
 
 (defcustom emacs-lisp-compilation-search-path '(nil)
-  "Search path for byte-compile error messages.
-Elements should be directory names, not file names of directories.
-The value nil as an element means to try the default directory."
+  "Directories to search for files named in byte-compile error messages.
+Value should be a list of directory names, not file names of
+directories.  The value nil as an element means the byte-compile
+message buffer `default-directory'."
   :version "27.1"
   :type '(repeat (choice (const :tag "Default" nil)
 			 (string :tag "Directory"))))

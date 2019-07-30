@@ -442,9 +442,10 @@ abbreviated part can also be toggled with
   :group 'grep)
 
 (defcustom grep-search-path '(nil)
-  "Search path for grep results.
-Elements should be directory names, not file names of directories.
-The value nil as an element means to try the default directory."
+  "List of directories to search for files named in grep messages.
+Elements should be directory names, not file names of
+directories.  The value nil as an element means the grep messages
+buffer `default-directory'."
   :group 'grep
   :version "27.1"
   :type '(repeat (choice (const :tag "Default" nil)
