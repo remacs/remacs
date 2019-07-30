@@ -615,9 +615,12 @@ return it."
       (profiler-report-render-calltree))
     buffer))
 
+(defun profiler--xref-backend () 'elisp)
+
 (define-derived-mode profiler-report-mode special-mode "Profiler-Report"
   "Profiler Report Mode."
   (add-to-invisibility-spec '(profiler . t))
+  (add-hook 'xref-backend-functions #'profiler--xref-backend nil t)
   (setq buffer-read-only t
 	buffer-undo-list t
 	truncate-lines t))
