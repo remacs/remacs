@@ -88,8 +88,6 @@ into help buttons that call `describe-text-category' or
 	     (insert-text-button
 	      (format "%S" value)
 	      'type 'help-face 'help-args (list value)))
-            ((widgetp value)
-	     (describe-text-widget value))
 	    (t
 	     (describe-text-sexp value))))
     (insert "\n")))
