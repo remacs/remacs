@@ -498,6 +498,26 @@ changes in daylight saving time are not taken into account."
   "Return a `decoded-time' structure with only the keywords given filled out."
   (list second minute hour day month year nil dst zone))
 
+(defun decoded-time-set-defaults (time)
+  "Set any nil values in `decoded-time' TIME to default values.
+The default value is based on January 1st, 1970 at midnight.
+
+TIME is modified and returned."
+  (unless (decoded-time-second time)
+    (setf (decoded-time-second time) 0))
+  (unless (decoded-time-minute time)
+    (setf (decoded-time-minute time) 0))
+  (unless (decoded-time-hour time)
+    (setf (decoded-time-hour time) 0))
+
+  (unless (decoded-time-day time)
+    (setf (decoded-time-day time) 1))
+  (unless (decoded-time-month time)
+    (setf (decoded-time-month time) 1))
+  (unless (decoded-time-year time)
+    (setf (decoded-time-year time) 0))
+  time)
+
 (provide 'time-date)
 
 ;;; time-date.el ends here

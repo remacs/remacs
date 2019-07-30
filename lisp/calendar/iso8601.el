@@ -349,21 +349,7 @@ Return the number of minutes."
 
 (defun iso8601--encode-time (time)
   "Like `encode-time', but fill in nil values in TIME."
-  (setq time (copy-sequence time))
-  (unless (decoded-time-second time)
-    (setf (decoded-time-second time) 0))
-  (unless (decoded-time-minute time)
-    (setf (decoded-time-minute time) 0))
-  (unless (decoded-time-hour time)
-    (setf (decoded-time-hour time) 0))
-
-  (unless (decoded-time-day time)
-    (setf (decoded-time-day time) 1))
-  (unless (decoded-time-month time)
-    (setf (decoded-time-month time) 1))
-  (unless (decoded-time-year time)
-    (setf (decoded-time-year time) 0))
-  (encode-time time))
+  (encode-time (decoded-time-set-defaults (copy-sequence time))))
 
 (provide 'iso8601)
 
