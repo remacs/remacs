@@ -259,7 +259,7 @@ for `calendar-current-time-zone'."
                             (car t2-date-sec) t1-utc-diff))
                  (t1-time (/ (cdr t1-date-sec) 60))
                  (t2-time (/ (cdr t2-date-sec) 60)))
-            (if (nth 7 (decode-time t1))
+            (if (decoded-time-dst (decode-time t1))
                 (list (/ t0-utc-diff 60) (/ (- t1-utc-diff t0-utc-diff) 60)
                       t0-name t1-name t1-rules t2-rules t1-time t2-time)
               (list (/ t1-utc-diff 60) (/ (- t0-utc-diff t1-utc-diff) 60)
@@ -291,7 +291,8 @@ the current year."
                    (condition-case nil
                        (encode-time 1 0 0 1 1 year)
                      (error
-                      (encode-time 1 0 0 1 1 (nth 5 (decode-time))))))
+                      (encode-time 1 0 0 1 1
+                                   (decoded-time-year (decode-time))))))
                 f (nth 4 e)
                 e (list year f (nth 5 e))
                 calendar-dst-transition-cache
