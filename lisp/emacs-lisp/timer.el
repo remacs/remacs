@@ -375,8 +375,11 @@ This function returns a timer object which you can use in
 	      (now (decode-time)))
 	  (if (>= hhmm 0)
 	      (setq time
-		    (encode-time 0 (% hhmm 100) (/ hhmm 100) (nth 3 now)
-				 (nth 4 now) (nth 5 now) (nth 8 now)))))))
+		    (encode-time 0 (% hhmm 100) (/ hhmm 100)
+                                 (decoded-time-day now)
+				 (decoded-time-month now)
+                                 (decoded-time-year now)
+                                 (decoded-time-zone now)))))))
 
   (or (consp time)
       (error "Invalid time format"))
