@@ -2070,14 +2070,15 @@ for \\[find-tag] (which see)."
               (beginning-of-line)
               (pcase-let* ((tag-info (etags-snarf-tag))
                            (`(,hint ,line . _) tag-info))
-                (unless (eq hint t) ; hint==t if we are in a filename line
-                  (let* ((file (file-of-tag))
-                         (mark-key (cons file line)))
-                    (unless (gethash mark-key marks)
-                      (let ((loc (xref-make-etags-location
-                                  tag-info (expand-file-name file))))
-                        (push (xref-make hint loc) xrefs)
-                        (puthash mark-key t marks)))))))))))
+                (let* ((file (file-of-tag))
+                       (mark-key (cons file line)))
+                  (unless (gethash mark-key marks)
+                    (let ((loc (xref-make-etags-location
+                                tag-info (expand-file-name file))))
+                      (push (xref-make (if (eq hint t) "(filename match)" hint)
+                                       loc)
+                            xrefs)
+                      (puthash mark-key t marks))))))))))
     (nreverse xrefs)))
 
 (defclass xref-etags-location (xref-location)
