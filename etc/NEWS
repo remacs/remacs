@@ -2110,6 +2110,10 @@ doing computations on a decoded time structure), 'make-decoded-time'
 filled out), and 'encoded-time-set-defaults' (which fills in nil
 elements as if it's midnight January 1st, 1970) have been added.
 
+*** The new function `time-zone-format' has been added to format
+Emacs time zones (which are in seconds) according to many standards
+(i.e., "+01:00").
+
 ** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++

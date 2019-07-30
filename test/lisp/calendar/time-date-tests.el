@@ -104,6 +104,12 @@
     (should (equal (decoded-time-add time (mdec :zone -7200))
                    '(12 15 14 8 7 2019 1 t 7200)))))
 
+(ert-deftest test-time-zone-format ()
+  (should (equal (time-zone-format 3600)
+                 "+01:00"))
+  (should (equal (time-zone-format -7200)
+                 "-02:00")))
+
 (require 'ert)
 
 ;;; time-date-tests.el ends here
