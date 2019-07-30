@@ -8285,7 +8285,7 @@ and defaults to `window-min-width'.  Both MAX-WIDTH and MIN-WIDTH
 are specified in columns and include fringes, margins, a
 scrollbar and a vertical divider, if any.
 
-If the optional argument `preserve-size' is non-nil, preserve the
+Optional argument PRESERVE-SIZE non-nil means to preserve the
 size of WINDOW (see `window-preserve-size').
 
 Fit pixelwise if the option `window-resize-pixelwise' is non-nil.
