@@ -43,7 +43,7 @@
 			      (list 'hms
 				    (decoded-time-hour time)
                                     (decoded-time-minute time)
-                                    (decoded-time-second 0 time))
+                                    (decoded-time-second time))
 			      (list 'hms 24 0 0))))))
 
 (defun calc-to-hms (arg)
