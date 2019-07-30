@@ -9410,7 +9410,9 @@ Obeys the standard process/prefix convention."
      (t
       (error "Couldn't select virtual nndoc group")))))
 
-(defun gnus-summary-widget-forward (arg)
+(define-obsolete-function-alias 'gnus-summary-widget-forward
+  #'gnus-summary-button-forward "27.1")
+(defun gnus-summary-button-forward (arg)
   "Move point to the next field or button in the article.
 With optional ARG, move across that many fields."
   (interactive "p")
@@ -9420,9 +9422,11 @@ With optional ARG, move across that many fields."
                  (error "No article window found"))))
     (select-window win)
     (select-frame-set-input-focus (window-frame win))
-    (widget-forward arg)))
+    (forward-button arg)))
 
-(defun gnus-summary-widget-backward (arg)
+(define-obsolete-function-alias 'gnus-summary-widget-backward
+  #'gnus-summary-button-backward "27.1")
+(defun gnus-summary-button-backward (arg)
   "Move point to the previous field or button in the article.
 With optional ARG, move across that many fields."
   (interactive "p")
@@ -9432,30 +9436,28 @@ With optional ARG, move across that many fields."
                  (error "No article window found"))))
     (select-window win)
     (select-frame-set-input-focus (window-frame win))
-    (unless (widget-at (point))
+    (unless (button-at (point))
       (goto-char (point-max)))
-    (widget-backward arg)))
+    (backward-button arg)))
 
 (defcustom gnus-collect-urls-primary-text "Link"
-  "The widget text for the default link in `gnus-summary-browse-url'."
+  "The button text for the default link in `gnus-summary-browse-url'."
   :version "27.1"
   :type 'string
   :group 'gnus-article-various)
 
 (defun gnus-collect-urls ()
   "Return the list of URLs in the buffer after (point).
-The 1st element is the widget named by `gnus-collect-urls-primary-text'."
+The 1st element is the button named by `gnus-collect-urls-primary-text'."
   (let ((pt (point)) urls primary)
-    (while (progn (widget-move 1 t) ; no echo
-		  ;; `widget-move' wraps around to top of buffer.
-		  (> (point) pt))
+    (while (forward-button 1 nil nil t)
       (setq pt (point))
-      (when-let ((w (widget-at pt))
-                 (u (or (widget-value w)
+      (when-let ((w (button-at pt))
+                 (u (or (button-get w 'shr-url)
                         (get-text-property pt 'gnus-string))))
 	(when (string-match-p "\\`[[:alpha:]]+://" u)
           (if (and gnus-collect-urls-primary-text (null primary)
-                   (string= gnus-collect-urls-primary-text (widget-text w)))
+                   (string= gnus-collect-urls-primary-text (button-label w)))
               (setq primary u)
 	    (push u urls)))))
     (setq urls (nreverse urls))
@@ -9489,7 +9491,7 @@ default."
     (gnus-summary-select-article)
     (gnus-with-article-buffer
       (article-goto-body)
-      ;; Back up a char, in case body starts with a widget.
+      ;; Back up a char, in case body starts with a button.
       (backward-char)
       (setq urls (gnus-collect-urls))
       (setq target

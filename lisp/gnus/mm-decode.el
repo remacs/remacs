@@ -1829,7 +1829,6 @@ text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
       (shr-insert-document document)
       (unless (bobp)
 	(insert "\n"))
-      (mm-convert-shr-links)
       (mm-handle-set-undisplayer
        handle
        (let ((min (point-min-marker))
@@ -1837,40 +1836,6 @@ text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
          (lambda ()
 	   (let ((inhibit-read-only t))
 	     (delete-region min max))))))))
-
-(defvar shr-image-map)
-(defvar shr-map)
-(autoload 'widget-convert-button "wid-edit")
-(defvar widget-keymap)
-
-(defun mm-convert-shr-links ()
-  (let ((start (point-min))
-	end keymap)
-    (while (and start
-		(< start (point-max)))
-      (when (setq start (text-property-not-all start (point-max) 'shr-url nil))
-	(setq end (next-single-property-change start 'shr-url nil (point-max)))
-	(widget-convert-button
-	 'url-link start end
-	 :help-echo (get-text-property start 'help-echo)
-	 :keymap (setq keymap (copy-keymap
-			       (if (mm-images-in-region-p start end)
-				   shr-image-map
-				 shr-map)))
-	 (get-text-property start 'shr-url))
-	;; Mask keys that launch `widget-button-click'.
-	;; Those bindings are provided by `widget-keymap'
-	;; that is a parent of `gnus-article-mode-map'.
-	(dolist (key (where-is-internal 'widget-button-click widget-keymap))
-	  (unless (lookup-key keymap key)
-	    (define-key keymap key #'ignore)))
-	;; Avoid `shr-next-link' and `shr-previous-link' in `keymap' so
-	;; TAB and M-TAB run `widget-forward' and `widget-backward' instead.
-	(substitute-key-definition 'shr-next-link nil keymap)
-	(substitute-key-definition 'shr-previous-link nil keymap)
-	(dolist (overlay (overlays-at start))
-	  (overlay-put overlay 'face nil))
-	(setq start end)))))
 
 (defun mm-handle-filename (handle)
   "Return filename of HANDLE if any."
