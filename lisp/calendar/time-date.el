@@ -237,7 +237,7 @@ DATE1 and DATE2 should be date-time strings."
 TIME should be a time value.
 The Gregorian date Sunday, December 31, 1bce is imaginary."
   (let* ((tim (decode-time time))
-	 (year (nth 5 tim)))
+	 (year (decoded-time-year tim)))
     (+ (time-date--day-in-year tim)	;	Days this year
        (* 365 (1- year))		;	+ Days in prior years
        (/ (1- year) 4)			;	+ Julian leap years
