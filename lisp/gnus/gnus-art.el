@@ -7739,7 +7739,7 @@ positives are possible."
      1 (>= gnus-button-browse-level 0) gnus-button-embedded-url 1)
     ;; Raw URLs.
     (gnus-button-url-regexp
-     0 (>= gnus-button-browse-level 0) browse-url 0)
+     0 (>= gnus-button-browse-level 0) browse-url-button-open-url 0)
     ;; man pages
     ("\\b\\([a-z][a-z]+([1-9])\\)\\W"
      0 (and (>= gnus-button-man-level 1) (< gnus-button-man-level 3))
