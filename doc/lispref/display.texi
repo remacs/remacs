@@ -6473,7 +6473,9 @@ that is the value of that property, passing it the single argument
 @var{button}).  If @var{use-mouse-action} is non-@code{nil}, try to
 invoke the button's @code{mouse-action} property instead of
 @code{action}; if the button has no @code{mouse-action} property, use
-@code{action} as normal.
+@code{action} as normal.  If the @code{button-data} property is
+present in @var{button}, use that as the argument for the
+@code{action} function instead of @var{button}.
 @end defun
 
 @defun button-label button
@@ -6541,14 +6543,16 @@ event's position is used.  If there's no button at @var{pos}, do
 nothing and return @code{nil}, otherwise return @code{t}.
 @end deffn
 
-@deffn Command forward-button n &optional wrap display-message
+@deffn Command forward-button n &optional wrap display-message no-error
 Move to the @var{n}th next button, or @var{n}th previous button if
 @var{n} is negative.  If @var{n} is zero, move to the start of any
 button at point.  If @var{wrap} is non-@code{nil}, moving past either
 end of the buffer continues from the other end.  If
 @var{display-message} is non-@code{nil}, the button's help-echo string
 is displayed.  Any button with a non-@code{nil} @code{skip} property
-is skipped over.  Returns the button found.
+is skipped over.  Returns the button found, and signals an error if no
+buttons can be found.  If @var{no-error} in non-@code{nil}, return nil
+instead of signalling the error.
 @end deffn
 
 @deffn Command backward-button n &optional wrap display-message
@@ -6558,7 +6562,9 @@ button at point.  If @var{wrap} is non-@code{nil}, moving past either
 end of the buffer continues from the other end.  If
 @var{display-message} is non-@code{nil}, the button's help-echo string
 is displayed.  Any button with a non-@code{nil} @code{skip} property
-is skipped over.  Returns the button found.
+is skipped over.  Returns the button found, and signals an error if no
+buttons can be found.  If @var{no-error} in non-@code{nil}, return nil
+instead of signalling the error.
 @end deffn
 
 @defun next-button pos &optional count-current

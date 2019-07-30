@@ -235,15 +235,19 @@ The action can either be a marker or a function.  If it's a
 marker then goto it.  Otherwise if it is a function then it is
 called with BUTTON as only argument.  BUTTON is either an
 overlay, a buffer position, or (for buttons in the mode-line or
-header-line) a string."
+header-line) a string.
+
+If BUTTON has a `button-data' value, call the function with this
+value instad of BUTTON."
   (let ((action (or (and use-mouse-action (button-get button 'mouse-action))
-		    (button-get button 'action))))
+		    (button-get button 'action)))
+        (data (button-get button 'button-data)))
     (if (markerp action)
 	(save-selected-window
 	  (select-window (display-buffer (marker-buffer action)))
 	  (goto-char action)
 	  (recenter 0))
-      (funcall action button))))
+      (funcall action (or data button)))))
 
 (defun button-label (button)
   "Return BUTTON's text label."
@@ -323,6 +327,10 @@ Creating large numbers of buttons can also be somewhat faster
 using `make-text-button'.  Note, however, that if there is an existing
 face property at the site of the button, the button face may not be visible.
 You may want to use `make-button' in that case.
+
+If the property `button-data' is present, it will later be used
+as the argument for the `action' callback function instead of the
+default argument, which is the button itself.
 
 BEG can also be a string, in which case it is made into a button.
 
@@ -462,13 +470,17 @@ return t."
 	(button-activate button use-mouse-action)
 	t))))
 
-(defun forward-button (n &optional wrap display-message)
+(defun forward-button (n &optional wrap display-message no-error)
   "Move to the Nth next button, or Nth previous button if N is negative.
 If N is 0, move to the start of any button at point.
 If WRAP is non-nil, moving past either end of the buffer continues from the
 other end.
 If DISPLAY-MESSAGE is non-nil, the button's help-echo string is displayed.
 Any button with a non-nil `skip' property is skipped over.
+
+If NO-ERROR, return nil if no further buttons could be found
+instead of erroring out.
+
 Returns the button found."
   (interactive "p\nd\nd")
   (let (button)
@@ -497,22 +509,28 @@ Returns the button found."
 	    (unless (button-get button 'skip)
 	      (setq n (1- n)))))))
     (if (null button)
-	(user-error (if wrap "No buttons!" "No more buttons"))
+        (if no-error
+            nil
+	  (user-error (if wrap "No buttons!" "No more buttons")))
       (let ((msg (and display-message (button-get button 'help-echo))))
 	(when msg
 	  (message "%s" msg)))
       button)))
 
-(defun backward-button (n &optional wrap display-message)
+(defun backward-button (n &optional wrap display-message no-error)
   "Move to the Nth previous button, or Nth next button if N is negative.
 If N is 0, move to the start of any button at point.
 If WRAP is non-nil, moving past either end of the buffer continues from the
 other end.
 If DISPLAY-MESSAGE is non-nil, the button's help-echo string is displayed.
 Any button with a non-nil `skip' property is skipped over.
+
+If NO-ERROR, return nil if no further buttons could be found
+instead of erroring out.
+
 Returns the button found."
   (interactive "p\nd\nd")
-  (forward-button (- n) wrap display-message))
+  (forward-button (- n) wrap display-message no-error))
 
 
 (provide 'button)

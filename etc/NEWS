@@ -1968,6 +1968,12 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** Buttons (created with 'make-button' and related functions) can
+now use the 'button-data' property.  If present, the data in this
+property will be passed on to the 'action' function instead of the
+button itself in 'button-activate'.
+
 ** 'defcustom' now takes a ':local' keyword that can be either t or
 'permanent', which mean that the variable should be automatically
 buffer-local.  'permanent' also sets the variable's 'permanent-local'
