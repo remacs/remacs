@@ -1205,13 +1205,12 @@ behavior."
 ;; TIME is like the output of decode-time
 (defun ediff-format-date (time)
   (format "%s %2d %4d %s:%s:%s"
-	  (cdr (assoc (nth 4 time) ediff-months)) ; month
-	  (nth 3 time) ; day
-	  (nth 5 time) ; year
-	  (ediff-fill-leading-zero (nth 2 time)) ; hour
-	  (ediff-fill-leading-zero (nth 1 time)) ; min
-	  (ediff-fill-leading-zero (nth 0 time)) ; sec
-	  ))
+	  (cdr (assoc (decoded-time-month time) ediff-months))
+	  (decoded-time-day time)
+	  (decoded-time-year time)
+	  (ediff-fill-leading-zero (decoded-time-hour time))
+	  (ediff-fill-leading-zero (decoded-time-minute time))
+	  (ediff-fill-leading-zero (decoded-time-second time))))
 
 ;; Draw the directories
 (defun ediff-insert-dirs-in-meta-buffer (meta-list)
