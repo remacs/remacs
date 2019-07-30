@@ -851,13 +851,11 @@ Internal use.")
     ;; Ensure aspell's alias dictionary will override standard
     ;; definitions.
     (setq found (ispell-aspell-add-aliases found))
-    ;; Merge into FOUND any elements from the standard
-    ;; ispell-dictionary-base-alist which have no element in FOUND at
-    ;; all.
-    (unless found
-      (dolist (dict ispell-dictionary-base-alist)
-        (unless (assoc (car dict) found)
-	  (setq found (nconc found (list dict))))))
+    ;; Merge into FOUND any elements from the standard ispell-dictionary-base-alist
+    ;; which have no element in FOUND at all.
+    (dolist (dict ispell-dictionary-base-alist)
+      (unless (assoc (car dict) found)
+	(setq found (nconc found (list dict)))))
     (setq ispell-aspell-dictionary-alist found)
     ;; Add a default entry
     (let ((default-dict
@@ -1297,7 +1295,8 @@ aspell is used along with Emacs).")
     ;; Substitute ispell-dictionary-alist with the list of
     ;; dictionaries corresponding to the given spellchecker.
     ;; With programs that support it, use the list of really
-    ;; installed dictionaries. Allow distro info.
+    ;; installed dictionaries and add to it elements of the original
+    ;; list that are not present there. Allow distro info.
     (let ((found-dicts-alist
 	   (if ispell-encoding8-command
                (if ispell-really-aspell
@@ -1364,9 +1363,7 @@ aspell is used along with Emacs).")
       ;; Add dicts to `ispell-dictionary-alist' unless already present.
       (dolist (dict (append found-dicts-alist
 			    ispell-base-dicts-override-alist
-			    (if found-dicts-alist
-                                nil
-                              ispell-dictionary-base-alist)))
+			    ispell-dictionary-base-alist))
 	(unless (assoc (car dict) all-dicts-alist)
 	  (push dict all-dicts-alist)))
       (setq ispell-dictionary-alist all-dicts-alist))
