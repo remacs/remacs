@@ -352,14 +352,18 @@ is output until the first non-zero unit is encountered."
                          (<= (car here) delay)))
              (concat (format "%.2f" (/ delay (car (cddr here)))) (cadr here))))))
 
-(defun time-zone-format (seconds)
+(defun time-zone-format (seconds &optional short)
   "Format SECONDS as a valid time zone string.
-For instance, 3600 is \"+01:00\"."
-  (format "%s%02d:%02d"
+For instance, 3600 is \"+01:00\".
+If SHORT, the colon isn't included."
+  (format "%s%02d%s%02d"
           (if (< seconds 0)
               "-"
             "+")
           (/ (abs seconds) 3600)
+          (if short
+              ""
+            ":")
           (mod (abs seconds) 3600)))
 
 (defun date-days-in-month (year month)
