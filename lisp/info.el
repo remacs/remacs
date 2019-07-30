@@ -2452,11 +2452,12 @@ Table of contents is created from the tree structure of menus."
   "Insert table of contents with references to nodes."
   (let ((section "Top"))
     (while nodes
-      (let ((node (assoc (car nodes) node-list)))
-        (unless (member (nth 2 node) (list nil section))
-          (insert (setq section (nth 2 node)) "\n"))
-        (insert (make-string level ?\t))
-        (insert "*Note " (car nodes) ":: \n")
+      (let ((node (assoc (car nodes) node-list))
+            (indentation (make-string level ?\t)))
+        (when (and (not (member (nth 2 node) (list nil section)))
+                   (not (equal (nth 1 node) (nth 2 node))))
+          (insert indentation (setq section (nth 2 node)) "\n"))
+        (insert indentation "*Note " (car nodes) ":: \n")
         (Info-toc-insert (nth 3 node) node-list (1+ level) curr-file)
         (setq nodes (cdr nodes))))))
 

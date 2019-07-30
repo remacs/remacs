@@ -53,53 +53,44 @@ width and height of the window.  If they are larger than this,
 and Emacs supports it, then the images will be rescaled down to
 fit these criteria."
   :version "24.1"
-  :group 'shr
   :type 'float)
 
 (defcustom shr-blocked-images nil
   "Images that have URLs matching this regexp will be blocked."
   :version "24.1"
-  :group 'shr
   :type '(choice (const nil) regexp))
 
 (defcustom shr-use-fonts t
   "If non-nil, use proportional fonts for text."
   :version "25.1"
-  :group 'shr
   :type 'boolean)
 
 (defcustom shr-discard-aria-hidden nil
   "If non-nil, don't render tags with `aria-hidden=\"true\"'.
 This attribute is meant to tell screen readers to ignore a tag."
   :version "27.1"
-  :group 'shr
   :type 'boolean)
 
 (defcustom shr-use-colors t
   "If non-nil, respect color specifications in the HTML."
   :version "26.1"
-  :group 'shr
   :type 'boolean)
 
 (defcustom shr-table-horizontal-line nil
   "Character used to draw horizontal table lines.
 If nil, don't draw horizontal table lines."
-  :group 'shr
   :type '(choice (const nil) character))
 
 (defcustom shr-table-vertical-line ?\s
   "Character used to draw vertical table lines."
-  :group 'shr
   :type 'character)
 
 (defcustom shr-table-corner ?\s
   "Character used to draw table corners."
-  :group 'shr
   :type 'character)
 
 (defcustom shr-hr-line ?-
   "Character used to draw hr lines."
-  :group 'shr
   :type 'character)
 
 (defcustom shr-width nil
@@ -110,8 +101,7 @@ If `shr-use-fonts' is set, the mean character width is used to
 compute the pixel width, which is used instead."
   :version "25.1"
   :type '(choice (integer :tag "Fixed width in characters")
-		 (const   :tag "Use the width of the window" nil))
-  :group 'shr)
+		 (const   :tag "Use the width of the window" nil)))
 
 (defcustom shr-bullet "* "
   "Bullet used for unordered lists.
@@ -119,19 +109,14 @@ Alternative suggestions are:
 - \"  \"
 - \"  \""
   :version "24.4"
-  :type 'string
-  :group 'shr)
+  :type 'string)
 
-(defcustom shr-external-browser 'browse-url-default-browser
-  "Function used to launch an external browser."
-  :version "24.4"
-  :group 'shr
-  :type 'function)
+(define-obsolete-variable-alias 'shr-external-browser
+  'browse-url-secondary-browser-function "27.1")
 
 (defcustom shr-image-animate t
   "Non nil means that images that can be animated will be."
   :version "24.4"
-  :group 'shr
   :type 'boolean)
 
 (defvar shr-content-function nil
@@ -144,28 +129,24 @@ cid: URL as the argument.")
 
 (defface shr-strike-through '((t :strike-through t))
   "Face for <s> elements."
-  :version "24.1"
-  :group 'shr)
+  :version "24.1")
 
 (defface shr-link
   '((t :inherit link))
   "Face for link elements."
-  :version "24.1"
-  :group 'shr)
+  :version "24.1")
 
 (defface shr-selected-link
   '((t :inherit shr-link :background "red"))
   "Temporary face for externally visited link elements.
 When a link is visited with an external browser, the link
 temporarily blinks with this face."
-  :version "27.1"
-  :group 'shr)
+  :version "27.1")
 
 (defface shr-abbreviation
   '((t :inherit underline :underline (:style wave)))
   "Face for <abbr> elements."
-  :version "27.1"
-  :group 'shr)
+  :version "27.1")
 
 (defvar shr-inhibit-images nil
   "If non-nil, inhibit loading images.")
@@ -973,7 +954,7 @@ size, and full-buffer size."
 (defun shr-browse-url (&optional external mouse-event)
   "Browse the URL at point using `browse-url'.
 If EXTERNAL is non-nil (interactively, the prefix argument), browse
-the URL using `shr-external-browser'.
+the URL using `browse-url-secondary-browser-function'.
 If this function is invoked by a mouse click, it will browse the URL
 at the position of the click.  Optional argument MOUSE-EVENT describes
 the mouse click event."
@@ -988,7 +969,7 @@ the mouse click event."
      (t
       (if external
           (progn
-	    (funcall shr-external-browser url)
+	    (funcall browse-url-secondary-browser-function url)
             (shr--blink-link))
 	(browse-url url))))))
 
@@ -1226,6 +1207,8 @@ START, and END.  Note that START and END should be markers."
   (add-text-properties
    start (point)
    (list 'shr-url url
+         'button t
+         'category 'shr                ; For button.el button buffers.
 	 'help-echo (let ((parsed (url-generic-parse-url
                                    (or (ignore-errors
 				         (decode-coding-string
@@ -1534,7 +1517,6 @@ The key element should be a regexp matched against the type of the source or
 url if no type is specified.  The value should be a float in the range 0.0 to
 1.0.  Media elements with higher value are preferred."
   :version "24.4"
-  :group 'shr
   :type '(alist :key-type regexp :value-type float))
 
 (defun shr--get-media-pref (elem)
@@ -1745,7 +1727,7 @@ The preference is a float determined from `shr-prefer-media-type'."
     (svg-gradient svg "background" 'linear '((0 . "#b0b0b0") (100 . "#808080")))
     (svg-rectangle svg 0 0 width height :gradient "background"
                    :stroke-width 2 :stroke-color "black")
-    (let ((image (svg-image svg)))
+    (let ((image (svg-image svg :scale 1)))
       (setf (image-property image :ascent) 100)
       image)))
 

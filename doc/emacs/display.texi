@@ -556,14 +556,14 @@ Font Lock mode.
 
 @node Colors
 @section Colors for Faces
-@cindex color name
-@cindex RGB triplet
 
   Faces can have various foreground and background colors.  When you
 specify a color for a face---for instance, when customizing the face
 (@pxref{Face Customization})---you can use either a @dfn{color name}
 or an @dfn{RGB triplet}.
 
+@subsection Color Names
+@cindex color name
 @findex list-colors-display
 @vindex list-colors-sort
   A color name is a pre-defined name, such as @samp{dark orange} or
@@ -578,12 +578,16 @@ such terminals.  However, Emacs understands X11 color names even on
 text terminals; if a face is given a color specified by an X11 color
 name, it is displayed using the closest-matching terminal color.
 
+@subsection RGB Triplets
+@cindex RGB triplet
   An RGB triplet is a string of the form @samp{#RRGGBB}.  Each of the
-R, G, and B components is a hexadecimal number specifying the
-component's relative intensity, one to four digits long (usually two
-digits are used).  The components must have the same number of digits.
-For hexadecimal values A to F, either upper or lower case are
-acceptable.
+primary color components is represented by a hexadecimal number
+between @samp{00} (intensity 0) and @samp{FF} (the maximum intensity).
+It is also possible to use one, three, or four hex digits for each
+component, so @samp{red} can be represented as @samp{#F00},
+@samp{#fff000000}, or @samp{#ffff00000000}.  The components must have
+the same number of digits.  For hexadecimal values A to F, either
+upper or lower case are acceptable.
 
   The @kbd{M-x list-colors-display} command also shows the equivalent
 RGB triplet for each named color.  For instance, @samp{medium sea

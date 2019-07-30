@@ -483,7 +483,6 @@ regarding the odd-looking coverage result for the quoted form."
 
 ;; ==== coverage-of-the-unknown-symbol-bug-25471 ====
 "Testcover correctly records coverage of code which uses `unknown'"
-:expected-result :failed
 ;; ====
 (defun testcover-testcase-how-do-i-know-you (name)
   (let ((val 'unknown))

@@ -721,12 +721,12 @@ Both times must be given in decoded form.  One of these times must be
 valid (year > 1900 or something)."
   ;; FIXME: does this function exist already?
   (decode-time (encode-time
-                (+ (nth 0 time1) (nth 0 time2))
-                (+ (nth 1 time1) (nth 1 time2))
-                (+ (nth 2 time1) (nth 2 time2))
-                (+ (nth 3 time1) (nth 3 time2))
-                (+ (nth 4 time1) (nth 4 time2))
-                (+ (nth 5 time1) (nth 5 time2))
+                (+ (decoded-time-second time1) (decoded-time-second time2))
+                (+ (decoded-time-minute time1) (decoded-time-minute time2))
+                (+ (decoded-time-hour time1) (decoded-time-hour time2))
+                (+ (decoded-time-day time1) (decoded-time-day time2))
+                (+ (decoded-time-month time1) (decoded-time-month time2))
+                (+ (decoded-time-year time1) (decoded-time-year time2))
                 nil
                 nil
                 ;;(or (nth 6 time1) (nth 6 time2)) ;; FIXME?
@@ -1623,9 +1623,9 @@ enumeration, given as a Lisp time value -- used for test purposes."
                     (lambda (offset)
                       (let* ((day (decode-time (time-add now
 							 (* 60 60 24 offset))))
-                             (d (nth 3 day))
-                             (m (nth 4 day))
-                             (y (nth 5 day))
+                             (d (decoded-time-day day))
+                             (m (decoded-time-month day))
+                             (y (decoded-time-year day))
                              (se (diary-sexp-entry p1 p2 (list m d y)))
                              (see (cond ((stringp se) se)
                                         ((consp se) (cdr se))

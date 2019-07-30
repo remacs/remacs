@@ -813,7 +813,8 @@ The path separator is colon in GNU and GNU-like systems."
     (error "No such directory found via CDPATH environment variable"))))
 
 (defun directory-files-recursively (dir regexp
-                                        &optional include-directories predicate)
+                                        &optional include-directories predicate
+                                        follow-symlinks)
   "Return list of all files under DIR that have file names matching REGEXP.
 This function works recursively.  Files are returned in \"depth
 first\" order, and files from each directory are sorted in
@@ -827,7 +828,10 @@ PREDICATE can be either nil (which means that all subdirectories
 are descended into), t (which means that subdirectories that
 can't be read are ignored), or a function (which is called with
 name name of the subdirectory and should return non-nil if the
-subdirectory is to be descended into)."
+subdirectory is to be descended into).
+
+If FOLLOW-SYMLINKS, symbolic links that point to directories are
+followed.  Note that this can lead to infinite recursion."
   (let* ((result nil)
 	 (files nil)
          (dir (directory-file-name dir))
@@ -841,19 +845,22 @@ subdirectory is to be descended into)."
 	    (let* ((leaf (substring file 0 (1- (length file))))
 		   (full-file (concat dir "/" leaf)))
 	      ;; Don't follow symlinks to other directories.
-	      (when (and (not (file-symlink-p full-file))
+	      (when (and (or (not (file-symlink-p full-file))
+                             (and (file-symlink-p full-file)
+                                  follow-symlinks))
                          ;; Allow filtering subdirectories.
                          (or (eq predicate nil)
                              (eq predicate t)
                              (funcall predicate full-file)))
                 (let ((sub-files
                        (if (eq predicate t)
-                           (condition-case _
-                               (directory-files-recursively
-				full-file regexp include-directories)
-                             (file-error nil))
+                           (ignore-error file-error
+                             (directory-files-recursively
+			      full-file regexp include-directories
+                              predicate follow-symlinks))
                          (directory-files-recursively
-			  full-file regexp include-directories))))
+			  full-file regexp include-directories
+                          predicate follow-symlinks))))
 		  (setq result (nconc result sub-files))))
 	      (when (and include-directories
 			 (string-match regexp leaf))
@@ -4959,8 +4966,8 @@ Uses `backup-directory-alist' in the same way as
 	      (list (make-backup-file-name fn))
 	    (cons (format "%s.~%d~" basic-name (1+ high-water-mark))
 		  (if (and (> number-to-delete 0)
-			   ;; Delete nothing if there is overflow
-			   ;; in the number of versions to keep.
+			   ;; Delete nothing if kept-new-versions and
+			   ;; kept-old-versions combine to an outlandish value.
 			   (>= (+ kept-new-versions kept-old-versions -1) 0))
 		      (mapcar (lambda (n)
 				(format "%s.~%d~" basic-name n))

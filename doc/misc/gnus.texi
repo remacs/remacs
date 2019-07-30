@@ -10163,8 +10163,8 @@ do so.
 @cindex url
 @findex gnus-summary-browse-url
 Scan the article buffer for links, and offer them to the user for
-browsing with @code{browse-url}.  By default, only scan the article
-body; with a prefix arg, also scan the article headers.
+browsing with @code{browse-url}.  With a prefix argument, browse with
+@code{browse-url-secondary-browser-function} instead.
 
 @end table
 
@@ -15720,7 +15720,7 @@ you.  For example, add to your @file{~/.gnus.el}:
 @end lisp
 
 If @var{auto-update} is non-@code{nil}, @code{gnus-group-split-update}
-will be added to @code{nnmail-pre-get-new-mail-hook}, so you won't ever
+will be added to @code{gnus-get-top-new-news-hook}, so you won't ever
 have to worry about updating @code{nnmail-split-fancy} again.  If you
 don't omit @var{catch-all} (it's optional, equivalent to @code{nil}),
 @code{gnus-group-split-default-catch-all-group} will be set to its

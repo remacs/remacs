@@ -194,7 +194,9 @@ The bounds of THING are determined by `bounds-of-thing-at-point'."
     (if (or (eq char-syntax ?\))
 	    (and (eq char-syntax ?\") (nth 3 (syntax-ppss))))
 	(forward-char 1)
-      (forward-sexp 1))))
+      (condition-case _
+          (forward-sexp 1)
+        (scan-error nil)))))
 
 (define-obsolete-function-alias 'end-of-sexp
   'thing-at-point--end-of-sexp "25.1"

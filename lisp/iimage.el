@@ -116,6 +116,7 @@ Examples of image filename patterns to match:
 (defun iimage-mode-buffer (arg)
   "Display images if ARG is non-nil, undisplay them otherwise."
   (let ((image-path (cons default-directory iimage-mode-image-search-path))
+        (edges (window-inside-pixel-edges (get-buffer-window)))
 	file)
     (with-silent-modifications
       (save-excursion
@@ -128,10 +129,15 @@ Examples of image filename patterns to match:
               ;; remove them either (we may leave some of ours, and we
               ;; may remove other packages's display properties).
               (if arg
-                  (add-text-properties (match-beginning 0) (match-end 0)
-                                       `(display ,(create-image file)
-                                         modification-hooks
-                                         (iimage-modification-hook)))
+                  (add-text-properties
+                   (match-beginning 0) (match-end 0)
+                   `(display
+                     ,(create-image file nil nil
+                                    :max-width (- (nth 2 edges) (nth 0 edges))
+				    :max-height (- (nth 3 edges) (nth 1 edges)))
+                     keymap ,image-map
+                     modification-hooks
+                     (iimage-modification-hook)))
                 (remove-text-properties (match-beginning 0) (match-end 0)
                                         '(display modification-hooks))))))))))
 

@@ -118,10 +118,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # endif
 #endif
 
-/* We require an architecture in which all pointers are the same size
-   and have the same layout, where pointers are either 32 or 64 bits
-   long, and where bytes have eight bits --- that is, a
-   general-purpose computer made after 1990.  */
+/* Require an architecture in which pointers, ptrdiff_t and intptr_t
+   are the same size and have the same layout, and where bytes have
+   eight bits --- that is, a general-purpose computer made after 1990.
+   Also require Lisp_Object to be at least as wide as pointers.  */
 verify (sizeof (ptrdiff_t) == sizeof (void *));
 verify (sizeof (intptr_t) == sizeof (ptrdiff_t));
 verify (sizeof (void (*) (void)) == sizeof (void *));
@@ -333,8 +333,8 @@ dump_fingerprint (char const *label,
   fprintf (stderr, "%s: %.*s\n", label, hexbuf_size, hexbuf);
 }
 
-/* Format of an Emacs portable dump file.  All offsets are relative to
-   the beginning of the file.  An Emacs portable dump file is coupled
+/* Format of an Emacs dump file.  All offsets are relative to
+   the beginning of the file.  An Emacs dump file is coupled
    to exactly the Emacs binary that produced it, so details of
    alignment and endianness are unimportant.
 
@@ -719,12 +719,7 @@ emacs_offset (const void *emacs_ptr)
 static bool
 dump_builtin_symbol_p (Lisp_Object object)
 {
-  if (!SYMBOLP (object))
-    return false;
-  char *bp = (char *) lispsym;
-  struct Lisp_Symbol *s = XSYMBOL (object);
-  char *sp = (char *) s;
-  return bp <= sp && sp < bp + sizeof (lispsym);
+  return SYMBOLP (object) && c_symbol_p (XSYMBOL (object));
 }
 
 /* Return whether OBJECT has the same bit pattern in all Emacs
@@ -2628,20 +2623,26 @@ dump_vectorlike_generic (struct dump_context *ctx,
 static bool
 dump_hash_table_stable_p (const struct Lisp_Hash_Table *hash)
 {
+  if (hash->test.hashfn == hashfn_user_defined)
+    error ("cannot dump hash tables with user-defined tests");  /* Bug#36769 */
   bool is_eql = hash->test.hashfn == hashfn_eql;
   bool is_equal = hash->test.hashfn == hashfn_equal;
   ptrdiff_t size = HASH_TABLE_SIZE (hash);
   for (ptrdiff_t i = 0; i < size; ++i)
-    if (!NILP (HASH_HASH (hash, i)))
-      {
-        Lisp_Object key =  HASH_KEY (hash, i);
-	bool key_stable = (dump_builtin_symbol_p (key)
-			   || FIXNUMP (key)
-			   || (is_equal && STRINGP (key))
-			   || ((is_equal || is_eql) && FLOATP (key)));
-        if (!key_stable)
-          return false;
-      }
+    {
+      Lisp_Object key =  HASH_KEY (hash, i);
+      if (!EQ (key, Qunbound))
+        {
+	  bool key_stable = (dump_builtin_symbol_p (key)
+			     || FIXNUMP (key)
+			     || (is_equal
+			         && (STRINGP (key) || BOOL_VECTOR_P (key)))
+			     || ((is_equal || is_eql)
+			         && (FLOATP (key) || BIGNUMP (key))));
+          if (!key_stable)
+            return false;
+        }
+    }
 
   return true;
 }
@@ -2653,8 +2654,11 @@ hash_table_contents (Lisp_Object table)
   Lisp_Object contents = Qnil;
   struct Lisp_Hash_Table *h = XHASH_TABLE (table);
   for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      dump_push (&contents, Fcons (HASH_KEY (h, i), HASH_VALUE (h, i)));
+    {
+      Lisp_Object key =  HASH_KEY (h, i);
+      if (!EQ (key, Qunbound))
+        dump_push (&contents, Fcons (key, HASH_VALUE (h, i)));
+    }
   return Fnreverse (contents);
 }
 
@@ -2663,13 +2667,14 @@ hash_table_contents (Lisp_Object table)
 static void
 check_hash_table_rehash (Lisp_Object table_orig)
 {
+  ptrdiff_t count = XHASH_TABLE (table_orig)->count;
   hash_rehash_if_needed (XHASH_TABLE (table_orig));
   Lisp_Object table_rehashed = Fcopy_hash_table (table_orig);
-  eassert (XHASH_TABLE (table_rehashed)->count >= 0);
-  XHASH_TABLE (table_rehashed)->count *= -1;
-  eassert (XHASH_TABLE (table_rehashed)->count <= 0);
+  eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
+  XHASH_TABLE (table_rehashed)->hash = Qnil;
+  eassert (count == 0 || hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   hash_rehash_if_needed (XHASH_TABLE (table_rehashed));
-  eassert (XHASH_TABLE (table_rehashed)->count >= 0);
+  eassert (!hash_rehash_needed_p (XHASH_TABLE (table_rehashed)));
   Lisp_Object expected_contents = hash_table_contents (table_orig);
   while (!NILP (expected_contents))
     {
@@ -2733,7 +2738,13 @@ dump_hash_table (struct dump_context *ctx,
      the need to rehash-on-access if we can load the dump where we
      want.  */
   if (hash->count > 0 && !is_stable)
-    hash->count = -hash->count;
+    /* Hash codes will have to be recomputed anyway, so let's not dump them.
+       Also set `hash` to nil for hash_rehash_needed_p.
+       We could also refrain from dumping the `next' and `index' vectors,
+       except that `next' is currently used for HASH_TABLE_SIZE and
+       we'd have to rebuild the next_free list as well as adjust
+       sweep_weak_hash_table for the case where there's no `index'.  */
+    hash->hash = Qnil;
 
   START_DUMP_PVEC (ctx, &hash->header, struct Lisp_Hash_Table, out);
   dump_pseudovector_lisp_fields (ctx, &out->header, &hash->header);
@@ -3657,8 +3668,7 @@ dump_check_overlap_dump_reloc (Lisp_Object lreloc_a,
 static struct emacs_reloc
 decode_emacs_reloc (struct dump_context *ctx, Lisp_Object lreloc)
 {
-  struct emacs_reloc reloc;
-  memset (&reloc, 0, sizeof (reloc));
+  struct emacs_reloc reloc = {0};
   ALLOW_IMPLICIT_CONVERSION;
   int type = XFIXNUM (dump_pop (&lreloc));
   DISALLOW_IMPLICIT_CONVERSION;
@@ -3817,8 +3827,7 @@ drain_reloc_list (struct dump_context *ctx,
   *reloc_list = Qnil;
   dump_align_output (ctx, max (alignof (struct dump_reloc),
 			       alignof (struct emacs_reloc)));
-  struct dump_table_locator locator;
-  memset (&locator, 0, sizeof (locator));
+  struct dump_table_locator locator = {0};
   locator.offset = ctx->offset;
   for (; !NILP (relocs); locator.nr_entries += 1)
     {
@@ -3988,7 +3997,7 @@ dump_drain_deferred_symbols (struct dump_context *ctx)
 DEFUN ("dump-emacs-portable",
        Fdump_emacs_portable, Sdump_emacs_portable,
        1, 2, 0,
-       doc: /* Dump current state of Emacs into portable dump file FILENAME.
+       doc: /* Dump current state of Emacs into dump file FILENAME.
 If TRACK-REFERRERS is non-nil, keep additional debugging information
 that can help track down the provenance of unsupported object
 types.  */)
@@ -4028,9 +4037,8 @@ types.  */)
   filename = Fexpand_file_name (filename, Qnil);
   filename = ENCODE_FILE (filename);
 
-  struct dump_context ctx_buf;
+  struct dump_context ctx_buf = {0};
   struct dump_context *ctx = &ctx_buf;
-  memset (ctx, 0, sizeof (*ctx));
   ctx->fd = -1;
 
   ctx->objects_dumped = make_eq_hash_table ();
@@ -4923,9 +4931,7 @@ dump_bitset_set_bit (struct dump_bitset *bitset, size_t bit_number)
 static void
 dump_bitset_clear (struct dump_bitset *bitset)
 {
-  int xword_size = sizeof (bitset->bits[0]);
-  if (bitset->number_words)
-    memset (bitset->bits, 0, bitset->number_words * xword_size);
+  memset (bitset->bits, 0, bitset->number_words * sizeof bitset->bits[0]);
 }
 
 struct pdumper_loaded_dump_private
@@ -5468,14 +5474,14 @@ pdumper_record_wd (const char *wd)
 
 DEFUN ("pdumper-stats", Fpdumper_stats, Spdumper_stats, 0, 0, 0,
        doc: /* Return statistics about portable dumping used by this session.
-If this Emacs sesion was started from a portable dump file,
+If this Emacs session was started from a dump file,
 the return value is an alist of the form:
 
   ((dumped-with-pdumper . t) (load-time . TIME) (dump-file-name . FILE))
 
 where TIME is the time in seconds it took to restore Emacs state
 from the dump file, and FILE is the name of the dump file.
-Value is nil if this session was not started using a portable dump file.*/)
+Value is nil if this session was not started using a dump file.*/)
      (void)
 {
   if (!dumped_with_pdumper_p ())

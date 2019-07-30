@@ -1,4 +1,4 @@
-/* Dump an executable image.
+/* Dump an executable file.
    Copyright (C) 1985-1988, 1999, 2001-2019 Free Software Foundation,
    Inc.
 

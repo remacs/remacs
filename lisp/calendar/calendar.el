@@ -1871,7 +1871,9 @@ the STRINGS are just concatenated and the result truncated."
   "Return the current date in a list (month day year).
 Optional integer OFFSET is a number of days from the current date."
   (let* ((now (decode-time))
-         (now (list (nth 4 now) (nth 3 now) (nth 5 now))))
+         (now (list (decoded-time-month now)
+                    (decoded-time-day now)
+                    (decoded-time-year now))))
     (if (zerop (or offset 0))
         now
       (calendar-gregorian-from-absolute

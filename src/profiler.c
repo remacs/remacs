@@ -530,7 +530,9 @@ the same lambda expression, or are really unrelated function.  */)
 static Lisp_Object
 cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct Lisp_Hash_Table *h)
 {
-  if (VECTORP (bt1) && VECTORP (bt2))
+  if (EQ (bt1, bt2))
+    return Qt;
+  else if (VECTORP (bt1) && VECTORP (bt2))
     {
       ptrdiff_t l = ASIZE (bt1);
       if (l != ASIZE (bt2))
@@ -541,7 +543,7 @@ cmpfn_profiler (Lisp_Object bt1, Lisp_Object bt2, struct Lisp_Hash_Table *h)
       return Qt;
     }
   else
-    return EQ (bt1, bt2) ? Qt : Qnil;
+    return Qnil;
 }
 
 static Lisp_Object

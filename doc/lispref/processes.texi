@@ -3038,7 +3038,7 @@ for a process object representing a serial port connection.
 
   Serial ports are available on GNU/Linux, Unix, and MS Windows systems.
 
-@deffn Command serial-term port speed
+@deffn Command serial-term port speed &optional line-mode
 Start a terminal-emulator for a serial port in a new buffer.
 @var{port} is the name of the serial port to connect to.  For
 example, this could be @file{/dev/ttyS0} on Unix.  On MS Windows, this
@@ -3051,6 +3051,8 @@ Lisp strings).
 is a common value.  The buffer is in Term mode; see @ref{Term Mode,,,
 emacs, The GNU Emacs Manual}, for the commands to use in that buffer.
 You can change the speed and the configuration in the mode line menu.
+If @var{line-mode} is non-@code{nil}, @code{term-line-mode} is used;
+otherwise @code{term-raw-mode} is used.
 @end deffn
 
 @defun make-serial-process &rest args

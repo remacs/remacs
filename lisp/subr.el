@@ -302,6 +302,14 @@ See also `with-demoted-errors' that does something similar
 without silencing all errors."
   (declare (debug t) (indent 0))
   `(condition-case nil (progn ,@body) (error nil)))
+
+(defmacro ignore-error (condition &rest body)
+  "Execute BODY; if the error CONDITION occurs, return nil.
+Otherwise, return result of last form in BODY.
+
+CONDITION can also be a list of error conditions."
+  (declare (debug t) (indent 1))
+  `(condition-case nil (progn ,@body) (,condition nil)))
 
 ;;;; Basic Lisp functions.
 
@@ -679,16 +687,13 @@ of course, also replace TO with a slightly larger value
       (list from)
     (or inc (setq inc 1))
     (when (zerop inc) (error "The increment can not be zero"))
-    (let (seq (n 0) (next from) (last from))
+    (let (seq (n 0) (next from))
       (if (> inc 0)
-          ;; The (>= next last) condition protects against integer
-          ;; overflow in computing NEXT.
-          (while (and (>= next last) (<= next to))
+          (while (<= next to)
             (setq seq (cons next seq)
                   n (1+ n)
-                  last next
                   next (+ from (* n inc))))
-        (while (and (<= next last) (>= next to))
+        (while (>= next to)
           (setq seq (cons next seq)
                 n (1+ n)
                 next (+ from (* n inc)))))

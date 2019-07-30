@@ -611,14 +611,14 @@ Return the response string if optional second argument is non-nil."
 If NOW, use that time instead."
   (require 'parse-time)
   (let* ((now (or now (current-time)))
-	 (zone (nth 8 (decode-time now))))
+	 (zone (decoded-time-zone (decode-time now))))
     (when (< zone 0)
       (setq zone (- zone)))
     (concat
      (format-time-string "%d" now)
      ;; The month name of the %b spec is locale-specific.  Pfff.
      (format " %s "
-	     (capitalize (car (rassoc (nth 4 (decode-time now))
+	     (capitalize (car (rassoc (decoded-time-month (decode-time now))
 				      parse-time-months))))
      (format-time-string "%Y %H:%M:%S %z" now))))
 

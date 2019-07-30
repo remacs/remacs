@@ -777,9 +777,8 @@ These will be used to retrieve the RSVP information from ical events."
        ,callback
        keymap ,gnus-mime-button-map
        face ,gnus-article-button-face
-       gnus-data ,data))
-    (widget-convert-button 'link start (point)
-                           :action 'gnus-widget-press-button)))
+       button t
+       gnus-data ,data))))
 
 (defun gnus-icalendar-send-buffer-by-mail (buffer-name subject)
   (let ((message-signature nil))

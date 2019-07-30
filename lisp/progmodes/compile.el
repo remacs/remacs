@@ -107,9 +107,33 @@ and a string describing how the process finished.")
 
 (defvar compilation-in-progress nil
   "List of compilation processes now running.")
-(or (assq 'compilation-in-progress minor-mode-alist)
-    (setq minor-mode-alist (cons '(compilation-in-progress " Compiling")
-				 minor-mode-alist)))
+(or (assq 'compilation-in-progress mode-line-modes)
+    (add-to-list 'mode-line-modes
+                 (list 'compilation-in-progress
+                       (propertize "[Compiling] "
+	                           'help-echo "Compiling; mouse-2: Goto Buffer"
+                                   'mouse-face 'mode-line-highlight
+                                   'local-map
+                                   (make-mode-line-mouse-map
+                                    'mouse-2
+			            #'compilation-goto-in-progress-buffer)))))
+
+(defun compilation-goto-in-progress-buffer ()
+  "Switch to the compilation buffer."
+  (interactive)
+  (cond
+   ((> (length compilation-in-progress) 1)
+    (switch-to-buffer (completing-read
+                       "Several compilation buffers; switch to: "
+                       (mapcar
+                        (lambda (process)
+                          (buffer-name (process-buffer process)))
+                        compilation-in-progress)
+                       nil t)))
+   (compilation-in-progress
+    (switch-to-buffer (process-buffer (car compilation-in-progress))))
+   (t
+    (error "No ongoing compilations"))))
 
 (defvar compilation-error "error"
   "Stem of message to print when no matches are found.")
@@ -1590,6 +1614,11 @@ If nil, ask to kill it."
   :type 'boolean
   :version "24.3")
 
+(defun compilation--update-in-progress-mode-line ()
+  ;; `compilation-in-progress' affects the mode-line of all
+  ;; buffers when it changes from nil to non-nil or vice-versa.
+  (unless compilation-in-progress (force-mode-line-update t)))
+
 ;;;###autoload
 (defun compilation-start (command &optional mode name-function highlight-regexp)
   "Run compilation command COMMAND (low level interface).
@@ -1783,8 +1812,8 @@ Returns the compilation buffer created."
 		  ;; The process may have exited already.
 		  (error nil)))
 	      (run-hook-with-args 'compilation-start-hook proc)
-              (setq compilation-in-progress
-		    (cons proc compilation-in-progress)))
+              (compilation--update-in-progress-mode-line)
+	      (push proc compilation-in-progress))
 	  ;; No asynchronous processes available.
 	  (message "Executing `%s'..." command)
 	  ;; Fake mode line display as if `start-process' were run.
@@ -2217,7 +2246,8 @@ commands of Compilation major mode are available.  See
 	    ;; process is dead, we can delete it now.  Otherwise it
 	    ;; will stay around until M-x list-processes.
 	    (delete-process proc)))
-	(setq compilation-in-progress (delq proc compilation-in-progress)))))
+        (setq compilation-in-progress (delq proc compilation-in-progress))
+        (compilation--update-in-progress-mode-line))))
 
 (defun compilation-filter (proc string)
   "Process filter for compilation buffers.

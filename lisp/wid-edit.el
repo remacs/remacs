@@ -1040,9 +1040,11 @@ POS defaults to the value of (point)."
   "If non-nil, use overlay change functions to tab around in the buffer.
 This is much faster.")
 
-(defun widget-move (arg)
+(defun widget-move (arg &optional suppress-echo)
   "Move point to the ARG next field or button.
-ARG may be negative to move backward."
+ARG may be negative to move backward.
+When the second optional argument is non-nil,
+nothing is shown in the echo area."
   (or (bobp) (> arg 0) (backward-char))
   (let ((wrapped 0)
 	(number arg)
@@ -1084,7 +1086,8 @@ ARG may be negative to move backward."
       (while (eq (widget-tabable-at) new)
 	(backward-char)))
     (forward-char))
-  (widget-echo-help (point))
+  (unless suppress-echo
+    (widget-echo-help (point)))
   (run-hooks 'widget-move-hook))
 
 (defun widget-forward (arg)

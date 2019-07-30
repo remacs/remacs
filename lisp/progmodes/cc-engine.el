@@ -713,6 +713,10 @@ comment at the start of cc-engine.el for more info."
 ;; the byte compiler.
 (defvar c-maybe-labelp)
 
+(defvar c-commas-bound-stmts nil)
+  ;; Set to non-nil when `c-beginning-of-statement-1' is to regard a comma as
+  ;; a statement terminator.
+
 ;; New awk-compatible version of c-beginning-of-statement-1, ACM 2002/6/22
 
 ;; Macros used internally in c-beginning-of-statement-1 for the
@@ -897,9 +901,7 @@ comment at the start of cc-engine.el for more info."
 	(start (point))
 	macro-start
 	(delims (if comma-delim '(?\; ?,) '(?\;)))
-	(c-stmt-delim-chars (if comma-delim
-				c-stmt-delim-chars-with-comma
-			      c-stmt-delim-chars))
+	(c-commas-bound-stmts (or c-commas-bound-stmts comma-delim))
 	c-maybe-labelp after-case:-pos saved
 	;; Current position.
 	pos
@@ -1422,21 +1424,12 @@ the line.  If this virtual semicolon is _at_ from, the function recognizes it.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
-  (let* ((skip-chars
-	  ;; If the current language has CPP macros, insert # into skip-chars.
-	  (if c-opt-cpp-symbol
-	      (concat (substring c-stmt-delim-chars 0 1) ; "^"
-		      c-opt-cpp-symbol			 ; usually "#"
-		      (substring c-stmt-delim-chars 1))	 ; e.g. ";{}?:"
-	    c-stmt-delim-chars))
-	 (skip-chars
-	  (if (c-major-mode-is 'c++-mode)
-	      (concat (substring skip-chars 0 1) ; "^"
-		      "["			 ; to catch C++ attributes
-		      (substring skip-chars 1))	; e.g. "#;{}?:"
-	    skip-chars))
-	 (non-skip-list
-	  (append (substring skip-chars 1) nil)) ; e.g. (?# ?\; ?{ ?} ?? ?:)
+  (let* ((skip-chars (if c-commas-bound-stmts
+			 c-stmt-boundary-skip-chars-with-comma
+		       c-stmt-boundary-skip-chars))   ; e.g. "^#;{}?:"
+	 (non-skip-list (if c-commas-bound-stmts
+			    c-stmt-boundary-skip-list-with-comma
+			  c-stmt-boundary-skip-list)) ; e.g. (?# ?\; ?{ ?} ?? ?:)
 	 lit-range lit-start vsemi-pos attr-end)
     (save-restriction
       (widen)
@@ -1477,7 +1470,11 @@ comment at the start of cc-engine.el for more info."
 	      ;; A question mark.  Can't be a label, so stop
 	      ;; looking for more : and ?.
 	      (setq c-maybe-labelp nil
-		    skip-chars (substring c-stmt-delim-chars 0 -2)))
+		    skip-chars
+		    (substring (if c-commas-bound-stmts
+				   c-stmt-delim-chars-with-comma
+				 c-stmt-delim-chars)
+			       0 -2)))
 	     ;; At a CPP construct or a "#" or "##" operator?
 	     ((and c-opt-cpp-symbol (looking-at c-opt-cpp-symbol))
 	      (if (save-excursion
@@ -1513,7 +1510,13 @@ comment at the start of cc-engine.el for more info."
   (save-excursion
     (let ((end (point))
 	  c-maybe-labelp)
-      (c-syntactic-skip-backward (substring c-stmt-delim-chars 1) nil t)
+      (c-syntactic-skip-backward
+       (substring
+	(if c-commas-bound-stmts
+	    c-stmt-delim-chars-with-comma
+	  c-stmt-delim-chars)
+	1)
+       nil t)
       (or (bobp)
 	  (eq (char-before) ?})
 	  (and (eq (char-before) ?{)
@@ -1540,9 +1543,10 @@ comment at the start of cc-engine.el for more info."
 
   (save-excursion
     (let ((end (point))
-	  (c-stmt-delim-chars c-stmt-delim-chars-with-comma)
+	  (c-commas-bound-stmts t)
 	  c-maybe-labelp)
-      (c-syntactic-skip-backward (substring c-stmt-delim-chars 1) nil t)
+      (c-syntactic-skip-backward (substring c-stmt-delim-chars-with-comma 1)
+				 nil t)
       (or (bobp)
 	  (memq (char-before) '(?{ ?}))
 	  (save-excursion (backward-char)
@@ -2977,6 +2981,7 @@ comment at the start of cc-engine.el for more info."
 ;; element is a list (HERE STATE END)), where HERE is the buffer position the
 ;; function was called for, STATE is the `parse-partial-sexp' state there, and
 ;; END is the end of the literal enclosing HERE, if any, or nil otherwise.
+;; N.B. END will be nil if the literal ends at EOB without a delimiter.
 
 (defun c-full-trim-near-cache ()
   ;; Remove stale entries in `c-full-lit-near-cache', i.e. those whose END
@@ -3045,7 +3050,8 @@ comment at the start of cc-engine.el for more info."
   ;; (STATE)                    otherwise,
   ;; where STATE is the parsing state at HERE, TYPE is the type of the literal
   ;; enclosing HERE, (one of 'string, 'c, 'c++) and (BEG . END) is the
-  ;; boundaries of that literal (including the delimiters).
+  ;; boundaries of that literal (including the delimiters), with END being nil
+  ;; if there is no end delimiter (i.e. the literal ends at EOB).
   ;;
   ;; Unless NOT-IN-DELIMITER is non-nil, when TO is inside a two-character
   ;; comment opener, this is recognized as being in a comment literal.
@@ -3064,6 +3070,7 @@ comment at the start of cc-engine.el for more info."
 	       (base (car elt))
 	       (near-base base)
 	       (s (cadr elt))
+	       s1
 	       (end (car (cddr elt)))
 	       far-base-and-state far-base far-s ty start)
 	  (if (or
@@ -3104,12 +3111,17 @@ comment at the start of cc-engine.el for more info."
 		      (t 'c)))
 	    (setq start (nth 8 s))
 	    (unless end
-	      (parse-partial-sexp here (point-max)
-				  nil	     ; TARGETDEPTH
-				  nil	     ; STOPBEFORE
-				  s	     ; OLDSTATE
-				  'syntax-table) ; stop at end of literal
-	      (setq end (point)))
+	      (setq s1 (parse-partial-sexp here (point-max)
+					   nil		  ; TARGETDEPTH
+					   nil		  ; STOPBEFORE
+					   s		  ; OLDSTATE
+					   'syntax-table)); stop at EO literal
+	      (unless (or (nth 3 s1)			  ; still in a string
+			  (and (nth 4 s1)
+			       (not (eq (nth 7 s1) 'syntax-table)))) ; still
+								     ; in a
+								     ; comment
+		(setq end (point))))
 	    (unless (eq near-base here)
 	      (c-full-put-near-cache-entry here s end))
 	    (list s ty (cons start end)))
@@ -5555,8 +5567,11 @@ comment at the start of cc-engine.el for more info."
 						   s
 						   'syntax-table)
 			       (point)))))
-	    (let ((pp-to-lit (c-full-pp-to-literal pos not-in-delimiter)))
-	      (car (cddr pp-to-lit))))))
+	    (let* ((pp-to-lit (c-full-pp-to-literal pos not-in-delimiter))
+		   (limits (car (cddr pp-to-lit))))
+	      (if (and limits (null (cdr limits)))
+		  (cons (car limits) (point-max))
+		limits)))))
       (cond
        (lit-limits)
 
@@ -7968,7 +7983,7 @@ comment at the start of cc-engine.el for more info."
 
 		  (if (save-excursion
 			(c-backward-token-2)
-			(looking-at c-multichar->-op-not->>-regexp))
+			(looking-at c-multichar->-op-not->>->>>-regexp))
 		      (progn
 			(goto-char (match-end 0))
 			t)		; Continue the loop.
@@ -12576,7 +12591,7 @@ comment at the start of cc-engine.el for more info."
 	 ;; There's always at most one syntactic element which got
 	 ;; an anchor pos.  It's stored in syntactic-relpos.
 	 syntactic-relpos
-	 (c-stmt-delim-chars c-stmt-delim-chars))
+	 (c-commas-bound-stmts c-commas-bound-stmts))
 
       ;; Check if we're directly inside an enclosing declaration
       ;; level block.
@@ -12628,7 +12643,7 @@ comment at the start of cc-engine.el for more info."
       ;; arglists.
       (when (and containing-sexp
 		 (eq (char-after containing-sexp) ?\())
-	(setq c-stmt-delim-chars c-stmt-delim-chars-with-comma))
+	(setq c-commas-bound-stmts t))
       ;; cache char before and after indent point, and move point to
       ;; the most likely position to perform the majority of tests
       (goto-char indent-point)

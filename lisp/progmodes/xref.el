@@ -99,7 +99,11 @@ This is typically the filename.")
 ;;;; Commonly needed location classes are defined here:
 
 (defcustom xref-file-name-display 'abs
-  "Style of file name display in *xref* buffers."
+  "Style of file name display in *xref* buffers.
+If the value is the symbol `abs', the default, show the file names
+in their full absolute form.
+If `nondirectory', show only the nondirectory (a.k.a. \"base name\")
+part of the file name."
   :type '(choice (const :tag "absolute file name" abs)
                  (const :tag "nondirectory file name" nondirectory))
   :version "27.1")

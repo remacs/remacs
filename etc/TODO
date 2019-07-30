@@ -297,11 +297,7 @@ One way of doing this is to start with fx's dynamic loading, and use it
 to implement things like auto-loaded buffer parsers and database
 access in cases which need more than Lisp.
 
-** Replace unexec with a more portable form of dumping
-See eg https://lists.gnu.org/r/emacs-devel/2014-01/msg01034.html
-       https://lists.gnu.org/r/emacs-devel/2014-06/msg00452.html
-
-One way is to provide portable undumping using mmap (per gerd design).
+** Fix portable dumping so that you can redump without using -batch.
 
 ** Imenu could be extended into a file-structure browsing mechanism
 using code like that of customize-groups.

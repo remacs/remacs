@@ -3594,6 +3594,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  sprintf_bytes = prec != 0;
 		}
 	      else if (BIGNUMP (arg))
+	      bignum_arg:
 		{
 		  int base = ((conversion == 'd' || conversion == 'i') ? 10
 			      : conversion == 'o' ? 8 : 16);
@@ -3655,11 +3656,17 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
-		      double uintmax = UINTMAX_MAX;
-		      if (! (0 <= d && d < uintmax + 1))
-			xsignal1 (Qoverflow_error, arg);
-		      x = d;
-		      negative = false;
+		      double abs_d = fabs (d);
+		      if (abs_d < UINTMAX_MAX + 1.0)
+			{
+			  negative = d <= -1;
+			  x = abs_d;
+			}
+		      else
+			{
+			  arg = double_to_integer (d);
+			  goto bignum_arg;
+			}
 		    }
 		  p[0] = negative ? '-' : plus_flag ? '+' : ' ';
 		  bool signedp = negative | plus_flag | space_flag;

@@ -1466,6 +1466,60 @@ seconds east of Greenwich.
 
 @strong{Common Lisp Note:} Common Lisp has different meanings for
 @var{dow} and @var{utcoff}.
+
+To access (or alter) the elements in the time value, the
+@code{decoded-time-second}, @code{decoded-time-minute},
+@code{decoded-time-hour}, @code{decoded-time-day},
+@code{decoded-time-month}, @code{decoded-time-year},
+@code{decoded-time-weekday}, @code{decoded-time-dst} and
+@code{decoded-time-zone} accessors can be used.
+
+For instance, to increase the year in a decoded time, you could say:
+
+@lisp
+(setf (decoded-time-year decoded-time)
+      (+ (decoded-time-year decoded-time) 4))
+@end lisp
+
+Also see the following function.
+
+@end defun
+
+@defun decoded-time-add time delta
+This function takes a decoded time structure and adds @var{delta}
+(also a decoded time structure) to it.  Elements in @var{delta} that
+are @code{nil} are ignored.
+
+For instance, if you want ``same time next month'', you
+could say:
+
+@lisp
+(let ((time (decode-time))
+      (delta (make-decoded-time :month 2)))
+   (encode-time (decoded-time-add time delta)))
+@end lisp
+
+If this date doesn't exist (if you're running this on January 31st,
+for instance), then the date will be shifted back until you get a
+valid date (which will be February 28th or 29th, depending).
+
+Fields are added in a most to least significant order, so if the
+adjustment described above happens, it happens before adding days,
+hours, minutes or seconds.
+
+The values in @var{delta} can be negative to subtract values instead.
+
+The return value is a decoded time structure.
+@end defun
+
+@defun make-decoded-time &key second minute hour day month year dst zone
+Return a decoded time structure with only the given keywords filled
+out, leaving the rest @code{nil}.  For instance, to get a structure
+that represents ``two months'', you could say:
+
+@lisp
+(make-decoded-time :month 2)
+@end lisp
 @end defun
 
 @defun encode-time &optional time form &rest obsolescent-arguments
@@ -1566,6 +1620,19 @@ element that cannot be determined from the input will be set to
 ISO 8601 string, like ``Fri, 25 Mar 2016 16:24:56 +0100'' or
 ``1998-09-12T12:21:54-0200'', but this function will attempt to parse
 less well-formed time strings as well.
+@end defun
+
+@vindex ISO 8601 date/time strings
+@defun iso8601-parse string
+For a more strict function (that will error out upon invalid input),
+this function can be used instead.  It's able to parse all variants of
+the ISO 8601 standard, so in addition to the formats mentioned above,
+it also parses things like ``1998W45-3'' (week number) and
+``1998-245'' (ordinal day number).  To parse durations, there's
+@code{iso8601-parse-duration}, and to parse intervals, there's
+@code{iso8601-parse-interval}.  All these functions return decoded
+time structures, except the final one, which returns three of them
+(the start, the end, and the duration).
 @end defun
 
 @defun format-time-string format-string &optional time zone
@@ -1865,6 +1932,16 @@ This returns the day number within the year corresponding to @var{time-value}.
 
 @defun date-leap-year-p year
 This function returns @code{t} if @var{year} is a leap year.
+@end defun
+
+@defun date-days-in-month year month
+Return the number of days in @var{month} in @var{year}.  For instance,
+there's 29 days in February 2004.
+@end defun
+
+@defun date-ordinal-to-time year ordinal
+Return the date of @var{ordinal} in @var{year} as a decoded time
+structure.  For instance, the 120th day in 2004 is April 29th.
 @end defun
 
 @node Timers

@@ -187,7 +187,7 @@ switch EWW buffers through a minibuffer prompt, press @kbd{s}
 (@code{eww-switch-to-buffer}).
 
 @findex eww-browse-with-external-browser
-@vindex shr-external-browser
+@vindex browse-url-secondary-browser-function
 @vindex eww-use-external-browser-for-content-type
 @kindex &
 @cindex External Browser
@@ -197,10 +197,10 @@ or are not implemented (E.g., JavaScript).  If you have trouble
 viewing a website with EWW then hit @kbd{&}
 (@code{eww-browse-with-external-browser}) inside the EWW buffer to
 open the website in the external browser specified by
-@code{shr-external-browser}.  Some content types, such as video or
-audio content, do not make sense to display in GNU Emacs at all.  You
-can tell EWW to open specific content automatically in an external
-browser by customizing
+@code{browse-url-secondary-browser-function}.  Some content types,
+such as video or audio content, do not make sense to display in GNU
+Emacs at all.  You can tell EWW to open specific content automatically
+in an external browser by customizing
 @code{eww-use-external-browser-for-content-type}.
 
 @node Advanced

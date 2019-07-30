@@ -223,10 +223,17 @@ The fourth part is a regexp identifying the pattern following the time stamp.
 This part may be omitted to use the normal pattern.
 
 Examples:
-\"-10/\"
-\"-9/^Last modified: %%$\"
-\"@set Time-stamp: %:b %:d, %:y$\"
-\"newcommand{\\\\\\\\timestamp}{%%}\"
+
+\"-10/\" (sets only `time-stamp-line-limit')
+
+\"-9/^Last modified: %%$\" (sets `time-stamp-line-limit',
+`time-stamp-start', `time-stamp-end' and `time-stamp-format')
+
+\"@set Time-stamp: %:b %:d, %:y$\" (sets `time-stamp-start',
+`time-stamp-end' and `time-stamp-format')
+
+\"newcommand{\\\\\\\\timestamp}{%%}\" (sets `time-stamp-start',
+`time-stamp-end' and `time-stamp-format')
 
 Do not change `time-stamp-pattern' `time-stamp-line-limit',
 `time-stamp-start', or `time-stamp-end' for yourself or you will be

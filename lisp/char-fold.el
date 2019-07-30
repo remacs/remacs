@@ -22,10 +22,29 @@
 
 ;;; Code:
 
-(eval-and-compile (put 'char-fold-table 'char-table-extra-slots 1))
+(eval-and-compile
+  (put 'char-fold-table 'char-table-extra-slots 1)
+  (defconst char-fold--default-include
+    '((?\" "＂" "“" "”" "”" "„" "⹂" "〞" "‟" "‟" "❞" "❝" "❠" "“" "„" "〝" "〟" "🙷" "🙶" "🙸" "«" "»")
+      (?' "❟" "❛" "❜" "‘" "’" "‚" "‛" "‚" "󠀢" "❮" "❯" "‹" "›")
+      (?` "❛" "‘" "‛" "󠀢" "❮" "‹")
+      (?ß "ss") ;; de
+      (?ι "ΐ")  ;; el for (?ΐ "ΐ") decomposition
+      (?υ "ΰ")  ;; el for (?ΰ "ΰ") decomposition
+      ))
+  (defconst char-fold--default-exclude
+    '(
+      (?и "й")  ;; ru
+      ))
+  (defconst char-fold--default-symmetric nil)
+  (defvar char-fold--previous
+    (list char-fold--default-include
+          char-fold--default-exclude
+          char-fold--default-symmetric)))
+
 
 (eval-and-compile
-  (defun char-fold-make-table ()
+  (defun char-fold--make-table ()
     (let* ((equiv (make-char-table 'char-fold-table))
            (equiv-multi (make-char-table 'char-fold-table))
            (table (unicode-property-table-internal 'decomposition)))
@@ -78,6 +97,25 @@
                               (cons (char-to-string char)
                                     (aref equiv (car decomp))))))))
                (funcall make-decomp-match-char decomp char)
+               ;; Check to see if the first char of the decomposition
+               ;; has a further decomposition.  If so, add a mapping
+               ;; back from that second decomposition to the original
+               ;; character.  This allows e.g. 'ι' (GREEK SMALL LETTER
+               ;; IOTA) to match both the Basic Greek block and
+               ;; Extended Greek block variants of IOTA +
+               ;; diacritical(s).  Repeat until there are no more
+               ;; decompositions.
+               (let ((dec decomp)
+                     next-decomp)
+                   (while dec
+                     (setq next-decomp (char-table-range table (car dec)))
+                     (when (consp next-decomp)
+                       (when (symbolp (car next-decomp))
+                         (setq next-decomp (cdr next-decomp)))
+                       (if (not (eq (car dec)
+                                    (car next-decomp)))
+                           (funcall make-decomp-match-char (list (car next-decomp)) char)))
+                     (setq dec next-decomp)))
                ;; Do it again, without the non-spacing characters.
                ;; This allows 'a' to match 'ä'.
                (let ((simpler-decomp nil)
@@ -97,27 +135,76 @@
                                  (aref equiv (car simpler-decomp)))))))))))
        table)
 
-      ;; Add some manual entries.
-      (dolist (it '((?\" "＂" "“" "”" "”" "„" "⹂" "〞" "‟" "‟" "❞" "❝" "❠" "“" "„" "〝" "〟" "🙷" "🙶" "🙸" "«" "»")
-                    (?' "❟" "❛" "❜" "‘" "’" "‚" "‛" "‚" "󠀢" "❮" "❯" "‹" "›")
-                    (?` "❛" "‘" "‛" "󠀢" "❮" "‹")))
+      ;; Add some entries to default decomposition
+      (dolist (it (or (bound-and-true-p char-fold-include)
+                      char-fold--default-include))
         (let ((idx (car it))
               (chars (cdr it)))
           (aset equiv idx (append chars (aref equiv idx)))))
+
+      ;; Remove some entries from default decomposition
+      (dolist (it (or (bound-and-true-p char-fold-exclude)
+                      char-fold--default-exclude))
+        (let ((idx (car it))
+              (chars (cdr it)))
+          (when (aref equiv idx)
+            (dolist (char chars)
+              (aset equiv idx (remove char (aref equiv idx)))))))
+
+      ;; Add symmetric entries
+      (when (or (bound-and-true-p char-fold-symmetric)
+                char-fold--default-symmetric)
+        (let ((symmetric (make-hash-table :test 'eq)))
+          ;; Initialize hashes
+          (map-char-table
+           (lambda (char decomp-list)
+             (puthash char (make-hash-table :test 'equal) symmetric)
+             (dolist (decomp decomp-list)
+               (puthash (string-to-char decomp) (make-hash-table :test 'equal) symmetric)))
+           equiv)
+
+          (map-char-table
+           (lambda (char decomp-list)
+             (dolist (decomp decomp-list)
+               (if (< (length decomp) 2)
+                   ;; Add single-char symmetric pairs to hash
+                   (let ((decomp-list (cons (char-to-string char) decomp-list))
+                         (decomp-hash (gethash (string-to-char decomp) symmetric)))
+                     (dolist (decomp2 decomp-list)
+                       (unless (equal decomp decomp2)
+                         (puthash decomp2 t decomp-hash)
+                         (puthash decomp t (gethash (string-to-char decomp2) symmetric)))))
+                 ;; Add multi-char symmetric pairs to equiv-multi char-table
+                 (let ((decomp-list (cons (char-to-string char) decomp-list))
+                       (prefix (string-to-char decomp))
+                       (suffix (substring decomp 1)))
+                   (puthash decomp t (gethash char symmetric))
+                   (dolist (decomp2 decomp-list)
+                     (if (< (length decomp2) 2)
+                         (aset equiv-multi prefix
+                               (cons (cons suffix (regexp-quote decomp2))
+                                     (aref equiv-multi prefix)))))))))
+           equiv)
+
+          ;; Update equiv char-table from hash
+          (maphash
+           (lambda (char decomp-hash)
+             (let (schars)
+               (maphash (lambda (schar _) (push schar schars)) decomp-hash)
+               (aset equiv char schars)))
+           symmetric)))
 
       ;; Convert the lists of characters we compiled into regexps.
       (map-char-table
        (lambda (char decomp-list)
          (let ((re (regexp-opt (cons (char-to-string char) decomp-list))))
-           (if (consp char) ; FIXME: char never is consp?
-               (set-char-table-range equiv char re)
-             (aset equiv char re))))
+           (aset equiv char re)))
        equiv)
       equiv)))
 
 (defconst char-fold-table
   (eval-when-compile
-    (char-fold-make-table))
+    (char-fold--make-table))
   "Used for folding characters of the same group during search.
 This is a char-table with the `char-fold-table' subtype.
 
@@ -140,6 +227,62 @@ For instance, the default alist for ?f includes:
 
 Exceptionally for the space character (32), ALIST is ignored.")
 
+
+(defun char-fold-update-table ()
+  "Update char-fold-table only when one of the options changes its value."
+  (let ((new (list (or (bound-and-true-p char-fold-include)
+                       char-fold--default-include)
+                   (or (bound-and-true-p char-fold-exclude)
+                       char-fold--default-exclude)
+                   (or (bound-and-true-p char-fold-symmetric)
+                       char-fold--default-symmetric))))
+    (unless (equal char-fold--previous new)
+      (setq char-fold-table (char-fold--make-table)
+            char-fold--previous new))))
+
+(defcustom char-fold-include char-fold--default-include
+  "Additional character foldings to include.
+Each entry is a list of a character and the strings that fold into it."
+  :type '(alist :key-type (character :tag "Fold to character")
+                :value-type (repeat (string :tag "Fold from string")))
+  :initialize #'custom-initialize-default
+  :set (lambda (sym val)
+         (custom-set-default sym val)
+         (char-fold-update-table))
+  :group 'isearch
+  :version "27.1")
+
+(defcustom char-fold-exclude char-fold--default-exclude
+  "Character foldings to remove from default decompisitions.
+Each entry is a list of a character and the strings to remove from folding."
+  :type '(alist :key-type (character :tag "Fold to character")
+                :value-type (repeat (string :tag "Fold from string")))
+  :initialize #'custom-initialize-default
+  :set (lambda (sym val)
+         (custom-set-default sym val)
+         (char-fold-update-table))
+  :group 'isearch
+  :version "27.1")
+
+(defcustom char-fold-symmetric char-fold--default-symmetric
+  "Non-nil means char-fold searching treats equivalent chars the same.
+That is, use of any of a set of char-fold equivalent chars in a search
+string finds any of them in the text being searched.
+
+If nil then only the \"base\" or \"canonical\" char of the set matches
+any of them.  The others match only themselves, even when char-folding
+is turned on."
+  :type 'boolean
+  :initialize #'custom-initialize-default
+  :set (lambda (sym val)
+         (custom-set-default sym val)
+         (char-fold-update-table))
+  :group 'isearch
+  :version "27.1")
+
+(char-fold-update-table)
+
+
 (defun char-fold--make-space-string (n)
   "Return a string that matches N spaces."
   (format "\\(?:%s\\|%s\\)"

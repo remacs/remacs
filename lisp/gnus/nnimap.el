@@ -270,7 +270,7 @@ textual parts.")
 		  (forward-line)
 		  (null (looking-at-p
 			 ;; We're expecting a mail header.
-			 "^[!-9;-~]+: "))))
+			 "^[!-9;-~]+:[[:space:]]"))))
 	    (delete-region (line-beginning-position)
 			   (1+ (line-end-position)))
 	  (setq lines nil)
@@ -1100,7 +1100,7 @@ textual parts.")
 		(format-time-string
 		 (format "%%d-%s-%%Y"
 			 (upcase
-			  (car (rassoc (nth 4 (decode-time cutoff))
+			  (car (rassoc (decoded-time-month (decode-time cutoff))
 				       parse-time-months))))
 		 cutoff))))
 	  (and (car result)
@@ -1340,7 +1340,7 @@ If LIMIT, first try to limit the search to the N last articles."
 		    (progn (end-of-line)
 			   (skip-chars-backward " \r\"")
 			   (point)))))
-	(unless (member '%NoSelect flags)
+	(unless (member '%Noselect flags)
           (let* ((group (utf7-decode (if (stringp group) group
                                        (format "%s" group)) t))
                  (group (cond ((or (not prefix)
@@ -1702,18 +1702,19 @@ If LIMIT, first try to limit the search to the N last articles."
 	     (cdr (or (assoc (caddr type) flags) ; %Flagged
 		      (assoc (intern (cadr type) obarray) flags)
 		      (assoc (cadr type) flags))))) ; "\Flagged"
-	(setq marks (delq ticks marks))
-	(pop ticks)
-	;; Add the new marks we got.
-	(setq ticks (gnus-add-to-range ticks new-marks))
-	;; Remove the marks from messages that don't have them.
-	(setq ticks (gnus-remove-from-range
-		     ticks
-		     (gnus-compress-sequence
-		      (gnus-sorted-complement existing new-marks))))
-	(when ticks
-	  (push (cons (car type) ticks) marks)))
-      (gnus-info-set-marks info marks t))
+	(when new-marks
+	  (setq marks (delq ticks marks))
+	  (pop ticks)
+	  ;; Add the new marks we got.
+	  (setq ticks (gnus-add-to-range ticks new-marks))
+	  ;; Remove the marks from messages that don't have them.
+	  (setq ticks (gnus-remove-from-range
+		       ticks
+		       (gnus-compress-sequence
+			(gnus-sorted-complement existing new-marks))))
+	  (when ticks
+	    (push (cons (car type) ticks) marks))
+	  (gnus-info-set-marks info marks t))))
     ;; Add vanished to the list of unexisting articles.
     (when vanished
       (let* ((old-unexists (assq 'unexist marks))

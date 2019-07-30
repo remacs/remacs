@@ -361,28 +361,31 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp,
       count = SPECPDL_INDEX ();
       record_unwind_protect_ptr (json_release_object, json);
       for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-        if (!NILP (HASH_HASH (h, i)))
-          {
-            Lisp_Object key = json_encode (HASH_KEY (h, i));
-            /* We can't specify the length, so the string must be
+        {
+          Lisp_Object key = HASH_KEY (h, i);
+          if (!EQ (key, Qunbound))
+            {
+              Lisp_Object ekey = json_encode (key);
+              /* We can't specify the length, so the string must be
                NUL-terminated.  */
-            check_string_without_embedded_nuls (key);
-            const char *key_str = SSDATA (key);
-            /* Reject duplicate keys.  These are possible if the hash
+              check_string_without_embedded_nuls (ekey);
+              const char *key_str = SSDATA (ekey);
+              /* Reject duplicate keys.  These are possible if the hash
                table test is not `equal'.  */
-            if (json_object_get (json, key_str) != NULL)
-              wrong_type_argument (Qjson_value_p, lisp);
-            int status = json_object_set_new (json, key_str,
-                                              lisp_to_json (HASH_VALUE (h, i),
-                                                            conf));
-            if (status == -1)
-              {
-                /* A failure can be caused either by an invalid key or
+              if (json_object_get (json, key_str) != NULL)
+                wrong_type_argument (Qjson_value_p, lisp);
+              int status
+                = json_object_set_new (json, key_str,
+                                       lisp_to_json (HASH_VALUE (h, i), conf));
+              if (status == -1)
+                {
+                  /* A failure can be caused either by an invalid key or
                    by low memory.  */
-                json_check_utf8 (key);
-                json_out_of_memory ();
-              }
-          }
+                  json_check_utf8 (ekey);
+                  json_out_of_memory ();
+                }
+            }
+        }
     }
   else if (NILP (lisp))
     return json_check (json_object ());

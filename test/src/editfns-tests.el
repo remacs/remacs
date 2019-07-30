@@ -165,13 +165,9 @@
   (should (string-equal (format "%d" -18446744073709551616.0)
                         "-18446744073709551616")))
 
-;; Perhaps Emacs will be improved someday to return the correct
-;; answer for positive numbers instead of overflowing; in
-;; that case these tests will need to be changed.  In the meantime make
-;; sure Emacs is reporting the overflow correctly.
 (ert-deftest format-%x-large-float ()
-  (should-error (format "%x" 18446744073709551616.0)
-                :type 'overflow-error))
+  (should (string-equal (format "%x" 18446744073709551616.0)
+                        "10000000000000000")))
 (ert-deftest read-large-integer ()
   (should (eq (type-of (read (format "%d0" most-negative-fixnum))) 'integer))
   (should (eq (type-of (read (format "%+d" (* -8.0 most-negative-fixnum))))
@@ -188,11 +184,16 @@
     (dolist (val (list most-negative-fixnum (1+ most-negative-fixnum)
 		       -1 0 1
 		       (1- most-positive-fixnum) most-positive-fixnum))
-      (should (eq val (read (format fmt val)))))))
+      (should (eq val (read (format fmt val)))))
+    (dolist (val (list (1+ most-positive-fixnum)
+		       (* 2 (1+ most-positive-fixnum))
+		       (* 4 (1+ most-positive-fixnum))
+		       (* 8 (1+ most-positive-fixnum))
+		       18446744073709551616.0))
+      (should (= val (read (format fmt val)))))))
 
-(ert-deftest format-%o-invalid-float ()
-  (should-error (format "%o" -1e-37)
-                :type 'overflow-error))
+(ert-deftest format-%o-negative-float ()
+  (should (string-equal (format "%o" -1e-37) "0")))
 
 ;; Bug#31938
 (ert-deftest format-%d-float ()

@@ -151,6 +151,7 @@
 (require 'tabulated-list)
 (require 'macroexp)
 (require 'url-handlers)
+(require 'browse-url)
 
 (defgroup package nil
   "Manager for Emacs Lisp packages."
@@ -331,15 +332,13 @@ default directory."
   :risky t
   :version "26.1")
 
-(defcustom package-check-signature
-  (if (and (require 'epg-config)
-           (epg-find-configuration 'OpenPGP))
-      'allow-unsigned)
+(defcustom package-check-signature 'allow-unsigned
   "Non-nil means to check package signatures when installing.
 More specifically the value can be:
 - nil: package signatures are ignored.
-- `allow-unsigned': install a package even if it is unsigned,
-  but if it is signed and we have the key for it, verify the signature.
+- `allow-unsigned': install a package even if it is unsigned, but
+  if it is signed, we have the key for it, and OpenGPG is
+  installed, verify the signature.
 - t: accept a package only if it comes with at least one verified signature.
 - `all': same as t, except when the package has several signatures,
   in which case we verify all the signatures.
@@ -352,6 +351,18 @@ contents of the archive."
                  (const all :tag "Check all signatures"))
   :risky t
   :version "27.1")
+
+(defun package-check-signature ()
+  "Check whether we have a usable OpenPGP configuration.
+If true, and `package-check-signature' is `allow-unsigned',
+return `allow-unsigned', otherwise return the value of
+`package-check-signature'."
+  (if (eq package-check-signature 'allow-unsigned)
+      (progn
+        (require 'epg-config)
+        (and (epg-find-configuration 'OpenPGP)
+             'allow-unsigned))
+    package-check-signature))
 
 (defcustom package-unsigned-archives nil
   "List of archives where we do not check for package signatures."
@@ -1279,15 +1290,15 @@ errors."
       (dolist (sig (epg-context-result-for context 'verify))
         (if (eq (epg-signature-status sig) 'good)
             (push sig good-signatures)
-          ;; If package-check-signature is allow-unsigned, don't
+          ;; If `package-check-signature' is allow-unsigned, don't
           ;; signal error when we can't verify signature because of
           ;; missing public key.  Other errors are still treated as
           ;; fatal (bug#17625).
-          (unless (and (eq package-check-signature 'allow-unsigned)
+          (unless (and (eq (package-check-signature) 'allow-unsigned)
                        (eq (epg-signature-status sig) 'no-pubkey))
             (setq had-fatal-error t))))
       (when (or (null good-signatures)
-                (and (eq package-check-signature 'all)
+                (and (eq (package-check-signature) 'all)
                      had-fatal-error))
         (package--display-verify-error context sig-file)
         (signal 'bad-signature (list sig-file)))
@@ -1318,7 +1329,7 @@ else, even if an error is signaled."
       :async async :noerror t
       ;; Connection error is assumed to mean "no sig-file".
       :error-form (let ((allow-unsigned
-                         (eq package-check-signature 'allow-unsigned)))
+                         (eq (package-check-signature) 'allow-unsigned)))
                     (when (and callback allow-unsigned)
                       (funcall callback nil))
                     (when unwind (funcall unwind))
@@ -1602,7 +1613,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
            (local-file (expand-file-name file dir)))
       (when (listp (read content))
         (make-directory dir t)
-        (if (or (not package-check-signature)
+        (if (or (not (package-check-signature))
                 (member name package-unsigned-archives))
             ;; If we don't care about the signature, save the file and
             ;; we're done.
@@ -1654,7 +1665,7 @@ downloads in the background."
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
         (inhibit-message (or inhibit-message async)))
-    (when (and package-check-signature (file-exists-p default-keyring))
+    (when (and (package-check-signature) (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (package-import-keyring default-keyring)
         (error (message "Cannot import default keyring: %S" (cdr error))))))
@@ -1901,7 +1912,7 @@ if all the in-between dependencies are also in PACKAGE-LIST."
          (file (concat (package-desc-full-name pkg-desc)
                        (package-desc-suffix pkg-desc))))
     (package--with-response-buffer location :file file
-      (if (or (not package-check-signature)
+      (if (or (not (package-check-signature))
               (member (package-desc-archive pkg-desc)
                       package-unsigned-archives))
           ;; If we don't care about the signature, unpack and we're
@@ -2494,44 +2505,47 @@ The description is read from the installed package files."
 
     (insert "\n")
 
-    (if built-in
-        ;; For built-in packages, get the description from the
-        ;; Commentary header.
-        (let ((fn (locate-file (format "%s.el" name) load-path
-                               load-file-rep-suffixes))
-              (opoint (point)))
-          (insert (or (lm-commentary fn) ""))
-          (save-excursion
-            (goto-char opoint)
-            (when (re-search-forward "^;;; Commentary:\n" nil t)
-              (replace-match ""))
-            (while (re-search-forward "^\\(;+ ?\\)" nil t)
-              (replace-match ""))))
-
-      (if (package-installed-p desc)
-          ;; For installed packages, get the description from the
-          ;; installed files.
-          (insert (package--get-description desc))
-
-        ;; For non-built-in, non-installed packages, get description from
-        ;; the archive.
-        (let* ((basename (format "%s-readme.txt" name))
-               readme-string)
-
-          (package--with-response-buffer (package-archive-base desc)
-            :file basename :noerror t
+    (let ((start-of-description (point)))
+      (if built-in
+          ;; For built-in packages, get the description from the
+          ;; Commentary header.
+          (let ((fn (locate-file (format "%s.el" name) load-path
+                                 load-file-rep-suffixes))
+                (opoint (point)))
+            (insert (or (lm-commentary fn) ""))
             (save-excursion
-              (goto-char (point-max))
-              (unless (bolp)
-                (insert ?\n)))
-            (cl-assert (not enable-multibyte-characters))
-            (setq readme-string
-                  ;; The readme.txt files are defined to contain utf-8 text.
-                  (decode-coding-region (point-min) (point-max) 'utf-8 t))
-            t)
-          (insert (or readme-string
-                      "This package does not provide a description.")))
-        ))))
+              (goto-char opoint)
+              (when (re-search-forward "^;;; Commentary:\n" nil t)
+                (replace-match ""))
+              (while (re-search-forward "^\\(;+ ?\\)" nil t)
+                (replace-match ""))))
+
+        (if (package-installed-p desc)
+            ;; For installed packages, get the description from the
+            ;; installed files.
+            (insert (package--get-description desc))
+
+          ;; For non-built-in, non-installed packages, get description from
+          ;; the archive.
+          (let* ((basename (format "%s-readme.txt" name))
+                 readme-string)
+
+            (package--with-response-buffer (package-archive-base desc)
+              :file basename :noerror t
+              (save-excursion
+                (goto-char (point-max))
+                (unless (bolp)
+                  (insert ?\n)))
+              (cl-assert (not enable-multibyte-characters))
+              (setq readme-string
+                    ;; The readme.txt files are defined to contain utf-8 text.
+                    (decode-coding-region (point-min) (point-max) 'utf-8 t))
+              t)
+            (insert (or readme-string
+                        "This package does not provide a description.")))))
+      ;; Make URLs in the description into links.
+      (goto-char start-of-description)
+      (browse-url-add-buttons))))
 
 (defun package-install-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
@@ -3533,9 +3547,15 @@ shown."
 (defun package-menu-filter (keyword)
   "Filter the *Packages* buffer.
 Show only those items that relate to the specified KEYWORD.
+
 KEYWORD can be a string or a list of strings.  If it is a list, a
 package will be displayed if it matches any of the keywords.
 Interactively, it is a list of strings separated by commas.
+
+KEYWORD can also be used to filter by status or archive name by
+using keywords like \"arc:gnu\" and \"status:available\".
+Statuses available include \"incompat\", \"available\",
+\"built-in\" and \"installed\".
 
 To restore the full package list, type `q'."
   (interactive

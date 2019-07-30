@@ -1501,13 +1501,17 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-browse-with-external-browser (&optional url)
   "Browse the current URL with an external browser.
-The browser to used is specified by the `shr-external-browser' variable."
+The browser to used is specified by the
+`browse-url-secondary-browser-function' variable."
   (interactive)
-  (funcall shr-external-browser (or url (plist-get eww-data :url))))
+  (funcall browse-url-secondary-browser-function
+           (or url (plist-get eww-data :url))))
 
 (defun eww-follow-link (&optional external mouse-event)
   "Browse the URL under point.
-If EXTERNAL is single prefix, browse the URL using `shr-external-browser'.
+If EXTERNAL is single prefix, browse the URL using
+`browse-url-secondary-browser-function'.
+
 If EXTERNAL is double prefix, browse in new buffer."
   (interactive (list current-prefix-arg last-nonmenu-event))
   (mouse-set-point mouse-event)
@@ -1518,7 +1522,7 @@ If EXTERNAL is double prefix, browse in new buffer."
      ((string-match "^mailto:" url)
       (browse-url-mail url))
      ((and (consp external) (<= (car external) 4))
-      (funcall shr-external-browser url)
+      (funcall browse-url-secondary-browser-function url)
       (shr--blink-link))
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))

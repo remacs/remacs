@@ -211,6 +211,9 @@ You can enable this mode locally in desired buffers, or use
 `global-prettify-symbols-mode' to enable it for all modes that
 support it."
   :init-value nil
+  (when prettify-symbols--keywords
+    (font-lock-remove-keywords nil prettify-symbols--keywords)
+    (setq prettify-symbols--keywords nil))
   (if prettify-symbols-mode
       ;; Turn on
       (when (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
@@ -226,9 +229,6 @@ support it."
         (font-lock-flush))
     ;; Turn off
     (remove-hook 'post-command-hook #'prettify-symbols--post-command-hook t)
-    (when prettify-symbols--keywords
-      (font-lock-remove-keywords nil prettify-symbols--keywords)
-      (setq prettify-symbols--keywords nil))
     (when (memq 'composition font-lock-extra-managed-props)
       (setq font-lock-extra-managed-props (delq 'composition
                                                 font-lock-extra-managed-props))

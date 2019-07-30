@@ -3887,7 +3887,7 @@ if you do build Emacs with Xt; please let us know if you've done this!)
 The only way to affect the behavior of keys within Emacs is through
 @code{xmodmap} (outside Emacs) or @code{define-key} (inside Emacs).  The
 @code{define-key} command should be used in conjunction with the
-@code{function-key-map} map.  For instance,
+@code{local-function-key-map} map.  For instance,
 
 @lisp
 (define-key function-key-map [M-@key{TAB}] [?\M-\t])

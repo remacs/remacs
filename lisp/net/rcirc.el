@@ -44,6 +44,7 @@
 (require 'cl-lib)
 (require 'ring)
 (require 'time-date)
+(eval-when-compile (require 'subr-x))
 
 (defconst rcirc-id-string (concat "rcirc on GNU Emacs " emacs-version))
 
@@ -1181,6 +1182,8 @@ with it."
                rcirc-log-directory)
       (rcirc-log-write))
     (rcirc-clean-up-buffer "Killed buffer")
+    (when-let ((process (get-buffer-process (current-buffer))))
+      (delete-process process))
     (when (and rcirc-buffer-alist ;; it's a server buffer
                rcirc-kill-channel-buffers)
       (dolist (channel rcirc-buffer-alist)

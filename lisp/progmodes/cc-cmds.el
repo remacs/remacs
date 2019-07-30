@@ -1775,7 +1775,7 @@ defun."
 		(setq arg (1+ arg)))
 	    (if (< arg 0)
 		(c-while-widening-to-decl-block
-		 (< (setq arg (- (c-forward-to-nth-EOF-} (- arg) where))) 0)))
+		 (< (setq arg (- (c-forward-to-nth-EOF-\;-or-} (- arg) where))) 0)))
 	    ;; Move forward to the next opening brace....
 	    (when (and (= arg 0)
 		       (progn
@@ -1811,10 +1811,11 @@ defun."
 	(c-keep-region-active)
 	(= arg 0)))))
 
-(defun c-forward-to-nth-EOF-} (n where)
-  ;; Skip to the closing brace of the Nth function after point.  If
-  ;; point is inside a function, this counts as the first.  Point must be
-  ;; outside any comment/string or macro.
+(defun c-forward-to-nth-EOF-\;-or-} (n where)
+  ;; Skip to the closing brace or semicolon of the Nth function after point.
+  ;; We move to a semicolon only for things like structs which don't end at a
+  ;; closing brace.  If point is inside a function, this counts as the first.
+  ;; Point must be outside any comment/string or macro.
   ;;
   ;; N must be strictly positive.
   ;; WHERE describes the position of point, one of the symbols `at-header',
@@ -1836,23 +1837,24 @@ defun."
     (forward-sexp)
     (setq n (1- n)))
    ((eq where 'in-trailer)
-    (c-syntactic-skip-backward "^}")
+    ;; The actual movement is done below.
     (setq n (1- n)))
    ((memq where '(at-function-end outwith-function at-header in-header))
     (when (c-syntactic-re-search-forward "{" nil 'eob)
       (backward-char)
       (forward-sexp)
       (setq n (1- n))))
-   (t (error "c-forward-to-nth-EOF-}: `where' is %s" where)))
+   (t (error "c-forward-to-nth-EOF-\\;-or-}: `where' is %s" where)))
+
+  (when (c-in-function-trailer-p)
+    (c-syntactic-re-search-forward ";" nil 'eob t))
 
   ;; Each time round the loop, go forward to a "}" at the outermost level.
   (while (and (> n 0) (not (eobp)))
-					;(c-parse-state)	; This call speeds up the following one by a factor
-					; of ~6.  Hmmm.  2006/4/5.
     (when (c-syntactic-re-search-forward "{" nil 'eob)
       (backward-char)
-      (forward-sexp))
-    (setq n (1- n)))
+      (forward-sexp)
+      (setq n (1- n))))
   n)
 
 (defun c-end-of-defun (&optional arg)
@@ -1907,7 +1909,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	;; Move forward to the } of a function
 	(if (> arg 0)
 	    (c-while-widening-to-decl-block
-	     (> (setq arg (c-forward-to-nth-EOF-} arg where)) 0))))
+	     (> (setq arg (c-forward-to-nth-EOF-\;-or-} arg where)) 0))))
 
       ;; Do we need to move forward from the brace to the semicolon?
       (when (eq arg 0)

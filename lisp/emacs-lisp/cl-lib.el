@@ -189,12 +189,16 @@ that the containing function should return.
 
 \(fn &rest VALUES)")
 
-(cl--defalias 'cl-values-list #'identity
+(defun cl-values-list (list)
   "Return multiple values, Common Lisp style, taken from a list.
-LIST specifies the list of values
-that the containing function should return.
+LIST specifies the list of values that the containing function
+should return.
 
-\(fn LIST)")
+Note that Emacs Lisp doesn't really support multiple values, so
+all this function does is return LIST."
+  (unless (listp list)
+    (signal 'wrong-type-argument list))
+  list)
 
 (defsubst cl-multiple-value-list (expression)
   "Return a list of the multiple values produced by EXPRESSION.

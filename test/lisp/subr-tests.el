@@ -400,5 +400,15 @@ See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19350."
   (should (equal subr-tests--hook '(f5 f10 f9 f6 f2 f1 f4 f3 f7 f8)))
   )
 
+(ert-deftest ignore-error-tests ()
+  (should (equal (ignore-error (end-of-file)
+                   (read ""))
+                 nil))
+  (should (equal (ignore-error end-of-file
+                   (read ""))
+                 nil))
+  (should-error (ignore-error foo
+                  (read ""))))
+
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

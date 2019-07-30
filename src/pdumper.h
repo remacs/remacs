@@ -35,7 +35,7 @@ INLINE_HEADER_BEGIN
    variables to which the Lisp heap points.  It doesn't know anything
    about other C variables.  The functions below allow code from other
    parts of Emacs to tell the portable dumper about other bits of
-   information to preserve in dumped images.
+   information to preserve in dump files.
 
    These memory-records are themselves preserved in the dump, so call
    the functions below only on the !initialized init path, just
@@ -44,7 +44,7 @@ INLINE_HEADER_BEGIN
    There are no special functions to preserve a global Lisp_Object.
    You should just staticpro these.  */
 
-/* Remember the value of THING in dumped images.  THING must not
+/* Remember the value of THING in dump files.  THING must not
    contain any pointers or Lisp_Object variables: these values are not
    valid across dump and load.  */
 #define PDUMPER_REMEMBER_SCALAR(thing)                  \

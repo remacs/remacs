@@ -981,7 +981,7 @@ command with a prefix argument (the value does not matter)."
 	  (goto-char start)
 	  ;; Now replace the current line with an entry for NEW-FILE.
 	  (dired-update-file-line new-file) nil)
-      (dired-log (concat "Failed to compress" from-file))
+      (dired-log (concat "Failed to (un)compress " from-file))
       from-file)))
 
 (defvar dired-compress-file-suffixes
@@ -1898,7 +1898,14 @@ Optional arg HOW-TO determines how to treat the target.
 			(set (make-local-variable 'minibuffer-default-add-function) nil)
 			(setq minibuffer-default defaults))
 		    (dired-mark-read-file-name
-		     (concat (if dired-one-file op1 operation) " %s to: ")
+                     (format "%s %%s %s: "
+                             (if dired-one-file op1 operation)
+                             (if (memq op-symbol '(symlink hardlink))
+                                 ;; Linking operations create links
+                                 ;; from the prompted file name; the
+                                 ;; other operations copy (etc) to the
+                                 ;; prompted file name.
+                                 "from" "to"))
 		     target-dir op-symbol arg rfn-list default))))
 	 (into-dir
           (progn

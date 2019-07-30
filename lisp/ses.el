@@ -1509,8 +1509,9 @@ Newlines in the data are escaped."
                                  ,printer
                                  ,(ses-cell-references cell))))
 	  (ses-goto-data row col)
-	  (delete-region (point) (line-end-position))
-	  (insert text)))
+          (let ((inhibit-quit t))
+	    (delete-region (point) (line-end-position))
+	    (insert text))))
       (message " "))))
 
 

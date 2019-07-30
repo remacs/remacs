@@ -655,11 +655,11 @@ okay.  See `mode-line-format'.")
 (put 'minor-mode-alist 'risky-local-variable t)
 ;; Don't use purecopy here--some people want to change these strings.
 (setq minor-mode-alist
-      '((abbrev-mode " Abbrev")
+      `((abbrev-mode " Abbrev")
         (overwrite-mode overwrite-mode)
         (auto-fill-function " Fill")
         ;; not really a minor mode...
-        (defining-kbd-macro " Def")))
+        (defining-kbd-macro ,(propertize " Def" 'face 'error))))
 
 ;; These variables are used by autoloadable packages.
 ;; They are defined here so that they do not get overridden

@@ -916,13 +916,16 @@ is discouraged.
 When commenting out entire functions, use two semicolons.
 
 @item ;;;;
-Comments that start with four semicolons, @samp{;;;;}, should be aligned
-to the left margin and are used for headings of major sections of a
-program.  For example:
+Comments that start with four (or more) semicolons, @samp{;;;;},
+should be aligned to the left margin and are used for headings of
+major sections of a program.  For example:
 
 @smallexample
 ;;;; The kill ring
 @end smallexample
+
+If you wish to have sub-headings under these heading, use more
+semicolons to nest these sub-headings.
 @end table
 
 @noindent

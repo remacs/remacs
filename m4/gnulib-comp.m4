@@ -70,6 +70,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module dirent:
   # Code from module dirfd:
   # Code from module dosname:
+  # Code from module double-slash-root:
   # Code from module dtoastr:
   # Code from module dtotimespec:
   # Code from module dup2:
@@ -227,6 +228,7 @@ AC_DEFUN([gl_INIT],
   gl_SHA512
   gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE
   gl_DIRENT_H
+  gl_DOUBLE_SLASH_ROOT
   gl_FUNC_DUP2
   if test $HAVE_DUP2 = 0 || test $REPLACE_DUP2 = 1; then
     AC_LIBOBJ([dup2])

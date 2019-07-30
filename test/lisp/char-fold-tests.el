@@ -44,6 +44,16 @@
         (should (string-match (char-fold--ascii-upcase re) (downcase it)))
         (should (string-match (char-fold--ascii-downcase re) (upcase it)))))))
 
+(defun char-fold--test-no-match-exactly (string &rest strings-to-match)
+  (let ((re (concat "\\`" (char-fold-to-regexp string) "\\'")))
+    (dolist (it strings-to-match)
+      (should-not (string-match re it)))
+    ;; Case folding
+    (let ((case-fold-search t))
+      (dolist (it strings-to-match)
+        (should-not (string-match (char-fold--ascii-upcase re) (downcase it)))
+        (should-not (string-match (char-fold--ascii-downcase re) (upcase it)))))))
+
 (defun char-fold--test-search-with-contents (contents string)
   (with-temp-buffer
     (insert contents)
@@ -52,6 +62,11 @@
     (goto-char (point-min))
     (should (char-fold-search-forward string nil 'noerror))
     (should (char-fold-search-backward string nil 'noerror))))
+
+(defun char-fold--permutation (strings)
+  (mapcar (lambda (string)
+            (cons string (remove string strings)))
+          strings))
 
 
 (ert-deftest char-fold--test-consistency ()
@@ -131,6 +146,78 @@
         (should-not (char-fold-search-forward (concat string "c") nil 'noerror))
         ;; Ensure it took less than a second.
         (should (< (- (time-to-seconds) time) 1))))))
+
+(ert-deftest char-fold--test-without-customization ()
+  (let* ((matches
+          '(
+            ("'" "’")
+            ("e" "ℯ" "ḗ" "ë" "ë")
+            ("ι"
+             "ί" ;; 1 level decomposition
+             "ί" ;; 2 level decomposition
+             "ΐ" ;; 3 level decomposition
+             )
+            ("ß" "ss")
+            ))
+         (no-matches
+          '(
+            ("и" "й")
+            )))
+    (dolist (strings matches)
+      (apply 'char-fold--test-match-exactly strings))
+    (dolist (strings no-matches)
+      (apply 'char-fold--test-no-match-exactly strings))))
+
+(ert-deftest char-fold--test-with-customization ()
+  :tags '(:expensive-test)
+  ;; FIXME: move some language-specific settings to defaults
+  (let ((char-fold-include
+         (append char-fold-include
+                 '(
+                   (?o "ø")  ;; da no nb nn
+                   (?l "ł")  ;; pl
+                   (?æ "ae")
+                   (?→ "->")
+                   (?⇒ "=>")
+                   )))
+        (char-fold-exclude
+         (append char-fold-exclude
+                 '(
+                   (?a "å")  ;; da no nb nn sv
+                   (?a "ä")  ;; et fi sv
+                   (?o "ö")  ;; et fi sv
+                   (?n "ñ")  ;; es
+                   )))
+        (char-fold-symmetric t)
+        (matches
+         '(
+           ("e" "ℯ" "ḗ" "ë" "ë")
+           ("е" "ё" "ё")
+           ("ι" "ί" "ί" "ΐ")
+           ("ß" "ss")
+           ("o" "ø")
+           ("l" "ł")
+           ("æ" "ae")
+           ("→" "->")
+           ("⇒" "=>")
+           ))
+        (no-matches
+         '(
+           ("a" "å")
+           ("a" "ä")
+           ("o" "ö")
+           ("n" "ñ")
+           ("и" "й")
+           ))
+        ;; Don't override global value by char-fold-update-table below
+        char-fold-table)
+    (char-fold-update-table)
+    (dolist (strings matches)
+      (dolist (permutation (char-fold--permutation strings))
+        (apply 'char-fold--test-match-exactly permutation)))
+    (dolist (strings no-matches)
+      (dolist (permutation (char-fold--permutation strings))
+        (apply 'char-fold--test-no-match-exactly permutation)))))
 
 (provide 'char-fold-tests)
 ;;; char-fold-tests.el ends here

@@ -52,7 +52,7 @@
                                             (flymake-reporting-backends))
            while notdone
            unless noninteractive do (read-event "" nil 0.1)
-           do (sleep-for (+ 0.5 flymake-no-changes-timeout))
+           do (sleep-for (+ 0.5 (or flymake-no-changes-timeout 0)))
            finally (when notdone (ert-skip
                                   (format "Some backends not reporting yet %s"
                                           notdone)))))
@@ -111,7 +111,6 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest perl-backend ()
   "Test the perl backend"
   (skip-unless (executable-find "perl"))
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (flymake-tests--with-flymake ("test.pl")
     (flymake-goto-next-error)
     (should (eq 'flymake-warning (face-at-point)))
@@ -123,7 +122,6 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest ruby-backend ()
   "Test the ruby backend"
   (skip-unless (executable-find "ruby"))
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   ;; Some versions of ruby fail if HOME doesn't exist (bug#29187).
   (let* ((tempdir (make-temp-file "flymake-tests-ruby" t))
          (process-environment (cons (format "HOME=%s" tempdir)
@@ -169,7 +167,6 @@ SEVERITY-PREDICATE is used to setup
 (ert-deftest included-c-header-files ()
   "Test inclusion of .h header files."
   (skip-unless (and (executable-find "gcc") (executable-find "make")))
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (let ((flymake-wrap-around nil))
     (flymake-tests--with-flymake
         ("some-problems.h")
@@ -295,7 +292,6 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest recurrent-backend ()
   "Test a backend that calls REPORT-FN multiple times"
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (with-temp-buffer
     (let (tick)
       (cl-letf

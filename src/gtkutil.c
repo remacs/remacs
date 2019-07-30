@@ -2035,11 +2035,11 @@ xg_get_file_with_chooser (struct frame *f,
   gtk_widget_show (wbox);
   wtoggle = gtk_check_button_new_with_label ("Show hidden files.");
 
-  if (x_gtk_show_hidden_files)
-    {
-      g_object_set (G_OBJECT (filewin), "show-hidden", TRUE, NULL);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wtoggle), TRUE);
-    }
+  g_object_set (G_OBJECT (filewin), "show-hidden",
+		x_gtk_show_hidden_files, NULL);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wtoggle),
+				x_gtk_show_hidden_files);
+
   gtk_widget_show (wtoggle);
   g_signal_connect (G_OBJECT (wtoggle), "clicked",
                     G_CALLBACK (xg_toggle_visibility_cb), filewin);

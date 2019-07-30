@@ -126,13 +126,15 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-(eval-and-compile
-  ;; Before Emacs-24.4, `pushnew' expands to runtime calls to `cl-adjoin'
-  ;; even for relatively simple cases such as used here.  We only test <25
-  ;; because it's easier and sufficient.
-  (when (or (featurep 'xemacs) (< emacs-major-version 25))
-    (require 'cl)))
+(eval-when-compile
+  (condition-case nil (require 'cl-lib) (file-missing (require 'cl)))
+  (defalias 'vhdl--pushnew (if (fboundp 'cl-pushnew) 'cl-pushnew 'pushnew)))
+
+;; Before Emacs-24.4, `pushnew' expands to runtime calls to `cl-adjoin'
+;; even for relatively simple cases such as used here.  We only test <25
+;; because it's easier and sufficient.
+(when (< emacs-major-version 25)
+  (condition-case nil (require 'cl-lib) (file-missing (require 'cl))))
 
 ;; Emacs 21+ handling
 (defconst vhdl-emacs-21 (and (<= 21 emacs-major-version) (not (featurep 'xemacs)))
@@ -14315,7 +14317,7 @@ of PROJECT."
       (vhdl-scan-directory-contents dir-name project nil
 				    (format "(%s/%s) " act-dir num-dir)
 				    (cdr dir-list))
-      (pushnew (file-name-directory dir-name) dir-list-tmp :test #'equal)
+      (vhdl--pushnew (file-name-directory dir-name) dir-list-tmp :test #'equal)
       (setq dir-list (cdr dir-list)
 	    act-dir (1+ act-dir)))
     (vhdl-aput 'vhdl-directory-alist project (list (nreverse dir-list-tmp)))
@@ -16407,8 +16409,8 @@ component instantiation."
 	     (if (or (member constant-name single-list)
 		     (member constant-name multi-list))
 		 (progn (setq single-list (delete constant-name single-list))
-			(pushnew constant-name multi-list :test #'equal))
-	       (pushnew constant-name single-list :test #'equal))
+			(vhdl--pushnew constant-name multi-list :test #'equal))
+	       (vhdl--pushnew constant-name single-list :test #'equal))
 	     (unless (match-string 1)
 	       (setq generic-alist (cdr generic-alist)))
 	     (vhdl-forward-syntactic-ws))
@@ -16434,12 +16436,12 @@ component instantiation."
 		     (member signal-name multi-out-list))
 		 (setq single-out-list (delete signal-name single-out-list))
 		 (setq multi-out-list (delete signal-name multi-out-list))
-		 (pushnew signal-name local-list :test #'equal))
+		 (vhdl--pushnew signal-name local-list :test #'equal))
 		((member signal-name single-in-list)
 		 (setq single-in-list (delete signal-name single-in-list))
-		 (pushnew signal-name multi-in-list :test #'equal))
+		 (vhdl--pushnew signal-name multi-in-list :test #'equal))
 		((not (member signal-name multi-in-list))
-		 (pushnew signal-name single-in-list :test #'equal)))
+		 (vhdl--pushnew signal-name single-in-list :test #'equal)))
 	     ;; output signal
 	     (cond
 	      ((member signal-name local-list)
@@ -16448,12 +16450,12 @@ component instantiation."
 		   (member signal-name multi-in-list))
 	       (setq single-in-list (delete signal-name single-in-list))
 	       (setq multi-in-list (delete signal-name multi-in-list))
-	       (pushnew signal-name local-list :test #'equal))
+	       (vhdl--pushnew signal-name local-list :test #'equal))
 	      ((member signal-name single-out-list)
 	       (setq single-out-list (delete signal-name single-out-list))
-	       (pushnew signal-name multi-out-list :test #'equal))
+	       (vhdl--pushnew signal-name multi-out-list :test #'equal))
 	      ((not (member signal-name multi-out-list))
-	       (pushnew signal-name single-out-list :test #'equal))))
+	       (vhdl--pushnew signal-name single-out-list :test #'equal))))
 	   (unless (match-string 1)
 	     (setq port-alist (cdr port-alist)))
 	   (vhdl-forward-syntactic-ws))
@@ -16536,14 +16538,14 @@ component instantiation."
 			 generic-end-pos
 			 (vhdl-compose-insert-generic constant-entry)))
 		  (setq generic-pos (point-marker))
-		  (pushnew constant-name written-list :test #'equal))
+		  (vhdl--pushnew constant-name written-list :test #'equal))
 		 (t
 		  (vhdl-goto-marker
 		   (vhdl-max-marker generic-inst-pos generic-pos))
 		  (setq generic-end-pos
 			(vhdl-compose-insert-generic constant-entry))
 		  (setq generic-inst-pos (point-marker))
-		    (pushnew constant-name written-list :test #'equal))))
+		    (vhdl--pushnew constant-name written-list :test #'equal))))
 	   (setq constant-alist (cdr constant-alist)))
 	 (when (/= constant-temp-pos generic-inst-pos)
 	   (vhdl-goto-marker (vhdl-max-marker constant-temp-pos generic-pos))
@@ -16562,14 +16564,14 @@ component instantiation."
 			(vhdl-max-marker
 			 port-end-pos (vhdl-compose-insert-port signal-entry)))
 		  (setq port-in-pos (point-marker))
-		  (pushnew signal-name written-list :test #'equal))
+		  (vhdl--pushnew signal-name written-list :test #'equal))
 		 ((member signal-name multi-out-list)
 		  (vhdl-goto-marker (vhdl-max-marker port-out-pos port-in-pos))
 		  (setq port-end-pos
 			(vhdl-max-marker
 			 port-end-pos (vhdl-compose-insert-port signal-entry)))
 		  (setq port-out-pos (point-marker))
-		  (pushnew signal-name written-list :test #'equal))
+		  (vhdl--pushnew signal-name written-list :test #'equal))
 		 ((or (member signal-name single-in-list)
 		      (member signal-name single-out-list))
 		  (vhdl-goto-marker
@@ -16578,12 +16580,12 @@ component instantiation."
 		    (vhdl-max-marker port-out-pos port-in-pos)))
 		  (setq port-end-pos (vhdl-compose-insert-port signal-entry))
 		  (setq port-inst-pos (point-marker))
-		  (pushnew signal-name written-list :test #'equal))
+		  (vhdl--pushnew signal-name written-list :test #'equal))
 		 ((equal (upcase (nth 2 signal-entry)) "OUT")
 		  (vhdl-goto-marker signal-pos)
 		  (vhdl-compose-insert-signal signal-entry)
 		  (setq signal-pos (point-marker))
-		  (pushnew signal-name written-list :test #'equal)))
+		  (vhdl--pushnew signal-name written-list :test #'equal)))
 	   (setq signal-alist (cdr signal-alist)))
 	 (when (/= port-temp-pos port-inst-pos)
 	   (vhdl-goto-marker
@@ -16934,7 +16936,7 @@ no project is defined."
   "Remove duplicate elements from IN-LIST."
   (let (out-list)
     (while in-list
-      (pushnew (car in-list) out-list :test #'equal)
+      (vhdl--pushnew (car in-list) out-list :test #'equal)
       (setq in-list (cdr in-list)))
     out-list))
 

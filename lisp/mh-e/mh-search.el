@@ -717,7 +717,7 @@ parsed."
               ((equal token "and") (push 'and op-stack))
               ((equal token ")")
                (multiple-value-setq (op-stack operand-stack)
-                 (values-list (mh-index-evaluate op-stack operand-stack)))
+                 (cl-values-list (mh-index-evaluate op-stack operand-stack)))
                (when (eq (car op-stack) 'not)
                  (setq op-stack (cdr op-stack))
                  (push `(not ,(pop operand-stack)) operand-stack))

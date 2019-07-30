@@ -744,6 +744,31 @@ file_name_absolute_no_tilde_p (Lisp_Object name)
   return IS_ABSOLUTE_FILE_NAME (SSDATA (name));
 }
 
+/* Return the home directory of the user NAME, or a null pointer if
+   NAME is empty or the user does not exist or the user's home
+   directory is not an absolute file name.  NAME is an array of bytes
+   that continues up to (but not including) the next NUL byte or
+   directory separator.  The returned string lives in storage good
+   until the next call to this or similar functions.  */
+static char *
+user_homedir (char const *name)
+{
+  ptrdiff_t length;
+  for (length = 0; name[length] && !IS_DIRECTORY_SEP (name[length]); length++)
+    continue;
+  if (length == 0)
+    return NULL;
+  USE_SAFE_ALLOCA;
+  char *p = SAFE_ALLOCA (length + 1);
+  memcpy (p, name, length);
+  p[length] = 0;
+  struct passwd *pw = getpwnam (p);
+  SAFE_FREE ();
+  if (!pw || (pw->pw_dir && !IS_ABSOLUTE_FILE_NAME (pw->pw_dir)))
+    return NULL;
+  return pw->pw_dir;
+}
+
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
        doc: /* Convert filename NAME to absolute, and canonicalize it.
 Second arg DEFAULT-DIRECTORY is directory to start with if NAME is relative
@@ -788,7 +813,6 @@ the root directory.  */)
   char *target;
 
   ptrdiff_t tlen;
-  struct passwd *pw;
 #ifdef DOS_NT
   int drive = 0;
   bool collapse_newdir = true;
@@ -1153,39 +1177,29 @@ the root directory.  */)
 	}
       else			/* ~user/filename */
 	{
-	  char *o, *p;
-	  for (p = nm; *p && !IS_DIRECTORY_SEP (*p); p++)
-	    continue;
-	  o = SAFE_ALLOCA (p - nm + 1);
-	  memcpy (o, nm, p - nm);
-	  o[p - nm] = 0;
-
-	  block_input ();
-	  pw = getpwnam (o + 1);
-	  unblock_input ();
-	  if (pw)
+	  char *nmhome = user_homedir (nm + 1);
+	  if (nmhome)
 	    {
-	      Lisp_Object tem;
-
-	      newdir = pw->pw_dir;
-	      /* `getpwnam' may return a unibyte string, which will
-		 bite us when we expect the directory to be multibyte.  */
-	      tem = make_unibyte_string (newdir, strlen (newdir));
-	      newdirlim = newdir + SBYTES (tem);
-	      if (multibyte && !STRING_MULTIBYTE (tem))
+	      ptrdiff_t nmhomelen = strlen (nmhome);
+	      newdir = nmhome;
+	      newdirlim = newdir + nmhomelen;
+	      if (multibyte)
 		{
-		  hdir = DECODE_FILE (tem);
+		  AUTO_STRING_WITH_LEN (lisp_nmhome, nmhome, nmhomelen);
+		  hdir = DECODE_FILE (lisp_nmhome);
 		  newdir = SSDATA (hdir);
 		  newdirlim = newdir + SBYTES (hdir);
 		}
-	      nm = p;
+
+	      while (*++nm && !IS_DIRECTORY_SEP (*nm))
+		continue;
 #ifdef DOS_NT
 	      collapse_newdir = false;
 #endif
 	    }
 
 	  /* If we don't find a user of that name, leave the name
-	     unchanged; don't move nm forward to p.  */
+	     unchanged.  */
 	}
     }
 
@@ -1667,18 +1681,6 @@ See also the function `substitute-in-file-name'.")
 }
 #endif
 
-bool
-file_name_absolute_p (const char *filename)
-{
-  return
-    (IS_DIRECTORY_SEP (*filename) || *filename == '~'
-#ifdef DOS_NT
-     || (IS_DRIVE (*filename) && IS_DEVICE_SEP (filename[1])
-	 && IS_DIRECTORY_SEP (filename[2]))
-#endif
-     );
-}
-
 /* Put into BUF the concatenation of DIR and FILE, with an intervening
    directory separator if needed.  Return a pointer to the NUL byte
    at the end of the concatenated string.  */
@@ -1774,46 +1776,21 @@ get_homedir (void)
   return ahome;
 }
 
-/* If /~ or // appears, discard everything through first slash.  */
+/* If a directory separator followed by an absolute file name (e.g.,
+   "//foo", "/~", "/~someuser") appears in NM, return the address of
+   the absolute file name.  Otherwise return NULL.  ENDP is the
+   address of the null byte at the end of NM.  */
 static char *
 search_embedded_absfilename (char *nm, char *endp)
 {
-  char *p, *s;
-
-  for (p = nm + 1; p < endp; p++)
-    {
-      if (IS_DIRECTORY_SEP (p[-1])
-	  && file_name_absolute_p (p)
-#if defined (WINDOWSNT) || defined (CYGWIN)
-	  /* // at start of file name is meaningful in Apollo,
-	     WindowsNT and Cygwin systems.  */
-	  && !(IS_DIRECTORY_SEP (p[0]) && p - 1 == nm)
-#endif /* not (WINDOWSNT || CYGWIN) */
-	  )
-	{
-	  for (s = p; *s && !IS_DIRECTORY_SEP (*s); s++);
-	  if (p[0] == '~' && s > p + 1)	/* We've got "/~something/".  */
-	    {
-	      USE_SAFE_ALLOCA;
-	      char *o = SAFE_ALLOCA (s - p + 1);
-	      struct passwd *pw;
-	      memcpy (o, p, s - p);
-	      o [s - p] = 0;
-
-	      /* If we have ~user and `user' exists, discard
-		 everything up to ~.  But if `user' does not exist, leave
-		 ~user alone, it might be a literal file name.  */
-	      block_input ();
-	      pw = getpwnam (o + 1);
-	      unblock_input ();
-	      SAFE_FREE ();
-	      if (pw)
-		return p;
-	    }
-	  else
-	    return p;
-	}
-    }
+  char *p = nm + 1;
+#ifdef DOUBLE_SLASH_IS_DISTINCT_ROOT
+  p += (IS_DIRECTORY_SEP (p[-1]) && IS_DIRECTORY_SEP (p[0])
+	&& !IS_DIRECTORY_SEP (p[1]));
+#endif
+  for (; p < endp; p++)
+    if (IS_DIRECTORY_SEP (p[-1]) && file_name_absolute_p (p))
+      return p;
   return NULL;
 }
 
@@ -2698,12 +2675,23 @@ This happens for interactive use with M-x.  */)
 
 DEFUN ("file-name-absolute-p", Ffile_name_absolute_p, Sfile_name_absolute_p,
        1, 1, 0,
-       doc: /* Return t if FILENAME is an absolute file name or starts with `~'.
-On Unix, absolute file names start with `/'.  */)
+       doc: /* Return t if FILENAME is an absolute file name.
+On Unix, absolute file names start with `/'.  In Emacs, an absolute
+file name can also start with an initial `~' or `~USER' component,
+where USER is a valid login name.  */)
   (Lisp_Object filename)
 {
   CHECK_STRING (filename);
   return file_name_absolute_p (SSDATA (filename)) ? Qt : Qnil;
+}
+
+bool
+file_name_absolute_p (char const *filename)
+{
+  return (IS_ABSOLUTE_FILE_NAME (filename)
+	  || (filename[0] == '~'
+	      && (!filename[1] || IS_DIRECTORY_SEP (filename[1])
+		  || user_homedir (&filename[1]))));
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,

@@ -61,10 +61,10 @@ can be one of the following:
 
 @table @samp
 @item pdump
-@cindex portable dump file
-Record the preloaded Lisp data in a @dfn{portable dump} file.  This
+@cindex dump file
+Record the preloaded Lisp data in a @dfn{dump file}.  This
 method produces an additional data file which Emacs will load at
-startup.  The portable dump file is usually called @file{emacs.pdmp},
+startup.  The produced dump file is usually called @file{emacs.pdmp},
 and is installed in the Emacs @code{exec-directory} (@pxref{Help
 Functions}).  This method is the most preferred one, as it does not
 require Emacs to employ any special techniques of memory allocation,
@@ -75,7 +75,7 @@ modern systems to enhance security and privacy.
 @cindex bootstrapping Emacs
 Like @samp{pdump}, but used while @dfn{bootstrapping} Emacs, when no
 previous Emacs binary and no @file{*.elc} byte-compiled Lisp files are
-available.  The produced portable dump file is usually named
+available.  The produced dump file is usually named
 @file{bootstrap-emacs.pdmp} in this case.
 
 @item dump
@@ -88,6 +88,8 @@ terminal, so that the tables of terminal information are empty in the
 dumped Emacs.)  This method is also known as @dfn{unexec}, because it
 produces a program file from a running process, and thus is in some
 sense the opposite of executing a program to start a process.
+Although this method was the way that Emacs traditionally saved its
+state, it is now deprecated.
 
 @item bootstrap
 Like @samp{dump}, but used when bootstrapping Emacs with the
@@ -97,11 +99,11 @@ Like @samp{dump}, but used when bootstrapping Emacs with the
 @cindex preloaded Lisp files
 @vindex preloaded-file-list
   The dumped @file{emacs} executable (also called a @dfn{pure} Emacs)
-is the one which is installed.  If the portable dumping was used to
+is the one which is installed.  If the portable dumper was used to
 build Emacs, the @file{emacs} executable is actually an exact copy of
 @file{temacs}, and the corresponding @file{emacs.pdmp} file is
 installed as well.  The variable @code{preloaded-file-list} stores a
-list of the preloaded Lisp files recorded in the portable dump file or
+list of the preloaded Lisp files recorded in the dump file or
 in the dumped Emacs executable.  If you port Emacs to a new operating
 system, and are not able to implement dumping of any kind, then Emacs
 must load @file{loadup.el} each time it starts.
@@ -201,14 +203,18 @@ In the unlikely event that you need a more general functionality than
 @code{before-init-hook} (@pxref{Startup Summary}).
 
 @defun dump-emacs-portable to-file &optional track-referrers
-This function dumps the current state of Emacs into a portable dump
+This function dumps the current state of Emacs into a dump
 file @var{to-file}, using the @code{pdump} method.  Normally, the
-portable dump file is called @file{@var{emacs-name}.dmp}, where
+dump file is called @file{@var{emacs-name}.dmp}, where
 @var{emacs-name} is the name of the Emacs executable file.  The
 optional argument @var{track-referrers}, if non-@code{nil}, causes the
-portable dumping process keep additional information to help track
+portable dumper to keep additional information to help track
 down the provenance of object types that are not yet supported by the
 @code{pdump} method.
+
+Although the portable dumper code can run on many platforms, the dump
+files that it produces are not portable---they can be loaded only by
+the Emacs executable that dumped them.
 
 If you want to use this function in an Emacs that was already dumped,
 you must run Emacs with the @samp{-batch} option.
@@ -220,20 +226,20 @@ This function dumps the current state of Emacs into an executable file
 @var{to-file}, using the @code{unexec} method.  It takes symbols from
 @var{from-file} (this is normally the executable file @file{temacs}).
 
-This function cannot be used in an Emacs that was already dumped.  If
-Emacs was built without @code{unexec} support, this function will not
-be available.
+This function cannot be used in an Emacs that was already dumped.
+This function is deprecated, and by default Emacs is built without
+@code{unexec} support so this function is not available.
 @end defun
 
 @defun pdumper-stats
-If the current Emacs session restored its state from a portable dump
+If the current Emacs session restored its state from a dump
 file, this function returns information about the dump file and the
 time it took to restore the Emacs state.  The value is an alist
 @w{@code{((dumped-with-pdumper . t) (load-time . @var{time})
 (dump-file-name . @var{file}))}},
 where @var{file} is the name of the dump file, and @var{time} is the
 time in seconds it took to restore the state from the dump file.
-If the current session was not restored from a portable dump file, the
+If the current session was not restored from a dump file, the
 value is nil.
 @end defun
 

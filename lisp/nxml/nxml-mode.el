@@ -530,16 +530,13 @@ Many aspects this mode can be customized using
   (setq-local syntax-propertize-function #'nxml-syntax-propertize)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
-  ;; Emacs 23 handles the encoding attribute on the xml declaration
-  ;; transparently to nxml-mode, so there is no longer a need for the below
-  ;; hook. The hook also had the drawback of overriding explicit user
-  ;; instruction to save as some encoding other than utf-8.
-  ;;(add-hook 'write-contents-hooks #'nxml-prepare-to-save)
   (when (not (and (buffer-file-name) (file-exists-p (buffer-file-name))))
     (when (and nxml-default-buffer-file-coding-system
 	       (not (local-variable-p 'buffer-file-coding-system)))
       (setq buffer-file-coding-system nxml-default-buffer-file-coding-system))
-    (when nxml-auto-insert-xml-declaration-flag
+    ;; When starting a new file, insert the XML declaraction.
+    (when (and nxml-auto-insert-xml-declaration-flag
+               (zerop (buffer-size)))
       (nxml-insert-xml-declaration)))
 
   (setq font-lock-defaults

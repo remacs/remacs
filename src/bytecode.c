@@ -1406,18 +1406,12 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
             /* h->count is a faster approximation for HASH_TABLE_SIZE (h)
                here. */
-            if (h->count <= 5)
+            if (h->count <= 5 && !h->test.cmpfn)
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
-		Lisp_Object hash_code
-		  = h->test.cmpfn ? h->test.hashfn (v1, h) : Qnil;
-
-                for (i = h->count; 0 <= --i; )
-                  if (EQ (v1, HASH_KEY (h, i))
-                      || (h->test.cmpfn
-                          && EQ (hash_code, HASH_HASH (h, i))
-			  && !NILP (h->test.cmpfn (v1, HASH_KEY (h, i), h))))
-                    break;
+		for (i = h->count; 0 <= --i; )
+		  if (EQ (v1, HASH_KEY (h, i)))
+		    break;
               }
             else
               i = hash_lookup (h, v1, NULL);

@@ -359,20 +359,26 @@ Symbols are also allowed; their print names are used instead."
 (defun gnus-seconds-today ()
   "Return the number of seconds passed today."
   (let ((now (decode-time)))
-    (+ (car now) (* (car (cdr now)) 60) (* (car (nthcdr 2 now)) 3600))))
+    (+ (decoded-time-second now)
+       (* (decoded-time-minute now) 60)
+       (* (decoded-time-hour now) 3600))))
 
 (defun gnus-seconds-month ()
   "Return the number of seconds passed this month."
   (let ((now (decode-time)))
-    (+ (car now) (* (car (cdr now)) 60) (* (car (nthcdr 2 now)) 3600)
-       (* (- (car (nthcdr 3 now)) 1) 3600 24))))
+    (+ (decoded-time-second now)
+       (* (decoded-time-minute now) 60)
+       (* (decoded-time-hour now) 3600)
+       (* (- (decoded-time-day now) 1) 3600 24))))
 
 (defun gnus-seconds-year ()
   "Return the number of seconds passed this year."
   (let* ((current (current-time))
 	 (now (decode-time current))
 	 (days (format-time-string "%j" current)))
-    (+ (car now) (* (car (cdr now)) 60) (* (car (nthcdr 2 now)) 3600)
+    (+ (decoded-time-second now)
+       (* (decoded-time-minute now) 60)
+       (* (decoded-time-hour now) 3600)
        (* (- (string-to-number days) 1) 3600 24))))
 
 (defmacro gnus-date-get-time (date)

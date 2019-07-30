@@ -95,4 +95,9 @@ See Bug#24641."
   (should (equal (let-alist--deep-dot-search '(foo .bar (let-alist .qux .baz)))
                  '((.bar . bar) (.qux . qux)))))  ; no .baz
 
+(ert-deftest let-alist--vectors ()
+  (should (equal (let-alist '((a . 1) (b . 2))
+                   `[,(+ .a) ,(+ .a .b .b)])
+                 [1 5])))
+
 ;;; let-alist.el ends here

@@ -1527,7 +1527,9 @@ Note that the style variables are always made local to the buffer."
 			   (or (not (nth 3 s))
 			       (not (memq (char-before) c-string-delims))))))
 	     ;; We're at the start of a string.
-	     (memq (char-before) c-string-delims)))
+	     (and (memq (char-before) c-string-delims)
+		  (not (nth 4 s)))))	; Check we're actually out of the
+					; comment. not stuck at EOB
 	(unless (and (c-major-mode-is 'c++-mode)
 		     (c-maybe-re-mark-raw-string))
 	  (if (c-unescaped-nls-in-string-p (1- (point)))

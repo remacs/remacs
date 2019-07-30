@@ -41,7 +41,9 @@
      (calc-enter-result 0 "time"
 			(list 'mod
 			      (list 'hms
-				    (nth 2 time) (nth 1 time) (nth 0 time))
+				    (decoded-time-hour time)
+                                    (decoded-time-minute time)
+                                    (decoded-time-second time))
 			      (list 'hms 24 0 0))))))
 
 (defun calc-to-hms (arg)
@@ -523,7 +525,7 @@ in the Gregorian calendar and the remaining part determines the time."
 
 
 (defun math-this-year ()
-  (nth 5 (decode-time)))
+  (decoded-time-year (decode-time)))
 
 (defun math-leap-year-p (year &optional julian)
   "Non-nil if YEAR is a leap year.
@@ -1341,8 +1343,12 @@ as measured in the integer number of days before December 31, 1 BC (Gregorian)."
 (defun calcFunc-now (&optional zone)
   (let ((date (let ((now (decode-time)))
 		(list 'date (math-dt-to-date
-			     (list (nth 5 now) (nth 4 now) (nth 3 now)
-				   (nth 2 now) (nth 1 now) (nth 0 now)))))))
+			     (list (decoded-time-year now)
+                                   (decoded-time-month now)
+                                   (decoded-time-day now)
+				   (decoded-time-hour now)
+                                   (decoded-time-minute now)
+                                   (decoded-time-second now)))))))
     (if zone
 	(math-add date (math-div (math-sub (calcFunc-tzone nil date)
 					   (calcFunc-tzone zone date))

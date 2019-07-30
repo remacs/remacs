@@ -86,6 +86,7 @@
 #  d-type \
 #  diffseq \
 #  dosname \
+#  double-slash-root \
 #  dtoastr \
 #  dtotimespec \
 #  dup2 \

@@ -4531,9 +4531,9 @@ mark_maybe_object (Lisp_Object obj)
 
   void *po = XPNTR (obj);
 
-  /* If the pointer is in the dumped image and the dump has a record
+  /* If the pointer is in the dump image and the dump has a record
      of the object starting at the place where the pointer points, we
-     definitely have an object.  If the pointer is in the dumped image
+     definitely have an object.  If the pointer is in the dump image
      and the dump has no idea what the pointer is pointing at, we
      definitely _don't_ have an object.  */
   if (pdumper_object_p (po))
@@ -4962,15 +4962,6 @@ flush_stack_call_func (void (*func) (void *arg), void *arg)
   self->stack_top = end;
   func (arg);
   eassert (current_thread == self);
-}
-
-static bool
-c_symbol_p (struct Lisp_Symbol *sym)
-{
-  char *lispsym_ptr = (char *) lispsym;
-  char *sym_ptr = (char *) sym;
-  ptrdiff_t lispsym_offset = sym_ptr - lispsym_ptr;
-  return 0 <= lispsym_offset && lispsym_offset < sizeof lispsym;
 }
 
 /* Determine whether it is safe to access memory at address P.  */
@@ -5507,7 +5498,7 @@ staticpro (Lisp_Object const *varaddress)
 static void
 allow_garbage_collection (intmax_t consing)
 {
-  consing_until_gc = consing;
+  consing_until_gc = consing - (OBJECT_CT_MAX - consing_until_gc);
   garbage_collection_inhibited--;
 }
 
