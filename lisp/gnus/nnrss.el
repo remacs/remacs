@@ -36,6 +36,7 @@
 (require 'rfc2231)
 (require 'mm-url)
 (require 'rfc2047)
+(require 'iso8601)
 (require 'mml)
 (require 'xml)
 
@@ -468,49 +469,25 @@ which RSS 2.0 allows."
 			(not (string-match "\\`[A-Z+-]" zone)))
 	       (setq zone nil))))
 	  ;; ISO 8601
-	  ((string-match
-	    (eval-when-compile
-	      (concat
-	       ;; 1. year
-	       "\\(199[0-9]\\|20[0-9][0-9]\\)"
-	       "\\(?:-"
-	       ;; 2. month
-	       "\\([01][0-9]\\)"
-	       "\\(?:-"
-	       ;; 3. day
-	       "\\([0-3][0-9]\\)"
-	       "\\)?\\)?\\(?:T"
-	       ;; 4. hh:mm
-	       "\\([012][0-9]:[0-5][0-9]\\)"
-	       "\\(?:"
-	       ;; 5. :ss
-	       "\\(:[0-5][0-9]\\)"
-	       "\\(?:\\.[0-9]+\\)?\\)?\\)?"
-	       ;; 6+7,8,9. zone
-	       "\\(?:\\(?:\\([+-][012][0-9]\\):\\([0-5][0-9]\\)\\)"
-	       "\\|\\([+-][012][0-9][0-5][0-9]\\)"
-	       "\\|\\(Z\\)\\)?"))
-	    date)
-	   (setq year (string-to-number (match-string 1 date))
-		 month (string-to-number (or (match-string 2 date) "1"))
-		 day (string-to-number (or (match-string 3 date) "1"))
-		 time (if (match-beginning 5)
-			  (substring date (match-beginning 4) (match-end 5))
-			(concat (or (match-string 4 date) "00:00") ":00"))
-		 zone (cond ((match-beginning 6)
-			     (concat (match-string 6 date)
-				     (match-string 7 date)))
-			    ((match-beginning 9) ;; Z
-			     "+0000")
-			    (t ;; nil if zone is not provided.
-			     (match-string 8 date))))))
+	  ((iso8601-valid-p date)
+	   (let ((decoded (decoded-time-set-defaults (iso8601-parse date))))
+	     (setq year (decoded-time-year decoded)
+		   month (decoded-time-month decoded)
+		   day (decoded-time-day decoded)
+		   time (format "%02d:%02d:%02d"
+				(decoded-time-hour decoded)
+				(decoded-time-minute decoded)
+				(decoded-time-second decoded))
+		   zone (if (equal (decoded-time-zone decoded) "Z")
+			    0
+			  (decoded-time-zone decoded))))))
     (if month
 	(progn
 	  (setq cts (current-time-string (encode-time 0 0 0 day month year)))
 	  (format "%s, %02d %s %04d %s%s"
 		  (substring cts 0 3) day (substring cts 4 7) year time
 		  (if zone
-		      (concat " " zone)
+		      (concat " " (time-zone-format zone t))
 		    "")))
       (message-make-date given))))
 
