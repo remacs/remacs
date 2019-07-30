@@ -1675,6 +1675,7 @@ clickable and will use `browse-url' to open the URLs in question."
                                          keymap ,browse-url-button-map
                                          face browse-url-button
                                          button t
+                                         category browse-url
                                          browse-url-data ,(match-string 0)))))))
 
 (defun browse-url-button-open (&optional external mouse-event)
