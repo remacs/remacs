@@ -1690,6 +1690,14 @@ external browser instead of the default one."
         (funcall browse-url-secondary-browser-function url)
       (browse-url url))))
 
+(defun browse-url-button-open-url (url)
+  "Open URL using `browse-url'.
+If `current-prefix-arg' is non-nil, use
+`browse-url-secondary-browser-function' instead."
+  (if current-prefix-arg
+      (funcall browse-url-secondary-browser-function url)
+    (browse-url url)))
+
 (defun browse-url-button-copy ()
   "Copy the URL under point"
   (interactive)
