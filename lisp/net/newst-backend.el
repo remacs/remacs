@@ -37,6 +37,7 @@
 (require 'derived)
 (require 'xml)
 (require 'url-parse)
+(require 'iso8601)
 
 ;; Silence warnings
 (defvar w3-mode-map)
@@ -1594,61 +1595,15 @@ This function calls `message' with arguments STRING and ARGS, if
        ;;(not (current-message))
        (apply 'message string args)))
 
-(defun newsticker--decode-iso8601-date (iso8601-string)
-  "Return ISO8601-STRING in format like `decode-time'.
-Converts from ISO-8601 to Emacs representation.
-Examples:
-2004-09-17T05:09:49.001+00:00
-2004-09-17T05:09:49+00:00
-2004-09-17T05:09+00:00
-2004-09-17T05:09:49
-2004-09-17T05:09
-2004-09-17
-2004-09
-2004"
-  (if iso8601-string
-      (when (string-match
-             (concat
-              "^ *\\([0-9]\\{4\\}\\)"   ;year
-              "\\(-\\([0-9]\\{2\\}\\)"  ;month
-              "\\(-\\([0-9]\\{2\\}\\)"  ;day
-              "\\(T"
-              "\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)" ;hour:minute
-              "\\(:\\([0-9]\\{2\\}\\)\\(\\.[0-9]+\\)?\\)?" ;second
-              ;timezone
-              "\\(\\([-+Z]\\)\\(\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)\\)?\\)?"
-              "\\)?\\)?\\)? *$")
-             iso8601-string)
-        (let ((year (read (match-string 1 iso8601-string)))
-              (month (read (or (match-string 3 iso8601-string)
-                               "1")))
-              (day (read (or (match-string 5 iso8601-string)
-                             "1")))
-              (hour (read (or (match-string 7 iso8601-string)
-                              "0")))
-              (minute (read (or (match-string 8 iso8601-string)
-                                "0")))
-              (second (read (or (match-string 10 iso8601-string)
-                                "0")))
-              (sign (match-string 13 iso8601-string))
-              (offset-hour (read (or (match-string 15 iso8601-string)
-                                     "0")))
-              (offset-minute (read (or (match-string 16 iso8601-string)
-                                       "0"))))
-          (cond ((string= sign "+")
-                 (setq hour (- hour offset-hour))
-                 (setq minute (- minute offset-minute)))
-                ((string= sign "-")
-                 (setq hour (+ hour offset-hour))
-                 (setq minute (+ minute offset-minute))))
-          ;; if UTC subtract current-time-zone offset
-          ;;(setq second (+ (car (current-time-zone)) second)))
-
-          (condition-case nil
-              (encode-time second minute hour day month year t)
-            (error
-             (message "Cannot decode \"%s\"" iso8601-string)
-             nil))))
+(defun newsticker--decode-iso8601-date (string)
+  "Return ISO8601-STRING in format like `encode-time'.
+Converts from ISO-8601 to Emacs representation."
+  (if string
+      (condition-case nil
+          (encode-time (iso8601-parse string))
+        (wrong-type-argument
+         (message "Cannot decode \"%s\"" string)
+         nil))
     nil))
 
 (defun newsticker--decode-rfc822-date (rfc822-string)
