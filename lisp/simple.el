@@ -9081,7 +9081,9 @@ This is an integer between 1 and 12 (inclusive).  January is 1.")
   (weekday nil :documentation "\
 This is a number between 0 and 6, and 0 is Sunday.")
   (dst nil :documentation "\
-This is t if daylight saving time is in effect, and nil if not.")
+This is t if daylight saving time is in effect, nil if it is not
+in effect, and -1 if daylight saving information is not
+available.")
   (zone nil :documentation "\
 This is an integer indicating the UTC offset in seconds, i.e.,
 the number of seconds east of Greenwich.")
