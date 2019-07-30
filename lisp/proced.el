@@ -1367,12 +1367,12 @@ Prefix ARG controls sort order, see `proced-sort-interactive'."
 The return string is always 6 characters wide."
   (let ((d-start (decode-time start))
         (d-current (decode-time)))
-    (cond ( ;; process started in previous years
-           (< (nth 5 d-start) (nth 5 d-current))
+    (cond (;; process started in previous years
+           (< (decoded-time-year d-start) (decoded-time-year d-current))
            (format-time-string "  %Y" start))
           ;; process started today
-          ((and (= (nth 3 d-start) (nth 3 d-current))
-                (= (nth 4 d-start) (nth 4 d-current)))
+          ((and (= (decoded-time-day d-start) (decoded-time-day d-current))
+                (= (decoded-time-month d-start) (decoded-time-month d-current)))
            (format-time-string " %H:%M" start))
           (t ;; process started this year
            (format-time-string "%b %e" start)))))
