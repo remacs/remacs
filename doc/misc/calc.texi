@@ -11055,9 +11055,9 @@ Another day counting system in common use is, confusingly, also called
 is the numbers of days since 12:00 noon (GMT) on November 24, 4714 BC
 in the Gregorian calendar (i.e., January 1, 4713 BC in the Julian
 calendar).  In Calc's scheme (in GMT) the Julian day origin is
-@mathit{-1721422.5}, because Calc starts at midnight instead of noon.
+@mathit{-1721424.5}, because Calc starts at midnight instead of noon.
 Thus to convert a Calc date code obtained by unpacking a
-date form into a Julian day number, simply add 1721422.5 after
+date form into a Julian day number, simply add 1721424.5 after
 compensating for the time zone difference.  The built-in @kbd{t J}
 command performs this conversion for you.
 

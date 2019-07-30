@@ -193,6 +193,27 @@ An existing calc stack is reused, otherwise a new one is created."
     (let ((calc-number-radix 36))
       (should (equal (math-format-number 12345678901) "36#5,O6A,QT1")))))
 
+(ert-deftest calc-test-calendar ()
+  "Test calendar conversions (bug#36822)."
+  (should (equal (calcFunc-julian (math-parse-date "2019-07-27")) 2458692))
+  (should (equal (math-parse-date "2019-07-27") '(date 737267)))
+  (should (equal (calcFunc-julian '(date 0)) 1721425))
+  (should (equal (math-date-to-gregorian-dt 1) '(1 1 1)))
+  (should (equal (math-date-to-gregorian-dt 0) '(-1 12 31)))
+  (should (equal (math-date-to-gregorian-dt -1721425) '(-4714 11 24)))
+  (should (equal (math-absolute-from-gregorian-dt 2019 7 27) 737267))
+  (should (equal (math-absolute-from-gregorian-dt 1 1 1) 1))
+  (should (equal (math-absolute-from-gregorian-dt -1 12 31) 0))
+  (should (equal (math-absolute-from-gregorian-dt -99 12 31) -35795))
+  (should (equal (math-absolute-from-gregorian-dt -4714 11 24) -1721425))
+  (should (equal (calcFunc-julian '(date -1721425)) 0))
+  (should (equal (math-date-to-julian-dt 1) '(1 1 3)))
+  (should (equal (math-date-to-julian-dt -1721425) '(-4713 1 1)))
+  (should (equal (math-absolute-from-julian-dt 2019 1 1) 737073))
+  (should (equal (math-absolute-from-julian-dt 1 1 3) 1))
+  (should (equal (math-absolute-from-julian-dt -101 1 1) -36892))
+  (should (equal (math-absolute-from-julian-dt -101 3 1) -36832))
+  (should (equal (math-absolute-from-julian-dt -4713 1 1) -1721425)))
 
 (provide 'calc-tests)
 ;;; calc-tests.el ends here
