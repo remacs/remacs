@@ -35,13 +35,13 @@
 
 (ert-deftest test-ordinal ()
   (should (equal (date-ordinal-to-time 2008 271)
-                 '(0 0 0 27 9 2008 nil nil nil)))
+                 '(nil nil nil 27 9 2008 nil nil nil)))
   (should (equal (date-ordinal-to-time 2008 1)
-                 '(0 0 0 1 1 2008 nil nil nil)))
+                 '(nil nil nil 1 1 2008 nil nil nil)))
   (should (equal (date-ordinal-to-time 2008 32)
-                 '(0 0 0 1 2 2008 nil nil nil)))
+                 '(nil nil nil 1 2 2008 nil nil nil)))
   (should (equal (date-ordinal-to-time 1981 095)
-                 '(0 0 0 5 4 1981 nil nil nil))))
+                 '(nil nil nil 5 4 1981 nil nil nil))))
 
 (cl-defmethod mdec (&key second minute hour
                          day month year
