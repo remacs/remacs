@@ -3598,22 +3598,22 @@ possible values."
 	  (let ((dtime (decode-time time)))
 	    (concat
 	     "Date: the "
-	     (number-to-string (nth 3 dtime))
-	     (let ((digit (% (nth 3 dtime) 10)))
+	     (number-to-string (decoded-time-day dtime))
+	     (let ((digit (% (decoded-time-day dtime) 10)))
 	       (cond
-		((memq (nth 3 dtime) '(11 12 13)) "th")
+		((memq (decoded-time-day dtime) '(11 12 13)) "th")
 		((= digit 1) "st")
 		((= digit 2) "nd")
 		((= digit 3) "rd")
 		(t "th")))
 	     " of "
-	     (nth (1- (nth 4 dtime)) gnus-english-month-names)
+	     (nth (1- (decoded-time-month dtime)) gnus-english-month-names)
 	     " "
-	     (number-to-string (nth 5 dtime))
+	     (number-to-string (decoded-time-year dtime))
 	     " at "
-	     (format "%02d" (nth 2 dtime))
+	     (format "%02d" (decoded-time-hour dtime))
 	     ":"
-	     (format "%02d" (nth 1 dtime)))))))
+	     (format "%02d" (decoded-time-minute dtime)))))))
     (foo
      (format "Date: %s (from Gnus)" date))))
 

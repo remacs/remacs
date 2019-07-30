@@ -1100,7 +1100,7 @@ textual parts.")
 		(format-time-string
 		 (format "%%d-%s-%%Y"
 			 (upcase
-			  (car (rassoc (nth 4 (decode-time cutoff))
+			  (car (rassoc (decoded-time-month (decode-time cutoff))
 				       parse-time-months))))
 		 cutoff))))
 	  (and (car result)

@@ -176,22 +176,25 @@ marked with SPECIAL."
 	 (thenHour (elt thenParts 2))
 	 (thenMin (elt thenParts 1))
 	 ;; convert time as elements into number of seconds since EPOCH.
-	 (then (encode-time 0
-			    thenMin
-			    thenHour
-			    ;; If THEN is earlier than NOW, make it
-			    ;; same time tomorrow.  Doc for encode-time
-			    ;; says that this is OK.
-			    (+ (elt nowParts 3)
-			       (if (or (< thenHour (elt nowParts 2))
-				       (and (= thenHour (elt nowParts 2))
-					    (<= thenMin (elt nowParts 1))))
-				   1 0))
-			    (elt nowParts 4)
-			    (elt nowParts 5)
-			    (elt nowParts 6)
-			    (elt nowParts 7)
-			    (elt nowParts 8)))
+	 (then (encode-time
+		0
+		thenMin
+		thenHour
+		;; If THEN is earlier than NOW, make it
+		;; same time tomorrow.  Doc for encode-time
+		;; says that this is OK.
+		(+ (decoded-time-day nowParts)
+		   (if (or (< thenHour (decoded-time-hour nowParts))
+			   (and (= thenHour
+				   (decoded-time-hour nowParts))
+				(<= thenMin
+				    (decoded-time-minute nowParts))))
+		       1 0))
+		(decoded-time-month nowParts)
+		(decoded-time-year nowParts)
+		(decoded-time-weekday nowParts)
+		(decoded-time-dst nowParts)
+		(decoded-time-zone nowParts)))
 	 (diff (float-time (time-subtract then now))))
     ;; Return number of timesteps in the number of seconds.
     (round diff gnus-demon-timestep)))

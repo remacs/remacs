@@ -5509,8 +5509,8 @@ If NOW, use that time instead."
 
 In posting styles use `(\"Expires\" (make-expires-date 30))'."
   (let* ((cur (decode-time))
-	 (nday (+ days (nth 3 cur))))
-    (setf (nth 3 cur) nday)
+	 (nday (+ days (decoded-time-day cur))))
+    (setf (decoded-time-day cur) nday)
     (message-make-date (encode-time cur))))
 
 (defun message-make-message-id ()

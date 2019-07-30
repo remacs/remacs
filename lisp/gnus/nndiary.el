@@ -1264,12 +1264,12 @@ all.  This may very well take some time.")
 	 (date-elts (decode-time date))
 	 ;; ### NOTE: out-of-range values are accepted by encode-time. This
 	 ;; makes our life easier.
-	 (monday (- (nth 3 date-elts)
+	 (monday (- (decoded-time-day date-elts)
 		    (if nndiary-week-starts-on-monday
-			(if (zerop (nth 6 date-elts))
+			(if (zerop (decoded-time-weekday date-elts))
 			    6
-			  (- (nth 6 date-elts) 1))
-		      (nth 6 date-elts))))
+			  (- (decoded-time-weekday date-elts) 1))
+		      (decoded-time-weekday date-elts))))
 	 reminder res)
     ;; remove the DOW and DST entries
     (setcdr (nthcdr 5 date-elts) (nthcdr 8 date-elts))
@@ -1343,9 +1343,10 @@ all.  This may very well take some time.")
 		 ;; have to know which day is the 1st one for this month.
 		 ;; Maybe there's simpler, but decode-time(encode-time) will
 		 ;; give us the answer.
-		 (let ((first (nth 6 (decode-time
-				      (encode-time 0 0 0 1 month year
-						   time-zone))))
+		 (let ((first (decoded-time-weekday
+			       (decode-time
+				(encode-time 0 0 0 1 month year
+					     time-zone))))
 		       (max (cond ((= month 2)
 				   (if (date-leap-year-p year) 29 28))
 				  ((<= month 7)
@@ -1390,11 +1391,11 @@ all.  This may very well take some time.")
   ;; If there's no next occurrence, returns the last one (if any) which is then
   ;; in the past.
   (let* ((today (decode-time now))
-	 (this-minute (nth 1 today))
-	 (this-hour (nth 2 today))
-	 (this-day (nth 3 today))
-	 (this-month (nth 4 today))
-	 (this-year (nth 5 today))
+	 (this-minute (decoded-time-minute today))
+	 (this-hour (decoded-time-hour today))
+	 (this-day (decoded-time-day today))
+	 (this-month (decoded-time-month today))
+	 (this-year (decoded-time-year today))
 	 (minute-list (sort (nndiary-flatten (nth 0 sched) 0 59) '<))
 	 (hour-list (sort (nndiary-flatten (nth 1 sched) 0 23) '<))
 	 (dom-list (nth 2 sched))
@@ -1445,9 +1446,10 @@ all.  This may very well take some time.")
 		 ;; have to know which day is the 1st one for this month.
 		 ;; Maybe there's simpler, but decode-time(encode-time) will
 		 ;; give us the answer.
-		 (let ((first (nth 6 (decode-time
-				      (encode-time 0 0 0 1 month year
-						   time-zone))))
+		 (let ((first (decoded-time-weekday
+			       (decode-time
+				(encode-time 0 0 0 1 month year
+					     time-zone))))
 		       (max (cond ((= month 2)
 				   (if (date-leap-year-p year) 29 28))
 				  ((<= month 7)
