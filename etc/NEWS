@@ -1009,6 +1009,14 @@ offers them to the user to open with 'browse-url'.
 This option controls whether and how to use Gnus search groups as
 'path:' search terms to 'notmuch'.
 
+---
++++ The buttons in the Gnus article buffer were formerly widgets
+(i.e., buttons from widget.el).  This has now changed, and they are
+now buttons (from button.el), and commands like 'TAB' now search for
+buttons instead of widgets.  There should be no user-visible changes,
+but out-of-tree code that relied on widgets being present might now
+fail.
+
 ** erc
 
 ---
