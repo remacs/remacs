@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <emacs@endlessparentheses.com>
 ;; Package-Requires: ((emacs "24.1"))
-;; Version: 1.0.5
+;; Version: 1.0.6
 ;; Keywords: extensions lisp
 ;; Prefix: let-alist
 ;; Separator: -
