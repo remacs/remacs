@@ -625,7 +625,7 @@ The return value is BASE-VARIABLE.  */)
            && !EQ (find_symbol_value (new_alias),
                    find_symbol_value (base_variable)))
     call2 (intern ("display-warning"),
-           list3 (intern ("defvaralias"), intern ("losing-value"), new_alias),
+           list3 (Qdefvaralias, intern ("losing-value"), new_alias),
            CALLN (Fformat_message,
                   build_string
                   ("Overwriting value of `%s' by aliasing to `%s'"),

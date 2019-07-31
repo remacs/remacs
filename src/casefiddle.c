@@ -529,7 +529,7 @@ See also `capitalize-region'.  */)
 
   if (!NILP (region_noncontiguous_p))
     {
-      bounds = call1 (Fsymbol_value (intern ("region-extract-function")),
+      bounds = call1 (Fsymbol_value (Qregion_extract_function),
 		      intern ("bounds"));
 
       while (CONSP (bounds))
