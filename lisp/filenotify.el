@@ -48,6 +48,8 @@ could use another implementation.")
                (:constructor nil)
                (:constructor
                 file-notify--watch-make (directory filename callback)))
+  "The internal struct for bookkeeping watched files or directories.
+Used in `file-notify-descriptors'."
   ;; Watched directory.
   directory
   ;; Watched relative filename, nil if watching the directory.
@@ -67,13 +69,13 @@ could use another implementation.")
   "Hash table for registered file notification descriptors.
 A key in this hash table is the descriptor as returned from
 `inotify', `kqueue', `gfilenotify', `w32notify' or a file name
-handler.  The value in the hash table is `file-notify--watch'
+handler.  The value in the hash table is a `file-notify--watch'
 struct.")
 
 (defun file-notify--rm-descriptor (descriptor)
   "Remove DESCRIPTOR from `file-notify-descriptors'.
 DESCRIPTOR should be an object returned by `file-notify-add-watch'.
-If it is registered in `file-notify-descriptors', a stopped event is sent."
+If it is registered in `file-notify-descriptors', a `stopped' event is sent."
   (when-let* ((watch (gethash descriptor file-notify-descriptors)))
     (let ((callback (file-notify--watch-callback watch)))
       ;; Make sure this is the last time the callback is invoked.
@@ -85,25 +87,26 @@ If it is registered in `file-notify-descriptors', a stopped event is sent."
            `(,descriptor stopped ,(file-notify--watch-absolute-filename watch)))
         (remhash descriptor file-notify-descriptors)))))
 
-;; This function is used by `inotify', `kqueue', `gfilenotify' and
-;; `w32notify' events.
+(cl-defstruct (file-notify (:type list) :named)
+  "A file system monitoring event, coming from the backends."
+  -event -callback)
+
+;; This function is used by `inotify', `kqueue', `gfilenotify',
+;; `w32notify' and remote file system handlers.  Usually, we call the
+;; argument `event' for such handlers.  But in the following, `event'
+;; means a part of the argument only, so we call the argument `object'.
 ;;;###autoload
-(defun file-notify-handle-event (event)
-  "Handle file system monitoring event.
-If EVENT is a filewatch event, call its callback.  It has the format
-
-  (file-notify (DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE]) CALLBACK)
-
+(defun file-notify-handle-event (object)
+  "Handle a file system monitoring event, coming from backends.
+If OBJECT is a filewatch event, call its callback.
 Otherwise, signal a `file-notify-error'."
   (interactive "e")
   (when file-notify-debug
-    (message "file-notify-handle-event %S" event))
-  (if (and (consp event)
-           (eq (car event) 'file-notify)
-	   (>= (length event) 3))
-      (funcall (nth 2 event) (nth 1 event))
+    (message "file-notify-handle-event %S" object))
+  (if (file-notify-p object)
+      (funcall (file-notify--callback object) (file-notify--event object))
     (signal 'file-notify-error
-	    (cons "Not a valid file-notify event" event))))
+	    (cons "Not a valid file-notify-event" object))))
 
 (cl-defstruct (file-notify--rename
                (:constructor nil)
@@ -113,7 +116,7 @@ Otherwise, signal a `file-notify-error'."
 
 (defvar file-notify--pending-rename nil
   "A pending rename event awaiting the destination file name.
-It is nil or a `file-notify--rename' where the cookie can be nil.")
+It is nil or a `file-notify--rename' defstruct where the cookie can be nil.")
 
 (defun file-notify--expand-file-name (watch file)
   "Full file name of FILE reported for WATCH."
@@ -284,13 +287,13 @@ DESC is the back-end descriptor.  ACTIONS is a list of:
                 (setq action 'deleted)))
              ((eq action 'stopped)
               (file-notify-rm-watch desc)
-              (setq actions nil)
-              (setq action nil))
+              (setq actions nil
+                    action nil))
              ;; Make the event pending.
              ((eq action 'renamed-from)
               (setq file-notify--pending-rename
-                    (file-notify--rename-make watch desc file file1-or-cookie))
-              (setq action nil))
+                    (file-notify--rename-make watch desc file file1-or-cookie)
+                    action nil))
              ;; Look for pending event.
              ((eq action 'renamed-to)
               (if file-notify--pending-rename
@@ -301,16 +304,16 @@ DESC is the back-end descriptor.  ACTIONS is a list of:
                                        file-notify--pending-rename))
                         (from-file (file-notify--rename-from-file
                                     file-notify--pending-rename)))
-                    (setq file1 file)
-                    (setq file from-file)
+                    (setq file1 file
+                          file from-file)
                     ;; If the source is handled by another watch, we
                     ;; must fire the rename event there as well.
                     (when (and (not (equal desc pending-desc))
                                callback)
                       (funcall callback
                                (list pending-desc 'renamed file file1)))
-                    (setq file-notify--pending-rename nil)
-                    (setq action 'renamed))
+                    (setq file-notify--pending-rename nil
+                          action 'renamed))
                 (setq action 'created))))
 
             (when action
