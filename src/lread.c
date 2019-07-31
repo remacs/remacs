@@ -1083,7 +1083,7 @@ static void
 close_infile_unwind (void *arg)
 {
   struct infile *prev_infile = arg;
-  eassert (infile);
+  eassert (infile && infile != prev_infile);
   fclose (infile->stream);
   infile = prev_infile;
 }
@@ -1403,6 +1403,10 @@ Return t if the file exists and loads successfully.  */)
 #endif
     }
 
+  /* Declare here rather than inside the else-part because the storage
+     might be accessed by the unbind_to call below.  */
+  struct infile input;
+
   if (is_module)
     {
       /* `module-load' uses the file name, so we can close the stream
@@ -1418,6 +1422,9 @@ Return t if the file exists and loads successfully.  */)
       if (! stream)
         report_file_error ("Opening stdio stream", file);
       set_unwind_protect_ptr (fd_index, close_infile_unwind, infile);
+      input.stream = stream;
+      input.lookahead = 0;
+      infile = &input;
     }
 
   if (! NILP (Vpurify_flag))
@@ -1443,10 +1450,6 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
-  /* Declare here rather than inside the else-part because the storage
-     might be accessed by the unbind_to call below.  */
-  struct infile input;
-
   if (is_module)
     {
 #ifdef HAVE_MODULES
@@ -1461,10 +1464,6 @@ Return t if the file exists and loads successfully.  */)
     }
   else
     {
-      input.stream = stream;
-      input.lookahead = 0;
-      infile = &input;
-
       if (lisp_file_lexically_bound_p (Qget_file_char))
         Fset (Qlexical_binding, Qt);
 
