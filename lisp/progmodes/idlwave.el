@@ -8813,9 +8813,8 @@ routines, and may have been scanned."
 
 ;; FIXME: Dynamically scoped vars need to use the `idlwave-' prefix.
 ;; (defvar type)
-(defmacro idlwave-xor (a b)
-  `(and (or ,a ,b)
-	(not (and ,a ,b))))
+
+(define-obsolete-function-alias 'idlwave-xor 'xor "27.1")
 
 (defun idlwave-routine-entry-compare (a b)
   "Compare two routine info entries for sorting.
@@ -8919,17 +8918,17 @@ This expects NAME TYPE IDLWAVE-TWIN-CLASS to be bound to the right values."
     ;; Now: follow JD's ideas about sorting.  Looks really simple now,
     ;; doesn't it?  The difficult stuff is hidden above...
     (cond
-     ((idlwave-xor asysp  bsysp)       asysp)	; System entries first
-     ((idlwave-xor aunresp bunresp)    bunresp) ; Unresolved last
+     ((xor asysp   bsysp)     asysp)        ; System entries first
+     ((xor aunresp bunresp)   bunresp)      ; Unresolved last
      ((and idlwave-sort-prefer-buffer-info
-	   (idlwave-xor abufp bbufp))  abufp)	; Buffers before non-buffers
-     ((idlwave-xor acompp bcompp)      acompp)	; Compiled entries
-     ((idlwave-xor apathp bpathp)      apathp)	; Library before non-library
-     ((idlwave-xor anamep bnamep)      anamep)	; Correct file names first
-     ((and idlwave-twin-class anamep bnamep     ; both file names match ->
-	   (idlwave-xor adefp bdefp))  bdefp)	; __define after __method
-     ((> anpath bnpath)                t)	; Who is first on path?
-     (t                                nil))))	; Default
+           (xor abufp bbufp)) abufp)        ; Buffers before non-buffers
+     ((xor acompp bcompp)     acompp)       ; Compiled entries
+     ((xor apathp bpathp)     apathp)       ; Library before non-library
+     ((xor anamep bnamep)     anamep)       ; Correct file names first
+     ((and idlwave-twin-class anamep bnamep ; both file names match ->
+           (xor adefp bdefp)) bdefp)        ; __define after __method
+     ((> anpath bnpath)       t)            ; Who is first on path?
+     (t                       nil))))       ; Default
 
 (defun idlwave-routine-source-file (source)
   (if (nth 2 source)

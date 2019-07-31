@@ -1194,10 +1194,7 @@ Return `equal' if T1 equals T2.  Return nil otherwise."
 
 ;;; Sorting
 
-(defsubst proced-xor (b1 b2)
-  "Return the logical exclusive or of args B1 and B2."
-  (and (or b1 b2)
-       (not (and b1 b2))))
+(define-obsolete-function-alias 'proced-xor 'xor "27.1")
 
 (defun proced-sort-p (p1 p2)
   "Predicate for sorting processes P1 and P2."
@@ -1208,8 +1205,8 @@ Return `equal' if T1 equals T2.  Return nil otherwise."
              (k2 (cdr (assq (car sorter) (cdr p2)))))
         ;; if the attributes are undefined, we should really abort sorting
         (if (and k1 k2)
-            (proced-xor (funcall (nth 1 sorter) k1 k2)
-                        (nth 2 sorter))))
+            (xor (funcall (nth 1 sorter) k1 k2)
+                 (nth 2 sorter))))
     (let ((sort-list proced-sort-internal) sorter predicate k1 k2)
       (catch 'done
         (while (setq sorter (pop sort-list))
@@ -1219,7 +1216,7 @@ Return `equal' if T1 equals T2.  Return nil otherwise."
                 (if (and k1 k2)
                     (funcall (nth 1 sorter) k1 k2)))
           (if (not (eq predicate 'equal))
-              (throw 'done (proced-xor predicate (nth 2 sorter)))))
+              (throw 'done (xor predicate (nth 2 sorter)))))
         (eq t predicate)))))
 
 (defun proced-sort (process-alist sorter descend)

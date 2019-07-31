@@ -1524,12 +1524,6 @@ Encode/decode your strokes with \\[strokes-encode-buffer],
   (or (eq char ?\s)
       (eq char ?*)))
 
-;;(defsubst strokes-xor (a b)  ### Should I make this an inline function? ###
-;;  "T if one and only one of A and B is non-nil; otherwise, returns nil.
-;;NOTE: Don't use this as a numeric xor since it treats all non-nil
-;;      values as t including `0' (zero)."
-;;  (eq (null a) (not (null b))))
-
 (defsubst strokes-xpm-encode-length-as-string (length)
   "Given some LENGTH in [0,62) do a fast lookup of its encoding."
   (aref strokes-base64-chars length))

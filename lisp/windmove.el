@@ -592,7 +592,7 @@ select the window with a displayed buffer, and the meaning of
 the prefix argument is reversed.
 When `switch-to-buffer-obey-display-actions' is non-nil,
 `switch-to-buffer' commands are also supported."
-  (let* ((no-select (not (eq (consp arg) windmove-display-no-select))) ; xor
+  (let* ((no-select (xor (consp arg) windmove-display-no-select))
          (old-window (or (minibuffer-selected-window) (selected-window)))
          (new-window)
          (minibuffer-depth (minibuffer-depth))

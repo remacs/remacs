@@ -708,9 +708,7 @@ finds ham or spam.")
   "Clear the `spam-caches' entry for a check."
   (remhash symbol spam-caches))
 
-(defun spam-xor (a b)
-  "Logical A xor B."
-  (and (or a b) (not (and a b))))
+(define-obsolete-function-alias 'spam-xor 'xor "27.1")
 
 (defun spam-set-difference (list1 list2)
   "Return a set difference of LIST1 and LIST2.
@@ -2550,7 +2548,7 @@ With a non-nil REMOVE, remove the ADDRESSES."
         (goto-char (point-min))
         (dolist (article articles)
           (insert (spam-get-article-as-string article)))
-        (let* ((arg (if (spam-xor unregister article-is-spam-p)
+        (let* ((arg (if (xor unregister article-is-spam-p)
                         "-spam"
                       "-good"))
                (status

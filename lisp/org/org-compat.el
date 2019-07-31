@@ -362,6 +362,14 @@ use of this function is for the stuck project list."
 
 ;;; Miscellaneous functions
 
+;; `xor' was added in Emacs 27.1.
+(defalias 'org-xor
+  (if (fboundp 'xor)
+      #'xor
+    (lambda (a b)
+      "Exclusive or."
+      (if a (not b) b))))
+
 (defun org-version-check (version feature level)
   (let* ((v1 (mapcar 'string-to-number (split-string version "[.]")))
          (v2 (mapcar 'string-to-number (split-string emacs-version "[.]")))

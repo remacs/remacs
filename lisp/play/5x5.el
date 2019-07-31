@@ -435,8 +435,8 @@ should return a grid vector array that is the new solution."
     (dotimes (y 5x5-grid-size)
       (dotimes (x 5x5-grid-size)
         (5x5-set-cell xored y x
-                      (5x5-xor (5x5-cell current y x)
-                               (5x5-cell best    y x)))))
+                      (xor (5x5-cell current y x)
+                           (5x5-cell best    y x)))))
     (5x5-mutate-solution xored)))
 
 (defun 5x5-mutate-solution (solution)
@@ -931,9 +931,7 @@ lest."
 
 ;; Support functions
 
-(defun 5x5-xor (x y)
-  "Boolean exclusive-or of X and Y."
-  (and (or x y) (not (and x y))))
+(define-obsolete-function-alias '5x5-xor 'xor "27.1")
 
 (defun 5x5-y-or-n-p (prompt)
   "5x5 wrapper for `y-or-n-p' which respects the `5x5-hassle-me' setting."

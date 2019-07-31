@@ -2604,7 +2604,7 @@ If ENABLE is non-nil, enable them instead."
   (let  ((bpl (or bpl idlwave-shell-bp-alist)) disabled modified)
     (while bpl
       (setq disabled (idlwave-shell-bp-get (car bpl) 'disabled))
-      (when (idlwave-xor (not disabled) (eq enable 'enable))
+      (when (xor (not disabled) (eq enable 'enable))
 	(idlwave-shell-toggle-enable-current-bp
 	 (car bpl) (if (eq enable 'enable) 'enable 'disable) no-update)
 	(push (car bpl) modified))

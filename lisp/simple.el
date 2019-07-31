@@ -5857,8 +5857,7 @@ mode temporarily."
     (goto-char omark)
     (cond (temp-highlight
 	   (setq-local transient-mark-mode (cons 'only transient-mark-mode)))
-	  ((or (and arg (region-active-p)) ; (xor arg (not (region-active-p)))
-	       (not (or arg (region-active-p))))
+	  ((xor arg (not (region-active-p)))
 	   (deactivate-mark))
 	  (t (activate-mark)))
     nil))

@@ -1771,7 +1771,7 @@ Whitespace differences are ignored."
 	(if (> (- (car forw) orig) (- orig (car back))) back forw)
       (or back forw))))
 
-(defsubst diff-xor (a b) (if a (if (not b) a) b))
+(define-obsolete-function-alias 'diff-xor 'xor "27.1")
 
 (defun diff-find-source-location (&optional other-file reverse noprompt)
   "Find current diff location within the source file.
@@ -1791,7 +1791,7 @@ SRC and DST are the two variants of text as returned by `diff-hunk-text'.
   SRC is the variant that was found in the buffer.
 SWITCHED is non-nil if the patch is already applied."
   (save-excursion
-    (let* ((other (diff-xor other-file diff-jump-to-old-file))
+    (let* ((other (xor other-file diff-jump-to-old-file))
 	   (char-offset (- (point) (diff-beginning-of-hunk t)))
            ;; Check that the hunk is well-formed.  Otherwise diff-mode and
            ;; the user may disagree on what constitutes the hunk
@@ -1917,7 +1917,7 @@ With a prefix argument, REVERSE the hunk."
 	(insert (car new)))
       ;; Display BUF in a window
       (set-window-point (display-buffer buf) (+ (car pos) (cdr new)))
-      (diff-hunk-status-msg line-offset (diff-xor switched reverse) nil)
+      (diff-hunk-status-msg line-offset (xor switched reverse) nil)
       (when diff-advance-after-apply-hunk
 	(diff-hunk-next))))))
 
@@ -1929,7 +1929,7 @@ With a prefix argument, try to REVERSE the hunk."
   (pcase-let ((`(,buf ,line-offset ,pos ,src ,_dst ,switched)
                (diff-find-source-location nil reverse)))
     (set-window-point (display-buffer buf) (+ (car pos) (cdr src)))
-    (diff-hunk-status-msg line-offset (diff-xor reverse switched) t)))
+    (diff-hunk-status-msg line-offset (xor reverse switched) t)))
 
 
 (defun diff-kill-applied-hunks ()
@@ -1966,7 +1966,7 @@ revision of the file otherwise."
       (pop-to-buffer buf)
       (goto-char (+ (car pos) (cdr src)))
       (when buffer (next-error-found buffer (current-buffer)))
-      (diff-hunk-status-msg line-offset (diff-xor reverse switched) t))))
+      (diff-hunk-status-msg line-offset (xor reverse switched) t))))
 
 
 (defun diff-current-defun ()
@@ -2376,7 +2376,7 @@ fixed, visit it in a buffer."
   (interactive "P")
   (save-excursion
     (goto-char (point-min))
-    (let* ((other (diff-xor other-file diff-jump-to-old-file))
+    (let* ((other (xor other-file diff-jump-to-old-file))
   	   (modified-buffers nil)
   	   (style (save-excursion
   	   	    (when (re-search-forward diff-hunk-header-re nil t)

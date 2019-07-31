@@ -10068,10 +10068,6 @@ Note: this function also decodes single byte encodings like
 	       (char-to-string (string-to-number byte 16)))
 	     (cdr (split-string hex "%")) ""))
 
-(defun org-xor (a b)
-  "Exclusive or."
-  (if a (not b) b))
-
 (defun org-fixup-message-id-for-http (s)
   "Replace special characters in a message id, so it can be used in an http query."
   (when (string-match "%" s)

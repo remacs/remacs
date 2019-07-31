@@ -209,6 +209,14 @@ value of last one, or nil if there are none.
   (declare (indent 1) (debug t))
   (cons 'if (cons cond (cons nil body))))
 
+(defsubst xor (cond1 cond2)
+  "Return the boolean exclusive-or of COND1 and COND2.
+If only one of the arguments is non-nil, return it; otherwise
+return nil."
+  (declare (pure t) (side-effect-free error-free))
+  (cond ((not cond1) cond2)
+        ((not cond2) cond1)))
+
 (defmacro dolist (spec &rest body)
   "Loop over a list.
 Evaluate BODY with VAR bound to each car from LIST, in turn.

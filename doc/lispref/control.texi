@@ -38,7 +38,7 @@ structure constructs (@pxref{Macros}).
 @menu
 * Sequencing::             Evaluation in textual order.
 * Conditionals::           @code{if}, @code{cond}, @code{when}, @code{unless}.
-* Combining Conditions::   @code{and}, @code{or}, @code{not}.
+* Combining Conditions::   @code{and}, @code{or}, @code{not}, and friends.
 * Pattern-Matching Conditional::  How to use @code{pcase} and friends.
 * Iteration::              @code{while} loops.
 * Generators::             Generic sequences and coroutines.
@@ -298,8 +298,8 @@ For example:
 @section Constructs for Combining Conditions
 @cindex combining conditions
 
-  This section describes three constructs that are often used together
-with @code{if} and @code{cond} to express complicated conditions.  The
+  This section describes constructs that are often used together with
+@code{if} and @code{cond} to express complicated conditions.  The
 constructs @code{and} and @code{or} can also be used individually as
 kinds of multiple conditional constructs.
 
@@ -418,6 +418,15 @@ This is not completely equivalent because it can evaluate @var{arg1} or
 @var{arg2} twice.  By contrast, @code{(or @var{arg1} @var{arg2}
 @var{arg3})} never evaluates any argument more than once.
 @end defspec
+
+@defun xor condition1 condition2
+This function returns the boolean exclusive-or of @var{condition1} and
+@var{condition2}.  That is, @code{xor} returns @code{nil} if either
+both arguments are @code{nil}, or both are non-@code{nil}.  Otherwise,
+it returns the value of that argument which is non-@code{nil}.
+
+Note that in contrast to @code{or}, both arguments are always evaluated.
+@end defun
 
 @node Pattern-Matching Conditional
 @section Pattern-Matching Conditional
