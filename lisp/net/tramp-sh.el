@@ -3785,7 +3785,8 @@ file-notify events."
 		 (intern-soft
 		  (replace-regexp-in-string "_" "-" (downcase x))))
 	       (split-string (match-string 1 line) "," 'omit))
-	      (match-string 3 line))))
+	      (or (match-string 3 line)
+		  (file-name-nondirectory (process-get proc 'watch-name))))))
 	;; Usually, we would add an Emacs event now.  Unfortunately,
 	;; `unread-command-events' does not accept several events at
 	;; once.  Therefore, we apply the handler directly.
