@@ -2325,5 +2325,31 @@ END:VCALENDAR
 )
   )
 
+(defun icalendar-test--format (string &optional day zone)
+  (let ((time (icalendar--decode-isodatetime string day zone)))
+    (format-time-string "%FT%T%z" (encode-time time) 0)))
+
+(defun icalendar-tests--decode-isodatetime (ical-string)
+  (should (equal (icalendar-test--format "20040917T050910-0200")
+                 "2004-09-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910")
+                 "2004-09-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910Z")
+                 "2004-09-17T05:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T0509")
+                 "2004-09-17T03:09:00+0000"))
+  (should (equal (icalendar-test--format "20040917")
+                 "2004-09-16T22:00:00+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" 1)
+                 "2004-09-18T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" 30)
+                 "2004-10-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" -1)
+                 "2004-09-16T03:09:10+0000"))
+
+  (should (equal (icalendar-test--format "20040917T050910" nil -3600)
+                 "2004-09-17T06:09:10+0000")))
+
+
 (provide 'icalendar-tests)
 ;;; icalendar-tests.el ends here
