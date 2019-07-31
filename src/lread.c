@@ -287,6 +287,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
 
   if (EQ (readcharfun, Qget_file_char))
     {
+      eassert (infile);
       readbyte = readbyte_from_file;
       goto read_multibyte;
     }
@@ -320,6 +321,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
 	 string, and the cdr part is a value of readcharfun given to
 	 read_vector.  */
       readbyte = readbyte_from_string;
+      eassert (infile);
       if (EQ (XCDR (readcharfun), Qget_emacs_mule_file_char))
 	emacs_mule_encoding = 1;
       goto read_multibyte;
@@ -328,6 +330,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
   if (EQ (readcharfun, Qget_emacs_mule_file_char))
     {
       readbyte = readbyte_from_file;
+      eassert (infile);
       emacs_mule_encoding = 1;
       goto read_multibyte;
     }
@@ -506,6 +509,7 @@ readbyte_from_stdio (void)
 static int
 readbyte_from_file (int c, Lisp_Object readcharfun)
 {
+  eassert (infile);
   if (c >= 0)
     {
       eassert (infile->lookahead < sizeof infile->buf);
@@ -1078,10 +1082,11 @@ suffix_p (Lisp_Object string, const char *suffix)
 static void
 close_infile_unwind (void *arg)
 {
-  FILE *stream = arg;
-  eassert (infile == NULL || infile->stream == stream);
-  infile = NULL;
-  fclose (stream);
+  struct infile *prev_infile = arg;
+  fprintf (stderr, "Closing infile: back to %x!\n", prev_infile);
+  eassert (infile);
+  fclose (infile->stream);
+  infile = prev_infile;
 }
 
 DEFUN ("load", Fload, Sload, 1, 5, 0,
@@ -1413,7 +1418,7 @@ Return t if the file exists and loads successfully.  */)
     {
       if (! stream)
         report_file_error ("Opening stdio stream", file);
-      set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
+      set_unwind_protect_ptr (fd_index, close_infile_unwind, infile);
     }
 
   if (! NILP (Vpurify_flag))
@@ -2019,7 +2024,7 @@ readevalloop (Lisp_Object readcharfun,
       if (b && first_sexp)
 	whole_buffer = (BUF_PT (b) == BUF_BEG (b) && BUF_ZV (b) == BUF_Z (b));
 
-      infile = infile0;
+      eassert (!infile0 || infile == infile0);
     read_next:
       c = READCHAR;
       if (c == ';')
