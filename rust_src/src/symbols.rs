@@ -31,29 +31,39 @@ use crate::{
     threads::ThreadState,
 };
 
+/// Pointer to an emacs lisp symbol
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
+    /// Retrieve the name of a symbol.
+    /// Equivalent to the SYMBOL_NAME macro
     pub fn symbol_name(self) -> LispObject {
         let s = unsafe { self.u.s.as_ref() };
         s.name
     }
 
+    /// Retrieve the name of a symbol.
+    /// Equivalent to the SYMBOL_NAME macro
     pub fn get_function(self) -> LispObject {
         let s = unsafe { self.u.s.as_ref() };
         s.function
     }
-
+    
+    /// Retrieve the plist field of a symbol
     pub fn get_plist(self) -> LispObject {
         let s = unsafe { self.u.s.as_ref() };
         s.plist
     }
 
+    /// Set the plist field of a symbol
+    /// Equivalent to set_symbol_plist
     pub fn set_plist(&mut self, plist: LispObject) {
         let s = unsafe { self.u.s.as_mut() };
         s.plist = plist;
     }
-
+    
+    /// Set the function field of a symbol
+    /// Equivalent to set_symbol_function
     pub fn set_function(&mut self, function: LispObject) {
         let s = unsafe { self.u.s.as_mut() };
         s.function = function;
@@ -87,7 +97,8 @@ impl LispSymbolRef {
     pub fn is_constant(self) -> bool {
         self.get_trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
-
+    /// Return the alias of a symbol
+    /// Equivalent to SYMBOL_ALIAS macro
     pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
         let s = self.u.s.as_ref();
@@ -135,14 +146,19 @@ impl LispSymbolRef {
         }
     }
 
+    /// Retrieve the indirect field of a symbol.
+    /// Equivalent to get_symbol_redirect
     pub fn get_redirect(self) -> symbol_redirect {
         unsafe { get_symbol_redirect(self.as_ptr()) }
     }
 
+    /// Set the indirect field of a symbol.
+    /// Equivalent to set_symbol_redirect
     pub fn set_redirect(mut self, v: symbol_redirect) {
         unsafe { set_symbol_redirect(self.as_mut(), v) }
     }
-
+    /// Return the value of a symbol
+    /// Equivalent to SYMBOL_VAL macro
     pub unsafe fn get_value(self) -> LispObject {
         let s = self.u.s.as_ref();
         s.val.value
@@ -306,14 +322,18 @@ impl From<LispObject> for Option<LispSymbolRef> {
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 impl LispObject {
+    /// Check if the LispObject is a symbol.
+    /// Equivalent to SYMBOLP macro
     pub fn is_symbol(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Symbol
     }
-
+    
+    /// Convert the a LispObject to symbol and unwrap
     pub fn force_symbol(self) -> LispSymbolRef {
         LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol)
     }
 
+    /// Convert the a LispObject to symbol
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         self.into()
     }

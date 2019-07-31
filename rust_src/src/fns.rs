@@ -23,7 +23,7 @@ use crate::{
     remacs_sys::{
         concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
         make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
-        redisplay_preserve_echo_area,
+        redisplay_preserve_echo_area, CHECK_STRING,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},

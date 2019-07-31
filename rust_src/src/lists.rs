@@ -25,6 +25,8 @@ use crate::{
 pub struct LispCons(LispObject);
 
 impl LispObject {
+    /// Check if object is a list and signal an error if not.
+    /// Equivalent to CHECK_LIST macro
     pub fn check_list(self) {
         if !self.is_list() {
             wrong_type!(Qlistp, self);
@@ -37,14 +39,19 @@ impl LispObject {
         }
     }
 
+    /// Check if object is a cons cell
+    /// Equivalent to CONSP macro
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
+    /// Convert to cons and unwrap. May be unsafe to use!
     pub const fn force_cons(self) -> LispCons {
         LispCons(self)
     }
 
+    /// Convert LispObject to LispCons struct.
+    /// Equivalent to XCONS macro
     pub fn as_cons(self) -> Option<LispCons> {
         if self.is_cons() {
             Some(LispCons(self))
@@ -76,10 +83,13 @@ impl Debug for LispCons {
 }
 
 impl LispObject {
+    /// Create a cons cell. Equivalent to Fcons
     pub fn cons(car: impl Into<Self>, cdr: impl Into<Self>) -> Self {
         unsafe { Fcons(car.into(), cdr.into()) }
     }
 
+    /// Check if object is a list.
+    /// Equivalent to LISTP macro
     pub fn is_list(self) -> bool {
         self.is_cons() || self.is_nil()
     }
@@ -320,16 +330,19 @@ impl LispCons {
     }
 
     /// Return the car (first cell).
+    /// Equivalent to XCAR macro
     pub fn car(self) -> LispObject {
         unsafe { (*self._extract()).u.s.as_ref().car }
     }
 
     /// Return the cdr (second cell).
+    /// Equivalent to XCDR macro
     pub fn cdr(self) -> LispObject {
         unsafe { (*self._extract()).u.s.as_ref().u.cdr }
     }
 
     /// Set the car of the cons cell.
+    /// Equivalent to XSETCAR macro
     pub fn set_car(self, n: impl Into<LispObject>) {
         unsafe {
             (*self._extract()).u.s.as_mut().car = n.into();
@@ -337,6 +350,7 @@ impl LispCons {
     }
 
     /// Set the cdr of the cons cell.
+    /// Equivalent to XSETCDR macro
     pub fn set_cdr(self, n: impl Into<LispObject>) {
         unsafe {
             (*self._extract()).u.s.as_mut().u.cdr = n.into();

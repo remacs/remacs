@@ -141,7 +141,9 @@ impl LispObject {
         }
     }
 
-    /// TODO: Bignum support? (Current Emacs doesn't have it)
+    // TODO: Bignum support? (Current Emacs doesn't have it)
+    /// Check if the LispObject is an integer.
+    /// Equivalent to INTEGERP macro
     pub fn is_integer(self) -> bool {
         self.is_fixnum()
     }
@@ -185,6 +187,7 @@ pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl
 }
 
 impl LispNumber {
+    ///
     pub fn to_fixnum(&self) -> EmacsInt {
         match *self {
             LispNumber::Fixnum(v) => v,
