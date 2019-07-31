@@ -49,6 +49,8 @@
 ;; 2008-02-21 - Installed in GNU Emacs.
 ;; 2011-10-17 - Patch `json-alist-p' and `json-plist-p' to avoid recursion -tzz
 ;; 2012-10-25 - Added pretty-printed reformatting -Ryan Crum (ryan@ryancrum.org)
+;; 2019-02-02 - Pretty-printing now uses replace-region-contents and support for
+;;              minimization -tsdh
 
 ;;; Code:
 
@@ -755,6 +757,12 @@ With prefix argument MINIMIZE, minimize it instead."
   (interactive "P")
   (json-pretty-print (point-min) (point-max) minimize))
 
+(defvar json-pretty-print-max-secs 2.0
+  "Maximum time for `json-pretty-print's comparison.
+The function `json-pretty-print' uses `replace-region-contents'
+(which see) passing the value of this variable as argument
+MAX-SECS.")
+
 (defun json-pretty-print (begin end &optional minimize)
   "Pretty-print selected region.
 With prefix argument MINIMIZE, minimize it instead."
@@ -766,16 +774,23 @@ With prefix argument MINIMIZE, minimize it instead."
         (json-object-type 'alist)
         (err (gensym))
         json)
-    (save-restriction
-      (narrow-to-region begin end)
-      (goto-char begin)
-      (while (not (eq (setq json (condition-case _
-                                     (json-read)
-                                   (json-error err)))
-                      err))
-        (delete-region begin (point))
-        (insert (json-encode json))
-        (setq begin (point))))))
+    (replace-region-contents
+     begin end
+     (lambda ()
+       (let ((pretty ""))
+         (save-restriction
+           (narrow-to-region begin end)
+           (goto-char begin)
+           (while (not (eq (setq json (condition-case nil
+                                          (json-read)
+                                        (json-error err)))
+                           err))
+             (setq pretty (concat pretty (json-encode json)))))
+         pretty))
+     json-pretty-print-max-secs
+     ;; FIXME: What's a good value here?  Can we use something better,
+     ;; e.g., by deriving a value from the size of the region?
+     64)))
 
 (defun json-pretty-print-buffer-ordered (&optional minimize)
   "Pretty-print current buffer with object keys ordered.
