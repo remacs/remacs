@@ -530,6 +530,12 @@ TIME is modified and returned."
     (setf (decoded-time-month time) 1))
   (unless (decoded-time-year time)
     (setf (decoded-time-year time) 0))
+
+  ;; When we don't have a time zone and we don't have a DST, then mark
+  ;; it as unknown.
+  (when (and (not (decoded-time-zone time))
+             (not (decoded-time-dst time)))
+    (setf (decoded-time-dst time) -1))
   time)
 
 (provide 'time-date)
