@@ -114,7 +114,9 @@ pub const BUF_BYTES_MAX: ptrdiff_t = buf_bytes_max();
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
+/// Reference to a lisp buffer
 impl LispBufferRef {
+    /// Create a new buffer with name NAME
     pub fn create_new(name: LispStringRef) -> Self {
         if name.is_empty() {
             error!("Empty string for buffer name is not allowed");
@@ -199,14 +201,16 @@ impl LispBufferRef {
 
         buffer.into()
     }
+    
     pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
-
+    /// Equivalent to BEG macro
     pub const fn beg(self) -> ptrdiff_t {
         BEG
     }
 
+    /// Equivalent to BEG_BYTE macro
     pub const fn beg_byte(self) -> ptrdiff_t {
         BEG_BYTE
     }
@@ -421,10 +425,12 @@ impl LispBufferRef {
         unsafe { (*self.text).beg }
     }
 
+    /// Equivalent to GPT macro
     pub fn gpt(self) -> ptrdiff_t {
         unsafe { (*self.text).gpt }
     }
 
+    /// Equivalent to GPT_BYTE macro
     pub fn gpt_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).gpt_byte }
     }
@@ -890,11 +896,14 @@ impl LispBufferRef {
 }
 
 impl LispObject {
+    /// Check if object is a buffer
+    /// Equivalent to BUFFERP
     pub fn is_buffer(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BUFFER))
     }
-
+    /// Convert object to a buffer reference
+    /// Equivalent to XBUFFERP
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         self.into()
     }

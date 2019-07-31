@@ -33,6 +33,7 @@ impl LispObject {
         }
     }
 
+    /// Equivalent to CHECK_LIST_END macro
     pub fn check_list_end(self, list: Self) {
         if !self.is_nil() {
             wrong_type!(Qlistp, list);
@@ -143,16 +144,23 @@ impl LispObject {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+/// Value specifies if the last item in an iterator must be a valid cons cell or not
+/// off: No checks are performed
+/// on: Signal an error if the last item is not a valid cons cell
 pub enum LispConsEndChecks {
-    off, // no checks
-    on,  // error when the last item inspected is not a valid cons cell.
+    off, 
+    on, 
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+/// Check if the list of cons cells is circular
+/// off: no checks performed
+/// safe: Checked, exit when a circular list is found
+/// on: Signal an error if a circular list is found
 pub enum LispConsCircularChecks {
-    off,  // no checks
-    safe, // checked, exits when a circular list is found.
-    on,   // raises error when a circular list is found.
+    off,  
+    safe,
+    on, 
 }
 
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
@@ -358,6 +366,7 @@ impl LispCons {
     }
 
     /// Check that "self" is an impure (i.e. not readonly) cons cell.
+    /// Equivalent to CHECK_IMPURE macro
     pub fn check_impure(self) {
         unsafe {
             CHECK_IMPURE(self.0, self._extract() as *mut c_void);
