@@ -123,7 +123,7 @@ There are different timeouts for local and remote file notification libraries."
    ((eq system-type 'cygwin) 6)
    (t 3)))
 
-(defmacro file-notify--wait-for-events (timeout until)
+(defmacro file-notify--test-wait-for-events (timeout until)
   "Wait for and return file notification events until form UNTIL is true.
 TIMEOUT is the maximum time to wait for, in seconds."
   `(with-timeout (,timeout (ignore))
@@ -134,7 +134,7 @@ TIMEOUT is the maximum time to wait for, in seconds."
   "Check that `file-notify-descriptors' is an empty hash table.
 Return nil when any other file notification watch is still active."
   ;; Give read events a last chance.
-  (file-notify--wait-for-events
+  (file-notify--test-wait-for-events
    (file-notify--test-timeout)
    (zerop (hash-table-count file-notify-descriptors)))
   ;; Now check.
@@ -193,6 +193,8 @@ Return nil when any other file notification watch is still active."
         file-notify--test-desc1 nil
         file-notify--test-desc2 nil
         file-notify--test-results nil
+        file-notify--test-event nil
+        file-notify--test-file nil
         file-notify--test-events nil
         file-notify--test-monitors nil))
 
@@ -459,9 +461,11 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
       (unless (eq system-type 'cygwin)
         (let (results)
           (cl-flet ((first-callback (event)
-                     (when (eq (nth 1 event) 'deleted) (push 1 results)))
+                     (when (eq (file-notify--test-event-action event) 'deleted)
+                       (push 1 results)))
                     (second-callback (event)
-                     (when (eq (nth 1 event) 'deleted) (push 2 results))))
+                     (when (eq (file-notify--test-event-action event) 'deleted)
+                       (push 2 results))))
             (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
             (write-region
              "any text" nil file-notify--test-tmpfile nil 'no-message)
@@ -480,7 +484,7 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
             ;; Only the second callback shall run.
 	    (file-notify--test-read-event)
             (delete-file file-notify--test-tmpfile)
-            (file-notify--wait-for-events
+            (file-notify--test-wait-for-events
              (file-notify--test-timeout) results)
             (should (equal results (list 2)))
 
@@ -494,6 +498,8 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
   "Check `file-notify-rm-watch' for remote files.")
 
 ;; Accessors for the callback argument.
+(defun file-notify--test-event-desc (event) (car event))
+(defun file-notify--test-event-action (event) (nth 1 event))
 (defun file-notify--test-event-file (event) (nth 2 event))
 (defun file-notify--test-event-file1 (event) (nth 3 event))
 
@@ -502,14 +508,15 @@ If UNSTABLE is non-nil, the test is tagged as `:unstable'."
 We cannot pass arguments, so we assume that `file-notify--test-event'
 and `file-notify--test-file' are bound somewhere."
   ;; Check the descriptor.
-  (should (equal (car file-notify--test-event) file-notify--test-desc))
+  (should (equal (file-notify--test-event-desc file-notify--test-event)
+                 file-notify--test-desc))
   ;; Check the file name.
   (should
    (string-prefix-p
     file-notify--test-file
     (file-notify--test-event-file file-notify--test-event)))
   ;; Check the second file name if exists.
-  (when (eq (nth 1 file-notify--test-event) 'renamed)
+  (when (eq (file-notify--test-event-action file-notify--test-event) 'renamed)
     (should
      (string-prefix-p
       file-notify--test-file
@@ -535,68 +542,72 @@ and the event to `file-notify--test-events'."
 	    file-notify--test-results
 	    (append file-notify--test-results `(,result))))))
 
-(defun file-notify--test-with-events-check (events)
-  "Check whether received events match one of the EVENTS alternatives."
+(defun file-notify--test-with-actions-check (actions)
+  "Check whether received actions match one of the ACTIONS alternatives."
   (let (result)
-    (dolist (elt events result)
+    (dolist (elt actions result)
       (setq result
             (or result
                 (if (eq (car elt) :random)
                     (equal (sort (cdr elt) 'string-lessp)
-                           (sort (mapcar #'cadr file-notify--test-events)
+                           (sort (mapcar #'file-notify--test-event-action
+                                         file-notify--test-events)
                                  'string-lessp))
-                  (equal elt (mapcar #'cadr file-notify--test-events))))))))
+                  (equal elt (mapcar #'file-notify--test-event-action
+                                     file-notify--test-events))))))))
 
-(defun file-notify--test-with-events-explainer (events)
-  "Explain why `file-notify--test-with-events-check' fails."
-  (if (null (cdr events))
-      (format "Received events do not match expected events\n%s\n%s"
-              (mapcar #'cadr file-notify--test-events) (car events))
+(defun file-notify--test-with-actions-explainer (actions)
+  "Explain why `file-notify--test-with-actions-check' fails."
+  (if (null (cdr actions))
+      (format "Received actions do not match expected actions\n%s\n%s"
+              (mapcar #'file-notify--test-event-action file-notify--test-events)
+              (car actions))
     (format
-     "Received events do not match any sequence of expected events\n%s\n%s"
-     (mapcar #'cadr file-notify--test-events) events)))
+     "Received actions do not match any sequence of expected actions\n%s\n%s"
+     (mapcar #'file-notify--test-event-action file-notify--test-events)
+     actions)))
 
-(put 'file-notify--test-with-events-check 'ert-explainer
-     'file-notify--test-with-events-explainer)
+(put 'file-notify--test-with-actions-check 'ert-explainer
+     'file-notify--test-with-actions-explainer)
 
-(defmacro file-notify--test-with-events (events &rest body)
-  "Run BODY collecting events and then compare with EVENTS.
-EVENTS is either a simple list of events, or a list of lists of
-events, which represent different possible results.  The first
+(defmacro file-notify--test-with-actions (actions &rest body)
+  "Run BODY collecting actions and then compare with ACTIONS.
+ACTIONS is either a simple list of actions, or a list of lists of
+actions, which represent different possible results.  The first
 event of a list could be the pseudo event `:random', which is
 just an indicator for comparison.
 
-Don't wait longer than timeout seconds for the events to be
+Don't wait longer than timeout seconds for the actions to be
 delivered."
-  (declare (indent 1))
-  `(let* ((events (if (consp (car ,events)) ,events (list ,events)))
+  (declare (indent 1) (debug (form body)))
+  `(let* ((actions (if (consp (car ,actions)) ,actions (list ,actions)))
           (max-length
            (apply
             'max
             (mapcar
              (lambda (x) (length (if (eq (car x) :random) (cdr x) x)))
-             events)))
+             actions)))
           create-lockfiles)
-     ;; Flush pending events.
+     ;; Flush pending actions.
      (file-notify--test-read-event)
-     (file-notify--wait-for-events
+     (file-notify--test-wait-for-events
       (file-notify--test-timeout)
       (not (input-pending-p)))
      (setq file-notify--test-events nil
            file-notify--test-results nil)
      ,@body
-     (file-notify--wait-for-events
-      ;; More events need more time.  Use some fudge factor.
+     (file-notify--test-wait-for-events
+      ;; More actions need more time.  Use some fudge factor.
       (* (ceiling max-length 100) (file-notify--test-timeout))
       (= max-length (length file-notify--test-events)))
-     ;; Check the result sequence just to make sure that all events
+     ;; Check the result sequence just to make sure that all actions
      ;; are as expected.
      (dolist (result file-notify--test-results)
        (when (ert-test-failed-p result)
          (ert-fail
           (cadr (ert-test-result-with-condition-condition result)))))
      ;; One of the possible event sequences shall match.
-     (should (file-notify--test-with-events-check events))))
+     (should (file-notify--test-with-actions-check actions))))
 
 (ert-deftest file-notify-test03-events ()
   "Check file creation/change/removal notifications."
@@ -613,7 +624,7 @@ delivered."
                (file-notify--test-add-watch
                 file-notify--test-tmpfile
                 '(change) #'file-notify--test-event-handler)))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
             (cond
              ;; gvfs-monitor-dir on cygwin does not detect the
              ;; `created' event reliably.
@@ -647,7 +658,7 @@ delivered."
 	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
 	    (cond
              ;; gvfs-monitor-dir on cygwin does not detect the
              ;; `changed' event reliably.
@@ -681,7 +692,7 @@ delivered."
 	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
-	(file-notify--test-with-events
+	(file-notify--test-with-actions
 	    (cond
 	     ;; w32notify does not raise `deleted' and `stopped'
 	     ;; events for the watched directory.
@@ -728,7 +739,7 @@ delivered."
 	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
-	(file-notify--test-with-events
+	(file-notify--test-with-actions
 	    (cond
 	     ;; w32notify does not distinguish between `changed' and
 	     ;; `attribute-changed'.  It does not raise `deleted' and
@@ -785,7 +796,7 @@ delivered."
 	       (file-notify--test-add-watch
 		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
-	(file-notify--test-with-events
+	(file-notify--test-with-actions
 	    (cond
 	     ;; w32notify does not raise `deleted' and `stopped'
 	     ;; events for the watched directory.
@@ -836,7 +847,7 @@ delivered."
 	       (file-notify--test-add-watch
 		file-notify--test-tmpfile
 		'(attribute-change) #'file-notify--test-event-handler)))
-	(file-notify--test-with-events
+	(file-notify--test-with-actions
 	    (cond
 	     ;; w32notify does not distinguish between `changed' and
 	     ;; `attribute-changed'.  Under MS Windows 7, we get four
@@ -923,7 +934,7 @@ delivered."
                "another text" nil file-notify--test-tmpfile nil 'no-message)
 
               ;; Check, that the buffer has been reverted.
-              (file-notify--wait-for-events
+              (file-notify--test-wait-for-events
                timeout
                (string-match
                 (format-message "Reverting buffer `%s'." (buffer-name buf))
@@ -932,7 +943,7 @@ delivered."
 
             ;; Stop file notification.  Autorevert shall still work via polling.
 	    (file-notify-rm-watch auto-revert-notify-watch-descriptor)
-	    (file-notify--wait-for-events
+	    (file-notify--test-wait-for-events
 	     timeout (null auto-revert-notify-watch-descriptor))
 	    (should auto-revert-use-notify)
 	    (should-not auto-revert-notify-watch-descriptor)
@@ -946,7 +957,7 @@ delivered."
                "foo bla" nil file-notify--test-tmpfile nil 'no-message)
 
               ;; Check, that the buffer has been reverted.
-              (file-notify--wait-for-events
+              (file-notify--test-wait-for-events
                timeout
                (string-match
                 (format-message "Reverting buffer `%s'." (buffer-name buf))
@@ -1002,7 +1013,7 @@ delivered."
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
 	(should (file-notify-valid-p file-notify--test-desc))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
 	    (cond
              ;; gvfs-monitor-dir on cygwin does not detect the
              ;; `changed' event reliably.
@@ -1039,7 +1050,7 @@ delivered."
 		  file-notify--test-tmpdir
 		  '(change) #'file-notify--test-event-handler)))
 	  (should (file-notify-valid-p file-notify--test-desc))
-	  (file-notify--test-with-events
+	  (file-notify--test-with-actions
 	      (cond
 	       ;; w32notify does not raise `deleted' and `stopped'
 	       ;; events for the watched directory.
@@ -1100,7 +1111,7 @@ delivered."
         ;; After removing the watch, the descriptor must not be valid
         ;; anymore.
         (file-notify-rm-watch file-notify--test-desc)
-        (file-notify--wait-for-events
+        (file-notify--test-wait-for-events
          (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
         (should-not (file-notify-valid-p file-notify--test-desc))
@@ -1127,7 +1138,7 @@ delivered."
         ;; After deleting the directory, the descriptor must not be
         ;; valid anymore.
         (delete-directory file-notify--test-tmpfile 'recursive)
-        (file-notify--wait-for-events
+        (file-notify--test-wait-for-events
 	 (file-notify--test-timeout)
 	 (not (file-notify-valid-p file-notify--test-desc)))
         (should-not (file-notify-valid-p file-notify--test-desc))
@@ -1170,7 +1181,7 @@ delivered."
 		(push (expand-file-name (format "y%d" i)) target-file-list))
 	    (push (expand-file-name (format "y%d" i)) source-file-list)
 	    (push (expand-file-name (format "x%d" i)) target-file-list)))
-        (file-notify--test-with-events (make-list (+ n n) 'created)
+        (file-notify--test-with-actions (make-list (+ n n) 'created)
           (let ((source-file-list source-file-list)
                 (target-file-list target-file-list))
             (while (and source-file-list target-file-list)
@@ -1178,7 +1189,7 @@ delivered."
               (write-region "" nil (pop source-file-list) nil 'no-message)
               (file-notify--test-read-event)
               (write-region "" nil (pop target-file-list) nil 'no-message))))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
 	    (cond
 	     ;; w32notify fires both `deleted' and `renamed' events.
 	     ((string-equal (file-notify--test-library) "w32notify")
@@ -1199,7 +1210,7 @@ delivered."
             (while (and source-file-list target-file-list)
               (file-notify--test-read-event)
               (rename-file (pop source-file-list) (pop target-file-list) t))))
-        (file-notify--test-with-events (make-list n 'deleted)
+        (file-notify--test-with-actions (make-list n 'deleted)
           (dolist (file target-file-list)
             (file-notify--test-read-event)
             (delete-file file)))
@@ -1233,7 +1244,7 @@ delivered."
 		file-notify--test-tmpfile
 		'(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
             ;; There could be one or two `changed' events.
             '((changed)
               (changed changed))
@@ -1269,7 +1280,7 @@ delivered."
                 file-notify--test-tmpfile
                 '(change) #'file-notify--test-event-handler)))
         (should (file-notify-valid-p file-notify--test-desc))
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
             (cond
              ;; On cygwin we only get the `changed' event.
              ((eq system-type 'cygwin)
@@ -1345,7 +1356,7 @@ the file watch."
         (should-not (equal file-notify--test-desc1 file-notify--test-desc2))
         (let ((n 100))
           ;; Run the test.
-          (file-notify--test-with-events
+          (file-notify--test-with-actions
               ;; There could be one or two `changed' events.
               (list
 	       ;; cygwin.
@@ -1387,13 +1398,13 @@ the file watch."
         ;; directory and the file monitor.  The `stopped' event is
         ;; from the file monitor.  It's undecided in which order the
         ;; the directory and the file monitor are triggered.
-        (file-notify--test-with-events '(:random deleted deleted stopped)
+        (file-notify--test-with-actions '(:random deleted deleted stopped)
           (delete-file file-notify--test-tmpfile1))
         (should (file-notify-valid-p file-notify--test-desc1))
         (should-not (file-notify-valid-p file-notify--test-desc2))
 
         ;; Now we delete the directory.
-        (file-notify--test-with-events
+        (file-notify--test-with-actions
             (cond
              ;; In kqueue and for cygwin, just one `deleted' event for
              ;; the directory is received.
