@@ -584,14 +584,18 @@ pub trait LispStructuralEqual {
 }
 
 impl LispObject {
+    /// Check if lisp object is nil.
+    /// Equivalent to NILP macro
     pub fn is_nil(self) -> bool {
         self == Qnil
     }
-
+    /// Check if lisp object is not nil
+    /// Equivalent to !NILP
     pub fn is_not_nil(self) -> bool {
         self != Qnil
     }
 
+    /// Check if object is t
     pub fn is_t(self) -> bool {
         self == Qt
     }
