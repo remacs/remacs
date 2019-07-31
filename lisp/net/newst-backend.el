@@ -1597,10 +1597,11 @@ This function calls `message' with arguments STRING and ARGS, if
 
 (defun newsticker--decode-iso8601-date (string)
   "Return ISO8601-STRING in format like `encode-time'.
-Converts from ISO-8601 to Emacs representation."
+Converts from ISO-8601 to Emacs representation.  If no time zone
+is present, this fuction defaults to universal time."
   (if string
       (condition-case nil
-          (encode-time (iso8601-parse string))
+          (encode-time (decoded-time-set-defaults (iso8601-parse string) 0))
         (wrong-type-argument
          (message "Cannot decode \"%s\"" string)
          nil))
