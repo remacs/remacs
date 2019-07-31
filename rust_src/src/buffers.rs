@@ -251,7 +251,7 @@ impl LispBufferRef {
         self.zv_marker_
     }
 
-    pub fn get_zv(self) -> isize{
+    pub fn get_zv(self) -> isize {
         self.zv
     }
 
