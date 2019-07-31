@@ -801,8 +801,7 @@ column 0 is considered to be the start of a defun.  If it is
 @code{nil}, an open parenthesis in column 0 has no special meaning.
 The default is @code{t}.  If a string literal happens to have a
 parenthesis in column 0, escape it with a backslash to avoid a false
-positive.  @xref{Left Margin Paren,, Left Margin Convention, emacs,
-The GNU Emacs Manual}.
+positive.
 @end defopt
 
 @defvar beginning-of-defun-function
