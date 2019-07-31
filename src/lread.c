@@ -1083,7 +1083,6 @@ static void
 close_infile_unwind (void *arg)
 {
   struct infile *prev_infile = arg;
-  fprintf (stderr, "Closing infile: back to %x!\n", prev_infile);
   eassert (infile);
   fclose (infile->stream);
   infile = prev_infile;
