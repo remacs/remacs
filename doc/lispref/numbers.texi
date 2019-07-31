@@ -1072,7 +1072,8 @@ result is 0, which is an identity element for this operation.  If
 @defun lognot integer
 This function returns the bitwise complement of its argument: the @var{n}th
 bit is one in the result if, and only if, the @var{n}th bit is zero in
-@var{integer}, and vice-versa.
+@var{integer}, and vice-versa.  The result equals @minus{}1 @minus{}
+@var{integer}.
 
 @example
 (lognot 5)
