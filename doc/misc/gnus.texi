@@ -23505,11 +23505,11 @@ XEmacs.  Here are examples:
         (png . (:relief -2))))
 @end lisp
 
-@pxref{Image Descriptors, ,Image Descriptors, elisp, The Emacs Lisp
-Reference Manual} for the valid properties for various image types.
-Currently, @code{pbm} is used for X-Face images and @code{png} is used
-for Face images in Emacs.  Only the @code{:face} property is effective
-on the @code{xface} image type in XEmacs if it is built with the
+@xref{Image Descriptors,,, elisp, The Emacs Lisp Reference Manual},
+for the valid properties for various image types.  Currently,
+@code{pbm} is used for X-Face images and @code{png} is used for Face
+images in Emacs.  Only the @code{:face} property is effective on the
+@code{xface} image type in XEmacs if it is built with the
 @samp{libcompface} library.
 @end table
 
@@ -23780,21 +23780,25 @@ The following variables offer control over how things are displayed.
 @item gnus-gravatar-size
 @vindex gnus-gravatar-size
 The size in pixels of gravatars.  Gravatars are always square, so one
-number for the size is enough.
+number for the size is enough.  If @code{nil}, this defaults to the
+value of @code{gravatar-size}.
 
 @item gnus-gravatar-properties
 @vindex gnus-gravatar-properties
-List of image properties applied to Gravatar images.
+List of image properties applied to Gravatar images (@pxref{Image
+Descriptors,,, elisp, The Emacs Lisp Reference Manual}).
 
 @item gnus-gravatar-too-ugly
 @vindex gnus-gravatar-too-ugly
-Regexp that matches mail addresses or names of people of which avatars
-should not be displayed, or @code{nil}.  It default to the value of
-@code{gnus-article-x-face-too-ugly} (@pxref{X-Face}).
+Regexp that matches mail addresses or names of people whose avatars
+should not be displayed, or @code{nil} to display all avatars.  It
+defaults to the value of @code{gnus-article-x-face-too-ugly}
+(@pxref{X-Face}).
 
 @end table
 
-If you want to see them in the From field, set:
+If you want to see gravatars in the From field, set:
+
 @lisp
 (setq gnus-treat-from-gravatar 'head)
 @end lisp

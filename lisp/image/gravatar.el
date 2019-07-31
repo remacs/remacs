@@ -40,18 +40,35 @@
 
 ;; FIXME a time value is not the nicest format for a custom variable.
 (defcustom gravatar-cache-ttl (days-to-time 30)
-  "Time to live for gravatar cache entries."
+  "Time to live for gravatar cache entries.
+If a requested gravatar has been cached for longer than this, it
+is retrieved anew."
   :type '(repeat integer)
   :group 'gravatar)
 
-;; FIXME Doc is tautological.  What are the options?
 (defcustom gravatar-rating "g"
-  "Default rating for gravatar."
+  "Most explicit Gravatar rating level to allow.
+Some gravatars are rated according to how suitable they are for
+different audiences.  The supported rating levels are, in order
+of increasing explicitness, the following:
+
+\"g\"  - Suitable for any audience.
+\"pg\" - May contain rude gestures, provocatively dressed
+       individuals, mild profanity, or mild violence.
+\"r\"  - May contain harsh profanity, intense violence, nudity,
+       or hard drug use.
+\"x\"  - May contain hardcore sexual imagery or extremely
+       disturbing violence.
+
+Each level covers itself as well as all less explicit levels.
+For example, setting this variable to \"pg\" will allow gravatars
+rated either \"g\" or \"pg\"."
   :type 'string
   :group 'gravatar)
 
 (defcustom gravatar-size 32
-  "Default size in pixels for gravatars."
+  "Gravatar size in pixels to request.
+Valid sizes range from 1 to 2048 inclusive."
   :type 'integer
   :group 'gravatar)
 
@@ -100,8 +117,10 @@ If no image available, return 'error."
 
 ;;;###autoload
 (defun gravatar-retrieve (mail-address cb &optional cbargs)
-  "Retrieve MAIL-ADDRESS gravatar and call CB on retrieval.
-You can provide a list of argument to pass to CB in CBARGS."
+  "Asynchronously retrieve a gravatar for MAIL-ADDRESS.
+When finished, call CB as (apply CB GRAVATAR CBARGS),
+where GRAVATAR is either an image descriptor, or the symbol
+`error' if the retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
     (if (gravatar-cache-expired url)
 	(let ((args (list url
@@ -120,7 +139,9 @@ You can provide a list of argument to pass to CB in CBARGS."
 
 ;;;###autoload
 (defun gravatar-retrieve-synchronously (mail-address)
-  "Retrieve MAIL-ADDRESS gravatar and returns it."
+  "Synchronously retrieve a gravatar for MAIL-ADDRESS.
+Value is either an image descriptor, or the symbol `error' if the
+retrieval failed."
   (let ((url (gravatar-build-url mail-address)))
     (if (gravatar-cache-expired url)
         (with-current-buffer (url-retrieve-synchronously url)

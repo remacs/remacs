@@ -2523,6 +2523,11 @@ face name.  In the vast majority of cases, this is not necessary; the
 usual procedure is to define a face with @code{defface}, and then use
 its name directly.
 
+@cindex face (non-removability of)
+Note that once you have defined a face (usually with @code{defface}),
+you cannot later undefine this face safely, except by restarting
+Emacs.
+
 @defmac defface face spec doc [keyword value]@dots{}
 This macro declares @var{face} as a named face whose default face spec
 is given by @var{spec}.  You should not quote the symbol @var{face},

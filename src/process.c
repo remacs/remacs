@@ -1279,10 +1279,19 @@ The string argument is normally a multibyte string, except:
   if (NILP (filter))
     filter = Qinternal_default_process_filter;
 
-  pset_filter (p, filter);
-
   if (p->infd >= 0)
-    set_process_filter_masks (p);
+    {
+      /* If filter WILL be t, stop reading output.  */
+      if (EQ (filter, Qt) && !EQ (p->status, Qlisten))
+        delete_read_fd (p->infd);
+      else if (/* If filter WAS t, then resume reading output.  */
+               EQ (p->filter, Qt)
+               /* Network or serial process not stopped:  */
+               && !EQ (p->command, Qt))
+        add_process_read_fd (p->infd);
+    }
+
+  pset_filter (p, filter);
 
   if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
     pset_childp (p, Fplist_put (p->childp, QCfilter, filter));

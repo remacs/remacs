@@ -383,8 +383,8 @@ own View-like bindings."
   "Toggle View mode, a minor mode for viewing text but not editing it.
 
 When View mode is enabled, commands that do not change the buffer
-contents are available as usual.  Kill commands insert text in
-kill buffers but do not delete.  Most other commands beep and
+contents are available as usual.  Kill commands save text but
+do not delete it from the buffer.  Most other commands beep and
 tell the user that the buffer is read-only.
 
 \\<view-mode-map>
