@@ -133,8 +133,8 @@ longer than `erc-fill-column'."
   ;; bytecompiling lambdas in this alist.  On the other hand, it makes
   ;; things hard to maintain.
   '(('nicknames 0 erc-button-buttonize-nicks erc-nick-popup 0)
-    (erc-button-url-regexp 0 t browse-url 0)
-    ("<URL: *\\([^<> ]+\\) *>" 0 t browse-url 1)
+    (erc-button-url-regexp 0 t browse-url-button-open-url 0)
+    ("<URL: *\\([^<> ]+\\) *>" 0 t browse-url-button-open-url 1)
 ;;; ("(\\(\\([^~\n \t@][^\n \t@]*\\)@\\([a-zA-Z0-9.:-]+\\)\\)" 1 t finger 2 3)
     ;; emacs internal
     ("[`]\\([a-zA-Z][-a-zA-Z_0-9]+\\)[']" 1 t erc-button-describe-symbol 1)
