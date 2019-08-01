@@ -487,7 +487,7 @@ which RSS 2.0 allows."
 	  (format "%s, %02d %s %04d %s%s"
 		  (substring cts 0 3) day (substring cts 4 7) year time
 		  (if zone
-		      (concat " " (time-zone-format zone t))
+		      (concat " " (format-time-string "%z" nil zone))
 		    "")))
       (message-make-date given))))
 
