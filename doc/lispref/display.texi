@@ -3983,7 +3983,9 @@ with its @var{keep-margins} argument @code{nil} or omitted.  However,
 if the optional fifth argument @var{persistent} is non-@code{nil} and
 the other arguments are processed successfully, the values specified
 here unconditionally survive subsequent invocations of
-@code{set-window-buffer}.
+@code{set-window-buffer}.  This can be used to permanently turn off
+fringes in the minibuffer window, consult the description of
+@code{set-window-scroll-bars} for an example (@pxref{Scroll Bars}).
 @end defun
 
 @defun window-fringes &optional window
@@ -4417,6 +4419,23 @@ the other arguments are processed successfully, the values specified
 here unconditionally survive subsequent invocations of
 @code{set-window-buffer}.
 @end defun
+
+Using the @var{persistent} argument of @code{set-window-scroll-bars}
+and @code{set-window-fringes} (@pxref{Fringe Size/Pos}) you can
+reliably and permanently turn off scroll bars and/or fringes in any
+minibuffer window by adding the following snippet to your early init
+file (@pxref{Init File}).
+
+@smallexample
+@group
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (set-window-scroll-bars
+             (minibuffer-window frame) 0 nil 0 nil t)
+            (set-window-fringes
+             (minibuffer-window frame) 0 0 nil t)))
+@end group
+@end smallexample
 
 The following four functions take as argument a live window which
 defaults to the selected one.
