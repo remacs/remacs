@@ -35,7 +35,6 @@
 (eval-when-compile (require 'cl-lib))
 
 (require 'mail-utils)
-(defvar parse-time-months)
 
 (defgroup pop3 nil
   "Post Office Protocol."
@@ -609,18 +608,9 @@ Return the response string if optional second argument is non-nil."
 (defun pop3-make-date (&optional now)
   "Make a valid date header.
 If NOW, use that time instead."
-  (require 'parse-time)
-  (let* ((now (or now (current-time)))
-	 (zone (decoded-time-zone (decode-time now))))
-    (when (< zone 0)
-      (setq zone (- zone)))
-    (concat
-     (format-time-string "%d" now)
-     ;; The month name of the %b spec is locale-specific.  Pfff.
-     (format " %s "
-	     (capitalize (car (rassoc (decoded-time-month (decode-time now))
-				      parse-time-months))))
-     (format-time-string "%Y %H:%M:%S %z" now))))
+  ;; The month name of the %b spec is locale-specific.  Pfff.
+  (let ((system-time-locale "C"))
+    (format-time-string "%d %b %Y %T %z" now)))
 
 (defun pop3-munge-message-separator (start end)
   "Check to see if a message separator exists.  If not, generate one."

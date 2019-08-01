@@ -36,7 +36,6 @@
 (require 'nnoo)
 (require 'netrc)
 (require 'utf7)
-(require 'parse-time)
 (require 'nnmail)
 
 (autoload 'auth-source-forget+ "auth-source")
@@ -1097,12 +1096,8 @@ textual parts.")
 	(let ((result
 	       (nnimap-command
 		"UID SEARCH SENTBEFORE %s"
-		(format-time-string
-		 (format "%%d-%s-%%Y"
-			 (upcase
-			  (car (rassoc (decoded-time-month (decode-time cutoff))
-				       parse-time-months))))
-		 cutoff))))
+		(let ((system-time-locale "C"))
+		  (upcase (format-time-string "%d-%b-%Y" cutoff))))))
 	  (and (car result)
 	       (delete 0 (mapcar #'string-to-number
 				 (cdr (assoc "SEARCH" (cdr result)))))))))))

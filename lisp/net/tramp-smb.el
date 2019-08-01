@@ -1814,6 +1814,9 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 	    (if (and sec min hour day month year)
 		(encode-time
 		 sec min hour day
+		 ;; FIXME: Won't this fail if parse-time-months is configured
+		 ;; by the user?  See "The date/time prompt" in the Org manual.
+		 ;; If the code is OK as-is, perhaps explain why in a comment.
 		 (cdr (assoc (downcase month) parse-time-months))
 		 year)
 	      tramp-time-dont-know))
