@@ -843,6 +843,7 @@ symbol `never', the posting is not allowed.  If it is the symbol
 Doing so would be even more evil than leaving it out."
   :group 'message-sending
   :link '(custom-manual "(message)Mail Variables")
+  :version "27.1"
   :type 'boolean)
 
 (defcustom message-sendmail-envelope-from
