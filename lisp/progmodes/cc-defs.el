@@ -1291,7 +1291,7 @@ been put there by c-put-char-property.  POINT remains unchanged."
       (when (and (fboundp 'syntax-ppss) (eq property 'syntax-table))
 	(setq c-syntax-table-hwm (min c-syntax-table-hwm place)))
       (setq end-place (c-next-single-property-change place property nil to))
-      (remove-text-properties place end-place (cons property nil))
+      (remove-text-properties place end-place (list property nil))
       ;; Do we have to do anything with stickiness here?
       (setq place end-place))))
 
@@ -1375,7 +1375,7 @@ property, or nil."
 	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
       (when (eq (char-after place) char)
-	(remove-text-properties place (1+ place) (cons property nil))
+	(remove-text-properties place (1+ place) (list property nil))
 	(or first
 	    (progn (setq first place)
 		   (when (eq property 'syntax-table)

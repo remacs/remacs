@@ -518,7 +518,7 @@ cons cells of the form (NAME . NUM).  See `sort' for more details."
     (or (= (move-to-column x) x)
 	(let ((p (point)))
 	  (indent-to x)
-	  (remove-text-properties p (point) '(face))))))
+          (remove-text-properties p (point) '(face nil))))))
 
 (defun chart-zap-chars (n)
   "Zap up to N chars without deleting EOLs."

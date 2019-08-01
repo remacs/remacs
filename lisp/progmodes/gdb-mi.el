@@ -1794,7 +1794,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
   "A comint send filter for gdb."
   (with-current-buffer gud-comint-buffer
     (let ((inhibit-read-only t))
-      (remove-text-properties (point-min) (point-max) '(face))))
+      (remove-text-properties (point-min) (point-max) '(face nil))))
   ;; mimic <RET> key to repeat previous command in GDB
   (when (= gdb-control-level 0)
     (if (not (string= "" string))

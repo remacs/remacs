@@ -933,7 +933,7 @@ Commands:                        Equivalent keys in read-only mode:
 					 '(front-sticky (read-only cursor-intangible)))))
 	      ;; Prevent insertion after the last text.
 	      (remove-text-properties (1- (point)) (point)
-				      '(rear-nonsticky)))
+                                      '(rear-nonsticky nil)))
 	    (setq forms--iif-start nil))
        `(lambda (arg)
 	  ,@(apply 'append
@@ -998,7 +998,7 @@ Commands:                        Equivalent keys in read-only mode:
   ;;			      '(front-sticky (read-only))))))
   ;;	 ;; Prevent insertion after the last text.
   ;;	 (remove-text-properties (1- (point)) (point)
-  ;;	 			 '(rear-nonsticky)))
+  ;;                             '(rear-nonsticky nil)))
   ;;
   ;;     ;; wrap up
   ;;     (setq forms--iif-start nil)

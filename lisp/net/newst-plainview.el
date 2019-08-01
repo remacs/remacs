@@ -1002,7 +1002,7 @@ not get changed."
              ;; toggle
              (add-text-properties pos1 pos2
                                   (list 'invisible org-inv-prop))
-             (remove-text-properties pos1 pos2 '(org-invisible))))))
+             (remove-text-properties pos1 pos2 '(org-invisible nil))))))
   (newsticker--buffer-redraw))
 
 (defun newsticker-show-entry ()
@@ -1028,7 +1028,7 @@ not get changed."
              ;; toggle
              (add-text-properties pos1 pos2
                                   (list 'invisible org-inv-prop))
-             (remove-text-properties pos1 pos2 '(org-invisible))))))
+             (remove-text-properties pos1 pos2 '(org-invisible nil))))))
   (newsticker--buffer-redraw))
 
 (defun newsticker-toggle-auto-narrow-to-feed ()

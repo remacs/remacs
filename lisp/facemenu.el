@@ -732,7 +732,7 @@ effect.  See `facemenu-remove-face-function'."
     (if facemenu-remove-face-function
         (funcall facemenu-remove-face-function start end)
       (if (and start (< start end))
-          (remove-text-properties start end '(face default))
+          (remove-list-of-text-properties start end '(face))
         (facemenu-set-self-insert-face 'default))))
    (facemenu-add-face-function
     (save-excursion

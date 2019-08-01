@@ -72,7 +72,7 @@
     (undo-boundary)
     (put-text-property (point-min) (point-max) 'face 'bold)
     (undo-boundary)
-    (remove-text-properties (point-min) (point-max) '(face default))
+    (remove-list-of-text-properties (point-min) (point-max) '(face))
     (undo-boundary)
     (set-buffer-multibyte (not enable-multibyte-characters))
     (undo-boundary)

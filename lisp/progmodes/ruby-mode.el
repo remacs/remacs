@@ -1858,7 +1858,7 @@ It will be properly highlighted even when the call omits parens.")
   "Syntactic keywords for Ruby mode.  See `syntax-propertize-function'."
   (let (case-fold-search)
     (goto-char start)
-    (remove-text-properties start end '(ruby-expansion-match-data))
+    (remove-text-properties start end '(ruby-expansion-match-data nil))
     (ruby-syntax-propertize-heredoc end)
     (ruby-syntax-enclosing-percent-literal end)
     (funcall

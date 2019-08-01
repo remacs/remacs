@@ -138,9 +138,10 @@ Regexp match data 0 specifies the characters to be composed."
       ;; No composition for you.  Let's actually remove any
       ;; composition we may have added earlier and which is now
       ;; incorrect.
-      (remove-text-properties start end '(composition
-                                          prettify-symbols-start
-                                          prettify-symbols-end))))
+      (remove-list-of-text-properties start end
+                                      '(composition
+                                        prettify-symbols-start
+                                        prettify-symbols-end))))
   ;; Return nil because we're not adding any face property.
   nil)
 
@@ -191,7 +192,7 @@ on the symbol."
 	        (e (apply #'max e)))
       (with-silent-modifications
 	(setq prettify-symbols--current-symbol-bounds (list s e))
-	(remove-text-properties s e '(composition))))))
+        (remove-text-properties s e '(composition nil))))))
 
 ;;;###autoload
 (define-minor-mode prettify-symbols-mode

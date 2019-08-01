@@ -9230,7 +9230,7 @@ Called with a universal prefix arg, show the priority instead of setting it."
       (goto-char (point-max))
       (while (not (bobp))
 	(when (equal marker (org-get-at-bol 'org-marker))
-	  (remove-text-properties (point-at-bol) (point-at-eol) '(display))
+          (remove-text-properties (point-at-bol) (point-at-eol) '(display nil))
 	  (org-move-to-column (- (window-width) (length stamp)) t)
           (add-text-properties
 	   (1- (point)) (point-at-eol)

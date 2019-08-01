@@ -378,7 +378,7 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
       (while (not (eobp))
         (setq next (next-single-char-property-change (point) 'mouse-face))
         (when (looking-at inactive-string)
-          (remove-text-properties (point) next '(mouse-face))
+          (remove-text-properties (point) next '(mouse-face nil))
           (add-text-properties (point) next '(face tmm-inactive)))
         (goto-char next)))
     (set-buffer-modified-p nil)))

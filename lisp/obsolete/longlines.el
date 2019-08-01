@@ -248,7 +248,7 @@ With optional argument ARG, make the hard newlines invisible again."
 	(inhibit-modification-hooks t)
 	buffer-file-name buffer-file-truename)
     (while pos
-      (remove-text-properties pos (1+ pos) '(display))
+      (remove-text-properties pos (1+ pos) '(display nil))
       (setq pos (text-property-not-all (1+ pos) (point-max) 'hard nil)))
     (restore-buffer-modified-p mod)))
 
@@ -387,7 +387,7 @@ compatibility with `format-alist', and is ignored."
 	    (goto-char (1+ pos))
 	    (insert-and-inherit " ")
 	    (delete-region pos (1+ pos))
-	    (remove-text-properties pos (1+ pos) 'hard))))
+            (remove-text-properties pos (1+ pos) '(hard nil)))))
       (set-buffer-modified-p mod)
       end)))
 

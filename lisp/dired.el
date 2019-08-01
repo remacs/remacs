@@ -2560,7 +2560,7 @@ See options: `dired-hide-details-hide-symlink-targets' and
   ;; approximate ("anywhere on the line is fine").
   ;; FIXME: This also removes other invisible properties!
   (save-excursion
-    (remove-text-properties
+    (remove-list-of-text-properties
      (progn (goto-char start) (line-end-position))
      (progn (goto-char end) (line-end-position))
      '(invisible))))

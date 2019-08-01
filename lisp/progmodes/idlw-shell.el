@@ -3120,7 +3120,7 @@ versions of IDL."
 		fetch-start start)
 	(setq fetch-end (next-single-property-change fetch-start 'fetch expr)))
       (unless fetch-end (setq fetch-end (length expr)))
-      (remove-text-properties fetch-start fetch-end '(fetch) expr)
+      (remove-text-properties fetch-start fetch-end '(fetch nil) expr)
       (setq expr (concat (substring expr 0 fetch-start)
 			 (format "(routine_names('%s',fetch=%d))"
 				 (substring expr fetch-start fetch-end)

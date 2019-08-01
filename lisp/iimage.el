@@ -138,8 +138,9 @@ Examples of image filename patterns to match:
                      keymap ,image-map
                      modification-hooks
                      (iimage-modification-hook)))
-                (remove-text-properties (match-beginning 0) (match-end 0)
-                                        '(display modification-hooks))))))))))
+                (remove-list-of-text-properties
+                 (match-beginning 0) (match-end 0)
+                 '(display modification-hooks))))))))))
 
 ;;;###autoload
 (define-minor-mode iimage-mode nil

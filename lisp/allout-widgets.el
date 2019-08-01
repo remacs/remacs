@@ -1966,7 +1966,7 @@ reapplying this method will rectify the glyphs."
                ;; XXX we strip the prior properties without even checking if
                ;;     the prior bullet was distinctive, because the widget
                ;;     provisions to convey that info is disappearing, sigh.
-               (remove-text-properties icon-end (1+ icon-end) '(display))
+               (remove-text-properties icon-end (1+ icon-end) '(display nil))
                (setq distinctive-start icon-end distinctive-end icon-end)
                (widget-put item-widget :distinctive-start distinctive-start)
                (widget-put item-widget :distinctive-end distinctive-end))

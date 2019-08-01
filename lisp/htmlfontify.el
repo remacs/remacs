@@ -1589,7 +1589,7 @@ Do not record undo information during evaluation of BODY."
   (when show-trailing-whitespace
     (hfy-save-buffer-state nil
       (remove-text-properties (point-min) (point-max)
-                              '(hfy-show-trailing-whitespace)))))
+                              '(hfy-show-trailing-whitespace nil)))))
 
 (defun hfy-begin-span (style text-block text-id text-begins-block-p)
   "Default handler to begin a span of text.
@@ -1677,7 +1677,8 @@ FILE, if set, is the file name."
     (copy-to-buffer html-buffer (point-min) (point-max))
     (set-buffer     html-buffer)
     ;; rip out props that could interfere with our htmlization of the buffer:
-    (remove-text-properties (point-min) (point-max) hfy-ignored-properties)
+    (remove-list-of-text-properties (point-min) (point-max)
+                                    hfy-ignored-properties)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; at this point, html-buffer retains the fontification of the parent:
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

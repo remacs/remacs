@@ -729,7 +729,7 @@ automatically inserts its partner."
     (condition-case err
         (with-silent-modifications
           ;; Remove properties even if don't find a pair.
-          (remove-text-properties
+          (remove-list-of-text-properties
            (previous-single-property-change (1+ start) 'latex-env-pair)
            (next-single-property-change start 'latex-env-pair)
            '(latex-env-pair))

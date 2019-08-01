@@ -561,7 +561,7 @@ Many aspects this mode can be customized using
     (widen)
     (with-silent-modifications
       (nxml-with-invisible-motion
-       (remove-text-properties (point-min) (point-max) '(face)))))
+       (remove-text-properties (point-min) (point-max) '(face nil)))))
   (remove-hook 'change-major-mode-hook #'nxml-cleanup t))
 
 (defun nxml-degrade (context err)

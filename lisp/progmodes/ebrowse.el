@@ -1383,7 +1383,7 @@ Pop to member buffer if no prefix ARG, to tree buffer otherwise."
 
 (defun ebrowse--unhide (start end)
   ;; FIXME: This also removes other invisible properties!
-  (remove-text-properties start end '(invisible)))
+  (remove-text-properties start end '(invisible nil)))
 
 ;;; Misc tree buffer commands
 
