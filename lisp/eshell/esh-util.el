@@ -600,10 +600,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 	  (setq host-users (cdr host-users))
 	  (cdr (assoc user host-users))))))
 
-;; Add an autoload for parse-time-string
-(if (and (not (fboundp 'parse-time-string))
-	 (locate-library "parse-time"))
-    (autoload 'parse-time-string "parse-time"))
+(autoload 'parse-time-string "parse-time")
 
 (eval-when-compile
   (require 'ange-ftp nil t))		; ange-ftp-parse-filename
@@ -649,17 +646,14 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 	       (size (string-to-number (match-string 5)))
 	       (name (ange-ftp-parse-filename))
 	       (mtime
-		(if (fboundp 'parse-time-string)
-		    (let ((moment (parse-time-string
-				   (match-string 6))))
-		      (if (nth 0 moment)
-			  (setcar (nthcdr 5 moment)
-				  (decoded-time-year (decode-time)))
-			(setcar (nthcdr 0 moment) 0)
-			(setcar (nthcdr 1 moment) 0)
-			(setcar (nthcdr 2 moment) 0))
-		      (encode-time moment))
-		  (ange-ftp-file-modtime (expand-file-name name dir))))
+		(let ((moment (parse-time-string (match-string 6))))
+		  (if (nth 0 moment)
+		      (setcar (nthcdr 5 moment)
+			      (decoded-time-year (decode-time)))
+		    (setcar (nthcdr 0 moment) 0)
+		    (setcar (nthcdr 1 moment) 0)
+		    (setcar (nthcdr 2 moment) 0))
+		  (encode-time moment)))
 	       symlink)
 	  (if (string-match "\\(.+\\) -> \\(.+\\)" name)
 	      (setq symlink (match-string 2 name)
