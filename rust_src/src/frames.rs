@@ -712,16 +712,17 @@ fn make_frame_visible_1(window: LispWindowRef) {
 /// If omitted, FRAME defaults to the currently selected frame.
 #[lisp_fn(min = "0")]
 pub fn make_frame_visible(frame: LispObject) {
-    #[cfg(feature = "window-system")]
-    {
+    let frame_ref = if cfg!(feature = "window-system") {
         let mut frame_ref: LispFrameRef = frame.into();
         if frame_ref.is_gui_window() {
             unsafe {
                 x_make_frame_visible(frame_ref.as_mut());
             }
         }
-    }
-    let frame_ref: LispFrameRef = frame.into();
+        frame_ref
+    } else {
+        frame.into()
+    };
     make_frame_visible_1(frame_ref.root_window());
 }
 
