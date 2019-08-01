@@ -2873,7 +2873,7 @@ is part of a file name (i.e., has the text property `dired-filename')."
 (defun dired-do-search (regexp)
   "Search through all marked files for a match for REGEXP.
 Stops when a match is found.
-To continue searching for next match, use command \\[tags-loop-continue]."
+To continue searching for next match, use command \\[fileloop-continue]."
   (interactive "sSearch marked files (regexp): ")
   (fileloop-initialize-search
    regexp
