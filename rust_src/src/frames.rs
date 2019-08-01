@@ -693,22 +693,17 @@ pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
 }
 
 /// Update the display_time slot of the buffers shown in WINDOW and all its descendants.
-fn make_frame_visible_1(mut window: LispWindowRef) {
+fn make_frame_visible_1(window: LispWindowRef) {
     if window.is_null() {
         return;
     }
-    loop {
-        let contents: LispObject = window.contents.into();
+    for win in window.iter() {
+        let contents: LispObject = win.contents.into();
         if contents.is_window() {
             make_frame_visible_1(contents.into());
         } else {
             let mut buffer: LispBufferRef = contents.into();
             buffer.set_display_time(current_time());
-        }
-        if window.next.is_nil() {
-            break;
-        } else {
-            window = window.next.into();
         }
     }
 }
@@ -717,15 +712,16 @@ fn make_frame_visible_1(mut window: LispWindowRef) {
 /// If omitted, FRAME defaults to the currently selected frame.
 #[lisp_fn(min = "0")]
 pub fn make_frame_visible(frame: LispObject) {
-    let mut frame_ref = window_frame_live_or_selected(frame);
     #[cfg(feature = "window-system")]
     {
+        let mut frame_ref: LispFrameRef = frame.into();
         if frame_ref.is_gui_window() {
             unsafe {
                 x_make_frame_visible(frame_ref.as_mut());
             }
         }
     }
+    let frame_ref: LispFrameRef = frame.into();
     make_frame_visible_1(frame_ref.root_window());
 }
 
