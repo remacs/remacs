@@ -36,7 +36,7 @@
 ;; about the squares where one may play, or else there is a known forced win
 ;; for the first player. This program has no such restriction, but it does not
 ;; know about the forced win, nor do I.
-;; See http://renju.nu/r1rulhis.htm for more information.
+;; See http://renju.se/rif/r1rulhis.htm for more information.
 
 
 ;; There are two main places where you may want to customize the program: key
