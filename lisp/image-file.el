@@ -140,7 +140,9 @@ absolute file name and number of characters inserted."
   "Yank handler for inserting an image into a buffer."
   (let ((len (length string))
 	(image (get-text-property 0 'display string)))
-    (remove-list-of-text-properties 0 len yank-excluded-properties string)
+    (if (eq yank-excluded-properties t)
+        (set-text-properties 0 len () string)
+      (remove-list-of-text-properties 0 len yank-excluded-properties string))
     (if (consp image)
 	(add-text-properties 0
 			     (or (next-single-property-change 0 'image-counter string)
