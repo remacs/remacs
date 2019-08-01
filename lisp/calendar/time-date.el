@@ -216,9 +216,9 @@ DATE1 and DATE2 should be date-time strings."
 
 (defun time-date--day-in-year (tim)
   "Return the day number within the year corresponding to the decoded time TIM."
-  (let* ((month (nth 4 tim))
-	 (day (nth 3 tim))
-	 (year (nth 5 tim))
+  (let* ((month (decoded-time-month tim))
+         (day (decoded-time-day tim))
+         (year (decoded-time-year tim))
 	 (day-of-year (+ day (* 31 (1- month)))))
     (when (> month 2)
       (setq day-of-year (- day-of-year (/ (+ 23 (* 4 month)) 10)))
