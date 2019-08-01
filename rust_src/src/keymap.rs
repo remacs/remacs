@@ -1,7 +1,6 @@
 //! Keymap support
 
 use std;
-use std::convert::TryInto;
 use std::ptr;
 
 use libc::{c_void, ptrdiff_t};
