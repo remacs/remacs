@@ -69,6 +69,7 @@ should return a grid vector array that is the new solution.
 
 ;;;### (autoloads nil "ada-mode" "progmodes/ada-mode.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/ada-mode.el
+(push (purecopy '(ada-mode 4 0)) package--builtin-versions)
 
 (autoload 'ada-add-extensions "ada-mode" "\
 Define SPEC and BODY as being valid extensions for Ada files.
@@ -15194,13 +15195,17 @@ Like `goto-address-mode', but only for comments and strings.
 ;;; Generated autoloads from image/gravatar.el
 
 (autoload 'gravatar-retrieve "gravatar" "\
-Retrieve MAIL-ADDRESS gravatar and call CB on retrieval.
-You can provide a list of argument to pass to CB in CBARGS.
+Asynchronously retrieve a gravatar for MAIL-ADDRESS.
+When finished, call CB as (apply CB GRAVATAR CBARGS),
+where GRAVATAR is either an image descriptor, or the symbol
+`error' if the retrieval failed.
 
 \(fn MAIL-ADDRESS CB &optional CBARGS)" nil nil)
 
 (autoload 'gravatar-retrieve-synchronously "gravatar" "\
-Retrieve MAIL-ADDRESS gravatar and returns it.
+Synchronously retrieve a gravatar for MAIL-ADDRESS.
+Value is either an image descriptor, or the symbol `error' if the
+retrieval failed.
 
 \(fn MAIL-ADDRESS)" nil nil)
 
@@ -16256,7 +16261,11 @@ See `hi-lock-mode' for more information on Hi-Lock mode.
 (defalias 'highlight-lines-matching-regexp 'hi-lock-line-face-buffer)
 
 (autoload 'hi-lock-line-face-buffer "hi-lock" "\
-Set face of all lines containing a match of REGEXP to FACE.
+Highlight all lines that match REGEXP using FACE.
+The lines that match REGEXP will be displayed by merging
+the attributes of FACE with any other face attributes
+of text in those lines.
+
 Interactively, prompt for REGEXP using `read-regexp', then FACE.
 Use the global history list for FACE.
 
@@ -32308,6 +32317,7 @@ and `sc-post-hook' is run after the guts of this function.
 
 ;;;### (autoloads nil "svg" "svg.el" (0 0 0 0))
 ;;; Generated autoloads from svg.el
+(push (purecopy '(svg 0 5)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "svg" '("svg-")))
 
@@ -36595,6 +36605,7 @@ Key bindings:
 ;;;### (autoloads nil "verilog-mode" "progmodes/verilog-mode.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from progmodes/verilog-mode.el
+(push (purecopy '(verilog-mode 2017 8 7 201875024)) package--builtin-versions)
 
 (autoload 'verilog-mode "verilog-mode" "\
 Major mode for editing Verilog code.
@@ -37478,8 +37489,8 @@ and disable it otherwise.  If called from Lisp, enable View mode
 if ARG is omitted or nil.
 
 When View mode is enabled, commands that do not change the buffer
-contents are available as usual.  Kill commands insert text in
-kill buffers but do not delete.  Most other commands beep and
+contents are available as usual.  Kill commands save text but
+do not delete it from the buffer.  Most other commands beep and
 tell the user that the buffer is read-only.
 
 \\<view-mode-map>
