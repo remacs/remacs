@@ -173,8 +173,8 @@ marked with SPECIAL."
 	 (nowParts (decode-time now))
 	 ;; obtain THEN as discrete components
 	 (thenParts (parse-time-string time))
-	 (thenHour (elt thenParts 2))
-	 (thenMin (elt thenParts 1))
+	 (thenHour (decoded-time-hour thenParts))
+	 (thenMin (decoded-time-minute thenParts))
 	 ;; convert time as elements into number of seconds since EPOCH.
 	 (then (encode-time
 		0
