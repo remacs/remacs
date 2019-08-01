@@ -991,6 +991,9 @@ DEFUN ("while", Fwhile, Swhile, 1, UNEVALLED, 0,
        doc: /* If TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
+
+The value of a `while' form is always nil.
+
 usage: (while TEST BODY...)  */)
   (Lisp_Object args)
 {
