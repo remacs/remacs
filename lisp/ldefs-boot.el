@@ -61,6 +61,7 @@ should return a grid vector array that is the new solution.
 
 ;;;### (autoloads nil "ada-mode" "progmodes/ada-mode.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/ada-mode.el
+(push (purecopy '(ada-mode 4 0)) package--builtin-versions)
 
 (autoload 'ada-add-extensions "ada-mode" "\
 Define SPEC and BODY as being valid extensions for Ada files.
@@ -1498,7 +1499,7 @@ Features a private abbrev table and the following bindings:
 
 \\[asm-colon]	outdent a preceding label, tab to next tab stop.
 \\[tab-to-tab-stop]	tab to next tab stop.
-\\[asm-newline]	newline, then tab to next tab stop.
+\\[newline-and-indent]	newline, then tab to next tab stop.
 \\[asm-comment]	smart placement of assembler comments.
 
 The character used for making comments is set by the variable
@@ -4455,6 +4456,12 @@ Any character in STRING that has an entry in
 `char-fold-table' is replaced with that entry (which is a
 regexp) and other characters are `regexp-quote'd.
 
+When LAX is non-nil, then the final character also matches ligatures
+partially, for instance, the search string \"f\" will match \"ﬁ\",
+so when typing the search string in isearch while the cursor is on
+a ligature, the search won't try to immediately advance to the next
+complete match, but will stay on the partially matched ligature.
+
 If the resulting regexp would be too long for Emacs to handle,
 just return the result of calling `regexp-quote' on STRING.
 
@@ -5098,13 +5105,18 @@ Returns the (possibly newly created) process buffer.
 \(fn NAME PROGRAM &optional STARTFILE &rest SWITCHES)" nil nil)
 
 (autoload 'comint-run "comint" "\
-Run PROGRAM in a Comint buffer and switch to it.
+Run PROGRAM in a Comint buffer and switch to that buffer.
+
+If SWITCHES are supplied, they are passed to PROGRAM.  With prefix argument
+\\[universal-argument] prompt for SWITCHES as well as PROGRAM.
+
 The buffer name is made by surrounding the file name of PROGRAM with `*'s.
 The file name is used to make a symbol name, such as `comint-sh-hook', and any
 hooks on this symbol are run in the buffer.
+
 See `make-comint' and `comint-exec'.
 
-\(fn PROGRAM)" t nil)
+\(fn PROGRAM &optional SWITCHES)" t nil)
 
 (function-put 'comint-run 'interactive-only 'make-comint)
 
@@ -5238,8 +5250,9 @@ Otherwise, it saves all modified buffers without asking.")
 
 (defvar compilation-search-path '(nil) "\
 List of directories to search for source files named in error messages.
-Elements should be directory names, not file names of directories.
-The value nil as an element means to try the default directory.")
+Elements should be directory names, not file names of
+directories.  The value nil as an element means the error
+message buffer `default-directory'.")
 
 (custom-autoload 'compilation-search-path "compile" t)
 
@@ -6811,10 +6824,30 @@ Prettify all columns in a text region.
 
 START and END delimit the text region.
 
+If you have, for example, the following columns:
+
+       a       b       c       d
+       aaaa    bb      ccc     ddddd
+
+Depending on your settings (see below), you then obtain the
+following result:
+
+       [ a   , b  , c      , d     ]
+       [ aaaa, bb , ccc    , ddddd ]
+
+See the `delimit-columns-str-before',
+`delimit-columns-str-after', `delimit-columns-str-separator',
+`delimit-columns-before', `delimit-columns-after',
+`delimit-columns-separator', `delimit-columns-format' and
+`delimit-columns-extra' variables for customization of the
+look. 
+
 \(fn START END)" t nil)
 
 (autoload 'delimit-columns-rectangle "delim-col" "\
 Prettify all columns in a text rectangle.
+
+See `delimit-columns-region' for what this entails.
 
 START and END delimit the corners of the text rectangle.
 
@@ -6864,9 +6897,9 @@ information on adapting behavior of commands in Delete Selection mode.
 ;;; Generated autoloads from emacs-lisp/derived.el
 
 (autoload 'define-derived-mode "derived" "\
-Create a new mode as a variant of an existing mode.
+Create a new mode CHILD which is a variant of an existing mode PARENT.
 
-The arguments to this command are as follow:
+The arguments are as follows:
 
 CHILD:     the name of the command for the derived mode.
 PARENT:    the name of the command for the parent mode (e.g. `text-mode')
@@ -6874,23 +6907,27 @@ PARENT:    the name of the command for the parent mode (e.g. `text-mode')
 NAME:      a string which will appear in the status line (e.g. \"Hypertext\")
 DOCSTRING: an optional documentation string--if you do not supply one,
            the function will attempt to invent something useful.
+KEYWORD-ARGS:
+           optional arguments in the form of pairs of keyword and value.
+           The following keyword arguments are currently supported:
+
+           :group GROUP
+                   Declare the customization group that corresponds
+                   to this mode.  The command `customize-mode' uses this.
+           :syntax-table TABLE
+                   Use TABLE instead of the default (CHILD-syntax-table).
+                   A nil value means to simply use the same syntax-table
+                   as the parent.
+           :abbrev-table TABLE
+                   Use TABLE instead of the default (CHILD-abbrev-table).
+                   A nil value means to simply use the same abbrev-table
+                   as the parent.
+           :after-hook FORM
+                   A single lisp form which is evaluated after the mode
+                   hooks have been run.  It should not be quoted.
+
 BODY:      forms to execute just before running the
            hooks for the new mode.  Do not use `interactive' here.
-
-BODY can start with a bunch of keyword arguments.  The following keyword
-  arguments are currently understood:
-:group GROUP
-	Declare the customization group that corresponds to this mode.
-	The command `customize-mode' uses this.
-:syntax-table TABLE
-	Use TABLE instead of the default (CHILD-syntax-table).
-	A nil value means to simply use the same syntax-table as the parent.
-:abbrev-table TABLE
-	Use TABLE instead of the default (CHILD-abbrev-table).
-	A nil value means to simply use the same abbrev-table as the parent.
-:after-hook FORM
-	A single lisp form which is evaluated after the mode hooks have been
-	run.  It should not be quoted.
 
 Here is how you could define LaTeX-Thesis mode as a variant of LaTeX mode:
 
@@ -6900,7 +6937,7 @@ You could then make new key bindings for `LaTeX-thesis-mode-map'
 without changing regular LaTeX mode.  In this example, BODY is empty,
 and DOCSTRING is generated by default.
 
-On a more complicated level, the following command uses `sgml-mode' as
+As a more complex example, the following command uses `sgml-mode' as
 the parent, and then sets the variable `case-fold-search' to nil:
 
   (define-derived-mode article-mode sgml-mode \"Article\"
@@ -6915,7 +6952,7 @@ The new mode runs the hook constructed by the function
 
 See Info node `(elisp)Derived Modes' for more details.
 
-\(fn CHILD PARENT NAME &optional DOCSTRING &rest BODY)" nil t)
+\(fn CHILD PARENT NAME [DOCSTRING] [KEYWORD-ARGS...] &rest BODY)" nil t)
 
 (function-put 'define-derived-mode 'doc-string-elt '4)
 
@@ -12279,14 +12316,11 @@ DELIMITED if non-nil means replace only word-delimited matches.
 ;;; Generated autoloads from filenotify.el
 
 (autoload 'file-notify-handle-event "filenotify" "\
-Handle file system monitoring event.
-If EVENT is a filewatch event, call its callback.  It has the format
-
-  (file-notify (DESCRIPTOR ACTIONS FILE [FILE1-OR-COOKIE]) CALLBACK)
-
+Handle a file system monitoring event, coming from backends.
+If OBJECT is a filewatch event, call its callback.
 Otherwise, signal a `file-notify-error'.
 
-\(fn EVENT)" t nil)
+\(fn OBJECT)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "filenotify" '("file-notify-")))
 
@@ -12831,7 +12865,7 @@ to get the effect of a C-q.
 
 ;;;### (autoloads nil "flymake" "progmodes/flymake.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake.el
-(push (purecopy '(flymake 1 0 6)) package--builtin-versions)
+(push (purecopy '(flymake 1 0 8)) package--builtin-versions)
 
 (autoload 'flymake-log "flymake" "\
 Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -14242,6 +14276,13 @@ Pop up a frame and enter GROUP.
 
 \(fn GROUP)" t nil)
 
+(autoload 'gnus-read-ephemeral-emacs-bug-group "gnus-group" "\
+Browse Emacs bug reports with IDS in an ephemeral group.
+The arguments have the same meaning as those of
+`gnus-read-ephemeral-bug-group', which see.
+
+\(fn IDS &optional WINDOW-CONF)" t nil)
+
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "gnus-group" '("gnus-")))
 
 ;;;***
@@ -14349,7 +14390,7 @@ group parameters.
 If AUTO-UPDATE is non-nil (prefix argument accepted, if called
 interactively), it makes sure nnmail-split-fancy is re-computed before
 getting new mail, by adding `gnus-group-split-update' to
-`nnmail-pre-get-new-mail-hook'.
+`gnus-get-top-new-news-hook'.
 
 A non-nil CATCH-ALL replaces the current value of
 `gnus-group-split-default-catch-all-group'.  This variable is only used
@@ -14821,13 +14862,17 @@ if ARG is `toggle'; disable the mode otherwise.
 ;;; Generated autoloads from image/gravatar.el
 
 (autoload 'gravatar-retrieve "gravatar" "\
-Retrieve MAIL-ADDRESS gravatar and call CB on retrieval.
-You can provide a list of argument to pass to CB in CBARGS.
+Asynchronously retrieve a gravatar for MAIL-ADDRESS.
+When finished, call CB as (apply CB GRAVATAR CBARGS),
+where GRAVATAR is either an image descriptor, or the symbol
+`error' if the retrieval failed.
 
 \(fn MAIL-ADDRESS CB &optional CBARGS)" nil nil)
 
 (autoload 'gravatar-retrieve-synchronously "gravatar" "\
-Retrieve MAIL-ADDRESS gravatar and returns it.
+Synchronously retrieve a gravatar for MAIL-ADDRESS.
+Value is either an image descriptor, or the symbol `error' if the
+retrieval failed.
 
 \(fn MAIL-ADDRESS)" nil nil)
 
@@ -15862,7 +15907,11 @@ See `hi-lock-mode' for more information on Hi-Lock mode.
 (defalias 'highlight-lines-matching-regexp 'hi-lock-line-face-buffer)
 
 (autoload 'hi-lock-line-face-buffer "hi-lock" "\
-Set face of all lines containing a match of REGEXP to FACE.
+Highlight all lines that match REGEXP using FACE.
+The lines that match REGEXP will be displayed by merging
+the attributes of FACE with any other face attributes
+of text in those lines.
+
 Interactively, prompt for REGEXP using `read-regexp', then FACE.
 Use the global history list for FACE.
 
@@ -18403,6 +18452,13 @@ Add submenus to the File menu, to convert to and from various formats." t nil)
 
 ;;;***
 
+;;;### (autoloads nil "iso8601" "calendar/iso8601.el" (0 0 0 0))
+;;; Generated autoloads from calendar/iso8601.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "iso8601" '("iso8601-")))
+
+;;;***
+
 ;;;### (autoloads nil "ispell" "textmodes/ispell.el" (0 0 0 0))
 ;;; Generated autoloads from textmodes/ispell.el
 
@@ -19196,7 +19252,7 @@ Special commands:
 ;;;### (autoloads nil "let-alist" "emacs-lisp/let-alist.el" (0 0
 ;;;;;;  0 0))
 ;;; Generated autoloads from emacs-lisp/let-alist.el
-(push (purecopy '(let-alist 1 0 5)) package--builtin-versions)
+(push (purecopy '(let-alist 1 0 6)) package--builtin-versions)
 
 (autoload 'let-alist "let-alist" "\
 Let-bind dotted symbols to their cdrs in ALIST and execute BODY.
@@ -19801,10 +19857,12 @@ Return the value of the header field whose type is FIELD-NAME.
 If second arg LAST is non-nil, use the last field of type FIELD-NAME.
 If third arg ALL is non-nil, concatenate all such fields with commas between.
 If 4th arg LIST is non-nil, return a list of all such fields.
+If 5th arg DELETE is non-nil, delete all header lines that are
+included in the result.
 The buffer should be narrowed to just the header, else false
 matches may be returned from the message body.
 
-\(fn FIELD-NAME &optional LAST ALL LIST)" nil nil)
+\(fn FIELD-NAME &optional LAST ALL LIST DELETE)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mail-utils" '("mail-")))
 
@@ -21652,15 +21710,6 @@ language environment LANG-ENV.
 
 \(fn FROM TO LANG-ENV)" nil nil)
 
-(autoload 'char-displayable-p "mule-util" "\
-Return non-nil if we should be able to display CHAR.
-On a multi-font display, the test is only whether there is an
-appropriate font from the selected frame's fontset to display
-CHAR's charset in general.  Since fonts may be specified on a
-per-character basis, this may not be accurate.
-
-\(fn CHAR)" nil nil)
-
 (autoload 'filepos-to-bufferpos "mule-util" "\
 Try to return the buffer position corresponding to a particular file position.
 The file position is given as a (0-based) BYTE count.
@@ -22866,7 +22915,7 @@ startup file, `~/.emacs-octave'.
 ;;;### (autoloads nil "opascal" "progmodes/opascal.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/opascal.el
 
-(define-obsolete-function-alias 'delphi-mode 'opascal-mode "24.4")
+(define-obsolete-function-alias 'delphi-mode #'opascal-mode "24.4")
 
 (autoload 'opascal-mode "opascal" "\
 Major mode for editing OPascal code.\\<opascal-mode-map>
@@ -24155,6 +24204,21 @@ The return value is a string (or nil in case we can't find it)." nil nil)
 ;;;### (autoloads nil "package-x" "emacs-lisp/package-x.el" (0 0
 ;;;;;;  0 0))
 ;;; Generated autoloads from emacs-lisp/package-x.el
+
+(autoload 'package-upload-file "package-x" "\
+Upload the Emacs Lisp package FILE to the package archive.
+Interactively, prompt for FILE.  The package is considered a
+single-file package if FILE ends in \".el\", and a multi-file
+package if FILE ends in \".tar\".
+Automatically extract package attributes and update the archive's
+contents list with this information.
+If `package-archive-upload-base' does not specify a valid upload
+destination, prompt for one.  If the directory does not exist, it
+is created.  The directory need not have any initial contents
+\(i.e., you can use this command to populate an initially empty
+archive).
+
+\(fn FILE)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "package-x" '("package-")))
 
@@ -27914,327 +27978,102 @@ becomes just a more verbose version of STRING.
 
 (autoload 'rx "rx" "\
 Translate regular expressions REGEXPS in sexp form to a regexp string.
-REGEXPS is a non-empty sequence of forms of the sort listed below.
-
-Note that `rx' is a Lisp macro; when used in a Lisp program being
-compiled, the translation is performed by the compiler.  The
-`literal' and `regexp' forms accept subforms that will evaluate
-to strings, in addition to constant strings.  If REGEXPS include
-such forms, then the result is an expression which returns a
-regexp string, rather than a regexp string directly.  See
-`rx-to-string' for performing translation completely at run time.
-
-The following are valid subforms of regular expressions in sexp
-notation.
-
-STRING
-     matches string STRING literally.
-
-CHAR
-     matches character CHAR literally.
-
-`not-newline', `nonl'
-     matches any character except a newline.
-
-`anything'
-     matches any character
-
-`(any SET ...)'
-`(in SET ...)'
-`(char SET ...)'
-     matches any character in SET ....  SET may be a character or string.
-     Ranges of characters can be specified as `A-Z' in strings.
-     Ranges may also be specified as conses like `(?A . ?Z)'.
-     Reversed ranges like `Z-A' and `(?Z . ?A)' are not permitted.
-
-     SET may also be the name of a character class: `digit',
-     `control', `hex-digit', `blank', `graph', `print', `alnum',
-     `alpha', `ascii', `nonascii', `lower', `punct', `space', `upper',
-     `word', or one of their synonyms.
-
-`(not (any SET ...))'
-     matches any character not in SET ...
-
-`line-start', `bol'
-     matches the empty string, but only at the beginning of a line
-     in the text being matched
-
-`line-end', `eol'
-     is similar to `line-start' but matches only at the end of a line
-
-`string-start', `bos', `bot'
-     matches the empty string, but only at the beginning of the
-     string being matched against.
-
-`string-end', `eos', `eot'
-     matches the empty string, but only at the end of the
-     string being matched against.
-
-`buffer-start'
-     matches the empty string, but only at the beginning of the
-     buffer being matched against.  Actually equivalent to `string-start'.
-
-`buffer-end'
-     matches the empty string, but only at the end of the
-     buffer being matched against.  Actually equivalent to `string-end'.
-
-`point'
-     matches the empty string, but only at point.
-
-`word-start', `bow'
-     matches the empty string, but only at the beginning of a word.
-
-`word-end', `eow'
-     matches the empty string, but only at the end of a word.
-
-`word-boundary'
-     matches the empty string, but only at the beginning or end of a
-     word.
-
-`(not word-boundary)'
-`not-word-boundary'
-     matches the empty string, but not at the beginning or end of a
-     word.
-
-`symbol-start'
-     matches the empty string, but only at the beginning of a symbol.
-
-`symbol-end'
-     matches the empty string, but only at the end of a symbol.
-
-`digit', `numeric', `num'
-     matches 0 through 9.
-
-`control', `cntrl'
-     matches any character whose code is in the range 0-31.
-
-`hex-digit', `hex', `xdigit'
-     matches 0 through 9, a through f and A through F.
-
-`blank'
-     matches horizontal whitespace, as defined by Annex C of the
-     Unicode Technical Standard #18.  In particular, it matches
-     spaces, tabs, and other characters whose Unicode
-     `general-category' property indicates they are spacing
-     separators.
-
-`graphic', `graph'
-     matches graphic characters--everything except whitespace, ASCII
-     and non-ASCII control characters, surrogates, and codepoints
-     unassigned by Unicode.
-
-`printing', `print'
-     matches whitespace and graphic characters.
-
-`alphanumeric', `alnum'
-     matches alphabetic characters and digits.  For multibyte characters,
-     it matches characters whose Unicode `general-category' property
-     indicates they are alphabetic or decimal number characters.
-
-`letter', `alphabetic', `alpha'
-     matches alphabetic characters.  For multibyte characters,
-     it matches characters whose Unicode `general-category' property
-     indicates they are alphabetic characters.
-
-`ascii'
-     matches ASCII (unibyte) characters.
-
-`nonascii'
-     matches non-ASCII (multibyte) characters.
-
-`lower', `lower-case'
-     matches anything lower-case, as determined by the current case
-     table.  If `case-fold-search' is non-nil, this also matches any
-     upper-case letter.
-
-`upper', `upper-case'
-     matches anything upper-case, as determined by the current case
-     table.  If `case-fold-search' is non-nil, this also matches any
-     lower-case letter.
-
-`punctuation', `punct'
-     matches punctuation.  (But at present, for multibyte characters,
-     it matches anything that has non-word syntax.)
-
-`space', `whitespace', `white'
-     matches anything that has whitespace syntax.
-
-`word', `wordchar'
-     matches anything that has word syntax.
-
-`not-wordchar'
-     matches anything that has non-word syntax.
-
-`(syntax SYNTAX)'
-     matches a character with syntax SYNTAX.  SYNTAX must be one
-     of the following symbols, or a symbol corresponding to the syntax
-     character, e.g. `\\.' for `\\s.'.
-
-     `whitespace'		(\\s- in string notation)
-     `punctuation'		(\\s.)
-     `word'			(\\sw)
-     `symbol'			(\\s_)
-     `open-parenthesis'		(\\s()
-     `close-parenthesis'	(\\s))
-     `expression-prefix'	(\\s')
-     `string-quote'		(\\s\")
-     `paired-delimiter'		(\\s$)
-     `escape'			(\\s\\)
-     `character-quote'		(\\s/)
-     `comment-start'		(\\s<)
-     `comment-end'		(\\s>)
-     `string-delimiter'		(\\s|)
-     `comment-delimiter'	(\\s!)
-
-`(not (syntax SYNTAX))'
-     matches a character that doesn't have syntax SYNTAX.
-
-`(category CATEGORY)'
-     matches a character with category CATEGORY.  CATEGORY must be
-     either a character to use for C, or one of the following symbols.
-
-     `space-for-indent'                 (\\c\\s in string notation)
-     `base'                             (\\c.)
-     `consonant'			(\\c0)
-     `base-vowel'			(\\c1)
-     `upper-diacritical-mark'		(\\c2)
-     `lower-diacritical-mark'		(\\c3)
-     `tone-mark'		        (\\c4)
-     `symbol'			        (\\c5)
-     `digit'			        (\\c6)
-     `vowel-modifying-diacritical-mark'	(\\c7)
-     `vowel-sign'			(\\c8)
-     `semivowel-lower'			(\\c9)
-     `not-at-end-of-line'		(\\c<)
-     `not-at-beginning-of-line'		(\\c>)
-     `alpha-numeric-two-byte'		(\\cA)
-     `chinese-two-byte'			(\\cC)
-     `greek-two-byte'			(\\cG)
-     `japanese-hiragana-two-byte'	(\\cH)
-     `indian-two-byte'			(\\cI)
-     `japanese-katakana-two-byte'	(\\cK)
-     `strong-left-to-right'             (\\cL)
-     `korean-hangul-two-byte'		(\\cN)
-     `strong-right-to-left'             (\\cR)
-     `cyrillic-two-byte'		(\\cY)
-     `combining-diacritic'		(\\c^)
-     `ascii'				(\\ca)
-     `arabic'				(\\cb)
-     `chinese'				(\\cc)
-     `ethiopic'				(\\ce)
-     `greek'				(\\cg)
-     `korean'				(\\ch)
-     `indian'				(\\ci)
-     `japanese'				(\\cj)
-     `japanese-katakana'		(\\ck)
-     `latin'				(\\cl)
-     `lao'				(\\co)
-     `tibetan'				(\\cq)
-     `japanese-roman'			(\\cr)
-     `thai'				(\\ct)
-     `vietnamese'			(\\cv)
-     `hebrew'				(\\cw)
-     `cyrillic'				(\\cy)
-     `can-break'			(\\c|)
-
-`(not (category CATEGORY))'
-     matches a character that doesn't have category CATEGORY.
-
-`(and SEXP1 SEXP2 ...)'
-`(: SEXP1 SEXP2 ...)'
-`(seq SEXP1 SEXP2 ...)'
-`(sequence SEXP1 SEXP2 ...)'
-     matches what SEXP1 matches, followed by what SEXP2 matches, etc.
-     Without arguments, matches the empty string.
-
-`(submatch SEXP1 SEXP2 ...)'
-`(group SEXP1 SEXP2 ...)'
-     like `and', but makes the match accessible with `match-end',
-     `match-beginning', and `match-string'.
-
-`(submatch-n N SEXP1 SEXP2 ...)'
-`(group-n N SEXP1 SEXP2 ...)'
-     like `group', but make it an explicitly-numbered group with
-     group number N.
-
-`(or SEXP1 SEXP2 ...)'
-`(| SEXP1 SEXP2 ...)'
-     matches anything that matches SEXP1 or SEXP2, etc.  If all
-     args are strings, use `regexp-opt' to optimize the resulting
-     regular expression.  Without arguments, never matches anything.
-
-`(minimal-match SEXP)'
-     produce a non-greedy regexp for SEXP.  Normally, regexps matching
-     zero or more occurrences of something are \"greedy\" in that they
-     match as much as they can, as long as the overall regexp can
-     still match.  A non-greedy regexp matches as little as possible.
-
-`(maximal-match SEXP)'
-     produce a greedy regexp for SEXP.  This is the default.
-
-Below, `SEXP ...' represents a sequence of regexp forms, treated as if
-enclosed in `(and ...)'.
-
-`(zero-or-more SEXP ...)'
-`(0+ SEXP ...)'
-     matches zero or more occurrences of what SEXP ... matches.
-
-`(* SEXP ...)'
-     like `zero-or-more', but always produces a greedy regexp, independent
-     of `rx-greedy-flag'.
-
-`(*? SEXP ...)'
-     like `zero-or-more', but always produces a non-greedy regexp,
-     independent of `rx-greedy-flag'.
-
-`(one-or-more SEXP ...)'
-`(1+ SEXP ...)'
-     matches one or more occurrences of SEXP ...
-
-`(+ SEXP ...)'
-     like `one-or-more', but always produces a greedy regexp.
-
-`(+? SEXP ...)'
-     like `one-or-more', but always produces a non-greedy regexp.
-
-`(zero-or-one SEXP ...)'
-`(optional SEXP ...)'
-`(opt SEXP ...)'
-     matches zero or one occurrences of A.
-
-`(? SEXP ...)'
-     like `zero-or-one', but always produces a greedy regexp.
-
-`(?? SEXP ...)'
-     like `zero-or-one', but always produces a non-greedy regexp.
-
-`(repeat N SEXP)'
-`(= N SEXP ...)'
-     matches N occurrences.
-
-`(>= N SEXP ...)'
-     matches N or more occurrences.
-
-`(repeat N M SEXP)'
-`(** N M SEXP ...)'
-     matches N to M occurrences.
-
-`(backref N)'
-     matches what was matched previously by submatch N.
-
-`(literal STRING-EXPR)'
-     matches STRING-EXPR literally, where STRING-EXPR is any lisp
-     expression that evaluates to a string.
-
-`(regexp REGEXP-EXPR)'
-     include REGEXP-EXPR in string notation in the result, where
-     REGEXP-EXPR is any lisp expression that evaluates to a
-     string containing a valid regexp.
-
-`(eval FORM)'
-     evaluate FORM and insert result.  If result is a string,
-     `regexp-quote' it.  Note that FORM is evaluated during
-     macroexpansion.
+Each argument is one of the forms below; RX is a subform, and RX... stands
+for one or more RXs.  For details, see Info node `(elisp) Rx Notation'.
+See `rx-to-string' for the corresponding function.
+
+STRING         Match a literal string.
+CHAR           Match a literal character.
+
+\(seq RX...)    Match the RXs in sequence.  Alias: :, sequence, and.
+\(or RX...)     Match one of the RXs.  Alias: |.
+
+\(zero-or-more RX...) Match RXs zero or more times.  Alias: 0+.
+\(one-or-more RX...)  Match RXs one or more times.  Alias: 1+.
+\(zero-or-one RX...)  Match RXs or the empty string.  Alias: opt, optional.
+\(* RX...)       Match RXs zero or more times; greedy.
+\(+ RX...)       Match RXs one or more times; greedy.
+\(? RX...)       Match RXs or the empty string; greedy.
+\(*? RX...)      Match RXs zero or more times; non-greedy.
+\(+? RX...)      Match RXs one or more times; non-greedy.
+\(?? RX...)      Match RXs or the empty string; non-greedy.
+\(= N RX...)     Match RXs exactly N times.
+\(>= N RX...)    Match RXs N or more times.
+\(** N M RX...)  Match RXs N to M times.  Alias: repeat.
+\(minimal-match RX)  Match RX, with zero-or-more, one-or-more, zero-or-one
+                and aliases using non-greedy matching.
+\(maximal-match RX)  Match RX, with zero-or-more, one-or-more, zero-or-one
+                and aliases using greedy matching, which is the default.
+
+\(any SET...)    Match a character from one of the SETs.  Each SET is a
+                character, a string, a range as string \"A-Z\" or cons
+                (?A . ?Z), or a character class (see below).  Alias: in, char.
+\(not CHARSPEC)  Match one character not matched by CHARSPEC.  CHARSPEC
+                can be (any ...), (syntax ...), (category ...),
+                or a character class.
+not-newline     Match any character except a newline.  Alias: nonl.
+anything        Match any character.
+
+CHARCLASS       Match a character from a character class.  One of:
+ alpha, alphabetic, letter   Alphabetic characters (defined by Unicode).
+ alnum, alphanumeric         Alphabetic or decimal digit chars (Unicode).
+ digit numeric, num          0-9.
+ xdigit, hex-digit, hex      0-9, A-F, a-f.
+ cntrl, control              ASCII codes 0-31.
+ blank                       Horizontal whitespace (Unicode).
+ space, whitespace, white    Chars with whitespace syntax.
+ lower, lower-case           Lower-case chars, from current case table.
+ upper, upper-case           Upper-case chars, from current case table.
+ graph, graphic              Graphic characters (Unicode).
+ print, printing             Whitespace or graphic (Unicode).
+ punct, punctuation          Not control, space, letter or digit (ASCII);
+                              not word syntax (non-ASCII).
+ word, wordchar              Characters with word syntax.
+ ascii                       ASCII characters (codes 0-127).
+ nonascii                    Non-ASCII characters (but not raw bytes).
+
+\(syntax SYNTAX)  Match a character with syntax SYNTAX, being one of:
+  whitespace, punctuation, word, symbol, open-parenthesis,
+  close-parenthesis, expression-prefix, string-quote,
+  paired-delimiter, escape, character-quote, comment-start,
+  comment-end, string-delimiter, comment-delimiter
+
+\(category CAT)   Match a character in category CAT, being one of:
+  space-for-indent, base, consonant, base-vowel,
+  upper-diacritical-mark, lower-diacritical-mark, tone-mark, symbol,
+  digit, vowel-modifying-diacritical-mark, vowel-sign,
+  semivowel-lower, not-at-end-of-line, not-at-beginning-of-line,
+  alpha-numeric-two-byte, chinese-two-byte, greek-two-byte,
+  japanese-hiragana-two-byte, indian-two-byte,
+  japanese-katakana-two-byte, strong-left-to-right,
+  korean-hangul-two-byte, strong-right-to-left, cyrillic-two-byte,
+  combining-diacritic, ascii, arabic, chinese, ethiopic, greek,
+  korean, indian, japanese, japanese-katakana, latin, lao,
+  tibetan, japanese-roman, thai, vietnamese, hebrew, cyrillic,
+  can-break
+
+Zero-width assertions: these all match the empty string in specific places.
+ line-start         At the beginning of a line.  Alias: bol.
+ line-end           At the end of a line.  Alias: eol.
+ string-start       At the start of the string or buffer.
+                     Alias: buffer-start, bos, bot.
+ string-end         At the end of the string or buffer.
+                     Alias: buffer-end, eos, eot.
+ point              At point.
+ word-start         At the beginning of a word.
+ word-end           At the end of a word.
+ word-boundary      At the beginning or end of a word.
+ not-word-boundary  Not at the beginning or end of a word.
+ symbol-start       At the beginning of a symbol.
+ symbol-end         At the end of a symbol.
+
+\(group RX...)  Match RXs and define a capture group.  Alias: submatch.
+\(group-n N RX...) Match RXs and define capture group N.  Alias: submatch-n.
+\(backref N)    Match the text that capture group N matched.
+
+\(literal EXPR) Match the literal string from evaluating EXPR at run time.
+\(regexp EXPR)  Match the string regexp from evaluating EXPR at run time.
+\(eval EXPR)    Match the rx sexp from evaluating EXPR at compile time.
 
 \(fn &rest REGEXPS)" nil t)
 
@@ -29218,7 +29057,7 @@ Otherwise, let mailer send back a message to report errors.")
 
 (custom-autoload 'mail-interactive "sendmail" t)
 
-(defvar send-mail-function (if (and (boundp 'smtpmail-smtp-server) smtpmail-smtp-server) 'smtpmail-send-it 'sendmail-query-once) "\
+(defvar send-mail-function (if (and (boundp 'smtpmail-smtp-server) smtpmail-smtp-server) #'smtpmail-send-it #'sendmail-query-once) "\
 Function to call to send the current buffer as mail.
 The headers should be delimited by a line which is
 not a valid RFC 822 (or later) header or continuation line,
@@ -29338,7 +29177,7 @@ before you edit the message, so you can edit or delete the lines.")
 Query for `send-mail-function' and send mail with it.
 This also saves the value of `send-mail-function' via Customize." nil nil)
 
-(define-mail-user-agent 'sendmail-user-agent 'sendmail-user-agent-compose 'mail-send-and-exit)
+(define-mail-user-agent 'sendmail-user-agent #'sendmail-user-agent-compose #'mail-send-and-exit)
 
 (autoload 'sendmail-user-agent-compose "sendmail" "\
 
@@ -30244,6 +30083,116 @@ Turning on snmp-mode runs the hooks in `snmp-common-mode-hook',
 then `snmpv2-mode-hook'." t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "snmp-mode" '("snmp")))
+
+;;;***
+
+;;;### (autoloads nil "so-long" "so-long.el" (0 0 0 0))
+;;; Generated autoloads from so-long.el
+(push (purecopy '(so-long 1 0)) package--builtin-versions)
+
+(autoload 'so-long-commentary "so-long" "\
+View the so-long documentation in `outline-mode'." t nil)
+
+(autoload 'so-long-customize "so-long" "\
+Open the so-long `customize' group." t nil)
+
+(autoload 'so-long-minor-mode "so-long" "\
+This is the minor mode equivalent of `so-long-mode'.
+
+If called interactively, enable So-Long minor mode if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp,
+also enable the mode if ARG is omitted or nil, and toggle it
+if ARG is `toggle'; disable the mode otherwise.
+
+Any active minor modes listed in `so-long-minor-modes' are disabled for the
+current buffer, and buffer-local values are assigned to variables in accordance
+with `so-long-variable-overrides'.
+
+This minor mode is a standard `so-long-action' option.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'so-long-mode "so-long" "\
+This major mode is the default `so-long-action' option.
+
+The normal reason for this mode being active is that `global-so-long-mode' is
+enabled, and `so-long-predicate' has detected that the file contains long lines.
+
+Many Emacs modes struggle with buffers which contain excessively long lines,
+and may consequently cause unacceptable performance issues.
+
+This is commonly on account of 'minified' code (i.e. code has been compacted
+into the smallest file size possible, which often entails removing newlines
+should they not be strictly necessary).  These kinds of files are typically
+not intended to be edited, so not providing the usual editing mode in these
+cases will rarely be an issue.
+
+This major mode disables any active minor modes listed in `so-long-minor-modes'
+for the current buffer, and buffer-local values are assigned to variables in
+accordance with `so-long-variable-overrides'.
+
+To restore the original major mode (along with the minor modes and variable
+values), despite potential performance issues, type \\[so-long-revert].
+
+Use \\[so-long-commentary] for more information.
+
+Use \\[so-long-customize] to configure the behaviour.
+
+\(fn)" t nil)
+
+(autoload 'so-long "so-long" "\
+Invoke `so-long-action' and run `so-long-hook'.
+
+This command is called automatically when long lines are detected, when
+`global-so-long-mode' is enabled.
+
+The effects of the action can be undone by calling `so-long-revert'.
+
+If ACTION is provided, it is used instead of `so-long-action'.  With a prefix
+argument, select the action to use interactively.
+
+\(fn &optional ACTION)" t nil)
+
+(autoload 'so-long-enable "so-long" "\
+Enable the so-long library's functionality.
+
+Equivalent to calling (global-so-long-mode 1)" t nil)
+
+(defvar global-so-long-mode nil "\
+Non-nil if Global So-Long mode is enabled.
+See the `global-so-long-mode' command
+for a description of this minor mode.
+Setting this variable directly does not take effect;
+either customize it (see the info node `Easy Customization')
+or call the function `global-so-long-mode'.")
+
+(custom-autoload 'global-so-long-mode "so-long" nil)
+
+(autoload 'global-so-long-mode "so-long" "\
+Toggle automated performance mitigations for files with long lines.
+
+If called interactively, enable Global So-Long mode if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp,
+also enable the mode if ARG is omitted or nil, and toggle it
+if ARG is `toggle'; disable the mode otherwise.
+
+Many Emacs modes struggle with buffers which contain excessively long lines,
+and may consequently cause unacceptable performance issues.
+
+This is commonly on account of 'minified' code (i.e. code that has been
+compacted into the smallest file size possible, which often entails removing
+newlines should they not be strictly necessary).
+
+When such files are detected by `so-long-predicate', we invoke the selected
+`so-long-action' to mitigate potential performance problems in the buffer.
+
+Use \\[so-long-commentary] for more information.
+
+Use \\[so-long-customize] to configure the behaviour.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "so-long" '("so-long-" "turn-o")))
 
 ;;;***
 
@@ -32433,14 +32382,21 @@ Start a terminal-emulator for a serial port in a new buffer.
 PORT is the path or name of the serial port.  For example, this
 could be \"/dev/ttyS0\" on Unix.  On Windows, this could be
 \"COM1\" or \"\\\\.\\COM10\".
+
 SPEED is the speed of the serial port in bits per second.  9600
 is a common value.  SPEED can be nil, see
 `serial-process-configure' for details.
+
+Usually `term-char-mode' is used, but if LINE-MODE (the prefix
+when used interactively) is non-nil, `term-line-mode' is used
+instead.
+
 The buffer is in Term mode; see `term-mode' for the commands to
 use in that buffer.
+
 \\<term-raw-map>Type \\[switch-to-buffer] to switch to another buffer.
 
-\(fn PORT SPEED)" t nil)
+\(fn PORT SPEED &optional LINE-MODE)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "term" '("ansi-term-color-vector" "explicit-shell-file-name" "serial-" "term-")))
 
@@ -33381,7 +33337,7 @@ Convert the time interval in seconds to a short string.
 
 \(fn DELAY)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time-date" '("encode-time-value" "seconds-to-string" "time-" "with-decoded-time-value")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time-date" '("date-" "decoded-time-" "encode-time-value" "seconds-to-string" "time-" "with-decoded-time-value")))
 
 ;;;***
 
@@ -33837,7 +33793,7 @@ the output buffer or changing the window configuration.
 
 ;;;### (autoloads nil "tramp" "net/tramp.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp.el
-(push (purecopy '(tramp 2 4 2)) package--builtin-versions)
+(push (purecopy '(tramp 2 4 3 -1)) package--builtin-versions)
 
 (defvar tramp-mode t "\
 Whether Tramp is enabled.
@@ -35512,6 +35468,19 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION.
 
 \(fn &optional REMOTE-LOCATION)" t nil)
 
+(autoload 'vc-log-search "vc" "\
+Search the log of changes for PATTERN.
+
+PATTERN is usually interpreted as a regular expression.  However, its
+exact semantics is up to the backend's log search command; some can
+only match fixed strings.
+
+Display all entries that match log messages in long format.
+With a prefix argument, ask for a command to run that will output
+log entries.
+
+\(fn PATTERN)" t nil)
+
 (autoload 'vc-log-mergebase "vc" "\
 Show a log of changes between the merge base of REV1 and REV2 revisions.
 The merge base is a common ancestor between REV1 and REV2 revisions.
@@ -35943,6 +35912,7 @@ Key bindings:
 ;;;### (autoloads nil "verilog-mode" "progmodes/verilog-mode.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from progmodes/verilog-mode.el
+(push (purecopy '(verilog-mode 2019 6 21 103209889)) package--builtin-versions)
 
 (autoload 'verilog-mode "verilog-mode" "\
 Major mode for editing Verilog code.
@@ -36824,8 +36794,8 @@ also enable the mode if ARG is omitted or nil, and toggle it
 if ARG is `toggle'; disable the mode otherwise.
 
 When View mode is enabled, commands that do not change the buffer
-contents are available as usual.  Kill commands insert text in
-kill buffers but do not delete.  Most other commands beep and
+contents are available as usual.  Kill commands save text but
+do not delete it from the buffer.  Most other commands beep and
 tell the user that the buffer is read-only.
 
 \\<view-mode-map>
