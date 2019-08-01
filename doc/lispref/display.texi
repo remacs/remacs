@@ -5777,8 +5777,13 @@ circle:
 @end lisp
 
 
-@node SVG Path Commands
-@subsubsection SVG Path Commands
+@subsubheading SVG Path Commands
+
+@cindex svg path commands
+@anchor{SVG Path Commands}
+@dfn{SVG paths} allow creation of complex images by combining lines,
+curves, arcs, and other basic shapes.  The functions described below
+allow invoking SVG path commands from a Lisp program.
 
 @deffn Command moveto points
 Move the pen to the first point in @var{points}.  Additional points
