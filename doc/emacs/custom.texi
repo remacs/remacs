@@ -1563,7 +1563,8 @@ self-inserting because the global keymap binds it to the command
 such as @kbd{C-a} also get their standard meanings from the global
 keymap.  Commands to rebind keys, such as @kbd{M-x global-set-key},
 work by storing the new binding in the proper place in the global map
-(@pxref{Rebinding}).
+(@pxref{Rebinding}).  To view the current key bindings, use the
+@kbd{C-h b} command.
 
 @cindex function key
   Most modern keyboards have function keys as well as character keys.
