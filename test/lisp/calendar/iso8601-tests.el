@@ -228,14 +228,14 @@
   ;; A time interval starting at 20 minutes and 50 seconds past 23
   ;; hours on 12 April 1985 and ending at 30 minutes past 10 hours on
   ;; 25 June 1985.
-  (should (equal (iso8601-parse-interval "19850412T232050/19850625T103000")
-                 '((50 20 23 12 4 1985 nil nil nil)
-                   (0 30 10 25 6 1985 nil nil nil)
+  (should (equal (iso8601-parse-interval "19850412T232050Z/19850625T103000Z")
+                 '((50 20 23 12 4 1985 nil nil 0)
+                   (0 30 10 25 6 1985 nil nil 0)
                    (10 9 11 15 3 1970 0 nil 0))))
   (should (equal (iso8601-parse-interval
-                  "1985-04-12T23:20:50/1985-06-25T10:30:00")
-                 '((50 20 23 12 4 1985 nil nil nil)
-                   (0 30 10 25 6 1985 nil nil nil)
+                  "1985-04-12T23:20:50Z/1985-06-25T10:30:00Z")
+                 '((50 20 23 12 4 1985 nil nil 0)
+                   (0 30 10 25 6 1985 nil nil 0)
                    (10 9 11 15 3 1970 0 nil 0))))
 
   ;; A time interval starting at 12 April 1985 and ending on 25 June
