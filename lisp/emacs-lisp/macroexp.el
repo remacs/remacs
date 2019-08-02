@@ -33,7 +33,8 @@
 (defvar macroexpand-all-environment nil)
 
 (defun macroexp--cons (car cdr original-cons)
-  "Return (CAR . CDR), using ORIGINAL-CONS if possible."
+  "Return ORIGINAL-CONS if the car/cdr of it is `eq' to CAR and CDR, respectively.
+If not, return (CAR . CDR)."
   (if (and (eq car (car original-cons)) (eq cdr (cdr original-cons)))
       original-cons
     (cons car cdr)))
