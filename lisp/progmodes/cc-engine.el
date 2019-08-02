@@ -271,6 +271,11 @@
     (setcdr c-macro-cache nil)
     (setq c-macro-cache-start-pos beg
 	  c-macro-cache-syntactic nil
+	  c-macro-cache-no-comment nil))
+   ((and c-macro-cache-start-pos
+	 (< beg c-macro-cache-start-pos))
+    (setq c-macro-cache-start-pos beg
+	  c-macro-cache-syntactic nil
 	  c-macro-cache-no-comment nil))))
 
 (defun c-macro-is-genuine-p ()
