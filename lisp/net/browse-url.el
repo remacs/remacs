@@ -169,7 +169,9 @@ If the value is not a function it should be a list of pairs
 \(REGEXP . FUNCTION).  In this case the function called will be the one
 associated with the first REGEXP which matches the current URL.  The
 function is passed the URL and any other args of `browse-url'.  The last
-regexp should probably be \".\" to specify a default browser."
+regexp should probably be \".\" to specify a default browser.
+
+Also see `browse-url-secondary-browser-function'."
   :type browse-url--browser-defcustom-type
   :version "24.1")
 
@@ -178,7 +180,9 @@ regexp should probably be \".\" to specify a default browser."
 This is usually an external browser (that is, not eww or w3m),
 used as the secondary browser choice, typically when a prefix
 argument is given to a URL-opening command in those modes that
-support this (for instance, eww/shr)."
+support this (for instance, eww/shr).
+
+Also see `browse-url-browser-function'."
   :version "27.1"
   :type browse-url--browser-defcustom-type)
 
