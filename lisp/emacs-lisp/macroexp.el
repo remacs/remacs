@@ -319,7 +319,8 @@ definitions to shadow the loaded ones for use in file byte-compilation."
     (cons (nreverse decls) body)))
 
 (defun macroexp-progn (exps)
-  "Return an expression equivalent to \\=`(progn ,@EXPS)."
+  "Return EXPS with `progn' prepended.
+If EXPS is a single expression, `progn' is not prepended."
   (if (cdr exps) `(progn ,@exps) (car exps)))
 
 (defun macroexp-unprogn (exp)
@@ -328,7 +329,7 @@ Never returns an empty list."
   (if (eq (car-safe exp) 'progn) (or (cdr exp) '(nil)) (list exp)))
 
 (defun macroexp-let* (bindings exp)
-  "Return an expression equivalent to \\=`(let* ,bindings ,exp)."
+  "Return an expression equivalent to \\=`(let* ,BINDINGS ,EXP)."
   (cond
    ((null bindings) exp)
    ((eq 'let* (car-safe exp)) `(let* (,@bindings ,@(cadr exp)) ,@(cddr exp)))
