@@ -45,6 +45,13 @@ following command may do the trick.  See xrdb(1) for more information.
 
   $ xrdb -merge ~/.Xresources
 
+** Emacs compiled with Cairo crashes when restoring session from desktop file.
+
+This can happen if the '.emacs.desktop' file contains setting for
+'font-backend' frame parameter.  A workaround is to delete the
+offending '.emacs.desktop' file, or edit it to remove the setting of
+'font-backend'.
+
 ** Emacs aborts while starting up, only when run without X.
 
 This problem often results from compiling Emacs with GCC when GCC was
