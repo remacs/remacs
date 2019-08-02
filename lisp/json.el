@@ -772,25 +772,60 @@ With prefix argument MINIMIZE, minimize it instead."
         (json-null :json-null)
         ;; Ensure that ordering is maintained
         (json-object-type 'alist)
-        (err (gensym))
-        json)
-    (replace-region-contents
-     begin end
-     (lambda ()
-       (let ((pretty ""))
-         (save-restriction
-           (narrow-to-region begin end)
-           (goto-char begin)
-           (while (not (eq (setq json (condition-case nil
-                                          (json-read)
-                                        (json-error err)))
-                           err))
-             (setq pretty (concat pretty (json-encode json)))))
-         pretty))
-     json-pretty-print-max-secs
-     ;; FIXME: What's a good value here?  Can we use something better,
-     ;; e.g., by deriving a value from the size of the region?
-     64)))
+        (orig-buf (current-buffer))
+        error)
+    ;; Strategy: Repeatedly `json-read' from the original buffer and
+    ;; write the pretty-printed snippet to a temporary buffer.  As
+    ;; soon as we get an error from `json-read', simply append the
+    ;; remainder which we couldn't pretty-print to the temporary
+    ;; buffer as well (probably the region ends _inside_ a JSON
+    ;; object).
+    ;;
+    ;; Finally, use `replace-region-contents' to swap the original
+    ;; region with the contents of the temporary buffer so that point,
+    ;; marks, etc. are kept.
+    (with-temp-buffer
+      (let ((tmp-buf (current-buffer)))
+        (set-buffer orig-buf)
+        (replace-region-contents
+         begin end
+         (lambda ()
+           (let ((pos (point))
+                 (keep-going t))
+             (while keep-going
+               (condition-case err
+                   ;; We want to format only the JSON snippets in the
+                   ;; region without modifying the whitespace between
+                   ;; them.
+                   (let ((space (buffer-substring
+                                 (point)
+                                 (+ (point)
+                                    (skip-chars-forward
+                                     " \t\n" (point-max)))))
+                         (json (json-read)))
+                     (setq pos (point)) ; End of last good json-read.
+                     (set-buffer tmp-buf)
+                     (insert space (json-encode json))
+                     (set-buffer orig-buf))
+                 (t
+                  (setq keep-going nil)
+                  (set-buffer orig-buf)
+                  ;; Rescue the remainder we couldn't pretty-print.
+                  (append-to-buffer tmp-buf pos (point-max))
+                  ;; EOF is expected because we json-read until we hit
+                  ;; the end of the narrow region.
+                  (unless (eq (car err) 'json-end-of-file)
+                    (setq error err)))))
+             tmp-buf))
+         json-pretty-print-max-secs
+         ;; FIXME: What's a good value here?  Can we use something better,
+         ;; e.g., by deriving a value from the size of the region?
+         64)))
+    ;; If we got an error during JSON processing (possibly the region
+    ;; starts or ends inside a JSON object), signal it to the user.
+    ;; We did our best.
+    (when error
+      (signal (car error) (cdr error)))))
 
 (defun json-pretty-print-buffer-ordered (&optional minimize)
   "Pretty-print current buffer with object keys ordered.
