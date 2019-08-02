@@ -1397,7 +1397,7 @@ the file watch."
         ;; active.  We receive the `deleted' event from both the
         ;; directory and the file monitor.  The `stopped' event is
         ;; from the file monitor.  It's undecided in which order the
-        ;; the directory and the file monitor are triggered.
+        ;; directory and the file monitor are triggered.
         (file-notify--test-with-actions '(:random deleted deleted stopped)
           (delete-file file-notify--test-tmpfile1))
         (should (file-notify-valid-p file-notify--test-desc1))
