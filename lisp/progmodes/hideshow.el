@@ -97,7 +97,8 @@
 ;; nested level in addition to the top-level:
 ;;
 ;;   (defun ttn-hs-hide-level-1 ()
-;;     (hs-hide-level 1)
+;;     (when (hs-looking-at-block-start-p)
+;;       (hs-hide-level 1))
 ;;     (forward-sexp 1))
 ;;   (setq hs-hide-all-non-comment-function 'ttn-hs-hide-level-1)
 ;;
