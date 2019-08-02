@@ -175,10 +175,10 @@ regexp should probably be \".\" to specify a default browser."
 
 (defcustom browse-url-secondary-browser-function 'browse-url-default-browser
   "Function used to launch an alternative browser.
-This should usually be an external browser (that is, not eww or
-w3m), used as the secondary browser choice, and is typically used
-when giving a prefix argument to the URL-opening command (in
-those modes that support this (for instance, eww/shr)."
+This is usually an external browser (that is, not eww or w3m),
+used as the secondary browser choice, typically when a prefix
+argument is given to a URL-opening command in those modes that
+support this (for instance, eww/shr)."
   :version "27.1"
   :type browse-url--browser-defcustom-type)
 
@@ -1700,7 +1700,7 @@ If `current-prefix-arg' is non-nil, use
     (browse-url url)))
 
 (defun browse-url-button-copy ()
-  "Copy the URL under point"
+  "Copy the URL under point."
   (interactive)
   (let ((url (get-text-property (point) 'browse-url-data)))
     (unless url
