@@ -1542,7 +1542,7 @@ Currently (2016-08) only used in C++ mode."
 
 (c-lang-defconst c-pre-lambda-tokens-re
   ;; Regexp matching any token in the list `c-pre-lambda-tokens'.
-  t (regexp-opt (c-lang-const c-pre-lambda-tokens)))
+  t (c-make-keywords-re t (c-lang-const c-pre-lambda-tokens)))
 (c-lang-defvar c-pre-lambda-tokens-re (c-lang-const c-pre-lambda-tokens-re))
 
 ;;; Syntactic whitespace.
