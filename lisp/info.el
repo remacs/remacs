@@ -882,6 +882,7 @@ just return nil (no error).
 
 If NO-POP-TO-DIR, don't try to pop to the info buffer if we can't
 find a node."
+  (info-initialize)
   ;; Convert filename to lower case if not found as specified.
   ;; Expand it.
   (cond
