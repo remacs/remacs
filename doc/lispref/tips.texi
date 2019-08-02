@@ -958,7 +958,7 @@ explains these conventions, starting with an example:
 ;; Created: 14 Jul 2010
 @group
 ;; Keywords: languages
-;; Homepage: http://example.com/foo
+;; URL: http://example.com/foo
 
 ;; This file is not part of GNU Emacs.
 

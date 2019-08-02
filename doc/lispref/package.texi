@@ -158,7 +158,7 @@ the various headers, as illustrated by the following example:
 ;; Author: J. R. Hacker <jrh@@example.com>
 ;; Version: 1.3
 ;; Package-Requires: ((flange "1.0"))
-;; Keywords: multimedia, frobnicate
+;; Keywords: multimedia, hypermedia
 ;; URL: http://example.com/jrhacker/superfrobnicate
 
 @dots{}
