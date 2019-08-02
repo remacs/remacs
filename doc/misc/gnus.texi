@@ -2917,9 +2917,9 @@ See also @code{gnus-total-expirable-newsgroups}.
 If the group parameter has an element that looks like
 @code{(expiry-wait . 10)}, this value will override any
 @code{nnmail-expiry-wait} and @code{nnmail-expiry-wait-function}
-(@pxref{Expiring Mail}) when expiring expirable messages.  The value
-can either be a number of days (not necessarily an integer) or the
-symbols @code{never} or @code{immediate}.
+settings (@pxref{Expiring Mail}) when expiring expirable messages.
+The value can be either a number of days (not necessarily an integer),
+or one of the symbols @code{never} or @code{immediate}.
 
 @item expiry-target
 @cindex expiry-target
@@ -15826,40 +15826,46 @@ don't really mix very well.
 
 @vindex nnmail-expiry-wait
 The @code{nnmail-expiry-wait} variable supplies the default time an
-expirable article has to live.  Gnus starts counting days from when the
-message @emph{arrived}, not from when it was sent.  The default is seven
-days.
+expirable article has to live.  The value of this variable can be
+either a number of days (not necessarily an integer), or one of the
+symbols @code{immediate} or @code{never}, meaning an article is
+immediately or never expirable, respectively.
 
-Gnus also supplies a function that lets you fine-tune how long articles
-are to live, based on what group they are in.  Let's say you want to
-have one month expiry period in the @samp{mail.private} group, a one day
-expiry period in the @samp{mail.junk} group, and a six day expiry period
-everywhere else:
+Gnus starts counting days from when the message @emph{arrived}, not
+from when it was sent.  The default is seven days.
 
 @vindex nnmail-expiry-wait-function
+The @code{nnmail-expiry-wait-function} variable lets you fine-tune how
+long articles are to live, based on what group they are in.  When set
+to a function, its returned value, if non-@code{nil}, overrides that
+of @code{nnmail-expiry-wait}.  Otherwise, the value of
+@code{nnmail-expiry-wait} is used instead.
+
+For example, let's say you want to have a one month expiry period in
+the @samp{mail.private} group, a one day expiry period in the
+@samp{mail.junk} group, and a six day expiry period everywhere else.
+This can be achieved as follows:
+
 @lisp
 (setq nnmail-expiry-wait-function
       (lambda (group)
-       (cond ((string= group "mail.private")
+        (cond ((string= group "mail.private")
                31)
-             ((string= group "mail.junk")
+              ((string= group "mail.junk")
                1)
-             ((string= group "important")
+              ((string= group "important")
                'never)
-             (t
+              (t
                6))))
 @end lisp
 
 The group names this function is fed are ``unadorned'' group
 names---no @samp{nnml:} prefixes and the like.
 
-The @code{nnmail-expiry-wait} variable and
-@code{nnmail-expiry-wait-function} function can either be a number (not
-necessarily an integer) or one of the symbols @code{immediate} or
-@code{never}.
-
-You can also use the @code{expiry-wait} group parameter to selectively
-change the expiry period (@pxref{Group Parameters}).
+As an alternative to the variables @code{nnmail-expiry-wait} or
+@code{nnmail-expiry-wait-function}, you can also use the
+@code{expiry-wait} group parameter to selectively change the expiry
+period (@pxref{Group Parameters}).
 
 @vindex nnmail-expiry-target
 The normal action taken when expiring articles is to delete them.
