@@ -2872,7 +2872,10 @@ is part of a file name (i.e., has the text property `dired-filename')."
 ;;;###autoload
 (defun dired-do-search (regexp)
   "Search through all marked files for a match for REGEXP.
+If no files are marked, search through the file under point.
+
 Stops when a match is found.
+
 To continue searching for next match, use command \\[fileloop-continue]."
   (interactive "sSearch marked files (regexp): ")
   (fileloop-initialize-search
@@ -2909,6 +2912,9 @@ with the command \\[tags-loop-continue]."
 ;;;###autoload
 (defun dired-do-find-regexp (regexp)
   "Find all matches for REGEXP in all marked files.
+
+If no files are marked, use the file under point.
+
 For any marked directory, all of its files are searched recursively.
 However, files matching `grep-find-ignored-files' and subdirectories
 matching `grep-find-ignored-directories' are skipped in the marked
@@ -2941,6 +2947,9 @@ REGEXP should use constructs supported by your local `grep' command."
 ;;;###autoload
 (defun dired-do-find-regexp-and-replace (from to)
   "Replace matches of FROM with TO, in all marked files.
+
+If no files are marked, use the file under point.
+
 For any marked directory, matches in all of its files are replaced,
 recursively.  However, files matching `grep-find-ignored-files'
 and subdirectories matching `grep-find-ignored-directories' are skipped
