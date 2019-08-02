@@ -1681,9 +1681,15 @@ This should be an executable on your path, or an absolute file name."
 
 ;;;###autoload
 (defun pdb (command-line)
-  "Run pdb on program FILE in buffer `*gud-FILE*'.
-The directory containing FILE becomes the initial working directory
-and source-file directory for your debugger."
+  "Run COMMAND-LINE in the `*gud-FILE*' buffer.
+
+COMMAND-LINE should include the pdb executable
+name (`gud-pdb-command-name') and the file to be debugged.
+
+If called interactively, the command line will be prompted for.
+
+The directory containing this file becomes the initial working
+directory and source-file directory for your debugger."
   (interactive
    (list (gud-query-cmdline 'pdb)))
 
