@@ -1257,7 +1257,7 @@ or a list (if FROMKILLED is t, it's a list on the format (NUM
 INFO-LIST), otherwise it's a list in the format of the
 `gnus-newsrc-hashtb' entries.  LEVEL is the new level of the
 group, OLDLEVEL is the old level and PREVIOUS is the group (a
-string name) to insert this group after."
+string name) to insert this group before."
   (let (group info active num)
     ;; Glean what info we can from the arguments.
     (if (consp entry)
@@ -1343,10 +1343,8 @@ string name) to insert this group after."
 	  (puthash group (list num info) gnus-newsrc-hashtb)
 	  (when (stringp previous)
 	    (setq previous (gnus-group-entry previous)))
-	  (let* ((prev-idx (seq-position gnus-group-list (caadr previous)))
-		 (idx (if prev-idx
-			  (1+ prev-idx)
-			(length gnus-group-list))))
+	  (let ((idx (or (seq-position gnus-group-list (caadr previous))
+			 (length gnus-group-list))))
 	    (push group (nthcdr idx gnus-group-list)))
 	  (gnus-dribble-enter
 	   (format "(gnus-group-set-info '%S)" info)
