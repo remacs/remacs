@@ -598,7 +598,7 @@ endif
 ##
 $(etc)/DOC: lisp.mk $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
 	$(AM_V_GEN)$(MKDIR_P) $(etc)
-	-$(AM_V_at)rm -f $(etc)/DOC
+	$(AM_V_at)rm -f $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -d $(srcdir) \
 	  $(SOME_MACHINE_OBJECTS) $(obj) > $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -a $(etc)/DOC -d $(lispsource) \
@@ -699,9 +699,11 @@ mostlyclean:
 	rm -f buildobj.h
 	rm -f globals.h gl-stamp
 	rm -f ./*.res ./*.tmp
-clean: mostlyclean
-	rm -f emacs-*.*.*[0-9]$(EXEEXT) emacs-*.*.*[0-9].pdmp
-	rm -f emacs$(EXEEXT) $(DEPDIR)/*
+versionclean:
+	rm -f emacs$(EXEEXT) emacs-*.*.*[0-9]$(EXEEXT) emacs-*.*.*[0-9].pdmp
+	rm -f ../etc/DOC*
+clean: mostlyclean versionclean
+	rm -f $(DEPDIR)/*
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
 ## It should remove all files generated during a compilation/bootstrap,
@@ -720,10 +722,8 @@ distclean: bootstrap-clean
 
 maintainer-clean: distclean
 	rm -f TAGS
-versionclean:
-	-rm -f emacs$(EXEEXT) emacs-*.*.*[0-9]$(EXEEXT) ../etc/DOC*
 extraclean: distclean
-	-rm -f ./*~ \#* TAGS config.in
+	rm -f ./*~ \#* TAGS config.in
 
 
 ETAGS = ../lib-src/etags${EXEEXT}

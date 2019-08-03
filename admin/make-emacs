@@ -109,7 +109,7 @@ if (@ARGV && $ARGV[0] eq "all")
     shift @ARGV;
   }
 
-system ("$make clean versionclean") if $all;
+system ("$make clean") if $all;
 
 if ($wall)
   {
