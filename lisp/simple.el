@@ -1125,8 +1125,9 @@ delete the text in the region and deactivate the mark instead.
 To disable this, set option `delete-active-region' to nil.
 
 Optional second arg KILLFLAG, if non-nil, means to kill (save in
-kill ring) instead of delete.  Interactively, N is the prefix
-arg, and KILLFLAG is set if N is explicitly specified.
+kill ring) instead of delete.  If called interactively, a numeric
+prefix argument specifies N, and KILLFLAG is also set if a prefix
+argument is used.
 
 When killing, the killed text is filtered by
 `filter-buffer-substring' before it is saved in the kill ring, so
@@ -1166,8 +1167,9 @@ delete the text in the region and deactivate the mark instead.
 To disable this, set variable `delete-active-region' to nil.
 
 Optional second arg KILLFLAG non-nil means to kill (save in kill
-ring) instead of delete.  Interactively, N is the prefix arg, and
-KILLFLAG is set if N was explicitly specified.
+ring) instead of delete.  If called interactively, a numeric
+prefix argument specifies N, and KILLFLAG is also set if a prefix
+argument is used.
 
 When killing, the killed text is filtered by
 `filter-buffer-substring' before it is saved in the kill ring, so
