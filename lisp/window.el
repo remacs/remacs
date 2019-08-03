@@ -666,8 +666,9 @@ new window to that atomic window.  Operations like `split-window'
 or `delete-window', when applied to a constituent of an atomic
 window, are applied atomically to the root of that atomic window.
 
-ALIST is an association list of symbols and values.  The
-following symbols can be used.
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.  The following symbols can be used:
 
 `window' specifies the existing window the new window shall be
   combined with.  Use `window-atom-root' to make the new window a
@@ -1000,8 +1001,10 @@ and may be called only if no window on SIDE exists yet."
 
 (defun display-buffer-in-side-window (buffer alist)
   "Display BUFFER in a side window of the selected frame.
-ALIST is an association list of symbols and values.  The
-following special symbols can be used in ALIST.
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+The following special symbols can be used in ALIST:
 
  `side' denotes the side of the frame where the new window shall
    be located.  Valid values are `bottom', `right', `top' and
@@ -7285,6 +7288,10 @@ The default predicate is to use any frame other than the selected
 frame.  If successful, return the window used; otherwise return
 nil.
 
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST has a non-nil `inhibit-switch-frame' entry, avoid
 raising the frame.
 
@@ -7314,10 +7321,15 @@ that allows the selected frame)."
 
 (defun display-buffer-same-window (buffer alist)
   "Display BUFFER in the selected window.
-This fails if ALIST has an `inhibit-same-window' element whose
-value is non-nil, or if the selected window is a minibuffer
-window or is dedicated to another buffer; in that case, return nil.
-Otherwise, return the selected window."
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
+This function fails if ALIST has an `inhibit-same-window'
+element whose value is non-nil, or if the selected window is a
+minibuffer window or is dedicated to another buffer; in that case,
+return nil.  Otherwise, return the selected window."
   (unless (or (cdr (assq 'inhibit-same-window alist))
 	      (window-minibuffer-p)
 	      (window-dedicated-p))
@@ -7325,6 +7337,11 @@ Otherwise, return the selected window."
 
 (defun display-buffer--maybe-same-window (buffer alist)
   "Conditionally display BUFFER in the selected window.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If `same-window-p' returns non-nil for BUFFER's name, call
 `display-buffer-same-window' and return its value.  Otherwise,
 return nil."
@@ -7335,6 +7352,10 @@ return nil."
   "Return a window that is already displaying BUFFER.
 Preferably use a window on the selected frame if such a window
 exists.  Return nil if no usable window is found.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
 
 If ALIST has a non-nil 'inhibit-same-window' entry, the selected
 window is not eligible for reuse.
@@ -7390,6 +7411,10 @@ that frame."
   "Return a window based on the mode of the buffer it displays.
 Display BUFFER in the returned window.  Return nil if no usable
 window is found.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
 
 If ALIST contains a `mode' entry, its value is a major mode (a
 symbol) or a list of modes.  A window is a candidate if it
@@ -7470,6 +7495,10 @@ See `display-buffer' for the format of display actions."
 This works by calling `pop-up-frame-function'.  If successful,
 return the window used; otherwise return nil.
 
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST has a non-nil `inhibit-switch-frame' entry, avoid
 raising the new frame.
 
@@ -7495,6 +7524,10 @@ new frame."
 The new window is created on the selected frame, or in
 `last-nonminibuffer-frame' if no windows can be created there.
 If successful, return the new window; otherwise return nil.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
 
 If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
 event that the new window is created on another frame, avoid
@@ -7524,6 +7557,10 @@ raising the frame."
 If `pop-up-frames' is non-nil (and not `graphic-only' on a
 text-only terminal), try with `display-buffer-pop-up-frame'.
 
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If that cannot be done, and `pop-up-windows' is non-nil, try
 again with `display-buffer-pop-up-window'."
   (or (display-buffer--maybe-pop-up-frame buffer alist)
@@ -7532,7 +7569,11 @@ again with `display-buffer-pop-up-window'."
 (defun display-buffer--maybe-pop-up-frame (buffer alist)
   "Try displaying BUFFER based on `pop-up-frames'.
 If `pop-up-frames' is non-nil (and not `graphic-only' on a
-text-only terminal), try with `display-buffer-pop-up-frame'."
+text-only terminal), try with `display-buffer-pop-up-frame'.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists."
   (and (if (eq pop-up-frames 'graphic-only)
 	   (display-graphic-p)
 	 pop-up-frames)
@@ -7549,6 +7590,10 @@ If `pop-up-windows' is non-nil, try with `display-buffer-pop-up-window'."
 By default, this either reuses a child frame of the selected
 frame or makes a new child frame of the selected frame.  If
 successful, return the window used; otherwise return nil.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
 
 If ALIST has a non-nil 'child-frame-parameters' entry, the
 corresponding value is an alist of frame parameters to give the
@@ -7653,6 +7698,11 @@ ALIST is a buffer display alist."
 
 (defun display-buffer-in-direction (buffer alist)
   "Try to display BUFFER in a direction specified by ALIST.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 ALIST has to contain a 'direction' entry whose value should be
 one of 'left', 'above' (or 'up'), 'right', and 'below' (or
 'down').  Other values are usually interpreted as 'below'.
@@ -7741,6 +7791,10 @@ create a new window below the selected one and show BUFFER there.
 If that attempt fails as well and there is a non-dedicated window
 below the selected one, use that window.
 
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST contains a 'window-min-height' entry, this function
 ensures that the window used is or can become at least as high as
 specified by that entry's value.  Note that such an entry alone
@@ -7795,7 +7849,11 @@ must also contain a 'window-height' entry with the same value."
 This either reuses such a window provided it shows BUFFER
 already, splits a window at the bottom of the frame or the
 frame's root window, or reuses some window at the bottom of the
-selected frame."
+selected frame.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists."
   (let (bottom-window bottom-window-shows-buffer window)
     (walk-window-tree
      (lambda (window)
@@ -7819,6 +7877,11 @@ selected frame."
 
 (defun display-buffer-in-previous-window (buffer alist)
   "Display BUFFER in a window previously showing it.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST has a non-nil `inhibit-same-window' entry, the selected
 window is not usable.  A dedicated window is usable only if it
 already shows BUFFER.  If ALIST contains a `previous-window'
@@ -7890,6 +7953,10 @@ apply the following order of preference:
 Search for a usable window, set that window to the buffer, and
 return the window.  If no suitable window is found, return nil.
 
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
 event that a window in another frame is chosen, avoid raising
 that frame."
@@ -7930,6 +7997,11 @@ that frame."
 
 (defun display-buffer-no-window (_buffer alist)
   "Display BUFFER in no window.
+
+ALIST is an association list of action symbols and values.
+See Info node `(elisp) Buffer Display Action Alists' for
+details of such alists.
+
 If ALIST has a non-nil `allow-no-window' entry, then don't display
 a window at all.  This makes possible to override the default action
 and avoid displaying the buffer.  It is assumed that when the caller
