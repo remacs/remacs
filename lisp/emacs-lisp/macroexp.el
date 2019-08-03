@@ -319,8 +319,9 @@ definitions to shadow the loaded ones for use in file byte-compilation."
     (cons (nreverse decls) body)))
 
 (defun macroexp-progn (exps)
-  "Return EXPS with `progn' prepended.
-If EXPS is a single expression, `progn' is not prepended."
+  "Return EXPS (a list of expressions) with `progn' prepended.
+If EXPS is a list with a single expression, `progn' is not
+prepended, but that expression is returned instead."
   (if (cdr exps) `(progn ,@exps) (car exps)))
 
 (defun macroexp-unprogn (exp)
