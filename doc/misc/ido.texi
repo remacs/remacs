@@ -65,6 +65,7 @@ Appendices
 * GNU Free Documentation License::  The license for this documentation.
 
 Indexes
+* Function Index::              An entry for each documented function.
 * Variable Index::              An entry for each documented variable.
 
 @detailmenu
@@ -175,6 +176,7 @@ record.
 @end defopt
 
 @c see (info "(elisp) File Name Completion")
+@findex ido-reread-directory
 @defopt ido-max-dir-file-cache
 This user option specifies maximum number of working directories to be
 cached.  This is the size of the cache of
@@ -246,6 +248,7 @@ end of the list by pressing @kbd{C-s} or @kbd{<right>}, or bring the
 last element to the head of the list by pressing @kbd{C-r} or
 @kbd{<left>}.
 
+@findex ido-complete
 The item in [...] indicates what can be added to your input by
 pressing @key{TAB} (@code{ido-complete}).  In this case, you will get
 "3" added to your input.
@@ -271,6 +274,7 @@ Since there is only one matching buffer left, it is given in [] and it
 is shown in the @code{ido-only-match} face (ForestGreen).  You can now
 press @key{TAB} or @key{RET} to go to that buffer.
 
+@findex ido-select-text
 If you want to create a new buffer named @file{234}, you can press
 @kbd{C-j} (@code{ido-select-text}) instead of @key{TAB} or @key{RET}.
 
@@ -289,6 +293,7 @@ the quickest way to get to the @file{123456} file would be just to
 type @kbd{4} and then @key{RET} (assuming there isn't any newer buffer
 with @kbd{4} in its name).
 
+@findex ido-find-file
 Likewise, if you use @kbd{C-x C-f} (@code{ido-find-file}), the list of
 files and directories in the current directory is provided in the same
 fashion as the buffers above.  The files and directories are normally
@@ -367,6 +372,7 @@ users Ido offers in addition to the default substring matching method
 the only difference to the description of the substring matching
 above.
 
+@findex ido-toggle-prefix
 @cindex toggle prefix matching
 You can toggle prefix matching with @kbd{C-p}
 (@code{ido-toggle-prefix}).
@@ -413,6 +419,7 @@ you to type @samp{[ch]$} for example and see all file names ending in
 @samp{c} or @samp{h}.
 
 @defopt ido-enable-regexp
+@findex ido-toggle-regexp
 If the value of this user option is non-@code{nil}, Ido will do regexp
 matching.  The value of this user option can be toggled within
 ido-mode using @code{ido-toggle-regexp}.
@@ -426,6 +433,7 @@ enable regexp matching.
 @cindex highlighting
 
 @noindent
+@vindex ido-use-faces
 The highlighting of matching items is controlled via
 @code{ido-use-faces}.  The faces used are @code{ido-first-match},
 @code{ido-only-match} and @code{ido-subdir}.
@@ -443,6 +451,7 @@ substring you enter does not match any of the visible buffers or
 files, Ido will automatically look for completions among the hidden
 buffers or files.
 
+@findex ido-toggle-ignore
 You can toggle display of the hidden buffers and files with @kbd{C-a}
 (@code{ido-toggle-ignore}).
 
@@ -466,6 +475,7 @@ or customize a certain variable:
 M-x customize-variable @key{RET} ido-xxxxx @key{RET}
 @end example
 
+@vindex ido-setup-hook
 To modify the keybindings, use the @code{ido-setup-hook}.  For example:
 
 @example
@@ -575,6 +585,7 @@ enable it:
 (setq ido-ignore-extensions t)
 @end example
 
+@vindex completion-ignored-extensions
 Now you can customize @code{completion-ignored-extensions} as well.
 Go ahead and add all the useless object files, backup files, shared
 library files and other computing flotsam you don't want Ido to show.
@@ -793,10 +804,10 @@ buffer name, a file name, or a directory name in the @emph{Ido} way.
 @appendix GNU Free Documentation License
 @include doclicense.texi
 
-@c @node Function Index
-@c @unnumbered Function Index
+@node Function Index
+@unnumbered Function Index
 
-@c @printindex fn
+@printindex fn
 
 @node Variable Index
 @unnumbered Variable Index
