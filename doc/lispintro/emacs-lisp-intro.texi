@@ -17924,7 +17924,7 @@ My @file{.emacs} file has a section that looks like this:
    #("   %[(" 0 6
      (help-echo
       "mouse-1: select window, mouse-2: delete others ..."))
-   (:eval (mode-line-mode-name))
+   (:eval (format-time-string "%F"))
    mode-line-process
    minor-mode-alist
    #("%n" 0 2 (help-echo "mouse-2: widen" local-map (keymap ...)))

@@ -2023,7 +2023,7 @@ be useful for Shell mode (in reality, Shell mode does not set
    "   "
    'global-mode-string
    "   %[("
-   '(:eval (mode-line-mode-name))
+   '(:eval (format-time-string "%F"))
    'mode-line-process
    'minor-mode-alist
    "%n"
