@@ -2404,6 +2404,12 @@ since only regular expressions have distinguished subexpressions.  */)
 	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
     }
 
+  /* Check whether the subexpression to replace is greater than the
+     number of subexpressions in the regexp. */
+  if (sub > 0 && search_regs.start[sub] == -1)
+    args_out_of_range (build_string ("Attempt to replace regexp subexpression that doesn't exist"),
+		       subexp);
+
   /* Sanity check to see whether the text to replace is present in the
      buffer/string. */
   if (NILP (string))
