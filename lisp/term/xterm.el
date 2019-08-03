@@ -946,21 +946,31 @@ The title is constructed from `frame-title-format'."
     (type data-type
      &context (window-system nil)
               ;; Only applies to terminals which have it enabled.
-              ((terminal-parameter nil 'xterm--get-selection) (eql t)))
+              ((terminal-parameter nil 'xterm--get-selection) (eql t))
+              ;; Doesn't work in screen; see bug#36879.
+              ((eq (terminal-parameter nil 'terminal-initted)
+                   'terminal-init-screen)
+               (eql nil)))
   (unless (eq data-type 'STRING)
     (error "Unsupported data type %S" data-type))
-  (let* ((screen (eq (terminal-parameter nil 'terminal-initted)
-                     'terminal-init-screen))
-         (query (concat "\e]52;" (xterm--selection-char type) ";")))
+  (let ((query (concat "\e]52;" (xterm--selection-char type) ";")))
     (with-temp-buffer
       (set-buffer-multibyte nil)
       (xterm--query
-       (concat (when screen "\eP") query "?\a" (when screen "\e\\"))
-       (list (cons query (lambda ()
-                           (while (let ((char (read-char)))
-                                    (unless (eq char ?\a)
-                                      (insert char)
-                                      t))))))
+       ;; Use ST as query terminator to get ST as reply terminator (bug#36879).
+       (concat query "?\e\\")
+       (list (cons query
+                   (lambda ()
+                     ;; Read data up to the string terminator, ST.
+                     (let (char last)
+                       (while (and (setq char (read-char
+                                               nil nil
+                                               xterm-query-timeout))
+                                   (not (and (eq char ?\\)
+                                             (eq last ?\e))))
+                         (when last
+                           (insert last))
+                         (setq last char))))))
        'no-async)
       (base64-decode-region (point-min) (point-max))
       (decode-coding-region (point-min) (point-max) 'utf-8-unix t))))
