@@ -2029,7 +2029,10 @@ for \\[find-tag] (which see)."
 
 (defvar etags-xref-find-definitions-tag-order '(tag-exact-match-p
                                                 tag-implicit-name-match-p)
-  "Tag order used in `xref-backend-definitions' to look for definitions.")
+  "Tag order used in `xref-backend-definitions' to look for definitions.
+
+If you want `xref-find-definitions' to find the tagged files by their
+file name, add `tag-partial-file-name-match-p' to the list value.")
 
 ;;;###autoload
 (defun etags--xref-backend () 'etags)
