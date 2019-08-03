@@ -2397,11 +2397,15 @@ since only regular expressions have distinguished subexpressions.  */)
   else
     {
       CHECK_FIXNUM (subexp);
-      if (! (0 <= XFIXNUM (subexp) && XFIXNUM (subexp) < search_regs.num_regs))
-	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
       sub = XFIXNUM (subexp);
+      /* Sanity check to see whether the subexp is larger than the
+	 allowed number of sub-regexps. */
+      if (sub >= 0 && sub > search_regs.num_regs)
+	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
     }
 
+  /* Sanity check to see whether the text to replace is present in the
+     buffer/string. */
   if (NILP (string))
     {
       if (search_regs.start[sub] < BEGV
