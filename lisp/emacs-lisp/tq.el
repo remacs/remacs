@@ -153,15 +153,18 @@ This produces more reliable results with some processes."
 		     (buffer-name buf)))
 	  (goto-char (point-min))
 	  (if (re-search-forward (tq-queue-head-regexp tq) nil t)
-	      (let ((answer (buffer-substring (point-min) (point))))
+	      (let ((answer (buffer-substring (point-min) (point)))
+                    (fn (tq-queue-head-fn tq))
+                    (closure (tq-queue-head-closure tq)))
 		(delete-region (point-min) (point))
-		(unwind-protect
-		    (condition-case nil
-			(funcall (tq-queue-head-fn tq)
-				 (tq-queue-head-closure tq)
-				 answer)
-		      (error nil))
-		  (tq-queue-pop tq))
+                ;; Pop the queue before calling the function because
+                ;; the function may add new functions to the head of
+                ;; the queue.
+		(tq-queue-pop tq)
+                (condition-case err
+                    (funcall fn closure answer)
+                  (error (message "Error while processing tq callback: %s"
+                                  (error-message-string err))))
 		(tq-process-buffer tq))))))))
 
 (provide 'tq)
