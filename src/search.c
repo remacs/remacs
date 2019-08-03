@@ -2389,44 +2389,32 @@ since only regular expressions have distinguished subexpressions.  */)
   case_action = nochange;	/* We tried an initialization */
 				/* but some C compilers blew it */
 
-  if (search_regs.num_regs <= 0)
+  ptrdiff_t num_regs = search_regs.num_regs;
+  if (num_regs <= 0)
     error ("`replace-match' called before any match found");
 
   if (NILP (subexp))
     sub = 0;
   else
     {
-      CHECK_FIXNUM (subexp);
+      CHECK_RANGED_INTEGER (subexp, 0, num_regs - 1);
       sub = XFIXNUM (subexp);
-      /* Sanity check to see whether the subexp is larger than the
-	 allowed number of sub-regexps. */
-      if (sub >= 0 && sub > search_regs.num_regs)
-	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
     }
 
-  /* Check whether the subexpression to replace is greater than the
-     number of subexpressions in the regexp. */
-  if (sub > 0 && search_regs.start[sub] == -1)
-    args_out_of_range (build_string ("Attempt to replace regexp subexpression that doesn't exist"),
-		       subexp);
+  ptrdiff_t sub_start = search_regs.start[sub];
+  ptrdiff_t sub_end = search_regs.end[sub];
+  eassert (sub_start <= sub_end);
 
-  /* Sanity check to see whether the text to replace is present in the
-     buffer/string. */
-  if (NILP (string))
+  /* Check whether the text to replace is present in the buffer/string.  */
+  if (! (NILP (string)
+	 ? BEGV <= sub_start && sub_end <= ZV
+	 : 0 <= sub_start && sub_end <= SCHARS (string)))
     {
-      if (search_regs.start[sub] < BEGV
-	  || search_regs.start[sub] > search_regs.end[sub]
-	  || search_regs.end[sub] > ZV)
-	args_out_of_range (make_fixnum (search_regs.start[sub]),
-			   make_fixnum (search_regs.end[sub]));
-    }
-  else
-    {
-      if (search_regs.start[sub] < 0
-	  || search_regs.start[sub] > search_regs.end[sub]
-	  || search_regs.end[sub] > SCHARS (string))
-	args_out_of_range (make_fixnum (search_regs.start[sub]),
-			   make_fixnum (search_regs.end[sub]));
+      if (sub_start < 0)
+	xsignal2 (Qerror,
+		  build_string ("replace-match subexpression does not exist"),
+		  subexp);
+      args_out_of_range (make_fixnum (sub_start), make_fixnum (sub_end));
     }
 
   if (NILP (fixedcase))
@@ -2434,8 +2422,8 @@ since only regular expressions have distinguished subexpressions.  */)
       /* Decide how to casify by examining the matched text. */
       ptrdiff_t last;
 
-      pos = search_regs.start[sub];
-      last = search_regs.end[sub];
+      pos = sub_start;
+      last = sub_end;
 
       if (NILP (string))
 	pos_byte = CHAR_TO_BYTE (pos);
@@ -2511,9 +2499,8 @@ since only regular expressions have distinguished subexpressions.  */)
     {
       Lisp_Object before, after;
 
-      before = Fsubstring (string, make_fixnum (0),
-			   make_fixnum (search_regs.start[sub]));
-      after = Fsubstring (string, make_fixnum (search_regs.end[sub]), Qnil);
+      before = Fsubstring (string, make_fixnum (0), make_fixnum (sub_start));
+      after = Fsubstring (string, make_fixnum (sub_end), Qnil);
 
       /* Substitute parts of the match into NEWTEXT
 	 if desired.  */
@@ -2542,12 +2529,12 @@ since only regular expressions have distinguished subexpressions.  */)
 
 		  if (c == '&')
 		    {
-		      substart = search_regs.start[sub];
-		      subend = search_regs.end[sub];
+		      substart = sub_start;
+		      subend = sub_end;
 		    }
 		  else if (c >= '1' && c <= '9')
 		    {
-		      if (c - '0' < search_regs.num_regs
+		      if (c - '0' < num_regs
 			  && search_regs.start[c - '0'] >= 0)
 			{
 			  substart = search_regs.start[c - '0'];
@@ -2612,13 +2599,8 @@ since only regular expressions have distinguished subexpressions.  */)
       return concat3 (before, newtext, after);
     }
 
-  /* Record point, then move (quietly) to the start of the match.  */
-  if (PT >= search_regs.end[sub])
-    opoint = PT - ZV;
-  else if (PT > search_regs.start[sub])
-    opoint = search_regs.end[sub] - ZV;
-  else
-    opoint = PT;
+  /* Record point.  A nonpositive OPOINT is actually an offset from ZV.  */
+  opoint = PT <= sub_start ? PT : max (PT, sub_end) - ZV;
 
   /* If we want non-literal replacement,
      perform substitution on the replacement string.  */
@@ -2687,7 +2669,7 @@ since only regular expressions have distinguished subexpressions.  */)
 
 	      if (c == '&')
 		idx = sub;
-	      else if (c >= '1' && c <= '9' && c - '0' < search_regs.num_regs)
+	      else if ('1' <= c && c <= '9' && c - '0' < num_regs)
 		{
 		  if (search_regs.start[c - '0'] >= 1)
 		    idx = c - '0';
@@ -2745,25 +2727,11 @@ since only regular expressions have distinguished subexpressions.  */)
       xfree (substed);
     }
 
-  /* The functions below modify the buffer, so they could trigger
-     various modification hooks (see signal_before_change and
-     signal_after_change).  If these hooks clobber the match data we
-     error out since otherwise this will result in confusing bugs.  */
-  ptrdiff_t sub_start = search_regs.start[sub];
-  ptrdiff_t sub_end = search_regs.end[sub];
-  ptrdiff_t num_regs = search_regs.num_regs;
-  newpoint = search_regs.start[sub] + SCHARS (newtext);
+  newpoint = sub_start + SCHARS (newtext);
+  ptrdiff_t newstart = sub_start == sub_end ? newpoint : sub_start;
 
   /* Replace the old text with the new in the cleanest possible way.  */
-  replace_range (search_regs.start[sub], search_regs.end[sub],
-                 newtext, 1, 0, 1, 1);
-  /* Update saved data to match adjustment made by replace_range.  */
-  {
-    ptrdiff_t change = newpoint - sub_end;
-    if (sub_start >= sub_end)
-      sub_start += change;
-    sub_end += change;
-  }
+  replace_range (sub_start, sub_end, newtext, 1, 0, 1, true);
 
   if (case_action == all_caps)
     Fupcase_region (make_fixnum (search_regs.start[sub]),
@@ -2773,17 +2741,18 @@ since only regular expressions have distinguished subexpressions.  */)
     Fupcase_initials_region (make_fixnum (search_regs.start[sub]),
 			     make_fixnum (newpoint));
 
-  if (search_regs.start[sub] != sub_start
-      || search_regs.end[sub] != sub_end
-      || search_regs.num_regs != num_regs)
+  /* The replace_range etc. functions can trigger modification hooks
+     (see signal_before_change and signal_after_change).  Try to error
+     out if these hooks clobber the match data since clobbering can
+     result in confusing bugs.  Although this sanity check does not
+     catch all possible clobberings, it should catch many of them.  */
+  if (! (search_regs.num_regs == num_regs
+	 && search_regs.start[sub] == newstart
+	 && search_regs.end[sub] == newpoint))
     error ("Match data clobbered by buffer modification hooks");
 
-  /* Put point back where it was in the text.  */
-  if (opoint <= 0)
-    TEMP_SET_PT (opoint + ZV);
-  else
-    TEMP_SET_PT (opoint);
-
+  /* Put point back where it was in the text, if possible.  */
+  TEMP_SET_PT (clip_to_bounds (BEGV, opoint + (opoint <= 0 ? ZV : 0), ZV));
   /* Now move point "officially" to the start of the inserted replacement.  */
   move_if_not_intangible (newpoint);
 
