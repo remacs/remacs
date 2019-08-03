@@ -81,7 +81,7 @@ static ptrdiff_t print_buffer_pos_byte;
      -N   the object will be printed several times and will take number N.
      N    the object has been printed so we can refer to it as #N#.
    print_number_index holds the largest N already used.
-   N has to be striclty larger than 0 since we need to distinguish -N.  */
+   N has to be strictly larger than 0 since we need to distinguish -N.  */
 static ptrdiff_t print_number_index;
 static void print_interval (INTERVAL interval, Lisp_Object printcharfun);
 
@@ -1149,7 +1149,11 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 }
 
 #define PRINT_CIRCLE_CANDIDATE_P(obj)			   \
-  (STRINGP (obj) || CONSP (obj)				   \
+  ((STRINGP (obj)                                          \
+       && (string_intervals (obj)                          \
+	  || print_depth > 1				   \
+	  || Vprint_continuous_numbering))		   \
+   || CONSP (obj)					   \
    || (VECTORLIKEP (obj)				   \
        && (VECTORP (obj) || COMPILEDP (obj)		   \
 	   || CHAR_TABLE_P (obj) || SUB_CHAR_TABLE_P (obj) \
