@@ -60,7 +60,7 @@ Semantic, and Ansi-Color faces are included.")
    `(header-line ((,class (:background "#666"))))
    ;; Highlighting faces
    `(fringe ((,class (:background ,alum-7))))
-   `(highlight ((,class (:foreground ,alum-6 :background ,butter-2))))
+   `(highlight ((,class (:foreground ,alum-6 :background "#c0c000"))))
    `(region ((,class (:background ,alum-5))))
    `(secondary-selection ((,class (:background ,blue-3))))
    `(isearch ((,class (:foreground ,alum-1 :background ,orange-3))))
