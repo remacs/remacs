@@ -4318,8 +4318,8 @@ RET\tSelect the file at the front of the list of matches.
 \\[ido-toggle-case]\tToggle case-sensitive searching of file names.
 \\[ido-toggle-literal]\tToggle literal reading of this file.
 \\[ido-completion-help]\tShow list of matching files in separate window.
-\\[ido-toggle-ignore]\tToggle ignoring files listed in `ido-ignore-files'."
-
+\\[ido-toggle-ignore]\tToggle ignoring files listed in `ido-ignore-files'.
+\\[ido-reread-directory]\tReread the current directory."
   (interactive)
   (ido-file-internal ido-default-file-method))
 
