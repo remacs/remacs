@@ -71,6 +71,17 @@ pairs:
     if the expression evaluates to a non-nil value.  `:enable' is
     an alias for `:active'.
 
+ :label FORM
+    FORM is an expression that is dynamically evaluated and whose
+    value serves as the menu's label (the default is the first
+    element of MENU).
+
+ :help HELP
+    HELP is a string, the help to display for the menu.
+    In a GUI this is a \"tooltip\" on the menu button.  (Though
+    in Lucid :help is not shown for the top-level menu bar, only
+    for sub-menus.)
+
 The rest of the elements in MENU are menu items.
 A menu item can be a vector of three elements:
 
