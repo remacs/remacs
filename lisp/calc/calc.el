@@ -1663,7 +1663,7 @@ See calc-keypad for details."
     (let* ((fmt (car calc-float-format))
 	   (figs (nth 1 calc-float-format))
 	   (new-mode-string
-	    (format "Calc%s%s: %d %s %-14s"
+	    (format "Calc%s%s: %d %s %s"
 		    (if (and calc-embedded-info
                              (eq (aref calc-embedded-info 1) (current-buffer)))
                         "Embed" "")
