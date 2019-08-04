@@ -9520,7 +9520,7 @@ code_convert_string_norecord (Lisp_Object string, Lisp_Object coding_system,
    NBYTES, enlarge the gap in advance.  */
 
 static unsigned char *
-get_buffer_gap_address (Lisp_Object buffer, int nbytes)
+get_buffer_gap_address (Lisp_Object buffer, ptrdiff_t nbytes)
 {
   struct buffer *buf = XBUFFER (buffer);
 
@@ -9546,9 +9546,9 @@ get_buffer_gap_address (Lisp_Object buffer, int nbytes)
 static unsigned char *
 get_char_bytes (int c, int *len)
 {
-  /* We uses two chaches considering the situation that
-     encode/decode_string_utf_8 are called repeatedly with the same
-     values for HANDLE_8_BIT and HANDLE_OVER_UNI arguments.  */
+  /* Use two caches, since encode/decode_string_utf_8 are called
+     repeatedly with the same values for HANDLE_8_BIT and
+     HANDLE_OVER_UNI arguments.  */
   static int chars[2];
   static unsigned char bytes[2][6];
   static int nbytes[2];
@@ -9572,55 +9572,51 @@ get_char_bytes (int c, int *len)
 
 /* Encode STRING by the coding system utf-8-unix.
 
-   Even if :pre-write-conversion and :encode-translation-table
-   properties are put to that coding system, they are ignored.
+   Ignore any :pre-write-conversion and :encode-translation-table
+   properties of that coding system.
 
-   It ignores :pre-write-conversion and :encode-translation-table
-   propeties of that coding system.
-
-   This function assumes that arguments have values as described
-   below.  The validity must be assured by callers.
+   Assume that arguments have values as described below.
+   The validity must be assured by callers.
 
    STRING is a multibyte string or an ASCII-only unibyte string.
 
    BUFFER is a unibyte buffer or Qnil.
 
-   If BUFFER is a unibyte buffer, the encoding result of UTF-8
-   sequence is inserted after point of the buffer, and the number of
-   inserted characters is returned.  Note that a caller should have
-   made BUFFER ready for modifying in advance (e.g. by calling
-   invalidate_buffer_caches).
+   If BUFFER is a unibyte buffer, insert the encoded result
+   after point of the buffer, and return the number of
+   inserted characters.  The caller should have made BUFFER ready for
+   modifying in advance (e.g., by calling invalidate_buffer_caches).
 
-   If BUFFER is Qnil, a unibyte string is made from the encodnig
-   result of UTF-8 sequence, and it is returned.  If NOCOPY and STRING
-   contains only Unicode characters (i.e. the encoding does not change
-   the byte sequence), STRING is returned even if it is multibyte.
+   If BUFFER is Qnil, return a unibyte string from the encoded result.
+   If NOCOPY, and if STRING contains only Unicode characters (i.e.,
+   the encoding does not change the byte sequence), return STRING even
+   if it is multibyte.
 
-   HANDLE-8-BIT and HANDE-OVER-UNI specify how to handle a non-Unicode
+   HANDLE-8-BIT and HANDLE-OVER-UNI specify how to handle a non-Unicode
    character.  The former is for an eight-bit character (represented
-   by 2-byte overlong sequence in multibyte STRING).  The latter is
-   for an over-unicode character (a character whose code is greater
-   than the maximum Unicode character 0x10FFFF, and is represented by
-   4 or 5-byte sequence in multibyte STRING).
+   by a 2-byte overlong sequence in a multibyte STRING).  The latter is
+   for an over-Unicode character (a character whose code is greater
+   than the maximum Unicode character 0x10FFFF, represented by a 4 or
+   5-byte sequence in a multibyte STRING).
 
-   If they are unibyte strings (typically "\357\277\275"; UTF-8
-   sequence for the Unicode REPLACEMENT CHARACTER #xFFFD), a
-   non-Unicode character is encoded into that sequence.
+   If these two arguments are unibyte strings (typically
+   "\357\277\275", the UTF-8 sequence for the Unicode REPLACEMENT
+   CHARACTER #xFFFD), encode a non-Unicode character into that
+   unibyte sequence.
 
-   If they are characters, a non-Unicode chracters is encoded into the
-   corresponding UTF-8 sequences.
+   If the two arguments are characters, encode a non-Unicode
+   character as if it was the argument.
 
-   If they are Qignored, a non-Unicode character is skipped on
-   encoding.
+   If they are Qignored, skip a non-Unicode character.
 
-   If HANDLE-8-BIT is Qt, an eight-bit character is encoded into one
+   If HANDLE-8-BIT is Qt, encode an eight-bit character into one
    byte of the same value.
 
-   If HANDLE-OVER-UNI is Qt, an over-unicode character is encoded
+   If HANDLE-OVER-UNI is Qt, encode an over-unicode character
    into the the same 4 or 5-byte sequence.
 
-   If they are Qnil, Qnil is returned if STRING has a non-Unicode
-   character. */
+   If the two arguments are Qnil, return Qnil if STRING has a
+   non-Unicode character.  */
 
 Lisp_Object
 encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
@@ -9633,7 +9629,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
     return string;
 
   ptrdiff_t num_8_bit = 0;   /* number of eight-bit chars in STRING */
-  /* The following two vars are counted only if handle_over_uni is not Qt */
+  /* The following two vars are counted only if handle_over_uni is not Qt.  */
   ptrdiff_t num_over_4 = 0; /* number of 4-byte non-Unicode chars in STRING */
   ptrdiff_t num_over_5 = 0; /* number of 5-byte non-Unicode chars in STRING */
   ptrdiff_t outbytes;	     /* number of bytes of decoding result. */
@@ -9828,25 +9824,23 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 
 /* Decode STRING by the coding system utf-8-unix.
 
-   Even if :post-read-conversion and :decode-translation-table
-   properties are put to that coding system, they are ignored.
+   Ignore any :pre-write-conversion and :encode-translation-table
+   properties of that coding system.
 
-   This function assumes that arguments have values as described
-   below.  The validity must be assured by callers.
+   Assumes that arguments have values as described below.
+   The validity must be assured by callers.
 
    STRING is a unibyte string or an ASCII-only multibyte string.
 
    BUFFER is a multibyte buffer or Qnil.
 
-   If BUFFER is a multibyte buffer, the decoding result of Unicode
-   characters are inserted after point of the buffer, and the number
-   of inserted characters is returned.  Note that a caller should have
-   made BUFFER ready for modifying in advance (e.g. by calling
-   invalidate_buffer_caches).
+   If BUFFER is a multibyte buffer, insert the decoding result of
+   Unicode characters after point of the buffer, and return the number
+   of inserted characters.  The caller should have made BUFFER ready
+   for modifying in advance (e.g., by calling invalidate_buffer_caches).
 
-   If BUFFER is Qnil, a multibyte string is made from the decoding
-   result of Unicode characters, and it is returned.  As a special
-   case, STRING itself is returned in the following cases:
+   If BUFFER is Qnil, return a multibyte string from the decoded result.
+   As a special case, return STRING itself in the following cases:
    1. STRING contains only ASCII characters.
    2. NOCOPY, and STRING contains only valid UTF-8 sequences.
 
@@ -9858,24 +9852,26 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    than #x10FFFF).  Note that this function does not treat an overlong
    UTF-8 sequence as invalid.
 
-   If they are strings (typically 1-char string of the Unicode
-   REPLACEMENT CHARACTER #xFFFD), an invalid sequence is decoded into
-   that string.  They must be multibyte strings if they contain a
-   non-ASCII character.
+   If these two arguments are strings (typically a 1-char string of
+   the Unicode REPLACEMENT CHARACTER #xFFFD), decode an invalid byte
+   sequence into that string.  They must be multibyte strings if they
+   contain a non-ASCII character.
 
-   If they are characters, an invalid sequence is decoded into the
-   corresponding multibyte representation of the characters.
+   If the two arguments are characters, decode an invalid byte
+   sequence into the corresponding multibyte representation of the
+   characters.
 
-   If they are Qignored, an invalid sequence is skipped on decoding.
+   If they are Qignored, skip an invalid byte sequence.
 
-   If HANDLE-8-BIT is Qt, an 1-byte invalid sequence is deoded into
+   If HANDLE-8-BIT is Qt, decode a 1-byte invalid sequence into
    the corresponding eight-bit character.
 
-   If HANDLE-OVER-UNI is Qt, a 4 or 5-byte invalid sequence that
-   follows Emacs' representation for an over-unicode character is
-   decoded into the corresponding character.
+   If HANDLE-OVER-UNI is Qt, decode a 4 or 5-byte invalid sequence
+   that follows Emacs' representation for an over-unicode character
+   into the corresponding character.
 
-   If they are Qnil, Qnil is returned if STRING has an invalid sequence.  */
+   If the two arguments are Qnil, return Qnil if STRING has an invalid
+   sequence.  */
 
 Lisp_Object
 decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
@@ -9883,7 +9879,7 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     Lisp_Object handle_over_uni)
 {
   /* This is like BYTES_BY_CHAR_HEAD, but it is assured that C >= 0x80
-     and it returns 0 for invalid sequence.  */
+     and it returns 0 for an invalid sequence.  */
 #define UTF_8_SEQUENCE_LENGTH(c)	\
   ((c) < 0xC2 ? 0			\
    : (c) < 0xE0 ? 2			\
@@ -9924,7 +9920,8 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		  && (len == 3
 		      || (UTF_8_EXTRA_OCTET_P (p[3])
 			  && len == 4
-			  && string_char (p, NULL, NULL) <= MAX_UNICODE_CHAR)))))
+			  && (string_char (p, NULL, NULL)
+			      <= MAX_UNICODE_CHAR))))))
 	{
 	  p += len;
 	  continue;
