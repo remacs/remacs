@@ -574,8 +574,8 @@ Advising Emacs Lisp Functions
 
 * Core Advising Primitives::  Primitives to manipulate advice.
 * Advising Named Functions::  Advising named functions.
-* Advice combinators::        Ways to compose advice.
-* Porting old advice::        Adapting code using the old defadvice.
+* Advice Combinators::        Ways to compose advice.
+* Porting Old Advice::        Adapting code using the old defadvice.
 
 Macros
 

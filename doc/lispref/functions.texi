@@ -1645,8 +1645,8 @@ ways to do it.  The added function is also called a piece of @emph{advice}.
 @menu
 * Core Advising Primitives::    Primitives to manipulate advice.
 * Advising Named Functions::    Advising named functions.
-* Advice combinators::          Ways to compose advice.
-* Porting old advice::          Adapting code using the old defadvice.
+* Advice Combinators::          Ways to compose advice.
+* Porting Old Advice::          Adapting code using the old defadvice.
 @end menu
 
 @node Core Advising Primitives
@@ -1659,7 +1659,7 @@ stored in @var{place} (@pxref{Generalized Variables}).
 
 @var{where} determines how @var{function} is composed with the
 existing function, e.g., whether @var{function} should be called before, or
-after the original function.  @xref{Advice combinators}, for the list of
+after the original function.  @xref{Advice Combinators}, for the list of
 available ways to compose the two functions.
 
 When modifying a variable (whose name will usually end with @code{-function}),
@@ -1834,7 +1834,7 @@ named function @var{symbol}.  @var{function} is called with two
 arguments: the advice function and its properties.
 @end defun
 
-@node Advice combinators
+@node Advice Combinators
 @subsection Ways to compose advice
 
 Here are the different possible values for the @var{where} argument of
@@ -1947,7 +1947,7 @@ More specifically, the composition of the two functions behaves like:
 @end table
 
 
-@node Porting old advice
+@node Porting Old Advice
 @subsection Adapting code using the old defadvice
 @cindex old advices, porting
 @c NB: The following index entries deliberately avoid ``old'',
