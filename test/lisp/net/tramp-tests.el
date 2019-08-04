@@ -3143,7 +3143,13 @@ They might differ only in access time."
   "Check `file-modes'.
 This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   (skip-unless (tramp--test-enabled))
-  (skip-unless (or (tramp--test-sh-p) (tramp--test-sudoedit-p)))
+  (skip-unless
+   (or (tramp--test-sh-p) (tramp--test-sudoedit-p)
+       ;; Not all tramp-gvfs.el methods support changing the file mode.
+       (and
+	(tramp--test-gvfs-p)
+	(string-match-p
+	 "ftp" (file-remote-p tramp-test-temporary-file-directory 'method)))))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
@@ -3443,7 +3449,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Check `set-file-times' and `file-newer-than-file-p'."
   (skip-unless (tramp--test-enabled))
   (skip-unless
-   (or (tramp--test-adb-p) (tramp--test-sh-p) (tramp--test-sudoedit-p)))
+   (or (tramp--test-adb-p) (tramp--test-gvfs-p)
+       (tramp--test-sh-p) (tramp--test-sudoedit-p)))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))

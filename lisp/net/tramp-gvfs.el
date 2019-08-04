@@ -471,6 +471,7 @@ It has been changed in GVFS 1.14.")
     ("gvfs-mount" . "mount")
     ("gvfs-move" . "move")
     ("gvfs-rm" . "remove")
+    ("gvfs-set-attribute" . "set")
     ("gvfs-trash" . "trash"))
   "List of cons cells, mapping \"gvfs-<command>\" to \"gio <command>\".")
 
@@ -590,15 +591,15 @@ It has been changed in GVFS 1.14.")
     (process-file . ignore)
     (rename-file . tramp-gvfs-handle-rename-file)
     (set-file-acl . ignore)
-    (set-file-modes . ignore)
+    (set-file-modes . tramp-gvfs-handle-set-file-modes)
     (set-file-selinux-context . ignore)
-    (set-file-times . ignore)
+    (set-file-times . tramp-gvfs-handle-set-file-times)
     (set-visited-file-modtime . tramp-handle-set-visited-file-modtime)
     (shell-command . ignore)
     (start-file-process . ignore)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
-    (tramp-set-file-uid-gid . ignore)
+    (tramp-set-file-uid-gid . tramp-gvfs-handle-set-file-uid-gid)
     (unhandled-file-name-directory . ignore)
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
@@ -1324,6 +1325,48 @@ file-notify events."
        'keep-date 'preserve-uid-gid)
     (tramp-run-real-handler
      #'rename-file (list filename newname ok-if-already-exists))))
+
+(defun tramp-gvfs-handle-set-file-modes (filename mode)
+  "Like `set-file-modes' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
+    (tramp-gvfs-send-command
+     v "gvfs-set-attribute" "-t" "uint32"
+     (tramp-gvfs-url-file-name (tramp-make-tramp-file-name v))
+     "unix::mode" (number-to-string mode))))
+
+(defun tramp-gvfs-handle-set-file-times (filename &optional time)
+  "Like `set-file-times' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
+    (let ((time
+	   (if (or (null time)
+		   (tramp-compat-time-equal-p time tramp-time-doesnt-exist)
+		   (tramp-compat-time-equal-p time tramp-time-dont-know))
+	       (current-time)
+	     time)))
+      (tramp-gvfs-send-command
+       v "gvfs-set-attribute" "-t" "uint64"
+       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name v))
+       "time::modified" (format-time-string "%s" time)))))
+
+(defun tramp-gvfs-set-file-uid-gid (filename &optional uid gid)
+  "Like `tramp-set-file-uid-gid' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
+    (when (natnump uid)
+      (tramp-gvfs-send-command
+       v "gvfs-set-attribute" "-t" "uint32"
+       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name v))
+       "unix::uid" (number-to-string uid)))
+    (when (natnump gid)
+      (tramp-gvfs-send-command
+       v "gvfs-set-attribute" "-t" "uint32"
+       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name v))
+       "unix::gid" (number-to-string gid)))))
 
 
 ;; File name conversions.
