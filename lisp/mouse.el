@@ -1296,7 +1296,7 @@ The region will be defined with mark and point."
      t (lambda ()
          (setq track-mouse old-track-mouse)
          (setq auto-hscroll-mode auto-hscroll-mode-saved)
-          (deactivate-mark)
+         (deactivate-mark)
          (pop-mark)))))
 
 (defun mouse--drag-set-mark-and-point (start click click-count)
@@ -2467,12 +2467,13 @@ is copied instead of being cut."
 
     (ignore-errors
       (track-mouse
+        (setq track-mouse 'dropping)
         ;; When event was "click" instead of "drag", skip loop.
         (while (progn
                  (setq event (read-key))      ; read-event or read-key
                  (or (mouse-movement-p event)
                      ;; Handle `mouse-autoselect-window'.
-                     (eq (car-safe event) 'select-window)))
+                     (memq (car event) '(select-window switch-frame))))
           ;; Obtain the dragged text in region.  When the loop was
           ;; skipped, value-selection remains nil.
           (unless value-selection

@@ -4586,7 +4586,8 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if (button_state & this)
 	  return 0;
 
-	if (button_state == 0)
+	/* Don't capture mouse when dropping.  */
+	if (button_state == 0 && !EQ (track_mouse, Qdropping))
 	  SetCapture (hwnd);
 
 	button_state |= this;
@@ -4707,8 +4708,11 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	if (parse_button (msg, HIWORD (wParam), &button, &up))
 	  {
-	    if (up) ReleaseCapture ();
-	    else SetCapture (hwnd);
+	    if (up)
+	      ReleaseCapture ();
+	    /* Don't capture mouse when dropping.  */
+	    else if (!EQ (track_mouse, Qdropping))
+	      SetCapture (hwnd);
 	    button = (button == 0) ? LMOUSE :
 	      ((button == 1) ? MMOUSE  : RMOUSE);
 	    if (up)
@@ -5351,8 +5355,9 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	else if (button_state & RMOUSE)
 	  flags |= TPM_RIGHTBUTTON;
 
-	/* Remember we did a SetCapture on the initial mouse down event,
-	   so for safety, we make sure the capture is canceled now.  */
+	/* We may have done a SetCapture on the initial mouse down
+	   event, so for safety, make sure the capture is canceled
+	   now.  */
 	ReleaseCapture ();
 	button_state = 0;
 

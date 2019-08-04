@@ -2480,7 +2480,11 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
       XFRAME (frame)->mouse_moved = 0;
 
   dpyinfo->last_mouse_scroll_bar = nil;
+  f = dpyinfo->ns_focus_frame ? dpyinfo->ns_focus_frame : SELECTED_FRAME ();
   if (dpyinfo->last_mouse_frame
+      /* While dropping, use the last mouse frame only if there is no
+	 currently focused frame.  */
+      && (!EQ (track_mouse, Qdropping) || !f)
       && FRAME_LIVE_P (dpyinfo->last_mouse_frame))
     f = dpyinfo->last_mouse_frame;
   else

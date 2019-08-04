@@ -3402,9 +3402,9 @@ update_window (struct window *w, bool force_p)
   if (!force_p)
     detect_input_pending_ignore_squeezables ();
 
-  /* If forced to complete the update, or if no input is pending, do
-     the update.  */
-  if (force_p || !input_pending || !NILP (do_mouse_tracking))
+  /* If forced to complete the update, no input is pending, or we are
+     tracking the mouse, do the update.  */
+  if (force_p || !input_pending || !NILP (track_mouse))
     {
       struct glyph_row *row, *end;
       struct glyph_row *mode_line_row;

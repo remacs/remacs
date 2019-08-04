@@ -327,6 +327,9 @@ redefine this function to suit your own tastes."
         executing-kbd-macro	       ; don't check inside macro
 	(null (cadr mp))	       ; don't move unless in an Emacs frame
 	(not (eq (car mp) (selected-frame)))
+        ;; Don't interfere with ongoing `mouse-drag-and-drop-region'
+        ;; (Bug#36269).
+        (eq track-mouse 'dropping)
 	;; Don't do anything if last event was a mouse event.
 	;; FIXME: this code fails in the case where the mouse was moved
 	;; since the last key-press but without generating any event.

@@ -3033,18 +3033,18 @@ read_menu_input (struct frame *sf, int *x, int *y, int min_y, int max_y,
       bool usable_input = 1;
       mi_result st = MI_CONTINUE;
       struct tty_display_info *tty = FRAME_TTY (sf);
-      Lisp_Object saved_mouse_tracking = do_mouse_tracking;
+      Lisp_Object old_track_mouse = track_mouse;
 
       /* Signal the keyboard reading routines we are displaying a menu
 	 on this terminal.  */
       tty->showing_menu = 1;
       /* We want mouse movements be reported by read_menu_command.  */
-      do_mouse_tracking = Qt;
+      track_mouse = Qt;
       do {
 	cmd = read_menu_command ();
       } while (NILP (cmd));
       tty->showing_menu = 0;
-      do_mouse_tracking = saved_mouse_tracking;
+      track_mouse = old_track_mouse;
 
       if (EQ (cmd, Qt) || EQ (cmd, Qtty_menu_exit)
 	  /* If some input switched frames under our feet, exit the

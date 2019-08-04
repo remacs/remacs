@@ -17289,7 +17289,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	 the mouse, resulting in an unwanted mouse-movement rather
 	 than a simple mouse-click.  */
       if (!w->start_at_line_beg
-	  && NILP (do_mouse_tracking)
+	  && NILP (track_mouse)
       	  && CHARPOS (startp) > BEGV
 	  && CHARPOS (startp) > BEG + beg_unchanged
 	  && CHARPOS (startp) <= Z - end_unchanged
@@ -30279,7 +30279,7 @@ show_mouse_face (Mouse_HLInfo *hlinfo, enum draw_glyphs_face draw)
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* Change the mouse cursor.  */
-  if (FRAME_WINDOW_P (f) && NILP (do_mouse_tracking))
+  if (FRAME_WINDOW_P (f) && NILP (track_mouse))
     {
 #ifndef HAVE_EXT_TOOL_BAR
       if (draw == DRAW_NORMAL_TEXT
@@ -31226,7 +31226,7 @@ define_frame_cursor1 (struct frame *f, Emacs_Cursor cursor, Lisp_Object pointer)
     return;
 
   /* Do not change cursor shape while dragging mouse.  */
-  if (EQ (do_mouse_tracking, Qdragging))
+  if (EQ (track_mouse, Qdragging) || EQ (track_mouse, Qdropping))
     return;
 
   if (!NILP (pointer))
@@ -32956,6 +32956,7 @@ be let-bound around code that needs to disable messages temporarily. */);
   /* also Qtext */
 
   DEFSYM (Qdragging, "dragging");
+  DEFSYM (Qdropping, "dropping");
 
   DEFSYM (Qinhibit_free_realized_faces, "inhibit-free-realized-faces");
 

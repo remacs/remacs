@@ -5196,20 +5196,15 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
       /* Figure out which root window we're on.  */
       XQueryPointer (FRAME_X_DISPLAY (*fp),
 		     DefaultRootWindow (FRAME_X_DISPLAY (*fp)),
-
 		     /* The root window which contains the pointer.  */
 		     &root,
-
 		     /* Trash which we can't trust if the pointer is on
 			a different screen.  */
 		     &dummy_window,
-
 		     /* The position on that root window.  */
 		     &root_x, &root_y,
-
 		     /* More trash we can't trust.  */
 		     &dummy, &dummy,
-
 		     /* Modifier keys and pointer buttons, about which
 			we don't care.  */
 		     (unsigned int *) &dummy);
@@ -5232,21 +5227,17 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 
 	x_catch_errors (FRAME_X_DISPLAY (*fp));
 
-	if (gui_mouse_grabbed (dpyinfo))
+	if (gui_mouse_grabbed (dpyinfo) && !EQ (track_mouse, Qdropping))
 	  {
 	    /* If mouse was grabbed on a frame, give coords for that frame
 	       even if the mouse is now outside it.  */
 	    XTranslateCoordinates (FRAME_X_DISPLAY (*fp),
-
 				   /* From-window.  */
 				   root,
-
 				   /* To-window.  */
 				   FRAME_X_WINDOW (dpyinfo->last_mouse_frame),
-
 				   /* From-position, to-position.  */
 				   root_x, root_y, &win_x, &win_y,
-
 				   /* Child of win.  */
 				   &child);
 	    f1 = dpyinfo->last_mouse_frame;
@@ -5256,16 +5247,12 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	    while (true)
 	      {
 		XTranslateCoordinates (FRAME_X_DISPLAY (*fp),
-
 				       /* From-window, to-window.  */
 				       root, win,
-
 				       /* From-position, to-position.  */
 				       root_x, root_y, &win_x, &win_y,
-
 				       /* Child of win.  */
 				       &child);
-
 		if (child == None || child == win)
 		  {
 #ifdef USE_GTK
@@ -5328,13 +5315,35 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 #endif /* USE_X_TOOLKIT */
 	  }
 
+	if ((!f1 || FRAME_TOOLTIP_P (f1))
+	    && EQ (track_mouse, Qdropping)
+	    && gui_mouse_grabbed (dpyinfo))
+	  {
+	    /* When dropping then if we didn't get a frame or only a
+	       tooltip frame and the mouse was grabbed on a frame,
+	       give coords for that frame even if the mouse is now
+	       outside it.  */
+	    XTranslateCoordinates (FRAME_X_DISPLAY (*fp),
+				   /* From-window.  */
+				   root,
+				   /* To-window.  */
+				   FRAME_X_WINDOW (dpyinfo->last_mouse_frame),
+				   /* From-position, to-position.  */
+				   root_x, root_y, &win_x, &win_y,
+				   /* Child of win.  */
+				   &child);
+	    f1 = dpyinfo->last_mouse_frame;
+	  }
+	else if (f1 && FRAME_TOOLTIP_P (f1))
+	  f1 = NULL;
+
 	if (x_had_errors_p (FRAME_X_DISPLAY (*fp)))
-	  f1 = 0;
+	  f1 = NULL;
 
 	x_uncatch_errors_after_check ();
 
 	/* If not, is it one of our scroll bars?  */
-	if (! f1)
+	if (!f1)
 	  {
 	    struct scroll_bar *bar;
 
@@ -5348,7 +5357,7 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	      }
 	  }
 
-	if (f1 == 0 && insist > 0)
+	if (!f1 && insist > 0)
 	  f1 = SELECTED_FRAME ();
 
 	if (f1)
@@ -7817,6 +7826,37 @@ flush_dirty_back_buffers (void)
   unblock_input ();
 }
 
+/**
+  mouse_or_wdesc_frame: When not dropping and the mouse was grabbed
+  for DPYINFO, return the frame where the mouse was seen last.  If
+  there's no such frame, return the frame according to WDESC.  When
+  dropping, return the frame according to WDESC.  If there's no such
+  frame and the mouse was grabbed for DPYINFO, return the frame where
+  the mouse was seen last.  In either case, never return a tooltip
+  frame.  */
+static struct frame *
+mouse_or_wdesc_frame (struct x_display_info *dpyinfo, int wdesc)
+{
+  struct frame *lm_f = (gui_mouse_grabbed (dpyinfo)
+			? dpyinfo->last_mouse_frame
+			: NULL);
+
+  if (lm_f && !EQ (track_mouse, Qdropping))
+    return lm_f;
+  else
+    {
+      struct frame *w_f = x_window_to_frame (dpyinfo, wdesc);
+
+      /* Do not return a tooltip frame.  */
+      if (!w_f || FRAME_TOOLTIP_P (w_f))
+	return EQ (track_mouse, Qdropping) ? lm_f : NULL;
+      else
+	/* When dropping it would be probably nice to raise w_f
+	   here.  */
+	return w_f;
+    }
+}
+
 /* Handles the XEvent EVENT on display DPYINFO.
 
    *FINISH is X_EVENT_GOTO_OUT if caller should stop reading events.
@@ -8749,14 +8789,13 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         previous_help_echo_string = help_echo_string;
         help_echo_string = Qnil;
 
-	f = (gui_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
-	     : x_window_to_frame (dpyinfo, event->xmotion.window));
-
-        if (hlinfo->mouse_face_hidden)
+	if (hlinfo->mouse_face_hidden)
           {
             hlinfo->mouse_face_hidden = false;
             clear_mouse_face (hlinfo);
           }
+
+	f = mouse_or_wdesc_frame (dpyinfo, event->xmotion.window);
 
 #ifdef USE_GTK
         if (f && xg_event_is_for_scrollbar (f, event))
@@ -8999,33 +9038,27 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	dpyinfo->last_mouse_glyph_frame = NULL;
 	x_display_set_last_user_time (dpyinfo, event->xbutton.time);
 
-	if (gui_mouse_grabbed (dpyinfo))
-	  f = dpyinfo->last_mouse_frame;
-	else
+	f = mouse_or_wdesc_frame (dpyinfo, event->xmotion.window);
+	if (f && event->xbutton.type == ButtonPress
+	    && !popup_activated ()
+	    && !x_window_to_scroll_bar (event->xbutton.display,
+					event->xbutton.window, 2)
+	    && !FRAME_NO_ACCEPT_FOCUS (f))
 	  {
-	    f = x_window_to_frame (dpyinfo, event->xbutton.window);
+	    /* When clicking into a child frame or when clicking
+	       into a parent frame with the child frame selected and
+	       `no-accept-focus' is not set, select the clicked
+	       frame.  */
+	    struct frame *hf = dpyinfo->highlight_frame;
 
-	    if (f && event->xbutton.type == ButtonPress
-		&& !popup_activated ()
-		&& !x_window_to_scroll_bar (event->xbutton.display,
-					    event->xbutton.window, 2)
-		&& !FRAME_NO_ACCEPT_FOCUS (f))
+	    if (FRAME_PARENT_FRAME (f) || (hf && frame_ancestor_p (f, hf)))
 	      {
-		/* When clicking into a child frame or when clicking
-		   into a parent frame with the child frame selected and
-		   `no-accept-focus' is not set, select the clicked
-		   frame.  */
-		struct frame *hf = dpyinfo->highlight_frame;
-
-		if (FRAME_PARENT_FRAME (f) || (hf && frame_ancestor_p (f, hf)))
-		  {
-		    block_input ();
-		    XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-				    RevertToParent, CurrentTime);
-		    if (FRAME_PARENT_FRAME (f))
-		      XRaiseWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f));
-		    unblock_input ();
-		  }
+		block_input ();
+		XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+				RevertToParent, CurrentTime);
+		if (FRAME_PARENT_FRAME (f))
+		  XRaiseWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f));
+		unblock_input ();
 	      }
 	  }
 

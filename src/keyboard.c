@@ -1159,14 +1159,14 @@ DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 
   user_error ("No recursive edit is in progress");
 }
 
-/* Restore mouse tracking enablement.  See Ftrack_mouse for the only use
-   of this function.  */
+/* Restore mouse tracking enablement.  See Finternal_track_mouse for
+   the only use of this function.  */
 
 static void
-tracking_off (Lisp_Object old_value)
+tracking_off (Lisp_Object old_track_mouse)
 {
-  do_mouse_tracking = old_value;
-  if (NILP (old_value))
+  track_mouse = old_track_mouse;
+  if (NILP (old_track_mouse))
     {
       /* Redisplay may have been preempted because there was input
 	 available, and it assumes it will be called again after the
@@ -1181,24 +1181,24 @@ tracking_off (Lisp_Object old_value)
     }
 }
 
-DEFUN ("internal--track-mouse", Ftrack_mouse, Strack_mouse, 1, 1, 0,
+DEFUN ("internal--track-mouse", Finternal_track_mouse, Sinternal_track_mouse,
+       1, 1, 0,
        doc: /* Call BODYFUN with mouse movement events enabled.  */)
   (Lisp_Object bodyfun)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object val;
 
-  record_unwind_protect (tracking_off, do_mouse_tracking);
+  record_unwind_protect (tracking_off, track_mouse);
 
-  do_mouse_tracking = Qt;
+  track_mouse = Qt;
 
   val = call0 (bodyfun);
   return unbind_to (count, val);
 }
 
-/* If mouse has moved on some frame, return one of those frames.
-
-   Return 0 otherwise.
+/* If mouse has moved on some frame and we are tracking the mouse,
+   return one of those frames.  Return NULL otherwise.
 
    If ignore_mouse_drag_p is non-zero, ignore (implicit) mouse movement
    after resizing the tool-bar window.  */
@@ -1210,11 +1210,8 @@ some_mouse_moved (void)
 {
   Lisp_Object tail, frame;
 
-  if (ignore_mouse_drag_p)
-    {
-      /* ignore_mouse_drag_p = false; */
-      return 0;
-    }
+  if (NILP (track_mouse) || ignore_mouse_drag_p)
+    return NULL;
 
   FOR_EACH_FRAME (tail, frame)
     {
@@ -1222,7 +1219,7 @@ some_mouse_moved (void)
 	return XFRAME (frame);
     }
 
-  return 0;
+  return NULL;
 }
 
 
@@ -2071,7 +2068,8 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
 	 This causes trouble if we are trying to read a mouse motion
 	 event (i.e., if we are inside a `track-mouse' form), so we
 	 restore the mouse_moved flag.  */
-      struct frame *f = NILP (do_mouse_tracking) ? NULL : some_mouse_moved ();
+      struct frame *f = some_mouse_moved ();
+
       help = call1 (Qmouse_fixup_help_message, help);
       if (f)
 	f->mouse_moved = true;
@@ -3403,8 +3401,7 @@ readable_events (int flags)
 	return 1;
     }
 
-  if (!(flags & READABLE_EVENTS_IGNORE_SQUEEZABLES)
-      && !NILP (do_mouse_tracking) && some_mouse_moved ())
+  if (!(flags & READABLE_EVENTS_IGNORE_SQUEEZABLES) && some_mouse_moved ())
     return 1;
   if (single_kboard)
     {
@@ -3786,7 +3783,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 
       if (kbd_fetch_ptr != kbd_store_ptr)
 	break;
-      if (!NILP (do_mouse_tracking) && some_mouse_moved ())
+      if (some_mouse_moved ())
 	break;
 
       /* If the quit flag is set, then read_char will return
@@ -3802,7 +3799,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 #endif
       if (kbd_fetch_ptr != kbd_store_ptr)
 	break;
-      if (!NILP (do_mouse_tracking) && some_mouse_moved ())
+      if (some_mouse_moved ())
 	break;
       if (end_time)
 	{
@@ -3941,8 +3938,9 @@ kbd_buffer_get_event (KBOARD **kbp,
         break;
       default:
 	{
-	  /* If this event is on a different frame, return a switch-frame this
-	     time, and leave the event in the queue for next time.  */
+	  /* If this event is on a different frame, return a
+	     switch-frame this time, and leave the event in the queue
+	     for next time.  */
 	  Lisp_Object frame;
 	  Lisp_Object focus;
 
@@ -3956,14 +3954,13 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  if (! NILP (focus))
 	    frame = focus;
 
-	  if (! EQ (frame, internal_last_event_frame)
+	  if (!EQ (frame, internal_last_event_frame)
 	      && !EQ (frame, selected_frame))
 	    obj = make_lispy_switch_frame (frame);
 	  internal_last_event_frame = frame;
 
 	  /* If we didn't decide to make a switch-frame event, go ahead
 	     and build a real event from the queue entry.  */
-
 	  if (NILP (obj))
 	    {
 	      obj = make_lispy_event (&event->ie);
@@ -3995,7 +3992,7 @@ kbd_buffer_get_event (KBOARD **kbp,
       }
     }
   /* Try generating a mouse motion event.  */
-  else if (!NILP (do_mouse_tracking) && some_mouse_moved ())
+  else if (some_mouse_moved ())
     {
       struct frame *f = some_mouse_moved ();
       Lisp_Object bar_window;
@@ -4027,7 +4024,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  if (NILP (frame))
 	    XSETFRAME (frame, f);
 
-	  if (! EQ (frame, internal_last_event_frame)
+	  if (!EQ (frame, internal_last_event_frame)
 	      && !EQ (frame, selected_frame))
 	    obj = make_lispy_switch_frame (frame);
 	  internal_last_event_frame = frame;
@@ -10935,7 +10932,7 @@ init_keyboard (void)
   recent_keys_index = 0;
   kbd_fetch_ptr = kbd_buffer;
   kbd_store_ptr = kbd_buffer;
-  do_mouse_tracking = Qnil;
+  track_mouse = Qnil;
   input_pending = false;
   interrupt_input_blocked = 0;
   pending_signals = false;
@@ -11297,7 +11294,7 @@ syms_of_keyboard (void)
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
   defsubr (&Srecursive_edit);
-  defsubr (&Strack_mouse);
+  defsubr (&Sinternal_track_mouse);
   defsubr (&Sinput_pending_p);
   defsubr (&Srecent_keys);
   defsubr (&Sthis_command_keys);
@@ -11643,8 +11640,15 @@ and the minor mode maps regardless of `overriding-local-map'.  */);
 	       doc: /* Keymap defining bindings for special events to execute at low level.  */);
   Vspecial_event_map = list1 (Qkeymap);
 
-  DEFVAR_LISP ("track-mouse", do_mouse_tracking,
-	       doc: /* Non-nil means generate motion events for mouse motion.  */);
+  DEFVAR_LISP ("track-mouse", track_mouse,
+	       doc: /* Non-nil means generate motion events for mouse motion.
+The special values `dragging' and `dropping' assert that the mouse
+cursor retains its appearance during mouse motion.  Any non-nil value
+but `dropping' asserts that motion events always relate to the frame
+where the the mouse movement started.  The value `dropping' asserts
+that motion events relate to the frame where the mouse cursor is seen
+when generating the event.  If there's no such frame, such motion
+events relate to the frame where the mouse movement started.  */);
 
   DEFVAR_KBOARD ("system-key-alist", Vsystem_key_alist,
 		 doc: /* Alist of system-specific X windows key symbols.
