@@ -160,7 +160,7 @@ constructs (header arguments, no-web syntax etc...) are ignored."
   (interactive "P")
   (let* ((contents (buffer-string))
          (haskell-regexp
-          (concat "^\\([ \t]*\\)#\\+begin_src[ \t]haskell*\\(.*\\)?[\r\n]"
+          (concat "^\\([ \t]*\\)#\\+begin_src[ \t]haskell*\\(.*\\)[\r\n]"
                   "\\([^\000]*?\\)[\r\n][ \t]*#\\+end_src.*"))
          (base-name (file-name-sans-extension (buffer-file-name)))
          (tmp-file (org-babel-temp-file "haskell-"))

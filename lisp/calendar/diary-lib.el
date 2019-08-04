@@ -109,7 +109,7 @@ are: `string', `symbol', `int', `tnil', `stringtnil.'"
                                       :tag "A string, t, or nil"))))
   :group 'diary)
 
-(defcustom diary-glob-file-regexp-prefix "^\\#"
+(defcustom diary-glob-file-regexp-prefix "^#"
   "Regular expression pre-pended to `diary-face-attrs' for file-wide specifiers."
   :type 'regexp
   :group 'diary)
