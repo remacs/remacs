@@ -530,7 +530,10 @@ syms_of_inotify (void)
   DEFSYM (Qdont_follow, "dont-follow");	/* IN_DONT_FOLLOW */
   DEFSYM (Qonlydir, "onlydir");		/* IN_ONLYDIR */
 
+#if 0
+  /* Defined in coding.c, which uses it on all platforms.  */
   DEFSYM (Qignored, "ignored");		/* IN_IGNORED */
+#endif
   DEFSYM (Qisdir, "isdir");		/* IN_ISDIR */
   DEFSYM (Qq_overflow, "q-overflow");	/* IN_Q_OVERFLOW */
   DEFSYM (Qunmount, "unmount");		/* IN_UNMOUNT */
