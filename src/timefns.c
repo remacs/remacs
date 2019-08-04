@@ -965,6 +965,37 @@ lisp_seconds_argument (Lisp_Object specified_time)
   return t.tv_sec;
 }
 
+/* Return the sum of the Lisp integers A and B.
+   Subtract instead of adding if SUBTRACT.
+   This function is tuned for small B.  */
+static Lisp_Object
+lispint_arith (Lisp_Object a, Lisp_Object b, bool subtract)
+{
+  bool mpz_done = false;
+
+  if (FASTER_TIMEFNS && FIXNUMP (b))
+    {
+      if (EQ (b, make_fixnum (0)))
+	return a;
+      if (FIXNUMP (a))
+	return make_int (subtract
+			 ? XFIXNUM (a) - XFIXNUM (b)
+			 : XFIXNUM (a) + XFIXNUM (b));
+      if (eabs (XFIXNUM (b)) <= ULONG_MAX)
+	{
+	  ((XFIXNUM (b) < 0) == subtract ? mpz_add_ui : mpz_sub_ui)
+	    (mpz[0], XBIGNUM (a)->value, eabs (XFIXNUM (b)));
+	  mpz_done = true;
+	}
+    }
+
+  if (!mpz_done)
+    (subtract ? mpz_sub : mpz_add) (mpz[0],
+				    *bignum_integer (&mpz[0], a),
+				    *bignum_integer (&mpz[1], b));
+  return make_integer_mpz ();
+}
+
 /* Given Lisp operands A and B, add their values, and return the
    result as a Lisp timestamp that is in (TICKS . HZ) form if either A
    or B are in that form, (HI LO US PS) form otherwise.  Subtract
@@ -989,18 +1020,7 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
   if (FASTER_TIMEFNS && EQ (ta.hz, tb.hz))
     {
       hz = ta.hz;
-      if (FIXNUMP (ta.ticks) && FIXNUMP (tb.ticks))
-	ticks = make_int (subtract
-			  ? XFIXNUM (ta.ticks) - XFIXNUM (tb.ticks)
-			  : XFIXNUM (ta.ticks) + XFIXNUM (tb.ticks));
-      else
-	{
-	  (subtract ? mpz_sub : mpz_add)
-	    (mpz[0],
-	     *bignum_integer (&mpz[0], ta.ticks),
-	     *bignum_integer (&mpz[1], tb.ticks));
-	  ticks = make_integer_mpz ();
-	}
+      ticks = lispint_arith (ta.ticks, tb.ticks, subtract);
     }
   else
     {
