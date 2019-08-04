@@ -2184,16 +2184,19 @@ matches arbitrary non-symbol whitespace.  Otherwise if LAX is non-nil,
 the beginning or the end of the string need not match a symbol boundary."
   (let ((not-word-symbol-re
 	 ;; This regexp matches all syntaxes except word and symbol syntax.
-	 ;; FIXME: Replace it with something shorter if possible (bug#14602).
-	 "\\(?:\\s-\\|\\s.\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s/\\|\\s$\\|\\s'\\|\\s<\\|\\s>\\|\\s@\\|\\s!\\|\\s|\\)+"))
+	 "\\(?:\\s-\\|\\s.\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s/\\|\\s$\\|\\s'\\|\\s<\\|\\s>\\|\\s!\\|\\s|\\)+"))
     (cond
      ((equal string "") "")
-     ((string-match-p (format "\\`%s\\'" not-word-symbol-re) string) not-word-symbol-re)
+     ((string-match-p (format "\\`%s\\'" not-word-symbol-re) string)
+      not-word-symbol-re)
      (t (concat
-	 (if (string-match-p (format "\\`%s" not-word-symbol-re) string) not-word-symbol-re
+	 (if (string-match-p (format "\\`%s" not-word-symbol-re) string)
+	     not-word-symbol-re
 	   "\\_<")
-	 (mapconcat 'regexp-quote (split-string string not-word-symbol-re t) not-word-symbol-re)
-	 (if (string-match-p (format "%s\\'" not-word-symbol-re) string) not-word-symbol-re
+	 (mapconcat 'regexp-quote (split-string string not-word-symbol-re t)
+		    not-word-symbol-re)
+	 (if (string-match-p (format "%s\\'" not-word-symbol-re) string)
+	     not-word-symbol-re
 	   (unless lax "\\_>")))))))
 
 ;; Search with lax whitespace
