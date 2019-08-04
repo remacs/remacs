@@ -2569,6 +2569,9 @@ subr.el so that it is available by default.  It now always returns the
 non-nil argument when the other is nil.  Several duplicates of 'xor'
 in other packages are now obsolete aliases of 'xor'.
 
++++
+** 'define-globalized-minor-mode' now takes BODY forms.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
