@@ -3772,9 +3772,16 @@ of."
 		     (format "File %s exists; overwrite anyway? " filename)))))
       (tramp-error v 'file-already-exists filename))
 
-    (let ((tmpfile (tramp-compat-make-temp-file filename)))
+    (let ((tmpfile (tramp-compat-make-temp-file filename))
+	  (modes (save-excursion (tramp-default-file-modes filename))))
       (when (and append (file-exists-p filename))
 	(copy-file filename tmpfile 'ok))
+      ;; The permissions of the temporary file should be set.  If
+      ;; FILENAME does not exist (eq modes nil) it has been
+      ;; renamed to the backup file.  This case `save-buffer'
+      ;; handles permissions.
+      ;; Ensure that it is still readable.
+      (set-file-modes tmpfile (logior (or modes 0) #o0400))
       ;; We say `no-message' here because we don't want the visited file
       ;; modtime data to be clobbered from the temp file.  We call
       ;; `set-visited-file-modtime' ourselves later on.
