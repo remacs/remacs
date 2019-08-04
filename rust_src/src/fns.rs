@@ -614,7 +614,9 @@ pub fn validate_subarray_rust(
     let mut int_from = from.unwrap_or(0);
     let mut int_to = to.unwrap_or(int_size);
 
-    // make negative numbers reverse array
+    // Negative indexes count from the end of the array.
+    // Adding size to them should turn them into
+    // equivalent positive indexes.
     if int_from < 0 {
         int_from += int_size;
     }
