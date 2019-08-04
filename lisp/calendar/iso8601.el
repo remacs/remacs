@@ -138,7 +138,7 @@ well as variants like \"2008W32\" (week number) and
       date)))
 
 (defun iso8601-parse-date (string)
-  "Parse STRING (which should be on ISO 8601 format) and return a time value."
+  "Parse STRING (in ISO 8601 format) and return a decoded time value."
   (cond
    ;; Just a year: [-+]YYYY.
    ((iso8601--match iso8601--year-match string)

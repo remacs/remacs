@@ -636,6 +636,7 @@ disallows them."
       (error "Invalid or unsupported time: %s" date-time-string))
     ;; Return a value in a format similar to that returned by decode-time, and
     ;; suitable for (apply #'encode-time ...).
+    ;; FIXME: Nobody uses this idiosyncratic value.  Perhaps stop returning it?
     (list second minute hour day month year second-fraction datatype
           (if has-time-zone
               (* (rng-xsd-time-to-seconds

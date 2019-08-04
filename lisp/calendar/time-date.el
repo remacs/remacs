@@ -374,8 +374,8 @@ January 1st being 1."
 
 (defun decoded-time-add (time delta)
   "Add DELTA to TIME, both of which are `decoded-time' structures.
-TIME should represent a time, while DELTA should only have
-non-nil integers for the values that should be altered.
+TIME should represent a time, while DELTA should have non-nil
+entries only for the values that should be altered.
 
 For instance, if you want to \"add two months\" to TIME, then
 leave all other fields but the month field in DELTA nil, and make

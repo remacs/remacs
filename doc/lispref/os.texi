@@ -1559,7 +1559,7 @@ or more arguments.  The first six arguments @var{second},
 specify most of the components of a decoded time.  If there are more
 than six arguments the @emph{last} argument is used as @var{zone} and
 any other extra arguments are ignored, so that @code{(apply
-#\\='encode-time (decode-time ...))} works; otherwise @var{zone} defaults
+#'encode-time (decode-time ...))} works; otherwise @var{zone} defaults
 to the current time zone rule (@pxref{Time Zone Rules}).  The decoded
 time's @var{dst} component is treated as if it was @minus{}1, and
 @var{form} takes its default value.
@@ -1581,7 +1581,7 @@ You can perform simple date arithmetic by using out-of-range values for
 for example, day 0 means the day preceding the given month.
 
 The operating system puts limits on the range of possible time values;
-if you try to encode a time that is out of range, an error results.
+if the limits are exceeded while encoding the time, an error results.
 For instance, years before 1970 do not work on some systems;
 on others, years as early as 1901 do work.
 @end defun

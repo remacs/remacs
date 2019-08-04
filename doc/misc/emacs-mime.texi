@@ -1541,10 +1541,6 @@ Here's a bunch of time/date/second/day examples:
              1000000)
 @result{} (905595714000000 . 1000000)
 
-(encode-time (parse-iso8601-time-string "1998-09-12T12:21:54+0200")
-             1000000)
-@result{} (905595714000000 . 1000000)
-
 (float-time '(905595714000000 . 1000000))
 @result{} 905595714.0
 
@@ -1627,7 +1623,7 @@ These are the functions available:
 Take a date and return a time.
 
 @item float-time
-Take a time and return seconds.  (This is a built-in function.)
+Take a time and return seconds.
 
 @item encode-time
 Take seconds (and other ways to represent time, notably decoded time
