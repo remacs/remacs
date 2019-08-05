@@ -1971,6 +1971,7 @@ The command then executes BODY and updates the isearch prompt."
          ,(format "Toggle %s searching on or off.%s" mode
                   (if docstring (concat "\n" docstring) ""))
          (interactive)
+         (unless isearch-mode (isearch-mode t))
          ,@(when function
              `((setq isearch-regexp-function
                      (unless (eq isearch-regexp-function #',function)
