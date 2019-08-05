@@ -658,7 +658,7 @@ remapped to these, respectively.
 command itself, not how many files are marked in total.
 
 ---
-*** A new face, 'dired-socket', is used to highlight sockets, named
+*** A new face, 'dired-special', is used to highlight sockets, named
 pipes, block devices and character devices.
 
 ** Find-Dired
