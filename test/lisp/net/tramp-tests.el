@@ -56,6 +56,7 @@
 (declare-function tramp-list-tramp-buffers "tramp-cmds")
 (declare-function tramp-method-out-of-band-p "tramp-sh")
 (declare-function tramp-smb-get-localname "tramp-smb")
+(declare-function tramp-time-diff "tramp")
 (defvar auto-save-file-name-transforms)
 (defvar tramp-connection-properties)
 (defvar tramp-copy-size-limit)
@@ -3084,9 +3085,18 @@ This tests also `access-file', `file-readable-p',
 
 (defsubst tramp--test-file-attributes-equal-p (attr1 attr2)
   "Check, whether file attributes ATTR1 and ATTR2 are equal.
-They might differ only in access time."
+They might differ only in time attributes."
+  ;; Access time.
   (setcar (nthcdr 4 attr1) tramp-time-dont-know)
   (setcar (nthcdr 4 attr2) tramp-time-dont-know)
+  ;; Modification time.
+  (when (< (abs (tramp-time-diff (nth 5 attr1) (nth 5 attr2))) 5)
+    (setcar (nthcdr 5 attr1) tramp-time-dont-know)
+    (setcar (nthcdr 5 attr2) tramp-time-dont-know))
+  ;; Status change time.
+  (when (< (abs (tramp-time-diff (nth 6 attr1) (nth 6 attr2))) 5)
+    (setcar (nthcdr 6 attr1) tramp-time-dont-know)
+    (setcar (nthcdr 6 attr2) tramp-time-dont-know))
   (equal attr1 attr2))
 
 ;; This isn't 100% correct, but better than no explainer at all.

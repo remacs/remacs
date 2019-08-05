@@ -3006,7 +3006,6 @@ User is always nil."
 			  localname)))))
 	  (tramp-error v 'file-already-exists newname)
 	(delete-file newname)))
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (copy-file
      filename newname 'ok-if-already-exists 'keep-time
@@ -3794,7 +3793,6 @@ of."
 	 (tramp-error
 	  v 'file-error "Couldn't write region to `%s'" filename))))
 
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
 
     ;; Set file modification time.

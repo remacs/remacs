@@ -1069,7 +1069,6 @@ component is used as the target of the symlink."
 		(tramp-error v 'file-already-exists localname)
 	      (delete-file linkname)))
 
-	  (tramp-flush-file-properties v (file-name-directory localname))
 	  (tramp-flush-file-properties v localname)
 
 	  ;; Right, they are on the same host, regardless of user,
@@ -1450,7 +1449,6 @@ of."
 (defun tramp-sh-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     ;; FIXME: extract the proper text from chmod's stderr.
     (tramp-barf-unless-okay
@@ -1462,7 +1460,6 @@ of."
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     (when (tramp-get-remote-touch v)
-      (tramp-flush-file-properties v (file-name-directory localname))
       (tramp-flush-file-properties v localname)
       (let ((time
 	     (if (or (null time)
@@ -1875,7 +1872,6 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 			      v2-localname)))))
 	      (tramp-error v2 'file-already-exists newname)
 	    (delete-file newname)))
-	(tramp-flush-file-properties v2 (file-name-directory v2-localname))
 	(tramp-flush-file-properties v2 v2-localname)
 	(tramp-barf-unless-okay
 	 v1
@@ -1942,7 +1938,6 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
       ;; When newname did exist, we have wrong cached values.
       (when t2
 	(with-parsed-tramp-file-name newname nil
-	  (tramp-flush-file-properties v (file-name-directory localname))
 	  (tramp-flush-file-properties v localname))))))
 
 (defun tramp-sh-handle-rename-file
@@ -2072,15 +2067,11 @@ file names."
 	  ;; In case of `rename', we must flush the cache of the source file.
 	  (when (and t1 (eq op 'rename))
 	    (with-parsed-tramp-file-name filename v1
-	      (tramp-flush-file-properties
-	       v1 (file-name-directory v1-localname))
 	      (tramp-flush-file-properties v1 v1-localname)))
 
 	  ;; When newname did exist, we have wrong cached values.
 	  (when t2
 	    (with-parsed-tramp-file-name newname v2
-	      (tramp-flush-file-properties
-	       v2 (file-name-directory v2-localname))
 	      (tramp-flush-file-properties v2 v2-localname))))))))
 
 (defun tramp-do-copy-or-rename-file-via-buffer (op filename newname keep-date)
@@ -2505,7 +2496,6 @@ The method used must be an out-of-band method."
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name directory nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (tramp-barf-unless-okay
      v (format "cd / && %s %s"
@@ -2518,7 +2508,6 @@ The method used must be an out-of-band method."
   "Like `delete-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (tramp-barf-unless-okay
      v (format "%s %s"
@@ -3394,7 +3383,6 @@ the result will be a local, non-Tramp, file name."
 	  (when coding-system-used
 	    (set 'last-coding-system-used coding-system-used))))
 
-      (tramp-flush-file-properties v (file-name-directory localname))
       (tramp-flush-file-properties v localname)
 
       ;; We must protect `last-coding-system-used', now we have set it

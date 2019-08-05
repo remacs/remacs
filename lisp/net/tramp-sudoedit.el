@@ -189,7 +189,6 @@ pass to the OPERATION."
 			      v2-localname)))))
 	      (tramp-error v2 'file-already-exists newname)
 	    (delete-file newname)))
-	(tramp-flush-file-properties v2 (file-name-directory v2-localname))
 	(tramp-flush-file-properties v2 v2-localname)
 	(unless
 	    (tramp-sudoedit-send-command
@@ -291,14 +290,10 @@ absolute file names."
 
 	(when (and t1 (eq op 'rename))
 	  (with-parsed-tramp-file-name filename v1
-	    (tramp-flush-file-properties
-	     v1 (file-name-directory v1-localname))
 	    (tramp-flush-file-properties v1 v1-localname)))
 
 	(when t2
 	  (with-parsed-tramp-file-name newname v2
-	    (tramp-flush-file-properties
-	     v2 (file-name-directory v2-localname))
 	    (tramp-flush-file-properties v2 v2-localname)))))))
 
 (defun tramp-sudoedit-handle-copy-file
@@ -323,7 +318,6 @@ absolute file names."
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name directory nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (unless
 	(tramp-sudoedit-send-command
@@ -335,7 +329,6 @@ absolute file names."
 (defun tramp-sudoedit-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (unless
 	(tramp-sudoedit-send-command
@@ -467,7 +460,6 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sudoedit-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (unless (tramp-sudoedit-send-command
 	     v "chmod" (format "%o" mode)
@@ -526,7 +518,6 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sudoedit-handle-set-file-times (filename &optional time)
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (let ((time
 	   (if (or (null time)
@@ -634,7 +625,6 @@ component is used as the target of the symlink."
 	      (tramp-error v 'file-already-exists localname)
 	    (delete-file linkname)))
 
-	(tramp-flush-file-properties v (file-name-directory localname))
 	(tramp-flush-file-properties v localname)
         (tramp-sudoedit-send-command
 	 v "ln" "-sf"

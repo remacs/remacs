@@ -817,12 +817,10 @@ file names."
 
 	  (when (and t1 (eq op 'rename))
 	    (with-parsed-tramp-file-name filename nil
-	      (tramp-flush-file-properties v (file-name-directory localname))
 	      (tramp-flush-file-properties v localname)))
 
 	  (when t2
 	    (with-parsed-tramp-file-name newname nil
-	      (tramp-flush-file-properties v (file-name-directory localname))
 	      (tramp-flush-file-properties v localname))))))))
 
 (defun tramp-gvfs-handle-copy-file
@@ -857,7 +855,6 @@ file names."
 	(tramp-error
 	 v 'file-error "Couldn't delete non-empty %s" directory)))
 
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (unless
 	(tramp-gvfs-send-command
@@ -872,7 +869,6 @@ file names."
 (defun tramp-gvfs-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (unless
 	(tramp-gvfs-send-command
@@ -1296,7 +1292,6 @@ file-notify events."
   "Like `make-directory' for Tramp files."
   (setq dir (directory-file-name (expand-file-name dir)))
   (with-parsed-tramp-file-name dir nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (save-match-data
       (let ((ldir (file-name-directory dir)))
@@ -1329,7 +1324,6 @@ file-notify events."
 (defun tramp-gvfs-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (tramp-gvfs-send-command
      v "gvfs-set-attribute" "-t" "uint32"
@@ -1339,7 +1333,6 @@ file-notify events."
 (defun tramp-gvfs-handle-set-file-times (filename &optional time)
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (let ((time
 	   (if (or (null time)
@@ -1355,7 +1348,6 @@ file-notify events."
 (defun tramp-gvfs-set-file-uid-gid (filename &optional uid gid)
   "Like `tramp-set-file-uid-gid' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (when (natnump uid)
       (tramp-gvfs-send-command

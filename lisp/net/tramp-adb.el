@@ -510,7 +510,6 @@ Emacs dired can't find files."
       (let ((par (expand-file-name ".." dir)))
 	(unless (file-directory-p par)
 	  (make-directory par parents))))
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (unless (or (tramp-adb-send-command-and-check
 		 v (format "mkdir %s" (tramp-shell-quote-argument localname)))
@@ -521,10 +520,8 @@ Emacs dired can't find files."
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name (file-truename directory) nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname))
   (with-parsed-tramp-file-name directory nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
     (tramp-adb-barf-unless-okay
      v (format "%s %s"
@@ -536,7 +533,6 @@ Emacs dired can't find files."
   "Like `delete-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (tramp-adb-barf-unless-okay
      v (format "rm %s" (tramp-shell-quote-argument localname))
@@ -627,7 +623,6 @@ But handle the case, if the \"test\" command is not available."
 
     ;; We must also flush the cache of the directory, because
     ;; `file-attributes' reads the values from there.
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (let* ((curbuf (current-buffer))
 	   (tmpfile (tramp-compat-make-temp-file filename)))
@@ -665,14 +660,12 @@ But handle the case, if the \"test\" command is not available."
 (defun tramp-adb-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (tramp-adb-send-command-and-check v (format "chmod %o %s" mode localname))))
 
 (defun tramp-adb-handle-set-file-times (filename &optional time)
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
     (let ((time (if (or (null time)
 			(tramp-compat-time-equal-p time tramp-time-doesnt-exist)
@@ -722,7 +715,6 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		;; We must also flush the cache of the directory,
 		;; because `file-attributes' reads the values from
 		;; there.
-		(tramp-flush-file-properties v (file-name-directory l2))
 		(tramp-flush-file-properties v l2)
 		;; Short track.
 		(tramp-adb-barf-unless-okay
@@ -757,8 +749,6 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  ;; We must also flush the cache of the directory,
 		  ;; because `file-attributes' reads the values from
 		  ;; there.
-		  (tramp-flush-file-properties
-		   v (file-name-directory localname))
 		  (tramp-flush-file-properties v localname)
 		  (when (tramp-adb-execute-adb-command
 			 v "push"
@@ -803,9 +793,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		    (l2 (tramp-compat-file-local-name newname)))
 		;; We must also flush the cache of the directory, because
 		;; `file-attributes' reads the values from there.
-		(tramp-flush-file-properties v (file-name-directory l1))
 		(tramp-flush-file-properties v l1)
-		(tramp-flush-file-properties v (file-name-directory l2))
 		(tramp-flush-file-properties v l2)
 		;; Short track.
 		(tramp-adb-barf-unless-okay

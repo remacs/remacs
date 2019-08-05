@@ -193,6 +193,22 @@ Returns VALUE."
     (let ((var (intern (concat "tramp-cache-set-count-" property))))
       (makunbound var))))
 
+(defun tramp-flush-file-upper-properties (key file)
+  "Remove some properties of FILE's upper directory."
+  (when (file-name-absolute-p file)
+    (let ((file (directory-file-name (file-name-directory file))))
+      ;; Unify localname.  Remove hop from `tramp-file-name' structure.
+      (setq file (tramp-compat-file-name-unquote file)
+	    key (copy-tramp-file-name key))
+      (setf (tramp-file-name-localname key) file
+	    (tramp-file-name-hop key) nil)
+      (maphash
+       (lambda (property _value)
+	 (when (string-match-p
+		"^\\(directory-\\|file-name-all-completions\\)" property)
+	   (tramp-flush-file-property key file property)))
+       (tramp-get-hash-table key)))))
+
 ;;;###tramp-autoload
 (defun tramp-flush-file-properties (key file)
   "Remove all properties of FILE in the cache context of KEY."
@@ -209,7 +225,9 @@ Returns VALUE."
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
 	       (not (string-equal file (directory-file-name truename))))
-      (tramp-flush-file-properties key truename))))
+      (tramp-flush-file-properties key truename))
+    ;; Remove selected properties of upper directory.
+    (tramp-flush-file-upper-properties key file)))
 
 ;;;###tramp-autoload
 (defun tramp-flush-directory-properties (key directory)
@@ -231,7 +249,9 @@ Remove also properties of all files in subdirectories."
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
 	       (not (string-equal directory (directory-file-name truename))))
-      (tramp-flush-directory-properties key truename))))
+      (tramp-flush-directory-properties key truename))
+    ;; Remove selected properties of upper directory.
+    (tramp-flush-file-upper-properties key directory)))
 
 ;; Reverting or killing a buffer should also flush file properties.
 ;; They could have been changed outside Tramp.  In eshell, "ls" would
