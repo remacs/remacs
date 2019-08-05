@@ -616,52 +616,64 @@ since it could result in memory overflow and make Emacs crash."
 		       (const :tag "Grow only" :value grow-only))
 	      "25.1")
 	     (display-raw-bytes-as-hex display boolean "26.1")
-             (display-line-numbers display-line-numbers
-                                   (choice
-                                    (const :tag "Off (nil)" :value nil)
-                                    (const :tag "Absolute line numbers"
-                                           :value t)
-                                    (const :tag "Relative line numbers"
-                                           :value relative)
-                                    (const :tag "Visually relative line numbers"
-                                           :value visual))
-                                   "26.1")
-             (display-line-numbers-width display-line-numbers
-                                 (choice
-                                  (const :tag "Dynamically computed"
-                                         :value nil)
-                                  (integer :menu-tag "Fixed number of columns"
-                                           :value 2
-                                           :format "%v"))
-                                 "26.1")
-             (display-line-numbers-current-absolute display-line-numbers
-                                 (choice
-                                  (const :tag "Display actual number of current line"
-                                         :value t)
-                                  (const :tag "Display zero as number of current line"
-                                         :value nil))
-                                 "26.1")
-             (display-line-numbers-widen display-line-numbers
-                                 (choice
-                                  (const :tag "Disregard narrowing when calculating line numbers"
-                                         :value t)
-                                  (const :tag "Count lines from beginning of narrowed region"
-                                         :value nil))
-                                 "26.1")
+             (display-line-numbers
+              display-line-numbers
+              (choice
+               (const :tag "Off (nil)" :value nil)
+               (const :tag "Absolute line numbers"
+                      :value t)
+               (const :tag "Relative line numbers"
+                      :value relative)
+               (const :tag "Visually relative line numbers"
+                      :value visual))
+              "26.1")
+             (display-line-numbers-width
+              display-line-numbers
+              (choice
+               (const :tag "Dynamically computed"
+                      :value nil)
+               (integer :menu-tag "Fixed number of columns"
+                        :value 2
+                        :format "%v"))
+              "26.1")
+             (display-line-numbers-current-absolute
+              display-line-numbers
+              (choice
+               (const :tag "Display actual number of current line"
+                      :value t)
+               (const :tag "Display zero as number of current line"
+                      :value nil))
+              "26.1")
+             (display-line-numbers-widen
+              display-line-numbers
+              (choice
+               (const :tag "Disregard narrowing when calculating line numbers"
+                      :value t)
+               (const :tag "Count lines from beginning of narrowed region"
+                      :value nil))
+              "26.1")
 
-             (display-fill-column-indicator display-fill-column-indicator
-                                 boolean "27.1")
-             (display-fill-column-indicator-column display-fill-column-indicator
-                                 (choice
-                                  (const :tag "Use fill-column variable"
-                                         :value t)
-                                  (const :tag "Fixed column number"
-                                         :value 70
-                                         :format "%v")
-                                  integer)
-                                 "27.1")
-             (display-fill-column-indicator-character display-fill-column-indicator
-                                 character "27.1")
+             (display-fill-column-indicator
+              display-fill-column-indicator
+              boolean
+              "27.1"
+              :safe booleanp)
+             (display-fill-column-indicator-column
+              display-fill-column-indicator
+              (choice
+               (const :tag "Use fill-column variable"
+                      :value t)
+               (const :tag "Fixed column number"
+                      :value 70
+                      :format "%v")
+               integer)
+              "27.1"
+              :safe (lambda (value) (or (booleanp value) (integerp value))))
+             (display-fill-column-indicator-character
+              display-fill-column-indicator
+              character
+              "27.1"
+              :safe characterp)
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c
