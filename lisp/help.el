@@ -465,28 +465,18 @@ To record all your input, use `open-dribble-file'."
   (help-setup-xref (list #'view-lossage)
 		   (called-interactively-p 'interactive))
   (with-help-window (help-buffer)
-    (with-current-buffer standard-output
-      (let ((prev-command nil))
-        (mapc
-         (lambda (key)
-	   (cond
-	    ((and (consp key) (null (car key)))
-	     (princ (format ";; %s\n"
-                            (setq prev-command
-                                  (if (symbolp (cdr key))
-                                      (cdr key)
-			            "anonymous-command")))))
-            ((eq key 'end-of-command)
-             (unless (bolp)
-               (princ (format ";; <during %s>\n" (or prev-command
-                                                     "unknown command")))))
-	    ((or (integerp key) (symbolp key) (listp key))
-	     (princ (single-key-description key))
-             (princ " "))
-	    (t
-	     (prin1 key)
-             (princ " "))))
-         (recent-keys 'include-cmds))))
+    (princ " ")
+    (princ (mapconcat (lambda (key)
+			(cond
+			 ((and (consp key) (null (car key)))
+			  (format ";; %s\n" (if (symbolp (cdr key)) (cdr key)
+					      "anonymous-command")))
+			 ((or (integerp key) (symbolp key) (listp key))
+			  (single-key-description key))
+			 (t
+			  (prin1-to-string key nil))))
+		      (recent-keys 'include-cmds)
+		      " "))
     (with-current-buffer standard-output
       (goto-char (point-min))
       (let ((comment-start ";; ")
