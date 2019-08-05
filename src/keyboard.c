@@ -307,6 +307,7 @@ static Lisp_Object command_loop (void);
 
 static void echo_now (void);
 static ptrdiff_t echo_length (void);
+static void record_char (Lisp_Object c);
 
 /* Incremented whenever a timer is run.  */
 unsigned timers_run;
@@ -1421,6 +1422,8 @@ command_loop_1 (void)
 	      Fcons (Qnil, cmd));
 	if (++recent_keys_index >= NUM_RECENT_KEYS)
 	  recent_keys_index = 0;
+	/* Mark this as a complete command in recent_keys. */
+	record_char (Qend_of_command);
       }
       Vthis_command = cmd;
       Vreal_this_command = cmd;
@@ -1470,6 +1473,9 @@ command_loop_1 (void)
       kset_last_prefix_arg (current_kboard, Vcurrent_prefix_arg);
 
       safe_run_hooks (Qpost_command_hook);
+
+      /* Mark this as a complete command in recent_keys. */
+      record_char (Qend_of_command);
 
       /* If displaying a message, resize the echo area window to fit
 	 that message's size exactly.  Do this only if the echo area
@@ -2089,7 +2095,6 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
 
 static Lisp_Object kbd_buffer_get_event (KBOARD **kbp, bool *used_mouse_menu,
 					 struct timespec *end_time);
-static void record_char (Lisp_Object c);
 
 static Lisp_Object help_form_saved_window_configs;
 static void
@@ -9996,7 +10001,9 @@ represented as pseudo-events of the form (nil . COMMAND).  */)
       do
 	{
 	  Lisp_Object e = AREF (recent_keys, i);
-	  if (cmds || !CONSP (e) || !NILP (XCAR (e)))
+	  if (cmds
+	      || ((!CONSP (e) || !NILP (XCAR (e)))
+		  && !EQ (e, Qend_of_command)))
 	    es = Fcons (e, es);
 	  if (++i >= NUM_RECENT_KEYS)
 	    i = 0;
@@ -11065,6 +11072,8 @@ syms_of_keyboard (void)
   DEFSYM (Qdisabled, "disabled");
 
   DEFSYM (Qundefined, "undefined");
+
+  DEFSYM (Qend_of_command, "end-of-command");
 
   /* Hooks to run before and after each command.  */
   DEFSYM (Qpre_command_hook, "pre-command-hook");
