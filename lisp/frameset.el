@@ -1102,8 +1102,8 @@ Internal use only."
   "Predicate to sort frame states in an order suitable for creating frames.
 It sorts minibuffer-owning frames before minibufferless ones.
 Internal use only."
-  (pcase-let ((`(,hasmini1 ,id-def1) (assq 'frameset--mini (car state1)))
-	      (`(,hasmini2 ,id-def2) (assq 'frameset--mini (car state2))))
+  (pcase-let ((`(,hasmini1 . ,id-def1) (cdr (assq 'frameset--mini (car state1))))
+	      (`(,hasmini2 . ,id-def2) (cdr (assq 'frameset--mini (car state2)))))
     (cond ((eq id-def1 t) t)
 	  ((eq id-def2 t) nil)
 	  ((not (eq hasmini1 hasmini2)) (eq hasmini1 t))
