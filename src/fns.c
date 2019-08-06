@@ -566,140 +566,6 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   return val;
 }
 
-static Lisp_Object string_char_byte_cache_string;
-static ptrdiff_t string_char_byte_cache_charpos;
-static ptrdiff_t string_char_byte_cache_bytepos;
-
-void
-clear_string_char_byte_cache (void)
-{
-  string_char_byte_cache_string = Qnil;
-}
-
-/* Return the byte index corresponding to CHAR_INDEX in STRING.  */
-
-ptrdiff_t
-string_char_to_byte (Lisp_Object string, ptrdiff_t char_index)
-{
-  ptrdiff_t i_byte;
-  ptrdiff_t best_below, best_below_byte;
-  ptrdiff_t best_above, best_above_byte;
-
-  best_below = best_below_byte = 0;
-  best_above = SCHARS (string);
-  best_above_byte = SBYTES (string);
-  if (best_above == best_above_byte)
-    return char_index;
-
-  if (EQ (string, string_char_byte_cache_string))
-    {
-      if (string_char_byte_cache_charpos < char_index)
-	{
-	  best_below = string_char_byte_cache_charpos;
-	  best_below_byte = string_char_byte_cache_bytepos;
-	}
-      else
-	{
-	  best_above = string_char_byte_cache_charpos;
-	  best_above_byte = string_char_byte_cache_bytepos;
-	}
-    }
-
-  if (char_index - best_below < best_above - char_index)
-    {
-      unsigned char *p = SDATA (string) + best_below_byte;
-
-      while (best_below < char_index)
-	{
-	  p += BYTES_BY_CHAR_HEAD (*p);
-	  best_below++;
-	}
-      i_byte = p - SDATA (string);
-    }
-  else
-    {
-      unsigned char *p = SDATA (string) + best_above_byte;
-
-      while (best_above > char_index)
-	{
-	  p--;
-	  while (!CHAR_HEAD_P (*p)) p--;
-	  best_above--;
-	}
-      i_byte = p - SDATA (string);
-    }
-
-  string_char_byte_cache_bytepos = i_byte;
-  string_char_byte_cache_charpos = char_index;
-  string_char_byte_cache_string = string;
-
-  return i_byte;
-}
-
-/* Return the character index corresponding to BYTE_INDEX in STRING.  */
-
-ptrdiff_t
-string_byte_to_char (Lisp_Object string, ptrdiff_t byte_index)
-{
-  ptrdiff_t i, i_byte;
-  ptrdiff_t best_below, best_below_byte;
-  ptrdiff_t best_above, best_above_byte;
-
-  best_below = best_below_byte = 0;
-  best_above = SCHARS (string);
-  best_above_byte = SBYTES (string);
-  if (best_above == best_above_byte)
-    return byte_index;
-
-  if (EQ (string, string_char_byte_cache_string))
-    {
-      if (string_char_byte_cache_bytepos < byte_index)
-	{
-	  best_below = string_char_byte_cache_charpos;
-	  best_below_byte = string_char_byte_cache_bytepos;
-	}
-      else
-	{
-	  best_above = string_char_byte_cache_charpos;
-	  best_above_byte = string_char_byte_cache_bytepos;
-	}
-    }
-
-  if (byte_index - best_below_byte < best_above_byte - byte_index)
-    {
-      unsigned char *p = SDATA (string) + best_below_byte;
-      unsigned char *pend = SDATA (string) + byte_index;
-
-      while (p < pend)
-	{
-	  p += BYTES_BY_CHAR_HEAD (*p);
-	  best_below++;
-	}
-      i = best_below;
-      i_byte = p - SDATA (string);
-    }
-  else
-    {
-      unsigned char *p = SDATA (string) + best_above_byte;
-      unsigned char *pbeg = SDATA (string) + byte_index;
-
-      while (p > pbeg)
-	{
-	  p--;
-	  while (!CHAR_HEAD_P (*p)) p--;
-	  best_above--;
-	}
-      i = best_above;
-      i_byte = p - SDATA (string);
-    }
-
-  string_char_byte_cache_bytepos = i_byte;
-  string_char_byte_cache_charpos = i;
-  string_char_byte_cache_string = string;
-
-  return i;
-}
-
 /* Convert STRING to a multibyte string.  */
 
 static Lisp_Object
@@ -2742,9 +2608,6 @@ Used by the byte-compiler to apply `define-symbol-prop' during
 compilation.  */);
   Voverriding_plist_environment = Qnil;
   DEFSYM (Qoverriding_plist_environment, "overriding-plist-environment");
-
-  staticpro (&string_char_byte_cache_string);
-  string_char_byte_cache_string = Qnil;
 
   Fset (Qyes_or_no_p_history, Qnil);
 

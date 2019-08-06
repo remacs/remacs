@@ -40,12 +40,13 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use crate::{
+    character::char_head_p,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     obarray::LispObarrayRef,
     remacs_sys::{
         buffer_display_table, char_width, compare_string_intervals, empty_unibyte_string,
-        find_composition as c_find_composition, get_composition_id, string_char_to_byte,
+        find_composition as c_find_composition, get_composition_id,
     },
     remacs_sys::{
         char_bits, composition_table, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval,
@@ -91,6 +92,10 @@ pub const MAX_BYTE8_CHAR: u32 = 0x3F_FFFF;
 pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 
 const BYTE8_OFFSET: u32 = 0x3F_FF00;
+
+static mut string_index_cache: LispObject = Qnil;
+static mut charpos_cache: usize = 0;
+static mut bytepos_cache: usize = 0;
 
 // cannot use `char`, it takes values out of its range
 #[repr(transparent)]
@@ -352,6 +357,131 @@ impl LispStringRef {
         s.size
     }
 
+    /// Return the byte index corresponding to the given character index.
+    ///
+    /// Caches the ouput of the most recent calculation to make several calls on
+    /// the same string faster.
+    pub fn char_idx_to_byte(self, char_index: usize) -> usize {
+        let mut best_below = 0;
+        let mut best_below_byte = 0;
+        let mut best_above = self.len_chars() as usize;
+        let mut best_above_byte = self.len_bytes() as usize;
+
+        // Return if contents are unibyte.
+        if best_above == best_above_byte {
+            return char_index;
+        }
+
+        // Use cache operating on the cached string?
+        unsafe {
+            if LispObject::from(self) == string_index_cache {
+                // Check if character is before or after cached position
+                if charpos_cache < char_index {
+                    best_below = charpos_cache;
+                    best_below_byte = bytepos_cache;
+                } else {
+                    best_above = charpos_cache;
+                    best_above_byte = bytepos_cache
+                }
+            }
+        }
+
+        let byte_index = if char_index - best_below < best_above - char_index {
+            // Target is forwards.
+            let mut byte = best_below_byte;
+
+            while best_below < char_index {
+                byte += self.head_len(byte);
+                best_below += 1;
+            }
+
+            byte
+        } else {
+            // Target is backwards.
+            let mut byte = best_above_byte;
+
+            while best_above > char_index {
+                byte -= 1;
+                while !self.is_head_at(byte) {
+                    byte -= 1;
+                }
+                best_above -= 1;
+            }
+
+            byte
+        };
+
+        // Update cache
+        unsafe {
+            string_index_cache = self.into();
+            bytepos_cache = byte_index;
+            charpos_cache = char_index;
+        }
+        byte_index
+    }
+
+    pub fn byte_idx_to_char(self, byte_index: usize) -> usize {
+        let mut best_below = 0;
+        let mut best_below_byte = 0;
+        let mut best_above = self.len_chars() as usize;
+        let mut best_above_byte = self.len_bytes() as usize;
+
+        // Return if string contents are unibyte.
+        if best_above == best_above_byte {
+            return byte_index;
+        }
+
+        // Use cache data if operating on cached string
+        unsafe {
+            if LispObject::from(self) == string_index_cache {
+                // Check if character is before or after cached position
+                if bytepos_cache < byte_index {
+                    best_below = charpos_cache;
+                    best_below_byte = bytepos_cache;
+                } else {
+                    best_above = charpos_cache;
+                    best_above_byte = bytepos_cache;
+                }
+            }
+        }
+
+        let (ccache, bcache) = if byte_index as isize - (best_below_byte as isize)
+            < best_above_byte as isize - byte_index as isize
+        {
+            // Target is forwards.
+            let mut i = best_below_byte;
+
+            while i < byte_index {
+                i += self.head_len(i);
+                best_below += 1;
+            }
+
+            (best_below, i)
+        } else {
+            // Target is backwards.
+            let mut i = best_above_byte;
+
+            while i > byte_index {
+                i -= 1;
+                while !self.is_head_at(i) {
+                    i -= 1;
+                }
+                best_above -= 1;
+            }
+
+            (best_above, i)
+        };
+
+        // Update cache
+        unsafe {
+            bytepos_cache = bcache;
+            charpos_cache = ccache;
+            string_index_cache = self.into();
+        }
+
+        ccache
+    }
+
     /// Return width of the string when displayed in the current buffer. The
     /// width is measured by how many columns it occupies on the screen while
     /// paying attention to compositions. This is a convenience function for
@@ -402,14 +532,14 @@ impl LispStringRef {
             let (chars, bytes, thiswidth) = if cmp_id >= 0 {
                 // Character is a composition, look it up in the composition table.
                 let chars = end - i;
-                let bytes = unsafe { string_char_to_byte(self.into(), end as isize) } - b as isize;
+                let bytes = self.char_idx_to_byte(end) - b;
                 let thiswidth = unsafe { (*(*composition_table.offset(cmp_id))).width } as usize;
-                (chars, bytes as usize, thiswidth)
+                (chars, bytes, thiswidth)
             } else {
                 // Character is a single codepoint, calculate it if multibyte, otherwise get
                 // raw byte at b.
                 let (ch, bytes) = if multibyte {
-                    unsafe { string_char_and_length(self.const_data_ptr().add(b)) }
+                    self.char_and_len(b)
                 } else {
                     (self.as_slice()[b].into(), 1)
                 };
@@ -481,6 +611,26 @@ impl LispStringRef {
 
     pub fn byte_at(self, index: ptrdiff_t) -> u8 {
         unsafe { *self.const_data_ptr().offset(index) }
+    }
+
+    /// Returns the length of the character sequence at ´index´.
+    pub fn head_len(self, index: usize) -> usize {
+        multibyte_length_by_head(self.as_slice()[index])
+    }
+
+    /// Checks whether `index` is the beginnign of a character sequence (also
+    /// counts single byte characters).
+    pub fn is_head_at(self, index: usize) -> bool {
+        char_head_p(self.as_slice()[index])
+    }
+
+    /// Gets the codepoint starting at the specified index, and its length.
+    ///
+    /// # Panics
+    ///
+    /// Panics if index is an incomplete codepoint at end of string.
+    pub fn char_and_len(self, index: usize) -> (Codepoint, usize) {
+        multibyte_char_at(&self.as_slice()[index..])
     }
 
     /// This function does not allocate. It will not change the size of the data allocation.
@@ -952,6 +1102,27 @@ pub fn multibyte_length_by_head(byte: c_uchar) -> usize {
     } else {
         5
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn string_char_to_byte(
+    string: LispObject,
+    char_index: ptrdiff_t,
+) -> ptrdiff_t {
+    string.force_string().char_idx_to_byte(char_index as usize) as ptrdiff_t
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn string_byte_to_char(
+    string: LispObject,
+    byte_index: ptrdiff_t,
+) -> ptrdiff_t {
+    string.force_string().byte_idx_to_char(byte_index as usize) as ptrdiff_t
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn clear_string_char_byte_cache() {
+    string_index_cache = Qnil;
 }
 
 /// Return the number of characters in the NBYTES bytes at PTR.
