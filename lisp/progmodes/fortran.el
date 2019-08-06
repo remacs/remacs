@@ -1820,7 +1820,9 @@ notes: 1) A non-zero/non-blank character in column 5 indicates a continuation
                            fortran-comment-indent-char))
                    (chars (string ?\s ?\t char)))
               (goto-char (match-end 0))
+              ;; relint suppression: Duplicated character
               (skip-chars-backward chars)
+              ;; relint suppression: Duplicated character
               (delete-region (point) (progn (skip-chars-forward chars)
                                             (point)))
               (insert-char char (- col (current-column)))))
