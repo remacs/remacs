@@ -9230,7 +9230,7 @@ DEFUN ("default-printer-name", Fdefault_printer_name, Sdefault_printer_name,
        0, 0, 0, doc: /* Return the name of Windows default printer device.  */)
   (void)
 {
-  static char pname_buf[256];
+  static char pname_buf[2 * MAX_UTF8_PATH + 3 - 1];
   int err;
   HANDLE hPrn;
   PRINTER_INFO_2W *ppi2w = NULL;

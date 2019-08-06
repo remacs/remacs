@@ -9290,13 +9290,13 @@ svg_image_p (Lisp_Object object)
 # ifdef WINDOWSNT
 
 /* Restore the original definition of __MINGW_MAJOR_VERSION.  */
-# ifdef W32_SAVE_MINGW_VERSION
-#  undef __MINGW_MAJOR_VERSION
-#  define __MINGW_MAJOR_VERSION W32_SAVE_MINGW_VERSION
-#  ifdef __MINGW_MAJOR_VERSION
-#   undef W32_SAVE_MINGW_VERSION
+#  if defined W32_SAVE_MINGW_VERSION && defined __MINGW_MAJOR_VERSION
+#   undef __MINGW_MAJOR_VERSION
+#   define __MINGW_MAJOR_VERSION W32_SAVE_MINGW_VERSION
+#   ifdef __MINGW_MAJOR_VERSION
+#    undef W32_SAVE_MINGW_VERSION
+#   endif
 #  endif
-# endif
 
 /* SVG library functions.  */
 #  if LIBRSVG_CHECK_VERSION (2, 32, 0)
