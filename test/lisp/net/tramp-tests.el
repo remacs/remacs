@@ -3090,11 +3090,15 @@ They might differ only in time attributes."
   (setcar (nthcdr 4 attr1) tramp-time-dont-know)
   (setcar (nthcdr 4 attr2) tramp-time-dont-know)
   ;; Modification time.
-  (when (< (abs (tramp-time-diff (nth 5 attr1) (nth 5 attr2))) 5)
+  (when (or (tramp-compat-time-equal-p (nth 5 attr1) tramp-time-dont-know)
+	    (tramp-compat-time-equal-p (nth 5 attr2) tramp-time-dont-know)
+	    (< (abs (tramp-time-diff (nth 5 attr1) (nth 5 attr2))) 5))
     (setcar (nthcdr 5 attr1) tramp-time-dont-know)
     (setcar (nthcdr 5 attr2) tramp-time-dont-know))
   ;; Status change time.
-  (when (< (abs (tramp-time-diff (nth 6 attr1) (nth 6 attr2))) 5)
+  (when (or (tramp-compat-time-equal-p (nth 6 attr1) tramp-time-dont-know)
+	    (tramp-compat-time-equal-p (nth 6 attr2) tramp-time-dont-know)
+	    (< (abs (tramp-time-diff (nth 6 attr1) (nth 6 attr2))) 5))
     (setcar (nthcdr 6 attr1) tramp-time-dont-know)
     (setcar (nthcdr 6 attr2) tramp-time-dont-know))
   (equal attr1 attr2))
@@ -3122,27 +3126,22 @@ They might differ only in time attributes."
 	    (write-region "foo" nil (expand-file-name "foo" tmp-name2))
 	    (write-region "bar" nil (expand-file-name "bar" tmp-name2))
 	    (write-region "boz" nil (expand-file-name "boz" tmp-name2))
+
 	    (setq attr (directory-files-and-attributes tmp-name2))
 	    (should (consp attr))
-	    ;; Dumb remote shells without perl(1) or stat(1) are not
-	    ;; able to return the date correctly.  They say "don't know".
 	    (dolist (elt attr)
-	      (unless
-		  (tramp-compat-time-equal-p
-		   (nth
-		    5 (file-attributes (expand-file-name (car elt) tmp-name2)))
-		   tramp-time-dont-know)
-		(should
-		 (tramp--test-file-attributes-equal-p
-		  (file-attributes (expand-file-name (car elt) tmp-name2))
-		  (cdr elt)))))
+	      (should
+	       (tramp--test-file-attributes-equal-p
+		(file-attributes (expand-file-name (car elt) tmp-name2))
+		(cdr elt))))
+
 	    (setq attr (directory-files-and-attributes tmp-name2 'full))
+	    (should (consp attr))
 	    (dolist (elt attr)
-	      (unless (tramp-compat-time-equal-p
-		       (nth 5 (file-attributes (car elt))) tramp-time-dont-know)
-		(should
-		 (tramp--test-file-attributes-equal-p
-		  (file-attributes (car elt)) (cdr elt)))))
+	      (should
+	       (tramp--test-file-attributes-equal-p
+		(file-attributes (car elt)) (cdr elt))))
+
 	    (setq attr (directory-files-and-attributes tmp-name2 nil "^b"))
 	    (should (equal (mapcar #'car attr) '("bar" "boz"))))
 
