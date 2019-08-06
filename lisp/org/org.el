@@ -17785,7 +17785,7 @@ NODEFAULT, hour and minute fields will be nil if not given."
 	 ;; second argument.  However, this requires at least Emacs
 	 ;; 25.1.  We can do it when we switch to this version as our
 	 ;; minimal requirement.
-	 (decode-time (encode-time (org-matcher-time s))))
+	 (decode-time (org-matcher-time s)))
 	(t (error "Not a standard Org time string: %s" s))))
 
 (defun org-timestamp-up (&optional arg)
