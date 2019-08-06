@@ -325,7 +325,6 @@ Should be called narrowed to the head of the message."
 (defun rfc2047-encodable-p ()
   "Return non-nil if any characters in current buffer need encoding in headers.
 The buffer may be narrowed."
-  (require 'message)			; for message-posting-charset
   (let ((charsets
 	 (mm-find-mime-charset-region (point-min) (point-max))))
     (goto-char (point-min))
@@ -334,7 +333,7 @@ The buffer may be narrowed."
 		 (re-search-forward rfc2047-encoded-word-regexp nil t)
 	       (goto-char (point-min))))
 	(and charsets
-	     (not (equal charsets (list (car message-posting-charset))))))))
+	     (not (equal charsets (list (car (bound-and-true-p message-posting-charset)))))))))
 
 ;; Use this syntax table when parsing into regions that may need
 ;; encoding.  Double quotes are string delimiters, backslash is
