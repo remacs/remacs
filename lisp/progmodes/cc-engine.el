@@ -1227,7 +1227,23 @@ comment at the start of cc-engine.el for more info."
 			       (not (looking-at
 				     c-opt-block-decls-with-vars-key))
 			       (or comma-delim
-				   (not (eq (char-after) ?\,)))))))
+				   (not (eq (char-after) ?\,))))))
+			   ;; Is the {..} followed by an operator which
+			   ;; prevents it being a statement in its own right?
+			   (save-excursion
+			     (and
+			      (c-go-list-forward)
+			      (progn
+				(c-forward-syntactic-ws)
+				(or
+				 (not (looking-at c-non-after-{}-ops-re))
+				 (let
+				     ((bad-op-len
+				       (- (match-end 0) (match-beginning 0))))
+				   (and
+				    (looking-at c-operator-re)
+				    (> (- (match-end 0) (match-beginning 0))
+				       bad-op-len))))))))
 			  (save-excursion
 			    (c-forward-sexp) (point)))
 			 ;; Just gone back over some paren block?

@@ -1205,6 +1205,36 @@ since CC Mode treats every identifier as an expression."
   ;; The operators as a flat list (without duplicates).
   t (c-filter-ops (c-lang-const c-operators) t t))
 
+(c-lang-defconst c-operator-re
+  ;; A regexp which matches any operator.
+  t (regexp-opt (c-lang-const c-operator-list)))
+(c-lang-defvar c-operator-re (c-lang-const c-operator-re))
+
+(c-lang-defconst c-bin-tern-operators
+  ;; All binary and ternary operators
+  t (c-filter-ops (c-lang-const c-operators)
+		  '(left-assoc right-assoc right-assoc-sequence)
+		  t))
+
+(c-lang-defconst c-unary-operators
+  ;; All unary operators.
+  t (c-filter-ops (c-lang-const c-operators)
+		  '(prefix postfix postfix-if-paren)
+		  t))
+
+(c-lang-defconst c-non-after-{}-operators
+  "Operators which can't appear after a block {..} construct."
+  t (c--set-difference (c-lang-const c-bin-tern-operators)
+		       (c-lang-const c-unary-operators)
+		       :test #'string-equal)
+  awk (remove "/" (c-lang-const c-non-after-{}-operators)))
+
+(c-lang-defconst c-non-after-{}-ops-re
+  ;; A regexp matching operators which can't appear after a block {..}
+  ;; construct.
+  t (regexp-opt (c-lang-const c-non-after-{}-operators)))
+(c-lang-defvar c-non-after-{}-ops-re (c-lang-const c-non-after-{}-ops-re))
+
 (c-lang-defconst c-overloadable-operators
   "List of the operators that are overloadable, in their \"identifier
 form\".  See also `c-op-identifier-prefix'."
