@@ -1591,8 +1591,23 @@ code line."
      (list (format "print_usage ('%s');\n" fn)))
     (let (result)
       (dolist (line inferior-octave-output-list)
+        ;; The help output has changed a few times in GNU Octave.
+        ;; Earlier versions output "usage: " before the function signature.
+        ;; After deprecating the usage function, and up until GNU Octave 4.0.3,
+        ;; the output looks like this:
+        ;; -- Mapping Function: abs (Z).
+        ;; After GNU Octave 4.2.0, the output is less verbose and it looks like
+        ;; this:
+        ;; -- abs (Z)
+        ;; The following regexp matches these three formats.
+        ;; The "usage: " alternative matches the symbol, because a call to
+        ;; print_usage with a non-existent function (e.g., print_usage ('A'))
+        ;; would output:
+        ;; error: print_usage: 'A' not found
+        ;; and we wouldn't like to match anything in this case.
+        ;; See bug #36459.
         (when (string-match
-               "\\s-*\\(?:--[^:]+\\|usage\\):\\s-*\\(.*\\)$"
+               "\\s-*\\(?:--[^:]+:\\|\\_<usage:\\|--\\)\\s-*\\(.*\\)$"
                line)
           (push (match-string 1 line) result)))
       (setq octave-eldoc-cache
