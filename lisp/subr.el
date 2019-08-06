@@ -4453,7 +4453,7 @@ This function is called directly from the C code."
            (package (intern (substring file 0
 			               (string-match "\\.elc?\\>" file))
                             obarray))
-	   (msg (format "Package %s is obsolete" package)))
+	   (msg (format "Package %s is deprecated" package)))
       ;; Cribbed from cl--compiling-file.
       (when (or (not (fboundp 'byte-compile-warning-enabled-p))
                 (byte-compile-warning-enabled-p 'obsolete package))

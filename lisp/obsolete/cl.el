@@ -3,6 +3,7 @@
 ;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
+;; Deprecated-since: 27.1
 ;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.

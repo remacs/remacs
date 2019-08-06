@@ -497,6 +497,8 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** The 'cl' package is now officially deprecated in favor of `cl-lib`.
+
 +++
 ** winner
 *** A new variable, 'winner-boring-buffers-regexp', has been added.
