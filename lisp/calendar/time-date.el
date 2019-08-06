@@ -423,6 +423,13 @@ changes in daylight saving time are not taken into account."
     (setq seconds (+ (* (or (decoded-time-hour delta) 0) 3600)
                      (* (or (decoded-time-minute delta) 0) 60)
                      (or (decoded-time-second delta) 0)))
+    (when (decoded-time-subsec delta)
+      (let* ((subsec (time-convert (time-add (decoded-time-subsec time)
+					     (decoded-time-subsec delta))
+				   t))
+	     (s (time-convert subsec 'integer)))
+	(setq seconds (+ seconds s))
+	(setf (decoded-time-subsec time) (time-subtract subsec s))))
 
     ;; Time zone adjustments are basically the same as time adjustments.
     (setq seconds (+ seconds (or (decoded-time-zone delta) 0)))
@@ -494,9 +501,9 @@ changes in daylight saving time are not taken into account."
 
 (cl-defun make-decoded-time (&key second minute hour
                                   day month year
-                                  dst zone)
+                                  dst zone subsec)
   "Return a `decoded-time' structure with only the keywords given filled out."
-  (list second minute hour day month year nil dst zone))
+  (list second minute hour day month year nil dst zone subsec))
 
 (defun decoded-time-set-defaults (time &optional default-zone)
   "Set any nil values in `decoded-time' TIME to default values.
@@ -526,6 +533,9 @@ TIME is modified and returned."
   (when (and (not (decoded-time-zone time))
              default-zone)
     (setf (decoded-time-zone time) 0))
+
+  (unless (decoded-time-subsec time)
+    (setf (decoded-time-subsec time) 0))
   time)
 
 (provide 'time-date)

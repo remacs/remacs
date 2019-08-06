@@ -1482,10 +1482,11 @@ Although @code{(time-convert nil nil)} is equivalent to
 This function converts a time value into calendrical information.  If
 you don't specify @var{time}, it decodes the current time, and similarly
 @var{zone} defaults to the current time zone rule.  @xref{Time Zone Rules}.
-The return value is a list of nine elements, as follows:
+The return value is a list of ten elements, as follows:
 
 @example
-(@var{seconds} @var{minutes} @var{hour} @var{day} @var{month} @var{year} @var{dow} @var{dst} @var{utcoff})
+(@var{seconds} @var{minutes} @var{hour} @var{day} @var{month} @var{year}
+ @var{dow} @var{dst} @var{utcoff} @var{subsec})
 @end example
 
 Here is what the elements mean:
@@ -1513,17 +1514,22 @@ in effect, and @minus{}1 if this information is not available.
 @item utcoff
 An integer indicating the Universal Time offset in seconds, i.e., the number of
 seconds east of Greenwich.
+@item subsec
+The number of subseconds past the second, as either 0 or a Lisp
+timestamp @code{(@var{ticks} . @var{hz})} representing a nonnegative
+fraction less than 1.
 @end table
 
 @strong{Common Lisp Note:} Common Lisp has different meanings for
-@var{dow} and @var{utcoff}.
+@var{dow} and @var{utcoff}, and lacks @var{subsec}.
 
 To access (or alter) the elements in the time value, the
 @code{decoded-time-second}, @code{decoded-time-minute},
 @code{decoded-time-hour}, @code{decoded-time-day},
 @code{decoded-time-month}, @code{decoded-time-year},
-@code{decoded-time-weekday}, @code{decoded-time-dst} and
-@code{decoded-time-zone} accessors can be used.
+@code{decoded-time-weekday}, @code{decoded-time-dst},
+@code{decoded-time-zone} and @code{decoded-time-subsec}
+accessors can be used.
 
 For instance, to increase the year in a decoded time, you could say:
 
@@ -1579,21 +1585,22 @@ It can act as the inverse of @code{decode-time}.
 
 Ordinarily the first argument is a list
 @code{(@var{second} @var{minute} @var{hour} @var{day} @var{month}
-@var{year} @var{ignored} @var{dst} @var{zone})} that specifies a
+@var{year} @var{ignored} @var{dst} @var{zone} @var{subsec})} that specifies a
 decoded time in the style of @code{decode-time}, so that
 @code{(encode-time (decode-time ...))}  works.  For the meanings of
 these list members, see the table under @code{decode-time}.
 
 As an obsolescent calling convention, this function can be given six
-or more arguments.  The first six arguments @var{second},
+through ten arguments.  The first six arguments @var{second},
 @var{minute}, @var{hour}, @var{day}, @var{month}, and @var{year}
-specify most of the components of a decoded time.  If there are more
-than six arguments the @emph{last} argument is used as @var{zone} and
-any other extra arguments are ignored, so that @code{(apply
-#'encode-time (decode-time ...))} works; otherwise @var{zone} defaults
-to the current time zone rule (@pxref{Time Zone Rules}).  The decoded
-time's @var{dst} component is treated as if it was @minus{}1, and
-@var{form} takes its default value.
+specify most of the components of a decoded time.  If there are seven
+through nine arguments the @emph{last} argument is used as @var{zone},
+and if there are ten arguments the ninth specifies @var{zone} and the
+tenth specifies @var{subsec}; in either case any other extra arguments
+are ignored, so that @code{(apply #'encode-time (decode-time ...))}
+works.  In this obsolescent convention, @var{zone} defaults to the
+current time zone rule (@pxref{Time Zone Rules}), @var{subsec}
+defaults to 0, and @var{dst} is treated as if it was @minus{}1.
 
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
@@ -1608,8 +1615,9 @@ the latter to the former as follows:
 @end example
 
 You can perform simple date arithmetic by using out-of-range values for
-@var{seconds}, @var{minutes}, @var{hour}, @var{day}, and @var{month};
-for example, day 0 means the day preceding the given month.
+@var{seconds}, @var{minutes}, @var{hour}, @var{day}, @var{month}, and
+@var{subsec}; for example, day 0 means the day preceding the given
+month.
 
 The operating system puts limits on the range of possible time values;
 if the limits are exceeded while encoding the time, an error results.

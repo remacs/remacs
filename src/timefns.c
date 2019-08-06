@@ -1296,7 +1296,7 @@ usage: (format-time-string FORMAT-STRING &optional TIME ZONE)  */)
 }
 
 DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 2, 0,
-       doc: /* Decode a time value as (SEC MINUTE HOUR DAY MONTH YEAR DOW DST UTCOFF).
+       doc: /* Decode a time value as (SEC MINUTE HOUR DAY MONTH YEAR DOW DST UTCOFF SUBSEC).
 The optional TIME is the time value to convert.  See
 `format-time-string' for the various forms of a time value.
 
@@ -1309,10 +1309,10 @@ without consideration for daylight saving time.
 To access (or alter) the elements in the time value, the
 `decoded-time-second', `decoded-time-minute', `decoded-time-hour',
 `decoded-time-day', `decoded-time-month', `decoded-time-year',
-`decoded-time-weekday', `decoded-time-dst' and `decoded-time-zone'
-accessors can be used.
+`decoded-time-weekday', `decoded-time-dst', `decoded-time-zone' and
+`decoded-time-subsec' accessors can be used.
 
-The list has the following nine members: SEC is an integer between 0
+The list has the following ten members: SEC is an integer between 0
 and 60; SEC is 60 for a leap second, which only some operating systems
 support.  MINUTE is an integer between 0 and 59.  HOUR is an integer
 between 0 and 23.  DAY is an integer between 1 and 31.  MONTH is an
@@ -1321,13 +1321,20 @@ four-digit year.  DOW is the day of week, an integer between 0 and 6,
 where 0 is Sunday.  DST is t if daylight saving time is in effect,
 nil if it is not in effect, and -1 if daylight saving information is
 not available.  UTCOFF is an integer indicating the UTC offset in
-seconds, i.e., the number of seconds east of Greenwich.  (Note that
-Common Lisp has different meanings for DOW and UTCOFF.)
+seconds, i.e., the number of seconds east of Greenwich.  SUBSEC is
+is either 0 or (TICKS . HZ) where HZ is a positive integer clock
+resolution and TICKS is a nonnegative integer less than HZ.  (Note
+that Common Lisp has different meanings for DOW and UTCOFF, and lacks
+SUBSEC.)
 
 usage: (decode-time &optional TIME ZONE)  */)
   (Lisp_Object specified_time, Lisp_Object zone)
 {
-  time_t time_spec = lisp_seconds_argument (specified_time);
+  struct lisp_time lt = lisp_time_struct (specified_time, 0);
+  struct timespec ts = lisp_to_timespec (lt);
+  if (! timespec_valid_p (ts))
+    time_overflow ();
+  time_t time_spec = ts.tv_sec;
   struct tm local_tm, gmt_tm;
   timezone_t tz = tzlookup (zone, false);
   struct tm *tm = emacs_localtime_rz (tz, &time_spec, &local_tm);
@@ -1367,7 +1374,10 @@ usage: (decode-time &optional TIME ZONE)  */)
 		 ? make_fixnum (tm_gmtoff (&local_tm))
 		 : gmtime_r (&time_spec, &gmt_tm)
 		 ? make_fixnum (tm_diff (&local_tm, &gmt_tm))
-		 : Qnil));
+		 : Qnil),
+		(EQ (lt.hz, make_fixnum (1))
+		 ? make_fixnum (0)
+		 : Fcons (integer_mod (lt.ticks, lt.hz), lt.hz)));
 }
 
 /* Return OBJ - OFFSET, checking that OBJ is a valid integer and that
@@ -1398,7 +1408,7 @@ check_tm_member (Lisp_Object obj, int offset)
 DEFUN ("encode-time", Fencode_time, Sencode_time, 1, MANY, 0,
        doc: /* Convert TIME to a timestamp.
 
-TIME is a list (SECOND MINUTE HOUR DAY MONTH YEAR IGNORED DST ZONE).
+TIME is a list (SECOND MINUTE HOUR DAY MONTH YEAR IGNORED DST ZONE SUBSEC).
 in the style of `decode-time', so that (encode-time (decode-time ...)) works.
 In this list, ZONE can be nil for Emacs local time, t for Universal
 Time, `wall' for system wall clock time, or a string as in the TZ
@@ -1407,15 +1417,18 @@ environment variable.  It can also be a list (as from
 without consideration for daylight saving time.  If ZONE specifies a
 time zone with daylight-saving transitions, DST is t for daylight
 saving time, nil for standard time, and -1 to cause the daylight
-saving flag to be guessed.
+saving flag to be guessed.  SUBSEC is either 0 or a Lisp timestamp
+in (TICKS . HZ) form.
 
 As an obsolescent calling convention, if this function is called with
-6 or more arguments, the first 6 arguments are SECOND, MINUTE, HOUR,
-DAY, MONTH, and YEAR, and specify the components of a decoded time,
-where DST assumed to be -1 and FORM is omitted.  If there are more
-than 6 arguments the *last* argument is used as ZONE and any other
-extra arguments are ignored, so that (apply #'encode-time
-(decode-time ...)) works; otherwise ZONE is assumed to be nil.
+6 through 10 arguments, the first 6 arguments are SECOND, MINUTE,
+HOUR, DAY, MONTH, and YEAR, and specify the components of a decoded
+time.  If there are 7 through 9 arguments the *last* argument
+specifies ZONE, and if there are 10 arguments the 9th specifies ZONE
+and the 10th specifies SUBSEC; in either case any other extra
+arguments are ignored, so that (apply #\\='encode-time (decode-time
+...)) works.  In this obsolescent convention, DST, ZONE, and SUBSEC
+default to -1, nil and 0 respectively.
 
 Out-of-range values for SECOND, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
@@ -1429,14 +1442,14 @@ usage: (encode-time TIME &rest OBSOLESCENT-ARGUMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   struct tm tm;
-  Lisp_Object zone = Qnil;
+  Lisp_Object zone = Qnil, subsec = make_fixnum (0);
   Lisp_Object a = args[0];
   tm.tm_isdst = -1;
 
   if (nargs == 1)
     {
       Lisp_Object tail = a;
-      for (int i = 0; i < 9; i++, tail = XCDR (tail))
+      for (int i = 0; i < 10; i++, tail = XCDR (tail))
 	CHECK_CONS (tail);
       tm.tm_sec  = check_tm_member (XCAR (a), 0); a = XCDR (a);
       tm.tm_min  = check_tm_member (XCAR (a), 0); a = XCDR (a);
@@ -1445,11 +1458,11 @@ usage: (encode-time TIME &rest OBSOLESCENT-ARGUMENTS)  */)
       tm.tm_mon  = check_tm_member (XCAR (a), 1); a = XCDR (a);
       tm.tm_year = check_tm_member (XCAR (a), TM_YEAR_BASE); a = XCDR (a);
       a = XCDR (a);
-      Lisp_Object dstflag = XCAR (a);
-      a = XCDR (a);
-      zone = XCAR (a);
+      Lisp_Object dstflag = XCAR (a); a = XCDR (a);
+      zone = XCAR (a); a = XCDR (a);
       if (SYMBOLP (dstflag) && !FIXNUMP (zone) && !CONSP (zone))
 	tm.tm_isdst = !NILP (dstflag);
+      subsec = XCAR (a);
     }
   else if (nargs < 6)
     xsignal2 (Qwrong_number_of_arguments, Qencode_time, make_fixnum (nargs));
@@ -1457,6 +1470,11 @@ usage: (encode-time TIME &rest OBSOLESCENT-ARGUMENTS)  */)
     {
       if (6 < nargs)
 	zone = args[nargs - 1];
+      if (9 < nargs)
+	{
+	  zone = args[8];
+	  subsec = args[9];
+	}
       tm.tm_sec  = check_tm_member (a, 0);
       tm.tm_min  = check_tm_member (args[1], 0);
       tm.tm_hour = check_tm_member (args[2], 0);
@@ -1474,9 +1492,25 @@ usage: (encode-time TIME &rest OBSOLESCENT-ARGUMENTS)  */)
   if (tm.tm_wday < 0)
     time_error (mktime_errno);
 
-  return (CURRENT_TIME_LIST
-	  ? list2 (hi_time (value), lo_time (value))
-	  : INT_TO_INTEGER (value));
+  if (CONSP (subsec))
+    {
+      Lisp_Object subsecticks = XCAR (subsec);
+      if (INTEGERP (subsecticks))
+	{
+	  struct lisp_time val1 = { INT_TO_INTEGER (value), make_fixnum (1) };
+	  Lisp_Object
+	    hz = XCDR (subsec),
+	    secticks = lisp_time_hz_ticks (val1, hz),
+	    ticks = lispint_arith (secticks, subsecticks, false);
+	  return Fcons (ticks, hz);
+	}
+    }
+  else if (INTEGERP (subsec))
+    return (CURRENT_TIME_LIST && EQ (subsec, make_fixnum (0))
+	    ? list2 (hi_time (value), lo_time (value))
+	    : lispint_arith (INT_TO_INTEGER (value), subsec, false));
+
+  xsignal2 (Qerror, build_string ("Invalid subsec"), subsec);
 }
 
 DEFUN ("time-convert", Ftime_convert, Stime_convert, 1, 2, 0,

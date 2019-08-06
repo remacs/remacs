@@ -3067,7 +3067,7 @@ Both must be integers or markers.  */)
   CHECK_INTEGER_COERCE_MARKER (y);
 
   /* A bignum can never be 0, so don't check that case.  */
-  if (FIXNUMP (y) && XFIXNUM (y) == 0)
+  if (EQ (y, make_fixnum (0)))
     xsignal0 (Qarith_error);
 
   if (FIXNUMP (x) && FIXNUMP (y))
@@ -3081,29 +3081,13 @@ Both must be integers or markers.  */)
     }
 }
 
-DEFUN ("mod", Fmod, Smod, 2, 2, 0,
-       doc: /* Return X modulo Y.
-The result falls between zero (inclusive) and Y (exclusive).
-Both X and Y must be numbers or markers.  */)
-  (register Lisp_Object x, Lisp_Object y)
+/* Return X mod Y.  Both must be integers and Y must be nonzero.  */
+Lisp_Object
+integer_mod (Lisp_Object x, Lisp_Object y)
 {
-  CHECK_NUMBER_COERCE_MARKER (x);
-  CHECK_NUMBER_COERCE_MARKER (y);
-
-  /* Note that a bignum can never be 0, so we don't need to check that
-     case.  */
-  if (FIXNUMP (y) && XFIXNUM (y) == 0)
-    xsignal0 (Qarith_error);
-
-  if (FLOATP (x) || FLOATP (y))
-    return fmod_float (x, y);
-
   if (FIXNUMP (x) && FIXNUMP (y))
     {
       EMACS_INT i1 = XFIXNUM (x), i2 = XFIXNUM (y);
-
-      if (i2 == 0)
-	xsignal0 (Qarith_error);
 
       i1 %= i2;
 
@@ -3126,6 +3110,22 @@ Both X and Y must be numbers or markers.  */)
 
       return make_integer_mpz ();
     }
+}
+
+DEFUN ("mod", Fmod, Smod, 2, 2, 0,
+       doc: /* Return X modulo Y.
+The result falls between zero (inclusive) and Y (exclusive).
+Both X and Y must be numbers or markers.  */)
+  (Lisp_Object x, Lisp_Object y)
+{
+  CHECK_NUMBER_COERCE_MARKER (x);
+  CHECK_NUMBER_COERCE_MARKER (y);
+
+  /* A bignum can never be 0, so don't check that case.  */
+  if (EQ (y, make_fixnum (0)))
+    xsignal0 (Qarith_error);
+
+  return (FLOATP (x) || FLOATP (y) ? fmod_float : integer_mod) (x, y);
 }
 
 static Lisp_Object

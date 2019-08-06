@@ -3581,6 +3581,7 @@ extern void set_default_internal (Lisp_Object, Lisp_Object,
 extern Lisp_Object expt_integer (Lisp_Object, Lisp_Object);
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
+extern Lisp_Object integer_mod (Lisp_Object, Lisp_Object);
 
 /* Defined in cmds.c */
 extern void syms_of_cmds (void);

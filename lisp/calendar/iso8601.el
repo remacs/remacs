@@ -129,7 +129,8 @@ well as variants like \"2008W32\" (week number) and
         (let ((time (iso8601-parse-time time-string)))
           (setf (decoded-time-hour date) (decoded-time-hour time))
           (setf (decoded-time-minute date) (decoded-time-minute time))
-          (setf (decoded-time-second date) (decoded-time-second time))))
+	  (setf (decoded-time-second date) (decoded-time-second time))
+	  (setf (decoded-time-subsec date) (decoded-time-subsec time))))
       ;; The time zone is optional.
       (when zone-string
         (setf (decoded-time-zone date)
@@ -236,6 +237,8 @@ well as variants like \"2008W32\" (week number) and
           (iso8601--decoded-time :hour hour
                                  :minute (or minute 0)
                                  :second (or second 0)
+				 ;; FIXME: Support subsec.
+				 :subsec 0
                                  :zone (and zone
                                             (* 60 (iso8601-parse-zone
                                                    zone)))))))))
@@ -274,7 +277,9 @@ Return the number of minutes."
                            :day (or (match-string 3 string) 0)
                            :hour (or (match-string 5 string) 0)
                            :minute (or (match-string 6 string) 0)
-                           :second (or (match-string 7 string) 0)))
+			   :second (or (match-string 7 string) 0)
+			   ;; FIXME: Support subsec.
+			   :subsec 0))
    ;; PnW: Weeks.
    ((iso8601--match iso8601--duration-week-match string)
     (let ((weeks (string-to-number (match-string 1 string))))
@@ -336,7 +341,7 @@ Return the number of minutes."
 
 (cl-defun iso8601--decoded-time (&key second minute hour
                                       day month year
-                                      dst zone)
+                                      dst zone subsec)
   (list (iso8601--value second)
         (iso8601--value minute)
         (iso8601--value hour)
@@ -345,7 +350,8 @@ Return the number of minutes."
         (iso8601--value year)
         nil
         dst
-        zone))
+        zone
+	subsec))
 
 (defun iso8601--encode-time (time)
   "Like `encode-time', but fill in nil values in TIME."

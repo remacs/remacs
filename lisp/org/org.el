@@ -17292,10 +17292,10 @@ The command returns the inserted time stamp."
     (put-text-property beg end 'display str)))
 
 (defun org-fix-decoded-time (time)
-  "Set 0 instead of nil for the first 6 elements of time.
+  "Set 0 instead of nil for the time-related elements of time.
 Don't touch the rest."
   (let ((n 0))
-    (mapcar (lambda (x) (if (< (setq n (1+ n)) 7) (or x 0) x)) time)))
+    (mapcar (lambda (x) (if (or (< (setq n (1+ n)) 7) (= n 10)) (or x 0) x)) time)))
 
 (defun org-time-stamp-to-now (timestamp-string &optional seconds)
   "Difference between TIMESTAMP-STRING and now in days.
@@ -17779,7 +17779,7 @@ NODEFAULT, hour and minute fields will be nil if not given."
 	       (string-to-number (match-string 4 s))
 	       (string-to-number (match-string 3 s))
 	       (string-to-number (match-string 2 s))
-	       nil nil nil))
+	       nil nil nil 0))
 	((string-match "^<[^>]+>$" s)
 	 ;; FIXME: `decode-time' needs to be called with ZONE as its
 	 ;; second argument.  However, this requires at least Emacs
