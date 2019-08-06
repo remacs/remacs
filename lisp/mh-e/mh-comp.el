@@ -217,7 +217,7 @@ TO, CC, and SUBJECT arguments are used."
 (defvar mh-error-if-no-draft nil)       ;raise error over using old draft
 
 ;;;###autoload
-(defun mh-smail-batch (&optional to subject other-headers &rest ignored)
+(defun mh-smail-batch (&optional to subject _other-headers &rest _ignored)
   "Compose a message with the MH mail system.
 
 This function does not prompt the user for any header fields, and
@@ -239,10 +239,7 @@ applications should use `mh-user-agent-compose'."
   'mh-before-send-letter-hook)
 
 ;;;###autoload
-(defun mh-user-agent-compose (&optional to subject other-headers continue
-                                        switch-function yank-action
-                                        send-actions return-action
-                                        &rest ignored)
+(defun mh-user-agent-compose (&optional to subject other-headers &rest _ignored)
   "Set up mail composition draft with the MH mail system.
 This is the `mail-user-agent' entry point to MH-E. This function
 conforms to the contract specified by `define-mail-user-agent'
@@ -256,8 +253,7 @@ OTHER-HEADERS is an alist specifying additional header fields.
 Elements look like (HEADER . VALUE) where both HEADER and VALUE
 are strings.
 
-CONTINUE, SWITCH-FUNCTION, YANK-ACTION, SEND-ACTIONS, and
-RETURN-ACTION and any additional arguments are IGNORED."
+Any additional arguments are IGNORED."
   (mh-find-path)
   (let ((mh-error-if-no-draft t))
     (mh-send to "" subject)
@@ -266,9 +262,7 @@ RETURN-ACTION and any additional arguments are IGNORED."
                         (cdr (car other-headers)))
       (setq other-headers (cdr other-headers)))))
 
-;; Shush compiler.
-(mh-do-in-xemacs
-  (defvar sendmail-coding-system))
+(defvar sendmail-coding-system)
 
 ;;;###autoload
 (defun mh-send-letter (&optional arg)
@@ -1297,10 +1291,10 @@ discarded."
   "Check if current buffer is entirely composed of ASCII.
 The function doesn't work for XEmacs since `find-charset-region'
 doesn't exist there."
-  (loop for charset in (mh-funcall-if-exists
-                        find-charset-region (point-min) (point-max))
-        unless (eq charset 'ascii) return nil
-        finally return t))
+  (cl-loop for charset in (mh-funcall-if-exists
+                           find-charset-region (point-min) (point-max))
+           unless (eq charset 'ascii) return nil
+           finally return t))
 
 (provide 'mh-comp)
 

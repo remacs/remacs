@@ -900,7 +900,7 @@ See also `mh-folder-mode'.
   ;; Don't allow Gnus to create buttons while highlighting, maybe this is bad
   ;; style?
   (mh-flet
-   ((gnus-article-add-button (&rest args) nil))
+   ((gnus-article-add-button (&rest _args) nil))
    (let* ((modified (buffer-modified-p))
           (gnus-article-buffer (buffer-name))
           (gnus-cite-face-list `(,@(cdr gnus-cite-face-list)

@@ -40,29 +40,11 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 
 
 
 ;;; Compatibility
-
-;; TODO: Replace `cl' with `cl-lib'.
-;; `cl' is deprecated in Emacs 24.3. Use `cl-lib' instead. However,
-;; we'll likely have to insert `cl-' before each use of a Common Lisp
-;; function.
-;;;###mh-autoload
-(defmacro mh-require-cl ()
-  "Macro to load \"cl\" if needed.
-
-Emacs coding conventions require that the \"cl\" package not be
-required at runtime. However, the \"cl\" package in Emacs 21.4
-and earlier left \"cl\" routines in their macro expansions. In
-particular, the expansion of (setf (gethash ...) ...) used
-functions in \"cl\" at run time. This macro recognizes that and
-loads \"cl\" appropriately."
-  (if (eq (car (macroexpand '(setf (gethash foo bar) baz))) 'cl-puthash)
-      '(require 'cl)
-    '(eval-when-compile (require 'cl))))
 
 ;;;###mh-autoload
 (defmacro mh-do-in-gnu-emacs (&rest body)
@@ -81,6 +63,9 @@ loads \"cl\" appropriately."
 ;;;###mh-autoload
 (defmacro mh-funcall-if-exists (function &rest args)
   "Call FUNCTION with ARGS as parameters if it exists."
+  ;; FIXME: Not clear when this should be used.  If the function happens
+  ;; not to exist at compile-time (e.g. because the corresponding package
+  ;; wasn't loaded), then it won't ever be used :-(
   (when (fboundp function)
     `(when (fboundp ',function)
        (funcall ',function ,@args))))
@@ -134,53 +119,6 @@ check if variable `transient-mark-mode' is active."
         (t                              ;GNU Emacs
          '(and (boundp 'transient-mark-mode) transient-mark-mode
                (boundp 'mark-active) mark-active))))
-
-;; Shush compiler.
-(mh-do-in-xemacs
-  (defvar struct)
-  (defvar x)
-  (defvar y))
-
-;;;###mh-autoload
-(defmacro mh-defstruct (name-spec &rest fields)
-  ;; FIXME: Use `cl-defstruct' instead: shouldn't emit warnings any
-  ;; more nor depend on run-time CL functions.
-  "Replacement for `defstruct' from the \"cl\" package.
-The `defstruct' in the \"cl\" library produces compiler warnings,
-and generates code that uses functions present in \"cl\" at
-run-time. This is a partial replacement, that avoids these
-issues.
-
-NAME-SPEC declares the name of the structure, while FIELDS
-describes the various structure fields. Lookup `defstruct' for
-more details."
-  (let* ((struct-name (if (atom name-spec) name-spec (car name-spec)))
-         (conc-name (or (and (consp name-spec)
-                             (cadr (assoc :conc-name (cdr name-spec))))
-                        (format "%s-" struct-name)))
-         (predicate (intern (format "%s-p" struct-name)))
-         (constructor (or (and (consp name-spec)
-                               (cadr (assoc :constructor (cdr name-spec))))
-                          (intern (format "make-%s" struct-name))))
-         (fields (mapcar (lambda (x)
-                           (if (atom x)
-                               (list x nil)
-                             (list (car x) (cadr x))))
-                         fields))
-         (field-names (mapcar #'car fields))
-         (struct (gensym "S"))
-         (x (gensym "X"))
-         (y (gensym "Y")))
-    `(progn
-       (defun* ,constructor (&key ,@fields)
-         (list (quote ,struct-name) ,@field-names))
-       (defun ,predicate (arg)
-         (and (consp arg) (eq (car arg) (quote ,struct-name))))
-       ,@(loop for x from 1
-               for y in field-names
-               collect `(defmacro ,(intern (format "%s%s" conc-name y)) (z)
-                          (list 'nth ,x z)))
-       (quote ,struct-name))))
 
 ;;;###mh-autoload
 (defmacro with-mh-folder-updating (save-modification-flag &rest body)
@@ -326,6 +264,16 @@ MH-E functions."
                     (let ,(if binding-needed-flag `((,var v)) ())
                       ,@body))))))))
 (put 'mh-iterate-on-range 'lisp-indent-hook 'defun)
+
+(defmacro mh-dlet* (binders &rest body)
+  "Like `let*' but always dynamically scoped."
+  (declare (debug let) (indent 1))
+  ;; Works in both lexical and non-lexical mode.
+  `(progn
+     ,@(mapcar (lambda (binder)
+                 `(defvar ,(if (consp binder) (car binder) binder)))
+               binders)
+     (let* ,binders ,@body)))
 
 (provide 'mh-acros)
 

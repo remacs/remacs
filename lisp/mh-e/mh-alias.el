@@ -30,8 +30,6 @@
 
 (require 'mh-e)
 
-(mh-require-cl)
-
 (require 'goto-addr)
 
 (defvar mh-alias-alist 'not-read
@@ -308,7 +306,7 @@ Blind aliases or users from /etc/passwd are not expanded."
        (if (not mh-alias-expand-aliases-flag)
            mh-alias-alist
          (lambda (string pred action)
-           (case action
+           (cl-case action
              ((nil)
               (let ((res (try-completion string mh-alias-alist pred)))
                 (if (or (eq res t)

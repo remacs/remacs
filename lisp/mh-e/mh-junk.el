@@ -32,7 +32,6 @@
 
 (require 'mh-e)
 (require 'mh-scan)
-(mh-require-cl)
 
 ;;;###mh-autoload
 (defun mh-junk-blacklist (range)

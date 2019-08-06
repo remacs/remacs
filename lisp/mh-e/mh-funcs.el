@@ -123,7 +123,7 @@ folder. This is useful for folders that are easily regenerated."
         (message "Folder %s removed" folder))
     (message "Folder not removed")))
 
-(defun mh-rmf-daemon (process output)
+(defun mh-rmf-daemon (_process output)
   "The rmf PROCESS puts OUTPUT in temporary buffer.
 Display the results only if something went wrong."
   (set-buffer (get-buffer-create mh-temp-buffer))

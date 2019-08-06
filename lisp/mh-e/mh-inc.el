@@ -33,7 +33,6 @@
 ;;; Code:
 
 (require 'mh-e)
-(mh-require-cl)
 
 (defvar mh-inc-spool-map-help nil
   "Help text for `mh-inc-spool-map'.")
@@ -51,13 +50,13 @@
   "Make all commands and defines keys for contents of `mh-inc-spool-list'."
   (setq mh-inc-spool-map-help nil)
   (when mh-inc-spool-list
-    (loop for elem in mh-inc-spool-list
-          do (let ((spool (nth 0 elem))
-                   (folder (nth 1 elem))
-                   (key (nth 2 elem)))
-               (progn
-                 (mh-inc-spool-generator folder spool)
-                 (mh-inc-spool-def-key key folder))))))
+    (cl-loop for elem in mh-inc-spool-list
+             do (let ((spool (nth 0 elem))
+                      (folder (nth 1 elem))
+                      (key (nth 2 elem)))
+                  (progn
+                    (mh-inc-spool-generator folder spool)
+                    (mh-inc-spool-def-key key folder))))))
 
 (defalias 'mh-inc-spool-make-no-autoload 'mh-inc-spool-make)
 
