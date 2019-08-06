@@ -459,24 +459,6 @@ timespec_ticks (struct timespec t)
 /* Convert T to a Lisp integer counting HZ ticks, taking the floor.
    Assume T is valid, but check HZ.  */
 static Lisp_Object
-time_hz_ticks (time_t t, Lisp_Object hz)
-{
-  if (FIXNUMP (hz))
-    {
-      if (XFIXNUM (hz) <= 0)
-	invalid_hz (hz);
-      intmax_t ticks;
-      if (FASTER_TIMEFNS && !INT_MULTIPLY_WRAPV (t, XFIXNUM (hz), &ticks))
-	return make_int (ticks);
-    }
-  else if (! (BIGNUMP (hz) && 0 < mpz_sgn (XBIGNUM (hz)->value)))
-    invalid_hz (hz);
-
-  mpz_set_time (mpz[0], t);
-  mpz_mul (mpz[0], mpz[0], *bignum_integer (&mpz[1], hz));
-  return make_integer_mpz ();
-}
-static Lisp_Object
 lisp_time_hz_ticks (struct lisp_time t, Lisp_Object hz)
 {
   if (FASTER_TIMEFNS && EQ (t.hz, hz))
@@ -536,32 +518,6 @@ Lisp_Object
 timespec_to_lisp (struct timespec t)
 {
   return Fcons (timespec_ticks (t), timespec_hz);
-}
-
-/* Convert T to a Lisp timestamp.  FORM specifies the timestamp format.  */
-static Lisp_Object
-time_form_stamp (time_t t, Lisp_Object form)
-{
-  if (NILP (form))
-    form = CURRENT_TIME_LIST ? Qlist : Qt;
-  if (EQ (form, Qlist))
-    return list2 (hi_time (t), lo_time (t));
-  if (EQ (form, Qt) || EQ (form, Qinteger))
-    return INT_TO_INTEGER (t);
-  return Fcons (time_hz_ticks (t, form), form);
-}
-static Lisp_Object
-lisp_time_form_stamp (struct lisp_time t, Lisp_Object form)
-{
-  if (NILP (form))
-    form = CURRENT_TIME_LIST ? Qlist : Qt;
-  if (EQ (form, Qlist))
-    return ticks_hz_list4 (t.ticks, t.hz);
-  if (EQ (form, Qinteger))
-    return lisp_time_seconds (t);
-  if (EQ (form, Qt))
-    form = t.hz;
-  return Fcons (lisp_time_hz_ticks (t, form), form);
 }
 
 /* From what should be a valid timestamp (TICKS . HZ), generate the
@@ -754,16 +710,14 @@ enum { DECODE_SECS_ONLY = WARN_OBSOLETE_TIMESTAMPS + 1 };
    old-format SPECIFIED_TIME.  If FLAGS & WARN_OBSOLETE_TIMESTAMPS,
    diagnose what could be obsolete (HIGH . LOW) timestamps.
 
-   If PFORM is not null, store into *PFORM the form of SPECIFIED-TIME.
    If RESULT is not null, store into *RESULT the converted time;
    otherwise, store into *DRESULT the number of seconds since the
    start of the POSIX Epoch.  Unsuccessful calls may or may not store
    results.
 
-   Signal an error if unsuccessful.  */
-static void
+   Return the form of SPECIFIED-TIME.  Signal an error if unsuccessful.  */
+static enum timeform
 decode_lisp_time (Lisp_Object specified_time, int flags,
-		  enum timeform *pform,
 		  struct lisp_time *result, double *dresult)
 {
   Lisp_Object high = make_fixnum (0);
@@ -819,12 +773,11 @@ decode_lisp_time (Lisp_Object specified_time, int flags,
 	form = TIMEFORM_INVALID;
     }
 
-  if (pform)
-    *pform = form;
   int err = decode_time_components (form, high, low, usec, psec,
 				    result, dresult);
   if (err)
     time_error (err);
+  return form;
 }
 
 /* Convert Z to time_t, returning true if it fits.  */
@@ -928,12 +881,16 @@ list4_to_timespec (Lisp_Object high, Lisp_Object low,
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
    If SPECIFIED_TIME is nil, use the current time.
-   Signal an error if SPECIFIED_TIME does not represent a time.  */
+   Signal an error if SPECIFIED_TIME does not represent a time.
+   If PFORM, store the time's form into *PFORM.  */
 static struct lisp_time
 lisp_time_struct (Lisp_Object specified_time, enum timeform *pform)
 {
   struct lisp_time t;
-  decode_lisp_time (specified_time, WARN_OBSOLETE_TIMESTAMPS, pform, &t, 0);
+  enum timeform form
+    = decode_lisp_time (specified_time, WARN_OBSOLETE_TIMESTAMPS, &t, 0);
+  if (pform)
+    *pform = form;
   return t;
 }
 
@@ -958,7 +915,7 @@ lisp_seconds_argument (Lisp_Object specified_time)
 {
   int flags = WARN_OBSOLETE_TIMESTAMPS | DECODE_SECS_ONLY;
   struct lisp_time lt;
-  decode_lisp_time (specified_time, flags, 0, &lt, 0);
+  decode_lisp_time (specified_time, flags, &lt, 0);
   struct timespec t = lisp_to_timespec (lt);
   if (! timespec_valid_p (t))
     time_overflow ();
@@ -1054,9 +1011,12 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
       ticks = make_integer_mpz ();
     }
 
-  /* Return the (TICKS . HZ) form if either argument is that way,
+  /* Return an integer if the timestamp resolution is 1,
+     otherwise the (TICKS . HZ) form if either argument is that way,
      otherwise the (HI LO US PS) form for backward compatibility.  */
-  return (aform == TIMEFORM_TICKS_HZ || bform == TIMEFORM_TICKS_HZ
+  return (EQ (hz, make_fixnum (1))
+	  ? ticks
+	  : aform == TIMEFORM_TICKS_HZ || bform == TIMEFORM_TICKS_HZ
 	  ? Fcons (ticks, hz)
 	  : ticks_hz_list4 (ticks, hz));
 }
@@ -1147,7 +1107,7 @@ or (if you need time as a string) `format-time-string'.  */)
   (Lisp_Object specified_time)
 {
   double t;
-  decode_lisp_time (specified_time, 0, 0, 0, &t);
+  decode_lisp_time (specified_time, 0, 0, &t);
   return make_float (t);
 }
 
@@ -1436,48 +1396,26 @@ check_tm_member (Lisp_Object obj, int offset)
 }
 
 DEFUN ("encode-time", Fencode_time, Sencode_time, 1, MANY, 0,
-       doc: /* Convert optional TIME to a timestamp.
-Optional FORM specifies how the returned value should be encoded.
-This can act as the reverse operation of `decode-time', which see.
+       doc: /* Convert TIME to a timestamp.
 
-If TIME is a list (SECOND MINUTE HOUR DAY MONTH YEAR IGNORED DST ZONE)
-it is a decoded time in the style of `decode-time', so that (encode-time
-(decode-time ...)) works.  TIME can also be a time value.
-See `format-time-string' for the various forms of a time value.
-For example, an omitted TIME stands for the current time.
-
-If FORM is a positive integer, the time is returned as a pair of
-integers (TICKS . FORM), where TICKS is the number of clock ticks and FORM
-is the clock frequency in ticks per second.  (Currently the positive
-integer should be at least 65536 if the returned value is expected to
-be given to standard functions expecting Lisp timestamps.)  If FORM is
-t, the time is returned as (TICKS . PHZ), where PHZ is a platform dependent
-clock frequency in ticks per second.  If FORM is `integer', the time is
-returned as an integer count of seconds.  If FORM is `list', the time is
-returned as an integer list (HIGH LOW USEC PSEC), where HIGH has the
-most significant bits of the seconds, LOW has the least significant 16
-bits, and USEC and PSEC are the microsecond and picosecond counts.
-Returned values are rounded toward minus infinity.  Although an
-omitted or nil FORM currently acts like `list', this is planned to
-change, so callers requiring list timestamps should specify `list'.
+TIME is a list (SECOND MINUTE HOUR DAY MONTH YEAR IGNORED DST ZONE).
+in the style of `decode-time', so that (encode-time (decode-time ...)) works.
+In this list, ZONE can be nil for Emacs local time, t for Universal
+Time, `wall' for system wall clock time, or a string as in the TZ
+environment variable.  It can also be a list (as from
+`current-time-zone') or an integer (as from `decode-time') applied
+without consideration for daylight saving time.  If ZONE specifies a
+time zone with daylight-saving transitions, DST is t for daylight
+saving time, nil for standard time, and -1 to cause the daylight
+saving flag to be guessed.
 
 As an obsolescent calling convention, if this function is called with
 6 or more arguments, the first 6 arguments are SECOND, MINUTE, HOUR,
 DAY, MONTH, and YEAR, and specify the components of a decoded time,
 where DST assumed to be -1 and FORM is omitted.  If there are more
 than 6 arguments the *last* argument is used as ZONE and any other
-extra arguments are ignored, so that (apply #\\='encode-time
+extra arguments are ignored, so that (apply #'encode-time
 (decode-time ...)) works; otherwise ZONE is assumed to be nil.
-
-If the input is a decoded time, ZONE is nil for Emacs local time, t
-for Universal Time, `wall' for system wall clock time, or a string as
-in the TZ environment variable.  It can also be a list (as from
-`current-time-zone') or an integer (as from `decode-time') applied
-without consideration for daylight saving time.
-
-If the input is a decoded time and ZONE specifies a time zone with
-daylight-saving transitions, DST is t for daylight saving time and nil
-for standard time.  If DST is -1, the daylight saving flag is guessed.
 
 Out-of-range values for SECOND, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
@@ -1487,26 +1425,19 @@ If you want them to stand for years in this century, you must do that yourself.
 Years before 1970 are not guaranteed to work.  On some systems,
 year values as low as 1901 do work.
 
-usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
+usage: (encode-time TIME &rest OBSOLESCENT-ARGUMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   struct tm tm;
-  Lisp_Object form = Qnil, zone = Qnil;
+  Lisp_Object zone = Qnil;
   Lisp_Object a = args[0];
   tm.tm_isdst = -1;
 
-  if (nargs <= 2)
+  if (nargs == 1)
     {
-      if (nargs == 2)
-	form = args[1];
       Lisp_Object tail = a;
       for (int i = 0; i < 9; i++, tail = XCDR (tail))
-	if (! CONSP (tail))
-	  {
-	    struct lisp_time t;
-	    decode_lisp_time (a, 0, 0, &t, 0);
-	    return lisp_time_form_stamp (t, form);
-	  }
+	CHECK_CONS (tail);
       tm.tm_sec  = check_tm_member (XCAR (a), 0); a = XCDR (a);
       tm.tm_min  = check_tm_member (XCAR (a), 0); a = XCDR (a);
       tm.tm_hour = check_tm_member (XCAR (a), 0); a = XCDR (a);
@@ -1543,7 +1474,43 @@ usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
   if (tm.tm_wday < 0)
     time_error (mktime_errno);
 
-  return time_form_stamp (value, form);
+  return (CURRENT_TIME_LIST
+	  ? list2 (hi_time (value), lo_time (value))
+	  : INT_TO_INTEGER (value));
+}
+
+DEFUN ("time-convert", Ftime_convert, Stime_convert, 1, 2, 0,
+       doc: /* Convert TIME value to a Lisp timestamp.
+With optional FORM, convert to that timestamp form.
+Truncate the returned value toward minus infinity.
+
+If FORM is nil (the default), return the the same form as `current-time'.
+If FORM is a positive integer, return a pair of integers (TICKS . FORM),
+where TICKS is the number of clock ticks and FORM is the clock frequency
+in ticks per second.  (Currently the positive integer should be at least
+65536 if the returned value is expected to be given to standard functions
+expecting Lisp timestamps.)  If FORM is t, return (TICKS . PHZ), where
+PHZ is a suitable clock frequency in ticks per second.  If FORM is
+`integer', return an integer count of seconds.  If FORM is `list',
+return an integer list (HIGH LOW USEC PSEC), where HIGH has the most
+significant bits of the seconds, LOW has the least significant 16
+bits, and USEC and PSEC are the microsecond and picosecond counts.  */)
+     (Lisp_Object time, Lisp_Object form)
+{
+  struct lisp_time t;
+  enum timeform input_form = decode_lisp_time (time, 0, &t, 0);
+  if (NILP (form))
+    form = CURRENT_TIME_LIST ? Qlist : Qt;
+  if (EQ (form, Qlist))
+    return ticks_hz_list4 (t.ticks, t.hz);
+  if (EQ (form, Qinteger))
+    return FASTER_TIMEFNS && INTEGERP (time) ? time : lisp_time_seconds (t);
+  if (EQ (form, Qt))
+    form = t.hz;
+  if (FASTER_TIMEFNS
+      && input_form == TIMEFORM_TICKS_HZ && EQ (form, XCDR (time)))
+    return time;
+  return Fcons (lisp_time_hz_ticks (t, form), form);
 }
 
 DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
@@ -1551,9 +1518,12 @@ DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
 The time is returned as a list of integers (HIGH LOW USEC PSEC).
 HIGH has the most significant bits of the seconds, while LOW has the
 least significant 16 bits.  USEC and PSEC are the microsecond and
-picosecond counts.  Use `encode-time' if you need a particular
-timestamp form; for example, (encode-time nil \\='integer) returns the
-current time in seconds.  */)
+picosecond counts.
+
+In a future Emacs version, the format of the returned timestamp is
+planned to change.  Use `time-convert' if you need a particular
+timestamp form; for example, (time-convert nil \\='integer) returns
+the current time in seconds.  */)
   (void)
 {
   return make_lisp_time (current_timespec ());
@@ -1798,6 +1768,7 @@ syms_of_timefns (void)
   DEFSYM (Qencode_time, "encode-time");
 
   defsubr (&Scurrent_time);
+  defsubr (&Stime_convert);
   defsubr (&Stime_add);
   defsubr (&Stime_subtract);
   defsubr (&Stime_less_p);

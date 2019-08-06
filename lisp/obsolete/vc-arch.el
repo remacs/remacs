@@ -133,7 +133,7 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	(file-error (insert (format "%s <%s> %s"
 				    (current-time-string)
 				    user-mail-address
-				    (+ (% (car (encode-time nil 1000000))
+				    (+ (% (car (time-convert nil 1000000))
 					  1000000)
 				       (buffer-size)))))))
     (comment-region beg (point))))

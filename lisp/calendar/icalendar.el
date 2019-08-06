@@ -646,7 +646,7 @@ FIXME: multiple comma-separated values should be allowed!"
 	(let ((decoded-time (list second minute hour day month year
 				  nil -1 zone)))
 	  (condition-case nil
-	      (decode-time (encode-time decoded-time 'integer))
+	      (decode-time (encode-time decoded-time))
 	    (error
 	     (message "Cannot decode \"%s\"" isodatetimestring)
 	     ;; Hope for the best....

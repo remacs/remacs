@@ -1271,7 +1271,7 @@ for this to be permanent."
 
 (defun tar-octal-time (timeval)
   ;; Format a timestamp as 11 octal digits.
-  (format "%011o" (encode-time timeval 'integer)))
+  (format "%011o" (time-convert timeval 'integer)))
 
 (defun tar-subfile-save-buffer ()
   "In tar subfile mode, save this buffer into its parent tar-file buffer.

@@ -20,10 +20,8 @@ terminal and the screen.
 * User Identification:: Finding the name and user id of the user.
 * Time of Day::         Getting the current time.
 * Time Zone Rules::     Rules for time zones and daylight saving time.
-* Time Conversion::     Converting a time from numeric form to
-                          calendrical data and vice versa.
-* Time Parsing::        Converting a time from numeric form to text
-                          and vice versa.
+* Time Conversion::     Converting among timestamp forms.
+* Time Parsing::        Converting timestamps to text and vice versa.
 * Processor Run Time::  Getting the run time used by Emacs.
 * Time Calculations::   Adding, subtracting, comparing times, etc.
 * Timers::              Setting a timer to call a function at a certain time.
@@ -1253,7 +1251,7 @@ represent absolute time by counting seconds since the @dfn{epoch} of
   Although traditionally Lisp timestamps were integer pairs, their
 form has evolved and programs ordinarily should not depend on the
 current default form.  If your program needs a particular timestamp
-form, you can use the @code{encode-time} function to convert it to the
+form, you can use the @code{time-convert} function to convert it to the
 needed form.  @xref{Time Conversion}.
 
 @cindex epoch
@@ -1304,7 +1302,7 @@ time, a single floating-point number for seconds, or a list
 @var{low})} that is a truncated list timestamp with missing elements
 taken to be zero.  You can convert a time value into
 a human-readable string using @code{format-time-string}, into a Lisp
-timestamp using @code{encode-time}, and into other forms using
+timestamp using @code{time-convert}, and into other forms using
 @code{decode-time} and @code{float-time}.  These functions are
 described in the following sections.
 
@@ -1334,6 +1332,11 @@ defaults to the current time zone rule.  @xref{Time Zone Rules}.
 
 @defun current-time
 This function returns the current time as a Lisp timestamp.
+Although the timestamp takes the form @code{(@var{high} @var{low}
+@var{micro} @var{pico})} in the current Emacs release, this is
+planned to change in a future Emacs version.  You can use the
+@code{time-convert} function to convert a timestamp to some other
+form.  @xref{Time Conversion}.
 @end defun
 
 @defun float-time &optional time
@@ -1411,8 +1414,8 @@ defaults to the current time zone rule.
 @cindex calendrical information
 @cindex time conversion
 
-  These functions convert time values (@pxref{Time of Day}) into
-calendrical information and vice versa.
+  These functions convert time values (@pxref{Time of Day}) to Lisp
+timestamps, or into calendrical information and vice versa.
 
   Many 32-bit operating systems are limited to system times containing
 32 bits of information in their seconds component; these systems
@@ -1421,11 +1424,59 @@ typically handle only the times from 1901-12-13 20:45:52 through
 systems have larger seconds components, and can represent times far in
 the past or future.
 
-  Time conversion functions always use the Gregorian calendar, even
+  Calendrical conversion functions always use the Gregorian calendar, even
 for dates before the Gregorian calendar was introduced.  Year numbers
 count the number of years since the year 1 B.C., and do not skip zero
 as traditional Gregorian years do; for example, the year number
 @minus{}37 represents the Gregorian year 38 B.C@.
+
+@defun time-convert time &optional form
+This function converts a time value into a Lisp timestamp.
+If the time cannot be represented exactly, it is truncated
+toward minus infinity.
+
+The optional @var{form} argument specifies the timestamp form to be
+returned.  If @var{form} is the symbol @code{integer}, this function
+returns an integer count of seconds.  If @var{form} is a positive
+integer, it specifies a clock frequency and this function returns an
+integer-pair timestamp @code{(@var{ticks}
+. @var{form})}.@footnote{Currently a positive integer @var{form}
+should be at least 65536 if the returned value is intended to be given
+to standard functions expecting Lisp timestamps.}  If @var{form} is
+@code{t}, this function treats it as a positive integer suitable for
+representing the timestamp; for example, it is treated as 1000000000
+if @var{time} is nil and the platform timestamp has nanosecond
+resolution.  If @var{form} is @code{list}, this function returns an
+integer list @code{(@var{high} @var{low} @var{micro} @var{pico})}.
+Although an omitted or @code{nil} @var{form} currently acts like
+@code{list}, this is planned to change in a future Emacs version, so
+callers requiring list timestamps should pass @code{list} explicitly.
+
+If @var{time} already has the proper form, this function might yield
+@var{time} rather than a copy.
+
+Although @code{(time-convert nil nil)} is equivalent to
+@code{(current-time)}, the latter may be a bit faster.
+
+@example
+@group
+(setq a (time-convert nil t))
+@result{} (1564826753904873156 . 1000000000)
+@end group
+@group
+(time-convert a 100000)
+@result{} (156482675390487 . 100000)
+@end group
+@group
+(time-convert a 'integer)
+@result{} 1564826753
+@end group
+@group
+(time-convert a 'list)
+@result{} (23877 23681 904873 156000)
+@end group
+@end example
+@end defun
 
 @defun decode-time &optional time zone
 This function converts a time value into calendrical information.  If
@@ -1522,36 +1573,16 @@ that represents ``two months'', you could say:
 @end lisp
 @end defun
 
-@defun encode-time &optional time form &rest obsolescent-arguments
+@defun encode-time time &rest obsolescent-arguments
 This function converts @var{time} to a Lisp timestamp.
 It can act as the inverse of @code{decode-time}.
 
-The first argument can be a time value such as a number of seconds, a
-pair @code{(@var{ticks} . @var{hz})}, a list @code{(@var{high}
-@var{low} @var{micro} @var{pico})}, or @code{nil} (the default) for
-the current time (@pxref{Time of Day}).  It can also be a list
+Ordinarily the first argument is a list
 @code{(@var{second} @var{minute} @var{hour} @var{day} @var{month}
 @var{year} @var{ignored} @var{dst} @var{zone})} that specifies a
 decoded time in the style of @code{decode-time}, so that
 @code{(encode-time (decode-time ...))}  works.  For the meanings of
 these list members, see the table under @code{decode-time}.
-
-The optional @var{form} argument specifies the desired timestamp form
-to be returned.  If @var{form} is the symbol @code{integer}, this
-function returns an integer count of seconds.  If @var{form} is a
-positive integer, it specifies a clock frequency and this function
-returns an integer-pair timestamp @code{(@var{ticks}
-. @var{form})}.@footnote{Currently a positive integer @var{form}
-should be at least 65536 if the returned value is intended to be given
-to standard functions expecting Lisp timestamps.}  If @var{form} is
-@code{t}, this function treats it as a positive integer suitable for
-representing the timestamp; for example, it is treated as 1000000000
-if the platform timestamp has nanosecond resolution.  If @var{form} is
-@code{list}, this function returns an integer list @code{(@var{high}
-@var{low} @var{micro} @var{pico})}.  Although an omitted or @code{nil}
-@var{form} currently acts like @code{list}, this is planned to change
-in a future Emacs version, so callers requiring list timestamps should
-pass @code{list} explicitly.
 
 As an obsolescent calling convention, this function can be given six
 or more arguments.  The first six arguments @var{second},

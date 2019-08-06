@@ -437,7 +437,7 @@ as an integer unless JUNK-ALLOWED is non-nil."
 ;; Random numbers.
 
 (defun cl--random-time ()
-  (car (encode-time nil t)))
+  (car (time-convert nil t)))
 
 ;;;###autoload (autoload 'cl-random-state-p "cl-extra")
 (cl-defstruct (cl--random-state

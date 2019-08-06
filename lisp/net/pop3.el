@@ -379,7 +379,7 @@ Use streaming commands."
 (defun pop3-uidl-dele (process)
   "Delete messages according to `pop3-leave-mail-on-server'.
 Return non-nil if it is necessary to update the local UIDL file."
-  (let* ((ctime (encode-time nil 'list))
+  (let* ((ctime (time-convert nil 'list))
 	 (age-limit (and (numberp pop3-leave-mail-on-server)
 			 (* 86400 pop3-leave-mail-on-server)))
 	 (srvr (assoc pop3-mailhost pop3-uidl-saved))

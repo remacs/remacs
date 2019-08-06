@@ -4533,7 +4533,7 @@ and the second element is the address."
 This function can be used in hooks like `gnus-select-group-hook'
 or `gnus-group-catchup-group-hook'."
   (when gnus-newsgroup-name
-    (let ((time (encode-time nil 'integer)))
+    (let ((time (time-convert nil 'integer)))
       (gnus-group-set-parameter gnus-newsgroup-name 'timestamp time))))
 
 (defsubst gnus-group-timestamp (group)

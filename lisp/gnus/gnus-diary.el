@@ -161,7 +161,7 @@ There are currently two built-in format functions:
 	 (now (current-time))
 	 (occur (nndiary-next-occurrence sched now))
 	 (real-time (time-subtract occur now)))
-    (let* ((sec (encode-time real-time 'integer))
+    (let* ((sec (time-convert real-time 'integer))
 	   (past (< sec 0))
 	   delay)
       (and past (setq sec (- sec)))

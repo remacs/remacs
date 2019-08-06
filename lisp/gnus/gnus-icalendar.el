@@ -650,7 +650,7 @@ is searched."
 (defun gnus-icalendar-show-org-agenda (event)
   (let* ((time-delta (time-subtract (gnus-icalendar-event:end-time event)
                                     (gnus-icalendar-event:start-time event)))
-         (duration-days (1+ (floor (encode-time time-delta 'integer) 86400))))
+         (duration-days (1+ (floor (time-convert time-delta 'integer) 86400))))
     (org-agenda-list nil (gnus-icalendar-event:start event) duration-days)))
 
 (cl-defmethod gnus-icalendar-event:sync-to-org ((event gnus-icalendar-event-request) reply-status)

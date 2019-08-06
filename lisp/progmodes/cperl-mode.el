@@ -8600,7 +8600,7 @@ start with default arguments, then refine the slowdown regions."
   (or l (setq l 1))
   (or step (setq step 500))
   (or lim (setq lim 40))
-  (let* ((timems (function (lambda () (car (encode-time nil 1000)))))
+  (let* ((timems (function (lambda () (car (time-convert nil 1000)))))
 	 (tt (funcall timems)) (c 0) delta tot)
     (goto-char (point-min))
     (forward-line (1- l))

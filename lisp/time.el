@@ -572,7 +572,7 @@ For example, the Unix uptime command format is \"%D, %z%2h:%.2m\"."
   (interactive)
   (let ((str
          (format-seconds (or format "%Y, %D, %H, %M, %z%S")
-			 (encode-time
+			 (time-convert
 			  (time-since before-init-time)
 			  'integer))))
     (if (called-interactively-p 'interactive)

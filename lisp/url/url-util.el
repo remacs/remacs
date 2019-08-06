@@ -181,7 +181,7 @@ Will not do anything if `url-show-status' is nil."
 	  (null url-show-status)
 	  (active-minibuffer-window)
 	  (= url-lazy-message-time
-	     (setq url-lazy-message-time (encode-time nil 'integer))))
+	     (setq url-lazy-message-time (time-convert nil 'integer))))
       nil
     (apply 'message args)))
 

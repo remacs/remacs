@@ -1348,7 +1348,7 @@ does not exist."
 	       (expand-file-name (or (file-symlink-p file) file)
 				 (file-name-directory file)))))
     (if (not attr) (error "No such file: \"%s\"" file)
-      (encode-time (file-attribute-modification-time attr) 'integer))))
+      (time-convert (file-attribute-modification-time attr) 'integer))))
 
 
 (provide 'ox-publish)

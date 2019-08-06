@@ -141,7 +141,7 @@ Set by `elint-initialize', if `elint-scan-preloaded' is non-nil.")
 (defconst elint-unknown-builtin-args
   ;; encode-time allows extra arguments for use with decode-time.
   ;; For some reason, some people seem to like to use them in other cases.
-  '((encode-time second minute hour day month year &rest zone))
+  '((encode-time time &rest obsolescent-arguments))
   "Those built-ins for which we can't find arguments, if any.")
 
 (defvar elint-extra-errors '(file-locked file-supersession ftp-error)

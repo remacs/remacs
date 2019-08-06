@@ -1234,7 +1234,7 @@
 	 symbol-function symbol-name symbol-plist symbol-value string-make-unibyte
 	 string-make-multibyte string-as-multibyte string-as-unibyte
 	 string-to-multibyte
-	 tan truncate
+	 tan time-convert truncate
 	 unibyte-char-to-multibyte upcase user-full-name
 	 user-login-name user-original-login-name custom-variable-p
 	 vconcat

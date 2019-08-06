@@ -86,7 +86,7 @@
 			   (cons 1000000000000 (1+ most-positive-fixnum)))))
     (dolist (a time-values)
       (let* ((d (ignore-errors (decode-time a t)))
-	     (e (encode-time d))
+	     (e (if d (encode-time d)))
 	     (diff (float-time (time-subtract a e))))
 	(should (or (not d)
 		    (and (<= 0 diff) (< diff 1))))))))

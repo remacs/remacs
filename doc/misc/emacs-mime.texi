@@ -1537,24 +1537,25 @@ Here's a bunch of time/date/second/day examples:
 (parse-time-string "Sat Sep 12 12:21:54 1998 +0200")
 @result{} (54 21 12 12 9 1998 6 -1 7200)
 
-(encode-time (date-to-time "Sat Sep 12 12:21:54 1998 +0200")
-             1000000)
-@result{} (905595714000000 . 1000000)
+(time-convert
+  (date-to-time "Sat Sep 12 12:21:54 1998 +0200")
+  'integer)
+@result{} 905595714
 
 (float-time '(905595714000000 . 1000000))
 @result{} 905595714.0
 
-(encode-time 905595714.0 1000000)
+(time-convert 905595714.0 1000000)
 @result{} (905595714000000 . 1000000)
 
 (time-to-days '(905595714000000 . 1000000))
 @result{} 729644
 
-(encode-time (days-to-time 729644) 1000000)
-@result{} (63041241600000000 . 1000000)
+(time-convert (days-to-time 729644) 'integer)
+@result{} 63041241600
 
-(encode-time (time-since '(905595714000000 . 1000000))
-             1000000)
+(time-convert (time-since '(905595714000000 . 1000000))
+              1000000)
 @result{} (631963244775642171 . 1000000000)
 
 (time-less-p '(905595714000000 . 1000000)
@@ -1622,12 +1623,14 @@ These are the functions available:
 @item date-to-time
 Take a date and return a time.
 
+@item time-convert
+Take a time and return a timestamp in a specified form.
+
 @item float-time
 Take a time and return seconds.
 
 @item encode-time
-Take seconds (and other ways to represent time, notably decoded time
-lists), and return a time.
+Take a decoded time and return a timestamp.
 
 @item time-to-days
 Take a time and return days.

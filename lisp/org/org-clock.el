@@ -723,7 +723,7 @@ menu\nmouse-2 will jump to task"))
 The time returned includes the time spent on this task in
 previous clocking intervals."
   (let ((currently-clocked-time
-	 (floor (encode-time (time-since org-clock-start-time) 'integer)
+	 (floor (time-convert (time-since org-clock-start-time) 'integer)
 		60)))
     (+ currently-clocked-time (or org-clock-total-time 0))))
 
@@ -1033,7 +1033,7 @@ to be CLOCKED OUT."))))
 				   nil 45)))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
-	   (floor (encode-time (time-since last-valid) 'integer)
+	   (floor (time-convert (time-since last-valid) 'integer)
 		  60))
 	 (keep
 	  (and (memq ch '(?k ?K))
@@ -1102,8 +1102,8 @@ If `only-dangling-p' is non-nil, only ask to resolve dangling
 			(lambda (clock)
 			  (format
 			   "Dangling clock started %d mins ago"
-			   (floor (encode-time (time-since (cdr clock))
-					       'integer)
+			   (floor (time-convert (time-since (cdr clock))
+						'integer)
 				  60)))))
 		   (or last-valid
 		       (cdr clock)))))))))))
@@ -1321,7 +1321,7 @@ the default behavior."
 			  (y-or-n-p
 			   (format
 			    "You stopped another clock %d mins ago; start this one from then? "
-			    (/ (encode-time
+			    (/ (time-convert
 				(time-subtract
 				 (org-current-time org-clock-rounding-minutes t)
 				 leftover)
@@ -1576,10 +1576,10 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (delete-region (point) (point-at-eol))
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
-	  (setq s (encode-time (time-subtract
-				(org-time-string-to-time te)
-				(org-time-string-to-time ts))
-			       'integer)
+	  (setq s (time-convert (time-subtract
+				 (org-time-string-to-time te)
+				 (org-time-string-to-time ts))
+				'integer)
 		h (floor s 3600)
 		m (floor (mod s 3600) 60))
 	  (insert " => " (format "%2d:%02d" h m))
@@ -1833,7 +1833,7 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 		      tend
 		      (>= (float-time org-clock-start-time) tstart)
 		      (<= (float-time org-clock-start-time) tend))
-	     (let ((time (floor (encode-time
+	     (let ((time (floor (time-convert
 				 (time-since org-clock-start-time)
 				 'integer)
 				60)))

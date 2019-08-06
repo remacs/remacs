@@ -171,14 +171,14 @@ If DATE lacks timezone information, GMT is assumed."
 (defalias 'time-to-seconds 'float-time)
 
 ;;;###autoload
-(defalias 'seconds-to-time 'encode-time)
+(defalias 'seconds-to-time 'time-convert)
 
 ;;;###autoload
 (defun days-to-time (days)
   "Convert DAYS into a time value."
-  (let ((time (encode-time (* 86400 days))))
+  (let ((time (time-convert (* 86400 days))))
     ;; Traditionally, this returned a two-element list if DAYS was an integer.
-    ;; Keep that tradition if encode-time outputs timestamps in list form.
+    ;; Keep that tradition if time-convert outputs timestamps in list form.
     (if (and (integerp days) (consp (cdr time)))
 	(setcdr (cdr time) nil))
     time))

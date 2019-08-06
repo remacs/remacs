@@ -2078,20 +2078,23 @@ functions like 'process-id' that compute process IDs, and functions like
 ** Time values
 
 +++
+*** New function time 'time-convert' converts Lisp time values
+to Lisp timestamps of various forms, including a new timestamp form
+(TICKS . HZ) where TICKS is an integer and HZ a positive integer
+denoting a clock frequency.
+
++++
 *** Although the default timestamp format is still '(HI LO US PS)',
 it is planned to change in a future Emacs version, to exploit bignums.
 The documentation has been updated to mention that the timestamp
 format may change and that programs should use functions like
-'format-time-string', 'decode-time', and 'encode-time' rather than
+'format-time-string', 'decode-time', and 'time-convert' rather than
 probing the innards of a timestamp directly, or creating a timestamp
 by hand.
 
 +++
-*** 'encode-time' supports a new API '(encode-time TIME &optional FORM)'.
-This can convert decoded times and Lisp time values to Lisp timestamps
-of various forms, including a new timestamp form '(TICKS . HZ)', where
-TICKS is an integer and HZ is a positive integer denoting a clock
-frequency.  The old 'encode-time' API is still supported.
+*** 'encode-time' supports a new API '(encode-time TIME)'.
+The old 'encode-time' API is still supported.
 
 +++
 *** A new package to parse ISO 8601 time, date, durations and

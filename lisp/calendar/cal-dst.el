@@ -127,7 +127,7 @@ after midnight UTC on absolute date ABS-DATE."
   "Return the time of the next time zone transition after TIME.
 Both TIME and the result are acceptable arguments to `current-time-zone'.
 Return nil if no such transition can be found."
-  (let* ((time (encode-time time 'integer))
+  (let* ((time (time-convert time 'integer))
          (time-zone (current-time-zone time))
          (time-utc-diff (car time-zone))
          hi

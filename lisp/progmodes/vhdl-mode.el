@@ -7403,7 +7403,7 @@ only-lines."
 		   100
                  (floor (* 100.0 (- pos (aref vhdl-progress-info 0)))
                         delta))))
-    (aset vhdl-progress-info 2 (encode-time nil 'integer))))
+    (aset vhdl-progress-info 2 (time-convert nil 'integer))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Indentation commands
@@ -8149,7 +8149,7 @@ depending on parameter UPPER-CASE."
 	   (message "Fixing case... (%2d%s)"
 		    (+ (* count 20) (/ (* 20 (- (point) beg)) (- end beg)))
 		    "%")
-	   (setq last-update (encode-time nil 'integer))))
+	   (setq last-update (time-convert nil 'integer))))
        (goto-char end)))))
 
 (defun vhdl-fix-case-region (beg end &optional arg)

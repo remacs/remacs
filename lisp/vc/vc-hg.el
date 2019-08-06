@@ -1043,7 +1043,7 @@ hg binary."
                (let ((vc-hg-size (nth 2 dirstate-entry))
                      (vc-hg-mtime (nth 3 dirstate-entry))
                      (fs-size (file-attribute-size stat))
-		     (fs-mtime (encode-time
+		     (fs-mtime (time-convert
 				(file-attribute-modification-time stat)
 				'integer)))
                  (if (and (eql vc-hg-size fs-size) (eql vc-hg-mtime fs-mtime))

@@ -151,7 +151,7 @@ signed integer."
 				    ;; tenths of microseconds between
 				    ;; 1601-01-01 and 1970-01-01
 				    "116444736000000000)")
-		 'rawnum (encode-time nil 'list)))
+		 'rawnum (time-convert nil 'list)))
 	 result-bytes)
     (dotimes (_byte 8)
       (push (calc-eval "and($1,16#FF)" 'rawnum tenths-of-us-since-jan-1-1601)

@@ -193,7 +193,7 @@ key cache `url-digest-auth-storage'."
 (defun url-digest-auth-make-cnonce ()
   "Compute a new unique client nonce value."
   (base64-encode-string
-   (format "%016x%016x" (random) (car (encode-time nil t)))
+   (format "%016x%016x" (random) (car (time-convert nil t)))
    t))
 
 (defun url-digest-auth-nonce-count (_nonce)

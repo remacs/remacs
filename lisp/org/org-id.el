@@ -356,7 +356,7 @@ So a typical ID could look like \"Org:4nd91V40HI\"."
   "Return string with random (version 4) UUID."
   (let ((rnd (md5 (format "%s%s%s%s%s%s%s"
 			  (random)
-			  (encode-time nil 'list)
+			  (time-convert nil 'list)
 			  (user-uid)
 			  (emacs-pid)
 			  (user-full-name)
@@ -418,7 +418,7 @@ using `org-id-decode'."
   ;; FIXME: If TIME represents N seconds after the epoch, then
   ;; this encoding assumes 0 <= N < 110075314176 = (* (expt 36 4) 65536),
   ;; i.e., that TIME is from 1970-01-01 00:00:00 to 5458-02-23 20:09:36 UTC.
-  (setq time (encode-time time 'list))
+  (setq time (time-convert time 'list))
   (concat (org-id-int-to-b36 (nth 0 time) 4)
 	  (org-id-int-to-b36 (nth 1 time) 4)
 	  (org-id-int-to-b36 (nth 2 time) 4)))

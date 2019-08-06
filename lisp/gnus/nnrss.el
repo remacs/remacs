@@ -455,7 +455,7 @@ which RSS 2.0 allows."
     (cond ((null date))			; do nothing for this case
 	  ;; if the date is just digits (unix time stamp):
 	  ((string-match "^[0-9]+$" date)
-	   (setq given (encode-time (string-to-number date))))
+	   (setq given (time-convert (string-to-number date))))
 	  ;; RFC 822
 	  ((string-match " [0-9]+ " date)
 	   (setq vector (timezone-parse-date date)

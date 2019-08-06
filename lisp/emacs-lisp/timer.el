@@ -57,7 +57,7 @@
 
 (defun timer--time-setter (timer time)
   (timer--check timer)
-  (let ((lt (encode-time time 'list)))
+  (let ((lt (time-convert time 'list)))
     (setf (timer--high-seconds timer) (nth 0 lt))
     (setf (timer--low-seconds timer) (nth 1 lt))
     (setf (timer--usecs timer) (nth 2 lt))
@@ -96,10 +96,7 @@ fire each time Emacs is idle for that many seconds."
   "Yield the next value after TIME that is an integral multiple of SECS.
 More precisely, the next value, after TIME, that is an integral multiple
 of SECS seconds since the epoch.  SECS may be a fraction."
-  (let* ((ticks-hz (if (and (consp time) (integerp (car time))
-			    (integerp (cdr time)) (< 0 (cdr time)))
-		       time
-		     (encode-time time 1000000000000)))
+  (let* ((ticks-hz (time-convert time t))
 	 (ticks (car ticks-hz))
 	 (hz (cdr ticks-hz))
 	 trunc-s-ticks)
@@ -109,7 +106,7 @@ of SECS seconds since the epoch.  SECS may be a fraction."
       (setq ticks (ash ticks 1))
       (setq hz (ash hz 1)))
     (let ((more-ticks (+ ticks trunc-s-ticks)))
-      (encode-time (cons (- more-ticks (% more-ticks trunc-s-ticks)) hz)))))
+      (time-convert (cons (- more-ticks (% more-ticks trunc-s-ticks)) hz)))))
 
 (defun timer-relative-time (time secs &optional usecs psecs)
   "Advance TIME by SECS seconds and optionally USECS microseconds

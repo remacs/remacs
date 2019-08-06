@@ -1022,7 +1022,7 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
     (setq
      flymake-timer
      (run-with-idle-timer
-      ;; This can use encode-time instead of seconds-to-time,
+      ;; This can use time-convert instead of seconds-to-time,
       ;; once we can assume Emacs 27 or later.
       (seconds-to-time flymake-no-changes-timeout)
       nil

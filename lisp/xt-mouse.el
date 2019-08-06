@@ -245,8 +245,8 @@ which is the \"1006\" extension implemented in Xterm >= 277."
              ;; for default value of mouse-1-click-follows-link (450msec).
 	     (timestamp (if (not xt-mouse-epoch)
 			    (progn (setq xt-mouse-epoch (float-time)) 0)
-			  (car (encode-time (time-since xt-mouse-epoch)
-					    1000))))
+			  (car (time-convert (time-since xt-mouse-epoch)
+					     1000))))
              (w (window-at x y))
              (ltrb (window-edges w))
              (left (nth 0 ltrb))

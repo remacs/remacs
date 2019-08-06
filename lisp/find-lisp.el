@@ -342,7 +342,7 @@ list of ls option letters of which c and u are recognized).  Use
 the same method as \"ls\" to decide whether to show time-of-day or
 year, depending on distance between file date and NOW."
   (let* ((time (nth (find-lisp-time-index switches) file-attr))
-	 (diff (encode-time (time-subtract time now) 'integer))
+	 (diff (time-convert (time-subtract time now) 'integer))
 	 (past-cutoff -15778476)		; 1/2 of a Gregorian year
 	 (future-cutoff (* 60 60)))		; 1 hour
     (format-time-string
