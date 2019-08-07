@@ -836,14 +836,13 @@ symbol `never', the posting is not allowed.  If it is the symbol
 		 (const ask)))
 
 (defcustom message-sendmail-f-is-evil
-  (if (boundp 'mail-specify-envelope-from)
-      (not mail-specify-envelope-from)
-    nil)
+  ;; FIXME: This is related to `mail-specify-envelope-from' but works
+  ;; differently (bug#36937).
+  nil
   "Non-nil means don't add \"-f username\" to the sendmail command line.
 Doing so would be even more evil than leaving it out."
   :group 'message-sending
   :link '(custom-manual "(message)Mail Variables")
-  :version "27.1"
   :type 'boolean)
 
 (defcustom message-sendmail-envelope-from
