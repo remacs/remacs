@@ -3085,44 +3085,24 @@ This tests also `access-file', `file-readable-p',
 
 (defsubst tramp--test-file-attributes-equal-p (attr1 attr2)
   "Check, whether file attributes ATTR1 and ATTR2 are equal.
-They might differ only in time attributes or directory size."
-  (let ((attr1 (copy-sequence attr1))
-	(attr2 (copy-sequence attr2))
-	(start-time
-	 (aref
-	  (ert--stats-test-start-times ert--current-run-stats)
-	  (ert--stats-test-pos ert--current-run-stats (ert-running-test)))))
-    ;; Access time.
-    (setcar (nthcdr 4 attr1) tramp-time-dont-know)
-    (setcar (nthcdr 4 attr2) tramp-time-dont-know)
-    ;; Modification time.  If any of the time values is "don't know",
-    ;; we cannot compare, and we normalize the time stamps.  If the
-    ;; time value is newer than the test start time, normalize it,
-    ;; because due to caching the time stamps could differ slightly (a
-    ;; few seconds).
-    (when (or (tramp-compat-time-equal-p (nth 5 attr1) tramp-time-dont-know)
-	      (tramp-compat-time-equal-p (nth 5 attr2) tramp-time-dont-know))
-      (setcar (nthcdr 5 attr1) tramp-time-dont-know)
-      (setcar (nthcdr 5 attr2) tramp-time-dont-know))
-    (when (time-less-p start-time (nth 5 attr1))
-      (setcar (nthcdr 5 attr1) tramp-time-dont-know))
-    (when (time-less-p start-time (nth 5 attr2))
-      (setcar (nthcdr 5 attr2) tramp-time-dont-know))
-    ;; Status change time.  Dito.
-    (when (or (tramp-compat-time-equal-p (nth 6 attr1) tramp-time-dont-know)
-	      (tramp-compat-time-equal-p (nth 6 attr2) tramp-time-dont-know))
-      (setcar (nthcdr 6 attr1) tramp-time-dont-know)
-      (setcar (nthcdr 6 attr2) tramp-time-dont-know))
-    (when (time-less-p start-time (nth 6 attr1))
-      (setcar (nthcdr 6 attr1) tramp-time-dont-know))
-    (when (time-less-p start-time (nth 6 attr2))
-      (setcar (nthcdr 6 attr2) tramp-time-dont-know))
-    ;; Size.  Set it to 0 for directories, because it might have
-    ;; changed.  For example the upper directory "../".
-    (when (eq (car attr1) t) (setcar (nthcdr 7 attr1) 0))
-    (when (eq (car attr2) t) (setcar (nthcdr 7 attr2) 0))
-    ;; The check.
-    (equal attr1 attr2)))
+They might differ only in time attributes."
+  ;; Access time.
+  (setcar (nthcdr 4 attr1) tramp-time-dont-know)
+  (setcar (nthcdr 4 attr2) tramp-time-dont-know)
+  ;; Modification time.
+  (when (or (tramp-compat-time-equal-p (nth 5 attr1) tramp-time-dont-know)
+	    (tramp-compat-time-equal-p (nth 5 attr2) tramp-time-dont-know)
+	    (< (abs (tramp-time-diff (nth 5 attr1) (nth 5 attr2))) 5))
+    (setcar (nthcdr 5 attr1) tramp-time-dont-know)
+    (setcar (nthcdr 5 attr2) tramp-time-dont-know))
+  ;; Status change time.
+  (when (or (tramp-compat-time-equal-p (nth 6 attr1) tramp-time-dont-know)
+	    (tramp-compat-time-equal-p (nth 6 attr2) tramp-time-dont-know)
+	    (< (abs (tramp-time-diff (nth 6 attr1) (nth 6 attr2))) 5))
+    (setcar (nthcdr 6 attr1) tramp-time-dont-know)
+    (setcar (nthcdr 6 attr2) tramp-time-dont-know))
+  (unless (equal attr1 attr2) (tramp--test-message "%S\n%S" attr1 attr2))
+  (equal attr1 attr2))
 
 ;; This isn't 100% correct, but better than no explainer at all.
 (put #'tramp--test-file-attributes-equal-p 'ert-explainer #'ert--explain-equal)
