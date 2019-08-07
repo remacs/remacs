@@ -4931,7 +4931,10 @@ dump_bitset_set_bit (struct dump_bitset *bitset, size_t bit_number)
 static void
 dump_bitset_clear (struct dump_bitset *bitset)
 {
-  memset (bitset->bits, 0, bitset->number_words * sizeof bitset->bits[0]);
+  /* Skip the memset if bitset->number_words == 0, because then bitset->bits
+     might be NULL and the memset would have undefined behavior.  */
+  if (bitset->number_words)
+    memset (bitset->bits, 0, bitset->number_words * sizeof bitset->bits[0]);
 }
 
 struct pdumper_loaded_dump_private
