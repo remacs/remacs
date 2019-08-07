@@ -2488,7 +2488,7 @@ usage:  (make-pipe-process &rest ARGS)  */)
    The address family of sa is not included in the result.  */
 
 Lisp_Object
-conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len, bool include_port)
+conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
 {
   Lisp_Object address;
   ptrdiff_t i;
@@ -2507,12 +2507,9 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len, bool include_port)
       {
 	DECLARE_POINTER_ALIAS (sin, struct sockaddr_in, sa);
 	len = sizeof (sin->sin_addr) + 1;
-        if (!include_port)
-          len--;
 	address = Fmake_vector (make_number (len), Qnil);
 	p = XVECTOR (address);
-        if (include_port)
-          p->contents[--len] = make_number (ntohs (sin->sin_port));
+	p->contents[--len] = make_number (ntohs (sin->sin_port));
 	cp = (unsigned char *) &sin->sin_addr;
 	break;
       }
@@ -2522,12 +2519,9 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len, bool include_port)
 	DECLARE_POINTER_ALIAS (sin6, struct sockaddr_in6, sa);
 	DECLARE_POINTER_ALIAS (ip6, uint16_t, &sin6->sin6_addr);
 	len = sizeof (sin6->sin6_addr) / 2 + 1;
-        if (!include_port)
-          len--;
 	address = Fmake_vector (make_number (len), Qnil);
 	p = XVECTOR (address);
-        if (include_port)
-          p->contents[--len] = make_number (ntohs (sin6->sin6_port));
+	p->contents[--len] = make_number (ntohs (sin6->sin6_port));
 	for (i = 0; i < len; i++)
 	  p->contents[i] = make_number (ntohs (ip6[i]));
 	return address;
@@ -2578,7 +2572,7 @@ conv_addrinfo_to_lisp (struct addrinfo *res)
 {
   Lisp_Object protocol = make_number (res->ai_protocol);
   eassert (XINT (protocol) == res->ai_protocol);
-  return Fcons (protocol, conv_sockaddr_to_lisp (res->ai_addr, res->ai_addrlen, true));
+  return Fcons (protocol, conv_sockaddr_to_lisp (res->ai_addr, res->ai_addrlen));
 }
 
 
@@ -2720,8 +2714,7 @@ set up yet, this function will block until socket setup has completed.  */)
 
   channel = XPROCESS (process)->infd;
   return conv_sockaddr_to_lisp (datagram_address[channel].sa,
-				datagram_address[channel].len,
-                                true);
+				datagram_address[channel].len);
 }
 
 DEFUN ("set-process-datagram-address", Fset_process_datagram_address, Sset_process_datagram_address,
@@ -3582,7 +3575,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #endif
 
       contact = Fplist_put (contact, p->is_server? QClocal: QCremote,
-			    conv_sockaddr_to_lisp (sa, addrlen, true));
+			    conv_sockaddr_to_lisp (sa, addrlen));
 #ifdef HAVE_GETSOCKNAME
       if (!p->is_server)
 	{
@@ -3591,7 +3584,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	  DECLARE_POINTER_ALIAS (psa1, struct sockaddr, &sa1);
 	  if (getsockname (s, psa1, &len1) == 0)
 	    contact = Fplist_put (contact, QClocal,
-				  conv_sockaddr_to_lisp (psa1, len1, true));
+				  conv_sockaddr_to_lisp (psa1, len1));
 	}
 #endif
     }
@@ -4255,8 +4248,7 @@ network_interface_list (void)
       namebuf[sizeof (ifq->ifr_name)] = 0;
       res = Fcons (Fcons (build_string (namebuf),
 			  conv_sockaddr_to_lisp (&ifq->ifr_addr,
-						 sizeof (struct sockaddr),
-                                                 true)),
+						 sizeof (struct sockaddr))),
 		   res);
     }
 
@@ -4459,9 +4451,9 @@ network_interface_info (Lisp_Object ifname)
     {
       any = 1;
 #ifdef HAVE_STRUCT_IFREQ_IFR_NETMASK
-      elt = conv_sockaddr_to_lisp (&rq.ifr_netmask, sizeof (rq.ifr_netmask), true);
+      elt = conv_sockaddr_to_lisp (&rq.ifr_netmask, sizeof (rq.ifr_netmask));
 #else
-      elt = conv_sockaddr_to_lisp (&rq.ifr_addr, sizeof (rq.ifr_addr), true);
+      elt = conv_sockaddr_to_lisp (&rq.ifr_addr, sizeof (rq.ifr_addr));
 #endif
     }
 #endif
@@ -4472,7 +4464,7 @@ network_interface_info (Lisp_Object ifname)
   if (ioctl (s, SIOCGIFBRDADDR, &rq) == 0)
     {
       any = 1;
-      elt = conv_sockaddr_to_lisp (&rq.ifr_broadaddr, sizeof (rq.ifr_broadaddr), true);
+      elt = conv_sockaddr_to_lisp (&rq.ifr_broadaddr, sizeof (rq.ifr_broadaddr));
     }
 #endif
   res = Fcons (elt, res);
@@ -4482,7 +4474,7 @@ network_interface_info (Lisp_Object ifname)
   if (ioctl (s, SIOCGIFADDR, &rq) == 0)
     {
       any = 1;
-      elt = conv_sockaddr_to_lisp (&rq.ifr_addr, sizeof (rq.ifr_addr), true);
+      elt = conv_sockaddr_to_lisp (&rq.ifr_addr, sizeof (rq.ifr_addr));
     }
 #endif
   res = Fcons (elt, res);
@@ -4602,7 +4594,7 @@ nil if none were found.  Each address is a vector of integers.  */)
       for (lres = res; lres; lres = lres->ai_next)
         {
           addresses = Fcons (conv_sockaddr_to_lisp
-                             (lres->ai_addr, lres->ai_addrlen, false),
+                             (lres->ai_addr, lres->ai_addrlen),
                              addresses);
         }
       addresses = Fnreverse (addresses);
@@ -4879,12 +4871,12 @@ server_accept_connection (Lisp_Object server, int channel)
   if (!NILP (service))
     contact = Fplist_put (contact, QCservice, service);
   contact = Fplist_put (contact, QCremote,
-			conv_sockaddr_to_lisp (&saddr.sa, len, true));
+			conv_sockaddr_to_lisp (&saddr.sa, len));
 #ifdef HAVE_GETSOCKNAME
   len = sizeof saddr;
   if (getsockname (s, &saddr.sa, &len) == 0)
     contact = Fplist_put (contact, QClocal,
-			  conv_sockaddr_to_lisp (&saddr.sa, len, true));
+			  conv_sockaddr_to_lisp (&saddr.sa, len));
 #endif
 
   pset_childp (p, contact);
@@ -8116,7 +8108,7 @@ init_process_emacs (int sockfd)
       union u_sockaddr sa;
       socklen_t salen = sizeof sa;
       if (getsockname (sockfd, &sa.sa, &salen) == 0)
-	sockname = conv_sockaddr_to_lisp (&sa.sa, salen, true);
+	sockname = conv_sockaddr_to_lisp (&sa.sa, salen);
     }
 # endif
   Vinternal__daemon_sockname = sockname;
