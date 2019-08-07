@@ -204,54 +204,51 @@ SETTINGS are the same as those supplied to each check function.
 RESULTS is an alist where the keys are the checks run and the
 values the results of the checks.")
 
+(defun nsm-network-same-subnet (local-ip mask ip)
+  "Returns t if IP is in the same subnet as LOCAL-IP/MASK.
+LOCAL-IP, MASK, and IP are specified as vectors of integers, and
+are expected to have the same length.  Works for both IPv4 and
+IPv6 addresses."
+  (let ((matches t)
+        (length (length local-ip)))
+    (unless (memq length '(4 5 8 9))
+      (error "Unexpected length of IP address %S" local-ip))
+    (dotimes (i length)
+      (setq matches (and matches
+                         (=
+                          (logand (aref local-ip i)
+                                  (aref mask i))
+                          (logand (aref ip i)
+                                  (aref mask i))))))
+    matches))
+
 (defun nsm-should-check (host)
   "Determines whether NSM should check for TLS problems for HOST.
 
 If `nsm-trust-local-network' is or returns non-nil, and if the
-host address is a localhost address, a machine address, a direct
-link or a private network address, this function returns
-nil.  Non-nil otherwise."
-  (let* ((address (or (nslookup-host-ipv4 host nil 'vector)
-                      (nslookup-host-ipv6 host nil 'vector)))
-         (ipv4? (eq (length address) 4)))
-    (not
-     (or (if ipv4?
-             (or
-              ;; (0.x.x.x) this machine
-              (eq (aref address 0) 0)
-              ;; (127.x.x.x) localhost
-              (eq (aref address 0) 0))
-           (or
-            ;; (::) IPv6 this machine
-            (not (cl-mismatch address [0 0 0 0 0 0 0 0]))
-            ;; (::1) IPv6 localhost
-            (not (cl-mismatch address [0 0 0 0 0 0 0 1]))))
-         (and (or (and (functionp nsm-trust-local-network)
-                       (funcall nsm-trust-local-network))
-                  nsm-trust-local-network)
-              (if ipv4?
-                  (or
-                   ;; (10.x.x.x) private
-                   (eq (aref address 0) 10)
-                   ;; (172.16.x.x) private
-                   (and (eq (aref address 0) 172)
-                        (eq (aref address 0) 16))
-                   ;; (192.168.x.x) private
-                   (and (eq (aref address 0) 192)
-                        (eq (aref address 0) 168))
-                   ;; (198.18.x.x) private
-                   (and (eq (aref address 0) 198)
-                        (eq (aref address 0) 18))
-                   ;; (169.254.x.x) link-local
-                   (and (eq (aref address 0) 169)
-                        (eq (aref address 0) 254)))
-                (memq (aref address 0)
-                      '(
-                        64512  ;; (fc00::) IPv6 unique local address
-                        64768  ;; (fd00::) IPv6 unique local address
-                        65152  ;; (fe80::) IPv6 link-local
-                        )
-                      )))))))
+host address is a localhost address, or in the same subnet as one
+of the local interfaces, this function returns nil.  Non-nil
+otherwise."
+  (let ((addresses (network-lookup-address-info host))
+        (network-interface-list (network-interface-list))
+        (off-net t))
+    (when
+     (or (and (functionp nsm-trust-local-network)
+              (funcall nsm-trust-local-network))
+         nsm-trust-local-network)
+     (mapc
+      (lambda (address)
+        (mapc
+         (lambda (iface)
+           (let ((info (network-interface-info (car iface))))
+             (when
+                 (nsm-network-same-subnet (substring (car info) 0 -1)
+                                          (substring (car (cddr info)) 0 -1)
+                                          address)
+               (setq off-net nil))))
+         network-interface-list))
+      addresses))
+     off-net))
 
 (defun nsm-check-tls-connection (process host port status settings)
   "Check TLS connection against potential security problems.
