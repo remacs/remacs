@@ -5720,7 +5720,7 @@ x_sync (struct frame *f)
  ***********************************************************************/
 
 DEFUN ("x-change-window-property", Fx_change_window_property,
-       Sx_change_window_property, 2, 6, 0,
+       Sx_change_window_property, 2, 7, 0,
        doc: /* Change window property PROP to VALUE on the X window of FRAME.
 PROP must be a string.  VALUE may be a string or a list of conses,
 numbers and/or strings.  If an element in the list is a string, it is
@@ -5735,9 +5735,12 @@ FORMAT gives the size in bits of each element if VALUE is a list.
 It must be one of 8, 16 or 32.
 If VALUE is a string or FORMAT is nil or not given, FORMAT defaults to 8.
 If OUTER-P is non-nil, the property is changed for the outer X window of
-FRAME.  Default is to change on the edit X window.  */)
+FRAME.  Default is to change on the edit X window.
+If SOURCE is non-nil, set the property on that window instead of from
+FRAME.  The number 0 denotes the root window.  */)
   (Lisp_Object prop, Lisp_Object value, Lisp_Object frame,
-   Lisp_Object type, Lisp_Object format, Lisp_Object outer_p)
+   Lisp_Object type, Lisp_Object format, Lisp_Object outer_p,
+   Lisp_Object source)
 {
   struct frame *f = decode_window_system_frame (frame);
   Atom prop_atom;
@@ -5801,8 +5804,17 @@ FRAME.  Default is to change on the edit X window.  */)
       target_type = XInternAtom (FRAME_X_DISPLAY (f), SSDATA (type), False);
     }
 
-  if (! NILP (outer_p)) w = FRAME_OUTER_WINDOW (f);
-  else w = FRAME_X_WINDOW (f);
+  if (! NILP (source))
+    {
+      CONS_TO_INTEGER (source, Window, w);
+      if (! w)
+	w = FRAME_DISPLAY_INFO (f)->root_window;
+    }
+  else
+    {
+      if (! NILP (outer_p)) w = FRAME_OUTER_WINDOW (f);
+      else w = FRAME_X_WINDOW (f);
+    }
 
   XChangeProperty (FRAME_X_DISPLAY (f), w,
 		   prop_atom, target_type, element_format, PropModeReplace,
