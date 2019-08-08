@@ -1346,7 +1346,7 @@ default, and not just the opening element.
 behave similarly, e.g. Pcomplete's default cycling can be obtained
 with '(setq completion-cycle-threshold 5)'.
 
----
++++
 *** Expansion of history event designators is disabled by default.
 To restore the old behavior, use
 

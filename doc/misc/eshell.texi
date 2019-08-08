@@ -462,10 +462,14 @@ The n-th entry of the history ring can be applied with the @samp{!n}
 command.  If @code{n} is negative, the entry is counted from the end
 of the history ring.
 
-@samp{!foo} expands to the last command beginning with @code{foo}, and
-@samp{!?foo} to the last command containing @code{foo}.  The n-th
-argument of the last command beginning with @code{foo} is accessible
-by @code{!foo:n}.
+@cindex event designators
+@findex eshell-expand-history-references
+When history event designators are enabled (by adding
+@code{eshell-expand-history-references} to
+@code{eshell-expand-input-functions}), @samp{!foo} expands to the last
+command beginning with @code{foo}, and @samp{!?foo} to the last
+command containing @code{foo}.  The n-th argument of the last command
+beginning with @code{foo} is accessible by @code{!foo:n}.
 
 The history ring is loaded from a file at the start of every session,
 and written back to the file at the end of every session.  The file path
