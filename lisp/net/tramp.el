@@ -1440,7 +1440,7 @@ default values are used."
 		     :method method :user user :domain domain :host host
 		     :port port :localname localname :hop hop))
 	  ;; The method must be known.
-	  (unless (or (tramp-completion-mode-p)
+	  (unless (or nodefault (tramp-completion-mode-p)
 		      (string-equal method tramp-default-method-marker)
 		      (assoc method tramp-methods))
 	    (tramp-user-error
