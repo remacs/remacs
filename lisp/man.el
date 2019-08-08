@@ -624,7 +624,13 @@ This is necessary if one wants to dump man.el with Emacs."
                           ;; so we don't need `2>' even with DOS shells
                           ;; which do support stderr redirection.
                           ((not (fboundp 'make-process)) " %s")
-                          ((concat " %s 2>" null-device)))))
+                          ((concat " %s 2>" null-device
+                                   ;; Some MS-Windows ports of Groff
+                                   ;; try to read stdin after exhausting
+                                   ;; the command-line arguments; make
+                                   ;; them exit if/when they do.
+                                   (if (eq system-type 'windows-nt)
+                                       (concat " <" null-device)))))))
 	(flist Man-filter-list))
     (while (and flist (car flist))
       (let ((pcom (car (car flist)))
