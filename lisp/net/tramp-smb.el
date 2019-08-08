@@ -589,7 +589,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (when (and (not ok-if-already-exists) (file-exists-p newname))
 	      (tramp-error v 'file-already-exists newname))
 	    (when (and (file-directory-p newname)
-		       (not (directory-name-p newname)))
+		       (not (tramp-compat-directory-name-p newname)))
 	      (tramp-error v 'file-error "File is a directory %s" newname))
 
 	    ;; We must also flush the cache of the directory, because
@@ -1334,7 +1334,8 @@ component is used as the target of the symlink."
       (if (tramp-tramp-file-p filename) filename newname) nil
     (when (and (not ok-if-already-exists) (file-exists-p newname))
       (tramp-error v 'file-already-exists newname))
-    (when (and (file-directory-p newname) (not (directory-name-p newname)))
+    (when (and (file-directory-p newname)
+	       (not (tramp-compat-directory-name-p newname)))
       (tramp-error v 'file-error "File is a directory %s" newname))
 
     (with-tramp-progress-reporter
