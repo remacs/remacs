@@ -1104,9 +1104,18 @@ It sorts minibuffer-owning frames before minibufferless ones.
 Internal use only."
   (pcase-let ((`(,hasmini1 . ,id-def1) (cdr (assq 'frameset--mini (car state1))))
 	      (`(,hasmini2 . ,id-def2) (cdr (assq 'frameset--mini (car state2)))))
-    (cond ((eq id-def1 t) t)
+    ;; hasmini1 is t when 1st frame has its own minibuffer
+    ;; hasmini2 is t when 2nd frame has its own minibuffer
+    ;; id-def1 is t when 1st minibuffer-owning frame is the default-minibuffer-frame
+    ;;         or frame-id of 1st frame if it's minibufferless
+    ;; id-def2 is t when 2nd minibuffer-owning frame is the default-minibuffer-frame
+    ;;         or frame-id of 2nd frame if it's minibufferless
+    (cond ;; Sort the minibuffer-owning default-minibuffer-frame first
+	  ((eq id-def1 t) t)
 	  ((eq id-def2 t) nil)
-	  ((not (eq hasmini1 hasmini2)) (eq hasmini1 t))
+	  ;; Sort non-default minibuffer-owning frames before minibufferless
+	  ((not (eq hasmini1 hasmini2)) (eq hasmini1 t)) ;; boolean xor
+	  ;; Sort minibufferless frames with frame-id before some remaining
 	  ((eq hasmini1 nil) (or id-def1 id-def2))
 	  (t t))))
 
