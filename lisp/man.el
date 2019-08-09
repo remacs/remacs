@@ -1288,8 +1288,23 @@ default type, `Man-xref-man-page' is used for the buttons."
 
 (defun Man-highlight-references0 (start-section regexp button-pos target type)
   ;; Based on `Man-build-references-alist'
-  (when (or (null start-section)
-	    (Man-find-section start-section))
+  (when (or (null start-section)        ;; Search regardless of sections.
+            ;; Section header is in this chunk.
+	    (Man-find-section start-section)
+            ;; Section header was in one of the previous chunks.
+            (save-excursion
+              (save-restriction
+                (let ((orig-pos (point)))
+                  (widen)
+                  (if (Man-find-section start-section)
+                      ;; We are in the right section of the next
+                      ;; section is either not yet in the buffer, or
+                      ;; it starts after the position where we should
+                      ;; start highlighting.
+                      (progn
+                        (forward-line 1)
+                        (or (null (re-search-forward Man-heading-regexp nil t))
+                            (> (point) orig-pos))))))))
     (let ((end (if start-section
 		   (progn
 		     (forward-line 1)
