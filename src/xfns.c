@@ -5730,14 +5730,17 @@ top bits and the cdr is the lower 16 bits.
 
 FRAME nil or omitted means use the selected frame.
 If TYPE is given and non-nil, it is the name of the type of VALUE.
-If TYPE is not given or nil, the type is STRING.
+ If TYPE is not given or nil, the type is STRING.
 FORMAT gives the size in bits of each element if VALUE is a list.
-It must be one of 8, 16 or 32.
-If VALUE is a string or FORMAT is nil or not given, FORMAT defaults to 8.
+ It must be one of 8, 16 or 32.
+ If VALUE is a string or FORMAT is nil or not given, FORMAT defaults to 8.
 If OUTER-P is non-nil, the property is changed for the outer X window of
-FRAME.  Default is to change on the edit X window.
-If WINDOW-ID is non-nil, set the property on that window instead of FRAME.
-The number 0 denotes the root window.  */)
+ FRAME.  Default is to change on the edit X window.
+If WINDOW-ID is non-nil, change the property of that window instead
+ of FRAME; the number 0 denotes the root window.  This argument is
+ separate from FRAME because window IDs are not unique across X
+ displays or screens on the same display, so FRAME provides context
+ for the window ID. */)
   (Lisp_Object prop, Lisp_Object value, Lisp_Object frame,
    Lisp_Object type, Lisp_Object format, Lisp_Object outer_p,
    Lisp_Object window_id)
@@ -5748,7 +5751,7 @@ The number 0 denotes the root window.  */)
   int element_format = 8;
   unsigned char *data;
   int nelements;
-  Window w;
+  Window target_window;
 
   CHECK_STRING (prop);
 
@@ -5796,6 +5799,20 @@ The number 0 denotes the root window.  */)
       nelements = SBYTES (value) / elsize;
     }
 
+  if (! NILP (window_id))
+    {
+      CONS_TO_INTEGER (window_id, Window, target_window);
+      if (! target_window)
+        target_window = FRAME_DISPLAY_INFO (f)->root_window;
+    }
+  else
+    {
+      if (! NILP (outer_p))
+        target_window = FRAME_OUTER_WINDOW (f);
+      else
+        target_window = FRAME_X_WINDOW (f);
+    }
+
   block_input ();
   prop_atom = XInternAtom (FRAME_X_DISPLAY (f), SSDATA (prop), False);
   if (! NILP (type))
@@ -5804,19 +5821,7 @@ The number 0 denotes the root window.  */)
       target_type = XInternAtom (FRAME_X_DISPLAY (f), SSDATA (type), False);
     }
 
-  if (! NILP (window_id))
-    {
-      CONS_TO_INTEGER (window_id, Window, w);
-      if (! w)
-	w = FRAME_DISPLAY_INFO (f)->root_window;
-    }
-  else
-    {
-      if (! NILP (outer_p)) w = FRAME_OUTER_WINDOW (f);
-      else w = FRAME_X_WINDOW (f);
-    }
-
-  XChangeProperty (FRAME_X_DISPLAY (f), w,
+  XChangeProperty (FRAME_X_DISPLAY (f), target_window,
 		   prop_atom, target_type, element_format, PropModeReplace,
 		   data, nelements);
 
@@ -5831,18 +5836,34 @@ The number 0 denotes the root window.  */)
 
 
 DEFUN ("x-delete-window-property", Fx_delete_window_property,
-       Sx_delete_window_property, 1, 2, 0,
+       Sx_delete_window_property, 1, 3, 0,
        doc: /* Remove window property PROP from X window of FRAME.
-FRAME nil or omitted means use the selected frame.  Value is PROP.  */)
-  (Lisp_Object prop, Lisp_Object frame)
+FRAME nil or omitted means use the selected frame.
+If WINDOW-ID is non-nil, remove property from that window instead
+ of FRAME; the number 0 denotes the root window.  This argument is
+ separate from FRAME because window IDs are not unique across X
+ displays or screens on the same display, so FRAME provides context
+ for the window ID.
+
+Return value is PROP.  */)
+  (Lisp_Object prop, Lisp_Object frame, Lisp_Object window_id)
 {
   struct frame *f = decode_window_system_frame (frame);
+  Window target_window = FRAME_X_WINDOW (f);
   Atom prop_atom;
 
   CHECK_STRING (prop);
+
+  if (! NILP (window_id))
+    {
+      CONS_TO_INTEGER (window_id, Window, target_window);
+      if (! target_window)
+        target_window = FRAME_DISPLAY_INFO (f)->root_window;
+    }
+
   block_input ();
   prop_atom = XInternAtom (FRAME_X_DISPLAY (f), SSDATA (prop), False);
-  XDeleteProperty (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f), prop_atom);
+  XDeleteProperty (FRAME_X_DISPLAY (f), target_window, prop_atom);
 
   /* Make sure the property is removed when we return.  */
   XFlush (FRAME_X_DISPLAY (f));
@@ -5936,16 +5957,19 @@ If FRAME is nil or omitted, use the selected frame.
 
 On X Windows, the following optional arguments are also accepted:
 If TYPE is nil or omitted, get the property as a string.
-Otherwise TYPE is the name of the atom that denotes the type expected.
-If SOURCE is non-nil, get the property on that window instead of from
-FRAME.  The number 0 denotes the root window.
+ Otherwise TYPE is the name of the atom that denotes the type expected.
+If WINDOW-ID is non-nil, get the property of that window instead of
+ FRAME; the number 0 denotes the root window.  This argument is
+ separate from FRAME because window IDs are not unique across X
+ displays or screens on the same display, so FRAME provides context
+ for the window ID.
 If DELETE-P is non-nil, delete the property after retrieving it.
 If VECTOR-RET-P is non-nil, don't return a string but a vector of values.
 
-Value is nil if FRAME hasn't a property with name PROP or if PROP has
-no value of TYPE (always string in the MS Windows case).  */)
+Return value is nil if FRAME doesn't have a property with name PROP or
+if PROP has no value of TYPE (always string in the MS Windows case). */)
   (Lisp_Object prop, Lisp_Object frame, Lisp_Object type,
-   Lisp_Object source, Lisp_Object delete_p, Lisp_Object vector_ret_p)
+   Lisp_Object window_id, Lisp_Object delete_p, Lisp_Object vector_ret_p)
 {
   struct frame *f = decode_window_system_frame (frame);
   Atom prop_atom;
@@ -5956,11 +5980,11 @@ no value of TYPE (always string in the MS Windows case).  */)
 
   CHECK_STRING (prop);
 
-  if (! NILP (source))
+  if (! NILP (window_id))
     {
-      CONS_TO_INTEGER (source, Window, target_window);
+      CONS_TO_INTEGER (window_id, Window, target_window);
       if (! target_window)
-	target_window = FRAME_DISPLAY_INFO (f)->root_window;
+        target_window = FRAME_DISPLAY_INFO (f)->root_window;
     }
 
   block_input ();
@@ -5982,7 +6006,7 @@ no value of TYPE (always string in the MS Windows case).  */)
                                          &found);
   if (NILP (prop_value)
       && ! found
-      && NILP (source)
+      && NILP (window_id)
       && target_window != FRAME_OUTER_WINDOW (f))
     {
       prop_value = x_window_property_intern (f,
@@ -6003,17 +6027,20 @@ DEFUN ("x-window-property-attributes", Fx_window_property_attributes, Sx_window_
        1, 3, 0,
        doc: /* Retrieve metadata about window property PROP on FRAME.
 If FRAME is nil or omitted, use the selected frame.
-If SOURCE is non-nil, get the property on that window instead of from
-FRAME.  The number 0 denotes the root window.
+If WINDOW-ID is non-nil, get the property of that window instead of
+ FRAME; the number 0 denotes the root window.  This argument is
+ separate from FRAME because window IDs are not unique across X
+ displays or screens on the same display, so FRAME provides context
+ for the window ID.
 
-Return value is nil if FRAME hasn't a property with name PROP.
+Return value is nil if FRAME doesn't have a property with name PROP.
 Otherwise, the return value is a vector with the following fields:
 
 0. The property type, as an integer.  The symbolic name of
  the type can be obtained with `x-get-atom-name'.
 1. The format of each element; one of 8, 16, or 32.
 2. The length of the property, in number of elements. */)
-  (Lisp_Object prop, Lisp_Object frame, Lisp_Object source)
+  (Lisp_Object prop, Lisp_Object frame, Lisp_Object window_id)
 {
   struct frame *f = decode_window_system_frame (frame);
   Window target_window = FRAME_X_WINDOW (f);
@@ -6027,9 +6054,9 @@ Otherwise, the return value is a vector with the following fields:
 
   CHECK_STRING (prop);
 
-  if (! NILP (source))
+  if (! NILP (window_id))
     {
-      CONS_TO_INTEGER (source, Window, target_window);
+      CONS_TO_INTEGER (window_id, Window, target_window);
       if (! target_window)
 	target_window = FRAME_DISPLAY_INFO (f)->root_window;
     }
@@ -6043,7 +6070,7 @@ Otherwise, the return value is a vector with the following fields:
 			   &bytes_remaining, &tmp_data);
   if (rc == Success          /* no invalid params */
       && actual_format == 0  /* but prop not found */
-      && NILP (source)
+      && NILP (window_id)
       && target_window != FRAME_OUTER_WINDOW (f))
     {
       /* analogous behavior to x-window-property: if property isn't found
