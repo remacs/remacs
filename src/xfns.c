@@ -5737,8 +5737,8 @@ FORMAT gives the size in bits of each element if VALUE is a list.
 If OUTER-P is non-nil, the property is changed for the outer X window of
  FRAME.  Default is to change on the edit X window.
 If WINDOW-ID is non-nil, change the property of that window instead
- of FRAME; the number 0 denotes the root window.  This argument is
- separate from FRAME because window IDs are not unique across X
+ of FRAME's X window; the number 0 denotes the root window.  This argument
+ is separate from FRAME because window IDs are not unique across X
  displays or screens on the same display, so FRAME provides context
  for the window ID. */)
   (Lisp_Object prop, Lisp_Object value, Lisp_Object frame,
@@ -5840,12 +5840,12 @@ DEFUN ("x-delete-window-property", Fx_delete_window_property,
        doc: /* Remove window property PROP from X window of FRAME.
 FRAME nil or omitted means use the selected frame.
 If WINDOW-ID is non-nil, remove property from that window instead
- of FRAME; the number 0 denotes the root window.  This argument is
- separate from FRAME because window IDs are not unique across X
- displays or screens on the same display, so FRAME provides context
- for the window ID.
+ of FRAME's X window; the number 0 denotes the root window.  This
+ argument is separate from FRAME because window IDs are not unique
+ across X displays or screens on the same display, so FRAME provides
+ context for the window ID.
 
-Return value is PROP.  */)
+Value is PROP.  */)
   (Lisp_Object prop, Lisp_Object frame, Lisp_Object window_id)
 {
   struct frame *f = decode_window_system_frame (frame);
@@ -5957,17 +5957,17 @@ If FRAME is nil or omitted, use the selected frame.
 
 On X Windows, the following optional arguments are also accepted:
 If TYPE is nil or omitted, get the property as a string.
- Otherwise TYPE is the name of the atom that denotes the type expected.
+ Otherwise TYPE is the name of the atom that denotes the expected type.
 If WINDOW-ID is non-nil, get the property of that window instead of
- FRAME; the number 0 denotes the root window.  This argument is
- separate from FRAME because window IDs are not unique across X
+ FRAME's X window; the number 0 denotes the root window.  This argument
+ is separate from FRAME because window IDs are not unique across X
  displays or screens on the same display, so FRAME provides context
  for the window ID.
 If DELETE-P is non-nil, delete the property after retrieving it.
-If VECTOR-RET-P is non-nil, don't return a string but a vector of values.
+If VECTOR-RET-P is non-nil, return a vector of values instead of a string.
 
 Return value is nil if FRAME doesn't have a property with name PROP or
-if PROP has no value of TYPE (always string in the MS Windows case). */)
+if PROP has no value of TYPE (always a string in the MS Windows case). */)
   (Lisp_Object prop, Lisp_Object frame, Lisp_Object type,
    Lisp_Object window_id, Lisp_Object delete_p, Lisp_Object vector_ret_p)
 {
@@ -6028,12 +6028,12 @@ DEFUN ("x-window-property-attributes", Fx_window_property_attributes, Sx_window_
        doc: /* Retrieve metadata about window property PROP on FRAME.
 If FRAME is nil or omitted, use the selected frame.
 If WINDOW-ID is non-nil, get the property of that window instead of
- FRAME; the number 0 denotes the root window.  This argument is
- separate from FRAME because window IDs are not unique across X
- displays or screens on the same display, so FRAME provides context
- for the window ID.
+ FRAME's X window; the number 0 denotes the root window.  This
+ argument is separate from FRAME because window IDs are not unique
+ across X displays or screens on the same display, so FRAME provides
+ context for the window ID.
 
-Return value is nil if FRAME doesn't have a property with name PROP.
+Return value is nil if FRAME doesn't have a property named PROP.
 Otherwise, the return value is a vector with the following fields:
 
 0. The property type, as an integer.  The symbolic name of
