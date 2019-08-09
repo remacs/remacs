@@ -237,7 +237,8 @@ non-Windows systems."
 	       (window-point)))
          (mods
 	  (delq 'click (delq 'double (delq 'triple (event-modifiers event)))))
-         (amt (assoc mods mouse-wheel-scroll-amount)))
+         (amt (assoc mods mouse-wheel-scroll-amount))
+         saw-error)
     (unless (eq scroll-window selected-window)
       ;; Mark window to be scrolled for redisplay.
       (select-window scroll-window 'mark-for-redisplay))
@@ -251,57 +252,66 @@ non-Windows systems."
       ;; So by adding things up we get a squaring up (1, 3, 6, 10, 15, ...).
       (setq amt (* amt (event-click-count event))))
     (when (numberp amt) (setq amt (* amt (event-line-count event))))
-    (unwind-protect
-	(let ((button (mwheel-event-button event)))
-	  (cond ((eq button mouse-wheel-down-event)
-                 (condition-case nil (funcall mwheel-scroll-down-function amt)
-                   ;; Make sure we do indeed scroll to the beginning of
-                   ;; the buffer.
-                   (beginning-of-buffer
-                    (unwind-protect
-                        (funcall mwheel-scroll-down-function)
-                      ;; If the first scroll succeeded, then some scrolling
-                      ;; is possible: keep scrolling til the beginning but
-                      ;; do not signal an error.  For some reason, we have
-                      ;; to do it even if the first scroll signaled an
-                      ;; error, because otherwise the window is recentered
-                      ;; for a reason that escapes me.  This problem seems
-                      ;; to only affect scroll-down.  --Stef
-                      (set-window-start (selected-window) (point-min))))))
-		((eq button mouse-wheel-up-event)
-                 (condition-case nil (funcall mwheel-scroll-up-function amt)
-                   ;; Make sure we do indeed scroll to the end of the buffer.
-                   (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
-                ((eq button mouse-wheel-left-event) ; for tilt scroll
-                 (when mouse-wheel-tilt-scroll
-                   (funcall (if mouse-wheel-flip-direction
-                                mwheel-scroll-right-function
-                              mwheel-scroll-left-function) amt)))
-                ((eq button mouse-wheel-right-event) ; for tilt scroll
-                 (when mouse-wheel-tilt-scroll
-                   (funcall (if mouse-wheel-flip-direction
-                                mwheel-scroll-left-function
-                              mwheel-scroll-right-function) amt)))
-		(t (error "Bad binding in mwheel-scroll"))))
-      (if (eq scroll-window selected-window)
-	  ;; If there is a temporarily active region, deactivate it if
-	  ;; scrolling moved point.
-	  (when (and old-point (/= old-point (window-point)))
-	    ;; Call `deactivate-mark' at the original position, so that
-	    ;; the original region is saved to the X selection.
-	    (let ((new-point (window-point)))
-	      (goto-char old-point)
-	      (deactivate-mark)
-	      (goto-char new-point)))
-	(select-window selected-window t))))
+    (condition-case nil
+        (unwind-protect
+	    (let ((button (mwheel-event-button event)))
+	      (cond ((eq button mouse-wheel-down-event)
+                     (condition-case nil (funcall mwheel-scroll-down-function amt)
+                       ;; Make sure we do indeed scroll to the beginning of
+                       ;; the buffer.
+                       (beginning-of-buffer
+                        (unwind-protect
+                            (funcall mwheel-scroll-down-function)
+                          ;; If the first scroll succeeded, then some scrolling
+                          ;; is possible: keep scrolling til the beginning but
+                          ;; do not signal an error.  For some reason, we have
+                          ;; to do it even if the first scroll signaled an
+                          ;; error, because otherwise the window is recentered
+                          ;; for a reason that escapes me.  This problem seems
+                          ;; to only affect scroll-down.  --Stef
+                          (set-window-start (selected-window) (point-min))))))
+		    ((eq button mouse-wheel-up-event)
+                     (condition-case nil (funcall mwheel-scroll-up-function amt)
+                       ;; Make sure we do indeed scroll to the end of the buffer.
+                       (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
+                    ((eq button mouse-wheel-left-event) ; for tilt scroll
+                     (when mouse-wheel-tilt-scroll
+                       (funcall (if mouse-wheel-flip-direction
+                                    mwheel-scroll-right-function
+                                  mwheel-scroll-left-function) amt)))
+                    ((eq button mouse-wheel-right-event) ; for tilt scroll
+                     (when mouse-wheel-tilt-scroll
+                       (funcall (if mouse-wheel-flip-direction
+                                    mwheel-scroll-left-function
+                                  mwheel-scroll-right-function) amt)))
+		    (t (error "Bad binding in mwheel-scroll"))))
+          (if (eq scroll-window selected-window)
+              ;; If there is a temporarily active region, deactivate it if
+              ;; scrolling moved point.
+	      (when (and old-point (/= old-point (window-point)))
+                ;; Call `deactivate-mark' at the original position, so that
+                ;; the original region is saved to the X selection.
+	        (let ((new-point (window-point)))
+	          (goto-char old-point)
+	          (deactivate-mark)
+	          (goto-char new-point)))
+	    (select-window selected-window t)))
+      ;; Do not ding at buffer limits.  Show a message instead.
+      (beginning-of-buffer
+       (message (error-message-string '(beginning-of-buffer)))
+       (setq saw-error t))
+      (end-of-buffer
+       (message (error-message-string '(end-of-buffer)))
+       (setq saw-error t)))
 
-  (when (and mouse-wheel-click-event mouse-wheel-inhibit-click-time)
-    (if mwheel-inhibit-click-event-timer
-	(cancel-timer mwheel-inhibit-click-event-timer)
-      (add-hook 'pre-command-hook 'mwheel-filter-click-events))
-    (setq mwheel-inhibit-click-event-timer
-	  (run-with-timer mouse-wheel-inhibit-click-time nil
-			  'mwheel-inhibit-click-timeout))))
+    (when (and (not saw-error)
+               mouse-wheel-click-event mouse-wheel-inhibit-click-time)
+      (if mwheel-inhibit-click-event-timer
+          (cancel-timer mwheel-inhibit-click-event-timer)
+        (add-hook 'pre-command-hook 'mwheel-filter-click-events))
+      (setq mwheel-inhibit-click-event-timer
+            (run-with-timer mouse-wheel-inhibit-click-time nil
+                            'mwheel-inhibit-click-timeout)))))
 
 (put 'mwheel-scroll 'scroll-command t)
 
