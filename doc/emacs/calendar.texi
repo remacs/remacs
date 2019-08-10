@@ -1618,12 +1618,12 @@ timeclock-change}.
 work today (assuming a typical average of 8 hours a day), and @kbd{M-x
 timeclock-when-to-leave} which will calculate when you're done.
 
-@vindex timeclock-modeline-display
-@findex timeclock-modeline-display
+@vindex timeclock-mode-line-display
+@findex timeclock-mode-line-display
   If you want Emacs to display the amount of time left of your
 workday in the mode line, either customize the
-@code{timeclock-modeline-display} variable and set its value to
-@code{t}, or invoke the @kbd{M-x timeclock-modeline-display} command.
+@code{timeclock-mode-line-display} variable and set its value to
+@code{t}, or invoke the @kbd{M-x timeclock-mode-line-display} command.
 
 @vindex timeclock-ask-before-exiting
   Terminating the current Emacs session might or might not mean that
