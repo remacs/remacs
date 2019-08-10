@@ -1110,7 +1110,8 @@ the arrows scrolls the display horizontally in the direction of the
 arrow.
 
   The fringes can also indicate other things, such as buffer
-boundaries (@pxref{Displaying Boundaries}), and where a program you
+boundaries (@pxref{Displaying Boundaries}), unused lines near the end
+of the window (@pxref{indicate-empty-lines}), and where a program you
 are debugging is executing (@pxref{Debuggers}).
 
 @vindex overflow-newline-into-fringe
@@ -1203,6 +1204,7 @@ extra spaces at the end of each line in the region.
 @vindex indicate-empty-lines
 @cindex unused lines
 @cindex fringes, and unused line indication
+@anchor{indicate-empty-lines}
   On graphical displays, Emacs can indicate unused lines at the end of
 the window with a small image in the left fringe (@pxref{Fringes}).
 The image appears for screen lines that do not correspond to any
