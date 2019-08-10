@@ -3089,11 +3089,11 @@ They might differ only in time attributes or directory size."
   (let ((attr1 (copy-sequence attr1))
 	(attr2 (copy-sequence attr2))
 	(start-time
-	 (floor
-	  (float-time
-	   (aref
-	    (ert--stats-test-start-times ert--current-run-stats)
-	    (ert--stats-test-pos ert--current-run-stats (ert-running-test)))))))
+	 (- (float-time
+	     (aref
+	      (ert--stats-test-start-times ert--current-run-stats)
+	      (ert--stats-test-pos ert--current-run-stats (ert-running-test))))
+	    60)))
     ;; Access time.
     (setcar (nthcdr 4 attr1) tramp-time-dont-know)
     (setcar (nthcdr 4 attr2) tramp-time-dont-know)
@@ -3101,23 +3101,25 @@ They might differ only in time attributes or directory size."
     ;; we cannot compare, and we normalize the time stamps.  If the
     ;; time value is newer than the test start time, normalize it,
     ;; because due to caching the time stamps could differ slightly (a
-    ;; few seconds).
+    ;; few seconds).  We use a test start time minus 60 seconds, in
+    ;; order to compensate a possible time offset on local and remote
+    ;; machines.
     (when (or (tramp-compat-time-equal-p (nth 5 attr1) tramp-time-dont-know)
 	      (tramp-compat-time-equal-p (nth 5 attr2) tramp-time-dont-know))
       (setcar (nthcdr 5 attr1) tramp-time-dont-know)
       (setcar (nthcdr 5 attr2) tramp-time-dont-know))
-    (when (<= start-time (floor (float-time (nth 5 attr1))))
+    (when (< start-time (float-time (nth 5 attr1)))
       (setcar (nthcdr 5 attr1) tramp-time-dont-know))
-    (when (<= start-time (floor (float-time (nth 5 attr2))))
+    (when (< start-time (float-time (nth 5 attr2)))
       (setcar (nthcdr 5 attr2) tramp-time-dont-know))
     ;; Status change time.  Dito.
     (when (or (tramp-compat-time-equal-p (nth 6 attr1) tramp-time-dont-know)
 	      (tramp-compat-time-equal-p (nth 6 attr2) tramp-time-dont-know))
       (setcar (nthcdr 6 attr1) tramp-time-dont-know)
       (setcar (nthcdr 6 attr2) tramp-time-dont-know))
-    (when (<= start-time (floor (float-time (nth 6 attr1))))
+    (when (< start-time (float-time (nth 6 attr1)))
       (setcar (nthcdr 6 attr1) tramp-time-dont-know))
-    (when (<= start-time (floor (float-time (nth 6 attr2))))
+    (when (< start-time (float-time (nth 6 attr2)))
       (setcar (nthcdr 6 attr2) tramp-time-dont-know))
     ;; Size.  Set it to 0 for directories, because it might have
     ;; changed.  For example the upper directory "../".
