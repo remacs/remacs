@@ -701,15 +701,11 @@ pub fn frame_char_height(_frame: LispFrameLiveOrSelected) -> i32 {
         let frame_ref: LispFrameRef = _frame.into();
 
         if frame_ref.is_gui_window() {
-            frame_ref.line_height
-        } else {
-            1
+            return frame_ref.line_height;
         }
     }
-    #[cfg(not(feature = "window-system"))]
-    {
-        1
-    }
+
+    1
 }
 
 /// Width in pixels of characters in the font in frame FRAME.
@@ -723,15 +719,11 @@ pub fn frame_char_width(_frame: LispFrameLiveOrSelected) -> i32 {
         let frame_ref: LispFrameRef = _frame.into();
 
         if frame_ref.is_gui_window() {
-            frame_ref.column_width
-        } else {
-            1
+            return frame_ref.column_width;
         }
     }
-    #[cfg(not(feature = "window-system"))]
-    {
-        1
-    }
+
+    1
 }
 
 include!(concat!(env!("OUT_DIR"), "/frame_exports.rs"));
