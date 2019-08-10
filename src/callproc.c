@@ -220,7 +220,7 @@ static mode_t const default_output_mode = 0666;
 DEFUN ("call-process", Fcall_process, Scall_process, 1, MANY, 0,
        doc: /* Call PROGRAM synchronously in separate process.
 The remaining arguments are optional.
-The program's input comes from file INFILE (nil means `/dev/null').
+The program's input comes from file INFILE (nil means `null-device').
 
 Third argument DESTINATION specifies how to handle program's output.
 If DESTINATION is a buffer, or t that stands for the current buffer,
