@@ -140,10 +140,10 @@ rules as described later).")
 				 :format "%v")) "\
 When to expire.
 
-Overrides any `nnmail-expiry-wait' and `nnmail-expiry-wait-function'
-when expiring expirable messages.  The value can either be a number of
-days (not necessarily an integer) or the symbols `never' or
-`immediate'.")
+Overrides any `nnmail-expiry-wait' or `nnmail-expiry-wait-function'
+settings when expiring expirable messages.  The value can be
+either a number of days (not necessarily an integer), or one of
+the symbols `never' or `immediate'.")
 
     (expiry-target (choice :tag "Expiry Target"
 			   :value delete

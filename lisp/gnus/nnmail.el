@@ -157,32 +157,33 @@ If nil, groups like \"mail.misc\" will end up in directories like
 
 (defcustom nnmail-expiry-wait 7
   "Expirable articles that are older than this will be expired.
-This variable can either be a number (which will be interpreted as a
-number of days) -- this doesn't have to be an integer.  This variable
-can also be `immediate' and `never'."
+This variable can be either a number of days (not necessarily an
+integer), or one of the symbols `immediate' or `never', meaning
+an article is immediately or never expirable, respectively.
+For more granular control, see `nnmail-expiry-wait-function'."
   :group 'nnmail-expire
-  :type '(choice (const immediate)
-		 (number :tag "days")
-		 (const never)))
+  :type '(choice (const :tag "Immediate" immediate)
+                 (const :tag "Never" never)
+                 (number :tag "Days")))
 
 (defcustom nnmail-expiry-wait-function nil
-  "Variable that holds function to specify how old articles should be before they are expired.
-The function will be called with the name of the group that the expiry
-is to be performed in, and it should return an integer that says how
-many days an article can be stored before it is considered \"old\".
-It can also return the values `never' and `immediate'.
+  "Function to determine how old articles should be before they are expired.
+The function is called with the name of the group that the expiry
+is to be performed in, and should return a value supported by
+`nnmail-expiry-wait', which it overrides.  If this variable is
+nil, the value of `nnmail-expiry-wait' is used instead.
 
 E.g.:
 
 \(setq nnmail-expiry-wait-function
-      (lambda (newsgroup)
-	(cond ((string-match \"private\" newsgroup) 31)
-	      ((string-match \"junk\" newsgroup) 1)
-	      ((string-match \"important\" newsgroup) \\='never)
-	      (t 7))))"
+      (lambda (group)
+        (cond ((string-match-p \"private\" group) 31)
+              ((string-match-p \"junk\" group) 1)
+              ((string-match-p \"important\" group) \\='never)
+              (t 7))))"
   :group 'nnmail-expire
   :type '(choice (const :tag "nnmail-expiry-wait" nil)
-		 (function :format "%v" nnmail-)))
+                 (function :tag "Custom function")))
 
 (defcustom nnmail-expiry-target 'delete
   "Variable that says where expired messages should end up.

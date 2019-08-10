@@ -4461,7 +4461,7 @@ retrieved via \\[yank] \\[yank-pop]."
   :version "23.2")
 
 (defcustom kill-do-not-save-duplicates nil
-  "Do not add a new string to `kill-ring' if it duplicates the last one.
+  "If non-nil, don't add a string to `kill-ring' if it duplicates the last one.
 The comparison is done using `equal-including-properties'."
   :type 'boolean
   :group 'killing
