@@ -1571,14 +1571,12 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
 ;; Return a list of current function name and argument index.
 (defun elisp--fnsym-in-current-sexp ()
   (save-excursion
-    (let ((argument-index (1- (elisp--beginning-of-sexp))))
-      ;; If we are at the beginning of function name, this will be -1.
-      (when (< argument-index 0)
-	(setq argument-index 0))
-      ;; Don't do anything if current word is inside a string.
-      (if (= (or (char-after (1- (point))) 0) ?\")
-	  nil
-	(list (elisp--current-symbol) argument-index)))))
+    (unless (nth 8 (syntax-ppss))
+      (let ((argument-index (1- (elisp--beginning-of-sexp))))
+        ;; If we are at the beginning of function name, this will be -1.
+        (when (< argument-index 0)
+          (setq argument-index 0))
+        (list (elisp--current-symbol) argument-index)))))
 
 ;; Move to the beginning of current sexp.  Return the number of nested
 ;; sexp the point was over or after.
