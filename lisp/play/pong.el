@@ -262,7 +262,7 @@
 
 
 (defun pong-move-left ()
-  "Move bat 2 up.
+  "Move bat 1 up.
 This is called left for historical reasons, since in some pong
 implementations you move with left/right paddle."
   (interactive)
@@ -274,7 +274,7 @@ implementations you move with left/right paddle."
 
 
 (defun pong-move-right ()
-  "Move bat 2 up."
+  "Move bat 1 down."
   (interactive)
   (if (< (+ pong-bat-player1 pong-bat-width) (1- pong-height))
       (and
