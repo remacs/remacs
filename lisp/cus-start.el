@@ -495,8 +495,8 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
                (const :tag "Silent" ignore)
                function))
 	     ;; undo.c
-	     (undo-limit undo integer)
-	     (undo-strong-limit undo integer)
+	     (undo-limit undo integer "27.1")
+	     (undo-strong-limit undo integer "27.1")
 	     (undo-outer-limit undo
 			       (choice integer
 				       (const :tag "No limit"
@@ -507,7 +507,7 @@ the undo info for the current command never gets discarded.
 This should only be chosen under exceptional circumstances,
 since it could result in memory overflow and make Emacs crash."
 					      nil))
-			       "22.1")
+			       "27.1")
 	     ;; window.c
 	     (temp-buffer-show-function windows (choice (const nil) function))
 	     (next-screen-context-lines windows integer)
