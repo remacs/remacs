@@ -3606,44 +3606,46 @@ HAVE_JPEG=no
 LIBJPEG=
 if test "${NS_IMPL_COCOA}" = yes; then
   : # Cocoa provides its own jpeg support, so do nothing.
-elif test "${with_jpeg}" != "no"; then
-  AC_CACHE_CHECK([for jpeglib 6b or later],
-    [emacs_cv_jpeglib],
-    [OLD_LIBS=$LIBS
-     for emacs_cv_jpeglib in yes -ljpeg no; do
-       case $emacs_cv_jpeglib in
-	 yes) ;;
-         no) break;;
-	 *) LIBS="$LIBS $emacs_cv_jpeglib";;
-       esac
-       AC_LINK_IFELSE(
-	 [AC_LANG_PROGRAM(
-	    [[#undef HAVE_STDLIB_H /* Avoid config.h/jpeglib.h collision.  */
-	      #include <stdio.h> /* jpeglib.h needs FILE and size_t.  */
-	      #include <jpeglib.h>
-	      #include <jerror.h>
-	      char verify[JPEG_LIB_VERSION < 62 ? -1 : 1];
-	      struct jpeg_decompress_struct cinfo;
-	    ]],
-	    [[
-	      jpeg_create_decompress (&cinfo);
-	      WARNMS (&cinfo, JWRN_JPEG_EOF);
-	      jpeg_destroy_decompress (&cinfo);
-	    ]])],
-	 [emacs_link_ok=yes],
-	 [emacs_link_ok=no])
-       LIBS=$OLD_LIBS
-       test $emacs_link_ok = yes && break
-     done])
-  if test "$emacs_cv_jpeglib" != no; then
-    HAVE_JPEG=yes
-    AC_DEFINE([HAVE_JPEG], 1,
-      [Define to 1 if you have the jpeg library (typically -ljpeg).])
-    ### mingw32 doesn't use -ljpeg, since it loads the library
-    ### dynamically when needed, and doesn't want a run-time
-    ### dependency on the jpeglib DLL.
-    test "$emacs_cv_jpeglib" != yes && test "${opsys}" != "mingw32" \
-    && LIBJPEG=$emacs_cv_jpeglib
+elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
+  if test "${with_jpeg}" != "no"; then
+    AC_CACHE_CHECK([for jpeglib 6b or later],
+      [emacs_cv_jpeglib],
+      [OLD_LIBS=$LIBS
+       for emacs_cv_jpeglib in yes -ljpeg no; do
+	 case $emacs_cv_jpeglib in
+	   yes) ;;
+	   no) break;;
+	   *) LIBS="$LIBS $emacs_cv_jpeglib";;
+	 esac
+	 AC_LINK_IFELSE(
+	   [AC_LANG_PROGRAM(
+	      [[#undef HAVE_STDLIB_H /* Avoid config.h/jpeglib.h collision.  */
+		#include <stdio.h> /* jpeglib.h needs FILE and size_t.  */
+		#include <jpeglib.h>
+		#include <jerror.h>
+		char verify[JPEG_LIB_VERSION < 62 ? -1 : 1];
+		struct jpeg_decompress_struct cinfo;
+	      ]],
+	      [[
+		jpeg_create_decompress (&cinfo);
+		WARNMS (&cinfo, JWRN_JPEG_EOF);
+		jpeg_destroy_decompress (&cinfo);
+	      ]])],
+	   [emacs_link_ok=yes],
+	   [emacs_link_ok=no])
+	 LIBS=$OLD_LIBS
+	 test $emacs_link_ok = yes && break
+       done])
+    if test "$emacs_cv_jpeglib" != no; then
+      HAVE_JPEG=yes
+      AC_DEFINE([HAVE_JPEG], 1,
+	[Define to 1 if you have the jpeg library (typically -ljpeg).])
+      ### mingw32 doesn't use -ljpeg, since it loads the library
+      ### dynamically when needed, and doesn't want a run-time
+      ### dependency on the jpeglib DLL.
+      test "$emacs_cv_jpeglib" != yes && test "${opsys}" != "mingw32" \
+      && LIBJPEG=$emacs_cv_jpeglib
+    fi
   fi
 fi
 AC_SUBST(LIBJPEG)
