@@ -210,7 +210,11 @@ require \"fileinto\";
 	      (set-buffer-modified-p nil)
 	    (error "Sieve download failed: %s" err)))
       (switch-to-buffer (get-buffer-create "template.siv"))
-      (insert sieve-template))
+      (insert sieve-template)
+      (setq name (read-string "Name for new script: "))
+      (when (string-match "\\.sieve\\'" name)
+        ;; The server will append .sieve to the script name.
+        (setq name (replace-match "" t t name))))
     (sieve-mode)
     (setq sieve-buffer-script-name name)
     (goto-char (point-min))
