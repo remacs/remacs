@@ -136,6 +136,14 @@ looked up, a numeric value, either an integer or a float, is
 returned."
       (nth 3 attributes))))
 
+(defalias 'tramp-compat-file-attribute-access-time
+  (if (fboundp 'file-attribute-access-time)
+      #'file-attribute-access-time
+    (lambda (attributes)
+      "The last access time in ATTRIBUTES returned by `file-attributes'.
+This a Lisp timestamp in the style of `current-time'."
+      (nth 4 attributes))))
+
 (defalias 'tramp-compat-file-attribute-modification-time
   (if (fboundp 'file-attribute-modification-time)
       #'file-attribute-modification-time
@@ -144,6 +152,16 @@ returned."
 This is the time of the last change to the file's contents, and
 is a Lisp timestamp in the style of `current-time'."
       (nth 5 attributes))))
+
+(defalias 'tramp-compat-file-attribute-status-change-time
+  (if (fboundp 'file-attribute-status-change-time)
+      #'file-attribute-status-change-time
+    (lambda (attributes)
+      "The status modification time in ATTRIBUTES returned by `file-attributes'.
+This is the time of last change to the file's attributes: owner
+and group, access mode bits, etc., and is a Lisp timestamp in the
+style of `current-time'."
+      (nth 6 attributes))))
 
 (defalias 'tramp-compat-file-attribute-size
   (if (fboundp 'file-attribute-size)
