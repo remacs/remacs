@@ -776,12 +776,11 @@ to make it write to the debugging output.  */)
   return character;
 }
 
-/* This function is never called.  Its purpose is to prevent
-   print_output_debug_flag from being optimized away.  */
-
-extern void debug_output_compilation_hack (bool) EXTERNALLY_VISIBLE;
+/* This function is only ever called from gdb. Its primary purpose is
+   to prevent print_output_debug_flag from being optimized away.  */
+extern void set_output_debug_flag (bool) EXTERNALLY_VISIBLE;
 void
-debug_output_compilation_hack (bool x)
+set_output_debug_flag (bool x)
 {
   print_output_debug_flag = x;
 }

@@ -1503,7 +1503,7 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * If F is the terminal frame and we are using X, return true if at
  * least one X frame exists.
  */
-static bool
+bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
@@ -1553,7 +1553,7 @@ other_frames (struct frame *f, bool invisible, bool force)
    instead.  If the selected frame doesn't have one, get some other
    frame's minibuffer window.  SELECT non-zero means select the new
    minibuffer window.  */
-static void
+void
 check_minibuf_window (Lisp_Object frame, int select)
 {
   struct frame *f = decode_live_frame (frame);
@@ -2261,41 +2261,6 @@ make_frame_visible_1 (Lisp_Object window)
       else
 	bset_display_time (XBUFFER (w->contents), Fcurrent_time ());
     }
-}
-
-DEFUN ("make-frame-invisible", Fmake_frame_invisible, Smake_frame_invisible,
-       0, 2, "",
-       doc: /* Make the frame FRAME invisible.
-If omitted, FRAME defaults to the currently selected frame.
-On graphical displays, invisible frames are not updated and are
-usually not displayed at all, even in a window system's \"taskbar\".
-
-Normally you may not make FRAME invisible if all other frames are invisible,
-but if the second optional argument FORCE is non-nil, you may do so.
-
-This function has no effect on text terminal frames.  Such frames are
-always considered visible, whether or not they are currently being
-displayed in the terminal.  */)
-  (Lisp_Object frame, Lisp_Object force)
-{
-  struct frame *f = decode_live_frame (frame);
-
-  if (NILP (force) && !other_frames (f, true, false))
-    error ("Attempt to make invisible the sole visible or iconified frame");
-
-  /* Don't allow minibuf_window to remain on an invisible frame.  */
-  check_minibuf_window (frame, EQ (minibuf_window, selected_window));
-
-  /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
-  if (FRAME_WINDOW_P (f))
-    x_make_frame_invisible (f);
-#endif
-
-  /* Make menu bar update for the Buffers and Frames menus.  */
-  windows_or_buffers_changed = 16;
-
-  return Qnil;
 }
 
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
@@ -5569,7 +5534,6 @@ iconify the top level frame instead.  */);
   defsubr (&Srestore_frame_configuration);
 #endif
   defsubr (&Smake_frame_visible);
-  defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
