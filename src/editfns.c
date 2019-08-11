@@ -3159,8 +3159,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t info_size, alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
+  ptrdiff_t info_size = sizeof *info, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, info_size, &info_size)
       || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);

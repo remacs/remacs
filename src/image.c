@@ -6463,7 +6463,6 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   png_uint_32 row_bytes;
   bool transparent_p;
   struct png_memory_storage tbr;  /* Data to be read */
-  ptrdiff_t nbytes;
   Emacs_Pix_Container ximg, mask_img = NULL;
 
   /* Find out what file to load.  */
@@ -6660,7 +6659,8 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   row_bytes = png_get_rowbytes (png_ptr, info_ptr);
 
   /* Allocate memory for the image.  */
-  if (INT_MULTIPLY_WRAPV (row_bytes, sizeof *pixels, &nbytes)
+  ptrdiff_t nbytes = sizeof *pixels;
+  if (INT_MULTIPLY_WRAPV (row_bytes, nbytes, &nbytes)
       || INT_MULTIPLY_WRAPV (nbytes, height, &nbytes))
     memory_full (SIZE_MAX);
   c->pixels = pixels = xmalloc (nbytes);
