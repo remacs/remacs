@@ -2542,7 +2542,9 @@ free_cons (struct Lisp_Cons *ptr)
   ptr->u.s.u.chain = cons_free_list;
   ptr->u.s.car = dead_object ();
   cons_free_list = ptr;
-  if (INT_ADD_WRAPV (consing_until_gc, sizeof *ptr, &consing_until_gc))
+  if (consing_until_gc <= 0)
+    consing_until_gc += sizeof *ptr;
+  else if (INT_ADD_WRAPV (consing_until_gc, sizeof *ptr, &consing_until_gc))
     consing_until_gc = OBJECT_CT_MAX;
   gcstat.total_free_conses++;
 }
