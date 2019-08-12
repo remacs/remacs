@@ -29,7 +29,7 @@
 (ert-deftest password-cache-tests-add-and-remove ()
   (let ((password-data (copy-hash-table password-data)))
     (password-cache-add "foo" "bar")
-    (should (equal (password-in-cache-p "foo") "bar"))
+    (should (eq (password-in-cache-p "foo") t))
     (password-cache-remove "foo")
     (should (not (password-in-cache-p "foo")))))
 
