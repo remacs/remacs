@@ -1261,6 +1261,12 @@ file-notify events."
     (with-tramp-file-property v localname "file-readable-p"
       (and (file-exists-p filename)
 	   (or (tramp-check-cached-permissions v ?r)
+	       ;; `tramp-check-cached-permissions' doesn't handle
+	       ;; symbolic links.
+	       (and (stringp (file-symlink-p filename))
+		    (file-readable-p
+		     (concat
+		      (file-remote-p filename) (file-symlink-p filename))))
 	       ;; If the user is different from what we guess to be
 	       ;; the user, we don't know.  Let's check, whether
 	       ;; access is restricted explicitly.
