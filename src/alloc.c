@@ -2542,6 +2542,8 @@ free_cons (struct Lisp_Cons *ptr)
   ptr->u.s.u.chain = cons_free_list;
   ptr->u.s.car = dead_object ();
   cons_free_list = ptr;
+  /* Use a temporary signed variable, since otherwise INT_ADD_WRAPV
+     might incorrectly return non-zero.  */
   int incr = sizeof *ptr;
   if (INT_ADD_WRAPV (consing_until_gc, incr, &consing_until_gc))
     consing_until_gc = OBJECT_CT_MAX;

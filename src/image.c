@@ -6658,11 +6658,13 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   /* Number of bytes needed for one row of the image.  */
   row_bytes = png_get_rowbytes (png_ptr, info_ptr);
 
-  /* Allocate memory for the image.  */
+  /* Use a temporary signed variable, since otherwise
+     INT_MULTIPLY_WRAPV might incorrectly return non-zero.  */
   ptrdiff_t nbytes = sizeof *pixels;
   if (INT_MULTIPLY_WRAPV (row_bytes, nbytes, &nbytes)
       || INT_MULTIPLY_WRAPV (nbytes, height, &nbytes))
     memory_full (SIZE_MAX);
+  /* Allocate memory for the image.  */
   c->pixels = pixels = xmalloc (nbytes);
   c->rows = rows = xmalloc (height * sizeof *rows);
   for (i = 0; i < height; ++i)

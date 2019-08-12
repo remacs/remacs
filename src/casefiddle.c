@@ -265,6 +265,8 @@ do_casify_multibyte_string (struct casing_context *ctx, Lisp_Object obj)
 
   ptrdiff_t size = SCHARS (obj), n;
   USE_SAFE_ALLOCA;
+  /* Use a temporary signed variable, since otherwise INT_ADD_WRAPV
+     might incorrectly return non-zero.  */
   ptrdiff_t casing_str_buf_size = sizeof (struct casing_str_buf);
   if (INT_MULTIPLY_WRAPV (size, MAX_MULTIBYTE_LENGTH, &n)
       || INT_ADD_WRAPV (n, casing_str_buf_size, &n))
