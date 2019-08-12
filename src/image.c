@@ -531,7 +531,7 @@ static struct image_type *image_types;
 
 /* Forward function prototypes.  */
 
-static struct image_type *lookup_image_type (Lisp_Object);
+struct image_type *lookup_image_type (Lisp_Object);
 static void x_laplace (struct frame *, struct image *);
 static void x_emboss (struct frame *, struct image *);
 static void x_build_heuristic_mask (struct frame *, struct image *,
@@ -9687,22 +9687,10 @@ DEFUN ("lookup-image", Flookup_image, Slookup_image, 1, 1, 0,
 			    Initialization
  ***********************************************************************/
 
-DEFUN ("init-image-library", Finit_image_library, Sinit_image_library, 1, 1, 0,
-       doc: /* Initialize image library implementing image type TYPE.
-Return non-nil if TYPE is a supported image type.
-
-If image libraries are loaded dynamically (currently only the case on
-MS-Windows), load the library for TYPE if it is not yet loaded, using
-the library file(s) specified by `dynamic-library-alist'.  */)
-  (Lisp_Object type)
-{
-  return lookup_image_type (type) ? Qt : Qnil;
-}
-
 /* Look up image type TYPE, and return a pointer to its image_type
    structure.  Return 0 if TYPE is not a known image type.  */
 
-static struct image_type *
+struct image_type *
 lookup_image_type (Lisp_Object type)
 {
   /* Types pbm and xbm are built-in and always available.  */
@@ -9914,7 +9902,6 @@ non-numeric, there is no explicit limit on the size of images.  */);
 #endif /* HAVE_NTGUI  */
 #endif /* HAVE_RSVG  */
 
-  defsubr (&Sinit_image_library);
 #ifdef HAVE_IMAGEMAGICK
   defsubr (&Simagemagick_types);
 #endif
