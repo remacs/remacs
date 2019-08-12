@@ -2004,13 +2004,11 @@ locally on a remote file name.  When the local system is a W32 system
 but the remote system is Unix, this introduces a superfluous drive
 letter into the file name.  This function removes it."
   (save-match-data
-    (funcall
-     (if (tramp-compat-file-name-quoted-p name)
-	 #'tramp-compat-file-name-quote #'identity)
-     (let ((name (tramp-compat-file-name-unquote name)))
-       (if (string-match "\\`[a-zA-Z]:/" name)
-	   (replace-match "/" nil t name)
-	 name)))))
+    (let ((quoted (tramp-compat-file-name-quoted-p name 'top))
+	  (result (tramp-compat-file-name-unquote name 'top)))
+      (setq result (if (string-match "\\`[a-zA-Z]:/" result)
+		     (replace-match "/" nil t result) result))
+      (if quoted (tramp-compat-file-name-quote result 'top) result))))
 
 ;;; Config Manipulation Functions:
 
@@ -3287,45 +3285,44 @@ User is always nil."
   "Like `file-truename' for Tramp files."
   ;; Preserve trailing "/".
   (funcall
-   (if (string-equal (file-name-nondirectory filename) "")
+   (if (tramp-compat-directory-name-p filename)
        #'file-name-as-directory #'identity)
-   (let ((result (expand-file-name filename))
-	 (numchase 0)
-	 ;; Don't make the following value larger than necessary.
-	 ;; People expect an error message in a timely fashion when
-	 ;; something is wrong; otherwise they might think that Emacs
-	 ;; is hung.  Of course, correctness has to come first.
-	 (numchase-limit 20)
-	 symlink-target)
-     (with-parsed-tramp-file-name result v1
-       ;; We cache only the localname.
-       (tramp-make-tramp-file-name
-	v1
-	(with-tramp-file-property v1 v1-localname "file-truename"
-	  (while (and (setq symlink-target (file-symlink-p result))
-		      (< numchase numchase-limit))
-	    (setq numchase (1+ numchase)
-		  result
-		  (with-parsed-tramp-file-name (expand-file-name result) v2
-		    (tramp-make-tramp-file-name
-		     v2
-		     (funcall
-		      (if (tramp-compat-file-name-quoted-p v2-localname)
-			  #'tramp-compat-file-name-quote #'identity)
-
+   ;; Quote properly.
+   (funcall
+    (if (tramp-compat-file-name-quoted-p filename)
+	#'tramp-compat-file-name-quote #'identity)
+    (let ((result (tramp-compat-file-name-unquote (expand-file-name filename)))
+	  (numchase 0)
+	  ;; Don't make the following value larger than necessary.
+	  ;; People expect an error message in a timely fashion when
+	  ;; something is wrong; otherwise they might think that Emacs
+	  ;; is hung.  Of course, correctness has to come first.
+	  (numchase-limit 20)
+	  symlink-target)
+      (with-parsed-tramp-file-name result v1
+	;; We cache only the localname.
+	(tramp-make-tramp-file-name
+	 v1
+	 (with-tramp-file-property v1 v1-localname "file-truename"
+	   (while (and (setq symlink-target (file-symlink-p result))
+		       (< numchase numchase-limit))
+	     (setq numchase (1+ numchase)
+		   result
+		   (with-parsed-tramp-file-name (expand-file-name result) v2
+		     (tramp-make-tramp-file-name
+		      v2
 		      (if (stringp symlink-target)
 			  (if (file-remote-p symlink-target)
-			      (let (file-name-handler-alist)
-				(tramp-compat-file-name-quote symlink-target))
+			      (tramp-compat-file-name-quote symlink-target 'top)
 			    (expand-file-name
 			     symlink-target (file-name-directory v2-localname)))
-			v2-localname))
-		     'nohop)))
-	    (when (>= numchase numchase-limit)
-	      (tramp-error
-	       v1 'file-error
-	       "Maximum number (%d) of symlinks exceeded" numchase-limit)))
-	  (tramp-compat-file-local-name (directory-file-name result))))))))
+			v2-localname)
+		      'nohop)))
+	     (when (>= numchase numchase-limit)
+	       (tramp-error
+		v1 'file-error
+		"Maximum number (%d) of symlinks exceeded" numchase-limit)))
+	   (tramp-compat-file-local-name (directory-file-name result)))))))))
 
 (defun tramp-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
@@ -3360,7 +3357,7 @@ User is always nil."
   "Like `insert-directory' for Tramp files."
   (unless switches (setq switches ""))
   ;; Mark trailing "/".
-  (when (and (zerop (length (file-name-nondirectory filename)))
+  (when (and (tramp-compat-directory-name-p filename)
 	     (not full-directory-p))
     (setq switches (concat switches "F")))
   ;; Check, whether directory is accessible.

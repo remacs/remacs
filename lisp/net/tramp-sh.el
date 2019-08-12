@@ -1044,8 +1044,7 @@ component is used as the target of the symlink."
 
       ;; If TARGET is still remote, quote it.
       (if (tramp-tramp-file-p target)
-	  (make-symbolic-link
-	   (let (file-name-handler-alist) (tramp-compat-file-name-quote target))
+	  (make-symbolic-link (tramp-compat-file-name-quote target 'top)
 	   linkname ok-if-already-exists)
 
 	(let ((ln (tramp-get-remote-ln v))
@@ -1090,108 +1089,113 @@ component is used as the target of the symlink."
 
 (defun tramp-sh-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-   ;; Preserve trailing "/".
+  ;; Preserve trailing "/".
   (funcall
-   (if (string-equal (file-name-nondirectory filename) "")
+   (if (tramp-compat-directory-name-p filename)
        #'file-name-as-directory #'identity)
-   (with-parsed-tramp-file-name (expand-file-name filename) nil
-     (tramp-make-tramp-file-name
-      v
-      (with-tramp-file-property v localname "file-truename"
-	(let ((result nil)			; result steps in reverse order
-	      (quoted (tramp-compat-file-name-quoted-p localname))
-	      (localname (tramp-compat-file-name-unquote localname)))
-	  (tramp-message v 4 "Finding true name for `%s'" filename)
-	  (cond
-	   ;; Use GNU readlink --canonicalize-missing where available.
-	   ((tramp-get-remote-readlink v)
-	    (tramp-send-command-and-check
-	     v
-	     (format "%s --canonicalize-missing %s"
-		     (tramp-get-remote-readlink v)
-		     (tramp-shell-quote-argument localname)))
-	    (with-current-buffer (tramp-get-connection-buffer v)
-	      (goto-char (point-min))
-	      (setq result (buffer-substring (point-min) (point-at-eol)))))
+   ;; Quote properly.
+   (funcall
+    (if (tramp-compat-file-name-quoted-p filename)
+	#'tramp-compat-file-name-quote #'identity)
+    (with-parsed-tramp-file-name
+	(tramp-compat-file-name-unquote (expand-file-name filename)) nil
+      (tramp-make-tramp-file-name
+       v
+       (with-tramp-file-property v localname "file-truename"
+	 (let (result)			; result steps in reverse order
+	   (tramp-message v 4 "Finding true name for `%s'" filename)
+	   (cond
+	    ;; Use GNU readlink --canonicalize-missing where available.
+	    ((tramp-get-remote-readlink v)
+	     (tramp-send-command-and-check
+	      v
+	      (format "%s --canonicalize-missing %s"
+		      (tramp-get-remote-readlink v)
+		      (tramp-shell-quote-argument localname)))
+	     (with-current-buffer (tramp-get-connection-buffer v)
+	       (goto-char (point-min))
+	       (setq result (buffer-substring (point-min) (point-at-eol)))))
 
-	   ;; Use Perl implementation.
-	   ((and (tramp-get-remote-perl v)
-		 (tramp-get-connection-property v "perl-file-spec" nil)
-		 (tramp-get-connection-property v "perl-cwd-realpath" nil))
-	    (tramp-maybe-send-script
-	     v tramp-perl-file-truename "tramp_perl_file_truename")
-	    (setq result
-		  (tramp-send-command-and-read
-		   v
-		   (format "tramp_perl_file_truename %s"
-			   (tramp-shell-quote-argument localname)))))
+	    ;; Use Perl implementation.
+	    ((and (tramp-get-remote-perl v)
+		  (tramp-get-connection-property v "perl-file-spec" nil)
+		  (tramp-get-connection-property v "perl-cwd-realpath" nil))
+	     (tramp-maybe-send-script
+	      v tramp-perl-file-truename "tramp_perl_file_truename")
+	     (setq result
+		   (tramp-send-command-and-read
+		    v
+		    (format "tramp_perl_file_truename %s"
+			    (tramp-shell-quote-argument localname)))))
 
-	   ;; Do it yourself.
-	   (t (let ((steps (split-string localname "/" 'omit))
-		    (thisstep nil)
-		    (numchase 0)
-		    ;; Don't make the following value larger than
-		    ;; necessary.  People expect an error message in a
-		    ;; timely fashion when something is wrong;
-		    ;; otherwise they might think that Emacs is hung.
-		    ;; Of course, correctness has to come first.
-		    (numchase-limit 20)
-		    symlink-target)
-		(while (and steps (< numchase numchase-limit))
-		  (setq thisstep (pop steps))
-		  (tramp-message
-		   v 5 "Check %s"
-		   (string-join
-		    (append '("") (reverse result) (list thisstep)) "/"))
-		  (setq symlink-target
-			(tramp-compat-file-attribute-type
-			 (file-attributes
-			  (tramp-make-tramp-file-name
-			   v
-			   (string-join
-			    (append '("") (reverse result) (list thisstep)) "/")
-			   'nohop))))
-		  (cond ((string= "." thisstep)
-			 (tramp-message v 5 "Ignoring step `.'"))
-			((string= ".." thisstep)
-			 (tramp-message v 5 "Processing step `..'")
-			 (pop result))
-			((stringp symlink-target)
-			 ;; It's a symlink, follow it.
-			 (tramp-message
-			  v 5 "Follow symlink to %s" symlink-target)
-			 (setq numchase (1+ numchase))
-			 (when (file-name-absolute-p symlink-target)
-			   (setq result nil))
-			 (setq steps
-			       (append
-				(split-string symlink-target "/" 'omit)	steps)))
-			(t
-			 ;; It's a file.
-			 (setq result (cons thisstep result)))))
-		(when (>= numchase numchase-limit)
-		  (tramp-error
-		   v 'file-error
-		   "Maximum number (%d) of symlinks exceeded" numchase-limit))
-		(setq result (reverse result))
-		;; Combine list to form string.
-		(setq result (if result (string-join (cons "" result) "/") "/"))
-		(when (string-empty-p result) (setq result "/")))))
+	    ;; Do it yourself.
+	    (t (let ((steps (split-string localname "/" 'omit))
+		     (thisstep nil)
+		     (numchase 0)
+		     ;; Don't make the following value larger than
+		     ;; necessary.  People expect an error message in a
+		     ;; timely fashion when something is wrong;
+		     ;; otherwise they might think that Emacs is hung.
+		     ;; Of course, correctness has to come first.
+		     (numchase-limit 20)
+		     symlink-target)
+		 (while (and steps (< numchase numchase-limit))
+		   (setq thisstep (pop steps))
+		   (tramp-message
+		    v 5 "Check %s"
+		    (string-join
+		     (append '("") (reverse result) (list thisstep)) "/"))
+		   (setq symlink-target
+			 (tramp-compat-file-attribute-type
+			  (file-attributes
+			   (tramp-make-tramp-file-name
+			    v
+			    (string-join
+			     (append
+			      '("") (reverse result) (list thisstep)) "/")
+			    'nohop))))
+		   (cond ((string= "." thisstep)
+			  (tramp-message v 5 "Ignoring step `.'"))
+			 ((string= ".." thisstep)
+			  (tramp-message v 5 "Processing step `..'")
+			  (pop result))
+			 ((stringp symlink-target)
+			  ;; It's a symlink, follow it.
+			  (tramp-message
+			   v 5 "Follow symlink to %s" symlink-target)
+			  (setq numchase (1+ numchase))
+			  (when (file-name-absolute-p symlink-target)
+			    (setq result nil))
+			  (setq steps
+				(append
+				 (split-string symlink-target "/" 'omit)
+				 steps)))
+			 (t
+			  ;; It's a file.
+			  (setq result (cons thisstep result)))))
+		 (when (>= numchase numchase-limit)
+		   (tramp-error
+		    v 'file-error
+		    "Maximum number (%d) of symlinks exceeded" numchase-limit))
+		 (setq result (reverse result))
+		 ;; Combine list to form string.
+		 (setq result
+		       (if result (string-join (cons "" result) "/") "/"))
+		 (when (string-empty-p result) (setq result "/")))))
 
-	  ;; Detect cycle.
-	  (when (and (file-symlink-p filename)
-		     (string-equal result localname))
-	    (tramp-error
-	     v 'file-error
-	     "Apparent cycle of symbolic links for %s" filename))
-	  ;; If the resulting localname looks remote, we must quote it
-	  ;; for security reasons.
-	  (when (or quoted (file-remote-p result))
-	    (let (file-name-handler-alist)
-	      (setq result (tramp-compat-file-name-quote result))))
-	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
-	  result))
-      'nohop))))
+	   ;; Detect cycle.
+	   (when (and (file-symlink-p filename)
+		      (string-equal result localname))
+	     (tramp-error
+	      v 'file-error
+	      "Apparent cycle of symbolic links for %s" filename))
+	   ;; If the resulting localname looks remote, we must quote it
+	   ;; for security reasons.
+	   (when (file-remote-p result)
+	     (setq result (tramp-compat-file-name-quote result 'top)))
+	   (tramp-message v 4 "True name of `%s' is `%s'" localname result)
+	   result))
+       'nohop)))))
 
 ;; Basic functions.
 
@@ -2676,7 +2680,7 @@ The method used must be an out-of-band method."
 	    (when (file-symlink-p filename)
 	      (goto-char (search-backward "->" beg 'noerror)))
 	    (search-backward
-	     (if (zerop (length (file-name-nondirectory filename)))
+	     (if (tramp-compat-directory-name-p filename)
 		 "."
 	       (file-name-nondirectory filename))
 	     beg 'noerror)

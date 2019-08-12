@@ -533,34 +533,36 @@ the result will be a local, non-Tramp, file name."
 
 (defun tramp-sudoedit-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-   ;; Preserve trailing "/".
+  ;; Preserve trailing "/".
   (funcall
-   (if (string-equal (file-name-nondirectory filename) "")
+   (if (tramp-compat-directory-name-p filename)
        #'file-name-as-directory #'identity)
-   (with-parsed-tramp-file-name (expand-file-name filename) nil
-     (tramp-make-tramp-file-name
-      v
-      (with-tramp-file-property v localname "file-truename"
-	(let ((quoted (tramp-compat-file-name-quoted-p localname))
-	      (localname (tramp-compat-file-name-unquote localname))
-	      result)
-	  (tramp-message v 4 "Finding true name for `%s'" filename)
-	  (setq result (tramp-sudoedit-send-command-string
-			v "readlink" "--canonicalize-missing" localname))
-	  ;; Detect cycle.
-	  (when (and (file-symlink-p filename)
-		     (string-equal result localname))
-	    (tramp-error
-	     v 'file-error
-	     "Apparent cycle of symbolic links for %s" filename))
-	  ;; If the resulting localname looks remote, we must quote it
-	  ;; for security reasons.
-	  (when (or quoted (file-remote-p result))
-	    (let (file-name-handler-alist)
-	      (setq result (tramp-compat-file-name-quote result))))
-	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
-	  result))
-      'nohop))))
+   ;; Quote properly.
+   (funcall
+    (if (tramp-compat-file-name-quoted-p filename)
+	#'tramp-compat-file-name-quote #'identity)
+    (with-parsed-tramp-file-name
+	(tramp-compat-file-name-unquote (expand-file-name filename)) nil
+      (tramp-make-tramp-file-name
+       v
+       (with-tramp-file-property v localname "file-truename"
+	 (let (result)
+	   (tramp-message v 4 "Finding true name for `%s'" filename)
+	   (setq result (tramp-sudoedit-send-command-string
+			 v "readlink" "--canonicalize-missing" localname))
+	   ;; Detect cycle.
+	   (when (and (file-symlink-p filename)
+		      (string-equal result localname))
+	     (tramp-error
+	      v 'file-error
+	      "Apparent cycle of symbolic links for %s" filename))
+	   ;; If the resulting localname looks remote, we must quote it
+	   ;; for security reasons.
+	   (when (file-remote-p result)
+	     (setq result (tramp-compat-file-name-quote result 'top)))
+	   (tramp-message v 4 "True name of `%s' is `%s'" localname result)
+	   result))
+       'nohop)))))
 
 (defun tramp-sudoedit-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
@@ -609,8 +611,7 @@ component is used as the target of the symlink."
 
       ;; If TARGET is still remote, quote it.
       (if (tramp-tramp-file-p target)
-	  (make-symbolic-link
-	   (let (file-name-handler-alist) (tramp-compat-file-name-quote target))
+	  (make-symbolic-link (tramp-compat-file-name-quote target 'top)
 	   linkname ok-if-already-exists)
 
 	;; Do the 'confirm if exists' thing.

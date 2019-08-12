@@ -986,7 +986,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (setq filename (expand-file-name filename))
   (unless switches (setq switches ""))
   ;; Mark trailing "/".
-  (when (and (zerop (length (file-name-nondirectory filename)))
+  (when (and (tramp-compat-directory-name-p filename)
 	     (not full-directory-p))
     (setq switches (concat switches "F")))
   (if full-directory-p
@@ -1175,8 +1175,7 @@ component is used as the target of the symlink."
 
       ;; If TARGET is still remote, quote it.
       (if (tramp-tramp-file-p target)
-	  (make-symbolic-link
-	   (let (file-name-handler-alist) (tramp-compat-file-name-quote target))
+	  (make-symbolic-link (tramp-compat-file-name-quote target 'top)
 	   linkname ok-if-already-exists)
 
 	;; Do the 'confirm if exists' thing.
