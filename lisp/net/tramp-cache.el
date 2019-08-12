@@ -205,7 +205,8 @@ Returns VALUE."
       (maphash
        (lambda (property _value)
 	 (when (string-match-p
-		"^\\(directory-\\|file-name-all-completions\\)" property)
+		"^\\(directory-\\|file-name-all-completions\\|file-entries\\)"
+		property)
 	   (tramp-flush-file-property key file property)))
        (tramp-get-hash-table key)))))
 
