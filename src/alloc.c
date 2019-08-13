@@ -3866,7 +3866,7 @@ memory_full (size_t nbytes)
   if (! enough_free_memory)
     {
       Vmemory_full = Qt;
-      consing_until_gc = memory_full_cons_threshold;
+      consing_until_gc = min (consing_until_gc, memory_full_cons_threshold);
 
       /* The first time we get here, free the spare memory.  */
       for (int i = 0; i < ARRAYELTS (spare_memory); i++)
