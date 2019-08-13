@@ -109,7 +109,11 @@ You can always manually refine a hunk with `diff-refine-hunk'."
                  (const :tag "Refine hunks during navigation" navigation)))
 
 (defcustom diff-font-lock-prettify nil
-  "If non-nil, font-lock will try and make the format prettier."
+  "If non-nil, font-lock will try and make the format prettier.
+
+This mimics the Magit's diff format by making the hunk header
+less cryptic, and on GUI frames also displays insertion and
+deletion indicators on the left fringe (if it's available)."
   :version "27.1"
   :type 'boolean)
 

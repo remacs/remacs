@@ -734,6 +734,10 @@ With a prefix argument asks for a command, so for example,
 'C-u M-x vc-log-search RET git log -1 f302475 RET' will display
 just one log entry found by its revision number.
 
+*** 'C-x v =' can now mimic Magit's diff format.
+Set the new user option 'diff-font-lock-prettify' to t for that, see
+below under "Diff mode".
+
 ** Diff mode
 +++
 *** Hunks are now automatically refined by font-lock.
@@ -754,6 +758,8 @@ according to the appropriate major mode.  Customize the new option
 
 *** File headers can be shortened, mimicking Magit's diff format.
 To enable it, set the new user option 'diff-font-lock-prettify' to t.
+On GUI frames, this option also displays the insertion and deletion
+indicators on the left fringe.
 
 +++
 *** Prefix arg of 'diff-goto-source' means jump to the old revision
