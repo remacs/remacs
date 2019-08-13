@@ -3,7 +3,7 @@
 (ert-deftest window-scroll-bar-width ()
   (let ((w1 (selected-window)))
     (set-window-scroll-bars w1 nil nil nil nil)
-    (should (eq 0 (window-scroll-bar-width wq)))
+    (should (eq 0 (window-scroll-bar-width w1)))
     (set-window-scroll-bars w1 1 'right nil nil)
     (should (eq 1 (window-scroll-bar-width w1)))))
 
