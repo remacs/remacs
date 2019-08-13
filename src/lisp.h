@@ -3793,13 +3793,7 @@ extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern void garbage_collect (void);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-#define CONSING_CT_MAX max (INTPTR_MAX, EMACS_INT_MAX)
-#if CONSING_CT_MAX == INTPTR_MAX
-typedef intptr_t consing_ct;
-#else
-typedef EMACS_INT consing_ct;
-#endif
-extern consing_ct consing_until_gc;
+extern intmax_t consing_until_gc;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
 #endif

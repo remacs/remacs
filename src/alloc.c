@@ -224,7 +224,7 @@ struct emacs_globals globals;
 
 /* maybe_gc collects garbage if this goes negative.  */
 
-consing_ct consing_until_gc;
+intmax_t consing_until_gc;
 
 #ifdef HAVE_PDUMPER
 /* Number of finalizers run: used to loop over GC until we stop
@@ -2547,7 +2547,7 @@ free_cons (struct Lisp_Cons *ptr)
      might incorrectly return non-zero.  */
   int incr = sizeof *ptr;
   if (INT_ADD_WRAPV (consing_until_gc, incr, &consing_until_gc))
-    consing_until_gc = CONSING_CT_MAX;
+    consing_until_gc = INTMAX_MAX;
   gcstat.total_free_conses++;
 }
 
@@ -5502,7 +5502,7 @@ staticpro (Lisp_Object const *varaddress)
 static void
 allow_garbage_collection (intmax_t consing)
 {
-  consing_until_gc = consing - (CONSING_CT_MAX - consing_until_gc);
+  consing_until_gc = consing - (INTMAX_MAX - consing_until_gc);
   garbage_collection_inhibited--;
 }
 
@@ -5512,7 +5512,7 @@ inhibit_garbage_collection (void)
   ptrdiff_t count = SPECPDL_INDEX ();
   record_unwind_protect_intmax (allow_garbage_collection, consing_until_gc);
   garbage_collection_inhibited++;
-  consing_until_gc = CONSING_CT_MAX;
+  consing_until_gc = INTMAX_MAX;
   return count;
 }
 
@@ -5818,7 +5818,7 @@ garbage_collect_1 (struct gcstat *gcst)
 
   /* In case user calls debug_print during GC,
      don't let that cause a recursive GC.  */
-  consing_until_gc = CONSING_CT_MAX;
+  consing_until_gc = INTMAX_MAX;
 
   /* Save what's currently displayed in the echo area.  Don't do that
      if we are GC'ing because we've run out of memory, since
@@ -5933,17 +5933,17 @@ garbage_collect_1 (struct gcstat *gcst)
     consing_until_gc = memory_full_cons_threshold;
   else
     {
-      consing_ct threshold = max (gc_cons_threshold, GC_DEFAULT_THRESHOLD / 10);
+      intmax_t threshold = max (gc_cons_threshold, GC_DEFAULT_THRESHOLD / 10);
       if (FLOATP (Vgc_cons_percentage))
 	{
 	  double tot = (XFLOAT_DATA (Vgc_cons_percentage)
 			* total_bytes_of_live_objects ());
 	  if (threshold < tot)
 	    {
-	      if (tot < CONSING_CT_MAX)
+	      if (tot < INTMAX_MAX)
 		threshold = tot;
 	      else
-		threshold = CONSING_CT_MAX;
+		threshold = INTMAX_MAX;
 	    }
 	}
       consing_until_gc = threshold;
