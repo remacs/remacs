@@ -5932,8 +5932,8 @@ garbage_collect_1 (struct gcstat *gcst)
     consing_until_gc = memory_full_cons_threshold;
   else
     {
-      intptr_t threshold = min (max (GC_DEFAULT_THRESHOLD,
-				     gc_cons_threshold >> 3),
+      intptr_t threshold = min (max (GC_DEFAULT_THRESHOLD / 10,
+				     gc_cons_threshold),
 				OBJECT_CT_MAX);
       if (FLOATP (Vgc_cons_percentage))
 	{
