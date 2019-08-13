@@ -7299,7 +7299,7 @@ w32_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
      horizontally reflected compared to how they appear on X, so we
      need to bitswap and convert to unsigned shorts before creating
      the bitmaps.  */
-  w32_init_fringe (terminal->rif);
+  gui_init_fringe (terminal->rif);
 
   unblock_input ();
 

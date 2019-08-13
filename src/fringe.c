@@ -1765,27 +1765,32 @@ init_fringe (void)
   fringe_faces = xzalloc (max_fringe_bitmaps * sizeof *fringe_faces);
 }
 
-#if defined (HAVE_NTGUI) || defined (USE_CAIRO)
-
 void
-#ifdef HAVE_NTGUI
-w32_init_fringe (struct redisplay_interface *rif)
-#else
-x_cr_init_fringe (struct redisplay_interface *rif)
-#endif
+gui_init_fringe (struct redisplay_interface *rif)
 {
   int bt;
 
-  if (!rif)
+  if (!rif || !rif->define_fringe_bitmap)
     return;
 
+  /* Set up the standard fringe bitmaps.  */
   for (bt = NO_FRINGE_BITMAP + 1; bt < MAX_STANDARD_FRINGE_BITMAPS; bt++)
     {
       struct fringe_bitmap *fb = &standard_bitmaps[bt];
       rif->define_fringe_bitmap (bt, fb->bits, fb->height, fb->width);
     }
+
+  /* Set up user-defined fringe bitmaps that might have been defined
+     before the frame of this kind was initialized.  This can happen
+     if Emacs is started as a daemon and the init files define fringe
+     bitmaps.  */
+  for ( ; bt < max_used_fringe_bitmap; bt++)
+    {
+      struct fringe_bitmap *fb = fringe_bitmaps[bt];
+      if (fb)
+	rif->define_fringe_bitmap (bt, fb->bits, fb->height, fb->width);
+    }
 }
-#endif
 
 #ifdef HAVE_NTGUI
 void
@@ -1795,7 +1800,7 @@ w32_reset_fringes (void)
   int bt;
   struct redisplay_interface *rif = FRAME_RIF (SELECTED_FRAME ());
 
-  if (!rif)
+  if (!rif || !rif->destroy_fringe_bitmap)
     return;
 
   for (bt = NO_FRINGE_BITMAP + 1; bt < max_used_fringe_bitmap; bt++)

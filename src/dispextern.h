@@ -3360,12 +3360,10 @@ void draw_row_fringe_bitmaps (struct window *, struct glyph_row *);
 bool draw_window_fringes (struct window *, bool);
 bool update_window_fringes (struct window *, bool);
 
+void gui_init_fringe (struct redisplay_interface *);
+
 #ifdef HAVE_NTGUI
-void w32_init_fringe (struct redisplay_interface *);
 void w32_reset_fringes (void);
-#endif
-#ifdef USE_CAIRO
-void x_cr_init_fringe (struct redisplay_interface *);
 #endif
 
 extern unsigned row_hash (struct glyph_row *);

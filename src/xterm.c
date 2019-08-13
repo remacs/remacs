@@ -13531,7 +13531,7 @@ x_initialize (void)
 #endif
 
 #ifdef USE_CAIRO
-  x_cr_init_fringe (&x_redisplay_interface);
+  gui_init_fringe (&x_redisplay_interface);
 #endif
 
   /* Note that there is no real way portable across R3/R4 to get the

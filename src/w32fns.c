@@ -5798,6 +5798,12 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
   f->output_data.w32 = xzalloc (sizeof (struct w32_output));
   FRAME_FONTSET (f) = -1;
 
+  /* Need to finish setting up of user-defined fringe bitmaps that
+     were defined before the first GUI frame was created (e.g., while
+     in daemon mode).  */
+  if (!f->terminal->reference_count)
+    gui_init_fringe (f->terminal->rif);
+
   fset_icon_name (f, gui_display_get_arg (dpyinfo,
                                           parameters,
                                           Qicon_name,
