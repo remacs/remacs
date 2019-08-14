@@ -5802,31 +5802,6 @@ Return t if scroll bars were actually changed and nil otherwise.  */)
   return w ? (apply_window_adjustment (w), Qt) : Qnil;
 }
 
-
-DEFUN ("window-scroll-bars", Fwindow_scroll_bars, Swindow_scroll_bars,
-       0, 1, 0,
-       doc: /* Get width and type of scroll bars of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Value is a list of the form (WIDTH COLUMNS VERTICAL-TYPE HEIGHT LINES
-HORIZONTAL-TYPE).  If WIDTH or HEIGHT is nil or VERTICAL-TYPE or
-HORIZONTAL-TYPE is t, the window is using the frame's corresponding
-value.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_live_window (window);
-
-  return Fcons (((w->scroll_bar_width >= 0)
-		 ? make_number (w->scroll_bar_width)
-		 : Qnil),
-		list5 (make_number (WINDOW_SCROLL_BAR_COLS (w)),
-		       w->vertical_scroll_bar_type,
-		       ((w->scroll_bar_height >= 0)
-			? make_number (w->scroll_bar_height)
-			: Qnil),
-		       make_number (WINDOW_SCROLL_BAR_LINES (w)),
-		       w->horizontal_scroll_bar_type));
-}
 
 /***********************************************************************
 			   Smooth scrolling
@@ -6214,7 +6189,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
   defsubr (&Sset_window_scroll_bars);
-  defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
 }

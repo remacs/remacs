@@ -483,6 +483,27 @@ impl LispWindowRef {
         }
     }
 
+    /// Height that a scroll bar in window W should have, if there is one.
+    /// Measured in lines (characters).  If scroll bars are turned off, this
+    /// is still nonzero.
+    pub fn config_scroll_bar_lines(self) -> i32 {
+        if self.scroll_bar_height >= 0 {
+            let frame_line_height = self.get_frame().line_height;
+            (self.scroll_bar_width + frame_line_height - 1) / frame_line_height
+        } else {
+            self.get_frame().config_scroll_bar_lines
+        }
+    }
+
+    /// Height of a scroll bar in window W, measured in columns.
+    pub fn scroll_bar_lines(self) -> i32 {
+        if self.has_horizontal_scroll_bar() {
+            self.config_scroll_bar_lines()
+        } else {
+            0
+        }
+    }
+
     /// Height of scroll bar area in the window, measured in pixels.
     pub fn scroll_bar_area_height(self) -> i32 {
         if self.has_horizontal_scroll_bar() {
@@ -521,6 +542,27 @@ impl LispWindowRef {
             self.scroll_bar_width
         } else {
             self.get_frame().config_scroll_bar_width
+        }
+    }
+
+    /// Width that a scroll bar in window W should have, if there is one.
+    /// Measured in columns (characters).  If scroll bars are turned off,
+    /// this is still nonzero.
+    pub fn config_scroll_bar_cols(self) -> i32 {
+        if self.scroll_bar_width >= 0 {
+            let frame_column_width = self.get_frame().column_width;
+            (self.scroll_bar_width + frame_column_width - 1) / frame_column_width
+        } else {
+            self.get_frame().config_scroll_bar_cols
+        }
+    }
+
+    /// Width of a scroll bar in window W, measured in columns.
+    pub fn scroll_bar_cols(self) -> i32 {
+        if self.has_vertical_scroll_bar() {
+            self.config_scroll_bar_cols()
+        } else {
+            0
         }
     }
 
@@ -2015,6 +2057,36 @@ pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) 
 pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
     let window: LispWindowRef = window.into();
     window.pixel_height_before_size_change
+}
+
+/// Get width and type of scroll bars of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// Value is a list of the form (WIDTH COLUMNS VERTICAL-TYPE HEIGHT LINES
+/// HORIZONTAL-TYPE).  If WIDTH or HEIGHT is nil or VERTICAL-TYPE or
+/// HORIZONTAL-TYPE is t, the window is using the frame's corresponding
+/// value.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bars(window: LispWindowLiveOrSelected) -> LispObject {
+    let window: LispWindowRef = window.into();
+    let width = if window.scroll_bar_width >= 0 {
+        Some(window.scroll_bar_width)
+    } else {
+        None
+    };
+    let height = if window.scroll_bar_height >= 0 {
+        Some(window.scroll_bar_height)
+    } else {
+        None
+    };
+    list!(
+        width,
+        window.scroll_bar_cols(),
+        window.vertical_scroll_bar_type,
+        height,
+        window.scroll_bar_lines(),
+        window.horizontal_scroll_bar_type
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
