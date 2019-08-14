@@ -2356,7 +2356,9 @@ The description is read from the installed package files."
          (installable (and archive (not built-in)))
          (status (if desc (package-desc-status desc) "orphan"))
          (incompatible-reason (package--incompatible-p desc))
-         (signed (if desc (package-desc-signed desc))))
+         (signed (if desc (package-desc-signed desc)))
+         (maintainer (cdr (assoc :maintainer extras)))
+         (authors (cdr (assoc :authors extras))))
     (when (string= status "avail-obso")
       (setq status "available obsolete"))
     (when incompatible-reason
@@ -2479,6 +2481,19 @@ The description is read from the installed package files."
          'action 'package-keyword-button-action)
         (insert " "))
       (insert "\n"))
+    (when maintainer
+      (package--print-help-section "Maintainer")
+      (package--print-email-button maintainer))
+    (when authors
+      (package--print-help-section
+          (if (= (length authors) 1)
+              "Author"
+            "Authors"))
+      (package--print-email-button (pop authors))
+      ;; If there's more than one author, indent the rest correctly.
+      (dolist (name authors)
+        (insert (make-string 13 ?\s))
+        (package--print-email-button name)))
     (let* ((all-pkgs (append (cdr (assq name package-alist))
                              (cdr (assq name package-archive-contents))
                              (let ((bi (assq name package--builtins)))
@@ -2576,6 +2591,21 @@ The description is read from the installed package files."
                        'link)))
     (apply #'insert-text-button button-text 'face button-face 'follow-link t
            props)))
+
+(defun package--print-email-button (name)
+  (when (car name)
+    (insert (car name)))
+  (when (and (car name) (cdr name))
+    (insert " "))
+  (when (cdr name)
+    (insert "<")
+    (insert-text-button (cdr name)
+                        'follow-link t
+                        'action (lambda (_)
+                                  (compose-mail
+                                   (format "%s <%s>" (car name) (cdr name)))))
+    (insert ">"))
+  (insert "\n"))
 
 
 ;;;; Package menu mode.
