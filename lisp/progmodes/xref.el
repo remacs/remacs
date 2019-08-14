@@ -957,7 +957,7 @@ Accepts the same arguments as `xref-show-xrefs-function'."
                    nil nil nil
                    'xref--read-identifier-history def)))
              (if (equal id "")
-                 (or def (user-error "There is no defailt identifier"))
+                 (or def (user-error "There is no default identifier"))
                id)))
           (t def))))
 
