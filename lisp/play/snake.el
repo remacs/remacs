@@ -179,8 +179,13 @@ and then start moving it leftwards.")
 
     (define-key map [left]	'snake-move-left)
     (define-key map [right]	'snake-move-right)
-    (define-key map [up]		'snake-move-up)
+    (define-key map [up]	'snake-move-up)
     (define-key map [down]	'snake-move-down)
+
+    (define-key map "\C-b"	'snake-move-left)
+    (define-key map "\C-f"	'snake-move-right)
+    (define-key map "\C-p"	'snake-move-up)
+    (define-key map "\C-n"	'snake-move-down)
     map))
 
 (defvar snake-null-map
