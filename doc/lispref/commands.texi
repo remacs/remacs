@@ -2504,12 +2504,12 @@ The returned event may come directly from the user, or from a keyboard
 macro.  It is not decoded by the keyboard's input coding system
 (@pxref{Terminal I/O Encoding}).
 
-If the optional argument @var{prompt} is non-@code{nil}, it should be a
-string to display in the echo area as a prompt.  Otherwise,
-@code{read-event} does not display any message to indicate it is waiting
-for input; instead, it prompts by echoing: it displays descriptions of
-the events that led to or were read by the current command.  @xref{The
-Echo Area}.
+If the optional argument @var{prompt} is non-@code{nil}, it should be
+a string to display in the echo area as a prompt.  If @var{prompt} is
+@code{nil} or the string @samp{""}, @code{read-event} does not display
+any message to indicate it is waiting for input; instead, it prompts
+by echoing: it displays descriptions of the events that led to or were
+read by the current command.  @xref{The Echo Area}.
 
 If @var{inherit-input-method} is non-@code{nil}, then the current input
 method (if any) is employed to make it possible to enter a

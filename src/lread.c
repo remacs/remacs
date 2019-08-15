@@ -762,9 +762,13 @@ If you want to read non-character events, or ignore them, call
 `read-event' or `read-char-exclusive' instead.
 
 If the optional argument PROMPT is non-nil, display that as a prompt.
+If PROMPT is nil or the string \"\", the key sequence/events that led
+to the current command is used as the prompt.
+
 If the optional argument INHERIT-INPUT-METHOD is non-nil and some
 input method is turned on in the current buffer, that input method
 is used for reading a character.
+
 If the optional argument SECONDS is non-nil, it should be a number
 specifying the maximum number of seconds to wait for input.  If no
 input arrives in that time, return nil.  SECONDS may be a
@@ -784,9 +788,13 @@ floating-point value.  */)
 DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
        doc: /* Read an event object from the input stream.
 If the optional argument PROMPT is non-nil, display that as a prompt.
+If PROMPT is nil or the string \"\", the key sequence/events that led
+to the current command is used as the prompt.
+
 If the optional argument INHERIT-INPUT-METHOD is non-nil and some
 input method is turned on in the current buffer, that input method
 is used for reading a character.
+
 If the optional argument SECONDS is non-nil, it should be a number
 specifying the maximum number of seconds to wait for input.  If no
 input arrives in that time, return nil.  SECONDS may be a
@@ -809,9 +817,13 @@ character code: it will fail the `characterp' test.  Use `event-basic-type'
 to recover the character code with the modifiers removed.
 
 If the optional argument PROMPT is non-nil, display that as a prompt.
+If PROMPT is nil or the string \"\", the key sequence/events that led
+to the current command is used as the prompt.
+
 If the optional argument INHERIT-INPUT-METHOD is non-nil and some
 input method is turned on in the current buffer, that input method
 is used for reading a character.
+
 If the optional argument SECONDS is non-nil, it should be a number
 specifying the maximum number of seconds to wait for input.  If no
 input arrives in that time, return nil.  SECONDS may be a
