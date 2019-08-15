@@ -3158,14 +3158,12 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   /* Upper bound on number of format specs.  Each uses at least 2 chars.  */
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
-  /* Use a temporary signed variable, since otherwise INT_ADD_WRAPV
-     might incorrectly return non-zero.  */
-  ptrdiff_t info_size = sizeof *info, alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, info_size, &info_size)
+  /* Allocate the info and discarded tables.  */
+  ptrdiff_t info_size, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
       || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
-  /* Allocate the info and discarded tables.  */
   info = SAFE_ALLOCA (alloca_size);
   /* discarded[I] is 1 if byte I of the format
      string was not copied into the output.
