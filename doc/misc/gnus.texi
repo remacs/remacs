@@ -849,7 +849,6 @@ Image Enhancements
                                   meant to be shown.
 * Picons::                      How to display pictures of what you're reading.
 * Gravatars::                   Display the avatar of people you read.
-* XVarious::                    Other XEmacsy Gnusey variables.
 
 Thwarting Email Spam
 
@@ -23428,7 +23427,6 @@ stuff, so Gnus has taken advantage of that.
 * Smileys::                     Show all those happy faces the way they were meant to be shown.
 * Picons::                      How to display pictures of what you're reading.
 * Gravatars::                   Display the avatar of people you read.
-* XVarious::                    Other XEmacsy Gnusey variables.
 @end menu
 
 
@@ -23815,23 +23813,6 @@ If you want to see them in the Cc and To fields, set:
 (setq gnus-treat-mail-gravatar 'head)
 @end lisp
 
-
-@node XVarious
-@subsection Various XEmacs Variables
-
-@table @code
-@item gnus-xmas-glyph-directory
-@vindex gnus-xmas-glyph-directory
-This is where Gnus will look for pictures.  Gnus will normally
-auto-detect this directory, but you may set it manually if you have an
-unusual directory structure.
-
-@item gnus-xmas-modeline-glyph
-@vindex gnus-xmas-modeline-glyph
-A glyph displayed in all Gnus mode lines.  It is a tiny gnu head by
-default.
-
-@end table
 
 @subsubsection Toolbar
 
