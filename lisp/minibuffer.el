@@ -154,14 +154,20 @@ Like CL's `some'."
     (or res
         (if firsterror (signal (car firsterror) (cdr firsterror))))))
 
-(defun complete-with-action (action table string pred)
-  "Perform completion ACTION.
-STRING is the string to complete.
-TABLE is the completion table.
-PRED is a completion predicate.
-ACTION can be one of nil, t or `lambda'."
+(defun complete-with-action (action collection string predicate)
+  "Perform completion according to ACTION.
+STRING, COLLECTION and PREDICATE are used as in `try-completion'.
+
+If COLLECTION is a function, it will be called directly to
+perform completion, no matter what ACTION is.
+
+If ACTION is `metadata' or a list where the first element is
+`boundaries', return nil.  If ACTION is nil, this function works
+like `try-completion'; if it's t, this function works like
+`all-completion'; and any other values makes it work like
+`test-completion'."
   (cond
-   ((functionp table) (funcall table string pred action))
+   ((functionp collection) (funcall collection string predicate action))
    ((eq (car-safe action) 'boundaries) nil)
    ((eq action 'metadata) nil)
    (t
@@ -170,7 +176,7 @@ ACTION can be one of nil, t or `lambda'."
       ((null action) 'try-completion)
       ((eq action t) 'all-completions)
       (t 'test-completion))
-     string table pred))))
+     string collection predicate))))
 
 (defun completion-table-dynamic (fun &optional switch-buffer)
   "Use function FUN as a dynamic completion table.
