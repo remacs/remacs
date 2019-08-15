@@ -4112,12 +4112,17 @@ Also, delete any process that is exited or signaled."
 					 "datagram"
 				       "network")
 				     (if (plist-get contact :server)
-					 (format "server on %s"
-						 (or
-						  (plist-get contact :host)
-						  (plist-get contact :local)))
-				       (format "connection to %s"
-					       (plist-get contact :host))))
+					 (format
+                                          "server on %s"
+					  (if (plist-get contact :host)
+                                              (format "%s:%s"
+						      (plist-get contact :host)
+                                                      (plist-get
+                                                       contact :service))
+					    (plist-get contact :local)))
+				       (format "connection to %s:%s"
+					       (plist-get contact :host)
+					       (plist-get contact :service))))
 			   (format "(serial port %s%s)"
 				   (or (plist-get contact :port) "?")
 				   (let ((speed (plist-get contact :speed)))
