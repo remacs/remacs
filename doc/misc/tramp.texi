@@ -1266,6 +1266,18 @@ to include are @option{ftp}, @option{http}, @option{https} and
 @option{smb}.  These methods are not intended to be used directly as
 GVFS based method.  Instead, they are added here for the benefit of
 @ref{Archive file names}.
+
+If you want to use GVFS-based @option{ftp} or @option{smb} methods,
+you must add them to @code{tramp-gvfs-methods}, and you must disable
+the corresponding Tramp package by setting @code{tramp-ftp-method} or
+@code{tramp-smb-method} to @code{nil}, respectively:
+
+@lisp
+@group
+(add-to-list 'tramp-gvfs-methods "ftp")
+(customize-set-variable 'tramp-ftp-method nil)
+@end group
+@end lisp
 @end defopt
 
 
