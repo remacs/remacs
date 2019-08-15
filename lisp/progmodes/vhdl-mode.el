@@ -692,7 +692,7 @@ browser.  The current project can also be changed temporarily in the menu."
 replaced by the user name (allows you to have user-specific project setups).
 The first entry is used as file name to import/export individual project
 setups.  All entries are used to automatically import project setups at
-startup (see option `vhdl-project-auto-load').  Projects loaded from the
+startup (see option `vhdl-project-autoload').  Projects loaded from the
 first entry are automatically made current.  Hint: specify local project
 setups in first entry, global setups in following entries; loading a local
 project setup will make it current, while loading the global setups
@@ -702,7 +702,11 @@ in global directories)."
   :type '(repeat (string :tag "File name" "\\1.prj"))
   :group 'vhdl-project)
 
-(defcustom vhdl-project-auto-load '(startup)
+
+(define-obsolete-variable-alias 'vhdl-project-auto-load
+  'vhdl-project-autoload "27.1")
+
+(defcustom vhdl-project-autoload '(startup)
   "Automatically load project setups from files.
 All project setup files that match the file names specified in option
 `vhdl-project-file-name' are automatically loaded.  The project of the
@@ -3673,11 +3677,11 @@ STRING are replaced by `-' and substrings are converted to lower case."
       ["Setup File Name..." (customize-option 'vhdl-project-file-name) t]
       ("Auto Load Setup File"
        ["At Startup"
-	(customize-set-variable 'vhdl-project-auto-load
-				(if (memq 'startup vhdl-project-auto-load)
-				   (delq 'startup vhdl-project-auto-load)
-				 (cons 'startup vhdl-project-auto-load)))
-       :style toggle :selected (memq 'startup vhdl-project-auto-load)])
+	(customize-set-variable 'vhdl-project-autoload
+				(if (memq 'startup vhdl-project-autoload)
+				   (delq 'startup vhdl-project-autoload)
+				 (cons 'startup vhdl-project-autoload)))
+       :style toggle :selected (memq 'startup vhdl-project-autoload)])
       ["Sort Projects"
        (customize-set-variable 'vhdl-project-sort (not vhdl-project-sort))
        :style toggle :selected vhdl-project-sort]
@@ -4683,7 +4687,7 @@ Usage:
     Emacs with VHDL Mode (i.e. load a VHDL file or use \"emacs -l
     vhdl-mode\") in a directory with an existing project setup file, it is
     automatically loaded and its project activated if option
-    `vhdl-project-auto-load' is non-nil.  Names/paths of the project setup
+    `vhdl-project-autoload' is non-nil.  Names/paths of the project setup
     files can be specified in option `vhdl-project-file-name'.  Multiple
     project setups can be automatically loaded from global directories.
     This is an alternative to specifying project setups with option
@@ -13126,7 +13130,7 @@ File statistics: \"%s\"\n\
 		  (list (cons new-name project-entry))))
     (vhdl-update-mode-menu)))
 
-(defun vhdl-auto-load-project ()
+(defun vhdl-autoload-project ()
   "Automatically load project setup at startup."
   (let ((file-name-list vhdl-project-file-name)
 	file-list list-length)
@@ -13145,12 +13149,14 @@ File statistics: \"%s\"\n\
 			   (not (> list-length 0)))
       (setq list-length (1- list-length))
       (setq file-list (cdr file-list)))))
+(define-obsolete-function-alias 'vhdl-auto-load-project
+  #'vhdl-autoload-project "27.1")
 
 ;; automatically load project setup when idle after startup
-(when (memq 'startup vhdl-project-auto-load)
+(when (memq 'startup vhdl-project-autoload)
   (if noninteractive
-      (vhdl-auto-load-project)
-    (vhdl-run-when-idle .1 nil 'vhdl-auto-load-project)))
+      (vhdl-autoload-project)
+    (vhdl-run-when-idle .1 nil 'vhdl-autoload-project)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -17635,7 +17641,7 @@ specified by a target."
        'vhdl-project-alist
        'vhdl-project
        'vhdl-project-file-name
-       'vhdl-project-auto-load
+       'vhdl-project-autoload
        'vhdl-project-sort
        'vhdl-compiler-alist
        'vhdl-compiler

@@ -2008,6 +2008,12 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
+** The variables 'help-enable-completion-auto-load',
+'help-enable-auto-load' and 'vhdl-project-auto-load', as well as the
+'vhdl-auto-load-project' have been renamed to have "autoload" without
+the hyphen in their names.  Obsolete aliases from the old names have
+been added.
+
 +++
 ** Buttons (created with 'make-button' and related functions) can
 now use the 'button-data' property.  If present, the data in this

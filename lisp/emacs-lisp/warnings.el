@@ -320,7 +320,7 @@ programming features."
 			 (set-window-start window warning-series))
 		       (sit-for 0)))))))))
 
-;; Use \\<special-mode-map> so that help-enable-auto-load can do its thing.
+;; Use \\<special-mode-map> so that help-enable-autoload can do its thing.
 ;; Any keymap that is defined will do.
 ;;;###autoload
 (defun lwarn (type level message &rest args)

@@ -222,7 +222,7 @@ exiting the minibuffer."
     t))
 
 ;; superemulates behavior of completing_read in src/minibuf.c
-;; Use \\<crm-local-completion-map> so that help-enable-auto-load can
+;; Use \\<crm-local-completion-map> so that help-enable-autoload can
 ;; do its thing.  Any keymap that is defined will do.
 ;;;###autoload
 (defun completing-read-multiple

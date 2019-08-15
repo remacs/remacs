@@ -104,7 +104,11 @@ and the output should go to `standard-output'.")
         (with-demoted-errors "while loading: %S"
           (load file 'noerror 'nomessage))))))
 
-(defcustom help-enable-completion-auto-load t
+
+(define-obsolete-variable-alias 'help-enable-completion-auto-load
+  'help-enable-completion-autoload "27.1")
+
+(defcustom help-enable-completion-autoload t
   "Whether completion for Help commands can perform autoloading.
 If non-nil, whenever invoking completion for `describe-function'
 or `describe-variable' load files that might contain definitions
@@ -115,11 +119,11 @@ with the current prefix.  The files are chosen according to
   :version "26.3")
 
 (defun help--symbol-completion-table (string pred action)
-  (when help-enable-completion-auto-load
+  (when help-enable-completion-autoload
     (let ((prefixes (radix-tree-prefixes (help-definition-prefixes) string)))
       (help--load-prefixes prefixes)))
   (let ((prefix-completions
-         (and help-enable-completion-auto-load
+         (and help-enable-completion-autoload
               (mapcar #'intern (all-completions string definition-prefixes)))))
     (complete-with-action action obarray string
                           (if pred (lambda (sym)
@@ -799,7 +803,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
     ;; If the function is autoloaded, and its docstring has
     ;; key substitution constructs, load the library.
     (and (autoloadp real-def) doc-raw
-         help-enable-auto-load
+         help-enable-autoload
          (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]" doc-raw)
          (autoload-do-load real-def))
 

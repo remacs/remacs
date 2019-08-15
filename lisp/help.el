@@ -1209,7 +1209,10 @@ by `with-help-window'."
   :group 'help
   :version "23.1")
 
-(defcustom help-enable-auto-load t
+(define-obsolete-variable-alias 'help-enable-auto-load
+  'help-enable-autoload "27.1")
+
+(defcustom help-enable-autoload t
   "Whether Help commands can perform autoloading.
 If non-nil, whenever \\[describe-function] is called for an
 autoloaded function whose docstring contains any key substitution
