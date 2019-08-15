@@ -150,3 +150,21 @@
     (should (time-equal-p
              (encode-time '(29 31 17 30 4 2019 2 t 7200 0))
              '(23752 27217))))
+
+(ert-deftest float-time-precision ()
+  (should (< 0 (float-time '(1 . 10000000000))))
+  (should (< (float-time '(-1 . 10000000000)) 0))
+
+  (let ((x 1.0))
+    (while (not (zerop x))
+      (dolist (multiplier '(-1.9 -1.5 -1.1 -1 1 1.1 1.5 1.9))
+        (let ((xmult (* x multiplier)))
+          (should (= xmult (float-time (time-convert xmult t))))))
+      (setq x (/ x 2))))
+
+  (let ((x 1.0))
+    (while (ignore-errors (time-convert x t))
+      (dolist (divisor '(-1.9 -1.5 -1.1 -1 1 1.1 1.5 1.9))
+        (let ((xdiv (/ x divisor)))
+          (should (= xdiv (float-time (time-convert xdiv t))))))
+      (setq x (* x 2)))))

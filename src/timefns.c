@@ -368,29 +368,54 @@ lo_time (time_t t)
   return make_fixnum (t & ((1 << LO_TIME_BITS) - 1));
 }
 
+/* When converting a double to a fraction TICKS / HZ, HZ is equal to
+   FLT_RADIX * P where 0 <= P < FLT_RADIX_POWER_SIZE.  The tiniest
+   nonzero double uses the maximum P.  */
+enum { flt_radix_power_size = DBL_MANT_DIG - DBL_MIN_EXP + 1 };
+
+/* A integer vector of size flt_radix_power_size.  The Pth entry
+   equals FLT_RADIX**P.  */
+static Lisp_Object flt_radix_power;
+
 /* Convert T into an Emacs time *RESULT, truncating toward minus infinity.
    Return zero if successful, an error number otherwise.  */
 static int
 decode_float_time (double t, struct lisp_time *result)
 {
-  if (!isfinite (t))
-    return isnan (t) ? EINVAL : EOVERFLOW;
-  /* Actual hz unknown; guess TIMESPEC_HZ.  */
-  mpz_set_d (mpz[1], t);
-  mpz_set_si (mpz[0], floor ((t - trunc (t)) * TIMESPEC_HZ));
-  mpz_addmul_ui (mpz[0], mpz[1], TIMESPEC_HZ);
-  result->ticks = make_integer_mpz ();
-  result->hz = timespec_hz;
-  return 0;
-}
+  Lisp_Object ticks, hz;
+  if (t == 0)
+    {
+      ticks = make_fixnum (0);
+      hz = make_fixnum (1);
+    }
+  else
+    {
+      int exponent = ilogb (t);
+      if (exponent == FP_ILOGBNAN)
+	return EINVAL;
 
-/* Compute S + NS/TIMESPEC_HZ as a double.
-   Calls to this function suffer from double-rounding;
-   work around some of the problem by using long double.  */
-static double
-s_ns_to_double (long double s, long double ns)
-{
-  return s + ns / TIMESPEC_HZ;
+      /* An enormous or infinite T would make SCALE < 0 which would make
+	 HZ < 1, which the (TICKS . HZ) representation does not allow.  */
+      if (DBL_MANT_DIG - 1 < exponent)
+	return EOVERFLOW;
+
+      /* min so we don't scale tiny numbers as if they were normalized.  */
+      int scale = min (DBL_MANT_DIG - 1 - exponent, flt_radix_power_size - 1);
+
+      double scaled = scalbn (t, scale);
+      eassert (trunc (scaled) == scaled);
+      ticks = double_to_integer (scaled);
+      hz = AREF (flt_radix_power, scale);
+      if (NILP (hz))
+	{
+	  mpz_ui_pow_ui (mpz[0], FLT_RADIX, scale);
+	  hz = make_integer_mpz ();
+	  ASET (flt_radix_power, scale, hz);
+	}
+    }
+  result->ticks = ticks;
+  result->hz = hz;
+  return 0;
 }
 
 /* Make a 4-element timestamp (HI LO US PS) from TICKS and HZ.
@@ -520,69 +545,111 @@ timespec_to_lisp (struct timespec t)
   return Fcons (timespec_ticks (t), timespec_hz);
 }
 
-/* From what should be a valid timestamp (TICKS . HZ), generate the
-   corresponding time values.
+/* Return NUMERATOR / DENOMINATOR, rounded to the nearest double.
+   Arguments must be Lisp integers, and DENOMINATOR must be nonzero.  */
+static double
+frac_to_double (Lisp_Object numerator, Lisp_Object denominator)
+{
+  intmax_t intmax_numerator;
+  if (FASTER_TIMEFNS && EQ (denominator, make_fixnum (1))
+      && integer_to_intmax (numerator, &intmax_numerator))
+    return intmax_numerator;
+
+  verify (FLT_RADIX == 2 || FLT_RADIX == 16);
+  enum { LOG2_FLT_RADIX = FLT_RADIX == 2 ? 1 : 4 };
+  mpz_t *n = bignum_integer (&mpz[0], numerator);
+  mpz_t *d = bignum_integer (&mpz[1], denominator);
+  ptrdiff_t nbits = mpz_sizeinbase (*n, 2);
+  ptrdiff_t dbits = mpz_sizeinbase (*d, 2);
+  eassume (0 < nbits);
+  eassume (0 < dbits);
+  ptrdiff_t ndig = (nbits + LOG2_FLT_RADIX - 1) / LOG2_FLT_RADIX;
+  ptrdiff_t ddig = (dbits + LOG2_FLT_RADIX - 1) / LOG2_FLT_RADIX;
+
+  /* Scale with SCALE when doing integer division.  That is, compute
+     (N * FLT_RADIX**SCALE) / D [or, if SCALE is negative, N / (D *
+     FLT_RADIX**-SCALE)] as a bignum, convert the bignum to double,
+     then divide the double by FLT_RADIX**SCALE.  */
+  ptrdiff_t scale = ddig - ndig + DBL_MANT_DIG + 1;
+  if (scale < 0)
+    {
+      mpz_mul_2exp (mpz[1], *d, - (scale * LOG2_FLT_RADIX));
+      d = &mpz[1];
+    }
+  else
+    {
+      /* min so we don't scale tiny numbers as if they were normalized.  */
+      scale = min (scale, flt_radix_power_size - 1);
+
+      mpz_mul_2exp (mpz[0], *n, scale * LOG2_FLT_RADIX);
+      n = &mpz[0];
+    }
+
+  mpz_t *q = &mpz[2];
+  mpz_t *r = &mpz[3];
+  mpz_tdiv_qr (*q, *r, *n, *d);
+
+  /* The amount to add to the absolute value of *Q so that truncating
+     it to double will round correctly.  */
+  int incr;
+
+  /* Round the quotient before converting it to double.
+     If the quotient is less than FLT_RADIX ** DBL_MANT_DIG,
+     round to the nearest integer; otherwise, it is less than
+     FLT_RADIX ** (DBL_MANT_DIG + 1) and round it to the nearest
+     multiple of FLT_RADIX.  Break ties to even.  */
+  if (mpz_sizeinbase (*q, 2) < DBL_MANT_DIG * LOG2_FLT_RADIX)
+    {
+      /* Converting to double will use the whole quotient so add 1 to
+	 its absolute value as per round-to-even; i.e., if the doubled
+	 remainder exceeds the denominator, or exactly equals the
+	 denominator and adding 1 would make the quotient even.  */
+      mpz_mul_2exp (*r, *r, 1);
+      int cmp = mpz_cmpabs (*r, *d);
+      incr = cmp > 0 || (cmp == 0 && (FASTER_TIMEFNS && FLT_RADIX == 2
+				      ? mpz_odd_p (*q)
+				      : mpz_tdiv_ui (*q, FLT_RADIX) & 1));
+    }
+  else
+    {
+      /* Converting to double will discard the quotient's low-order digit,
+	 so add FLT_RADIX to its absolute value as per round-to-even.  */
+      int lo_2digits = mpz_tdiv_ui (*q, FLT_RADIX * FLT_RADIX);
+      eassume (0 <= lo_2digits && lo_2digits < FLT_RADIX * FLT_RADIX);
+      int lo_digit = lo_2digits % FLT_RADIX;
+      incr = ((lo_digit > FLT_RADIX / 2
+	       || (lo_digit == FLT_RADIX / 2 && FLT_RADIX % 2 == 0
+		   && ((lo_2digits / FLT_RADIX) & 1
+		       || mpz_sgn (*r) != 0)))
+	      ? FLT_RADIX : 0);
+    }
+
+  /* Increment the absolute value of the quotient by INCR.  */
+  if (!FASTER_TIMEFNS || incr != 0)
+    (mpz_sgn (*n) < 0 ? mpz_sub_ui : mpz_add_ui) (*q, *q, incr);
+
+  return scalbn (mpz_get_d (*q), -scale);
+}
+
+/* From a valid timestamp (TICKS . HZ), generate the corresponding
+   time values.
 
    If RESULT is not null, store into *RESULT the converted time.
    Otherwise, store into *DRESULT the number of seconds since the
-   start of the POSIX Epoch.  Unsuccessful calls may or may not store
-   results.
+   start of the POSIX Epoch.
 
-   Return zero if successful, an error number if (TICKS . HZ) would not
-   be a valid new-format timestamp.  */
+   Return zero, which indicates success.  */
 static int
 decode_ticks_hz (Lisp_Object ticks, Lisp_Object hz,
 		 struct lisp_time *result, double *dresult)
 {
-  int ns;
-  mpz_t *q = &mpz[0];
-
-  if (! (INTEGERP (ticks)
-	 && ((FIXNUMP (hz) && 0 < XFIXNUM (hz))
-	     || (BIGNUMP (hz) && 0 < mpz_sgn (XBIGNUM (hz)->value)))))
-    return EINVAL;
-
   if (result)
     {
       result->ticks = ticks;
       result->hz = hz;
     }
   else
-    {
-      if (FASTER_TIMEFNS && EQ (hz, timespec_hz))
-	{
-	  if (FIXNUMP (ticks))
-	    {
-	      verify (1 < TIMESPEC_HZ);
-	      EMACS_INT s = XFIXNUM (ticks) / TIMESPEC_HZ;
-	      ns = XFIXNUM (ticks) % TIMESPEC_HZ;
-	      if (ns < 0)
-		s--, ns += TIMESPEC_HZ;
-	      *dresult = s_ns_to_double (s, ns);
-	      return 0;
-	    }
-	  ns = mpz_fdiv_q_ui (*q, XBIGNUM (ticks)->value, TIMESPEC_HZ);
-	}
-      else if (FASTER_TIMEFNS && EQ (hz, make_fixnum (1)))
-	{
-	  ns = 0;
-	  if (FIXNUMP (ticks))
-	    {
-	      *dresult = XFIXNUM (ticks);
-	      return 0;
-	    }
-	  q = &XBIGNUM (ticks)->value;
-	}
-      else
-	{
-	  mpz_mul_ui (*q, *bignum_integer (&mpz[1], ticks), TIMESPEC_HZ);
-	  mpz_fdiv_q (*q, *q, *bignum_integer (&mpz[1], hz));
-	  ns = mpz_fdiv_q_ui (*q, *q, TIMESPEC_HZ);
-	}
-
-      *dresult = s_ns_to_double (mpz_get_d (*q), ns);
-    }
-
+    *dresult = frac_to_double (ticks, hz);
   return 0;
 }
 
@@ -621,7 +688,10 @@ decode_time_components (enum timeform form,
       return EINVAL;
 
     case TIMEFORM_TICKS_HZ:
-      return decode_ticks_hz (high, low, result, dresult);
+      if (INTEGERP (high)
+	  && (!NILP (Fnatnump (low)) && !EQ (low, make_fixnum (0))))
+	return decode_ticks_hz (high, low, result, dresult);
+      return EINVAL;
 
     case TIMEFORM_FLOAT:
       {
@@ -636,17 +706,8 @@ decode_time_components (enum timeform form,
       }
 
     case TIMEFORM_NIL:
-      {
-	struct timespec now = current_timespec ();
-	if (result)
-	  {
-	    result->ticks = timespec_ticks (now);
-	    result->hz = timespec_hz;
-	  }
-	else
-	  *dresult = s_ns_to_double (now.tv_sec, now.tv_nsec);
-	return 0;
-      }
+      return decode_ticks_hz (timespec_ticks (current_timespec ()),
+			      timespec_hz, result, dresult);
 
     default:
       break;
@@ -1814,6 +1875,10 @@ syms_of_timefns (void)
   defsubr (&Scurrent_time_string);
   defsubr (&Scurrent_time_zone);
   defsubr (&Sset_time_zone_rule);
+
+  flt_radix_power = make_vector (flt_radix_power_size, Qnil);
+  staticpro (&flt_radix_power);
+
 #ifdef NEED_ZTRILLION_INIT
   pdumper_do_now_and_after_load (syms_of_timefns_for_pdumper);
 #endif
