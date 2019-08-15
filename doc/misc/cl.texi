@@ -323,6 +323,7 @@ arranges for the processing of keyword arguments, default values,
 etc., to be done at compile-time whenever possible.
 @end defmac
 
+@cindex &allow-other-keys
 @defmac cl-defmacro name arglist body@dots{}
 This is identical to the regular @code{defmacro} form,
 except that @var{arglist} is allowed to be a full Common Lisp
@@ -438,6 +439,7 @@ function call, like this:
 (bar :a 10 'baz 42)
 @end example
 
+@cindex &allow-other-keys
 Ordinarily, it is an error to pass an unrecognized keyword to
 a function, e.g., @code{(foo 1 2 :c 3 :goober 4)}.  You can ask
 Lisp to ignore unrecognized keywords, either by adding the
