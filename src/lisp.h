@@ -401,7 +401,7 @@ typedef EMACS_INT Lisp_Word;
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
 # if defined HAVE_STATEMENT_EXPRESSIONS && defined HAVE_TYPEOF
 #  define lisp_h_make_fixnum(n) \
-     ({ typeof (n) lisp_h_make_fixnum_n = n; \
+     ({ typeof (+(n)) lisp_h_make_fixnum_n = n; \
 	eassert (!FIXNUM_OVERFLOW_P (lisp_h_make_fixnum_n)); \
 	lisp_h_make_fixnum_wrap (lisp_h_make_fixnum_n); })
 # else
