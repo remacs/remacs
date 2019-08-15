@@ -84,22 +84,22 @@
      (choice :tag "Weight"
 	     :help-echo "Font weight."
 	     :value normal		; default
-	     (const :tag "black" ultra-bold)
-	     (const :tag "bold" bold)
-	     (const :tag "book" semi-light)
-	     (const :tag "demibold" semi-bold)
+	     (const :tag "ultralight" ultra-light)
 	     (const :tag "extralight" extra-light)
-	     (const :tag "extrabold" extra-bold)
-	     (const :tag "heavy" extra-bold)
 	     (const :tag "light" light)
-	     (const :tag "medium" normal)
+	     (const :tag "thin" thin)
+	     (const :tag "semilight" semi-light)
+	     (const :tag "book" semi-light)
 	     (const :tag "normal" normal)
 	     (const :tag "regular" normal)
+	     (const :tag "medium" normal)
 	     (const :tag "semibold" semi-bold)
-	     (const :tag "semilight" semi-light)
-	     (const :tag "ultralight" ultra-light)
+	     (const :tag "demibold" semi-bold)
+	     (const :tag "bold" bold)
+	     (const :tag "extrabold" extra-bold)
+	     (const :tag "heavy" extra-bold)
 	     (const :tag "ultrabold" ultra-bold)
-	     (const :tag "thin" thin)))
+	     (const :tag "black" ultra-bold)))
 
     (:slant
      (choice :tag "Slant"
