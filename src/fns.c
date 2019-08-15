@@ -87,7 +87,7 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 	  return make_fixnum (remainder);
 	val = get_random ();
       }
-  return make_fixnum (val);
+  return make_ufixnum (val);
 }
 
 /* Random data-structure functions.  */
@@ -3994,7 +3994,7 @@ cmpfn_user_defined (Lisp_Object key1, Lisp_Object key2,
 static Lisp_Object
 hashfn_eq (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
-  return make_fixnum (XHASH (key) ^ XTYPE (key));
+  return make_ufixnum (XHASH (key) ^ XTYPE (key));
 }
 
 /* Ignore HT and return a hash code for KEY which uses 'equal' to compare keys.
@@ -4003,7 +4003,7 @@ hashfn_eq (Lisp_Object key, struct Lisp_Hash_Table *h)
 Lisp_Object
 hashfn_equal (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
-  return make_fixnum (sxhash (key, 0));
+  return make_ufixnum (sxhash (key, 0));
 }
 
 /* Ignore HT and return a hash code for KEY which uses 'eql' to compare keys.
@@ -4023,7 +4023,7 @@ hashfn_user_defined (Lisp_Object key, struct Lisp_Hash_Table *h)
 {
   Lisp_Object args[] = { h->test.user_hash_function, key };
   Lisp_Object hash = hash_table_user_defined_call (ARRAYELTS (args), args, h);
-  return FIXNUMP (hash) ? hash : make_fixnum (sxhash (hash, 0));
+  return FIXNUMP (hash) ? hash : make_ufixnum (sxhash (hash, 0));
 }
 
 struct hash_table_test const

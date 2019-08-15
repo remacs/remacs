@@ -566,7 +566,7 @@ hashfn_profiler (Lisp_Object bt, struct Lisp_Hash_Table *h)
     }
   else
     hash = XHASH (bt);
-  return make_fixnum (SXHASH_REDUCE (hash));
+  return make_ufixnum (SXHASH_REDUCE (hash));
 }
 
 static void syms_of_profiler_for_pdumper (void);
