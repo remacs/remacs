@@ -104,7 +104,6 @@ misprints are the Gnus team's fault, sorry.
 * FAQ 1-5::    I sometimes read references to No Gnus and Oort Gnus,
                what are those?
 * FAQ 1-6::    Which version of Emacs do I need?
-* FAQ 1-7::    How do I run Gnus on both Emacs and XEmacs?
 @end menu
 
 @node FAQ 1-1
@@ -161,10 +160,9 @@ Where and how to get Gnus?
 
 @subsubheading Answer
 
-Gnus is released independent from releases of Emacs and XEmacs.
-Therefore, the version bundled with Emacs or the version in XEmacs's
-package system might not be up to date (e.g., Gnus 5.9 bundled with Emacs
-21 is outdated).
+Gnus is released independent from releases of Emacs.  Therefore, the
+version bundled with Emacs might not be up to date (e.g., Gnus 5.9
+bundled with Emacs 21 is outdated).
 You can get the latest released version of Gnus from
 @uref{http://www.gnus.org/dist/gnus.tar.gz}
 or from
@@ -187,13 +185,11 @@ tarball with some packer (e.g., Winace from
 and use the batch-file make.bat included in the tarball to install
 Gnus.) If you don't want to (or aren't allowed to) install Gnus
 system-wide, you can install it in your home directory and add the
-following lines to your ~/.xemacs/init.el or ~/.emacs:
+following lines to your ~/.emacs:
 
 @example
 (add-to-list 'load-path "/path/to/gnus/lisp")
-(if (featurep 'xemacs)
-    (add-to-list 'Info-directory-list "/path/to/gnus/texi/")
-  (add-to-list 'Info-default-directory-list "/path/to/gnus/texi/"))
+(add-to-list 'Info-default-directory-list "/path/to/gnus/texi/")
 @end example
 @noindent
 
@@ -224,20 +220,8 @@ Which version of Emacs do I need?
 @subsubheading Answer
 
 Gnus 5.13 requires an Emacs version that is greater than or equal
-to Emacs 23.1 or XEmacs 21.1, although there are some features that
+to Emacs 23.1, although there are some features that
 only work on Emacs 24.
-
-@node FAQ 1-7
-@subsubheading Question 1.7
-
-How do I run Gnus on both Emacs and XEmacs?
-
-@subsubheading Answer
-
-You can't use the same copy of Gnus in both as the Lisp
-files are byte-compiled to a format which is different
-depending on which Emacs did the compilation. Get one copy
-of Gnus for Emacs and one for XEmacs.
 
 @node FAQ 2 - Startup / Group buffer
 @subsection Startup / Group buffer
@@ -1389,9 +1373,8 @@ installed and in your Path. Then you need
 @uref{http://www.kdstevens.com/~stevens/ispell-page.html, ispell.el}
 and for on-the-fly spell-checking
 @uref{http://www-sop.inria.fr/members/Manuel.Serrano/flyspell/flyspell.html, flyspell.el}.
-Ispell.el is shipped with Emacs and available through the XEmacs package system,
-flyspell.el is shipped with Emacs and part of XEmacs text-modes package which is
-available through the package system, so there should be no need to install them
+Ispell.el is shipped with Emacs,
+flyspell.el is shipped with Emacs, so there should be no need to install them
 manually.
 
 Ispell.el assumes you use ispell, if you choose aspell say
@@ -1465,7 +1448,7 @@ node "Mail Aliases" in Message (not Gnus) manual for
 details.
 
 However, what you really want is the Insidious Big Brother
-Database bbdb. Get it through the XEmacs package system or from
+Database bbdb. Get it from
 @uref{http://bbdb.sourceforge.net/, bbdb's homepage}.
 Now place the following in @file{~/.gnus.el}, to activate bbdb for Gnus:
 
@@ -1774,9 +1757,7 @@ more then one article."
   (let ((archive-name
          (format
           "nnml:1.%s"
-          (if (featurep 'xemacs)
-              (replace-in-string gnus-newsgroup-name "^.*:" "")
-            (replace-regexp-in-string "^.*:" "" gnus-newsgroup-name)))))
+          (replace-in-string gnus-newsgroup-name "^.*:" ""))))
     (gnus-summary-copy-article n archive-name)))
 @end example
 @noindent
@@ -2289,8 +2270,8 @@ whatever-server which offers Gnus a standardized interface
 to functions like "get message", "get Headers" etc.
 
 @item Emacs
-When the term Emacs is used in this FAQ, it means either GNU
-Emacs or XEmacs.
+When the term Emacs is used in this FAQ, it means GNU
+Emacs.
 
 @item Message
 In this FAQ message means either a mail or a posting to a

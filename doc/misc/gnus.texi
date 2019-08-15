@@ -821,7 +821,7 @@ Various
 * Undo::                        Some actions can be undone.
 * Predicate Specifiers::        Specifying predicates.
 * Moderation::                  What to do if you're a moderator.
-* Image Enhancements::          Modern versions of Emacs/XEmacs can display images.
+* Image Enhancements::          Modern versions of Emacs can display images.
 * Fuzzy Matching::              What's the big fuzz?
 * Thwarting Email Spam::        Simple ways to avoid unsolicited commercial email.
 * Spam Package::                A package for filtering and processing spam.
@@ -876,7 +876,6 @@ Spam Statistics Package
 
 Appendices
 
-* XEmacs::                      Requirements for installing under XEmacs.
 * History::                     How Gnus got where it is today.
 * On Writing Manuals::          Why this is not a beginner's guide.
 * Terminology::                 We use really difficult, like, words here.
@@ -924,7 +923,6 @@ Gnus Reference Guide
 * Ranges::                      A handy format for storing mucho numbers.
 * Group Info::                  The group info format.
 * Extended Interactive::        Symbolic prefixes and stuff.
-* Emacs/XEmacs Code::           Gnus can be run under all modern Emacsen.
 * Various File Formats::        Formats of files that Gnus use.
 
 Back End Interface
@@ -4319,9 +4317,7 @@ names:
 @item nnmail-pathname-coding-system
 @vindex nnmail-pathname-coding-system
 The value of this variable should be a coding system or @code{nil}.  The
-default is @code{nil} in Emacs, or is the aliasee of the coding system
-named @code{file-name} (a certain coding system of which an alias is
-@code{file-name}) in XEmacs.
+default is @code{nil} in Emacs.
 
 The @code{nnml} back end, the @code{nnrss} back end, the agent, and
 the cache use non-@acronym{ASCII} group names in those files and
@@ -4329,17 +4325,14 @@ directories.  This variable overrides the value of
 @code{file-name-coding-system} which specifies the coding system used
 when encoding and decoding those file names and directory names.
 
-In XEmacs (with the @code{mule} feature), @code{file-name-coding-system}
-is the only means to specify the coding system used to encode and decode
-file names.  On the other hand, Emacs uses the value of
-@code{default-file-name-coding-system} if @code{file-name-coding-system}
-is @code{nil} or it is bound to the value of
-@code{nnmail-pathname-coding-system} which is @code{nil}.
+Emacs uses the value of @code{default-file-name-coding-system} if
+@code{file-name-coding-system} is @code{nil} or it is bound to the
+value of @code{nnmail-pathname-coding-system} which is @code{nil}.
 
-Normally the value of @code{default-file-name-coding-system} in Emacs or
-@code{nnmail-pathname-coding-system} in XEmacs is initialized according
-to the locale, so you will need to do nothing if the value is suitable
-to encode and decode non-@acronym{ASCII} group names.
+Normally the value of @code{default-file-name-coding-system} is
+initialized according to the locale, so you will need to do nothing if
+the value is suitable to encode and decode non-@acronym{ASCII} group
+names.
 
 The value of this variable (or @code{default-file-name-coding-system})
 does not necessarily need to be the same value that is determined by
@@ -12557,11 +12550,11 @@ still a pain, though.
 
 This variable controls which information should be exposed in the
 User-Agent header.  It can be a list of symbols or a string.  Valid
-symbols are @code{gnus} (show Gnus version) and @code{emacs} (show Emacs
-version).  In addition to the Emacs version, you can add @code{codename}
-(show (S)XEmacs codename) or either @code{config} (show system
-configuration) or @code{type} (show system type).  If you set it to a
-string, be sure to use a valid format, see RFC 2616.
+symbols are @code{gnus} (show Gnus version) and @code{emacs} (show
+Emacs version).  In addition to the Emacs version, you can add
+@code{config} (show system configuration) or @code{type} (show system
+type).  If you set it to a string, be sure to use a valid format, see
+RFC 2616.
 
 @end table
 
@@ -17154,8 +17147,7 @@ The directory where @code{nnrss} stores its files.  The default is
 @vindex nnrss-file-coding-system
 The coding system used when reading and writing the @code{nnrss} groups
 data files.  The default is the value of
-@code{mm-universal-coding-system} (which defaults to @code{emacs-mule}
-in Emacs or @code{escape-quoted} in XEmacs).
+@code{mm-universal-coding-system} (which defaults to @code{emacs-mule}).
 
 @item nnrss-ignore-article-fields
 @vindex nnrss-ignore-article-fields
@@ -21102,13 +21094,7 @@ and `gnus-score-decay-scale'."
                       (max gnus-score-decay-constant
                            (* (abs score)
                               gnus-score-decay-scale)))))))
-    (if (and (featurep 'xemacs)
-             ;; XEmacs's floor can handle only the floating point
-             ;; number below the half of the maximum integer.
-             (> (abs n) (lsh -1 -2)))
-        (string-to-number
-         (car (split-string (number-to-string n) "\\.")))
-      (floor n))))
+    (floor n)))
 @end lisp
 
 @vindex gnus-score-decay-scale
@@ -22270,7 +22256,7 @@ to you, using @kbd{G b u} and updating the group will usually fix this.
 * Predicate Specifiers::        Specifying predicates.
 * Moderation::                  What to do if you're a moderator.
 * Fetching a Group::            Starting Gnus just to read a group.
-* Image Enhancements::          Modern versions of Emacs/XEmacs can display images.
+* Image Enhancements::          Modern versions of Emacs can display images.
 * Fuzzy Matching::              What's the big fuzz?
 * Thwarting Email Spam::        Simple ways to avoid unsolicited commercial email.
 * Spam Package::                A package for filtering and processing spam.
@@ -22613,11 +22599,9 @@ special @code{balloon-help} property set to
 variables should be either strings or symbols naming functions that
 return a string.  When the mouse passes over text with this property
 set, a balloon window will appear and display the string.  Please
-refer to @ref{Tooltips, ,Tooltips, emacs, The Emacs Manual},
-(in Emacs) or the doc string of @code{balloon-help-mode} (in
-XEmacs) for more information on this.  (For technical reasons, the
-guillemets have been approximated as @samp{<<} and @samp{>>} in this
-paragraph.)
+refer to @ref{Tooltips, ,Tooltips, emacs, The Emacs Manual} for more
+information on this.  (For technical reasons, the guillemets have been
+approximated as @samp{<<} and @samp{>>} in this paragraph.)
 
 Here's an alternative recipe for the group buffer:
 
@@ -22698,8 +22682,7 @@ these countries, that's not true.
 @vindex gnus-use-correct-string-widths
 To help fix this, you can set @code{gnus-use-correct-string-widths} to
 @code{t}.  This makes buffer generation slower, but the results will be
-prettier.  The default value under XEmacs is @code{t} but @code{nil}
-for Emacs.
+prettier.  The default value is @code{nil}.
 
 
 @node Window Layout
@@ -22878,9 +22861,7 @@ frame will be created where picons will be shown.  As you can see,
 instead of the normal @code{1.0} top-level spec, each additional split
 should have a frame parameter alist as the size spec.
 @xref{Frame Parameters, , Frame Parameters, elisp, The GNU Emacs Lisp
-Reference Manual}.  Under XEmacs, a frame property list will be
-accepted, too---for instance, @code{(height 5 width 15 left -1 top 1)}
-is such a plist.
+Reference Manual}.
 The list of all possible keys for @code{gnus-buffer-configuration} can
 be found in its default value.
 
@@ -23417,8 +23398,8 @@ It takes the group name as a parameter.
 @node Image Enhancements
 @section Image Enhancements
 
-XEmacs, as well as Emacs 21@footnote{Emacs 21 on MS Windows doesn't
-support images, Emacs 22 does.} and up, are able to display pictures and
+Emacs 21@footnote{Emacs 21 on MS Windows doesn't
+support images, Emacs 22 does.} and up are able to display pictures and
 stuff, so Gnus has taken advantage of that.
 
 @menu
@@ -23451,13 +23432,12 @@ readers.
 @c @anchor{X-Face}
 
 Viewing an @code{X-Face} header either requires an Emacs that has
-@samp{compface} support (which most XEmacs versions have), or that you
+@samp{compface} support, or that you
 have suitable conversion or display programs installed.  If your Emacs
 has image support the default action is to display the face before the
 @code{From} header.  If there's no native @code{X-Face} support, Gnus
 will try to convert the @code{X-Face} header using external programs
-from the @code{pbmplus} package and friends, see below.  For XEmacs it's
-faster if XEmacs has been compiled with @code{X-Face} support.  The
+from the @code{pbmplus} package and friends, see below.  The
 default action under Emacs without image support is to fork off the
 @code{display} program.
 
@@ -23494,8 +23474,7 @@ default colors are black and white.
 @vindex gnus-face-properties-alist
 Alist of image types and properties applied to Face (@pxref{Face}) and
 X-Face images.  The default value is @code{((pbm . (:face gnus-x-face))
-(png . nil))} for Emacs or @code{((xface . (:face gnus-x-face)))} for
-XEmacs.  Here are examples:
+(png . nil))}.  Here are examples:
 
 @lisp
 ;; Specify the altitude of Face and X-Face images in the From header.
@@ -23512,9 +23491,7 @@ XEmacs.  Here are examples:
 @xref{Image Descriptors,,, elisp, The Emacs Lisp Reference Manual},
 for the valid properties for various image types.  Currently,
 @code{pbm} is used for X-Face images and @code{png} is used for Face
-images in Emacs.  Only the @code{:face} property is effective on the
-@code{xface} image type in XEmacs if it is built with the
-@samp{libcompface} library.
+images in Emacs.
 @end table
 
 If you use posting styles, you can use an @code{x-face-file} entry in
@@ -23586,10 +23563,6 @@ displayed Face images.  @xref{X-Face}.
 
 Viewing a @code{Face} header requires an Emacs that is able to display
 PNG images.
-@c Maybe add this:
-@c (if (featurep 'xemacs)
-@c     (featurep 'png)
-@c   (image-type-available-p 'png))
 
 Gnus provides a few convenience functions and variables to allow
 easier insertion of Face headers in outgoing messages.
@@ -26398,8 +26371,7 @@ This variable controls whether to add timestamps to messages that are
 controlled by @code{gnus-verbose} and @code{gnus-verbose-backends} and
 are issued.  The default value is @code{nil} which means never to add
 timestamp.  If it is @code{log}, add timestamps to only the messages
-that go into the @file{*Messages*} buffer (in XEmacs, it is the
-@w{@file{ *Message-Log*}} buffer).  If it is neither @code{nil} nor
+that go into the @file{*Messages*} buffer.  If it is neither @code{nil} nor
 @code{log}, add timestamps not only to log messages but also to the ones
 displayed in the echo area.
 
@@ -26511,7 +26483,6 @@ but at the common table.@*
 @chapter Appendices
 
 @menu
-* XEmacs::                      Requirements for installing under XEmacs.
 * History::                     How Gnus got where it is today.
 * On Writing Manuals::          Why this is not a beginner's guide.
 * Terminology::                 We use really difficult, like, words here.
@@ -26521,19 +26492,6 @@ but at the common table.@*
 * Emacs for Heathens::          A short introduction to Emacsian terms.
 * Frequently Asked Questions::  The Gnus FAQ
 @end menu
-
-
-@node XEmacs
-@section XEmacs
-@cindex XEmacs
-@cindex installing under XEmacs
-
-XEmacs is distributed as a collection of packages.  You should install
-whatever packages the Gnus XEmacs package requires.  The current
-requirements are @samp{gnus}, @samp{mail-lib}, @samp{xemacs-base},
-@samp{eterm}, @samp{sh-script}, @samp{net-utils}, @samp{os-utils},
-@samp{dired}, @samp{mh-e}, @samp{sieve}, @samp{ps-print},
-@samp{pgg}, @samp{mailcrypt}, @samp{ecrypto}, and @samp{sasl}.
 
 
 @node History
@@ -26646,8 +26604,7 @@ and news from different sources.  I have added hooks for customizations
 everywhere I could imagine it being useful.  By doing so, I'm inviting
 every one of you to explore and invent.
 
-May Gnus never be complete.  @kbd{C-u 100 M-x all-hail-emacs} and
-@kbd{C-u 100 M-x all-hail-xemacs}.
+May Gnus never be complete.  @kbd{C-u 100 M-x all-hail-emacs}.
 
 
 @node Compatibility
@@ -26800,7 +26757,6 @@ know.
 @node Emacsen
 @subsection Emacsen
 @cindex Emacsen
-@cindex XEmacs
 @cindex Mule
 @cindex Emacs
 
@@ -26811,15 +26767,12 @@ This version of Gnus should work on:
 @item
 Emacs 23.1 and up.
 
-@item
-XEmacs 21.4 and up.
-
 @end itemize
 
 This Gnus version will absolutely not work on any Emacsen older than
 that.  Not reliably, at least.  Older versions of Gnus may work on older
 Emacs versions.  Particularly, Gnus 5.10.8 should also work on Emacs
-20.7 and XEmacs 21.1.
+20.7.
 
 @c No-merge comment: The paragraph added in v5-10 here must not be
 @c synced here!
@@ -27374,7 +27327,7 @@ referred.
 Gnus can make use of GroupLens predictions.
 
 @item
-Picons (personal icons) can be displayed under XEmacs (@pxref{Picons}).
+Picons (personal icons) can be displayed (@pxref{Picons}).
 
 @item
 A @code{trn}-like tree buffer can be displayed (@pxref{Tree Display}).
@@ -27946,28 +27899,6 @@ shadows manually or remove them using @code{make
 remove-installed-shadows}.
 
 @item
-New @file{make.bat} for compiling and installing Gnus under MS Windows
-
-Use @file{make.bat} if you want to install Gnus under MS Windows, the
-first argument to the batch-program should be the directory where
-@file{xemacs.exe} respectively @file{emacs.exe} is located, if you want
-to install Gnus after compiling it, give @file{make.bat} @code{/copy} as
-the second parameter.
-
-@file{make.bat} has been rewritten from scratch, it now features
-automatic recognition of XEmacs and Emacs, generates
-@file{gnus-load.el}, checks if errors occur while compilation and
-generation of info files and reports them at the end of the build
-process.  It now uses @code{makeinfo} if it is available and falls
-back to @file{infohack.el} otherwise.  @file{make.bat} should now
-install all files which are necessary to run Gnus and be generally a
-complete replacement for the @code{configure; make; make install}
-cycle used under Unix systems.
-
-The new @file{make.bat} makes @file{make-x.bat} and @file{xemacs.mak}
-superfluous, so they have been removed.
-
-@item
 @file{~/News/overview/} not used.
 
 As a result of the following change, the @file{~/News/overview/}
@@ -28526,7 +28457,7 @@ message, Message Manual}).
 The tool bars have been updated to use GNOME icons in Group, Summary and
 Message mode.  You can also customize the tool bars: @kbd{M-x
 customize-apropos @key{RET} -tool-bar$} should get you started.  This is a new
-feature in Gnus 5.10.10.  (Only for Emacs, not in XEmacs.)
+feature in Gnus 5.10.10.
 
 @item The tool bar icons are now (de)activated correctly
 in the group buffer, see the variable @code{gnus-group-update-tool-bar}.
@@ -28599,9 +28530,6 @@ The following Emacs versions are supported by No Gnus:
 @itemize @bullet
 
 @item Emacs 22 and up
-@item XEmacs 21.4
-@item XEmacs 21.5
-@item SXEmacs
 
 @end itemize
 
@@ -28901,16 +28829,13 @@ messages are deleted again).
 
 @item The tool bar has been updated to use GNOME icons.
 You can also customize the tool bars: @kbd{M-x customize-apropos @key{RET}
--tool-bar$} should get you started.  (Only for Emacs, not in XEmacs.)
+-tool-bar$} should get you started.
 @c FIXME: Document this in the manual
 
 @item The tool bar icons are now (de)activated correctly
 in the group buffer, see the variable @code{gnus-group-update-tool-bar}.
 Its default value depends on your Emacs version.
 @c FIXME: Document this in the manual
-
-@item You can change the location of XEmacs's toolbars in Gnus buffers.
-See @code{gnus-use-toolbar} and @code{message-use-toolbar}.
 
 @end itemize
 
@@ -29610,7 +29535,6 @@ and general methods of operation.
 * Ranges::                      A handy format for storing mucho numbers.
 * Group Info::                  The group info format.
 * Extended Interactive::        Symbolic prefixes and stuff.
-* Emacs/XEmacs Code::           Gnus can be run under all modern Emacsen.
 * Various File Formats::        Formats of files that Gnus use.
 @end menu
 
@@ -30950,52 +30874,6 @@ The current group name---the @code{gnus-group-group-name}
 function.
 
 @end table
-
-
-@node Emacs/XEmacs Code
-@subsection Emacs/XEmacs Code
-@cindex XEmacs
-@cindex Emacsen
-
-While Gnus runs under Emacs, XEmacs and Mule, I decided that one of the
-platforms must be the primary one.  I chose Emacs.  Not because I don't
-like XEmacs or Mule, but because it comes first alphabetically.
-
-This means that Gnus will byte-compile under Emacs with nary a warning,
-while XEmacs will pump out gigabytes of warnings while byte-compiling.
-As I use byte-compilation warnings to help me root out trivial errors in
-Gnus, that's very useful.
-
-I've also consistently used Emacs function interfaces, but have used
-Gnusey aliases for the functions.  To take an example:  Emacs defines a
-@code{run-at-time} function while XEmacs defines a @code{start-itimer}
-function.  I then define a function called @code{gnus-run-at-time} that
-takes the same parameters as the Emacs @code{run-at-time}.  When running
-Gnus under Emacs, the former function is just an alias for the latter.
-However, when running under XEmacs, the former is an alias for the
-following function:
-
-@lisp
-(defun gnus-xmas-run-at-time (time repeat function &rest args)
-  (start-itimer
-   "gnus-run-at-time"
-   `(lambda ()
-      (,function ,@@args))
-   time repeat))
-@end lisp
-
-This sort of thing has been done for bunches of functions.  Gnus does
-not redefine any native Emacs functions while running under XEmacs---it
-does this @code{defalias} thing with Gnus equivalents instead.  Cleaner
-all over.
-
-In the cases where the XEmacs function interface was obviously cleaner,
-I used it instead.  For example @code{gnus-region-active-p} is an alias
-for @code{region-active-p} in XEmacs, whereas in Emacs it is a function.
-
-Of course, I could have chosen XEmacs as my native platform and done
-mapping functions the other way around.  But I didn't.  The performance
-hit these indirections impose on Gnus under XEmacs should be slight.
 
 
 @node Various File Formats
