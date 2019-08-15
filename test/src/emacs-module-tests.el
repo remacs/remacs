@@ -368,7 +368,7 @@ Interactively, you can try hitting \\[keyboard-quit] to quit."
     (let ((input (car test-case))
           (expected (cdr test-case)))
       (ert-info ((format "input: %S, expected result: %d" input expected))
-        (should (eq (mod-test-nanoseconds input) expected))))))
+        (should (= (mod-test-nanoseconds input) expected))))))
 
 (ert-deftest mod-test-double ()
   (dolist (input (list 0 1 2 -1 42 12345678901234567890
