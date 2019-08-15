@@ -248,6 +248,10 @@ Return a bovination list to use."
   defun*
   defsubst
   defmacro
+  cl-defun
+  cl-defun*
+  cl-defsubst
+  cl-defmacro
   define-overload ;; @todo - remove after cleaning up semantic.
   define-overloadable-function
   )
