@@ -114,7 +114,12 @@ RFC 2646 suggests 66 characters for readability."
 
 ;;;###autoload
 (defun fill-flowed (&optional buffer delete-space)
-  (with-current-buffer (or (current-buffer) buffer)
+  "Apply RFC2646 decoding to BUFFER.
+If BUFFER is nil, default to the current buffer.
+
+If DELETE-SPACE, delete RFC2646 spaces padding at the end of
+lines."
+  (with-current-buffer (or buffer (current-buffer))
     (goto-char (point-min))
     ;; Remove space stuffing.
     (while (re-search-forward "^\\( \\|>+ $\\)" nil t)
