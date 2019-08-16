@@ -249,7 +249,6 @@ Return a bovination list to use."
   defsubst
   defmacro
   cl-defun
-  cl-defun*
   cl-defsubst
   cl-defmacro
   define-overload ;; @todo - remove after cleaning up semantic.
@@ -396,6 +395,7 @@ Return a bovination list to use."
          (cons nil nil)
          )))
   defstruct
+  cl-defstruct
   )
 
 (semantic-elisp-setup-form-parser
@@ -614,7 +614,7 @@ Returns non-nil it is not possible to go up a context."
   (let ((last-up (semantic-up-context-default)))
   (while
       (and (not (looking-at
-		 "(\\(let\\*?\\|def\\(un\\|method\\|generic\\|\
+		 "(\\(let\\*?\\|\\(?:cl-\\)?def\\(un\\|method\\|generic\\|\
 define-mode-overload\\)\
 \\|with-slots\\)"))
 	   (not last-up))
