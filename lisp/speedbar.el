@@ -700,7 +700,7 @@ singular expression.  This variable will be turned into
 function `speedbar-add-supported-extension' to add a new extension at
 runtime, or use the configuration dialog to set it in your init file.
 If you add an extension to this list, and it does not appear, you may
-need to also modify `completion-ignored-extension' which will also help
+need to also modify `completion-ignored-extensions' which will also help
 file completion."
   :group 'speedbar
   :type '(repeat (regexp :tag "Extension Regexp"))
