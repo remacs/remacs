@@ -721,7 +721,7 @@ into the output, \\=\\=\\=\\[ puts \\=\\[ into the output, and \\=\\=\\=` puts \
 output.
 
 Return the original STRING if no substitutions are made.
-Otherwise, return a new string.  */)
+Otherwise, return a new string (without any text properties).  */)
   (Lisp_Object string)
 {
   char *buf;
@@ -984,7 +984,7 @@ Otherwise, return a new string.  */)
 	{
 	  /* Nothing has changed other than quoting, so copy the string’s
 	     text properties.  FIXME: Text properties should survive other
-	     changes too.  */
+	     changes too; see bug#17052.  */
 	  INTERVAL interval_copy = copy_intervals (string_intervals (string),
 						   0, SCHARS (string));
 	  if (interval_copy)
