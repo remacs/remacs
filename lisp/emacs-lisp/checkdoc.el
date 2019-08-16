@@ -1494,16 +1494,11 @@ may require more formatting")
 	       (if (and (re-search-forward "[.!?:\"]\\([ \t\n]+\\|\"\\)"
 					   (line-end-position) t)
 			(< (current-column) numc))
-		   (if (checkdoc-autofix-ask-replace
-			p (1+ p)
-			"1st line not a complete sentence.  Join these lines? "
-			" " t)
-		       (progn
-			 ;; They said yes.  We have more fill work to do...
-			 (goto-char (match-beginning 1))
-			 (delete-region (point) (match-end 1))
-			 (insert "\n")
-			 (setq msg nil))))))
+		   (when (checkdoc-autofix-ask-replace
+		          p (1+ p)
+		          "1st line not a complete sentence.  Join these lines? "
+		          " " t)
+		     (setq msg nil)))))
 	   (if msg
 	       (checkdoc-create-error msg s (save-excursion
 					      (goto-char s)
