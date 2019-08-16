@@ -933,7 +933,8 @@ don't move point."
                            ;; Don't bug out if the file is empty (or a
                            ;; definition ends prematurely.
                            (end-of-file)))
-    (`(,(or 'defun 'defvar 'defcustom 'defmacro 'defconst 'defsubst 'defadvice)
+    (`(,(or 'defun 'defvar 'defcustom 'defmacro 'defconst 'defsubst 'defadvice
+            'cl-defun 'cl-defgeneric 'cl-defmethod 'cl-defmacro)
        ,(pred symbolp)
        ;; Require an initializer, i.e. ignore single-argument `defvar'
        ;; forms, which never have a doc string.
@@ -1675,7 +1676,10 @@ function,command,variable,option or symbol." ms1))))))
 		   (last-pos 0)
 		   (found 1)
 		   (order (and (nth 3 fp) (car (nth 3 fp))))
-		   (nocheck (append '("&optional" "&rest") (nth 3 fp)))
+		   (nocheck (append '("&optional" "&rest" "&key" "&aux"
+                                      "&context" "&environment" "&whole"
+                                      "&body" "&allow-other-keys")
+                                    (nth 3 fp)))
 		   (inopts nil))
 	       (while (and args found (> found last-pos))
                  (if (or (member (car args) nocheck)
@@ -1880,7 +1884,8 @@ the token checkdoc-order: <TOKEN> exists, and TOKEN is a symbol read
 from the comment."
   (save-excursion
     (beginning-of-defun)
-    (let ((defun (looking-at "(def\\(un\\|macro\\|subst\\|advice\\)"))
+    (let ((defun (looking-at
+                  "(\\(?:cl-\\)?def\\(un\\|macro\\|subst\\|advice\\|generic\\|method\\)"))
 	  (is-advice (looking-at "(defadvice"))
 	  (lst nil)
 	  (ret nil)
@@ -1946,7 +1951,10 @@ from the comment."
 	;; This is because read will intern nil if it doesn't into the
 	;; new obarray.
 	(if (not (listp lst)) (setq lst nil))
-	(if is-advice nil
+	(unless is-advice
+          ;; lst here can be something like ((foo bar) baz) from
+          ;; cl-lib methods; flatten it:
+          (setq lst (flatten-tree lst))
 	  (while lst
 	    (setq ret (cons (symbol-name (car lst)) ret)
 		  lst (cdr lst)))))
