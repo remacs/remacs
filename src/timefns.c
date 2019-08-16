@@ -661,9 +661,17 @@ enum timeform
    TIMEFORM_HI_LO_US, /* seconds plus microseconds (HI LO US) */
    TIMEFORM_NIL, /* current time in nanoseconds */
    TIMEFORM_HI_LO_US_PS, /* seconds plus micro and picoseconds (HI LO US PS) */
+   /* These two should be last; see timeform_sub_ps_p.  */
    TIMEFORM_FLOAT, /* time as a float */
    TIMEFORM_TICKS_HZ /* fractional time: HI is ticks, LO is ticks per second */
   };
+
+/* True if Lisp times of form FORM can express sub-picosecond timestamps.  */
+static bool
+timeform_sub_ps_p (enum timeform form)
+{
+  return TIMEFORM_FLOAT <= form;
+}
 
 /* From the valid form FORM and the time components HIGH, LOW, USEC
    and PSEC, generate the corresponding time value.  If LOW is
@@ -1016,8 +1024,8 @@ lispint_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 
 /* Given Lisp operands A and B, add their values, and return the
    result as a Lisp timestamp that is in (TICKS . HZ) form if either A
-   or B are in that form, (HI LO US PS) form otherwise.  Subtract
-   instead of adding if SUBTRACT.  */
+   or B are in that form or are floats, (HI LO US PS) form otherwise.
+   Subtract instead of adding if SUBTRACT.  */
 static Lisp_Object
 time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 {
@@ -1077,7 +1085,7 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
      otherwise the (HI LO US PS) form for backward compatibility.  */
   return (EQ (hz, make_fixnum (1))
 	  ? ticks
-	  : aform == TIMEFORM_TICKS_HZ || bform == TIMEFORM_TICKS_HZ
+	  : timeform_sub_ps_p (aform) || timeform_sub_ps_p (bform)
 	  ? Fcons (ticks, hz)
 	  : ticks_hz_list4 (ticks, hz));
 }

@@ -135,9 +135,10 @@
   (should (equal (timezone-zone-to-minute "*invalid*") 0)))
 
 (ert-deftest timezone-tests-time-from-absolute ()
-  (should (equal (timezone-time-from-absolute (* 2020 365)  ; Jan 1 2020
-                                      (* 12 60 60)) ; 12:00
-                 '(23911 48704 0 0))))
+  (should (time-equal-p
+	   (timezone-time-from-absolute (* 2020 365)  ; Jan 1 2020
+					(* 12 60 60)) ; 12:00
+	   '(23911 48704 0 0))))
 
 ;; TODO: Write tests for timezone-tests-time-zone-from-absolute, which is a
 ;;       bit tricky since the results depend on `current-time-zone'.

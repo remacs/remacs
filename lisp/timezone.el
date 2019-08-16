@@ -284,14 +284,14 @@ or an integer of the form +-HHMM, or a time zone name."
 
 (defun timezone-time-from-absolute (date seconds)
   "Compute the UTC time equivalent to DATE at time SECONDS after midnight.
-Return a list suitable as an argument to `current-time-zone',
+Return a Lisp timestamp suitable as an argument to `current-time-zone',
 or nil if the date cannot be thus represented.
 DATE is the number of days elapsed since the (imaginary)
 Gregorian date Sunday, December 31, 1 BC."
   (let* ((current-time-origin 719163)
 	    ;; (timezone-absolute-from-gregorian 1 1 1970)
 	 (days (- date current-time-origin))
-	 (seconds-per-day (float 86400))
+	 (seconds-per-day 86400)
 	 (day-seconds (* days seconds-per-day)))
     (condition-case nil (time-add day-seconds seconds)
       (range-error))))

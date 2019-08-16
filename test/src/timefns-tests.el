@@ -145,6 +145,9 @@
 		      (< 0.99 (/ (- (float-time a)) (float-time b))
 			 1.01))))))))
 
+(ert-deftest time-rounding-tests ()
+  (should (time-equal-p 1e-13 (time-add 0 1e-13))))
+
 (ert-deftest encode-time-dst-numeric-zone ()
     "Check for Bug#35502."
     (should (time-equal-p
