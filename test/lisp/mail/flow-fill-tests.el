@@ -24,7 +24,7 @@
 (require 'ert)
 (require 'flow-fill)
 
-(ert-deftest fill-flow-tests-fill-flowed-encode ()
+(ert-deftest fill-flow-tests-fill-flowed-decode ()
   (let ((input
          (concat
           "> Thou villainous ill-breeding spongy dizzy-eyed \n"
@@ -53,6 +53,7 @@
     (with-temp-buffer
       (insert input)
       (fill-flowed)
+      (message "foo")
       (should (equal (buffer-string) output)))))
 
 (ert-deftest fill-flow-tests-fill-flowed-encode ()
@@ -86,6 +87,19 @@
     (with-temp-buffer
       (insert input)
       (fill-flowed-encode)
+      (should (equal (buffer-string) output)))))
+
+(ert-deftest fill-flow-tests-fill-flowed-stuffed ()
+  (let ((input
+         (concat
+          " > From space-stuffed with a \n"
+          "continuation.\n"))
+        (output
+         "> From space-stuffed with a continuation.\n")
+        (fill-flowed-display-column 69))
+    (with-temp-buffer
+      (insert input)
+      (fill-flowed)
       (should (equal (buffer-string) output)))))
 
 (provide 'flow-fill-tests)

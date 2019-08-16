@@ -120,55 +120,49 @@ If BUFFER is nil, default to the current buffer.
 If DELETE-SPACE, delete RFC2646 spaces padding at the end of
 lines."
   (with-current-buffer (or buffer (current-buffer))
-    (goto-char (point-min))
-    ;; Remove space stuffing.
-    (while (re-search-forward "^\\( \\|>+ $\\)" nil t)
-      (delete-char -1)
-      (forward-line 1))
-    (goto-char (point-min))
-    (while (re-search-forward " $" nil t)
-      (when (save-excursion
-	      (beginning-of-line)
-	      (looking-at "^\\(>*\\)\\( ?\\)"))
-	(let ((quote (match-string 1))
-	      sig)
-	  (if (string= quote "")
-	      (setq quote nil))
-	  (when (and quote (string= (match-string 2) ""))
-	    (save-excursion
-	      ;; insert SP after quote for pleasant reading of quoted lines
-	      (beginning-of-line)
-	      (when (> (skip-chars-forward ">") 0)
-		(insert " "))))
-	  ;; XXX slightly buggy handling of "-- "
-	  (while (and (save-excursion
-			(ignore-errors (backward-char 3))
-			(setq sig (looking-at "-- "))
-			(looking-at "[^-][^-] "))
-		      (save-excursion
-			(unless (eobp)
-			  (forward-char 1)
-			  (looking-at (format "^\\(%s\\)\\([^>\n\r]\\)"
-					      (or quote " ?"))))))
-	    (save-excursion
-	      (replace-match (if (string= (match-string 2) " ")
-				 "" "\\2")))
-	    (backward-delete-char -1)
-	    (when delete-space
-	      (delete-char -1))
-	    (end-of-line))
-	  (unless sig
-	    (condition-case nil
-		(let ((fill-prefix (when quote (concat quote " ")))
-		      (fill-column (eval fill-flowed-display-column))
-		      adaptive-fill-mode)
-		  (fill-region (point-at-bol)
-			       (min (1+ (point-at-eol))
-				    (point-max))
-			       'left 'nosqueeze))
-	      (error
-	       (forward-line 1)
-	       nil))))))))
+    (let ((fill-column  (eval fill-flowed-display-column)))
+      (goto-char (point-min))
+      (while (not (eobp))
+        (cond
+         ((and (looking-at "^>+")
+               (eq (char-before (line-end-position)) ?\s))
+          (let ((prefix (match-string 0)))
+            ;; Insert a space character after the quote signs for more
+            ;; pleasant reading of quoted lines.
+            (goto-char (match-end 0))
+            (unless (looking-at " ")
+              (insert " "))
+            (end-of-line)
+            (when (and (not (eobp))
+                       (save-excursion
+                         (forward-line 1)
+                         (looking-at (format "\\(%s ?\\)[^>]" prefix))))
+              ;; Delete the newline and the quote at the start of the
+              ;; next line.
+              (delete-region (point) (match-end 1))
+              (ignore-errors
+		  (let ((fill-prefix (concat prefix " "))
+		        adaptive-fill-mode)
+		    (fill-region (line-beginning-position)
+                                 (line-end-position)
+			         'left 'nosqueeze))))))
+         (t
+          ;; Delete the newline.
+          (when (eq (following-char) ?\s)
+            (delete-char 1))
+          ;; Hack: Don't do the flowing on the signature line.
+          (when (and (not (looking-at "-- $"))
+                     (eq (char-before (line-end-position)) ?\s))
+            (end-of-line)
+            (when delete-space
+              (delete-char -1))
+            (delete-char 1)
+            (ignore-errors
+		(let ((fill-prefix ""))
+		  (fill-region (line-beginning-position)
+                               (line-end-position)
+			       'left 'nosqueeze))))))
+        (forward-line 1)))))
 
 (make-obsolete-variable 'fill-flowed-encode-tests nil "27.1")
 (defvar fill-flowed-encode-tests)
