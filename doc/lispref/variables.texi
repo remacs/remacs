@@ -2533,14 +2533,43 @@ set.  An example of using this macro is:
 @end example
 @end defmac
 
-@findex gv-define-expander
-@findex gv-letplace
-@c FIXME?  Not sure what or how much to say about these.
-@c See cl.texi for an example of using gv-letplace.
-For more control over the expansion, see the macro @code{gv-define-expander}.
+@defmac gv-define-expander name handler
+For more control over the expansion, the @code{gv-define-expander}
+macro can be used.  For instance, a settable @code{substring} could be
+implemented this way:
+
+@example
+(gv-define-expander substring
+  (lambda (do place from &optional to)
+    (gv-letplace (getter setter) place
+      (macroexp-let2* nil ((start from) (end to))
+        (funcall do `(substring ,getter ,start ,end)
+                 (lambda (v)
+                   (funcall setter `(cl--set-substring
+                                     ,getter ,start ,end ,v))))))))
+@end example
+@end defmac
+
+@defmac gv-letplace (getter setter) place &rest body
 The macro @code{gv-letplace} can be useful in defining macros that
 perform similarly to @code{setf}; for example, the @code{incf} macro
-of Common Lisp.  Consult the source file @file{gv.el} for more details.
+of Common Lisp could be implemented this way:
+
+@example
+(defmacro incf (place &optional n)
+  (gv-letplace (getter setter) place
+    (macroexp-let2 nil v (or n 1)
+      (funcall setter `(+ ,v ,getter)))))
+@end example
+
+@var{getter} will be bound to a copyable expression that returns the
+value of @var{place}.  @var{setter} will be bound to a function that
+takes an expression @var{v} and returns a new expression that sets
+@var{place} to @var{v}.  @var{body} should return a Emacs Lisp
+expression manipulating @var{place} via @var{getter} and @var{setter}.
+@end defmac
+
+Consult the source file @file{gv.el} for more details.
 
 @cindex CL note---no @code{setf} functions
 @quotation
