@@ -329,7 +329,10 @@ Use `url-http-referer' as the Referer-header (subject to `url-privacy-level')."
              ;; The request
              (or url-http-method "GET") " "
              (url-http--encode-string
-              (if using-proxy (url-recreate-url url-http-target-url) real-fname))
+              (if (and using-proxy
+                       ;; Bug#35969.
+                       (not (equal "https" (url-type url-http-target-url))))
+                  (url-recreate-url url-http-target-url) real-fname))
              " HTTP/" url-http-version "\r\n"
              ;; Version of MIME we speak
              "MIME-Version: 1.0\r\n"
@@ -1439,9 +1442,7 @@ The return value of this function is the retrieval buffer."
                         'url-http-wait-for-headers-change-function)
                   (set-process-filter tls-connection 'url-http-generic-filter)
                   (process-send-string tls-connection
-                                       ;; Use the non-proxy form of the request
-                                       (let (url-http-proxy)
-                                         (url-http-create-request))))
+                                       (url-http-create-request)))
               (gnutls-error
                (url-http-activate-callback)
                (error "gnutls-error: %s" e))
