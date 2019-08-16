@@ -1028,7 +1028,6 @@ is wrapped around any parts requiring it."
               deps))))
 
 (declare-function lm-header "lisp-mnt" (header))
-(declare-function lm-header-multiline "lisp-mnt" (header))
 (declare-function lm-homepage "lisp-mnt" (&optional file))
 (declare-function lm-keywords-list "lisp-mnt" (&optional file))
 (declare-function lm-maintainer "lisp-mnt" (&optional file))
@@ -1055,8 +1054,7 @@ boundaries."
     (narrow-to-region start (point))
     (require 'lisp-mnt)
     ;; Use some headers we've invented to drive the process.
-    (let* ((requires-str
-            (mapconcat 'identity (lm-header-multiline "package-requires") " "))
+    (let* ((requires-str (lm-header "package-requires"))
            ;; Prefer Package-Version; if defined, the package author
            ;; probably wants us to use it.  Otherwise try Version.
            (pkg-version
