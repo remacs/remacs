@@ -1346,6 +1346,16 @@ All keyword parameters default to nil."
 	    (error
 	     (delay-warning 'frameset (error-message-string err) :warning))))))
 
+    ;; Make sure the frame with last-focus-update has focus.
+    (let ((last-focus-frame
+           (catch 'last-focus
+             (maphash (lambda (frame _)
+                        (when (frame-parameter frame 'last-focus-update)
+                          (throw 'last-focus frame)))
+                      frameset--action-map))))
+      (when last-focus-frame
+        (select-frame-set-input-focus last-focus-frame)))
+
     ;; Make sure there's at least one visible frame.
     (unless (or (daemonp)
 		(catch 'visible
