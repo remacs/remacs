@@ -311,10 +311,9 @@
    arguments should not have side effects.
 
    The WRAPV macros are not constant expressions.  They support only
-   +, binary -, and *.  The result type must be either signed, or an
-   unsigned type that is 'unsigned int' or wider.  Because the WRAPV
-   macros convert the result, the report overflow in different
-   circumstances than the OVERFLOW macros do.
+   +, binary -, and *.  Because the WRAPV macros convert the result,
+   they report overflow in different circumstances than the OVERFLOW
+   macros do.
 
    These macros are tuned for their last input argument being a constant.
 
@@ -417,29 +416,41 @@
                         unsigned long int, 0, ULONG_MAX), \
      long long int: \
        _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long long int, \
-                        long long int, LLONG_MIN, LLONG_MAX),
+                        long long int, LLONG_MIN, LLONG_MAX), \
      unsigned long long int: \
        _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned long long int, \
-                        unsigned long long int, ULLONG_MIN, ULLONG_MAX)))
+                        unsigned long long int, 0, ULLONG_MAX)))
 #else
-/* This fallback implementation uses _GL_SIGNED_TYPE_OR_EXPR, and so
-   may guess wrong on some non-GNU pre-C11 compilers when the type of
-   *R is unsigned char or unsigned short.  This is why the
-   documentation for INT_ADD_WRAPV says that the result type, if
-   unsigned, should be unsigned int or wider.  */
+/* Store the low-order bits of A <op> B into *R, where OP specifies
+   the operation and OVERFLOW the overflow predicate.  If *R is
+   signed, its type is ST with bounds SMIN..SMAX; otherwise its type
+   is UT with bounds U..UMAX.  ST and UT are narrower than int.
+   Return 1 if the result overflows.  See above for restrictions.  */
+# if _GL_HAVE___TYPEOF__
+#  define _GL_INT_OP_WRAPV_SMALLISH(a,b,r,op,overflow,st,smin,smax,ut,umax) \
+    (TYPE_SIGNED (__typeof__ (*(r))) \
+     ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, st, smin, smax) \
+     : _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, ut, 0, umax))
+# else
+#  define _GL_INT_OP_WRAPV_SMALLISH(a,b,r,op,overflow,st,smin,smax,ut,umax) \
+    (overflow (a, b, smin, smax) \
+     ? (overflow (a, b, 0, umax) \
+        ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a,b,op,unsigned,st), 1) \
+        : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a,b,op,unsigned,st)) < 0) \
+     : (overflow (a, b, 0, umax) \
+        ? (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a,b,op,unsigned,st)) >= 0 \
+        : (*(r) = _GL_INT_OP_WRAPV_VIA_UNSIGNED (a,b,op,unsigned,st), 0)))
+# endif
+
 # define _GL_INT_OP_WRAPV(a, b, r, op, builtin, overflow) \
    (sizeof *(r) == sizeof (signed char) \
-    ? (_GL_SIGNED_TYPE_OR_EXPR (*(r)) \
-       ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
-                          signed char, SCHAR_MIN, SCHAR_MAX) \
-       : _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
-                          unsigned char, 0, UCHAR_MAX)) \
+    ? _GL_INT_OP_WRAPV_SMALLISH (a, b, r, op, overflow, \
+                                 signed char, SCHAR_MIN, SCHAR_MAX, \
+                                 unsigned char, UCHAR_MAX) \
     : sizeof *(r) == sizeof (short int) \
-    ? (_GL_SIGNED_TYPE_OR_EXPR (*(r)) \
-       ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
-                          short int, SHRT_MIN, SHRT_MAX) \
-       : _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
-                          unsigned short int, 0, USHRT_MAX)) \
+    ? _GL_INT_OP_WRAPV_SMALLISH (a, b, r, op, overflow, \
+                                 short int, SHRT_MIN, SHRT_MAX, \
+                                 unsigned short int, USHRT_MAX) \
     : sizeof *(r) == sizeof (int) \
     ? (EXPR_SIGNED (*(r)) \
        ? _GL_INT_OP_CALC (a, b, r, op, overflow, unsigned int, \
@@ -541,8 +552,8 @@
             <= -1 - (a))) \
       : INT_NEGATE_OVERFLOW (_GL_INT_CONVERT (b, tmin)) && (b) == -1 \
       ? (EXPR_SIGNED (a) \
-	 ? 0 < (a) + (tmin) \
-	 : 0 < (a) && -1 - (tmin) < (a) - 1) \
+         ? 0 < (a) + (tmin) \
+         : 0 < (a) && -1 - (tmin) < (a) - 1) \
       : (tmin) / (b) < (a)) \
    : (b) == 0 \
    ? 0 \
