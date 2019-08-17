@@ -2116,10 +2116,20 @@ probing the innards of a timestamp directly, or creating a timestamp
 by hand.
 
 +++
-*** Decoded (calendrical) timestamps now have a new subsecond member.
-This affects functions like decode-time and parse-time-string that
-generate these timestamps, and functions like encode-time that accept
-them.
+*** Decoded (calendrical) timestamps now have subsecond resolution.
+This affects decode-time, which generates these timestamps, as well as
+functions like encode-time that accept them.  The subsecond info is
+present as a (TICKS . HZ) value in the seconds element of a decoded
+timestamp, and decode-time has a new optional FORM argument specifying
+the form of the seconds member.  For example, if X is the timestamp
+(1566009571321878186 . 1000000000), which represents 2019-08-17
+02:39:31.321878186 UTC, (decode-time X t t) returns ((31321878186
+. 1000000000) 39 2 17 8 2019 6 nil 0) instead of the traditional (31
+39 2 17 8 2019 6 nil 0) returned by plain (decode-time X t).  Although
+the default FORM is currently 'integer', which truncates the seconds
+to an integer and is the traditional behavior, this default may change
+in future Emacs versions, so callers requiring an integer should
+specify FORM explicitly.
 
 +++
 *** 'encode-time' supports a new API '(encode-time TIME)'.
@@ -2152,8 +2162,8 @@ with POSIX.1-2017.
 *** To access (or alter) the elements a decoded time value, the
 'decoded-time-second', 'decoded-time-minute', 'decoded-time-hour',
 'decoded-time-day', 'decoded-time-month', 'decoded-time-year',
-'decoded-time-weekday', 'decoded-time-dst', 'decoded-time-zone',
-and 'decoded-time-subsec' accessors can be used.
+'decoded-time-weekday', 'decoded-time-dst' and 'decoded-time-zone'
+accessors can be used.
 
 *** The new functions 'date-days-in-month' (which will say how many
 days there are in a month in a specific year), 'date-ordinal-to-time'

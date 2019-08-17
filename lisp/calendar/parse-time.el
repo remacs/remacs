@@ -148,7 +148,7 @@ letters, digits, plus or minus signs or colons."
 
 ;;;###autoload
 (defun parse-time-string (string)
-  "Parse the time in STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ SUBSEC).
+  "Parse the time in STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
 STRING should be something resembling an RFC 822 (or later) date-time, e.g.,
 \"Fri, 25 Mar 2016 16:24:56 +0100\", but this function is
 somewhat liberal in what format it accepts, and will attempt to
@@ -156,7 +156,7 @@ return a \"likely\" value even for somewhat malformed strings.
 The values returned are identical to those of `decode-time', but
 any unknown values other than DST are returned as nil, and an
 unknown DST value is returned as -1."
-  (let ((time (list nil nil nil nil nil nil nil -1 nil nil))
+  (let ((time (list nil nil nil nil nil nil nil -1 nil))
 	(temp (parse-time-tokenize (downcase string))))
     (while temp
       (let ((parse-time-elt (pop temp))
@@ -193,10 +193,6 @@ unknown DST value is returned as -1."
 				       (funcall this)))
 				 parse-time-val)))
 		  (setf (nth (pop slots) time) new-val))))))))
-    ;; FIXME: Currently parse-time-string does not parse subseconds.
-    ;; So if seconds were found, set subseconds to zero.
-    (when (nth 0 time)
-      (setf (nth 9 time) 0))
     time))
 
 (defun parse-iso8601-time-string (date-string)

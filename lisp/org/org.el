@@ -17775,12 +17775,14 @@ NODEFAULT, hour and minute fields will be nil if not given."
 	       (string-to-number (match-string 4 s))
 	       (string-to-number (match-string 3 s))
 	       (string-to-number (match-string 2 s))
-	       nil nil nil 0))
+	       nil nil nil))
 	((string-match "^<[^>]+>$" s)
 	 ;; FIXME: `decode-time' needs to be called with ZONE as its
 	 ;; second argument.  However, this requires at least Emacs
 	 ;; 25.1.  We can do it when we switch to this version as our
 	 ;; minimal requirement.
+	 ;; FIXME: decode-time needs to be called with t as its
+	 ;; third argument, but this requires at least Emacs 27.
 	 (decode-time (org-matcher-time s)))
 	(t (error "Not a standard Org time string: %s" s))))
 
