@@ -825,7 +825,9 @@ If STR already contains padding, the corresponding amount is
 ignored from `comment-padding'.
 N defaults to 0.
 If N is `re', a regexp is returned instead, that would match
-the string for any N."
+the string for any N.
+
+Ensure that `comment-normalize-vars' has been called before you use this."
   (setq n (or n 0))
   (when (and (stringp str) (string-match "\\S-" str))
     ;; Separate the actual string from any leading/trailing padding
@@ -860,8 +862,10 @@ It also adds N copies of the first non-whitespace chars of STR.
 If STR already contains padding, the corresponding amount is
 ignored from `comment-padding'.
 N defaults to 0.
-If N is `re', a regexp is returned instead, that would match
-  the string for any N."
+If N is `re', a regexp is returned instead, that would match the
+string for any N.
+
+Ensure that `comment-normalize-vars' has been called before you use this."
   (setq n (or n 0))
   (when (and (stringp str) (not (string= "" str)))
     ;; Only separate the left pad because we assume there is no right pad.
