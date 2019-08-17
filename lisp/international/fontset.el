@@ -246,6 +246,7 @@
         (makasar #x11EE0)
 	(cuneiform #x12000)
 	(cuneiform-numbers-and-punctuation #x12400)
+	(egyptian #x13000)
 	(mro #x16A40)
 	(bassa-vah #x16AD0)
 	(pahawh-hmong #x16B11)
@@ -708,8 +709,8 @@
   ;; For simple scripts
   (dolist (script '(phonetic
 		    armenian
-		    syriac
 		    thaana
+		    syriac
 		    georgian
 		    cherokee
 		    canadian-aboriginal
@@ -734,8 +735,9 @@
 		    phoenician
 		    lydian
 		    kharoshthi
-		    cuneiform
 		    cuneiform-numbers-and-punctuation
+		    cuneiform
+		    egyptian
 		    byzantine-musical-symbol
 		    musical-symbol
 		    ancient-greek-musical-notation
