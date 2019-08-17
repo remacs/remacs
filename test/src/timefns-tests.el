@@ -40,25 +40,31 @@
 		    (7879679999900 . 100000)
 		    (78796799999999999999 . 1000000000000)))
       ;; UTC.
-     (let ((subsec (time-subtract (time-convert look t)
-				  (time-convert look 'integer))))
+     (let ((sec (time-add 59 (time-subtract (time-convert look t)
+                                            (time-convert look 'integer)))))
       (should (string-equal
 	       (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" look t)
 	       "1972-06-30 23:59:59.999 +0000"))
-      (should (equal (decode-time look t)
-		     (list 59 59 23 30 6 1972 5 nil 0 subsec)))
+      (should (equal (decode-time look t 'integer)
+		     '(59 59 23 30 6 1972 5 nil 0)))
+      (should (equal (decode-time look t t)
+		     (list sec 59 23 30 6 1972 5 nil 0)))
       ;; "UTC0".
       (should (string-equal
 	       (format-time-string format look "UTC0")
 	       "1972-06-30 23:59:59.999 +0000 (UTC)"))
-      (should (equal (decode-time look "UTC0")
-		     (list 59 59 23 30 6 1972 5 nil 0 subsec)))
+      (should (equal (decode-time look "UTC0" 'integer)
+		     '(59 59 23 30 6 1972 5 nil 0)))
+      (should (equal (decode-time look "UTC0" t)
+		     (list sec 59 23 30 6 1972 5 nil 0)))
       ;; Negative UTC offset, as a Lisp list.
       (should (string-equal
 	       (format-time-string format look '(-28800 "PST"))
 	       "1972-06-30 15:59:59.999 -0800 (PST)"))
-      (should (equal (decode-time look '(-28800 "PST"))
-		     (list 59 59 15 30 6 1972 5 nil -28800 subsec)))
+      (should (equal (decode-time look '(-28800 "PST") 'integer)
+		     '(59 59 15 30 6 1972 5 nil -28800)))
+      (should (equal (decode-time look '(-28800 "PST") t)
+		     (list sec 59 15 30 6 1972 5 nil -28800)))
       ;; Negative UTC offset, as a Lisp integer.
       (should (string-equal
 	       (format-time-string format look -28800)
@@ -67,14 +73,18 @@
 	       (if (eq system-type 'windows-nt)
 		   "1972-06-30 15:59:59.999 -0800 (ZZZ)"
 		 "1972-06-30 15:59:59.999 -0800 (-08)")))
-      (should (equal (decode-time look -28800)
-		     (list 59 59 15 30 6 1972 5 nil -28800 subsec)))
+      (should (equal (decode-time look -28800 'integer)
+		     '(59 59 15 30 6 1972 5 nil -28800)))
+      (should (equal (decode-time look -28800 t)
+		     (list sec 59 15 30 6 1972 5 nil -28800)))
       ;; Positive UTC offset that is not an hour multiple, as a string.
       (should (string-equal
 	       (format-time-string format look "IST-5:30")
 	       "1972-07-01 05:29:59.999 +0530 (IST)"))
-      (should (equal (decode-time look "IST-5:30")
-		     (list 59 29 5 1 7 1972 6 nil 19800 subsec)))))))
+      (should (equal (decode-time look "IST-5:30" 'integer)
+		     '(59 29 5 1 7 1972 6 nil 19800)))
+      (should (equal (decode-time look "IST-5:30" t)
+		     (list sec 29 5 1 7 1972 6 nil 19800)))))))
 
 (ert-deftest decode-then-encode-time ()
   (let ((time-values (list 0 -2 1 0.0 -0.0 -2.0 1.0
@@ -87,11 +97,13 @@
 			   (cons (1+ most-positive-fixnum) 1000000000000)
 			   (cons 1000000000000 (1+ most-positive-fixnum)))))
     (dolist (a time-values)
-      (let* ((d (ignore-errors (decode-time a t)))
+      (let* ((d (ignore-errors (decode-time a t t)))
+             (d-integer (ignore-errors (decode-time a t 'integer)))
 	     (e (if d (encode-time d)))
-	     (diff (float-time (time-subtract a e))))
-	(should (or (not d)
-		    (and (<= 0 diff) (< diff 1))))))))
+	     (e-integer (if d-integer (encode-time d-integer))))
+	(should (or (not d) (time-equal-p a e)))
+	(should (or (not d-integer) (time-equal-p (time-convert a 'integer)
+                                                  e-integer)))))))
 
 ;;; This should not dump core.
 (ert-deftest format-time-string-with-outlandish-zone ()
@@ -151,7 +163,7 @@
 (ert-deftest encode-time-dst-numeric-zone ()
     "Check for Bug#35502."
     (should (time-equal-p
-             (encode-time '(29 31 17 30 4 2019 2 t 7200 0))
+             (encode-time '(29 31 17 30 4 2019 2 t 7200))
              '(23752 27217))))
 
 (ert-deftest float-time-precision ()

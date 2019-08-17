@@ -1478,23 +1478,23 @@ Although @code{(time-convert nil nil)} is equivalent to
 @end example
 @end defun
 
-@defun decode-time &optional time zone
+@defun decode-time &optional time zone form
 This function converts a time value into calendrical information.  If
 you don't specify @var{time}, it decodes the current time, and similarly
 @var{zone} defaults to the current time zone rule.  @xref{Time Zone Rules}.
-The return value is a list of ten elements, as follows:
+The @var{form} argument controls the form of the returned
+@var{seconds} element, as described below.
+The return value is a list of nine elements, as follows:
 
 @example
-(@var{seconds} @var{minutes} @var{hour} @var{day} @var{month} @var{year}
- @var{dow} @var{dst} @var{utcoff} @var{subsec})
+(@var{seconds} @var{minutes} @var{hour} @var{day} @var{month} @var{year} @var{dow} @var{dst} @var{utcoff})
 @end example
 
 Here is what the elements mean:
 
 @table @var
 @item seconds
-The number of seconds past the minute, as an integer between 0 and 59.
-On some operating systems, this is 60 for leap seconds.
+The number of seconds past the minute, with form described below.
 @item minutes
 The number of minutes past the hour, as an integer between 0 and 59.
 @item hour
@@ -1514,22 +1514,33 @@ in effect, and @minus{}1 if this information is not available.
 @item utcoff
 An integer indicating the Universal Time offset in seconds, i.e., the number of
 seconds east of Greenwich.
-@item subsec
-The number of subseconds past the second, as either 0 or a Lisp
-timestamp @code{(@var{ticks} . @var{hz})} representing a nonnegative
-fraction less than 1.
 @end table
 
+The @var{seconds} element is a Lisp timestamp that is nonnegative and
+less than 61; it is less than 60 except during positive leap seconds
+(assuming the operating system supports leap seconds).  If the
+optional @var{form} argument is @code{t}, @var{seconds} uses the same
+precision as @var{time}; if @var{form} is @code{integer},
+@var{seconds} is truncated to an integer.  For example, if @var{time}
+is the timestamp @code{(1566009571321 . 1000)}, which represents
+2019-08-17 02:39:31.321 UTC on typical systems that lack leap seconds,
+then @code{(decode-time @var{time} t t)} returns @code{((31321 . 1000)
+39 2 17 8 2019 6 nil 0)}, whereas @code{(decode-time @var{time} t
+'integer)} returns @code{(31 39 2 17 8 2019 6 nil 0)}.  If @var{form}
+is omitted or @code{nil}, it currently defaults to @code{integer} but
+this default may change in future Emacs releases, so callers requiring
+a particular form should specify @var{form}.
+
 @strong{Common Lisp Note:} Common Lisp has different meanings for
-@var{dow} and @var{utcoff}, and lacks @var{subsec}.
+@var{dow} and @var{utcoff}, and its @var{second} is an integer between
+0 and 59 inclusive.
 
 To access (or alter) the elements in the time value, the
 @code{decoded-time-second}, @code{decoded-time-minute},
 @code{decoded-time-hour}, @code{decoded-time-day},
 @code{decoded-time-month}, @code{decoded-time-year},
-@code{decoded-time-weekday}, @code{decoded-time-dst},
-@code{decoded-time-zone} and @code{decoded-time-subsec}
-accessors can be used.
+@code{decoded-time-weekday}, @code{decoded-time-dst} and
+@code{decoded-time-zone} accessors can be used.
 
 For instance, to increase the year in a decoded time, you could say:
 
@@ -1551,7 +1562,7 @@ For instance, if you want ``same time next month'', you
 could say:
 
 @lisp
-(let ((time (decode-time))
+(let ((time (decode-time nil nil t))
       (delta (make-decoded-time :month 2)))
    (encode-time (decoded-time-add time delta)))
 @end lisp
@@ -1585,22 +1596,21 @@ It can act as the inverse of @code{decode-time}.
 
 Ordinarily the first argument is a list
 @code{(@var{second} @var{minute} @var{hour} @var{day} @var{month}
-@var{year} @var{ignored} @var{dst} @var{zone} @var{subsec})} that specifies a
+@var{year} @var{ignored} @var{dst} @var{zone})} that specifies a
 decoded time in the style of @code{decode-time}, so that
 @code{(encode-time (decode-time ...))}  works.  For the meanings of
 these list members, see the table under @code{decode-time}.
 
 As an obsolescent calling convention, this function can be given six
-through ten arguments.  The first six arguments @var{second},
+or more arguments.  The first six arguments @var{second},
 @var{minute}, @var{hour}, @var{day}, @var{month}, and @var{year}
-specify most of the components of a decoded time.  If there are seven
-through nine arguments the @emph{last} argument is used as @var{zone},
-and if there are ten arguments the ninth specifies @var{zone} and the
-tenth specifies @var{subsec}; in either case any other extra arguments
-are ignored, so that @code{(apply #'encode-time (decode-time ...))}
-works.  In this obsolescent convention, @var{zone} defaults to the
-current time zone rule (@pxref{Time Zone Rules}), @var{subsec}
-defaults to 0, and @var{dst} is treated as if it was @minus{}1.
+specify most of the components of a decoded time.  If there are more
+than six arguments the @emph{last} argument is used as @var{zone} and
+any other extra arguments are ignored, so that @code{(apply
+#'encode-time (decode-time ...))} works.  In this obsolescent
+convention, @var{zone} defaults to the current time zone rule
+(@pxref{Time Zone Rules}), and @var{dst} is treated as if it was
+@minus{}1.
 
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
@@ -1615,9 +1625,8 @@ the latter to the former as follows:
 @end example
 
 You can perform simple date arithmetic by using out-of-range values for
-@var{seconds}, @var{minutes}, @var{hour}, @var{day}, @var{month}, and
-@var{subsec}; for example, day 0 means the day preceding the given
-month.
+@var{seconds}, @var{minutes}, @var{hour}, @var{day}, and @var{month};
+for example, day 0 means the day preceding the given month.
 
 The operating system puts limits on the range of possible time values;
 if the limits are exceeded while encoding the time, an error results.

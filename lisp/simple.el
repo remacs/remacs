@@ -9082,8 +9082,9 @@ to capitalize ARG words."
                (:copier nil)
                (:type list))
   (second nil :documentation "\
-This is an integer between 0 and 60 (inclusive).  (60 is a leap
-second, which only some operating systems support.)")
+This is an integer or a Lisp timestamp (TICKS . HZ) representing a nonnegative
+number of seconds less than 61.  (If not less than 60, it is a leap second,
+which only some operating systems support.)")
   (minute nil :documentation "This is an integer between 0 and 59 (inclusive).")
   (hour nil :documentation "This is an integer between 0 and 23 (inclusive).")
   (day nil :documentation "This is an integer between 1 and 31 (inclusive).")
@@ -9099,9 +9100,6 @@ available.")
   (zone nil :documentation "\
 This is an integer indicating the UTC offset in seconds, i.e.,
 the number of seconds east of Greenwich.")
-  (subsec nil :documentation "\
-This is 0, or is an integer pair (TICKS . HZ) indicating TICKS/HZ seconds,
-where HZ is positive and TICKS is nonnegative and less than HZ.")
   )
 
 

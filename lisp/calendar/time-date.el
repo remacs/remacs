@@ -420,26 +420,13 @@ changes in daylight saving time are not taken into account."
 
     ;; Do the time part, which is pretty simple (except for leap
     ;; seconds, I guess).
-    (setq seconds (+ (* (or (decoded-time-hour delta) 0) 3600)
-                     (* (or (decoded-time-minute delta) 0) 60)
-                     (or (decoded-time-second delta) 0)))
-    (when (decoded-time-subsec delta)
-      (let* ((subsec (time-convert (time-add (decoded-time-subsec time)
-					     (decoded-time-subsec delta))
-				   t))
-	     (s (time-convert subsec 'integer)))
-	(setq seconds (+ seconds s))
-	(setf (decoded-time-subsec time) (time-subtract subsec s))))
-
     ;; Time zone adjustments are basically the same as time adjustments.
-    (setq seconds (+ seconds (or (decoded-time-zone delta) 0)))
+    (setq seconds (time-add (+ (* (or (decoded-time-hour delta) 0) 3600)
+			       (* (or (decoded-time-minute delta) 0) 60)
+			       (or (decoded-time-zone delta) 0))
+			    (or (decoded-time-second delta) 0)))
 
-    (cond
-     ((> seconds 0)
-      (decoded-time--alter-second time seconds t))
-     ((< seconds 0)
-      (decoded-time--alter-second time (abs seconds) nil)))
-
+    (decoded-time--alter-second time seconds)
     time))
 
 (defun decoded-time--alter-month (time increase)
@@ -472,38 +459,31 @@ changes in daylight saving time are not taken into account."
             (date-days-in-month (decoded-time-year time)
                                 (decoded-time-month time))))))
 
-(defun decoded-time--alter-second (time seconds increase)
-  "Increase or decrease the time in TIME by SECONDS."
-  (let ((old (+ (* (or (decoded-time-hour time) 0) 3600)
-                (* (or (decoded-time-minute time) 0) 60)
-                (or (decoded-time-second time) 0))))
-
-    (if increase
-        (progn
-          (setq old (+ old seconds))
-          (setf (decoded-time-second time) (% old 60)
-                (decoded-time-minute time) (% (/ old 60) 60)
-                (decoded-time-hour time) (% (/ old 3600) 24))
-          ;; Hm...  DST...
-          (let ((days (/ old (* 60 60 24))))
-            (while (> days 0)
-              (decoded-time--alter-day time t)
-              (cl-decf days))))
-      (setq old (abs (- old seconds)))
-      (setf (decoded-time-second time) (% old 60)
-            (decoded-time-minute time) (% (/ old 60) 60)
-            (decoded-time-hour time) (% (/ old 3600) 24))
-      ;; Hm...  DST...
-      (let ((days (/ old (* 60 60 24))))
-        (while (> days 0)
-          (decoded-time--alter-day time nil)
-          (cl-decf days))))))
+(defun decoded-time--alter-second (time seconds)
+  "Increase the time in TIME by SECONDS."
+  (let* ((secsperday 86400)
+	 (old (time-add (+ (* 3600 (or (decoded-time-hour time) 0))
+			   (* 60 (or (decoded-time-minute time) 0)))
+			(or (decoded-time-second time) 0)))
+	 (new (time-add old seconds)))
+    ;; Hm...  DST...
+    (while (time-less-p new 0)
+      (decoded-time--alter-day time nil)
+      (setq new (time-add new secsperday)))
+    (while (not (time-less-p new secsperday))
+      (decoded-time--alter-day time t)
+      (setq new (time-subtract new secsperday)))
+    (let ((sec (time-convert new 'integer)))
+      (setf (decoded-time-second time) (time-add (% sec 60)
+						 (time-subtract new sec))
+	    (decoded-time-minute time) (% (/ sec 60) 60)
+	    (decoded-time-hour time) (/ sec 3600)))))
 
 (cl-defun make-decoded-time (&key second minute hour
                                   day month year
-                                  dst zone subsec)
+                                  dst zone)
   "Return a `decoded-time' structure with only the keywords given filled out."
-  (list second minute hour day month year nil dst zone subsec))
+  (list second minute hour day month year nil dst zone))
 
 (defun decoded-time-set-defaults (time &optional default-zone)
   "Set any nil values in `decoded-time' TIME to default values.
@@ -533,9 +513,6 @@ TIME is modified and returned."
   (when (and (not (decoded-time-zone time))
              default-zone)
     (setf (decoded-time-zone time) 0))
-
-  (unless (decoded-time-subsec time)
-    (setf (decoded-time-subsec time) 0))
   time)
 
 (provide 'time-date)
