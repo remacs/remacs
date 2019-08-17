@@ -628,6 +628,7 @@ FIXME: multiple comma-separated values should be allowed!"
         (when (> (length isodatetimestring) 14)
           ;; seconds present
           (setq second (read (substring isodatetimestring 13 15))))
+	;; FIXME: Support subseconds.
         (when (and (> (length isodatetimestring) 15)
                    ;; UTC specifier present
                    (char-equal ?Z (aref isodatetimestring 15)))
@@ -703,6 +704,7 @@ FIXME: multiple comma-separated values should be allowed!"
                 (setq minutes (read (substring isodurationstring
                                                (match-beginning 10)
                                                (match-end 10)))))
+	    ;; FIXME: Support subseconds.
             (if (match-beginning 11)
                 (setq seconds (read (substring isodurationstring
                                                (match-beginning 12)
@@ -719,9 +721,12 @@ FIXME: multiple comma-separated values should be allowed!"
   "Add TIME1 to TIME2.
 Both times must be given in decoded form.  One of these times must be
 valid (year > 1900 or something)."
-  ;; FIXME: does this function exist already?
+  ;; FIXME: does this function exist already?  Can we use decoded-time-add?
   (decode-time (encode-time
-                (+ (decoded-time-second time1) (decoded-time-second time2))
+		;; FIXME: Support subseconds.
+		(time-convert (time-add (decoded-time-second time1)
+					(decoded-time-second time2))
+			      'integer)
                 (+ (decoded-time-minute time1) (decoded-time-minute time2))
                 (+ (decoded-time-hour time1) (decoded-time-hour time2))
                 (+ (decoded-time-day time1) (decoded-time-day time2))

@@ -98,7 +98,7 @@ DELAY is a string, giving the length of the time.  Possible values are:
 	   (setq hour   (string-to-number (match-string 1 delay))
 		 minute (string-to-number (match-string 2 delay)))
 	   ;; Use current time, except...
-	   (setq deadline (decode-time))
+	   (setq deadline (decode-time nil nil t))
 	   ;; ... for minute and hour.
 	   (setq deadline (apply #'encode-time (car deadline) minute hour
 				 (nthcdr 3 deadline)))

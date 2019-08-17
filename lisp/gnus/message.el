@@ -5508,7 +5508,7 @@ If NOW, use that time instead."
   "Make date string for the Expires header.  Expiry in DAYS days.
 
 In posting styles use `(\"Expires\" (make-expires-date 30))'."
-  (let* ((cur (decode-time))
+  (let* ((cur (decode-time nil nil 'integer))
 	 (nday (+ days (decoded-time-day cur))))
     (setf (decoded-time-day cur) nday)
     (message-make-date (encode-time cur))))

@@ -37,7 +37,7 @@
 (defun calc-time ()
   (interactive)
   (calc-wrapper
-   (let ((time (decode-time)))
+   (let ((time (decode-time nil nil 'integer))) ;; FIXME: Support subseconds.
      (calc-enter-result 0 "time"
 			(list 'mod
 			      (list 'hms
@@ -499,7 +499,8 @@ in the Gregorian calendar and the remaining part determines the time."
 	(math-add (math-float date)
 		  (math-div (math-add (+ (* (nth 3 dt) 3600)
 					 (* (nth 4 dt) 60))
-				      (nth 5 dt))
+				      ;; FIXME: Support subseconds.
+				      (time-convert (nth 5 dt) 'integer))
 			    '(float 864 2)))
       date)))
 
@@ -1327,7 +1328,8 @@ as measured in the integer number of days before December 31, 1 BC (Gregorian)."
           (math-parse-iso-date-validate isoyear isoweek isoweekday hour minute second)))))
 
 (defun calcFunc-now (&optional zone)
-  (let ((date (let ((now (decode-time)))
+  ;; FIXME: Support subseconds.
+  (let ((date (let ((now (decode-time nil nil 'integer)))
 		(list 'date (math-dt-to-date
 			     (list (decoded-time-year now)
                                    (decoded-time-month now)

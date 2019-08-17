@@ -357,24 +357,24 @@ Symbols are also allowed; their print names are used instead."
 ;; the full date if it's older)
 
 (defun gnus-seconds-today ()
-  "Return the number of seconds passed today."
-  (let ((now (decode-time)))
+  "Return the integer number of seconds passed today."
+  (let ((now (decode-time nil nil 'integer)))
     (+ (decoded-time-second now)
        (* (decoded-time-minute now) 60)
        (* (decoded-time-hour now) 3600))))
 
 (defun gnus-seconds-month ()
-  "Return the number of seconds passed this month."
-  (let ((now (decode-time)))
+  "Return the integer number of seconds passed this month."
+  (let ((now (decode-time nil nil 'integer)))
     (+ (decoded-time-second now)
        (* (decoded-time-minute now) 60)
        (* (decoded-time-hour now) 3600)
        (* (- (decoded-time-day now) 1) 3600 24))))
 
 (defun gnus-seconds-year ()
-  "Return the number of seconds passed this year."
+  "Return the integer number of seconds passed this year."
   (let* ((current (current-time))
-	 (now (decode-time current))
+	 (now (decode-time current nil 'integer))
 	 (days (format-time-string "%j" current)))
     (+ (decoded-time-second now)
        (* (decoded-time-minute now) 60)

@@ -322,9 +322,10 @@ Return the number of minutes."
                                             duration))))
     (list start end
           (or duration
+	      ;; FIXME: Support subseconds.
               (decode-time (time-subtract (iso8601--encode-time end)
                                           (iso8601--encode-time start))
-                           (or (decoded-time-zone end) 0))))))
+			   (or (decoded-time-zone end) 0) 'integer)))))
 
 (defun iso8601--match (regexp string)
   (string-match (concat "\\`" regexp "\\'") string))

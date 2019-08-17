@@ -385,7 +385,8 @@ VALUE can be `on', `off', or `paused'."
       (message "No timer set")
     (let* ((rtime (decode-time
 		   (time-subtract (timer--time org-timer-countdown-timer)
-				  nil)))
+				  nil)
+		   'integer))
 	   (rsecs (nth 0 rtime))
 	   (rmins (nth 1 rtime)))
       (message "%d minute(s) %d seconds left before next time out"

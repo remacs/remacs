@@ -1210,7 +1210,8 @@ behavior."
 	  (decoded-time-year time)
 	  (ediff-fill-leading-zero (decoded-time-hour time))
 	  (ediff-fill-leading-zero (decoded-time-minute time))
-	  (ediff-fill-leading-zero (decoded-time-second time))))
+	  (ediff-fill-leading-zero (time-convert (decoded-time-second time)
+						 'integer))))
 
 ;; Draw the directories
 (defun ediff-insert-dirs-in-meta-buffer (meta-list)

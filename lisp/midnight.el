@@ -193,8 +193,8 @@ The default value is `clean-buffer-list'."
   :type 'hook)
 
 (defun midnight-next ()
-  "Return the number of seconds till the next midnight."
-  (pcase-let ((`(,sec ,min ,hrs) (decode-time)))
+  "Return the number of whole or partial seconds till the next midnight."
+  (pcase-let ((`(,sec ,min ,hrs) (decode-time nil nil 'integer)))
     (- (* 24 60 60) (* 60 60 hrs) (* 60 min) sec)))
 
 ;;;###autoload
