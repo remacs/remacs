@@ -1090,11 +1090,14 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
     }
 
   /* Return an integer if the timestamp resolution is 1,
-     otherwise the (TICKS . HZ) form if either argument is that way,
-     otherwise the (HI LO US PS) form for backward compatibility.  */
+     otherwise the (TICKS . HZ) form if !CURRENT_TIME_LIST or if
+     either input form supports timestamps that cannot be expressed
+     exactly in (HI LO US PS) form, otherwise the (HI LO US PS) form
+     for backward compatibility.  */
   return (EQ (hz, make_fixnum (1))
 	  ? ticks
-	  : timeform_sub_ps_p (aform) || timeform_sub_ps_p (bform)
+	  : (!CURRENT_TIME_LIST
+	     || timeform_sub_ps_p (aform) || timeform_sub_ps_p (bform))
 	  ? Fcons (ticks, hz)
 	  : ticks_hz_list4 (ticks, hz));
 }
