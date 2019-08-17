@@ -3926,6 +3926,7 @@ select.  The argument ALL-FRAMES has the same meaning as in
 always effectively nil."
   (interactive "p")
   (let* ((window (selected-window))
+         (original-window window)
 	 (function (and (not ignore-window-parameters)
 			(window-parameter window 'other-window)))
 	 old-window old-count)
@@ -3967,6 +3968,10 @@ always effectively nil."
 	      (setq old-count count)))
 	   (t
 	    (setq count (1+ count)))))
+
+        (when (and (eq window original-window)
+                   (called-interactively-p 'interactive))
+          (message "No other window to select"))
 
 	(select-window window)
 	;; Always return nil.
