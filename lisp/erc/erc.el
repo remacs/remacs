@@ -2594,6 +2594,8 @@ every `erc-lurker-cleanup-interval' updates to
 consumption of lurker state during long Emacs sessions and/or ERC
 sessions with large numbers of incoming PRIVMSGs.")
 
+(defvar erc-message-parsed)
+
 (defun erc-lurker-update-status (_message)
   "Update `erc-lurker-state' if necessary.
 
@@ -2603,18 +2605,20 @@ reflect the fact that its sender has issued a PRIVMSG at the
 current time.  Otherwise, take no action.
 
 This function depends on the fact that `erc-display-message'
-dynamically binds `parsed', which is used to check if the current
-message is a PRIVMSG and to determine its sender.  See also
-`erc-lurker-trim-nicks' and `erc-lurker-ignore-chars'.
+dynamically binds `erc-message-parsed', which is used to check if
+the current message is a PRIVMSG and to determine its sender.
+See also `erc-lurker-trim-nicks' and `erc-lurker-ignore-chars'.
 
 In order to limit memory consumption, this function also calls
 `erc-lurker-cleanup' once every `erc-lurker-cleanup-interval'
 updates of `erc-lurker-state'."
-  (when (and (boundp 'parsed) (erc-response-p parsed))
-    (let* ((command (erc-response.command parsed))
+  (when (and (boundp 'erc-message-parsed)
+             (erc-response-p erc-message-parsed))
+    (let* ((command (erc-response.command erc-message-parsed))
            (sender
             (erc-lurker-maybe-trim
-             (car (erc-parse-user (erc-response.sender parsed)))))
+             (car (erc-parse-user
+                   (erc-response.sender erc-message-parsed)))))
            (server
             (erc-canonicalize-server-name erc-server-announced-name)))
       (when (equal command "PRIVMSG")
@@ -2704,7 +2708,8 @@ ARGS, PARSED, and TYPE are used to format MSG sensibly.
 See also `erc-format-message' and `erc-display-line'."
   (let ((string (if (symbolp msg)
                     (apply #'erc-format-message msg args)
-                  msg)))
+                  msg))
+        (erc-message-parsed parsed))
     (setq string
           (cond
            ((null type)
