@@ -4260,7 +4260,11 @@ any window whose `no-delete-other-windows' parameter is non-nil."
         (throw 'done nil)))
 
       ;; If WINDOW is the main window of its frame do nothing.
-      (unless (eq window main)
+      (if (eq window main)
+          ;; Give a message to the user if this has been called as a
+          ;; command.
+          (when (called-interactively-p 'interactive)
+            (message "No other windows to delete"))
 	(delete-other-windows-internal window main)
 	(window--check frame))
       ;; Always return nil.
