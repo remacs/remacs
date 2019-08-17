@@ -104,6 +104,7 @@
     (should (equal (decoded-time-add time (mdec :zone -7200))
                    '(12 15 14 8 7 2019 1 t 7200)))))
 
-(require 'ert)
+(ert-deftest test-time-since ()
+  (should (time-equal-p 0 (time-since nil))))
 
 ;;; time-date-tests.el ends here

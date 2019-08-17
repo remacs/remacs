@@ -1040,7 +1040,16 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 
   enum timeform aform, bform;
   struct lisp_time ta = lisp_time_struct (a, &aform);
-  struct lisp_time tb = lisp_time_struct (b, &bform);
+
+  /* Subtract nil from nil correctly, and handle other eq values
+     quicker while we're at it.  Compare here rather than earlier, to
+     handle NaNs and check formats.  */
+  struct lisp_time tb;
+  if (EQ (a, b))
+    bform = aform, tb = ta;
+  else
+    tb = lisp_time_struct (b, &bform);
+
   Lisp_Object ticks, hz;
 
   if (FASTER_TIMEFNS && EQ (ta.hz, tb.hz))
@@ -1125,8 +1134,9 @@ time_cmp (Lisp_Object a, Lisp_Object b)
 
   struct lisp_time ta = lisp_time_struct (a, 0);
 
-  /* Compare nil to nil correctly, and other eq values while we're at it.
-     Compare here rather than earlier, to handle NaNs and check formats.  */
+  /* Compare nil to nil correctly, and handle other eq values quicker
+     while we're at it.  Compare here rather than earlier, to handle
+     NaNs and check formats.  */
   if (EQ (a, b))
     return 0;
 
