@@ -417,6 +417,11 @@ RGB triplets with a single hexadecimal digit per component.
 
 * Editing Changes in Emacs 27.1
 
+---
+** The 'newline-and-indent' command (commonly bound to 'RET' in many
+modes) now takes an optional numeric argument to specify how many
+times is should insert newlines (and indent).
+
 +++
 ** New command 'make-empty-file'.
 
