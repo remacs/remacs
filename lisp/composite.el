@@ -554,6 +554,11 @@ All non-spacing characters have this function in
      ;; This sequence doesn't start with a proper base character.
      ((memq (get-char-code-property (lgstring-char gstring 0)
 				    'general-category)
+            ;; "Improper" base characters are of the following general
+            ;; categories:
+            ;;   Mark (nonspacing, combining, enclosing)
+            ;;   Separator (space, line, paragraph)
+            ;;   Other (control, format, surrogate)
 	    '(Mn Mc Me Zs Zl Zp Cc Cf Cs))
       nil)
 
@@ -646,6 +651,7 @@ All non-spacing characters have this function in
 			  de (+ de yoff)))
 		   ((and (= class 0)
 			 (eq (get-char-code-property (lglyph-char glyph)
+                                                     ;; Me = enclosing mark
 						     'general-category) 'Me))
 		    ;; Artificially laying out glyphs in an enclosing
 		    ;; mark is difficult.  All we can do is to adjust
@@ -771,7 +777,8 @@ prepending a space before it."
 					    'general-category)
 		    'Cf)
 		(progn
-		  ;; Compose by replacing with a space.
+		  ;; Compose Cf (format) control characters by
+		  ;; replacing with a space.
 		  (lglyph-set-char glyph 32)
 		  (lglyph-set-width glyph 1)
 		  (setq i (1+ i)))
