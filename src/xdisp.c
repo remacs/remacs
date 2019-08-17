@@ -152,6 +152,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    description of the environment in which the text is to be
    displayed.  But this is too early, read on.
 
+   Iteration over buffer and strings.
+
    Characters and pixmaps displayed for a range of buffer text depend
    on various settings of buffers and windows, on overlays and text
    properties, on display tables, on selective display.  The good news
@@ -176,6 +178,46 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    current X and Y position, and lots of other stuff you can better
    see in dispextern.h.
 
+   The "stop position".
+
+   Some of the fields maintained by the iterator change relatively
+   infrequently.  These include the face of the characters, whether
+   text is invisible, the object (buffer or display or overlay string)
+   being iterated, character composition info, etc.  For any given
+   buffer or string position, these sources of information that
+   affects the display can be determined by calling the appropriate
+   primitives, such as Fnext_single_property_change, but both these
+   calls and the processing of their return values is relatively
+   expensive.  To optimize redisplay, the display engine checks these
+   sources of display information only when needed.  To that end, it
+   always maintains the position of the next place where it must stop
+   and re-examine all those potential sources.  This is called "stop
+   position" and is stored in the stop_charpos field of the iterator.
+   The stop position is updated by compute_stop_pos, which is called
+   whenever the iteration reaches the current stop position and
+   processes it.  Processing a stop position is done by handle_stop,
+   which invokes a series of handlers, one each for every potential
+   source of display-related information; see the it_props array for
+   those handlers.  For example, one handler is handle_face_prop,
+   which detects changes in face properties, and supplies the face ID
+   that the iterator will use for all the glyphs it generates up to
+   the next stop position; this face ID is the result of realizing the
+   face specified by the relevant text properties at this position.
+   Each handler called by handle_stop processes the sources of display
+   information for which it is "responsible", and returns a value
+   which tells handle_stop what to do next.
+
+   Once handle_stop returns, the information it stores in the iterator
+   fields will not be refreshed until the iteration reaches the next
+   stop position, which is computed by compute_stop_pos called at the
+   end of handle_stop.  compute_stop_pos examines the buffer's or
+   string's interval tree to determine where the text properties
+   change, finds the next position where overlays and character
+   composition can change, and stores in stop_charpos the closest
+   position where any of these factors should be reconsider.
+
+   Producing glyphs.
+
    Glyphs in a desired matrix are normally constructed in a loop
    calling get_next_display_element and then PRODUCE_GLYPHS.  The call
    to PRODUCE_GLYPHS will fill the iterator structure with pixel
@@ -191,23 +233,28 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    Frame matrices.
 
    That just couldn't be all, could it?  What about terminal types not
-   supporting operations on sub-windows of the screen?  To update the
-   display on such a terminal, window-based glyph matrices are not
-   well suited.  To be able to reuse part of the display (scrolling
-   lines up and down), we must instead have a view of the whole
-   screen.  This is what `frame matrices' are for.  They are a trick.
+   supporting operations on sub-windows of the screen (a.k.a. "TTY" or
+   "text-mode terminal")?  To update the display on such a terminal,
+   window-based glyph matrices are not well suited.  To be able to
+   reuse part of the display (scrolling lines up and down), we must
+   instead have a view of the whole screen.  This is what `frame
+   matrices' are for.  They are a trick.
 
-   Frames on terminals like above have a glyph pool.  Windows on such
-   a frame sub-allocate their glyph memory from their frame's glyph
+   Frames on text terminals have a glyph pool.  Windows on such a
+   frame sub-allocate their glyph memory from their frame's glyph
    pool.  The frame itself is given its own glyph matrices.  By
    coincidence---or maybe something else---rows in window glyph
    matrices are slices of corresponding rows in frame matrices.  Thus
    writing to window matrices implicitly updates a frame matrix which
    provides us with the view of the whole screen that we originally
-   wanted to have without having to move many bytes around.  To be
-   honest, there is a little bit more done, but not much more.  If you
-   plan to extend that code, take a look at dispnew.c.  The function
-   build_frame_matrix is a good starting point.
+   wanted to have without having to move many bytes around.  Then
+   updating all the visible windows on text-terminal frames is done by
+   using the frame matrices, which allows frame-global optimization of
+   what is actually written to the glass.
+
+   To be honest, there is a little bit more done, but not much more.
+   If you plan to extend that code, take a look at dispnew.c.  The
+   function build_frame_matrix is a good starting point.
 
    Bidirectional display.
 
@@ -220,9 +267,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    concerned, the effect of calling bidi_move_to_visually_next, the
    main interface of the reordering engine, is that the iterator gets
    magically placed on the buffer or string position that is to be
-   displayed next.  In other words, a linear iteration through the
-   buffer/string is replaced with a non-linear one.  All the rest of
-   the redisplay is oblivious to the bidi reordering.
+   displayed next in the visual order.  In other words, a linear
+   iteration through the buffer/string is replaced with a non-linear
+   one.  All the rest of the redisplay is oblivious to the bidi
+   reordering.
 
    Well, almost oblivious---there are still complications, most of
    them due to the fact that buffer and string positions no longer
@@ -231,7 +279,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    monotonously changing with vertical positions.  Also, accounting
    for face changes, overlays, etc. becomes more complex because
    non-linear iteration could potentially skip many positions with
-   changes, and then cross them again on the way back...
+   changes, and then cross them again on the way back (see
+   handle_stop_backwards)...
 
    One other prominent effect of bidirectional display is that some
    paragraphs of text need to be displayed starting at the right
@@ -252,7 +301,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    This way, the terminal-specific back-end can still draw the glyphs
    left to right, even for R2L lines.
 
-   Bidirectional display and character compositions
+   Bidirectional display and character compositions.
 
    Some scripts cannot be displayed by drawing each character
    individually, because adjacent characters change each other's shape
@@ -272,15 +321,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    Each of these grapheme clusters is then delivered to PRODUCE_GLYPHS
    in the direction corresponding to the current bidi scan direction
    (recorded in the scan_dir member of the `struct bidi_it' object
-   that is part of the buffer iterator).  In particular, if the bidi
-   iterator currently scans the buffer backwards, the grapheme
-   clusters are delivered back to front.  This reorders the grapheme
-   clusters as appropriate for the current bidi context.  Note that
-   this means that the grapheme clusters are always stored in the
-   LGSTRING object (see composite.c) in the logical order.
+   that is part of the iterator).  In particular, if the bidi iterator
+   currently scans the buffer backwards, the grapheme clusters are
+   delivered back to front.  This reorders the grapheme clusters as
+   appropriate for the current bidi context.  Note that this means
+   that the grapheme clusters are always stored in the LGSTRING object
+   (see composite.c) in the logical order.
 
    Moving an iterator in bidirectional text
-   without producing glyphs
+   without producing glyphs.
 
    Note one important detail mentioned above: that the bidi reordering
    engine, driven by the iterator, produces characters in R2L rows
