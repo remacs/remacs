@@ -593,6 +593,12 @@ FILE is the file where FUNCTION was probably defined."
     (insert "  This function does not change global state, "
             "including the match data.\n")))
 
+(add-hook 'help-fns-describe-function-functions #'help-fns--disabled)
+(defun help-fns--disabled (function)
+  (when (and (symbolp function)
+             (function-get function 'disabled))
+    (insert "  This function is disabled.\n")))
+
 (defun help-fns--first-release (symbol)
   "Return the likely first release that defined SYMBOL, or nil."
   ;; Code below relies on the etc/NEWS* files.
