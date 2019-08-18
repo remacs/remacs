@@ -380,17 +380,12 @@ VALUE can be `on', `off', or `paused'."
 (defun org-timer-show-remaining-time ()
   "Display the remaining time before the timer ends."
   (interactive)
-  (require 'time)
-  (if (not org-timer-countdown-timer)
-      (message "No timer set")
-    (let* ((rtime (decode-time
-		   (time-subtract (timer--time org-timer-countdown-timer)
-				  nil)
-		   'integer))
-	   (rsecs (nth 0 rtime))
-	   (rmins (nth 1 rtime)))
-      (message "%d minute(s) %d seconds left before next time out"
-	       rmins rsecs))))
+  (message
+   (if (not org-timer-countdown-timer)
+       "No timer set"
+     (format-seconds
+      "%m minute(s) %s seconds left before next time out"
+      (time-subtract (timer--time org-timer-countdown-timer) nil)))))
 
 ;;;###autoload
 (defun org-timer-set-timer (&optional opt)
