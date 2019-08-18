@@ -30,6 +30,11 @@ This allows disabling the new feature introduced in Emacs 26.1 which
 loads files during completion of 'C-h f' and 'C-h v' according to
 'definition-prefixes'.
 
+---
+** Emacs now supports the new Japanese Era name.
+The newly assigned codepoint U+32FF was added to the Unicode Character
+Database compiled into Emacs.
+
 
 * Editing Changes in Emacs 26.3
 
