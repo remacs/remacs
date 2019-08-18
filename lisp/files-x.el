@@ -491,6 +491,13 @@ from the MODE alist ignoring the input argument VALUE."
 		(cons `(,mode . ((,variable . ,value)))
 		      variables))))
 
+      ;; Invalidate cache (may be needed if this .dir-locals.el file
+      ;; will be written with the same timestamp as is already present
+      ;; in the cache, see bug#13860).
+      (setq dir-locals-directory-cache
+            (assoc-delete-all (file-name-directory variables-file)
+                              dir-locals-directory-cache))
+
       ;; Insert modified alist of directory-local variables.
       (insert ";;; Directory Local Variables\n")
       (insert ";;; For more information see (info \"(emacs) Directory Variables\")\n\n")
