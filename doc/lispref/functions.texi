@@ -1752,6 +1752,30 @@ with such a spec would, and then return the corresponding list of arguments
 that was built.  E.g., @code{(advice-eval-interactive-spec "r\nP")} will
 return a list of three elements, containing the boundaries of the region and
 the current prefix argument.
+
+For instance, if you want to make the @kbd{C-x m}
+(@code{compose-mail}) command prompt for a @samp{From:} header, you
+could say something like this:
+
+@example
+(defun my-compose-mail-advice (orig &rest args)
+  "Read From: address interactively."
+  (interactive
+   (lambda (spec)
+     (let* ((user-mail-address
+             (completing-read "From: "
+                              '("one.address@@example.net"
+                                "alternative.address@@example.net")))
+            (from (message-make-from user-full-name
+                                     user-mail-address))
+            (spec (advice-eval-interactive-spec spec)))
+       ;; Put the From header into the OTHER-HEADERS argument.
+       (push (cons 'From from) (nth 2 spec))
+       spec)))
+  (apply orig args))
+
+(advice-add 'compose-mail :around #'my-compose-mail-advice)
+@end example
 @end defun
 
 @node Advising Named Functions
