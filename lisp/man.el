@@ -1296,21 +1296,7 @@ default type, `Man-xref-man-page' is used for the buttons."
   ;; Based on `Man-build-references-alist'
   (when (or (null start-section)        ;; Search regardless of sections.
             ;; Section header is in this chunk.
-	    (Man-find-section start-section)
-            ;; Section header was in one of the previous chunks.
-            (save-excursion
-              (save-restriction
-                (let ((orig-pos (point)))
-                  (widen)
-                  (if (Man-find-section start-section)
-                      ;; We are in the right section of the next
-                      ;; section is either not yet in the buffer, or
-                      ;; it starts after the position where we should
-                      ;; start highlighting.
-                      (progn
-                        (forward-line 1)
-                        (or (null (re-search-forward Man-heading-regexp nil t))
-                            (> (point) orig-pos))))))))
+            (Man-find-section start-section))
     (let ((end (if start-section
 		   (progn
 		     (forward-line 1)
@@ -1384,7 +1370,9 @@ command is run.  Second argument STRING is the entire string of output."
 		(narrow-to-region
 		 (save-excursion
 		   (goto-char beg)
-		   (line-beginning-position))
+                   ;; Process whole sections (Bug#36927).
+                   (Man-previous-section 1)
+                   (point))
 		 (point))
 		(if Man-fontify-manpage-flag
 		    (Man-fontify-manpage)
