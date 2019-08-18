@@ -3491,7 +3491,8 @@ DEFUN ("frame-bottom-divider-width", Fbottom_divider_width, Sbottom_divider_widt
   return make_fixnum (FRAME_BOTTOM_DIVIDER_WIDTH (decode_any_frame (frame)));
 }
 
-DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
+DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4,
+       "(list (selected-frame) current-prefix-arg)",
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
 HEIGHT lines but that the idea of the actual height of the frame should
@@ -3500,7 +3501,10 @@ not be changed.
 Optional fourth argument PIXELWISE non-nil means that FRAME should be
 HEIGHT pixels high.  Note: When `frame-resize-pixelwise' is nil, some
 window managers may refuse to honor a HEIGHT that is not an integer
-multiple of the default frame font height.  */)
+multiple of the default frame font height.
+
+When called interactively, HEIGHT is the numeric prefix and the
+currenly selected frame will be set to this height.  */)
   (Lisp_Object frame, Lisp_Object height, Lisp_Object pretend, Lisp_Object pixelwise)
 {
   struct frame *f = decode_live_frame (frame);
@@ -3516,7 +3520,8 @@ multiple of the default frame font height.  */)
   return Qnil;
 }
 
-DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 4, 0,
+DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 4,
+       "(list (selected-frame) current-prefix-arg)",
        doc: /* Set text width of frame FRAME to WIDTH columns.
 Optional third arg PRETEND non-nil means that redisplay should use WIDTH
 columns but that the idea of the actual width of the frame should not
@@ -3525,7 +3530,10 @@ be changed.
 Optional fourth argument PIXELWISE non-nil means that FRAME should be
 WIDTH pixels wide.  Note: When `frame-resize-pixelwise' is nil, some
 window managers may refuse to honor a WIDTH that is not an integer
-multiple of the default frame font width.  */)
+multiple of the default frame font width.
+
+When called interactively, WIDTH is the numeric prefix and the
+currenly selected frame will be set to this width.    */)
   (Lisp_Object frame, Lisp_Object width, Lisp_Object pretend, Lisp_Object pixelwise)
 {
   struct frame *f = decode_live_frame (frame);

@@ -244,6 +244,11 @@ to be restored, or if desktop.el needs to interact with you during
 restoration of the session.
 
 +++
+** The functions 'set-frame-height' and 'set-frame-width' are now
+commands, and will set the currently selected frame to the height/
+width specified by the numeric prefix.
+
++++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
 +++
