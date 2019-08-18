@@ -423,7 +423,7 @@ decode_float_time (double t, struct lisp_time *result)
 static Lisp_Object
 ticks_hz_list4 (Lisp_Object ticks, Lisp_Object hz)
 {
-  mpz_t *zticks = bignum_integer (&mpz[0], ticks);
+  mpz_t const *zticks = bignum_integer (&mpz[0], ticks);
 #if FASTER_TIMEFNS && TRILLION <= ULONG_MAX
   mpz_mul_ui (mpz[0], *zticks, TRILLION);
 #else
@@ -557,8 +557,8 @@ frac_to_double (Lisp_Object numerator, Lisp_Object denominator)
 
   verify (FLT_RADIX == 2 || FLT_RADIX == 16);
   enum { LOG2_FLT_RADIX = FLT_RADIX == 2 ? 1 : 4 };
-  mpz_t *n = bignum_integer (&mpz[0], numerator);
-  mpz_t *d = bignum_integer (&mpz[1], denominator);
+  mpz_t const *n = bignum_integer (&mpz[0], numerator);
+  mpz_t const *d = bignum_integer (&mpz[1], denominator);
   ptrdiff_t nbits = mpz_sizeinbase (*n, 2);
   ptrdiff_t dbits = mpz_sizeinbase (*d, 2);
   eassume (0 < nbits);
@@ -1061,8 +1061,8 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
     {
       /* The plan is to decompose ta into na/da and tb into nb/db.
 	 Start by computing da and db.  */
-      mpz_t *da = bignum_integer (&mpz[1], ta.hz);
-      mpz_t *db = bignum_integer (&mpz[2], tb.hz);
+      mpz_t const *da = bignum_integer (&mpz[1], ta.hz);
+      mpz_t const *db = bignum_integer (&mpz[2], tb.hz);
 
       /* The plan is to compute (na * (db/g) + nb * (da/g)) / lcm (da, db)
 	 where g = gcd (da, db).  Start by computing g.  */
@@ -1082,9 +1082,9 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 
       /* ticks = (fb * na) OPER (fa * nb), where OPER is + or -.
 	 OP is the multiply-add or multiply-sub form of OPER.  */
-      mpz_t *na = bignum_integer (&mpz[0], ta.ticks);
+      mpz_t const *na = bignum_integer (&mpz[0], ta.ticks);
       mpz_mul (mpz[0], *fb, *na);
-      mpz_t *nb = bignum_integer (&mpz[3], tb.ticks);
+      mpz_t const *nb = bignum_integer (&mpz[3], tb.ticks);
       (subtract ? mpz_submul : mpz_addmul) (mpz[0], *fa, *nb);
       ticks = make_integer_mpz ();
     }
@@ -1144,8 +1144,8 @@ time_cmp (Lisp_Object a, Lisp_Object b)
     return 0;
 
   struct lisp_time tb = lisp_time_struct (b, 0);
-  mpz_t *za = bignum_integer (&mpz[0], ta.ticks);
-  mpz_t *zb = bignum_integer (&mpz[1], tb.ticks);
+  mpz_t const *za = bignum_integer (&mpz[0], ta.ticks);
+  mpz_t const *zb = bignum_integer (&mpz[1], tb.ticks);
   if (! (FASTER_TIMEFNS && EQ (ta.hz, tb.hz)))
     {
       /* This could be sped up by looking at the signs, sizes, and

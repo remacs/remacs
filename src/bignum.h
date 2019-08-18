@@ -83,7 +83,7 @@ mpz_set_uintmax (mpz_t result, uintmax_t v)
 /* Return a pointer to an mpz_t that is equal to the Lisp integer I.
    If I is a bignum this returns a pointer to I's representation;
    otherwise this sets *TMP to I's value and returns TMP.  */
-INLINE mpz_t *
+INLINE mpz_t const *
 bignum_integer (mpz_t *tmp, Lisp_Object i)
 {
   if (FIXNUMP (i))

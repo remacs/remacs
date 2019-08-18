@@ -2871,7 +2871,7 @@ static Lisp_Object
 bignum_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 		     ptrdiff_t argnum, intmax_t iaccum, Lisp_Object val)
 {
-  mpz_t *accum;
+  mpz_t const *accum;
   if (argnum == 0)
     {
       accum = bignum_integer (&mpz[0], val);
@@ -2882,7 +2882,7 @@ bignum_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 
   while (true)
     {
-      mpz_t *next = bignum_integer (&mpz[1], val);
+      mpz_t const *next = bignum_integer (&mpz[1], val);
 
       switch (code)
 	{
@@ -3099,7 +3099,7 @@ integer_mod (Lisp_Object x, Lisp_Object y)
     }
   else
     {
-      mpz_t *ym = bignum_integer (&mpz[1], y);
+      mpz_t const *ym = bignum_integer (&mpz[1], y);
       bool neg_y = mpz_sgn (*ym) < 0;
       mpz_mod (mpz[0], *bignum_integer (&mpz[0], x), *ym);
 
@@ -3269,7 +3269,7 @@ In this case, the sign bit is duplicated.  */)
 	}
     }
 
-  mpz_t *zval = bignum_integer (&mpz[0], value);
+  mpz_t const *zval = bignum_integer (&mpz[0], value);
   if (XFIXNUM (count) < 0)
     {
       if (TYPE_MAXIMUM (mp_bitcnt_t) < - XFIXNUM (count))
