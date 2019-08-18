@@ -189,21 +189,3 @@
 ;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
 (ert-deftest window-pixel-height-before-size-change ()
   (window-pixel-height-before-size-change))
-
-(ert-deftest set-window-scroll-bars ()
-  (let ((w1 (selected-window))
-        (w2 (split-window))
-        (columns (if (window-system) 1 0)))
-    (set-window-scroll-bars w1 1 t nil nil)
-    (should (equal `(1 ,columns t nil 0 nil) (window-scroll-bars w1)))
-    (should (equal `(1 ,columns t nil 0 nil) (window-scroll-bars nil)))
-    (set-window-scroll-bars w1)
-    (should (equal '(nil 0 nil nil 0 nil) (window-scroll-bars w1)))
-    (set-window-scroll-bars w2 1 t nil nil)
-    (should (equal `(1 ,columns t nil 0 nil) (window-scroll-bars w2)))
-    
-    ;; invoking set-window-scroll-bars with the same params would
-    ;; not change the scroll bars and should return nil
-    (should (set-window-scroll-bars w1 1 t nil nil))
-    (should-not (set-window-scroll-bars w1 1 t nil nil))
-    (should (set-window-scroll-bars w1 2 t nil nil))))
