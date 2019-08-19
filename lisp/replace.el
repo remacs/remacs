@@ -2614,7 +2614,8 @@ It must return a string."
                                    (setq real-match-data
                                          (save-excursion
                                            (goto-char (match-beginning 0))
-                                           (looking-at search-string)
+                                           ;; We must quote the string (Bug#37073)
+                                           (looking-at (regexp-quote search-string))
                                            (match-data t (nth 2 elt)))
                                          noedit
                                          (replace-match-maybe-edit
@@ -2624,7 +2625,9 @@ It must return a string."
                                          real-match-data
                                          (save-excursion
                                            (goto-char (match-beginning 0))
-                                           (looking-at next-replacement)
+                                           (if regexp-flag
+                                               (looking-at next-replacement)
+                                             (looking-at (regexp-quote next-replacement)))
                                            (match-data t (nth 2 elt))))
                                    ;; Set replaced nil to keep in loop
                                    (when (eq def 'undo-all)
