@@ -58,9 +58,6 @@ static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
-static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
-					      Lisp_Object, Lisp_Object,
-					      Lisp_Object);
 
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
@@ -5705,7 +5702,7 @@ set_window_fringes (struct window *w, Lisp_Object left_width,
 			    Scroll bars
  ***********************************************************************/
 
-static struct window *
+struct window *
 set_window_scroll_bars (struct window *w, Lisp_Object width,
 			Lisp_Object vertical_type, Lisp_Object height,
 			Lisp_Object horizontal_type)
@@ -5772,36 +5769,6 @@ set_window_scroll_bars (struct window *w, Lisp_Object width,
 
   return changed ? w : NULL;
 }
-
-DEFUN ("set-window-scroll-bars", Fset_window_scroll_bars,
-       Sset_window_scroll_bars, 1, 5, 0,
-       doc: /* Set width and type of scroll bars of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Second parameter WIDTH specifies the pixel width for the vertical scroll
-bar.  If WIDTH is nil, use the scroll bar width of WINDOW's frame.
-Third parameter VERTICAL-TYPE specifies the type of the vertical scroll
-bar: left, right, nil or t where nil means to not display a vertical
-scroll bar on WINDOW and t means to use WINDOW frame's vertical scroll
-bar type.
-
-Fourth parameter HEIGHT specifies the pixel height for the horizontal
-scroll bar.  If HEIGHT is nil, use the scroll bar height of WINDOW's
-frame.  Fifth parameter HORIZONTAL-TYPE specifies the type of the
-horizontal scroll bar: bottom, nil, or t where nil means to not display
-a horizontal scroll bar on WINDOW and t means to use WINDOW frame's
-horizontal scroll bar type.
-
-Return t if scroll bars were actually changed and nil otherwise.  */)
-  (Lisp_Object window, Lisp_Object width, Lisp_Object vertical_type,
-   Lisp_Object height, Lisp_Object horizontal_type)
-{
-  struct window *w
-    = set_window_scroll_bars (decode_live_window (window),
-			      width, vertical_type, height, horizontal_type);
-  return w ? (apply_window_adjustment (w), Qt) : Qnil;
-}
-
 
 DEFUN ("window-scroll-bars", Fwindow_scroll_bars, Swindow_scroll_bars,
        0, 1, 0,
@@ -6213,7 +6180,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
-  defsubr (&Sset_window_scroll_bars);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
