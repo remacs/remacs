@@ -1,4 +1,4 @@
-;;; erc-stamp.el --- Timestamping for ERC messages
+;;; erc-stamp.el --- Timestamping for ERC messages  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2004, 2006-2019 Free Software Foundation, Inc.
 
@@ -186,10 +186,11 @@ or `erc-send-modify-hook'."
 	(funcall erc-insert-away-timestamp-function
 		 (erc-format-timestamp ct erc-away-timestamp-format)))
       (add-text-properties (point-min) (point-max)
-			   (list 'timestamp ct))
-      (add-text-properties (point-min) (point-max)
+			   ;; It's important for the function to
+			   ;; be different on different entries (bug#22700).
 			   (list 'cursor-sensor-functions
-				 (list #'erc-echo-timestamp))))))
+				 (list (lambda (_window _before dir)
+					 (erc-echo-timestamp dir ct))))))))
 
 (defvar erc-timestamp-last-inserted nil
   "Last timestamp inserted into the buffer.")
@@ -399,14 +400,12 @@ enabled when the message was inserted."
 	    (erc-munge-invisibility-spec)))
 	(erc-buffer-list)))
 
-(defun erc-echo-timestamp (window _before dir)
+(defun erc-echo-timestamp (dir stamp)
   "Print timestamp text-property of an IRC message."
   (when (and erc-echo-timestamps (eq 'entered dir))
-    (let* ((now (window-point window))
-	   (stamp (get-text-property now 'timestamp)))
-      (when stamp
-	(message "%s" (format-time-string erc-echo-timestamp-format
-					  stamp))))))
+    (when stamp
+      (message "%s" (format-time-string erc-echo-timestamp-format
+					stamp)))))
 
 (provide 'erc-stamp)
 
