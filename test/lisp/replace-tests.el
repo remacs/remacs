@@ -411,6 +411,9 @@ Each element has the format:
 (defvar replace-tests-bind-read-string nil
   "A string to bind `read-string' and avoid the prompt.")
 
+(defvar replace-tests-perform-replace-regexp-flag t
+  "Value for regexp-flag argument passed to `perform-replace' in undo tests.")
+
 (defmacro replace-tests-with-undo (input from to char-nums def-chr &rest body)
   "Helper to test `query-replace' undo feature.
 INPUT is a string to insert in a temporary buffer.
@@ -463,7 +466,7 @@ Return the last evalled form in BODY."
                    ((symbol-function 'replace-highlight)
                     (lambda (&rest _args)
                       (string-match "[A-Z ]" "ForestGreen"))))
-           (perform-replace ,from ,to t t nil))
+           (perform-replace ,from ,to t replace-tests-perform-replace-regexp-flag nil))
          ,@body))))
 
 (defun replace-tests--query-replace-undo (&optional comma)
@@ -504,5 +507,27 @@ Return the last evalled form in BODY."
      (replace-tests-with-undo
       input "a" "B" ((?\s . (1 2 3)) (?E . (4)) (?U . (5))) ?q
       (string= input (buffer-string))))))
+
+(ert-deftest query-replace-undo-bug37073 ()
+  "Test for https://debbugs.gnu.org/37073 ."
+  (let ((input "theorem 1\ntheorem 2\ntheorem 3"))
+    (should
+     (replace-tests-with-undo
+         input "theorem \\([0-9]+\\)"
+         "theorem \\\\ref{theo_\\1}"
+         ((?\s . (1 2)) (?U . (3)))
+         ?q
+       (string= input (buffer-string)))))
+  ;; Now run a test with regexp-flag arg in `perform-replace' set to nil
+  (let ((input " ^theorem$ 1\n ^theorem$ 2\n ^theorem$ 3")
+        (replace-tests-perform-replace-regexp-flag nil)
+        (expected " theo 1\n ^theorem$ 2\n ^theorem$ 3"))
+    (should
+     (replace-tests-with-undo
+         input "^theorem$"
+         "theo"
+         ((?\s . (1 2 4)) (?U . (3)))
+         ?q
+       (string= expected (buffer-string))))))
 
 ;;; replace-tests.el ends here
