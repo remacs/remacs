@@ -1035,11 +1035,11 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
       double db = XFLOAT_DATA (Ffloat_time (b));
       return make_float (subtract ? da - db : da + db);
     }
-  if (FLOATP (b) && !isfinite (XFLOAT_DATA (b)))
-    return subtract ? make_float (-XFLOAT_DATA (b)) : b;
-
   enum timeform aform, bform;
   struct lisp_time ta = lisp_time_struct (a, &aform);
+
+  if (FLOATP (b) && !isfinite (XFLOAT_DATA (b)))
+    return subtract ? make_float (-XFLOAT_DATA (b)) : b;
 
   /* Subtract nil from nil correctly, and handle other eq values
      quicker while we're at it.  Compare here rather than earlier, to
