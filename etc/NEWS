@@ -445,6 +445,11 @@ RGB triplets with a single hexadecimal digit per component.
 ---
 ** The toolbar now shows the equivalent key binding in its tooltips.
 
+---
+** 'scroll-lock-mode' is now bound to the 'Scroll_Lock' key globally.
+Note that this key binding will not work on MS-Windows systems if
+'w32-scroll-lock-modifier' is non-nil.
+
 
 * Editing Changes in Emacs 27.1
 
