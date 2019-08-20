@@ -129,9 +129,6 @@ This is intended mostly to help developers.
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
 builds respectively.
 
----
-** The toolbar now shows the equivalent key binding in its tooltips.
-
 
 * Startup Changes in Emacs 27.1
 
@@ -418,6 +415,9 @@ It is used for displaying file sizes and disk space in some cases.
 
 The X convention previously used differed slightly, particularly for
 RGB triplets with a single hexadecimal digit per component.
+
+---
+** The toolbar now shows the equivalent key binding in its tooltips.
 
 
 * Editing Changes in Emacs 27.1
