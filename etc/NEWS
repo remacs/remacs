@@ -129,6 +129,8 @@ This is intended mostly to help developers.
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
 builds respectively.
 
+** New make target 'help' shows a summary of common make targets.
+
 
 * Startup Changes in Emacs 27.1
 
