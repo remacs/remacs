@@ -4848,6 +4848,12 @@ all window-local buffer lists."
 	;; Unrecord BUFFER in WINDOW.
 	(unrecord-window-buffer window buffer)))))
 
+(defcustom quit-window-hook nil
+  "Hook run before performing any other actions in the `quit-buffer' command."
+  :type 'hook
+  :version "27.1"
+  :group 'windows)
+
 (defun quit-restore-window (&optional window bury-or-kill)
   "Quit WINDOW and deal with its buffer.
 WINDOW must be a live window and defaults to the selected one.
@@ -4876,7 +4882,11 @@ nil means to not handle the buffer in a particular way.  This
   most reliable remedy to not have `switch-to-prev-buffer' switch
   to this buffer again without killing the buffer.
 
-`kill' means to kill WINDOW's buffer."
+`kill' means to kill WINDOW's buffer.
+
+The functions in `quit-window-hook' will be run before doing
+anything else."
+  (run-hooks 'quit-window-hook)
   (setq window (window-normalize-window window t))
   (let* ((buffer (window-buffer window))
 	 (quit-restore (window-parameter window 'quit-restore))
@@ -4971,7 +4981,10 @@ According to information stored in WINDOW's `quit-restore' window
 parameter either (1) delete WINDOW and its frame, (2) delete
 WINDOW, (3) restore the buffer previously displayed in WINDOW,
 or (4) make WINDOW display some other buffer than the present
-one.  If non-nil, reset `quit-restore' parameter to nil."
+one.  If non-nil, reset `quit-restore' parameter to nil.
+
+The functions in `quit-window-hook' will be run before doing
+anything else."
   (interactive "P")
   (quit-restore-window window (if kill 'kill 'bury)))
 

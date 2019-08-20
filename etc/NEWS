@@ -2024,6 +2024,10 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** The new 'quit-window-hook' is now run first when executing the
+'quit-window' command.
+
 ** The variables 'help-enable-completion-auto-load',
 'help-enable-auto-load' and 'vhdl-project-auto-load', as well as the
 'vhdl-auto-load-project' have been renamed to have "autoload" without

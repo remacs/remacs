@@ -4043,6 +4043,10 @@ the selected one. The function's behavior is determined by the four
 elements of the list specified by @var{window}'s @code{quit-restore}
 parameter (@pxref{Window Parameters}).
 
+@vindex quit-window-hook
+The functions in @code{quit-window-hook} are run before doing anything
+else.
+
 The first element of the @code{quit-restore} parameter is one of the
 symbols @code{window}, meaning that the window has been specially
 created by @code{display-buffer}; @code{frame}, a separate frame has
