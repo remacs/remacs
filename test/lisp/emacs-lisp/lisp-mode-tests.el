@@ -284,7 +284,11 @@ Expected initialization file: `%s'\"
     (lisp-indent-line)
     (should (equal (buffer-string) "prompt> foo"))))
 
-
+(ert-deftest lisp-indent-unfinished-string ()
+  "Don't infloop on unfinished string (Bug#37045)."
+  (with-temp-buffer
+    (insert "\"\n")
+    (lisp-indent-region (point-min) (point-max))))
 
 (provide 'lisp-mode-tests)
 ;;; lisp-mode-tests.el ends here

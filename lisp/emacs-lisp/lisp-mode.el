@@ -822,7 +822,7 @@ by more than one line to cross a string literal."
                (setq last-sexp (nth 2 ppss)))
              (setq depth (car ppss))
              ;; Skip over newlines within strings.
-             (nth 3 ppss))
+             (and (not (eobp)) (nth 3 ppss)))
       (let ((string-start (nth 8 ppss)))
         (setq ppss (parse-partial-sexp (point) (point-max)
                                        nil nil ppss 'syntax-table))
@@ -838,17 +838,22 @@ by more than one line to cross a string literal."
                                        indent-stack)))))
     (prog1
         (let (indent)
-          (cond ((= (forward-line 1) 1) nil)
-                ;; Negative depth, probably some kind of syntax error.
+          (cond ((= (forward-line 1) 1)
+                 ;; Can't move to the next line, apparently end of buffer.
+                 nil)
                 ((null indent-stack)
-                 ;; Reset state.
+                 ;; Negative depth, probably some kind of syntax
+                 ;; error.  Reset the state.
                  (setq ppss (parse-partial-sexp (point) (point))))
                 ((car indent-stack))
                 ((integerp (setq indent (calculate-lisp-indent ppss)))
                  (setf (car indent-stack) indent))
                 ((consp indent)       ; (COLUMN CONTAINING-SEXP-START)
                  (car indent))
-                ;; This only happens if we're in a string.
+                ;; This only happens if we're in a string, but the
+                ;; loop should always skip over strings (unless we hit
+                ;; end of buffer, which is taken care of by the first
+                ;; clause).
                 (t (error "This shouldn't happen"))))
       (setf (lisp-indent-state-stack state) indent-stack)
       (setf (lisp-indent-state-ppss-point state) ppss-point)

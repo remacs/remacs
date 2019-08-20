@@ -62,6 +62,9 @@ of OTF script tags in otf-script-alist, whose source is on this page:
   https://docs.microsoft.com/en-us/typography/opentype/spec/scripttags
 
 Other databases in fontset.el might also need to be updated as needed.
+One notable place to check is the function setup-default-fontset,
+where new scripts will generally need some addition, most probably to
+the list of "simple" scripts (search for "Simple").
 
 The function 'ucs-names', defined in lisp/international/mule-cmds.el,
 might need to be updated because it knows about used and unused ranges

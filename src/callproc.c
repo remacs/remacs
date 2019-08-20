@@ -220,7 +220,7 @@ DEFUN ("call-process", Fcall_process, Scall_process, 1, MANY, 0,
        doc: /* Call PROGRAM synchronously in separate process.
 The remaining arguments are optional.
 
-The program's input comes from file INFILE (nil means `/dev/null').
+The program's input comes from file INFILE (nil means `null-device').
 If you want to make the input come from an Emacs buffer, use
 `call-process-region' instead.
 
