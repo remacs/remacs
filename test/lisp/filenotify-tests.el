@@ -946,7 +946,8 @@ delivered."
 	    (file-notify--test-wait-for-events
 	     timeout (null auto-revert-notify-watch-descriptor))
 	    (should auto-revert-use-notify)
-	    (should-not auto-revert-notify-watch-descriptor)
+	    (should-not
+             (file-notify-valid-p auto-revert-notify-watch-descriptor))
 
 	    ;; Modify file.  We wait for two seconds, in order to
 	    ;; have another timestamp.  One second seems to be too
