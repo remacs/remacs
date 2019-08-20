@@ -391,16 +391,36 @@ decode_float_time (double t, struct lisp_time *result)
   else
     {
       int exponent = ilogb (t);
-      if (exponent == FP_ILOGBNAN)
-	return EINVAL;
-
-      /* An enormous or infinite T would make SCALE < 0 which would make
-	 HZ < 1, which the (TICKS . HZ) representation does not allow.  */
-      if (DBL_MANT_DIG - 1 < exponent)
-	return EOVERFLOW;
-
-      /* min so we don't scale tiny numbers as if they were normalized.  */
-      int scale = min (DBL_MANT_DIG - 1 - exponent, flt_radix_power_size - 1);
+      int scale;
+      if (exponent < DBL_MANT_DIG)
+	{
+	  if (exponent < DBL_MIN_EXP - 1)
+	    {
+	      if (exponent == FP_ILOGBNAN
+		  && (FP_ILOGBNAN != FP_ILOGB0 || isnan (t)))
+		return EINVAL;
+	      /* T is tiny.  SCALE must be less than FLT_RADIX_POWER_SIZE,
+		 as otherwise T would be scaled as if it were normalized.  */
+	      scale = flt_radix_power_size - 1;
+	    }
+	  else
+	    {
+	      /* The typical case.  */
+	      scale = DBL_MANT_DIG - 1 - exponent;
+	    }
+	}
+      else if (exponent < INT_MAX)
+	{
+	 /* T is finite but so large that HZ would be less than 1 if
+	    T's precision were represented exactly.  SCALE must be
+	    nonnegative, as the (TICKS . HZ) representation requires
+	    HZ to be at least 1.  So use SCALE = 0, which converts T to
+	    (T . 1), which is the exact numeric value with too-large HZ,
+	    which is typically better than signaling overflow.  */
+	  scale = 0;
+	}
+      else
+	return FP_ILOGBNAN == INT_MAX && isnan (t) ? EINVAL : EOVERFLOW;
 
       double scaled = scalbn (t, scale);
       eassert (trunc (scaled) == scaled);

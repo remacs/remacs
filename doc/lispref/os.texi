@@ -1346,6 +1346,8 @@ given, specifies a time to convert instead of the current time.
 
 @emph{Warning}: Since the result is floating point, it may not be
 exact.  Do not use this function if precise time stamps are required.
+For example, on typical systems @code{(float-time '(1 . 10))} displays
+as @samp{0.1} but is slightly greater than 1/10.
 
 @code{time-to-seconds} is an alias for this function.
 @end defun
@@ -1432,8 +1434,6 @@ as traditional Gregorian years do; for example, the year number
 
 @defun time-convert time &optional form
 This function converts a time value into a Lisp timestamp.
-If the time cannot be represented exactly, it is truncated
-toward minus infinity.
 
 The optional @var{form} argument specifies the timestamp form to be
 returned.  If @var{form} is the symbol @code{integer}, this function
@@ -1452,8 +1452,17 @@ Although an omitted or @code{nil} @var{form} currently acts like
 @code{list}, this is planned to change in a future Emacs version, so
 callers requiring list timestamps should pass @code{list} explicitly.
 
-If @var{time} already has the proper form, this function might yield
-@var{time} rather than a copy.
+If @var{time} is infinite or a NaN, this function signals an error.
+Otherwise, if @var{time} cannot be represented exactly, conversion
+truncates it toward minus infinity.  When @var{form} is @code{t},
+conversion is always exact so no truncation occurs, and the returned
+clock resolution is no less than that of @var{time}.  By way of
+contrast, @code{float-time} can convert any Lisp time value without
+signaling an error, although the result might not be exact.
+@xref{Time of Day}.
+
+For efficiency this function might return a value that is @code{eq} to
+@var{time}, or that otherwise shares structure with @var{time}.
 
 Although @code{(time-convert nil nil)} is equivalent to
 @code{(current-time)}, the latter may be a bit faster.
@@ -1950,16 +1959,18 @@ The result is @code{nil} if either argument is a NaN.
 
 @defun time-subtract t1 t2
 This returns the time difference @var{t1} @minus{} @var{t2} between
-two time values, as a time value.  However, the result is a float
-if either argument is a float infinity or NaN@.
+two time values, normally as a Lisp timestamp but as a float
+if either argument is infinite or a NaN@.
+When the result is a timestamp, it is exact and its clock
+resolution is no worse than the worse of its two arguments' resolutions.
 If you need the difference in units
-of elapsed seconds, use @code{float-time} (@pxref{Time of Day,
-float-time}) to convert the result into seconds.
+of elapsed seconds, you can convert it with @code{time-convert} or
+@code{float-time}.  @xref{Time Conversion}.
 @end defun
 
 @defun time-add t1 t2
-This returns the sum of two time values, as a time value.
-However, the result is a float if either argument is a float infinity or NaN@.
+This returns the sum of two time values,
+using the same conversion rules as @code{time-subtract}.
 One argument should represent a time difference rather than a point in time,
 as a time value that is often just a single number of elapsed seconds.
 Here is how to add a number of seconds to a time value:

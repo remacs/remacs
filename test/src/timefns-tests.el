@@ -129,6 +129,12 @@
 			   most-negative-fixnum most-positive-fixnum
 			   (1- most-negative-fixnum)
 			   (1+ most-positive-fixnum)
+			   1e1 -1e1 1e-1 -1e-1
+			   1e8 -1e8 1e-8 -1e-8
+			   1e9 -1e9 1e-9 -1e-9
+			   1e10 -1e10 1e-10 -1e-10
+			   1e16 -1e16 1e-16 -1e-16
+			   1e37 -1e37 1e-37 -1e-37
 			   1e+INF -1e+INF 1e+NaN -1e+NaN
 			   '(0 0 0 1) '(0 0 1 0) '(0 1 0 0) '(1 0 0 0)
 			   '(-1 0 0 0) '(1 2 3 4) '(-1 2 3 4)
