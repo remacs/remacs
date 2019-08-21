@@ -84,17 +84,22 @@ set to the event sent when clicking on the mouse wheel button."
   :group 'mouse
   :type 'number)
 
-(defcustom mouse-wheel-scroll-amount '(5 ((shift) . 1) ((control) . nil))
+(defcustom mouse-wheel-scroll-amount
+  '(5 ((shift) . 1) ((meta) . nil) ((control) . text-scale))
   "Amount to scroll windows by when spinning the mouse wheel.
 This is an alist mapping the modifier key to the amount to scroll when
 the wheel is moved with the modifier key depressed.
-Elements of the list have the form (MODIFIERS . AMOUNT) or just AMOUNT if
-MODIFIERS is nil.
+Elements of the list have the form (MODIFIER . AMOUNT) or just AMOUNT if
+MODIFIER is nil.
 
 AMOUNT should be the number of lines to scroll, or nil for near full
 screen.  It can also be a floating point number, specifying the fraction of
 a full screen to scroll.  A near full screen is `next-screen-context-lines'
-less than a full screen."
+less than a full screen.
+
+If AMOUNT is the symbol text-scale, this means that with
+MODIFIER, the mouse wheel will change the face height instead of
+scrolling."
   :group 'mouse
   :type '(cons
 	  (choice :tag "Normal"
@@ -105,20 +110,22 @@ less than a full screen."
 		   (repeat (choice :tag "modifier"
 				   (const alt) (const control) (const hyper)
 				   (const meta) (const shift) (const super)))
-		   (choice :tag "scroll amount"
-			   (const :tag "Full screen" :value nil)
-			   (integer :tag "Specific # of lines")
-			   (float :tag "Fraction of window"))))
+		   (choice :tag "action"
+			   (const :tag "Scroll full screen" :value nil)
+			   (integer :tag "Scroll specific # of lines")
+			   (float :tag "Scroll fraction of window"))))
           (repeat
            (cons
             (repeat (choice :tag "modifier"
 			    (const alt) (const control) (const hyper)
                             (const meta) (const shift) (const super)))
-            (choice :tag "scroll amount"
-                    (const :tag "Full screen" :value nil)
-                    (integer :tag "Specific # of lines")
-                    (float :tag "Fraction of window")))))
-  :set 'mouse-wheel-change-button)
+            (choice :tag "action"
+                    (const :tag "Scroll full screen" :value nil)
+                    (integer :tag "Scroll specific # of lines")
+                    (float :tag "Scroll fraction of window")
+                    (const :tag "Change face size" :value text-scale)))))
+  :set 'mouse-wheel-change-button
+  :version "27.1")
 
 (defcustom mouse-wheel-progressive-speed t
   "If non-nil, the faster the user moves the wheel, the faster the scrolling.
@@ -316,6 +323,15 @@ non-Windows systems."
 (put 'mwheel-scroll 'scroll-command t)
 
 (defvar mwheel-installed-bindings nil)
+(defvar mwheel-installed-text-scale-bindings nil)
+
+(defun mouse-wheel--remove-bindings (bindings funs)
+  "Remove key BINDINGS if they're bound to any function in FUNS.
+BINDINGS is a list of key bindings, FUNS is a list of functions.
+This is a helper function for `mouse-wheel-mode'."
+  (dolist (key bindings)
+    (when (memq (lookup-key (current-global-map) key) funs)
+      (global-unset-key key))))
 
 (define-minor-mode mouse-wheel-mode
   "Toggle mouse wheel support (Mouse Wheel mode)."
@@ -328,17 +344,32 @@ non-Windows systems."
   :global t
   :group 'mouse
   ;; Remove previous bindings, if any.
-  (while mwheel-installed-bindings
-    (let ((key (pop mwheel-installed-bindings)))
-      (when (eq (lookup-key (current-global-map) key) 'mwheel-scroll)
-        (global-unset-key key))))
+  (mouse-wheel--remove-bindings mwheel-installed-bindings
+                                '(mwheel-scroll))
+  (mouse-wheel--remove-bindings mwheel-installed-text-scale-bindings
+                                '(text-scale-increase
+                                  text-scale-decrease))
+  (setq mwheel-installed-bindings nil)
+  (setq mwheel-installed-text-scale-bindings nil)
   ;; Setup bindings as needed.
   (when mouse-wheel-mode
-    (dolist (event (list mouse-wheel-down-event mouse-wheel-up-event mouse-wheel-right-event mouse-wheel-left-event))
-      (dolist (key (mapcar (lambda (amt) `[(,@(if (consp amt) (car amt)) ,event)])
-                           mouse-wheel-scroll-amount))
-        (global-set-key key 'mwheel-scroll)
-        (push key mwheel-installed-bindings)))))
+    (dolist (binding mouse-wheel-scroll-amount)
+      (cond
+       ;; Bindings for changing font size.
+       ((and (consp binding) (eq (cdr binding) 'text-scale))
+        (let ((increase-key `[,(list (caar binding) mouse-wheel-down-event)])
+              (decrease-key `[,(list (caar binding) mouse-wheel-up-event)]))
+          (global-set-key increase-key 'text-scale-increase)
+          (global-set-key decrease-key 'text-scale-decrease)
+          (push increase-key mwheel-installed-text-scale-bindings)
+          (push decrease-key mwheel-installed-text-scale-bindings)))
+       ;; Bindings for scrolling.
+       (t
+        (dolist (event (list mouse-wheel-down-event mouse-wheel-up-event
+                             mouse-wheel-right-event mouse-wheel-left-event))
+          (let ((key `[(,@(if (consp binding) (car binding)) ,event)]))
+            (global-set-key key 'mwheel-scroll)
+            (push key mwheel-installed-bindings))))))))
 
 ;;; Compatibility entry point
 ;; preloaded ;;;###autoload

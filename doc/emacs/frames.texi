@@ -201,10 +201,12 @@ deactivating the mark.  @xref{Shift Selection}.
 @vindex mouse-wheel-progressive-speed
   Some mice have a ``wheel'' which can be used for scrolling.  Emacs
 supports scrolling windows with the mouse wheel, by default, on most
-graphical displays.  To toggle this feature, use @kbd{M-x
-mouse-wheel-mode}.  The variables @code{mouse-wheel-follow-mouse} and
-@code{mouse-wheel-scroll-amount} determine where and by how much
-buffers are scrolled.  The variable
+graphical displays.  There is also support for increasing or
+decreasing the height of the default face, by default bound to
+scrolling with the @key{Ctrl} modifier.  To toggle this feature, use
+@kbd{M-x mouse-wheel-mode}.  The variables
+@code{mouse-wheel-follow-mouse} and @code{mouse-wheel-scroll-amount}
+determine where and by how much buffers are scrolled.  The variable
 @code{mouse-wheel-progressive-speed} determines whether the scroll
 speed is linked to how fast you move the wheel.
 

@@ -2309,6 +2309,18 @@ bool vector.
 ** 'regexp-quote' may return its argument string.
 If the argument needs no quoting, it can be returned instead of a copy.
 
++++
+** Mouse scroll up and down with control key modifier changes font size.
+Previously, the control key modifier was used to scroll up or down by
+an amount which was close to near a full screen.  This is now instead
+available by scrolling with the meta modifier key.
+
+To get the old behaviour back, customize the variable
+'mouse-wheel-scroll-amount', or add the following to your init file:
+
+(customize-set-variable 'mouse-wheel-scroll-amount
+                        '(5 ((shift) . 1) ((control) . nil)))
+
 
 * Lisp Changes in Emacs 27.1
 
