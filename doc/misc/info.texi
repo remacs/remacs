@@ -929,10 +929,9 @@ is @code{Info-top-node}.
 @section Quitting Info
 
 @kindex q @r{(Info mode)}
-@findex Info-exit
 @cindex quitting Info mode
   To get out of Info, back to what you were doing before, type @kbd{q}
-for @dfn{Quit}.  This runs @code{Info-exit} in Emacs.
+for @dfn{Quit}.  This runs @code{quit-window} in Emacs.
 
   This is the end of the basic course on using Info.  You have learned
 how to move in an Info document, and how to follow menus and cross
