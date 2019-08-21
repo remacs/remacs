@@ -184,7 +184,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    infrequently.  These include the face of the characters, whether
    text is invisible, the object (buffer or display or overlay string)
    being iterated, character composition info, etc.  For any given
-   buffer or string position, these sources of information that
+   buffer or string position, the sources of information that
    affects the display can be determined by calling the appropriate
    primitives, such as Fnext_single_property_change, but both these
    calls and the processing of their return values is relatively
@@ -214,7 +214,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    string's interval tree to determine where the text properties
    change, finds the next position where overlays and character
    composition can change, and stores in stop_charpos the closest
-   position where any of these factors should be reconsider.
+   position where any of these factors should be reconsidered.
 
    Producing glyphs.
 
