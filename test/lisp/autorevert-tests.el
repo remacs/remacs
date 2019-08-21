@@ -111,7 +111,7 @@ being the result.")
      (cons
       t (ignore-errors
 	  (and
-	   (not (getenv "EMACS_HYDRA_CI")(getenv "EMACS_HYDRA_CI"))
+	   (not (getenv "EMACS_HYDRA_CI"))
 	   (file-remote-p auto-revert-test-remote-temporary-file-directory)
 	   (file-directory-p auto-revert-test-remote-temporary-file-directory)
 	   (file-writable-p
