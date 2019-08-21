@@ -3492,7 +3492,7 @@ DEFUN ("frame-bottom-divider-width", Fbottom_divider_width, Sbottom_divider_widt
 }
 
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4,
-       "(list (selected-frame) current-prefix-arg)",
+       "(list (selected-frame) (prefix-numeric-value current-prefix-arg))",
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
 HEIGHT lines but that the idea of the actual height of the frame should
@@ -3521,7 +3521,7 @@ currenly selected frame will be set to this height.  */)
 }
 
 DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 4,
-       "(list (selected-frame) current-prefix-arg)",
+       "(list (selected-frame) (prefix-numeric-value current-prefix-arg))",
        doc: /* Set text width of frame FRAME to WIDTH columns.
 Optional third arg PRETEND non-nil means that redisplay should use WIDTH
 columns but that the idea of the actual width of the frame should not
