@@ -2166,7 +2166,9 @@ end and duration).
 +++
 *** 'time-add', 'time-subtract', and 'time-less-p' now accept
 infinities and NaNs too, and propagate them or return nil like
-floating-point operators do.
+floating-point operators do.  If both arguments are finite, these
+functions now return exact results instead of rounding in some cases,
+and they also avoid excess precision when that is easy.
 
 +++
 *** New function 'time-equal-p' compares time values for equality.

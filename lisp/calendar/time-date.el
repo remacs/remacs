@@ -421,10 +421,13 @@ changes in daylight saving time are not taken into account."
     ;; Do the time part, which is pretty simple (except for leap
     ;; seconds, I guess).
     ;; Time zone adjustments are basically the same as time adjustments.
-    (setq seconds (time-add (+ (* (or (decoded-time-hour delta) 0) 3600)
-			       (* (or (decoded-time-minute delta) 0) 60)
-			       (or (decoded-time-zone delta) 0))
-			    (or (decoded-time-second delta) 0)))
+    (setq seconds (time-convert (or (decoded-time-second delta) 0) t))
+    (setq seconds
+	  (time-add seconds
+		    (time-convert (+ (* (or (decoded-time-hour delta) 0) 3600)
+				     (* (or (decoded-time-minute delta) 0) 60)
+				     (or (decoded-time-zone delta) 0))
+				  (cdr seconds))))
 
     (decoded-time--alter-second time seconds)
     time))
@@ -461,11 +464,16 @@ changes in daylight saving time are not taken into account."
 
 (defun decoded-time--alter-second (time seconds)
   "Increase the time in TIME by SECONDS."
-  (let* ((secsperday 86400)
-	 (old (time-add (+ (* 3600 (or (decoded-time-hour time) 0))
-			   (* 60 (or (decoded-time-minute time) 0)))
-			(or (decoded-time-second time) 0)))
-	 (new (time-add old seconds)))
+  (let* ((time-sec (time-convert (or (decoded-time-second time) 0) t))
+	 (time-hz (cdr time-sec))
+	 (old (time-add time-sec
+			(time-convert
+			 (+ (* 3600 (or (decoded-time-hour time) 0))
+			    (* 60 (or (decoded-time-minute time) 0)))
+			 time-hz)))
+	 (new (time-convert (time-add old seconds) t))
+	 (new-hz (cdr new))
+	 (secsperday (time-convert 86400 new-hz)))
     ;; Hm...  DST...
     (while (time-less-p new 0)
       (decoded-time--alter-day time nil)
@@ -474,8 +482,10 @@ changes in daylight saving time are not taken into account."
       (decoded-time--alter-day time t)
       (setq new (time-subtract new secsperday)))
     (let ((sec (time-convert new 'integer)))
-      (setf (decoded-time-second time) (time-add (% sec 60)
-						 (time-subtract new sec))
+      (setf (decoded-time-second time) (time-add
+					(time-convert (% sec 60) new-hz)
+					(time-subtract
+					 new (time-convert sec new-hz)))
 	    (decoded-time-minute time) (% (/ sec 60) 60)
 	    (decoded-time-hour time) (/ sec 3600)))))
 

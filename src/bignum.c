@@ -31,9 +31,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    storage is exhausted.  Admittedly this is not ideal.  An mpz value
    in a temporary is made permanent by mpz_swapping it with a bignum's
    value.  Although typically at most two temporaries are needed,
-   time_arith, rounddiv_q and rounding_driver each need four.  */
+   rounddiv_q and rounding_driver both need four and time_arith needs
+   five.  */
 
-mpz_t mpz[4];
+mpz_t mpz[5];
 
 static void *
 xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)

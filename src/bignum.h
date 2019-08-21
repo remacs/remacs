@@ -41,7 +41,7 @@ struct Lisp_Bignum
   mpz_t value;
 } GCALIGNED_STRUCT;
 
-extern mpz_t mpz[4];
+extern mpz_t mpz[5];
 
 extern void init_bignum (void);
 extern Lisp_Object make_integer_mpz (void);
