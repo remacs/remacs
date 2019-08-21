@@ -111,7 +111,7 @@ being the result.")
      (cons
       t (ignore-errors
 	  (and
-	   (not (getenv "EMACS_HYDRA_CI"))
+	   (not (getenv "EMACS_HYDRA_CI")(getenv "EMACS_HYDRA_CI"))
 	   (file-remote-p auto-revert-test-remote-temporary-file-directory)
 	   (file-directory-p auto-revert-test-remote-temporary-file-directory)
 	   (file-writable-p
@@ -277,6 +277,9 @@ This expects `auto-revert--messages' to be bound by
 ;  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
 
   (let ((tmpfile (make-temp-file "auto-revert-test"))
+        ;; Try to catch bug#32645.
+        (auto-revert-debug (getenv "EMACS_HYDRA_CI"))
+        (file-notify-debug (getenv "EMACS_HYDRA_CI"))
         buf desc)
     (unwind-protect
 	(progn
