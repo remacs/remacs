@@ -4034,6 +4034,10 @@ This command quits @var{window} and buries its buffer.  The argument
 With prefix argument @var{kill} non-@code{nil}, it kills the buffer
 instead of burying it.  It calls the function @code{quit-restore-window}
 described next to deal with the window and its buffer.
+
+@vindex quit-window-hook
+The functions in @code{quit-window-hook} are run before doing anything
+else.
 @end deffn
 
 @defun quit-restore-window &optional window bury-or-kill
@@ -4042,10 +4046,6 @@ optional argument @var{window} must be a live window and defaults to
 the selected one. The function's behavior is determined by the four
 elements of the list specified by @var{window}'s @code{quit-restore}
 parameter (@pxref{Window Parameters}).
-
-@vindex quit-window-hook
-The functions in @code{quit-window-hook} are run before doing anything
-else.
 
 The first element of the @code{quit-restore} parameter is one of the
 symbols @code{window}, meaning that the window has been specially
