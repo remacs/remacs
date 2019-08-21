@@ -47,7 +47,6 @@ static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 static bool internal_equal (Lisp_Object, Lisp_Object,
 			    enum equal_kind, int, Lisp_Object);
-static EMACS_UINT sxhash_bignum (struct Lisp_Bignum *);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -1444,7 +1443,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
     }
   else
     {
-      if (mpz_sgn (XBIGNUM (n)->value) < 0)
+      if (mpz_sgn (*xbignum_val (n)) < 0)
 	return tail;
       num = large_num;
     }
@@ -1482,11 +1481,11 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
 	 CYCLE_LENGTH.  */
       /* Add N mod CYCLE_LENGTH to NUM.  */
       if (cycle_length <= ULONG_MAX)
-	num += mpz_tdiv_ui (XBIGNUM (n)->value, cycle_length);
+	num += mpz_tdiv_ui (*xbignum_val (n), cycle_length);
       else
 	{
 	  mpz_set_intmax (mpz[0], cycle_length);
-	  mpz_tdiv_r (mpz[0], XBIGNUM (n)->value, mpz[0]);
+	  mpz_tdiv_r (mpz[0], *xbignum_val (n), mpz[0]);
 	  intptr_t iz;
 	  mpz_export (&iz, NULL, -1, sizeof iz, 0, 0, mpz[0]);
 	  num += iz;
@@ -1595,7 +1594,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
         {
           Lisp_Object tem = XCAR (tail);
           if (BIGNUMP (tem)
-	      && mpz_cmp (XBIGNUM (elt)->value, XBIGNUM (tem)->value) == 0)
+	      && mpz_cmp (*xbignum_val (elt), *xbignum_val (tem)) == 0)
             return tail;
         }
     }
@@ -2307,7 +2306,7 @@ This differs from numeric comparison: (eql 0.0 -0.0) returns nil and
     return FLOATP (obj2) && same_float (obj1, obj2) ? Qt : Qnil;
   else if (BIGNUMP (obj1))
     return ((BIGNUMP (obj2)
-	     && mpz_cmp (XBIGNUM (obj1)->value, XBIGNUM (obj2)->value) == 0)
+	     && mpz_cmp (*xbignum_val (obj1), *xbignum_val (obj2)) == 0)
 	    ? Qt : Qnil);
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
@@ -2437,7 +2436,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	if (ASIZE (o2) != size)
 	  return false;
 	if (BIGNUMP (o1))
-	  return mpz_cmp (XBIGNUM (o1)->value, XBIGNUM (o2)->value) == 0;
+	  return mpz_cmp (*xbignum_val (o1), *xbignum_val (o2)) == 0;
 	if (OVERLAYP (o1))
 	  {
 	    if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
@@ -4640,13 +4639,14 @@ sxhash_bool_vector (Lisp_Object vec)
 /* Return a hash for a bignum.  */
 
 static EMACS_UINT
-sxhash_bignum (struct Lisp_Bignum *bignum)
+sxhash_bignum (Lisp_Object bignum)
 {
-  size_t i, nlimbs = mpz_size (bignum->value);
+  mpz_t const *n = xbignum_val (bignum);
+  size_t i, nlimbs = mpz_size (*n);
   EMACS_UINT hash = 0;
 
   for (i = 0; i < nlimbs; ++i)
-    hash = sxhash_combine (hash, mpz_getlimbn (bignum->value, i));
+    hash = sxhash_combine (hash, mpz_getlimbn (*n, i));
 
   return SXHASH_REDUCE (hash);
 }
@@ -4680,7 +4680,7 @@ sxhash (Lisp_Object obj, int depth)
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
       if (BIGNUMP (obj))
-	hash = sxhash_bignum (XBIGNUM (obj));
+	hash = sxhash_bignum (obj);
       else if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In

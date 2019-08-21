@@ -2211,7 +2211,7 @@ dump_bignum (struct dump_context *ctx, Lisp_Object object)
   const struct Lisp_Bignum *bignum = XBIGNUM (object);
   START_DUMP_PVEC (ctx, &bignum->header, struct Lisp_Bignum, out);
   verify (sizeof (out->value) >= sizeof (struct bignum_reload_info));
-  dump_field_fixup_later (ctx, out, bignum, &bignum->value);
+  dump_field_fixup_later (ctx, out, bignum, xbignum_val (object));
   dump_off bignum_offset = finish_dump_pvec (ctx, &out->header);
   if (ctx->flags.dump_object_contents)
     {
@@ -3397,19 +3397,18 @@ dump_cold_buffer (struct dump_context *ctx, Lisp_Object data)
 static void
 dump_cold_bignum (struct dump_context *ctx, Lisp_Object object)
 {
-  const struct Lisp_Bignum *bignum = XBIGNUM (object);
-  size_t sz_nlimbs = mpz_size (bignum->value);
+  mpz_t const *n = xbignum_val (object);
+  size_t sz_nlimbs = mpz_size (*n);
   eassert (sz_nlimbs < DUMP_OFF_MAX);
   dump_align_output (ctx, alignof (mp_limb_t));
   dump_off nlimbs = (dump_off) sz_nlimbs;
   Lisp_Object descriptor
     = list2 (dump_off_to_lisp (ctx->offset),
-	     dump_off_to_lisp ((mpz_sgn (bignum->value) < 0
-				? -nlimbs : nlimbs)));
+	     dump_off_to_lisp (mpz_sgn (*n) < 0 ? -nlimbs : nlimbs));
   Fputhash (object, descriptor, ctx->bignum_data);
   for (mp_size_t i = 0; i < nlimbs; ++i)
     {
-      mp_limb_t limb = mpz_getlimbn (bignum->value, i);
+      mp_limb_t limb = mpz_getlimbn (*n, i);
       dump_write (ctx, &limb, sizeof (limb));
     }
 }
@@ -5205,8 +5204,8 @@ dump_do_dump_relocation (const uintptr_t dump_base,
       {
         struct Lisp_Bignum *bignum = dump_ptr (dump_base, reloc_offset);
         struct bignum_reload_info reload_info;
-        verify (sizeof (reload_info) <= sizeof (bignum->value));
-        memcpy (&reload_info, &bignum->value, sizeof (reload_info));
+        verify (sizeof (reload_info) <= sizeof (*bignum_val (bignum)));
+        memcpy (&reload_info, bignum_val (bignum), sizeof (reload_info));
         const mp_limb_t *limbs =
           dump_ptr (dump_base, reload_info.data_location);
         mpz_roinit_n (bignum->value, limbs, reload_info.nlimbs);

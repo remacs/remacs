@@ -5290,9 +5290,10 @@ make_pure_float (double num)
    space.  */
 
 static Lisp_Object
-make_pure_bignum (struct Lisp_Bignum *value)
+make_pure_bignum (Lisp_Object value)
 {
-  size_t i, nlimbs = mpz_size (value->value);
+  mpz_t const *n = xbignum_val (value);
+  size_t i, nlimbs = mpz_size (*n);
   size_t nbytes = nlimbs * sizeof (mp_limb_t);
   mp_limb_t *pure_limbs;
   mp_size_t new_size;
@@ -5303,10 +5304,10 @@ make_pure_bignum (struct Lisp_Bignum *value)
   int limb_alignment = alignof (mp_limb_t);
   pure_limbs = pure_alloc (nbytes, - limb_alignment);
   for (i = 0; i < nlimbs; ++i)
-    pure_limbs[i] = mpz_getlimbn (value->value, i);
+    pure_limbs[i] = mpz_getlimbn (*n, i);
 
   new_size = nlimbs;
-  if (mpz_sgn (value->value) < 0)
+  if (mpz_sgn (*n) < 0)
     new_size = -new_size;
 
   mpz_roinit_n (b->value, pure_limbs, new_size);
@@ -5456,7 +5457,7 @@ purecopy (Lisp_Object obj)
       return obj;
     }
   else if (BIGNUMP (obj))
-    obj = make_pure_bignum (XBIGNUM (obj));
+    obj = make_pure_bignum (obj);
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");

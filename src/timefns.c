@@ -91,7 +91,7 @@ static Lisp_Object timespec_hz;
 #define TRILLION 1000000000000
 #if FIXNUM_OVERFLOW_P (TRILLION)
 static Lisp_Object trillion;
-# define ztrillion (XBIGNUM (trillion)->value)
+# define ztrillion (*xbignum_val (trillion))
 #else
 # define trillion make_fixnum (TRILLION)
 # if ULONG_MAX < TRILLION || !FASTER_TIMEFNS
@@ -534,7 +534,7 @@ lisp_time_hz_ticks (struct lisp_time t, Lisp_Object hz)
 	return make_int (ticks / XFIXNUM (t.hz)
 			 - (ticks % XFIXNUM (t.hz) < 0));
     }
-  else if (! (BIGNUMP (hz) && 0 < mpz_sgn (XBIGNUM (hz)->value)))
+  else if (! (BIGNUMP (hz) && 0 < mpz_sgn (*xbignum_val (hz))))
     invalid_hz (hz);
 
   mpz_mul (mpz[0],
@@ -906,6 +906,7 @@ lisp_to_timespec (struct lisp_time t)
   struct timespec result = invalid_timespec ();
   int ns;
   mpz_t *q = &mpz[0];
+  mpz_t const *qt = q;
 
   if (FASTER_TIMEFNS && EQ (t.hz, timespec_hz))
     {
@@ -924,7 +925,7 @@ lisp_to_timespec (struct lisp_time t)
 	  return result;
 	}
       else
-	ns = mpz_fdiv_q_ui (*q, XBIGNUM (t.ticks)->value, TIMESPEC_HZ);
+	ns = mpz_fdiv_q_ui (*q, *xbignum_val (t.ticks), TIMESPEC_HZ);
     }
   else if (FASTER_TIMEFNS && EQ (t.hz, make_fixnum (1)))
     {
@@ -941,7 +942,7 @@ lisp_to_timespec (struct lisp_time t)
 	  return result;
 	}
       else
-	q = &XBIGNUM (t.ticks)->value;
+	qt = xbignum_val (t.ticks);
     }
   else
     {
@@ -953,7 +954,7 @@ lisp_to_timespec (struct lisp_time t)
   /* With some versions of MinGW, tv_sec is a 64-bit type, whereas
      time_t is a 32-bit type.  */
   time_t sec;
-  if (mpz_time (*q, &sec))
+  if (mpz_time (*qt, &sec))
     {
       result.tv_sec = sec;
       result.tv_nsec = ns;
@@ -1038,7 +1039,7 @@ lispint_arith (Lisp_Object a, Lisp_Object b, bool subtract)
       if (eabs (XFIXNUM (b)) <= ULONG_MAX)
 	{
 	  ((XFIXNUM (b) < 0) == subtract ? mpz_add_ui : mpz_sub_ui)
-	    (mpz[0], XBIGNUM (a)->value, eabs (XFIXNUM (b)));
+	    (mpz[0], *xbignum_val (a), eabs (XFIXNUM (b)));
 	  mpz_done = true;
 	}
     }
