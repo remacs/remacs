@@ -441,10 +441,10 @@ Bartosz Duszel: changed allout.el bib-mode.el cc-cmds.el hexl.el icon.el
   xscheme.el
 
 Basil L. Contovounesios: changed simple.el message.el customize.texi
-  internals.texi sequences.texi bibtex.el css-mode-tests.el css-mode.el
-  display.texi electric.el eval.texi functions.texi gnus-art.el
-  gnus-gravatar.el gnus.texi gravatar.el ibuffer.el image-tests.el
-  image.el indent.el json-tests.el and 14 other files
+  gnus.texi internals.texi sequences.texi bibtex.el css-mode-tests.el
+  css-mode.el display.texi electric.el eval.texi functions.texi
+  gnus-art.el gnus-cus.el gnus-gravatar.el gravatar.el ibuffer.el
+  image-tests.el image.el indent.el and 16 other files
 
 Bastian Beischer: changed include.el mru-bookmark.el refs.el
   semantic/complete.el senator.el
@@ -3281,8 +3281,8 @@ Matt Swift: changed dired.el editfns.c lisp-mode.el mm-decode.el
 
 Mauro Aranda: changed autorevert.el cc-mode.texi control.texi dbus.texi
   dired-x.texi eudc.texi files.texi functions.texi gnus-faq.texi
-  gnus.texi info.el modes.texi org.texi os.texi picture.el positions.texi
-  reftex.texi variables.texi
+  gnus.texi info.el modes.texi octave.el org.texi os.texi picture.el
+  pong.el positions.texi reftex.texi variables.texi
 
 Maxime Edouard Robert Froumentin: changed gnus-art.el mml.el
 
@@ -3659,11 +3659,11 @@ and changed rsz-mini.el emacs-buffer.gdb comint.el files.el Makefile
 
 Noah Lavine: changed tramp.el
 
-Noam Postavsky: changed lisp-mode.el progmodes/python.el xdisp.c
-  lisp-mode-tests.el cl-macs.el emacs-lisp/debug.el term.el bytecomp.el
-  data.c simple.el ert.el help-fns.el subr.el modes.texi processes.texi
-  cl-print.el elisp-mode.el eval.c ffap.el search.c sh-script.el
-  and 259 other files
+Noam Postavsky: changed lisp-mode.el progmodes/python.el
+  lisp-mode-tests.el xdisp.c cl-macs.el term.el emacs-lisp/debug.el
+  bytecomp.el data.c simple.el ert.el help-fns.el processes.texi subr.el
+  modes.texi cl-print.el elisp-mode.el eval.c ffap.el search.c
+  sh-script.el and 259 other files
 
 Nobuyoshi Nakada: co-wrote ruby-mode.el
 
@@ -4512,8 +4512,8 @@ Stefan Bruda: co-wrote prolog.el
 
 Stefan Guath: changed find-dired.el
 
-Stefan Kangas: changed bookmark.el buffer.c fileio.c windows.texi
-  winner.el
+Stefan Kangas: changed bookmark.el buffer.c fileio.c package-x.el
+  package.texi windows.texi winner.el
 
 Stefan Merten: co-wrote rst.el
 
@@ -4857,10 +4857,10 @@ Tino Calancha: wrote buff-menu-tests.el ediff-ptch-tests.el
   em-ls-tests.el ffap-tests.el hi-lock-tests.el ls-lisp-tests.el
   register-tests.el rmc-tests.el
 and changed ibuffer.el dired-tests.el ibuf-ext.el dired.el dired-aux.el
-  simple.el replace.el ibuffer-tests.el ls-lisp.el diff-mode.el
-  ibuf-macs.el cl-seq.el dired-x.el dired.texi ediff-ptch.el em-ls.el
-  files.el replace-tests.el buff-menu.el cl.texi ediff-init.el
-  and 82 other files
+  replace.el simple.el ibuffer-tests.el ls-lisp.el diff-mode.el
+  ibuf-macs.el replace-tests.el cl-seq.el dired-x.el dired.texi
+  ediff-ptch.el em-ls.el files.el buff-menu.el cl.texi ediff-init.el
+  and 83 other files
 
 Titus von der Malsburg: changed simple.el window.el
 
