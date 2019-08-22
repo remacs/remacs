@@ -302,15 +302,11 @@ static intptr_t garbage_collection_inhibited;
 
 const char *pending_malloc_warning;
 
-#if 0 /* Normally, pointer sanity only on request... */
+/* Pointer sanity only on request.  FIXME: Code depending on
+   SUSPICIOUS_OBJECT_CHECKING is obsolete; remove it entirely.  */
 #ifdef ENABLE_CHECKING
 #define SUSPICIOUS_OBJECT_CHECKING 1
 #endif
-#endif
-
-/* ... but unconditionally use SUSPICIOUS_OBJECT_CHECKING while the GC
-   bug is unresolved.  */
-#define SUSPICIOUS_OBJECT_CHECKING 1
 
 #ifdef SUSPICIOUS_OBJECT_CHECKING
 struct suspicious_free_record
@@ -327,8 +323,8 @@ static int suspicious_free_history_index;
 static void *find_suspicious_object_in_range (void *begin, void *end);
 static void detect_suspicious_free (void *ptr);
 #else
-# define find_suspicious_object_in_range(begin, end) NULL
-# define detect_suspicious_free(ptr) (void)
+# define find_suspicious_object_in_range(begin, end) ((void *) NULL)
+# define detect_suspicious_free(ptr) ((void) 0)
 #endif
 
 /* Maximum amount of C stack to save when a GC happens.  */
