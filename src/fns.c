@@ -4198,21 +4198,20 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 					  new_size);
       ptrdiff_t next_size = ASIZE (next);
       for (ptrdiff_t i = old_size; i < next_size - 1; i++)
-	gc_aset (next, i, make_fixnum (i + 1));
-      gc_aset (next, next_size - 1, make_fixnum (-1));
-      ptrdiff_t index_size = hash_index_size (h, next_size);
+	ASET (next, i, make_fixnum (i + 1));
+      ASET (next, next_size - 1, make_fixnum (-1));
 
       /* Build the new&larger key_and_value vector, making sure the new
          fields are initialized to `unbound`.  */
       Lisp_Object key_and_value
 	= larger_vecalloc (h->key_and_value, 2 * (next_size - old_size),
 			   2 * next_size);
-      for (ptrdiff_t i = ASIZE (h->key_and_value);
-            i < ASIZE (key_and_value); i++)
+      for (ptrdiff_t i = 2 * old_size; i < 2 * next_size; i++)
         ASET (key_and_value, i, Qunbound);
 
       Lisp_Object hash = larger_vector (h->hash, next_size - old_size,
 					next_size);
+      ptrdiff_t index_size = hash_index_size (h, next_size);
       h->index = make_vector (index_size, make_fixnum (-1));
       h->key_and_value = key_and_value;
       h->hash = hash;
@@ -4404,17 +4403,14 @@ hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
     {
-      ptrdiff_t i, size = HASH_TABLE_SIZE (h);
+      ptrdiff_t size = HASH_TABLE_SIZE (h);
+      if (!hash_rehash_needed_p (h))
+	memclear (XVECTOR (h->hash)->contents, size * word_size);
+      memclear (XVECTOR (h->key_and_value)->contents, size * 2 * word_size);
+      for (ptrdiff_t i = 0; i < size; i++)
+	set_hash_next_slot (h, i, i < size - 1 ? i + 1 : -1);
 
-      for (i = 0; i < size; ++i)
-	{
-	  set_hash_next_slot (h, i, i < size - 1 ? i + 1 : -1);
-	  set_hash_key_slot (h, i, Qunbound);
-	  set_hash_value_slot (h, i, Qnil);
-	  set_hash_hash_slot (h, i, Qnil);
-	}
-
-      for (i = 0; i < ASIZE (h->index); ++i)
+      for (ptrdiff_t i = 0; i < ASIZE (h->index); i++)
 	ASET (h->index, i, make_fixnum (-1));
 
       h->next_free = 0;

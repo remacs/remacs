@@ -2307,7 +2307,7 @@ struct Lisp_Hash_Table
      weakness of the table.  */
   Lisp_Object weak;
 
-  /* Vector of hash codes.
+  /* Vector of hash codes, or nil if the table needs rehashing.
      If the I-th entry is unused, then hash[I] should be nil.  */
   Lisp_Object hash;
 
@@ -2327,8 +2327,7 @@ struct Lisp_Hash_Table
      'index' are special and are either ignored by the GC or traced in
      a special way (e.g. because of weakness).  */
 
-  /* Number of key/value entries in the table.  This number is
-     negated if the table needs rehashing.  */
+  /* Number of key/value entries in the table.  */
   ptrdiff_t count;
 
   /* Index of first free entry in free list, or -1 if none.  */
@@ -2413,7 +2412,9 @@ HASH_HASH (const struct Lisp_Hash_Table *h, ptrdiff_t idx)
 INLINE ptrdiff_t
 HASH_TABLE_SIZE (const struct Lisp_Hash_Table *h)
 {
-  return ASIZE (h->next);
+  ptrdiff_t size = ASIZE (h->next);
+  eassume (0 < size);
+  return size;
 }
 
 void hash_table_rehash (struct Lisp_Hash_Table *h);
