@@ -34,7 +34,7 @@ the FAQ may not be embedded in a larger literary work unless that work
 itself allows free copying and redistribution.
 
 [This version has been heavily edited since it was included in the Emacs
-distribution.]
+distribution in 1999.]
 @end quotation
 @end copying
 
