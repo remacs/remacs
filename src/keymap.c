@@ -3371,12 +3371,10 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
 
   if (!keymap_p)
     {
-      /* Call Fkey_description first, to avoid GC bug for the other string.  */
       if (!NILP (prefix) && XFIXNAT (Flength (prefix)) > 0)
 	{
-	  Lisp_Object tem = Fkey_description (prefix, Qnil);
 	  AUTO_STRING (space, " ");
-	  elt_prefix = concat2 (tem, space);
+	  elt_prefix = concat2 (Fkey_description (prefix, Qnil), space);
 	}
       prefix = Qnil;
     }
