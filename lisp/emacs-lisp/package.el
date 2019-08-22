@@ -2894,7 +2894,7 @@ KEYWORDS should be nil or a list of keywords."
           (mapcar #'package-menu--print-info-simple info-list))))
 
 (defun package-all-keywords ()
-  "Collect all package keywords"
+  "Collect all package keywords."
   (let ((key-list))
     (package--mapc (lambda (desc)
                      (setq key-list (append (package-desc--keywords desc)
@@ -2951,7 +2951,7 @@ When none are given, the package matches."
 
 (defun package-menu--generate (remember-pos packages &optional keywords)
   "Populate the Package Menu.
- If REMEMBER-POS is non-nil, keep point on the same entry.
+If REMEMBER-POS is non-nil, keep point on the same entry.
 PACKAGES should be t, which means to display all known packages,
 or a list of package names (symbols) to display.
 
@@ -3209,7 +3209,7 @@ The full list of keys can be viewed with \\[describe-mode]."
   "Return the priority of ARCHIVE.
 
 The archive priorities are specified in
-`package-archive-priorities'. If not given there, the priority
+`package-archive-priorities'.  If not given there, the priority
 defaults to 0."
   (or (cdr (assoc archive package-archive-priorities))
       0))
