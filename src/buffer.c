@@ -4568,7 +4568,7 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	prop_i = copy[i++];
 	overlay_i = copy[i++];
 	/* It is possible that the recorded overlay has been deleted
-	   (which makes it's markers' buffers be nil), or that (due to
+	   (which makes its markers' buffers be nil), or that (due to
 	   some bug) it belongs to a different buffer.  Only run this
 	   hook if the overlay belongs to the current buffer.  */
 	if (XMARKER (OVERLAY_START (overlay_i))->buffer == current_buffer)
