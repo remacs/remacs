@@ -2950,9 +2950,12 @@ suppressed.  */)
      But not more than once in any file,
      and not when we aren't loading or reading from a file.  */
   if (!from_file)
-    for (tem = Vcurrent_load_list; CONSP (tem); tem = XCDR (tem))
-      if (NILP (XCDR (tem)) && STRINGP (XCAR (tem)))
-	from_file = 1;
+    {
+      Lisp_Object tail = Vcurrent_load_list;
+      FOR_EACH_TAIL_SAFE (tail)
+	if (NILP (XCDR (tail)) && STRINGP (XCAR (tail)))
+	  from_file = true;
+    }
 
   if (from_file)
     {
