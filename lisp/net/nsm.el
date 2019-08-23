@@ -692,7 +692,8 @@ Sheffer, Holz, Saint-Andre (May 2015).  \"Recommendations for Secure
 Use of Transport Layer Security (TLS) and Datagram Transport Layer
 Security (DTLS)\", `https://tools.ietf.org/html/rfc7525'"
   (let ((compression (plist-get status :compression)))
-    (and (string-match "^\\bDEFLATE\\b" compression)
+    (and compression
+	 (string-match "^\\bDEFLATE\\b" compression)
          (format-message
           "compression method (%s) may lead to leakage of sensitive information"
           compression))))

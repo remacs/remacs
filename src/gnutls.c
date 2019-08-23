@@ -1493,20 +1493,18 @@ returned as the :certificate entry.  */)
 
   /* Compression name. */
 #ifdef HAVE_GNUTLS_COMPRESSION_GET
-  Lisp_Object compression = build_string (gnutls_compression_get_name
-					  (gnutls_compression_get (state)));
-#else
-  Lisp_Object compression = build_string ("NULL");
+  result = nconc2
+    (result, list2 (intern (":compression"),
+		    build_string (gnutls_compression_get_name
+				  (gnutls_compression_get (state)))));
 #endif
-  result = nconc2 (result, list2 (intern (":compression"), compression));
 
   /* Encrypt-then-MAC. */
-  Lisp_Object etm_status = Qnil;
 #ifdef HAVE_GNUTLS_ETM_STATUS
-  if (gnutls_session_etm_status (state))
-    etm_status = Qt;
+  result = nconc2
+    (result, list2 (intern (":encrypt-then-mac"),
+		    gnutls_session_etm_status (state) ? Qt : Qnil));
 #endif
-  result = nconc2 (result, list2 (intern (":encrypt-then-mac"), etm_status));
 
   /* Renegotiation Indication */
   result = nconc2
