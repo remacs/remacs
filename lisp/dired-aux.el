@@ -992,6 +992,7 @@ command with a prefix argument (the value does not matter)."
     ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xf -")
     ("\\.tgz\\'" "" "gzip -dc %i | tar -xf -")
     ("\\.gz\\'" "" "gunzip")
+    ("\\.lz\\'" "" "lzip -d")
     ("\\.Z\\'" "" "uncompress")
     ;; For .z, try gunzip.  It might be an old gzip file,
     ;; or it might be from compact? pack? (which?) but gunzip handles both.
