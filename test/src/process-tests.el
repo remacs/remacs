@@ -154,24 +154,30 @@
                   (concat invocation-directory invocation-name)
                   "-Q" "--batch" "--eval"
                   (prin1-to-string
-                   '(let (s)
-                      (while (setq s (read-from-minibuffer "$ "))
+                   '(let ((s nil) (count 0))
+                      (while (setq s (read-from-minibuffer
+                                      (format "%d> " count)))
                         (princ s)
-                        (princ "\n")))))))
+                        (princ "\n")
+                        (setq count (1+ count))))))))
       (set-process-query-on-exit-flag proc nil)
       (send-string proc "one\n")
-      (should
-       (accept-process-output proc 1))  ; Read "one".
-      (should (equal (buffer-string) "$ one\n$ "))
+      (while (not (equal (buffer-substring
+                          (line-beginning-position) (point-max))
+                         "1> "))
+        (accept-process-output proc))   ; Read "one".
+      (should (equal (buffer-string) "0> one\n1> "))
       (set-process-filter proc t)       ; Stop reading from proc.
       (send-string proc "two\n")
       (should-not
        (accept-process-output proc 1))  ; Can't read "two" yet.
-      (should (equal (buffer-string) "$ one\n$ "))
+      (should (equal (buffer-string) "0> one\n1> "))
       (set-process-filter proc nil)     ; Resume reading from proc.
-      (should
-       (accept-process-output proc 1))  ; Read "two" from proc.
-      (should (equal (buffer-string) "$ one\n$ two\n$ ")))))
+      (while (not (equal (buffer-substring
+                          (line-beginning-position) (point-max))
+                         "2> "))
+        (accept-process-output proc))   ; Read "Two".
+      (should (equal (buffer-string) "0> one\n1> two\n2> ")))))
 
 (ert-deftest start-process-should-not-modify-arguments ()
   "`start-process' must not modify its arguments in-place."
