@@ -44,6 +44,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_EXT__DUMBFW
 #endif
 
+#if GNUTLS_VERSION_NUMBER >= 0x030400
+# define HAVE_GNUTLS_ETM_STATUS
+#endif
+
 /* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
    exported only since 3.3.0. */
 #if GNUTLS_VERSION_NUMBER >= 0x030300
@@ -159,6 +163,8 @@ DEF_DLL_FN (int, gnutls_x509_crt_check_hostname,
 DEF_DLL_FN (int, gnutls_x509_crt_check_issuer,
               (gnutls_x509_crt_t, gnutls_x509_crt_t));
 DEF_DLL_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
+DEF_DLL_DN (int, gnutls_x509_crt_export,
+            (gnutls_x509_crt_t, gnutls_x509_crt_fmt_t, void *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_import,
 	    (gnutls_x509_crt_t, const gnutls_datum_t *,
 	     gnutls_x509_crt_fmt_t));
@@ -180,6 +186,9 @@ DEF_DLL_FN (int, gnutls_x509_crt_get_dn,
 	    (gnutls_x509_crt_t, char *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_get_pk_algorithm,
 	    (gnutls_x509_crt_t, unsigned int *));
+DEF_DLL_FN (int, gnutls_x509_crt_print,
+            (gnutls_x509_crt_t, gnutls_certificate_print_formats_t,
+             gnutls_datum_t *));
 DEF_DLL_FN (const char *, gnutls_pk_algorithm_get_name,
 	    (gnutls_pk_algorithm_t));
 DEF_DLL_FN (int, gnutls_pk_bits_to_sec_param,
@@ -208,6 +217,11 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 	    (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (gnutls_compression_method_t, gnutls_compression_get,
+            (gnutls_session_t));
+DEF_DLL_FN (const char *, gnutls_compression_get_name,
+            (gnutls_compression_method_t));
+DEF_DLL_FN (unsigned, gnutls_safe_renegotiation_status, (gnutls_session_t));
 
 #  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
@@ -249,6 +263,9 @@ DEF_DLL_FN (int, gnutls_aead_cipher_encrypt,
 DEF_DLL_FN (int, gnutls_aead_cipher_decrypt,
 	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
 	     size_t, size_t, const void *, size_t, void *, size_t *));
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+DEF_DLL_FN (unsigned, gnutls_session_etm_status, (gnutls_session_t));
 #   endif
 DEF_DLL_FN (int, gnutls_hmac_init,
 	    (gnutls_hmac_hd_t *, gnutls_mac_algorithm_t, const void *, size_t));
@@ -322,6 +339,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_check_hostname);
   LOAD_DLL_FN (library, gnutls_x509_crt_check_issuer);
   LOAD_DLL_FN (library, gnutls_x509_crt_deinit);
+  LOAD_DLL_FN (library, gnutls_x509_crt_export);
   LOAD_DLL_FN (library, gnutls_x509_crt_import);
   LOAD_DLL_FN (library, gnutls_x509_crt_init);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_fingerprint);
@@ -332,6 +350,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_get_expiration_time);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_dn);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_pk_algorithm);
+  LOAD_DLL_FN (library, gnutls_x509_crt_print)
   LOAD_DLL_FN (library, gnutls_pk_algorithm_get_name);
   LOAD_DLL_FN (library, gnutls_pk_bits_to_sec_param);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_unique_id);
@@ -349,6 +368,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
+  LOAD_DLL_FN (library, gnutls_compression_get);
+  LOAD_DLL_FN (library, gnutls_compression_get_name);
+  LOAD_DLL_FN (library, gnutls_safe_renegotiation_status);
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
   LOAD_DLL_FN (library, gnutls_mac_list);
@@ -379,6 +401,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
   LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
   LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+  LOAD_DLL_FN (library, gnutls_session_etm_status);
 #   endif
   LOAD_DLL_FN (library, gnutls_hmac_init);
   LOAD_DLL_FN (library, gnutls_hmac_get_len);
@@ -437,6 +462,9 @@ init_gnutls_functions (void)
 #  define gnutls_kx_get_name fn_gnutls_kx_get_name
 #  define gnutls_mac_get fn_gnutls_mac_get
 #  define gnutls_mac_get_name fn_gnutls_mac_get_name
+#  define gnutls_compression_get fn_gnutls_compression_get
+#  define gnutls_compression_get_name fn_gnutls_compression_get_name
+#  define gnutls_safe_renegotiation_status fn_gnutls_safe_renegotiation_status;
 #  define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
 #  define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
 #  define gnutls_priority_set_direct fn_gnutls_priority_set_direct
@@ -456,6 +484,7 @@ init_gnutls_functions (void)
 #  define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
 #  define gnutls_x509_crt_check_issuer fn_gnutls_x509_crt_check_issuer
 #  define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
+#  define gnutls_x509_crt_export fn_gnutls_x509_crt_export
 #  define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
 #  define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
 #  define gnutls_x509_crt_get_expiration_time fn_gnutls_x509_crt_get_expiration_time
@@ -464,6 +493,7 @@ init_gnutls_functions (void)
 #  define gnutls_x509_crt_get_issuer_unique_id fn_gnutls_x509_crt_get_issuer_unique_id
 #  define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
 #  define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
+#  define gnutls_x509_crt_print fn_gnutls_x509_crt_print
 #  define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
 #  define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
 #  define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
@@ -500,6 +530,9 @@ init_gnutls_functions (void)
 #    define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
 #    define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
 #    define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+#    define gnutls_session_etm_status fn_gnutls_session_etm_status
 #   endif
 #  define gnutls_hmac_init fn_gnutls_hmac_init
 #  define gnutls_hmac_get_len fn_gnutls_hmac_get_len
@@ -1041,7 +1074,34 @@ gnutls_hex_string (unsigned char *buf, ptrdiff_t buf_size, const char *prefix)
 }
 
 static Lisp_Object
-gnutls_certificate_details (gnutls_x509_crt_t cert)
+emacs_gnutls_certificate_export_pem (gnutls_x509_crt_t cert)
+{
+  size_t size = 0;
+  int err = gnutls_x509_crt_export (cert, GNUTLS_X509_FMT_PEM, NULL, &size);
+  check_memory_full (err);
+
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      unsigned char *buf = xmalloc(size * sizeof (unsigned char));
+      err = gnutls_x509_crt_export (cert, GNUTLS_X509_FMT_PEM, buf, &size);
+      check_memory_full (err);
+
+      if (err < GNUTLS_E_SUCCESS)
+        {
+          xfree (buf);
+          error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
+        }
+
+      return build_string(buf);
+    }
+  else if (err < GNUTLS_E_SUCCESS)
+    error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
+
+  return Qnil;
+}
+
+static Lisp_Object
+emacs_gnutls_certificate_details (gnutls_x509_crt_t cert)
 {
   Lisp_Object res = Qnil;
   int err;
@@ -1209,6 +1269,10 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
       xfree (buf);
     }
 
+  /* PEM */
+  res = nconc2 (res, list2 (intern (":pem"),
+                            emacs_gnutls_certificate_export_pem(cert)));
+
   return res;
 }
 
@@ -1245,6 +1309,29 @@ DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_descri
 
   if (EQ (status_symbol, intern (":no-host-match")))
     return build_string ("certificate host does not match hostname");
+
+  if (EQ (status_symbol, intern (":signature-failure")))
+    return build_string ("certificate signature could not be verified");
+
+  if (EQ (status_symbol, intern (":revocation-data-superseded")))
+    return build_string ("certificate revocation data are old and have been "
+                         "superseded");
+
+  if (EQ (status_symbol, intern (":revocation-data-issued-in-future")))
+    return build_string ("certificate revocation data have a future issue date");
+
+  if (EQ (status_symbol, intern (":signer-constraints-failure")))
+    return build_string ("certificate ");
+
+  if (EQ (status_symbol, intern (":purpose-mismatch")))
+    return build_string ("certificate does not match the intended purpose");
+
+  if (EQ (status_symbol, intern (":missing-ocsp-status")))
+    return build_string ("certificate requires the server to send a OCSP "
+                         "certificate status, but no status was received");
+
+  if (EQ (status_symbol, intern (":invalid-ocsp-status")))
+    return build_string ("the received OCSP certificate status is invalid");
 
   return Qnil;
 }
@@ -1297,6 +1384,35 @@ returned as the :certificate entry.  */)
   if (verification & GNUTLS_CERT_EXPIRED)
     warnings = Fcons (intern (":expired"), warnings);
 
+#if GNUTLS_VERSION_NUMBER >= 0x030100
+  if (verification & GNUTLS_CERT_SIGNATURE_FAILURE)
+    warnings = Fcons (intern (":signature-failure"), warnings);
+
+# if GNUTLS_VERSION_NUMBER >= 0x030114
+  if (verification & GNUTLS_CERT_REVOCATION_DATA_SUPERSEDED)
+    warnings = Fcons (intern (":revocation-data-superseded"), warnings);
+
+  if (verification & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
+    warnings = Fcons (intern (":revocation-data-issued-in-future"), warnings);
+
+  if (verification & GNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE)
+    warnings = Fcons (intern (":signer-constraints-failure"), warnings);
+
+#  if GNUTLS_VERSION_NUMBER >= 0x030400
+  if (verification & GNUTLS_CERT_PURPOSE_MISMATCH)
+    warnings = Fcons (intern (":purpose-mismatch"), warnings);
+
+#   if GNUTLS_VERSION_NUMBER >= 0x030501
+  if (verification & GNUTLS_CERT_MISSING_OCSP_STATUS)
+    warnings = Fcons (intern (":missing-ocsp-status"), warnings);
+
+  if (verification & GNUTLS_CERT_INVALID_OCSP_STATUS)
+    warnings = Fcons (intern (":invalid-ocsp-status"), warnings);
+#   endif
+#  endif
+# endif
+#endif
+
   if (XPROCESS (proc)->gnutls_extra_peer_verification &
       CERTIFICATE_NOT_MATCHING)
     warnings = Fcons (intern (":no-host-match"), warnings);
@@ -1319,7 +1435,7 @@ returned as the :certificate entry.  */)
 
       /* Return all the certificates in a list. */
       for (int i = 0; i < XPROCESS (proc)->gnutls_certificates_length; i++)
-	certs = nconc2 (certs, list1 (gnutls_certificate_details
+	certs = nconc2 (certs, list1 (emacs_gnutls_certificate_details
 				      (XPROCESS (proc)->gnutls_certificates[i])));
 
       result = nconc2 (result, list2 (intern (":certificates"), certs));
@@ -1364,6 +1480,26 @@ returned as the :certificate entry.  */)
 		    build_string (gnutls_mac_get_name
 				  (gnutls_mac_get (state)))));
 
+  /* Compression name. */
+  result = nconc2
+    (result, list2 (intern (":compression"),
+		    build_string (gnutls_compression_get_name
+				  (gnutls_compression_get (state)))));
+
+  /* Encrypt-then-MAC. */
+  result = nconc2
+    (result, list2 (intern (":encrypt-then-mac"),
+#ifdef HAVE_GNUTLS_ETM_STATUS
+                    gnutls_session_etm_status (state) ? Qt : Qnil
+#else
+                    Qnil
+#endif
+                    ));
+
+  /* Renegotiation Indication */
+  result = nconc2
+    (result, list2 (intern (":safe-renegotiation"),
+                    gnutls_safe_renegotiation_status (state) ? Qt : Qnil));
 
   return result;
 }
@@ -1423,6 +1559,55 @@ boot_error (struct Lisp_Process *p, const char *m, ...)
   else
     verror (m, ap);
   va_end (ap);
+}
+
+DEFUN ("gnutls-format-certificate", Fgnutls_format_certificate, Sgnutls_format_certificate, 1, 1, 0,
+       doc: /* Format a X.509 certificate to a string.
+
+Given a PEM-encoded X.509 certificate CERT, returns a human-readable
+string representation.  */)
+     (Lisp_Object cert)
+{
+  CHECK_STRING (cert);
+
+  int err;
+  gnutls_x509_crt_t crt;
+
+  err = gnutls_x509_crt_init (&crt);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+
+  unsigned char *crt_buf = SDATA (cert);
+  gnutls_datum_t crt_data = { crt_buf, strlen (crt_buf) };
+  err = gnutls_x509_crt_import (crt, &crt_data, GNUTLS_X509_FMT_PEM);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    {
+      gnutls_x509_crt_deinit (crt);
+      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+    }
+
+  gnutls_datum_t out;
+  err = gnutls_x509_crt_print (crt, GNUTLS_CRT_PRINT_FULL, &out);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    {
+      gnutls_x509_crt_deinit (crt);
+      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+    }
+
+  char *out_buf = xmalloc ((out.size + 1) * sizeof (char));
+  memset (out_buf, 0, (out.size + 1) * sizeof (char));
+  memcpy (out_buf, out.data, out.size);
+
+  xfree (out.data);
+  gnutls_x509_crt_deinit (crt);
+
+  Lisp_Object result = build_string (out_buf);
+  xfree (out_buf);
+
+  return result;
 }
 
 Lisp_Object
@@ -2706,6 +2891,7 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_bye);
   defsubr (&Sgnutls_peer_status);
   defsubr (&Sgnutls_peer_status_warning_describe);
+  defsubr (&Sgnutls_format_certificate);
 
 #ifdef HAVE_GNUTLS3
   defsubr (&Sgnutls_ciphers);
