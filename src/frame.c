@@ -5327,7 +5327,7 @@ or a list (- N) meaning -N pixels relative to bottom/right corner.
 On Nextstep, this just calls `ns-parse-geometry'.  */)
   (Lisp_Object string)
 {
-  int geometry, x = 0, y = 0;
+  int geometry, x UNINIT, y UNINIT;
   unsigned int width, height;
   Lisp_Object result;
 
