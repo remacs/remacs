@@ -46,10 +46,11 @@ connection should be handled.
 
 The following values are possible:
 
-`low': Check for problems known before Edward Snowden.
+`low': Only the most basic checks are performed -- very insecure.
 `medium': Default.  Suitable for most circumstances.
 `high': Warns about additional issues not enabled in `medium' due to
 compatibility concerns.
+`paranoid': On this level, the user is queried for most new connections.
 
 See the Emacs manual for a description of all things that are
 checked and warned against."
@@ -57,11 +58,8 @@ checked and warned against."
   :group 'nsm
   :type '(choice (const :tag "Low" low)
                  (const :tag "Medium" medium)
-                 (const :tag "High" high)))
-
-;; Backward compatibility
-(when (eq network-security-level 'paranoid)
-  (setq network-security-level 'high))
+                 (const :tag "High" high)
+		 (const :tag "Paranoid" paranoid)))
 
 (defcustom nsm-trust-local-network nil
   "Disable warnings when visiting trusted hosts on local networks.
@@ -141,7 +139,7 @@ unencrypted."
         process)))))
 
 (defcustom nsm-tls-checks
-  '(;; Pre-Snowden Known Weaknesses
+  '(;; Old Known Weaknesses.
     (nsm-tls-check-version                . low)
     (nsm-tls-check-compression            . low)
     (nsm-tls-check-renegotiation-info-ext . low)
@@ -152,7 +150,7 @@ unencrypted."
     (nsm-tls-check-anon-kx                . low)
     (nsm-tls-check-md5-sig                . low)
     (nsm-tls-check-rc4-cipher             . low)
-    ;; Post-Snowden Apocalypse
+    ;; Weaknesses made known after 2013.
     (nsm-tls-check-dhe-prime-kx           . medium)
     (nsm-tls-check-sha1-sig               . medium)
     (nsm-tls-check-ecdsa-cbc-cipher       . medium)
@@ -273,23 +271,32 @@ found, and nil otherwise.
 See also: `nsm-tls-checks' and `nsm-noninteractive'"
   (when (nsm-should-check host)
     (let* ((results
-            (cl-loop for check in nsm-tls-checks
-                     for type = (intern (format ":%s"
-                                                (string-remove-prefix
-                                                 "nsm-tls-check-"
-                                                 (symbol-name (car check))))
-                                        obarray)
-                     ;; Skip the check if the user has already said that this
-                     ;; host is OK for this type of "error".
-                     for result = (and (not (memq type (plist-get settings :conditions)))
-                                       (>= (nsm-level network-security-level)
-                                           (nsm-level (cdr check)))
-                                       (funcall (car check) host port status settings))
-                     when result
-                     collect (cons type result)))
+            (cl-loop
+             for check in nsm-tls-checks
+             for type = (intern (format ":%s"
+                                        (string-remove-prefix
+                                         "nsm-tls-check-"
+                                         (symbol-name (car check))))
+                                obarray)
+             ;; Skip the check if the user has already said that this
+             ;; host is OK for this type of "error".
+             for result = (and (not (memq type
+                                          (plist-get settings :conditions)))
+                               (>= (nsm-level network-security-level)
+                                   (nsm-level (cdr check)))
+                               (funcall (car check) host port status settings))
+             when result
+             collect (cons type result)))
            (problems (nconc (plist-get status :warnings) (map-keys results))))
+
+      ;; We haven't seen this before, and we're paranoid.
+      (when (and (eq network-security-level 'paranoid)
+	         (not (nsm-fingerprint-ok-p status settings)))
+        (push '(:not-seen . "Certificate not seen before") results))
+
       (when (and results
-                 (not (seq-set-equal-p (plist-get settings :conditions) problems))
+                 (not (seq-set-equal-p (plist-get settings :conditions)
+                                       problems))
                  (not (nsm-query host port status
                                  'conditions
                                  problems
@@ -653,7 +660,8 @@ the MD5 Message-Digest and the HMAC-MD5 Algorithms\",
 
 ;; Extension checks
 
-(defun nsm-tls-check-renegotiation-info-ext (host port status &optional settings)
+(defun nsm-tls-check-renegotiation-info-ext (host port status
+                                                  &optional settings)
   "Check for renegotiation_info TLS extension status.
 
 If this TLS extension is not used, the connection established is
@@ -739,17 +747,14 @@ protocol."
 
 (defun nsm-fingerprint-ok-p (status settings)
   (let ((saved-fingerprints (plist-get settings :fingerprints)))
-    ;; Haven't seen this host before or not pinning cert
+    ;; Haven't seen this host before or not pinning cert.
     (or (null saved-fingerprints)
-        ;; Plain connection allowed
+        ;; Plain connection allowed.
         (memq :none saved-fingerprints)
-        ;; We are pinning certs, and we have seen this host
-        ;; before, but the credientials for this host differs
-        ;; from the last times we saw it
+        ;; We are pinning certs, and we have seen this host before,
+        ;; but the credientials for this host differs from the last
+        ;; times we saw it.
         (member (nsm-fingerprint status) saved-fingerprints))))
-
-(set-advertised-calling-convention
- 'nsm-fingerprint-ok-p '(status settings) "27.1")
 
 (defun nsm-check-plain-connection (process host port settings warn-unencrypted)
   (if (nsm-should-check host)
