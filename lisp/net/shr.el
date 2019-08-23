@@ -719,6 +719,7 @@ size, and full-buffer size."
           (insert "\n")
 	  (shr-indent)
           (when (and (> (1- gap-start) (point-min))
+                     (get-text-property (point) 'shr-url)
                      ;; The link on both sides of the newline are the
                      ;; same...
                      (equal (get-text-property (point) 'shr-url)
@@ -2363,6 +2364,7 @@ flags that control whether to collect or render objects."
 	(car (window-text-pixel-size nil (point-min) (point-max)))))))
 
 (defun shr-render-td (dom width fill)
+  (setq d dom)
   (let ((cache (intern (format "shr-td-cache-%s-%s" width fill))))
     (or (dom-attr dom cache)
 	(and fill
