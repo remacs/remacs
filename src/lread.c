@@ -2585,7 +2585,8 @@ read_escape (Lisp_Object readcharfun, bool stringp)
 	       want.  */
 	    int digit = char_hexdigit (c);
 	    if (digit < 0)
-	      error ("Non-hex digit used for Unicode escape");
+	      error ("Non-hex character used for Unicode escape: %c (%d)",
+		     c, c);
 	    i = (i << 4) + digit;
 	  }
 	if (i > 0x10FFFF)
