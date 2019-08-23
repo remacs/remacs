@@ -728,7 +728,11 @@ references displayed in the current *xref* buffer."
   "Mode for displaying cross-references."
   (setq buffer-read-only t)
   (setq next-error-function #'xref--next-error-function)
-  (setq next-error-last-buffer (current-buffer)))
+  (setq next-error-last-buffer (current-buffer))
+  (setq imenu-prev-index-position-function
+        #'xref--imenu-prev-index-position)
+  (setq imenu-extract-index-name-function
+        #'xref--imenu-extract-index-name))
 
 (defvar xref--transient-buffer-mode-map
   (let ((map (make-sparse-keymap)))
@@ -739,6 +743,22 @@ references displayed in the current *xref* buffer."
 (define-derived-mode xref--transient-buffer-mode
   xref--xref-buffer-mode
   "XREF Transient")
+
+(defun xref--imenu-prev-index-position ()
+  "Move point to previous line in `xref' buffer.
+This function is used as a value for
+`imenu-prev-index-position-function'."
+  (if (bobp)
+      nil
+    (xref--search-property 'xref-group t)))
+
+(defun xref--imenu-extract-index-name ()
+  "Return imenu name for line at point.
+This function is used as a value for
+`imenu-extract-index-name-function'.  Point should be at the
+beginning of the line."
+  (buffer-substring-no-properties (line-beginning-position)
+                                  (line-end-position)))
 
 (defun xref--next-error-function (n reset?)
   (when reset?
@@ -789,7 +809,8 @@ GROUP is a string for decoration purposes and XREF is an
            for line-format = (and max-line-width
                                   (format "%%%dd: " max-line-width))
            do
-           (xref--insert-propertized '(face xref-file-header) group "\n")
+           (xref--insert-propertized '(face xref-file-header 'xref-group t)
+                                     group "\n")
            (cl-loop for (xref . more2) on xrefs do
                     (with-slots (summary location) xref
                       (let* ((line (xref-location-line location))

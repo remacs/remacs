@@ -1849,6 +1849,11 @@ and 'gravatar-force-default'.
 *** The built-in ada-mode is now deleted.  The Gnu ELPA package is a
 good replacement, even in very large source files.
 
+** xref
+
+---
+*** Imenu support has been added to 'xref--xref-buffer-mode'.
+
 
 * New Modes and Packages in Emacs 27.1
 
