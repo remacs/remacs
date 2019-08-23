@@ -275,7 +275,8 @@ variable.
 +++
 ** TLS connections have their security tightened by default.
 Most of the checks for outdated, believed-to-be-weak TLS algorithms
-and ciphers are now switched on by default.  By default, the NSM will
+and ciphers are now switched on by default.  (In addition, several new
+TLS weaknesses are now warned about.)  By default, the NSM will
 flag connections using these weak algorithms and ask users whether to
 allow them.  To get the old behavior back (where certificates are
 checked for validity, but no warnings about weak cryptography are
