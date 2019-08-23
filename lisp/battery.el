@@ -38,18 +38,20 @@
   :prefix "battery-"
   :group 'hardware)
 
-(defcustom battery-linux-sysfs-regexp "[bB][aA][tT][0-9]?$"
-  "Regexp for folder names to be searched under
-  /sys/class/power_supply/ that contain battery information."
-  :version "26.1"
-  :type 'regexp
-  :group 'battery)
-
 (defcustom battery-upower-device "battery_BAT1"
   "Upower battery device name."
   :version "26.1"
   :type 'string
   :group 'battery)
+
+(defun battery--find-linux-sysfs-batteries ()
+  (let ((dirs nil))
+    (dolist (file (directory-files "/sys/class/power_supply/" t))
+      (when (and (or (file-directory-p file)
+                     (file-symlink-p file))
+                 (file-exists-p (expand-file-name "capacity" file)))
+        (push file dirs)))
+    (nreverse dirs)))
 
 (defcustom battery-status-function
   (cond ((and (eq system-type 'gnu/linux)
@@ -60,8 +62,7 @@
 	 #'battery-linux-proc-acpi)
 	((and (eq system-type 'gnu/linux)
 	      (file-directory-p "/sys/class/power_supply/")
-	      (directory-files "/sys/class/power_supply/" nil
-                               battery-linux-sysfs-regexp))
+              (battery--find-linux-sysfs-batteries))
 	 #'battery-linux-sysfs)
 	((and (eq system-type 'berkeley-unix)
 	      (file-executable-p "/usr/sbin/apm"))
@@ -449,9 +450,7 @@ The following %-sequences are provided:
     ;; available information together.
     (with-temp-buffer
       (dolist (dir (ignore-errors
-		    (directory-files
-		     "/sys/class/power_supply/" t
-                     battery-linux-sysfs-regexp)))
+                     (battery--find-linux-sysfs-batteries)))
 	(erase-buffer)
 	(ignore-errors (insert-file-contents
 			(expand-file-name "uevent" dir)))

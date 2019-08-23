@@ -507,6 +507,11 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** On GNU/Linux, `M-x battery' will now list all batteries, no matter
+what they're named, and the `battery-linux-sysfs-regexp' variable has
+been removed.
+
 ** The 'list-processes' command now includes port numbers in the
 network connection information (in addition to the host name).
 
