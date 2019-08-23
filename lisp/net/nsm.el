@@ -28,6 +28,7 @@
 (require 'rmc)                       ; read-multiple-choice
 (require 'subr-x)
 (require 'seq)
+(require 'map)
 
 (defvar nsm-permanent-host-settings nil)
 (defvar nsm-temporary-host-settings nil)
@@ -293,7 +294,7 @@ See also: `nsm-tls-checks' and `nsm-noninteractive'"
                                  'conditions
                                  problems
                                  (format-message
-		                  "The TLS connection to %s:%s is insecure for the following reason%s:\n\n%s"
+		                  "The TLS connection to %s:%s is insecure\nfor the following reason%s:\n\n%s"
 		                  host port
 		                  (if (> (length problems) 1)
 			              "s" "")
@@ -835,10 +836,12 @@ protocol."
                                     (?n "next" "Next certificate")
                                     (?p "previous" "Previous certificate")
                                     (?q "quit" "Quit details view")))
-                 (answer (read-multiple-choice "Continue connecting?" accept-choices))
+                 (answer (read-multiple-choice "Continue connecting?"
+                                               accept-choices))
                  (show-details (char-equal (car answer) ?d))
                  (pems (cl-loop for cert in certs
-                                collect (gnutls-format-certificate (plist-get cert :pem))))
+                                collect (gnutls-format-certificate
+                                         (plist-get cert :pem))))
                  (cert-index 0))
             (while show-details
               (unless (get-buffer-window cert-buffer)
@@ -999,13 +1002,27 @@ protocol."
         (insert
 	 (propertize "Certificate information" 'face 'underline) "\n"
 	 "  Issued by:"
-         (plist-get cert :issuer) "\n"
+         (nsm-certificate-part (plist-get cert :issuer) "CN" t) "\n"
 	 "  Issued to:"
-	 (plist-get cert :subject) "\n")
+	 (or (nsm-certificate-part (plist-get cert :subject) "O")
+	     (nsm-certificate-part (plist-get cert :subject) "OU" t))
+         "\n"
+	 "  Hostname:"
+	 (nsm-certificate-part (plist-get cert :subject) "CN" t) "\n")
 	(when (and (plist-get cert :public-key-algorithm)
 		   (plist-get cert :signature-algorithm))
-	  (insert "  Public key:" (plist-get cert :public-key-algorithm) "\n")
-          (insert "  Signature:" (plist-get cert :signature-algorithm) "\n"))
+	  (insert
+	   "  Public key:" (plist-get cert :public-key-algorithm)
+	   ", signature: " (plist-get cert :signature-algorithm) "\n"))
+        (when (and (plist-get status :key-exchange)
+		   (plist-get status :cipher)
+		   (plist-get status :mac)
+		   (plist-get status :protocol))
+	  (insert
+	   "  Session:" (plist-get status :protocol)
+	   ", key: " (plist-get status :key-exchange)
+	   ", cipher: " (plist-get status :cipher)
+	   ", mac: " (plist-get status :mac) "\n"))
         (when (plist-get cert :certificate-security-level)
 	  (insert
 	   "  Security level:"
@@ -1015,16 +1032,7 @@ protocol."
 	(insert
 	 "  Valid:From " (plist-get cert :valid-from)
 	 " to " (plist-get cert :valid-to) "\n")
-        ;; Handshake parameters
-        (insert (propertize "Session information" 'face 'underline) "\n")
-	(insert "  Version:" (plist-get status :protocol) "\n")
-        (insert "  Safe renegotiation:" (if (plist-get status :safe-renegotiation) "Yes" "No") "\n")
-	(insert "  Compression:" (plist-get status :compression) "\n")
-	(insert "  Encrypt-then-MAC:" (if (plist-get status :encrypt-then-mac) "Yes" "No") "\n")
-        (insert "  Cipher suite:" (nsm-cipher-suite status) "\n")
-        (if (string-match "^\\bDHE\\b" (plist-get status :key-exchange))
-            (insert "  DH prime bits:" (format "%d" (plist-get status :diffie-hellman-prime-bits)) "\n")
-          (insert "\n"))
+        (insert "\n")
         (goto-char (point-min))
 	(while (re-search-forward "^[^:]+:" nil t)
 	  (insert (make-string (- 22 (current-column)) ? )))
@@ -1042,6 +1050,37 @@ protocol."
           (plist-get status :key-exchange)
           (plist-get status :cipher)
           (plist-get status :mac)))
+
+(defun nsm-certificate-part (string part &optional full)
+  (let ((part (cadr (assoc part (nsm-parse-subject string)))))
+    (cond
+     (part part)
+     (full string)
+     (t nil))))
+
+(defun nsm-parse-subject (string)
+  (with-temp-buffer
+    (insert string)
+    (goto-char (point-min))
+    (let ((start (point))
+	  (result nil))
+      (while (not (eobp))
+	(push (replace-regexp-in-string
+	       "[\\]\\(.\\)" "\\1"
+	       (buffer-substring start
+				 (if (re-search-forward "[^\\]," nil 'move)
+				     (1- (point))
+				   (point))))
+	      result)
+	(setq start (point)))
+      (mapcar
+       (lambda (elem)
+	 (let ((pos (cl-position ?= elem)))
+	   (if pos
+	       (list (substring elem 0 pos)
+		     (substring elem (1+ pos)))
+	     elem)))
+       (nreverse result)))))
 
 (define-obsolete-function-alias 'nsm--encryption #'nsm-cipher-suite "27.1")
 
