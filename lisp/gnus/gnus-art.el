@@ -3628,7 +3628,7 @@ possible values."
     (unless max-segments
       (setq max-segments (length article-time-units)))
     (cond
-     ((zerop sec)
+     ((< (abs sec) 1)
       "Now")
      (t
       (concat
