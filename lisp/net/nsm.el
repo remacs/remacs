@@ -46,7 +46,7 @@ connection should be handled.
 
 The following values are possible:
 
-`low': Only the most basic checks are performed -- very insecure.
+`low': No checks are performed: This is extremely insecure.
 `medium': Default.  Suitable for most circumstances.
 `high': Warns about additional issues not enabled in `medium' due to
 compatibility concerns.
@@ -140,16 +140,16 @@ unencrypted."
 
 (defcustom nsm-tls-checks
   '(;; Old Known Weaknesses.
-    (nsm-tls-check-version                . low)
-    (nsm-tls-check-compression            . low)
-    (nsm-tls-check-renegotiation-info-ext . low)
-    (nsm-tls-check-verify-cert            . low)
-    (nsm-tls-check-same-cert              . low)
-    (nsm-tls-check-null-suite             . low)
-    (nsm-tls-check-export-kx              . low)
-    (nsm-tls-check-anon-kx                . low)
-    (nsm-tls-check-md5-sig                . low)
-    (nsm-tls-check-rc4-cipher             . low)
+    (nsm-tls-check-version                . medium)
+    (nsm-tls-check-compression            . medium)
+    (nsm-tls-check-renegotiation-info-ext . medium)
+    (nsm-tls-check-verify-cert            . medium)
+    (nsm-tls-check-same-cert              . medium)
+    (nsm-tls-check-null-suite             . medium)
+    (nsm-tls-check-export-kx              . medium)
+    (nsm-tls-check-anon-kx                . medium)
+    (nsm-tls-check-md5-sig                . medium)
+    (nsm-tls-check-rc4-cipher             . medium)
     ;; Weaknesses made known after 2013.
     (nsm-tls-check-dhe-prime-kx           . medium)
     (nsm-tls-check-sha1-sig               . medium)
