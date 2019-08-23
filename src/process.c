@@ -4596,7 +4596,7 @@ network_lookup_address_info_1 (Lisp_Object host, const char *service,
 #else
       AUTO_STRING (format, "%s/%s getaddrinfo error %d");
       msg = CALLN (Fformat, format, host, build_string (service),
-		   make_number (ret));
+		   make_fixnum (ret));
 #endif
     }
    return msg;
