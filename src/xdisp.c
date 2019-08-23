@@ -20513,10 +20513,11 @@ extend_face_to_end_of_line (struct it *it)
       it->face_id = FACE_FOR_CHAR (f, face, 0, -1, Qnil);
     }
 
-#ifdef HAVE_WINDOW_SYSTEM
   /* The default face, possibly remapped. */
   struct face *default_face =
     FACE_FROM_ID (f, lookup_basic_face (it->w, f, DEFAULT_FACE_ID));
+
+#ifdef HAVE_WINDOW_SYSTEM
   if (default_face == NULL)
     error ("extend_face_to_end_of_line: default_face is not set!");
 
