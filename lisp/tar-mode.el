@@ -510,7 +510,7 @@ MODE should be an integer which is a file mode value."
 	    (if (= 0 (length gname)) gid gname)
 	    size
 	    (if tar-mode-show-date
-                (format-time-string " %FT%T" time)
+                (format-time-string " %Y-%m-%d %H:%M" time)
               "")
 	    (propertize name
 			'mouse-face 'highlight
