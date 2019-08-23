@@ -163,7 +163,7 @@ DEF_DLL_FN (int, gnutls_x509_crt_check_hostname,
 DEF_DLL_FN (int, gnutls_x509_crt_check_issuer,
               (gnutls_x509_crt_t, gnutls_x509_crt_t));
 DEF_DLL_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
-DEF_DLL_DN (int, gnutls_x509_crt_export,
+DEF_DLL_FN (int, gnutls_x509_crt_export,
             (gnutls_x509_crt_t, gnutls_x509_crt_fmt_t, void *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_import,
 	    (gnutls_x509_crt_t, const gnutls_datum_t *,
@@ -350,7 +350,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_get_expiration_time);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_dn);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_pk_algorithm);
-  LOAD_DLL_FN (library, gnutls_x509_crt_print)
+  LOAD_DLL_FN (library, gnutls_x509_crt_print);
   LOAD_DLL_FN (library, gnutls_pk_algorithm_get_name);
   LOAD_DLL_FN (library, gnutls_pk_bits_to_sec_param);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_unique_id);
@@ -464,7 +464,7 @@ init_gnutls_functions (void)
 #  define gnutls_mac_get_name fn_gnutls_mac_get_name
 #  define gnutls_compression_get fn_gnutls_compression_get
 #  define gnutls_compression_get_name fn_gnutls_compression_get_name
-#  define gnutls_safe_renegotiation_status fn_gnutls_safe_renegotiation_status;
+#  define gnutls_safe_renegotiation_status fn_gnutls_safe_renegotiation_status
 #  define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
 #  define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
 #  define gnutls_priority_set_direct fn_gnutls_priority_set_direct
@@ -1321,7 +1321,7 @@ DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_descri
     return build_string ("certificate revocation data have a future issue date");
 
   if (EQ (status_symbol, intern (":signer-constraints-failure")))
-    return build_string ("certificate ");
+    return build_string ("certificate signer constraints were violated");
 
   if (EQ (status_symbol, intern (":purpose-mismatch")))
     return build_string ("certificate does not match the intended purpose");
