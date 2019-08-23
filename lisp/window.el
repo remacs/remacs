@@ -4982,7 +4982,10 @@ one.  If non-nil, reset `quit-restore' parameter to nil.
 The functions in `quit-window-hook' will be run before doing
 anything else."
   (interactive "P")
-  (run-hooks 'quit-window-hook)
+  ;; Run the hook from the buffer implied to get any buffer-local
+  ;; values.
+  (with-current-buffer (window-buffer (window-normalize-window window))
+    (run-hooks 'quit-window-hook))
   (quit-restore-window window (if kill 'kill 'bury)))
 
 (defun quit-windows-on (&optional buffer-or-name kill frame)
