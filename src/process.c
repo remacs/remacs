@@ -4120,10 +4120,8 @@ usage: (make-network-process &rest ARGS)  */)
       hints.ai_socktype = socktype;
 
       msg = network_lookup_address_info_1 (host, portstring, &hints, &res);
-      if (!EQ(msg, Qt))
-        {
-          error ("%s", SSDATA (msg));
-        }
+      if (!EQ (msg, Qt))
+	error ("%s", SSDATA (msg));
 
       for (lres = res; lres; lres = lres->ai_next)
 	addrinfos = Fcons (conv_addrinfo_to_lisp (lres), addrinfos);
@@ -4593,10 +4591,12 @@ network_lookup_address_info_1 (Lisp_Object host, const char *service,
         str = SSDATA (code_convert_string_norecord
                       (build_string (str), Vlocale_coding_system, 0));
       AUTO_STRING (format, "%s/%s %s");
-      msg = CALLN (Fformat, format, host, build_string (service), build_string (str));
+      msg = CALLN (Fformat, format, host, build_string (service),
+		   build_string (str));
 #else
       AUTO_STRING (format, "%s/%s getaddrinfo error %d");
-      msg = CALLN (Fformat, format, host, build_string (service), make_number (ret));
+      msg = CALLN (Fformat, format, host, build_string (service),
+		   make_number (ret));
 #endif
     }
    return msg;
@@ -4634,18 +4634,14 @@ nil if none were found.  Each address is a vector of integers.  */)
   hints.ai_socktype = SOCK_DGRAM;
 
   msg = network_lookup_address_info_1 (name, NULL, &hints, &res);
-  if (!EQ(msg, Qt))
-    {
-      message ("%s", SSDATA(msg));
-    }
+  if (!EQ (msg, Qt))
+    message ("%s", SSDATA(msg));
   else
     {
       for (lres = res; lres; lres = lres->ai_next)
-        {
-          addresses = Fcons (conv_sockaddr_to_lisp
-                             (lres->ai_addr, lres->ai_addrlen),
-                             addresses);
-        }
+	addresses = Fcons (conv_sockaddr_to_lisp (lres->ai_addr,
+						  lres->ai_addrlen),
+			   addresses);
       addresses = Fnreverse (addresses);
 
       freeaddrinfo (res);

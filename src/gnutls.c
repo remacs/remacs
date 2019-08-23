@@ -48,6 +48,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_ETM_STATUS
 #endif
 
+#if GNUTLS_VERSION_NUMBER < 0x030600
+# define HAVE_GNUTLS_COMPRESSION_GET
+#endif
+
 /* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
    exported only since 3.3.0. */
 #if GNUTLS_VERSION_NUMBER >= 0x030300
@@ -217,10 +221,12 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 	    (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+#ifdef HAVE_GNUTLS_COMPRESSION_GET
 DEF_DLL_FN (gnutls_compression_method_t, gnutls_compression_get,
             (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_compression_get_name,
             (gnutls_compression_method_t));
+#endif
 DEF_DLL_FN (unsigned, gnutls_safe_renegotiation_status, (gnutls_session_t));
 
 #  ifdef HAVE_GNUTLS3
@@ -368,8 +374,10 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
+#  ifdef HAVE_GNUTLS_COMPRESSION_GET
   LOAD_DLL_FN (library, gnutls_compression_get);
   LOAD_DLL_FN (library, gnutls_compression_get_name);
+#  endif
   LOAD_DLL_FN (library, gnutls_safe_renegotiation_status);
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
@@ -462,8 +470,10 @@ init_gnutls_functions (void)
 #  define gnutls_kx_get_name fn_gnutls_kx_get_name
 #  define gnutls_mac_get fn_gnutls_mac_get
 #  define gnutls_mac_get_name fn_gnutls_mac_get_name
-#  define gnutls_compression_get fn_gnutls_compression_get
-#  define gnutls_compression_get_name fn_gnutls_compression_get_name
+#  ifdef HAVE_GNUTLS_COMPRESSION_GET
+#   define gnutls_compression_get fn_gnutls_compression_get
+#   define gnutls_compression_get_name fn_gnutls_compression_get_name
+#  endif
 #  define gnutls_safe_renegotiation_status fn_gnutls_safe_renegotiation_status
 #  define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
 #  define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
@@ -1082,17 +1092,18 @@ emacs_gnutls_certificate_export_pem (gnutls_x509_crt_t cert)
 
   if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
     {
-      unsigned char *buf = xmalloc(size * sizeof (unsigned char));
+      USE_SAFE_ALLOCA;
+      char *buf = SAFE_ALLOCA (size);
       err = gnutls_x509_crt_export (cert, GNUTLS_X509_FMT_PEM, buf, &size);
       check_memory_full (err);
 
       if (err < GNUTLS_E_SUCCESS)
-        {
-          xfree (buf);
-          error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
-        }
+	error ("GnuTLS certificate export error: %s",
+	       emacs_gnutls_strerror (err));
 
-      return build_string(buf);
+      Lisp_Object result = build_string (buf);
+      SAFE_FREE ();
+      return result;
     }
   else if (err < GNUTLS_E_SUCCESS)
     error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
@@ -1481,20 +1492,21 @@ returned as the :certificate entry.  */)
 				  (gnutls_mac_get (state)))));
 
   /* Compression name. */
-  result = nconc2
-    (result, list2 (intern (":compression"),
-		    build_string (gnutls_compression_get_name
-				  (gnutls_compression_get (state)))));
+#ifdef HAVE_GNUTLS_COMPRESSION_GET
+  Lisp_Object compression = build_string (gnutls_compression_get_name
+					  (gnutls_compression_get (state)));
+#else
+  Lisp_Object compression = build_string ("NULL");
+#endif
+  result = nconc2 (result, list2 (intern (":compression"), compression));
 
   /* Encrypt-then-MAC. */
-  result = nconc2
-    (result, list2 (intern (":encrypt-then-mac"),
+  Lisp_Object etm_status = Qnil;
 #ifdef HAVE_GNUTLS_ETM_STATUS
-                    gnutls_session_etm_status (state) ? Qt : Qnil
-#else
-                    Qnil
+  if (gnutls_session_etm_status (state))
+    etm_status = Qt;
 #endif
-                    ));
+  result = nconc2 (result, list2 (intern (":encrypt-then-mac"), etm_status));
 
   /* Renegotiation Indication */
   result = nconc2
@@ -1561,7 +1573,8 @@ boot_error (struct Lisp_Process *p, const char *m, ...)
   va_end (ap);
 }
 
-DEFUN ("gnutls-format-certificate", Fgnutls_format_certificate, Sgnutls_format_certificate, 1, 1, 0,
+DEFUN ("gnutls-format-certificate", Fgnutls_format_certificate,
+       Sgnutls_format_certificate, 1, 1, 0,
        doc: /* Format a X.509 certificate to a string.
 
 Given a PEM-encoded X.509 certificate CERT, returns a human-readable
@@ -1578,14 +1591,14 @@ string representation.  */)
   if (err < GNUTLS_E_SUCCESS)
     error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
 
-  unsigned char *crt_buf = SDATA (cert);
-  gnutls_datum_t crt_data = { crt_buf, strlen (crt_buf) };
+  gnutls_datum_t crt_data = { SDATA (cert), strlen (SSDATA (cert)) };
   err = gnutls_x509_crt_import (crt, &crt_data, GNUTLS_X509_FMT_PEM);
   check_memory_full (err);
   if (err < GNUTLS_E_SUCCESS)
     {
       gnutls_x509_crt_deinit (crt);
-      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+      error ("gnutls-format-certificate error: %s",
+	     emacs_gnutls_strerror (err));
     }
 
   gnutls_datum_t out;
@@ -1594,7 +1607,8 @@ string representation.  */)
   if (err < GNUTLS_E_SUCCESS)
     {
       gnutls_x509_crt_deinit (crt);
-      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+      error ("gnutls-format-certificate error: %s",
+	     emacs_gnutls_strerror (err));
     }
 
   char *out_buf = xmalloc ((out.size + 1) * sizeof (char));
