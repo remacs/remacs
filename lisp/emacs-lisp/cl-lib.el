@@ -129,11 +129,11 @@ The return value is the decremented value of PLACE."
     (list 'cl-callf '- place (or x 1))))
 
 (defmacro cl-pushnew (x place &rest keys)
-  "Add X to the list stored in PLACE unless already X is already in the list.
+  "Add X to the list stored in PLACE unless X is already in the list.
 PLACE is a generalized variable that stores a list.
 
-Like (push X PLACE), except that PLACE is unmodified if X is
-`eql' to an element already in PLACE list.
+Like (push X PLACE), except that PLACE is unmodified if X is `eql'
+to an element already in the list stored in PLACE.
 
 \nKeywords supported:  :test :test-not :key
 \n(fn X PLACE [KEYWORD VALUE]...)"
