@@ -2364,7 +2364,6 @@ flags that control whether to collect or render objects."
 	(car (window-text-pixel-size nil (point-min) (point-max)))))))
 
 (defun shr-render-td (dom width fill)
-  (setq d dom)
   (let ((cache (intern (format "shr-td-cache-%s-%s" width fill))))
     (or (dom-attr dom cache)
 	(and fill
