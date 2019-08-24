@@ -3533,9 +3533,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		      (file-attributes tmp-name1))
 		     tramp-time-dont-know)
 	      (should
-	       (equal (tramp-compat-file-attribute-modification-time
-		       (file-attributes tmp-name1))
-		      (seconds-to-time 1)))
+	       (tramp-compat-time-equal-p
+                (tramp-compat-file-attribute-modification-time
+		 (file-attributes tmp-name1))
+		(seconds-to-time 1)))
 	      (write-region "bla" nil tmp-name2)
 	      (should (file-exists-p tmp-name2))
 	      (should (file-newer-than-file-p tmp-name2 tmp-name1))
@@ -4182,8 +4183,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (with-timeout (10 (tramp--test-timeout-handler))
 	      (while (accept-process-output proc 0 nil t)))
 	    ;; We cannot use `string-equal', because tramp-adb.el
-	    ;; echoes also the sent string.
-	    (should (string-match "killed\n\\'" (buffer-string))))
+	    ;; echoes also the sent string.  And a remote macOS sends
+	    ;; a slightly modified string.
+	    (should (string-match "killed.*\n\\'" (buffer-string))))
 
 	;; Cleanup.
 	(ignore-errors (delete-process proc)))
