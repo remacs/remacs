@@ -653,6 +653,13 @@ comparing the subr with a much slower lisp implementation."
     (data-tests-check-sign (% -1 -3) (% nb1 nb3))
     (data-tests-check-sign (mod -1 -3) (mod nb1 nb3))))
 
+(ert-deftest data-tests-mod-0 ()
+  (dolist (num (list (1- most-negative-fixnum) -1 0 1
+                     (1+ most-positive-fixnum)))
+    (should-error (mod num 0)))
+  (when (ignore-errors (/ 0.0 0))
+    (should (equal (abs (mod 0.0 0)) (abs (- 0.0 (/ 0.0 0)))))))
+
 (ert-deftest data-tests-ash-lsh ()
   (should (= (ash most-negative-fixnum 1)
              (* most-negative-fixnum 2)))

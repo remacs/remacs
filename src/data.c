@@ -3117,12 +3117,14 @@ Both X and Y must be numbers or markers.  */)
 {
   CHECK_NUMBER_COERCE_MARKER (x);
   CHECK_NUMBER_COERCE_MARKER (y);
+  if (FLOATP (x) || FLOATP (y))
+    return fmod_float (x, y);
 
   /* A bignum can never be 0, so don't check that case.  */
   if (EQ (y, make_fixnum (0)))
     xsignal0 (Qarith_error);
 
-  return (FLOATP (x) || FLOATP (y) ? fmod_float : integer_mod) (x, y);
+  return integer_mod (x, y);
 }
 
 static Lisp_Object
