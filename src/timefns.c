@@ -1105,8 +1105,8 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 
       /* fa = da/g, fb = db/g.  */
       mpz_t *fa = &mpz[4], *fb = &mpz[3];
-      mpz_tdiv_q (*fa, *da, *g);
-      mpz_tdiv_q (*fb, *db, *g);
+      mpz_divexact (*fa, *da, *g);
+      mpz_divexact (*fb, *db, *g);
 
       /* ihz = fa * db.  This is equal to lcm (da, db).  */
       mpz_t *ihz = &mpz[0];
@@ -1149,8 +1149,8 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 
       if (!FASTER_TIMEFNS || mpz_cmp_ui (*ig, 1) > 0)
 	{
-	  mpz_tdiv_q (*iticks, *iticks, *ig);
-	  mpz_tdiv_q (*ihz, *ihz, *ig);
+	  mpz_divexact (*iticks, *iticks, *ig);
+	  mpz_divexact (*ihz, *ihz, *ig);
 
 	  if (!FASTER_TIMEFNS || mpz_cmp (*ihz, *hzmin) < 0)
 	    {
