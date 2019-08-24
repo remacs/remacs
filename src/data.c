@@ -3098,7 +3098,7 @@ integer_mod (Lisp_Object x, Lisp_Object y)
     {
       mpz_t const *ym = bignum_integer (&mpz[1], y);
       bool neg_y = mpz_sgn (*ym) < 0;
-      mpz_mod (mpz[0], *bignum_integer (&mpz[0], x), *ym);
+      mpz_tdiv_r (mpz[0], *bignum_integer (&mpz[0], x), *ym);
 
       /* Fix the sign if needed.  */
       int sgn_r = mpz_sgn (mpz[0]);
