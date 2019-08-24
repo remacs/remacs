@@ -3055,6 +3055,59 @@ usage: (/ NUMBER &rest DIVISORS)  */)
   return arith_driver (Adiv, nargs, args, a);
 }
 
+/* Return NUM % DEN (or NUM mod DEN, if MODULO).  NUM and DEN must be
+   integers.  */
+static Lisp_Object
+integer_remainder (Lisp_Object num, Lisp_Object den, bool modulo)
+{
+  if (FIXNUMP (den))
+    {
+      EMACS_INT d = XFIXNUM (den);
+      if (d == 0)
+	xsignal0 (Qarith_error);
+
+      EMACS_INT r;
+      bool have_r = false;
+      if (FIXNUMP (num))
+	{
+	  r = XFIXNUM (num) % d;
+	  have_r = true;
+	}
+      else if (eabs (d) <= ULONG_MAX)
+	{
+	  mpz_t const *n = xbignum_val (num);
+	  bool neg_n = mpz_sgn (*n) < 0;
+	  r = mpz_tdiv_ui (*n, eabs (d));
+	  if (neg_n)
+	    r = -r;
+	  have_r = true;
+	}
+
+      if (have_r)
+	{
+	  /* If MODULO and the remainder has the wrong sign, fix it.  */
+	  if (modulo && (d < 0 ? r > 0 : r < 0))
+	    r += d;
+
+	  return make_fixnum (r);
+	}
+    }
+
+  mpz_t const *d = bignum_integer (&mpz[1], den);
+  mpz_t *r = &mpz[0];
+  mpz_tdiv_r (*r, *bignum_integer (&mpz[0], num), *d);
+
+  if (modulo)
+    {
+      /* If the remainder has the wrong sign, fix it.  */
+      int sgn_r = mpz_sgn (*r);
+      if (mpz_sgn (*d) < 0 ? sgn_r > 0 : sgn_r < 0)
+	mpz_add (*r, *r, *d);
+    }
+
+  return make_integer_mpz ();
+}
+
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
 Both must be integers or markers.  */)
@@ -3062,51 +3115,7 @@ Both must be integers or markers.  */)
 {
   CHECK_INTEGER_COERCE_MARKER (x);
   CHECK_INTEGER_COERCE_MARKER (y);
-
-  /* A bignum can never be 0, so don't check that case.  */
-  if (EQ (y, make_fixnum (0)))
-    xsignal0 (Qarith_error);
-
-  if (FIXNUMP (x) && FIXNUMP (y))
-    return make_fixnum (XFIXNUM (x) % XFIXNUM (y));
-  else
-    {
-      mpz_tdiv_r (mpz[0],
-		  *bignum_integer (&mpz[0], x),
-		  *bignum_integer (&mpz[1], y));
-      return make_integer_mpz ();
-    }
-}
-
-/* Return X mod Y.  Both must be integers and Y must be nonzero.  */
-static Lisp_Object
-integer_mod (Lisp_Object x, Lisp_Object y)
-{
-  if (FIXNUMP (x) && FIXNUMP (y))
-    {
-      EMACS_INT i1 = XFIXNUM (x), i2 = XFIXNUM (y);
-
-      i1 %= i2;
-
-      /* If the "remainder" comes out with the wrong sign, fix it.  */
-      if (i2 < 0 ? i1 > 0 : i1 < 0)
-	i1 += i2;
-
-      return make_fixnum (i1);
-    }
-  else
-    {
-      mpz_t const *ym = bignum_integer (&mpz[1], y);
-      bool neg_y = mpz_sgn (*ym) < 0;
-      mpz_tdiv_r (mpz[0], *bignum_integer (&mpz[0], x), *ym);
-
-      /* Fix the sign if needed.  */
-      int sgn_r = mpz_sgn (mpz[0]);
-      if (neg_y ? sgn_r > 0 : sgn_r < 0)
-	mpz_add (mpz[0], mpz[0], *ym);
-
-      return make_integer_mpz ();
-    }
+  return integer_remainder (x, y, false);
 }
 
 DEFUN ("mod", Fmod, Smod, 2, 2, 0,
@@ -3119,12 +3128,7 @@ Both X and Y must be numbers or markers.  */)
   CHECK_NUMBER_COERCE_MARKER (y);
   if (FLOATP (x) || FLOATP (y))
     return fmod_float (x, y);
-
-  /* A bignum can never be 0, so don't check that case.  */
-  if (EQ (y, make_fixnum (0)))
-    xsignal0 (Qarith_error);
-
-  return integer_mod (x, y);
+  return integer_remainder (x, y, true);
 }
 
 static Lisp_Object
