@@ -323,31 +323,39 @@ See Bug#30460."
                                                   invocation-directory))
                  :stop t)))
 
+;; All the following tests require working DNS, which appears not to
+;; be the case for hydra.nixos.org, so disable them there for now.
+
 (ert-deftest lookup-family-specification ()
   "network-lookup-address-info should only accept valid family symbols."
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (should-error (network-lookup-address-info "google.com" 'both))
   (should (network-lookup-address-info "google.com" 'ipv4))
   (should (network-lookup-address-info "google.com" 'ipv6)))
 
 (ert-deftest lookup-unicode-domains ()
   "Unicode domains should fail"
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (should-error (network-lookup-address-info "faß.de"))
-  (should (length (network-lookup-address-info (puny-encode-domain "faß.de")))))
+  (should (network-lookup-address-info (puny-encode-domain "faß.de"))))
 
 (ert-deftest unibyte-domain-name ()
   "Unibyte domain names should work"
-  (should (length (network-lookup-address-info (string-to-unibyte "google.com")))))
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
+  (should (network-lookup-address-info (string-to-unibyte "google.com"))))
 
 (ert-deftest lookup-google ()
   "Check that we can look up google IP addresses"
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (let ((addresses-both (network-lookup-address-info "google.com"))
         (addresses-v4 (network-lookup-address-info "google.com" 'ipv4))
         (addresses-v6 (network-lookup-address-info "google.com" 'ipv6)))
-    (should (length addresses-both))
-    (should (length addresses-v4))
-    (should (length addresses-v6))))
+    (should addresses-both)
+    (should addresses-v4)
+    (should addresses-v6)))
 
 (ert-deftest non-existent-lookup-failure ()
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   "Check that looking up non-existent domain returns nil"
   (should (eq nil (network-lookup-address-info "emacs.invalid"))))
 
