@@ -9516,6 +9516,10 @@ code_convert_string_norecord (Lisp_Object string, Lisp_Object coding_system,
 }
 
 
+/* #define ENABLE_UTF_8_CONVERTER_TEST */
+
+#ifdef ENABLE_UTF_8_CONVERTER_TEST
+
 /* Return the gap address of BUFFER.  If the gap size is less than
    NBYTES, enlarge the gap in advance.  */
 
@@ -9618,7 +9622,7 @@ get_char_bytes (int c, int *len)
    If the two arguments are Qnil, return Qnil if STRING has a
    non-Unicode character.  */
 
-Lisp_Object
+static Lisp_Object
 encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     bool nocopy, Lisp_Object handle_8_bit,
 		     Lisp_Object handle_over_uni)
@@ -9873,7 +9877,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    If the two arguments are Qnil, return Qnil if STRING has an invalid
    sequence.  */
 
-Lisp_Object
+static Lisp_Object
 decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     bool nocopy, Lisp_Object handle_8_bit,
 		     Lisp_Object handle_over_uni)
@@ -10110,10 +10114,6 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
     }
   return val;
 }
-
-/* #define ENABLE_UTF_8_CONVERTER_TEST */
-
-#ifdef ENABLE_UTF_8_CONVERTER_TEST
 
 /* These functions are useful for testing and benchmarking
    encode_string_utf_8 and decode_string_utf_8.  */

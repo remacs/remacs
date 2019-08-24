@@ -28,7 +28,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 extern FILE *emacs_fopen (char const *, char const *);
 extern void errputc (int);
-extern void verrprintf (char const *, va_list) ATTRIBUTE_FORMAT_PRINTF (1, 0);
 extern void errwrite (void const *, ptrdiff_t);
 extern void close_output_streams (void);
 

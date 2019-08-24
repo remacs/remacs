@@ -2810,12 +2810,6 @@ errputc (int c)
 }
 
 void
-verrprintf (char const *fmt, va_list ap)
-{
-  vfprintf (errstream (), fmt, ap);
-}
-
-void
 errwrite (void const *buf, ptrdiff_t nbuf)
 {
   fwrite_unlocked (buf, 1, nbuf, errstream ());

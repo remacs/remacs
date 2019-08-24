@@ -3079,7 +3079,7 @@ Both must be integers or markers.  */)
 }
 
 /* Return X mod Y.  Both must be integers and Y must be nonzero.  */
-Lisp_Object
+static Lisp_Object
 integer_mod (Lisp_Object x, Lisp_Object y)
 {
   if (FIXNUMP (x) && FIXNUMP (y))

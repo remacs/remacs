@@ -433,7 +433,7 @@ ftfont_lookup_cache (Lisp_Object key, enum ftfont_cache_for cache_for)
   return cache;
 }
 
-FcCharSet *
+static FcCharSet *
 ftfont_get_fc_charset (Lisp_Object entity)
 {
   Lisp_Object val, cache;

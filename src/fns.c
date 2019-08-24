@@ -3280,11 +3280,11 @@ static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool,
 static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  bool, ptrdiff_t *);
 
-Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
-				    bool, bool);
+static Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
+					   bool, bool);
 
-Lisp_Object base64_encode_string_1(Lisp_Object, bool,
-				   bool, bool);
+static Lisp_Object base64_encode_string_1 (Lisp_Object, bool,
+					   bool, bool);
 
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
@@ -3295,7 +3295,7 @@ Optional third argument NO-LINE-BREAK means do not break long lines
 into shorter lines.  */)
   (Lisp_Object beg, Lisp_Object end, Lisp_Object no_line_break)
 {
-  return base64_encode_region_1(beg, end, NILP (no_line_break), true, false);
+  return base64_encode_region_1 (beg, end, NILP (no_line_break), true, false);
 }
 
 
@@ -3308,10 +3308,10 @@ Optional second argument NO-PAD means do not add padding char =.
 This produces the URL variant of base 64 encoding defined in RFC 4648.  */)
   (Lisp_Object beg, Lisp_Object end, Lisp_Object no_pad)
 {
-  return base64_encode_region_1(beg, end, false, NILP(no_pad), true);
+  return base64_encode_region_1 (beg, end, false, NILP(no_pad), true);
 }
 
-Lisp_Object
+static Lisp_Object
 base64_encode_region_1 (Lisp_Object beg, Lisp_Object end, bool line_break,
 			bool pad, bool base64url)
 {
@@ -3376,11 +3376,11 @@ into shorter lines.  */)
   (Lisp_Object string, Lisp_Object no_line_break)
 {
 
-  return base64_encode_string_1(string, NILP (no_line_break), true, false);
+  return base64_encode_string_1 (string, NILP (no_line_break), true, false);
 }
 
-DEFUN ("base64url-encode-string", Fbase64url_encode_string, Sbase64url_encode_string,
-       1, 2, 0,
+DEFUN ("base64url-encode-string", Fbase64url_encode_string,
+       Sbase64url_encode_string, 1, 2, 0,
        doc: /* Base64url-encode STRING and return the result.
 Optional second argument NO-PAD means do not add padding char =.
 
@@ -3388,12 +3388,12 @@ This produces the URL variant of base 64 encoding defined in RFC 4648.  */)
   (Lisp_Object string, Lisp_Object no_pad)
 {
 
-  return base64_encode_string_1(string, false, NILP(no_pad), true);
+  return base64_encode_string_1 (string, false, NILP(no_pad), true);
 }
 
-Lisp_Object
-base64_encode_string_1(Lisp_Object string, bool line_break,
-		       bool pad, bool base64url)
+static Lisp_Object
+base64_encode_string_1 (Lisp_Object string, bool line_break,
+			bool pad, bool base64url)
 {
   ptrdiff_t allength, length, encoded_length;
   char *encoded;
@@ -3510,9 +3510,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 	{
 	  *e++ = b64_value_to_char[value];
 	  if (pad)
-	    {
-	      *e++ = '=';
-	    }
+	    *e++ = '=';
 	  break;
 	}
 
