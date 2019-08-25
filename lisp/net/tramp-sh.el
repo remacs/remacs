@@ -669,7 +669,7 @@ else
 $uid = ($ARGV[1] eq \"integer\") ? $stat[4] : \"\\\"\" . getpwuid($stat[4]) . \"\\\"\";
 $gid = ($ARGV[1] eq \"integer\") ? $stat[5] : \"\\\"\" . getgrgid($stat[5]) . \"\\\"\";
 printf(
-    \"(%%s %%u %%s %%s (%%u %%u) (%%u %%u) (%%u %%u) %%u %%u t %%u -1)\\n\",
+    \"(%%s %%u %%s %%s (%%u %%u) (%%u %%u) (%%u %%u) %%u.0 %%u t %%u.0 -1)\\n\",
     $type,
     $stat[3],
     $uid,
@@ -719,7 +719,7 @@ for($i = 0; $i < $n; $i++)
     $gid = ($ARGV[1] eq \"integer\") ? $stat[5] : \"\\\"\" . getgrgid($stat[5]) . \"\\\"\";
     $filename =~ s/\"/\\\\\"/g;
     printf(
-        \"(\\\"%%s\\\" %%s %%u %%s %%s (%%u %%u) (%%u %%u) (%%u %%u) %%u.0 %%u t (%%u . %%u) (%%u . %%u))\\n\",
+        \"(\\\"%%s\\\" %%s %%u %%s %%s (%%u %%u) (%%u %%u) (%%u %%u) %%u.0 %%u t %%u.0 -1)\\n\",
         $filename,
         $type,
         $stat[3],
@@ -733,10 +733,7 @@ for($i = 0; $i < $n; $i++)
         $stat[10] & 0xffff,
         $stat[7],
         $stat[2],
-        $stat[1] >> 16 & 0xffff,
-        $stat[1] & 0xffff,
-        $stat[0] >> 16 & 0xffff,
-        $stat[0] & 0xffff);
+        $stat[1]);
 }
 printf(\")\\n\");' \"$1\" \"$2\" 2>/dev/null"
   "Perl script implementing `directory-files-attributes' as Lisp `read'able
@@ -1356,7 +1353,7 @@ component is used as the target of the symlink."
        ;; `tramp-stat-marker', in order to make a proper shell escape
        ;; of them in file names.
        "( (%s %s || %s -h %s) && (%s -c "
-       "'((%s%%N%s) %%h %s %s %%X %%Y %%Z %%s %s%%A%s t %%i -1)' "
+       "'((%s%%N%s) %%h %s %s %%X %%Y %%Z %%s.0 %s%%A%s t %%i.0 -1)' "
        "%s | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g') || echo nil)"))
     (tramp-get-file-exists-command vec)
     (tramp-shell-quote-argument localname)
@@ -1767,7 +1764,7 @@ of."
        ;; of them in file names.
        "cd %s && echo \"(\"; (%s %s -a | "
        "xargs %s -c "
-       "'(%s%%n%s (%s%%N%s) %%h %s %s %%X %%Y %%Z %%s %s%%A%s t %%i -1)' "
+       "'(%s%%n%s (%s%%N%s) %%h %s %s %%X %%Y %%Z %%s.0 %s%%A%s t %%i.0 -1)' "
        "-- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g'); echo \")\""))
     (tramp-shell-quote-argument localname)
     (tramp-get-ls-command vec)
