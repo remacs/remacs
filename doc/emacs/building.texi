@@ -266,11 +266,12 @@ fringe (@pxref{Fringes}), the locus-visiting commands put an arrow in
 the fringe, pointing to the current error message.  If the window has
 no left fringe, such as on a text terminal, these commands scroll the
 window so that the current message is at the top of the window.  If
-you change the variable @code{compilation-context-lines} to an integer
-value @var{n}, these commands scroll the window so that the current
-error message is @var{n} lines from the top, whether or not there is a
-fringe; the default value, @code{nil}, gives the behavior described
-above.
+you change the variable @code{compilation-context-lines} to @code{t},
+a visible arrow is inserted before column zero instead.  If you change
+the variable to an integer value @var{n}, these commands scroll the
+window so that the current error message is @var{n} lines from the
+top, whether or not there is a fringe; the default value, @code{nil},
+gives the behavior described above.
 
 @vindex compilation-error-regexp-alist
 @vindex grep-regexp-alist

@@ -558,6 +558,11 @@ that it doesn't bring any measurable benefit.
 ---
 *** In 'compilation-error-regexp-alist', 'line' (and 'end-line') can
 be functions.
++++
+*** 'compilation-context-lines' can now take the value t; this is like
+nil, but instead of scrolling the current line to the top of the
+screen when there is no left fringe, it inserts a visible arrow before
+column zero.
 
 ** cl-lib.el
 +++
