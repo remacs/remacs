@@ -512,6 +512,10 @@ current and the previous or the next line, as before.
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
 ---
+** 'autoconf-mode' is now used instead of 'm4-mode' for the
+acinclude.m4/aclocal.m4/acsite.m4 files.
+
+---
 ** On GNU/Linux, `M-x battery' will now list all batteries, no matter
 what they're named, and the `battery-linux-sysfs-regexp' variable has
 been removed.

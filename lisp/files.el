@@ -2719,6 +2719,8 @@ since only a single case-insensitive search through the alist is made."
      ("\\.bib\\'" . bibtex-mode)
      ("\\.bst\\'" . bibtex-style-mode)
      ("\\.sql\\'" . sql-mode)
+     ;; These .m4 files are Autoconf files.
+     ("\\(acinclude\\|aclocal\\|acsite\\)\\.m4\\'" . autoconf-mode)
      ("\\.m[4c]\\'" . m4-mode)
      ("\\.mf\\'" . metafont-mode)
      ("\\.mp\\'" . metapost-mode)
