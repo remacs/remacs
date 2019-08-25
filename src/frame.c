@@ -5328,7 +5328,8 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
   (Lisp_Object string)
 {
   /* x and y don't need initialization, as they are not accessed
-     unless XParseGeometry sets them.  */
+     unless XParseGeometry sets them, in which case it always returns
+     a non-zero value.  */
   int x UNINIT, y UNINIT;
   unsigned int width, height;
 
