@@ -5327,9 +5327,10 @@ or a list (- N) meaning -N pixels relative to bottom/right corner.
 On Nextstep, this just calls `ns-parse-geometry'.  */)
   (Lisp_Object string)
 {
-  int geometry, x UNINIT, y UNINIT;
+  /* x and y don't need initialization, as they are not accessed
+     unless XParseGeometry sets them.  */
+  int x UNINIT, y UNINIT;
   unsigned int width, height;
-  Lisp_Object result;
 
   CHECK_STRING (string);
 
@@ -5337,9 +5338,9 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
   if (strchr (SSDATA (string), ' ') != NULL)
     return call1 (Qns_parse_geometry, string);
 #endif
-  geometry = XParseGeometry (SSDATA (string),
-			     &x, &y, &width, &height);
-  result = Qnil;
+  int geometry = XParseGeometry (SSDATA (string),
+				 &x, &y, &width, &height);
+  Lisp_Object result = Qnil;
   if (geometry & XValue)
     {
       Lisp_Object element;
