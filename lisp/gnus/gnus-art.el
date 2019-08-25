@@ -5059,7 +5059,10 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
    (list
     (read-file-name "Replace MIME part with file: "
                     (or mm-default-directory default-directory)
-                    nil nil)))
+                    nil t)))
+  (unless (file-regular-p (file-truename file))
+    (error "Can't replace part with %s, which isn't a regular file"
+	   file))
   (gnus-mime-save-part-and-strip file))
 
 (defun gnus-mime-save-part-and-strip (&optional file)
