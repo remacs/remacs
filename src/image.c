@@ -6598,15 +6598,16 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 # ifdef PNG_tRNS_SUPPORTED
   png_bytep trans_alpha;
   int num_trans;
-  if (png_get_tRNS (png_ptr, info_ptr, &trans_alpha, &num_trans, NULL)
-      && trans_alpha)
+  if (png_get_tRNS (png_ptr, info_ptr, &trans_alpha, &num_trans, NULL))
     {
-      int i;
-      for (i = 0; i < num_trans; i++)
-	if (0 < trans_alpha[i] && trans_alpha[i] < 255)
-	  break;
-      if (! (i < num_trans))
-	transparent_p = true;
+      transparent_p = true;
+      if (trans_alpha)
+	for (int i = 0; i < num_trans; i++)
+	  if (0 < trans_alpha[i] && trans_alpha[i] < 255)
+	    {
+	      transparent_p = false;
+	      break;
+	    }
     }
 # endif
 
