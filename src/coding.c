@@ -9516,10 +9516,6 @@ code_convert_string_norecord (Lisp_Object string, Lisp_Object coding_system,
 }
 
 
-/* #define ENABLE_UTF_8_CONVERTER_TEST */
-
-#ifdef ENABLE_UTF_8_CONVERTER_TEST
-
 /* Return the gap address of BUFFER.  If the gap size is less than
    NBYTES, enlarge the gap in advance.  */
 
@@ -9622,7 +9618,7 @@ get_char_bytes (int c, int *len)
    If the two arguments are Qnil, return Qnil if STRING has a
    non-Unicode character.  */
 
-static Lisp_Object
+Lisp_Object
 encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     bool nocopy, Lisp_Object handle_8_bit,
 		     Lisp_Object handle_over_uni)
@@ -9846,7 +9842,10 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    If BUFFER is Qnil, return a multibyte string from the decoded result.
    As a special case, return STRING itself in the following cases:
    1. STRING contains only ASCII characters.
-   2. NOCOPY, and STRING contains only valid UTF-8 sequences.
+   2. NOCOPY is true, and STRING contains only valid UTF-8 sequences.
+
+   For maximum speed, always specify NOCOPY true when STRING is
+   guaranteed to contain only valid UTF-8 sequences.
 
    HANDLE-8-BIT and HANDLE-OVER-UNI specify how to handle a invalid
    byte sequence.  The former is for an 1-byte invalid sequence that
@@ -9877,7 +9876,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    If the two arguments are Qnil, return Qnil if STRING has an invalid
    sequence.  */
 
-static Lisp_Object
+Lisp_Object
 decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     bool nocopy, Lisp_Object handle_8_bit,
 		     Lisp_Object handle_over_uni)
@@ -10114,6 +10113,10 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
     }
   return val;
 }
+
+/* #define ENABLE_UTF_8_CONVERTER_TEST */
+
+#ifdef ENABLE_UTF_8_CONVERTER_TEST
 
 /* These functions are useful for testing and benchmarking
    encode_string_utf_8 and decode_string_utf_8.  */
