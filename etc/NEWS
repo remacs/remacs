@@ -516,14 +516,14 @@ current and the previous or the next line, as before.
 acinclude.m4/aclocal.m4/acsite.m4 files.
 
 ---
-** On GNU/Linux, `M-x battery' will now list all batteries, no matter
-what they're named, and the `battery-linux-sysfs-regexp' variable has
+** On GNU/Linux, 'M-x battery' will now list all batteries, no matter
+what they're named, and the 'battery-linux-sysfs-regexp' variable has
 been removed.
 
 ** The 'list-processes' command now includes port numbers in the
 network connection information (in addition to the host name).
 
-** The 'cl' package is now officially deprecated in favor of `cl-lib`.
+** The 'cl' package is now officially deprecated in favor of 'cl-lib'.
 
 +++
 ** winner
