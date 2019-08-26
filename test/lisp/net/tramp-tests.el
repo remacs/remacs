@@ -3098,6 +3098,12 @@ They might differ only in time attributes or directory size."
   (let ((attr1 (copy-sequence attr1))
 	(attr2 (copy-sequence attr2))
 	(start-time (- tramp--test-start-time 10)))
+    ;; Link number.  For directories, it includes the number of
+    ;; subdirectories.  Set it to 1.
+    (when (eq (tramp-compat-file-attribute-type attr1) t)
+      (setcar (nthcdr 1 attr1) 1))
+    (when (eq (tramp-compat-file-attribute-type attr2) t)
+      (setcar (nthcdr 1 attr2) 1))
     ;; Access time.
     (setcar (nthcdr 4 attr1) tramp-time-dont-know)
     (setcar (nthcdr 4 attr2) tramp-time-dont-know)
@@ -5285,10 +5291,15 @@ This requires restrictions of file name syntax."
 		    (goto-char (point-min))
 		    (should
 		     (re-search-forward
-		      (format
-		       "^%s=%s$"
-		       (regexp-quote envvar)
-		       (regexp-quote (getenv envvar))))))))))
+                      ;; We must use proper encoding on macOS.  See
+                      ;; Bug#36940.
+                      (funcall
+	               (if (eq coding-system-for-read 'utf-8-hfs)
+                           'ucs-normalize-HFS-NFD-string 'identity)
+		       (format
+		        "^%s=%s$"
+		        (regexp-quote envvar)
+		        (regexp-quote (getenv envvar)))))))))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))
