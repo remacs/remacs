@@ -216,7 +216,7 @@ This enables the creation of your target type."
       (setq ede-proj-target-alist
 	    (cons (cons name class) ede-proj-target-alist)))))
 
-(defclass ede-proj-project (eieio-persistent ede-project)
+(defclass ede-proj-project (eieio-persistent ede-project eieio-named)
   ((extension :initform ".ede")
    (file-header-line :initform ";; EDE Project Files are auto generated: Do Not Edit")
    (makefile-type :initarg :makefile-type
