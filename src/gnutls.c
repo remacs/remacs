@@ -140,6 +140,7 @@ DEF_DLL_FN (void, gnutls_dh_set_prime_bits,
 DEF_DLL_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
 DEF_DLL_FN (int, gnutls_error_is_fatal, (int));
 DEF_DLL_FN (int, gnutls_global_init, (void));
+DEF_DLL_FN (void, gnutls_free, (void *));
 DEF_DLL_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
 #  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
@@ -326,6 +327,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_dh_get_prime_bits);
   LOAD_DLL_FN (library, gnutls_error_is_fatal);
   LOAD_DLL_FN (library, gnutls_global_init);
+  LOAD_DLL_FN (library, gnutls_free);
   LOAD_DLL_FN (library, gnutls_global_set_log_function);
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_global_set_audit_log_function);
@@ -463,6 +465,7 @@ init_gnutls_functions (void)
 #  define gnutls_global_init fn_gnutls_global_init
 #  define gnutls_global_set_audit_log_function fn_gnutls_global_set_audit_log_function
 #  define gnutls_global_set_log_function fn_gnutls_global_set_log_function
+#  define gnutls_free fn_gnutls_free
 #  define gnutls_global_set_log_level fn_gnutls_global_set_log_level
 #  define gnutls_handshake fn_gnutls_handshake
 #  define gnutls_init fn_gnutls_init
@@ -1613,7 +1616,7 @@ string representation.  */)
   memset (out_buf, 0, (out.size + 1) * sizeof (char));
   memcpy (out_buf, out.data, out.size);
 
-  xfree (out.data);
+  gnutls_free (out.data);
   gnutls_x509_crt_deinit (crt);
 
   Lisp_Object result = build_string (out_buf);
