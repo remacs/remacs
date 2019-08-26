@@ -8304,6 +8304,10 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
       AUTO_STRING (end, ")");
       Lisp_Object orig = PROP (TOOL_BAR_ITEM_HELP);
       Lisp_Object desc = Fkey_description (keys, Qnil);
+
+      if (NILP (orig))
+        orig = PROP (TOOL_BAR_ITEM_CAPTION);
+
       set_prop (TOOL_BAR_ITEM_HELP, CALLN (Fconcat, orig, beg, desc, end));
     }
 
