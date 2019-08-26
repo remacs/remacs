@@ -262,6 +262,15 @@ a single minimum version string."
           (throw 'version-ok t)))
       (error "Unsupported version: %s" version))))
 
+(defun epg-required-version-p (protocol required-version)
+  "Verify a sufficient version of GnuPG for specific protocol.
+PROTOCOL is symbol, either `OpenPGP' or `CMS'.  REQUIRED-VERSION
+is a string containing the required version number.  Return
+non-nil if that version or higher is installed."
+  (let ((version (cdr (assq 'version (epg-find-configuration protocol)))))
+    (and (stringp version)
+         (version<= required-version version))))
+
 ;;;###autoload
 (defun epg-expand-group (config group)
   "Look at CONFIG and try to expand GROUP."
