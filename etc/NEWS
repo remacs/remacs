@@ -953,6 +953,11 @@ early init file.
 
 ** Info
 
++++
+*** Clicking on the left/right arrow icon in the Info tool-bar while
+holding down the Ctrl key pops up a menu of previously visited Info nodes
+where you can select a node to go back (like in browsers).
+
 ---
 *** Info can now follow 'file://' protocol URLs.
 The 'file://' URLs in Info documents can now be followed by passing

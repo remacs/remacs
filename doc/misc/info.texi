@@ -886,6 +886,14 @@ which the header says is the @samp{Previous} node (from this node, the
 to revisit nodes in the history list in the forward direction, so that
 @kbd{r} will return you to the node you came from by typing @kbd{l}.
 
+@cindex using tool-bar to navigate history
+  Clicking the mouse on the left arrow icon in the tool-bar while
+holding down the @key{CTRL} key in Emacs opens a menu of previously
+visited nodes: the same nodes that you can revisit by
+@code{Info-history-back}.  Selecting a node after clicking on the
+right arrow icon revisits the same nodes as available by
+@code{Info-history-forward}.
+
 @kindex L @r{(Info mode)}
 @findex Info-history
 @cindex history list of visited nodes

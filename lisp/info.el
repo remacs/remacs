@@ -4059,6 +4059,8 @@ If FORK is non-nil, it is passed to `Info-goto-node'."
     (define-key map [follow-link] 'mouse-face)
     (define-key map [XF86Back] 'Info-history-back)
     (define-key map [XF86Forward] 'Info-history-forward)
+    (define-key map [tool-bar C-Back\ in\ history] 'Info-history-back-menu)
+    (define-key map [tool-bar C-Forward\ in\ history] 'Info-history-forward-menu)
     map)
   "Keymap containing Info commands.")
 
@@ -4150,6 +4152,36 @@ If FORK is non-nil, it is passed to `Info-goto-node'."
     (tool-bar-local-item-from-menu 'quit-window "exit" map Info-mode-map
 				   :vert-only t)
     map))
+
+(defun Info-history-menu (e name history command)
+  (let* ((i (length history))
+         (map (make-sparse-keymap name)))
+    (mapc (lambda (history)
+            (let ((file (nth 0 history))
+                  (node (nth 1 history)))
+              (when (stringp file)
+                (setq file (file-name-sans-extension
+                            (file-name-nondirectory file))))
+              (define-key map (vector (intern (format "history-%i" i)))
+                `(menu-item ,(format "(%s) %s" file node)
+                            (lambda ()
+                              (interactive)
+                              (dotimes (_ ,i) (call-interactively ',command))))))
+            (setq i (1- i)))
+          (reverse history))
+    (let* ((selection (x-popup-menu e map))
+           (binding (and selection (lookup-key map (vector (car selection))))))
+      (if binding (call-interactively binding)))))
+
+(defun Info-history-back-menu (e)
+  "Pop up the menu with a list of previously visited Info nodes."
+  (interactive "e")
+  (Info-history-menu e "Back in history" Info-history 'Info-history-back))
+
+(defun Info-history-forward-menu (e)
+  "Pop up the menu with a list of Info nodes visited with ‘Info-history-back’."
+  (interactive "e")
+  (Info-history-menu e "Forward in history" Info-history-forward 'Info-history-forward))
 
 (defvar Info-menu-last-node nil)
 ;; Last node the menu was created for.
