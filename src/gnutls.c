@@ -1622,7 +1622,8 @@ string representation.  */)
 	     emacs_gnutls_strerror (err));
     }
 
-  Lisp_Object result = make_string_from_bytes (out.data, out.size, out.size);
+  Lisp_Object result = make_string_from_bytes ((char *) out.data, out.size,
+					       out.size);
   gnutls_free (out.data);
   gnutls_x509_crt_deinit (crt);
 
