@@ -140,7 +140,6 @@ DEF_DLL_FN (void, gnutls_dh_set_prime_bits,
 DEF_DLL_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
 DEF_DLL_FN (int, gnutls_error_is_fatal, (int));
 DEF_DLL_FN (int, gnutls_global_init, (void));
-DEF_DLL_FN (void, gnutls_free, (void *));
 DEF_DLL_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
 #  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
@@ -291,6 +290,7 @@ DEF_DLL_FN (const char *, gnutls_ext_get_name, (unsigned int));
 #   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
+static gnutls_free_function *gnutls_free_func;
 
 static bool
 init_gnutls_functions (void)
@@ -327,7 +327,6 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_dh_get_prime_bits);
   LOAD_DLL_FN (library, gnutls_error_is_fatal);
   LOAD_DLL_FN (library, gnutls_global_init);
-  LOAD_DLL_FN (library, gnutls_free);
   LOAD_DLL_FN (library, gnutls_global_set_log_function);
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_global_set_audit_log_function);
@@ -430,6 +429,13 @@ init_gnutls_functions (void)
 #   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
+  /* gnutls_free is a variable inside GnuTLS, whose value is the
+     "free" function.  So it needs special handling.  */
+  gnutls_free_func = (gnutls_free_function *) GetProcAddress (library,
+							      "gnutls_free");
+  if (!gnutls_free_func)
+    return false;
+
   max_log_level = clip_to_bounds (INT_MIN, global_gnutls_log_level, INT_MAX);
   {
     Lisp_Object name = CAR_SAFE (Fget (Qgnutls, QCloaded_from));
@@ -465,7 +471,6 @@ init_gnutls_functions (void)
 #  define gnutls_global_init fn_gnutls_global_init
 #  define gnutls_global_set_audit_log_function fn_gnutls_global_set_audit_log_function
 #  define gnutls_global_set_log_function fn_gnutls_global_set_log_function
-#  define gnutls_free fn_gnutls_free
 #  define gnutls_global_set_log_level fn_gnutls_global_set_log_level
 #  define gnutls_handshake fn_gnutls_handshake
 #  define gnutls_init fn_gnutls_init
@@ -562,6 +567,11 @@ init_gnutls_functions (void)
 #   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
+/* gnutls_free is a data pointer to a variable which holds a pointer
+   to the function.  We use #undef because MinGW64 defines gnutls_free
+   as a macro as well in the GnuTLS headers.  */
+#  undef gnutls_free
+#  define gnutls_free (*gnutls_free_func)
 
 /* This wrapper is called from fns.c, which doesn't know about the
    LOAD_DLL_FN stuff above.  */
@@ -1612,15 +1622,9 @@ string representation.  */)
 	     emacs_gnutls_strerror (err));
     }
 
-  char *out_buf = xmalloc ((out.size + 1) * sizeof (char));
-  memset (out_buf, 0, (out.size + 1) * sizeof (char));
-  memcpy (out_buf, out.data, out.size);
-
+  Lisp_Object result = make_string_from_bytes (out.data, out.size, out.size);
   gnutls_free (out.data);
   gnutls_x509_crt_deinit (crt);
-
-  Lisp_Object result = build_string (out_buf);
-  xfree (out_buf);
 
   return result;
 }
