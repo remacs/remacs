@@ -567,9 +567,9 @@ init_gnutls_functions (void)
 #   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
-/* gnutls_free is a data pointer to a variable which holds a pointer
-   to the function.  We use #undef because MinGW64 defines gnutls_free
-   as a macro as well in the GnuTLS headers.  */
+/* gnutls_free_func is a data pointer to a variable which holds an
+   address of a function.  We use #undef because MinGW64 defines
+   gnutls_free as a macro as well in the GnuTLS headers.  */
 #  undef gnutls_free
 #  define gnutls_free (*gnutls_free_func)
 
