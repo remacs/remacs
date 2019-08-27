@@ -5276,7 +5276,10 @@ This requires restrictions of file name syntax."
 		(should-not (file-exists-p file1))))
 
 	    ;; Check, that environment variables are set correctly.
-	    (when (and (tramp--test-expensive-test) (tramp--test-sh-p))
+            ;; We do not run on macOS due to encoding problems.  See
+            ;; Bug#36940.
+	    (when (and (tramp--test-expensive-test) (tramp--test-sh-p)
+		       (not (eq system-type 'darwin)))
 	      (dolist (elt files)
 		(let ((envvar (concat "VAR_" (upcase (md5 elt))))
 		      (elt (encode-coding-string elt coding-system-for-read))
@@ -5291,15 +5294,10 @@ This requires restrictions of file name syntax."
 		    (goto-char (point-min))
 		    (should
 		     (re-search-forward
-                      ;; We must use proper encoding on macOS.  See
-                      ;; Bug#36940.
-                      (funcall
-	               (if (eq coding-system-for-read 'utf-8-hfs)
-                           'ucs-normalize-HFS-NFD-string 'identity)
-		       (format
-		        "^%s=%s$"
-		        (regexp-quote envvar)
-		        (regexp-quote (getenv envvar)))))))))))
+		      (format
+		       "^%s=%s$"
+		       (regexp-quote envvar)
+		       (regexp-quote (getenv envvar))))))))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))
