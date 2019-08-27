@@ -2938,10 +2938,15 @@ This hook is normally set up with a function to put the buffer in Help
 mode.")
 
 (defconst user-emacs-directory
-  (if (eq system-type 'ms-dos)
-      ;; MS-DOS cannot have initial dot.
-      "~/_emacs.d/"
-    "~/.emacs.d/")
+  (let ((config-dir (concat (or (getenv-internal "XDG_CONFIG_HOME")
+				"~/.config")
+			    "/emacs/")))
+    (if (file-exists-p config-dir)
+	config-dir
+      (if (eq system-type 'ms-dos)
+	  ;; MS-DOS cannot have initial dot.
+	  "~/_emacs.d/"
+	"~/.emacs.d/")))
   "Directory beneath which additional per-user Emacs-specific files are placed.
 Various programs in Emacs store information in this directory.
 Note that this should end with a directory separator.
