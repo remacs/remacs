@@ -134,12 +134,19 @@ builds respectively.
 
 +++
 ** Emacs now uses the XDG convention for init files.
-For example, it looks for init.el in ~/.config/emacs/init.el.
-Emacs continues to look for init files in their traditional locations
-if ~/.config/emacs does not exist.  The XDG_CONFIG_HOME environment
-variable (default ~/.config) specifies the parent directory of these
-configuration files, so invoking Emacs with XDG_CONFIG_HOME='/nowhere'
-might be useful if your new-location init files are scrambled.
+For example, it looks for init.el in ~/.config/emacs/init.el, and
+similarly for other init files.
+
+The XDG_CONFIG_HOME environment variable (which defaults to ~/.config)
+specifies the parent directory of these and other configuration files,
+and will override their traditional locations (the home directory,
+~/.emacs.d, etc.).
+
+Emacs will still look for init files in their traditional locations if
+XDG_CONFIG_HOME does not exist, so invoking Emacs with
+XDG_CONFIG_HOME='/nowhere' might be useful if your new-location init
+files are scrambled, or if you want to force Emacs to ignore files
+under XDG_CONFIG_HOME for some other reason.
 
 +++
 ** Emacs can now be configured using an early init file.
