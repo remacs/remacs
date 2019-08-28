@@ -28502,7 +28502,7 @@ font_for_underline_metrics (struct glyph_string *s)
   for (g = s->first_glyph - 1; g >= g0; g--)
     {
       struct face *prev_face = FACE_FROM_ID (s->f, g->face_id);
-      if (!(prev_face && prev_face->underline_p))
+      if (!(prev_face && prev_face->underline != FACE_NO_UNDERLINE))
 	break;
     }
 

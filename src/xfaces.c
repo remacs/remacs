@@ -1209,7 +1209,7 @@ free_face_colors (struct frame *f, struct face *face)
       IF_DEBUG (--ncolors_allocated);
     }
 
-  if (face->underline_p
+  if (face->underline
       && !face->underline_defaulted_p)
     {
       x_free_colors (f, &face->underline_color, 1);
@@ -5698,16 +5698,14 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
   if (EQ (underline, Qt))
     {
       /* Use default color (same as foreground color).  */
-      face->underline_p = true;
-      face->underline_type = FACE_UNDER_LINE;
+      face->underline = FACE_UNDER_LINE;
       face->underline_defaulted_p = true;
       face->underline_color = 0;
     }
   else if (STRINGP (underline))
     {
       /* Use specified color.  */
-      face->underline_p = true;
-      face->underline_type = FACE_UNDER_LINE;
+      face->underline = FACE_UNDER_LINE;
       face->underline_defaulted_p = false;
       face->underline_color
 	= load_color (f, face, underline,
@@ -5715,7 +5713,7 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
     }
   else if (NILP (underline))
     {
-      face->underline_p = false;
+      face->underline = FACE_NO_UNDERLINE;
       face->underline_defaulted_p = false;
       face->underline_color = 0;
     }
@@ -5723,10 +5721,9 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
     {
       /* `(:color COLOR :style STYLE)'.
          STYLE being one of `line' or `wave'. */
-      face->underline_p = true;
+      face->underline = FACE_UNDER_LINE;
       face->underline_color = 0;
       face->underline_defaulted_p = true;
-      face->underline_type = FACE_UNDER_LINE;
 
       /* FIXME?  This is also not robust about checking the precise form.
          See comments in Finternal_set_lisp_face_attribute.  */
@@ -5759,9 +5756,9 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
           else if (EQ (keyword, QCstyle))
             {
               if (EQ (value, Qline))
-                face->underline_type = FACE_UNDER_LINE;
+                face->underline = FACE_UNDER_LINE;
               else if (EQ (value, Qwave))
-                face->underline_type = FACE_UNDER_WAVE;
+                face->underline = FACE_UNDER_WAVE;
             }
         }
     }
@@ -6296,9 +6293,8 @@ merge_faces (struct window *w, Lisp_Object face_name, int face_id,
 {
   struct frame *f = WINDOW_XFRAME (w);
   Lisp_Object attrs[LFACE_VECTOR_SIZE];
-  struct face *base_face;
+  struct face *base_face = FACE_FROM_ID_OR_NULL (f, base_face_id);
 
-  base_face = FACE_FROM_ID_OR_NULL (f, base_face_id);
   if (!base_face)
     return base_face_id;
 
@@ -6323,12 +6319,14 @@ merge_faces (struct window *w, Lisp_Object face_name, int face_id,
     }
   else
     {
-      struct face *face;
       if (face_id < 0)
 	return base_face_id;
-      face = FACE_FROM_ID_OR_NULL (f, face_id);
+
+      struct face *face = FACE_FROM_ID_OR_NULL (f, face_id);
+
       if (!face)
 	return base_face_id;
+
       merge_face_vectors (w, f, face->lface, attrs, 0);
     }
 
@@ -6416,7 +6414,7 @@ dump_realized_face (struct face *face)
 #endif
   fprintf (stderr, "fontset: %d\n", face->fontset);
   fprintf (stderr, "underline: %d (%s)\n",
-	   face->underline_p,
+	   face->underline,
 	   SDATA (Fsymbol_name (face->lface[LFACE_UNDERLINE_INDEX])));
   fprintf (stderr, "hash: %" PRIuPTR "\n", face->hash);
 }

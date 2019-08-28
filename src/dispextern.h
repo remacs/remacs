@@ -1607,6 +1607,7 @@ enum lface_attribute_index
   LFACE_INHERIT_INDEX,
   LFACE_FONTSET_INDEX,
   LFACE_DISTANT_FOREGROUND_INDEX,
+  LFACE_EXTEND_INDEX,
   LFACE_VECTOR_SIZE
 };
 
@@ -1632,6 +1633,7 @@ enum face_box_type
 
 enum face_underline_type
 {
+  FACE_NO_UNDERLINE = 0,
   FACE_UNDER_LINE,
   FACE_UNDER_WAVE
 };
@@ -1706,7 +1708,7 @@ struct face
   ENUM_BF (face_box_type) box : 2;
 
   /* Style of underlining. */
-  ENUM_BF (face_underline_type) underline_type : 1;
+  ENUM_BF (face_underline_type) underline : 2;
 
   /* If `box' above specifies a 3D type, true means use box_color for
      drawing shadows.  */
@@ -1714,7 +1716,6 @@ struct face
 
   /* Non-zero if text in this face should be underlined, overlined,
      strike-through or have a box drawn around it.  */
-  bool_bf underline_p : 1;
   bool_bf overline_p : 1;
   bool_bf strike_through_p : 1;
 
@@ -1724,14 +1725,10 @@ struct face
   bool_bf foreground_defaulted_p : 1;
   bool_bf background_defaulted_p : 1;
 
-  /* True means that either no color is specified for underlining or that
-     the specified color couldn't be loaded.  Use the foreground
-     color when drawing in that case. */
-  bool_bf underline_defaulted_p : 1;
-
   /* True means that either no color is specified for the corresponding
      attribute or that the specified color couldn't be loaded.
      Use the foreground color when drawing in that case. */
+  bool_bf underline_defaulted_p : 1;
   bool_bf overline_color_defaulted_p : 1;
   bool_bf strike_through_color_defaulted_p : 1;
   bool_bf box_color_defaulted_p : 1;
