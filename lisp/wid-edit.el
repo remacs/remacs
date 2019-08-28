@@ -3083,7 +3083,9 @@ as the value."
 (define-widget 'file 'string
   "A file widget.
 It reads a file name from an editable text field."
-  :completions #'completion-file-name-table
+  :completions (completion-table-case-fold
+                #'completion-file-name-table
+                (not read-file-name-completion-ignore-case))
   :prompt-value 'widget-file-prompt-value
   :format "%{%t%}: %v"
   ;; Doesn't work well with terminating newline.
@@ -3118,6 +3120,11 @@ It reads a file name from an editable text field."
 (define-widget 'directory 'file
   "A directory widget.
 It reads a directory name from an editable text field."
+  :completions (apply-partially #'completion-table-with-predicate
+                                (completion-table-case-fold
+                                 #'completion-file-name-table
+                                 (not read-file-name-completion-ignore-case))
+                                #'directory-name-p 'strict)
   :tag "Directory")
 
 (defvar widget-symbol-prompt-value-history nil
