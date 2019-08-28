@@ -654,7 +654,14 @@ Create parent directories as needed."
                    (let ((cleanup-f (flymake-proc--get-cleanup-function
                                      (buffer-file-name))))
                      (flymake-log 3 "cleaning up using %s" cleanup-f)
-                     (funcall cleanup-f))))
+                     ;; Make cleanup-f see the temporary file names
+                     ;; created by its corresponding init function
+                     ;; (bug#31981).
+                     (let ((flymake-proc--temp-source-file-name
+                            (process-get proc 'flymake-proc--temp-source-file-name))
+                           (flymake-proc--temp-master-file-name
+                            (process-get proc 'flymake-proc--temp-master-file-name)))
+                       (funcall cleanup-f)))))
                (kill-buffer output-buffer)))))))
 
 (defun flymake-proc--panic (problem explanation)
@@ -824,6 +831,10 @@ can also be executed interactively independently of
                   (process-put proc 'flymake-proc--output-buffer
                                (generate-new-buffer
                                 (format " *flymake output for %s*" (current-buffer))))
+                  (process-put proc 'flymake-proc--temp-source-file-name
+                               flymake-proc--temp-source-file-name)
+                  (process-put proc 'flymake-proc--temp-master-file-name
+                               flymake-proc--temp-master-file-name)
                   (setq flymake-proc--current-process proc)
                   (flymake-log 2 "started process %d, command=%s, dir=%s"
                                (process-id proc) (process-command proc)
@@ -865,6 +876,7 @@ can also be executed interactively independently of
   (let* ((ext (file-name-extension file-name))
 	 (temp-name (file-truename
 		     (concat (file-name-sans-extension file-name)
+                             "_" (format-time-string "%H%M%S%N")
 			     "_" prefix
 			     (and ext (concat "." ext))))))
     (flymake-log 3 "create-temp-inplace: file=%s temp=%s" file-name temp-name)
