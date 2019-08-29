@@ -48,6 +48,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <count-leading-zeros.h>
 
+/* Emacs needs proper handling of ±inf; correct printing as well as
+   important packages depend on it.  Make sure the user didn't specify
+   -ffinite-math-only, either directly or implicitly with -Ofast or
+   -ffast-math.  */
+#if defined __FINITE_MATH_ONLY__ && __FINITE_MATH_ONLY__
+ #error Emacs cannot be built with -ffinite-math-only
+#endif
+
 /* Check that X is a floating point number.  */
 
 static void
