@@ -16,12 +16,6 @@ You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing 'C-u C-h C-n'.
 
 
-* Installation Changes in Emacs 26.3
-
-
-* Startup Changes in Emacs 26.3
-
-
 * Changes in Emacs 26.3
 
 ** New option 'help-enable-completion-auto-load'.
@@ -32,24 +26,6 @@ loads files during completion of 'C-h f' and 'C-h v' according to
 ** Emacs now supports the new Japanese Era name.
 The newly assigned codepoint U+32FF was added to the Unicode Character
 Database compiled into Emacs.
-
-
-* Editing Changes in Emacs 26.3
-
-
-* Changes in Specialized Modes and Packages in Emacs 26.3
-
-
-* New Modes and Packages in Emacs 26.3
-
-
-* Incompatible Lisp Changes in Emacs 26.3
-
-
-* Lisp Changes in Emacs 26.3
-
-
-* Changes in Emacs 26.3 on Non-Free Operating Systems
 
 
 * Installation Changes in Emacs 26.2
