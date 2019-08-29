@@ -715,8 +715,12 @@ size, and full-buffer size."
         ;; Success; continue.
         (when (= (preceding-char) ?\s)
 	  (delete-char -1))
-        (let ((gap-start (point)))
-          (insert "\n")
+        (let ((gap-start (point))
+              (face (get-text-property (point) 'face)))
+          ;; Extend the background to the end of the line.
+          (if face
+              (insert (propertize "\n" 'face (shr-face-background face)))
+            (insert "\n"))
 	  (shr-indent)
           (when (and (> (1- gap-start) (point-min))
                      (get-text-property (point) 'shr-url)
