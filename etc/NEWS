@@ -191,12 +191,6 @@ after Emacs has finished initialization and is ready for use.
 emacs.service file to eg "~/.config/systemd/user/", you will need to copy
 the new version of the file again.)
 
-+++
-** New option 'help-enable-completion-auto-load'.
-This allows disabling the new feature introduced in Emacs 26.1 which
-loads files during completion of 'C-h f' and 'C-h v' according to
-'definition-prefixes'.
-
 
 * Changes in Emacs 27.1
 
