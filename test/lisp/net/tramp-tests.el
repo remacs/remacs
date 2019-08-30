@@ -5153,7 +5153,8 @@ This requires restrictions of file name syntax."
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (tramp--test-make-temp-name 'local quoted))
 	   (files (delq nil files))
-	   (process-environment process-environment))
+	   (process-environment process-environment)
+	   (sorted-files (sort (copy-sequence files) #'string-lessp)))
       (unwind-protect
 	  (progn
 	    (make-directory tmp-name1)
@@ -5200,10 +5201,20 @@ This requires restrictions of file name syntax."
 	    ;; Check file names.
 	    (should (equal (directory-files
 			    tmp-name1 nil directory-files-no-dot-files-regexp)
-			   (sort (copy-sequence files) #'string-lessp)))
+			   sorted-files))
 	    (should (equal (directory-files
 			    tmp-name2 nil directory-files-no-dot-files-regexp)
-			   (sort (copy-sequence files) #'string-lessp)))
+			   sorted-files))
+	    (should (equal (mapcar
+			    #'car
+			    (directory-files-and-attributes
+			     tmp-name1 nil directory-files-no-dot-files-regexp))
+			   sorted-files))
+	    (should (equal (mapcar
+			    #'car
+			    (directory-files-and-attributes
+			     tmp-name2 nil directory-files-no-dot-files-regexp))
+			   sorted-files))
 
 	    ;; `substitute-in-file-name' could return different
 	    ;; values.  For `adb', there could be strange file
