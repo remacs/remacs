@@ -1759,11 +1759,14 @@ of."
        ;; We must care about file names with spaces, or starting with
        ;; "-"; this would confuse xargs.  "ls -aQ" might be a
        ;; solution, but it does not work on all remote systems.
+       ;; Therefore, we use \000 as file separator.
+       ;; `tramp-sh--quoting-style-options' do not work for file names
+       ;; with spaces piped to "xargs".
        ;; Apostrophes in the stat output are masked as
        ;; `tramp-stat-marker', in order to make a proper shell escape
        ;; of them in file names.
-       "cd %s && echo \"(\"; (%s %s -a | "
-       "xargs %s -c "
+       "cd %s && echo \"(\"; (%s %s -a | tr '\\n\\r' '\\000\\000' | "
+       "xargs -0 %s -c "
        "'(%s%%n%s (%s%%N%s) %%h %s %s %%X %%Y %%Z %%s %s%%A%s t %%i -1)' "
        "-- 2>/dev/null | sed -e 's/\"/\\\\\"/g' -e 's/%s/\"/g'); echo \")\""))
     (tramp-shell-quote-argument localname)
