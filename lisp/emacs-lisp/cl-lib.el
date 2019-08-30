@@ -110,6 +110,7 @@ a future Emacs interpreter will be able to use it.")
 ;; These macros are defined here so that they
 ;; can safely be used in init files.
 
+;;;###autoload
 (defmacro cl-incf (place &optional x)
   "Increment PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
