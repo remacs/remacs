@@ -1170,13 +1170,16 @@ please check its value")
   ;; This is typically equivalent to ~/.config/emacs if the user is
   ;; following the XDG convention, and is ~INIT-FILE-USER/.emacs.d
   ;; on other systems.
-  (setq xdg-dir
-    (let* ((dir (concat (or (getenv "XDG_CONFIG_HOME")
+  (setq xdg-dir (concat (or (getenv "XDG_CONFIG_HOME")
 			    (concat "~" init-file-user "/.config"))
-			"/emacs/")))
-      (if (file-exists-p dir) dir)))
+			"/emacs/"))
   (setq startup-init-directory
-	(or xdg-dir (concat "~" init-file-user "/.emacs.d/")))
+	(if (file-exists-p xdg-dir)
+	    xdg-dir
+	  (let ((emacs-d-dir (concat "~" init-file-user "/.emacs.d/")))
+	    (if (file-exists-p emacs-d-dir)
+		emacs-d-dir
+	      xdg-dir))))
 
   ;; Load the early init file, if found.
   (startup--load-user-init-file
@@ -1325,7 +1328,7 @@ please check its value")
     (startup--load-user-init-file
      (lambda ()
        (cond
-	(xdg-dir nil)
+	((eq startup-init-directory xdg-dir) nil)
         ((eq system-type 'ms-dos)
          (concat "~" init-file-user "/_emacs"))
         ((not (eq system-type 'windows-nt))

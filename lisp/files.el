@@ -1043,7 +1043,7 @@ directory if it does not exist."
 		     (setq errtype "access"))
 	       (with-file-modes ?\700
 		 (condition-case nil
-		     (make-directory user-emacs-directory)
+		     (make-directory user-emacs-directory t)
 		   (error (setq errtype "create")))))
 	     (when (and errtype
 			user-emacs-directory-warning
