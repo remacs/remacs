@@ -418,7 +418,7 @@ already set or has been customized; otherwise, just use
 @code{set-default}.
 
 @item custom-initialize-delay
-This functions behaves like @code{custom-initialize-set}, but it
+This function behaves like @code{custom-initialize-set}, but it
 delays the actual initialization to the next Emacs start.  This should
 be used in files that are preloaded (or for autoloaded variables), so
 that the initialization is done in the run-time context rather than
