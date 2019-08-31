@@ -1028,6 +1028,7 @@ is wrapped around any parts requiring it."
               deps))))
 
 (declare-function lm-header "lisp-mnt" (header))
+(declare-function lm-header-multiline "lisp-mnt" (header))
 (declare-function lm-homepage "lisp-mnt" (&optional file))
 (declare-function lm-keywords-list "lisp-mnt" (&optional file))
 (declare-function lm-maintainer "lisp-mnt" (&optional file))
@@ -1054,8 +1055,7 @@ boundaries."
     (narrow-to-region start (point))
     (require 'lisp-mnt)
     ;; Use some headers we've invented to drive the process.
-    (let* ((requires-str (lm-header "package-requires"))
-           ;; Prefer Package-Version; if defined, the package author
+    (let* (;; Prefer Package-Version; if defined, the package author
            ;; probably wants us to use it.  Otherwise try Version.
            (pkg-version
             (or (package-strip-rcs-id (lm-header "package-version"))
@@ -1067,9 +1067,9 @@ boundaries."
             "Package lacks a \"Version\" or \"Package-Version\" header"))
       (package-desc-from-define
        file-name pkg-version desc
-       (if requires-str
-           (package--prepare-dependencies
-            (package-read-from-string requires-str)))
+       (and-let* ((require-lines (lm-header-multiline "package-requires")))
+         (package--prepare-dependencies
+          (package-read-from-string (mapconcat #'identity require-lines " "))))
        :kind 'single
        :url homepage
        :keywords keywords
