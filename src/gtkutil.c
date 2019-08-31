@@ -951,8 +951,8 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
   Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
   gint gwidth, gheight;
   int totalheight
-    = pixelheight + FRAME_TOOLBAR_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
-  int totalwidth = pixelwidth + FRAME_TOOLBAR_WIDTH (f);
+    = pixelheight + FRAME_TOOLBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
+  int totalwidth = pixelwidth + FRAME_TABBAR_WIDTH (f) + FRAME_TOOLBAR_WIDTH (f);
 
   if (FRAME_PIXEL_HEIGHT (f) == 0)
     return;
@@ -1437,9 +1437,9 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   /* Use one row/col here so base_height/width does not become zero.
      Gtk+ and/or Unity on Ubuntu 12.04 can't handle it.
      Obviously this makes the row/col value displayed off by 1.  */
-  base_width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, 1) + FRAME_TOOLBAR_WIDTH (f);
+  base_width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, 1) + FRAME_TABBAR_WIDTH (f) + FRAME_TOOLBAR_WIDTH (f);
   base_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 1)
-    + FRAME_MENUBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
+    + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f);
 
   size_hints.base_width = base_width;
   size_hints.base_height = base_height;

@@ -290,7 +290,8 @@
       (load "image")
       (load "international/fontset")
       (load "dnd")
-      (load "tool-bar")))
+      (load "tool-bar")
+      (load "tab-bar")))
 
 (if (featurep 'dynamic-setting)
     (load "dynamic-setting"))

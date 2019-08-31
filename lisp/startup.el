@@ -731,6 +731,9 @@ It is the default value of the variable `top-level'."
     ("--background-color" . "-bg")
     ("--color"		  . "-color")))
 
+(defconst tab-bar-images-pixel-height 18
+  "Height in pixels of images in the tab-bar.")
+
 (defconst tool-bar-images-pixel-height 24
   "Height in pixels of images in the tool-bar.")
 
@@ -1264,6 +1267,7 @@ please check its value")
   (unless (daemonp)
     (if (or noninteractive emacs-basic-display)
 	(setq menu-bar-mode nil
+	      tab-bar-mode nil
 	      tool-bar-mode nil
 	      no-blinking-cursor t))
     (frame-initialize))
@@ -1479,6 +1483,7 @@ This can set the values of `menu-bar-mode', `tool-bar-mode', and
 settings will be marked as \"CHANGED outside of Customize\"."
   (let ((no-vals  '("no" "off" "false" "0"))
 	(settings '(("menuBar" "MenuBar" menu-bar-mode nil)
+		    ("tabBar" "TabBar" tab-bar-mode nil)
 		    ("toolBar" "ToolBar" tool-bar-mode nil)
 		    ("scrollBar" "ScrollBar" scroll-bar-mode nil)
 		    ("cursorBlink" "CursorBlink" no-blinking-cursor t))))

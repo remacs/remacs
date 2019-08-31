@@ -3663,7 +3663,7 @@ be preferred.  */);
   DEFSYM (Qmode_line, "mode-line");
 
   staticpro (&Vmouse_events);
-  Vmouse_events = pure_list (Qmenu_bar, Qtool_bar, Qheader_line, Qmode_line,
+  Vmouse_events = pure_list (Qmenu_bar, Qtab_bar, Qtool_bar, Qtab_line, Qheader_line, Qmode_line,
 			     intern_c_string ("mouse-1"),
 			     intern_c_string ("mouse-2"),
 			     intern_c_string ("mouse-3"),

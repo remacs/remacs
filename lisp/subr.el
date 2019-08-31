@@ -2395,8 +2395,12 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
         (progn
 	  (use-global-map
            (let ((map (make-sparse-keymap)))
-             ;; Don't hide the menu-bar and tool-bar entries.
+             ;; Don't hide the menu-bar, tab-bar and tool-bar entries.
              (define-key map [menu-bar] (lookup-key global-map [menu-bar]))
+             (define-key map [tab-bar]
+	       ;; This hack avoids evaluating the :filter (Bug#9922).
+	       (or (cdr (assq 'tab-bar global-map))
+		   (lookup-key global-map [tab-bar])))
              (define-key map [tool-bar]
 	       ;; This hack avoids evaluating the :filter (Bug#9922).
 	       (or (cdr (assq 'tool-bar global-map))

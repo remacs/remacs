@@ -6000,7 +6000,7 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
 
   f->output_data.w32->current_cursor = f->output_data.w32->nontext_cursor;
 
-  window_prompting = gui_figure_window_size (f, parameters, true,
+  window_prompting = gui_figure_window_size (f, parameters, true, true,
                                              &x_width, &x_height);
 
   tem = gui_display_get_arg (dpyinfo, parameters, Qunsplittable, 0, 0,
@@ -6968,7 +6968,7 @@ w32_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
   f->output_data.w32->explicit_parent = false;
 
-  gui_figure_window_size (f, parms, true, &x_width, &x_height);
+  gui_figure_window_size (f, parms, true, true, &x_width, &x_height);
 
   /* No fringes on tip frame.  */
   f->fringe_cols = 0;
@@ -10193,6 +10193,7 @@ frame_parm_handler w32_frame_parm_handlers[] =
   gui_set_vertical_scroll_bars,
   gui_set_horizontal_scroll_bars,
   gui_set_visibility,
+  w32_set_tab_bar_lines,
   w32_set_tool_bar_lines,
   0, /* x_set_scroll_bar_foreground, */
   0, /* x_set_scroll_bar_background, */

@@ -194,6 +194,11 @@ enum event_kind
      the help to show.  */
   HELP_EVENT,
 
+  /* An event from a tab-bar.  Member `arg' of the input event
+     contains the tab-bar item selected.  If `frame_or_window'
+     and `arg' are equal, this is a prefix event.  */
+  TAB_BAR_EVENT,
+
   /* An event from a tool-bar.  Member `arg' of the input event
      contains the tool-bar item selected.  If `frame_or_window'
      and `arg' are equal, this is a prefix event.  */
@@ -623,6 +628,9 @@ struct terminal
   /* This hook is called to display popup dialog.  */
   Lisp_Object (*popup_dialog_hook) (struct frame *f, Lisp_Object header,
 				    Lisp_Object contents);
+
+  /* This hook is called to change the frame's (internal) tab-bar.  */
+  void (*change_tab_bar_height_hook) (struct frame *f, int height);
 
   /* This hook is called to change the frame's (internal) tool-bar.  */
   void (*change_tool_bar_height_hook) (struct frame *f, int height);

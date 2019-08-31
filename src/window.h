@@ -361,6 +361,9 @@ struct window
     /* Effective height of the header line, or -1 if not known.  */
     int header_line_height;
 
+    /* Effective height of the tab line, or -1 if not known.  */
+    int tab_line_height;
+
     /* Z - the buffer position of the last glyph in the current
        matrix of W.  Only valid if window_end_valid is true.  */
     ptrdiff_t window_end_pos;
@@ -697,7 +700,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
   (WINDOW_LEFT_EDGE_COL (W) + WINDOW_TOTAL_COLS (W))
 
 /* Return the canonical frame line at which window W starts.
-   This includes a header line, if any.  */
+   This includes a header/tab line, if any.  */
 #define WINDOW_TOP_EDGE_LINE(W) (W)->top_line
 
 /* Return the canonical frame line before which window W ends.
@@ -715,7 +718,7 @@ wset_next_buffers (struct window *w, Lisp_Object val)
   (WINDOW_LEFT_PIXEL_EDGE (W) + WINDOW_PIXEL_WIDTH (W))
 
 /* Return the top pixel edge at which window W starts.
-   This includes a header line, if any.  */
+   This includes a header/tab line, if any.  */
 #define WINDOW_TOP_PIXEL_EDGE(W) (W)->pixel_top
 
 /* Return the bottom pixel edge before which window W ends.
@@ -745,6 +748,13 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_MENU_BAR_P(W) false
 #endif
 
+/* True if W is a tab bar window.  */
+#if defined (HAVE_WINDOW_SYSTEM)
+#define WINDOW_TAB_BAR_P(W) \
+  (WINDOWP (WINDOW_XFRAME (W)->tab_bar_window) \
+   && (W) == XWINDOW (WINDOW_XFRAME (W)->tab_bar_window))
+#endif
+
 /* True if W is a tool bar window.  */
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
 #define WINDOW_TOOL_BAR_P(W) \
@@ -756,13 +766,13 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 
 /* Return the frame y-position at which window W starts.  */
 #define WINDOW_TOP_EDGE_Y(W) \
-  (((WINDOW_MENU_BAR_P (W) || WINDOW_TOOL_BAR_P (W)) \
+  (((WINDOW_MENU_BAR_P (W) || WINDOW_TAB_BAR_P (W) || WINDOW_TOOL_BAR_P (W)) \
     ? 0 : FRAME_INTERNAL_BORDER_WIDTH (WINDOW_XFRAME (W))) \
    + WINDOW_TOP_PIXEL_EDGE (W))
 
 /* Return the frame y-position before which window W ends.  */
 #define WINDOW_BOTTOM_EDGE_Y(W)				   \
-  (((WINDOW_MENU_BAR_P (W) || WINDOW_TOOL_BAR_P (W))	   \
+  (((WINDOW_MENU_BAR_P (W) || WINDOW_TAB_BAR_P (W) || WINDOW_TOOL_BAR_P (W))	   \
     ? 0 : FRAME_INTERNAL_BORDER_WIDTH (WINDOW_XFRAME (W))) \
    + WINDOW_BOTTOM_PIXEL_EDGE (W))
 
@@ -996,6 +1006,16 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_HEADER_LINE_LINES(W)	\
   window_wants_header_line (W)
 
+/* Height in pixels of the tab line.
+   Zero if W doesn't have a tab line.  */
+#define WINDOW_TAB_LINE_HEIGHT(W)	\
+  (window_wants_tab_line (W)		\
+   ? CURRENT_TAB_LINE_HEIGHT (W)	\
+   : 0)
+
+#define WINDOW_TAB_LINE_LINES(W)	\
+  window_wants_tab_line (W)
+
 /* Pixel height of window W without mode line, bottom scroll bar and
    bottom divider.  */
 #define WINDOW_BOX_HEIGHT_NO_MODE_LINE(W)	\
@@ -1004,14 +1024,15 @@ wset_next_buffers (struct window *w, Lisp_Object val)
    - WINDOW_SCROLL_BAR_AREA_HEIGHT (W)		\
    - WINDOW_MODE_LINE_HEIGHT (W))
 
-/* Pixel height of window W without mode and header line and bottom
+/* Pixel height of window W without mode and header/tab line and bottom
    divider.  */
 #define WINDOW_BOX_TEXT_HEIGHT(W)	\
   (WINDOW_PIXEL_HEIGHT ((W))		\
    - WINDOW_BOTTOM_DIVIDER_WIDTH (W)	\
    - WINDOW_SCROLL_BAR_AREA_HEIGHT (W)	\
    - WINDOW_MODE_LINE_HEIGHT (W)	\
-   - WINDOW_HEADER_LINE_HEIGHT (W))
+   - WINDOW_HEADER_LINE_HEIGHT (W)	\
+   - WINDOW_TAB_LINE_HEIGHT (W))
 
 /* Return the frame position where the horizontal scroll bar of window W
    starts.  */
@@ -1068,7 +1089,7 @@ extern Lisp_Object minibuf_selected_window;
 
 extern Lisp_Object make_window (void);
 extern Lisp_Object window_from_coordinates (struct frame *, int, int,
-                                            enum window_part *, bool);
+                                            enum window_part *, bool, bool);
 extern void resize_frame_windows (struct frame *, int, bool);
 extern void restore_window_configuration (Lisp_Object);
 extern void delete_all_child_windows (Lisp_Object);
@@ -1158,6 +1179,7 @@ extern bool compare_window_configurations (Lisp_Object, Lisp_Object, bool);
 extern void mark_window_cursors_off (struct window *);
 extern bool window_wants_mode_line (struct window *);
 extern bool window_wants_header_line (struct window *);
+extern bool window_wants_tab_line (struct window *);
 extern int window_internal_height (struct window *);
 extern int window_body_width (struct window *w, bool);
 enum margin_unit { MARGIN_IN_LINES, MARGIN_IN_PIXELS };

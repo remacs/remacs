@@ -181,6 +181,15 @@ struct frame
   Lisp_Object menu_bar_window;
 #endif
 
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* A window used to display the tab-bar of a frame.  */
+  Lisp_Object tab_bar_window;
+
+  /* Desired and current contents displayed in that window.  */
+  Lisp_Object desired_tab_bar_string;
+  Lisp_Object current_tab_bar_string;
+#endif
+
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* A window used to display the tool-bar of a frame.  */
   Lisp_Object tool_bar_window;
@@ -201,12 +210,20 @@ struct frame
   Lisp_Object font_data;
 #endif
 
+  /* Desired and current tab-bar items.  */
+  Lisp_Object tab_bar_items;
+
   /* Desired and current tool-bar items.  */
   Lisp_Object tool_bar_items;
   /* tool_bar_items should be the last Lisp_Object member.  */
 
   /* Cache of realized faces.  */
   struct face_cache *face_cache;
+
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* Tab-bar item index of the item on which a mouse button was pressed.  */
+  int last_tab_bar_item;
+#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Tool-bar item index of the item on which a mouse button was pressed.  */
@@ -255,6 +272,12 @@ struct frame
 
   /* Set to true when current redisplay has updated frame.  */
   bool_bf updated_p : 1;
+
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* Set to true to minimize tab-bar height even when
+     auto-resize-tab-bar is set to grow-only.  */
+  bool_bf minimize_tab_bar_window_p : 1;
+#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Set to true to minimize tool-bar height even when
@@ -404,6 +427,10 @@ struct frame
   /* Set to true after this frame was made by `make-frame'.  */
   bool_bf after_make_frame : 1;
 
+  /* Whether the tab bar height change should be taken into account.  */
+  bool_bf tab_bar_redisplayed : 1;
+  bool_bf tab_bar_resized : 1;
+
   /* Whether the tool bar height change should be taken into account.  */
   bool_bf tool_bar_redisplayed : 1;
   bool_bf tool_bar_resized : 1;
@@ -434,6 +461,15 @@ struct frame
      to detect whether a window was deleted on this frame since the
      last time run_window_change_functions was called on it.  */
   ptrdiff_t number_of_windows;
+
+  /* Number of lines (rounded up) of tab bar.  REMOVE THIS  */
+  int tab_bar_lines;
+
+  /* Height of frame internal tab bar in pixels.  */
+  int tab_bar_height;
+
+  int n_tab_bar_rows;
+  int n_tab_bar_items;
 
   /* Number of lines (rounded up) of tool bar.  REMOVE THIS  */
   int tool_bar_lines;
@@ -701,6 +737,28 @@ fset_title (struct frame *f, Lisp_Object val)
   f->title = val;
 }
 INLINE void
+fset_tab_bar_items (struct frame *f, Lisp_Object val)
+{
+  f->tab_bar_items = val;
+}
+#if defined (HAVE_WINDOW_SYSTEM)
+INLINE void
+fset_tab_bar_window (struct frame *f, Lisp_Object val)
+{
+  f->tab_bar_window = val;
+}
+INLINE void
+fset_current_tab_bar_string (struct frame *f, Lisp_Object val)
+{
+  f->current_tab_bar_string = val;
+}
+INLINE void
+fset_desired_tab_bar_string (struct frame *f, Lisp_Object val)
+{
+  f->desired_tab_bar_string = val;
+}
+#endif /* HAVE_WINDOW_SYSTEM */
+INLINE void
 fset_tool_bar_items (struct frame *f, Lisp_Object val)
 {
   f->tool_bar_items = val;
@@ -878,6 +936,12 @@ default_pixels_per_inch_y (void)
 /* Pixel height of frame F's menu bar.  */
 #define FRAME_MENU_BAR_HEIGHT(f) (f)->menu_bar_height
 
+/* Number of lines of frame F used for the tab-bar.  */
+#define FRAME_TAB_BAR_LINES(f) (f)->tab_bar_lines
+
+/* Pixel height of frame F's tab-bar.  */
+#define FRAME_TAB_BAR_HEIGHT(f) (f)->tab_bar_height
+
 /* True if this frame should display a tool bar
    in a way that does not use any text lines.  */
 #ifdef HAVE_EXT_TOOL_BAR
@@ -901,11 +965,11 @@ default_pixels_per_inch_y (void)
 
 /* Lines above the top-most window in frame F.  */
 #define FRAME_TOP_MARGIN(F) \
-  (FRAME_MENU_BAR_LINES (F) + FRAME_TOOL_BAR_LINES (F))
+  (FRAME_MENU_BAR_LINES (F) + FRAME_TAB_BAR_LINES (F) + FRAME_TOOL_BAR_LINES (F))
 
 /* Pixel height of frame F's top margin.  */
 #define FRAME_TOP_MARGIN_HEIGHT(F)				\
-  (FRAME_MENU_BAR_HEIGHT (F) + FRAME_TOOL_BAR_HEIGHT (F))
+  (FRAME_MENU_BAR_HEIGHT (F) + FRAME_TAB_BAR_HEIGHT (F) + FRAME_TOOL_BAR_HEIGHT (F))
 
 /* True if this frame should display a menu bar
    in a way that does not use any text lines.  */
@@ -1255,6 +1319,8 @@ SET_FRAME_VISIBLE (struct frame *f, int v)
 extern Lisp_Object selected_frame;
 extern Lisp_Object old_selected_frame;
 
+extern int frame_default_tab_bar_height;
+
 #ifndef HAVE_EXT_TOOL_BAR
 extern int frame_default_tool_bar_height;
 #endif
@@ -1566,7 +1632,7 @@ extern void gui_set_horizontal_scroll_bars (struct frame *, Lisp_Object, Lisp_Ob
 extern void gui_set_scroll_bar_width (struct frame *, Lisp_Object, Lisp_Object);
 extern void gui_set_scroll_bar_height (struct frame *, Lisp_Object, Lisp_Object);
 
-extern long gui_figure_window_size (struct frame *, Lisp_Object, bool, int *, int *);
+extern long gui_figure_window_size (struct frame *, Lisp_Object, bool, bool, int *, int *);
 
 extern void gui_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
 extern void gui_set_no_special_glyphs (struct frame *, Lisp_Object, Lisp_Object);

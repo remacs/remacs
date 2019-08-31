@@ -3220,9 +3220,11 @@ x_draw_image_relief (struct glyph_string *s)
   if (s->hl == DRAW_IMAGE_SUNKEN
       || s->hl == DRAW_IMAGE_RAISED)
     {
-      thick = (tool_bar_button_relief < 0
-	       ? DEFAULT_TOOL_BAR_BUTTON_RELIEF
-	       : min (tool_bar_button_relief, 1000000));
+      thick = (tab_bar_button_relief < 0
+	       ? DEFAULT_TAB_BAR_BUTTON_RELIEF
+	       : (tool_bar_button_relief < 0
+                  ? DEFAULT_TOOL_BAR_BUTTON_RELIEF
+                  : min (tool_bar_button_relief, 1000000)));
       raised_p = s->hl == DRAW_IMAGE_RAISED;
     }
   else
@@ -3235,6 +3237,19 @@ x_draw_image_relief (struct glyph_string *s)
   y1 = y + s->slice.height - 1;
 
   extra_x = extra_y = 0;
+  if (s->face->id == TAB_BAR_FACE_ID)
+    {
+      if (CONSP (Vtab_bar_button_margin)
+	  && FIXNUMP (XCAR (Vtab_bar_button_margin))
+	  && FIXNUMP (XCDR (Vtab_bar_button_margin)))
+	{
+	  extra_x = XFIXNUM (XCAR (Vtab_bar_button_margin));
+	  extra_y = XFIXNUM (XCDR (Vtab_bar_button_margin));
+	}
+      else if (FIXNUMP (Vtab_bar_button_margin))
+	extra_x = extra_y = XFIXNUM (Vtab_bar_button_margin);
+    }
+
   if (s->face->id == TOOL_BAR_FACE_ID)
     {
       if (CONSP (Vtool_bar_button_margin)
@@ -8394,10 +8409,11 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       /* If mouse-highlight is an integer, input clears out
 	 mouse highlighting.  */
       if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
-#if ! defined (USE_GTK)
 	  && (f == 0
-	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
+#if ! defined (USE_GTK)
+	      || !EQ (f->tool_bar_window, hlinfo->mouse_face_window)
 #endif
+	      || !EQ (f->tab_bar_window, hlinfo->mouse_face_window))
 	  )
         {
           clear_mouse_face (hlinfo);
@@ -8821,7 +8837,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	      {
 		static Lisp_Object last_mouse_window;
 		Lisp_Object window = window_from_coordinates
-		  (f, event->xmotion.x, event->xmotion.y, 0, false);
+		  (f, event->xmotion.x, event->xmotion.y, 0, false, false);
 
 		/* A window will be autoselected only when it is not
 		   selected now and the last mouse movement event was
@@ -9032,6 +9048,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       {
         /* If we decide we want to generate an event to be seen
            by the rest of Emacs, we put it here.  */
+        bool tab_bar_p = false;
         bool tool_bar_p = false;
 
 	memset (&compose_status, 0, sizeof (compose_status));
@@ -9068,6 +9085,23 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
         if (f)
           {
+            /* Is this in the tab-bar?  */
+            if (WINDOWP (f->tab_bar_window)
+                && WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)))
+              {
+                Lisp_Object window;
+                int x = event->xbutton.x;
+                int y = event->xbutton.y;
+
+                window = window_from_coordinates (f, x, y, 0, true, true);
+                tab_bar_p = EQ (window, f->tab_bar_window);
+
+                if (tab_bar_p && event->xbutton.button < 4)
+		  handle_tab_bar_click
+		    (f, x, y, event->xbutton.type == ButtonPress,
+		     x_x_to_emacs_modifiers (dpyinfo, event->xbutton.state));
+              }
+
 #if ! defined (USE_GTK)
             /* Is this in the tool-bar?  */
             if (WINDOWP (f->tool_bar_window)
@@ -9077,7 +9111,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                 int x = event->xbutton.x;
                 int y = event->xbutton.y;
 
-                window = window_from_coordinates (f, x, y, 0, true);
+                window = window_from_coordinates (f, x, y, 0, true, true);
                 tool_bar_p = EQ (window, f->tool_bar_window);
 
                 if (tool_bar_p && event->xbutton.button < 4)
@@ -9087,7 +9121,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
               }
 #endif /* !USE_GTK */
 
-            if (!tool_bar_p)
+            if (!tab_bar_p && !tool_bar_p)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
               if (! popup_activated ())
 #endif
@@ -9134,6 +9168,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           {
             dpyinfo->grabbed |= (1 << event->xbutton.button);
             dpyinfo->last_mouse_frame = f;
+            if (f && !tab_bar_p)
+              f->last_tab_bar_item = -1;
 #if ! defined (USE_GTK)
             if (f && !tool_bar_p)
               f->last_tool_bar_item = -1;
@@ -11346,8 +11382,10 @@ x_set_window_size_1 (struct frame *f, bool change_gravity,
     {
       frame_size_history_add
 	(f, Qx_set_window_size_3, width, height,
-	 list3i (pixelwidth + FRAME_TOOLBAR_WIDTH (f),
+	 list3i (pixelwidth + FRAME_TOOLBAR_WIDTH (f)
+                 + FRAME_TABBAR_WIDTH (f),
 		 (pixelheight + FRAME_TOOLBAR_HEIGHT (f)
+                  + FRAME_TABBAR_HEIGHT (f)
 		  + FRAME_MENUBAR_HEIGHT (f)),
 		 FRAME_MENUBAR_HEIGHT (f)));
 
@@ -13464,6 +13502,7 @@ x_create_terminal (struct x_display_info *dpyinfo)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   terminal->popup_dialog_hook = xw_popup_dialog;
 #endif
+  terminal->change_tab_bar_height_hook = x_change_tab_bar_height;
 #ifndef HAVE_EXT_TOOL_BAR
   terminal->change_tool_bar_height_hook = x_change_tool_bar_height;
 #endif
