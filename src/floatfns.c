@@ -48,7 +48,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <count-leading-zeros.h>
 
-/* Emacs needs proper handling of ±inf; correct printing as well as
+/* Emacs needs proper handling of +/-inf; correct printing as well as
    important packages depend on it.  Make sure the user didn't specify
    -ffinite-math-only, either directly or implicitly with -Ofast or
    -ffast-math.  */
