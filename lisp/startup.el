@@ -490,6 +490,27 @@ DIRS are relative."
     (when tail
       (setcdr tail (append (mapcar 'expand-file-name dirs) (cdr tail))))))
 
+;; The default location for XDG-convention Emacs init files.
+(defconst startup--xdg-config-default "~/.config/emacs/")
+;; The location for XDG-convention Emacs init files.
+(defvar startup--xdg-config-home-emacs)
+
+;; Return the name of the init file directory for Emacs, assuming
+;; XDG-DIR is the XDG location and USER-NAME is the user name.
+;; If USER-NAME is nil or "", use the current user.
+;; Prefer the XDG location unless it does does not exist and the
+;; .emacs.d location does exist.
+(defun startup--xdg-or-homedot (xdg-dir user-name)
+  (if (file-exists-p xdg-dir)
+      xdg-dir
+    (let ((emacs-d-dir (concat "~" user-name
+			       (if (eq system-type 'ms-dos)
+				   "/_emacs.d/"
+				 "/.emacs.d/"))))
+      (if (file-exists-p emacs-d-dir)
+	  emacs-d-dir
+	xdg-dir))))
+
 (defun normal-top-level ()
   "Emacs calls this function when it first starts up.
 It sets `command-line-processed', processes the command-line,
@@ -498,6 +519,14 @@ It is the default value of the variable `top-level'."
   (if command-line-processed
       (message internal--top-level-message)
     (setq command-line-processed t)
+
+    (setq startup--xdg-config-home-emacs
+	  (let ((xdg-config-home (getenv-internal "XDG_CONFIG_HOME")))
+	    (if xdg-config-home
+		(concat xdg-config-home "/emacs/")
+	      startup--xdg-config-default)))
+    (setq user-emacs-directory
+	  (startup--xdg-or-homedot startup--xdg-config-home-emacs nil))
 
     ;; Look in each dir in load-path for a subdirs.el file.  If we
     ;; find one, load it, which will add the appropriate subdirs of
@@ -1167,19 +1196,17 @@ please check its value")
                          :error))))
 
   ;; Calculate the name of the Emacs init directory.
-  ;; This is typically equivalent to ~/.config/emacs if the user is
-  ;; following the XDG convention, and is ~INIT-FILE-USER/.emacs.d
-  ;; on other systems.
-  (setq xdg-dir (concat (or (getenv "XDG_CONFIG_HOME")
-			    (concat "~" init-file-user "/.config"))
-			"/emacs/"))
+  ;; This is typically ~INIT-FILE-USER/.config/emacs unless the user
+  ;; is following the ~INIT-FILE-USER/.emacs.d convention.
+  (setq xdg-dir startup--xdg-config-home-emacs)
   (setq startup-init-directory
-	(if (file-exists-p xdg-dir)
-	    xdg-dir
-	  (let ((emacs-d-dir (concat "~" init-file-user "/.emacs.d/")))
-	    (if (file-exists-p emacs-d-dir)
-		emacs-d-dir
-	      xdg-dir))))
+	(if (or (zerop (length init-file-user))
+		(and (eq xdg-dir user-emacs-directory)
+		     (not (eq xdg-dir startup--xdg-config-default))))
+	    user-emacs-directory
+	  ;; The name is not obvious, so access more directories to calculate it.
+	  (setq xdg-dir (concat "~" init-file-user "/.config/emacs/"))
+	  (startup--xdg-or-homedot xdg-dir init-file-user)))
 
   ;; Load the early init file, if found.
   (startup--load-user-init-file
