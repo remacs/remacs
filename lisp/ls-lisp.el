@@ -517,7 +517,8 @@ If the \"..\" directory entry has nil attributes, the attributes
 are copied from the \".\" entry, if they are non-nil.  Otherwise,
 the offending element is removed from the list, as are any
 elements for other directory entries with nil attributes."
-  (if (and (null (cdr (assoc ".." file-alist)))
+  (if (and (consp (assoc ".." file-alist))
+           (null (cdr (assoc ".." file-alist)))
 	   (cdr (assoc "." file-alist)))
       (setcdr (assoc ".." file-alist) (cdr (assoc "." file-alist))))
   (rassq-delete-all nil file-alist))
