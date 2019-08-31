@@ -3479,7 +3479,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(setq tmp-name3 (concat (file-remote-p tmp-name3) tmp-name2)))))
 
 	;; Cleanup.
-	(ignore-errors (delete-directory tmp-name1 'recursive)))
+	(ignore-errors
+	  (delete-file tmp-name3)
+	  (delete-directory tmp-name1 'recursive)))
 
       ;; Detect cyclic symbolic links.
       (unwind-protect
