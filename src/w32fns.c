@@ -6059,6 +6059,11 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
     /* No menu bar for child frames.  */
     store_frame_param (f, Qmenu_bar_lines, make_fixnum (0));
 
+  gui_default_parameter (f, parameters, Qtab_bar_lines,
+                         NILP (Vtab_bar_mode)
+                         ? make_fixnum (0) : make_fixnum (1),
+                         NULL, NULL, RES_TYPE_NUMBER);
+
   gui_default_parameter (f, parameters, Qtool_bar_lines,
                          NILP (Vtool_bar_mode)
                          ? make_fixnum (0) : make_fixnum (1),
@@ -8808,6 +8813,9 @@ and width values are in pixels.
 `menu-bar-size' is a cons of the width and height of the menu bar of
   FRAME.
 
+`tab-bar-size' is a cons of the width and height of the tab bar of
+  FRAME.
+
 `tool-bar-external', if non-nil, means the tool bar is external (never
   included in the inner edges of FRAME).
 
@@ -8830,6 +8838,7 @@ and width values are in pixels.
   unsigned int external_border_width, external_border_height;
   int title_bar_width = 0, title_bar_height = 0;
   int single_menu_bar_height, wrapped_menu_bar_height, menu_bar_height;
+  int tab_bar_height = FRAME_TAB_BAR_HEIGHT (f);
   int tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
   int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
 
@@ -8903,6 +8912,13 @@ and width values are in pixels.
 		       Fcons (make_fixnum
 			      (menu_bar.rcBar.right - menu_bar.rcBar.left),
 			      make_fixnum (menu_bar_height))),
+		Fcons (Qtab_bar_size,
+		       Fcons (make_fixnum
+			      (tab_bar_height
+			       ? (right - left - 2 * external_border_width
+				  - 2 * internal_border_width)
+			       : 0),
+			      make_fixnum (tab_bar_height))),
 		Fcons (Qtool_bar_external, Qnil),
 		Fcons (Qtool_bar_position, tool_bar_height ? Qtop : Qnil),
 		Fcons (Qtool_bar_size,
@@ -8994,6 +9010,7 @@ menu bar or tool bar of FRAME.  */)
 
 	  return list4 (make_fixnum (left + internal_border_width),
 			make_fixnum (top
+				     + FRAME_TAB_BAR_HEIGHT (f)
 				     + FRAME_TOOL_BAR_HEIGHT (f)
 				     + internal_border_width),
 			make_fixnum (right - internal_border_width),
