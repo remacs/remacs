@@ -474,10 +474,13 @@ the value refers to the corresponding source file.
 
 @defvar user-emacs-directory
 This variable holds the name of the Emacs default directory.
-It is @file{@var{xdghome}/emacs/} if that directory exists, otherwise
-@file{~/.emacs.d/} on all platforms but MS-DOS.  Here, @var{xdghome}
+It defaults to @file{$@{XDG_CONFIG_HOME-'~/.config'@}/emacs/}
+if that directory exists and @file{~/.emacs.d/} does not exist,
+otherwise to @file{~/.emacs.d/} on all platforms but MS-DOS@.
+Here, @file{$@{XDG_CONFIG_HOME-'~/.config'@}}
 stands for the value of the environment variable @env{XDG_CONFIG_HOME}
 if that variable is set, and for @file{~/.config} otherwise.
+@xref{Find Init,,How Emacs Finds Your Init File, emacs, The GNU Emacs Manual}.
 @end defvar
 
 @node Terminal-Specific

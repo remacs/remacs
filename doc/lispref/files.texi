@@ -2822,9 +2822,10 @@ filter out a directory named @file{foo.elc}.
 name for a particular use---typically, to hold configuration data
 specified by the current user.  Usually, such files should be located
 in the directory specified by @code{user-emacs-directory}, which is
-@file{~/.config/emacs} or @file{~/.emacs.d} by default (@pxref{Init
-File}).  For example, abbrev definitions are stored by default in
-@file{~/.config/emacs/abbrev_defs} or @file{~/.emacs.d/abbrev_defs}.
+typically @file{~/.config/emacs} by default (@pxref{Find
+Init,,How Emacs Finds Your Init File, emacs, The GNU Emacs Manual}).
+For example, abbrev definitions are stored by default in
+@file{~/.config/emacs/abbrev_defs}.
 The easiest way to specify such a file name is to use the function
 @code{locate-user-emacs-file}.
 
