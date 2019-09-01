@@ -147,6 +147,10 @@ Root must be the root of an Emacs source tree."
     (unless (> (length newversion) 2)   ; pretest or release candidate?
       (with-temp-buffer
         (insert-file-contents newsfile)
+        (when (re-search-forward "^\\* [^\n]*\n+" nil t)
+          (display-warning 'admin
+                           "NEWS file contains empty sections - remove them?"))
+        (goto-char (point-min))
         (if (re-search-forward "^\\(\\+\\+\\+ *\\|--- *\\)$" nil t)
             (display-warning 'admin
                              "NEWS file still contains temporary markup.
