@@ -377,6 +377,9 @@ specified by `tab-bar-close-tab-select'."
     (message "Deleted the current tab")))
 
 (defalias 'list-tabs 'tab-bar-list)
+(defalias 'switch-to-tab 'tab-bar-select-tab)
+(defalias 'previous-tab 'tab-bar-switch-to-prev-tab)
+(defalias 'next-tab 'tab-bar-switch-to-next-tab)
 
 (defun tab-bar-list ()
   "Display a list of named window configurations.

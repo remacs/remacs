@@ -1896,9 +1896,12 @@ New tab-based keybindings (similar to frame-based):
 Also it's possible to switch named persistent window configurations
 without having graphical access to the tab-bar, even on a tty
 or when 'tab-bar-mode' is disabled, with these commands:
+'list-tabs' displays a list of named window configurations for switching;
 'make-tab' creates a new window configuration;
 'delete-tab' deletes the current window configuration;
-'list-tabs' displays a list of named window configurations.
+'switch-to-tab' switches to the window configuration by its name;
+'previous-tab' switches to the previous window configuration;
+'next-tab' switches to the next window configuration.
 
 ** 'global-tab-line-mode' enables the tab-line above each window to
 switch buffers in it to previous/next buffers.  Selecting a previous
