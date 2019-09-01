@@ -2937,7 +2937,7 @@ When the hook runs, the temporary buffer is current.
 This hook is normally set up with a function to put the buffer in Help
 mode.")
 
-(defconst user-emacs-directory
+(defvar user-emacs-directory
   ;; The value does not matter since Emacs sets this at startup.
   nil
   "Directory beneath which additional per-user Emacs-specific files are placed.
