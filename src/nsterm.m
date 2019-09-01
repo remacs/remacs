@@ -1088,11 +1088,15 @@ ns_update_begin (struct frame *f)
 
   if ([view isFullscreen] && [view fsIsNative])
   {
-    // Fix reappearing tool bar in fullscreen for Mac OS X 10.7
-    BOOL tbar_visible = FRAME_EXTERNAL_TOOL_BAR (f) ? YES : NO;
+    // Fix reappearing tool bar or tab bar in fullscreen for Mac OS X 10.7
+    BOOL tarbar_visible = FRAME_EXTERNAL_TAB_BAR (f) ? YES : NO;
+    NSTabbar *tabbar = [FRAME_NS_VIEW (f) tabbar];
+    if (! tarbar_visible != ! [tabbar isVisible])
+      [tabbar setVisible: tarbar_visible];
+    BOOL toolbar_visible = FRAME_EXTERNAL_TOOL_BAR (f) ? YES : NO;
     NSToolbar *toolbar = [FRAME_NS_VIEW (f) toolbar];
-    if (! tbar_visible != ! [toolbar isVisible])
-      [toolbar setVisible: tbar_visible];
+    if (! toolbar_visible != ! [toolbar isVisible])
+      [toolbar setVisible: toolbar_visible];
   }
 #endif
 }
@@ -1683,7 +1687,7 @@ ns_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
           f->top_pos = f->size_hint_flags & YNegative
             ? ([screen visibleFrame].size.height + f->top_pos
                - FRAME_PIXEL_HEIGHT (f) - FRAME_NS_TITLEBAR_HEIGHT (f)
-               - FRAME_TOOLBAR_HEIGHT (f))
+               - FRAME_TABBAR_HEIGHT (f) - FRAME_TOOLBAR_HEIGHT (f))
             : f->top_pos;
 #ifdef NS_IMPL_GNUSTEP
 	  if (f->left_pos < 100)
@@ -1701,7 +1705,7 @@ ns_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
             f->left_pos = FRAME_PIXEL_WIDTH (parent) - FRAME_PIXEL_WIDTH (f) + f->left_pos;
 
           if (f->top_pos < 0)
-            f->top_pos = FRAME_PIXEL_HEIGHT (parent) + FRAME_TOOLBAR_HEIGHT (parent)
+            f->top_pos = FRAME_PIXEL_HEIGHT (parent) + FRAME_TABBAR_HEIGHT (parent) + FRAME_TOOLBAR_HEIGHT (parent)
               - FRAME_PIXEL_HEIGHT (f) + f->top_pos;
         }
 
@@ -1764,6 +1768,7 @@ ns_set_window_size (struct frame *f,
   wr.size.height = pixelheight;
   if (! [view isFullscreen])
     wr.size.height += FRAME_NS_TITLEBAR_HEIGHT (f)
+      + FRAME_TABBAR_HEIGHT (f)
       + FRAME_TOOLBAR_HEIGHT (f);
 
   /* Do not try to constrain to this screen.  We may have multiple
@@ -1780,7 +1785,7 @@ ns_set_window_size (struct frame *f,
 	   Fcons (make_fixnum (wr.size.width), make_fixnum (wr.size.height)),
 	   make_fixnum (f->border_width),
 	   make_fixnum (FRAME_NS_TITLEBAR_HEIGHT (f)),
-	   make_fixnum (FRAME_TOOLBAR_HEIGHT (f))));
+	   make_fixnum (FRAME_TABBAR_HEIGHT (f) + FRAME_TOOLBAR_HEIGHT (f))));
 
   [window setFrame: wr display: YES];
 
@@ -1817,10 +1822,12 @@ ns_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
           [window setStyleMask: ((window.styleMask | FRAME_DECORATED_FLAGS)
                                   ^ FRAME_UNDECORATED_FLAGS)];
 
+          [view createTabbar: f];
           [view createToolbar: f];
         }
       else
         {
+          [window setTabbar: nil];
           [window setToolbar: nil];
           /* Do I need to release the toolbar here?  */
 
@@ -2405,7 +2412,7 @@ frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_y)
   CGPoint mouse_pos =
     CGPointMake(f->left_pos + pix_x,
                 f->top_pos + pix_y +
-                FRAME_NS_TITLEBAR_HEIGHT(f) + FRAME_TOOLBAR_HEIGHT(f));
+                FRAME_NS_TITLEBAR_HEIGHT(f) + FRAME_TABBAR_HEIGHT(f) + FRAME_TOOLBAR_HEIGHT(f));
   CGWarpMouseCursorPosition (mouse_pos);
 #endif
 }
@@ -6100,6 +6107,7 @@ not_in_argv (NSString *arg)
 - (void)dealloc
 {
   NSTRACE ("[EmacsView dealloc]");
+  [tabbar release];
   [toolbar release];
   if (fs_state == FULLSCREEN_BOTH)
     [nonfs_window release];
@@ -6951,19 +6959,40 @@ not_in_argv (NSString *arg)
 
   if (! [self isFullscreen])
     {
+      int tabbar_height;
       int toolbar_height;
 #ifdef NS_IMPL_GNUSTEP
       // GNUstep does not always update the tool bar height.  Force it.
       if (toolbar && [toolbar isVisible])
           update_frame_tool_bar (emacsframe);
+      if (tabbar && [tabbar isVisible])
+          update_frame_tab_bar (emacsframe);
 #endif
+
+      tabbar_height = FRAME_TABBAR_HEIGHT (emacsframe);
+      if (tabbar_height < 0)
+        tabbar_height = 35;
 
       toolbar_height = FRAME_TOOLBAR_HEIGHT (emacsframe);
       if (toolbar_height < 0)
         toolbar_height = 35;
 
       extra = FRAME_NS_TITLEBAR_HEIGHT (emacsframe)
-        + toolbar_height;
+        + tabbar_height + toolbar_height;
+    }
+
+  if (wait_for_tab_bar)
+    {
+      /* The tabbar height is always 0 in fullscreen and undecorated
+         frames, so don't wait for it to become available.  */
+      if (FRAME_TABBAR_HEIGHT (emacsframe) == 0
+          && FRAME_UNDECORATED (emacsframe) == false
+          && ! [self isFullscreen])
+        {
+          NSTRACE_MSG ("Waiting for tabbar");
+          return;
+        }
+      wait_for_tab_bar = NO;
     }
 
   if (wait_for_tool_bar)
@@ -6984,6 +7013,7 @@ not_in_argv (NSString *arg)
   newh = (int)wr.size.height - extra;
 
   NSTRACE_SIZE ("New size", NSMakeSize (neww, newh));
+  NSTRACE_MSG ("FRAME_TABBAR_HEIGHT: %d", FRAME_TABBAR_HEIGHT (emacsframe));
   NSTRACE_MSG ("FRAME_TOOLBAR_HEIGHT: %d", FRAME_TOOLBAR_HEIGHT (emacsframe));
   NSTRACE_MSG ("FRAME_NS_TITLEBAR_HEIGHT: %d", FRAME_NS_TITLEBAR_HEIGHT (emacsframe));
 
@@ -7058,6 +7088,7 @@ not_in_argv (NSString *arg)
   if (! [self isFullscreen])
     {
       extra = FRAME_NS_TITLEBAR_HEIGHT (emacsframe)
+        + FRAME_TABBAR_HEIGHT (emacsframe)
         + FRAME_TOOLBAR_HEIGHT (emacsframe);
     }
 
@@ -7284,6 +7315,34 @@ not_in_argv (NSString *arg)
 }
 
 
+- (void)createTabbar: (struct frame *)f
+{
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  tabbar = [[EmacsTabbar alloc] initForView: self withIdentifier:
+                   [NSString stringWithFormat: @"Emacs Frame %d",
+                             ns_window_num]];
+  [tabbar setVisible: NO];
+  [window setTabbar: tabbar];
+
+  /* Don't set frame garbaged until tab bar is up to date?
+     This avoids an extra clear and redraw (flicker) at frame creation.  */
+  if (FRAME_EXTERNAL_TAB_BAR (f)) wait_for_tab_bar = YES;
+  else wait_for_tab_bar = NO;
+
+
+#ifdef NS_IMPL_COCOA
+  {
+    NSButton *toggleButton;
+    toggleButton = [window standardWindowButton: NSWindowTabbarButton];
+    [toggleButton setTarget: self];
+    [toggleButton setAction: @selector (toggleTabbar: )];
+  }
+#endif
+}
+
+
 - (void)createToolbar: (struct frame *)f
 {
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
@@ -7389,6 +7448,10 @@ not_in_argv (NSString *arg)
   name = [NSString stringWithUTF8String:
                    NILP (tem) ? "Emacs" : SSDATA (tem)];
   [win setTitle: name];
+
+  /* tabbar support */
+  if (! FRAME_UNDECORATED (f))
+    [self createTabbar: f];
 
   /* toolbar support */
   if (! FRAME_UNDECORATED (f))
@@ -7693,7 +7756,7 @@ not_in_argv (NSString *arg)
       willUseFullScreenPresentationOptions:
   (NSApplicationPresentationOptions)proposedOptions
 {
-  return proposedOptions|NSApplicationPresentationAutoHideToolbar;
+  return proposedOptions|NSApplicationPresentationAutoHideTabbar|NSApplicationPresentationAutoHideToolbar;
 }
 #endif
 
@@ -7725,7 +7788,8 @@ not_in_argv (NSString *arg)
     }
   else
     {
-      BOOL tbar_visible = FRAME_EXTERNAL_TOOL_BAR (emacsframe) ? YES : NO;
+      BOOL tarbar_visible = FRAME_EXTERNAL_TAB_BAR (emacsframe) ? YES : NO;
+      BOOL toolbar_visible = FRAME_EXTERNAL_TOOL_BAR (emacsframe) ? YES : NO;
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 \
   && MAC_OS_X_VERSION_MIN_REQUIRED <= 1070
       unsigned val = (unsigned)[NSApp presentationOptions];
@@ -7738,12 +7802,14 @@ not_in_argv (NSString *arg)
             = NSApplicationPresentationAutoHideDock
             | NSApplicationPresentationAutoHideMenuBar
             | NSApplicationPresentationFullScreen
+            | NSApplicationPresentationAutoHideTabbar
             | NSApplicationPresentationAutoHideToolbar;
 
           [NSApp setPresentationOptions: options];
         }
 #endif
-      [toolbar setVisible:tbar_visible];
+      [tabbar setVisible:tarbar_visible];
+      [toolbar setVisible:toolbar_visible];
     }
 }
 
@@ -7784,6 +7850,16 @@ not_in_argv (NSString *arg)
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
   [self updateCollectionBehavior];
 #endif
+  if (FRAME_EXTERNAL_TAB_BAR (emacsframe))
+    {
+      [tabbar setVisible:YES];
+      update_frame_tab_bar (emacsframe);
+      [self updateFrameSize:YES];
+      [[self window] display];
+    }
+  else
+    [tabbar setVisible:NO];
+
   if (FRAME_EXTERNAL_TOOL_BAR (emacsframe))
     {
       [toolbar setVisible:YES];
@@ -8093,6 +8169,53 @@ not_in_argv (NSString *arg)
     }
 
   ns_send_appdefined (-1);
+  return self;
+}
+
+
+- (EmacsTabbar *)tabbar
+{
+  return tabbar;
+}
+
+
+/* This gets called on tabbar button click.  */
+- (instancetype)tabbarClicked: (id)item
+{
+  NSEvent *theEvent;
+  int idx = [item tag] * TAB_BAR_ITEM_NSLOTS;
+
+  NSTRACE ("[EmacsView tabbarClicked:]");
+
+  if (!emacs_event)
+    return self;
+
+  /* Send first event (for some reason two needed).  */
+  theEvent = [[self window] currentEvent];
+  emacs_event->kind = TAB_BAR_EVENT;
+  XSETFRAME (emacs_event->arg, emacsframe);
+  EV_TRAILER (theEvent);
+
+  emacs_event->kind = TAB_BAR_EVENT;
+  /* XSETINT (emacs_event->code, 0); */
+  emacs_event->arg = AREF (emacsframe->tab_bar_items,
+			   idx + TAB_BAR_ITEM_KEY);
+  emacs_event->modifiers = EV_MODIFIERS (theEvent);
+  EV_TRAILER (theEvent);
+  return self;
+}
+
+
+- (instancetype)toggleTabbar: (id)sender
+{
+  NSTRACE ("[EmacsView toggleTabbar:]");
+
+  if (!emacs_event)
+    return self;
+
+  emacs_event->kind = NS_NONKEY_EVENT;
+  emacs_event->code = KEY_NS_TOGGLE_TABBAR;
+  EV_TRAILER ((id)nil);
   return self;
 }
 

@@ -397,6 +397,7 @@ typedef id instancetype;
 
    ========================================================================== */
 
+@class EmacsTabbar;
 @class EmacsToolbar;
 
 #ifdef NS_IMPL_COCOA
@@ -421,14 +422,18 @@ typedef id instancetype;
    struct frame *emacsframe;
    int rows, cols;
    int scrollbarsNeedingUpdate;
+   EmacsTabbar *tabbar;
    EmacsToolbar *toolbar;
    NSRect ns_userRect;
+   BOOL wait_for_tab_bar;
    BOOL wait_for_tool_bar;
    }
 
 /* AppKit-side interface */
 - (instancetype)menuDown: (id)sender;
+- (instancetype)tabbarClicked: (id)item;
 - (instancetype)toolbarClicked: (id)item;
+- (instancetype)toggleTabbar: (id)sender;
 - (instancetype)toggleToolbar: (id)sender;
 - (void)keyDown: (NSEvent *)theEvent;
 - (void)mouseDown: (NSEvent *)theEvent;
@@ -437,9 +442,11 @@ typedef id instancetype;
 
 /* Emacs-side interface */
 - (instancetype) initFrameFromEmacs: (struct frame *) f;
+- (void) createTabbar: (struct frame *)f;
 - (void) createToolbar: (struct frame *)f;
 - (void) setRows: (int) r andColumns: (int) c;
 - (void) setWindowClosing: (BOOL)closing;
+- (EmacsTabbar *) tabbar;
 - (EmacsToolbar *) toolbar;
 - (void) deleteWorkingText;
 - (void) updateFrameSize: (BOOL) delay;
@@ -507,6 +514,45 @@ typedef id instancetype;
 - (void) clear;
 - (Lisp_Object)runMenuAt: (NSPoint)p forFrame: (struct frame *)f
                  keymaps: (bool)keymaps;
+@end
+
+
+/* ==========================================================================
+
+   Tabbar
+
+   ========================================================================== */
+
+@class EmacsImage;
+
+#ifdef NS_IMPL_COCOA
+@interface EmacsTabbar : NSTabbar <NSTabbarDelegate>
+#else
+@interface EmacsTabbar : NSTabbar
+#endif
+   {
+     EmacsView *emacsView;
+     NSMutableDictionary *identifierToItem;
+     NSMutableArray *activeIdentifiers;
+     NSArray *prevIdentifiers;
+     unsigned long enablement, prevEnablement;
+   }
+- (instancetype) initForView: (EmacsView *)view withIdentifier: (NSString *)identifier;
+- (void) clearActive;
+- (void) clearAll;
+- (BOOL) changed;
+- (void) addDisplayItemWithImage: (EmacsImage *)img
+                             idx: (int)idx
+                             tag: (int)tag
+                        helpText: (const char *)help
+                         enabled: (BOOL)enabled;
+
+/* delegate methods */
+- (NSTabbarItem *)tabbar: (NSTabbar *)tabbar
+     itemForItemIdentifier: (NSString *)itemIdentifier
+ willBeInsertedIntoTabbar: (BOOL)flag;
+- (NSArray *)tabbarDefaultItemIdentifiers: (NSTabbar *)tabbar;
+- (NSArray *)tabbarAllowedItemIdentifiers: (NSTabbar *)tabbar;
 @end
 
 
@@ -753,6 +799,7 @@ extern EmacsMenu *svcsMenu;
 #define KEY_NS_NEW_FRAME               ((1<<28)|(0<<16)|12)
 #define KEY_NS_TOGGLE_TOOLBAR          ((1<<28)|(0<<16)|13)
 #define KEY_NS_SHOW_PREFS              ((1<<28)|(0<<16)|14)
+#define KEY_NS_TOGGLE_TABBAR           ((1<<28)|(0<<16)|15)
 
 /* Could use list to store these, but rest of emacs has a big infrastructure
    for managing a table of bitmap "records".  */
@@ -923,6 +970,7 @@ struct ns_output
   NSColor *cursor_color;
   NSColor *foreground_color;
   NSColor *background_color;
+  EmacsTabbar *tabbar;
   EmacsToolbar *toolbar;
 #else
   void *view;
@@ -930,6 +978,7 @@ struct ns_output
   void *cursor_color;
   void *foreground_color;
   void *background_color;
+  void *tabbar;
   void *toolbar;
 #endif
 
@@ -973,6 +1022,9 @@ struct ns_output
 
   /* The height of the titlebar decoration (included in NSWindow's frame).  */
   int titlebar_height;
+
+  /* The height of the tabbar if displayed, else 0.  */
+  int tabbar_height;
 
   /* The height of the toolbar if displayed, else 0.  */
   int toolbar_height;
@@ -1028,6 +1080,16 @@ struct x_output
            - NSHeight([NSWindow contentRectForFrameRect:                \
                        [[FRAME_NS_VIEW (f) window] frame]               \
                        styleMask:[[FRAME_NS_VIEW (f) window] styleMask]])))
+
+/* Compute pixel height of the tabbar.  */
+#define FRAME_TABBAR_HEIGHT(f)                                          \
+  (([[FRAME_NS_VIEW (f) window] tabbar] == nil                  	\
+    || ! [[FRAME_NS_VIEW (f) window] tabbar].isVisible) ?		\
+   0                                                                    \
+   : (int)(NSHeight([NSWindow contentRectForFrameRect:                  \
+                     [[FRAME_NS_VIEW (f) window] frame]                 \
+                     styleMask:[[FRAME_NS_VIEW (f) window] styleMask]]) \
+           - NSHeight([[[FRAME_NS_VIEW (f) window] contentView] frame])))
 
 /* Compute pixel height of the toolbar.  */
 #define FRAME_TOOLBAR_HEIGHT(f)                                         \
@@ -1169,6 +1231,8 @@ extern const char *ns_get_defaults_value (const char *key);
 extern void ns_init_locale (void);
 
 /* in nsmenu */
+extern void update_frame_tab_bar (struct frame *f);
+extern void free_frame_tab_bar (struct frame *f);
 extern void update_frame_tool_bar (struct frame *f);
 extern void free_frame_tool_bar (struct frame *f);
 extern Lisp_Object find_and_return_menu_selection (struct frame *f,
@@ -1276,6 +1340,7 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSWindowCollectionBehaviorFullScreenPrimary (1 << 7)
 #define NSApplicationPresentationFullScreen         (1 << 10)
 #define NSApplicationPresentationAutoHideToolbar    (1 << 11)
+#define NSApplicationPresentationAutoHideTabbar     (1 << 12)
 #define NSAppKitVersionNumber10_7                   1138
 #endif /* !defined (MAC_OS_X_VERSION_10_7) */
 

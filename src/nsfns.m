@@ -610,6 +610,75 @@ ns_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 }
 
 
+/* tabbar support */
+static void
+ns_set_tab_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
+{
+  /* Currently, when the tab bar changes state, the frame is resized.
+
+     TODO: It would be better if this didn't occur when 1) the frame
+     is full height or maximized or 2) when specified by
+     `frame-inhibit-implied-resize'.  */
+  int nlines;
+
+  NSTRACE ("ns_set_tab_bar_lines");
+
+  if (FRAME_MINIBUF_ONLY_P (f))
+    return;
+
+  if (RANGED_FIXNUMP (0, value, INT_MAX))
+    nlines = XFIXNAT (value);
+  else
+    nlines = 0;
+
+  if (nlines)
+    {
+      FRAME_EXTERNAL_TAB_BAR (f) = 1;
+      update_frame_tab_bar (f);
+    }
+  else
+    {
+      if (FRAME_EXTERNAL_TAB_BAR (f))
+        {
+          free_frame_tab_bar (f);
+          FRAME_EXTERNAL_TAB_BAR (f) = 0;
+
+          {
+            EmacsView *view = FRAME_NS_VIEW (f);
+            int fs_state = [view fullscreenState];
+
+            if (fs_state == FULLSCREEN_MAXIMIZED)
+              {
+                [view setFSValue:FULLSCREEN_WIDTH];
+              }
+            else if (fs_state == FULLSCREEN_HEIGHT)
+              {
+                [view setFSValue:FULLSCREEN_NONE];
+              }
+          }
+       }
+    }
+
+  {
+    int inhibit
+      = ((f->after_make_frame
+	  && !f->tab_bar_resized
+	  && (EQ (frame_inhibit_implied_resize, Qt)
+	      || (CONSP (frame_inhibit_implied_resize)
+		  && !NILP (Fmemq (Qtab_bar_lines,
+				   frame_inhibit_implied_resize))))
+	  && NILP (get_frame_param (f, Qfullscreen)))
+	 ? 0
+	 : 2);
+
+    NSTRACE_MSG ("inhibit:%d", inhibit);
+
+    frame_size_history_add (f, Qupdate_frame_tab_bar, 0, 0, Qnil);
+    adjust_frame_size (f, -1, -1, inhibit, 0, Qtab_bar_lines);
+  }
+}
+
+
 /* toolbar support */
 static void
 ns_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
@@ -923,6 +992,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
   gui_set_vertical_scroll_bars, /* generic OK */
   gui_set_horizontal_scroll_bars, /* generic OK */
   gui_set_visibility, /* generic OK */
+  ns_set_tab_bar_lines,
   ns_set_tool_bar_lines,
   0, /* x_set_scroll_bar_foreground, will ignore (not possible on NS) */
   0, /* x_set_scroll_bar_background,  will ignore (not possible on NS) */
@@ -1284,6 +1354,10 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
      variables; ignore them here.  */
   gui_default_parameter (f, parms, Qmenu_bar_lines,
                          NILP (Vmenu_bar_mode)
+                         ? make_fixnum (0) : make_fixnum (1),
+                         NULL, NULL, RES_TYPE_NUMBER);
+  gui_default_parameter (f, parms, Qtab_bar_lines,
+                         NILP (Vtab_bar_mode)
                          ? make_fixnum (0) : make_fixnum (1),
                          NULL, NULL, RES_TYPE_NUMBER);
   gui_default_parameter (f, parms, Qtool_bar_lines,
@@ -2790,6 +2864,10 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
   int native_right = f->left_pos + outer_width - border;
   int native_bottom = f->top_pos + outer_height - border;
   int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
+  int tab_bar_height = FRAME_TABBAR_HEIGHT (f);
+  int tab_bar_width = (tab_bar_height
+		       ? outer_width - 2 * internal_border_width
+		       : 0);
   int tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
   int tool_bar_width = (tool_bar_height
 			? outer_width - 2 * internal_border_width
@@ -2805,7 +2883,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		   native_right, native_bottom);
   else if (EQ (attribute, Qinner_edges))
     return list4i (native_left + internal_border_width,
-		   native_top + tool_bar_height + internal_border_width,
+		   native_top + tab_bar_height + tool_bar_height + internal_border_width,
 		   native_right - internal_border_width,
 		   native_bottom - internal_border_width);
   else
@@ -2824,6 +2902,9 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		    Fcons (make_fixnum (0), make_fixnum (title_height))),
 	     Fcons (Qmenu_bar_external, Qnil),
 	     Fcons (Qmenu_bar_size, Fcons (make_fixnum (0), make_fixnum (0))),
+	     Fcons (Qtab_bar_size,
+		    Fcons (make_fixnum (tab_bar_width),
+			   make_fixnum (tab_bar_height))),
 	     Fcons (Qtool_bar_external,
 		    FRAME_EXTERNAL_TOOL_BAR (f) ? Qt : Qnil),
 	     Fcons (Qtool_bar_position, FRAME_TOOL_BAR_POSITION (f)),
@@ -2859,6 +2940,9 @@ and width values are in pixels.
   included in the inner edges of FRAME).
 
 `menu-bar-size' is a cons of the width and height of the menu bar of
+  FRAME.
+
+`tab-bar-size' is a cons of the width and height of the tab bar of
   FRAME.
 
 `tool-bar-external', if non-nil, means the tool bar is external (never
