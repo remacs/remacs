@@ -130,26 +130,45 @@ Reduce tab width proportionally to space taken by other tabs."
                           (substring tab-name (- limit)))
                   'help-echo tab-name))))
 
+(defvar tab-line-tabs-limit 15
+  "Maximum number of buffer tabs displayed in the window tab-line.")
+
+(defun tab-line-tabs (&optional window)
+  (let* ((buffer (window-buffer window))
+         (next-buffers (seq-remove (lambda (b) (eq b buffer))
+                                   (window-next-buffers window)))
+         (next-buffers (seq-filter #'buffer-live-p next-buffers))
+         (prev-buffers (seq-remove (lambda (b) (eq b buffer))
+                                   (mapcar #'car (window-prev-buffers window))))
+         (prev-buffers (seq-filter #'buffer-live-p prev-buffers))
+         ;; Remove next-buffers from prev-buffers
+         (prev-buffers (seq-difference prev-buffers next-buffers))
+         (half-limit (/ tab-line-tabs-limit 2))
+         (prev-buffers-limit
+          (if (> (length prev-buffers) half-limit)
+              (if (> (length next-buffers) half-limit)
+                  half-limit
+                (+ half-limit (- half-limit (length next-buffers))))
+            (length prev-buffers)))
+         (next-buffers-limit
+          (- tab-line-tabs-limit prev-buffers-limit))
+         (buffer-tabs
+          (append (reverse (seq-take prev-buffers prev-buffers-limit))
+                  (list buffer)
+                  (seq-take next-buffers next-buffers-limit))))
+    buffer-tabs))
+
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
   (let* ((window (selected-window))
          (buffer (window-buffer window))
-         (next-buffers (seq-remove (lambda (b) (eq b buffer))
-                                   (window-next-buffers window)))
-         (prev-buffers (seq-remove (lambda (b) (eq b buffer))
-                                   (mapcar #'car (window-prev-buffers window))))
-         ;; Remove next-buffers from prev-buffers
-         (prev-buffers (seq-difference prev-buffers next-buffers))
-         (buffers (append (reverse prev-buffers)
-                          (list buffer)
-                          next-buffers))
-         (buffers (seq-filter #'buffer-live-p buffers)))
+         (buffer-tabs (tab-line-tabs window)))
     (append
      (mapcar
       (lambda (b)
         (format "%s%s%s"
                 tab-line-separator
-                (apply 'propertize (tab-line-tab-name b buffers)
+                (apply 'propertize (tab-line-tab-name b buffer-tabs)
                        `(
                          buffer ,b
                          face ,(if (eq b buffer)
@@ -166,7 +185,7 @@ Reduce tab width proportionally to space taken by other tabs."
                                  'tab-line-tab-inactive)
                          mouse-face tab-line-close-highlight
                          keymap ,tab-line-tab-close-map))))
-      buffers)
+      buffer-tabs)
      (list (format "%s%s"
                    tab-line-separator
                    (apply 'propertize tab-line-tab-name-add
