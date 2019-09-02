@@ -296,6 +296,14 @@ issued), you can either set 'network-security-protocol-checks' to nil,
 or adjust the elements in that variable to only happen on the 'high'
 security level (assuming you use the 'medium' level).
 
+---
+** New user option 'nsm-trust-local-network'.
+Allows skipping Network Security Manager checks for hosts on your
+local subnet(s).  It defaults to nil.  Usually, there should be no
+need to set this non-nil, and doing that risks opening your local
+network connections to attacks.  So be sure you know what you are
+doing before changing the value.
+
 +++
 ** Native GnuTLS connections can now use client certificates.
 Previously, this support was only available when using the external
