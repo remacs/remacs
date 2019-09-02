@@ -126,7 +126,9 @@ Reduce tab width proportionally to space taken by other tabs."
                  (max 1 (- (/ (window-width) (length buffers)) 3)))))
     (if (or (not limit) (< (length tab-name) limit))
         tab-name
-      (concat tab-line-tab-name-ellipsis (substring tab-name (- limit))))))
+      (propertize (concat tab-line-tab-name-ellipsis
+                          (substring tab-name (- limit)))
+                  'help-echo tab-name))))
 
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
@@ -149,7 +151,6 @@ Reduce tab width proportionally to space taken by other tabs."
                 tab-line-separator
                 (apply 'propertize (tab-line-tab-name b buffers)
                        `(
-                         help-echo "Click to visit tab"
                          buffer ,b
                          face ,(if (eq b buffer)
                                    'tab-line-tab
