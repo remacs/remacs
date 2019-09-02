@@ -665,17 +665,19 @@ the MD5 Message-Digest and the HMAC-MD5 Algorithms\",
 If this TLS extension is not used, the connection established is
 vulnerable to an attack in which an impersonator can extract
 sensitive information such as HTTP session ID cookies or login
-passwords.
+passwords.  Renegotiation was removed in TLS1.3, so this is only
+checked for earlier protocol versions.
 
 Reference:
 
 E. Rescorla, M. Ray, S. Dispensa, N. Oskov (Feb 2010).  \"Transport
 Layer Security (TLS) Renegotiation Indication Extension\",
 `https://tools.ietf.org/html/rfc5746'"
-  (let ((unsafe-renegotiation (not (plist-get status :safe-renegotiation))))
-    (and unsafe-renegotiation
-         (format-message
-          "safe renegotiation is not supported, connection not protected from impersonators"))))
+  (when (plist-member status :safe-renegotiation)
+    (let ((unsafe-renegotiation (not (plist-get status :safe-renegotiation))))
+      (and unsafe-renegotiation
+           (format-message
+            "safe renegotiation is not supported, connection not protected from impersonators")))))
 
 ;; Compression checks
 
