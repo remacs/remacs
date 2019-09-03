@@ -526,9 +526,9 @@ typedef id instancetype;
 @class EmacsImage;
 
 #ifdef NS_IMPL_COCOA
-@interface EmacsTabbar : NSTabbar <NSTabbarDelegate>
+@interface EmacsTabbar : NSToolbar <NSToolbarDelegate>
 #else
-@interface EmacsTabbar : NSTabbar
+@interface EmacsTabbar : NSToolbar
 #endif
    {
      EmacsView *emacsView;
@@ -548,11 +548,11 @@ typedef id instancetype;
                          enabled: (BOOL)enabled;
 
 /* delegate methods */
-- (NSTabbarItem *)tabbar: (NSTabbar *)tabbar
+- (NSToolbarItem *)tabbar: (NSToolbar *)tabbar
      itemForItemIdentifier: (NSString *)itemIdentifier
  willBeInsertedIntoTabbar: (BOOL)flag;
-- (NSArray *)tabbarDefaultItemIdentifiers: (NSTabbar *)tabbar;
-- (NSArray *)tabbarAllowedItemIdentifiers: (NSTabbar *)tabbar;
+- (NSArray *)tabbarDefaultItemIdentifiers: (NSToolbar *)tabbar;
+- (NSArray *)tabbarAllowedItemIdentifiers: (NSToolbar *)tabbar;
 @end
 
 

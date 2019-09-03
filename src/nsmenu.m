@@ -1167,8 +1167,8 @@ update_frame_tab_bar (struct frame *f)
 
   self = [super initWithIdentifier: identifier];
   emacsView = view;
-  [self setDisplayMode: NSTabbarDisplayModeIconOnly];
-  [self setSizeMode: NSTabbarSizeModeSmall];
+  [self setDisplayMode: NSToolbarDisplayModeIconOnly];
+  [self setSizeMode: NSToolbarSizeModeSmall];
   [self setDelegate: self];
   identifierToItem = [[NSMutableDictionary alloc] initWithCapacity: 10];
   activeIdentifiers = [[NSMutableArray alloc] initWithCapacity: 8];
@@ -1229,10 +1229,10 @@ update_frame_tab_bar (struct frame *f)
   [activeIdentifiers addObject: identifier];
 
   /* 2) create / reuse item */
-  NSTabbarItem *item = [identifierToItem objectForKey: identifier];
+  NSToolbarItem *item = [identifierToItem objectForKey: identifier];
   if (item == nil)
     {
-      item = [[[NSTabbarItem alloc] initWithItemIdentifier: identifier]
+      item = [[[NSToolbarItem alloc] initWithItemIdentifier: identifier]
                autorelease];
       [item setImage: img];
       [item setTabTip: [NSString stringWithUTF8String: help]];
@@ -1262,17 +1262,17 @@ update_frame_tab_bar (struct frame *f)
 
 /* delegate methods */
 
-- (NSTabbarItem *)tabbar: (NSTabbar *)tabbar
+- (NSToolbarItem *)tabbar: (NSToolbar *)tabbar
       itemForItemIdentifier: (NSString *)itemIdentifier
   willBeInsertedIntoTabbar: (BOOL)flag
 {
   NSTRACE ("[EmacsTabbar tabbar: ...]");
 
-  /* Look up NSTabbarItem by identifier and return...  */
+  /* Look up NSToolbarItem by identifier and return...  */
   return [identifierToItem objectForKey: itemIdentifier];
 }
 
-- (NSArray *)tabbarDefaultItemIdentifiers: (NSTabbar *)tabbar
+- (NSArray *)tabbarDefaultItemIdentifiers: (NSToolbar *)tabbar
 {
   NSTRACE ("[EmacsTabbar tabbarDefaultItemIdentifiers:]");
 
@@ -1281,7 +1281,7 @@ update_frame_tab_bar (struct frame *f)
 }
 
 /* for configuration palette (not yet supported) */
-- (NSArray *)tabbarAllowedItemIdentifiers: (NSTabbar *)tabbar
+- (NSArray *)tabbarAllowedItemIdentifiers: (NSToolbar *)tabbar
 {
   NSTRACE ("[EmacsTabbar tabbarAllowedItemIdentifiers:]");
 
@@ -1301,7 +1301,7 @@ update_frame_tab_bar (struct frame *f)
 /* optional and unneeded */
 /* - tabbarWillAddItem: (NSNotification *)notification { } */
 /* - tabbarDidRemoveItem: (NSNotification *)notification { } */
-/* - (NSArray *)tabbarSelectableItemIdentifiers: (NSTabbar *)tabbar */
+/* - (NSArray *)tabbarSelectableItemIdentifiers: (NSToolbar *)tabbar */
 
 @end  /* EmacsTabbar */
 

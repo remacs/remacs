@@ -1090,7 +1090,7 @@ ns_update_begin (struct frame *f)
   {
     // Fix reappearing tool bar or tab bar in fullscreen for Mac OS X 10.7
     BOOL tarbar_visible = FRAME_EXTERNAL_TAB_BAR (f) ? YES : NO;
-    NSTabbar *tabbar = [FRAME_NS_VIEW (f) tabbar];
+    NSToolbar *tabbar = [FRAME_NS_VIEW (f) tabbar];
     if (! tarbar_visible != ! [tabbar isVisible])
       [tabbar setVisible: tarbar_visible];
     BOOL toolbar_visible = FRAME_EXTERNAL_TOOL_BAR (f) ? YES : NO;
@@ -7335,7 +7335,7 @@ not_in_argv (NSString *arg)
 #ifdef NS_IMPL_COCOA
   {
     NSButton *toggleButton;
-    toggleButton = [window standardWindowButton: NSWindowTabbarButton];
+    toggleButton = [window standardWindowButton: NSWindowToolbarButton];
     [toggleButton setTarget: self];
     [toggleButton setAction: @selector (toggleTabbar: )];
   }
