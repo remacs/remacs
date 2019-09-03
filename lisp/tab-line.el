@@ -126,8 +126,8 @@ Reduce tab width proportionally to space taken by other tabs."
                  (max 1 (- (/ (window-width) (length buffers)) 3)))))
     (if (or (not limit) (< (length tab-name) limit))
         tab-name
-      (propertize (concat tab-line-tab-name-ellipsis
-                          (substring tab-name (- limit)))
+      (propertize (truncate-string-to-width tab-name limit nil nil
+                                            tab-line-tab-name-ellipsis)
                   'help-echo tab-name))))
 
 (defvar tab-line-tabs-limit 15
