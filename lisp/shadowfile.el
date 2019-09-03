@@ -165,6 +165,9 @@ created by `shadow-define-regexp-group'.")
 (defvar shadow-info-buffer nil)		; buf visiting shadow-info-file
 (defvar shadow-todo-buffer nil)		; buf visiting shadow-todo-file
 
+(defvar shadow-debug nil
+  "Use for debug messages.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Syntactic sugar; General list and string manipulation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -673,7 +676,7 @@ Return t unless files were locked; then return nil."
 	(eval-buffer))
       (when shadow-todo-file
 	(set-buffer (setq shadow-todo-buffer
-			  (find-file-noselect shadow-todo-file)))
+			  (find-file-noselect shadow-todo-file 'nowarn)))
 	(when (and (not (buffer-modified-p))
 		   (file-newer-than-file-p (make-auto-save-file-name)
 					   shadow-todo-file))
