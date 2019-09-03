@@ -5781,6 +5781,68 @@ mark_and_sweep_weak_table_contents (void)
     }
 }
 
+/* Return the number of bytes to cons between GCs, assuming
+   gc-cons-threshold is THRESHOLD and gc-cons-percentage is
+   GC_CONS_PERCENTAGE.  */
+static intmax_t
+consing_threshold (intmax_t threshold, Lisp_Object gc_cons_percentage)
+{
+  if (!NILP (Vmemory_full))
+    return memory_full_cons_threshold;
+  else
+    {
+      threshold = max (threshold, GC_DEFAULT_THRESHOLD / 10);
+      if (FLOATP (gc_cons_percentage))
+	{
+	  double tot = (XFLOAT_DATA (gc_cons_percentage)
+			* total_bytes_of_live_objects ());
+	  if (threshold < tot)
+	    {
+	      if (tot < INTMAX_MAX)
+		threshold = tot;
+	      else
+		threshold = INTMAX_MAX;
+	    }
+	}
+      return threshold;
+    }
+}
+
+/* Increment consing_until_gc by DIFF, avoiding overflow.  */
+static Lisp_Object
+bump_consing_until_gc (intmax_t diff)
+{
+  /* If consing_until_gc is negative leave it alone, since this prevents
+     negative integer overflow and a GC would have been done soon anyway.  */
+  if (0 <= consing_until_gc
+      && INT_ADD_WRAPV (consing_until_gc, diff, &consing_until_gc))
+    consing_until_gc = INTMAX_MAX;
+  return Qnil;
+}
+
+/* Watch changes to gc-cons-threshold.  */
+static Lisp_Object
+watch_gc_cons_threshold (Lisp_Object symbol, Lisp_Object newval,
+			 Lisp_Object operation, Lisp_Object where)
+{
+  intmax_t new_threshold;
+  int diff = (INTEGERP (newval) && integer_to_intmax (newval, &new_threshold)
+	      ? (consing_threshold (new_threshold, Vgc_cons_percentage)
+		 - consing_threshold (gc_cons_threshold, Vgc_cons_percentage))
+	      : 0);
+  return bump_consing_until_gc (diff);
+}
+
+/* Watch changes to gc-cons-percentage.  */
+static Lisp_Object
+watch_gc_cons_percentage (Lisp_Object symbol, Lisp_Object newval,
+			  Lisp_Object operation, Lisp_Object where)
+{
+  int diff = (consing_threshold (consing_until_gc, newval)
+	      - consing_threshold (consing_until_gc, Vgc_cons_percentage));
+  return bump_consing_until_gc (diff);
+}
+
 /* Subroutine of Fgarbage_collect that does most of the work.  */
 static bool
 garbage_collect_1 (struct gcstat *gcst)
@@ -5923,25 +5985,8 @@ garbage_collect_1 (struct gcstat *gcst)
 
   unblock_input ();
 
-  if (!NILP (Vmemory_full))
-    consing_until_gc = memory_full_cons_threshold;
-  else
-    {
-      intmax_t threshold = max (gc_cons_threshold, GC_DEFAULT_THRESHOLD / 10);
-      if (FLOATP (Vgc_cons_percentage))
-	{
-	  double tot = (XFLOAT_DATA (Vgc_cons_percentage)
-			* total_bytes_of_live_objects ());
-	  if (threshold < tot)
-	    {
-	      if (tot < INTMAX_MAX)
-		threshold = tot;
-	      else
-		threshold = INTMAX_MAX;
-	    }
-	}
-      consing_until_gc = threshold;
-    }
+  consing_until_gc = consing_threshold (gc_cons_threshold,
+					Vgc_cons_percentage);
 
   if (garbage_collection_messages && NILP (Vmemory_full))
     {
@@ -7362,6 +7407,7 @@ do hash-consing of the objects allocated to pure space.  */);
   DEFSYM (Qheap, "heap");
   DEFSYM (QAutomatic_GC, "Automatic GC");
 
+  DEFSYM (Qgc_cons_percentage, "gc-cons-percentage");
   DEFSYM (Qgc_cons_threshold, "gc-cons-threshold");
   DEFSYM (Qchar_table_extra_slots, "char-table-extra-slots");
 
@@ -7395,6 +7441,22 @@ N should be nonnegative.  */);
   defsubr (&Smemory_info);
   defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);
+
+  Lisp_Object watcher;
+
+  static union Aligned_Lisp_Subr Swatch_gc_cons_threshold =
+     {{{ PSEUDOVECTOR_FLAG | (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS) },
+       { .a4 = watch_gc_cons_threshold },
+       4, 4, "watch_gc_cons_threshold", 0, 0}};
+  XSETSUBR (watcher, &Swatch_gc_cons_threshold.s);
+  Fadd_variable_watcher (Qgc_cons_threshold, watcher);
+
+  static union Aligned_Lisp_Subr Swatch_gc_cons_percentage =
+     {{{ PSEUDOVECTOR_FLAG | (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS) },
+       { .a4 = watch_gc_cons_percentage },
+       4, 4, "watch_gc_cons_percentage", 0, 0}};
+  XSETSUBR (watcher, &Swatch_gc_cons_percentage.s);
+  Fadd_variable_watcher (Qgc_cons_percentage, watcher);
 }
 
 #ifdef HAVE_X_WINDOWS
