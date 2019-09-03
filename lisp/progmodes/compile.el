@@ -2602,45 +2602,68 @@ column zero points to the current message."
 			       (point)))
          (set-window-point w mk))))
 
-(defvar-local overlay-arrow-overlay nil
+(defvar-local compilation-arrow-overlay nil
   "Overlay with the before-string property of `overlay-arrow-string'.
 
 When non-nil, this overlay causes redisplay to display `overlay-arrow-string'
 at the overlay's start position.")
 
+(defvar compilation-margin-string "=>"
+  "The string which will appear in the margin in compilation mode.
+This must be two characters long; there should be no need to
+change the default.")
+(put-text-property 0 2 'face 'default compilation-margin-string)
+
+(defconst compilation--dummy-string
+  (propertize ">" 'display
+              `((margin left-margin) ,compilation-margin-string))
+  "A string which is only a placeholder for compilation-margin-string.
+Actual value is never used, only the text property.")
+
+(defun compilation-set-up-arrow-spec-in-margin ()
+  "Set up compilation-arrow-overlay to display as an arrow in a margin."
+  (setq overlay-arrow-string "")
+  (setq compilation-arrow-overlay
+	(make-overlay overlay-arrow-position overlay-arrow-position))
+  (overlay-put compilation-arrow-overlay
+               'before-string compilation--dummy-string)
+  (set-window-margins (selected-window) (+ (or (car (window-margins)) 0) 2)))
+
+(defun compilation-tear-down-arrow-spec-in-margin ()
+  "Restore compilation-arrow-overlay to not using the margin, which is removed."
+  (overlay-put compilation-arrow-overlay 'before-string nil)
+  (delete-overlay compilation-arrow-overlay)
+  (setq compilation-arrow-overlay nil)
+  (set-window-margins (selected-window) (- (car (window-margins)) 2)))
+
 (defun compilation-set-overlay-arrow (w)
   "Set up, or switch off, the overlay-arrow for window W."
-  (with-current-buffer (window-buffer w)
+  (with-selected-window w        ; So the later `goto-char' will work.
     (if (and (eq compilation-context-lines t)
              (equal (car (window-fringes w)) 0)) ; No left fringe
-        ;; Insert a "=>" before-string overlay at the beginning of the
-        ;; line pointed to by `overlay-arrow-position'.
-        (cond
-         ((overlayp overlay-arrow-overlay)
-          (when (not (eq (overlay-start overlay-arrow-overlay)
-		         overlay-arrow-position))
-	    (if overlay-arrow-position
-                (progn
-	          (move-overlay overlay-arrow-overlay
+        ;; Insert a before-string overlay at the beginning of the line
+        ;; pointed to by `overlay-arrow-position', such that it will
+        ;; display in a 2-character margin.
+        (progn
+          (cond
+           ((overlayp compilation-arrow-overlay)
+            (when (not (eq (overlay-start compilation-arrow-overlay)
+		           overlay-arrow-position))
+	      (if overlay-arrow-position
+	          (move-overlay compilation-arrow-overlay
 			        overlay-arrow-position overlay-arrow-position)
-                  (setq overlay-arrow-string "=>")
-                  (overlay-put overlay-arrow-overlay
-                               'before-string overlay-arrow-string))
-	      (delete-overlay overlay-arrow-overlay)
-	      (setq overlay-arrow-overlay nil))))
+                (compilation-tear-down-arrow-spec-in-margin))))
 
-         (overlay-arrow-position
-          (setq overlay-arrow-overlay
-	        (make-overlay overlay-arrow-position overlay-arrow-position))
-          (setq overlay-arrow-string "=>")
-          (overlay-put overlay-arrow-overlay 'before-string overlay-arrow-string)))
+           (overlay-arrow-position
+            (compilation-set-up-arrow-spec-in-margin)))
+          ;; Ensure that the "=>" remains in the window by causing
+          ;; the window to be scrolled, if needed.
+          (goto-char (overlay-start compilation-arrow-overlay)))
 
       ;; `compilation-context-lines' isn't t, or we've got a left
       ;; fringe, so remove any overlay arrow.
-      (when (overlayp overlay-arrow-overlay)
-        (setq overlay-arrow-string "")
-        (delete-overlay overlay-arrow-overlay)
-        (setq overlay-arrow-overlay nil)))))
+      (when (overlayp compilation-arrow-overlay)
+        (compilation-tear-down-arrow-spec-in-margin)))))
 
 (defvar next-error-highlight-timer)
 
