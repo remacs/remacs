@@ -13110,16 +13110,14 @@ display_tab_bar (struct window *w)
 
   /* Display all items of the tab bar.  */
   items = it.f->tab_bar_items;
-  for (i = 0; i < ASIZE (items); i += 11)
+  for (i = 0; i < it.f->n_tab_bar_items; ++i)
     {
       Lisp_Object string;
 
       /* Stop at nil string.  */
-      string = AREF (items, i + 3);
+      string = AREF (items, i * TAB_BAR_ITEM_NSLOTS + TAB_BAR_ITEM_CAPTION);
       if (NILP (string))
 	break;
-
-      /* string = build_string ("Test 4"); */
 
       /* Display the item, pad with one space.  */
       if (it.current_x < it.last_visible_x)
