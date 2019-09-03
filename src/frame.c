@@ -233,6 +233,35 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 			 0, 1, 0, 0);
     }
 }
+
+static void
+set_tab_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
+{
+  int nlines;
+  int olines = FRAME_TAB_BAR_LINES (f);
+
+  /* Right now, tab bars don't work properly in minibuf-only frames;
+     most of the commands try to apply themselves to the minibuffer
+     frame itself, and get an error because you can't switch buffers
+     in or split the minibuffer window.  */
+  if (FRAME_MINIBUF_ONLY_P (f))
+    return;
+
+  if (TYPE_RANGED_FIXNUMP (int, value))
+    nlines = XFIXNUM (value);
+  else
+    nlines = 0;
+
+  if (nlines != olines)
+    {
+      windows_or_buffers_changed = 14;
+      FRAME_TAB_BAR_LINES (f) = nlines;
+      FRAME_TAB_BAR_HEIGHT (f) = nlines * FRAME_LINE_HEIGHT (f);
+      change_frame_size (f, FRAME_COLS (f),
+			 FRAME_LINES (f) + olines - nlines,
+			 0, 1, 0, 0);
+    }
+}
 
 Lisp_Object Vframe_list;
 
@@ -382,6 +411,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
   if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f)) && NILP (horizontal))
     {
       int min_height = (FRAME_MENU_BAR_LINES (f)
+			+ FRAME_TAB_BAR_LINES (f)
 			+ FRAME_WANTS_MODELINE_P (f)
 			+ 2);	/* one text line and one echo-area line */
       if (retval < min_height)
@@ -1098,6 +1128,9 @@ make_initial_frame (void)
 
   /* The default value of menu-bar-mode is t.  */
   set_menu_bar_lines (f, make_fixnum (1), Qnil);
+
+  /* The default value of tab-bar-mode is nil.  */
+  set_tab_bar_lines (f, make_fixnum (0), Qnil);
 
   /* Allocate glyph matrices.  */
   adjust_frame_glyphs (f);
@@ -3086,6 +3119,8 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
     {
       if (EQ (prop, Qmenu_bar_lines))
 	set_menu_bar_lines (f, val, make_fixnum (FRAME_MENU_BAR_LINES (f)));
+      else if (EQ (prop, Qtab_bar_lines))
+	set_tab_bar_lines (f, val, make_fixnum (FRAME_TAB_BAR_LINES (f)));
       else if (EQ (prop, Qname))
 	set_term_frame_name (f, val);
     }
@@ -3181,6 +3216,8 @@ If FRAME is omitted or nil, return information on the currently selected frame. 
       Lisp_Object lines;
       XSETFASTINT (lines, FRAME_MENU_BAR_LINES (f));
       store_in_alist (&alist, Qmenu_bar_lines, lines);
+      XSETFASTINT (lines, FRAME_TAB_BAR_LINES (f));
+      store_in_alist (&alist, Qtab_bar_lines, lines);
     }
 
   return alist;

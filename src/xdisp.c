@@ -989,6 +989,7 @@ static int underlying_face_id (struct it *);
 
 #ifdef HAVE_WINDOW_SYSTEM
 
+static void display_tab_bar (struct window *);
 static void update_tab_bar (struct frame *, bool);
 static void update_tool_bar (struct frame *, bool);
 static void gui_draw_bottom_divider (struct window *w);
@@ -12550,8 +12551,9 @@ fast_set_selected_frame (Lisp_Object frame)
 static void
 update_tab_bar (struct frame *f, bool save_match_data)
 {
-  bool do_update = (WINDOWP (f->tab_bar_window)
-		    && WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)) > 0);
+  bool do_update = ((FRAME_WINDOW_P (f) && WINDOWP (f->tab_bar_window))
+		    ? (WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)) > 0)
+                    : (FRAME_TAB_BAR_LINES (f) > 0));
 
   if (do_update)
     {
@@ -13027,6 +13029,110 @@ redisplay_tab_bar (struct frame *f)
 
   f->minimize_tab_bar_window_p = false;
   return false;
+}
+
+/* Redisplay the tab bar in the frame for window W.
+
+   The tab bar of X frames that don't have X toolkit support is
+   displayed in a special window W->frame->tab_bar_window.
+
+   The tab bar of terminal frames is treated specially as far as
+   glyph matrices are concerned.  Tab bar lines are not part of
+   windows, so the update is done directly on the frame matrix rows
+   for the tab bar.  */
+
+static void
+display_tab_bar (struct window *w)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+  struct it it;
+  Lisp_Object items;
+  int i;
+  bool has_menu_p = FRAME_MENU_BAR_LINES (f) > 0;
+
+  /* Don't do all this for graphical frames.  */
+#ifdef HAVE_NTGUI
+  if (FRAME_W32_P (f))
+    return;
+#endif
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  if (FRAME_X_P (f))
+    return;
+#endif
+
+#ifdef HAVE_NS
+  if (FRAME_NS_P (f))
+    return;
+#endif /* HAVE_NS */
+
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  eassert (!FRAME_WINDOW_P (f));
+  init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (has_menu_p ? 1 : 0), TAB_BAR_FACE_ID);
+  it.first_visible_x = 0;
+  it.last_visible_x = FRAME_PIXEL_WIDTH (f);
+#elif defined (HAVE_X_WINDOWS) /* X without toolkit.  */
+  if (FRAME_WINDOW_P (f))
+    {
+      /* Tab bar lines are displayed in the desired matrix of the
+	 dummy window tab_bar_window.  */
+      struct window *tab_w;
+      tab_w = XWINDOW (f->tab_bar_window);
+      init_iterator (&it, tab_w, -1, -1, tab_w->desired_matrix->rows + (has_menu_p ? 1 : 0),
+		     TAB_BAR_FACE_ID);
+      it.first_visible_x = 0;
+      it.last_visible_x = FRAME_PIXEL_WIDTH (f);
+    }
+  else
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
+    {
+      /* This is a TTY frame, i.e. character hpos/vpos are used as
+	 pixel x/y.  */
+      init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (has_menu_p ? 1 : 0),
+		     TAB_BAR_FACE_ID);
+      it.first_visible_x = 0;
+      it.last_visible_x = FRAME_COLS (f);
+    }
+
+  /* FIXME: This should be controlled by a user option.  See the
+     comments in redisplay_tool_bar and display_mode_line about
+     this.  */
+  it.paragraph_embedding = L2R;
+
+  /* Clear all rows of the tab bar.  */
+  for (i = 0; i < FRAME_TAB_BAR_LINES (f); ++i)
+    {
+      struct glyph_row *row = it.glyph_row + i;
+      clear_glyph_row (row);
+      row->enabled_p = true;
+      row->full_width_p = true;
+      row->reversed_p = false;
+    }
+
+  /* Display all items of the tab bar.  */
+  items = it.f->tab_bar_items;
+  for (i = 0; i < ASIZE (items); i += 11)
+    {
+      Lisp_Object string;
+
+      /* Stop at nil string.  */
+      string = AREF (items, i + 3);
+      if (NILP (string))
+	break;
+
+      /* string = build_string ("Test 4"); */
+
+      /* Display the item, pad with one space.  */
+      if (it.current_x < it.last_visible_x)
+	display_string (NULL, string, Qnil, 0, 0, &it,
+			SCHARS (string) + 1, 0, 0, -1);
+    }
+
+  /* Fill out the line with spaces.  */
+  if (it.current_x < it.last_visible_x)
+    display_string ("", Qnil, Qnil, 0, 0, &it, -1, 0, 0, -1);
+
+  /* Compute the total height of the lines.  */
+  compute_line_metrics (&it);
 }
 
 /* Get information about the tab-bar item which is displayed in GLYPH
@@ -18631,6 +18737,12 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
+      else
+        {
+          if ((FRAME_TAB_BAR_LINES (f) > 0))
+            display_tab_bar (w);
+        }
+
       gui_consider_frame_title (w->frame);
 #endif
     }

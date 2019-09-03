@@ -49,7 +49,8 @@
 (defface tab-bar
   '((default
      :box (:line-width 1 :style released-button)
-     :foreground "black")
+     :foreground "black"
+     :background "white")
     (((type x w32 ns) (class color))
      :background "grey75")
     (((type x) (class mono))
@@ -97,7 +98,27 @@
     (global-set-key [(control shift iso-lefttab)] 'tab-bar-switch-to-prev-tab)
     (global-set-key [(control tab)]               'tab-bar-switch-to-next-tab)))
 
-;;;###autoload
+(defun tab-bar-mouse (event)
+  "Text-mode emulation of switching tabs on the tab-bar.
+This command is used when you click the mouse in the tab-bar
+on a console which has no window system but does have a mouse."
+  (interactive "e")
+  (let* ((x-position (car (posn-x-y (event-start event))))
+         (keymap (lookup-key (cons 'keymap (nreverse (current-active-maps))) [tab-bar]))
+         (column 0))
+    (when x-position
+      (unless (catch 'done
+                (map-keymap
+                 (lambda (_key binding)
+                   (when (eq (car-safe binding) 'menu-item)
+                     (when (> (+ column (length (nth 1 binding))) x-position)
+                       (call-interactively (nth 2 binding))
+                       (throw 'done t))
+                     (setq column (+ column (length (nth 1 binding)) 1))))
+                 keymap))
+        ;; Clicking anywhere outside existing tabs will add a new tab
+        (tab-bar-add-tab)))))
+
 ;; Used in the Show/Hide menu, to have the toggle reflect the current frame.
 (defun toggle-tab-bar-mode-from-frame (&optional arg)
   "Toggle tab bar on or off, based on the status of the current frame.
@@ -152,7 +173,7 @@ Return its existing value or a new value."
   "Generate an actual keymap from `tab-bar-map', without caching."
   (let ((i 0))
     (append
-     '(keymap)
+     '(keymap (mouse-1 . tab-bar-mouse))
      (mapcan
       (lambda (tab)
         (setq i (1+ i))
