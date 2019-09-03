@@ -1375,6 +1375,9 @@ the Elisp manual for documentation of the new mode and its commands.
 dimensions, instead of always using 16 pixels.  As a result, Tetris,
 Snake and Pong are more playable on HiDPI displays.
 
+*** 'gamegrid-add-score' can now sort scores from lower to higher.
+This is useful for games where lower scores are better, like time-based games.
+
 ** Filecache
 
 ---
