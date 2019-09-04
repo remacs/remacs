@@ -257,7 +257,7 @@ which is the \"1006\" extension implemented in Xterm >= 277."
                                                 (or (not menu-bar-mode)
                                                     ;; The tab-bar is on the
                                                     ;; second row below menu-bar
-                                                    (eq (cdr (nth 6 (posn-at-x-y x y))) 1)))
+                                                    (eq y 1)))
                                            'tab-bar
                                          'menu-bar))
                              (nthcdr 2 (posn-at-x-y x y)))))

@@ -753,6 +753,8 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 #define WINDOW_TAB_BAR_P(W) \
   (WINDOWP (WINDOW_XFRAME (W)->tab_bar_window) \
    && (W) == XWINDOW (WINDOW_XFRAME (W)->tab_bar_window))
+#else
+#define WINDOW_TAB_BAR_P(W) false
 #endif
 
 /* True if W is a tool bar window.  */

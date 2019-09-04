@@ -267,6 +267,7 @@
 (load "rfn-eshadow")
 
 (load "menu-bar")
+(load "tab-bar")
 (load "emacs-lisp/lisp")
 (load "textmodes/page")
 (load "register")
@@ -290,8 +291,7 @@
       (load "image")
       (load "international/fontset")
       (load "dnd")
-      (load "tool-bar")
-      (load "tab-bar")))
+      (load "tool-bar")))
 
 (if (featurep 'dynamic-setting)
     (load "dynamic-setting"))
