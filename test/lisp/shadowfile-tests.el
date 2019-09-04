@@ -64,7 +64,7 @@
   "Temporary directory for Tramp tests.")
 
 (setq password-cache-expiry nil
-      shadow-debug nil
+      shadow-debug t
       tramp-verbose 0
       tramp-message-show-message nil)
 
@@ -92,11 +92,11 @@
     (set-buffer-modified-p nil)
     (kill-buffer))
   ;; Delete buffers.
-  (when (buffer-live-p shadow-info-buffer)
+  (ignore-errors
     (with-current-buffer shadow-info-buffer
       (set-buffer-modified-p nil)
       (kill-buffer)))
-  (when (buffer-live-p shadow-todo-buffer)
+  (ignore-errors
     (with-current-buffer shadow-todo-buffer
       (set-buffer-modified-p nil)
       (kill-buffer)))
@@ -131,8 +131,9 @@ guaranteed by the originator of a cluster definition."
 		   ((symbol-function 'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
-          ;; Cleanup.
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster "cluster"
@@ -247,8 +248,9 @@ guaranteed by the originator of a cluster definition."
 		   ((symbol-function 'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
-	  ;; Cleanup.
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster1 "cluster1"
@@ -342,8 +344,10 @@ guaranteed by the originator of a cluster definition."
 	cluster primary regexp file hup)
     (unwind-protect
 	(progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster "cluster"
@@ -412,8 +416,10 @@ guaranteed by the originator of a cluster definition."
 	cluster primary regexp file1 file2)
     (unwind-protect
 	(progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster "cluster"
@@ -477,8 +483,10 @@ guaranteed by the originator of a cluster definition."
 	cluster primary regexp file)
     (unwind-protect
 	(progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster "cluster"
@@ -532,8 +540,10 @@ guaranteed by the originator of a cluster definition."
 	cluster primary regexp file)
     (unwind-protect
 	(progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define a cluster.
 	  (setq cluster "cluster"
@@ -591,8 +601,9 @@ guaranteed by the originator of a cluster definition."
 		   ((symbol-function 'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
-	  ;; Cleanup.
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define clusters.
 	  (setq cluster1 "cluster1"
@@ -651,8 +662,9 @@ guaranteed by the originator of a cluster definition."
 		   ((symbol-function 'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
-	  ;; Cleanup.
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
 	  ;; Define clusters.
 	  (setq cluster1 "cluster1"
@@ -710,8 +722,10 @@ guaranteed by the originator of a cluster definition."
 	cluster1 cluster2 primary regexp file)
     (unwind-protect
         (progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
           ;; Define clusters.
 	  (setq cluster1 "cluster1"
@@ -817,8 +831,12 @@ guaranteed by the originator of a cluster definition."
             shadow-files-to-copy)))
 
       ;; Cleanup.
-      (ignore-errors (delete-file file))
-      (ignore-errors (delete-file (concat (shadow-site-primary cluster2) file)))
+      (dolist (elt `(,file ,(concat (shadow-site-primary cluster2) file)))
+        (ignore-errors
+          (with-current-buffer (get-file-buffer elt)
+            (set-buffer-modified-p nil)
+            (kill-buffer)))
+        (ignore-errors (delete-file elt)))
       (shadow--tests-cleanup))))
 
 (ert-deftest shadow-test09-shadow-copy-files ()
@@ -836,8 +854,10 @@ guaranteed by the originator of a cluster definition."
 	cluster1 cluster2 primary regexp file mocked-input)
     (unwind-protect
 	(progn
-	  ;; Cleanup.
+
+          ;; Cleanup & initialize.
           (shadow--tests-cleanup)
+          (shadow-initialize)
 
           ;; Define clusters.
 	  (setq cluster1 "cluster1"
@@ -894,8 +914,12 @@ guaranteed by the originator of a cluster definition."
 
       ;; Cleanup.
       (remove-function (symbol-function 'write-region) "write-region-mock")
-      (ignore-errors (delete-file file))
-      (ignore-errors (delete-file (concat (shadow-site-primary cluster2) file)))
+      (dolist (elt `(,file ,(concat (shadow-site-primary cluster2) file)))
+        (ignore-errors
+          (with-current-buffer (get-file-buffer elt)
+            (set-buffer-modified-p nil)
+            (kill-buffer)))
+        (ignore-errors (delete-file elt)))
       (shadow--tests-cleanup))))
 
 (defun shadowfile-test-all (&optional interactive)
@@ -904,11 +928,6 @@ guaranteed by the originator of a cluster definition."
   (if interactive
       (ert-run-tests-interactively "^shadowfile-")
     (ert-run-tests-batch "^shadowfile-")))
-
-(let ((shadow-info-file shadow-test-info-file)
-      (shadow-todo-file shadow-test-todo-file))
-  (shadow--tests-cleanup)
-  (shadow-initialize))
 
 (provide 'shadowfile-tests)
 ;;; shadowfile-tests.el ends here
