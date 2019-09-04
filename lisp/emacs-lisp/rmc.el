@@ -106,7 +106,7 @@ Usage example:
           (setq tchar
                 (if (and (display-popup-menus-p)
                          last-input-event ; not during startup
-                         (listp last-nonmenu-event)
+                         (consp last-nonmenu-event)
                          use-dialog-box)
                     (x-popup-dialog
                      t
