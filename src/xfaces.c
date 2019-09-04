@@ -1590,6 +1590,7 @@ the WIDTH times as wide as FACE on FRAME.  */)
 #define LFACE_FONT(LFACE)	    AREF ((LFACE), LFACE_FONT_INDEX)
 #define LFACE_INHERIT(LFACE)	    AREF ((LFACE), LFACE_INHERIT_INDEX)
 #define LFACE_FONTSET(LFACE)	    AREF ((LFACE), LFACE_FONTSET_INDEX)
+#define LFACE_EXTEND(LFACE)	    AREF ((LFACE), LFACE_EXTEND_INDEX)
 #define LFACE_DISTANT_FOREGROUND(LFACE) \
   AREF ((LFACE), LFACE_DISTANT_FOREGROUND_INDEX)
 
@@ -1633,6 +1634,10 @@ check_lface_attrs (Lisp_Object attrs[LFACE_VECTOR_SIZE])
 	   || SYMBOLP (attrs[LFACE_UNDERLINE_INDEX])
 	   || STRINGP (attrs[LFACE_UNDERLINE_INDEX])
 	   || CONSP (attrs[LFACE_UNDERLINE_INDEX]));
+  eassert (UNSPECIFIEDP (attrs[LFACE_EXTEND_INDEX])
+	   || IGNORE_DEFFACE_P (attrs[LFACE_EXTEND_INDEX])
+	   || SYMBOLP (attrs[LFACE_EXTEND_INDEX])
+	   || STRINGP (attrs[LFACE_EXTEND_INDEX]));
   eassert (UNSPECIFIEDP (attrs[LFACE_OVERLINE_INDEX])
 	   || IGNORE_DEFFACE_P (attrs[LFACE_OVERLINE_INDEX])
 	   || SYMBOLP (attrs[LFACE_OVERLINE_INDEX])
@@ -2512,6 +2517,13 @@ merge_face_ref (struct window *w,
 					err_msgs, named_merge_points))
 		    err = true;
 		}
+	      else if (EQ (keyword, QCextend))
+		{
+		  if (EQ (value, Qt) || NILP (value))
+		    to[LFACE_EXTEND_INDEX] = value;
+		  else
+		    err = true;
+		}
 	      else
 		err = true;
 
@@ -3030,6 +3042,17 @@ FRAME 0 means change the face on all frames, and change the default
       old_value = LFACE_INVERSE (lface);
       ASET (lface, LFACE_INVERSE_INDEX, value);
     }
+  else if (EQ (attr, QCextend))
+    {
+      if (!UNSPECIFIEDP (value) && !IGNORE_DEFFACE_P (value))
+	{
+	  CHECK_SYMBOL (value);
+	  if (!EQ (value, Qt) && !NILP (value))
+	    signal_error ("Invalid extend face attribute value", value);
+	}
+      old_value = LFACE_EXTEND (lface);
+      ASET (lface, LFACE_EXTEND_INDEX, value);
+    }
   else if (EQ (attr, QCforeground))
     {
       /* Compatibility with 20.x.  */
@@ -3503,7 +3526,9 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
     value = face_boolean_x_resource_value (value, true);
   else if (EQ (attr, QCweight) || EQ (attr, QCslant) || EQ (attr, QCwidth))
     value = intern (SSDATA (value));
-  else if (EQ (attr, QCreverse_video) || EQ (attr, QCinverse_video))
+  else if (EQ (attr, QCreverse_video)
+           || EQ (attr, QCinverse_video)
+           || EQ (attr, QCextend))
     value = face_boolean_x_resource_value (value, true);
   else if (EQ (attr, QCunderline)
 	   || EQ (attr, QCoverline)
@@ -3727,6 +3752,8 @@ frames).  If FRAME is omitted or nil, use the selected frame.  */)
     value = LFACE_SWIDTH (lface);
   else if (EQ (keyword, QCinherit))
     value = LFACE_INHERIT (lface);
+  else if (EQ (keyword, QCextend))
+    value = LFACE_EXTEND (lface);
   else if (EQ (keyword, QCfont))
     value = LFACE_FONT (lface);
   else if (EQ (keyword, QCfontset))
@@ -3754,7 +3781,9 @@ Value is nil if ATTR doesn't have a discrete set of valid values.  */)
 
   if (EQ (attr, QCunderline) || EQ (attr, QCoverline)
       || EQ (attr, QCstrike_through)
-      || EQ (attr, QCinverse_video) || EQ (attr, QCreverse_video))
+      || EQ (attr, QCinverse_video)
+      || EQ (attr, QCreverse_video)
+      || EQ (attr, QCextend))
     result = list2 (Qt, Qnil);
 
   return result;
@@ -4784,6 +4813,9 @@ gui_supports_face_attributes_p (struct frame *f,
       || (!UNSPECIFIEDP (attrs[LFACE_INVERSE_INDEX])
 	  && face_attr_equal_p (attrs[LFACE_INVERSE_INDEX],
 				def_attrs[LFACE_INVERSE_INDEX]))
+      || (!UNSPECIFIEDP (attrs[LFACE_EXTEND_INDEX])
+	  && face_attr_equal_p (attrs[LFACE_EXTEND_INDEX],
+				def_attrs[LFACE_EXTEND_INDEX]))
       || (!UNSPECIFIEDP (attrs[LFACE_FOREGROUND_INDEX])
 	  && face_attr_equal_p (attrs[LFACE_FOREGROUND_INDEX],
 				def_attrs[LFACE_FOREGROUND_INDEX]))
@@ -5361,6 +5393,9 @@ realize_default_face (struct frame *f)
       if (UNSPECIFIEDP (LFACE_FONTSET (lface)))
 	ASET (lface, LFACE_FONTSET_INDEX, Qnil);
     }
+
+  if (UNSPECIFIEDP (LFACE_EXTEND (lface)))
+    ASET (lface, LFACE_EXTEND_INDEX, Qnil);
 
   if (UNSPECIFIEDP (LFACE_UNDERLINE (lface)))
     ASET (lface, LFACE_UNDERLINE_INDEX, Qnil);
@@ -6539,6 +6574,7 @@ syms_of_xfaces (void)
   DEFSYM (QCstrike_through, ":strike-through");
   DEFSYM (QCbox, ":box");
   DEFSYM (QCinherit, ":inherit");
+  DEFSYM (QCextend, ":extend");
 
   /* Symbols used for Lisp face attribute values.  */
   DEFSYM (QCcolor, ":color");

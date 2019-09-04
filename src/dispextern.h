@@ -1677,11 +1677,9 @@ struct face
   /* Pixel value or color index of background color.  */
   unsigned long background;
 
-  /* Pixel value or color index of underline color.  */
+  /* Pixel value or color index of underline, overlined,
+     strike-through, or box color.  */
   unsigned long underline_color;
-
-  /* Pixel value or color index of overlined, strike-through, or box
-     color.  */
   unsigned long overline_color;
   unsigned long strike_through_color;
   unsigned long box_color;
@@ -1863,6 +1861,9 @@ struct face_cache
   (UNSIGNED_CMP (ID, <, FRAME_FACE_CACHE (F)->used)	\
    ? FRAME_FACE_CACHE (F)->faces_by_id[ID]		\
    : NULL)
+
+#define FACE_EXTENSIBLE_P(F)			\
+  (!NILP (F->lface[LFACE_EXTEND_INDEX]))
 
 /* True if FACE is suitable for displaying ASCII characters.  */
 INLINE bool
@@ -2373,7 +2374,7 @@ struct it
   /* Face id of the iterator saved in case a glyph from dpvec contains
      a face.  The face is restored when all glyphs from dpvec have
      been delivered.  */
-  int saved_face_id;
+  int saved_face_id, saved_extend_face_id;
 
   /* Vector of glyphs for control character translation.  The pointer
      dpvec is set to ctl_chars when a control character is translated.
@@ -2435,7 +2436,7 @@ struct it
     ptrdiff_t prev_stop;
     ptrdiff_t base_level_stop;
     struct composition_it cmp_it;
-    int face_id;
+    int face_id, extend_face_id;
 
     /* Save values specific to a given method.  */
     union {
@@ -2492,6 +2493,9 @@ struct it
 
   /* Face to use.  */
   int face_id;
+
+  /* Face to extend at EOL/  */
+  int extend_face_id;
 
   /* Setting of buffer-local variable selective-display-ellipses.  */
   bool_bf selective_display_ellipsis_p : 1;
