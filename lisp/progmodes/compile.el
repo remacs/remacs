@@ -2600,7 +2600,8 @@ column zero points to the current message."
                                (goto-char mk)
 			       (beginning-of-line 1)
 			       (point)))
-         (set-window-point w mk))))
+         (set-window-point w mk))
+        (t (set-window-point w mk))))
 
 (defvar-local compilation-arrow-overlay nil
   "Overlay with the before-string property of `overlay-arrow-string'.
