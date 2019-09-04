@@ -3333,13 +3333,13 @@ It reads a directory name from an editable text field."
       (condition-case data ;Note: We get a spurious byte-compile warning here.
 	  (progn
 	    ;; Avoid a confusing end-of-file error.
-	    (skip-syntax-forward "\\s-")
+	    (skip-syntax-forward "-")
 	    (if (eobp)
 		(setq err "Empty sexp -- use nil?")
 	      (unless (widget-apply widget :match (read (current-buffer)))
 		(setq err (widget-get widget :type-error))))
 	    ;; Allow whitespace after expression.
-	    (skip-syntax-forward "\\s-")
+	    (skip-syntax-forward "-")
 	    (if (and (not (eobp))
 		     (not err))
 		(setq err (format "Junk at end of expression: %s"
