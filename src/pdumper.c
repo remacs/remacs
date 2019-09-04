@@ -4734,7 +4734,7 @@ dump_mmap_release_vm (struct dump_memory_map *map)
 static bool
 needs_mmap_retry_p (void)
 {
-#if defined (CYGWIN) || VM_SUPPORTED == VM_MS_WINDOWS
+#if defined CYGWIN || VM_SUPPORTED == VM_MS_WINDOWS || defined _AIX
   return true;
 #else
   return false;
