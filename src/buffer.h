@@ -1268,10 +1268,6 @@ buffer_window_count (struct buffer *b)
 			Buffer-local Variables
  ***********************************************************************/
 
-/* Number of per-buffer variables used.  */
-
-extern int last_per_buffer_idx;
-
 /* Return the offset in bytes of member VAR of struct buffer
    from the start of a buffer structure.  */
 
@@ -1296,23 +1292,21 @@ extern int last_per_buffer_idx;
 #define PER_BUFFER_VAR_IDX(VAR) \
     PER_BUFFER_IDX (PER_BUFFER_VAR_OFFSET (VAR))
 
+extern bool valid_per_buffer_idx (int);
+
 /* Value is true if the variable with index IDX has a local value
    in buffer B.  */
 
 #define PER_BUFFER_VALUE_P(B, IDX)		\
-    (((IDX) < 0 || IDX >= last_per_buffer_idx)	\
-     ? (emacs_abort (), false)			\
-     : ((B)->local_flags[IDX] != 0))
+  (eassert (valid_per_buffer_idx (IDX)),	\
+   (B)->local_flags[IDX])
 
 /* Set whether per-buffer variable with index IDX has a buffer-local
    value in buffer B.  VAL zero means it hasn't.  */
 
 #define SET_PER_BUFFER_VALUE_P(B, IDX, VAL)	\
-     do {						\
-       if ((IDX) < 0 || (IDX) >= last_per_buffer_idx)	\
-	 emacs_abort ();				\
-       (B)->local_flags[IDX] = (VAL);			\
-     } while (false)
+  (eassert (valid_per_buffer_idx (IDX)),	\
+   (B)->local_flags[IDX] = (VAL))
 
 /* Return the index value of the per-buffer variable at offset OFFSET
    in the buffer structure.
