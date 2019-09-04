@@ -13509,7 +13509,8 @@ hscroll_window_tree (Lisp_Object window)
 		 get glyph rows whose start and end have zero buffer
 		 positions, which we cannot handle below.  Just skip
 		 such windows.  */
-	      && CHARPOS (cursor_row->start.pos) >= BUF_BEG (w->contents)
+	      && (CHARPOS (cursor_row->start.pos)
+		  >= BUF_BEG (XBUFFER (w->contents)))
 	      /* For left-to-right rows, hscroll when cursor is either
 		 (i) inside the right hscroll margin, or (ii) if it is
 		 inside the left margin and the window is already
