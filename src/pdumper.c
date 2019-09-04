@@ -5057,7 +5057,7 @@ pdumper_cold_object_p_impl (const void *obj)
   return offset >= dump_private.header.cold_start;
 }
 
-enum Lisp_Type
+int
 pdumper_find_object_type_impl (const void *obj)
 {
   eassert (pdumper_object_p (obj));
@@ -5067,7 +5067,7 @@ pdumper_find_object_type_impl (const void *obj)
   const struct dump_reloc *reloc =
     dump_find_relocation (&dump_private.header.object_starts, offset);
   return (reloc != NULL && dump_reloc_get_offset (*reloc) == offset)
-    ? (enum Lisp_Type) reloc->type
+    ? reloc->type
     : PDUMPER_NO_OBJECT;
 }
 

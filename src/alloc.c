@@ -4617,11 +4617,11 @@ mark_maybe_pointer (void *p)
 
   if (pdumper_object_p (p))
     {
-      enum Lisp_Type type = pdumper_find_object_type (p);
-      if (type != PDUMPER_NO_OBJECT)
-        mark_object ((type == Lisp_Symbol)
-                     ? make_lisp_symbol(p)
-                     : make_lisp_ptr(p, type));
+      int type = pdumper_find_object_type (p);
+      if (pdumper_valid_object_type_p (type))
+        mark_object (type == Lisp_Symbol
+                     ? make_lisp_symbol (p)
+                     : make_lisp_ptr (p, type));
       /* See mark_maybe_object for why we can confidently return.  */
       return;
     }
