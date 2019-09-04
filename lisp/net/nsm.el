@@ -823,7 +823,7 @@ protocol."
       ;; First format the certificate and warnings.
       (with-current-buffer-window
        buffer nil nil
-       (insert (nsm-format-certificate status))
+       (when status (insert (nsm-format-certificate status)))
        (insert message)
        (goto-char (point-min))
        ;; Fill the first line of the message, which usually
