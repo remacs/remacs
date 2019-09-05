@@ -728,22 +728,27 @@ xd_append_arg (int dtype, Lisp_Object object, DBusMessageIter *iter)
 	    strcpy (signature, DBUS_TYPE_STRING_AS_STRING);
 
 	  else
-	    /* If the element type is DBUS_TYPE_SIGNATURE, and this is
-	       the only element, the value of this element is used as
-	       the array's element signature.  */
-	    if ((XD_OBJECT_TO_DBUS_TYPE (CAR_SAFE (object))
-		 == DBUS_TYPE_SIGNATURE)
-		&& STRINGP (CAR_SAFE (XD_NEXT_VALUE (object)))
-		&& NILP (CDR_SAFE (XD_NEXT_VALUE (object))))
-	      {
-		lispstpcpy (signature, CAR_SAFE (XD_NEXT_VALUE (object)));
-		object = CDR_SAFE (XD_NEXT_VALUE (object));
-	      }
+	    {
+	      /* If the element type is DBUS_TYPE_SIGNATURE, and this is
+		 the only element, the value of this element is used as
+		 the array's element signature.  */
+	      if (CONSP (object) && (XD_OBJECT_TO_DBUS_TYPE (XCAR (object))
+				     == DBUS_TYPE_SIGNATURE))
+		{
+		  Lisp_Object val = XD_NEXT_VALUE (object);
+		  if (CONSP (val) && STRINGP (XCAR (val)) && NILP (XCDR (val))
+		      && SBYTES (XCAR (val)) < DBUS_MAXIMUM_SIGNATURE_LENGTH)
+		    {
+		      lispstpcpy (signature, XCAR (val));
+		      object = Qnil;
+		    }
+		}
 
-	    else
-	      xd_signature (signature,
-			    XD_OBJECT_TO_DBUS_TYPE (CAR_SAFE (object)),
-			    dtype, CAR_SAFE (XD_NEXT_VALUE (object)));
+	      if (!NILP (object))
+		xd_signature (signature,
+			      XD_OBJECT_TO_DBUS_TYPE (CAR_SAFE (object)),
+			      dtype, CAR_SAFE (XD_NEXT_VALUE (object)));
+	    }
 
 	  XD_DEBUG_MESSAGE ("%c %s %s", dtype, signature,
 			    XD_OBJECT_TO_STRING (object));
