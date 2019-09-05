@@ -5783,18 +5783,18 @@ mark_and_sweep_weak_table_contents (void)
 
 /* Return the number of bytes to cons between GCs, assuming
    gc-cons-threshold is THRESHOLD and gc-cons-percentage is
-   GC_CONS_PERCENTAGE.  */
+   PERCENTAGE.  */
 static intmax_t
-consing_threshold (intmax_t threshold, Lisp_Object gc_cons_percentage)
+consing_threshold (intmax_t threshold, Lisp_Object percentage)
 {
   if (!NILP (Vmemory_full))
     return memory_full_cons_threshold;
   else
     {
       threshold = max (threshold, GC_DEFAULT_THRESHOLD / 10);
-      if (FLOATP (gc_cons_percentage))
+      if (FLOATP (percentage))
 	{
-	  double tot = (XFLOAT_DATA (gc_cons_percentage)
+	  double tot = (XFLOAT_DATA (percentage)
 			* total_bytes_of_live_objects ());
 	  if (threshold < tot)
 	    {
@@ -5825,11 +5825,12 @@ static Lisp_Object
 watch_gc_cons_threshold (Lisp_Object symbol, Lisp_Object newval,
 			 Lisp_Object operation, Lisp_Object where)
 {
-  intmax_t new_threshold;
-  int diff = (INTEGERP (newval) && integer_to_intmax (newval, &new_threshold)
-	      ? (consing_threshold (new_threshold, Vgc_cons_percentage)
-		 - consing_threshold (gc_cons_threshold, Vgc_cons_percentage))
-	      : 0);
+  Lisp_Object percentage = Vgc_cons_percentage;
+  intmax_t threshold;
+  intmax_t diff = (INTEGERP (newval) && integer_to_intmax (newval, &threshold)
+		   ? (consing_threshold (threshold, percentage)
+		      - consing_threshold (gc_cons_threshold, percentage))
+		   : 0);
   return bump_consing_until_gc (diff);
 }
 
@@ -5838,8 +5839,9 @@ static Lisp_Object
 watch_gc_cons_percentage (Lisp_Object symbol, Lisp_Object newval,
 			  Lisp_Object operation, Lisp_Object where)
 {
-  int diff = (consing_threshold (consing_until_gc, newval)
-	      - consing_threshold (consing_until_gc, Vgc_cons_percentage));
+  intmax_t threshold = gc_cons_threshold;
+  intmax_t diff = (consing_threshold (threshold, newval)
+		   - consing_threshold (threshold, Vgc_cons_percentage));
   return bump_consing_until_gc (diff);
 }
 
