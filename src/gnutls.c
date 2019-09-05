@@ -1520,12 +1520,7 @@ returned as the :certificate entry.  */)
 #endif
 
   /* Renegotiation Indication */
-#ifdef GNUTLS_TLS1_3
-  bool older_proto = proto < GNUTLS_TLS1_3;
-#else
-  bool older_proto = true;
-#endif
-  if (older_proto)
+  if (proto <= GNUTLS_TLS1_2)
     result = nconc2
       (result, list2 (intern (":safe-renegotiation"),
 		      gnutls_safe_renegotiation_status (state) ? Qt : Qnil));
