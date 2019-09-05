@@ -373,8 +373,13 @@ extern int emacs_setenv_TZ (char const *);
 #undef noinline
 #endif
 
-/* Use Gnulib's extern-inline module for extern inline functions.
-   An include file foo.h should prepend FOO_INLINE to function
+/* INLINE marks functions defined in Emacs-internal C headers.
+   INLINE is implemented via C99-style 'extern inline' if Emacs is built
+   with -DEMACS_EXTERN_INLINE; otherwise it is implemented via 'static'.
+   EMACS_EXTERN_INLINE is no longer the default, as 'static' seems to
+   have better performance with GCC.
+
+   An include file foo.h should prepend INLINE to function
    definitions, with the following overall pattern:
 
       [#include any other .h files first.]
@@ -399,20 +404,40 @@ extern int emacs_setenv_TZ (char const *);
    For Emacs, this is done by having emacs.c first '#define INLINE
    EXTERN_INLINE' and then include every .h file that uses INLINE.
 
-   The INLINE_HEADER_BEGIN and INLINE_HEADER_END suppress bogus
-   warnings in some GCC versions; see ../m4/extern-inline.m4.
+   The INLINE_HEADER_BEGIN and INLINE_HEADER_END macros suppress bogus
+   warnings in some GCC versions; see ../m4/extern-inline.m4.  */
+
+#ifdef EMACS_EXTERN_INLINE
+
+/* Use Gnulib's extern-inline module for extern inline functions.
 
    C99 compilers compile functions like 'incr' as C99-style extern
    inline functions.  Buggy GCC implementations do something similar with
    GNU-specific keywords.  Buggy non-GCC compilers use static
    functions, which bloats the code but is good enough.  */
 
-#ifndef INLINE
-# define INLINE _GL_INLINE
+# ifndef INLINE
+#  define INLINE _GL_INLINE
+# endif
+# define EXTERN_INLINE _GL_EXTERN_INLINE
+# define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
+# define INLINE_HEADER_END _GL_INLINE_HEADER_END
+
+#else
+
+/* Use 'static' instead of 'extern inline' because 'static' typically
+   has better performance for Emacs.  Do not use the 'inline' keyword,
+   as modern compilers inline automatically.  ATTRIBUTE_UNUSED
+   pacifies gcc -Wunused-function.  */
+
+# ifndef INLINE
+#  define INLINE EXTERN_INLINE
+# endif
+# define EXTERN_INLINE static ATTRIBUTE_UNUSED
+# define INLINE_HEADER_BEGIN
+# define INLINE_HEADER_END
+
 #endif
-#define EXTERN_INLINE _GL_EXTERN_INLINE
-#define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
-#define INLINE_HEADER_END _GL_INLINE_HEADER_END
 
 /* 'int x UNINIT;' is equivalent to 'int x;', except it cajoles GCC
    into not warning incorrectly about use of an uninitialized variable.  */
