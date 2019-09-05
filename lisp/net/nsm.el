@@ -171,7 +171,7 @@ otherwise.
 See also: `nsm-check-tls-connection', `nsm-save-host-names',
 `nsm-settings-file'"
   :version "27.1"
-  :type '(repeat (cons (symbol :tag "Check function")
+  :type '(repeat (list (symbol :tag "Check function")
                        (choice :tag "Level"
                                :value medium
                                (const :tag "Low" low)
