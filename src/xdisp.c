@@ -1478,7 +1478,10 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 	= window_parameter (w, Qtab_line_format);
 
       w->tab_line_height
-	= display_mode_line (w, TAB_LINE_FACE_ID, window_tab_line_format);
+	= display_mode_line (w, TAB_LINE_FACE_ID,
+			     NILP (window_tab_line_format)
+			     ? BVAR (current_buffer, tab_line_format)
+			     : window_tab_line_format);
     }
 
   if (window_wants_header_line (w))
@@ -24743,7 +24746,10 @@ display_mode_lines (struct window *w)
       Lisp_Object window_tab_line_format
 	= window_parameter (w, Qtab_line_format);
 
-      display_mode_line (w, TAB_LINE_FACE_ID, window_tab_line_format);
+      display_mode_line (w, TAB_LINE_FACE_ID,
+			 NILP (window_tab_line_format)
+			 ? BVAR (current_buffer, tab_line_format)
+			 : window_tab_line_format);
       ++n;
     }
 

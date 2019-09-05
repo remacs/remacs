@@ -539,6 +539,10 @@ struct buffer
      of windows.  Nil means don't display that line.  */
   Lisp_Object header_line_format_;
 
+  /* Analogous to mode_line_format for the line displayed at the top
+     of windows.  Nil means don't display that line.  */
+  Lisp_Object tab_line_format_;
+
   /* Keys that are bound local to this buffer.  */
   Lisp_Object keymap_;
 

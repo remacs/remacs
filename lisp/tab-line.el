@@ -251,8 +251,6 @@ using the `previous-buffer' command."
       (force-mode-line-update))))
 
 
-(defvar tab-line-format '(:eval (tab-line-format)))
-
 ;;;###autoload
 (define-minor-mode global-tab-line-mode
   "Display window-local tab line."
@@ -260,24 +258,8 @@ using the `previous-buffer' command."
   :type 'boolean
   :global t
   :init-value nil
-  :initialize (lambda (sym val)
-                (custom-initialize-default sym val)
-                (when global-tab-line-mode
-                  (add-hook 'pre-redisplay-functions #'tab-line-update-window-parameter)))
-  (if global-tab-line-mode
-      (progn
-        (add-hook 'pre-redisplay-functions #'tab-line-update-window-parameter)
-        (force-mode-line-update))
-    (remove-hook 'pre-redisplay-functions #'tab-line-update-window-parameter)
-    (walk-windows (lambda (w) (tab-line-update-window-parameter w)) t)))
-
-(defun tab-line-update-window-parameter (window)
-  (let* ((name 'tab-line-format)
-         (value (window-parameter window name))
-         (active global-tab-line-mode))
-    (when (xor value active)
-      (set-window-parameter
-       window name (unless value tab-line-format)))))
+  (setq-default tab-line-format (when global-tab-line-mode
+                                  '(:eval (tab-line-format)))))
 
 
 (provide 'tab-line)
