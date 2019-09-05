@@ -55,7 +55,6 @@ compatibility concerns.
 See the Emacs manual for a description of all things that are
 checked and warned against."
   :version "25.1"
-  :group 'nsm
   :type '(choice (const :tag "Low" low)
                  (const :tag "Medium" medium)
                  (const :tag "High" high)
@@ -76,7 +75,6 @@ connecting to hosts on a local network.
 Make sure you know what you are doing before enabling this
 option."
   :version "27.1"
-  :group 'nsm
   :type '(choice (const :tag "On" t)
                  (const :tag "Off" nil)
                  (function :tag "Custom function")))
@@ -85,7 +83,6 @@ option."
 						 user-emacs-directory)
   "The file the security manager settings will be stored in."
   :version "25.1"
-  :group 'nsm
   :type 'file)
 
 (defcustom nsm-save-host-names nil
@@ -93,7 +90,6 @@ option."
 By default, only hosts that have exceptions have their names
 stored in plain text."
   :version "25.1"
-  :group 'nsm
   :type 'boolean)
 
 (defvar nsm-noninteractive nil
@@ -175,8 +171,7 @@ otherwise.
 See also: `nsm-check-tls-connection', `nsm-save-host-names',
 `nsm-settings-file'"
   :version "27.1"
-  :group 'nsm
-  :type '(repeat (cons (function :tag "Check function")
+  :type '(repeat (cons (symbol :tag "Check function")
                        (choice :tag "Level"
                                :value medium
                                (const :tag "Low" low)
