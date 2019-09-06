@@ -1307,9 +1307,14 @@ containing it, until no links are left at any level.
       (let ((handler (find-file-name-handler filename 'file-truename)))
 	;; For file name that has a special handler, call handler.
 	;; This is so that ange-ftp can save time by doing a no-op.
-	(if handler
-	    (setq filename (funcall handler 'file-truename filename)
-		  done t)
+	(or
+	 (if handler
+	     (setq filename (funcall handler 'file-truename filename)
+		   done t)
+	   (condition-case nil
+	       (setq filename (fileio--truename filename)
+		     done t)
+	     (file-missing nil)))
 	  (let ((dir (or (file-name-directory filename) default-directory))
 		target dirfile)
 	    ;; Get the truename of the directory.
