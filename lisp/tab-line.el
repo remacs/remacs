@@ -113,9 +113,14 @@
   "Local keymap to close `tab-line-mode' window tabs.")
 
 (defvar tab-line-separator " ")
-(defvar tab-line-tab-name-ellipsis (if (char-displayable-p ?…) "…" "..."))
-(defvar tab-line-tab-name-add      (if (char-displayable-p ?➕) "➕" "[+]"))
-(defvar tab-line-tab-name-close    (if (char-displayable-p ?⮿) "⮿" "[x]"))
+(defvar tab-line-tab-name-ellipsis
+  (if (char-displayable-p ?…) "…" "..."))
+(defvar tab-line-tab-name-add
+  (if (char-displayable-p ?➕) "➕" "[+]"))
+(defvar tab-line-tab-name-close
+  ;; Need to add space after Unicode char on terminals
+  ;; to avoid clobbering next char by wide Unicode char.
+  (if (char-displayable-p ?⮿) (if window-system "⮿" "⮿ ") "[x]"))
 
 
 (defun tab-line-tab-name (buffer &optional buffers)

@@ -171,6 +171,16 @@ Return its existing value or a new value."
 
 (defun tab-bar-make-keymap-1 ()
   "Generate an actual keymap from `tab-bar-map', without caching."
+  ;; Can't check for char-displayable-p in defvar
+  ;; because this file is preloaded.
+  (unless tab-bar-tab-name-add
+    (setq tab-bar-tab-name-add
+          (if (char-displayable-p ?➕) "➕" "[+]")))
+  (unless tab-bar-tab-name-close
+    (setq tab-bar-tab-name-close
+          ;; Need to add space after Unicode char on terminals
+          ;; to avoid clobbering next char by wide Unicode char.
+          (if (char-displayable-p ?⮿) (if window-system "⮿" "⮿ ") "[x]")))
   (let ((i 0))
     (append
      '(keymap (mouse-1 . tab-bar-mouse))
@@ -181,7 +191,7 @@ Return its existing value or a new value."
                ((eq (car tab) 'current-tab)
                 `(current-tab
                   menu-item
-                  ,(propertize "Current tab" 'face 'tab-bar-tab)
+                  ,(propertize (cdr (assq 'name tab)) 'face 'tab-bar-tab)
                   ignore
                   :help "Current tab"))
                (t
@@ -194,8 +204,7 @@ Return its existing value or a new value."
                   :help "Click to visit tab")))
               `(,(intern (format "close-tab-%i" i))
                 menu-item
-                ,(concat (propertize (or tab-bar-tab-name-close
-                                         (if (char-displayable-p ?⮿) "⮿" "[x]"))
+                ,(concat (propertize tab-bar-tab-name-close
                                      'face (if (eq (car tab) 'current-tab)
                                                'tab-bar-tab
                                              'tab-bar-tab-inactive))
@@ -206,8 +215,7 @@ Return its existing value or a new value."
                 :help "Click to close tab")))
       (tab-bar-tabs))
      `((add-tab menu-item
-                ,(propertize (or tab-bar-tab-name-add
-                                 (if (char-displayable-p ?➕) "➕" "[+]"))
+                ,(propertize tab-bar-tab-name-add
                              'face 'tab-bar-tab-inactive)
                 tab-bar-add-tab
                 :help "Click to add tab")))))
