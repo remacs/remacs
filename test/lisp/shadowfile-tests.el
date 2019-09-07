@@ -126,9 +126,9 @@ guaranteed by the originator of a cluster definition."
     (unwind-protect
 	;; We must mock `read-from-minibuffer' and `read-string', in
 	;; order to avoid interactive arguments.
-	(cl-letf* (((symbol-function 'read-from-minibuffer)
+	(cl-letf* (((symbol-function #'read-from-minibuffer)
 		    (lambda (&rest args) (pop mocked-input)))
-		   ((symbol-function 'read-string)
+		   ((symbol-function #'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
           ;; Cleanup & initialize.
@@ -140,7 +140,7 @@ guaranteed by the originator of a cluster definition."
 		primary shadow-system-name
 		regexp (shadow-regexp-superquote primary)
 		mocked-input `(,cluster ,primary ,regexp))
-	  (call-interactively 'shadow-define-cluster)
+	  (call-interactively #'shadow-define-cluster)
 	  (should
 	   (string-equal
 	    (shadow-cluster-name (shadow-get-cluster cluster)) cluster))
@@ -164,7 +164,7 @@ guaranteed by the originator of a cluster definition."
 		mocked-input `(,cluster ,cluster ,primary ,regexp))
           (with-current-buffer (messages-buffer)
             (narrow-to-region (point-max) (point-max)))
-	  (call-interactively 'shadow-define-cluster)
+	  (call-interactively #'shadow-define-cluster)
 	  (should
            (string-match
             (regexp-quote "Not a valid primary!")
@@ -185,7 +185,7 @@ guaranteed by the originator of a cluster definition."
 		mocked-input `(,cluster ,primary ,cluster ,regexp))
           (with-current-buffer (messages-buffer)
             (narrow-to-region (point-max) (point-max)))
-	  (call-interactively 'shadow-define-cluster)
+	  (call-interactively #'shadow-define-cluster)
 	  (should
            (string-match
             (regexp-quote "Regexp doesn't include the primary host!")
@@ -206,7 +206,7 @@ guaranteed by the originator of a cluster definition."
 		(file-remote-p shadow-test-remote-temporary-file-directory)
 		regexp (shadow-regexp-superquote primary)
 		mocked-input `(,cluster ,primary ,regexp))
-	  (call-interactively 'shadow-define-cluster)
+	  (call-interactively #'shadow-define-cluster)
 	  (should
 	   (string-equal
 	    (shadow-cluster-name (shadow-get-cluster cluster)) cluster))
@@ -243,9 +243,9 @@ guaranteed by the originator of a cluster definition."
     (unwind-protect
 	;; We must mock `read-from-minibuffer' and `read-string', in
 	;; order to avoid interactive arguments.
-	(cl-letf* (((symbol-function 'read-from-minibuffer)
+	(cl-letf* (((symbol-function #'read-from-minibuffer)
 		    (lambda (&rest args) (pop mocked-input)))
-		   ((symbol-function 'read-string)
+		   ((symbol-function #'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
           ;; Cleanup & initialize.
@@ -596,9 +596,9 @@ guaranteed by the originator of a cluster definition."
     (unwind-protect
 	;; We must mock `read-from-minibuffer' and `read-string', in
 	;; order to avoid interactive arguments.
-	(cl-letf* (((symbol-function 'read-from-minibuffer)
+	(cl-letf* (((symbol-function #'read-from-minibuffer)
 		    (lambda (&rest args) (pop mocked-input)))
-		   ((symbol-function 'read-string)
+		   ((symbol-function #'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
           ;; Cleanup & initialize.
@@ -629,7 +629,7 @@ guaranteed by the originator of a cluster definition."
 		mocked-input `(,cluster1 ,file1 ,cluster2 ,file2 ,(kbd "RET")))
 	  (with-temp-buffer
             (set-visited-file-name file1)
-	    (call-interactively 'shadow-define-literal-group)
+	    (call-interactively #'shadow-define-literal-group)
             (set-buffer-modified-p nil))
 
           ;; `shadow-literal-groups' is a list of lists.
@@ -657,9 +657,9 @@ guaranteed by the originator of a cluster definition."
     (unwind-protect
 	;; We must mock `read-from-minibuffer' and `read-string', in
 	;; order to avoid interactive arguments.
-	(cl-letf* (((symbol-function 'read-from-minibuffer)
+	(cl-letf* (((symbol-function #'read-from-minibuffer)
 		    (lambda (&rest args) (pop mocked-input)))
-		   ((symbol-function 'read-string)
+		   ((symbol-function #'read-string)
 		    (lambda (&rest args) (pop mocked-input))))
 
           ;; Cleanup & initialize.
@@ -686,7 +686,8 @@ guaranteed by the originator of a cluster definition."
                                ,cluster1 ,cluster2 ,(kbd "RET")))
 	  (with-temp-buffer
             (set-visited-file-name nil)
-	    (call-interactively 'shadow-define-regexp-group))
+	    (call-interactively #'shadow-define-regexp-group)
+            (set-buffer-modified-p nil))
 
           ;; `shadow-regexp-groups' is a list of lists.
           (should (consp shadow-regexp-groups))
@@ -733,7 +734,9 @@ guaranteed by the originator of a cluster definition."
 		regexp (shadow-regexp-superquote primary))
 	  (shadow-set-cluster cluster1 primary regexp)
           (when shadow-debug
-            (message "%s %s %s %s" cluster1 primary regexp shadow-clusters))
+            (message
+             "shadow-test08-shadow-todo: %s %s %s %s"
+             cluster1 primary regexp shadow-clusters))
 
 	  (setq cluster2 "cluster2"
 		primary
@@ -741,7 +744,9 @@ guaranteed by the originator of a cluster definition."
 		regexp (shadow-regexp-superquote primary))
 	  (shadow-set-cluster cluster2 primary regexp)
           (when shadow-debug
-            (message "%s %s %s %s" cluster2 primary regexp shadow-clusters))
+            (message
+             "shadow-test08-shadow-todo: %s %s %s %s"
+             cluster2 primary regexp shadow-clusters))
 
 	  ;; Define a literal group.
 	  (setq file
@@ -750,7 +755,8 @@ guaranteed by the originator of a cluster definition."
                 shadow-literal-groups
                 `((,(concat "/cluster1:" file) ,(concat "/cluster2:" file))))
           (when shadow-debug
-            (message "%s %s" file shadow-literal-groups))
+            (message
+             "shadow-test08-shadow-todo: %s %s" file shadow-literal-groups))
 
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
@@ -759,7 +765,7 @@ guaranteed by the originator of a cluster definition."
             (save-buffer))
           (when shadow-debug
             (message
-             "%s %s"
+             "shadow-test08-shadow-todo: %s %s"
              (cons file (shadow-contract-file-name (concat "/cluster2:" file)))
              shadow-files-to-copy))
 	  (should
@@ -774,7 +780,7 @@ guaranteed by the originator of a cluster definition."
             (save-buffer))
           (when shadow-debug
             (message
-             "%s %s"
+             "shadow-test08-shadow-todo: %s %s"
              (cons
               (concat (shadow-site-primary cluster2) file)
               (shadow-contract-file-name (concat "/cluster1:" file)))
@@ -794,7 +800,8 @@ guaranteed by the originator of a cluster definition."
                    ,(concat (shadow-site-primary cluster2)
                             (shadow-regexp-superquote file)))))
           (when shadow-debug
-            (message "%s %s" file shadow-regexp-groups))
+            (message
+             "shadow-test08-shadow-todo: %s %s" file shadow-regexp-groups))
 
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
@@ -803,7 +810,7 @@ guaranteed by the originator of a cluster definition."
             (save-buffer))
           (when shadow-debug
             (message
-             "%s %s"
+             "shadow-test08-shadow-todo: %s %s"
              (cons file (shadow-contract-file-name (concat "/cluster2:" file)))
              shadow-files-to-copy))
 	  (should
@@ -818,7 +825,7 @@ guaranteed by the originator of a cluster definition."
             (save-buffer))
           (when shadow-debug
             (message
-             "%s %s"
+             "shadow-test08-shadow-todo: %s %s"
              (cons
               (concat (shadow-site-primary cluster2) file)
               (shadow-contract-file-name (concat "/cluster1:" file)))
@@ -898,7 +905,7 @@ guaranteed by the originator of a cluster definition."
 	  ;; We must mock `write-region', in order to check proper
 	  ;; action.
           (add-function
-           :before (symbol-function 'write-region)
+           :before (symbol-function #'write-region)
 	   (lambda (&rest args)
              (when (and (buffer-file-name) mocked-input)
                (should (equal (buffer-file-name) (pop mocked-input)))))
@@ -913,7 +920,7 @@ guaranteed by the originator of a cluster definition."
              (looking-at (regexp-quote "(setq shadow-files-to-copy nil)")))))
 
       ;; Cleanup.
-      (remove-function (symbol-function 'write-region) "write-region-mock")
+      (remove-function (symbol-function #'write-region) "write-region-mock")
       (dolist (elt `(,file ,(concat (shadow-site-primary cluster2) file)))
         (ignore-errors
           (with-current-buffer (get-file-buffer elt)
