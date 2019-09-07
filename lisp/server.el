@@ -931,7 +931,6 @@ This handles splitting the command if it would be bigger than
     ;; to open a frame on a new display, we might end up with an unusable
     ;; frame because input from that display will be blocked (until exiting
     ;; the minibuffer).  Better exit this minibuffer right away.
-    ;; Similarly with recursive-edits such as the splash screen.
     (run-with-timer 0 nil (lambda () (server-execute-continuation proc)))
     (top-level)))
 
