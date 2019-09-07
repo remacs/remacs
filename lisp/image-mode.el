@@ -727,9 +727,8 @@ was inserted."
                                      jka-compr-really-do-compress))
                            ;; This means the buffer holds the
                            ;; decrypted content (bug#21870).
-                           (not (and (boundp 'epa-file-encrypt-to)
-                                     (local-variable-p
-                                      'epa-file-encrypt-to))))))
+                           (not (local-variable-p
+                                 'epa-file-encrypt-to)))))
 	 (file-or-data
           (if data-p
 	      (let ((str
