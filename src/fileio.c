@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include "sysstdio.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2693,46 +2692,6 @@ file_name_absolute_p (char const *filename)
 	  || (filename[0] == '~'
 	      && (!filename[1] || IS_DIRECTORY_SEP (filename[1])
 		  || user_homedir (&filename[1]))));
-}
-
-DEFUN ("fileio--truename", Ffileio__truename, Sfileio__truename, 1, 1, 0,
-       doc: /* Return the true name of FILENAME, without file name handlers.
-
-The returned string is an absolute file name that does not involve
-\".\", \"..\", or symbolic links.  Signal an error if FILENAME does
-not exist or if its true name cannot be determined.  */)
-     (Lisp_Object filename)
-{
-  CHECK_STRING (filename);
-  Lisp_Object absname = Fexpand_file_name (filename, Qnil);
-  Lisp_Object encoded_absname = ENCODE_FILE (absname);
-  ptrdiff_t encoded_len = SBYTES (encoded_absname);
-  char *encoded = SSDATA (encoded_absname);
-  bool append_slash = (1 < encoded_len
-		       && IS_DIRECTORY_SEP (encoded[encoded_len - 1])
-		       && !IS_DIRECTORY_SEP (encoded[encoded_len - 2]));
-  char *truename = realpath (encoded, NULL);
-  if (!truename)
-    report_file_error ("Deriving truename", filename);
-  ptrdiff_t truename_len = strlen (truename);
-  if (truename_len == encoded_len - append_slash
-      && memcmp (truename, encoded, truename_len) == 0)
-    {
-      /* ABSNAME is already the true name.  */
-      xfree (truename);
-      return absname;
-    }
-  else
-    {
-      if (append_slash)
-	{
-	  truename = xrealloc (truename, truename_len + 2);
-	  strcpy (truename + truename_len, "/");
-	}
-      Lisp_Object unibyte_truename = build_unibyte_string (truename);
-      xfree (truename);
-      return DECODE_FILE (unibyte_truename);
-    }
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
@@ -6469,7 +6428,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sadd_name_to_file);
   defsubr (&Smake_symbolic_link);
   defsubr (&Sfile_name_absolute_p);
-  defsubr (&Sfileio__truename);
   defsubr (&Sfile_exists_p);
   defsubr (&Sfile_executable_p);
   defsubr (&Sfile_readable_p);
