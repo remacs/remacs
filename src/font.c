@@ -5509,7 +5509,14 @@ and cannot switch to a smaller font for those characters, set
 this variable non-nil.
 Disabling compaction of font caches might enlarge the Emacs memory
 footprint in sessions that use lots of different fonts.  */);
+
+#ifdef WINDOWSNT
+  /* Compacting font caches causes slow redisplay on Windows with many
+     large fonts, so we disable it by default.  */
+  inhibit_compacting_font_caches = 1;
+#else
   inhibit_compacting_font_caches = 0;
+#endif
 
   DEFVAR_BOOL ("xft-ignore-color-fonts",
 	       Vxft_ignore_color_fonts,

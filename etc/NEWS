@@ -2663,6 +2663,11 @@ is being used, except in Far Eastern locales.  When this variable is
 non-zero, Emacs at startup sets 'locale-coding-system' to the
 corresponding encoding, instead of using 'w32-ansi-code-page'.
 
+---
+** The default value of 'inhibit-compacting-font-caches' is t on MS-Windows.
+Experience shows that compacting font caches causes more trouble on
+MS-Windows than it helps.
+
 +++
 ** On NS the behaviour of drag and drop can now be modified by use of
 modifier keys in line with Apples guidelines.  This makes the drag and
