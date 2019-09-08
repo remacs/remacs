@@ -2906,7 +2906,16 @@ Supported keywords for slots are:
 		(error "Duplicate slots named %s in %s" slot name))
 	    (let ((accessor (intern (format "%s%s" conc-name slot)))
                   (default-value (pop desc))
-                  (doc (plist-get desc :documentation)))
+                  (doc (plist-get desc :documentation))
+                  (access-body
+                   `(progn
+                      ,@(and pred-check
+			     (list `(or ,pred-check
+                                        (signal 'wrong-type-argument
+                                                (list ',name cl-x)))))
+                      ,(if (memq type '(nil vector)) `(aref cl-x ,pos)
+                         (if (= pos 0) '(car cl-x)
+                           `(nth ,pos cl-x))))))
 	      (push slot slots)
 	      (push default-value defaults)
 	      ;; The arg "cl-x" is referenced by name in eg pred-form
@@ -2916,13 +2925,7 @@ Supported keywords for slots are:
                                 slot name
                                 (if doc (concat "\n" doc) ""))
                        (declare (side-effect-free t))
-                       ,@(and pred-check
-			      (list `(or ,pred-check
-                                         (signal 'wrong-type-argument
-                                                 (list ',name cl-x)))))
-                       ,(if (memq type '(nil vector)) `(aref cl-x ,pos)
-                          (if (= pos 0) '(car cl-x)
-                            `(nth ,pos cl-x))))
+                       ,access-body)
                     forms)
               (when (cl-oddp (length desc))
                 (push
@@ -2942,11 +2945,18 @@ Supported keywords for slots are:
                      forms)
                     (push kw desc)
                     (setcar defaults nil))))
-              (if (plist-get desc ':read-only)
-                  (push `(gv-define-expander ,accessor
-                           (lambda (_cl-do _cl-x)
-                             (error "%s is a read-only slot" ',accessor)))
-                        forms)
+              (cond
+               ((eq defsym 'defun)
+                (unless (plist-get desc ':read-only)
+                  (push `(defun ,(gv-setter accessor) (val cl-x)
+                           (setf ,access-body val))
+                        forms)))
+               ((plist-get desc ':read-only)
+                (push `(gv-define-expander ,accessor
+                         (lambda (_cl-do _cl-x)
+                           (error "%s is a read-only slot" ',accessor)))
+                      forms))
+               (t
                 ;; For normal slots, we don't need to define a setf-expander,
                 ;; since gv-get can use the compiler macro to get the
                 ;; same result.
@@ -2964,7 +2974,7 @@ Supported keywords for slots are:
                 ;;             ,(and pred-check `',pred-check)
                 ;;             ,pos)))
                 ;;       forms)
-                )
+                ))
 	      (if print-auto
 		  (nconc print-func
 			 (list `(princ ,(format " %s" slot) cl-s)
