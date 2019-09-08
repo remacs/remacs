@@ -4149,16 +4149,11 @@ handle_fontified_prop (struct it *it)
  ***********************************************************************/
 
 static enum prop_handled
-handle_face_prop_general (struct it *it,
+handle_face_prop_general (struct it *it, int *face_id_ptr,
                           enum lface_attribute_index attr_filter)
 {
-  int new_face_id, *face_id_ptr;
+  int new_face_id;
   ptrdiff_t next_stop;
-
-  if (attr_filter == LFACE_EXTEND_INDEX)
-    face_id_ptr = &(it->extend_face_id);
-  else
-    face_id_ptr = &(it->face_id);
 
   if (!STRINGP (it->string))
     {
@@ -4313,7 +4308,7 @@ handle_face_prop_general (struct it *it,
 static enum prop_handled
 handle_face_prop (struct it *it)
 {
-  return handle_face_prop_general (it, 0);
+  return handle_face_prop_general (it, &(it->face_id), 0);
 }
 
 
@@ -21598,7 +21593,7 @@ extend_face_to_end_of_line (struct it *it)
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
 
-  handle_face_prop_general (it, LFACE_EXTEND_INDEX);
+  handle_face_prop_general (it, &(it->extend_face_id), LFACE_EXTEND_INDEX);
 
   /* Face extension extends the background and box of IT->extend_face_id
      to the end of the line.  If the background equals the background
