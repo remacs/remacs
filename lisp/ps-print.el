@@ -1320,28 +1320,17 @@ Please send all bug fixes and enhancements to
 ;; Known bugs and limitations of ps-print
 ;; --------------------------------------
 ;;
-;; Although color printing will work in XEmacs 19.12, it doesn't work well; in
-;; particular, bold or italic fonts don't print in the right background color.
-;;
-;; Invisible properties aren't correctly ignored in XEmacs 19.12.
-;;
 ;; Automatic font-attribute detection doesn't work well, especially with
 ;; hilit19 and older versions of get-create-face.  Users having problems with
 ;; auto-font detection should use the lists `ps-italic-faces', `ps-bold-faces'
 ;; and `ps-underlined-faces' and/or turn off automatic detection by setting
 ;; `ps-auto-font-detect' to nil.
 ;;
-;; Automatic font-attribute detection doesn't work with XEmacs 19.12 in tty
-;; mode; use the lists `ps-italic-faces', `ps-bold-faces' and
-;; `ps-underlined-faces' instead.
-;;
 ;; Still too slow; could use some hand-optimization.
 ;;
 ;; Default background color isn't working.
 ;;
 ;; Faces are always treated as opaque.
-;;
-;; Epoch, Lucid and Emacs 22 not supported.  At all.
 ;;
 ;; Fixed-pitch fonts work better for line folding, but are not required.
 ;;
