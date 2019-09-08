@@ -297,6 +297,10 @@ static ptrdiff_t pure_bytes_used_non_lisp;
 
 static intptr_t garbage_collection_inhibited;
 
+/* The GC threshold in bytes, the last time it was calculated
+   from gc-cons-threshold and gc-cons-percentage.  */
+static intmax_t gc_threshold;
+
 /* If nonzero, this is a warning delivered by malloc and not yet
    displayed.  */
 
@@ -5808,15 +5812,28 @@ consing_threshold (intmax_t threshold, Lisp_Object percentage)
     }
 }
 
-/* Increment consing_until_gc by DIFF, avoiding overflow.  */
+/* Adjust consing_until_gc, assuming gc-cons-threshold is THRESHOLD and
+   gc-cons-percentage is PERCENTAGE.  */
 static Lisp_Object
-bump_consing_until_gc (intmax_t diff)
+bump_consing_until_gc (intmax_t threshold, Lisp_Object percentage)
 {
   /* If consing_until_gc is negative leave it alone, since this prevents
      negative integer overflow and a GC would have been done soon anyway.  */
-  if (0 <= consing_until_gc
-      && INT_ADD_WRAPV (consing_until_gc, diff, &consing_until_gc))
-    consing_until_gc = INTMAX_MAX;
+  if (0 <= consing_until_gc)
+    {
+      threshold = consing_threshold (threshold, percentage);
+      intmax_t sum;
+      if (INT_ADD_WRAPV (consing_until_gc, threshold - gc_threshold, &sum))
+	{
+	  /* Scale the threshold down so that consing_until_gc does
+	     not overflow.  */
+	  sum = INTMAX_MAX;
+	  threshold = INTMAX_MAX - consing_until_gc + gc_threshold;
+	}
+      consing_until_gc = sum;
+      gc_threshold = threshold;
+    }
+
   return Qnil;
 }
 
@@ -5825,13 +5842,10 @@ static Lisp_Object
 watch_gc_cons_threshold (Lisp_Object symbol, Lisp_Object newval,
 			 Lisp_Object operation, Lisp_Object where)
 {
-  Lisp_Object percentage = Vgc_cons_percentage;
   intmax_t threshold;
-  intmax_t diff = (INTEGERP (newval) && integer_to_intmax (newval, &threshold)
-		   ? (consing_threshold (threshold, percentage)
-		      - consing_threshold (gc_cons_threshold, percentage))
-		   : 0);
-  return bump_consing_until_gc (diff);
+  if (! (INTEGERP (newval) && integer_to_intmax (newval, &threshold)))
+    return Qnil;
+  return bump_consing_until_gc (threshold, Vgc_cons_percentage);
 }
 
 /* Watch changes to gc-cons-percentage.  */
@@ -5839,10 +5853,7 @@ static Lisp_Object
 watch_gc_cons_percentage (Lisp_Object symbol, Lisp_Object newval,
 			  Lisp_Object operation, Lisp_Object where)
 {
-  intmax_t threshold = gc_cons_threshold;
-  intmax_t diff = (consing_threshold (threshold, newval)
-		   - consing_threshold (threshold, Vgc_cons_percentage));
-  return bump_consing_until_gc (diff);
+  return bump_consing_until_gc (gc_cons_threshold, newval);
 }
 
 /* Subroutine of Fgarbage_collect that does most of the work.  */
@@ -5987,8 +5998,8 @@ garbage_collect_1 (struct gcstat *gcst)
 
   unblock_input ();
 
-  consing_until_gc = consing_threshold (gc_cons_threshold,
-					Vgc_cons_percentage);
+  consing_until_gc = gc_threshold
+    = consing_threshold (gc_cons_threshold, Vgc_cons_percentage);
 
   if (garbage_collection_messages && NILP (Vmemory_full))
     {
