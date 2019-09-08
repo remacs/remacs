@@ -2609,16 +2609,13 @@ column zero points to the current message."
 When non-nil, this overlay causes redisplay to display `overlay-arrow-string'
 at the overlay's start position.")
 
-(defvar compilation-margin-string "=>"
-  "The string which will appear in the margin in compilation mode.
-This must be two characters long; there should be no need to
-change the default.")
-(put-text-property 0 2 'face 'default compilation-margin-string)
+(defconst compilation--margin-string (propertize "=>" 'face 'default)
+  "The string which will appear in the margin in compilation mode.")
 
 (defconst compilation--dummy-string
   (propertize ">" 'display
-              `((margin left-margin) ,compilation-margin-string))
-  "A string which is only a placeholder for compilation-margin-string.
+              `((margin left-margin) ,compilation--margin-string))
+  "A string which is only a placeholder for `compilation--margin-string'.
 Actual value is never used, only the text property.")
 
 (defun compilation-set-up-arrow-spec-in-margin ()
