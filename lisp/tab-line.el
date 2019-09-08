@@ -203,8 +203,10 @@ Reduce tab width proportionally to space taken by other tabs."
 
 (defun tab-line-add-tab (&optional e)
   (interactive "e")
-  ;; Maybe (buffer-menu-open)
-  (mouse-buffer-menu e))
+  (if window-system
+      (mouse-buffer-menu e) ; like (buffer-menu-open)
+    ;; tty menu doesn't support mouse clicks, so use tmm
+    (tmm-prompt (mouse-buffer-menu-keymap))))
 
 (defun tab-line-select-tab (&optional e)
   "Switch to the selected tab.

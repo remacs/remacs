@@ -96,6 +96,7 @@
                                      default-frame-alist)))))
   (when tab-bar-mode
     (global-set-key [(control shift iso-lefttab)] 'tab-bar-switch-to-prev-tab)
+    (global-set-key [(control shift tab)]         'tab-bar-switch-to-prev-tab)
     (global-set-key [(control tab)]               'tab-bar-switch-to-next-tab)))
 
 (defun tab-bar-mouse (event)
@@ -334,7 +335,7 @@ If `rightmost', create as the last tab."
           (setcdr prev-tab (cons new-tab (cdr prev-tab))))))))
     (set-frame-parameter nil 'tabs tabs)
     (tab-bar-select-tab new-tab)
-    (unless (and (display-graphic-p) tab-bar-mode)
+    (unless tab-bar-mode
       (message "Added new tab with the current window configuration"))))
 
 
@@ -395,14 +396,14 @@ specified by `tab-bar-close-tab-select'."
   "Create a new named window configuration without having to click a tab."
   (interactive)
   (tab-bar-add-tab)
-  (unless (and (display-graphic-p) tab-bar-mode)
+  (unless tab-bar-mode
     (message "Added new tab with the current window configuration")))
 
 (defun delete-tab ()
   "Delete the current window configuration without clicking a close button."
   (interactive)
   (tab-bar-close-current-tab)
-  (unless (and (display-graphic-p) tab-bar-mode)
+  (unless tab-bar-mode
     (message "Deleted the current tab")))
 
 (defalias 'list-tabs 'tab-bar-list)

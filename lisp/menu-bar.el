@@ -1245,7 +1245,6 @@ mail status in mode line"))
     (bindings--define-key menu [showhide-tab-bar]
       '(menu-item "Tab Bar" toggle-tab-bar-mode-from-frame
                   :help "Turn tab bar on/off"
-                  :visible (display-graphic-p)
                   :button
                   (:toggle . (menu-bar-positive-p
                               (frame-parameter (menu-bar-frame-for-menubar)
