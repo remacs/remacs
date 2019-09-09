@@ -1300,6 +1300,24 @@ UID:9188710a-08a7-4061-bae3-d4cf4972599a
 "
 ))
 
+(ert-deftest icalendar-import-bug-33277 ()
+  ;;bug#33277 -- start time equals end time
+  (icalendar-tests--test-import
+   "DTSTART:20181105T200000Z
+DTSTAMP:20181105T181652Z
+DESCRIPTION:
+LAST-MODIFIED:20181105T181646Z
+LOCATION:
+SEQUENCE:0
+SUMMARY:event with same start/end time
+TRANSP:OPAQUE
+"
+
+   "&2018/11/5 21:00 event with same start/end time\n"
+   "&5/11/2018 21:00 event with same start/end time\n"
+   "&11/5/2018 21:00 event with same start/end time\n"
+   ))
+
 (ert-deftest icalendar-import-multiple-vcalendars ()
   (icalendar-tests--test-import
    "DTSTART;VALUE=DATE:20110723
