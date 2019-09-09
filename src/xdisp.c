@@ -4148,14 +4148,15 @@ handle_fontified_prop (struct it *it)
 				Faces
  ***********************************************************************/
 
-static enum prop_handled
-handle_face_prop_general (struct it *it, int *face_id_ptr,
+static int
+handle_face_prop_general (struct it *it, int initial_face_id,
                           enum lface_attribute_index attr_filter)
 {
   int new_face_id;
   ptrdiff_t next_stop;
+  const bool is_string = STRINGP (it->string);
 
-  if (!STRINGP (it->string))
+  if (!is_string)
     {
       new_face_id
 	= face_at_buffer_position (it->w,
@@ -4164,39 +4165,7 @@ handle_face_prop_general (struct it *it, int *face_id_ptr,
 				   (IT_CHARPOS (*it)
 				    + TEXT_PROP_DISTANCE_LIMIT),
 	                           false, it->base_face_id, attr_filter);
-
-      /* Is this a start of a run of characters with box face?
-	 Caveat: this can be called for a freshly initialized
-	 iterator; face_id is -1 in this case.  We know that the new
-	 face will not change until limit, i.e. if the new face has a
-	 box, all characters up to limit will have one.  But, as
-	 usual, we don't know whether limit is really the end.  */
-      if (new_face_id != *face_id_ptr)
-	{
-	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
-	  /* If it->face_id is -1, old_face below will be NULL, see
-	     the definition of FACE_FROM_ID_OR_NULL.  This will happen
-	     if this is the initial call that gets the face.  */
-	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, *face_id_ptr);
-
-	  /* If the value of face_id of the iterator is -1, we have to
-	     look in front of IT's position and see whether there is a
-	     face there that's different from new_face_id.  */
-	  if (!old_face && IT_CHARPOS (*it) > BEG)
-	    {
-	      int prev_face_id = face_before_it_pos (it);
-
-	      old_face = FACE_FROM_ID_OR_NULL (it->f, prev_face_id);
-	    }
-
-	  /* If the new face has a box, but the old face does not,
-	     this is the start of a run of characters with box face,
-	     i.e. this character has a shadow on the left side.  */
-	  it->start_of_box_run_p = (new_face->box != FACE_NO_BOX
-				    && (old_face == NULL || !old_face->box));
-	  it->face_box_p = new_face->box != FACE_NO_BOX;
-	}
-    }
+     }
   else
     {
       int base_face_id;
@@ -4275,40 +4244,53 @@ handle_face_prop_general (struct it *it, int *face_id_ptr,
 					     bufpos,
 					     &next_stop,
 					     base_face_id, false);
-
-      /* Is this a start of a run of characters with box?  Caveat:
-	 this can be called for a freshly allocated iterator; face_id
-	 is -1 is this case.  We know that the new face will not
-	 change until the next check pos, i.e. if the new face has a
-	 box, all characters up to that position will have a
-	 box.  But, as usual, we don't know whether that position
-	 is really the end.  */
-      if (new_face_id != *face_id_ptr)
-	{
-	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
-	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, *face_id_ptr);
-
-	  /* If new face has a box but old face hasn't, this is the
-	     start of a run of characters with box, i.e. it has a
-	     shadow on the left side.  */
-	  it->start_of_box_run_p
-	    = new_face->box && (old_face == NULL || !old_face->box);
-	  it->face_box_p = new_face->box != FACE_NO_BOX;
-	}
     }
 
-  *face_id_ptr = new_face_id;
-  return HANDLED_NORMALLY;
+  /* Is this a start of a run of characters with box face?
+     Caveat: this can be called for a freshly initialized
+     iterator; face_id is -1 in this case.  We know that the new
+     face will not change until limit, i.e. if the new face has a
+     box, all characters up to limit will have one.  But, as
+     usual, we don't know whether limit is really the end.  */
+  if (new_face_id != initial_face_id)
+    {
+      struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
+      /* If it->face_id is -1, old_face below will be NULL, see
+	 the definition of FACE_FROM_ID_OR_NULL.  This will happen
+	 if this is the initial call that gets the face.  */
+      struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, initial_face_id);
+
+      /* If the value of face_id of the iterator is -1, we have to
+	 look in front of IT's position and see whether there is a
+	 face there that's different from new_face_id.  */
+      if (!is_string
+          && !old_face
+          && IT_CHARPOS (*it) > BEG)
+	{
+	  int prev_face_id = face_before_it_pos (it);
+
+	  old_face = FACE_FROM_ID_OR_NULL (it->f, prev_face_id);
+	}
+
+      /* If the new face has a box, but the old face does not,
+	 this is the start of a run of characters with box face,
+	 i.e. this character has a shadow on the left side.  */
+      it->start_of_box_run_p = (new_face->box != FACE_NO_BOX
+                                && (old_face == NULL || !old_face->box));
+      it->face_box_p = new_face->box != FACE_NO_BOX;
+    }
+
+  return new_face_id;
 }
 
 
 /* Set up iterator IT from face properties at its current position.
    Called from handle_stop.  */
-
 static enum prop_handled
 handle_face_prop (struct it *it)
 {
-  return handle_face_prop_general (it, &(it->face_id), 0);
+  it->face_id = handle_face_prop_general (it, it->face_id, 0);
+  return HANDLED_NORMALLY;
 }
 
 
@@ -21593,7 +21575,8 @@ extend_face_to_end_of_line (struct it *it)
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
 
-  handle_face_prop_general (it, &(it->extend_face_id), LFACE_EXTEND_INDEX);
+  it->extend_face_id
+    = handle_face_prop_general (it, it->extend_face_id, LFACE_EXTEND_INDEX);
 
   /* Face extension extends the background and box of IT->extend_face_id
      to the end of the line.  If the background equals the background
