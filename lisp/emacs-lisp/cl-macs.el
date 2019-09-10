@@ -3006,6 +3006,7 @@ Supported keywords for slots are:
     `(progn
        (defvar ,tag-symbol)
        ,@(nreverse forms)
+       :autoload-end
        ;; Call cl-struct-define during compilation as well, so that
        ;; a subsequent cl-defstruct in the same file can correctly include this
        ;; struct as a parent.
