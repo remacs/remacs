@@ -1846,7 +1846,8 @@ When BUF nil, default to the buffer at current line."
 			  (stringp dired-directory)
 			  dired-directory)))))
 	 (when name
-	   (string-match regexp name))))))
+           ;; Match on the displayed file name (which is abbreviated).
+	   (string-match regexp (abbreviate-file-name name)))))))
 
 ;;;###autoload
 (defun ibuffer-mark-by-content-regexp (regexp &optional all-buffers)

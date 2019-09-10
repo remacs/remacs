@@ -1028,6 +1028,7 @@ is wrapped around any parts requiring it."
               deps))))
 
 (declare-function lm-header "lisp-mnt" (header))
+(declare-function lm-header-multiline "lisp-mnt" (header))
 (declare-function lm-homepage "lisp-mnt" (&optional file))
 (declare-function lm-keywords-list "lisp-mnt" (&optional file))
 (declare-function lm-maintainer "lisp-mnt" (&optional file))
@@ -1054,8 +1055,7 @@ boundaries."
     (narrow-to-region start (point))
     (require 'lisp-mnt)
     ;; Use some headers we've invented to drive the process.
-    (let* ((requires-str (lm-header "package-requires"))
-           ;; Prefer Package-Version; if defined, the package author
+    (let* (;; Prefer Package-Version; if defined, the package author
            ;; probably wants us to use it.  Otherwise try Version.
            (pkg-version
             (or (package-strip-rcs-id (lm-header "package-version"))
@@ -1067,9 +1067,9 @@ boundaries."
             "Package lacks a \"Version\" or \"Package-Version\" header"))
       (package-desc-from-define
        file-name pkg-version desc
-       (if requires-str
-           (package--prepare-dependencies
-            (package-read-from-string requires-str)))
+       (and-let* ((require-lines (lm-header-multiline "package-requires")))
+         (package--prepare-dependencies
+          (package-read-from-string (mapconcat #'identity require-lines " "))))
        :kind 'single
        :url homepage
        :keywords keywords
@@ -2894,7 +2894,7 @@ KEYWORDS should be nil or a list of keywords."
           (mapcar #'package-menu--print-info-simple info-list))))
 
 (defun package-all-keywords ()
-  "Collect all package keywords"
+  "Collect all package keywords."
   (let ((key-list))
     (package--mapc (lambda (desc)
                      (setq key-list (append (package-desc--keywords desc)
@@ -2951,7 +2951,7 @@ When none are given, the package matches."
 
 (defun package-menu--generate (remember-pos packages &optional keywords)
   "Populate the Package Menu.
- If REMEMBER-POS is non-nil, keep point on the same entry.
+If REMEMBER-POS is non-nil, keep point on the same entry.
 PACKAGES should be t, which means to display all known packages,
 or a list of package names (symbols) to display.
 
@@ -3086,12 +3086,15 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
   "`package-archive-contents' before the latest refresh.")
 
 (defun package-menu-refresh ()
-  "Download the Emacs Lisp package archive.
-This fetches the contents of each archive specified in
-`package-archives', and then refreshes the package menu."
+  "In Package Menu, download the Emacs Lisp package archive.
+Fetch the contents of each archive specified in
+`package-archives', and then refresh the package menu.  Signal a
+user-error if there is already a refresh running asynchronously."
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
+  (when (and package-menu-async package--downloads-in-progress)
+    (user-error "Package refresh is already in progress, please wait..."))
   (setq package-menu--old-archive-contents package-archive-contents)
   (setq package-menu--new-package-list nil)
   (package-refresh-contents package-menu-async))
@@ -3206,7 +3209,7 @@ The full list of keys can be viewed with \\[describe-mode]."
   "Return the priority of ARCHIVE.
 
 The archive priorities are specified in
-`package-archive-priorities'. If not given there, the priority
+`package-archive-priorities'.  If not given there, the priority
 defaults to 0."
   (or (cdr (assoc archive package-archive-priorities))
       0))

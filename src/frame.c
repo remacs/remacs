@@ -3492,7 +3492,7 @@ DEFUN ("frame-bottom-divider-width", Fbottom_divider_width, Sbottom_divider_widt
 }
 
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4,
-       "(list (selected-frame) current-prefix-arg)",
+       "(list (selected-frame) (prefix-numeric-value current-prefix-arg))",
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
 HEIGHT lines but that the idea of the actual height of the frame should
@@ -3521,7 +3521,7 @@ currenly selected frame will be set to this height.  */)
 }
 
 DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 4,
-       "(list (selected-frame) current-prefix-arg)",
+       "(list (selected-frame) (prefix-numeric-value current-prefix-arg))",
        doc: /* Set text width of frame FRAME to WIDTH columns.
 Optional third arg PRETEND non-nil means that redisplay should use WIDTH
 columns but that the idea of the actual width of the frame should not
@@ -5327,9 +5327,11 @@ or a list (- N) meaning -N pixels relative to bottom/right corner.
 On Nextstep, this just calls `ns-parse-geometry'.  */)
   (Lisp_Object string)
 {
-  int geometry, x, y;
+  /* x and y don't need initialization, as they are not accessed
+     unless XParseGeometry sets them, in which case it always returns
+     a non-zero value.  */
+  int x UNINIT, y UNINIT;
   unsigned int width, height;
-  Lisp_Object result;
 
   CHECK_STRING (string);
 
@@ -5337,9 +5339,9 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
   if (strchr (SSDATA (string), ' ') != NULL)
     return call1 (Qns_parse_geometry, string);
 #endif
-  geometry = XParseGeometry (SSDATA (string),
-			     &x, &y, &width, &height);
-  result = Qnil;
+  int geometry = XParseGeometry (SSDATA (string),
+				 &x, &y, &width, &height);
+  Lisp_Object result = Qnil;
   if (geometry & XValue)
     {
       Lisp_Object element;

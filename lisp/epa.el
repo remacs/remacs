@@ -440,12 +440,12 @@ If ARG is non-nil, mark the key."
 	      (substitute-command-keys "\
 - `\\[epa-mark-key]' to mark a key on the line
 - `\\[epa-unmark-key]' to unmark a key on the line\n"))
-      (widget-create 'link
+      (widget-create 'push-button
 		     :notify (lambda (&rest _ignore) (abort-recursive-edit))
 		     :help-echo
 		     "Click here or \\[abort-recursive-edit] to cancel"
 		     "Cancel")
-      (widget-create 'link
+      (widget-create 'push-button
 		     :notify (lambda (&rest _ignore) (exit-recursive-edit))
 		     :help-echo
 		     "Click here or \\[exit-recursive-edit] to finish"

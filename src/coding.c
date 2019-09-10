@@ -9842,7 +9842,10 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    If BUFFER is Qnil, return a multibyte string from the decoded result.
    As a special case, return STRING itself in the following cases:
    1. STRING contains only ASCII characters.
-   2. NOCOPY, and STRING contains only valid UTF-8 sequences.
+   2. NOCOPY is true, and STRING contains only valid UTF-8 sequences.
+
+   For maximum speed, always specify NOCOPY true when STRING is
+   guaranteed to contain only valid UTF-8 sequences.
 
    HANDLE-8-BIT and HANDLE-OVER-UNI specify how to handle a invalid
    byte sequence.  The former is for an 1-byte invalid sequence that

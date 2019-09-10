@@ -48,6 +48,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <count-leading-zeros.h>
 
+/* Emacs needs proper handling of +/-inf; correct printing as well as
+   important packages depend on it.  Make sure the user didn't specify
+   -ffinite-math-only, either directly or implicitly with -Ofast or
+   -ffast-math.  */
+#if defined __FINITE_MATH_ONLY__ && __FINITE_MATH_ONLY__
+ #error Emacs cannot be built with -ffinite-math-only
+#endif
+
 /* Check that X is a floating point number.  */
 
 static void
@@ -268,9 +276,9 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
     }
   else
     {
-      if (mpz_sgn (XBIGNUM (arg)->value) < 0)
+      if (mpz_sgn (*xbignum_val (arg)) < 0)
 	{
-	  mpz_neg (mpz[0], XBIGNUM (arg)->value);
+	  mpz_neg (mpz[0], *xbignum_val (arg));
 	  arg = make_integer_mpz ();
 	}
     }
@@ -315,7 +323,7 @@ This is the same as the exponent of a float.  */)
       value = ivalue - 1;
     }
   else if (!FIXNUMP (arg))
-    value = mpz_sizeinbase (XBIGNUM (arg)->value, 2) - 1;
+    value = mpz_sizeinbase (*xbignum_val (arg), 2) - 1;
   else
     {
       EMACS_INT i = XFIXNUM (arg);

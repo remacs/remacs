@@ -39,7 +39,8 @@
 (defcustom prog-mode-hook nil
   "Normal hook run when entering programming modes."
   :type 'hook
-  :options '(flyspell-prog-mode abbrev-mode flymake-mode linum-mode
+  :options '(flyspell-prog-mode abbrev-mode flymake-mode
+                                display-line-numbers-mode
                                 prettify-symbols-mode)
   :group 'prog-mode)
 

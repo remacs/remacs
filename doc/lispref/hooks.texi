@@ -160,6 +160,9 @@ The command loop runs this soon after @code{post-command-hook} (q.v.).
 @item frame-auto-hide-function
 @xref{Quitting Windows}.
 
+@item quit-window-hook
+@xref{Quitting Windows}.
+
 @item kill-buffer-hook
 @itemx kill-buffer-query-functions
 @xref{Killing Buffers}.

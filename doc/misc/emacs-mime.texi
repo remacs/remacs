@@ -1568,7 +1568,7 @@ Here's a bunch of time/date/second/day examples:
 
 (time-subtract '(905595714000000 . 1000000)
                '(905595593000000000 . 1000000000))
-@result{} (121000000000 . 1000000000)
+@result{} (121000000 . 1000000)
 
 (days-between "Sat Sep 12 12:21:54 1998 +0200"
               "Sat Sep 07 12:21:54 1998 +0200")

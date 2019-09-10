@@ -31,9 +31,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    storage is exhausted.  Admittedly this is not ideal.  An mpz value
    in a temporary is made permanent by mpz_swapping it with a bignum's
    value.  Although typically at most two temporaries are needed,
-   time_arith, rounddiv_q and rounding_driver each need four.  */
+   rounddiv_q and rounding_driver both need four and time_arith needs
+   five.  */
 
-mpz_t mpz[4];
+mpz_t mpz[5];
 
 static void *
 xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
@@ -62,7 +63,7 @@ init_bignum (void)
 double
 bignum_to_double (Lisp_Object n)
 {
-  return mpz_get_d_rounded (XBIGNUM (n)->value);
+  return mpz_get_d_rounded (*xbignum_val (n));
 }
 
 /* Return D, converted to a Lisp integer.  Discard any fraction.
@@ -263,13 +264,13 @@ intmax_t
 bignum_to_intmax (Lisp_Object x)
 {
   intmax_t i;
-  return mpz_to_intmax (XBIGNUM (x)->value, &i) ? i : 0;
+  return mpz_to_intmax (*xbignum_val (x), &i) ? i : 0;
 }
 uintmax_t
 bignum_to_uintmax (Lisp_Object x)
 {
   uintmax_t i;
-  return mpz_to_uintmax (XBIGNUM (x)->value, &i) ? i : 0;
+  return mpz_to_uintmax (*xbignum_val (x), &i) ? i : 0;
 }
 
 /* Yield an upper bound on the buffer size needed to contain a C
@@ -283,7 +284,7 @@ mpz_bufsize (mpz_t const num, int base)
 ptrdiff_t
 bignum_bufsize (Lisp_Object num, int base)
 {
-  return mpz_bufsize (XBIGNUM (num)->value, base);
+  return mpz_bufsize (*xbignum_val (num), base);
 }
 
 /* Convert NUM to a nearest double, as opposed to mpz_get_d which
@@ -317,7 +318,7 @@ ptrdiff_t
 bignum_to_c_string (char *buf, ptrdiff_t size, Lisp_Object num, int base)
 {
   eassert (bignum_bufsize (num, abs (base)) == size);
-  mpz_get_str (buf, base, XBIGNUM (num)->value);
+  mpz_get_str (buf, base, *xbignum_val (num));
   ptrdiff_t n = size - 2;
   return !buf[n - 1] ? n - 1 : n + !!buf[n];
 }

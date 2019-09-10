@@ -41,6 +41,8 @@ typedef unsigned long Time;
 #endif
 
 #include <sys/time.h>	/* for 'struct timeval' */
+
+#undef hz /* AIX <sys/param.h> #defines this.  */
 
 /* Emacs uses struct timespec to represent nonnegative temporal intervals.
 

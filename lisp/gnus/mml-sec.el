@@ -915,7 +915,7 @@ If no one is selected, symmetric encryption will be performed.  "
     (when sign
       (setq signers (mml-secure-signers context signer-names))
       (setf (epg-context-signers context) signers)
-      (when mml-secure-openpgp-sign-with-sender
+      (when (and (eq 'OpenPGP protocol) mml-secure-openpgp-sign-with-sender)
         (setf (epg-context-sender context) sender)))
     (when (eq 'OpenPGP protocol)
       (setf (epg-context-armor context) t)
@@ -945,10 +945,10 @@ If no one is selected, symmetric encryption will be performed.  "
 	 signature micalg)
     (when (eq 'OpenPGP protocol)
       (setf (epg-context-armor context) t)
-      (setf (epg-context-textmode context) t))
+      (setf (epg-context-textmode context) t)
+      (when mml-secure-openpgp-sign-with-sender
+        (setf (epg-context-sender context) sender)))
     (setf (epg-context-signers context) signers)
-    (when mml-secure-openpgp-sign-with-sender
-      (setf (epg-context-sender context) sender))
     (when (mml-secure-cache-passphrase-p protocol)
       (epg-context-set-passphrase-callback
        context

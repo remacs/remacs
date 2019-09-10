@@ -1790,17 +1790,22 @@ If END is omitted, it defaults to the length of LIST."
   :type 'string
   :group 'widget-button)
 
+(defvar widget-link-keymap
+  (let ((map (copy-keymap widget-keymap)))
+    ;; Only bind mouse-2, since mouse-1 will be translated accordingly to
+    ;; the customization of `mouse-1-click-follows-link'.
+    (define-key map [down-mouse-1] (lookup-key widget-global-map [down-mouse-1]))
+    (define-key map [down-mouse-2] 'widget-button-click)
+    (define-key map [mouse-2] 'widget-button-click)
+    map)
+  "Keymap used inside a link widget.")
+
 (define-widget 'link 'item
   "An embedded link."
   :button-prefix 'widget-link-prefix
   :button-suffix 'widget-link-suffix
-  ;; The `follow-link' property should only be used in those contexts where the
-  ;; mouse-1 event normally doesn't follow the link, yet the `link' widget
-  ;; seems to almost always be used in contexts where (down-)mouse-1 is bound
-  ;; to `widget-button-click' and hence the "mouse-1 to mouse-2" remapping is
-  ;; not necessary (and can even be harmful).  So let's not add a :follow-link
-  ;; by default.  See (bug#22434).
-  ;; :follow-link 'mouse-face
+  :follow-link 'mouse-face
+  :keymap widget-link-keymap
   :help-echo "Follow the link."
   :format "%[%t%]")
 
@@ -3078,7 +3083,9 @@ as the value."
 (define-widget 'file 'string
   "A file widget.
 It reads a file name from an editable text field."
-  :completions #'completion-file-name-table
+  :completions (completion-table-case-fold
+                #'completion-file-name-table
+                (not read-file-name-completion-ignore-case))
   :prompt-value 'widget-file-prompt-value
   :format "%{%t%}: %v"
   ;; Doesn't work well with terminating newline.
@@ -3113,6 +3120,11 @@ It reads a file name from an editable text field."
 (define-widget 'directory 'file
   "A directory widget.
 It reads a directory name from an editable text field."
+  :completions (apply-partially #'completion-table-with-predicate
+                                (completion-table-case-fold
+                                 #'completion-file-name-table
+                                 (not read-file-name-completion-ignore-case))
+                                #'directory-name-p 'strict)
   :tag "Directory")
 
 (defvar widget-symbol-prompt-value-history nil
@@ -3328,13 +3340,13 @@ It reads a directory name from an editable text field."
       (condition-case data ;Note: We get a spurious byte-compile warning here.
 	  (progn
 	    ;; Avoid a confusing end-of-file error.
-	    (skip-syntax-forward "\\s-")
+	    (skip-syntax-forward "-")
 	    (if (eobp)
 		(setq err "Empty sexp -- use nil?")
 	      (unless (widget-apply widget :match (read (current-buffer)))
 		(setq err (widget-get widget :type-error))))
 	    ;; Allow whitespace after expression.
-	    (skip-syntax-forward "\\s-")
+	    (skip-syntax-forward "-")
 	    (if (and (not (eobp))
 		     (not err))
 		(setq err (format "Junk at end of expression: %s"

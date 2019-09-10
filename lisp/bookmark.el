@@ -619,8 +619,8 @@ If POSN is non-nil, record POSN as the point instead of `(point)'."
 ;; was incorrect in Emacs 22 and Emacs 23.1.)
 ;;
 ;; To deal with the change from FIRST format to SECOND, conversion
-;; code was added, and it is still in use.  See
-;; `bookmark-maybe-upgrade-file-format'.
+;; code was added, which is no longer used and has been declared
+;; obsolete.  See `bookmark-maybe-upgrade-file-format'.
 ;;
 ;; No conversion from SECOND to CURRENT is done.  Instead, the code
 ;; handles both formats OK.  It must continue to do so.
@@ -640,7 +640,7 @@ You should never need to change this.")
 
 
 (defun bookmark-alist-from-buffer ()
-  "Return a `bookmark-alist' (in any format) from the current buffer.
+  "Return a `bookmark-alist' from the current buffer.
 The buffer must of course contain bookmark format information.
 Does not care from where in the buffer it is called, and does not
 affect point."
@@ -648,19 +648,13 @@ affect point."
     (goto-char (point-min))
     (if (search-forward bookmark-end-of-version-stamp-marker nil t)
         (read (current-buffer))
-      ;; Else we're dealing with format version 0
-      (if (search-forward "(" nil t)
-          (progn
-            (forward-char -1)
-            (read (current-buffer)))
-        ;; Else no hope of getting information here.
-        (if buffer-file-name
-            (error "File not in bookmark format: %s" buffer-file-name)
-          (error "Buffer not in bookmark format: %s" (buffer-name)))))))
-
+      (if buffer-file-name
+          (error "File not in bookmark format: %s" buffer-file-name)
+        (error "Buffer not in bookmark format: %s" (buffer-name))))))
 
 (defun bookmark-upgrade-version-0-alist (old-list)
   "Upgrade a version 0 alist OLD-LIST to the current version."
+  (declare (obsolete nil "27.1"))
   (mapcar
    (lambda (bookmark)
      (let* ((name      (car bookmark))
@@ -683,11 +677,14 @@ affect point."
 (defun bookmark-upgrade-file-format-from-0 ()
   "Upgrade a bookmark file of format 0 (the original format) to format 1.
 This expects to be called from `point-min' in a bookmark file."
+  (declare (obsolete nil "27.1"))
   (let* ((reporter (make-progress-reporter
                     (format "Upgrading bookmark format from 0 to %d..."
-                     bookmark-file-format-version)))
+                            bookmark-file-format-version)))
          (old-list (bookmark-alist-from-buffer))
-         (new-list (bookmark-upgrade-version-0-alist old-list)))
+         (new-list (with-suppressed-warnings
+                       ((obsolete bookmark-upgrade-version-0-alist))
+                     (bookmark-upgrade-version-0-alist old-list))))
     (delete-region (point-min) (point-max))
     (bookmark-insert-file-format-version-stamp buffer-file-coding-system)
     (pp new-list (current-buffer))
@@ -699,6 +696,7 @@ This expects to be called from `point-min' in a bookmark file."
 (defun bookmark-grok-file-format-version ()
   "Return an integer which is the file-format version of this bookmark file.
 This expects to be called from `point-min' in a bookmark file."
+  (declare (obsolete nil "27.1"))
   (if (looking-at "^;;;;")
       (save-excursion
         (save-match-data
@@ -714,12 +712,18 @@ This expects to be called from `point-min' in a bookmark file."
   "Check the file-format version of this bookmark file.
 If the version is not up-to-date, upgrade it automatically.
 This expects to be called from `point-min' in a bookmark file."
-  (let ((version (bookmark-grok-file-format-version)))
+  (declare (obsolete nil "27.1"))
+  (let ((version
+         (with-suppressed-warnings
+             ((obsolete bookmark-grok-file-format-version))
+           (bookmark-grok-file-format-version))))
     (cond
      ((= version bookmark-file-format-version)
       ) ; home free -- version is current
      ((= version 0)
-      (bookmark-upgrade-file-format-from-0))
+      (with-suppressed-warnings
+          ((obsolete bookmark-upgrade-file-format-from-0))
+        (bookmark-upgrade-file-format-from-0)))
      (t
       (error "Bookmark file format version strangeness")))))
 
@@ -1541,7 +1545,6 @@ unique numeric suffixes \"<2>\", \"<3>\", etc."
       (with-current-buffer (let (enable-local-variables)
 			     (find-file-noselect file))
 	(goto-char (point-min))
-	(bookmark-maybe-upgrade-file-format)
 	(let ((blist (bookmark-alist-from-buffer)))
 	  (unless (listp blist)
 	    (error "Invalid bookmark list in %s" file))

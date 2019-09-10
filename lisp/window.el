@@ -4849,7 +4849,7 @@ all window-local buffer lists."
 	(unrecord-window-buffer window buffer)))))
 
 (defcustom quit-window-hook nil
-  "Hook run before performing any other actions in the `quit-buffer' command."
+  "Hook run before performing any other actions in the `quit-window' command."
   :type 'hook
   :version "27.1"
   :group 'windows)
@@ -4882,11 +4882,7 @@ nil means to not handle the buffer in a particular way.  This
   most reliable remedy to not have `switch-to-prev-buffer' switch
   to this buffer again without killing the buffer.
 
-`kill' means to kill WINDOW's buffer.
-
-The functions in `quit-window-hook' will be run before doing
-anything else."
-  (run-hooks 'quit-window-hook)
+`kill' means to kill WINDOW's buffer."
   (setq window (window-normalize-window window t))
   (let* ((buffer (window-buffer window))
 	 (quit-restore (window-parameter window 'quit-restore))
@@ -4986,6 +4982,10 @@ one.  If non-nil, reset `quit-restore' parameter to nil.
 The functions in `quit-window-hook' will be run before doing
 anything else."
   (interactive "P")
+  ;; Run the hook from the buffer implied to get any buffer-local
+  ;; values.
+  (with-current-buffer (window-buffer (window-normalize-window window))
+    (run-hooks 'quit-window-hook))
   (quit-restore-window window (if kill 'kill 'bury)))
 
 (defun quit-windows-on (&optional buffer-or-name kill frame)

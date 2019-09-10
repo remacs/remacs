@@ -38,13 +38,13 @@
 
 (defun macros--insert-vector-macro (definition)
   "Print DEFINITION, a vector, into the current buffer."
-  (dotimes (i (length definition))
-    (let ((char (aref definition i)))
-      (insert (if (zerop i) ?\[ ?\s))
-      (if (characterp char)
-          (princ (prin1-char char) (current-buffer))
-        (prin1 char (current-buffer)))))
-  (insert ?\]))
+  (insert ?\[
+          (mapconcat (lambda (event)
+                       (or (prin1-char event)
+                           (prin1-to-string event)))
+                     definition
+                     " ")
+          ?\]))
 
 ;;;###autoload
 (defun insert-kbd-macro (macroname &optional keys)

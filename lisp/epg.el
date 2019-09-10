@@ -1618,7 +1618,9 @@ If you are unsure, use synchronous version of this function
 				      (car (epg-key-sub-key-list signer)))))
 			     (epg-context-signers context)))
                      (let ((sender (epg-context-sender context)))
-                       (when (stringp sender)
+                       (when (and (eql 'OpenPGP (epg-context-protocol context))
+                                  (epg-required-version-p 'OpenPGP "2.1.15")
+                                  (stringp sender))
                          (list "--sender" sender)))
 		     (epg--args-from-sig-notations
 		      (epg-context-sig-notations context))
@@ -1714,9 +1716,11 @@ If you are unsure, use synchronous version of this function
 					  (car (epg-key-sub-key-list
 						signer)))))
 				 (epg-context-signers context))))
-		     (if sign
+		     (if (and sign
+                              (eql 'OpenPGP (epg-context-protocol context)))
                          (let ((sender (epg-context-sender context)))
-                           (when (stringp sender)
+                           (when (and (epg-required-version-p 'OpenPGP "2.1.15")
+                                      (stringp sender))
                              (list "--sender" sender))))
                      (if sign
 			 (epg--args-from-sig-notations

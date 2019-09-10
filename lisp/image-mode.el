@@ -720,11 +720,15 @@ was inserted."
 				     archive-superior-buffer))
 			   (not (and (boundp 'tar-superior-buffer)
 				     tar-superior-buffer))
+                           ;; This means the buffer holds the contents
+                           ;; of a file uncompressed by jka-compr.el.
+                           (not (and (local-variable-p
+                                      'jka-compr-really-do-compress)
+                                     jka-compr-really-do-compress))
                            ;; This means the buffer holds the
                            ;; decrypted content (bug#21870).
-                           (not (and (boundp 'epa-file-encrypt-to)
-                                     (local-variable-p
-                                      'epa-file-encrypt-to))))))
+                           (not (local-variable-p
+                                 'epa-file-encrypt-to)))))
 	 (file-or-data
           (if data-p
 	      (let ((str

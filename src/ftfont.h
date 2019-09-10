@@ -41,7 +41,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif	/* HAVE_M17N_FLT */
 #endif	/* HAVE_LIBOTF */
 
-extern FcCharSet *ftfont_get_fc_charset (Lisp_Object);
 extern void ftfont_fix_match (FcPattern *, FcPattern *);
 extern void ftfont_add_rendering_parameters (FcPattern *, Lisp_Object);
 extern FcPattern *ftfont_entity_pattern (Lisp_Object, int);

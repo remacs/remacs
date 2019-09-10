@@ -738,7 +738,6 @@ level.  If ARG is nil, Gnus will be started at level 2
 and not a positive number, Gnus will prompt the user for the name
 of an NNTP server to use.  As opposed to \\[gnus], this command
 will not connect to the local server."
-  (interactive "P")
   (let ((val (or arg (1- gnus-level-default-subscribed))))
     (gnus val t slave)
     (make-local-variable 'gnus-group-use-permanent-levels)
@@ -749,8 +748,6 @@ will not connect to the local server."
 If ARG is non-nil and a positive number, Gnus will use that as the
 startup level.  If ARG is non-nil and not a positive number, Gnus will
 prompt the user for the name of an NNTP server to use."
-  (interactive "P")
-
   (if (gnus-alive-p)
       (progn
 	(gnus-run-hooks 'gnus-before-resume-hook)

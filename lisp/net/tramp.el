@@ -4211,9 +4211,10 @@ the remote host use line-endings as defined in the variable
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
         (tramp-flush-connection-properties proc)
         (tramp-flush-directory-properties vec ""))
-      (goto-char (point-max))
-      (when (and prompt (re-search-backward (regexp-quote prompt) nil t))
-	(delete-region (point) (point-max))))))
+      (with-current-buffer (process-buffer proc)
+        (goto-char (point-max))
+        (when (and prompt (re-search-backward (regexp-quote prompt) nil t))
+	  (delete-region (point) (point-max)))))))
 
 (defun tramp-get-inode (vec)
   "Returns the virtual inode number.

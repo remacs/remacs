@@ -2220,28 +2220,18 @@ as a function from Lisp programs.
 @cindex init file
 @cindex .emacs file
 @cindex ~/.emacs file
-@cindex ~/.config/emacs file
+@cindex ~/.config/emacs/init.el file
 @cindex Emacs initialization file
 @cindex startup (init file)
+@cindex XDG_CONFIG_HOME
 
   When Emacs is started, it normally tries to load a Lisp program from
 an @dfn{initialization file}, or @dfn{init file} for short.  This
-file, if it exists, specifies how to initialize Emacs for you.  Emacs
-looks for your init file using the filenames
-@file{~/.config/emacs},. @file{~/.emacs}, @file{~/.config/emacs.el},
-@file{~/.emacs.el}, @file{~/.config/emacs.d/init.el} or
-@file{~/.emacs.d/init.el}; you can choose to use any one of these
-names (@pxref{Find Init}).  Here, @file{~/} stands for your home
-directory.
-
-  While the @file{~/.emacs} and @file{~/.emacs.d/init.el} locations
-are backward-compatible to older Emacs versions, and the rest of this
-chapter will use them to name your initialization file, it is better practice
-to group all of your dotfiles under @file{.config} so that if you have
-to troubleshoot a problem that might be due to a bad init file, or
-archive a collection of them, it can be done by renaming or
-copying that directory.  Note that the @file{.config} versions
-don't have a leading dot on the basename part of the file.
+file, if it exists, specifies how to initialize Emacs for you.
+If the file @file{~/.config/emacs/init.el} exists, it is used as the
+init file; otherwise Emacs may look at @file{~/.emacs.el},
+@file{~/.emacs}, @file{~/.emacs.d/init.el}, or other locations.
+@xref{Find Init}.
 
   You can use the command line switch @samp{-q} to prevent loading
 your init file, and @samp{-u} (or @samp{--user}) to specify a
@@ -2313,17 +2303,17 @@ function @code{setq} to set the variable @code{fill-column}
 
   You can set any Lisp variable with @code{setq}, but with certain
 variables @code{setq} won't do what you probably want in the
-@file{.emacs} file.  Some variables automatically become buffer-local
-when set with @code{setq}; what you want in @file{.emacs} is to set
+init file.  Some variables automatically become buffer-local
+when set with @code{setq}; what you want in the init file is to set
 the default value, using @code{setq-default}.  Some customizable minor
 mode variables do special things to enable the mode when you set them
 with Customize, but ordinary @code{setq} won't do that; to enable the
-mode in your @file{.emacs} file, call the minor mode command.  The
+mode in your init file, call the minor mode command.  The
 following section has examples of both of these methods.
 
   The second argument to @code{setq} is an expression for the new
 value of the variable.  This can be a constant, a variable, or a
-function call expression.  In @file{.emacs}, constants are used most
+function call expression.  In the init file, constants are used most
 of the time.  They can be:
 
 @table @asis
@@ -2646,25 +2636,49 @@ library.  @xref{Hooks}.
 @node Find Init
 @subsection How Emacs Finds Your Init File
 
-  Normally Emacs uses your home directory to find
-@file{~/.config/emacs} or @file{~/.emacs}; that's what @samp{~} means
-in a file name.  @xref{General Variables, HOME}.  If none of
-@file{~/.config/emacs}, @file{~/.emacs}, @file{~/.config/emacs.el} nor
-@file{~/.emacs.el} is found, Emacs looks for
-@file{~/.config/emacs.d/init.el} or @file{~/.emacs.d/init.el} (these,
-like @file{~/.emacs.el}, can be byte-compiled).
+  Emacs normally finds your init file in a location under your home
+directory.  @xref{Init File}.  By default this location is
+@file{~/.config/emacs/init.el} where @file{~/} stands for your home directory.
+This default can be overridden as described below.
 
-  However, if you run Emacs from a shell started by @code{su}, Emacs
+  If @env{XDG_CONFIG_HOME} is set in your environment, its
+value replaces @file{~/.config} in the name of the default
+init file.
+
+  If the default init file's parent directory does not exist but the
+directory @file{~/.emacs.d} does exist, Emacs looks for your init file
+using the filenames @file{~/.emacs.el}, @file{~/.emacs}, or
+@file{~/.emacs.d/init.el}; you can choose to use any one of these
+names.  (Note that only the locations directly in your home directory
+have a leading dot in the location's basename.)  Although this is
+backward-compatible with older Emacs versions, modern POSIX platforms
+prefer putting your initialization files under @file{~/.config} so
+that troubleshooting a problem that might be due to a bad init file,
+or archiving a collection of init files, can be done by renaming that
+directory.  To help older Emacs versions find configuration files in
+their current default locations, you can execute the following
+Emacs Lisp code:
+
+@example
+(make-symbolic-link ".config/emacs" "~/.emacs.d")
+@end example
+
+  However, if you run Emacs from a shell started by @code{su} and
+@env{XDG_CONFIG_HOME} is not set in your environment, Emacs
 tries to find your own initialization files, not that of the user you are
 currently pretending to be.  The idea is that you should get your own
 editor customizations even if you are running as the super user.
 
   More precisely, Emacs first determines which user's init file to use.
 It gets your user name from the environment variables @env{LOGNAME} and
-@env{USER}; if neither of those exists, it uses effective user-ID@.
+@env{USER}; if neither of those exists, it uses the effective user-ID@.
 If that user name matches the real user-ID, then Emacs uses @env{HOME};
 otherwise, it looks up the home directory corresponding to that user
 name in the system's data base of users.
+
+  For brevity the rest of the Emacs documentation generally uses just
+the current default location @file{~/.config/emacs/init.el} for the
+init file.
 @c  LocalWords:  backtab
 
 @node Init Non-ASCII
@@ -2705,8 +2719,8 @@ Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
 @subsection The Early Init File
 @cindex early init file
 
-  Most customizations for Emacs should be put in the normal init file,
-@file{.config/emacs} or @file{~/.config/emacs.d/init.el}.  However, it is sometimes desirable
+  Most customizations for Emacs should be put in the normal init file.
+@xref{Init File}.  However, it is sometimes desirable
 to have customizations that take effect during Emacs startup earlier than the
 normal init file is processed.  Such customizations can be put in the early
 init file, @file{~/.config/emacs.d/early-init.el} or @file{~/.emacs.d/early-init.el}.  This file is loaded before the

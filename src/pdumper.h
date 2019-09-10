@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 INLINE_HEADER_BEGIN
 
-#define PDUMPER_NO_OBJECT ((enum Lisp_Type) -1)
+enum { PDUMPER_NO_OBJECT = -1 };
 
 /* Indicate in source code that we're deliberately relying on pdumper
    not preserving the given value.  Compiles to nothing --- for humans
@@ -170,12 +170,12 @@ pdumper_cold_object_p (const void *obj)
 }
 
 
-extern enum Lisp_Type pdumper_find_object_type_impl (const void *obj);
+extern int pdumper_find_object_type_impl (const void *obj);
 
 /* Return the type of the dumped object that starts at OBJ.  It is a
    programming error to call this routine for an OBJ for which
    pdumper_object_p would return false.  */
-INLINE _GL_ATTRIBUTE_CONST enum Lisp_Type
+INLINE _GL_ATTRIBUTE_CONST int
 pdumper_find_object_type (const void *obj)
 {
 #ifdef HAVE_PDUMPER
@@ -186,6 +186,14 @@ pdumper_find_object_type (const void *obj)
 #endif
 }
 
+/* Return true if TYPE is that of a Lisp object.
+   PDUMPER_NO_OBJECT is invalid.  */
+INLINE bool
+pdumper_valid_object_type_p (int type)
+{
+  return 0 <= type;
+}
+
 /* Return whether OBJ points exactly to the start of some object in
    the loaded dump image.  It is a programming error to call this
    routine for an OBJ for which pdumper_object_p would return
@@ -194,7 +202,7 @@ INLINE _GL_ATTRIBUTE_CONST bool
 pdumper_object_p_precise (const void *obj)
 {
 #ifdef HAVE_PDUMPER
-  return pdumper_find_object_type (obj) != PDUMPER_NO_OBJECT;
+  return pdumper_valid_object_type_p (pdumper_find_object_type (obj));
 #else
   (void) obj;
   emacs_abort ();

@@ -1,4 +1,4 @@
-;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
+;;; startup.el --- process Emacs shell arguments  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1985-1986, 1992, 1994-2019 Free Software Foundation,
 ;; Inc.
@@ -490,6 +490,27 @@ DIRS are relative."
     (when tail
       (setcdr tail (append (mapcar 'expand-file-name dirs) (cdr tail))))))
 
+;; The default location for XDG-convention Emacs init files.
+(defconst startup--xdg-config-default "~/.config/emacs/")
+;; The location for XDG-convention Emacs init files.
+(defvar startup--xdg-config-home-emacs)
+
+;; Return the name of the init file directory for Emacs, assuming
+;; XDG-DIR is the XDG location and USER-NAME is the user name.
+;; If USER-NAME is nil or "", use the current user.
+;; Prefer the XDG location unless it does does not exist and the
+;; .emacs.d location does exist.
+(defun startup--xdg-or-homedot (xdg-dir user-name)
+  (if (file-exists-p xdg-dir)
+      xdg-dir
+    (let ((emacs-d-dir (concat "~" user-name
+			       (if (eq system-type 'ms-dos)
+				   "/_emacs.d/"
+				 "/.emacs.d/"))))
+      (if (file-exists-p emacs-d-dir)
+	  emacs-d-dir
+	xdg-dir))))
+
 (defun normal-top-level ()
   "Emacs calls this function when it first starts up.
 It sets `command-line-processed', processes the command-line,
@@ -498,6 +519,14 @@ It is the default value of the variable `top-level'."
   (if command-line-processed
       (message internal--top-level-message)
     (setq command-line-processed t)
+
+    (setq startup--xdg-config-home-emacs
+	  (let ((xdg-config-home (getenv-internal "XDG_CONFIG_HOME")))
+	    (if xdg-config-home
+		(concat xdg-config-home "/emacs/")
+	      startup--xdg-config-default)))
+    (setq user-emacs-directory
+	  (startup--xdg-or-homedot startup--xdg-config-home-emacs nil))
 
     ;; Look in each dir in load-path for a subdirs.el file.  If we
     ;; find one, load it, which will add the appropriate subdirs of
@@ -906,16 +935,19 @@ init-file, or to a default value if loading is not possible."
               ;; the name of the file that it loads into
               ;; `user-init-file'.
               (setq user-init-file t)
-              (load (if (equal (file-name-extension init-file-name)
-                               "el")
-                        (file-name-sans-extension init-file-name)
-                      init-file-name)
-                    'noerror 'nomessage)
+	      (when init-file-name
+		(load (if (equal (file-name-extension init-file-name)
+				 "el")
+			  (file-name-sans-extension init-file-name)
+			init-file-name)
+		      'noerror 'nomessage))
 
               (when (and (eq user-init-file t) alternate-filename-function)
                 (let ((alt-file (funcall alternate-filename-function)))
                   (and (equal (file-name-extension alt-file) "el")
                        (setq alt-file (file-name-sans-extension alt-file)))
+		  (unless init-file-name
+		    (setq init-file-name alt-file))
                   (load alt-file 'noerror 'nomessage)))
 
               ;; If we did not find the user's init file, set
@@ -971,18 +1003,10 @@ the `--debug-init' option to view a complete error backtrace."
     (when debug-on-error-should-be-set
       (setq debug-on-error debug-on-error-from-init-file))))
 
-(defun find-init-path (fn)
-  "Look in ~/.config/FOO or ~/.FOO for the dotfile or dot directory FOO.
-It is expected that the output will undergo ~ expansion.  Implements the
-XDG convention for dotfiles."
-  (let* ((xdg-path (concat "~" init-file-user "/.config/" fn))
-        (oldstyle-path (concat "~" init-file-user "/." fn))
-        (found-path (if (file-exists-p xdg-path) xdg-path oldstyle-path)))
-    found-path))
-
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
+ (let (xdg-dir startup-init-directory)
   (setq before-init-time (current-time)
 	after-init-time nil
         command-line-default-directory default-directory)
@@ -1171,6 +1195,19 @@ please check its value")
                                    init-file-user))
                          :error))))
 
+  ;; Calculate the name of the Emacs init directory.
+  ;; This is typically ~INIT-FILE-USER/.config/emacs unless the user
+  ;; is following the ~INIT-FILE-USER/.emacs.d convention.
+  (setq xdg-dir startup--xdg-config-home-emacs)
+  (setq startup-init-directory
+	(if (or (zerop (length init-file-user))
+		(and (eq xdg-dir user-emacs-directory)
+		     (not (eq xdg-dir startup--xdg-config-default))))
+	    user-emacs-directory
+	  ;; The name is not obvious, so access more directories to calculate it.
+	  (setq xdg-dir (concat "~" init-file-user "/.config/emacs/"))
+	  (startup--xdg-or-homedot xdg-dir init-file-user)))
+
   ;; Load the early init file, if found.
   (startup--load-user-init-file
    (lambda ()
@@ -1180,8 +1217,7 @@ please check its value")
       ;; with the .el extension, if the file doesn't exist, not just
       ;; "early-init" without an extension, as it does for ".emacs".
       "early-init.el"
-      (file-name-as-directory
-       (find-init-path "emacs.d")))))
+      startup-init-directory)))
   (setq early-init-file user-init-file)
 
   ;; If any package directory exists, initialize the package system.
@@ -1319,10 +1355,11 @@ please check its value")
     (startup--load-user-init-file
      (lambda ()
        (cond
+	((eq startup-init-directory xdg-dir) nil)
         ((eq system-type 'ms-dos)
          (concat "~" init-file-user "/_emacs"))
         ((not (eq system-type 'windows-nt))
-         (find-init-path "emacs"))
+         (concat "~" init-file-user "/.emacs"))
         ;; Else deal with the Windows situation.
         ((directory-files "~" nil "^\\.emacs\\(\\.elc?\\)?$")
          ;; Prefer .emacs on Windows.
@@ -1339,8 +1376,7 @@ please check its value")
      (lambda ()
        (expand-file-name
         "init"
-        (file-name-as-directory
-         (find-init-path "emacs.d"))))
+        startup-init-directory))
      (not inhibit-default-init))
 
     (when (and deactivate-mark transient-mark-mode)
@@ -1456,7 +1492,7 @@ Consider using a subdirectory instead, e.g.: %s"
   (if (and (boundp 'x-session-previous-id)
            (stringp x-session-previous-id))
       (with-no-warnings
-	(emacs-session-restore x-session-previous-id))))
+	(emacs-session-restore x-session-previous-id)))))
 
 (defun x-apply-session-resources ()
   "Apply X resources which specify initial values for Emacs variables.

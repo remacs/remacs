@@ -297,20 +297,20 @@ static ptrdiff_t pure_bytes_used_non_lisp;
 
 static intptr_t garbage_collection_inhibited;
 
+/* The GC threshold in bytes, the last time it was calculated
+   from gc-cons-threshold and gc-cons-percentage.  */
+static intmax_t gc_threshold;
+
 /* If nonzero, this is a warning delivered by malloc and not yet
    displayed.  */
 
 const char *pending_malloc_warning;
 
-#if 0 /* Normally, pointer sanity only on request... */
+/* Pointer sanity only on request.  FIXME: Code depending on
+   SUSPICIOUS_OBJECT_CHECKING is obsolete; remove it entirely.  */
 #ifdef ENABLE_CHECKING
 #define SUSPICIOUS_OBJECT_CHECKING 1
 #endif
-#endif
-
-/* ... but unconditionally use SUSPICIOUS_OBJECT_CHECKING while the GC
-   bug is unresolved.  */
-#define SUSPICIOUS_OBJECT_CHECKING 1
 
 #ifdef SUSPICIOUS_OBJECT_CHECKING
 struct suspicious_free_record
@@ -327,8 +327,8 @@ static int suspicious_free_history_index;
 static void *find_suspicious_object_in_range (void *begin, void *end);
 static void detect_suspicious_free (void *ptr);
 #else
-# define find_suspicious_object_in_range(begin, end) NULL
-# define detect_suspicious_free(ptr) (void)
+# define find_suspicious_object_in_range(begin, end) ((void *) NULL)
+# define detect_suspicious_free(ptr) ((void) 0)
 #endif
 
 /* Maximum amount of C stack to save when a GC happens.  */
@@ -4621,11 +4621,11 @@ mark_maybe_pointer (void *p)
 
   if (pdumper_object_p (p))
     {
-      enum Lisp_Type type = pdumper_find_object_type (p);
-      if (type != PDUMPER_NO_OBJECT)
-        mark_object ((type == Lisp_Symbol)
-                     ? make_lisp_symbol(p)
-                     : make_lisp_ptr(p, type));
+      int type = pdumper_find_object_type (p);
+      if (pdumper_valid_object_type_p (type))
+        mark_object (type == Lisp_Symbol
+                     ? make_lisp_symbol (p)
+                     : make_lisp_ptr (p, type));
       /* See mark_maybe_object for why we can confidently return.  */
       return;
     }
@@ -5290,9 +5290,10 @@ make_pure_float (double num)
    space.  */
 
 static Lisp_Object
-make_pure_bignum (struct Lisp_Bignum *value)
+make_pure_bignum (Lisp_Object value)
 {
-  size_t i, nlimbs = mpz_size (value->value);
+  mpz_t const *n = xbignum_val (value);
+  size_t i, nlimbs = mpz_size (*n);
   size_t nbytes = nlimbs * sizeof (mp_limb_t);
   mp_limb_t *pure_limbs;
   mp_size_t new_size;
@@ -5303,10 +5304,10 @@ make_pure_bignum (struct Lisp_Bignum *value)
   int limb_alignment = alignof (mp_limb_t);
   pure_limbs = pure_alloc (nbytes, - limb_alignment);
   for (i = 0; i < nlimbs; ++i)
-    pure_limbs[i] = mpz_getlimbn (value->value, i);
+    pure_limbs[i] = mpz_getlimbn (*n, i);
 
   new_size = nlimbs;
-  if (mpz_sgn (value->value) < 0)
+  if (mpz_sgn (*n) < 0)
     new_size = -new_size;
 
   mpz_roinit_n (b->value, pure_limbs, new_size);
@@ -5456,7 +5457,7 @@ purecopy (Lisp_Object obj)
       return obj;
     }
   else if (BIGNUMP (obj))
-    obj = make_pure_bignum (XBIGNUM (obj));
+    obj = make_pure_bignum (obj);
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
@@ -5784,6 +5785,77 @@ mark_and_sweep_weak_table_contents (void)
     }
 }
 
+/* Return the number of bytes to cons between GCs, assuming
+   gc-cons-threshold is THRESHOLD and gc-cons-percentage is
+   PERCENTAGE.  */
+static intmax_t
+consing_threshold (intmax_t threshold, Lisp_Object percentage)
+{
+  if (!NILP (Vmemory_full))
+    return memory_full_cons_threshold;
+  else
+    {
+      threshold = max (threshold, GC_DEFAULT_THRESHOLD / 10);
+      if (FLOATP (percentage))
+	{
+	  double tot = (XFLOAT_DATA (percentage)
+			* total_bytes_of_live_objects ());
+	  if (threshold < tot)
+	    {
+	      if (tot < INTMAX_MAX)
+		threshold = tot;
+	      else
+		threshold = INTMAX_MAX;
+	    }
+	}
+      return threshold;
+    }
+}
+
+/* Adjust consing_until_gc, assuming gc-cons-threshold is THRESHOLD and
+   gc-cons-percentage is PERCENTAGE.  */
+static Lisp_Object
+bump_consing_until_gc (intmax_t threshold, Lisp_Object percentage)
+{
+  /* If consing_until_gc is negative leave it alone, since this prevents
+     negative integer overflow and a GC would have been done soon anyway.  */
+  if (0 <= consing_until_gc)
+    {
+      threshold = consing_threshold (threshold, percentage);
+      intmax_t sum;
+      if (INT_ADD_WRAPV (consing_until_gc, threshold - gc_threshold, &sum))
+	{
+	  /* Scale the threshold down so that consing_until_gc does
+	     not overflow.  */
+	  sum = INTMAX_MAX;
+	  threshold = INTMAX_MAX - consing_until_gc + gc_threshold;
+	}
+      consing_until_gc = sum;
+      gc_threshold = threshold;
+    }
+
+  return Qnil;
+}
+
+/* Watch changes to gc-cons-threshold.  */
+static Lisp_Object
+watch_gc_cons_threshold (Lisp_Object symbol, Lisp_Object newval,
+			 Lisp_Object operation, Lisp_Object where)
+{
+  intmax_t threshold;
+  if (! (INTEGERP (newval) && integer_to_intmax (newval, &threshold)))
+    return Qnil;
+  return bump_consing_until_gc (threshold, Vgc_cons_percentage);
+}
+
+/* Watch changes to gc-cons-percentage.  */
+static Lisp_Object
+watch_gc_cons_percentage (Lisp_Object symbol, Lisp_Object newval,
+			  Lisp_Object operation, Lisp_Object where)
+{
+  return bump_consing_until_gc (gc_cons_threshold, newval);
+}
+
 /* Subroutine of Fgarbage_collect that does most of the work.  */
 static bool
 garbage_collect_1 (struct gcstat *gcst)
@@ -5926,25 +5998,8 @@ garbage_collect_1 (struct gcstat *gcst)
 
   unblock_input ();
 
-  if (!NILP (Vmemory_full))
-    consing_until_gc = memory_full_cons_threshold;
-  else
-    {
-      intmax_t threshold = max (gc_cons_threshold, GC_DEFAULT_THRESHOLD / 10);
-      if (FLOATP (Vgc_cons_percentage))
-	{
-	  double tot = (XFLOAT_DATA (Vgc_cons_percentage)
-			* total_bytes_of_live_objects ());
-	  if (threshold < tot)
-	    {
-	      if (tot < INTMAX_MAX)
-		threshold = tot;
-	      else
-		threshold = INTMAX_MAX;
-	    }
-	}
-      consing_until_gc = threshold;
-    }
+  consing_until_gc = gc_threshold
+    = consing_threshold (gc_cons_threshold, Vgc_cons_percentage);
 
   if (garbage_collection_messages && NILP (Vmemory_full))
     {
@@ -7365,6 +7420,7 @@ do hash-consing of the objects allocated to pure space.  */);
   DEFSYM (Qheap, "heap");
   DEFSYM (QAutomatic_GC, "Automatic GC");
 
+  DEFSYM (Qgc_cons_percentage, "gc-cons-percentage");
   DEFSYM (Qgc_cons_threshold, "gc-cons-threshold");
   DEFSYM (Qchar_table_extra_slots, "char-table-extra-slots");
 
@@ -7398,6 +7454,22 @@ N should be nonnegative.  */);
   defsubr (&Smemory_info);
   defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);
+
+  Lisp_Object watcher;
+
+  static union Aligned_Lisp_Subr Swatch_gc_cons_threshold =
+     {{{ PSEUDOVECTOR_FLAG | (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS) },
+       { .a4 = watch_gc_cons_threshold },
+       4, 4, "watch_gc_cons_threshold", 0, 0}};
+  XSETSUBR (watcher, &Swatch_gc_cons_threshold.s);
+  Fadd_variable_watcher (Qgc_cons_threshold, watcher);
+
+  static union Aligned_Lisp_Subr Swatch_gc_cons_percentage =
+     {{{ PSEUDOVECTOR_FLAG | (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS) },
+       { .a4 = watch_gc_cons_percentage },
+       4, 4, "watch_gc_cons_percentage", 0, 0}};
+  XSETSUBR (watcher, &Swatch_gc_cons_percentage.s);
+  Fadd_variable_watcher (Qgc_cons_percentage, watcher);
 }
 
 #ifdef HAVE_X_WINDOWS

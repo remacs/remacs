@@ -525,7 +525,7 @@ DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
   (Lisp_Object object)
 {
   return ((FIXNUMP (object) ? 0 <= XFIXNUM (object)
-	   : BIGNUMP (object) && 0 <= mpz_sgn (XBIGNUM (object)->value))
+	   : BIGNUMP (object) && 0 <= mpz_sgn (*xbignum_val (object)))
 	  ? Qt : Qnil);
 }
 
@@ -771,10 +771,7 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   if (AUTOLOADP (function))
     Fput (symbol, Qautoload, XCDR (function));
 
-  /* Convert to eassert or remove after GC bug is found.  In the
-     meantime, check unconditionally, at a slight perf hit.  */
-  if (! valid_lisp_object_p (definition))
-    emacs_abort ();
+  eassert (valid_lisp_object_p (definition));
 
   set_symbol_function (symbol, definition);
 
@@ -2481,7 +2478,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
       else if (isnan (f1))
 	lt = eq = gt = false;
       else
-	i2 = mpz_cmp_d (XBIGNUM (num2)->value, f1);
+	i2 = mpz_cmp_d (*xbignum_val (num2), f1);
     }
   else if (FIXNUMP (num1))
     {
@@ -2502,7 +2499,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 	  i2 = XFIXNUM (num2);
 	}
       else
-	i2 = mpz_sgn (XBIGNUM (num2)->value);
+	i2 = mpz_sgn (*xbignum_val (num2));
     }
   else if (FLOATP (num2))
     {
@@ -2510,12 +2507,12 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
       if (isnan (f2))
 	lt = eq = gt = false;
       else
-	i1 = mpz_cmp_d (XBIGNUM (num1)->value, f2);
+	i1 = mpz_cmp_d (*xbignum_val (num1), f2);
     }
   else if (FIXNUMP (num2))
-    i1 = mpz_sgn (XBIGNUM (num1)->value);
+    i1 = mpz_sgn (*xbignum_val (num1));
   else
-    i1 = mpz_cmp (XBIGNUM (num1)->value, XBIGNUM (num2)->value);
+    i1 = mpz_cmp (*xbignum_val (num1), *xbignum_val (num2));
 
   if (eq)
     {
@@ -3005,7 +3002,7 @@ usage: (- &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)  */)
 	return make_int (-XFIXNUM (a));
       if (FLOATP (a))
 	return make_float (-XFLOAT_DATA (a));
-      mpz_neg (mpz[0], XBIGNUM (a)->value);
+      mpz_neg (mpz[0], *xbignum_val (a));
       return make_integer_mpz ();
     }
   return arith_driver (Asub, nargs, args, a);
@@ -3058,6 +3055,59 @@ usage: (/ NUMBER &rest DIVISORS)  */)
   return arith_driver (Adiv, nargs, args, a);
 }
 
+/* Return NUM % DEN (or NUM mod DEN, if MODULO).  NUM and DEN must be
+   integers.  */
+static Lisp_Object
+integer_remainder (Lisp_Object num, Lisp_Object den, bool modulo)
+{
+  if (FIXNUMP (den))
+    {
+      EMACS_INT d = XFIXNUM (den);
+      if (d == 0)
+	xsignal0 (Qarith_error);
+
+      EMACS_INT r;
+      bool have_r = false;
+      if (FIXNUMP (num))
+	{
+	  r = XFIXNUM (num) % d;
+	  have_r = true;
+	}
+      else if (eabs (d) <= ULONG_MAX)
+	{
+	  mpz_t const *n = xbignum_val (num);
+	  bool neg_n = mpz_sgn (*n) < 0;
+	  r = mpz_tdiv_ui (*n, eabs (d));
+	  if (neg_n)
+	    r = -r;
+	  have_r = true;
+	}
+
+      if (have_r)
+	{
+	  /* If MODULO and the remainder has the wrong sign, fix it.  */
+	  if (modulo && (d < 0 ? r > 0 : r < 0))
+	    r += d;
+
+	  return make_fixnum (r);
+	}
+    }
+
+  mpz_t const *d = bignum_integer (&mpz[1], den);
+  mpz_t *r = &mpz[0];
+  mpz_tdiv_r (*r, *bignum_integer (&mpz[0], num), *d);
+
+  if (modulo)
+    {
+      /* If the remainder has the wrong sign, fix it.  */
+      int sgn_r = mpz_sgn (*r);
+      if (mpz_sgn (*d) < 0 ? sgn_r > 0 : sgn_r < 0)
+	mpz_add (*r, *r, *d);
+    }
+
+  return make_integer_mpz ();
+}
+
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
 Both must be integers or markers.  */)
@@ -3065,51 +3115,7 @@ Both must be integers or markers.  */)
 {
   CHECK_INTEGER_COERCE_MARKER (x);
   CHECK_INTEGER_COERCE_MARKER (y);
-
-  /* A bignum can never be 0, so don't check that case.  */
-  if (EQ (y, make_fixnum (0)))
-    xsignal0 (Qarith_error);
-
-  if (FIXNUMP (x) && FIXNUMP (y))
-    return make_fixnum (XFIXNUM (x) % XFIXNUM (y));
-  else
-    {
-      mpz_tdiv_r (mpz[0],
-		  *bignum_integer (&mpz[0], x),
-		  *bignum_integer (&mpz[1], y));
-      return make_integer_mpz ();
-    }
-}
-
-/* Return X mod Y.  Both must be integers and Y must be nonzero.  */
-Lisp_Object
-integer_mod (Lisp_Object x, Lisp_Object y)
-{
-  if (FIXNUMP (x) && FIXNUMP (y))
-    {
-      EMACS_INT i1 = XFIXNUM (x), i2 = XFIXNUM (y);
-
-      i1 %= i2;
-
-      /* If the "remainder" comes out with the wrong sign, fix it.  */
-      if (i2 < 0 ? i1 > 0 : i1 < 0)
-	i1 += i2;
-
-      return make_fixnum (i1);
-    }
-  else
-    {
-      mpz_t const *ym = bignum_integer (&mpz[1], y);
-      bool neg_y = mpz_sgn (*ym) < 0;
-      mpz_mod (mpz[0], *bignum_integer (&mpz[0], x), *ym);
-
-      /* Fix the sign if needed.  */
-      int sgn_r = mpz_sgn (mpz[0]);
-      if (neg_y ? sgn_r > 0 : sgn_r < 0)
-	mpz_add (mpz[0], mpz[0], *ym);
-
-      return make_integer_mpz ();
-    }
+  return integer_remainder (x, y, false);
 }
 
 DEFUN ("mod", Fmod, Smod, 2, 2, 0,
@@ -3120,12 +3126,9 @@ Both X and Y must be numbers or markers.  */)
 {
   CHECK_NUMBER_COERCE_MARKER (x);
   CHECK_NUMBER_COERCE_MARKER (y);
-
-  /* A bignum can never be 0, so don't check that case.  */
-  if (EQ (y, make_fixnum (0)))
-    xsignal0 (Qarith_error);
-
-  return (FLOATP (x) || FLOATP (y) ? fmod_float : integer_mod) (x, y);
+  if (FLOATP (x) || FLOATP (y))
+    return fmod_float (x, y);
+  return integer_remainder (x, y, true);
 }
 
 static Lisp_Object
@@ -3214,7 +3217,7 @@ representation.  */)
 
   if (BIGNUMP (value))
     {
-      mpz_t *nonneg = &XBIGNUM (value)->value;
+      mpz_t const *nonneg = xbignum_val (value);
       if (mpz_sgn (*nonneg) < 0)
 	{
 	  mpz_com (mpz[0], *nonneg);
@@ -3245,10 +3248,10 @@ In this case, the sign bit is duplicated.  */)
     {
       if (EQ (value, make_fixnum (0)))
 	return value;
-      if (mpz_sgn (XBIGNUM (count)->value) < 0)
+      if (mpz_sgn (*xbignum_val (count)) < 0)
 	{
 	  EMACS_INT v = (FIXNUMP (value) ? XFIXNUM (value)
-			 : mpz_sgn (XBIGNUM (value)->value));
+			 : mpz_sgn (*xbignum_val (value)));
 	  return make_fixnum (v < 0 ? -1 : 0);
 	}
       overflow_error ();
@@ -3291,8 +3294,8 @@ expt_integer (Lisp_Object x, Lisp_Object y)
   if (TYPE_RANGED_FIXNUMP (unsigned long, y))
     exp = XFIXNUM (y);
   else if (MOST_POSITIVE_FIXNUM < ULONG_MAX && BIGNUMP (y)
-	   && mpz_fits_ulong_p (XBIGNUM (y)->value))
-    exp = mpz_get_ui (XBIGNUM (y)->value);
+	   && mpz_fits_ulong_p (*xbignum_val (y)))
+    exp = mpz_get_ui (*xbignum_val (y));
   else
     overflow_error ();
 
@@ -3311,7 +3314,7 @@ Markers are converted to integers.  */)
     return make_int (XFIXNUM (number) + 1);
   if (FLOATP (number))
     return (make_float (1.0 + XFLOAT_DATA (number)));
-  mpz_add_ui (mpz[0], XBIGNUM (number)->value, 1);
+  mpz_add_ui (mpz[0], *xbignum_val (number), 1);
   return make_integer_mpz ();
 }
 
@@ -3326,7 +3329,7 @@ Markers are converted to integers.  */)
     return make_int (XFIXNUM (number) - 1);
   if (FLOATP (number))
     return (make_float (-1.0 + XFLOAT_DATA (number)));
-  mpz_sub_ui (mpz[0], XBIGNUM (number)->value, 1);
+  mpz_sub_ui (mpz[0], *xbignum_val (number), 1);
   return make_integer_mpz ();
 }
 
@@ -3337,7 +3340,7 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
   CHECK_INTEGER (number);
   if (FIXNUMP (number))
     return make_fixnum (~XFIXNUM (number));
-  mpz_com (mpz[0], XBIGNUM (number)->value);
+  mpz_com (mpz[0], *xbignum_val (number));
   return make_integer_mpz ();
 }
 

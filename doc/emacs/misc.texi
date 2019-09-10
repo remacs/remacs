@@ -302,7 +302,10 @@ the Transport Layer Security (@acronym{TLS}) features.
 @vindex network-security-level
 The @code{network-security-level} variable determines the security
 level that @acronym{NSM} enforces.  If its value is @code{low}, no
-security checks are performed.
+security checks are performed.  This is not recommended, and will
+basically mean that your network connections can't be trusted.
+However, the setting can be useful in limited circumstances, as when
+testing network issues.
 
 If this variable is @code{medium} (which is the default), a number of
 checks will be performed.  If as result @acronym{NSM} determines that
@@ -325,13 +328,12 @@ The protocol network checks is controlled via the
 @code{network-security-protocol-checks} variable.
 
 It's an alist where the first element of each association is the name
-of the check, the second element is the security level where the check
-should be used, and the optional third element is a parameter supplied
-to the check.
+of the check, and the second element is the security level where the
+check should be used.
 
 An element like @code{(rc4 medium)} will result in the function
 @code{nsm-protocol-check--rc4} being called like thus:
-@w{@code{(nsm-protocol-check--rc4 host port status optional-parameter)}}.
+@w{@code{(nsm-protocol-check--rc4 host port status settings)}}.
 The function should return non-@code{nil} if the connection should
 proceed and @code{nil} otherwise.
 

@@ -110,6 +110,7 @@ a future Emacs interpreter will be able to use it.")
 ;; These macros are defined here so that they
 ;; can safely be used in init files.
 
+;;;###autoload
 (defmacro cl-incf (place &optional x)
   "Increment PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
@@ -129,9 +130,12 @@ The return value is the decremented value of PLACE."
     (list 'cl-callf '- place (or x 1))))
 
 (defmacro cl-pushnew (x place &rest keys)
-  "(cl-pushnew X PLACE): insert X at the head of the list if not already there.
-Like (push X PLACE), except that the list is unmodified if X is `eql' to
-an element already on the list.
+  "Add X to the list stored in PLACE unless X is already in the list.
+PLACE is a generalized variable that stores a list.
+
+Like (push X PLACE), except that PLACE is unmodified if X is `eql'
+to an element already in the list stored in PLACE.
+
 \nKeywords supported:  :test :test-not :key
 \n(fn X PLACE [KEYWORD VALUE]...)"
   (declare (debug

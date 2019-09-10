@@ -220,4 +220,7 @@ literals (Bug#20852)."
                    (* most-positive-fixnum most-positive-fixnum)))
     (should (= n (string-to-number (format "%d." n))))))
 
+(ert-deftest lread-circular-hash ()
+  (should-error (read "#s(hash-table data #0=(#0# . #0#))")))
+
 ;;; lread-tests.el ends here

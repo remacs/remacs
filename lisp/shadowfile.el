@@ -165,6 +165,9 @@ created by `shadow-define-regexp-group'.")
 (defvar shadow-info-buffer nil)		; buf visiting shadow-info-file
 (defvar shadow-todo-buffer nil)		; buf visiting shadow-todo-file
 
+(defvar shadow-debug nil
+  "Use for debug messages.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Syntactic sugar; General list and string manipulation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -631,6 +634,10 @@ Consider them as regular expressions if third arg REGEXP is true."
   (let ((shadows (shadow-shadows-of
 		  (shadow-expand-file-name
 		   (buffer-file-name (current-buffer))))))
+    (when shadow-debug
+      (message
+       "shadow-add-to-todo: %s %s\n%s"
+       shadows shadow-files-to-copy (with-output-to-string (backtrace))))
     (when shadows
       (setq shadow-files-to-copy
 	    (shadow-union shadows shadow-files-to-copy))
@@ -644,6 +651,10 @@ Consider them as regular expressions if third arg REGEXP is true."
 (defun shadow-remove-from-todo (pair)
   "Remove PAIR from `shadow-files-to-copy'.
 PAIR must be `eq' to one of the elements of that list."
+  (when shadow-debug
+    (message
+     "shadow-remove-from-todo: %s %s\n%s"
+     pair shadow-files-to-copy (with-output-to-string (backtrace))))
   (setq shadow-files-to-copy
 	(cl-remove-if (lambda (s) (eq s pair)) shadow-files-to-copy)))
 
@@ -673,7 +684,7 @@ Return t unless files were locked; then return nil."
 	(eval-buffer))
       (when shadow-todo-file
 	(set-buffer (setq shadow-todo-buffer
-			  (find-file-noselect shadow-todo-file)))
+			  (find-file-noselect shadow-todo-file 'nowarn)))
 	(when (and (not (buffer-modified-p))
 		   (file-newer-than-file-p (make-auto-save-file-name)
 					   shadow-todo-file))
@@ -714,6 +725,8 @@ With non-nil argument also saves the buffer."
     (if save (shadow-save-todo-file))))
 
 (defun shadow-save-todo-file ()
+  (when shadow-debug
+    (message "shadow-save-todo-file:\n%s" (with-output-to-string (backtrace))))
   (if (and shadow-todo-buffer (buffer-modified-p shadow-todo-buffer))
       (with-current-buffer shadow-todo-buffer
 	(condition-case nil		; have to continue even in case of
@@ -769,7 +782,7 @@ look for files that have been changed and need to be copied to other systems."
 				(buffer-list))))
 	   (yes-or-no-p "Modified buffers exist; exit anyway? "))
        (or (not (fboundp 'process-list))
-	   ;; process-list is not defined on MSDOS.
+	   ;; `process-list' is not defined on MSDOS.
 	   (let ((processes (process-list))
 		 active)
 	     (while processes

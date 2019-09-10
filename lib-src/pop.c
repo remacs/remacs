@@ -1275,7 +1275,7 @@ pop_getline (popserver server, char **line)
       server->buffer_index = 0;
     }
 
-  while (1)
+  while (true)
     {
       /* There's a "- 1" here to leave room for the null that we put
          at the end of the read data below.  We put the null there so
@@ -1288,7 +1288,7 @@ pop_getline (popserver server, char **line)
 	    {
 	      strcpy (pop_error, "Out of memory in pop_getline");
 	      pop_trash (server);
-	      return (-1);
+	      break;
 	    }
 	}
       ret = RECV (server->file, server->buffer + server->data,
@@ -1298,13 +1298,13 @@ pop_getline (popserver server, char **line)
 	  snprintf (pop_error, ERROR_MAX, "%s%s",
 		    GETLINE_ERROR, strerror (errno));
 	  pop_trash (server);
-	  return (-1);
+	  break;
 	}
       else if (ret == 0)
 	{
 	  strcpy (pop_error, "Unexpected EOF from server in pop_getline");
 	  pop_trash (server);
-	  return (-1);
+	  break;
 	}
       else
 	{
@@ -1332,7 +1332,7 @@ pop_getline (popserver server, char **line)
 	}
     }
 
-  /* NOTREACHED */
+  return -1;
 }
 
 /*

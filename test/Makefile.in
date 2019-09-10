@@ -233,6 +233,7 @@ define test_template
   ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
     $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
 					$(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
+    $(notdir $(1).log): $(1).log
   endif
 
   ## Short aliases that always re-run the tests, with no logging.

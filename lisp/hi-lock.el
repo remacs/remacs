@@ -447,7 +447,7 @@ highlighting will not update as you type."
   (hi-lock-set-pattern
    ;; The \\(?:...\\) grouping construct ensures that a leading ^, +, * or ?
    ;; or a trailing $ in REGEXP will be interpreted correctly.
-   (concat "^.*\\(?:" regexp "\\).*$") face))
+   (concat "^.*\\(?:" regexp "\\).*\\(?:$\\)\n?") face))
 
 
 ;;;###autoload

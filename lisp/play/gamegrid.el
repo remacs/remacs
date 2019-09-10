@@ -562,7 +562,8 @@ FILE is created there."
 	 (gamegrid-shared-game-dir
 	  (not (zerop (logand #o6000 (or update-game-score-modes 0))))))
     (cond ((or (not update-game-score-modes) (file-name-absolute-p file))
-	   (gamegrid-add-score-insecure file score))
+	   (gamegrid-add-score-insecure file score
+                                        gamegrid-user-score-file-directory))
 	  ((and gamegrid-shared-game-dir
 		(file-exists-p (expand-file-name file shared-game-score-directory)))
 	   ;; Use the setgid (or setuid) "update-game-score" program

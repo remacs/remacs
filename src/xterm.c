@@ -10044,7 +10044,6 @@ For details, see etc/PROBLEMS.\n",
     {
       fprintf (stderr, "%s\n", error_msg);
       Fkill_emacs (make_fixnum (70));
-      /* NOTREACHED */
     }
 
   totally_unblock_input ();

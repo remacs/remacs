@@ -109,6 +109,9 @@ sections if you need to.
   (provided you have the 'gzip' program) those installed Lisp source (.el)
   files that have corresponding .elc versions, as well as the Info files.
 
+  You can read a brief summary about common make targets:
+
+                make help
 
 ADDITIONAL DISTRIBUTION FILES
 

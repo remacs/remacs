@@ -72,12 +72,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <soundcard.h>
 #endif
 #ifdef HAVE_ALSA
-#ifdef ALSA_SUBDIR_INCLUDE
 #include <alsa/asoundlib.h>
-#else
-#include <asoundlib.h>
-#endif /* ALSA_SUBDIR_INCLUDE */
-#endif /* HAVE_ALSA */
+#endif
 
 /* END: Non Windows Includes */
 

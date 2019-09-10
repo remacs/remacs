@@ -701,9 +701,8 @@ of `my-compilation-root' here."
 ;;;###autoload
 (defcustom compilation-search-path '(nil)
   "List of directories to search for source files named in error messages.
-Elements should be directory names, not file names of
-directories.  The value nil as an element means the error
-message buffer `default-directory'."
+Elements should be directory names, not file names of directories.
+The value nil as an element means to try the default directory."
   :type '(repeat (choice (const :tag "Default" nil)
 			 (string :tag "Directory"))))
 
@@ -2575,28 +2574,94 @@ region and the first line of the next region."
 
 (defcustom compilation-context-lines nil
   "Display this many lines of leading context before the current message.
-If nil and the left fringe is displayed, don't scroll the
+If nil or t, and the left fringe is displayed, don't scroll the
 compilation output window; an arrow in the left fringe points to
-the current message.  If nil and there is no left fringe, the message
-displays at the top of the window; there is no arrow."
-  :type '(choice integer (const :tag "No window scrolling" nil))
+the current message.  With no left fringe, If nil, the message
+scrolls to the top of the window; there is no arrow.  If t, don't
+scroll the compilation output window at all; an arrow before
+column zero points to the current message."
+  :type '(choice integer
+                 (const :tag "Scroll window when no fringe" nil)
+                 (const :tag  "No window scrolling" t))
   :version "22.1")
 
 (defsubst compilation-set-window (w mk)
-  "Align the compilation output window W with marker MK near top."
-  (if (integerp compilation-context-lines)
-      (set-window-start w (save-excursion
-			    (goto-char mk)
-			    (compilation-beginning-of-line
-			     (- 1 compilation-context-lines))
-			    (point)))
+  "Maybe align the compilation output window W with marker MK near top."
+  (cond ((integerp compilation-context-lines)
+         (set-window-start w (save-excursion
+			       (goto-char mk)
+			       (compilation-beginning-of-line
+			        (- 1 compilation-context-lines))
+			       (point))))
+        ((eq compilation-context-lines t))
     ;; If there is no left fringe.
-    (when (equal (car (window-fringes w)) 0)
-      (set-window-start w (save-excursion
-                            (goto-char mk)
-			    (beginning-of-line 1)
-			    (point)))))
-    (set-window-point w mk))
+        ((equal (car (window-fringes w)) 0)
+         (set-window-start w (save-excursion
+                               (goto-char mk)
+			       (beginning-of-line 1)
+			       (point)))
+         (set-window-point w mk))
+        (t (set-window-point w mk))))
+
+(defvar-local compilation-arrow-overlay nil
+  "Overlay with the before-string property of `overlay-arrow-string'.
+
+When non-nil, this overlay causes redisplay to display `overlay-arrow-string'
+at the overlay's start position.")
+
+(defconst compilation--margin-string (propertize "=>" 'face 'default)
+  "The string which will appear in the margin in compilation mode.")
+
+(defconst compilation--dummy-string
+  (propertize ">" 'display
+              `((margin left-margin) ,compilation--margin-string))
+  "A string which is only a placeholder for `compilation--margin-string'.
+Actual value is never used, only the text property.")
+
+(defun compilation-set-up-arrow-spec-in-margin ()
+  "Set up compilation-arrow-overlay to display as an arrow in a margin."
+  (setq overlay-arrow-string "")
+  (setq compilation-arrow-overlay
+	(make-overlay overlay-arrow-position overlay-arrow-position))
+  (overlay-put compilation-arrow-overlay
+               'before-string compilation--dummy-string)
+  (set-window-margins (selected-window) (+ (or (car (window-margins)) 0) 2)))
+
+(defun compilation-tear-down-arrow-spec-in-margin ()
+  "Restore compilation-arrow-overlay to not using the margin, which is removed."
+  (overlay-put compilation-arrow-overlay 'before-string nil)
+  (delete-overlay compilation-arrow-overlay)
+  (setq compilation-arrow-overlay nil)
+  (set-window-margins (selected-window) (- (car (window-margins)) 2)))
+
+(defun compilation-set-overlay-arrow (w)
+  "Set up, or switch off, the overlay-arrow for window W."
+  (with-selected-window w        ; So the later `goto-char' will work.
+    (if (and (eq compilation-context-lines t)
+             (equal (car (window-fringes w)) 0)) ; No left fringe
+        ;; Insert a before-string overlay at the beginning of the line
+        ;; pointed to by `overlay-arrow-position', such that it will
+        ;; display in a 2-character margin.
+        (progn
+          (cond
+           ((overlayp compilation-arrow-overlay)
+            (when (not (eq (overlay-start compilation-arrow-overlay)
+		           overlay-arrow-position))
+	      (if overlay-arrow-position
+	          (move-overlay compilation-arrow-overlay
+			        overlay-arrow-position overlay-arrow-position)
+                (compilation-tear-down-arrow-spec-in-margin))))
+
+           (overlay-arrow-position
+            (compilation-set-up-arrow-spec-in-margin)))
+          ;; Ensure that the "=>" remains in the window by causing
+          ;; the window to be scrolled, if needed.
+          (goto-char (overlay-start compilation-arrow-overlay)))
+
+      ;; `compilation-context-lines' isn't t, or we've got a left
+      ;; fringe, so remove any overlay arrow.
+      (when (overlayp compilation-arrow-overlay)
+        (compilation-tear-down-arrow-spec-in-margin)))))
 
 (defvar next-error-highlight-timer)
 
@@ -2618,7 +2683,8 @@ and overlay is highlighted between MK and END-MK."
 	 (highlight-regexp (with-current-buffer (marker-buffer msg)
 			     ;; also do this while we change buffer
 			     (goto-char (marker-position msg))
-			     (and w (compilation-set-window w msg))
+			     (and w (progn (compilation-set-window w msg)
+                                           (compilation-set-overlay-arrow w)))
 			     compilation-highlight-regexp)))
     ;; Ideally, the window-size should be passed to `display-buffer'
     ;; so it's only used when creating a new window.
@@ -2739,7 +2805,8 @@ attempts to find a file whose name is produced by (format FMT FILENAME)."
 				   '(nil (allow-no-window . t))))))
           (with-current-buffer (marker-buffer marker)
 	    (goto-char marker)
-	    (and w (compilation-set-window w marker)))
+	    (and w (progn (compilation-set-window w marker)
+                          (compilation-set-overlay-arrow w))))
           (let* ((name (read-file-name
                         (format "Find this %s in (default %s): "
                                 compilation-error filename)

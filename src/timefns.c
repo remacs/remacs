@@ -91,13 +91,29 @@ static Lisp_Object timespec_hz;
 #define TRILLION 1000000000000
 #if FIXNUM_OVERFLOW_P (TRILLION)
 static Lisp_Object trillion;
-# define ztrillion (XBIGNUM (trillion)->value)
+# define ztrillion (*xbignum_val (trillion))
 #else
 # define trillion make_fixnum (TRILLION)
 # if ULONG_MAX < TRILLION || !FASTER_TIMEFNS
 mpz_t ztrillion;
 # endif
 #endif
+
+/* True if the nonzero Lisp integer HZ divides evenly into a trillion.  */
+static bool
+trillion_factor (Lisp_Object hz)
+{
+  if (FASTER_TIMEFNS)
+    {
+      if (FIXNUMP (hz))
+	return TRILLION % XFIXNUM (hz) == 0;
+      if (!FIXNUM_OVERFLOW_P (TRILLION))
+	return false;
+    }
+  verify (TRILLION <= INTMAX_MAX);
+  intmax_t ihz;
+  return integer_to_intmax (hz, &ihz) && TRILLION % ihz == 0;
+}
 
 /* Return a struct timeval that is roughly equivalent to T.
    Use the least timeval not less than T.
@@ -391,16 +407,36 @@ decode_float_time (double t, struct lisp_time *result)
   else
     {
       int exponent = ilogb (t);
-      if (exponent == FP_ILOGBNAN)
-	return EINVAL;
-
-      /* An enormous or infinite T would make SCALE < 0 which would make
-	 HZ < 1, which the (TICKS . HZ) representation does not allow.  */
-      if (DBL_MANT_DIG - 1 < exponent)
-	return EOVERFLOW;
-
-      /* min so we don't scale tiny numbers as if they were normalized.  */
-      int scale = min (DBL_MANT_DIG - 1 - exponent, flt_radix_power_size - 1);
+      int scale;
+      if (exponent < DBL_MANT_DIG)
+	{
+	  if (exponent < DBL_MIN_EXP - 1)
+	    {
+	      if (exponent == FP_ILOGBNAN
+		  && (FP_ILOGBNAN != FP_ILOGB0 || isnan (t)))
+		return EINVAL;
+	      /* T is tiny.  SCALE must be less than FLT_RADIX_POWER_SIZE,
+		 as otherwise T would be scaled as if it were normalized.  */
+	      scale = flt_radix_power_size - 1;
+	    }
+	  else
+	    {
+	      /* The typical case.  */
+	      scale = DBL_MANT_DIG - 1 - exponent;
+	    }
+	}
+      else if (exponent < INT_MAX)
+	{
+	 /* T is finite but so large that HZ would be less than 1 if
+	    T's precision were represented exactly.  SCALE must be
+	    nonnegative, as the (TICKS . HZ) representation requires
+	    HZ to be at least 1.  So use SCALE = 0, which converts T to
+	    (T . 1), which is the exact numeric value with too-large HZ,
+	    which is typically better than signaling overflow.  */
+	  scale = 0;
+	}
+      else
+	return FP_ILOGBNAN == INT_MAX && isnan (t) ? EINVAL : EOVERFLOW;
 
       double scaled = scalbn (t, scale);
       eassert (trunc (scaled) == scaled);
@@ -498,7 +534,7 @@ lisp_time_hz_ticks (struct lisp_time t, Lisp_Object hz)
 	return make_int (ticks / XFIXNUM (t.hz)
 			 - (ticks % XFIXNUM (t.hz) < 0));
     }
-  else if (! (BIGNUMP (hz) && 0 < mpz_sgn (XBIGNUM (hz)->value)))
+  else if (! (BIGNUMP (hz) && 0 < mpz_sgn (*xbignum_val (hz))))
     invalid_hz (hz);
 
   mpz_mul (mpz[0],
@@ -661,17 +697,9 @@ enum timeform
    TIMEFORM_HI_LO_US, /* seconds plus microseconds (HI LO US) */
    TIMEFORM_NIL, /* current time in nanoseconds */
    TIMEFORM_HI_LO_US_PS, /* seconds plus micro and picoseconds (HI LO US PS) */
-   /* These two should be last; see timeform_sub_ps_p.  */
    TIMEFORM_FLOAT, /* time as a float */
    TIMEFORM_TICKS_HZ /* fractional time: HI is ticks, LO is ticks per second */
   };
-
-/* True if Lisp times of form FORM can express sub-picosecond timestamps.  */
-static bool
-timeform_sub_ps_p (enum timeform form)
-{
-  return TIMEFORM_FLOAT <= form;
-}
 
 /* From the valid form FORM and the time components HIGH, LOW, USEC
    and PSEC, generate the corresponding time value.  If LOW is
@@ -878,6 +906,7 @@ lisp_to_timespec (struct lisp_time t)
   struct timespec result = invalid_timespec ();
   int ns;
   mpz_t *q = &mpz[0];
+  mpz_t const *qt = q;
 
   if (FASTER_TIMEFNS && EQ (t.hz, timespec_hz))
     {
@@ -896,7 +925,7 @@ lisp_to_timespec (struct lisp_time t)
 	  return result;
 	}
       else
-	ns = mpz_fdiv_q_ui (*q, XBIGNUM (t.ticks)->value, TIMESPEC_HZ);
+	ns = mpz_fdiv_q_ui (*q, *xbignum_val (t.ticks), TIMESPEC_HZ);
     }
   else if (FASTER_TIMEFNS && EQ (t.hz, make_fixnum (1)))
     {
@@ -913,7 +942,7 @@ lisp_to_timespec (struct lisp_time t)
 	  return result;
 	}
       else
-	q = &XBIGNUM (t.ticks)->value;
+	qt = xbignum_val (t.ticks);
     }
   else
     {
@@ -925,7 +954,7 @@ lisp_to_timespec (struct lisp_time t)
   /* With some versions of MinGW, tv_sec is a 64-bit type, whereas
      time_t is a 32-bit type.  */
   time_t sec;
-  if (mpz_time (*q, &sec))
+  if (mpz_time (*qt, &sec))
     {
       result.tv_sec = sec;
       result.tv_nsec = ns;
@@ -1010,7 +1039,7 @@ lispint_arith (Lisp_Object a, Lisp_Object b, bool subtract)
       if (eabs (XFIXNUM (b)) <= ULONG_MAX)
 	{
 	  ((XFIXNUM (b) < 0) == subtract ? mpz_add_ui : mpz_sub_ui)
-	    (mpz[0], XBIGNUM (a)->value, eabs (XFIXNUM (b)));
+	    (mpz[0], *xbignum_val (a), eabs (XFIXNUM (b)));
 	  mpz_done = true;
 	}
     }
@@ -1060,9 +1089,14 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
   else
     {
       /* The plan is to decompose ta into na/da and tb into nb/db.
-	 Start by computing da and db.  */
+	 Start by computing da and db, their minimum (which will be
+	 needed later) and the iticks temporary that will become
+	 available once only their minimum is needed.  */
       mpz_t const *da = bignum_integer (&mpz[1], ta.hz);
       mpz_t const *db = bignum_integer (&mpz[2], tb.hz);
+      bool da_lt_db = mpz_cmp (*da, *db) < 0;
+      mpz_t const *hzmin = da_lt_db ? da : db;
+      mpz_t *iticks = &mpz[da_lt_db + 1];
 
       /* The plan is to compute (na * (db/g) + nb * (da/g)) / lcm (da, db)
 	 where g = gcd (da, db).  Start by computing g.  */
@@ -1070,34 +1104,83 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
       mpz_gcd (*g, *da, *db);
 
       /* fa = da/g, fb = db/g.  */
-      mpz_t *fa = &mpz[1], *fb = &mpz[3];
-      mpz_tdiv_q (*fa, *da, *g);
-      mpz_tdiv_q (*fb, *db, *g);
+      mpz_t *fa = &mpz[4], *fb = &mpz[3];
+      mpz_divexact (*fa, *da, *g);
+      mpz_divexact (*fb, *db, *g);
 
-      /* FIXME: Maybe omit need for extra temp by computing fa * db here?  */
+      /* ihz = fa * db.  This is equal to lcm (da, db).  */
+      mpz_t *ihz = &mpz[0];
+      mpz_mul (*ihz, *fa, *db);
 
-      /* hz = fa * db.  This is equal to lcm (da, db).  */
-      mpz_mul (mpz[0], *fa, *db);
-      hz = make_integer_mpz ();
+      /* When warning about obsolete timestamps, if the smaller
+	 denominator comes from a non-(TICKS . HZ) timestamp and could
+	 generate a (TICKS . HZ) timestamp that would look obsolete,
+	 arrange for the result to have a higher HZ to avoid a
+	 spurious warning by a later consumer of this function's
+	 returned value.  */
+      verify (1 << LO_TIME_BITS <= ULONG_MAX);
+      if (WARN_OBSOLETE_TIMESTAMPS
+	  && (da_lt_db ? aform : bform) == TIMEFORM_FLOAT
+	  && (da_lt_db ? bform : aform) != TIMEFORM_TICKS_HZ
+	  && mpz_cmp_ui (*hzmin, 1) > 0
+	  && mpz_cmp_ui (*hzmin, 1 << LO_TIME_BITS) < 0)
+	{
+	  mpz_t *hzmin1 = &mpz[2 - da_lt_db];
+	  mpz_set_ui (*hzmin1, 1 << LO_TIME_BITS);
+	  hzmin = hzmin1;
+	}
 
-      /* ticks = (fb * na) OPER (fa * nb), where OPER is + or -.
-	 OP is the multiply-add or multiply-sub form of OPER.  */
-      mpz_t const *na = bignum_integer (&mpz[0], ta.ticks);
-      mpz_mul (mpz[0], *fb, *na);
+      /* iticks = (fb * na) OP (fa * nb), where OP is + or -.  */
+      mpz_t const *na = bignum_integer (iticks, ta.ticks);
+      mpz_mul (*iticks, *fb, *na);
       mpz_t const *nb = bignum_integer (&mpz[3], tb.ticks);
-      (subtract ? mpz_submul : mpz_addmul) (mpz[0], *fa, *nb);
+      (subtract ? mpz_submul : mpz_addmul) (*iticks, *fa, *nb);
+
+      /* Normalize iticks/ihz by dividing both numerator and
+	 denominator by ig = gcd (iticks, ihz).  However, if that
+	 would cause the denominator to become less than hzmin,
+	 rescale the denominator upwards from its ordinary value by
+	 multiplying numerator and denominator so that the denominator
+	 becomes at least hzmin.  This rescaling avoids returning a
+	 timestamp that is less precise than both a and b, or a
+	 timestamp that looks obsolete when that might be a problem.  */
+      mpz_t *ig = &mpz[3];
+      mpz_gcd (*ig, *iticks, *ihz);
+
+      if (!FASTER_TIMEFNS || mpz_cmp_ui (*ig, 1) > 0)
+	{
+	  mpz_divexact (*iticks, *iticks, *ig);
+	  mpz_divexact (*ihz, *ihz, *ig);
+
+	  if (!FASTER_TIMEFNS || mpz_cmp (*ihz, *hzmin) < 0)
+	    {
+	      /* Rescale straightforwardly.  Although this might not
+		 yield the minimal denominator that preserves numeric
+		 value and is at least hzmin, calculating such a
+		 denominator would be too expensive because it would
+		 require testing multisets of factors of lcm (da, db).  */
+	      mpz_t *rescale = &mpz[3];
+	      mpz_cdiv_q (*rescale, *hzmin, *ihz);
+	      mpz_mul (*iticks, *iticks, *rescale);
+	      mpz_mul (*ihz, *ihz, *rescale);
+	    }
+	}
+      hz = make_integer_mpz ();
+      mpz_swap (mpz[0], *iticks);
       ticks = make_integer_mpz ();
     }
 
   /* Return an integer if the timestamp resolution is 1,
      otherwise the (TICKS . HZ) form if !CURRENT_TIME_LIST or if
-     either input form supports timestamps that cannot be expressed
+     either input used (TICKS . HZ) form or the result can't be expressed
      exactly in (HI LO US PS) form, otherwise the (HI LO US PS) form
      for backward compatibility.  */
   return (EQ (hz, make_fixnum (1))
 	  ? ticks
 	  : (!CURRENT_TIME_LIST
-	     || timeform_sub_ps_p (aform) || timeform_sub_ps_p (bform))
+	     || aform == TIMEFORM_TICKS_HZ
+	     || bform == TIMEFORM_TICKS_HZ
+	     || !trillion_factor (hz))
 	  ? Fcons (ticks, hz)
 	  : ticks_hz_list4 (ticks, hz));
 }

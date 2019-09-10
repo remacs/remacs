@@ -33,8 +33,7 @@
 ;; paragraph and we let `fill-region' fill the long line into several
 ;; lines with the quote prefix as `fill-prefix'.
 
-;; Todo: implement basic `fill-region' (Emacs and XEmacs
-;;       implementations differ..)
+;; Todo: implement basic `fill-region'
 
 ;;; History:
 

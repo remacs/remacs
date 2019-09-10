@@ -47,7 +47,6 @@ static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 static bool internal_equal (Lisp_Object, Lisp_Object,
 			    enum equal_kind, int, Lisp_Object);
-static EMACS_UINT sxhash_bignum (struct Lisp_Bignum *);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -1444,7 +1443,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
     }
   else
     {
-      if (mpz_sgn (XBIGNUM (n)->value) < 0)
+      if (mpz_sgn (*xbignum_val (n)) < 0)
 	return tail;
       num = large_num;
     }
@@ -1482,11 +1481,11 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
 	 CYCLE_LENGTH.  */
       /* Add N mod CYCLE_LENGTH to NUM.  */
       if (cycle_length <= ULONG_MAX)
-	num += mpz_tdiv_ui (XBIGNUM (n)->value, cycle_length);
+	num += mpz_tdiv_ui (*xbignum_val (n), cycle_length);
       else
 	{
 	  mpz_set_intmax (mpz[0], cycle_length);
-	  mpz_tdiv_r (mpz[0], XBIGNUM (n)->value, mpz[0]);
+	  mpz_tdiv_r (mpz[0], *xbignum_val (n), mpz[0]);
 	  intptr_t iz;
 	  mpz_export (&iz, NULL, -1, sizeof iz, 0, 0, mpz[0]);
 	  num += iz;
@@ -1595,7 +1594,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
         {
           Lisp_Object tem = XCAR (tail);
           if (BIGNUMP (tem)
-	      && mpz_cmp (XBIGNUM (elt)->value, XBIGNUM (tem)->value) == 0)
+	      && mpz_cmp (*xbignum_val (elt), *xbignum_val (tem)) == 0)
             return tail;
         }
     }
@@ -2307,7 +2306,7 @@ This differs from numeric comparison: (eql 0.0 -0.0) returns nil and
     return FLOATP (obj2) && same_float (obj1, obj2) ? Qt : Qnil;
   else if (BIGNUMP (obj1))
     return ((BIGNUMP (obj2)
-	     && mpz_cmp (XBIGNUM (obj1)->value, XBIGNUM (obj2)->value) == 0)
+	     && mpz_cmp (*xbignum_val (obj1), *xbignum_val (obj2)) == 0)
 	    ? Qt : Qnil);
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
@@ -2437,7 +2436,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	if (ASIZE (o2) != size)
 	  return false;
 	if (BIGNUMP (o1))
-	  return mpz_cmp (XBIGNUM (o1)->value, XBIGNUM (o2)->value) == 0;
+	  return mpz_cmp (*xbignum_val (o1), *xbignum_val (o2)) == 0;
 	if (OVERLAYP (o1))
 	  {
 	    if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
@@ -2951,9 +2950,12 @@ suppressed.  */)
      But not more than once in any file,
      and not when we aren't loading or reading from a file.  */
   if (!from_file)
-    for (tem = Vcurrent_load_list; CONSP (tem); tem = XCDR (tem))
-      if (NILP (XCDR (tem)) && STRINGP (XCAR (tem)))
-	from_file = 1;
+    {
+      Lisp_Object tail = Vcurrent_load_list;
+      FOR_EACH_TAIL_SAFE (tail)
+	if (NILP (XCDR (tail)) && STRINGP (XCAR (tail)))
+	  from_file = true;
+    }
 
   if (from_file)
     {
@@ -3278,11 +3280,11 @@ static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool,
 static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  bool, ptrdiff_t *);
 
-Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
-				    bool, bool);
+static Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
+					   bool, bool);
 
-Lisp_Object base64_encode_string_1(Lisp_Object, bool,
-				   bool, bool);
+static Lisp_Object base64_encode_string_1 (Lisp_Object, bool,
+					   bool, bool);
 
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
@@ -3293,7 +3295,7 @@ Optional third argument NO-LINE-BREAK means do not break long lines
 into shorter lines.  */)
   (Lisp_Object beg, Lisp_Object end, Lisp_Object no_line_break)
 {
-  return base64_encode_region_1(beg, end, NILP (no_line_break), true, false);
+  return base64_encode_region_1 (beg, end, NILP (no_line_break), true, false);
 }
 
 
@@ -3306,10 +3308,10 @@ Optional second argument NO-PAD means do not add padding char =.
 This produces the URL variant of base 64 encoding defined in RFC 4648.  */)
   (Lisp_Object beg, Lisp_Object end, Lisp_Object no_pad)
 {
-  return base64_encode_region_1(beg, end, false, NILP(no_pad), true);
+  return base64_encode_region_1 (beg, end, false, NILP(no_pad), true);
 }
 
-Lisp_Object
+static Lisp_Object
 base64_encode_region_1 (Lisp_Object beg, Lisp_Object end, bool line_break,
 			bool pad, bool base64url)
 {
@@ -3374,11 +3376,11 @@ into shorter lines.  */)
   (Lisp_Object string, Lisp_Object no_line_break)
 {
 
-  return base64_encode_string_1(string, NILP (no_line_break), true, false);
+  return base64_encode_string_1 (string, NILP (no_line_break), true, false);
 }
 
-DEFUN ("base64url-encode-string", Fbase64url_encode_string, Sbase64url_encode_string,
-       1, 2, 0,
+DEFUN ("base64url-encode-string", Fbase64url_encode_string,
+       Sbase64url_encode_string, 1, 2, 0,
        doc: /* Base64url-encode STRING and return the result.
 Optional second argument NO-PAD means do not add padding char =.
 
@@ -3386,12 +3388,12 @@ This produces the URL variant of base 64 encoding defined in RFC 4648.  */)
   (Lisp_Object string, Lisp_Object no_pad)
 {
 
-  return base64_encode_string_1(string, false, NILP(no_pad), true);
+  return base64_encode_string_1 (string, false, NILP(no_pad), true);
 }
 
-Lisp_Object
-base64_encode_string_1(Lisp_Object string, bool line_break,
-		       bool pad, bool base64url)
+static Lisp_Object
+base64_encode_string_1 (Lisp_Object string, bool line_break,
+			bool pad, bool base64url)
 {
   ptrdiff_t allength, length, encoded_length;
   char *encoded;
@@ -3508,9 +3510,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 	{
 	  *e++ = b64_value_to_char[value];
 	  if (pad)
-	    {
-	      *e++ = '=';
-	    }
+	    *e++ = '=';
 	  break;
 	}
 
@@ -4196,21 +4196,20 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
 					  new_size);
       ptrdiff_t next_size = ASIZE (next);
       for (ptrdiff_t i = old_size; i < next_size - 1; i++)
-	gc_aset (next, i, make_fixnum (i + 1));
-      gc_aset (next, next_size - 1, make_fixnum (-1));
-      ptrdiff_t index_size = hash_index_size (h, next_size);
+	ASET (next, i, make_fixnum (i + 1));
+      ASET (next, next_size - 1, make_fixnum (-1));
 
       /* Build the new&larger key_and_value vector, making sure the new
          fields are initialized to `unbound`.  */
       Lisp_Object key_and_value
 	= larger_vecalloc (h->key_and_value, 2 * (next_size - old_size),
 			   2 * next_size);
-      for (ptrdiff_t i = ASIZE (h->key_and_value);
-            i < ASIZE (key_and_value); i++)
+      for (ptrdiff_t i = 2 * old_size; i < 2 * next_size; i++)
         ASET (key_and_value, i, Qunbound);
 
       Lisp_Object hash = larger_vector (h->hash, next_size - old_size,
 					next_size);
+      ptrdiff_t index_size = hash_index_size (h, next_size);
       h->index = make_vector (index_size, make_fixnum (-1));
       h->key_and_value = key_and_value;
       h->hash = hash;
@@ -4402,17 +4401,17 @@ hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
     {
-      ptrdiff_t i, size = HASH_TABLE_SIZE (h);
-
-      for (i = 0; i < size; ++i)
+      ptrdiff_t size = HASH_TABLE_SIZE (h);
+      if (!hash_rehash_needed_p (h))
+	memclear (XVECTOR (h->hash)->contents, size * word_size);
+      for (ptrdiff_t i = 0; i < size; i++)
 	{
 	  set_hash_next_slot (h, i, i < size - 1 ? i + 1 : -1);
 	  set_hash_key_slot (h, i, Qunbound);
 	  set_hash_value_slot (h, i, Qnil);
-	  set_hash_hash_slot (h, i, Qnil);
 	}
 
-      for (i = 0; i < ASIZE (h->index); ++i)
+      for (ptrdiff_t i = 0; i < ASIZE (h->index); i++)
 	ASET (h->index, i, make_fixnum (-1));
 
       h->next_free = 0;
@@ -4640,13 +4639,14 @@ sxhash_bool_vector (Lisp_Object vec)
 /* Return a hash for a bignum.  */
 
 static EMACS_UINT
-sxhash_bignum (struct Lisp_Bignum *bignum)
+sxhash_bignum (Lisp_Object bignum)
 {
-  size_t i, nlimbs = mpz_size (bignum->value);
+  mpz_t const *n = xbignum_val (bignum);
+  size_t i, nlimbs = mpz_size (*n);
   EMACS_UINT hash = 0;
 
   for (i = 0; i < nlimbs; ++i)
-    hash = sxhash_combine (hash, mpz_getlimbn (bignum->value, i));
+    hash = sxhash_combine (hash, mpz_getlimbn (*n, i));
 
   return SXHASH_REDUCE (hash);
 }
@@ -4680,7 +4680,7 @@ sxhash (Lisp_Object obj, int depth)
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
       if (BIGNUMP (obj))
-	hash = sxhash_bignum (XBIGNUM (obj));
+	hash = sxhash_bignum (obj);
       else if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In

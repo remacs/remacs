@@ -59,58 +59,6 @@ should return a grid vector array that is the new solution.
 
 ;;;***
 
-;;;### (autoloads nil "ada-mode" "progmodes/ada-mode.el" (0 0 0 0))
-;;; Generated autoloads from progmodes/ada-mode.el
-(push (purecopy '(ada-mode 4 0)) package--builtin-versions)
-
-(autoload 'ada-add-extensions "ada-mode" "\
-Define SPEC and BODY as being valid extensions for Ada files.
-Going from body to spec with `ff-find-other-file' used these
-extensions.
-SPEC and BODY are two regular expressions that must match against
-the file name.
-
-\(fn SPEC BODY)" nil nil)
-
-(autoload 'ada-mode "ada-mode" "\
-Ada mode is the major mode for editing Ada code.
-
-\(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ada-mode" '("ada-")))
-
-;;;***
-
-;;;### (autoloads nil "ada-prj" "progmodes/ada-prj.el" (0 0 0 0))
-;;; Generated autoloads from progmodes/ada-prj.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ada-prj" '("ada-")))
-
-;;;***
-
-;;;### (autoloads nil "ada-stmt" "progmodes/ada-stmt.el" (0 0 0 0))
-;;; Generated autoloads from progmodes/ada-stmt.el
-
-(autoload 'ada-header "ada-stmt" "\
-Insert a descriptive header at the top of the file." t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ada-stmt" '("ada-")))
-
-;;;***
-
-;;;### (autoloads nil "ada-xref" "progmodes/ada-xref.el" (0 0 0 0))
-;;; Generated autoloads from progmodes/ada-xref.el
-
-(autoload 'ada-find-file "ada-xref" "\
-Open FILENAME, from anywhere in the source path.
-Completion is available.
-
-\(fn FILENAME)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ada-xref" '("ada-")))
-
-;;;***
-
 ;;;### (autoloads nil "add-log" "vc/add-log.el" (0 0 0 0))
 ;;; Generated autoloads from vc/add-log.el
 
@@ -1273,7 +1221,7 @@ Entering array mode calls the function `array-mode-hook'.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "array" '("array-" "current-line" "limit-index" "move-to-column-untabify" "untabify-backward" "xor")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "array" '("array-" "current-line" "limit-index" "move-to-column-untabify" "untabify-backward")))
 
 ;;;***
 
@@ -2490,7 +2438,9 @@ If the value is not a function it should be a list of pairs
 \(REGEXP . FUNCTION).  In this case the function called will be the one
 associated with the first REGEXP which matches the current URL.  The
 function is passed the URL and any other args of `browse-url'.  The last
-regexp should probably be \".\" to specify a default browser.")
+regexp should probably be \".\" to specify a default browser.
+
+Also see `browse-url-secondary-browser-function'.")
 
 (custom-autoload 'browse-url-browser-function "browse-url" t)
 
@@ -3026,8 +2976,15 @@ it won't work in an interactive Emacs." nil nil)
 Run `byte-compile-file' on the files remaining on the command line.
 Use this from the command line, with `-batch';
 it won't work in an interactive Emacs.
-Each file is processed even if an error occurred previously.
+
+Each file is processed even if an error occurred previously.  If
+a file name denotes a directory, all Emacs Lisp source files in
+that directory (that have previously been compiled) will be
+recompiled if newer than the compiled files.  In this case,
+NOFORCE is ignored.
+
 For example, invoke \"emacs -batch -f batch-byte-compile $emacs/ ~/*.el\".
+
 If NOFORCE is non-nil, don't recompile a file that seems to be
 already up-to-date.
 
@@ -4763,13 +4720,6 @@ and runs the normal hook `command-history-hook'." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "cl" "emacs-lisp/cl.el" (0 0 0 0))
-;;; Generated autoloads from emacs-lisp/cl.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl" '("cl-" "define-" "defsetf" "flet" "labels" "lexical-let")))
-
-;;;***
-
 ;;;### (autoloads "actual autoloads are elsewhere" "cl-extra" "emacs-lisp/cl-extra.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/cl-extra.el
@@ -5250,9 +5200,8 @@ Otherwise, it saves all modified buffers without asking.")
 
 (defvar compilation-search-path '(nil) "\
 List of directories to search for source files named in error messages.
-Elements should be directory names, not file names of
-directories.  The value nil as an element means the error
-message buffer `default-directory'.")
+Elements should be directory names, not file names of directories.
+The value nil as an element means to try the default directory.")
 
 (custom-autoload 'compilation-search-path "compile" t)
 
@@ -5385,7 +5334,7 @@ This is the value of `next-error-function' in Compilation buffers.
 
 \(fn N &optional RESET)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "compile" '("compil" "define-compilation-mode" "kill-compilation" "recompile")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "compile" '("compil" "define-compilation-mode" "kill-compilation" "overlay-arrow-overlay" "recompile")))
 
 ;;;***
 
@@ -8112,14 +8061,17 @@ For example, you could write
 Make a global mode GLOBAL-MODE corresponding to buffer-local minor MODE.
 TURN-ON is a function that will be called with no args in every buffer
   and that should try to turn MODE on if applicable for that buffer.
-KEYS is a list of CL-style keyword arguments.  As the minor mode
-  defined by this function is always global, any :global keyword is
-  ignored.  Other keywords have the same meaning as in `define-minor-mode',
-  which see.  In particular, :group specifies the custom group.
-  The most useful keywords are those that are passed on to the
-  `defcustom'.  It normally makes no sense to pass the :lighter
-  or :keymap keywords to `define-globalized-minor-mode', since these
-  are usually passed to the buffer-local version of the minor mode.
+Each of KEY VALUE is a pair of CL-style keyword arguments.  As
+  the minor mode defined by this function is always global, any
+  :global keyword is ignored.  Other keywords have the same
+  meaning as in `define-minor-mode', which see.  In particular,
+  :group specifies the custom group.  The most useful keywords
+  are those that are passed on to the `defcustom'.  It normally
+  makes no sense to pass the :lighter or :keymap keywords to
+  `define-globalized-minor-mode', since these are usually passed
+  to the buffer-local version of the minor mode.
+BODY contains code to execute each time the mode is enabled or disabled.
+  It is executed after toggling the mode, and before running GLOBAL-MODE-hook.
 
 If MODE's set-up depends on the major mode in effect when it was
 enabled, then disabling and reenabling MODE should make MODE work
@@ -8131,7 +8083,7 @@ When a major mode is initialized, MODE is actually turned on just
 after running the major mode's hook.  However, MODE is not turned
 on if the hook has explicitly disabled it.
 
-\(fn GLOBAL-MODE MODE TURN-ON &rest KEYS)" nil t)
+\(fn GLOBAL-MODE MODE TURN-ON [KEY VALUE]... BODY...)" nil t)
 
 (function-put 'define-globalized-minor-mode 'doc-string-elt '2)
 
@@ -8206,6 +8158,17 @@ pairs:
     ENABLE is an expression.  The menu is enabled for selection
     if the expression evaluates to a non-nil value.  `:enable' is
     an alias for `:active'.
+
+ :label FORM
+    FORM is an expression that is dynamically evaluated and whose
+    value serves as the menu's label (the default is the first
+    element of MENU).
+
+ :help HELP
+    HELP is a string, the help to display for the menu.
+    In a GUI this is a \"tooltip\" on the menu button.  (Though
+    in Lucid :help is not shown for the top-level menu bar, only
+    for sub-menus.)
 
 The rest of the elements in MENU are menu items.
 A menu item can be a vector of three elements:
@@ -12855,7 +12818,11 @@ to get the effect of a C-q.
 \(fn &optional BUFFER)" nil nil)
 
 (autoload 'fill-flowed "flow-fill" "\
+Apply RFC2646 decoding to BUFFER.
+If BUFFER is nil, default to the current buffer.
 
+If DELETE-SPACE, delete RFC2646 spaces padding at the end of
+lines.
 
 \(fn &optional BUFFER DELETE-SPACE)" nil nil)
 
@@ -14762,24 +14729,6 @@ Add the window configuration CONF to `gnus-buffer-configuration'.
 ;;;### (autoloads nil "gnutls" "net/gnutls.el" (0 0 0 0))
 ;;; Generated autoloads from net/gnutls.el
 
-(defvar gnutls-min-prime-bits 256 "\
-Minimum number of prime bits accepted by GnuTLS for key exchange.
-During a Diffie-Hellman handshake, if the server sends a prime
-number with fewer than this number of bits, the handshake is
-rejected.  (The smaller the prime number, the less secure the
-key exchange is against man-in-the-middle attacks.)
-
-A value of nil says to use the default GnuTLS value.
-
-The default value of this variable is such that virtually any
-connection can be established, whether this connection can be
-considered cryptographically \"safe\" or not.  However, Emacs
-network security is handled at a higher level via
-`open-network-stream' and the Network Security Manager.  See Info
-node `(emacs) Network Security'.")
-
-(custom-autoload 'gnutls-min-prime-bits "gnutls" t)
-
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "gnutls" '("gnutls-" "open-gnutls-stream")))
 
 ;;;***
@@ -14863,11 +14812,11 @@ if ARG is `toggle'; disable the mode otherwise.
 
 (autoload 'gravatar-retrieve "gravatar" "\
 Asynchronously retrieve a gravatar for MAIL-ADDRESS.
-When finished, call CB as (apply CB GRAVATAR CBARGS),
+When finished, call CALLBACK as (apply CALLBACK GRAVATAR CBARGS),
 where GRAVATAR is either an image descriptor, or the symbol
 `error' if the retrieval failed.
 
-\(fn MAIL-ADDRESS CB &optional CBARGS)" nil nil)
+\(fn MAIL-ADDRESS CALLBACK &optional CBARGS)" nil nil)
 
 (autoload 'gravatar-retrieve-synchronously "gravatar" "\
 Synchronously retrieve a gravatar for MAIL-ADDRESS.
@@ -15107,9 +15056,15 @@ and source-file directory for your debugger.
 \(fn COMMAND-LINE)" t nil)
 
 (autoload 'pdb "gud" "\
-Run pdb on program FILE in buffer `*gud-FILE*'.
-The directory containing FILE becomes the initial working directory
-and source-file directory for your debugger.
+Run COMMAND-LINE in the `*gud-FILE*' buffer.
+
+COMMAND-LINE should include the pdb executable
+name (`gud-pdb-command-name') and the file to be debugged.
+
+If called interactively, the command line will be prompted for.
+
+The directory containing this file becomes the initial working
+directory and source-file directory for your debugger.
 
 \(fn COMMAND-LINE)" t nil)
 
@@ -17117,7 +17072,8 @@ RET	Select the file at the front of the list of matches.
 \\[ido-toggle-case]	Toggle case-sensitive searching of file names.
 \\[ido-toggle-literal]	Toggle literal reading of this file.
 \\[ido-completion-help]	Show list of matching files in separate window.
-\\[ido-toggle-ignore]	Toggle ignoring files listed in `ido-ignore-files'." t nil)
+\\[ido-toggle-ignore]	Toggle ignoring files listed in `ido-ignore-files'.
+\\[ido-reread-directory]	Reread the current directory." t nil)
 
 (autoload 'ido-find-file-other-window "ido" "\
 Switch to another file and show it in another window.
@@ -17965,7 +17921,7 @@ Display the \"Reporting Bugs\" section of the Emacs manual in Info mode." t nil)
 (autoload 'info-standalone "info" "\
 Run Emacs as a standalone Info reader.
 Usage:  emacs -f info-standalone [filename]
-In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself." nil nil)
+In standalone mode, \\<Info-mode-map>\\[quit-window] exits Emacs itself." nil nil)
 
 (autoload 'Info-on-current-buffer "info" "\
 Use Info mode to browse the current Info buffer.
@@ -18007,7 +17963,7 @@ one topic and contains references to other nodes which discuss related
 topics.  Info has commands to follow the references and show you other nodes.
 
 \\<Info-mode-map>\\[Info-help]	Invoke the Info tutorial.
-\\[Info-exit]	Quit Info: reselect previously selected buffer.
+\\[quit-window]	Quit Info: reselect previously selected buffer.
 
 Selecting other nodes:
 \\[Info-mouse-follow-nearest-node]
@@ -20528,10 +20484,9 @@ OTHER-HEADERS is an alist specifying additional header fields.
 Elements look like (HEADER . VALUE) where both HEADER and VALUE
 are strings.
 
-CONTINUE, SWITCH-FUNCTION, YANK-ACTION, SEND-ACTIONS, and
-RETURN-ACTION and any additional arguments are IGNORED.
+Any additional arguments are IGNORED.
 
-\(fn &optional TO SUBJECT OTHER-HEADERS CONTINUE SWITCH-FUNCTION YANK-ACTION SEND-ACTIONS RETURN-ACTION &rest IGNORED)" nil nil)
+\(fn &optional TO SUBJECT OTHER-HEADERS &rest IGNORED)" nil nil)
 
 (autoload 'mh-send-letter "mh-comp" "\
 Save draft and send message.
@@ -21787,7 +21742,37 @@ Interactively, prompt for NAME-SERVER if invoked with prefix argument.
 
 This command uses `nslookup-program' for looking up the DNS information.
 
+See also: `nslookup-host-ipv4', `nslookup-host-ipv6' for
+non-interactive versions of this function more suitable for use
+in Lisp code.
+
 \(fn HOST &optional NAME-SERVER)" t nil)
+
+(autoload 'nslookup-host-ipv4 "net-utils" "\
+Return the IPv4 address for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for DNS
+resolution.
+
+If FORMAT is `string', returns the IP address as a
+string (default).  If FORMAT is `vector', returns a 4-integer
+vector of octets.
+
+This command uses `nslookup-program' to look up DNS records.
+
+\(fn HOST &optional NAME-SERVER FORMAT)" nil nil)
+
+(autoload 'nslookup-host-ipv6 "net-utils" "\
+Return the IPv6 address for HOST (name or IP address).
+Optional argument NAME-SERVER says which server to use for DNS
+resolution.
+
+If FORMAT is `string', returns the IP address as a
+string (default).  If FORMAT is `vector', returns a 8-integer
+vector of hextets.
+
+This command uses `nslookup-program' to look up DNS records.
+
+\(fn HOST &optional NAME-SERVER FORMAT)" nil nil)
 
 (autoload 'nslookup "net-utils" "\
 Run `nslookup-program'." t nil)
@@ -21845,7 +21830,7 @@ Open a network connection to HOST on PORT.
 
 \(fn HOST PORT)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "net-utils" '("arp-program" "dig-program" "dns-lookup-program" "finger-X.500-host-regexps" "ftp-" "ifconfig-program" "ipconfig" "iwconfig-program" "net" "nslookup-" "ping-program" "route-program" "run-network-program" "smbclient" "traceroute-program" "whois-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "net-utils" '("arp-program" "dig-program" "dns-lookup-program" "finger-X.500-host-regexps" "ftp-" "ifconfig-program" "iwconfig-program" "net" "nslookup-" "ping-program" "route-program" "run-network-program" "smbclient" "traceroute-program" "whois-")))
 
 ;;;***
 
@@ -24268,7 +24253,7 @@ matching parenthesis is highlighted in `show-paren-style' after
 (put 'parse-time-rules 'risky-local-variable t)
 
 (autoload 'parse-time-string "parse-time" "\
-Parse the time-string STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
+Parse the time in STRING into (SEC MIN HOUR DAY MON YEAR DOW DST TZ).
 STRING should be something resembling an RFC 822 (or later) date-time, e.g.,
 \"Fri, 25 Mar 2016 16:24:56 +0100\", but this function is
 somewhat liberal in what format it accepts, and will attempt to
@@ -33258,7 +33243,7 @@ If DATE lacks timezone information, GMT is assumed.
 
 (defalias 'time-to-seconds 'float-time)
 
-(defalias 'seconds-to-time 'encode-time)
+(defalias 'seconds-to-time 'time-convert)
 
 (autoload 'days-to-time "time-date" "\
 Convert DAYS into a time value.
@@ -36411,7 +36396,7 @@ Usage:
     Emacs with VHDL Mode (i.e. load a VHDL file or use \"emacs -l
     vhdl-mode\") in a directory with an existing project setup file, it is
     automatically loaded and its project activated if option
-    `vhdl-project-auto-load' is non-nil.  Names/paths of the project setup
+    `vhdl-project-autoload' is non-nil.  Names/paths of the project setup
     files can be specified in option `vhdl-project-file-name'.  Multiple
     project setups can be automatically loaded from global directories.
     This is an alternative to specifying project setups with option

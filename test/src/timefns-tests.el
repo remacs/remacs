@@ -19,6 +19,12 @@
 
 (require 'ert)
 
+(defun timefns-tests--decode-time (look zone decoded-time)
+  (should (equal (decode-time look zone t) decoded-time))
+  (should (equal (decode-time look zone 'integer)
+		 (cons (time-convert (car decoded-time) 'integer)
+		       (cdr decoded-time)))))
+
 ;;; Check format-time-string and decode-time with various TZ settings.
 ;;; Use only POSIX-compatible TZ values, since the tests should work
 ;;; even if tzdb is not in use.
@@ -40,31 +46,29 @@
 		    (7879679999900 . 100000)
 		    (78796799999999999999 . 1000000000000)))
       ;; UTC.
-     (let ((sec (time-add 59 (time-subtract (time-convert look t)
-                                            (time-convert look 'integer)))))
+     (let* ((look-ticks-hz (time-convert look t))
+	    (hz (cdr look-ticks-hz))
+	    (look-integer (time-convert look 'integer))
+	    (sec (time-add (time-convert 59 hz)
+			   (time-subtract look-ticks-hz
+					  (time-convert look-integer hz)))))
       (should (string-equal
 	       (format-time-string "%Y-%m-%d %H:%M:%S.%3N %z" look t)
 	       "1972-06-30 23:59:59.999 +0000"))
-      (should (equal (decode-time look t 'integer)
-		     '(59 59 23 30 6 1972 5 nil 0)))
-      (should (equal (decode-time look t t)
-		     (list sec 59 23 30 6 1972 5 nil 0)))
+      (timefns-tests--decode-time look t
+				  (list sec 59 23 30 6 1972 5 nil 0))
       ;; "UTC0".
       (should (string-equal
 	       (format-time-string format look "UTC0")
 	       "1972-06-30 23:59:59.999 +0000 (UTC)"))
-      (should (equal (decode-time look "UTC0" 'integer)
-		     '(59 59 23 30 6 1972 5 nil 0)))
-      (should (equal (decode-time look "UTC0" t)
-		     (list sec 59 23 30 6 1972 5 nil 0)))
+      (timefns-tests--decode-time look "UTC0"
+				  (list sec 59 23 30 6 1972 5 nil 0))
       ;; Negative UTC offset, as a Lisp list.
       (should (string-equal
 	       (format-time-string format look '(-28800 "PST"))
 	       "1972-06-30 15:59:59.999 -0800 (PST)"))
-      (should (equal (decode-time look '(-28800 "PST") 'integer)
-		     '(59 59 15 30 6 1972 5 nil -28800)))
-      (should (equal (decode-time look '(-28800 "PST") t)
-		     (list sec 59 15 30 6 1972 5 nil -28800)))
+      (timefns-tests--decode-time look '(-28800 "PST")
+				  (list sec 59 15 30 6 1972 5 nil -28800))
       ;; Negative UTC offset, as a Lisp integer.
       (should (string-equal
 	       (format-time-string format look -28800)
@@ -73,18 +77,14 @@
 	       (if (eq system-type 'windows-nt)
 		   "1972-06-30 15:59:59.999 -0800 (ZZZ)"
 		 "1972-06-30 15:59:59.999 -0800 (-08)")))
-      (should (equal (decode-time look -28800 'integer)
-		     '(59 59 15 30 6 1972 5 nil -28800)))
-      (should (equal (decode-time look -28800 t)
-		     (list sec 59 15 30 6 1972 5 nil -28800)))
+      (timefns-tests--decode-time look -28800
+				  (list sec 59 15 30 6 1972 5 nil -28800))
       ;; Positive UTC offset that is not an hour multiple, as a string.
       (should (string-equal
 	       (format-time-string format look "IST-5:30")
 	       "1972-07-01 05:29:59.999 +0530 (IST)"))
-      (should (equal (decode-time look "IST-5:30" 'integer)
-		     '(59 29 5 1 7 1972 6 nil 19800)))
-      (should (equal (decode-time look "IST-5:30" t)
-		     (list sec 29 5 1 7 1972 6 nil 19800)))))))
+      (timefns-tests--decode-time look "IST-5:30"
+				  (list sec 29 5 1 7 1972 6 nil 19800))))))
 
 (ert-deftest decode-then-encode-time ()
   (let ((time-values (list 0 -2 1 0.0 -0.0 -2.0 1.0
@@ -129,6 +129,12 @@
 			   most-negative-fixnum most-positive-fixnum
 			   (1- most-negative-fixnum)
 			   (1+ most-positive-fixnum)
+			   1e1 -1e1 1e-1 -1e-1
+			   1e8 -1e8 1e-8 -1e-8
+			   1e9 -1e9 1e-9 -1e-9
+			   1e10 -1e10 1e-10 -1e-10
+			   1e16 -1e16 1e-16 -1e-16
+			   1e37 -1e37 1e-37 -1e-37
 			   1e+INF -1e+INF 1e+NaN -1e+NaN
 			   '(0 0 0 1) '(0 0 1 0) '(0 1 0 0) '(1 0 0 0)
 			   '(-1 0 0 0) '(1 2 3 4) '(-1 2 3 4)

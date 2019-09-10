@@ -558,9 +558,9 @@ All non-spacing characters have this function in
             ;; "Improper" base characters are of the following general
             ;; categories:
             ;;   Mark (nonspacing, combining, enclosing)
-            ;;   Separator (space, line, paragraph)
+            ;;   Separator (line, paragraph)
             ;;   Other (control, format, surrogate)
-	    '(Mn Mc Me Zs Zl Zp Cc Cf Cs))
+	    '(Mn Mc Me Zl Zp Cc Cf Cs))
       nil)
 
      ;; A base character and the following non-spacing characters.

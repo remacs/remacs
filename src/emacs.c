@@ -2084,8 +2084,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
   /* Enter editor command loop.  This never returns.  */
   Frecursive_edit ();
-  /* NOTREACHED */
-  return 0;
+  eassume (false);
 }
 
 /* Sort the args so we can find the most important ones

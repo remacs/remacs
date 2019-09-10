@@ -1329,7 +1329,8 @@ If STR has `advice' text property, append the following special event:
 (defvar quail-conversion-str nil)
 
 (defun quail-input-method (key)
-  (if (or (and buffer-read-only
+  (if (or (and (or buffer-read-only
+                   (get-char-property (point) 'read-only))
 	       (not (or inhibit-read-only
 			(get-char-property (point) 'inhibit-read-only))))
 	  (and overriding-terminal-local-map

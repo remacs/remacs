@@ -40,7 +40,7 @@
 ;; * Frame/buffer killing hooks
 ;; * Mouse-3 position relative menu
 ;; * Mouse motion, help-echo hacks
-;; * Mouse clicking, double clicking, & XEmacs image clicking hack
+;; * Mouse clicking & double clicking
 ;; * Mode line hacking
 ;; * Utilities for use in a program covering:
 ;;    o keymap massage for some actions
@@ -56,7 +56,6 @@
 ;; 1) (require 'dframe)
 ;; 2) Variable Setup:
 ;;   -frame-parameters -- Frame parameters for Emacs.
-;;   -frame-plist -- Frame parameters for XEmacs.
 ;;   -- Not on parameter lists: They can optionally include width
 ;;      and height.  If width or height is not included, then it will
 ;;      be provided to match the originating frame.  In general,
@@ -112,13 +111,9 @@
 
 ;;; Code:
 
-;;; Compatibility functions
-;;
-(defalias 'dframe-frame-parameter
-  (if (fboundp 'frame-parameter) 'frame-parameter
-    (lambda (frame parameter)
-      "Return FRAME's PARAMETER value."
-      (cdr (assoc parameter (frame-parameters frame))))))
+
+(define-obsolete-function-alias 'dframe-frame-parameter
+  'frame-parameter "27.1")
 
 
 ;;; Variables
@@ -322,8 +317,8 @@ CREATE-HOOK is a hook to run after creating a frame."
       (if (frame-live-p (symbol-value frame-var))
 	  (raise-frame (symbol-value frame-var))
 	(set frame-var
-	     (let* ((mh (dframe-frame-parameter dframe-attached-frame
-						'menu-bar-lines))
+             (let* ((mh (frame-parameter dframe-attached-frame
+                                         'menu-bar-lines))
 		    (paramsa
 		     ;; Only add a guessed height if one is not specified
 		     ;; in the input parameters.
@@ -377,8 +372,8 @@ a cons cell indicating a position of the form (LEFT . TOP)."
   ;; Position dframe.
   ;; Do no positioning if not on a windowing system,
   (unless (or (not window-system) (eq window-system 'pc))
-    (let* ((pfx (dframe-frame-parameter parent-frame 'left))
-	   (pfy (dframe-frame-parameter parent-frame 'top))
+    (let* ((pfx (frame-parameter parent-frame 'left))
+           (pfy (frame-parameter parent-frame 'top))
 	   (pfw (+ (tool-bar-pixel-width parent-frame)
 		   (frame-pixel-width parent-frame)))
 	   (pfh (frame-pixel-height parent-frame))

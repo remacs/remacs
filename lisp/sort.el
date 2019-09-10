@@ -225,11 +225,17 @@ the sort order."
       (narrow-to-region beg end)
       (goto-char (point-min))
       (sort-subr reverse
-		 (function
-		  (lambda ()
-		    (while (and (not (eobp)) (looking-at paragraph-separate))
-		      (forward-line 1))))
-		 'forward-paragraph))))
+		 (lambda ()
+		   (while (and (not (eobp)) (looking-at paragraph-separate))
+		     (forward-line 1)))
+		 (lambda ()
+                   (forward-paragraph)
+                   ;; If the buffer doesn't end with a newline, add a
+                   ;; newline to avoid having paragraphs being
+                   ;; concatenated after sorting.
+                   (when (and (eobp)
+                              (not (bolp)))
+                     (insert "\n")))))))
 
 ;;;###autoload
 (defun sort-pages (reverse beg end)

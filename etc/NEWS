@@ -16,10 +16,10 @@ You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing 'C-u C-h C-n'.
 
 Temporary note:
-+++ indicates that all necessary documentation updates are complete.
-    (This means all relevant manuals in doc/ AND lisp doc-strings.)
++++ indicates that all relevant manuals in doc/ have been updated.
 --- means no change in the manuals is needed.
-When you add a new item, use the appropriate mark if you are sure it applies,
+When you add a new item, use the appropriate mark if you are sure it
+applies, and please also update docstrings as needed.
 
 
 * Installation Changes in Emacs 27.1
@@ -129,8 +129,26 @@ This is intended mostly to help developers.
 ** Emacs now requires GTK 2.24 and GTK 3.10 for the GTK 2 and GTK 3
 builds respectively.
 
+** New make target 'help' shows a summary of common make targets.
+
 
 * Startup Changes in Emacs 27.1
+
++++
+** Emacs now uses the XDG convention for init files.
+For example, it looks for init.el in ~/.config/emacs/init.el, and
+similarly for other init files.
+
+The XDG_CONFIG_HOME environment variable (which defaults to ~/.config)
+specifies the parent directory of these and other configuration files,
+and will override their traditional locations (the home directory,
+~/.emacs.d, etc.).
+
+Emacs will still look for init files in their traditional locations if
+XDG_CONFIG_HOME does not exist, so invoking Emacs with
+XDG_CONFIG_HOME='/nowhere' might be useful if your new-location init
+files are scrambled, or if you want to force Emacs to ignore files
+under XDG_CONFIG_HOME for some other reason.
 
 +++
 ** Emacs can now be configured using an early init file.
@@ -173,12 +191,6 @@ after Emacs has finished initialization and is ready for use.
 emacs.service file to eg "~/.config/systemd/user/", you will need to copy
 the new version of the file again.)
 
-+++
-** New option 'help-enable-completion-auto-load'.
-This allows disabling the new feature introduced in Emacs 26.1 which
-loads files during completion of 'C-h f' and 'C-h v' according to
-'definition-prefixes'.
-
 
 * Changes in Emacs 27.1
 
@@ -204,6 +216,9 @@ To get the old, less-secure behavior, you can set the
 ---
 *** When run by root, emacsclient no longer connects to non-root sockets.
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
+
+** New function 'network-lookup-address-info'.
+This does IPv4 and/or IPv6 address lookups on hostnames.
 
 ---
 ** Control of the threshold for using the 'distant-foreground' color.
@@ -272,13 +287,22 @@ variable.
 +++
 ** TLS connections have their security tightened by default.
 Most of the checks for outdated, believed-to-be-weak TLS algorithms
-and ciphers are now switched on by default.  By default, the NSM will
+and ciphers are now switched on by default.  (In addition, several new
+TLS weaknesses are now warned about.)  By default, the NSM will
 flag connections using these weak algorithms and ask users whether to
 allow them.  To get the old behavior back (where certificates are
 checked for validity, but no warnings about weak cryptography are
 issued), you can either set 'network-security-protocol-checks' to nil,
 or adjust the elements in that variable to only happen on the 'high'
 security level (assuming you use the 'medium' level).
+
+---
+** New user option 'nsm-trust-local-network'.
+Allows skipping Network Security Manager checks for hosts on your
+local subnet(s).  It defaults to nil.  Usually, there should be no
+need to set this non-nil, and doing that risks opening your local
+network connections to attacks.  So be sure you know what you are
+doing before changing the value.
 
 +++
 ** Native GnuTLS connections can now use client certificates.
@@ -507,10 +531,19 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** 'autoconf-mode' is now used instead of 'm4-mode' for the
+acinclude.m4/aclocal.m4/acsite.m4 files.
+
+---
+** On GNU/Linux, 'M-x battery' will now list all batteries, no matter
+what they're named, and the 'battery-linux-sysfs-regexp' variable has
+been removed.
+
 ** The 'list-processes' command now includes port numbers in the
 network connection information (in addition to the host name).
 
-** The 'cl' package is now officially deprecated in favor of `cl-lib`.
+** The 'cl' package is now officially deprecated in favor of 'cl-lib'.
 
 +++
 ** winner
@@ -545,6 +578,11 @@ that it doesn't bring any measurable benefit.
 ---
 *** In 'compilation-error-regexp-alist', 'line' (and 'end-line') can
 be functions.
++++
+*** 'compilation-context-lines' can now take the value t; this is like
+nil, but instead of scrolling the current line to the top of the
+screen when there is no left fringe, it inserts a visible arrow before
+column zero.
 
 ** cl-lib.el
 +++
@@ -690,7 +728,7 @@ The default value is 'find-dired-sort-by-filename'.
 ** Change Logs and VC
 
 +++
-*** New command 'log-edit-generate-changelog', bound to C-c C-w.
+*** New command 'log-edit-generate-changelog-from-diff', bound to C-c C-w.
 This generates ChangeLog entries from the VC fileset diff.
 
 *** Recording ChangeLog entries doesn't require an actual file.
@@ -934,6 +972,11 @@ early init file.
 *** Imenu support has been added to 'package-menu-mode'.
 
 ** Info
+
++++
+*** Clicking on the left/right arrow icon in the Info tool-bar while
+holding down the Ctrl key pops up a menu of previously visited Info nodes
+where you can select a node to go back (like in browsers).
 
 ---
 *** Info can now follow 'file://' protocol URLs.
@@ -1793,6 +1836,16 @@ aliases of 'bookmark-default-file'.
 When non-nil, watch whether the bookmark file has changed on disk.
 
 ---
+*** The old bookmark file format is no longer supported.
+This bookmark file format has not been used in Emacs since at least
+version 19.34, released in 1996, and will no longer be automatically
+converted to the new bookmark file format.
+
+The following functions are now declared obsolete:
+bookmark-grok-file-format-version, bookmark-maybe-upgrade-file-format,
+bookmark-upgrade-file-format-from-0, bookmark-upgrade-version-0-alist
+
+---
 ** The mantemp.el library is now marked obsolete.
 This library generates manual C++ template instantiations.  It should
 no longer be useful on modern compilers, which do this automatically.
@@ -1839,6 +1892,11 @@ and 'gravatar-force-default'.
 
 *** The built-in ada-mode is now deleted.  The Gnu ELPA package is a
 good replacement, even in very large source files.
+
+** xref
+
+---
+*** Imenu support has been added to 'xref--xref-buffer-mode'.
 
 
 * New Modes and Packages in Emacs 27.1
@@ -2166,7 +2224,9 @@ end and duration).
 +++
 *** 'time-add', 'time-subtract', and 'time-less-p' now accept
 infinities and NaNs too, and propagate them or return nil like
-floating-point operators do.
+floating-point operators do.  If both arguments are finite, these
+functions now return exact results instead of rounding in some cases,
+and they also avoid excess precision when that is easy.
 
 +++
 *** New function 'time-equal-p' compares time values for equality.
@@ -2569,6 +2629,9 @@ subr.el so that it is available by default.  It now always returns the
 non-nil argument when the other is nil.  Several duplicates of 'xor'
 in other packages are now obsolete aliases of 'xor'.
 
++++
+** 'define-globalized-minor-mode' now takes BODY forms.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
@@ -2609,6 +2672,11 @@ system.  It is usually zero, which indicates that 'w32-ansi-code-page'
 is being used, except in Far Eastern locales.  When this variable is
 non-zero, Emacs at startup sets 'locale-coding-system' to the
 corresponding encoding, instead of using 'w32-ansi-code-page'.
+
+---
+** The default value of 'inhibit-compacting-font-caches' is t on MS-Windows.
+Experience shows that compacting font caches causes more trouble on
+MS-Windows than it helps.
 
 +++
 ** On NS the behaviour of drag and drop can now be modified by use of

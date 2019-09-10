@@ -44,6 +44,9 @@ The Makefile in this directory supports the following targets:
   tests.  In the former case the output is shown on the terminal, in
   the latter case the output is written to <filename>.log.
 
+<filename> could be either a relative file name like
+"lisp/files-tests", or a package name like "files-tests".
+
 ERT offers selectors, which make it possible to filter out which test
 cases shall run.  The make variable $(SELECTOR) gives you a simple
 mean to use your own selectors.  The ERT manual describes how

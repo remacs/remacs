@@ -148,7 +148,11 @@ Otherwise, it tries the programs listed in the entry until the
 version requirement is met."
   (unless program-alist
     (setq program-alist epg-config--program-alist))
-  (let ((entry (assq protocol program-alist)))
+  (let ((entry (assq protocol program-alist))
+        ;; In many gnupg distributions (especially on Windows), the
+        ;; version string is "gpg (GnuPG) 2.2.15-unknown" or the like.
+        (version-regexp-alist (cons '("^[-._+ ]?unknown$" . -4)
+                                    version-regexp-alist)))
     (unless entry
       (error "Unknown protocol %S" protocol))
     (cl-destructuring-bind (symbol . alist)
@@ -261,6 +265,15 @@ a single minimum version string."
                        (version< version max)))
           (throw 'version-ok t)))
       (error "Unsupported version: %s" version))))
+
+(defun epg-required-version-p (protocol required-version)
+  "Verify a sufficient version of GnuPG for specific protocol.
+PROTOCOL is symbol, either `OpenPGP' or `CMS'.  REQUIRED-VERSION
+is a string containing the required version number.  Return
+non-nil if that version or higher is installed."
+  (let ((version (cdr (assq 'version (epg-find-configuration protocol)))))
+    (and (stringp version)
+         (version<= required-version version))))
 
 ;;;###autoload
 (defun epg-expand-group (config group)

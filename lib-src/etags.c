@@ -1146,7 +1146,6 @@ main (int argc, char **argv)
 	  {
 	    error ("-o option may only be given once.");
 	    suggest_asking_for_help ();
-	    /* NOTREACHED */
 	  }
 	tagfile = optarg;
 	break;
@@ -1208,7 +1207,6 @@ main (int argc, char **argv)
       case 'w': no_warnings = true;				break;
       default:
 	suggest_asking_for_help ();
-	/* NOTREACHED */
       }
 
   /* No more options.  Store the rest of arguments. */
@@ -1227,13 +1225,11 @@ main (int argc, char **argv)
 
   if (help_asked)
     print_help (argbuffer);
-    /* NOTREACHED */
 
   if (nincluded_files == 0 && file_count == 0)
     {
       error ("no input files specified.");
       suggest_asking_for_help ();
-      /* NOTREACHED */
     }
 
   if (tagfile == NULL)

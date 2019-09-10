@@ -169,7 +169,8 @@ string_to_object (Lisp_Object val, Lisp_Object defalt)
 	{
 	  int c = SREF (val, i);
 	  if (c != ' ' && c != '\t' && c != '\n')
-	    error ("Trailing garbage following expression");
+	    xsignal1 (Qinvalid_read_syntax,
+		      build_string ("Trailing garbage following expression"));
 	}
     }
 

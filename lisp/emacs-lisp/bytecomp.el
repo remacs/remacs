@@ -4071,7 +4071,7 @@ that suppresses all warnings during execution of BODY."
 			,condition '(fboundp functionp)
 			byte-compile-unresolved-functions))
 	  (bound-list (byte-compile-find-bound-condition
-		       ,condition '(boundp default-boundp)))
+                       ,condition '(boundp default-boundp local-variable-p)))
 	  ;; Maybe add to the bound list.
 	  (byte-compile-bound-variables
            (append bound-list byte-compile-bound-variables)))

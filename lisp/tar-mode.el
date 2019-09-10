@@ -450,6 +450,7 @@ checksum before doing the check."
       (progn (beep) (message "Invalid checksum for file %s!" file-name))))
 
 (defun tar-clip-time-string (time)
+  (declare (obsolete format-time-string "27.1"))
   (let ((str (current-time-string time)))
     (concat " " (substring str 4 16) (format-time-string " %Y" time))))
 
@@ -508,7 +509,9 @@ MODE should be an integer which is a file mode value."
 	    (if (= 0 (length uname)) uid uname)
 	    (if (= 0 (length gname)) gid gname)
 	    size
-	    (if tar-mode-show-date (tar-clip-time-string time) "")
+	    (if tar-mode-show-date
+                (format-time-string " %Y-%m-%d %H:%M" time)
+              "")
 	    (propertize name
 			'mouse-face 'highlight
 			'help-echo "mouse-2: extract this file into a buffer")

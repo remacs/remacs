@@ -2095,7 +2095,9 @@ written into the buffer `*icalendar-errors*'."
                                                              dtstart-zone))
                  (start-d (icalendar--datetime-to-diary-date
                            dtstart-dec))
-                 (start-t (icalendar--datetime-to-colontime dtstart-dec))
+                 (start-t (and dtstart
+                               (> (length dtstart) 8)
+                               (icalendar--datetime-to-colontime dtstart-dec)))
                  (dtend (icalendar--get-event-property e 'DTEND))
                  (dtend-zone (icalendar--find-time-zone
  			      (icalendar--get-event-property-attributes
@@ -2148,8 +2150,7 @@ written into the buffer `*icalendar-errors*'."
                                     (icalendar--get-event-property-attributes
                                      e 'DTEND))
                                    "DATE")))
-                            (icalendar--datetime-to-colontime dtend-dec)
-                          start-t))
+                            (icalendar--datetime-to-colontime dtend-dec)))
             (icalendar--dmsg "start-d: %s, end-d: %s" start-d end-d)
             (cond
              ;; recurring event

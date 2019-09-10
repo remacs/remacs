@@ -105,8 +105,8 @@ are integer buffer positions in the reverse order of the insertion order.")
 (defvar skeleton-regions)
 
 (def-edebug-spec skeleton-edebug-spec
-  ([&or null stringp (stringp &rest stringp) [[&not atom] def-form]]
-   &rest &or "n" "_" "-" ">" "@" "&" "!" "resume:"
+  ([&or null stringp (stringp &rest stringp) [[&not atom] sexp]]
+   &rest &or "n" "_" "-" ">" "@" "&" "!" "|" "resume:"
    ("quote" def-form) skeleton-edebug-spec def-form))
 ;;;###autoload
 (defmacro define-skeleton (command documentation &rest skeleton)

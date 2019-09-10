@@ -6234,7 +6234,10 @@ DEF_DLL_FN (void, png_read_info, (png_structp, png_infop));
 DEF_DLL_FN (png_uint_32, png_get_IHDR,
 	    (png_structp, png_infop, png_uint_32 *, png_uint_32 *,
 	     int *, int *, int *, int *, int *));
-DEF_DLL_FN (png_uint_32, png_get_valid, (png_structp, png_infop, png_uint_32));
+#  ifdef PNG_tRNS_SUPPORTED
+DEF_DLL_FN (png_uint_32, png_get_tRNS, (png_structp, png_infop, png_bytep *,
+					int *, png_color_16p *));
+#  endif
 DEF_DLL_FN (void, png_set_strip_16, (png_structp));
 DEF_DLL_FN (void, png_set_expand, (png_structp));
 DEF_DLL_FN (void, png_set_gray_to_rgb, (png_structp));
@@ -6273,7 +6276,9 @@ init_png_functions (void)
   LOAD_DLL_FN (library, png_set_sig_bytes);
   LOAD_DLL_FN (library, png_read_info);
   LOAD_DLL_FN (library, png_get_IHDR);
-  LOAD_DLL_FN (library, png_get_valid);
+#  ifdef PNG_tRNS_SUPPORTED
+  LOAD_DLL_FN (library, png_get_tRNS);
+#  endif
   LOAD_DLL_FN (library, png_set_strip_16);
   LOAD_DLL_FN (library, png_set_expand);
   LOAD_DLL_FN (library, png_set_gray_to_rgb);
@@ -6304,7 +6309,7 @@ init_png_functions (void)
 #  undef png_get_IHDR
 #  undef png_get_io_ptr
 #  undef png_get_rowbytes
-#  undef png_get_valid
+#  undef png_get_tRNS
 #  undef png_longjmp
 #  undef png_read_end
 #  undef png_read_image
@@ -6329,7 +6334,7 @@ init_png_functions (void)
 #  define png_get_IHDR fn_png_get_IHDR
 #  define png_get_io_ptr fn_png_get_io_ptr
 #  define png_get_rowbytes fn_png_get_rowbytes
-#  define png_get_valid fn_png_get_valid
+#  define png_get_tRNS fn_png_get_tRNS
 #  define png_longjmp fn_png_longjmp
 #  define png_read_end fn_png_read_end
 #  define png_read_image fn_png_read_image
@@ -6589,10 +6594,22 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 
   /* If image contains simply transparency data, we prefer to
      construct a clipping mask.  */
-  if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS))
-    transparent_p = 1;
-  else
-    transparent_p = 0;
+  transparent_p = false;
+# ifdef PNG_tRNS_SUPPORTED
+  png_bytep trans_alpha;
+  int num_trans;
+  if (png_get_tRNS (png_ptr, info_ptr, &trans_alpha, &num_trans, NULL))
+    {
+      transparent_p = true;
+      if (trans_alpha)
+	for (int i = 0; i < num_trans; i++)
+	  if (0 < trans_alpha[i] && trans_alpha[i] < 255)
+	    {
+	      transparent_p = false;
+	      break;
+	    }
+    }
+# endif
 
   /* This function is easier to write if we only have to handle
      one data format: RGB or RGBA with 8 bits per channel.  Let's
@@ -6680,7 +6697,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
   /* Create an image and pixmap serving as mask if the PNG image
      contains an alpha channel.  */
   if (channels == 4
-      && !transparent_p
+      && transparent_p
       && !image_create_x_image_and_pixmap (f, img, width, height, 1,
 					   &mask_img, 1))
     {
