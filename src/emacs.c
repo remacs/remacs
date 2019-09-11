@@ -662,7 +662,7 @@ argmatch (char **argv, int argc, const char *sstr, const char *lstr,
 #ifdef HAVE_PDUMPER
 
 static const char *
-dump_error_to_string (enum pdumper_load_result result)
+dump_error_to_string (int result)
 {
   switch (result)
     {
@@ -681,37 +681,29 @@ dump_error_to_string (enum pdumper_load_result result)
     case PDUMPER_LOAD_VERSION_MISMATCH:
       return "not built for this Emacs executable";
     default:
-      return "generic error";
+      return (result <= PDUMPER_LOAD_ERROR
+	      ? "generic error"
+	      : strerror (result - PDUMPER_LOAD_ERROR));
     }
 }
 
-/* Find a path (absolute or relative) to the Emacs executable.
-   Called early in initialization by portable dumper loading code, so we
-   can't use lisp and associated machinery.  On success, *EXENAME is
-   set to a heap-allocated string giving a path to the Emacs
-   executable or to NULL if we can't determine the path immediately.
- */
-static enum pdumper_load_result
-load_pdump_find_executable (const char* argv0, char **exename)
+/* Find a name (absolute or relative) of the Emacs executable whose
+   name (as passed into this program) is ARGV0.  Called early in
+   initialization by portable dumper loading code, so avoid Lisp and
+   associated machinery.  Return a heap-allocated string giving a name
+   of the Emacs executable, or an empty heap-allocated string or NULL
+   if not found.  Store into *CANDIDATE_SIZE a lower bound on the size
+   of any heap allocation.  */
+static char *
+load_pdump_find_executable (char const *argv0, ptrdiff_t *candidate_size)
 {
-  enum pdumper_load_result result;
+  *candidate_size = 0;
+
+  /* Use xstrdup etc. to allocate storage, so as to call our private
+     implementation of malloc, since the caller calls our free.  */
 #ifdef WINDOWSNT
-  result = PDUMPER_LOAD_ERROR;
-  *exename = NULL;
   char *prog_fname = w32_my_exename ();
-  if (prog_fname)
-    {
-      result = PDUMPER_LOAD_OOM;
-      /* Use xstrdup, so as to call our private implementation of
-	 malloc, since the caller calls our free.  */
-      char *ret = xstrdup (prog_fname);
-      if (ret)
-	{
-	  *exename = ret;
-	  result = PDUMPER_LOAD_SUCCESS;
-	}
-    }
-  return result;
+  return prog_fname ? xstrdup (prog_fname) : NULL;
 #else  /* !WINDOWSNT */
   char *candidate = NULL;
 
@@ -719,33 +711,23 @@ load_pdump_find_executable (const char* argv0, char **exename)
      path already, so just copy it.  */
   eassert (argv0);
   if (strchr (argv0, DIRECTORY_SEP))
-    {
-      result = PDUMPER_LOAD_OOM;
-      char *ret = strdup (argv0);
-      if (!ret)
-        goto out;
-      result = PDUMPER_LOAD_SUCCESS;
-      *exename = ret;
-      goto out;
-    }
-  size_t argv0_length = strlen (argv0);
+    return xstrdup (argv0);
+  ptrdiff_t argv0_length = strlen (argv0);
 
   const char *path = getenv ("PATH");
   if (!path)
     {
       /* Default PATH is implementation-defined, so we don't know how
          to conduct the search.  */
-      result = PDUMPER_LOAD_SUCCESS;
-      *exename = NULL;
-      goto out;
+      return NULL;
     }
 
   /* Actually try each concatenation of a path element and the
      executable basename.  */
-  const char path_sep[] = { SEPCHAR, '\0' };
   do
     {
-      size_t path_part_length = strcspn (path, path_sep);
+      static char const path_sep[] = { SEPCHAR, '\0' };
+      ptrdiff_t path_part_length = strcspn (path, path_sep);
       const char *path_part = path;
       path += path_part_length;
       if (path_part_length == 0)
@@ -753,46 +735,34 @@ load_pdump_find_executable (const char* argv0, char **exename)
           path_part = ".";
           path_part_length = 1;
         }
-      size_t candidate_length = path_part_length + 1 + argv0_length;
-      {
-        char *new_candidate = realloc (candidate, candidate_length + 1);
-        if (!new_candidate)
-          {
-            result = PDUMPER_LOAD_OOM;
-            goto out;
-          }
-        candidate = new_candidate;
-      }
+      ptrdiff_t needed = path_part_length + 1 + argv0_length + 1;
+      if (*candidate_size <= needed)
+	{
+	  xfree (candidate);
+	  candidate = xpalloc (NULL, candidate_size,
+			       needed - *candidate_size + 1, -1, 1);
+	}
       memcpy (candidate + 0, path_part, path_part_length);
       candidate[path_part_length] = DIRECTORY_SEP;
       memcpy (candidate + path_part_length + 1, argv0, argv0_length + 1);
       struct stat st;
-      if (!access (candidate, X_OK) &&
-          !stat (candidate, &st) &&
-          S_ISREG (st.st_mode))
-        {
-          *exename = candidate;
-          candidate = NULL;
-          break;
-        }
-    } while ((path++)[0] != '\0');
+      if (check_executable (candidate)
+	  && stat (candidate, &st) == 0 && S_ISREG (st.st_mode))
+	return candidate;
+      *candidate = '\0';
+    }
+  while (*path++ != '\0');
 
-  result = PDUMPER_LOAD_SUCCESS;
-
- out:
-  free (candidate);
-  return result;
+  return candidate;
 #endif	/* !WINDOWSNT */
 }
 
-static enum pdumper_load_result
+static void
 load_pdump (int argc, char **argv)
 {
   const char *const suffix = ".pdmp";
-  enum pdumper_load_result result;
-  char *exename = NULL;
-  char *real_exename = NULL;
-  const char* strip_suffix =
+  int result;
+  const char *strip_suffix =
 #if defined DOS_NT || defined CYGWIN
     ".exe"
 #else
@@ -821,7 +791,6 @@ load_pdump (int argc, char **argv)
       skip_args++;
     }
 
-  result = PDUMPER_NOT_LOADED;
   if (dump_file)
     {
       result = pdumper_load (dump_file);
@@ -829,8 +798,7 @@ load_pdump (int argc, char **argv)
       if (result != PDUMPER_LOAD_SUCCESS)
         fatal ("could not load dump file \"%s\": %s",
                dump_file, dump_error_to_string (result));
-      else
-        goto out;
+      return;
     }
 
   /* Look for a dump file in the same directory as the executable; it
@@ -839,44 +807,41 @@ load_pdump (int argc, char **argv)
      so we can't use decode_env_path.  We're working in whatever
      encoding the system natively uses for filesystem access, so
      there's no need for character set conversion.  */
-  result = load_pdump_find_executable (argv[0], &exename);
-  if (result != PDUMPER_LOAD_SUCCESS)
-    goto out;
+  ptrdiff_t bufsize;
+  dump_file = load_pdump_find_executable (argv[0], &bufsize);
 
   /* If we couldn't find our executable, go straight to looking for
      the dump in the hardcoded location.  */
-  if (exename)
+  if (dump_file && *dump_file)
     {
 #ifdef WINDOWSNT
       /* w32_my_exename resolves symlinks internally, so no need to
 	 call realpath.  */
-      real_exename = exename;
-      exename = NULL;
 #else
-      real_exename = realpath (exename, NULL);
+      char *real_exename = realpath (dump_file, NULL);
       if (!real_exename)
         fatal ("could not resolve realpath of \"%s\": %s",
-               exename, strerror (errno));
+               dump_file, strerror (errno));
+      xfree (dump_file);
+      dump_file = real_exename;
 #endif
-      size_t real_exename_length = strlen (real_exename);
+      ptrdiff_t exenamelen = strlen (dump_file);
+#ifndef WINDOWSNT
+      bufsize = exenamelen + 1;
+#endif
       if (strip_suffix)
         {
-          size_t strip_suffix_length = strlen (strip_suffix);
-          if (real_exename_length >= strip_suffix_length)
-            {
-              size_t prefix_length =
-                real_exename_length - strip_suffix_length;
-              if (!memcmp (&real_exename[prefix_length],
-                           strip_suffix,
-                           strip_suffix_length))
-                  real_exename_length = prefix_length;
-            }
+	  ptrdiff_t strip_suffix_length = strlen (strip_suffix);
+	  ptrdiff_t prefix_length = exenamelen - strip_suffix_length;
+	  if (0 <= prefix_length
+	      && !memcmp (&dump_file[prefix_length], strip_suffix,
+			  strip_suffix_length))
+	    exenamelen = prefix_length;
         }
-      dump_file = alloca (real_exename_length + strlen (suffix) + 1);
-      memcpy (dump_file, real_exename, real_exename_length);
-      memcpy (dump_file + real_exename_length,
-              suffix,
-              strlen (suffix) + 1);
+      ptrdiff_t needed = exenamelen + strlen (suffix) + 1;
+      if (bufsize < needed)
+	dump_file = xpalloc (dump_file, &bufsize, needed - bufsize, -1, 1);
+      strcpy (dump_file + exenamelen, suffix);
       result = pdumper_load (dump_file);
       if (result == PDUMPER_LOAD_SUCCESS)
         goto out;
@@ -896,16 +861,19 @@ load_pdump (int argc, char **argv)
      "emacs.pdmp" so that the Emacs binary still works if the user
      copies and renames it.  */
   const char *argv0_base = "emacs";
-  dump_file = alloca (strlen (path_exec)
+  ptrdiff_t needed = (strlen (path_exec)
                       + 1
                       + strlen (argv0_base)
                       + strlen (suffix)
                       + 1);
+  if (bufsize < needed)
+    {
+      xfree (dump_file);
+      dump_file = xpalloc (NULL, &bufsize, needed - bufsize, -1, 1);
+    }
   sprintf (dump_file, "%s%c%s%s",
            path_exec, DIRECTORY_SEP, argv0_base, suffix);
   result = pdumper_load (dump_file);
-  if (result == PDUMPER_LOAD_SUCCESS)
-    goto out;
 
   if (result == PDUMPER_LOAD_FILE_NOT_FOUND)
     {
@@ -920,13 +888,18 @@ load_pdump (int argc, char **argv)
 	    last_sep = p;
 	}
       argv0_base = last_sep ? last_sep + 1 : argv[0];
-      dump_file = alloca (strlen (path_exec)
+      ptrdiff_t needed = (strlen (path_exec)
 			  + 1
 			  + strlen (argv0_base)
 			  + strlen (suffix)
 			  + 1);
+      if (bufsize < needed)
+	{
+	  xfree (dump_file);
+	  dump_file = xmalloc (needed);
+	}
 #ifdef DOS_NT
-      size_t argv0_len = strlen (argv0_base);
+      ptrdiff_t argv0_len = strlen (argv0_base);
       if (argv0_len >= 4
 	  && c_strcasecmp (argv0_base + argv0_len - 4, ".exe") == 0)
 	sprintf (dump_file, "%s%c%.*s%s", path_exec, DIRECTORY_SEP,
@@ -943,13 +916,10 @@ load_pdump (int argc, char **argv)
       if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
 	fatal ("could not load dump file \"%s\": %s",
 	       dump_file, dump_error_to_string (result));
-      dump_file = NULL;
     }
 
  out:
-  free (exename);
-  free (real_exename);
-  return result;
+  xfree (dump_file);
 }
 #endif /* HAVE_PDUMPER */
 

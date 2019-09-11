@@ -124,10 +124,10 @@ enum pdumper_load_result
     PDUMPER_LOAD_FAILED_DUMP,
     PDUMPER_LOAD_OOM,
     PDUMPER_LOAD_VERSION_MISMATCH,
-    PDUMPER_LOAD_ERROR,
+    PDUMPER_LOAD_ERROR /* Must be last, as errno may be added.  */
   };
 
-enum pdumper_load_result pdumper_load (const char *dump_filename);
+int pdumper_load (const char *dump_filename);
 
 struct pdumper_loaded_dump
 {

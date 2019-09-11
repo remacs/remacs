@@ -3844,6 +3844,9 @@ set_interval_marked (INTERVAL i)
 void
 memory_full (size_t nbytes)
 {
+  if (!initialized)
+    fatal ("memory exhausted");
+
   /* Do not go into hysterics merely because a large request failed.  */
   bool enough_free_memory = false;
   if (SPARE_MEMORY < nbytes)

@@ -4298,6 +4298,7 @@ extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
+extern bool check_executable (char *);
 extern char *splice_dir_file (char *, char const *, char const *);
 extern bool file_name_absolute_p (const char *);
 extern char const *get_homedir (void);

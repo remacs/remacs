@@ -150,7 +150,7 @@ check_existing (const char *filename)
 
 /* Return true if file FILENAME exists and can be executed.  */
 
-static bool
+bool
 check_executable (char *filename)
 {
   return faccessat (AT_FDCWD, filename, X_OK, AT_EACCESS) == 0;
