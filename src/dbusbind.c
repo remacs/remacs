@@ -26,6 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "termhooks.h"
 #include "keyboard.h"
+#include "pdumper.h"
 #include "process.h"
 
 #ifndef DBUS_NUM_MESSAGE_TYPES
@@ -1681,6 +1682,12 @@ init_dbusbind (void)
   xputenv ("DBUS_FATAL_WARNINGS=0");
 }
 
+static void
+syms_of_dbusbind_for_pdumper (void)
+{
+  xd_registered_buses = Qnil;
+}
+
 void
 syms_of_dbusbind (void)
 {
@@ -1829,13 +1836,10 @@ be called when the D-Bus reply message arrives.  */);
 #endif
 
   /* Initialize internal objects.  */
-  xd_registered_buses = Qnil;
+  pdumper_do_now_and_after_load (syms_of_dbusbind_for_pdumper);
   staticpro (&xd_registered_buses);
 
-  // TODO: reset buses on dump load
-
   Fprovide (intern_c_string ("dbusbind"), Qnil);
-
 }
 
 #endif /* HAVE_DBUS */
