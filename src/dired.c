@@ -295,7 +295,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	    {
 	      Lisp_Object fileattrs
 		= file_attributes (fd, dp->d_name, directory, name, id_format);
-	      list = Fcons (Fcons (finalname, fileattrs), list);
+	      if (!NILP (fileattrs))
+		list = Fcons (Fcons (finalname, fileattrs), list);
 	    }
 	  else
 	    list = Fcons (finalname, list);
