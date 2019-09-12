@@ -1255,6 +1255,11 @@ highlight in one iteration while processing the full buffer.
 +++
 *** New isearch bindings.
 
+'C-M-z' invokes new function 'isearch-yank-until-char', which yanks
+everything from point up to but not including the specified
+character into the search string.  This is especially useful for
+keyboard macros.
+
 'C-M-w' in isearch changed from 'isearch-del-char' to the new function
 'isearch-yank-symbol-or-char'.  'isearch-del-char' is now bound to
 'C-M-d'.
