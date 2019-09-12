@@ -79,9 +79,9 @@ dirent_type (struct dirent *dp)
 }
 
 static DIR *
-open_directory (Lisp_Object dirname, int *fdp)
+open_directory (Lisp_Object dirname, Lisp_Object encoded_dirname, int *fdp)
 {
-  char *name = SSDATA (dirname);
+  char *name = SSDATA (encoded_dirname);
   DIR *d;
   int fd, opendir_errno;
 
@@ -187,11 +187,11 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   /* Note: ENCODE_FILE and DECODE_FILE can GC because they can run
      run_pre_post_conversion_on_str which calls Lisp directly and
      indirectly.  */
-  dirfilename = ENCODE_FILE (dirfilename);
+  Lisp_Object encoded_dirfilename = ENCODE_FILE (dirfilename);
   encoded_directory = ENCODE_FILE (directory);
 
   int fd;
-  DIR *d = open_directory (dirfilename, &fd);
+  DIR *d = open_directory (dirfilename, encoded_dirfilename, &fd);
 
   /* Unfortunately, we can now invoke expand-file-name and
      file-attributes on filenames, both of which can throw, so we must
@@ -210,7 +210,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	{
 	  /* w32.c:stat will notice these bindings and avoid calling
 	     GetDriveType for each file.  */
-	  if (is_slow_fs (SSDATA (dirfilename)))
+	  if (is_slow_fs (SSDATA (encoded_dirfilename)))
 	    Vw32_get_true_file_attributes = Qnil;
 	  else
 	    Vw32_get_true_file_attributes = Qt;
@@ -509,7 +509,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	}
     }
   int fd;
-  DIR *d = open_directory (encoded_dir, &fd);
+  DIR *d = open_directory (dirname, encoded_dir, &fd);
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
   /* Loop reading directory entries.  */
