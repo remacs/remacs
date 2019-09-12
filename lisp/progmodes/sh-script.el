@@ -4338,12 +4338,13 @@ option followed by a colon `:' if the option accepts an argument."
 
 (defun sh--assignment-collect ()
   (sh-remember-variable
-   (save-excursion
-     (if (re-search-forward (sh-feature sh-assignment-regexp)
-			    (prog1 (point)
-			      (beginning-of-line 1))
-			    t)
-	 (match-string 1)))))
+   (when (eq ?= (char-before))
+     (save-excursion
+       (if (re-search-forward (sh-feature sh-assignment-regexp)
+			      (prog1 (point)
+			        (beginning-of-line 1))
+			      t)
+	   (match-string 1))))))
 
 
 (defun sh-maybe-here-document (arg)
