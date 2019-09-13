@@ -241,7 +241,7 @@ bool gc_in_progress;
 typedef uintptr_t byte_ct;
 typedef intptr_t object_ct;
 
-/* Number of live and free conses etc.  */
+/* Number of live and free conses etc. counted by the most-recent GC.  */
 
 static struct gcstat
 {
@@ -560,7 +560,7 @@ struct Lisp_Finalizer finalizers;
 
 /* Head of a circularly-linked list of finalizers that must be invoked
    because we deemed them unreachable.  This list must be global, and
-   not a local inside garbage_collect_1, in case we GC again while
+   not a local inside garbage_collect, in case we GC again while
    running finalizers.  */
 struct Lisp_Finalizer doomed_finalizers;
 
@@ -1366,7 +1366,6 @@ make_interval (void)
 	  newi->next = interval_block;
 	  interval_block = newi;
 	  interval_block_index = 0;
-	  gcstat.total_free_intervals += INTERVAL_BLOCK_SIZE;
 	}
       val = &interval_block->intervals[interval_block_index++];
     }
@@ -1375,7 +1374,6 @@ make_interval (void)
 
   consing_until_gc -= sizeof (struct interval);
   intervals_consed++;
-  gcstat.total_free_intervals--;
   RESET_INTERVAL (val);
   val->gcmarkbit = 0;
   return val;
@@ -1730,8 +1728,6 @@ allocate_string (void)
 	  NEXT_FREE_LISP_STRING (s) = string_free_list;
 	  string_free_list = ptr_bounds_clip (s, sizeof *s);
 	}
-
-      gcstat.total_free_strings += STRING_BLOCK_SIZE;
     }
 
   check_string_free_list ();
@@ -1742,8 +1738,6 @@ allocate_string (void)
 
   MALLOC_UNBLOCK_INPUT;
 
-  gcstat.total_free_strings--;
-  gcstat.total_strings++;
   ++strings_consed;
   consing_until_gc -= sizeof *s;
 
@@ -2461,7 +2455,6 @@ make_float (double float_value)
 	  memset (new->gcmarkbits, 0, sizeof new->gcmarkbits);
 	  float_block = new;
 	  float_block_index = 0;
-	  gcstat.total_free_floats += FLOAT_BLOCK_SIZE;
 	}
       XSETFLOAT (val, &float_block->floats[float_block_index]);
       float_block_index++;
@@ -2473,7 +2466,6 @@ make_float (double float_value)
   eassert (!XFLOAT_MARKED_P (XFLOAT (val)));
   consing_until_gc -= sizeof (struct Lisp_Float);
   floats_consed++;
-  gcstat.total_free_floats--;
   return val;
 }
 
@@ -2545,7 +2537,6 @@ free_cons (struct Lisp_Cons *ptr)
   cons_free_list = ptr;
   if (INT_ADD_WRAPV (consing_until_gc, sizeof *ptr, &consing_until_gc))
     consing_until_gc = INTMAX_MAX;
-  gcstat.total_free_conses++;
 }
 
 DEFUN ("cons", Fcons, Scons, 2, 2, 0,
@@ -2565,26 +2556,12 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
     {
       if (cons_block_index == CONS_BLOCK_SIZE)
 	{
-	  /* Maximum number of conses that should be active at any
-	     given time, so that list lengths fit into a ptrdiff_t and
-	     into a fixnum.  */
-	  ptrdiff_t max_conses = min (PTRDIFF_MAX, MOST_POSITIVE_FIXNUM);
-
-	  /* This check is typically optimized away, as a runtime
-	     check is needed only on weird platforms where a count of
-	     distinct conses might not fit.  */
-	  if (max_conses < INTPTR_MAX / sizeof (struct Lisp_Cons)
-	      && (max_conses - CONS_BLOCK_SIZE
-		  < gcstat.total_free_conses + gcstat.total_conses))
-	    memory_full (sizeof (struct cons_block));
-
 	  struct cons_block *new
 	    = lisp_align_malloc (sizeof *new, MEM_TYPE_CONS);
 	  memset (new->gcmarkbits, 0, sizeof new->gcmarkbits);
 	  new->next = cons_block;
 	  cons_block = new;
 	  cons_block_index = 0;
-	  gcstat.total_free_conses += CONS_BLOCK_SIZE;
 	}
       XSETCONS (val, &cons_block->conses[cons_block_index]);
       cons_block_index++;
@@ -2596,7 +2573,6 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
   XSETCDR (val, cdr);
   eassert (!XCONS_MARKED_P (XCONS (val)));
   consing_until_gc -= sizeof (struct Lisp_Cons);
-  gcstat.total_free_conses--;
   cons_cells_consed++;
   return val;
 }
@@ -2855,7 +2831,6 @@ setup_on_free_list (struct Lisp_Vector *v, ptrdiff_t nbytes)
   eassert (vindex < VECTOR_MAX_FREE_LIST_INDEX);
   set_next_vector (v, vector_free_lists[vindex]);
   vector_free_lists[vindex] = v;
-  gcstat.total_free_vector_slots += nbytes / word_size;
 }
 
 /* Get a new vector block.  */
@@ -2903,7 +2878,6 @@ allocate_vector_from_block (ptrdiff_t nbytes)
     {
       vector = vector_free_lists[index];
       vector_free_lists[index] = next_vector (vector);
-      gcstat.total_free_vector_slots -= nbytes / word_size;
       return vector;
     }
 
@@ -2917,7 +2891,6 @@ allocate_vector_from_block (ptrdiff_t nbytes)
 	/* This vector is larger than requested.  */
 	vector = vector_free_lists[index];
 	vector_free_lists[index] = next_vector (vector);
-	gcstat.total_free_vector_slots -= nbytes / word_size;
 
 	/* Excess bytes are used for the smaller vector,
 	   which should be set on an appropriate free list.  */
@@ -3092,7 +3065,10 @@ sweep_vectors (void)
 		   space was coalesced into the only free vector.  */
 		free_this_block = true;
 	      else
-		setup_on_free_list (vector, total_bytes);
+		{
+		  setup_on_free_list (vector, total_bytes);
+		  gcstat.total_free_vector_slots += total_bytes / word_size;
+		}
 	    }
 	}
 
@@ -3454,7 +3430,6 @@ Its value is void, and its function definition and property list are nil.  */)
 	  new->next = symbol_block;
 	  symbol_block = new;
 	  symbol_block_index = 0;
-	  gcstat.total_free_symbols += SYMBOL_BLOCK_SIZE;
 	}
       XSETSYMBOL (val, &symbol_block->symbols[symbol_block_index]);
       symbol_block_index++;
@@ -3465,7 +3440,6 @@ Its value is void, and its function definition and property list are nil.  */)
   init_symbol (val, name);
   consing_until_gc -= sizeof (struct Lisp_Symbol);
   symbols_consed++;
-  gcstat.total_free_symbols--;
   return val;
 }
 
@@ -5723,7 +5697,7 @@ visit_buffer_root (struct gc_root_visitor visitor,
 
    There are other GC roots of course, but these roots are dynamic
    runtime data structures that pdump doesn't care about and so we can
-   continue to mark those directly in garbage_collect_1.  */
+   continue to mark those directly in garbage_collect.  */
 void
 visit_static_gc_roots (struct gc_root_visitor visitor)
 {
@@ -5753,8 +5727,7 @@ mark_object_root_visitor (Lisp_Object const *root_ptr,
 }
 
 /* List of weak hash tables we found during marking the Lisp heap.
-   Will be NULL on entry to garbage_collect_1 and after it
-   returns.  */
+   NULL on entry to garbage_collect and after it returns.  */
 static struct Lisp_Hash_Table *weak_hash_tables;
 
 NO_INLINE /* For better stack traces */
@@ -5860,8 +5833,8 @@ watch_gc_cons_percentage (Lisp_Object symbol, Lisp_Object newval,
 }
 
 /* Subroutine of Fgarbage_collect that does most of the work.  */
-static bool
-garbage_collect_1 (struct gcstat *gcst)
+void
+garbage_collect (void)
 {
   struct buffer *nextb;
   char stack_top_variable;
@@ -5873,7 +5846,7 @@ garbage_collect_1 (struct gcstat *gcst)
   eassert (weak_hash_tables == NULL);
 
   if (garbage_collection_inhibited)
-    return false;
+    return;
 
   /* Record this function, so it appears on the profiler's backtraces.  */
   record_in_backtrace (QAutomatic_GC, 0, 0);
@@ -6014,8 +5987,6 @@ garbage_collect_1 (struct gcstat *gcst)
 
   unbind_to (count, Qnil);
 
-  *gcst = gcstat;
-
   /* GC is complete: now we can run our finalizer callbacks.  */
   run_finalizers (&doomed_finalizers);
 
@@ -6043,15 +6014,6 @@ garbage_collect_1 (struct gcstat *gcst)
       byte_ct swept = tot_before <= tot_after ? 0 : tot_before - tot_after;
       malloc_probe (min (swept, SIZE_MAX));
     }
-
-  return true;
-}
-
-void
-garbage_collect (void)
-{
-  struct gcstat gcst;
-  garbage_collect_1 (&gcst);
 }
 
 DEFUN ("garbage-collect", Fgarbage_collect, Sgarbage_collect, 0, 0, "",
@@ -6071,9 +6033,11 @@ returns nil, because real GC can't be done.
 See Info node `(elisp)Garbage Collection'.  */)
   (void)
 {
-  struct gcstat gcst;
-  if (!garbage_collect_1 (&gcst))
+  if (garbage_collection_inhibited)
     return Qnil;
+
+  garbage_collect ();
+  struct gcstat gcst = gcstat;
 
   Lisp_Object total[] = {
     list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
