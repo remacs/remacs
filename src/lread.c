@@ -3310,8 +3310,6 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	    if (ch == '@')
 	      comma_type = Qcomma_at;
-	    else if (ch == '.')
-	      comma_type = Qcomma_dot;
 	    else
 	      {
 		if (ch >= 0) UNREAD (ch);
@@ -5080,7 +5078,6 @@ this variable will become obsolete.  */);
   DEFSYM (Qbackquote, "`");
   DEFSYM (Qcomma, ",");
   DEFSYM (Qcomma_at, ",@");
-  DEFSYM (Qcomma_dot, ",.");
 
   DEFSYM (Qinhibit_file_name_operation, "inhibit-file-name-operation");
   DEFSYM (Qascii_character, "ascii-character");

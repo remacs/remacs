@@ -2006,6 +2006,19 @@ immediately.  Type 'M-x so-long-commentary' for full documentation.
 * Incompatible Lisp Changes in Emacs 27.1
 
 ---
+** Incomplete destructive splicing support has been removed.
+Support for Common Lisp style destructive splicing (",.") was
+incomplete and broken for a long time.  It has now been removed.
+
+This means that backquote substitution now works for identifiers
+starting with a period (".").  Consider the following example:
+
+    (let ((.foo 42)) `,.foo)
+
+In the past, this would have incorrectly evaluated to '(\,\. foo)',
+but will now instead evaluate to '42'.
+
+---
 ** The REGEXP in 'magic-mode-alist' is now matched case-sensitively.
 Likewise for 'magic-fallback-mode-alist'.
 

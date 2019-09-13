@@ -2076,8 +2076,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       else if (print_quoted && CONSP (XCDR (obj)) && NILP (XCDR (XCDR (obj)))
 	       && new_backquote_output
 	       && (EQ (XCAR (obj), Qcomma)
-		   || EQ (XCAR (obj), Qcomma_at)
-		   || EQ (XCAR (obj), Qcomma_dot)))
+		   || EQ (XCAR (obj), Qcomma_at)))
 	{
 	  print_object (XCAR (obj), printcharfun, false);
 	  new_backquote_output--;
