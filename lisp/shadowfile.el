@@ -628,7 +628,7 @@ Consider them as regular expressions if third arg REGEXP is true."
                                (shadow-parse-name file))))
                          (when shadow-debug
                            (message
-                            "shadow-shadows-of: %s %s %s"
+                            "shadow-shadows-of-1: %s %s %s"
                             file (shadow-parse-name file) realname))
 			 (mapcar
 			  (function
