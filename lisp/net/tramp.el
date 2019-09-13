@@ -2530,12 +2530,11 @@ not in completion mode."
 	  ((tramp-file-name-p vec-or-filename) vec-or-filename)
 	  ((tramp-tramp-file-p vec-or-filename)
 	   (tramp-dissect-file-name vec-or-filename)))))
-    (when vec
-      (or ;; We check this for the process related to
-	  ;; `tramp-buffer-name'; otherwise `start-file-process'
-	  ;; wouldn't run ever when `non-essential' is non-nil.
-	  (process-live-p (get-process (tramp-buffer-name vec)))
-	  (not (tramp-completion-mode-p))))))
+    (or ;; We check this for the process related to
+	;; `tramp-buffer-name'; otherwise `start-file-process'
+	;; wouldn't run ever when `non-essential' is non-nil.
+        (and vec (process-live-p (get-process (tramp-buffer-name vec))))
+	(not (tramp-completion-mode-p)))))
 
 ;; Method, host name and user name completion.
 ;; `tramp-completion-dissect-file-name' returns a list of
