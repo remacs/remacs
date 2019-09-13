@@ -1640,7 +1640,7 @@ Each element in the list should be a list of strings or pairs
      "\tMany people have contributed code included in GNU Emacs\n"
      :link ("Contributing"
 	    ,(lambda (_button) (info "(emacs)Contributing")))
-     "\tHow to contribute improvements to Emacs\n"
+     "\tHow to report bugs and contribute improvements to Emacs\n"
      "\n"
      :link ("GNU and Freedom" ,(lambda (_button) (describe-gnu-project)))
      "\tWhy we developed GNU Emacs, and the GNU operating system\n"
@@ -1682,7 +1682,9 @@ Each element in the list should be a list of strings or pairs
 	    ,(lambda (_button)
                (browse-url "https://www.gnu.org/software/emacs/tour/"))
 	    "Browse https://www.gnu.org/software/emacs/tour/")
-     "\tSee an overview of Emacs features at gnu.org"))
+     "\tSee an overview of Emacs features at gnu.org\n"
+     :link ("Emacs Manual" ,(lambda (_button) (info-emacs-manual)))
+     "\tDisplay the Emacs manual in Info mode"))
   "A list of texts to show in the middle part of the About screen.
 Each element in the list should be a list of strings or pairs
 `:face FACE', like `fancy-splash-insert' accepts them.")
@@ -2219,7 +2221,7 @@ Type \\[describe-distribution] for information on "))
 		 'action
 		 (lambda (_button) (info "(emacs)Contributing"))
 		 'follow-link t)
-  (insert "\tHow to contribute improvements to Emacs\n\n")
+  (insert "\tHow to report bugs and contribute improvements to Emacs\n\n")
 
   (insert-button "GNU and Freedom"
 		 'action (lambda (_button) (describe-gnu-project))
