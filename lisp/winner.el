@@ -36,18 +36,8 @@
 
 (defun winner-active-region ()
   (declare (gv-setter (lambda (store)
-                        (if (featurep 'xemacs)
-                            `(if ,store (zmacs-activate-region)
-                               (zmacs-deactivate-region))
-                          `(if ,store (activate-mark) (deactivate-mark))))))
+                        `(if ,store (activate-mark) (deactivate-mark)))))
   (region-active-p))
-
-(defalias 'winner-edges
-  (if (featurep 'xemacs) 'window-pixel-edges 'window-edges))
-(defalias 'winner-window-list
-  (if (featurep 'xemacs)
-      (lambda () (delq (minibuffer-window) (window-list nil 0)))
-    (lambda () (window-list nil 0))))
 
 (require 'ring)
 
@@ -82,17 +72,17 @@ You may want to include buffer names such as *Help*, *Apropos*,
 
 ;; List the windows according to their edges.
 (defun winner-sorted-window-list ()
-  (sort (winner-window-list)
+  (sort (window-list nil 0)
         (lambda (x y)
-          (cl-loop for a in (winner-edges x)
-                   for b in (winner-edges y)
+          (cl-loop for a in (window-edges x)
+                   for b in (window-edges y)
                    while (= a b)
                    finally return (< a b)))))
 
 (defun winner-win-data ()
   ;; Essential properties of the windows in the selected frame.
   (cl-loop for win in (winner-sorted-window-list)
-           collect (cons (winner-edges win) (window-buffer win))))
+           collect (cons (window-edges win) (window-buffer win))))
 
 ;; This variable is updated with the current window configuration
 ;; every time it changes.
@@ -242,7 +232,7 @@ You may want to include buffer names such as *Help*, *Apropos*,
 (defun winner-make-point-alist ()
   (save-current-buffer
     (cl-loop with alist
-             for win in (winner-window-list)
+             for win in (window-list nil 0)
              for entry =
              (or (assq (window-buffer win) alist)
                  (car (push (list (set-buffer (window-buffer win))
