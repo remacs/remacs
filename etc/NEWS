@@ -2430,6 +2430,13 @@ remote systems, which support this check.
 ** 'memory-limit' now returns a better estimate of memory consumption.
 
 +++
+** When interpreting 'gc-cons-percentage', Emacs now estimates the
+heap size more often and (we hope) more accurately.  E.g., formerly
+(progn (let ((gc-cons-percentage 0.8)) BODY1) BODY2) continued to use
+the 0.8 value during BODY2 until the next garbage collection, but that
+is no longer true.  Applications may need to re-tune their GC tricks.
+
++++
 ** New macro 'combine-change-calls' arranges to call the change hooks
 ('before-change-functions' and 'after-change-functions') just once
 each around a sequence of lisp forms, given a region.  This is
