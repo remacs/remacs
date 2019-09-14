@@ -3824,9 +3824,10 @@ extern void mark_maybe_objects (Lisp_Object const *, ptrdiff_t);
 extern void mark_stack (char const *, char const *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern void garbage_collect (void);
+extern void maybe_garbage_collect (void);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-extern intmax_t consing_until_gc;
+extern EMACS_INT consing_until_gc;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
 #endif
@@ -5056,7 +5057,7 @@ INLINE void
 maybe_gc (void)
 {
   if (consing_until_gc < 0)
-    garbage_collect ();
+    maybe_garbage_collect ();
 }
 
 INLINE_HEADER_END
