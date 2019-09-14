@@ -434,6 +434,7 @@ static int
 fill_column_indicator_column (struct it *it, int char_width)
 {
   if (Vdisplay_fill_column_indicator
+      && it->w->pseudo_window_p == 0
       && it->continuation_lines_width == 0
       && CHARACTERP (Vdisplay_fill_column_indicator_character))
     {
@@ -21378,7 +21379,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
       int saved_c = it->c, saved_len = it->len;
       int saved_char_to_display = it->char_to_display;
       int saved_x = it->current_x;
-      int saved_face_id = it->face_id;
+      const int saved_face_id = it->face_id;
       bool saved_box_end = it->end_of_box_run_p;
       struct text_pos saved_pos = it->position;
       Lisp_Object saved_object = it->object;
@@ -21389,32 +21390,39 @@ append_space_for_newline (struct it *it, bool default_face_p)
       it->object = Qnil;
       it->len = 1;
 
-      int local_default_face_id =
-	lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID);
-      struct face* default_face =
-	FACE_FROM_ID (it->f, local_default_face_id);
+      int char_width = 1;
 
+      if (default_face_p
+#ifdef HAVE_WINDOW_SYSTEM
+          || FRAME_WINDOW_P (it->f)
+#endif
+	  )
+	{
+	  const int local_default_face_id =
+	    lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID);
+	  struct face* default_face =
+	    FACE_FROM_ID (it->f, local_default_face_id);
+
+#ifdef HAVE_WINDOW_SYSTEM
+	  if (FRAME_WINDOW_P (it->f))
+	    {
+	      struct font *font = (default_face->font
+	                           ? default_face->font
+	                           : FRAME_FONT (it->f));
+	      char_width = (font->average_width
+	                    ? font->average_width
+	                    : font->space_width);
+	    }
+#endif
+	  if (default_face_p)
+	    it->face_id = local_default_face_id;
+	}
       /* Corner case for when display-fill-column-indicator-mode
 	 is active and the extra character should be added in the
 	 same place than the line.  */
 
-      int char_width = 1;
-
-#ifdef HAVE_WINDOW_SYSTEM
-      if (FRAME_WINDOW_P (it->f))
-	{
-	  struct font *font = (default_face->font
-	                       ? default_face->font
-	                       : FRAME_FONT (it->f));
-	  char_width = (font->average_width
-	                ? font->average_width
-	                : font->space_width);
-	}
-#endif
       const int indicator_column =
-	(it->w->pseudo_window_p == 0
-	 ? fill_column_indicator_column (it, char_width)
-	 : -1);
+	fill_column_indicator_column (it, char_width);
 
       if (it->current_x == indicator_column)
 	{
@@ -21424,31 +21432,26 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	    = merge_faces (it->w, Qfill_column_indicator,
 	                   0, saved_face_id);
 	  face = FACE_FROM_ID (it->f, it->face_id);
-	  goto produce_glyphs;
 	}
+      else
+	{
+	  it->c = it->char_to_display = ' ';
+	  /* If the default face was remapped, be sure to use the
+	     remapped face for the appended newline.  */
 
-      it->c = it->char_to_display = ' ';
-      /* If the default face was remapped, be sure to use the
-	 remapped face for the appended newline.  */
-      it->face_id = default_face_p
-	? local_default_face_id
-	: it->saved_face_id;
-
-
-      face = FACE_FROM_ID (it->f, it->face_id);
-      it->face_id = FACE_FOR_CHAR (it->f, face, 0, -1, Qnil);
-      /* In R2L rows, we will prepend a stretch glyph that will
-	 have the end_of_box_run_p flag set for it, so there's no
-	 need for the appended newline glyph to have that flag
-	 set.  */
-      if (it->glyph_row->reversed_p
-          /* But if the appended newline glyph goes all the way to
-	     the end of the row, there will be no stretch glyph,
-	     so leave the box flag set.  */
-          && saved_x + FRAME_COLUMN_WIDTH (it->f) < it->last_visible_x)
-	it->end_of_box_run_p = false;
-
-    produce_glyphs:
+	  face = FACE_FROM_ID (it->f, it->face_id);
+	  it->face_id = FACE_FOR_CHAR (it->f, face, 0, -1, Qnil);
+	  /* In R2L rows, we will prepend a stretch glyph that will
+	     have the end_of_box_run_p flag set for it, so there's no
+	     need for the appended newline glyph to have that flag
+	     set.  */
+	  if (it->glyph_row->reversed_p
+	      /* But if the appended newline glyph goes all the way to
+		 the end of the row, there will be no stretch glyph,
+		 so leave the box flag set.  */
+	      && saved_x + FRAME_COLUMN_WIDTH (it->f) < it->last_visible_x)
+	    it->end_of_box_run_p = false;
+	}
       PRODUCE_GLYPHS (it);
 #ifdef HAVE_WINDOW_SYSTEM
       if (FRAME_WINDOW_P (it->f))
@@ -21671,9 +21674,7 @@ extend_face_to_end_of_line (struct it *it)
 	                          : font->space_width);
 
 	  const int indicator_column =
-	    (it->w->pseudo_window_p == 0
-	     ? fill_column_indicator_column (it, char_width)
-	     : -1);
+	    fill_column_indicator_column (it, char_width);
 
 	  const char saved_char = it->char_to_display;
 	  const struct text_pos saved_pos = it->position;
