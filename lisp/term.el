@@ -587,10 +587,9 @@ executed once, when the buffer is created."
     (define-key map "\en" 'term-next-input)
     (define-key map "\er" 'term-previous-matching-input)
     (define-key map "\es" 'term-next-matching-input)
-    (unless (featurep 'xemacs)
-      (define-key map [?\A-\M-r]
-	'term-previous-matching-input-from-input)
-      (define-key map [?\A-\M-s] 'term-next-matching-input-from-input))
+    (define-key map [?\A-\M-r]
+      'term-previous-matching-input-from-input)
+    (define-key map [?\A-\M-s] 'term-next-matching-input-from-input)
     (define-key map "\e\C-l" 'term-show-output)
     (define-key map "\C-m" 'term-send-input)
     (define-key map "\C-d" 'term-delchar-or-maybe-eof)
@@ -827,9 +826,7 @@ is buffer-local."
 
     ;; Added nearly all the 'gray keys' -mm
 
-    (if (featurep 'xemacs)
-        (define-key map [button2] 'term-mouse-paste)
-      (define-key map [mouse-2] 'term-mouse-paste))
+    (define-key map [mouse-2] 'term-mouse-paste)
     (define-key map [up] 'term-send-up)
     (define-key map [down] 'term-send-down)
     (define-key map [right] 'term-send-right)
@@ -1235,15 +1232,11 @@ without any interpretation."
 (defun term-mouse-paste (click)
   "Insert the primary selection at the position clicked on."
   (interactive "e")
-  (if (featurep 'xemacs)
-      (term-send-raw-string
-       (or (condition-case () (x-get-selection) (error ()))
-	   (error "No selection available")))
-    ;; Give temporary modes such as isearch a chance to turn off.
-    (run-hooks 'mouse-leave-buffer-hook)
-    (setq this-command 'yank)
-    (mouse-set-point click)
-    (term-send-raw-string (gui-get-primary-selection))))
+  ;; Give temporary modes such as isearch a chance to turn off.
+  (run-hooks 'mouse-leave-buffer-hook)
+  (setq this-command 'yank)
+  (mouse-set-point click)
+  (term-send-raw-string (gui-get-primary-selection)))
 
 (defun term-paste ()
   "Insert the last stretch of killed text at point."
