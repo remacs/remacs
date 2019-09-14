@@ -1151,8 +1151,8 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 #define PRINT_CIRCLE_CANDIDATE_P(obj)			   \
   ((STRINGP (obj)                                          \
        && (string_intervals (obj)                          \
-	  || print_depth > 1				   \
-	  || Vprint_continuous_numbering))		   \
+	   || print_depth > 1				   \
+	   || !NILP (Vprint_continuous_numbering)))	   \
    || CONSP (obj)					   \
    || (VECTORLIKEP (obj)				   \
        && (VECTORP (obj) || COMPILEDP (obj)		   \
