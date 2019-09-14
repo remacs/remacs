@@ -1447,15 +1447,15 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 	      (push (cons name (plist-get input :value))
 		    values)))
 	   ((equal (plist-get input :type) "file")
-	    (push (cons "file"
-			(list (cons "filedata"
-				    (with-temp-buffer
-				      (insert-file-contents
-				       (plist-get input :filename))
-				      (buffer-string)))
-			      (cons "name" (plist-get input :name))
-			      (cons "filename" (plist-get input :filename))))
-		  values))
+            (when-let ((file (plist-get input :filename)))
+              (push (list "file"
+                          (cons "filedata"
+                                (with-temp-buffer
+                                  (insert-file-contents file)
+                                  (buffer-string)))
+                          (cons "name" name)
+                          (cons "filename" file))
+                    values)))
 	   ((equal (plist-get input :type) "submit")
 	    ;; We want the values from buttons if we hit a button if
 	    ;; we hit enter on it, or if it's the first button after
