@@ -6021,9 +6021,10 @@ garbage_collect (void)
   /* Accumulate statistics.  */
   if (FLOATP (Vgc_elapsed))
     {
-      struct timespec since_start = timespec_sub (current_timespec (), start);
-      Vgc_elapsed = make_float (XFLOAT_DATA (Vgc_elapsed)
-				+ timespectod (since_start));
+      static struct timespec gc_elapsed;
+      gc_elapsed = timespec_add (gc_elapsed,
+				 timespec_sub (current_timespec (), start));
+      Vgc_elapsed = make_float (timespectod (gc_elapsed));
     }
 
   gcs_done++;
