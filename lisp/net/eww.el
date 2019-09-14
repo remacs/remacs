@@ -326,6 +326,18 @@ the default EWW buffer."
                               #'url-hexify-string (split-string url) "+"))))))
   url)
 
+(defun eww--preprocess-html (start end)
+  "Translate all < characters that do not look like start of tags into &lt;."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char start)
+      (let ((case-fold-search t))
+        (while (re-search-forward "<[^0-9a-z!/]" nil t)
+          (goto-char (match-beginning 0))
+          (delete-region (point) (1+ (point)))
+          (insert "&lt;"))))))
+
 ;;;###autoload (defalias 'browse-web 'eww)
 
 ;;;###autoload
@@ -479,6 +491,7 @@ Currently this means either text/html or application/xhtml+xml."
 		  ;; Remove CRLF and replace NUL with &#0; before parsing.
 		  (while (re-search-forward "\\(\r$\\)\\|\0" nil t)
 		    (replace-match (if (match-beginning 1) "" "&#0;") t t)))
+                (eww--preprocess-html (point) (point-max))
 		(libxml-parse-html-region (point) (point-max))))))
 	(source (and (null document)
 		     (buffer-substring (point) (point-max)))))
@@ -716,6 +729,7 @@ the like."
 		(condition-case nil
 		    (decode-coding-region (point-min) (point-max) 'utf-8)
 		  (coding-system-error nil))
+                (eww--preprocess-html (point-min) (point-max))
 		(libxml-parse-html-region (point-min) (point-max))))
          (base (plist-get eww-data :url)))
     (eww-score-readability dom)
