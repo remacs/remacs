@@ -12666,7 +12666,6 @@ display_tab_bar (struct window *w)
   struct it it;
   Lisp_Object items;
   int i;
-  bool has_menu_bar_p = FRAME_MENU_BAR_LINES (f) > 0;
 
   /* Don't do all this for graphical frames.  */
 #ifdef HAVE_NTGUI
@@ -12685,7 +12684,7 @@ display_tab_bar (struct window *w)
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   eassert (!FRAME_WINDOW_P (f));
-  init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (has_menu_bar_p ? 1 : 0), TAB_BAR_FACE_ID);
+  init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0), TAB_BAR_FACE_ID);
   it.first_visible_x = 0;
   it.last_visible_x = FRAME_PIXEL_WIDTH (f);
 #elif defined (HAVE_X_WINDOWS) /* X without toolkit.  */
@@ -12695,7 +12694,7 @@ display_tab_bar (struct window *w)
 	 dummy window tab_bar_window.  */
       struct window *tab_w;
       tab_w = XWINDOW (f->tab_bar_window);
-      init_iterator (&it, tab_w, -1, -1, tab_w->desired_matrix->rows + (has_menu_bar_p ? 1 : 0),
+      init_iterator (&it, tab_w, -1, -1, tab_w->desired_matrix->rows,
 		     TAB_BAR_FACE_ID);
       it.first_visible_x = 0;
       it.last_visible_x = FRAME_PIXEL_WIDTH (f);
@@ -12705,7 +12704,7 @@ display_tab_bar (struct window *w)
     {
       /* This is a TTY frame, i.e. character hpos/vpos are used as
 	 pixel x/y.  */
-      init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (has_menu_bar_p ? 1 : 0),
+      init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
 		     TAB_BAR_FACE_ID);
       it.first_visible_x = 0;
       it.last_visible_x = FRAME_COLS (f);
@@ -12737,10 +12736,9 @@ display_tab_bar (struct window *w)
       if (NILP (string))
 	break;
 
-      /* Display the item, pad with one space.  */
       if (it.current_x < it.last_visible_x)
 	display_string (NULL, string, Qnil, 0, 0, &it,
-			SCHARS (string) + 1, 0, 0, STRING_MULTIBYTE (string));
+			SCHARS (string), 0, 0, STRING_MULTIBYTE (string));
     }
 
   /* Fill out the line with spaces.  */
@@ -13159,7 +13157,7 @@ redisplay_tab_bar (struct frame *f)
    GLYPH doesn't display a tab-bar item.  */
 
 static bool
-tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx)
+tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx, bool *close_p)
 {
   Lisp_Object prop;
   int charpos;
@@ -13178,6 +13176,11 @@ tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx)
   if (! FIXNUMP (prop))
     return false;
   *prop_idx = XFIXNUM (prop);
+
+  *close_p = !NILP (Fget_text_property (make_fixnum (charpos),
+                                        Qclose,
+                                        f->current_tab_bar_string));
+
   return true;
 }
 
@@ -13194,7 +13197,7 @@ tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx)
 
 static int
 get_tab_bar_item (struct frame *f, int x, int y, struct glyph **glyph,
-		   int *hpos, int *vpos, int *prop_idx)
+		   int *hpos, int *vpos, int *prop_idx, bool *close_p)
 {
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   struct window *w = XWINDOW (f->tab_bar_window);
@@ -13207,7 +13210,7 @@ get_tab_bar_item (struct frame *f, int x, int y, struct glyph **glyph,
 
   /* Get the start of this tab-bar item's properties in
      f->tab_bar_items.  */
-  if (!tab_bar_item_info (f, *glyph, prop_idx))
+  if (!tab_bar_item_info (f, *glyph, prop_idx, close_p))
     return -1;
 
   /* Is mouse on the highlighted item?  */
@@ -13238,6 +13241,7 @@ handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   struct window *w = XWINDOW (f->tab_bar_window);
   int hpos, vpos, prop_idx;
+  bool close_p;
   struct glyph *glyph;
   Lisp_Object enabled_p;
   int ts;
@@ -13250,7 +13254,7 @@ handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
      highlight, since tab-bar items are not highlighted in that
      case.  */
   frame_to_window_pixel_xy (w, &x, &y);
-  ts = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx);
+  ts = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx, &close_p);
   if (ts == -1
       || (ts != 0 && !NILP (Vmouse_highlight)))
     return;
@@ -13294,7 +13298,7 @@ handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
       event.kind = TAB_BAR_EVENT;
       event.frame_or_window = frame;
       event.arg = key;
-      event.modifiers = modifiers;
+      event.modifiers = close_p ? ctrl_modifier | modifiers : modifiers;
       kbd_buffer_store_event (&event);
       f->last_tab_bar_item = -1;
     }
@@ -13318,6 +13322,7 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
   int i;
   Lisp_Object enabled_p;
   int prop_idx;
+  bool close_p;
   enum draw_glyphs_face draw = DRAW_IMAGE_RAISED;
   bool mouse_down_p;
   int rc;
@@ -13330,7 +13335,7 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
       return;
     }
 
-  rc = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx);
+  rc = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx, &close_p);
   if (rc < 0)
     {
       /* Not on tab-bar item.  */
@@ -20803,11 +20808,13 @@ do nothing.  */)
 {
 #if defined (HAVE_WINDOW_SYSTEM)
   struct frame *sf = SELECTED_FRAME ();
-  struct glyph_matrix *m = XWINDOW (sf->tab_bar_window)->current_matrix;
+  struct glyph_matrix *m = WINDOWP (sf->tab_bar_window)
+    ? XWINDOW (sf->tab_bar_window)->current_matrix
+    : sf->current_matrix;
   EMACS_INT vpos;
 
   if (NILP (row))
-    vpos = 0;
+    vpos = WINDOWP (sf->tab_bar_window) ? 0 : FRAME_MENU_BAR_LINES (sf) > 0 ? 1 : 0;
   else
     {
       CHECK_FIXNUM (row);

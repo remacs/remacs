@@ -42,8 +42,35 @@
   :version "27.1")
 
 (defface tab-line
-  '((default :inherit header-line))
+  '((((type x w32 ns) (class color))
+     :background "grey85"
+     :foreground "black")
+    (((type x) (class mono))
+     :background "grey")
+    (t
+     :inverse-video t))
   "Tab line face."
+  :version "27.1"
+  :group 'tab-line-faces)
+
+(defface tab-line-tab
+  '((((class color) (min-colors 88))
+     :box (:line-width 1 :style released-button)
+     :background "grey85")
+    (t
+     :inverse-video nil))
+  "Tab line face for selected tab."
+  :version "27.1"
+  :group 'tab-line-faces)
+
+(defface tab-line-tab-inactive
+  '((default
+      :inherit tab-line-tab)
+    (((class color) (min-colors 88))
+     :background "grey75")
+    (t
+     :inverse-video t))
+  "Tab line face for non-selected tabs."
   :version "27.1"
   :group 'tab-line-faces)
 
@@ -59,31 +86,7 @@
   :version "27.1"
   :group 'tab-line-faces)
 
-(defface tab-line-tab
-  '((((class color) (min-colors 88))
-     :box (:line-width -1 :style pressed-button)
-     :background "white" :foreground "black")
-    (t
-     :inverse-video t))
-  "Tab line face for selected tab."
-  :version "27.1"
-  :group 'tab-line-faces)
-
-(defface tab-line-tab-inactive
-  '((default
-     :inherit tab-line)
-    (((class color) (min-colors 88) (background light))
-     :weight light
-     :box (:line-width -1 :color "grey75" :style released-button)
-     :foreground "grey20" :background "grey90")
-    (((class color) (min-colors 88) (background dark) )
-     :weight light
-     :box (:line-width -1 :color "grey40" :style released-button)
-     :foreground "grey80" :background "grey30"))
-  "Tab line face for non-selected tabs."
-  :version "27.1"
-  :group 'tab-line-faces)
-
+
 (defvar tab-line-tab-map
   (let ((map (make-sparse-keymap)))
     (define-key map [tab-line mouse-1] 'tab-line-select-tab)
@@ -112,15 +115,37 @@
     map)
   "Local keymap to close `tab-line-mode' window tabs.")
 
+
 (defvar tab-line-separator " ")
+
 (defvar tab-line-tab-name-ellipsis
   (if (char-displayable-p ?…) "…" "..."))
-(defvar tab-line-tab-name-add
-  (if (char-displayable-p ?➕) "➕" "[+]"))
-(defvar tab-line-tab-name-close
-  ;; Need to add space after Unicode char on terminals
-  ;; to avoid clobbering next char by wide Unicode char.
-  (if (char-displayable-p ?⮿) (if window-system "⮿" "⮿ ") "[x]"))
+
+(defvar tab-line-button-new
+  (propertize " + "
+              'display `(image :type xpm
+                               :file ,(expand-file-name
+                                       "images/tabs/new.xpm"
+                                       data-directory)
+                               :margin (2 . 0)
+                               :ascent center)
+              'keymap tab-line-add-map
+              'mouse-face 'tab-line-highlight
+              'help-echo "Click to add tab")
+  "Button for creating a new tab.")
+
+(defvar tab-line-button-close
+  (propertize "x"
+              'display `(image :type xpm
+                               :file ,(expand-file-name
+                                       "images/tabs/close.xpm"
+                                       data-directory)
+                               :margin (2 . 0)
+                               :ascent center)
+              'keymap tab-line-tab-close-map
+              'mouse-face 'tab-line-close-highlight
+              'help-echo "Click to close tab")
+  "Button for closing the clicked tab.")
 
 
 (defun tab-line-tab-name (buffer &optional buffers)
@@ -171,39 +196,25 @@ Reduce tab width proportionally to space taken by other tabs."
     (append
      (mapcar
       (lambda (b)
-        (format "%s%s%s"
-                tab-line-separator
-                (apply 'propertize (tab-line-tab-name b buffer-tabs)
-                       `(
-                         buffer ,b
-                         face ,(if (eq b buffer)
-                                   'tab-line-tab
-                                 'tab-line-tab-inactive)
-                         mouse-face tab-line-highlight
-                         keymap ,tab-line-tab-map))
-                (apply 'propertize tab-line-tab-name-close
-                       `(
-                         help-echo "Click to close tab"
-                         buffer ,b
-                         face ,(if (eq b buffer)
-                                   'tab-line-tab
-                                 'tab-line-tab-inactive)
-                         mouse-face tab-line-close-highlight
-                         keymap ,tab-line-tab-close-map))))
+        (concat
+         (or tab-line-separator "")
+         (apply 'propertize (concat (propertize
+                                     (tab-line-tab-name b buffer-tabs)
+                                     'keymap tab-line-tab-map)
+                                    tab-line-button-close)
+                `(
+                  buffer ,b
+                  face ,(if (eq b buffer)
+                            'tab-line-tab
+                          'tab-line-tab-inactive)
+                  mouse-face tab-line-highlight))))
       buffer-tabs)
-     (list (format "%s%s"
-                   tab-line-separator
-                   (apply 'propertize tab-line-tab-name-add
-                          `(
-                            help-echo "Click to add tab"
-                            face tab-line-tab-inactive
-                            mouse-face tab-line-highlight
-                            keymap ,tab-line-add-map)))))))
+     (list (concat tab-line-separator tab-line-button-new)))))
 
 
 (defun tab-line-add-tab (&optional e)
   (interactive "e")
-  (if window-system
+  (if window-system ; (display-popup-menus-p)
       (mouse-buffer-menu e) ; like (buffer-menu-open)
     ;; tty menu doesn't support mouse clicks, so use tmm
     (tmm-prompt (mouse-buffer-menu-keymap))))

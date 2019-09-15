@@ -47,34 +47,42 @@
   :version "27.1")
 
 (defface tab-bar
-  '((default
-     :box (:line-width 1 :style released-button)
-     :foreground "black"
-     :background "white")
-    (((type x w32 ns) (class color))
-     :background "grey75")
+  '((((type x w32 ns) (class color))
+     :height 1.1
+     :background "grey85"
+     :foreground "black")
     (((type x) (class mono))
-     :background "grey"))
+     :background "grey")
+    (t
+     :inverse-video t))
   "Tab bar face."
   :version "27.1"
   :group 'tab-bar-faces)
 
 (defface tab-bar-tab
-  '((default
-      :inherit tab-bar-tab-inactive)
+  '((((class color) (min-colors 88))
+     :box (:line-width 1 :style released-button))
     (t
-     :background "grey75"))
+     :inverse-video nil))
   "Tab bar face for selected tab."
   :version "27.1"
   :group 'tab-bar-faces)
 
 (defface tab-bar-tab-inactive
-  '((((class color) (min-colors 88))
-     :box (:line-width -15 :style pressed-button)
-     :background "grey60")
+  '((default
+      :inherit tab-bar-tab)
+    (((class color) (min-colors 88))
+     :background "grey75")
     (t
-     :inherit highlight))
+     :inverse-video t))
   "Tab bar face for non-selected tab."
+  :version "27.1"
+  :group 'tab-bar-faces)
+
+(defface tab-bar-separator
+  '((t
+     :inverse-video nil))
+  "Tab bar face for separator."
   :version "27.1"
   :group 'tab-bar-faces)
 
@@ -99,7 +107,7 @@
     (global-set-key [(control shift tab)]         'tab-bar-switch-to-prev-tab)
     (global-set-key [(control tab)]               'tab-bar-switch-to-next-tab)))
 
-(defun tab-bar-mouse (event)
+(defun tab-bar-handle-mouse (event)
   "Text-mode emulation of switching tabs on the tab-bar.
 This command is used when you click the mouse in the tab-bar
 on a console which has no window system but does have a mouse."
@@ -113,9 +121,11 @@ on a console which has no window system but does have a mouse."
                  (lambda (_key binding)
                    (when (eq (car-safe binding) 'menu-item)
                      (when (> (+ column (length (nth 1 binding))) x-position)
-                       (call-interactively (nth 2 binding))
+                       ;; TODO: handle close
+                       (unless (get-text-property (- x-position column) 'close (nth 1 binding))
+                         (call-interactively (nth 2 binding)))
                        (throw 'done t))
-                     (setq column (+ column (length (nth 1 binding)) 1))))
+                     (setq column (+ column (length (nth 1 binding))))))
                  keymap))
         ;; Clicking anywhere outside existing tabs will add a new tab
         (tab-bar-add-tab)))))
@@ -149,9 +159,30 @@ Its main job is to show tabs in the tab bar."
           (puthash key tab-bar-map tab-bar-keymap-cache)))))
 
 
-(defvar tab-bar-separator " ")
-(defvar tab-bar-tab-name-add nil)
-(defvar tab-bar-tab-name-close nil)
+(defvar tab-bar-separator
+  (propertize " " 'face 'tab-bar-separator))
+
+(defvar tab-bar-button-new
+  (propertize " + "
+              'display `(image :type xpm
+                               :file ,(expand-file-name
+                                       "images/tabs/new.xpm"
+                                       data-directory)
+                               :margin (2 . 0)
+                               :ascent center))
+  "Button for creating a new tab.")
+
+(defvar tab-bar-button-close
+  (propertize "x"
+              'display `(image :type xpm
+                               :file ,(expand-file-name
+                                       "images/tabs/close.xpm"
+                                       data-directory)
+                               :margin (2 . 0)
+                               :ascent center)
+              'close t
+              :help "Click to close tab")
+  "Button for closing the clicked tab.")
 
 (defun tab-bar-tab-name ()
   "Generate tab name in the context of the selected frame."
@@ -172,54 +203,44 @@ Return its existing value or a new value."
 
 (defun tab-bar-make-keymap-1 ()
   "Generate an actual keymap from `tab-bar-map', without caching."
-  ;; Can't check for char-displayable-p in defvar
-  ;; because this file is preloaded.
-  (unless tab-bar-tab-name-add
-    (setq tab-bar-tab-name-add
-          (if (char-displayable-p ?➕) "➕" "[+]")))
-  (unless tab-bar-tab-name-close
-    (setq tab-bar-tab-name-close
-          ;; Need to add space after Unicode char on terminals
-          ;; to avoid clobbering next char by wide Unicode char.
-          (if (char-displayable-p ?⮿) (if window-system "⮿" "⮿ ") "[x]")))
   (let ((i 0))
     (append
-     '(keymap (mouse-1 . tab-bar-mouse))
+     '(keymap (mouse-1 . tab-bar-handle-mouse))
      (mapcan
       (lambda (tab)
         (setq i (1+ i))
-        (list (cond
-               ((eq (car tab) 'current-tab)
-                `(current-tab
-                  menu-item
-                  ,(propertize (cdr (assq 'name tab)) 'face 'tab-bar-tab)
-                  ignore
-                  :help "Current tab"))
-               (t
-                `(,(intern (format "tab-%i" i))
-                  menu-item
-                  ,(propertize (cdr (assq 'name tab)) 'face 'tab-bar-tab-inactive)
-                  ,(lambda ()
-                     (interactive)
-                     (tab-bar-select-tab tab))
-                  :help "Click to visit tab")))
-              `(,(intern (format "close-tab-%i" i))
-                menu-item
-                ,(concat (propertize tab-bar-tab-name-close
-                                     'face (if (eq (car tab) 'current-tab)
-                                               'tab-bar-tab
-                                             'tab-bar-tab-inactive))
-                         tab-bar-separator)
-                ,(lambda ()
-                   (interactive)
-                   (tab-bar-close-tab tab))
-                :help "Click to close tab")))
+        (append
+         (cond
+          ((eq (car tab) 'current-tab)
+           `((current-tab
+              menu-item
+              ,(propertize (concat (cdr (assq 'name tab))
+                                   (or tab-bar-button-close ""))
+                           'face 'tab-bar-tab)
+              ignore
+              :help "Current tab")))
+          (t
+           `((,(intern (format "tab-%i" i))
+              menu-item
+              ,(propertize (concat (cdr (assq 'name tab))
+                                   (or tab-bar-button-close ""))
+                           'face 'tab-bar-tab-inactive)
+              ,(lambda ()
+                 (interactive)
+                 (tab-bar-select-tab tab))
+              :help "Click to visit tab"))))
+         `((,(if (eq (car tab) 'current-tab) 'C-current-tab (intern (format "C-tab-%i" i)))
+            menu-item ""
+            ,(lambda ()
+               (interactive)
+               (tab-bar-close-tab tab))))
+         (when (and (stringp tab-bar-separator)
+                    (> (length tab-bar-separator) 0))
+           `((,(intern (format "sep-%i" i)) menu-item ,tab-bar-separator ignore)))))
       (tab-bar-tabs))
-     `((add-tab menu-item
-                ,(propertize tab-bar-tab-name-add
-                             'face 'tab-bar-tab-inactive)
-                tab-bar-add-tab
-                :help "Click to add tab")))))
+     (when tab-bar-button-new
+       `((add-tab menu-item ,tab-bar-button-new tab-bar-add-tab
+                  :help "New tab"))))))
 
 
 (defun tab-bar-read-tab-name (prompt)
@@ -279,16 +300,16 @@ Return its existing value or a new value."
         (setq tabs (cdr tabs)))
       (force-window-update))))
 
-(defun tab-bar-switch-to-prev-tab ()
-  "Switch to the previous tab."
-  (interactive)
+(defun tab-bar-switch-to-prev-tab (&optional _arg)
+  "Switch to ARGth previous tab."
+  (interactive "p")
   (let ((prev-tab (tab-bar-find-prev-tab)))
     (when prev-tab
       (tab-bar-select-tab (car prev-tab)))))
 
-(defun tab-bar-switch-to-next-tab ()
-  "Switch to the next tab."
-  (interactive)
+(defun tab-bar-switch-to-next-tab (&optional _arg)
+  "Switch to ARGth next tab."
+  (interactive "p")
   (let* ((tabs (tab-bar-tabs))
          (prev-tab (tab-bar-find-prev-tab tabs)))
     (if prev-tab
