@@ -2391,11 +2391,11 @@ file_name_case_insensitive_p (const char *filename)
      support the latter.  */
 
 #ifdef _PC_CASE_INSENSITIVE
-  int res = pathconf (filename, _PC_CASE_INSENSITIVE);
+  long int res = pathconf (filename, _PC_CASE_INSENSITIVE);
   if (res >= 0)
     return res > 0;
 #elif defined _PC_CASE_SENSITIVE
-  int res = pathconf (filename, _PC_CASE_SENSITIVE);
+  long int res = pathconf (filename, _PC_CASE_SENSITIVE);
   if (res >= 0)
     return res == 0;
 #endif
