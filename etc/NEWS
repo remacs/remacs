@@ -743,6 +743,10 @@ file.
 *** New customizable variable 'vc-find-revision-no-save'.
 With non-nil, 'vc-find-revision' doesn't write the created buffer to file.
 
+---
+*** 'vc-dir-ignore' now takes a prefix argument to ignore all marked
+files.
+
 *** New customizable variable 'vc-git-grep-template'.
 This new variable allows customizing the default arguments passed to
 'git-grep' when 'vc-git-grep' is used.
