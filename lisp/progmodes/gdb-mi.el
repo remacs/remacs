@@ -1827,7 +1827,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
 		      " "))
       (setq gdb-first-done-or-error t)
       (let ((to-send (concat "-interpreter-exec console "
-                             (gdb-mi-quote (concat gdb-continuation string " "))
+                             (gdb-mi-quote (concat gdb-continuation string))
                              "\n")))
         (if gdb-enable-debug
             (push (cons 'mi-send to-send) gdb-debug-log))
