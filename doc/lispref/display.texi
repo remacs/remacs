@@ -5016,7 +5016,9 @@ means no right marginal area.
   Setting these variables does not immediately affect the window.  These
 variables are checked when a new buffer is displayed in the window.
 Thus, you can make changes take effect by calling
-@code{set-window-buffer}.
+@code{set-window-buffer}.  Do not use these variables to try to
+determine the current width of the left or right margin.  Instead, use
+the function @code{window-margins}.
 
   You can also set the margin widths immediately.
 
