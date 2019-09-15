@@ -12740,7 +12740,7 @@ display_tab_bar (struct window *w)
       /* Display the item, pad with one space.  */
       if (it.current_x < it.last_visible_x)
 	display_string (NULL, string, Qnil, 0, 0, &it,
-			SCHARS (string) + 1, 0, 0, -1);
+			SCHARS (string) + 1, 0, 0, STRING_MULTIBYTE (string));
     }
 
   /* Fill out the line with spaces.  */
@@ -12947,7 +12947,8 @@ tab_bar_height (struct frame *f, int *n_rows, bool pixelwise)
   temp_row->reversed_p = false;
   it.first_visible_x = 0;
   it.last_visible_x = WINDOW_PIXEL_WIDTH (w);
-  reseat_to_string (&it, NULL, f->desired_tab_bar_string, 0, 0, 0, -1);
+  reseat_to_string (&it, NULL, f->desired_tab_bar_string,
+                    0, 0, 0, STRING_MULTIBYTE (f->desired_tab_bar_string));
   it.paragraph_embedding = L2R;
 
   while (!ITERATOR_AT_END_P (&it))
@@ -13023,7 +13024,8 @@ redisplay_tab_bar (struct frame *f)
 
   /* Build a string that represents the contents of the tab-bar.  */
   build_desired_tab_bar_string (f);
-  reseat_to_string (&it, NULL, f->desired_tab_bar_string, 0, 0, 0, -1);
+  reseat_to_string (&it, NULL, f->desired_tab_bar_string, 0, 0, 0,
+                    STRING_MULTIBYTE (f->desired_tab_bar_string));
   /* FIXME: This should be controlled by a user option.  But it
      doesn't make sense to have an R2L tab bar if the menu bar cannot
      be drawn also R2L, and making the menu bar R2L is tricky due
