@@ -120,9 +120,9 @@
 ;; - "installed" instead of a blank in the status column
 ;; - tramp needs its files to be compiled in a certain order.
 ;;   how to handle this?  fix tramp?
-;; - maybe we need separate .elc directories for various emacs versions
-;;   and also emacs-vs-xemacs.  That way conditional compilation can
-;;   work.  But would this break anything?
+;; - maybe we need separate .elc directories for various emacs
+;;   versions.  That way conditional compilation can work.  But would
+;;   this break anything?
 ;; - William Xu suggests being able to open a package file without
 ;;   installing it
 ;; - Interface with desktop.el so that restarting after an install
@@ -357,9 +357,9 @@ contents of the archive."
 
 (defun package-check-signature ()
   "Check whether we have a usable OpenPGP configuration.
-If true, and `package-check-signature' is `allow-unsigned',
-return `allow-unsigned', otherwise return the value of
-`package-check-signature'."
+If so, and variable `package-check-signature' is
+`allow-unsigned', return `allow-unsigned', otherwise return the
+value of variable `package-check-signature'."
   (if (eq package-check-signature 'allow-unsigned)
       (progn
         (require 'epg-config)
@@ -475,6 +475,8 @@ Slots:
   signed)
 
 (defun package--from-builtin (bi-desc)
+  "Create a `package-desc' object from BI-DESC.
+BI-DESC should be a `package--bi-desc' object."
   (package-desc-create :name (pop bi-desc)
                        :version (package--bi-desc-version bi-desc)
                        :summary (package--bi-desc-summary bi-desc)
@@ -512,11 +514,21 @@ This is, approximately, the inverse of `version-to-list'.
       (apply #'concat (nreverse str-list)))))
 
 (defun package-desc-full-name (pkg-desc)
+  "Return full name of package-desc object PKG-DESC.
+This is the name of the package with its version appended."
   (format "%s-%s"
           (package-desc-name pkg-desc)
           (package-version-join (package-desc-version pkg-desc))))
 
 (defun package-desc-suffix (pkg-desc)
+  "Return file-name extension of package-desc object PKG-DESC.
+Depending on the `package-desc-kind' of PKG-DESC, this is one of:
+
+   'single - \".el\"
+   'tar    - \".tar\"
+   'dir    - \"\"
+
+Signal an error if the kind is none of the above."
   (pcase (package-desc-kind pkg-desc)
     ('single ".el")
     ('tar ".tar")
@@ -524,6 +536,10 @@ This is, approximately, the inverse of `version-to-list'.
     (kind (error "Unknown package kind: %s" kind))))
 
 (defun package-desc--keywords (pkg-desc)
+  "Return keywords of package-desc object PKG-DESC.
+These keywords come from the foo-pkg.el file, and in general
+corresponds to the keywords in the \"Keywords\" header of the
+package."
   (let ((keywords (cdr (assoc :keywords (package-desc-extras pkg-desc)))))
     (if (eq (car-safe keywords) 'quote)
         (nth 1 keywords)
@@ -533,10 +549,10 @@ This is, approximately, the inverse of `version-to-list'.
   "Return the priority of the archive of package-desc object P."
   (package-archive-priority (package-desc-archive p)))
 
-;; Package descriptor format used in finder-inf.el and package--builtins.
 (cl-defstruct (package--bi-desc
                (:constructor package-make-builtin (version summary))
                (:type vector))
+  "Package descriptor format used in finder-inf.el and package--builtins."
   version
   reqs
   summary)
@@ -578,7 +594,15 @@ loaded and/or activated, customize `package-load-list'.")
 ;; The following functions are called on each installed package by
 ;; `package-load-all-descriptors', which ultimately populates the
 ;; `package-alist' variable.
+
 (defun package-process-define-package (exp)
+  "Process define-package expression EXP and push it to `package-alist'.
+EXP should be a form read from a foo-pkg.el file.
+Convert EXP into a `package-desc' object using the
+`package-desc-from-define' constructor before pushing it to
+`package-alist'.
+If there already exists a package by that name in
+`package-alist', replace that definition with the new one."
   (when (eq (car-safe exp) 'define-package)
     (let* ((new-pkg-desc (apply #'package-desc-from-define (cdr exp)))
            (name (package-desc-name new-pkg-desc))
@@ -869,6 +893,7 @@ untar into a directory named DIR; otherwise, signal an error."
   (mapcar #'macroexp-quote
           (apply #'nconc
                  (mapcar (lambda (pair) (list (car pair) (cdr pair))) alist))))
+
 (defun package-unpack (pkg-desc)
   "Install the contents of the current buffer as a package."
   (let* ((name (package-desc-name pkg-desc))
@@ -1902,12 +1927,13 @@ if all the in-between dependencies are also in PACKAGE-LIST."
 ;; installed in a variety of ways (archives, buffer, file), but
 ;; requirements (dependencies) are always satisfied by looking in
 ;; `package-archive-contents'.
+
 (defun package-archive-base (desc)
-  "Return the archive containing the package NAME."
+  "Return the package described by DESC."
   (cdr (assoc (package-desc-archive desc) package-archives)))
 
 (defun package-install-from-archive (pkg-desc)
-  "Download and install a tar package."
+  "Download and install a tar package defined by PKG-DESC."
   ;; This won't happen, unless the archive is doing something wrong.
   (when (eq (package-desc-kind pkg-desc) 'dir)
     (error "Can't install directory package from archive"))
@@ -2084,7 +2110,7 @@ Downloads and installs required packages as needed."
 
 ;;;###autoload
 (defun package-install-file (file)
-  "Install a package from a file.
+  "Install a package from FILE.
 The file can either be a tar file, an Emacs Lisp file, or a
 directory."
   (interactive "fPackage file name: ")
@@ -2220,7 +2246,7 @@ object."
 
 ;;;###autoload
 (defun package-autoremove ()
-  "Remove packages that are no more needed.
+  "Remove packages that are no longer needed.
 
 Packages that are no more needed by other packages in
 `package-selected-packages' and their dependencies
@@ -2337,6 +2363,8 @@ The description is read from the installed package files."
      )))
 
 (defun describe-package-1 (pkg)
+  "Insert the package description for PKG.
+Helper function for `describe-package'."
   (require 'lisp-mnt)
   (let* ((desc (or
                 (if (package-desc-p pkg) pkg)
@@ -2566,6 +2594,9 @@ The description is read from the installed package files."
       (browse-url-add-buttons))))
 
 (defun package-install-button-action (button)
+  "Run `package-install' on the package BUTTON points to.
+Used for the 'action property of buttons in the buffer created by
+`describe-package'."
   (let ((pkg-desc (button-get button 'package-desc)))
     (when (y-or-n-p (format-message "Install package `%s'? "
                                     (package-desc-full-name pkg-desc)))
@@ -2574,6 +2605,9 @@ The description is read from the installed package files."
       (goto-char (point-min)))))
 
 (defun package-delete-button-action (button)
+  "Run `package-delete' on the package BUTTON points to.
+Used for the 'action property of buttons in the buffer created by
+`describe-package'."
   (let ((pkg-desc (button-get button 'package-desc)))
     (when (y-or-n-p (format-message "Delete package `%s'? "
                                     (package-desc-full-name pkg-desc)))
@@ -2582,10 +2616,17 @@ The description is read from the installed package files."
       (goto-char (point-min)))))
 
 (defun package-keyword-button-action (button)
+  "Show filtered \"*Packages*\" buffer for BUTTON.
+The buffer is filtered by the `package-keyword' property of BUTTON.
+Used for the 'action property of buttons in the buffer created by
+`describe-package'."
   (let ((pkg-keyword (button-get button 'package-keyword)))
     (package-show-package-list t (list pkg-keyword))))
 
-(defun package-make-button (text &rest props)
+(defun package-make-button (text &rest properties)
+  "Insert button labeled TEXT with button PROPERTIES at point.
+PROPERTIES are passed to `insert-text-button', for which this
+function is a convenience wrapper used by `describe-package-1'."
   (let ((button-text (if (display-graphic-p) text (concat "[" text "]")))
         (button-face (if (display-graphic-p)
                          '(:box (:line-width 2 :color "dark grey")
@@ -2593,20 +2634,23 @@ The description is read from the installed package files."
                                 :foreground "black")
                        'link)))
     (apply #'insert-text-button button-text 'face button-face 'follow-link t
-           props)))
+           properties)))
 
-(defun package--print-email-button (name)
-  (when (car name)
-    (insert (car name)))
-  (when (and (car name) (cdr name))
+(defun package--print-email-button (recipient)
+  "Insert a button whose action will send an email to RECIPIENT.
+NAME should have the form (FULLNAME . EMAIL) where FULLNAME is
+either a full name or nil, and EMAIL is a valid email address."
+  (when (car recipient)
+    (insert (car recipient)))
+  (when (and (car recipient) (cdr recipient))
     (insert " "))
-  (when (cdr name)
+  (when (cdr recipient)
     (insert "<")
-    (insert-text-button (cdr name)
+    (insert-text-button (cdr recipient)
                         'follow-link t
                         'action (lambda (_)
                                   (compose-mail
-                                   (format "%s <%s>" (car name) (cdr name)))))
+                                   (format "%s <%s>" (car recipient) (cdr recipient)))))
     (insert ">"))
   (insert "\n"))
 
@@ -2704,13 +2748,13 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
      (push (cons ,pkg-desc ,status) ,listname)))
 
 (defvar package-list-unversioned nil
-  "If non-nil include packages that don't have a version in `list-package'.")
+  "If non-nil, include packages that don't have a version in `list-packages'.")
 
 (defvar package-list-unsigned nil
   "If non-nil, mention in the list which packages were installed w/o signature.")
 
 (defvar package--emacs-version-list (version-to-list emacs-version)
-  "`emacs-version', as a list.")
+  "The value of variable `emacs-version' as a list.")
 
 (defun package--incompatible-p (pkg &optional shallow)
   "Return non-nil if PKG has no chance of being installable.
@@ -2785,7 +2829,7 @@ Can be toggled with \\<package-menu-mode-map> \\[package-menu-toggle-hiding].
 Installed obsolete packages are always displayed.")
 
 (defun package-menu-toggle-hiding ()
-  "Toggle visibility of obsolete available packages."
+  "In Package Menu, toggle visibility of obsolete available packages."
   (interactive)
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
@@ -3103,7 +3147,7 @@ user-error if there is already a refresh running asynchronously."
   (package-refresh-contents package-menu-async))
 
 (defun package-menu-hide-package ()
-  "Hide a package under point.
+  "Hide a package under point in Package Menu.
 If optional arg BUTTON is non-nil, describe its associated package."
   (interactive)
   (declare (interactive-only "change `package-hidden-regexps' instead."))
@@ -3202,6 +3246,7 @@ The full list of keys can be viewed with \\[describe-mode]."
   'package-menu-view-commentary 'package-menu-describe-package "24.1")
 
 (defun package-menu-get-status ()
+  "Return status text of package at point in Package Menu."
   (let* ((id (tabulated-list-get-id))
          (entry (and id (assoc id tabulated-list-entries))))
     (if entry
@@ -3227,6 +3272,10 @@ consideration."
         (package-desc-version pkg-desc)))
 
 (defun package-menu--find-upgrades ()
+  "In Package Menu, return an alist of packages that can be upgraded.
+The alist has the same form as `package-alist', namely a list
+of (PKG . DESCS), but where DESCS is the `package-desc' object
+corresponding to the newer version."
   (let (installed available upgrades)
     ;; Build list of installed/available packages in this buffer.
     (dolist (entry tabulated-list-entries)
@@ -3490,7 +3539,7 @@ Store this list in `package-menu--new-package-list'."
 
 
 (defun package-menu--post-refresh ()
-  "If there's a *Packages* buffer, revert it and check for new packages and upgrades.
+  "Revert \"*Packages*\" buffer and check for new packages and upgrades.
 Do nothing if there's no *Packages* buffer.
 
 This function is called after `package-refresh-contents' and it
