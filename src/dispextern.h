@@ -3559,7 +3559,8 @@ int face_at_buffer_position (struct window *, ptrdiff_t, ptrdiff_t *,
 int face_for_overlay_string (struct window *, ptrdiff_t, ptrdiff_t *, ptrdiff_t,
                              bool, Lisp_Object);
 int face_at_string_position (struct window *, Lisp_Object, ptrdiff_t, ptrdiff_t,
-                             ptrdiff_t *, enum face_id, bool);
+                             ptrdiff_t *, enum face_id, bool,
+                             enum lface_attribute_index);
 int merge_faces (struct window *, Lisp_Object, int, int);
 int compute_char_face (struct frame *, int, Lisp_Object);
 void free_all_realized_faces (Lisp_Object);

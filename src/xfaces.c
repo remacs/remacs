@@ -6275,9 +6275,10 @@ face_for_overlay_string (struct window *w, ptrdiff_t pos,
 
 int
 face_at_string_position (struct window *w, Lisp_Object string,
-			 ptrdiff_t pos, ptrdiff_t bufpos,
-			 ptrdiff_t *endptr, enum face_id base_face_id,
-                         bool mouse_p)
+                         ptrdiff_t pos, ptrdiff_t bufpos,
+                         ptrdiff_t *endptr, enum face_id base_face_id,
+                         bool mouse_p,
+                         enum lface_attribute_index attr_filter)
 {
   Lisp_Object prop, position, end, limit;
   struct frame *f = XFRAME (WINDOW_FRAME (w));
@@ -6321,7 +6322,7 @@ face_at_string_position (struct window *w, Lisp_Object string,
 
   /* Merge in attributes specified via text properties.  */
   if (!NILP (prop))
-    merge_face_ref (w, f, prop, attrs, true, NULL, 0);
+    merge_face_ref (w, f, prop, attrs, true, NULL, attr_filter);
 
   /* Look up a realized face with the given face attributes,
      or realize a new one for ASCII characters.  */

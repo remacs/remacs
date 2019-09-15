@@ -3785,7 +3785,7 @@ font_at (int c, ptrdiff_t pos, struct face *face, struct window *w,
 
       if (STRINGP (string))
 	face_id = face_at_string_position (w, string, pos, 0, &endptr,
-					   DEFAULT_FACE_ID, 0);
+	                                   DEFAULT_FACE_ID, false, 0);
       else
 	face_id = face_at_buffer_position (w, pos, &endptr,
 	                                   pos + 100, false, -1, 0);
@@ -3841,7 +3841,7 @@ font_range (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t *limit,
 	    : lookup_basic_face (w, f, DEFAULT_FACE_ID);
 
 	  face_id = face_at_string_position (w, string, pos, 0, &ignore,
-					     face_id, false);
+	                                     face_id, false, 0);
 	}
       face = FACE_FROM_ID (f, face_id);
     }

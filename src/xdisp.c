@@ -4173,7 +4173,8 @@ handle_face_prop_general (struct it *it, int initial_face_id,
 				   &next_stop,
 				   (IT_CHARPOS (*it)
 				    + TEXT_PROP_DISTANCE_LIMIT),
-	                           false, it->base_face_id, attr_filter);
+	                           false, it->base_face_id,
+	                           attr_filter);
      }
   else
     {
@@ -4218,7 +4219,7 @@ handle_face_prop_general (struct it *it, int initial_face_id,
 				       (IT_CHARPOS (*it)
 					+ TEXT_PROP_DISTANCE_LIMIT),
 				       false,
-				       from_overlay);
+	                               from_overlay);
 	}
       else
 	{
@@ -4252,7 +4253,8 @@ handle_face_prop_general (struct it *it, int initial_face_id,
 					     IT_STRING_CHARPOS (*it),
 					     bufpos,
 					     &next_stop,
-					     base_face_id, false);
+                                             base_face_id, false,
+					     attr_filter);
     } /* !is_string.  */
 
   /* Is this a start of a run of characters with box face?
@@ -4422,12 +4424,9 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
       base_face_id = underlying_face_id (it);
 
       /* Get the face for ASCII, or unibyte.  */
-      face_id = face_at_string_position (it->w,
-					 it->string,
-					 charpos,
-					 bufpos,
-					 &next_check_charpos,
-					 base_face_id, false);
+      face_id = face_at_string_position (it->w, it->string, charpos,
+                                         bufpos, &next_check_charpos,
+                                         base_face_id, false, 0);
 
       /* Correct the face for charsets different from ASCII.  Do it
 	 for the multibyte case only.  The face returned above is
@@ -7637,7 +7636,8 @@ get_next_display_element (struct it *it)
 			  next_face_id
 			    = face_at_string_position (it->w, base_string,
 						       CHARPOS (pos), 0,
-						       &ignore, face_id, false);
+						       &ignore, face_id,
+			                               false, 0);
 			  it->end_of_box_run_p
 			    = (FACE_FROM_ID (it->f, next_face_id)->box
 			       == FACE_NO_BOX);
@@ -26569,8 +26569,8 @@ display_string (const char *string, Lisp_Object lisp_string, Lisp_Object face_st
 
   /* Initialize the iterator IT for iteration over STRING beginning
      with index START.  */
-  reseat_to_string (it, NILP (lisp_string) ? string : NULL, lisp_string, start,
-		    precision, field_width, multibyte);
+  reseat_to_string (it, NILP (lisp_string) ? string : NULL, lisp_string,
+                    start, precision, field_width, multibyte);
   if (string && STRINGP (lisp_string))
     /* LISP_STRING is the one returned by decode_mode_spec.  We should
        ignore its text properties.  */
@@ -26585,7 +26585,7 @@ display_string (const char *string, Lisp_Object lisp_string, Lisp_Object face_st
 
       it->face_id
 	= face_at_string_position (it->w, face_string, face_string_pos,
-				   0, &endptr, it->base_face_id, false);
+	                           0, &endptr, it->base_face_id, false, 0);
       face = FACE_FROM_ID (it->f, it->face_id);
       it->face_box_p = face->box != FACE_NO_BOX;
     }
@@ -32745,11 +32745,10 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	  hlinfo->mouse_face_past_end = false;
 	  hlinfo->mouse_face_window   = window;
 
-	  hlinfo->mouse_face_face_id = face_at_string_position (w, string,
-								charpos,
-								0, &ignore,
-								glyph->face_id,
-								true);
+	  hlinfo->mouse_face_face_id =
+	    face_at_string_position (w, string, charpos, 0, &ignore,
+	                             glyph->face_id, true, 0);
+
 	  show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 	  mouse_face_shown = true;
 
@@ -33175,7 +33174,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	      hlinfo->mouse_face_window = window;
 	      hlinfo->mouse_face_face_id
 		= face_at_string_position (w, object, pos, 0, &ignore,
-					   glyph->face_id, true);
+		                           glyph->face_id, true, 0);
 	      show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 	      cursor = No_Cursor;
 	    }
