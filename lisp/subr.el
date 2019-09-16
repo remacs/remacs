@@ -3120,11 +3120,15 @@ Otherwise, return nil."
       raw-field)))
 
 (defun sha1 (object &optional start end binary)
-  "Return the SHA1 (Secure Hash Algorithm) of an OBJECT.
+  "Return the SHA-1 (Secure Hash Algorithm) of an OBJECT.
 OBJECT is either a string or a buffer.  Optional arguments START and
 END are character positions specifying which portion of OBJECT for
 computing the hash.  If BINARY is non-nil, return a string in binary
-form."
+form.
+
+Note that SHA-1 is not collision resistant and should not be used
+for anything security-related.  See `secure-hash' for
+alternatives."
   (secure-hash 'sha1 object start end binary))
 
 (defun function-get (f prop &optional autoload)

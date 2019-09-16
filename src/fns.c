@@ -5376,7 +5376,10 @@ If OBJECT is a string, the most preferred coding system (see the
 command `prefer-coding-system') is used.
 
 If NOERROR is non-nil, silently assume the `raw-text' coding if the
-guesswork fails.  Normally, an error is signaled in such case.  */)
+guesswork fails.  Normally, an error is signaled in such case.
+
+Note that MD5 is not collision resistant and should not be used for
+anything security-related.  See `secure-hash' for alternatives.  */)
   (Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror)
 {
   return secure_hash (Qmd5, object, start, end, coding_system, noerror, Qnil);
@@ -5393,7 +5396,11 @@ whole OBJECT.
 
 The full list of algorithms can be obtained with `secure-hash-algorithms'.
 
-If BINARY is non-nil, returns a string in binary form.  */)
+If BINARY is non-nil, returns a string in binary form.
+
+Note that MD5 and SHA-1 are not collision resistant and should not be
+used for anything security-related.  For these applications, use one
+of the other hash types instead, e.g. sha256 or sha512.  */)
   (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object binary)
 {
   return secure_hash (algorithm, object, start, end, Qnil, Qnil, binary);
