@@ -1063,6 +1063,11 @@ See the concept index in the Gnus manual for the 'match-list' entry.
 *** nil is no longer an allowed value for 'mm-text-html-renderer'.
 
 +++
+The default value of 'mm-inline-large-images' has changed from nil to
+'resize', which means that large images will be resized instead of
+displayed with an external program by default.
+
++++
 *** A new Gnus summary mode command, 'S A'
 ('gnus-summary-attach-article') can be used to attach the current
 article(s) to a pre-existing Message buffer, or create a new Message
