@@ -1598,6 +1598,8 @@ init_callproc (void)
       Lisp_Object path_game = build_unibyte_string (PATH_GAME);
       if (file_accessible_directory_p (path_game))
 	gamedir = path_game;
+      else if (errno != ENOENT && errno != ENOTDIR)
+	dir_warning ("game dir", path_game);
     }
   Vshared_game_score_directory = gamedir;
 }
