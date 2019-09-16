@@ -1595,10 +1595,21 @@ init_callproc (void)
   Lisp_Object gamedir = Qnil;
   if (PATH_GAME)
     {
-      Lisp_Object path_game = build_unibyte_string (PATH_GAME);
+      const char *cpath_game = PATH_GAME;
+#ifdef WINDOWSNT
+      /* On MS-Windows, PATH_GAME normally starts with a literal
+	 "%emacs_dir%", so it will never work without some tweaking.  */
+      cpath_game = w32_relocate (cpath_game);
+#endif
+      Lisp_Object path_game = build_unibyte_string (cpath_game);
       if (file_accessible_directory_p (path_game))
 	gamedir = path_game;
-      else if (errno != ENOENT && errno != ENOTDIR)
+      else if (errno != ENOENT && errno != ENOTDIR
+#ifdef DOS_NT
+	       /* DOS/Windows sometimes return EACCES for bad file names  */
+	       && errno != EACCES
+#endif
+	       )
 	dir_warning ("game dir", path_game);
     }
   Vshared_game_score_directory = gamedir;
