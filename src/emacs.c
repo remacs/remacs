@@ -923,7 +923,6 @@ load_pdump (int argc, char **argv)
 }
 #endif /* HAVE_PDUMPER */
 
-/* ARGSUSED */
 int
 main (int argc, char **argv)
 {
