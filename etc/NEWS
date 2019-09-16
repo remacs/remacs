@@ -983,6 +983,9 @@ early init file.
 ---
 *** Imenu support has been added to 'package-menu-mode'.
 
+---
+*** The package list can now be sorted by version or description.
+
 ** Info
 
 +++

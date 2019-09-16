@@ -2725,11 +2725,11 @@ Letters do not insert themselves; instead, they are commands.
                              package-menu--transaction-status)))
   (setq tabulated-list-format
         `[("Package" 18 package-menu--name-predicate)
-          ("Version" 13 nil)
+          ("Version" 13 package-menu--version-predicate)
           ("Status"  10 package-menu--status-predicate)
           ,@(if (cdr package-archives)
                 '(("Archive" 10 package-menu--archive-predicate)))
-          ("Description" 0 nil)])
+          ("Description" 0 package-menu--description-predicate)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
@@ -3469,13 +3469,17 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
               (message "Operation %s finished" message-template))))))))
 
 (defun package-menu--version-predicate (A B)
-  (let ((vA (or (aref (cadr A) 1)  '(0)))
-        (vB (or (aref (cadr B) 1) '(0))))
+  "Predicate to sort \"*Packages*\" buffer by the version column.
+This is used for `tabulated-list-format' in `package-menu-mode'."
+  (let ((vA (or (version-to-list (aref (cadr A) 1)) '(0)))
+        (vB (or (version-to-list (aref (cadr B) 1)) '(0))))
     (if (version-list-= vA vB)
         (package-menu--name-predicate A B)
       (version-list-< vA vB))))
 
 (defun package-menu--status-predicate (A B)
+  "Predicate to sort \"*Packages*\" buffer by the status column.
+This is used for `tabulated-list-format' in `package-menu-mode'."
   (let ((sA (aref (cadr A) 2))
         (sB (aref (cadr B) 2)))
     (cond ((string= sA sB)
@@ -3506,19 +3510,28 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
           (t (string< sA sB)))))
 
 (defun package-menu--description-predicate (A B)
-  (let ((dA (aref (cadr A) 3))
-        (dB (aref (cadr B) 3)))
+  "Predicate to sort \"*Packages*\" buffer by the description column.
+This is used for `tabulated-list-format' in `package-menu-mode'."
+  (let ((dA (aref (cadr A) (if (cdr package-archives) 4 3)))
+        (dB (aref (cadr B) (if (cdr package-archives) 4 3))))
     (if (string= dA dB)
         (package-menu--name-predicate A B)
       (string< dA dB))))
 
 (defun package-menu--name-predicate (A B)
+  "Predicate to sort \"*Packages*\" buffer by the name column.
+This is used for `tabulated-list-format' in `package-menu-mode'."
   (string< (symbol-name (package-desc-name (car A)))
            (symbol-name (package-desc-name (car B)))))
 
 (defun package-menu--archive-predicate (A B)
-  (string< (or (package-desc-archive (car A)) "")
-           (or (package-desc-archive (car B)) "")))
+  "Predicate to sort \"*Packages*\" buffer by the archive column.
+This is used for `tabulated-list-format' in `package-menu-mode'."
+  (let ((a (or (package-desc-archive (car A)) ""))
+        (b (or (package-desc-archive (car B)) "")))
+    (if (string= a b)
+        (package-menu--name-predicate A B)
+      (string< a b))))
 
 (defun package-menu--populate-new-package-list ()
   "Decide which packages are new in `package-archives-contents'.
