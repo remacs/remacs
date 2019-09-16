@@ -165,6 +165,13 @@ attempt."
   :type '(choice regexp (const :tag "None" nil))
   :version "27.1")
 
+(defcustom smtpmail-retries 10
+  "The number of times smtpmail will retry sending when getting transient errors.
+These are errors with a code of 4xx from the SMTP server, which
+mean \"try again\"."
+  :type 'integer
+  :version "27.1")
+
 ;; End of customizable variables.
 
 
@@ -823,7 +830,7 @@ Returns an error if the server cannot be contacted."
 		)
                ((and (numberp (car result))
                      (<= 400 (car result) 499)
-                     (< send-attempts 10))
+                     (< send-attempts smtpmail-retries))
                 (message "Got transient error code %s when sending; retrying attempt %d..."
                          (car result) send-attempts)
                 ;; Retry on getting a transient 4xx code; see
