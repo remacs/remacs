@@ -122,7 +122,7 @@ on a console which has no window system but does have a mouse."
                    (when (eq (car-safe binding) 'menu-item)
                      (when (> (+ column (length (nth 1 binding))) x-position)
                        ;; TODO: handle close
-                       (unless (get-text-property (- x-position column) 'close (nth 1 binding))
+                       (unless (get-text-property (- x-position column) 'close-tab (nth 1 binding))
                          (call-interactively (nth 2 binding)))
                        (throw 'done t))
                      (setq column (+ column (length (nth 1 binding))))))
@@ -180,7 +180,7 @@ Its main job is to show tabs in the tab bar."
                                        data-directory)
                                :margin (2 . 0)
                                :ascent center)
-              'close t
+              'close-tab t
               :help "Click to close tab")
   "Button for closing the clicked tab.")
 

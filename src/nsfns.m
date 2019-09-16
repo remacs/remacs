@@ -632,32 +632,7 @@ ns_set_tab_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     nlines = 0;
 
   if (nlines)
-    {
-      FRAME_EXTERNAL_TAB_BAR (f) = 1;
-      update_frame_tab_bar (f);
-    }
-  else
-    {
-      if (FRAME_EXTERNAL_TAB_BAR (f))
-        {
-          free_frame_tab_bar (f);
-          FRAME_EXTERNAL_TAB_BAR (f) = 0;
-
-          {
-            EmacsView *view = FRAME_NS_VIEW (f);
-            int fs_state = [view fullscreenState];
-
-            if (fs_state == FULLSCREEN_MAXIMIZED)
-              {
-                [view setFSValue:FULLSCREEN_WIDTH];
-              }
-            else if (fs_state == FULLSCREEN_HEIGHT)
-              {
-                [view setFSValue:FULLSCREEN_NONE];
-              }
-          }
-       }
-    }
+    update_frame_tab_bar (f);
 
   {
     int inhibit
@@ -1371,7 +1346,7 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
                          RES_TYPE_STRING);
 
   parms = get_geometry_from_preferences (dpyinfo, parms);
-  window_prompting = gui_figure_window_size (f, parms, true,
+  window_prompting = gui_figure_window_size (f, parms, true, true,
                                              &x_width, &x_height);
 
   tem = gui_display_get_arg (dpyinfo, parms, Qunsplittable, 0, 0,

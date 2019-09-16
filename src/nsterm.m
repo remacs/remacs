@@ -1089,7 +1089,7 @@ ns_update_begin (struct frame *f)
   if ([view isFullscreen] && [view fsIsNative])
   {
     // Fix reappearing tool bar or tab bar in fullscreen for Mac OS X 10.7
-    BOOL tarbar_visible = FRAME_EXTERNAL_TAB_BAR (f) ? YES : NO;
+    BOOL tarbar_visible = NO;
     NSToolbar *tabbar = [FRAME_NS_VIEW (f) tabbar];
     if (! tarbar_visible != ! [tabbar isVisible])
       [tabbar setVisible: tarbar_visible];
@@ -7328,8 +7328,7 @@ not_in_argv (NSString *arg)
 
   /* Don't set frame garbaged until tab bar is up to date?
      This avoids an extra clear and redraw (flicker) at frame creation.  */
-  if (FRAME_EXTERNAL_TAB_BAR (f)) wait_for_tab_bar = YES;
-  else wait_for_tab_bar = NO;
+  wait_for_tab_bar = NO;
 
 
 #ifdef NS_IMPL_COCOA
@@ -7756,7 +7755,7 @@ not_in_argv (NSString *arg)
       willUseFullScreenPresentationOptions:
   (NSApplicationPresentationOptions)proposedOptions
 {
-  return proposedOptions|NSApplicationPresentationAutoHideTabbar|NSApplicationPresentationAutoHideToolbar;
+  return proposedOptions|NSApplicationPresentationAutoHideToolbar;
 }
 #endif
 
@@ -7788,7 +7787,7 @@ not_in_argv (NSString *arg)
     }
   else
     {
-      BOOL tarbar_visible = FRAME_EXTERNAL_TAB_BAR (emacsframe) ? YES : NO;
+      BOOL tarbar_visible = NO;
       BOOL toolbar_visible = FRAME_EXTERNAL_TOOL_BAR (emacsframe) ? YES : NO;
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 \
   && MAC_OS_X_VERSION_MIN_REQUIRED <= 1070
@@ -7850,15 +7849,7 @@ not_in_argv (NSString *arg)
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
   [self updateCollectionBehavior];
 #endif
-  if (FRAME_EXTERNAL_TAB_BAR (emacsframe))
-    {
-      [tabbar setVisible:YES];
-      update_frame_tab_bar (emacsframe);
-      [self updateFrameSize:YES];
-      [[self window] display];
-    }
-  else
-    [tabbar setVisible:NO];
+  [tabbar setVisible:NO];
 
   if (FRAME_EXTERNAL_TOOL_BAR (emacsframe))
     {

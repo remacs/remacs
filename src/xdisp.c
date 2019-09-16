@@ -13178,7 +13178,7 @@ tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx, bool *cl
   *prop_idx = XFIXNUM (prop);
 
   *close_p = !NILP (Fget_text_property (make_fixnum (charpos),
-                                        Qclose,
+                                        Qclose_tab,
                                         f->current_tab_bar_string));
 
   return true;
@@ -13348,6 +13348,7 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
 
   clear_mouse_face (hlinfo);
 
+#ifndef HAVE_NS
   /* Mouse is down, but on different tab-bar item?  */
   mouse_down_p = (gui_mouse_grabbed (dpyinfo)
 		  && f == dpyinfo->last_mouse_frame);
@@ -13356,6 +13357,9 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
     return;
 
   draw = mouse_down_p ? DRAW_IMAGE_SUNKEN : DRAW_IMAGE_RAISED;
+#else
+  draw = DRAW_IMAGE_RAISED;
+#endif /* HAVE_NS */
 
   /* If tab-bar item is not enabled, don't highlight it.  */
   enabled_p = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_ENABLED_P);
@@ -34343,6 +34347,7 @@ window, nil if it's okay to leave the cursor partially-visible.  */);
   Vmake_cursor_line_fully_visible = Qt;
   DEFSYM (Qmake_cursor_line_fully_visible, "make-cursor-line-fully-visible");
 
+  DEFSYM (Qclose_tab, "close-tab");
   DEFVAR_LISP ("tab-bar-border", Vtab_bar_border,
     doc: /* Border below tab-bar in pixels.
 If an integer, use it as the height of the border.
