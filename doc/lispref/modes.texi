@@ -1201,6 +1201,11 @@ width of which is governed by @code{tabulated-list-padding}.
 function advances point by one line.
 @end defun
 
+@defun tabulated-list-clear-all-tags
+This function clears all tags from the padding area in the current
+buffer.
+@end defun
+
 @defun tabulated-list-set-col col desc &optional change-entry-data
 This function changes the tabulated list entry at point, setting
 @var{col} to @var{desc}.  @var{col} is the column number to change, or

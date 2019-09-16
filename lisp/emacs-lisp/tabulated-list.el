@@ -192,6 +192,19 @@ If ADVANCE is non-nil, move forward by one line afterwards."
   (if advance
       (forward-line)))
 
+(defun tabulated-list-clear-all-tags ()
+  "Clear all tags from the padding area in the current buffer."
+  (unless (> tabulated-list-padding 0)
+    (error "There can be no tags in current buffer"))
+  (save-excursion
+    (goto-char (point-min))
+    (let ((inhibit-read-only t)
+          ;; Match non-space in the first n characters.
+          (re (format "^ \\{0,%d\\}[^ ]" (1- tabulated-list-padding)))
+          (empty (make-string tabulated-list-padding ? )))
+      (while (re-search-forward re nil 'noerror)
+        (tabulated-list-put-tag empty)))))
+
 (defvar tabulated-list-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map (make-composed-keymap

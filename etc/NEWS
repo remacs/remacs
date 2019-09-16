@@ -1766,6 +1766,11 @@ near the current column in Tabulated Lists (see variables
 list mode: 'w' (which widens the current column) and 'c' which makes
 the current column contract.
 
++++
+*** New function 'tabulated-list-clear-all-tags'.
+This function clears all tags from the padding area in the current
+buffer.  Tags are typically added by calling 'tabulated-list-put-tag'.
+
 ** Text mode
 
 +++
