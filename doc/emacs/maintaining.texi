@@ -1284,7 +1284,7 @@ listed files and directories.
 @item G
 Add the file under point to the list of files that the VC should
 ignore (@code{vc-dir-ignore}).  For instance, if the VC is Git, it
-will append this file to the @samp{.gitignore} file.  If given a
+will append this file to the @file{.gitignore} file.  If given a
 prefix, do this with all the marked files.
 
 @item q
