@@ -5081,7 +5081,7 @@ make_digest_string (Lisp_Object digest, int digest_size)
 
 DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
        Ssecure_hash_algorithms, 0, 0, 0,
-       doc: /* Return a list of all the supported `secure_hash' algorithms. */)
+       doc: /* Return a list of all the supported `secure-hash' algorithms. */)
   (void)
 {
   return list (Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512);
@@ -5388,7 +5388,12 @@ anything security-related.  See `secure-hash' for alternatives.  */)
 DEFUN ("secure-hash", Fsecure_hash, Ssecure_hash, 2, 5, 0,
        doc: /* Return the secure hash of OBJECT, a buffer or string.
 ALGORITHM is a symbol specifying the hash to use:
-md5, sha1, sha224, sha256, sha384 or sha512.
+- md5    corresponds to MD5
+- sha1   corresponds to SHA-1
+- sha224 corresponds to SHA-2 (SHA-224)
+- sha256 corresponds to SHA-2 (SHA-256)
+- sha384 corresponds to SHA-2 (SHA-384)
+- sha512 corresponds to SHA-2 (SHA-512)
 
 The two optional arguments START and END are positions specifying for
 which part of OBJECT to compute the hash.  If nil or omitted, uses the

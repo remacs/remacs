@@ -858,4 +858,22 @@
        (puthash k k h)))
     (should (= 100 (hash-table-count h)))))
 
+(ert-deftest test-secure-hash ()
+  (should (equal (secure-hash 'md5    "foobar")
+                 "3858f62230ac3c915f300c664312c63f"))
+  (should (equal (secure-hash 'sha1   "foobar")
+                 "8843d7f92416211de9ebb963ff4ce28125932878"))
+  (should (equal (secure-hash 'sha224 "foobar")
+                 "de76c3e567fca9d246f5f8d3b2e704a38c3c5e258988ab525f941db8"))
+  (should (equal (secure-hash 'sha256 "foobar")
+                 (concat "c3ab8ff13720e8ad9047dd39466b3c89"
+                         "74e592c2fa383d4a3960714caef0c4f2")))
+  (should (equal (secure-hash 'sha384 "foobar")
+                 (concat "3c9c30d9f665e74d515c842960d4a451c83a0125fd3de739"
+                         "2d7b37231af10c72ea58aedfcdf89a5765bf902af93ecf06")))
+  (should (equal (secure-hash 'sha512 "foobar")
+                 (concat "0a50261ebd1a390fed2bf326f2673c145582a6342d5"
+                         "23204973d0219337f81616a8069b012587cf5635f69"
+                         "25f1b56c360230c19b273500ee013e030601bf2425"))))
+
 (provide 'fns-tests)
