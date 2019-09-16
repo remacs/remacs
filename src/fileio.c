@@ -3612,7 +3612,7 @@ file_offset (Lisp_Object val)
 static struct timespec
 time_error_value (int errnum)
 {
-  int ns = (errnum == ENOENT || errnum == EACCES || errnum == ENOTDIR
+  int ns = (errnum == ENOENT || errnum == ENOTDIR
 	    ? NONEXISTENT_MODTIME_NSECS
 	    : UNKNOWN_MODTIME_NSECS);
   return make_timespec (0, ns);
