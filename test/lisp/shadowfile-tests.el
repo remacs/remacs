@@ -64,7 +64,7 @@
   "Temporary directory for Tramp tests.")
 
 (setq password-cache-expiry nil
-      shadow-debug t
+      shadow-debug nil
       tramp-verbose 0
       tramp-message-show-message nil
       ;; On macOS, `temporary-file-directory' is a symlinked directory.
