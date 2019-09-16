@@ -134,6 +134,7 @@ static dev_t timestamp_file_system;
    is added here.  */
 static Lisp_Object Vwrite_region_annotation_buffers;
 
+static Lisp_Object file_name_directory (Lisp_Object);
 static bool a_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     Lisp_Object *, struct coding_system *);
 static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
@@ -356,6 +357,15 @@ Given a Unix syntax file name, returns a string ending in slash.  */)
       return STRINGP (handled_name) ? handled_name : Qnil;
     }
 
+  return file_name_directory (filename);
+}
+
+/* Return the directory component of FILENAME, or nil if FILENAME does
+   not contain a directory component.  */
+
+static Lisp_Object
+file_name_directory (Lisp_Object filename)
+{
   char *beg = SSDATA (filename);
   char const *p = beg + SBYTES (filename);
 
@@ -2369,41 +2379,48 @@ internal_delete_file (Lisp_Object filename)
   return NILP (tem);
 }
 
-/* Filesystems are case-sensitive on all supported systems except
-   MS-Windows, MS-DOS, Cygwin, and Mac OS X.  They are always
-   case-insensitive on the first two, but they may or may not be
-   case-insensitive on Cygwin and OS X.  The following function
-   attempts to provide a runtime test on those two systems.  If the
-   test is not conclusive, we assume case-insensitivity on Cygwin and
-   case-sensitivity on Mac OS X.
+/* Return -1 if FILE is a case-insensitive file name, 0 if not,
+   and a positive errno value if the result cannot be determined.  */
 
-   FIXME: Mounted filesystems on Posix hosts, like Samba shares or
-   NFS-mounted Windows volumes, might be case-insensitive.  Can we
-   detect this?  */
-
-static bool
-file_name_case_insensitive_p (const char *filename)
+static int
+file_name_case_insensitive_err (Lisp_Object file)
 {
-  /* Use pathconf with _PC_CASE_INSENSITIVE or _PC_CASE_SENSITIVE if
-     those flags are available.  As of this writing (2017-05-20),
+  /* Filesystems are case-sensitive on all supported systems except
+     MS-Windows, MS-DOS, Cygwin, and macOS.  They are always
+     case-insensitive on the first two, but they may or may not be
+     case-insensitive on Cygwin and macOS so do a runtime test on
+     those two systems.  If the test is not conclusive, assume
+     case-insensitivity on Cygwin and case-sensitivity on macOS.
+
+     FIXME: Mounted filesystems on Posix hosts, like Samba shares or
+     NFS-mounted Windows volumes, might be case-insensitive.  Can we
+     detect this?
+
+     Use pathconf with _PC_CASE_INSENSITIVE or _PC_CASE_SENSITIVE if
+     those flags are available.  As of this writing (2019-09-15),
      Cygwin is the only platform known to support the former (starting
      with Cygwin-2.6.1), and macOS is the only platform known to
      support the latter.  */
 
-#ifdef _PC_CASE_INSENSITIVE
+#if defined _PC_CASE_INSENSITIVE || defined _PC_CASE_SENSITIVE
+  char *filename = SSDATA (ENCODE_FILE (file));
+# ifdef _PC_CASE_INSENSITIVE
   long int res = pathconf (filename, _PC_CASE_INSENSITIVE);
   if (res >= 0)
-    return res > 0;
-#elif defined _PC_CASE_SENSITIVE
+    return - (res > 0);
+# else
   long int res = pathconf (filename, _PC_CASE_SENSITIVE);
   if (res >= 0)
-    return res == 0;
+    return - (res == 0);
+# endif
+  if (errno != EINVAL)
+    return errno;
 #endif
 
 #if defined CYGWIN || defined DOS_NT
-  return true;
+  return -1;
 #else
-  return false;
+  return 0;
 #endif
 }
 
@@ -2426,21 +2443,18 @@ The arg must be a string.  */)
 
   /* If the file doesn't exist, move up the filesystem tree until we
      reach an existing directory or the root.  */
-  if (NILP (Ffile_exists_p (filename)))
+  while (true)
     {
-      filename = Ffile_name_directory (filename);
-      while (NILP (Ffile_exists_p (filename)))
-	{
-	  Lisp_Object newname = expand_and_dir_to_file (filename);
-	  /* Avoid infinite loop if the root is reported as non-existing
-	     (impossible?).  */
-	  if (!NILP (Fstring_equal (newname, filename)))
-	    break;
-	  filename = newname;
-	}
+      int err = file_name_case_insensitive_err (filename);
+      if (! (err == ENOENT || err == ENOTDIR))
+	return err < 0 ? Qt : Qnil;
+      Lisp_Object parent = file_name_directory (filename);
+      /* Avoid infinite loop if the root is reported as non-existing
+	 (impossible?).  */
+      if (!NILP (Fstring_equal (parent, filename)))
+	return Qnil;
+      filename = parent;
     }
-  filename = ENCODE_FILE (filename);
-  return file_name_case_insensitive_p (SSDATA (filename)) ? Qt : Qnil;
 }
 
 DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
@@ -2790,7 +2804,7 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
   if (errno != ENOENT)
     return Qnil;
 
-  dir = Ffile_name_directory (absname);
+  dir = file_name_directory (absname);
   eassert (!NILP (dir));
 #ifdef MSDOS
   dir = Fdirectory_file_name (dir);
@@ -5822,7 +5836,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
       if (!NILP (Vrun_hooks))
 	{
 	  Lisp_Object dir;
-	  dir = Ffile_name_directory (listfile);
+	  dir = file_name_directory (listfile);
 	  if (NILP (Ffile_directory_p (dir)))
 	    internal_condition_case_1 (do_auto_save_make_dir,
 				       dir, Qt,
