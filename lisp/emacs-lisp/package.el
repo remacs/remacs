@@ -214,7 +214,10 @@ Each element has the form (ID . LOCATION).
   (Other types of URL are currently not supported.)
 
 Only add locations that you trust, since fetching and installing
-a package can run arbitrary code."
+a package can run arbitrary code.
+
+HTTPS URLs should be used where possible, as they offer superior
+security."
   :type '(alist :key-type (string :tag "Archive name")
                 :value-type (string :tag "URL or directory name"))
   :risky t
