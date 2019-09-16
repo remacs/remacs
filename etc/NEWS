@@ -1903,7 +1903,7 @@ and 'gravatar-force-default'.
 
 ** ada-mode
 
-*** The built-in ada-mode is now deleted.  The Gnu ELPA package is a
+*** The built-in ada-mode is now deleted.  The GNU ELPA package is a
 good replacement, even in very large source files.
 
 ** xref
