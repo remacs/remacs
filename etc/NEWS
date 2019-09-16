@@ -196,10 +196,6 @@ the new version of the file again.)
 
 ** emacsclient
 
-*** emacsclient no longer passes '--eval' arguments to an alternate editor.
-Previously, '--eval' arguments were passed as file names to any
-alternate editor started by '--alternate-editor'.
-
 +++
 *** emacsclient now supports an 'EMACS_SOCKET_NAME' environment variable.
 The command-line argument '--socket-name' overrides it.
