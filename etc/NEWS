@@ -1018,6 +1018,9 @@ only one hit.  This can be altered by changing
 *** Xref buffers support refreshing the search results.
 A new command 'xref-revert-buffer' is bound to 'g'.
 
+---
+*** Imenu support has been added to 'xref--xref-buffer-mode'.
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
@@ -1912,11 +1915,6 @@ and 'gravatar-force-default'.
 *** The built-in ada-mode is now deleted.  The GNU ELPA package is a
 good replacement, even in very large source files.
 
-** xref
-
----
-*** Imenu support has been added to 'xref--xref-buffer-mode'.
-
 
 * New Modes and Packages in Emacs 27.1
 
@@ -1952,6 +1950,7 @@ long lines will (subject to configuration) cause the user's preferred
 major mode is replaced by 'so-long-mode').  In extreme cases this can
 prevent delays of several minutes, and make Emacs responsive almost
 immediately.  Type 'M-x so-long-commentary' for full documentation.
+
 
 * Incompatible Lisp Changes in Emacs 27.1
 
