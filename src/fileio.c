@@ -6081,16 +6081,18 @@ effect except for flushing STREAM's data.  */)
 
 #ifndef DOS_NT
 
-/* Yield a Lisp float as close as possible to BLOCKSIZE * BLOCKS, with
-   the result negated if NEGATE.  */
+/* Yield a Lisp number equal to BLOCKSIZE * BLOCKS, with the result
+   negated if NEGATE.  */
 static Lisp_Object
 blocks_to_bytes (uintmax_t blocksize, uintmax_t blocks, bool negate)
 {
-  /* On typical platforms the following code is accurate to 53 bits,
-     which is close enough.  BLOCKSIZE is invariably a power of 2, so
-     converting it to double does not lose information.  */
-  double bs = blocksize;
-  return make_float (negate ? -bs * -blocks : bs * blocks);
+  intmax_t n;
+  if (!INT_MULTIPLY_WRAPV (blocksize, blocks, &n))
+    return make_int (negate ? -n : n);
+  Lisp_Object bs = make_uint (blocksize);
+  if (negate)
+    bs = CALLN (Fminus, bs);
+  return CALLN (Ftimes, bs, make_uint (blocks));
 }
 
 DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
