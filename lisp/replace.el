@@ -2597,7 +2597,7 @@ It must return a string."
                                   search-string (nth (if replaced 4 3) elt)
                                   last-replacement (nth (if replaced 3 4) elt)
                                   search-string-replaced search-string
-                                  last-replacement-replaced last-replacement
+                                  next-replacement-replaced last-replacement
                                   last-was-act-and-show nil)
 
                                  (when (and (= stack-idx stack-len)
