@@ -1165,7 +1165,7 @@ defining new 'cl-defmethod' of 'smtpmail-try-auth-method'.
 attempt when communicating with the SMTP server(s), the
 'smtpmail-servers-requiring-authorization' variable can be used.
 
----
++++
 *** smtpmail will now try resending mail when getting a transient 4xx
 error message from the SMTP server.  The new 'smtpmail-retries'
 variable says how many times to retry.
