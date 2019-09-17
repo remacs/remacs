@@ -2704,6 +2704,14 @@ Experience shows that compacting font caches causes more trouble on
 MS-Windows than it helps.
 
 +++
+** Font lookup on MS-Windows was improved to support rare scripts.
+To activate the improvement, run the new function
+'w32-find-non-USB-fonts' once per Emacs session, or assign to the new
+variable 'w32-non-USB-fonts' the list of scripts and the corresponding
+fonts.  See the documentation of this function and variable in the
+Emacs manual for more details.
+
++++
 ** On NS the behaviour of drag and drop can now be modified by use of
 modifier keys in line with Apples guidelines.  This makes the drag and
 drop behaviour more consistent, as previously the sending application
