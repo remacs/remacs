@@ -241,7 +241,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	  && fast_string_match_internal (match, name, case_table) < 0)
 	continue;
 
-      Lisp_Object fileattrs;
+      Lisp_Object fileattrs UNINIT;
       if (attrs)
 	{
 	  fileattrs = file_attributes (fd, dp->d_name, directory, name,
