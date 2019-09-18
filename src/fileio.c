@@ -2961,7 +2961,10 @@ file_directory_p (Lisp_Object file)
 {
 #ifdef DOS_NT
   /* This is cheaper than 'stat'.  */
-  return faccessat (AT_FDCWD, SSDATA (file), D_OK, AT_EACCESS) == 0;
+  bool retval = faccessat (AT_FDCWD, SSDATA (file), D_OK, AT_EACCESS) == 0;
+  if (!retval && errno == EACCES)
+    errno = ENOTDIR;	/* like the non-DOS_NT branch below does */
+  return retval;
 #else
 # ifdef O_PATH
   /* Use O_PATH if available, as it avoids races and EOVERFLOW issues.  */
