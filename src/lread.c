@@ -1343,6 +1343,7 @@ Return t if the file exists and loads successfully.  */)
           /* openp already checked for newness, no point doing it again.
              FIXME would be nice to get a message when openp
              ignores suffix order due to load_prefer_newer.  */
+	  Lisp_Object notfound = found;
           if (!load_prefer_newer && is_elc)
             {
               result = stat (SSDATA (efound), &s1);
@@ -1354,11 +1355,11 @@ Return t if the file exists and loads successfully.  */)
 		  err = errno;
                   SSET (efound, SBYTES (efound) - 1, 'c');
 		  if (result != 0)
-		    found = Fsubstring (found, make_fixnum (0),
-					make_fixnum (-1));
+		    notfound = Fsubstring (found, make_fixnum (0),
+					   make_fixnum (-1));
                 }
 	      if (result != 0)
-		file_test_errno (found, err);
+		file_test_errno (notfound, err);
 	      else if (timespec_cmp (get_stat_mtime (&s1),
 				     get_stat_mtime (&s2))
 		       < 0)
