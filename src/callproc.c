@@ -1560,20 +1560,19 @@ init_callproc (void)
      source directory.  */
   if (data_dir == 0)
     {
-      Lisp_Object tem, tem1, srcdir;
+      Lisp_Object tem, srcdir;
       Lisp_Object lispdir = Fcar (decode_env_path (0, PATH_DUMPLOADSEARCH, 0));
 
       srcdir = Fexpand_file_name (build_string ("../src/"), lispdir);
 
       tem = Fexpand_file_name (build_string ("NEWS"), Vdata_directory);
-      tem1 = Ffile_exists_p (tem);
-      if (!NILP (Fequal (srcdir, Vinvocation_directory)) || NILP (tem1))
+      if (!NILP (Fequal (srcdir, Vinvocation_directory))
+	  || !file_access_p (SSDATA (tem), F_OK))
 	{
 	  Lisp_Object newdir;
 	  newdir = Fexpand_file_name (build_string ("../etc/"), lispdir);
 	  tem = Fexpand_file_name (build_string ("NEWS"), newdir);
-	  tem1 = Ffile_exists_p (tem);
-	  if (!NILP (tem1))
+	  if (file_access_p (SSDATA (tem), F_OK))
 	    Vdata_directory = newdir;
 	}
     }
