@@ -2009,7 +2009,7 @@ longer defaults to 'buffer-file-name'.
 ** File metadata primitives now signal an error if I/O, access, or
 other serious errors prevent them from determining the result.
 Formerly, these functions often (though not always) returned nil.
-For example, if the directory /etc/firewalld is not searchable,
+For example, if searching /etc/firewalld results in an I/O error,
 (file-symlink-p "/etc/firewalld/firewalld.conf") now signals an error
 instead of returning nil, because file-symlink-p cannot determine
 whether a symbolic link exists there.  These functions still behave as

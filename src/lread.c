@@ -1358,7 +1358,7 @@ Return t if the file exists and loads successfully.  */)
 					make_fixnum (-1));
                 }
 	      if (result != 0)
-		file_attribute_errno (found, err);
+		file_test_errno (found, err);
 	      else if (timespec_cmp (get_stat_mtime (&s1),
 				     get_stat_mtime (&s2))
 		       < 0)

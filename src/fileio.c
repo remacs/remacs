@@ -265,7 +265,7 @@ file_attribute_errno (Lisp_Object file, int err)
 enum { PICKY_EACCES = false };
 #endif
 
-static Lisp_Object
+Lisp_Object
 file_test_errno (Lisp_Object file, int err)
 {
   if (!PICKY_EACCES && err == EACCES)
