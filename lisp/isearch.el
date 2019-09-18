@@ -1370,7 +1370,6 @@ NOPUSH is t and EDIT is t."
   (remove-hook 'post-command-hook 'isearch-post-command-hook)
   (remove-hook 'mouse-leave-buffer-hook 'isearch-mouse-leave-buffer)
   (remove-hook 'kbd-macro-termination-hook 'isearch-done)
-  (setq isearch-lazy-highlight-start nil)
   (when (buffer-live-p isearch--current-buffer)
     (with-current-buffer isearch--current-buffer
       (setq isearch--current-buffer nil)
@@ -3970,8 +3969,9 @@ Attempt to do the search exactly the way the pending Isearch would."
 		  (if isearch-lazy-highlight-forward
 		      (setq isearch-lazy-highlight-end (point-min))
 		    (setq isearch-lazy-highlight-start (point-max)))
-		  (run-at-time lazy-highlight-interval nil
-			       'isearch-lazy-highlight-buffer-update))
+		  (setq isearch-lazy-highlight-timer
+			(run-at-time lazy-highlight-interval nil
+				     'isearch-lazy-highlight-buffer-update)))
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
 				 'isearch-lazy-highlight-update)))))))))
