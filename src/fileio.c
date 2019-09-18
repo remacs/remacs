@@ -253,9 +253,23 @@ file_attribute_errno (Lisp_Object file, int err)
   return file_metadata_errno ("Getting attributes", file, err);
 }
 
+/* In theory, EACCES errors for predicates like file-readable-p should
+   be checked further because they may be problems with an ancestor
+   directory instead of with the file itself, which means that we
+   don't have reliable info about the requested file.  In practice,
+   though, such errors are common enough that signaling them can be
+   annoying even if the errors are real (e.g., Bug#37445).  So return
+   nil for EACCES unless compiling with -DPICKY_EACCES, which is off
+   by default.  */
+#ifndef PICKY_EACCES
+enum { PICKY_EACCES = false };
+#endif
+
 static Lisp_Object
 file_test_errno (Lisp_Object file, int err)
 {
+  if (!PICKY_EACCES && err == EACCES)
+    return Qnil;
   return file_metadata_errno ("Testing file", file, err);
 }
 
@@ -2745,7 +2759,7 @@ check_file_access (Lisp_Object file, Lisp_Object operation, int amode)
     return Qt;
   int err = errno;
   if (err == EROFS || err == ETXTBSY
-      || (err == EACCES && amode != F_OK
+      || (PICKY_EACCES && err == EACCES && amode != F_OK
 	  && file_access_p (encoded_file, F_OK)))
     {
       errno = err;
