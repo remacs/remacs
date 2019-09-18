@@ -525,7 +525,9 @@ based on the Tramp and Emacs versions, and should not be set here."
   :type '(repeat string))
 
 ;;;###tramp-autoload
-(defcustom tramp-sh-extra-args '(("/bash\\'" . "-norc -noprofile"))
+(defcustom tramp-sh-extra-args
+  '(("/bash\\'" . "-norc -noprofile")
+    ("/zsh\\'" . "-f +Z"))
   "Alist specifying extra arguments to pass to the remote shell.
 Entries are (REGEXP . ARGS) where REGEXP is a regular expression
 matching the shell file name and ARGS is a string specifying the
