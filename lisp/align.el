@@ -1216,9 +1216,12 @@ have been aligned.  No changes will be made to the buffer."
 	  (when area
 	    (if func
 		(funcall func
-			 (marker-position (car area))
-			 (marker-position (cdr area))
-			 change)
+                         (marker-position (car area))
+                         (marker-position (if (and justify
+                                                   (consp (cdr area)))
+                                              (cadr area)
+                                            (cdr area)))
+                         change)
 	      (if (not (and justify
 			    (consp (cdr area))))
 		  (goto-char (cdr area))
