@@ -859,24 +859,23 @@ by commands like \"K v\" which operate on individual MIME parts."
     (if (string-match ".*/" name) (setq name (substring name (match-end 0))))
     ;; These vars are passed by dynamic-scoping to
     ;; mh-mime-button-line-format-alist via gnus-eval-format.
-    (with-suppressed-warnings ((lexical index description dots))
-      (mh-dlet* ((index index)
-                 (description (mail-decode-encoded-word-string
-                               (or (mm-handle-description handle) "")))
-                 (dots (if (or displayed (mm-handle-displayed-p handle))
-                           "   " "..."))
-                 (long-type (concat type (and (not (equal name ""))
-                                              (concat "; " name)))))
-                (unless (equal description "")
-                  (setq long-type (concat " --- " long-type)))
-                (unless (bolp) (insert "\n"))
-                (setq begin (point))
-                (gnus-eval-format
-                 mh-mime-button-line-format mh-mime-button-line-format-alist
-                 `(,@(mh-gnus-local-map-property mh-mime-button-map)
-                   mh-callback mh-mm-display-part
-                   mh-part ,index
-                   mh-data ,handle))))
+    (mh-dlet* ((index index)
+               (description (mail-decode-encoded-word-string
+                             (or (mm-handle-description handle) "")))
+               (dots (if (or displayed (mm-handle-displayed-p handle))
+                         "   " "..."))
+               (long-type (concat type (and (not (equal name ""))
+                                            (concat "; " name)))))
+      (unless (equal description "")
+        (setq long-type (concat " --- " long-type)))
+      (unless (bolp) (insert "\n"))
+      (setq begin (point))
+      (gnus-eval-format
+       mh-mime-button-line-format mh-mime-button-line-format-alist
+       `(,@(mh-gnus-local-map-property mh-mime-button-map)
+         mh-callback mh-mm-display-part
+         mh-part ,index
+         mh-data ,handle)))
     (setq end (point))
     (widget-convert-button
      'link begin end
@@ -901,45 +900,44 @@ by commands like \"K v\" which operate on individual MIME parts."
          begin end face)
     ;; These vars are passed by dynamic-scoping to
     ;; mh-mime-security-button-line-format-alist via gnus-eval-format.
-    (with-suppressed-warnings ((lexical type info details))
-      (mh-dlet* ((type (concat crypto-type
-                               (if (equal (car handle) "multipart/signed")
-                                   " Signed" " Encrypted")
-                               " Part"))
-                 (info (or (mh-mm-handle-multipart-ctl-parameter
-                            handle 'gnus-info)
-                           "Undecided"))
-                 (details (mh-mm-handle-multipart-ctl-parameter
-                           handle 'gnus-details))
-                 pressed-details)
-                (setq details (if details (concat "\n" details) ""))
-                (setq pressed-details (if mh-mime-security-button-pressed details ""))
-                (setq face (mh-mime-security-button-face info))
-                (unless (bolp) (insert "\n"))
-                (setq begin (point))
-                (gnus-eval-format
-                 mh-mime-security-button-line-format
-                 mh-mime-security-button-line-format-alist
-                 `(,@(mh-gnus-local-map-property mh-mime-security-button-map)
-                   mh-button-pressed ,mh-mime-security-button-pressed
-                   mh-callback mh-mime-security-press-button
-                   mh-line-format ,mh-mime-security-button-line-format
-                   mh-data ,handle))
-                (setq end (point))
-                (widget-convert-button 'link begin end
-                                       :mime-handle handle
-                                       :action 'mh-widget-press-button
-                                       :button-keymap mh-mime-security-button-map
-                                       :button-face face
-                                       :help-echo "Mouse-2 click or press RET (in show buffer) to see security details.")
-                (dolist (ov (mh-funcall-if-exists overlays-in begin end))
-                  (mh-funcall-if-exists overlay-put ov 'evaporate t))
-                (when (equal info "Failed")
-                  (let* ((type (if (equal (car handle) "multipart/signed")
-                                   "verification" "decryption"))
-                         (warning (if (equal type "decryption")
-                                      "(passphrase may be incorrect)" "")))
-                    (message "%s %s failed %s" crypto-type type warning)))))))
+    (mh-dlet* ((type (concat crypto-type
+                             (if (equal (car handle) "multipart/signed")
+                                 " Signed" " Encrypted")
+                             " Part"))
+               (info (or (mh-mm-handle-multipart-ctl-parameter
+                          handle 'gnus-info)
+                         "Undecided"))
+               (details (mh-mm-handle-multipart-ctl-parameter
+                         handle 'gnus-details))
+               pressed-details)
+      (setq details (if details (concat "\n" details) ""))
+      (setq pressed-details (if mh-mime-security-button-pressed details ""))
+      (setq face (mh-mime-security-button-face info))
+      (unless (bolp) (insert "\n"))
+      (setq begin (point))
+      (gnus-eval-format
+       mh-mime-security-button-line-format
+       mh-mime-security-button-line-format-alist
+       `(,@(mh-gnus-local-map-property mh-mime-security-button-map)
+         mh-button-pressed ,mh-mime-security-button-pressed
+         mh-callback mh-mime-security-press-button
+         mh-line-format ,mh-mime-security-button-line-format
+         mh-data ,handle))
+      (setq end (point))
+      (widget-convert-button 'link begin end
+                             :mime-handle handle
+                             :action 'mh-widget-press-button
+                             :button-keymap mh-mime-security-button-map
+                             :button-face face
+                             :help-echo "Mouse-2 click or press RET (in show buffer) to see security details.")
+      (dolist (ov (mh-funcall-if-exists overlays-in begin end))
+        (mh-funcall-if-exists overlay-put ov 'evaporate t))
+      (when (equal info "Failed")
+        (let* ((type (if (equal (car handle) "multipart/signed")
+                         "verification" "decryption"))
+               (warning (if (equal type "decryption")
+                            "(passphrase may be incorrect)" "")))
+          (message "%s %s failed %s" crypto-type type warning))))))
 
 (defun mh-mime-security-button-face (info)
   "Return the button face to use for encrypted/signed mail based on INFO."
