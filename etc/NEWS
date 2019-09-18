@@ -2005,6 +2005,16 @@ file name if there is no user named "foo".
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
 
++++
+** File metadata primitives now signal an error if I/O, access, or
+other serious errors prevent them from determining the result.
+Formerly, these functions often (though not always) returned nil.
+For example, if the directory /etc/firewalld is not searchable,
+(file-symlink-p "/etc/firewalld/firewalld.conf") now signals an error
+instead of returning nil, because file-symlink-p cannot determine
+whether a symbolic link exists there.  These functions still behave as
+before if the only problem is that the file does not exist.
+
 ---
 ** The function 'eldoc-message' now accepts a single argument.
 Programs that called it with multiple arguments before should pass

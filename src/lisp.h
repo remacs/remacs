@@ -4299,7 +4299,6 @@ extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
-extern bool check_executable (char *);
 extern char *splice_dir_file (char *, char const *, char const *);
 extern bool file_name_absolute_p (const char *);
 extern char const *get_homedir (void);
@@ -4310,12 +4309,14 @@ extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 extern void close_file_unwind (int);
 extern void fclose_unwind (void *);
 extern void restore_point_unwind (Lisp_Object);
+extern bool file_access_p (char const *, int);
 extern Lisp_Object get_file_errno_data (const char *, Lisp_Object, int);
 extern AVOID report_file_errno (const char *, Lisp_Object, int);
 extern AVOID report_file_error (const char *, Lisp_Object);
 extern AVOID report_file_notify_error (const char *, Lisp_Object);
+extern Lisp_Object file_attribute_errno (Lisp_Object, int);
 extern bool internal_delete_file (Lisp_Object);
-extern Lisp_Object emacs_readlinkat (int, const char *);
+extern Lisp_Object check_emacs_readlinkat (int, Lisp_Object, char const *);
 extern bool file_directory_p (Lisp_Object);
 extern bool file_accessible_directory_p (Lisp_Object);
 extern void init_fileio (void);

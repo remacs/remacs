@@ -819,7 +819,7 @@ stat_gname (struct stat *st)
 
 DEFUN ("file-attributes", Ffile_attributes, Sfile_attributes, 1, 2, 0,
        doc: /* Return a list of attributes of file FILENAME.
-Value is nil if specified file cannot be opened.
+Value is nil if specified file does not exist.
 
 ID-FORMAT specifies the preferred format of attributes uid and gid (see
 below) - valid values are `string' and `integer'.  The latter is the
@@ -939,15 +939,14 @@ file_attributes (int fd, char const *name,
 	 information to be accurate.  */
       w32_stat_get_owner_group = 1;
 #endif
-      if (fstatat (fd, name, &s, AT_SYMLINK_NOFOLLOW) == 0)
-	err = 0;
+      err = fstatat (fd, name, &s, AT_SYMLINK_NOFOLLOW) == 0 ? 0 : errno;
 #ifdef WINDOWSNT
       w32_stat_get_owner_group = 0;
 #endif
     }
 
   if (err != 0)
-    return unbind_to (count, Qnil);
+    return unbind_to (count, file_attribute_errno (filename, err));
 
   Lisp_Object file_type;
   if (S_ISLNK (s.st_mode))
@@ -956,7 +955,7 @@ file_attributes (int fd, char const *name,
 	 symlink is replaced between the call to fstatat and the call
 	 to emacs_readlinkat.  Detect this race unless the replacement
 	 is also a symlink.  */
-      file_type = emacs_readlinkat (fd, name);
+      file_type = check_emacs_readlinkat (fd, filename, name);
       if (NILP (file_type))
 	return unbind_to (count, Qnil);
     }
