@@ -257,12 +257,16 @@ file_attribute_errno (Lisp_Object file, int err)
    be checked further because they may be problems with an ancestor
    directory instead of with the file itself, which means that we
    don't have reliable info about the requested file.  In practice,
-   though, such errors are common enough that signaling them can be
-   annoying even if the errors are real (e.g., Bug#37445).  So return
-   nil for EACCES unless compiling with -DPICKY_EACCES, which is off
-   by default.  */
+   though, DOS_NT platforms set errno to EACCES for missing files like
+   "/var/mail", so signaling EACCES errors would be a mistake there.
+   So return nil for EACCES unless PICKY_EACCES, which is false by
+   default on DOS_NT.  */
 #ifndef PICKY_EACCES
+# ifdef DOS_NT
 enum { PICKY_EACCES = false };
+# else
+enum { PICKY_EACCES = true };
+# endif
 #endif
 
 Lisp_Object
