@@ -58,9 +58,8 @@ enum property_set_type
 
 /* verify_interval_modification saves insertion hooks here
    to be run later by report_interval_modification.  */
-static Lisp_Object interval_insert_behind_hooks;
-static Lisp_Object interval_insert_in_front_hooks;
-
+Lisp_Object interval_insert_behind_hooks;
+Lisp_Object interval_insert_in_front_hooks;
 
 /* Signal a `text-read-only' error.  This function makes it easier
    to capture that error in GDB by putting a breakpoint on it.  */

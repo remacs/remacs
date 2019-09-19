@@ -1139,6 +1139,12 @@ extern struct buffer buffer_local_flags;
    that don't have such names.  */
 
 extern struct buffer buffer_local_symbols;
+
+/* verify_interval_modification saves insertion hooks here
+   to be run later by report_interval_modification.  */
+extern Lisp_Object interval_insert_behind_hooks;
+extern Lisp_Object interval_insert_in_front_hooks;
+
 
 extern void delete_all_overlays (struct buffer *);
 extern void reset_buffer (struct buffer *);

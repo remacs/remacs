@@ -2201,7 +2201,7 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   struct rvoe_arg rvoe_arg;
-  Lisp_Object tmp;
+  Lisp_Object tmp, save_insert_behind_hooks, save_insert_in_from_hooks;
 
   if (inhibit_modification_hooks)
     return;
@@ -2237,6 +2237,12 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
       return;
     }
 
+  /* Save and restore the insert-*-hooks, because other hooks like
+     after-change-functions, called below, could clobber them if they
+     manipulate text properties.  */
+  save_insert_behind_hooks = interval_insert_behind_hooks;
+  save_insert_in_from_hooks = interval_insert_in_front_hooks;
+
   if (!NILP (combine_after_change_list))
     Fcombine_after_change_execute ();
 
@@ -2258,6 +2264,9 @@ signal_after_change (ptrdiff_t charpos, ptrdiff_t lendel, ptrdiff_t lenins)
       /* There was no error: unarm the reset_on_error.  */
       rvoe_arg.errorp = 0;
     }
+
+  interval_insert_behind_hooks = save_insert_behind_hooks;
+  interval_insert_in_front_hooks = save_insert_in_from_hooks;
 
   if (buffer_has_overlays ())
     report_overlay_modification (make_fixnum (charpos),
