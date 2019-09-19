@@ -37,14 +37,12 @@
 (defcustom pcmpl-gnu-makefile-regexps
   '("\\`GNUmakefile" "\\`[Mm]akefile" "\\.ma?k\\'")
   "A list of regexps that will match Makefile names."
-  :type '(repeat regexp)
-  :group 'pcmpl-gnu)
+  :type '(repeat regexp))
 
 (defcustom pcmpl-gnu-makefile-includes t
   "If non-nil, `pcomplete/make' completes on targets in included files."
   :type 'boolean
-  :group 'pcmpl-gnu
-  :version 27.1
+  :version "27.1"
   :safe 'booleanp)
 
 ;; Functions:
@@ -166,8 +164,7 @@ Return the new list."
   "\\.t\\(ar\\(\\.\\(gz\\|bz2\\|Z\\|xz\\)\\)?\\|gz\\|a[zZ]\\|z2\\)\\'"
   "A regexp which matches any tar archive."
   :version "24.3"                       ; added xz
-  :type 'regexp
-  :group 'pcmpl-gnu)
+  :type 'regexp)
 
 ;; Only used in tar-mode buffers.
 (defvar tar-parse-info)
