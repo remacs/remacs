@@ -1007,23 +1007,27 @@ Uses `gnus-registry-marks' to find what shortcuts to install."
 ;; (defalias 'gnus-user-format-function-M 'gnus-registry-article-marks-to-chars)
 (defun gnus-registry-article-marks-to-chars (headers)
   "Show the marks for an article by the :char property."
-  (let* ((id (mail-header-message-id headers))
-         (marks (when id (gnus-registry-get-id-key id 'mark))))
-    (concat (delq nil
-		  (mapcar
-		   (lambda (m)
-		     (plist-get
-		      (cdr-safe (assoc m gnus-registry-marks))
-		      :char))
-		   marks)))))
+  (if (hash-table-p gnus-registry-db)
+      (let* ((id (mail-header-message-id headers))
+             (marks (when id (gnus-registry-get-id-key id 'mark))))
+	(concat (delq nil
+		      (mapcar
+		       (lambda (m)
+			 (plist-get
+			  (cdr-safe (assoc m gnus-registry-marks))
+			  :char))
+		       marks))))
+    ""))
 
 ;; use like this:
 ;; (defalias 'gnus-user-format-function-M 'gnus-registry-article-marks-to-names)
 (defun gnus-registry-article-marks-to-names (headers)
   "Show the marks for an article by name."
-  (let* ((id (mail-header-message-id headers))
-         (marks (when id (gnus-registry-get-id-key id 'mark))))
-    (mapconcat (lambda (mark) (symbol-name mark)) marks ",")))
+  (if (hash-table-p gnus-registry-db)
+      (let* ((id (mail-header-message-id headers))
+             (marks (when id (gnus-registry-get-id-key id 'mark))))
+	(mapconcat (lambda (mark) (symbol-name mark)) marks ","))
+    ""))
 
 (defun gnus-registry-read-mark ()
   "Read a mark name from the user with completion."
