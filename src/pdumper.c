@@ -5303,7 +5303,7 @@ enum dump_section
 
    N.B. We run very early in initialization, so we can't use lisp,
    unwinding, xmalloc, and so on.  */
-enum pdumper_load_result
+int
 pdumper_load (const char *dump_filename)
 {
   intptr_t dump_size;
@@ -5328,10 +5328,15 @@ pdumper_load (const char *dump_filename)
   /* We can load only one dump.  */
   eassert (!dump_loaded_p ());
 
-  enum pdumper_load_result err = PDUMPER_LOAD_FILE_NOT_FOUND;
+  int err;
   int dump_fd = emacs_open (dump_filename, O_RDONLY, 0);
   if (dump_fd < 0)
-    goto out;
+    {
+      err = (errno == ENOENT || errno == ENOTDIR
+	     ? PDUMPER_LOAD_FILE_NOT_FOUND
+	     : PDUMPER_LOAD_ERROR + errno);
+      goto out;
+    }
 
   err = PDUMPER_LOAD_FILE_NOT_FOUND;
   if (fstat (dump_fd, &stat) < 0)

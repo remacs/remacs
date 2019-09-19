@@ -3824,9 +3824,10 @@ extern void mark_maybe_objects (Lisp_Object const *, ptrdiff_t);
 extern void mark_stack (char const *, char const *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern void garbage_collect (void);
+extern void maybe_garbage_collect (void);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-extern intmax_t consing_until_gc;
+extern EMACS_INT consing_until_gc;
 #ifdef HAVE_PDUMPER
 extern int number_finalizers_run;
 #endif
@@ -4308,12 +4309,15 @@ extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 extern void close_file_unwind (int);
 extern void fclose_unwind (void *);
 extern void restore_point_unwind (Lisp_Object);
+extern bool file_access_p (char const *, int);
 extern Lisp_Object get_file_errno_data (const char *, Lisp_Object, int);
 extern AVOID report_file_errno (const char *, Lisp_Object, int);
 extern AVOID report_file_error (const char *, Lisp_Object);
 extern AVOID report_file_notify_error (const char *, Lisp_Object);
+extern Lisp_Object file_attribute_errno (Lisp_Object, int);
+extern Lisp_Object file_test_errno (Lisp_Object, int);
 extern bool internal_delete_file (Lisp_Object);
-extern Lisp_Object emacs_readlinkat (int, const char *);
+extern Lisp_Object check_emacs_readlinkat (int, Lisp_Object, char const *);
 extern bool file_directory_p (Lisp_Object);
 extern bool file_accessible_directory_p (Lisp_Object);
 extern void init_fileio (void);
@@ -5055,7 +5059,7 @@ INLINE void
 maybe_gc (void)
 {
   if (consing_until_gc < 0)
-    garbage_collect ();
+    maybe_garbage_collect ();
 }
 
 INLINE_HEADER_END

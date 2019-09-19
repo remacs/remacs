@@ -514,6 +514,9 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map [isearch-yank-kill]
       '(menu-item "Current kill" isearch-yank-kill
                   :help "Append current kill to search string"))
+    (define-key map [isearch-yank-until-char]
+      '(menu-item "Until char..." isearch-yank-until-char
+                  :help "Yank from point to specified character into search string"))
     (define-key map [isearch-yank-line]
       '(menu-item "Rest of line" isearch-yank-line
                   :help "Yank the rest of the current line on search string"))
@@ -705,6 +708,7 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map "\M-\C-d" 'isearch-del-char)
     (define-key map "\M-\C-y" 'isearch-yank-char)
     (define-key map    "\C-y" 'isearch-yank-kill)
+    (define-key map "\M-\C-z" 'isearch-yank-until-char)
     (define-key map "\M-s\C-e" 'isearch-yank-line)
 
     (define-key map "\M-s\M-<" 'isearch-beginning-of-buffer)
@@ -998,6 +1002,8 @@ Type \\[isearch-yank-word-or-char] to yank next word or character in buffer
 Type \\[isearch-del-char] to delete character from end of search string.
 Type \\[isearch-yank-char] to yank char from buffer onto end of search\
  string and search for it.
+Type \\[isearch-yank-until-char] to yank from point until the next instance of a
+ specified character onto end of search string and search for it.
 Type \\[isearch-yank-line] to yank rest of line onto end of search string\
  and search for it.
 Type \\[isearch-yank-kill] to yank the last string of killed text.
@@ -1364,7 +1370,6 @@ NOPUSH is t and EDIT is t."
   (remove-hook 'post-command-hook 'isearch-post-command-hook)
   (remove-hook 'mouse-leave-buffer-hook 'isearch-mouse-leave-buffer)
   (remove-hook 'kbd-macro-termination-hook 'isearch-done)
-  (setq isearch-lazy-highlight-start nil)
   (when (buffer-live-p isearch--current-buffer)
     (with-current-buffer isearch--current-buffer
       (setq isearch--current-buffer nil)
@@ -2561,6 +2566,23 @@ If optional ARG is non-nil, pull in the next ARG characters."
 If optional ARG is non-nil, pull in the next ARG words."
   (interactive "p")
   (isearch-yank-internal (lambda () (forward-word arg) (point))))
+
+(defun isearch-yank-until-char (char)
+  "Pull everything until next instance of CHAR from buffer into search string.
+Interactively, prompt for CHAR.
+This is often useful for keyboard macros, for example in programming
+languages or markup languages in which CHAR marks a token boundary."
+  (interactive "cYank until character: ")
+  (isearch-yank-internal
+   (lambda () (let ((inhibit-field-text-motion t))
+                (condition-case nil
+                    (progn
+                      (search-forward (char-to-string char))
+                      (forward-char -1))
+                  (search-failed
+                   (message "`%c' not found" char)
+                   (sit-for 2)))
+                (point)))))
 
 (defun isearch-yank-line (&optional arg)
   "Pull rest of line from buffer into search string.
@@ -3947,8 +3969,9 @@ Attempt to do the search exactly the way the pending Isearch would."
 		  (if isearch-lazy-highlight-forward
 		      (setq isearch-lazy-highlight-end (point-min))
 		    (setq isearch-lazy-highlight-start (point-max)))
-		  (run-at-time lazy-highlight-interval nil
-			       'isearch-lazy-highlight-buffer-update))
+		  (setq isearch-lazy-highlight-timer
+			(run-at-time lazy-highlight-interval nil
+				     'isearch-lazy-highlight-buffer-update)))
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
 				 'isearch-lazy-highlight-update)))))))))
