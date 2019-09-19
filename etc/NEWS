@@ -1456,6 +1456,11 @@ available for output of asynchronous shell commands.
 *** The function 'pcomplete-uniquify-list' has been renamed from
 'pcomplete-uniqify-list'.
 
+---
+*** 'pcomplete/make' now completes on targets in included files, recursively.
+To recover the previous behavior, set new user option
+`pcmpl-gnu-makefile-includes' to nil.
+
 ** Auth-source
 
 ---
