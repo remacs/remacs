@@ -1188,15 +1188,15 @@ Return a string with image data."
 
 (defun svg--wrap-svg (data)
   "Add a default foreground colour to SVG images."
-  (with-temp-buffer
-    (insert "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-            "xmlns:xi=\"http://www.w3.org/2001/XInclude\" "
-            "style=\"color: "
-            (face-foreground 'default) ";\">"
-            "<xi:include href=\"data:image/svg+xml;base64,"
-            (base64-encode-string data t)
-            "\"></xi:include></svg>")
-    (buffer-string)))
+  (let ((size (image-size (create-image data nil t :scaling 1) t)))
+    (with-temp-buffer
+      (insert
+       (format
+        "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" style=\"color: %s;\" viewBox=\"0 0 %d %d\"> <xi:include href=\"data:image/svg+xml;base64,%s \"></xi:include></svg>"
+        (face-foreground 'default)
+        (car size) (cdr size)
+        (base64-encode-string data t)))
+      (buffer-string))))
 
 (defun shr-image-displayer (content-function)
   "Return a function to display an image.
