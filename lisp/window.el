@@ -2217,6 +2217,10 @@ non-nil values of ALL-FRAMES have special meanings:
 
 - A frame means consider all windows on that frame only.
 
+If ALL-FRAMES specifies a frame, the first window walked is the
+first window on that frame (the one returned by `frame-first-window'),
+not necessarily the selected window.
+
 Anything else means consider all windows on the selected frame
 and no others.
 
@@ -2226,13 +2230,13 @@ windows nor the buffer list."
   ;; back to it.
   (when (window-minibuffer-p)
     (setq minibuf t))
-  ;; Make sure to not mess up the order of recently selected
-  ;; windows.  Use `save-selected-window' and `select-window'
-  ;; with second argument non-nil for this purpose.
+  ;; Use `save-selected-window' to prevent FUN from messing up
+  ;; the order of windows when it changes the selected window.
   (save-selected-window
-    (when (framep all-frames)
-      (select-window (frame-first-window all-frames) 'norecord))
-    (dolist (walk-windows-window (window-list-1 nil minibuf all-frames))
+    (dolist (walk-windows-window
+             (window-list-1 (and (framep all-frames)
+                                 (frame-first-window all-frames))
+                            minibuf all-frames))
       (funcall fun walk-windows-window))))
 
 (defun window-at-side-p (&optional window side)
