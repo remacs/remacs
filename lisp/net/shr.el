@@ -1192,7 +1192,7 @@ Return a string with image data."
     (with-temp-buffer
       (insert
        (format
-        "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" style=\"color: %s;\" viewBox=\"0 0 %d %d\"> <xi:include href=\"data:image/svg+xml;base64,%s \"></xi:include></svg>"
+        "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" style=\"color: %s;\" viewBox=\"0 0 %d %d\"> <xi:include href=\"data:image/svg+xml;base64,%s\"></xi:include></svg>"
         (face-foreground 'default)
         (car size) (cdr size)
         (base64-encode-string data t)))
