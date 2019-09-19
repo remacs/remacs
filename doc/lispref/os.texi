@@ -475,7 +475,8 @@ the value refers to the corresponding source file.
 @defvar user-emacs-directory
 This variable holds the name of the Emacs default directory.
 It defaults to @file{$@{XDG_CONFIG_HOME-'~/.config'@}/emacs/}
-if that directory exists and @file{~/.emacs.d/} does not exist,
+if that directory exists and @file{~/.emacs.d/} and @file{~/.emacs} do
+not exist,
 otherwise to @file{~/.emacs.d/} on all platforms but MS-DOS@.
 Here, @file{$@{XDG_CONFIG_HOME-'~/.config'@}}
 stands for the value of the environment variable @env{XDG_CONFIG_HOME}
