@@ -1313,7 +1313,7 @@ buffer-local values of tags table format variables."
       ;; Find the end of the tag and record the whole tag text.
       (search-forward "\177")
       (setq tag-text (buffer-substring (1- (point)) (point-at-bol)))
-      ;; If use-explicit is non nil and explicit tag is present, use it as part of
+      ;; If use-explicit is non-nil and explicit tag is present, use it as part of
       ;; return value. Else just skip it.
       (setq explicit-start (point))
       (when (and (search-forward "\001" (point-at-bol 2) t)

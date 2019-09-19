@@ -77,7 +77,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 	composition, the elements are characters or encoded
 	composition rules.
 
-   MODIFICATION-FUNC -- If non nil, it is a function to call when the
+   MODIFICATION-FUNC -- If non-nil, it is a function to call when the
 	composition gets invalid after a modification in a buffer.  If
 	it is nil, a function in `composition-function-table' of the
 	first character in the sequence is called.

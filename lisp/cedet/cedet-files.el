@@ -89,7 +89,7 @@ specific conversions during tests."
     file))
 
 (defun cedet-files-list-recursively (dir re)
-  "Returns list of files in directory matching to given regex"
+  "Return list of files in directory matching to given regex."
   (when (file-accessible-directory-p dir)
     (let ((files (directory-files dir t))
           matched)

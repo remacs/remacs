@@ -461,7 +461,7 @@ resultant list of strings."
 (defun eshell-pred-file-type (type)
   "Return a test which tests that the file is of a certain TYPE.
 TYPE must be a character, and should be one of the possible options
-that `ls -l' will show in the first column of its display. "
+that `ls -l' will show in the first column of its display."
   (when (eq type ?%)
     (setq type (char-after))
     (if (memq type '(?b ?c))

@@ -238,7 +238,7 @@ If nil, the table's buffer is no in Emacs.  If it has a value, then
 it is in Emacs.")
    (dirty :initform nil
 	  :documentation
-	  "Non nil if this table needs to be `Saved'.")
+	  "Non-nil if this table needs to be `Saved'.")
    (db-refs :initform nil
 	    :documentation
 	    "List of `semanticdb-table' objects referring to this one.
@@ -833,7 +833,7 @@ value.")
 (make-variable-buffer-local 'semanticdb-project-system-databases)
 
 (defvar semanticdb-search-system-databases t
-  "Non nil if search routines are to include a system database.")
+  "Non-nil if search routines are to include a system database.")
 
 (defun semanticdb-current-database-list (&optional dir)
   "Return a list of databases associated with the current buffer.

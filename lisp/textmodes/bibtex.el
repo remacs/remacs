@@ -862,7 +862,7 @@ To interactively change the dialect use the command `bibtex-set-dialect'."
 
 (defcustom bibtex-no-opt-remove-re "\\`option"
   "If a field name matches this regexp, the prefix OPT is not removed.
-If nil prefix OPT is always removed"
+If nil prefix OPT is always removed."
   :group 'bibtex
   :version "24.1"
   :type '(choice (regexp) (const nil)))
@@ -2188,7 +2188,7 @@ If FLAG is nil, a message is echoed if point was incremented at least
 (defun bibtex-beginning-of-first-entry ()
   "Go to beginning of line of first BibTeX entry in buffer.
 If `bibtex-sort-ignore-string-entries' is non-nil, @String entries
-are ignored.  Return point"
+are ignored.  Return point."
   (goto-char (point-min))
   (bibtex-skip-to-valid-entry)
   (point))
@@ -2714,7 +2714,7 @@ and `bibtex-autokey-names-stretch'."
 
 (defun bibtex-autokey-get-title ()
   "Get title field contents up to a terminator.
-Return the result as a string"
+Return the result as a string."
   (let ((case-fold-search t)
         (titlestring
          (bibtex-autokey-get-field "title"
@@ -2866,7 +2866,7 @@ Concatenate the key:
 (defun bibtex-read-key (prompt &optional key global)
   "Read BibTeX key from minibuffer using PROMPT and default KEY.
 If optional arg GLOBAL is non-nil, completion is based on the keys in
-`bibtex-reference-keys' of `bibtex-files',"
+`bibtex-reference-keys' of `bibtex-files'."
   (let (completion-ignore-case)
     (completing-read prompt (if global (bibtex-global-key-alist)
                               bibtex-reference-keys)
@@ -3054,7 +3054,7 @@ already set.  If SELECT is non-nil interactively select a BibTeX buffer.
 
 When called interactively, FORCE is t, CURRENT is t if current buffer
 visits a file using `bibtex-mode', and SELECT is t if current buffer
-does not use `bibtex-mode',"
+does not use `bibtex-mode'."
   (interactive (list (eq major-mode 'bibtex-mode) t
                      (not (eq major-mode 'bibtex-mode))))
   (let ((file-path (split-string (or bibtex-file-path default-directory) ":+"))

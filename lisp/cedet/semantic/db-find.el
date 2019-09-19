@@ -304,7 +304,7 @@ so that it can be called from the idle work handler."
 
 (defun semanticdb-find-translate-path-default (path brutish)
   "Translate PATH into a list of semantic tables.
-If BRUTISH is non nil, return all tables associated with PATH.
+If BRUTISH is non-nil, return all tables associated with PATH.
 Default action as described in `semanticdb-find-translate-path'."
   (if (semanticdb-find-results-p path)
       ;; nil means perform the search over these results.

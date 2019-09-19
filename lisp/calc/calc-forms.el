@@ -1462,7 +1462,7 @@ as measured in the integer number of days before December 31, 1 BC (Gregorian)."
     ( "PGT" 8 "PST" "PDT" ) ( "PST" 8 0 ) ( "PDT" 8 -1 )  ; Pacific
     ( "YGT" 9 "YST" "YDT" ) ( "YST" 9 0 ) ( "YDT" 9 -1 )  ; Yukon
     )
-  "No doc yet.  See calc manual for now. ")
+  "No doc yet.  See calc manual for now.")
 
 (defvar var-TimeZone nil)
 

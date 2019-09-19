@@ -58,7 +58,7 @@
   "Run FUNCTION on every file buffer found.
 FUNCTION does not have arguments; when it is entered `current-buffer'
 is the currently selected file buffer.
-If optional argument PREDICATE is non nil, only select file buffers
+If optional argument PREDICATE is non-nil, only select file buffers
 for which the function PREDICATE returns non-nil.
 If optional argument BUFFERS is non-nil, it is a list of buffers to
 walk through.  It defaults to `buffer-list'."

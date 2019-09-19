@@ -86,7 +86,7 @@ Argument CH-PREFIX is another character prefix to display."
 (defun eieio-build-class-alist (&optional class instantiable-only buildlist)
   "Return an alist of all currently active classes for completion purposes.
 Optional argument CLASS is the class to start with.
-If INSTANTIABLE-ONLY is non nil, only allow names of classes which
+If INSTANTIABLE-ONLY is non-nil, only allow names of classes which
 are not abstract, otherwise allow all classes.
 Optional argument BUILDLIST is more list to attach and is used internally."
   (let* ((cc (or class 'eieio-default-superclass))
@@ -107,7 +107,7 @@ Optional argument BUILDLIST is more list to attach and is used internally."
 (defun eieio-read-class (prompt &optional histvar instantiable-only)
   "Return a class chosen by the user using PROMPT.
 Optional argument HISTVAR is a variable to use as history.
-If INSTANTIABLE-ONLY is non nil, only allow names of classes which
+If INSTANTIABLE-ONLY is non-nil, only allow names of classes which
 are not abstract."
   (intern (completing-read prompt (eieio-build-class-alist nil instantiable-only)
 			   nil t nil
@@ -117,7 +117,7 @@ are not abstract."
   "Return a class chosen by the user using PROMPT.
 CLASS is the base class, and completion occurs across all subclasses.
 Optional argument HISTVAR is a variable to use as history.
-If INSTANTIABLE-ONLY is non nil, only allow names of classes which
+If INSTANTIABLE-ONLY is non-nil, only allow names of classes which
 are not abstract."
   (intern (completing-read prompt
 			   (eieio-build-class-alist class instantiable-only)

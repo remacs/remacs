@@ -1236,7 +1236,7 @@ calling `org-latex-compile'."
 ;;; Internal Functions
 
 (defun org-latex--caption-above-p (element info)
-  "Non nil when caption is expected to be located above ELEMENT.
+  "Non-nil when caption is expected to be located above ELEMENT.
 INFO is a plist holding contextual information."
   (let ((above (plist-get info :latex-caption-above)))
     (if (symbolp above) above

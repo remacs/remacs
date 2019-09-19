@@ -626,7 +626,7 @@ If nil, indent as:
 	input [31:0] a;
 	input        \\=`CP;
 	output       c;
-If non nil, treat as:
+If non-nil, treat as:
 	input [31:0] a;
 	input \\=`CP    ;
 	output       c;"

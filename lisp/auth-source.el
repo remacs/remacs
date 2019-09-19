@@ -2259,12 +2259,12 @@ items don't have a username.  This means that if you search for
 username \"joe\" and it matches an item but the item doesn't have
 a :user attribute, the username \"joe\" will be returned.
 
-A non nil DELETE-EXISTING means deleting any matching password
+A non-nil DELETE-EXISTING means deleting any matching password
 entry in the respective sources.  This is useful only when
-CREATE-MISSING is non nil as well; the intended use case is to
+CREATE-MISSING is non-nil as well; the intended use case is to
 remove wrong password entries.
 
-If no matching entry is found, and CREATE-MISSING is non nil,
+If no matching entry is found, and CREATE-MISSING is non-nil,
 the password will be retrieved interactively, and it will be
 stored in the password database which matches best (see
 `auth-sources').

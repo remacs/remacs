@@ -1800,7 +1800,7 @@ Return a cons cell (X . Y)"
 		 "The overlay the ghost text is displayed in.")
    (first-show :initform t
 	       :documentation
-	       "Non nil if we have not seen our first show request.")
+	       "Non-nil if we have not seen our first show request.")
    )
   "Cycle completions inline with ghost text.
 Completion displayer using ghost chars after point for focus options.

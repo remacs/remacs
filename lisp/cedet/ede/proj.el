@@ -165,7 +165,7 @@ These are the linkers the user can choose from when setting the
 	      :label "Part of all: target"
 	      :group make
 	      :documentation
-	      "Non nil means the rule created is part of the all: target.
+	      "Non-nil means the rule created is part of the all: target.
 Setting this to nil creates the rule to build this item, but does not
 include it in the all: rule.")
    (configuration-variables

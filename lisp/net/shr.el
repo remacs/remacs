@@ -115,7 +115,7 @@ Alternative suggestions are:
   'browse-url-secondary-browser-function "27.1")
 
 (defcustom shr-image-animate t
-  "Non nil means that images that can be animated will be."
+  "Non-nil means that images that can be animated will be."
   :version "24.4"
   :type 'boolean)
 

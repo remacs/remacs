@@ -1817,7 +1817,7 @@ below (above if ABOVE is true) that of FRAME2.  Hence the
 position of FRAME2 in its display's Z (stacking) order relative
 to all other frames excluding FRAME1 remains unaltered.
 
-Some window managers may refuse to restack windows. "
+Some window managers may refuse to restack windows."
   (if (and (frame-live-p frame1)
            (frame-live-p frame2)
            (equal (frame-parameter frame1 'display)

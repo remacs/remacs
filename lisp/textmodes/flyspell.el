@@ -1116,7 +1116,7 @@ Mostly we check word delimiters."
 If the optional argument FOLLOWING, or, when called interactively
 `ispell-following-word', is non-nil, checks the following (rather
 than preceding) word when the cursor is not over a word.  If
-optional argument KNOWN-MISSPELLING is non nil considers word a
+optional argument KNOWN-MISSPELLING is non-nil considers word a
 misspelling and skips redundant spell-checking step.
 
 See `flyspell-get-word' for details of how this finds the word to

@@ -389,7 +389,7 @@ This knows details about or source tree."
 ;; include lists, and Preprocessor symbol tables.
 
 (cl-defmethod ede-cpp-root-header-file-p ((proj ede-cpp-root-project) name)
-  "Non nil if in PROJ the filename NAME is a header."
+  "Non-nil if in PROJ the filename NAME is a header."
   (save-match-data
     (string-match (oref proj header-match-regexp) name)))
 

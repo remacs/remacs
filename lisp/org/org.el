@@ -4280,7 +4280,7 @@ org-level-* faces."
 
 (defcustom org-highlight-latex-and-related nil
   "Non-nil means highlight LaTeX related syntax in the buffer.
-When non nil, the value should be a list containing any of the
+When non-nil, the value should be a list containing any of the
 following symbols:
   `latex'    Highlight LaTeX snippets and environments.
   `script'   Highlight subscript and superscript.
@@ -15434,7 +15434,7 @@ but in some other way.")
 Being in this list makes sure that they are offered for completion.")
 
 (defun org--valid-property-p (property)
-  "Non nil when string PROPERTY is a valid property name."
+  "Non-nil when string PROPERTY is a valid property name."
   (not
    (or (equal property "")
        (string-match-p "\\s-" property))))

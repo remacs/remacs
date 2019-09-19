@@ -541,7 +541,7 @@ don't yield.")
 
 (defun cps--replace-variable-references (var new-var form)
   "Replace all non-shadowed references to VAR with NEW-VAR in FORM.
-This routine does not modify FORM. Instead, it returns a
+This routine does not modify FORM.  Instead, it returns a
 modified copy."
   (macroexpand-all
    `(cl-symbol-macrolet ((,var ,new-var)) ,form)
@@ -760,7 +760,7 @@ Return the value with which ITERATOR finished iteration."
        (cps--advance-for ,cs))))
 
 (defun cps--handle-loop-for (var)
-  "Support `iter-by' in `loop'.  "
+  "Support `iter-by' in `loop'."
   ;; N.B. While the cl-loop-for-handler is a documented interface,
   ;; there's no documented way for cl-loop-for-handler callbacks to do
   ;; anything useful!  Additionally, cl-loop currently lexbinds useful

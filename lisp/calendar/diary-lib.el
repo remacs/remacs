@@ -97,7 +97,7 @@ is pre-pended to REGEXP for file-wide specifiers.  ATTRIBUTE
 specifies which face attribute (e.g. `:foreground') to modify, or
 that this is a face (`:face') to apply.  TYPE is the type of
 attribute being applied.  Available TYPES (see `diary-attrtype-convert')
-are: `string', `symbol', `int', `tnil', `stringtnil.'"
+are: `string', `symbol', `int', `tnil', `stringtnil'."
   :type '(repeat (list (string :tag "Regular expression")
                        (integer :tag "Sub-expression")
                        (symbol :tag "Attribute (e.g. :foreground)")
@@ -1257,7 +1257,7 @@ the regexp with parentheses."
 MARKFUNC is a function that marks entries of the appropriate type
 matching a given date pattern.  MONTHS is an array of month names.
 SYMBOL marks diary entries of the type in question.  ABSFUNC is a
-function that converts absolute dates to dates of the appropriate type.  "
+function that converts absolute dates to dates of the appropriate type."
   (calendar-dlet*
       ((dayname (diary-name-pattern calendar-day-name-array
                                     calendar-day-abbrev-array))

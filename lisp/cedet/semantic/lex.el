@@ -256,7 +256,7 @@ SPECS must be a list of (NAME . TOKSYM) elements, where:
   NAME is the name of the keyword symbol to define.
   TOKSYM is the lexical token symbol of that keyword.
 
-If optional argument PROPSPECS is non nil, then interpret it, and
+If optional argument PROPSPECS is non-nil, then interpret it, and
 apply those properties.
 PROPSPECS must be a list of (NAME PROPERTY VALUE) elements."
   ;; Create the symbol hash table
@@ -414,7 +414,7 @@ SPECS must be a list of (TYPE . TOKENS) elements, where:
     MATCHER is a string or regexp a text must match to be a such
     lexical token.
 
-If optional argument PROPSPECS is non nil, then interpret it, and
+If optional argument PROPSPECS is non-nil, then interpret it, and
 apply those properties.
 PROPSPECS must be a list of (TYPE PROPERTY VALUE)."
   ;; Create the symbol hash table
@@ -1060,7 +1060,7 @@ The collapsed tokens are saved in `semantic-lex-block-streams'."
 ;; to create new lexical analyzers.
 
 (defcustom semantic-lex-debug-analyzers nil
-  "Non nil means to debug analyzers with syntax protection.
+  "Non-nil means to debug analyzers with syntax protection.
 Only in effect if `debug-on-error' is also non-nil."
   :group 'semantic
   :type 'boolean)

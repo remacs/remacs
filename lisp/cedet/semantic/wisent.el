@@ -184,7 +184,7 @@ the standard function `semantic-parse-stream'."
     ;; lookahead tokens and tokens in STREAM can be different the
     ;; lookahead token is put in the variable `wisent-lex-lookahead'
     ;; before calling `wisent-parse'.  Wisent's lexers always pop the
-    ;; next lexical token from that variable when non nil, then from
+    ;; next lexical token from that variable when non-nil, then from
     ;; the lexical input stream.
     ;;
     ;; The first element of STREAM is used to keep lookahead tokens

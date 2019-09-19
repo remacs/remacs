@@ -581,7 +581,7 @@ the associations of any windows with the current buffer.
 EXIT-ACTION, if non-nil, must specify a function that is called
 with the current buffer as argument and is called after disabling
 `view-mode' and removing any associations of windows with the
-current buffer. "
+current buffer."
   (when view-mode
     (let ((buffer (window-buffer)))
       (unless view-no-disable-on-exit

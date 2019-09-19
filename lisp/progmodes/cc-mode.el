@@ -1966,7 +1966,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; these caches from inside them, and we must thus be sure that this
   ;; has already been executed.
   ;;
-  ;; This calls the language variable c-before-font-lock-functions, if non nil.
+  ;; This calls the language variable c-before-font-lock-functions, if non-nil.
   ;; This typically sets `syntax-table' properties.
 
   ;; We can sometimes get two consecutive calls to `after-change-functions'

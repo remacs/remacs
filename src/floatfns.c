@@ -141,7 +141,7 @@ DEFUN ("tan", Ftan, Stan, 1, 1, 0,
 }
 
 DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
-       doc: /* Return non nil if argument X is a NaN.  */)
+       doc: /* Return non-nil if argument X is a NaN.  */)
   (Lisp_Object x)
 {
   CHECK_FLOAT (x);

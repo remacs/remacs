@@ -8908,7 +8908,7 @@ The new content of the line will be NEWHEAD (as modified by
 If FIXFACE is non-nil, the face of each item is modified according to
 the new TODO state.
 If JUST-THIS is non-nil, change just the current line, not all.
-If FORCE-TAGS is non nil, the car of it returns the new tags."
+If FORCE-TAGS is non-nil, the car of it returns the new tags."
   (let* ((inhibit-read-only t)
 	 (line (org-current-line))
 	 (org-agenda-buffer (current-buffer))
@@ -10205,7 +10205,7 @@ to override `appt-message-warning-time'."
       (message "Added %d event%s for today" cnt (if (> cnt 1) "s" "")))))
 
 (defun org-agenda-today-p (date)
-  "Non nil when DATE means today.
+  "Non-nil when DATE means today.
 DATE is either a list of the form (month day year) or a number of
 days as returned by `calendar-absolute-from-gregorian' or
 `org-today'.  This function considers `org-extend-today-until'

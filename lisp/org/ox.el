@@ -804,7 +804,7 @@ also be set with the OPTIONS keyword, e.g. \"timestamp:nil\"."
   :safe #'booleanp)
 
 (defcustom org-export-with-timestamps t
-  "Non nil means allow timestamps in export.
+  "Non-nil means allow timestamps in export.
 
 It can be set to any of the following values:
   t          export all timestamps.

@@ -613,7 +613,7 @@ and change the current conversion to the last one in the group."
       (message "%s" msg))))
 
 ;; Update the conversion area with the latest conversion selected.
-;; ALL if non nil means to update the whole area, else update only
+;; ALL if non-nil means to update the whole area, else update only
 ;; inside quail-overlay-head.
 
 (defun kkc-update-conversion (&optional all)

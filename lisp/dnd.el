@@ -63,12 +63,12 @@ if some action was made, or nil if the URL is ignored."
       'dnd-open-local-file
     'dnd-open-remote-url)
   "The function to call when opening a file on a remote machine.
-The function will be called with two arguments; URI and ACTION. See
-`dnd-open-file' for details.
+The function will be called with two arguments, URI and ACTION.
+See `dnd-open-file' for details.
 If nil, then dragging remote files into Emacs will result in an error.
 Predefined functions are `dnd-open-local-file' and `dnd-open-remote-url'.
 `dnd-open-local-file' attempts to open a remote file using its UNC name and
-is the  default on MS-Windows.  `dnd-open-remote-url' uses `url-handler-mode'
+is the default on MS-Windows.  `dnd-open-remote-url' uses `url-handler-mode'
 and is the default except for MS-Windows."
   :version "22.1"
   :type 'function
@@ -174,7 +174,7 @@ The last / in file:/// is part of the file name.  If the system
 natively supports unc file names, then remote urls of the form
 file://server-name/file-name will also be handled by this function.
 An alternative for systems that do not support unc file names is
-`dnd-open-remote-url'. ACTION is ignored."
+`dnd-open-remote-url'.  ACTION is ignored."
 
   (let* ((f (dnd-get-local-file-name uri t)))
     (if (and f (file-readable-p f))

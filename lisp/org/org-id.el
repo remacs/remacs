@@ -241,7 +241,7 @@ Create an ID if necessary."
   "Get the ID property of the entry at point-or-marker POM.
 If POM is nil, refer to the entry at point.
 If the entry does not have an ID, the function returns nil.
-However, when CREATE is non nil, create an ID if none is present already.
+However, when CREATE is non-nil, create an ID if none is present already.
 PREFIX will be passed through to `org-id-new'.
 In any case, the ID of the entry is returned."
   (org-with-point-at pom

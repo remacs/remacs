@@ -66,7 +66,7 @@
 
 ;; I see a degradation of maybe 10-20% only.
 (defcustom apropos-do-all nil
-  "Non nil means apropos commands will search more extensively.
+  "Non-nil means apropos commands will search more extensively.
 This may be slower.  This option affects the following commands:
 
 `apropos-user-option' will search all variables, not just user options.

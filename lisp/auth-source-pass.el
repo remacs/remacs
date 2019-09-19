@@ -243,7 +243,7 @@ HOSTNAME should not contain any username or port number."
 (defun auth-source-pass--select-from-entries (entries user)
   "Return best matching password-store entry data from ENTRIES.
 
-If USER is non nil, give precedence to entries containing a user field
+If USER is non-nil, give precedence to entries containing a user field
 matching USER."
   (let (fallback)
     (catch 'auth-source-pass-break
