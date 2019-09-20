@@ -38,6 +38,10 @@
 (defvar vc-hg-program)
 
 ;;;###tramp-autoload
+(defconst tramp-default-remote-shell "/bin/sh"
+  "The default remote shell Tramp applies.")
+
+;;;###tramp-autoload
 (defcustom tramp-inline-compress-start-size 4096
   "The minimum size of compressing where inline transfer.
 When inline transfer, compress transferred data of file whose
@@ -132,10 +136,10 @@ The string is used in `tramp-methods'.")
 ;;;###tramp-autoload
 (tramp--with-startup
  (add-to-list 'tramp-methods
-              '("rcp"
+              `("rcp"
                 (tramp-login-program        "rsh")
                 (tramp-login-args           (("%h") ("-l" "%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "rcp")
@@ -143,35 +147,37 @@ The string is used in `tramp-methods'.")
                 (tramp-copy-keep-date       t)
                 (tramp-copy-recursive       t)))
  (add-to-list 'tramp-methods
-              '("remcp"
+              `("remcp"
                 (tramp-login-program        "remsh")
                 (tramp-login-args           (("%h") ("-l" "%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "rcp")
                 (tramp-copy-args            (("-p" "%k")))
                 (tramp-copy-keep-date       t)))
  (add-to-list 'tramp-methods
-              '("scp"
+              `("scp"
                 (tramp-login-program        "ssh")
                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
 				             ("-e" "none") ("%h")))
                 (tramp-async-args           (("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "scp")
-                (tramp-copy-args            (("-P" "%p") ("-p" "%k") ("-q") ("-r") ("%c")))
+                (tramp-copy-args            (("-P" "%p") ("-p" "%k") ("-q")
+					     ("-r") ("%c")))
                 (tramp-copy-keep-date       t)
                 (tramp-copy-recursive       t)))
  (add-to-list 'tramp-methods
-              '("scpx"
+              `("scpx"
                 (tramp-login-program        "ssh")
                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
-				             ("-e" "none") ("-t" "-t") ("%h") ("/bin/sh")))
+				             ("-e" "none") ("-t" "-t") ("%h")
+					     ("%l")))
                 (tramp-async-args           (("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "scp")
@@ -180,64 +186,66 @@ The string is used in `tramp-methods'.")
                 (tramp-copy-keep-date       t)
                 (tramp-copy-recursive       t)))
  (add-to-list 'tramp-methods
-              '("rsync"
+              `("rsync"
                 (tramp-login-program        "ssh")
                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
 				             ("-e" "none") ("%h")))
                 (tramp-async-args           (("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "rsync")
-                (tramp-copy-args            (("-t" "%k") ("-p") ("-r") ("-s") ("-c")))
+                (tramp-copy-args            (("-t" "%k") ("-p") ("-r") ("-s")
+					     ("-c")))
                 (tramp-copy-env             (("RSYNC_RSH") ("ssh" "%c")))
                 (tramp-copy-keep-date       t)
                 (tramp-copy-keep-tmpfile    t)
                 (tramp-copy-recursive       t)))
  (add-to-list 'tramp-methods
-              '("rsh"
+              `("rsh"
                 (tramp-login-program        "rsh")
                 (tramp-login-args           (("%h") ("-l" "%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
-              '("remsh"
+              `("remsh"
                 (tramp-login-program        "remsh")
                 (tramp-login-args           (("%h") ("-l" "%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
-              '("ssh"
+              `("ssh"
                 (tramp-login-program        "ssh")
                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
 				             ("-e" "none") ("%h")))
                 (tramp-async-args           (("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
-              '("sshx"
+              `("sshx"
                 (tramp-login-program        "ssh")
                 (tramp-login-args           (("-l" "%u") ("-p" "%p") ("%c")
-				             ("-e" "none") ("-t" "-t") ("%h") ("/bin/sh")))
+				             ("-e" "none") ("-t" "-t") ("%h")
+					     ("%l")))
                 (tramp-async-args           (("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
-              '("telnet"
+              `("telnet"
                 (tramp-login-program        "telnet")
                 (tramp-login-args           (("%h") ("%p") ("2>/dev/null")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
-              '("nc"
+              `("nc"
                 (tramp-login-program        "telnet")
                 (tramp-login-args           (("%h") ("%p") ("2>/dev/null")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "nc")
@@ -247,24 +255,25 @@ The string is used in `tramp-methods'.")
                 ;; We use "-p" as required for newer busyboxes.  For older
                 ;; busybox/nc versions, the value must be (("-l") ("%r")).  This
                 ;; can be achieved by tweaking `tramp-connection-properties'.
-                (tramp-remote-copy-args     (("-l") ("-p" "%r") ("2>/dev/null")))))
+                (tramp-remote-copy-args     (("-l") ("-p" "%r")
+					     ("2>/dev/null")))))
  (add-to-list 'tramp-methods
-              '("su"
+              `("su"
                 (tramp-login-program        "su")
                 (tramp-login-args           (("-") ("%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-connection-timeout   10)))
  (add-to-list 'tramp-methods
-              '("sg"
+              `("sg"
                 (tramp-login-program        "sg")
                 (tramp-login-args           (("-") ("%u")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-connection-timeout   10)))
  (add-to-list 'tramp-methods
-              '("sudo"
+              `("sudo"
                 (tramp-login-program        "sudo")
                 ;; The password template must be masked.  Otherwise,
                 ;; it could be interpreted as password prompt if the
@@ -273,46 +282,47 @@ The string is used in `tramp-methods'.")
 				             ("-p" "P\"\"a\"\"s\"\"s\"\"w\"\"o\"\"r\"\"d\"\":")))
                 ;; Local $SHELL could be a nasty one, like zsh or
                 ;; fish.  Let's override it.
-                (tramp-login-env            (("SHELL") ("/bin/sh")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-login-env            (("SHELL")
+					     (,tramp-default-remote-shell)))
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-connection-timeout   10)
                 (tramp-session-timeout      300)))
  (add-to-list 'tramp-methods
-              '("doas"
+              `("doas"
                 (tramp-login-program        "doas")
                 (tramp-login-args           (("-u" "%u") ("-s")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-connection-timeout   10)
                 (tramp-session-timeout      300)))
  (add-to-list 'tramp-methods
-              '("ksu"
+              `("ksu"
                 (tramp-login-program        "ksu")
                 (tramp-login-args           (("%u") ("-q")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-connection-timeout   10)))
  (add-to-list 'tramp-methods
-              '("krlogin"
+              `("krlogin"
                 (tramp-login-program        "krlogin")
                 (tramp-login-args           (("%h") ("-l" "%u") ("-x")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
               `("plink"
                 (tramp-login-program        "plink")
-                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("-t")
-				             ("%h") ("\"")
+                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh")
+					     ("-t") ("%h") ("\"")
 				             (,(format
 				                "env 'TERM=%s' 'PROMPT_COMMAND=' 'PS1=%s'"
 				                tramp-terminal-type
 				                tramp-initial-end-of-output))
-				             ("/bin/sh") ("\"")))
-                (tramp-remote-shell         "/bin/sh")
+				             ("%l") ("\"")))
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
@@ -323,50 +333,50 @@ The string is used in `tramp-methods'.")
 				                "env 'TERM=%s' 'PROMPT_COMMAND=' 'PS1=%s'"
 				                tramp-terminal-type
 				                tramp-initial-end-of-output))
-				             ("/bin/sh") ("\"")))
-                (tramp-remote-shell         "/bin/sh")
+				             ("%l") ("\"")))
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))))
  (add-to-list 'tramp-methods
               `("pscp"
                 (tramp-login-program        "plink")
-                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("-t")
-				             ("%h") ("\"")
+                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh")
+					     ("-t") ("%h") ("\"")
 				             (,(format
 				                "env 'TERM=%s' 'PROMPT_COMMAND=' 'PS1=%s'"
 				                tramp-terminal-type
 				                tramp-initial-end-of-output))
-				             ("/bin/sh") ("\"")))
-                (tramp-remote-shell         "/bin/sh")
+				             ("%l") ("\"")))
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "pscp")
-                (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-scp") ("-p" "%k")
-				             ("-q") ("-r")))
+                (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-scp")
+					     ("-p" "%k") ("-q") ("-r")))
                 (tramp-copy-keep-date       t)
                 (tramp-copy-recursive       t)))
  (add-to-list 'tramp-methods
               `("psftp"
                 (tramp-login-program        "plink")
-                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("-t")
-				             ("%h") ("\"")
+                (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh")
+					     ("-t") ("%h") ("\"")
 				             (,(format
 				                "env 'TERM=%s' 'PROMPT_COMMAND=' 'PS1=%s'"
 				                tramp-terminal-type
 				                tramp-initial-end-of-output))
-				             ("/bin/sh") ("\"")))
-                (tramp-remote-shell         "/bin/sh")
+				             ("%l") ("\"")))
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
                 (tramp-copy-program         "pscp")
-                (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-sftp") ("-p" "%k")
-				             ("-q")))
+                (tramp-copy-args            (("-l" "%u") ("-P" "%p") ("-sftp")
+					     ("-p" "%k") ("-q")))
                 (tramp-copy-keep-date       t)))
  (add-to-list 'tramp-methods
-              '("fcp"
+              `("fcp"
                 (tramp-login-program        "fsh")
                 (tramp-login-args           (("%h") ("-l" "%u") ("sh" "-i")))
-                (tramp-remote-shell         "/bin/sh")
+                (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-i") ("-c"))
                 (tramp-copy-program         "fcp")
@@ -778,7 +788,8 @@ my $data;
 while (read STDIN, $data, 54) {
     my $pad = q();
 
-    # Only for the last chunk, and only if did not fill the last three-byte packet
+    # Only for the last chunk, and only if did not fill the last
+    # three-byte packet
     if (eof) {
         my $mod = length($data) %% 3;
         $pad = q(=) x (3 - $mod) if $mod;
@@ -4023,19 +4034,22 @@ file exists and nonzero exit status otherwise."
        vec 'file-error "Couldn't find command to check if file exists"))
     result))
 
+(defun tramp-get-sh-extra-args (shell)
+  "Find extra args for SHELL."
+  (let ((alist tramp-sh-extra-args)
+	item extra-args)
+    (while (and alist (null extra-args))
+      (setq item (pop alist))
+      (when (string-match-p (car item) shell)
+	(setq extra-args (cdr item))))
+    extra-args))
+
 (defun tramp-open-shell (vec shell)
   "Opens shell SHELL."
   (with-tramp-progress-reporter
       vec 5 (format-message "Opening remote shell `%s'" shell)
     ;; Find arguments for this shell.
-    (let ((alist tramp-sh-extra-args)
-	  item extra-args)
-      (while (and alist (null extra-args))
-	(setq item (pop alist))
-	(when (string-match-p (car item) shell)
-	  (setq extra-args (cdr item))))
-      ;; It is useful to set the prompt in the following command
-      ;; because some people have a setting for $PS1 which /bin/sh
+    (let ((extra-args (tramp-get-sh-extra-args shell)))
       ;; doesn't know about and thus /bin/sh will display a strange
       ;; prompt.  For example, if $PS1 has "${CWD}" in the value, then
       ;; ksh will display the current working directory but /bin/sh
@@ -4894,6 +4908,9 @@ connection if a previous connection has died for some reason."
 			  (tramp-get-method-parameter hop 'tramp-login-program))
 			 (login-args
 			  (tramp-get-method-parameter hop 'tramp-login-args))
+			 (remote-shell
+			  (tramp-get-method-parameter hop 'tramp-remote-shell))
+			 (extra-args (tramp-get-sh-extra-args remote-shell))
 			 (login-env
 			  (tramp-get-method-parameter hop 'tramp-login-env))
 			 (async-args
@@ -4971,7 +4988,8 @@ connection if a previous connection has died for some reason."
 		     spec (format-spec-make ?t tmpfile)
 		     options (format-spec options spec)
 		     spec (format-spec-make
-			   ?h l-host ?u l-user ?p l-port ?c options)
+			   ?h l-host ?u l-user ?p l-port ?c options
+			   ?l (concat remote-shell " " extra-args))
 		     command
 		     (concat
 		      ;; We do not want to see the trailing local
@@ -5320,7 +5338,7 @@ Nonexistent directories are removed from spec."
 		  (progn
 		    (tramp-message
 		     vec 3
-		     "`getconf PATH' not successful, using default value \"%s\"."
+		    "`getconf PATH' not successful, using default value \"%s\"."
 		     "/bin:/usr/bin")
 		    "/bin:/usr/bin"))))
 	     (own-remote-path
@@ -5893,9 +5911,6 @@ function cell is returned to be applied on a buffer."
 ;;   reasonably unproblematic.  And maybe trampclient should have some
 ;;   way of passing credentials, like by using an SSL socket or
 ;;   something.  (David Kastrup)
-;;
-;; * Reconnect directly to a compliant shell without first going
-;;   through the user's default shell.  (Pete Forman)
 ;;
 ;; * Avoid the local shell entirely for starting remote processes.  If
 ;;   so, I think even a signal, when delivered directly to the local

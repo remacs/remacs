@@ -805,7 +805,8 @@ behavior.
 
 Works like @option{ssh} but without the extra authentication prompts.
 @option{sshx} uses @samp{ssh -t -t @var{host} -l @var{user} /bin/sh}
-to open a connection with a ``standard'' login shell.
+to open a connection with a ``standard'' login shell.  It supports to
+change the remote login shell @command{/bin/sh}.
 
 @strong{Note} that @option{sshx} does not bypass authentication
 questions.  For example, if the host key of the remote host is not
@@ -841,7 +842,8 @@ This is another method from the Kerberos suite.  It behaves like @option{su}.
 
 @option{plink} method is for MS Windows users with the PuTTY
 implementation of SSH@.  It uses @samp{plink -ssh} to log in to the
-remote host.
+remote host.  It supports to change the remote login shell
+@command{/bin/sh}.
 
 Check the @samp{Share SSH connections if possible} control for that
 session.
@@ -854,7 +856,8 @@ session.
 
 Another method using PuTTY on MS Windows with session names instead of
 host names.  @option{plinkx} calls @samp{plink -load @var{session}
--t}.  User names and port numbers must be defined in the session.
+-t}.  User names and port numbers must be defined in the session.  It
+supports to change the remote login shell @command{/bin/sh}.
 
 Check the @samp{Share SSH connections if possible} control for that
 session.
@@ -928,7 +931,8 @@ This method supports the @samp{-p} argument.
 
 @option{scpx} is useful to avoid login shell questions.  It is similar
 in performance to @option{scp}.  @option{scpx} uses @samp{ssh -t -t
-@var{host} -l @var{user} /bin/sh} to open a connection.
+@var{host} -l @var{user} /bin/sh} to open a connection.  It supports
+to change the remote login shell @command{/bin/sh}.
 
 @option{scpx} is useful for MS Windows users when @command{ssh}
 triggers an error about allocating a pseudo tty.  This happens due to
@@ -951,6 +955,8 @@ These methods are similar to @option{scp} or @option{sftp}, but they
 use the @command{plink} command to connect to the remote host, and
 they use @command{pscp} or @command{psftp} for transferring the files.
 These programs are part of PuTTY, an SSH implementation for MS Windows.
+
+They support to change the remote login shell @command{/bin/sh}.
 
 Check the @samp{Share SSH connections if possible} control for that
 session.
@@ -2100,12 +2106,10 @@ be recomputed.  To force @value{tramp} to recompute afresh, call
 @cindex zsh setup
 
 Per default, @value{tramp} uses the command @command{/bin/sh} for
-strting a shell on the remote host.  This can be changed by setting
+starting a shell on the remote host.  This can be changed by setting
 the connection property @option{remote-shell}, see @xref{Predefined
-connection information}.  Other properties might be adapted as well,
-like @option{remote-shell-login} or @option{remote-shell-args}.  If
-you want, for example, use @command{/usr/bin/zsh} on a remote host,
-you might apply
+connection information}.  If you want, for example, use
+@command{/usr/bin/zsh} on a remote host, you might apply
 
 @lisp
 @group
@@ -2114,6 +2118,11 @@ you might apply
                    "remote-shell" "/usr/bin/zsh"))
 @end group
 @end lisp
+
+This works only for connection methods which allow to override the
+remote login shell, like @option{sshx} or @option{plink}.  See
+@ref{Inline methods} and @ref{External methods} for connection methods
+which support this.
 
 This approach has also the advantage, that settings in
 @code{tramp-sh-extra-args} will be applied.  For zsh, the trouble
@@ -3765,6 +3774,9 @@ This uses the default value of @code{tramp-terminal-type},
 @samp{"dumb"}, as value of the @env{TERM} environment variable.  If
 you want to use another value for @env{TERM}, change
 @code{tramp-terminal-type} and this line accordingly.
+
+Alternatively, you could set the remote login shell explicitly.  See
+@ref{Remote shell setup} for discussing this technique,
 
 When using fish shell on remote hosts, disable fancy formatting by
 adding the following to @file{~/.config/fish/config.fish}:

@@ -212,22 +212,32 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
 
   * `tramp-login-args'
     This specifies the list of arguments to pass to the above
-    mentioned program.  Please note that this is a list of list of arguments,
-    that is, normally you don't want to put \"-a -b\" or \"-f foo\"
-    here.  Instead, you want a list (\"-a\" \"-b\"), or (\"-f\" \"foo\").
-    There are some patterns: \"%h\" in this list is replaced by the host
-    name, \"%u\" is replaced by the user name, \"%p\" is replaced by the
-    port number, and \"%%\" can be used to obtain a literal percent character.
-    If a list containing \"%h\", \"%u\" or \"%p\" is unchanged during
-    expansion (i.e. no host or no user specified), this list is not used as
-    argument.  By this, arguments like (\"-l\" \"%u\") are optional.
-    \"%t\" is replaced by the temporary file name produced with
-    `tramp-make-tramp-temp-file'.  \"%k\" indicates the keep-date
-    parameter of a program, if exists.  \"%c\" adds additional
-    `tramp-ssh-controlmaster-options' options for the first hop.
-    The existence of `tramp-login-args', combined with the absence of
-    `tramp-copy-args', is an indication that the method is capable of
-     multi-hops.
+    mentioned program.  Please note that this is a list of list
+    of arguments, that is, normally you don't want to put \"-a
+    -b\" or \"-f foo\" here.  Instead, you want a list (\"-a\"
+    \"-b\"), or (\"-f\" \"foo\").  There are some patterns:
+
+    - \"%h\" in this list is replaced by the host name
+    - \"%u\" is replaced by the user name
+    - \"%p\" is replaced by the port number
+    - \"%%\" can be used to obtain a literal percent character.
+
+    If a list containing \"%h\", \"%u\" or \"%p\" is unchanged
+    during expansion (i.e. no host, no user or no port
+    specified), this list is not used as argument.  By this,
+    arguments like (\"-l\" \"%u\") are optional.
+
+    - \"%l\" is replaced by the login shell `tramp-remote-shell'
+      and its parameters.
+    - \"%t\" is replaced by the temporary file name produced with
+      `tramp-make-tramp-temp-file'.
+    - \"%k\" indicates the keep-date parameter of a program, if exists
+    - \"%c\" adds additional `tramp-ssh-controlmaster-options'
+      options for the first hop.
+
+    The existence of `tramp-login-args', combined with the
+    absence of `tramp-copy-args', is an indication that the
+    method is capable of multi-hops.
 
   * `tramp-login-env'
      A list of environment variables and their values, which will
@@ -326,6 +336,9 @@ must specify `tramp-copy-program' and `tramp-copy-args'.  If it is an
 inline method, then these two parameters should be nil.
 
 Notes:
+
+All these arguments can be overwritten by connection properties.
+See Info node `(tramp) Predefined connection information'.
 
 When using `su' or `sudo' the phrase \"open connection to a remote
 host\" sounds strange, but it is used nevertheless, for consistency.

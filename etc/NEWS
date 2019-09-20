@@ -1530,6 +1530,12 @@ names are adjusted to the host name from the previous hop.
 timeout, after which the underlying session is disabled.  This is for
 security reasons.
 
++++
+*** For some connection methods, like "sshx" or "plink", it is
+possible to configure the remote login shell.  This avoids problems
+with remote hosts, where "/bin/sh" is a link to a shell which
+cooperates badly with Tramp.
+
 ** Rcirc
 
 ---
