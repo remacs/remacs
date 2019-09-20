@@ -211,27 +211,35 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     or the name of telnet or a workalike, or the name of su or a workalike.
 
   * `tramp-login-args'
-    This specifies the list of arguments to pass to the above
-    mentioned program.  Please note that this is a list of list
-    of arguments, that is, normally you don't want to put \"-a
-    -b\" or \"-f foo\" here.  Instead, you want a list (\"-a\"
-    \"-b\"), or (\"-f\" \"foo\").  There are some patterns:
+    This specifies a list of lists of arguments to pass to the
+    above mentioned program.  You normally want to put each
+    argument in an individual string, i.e.
+    (\"-a\" \"-b\") rather than (\"-a -b\").
 
-    - \"%h\" in this list is replaced by the host name
+    \"%\" followed by a letter are expanded in the arguments as
+    follows:
+
+    - \"%h\" is replaced by the host name
     - \"%u\" is replaced by the user name
     - \"%p\" is replaced by the port number
     - \"%%\" can be used to obtain a literal percent character.
 
-    If a list containing \"%h\", \"%u\" or \"%p\" is unchanged
-    during expansion (i.e. no host, no user or no port
-    specified), this list is not used as argument.  By this,
-    arguments like (\"-l\" \"%u\") are optional.
+    If a sub-list containing \"%h\", \"%u\" or \"%p\" is
+    unchanged after expansion (i.e. no host, no user or no port
+    were specified), that sublist is not used.  For e.g.
+
+    '((\"-a\" \"-b\") (\"-l\" \"%u\"))
+
+    that means that (\"-l\" \"%u\") is used only if the user was
+    specified, and it is thus effectively optional.
+
+    Other expansions are:
 
     - \"%l\" is replaced by the login shell `tramp-remote-shell'
       and its parameters.
     - \"%t\" is replaced by the temporary file name produced with
       `tramp-make-tramp-temp-file'.
-    - \"%k\" indicates the keep-date parameter of a program, if exists
+    - \"%k\" indicates the keep-date parameter of a program, if exists.
     - \"%c\" adds additional `tramp-ssh-controlmaster-options'
       options for the first hop.
 
