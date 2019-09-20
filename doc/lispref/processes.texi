@@ -1042,7 +1042,7 @@ this is either @code{nil}, which means the process is running or
 @end smallexample
 @end defun
 
-@defun process-contact process &optional key
+@defun process-contact process &optional key no-block
 This function returns information about how a network, a serial, or a
 pipe connection was set up.  When @var{key} is @code{nil}, it returns
 @code{(@var{hostname} @var{service})} for a network connection,
@@ -1086,6 +1086,11 @@ connection, see @code{make-pipe-process} for the list of keys.
 
 If @var{key} is a keyword, the function returns the value corresponding
 to that keyword.
+
+If @var{process} is a non-blocking network stream that hasn't been
+fully set up yet, then this function will block until that has
+happened.  If given the optional @var{no-block} parameter, this
+function will return @code{nil} instead of blocking.
 @end defun
 
 @defun process-id process

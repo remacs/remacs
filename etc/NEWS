@@ -2131,6 +2131,10 @@ valid event type.
 * Lisp Changes in Emacs 27.1
 
 +++
+** 'process-contact' now takes an optional NO-BLOCK parameter to allow
+not waiting for a process to be set up.
+
++++
 ** The new 'quit-window-hook' is now run first when executing the
 'quit-window' command.
 

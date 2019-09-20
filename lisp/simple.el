@@ -4107,7 +4107,7 @@ Also, delete any process that is exited or signaled."
 		    (t "--")))
 		  (cmd
 		   (if (memq type '(network serial))
-		       (let ((contact (process-contact p t)))
+		       (let ((contact (process-contact p t t)))
 			 (if (eq type 'network)
 			     (format "(%s %s)"
 				     (if (plist-get contact :type)
