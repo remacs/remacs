@@ -182,6 +182,7 @@ with an old syntax that accepted only one binding."
     (setq spec (list spec)))
   (list 'if-let* spec then (macroexp-progn else)))
 
+;;;###autoload
 (defmacro when-let (spec &rest body)
   "Bind variables according to SPEC and conditionally evaluate BODY.
 Evaluate each binding in turn, stopping if a binding value is nil.
