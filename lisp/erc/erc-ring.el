@@ -147,5 +147,4 @@ containing a password."
 ;;; erc-ring.el ends here
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: nil
 ;; End:

@@ -873,6 +873,4 @@ VALUE is the options value.")
 ;;; erc-networks.el ends here
 ;;
 ;; Local Variables:
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:

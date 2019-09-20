@@ -91,6 +91,4 @@ It replaces text according to `erc-replace-alist'."
 ;;
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:

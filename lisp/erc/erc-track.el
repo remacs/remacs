@@ -947,6 +947,4 @@ switch back to the last non-ERC buffer visited.  Next is defined by
 ;;
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:

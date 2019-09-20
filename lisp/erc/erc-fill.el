@@ -194,5 +194,4 @@ You can put this on `erc-insert-modify-hook' and/or `erc-send-modify-hook'."
 ;;; erc-fill.el ends here
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: nil
 ;; End:

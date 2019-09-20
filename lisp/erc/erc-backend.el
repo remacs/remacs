@@ -2075,6 +2075,3 @@ See `erc-display-error-notice'." nil
 (provide 'erc-backend)
 
 ;;; erc-backend.el ends here
-;; Local Variables:
-;; indent-tabs-mode: nil
-;; End:

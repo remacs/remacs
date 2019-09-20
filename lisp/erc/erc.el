@@ -6854,6 +6854,4 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL."
 ;;
 ;; Local Variables:
 ;; outline-regexp: ";;+"
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:

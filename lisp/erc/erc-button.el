@@ -531,5 +531,4 @@ and `apropos' for other symbols."
 ;;; erc-button.el ends here
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: nil
 ;; End:

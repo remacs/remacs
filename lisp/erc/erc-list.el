@@ -226,6 +226,4 @@ to RFC and send the LIST header (#321) at start of list transmission."
 ;;
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:
