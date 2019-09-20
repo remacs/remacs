@@ -1164,9 +1164,15 @@ FILE is the file from which we obtained this token."
 (defvar auth-source--session-nonce nil)
 
 (defun auth-source--obfuscate (string)
+  ;; We want to keep passwords out of backtraces and bug reports and
+  ;; the like, so if we have GnuTLS available, we encrypt them with a
+  ;; nonce that we just keep in memory.  If somebody has access to the
+  ;; current Emacs session, they can be decrypted, but if not, little
+  ;; useful information is leaked.  If you reset the nonce, you also
+  ;; have to call `auth-source-forget-all-cached'.
   (unless auth-source--session-nonce
     (setq auth-source--session-nonce
-          (apply #'string (cl-loop repeat 10
+          (apply #'string (cl-loop repeat 32
                                    collect (random 128)))))
   (if (and (fboundp 'gnutls-symmetric-encrypt)
            (gnutls-available-p))
