@@ -1172,42 +1172,45 @@ FILE is the file from which we obtained this token."
   ;; have to call `auth-source-forget-all-cached'.
   (unless auth-source--session-nonce
     (setq auth-source--session-nonce
-          (apply #'string (cl-loop repeat 32
+          (apply #'string (cl-loop repeat 16
                                    collect (random 128)))))
   (if (and (fboundp 'gnutls-symmetric-encrypt)
            (gnutls-available-p))
       (let ((cdata (car (last (gnutls-ciphers)))))
         (mapconcat
          #'base64-encode-string
-         (append
-          (list (format "%d" (length string)))
-          (gnutls-symmetric-encrypt
-           (pop cdata)
-           (auth-source--pad auth-source--session-nonce
-                             (plist-get cdata :cipher-keysize))
-           (list 'iv-auto (plist-get cdata :cipher-ivsize))
-           (auth-source--pad string (plist-get cdata :cipher-blocksize))))
+         (gnutls-symmetric-encrypt
+          (pop cdata)
+          (auth-source--pad auth-source--session-nonce
+                            (plist-get cdata :cipher-keysize))
+          (list 'iv-auto (plist-get cdata :cipher-ivsize))
+          (auth-source--pad string (plist-get cdata :cipher-blocksize)))
          "-"))
     (mapcar #'1- string)))
 
-(defun auth-source--pad (s length)
+(defun auth-source--pad (string length)
   "Pad string S to a modulo of LENGTH."
-  (concat s (make-string (- length (mod (length s) length)) ?\0)))
+  (let ((pad (- length (mod (length string) length))))
+    (concat string (make-string pad pad))))
+
+(defun auth-source--unpad (string)
+  "Remove PKCS#7 padding from STRING."
+  (substring string 0 (- (length string)
+			 (aref string (1- (length string))))))
 
 (defun auth-source--deobfuscate (data)
   (if (and (fboundp 'gnutls-symmetric-encrypt)
            (gnutls-available-p))
       (let ((cdata (car (last (gnutls-ciphers))))
             (bits (split-string data "-")))
-        (substring
+        (auth-source--unpad
          (car
           (gnutls-symmetric-decrypt
            (pop cdata)
            (auth-source--pad auth-source--session-nonce
                              (plist-get cdata :cipher-keysize))
-           (base64-decode-string (caddr bits))
-           (base64-decode-string (cadr bits))))
-         0 (string-to-number (base64-decode-string (car bits)))))
+           (base64-decode-string (cadr bits))
+           (base64-decode-string (car bits))))))
     (apply #'string (mapcar #'1+ data))))
 
 (cl-defun auth-source-netrc-search (&rest spec
