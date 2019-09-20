@@ -1168,7 +1168,8 @@ FILE is the file from which we obtained this token."
     (setq auth-source--session-nonce
           (apply #'string (cl-loop repeat 10
                                    collect (random 128)))))
-  (if (fboundp 'gnutls-symmetric-encrypt)
+  (if (and (fboundp 'gnutls-symmetric-encrypt)
+           (gnutls-available-p))
       (let ((cdata (car (last (gnutls-ciphers)))))
         (mapconcat
          #'base64-encode-string
@@ -1188,7 +1189,8 @@ FILE is the file from which we obtained this token."
   (concat s (make-string (- length (mod (length s) length)) ?\0)))
 
 (defun auth-source--deobfuscate (data)
-  (if (fboundp 'gnutls-symmetric-encrypt)
+  (if (and (fboundp 'gnutls-symmetric-encrypt)
+           (gnutls-available-p))
       (let ((cdata (car (last (gnutls-ciphers))))
             (bits (split-string data "-")))
         (substring
