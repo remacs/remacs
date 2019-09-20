@@ -72,7 +72,7 @@ PROCESSED-PARAMS isn't used yet."
 (defun org-babel-execute:J (body params)
   "Execute a block of J code BODY.
 PARAMS are given by org-babel.
-This function is called by `org-babel-execute-src-block'"
+This function is called by `org-babel-execute-src-block'."
   (message "executing J source code block")
   (let* ((processed-params (org-babel-process-params params))
 	 (sessionp (cdr (assq :session params)))

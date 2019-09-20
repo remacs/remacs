@@ -1592,7 +1592,7 @@ previous region was just saved to the kill ring).
 
 If this command is called a second consecutive time with the same
 CLICK position, kill the region (or delete it
-if `mouse-drag-copy-region' is non-nil)"
+if `mouse-drag-copy-region' is non-nil)."
   (interactive "e")
   (mouse-minibuffer-check click)
   (let* ((posn     (event-start click))

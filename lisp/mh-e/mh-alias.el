@@ -51,10 +51,10 @@
     "/usr/lib/mh/MailAliases" "/usr/share/mailutils/mh/MailAliases"
     "/etc/passwd")
   "A list of system files which are a source of aliases.
-If these files are modified, they are automatically reread. This list
+If these files are modified, they are automatically reread.  This list
 need include only system aliases and the passwd file, since personal
 alias files listed in your \"Aliasfile:\" MH profile component are
-automatically included. You can update the alias list manually using
+automatically included.  You can update the alias list manually using
 \\[mh-alias-reload]."
   :type '(repeat file)
   :group 'mh-alias)
@@ -170,9 +170,9 @@ Exclude all aliases already in `mh-alias-alist' from \"ali\""
 
 Since aliases are updated frequently, MH-E reloads aliases
 automatically whenever an alias lookup occurs if an alias source has
-changed. Sources include files listed in your \"Aliasfile:\" profile
+changed.  Sources include files listed in your \"Aliasfile:\" profile
 component and your password file if option `mh-alias-local-users' is
-turned on. However, you can reload your aliases manually by calling
+turned on.  However, you can reload your aliases manually by calling
 this command directly.
 
 This function runs `mh-alias-reloaded-hook' after the aliases have
@@ -224,8 +224,9 @@ been loaded."
 (defun mh-alias-ali (alias &optional user)
   "Return ali expansion for ALIAS.
 ALIAS must be a string for a single alias.
-If USER is t, then assume ALIAS is an address and call ali -user. ali
-returns the string unchanged if not defined. The same is done here."
+If USER is t, then assume ALIAS is an address and call ali -user.
+ali returns the string unchanged if not defined.  The same is
+done here."
   (condition-case err
       (save-excursion
         (let ((user-arg (if user "-user" "-nouser")))
@@ -378,8 +379,8 @@ NO-COMMA-SWAP is non-nil."
 
 (defun mh-alias-canonicalize-suggestion (string)
   "Process STRING to replace spaces by periods.
-First all spaces and commas are replaced by periods. Then every run of
-consecutive periods are replaced with a single period. Finally the
+First all spaces and commas are replaced by periods.   Then every run
+of consecutive periods are replaced with a single period.  Finally the
 string is converted to lower case."
   (with-temp-buffer
     (insert string)
@@ -492,9 +493,9 @@ Prompt for alias file if not provided and there is more than one
 candidate.
 
 If the alias exists already, you will have the choice of
-inserting the new alias before or after the old alias. In the
+inserting the new alias before or after the old alias.  In the
 former case, this alias will be used when sending mail to this
-alias. In the latter case, the alias serves as an additional
+alias.  In the latter case, the alias serves as an additional
 folder name hint when filing messages."
   (if (not file)
       (setq file (mh-alias-insert-file alias)))
@@ -544,10 +545,10 @@ folder name hint when filing messages."
 (defun mh-alias-add-alias (alias address)
   "Add ALIAS for ADDRESS in personal alias file.
 
-This function prompts you for an alias and address. If the alias
+This function prompts you for an alias and address.  If the alias
 exists already, you will have the choice of inserting the new
-alias before or after the old alias. In the former case, this
-alias will be used when sending mail to this alias. In the latter
+alias before or after the old alias.  In the former case, this
+alias will be used when sending mail to this alias.  In the latter
 case, the alias serves as an additional folder name hint when
 filing messages."
   (interactive "P\nP")

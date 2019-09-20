@@ -381,7 +381,7 @@ wrong count of total articles shown by Gnus.")
 its maildir mail folders (e.g. the Dovecot IMAP server or mutt).")
 
 (defvoo nnmairix-default-group nil
-  "Default search group. This is the group which is used for all
+  "Default search group.  This is the group which is used for all
 temporary searches, e.g. nnmairix-search.")
 
 ;;; === Internal variables
@@ -1096,7 +1096,7 @@ show wrong article counts."
 (defun nnmairix-propagate-marks (&optional server)
   "Propagate marks from nnmairix group to original articles.
 Unless SERVER is explicitly specified, will use the last opened
-nnmairix server. Only marks from current session will be set."
+nnmairix server.  Only marks from current session will be set."
   (interactive)
   (if server
       (nnmairix-open-server server)

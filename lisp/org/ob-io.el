@@ -41,8 +41,8 @@
   "Name of the command to use for executing Io code.")
 
 (defun org-babel-execute:io (body params)
-  "Execute a block of Io code with org-babel.  This function is
-called by `org-babel-execute-src-block'"
+  "Execute a block of Io code with org-babel.
+This function is called by `org-babel-execute-src-block'."
   (message "executing Io source code block")
   (let* ((processed-params (org-babel-process-params params))
          (session (org-babel-io-initiate-session (nth 0 processed-params)))

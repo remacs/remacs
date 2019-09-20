@@ -40,7 +40,7 @@
 
 
 (defun math-map-binop (binop args1 args2)
-  "Apply BINOP to the elements of the lists ARGS1 and ARGS2"
+  "Apply BINOP to the elements of the lists ARGS1 and ARGS2."
   (if args1
       (cons
        (funcall binop (car args1) (car args2))

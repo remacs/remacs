@@ -215,7 +215,7 @@ return the value of the last statement in BODY, as elisp."
        (let ((eoe-string (format "puts \"%s\"" org-babel-ruby-eoe-indicator)))
 	 ;; Force the session to be ready before the actual session
 	 ;; code is run.  There is some problem in comint that will
-	 ;; sometimes show the prompt after the the input has already
+	 ;; sometimes show the prompt after the input has already
 	 ;; been inserted and that throws off the extraction of the
 	 ;; result for Babel.
 	 (org-babel-comint-with-output

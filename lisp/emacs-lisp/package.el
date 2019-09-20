@@ -448,11 +448,11 @@ Slots:
 `summary' Short description of the package, typically taken from
         the first line of the file.
 
-`reqs'	Requirements of the package. A list of (PACKAGE
+`reqs'	Requirements of the package.  A list of (PACKAGE
         VERSION-LIST) naming the dependent package and the minimum
         required version.
 
-`kind'	The distribution format of the package. Currently, it is
+`kind'	The distribution format of the package.  Currently, it is
         either `single' or `tar'.
 
 `archive' The name of the archive (as a string) whence this
@@ -980,7 +980,7 @@ untar into a directory named DIR; otherwise, signal an error."
     auto-name))
 
 (defun package--make-autoloads-and-stuff (pkg-desc pkg-dir)
-  "Generate autoloads, description file, etc.. for PKG-DESC installed at PKG-DIR."
+  "Generate autoloads, description file, etc., for PKG-DESC installed at PKG-DIR."
   (package-generate-autoloads (package-desc-name pkg-desc) pkg-dir)
   (let ((desc-file (expand-file-name (package--description-file pkg-dir)
                                      pkg-dir)))
@@ -2843,7 +2843,7 @@ If the name of a package matches any of these regexps it is
 omitted from the package menu.  To toggle this, type \\[package-menu-toggle-hiding].
 
 Values can be interactively added to this list by typing
-\\[package-menu-hide-package] on a package"
+\\[package-menu-hide-package] on a package."
   :version "25.1"
   :type '(repeat (regexp :tag "Hide packages with name matching")))
 

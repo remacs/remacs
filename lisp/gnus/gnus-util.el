@@ -1610,7 +1610,7 @@ empty directories from OLD-PATH."
 
 (defun gnus-rescale-image (image size)
   "Rescale IMAGE to SIZE if possible.
-SIZE is in format (WIDTH . HEIGHT). Return a new image.
+SIZE is in format (WIDTH . HEIGHT).  Return a new image.
 Sizes are in pixels."
   (if (not (fboundp 'imagemagick-types))
       image

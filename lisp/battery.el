@@ -113,7 +113,7 @@ string are substituted as defined by the current value of the variable
 ;;;###autoload (put 'battery-mode-line-string 'risky-local-variable t)
 
 (defcustom battery-mode-line-limit 100
-  "Percentage of full battery load below which display battery status"
+  "Percentage of full battery load below which display battery status."
   :version "24.1"
   :type 'integer
   :group 'battery)

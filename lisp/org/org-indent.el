@@ -298,7 +298,7 @@ LEVEL is the current level of heading.  INDENTATION is the
 expected indentation when wrapping line.
 
 When optional argument HEADING is non-nil, assume line is at
-a heading.  Moreover, if is is `inlinetask', the first star will
+a heading.  Moreover, if it is `inlinetask', the first star will
 have `org-warning' face."
   (let* ((line (aref (pcase heading
 		       (`nil org-indent--text-line-prefixes)

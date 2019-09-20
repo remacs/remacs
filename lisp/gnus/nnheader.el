@@ -661,7 +661,7 @@ the line could be found."
 (defvar nnheader-directory-files-is-safe (not (eq system-type 'windows-nt))
   "If non-nil, Gnus believes `directory-files' is safe.
 It has been reported numerous times that `directory-files' fails with
-an alarming frequency on NFS mounted file systems. If it is nil,
+an alarming frequency on NFS mounted file systems.  If it is nil,
 `nnheader-directory-files-safe' is used.")
 
 (defun nnheader-directory-files-safe (&rest args)

@@ -300,7 +300,7 @@ This class brings in method overloads for building.")
 (defclass ede-target-with-config-build ()
   ()
   "Class to mix into a project with configuration for builds.
-This class brings in method overloads for for building.")
+This class brings in method overloads for building.")
 
 (cl-defmethod project-compile-project ((proj ede-project-with-config-build) &optional command)
   "Compile the entire current project PROJ.

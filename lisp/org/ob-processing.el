@@ -135,7 +135,7 @@ This function is called by `org-babel-execute-src-block'."
 
 (defun org-babel-prep-session:processing (_session _params)
   "Return an error if the :session header argument is set.
-Processing does not support sessions"
+Processing does not support sessions."
   (error "Processing does not support sessions"))
 
 (defun org-babel-variable-assignments:processing (params)

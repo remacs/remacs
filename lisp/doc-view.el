@@ -214,7 +214,7 @@ scaling."
 (defcustom doc-view-image-width 850
   "Default image width.
 Has only an effect if `doc-view-scale-internally' is non-nil and support for
-scaling is compiled into emacs."
+scaling is compiled into Emacs."
   :version "24.1"
   :type 'number)
 
@@ -1778,7 +1778,7 @@ If BACKWARD is non-nil, jump to the previous match."
               (error "Cannot determine the document type"))))))
 
 (defun doc-view-set-up-single-converter ()
-  "Find the right single-page converter for the current document type"
+  "Find the right single-page converter for the current document type."
   (pcase-let ((`(,conv-function ,type ,extension)
                (pcase doc-view-doc-type
                  ('djvu (list #'doc-view-djvu->tiff-converter-ddjvu 'tiff "tif"))

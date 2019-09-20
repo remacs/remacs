@@ -49,8 +49,8 @@
 ;; Use ebnf-eps-buffer to produce an encapsulated postscript file.
 ;;
 (defun org-babel-execute:ebnf (body params)
-  "Execute a block of Ebnf code with org-babel.  This function is
-called by `org-babel-execute-src-block'"
+  "Execute a block of Ebnf code with org-babel.
+This function is called by `org-babel-execute-src-block'."
   (save-excursion
     (let* ((dest-file (cdr (assq :file params)))
 	   (dest-dir (file-name-directory dest-file))

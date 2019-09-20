@@ -107,7 +107,7 @@ Override the value locally if a language supports other tag types.
 When adding new elements, try to use symbols also returned by the parser.
 The form of an entry in this list is of the form:
  ( SYMBOL .  FACE )
-where SYMBOL is a tag type symbol used with semantic.  FACE
+where SYMBOL is a tag type symbol used with semantic, and FACE
 is a symbol representing a face.
 Faces used are generated in `font-lock' for consistency, and will not
 be used unless font lock is a feature.")
@@ -407,7 +407,7 @@ Optional argument COLOR means highlight the prototype with font-lock colors."
       (concat file ": " proto))))
 
 (define-overloadable-function semantic-format-tag-short-doc (tag &optional parent color)
-  "Display a short form of TAG's documentation. (Comments, or docstring.)
+  "Display a short form of TAG's documentation.  (Comments, or docstring.)
 Optional argument PARENT is the parent type if TAG is a detail.
 Optional argument COLOR means highlight the prototype with font-lock colors.")
 

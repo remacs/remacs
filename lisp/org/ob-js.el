@@ -60,7 +60,7 @@
 
 (defun org-babel-execute:js (body params)
   "Execute a block of Javascript code with org-babel.
-This function is called by `org-babel-execute-src-block'"
+This function is called by `org-babel-execute-src-block'."
   (let* ((org-babel-js-cmd (or (cdr (assq :cmd params)) org-babel-js-cmd))
          (result-type (cdr (assq :result-type params)))
          (full-body (org-babel-expand-body:generic

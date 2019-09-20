@@ -148,7 +148,7 @@ RETURN-ATTRS is a list of attributes to return, defaulting to
 (defun eudc-ldap-get-field-list (_dummy &optional objectclass)
   "Return a list of valid attribute names for the current server.
 OBJECTCLASS is the LDAP object class for which the valid
-attribute names are returned. Default to `person'"
+attribute names are returned.  Default to `person'."
   (interactive)
   (or eudc-server
       (call-interactively 'eudc-set-server))

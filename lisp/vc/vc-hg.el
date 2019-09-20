@@ -898,7 +898,7 @@ REPO must be the directory name of an hg repository."
      :file-sources (nreverse vc-hg--hgignore-filenames))))
 
 (defun vc-hg--ignore-patterns-valid-p (hgip)
-  "Return whether the cached ignore patterns in HGIP are still valid"
+  "Return whether the cached ignore patterns in HGIP are still valid."
   (let ((valid t)
         (file-sources (vc-hg--ignore-patterns-file-sources hgip)))
     (while (and file-sources valid)

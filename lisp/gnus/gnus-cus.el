@@ -190,7 +190,7 @@ Which articles to display on entering the group.
      unread and ticked articles.
 
 `Other'
-     Display the articles that satisfy the S-expression. The S-expression
+     Display the articles that satisfy the S-expression.  The S-expression
      should be in an array form.")
 
     (comment (string :tag  "Comment") "\

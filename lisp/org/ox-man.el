@@ -159,7 +159,7 @@ When nil, no transformation is made."
 ;; Src blocks
 
 (defcustom org-man-source-highlight nil
-  "Use GNU source highlight to embellish source blocks "
+  "Use GNU source highlight to embellish source blocks."
   :group 'org-export-man
   :version "24.4"
   :package-version '(Org . "8.0")
@@ -1042,7 +1042,7 @@ holding contextual information."
 
 (defun org-man-verse-block (_verse-block contents _info)
   "Transcode a VERSE-BLOCK element from Org to Man.
-CONTENTS is verse block contents. INFO is a plist holding
+CONTENTS is verse block contents.  INFO is a plist holding
 contextual information."
   (format ".RS\n.ft I\n%s\n.ft\n.RE" contents))
 

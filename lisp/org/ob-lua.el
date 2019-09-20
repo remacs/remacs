@@ -101,7 +101,7 @@ This function is called by `org-babel-execute-src-block'."
 
 (defun org-babel-prep-session:lua (session params)
   "Prepare SESSION according to the header arguments in PARAMS.
-VARS contains resolved variable references"
+VARS contains resolved variable references."
   (let* ((session (org-babel-lua-initiate-session session))
 	 (var-lines
 	  (org-babel-variable-assignments:lua params)))

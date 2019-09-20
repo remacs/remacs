@@ -710,7 +710,7 @@ If NOW, use that time instead."
 
 (defun pop3-list (process &optional msg)
   "If MSG is nil, return an alist of (MESSAGE-ID . SIZE) pairs.
-Otherwise, return the size of the message-id MSG"
+Otherwise, return the size of the message-id MSG."
   (pop3-send-command process (if msg
 				 (format "LIST %d" msg)
 			       "LIST"))

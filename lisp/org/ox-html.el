@@ -1138,7 +1138,7 @@ checkboxes. The other two use the `off' checkbox for `trans'.")
 
 (defcustom org-html-checkbox-type 'ascii
   "The type of checkboxes to use for HTML export.
-See `org-html-checkbox-types' for for the values used for each
+See `org-html-checkbox-types' for the values used for each
 option."
   :group 'org-export-html
   :version "24.4"

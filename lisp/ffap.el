@@ -950,7 +950,7 @@ appending SUFFIX.")
 
 (defun ffap-latex-mode (name)
   "`ffap' function suitable for latex buffers.
-This uses the program kpsewhich if available. In this case, the
+This uses the program kpsewhich if available.  In this case, the
 variable `ffap-latex-guess-rules' is used for building a filename
 out of NAME."
   (cond ((file-exists-p name)

@@ -809,7 +809,7 @@ was inserted."
 
 If the current buffer is displaying an image file as an image,
 call `image-mode-as-text' to switch to text or hex display.
-Otherwise, display the image by calling `image-mode'"
+Otherwise, display the image by calling `image-mode'."
   (interactive)
   (if (image-get-display-property)
       (image-mode-as-text)

@@ -2733,15 +2733,15 @@ with some simple extensions.
 %O          Download mark (character).
 %*          If present, indicates desired cursor position
             (instead of after first colon).
-%u          User defined specifier. The next character in the
-            format string should be a letter. Gnus will call the
+%u          User defined specifier.  The next character in the
+            format string should be a letter.  Gnus will call the
             function gnus-user-format-function-X, where X is the
-            letter following %u. The function will be passed the
-            current header as argument. The function should
+            letter following %u.  The function will be passed the
+            current header as argument.  The function should
             return a string, which will be inserted into the
             summary just like information from any other summary
             specifier.
-&user-date; Age sensitive date format. Various date format is
+&user-date; Age sensitive date format.  Various date format is
             defined in `gnus-user-date-format-alist'.
 
 
@@ -4055,10 +4055,10 @@ Allow completion over sensible values."
 ;;;###autoload
 (defun gnus-no-server (&optional arg slave)
   "Read network news.
-If ARG is a positive number, Gnus will use that as the startup
-level. If ARG is nil, Gnus will be started at level 2.  If ARG is
-non-nil and not a positive number, Gnus will prompt the user for the
-name of an NNTP server to use.
+If ARG is a positive number, Gnus will use that as the startup level.
+If ARG is nil, Gnus will be started at level 2.  If ARG is non-nil
+and not a positive number, Gnus will prompt the user for the name of
+an NNTP server to use.
 As opposed to `gnus', this command will not connect to the local
 server."
   (interactive "P")

@@ -1902,7 +1902,7 @@ If you are unsure, use synchronous version of this function
 
 (defun epg-receive-keys (context keys)
   "Add keys from server.
-KEYS is a list of key IDs"
+KEYS is a list of key IDs."
   (unwind-protect
       (progn
 	(epg-start-receive-keys context keys)
@@ -2002,7 +2002,7 @@ PARAMETERS is a string which tells how to create the key."
 (defun epg-start-edit-key (context key edit-callback handback)
   "Initiate an edit operation on KEY.
 
-EDIT-CALLBACK is called from process filter and takes 3
+EDIT-CALLBACK is called from process filter and takes four
 arguments: the context, a status, an argument string, and the
 handback argument.
 

@@ -267,7 +267,7 @@ you can \"misuse\" it to also add other text to the header."
   "List of types searched for when creating the daily/weekly agenda.
 This variable is a list of symbols that controls the types of
 items that appear in the daily/weekly agenda.  Allowed symbols in this
-list are are
+list are
 
   :timestamp   List items containing a date stamp or date range matching
                the selected date.  This includes sexp entries in angular
@@ -1225,9 +1225,9 @@ These days get the special face `org-agenda-date-weekend' in the agenda."
 
 (defcustom org-agenda-move-date-from-past-immediately-to-today t
   "Non-nil means jump to today when moving a past date forward in time.
-When using S-right in the agenda to move a a date forward, and the date
+When using S-right in the agenda to move a date forward, and the date
 stamp currently points to the past, the first key press will move it
-to today.  WHen nil, just move one day forward even if the date stays
+to today.  When nil, just move one day forward even if the date stays
 in the past."
   :group 'org-agenda-daily/weekly
   :version "24.1"
@@ -1498,7 +1498,7 @@ The third item is a string which will be placed right after the
 times that have a grid line.
 
 The fourth item is a string placed after the grid times.  This
-will align with agenda items"
+will align with agenda items."
   :group 'org-agenda-time-grid
   :type
   '(list
@@ -1542,18 +1542,18 @@ This is a list of symbols which will be used in sequence to determine
 if an entry should be listed before another entry.  The following
 symbols are recognized:
 
-time-up            Put entries with time-of-day indications first, early first
-time-down          Put entries with time-of-day indications first, late first
-timestamp-up       Sort by any timestamp, early first
-timestamp-down     Sort by any timestamp, late first
-scheduled-up       Sort by scheduled timestamp, early first
-scheduled-down     Sort by scheduled timestamp, late first
-deadline-up        Sort by deadline timestamp, early first
-deadline-down      Sort by deadline timestamp, late first
-ts-up              Sort by active timestamp, early first
-ts-down            Sort by active timestamp, late first
-tsia-up            Sort by inactive timestamp, early first
-tsia-down          Sort by inactive timestamp, late first
+time-up            Put entries with time-of-day indications first, early first.
+time-down          Put entries with time-of-day indications first, late first.
+timestamp-up       Sort by any timestamp, early first.
+timestamp-down     Sort by any timestamp, late first.
+scheduled-up       Sort by scheduled timestamp, early first.
+scheduled-down     Sort by scheduled timestamp, late first.
+deadline-up        Sort by deadline timestamp, early first.
+deadline-down      Sort by deadline timestamp, late first.
+ts-up              Sort by active timestamp, early first.
+ts-down            Sort by active timestamp, late first.
+tsia-up            Sort by inactive timestamp, early first.
+tsia-down          Sort by inactive timestamp, late first.
 category-keep      Keep the default order of categories, corresponding to the
 		   sequence in `org-agenda-files'.
 category-up        Sort alphabetically by category, A-Z.
@@ -1568,10 +1568,10 @@ effort-up          Sort numerically by estimated effort, high effort last.
 effort-down        Sort numerically by estimated effort, high effort first.
 user-defined-up    Sort according to `org-agenda-cmp-user-defined', high last.
 user-defined-down  Sort according to `org-agenda-cmp-user-defined', high first.
-habit-up           Put entries that are habits first
-habit-down         Put entries that are habits last
-alpha-up           Sort headlines alphabetically
-alpha-down         Sort headlines alphabetically, reversed
+habit-up           Put entries that are habits first.
+habit-down         Put entries that are habits last.
+alpha-up           Sort headlines alphabetically.
+alpha-down         Sort headlines alphabetically, reversed.
 
 The different possibilities will be tried in sequence, and testing stops
 if one comparison returns a \"not-equal\".  For example, the default
@@ -7365,8 +7365,7 @@ With a prefix argument, do so in all agenda buffers."
   "Filter lines in the agenda buffer that have a specific category.
 The category is that of the current line.
 Without prefix argument, keep only the lines of that category.
-With a prefix argument, exclude the lines of that category.
-"
+With a prefix argument, exclude the lines of that category."
   (interactive "P")
   (if (and org-agenda-filtered-by-category
 	   org-agenda-category-filter)
@@ -7882,7 +7881,7 @@ Negative selection means regexp must not match for selection of an entry."
 
 (defun org-agenda-forward-block (&optional backward)
   "Move forward by one agenda block.
-When optional argument BACKWARD is set, go backward"
+When optional argument BACKWARD is set, go backward."
   (interactive)
   (cond ((not (derived-mode-p 'org-agenda-mode))
 	 (user-error

@@ -390,7 +390,7 @@ If the symbols for the current master file do not exist, they are created."
           (buffer-file-name)))))
     (cond
      ((null master)
-      (error "Need a filename for this buffer,  please save it first"))
+      (error "Need a filename for this buffer, please save it first"))
      ((or (file-exists-p (concat master ".tex"))
           (reftex-get-buffer-visiting (concat master ".tex")))
       ;; Ahh, an extra .tex was missing...

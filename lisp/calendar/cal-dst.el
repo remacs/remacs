@@ -276,7 +276,7 @@ function `calendar-dst-find-startend'.")
   "Find the dates in YEAR on which daylight saving time starts and ends.
 Returns a list (YEAR START END), where START and END are
 expressions that when evaluated return the start and end dates,
-respectively. This function first attempts to use pre-calculated
+respectively.  This function first attempts to use pre-calculated
 data from `calendar-dst-transition-cache', otherwise it calls
 `calendar-dst-find-data' (and adds the results to the cache).
 If dates in YEAR cannot be handled by `encode-time' (e.g.,

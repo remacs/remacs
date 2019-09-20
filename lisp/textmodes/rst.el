@@ -1904,7 +1904,7 @@ includes indentation and correct length of adornment lines."
   "Return the next best `rst-Hdr' upward from HDR.
 Consider existing hierarchy HIER and preferred headers.  PREV may
 be a previous `rst-Hdr' which may be taken into account.  If DOWN
-return the next best `rst-Hdr' downward instead. Return nil in
+return the next best `rst-Hdr' downward instead.  Return nil if
 HIER is nil."
   (let* ((normalized-hier (if down
 			      hier
@@ -2878,7 +2878,7 @@ file-write hook to always make it up-to-date automatically."
   ;; testcover: ok.
   "Display a table of contents for current buffer.
 Displays all section titles found in the current buffer in a
-hierarchical list. The resulting buffer can be navigated, and
+hierarchical list.  The resulting buffer can be navigated, and
 selecting a section title moves the cursor to that section."
   (interactive)
   (rst-reset-section-caches)
@@ -3397,7 +3397,7 @@ Region is from BEG to END.  Uncomment if ARG."
 
 (defun rst-uncomment-region (beg end &optional _arg)
   "Uncomment the current region.
-Region is from BEG to END.  _ARG is ignored"
+Region is from BEG to END.  _ARG is ignored."
   (save-excursion
     (goto-char beg)
     (rst-forward-line-strict 0)
@@ -4003,7 +4003,7 @@ to `font-lock-end'."
 
 (defun rst-font-lock-extend-region-internal (beg end)
   "Check the region BEG / END for being in the middle of a multi-line construct.
-Return nil if not or a cons with new values for BEG / END"
+Return nil if not or a cons with new values for BEG / END."
   (let ((nbeg (rst-font-lock-extend-region-extend beg -1))
 	(nend (rst-font-lock-extend-region-extend end 1)))
     (if (or nbeg nend)

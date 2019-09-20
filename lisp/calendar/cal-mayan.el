@@ -314,7 +314,7 @@ Echo Mayan date unless NOECHO is non-nil."
 
 (defun calendar-mayan-long-count-to-absolute (c)
   "Compute the absolute date corresponding to the Mayan Long Count C.
-Long count is a list (baktun katun tun uinal kin)"
+Long count is a list (baktun katun tun uinal kin)."
   (+ (* (nth 0 c) 144000)               ; baktun
      (* (nth 1 c) 7200)                 ; katun
      (* (nth 2 c) 360)                  ; tun

@@ -44,7 +44,7 @@ Each handler is a list on the form
 
 FUNCTION is the function to be called.  TIME is the number of
 `gnus-demon-timestep's between each call.
-If nil, never call. If t, call each `gnus-demon-timestep'.
+If nil, never call.  If t, call each `gnus-demon-timestep'.
 
 If IDLE is t, only call each time Emacs has been idle for TIME.
 If IDLE is a number, only call when Emacs has been idle more than
@@ -98,8 +98,8 @@ Emacs has been idle for IDLE `gnus-demon-timestep's."
 (defun gnus-demon-run-callback (func &optional idle time special)
   "Run FUNC if Emacs has been idle for longer than IDLE seconds.
 If not, and a TIME is given, restart a new idle timer, so FUNC
-can be called at the next opportunity. Such a special idle run is
-marked with SPECIAL."
+can be called at the next opportunity.  Such a special idle run
+is marked with SPECIAL."
   (unless gnus-inhibit-demon
     (cl-block run-callback
       (when (eq idle t)

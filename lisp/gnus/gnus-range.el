@@ -28,7 +28,7 @@
 
 (defsubst gnus-range-normalize (range)
   "Normalize RANGE.
-If RANGE is a single range, return (RANGE). Otherwise, return RANGE."
+If RANGE is a single range, return (RANGE).  Otherwise, return RANGE."
   (if (listp (cdr-safe range)) range (list range)))
 
 (defun gnus-last-element (list)

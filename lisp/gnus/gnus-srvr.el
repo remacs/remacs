@@ -190,14 +190,14 @@ If nil, a faster, but more primitive, buffer is used instead."
   '((((class color) (background light)) (:foreground "PaleTurquoise" :bold t))
     (((class color) (background dark)) (:foreground "PaleTurquoise" :bold t))
     (t (:bold t)))
-  "Face used for displaying AGENTIZED servers"
+  "Face used for displaying AGENTIZED servers."
   :group 'gnus-server-visual)
 
 (defface gnus-server-cloud
   '((((class color) (background light)) (:foreground "ForestGreen" :bold t))
     (((class color) (background dark)) (:foreground "PaleGreen" :bold t))
     (t (:bold t)))
-  "Face used for displaying Cloud-synced servers"
+  "Face used for displaying Cloud-synced servers."
   :group 'gnus-server-visual)
 
 (defface gnus-server-cloud-host
@@ -211,7 +211,7 @@ If nil, a faster, but more primitive, buffer is used instead."
   '((((class color) (background light)) (:foreground "Green3" :bold t))
     (((class color) (background dark)) (:foreground "Green1" :bold t))
     (t (:bold t)))
-  "Face used for displaying OPENED servers"
+  "Face used for displaying OPENED servers."
   :group 'gnus-server-visual)
 
 (defface gnus-server-closed
@@ -219,21 +219,21 @@ If nil, a faster, but more primitive, buffer is used instead."
     (((class color) (background dark))
      (:foreground "LightBlue" :italic t))
     (t (:italic t)))
-  "Face used for displaying CLOSED servers"
+  "Face used for displaying CLOSED servers."
   :group 'gnus-server-visual)
 
 (defface gnus-server-denied
   '((((class color) (background light)) (:foreground "Red" :bold t))
     (((class color) (background dark)) (:foreground "Pink" :bold t))
     (t (:inverse-video t :bold t)))
-  "Face used for displaying DENIED servers"
+  "Face used for displaying DENIED servers."
   :group 'gnus-server-visual)
 
 (defface gnus-server-offline
   '((((class color) (background light)) (:foreground "Orange" :bold t))
     (((class color) (background dark)) (:foreground "Yellow" :bold t))
     (t (:inverse-video t :bold t)))
-  "Face used for displaying OFFLINE servers"
+  "Face used for displaying OFFLINE servers."
   :group 'gnus-server-visual)
 
 (defvar gnus-server-font-lock-keywords

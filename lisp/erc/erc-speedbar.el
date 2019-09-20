@@ -42,7 +42,7 @@
 ;;; Customization:
 
 (defgroup erc-speedbar nil
-  "Integration of ERC in the Speedbar"
+  "Integration of ERC in the Speedbar."
   :group 'erc)
 
 (defcustom erc-speedbar-sort-users-type 'activity
@@ -270,8 +270,8 @@ INDENT is the current indentation level."
        indent))))
 
 (defun erc-speedbar-update-channel (buffer)
-  "Update the speedbar information about a ERC buffer. The update
-is only done when the channel is actually expanded already."
+  "Update the speedbar information about a ERC buffer.
+The update is only done when the channel is actually expanded already."
   ;; This is only a rude hack and doesn't care about multiserver usage
   ;; yet, consider this a brain storming, better ideas?
   (with-current-buffer speedbar-buffer

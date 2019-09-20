@@ -578,12 +578,12 @@ This must be a list.  For example, `(\"-C\" \"configfile\")'."
 
 (defcustom spam-spamassassin-positive-spam-flag-header "YES"
   "The regex on `spam-spamassassin-spam-flag-header' for positive spam
-identification"
+identification."
   :type 'string
   :group 'spam-spamassassin)
 
 (defcustom spam-spamassassin-spam-status-header "X-Spam-Status"
-  "The header inserted by SpamAssassin, giving extended scoring information"
+  "The header inserted by SpamAssassin, giving extended scoring information."
   :type 'string
   :group 'spam-spamassassin)
 
@@ -594,7 +594,7 @@ identification"
   :group 'spam-spamassassin)
 
 (defcustom spam-sa-learn-rebuild t
-  "Whether sa-learn should rebuild the database every time it is called
+  "Whether sa-learn should rebuild the database every time it is called.
 Enable this if you want sa-learn to rebuild the database automatically.  Doing
 this will slightly increase the running time of the spam registration process.
 If you choose not to do this, you will have to run \"sa-learn --rebuild\" in
@@ -767,7 +767,7 @@ When either list is nil, the other is returned."
     nil))
 
 (defun spam-classifications ()
-  "Return list of valid classifications"
+  "Return list of valid classifications."
   '(spam ham))
 
 (defun spam-classification-valid-p (classification)
@@ -2185,7 +2185,7 @@ Uses `gnus-newsgroup-name' if category is nil (for ham registration)."
 (require 'spam-stat)
 
 (defun spam-check-stat ()
-  "Check the spam-stat backend for the classification of this message"
+  "Check the spam-stat backend for the classification of this message."
   (let ((spam-stat-split-fancy-spam-group spam-split-group) ; override
 	(spam-stat-buffer (buffer-name)) ; stat the current buffer
 	category return)
@@ -2609,7 +2609,7 @@ With a non-nil REMOVE, remove the ADDRESSES."
 
 ;; return something sensible if the score can't be determined
 (defun spam-spamassassin-score (&optional recheck)
-  "Get the SpamAssassin score"
+  "Get the SpamAssassin score."
   (interactive "P")
   (save-window-excursion
     (gnus-summary-show-article t)

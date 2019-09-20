@@ -285,7 +285,7 @@ Otherwise, look for `movemail' in the directories in
 		  (throw 'scan x))))))))))
 
 (defvar rmail-movemail-variant-in-use nil
-  "The movemail variant currently in use. Known variants are:
+  "The movemail variant currently in use.  Known variants are:
 
   `emacs'     Means any implementation, compatible with the native Emacs one.
               This is the default;
@@ -2308,7 +2308,7 @@ If nil, that means the current message."
 (defun rmail-get-attr-value (attr state)
   "Return the character value for ATTR.
 ATTR is a (numeric) index, an offset into the mbox attribute
-header value. STATE is one of nil, t, or a character value."
+header value.  STATE is one of nil, t, or a character value."
   (cond
    ((numberp state) state)
    ((not state) ?-)

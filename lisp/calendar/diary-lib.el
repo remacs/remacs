@@ -1950,7 +1950,7 @@ highlighting the day in the calendar."
              (cons mark entry)))))
 
 (defun diary-ordinal-suffix (n)
-  "Ordinal suffix for N. (That is, `st', `nd', `rd', or `th', as appropriate.)"
+  "Ordinal suffix for N.  (That is, `st', `nd', `rd', or `th', as appropriate.)"
   (if (or (memq (% n 100) '(11 12 13))
           (< 3 (% n 10)))
       "th"

@@ -329,7 +329,7 @@ calling this one."
 (defun semantic-find-file-noselect (file &optional nowarn rawfile wildcards)
   "Call `find-file-noselect' with various features turned off.
 Use this when referencing a file that will be soon deleted.
-FILE, NOWARN, RAWFILE, and WILDCARDS are passed into `find-file-noselect'"
+FILE, NOWARN, RAWFILE, and WILDCARDS are passed into `find-file-noselect'."
   ;; Hack -
   ;; Check if we are in set-auto-mode, and if so, warn about this.
   (when (boundp 'keep-mode-if-same)

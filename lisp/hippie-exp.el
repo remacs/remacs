@@ -248,7 +248,7 @@ If nil, all buffers are searched."
 (defcustom hippie-expand-ignore-buffers '("^ \\*.*\\*$" dired-mode)
   "A list specifying which buffers not to search (if not current).
 Can contain both regexps matching buffer names (as strings) and major modes
-\(as atoms)"
+\(as atoms)."
   :type '(repeat (choice regexp (symbol :tag "Major Mode")))
   :group 'hippie-expand)
 

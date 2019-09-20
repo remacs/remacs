@@ -1136,9 +1136,9 @@ they were placed in the queue."
 This variable is used by the default date generating function,
 feedmail-default-date-generator.  If nil, the default, the
 last-modified timestamp of the queue file is used to create the
-message Date: header; if there is no queue file, the current time is
-used. If you are using VM, it might be supplying this header for
-you.  To suppress VM's version
+message Date: header; if there is no queue file, the current time
+is used.  If you are using VM, it might be supplying this header
+for you.  To suppress VM's version
 
 	(setq vm-mail-header-insert-date nil)"
   :group 'feedmail-queue
@@ -1382,7 +1382,7 @@ It shows the simple addresses and gets a confirmation.  Use as:
 When this hook runs, the current buffer is already the appropriate
 buffer.  It has already had all the header prepping from the standard
 package.  The next step after running the hook will be to save the
-message via Fcc: processing. The hook might be interested in these:
+message via Fcc: processing.  The hook might be interested in these:
 \(1) `feedmail-prepped-text-buffer' contains the header and body of the
 message, ready to go; (2) `feedmail-address-list' contains a list
 of simplified recipients of addresses which are to be given to the
@@ -1411,7 +1411,7 @@ can undo the encoding."
   "User's last opportunity to modify the message before Fcc action.
 It has already had all the header prepping from the standard package.
 The next step after running the hook will be to save the message via
-Fcc: processing. The hook might be interested in these: (1)
+Fcc: processing.  The hook might be interested in these: (1)
 `feedmail-prepped-text-buffer' contains the header and body of the
 message, ready to go; (2) `feedmail-address-list' contains a list of
 simplified recipients of addressees to whom the message was sent (3)
@@ -2361,7 +2361,7 @@ mapped to mostly alphanumerics for safety."
      )))
 
 (defun feedmail-send-it-immediately-wrapper ()
-  "Wrapper to catch skip-me-i"
+  "Wrapper to catch skip-me-i."
   (if (eq 'skip-me-i (catch 'skip-me-i (feedmail-send-it-immediately)))
       (error "FQM: Sending...abandoned!")))
 
@@ -3159,7 +3159,7 @@ been weeded out."
 	 (sit-for feedmail-queue-chatty-sit-for))))
 
 (defun feedmail-find-eoh (&optional noerror)
-  "Internal; finds the end of message header fields, returns mark just before it"
+  "Internal; finds the end of message header fields, returns mark just before it."
   ;; all this funny business with line endings is to account for CRLF
   ;; weirdness that I don't think I'll ever figure out
   (feedmail-say-debug ">in-> feedmail-find-eoh %s" noerror)

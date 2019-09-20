@@ -1022,7 +1022,7 @@ appeared on the mode-line."
   (delq nil (mapcar 'symbol-name minor-mode-list)))
 
 (defun describe-minor-mode-from-symbol (symbol)
-  "Display documentation of a minor mode given as a symbol, SYMBOL"
+  "Display documentation of a minor mode given as a symbol, SYMBOL."
   (interactive (list (intern (completing-read
 			      "Minor mode symbol: "
 			      (describe-minor-mode-completion-table-for-symbol)))))

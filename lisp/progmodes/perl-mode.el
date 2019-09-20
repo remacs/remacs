@@ -500,7 +500,7 @@
   "Indentation of Perl statements with respect to containing block."
   :type 'integer)
 
-;; Is is not unusual to put both things like perl-indent-level and
+;; It is not unusual to put both things like perl-indent-level and
 ;; cperl-indent-level in the local variable section of a file. If only
 ;; one of perl-mode and cperl-mode is in use, a warning will be issued
 ;; about the variable. Autoload these here, so that no warning is

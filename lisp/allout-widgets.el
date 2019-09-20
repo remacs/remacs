@@ -132,7 +132,7 @@ Also enable `allout-auto-activation' for this to take effect upon
 visiting an outline.
 
 When this is set you can disable allout widgets in select files
-by setting `allout-widgets-mode-inhibit'
+by setting `allout-widgets-mode-inhibit'.
 
 Instead of setting `allout-widgets-auto-activation' you can
 explicitly invoke `allout-widgets-mode' in allout buffers where
@@ -867,7 +867,7 @@ Optional RECURSING is for internal use, to limit recursion."
   )
 ;;;_   > allout-current-decorated-p ()
 (defun allout-current-decorated-p ()
-  "True if the current item is not decorated"
+  "True if the current item is not decorated."
   (save-excursion
     (if (allout-back-to-current-heading)
         (if (> allout-recent-depth 0)

@@ -199,8 +199,8 @@ When `away', log messages only when away."
 
 (defcustom erc-log-match-format "%t<%n:%c> %m"
   "Format for matched Messages.
-This variable specifies how messages in the corresponding log buffers will
-be formatted. The various format specs are:
+This variable specifies how messages in the corresponding log buffers
+will be formatted.  The various format specs are:
 
 %t Timestamp (uses `erc-timestamp-format' if non-nil or \"[%Y-%m-%d %H:%M] \")
 %n Nickname of sender
@@ -227,7 +227,7 @@ for beeping to work."
   "Hook run when text matches a given match-type.
 Functions in this hook are passed as arguments:
 \(match-type nick!user@host message) where MATCH-TYPE is a symbol of:
-current-nick, keyword, pal, dangerous-host, fool"
+current-nick, keyword, pal, dangerous-host, fool."
   :options '(erc-log-matches erc-hide-fools erc-beep-on-match)
   :group 'erc-match
   :type 'hook)

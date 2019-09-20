@@ -255,7 +255,7 @@ to limit saving to files located under `my-grep-root'."
 
 (defcustom grep-error-screen-columns nil
   "If non-nil, column numbers in grep hits are screen columns.
-See `compilation-error-screen-columns'"
+See `compilation-error-screen-columns'."
   :type '(choice (const :tag "Default" nil)
 		 integer)
   :version "22.1"

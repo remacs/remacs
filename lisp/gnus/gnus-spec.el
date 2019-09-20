@@ -344,8 +344,8 @@ Return a list of updated types."
 
 (defun gnus-pad-form (el pad-width)
   "Return a form that pads EL to PAD-WIDTH accounting for multi-column
-characters correctly. This is because `format' may pad to columns or to
-characters when given a pad value."
+characters correctly.  This is because `format' may pad to columns
+or to characters when given a pad value."
   (let ((pad (abs pad-width))
 	(side (< 0 pad-width)))
     (if (symbolp el)

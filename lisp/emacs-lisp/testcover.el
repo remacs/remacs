@@ -150,12 +150,12 @@ call to one of the `testcover-1value-functions'."
 
 (defface testcover-nohits
   '((t (:background "DeepPink2")))
-  "Face for forms that had no hits during coverage test"
+  "Face for forms that had no hits during coverage test."
   :group 'testcover)
 
 (defface testcover-1value
   '((t (:background "Wheat2")))
-  "Face for forms that always produced the same value during coverage test"
+  "Face for forms that always produced the same value during coverage test."
   :group 'testcover)
 
 

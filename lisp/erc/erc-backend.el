@@ -261,7 +261,7 @@ but has not been processed yet.")
   "Non-nil when we're currently processing a message.
 
 When ERC receives a private message, it sets up a new buffer for
-this query.  These in turn, though, do start flyspell. This
+this query.  These in turn, though, do start flyspell.  This
 involves starting an external process, in which case Emacs will
 wait - and when it waits, it does accept other stuff from, say,
 network exceptions.  So, if someone sends you two messages
@@ -320,7 +320,7 @@ If a key is pressed while ERC is waiting, it will stop waiting."
   "The maximum length of a single message.
 If a message exceeds this size, it is broken into multiple ones.
 
-IRC allows for lines up to 512 bytes. Two of them are CR LF.
+IRC allows for lines up to 512 bytes.  Two of them are CR LF.
 And a typical message looks like this:
 
   :nicky!uhuser@host212223.dialin.fnordisp.net PRIVMSG #lazybastards :Hello!
@@ -347,8 +347,8 @@ This will only be consulted if the coding system in
 This is either a coding system, a cons, a function, or nil.
 
 If a cons, the encoding system for outgoing text is in the car
-and the decoding system for incoming text is in the cdr. The most
-interesting use for this is to put `undecided' in the cdr. This
+and the decoding system for incoming text is in the cdr.  The most
+interesting use for this is to put `undecided' in the cdr.  This
 means that `erc-coding-system-precedence' will be consulted, and the
 first match there will be used.
 
@@ -795,7 +795,7 @@ Use DISPLAY-FN to show the results."
 (defun erc-server-send (string &optional forcep target)
   "Send STRING to the current server.
 If FORCEP is non-nil, no flood protection is done - the string is
-sent directly. This might cause the messages to arrive in a wrong
+sent directly.  This might cause the messages to arrive in a wrong
 order.
 
 If TARGET is specified, look up encoding information for that
@@ -903,7 +903,7 @@ protection algorithm."
   "Send LINE to the server as a privmsg or a notice.
 MESSAGE-COMMAND should be either \"PRIVMSG\" or \"NOTICE\".
 If the target is \",\", the last person you've got a message from will
-be used. If the target is \".\", the last person you've sent a message
+be used.  If the target is \".\", the last person you've sent a message
 to will be used."
   (cond
    ((string-match "^\\s-*\\(\\S-+\\) ?\\(.*\\)" line)

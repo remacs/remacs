@@ -813,7 +813,7 @@ is a list of CCL-BLOCKs."
   t)
 
 (defun ccl-compile-read-multibyte-character (cmd)
-  "Compile read-multibyte-character"
+  "Compile read-multibyte-character."
   (if (/= (length cmd) 3)
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
@@ -824,7 +824,7 @@ is a list of CCL-BLOCKs."
   nil)
 
 (defun ccl-compile-write-multibyte-character (cmd)
-  "Compile write-multibyte-character"
+  "Compile write-multibyte-character."
   (if (/= (length cmd) 3)
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))

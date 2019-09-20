@@ -198,7 +198,7 @@ Tags of those classes are excluded from search."
 
 (defun senator-search-default-tag-filter (tag)
   "Default function that filters searched tags.
-Ignore tags of classes in `senator-search-ignore-tag-classes'"
+Ignore tags of classes in `senator-search-ignore-tag-classes'."
   (not (memq (semantic-tag-class tag)
              senator-search-ignore-tag-classes)))
 

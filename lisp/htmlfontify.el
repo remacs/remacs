@@ -460,7 +460,7 @@ and so on."
   keep-overlays      : More of a bell (or possibly whistle) than an
                        optimization - If on, preserve overlay highlighting
                        (cf ediff or goo-font-lock) as well as basic faces.\n
-  body-text-only     : Emit only body-text. In concrete terms,
+  body-text-only     : Emit only body-text.  In concrete terms,
                        1. Suppress calls to `hfy-page-header' and
                           `hfy-page-footer'
                        2. Pretend that `div-wrapper' option above is
@@ -1066,7 +1066,7 @@ haven't encountered them yet.  Returns a `hfy-style-assoc'."
 
 (defun hfy-face-resolve-face (fn)
   "For FN return a face specification.
-FN may be either a face or a face specification. If the latter,
+FN may be either a face or a face specification.  If the latter,
 then the specification is returned unchanged."
   (cond
    ((facep fn)
@@ -1593,8 +1593,8 @@ Do not record undo information during evaluation of BODY."
 
 (defun hfy-begin-span (style text-block text-id text-begins-block-p)
   "Default handler to begin a span of text.
-Insert \"<span class=\"STYLE\" ...>\". See
-`hfy-begin-span-handler' for more information."
+Insert \"<span class=\"STYLE\" ...>\".
+See `hfy-begin-span-handler' for more information."
   (when text-begins-block-p
     (insert
      (format "<span onclick=\"toggle_invis('%s');\">…</span>" text-block)))

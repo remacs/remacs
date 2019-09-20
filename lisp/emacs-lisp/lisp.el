@@ -60,8 +60,8 @@ Should take the same arguments and behave similarly to `forward-sexp'.")
 With ARG, do it that many times.  Negative arg -N means move
 backward across N balanced expressions.  This command assumes
 point is not in a string or comment.  Calls
-`forward-sexp-function' to do the work, if that is non-nil.  If
-unable to move over a sexp, signal `scan-error' with three
+`forward-sexp-function' to do the work, if that is non-nil.
+If unable to move over a sexp, signal `scan-error' with three
 arguments: a message, the start of the obstacle (usually a
 parenthesis or list marker of some kind), and end of the
 obstacle."
@@ -164,7 +164,7 @@ This command will also work on other parentheses-like expressions
 defined by the current language mode.  With ARG, do this that
 many times.  A negative argument means move backward but still to
 a less deep spot.  If ESCAPE-STRINGS is non-nil (as it is
-interactively), move out of enclosing strings as well. If
+interactively), move out of enclosing strings as well.  If
 NO-SYNTAX-CROSSING is non-nil (as it is interactively), prefer to
 break out of any enclosing string instead of moving to the start
 of a list broken across multiple strings.  On error, location of

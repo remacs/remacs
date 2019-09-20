@@ -55,7 +55,7 @@ org-agenda-files
      the variable `org-agenda-files'.
 org-agenda-text-search-extra-files
      Include the files given in the variable
-     `org-agenda-text-search-extra-files'"
+     `org-agenda-text-search-extra-files'."
   :group 'org-mobile
   :type '(list :greedy t
 	       (option (const :tag "org-agenda-files" org-agenda-files))

@@ -61,7 +61,7 @@
 
 (defun org-babel-execute:shen (body params)
   "Execute a block of Shen code with org-babel.
-This function is called by `org-babel-execute-src-block'"
+This function is called by `org-babel-execute-src-block'."
   (require 'inf-shen)
   (let* ((result-params (cdr (assq :result-params params)))
          (full-body (org-babel-expand-body:shen body params)))

@@ -2103,7 +2103,7 @@ spell-check."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-auto-correct-previous-hook ()
   "Hook to track successive calls to `flyspell-auto-correct-previous-word'.
-Sets `flyspell-auto-correct-previous-pos' to nil"
+Sets `flyspell-auto-correct-previous-pos' to nil."
   (interactive)
   (remove-hook 'pre-command-hook (function flyspell-auto-correct-previous-hook) t)
   (unless (eq this-command (function flyspell-auto-correct-previous-word))

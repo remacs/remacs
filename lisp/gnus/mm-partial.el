@@ -54,7 +54,7 @@
   "Show the partial part of HANDLE.
 This function replaces the buffer of HANDLE with a buffer contains
 the entire message.
-If NO-DISPLAY is nil, display it. Otherwise, do nothing after replacing."
+If NO-DISPLAY is nil, display it.  Otherwise, do nothing after replacing."
   (let ((id (cdr (assq 'id (cdr (mm-handle-type handle)))))
 	phandles
 	(b (point)) (n 1) total

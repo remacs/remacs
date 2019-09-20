@@ -42,7 +42,7 @@
 
 (defun org-babel-execute:forth (body params)
   "Execute a block of Forth code with org-babel.
-This function is called by `org-babel-execute-src-block'"
+This function is called by `org-babel-execute-src-block'."
   (if (string= "none" (cdr (assq :session params)))
       (error "Non-session evaluation not supported for Forth code blocks")
     (let ((all-results (org-babel-forth-session-execute body params)))

@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; This implements the most of CLOS's multiple-dispatch generic functions.
+;; This implements most of CLOS's multiple-dispatch generic functions.
 ;; To use it you need either (require 'cl-generic) or (require 'cl-lib).
 ;; The main entry points are: `cl-defgeneric' and `cl-defmethod'.
 
@@ -911,7 +911,7 @@ Can only be used from within the lexical body of a primary or around method."
 ;;; Add support for describe-function
 
 (defun cl--generic-search-method (met-name)
-  "For `find-function-regexp-alist'. Searches for a cl-defmethod.
+  "For `find-function-regexp-alist'.  Searches for a cl-defmethod.
 MET-NAME is as returned by `cl--generic-load-hist-format'."
   (let ((base-re (concat "(\\(?:cl-\\)?defmethod[ \t]+"
                          (regexp-quote (format "%s" (car met-name)))

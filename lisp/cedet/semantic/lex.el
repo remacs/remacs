@@ -454,7 +454,7 @@ PROPSPECS must be a list of (TYPE PROPERTY VALUE)."
 (defsubst semantic-lex-map-types (fun &optional property)
   "Call function FUN on every lexical type.
 If optional PROPERTY is non-nil, call FUN only on every type symbol
-which as a PROPERTY value.  FUN receives a type symbol as argument."
+which has a PROPERTY value.  FUN receives a type symbol as argument."
   (semantic-lex-map-symbols
    fun semantic-lex-types-obarray property))
 
@@ -769,7 +769,7 @@ Note: The order in which analyzers are listed is important.
 If two analyzers can match the same text, it is important to order the
 analyzers so that the one you want to match first occurs first.  For
 example, it is good to put a number analyzer in front of a symbol
-analyzer which might mistake a number for as a symbol."
+analyzer which might mistake a number for a symbol."
   `(defun ,name  (start end &optional depth length)
      ,(concat doc "\nSee `semantic-lex' for more information.")
      ;; Make sure the state of block parsing starts over.
@@ -1581,7 +1581,7 @@ DEFAULT is the default lexical token returned when no MATCHES."
 (defmacro define-lex-block-type-analyzer (name doc syntax matches)
   "Define a block type analyzer NAME with DOC string.
 
-SYNTAX is the regexp that matches block delimiters,  typically the
+SYNTAX is the regexp that matches block delimiters, typically the
 open (`\\\\s(') and close (`\\\\s)') parenthesis syntax classes.
 
 MATCHES is a pair (OPEN-SPECS . CLOSE-SPECS) that defines blocks.

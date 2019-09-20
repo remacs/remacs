@@ -557,7 +557,7 @@ permanently, remove the group from `shadow-literal-groups' or
 (defun shadow-make-group (regexp sites)
   "Make a description of a file group---
 actually a list of regexp Tramp file names---from REGEXP (name of file to
-be shadowed), and list of SITES"
+be shadowed), and list of SITES."
   (if sites
       (cons (shadow-make-fullname
              (shadow-parse-name (shadow-site-primary (car sites))) nil regexp)

@@ -784,7 +784,7 @@ by the numbers in order 1-2-3-1-... :
       (dcl-back-to-indentation-1 (point))
     (dcl-back-to-indentation-1)))
 (defun dcl-back-to-indentation-1 (&optional limit)
-  "Helper function for dcl-back-to-indentation"
+  "Helper function for `dcl-back-to-indentation'."
 
   ;; "Indentation points" that we will travel to
   ;;  $  l:  !  comment
@@ -1074,8 +1074,7 @@ dcl-calc-command-indent-function is nil or returns nil set cur-indent
 to cur-indent+extra-indent.
 
 See also documentation for dcl-calc-command-indent-function.
-The indent-type classification could probably be expanded upon.
-"
+The indent-type classification could probably be expanded upon."
   ()
   (save-excursion
     (beginning-of-line)
@@ -1458,7 +1457,7 @@ regexps in `dcl-electric-reindent-regexps'."
 
 ;;;-------------------------------------------------------------------------
 (defun dcl-indent-to (col &optional minimum)
-  "Like indent-to, but only indents if indentation would change"
+  "Like `indent-to', but only indents if indentation would change."
   (interactive)
   (let (cur-indent collapsed indent)
     (save-excursion

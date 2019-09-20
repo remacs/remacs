@@ -877,7 +877,7 @@ The optional NEW-WINDOW argument is not used."
 
 (defun browse-url-default-macosx-browser (url &optional _new-window)
   "Invoke the macOS system's default Web browser.
-The optional NEW-WINDOW argument is not used"
+The optional NEW-WINDOW argument is not used."
   (interactive (browse-url-interactive-arg "URL: "))
   (start-process (concat "open " url) nil "open" url))
 

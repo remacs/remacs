@@ -130,7 +130,7 @@
 
 (defcustom smime-keys nil
   "Map mail addresses to a file containing Certificate (and private key).
-The file is assumed to be in PEM format. You can also associate additional
+The file is assumed to be in PEM format.  You can also associate additional
 certificates to be sent with every message to each address."
   :type '(repeat (list (string :tag "Mail address")
 		       (file :tag "File name")
@@ -197,7 +197,7 @@ against a certificate revocation list (CRL).
 
 For this to work the CRL must be up-to-date and since they are
 normally updated quite often (i.e., several times a day) you
-probably need some tool to keep them up-to-date. Unfortunately
+probably need some tool to keep them up-to-date.  Unfortunately
 Gnus cannot do this for you.
 
 The CRL should either be appended (in PEM format) to your
@@ -435,7 +435,7 @@ in the buffer specified by `smime-details-buffer'."
 
 (defun smime-verify-buffer (&optional buffer)
   "Verify integrity of S/MIME message in BUFFER.
-Uses current buffer if BUFFER is nil. Returns non-nil on success.
+Uses current buffer if BUFFER is nil.  Returns non-nil on success.
 Any details (stdout and stderr) are left in the buffer specified by
 `smime-details-buffer'."
   (interactive)
@@ -445,7 +445,7 @@ Any details (stdout and stderr) are left in the buffer specified by
 (defun smime-noverify-buffer (&optional buffer)
   "Verify integrity of S/MIME message in BUFFER.
 Does NOT verify validity of certificate (only message integrity).
-Uses current buffer if BUFFER is nil. Returns non-nil on success.
+Uses current buffer if BUFFER is nil.  Returns non-nil on success.
 Any details (stdout and stderr) are left in the buffer specified by
 `smime-details-buffer'."
   (interactive)

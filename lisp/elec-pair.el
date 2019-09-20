@@ -51,7 +51,7 @@ See also the variable `electric-pair-text-pairs'."
 
 Pairs of delimiters in this list are a fallback in case they have
 no syntax relevant to `electric-pair-mode' in the syntax table
-defined in `electric-pair-text-syntax-table'"
+defined in `electric-pair-text-syntax-table'."
   :version "24.4"
   :group 'electricity
   :type '(repeat (cons character character)))
@@ -159,7 +159,7 @@ return value is considered instead."
   #'electric-pair--skip-whitespace
   "Function to use to skip whitespace forward.
 Before attempting a skip, if `electric-pair-skip-whitespace' is
-non-nil, this function is called. It move point to a new buffer
+non-nil, this function is called.  It move point to a new buffer
 position, presumably skipping only whitespace in between.")
 
 (defun electric-pair--skip-whitespace ()
@@ -380,7 +380,7 @@ If point is not enclosed by any lists, return ((t) . (t))."
 (defvar electric-pair-string-bound-function 'point-max
   "Next buffer position where strings are syntactically unexpected.
 Value is a function called with no arguments and returning a
-buffer position. Major modes should set this variable
+buffer position.  Major modes should set this variable
 buffer-locally if they experience slowness with
 `electric-pair-mode' when pairing quotes.")
 

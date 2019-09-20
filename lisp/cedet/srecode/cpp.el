@@ -43,7 +43,7 @@
   "List expansion candidates for the :using-namespaces argument.
 A dictionary entry of the named PREFIX_NAMESPACE with the value
 NAMESPACE:: is created for each namespace unless the current
-buffer contains a using NAMESPACE; statement "
+buffer contains a using NAMESPACE; statement."
   :group 'srecode-cpp
   :type  '(repeat string))
 
@@ -56,7 +56,7 @@ buffer contains a using NAMESPACE; statement "
 
 ;;;###autoload
 (defun srecode-semantic-handle-:c (dict)
-  "Add macros into the dictionary DICT based on the current c file.
+  "Add macros into the dictionary DICT based on the current C file.
 Adds the following:
 FILENAME_SYMBOL - filename converted into a C compat symbol.
 HEADER - Shown section if in a header file."
@@ -110,7 +110,7 @@ PREFIX_NAMESPACE - for each NAMESPACE in `srecode-cpp-namespaces'."
 (define-mode-local-override srecode-semantic-apply-tag-to-dict
   c-mode (tag-wrapper dict)
   "Apply C and C++ specific features from TAG-WRAPPER into DICT.
-Calls `srecode-semantic-apply-tag-to-dict-default' first. Adds
+Calls `srecode-semantic-apply-tag-to-dict-default' first.  Adds
 special behavior for tag of classes include, using and function.
 
 This function cannot be split into C and C++ specific variants, as

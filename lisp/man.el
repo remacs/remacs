@@ -1023,7 +1023,7 @@ names or descriptions.  The pattern argument is usually an
     (man man-args)))
 
 (defmacro Man-start-calling (&rest body)
-  "Start the man command in `body' after setting up the environment"
+  "Start the man command in `body' after setting up the environment."
   `(let ((process-environment (copy-sequence process-environment))
 	;; The following is so Awk script gets \n intact
 	;; But don't prevent decoding of the outside.

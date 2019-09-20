@@ -147,7 +147,7 @@ display HTML source."
   ;; Default to preferring HTML parts, but only if we have a renderer
   (if rmail-mime-render-html-function t nil)
   "If non-nil, default to showing HTML part rather than text part
-when both are available"
+when both are available."
   :group 'rmail
   :version "25.1"
   :type 'boolean)
@@ -1391,8 +1391,8 @@ STATE forces a particular display state, rather than toggling.
 `raw' forces raw mode, any other non-nil value forces decoded mode.
 
 If `rmail-enable-mime' is nil, this creates a temporary \"*RMAIL*\"
-buffer holding a decoded copy of the message. Inline content-types are
-handled according to `rmail-mime-media-type-handlers-alist'.
+buffer holding a decoded copy of the message.  Inline content-types
+are handled according to `rmail-mime-media-type-handlers-alist'.
 By default, this displays text and multipart messages, and offers to
 download attachments as specified by `rmail-mime-attachment-dirs-alist'.
 The arguments ARG and STATE have no effect in this case."

@@ -364,7 +364,7 @@ either an error is raised or not."
 
 (defun mml-secure-message-sign (&optional method)
   "Add MML tags to sign the entire message.
-Use METHOD if given. Else use `mml-secure-method' or
+Use METHOD if given.  Else use `mml-secure-method' or
 `mml-default-sign-method'."
   (interactive)
   (mml-secure-message
@@ -373,7 +373,7 @@ Use METHOD if given. Else use `mml-secure-method' or
 
 (defun mml-secure-message-sign-encrypt (&optional method)
   "Add MML tag to sign and encrypt the entire message.
-Use METHOD if given. Else use `mml-secure-method' or
+Use METHOD if given.  Else use `mml-secure-method' or
 `mml-default-sign-method'."
   (interactive)
   (mml-secure-message
@@ -382,7 +382,7 @@ Use METHOD if given. Else use `mml-secure-method' or
 
 (defun mml-secure-message-encrypt (&optional method)
   "Add MML tag to encrypt the entire message.
-Use METHOD if given. Else use `mml-secure-method' or
+Use METHOD if given.  Else use `mml-secure-method' or
 `mml-default-sign-method'."
   (interactive)
   (mml-secure-message

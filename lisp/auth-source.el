@@ -136,7 +136,7 @@ let-binding."
                                    (ssh  "ssh" "22")
                                    (sftp "sftp" "115")
                                    (smtp "smtp" "25"))
-  "List of authentication protocols and their names"
+  "List of authentication protocols and their names."
 
   :version "23.2" ;; No Gnus
   :type '(repeat :tag "Authentication Protocols"

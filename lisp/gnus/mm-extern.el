@@ -144,7 +144,7 @@
   "Show the external-body part of HANDLE.
 This function replaces the buffer of HANDLE with a buffer contains
 the entire message.
-If NO-DISPLAY is nil, display it. Otherwise, do nothing after replacing."
+If NO-DISPLAY is nil, display it.  Otherwise, do nothing after replacing."
   (unless (mm-handle-cache handle)
     (mm-extern-cache-contents handle))
   (unless no-display

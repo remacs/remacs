@@ -28,7 +28,7 @@
 (require 'erc)
 
 (defgroup erc-ezbounce nil
-  "Interface to the EZBounce IRC bouncer (a virtual IRC server)"
+  "Interface to the EZBounce IRC bouncer (a virtual IRC server)."
   :group 'erc)
 
 (defcustom erc-ezb-regexp "^ezbounce!srv$"
@@ -77,7 +77,7 @@ The alist's format is as follows:
 ;;;###autoload
 (defun erc-ezb-get-login (server port)
   "Return an appropriate EZBounce login for SERVER and PORT.
-Look up entries in `erc-ezb-login-alist'. If the username or password
+Look up entries in `erc-ezb-login-alist'.  If the username or password
 in the alist is nil, prompt for the appropriate values."
   (let ((login (cdr (assoc (cons server port) erc-ezb-login-alist))))
     (when login

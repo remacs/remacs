@@ -77,7 +77,7 @@ This function is called by `org-babel-execute-src-block'."
 
 (defun org-babel-prep-session:asymptote (_session _params)
   "Return an error if the :session header argument is set.
-Asymptote does not support sessions"
+Asymptote does not support sessions."
   (error "Asymptote does not support sessions"))
 
 (defun org-babel-variable-assignments:asymptote (params)

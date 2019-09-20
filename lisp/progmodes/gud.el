@@ -3069,7 +3069,7 @@ the character after the end of the expr."
   "Returns the previous expr, point is set to beginning of that expr.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
-the character after the end of the expr"
+the character after the end of the expr."
   (let ((begin) (end))
     (gud-backward-sexp)
     (setq begin (point))

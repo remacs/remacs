@@ -1594,7 +1594,7 @@ predicate.  See Info node `(gnus)Customizing Articles'."
 ;; gnus-article-encrypt-protocol-alist.
 (defcustom gnus-article-encrypt-protocol "PGP"
   "The protocol used for encrypt articles.
-It is a string, such as \"PGP\". If nil, ask user."
+It is a string, such as \"PGP\".  If nil, ask user."
   :version "22.1"
   :type 'string
   :group 'mime-security)
@@ -7374,7 +7374,7 @@ man page."
 Strings like this can be either a message ID or a mail address.  If it is one
 of the symbols `mid' or `mail', Gnus will always assume that the string is a
 message ID or a mail address, respectively.  If this variable is set to the
-symbol `ask', always query the user what do do.  If it is a function, this
+symbol `ask', always query the user what to do.  If it is a function, this
 function will be called with the string as its only argument.  The function
 must return `mid', `mail', `invalid' or `ask'."
   :version "22.1"

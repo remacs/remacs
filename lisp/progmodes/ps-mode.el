@@ -496,7 +496,7 @@ The keymap for this second window is:
 
 
 When Ghostscript encounters an error it displays an error message
-with a file position. Clicking mouse-2 on this number will bring
+with a file position.  Clicking mouse-2 on this number will bring
 point to the corresponding spot in the PostScript window, if input
 to the interpreter was sent from that window.
 Typing \\<ps-run-mode-map>\\[ps-run-goto-error] when the cursor is at the number has the same effect."
@@ -606,7 +606,7 @@ Typing \\<ps-run-mode-map>\\[ps-run-goto-error] when the cursor is at the number
   "To what column should text on current line be indented?
 
 Indentation is increased if the last token on the current line
-defines the beginning of a group. These tokens are:  {  [  <<"
+defines the beginning of a group.  These tokens are:  {  [  <<"
   (save-excursion
     (beginning-of-line)
     (if (looking-at "[ \t]*\\(}\\|\\]\\|>>\\)")
@@ -1068,7 +1068,7 @@ grestore
 
 (defun ps-run-goto-error ()
   "Jump to buffer position read as integer at point.
-Use line numbers if `ps-run-error-line-numbers' is not nil"
+Use line numbers if `ps-run-error-line-numbers' is not nil."
   (interactive)
   (let ((p (point)))
     (unless (looking-at "[0-9]")

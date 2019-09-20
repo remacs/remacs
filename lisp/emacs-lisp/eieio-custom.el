@@ -454,7 +454,7 @@ Must return the created widget."
 
 (cl-defmethod eieio-read-customization-group ((obj eieio-default-superclass))
   "Do a completing read on the name of a customization group in OBJ.
-Return the symbol for the group, or nil"
+Return the symbol for the group, or nil."
   (let ((g (eieio--class-option (eieio--object-class obj)
                                 :custom-groups)))
     (if (= (length g) 1)

@@ -94,8 +94,8 @@
       body)))
 
 (defun org-babel-execute:picolisp (body params)
-  "Execute a block of Picolisp code with org-babel.  This function is
- called by `org-babel-execute-src-block'"
+  "Execute a block of Picolisp code with org-babel.
+This function is called by `org-babel-execute-src-block'."
   (message "executing Picolisp source code block")
   (let* (
 	 ;; Name of the session or "none".

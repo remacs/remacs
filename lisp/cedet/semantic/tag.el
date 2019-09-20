@@ -471,8 +471,8 @@ ATTRIBUTES is a list of additional attributes belonging to this tag."
 NAME is the name of this variable.
 TYPE is a string or semantic tag representing the type of this variable.
 Optional DEFAULT-VALUE is a string representing the default value of this
-variable.  ATTRIBUTES is a list of additional attributes belonging to this
-tag."
+variable.
+ATTRIBUTES is a list of additional attributes belonging to this tag."
   (apply 'semantic-tag name 'variable
          :type type
          :default-value default-value
@@ -518,8 +518,8 @@ ATTRIBUTES is a list of additional attributes belonging to this tag."
 (defsubst semantic-tag-new-include (name system-flag &rest attributes)
   "Create a semantic tag of class `include'.
 NAME is the name of this include.
-SYSTEM-FLAG represents that we were able to identify this include as belonging
-to the system, as opposed to belonging to the local project.
+SYSTEM-FLAG represents that we were able to identify this include as
+belonging to the system, as opposed to belonging to the local project.
 ATTRIBUTES is a list of additional attributes belonging to this tag."
   (apply 'semantic-tag name 'include
          :system-flag system-flag
@@ -528,8 +528,8 @@ ATTRIBUTES is a list of additional attributes belonging to this tag."
 (defsubst semantic-tag-new-package (name detail &rest attributes)
   "Create a semantic tag of class `package'.
 NAME is the name of this package.
-DETAIL is extra information about this package, such as a location where
-it can be found.
+DETAIL is extra information about this package, such as a location
+where it can be found.
 ATTRIBUTES is a list of additional attributes belonging to this tag."
   (apply 'semantic-tag name 'package
          :detail detail
@@ -547,7 +547,7 @@ ATTRIBUTES is a list of additional attributes belonging to this tag."
 (defsubst semantic-tag-set-faux (tag)
   "Set TAG to be a new FAUX tag.
 FAUX tags represent constructs not found in the source code.
-You can identify a faux tag with `semantic-tag-faux-p'"
+You can identify a faux tag with `semantic-tag-faux-p'."
   (semantic--tag-put-property tag :faux-flag t))
 
 (defsubst semantic-tag-set-name (tag name)
@@ -565,9 +565,9 @@ You can identify a faux tag with `semantic-tag-faux-p'"
 ;; it.  This prevents saving of massive amounts of proxy data.
 (defun semantic-create-tag-proxy (function data)
   "Create a tag proxy symbol.
-FUNCTION will be used to resolve the proxy.  It should take 3
+FUNCTION will be used to resolve the proxy.  It should take
 two arguments, DATA and TAG.  TAG is a proxy tag that needs
-to be resolved, and DATA is the DATA passed into this function.
+to be resolved, and DATA is the data passed into this function.
 DATA is data to help resolve the proxy.  DATA can be an EIEIO object,
 such that FUNCTION is a method.
 FUNCTION should return a list of tags, preferably one tag."
@@ -870,7 +870,7 @@ That is the value of the `:throws' attribute."
   "Return the parent of the function that TAG describes.
 That is the value of the `:parent' attribute.
 A function has a parent if it is a method of a class, and if the
-function does not appear in body of its parent class."
+function does not appear in the body of its parent class."
   (semantic-tag-named-parent tag))
 
 (defsubst semantic-tag-function-destructor-p (tag)
@@ -976,7 +976,7 @@ Perform the described task in `semantic-tag-components'."
 Children are any sub-tags which contain overlays.
 
 Default behavior is to get `semantic-tag-components' in addition
-to the components of an anonymous types (if applicable.)
+to the components of an anonymous type (if applicable.)
 
 Note for language authors:
   If a mode defines a language tag that has tags in it with overlays

@@ -71,7 +71,7 @@
   "Face used for highlighting buttons in ERC buffers.
 
 A button is a piece of text that you can activate by pressing
-`RET' or `mouse-2' above it. See also `erc-button-keymap'."
+`RET' or `mouse-2' above it.  See also `erc-button-keymap'."
   :type 'face
   :group 'erc-faces)
 
@@ -169,10 +169,10 @@ REGEXP is the string matching text around the button or a symbol
   current server.
 
 BUTTON is the number of the regexp grouping actually matching the
-  button,  This is ignored if REGEXP is \\='nicknames.
+  button.  This is ignored if REGEXP is \\='nicknames.
 
 FORM is a lisp expression which must eval to true for the button to
-  be added,
+  be added.
 
 CALLBACK is the function to call when the user push this button.
   CALLBACK can also be a symbol.  Its variable value will be used
@@ -459,7 +459,7 @@ For use on `completion-at-point-functions'."
       t)))
 
 (defun erc-browse-emacswiki (thing)
-  "Browse to thing in the emacs-wiki."
+  "Browse to THING in the emacs-wiki."
   (browse-url (concat erc-emacswiki-url thing)))
 
 (defun erc-browse-emacswiki-lisp (thing)

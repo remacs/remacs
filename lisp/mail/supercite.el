@@ -1753,7 +1753,7 @@ entered, regardless of the value of `sc-electric-references-p'.  See
 
 (defun sc-raw-mode-toggle ()
   "Toggle, in one fell swoop, two important SC variables:
-`sc-fixup-whitespace-p' and `sc-auto-fill-region-p'"
+`sc-fixup-whitespace-p' and `sc-auto-fill-region-p'."
   (interactive)
   (setq sc-fixup-whitespace-p (not sc-fixup-whitespace-p)
 	sc-auto-fill-region-p (not sc-auto-fill-region-p))

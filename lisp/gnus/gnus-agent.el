@@ -1739,9 +1739,9 @@ the article files."
 (defun gnus-agent-flush-cache ()
   "Flush the agent's index files such that the group no longer
 appears to have any local content.  The actual content, the
-article files, is then deleted using gnus-agent-expire-group. The
-gnus-agent-regenerate-group method provides an undo mechanism by
-reconstructing the index files from the article files."
+article files, is then deleted using gnus-agent-expire-group.
+The gnus-agent-regenerate-group method provides an undo mechanism
+by reconstructing the index files from the article files."
   (interactive)
   (save-excursion
     (let ((file-name-coding-system nnmail-pathname-coding-system))

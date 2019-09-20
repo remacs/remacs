@@ -760,7 +760,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 (autoload 'epa-select-keys "epa")
 
 (defun mml2015-epg-key-image (key-id)
-  "Return the image of a key, if any"
+  "Return the image of a key, if any."
   (with-temp-buffer
     (set-buffer-multibyte nil)
     (let* ((coding-system-for-write 'binary)
@@ -777,7 +777,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
 (autoload 'gnus-rescale-image "gnus-util")
 
 (defun mml2015-epg-key-image-to-string (key-id)
-  "Return a string with the image of a key, if any"
+  "Return a string with the image of a key, if any."
   (let ((key-image (mml2015-epg-key-image key-id)))
     (if (not key-image)
 	""

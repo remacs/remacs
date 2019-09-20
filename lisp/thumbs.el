@@ -758,7 +758,7 @@ ACTION and ARG should be a valid convert command."
 (put 'thumbs-mode 'mode-class 'special)
 (define-derived-mode thumbs-mode
   fundamental-mode "thumbs"
-  "Preview images in a thumbnails buffer"
+  "Preview images in a thumbnails buffer."
   (setq buffer-read-only t))
 
 (defvar thumbs-view-image-mode-map

@@ -287,7 +287,7 @@ in this order.  Return nil if no start file found."
 
 (defun scheme-compile-region (start end)
   "Compile the current region in the inferior Scheme process.
-\(A BEGIN is wrapped around the region: (BEGIN <region>))"
+\(A BEGIN is wrapped around the region: (BEGIN <region>).)"
   (interactive "r")
   (comint-send-string (scheme-proc) (format scheme-compile-exp-command
 					    (format "(begin %s)"

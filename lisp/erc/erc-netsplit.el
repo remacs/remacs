@@ -33,9 +33,9 @@
 (require 'erc)
 
 (defgroup erc-netsplit nil
-  "Netsplit detection tries to automatically figure when a
-netsplit happens, and filters the QUIT messages. It also keeps
-track of netsplits, so that it can filter the JOIN messages on a netjoin too."
+  "Netsplit detection tries to automatically figure when a netsplit
+happens, and filters the QUIT messages.  It also keeps track of
+netsplits, so that it can filter the JOIN messages on a netjoin too."
   :group 'erc)
 
 ;;;###autoload(autoload 'erc-netsplit-mode "erc-netsplit")
@@ -57,8 +57,7 @@ track of netsplits, so that it can filter the JOIN messages on a netjoin too."
   :type 'boolean)
 
 (defcustom erc-netsplit-debug nil
-  "If non-nil, debug messages will be shown in the
-sever buffer."
+  "If non-nil, debug messages will be shown in the sever buffer."
   :group 'erc-netsplit
   :type 'boolean)
 

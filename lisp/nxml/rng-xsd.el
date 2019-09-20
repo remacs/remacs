@@ -550,7 +550,7 @@ fractional part of the second."
        (< (car numbers1) (car numbers2))))
 
 (defun rng-xsd-date-to-days (year month day)
-  "Return a unique day number where Jan 1 1 AD is day 1"
+  "Return a unique day number where Jan 1 1 AD is day 1."
   (if (> year 0)			; AD
       (+ (rng-xsd-days-in-years (- year 1))
 	 (rng-xsd-day-number-in-year year month day))

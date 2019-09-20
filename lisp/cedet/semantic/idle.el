@@ -91,8 +91,8 @@ run as soon as Emacs is idle."
 
 (defcustom semantic-idle-scheduler-work-idle-time 60
   "Time in seconds of idle before scheduling big work.
-This time should be long enough that once any big work is started, it is
-unlikely the user would be ready to type again right away."
+This time should be long enough that once any big work is started,
+it is unlikely the user would be ready to type again right away."
   :group 'semantic
   :type 'number
   :set (lambda (sym val)
@@ -1004,8 +1004,8 @@ completion.
   #'semantic-idle-breadcrumbs--display-in-header-line
   "Function to display the tag under point in idle time.
 This function should take a list of Semantic tags as its only
-argument. The tags are sorted according to their nesting order,
-starting with the outermost tag. The function should call
+argument.  The tags are sorted according to their nesting order,
+starting with the outermost tag.  The function should call
 `semantic-idle-breadcrumbs-format-tag-list-function' to convert
 the tag list into a string."
   :group 'semantic
@@ -1020,13 +1020,13 @@ the tag list into a string."
   #'semantic-idle-breadcrumbs--format-linear
   "Function to format the list of tags containing point.
 This function should take a list of Semantic tags and an optional
-maximum length of the produced string as its arguments. The
-maximum length is a hint and can be ignored. When the maximum
-length is omitted, an unconstrained string should be
-produced. The tags are sorted according to their nesting order,
-starting with the outermost tag. Single tags should be formatted
-using `semantic-idle-breadcrumbs-format-tag-function' unless
-special formatting is required."
+maximum length of the produced string as its arguments.  The
+maximum length is a hint and can be ignored.  When the maximum
+length is omitted, an unconstrained string should be produced.
+The tags are sorted according to their nesting order, starting
+with the outermost tag.  Single tags should be formatted using
+`semantic-idle-breadcrumbs-format-tag-function' unless special
+formatting is required."
   :group 'semantic
   :type  '(choice
 	   (const    :tag "Format tags as list, innermost last"

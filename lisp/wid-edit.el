@@ -1939,7 +1939,7 @@ the earlier input."
     widget))
 
 (defun widget-field-value-set (widget value)
-  "Set an editable text field WIDGET to VALUE"
+  "Set an editable text field WIDGET to VALUE."
   (let ((from (widget-field-start widget))
 	(to (widget-field-text-end widget))
 	(buffer (widget-field-buffer widget)))
@@ -3051,7 +3051,7 @@ as the value."
   "History of input to `widget-string-prompt-value'.")
 
 (define-widget 'string 'editable-field
-  "A string"
+  "A string."
   :tag "String"
   :format "%{%t%}: %v"
   :complete-function 'ispell-complete-word

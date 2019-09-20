@@ -212,7 +212,7 @@ This is used when `erc-insert-timestamp-function' is set to
   "Insert timestamp only if its value changed since last insertion.
 If `erc-insert-timestamp-function' is `erc-insert-timestamp-left', a
 string of spaces which is the same size as the timestamp is added to
-the beginning of the line in its place. If you use
+the beginning of the line in its place.  If you use
 `erc-insert-timestamp-right', nothing gets inserted in place of the
 timestamp."
   :group 'erc-stamp

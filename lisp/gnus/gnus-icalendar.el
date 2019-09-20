@@ -250,10 +250,11 @@
   "Parse RFC5545 iCalendar in buffer BUF and return an event object.
 
 Return a gnus-icalendar-event object representing the first event
-contained in the invitation. Return nil for calendars without an event entry.
+contained in the invitation.  Return nil for calendars without an
+event entry.
 
 ATTENDEE-NAME-OR-EMAIL is a list of strings that will be matched
-against the event's attendee names and emails. Invitation rsvp
+against the event's attendee names and emails.  Invitation rsvp
 status will be retrieved from the first matching attendee record."
   (let ((ical (with-current-buffer (icalendar--get-unfolded-buffer (get-buffer buf))
                 (goto-char (point-min))

@@ -145,8 +145,8 @@ If t, fetch all the available old headers."
 		 (sexp :menu-tag "other" t)))
 
 (defcustom gnus-refer-thread-use-nnir nil
-  "Use nnir to search an entire server when referring threads. A
-nil value will only search for thread-related articles in the
+  "Use nnir to search an entire server when referring threads.
+A nil value will only search for thread-related articles in the
 current group."
   :version "24.1"
   :group 'gnus-thread
@@ -154,7 +154,7 @@ current group."
 
 (defcustom gnus-refer-thread-limit-to-thread nil
   "If non-nil referring a thread will limit the summary buffer to
-articles in the thread. A nil value will add the thread articles
+articles in the thread.  A nil value will add the thread articles
 to the summary buffer."
   :version "25.1"
   :group 'gnus-thread
@@ -8655,7 +8655,7 @@ SCORE."
 (defun gnus-summary-limit-include-thread (id &optional thread-only)
   "Display all hidden articles belonging to thread ID.
 When called interactively, ID is the Message-ID of the current
-article. If thread-only is non-nil limit the summary buffer to
+article.  If thread-only is non-nil limit the summary buffer to
 these articles."
   (interactive (list (mail-header-id (gnus-summary-article-header))))
   (let ((articles (gnus-articles-in-thread
@@ -9080,14 +9080,14 @@ Return the number of articles fetched."
     result))
 
 (defun gnus-summary-refer-thread (&optional limit)
-  "Fetch all articles in the current thread. For backends that
-know how to search for threads (currently only 'nnimap) a
-non-numeric prefix arg will use nnir to search the entire
+  "Fetch all articles in the current thread.  For backends
+that know how to search for threads (currently only 'nnimap)
+a non-numeric prefix arg will use nnir to search the entire
 server; without a prefix arg only the current group is
-searched. If the variable `gnus-refer-thread-use-nnir' is
-non-nil the prefix arg has the reverse meaning. If no
+searched.  If the variable `gnus-refer-thread-use-nnir' is
+non-nil the prefix arg has the reverse meaning.  If no
 backend-specific 'request-thread function is available fetch
-LIMIT (the numerical prefix) old headers. If LIMIT is
+LIMIT (the numerical prefix) old headers.  If LIMIT is
 non-numeric or nil fetch the number specified by the
 `gnus-refer-thread-limit' variable."
   (interactive "P")
@@ -9647,8 +9647,8 @@ The search stars on the current article and goes forwards unless
 BACKWARD is non-nil.  If BACKWARD is `all', do all articles.
 If UNREAD is non-nil, only unread articles will
 be taken into consideration.  If NOT-CASE-FOLD, case won't be folded
-in the comparisons. If NOT-MATCHING, return a list of all articles that
-not match REGEXP on HEADER."
+in the comparisons.  If NOT-MATCHING, return a list of all articles
+that not match REGEXP on HEADER."
   (let ((case-fold-search (not not-case-fold))
 	articles func)
     (if (consp header)

@@ -245,7 +245,7 @@ The effect may be disabled by setting this variable to nil."
 (defcustom erc-track-position-in-mode-line 'before-modes
   "Where to show modified channel information in the mode-line.
 
-Setting this variable only has effects in GNU Emacs versions above 21.3.
+Setting this variable only has effect in GNU Emacs versions above 21.3.
 
 Choices are:
 `before-modes' - add to the beginning of `mode-line-modes',
@@ -328,7 +328,7 @@ important."
 
 
 (defun erc-track-remove-from-mode-line ()
-  "Remove `erc-track-modified-channels' from the mode-line"
+  "Remove `erc-track-modified-channels' from the mode-line."
   (when (boundp 'mode-line-modes)
     (setq mode-line-modes
 	  (remove '(t erc-modified-channels-object) mode-line-modes)))
@@ -628,7 +628,7 @@ because the debugger also causes changes to the window-configuration.")
 (defun erc-modified-channels-update (&rest _args)
   "This function updates the information in `erc-modified-channels-alist'
 according to buffer visibility.  It calls
-`erc-modified-channels-display' at the end. This should usually be
+`erc-modified-channels-display' at the end.  This should usually be
 called via `window-configuration-change-hook'.
 ARGS are ignored."
   (interactive)
@@ -864,7 +864,7 @@ is in `erc-mode'."
 
 (defvar erc-track-last-non-erc-buffer nil
   "Stores the name of the last buffer you were in before activating
-`erc-track-switch-buffers'")
+`erc-track-switch-buffers'.")
 
 (defun erc-track-sort-by-activest ()
   "Sort erc-modified-channels-alist by activity.
@@ -889,7 +889,7 @@ higher number than any other face in that list."
     count))
 
 (defun erc-track-sort-by-importance ()
-  "Sort erc-modified-channels-alist by importance.
+  "Sort `erc-modified-channels-alist' by importance.
 That means the position of the face in `erc-track-faces-priority-list'."
   (setq erc-modified-channels-alist
 	(sort erc-modified-channels-alist
@@ -898,8 +898,8 @@ That means the position of the face in `erc-track-faces-priority-list'."
 
 (defun erc-track-get-active-buffer (arg)
   "Return the buffer name of ARG in `erc-modified-channels-alist'.
-Negative arguments index in the opposite direction.  This direction is
-relative to `erc-track-switch-direction'"
+Negative arguments index in the opposite direction.  This direction
+is relative to `erc-track-switch-direction'."
   (let ((dir erc-track-switch-direction)
 	offset)
     (when (< arg 0)

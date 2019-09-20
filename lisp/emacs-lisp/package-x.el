@@ -124,7 +124,7 @@ Return the file contents, as a string, or nil if unsuccessful."
 	 (buffer-substring-no-properties (point-min) (point-max)))))))
 
 (defun package--archive-contents-from-file ()
-  "Parse the archive-contents at `package-archive-upload-base'"
+  "Parse the archive-contents at `package-archive-upload-base'."
   (let ((file (expand-file-name "archive-contents"
 				package-archive-upload-base)))
     (if (not (file-exists-p file))

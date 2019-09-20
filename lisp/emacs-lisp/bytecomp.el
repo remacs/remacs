@@ -395,16 +395,16 @@ else the global value will be modified."
   "Non-nil means collect call-graph information when compiling.
 This records which functions were called and from where.
 If the value is t, compilation displays the call graph when it finishes.
-If the value is neither t nor nil, compilation asks you whether to display
-the graph.
+If the value is neither t nor nil, compilation asks you whether to
+display the graph.
 
-The call tree only lists functions called, not macros used. Those functions
-which the byte-code interpreter knows about directly (eq, cons, etc.) are
-not reported.
+The call tree only lists functions called, not macros used.  Those
+functions which the byte-code interpreter knows about directly (eq,
+cons, etc.) are not reported.
 
-The call tree also lists those functions which are not known to be called
-\(that is, to which no calls have been compiled).  Functions which can be
-invoked interactively are excluded from this list."
+The call tree also lists those functions which are not known to be
+called (that is, to which no calls have been compiled).  Functions
+which can be invoked interactively are excluded from this list."
   :type '(choice (const :tag "Yes" t) (const :tag "No" nil)
 		 (other :tag "Ask" lambda)))
 

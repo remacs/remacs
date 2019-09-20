@@ -3319,7 +3319,7 @@ property."
     (let ((attr (org-export-read-attribute :attr_latex table)))
       (when (plist-get attr :rmlines)
 	;; When the "rmlines" attribute is provided, remove all hlines
-	;; but the the one separating heading from the table body.
+	;; but the one separating heading from the table body.
 	(let ((n 0) (pos 0))
 	  (while (and (< (length output) pos)
 		      (setq pos (string-match "^\\\\hline\n?" output pos)))

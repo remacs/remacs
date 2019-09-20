@@ -319,7 +319,7 @@ where different symbols are used.
 
 Subclasses should be named `semantic-symref-tool-NAME', where
 NAME is the name of the tool used in the configuration variable
-`semantic-symref-tool'"
+`semantic-symref-tool'."
   :abstract t)
 
 (cl-defmethod semantic-symref-get-result ((tool semantic-symref-tool-baseclass))
@@ -388,7 +388,7 @@ Each element is a cons cell of the form (LINE . FILENAME).")
 	     :type list
 	     :documentation
 	     "The list of tags with hits in them.
-Use the  `semantic-symref-hit-tags' method to get this list.")
+Use the `semantic-symref-hit-tags' method to get this list.")
    )
   "The results from a symbol reference search.")
 
@@ -476,7 +476,7 @@ Return the Semantic tag associated with HIT.
 SEARCHTXT is the text that is being searched for.
 Used to narrow the in-buffer search.
 SEARCHTYPE is the type of search (such as 'symbol or 'tagname).
-If there is no database, of if the searchtype is wrong, return nil."
+If there is no database, or if the searchtype is wrong, return nil."
   ;; Allowed search types for this mechanism:
   ;; tagname, tagregexp, tagcompletions
   (if (not (memq searchtype '(tagname tagregexp tagcompletions)))

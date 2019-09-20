@@ -136,7 +136,7 @@ If DIR has not been used as a build directory, fall back to
 
 (defun ede-linux--detect-architecture (dir)
   "Try to auto-detect the architecture as configured in DIR.
-DIR is Linux' build directory. If it cannot be auto-detected,
+DIR is Linux' build directory.  If it cannot be auto-detected,
 returns `project-linux-architecture-default'."
   (let ((archs-dir (expand-file-name "arch" dir))
         (archs (ede-linux--get-archs dir))
@@ -157,9 +157,9 @@ returns `project-linux-architecture-default'."
 
 (defun ede-linux--get-architecture (dir bdir)
   "Try to auto-detect the architecture as configured in BDIR.
-Uses `ede-linux--detect-architecture' for the auto-detection. If
-the result is `ask', let the user choose from architectures found
-in DIR."
+Uses `ede-linux--detect-architecture' for the auto-detection.
+If the result is `ask', let the user choose from architectures
+found in DIR."
   (let ((arch (ede-linux--detect-architecture bdir)))
     (cl-case arch
       (ask

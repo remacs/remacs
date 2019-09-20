@@ -1013,7 +1013,7 @@ OPT-ARGS is a list of argument numbers which are optional."
 
 (defun reftex-context-substring (&optional to-end)
   "Return up to 150 chars from point.
-When point is just after a { or [, limit string to matching parenthesis"
+When point is just after a { or [, limit string to matching parenthesis."
   (cond
    (to-end
     ;; Environment - find next \end

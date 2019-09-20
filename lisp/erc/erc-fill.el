@@ -109,7 +109,7 @@ nick names right and text left."
 
 (defcustom erc-fill-variable-maximum-indentation 17
   "If we indent a line after a long nick, don't indent more then this
-characters. Set to nil to disable."
+characters.  Set to nil to disable."
   :group 'erc-fill
   :type 'integer)
 

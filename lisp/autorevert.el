@@ -616,7 +616,7 @@ Called after `set-visited-file-name'."
 If such a timer is active, cancel it.  Start a new timer if
 Global Auto-Revert Mode is active or if Auto-Revert Mode is active
 in some buffer.  Restarting the timer ensures that Auto-Revert Mode
-will use an up-to-date value of `auto-revert-interval'"
+will use an up-to-date value of `auto-revert-interval'."
   (interactive)
   (if (timerp auto-revert-timer)
       (cancel-timer auto-revert-timer))

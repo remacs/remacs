@@ -307,7 +307,7 @@ integers greater than 0."
 	     (error "Unknown %S operator" operator)))))
 
 (defun org-columns--overlay-text (value fmt width property original)
-  "Return text "
+  "Return text."
   (format fmt
           (let ((v (org-columns-add-ellipses value width)))
             (pcase property

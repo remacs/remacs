@@ -121,7 +121,7 @@ Diary articles will appear again, as if they'd been just received.
 
 Entries look like (3 . day) which means something like \"Please
 Hortense, would you be so kind as to remind me of my appointments 3 days
-before the date, thank you very much. Anda, hmmm... by the way, are you
+before the date, thank you very much.  Anda, hmmm... by the way, are you
 doing anything special tonight ?\".
 
 The units of measure are 'minute 'hour 'day 'week 'month and 'year (no,
@@ -218,7 +218,7 @@ The hook functions will be called with the article in the current buffer."
 (defvoo nndiary-get-new-mail nil
   "Whether nndiary gets new mail and split it.
 Contrary to traditional mail back ends, this variable can be set to t
-even if your primary mail back end also retrieves mail. In such a case,
+even if your primary mail back end also retrieves mail.  In such a case,
 NDiary uses its own mail-sources and split-methods.")
 
 (defvoo nndiary-nov-is-evil nil

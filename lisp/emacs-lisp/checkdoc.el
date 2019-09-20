@@ -194,7 +194,7 @@
   "Non-nil means attempt auto-fixing of doc strings.
 If this value is the symbol `query', then the user is queried before
 any change is made.  If the value is `automatic', then all changes are
-made without asking unless the change is very-complex.  If the value
+made without asking unless the change is very complex.  If the value
 is `semiautomatic' or any other value, then simple fixes are made
 without asking, and complex changes are made by asking the user first.
 The value `never' is the same as nil, never ask or change anything."
@@ -238,10 +238,10 @@ This is automatically set to nil if Ispell does not exist on your
 system.  Possible values are:
 
   nil         - Don't spell-check during basic style checks.
-  defun       - Spell-check when style checking a single defun
-  buffer      - Spell-check when style checking the whole buffer
+  defun       - Spell-check when style checking a single defun.
+  buffer      - Spell-check when style checking the whole buffer.
   interactive - Spell-check during any interactive check.
-  t           - Always spell-check"
+  t           - Always spell-check."
   :type '(choice (const nil)
           (const defun)
           (const buffer)
@@ -1050,7 +1050,7 @@ space at the end of each line."
 (defun checkdoc-ispell ()
   "Check the style and spelling of everything interactively.
 Calls `checkdoc' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc'"
+Prefix argument is the same as for `checkdoc'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc)))
@@ -1059,7 +1059,7 @@ Prefix argument is the same as for `checkdoc'"
 (defun checkdoc-ispell-current-buffer ()
   "Check the style and spelling of the current buffer.
 Calls `checkdoc-current-buffer' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-current-buffer'"
+Prefix argument is the same as for `checkdoc-current-buffer'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-current-buffer)))
@@ -1068,7 +1068,7 @@ Prefix argument is the same as for `checkdoc-current-buffer'"
 (defun checkdoc-ispell-interactive ()
   "Check the style and spelling of the current buffer interactively.
 Calls `checkdoc-interactive' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-interactive'"
+Prefix argument is the same as for `checkdoc-interactive'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-interactive)))
@@ -1077,7 +1077,7 @@ Prefix argument is the same as for `checkdoc-interactive'"
 (defun checkdoc-ispell-message-interactive ()
   "Check the style and spelling of message text interactively.
 Calls `checkdoc-message-interactive' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-message-interactive'"
+Prefix argument is the same as for `checkdoc-message-interactive'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-message-interactive
@@ -1087,7 +1087,7 @@ Prefix argument is the same as for `checkdoc-message-interactive'"
 (defun checkdoc-ispell-message-text ()
   "Check the style and spelling of message text interactively.
 Calls `checkdoc-message-text' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-message-text'"
+Prefix argument is the same as for `checkdoc-message-text'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-message-text)))
@@ -1096,7 +1096,7 @@ Prefix argument is the same as for `checkdoc-message-text'"
 (defun checkdoc-ispell-start ()
   "Check the style and spelling of the current buffer.
 Calls `checkdoc-start' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-start'"
+Prefix argument is the same as for `checkdoc-start'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-start)))
@@ -1105,7 +1105,7 @@ Prefix argument is the same as for `checkdoc-start'"
 (defun checkdoc-ispell-continue ()
   "Check the style and spelling of the current buffer after point.
 Calls `checkdoc-continue' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-continue'"
+Prefix argument is the same as for `checkdoc-continue'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-continue)))
@@ -1114,7 +1114,7 @@ Prefix argument is the same as for `checkdoc-continue'"
 (defun checkdoc-ispell-comments ()
   "Check the style and spelling of the current buffer's comments.
 Calls `checkdoc-comments' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-comments'"
+Prefix argument is the same as for `checkdoc-comments'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-comments)))
@@ -1123,7 +1123,7 @@ Prefix argument is the same as for `checkdoc-comments'"
 (defun checkdoc-ispell-defun ()
   "Check the style and spelling of the current defun with Ispell.
 Calls `checkdoc-defun' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-defun'"
+Prefix argument is the same as for `checkdoc-defun'."
   (interactive)
   (let ((checkdoc-spellcheck-documentation-flag t))
     (call-interactively #'checkdoc-defun)))

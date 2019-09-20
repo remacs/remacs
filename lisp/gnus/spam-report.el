@@ -318,9 +318,9 @@ symbol `ask', query before flushing the queue file."
 
 ;;;###autoload
 (defun spam-report-url-ping-mm-url (host report)
-  "Ping a host through HTTP, addressing a specific GET resource. Use
-the external program specified in `mm-url-program' to connect to
-server."
+  "Ping a host through HTTP, addressing a specific GET resource.
+Use the external program specified in `mm-url-program' to connect
+to server."
   (with-temp-buffer
     (let ((url (format "http://%s%s" host report)))
       (mm-url-insert url t))))

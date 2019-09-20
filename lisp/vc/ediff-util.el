@@ -2207,7 +2207,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
   "Restore ARGth diff from `ediff-killed-diffs-alist'.
 ARG is a prefix argument.  If ARG is nil, restore the current-difference.
 If the second optional argument, a character, is given, use it to
-determine the target buffer instead of (ediff-last-command-char)"
+determine the target buffer instead of `ediff-last-command-char'."
   (interactive "P")
   (ediff-barf-if-not-control-buffer)
   (if (numberp arg)

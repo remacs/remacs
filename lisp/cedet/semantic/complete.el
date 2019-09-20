@@ -1219,7 +1219,7 @@ Basics search only in the current buffer.")
 (cl-defmethod semantic-collector-calculate-cache
   ((obj semantic-collector-buffer-deep))
   "Calculate the completion cache for OBJ.
-Uses `semantic-flatten-tags-table'"
+Uses `semantic-flatten-tags-table'."
   (oset obj cache
 	;; Must create it in SEMANTICDB find format.
 	;; ( ( DBTABLE TAG TAG ... ) ... )
@@ -1314,7 +1314,7 @@ Uses semanticdb for searching all tags in the current project."
 	  :documentation "List of tags this displayer is showing.")
    (last-prefix :type string
 		:protection :protected
-		:documentation "Prefix associated with slot `table'")
+		:documentation "Prefix associated with slot `table'.")
    )
   "Abstract displayer baseclass.
 Manages the display of some number of tags.
@@ -1746,7 +1746,7 @@ Display mechanism using tooltip for a list of possible completions.")
 
 (defun semantic-displayer-point-position ()
   "Return the location of POINT as positioned on the selected frame.
-Return a cons cell (X . Y)"
+Return a cons cell (X . Y)."
   (let* ((frame (selected-frame))
 	 (toolbarleft
 	  (if (eq (cdr (assoc 'tool-bar-position default-frame-alist)) 'left)

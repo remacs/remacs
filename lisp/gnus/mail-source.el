@@ -286,7 +286,7 @@ number."
   :type 'boolean)
 
 (defcustom mail-source-incoming-file-prefix "Incoming"
-  "Prefix for file name for storing incoming mail"
+  "Prefix for file name for storing incoming mail."
   :group 'mail-source
   :type 'string)
 

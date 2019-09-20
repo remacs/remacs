@@ -1360,7 +1360,7 @@ move to the previous message."
 
 (defun rmail-summary-show-message (where)
   "Show current mail message.
-Position it according to WHERE which can be BEG or END"
+Position it according to WHERE which can be BEG or END."
   (if (and (one-window-p) (not pop-up-frames))
       ;; If there is just one window, put the summary on the top.
       (let ((buffer rmail-buffer))

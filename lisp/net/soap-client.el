@@ -334,7 +334,7 @@ element name."
   "Store ELEMENT in NS.
 Multiple elements with the same name can be stored in a
 namespace.  When retrieving the element you can specify a
-discriminant predicate to `soap-namespace-get'"
+discriminant predicate to `soap-namespace-get'."
   (let ((name (soap-element-name element)))
     (push element (gethash name (soap-namespace-elements ns)))))
 
@@ -1476,7 +1476,7 @@ This is a specialization of `soap-decode-type' for
 
 (defun soap-xs-parse-sequence (node)
   "Parse a sequence definition from XML NODE.
-Returns a `soap-xs-complex-type'"
+Returns a `soap-xs-complex-type'."
   (cl-assert (memq (soap-l2wk (xml-node-name node))
                    '(xsd:sequence xsd:choice xsd:all))
              nil
@@ -2814,7 +2814,7 @@ decode function to perform the actual decoding."
 (defun soap-parse-envelope (node operation wsdl)
   "Parse the SOAP envelope in NODE and return the response.
 OPERATION is the WSDL operation for which we expect the response,
-WSDL is used to decode the NODE"
+WSDL is used to decode the NODE."
   (soap-with-local-xmlns node
     (cl-assert (eq (soap-l2wk (xml-node-name node)) 'soap:Envelope)
                nil

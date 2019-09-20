@@ -158,7 +158,7 @@ For example, you may want to set this to (\"-Z2\") to reduce header length."
     (or (nth 1 val) (nth 0 val) addr)))
 
 (defun hashcash-generate-payment (str val)
-  "Generate a hashcash payment by finding a VAL-bit collison on STR."
+  "Generate a hashcash payment by finding a VAL-bit collision on STR."
   (if (and (> val 0)
 	   hashcash-program)
       (with-current-buffer (get-buffer-create " *hashcash*")
@@ -171,7 +171,7 @@ For example, you may want to set this to (\"-Z2\") to reduce header length."
     (error "No `hashcash' binary found")))
 
 (defun hashcash-generate-payment-async (str val callback)
-  "Generate a hashcash payment by finding a VAL-bit collison on STR.
+  "Generate a hashcash payment by finding a VAL-bit collision on STR.
 Return immediately.  Call CALLBACK with process and result when ready."
   (if (and (> val 0)
 	   hashcash-program)
@@ -226,7 +226,7 @@ Return immediately.  Call CALLBACK with process and result when ready."
 
 ;;;###autoload
 (defun hashcash-insert-payment (arg)
-  "Insert X-Payment and X-Hashcash headers with a payment for ARG"
+  "Insert X-Payment and X-Hashcash headers with a payment for ARG."
   (interactive "sPay to: ")
   (unless (hashcash-already-paid-p arg)
     (let ((pay (hashcash-generate-payment (hashcash-payment-to arg)
@@ -294,7 +294,7 @@ BUFFER defaults to the current buffer."
 
 ;;;###autoload
 (defun hashcash-verify-payment (token &optional resource amount)
-  "Verify a hashcash payment"
+  "Verify a hashcash payment."
   (let* ((split (split-string token ":"))
 	 (key (if (< (hashcash-version token) 1.2)
 		  (nth 1 split)

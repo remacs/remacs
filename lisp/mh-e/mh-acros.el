@@ -160,8 +160,8 @@ Stronger than `save-excursion', weaker than `save-window-excursion'."
 ;;;###mh-autoload
 (defmacro mh-do-at-event-location (event &rest body)
   "Switch to the location of EVENT and execute BODY.
-After BODY has been executed return to original window. The
-modification flag of the buffer in the event window is
+After BODY has been executed return to original window.
+The modification flag of the buffer in the event window is
 preserved."
   (declare (debug t))
   (let ((event-window (make-symbol "event-window"))
@@ -206,7 +206,7 @@ preserved."
   "Iterate over region.
 
 VAR is bound to the message on the current line as we loop
-starting from BEGIN till END. In each step BODY is executed.
+starting from BEGIN till END.  In each step BODY is executed.
 
 If VAR is nil then the loop is executed without any binding."
   (declare (debug (symbolp body)))
@@ -230,7 +230,7 @@ If VAR is nil then the loop is executed without any binding."
 VAR is bound to each message in turn in a loop over RANGE, which
 can be a message number, a list of message numbers, a sequence, a
 region in a cons cell, or a MH range (something like last:20) in
-a string. In each iteration, BODY is executed.
+a string.  In each iteration, BODY is executed.
 
 The parameter RANGE is usually created with
 `mh-interactive-range' in order to provide a uniform interface to

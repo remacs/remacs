@@ -54,7 +54,7 @@
 ;;;###autoload
 (defun tibetan-char-p (ch)
   "Check if char CH is Tibetan character.
-Returns non-nil if CH is Tibetan. Otherwise, returns nil."
+Returns non-nil if CH is Tibetan.  Otherwise, returns nil."
   (memq (char-charset ch) '(tibetan tibetan-1-column)))
 
 ;;; Functions for Tibetan <-> Tibetan-transcription.

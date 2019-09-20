@@ -7554,7 +7554,7 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-maybe-re-mark-raw-string ()
   ;; When this function is called, point is immediately after a " which opens
-  ;; a string.  If this " is the characteristic " of of a raw string
+  ;; a string.  If this " is the characteristic " of a raw string
   ;; opener, apply the pertinent `syntax-table' text properties to the
   ;; entire raw string (when properly terminated) or just the delimiter
   ;; (otherwise).  In either of these cases, return t, otherwise return nil.

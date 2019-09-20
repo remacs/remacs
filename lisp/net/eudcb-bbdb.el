@@ -179,7 +179,7 @@ BBDB < 3 used `net'; BBDB >= 3 uses `mail'."
 
 (defun eudc-bbdb-format-record-as-result (record)
   "Format the BBDB RECORD as a EUDC query result record.
-The record is filtered according to `eudc-bbdb-current-return-attributes'"
+The record is filtered according to `eudc-bbdb-current-return-attributes'."
   (require 'bbdb)
   (let ((attrs (or eudc-bbdb-current-return-attributes
 		   '(firstname lastname aka company phones addresses net notes)))

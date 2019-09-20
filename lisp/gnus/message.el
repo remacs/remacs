@@ -1131,8 +1131,8 @@ If `traditional', reply inline.
 If `above', reply above quoted text.
 If `below', reply below quoted text.
 
-Note: Many newsgroups frown upon nontraditional reply styles. You
-probably want to set this variable only for specific groups,
+Note: Many newsgroups frown upon nontraditional reply styles.
+You probably want to set this variable only for specific groups,
 e.g. using `gnus-posting-styles':
 
   (eval (set (make-local-variable \\='message-cite-reply-position) \\='above))"
@@ -1169,7 +1169,7 @@ use in `gnus-posting-styles', such as:
     (message-yank-cited-prefix  "")
     (message-yank-empty-prefix  "")
     (message-citation-line-format  "\n\n-----------------------\nOn %a, %b %d %Y, %N wrote:\n"))
-  "Message citation style used by MS Outlook. Use with message-cite-style.")
+  "Message citation style used by MS Outlook.  Use with `message-cite-style'.")
 
 (defconst message-cite-style-thunderbird
   '((message-cite-function  'message-cite-original)
@@ -1179,7 +1179,7 @@ use in `gnus-posting-styles', such as:
     (message-yank-cited-prefix  ">")
     (message-yank-empty-prefix  ">")
     (message-citation-line-format "On %D %R %p, %N wrote:"))
-  "Message citation style used by Mozilla Thunderbird. Use with message-cite-style.")
+  "Message citation style used by Mozilla Thunderbird.  Use with `message-cite-style'.")
 
 (defconst message-cite-style-gmail
   '((message-cite-function  'message-cite-original)
@@ -1189,7 +1189,7 @@ use in `gnus-posting-styles', such as:
     (message-yank-cited-prefix  "    ")
     (message-yank-empty-prefix  "    ")
     (message-citation-line-format "On %e %B %Y %R, %f wrote:\n"))
-  "Message citation style used by Gmail. Use with message-cite-style.")
+  "Message citation style used by Gmail.  Use with `message-cite-style'.")
 
 (defcustom message-distribution-function nil
   "Function called to return a Distribution header."
@@ -4511,8 +4511,8 @@ smaller pieces, the size of each is about "
 one.
 
 However, some mail readers (MUA's) can't read split messages, i.e.,
-mails in message/partially format. Answer `n', and the message will be
-sent in one piece.
+mails in message/partially format.  Answer `n', and the message
+will be sent in one piece.
 
 The size limit is controlled by `message-send-mail-partially-limit'.
 If you always want Gnus to send messages in one piece, set
