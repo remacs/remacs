@@ -139,7 +139,10 @@ Format of each entry is controlled by the variable `register-preview-function'."
      nil
      (with-current-buffer standard-output
        (setq cursor-in-non-selected-windows nil)
-       (insert (mapconcat register-preview-function register-alist ""))))))
+       (mapc (lambda (elem)
+               (when (get-register (car elem))
+                 (insert (funcall register-preview-function elem))))
+             register-alist)))))
 
 (defun register-read-with-preview (prompt)
   "Read and return a register name, possibly showing existing registers.
