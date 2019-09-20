@@ -373,7 +373,7 @@ column.  Negate the predicate that would be returned if
                                   (if (stringp b) b (car b)))))))
       ;; Reversed order.
       (if (cdr tabulated-list-sort-key)
-          (lambda (a b) (not (funcall sorter a b)))
+          (lambda (a b) (funcall sorter b a))
         sorter))))
 
 (defsubst tabulated-list--col-local-max-widths (col)
