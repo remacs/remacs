@@ -295,14 +295,6 @@ part.  This is for the internal use, you should never modify the value.")
 			(t
 			 (mm-find-mime-charset-region point (point)
 						      mm-hack-charsets))))
-	;; If the user has inserted a Content-Type header, then
-	;; respect that instead of overwriting with "text/plain".
-	(save-restriction
-	  (narrow-to-region point (point))
-	  (let ((content-type (mail-fetch-field "content-type")))
-	    (when (and content-type
-		       (eq (car tag) 'part))
-	      (setcdr (assq 'type tag) content-type))))
 	(when (and (not raw) (memq nil charsets))
 	  (if (or (memq 'unknown-encoding mml-confirmation-set)
 		  (message-options-get 'unknown-encoding)
@@ -479,15 +471,22 @@ If MML is non-nil, return the buffer up till the correspondent mml tag."
 (declare-function libxml-parse-html-region "xml.c"
 		  (start end &optional base-url discard-comments))
 
-(defun mml-generate-mime (&optional multipart-type)
+(defun mml-generate-mime (&optional multipart-type content-type)
   "Generate a MIME message based on the current MML document.
 MULTIPART-TYPE defaults to \"mixed\", but can also
-be \"related\" or \"alternate\"."
+be \"related\" or \"alternate\".
+
+If CONTENT-TYPE (and there's only one part), override the content
+type detected."
   (let ((cont (mml-parse))
 	(mml-multipart-number mml-multipart-number)
 	(options message-options))
     (if (not cont)
 	nil
+      (when (and (consp (car cont))
+		 (= (length cont) 1)
+		 content-type)
+	(setcdr (assq 'type (cdr (car cont))) content-type))
       (when (and (consp (car cont))
 		 (= (length cont) 1)
 		 (fboundp 'libxml-parse-html-region)

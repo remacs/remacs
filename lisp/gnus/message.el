@@ -8061,7 +8061,10 @@ regexp VARSTR."
       (message-goto-body)
       (save-restriction
 	(narrow-to-region (point) (point-max))
-	(let ((new (mml-generate-mime)))
+	(let ((new (mml-generate-mime nil
+				      (save-restriction
+					(message-narrow-to-headers)
+					(mail-fetch-field "content-type")))))
 	  (when new
 	    (delete-region (point-min) (point-max))
 	    (insert new)
