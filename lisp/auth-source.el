@@ -1132,11 +1132,15 @@ FILE is the file from which we obtained this token."
                                 ((member k '("password")) "secret")
                                 (t k)))
 
-                  ;; send back the secret in a function (lexical binding)
+                  ;; Send back the secret in a function (lexical
+                  ;; binding).  We slightly obfuscate the passwords
+                  ;; (that's the "(mapcar #+' ..)" stuff) to avoid
+                  ;; showing the passwords in clear text in backtraces
+                  ;; and the like.
                   (when (equal k "secret")
-                    (setq v (let ((lexv v)
+                    (setq v (let ((lexv (mapcar #'1+ v))
                                   (token-decoder nil))
-                              (when (string-match "^gpg:" lexv)
+                              (when (string-match "^gpg:" v)
                                 ;; it's a GPG token: create a token decoder
                                 ;; which unsets itself once
                                 (setq token-decoder
@@ -1147,9 +1151,11 @@ FILE is the file from which we obtained this token."
                                              filename)
                                           (setq token-decoder nil)))))
                               (lambda ()
-                                (when token-decoder
-                                  (setq lexv (funcall token-decoder lexv)))
-                                lexv))))
+                                (if token-decoder
+                                    (funcall token-decoder
+                                             (apply #'string
+                                                    (mapcar #'1- lexv)))
+                                  (apply #'string (mapcar #'1- lexv)))))))
                   (setq ret (plist-put ret
                                        (auth-source--symbol-keyword k)
                                        v))))
