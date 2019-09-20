@@ -956,14 +956,13 @@ Note that the MAX parameter is used so we can exit the parse early."
                 (insert (funcall cached-secrets)))
             (insert-file-contents file)
             ;; cache all netrc files (used to be just .gpg files)
-            ;; Store the contents of the file heavily encrypted in memory.
-            ;; (note for the irony-impaired: they are just obfuscated)
+            ;; Store the contents of the file obfuscated in memory.
             (auth-source--aput
              auth-source-netrc-cache file
              (list :mtime (file-attribute-modification-time
                            (file-attributes file))
-                   :secret (let ((v (mapcar #'1+ (buffer-string))))
-                             (lambda () (apply #'string (mapcar #'1- v)))))))
+                   :secret (let ((v (auth-source--obfuscate (buffer-string))))
+                             (lambda () (auth-source--deobfuscate v))))))
           (goto-char (point-min))
           (let ((entries (auth-source-netrc-parse-entries check max))
                 alist)
@@ -1138,7 +1137,7 @@ FILE is the file from which we obtained this token."
                   ;; showing the passwords in clear text in backtraces
                   ;; and the like.
                   (when (equal k "secret")
-                    (setq v (let ((lexv (mapcar #'1+ v))
+                    (setq v (let ((lexv (auth-source--obfuscate v))
                                   (token-decoder nil))
                               (when (string-match "^gpg:" v)
                                 ;; it's a GPG token: create a token decoder
@@ -1153,14 +1152,55 @@ FILE is the file from which we obtained this token."
                               (lambda ()
                                 (if token-decoder
                                     (funcall token-decoder
-                                             (apply #'string
-                                                    (mapcar #'1- lexv)))
-                                  (apply #'string (mapcar #'1- lexv)))))))
+                                             (auth-source--deobfuscate lexv))
+                                  (auth-source--deobfuscate lexv))))))
                   (setq ret (plist-put ret
                                        (auth-source--symbol-keyword k)
                                        v))))
               ret))
           alist))
+
+;; Never change this variable.
+(defvar auth-source--session-nonce nil)
+
+(defun auth-source--obfuscate (string)
+  (unless auth-source--session-nonce
+    (setq auth-source--session-nonce
+          (apply #'string (cl-loop repeat 10
+                                   collect (random 128)))))
+  (if (fboundp 'gnutls-symmetric-encrypt)
+      (let ((cdata (car (last (gnutls-ciphers)))))
+        (mapconcat
+         #'base64-encode-string
+         (append
+          (list (format "%d" (length string)))
+          (gnutls-symmetric-encrypt
+           (pop cdata)
+           (auth-source--pad auth-source--session-nonce
+                             (plist-get cdata :cipher-keysize))
+           (list 'iv-auto (plist-get cdata :cipher-ivsize))
+           (auth-source--pad string (plist-get cdata :cipher-blocksize))))
+         "-"))
+    (mapcar #'1- string)))
+
+(defun auth-source--pad (s length)
+  "Pad string S to a modulo of LENGTH."
+  (concat s (make-string (- length (mod (length s) length)) ?\0)))
+
+(defun auth-source--deobfuscate (data)
+  (if (fboundp 'gnutls-symmetric-encrypt)
+      (let ((cdata (car (last (gnutls-ciphers))))
+            (bits (split-string data "-")))
+        (substring
+         (car
+          (gnutls-symmetric-decrypt
+           (pop cdata)
+           (auth-source--pad auth-source--session-nonce
+                             (plist-get cdata :cipher-keysize))
+           (base64-decode-string (caddr bits))
+           (base64-decode-string (cadr bits))))
+         0 (string-to-number (base64-decode-string (car bits)))))
+    (apply #'string (mapcar #'1+ data))))
 
 (cl-defun auth-source-netrc-search (&rest spec
                                     &key backend require create
