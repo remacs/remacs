@@ -1050,8 +1050,13 @@ DEFUN ("image-size", Fimage_size, Simage_size, 1, 3, 0,
        doc: /* Return the size of image SPEC as pair (WIDTH . HEIGHT).
 PIXELS non-nil means return the size in pixels, otherwise return the
 size in canonical character units.
+
 FRAME is the frame on which the image will be displayed.  FRAME nil
-or omitted means use the selected frame.  */)
+or omitted means use the selected frame.
+
+Calling this function will result in the image being stored in the
+image cache.  If this is not desirable, call `image-flush' after
+calling this function.  */)
   (Lisp_Object spec, Lisp_Object pixels, Lisp_Object frame)
 {
   Lisp_Object size;
