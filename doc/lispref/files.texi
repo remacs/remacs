@@ -607,8 +607,7 @@ This function appends the contents of the region delimited by
 @var{filename}.  If that file does not exist, it is created.  This
 function returns @code{nil}.
 
-An error is signaled if @var{filename} specifies a nonwritable file,
-or a nonexistent file in a directory where files cannot be created.
+An error is signaled if you cannot write or create @var{filename}.
 
 When called from Lisp, this function is completely equivalent to:
 
@@ -851,12 +850,13 @@ permissions.
 @defun file-exists-p filename
 This function returns @code{t} if a file named @var{filename} appears
 to exist.  This does not mean you can necessarily read the file, only
-that you can find out its attributes.  (On GNU and other POSIX-like
+that you can probably find out its attributes.  (On GNU and other POSIX-like
 systems, this is true if the file exists and you have execute
 permission on the containing directories, regardless of the
 permissions of the file itself.)
 
-If the file does not exist, this function returns @code{nil}.
+If the file does not exist, or if there was trouble determining
+whether the file exists, this function returns @code{nil}.
 
 Directories are files, so @code{file-exists-p} can return @code{t} when
 given a directory.  However, because @code{file-exists-p} follows
@@ -881,7 +881,7 @@ inside the directory, and open those files if their modes permit.
 This function returns @code{t} if the file @var{filename} can be written
 or created by you, and @code{nil} otherwise.  A file is writable if the
 file exists and you can write it.  It is creatable if it does not exist,
-but the specified directory does exist and you can write in that
+but its parent directory does exist and you can write in that
 directory.
 
 In the example below, @file{foo} is not writable because the parent
@@ -899,7 +899,7 @@ directory.
 @defun file-accessible-directory-p dirname
 This function returns @code{t} if you have permission to open existing
 files in the directory whose name as a file is @var{dirname};
-otherwise (or if there is no such directory), it returns @code{nil}.
+otherwise (e.g., if there is no such directory), it returns @code{nil}.
 The value of @var{dirname} may be either a directory name (such as
 @file{/foo/}) or the file name of a file which is a directory
 (such as @file{/foo}, without the final slash).
@@ -914,8 +914,8 @@ file in @file{/foo/} will give an error:
 @end defun
 
 @defun access-file filename string
-This function opens file @var{filename} for reading, then closes it and
-returns @code{nil}.  However, if the open fails, it signals an error
+If you can read @var{filename} this function returns @code{nil};
+otherwise it signals an error
 using @var{string} as the error message text.
 @end defun
 
@@ -1011,6 +1011,7 @@ absolute file name of the target; determining the full file name that
 the link points to is nontrivial, see below.)
 
 If the file @var{filename} is not a symbolic link, or does not exist,
+or if there is trouble determining whether it is a symbolic link,
 @code{file-symlink-p} returns @code{nil}.
 
 Here are a few examples of using this function:
@@ -1071,7 +1072,9 @@ link.  If you actually need the file name of the link target, use
 
 @defun file-directory-p filename
 This function returns @code{t} if @var{filename} is the name of an
-existing directory, @code{nil} otherwise.
+existing directory.  It returns @code{nil} if @var{filename} does
+not name a directory, or if there is trouble determining whether
+it is a directory.
 This function follows symbolic links.
 
 @example
@@ -1103,6 +1106,8 @@ This function follows symbolic links.
 This function returns @code{t} if the file @var{filename} exists and is
 a regular file (not a directory, named pipe, terminal, or
 other I/O device).
+It returns @code{nil} if @var{filename} does not exist or is not a regular
+file, or if there is trouble determining whether it is a regular file.
 This function follows symbolic links.
 @end defun
 

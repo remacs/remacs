@@ -253,30 +253,6 @@ file_attribute_errno (Lisp_Object file, int err)
   return file_metadata_errno ("Getting attributes", file, err);
 }
 
-/* In theory, EACCES errors for predicates like file-readable-p should
-   be checked further because they may be problems with an ancestor
-   directory instead of with the file itself, which means that we
-   don't have reliable info about the requested file.  In practice,
-   though, DOS_NT platforms set errno to EACCES for missing files like
-   "/var/mail", so signaling EACCES errors would be a mistake there.
-   So return nil for EACCES unless PICKY_EACCES, which is false by
-   default on DOS_NT.  */
-#ifndef PICKY_EACCES
-# ifdef DOS_NT
-enum { PICKY_EACCES = false };
-# else
-enum { PICKY_EACCES = true };
-# endif
-#endif
-
-Lisp_Object
-file_test_errno (Lisp_Object file, int err)
-{
-  if (!PICKY_EACCES && err == EACCES)
-    return Qnil;
-  return file_metadata_errno ("Testing file", file, err);
-}
-
 void
 close_file_unwind (int fd)
 {
@@ -2453,7 +2429,9 @@ file_name_case_insensitive_err (Lisp_Object file)
 DEFUN ("file-name-case-insensitive-p", Ffile_name_case_insensitive_p,
        Sfile_name_case_insensitive_p, 1, 1, 0,
        doc: /* Return t if file FILENAME is on a case-insensitive filesystem.
-The arg must be a string.  */)
+Return nil if FILENAME does not exist or is not on a case-insensitive
+filesystem, or if there was trouble determining whether the filesystem
+is case-insensitive.  */)
   (Lisp_Object filename)
 {
   Lisp_Object handler;
@@ -2467,19 +2445,16 @@ The arg must be a string.  */)
   if (!NILP (handler))
     return call2 (handler, Qfile_name_case_insensitive_p, filename);
 
-  /* If the file doesn't exist, move up the filesystem tree until we
-     reach an existing directory or the root.  */
+  /* If the file doesn't exist or there is trouble checking its
+     filesystem, move up the filesystem tree until we reach an
+     existing, trouble-free directory or the root.  */
   while (true)
     {
       int err = file_name_case_insensitive_err (filename);
-      switch (err)
-	{
-	case -1: return Qt;
-	default: return file_test_errno (filename, err);
-	case ENOENT: case ENOTDIR: break;
-	}
+      if (err <= 0)
+	return err < 0 ? Qt : Qnil;
       Lisp_Object parent = file_name_directory (filename);
-      /* Avoid infinite loop if the root is reported as non-existing
+      /* Avoid infinite loop if the root has trouble
 	 (impossible?).  */
       if (!NILP (Fstring_equal (parent, filename)))
 	return Qnil;
@@ -2739,8 +2714,7 @@ file_name_absolute_p (char const *filename)
 }
 
 /* Return t if FILE exists and is accessible via OPERATION and AMODE,
-   nil (setting errno) if not.  Signal an error if the result cannot
-   be determined.  */
+   nil (setting errno) if not.  */
 
 static Lisp_Object
 check_file_access (Lisp_Object file, Lisp_Object operation, int amode)
@@ -2758,22 +2732,13 @@ check_file_access (Lisp_Object file, Lisp_Object operation, int amode)
     }
 
   char *encoded_file = SSDATA (ENCODE_FILE (file));
-  bool ok = file_access_p (encoded_file, amode);
-  if (ok)
-    return Qt;
-  int err = errno;
-  if (err == EROFS || err == ETXTBSY
-      || (PICKY_EACCES && err == EACCES && amode != F_OK
-	  && file_access_p (encoded_file, F_OK)))
-    {
-      errno = err;
-      return Qnil;
-    }
-  return file_test_errno (file, err);
+  return file_access_p (encoded_file, amode) ? Qt : Qnil;
 }
 
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
        doc: /* Return t if file FILENAME exists (whether or not you can read it).
+Return nil if FILENAME does not exist, or if there was trouble
+determining whether the file exists.
 See also `file-readable-p' and `file-attributes'.
 This returns nil for a symlink to a nonexistent file.
 Use `file-symlink-p' to test for such links.  */)
@@ -2834,16 +2799,7 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
      should check ACLs though, which do affect this.  */
   return file_directory_p (encoded) ? Qt : Qnil;
 #else
-  if (file_access_p (SSDATA (encoded), W_OK | X_OK))
-    return Qt;
-  int err = errno;
-  if (err == EROFS
-      || (err == EACCES && file_access_p (SSDATA (encoded), F_OK)))
-    {
-      errno = err;
-      return Qnil;
-    }
-  return file_test_errno (absname, err);
+  return file_access_p (SSDATA (encoded), W_OK | X_OK) ? Qt : Qnil;
 #endif
 }
 
@@ -2919,7 +2875,8 @@ check_emacs_readlinkat (int fd, Lisp_Object file, char const *encoded_file)
 DEFUN ("file-symlink-p", Ffile_symlink_p, Sfile_symlink_p, 1, 1, 0,
        doc: /* Return non-nil if file FILENAME is the name of a symbolic link.
 The value is the link target, as a string.
-Otherwise it returns nil.
+Return nil if FILENAME does not exist or is not a symbolic link,
+of there was trouble determining whether the file is a symbolic link.
 
 This function does not check whether the link target exists.  */)
   (Lisp_Object filename)
@@ -2935,12 +2892,13 @@ This function does not check whether the link target exists.  */)
   if (!NILP (handler))
     return call2 (handler, Qfile_symlink_p, filename);
 
-  return check_emacs_readlinkat (AT_FDCWD, filename,
-				 SSDATA (ENCODE_FILE (filename)));
+  return emacs_readlinkat (AT_FDCWD, SSDATA (ENCODE_FILE (filename)));
 }
 
 DEFUN ("file-directory-p", Ffile_directory_p, Sfile_directory_p, 1, 1, 0,
        doc: /* Return t if FILENAME names an existing directory.
+Return nil if FILENAME does not name a directory, or if there
+was trouble determining whether FILENAME is a directory.
 Symbolic links to directories count as directories.
 See `file-symlink-p' to distinguish symlinks.  */)
   (Lisp_Object filename)
@@ -2953,9 +2911,7 @@ See `file-symlink-p' to distinguish symlinks.  */)
   if (!NILP (handler))
     return call2 (handler, Qfile_directory_p, absname);
 
-  if (file_directory_p (absname))
-    return Qt;
-  return file_test_errno (absname, errno);
+  return file_directory_p (absname) ? Qt : Qnil;
 }
 
 /* Return true if FILE is a directory or a symlink to a directory.
@@ -3040,12 +2996,7 @@ really is a readable and searchable directory.  */)
     }
 
   Lisp_Object encoded_absname = ENCODE_FILE (absname);
-  if (file_accessible_directory_p (encoded_absname))
-    return Qt;
-  int err = errno;
-  if (err == EACCES && file_access_p (SSDATA (encoded_absname), F_OK))
-    return Qnil;
-  return file_test_errno (absname, err);
+  return file_accessible_directory_p (encoded_absname) ? Qt : Qnil;
 }
 
 /* If FILE is a searchable directory or a symlink to a
@@ -3108,6 +3059,8 @@ file_accessible_directory_p (Lisp_Object file)
 DEFUN ("file-regular-p", Ffile_regular_p, Sfile_regular_p, 1, 1, 0,
        doc: /* Return t if FILENAME names a regular file.
 This is the sort of file that holds an ordinary stream of data bytes.
+Return nil if FILENAME does not exist or is not a regular file,
+or there was trouble determining whether FILENAME is a regular file.
 Symbolic links to regular files count as regular files.
 See `file-symlink-p' to distinguish symlinks.  */)
   (Lisp_Object filename)
@@ -3133,9 +3086,7 @@ See `file-symlink-p' to distinguish symlinks.  */)
   Vw32_get_true_file_attributes = true_attributes;
 #endif
 
-  if (stat_result == 0)
-    return S_ISREG (st.st_mode) ? Qt : Qnil;
-  return file_test_errno (absname, errno);
+  return stat_result == 0 && S_ISREG (st.st_mode) ? Qt : Qnil;
 }
 
 DEFUN ("file-selinux-context", Ffile_selinux_context,
@@ -3541,20 +3492,15 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
     {
       err1 = errno;
       if (err1 != EOVERFLOW)
-	return file_test_errno (absname1, err1);
+	return file_attribute_errno (absname1, err1);
     }
-
   if (stat (SSDATA (ENCODE_FILE (absname2)), &st2) != 0)
     {
-      file_test_errno (absname2, errno);
+      file_attribute_errno (absname2, errno);
       return Qt;
     }
-
   if (err1)
-    {
-      file_test_errno (absname1, err1);
-      eassume (false);
-    }
+    file_attribute_errno (absname1, err1);
 
   return (timespec_cmp (get_stat_mtime (&st2), get_stat_mtime (&st1)) < 0
 	  ? Qt : Qnil);

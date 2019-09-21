@@ -2029,11 +2029,14 @@ longer defaults to 'buffer-file-name'.
 ** File metadata primitives now signal an error if I/O, access, or
 other serious errors prevent them from determining the result.
 Formerly, these functions often (though not always) returned nil.
-For example, if searching /etc/firewalld results in an I/O error,
-(file-symlink-p "/etc/firewalld/firewalld.conf") now signals an error
-instead of returning nil, because file-symlink-p cannot determine
-whether a symbolic link exists there.  These functions still behave as
-before if the only problem is that the file does not exist.
+For example, if there is an access error, I/O error or low-level
+integer overflow when getting the attributes of a file F,
+(file-attributes F) now signals an error instead of returning nil.
+These functions still behave as before if the only problem is that the
+file does not exist.  The affected primitives are
+directory-files-and-attributes, file-acl, file-attributes, file-modes,
+file-newer-than-file-p, file-selinux-context, file-system-info, and
+set-visited-file-modtime.
 
 ---
 ** The function 'eldoc-message' now accepts a single argument.

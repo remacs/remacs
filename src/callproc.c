@@ -1567,12 +1567,12 @@ init_callproc (void)
 
       tem = Fexpand_file_name (build_string ("NEWS"), Vdata_directory);
       if (!NILP (Fequal (srcdir, Vinvocation_directory))
-	  || !file_access_p (SSDATA (tem), F_OK))
+	  || NILP (Ffile_exists_p (tem)))
 	{
 	  Lisp_Object newdir;
 	  newdir = Fexpand_file_name (build_string ("../etc/"), lispdir);
 	  tem = Fexpand_file_name (build_string ("NEWS"), newdir);
-	  if (file_access_p (SSDATA (tem), F_OK))
+	  if (!NILP (Ffile_exists_p (tem)))
 	    Vdata_directory = newdir;
 	}
     }
