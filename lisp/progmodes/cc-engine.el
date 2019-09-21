@@ -10100,7 +10100,8 @@ This function might do hidden buffer changes."
 		     (throw 'at-decl-or-cast t)))))
 
 	   ;; CASE 18
-	   (when (and (not (memq context '(nil top)))
+	   (when (and at-decl-end
+		      (not (memq context '(nil top)))
 		      (or (and got-prefix (not got-number))
 			  (and (eq context 'decl)
 			       (not c-recognize-paren-inits)
