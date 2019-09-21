@@ -2138,7 +2138,7 @@ Also sets up so that exiting Emacs will automatically save the file."
   "Kill between point and mark.
 The text is deleted but saved in the kill ring.
 The command \\[yank] can retrieve it from there.
-/(If you want to kill and then yank immediately, use \\[copy-region-as-kill].)
+\(If you want to kill and then yank immediately, use \\[copy-region-as-kill].)
 
 This is the primitive for programs to kill text (as opposed to deleting it).
 Supply two arguments, character positions indicating the stretch of text
