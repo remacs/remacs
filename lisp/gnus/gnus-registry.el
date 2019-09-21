@@ -1007,7 +1007,7 @@ Uses `gnus-registry-marks' to find what shortcuts to install."
 ;; (defalias 'gnus-user-format-function-M 'gnus-registry-article-marks-to-chars)
 (defun gnus-registry-article-marks-to-chars (headers)
   "Show the marks for an article by the :char property."
-  (if (hash-table-p gnus-registry-db)
+  (if (object-p gnus-registry-db)
       (let* ((id (mail-header-message-id headers))
              (marks (when id (gnus-registry-get-id-key id 'mark))))
 	(concat (delq nil
@@ -1023,7 +1023,7 @@ Uses `gnus-registry-marks' to find what shortcuts to install."
 ;; (defalias 'gnus-user-format-function-M 'gnus-registry-article-marks-to-names)
 (defun gnus-registry-article-marks-to-names (headers)
   "Show the marks for an article by name."
-  (if (hash-table-p gnus-registry-db)
+  (if (object-p gnus-registry-db)
       (let* ((id (mail-header-message-id headers))
              (marks (when id (gnus-registry-get-id-key id 'mark))))
 	(mapconcat (lambda (mark) (symbol-name mark)) marks ","))
