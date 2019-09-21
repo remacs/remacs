@@ -2130,6 +2130,11 @@ valid event type.
 
 * Lisp Changes in Emacs 27.1
 
+** 'reveal-mode' can now also be used for more than to toggle between
+invisible and visible: It can also toggle 'display' properties in
+overlays.  This is only done on 'display' properties that have the
+'reveal-toggle-invisible' property set.
+
 +++
 ** 'process-contact' now takes an optional NO-BLOCK parameter to allow
 not waiting for a process to be set up.
