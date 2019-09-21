@@ -2567,6 +2567,10 @@ left to higher-level functions.
 
 ** Image mode
 
+*** An Exif library has been added that can parse JPEG files and
+output data about creation times and orientation and the like.
+'exif-parse' is the main interface function.
+
 *** 'image-mode' started using ImageMagick by default for all images
 some years back.  It now respects 'imagemagick-types-inhibit' as a way
 to disable that.
