@@ -3152,10 +3152,10 @@ User is always nil."
 
 (defun tramp-handle-file-modes (filename)
   "Like `file-modes' for Tramp files."
-  (let ((truename (or (file-truename filename) filename)))
-    (when (file-exists-p truename)
-      (tramp-mode-string-to-int
-       (tramp-compat-file-attribute-modes (file-attributes truename))))))
+  ;; Starting with Emacs 25.1, `when-let' can be used.
+  (let ((attrs (file-attributes (or (file-truename filename) filename))))
+    (when attrs
+      (tramp-mode-string-to-int (tramp-compat-file-attribute-modes attrs)))))
 
 ;; Localname manipulation functions that grok Tramp localnames...
 (defun tramp-handle-file-name-as-directory (file)
