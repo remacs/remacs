@@ -5409,7 +5409,14 @@ of the other hash types instead, e.g. sha256 or sha512.  */)
 DEFUN ("buffer-hash", Fbuffer_hash, Sbuffer_hash, 0, 1, 0,
        doc: /* Return a hash of the contents of BUFFER-OR-NAME.
 This hash is performed on the raw internal format of the buffer,
-disregarding any coding systems.  If nil, use the current buffer.  */ )
+disregarding any coding systems.  If nil, use the current buffer.
+
+This function is useful for comparing two buffers running in the same
+Emacs, but is not guaranteed to return the same hash between different
+Emacs versions.
+
+It should not be used for anything security-related.  See
+`secure-hash' for these applications.  */ )
   (Lisp_Object buffer_or_name)
 {
   Lisp_Object buffer;
