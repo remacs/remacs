@@ -1481,7 +1481,7 @@ available for output of asynchronous shell commands.
 ---
 *** 'pcomplete/make' now completes on targets in included files, recursively.
 To recover the previous behavior, set new user option
-`pcmpl-gnu-makefile-includes' to nil.
+'pcmpl-gnu-makefile-includes' to nil.
 
 ** Auth-source
 
@@ -1491,7 +1491,7 @@ To recover the previous behavior, set new user option
 *** .authinfo and .netrc files now use a new mode: 'authinfo-mode'.
 This is just like 'fundamental-mode', except that it hides passwords
 under a "****" display property.  When the cursor moves to this text,
-the real password is revealed (via `reveal-mode').
+the real password is revealed (via 'reveal-mode').
 
 ** Tramp
 
