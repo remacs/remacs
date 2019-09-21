@@ -21400,7 +21400,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  const int local_default_face_id =
 	    lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID);
 	  struct face* default_face =
-	    FACE_FROM_ID (it->f, local_default_face_id);
+	    FACE_FROM_ID_OR_NULL (it->f, local_default_face_id);
 
 #ifdef HAVE_WINDOW_SYSTEM
 	  if (FRAME_WINDOW_P (it->f))
@@ -21534,7 +21534,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	  g->ascent = it->max_ascent;
 	  g->descent = it->max_descent;
 	}
-#endif // HAVE_WINDOW_SYSTEM
+#endif /* HAVE_WINDOW_SYSTEM  */
       it->override_ascent = -1;
       it->constrain_row_ascent_descent_p = false;
       it->current_x = saved_x;
@@ -21721,8 +21721,6 @@ extend_face_to_end_of_line (struct it *it)
 		  it->face_id = save_face_id;
 		}
             }
-
-	  /* Restore the face after the indicator was generated.  */
 
 	  /* If there is space after the indicator generate an
 	     extra empty glyph to restore the face.  Issue was

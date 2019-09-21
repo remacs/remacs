@@ -2282,7 +2282,7 @@ filter_face_ref (Lisp_Object face_ref,
    of ERR_MSGS).  Use NAMED_MERGE_POINTS to detect loops in face
    inheritance or list structure; it may be 0 for most callers.
 
-   attr_filter is the index of a parameter that conditions the merging
+   ATTR_FILTER is the index of a parameter that conditions the merging
    for named faces (case 1) to only the face_ref where
    lface[merge_face_ref] is non-nil. To merge unconditionally set this
    value to 0.
@@ -6043,7 +6043,7 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
    which a different face is needed, as far as text properties and
    overlays are concerned.  W is a window displaying current_buffer.
 
-   attr_filter is passed merge_face_ref.
+   ATTR_FILTER is passed merge_face_ref.
 
    REGION_BEG, REGION_END delimit the region, so it can be
    highlighted.
@@ -6126,7 +6126,8 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
   }
 
   /* Optimize common cases where we can use the default face.  */
-  if (noverlays == 0 && NILP (prop))
+  if (noverlays == 0
+      && NILP (prop))
     {
       SAFE_FREE ();
       return default_face->id;
