@@ -2529,7 +2529,7 @@ merge_face_ref (struct window *w,
 		     normal face reference.  */
 		  if (! merge_face_ref (w, f, value, to,
 		                        err_msgs, named_merge_points,
-		                        0))
+		                        attr_filter))
 		    err = true;
 		}
 	      else if (EQ (keyword, QCextend))
@@ -2560,10 +2560,10 @@ merge_face_ref (struct window *w,
 
 	  if (! NILP (next))
 	    ok = merge_face_ref (w, f, next, to, err_msgs,
-	                         named_merge_points, 0);
+	                         named_merge_points, attr_filter);
 
 	  if (! merge_face_ref (w, f, first, to, err_msgs,
-	                        named_merge_points, 0))
+	                        named_merge_points, attr_filter))
 	    ok = false;
 	}
     }

@@ -21563,7 +21563,6 @@ append_space_for_newline (struct it *it, bool default_face_p)
 static void
 extend_face_to_end_of_line (struct it *it)
 {
-  struct face *face;
   struct frame *f = it->f;
 
   /* If line is already filled, do nothing.  Non window-system frames
@@ -21588,9 +21587,9 @@ extend_face_to_end_of_line (struct it *it)
   /* Face extension extends the background and box of IT->extend_face_id
      to the end of the line.  If the background equals the background
      of the frame, we don't have to do anything.  */
-  face = FACE_FROM_ID (f, (it->face_before_selective_p
-                           ? it->saved_face_id
-                           : extend_face_id));
+  struct face *face = FACE_FROM_ID (f, (it->face_before_selective_p
+                                        ? it->saved_face_id
+                                        : extend_face_id));
 
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
