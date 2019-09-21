@@ -434,7 +434,7 @@ static int
 fill_column_indicator_column (struct it *it, int char_width)
 {
   if (Vdisplay_fill_column_indicator
-      && it->w->pseudo_window_p == 0
+      && !it->w->pseudo_window_p
       && it->continuation_lines_width == 0
       && CHARACTERP (Vdisplay_fill_column_indicator_character))
     {
@@ -21581,8 +21581,9 @@ extend_face_to_end_of_line (struct it *it)
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
 
-  const int extend_face_id
-    = face_at_pos (it, LFACE_EXTEND_INDEX);
+  const int extend_face_id = (it->face_id == DEFAULT_FACE_ID)
+    ? DEFAULT_FACE_ID
+    : face_at_pos (it, LFACE_EXTEND_INDEX);
 
   /* Face extension extends the background and box of IT->extend_face_id
      to the end of the line.  If the background equals the background
