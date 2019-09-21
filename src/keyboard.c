@@ -10711,7 +10711,7 @@ On such systems, Emacs starts a subshell instead of suspending.  */)
   get_tty_size (fileno (CURTTY ()->input), &width, &height);
   if (width != old_width || height != old_height)
     change_frame_size (SELECTED_FRAME (), width,
-		       height - FRAME_MENU_BAR_LINES (SELECTED_FRAME ()),
+		       height - FRAME_MENU_BAR_LINES (SELECTED_FRAME ()) - FRAME_TAB_BAR_LINES (SELECTED_FRAME ()),
 		       0, 0, 0, 0);
 
   run_hook (intern ("suspend-resume-hook"));

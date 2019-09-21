@@ -5675,7 +5675,7 @@ handle_window_change_signal (int sig)
              structures now.  Let that be done later outside of the
              signal handler.  */
           change_frame_size (XFRAME (frame), width,
-			     height - FRAME_MENU_BAR_LINES (XFRAME (frame)),
+			     height - FRAME_MENU_BAR_LINES (XFRAME (frame)) - FRAME_TAB_BAR_LINES (XFRAME (frame)),
 			     0, 1, 0, 0);
     }
   }
@@ -6355,7 +6355,7 @@ init_display_interactive (void)
     change_frame_size (XFRAME (selected_frame),
                        FrameCols (t->display_info.tty),
                        FrameRows (t->display_info.tty)
-		       - FRAME_MENU_BAR_LINES (f), 0, 0, 1, 0);
+		       - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f), 0, 0, 1, 0);
 
     /* Delete the initial terminal. */
     if (--initial_terminal->reference_count == 0

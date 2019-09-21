@@ -1190,9 +1190,11 @@ make_terminal_frame (struct terminal *terminal)
 #endif
 
   FRAME_MENU_BAR_LINES (f) = NILP (Vmenu_bar_mode) ? 0 : 1;
-  FRAME_LINES (f) = FRAME_LINES (f) - FRAME_MENU_BAR_LINES (f);
+  FRAME_TAB_BAR_LINES (f) = NILP (Vtab_bar_mode) ? 0 : 1;
+  FRAME_LINES (f) = FRAME_LINES (f) - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f);
   FRAME_MENU_BAR_HEIGHT (f) = FRAME_MENU_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
-  FRAME_TEXT_HEIGHT (f) = FRAME_TEXT_HEIGHT (f) - FRAME_MENU_BAR_HEIGHT (f);
+  FRAME_TAB_BAR_HEIGHT (f) = FRAME_TAB_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
+  FRAME_TEXT_HEIGHT (f) = FRAME_TEXT_HEIGHT (f) - FRAME_MENU_BAR_HEIGHT (f) - FRAME_TAB_BAR_HEIGHT (f);
 
   /* Set the top frame to the newly created frame.  */
   if (FRAMEP (FRAME_TTY (f)->top_frame)
@@ -1314,7 +1316,7 @@ affects all frames on the same terminal device.  */)
   {
     int width, height;
     get_tty_size (fileno (FRAME_TTY (f)->input), &width, &height);
-    adjust_frame_size (f, width, height - FRAME_MENU_BAR_LINES (f),
+    adjust_frame_size (f, width, height - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f),
 		       5, 0, Qterminal_frame);
   }
 
