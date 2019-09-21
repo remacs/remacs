@@ -556,7 +556,7 @@ point and the mark is operated on.  */)
 
   if (!NILP (region_noncontiguous_p))
     {
-      bounds = call1 (Fsymbol_value (intern ("region-extract-function")),
+      bounds = call1 (Fsymbol_value (Qregion_extract_function),
 		      intern ("bounds"));
 
       while (CONSP (bounds))
@@ -571,15 +571,31 @@ point and the mark is operated on.  */)
   return Qnil;
 }
 
-DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 2, "r",
+DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 3,
+       "(list (region-beginning) (region-end) (region-noncontiguous-p))",
        doc: /* Convert the region to capitalized form.
 This means that each word's first character is converted to either
 title case or upper case, and the rest to lower case.
 In programs, give two arguments, the starting and ending
 character positions to operate on.  */)
-  (Lisp_Object beg, Lisp_Object end)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object region_noncontiguous_p)
 {
-  casify_region (CASE_CAPITALIZE, beg, end);
+  Lisp_Object bounds = Qnil;
+
+  if (!NILP (region_noncontiguous_p))
+    {
+      bounds = call1 (Fsymbol_value (Qregion_extract_function),
+		      intern ("bounds"));
+
+      while (CONSP (bounds))
+	{
+	  casify_region (CASE_CAPITALIZE, XCAR (XCAR (bounds)), XCDR (XCAR (bounds)));
+	  bounds = XCDR (bounds);
+	}
+    }
+  else
+    casify_region (CASE_CAPITALIZE, beg, end);
+
   return Qnil;
 }
 
