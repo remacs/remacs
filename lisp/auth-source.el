@@ -2397,6 +2397,38 @@ MODE can be \"login\" or \"password\"."
       (setq password (funcall password)))
     (list user password auth-info)))
 
+;;; Tiny mode for editing .netrc/.authinfo modes (that basically just
+;;; hides passwords).
+
+;;;###autoload
+(define-derived-mode authinfo-mode fundamental-mode "Authinfo"
+  "Mode for editing .authinfo/.netrc files.
+
+This is just like `fundamental-mode', but hides passwords.  The
+passwords are revealed when point moved into the password.
+
+\\{authinfo-mode-map}"
+  (authinfo--hide-passwords (point-min) (point-max))
+  (reveal-mode))
+
+(defun authinfo--hide-passwords (start end)
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char start)
+      (while (re-search-forward "\\bpassword +\\([^\n\t ]+\\)"
+                                nil t)
+        (let ((overlay (make-overlay (match-beginning 1) (match-end 1))))
+          (overlay-put overlay 'display (propertize "****"
+                                                    'face 'warning))
+          (overlay-put overlay 'reveal-toggle-invisible
+                       #'authinfo--toggle-display))))))
+
+(defun authinfo--toggle-display (overlay hide)
+  (if hide
+      (overlay-put overlay 'display (propertize "****" 'face 'warning))
+    (overlay-put overlay 'display nil)))
+
 (provide 'auth-source)
 
 ;;; auth-source.el ends here
