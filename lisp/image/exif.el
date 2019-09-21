@@ -107,7 +107,7 @@ The return value is a list of Exif items."
     (delete-region (point-min) (point))
     (let* ((endian-marker (exif--read-chunk 2))
            (le (cond
-                ;; "Morotola" is big-endian.
+                ;; "Motorola" is big-endian.
                 ((equal endian-marker "MM")
                  nil)
                 ;; "Intel" is little-endian.
@@ -141,7 +141,7 @@ The return value is a list of Exif items."
                   ;; The actual length is the number in this field
                   ;; times the "inherent" length of the field format
                   ;; (i.e., "long integer" (4 bytes) or "ascii" (1
-                  ;; byte).
+                  ;; byte)).
                   for length = (* (exif--read-number 4 le)
                                   (cdr field-format))
                   for value = (exif--read-number 4 le)
@@ -171,7 +171,7 @@ The return value is a list of Exif items."
           ;; keep parsing.
           (progn
             (goto-char (1+ next))
-            (append dir (exif--parse-directory le)))
+            (nconc dir (exif--parse-directory le)))
         ;; We've reached the end of the directories.
         dir))))
 
