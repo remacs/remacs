@@ -337,10 +337,14 @@ emacs -batch -l ert -l my-tests.el \
 
 In quiet mode ERT prints only unexpected results and summary.
 
-If ERT is not part of your Emacs distribution, you may need to use
-@code{-L /path/to/ert/} so that Emacs can find it.  You may need
-additional @code{-L} flags to ensure that @code{my-tests.el} and all the
-files that it requires are on your @code{load-path}.
+You can specify selectors to only run a subset of your tests
+(@pxref{Test Selectors}).  For example, the following would run all
+tests where the name of the test matches the string ``to-match''.
+
+@example
+emacs -batch -l ert -l my-tests.el \
+      -eval '(ert-run-tests-batch-and-exit "to-match")'
+@end example
 
 
 @node Test Selectors
