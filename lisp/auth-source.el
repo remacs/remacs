@@ -2416,9 +2416,9 @@ passwords are revealed when point moved into the password.
     (save-restriction
       (narrow-to-region start end)
       (goto-char start)
-      (while (re-search-forward "\\bpassword +\\([^\n\t ]+\\)"
+      (while (re-search-forward "\\(\\s-\\|^\\)password\\s-+\\([^\n\t ]+\\)"
                                 nil t)
-        (let ((overlay (make-overlay (match-beginning 1) (match-end 1))))
+        (let ((overlay (make-overlay (match-beginning 2) (match-end 2))))
           (overlay-put overlay 'display (propertize "****"
                                                     'face 'warning))
           (overlay-put overlay 'reveal-toggle-invisible
