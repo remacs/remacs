@@ -39,6 +39,7 @@
 ;;; Code:
 
 (require 'image)
+(require 'exif)
 (eval-when-compile (require 'cl-lib))
 
 ;;; Image mode window-info management.
@@ -744,17 +745,25 @@ was inserted."
 	 (type (if (image--imagemagick-wanted-p filename)
 		   'imagemagick
 		 (image-type file-or-data nil data-p)))
-         ;; :scale 1: If we do not set this, create-image will apply
-         ;; default scaling based on font size.
-	 (image (if (not edges)
+	 (inhibit-read-only t)
+	 (buffer-undo-list t)
+	 (modified (buffer-modified-p))
+	 props image)
+
+    ;; Get the rotation data from the file, if any.
+    (setq image-transform-rotation
+          (or (exif-orientation
+               (ignore-error exif-error
+                 (exif-parse-buffer)))
+              0.0))
+
+    ;; :scale 1: If we do not set this, create-image will apply
+    ;; default scaling based on font size.
+    (setq image (if (not edges)
 		    (create-image file-or-data type data-p :scale 1)
 		  (create-image file-or-data type data-p :scale 1
 				:max-width (- (nth 2 edges) (nth 0 edges))
 				:max-height (- (nth 3 edges) (nth 1 edges)))))
-	 (inhibit-read-only t)
-	 (buffer-undo-list t)
-	 (modified (buffer-modified-p))
-	 props)
 
     ;; Discard any stale image data before looking it up again.
     (image-flush image)
