@@ -2358,7 +2358,11 @@ testing for syntax only valid as JSX."
                               'syntax-table (string-to-syntax "\"/"))
            (js-syntax-propertize-regexp end)))))
     ("\\`\\(#\\)!" (1 "< b"))
-    ("<" (0 (ignore (if js-jsx-syntax (js-jsx--syntax-propertize-tag end))))))
+    ("<" (0 (ignore
+             (when js-jsx-syntax
+               ;; Not inside a comment or string.
+               (unless (nth 8 (save-excursion (syntax-ppss (match-beginning 0))))
+                 (js-jsx--syntax-propertize-tag end)))))))
    (point) end))
 
 (defconst js--prettify-symbols-alist
