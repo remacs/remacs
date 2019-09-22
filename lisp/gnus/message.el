@@ -4364,6 +4364,14 @@ This function could be useful in `message-setup-hook'."
     (dolist (hdr '("To" "Cc" "Bcc"))
       (let ((addr (message-fetch-field hdr)))
 	(when (stringp addr)
+	  ;; First check for syntactically invalid addresses.
+	  (dolist (address (mail-header-parse-addresses addr t))
+	    (unless (mail-header-parse-addresses address)
+	      (unless (y-or-n-p
+		       (format "Email address %s looks invalid; send anyway?"
+			       address))
+		(user-error "Invalid address %s" address))))
+	  ;; Then check for likely-bogus addresses.
 	  (dolist (bog (message-bogus-recipient-p addr))
 	    (and bog
 		 (not (y-or-n-p
