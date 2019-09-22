@@ -39,7 +39,7 @@
   :group 'gnus-windows
   :type 'boolean)
 
-(defcustom gnus-use-atomic-windows t
+(defcustom gnus-use-atomic-windows nil
   "If non-nil, Gnus' window compositions will be atomic."
   :type 'boolean
   :version "27.1")
