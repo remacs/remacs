@@ -12855,10 +12855,7 @@ The attribute value can be a string, a function with zero arguments
 (the return value will be used), a variable (its value will be used)
 or a list (it will be @code{eval}ed and the return value will be
 used).  The functions and sexps are called/@code{eval}ed in the
-message buffer that is being set up.  The headers of the current
-article are available through the @code{message-reply-headers}
-variable, which is a @code{mail-header} object that can be accessed
-via the @code{mail-header-*} accessors.
+message buffer that is being set up.
 
 In the case of a string value, if the @code{match} is a regular
 expression, or if it takes the form @code{(header @var{match}
@@ -12867,8 +12864,6 @@ on the value to replace the positional parameters @samp{\@var{n}} by
 the corresponding parenthetical matches (@pxref{Replacing Match,,
 Replacing the Text that Matched, elisp, The Emacs Lisp Reference
 Manual}.)
-
-@vindex message-reply-headers
 
 If you wish to check whether the message you are about to compose is
 meant to be a news article or a mail message, you can check the values
