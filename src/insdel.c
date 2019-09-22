@@ -2002,7 +2002,7 @@ prepare_to_modify_buffer_1 (ptrdiff_t start, ptrdiff_t end,
 	  : (!NILP (Vselect_active_regions)
 	     && !NILP (Vtransient_mark_mode))))
     Vsaved_region_selection
-      = call1 (Fsymbol_value (Qregion_extract_function), Qnil);
+      = call1 (Vregion_extract_function, Qnil);
 
   signal_before_change (start, end, preserve_ptr);
   Fset (Qdeactivate_mark, Qt);
@@ -2400,8 +2400,6 @@ whether files are locked by another Emacs session, as well as
 handling of the active region per `select-active-regions'.  */);
   inhibit_modification_hooks = 0;
   DEFSYM (Qinhibit_modification_hooks, "inhibit-modification-hooks");
-
-  DEFSYM (Qregion_extract_function, "region-extract-function");
 
   defsubr (&Scombine_after_change_execute);
 }

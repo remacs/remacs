@@ -1087,7 +1087,7 @@ instead of deleted."
   :group 'killing
   :version "24.1")
 
-(defvar region-extract-function
+(setq region-extract-function
   (lambda (method)
     (when (region-beginning)
       (cond
@@ -1096,19 +1096,7 @@ instead of deleted."
        ((eq method 'delete-only)
         (delete-region (region-beginning) (region-end)))
        (t
-        (filter-buffer-substring (region-beginning) (region-end) method)))))
-  "Function to get the region's content.
-Called with one argument METHOD which can be:
-- nil: return the content as a string (list of strings for
-  non-contiguous regions).
-- `delete-only': delete the region; the return value is undefined.
-- `bounds': return the boundaries of the region as a list of one
-  or more cons cells of the form (START . END).
-- anything else: delete the region and return its content
-  as a string (or list of strings for non-contiguous regions),
-  after filtering it with `filter-buffer-substring', which
-  is called, for each contiguous sub-region, with METHOD as its
-  3rd argument.")
+        (filter-buffer-substring (region-beginning) (region-end) method))))))
 
 (defvar region-insert-function
   (lambda (lines)

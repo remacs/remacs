@@ -2739,7 +2739,7 @@ since only regular expressions have distinguished subexpressions.  */)
 		    Qnil);
   else if (case_action == cap_initial)
     Fupcase_initials_region (make_fixnum (search_regs.start[sub]),
-			     make_fixnum (newpoint));
+			     make_fixnum (newpoint), Qnil);
 
   /* The replace_range etc. functions can trigger modification hooks
      (see signal_before_change and signal_after_change).  Try to error

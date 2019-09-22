@@ -488,7 +488,8 @@ interface that's more like functions like 'search-forward'.
 ---
 ** More commands support noncontiguous rectangular regions, namely
 'upcase-dwim', 'downcase-dwim', 'capitalize-dwim', 'capitalize-region',
-'replace-string', 'replace-regexp', and 'delimit-columns-region'.
+'upcase-initials-region', 'replace-string', 'replace-regexp', and
+'delimit-columns-region'.
 
 +++
 ** When asked to visit a large file, Emacs now offers visiting it literally.

@@ -1535,7 +1535,7 @@ command_loop_1 (void)
 				  Vselection_inhibit_update_commands)))
 		{
 		  Lisp_Object txt
-		    = call1 (Fsymbol_value (Qregion_extract_function), Qnil);
+		    = call1 (Vregion_extract_function, Qnil);
 		  if (XFIXNUM (Flength (txt)) > 0)
 		    /* Don't set empty selections.  */
 		    call2 (Qgui_set_selection, QPRIMARY, txt);
