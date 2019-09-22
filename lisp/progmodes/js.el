@@ -4484,7 +4484,7 @@ their `mode-name' updates to show enabled syntax extensions."
 
 (defvar js-jsx-regexps
   (list "\\_<\\(?:var\\|let\\|const\\|import\\)\\_>.*?React")
-  "Regexps for detecting JSX in JavaScript buffers.
+  "Case-sensitive regexps for detecting JSX in JavaScript buffers.
 When `js-jsx-detect-syntax' is non-nil and any of these regexps
 match text near the beginning of a JavaScript buffer,
 `js-jsx-syntax' (which see) will be made buffer-local and set to
@@ -4504,7 +4504,9 @@ is non-nil.  Return t after enabling, nil otherwise."
                    (catch 'match
                      (mapc
                       (lambda (regexp)
-                        (if (re-search-forward regexp 4000 t) (throw 'match t)))
+                        (when (let (case-fold-search)
+                                (re-search-forward regexp 4000 t))
+                          (throw 'match t)))
                       js-jsx-regexps)
                      nil))))
     (js-jsx-enable)
