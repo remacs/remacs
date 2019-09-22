@@ -22924,7 +22924,7 @@ to fiddle with @code{gnus-tree-minimize-window} to avoid having the
 windows resized.
 
 Lastly, it's possible to make Gnus window layouts ``atomic''
-(@xref{Atomic Windows, , Atomic Windows, elisp, The GNU Emacs Lisp
+(@pxref{Atomic Windows, , Atomic Windows, elisp, The GNU Emacs Lisp
 Reference Manual}) by setting @code{gnus-use-atomic-windows} to
 @code{t}.  This will ensure that pop-up buffers (e.g. help or
 completion buffers), will appear below or to the side of the entire
