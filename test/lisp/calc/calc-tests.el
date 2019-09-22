@@ -215,6 +215,109 @@ An existing calc stack is reused, otherwise a new one is created."
   (should (equal (math-absolute-from-julian-dt -101 3 1) -36832))
   (should (equal (math-absolute-from-julian-dt -4713 1 1) -1721425)))
 
+(ert-deftest calc-test-solve-linear-system ()
+  "Test linear system solving (bug#35374)."
+  ;;   x + y =   3
+  ;;  2x - 3y = -4
+  ;; with the unique solution x=1, y=2
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 3)
+              (calcFunc-eq (- (* 2 (var x var-x)) (* 3 (var y var-y))) -4))
+            '(vec (var x var-x) (var y var-y)))
+           '(vec (calcFunc-eq (var x var-x) 1)
+                 (calcFunc-eq (var y var-y) 2))))
+
+  ;;  x + y = 1
+  ;;  x + y = 2
+  ;; has no solution
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 1)
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 2))
+            '(vec (var x var-x) (var y var-y)))
+           '(calcFunc-solve
+             (vec
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 1)
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 2))
+             (vec (var x var-x) (var y var-y)))))
+  ;;   x - y = 1
+  ;;   x + y = 1
+  ;; with the unique solution x=1, y=0
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (- (var x var-x) (var y var-y)) 1)
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 1))
+            '(vec (var x var-x) (var y var-y)))
+           '(vec (calcFunc-eq (var x var-x) 1)
+                 (calcFunc-eq (var y var-y) 0))))
+  ;;  2x - 3y +  z =  5
+  ;;   x +  y - 2z =  0
+  ;;  -x + 2y + 3z = -3
+  ;; with the unique solution x=1, y=-1, z=0
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq
+               (+ (- (* 2 (var x var-x)) (* 3 (var y var-y))) (var z var-z))
+               5)
+              (calcFunc-eq
+               (- (+ (var x var-x) (var y var-y)) (* 2 (var z var-z)))
+               0)
+              (calcFunc-eq
+               (+ (- (* 2 (var y var-y)) (var x var-x)) (* 3 (var z var-z)))
+               -3))
+            '(vec (var x var-x) (var y var-y) (var z var-z)))
+           ;; The `float' forms in the result are just artefacts of Calc's
+           ;; current solver; it should be fixed to produce exact (integral)
+           ;; results in this case.
+           '(vec (calcFunc-eq (var x var-x) (float 1 0))
+                 (calcFunc-eq (var y var-y) (float -1 0))
+                 (calcFunc-eq (var z var-z) 0))))
+  ;;   x = y + 1
+  ;;   x = y
+  ;; has no solution
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (var x var-x) (+ (var y var-y) 1))
+              (calcFunc-eq (var x var-x) (var y var-y)))
+            '(vec (var x var-x) (var y var-y)))
+           '(calcFunc-solve
+             (vec
+              (calcFunc-eq (var x var-x) (+ (var y var-y) 1))
+              (calcFunc-eq (var x var-x) (var y var-y)))
+             (vec (var x var-x) (var y var-y)))))
+  ;;  x + y + z = 6
+  ;;  x + y     = 3
+  ;;  x - y     = 1
+  ;; with the unique solution x=2, y=1, z=3
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (+ (+ (var x var-x) (var y var-y)) (var z var-z)) 6)
+              (calcFunc-eq (+ (var x var-x) (var y var-y)) 3)
+              (calcFunc-eq (- (var x var-x) (var y var-y)) 1))
+            '(vec (var x var-x) (var y var-y) (var z var-z)))
+           '(vec
+             (calcFunc-eq (var x var-x) 2)
+             (calcFunc-eq (var y var-y) 1)
+             (calcFunc-eq (var z var-z) 3))))
+  ;; x = 3
+  ;; x + 4y^2 = 3                   (ok, so this one isn't linear)
+  ;; with the unique (double) solution x=3, y=0
+  (should (equal
+           (calcFunc-solve
+            '(vec
+              (calcFunc-eq (var x var-x) 3)
+              (calcFunc-eq (+ (var x var-x) (* 4 (^ (var y var-y) 2))) 3))
+            '(vec (var x var-x) (var y var-y)))
+           '(vec (calcFunc-eq (var x var-x) 3)
+                 (calcFunc-eq (var y var-y) 0)))))
+
 (provide 'calc-tests)
 ;;; calc-tests.el ends here
 
