@@ -1952,10 +1952,8 @@ and @uref{http://pyropus.ca/software/getmail/, getmail}.
 You should tell those to write the mail to your disk and
 Gnus to read it from there. Last but not least the mail
 sending part: This can be done with every MTA like
-@uref{http://www.sendmail.org/, sendmail},
-@uref{http://www.qmail.org/, postfix},
-@uref{http://www.exim.org/, exim} or
-@uref{http://www.qmail.org/, qmail}.
+@uref{http://www.sendmail.org/, sendmail} or
+@uref{http://www.exim.org/, exim}.
 
 On windows boxes I'd vote for
 @uref{http://www.tglsoft.de/, Hamster},

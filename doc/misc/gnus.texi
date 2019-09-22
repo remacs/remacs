@@ -16416,8 +16416,7 @@ have to set this variable to @code{t}.  The default is @code{nil}.
 
 @code{nnmaildir} stores mail in the maildir format, with each maildir
 corresponding to a group in Gnus.  This format is documented here:
-@uref{http://cr.yp.to/proto/maildir.html} and here:
-@uref{http://www.qmail.org/man/man5/maildir.html}.  @code{nnmaildir}
+@uref{http://cr.yp.to/proto/maildir.html}.  @code{nnmaildir}
 also stores extra information in the @file{.nnmaildir/} directory
 within a maildir.
 
