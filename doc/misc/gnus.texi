@@ -12857,8 +12857,8 @@ or a list (it will be @code{eval}ed and the return value will be
 used).  The functions and sexps are called/@code{eval}ed in the
 message buffer that is being set up.  The headers of the current
 article are available through the @code{message-reply-headers}
-variable, which is a vector of the following headers: number subject
-from date id references chars lines xref extra.
+variable, which is a @code{mail-header} object that can be accessed
+via the @code{mail-header-*} accessors.
 
 In the case of a string value, if the @code{match} is a regular
 expression, or if it takes the form @code{(header @var{match}
