@@ -47,6 +47,7 @@
 (require 'sendmail)   ;; for mail-sendmail-undelimit-header
 (require 'mail-utils) ;; for mail-fetch-field
 (require 'browse-url)
+(require 'mail-parse)
 
 (defcustom mailclient-place-body-on-clipboard-flag
   (fboundp 'w32-set-clipboard-data)
@@ -141,6 +142,14 @@ The mail client is taken to be the handler of mailto URLs."
 	     (concat
 	      (save-excursion
 		(narrow-to-region (point-min) delimline)
+                ;; We can't send multipart/* messages (i. e. with
+                ;; attachments or the like) via this method.
+                (when-let ((type (mail-fetch-field "content-type")))
+                  (when (and (string-match "multipart"
+                                           (car (mail-header-parse-content-type
+                                                 type)))
+                             (not (y-or-n-p "Message with attachments can't be sent via mailclient; continue anyway?")))
+                    (error "Choose a different `send-mail-function' to send attachments")))
 		(goto-char (point-min))
 		(setq coding-system
 		      (if (re-search-forward mime-charset-pattern nil t)
