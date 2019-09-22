@@ -51,7 +51,7 @@
 ;; in the directory, and then that number of entries follows, and then
 ;; an offset to the next IFD.
 
-;; Usage: (exif-parse "test.jpg") =>
+;; Usage: (exif-parse-file "test.jpg") =>
 ;; ((:tag 274 :tag-name orientation :format 3 :format-type short :value 1)
 ;;  (:tag 282 :tag-name x-resolution :format 5 :format-type rational :value
 ;;        (180 . 1))
@@ -75,25 +75,70 @@
     (306 date-time))
   "Alist of tag values and their names.")
 
-(defun exif-parse (file)
-  "Parse FILE (a JPEG file) and return the Exif data, if any.
-The return value is a list of Exif items."
-  (when-let ((app1 (cdr (assq #xffe1 (exif--parse-jpeg file)))))
-    (exif--parse-exif-chunk app1)))
+(defconst exif--orientation
+  '((1 0 nil)
+    (2 0 t)
+    (3 180 nil)
+    (4 180 t)
+    (5 90 nil)
+    (6 90 t)
+    (7 270 nil)
+    (8 270 t))
+  "Alist of Exif orientation codes.
+These are mapped onto rotation values and whether the image is
+mirrored or not.")
 
-(defun exif--parse-jpeg (file)
+(define-error 'exif-error "Invalid Exif data")
+
+(defun exif-parse-file (file)
+  "Parse FILE (a JPEG file) and return the Exif data, if any.
+The return value is a list of Exif items.
+
+If the data is invalid, an `exif-error' is signalled."
   (with-temp-buffer
     (set-buffer-multibyte nil)
     (insert-file-contents-literally file)
-    (unless (= (exif--read-number-be 2) #xffd8) ; SOI (start of image)
-      (error "Not a valid JPEG file"))
-    (cl-loop for segment = (exif--read-number-be 2)
-             for size = (exif--read-number-be 2)
-             ;; Stop parsing when we get to SOS (start of stream);
-             ;; this is when the image itself starts, and there will
-             ;; be no more chunks of interest after that.
-             while (not (= segment #xffda))
-             collect (cons segment (exif--read-chunk (- size 2))))))
+    (exif-parse-buffer)))
+
+(defun exif-parse-buffer (&optional buffer)
+  "Parse BUFFER (which should be a JPEG file) and return the Exif data, if any.
+The return value is a list of Exif items.
+
+If the data is invalid, an `exif-error' is signalled."
+  (setq buffer (or buffer (current-buffer)))
+  (with-current-buffer buffer
+    (if enable-multibyte-characters
+        (with-temp-buffer
+          (set-buffer-multibyte nil)
+          (let ((dest (current-buffer)))
+            (with-current-buffer buffer
+              (encode-coding-region (point-min) (point-max)
+                                    buffer-file-coding-system
+                                    dest))
+            (when-let ((app1 (cdr (assq #xffe1 (exif--parse-jpeg)))))
+              (exif--parse-exif-chunk app1))))
+      (when-let ((app1 (cdr (assq #xffe1 (exif--parse-jpeg)))))
+        (exif--parse-exif-chunk app1)))))
+
+(defun exif-orientation (exif)
+  "Return the orientation (in degrees) in EXIF.
+If the orientation isn't present in the data, return nil."
+  (let ((code (plist-get (cl-find 'orientation exif
+                                  :key (lambda (e)
+                                         (plist-get e :tag-name)))
+                         :value)))
+    (cadr (assq code exif--orientation))))
+
+(defun exif--parse-jpeg ()
+  (unless (= (exif--read-number-be 2) #xffd8) ; SOI (start of image)
+    (signal 'exif-error "Not a valid JPEG file"))
+  (cl-loop for segment = (exif--read-number-be 2)
+           for size = (exif--read-number-be 2)
+           ;; Stop parsing when we get to SOS (start of stream);
+           ;; this is when the image itself starts, and there will
+           ;; be no more chunks of interest after that.
+           while (not (= segment #xffda))
+           collect (cons segment (exif--read-chunk (- size 2)))))
 
 (defun exif--parse-exif-chunk (data)
   (with-temp-buffer
@@ -103,7 +148,7 @@ The return value is a list of Exif items."
     ;; The Exif data is in the APP1 JPEG chunk and starts with
     ;; "Exif\0\0".
     (unless (equal (exif--read-chunk 6) (string ?E ?x ?i ?f ?\0 ?\0))
-      (error "Not a valid Exif chunk"))
+      (signal 'exif-error "Not a valid Exif chunk"))
     (delete-region (point-min) (point))
     (let* ((endian-marker (exif--read-chunk 2))
            (le (cond
@@ -114,12 +159,15 @@ The return value is a list of Exif items."
                 ((equal endian-marker "II")
                  t)
                 (t
-                 (error "Invalid endian-ness %s" endian-marker)))))
+                 (signal 'exif-error
+                         (format "Invalid endian-ness %s" endian-marker))))))
       ;; Another magical number.
       (unless (= (exif--read-number 2 le) #x002a)
-        (error "Invalid TIFF header length"))
+        (signal 'exif-error "Invalid TIFF header length"))
       (let ((offset (exif--read-number 2 le)))
         ;; Jump to where the IFD (directory) starts and parse it.
+        (when (> (1+ offset) (point-max))
+          (signal 'exif-error "Invalid IFD (directory) offset"))
         (goto-char (1+ offset))
         (exif--parse-directory le)))))
 
@@ -145,31 +193,39 @@ The return value is a list of Exif items."
                   for length = (* (exif--read-number 4 le)
                                   (cdr field-format))
                   for value = (exif--read-number 4 le)
-                  collect (list :tag tag
-                                :tag-name (cadr (assq tag exif-tag-alist))
-                                :format format
-                                :format-type (car field-format)
-                                :value (exif--process-value
-                                        (if (> length 4)
-                                            ;; If the length of the data
-                                            ;; is more than 4 bytes, then
-                                            ;; it's actually stored after
-                                            ;; this directory, and the
-                                            ;; value here is just the
-                                            ;; offset to use to find the
-                                            ;; data.
-                                            (buffer-substring
-                                             (1+ value) (+ (1+ value) length))
-                                          ;; The value is stored
-                                          ;; directly in the directory.
-                                          value)
-                                        (car field-format)
-                                        le)))))
+                  collect (list
+                           :tag tag
+                           :tag-name (cadr (assq tag exif-tag-alist))
+                           :format format
+                           :format-type (car field-format)
+                           :value (exif--process-value
+                                   (if (> length 4)
+                                       ;; If the length of the data is
+                                       ;; more than 4 bytes, then it's
+                                       ;; actually stored after this
+                                       ;; directory, and the value
+                                       ;; here is just the offset to
+                                       ;; use to find the data.
+                                       (progn
+                                         (when (> (+ (1+ value) length)
+                                                  (point-max))
+                                           (signal 'exif-error
+                                                   "Premature end of file"))
+                                         (buffer-substring
+                                          (1+ value)
+                                          (+ (1+ value) length)))
+                                     ;; The value is stored directly
+                                     ;; in the directory.
+                                     value)
+                                   (car field-format)
+                                   le)))))
     (let ((next (exif--read-number 4 le)))
       (if (> next 0)
           ;; There's more than one directory; if so, jump to it and
           ;; keep parsing.
           (progn
+            (when (> (1+ next) (point-max))
+              (signal 'exif-error "Invalid IFD (directory) next-offset"))
             (goto-char (1+ next))
             (nconc dir (exif--parse-directory le)))
         ;; We've reached the end of the directories.
@@ -190,6 +246,8 @@ The return value is a list of Exif items."
 
 (defun exif--read-chunk (bytes)
   "Return BYTES octets from the buffer and advance point that much."
+  (when (> (+ (point) bytes) (point-max))
+    (signal 'exif-error "Premature end of file"))
   (prog1
       (buffer-substring (point) (+ (point) bytes))
     (forward-char bytes)))
@@ -197,6 +255,8 @@ The return value is a list of Exif items."
 (defun exif--read-number-be (bytes)
   "Read BYTES octets from the buffer as a chunk of big-endian bytes.
 Advance point to after the read bytes."
+  (when (> (+ (point) bytes) (point-max))
+    (signal 'exif-error "Premature end of file"))
   (let ((sum 0))
     (dotimes (_ bytes)
       (setq sum (+ (* sum 256) (following-char)))
@@ -206,6 +266,8 @@ Advance point to after the read bytes."
 (defun exif--read-number-le (bytes)
   "Read BYTES octets from the buffer as a chunk of low-endian bytes.
 Advance point to after the read bytes."
+  (when (> (+ (point) bytes) (point-max))
+    (signal 'exif-error "Premature end of file"))
   (let ((sum 0))
     (dotimes (i bytes)
       (setq sum (+ (* (following-char) (expt 256 i)) sum))
