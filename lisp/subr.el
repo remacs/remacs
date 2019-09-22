@@ -5520,6 +5520,7 @@ NAME is the package name as a symbol, and VERSION is its version
 as a list.")
 
 (defun package--description-file (dir)
+  "Return package description file name for package DIR."
   (concat (let ((subdir (file-name-nondirectory
                          (directory-file-name dir))))
             (if (string-match "\\([^.].*?\\)-\\([0-9]+\\(?:[.][0-9]+\\|\\(?:pre\\|beta\\|alpha\\)[0-9]+\\)*\\)" subdir)

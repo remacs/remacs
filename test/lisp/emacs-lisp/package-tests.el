@@ -28,7 +28,12 @@
 
 ;; Run this in a clean Emacs session using:
 ;;
-;;     $ emacs -Q --batch -L . -l package-test.el -l ert -f ert-run-tests-batch-and-exit
+;;     $ emacs -Q --batch -L . -l package-tests.el -l ert -f ert-run-tests-batch-and-exit
+;;
+;; From the top level directory of the Emacs development repository,
+;; you can use this instead:
+;;
+;;     $ make -C test package-tests
 
 ;;; Code:
 
