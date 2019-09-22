@@ -12764,7 +12764,7 @@ build_desired_tab_bar_string (struct frame *f)
   caption = Qnil;
 
   /* Prepare F->desired_tab_bar_string.  Make a new string.  */
-  fset_desired_tab_bar_string (f, build_string (" "));
+  fset_desired_tab_bar_string (f, build_string (""));
 
   /* Put a `display' property on the string for the captions to display,
      put a `menu_item' property on tab-bar items with a value that

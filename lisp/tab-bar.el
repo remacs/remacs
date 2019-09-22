@@ -1,4 +1,4 @@
-;;; tab-bar.el --- frame-local tab bar with named persistent window configurations -*- lexical-binding: t; -*-
+;;; tab-bar.el --- frame-local tabs with named persistent window configurations -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Free Software Foundation, Inc.
 
@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; Provides `tab-bar-mode' to control display of the tab-bar and
+;; Provides `tab-bar-mode' to control display of the tab bar and
 ;; bindings for the global tab bar.
 
 ;; The normal global binding for [tab-bar] (below) uses the value of
@@ -36,7 +36,7 @@
 
 
 (defgroup tab-bar nil
-  "Frame-local tab bar."
+  "Frame-local tabs."
   :group 'convenience
   :version "27.1")
 
@@ -79,13 +79,6 @@
   :version "27.1"
   :group 'tab-bar-faces)
 
-(defface tab-bar-separator
-  '((t
-     :inverse-video nil))
-  "Tab bar face for separator."
-  :version "27.1"
-  :group 'tab-bar-faces)
-
 
 (define-minor-mode tab-bar-mode
   "Toggle the tab bar in all graphical frames (Tab Bar mode)."
@@ -108,8 +101,8 @@
     (global-set-key [(control tab)]               'tab-bar-switch-to-next-tab)))
 
 (defun tab-bar-handle-mouse (event)
-  "Text-mode emulation of switching tabs on the tab-bar.
-This command is used when you click the mouse in the tab-bar
+  "Text-mode emulation of switching tabs on the tab bar.
+This command is used when you click the mouse in the tab bar
 on a console which has no window system but does have a mouse."
   (interactive "e")
   (let* ((x-position (car (posn-x-y (event-start event))))
@@ -159,8 +152,7 @@ Its main job is to show tabs in the tab bar."
           (puthash key tab-bar-map tab-bar-keymap-cache)))))
 
 
-(defvar tab-bar-separator
-  (propertize " " 'face 'tab-bar-separator))
+(defvar tab-bar-separator nil)
 
 (defvar tab-bar-button-new
   (propertize " + "
@@ -173,7 +165,7 @@ Its main job is to show tabs in the tab bar."
   "Button for creating a new tab.")
 
 (defvar tab-bar-button-close
-  (propertize "x"
+  (propertize " x"
               'display `(image :type xpm
                                :file ,(expand-file-name
                                        "images/tabs/close.xpm"
@@ -188,8 +180,15 @@ Its main job is to show tabs in the tab bar."
   "Generate tab name in the context of the selected frame."
   (mapconcat
    (lambda (w) (buffer-name (window-buffer w)))
-   (window-list)
+   (window-list-1 (frame-first-window) 'nomini)
    ", "))
+
+(defvar tab-bar-tabs-function #'tab-bar-tabs
+  "Function to get a list of tabs to display in the tab bar.
+This function should return a list of alists with parameters
+that include at least the element (name . TAB-NAME).
+For example, '((tab (name . \"Tab 1\")) (current-tab (name . \"Tab 2\")))
+By default, use function `tab-bar-tabs'.")
 
 (defun tab-bar-tabs ()
   "Return a list of tabs belonging to the selected frame.
@@ -203,13 +202,15 @@ Return its existing value or a new value."
 
 (defun tab-bar-make-keymap-1 ()
   "Generate an actual keymap from `tab-bar-map', without caching."
-  (let ((i 0))
+  (let ((separator (or tab-bar-separator (if window-system " " "|")))
+        (i 0))
     (append
      '(keymap (mouse-1 . tab-bar-handle-mouse))
      (mapcan
       (lambda (tab)
         (setq i (1+ i))
         (append
+         `((,(intern (format "sep-%i" i)) menu-item ,separator ignore))
          (cond
           ((eq (car tab) 'current-tab)
            `((current-tab
@@ -233,13 +234,11 @@ Return its existing value or a new value."
             menu-item ""
             ,(lambda ()
                (interactive)
-               (tab-bar-close-tab tab))))
-         (when (and (stringp tab-bar-separator)
-                    (> (length tab-bar-separator) 0))
-           `((,(intern (format "sep-%i" i)) menu-item ,tab-bar-separator ignore)))))
-      (tab-bar-tabs))
+               (tab-bar-close-tab tab))))))
+      (funcall tab-bar-tabs-function))
      (when tab-bar-button-new
-       `((add-tab menu-item ,tab-bar-button-new tab-bar-add-tab
+       `((sep-add-tab menu-item ,separator ignore)
+         (add-tab menu-item ,tab-bar-button-new tab-bar-add-tab
                   :help "New tab"))))))
 
 

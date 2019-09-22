@@ -1,4 +1,4 @@
-;;; tab-line.el --- window-local tab line with window buffers -*- lexical-binding: t; -*-
+;;; tab-line.el --- window-local tabs with window buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Free Software Foundation, Inc.
 
@@ -31,7 +31,7 @@
 
 
 (defgroup tab-line nil
-  "Window-local tab line."
+  "Window-local tabs."
   :group 'convenience
   :version "27.1")
 
@@ -70,7 +70,7 @@
      :background "grey75")
     (t
      :inverse-video t))
-  "Tab line face for non-selected tabs."
+  "Tab line face for non-selected tab."
   :version "27.1"
   :group 'tab-line-faces)
 
@@ -82,7 +82,7 @@
 
 (defface tab-line-close-highlight
   '((t :foreground "red"))
-  "Tab line face for highlighting."
+  "Tab line face for highlighting of the close button."
   :version "27.1"
   :group 'tab-line-faces)
 
@@ -90,11 +90,10 @@
 (defvar tab-line-tab-map
   (let ((map (make-sparse-keymap)))
     (define-key map [tab-line mouse-1] 'tab-line-select-tab)
-    (define-key map [tab-line mouse-2] 'tab-line-select-tab)
+    (define-key map [tab-line mouse-2] 'tab-line-close-tab)
     (define-key map [tab-line mouse-4] 'tab-line-switch-to-prev-tab)
     (define-key map [tab-line mouse-5] 'tab-line-switch-to-next-tab)
     (define-key map "\C-m" 'tab-line-select-tab)
-    (define-key map [follow-link] 'mouse-face)
     map)
   "Local keymap for `tab-line-mode' window tabs.")
 
@@ -103,7 +102,6 @@
     (define-key map [tab-line mouse-1] 'tab-line-add-tab)
     (define-key map [tab-line mouse-2] 'tab-line-add-tab)
     (define-key map "\C-m" 'tab-line-add-tab)
-    (define-key map [follow-link] 'mouse-face)
     map)
   "Local keymap to add `tab-line-mode' window tabs.")
 
@@ -111,12 +109,11 @@
   (let ((map (make-sparse-keymap)))
     (define-key map [tab-line mouse-1] 'tab-line-close-tab)
     (define-key map [tab-line mouse-2] 'tab-line-close-tab)
-    (define-key map [follow-link] 'mouse-face)
     map)
   "Local keymap to close `tab-line-mode' window tabs.")
 
 
-(defvar tab-line-separator " ")
+(defvar tab-line-separator nil)
 
 (defvar tab-line-tab-name-ellipsis
   (if (char-displayable-p ?…) "…" "..."))
@@ -135,7 +132,7 @@
   "Button for creating a new tab.")
 
 (defvar tab-line-button-close
-  (propertize "x"
+  (propertize " x"
               'display `(image :type xpm
                                :file ,(expand-file-name
                                        "images/tabs/close.xpm"
@@ -148,9 +145,16 @@
   "Button for closing the clicked tab.")
 
 
+(defvar tab-line-tab-name-function #'tab-line-tab-name
+  "Function to get a tab name.
+Function gets two arguments: tab to get name for and a list of tabs
+to display.  By default, use function `tab-line-tab-name'.")
+
 (defun tab-line-tab-name (buffer &optional buffers)
   "Generate tab name from BUFFER.
-Reduce tab width proportionally to space taken by other tabs."
+Reduce tab width proportionally to space taken by other tabs.
+This function can be overridden by changing the default value of the
+variable `tab-line-tab-name-function'."
   (let ((tab-name (buffer-name buffer))
         (limit (when buffers
                  (max 1 (- (/ (window-width) (length buffers)) 3)))))
@@ -161,10 +165,22 @@ Reduce tab width proportionally to space taken by other tabs."
                   'help-echo tab-name))))
 
 (defvar tab-line-tabs-limit 15
-  "Maximum number of buffer tabs displayed in the window tab-line.")
+  "Maximum number of buffer tabs displayed in the tab line.")
 
-(defun tab-line-tabs (&optional window)
-  (let* ((buffer (window-buffer window))
+(defvar tab-line-tabs-function #'tab-line-tabs
+  "Function to get a list of tabs to display in the tab line.
+This function should return either a list of buffers whose names will
+be displayed, or just a list of strings to display in the tab line.
+By default, use function `tab-line-tabs'.")
+
+(defun tab-line-tabs ()
+  "Return a list of tabs that should be displayed in the tab line.
+By default returns a list of window buffers, i.e. buffers previously
+shown in the same window where the tab line is displayed.
+This list can be overridden by changing the default value of the
+variable `tab-line-tabs-function'."
+  (let* ((window (selected-window))
+         (buffer (window-buffer window))
          (next-buffers (seq-remove (lambda (b) (eq b buffer))
                                    (window-next-buffers window)))
          (next-buffers (seq-filter #'buffer-live-p next-buffers))
@@ -191,25 +207,26 @@ Reduce tab width proportionally to space taken by other tabs."
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
   (let* ((window (selected-window))
-         (buffer (window-buffer window))
-         (buffer-tabs (tab-line-tabs window)))
+         (selected-buffer (window-buffer window))
+         (tabs (funcall tab-line-tabs-function))
+         (separator (or tab-line-separator (if window-system " " "|"))))
     (append
      (mapcar
-      (lambda (b)
+      (lambda (tab)
         (concat
-         (or tab-line-separator "")
+         separator
          (apply 'propertize (concat (propertize
-                                     (tab-line-tab-name b buffer-tabs)
+                                     (funcall tab-line-tab-name-function tab tabs)
                                      'keymap tab-line-tab-map)
                                     tab-line-button-close)
                 `(
-                  buffer ,b
-                  face ,(if (eq b buffer)
+                  tab ,tab
+                  face ,(if (eq tab selected-buffer)
                             'tab-line-tab
                           'tab-line-tab-inactive)
                   mouse-face tab-line-highlight))))
-      buffer-tabs)
-     (list (concat tab-line-separator tab-line-button-new)))))
+      tabs)
+     (list (concat separator tab-line-button-new)))))
 
 
 (defun tab-line-add-tab (&optional e)
@@ -227,7 +244,7 @@ using the `previous-buffer' command."
   (interactive "e")
   (let* ((posnp (event-start e))
          (window (posn-window posnp))
-         (buffer (get-pos-property 1 'buffer (car (posn-string posnp))))
+         (buffer (get-pos-property 1 'tab (car (posn-string posnp))))
          (window-buffer (window-buffer window))
          (next-buffers (seq-remove (lambda (b) (eq b window-buffer))
                                    (window-next-buffers window)))
@@ -260,7 +277,7 @@ using the `previous-buffer' command."
   (interactive "e")
   (let* ((posnp (event-start e))
          (window (posn-window posnp))
-         (buffer (get-pos-property 1 'buffer (car (posn-string posnp)))))
+         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))
     (with-selected-window window
       (if (eq buffer (current-buffer))
           (bury-buffer)

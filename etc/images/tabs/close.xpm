@@ -2,7 +2,7 @@
 static char * close_xpm[] = {
 "9 9 4 1",
 " 	c None",
-".	c #CCCCCC",
+".	c #BFBFBF",
 "+	c #000000",
 "@	c #808080",
 "  .....  ",
