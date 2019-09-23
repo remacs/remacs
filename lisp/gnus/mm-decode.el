@@ -1738,9 +1738,21 @@ If RECURSIVE, search recursively."
 	      (setq parts (funcall func parts ctl))
 	    (mm-set-handle-multipart-parameter
 	     mm-security-handle 'gnus-details
-	     (format "Unknown encrypt protocol (%s)" protocol))))))
-     (t nil))
-    parts))
+	     (format "Unknown encrypt protocol (%s)" protocol)))))))
+    (let ((info (get-text-property 0 'gnus-info (car mm-security-handle))))
+      (if (or (not info)
+	      (member "OK" (split-string info "\n")))
+	  parts
+	;; We had an error during decryption.  Report what it is.
+	(list
+	 (mm-make-handle
+	  (with-current-buffer (generate-new-buffer " *mm*")
+	    (insert "Error!  Result from decryption:\n\n"
+		    info "\n\n"
+		    (get-text-property 0 'gnus-details
+				       (car mm-security-handle)))
+	    (current-buffer))
+	  '("text/plain")))))))
 
 (defun mm-multiple-handles (handles)
   (and (listp handles)
