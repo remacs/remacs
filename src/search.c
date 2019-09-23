@@ -3138,10 +3138,12 @@ DEFUN ("regexp-quote", Fregexp_quote, Sregexp_quote, 1, 1, 0,
     }
 
   Lisp_Object result
-    = make_specified_string (temp,
-			     SCHARS (string) + backslashes_added,
-			     out - temp,
-			     STRING_MULTIBYTE (string));
+    = (backslashes_added > 0
+       ? make_specified_string (temp,
+                                SCHARS (string) + backslashes_added,
+                                out - temp,
+                                STRING_MULTIBYTE (string))
+       : string);
   SAFE_FREE ();
   return result;
 }

@@ -1562,6 +1562,9 @@ whitespace:
  (concat "\\s-" (regexp-quote string) "\\s-"))
 @end group
 @end example
+
+The returned string may be @var{string} itself if it does not contain
+any special characters.
 @end defun
 
 @cindex optimize regexp

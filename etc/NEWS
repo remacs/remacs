@@ -2157,6 +2157,10 @@ valid event type.
 be specified in image specs representing the entire bitmap as a single
 bool vector.
 
++++
+** 'regexp-quote' may return its argument string.
+If the argument needs no quoting, it can be returned instead of a copy.
+
 
 * Lisp Changes in Emacs 27.1
 
