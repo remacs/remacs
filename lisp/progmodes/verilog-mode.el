@@ -4,12 +4,12 @@
 
 ;; Author: Michael McNamara <mac@verilog.com>
 ;;    Wilson Snyder <wsnyder@wsnyder.org>
-;; X-URL: http://www.veripool.org
+;; X-URL: https://www.veripool.org
 ;; Created: 3 Jan 1996
 ;; Keywords: languages
 ;; The "Version" is the date followed by the decimal rendition of the Git
 ;;     commit hex.
-;; Version: 2019.06.21.103209889
+;; Version: 2019.09.23.004801067
 
 ;; Yoni Rabkin <yoni@rabkins.net> contacted the maintainer of this
 ;; file on 19/3/2008, and the maintainer agreed that when a bug is
@@ -55,7 +55,7 @@
 ;; under continuous development.  Please report any issues to the issue
 ;; tracker at
 ;;
-;;    http://www.veripool.org/verilog-mode
+;;    https://www.veripool.org/verilog-mode
 ;;
 ;; Please use verilog-submit-bug-report to submit a report; type C-c
 ;; C-b to invoke this and as a result we will have a much easier time
@@ -72,7 +72,7 @@
 ;; default.
 
 ;; You can get step by step help in installing this file by going to
-;; <http://www.veripool.com/verilog-mode>
+;; <https://www.veripool.org/verilog-mode>
 
 ;; The short list of installation instructions are: To set up
 ;; automatic Verilog mode, put this file in your load path, and put
@@ -117,14 +117,14 @@
 
 ;;; History:
 ;;
-;; See commit history at http://www.veripool.org/verilog-mode.html
+;; See commit history at https://www.veripool.org/verilog-mode
 ;; (This section is required to appease checkdoc.)
 
 ;;; Code:
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2019-06-21-626dba1-vpo-GNU"
+(defconst verilog-mode-version "2019-09-23-049422b-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -530,8 +530,7 @@ you to the next lint error."
 ;; We don't mark it safe, as it's used as a shell command
 
 (defcustom verilog-preprocessor
-  ;; Very few tools give preprocessed output, so we'll default to Verilog-Perl
-  "vppreproc __FLAGS__ __FILE__"
+  "verilator -E __FLAGS__ __FILE__"
   "Program and arguments to use to preprocess Verilog source.
 This is invoked with `verilog-preprocess', and depending on the
 `verilog-set-compile-command', may also be invoked when you type
@@ -2983,7 +2982,7 @@ find the errors."
      "\\)\\|\\(?:"
      ;; `define and `if can span multiple lines if line ends in '\'.
      ;; NOTE: `if is not IEEE 1800-2012.
-     ;; from http://www.emacswiki.org/emacs/MultilineRegexp
+     ;; from https://www.emacswiki.org/emacs/MultilineRegexp
      (concat "\\<\\(`define\\|`if\\)\\>"  ; directive
              "\\s-+"  ; separator
              "\\(?:.*?\\(?:\n.*\\)*?\\)"  ; definition: to end of line, then maybe more lines (excludes any trailing \n)
@@ -3830,7 +3829,7 @@ Variables controlling indentation/edit style:
 
 Variables controlling other actions:
 
- `verilog-linter'                   (default `surelint')
+ `verilog-linter'                   (default `none')
    Unix program to call to run the lint checker.  This is the default
    command for \\[compile-command] and \\[verilog-auto-save-compile].
 
@@ -7628,9 +7627,9 @@ and `verilog-separator-keywords'.)"
 (defun verilog-build-defun-re (str &optional arg)
   "Return function/task/module starting with STR as regular expression.
 With optional second ARG non-nil, STR is the complete name of the instruction."
-  (if arg
-      (concat "^\\(function\\|task\\|module\\)[ \t]+\\(" str "\\)\\>")
-    (concat "^\\(function\\|task\\|module\\)[ \t]+\\(" str "[a-zA-Z0-9_]*\\)\\>")))
+  (unless arg
+    (setq str (concat str "[a-zA-Z0-9_]*")))
+  (concat "^\\s-*\\(function\\|task\\|module\\)[ \t]+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\(" str "\\)\\>"))
 
 (defun verilog-comp-defun (verilog-str verilog-pred verilog-flag)
   "Function passed to `completing-read', `try-completion' or `all-completions'.
@@ -8996,7 +8995,7 @@ Outputs comments above subcell signals, for example:
 	  ;; below 3 modified by verilog-read-sub-decls-line
 	  sigs-out sigs-inout sigs-in sigs-intf sigs-intfd)
       (verilog-beg-of-defun-quick)
-      (while (verilog-re-search-forward-quick "\\(/\\*AUTOINST\\*/\\|\\.\\*\\)" end-mod-point t)
+      (while (verilog-re-search-forward-quick "\\(/\\*AUTOINST\\((.*?)\\)?\\*/\\|\\.\\*\\)" end-mod-point t)
 	(save-excursion
 	  (goto-char (match-beginning 0))
           (setq par-values (and verilog-auto-inst-param-value
@@ -10811,6 +10810,7 @@ Intended for internal use inside a `verilog-save-font-no-change-functions' block
              (verilog-regexp-words
               '("AS" "AUTOARG" "AUTOCONCATWIDTH" "AUTOINST" "AUTOINSTPARAM"
                 "AUTOSENSE")))
+           "\\((.*?)\\)?"
            "\\*/")
    'verilog-delete-to-paren)
   ;; Do .* instantiations, but avoid removing any user pins by looking for our magic comments
@@ -10941,7 +10941,7 @@ shown) will make this into:
 	(forward-char 1)
 	(let ((indent-pt (+ (current-column)))
 	      (end-pt (save-excursion (verilog-forward-close-paren) (point))))
-	  (cond ((verilog-re-search-forward-quick "\\(/\\*AUTOINST\\*/\\|\\.\\*\\)" end-pt t)
+	  (cond ((verilog-re-search-forward-quick "\\(/\\*AUTOINST\\((.*?)\\)?\\*/\\|\\.\\*\\)" end-pt t)
                  (goto-char end-pt))  ; Already there, continue search with next instance
 		(t
 		 ;; Delete identical interconnect
@@ -11596,7 +11596,7 @@ Exceptions:
   Unless you are instantiating a module multiple times, or the module is
   something trivial like an adder, DO NOT CHANGE SIGNAL NAMES ACROSS HIERARCHY.
   It just makes for unmaintainable code.  To sanitize signal names, try
-  vrename from URL `http://www.veripool.org'.
+  vrename from URL `https://www.veripool.org'.
 
   When you need to violate this suggestion there are two ways to list
   exceptions, placing them before the AUTOINST, or using templates.
@@ -11679,7 +11679,7 @@ Templates:
         InstModule ms2m (/*AUTOINST*/
             // Outputs
             .NotInTemplate      (NotInTemplate),
-            .ptl_bus            (ptl_busnew[3:0]),  // Templated
+            .ptl_bus            (ptl_busnew[3:0]),
             ....
 
 
@@ -11831,11 +11831,11 @@ Lisp Templates:
   occur.
 
 For more information see the \\[verilog-faq] and forums at URL
-`http://www.veripool.org'."
+`https://www.veripool.org'."
   (save-excursion
     ;; Find beginning
     (let* ((pt (point))
-	   (for-star (save-excursion (backward-char 2) (looking-at "\\.\\*")))
+           (for-star (save-excursion (backward-char 2) (looking-at "\\.\\*")))
 	   (indent-pt (save-excursion (verilog-backward-open-paren)
 				      (1+ (current-column))))
 	   (verilog-auto-inst-column (max verilog-auto-inst-column
@@ -11940,6 +11940,10 @@ For more information see the \\[verilog-faq] and forums at URL
 Replace the parameter connections to an instantiation with ones
 automatically derived from the module header of the instantiated netlist.
 
+You may also provide an optional regular expression, in which
+case only parameters matching the regular expression will be
+included.
+
 See \\[verilog-auto-inst] for limitations, and templates to customize the
 output.
 
@@ -11975,7 +11979,9 @@ Templates:
   just as you would with \\[verilog-auto-inst]."
   (save-excursion
     ;; Find beginning
-    (let* ((pt (point))
+    (let* ((params (verilog-read-auto-params 0 1))
+           (regexp (nth 0 params))
+           (pt (point))
 	   (indent-pt (save-excursion (verilog-backward-open-paren)
 				      (1+ (current-column))))
 	   (verilog-auto-inst-column (max verilog-auto-inst-column
@@ -12017,6 +12023,8 @@ Templates:
 			 (verilog-decls-get-gparams submoddecls)
 			 skip-pins))
 	      (vl-dir "parameter"))
+          (when regexp
+            (setq sig-list (verilog-signals-matching-regexp sig-list regexp)))
 	  (when sig-list
 	    (when (not did-first) (verilog-auto-inst-first) (setq did-first t))
             ;; Note these are searched for in verilog-read-sub-decls.
@@ -12390,7 +12398,7 @@ isn't declared elsewhere inside the module.  This is useful for modules which
 only instantiate other modules.
 
 Limitations:
-  This ONLY detects outputs of AUTOINSTants (see `verilog-read-sub-decls').
+  This ONLY detects inputs of AUTOINSTants (see `verilog-read-sub-decls').
 
   If placed inside the parenthesis of a module declaration, it creates
   Verilog 2001 style, else uses Verilog 1995 style.
@@ -12474,7 +12482,7 @@ Make inout statements for any inout signal in an /*AUTOINST*/ that
 isn't declared elsewhere inside the module.
 
 Limitations:
-  This ONLY detects outputs of AUTOINSTants (see `verilog-read-sub-decls').
+  This ONLY detects inouts of AUTOINSTants (see `verilog-read-sub-decls').
 
   If placed inside the parenthesis of a module declaration, it creates
   Verilog 2001 style, else uses Verilog 1995 style.
@@ -13832,7 +13840,7 @@ Using \\[describe-function], see also:
     `verilog-read-includes'     for reading \\=`includes
 
 If you have bugs with these autos, please file an issue at
-URL `http://www.veripool.org/verilog-mode' or contact the AUTOAUTHOR
+URL `https://www.veripool.org/verilog-mode' or contact the AUTOAUTHOR
 Wilson Snyder (wsnyder@wsnyder.org)."
   (interactive)
   (unless noninteractive (message "Updating AUTOs..."))
@@ -13890,8 +13898,8 @@ Wilson Snyder (wsnyder@wsnyder.org)."
           (verilog-auto-re-search-do "/\\*AUTOINSERTLISP(.*?)\\*/"
                                      'verilog-auto-insert-lisp)
           ;; Expand instances before need the signals the instances input/output
-          (verilog-auto-re-search-do "/\\*AUTOINSTPARAM\\*/" 'verilog-auto-inst-param)
-          (verilog-auto-re-search-do "/\\*AUTOINST\\*/" 'verilog-auto-inst)
+          (verilog-auto-re-search-do "/\\*AUTOINSTPARAM\\((.*?)\\)?\\*/" 'verilog-auto-inst-param)
+          (verilog-auto-re-search-do "/\\*AUTOINST\\((.*?)\\)?\\*/" 'verilog-auto-inst)
           (verilog-auto-re-search-do "\\.\\*" 'verilog-auto-star)
           ;; Must be done before autoin/out as creates a reg
           (verilog-auto-re-search-do "/\\*AUTOASCIIENUM(.*?)\\*/" 'verilog-auto-ascii-enum)
@@ -14427,7 +14435,7 @@ Clicking on the middle-mouse button loads them in a buffer (as in dired)."
 	    ;; This scanner is syntax-fragile, so don't get bent
 	    (when verilog-highlight-modules
 	      (condition-case nil
-		  (while (verilog-re-search-forward-quick "\\(/\\*AUTOINST\\*/\\|\\.\\*\\)" end-point t)
+		  (while (verilog-re-search-forward-quick "\\(/\\*AUTOINST\\((.*?)\\)?\\*/\\|\\.\\*\\)" end-point t)
 		    (save-excursion
 		      (goto-char (match-beginning 0))
 		      (unless (verilog-inside-comment-or-string-p)
@@ -14513,9 +14521,9 @@ Files are checked based on `verilog-library-flags'."
   (with-output-to-temp-buffer "*verilog-mode help*"
     (princ (format "You are using verilog-mode %s\n" verilog-mode-version))
     (princ "\n")
-    (princ "For new releases, see http://www.veripool.com/verilog-mode\n")
+    (princ "For new releases, see https://www.veripool.org/verilog-mode\n")
     (princ "\n")
-    (princ "For frequently asked questions, see http://www.veripool.org/verilog-mode-faq.html\n")
+    (princ "For frequently asked questions, see https://www.veripool.org/verilog-mode-faq.html\n")
     (princ "\n")
     (princ "To submit a bug, use M-x verilog-submit-bug-report\n")
     (princ "\n")))
@@ -14617,11 +14625,11 @@ I save so much time, my files are colored nicely, my co workers respect
 my coding ability... until now.  I'd really appreciate anything you
 could do to help me out with this minor deficiency in the product.
 
-I've taken a look at the Verilog-Mode FAQ at:
-https://www.veripool.org/wiki/verilog-mode/Faq
+I've taken a look at the Verilog-Mode FAQ at
+https://www.veripool.org/verilog-mode-faq.html.
 
 And, I've considered filing the bug on the issue tracker at
-https://www.veripool.org/projects/verilog-mode/issues
+https://www.veripool.org/verilog-mode-bugs
 since I realize that public bugs are easier for you to track,
 and for others to search, but would prefer to email.
 
