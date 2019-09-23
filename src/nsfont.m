@@ -1010,7 +1010,7 @@ nsfont_draw (struct glyph_string *s, int from, int to, int x, int y,
   NSRect r;
   struct nsfont_info *font;
   NSColor *col, *bgCol;
-  unsigned short *t = s->char2b;
+  unsigned *t = s->char2b;
   int i, len, flags;
   char isComposite = s->first_glyph->type == COMPOSITE_GLYPH;
 
