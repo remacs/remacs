@@ -295,11 +295,6 @@ If the buffer is not in memory, load it with `find-file-noselect'."
 If OBJ's file is not loaded, read it in first."
   (set-buffer (semanticdb-get-buffer obj)))
 
-(cl-defmethod semanticdb-full-filename ((obj semanticdb-table))
-  "Fetch the full filename that OBJ refers to."
-  (expand-file-name (oref obj file)
-		    (oref (oref obj parent-db) reference-directory)))
-
 (cl-defmethod semanticdb-dirty-p ((obj semanticdb-table))
   "Return non-nil if OBJ is dirty."
   (oref obj dirty))
@@ -356,6 +351,11 @@ Note: This index will not be saved in a persistent file.")
 	   :protection :protected
 	   :documentation "List of `semantic-db-table' objects."))
   "Database of file tables.")
+
+(cl-defmethod semanticdb-full-filename ((obj semanticdb-table))
+  "Fetch the full filename that OBJ refers to."
+  (expand-file-name (oref obj file)
+		    (oref (oref obj parent-db) reference-directory)))
 
 (cl-defmethod semanticdb-full-filename ((obj semanticdb-project-database))
   "Fetch the full filename that OBJ refers to.
