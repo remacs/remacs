@@ -1741,16 +1741,19 @@ If RECURSIVE, search recursively."
 	     (format "Unknown encrypt protocol (%s)" protocol)))))))
     (let ((info (get-text-property 0 'gnus-info (car mm-security-handle))))
       (if (or (not info)
+	      (equal info "")
 	      (member "OK" (split-string info "\n")))
 	  parts
+	(debug mm-security-handle)
 	;; We had an error during decryption.  Report what it is.
 	(list
 	 (mm-make-handle
 	  (with-current-buffer (generate-new-buffer " *mm*")
 	    (insert "Error!  Result from decryption:\n\n"
 		    info "\n\n"
-		    (get-text-property 0 'gnus-details
-				       (car mm-security-handle)))
+		    (or (get-text-property 0 'gnus-details
+					   (car mm-security-handle))
+			""))
 	    (current-buffer))
 	  '("text/plain")))))))
 
