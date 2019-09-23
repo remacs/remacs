@@ -409,12 +409,13 @@ With ARG, turn time stamping on if and only if arg is positive."
 (defun time-stamp--format (format time)
   (format-time-string format time time-stamp-time-zone))
 
-(defun time-stamp-string (&optional ts-format)
+(defun time-stamp-string (&optional ts-format time)
   "Generate the new string to be inserted by \\[time-stamp].
 Optionally use format TS-FORMAT instead of `time-stamp-format' to
-format the string."
+format the string.  Optional second argument TIME is only for testing;
+normally the current time is used."
   (if (stringp (or ts-format (setq ts-format time-stamp-format)))
-      (time-stamp--format (time-stamp-string-preprocess ts-format) nil)))
+      (time-stamp-string-preprocess ts-format time)))
 
 
 (defconst time-stamp-no-file "(no file)"
@@ -495,7 +496,7 @@ and all `time-stamp-format' compatibility."
 	(setq field-result
 	(cond
 	 ((eq cur-char ?%)
-	  "%%")
+	  "%")
 	 ((eq cur-char ?a)		;day of week
 	  (if change-case
 	      (time-stamp--format "%#a" time)
