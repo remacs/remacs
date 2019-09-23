@@ -2184,7 +2184,7 @@ increase the score of each group you read."
   "v" gnus-summary-verbose-headers
   "a" gnus-article-strip-headers-in-body ;; mnemonic: wash archive
   "p" gnus-article-verify-x-pgp-sig
-  "d" gnus-article-treat-dumbquotes
+  "d" gnus-article-treat-smartquotes
   "U" gnus-article-treat-non-ascii
   "i" gnus-summary-idna-message)
 
@@ -2509,7 +2509,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	       ["Leading space in headers"
 		gnus-article-remove-leading-whitespace t])
 	      ["Overstrike" gnus-article-treat-overstrike t]
-	      ["Dumb quotes" gnus-article-treat-dumbquotes t]
+	      ["Smartquotes" gnus-article-treat-smartquotes t]
 	      ["Non-ASCII" gnus-article-treat-non-ascii t]
 	      ["Emphasis" gnus-article-emphasize t]
 	      ["Word wrap" gnus-article-fill-cited-article t]

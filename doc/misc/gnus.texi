@@ -9006,18 +9006,18 @@ Treat overstrike (@code{gnus-article-treat-overstrike}).
 
 @item W d
 @kindex W d @r{(Summary)}
-@findex gnus-article-treat-dumbquotes
-@vindex gnus-article-dumbquotes-map
+@findex gnus-article-treat-smartquotes
+@vindex gnus-article-smartquotes-map
 @cindex Smartquotes
 @cindex M****s*** sm*rtq**t*s
 @cindex Latin 1
-Treat M****s*** sm*rtq**t*s according to
-@code{gnus-article-dumbquotes-map}
-(@code{gnus-article-treat-dumbquotes}).  Note that this function guesses
-whether a character is a sm*rtq**t* or not, so it should only be used
+Treat ``Microsoft smartquotes'' according to
+@code{gnus-article-smartquotes-map}
+(@code{gnus-article-treat-smartquotes}).  Note that this function guesses
+whether a character is a smartquote or not, so it should only be used
 interactively.
 
-Sm*rtq**t*s are M****s***'s unilateral extension to the character map in
+Smartquotes are Microsoft's unilateral extension to the character map in
 an attempt to provide more quoting characters.  If you see something
 like @code{\222} or @code{\264} where you're expecting some kind of
 apostrophe or quotation mark, then try this wash.
@@ -9037,9 +9037,9 @@ like.  For instance, @samp{»} is translated into @samp{>>}, and so on.
 @kindex W Y f @r{(Summary)}
 @findex gnus-article-outlook-deuglify-article
 @cindex Outlook Express
-Full deuglify of broken Outlook (Express) articles: Treat dumbquotes,
-unwrap lines, repair attribution and rearrange citation.
-(@code{gnus-article-outlook-deuglify-article}).
+Full deuglify of broken Outlook (Express) articles: Treat
+\"smartquotes\", unwrap lines, repair attribution and rearrange
+citation (@code{gnus-article-outlook-deuglify-article}).
 
 @item W Y u
 @kindex W Y u @r{(Summary)}

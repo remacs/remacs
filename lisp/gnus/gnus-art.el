@@ -894,7 +894,7 @@ images in Emacs."
 (defvar gnus-decode-address-function 'mail-decode-encoded-address-region
   "Function used to decode addresses.")
 
-(defvar gnus-article-dumbquotes-map
+(defvar gnus-article-smartquotes-map
   '((?\200 "EUR")
     (?\202 ",")
     (?\203 "f")
@@ -915,6 +915,8 @@ images in Emacs."
     (?\234 "oe")
     (?\264 "'"))
   "Table for MS-to-Latin1 translation.")
+(make-obsolete-variable 'gnus-article-dumbquotes-map
+			'gnus-article-smartquotes-map "27.1")
 
 (defcustom gnus-ignored-mime-types nil
   "List of MIME types that should be ignored by Gnus."
@@ -2074,18 +2076,20 @@ always hide."
 	    ))
 	  (forward-line 1))))))
 
-(defun article-treat-dumbquotes ()
-  "Translate M****s*** sm*rtq**t*s and other symbols into proper text.
-Note that this function guesses whether a character is a sm*rtq**t* or
+(defun article-treat-smartquotes ()
+  "Translate \"Microsoft smartquotes\" and other symbols into proper text.
+Note that this function guesses whether a character is a smartquote or
 not, so it should only be used interactively.
 
-Sm*rtq**t*s are M****s***'s unilateral extension to the
+Smartquotes are Microsoft's unilateral extension to the
 iso-8859-1 character map in an attempt to provide more quoting
 characters.  If you see something like \\222 or \\264 where
 you're expecting some kind of apostrophe or quotation mark, then
 try this wash."
   (interactive)
-  (article-translate-strings gnus-article-dumbquotes-map))
+  (article-translate-strings gnus-article-smartquotes-map))
+(define-obsolete-function-alias 'article-treat-dumquotes
+  #'article-treat-smartquotes "27.1")
 
 (defvar org-entities)
 
@@ -4371,11 +4375,13 @@ If variable `gnus-use-long-file-name' is non-nil, it is
      article-date-lapsed
      article-date-combined-lapsed
      article-emphasize
+     article-treat-smartquotes
+     ;; Obsolete alias.
      article-treat-dumbquotes
      article-treat-non-ascii
-     article-normalize-headers
-     ;;(article-show-all . gnus-article-show-all-headers)
-     )))
+     article-normalize-headers)))
+(define-obsolete-function-alias 'gnus-article-treat-dumbquotes
+  'gnus-article-treat-smartquotes "27.1")
 
 ;;;
 ;;; Gnus article mode
