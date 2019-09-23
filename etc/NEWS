@@ -1497,7 +1497,8 @@ To recover the previous behavior, set new user option
 *** .authinfo and .netrc files now use a new mode: 'authinfo-mode'.
 This is just like 'fundamental-mode', except that it hides passwords
 under a "****" display property.  When the cursor moves to this text,
-the real password is revealed (via 'reveal-mode').
+the real password is revealed (via 'reveal-mode').  The
+'authinfo-hidden' variable can be used to control what to hide.
 
 ** Tramp
 

@@ -2400,6 +2400,11 @@ MODE can be \"login\" or \"password\"."
 ;;; Tiny mode for editing .netrc/.authinfo modes (that basically just
 ;;; hides passwords).
 
+(defcustom authinfo-hidden "password"
+  "Regexp matching elements in .authinfo/.netrc files that should be hidden."
+  :type 'regexp
+  :version "27.1")
+
 ;;;###autoload
 (define-derived-mode authinfo-mode fundamental-mode "Authinfo"
   "Mode for editing .authinfo/.netrc files.
@@ -2416,13 +2421,15 @@ passwords are revealed when point moved into the password.
     (save-restriction
       (narrow-to-region start end)
       (goto-char start)
-      (while (re-search-forward "\\(\\s-\\|^\\)password\\s-+\\([^\n\t ]+\\)"
+      (while (re-search-forward (format "\\(\\s-\\|^\\)\\(%s\\)\\s-+"
+                                        authinfo-hidden)
                                 nil t)
-        (let ((overlay (make-overlay (match-beginning 2) (match-end 2))))
-          (overlay-put overlay 'display (propertize "****"
-                                                    'face 'warning))
-          (overlay-put overlay 'reveal-toggle-invisible
-                       #'authinfo--toggle-display))))))
+        (when (looking-at "[^\n\t ]+")
+          (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
+            (overlay-put overlay 'display (propertize "****"
+                                                      'face 'warning))
+            (overlay-put overlay 'reveal-toggle-invisible
+                         #'authinfo--toggle-display)))))))
 
 (defun authinfo--toggle-display (overlay hide)
   (if hide
