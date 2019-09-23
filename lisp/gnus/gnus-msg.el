@@ -1587,6 +1587,7 @@ this is a reply."
       (message-narrow-to-headers)
       (let ((gcc (or gcc (mail-fetch-field "gcc" nil t)))
 	    (cur (current-buffer))
+	    (encoded-cache message-encoded-mail-cache)
 	    groups group method group-art options
 	    mml-externalize-attachments)
 	(when gcc
@@ -1614,7 +1615,12 @@ this is a reply."
 	      (setq message-options (with-current-buffer cur message-options))
 	      (insert-buffer-substring cur)
 	      (run-hooks 'gnus-gcc-pre-body-encode-hook)
-	      (message-encode-message-body)
+	      ;; Avoid re-doing things like GPG-encoding secret parts.
+	      (if (not encoded-cache)
+		  (message-encode-message-body)
+		(erase-buffer)
+		(insert encoded-cache))
+	      (message-remove-header "gcc")
 	      (run-hooks 'gnus-gcc-post-body-encode-hook)
 	      (save-restriction
 		(message-narrow-to-headers)

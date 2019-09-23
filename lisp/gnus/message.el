@@ -1891,6 +1891,9 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
 (defvar message-bogus-system-names "\\`localhost\\.\\|\\.local\\'"
   "The regexp of bogus system names.")
 
+(defvar message-encoded-mail-cache nil
+  "After sending a message, the encoded version is cached in this variable.")
+
 (autoload 'gnus-alive-p "gnus-util")
 (autoload 'gnus-delay-article "gnus-delay")
 (autoload 'gnus-extract-address-components "gnus-util")
@@ -2974,7 +2977,8 @@ Like `text-mode', but with these additional commands:
   ;; excluding citations and other artifacts.
   ;;
   (set (make-local-variable 'syntax-propertize-function) 'message--syntax-propertize)
-  (set (make-local-variable 'parse-sexp-ignore-comments) t))
+  (set (make-local-variable 'parse-sexp-ignore-comments) t)
+  (setq-local message-encoded-mail-cache nil))
 
 (defun message-setup-fill-variables ()
   "Setup message fill variables."
@@ -4598,6 +4602,7 @@ If you always want Gnus to send messages in one piece, set
 		    (mml-buffer-substring-no-properties-except-some
 		     (point-min) (point-max))))
 	  (message-encode-message-body)
+	  (message--cache-encoded mailbuf)
 	  (save-restriction
 	    (message-narrow-to-headers)
 	    ;; We (re)generate the Lines header.
@@ -4652,6 +4657,14 @@ If you always want Gnus to send messages in one piece, set
     (set-buffer mailbuf)
     (setq message-options options)
     (push 'mail message-sent-message-via)))
+
+(defun message--cache-encoded (mailbuf)
+  ;; Store the encoded buffer data for possible reuse later
+  ;; when doing Fcc/Gcc handling.  This avoids having to do
+  ;; things like re-GPG-encoding secure parts.
+  (let ((encoded (buffer-string)))
+    (with-current-buffer mailbuf
+      (setq message-encoded-mail-cache encoded))))
 
 (defun message--fold-long-headers ()
   "Fold too-long header lines.
@@ -4946,6 +4959,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 		 (mml-buffer-substring-no-properties-except-some
 		  (point-min) (point-max))))
 	      (message-encode-message-body)
+	      (message--cache-encoded messbuf)
 	      ;; Remove some headers.
 	      (save-restriction
 		(message-narrow-to-headers)
@@ -5408,6 +5422,7 @@ The result is a fixnum."
   "Process Fcc headers in the current buffer."
   (let ((case-fold-search t)
 	(buf (current-buffer))
+	(encoded-cache message-encoded-mail-cache)
 	(mml-externalize-attachments message-fcc-externalize-attachments)
 	(file (message-field-value "fcc" t))
 	list)
@@ -5415,7 +5430,11 @@ The result is a fixnum."
       (with-temp-buffer
 	(insert-buffer-substring buf)
 	(message-clone-locals buf)
-	(message-encode-message-body)
+	;; Avoid re-doing things like GPG-encoding secret parts.
+	(if (not encoded-cache)
+	    (message-encode-message-body)
+	  (erase-buffer)
+	  (insert encoded-cache))
 	(save-restriction
 	  (message-narrow-to-headers)
 	  (while (setq file (message-fetch-field "fcc" t))
