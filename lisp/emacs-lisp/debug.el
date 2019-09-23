@@ -163,7 +163,10 @@ of the evaluator.
 
 You may call with no args, or you may pass nil as the first arg and
 any other args you like.  In that case, the list of args after the
-first will be printed into the backtrace buffer."
+first will be printed into the backtrace buffer.
+
+If `inhibit-redisplay' is non-nil when this function is called,
+the debugger will not be entered."
   (interactive)
   (cond
    (inhibit-redisplay
