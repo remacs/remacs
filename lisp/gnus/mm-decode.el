@@ -1744,7 +1744,6 @@ If RECURSIVE, search recursively."
 	      (equal info "")
 	      (member "OK" (split-string info "\n")))
 	  parts
-	(debug mm-security-handle)
 	;; We had an error during decryption.  Report what it is.
 	(list
 	 (mm-make-handle
