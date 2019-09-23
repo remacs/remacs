@@ -30,7 +30,7 @@
   beginning end value)
 
 (defun text-property-search-forward (property &optional value predicate
-                                              not-immediate)
+                                              not-current)
   "Search for the next region that has text property PROPERTY set to VALUE.
 If not found, the return value is nil.  If found, point will be
 placed at the end of the region and an object describing the
@@ -45,7 +45,7 @@ means the same as `equal'.  `nil' means almost the same as \"not
 equal\", but will also end the match if the value of PROPERTY
 changes.  See the manual for extensive examples.
 
-If `not-immediate', if the match is under point, it will not be
+If NOT-CURRENT, if the match is under point, it will not be
 returned, but instead the next instance is returned, if any.
 
 The return value (if a match is made) is a `prop-match'
@@ -66,7 +66,7 @@ at the start of the region)."
    ;; end.
    ((and (text-property--match-p value (get-text-property (point) property)
                                  predicate)
-         (not not-immediate))
+         (not not-current))
     (text-property--find-end-forward (point) property value predicate))
    (t
     (let ((origin (point))
@@ -121,7 +121,7 @@ at the start of the region)."
 
 
 (defun text-property-search-backward (property &optional value predicate
-                                               not-immediate)
+                                               not-current)
   "Search for the previous region that has text property PROPERTY set to VALUE.
 See `text-property-search-forward' for further documentation."
   (interactive
@@ -138,7 +138,7 @@ See `text-property-search-forward' for further documentation."
    ((and (text-property--match-p
           value (get-text-property (1- (point)) property)
           predicate)
-         (not not-immediate))
+         (not not-current))
     (text-property--find-end-backward (1- (point)) property value predicate))
    (t
     (let ((origin (point))
