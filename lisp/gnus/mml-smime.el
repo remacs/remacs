@@ -363,7 +363,7 @@ Whether the passphrase is cached at all is controlled by
 			  (downcase
 			   (cdr (assq micalg
 				      epg-digest-algorithm-alist))))))
-      (insert "protocol=\"application/pkcs7-signature\"\n")
+      (insert "  protocol=\"application/pkcs7-signature\"\n")
       (insert (format "\n--%s\n" boundary))
       (goto-char (point-max))
       (insert (format "\n--%s\n" boundary))
