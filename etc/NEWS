@@ -1576,6 +1576,10 @@ GnuTLS manual) is recommended instead.
 
 ** Message
 
+*** 'message-mode' now supports highlighting citations of different
+depths.  This can be customized via 'message-cite-level-function' and
+the new 'message-cited-text-*' faces.
+
 +++
 *** Messages can now be systematically encrypted
 when the PGP keyring contains a public key for every recipient.  To
