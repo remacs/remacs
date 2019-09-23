@@ -141,7 +141,7 @@ ${charsetdir}/VSCII-2.map: ${GLIBC_CHARMAPS}/TCVN5712-1.gz ${mapconv} ${compact}
 
 ${charsetdir}/ALTERNATIVNYJ.map: ${charsetdir}/IBM866.map
 	${AM_V_GEN}(echo "# Modified from $(notdir $<) according to the chart at" && \
-	  echo "# http://www.cyrillic.com/ref/cyrillic/koi-8alt.html," && \
+	  echo "# https://web.archive.org/web/20100131045151/http://www.cyrillic.com/ref/cyrillic/koi-8alt.html" && \
 	  echo "# with guesses for the Unicodes of the glyphs." && \
 	  sed -e '1 d' \
 	     -e '/0xF2/ s/ .*/ 0x2019/' \
@@ -226,8 +226,8 @@ ${lispintdir}/eucjp-ms.el: ${GLIBC_CHARMAPS}/EUC-JP-MS.gz ${eucjp_ms}
 
 # As Uni2JIS doesn't contain mappings of characters added to Unicode
 # recently, we add them manually here (including one correction for
-# U+005C vs U+FF3C).  These changes are based on bogytech's blog at
-# http://bogytech.blogspot.jp/search/label/emacs.
+# U+005C vs U+FF3C).  These changes are based on bogytech's blog at:
+# https://bogytech.blogspot.com/search/label/emacs
 ${charsetdir}/JISC6226.map: ${mapfiledir}/Uni2JIS ${mapconv} ${kuten}
 	${AM_V_GEN}(${run_mapconv} $< '/^[^#].*0-/' YASUOKA ${kuten} \
 	  | sed -e '/0x2140/s/005C/FF3C/' && \

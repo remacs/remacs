@@ -2137,7 +2137,7 @@ On Nextstep, TERMINAL is unused.  */)
 
 
 /* Send clipboard manager a SAVE_TARGETS request with a UTF8_STRING
-   property (http://www.freedesktop.org/wiki/ClipboardManager).  */
+   property (https://www.freedesktop.org/wiki/ClipboardManager/).  */
 
 static Lisp_Object
 x_clipboard_manager_save (Lisp_Object frame)

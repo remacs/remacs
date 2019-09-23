@@ -34,7 +34,7 @@
 
 INPUT-FILE should be in the format of the BidiCharacterTest.txt file
 available from the Unicode site, as part of the UCD database, see
-http://www.unicode.org/Public/UCD/latest/ucd/BidiCharacterTest.txt.
+https://www.unicode.org/Public/UCD/latest/ucd/BidiCharacterTest.txt.
 
 The resulting file should be viewed with `inhibit-bidi-mirroring' set to t."
   (let ((output-buf (get-buffer-create "*biditest-output*"))

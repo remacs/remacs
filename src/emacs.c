@@ -159,11 +159,7 @@ static uintmax_t heap_bss_diff;
    On Cocoa, CoreFoundation lib fails in forked process, see Mac OS X
    Leopard Developer Release Notes for CoreFoundation Framework:
 
-   http://developer.apple.com/ReleaseNotes/
-   CoreFoundation/CoreFoundation.html
-
-   Note: the above is no longer available on-line, but it can be found
-   via the "Wayback machine", https://web.archive.org.
+   https://web.archive.org/web/20090225231934/http://developer.apple.com/ReleaseNotes/CoreFoundation/CoreFoundation.html
 
    On Windows, a Cygwin fork child cannot access the USER subsystem.
 

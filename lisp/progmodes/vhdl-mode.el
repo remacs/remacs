@@ -4858,7 +4858,7 @@ releases.  You are kindly invited to participate in beta testing.  Subscribe
 to above mailing lists by sending an email to <reto@gnu.org>.
 
 VHDL Mode is officially distributed at
-http://www.iis.ee.ethz.ch/~zimmi/emacs/vhdl-mode.html
+https://guest.iis.ee.ethz.ch/~zimmi/emacs/vhdl-mode.html
 where the latest version can be found.
 
 

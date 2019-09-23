@@ -5547,8 +5547,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		     through all the channels and check for data.
 		     This is a workaround needed for some versions of
 		     the gnutls library -- 2.12.14 has been confirmed
-		     to need it.  See
-		     http://comments.gmane.org/gmane.emacs.devel/145074 */
+		     to need it.  */
 		  for (channel = 0; channel < FD_SETSIZE; ++channel)
 		    if (! NILP (chan_process[channel]))
 		      {

@@ -1243,7 +1243,7 @@ Used by `bibtex-complete-crossref-cleanup' and `bibtex-copy-summary-as-kill'."
 (defcustom bibtex-generate-url-list
   '((("url" . ".*:.*"))
     (("doi" . "10\\.[0-9]+/.+")
-     "http://dx.doi.org/%s"
+     "https://doi.org/%s"
      ("doi" ".*" 0)))
   "List of schemes for generating the URL of a BibTeX entry.
 These schemes are used by `bibtex-url'.

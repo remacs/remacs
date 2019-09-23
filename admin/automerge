@@ -236,7 +236,7 @@ git fetch || die "fetch error"
 
     ## Rebasing would be incorrect, since it would rewrite the
     ## (already published) release branch commits.
-    ## Ref eg http://lists.gnu.org/r/emacs-devel/2014-12/msg01435.html
+    ## Ref eg https://lists.gnu.org/r/emacs-devel/2014-12/msg01435.html
     ## Instead, we throw away what we just did, and do the merge again.
     echo "Resetting..."
     git reset --hard $rev

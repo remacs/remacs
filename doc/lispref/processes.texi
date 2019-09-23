@@ -2690,8 +2690,8 @@ override this.
 @item :service @var{service}
 @var{service} specifies a port number to connect to; or, for a server,
 the port number to listen on.  It should be a service name like
-@samp{"http"} that translates to a port number, or an integer like @samp{80}
-or an integer string like @samp{"80"} that specifies the port number
+@samp{"https"} that translates to a port number, or an integer like @samp{443}
+or an integer string like @samp{"443"} that specifies the port number
 directly.  For a server, it can also be @code{t}, which means to let
 the system select an unused port number.
 

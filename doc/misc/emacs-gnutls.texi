@@ -90,7 +90,7 @@ alias of the second.
 There's one way to find out if GnuTLS is available, by calling
 @code{gnutls-available-p}.  This is a little bit trickier on the W32
 (Windows) platform, but if you have the GnuTLS DLLs (available from
-@url{http://sourceforge.net/projects/ezwinports/files/} thanks to Eli
+@url{https://sourceforge.net/projects/ezwinports/files/} thanks to Eli
 Zaretskii) in the same directory as Emacs, you should be OK.
 
 @defun gnutls-available-p

@@ -23,8 +23,8 @@ The following shell commands then build and run Emacs from scratch:
 	src/emacs
 
 For more details, see
-http://www.emacswiki.org/emacs/GitQuickStartForEmacsDevs and
-http://www.emacswiki.org/emacs/GitForEmacsDevs or see the file
+https://www.emacswiki.org/emacs/GitQuickStartForEmacsDevs and
+https://www.emacswiki.org/emacs/GitForEmacsDevs or see the file
 admin/notes/git-workflow.
 
 ** Getting involved with development

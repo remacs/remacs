@@ -319,7 +319,7 @@ Gnus.  He started writing an Emacs HTML rendering library,
 @code{shr.el}, to read blogs in Gnus.  He eventually added a web
 browser front end and HTML form support.  Which resulted in EWW, the
 Emacs Web Wowser.  EWW was announced on 16 June 2013:
-@url{http://lars.ingebrigtsen.no/2013/06/16/eww/}.
+@url{https://lars.ingebrigtsen.no/2013/06/16/eww/}.
 
 EWW was then moved from the Gnus repository to GNU Emacs and several
 developers started contributing to it as well.

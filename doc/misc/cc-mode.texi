@@ -393,7 +393,7 @@ version 5.34.
 @ccmode{} supports the editing of C, C++, Objective-C,
 Java, CORBA's Interface Definition Language, Pike@footnote{A C-like
 scripting language with its roots in the LPC language used in some MUD
-engines.  See @uref{http://pike.ida.liu.se/}.} and AWK files.  In this
+engines.  See @uref{https://pike.lysator.liu.se/}.} and AWK files.  In this
 way, you can easily set up consistent font locking and coding styles for
 use in editing all of these languages, although AWK is not yet as
 uniformly integrated as the other languages.
@@ -2693,7 +2693,7 @@ The classic Stroustrup style for C++ code.
 Popular C++ coding standards as defined by ``Programming in C++, Rules
 and Recommendations,'' Erik Nyquist and Mats Henricson,
 Ellemtel@footnote{This document is available at
-@uref{http://www.doc.ic.ac.uk/lab/cplus/c++.rules/} among other
+@uref{https://www.doc.ic.ac.uk/lab/cplus/c++.rules/} among other
 places.}.
 @c N.B.  This URL was still valid at 2005/8/28  (ACM).
 
@@ -2705,7 +2705,7 @@ C coding standard for Linux (the kernel).
 @cindex Python style
 C coding standard for Python extension modules@footnote{Python is a
 high level scripting language with a C/C++ foreign function interface.
-For more information, see @uref{http://www.python.org/}.}.
+For more information, see @uref{https://www.python.org/}.}.
 
 @item java
 @cindex Java style
@@ -6014,7 +6014,7 @@ set_line (line_t @{point_t@{0.4, 0.2@},
          ^ enclosing parenthesis.
 @end group
 @end example
-                      
+
 
 The middle line of that example will have a syntactic context with
 three syntactic symbols, @code{arglist-cont-nonempty},
@@ -6059,7 +6059,7 @@ struct STR @{
     @sssTBasicOffset{}
 @end group
 @end example
-        
+
 
 Note that the syntactic context of the @code{brace-list-intro} line
 also has a syntactic element with the symbol @code{brace-list-entry}
@@ -6100,7 +6100,7 @@ struct STR @{
     @};
 @end group
 @end example
-        
+
 
 Note that the syntactic context of the @code{brace-list-intro} line
 also has a syntactic element with the symbol @code{brace-list-entry}

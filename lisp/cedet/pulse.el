@@ -100,7 +100,7 @@ left.  So, for example, INT=256 and NB-DIGITS=2 returns \"00\", since
 the hex equivalent of 256 decimal is 100, which is more than 2 digits.
 
 This function was blindly copied from hexrgb.el by Drew Adams.
-http://www.emacswiki.org/cgi-bin/wiki/hexrgb.el"
+https://www.emacswiki.org/emacs/hexrgb.el"
   (setq nb-digits (or nb-digits 4))
   (substring (format (concat "%0" (int-to-string nb-digits) "X") int) (- nb-digits)))
 
@@ -110,7 +110,7 @@ Each X in the string is a hexadecimal digit.
 Input VALUES is as for the output of `x-color-values'.
 
 This function was blindly copied from hexrgb.el by Drew Adams.
-http://www.emacswiki.org/cgi-bin/wiki/hexrgb.el"
+https://www.emacswiki.org/emacs/hexrgb.el"
   (concat "#"
           (pulse-int-to-hex (nth 0 values) 4) ; red
           (pulse-int-to-hex (nth 1 values) 4) ; green

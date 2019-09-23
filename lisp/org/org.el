@@ -2353,7 +2353,7 @@ For more examples, see the system specific constants
 			(string :tag "Command")
 			(function :tag "Function")))))
 
-(defcustom org-doi-server-url "http://dx.doi.org/"
+(defcustom org-doi-server-url "https://doi.org/"
   "The URL of the DOI server."
   :type 'string
   :version "24.3"

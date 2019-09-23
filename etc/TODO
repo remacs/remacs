@@ -720,7 +720,7 @@ Anders Lindgren <andlind@gmail.com> has implemented
 running Emacs as root.
 
 See this article by Bozhidar Batsov for an overview of Proced:
-http://emacsredux.com/blog/2013/05/02/manage-processes-with-proced/
+https://emacsredux.com/blog/2013/05/02/manage-processes-with-proced/
 
 **** Tooltip properties
 

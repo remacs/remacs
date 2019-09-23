@@ -53,7 +53,7 @@ ERT is similar to tools for other environments such as JUnit, but has
 unique features that take advantage of the dynamic and interactive
 nature of Emacs.  Despite its name, it works well both for test-driven
 development (see
-@url{http://en.wikipedia.org/wiki/Test-driven_development}) and for
+@url{https://en.wikipedia.org/wiki/Test-driven_development}) and for
 traditional software development methods.
 
 @menu
@@ -899,11 +899,11 @@ For information on mocks, stubs, fixtures, or test suites, see below.
 
 Stubbing out functions or using so-called @emph{mocks} can make it
 easier to write tests.  See
-@url{http://en.wikipedia.org/wiki/Mock_object} for an explanation of
+@url{https://en.wikipedia.org/wiki/Mock_object} for an explanation of
 the corresponding concepts in object-oriented languages.
 
 ERT does not have built-in support for mocks or stubs.  The package
-@code{el-mock} (see @url{http://www.emacswiki.org/emacs/el-mock.el})
+@code{el-mock} (see @url{https://www.emacswiki.org/emacs/el-mock.el})
 offers mocks for Emacs Lisp and can be used in conjunction with ERT.
 
 

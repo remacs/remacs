@@ -167,8 +167,8 @@ value effective."
     nil
     3600))
   "A customizable list of news feeds to select from.
-These were mostly extracted from the Radio Community Server at
-http://subhonker6.userland.com/rcsPublic/rssHotlist.
+These were mostly extracted from the Radio Community Server
+<http://rcs.userland.com/>.
 
 You may add other entries in `newsticker-url-list'."
   :type `(set ,@(mapcar #'newsticker--splicer

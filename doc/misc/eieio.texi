@@ -1006,7 +1006,7 @@ what CLOS does when a monotonic class structure is defined.
 
 This is derived from the Dylan language documents by
 Kim Barrett et al.: A Monotonic Superclass Linearization for Dylan
-Retrieved from: http://192.220.96.201/dylan/linearization-oopsla96.html
+Retrieved from: https://doi.org/10.1145/236338.236343
 @end table
 
 @node Predicates

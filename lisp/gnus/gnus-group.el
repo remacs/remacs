@@ -2297,6 +2297,7 @@ Return the name of the group if selection was successful."
 	   (message "Quit reading the ephemeral group"))
 	 nil)))))
 
+;; FIXME: This URL no longer works.
 (defcustom gnus-gmane-group-download-format
   "http://download.gmane.org/%s/%s/%s"
   "URL for downloading mbox files.

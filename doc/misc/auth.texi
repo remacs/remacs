@@ -279,7 +279,7 @@ machine gmail2 login account2@@gmail.com password "account2 password" port imap
 @chapter Secret Service API
 
 The @dfn{Secret Service API} is a standard from
-@uref{http://www.freedesktop.org/wiki/Specifications/secret-storage-spec,,freedesktop.org}
+@uref{https://www.freedesktop.org/wiki/Specifications/secret-storage-spec/,,freedesktop.org}
 to securely store passwords and other confidential information.  This
 API is implemented by system daemons such as the GNOME Keyring and the
 KDE Wallet (these are GNOME and KDE packages respectively and should
@@ -442,7 +442,7 @@ then fall back to @file{~/.authinfo.gpg}.
 @node The Unix password store
 @chapter The Unix password store
 
-@uref{http://www.passwordstore.org,,The standard unix password
+@uref{https://www.passwordstore.org,,The standard unix password
 manager} (or just @code{pass}) stores your passwords in
 @code{gpg}-protected files following the Unix philosophy.  The store
 location (any directory) must be specified in the

@@ -298,7 +298,7 @@ you launched Emacs:
 
 This problem occurs because unfortunately there are two libraries
 called "libotf".  One is the library for handling OpenType fonts,
-http://www.m17n.org/libotf/, which is the one that Emacs expects.
+https://www.nongnu.org/m17n/, which is the one that Emacs expects.
 The other is a library for Open Trace Format, and is used by some
 versions of the MPI message passing interface for parallel
 programming.

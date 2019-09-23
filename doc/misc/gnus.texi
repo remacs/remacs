@@ -2629,6 +2629,9 @@ type.  @xref{Document Groups}.
 Create one of the groups mentioned in @code{gnus-useful-groups}
 (@code{gnus-group-make-useful-group}).
 
+@c FIXME: Gmane.org is no longer working; fix the Gmane referrences
+@c in this file accordingly.
+
 @item G w
 @kindex G w @r{(Group)}
 @findex gnus-group-make-web-group
@@ -3234,7 +3237,7 @@ group by reverse date to see the latest news at the top and an
 Debian daily news group @code{gmane.linux.debian.user.news} from
 news.gmane.org.  The @acronym{RSS} group corresponds to the Debian
 weekly news RSS feed
-@url{http://packages.debian.org/unstable/newpkg_main.en.rdf},
+@url{https://packages.debian.org/unstable/newpkg_main.en.rdf},
 @xref{RSS}.
 
 @lisp
@@ -9164,10 +9167,10 @@ Use @uref{http://emacs-w3m.namazu.org/, emacs-w3m}.
 Use @uref{http://w3m.sourceforge.net/, w3m}.
 
 @item links
-Use @uref{http://links.sf.net/, Links}.
+Use @uref{https://almende.github.io/chap-links-library/, CHAP Links}.
 
 @item lynx
-Use @uref{http://lynx.isc.org/, Lynx}.
+Use @uref{https://lynx.browser.org/, Lynx}.
 
 @item html2text
 Use html2text---a simple @acronym{HTML} converter included with Gnus.
@@ -9591,7 +9594,7 @@ Picons, on the other hand, reside on your own system, and Gnus will
 try to match the headers to what you have (@pxref{Picons}).
 
 Gravatars reside on-line and are fetched from
-@uref{http://www.gravatar.com/} (@pxref{Gravatars}).
+@uref{https://en.gravatar.com/} (@pxref{Gravatars}).
 
 All these functions are toggles---if the elements already exist,
 they'll be removed.
@@ -13897,7 +13900,7 @@ installed.  You then define a server as follows:
 @findex nntp-open-ssl-stream
 @item nntp-open-ssl-stream
 Opens a connection to a server over a @dfn{secure} channel.  To use
-this you must have @uref{http://www.openssl.org, OpenSSL}
+this you must have @uref{https://www.openssl.org/, OpenSSL}
 @ignore
 @c Defunct URL, ancient package, so don't mention it.
 or @uref{ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL, SSLeay}
@@ -16411,7 +16414,7 @@ have to set this variable to @code{t}.  The default is @code{nil}.
 
 @code{nnmaildir} stores mail in the maildir format, with each maildir
 corresponding to a group in Gnus.  This format is documented here:
-@uref{http://cr.yp.to/proto/maildir.html}.  @code{nnmaildir}
+@uref{https://cr.yp.to/proto/maildir.html}.  @code{nnmaildir}
 also stores extra information in the @file{.nnmaildir/} directory
 within a maildir.
 
@@ -17083,7 +17086,7 @@ Some web sites have an RDF Site Summary (@acronym{RSS}).
 @acronym{RSS} is a format for summarizing headlines from news related
 sites (such as BBC or CNN).  But basically anything list-like can be
 presented as an @acronym{RSS} feed: weblogs, changelogs or recent
-changes to a wiki (e.g., @url{http://cliki.net/site/recent-changes}).
+changes to a wiki (e.g., @url{https://cliki.net/site/recent-changes}).
 
 @acronym{RSS} has a quite regular and nice interface, and it's
 possible to get the information Gnus needs to keep groups updated.
@@ -20864,6 +20867,7 @@ The kill to score conversion package isn't included in Emacs by default.
 You can fetch it from the contrib directory of the Gnus distribution or
 from
 @uref{http://heim.ifi.uio.no/~larsi/ding-various/gnus-kill-to-score.el}.
+@c FIXME: The above URL no longer works.
 
 If your old kill files are very complex---if they contain more
 non-@code{gnus-kill} forms than not, you'll have to convert them by
@@ -21369,9 +21373,6 @@ to get a group name.  By default this is @code{$HOME/Mail}.
 @subsubsection The swish-e Engine
 
 FIXME: Say something more here.
-
-Documentation for swish-e may be found at the swish-e homepage
-@uref{http://swish-e.org}
 
 @table @code
 
@@ -23557,7 +23558,7 @@ represent the author of the message.
 @cindex face
 @findex gnus-article-display-face
 The contents of a @code{Face} header must be a base64 encoded PNG image.
-See @uref{http://quimby.gnus.org/circus/face/} for the precise
+See @uref{https://quimby.gnus.org/circus/face/} for the precise
 specifications.
 
 The @code{gnus-face-properties-alist} variable affects the appearance of
@@ -23681,7 +23682,7 @@ in either monochrome @code{XBM} format or color @code{XPM} and
 @vindex gnus-picon-databases
 For instructions on obtaining and installing the picons databases,
 point your Web browser at
-@uref{http://www.cs.indiana.edu/picons/ftp/index.html}.
+@uref{https://cs.indiana.edu/ftp/faces/picons/}.
 
 If you are using Debian GNU/Linux, saying @samp{apt-get install
 picon-.*} will install the picons where Gnus can find them.
@@ -23750,7 +23751,7 @@ interesting.
 
 A gravatar is an image registered to an e-mail address.
 
-You can submit yours on-line at @uref{http://www.gravatar.com}.
+You can submit yours on-line at @uref{https://en.gravatar.com/}.
 
 The following variables offer control over how things are displayed.
 
@@ -24147,8 +24148,7 @@ compute a hash collision up to a certain number of bits.  The
 resulting hashcash cookie is inserted in a @samp{X-Hashcash:} header.
 For more details, and for the external application @code{hashcash} you
 need to install to use this feature, see
-@uref{http://www.hashcash.org/}.  Even more information can be found
-at @uref{http://www.camram.org/}.
+@uref{http://www.hashcash.org/}.
 
 If you wish to generate hashcash for each message you send, you can
 customize @code{message-generate-hashcash} (@pxref{Mail Headers, ,Mail
@@ -24999,7 +24999,7 @@ added to a group's @code{spam-process} parameter, the spam-marked
 articles groups will be reported to the Gmane administrators via a
 HTTP request.
 
-Gmane can be found at @uref{http://gmane.org}.
+Gmane was formerly found at @uref{http://gmane.org}.
 
 @emph{WARNING}
 
@@ -26505,7 +26505,7 @@ but at the common table.@*
 
 If you want to investigate the person responsible for this outrage,
 you can point your (feh!) web browser to
-@uref{http://quimby.gnus.org/}.  This is also the primary
+@uref{https://quimby.gnus.org/}.  This is also the primary
 distribution point for the new and spiffy versions of Gnus, and is
 known as The Site That Destroys Newsrcs And Drives People Mad.
 
@@ -26567,9 +26567,7 @@ Gnus 5.10 on May 1st 2003 (24 releases).
 
 On the January 4th 2004, No Gnus was begun.
 
-On April 19, 2010 Gnus development was moved to Git.  See
-http://git.gnus.org for details (http://www.gnus.org will be updated
-with the information when possible).
+On April 19, 2010 Gnus development was moved to Git.
 
 On the January 31th 2012, Ma Gnus was begun.
 

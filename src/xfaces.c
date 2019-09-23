@@ -4177,7 +4177,7 @@ color_distance (Emacs_Color *x, Emacs_Color *y)
 	 algorithm: it does not have a range of colors where it suddenly
 	 gives far from optimal results.
 
-     See <http://www.compuphase.com/cmetric.htm> for more info.  */
+     See <https://www.compuphase.com/cmetric.htm> for more info.  */
 
   long r = (x->red   - y->red)   >> 8;
   long g = (x->green - y->green) >> 8;

@@ -39,7 +39,7 @@ help:
 	@echo "NOTE:  This is a brief summary of some common make targets."
 	@echo "For more detailed information, please read the files INSTALL,"
 	@echo "INSTALL.REPO, Makefile or visit this URL:"
-	@echo "http://www.gnu.org/prep/standards/html_node/Standard-Targets.html"
+	@echo "https://www.gnu.org/prep/standards/html_node/Standard-Targets.html"
 	@echo ""
 	@echo "make all              -- compile and build Emacs"
 	@echo "make install          -- install Emacs"

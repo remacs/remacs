@@ -1314,7 +1314,7 @@ if hasattr(gdb, 'printing'):
       # simpler and works regardless of whether VAL is a pointer or
       # integer.  Also, val.cast (gdb.lookup.type ("EMACS_UINT"))
       # would have problems with GDB 7.12.1; see
-      # <http://patchwork.sourceware.org/patch/11557/>.
+      # <https://patchwork.sourceware.org/patch/11557/>
       ival = long (val)
 
       # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".

@@ -76,7 +76,7 @@ cc everyone on replies.)
 
 (Many people think the submitter SHOULD be automatically subscribed
 to subsequent discussion, but this does not seem to be implemented.
-See http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=37078
+See https://bugs.debian.org/37078
 See also https://debbugs.gnu.org/5439 )
 
 Do NOT send a separate copy to the bug list address, since this may
@@ -155,7 +155,7 @@ Package: emacs
 Version: 23.0.60
 Severity: minor
 
-Remember to fix FOO, as discussed on emacs-devel at http://... .
+Remember to fix FOO, as discussed on emacs-devel at https://... .
 
 ** Not interested in tracker control messages (tags being set, etc)?
 Discard mails matching:
@@ -280,7 +280,7 @@ tag:tag                # all bugs with given tag
 
 *** Usertags
 
-See <http://wiki.debian.org/bugs.debian.org/usertags>
+See <https://wiki.debian.org/bugs.debian.org/usertags>
 
 "Usertags" are very similar to tags: a set of labels that can be added
 to a bug.  There are two differences between normal tags and user tags:
@@ -385,7 +385,7 @@ will be assigned proper numbers).
 NB you cannot clone a merged bug.  You'd think that trying to do so
 would just give you an unmerged copy of the specified bug number, but no:
 
-http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=474742
+https://bugs.debian.org/474742
 
 You must unmerge, clone, then re-merge.
 

@@ -5026,7 +5026,7 @@ struct for_each_tail_internal
 
    Use Brent’s teleporting tortoise-hare algorithm.  See:
    Brent RP. BIT. 1980;20(2):176-84. doi:10.1007/BF01933190
-   http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
+   https://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
 
    This macro uses maybe_quit because of an excess of caution.  The
    call to maybe_quit should not be needed in practice, as a very long

@@ -8294,7 +8294,7 @@ gif_load (struct frame *f, struct image *img)
       /* For disposal == 0, the spec says "No disposal specified. The
 	 decoder is not required to take any action."  In practice, it
 	 seems we need to treat this like "keep in place", see e.g.
-	 http://upload.wikimedia.org/wikipedia/commons/3/37/Clock.gif */
+	 https://upload.wikimedia.org/wikipedia/commons/3/37/Clock.gif */
       if (disposal == 0)
 	disposal = 1;
 
@@ -9196,7 +9196,7 @@ DEFUN ("imagemagick-types", Fimagemagick_types, Simagemagick_types, 0, 0, 0,
        doc: /* Return a list of image types supported by ImageMagick.
 Each entry in this list is a symbol named after an ImageMagick format
 tag.  See the ImageMagick manual for a list of ImageMagick formats and
-their descriptions (http://www.imagemagick.org/script/formats.php).
+their descriptions (https://www.imagemagick.org/script/formats.php).
 You can also try the shell command: `identify -list format'.
 
 Note that ImageMagick recognizes many file-types that Emacs does not

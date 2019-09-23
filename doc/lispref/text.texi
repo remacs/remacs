@@ -5310,7 +5310,7 @@ the value if contains a valid JSON object; otherwise it signals the
 
 The @code{jsonrpc} library implements the @acronym{JSONRPC}
 specification, version 2.0, as it is described in
-@uref{http://www.jsonrpc.org/}.  As the name suggests, JSONRPC is a
+@uref{https://www.jsonrpc.org/}.  As the name suggests, JSONRPC is a
 generic @dfn{Remote Procedure Call} protocol designed around
 @acronym{JSON} objects, which you can convert to and from Lisp objects
 (@pxref{Parsing JSON}).
@@ -5325,7 +5325,7 @@ generic @dfn{Remote Procedure Call} protocol designed around
 @node JSONRPC Overview
 @subsection Overview
 
-Quoting from the @uref{http://www.jsonrpc.org/, spec}, JSONRPC "is
+Quoting from the @uref{https://www.jsonrpc.org/, spec}, JSONRPC "is
 transport agnostic in that the concepts can be used within the same
 process, over sockets, over http, or in many various message passing
 environments."

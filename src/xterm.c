@@ -10599,7 +10599,7 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
    on the root window for frame F contains ATOMNAME.
    This is how a WM check shall be done according to the Window Manager
    Specification/Extended Window Manager Hints at
-   http://freedesktop.org/wiki/Specifications/wm-spec.  */
+   https://freedesktop.org/wiki/Specifications/wm-spec/.  */
 
 bool
 x_wm_supports (struct frame *f, Atom want_atom)
@@ -11524,7 +11524,7 @@ static void
 xembed_request_focus (struct frame *f)
 {
   /* See XEmbed Protocol Specification at
-     http://freedesktop.org/wiki/Specifications/xembed-spec  */
+     https://freedesktop.org/wiki/Specifications/xembed-spec/  */
   if (FRAME_VISIBLE_P (f))
     xembed_send_message (f, CurrentTime,
 			 XEMBED_REQUEST_FOCUS, 0, 0, 0);
@@ -11536,7 +11536,7 @@ static void
 x_ewmh_activate_frame (struct frame *f)
 {
   /* See Window Manager Specification/Extended Window Manager Hints at
-     http://freedesktop.org/wiki/Specifications/wm-spec  */
+     https://freedesktop.org/wiki/Specifications/wm-spec/  */
 
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
 
@@ -11586,7 +11586,7 @@ x_focus_frame (struct frame *f, bool noactivate)
     {
       /* For Xembedded frames, normally the embedder forwards key
 	 events.  See XEmbed Protocol Specification at
-	 http://freedesktop.org/wiki/Specifications/xembed-spec  */
+	 https://freedesktop.org/wiki/Specifications/xembed-spec/  */
       xembed_request_focus (f);
     }
   else

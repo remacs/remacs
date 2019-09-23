@@ -25,7 +25,7 @@
 ;; The grammar itself is transcribed from the ECMAScript Language
 ;; Specification published at
 ;;
-;; http://www.ecma-international.org/publications/standards/Ecma-262.htm
+;; https://www.ecma-international.org/publications/standards/Ecma-262.htm
 ;;
 ;; and redistributed under the following license:
 

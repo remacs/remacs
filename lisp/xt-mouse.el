@@ -50,7 +50,7 @@
   "Read a click and release event from XTerm.
 Similar to `xterm-mouse-translate', but using the \"1006\"
 extension, which supports coordinates >= 231 (see
-http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)."
+https://invisible-island.net/xterm/ctlseqs/ctlseqs.html)."
   (xterm-mouse-translate-1 1006))
 
 (defun xterm-mouse-translate-1 (&optional extension)

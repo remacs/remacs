@@ -2718,7 +2718,7 @@ interpreted as icon name.
 
 @item :category @var{category}
 The type of notification this is, a string.  See the
-@uref{http://developer.gnome.org/notification-spec/#categories,
+@uref{https://developer.gnome.org/notification-spec/#categories,
 Desktop Notifications Specification} for a list of standard
 categories.
 

@@ -14617,11 +14617,11 @@ I save so much time, my files are colored nicely, my co workers respect
 my coding ability... until now.  I'd really appreciate anything you
 could do to help me out with this minor deficiency in the product.
 
-I've taken a look at the Verilog-Mode FAQ at
-http://www.veripool.org/verilog-mode-faq.html.
+I've taken a look at the Verilog-Mode FAQ at:
+https://www.veripool.org/wiki/verilog-mode/Faq
 
 And, I've considered filing the bug on the issue tracker at
-http://www.veripool.org/verilog-mode-bugs
+https://www.veripool.org/projects/verilog-mode/issues
 since I realize that public bugs are easier for you to track,
 and for others to search, but would prefer to email.
 

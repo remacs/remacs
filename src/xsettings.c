@@ -343,8 +343,8 @@ get_prop_window (struct x_display_info *dpyinfo)
 #define PAD(nr)    (((nr) + 3) & ~3)
 
 /* Parse xsettings and extract those that deal with Xft.
-   See http://freedesktop.org/wiki/Specifications/XSettingsRegistry
-   and http://standards.freedesktop.org/xsettings-spec/xsettings-spec-0.5.html.
+   See https://freedesktop.org/wiki/Specifications/XSettingsRegistry/
+   and https://specifications.freedesktop.org/xsettings-spec/xsettings-spec-0.5.html.
 
    Layout of prop.  First is a header:
 

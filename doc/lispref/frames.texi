@@ -3861,7 +3861,7 @@ drop.
 
 @vindex dnd-protocol-alist
   When an URL is dropped on Emacs it may be a file, but it may also be
-another URL type (ftp, http, etc.).  Emacs first checks
+another URL type (https, etc.).  Emacs first checks
 @code{dnd-protocol-alist} to determine what to do with the URL@.  If
 there is no match there and if @code{browse-url-browser-function} is
 an alist, Emacs looks for a match there.  If no match is found the

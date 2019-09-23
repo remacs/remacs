@@ -440,8 +440,7 @@ Specifies whether confirmation is required to accept cookies.
 
 @defopt url-cookie-multiple-line
 Specifies whether to put all cookies for the server on one line in the
-HTTP request to satisfy broken servers like
-@url{http://www.hotmail.com}.
+HTTP request to satisfy broken servers.
 @end defopt
 
 @defopt url-cookie-trusted-urls

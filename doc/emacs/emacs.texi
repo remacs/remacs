@@ -1316,7 +1316,7 @@ Emacs editors, all sharing common principles of organization.  For
 information on the underlying philosophy of Emacs and the lessons
 learned from its development, see @cite{Emacs, the Extensible,
 Customizable Self-Documenting Display Editor}, available from
-@url{http://hdl.handle.net/1721.1/5736}.
+@url{https://dspace.mit.edu/handle/1721.1/5736}.
 
 This version of the manual is mainly intended for use with GNU Emacs
 installed on GNU and Unix systems.  GNU Emacs can also be used on

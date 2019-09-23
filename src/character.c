@@ -1045,7 +1045,7 @@ printablep (int c)
 }
 
 /* Return true if C is a horizontal whitespace character, as defined
-   by http://www.unicode.org/reports/tr18/tr18-19.html#blank.  */
+   by https://www.unicode.org/reports/tr18/tr18-19.html#blank.  */
 bool
 blankp (int c)
 {

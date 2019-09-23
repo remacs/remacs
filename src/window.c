@@ -6350,8 +6350,8 @@ and redisplay normally--don't erase and redraw the frame.  */)
   int this_scroll_margin;
 
   /* For reasons why we signal an error here, see
-     http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00053.html,
-     http://lists.gnu.org/archive/html/emacs-devel/2014-06/msg00094.html.  */
+     https://lists.gnu.org/r/emacs-devel/2014-06/msg00053.html,
+     https://lists.gnu.org/r/emacs-devel/2014-06/msg00094.html.  */
   if (buf != current_buffer)
     error ("`recenter'ing a window that does not display current-buffer.");
 

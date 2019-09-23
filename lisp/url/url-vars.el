@@ -327,7 +327,7 @@ a terminal with a slow modem."
 
 (defvar url-using-proxy nil
   "Either nil or the fully qualified proxy URL in use, e.g.
-http://www.example.com/")
+https://www.example.com/")
 
 (defcustom url-news-server nil
   "The default news server from which to get newsgroups/articles.
