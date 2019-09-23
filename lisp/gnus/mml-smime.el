@@ -133,7 +133,7 @@ Whether the passphrase is cached at all is controlled by
   (when (null smime-keys)
     (customize-variable 'smime-keys)
     (error "No S/MIME keys configured, use customize to add your key"))
-  (smime-sign-buffer (cdr (assq 'keyfile cont)))
+  (smime-sign-buffer (cdar smime-keys))
   (goto-char (point-min))
   (while (search-forward "\r\n" nil t)
     (replace-match "\n" t t))
