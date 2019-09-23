@@ -1609,7 +1609,7 @@ If `ask', ask for user confirmation."
     (if (and recursive
 	     (eq t (file-attribute-type attrs))
 	     (or (eq recursive 'always)
-		 (yes-or-no-p (format "Recursive copies of %s? " from))))
+		 (yes-or-no-p (format "Copy %s recursively? " from))))
 	(copy-directory from to preserve-time)
       (or top (dired-handle-overwrite to))
       (condition-case err
