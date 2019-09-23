@@ -17076,8 +17076,8 @@ reminders.
 
 @smallexample
 @group
-;;; Mail mode
-; To enter mail mode, type 'C-x m'
+;;; Message mode
+; To enter message mode, type 'C-x m'
 ; To enter RMAIL (for reading mail),
 ; type 'M-x rmail'
 (setq mail-aliases t)
