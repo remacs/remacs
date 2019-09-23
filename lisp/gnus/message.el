@@ -2890,7 +2890,7 @@ systematically send encrypted emails when possible."
     ["Sort Headers" message-sort-headers t]
     ["Encode non-ASCII domain names" message-idna-to-ascii-rhs t]
     ;; We hide `message-hidden-headers' by narrowing the buffer.
-    ["Show Hidden Headers" widen t]
+    ["Show Hidden Headers" message-widen-and-recenter t]
     ["Goto Body" message-goto-body t]
     ["Goto Signature" message-goto-signature t]))
 
@@ -3368,6 +3368,12 @@ or in the synonym headers, defined by `message-header-synonyms'."
 
 
 ;;; Various commands
+
+(defun message-widen-and-recenter ()
+  "Widen the buffer and go to the start."
+  (interactive)
+  (widen)
+  (goto-char (point-min)))
 
 (defun message-delete-not-region (beg end)
   "Delete everything in the body of the current message outside of the region."
