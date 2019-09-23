@@ -701,7 +701,8 @@ If you do not specify PLAIN-FILE, this functions prompts for the value to use."
     (message "Verifying %s...done" (file-name-nondirectory file))
     (if (epg-context-result-for context 'verify)
 	(epa-display-info (epg-verify-result-to-string
-			   (epg-context-result-for context 'verify))))))
+			   (epg-context-result-for context 'verify)))
+      (message "Verification not successful"))))
 
 (defun epa--read-signature-type ()
   (let (type c)
@@ -945,6 +946,8 @@ For example:
 		 (or coding-system-for-read
 		     (get-text-property start 'epa-coding-system-used)
 		     'undecided)))
+    (unless (epg-context-result-for context 'verify)
+      (error "Unable to verify region"))
     (if (or (eq epa-replace-original-text t)
             (and epa-replace-original-text
                  (y-or-n-p "Replace the original text? ")))
