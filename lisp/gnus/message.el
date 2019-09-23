@@ -4597,7 +4597,6 @@ If you always want Gnus to send messages in one piece, set
 	  (insert (with-current-buffer mailbuf
 		    (mml-buffer-substring-no-properties-except-some
 		     (point-min) (point-max))))
-	  ;; Remove some headers.
 	  (message-encode-message-body)
 	  (save-restriction
 	    (message-narrow-to-headers)
