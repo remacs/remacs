@@ -1,5 +1,5 @@
 # Detect some bugs in glibc's implementation of utimes.
-# serial 6
+# serial 7
 
 dnl Copyright (C) 2003-2005, 2009-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
@@ -147,7 +147,7 @@ main ()
           *-musl*) gl_cv_func_working_utimes="guessing yes" ;;
                    # Guess no on native Windows.
           mingw*)  gl_cv_func_working_utimes="guessing no" ;;
-          *)       gl_cv_func_working_utimes="guessing no" ;;
+          *)       gl_cv_func_working_utimes="$gl_cross_guess_normal" ;;
         esac
        ])
     ])

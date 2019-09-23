@@ -1,4 +1,4 @@
-# serial 30
+# serial 31
 dnl Copyright (C) 2002-2003, 2005-2007, 2009-2019 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
@@ -247,7 +247,7 @@ main ()
        [case "$host_os" in
                   # Guess no on native Windows.
           mingw*) gl_cv_func_working_mktime="guessing no" ;;
-          *)      gl_cv_func_working_mktime="guessing no" ;;
+          *)      gl_cv_func_working_mktime="$gl_cross_guess_normal" ;;
         esac
        ])
     ])

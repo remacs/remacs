@@ -32,7 +32,7 @@ AC_DEFUN([gl_EXTERN_INLINE],
      https://lists.gnu.org/r/bug-gnulib/2012-12/msg00023.html
 
      DragonFly; see
-     http://muscles.dragonflybsd.org/bulk/bleeding-edge-potential/latest-per-pkg/ah-tty-0.3.12.log
+     http://muscles.dragonflybsd.org/bulk/clang-master-potential/20141111_102002/logs/ah-tty-0.3.12.log
 
      FreeBSD; see:
      https://lists.gnu.org/r/bug-gnulib/2014-07/msg00104.html

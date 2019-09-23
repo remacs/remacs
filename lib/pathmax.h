@@ -20,7 +20,7 @@
 
 /* POSIX:2008 defines PATH_MAX to be the maximum number of bytes in a filename,
    including the terminating NUL byte.
-   <http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/limits.h.html>
+   <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/limits.h.html>
    PATH_MAX is not defined on systems which have no limit on filename length,
    such as GNU/Hurd.
 

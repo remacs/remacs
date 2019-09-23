@@ -238,8 +238,8 @@ _GL_WARN_ON_USE (getloadavg, "getloadavg is not portable - "
        element (or NULL if it doesn't contain an "=" sign),
      - It returns the index of the "token" in the given array of tokens.
    Otherwise it returns -1, and *OPTIONP and *VALUEP are undefined.
-   For more details see the POSIX:2001 specification.
-   http://www.opengroup.org/susv3xsh/getsubopt.html */
+   For more details see the POSIX specification.
+   https://pubs.opengroup.org/onlinepubs/9699919799/functions/getsubopt.html */
 # if !@HAVE_GETSUBOPT@
 _GL_FUNCDECL_SYS (getsubopt, int,
                   (char **optionp, char *const *tokens, char **valuep)

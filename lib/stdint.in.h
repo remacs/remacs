@@ -17,7 +17,7 @@
 
 /*
  * ISO C 99 <stdint.h> for platforms that lack it.
- * <http://www.opengroup.org/susv3xbd/stdint.h.html>
+ * <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/stdint.h.html>
  */
 
 #ifndef _@GUARD_PREFIX@_STDINT_H

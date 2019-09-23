@@ -1,4 +1,4 @@
-# serial 22
+# serial 23
 
 dnl From Jim Meyering.
 dnl A wrapper around AC_FUNC_GETGROUPS.
@@ -8,8 +8,6 @@ dnl A wrapper around AC_FUNC_GETGROUPS.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
-
-m4_version_prereq([2.70], [] ,[
 
 # This is taken from the following Autoconf patch:
 # https://git.savannah.gnu.org/gitweb/?p=autoconf.git;a=commitdiff;h=7fbb553727ed7e0e689a17594b58559ecf3ea6e9
@@ -44,8 +42,8 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
             *-gnu* | gnu*) ac_cv_func_getgroups_works="guessing yes" ;;
                            # Guess yes on musl systems.
             *-musl*)       ac_cv_func_getgroups_works="guessing yes" ;;
-                           # If we don't know, assume the worst.
-            *)             ac_cv_func_getgroups_works="guessing no" ;;
+                           # If we don't know, obey --enable-cross-guesses.
+            *)             ac_cv_func_getgroups_works="$gl_cross_guess_normal" ;;
           esac
          ])
       ])
@@ -60,8 +58,6 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
   esac
   LIBS=$ac_save_LIBS
 ])# AC_FUNC_GETGROUPS
-
-])
 
 AC_DEFUN([gl_FUNC_GETGROUPS],
 [
@@ -99,8 +95,8 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
              *-gnu* | gnu*) gl_cv_func_getgroups_works="guessing yes" ;;
                             # Guess yes on musl systems.
              *-musl*)       gl_cv_func_getgroups_works="guessing yes" ;;
-                            # If we don't know, assume the worst.
-             *)             gl_cv_func_getgroups_works="guessing no" ;;
+                            # If we don't know, obey --enable-cross-guesses.
+             *)             gl_cv_func_getgroups_works="$gl_cross_guess_normal" ;;
            esac
           ])])
       case "$gl_cv_func_getgroups_works" in

@@ -253,10 +253,28 @@ _GL_INLINE_HEADER_BEGIN
 /* Declare overridden functions.  */
 
 
-#if defined GNULIB_POSIXCHECK
+#if @GNULIB_ACCESS@
+# if @REPLACE_ACCESS@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef access
+#   define access rpl_access
+#  endif
+_GL_FUNCDECL_RPL (access, int, (const char *file, int mode)
+                               _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (access, int, (const char *file, int mode));
+# else
+_GL_CXXALIAS_SYS (access, int, (const char *file, int mode));
+# endif
+_GL_CXXALIASWARN (access);
+#elif defined GNULIB_POSIXCHECK
+# undef access
+# if HAVE_RAW_DECL_ACCESS
 /* The access() function is a security risk.  */
-_GL_WARN_ON_USE (access, "the access function is a security risk - "
+_GL_WARN_ON_USE (access, "access does not always support X_OK - "
+                 "use gnulib module access for portability; "
+                 "also, this function is a security risk - "
                  "use the gnulib module faccessat instead");
+# endif
 #endif
 
 
@@ -277,7 +295,7 @@ _GL_WARN_ON_USE (chown, "chdir is not always in <unistd.h> - "
    to GID (if GID is not -1).  Follow symbolic links.
    Return 0 if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/chown.html.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/chown.html.  */
 # if @REPLACE_CHOWN@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef chown
@@ -371,7 +389,7 @@ _GL_WARN_ON_USE (dup, "dup is unportable - "
    NEWFD = OLDFD, otherwise close NEWFD first if it is open.
    Return newfd if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/dup2.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/dup2.html>.  */
 # if @REPLACE_DUP2@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define dup2 rpl_dup2
@@ -526,7 +544,7 @@ _GL_WARN_ON_USE (faccessat, "faccessat is not portable - "
    the given file descriptor is open.
    Return 0 if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/fchdir.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/fchdir.html>.  */
 # if ! @HAVE_FCHDIR@
 _GL_FUNCDECL_SYS (fchdir, int, (int /*fd*/));
 
@@ -587,7 +605,7 @@ _GL_WARN_ON_USE (fchownat, "fchownat is not portable - "
 /* Synchronize changes to a file.
    Return 0 if successful, otherwise -1 and errno set.
    See POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/fdatasync.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/fdatasync.html>.  */
 # if !@HAVE_FDATASYNC@ || !@HAVE_DECL_FDATASYNC@
 _GL_FUNCDECL_SYS (fdatasync, int, (int fd));
 # endif
@@ -606,7 +624,7 @@ _GL_WARN_ON_USE (fdatasync, "fdatasync is unportable - "
 /* Synchronize changes, including metadata, to a file.
    Return 0 if successful, otherwise -1 and errno set.
    See POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/fsync.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/fsync.html>.  */
 # if !@HAVE_FSYNC@
 _GL_FUNCDECL_SYS (fsync, int, (int fd));
 # endif
@@ -625,7 +643,7 @@ _GL_WARN_ON_USE (fsync, "fsync is unportable - "
 /* Change the size of the file to which FD is opened to become equal to LENGTH.
    Return 0 if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/ftruncate.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/ftruncate.html>.  */
 # if @REPLACE_FTRUNCATE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef ftruncate
@@ -655,7 +673,7 @@ _GL_WARN_ON_USE (ftruncate, "ftruncate is unportable - "
    Return BUF if successful, or NULL if the directory couldn't be determined
    or SIZE was too small.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/getcwd.html>.
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/getcwd.html>.
    Additionally, the gnulib module 'getcwd' guarantees the following GNU
    extension: If BUF is NULL, an array is allocated with 'malloc'; the array
    is SIZE bytes long, unless SIZE == 0, in which case it is as big as
@@ -815,7 +833,7 @@ _GL_WARN_ON_USE (gethostname, "gethostname is unportable - "
 /* Returns the user's login name, or NULL if it cannot be found.  Upon error,
    returns NULL with errno set.
 
-   See <http://www.opengroup.org/susv3xsh/getlogin.html>.
+   See <https://pubs.opengroup.org/onlinepubs/9699919799/functions/getlogin.html>.
 
    Most programs don't need to use this function, because the information is
    available through environment variables:
@@ -844,7 +862,7 @@ _GL_WARN_ON_USE (getlogin, "getlogin is unportable - "
    the case that the login name cannot be found but no specific error is
    provided (this case is hopefully rare but is left open by the POSIX spec).
 
-   See <http://www.opengroup.org/susv3xsh/getlogin.html>.
+   See <https://pubs.opengroup.org/onlinepubs/9699919799/functions/getlogin.html>.
 
    Most programs don't need to use this function, because the information is
    available through environment variables:
@@ -1079,7 +1097,7 @@ _GL_WARN_ON_USE (isatty, "isatty has portability problems on native Windows - "
    to GID (if GID is not -1).  Do not follow symbolic links.
    Return 0 if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/lchown.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/lchown.html>.  */
 # if @REPLACE_LCHOWN@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef lchown
@@ -1109,7 +1127,7 @@ _GL_WARN_ON_USE (lchown, "lchown is unportable to pre-POSIX.1-2001 systems - "
 /* Create a new hard link for an existing file.
    Return 0 if successful, otherwise -1 and errno set.
    See POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/link.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/link.html>.  */
 # if @REPLACE_LINK@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define link rpl_link
@@ -1175,7 +1193,7 @@ _GL_WARN_ON_USE (linkat, "linkat is unportable - "
 /* Set the offset of FD relative to SEEK_SET, SEEK_CUR, or SEEK_END.
    Return the new offset if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/lseek.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/lseek.html>.  */
 # if @REPLACE_LSEEK@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define lseek rpl_lseek
@@ -1247,7 +1265,7 @@ _GL_WARN_ON_USE (pipe2, "pipe2 is unportable - "
    Return the number of bytes placed into BUF if successful, otherwise
    set errno and return -1.  0 indicates EOF.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/pread.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/pread.html>.  */
 # if @REPLACE_PREAD@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef pread
@@ -1282,7 +1300,7 @@ _GL_WARN_ON_USE (pread, "pread is unportable - "
    Return the number of bytes written if successful, otherwise
    set errno and return -1.  0 indicates nothing written.  See the
    POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/pwrite.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/pwrite.html>.  */
 # if @REPLACE_PWRITE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef pwrite
@@ -1315,7 +1333,7 @@ _GL_WARN_ON_USE (pwrite, "pwrite is unportable - "
 #if @GNULIB_READ@
 /* Read up to COUNT bytes from file descriptor FD into the buffer starting
    at BUF.  See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/read.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/read.html>.  */
 # if @REPLACE_READ@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef read
@@ -1339,7 +1357,7 @@ _GL_CXXALIASWARN (read);
    bytes of it into BUF.  Return the number of bytes placed into BUF if
    successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/readlink.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/readlink.html>.  */
 # if @REPLACE_READLINK@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define readlink rpl_readlink
@@ -1449,7 +1467,7 @@ _GL_WARN_ON_USE (sethostname, "sethostname is unportable - "
 /* Pause the execution of the current thread for N seconds.
    Returns the number of seconds left to sleep.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/sleep.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/sleep.html>.  */
 # if @REPLACE_SLEEP@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef sleep
@@ -1533,7 +1551,7 @@ _GL_WARN_ON_USE (symlinkat, "symlinkat is not portable - "
 /* Change the size of the file designated by FILENAME to become equal to LENGTH.
    Return 0 if successful, otherwise -1 and errno set.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/truncate.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/truncate.html>.  */
 # if @REPLACE_TRUNCATE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef truncate
@@ -1640,7 +1658,7 @@ _GL_WARN_ON_USE (unlinkat, "unlinkat is not portable - "
 /* Pause the execution of the current thread for N microseconds.
    Returns 0 on completion, or -1 on range error.
    See the POSIX:2001 specification
-   <http://www.opengroup.org/susv3xsh/usleep.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/009695399/functions/usleep.html>.  */
 # if @REPLACE_USLEEP@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef usleep
@@ -1667,7 +1685,7 @@ _GL_WARN_ON_USE (usleep, "usleep is unportable - "
 #if @GNULIB_WRITE@
 /* Write up to COUNT bytes starting at BUF to file descriptor FD.
    See the POSIX:2008 specification
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html>.  */
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html>.  */
 # if @REPLACE_WRITE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef write

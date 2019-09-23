@@ -17,7 +17,7 @@
 
 /*
  * ISO C 99 <inttypes.h> for platforms that lack it.
- * <http://www.opengroup.org/susv3xbd/inttypes.h.html>
+ * <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/inttypes.h.html>
  */
 
 #if __GNUC__ >= 3

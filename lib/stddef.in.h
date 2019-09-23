@@ -19,7 +19,7 @@
 
 /*
  * POSIX 2008 <stddef.h> for platforms that have issues.
- * <http://www.opengroup.org/susv3xbd/stddef.h.html>
+ * <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/stddef.h.html>
  */
 
 #if __GNUC__ >= 3

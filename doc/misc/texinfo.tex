@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2019-08-18.20}
+\def\texinfoversion{2019-09-20.22}
 %
 % Copyright 1985, 1986, 1988, 1990-2019 Free Software Foundation, Inc.
 %
@@ -1052,7 +1052,7 @@ where each line of input produces a line of output.}
             tex.sprint(
               string.format(string.char(0x5c) .. string.char(0x25) .. '03o' ..
                             string.char(0x5c) .. string.char(0x25) .. '03o',
-                            (c / 256), (c % 256)))
+                            math.floor(c / 256), math.floor(c % 256)))
           else
             c = c - 0x10000
             local c_hi = c / 1024 + 0xd800
@@ -1062,8 +1062,8 @@ where each line of input produces a line of output.}
                             string.char(0x5c) .. string.char(0x25) .. '03o' ..
                             string.char(0x5c) .. string.char(0x25) .. '03o' ..
                             string.char(0x5c) .. string.char(0x25) .. '03o',
-                            (c_hi / 256), (c_hi % 256),
-                            (c_lo / 256), (c_lo % 256)))
+                            math.floor(c_hi / 256), math.floor(c_hi % 256),
+                            math.floor(c_lo / 256), math.floor(c_lo % 256)))
           end
         end
       end
@@ -1076,15 +1076,19 @@ where each line of input produces a line of output.}
       function PDFescstr(str)
         for c in string.bytes(str) do
           if c <= 0x20 or c >= 0x80 or c == 0x28 or c == 0x29 or c == 0x5c then
-            tex.sprint(
+            tex.sprint(-2,
               string.format(string.char(0x5c) .. string.char(0x25) .. '03o',
                             c))
           else
-            tex.sprint(string.char(c))
+            tex.sprint(-2, string.char(c))
           end
         end
       end
     }
+    % The -2 in the arguments here gives all the input to TeX catcode 12
+    % (other) or 10 (space), preventing undefined control sequence errors. See
+    % https://lists.gnu.org/archive/html/bug-texinfo/2019-08/msg00031.html
+    %
   \endgroup
   \def\pdfescapestring#1{\directlua{PDFescstr('\luaescapestring{#1}')}}
   \ifnum\luatexversion>84
@@ -4843,6 +4847,7 @@ end
   \definedummyletter\ %
   \definedummyletter\{%
   \definedummyletter\}%
+  \definedummyletter\&%
   %
   % Do the redefinitions.
   \definedummies
@@ -4913,6 +4918,7 @@ end
   \definedummyword\TeX
   %
   % Assorted special characters.
+  \definedummyword\ampchar
   \definedummyword\atchar
   \definedummyword\arrow
   \definedummyword\backslashchar

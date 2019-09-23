@@ -1,4 +1,4 @@
-# serial 68
+# serial 69
 
 # Copyright (C) 1996-2001, 2003-2019 Free Software Foundation, Inc.
 #
@@ -243,8 +243,8 @@ AC_DEFUN([gl_REGEX],
         [case "$host_os" in
                    # Guess no on native Windows.
            mingw*) gl_cv_func_re_compile_pattern_working="guessing no" ;;
-                   # Otherwise, assume it is not working.
-           *)      gl_cv_func_re_compile_pattern_working="guessing no" ;;
+                   # Otherwise obey --enable-cross-guesses.
+           *)      gl_cv_func_re_compile_pattern_working="$gl_cross_guess_normal" ;;
          esac
         ])
       ])

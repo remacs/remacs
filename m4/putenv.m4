@@ -1,4 +1,4 @@
-# putenv.m4 serial 23
+# putenv.m4 serial 24
 dnl Copyright (C) 2002-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -40,8 +40,8 @@ AC_DEFUN([gl_FUNC_PUTENV],
                 *-musl*)       gl_cv_func_svid_putenv="guessing yes" ;;
                                # Guess no on native Windows.
                 mingw*)        gl_cv_func_svid_putenv="guessing no" ;;
-                               # If we don't know, assume the worst.
-                *)             gl_cv_func_svid_putenv="guessing no" ;;
+                               # If we don't know, obey --enable-cross-guesses.
+                *)             gl_cv_func_svid_putenv="$gl_cross_guess_normal" ;;
               esac
              ])
    ])

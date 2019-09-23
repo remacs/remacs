@@ -54,7 +54,7 @@
 
    The PREADLINKAT function specifies how to read links.  It operates
    like POSIX readlinkat()
-   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/readlink.html>
+   <https://pubs.opengroup.org/onlinepubs/9699919799/functions/readlink.html>
    but can assume that its first argument is the same as FD.
 
    If successful, return the buffer address; otherwise return NULL and

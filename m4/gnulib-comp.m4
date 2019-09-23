@@ -1104,6 +1104,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/nstrftime.m4
   m4/off_t.m4
   m4/open-cloexec.m4
+  m4/open-slash.m4
   m4/open.m4
   m4/pathmax.m4
   m4/pipe2.m4

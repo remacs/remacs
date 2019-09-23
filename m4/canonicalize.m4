@@ -1,4 +1,4 @@
-# canonicalize.m4 serial 30
+# canonicalize.m4 serial 31
 
 dnl Copyright (C) 2003-2007, 2009-2019 Free Software Foundation, Inc.
 
@@ -117,8 +117,8 @@ AC_DEFUN([gl_FUNC_REALPATH_WORKS],
         *-musl*)       gl_cv_func_realpath_works="guessing yes" ;;
                        # Guess no on native Windows.
         mingw*)        gl_cv_func_realpath_works="guessing no" ;;
-                       # If we don't know, assume the worst.
-        *)             gl_cv_func_realpath_works="guessing no" ;;
+                       # If we don't know, obey --enable-cross-guesses.
+        *)             gl_cv_func_realpath_works="$gl_cross_guess_normal" ;;
       esac
      ])
     rm -rf conftest.a conftest.d

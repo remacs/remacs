@@ -71,7 +71,7 @@ COUNT_LEADING_ZEROS_INLINE int
 count_leading_zeros_32 (unsigned int x)
 {
   /* <https://github.com/gibsjose/BitHacks>
-     <http://www.fit.vutbr.cz/~ibarina/pub/bithacks.pdf> */
+     <https://www.fit.vutbr.cz/~ibarina/pub/bithacks.pdf> */
   static const char de_Bruijn_lookup[32] = {
     31, 22, 30, 21, 18, 10, 29, 2, 20, 17, 15, 13, 9, 6, 28, 1,
     23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0

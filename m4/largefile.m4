@@ -56,7 +56,7 @@ rm -rf conftest*[]dnl
 # By default, many hosts won't let programs access large files;
 # one must use special compiler options to get large-file access to work.
 # For more details about this brain damage please see:
-# http://www.unix-systems.org/version2/whatsnew/lfs20mar.html
+# http://www.unix.org/version2/whatsnew/lfs20mar.html
 AC_DEFUN([AC_SYS_LARGEFILE],
 [AC_ARG_ENABLE(largefile,
                [  --disable-largefile     omit support for large files])

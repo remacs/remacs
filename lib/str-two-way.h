@@ -49,7 +49,7 @@
    character shift table similar to the Boyer-Moore algorithm to
    achieve improved (potentially sub-linear) performance.
 
-   See http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260,
+   See https://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260,
    https://en.wikipedia.org/wiki/Boyer-Moore_string_search_algorithm,
    https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.34.6641&rep=rep1&type=pdf
 */

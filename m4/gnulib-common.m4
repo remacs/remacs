@@ -1,4 +1,4 @@
-# gnulib-common.m4 serial 44
+# gnulib-common.m4 serial 45
 dnl Copyright (C) 2007-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -94,7 +94,7 @@ AC_DEFUN([gl_COMMON_BODY], [
    invoked from such signal handlers.  Such functions have some restrictions:
      * All functions that it calls should be marked _GL_ASYNC_SAFE as well,
        or should be listed as async-signal-safe in POSIX
-       <http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04>
+       <https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04>
        section 2.4.3.  Note that malloc(), sprintf(), and fwrite(), in
        particular, are NOT async-signal-safe.
      * All memory locations (variables and struct fields) that these functions
@@ -115,6 +115,33 @@ AC_DEFUN([gl_COMMON_BODY], [
        errno.  */
 #define _GL_ASYNC_SAFE
 ])
+  dnl Hint which direction to take regarding cross-compilation guesses:
+  dnl When a user installs a program on a platform they are not intimately
+  dnl familiar with, --enable-cross-guesses=conservative is the appropriate
+  dnl choice.  It implements the "If we don't know, assume the worst" principle.
+  dnl However, when an operating system developer (on a platform which is not
+  dnl yet known to gnulib) builds packages for their platform, they want to
+  dnl expose, not hide, possible platform bugs; in this case,
+  dnl --enable-cross-guesses=risky is the appropriate choice.
+  dnl Sets the variables
+  dnl gl_cross_guess_normal    (to be used when 'yes' is good and 'no' is bad),
+  dnl gl_cross_guess_inverted  (to be used when 'no' is good and 'yes' is bad).
+  AC_ARG_ENABLE([cross-guesses],
+    [AS_HELP_STRING([--enable-cross-guesses={conservative|risky}],
+       [specify policy for cross-compilation guesses])],
+    [if test "x$enableval" != xconservative && test "x$enableval" != xrisky; then
+       AC_MSG_WARN([invalid argument supplied to --enable-cross-guesses])
+       enableval=conservative
+     fi
+     gl_cross_guesses="$enableval"],
+    [gl_cross_guesses=conservative])
+  if test $gl_cross_guesses = risky; then
+    gl_cross_guess_normal="guessing yes"
+    gl_cross_guess_inverted="guessing no"
+  else
+    gl_cross_guess_normal="guessing no"
+    gl_cross_guess_inverted="guessing yes"
+  fi
   dnl Preparation for running test programs:
   dnl Tell glibc to write diagnostics from -D_FORTIFY_SOURCE=2 to stderr, not
   dnl to /dev/tty, so they can be redirected to log files.  Such diagnostics

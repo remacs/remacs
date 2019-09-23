@@ -1,4 +1,4 @@
-# unistd_h.m4 serial 75
+# unistd_h.m4 serial 76
 dnl Copyright (C) 2006-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -41,9 +41,9 @@ AC_DEFUN([gl_UNISTD_H],
 #  include <io.h>
 # endif
 #endif
-    ]], [chdir chown dup dup2 dup3 environ euidaccess faccessat fchdir fchownat
-    fdatasync fsync ftruncate getcwd getdomainname getdtablesize getgroups
-    gethostname getlogin getlogin_r getpagesize getpass
+    ]], [access chdir chown dup dup2 dup3 environ euidaccess faccessat fchdir
+    fchownat fdatasync fsync ftruncate getcwd getdomainname getdtablesize
+    getgroups gethostname getlogin getlogin_r getpagesize getpass
     getusershell setusershell endusershell
     group_member isatty lchown link linkat lseek pipe pipe2 pread pwrite
     readlink readlinkat rmdir sethostname sleep symlink symlinkat
@@ -61,6 +61,7 @@ AC_DEFUN([gl_UNISTD_MODULE_INDICATOR],
 
 AC_DEFUN([gl_UNISTD_H_DEFAULTS],
 [
+  GNULIB_ACCESS=0;               AC_SUBST([GNULIB_ACCESS])
   GNULIB_CHDIR=0;                AC_SUBST([GNULIB_CHDIR])
   GNULIB_CHOWN=0;                AC_SUBST([GNULIB_CHOWN])
   GNULIB_CLOSE=0;                AC_SUBST([GNULIB_CLOSE])
@@ -159,6 +160,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   HAVE_DECL_TTYNAME_R=1;  AC_SUBST([HAVE_DECL_TTYNAME_R])
   HAVE_OS_H=0;            AC_SUBST([HAVE_OS_H])
   HAVE_SYS_PARAM_H=0;     AC_SUBST([HAVE_SYS_PARAM_H])
+  REPLACE_ACCESS=0;       AC_SUBST([REPLACE_ACCESS])
   REPLACE_CHOWN=0;        AC_SUBST([REPLACE_CHOWN])
   REPLACE_CLOSE=0;        AC_SUBST([REPLACE_CLOSE])
   REPLACE_DUP=0;          AC_SUBST([REPLACE_DUP])

@@ -1,4 +1,4 @@
-# serial 11
+# serial 12
 # See if we need to provide fdopendir.
 
 dnl Copyright (C) 2009-2019 Free Software Foundation, Inc.
@@ -49,8 +49,8 @@ DIR *fdopendir (int);
             *-gnu*)  gl_cv_func_fdopendir_works="guessing yes" ;;
                      # Guess yes on musl systems.
             *-musl*) gl_cv_func_fdopendir_works="guessing yes" ;;
-                     # If we don't know, assume the worst.
-            *)       gl_cv_func_fdopendir_works="guessing no" ;;
+                     # If we don't know, obey --enable-cross-guesses.
+            *)       gl_cv_func_fdopendir_works="$gl_cross_guess_normal" ;;
           esac
          ])])
     case "$gl_cv_func_fdopendir_works" in
