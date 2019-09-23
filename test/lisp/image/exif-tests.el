@@ -36,7 +36,7 @@
              :value))
 
 (ert-deftest test-exif-parse ()
-  (let ((exif (exif-parse (test-image-file "black.jpg"))))
+  (let ((exif (exif-parse-file (test-image-file "black.jpg"))))
     (should (equal (exif-elem exif 'make) "Panasonic"))
     (should (equal (exif-elem exif 'orientation) 1))
     (should (equal (exif-elem exif 'x-resolution) '(180 . 1)))))
