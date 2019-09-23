@@ -1376,12 +1376,12 @@ ones, in case fg and bg are nil."
 (defun shr-tag-sup (dom)
   (let ((start (point)))
     (shr-generic dom)
-    (put-text-property start (point) 'display '(raise 0.5))))
+    (put-text-property start (point) 'display '(raise 0.2))))
 
 (defun shr-tag-sub (dom)
   (let ((start (point)))
     (shr-generic dom)
-    (put-text-property start (point) 'display '(raise -0.5))))
+    (put-text-property start (point) 'display '(raise -0.2))))
 
 (defun shr-tag-p (dom)
   (shr-ensure-paragraph)
