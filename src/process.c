@@ -3760,7 +3760,7 @@ for a server process, it must be a valid name or address for the local
 host, and only clients connecting to that address will be accepted.
 If all interfaces should be bound, an address of \"0.0.0.0\" (for
 ipv4) or \"::\" (for ipv6) can be used.  (On some operating systems,
-using \"::\" list on both ipv4 and ipv5.)  `local' will use IPv4 by
+using \"::\" listens on both ipv4 and ipv6.)  `local' will use IPv4 by
 default, use a FAMILY of 'ipv6 to override this.
 
 :service SERVICE -- SERVICE is name of the service desired, or an
