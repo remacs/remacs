@@ -2685,7 +2685,11 @@ the local host.  If you specify @var{host} for a server, it must
 specify a valid address for the local host, and only clients
 connecting to that address will be accepted.  When using @code{local},
 by default IPv4 will be used, specify a @var{family} of @code{ipv6} to
-override this.
+override this.  To listen on all interfaces, specify an address of
+@samp{"0.0.0.0"} for IPv4 or @samp{"::"} for IPv6.  Note that on some
+operating systems, listening on @samp{"::"} will also listen on IPv4,
+so attempting to then listen separately on IPv4 will result in
+@code{EADDRINUSE} errors (@samp{"Address already in use"}).
 
 @item :service @var{service}
 @var{service} specifies a port number to connect to; or, for a server,
