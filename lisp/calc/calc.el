@@ -1394,7 +1394,7 @@ commands given here will actually operate on the *Calculator* stack."
 
 ;;;###autoload
 (defun calc (&optional arg full-display interactive)
-  "The Emacs Calculator.  Full documentation is listed under \"calc-mode\"."
+  "The Emacs Calculator.  Full documentation is listed under `calc-mode'."
   (interactive "P\ni\np")
   (if arg
       (unless (eq arg 0)
