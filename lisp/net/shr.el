@@ -1088,13 +1088,7 @@ element is the data blob and the second element is the content-type."
 	    (insert-image image (or alt "*")))
 	  (put-text-property start (point) 'image-size size)
 	  (when (and shr-image-animate
-                     (cond ((fboundp 'image-multi-frame-p)
-		       ;; Only animate multi-frame things that specify a
-		       ;; delay; eg animated gifs as opposed to
-		       ;; multi-page tiffs.  FIXME?
-                            (cdr (image-multi-frame-p image)))
-                           ((fboundp 'image-animated-p)
-                            (image-animated-p image))))
+                     (cdr (image-multi-frame-p image)))
             (image-animate image nil 60)))
 	image)
     (insert (or alt ""))))
