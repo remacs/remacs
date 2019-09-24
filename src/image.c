@@ -8896,12 +8896,28 @@ imagemagick_load_image (struct frame *f, struct image *img,
      "super-wand". */
   if (MagickGetNumberImages (image_wand) > 1)
     {
-      MagickWand *super_wand = image_wand;
-      image_wand = imagemagick_compute_animated_image (super_wand, ino);
-      if (! image_wand)
-	image_wand = super_wand;
+      /* This is an animated image (it has a delay), so compute the
+	 composite image etc. */
+      if (MagickGetImageDelay (image_wand) > 0)
+	{
+	  MagickWand *super_wand = image_wand;
+	  image_wand = imagemagick_compute_animated_image (super_wand, ino);
+	  if (! image_wand)
+	    image_wand = super_wand;
+	  else
+	    DestroyMagickWand (super_wand);
+	}
       else
-	DestroyMagickWand (super_wand);
+	/* This is not an animated image: It's just a multi-image file
+	   (like an .ico file).  Just return the correct
+	   sub-image.  */
+	{
+	  MagickWand *super_wand = image_wand;
+
+	  MagickSetIteratorIndex (super_wand, ino);
+	  image_wand = MagickGetImage (super_wand);
+	  DestroyMagickWand (super_wand);
+	}
     }
 
   /* Retrieve the frame's background color, for use later.  */
