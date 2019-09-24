@@ -614,43 +614,8 @@ ns_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 static void
 ns_set_tab_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
-  /* Currently, when the tab bar changes state, the frame is resized.
-
-     TODO: It would be better if this didn't occur when 1) the frame
-     is full height or maximized or 2) when specified by
-     `frame-inhibit-implied-resize'.  */
-  int nlines;
-
+  /* Currently unimplemented.  */
   NSTRACE ("ns_set_tab_bar_lines");
-
-  if (FRAME_MINIBUF_ONLY_P (f))
-    return;
-
-  if (RANGED_FIXNUMP (0, value, INT_MAX))
-    nlines = XFIXNAT (value);
-  else
-    nlines = 0;
-
-  if (nlines)
-    update_frame_tab_bar (f);
-
-  {
-    int inhibit
-      = ((f->after_make_frame
-	  && !f->tab_bar_resized
-	  && (EQ (frame_inhibit_implied_resize, Qt)
-	      || (CONSP (frame_inhibit_implied_resize)
-		  && !NILP (Fmemq (Qtab_bar_lines,
-				   frame_inhibit_implied_resize))))
-	  && NILP (get_frame_param (f, Qfullscreen)))
-	 ? 0
-	 : 2);
-
-    NSTRACE_MSG ("inhibit:%d", inhibit);
-
-    frame_size_history_add (f, Qupdate_frame_tab_bar, 0, 0, Qnil);
-    adjust_frame_size (f, -1, -1, inhibit, 0, Qtab_bar_lines);
-  }
 }
 
 
@@ -1331,10 +1296,6 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
                          NILP (Vmenu_bar_mode)
                          ? make_fixnum (0) : make_fixnum (1),
                          NULL, NULL, RES_TYPE_NUMBER);
-  gui_default_parameter (f, parms, Qtab_bar_lines,
-                         NILP (Vtab_bar_mode)
-                         ? make_fixnum (0) : make_fixnum (1),
-                         NULL, NULL, RES_TYPE_NUMBER);
   gui_default_parameter (f, parms, Qtool_bar_lines,
                          NILP (Vtool_bar_mode)
                          ? make_fixnum (0) : make_fixnum (1),
@@ -1346,7 +1307,7 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
                          RES_TYPE_STRING);
 
   parms = get_geometry_from_preferences (dpyinfo, parms);
-  window_prompting = gui_figure_window_size (f, parms, true, true,
+  window_prompting = gui_figure_window_size (f, parms, false, true,
                                              &x_width, &x_height);
 
   tem = gui_display_get_arg (dpyinfo, parms, Qunsplittable, 0, 0,
@@ -2839,10 +2800,6 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
   int native_right = f->left_pos + outer_width - border;
   int native_bottom = f->top_pos + outer_height - border;
   int internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
-  int tab_bar_height = FRAME_TABBAR_HEIGHT (f);
-  int tab_bar_width = (tab_bar_height
-		       ? outer_width - 2 * internal_border_width
-		       : 0);
   int tool_bar_height = FRAME_TOOLBAR_HEIGHT (f);
   int tool_bar_width = (tool_bar_height
 			? outer_width - 2 * internal_border_width
@@ -2858,7 +2815,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		   native_right, native_bottom);
   else if (EQ (attribute, Qinner_edges))
     return list4i (native_left + internal_border_width,
-		   native_top + tab_bar_height + tool_bar_height + internal_border_width,
+		   native_top + tool_bar_height + internal_border_width,
 		   native_right - internal_border_width,
 		   native_bottom - internal_border_width);
   else
@@ -2877,9 +2834,6 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		    Fcons (make_fixnum (0), make_fixnum (title_height))),
 	     Fcons (Qmenu_bar_external, Qnil),
 	     Fcons (Qmenu_bar_size, Fcons (make_fixnum (0), make_fixnum (0))),
-	     Fcons (Qtab_bar_size,
-		    Fcons (make_fixnum (tab_bar_width),
-			   make_fixnum (tab_bar_height))),
 	     Fcons (Qtool_bar_external,
 		    FRAME_EXTERNAL_TOOL_BAR (f) ? Qt : Qnil),
 	     Fcons (Qtool_bar_position, FRAME_TOOL_BAR_POSITION (f)),
@@ -2915,9 +2869,6 @@ and width values are in pixels.
   included in the inner edges of FRAME).
 
 `menu-bar-size' is a cons of the width and height of the menu bar of
-  FRAME.
-
-`tab-bar-size' is a cons of the width and height of the tab bar of
   FRAME.
 
 `tool-bar-external', if non-nil, means the tool bar is external (never
