@@ -3028,6 +3028,7 @@ enum xbm_keyword_index
   XBM_FILE,
   XBM_WIDTH,
   XBM_HEIGHT,
+  XBM_STRIDE,
   XBM_DATA,
   XBM_FOREGROUND,
   XBM_BACKGROUND,
@@ -3049,6 +3050,7 @@ static const struct image_keyword xbm_format[XBM_LAST] =
   {":file",		IMAGE_STRING_VALUE,			0},
   {":width",		IMAGE_POSITIVE_INTEGER_VALUE,		0},
   {":height",		IMAGE_POSITIVE_INTEGER_VALUE,		0},
+  {":stride",		IMAGE_POSITIVE_INTEGER_VALUE,		0},
   {":data",		IMAGE_DONT_CHECK_VALUE_TYPE,		0},
   {":foreground",	IMAGE_STRING_OR_NIL_VALUE,		0},
   {":background",	IMAGE_STRING_OR_NIL_VALUE,		0},
@@ -3124,7 +3126,7 @@ xbm_image_p (Lisp_Object object)
   else
     {
       Lisp_Object data;
-      int width, height;
+      int width, height, stride;
 
       /* Entries for `:width', `:height' and `:data' must be present.  */
       if (!kw[XBM_WIDTH].count
@@ -3135,6 +3137,11 @@ xbm_image_p (Lisp_Object object)
       data = kw[XBM_DATA].value;
       width = XFIXNAT (kw[XBM_WIDTH].value);
       height = XFIXNAT (kw[XBM_HEIGHT].value);
+
+      if (!kw[XBM_STRIDE].count)
+	stride = width;
+      else
+	stride = XFIXNAT (kw[XBM_STRIDE].value);
 
       /* Check type of data, and width and height against contents of
 	 data.  */
@@ -3154,8 +3161,7 @@ xbm_image_p (Lisp_Object object)
 
 	      if (STRINGP (elt))
 		{
-		  if (SCHARS (elt)
-		      < (width + CHAR_BIT - 1) / CHAR_BIT)
+		  if (SCHARS (elt) < stride / CHAR_BIT)
 		    return 0;
 		}
 	      else if (BOOL_VECTOR_P (elt))
@@ -3169,13 +3175,16 @@ xbm_image_p (Lisp_Object object)
 	}
       else if (STRINGP (data))
 	{
-	  if (SCHARS (data)
-	      < (width + CHAR_BIT - 1) / CHAR_BIT * height)
+	  if (SCHARS (data) < stride / CHAR_BIT * height)
 	    return 0;
 	}
       else if (BOOL_VECTOR_P (data))
 	{
-	  if (bool_vector_size (data) / height < width)
+	  if (height > 1 && stride != (width + CHAR_BIT - 1)
+	      / CHAR_BIT * CHAR_BIT)
+	    return 0;
+
+	  if (bool_vector_size (data) / height < stride)
 	    return 0;
 	}
       else

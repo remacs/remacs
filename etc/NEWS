@@ -2152,6 +2152,11 @@ valid event type.
 ---
 ** The obsolete package xesam.el (since Emacs 24) has been removed.
 
++++
+** The XBM image handler now accepts a ':stride' argument, which should
+be specified in image specs representing the entire bitmap as a single
+bool vector.
+
 
 * Lisp Changes in Emacs 27.1
 
