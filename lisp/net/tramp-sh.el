@@ -5528,25 +5528,30 @@ Nonexistent directories are removed from spec."
 (defun tramp-get-remote-stat (vec)
   "Determine remote `stat' command."
   (with-tramp-connection-property vec "stat"
-    (tramp-message vec 5 "Finding a suitable `stat' command")
-    (let ((result (tramp-find-executable
-		   vec "stat" (tramp-get-remote-path vec)))
-	  tmp)
-      ;; Check whether stat(1) returns usable syntax.  "%s" does not
-      ;; work on older AIX systems.  Recent GNU stat versions (8.24?)
-      ;; use shell quoted format for "%N", we check the boundaries "`"
-      ;; and "'", therefore.  See Bug#23422 in coreutils.
-      ;; Since GNU stat 8.26, environment variable QUOTING_STYLE is
-      ;; supported.
-      (when result
-	(setq result (concat "env QUOTING_STYLE=locale " result)
-	      tmp (tramp-send-command-and-read
-		   vec (format "%s -c '(\"%%N\" %%s)' /" result) 'noerror))
-	(unless (and (listp tmp) (stringp (car tmp))
-		     (string-match-p "^\\(`/'\\|‘/’\\)$" (car tmp))
-		     (integerp (cadr tmp)))
-	  (setq result nil)))
-      result)))
+    ;; stat on Solaris is buggy.  We've got reports for "SunOS 5.10"
+    ;; and "SunOS 5.11" so far.
+    (unless (string-match-p
+	     (eval-when-compile (regexp-opt '("SunOS 5.10" "SunOS 5.11")))
+	     (tramp-get-connection-property vec "uname" ""))
+      (tramp-message vec 5 "Finding a suitable `stat' command")
+      (let ((result (tramp-find-executable
+		     vec "stat" (tramp-get-remote-path vec)))
+	    tmp)
+	;; Check whether stat(1) returns usable syntax.  "%s" does not
+	;; work on older AIX systems.  Recent GNU stat versions
+	;; (8.24?)  use shell quoted format for "%N", we check the
+	;; boundaries "`" and "'", therefore.  See Bug#23422 in
+	;; coreutils.  Since GNU stat 8.26, environment variable
+	;; QUOTING_STYLE is supported.
+	(when result
+	  (setq result (concat "env QUOTING_STYLE=locale " result)
+		tmp (tramp-send-command-and-read
+		     vec (format "%s -c '(\"%%N\" %%s)' /" result) 'noerror))
+	  (unless (and (listp tmp) (stringp (car tmp))
+		       (string-match-p "^\\(`/'\\|‘/’\\)$" (car tmp))
+		       (integerp (cadr tmp)))
+	    (setq result nil)))
+	result))))
 
 (defun tramp-get-remote-readlink (vec)
   "Determine remote `readlink' command."
