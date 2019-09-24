@@ -5413,6 +5413,11 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
+/* This function is called from the main (a.k.a. "Lisp") thread, and
+   prepares the coordinates to be used by w32_createwindow (which runs
+   in the input thread), when necessary.  The calls to
+   gui_display_get_arg must be done here, because they can cons Lisp
+   objects, and that can only be done in the Lisp thread.  */
 static void
 my_create_window (struct frame * f)
 {
@@ -5421,20 +5426,33 @@ my_create_window (struct frame * f)
   Lisp_Object left, top;
   struct w32_display_info *dpyinfo = &one_w32_display_info;
 
-  /* When called with RES_TYPE_NUMBER, gui_display_get_arg will return
-     zero for anything that is not a number and is not Qunbound.  */
-  left = gui_display_get_arg (dpyinfo, Qnil, Qleft, "left", "Left",
-                              RES_TYPE_NUMBER);
-  top = gui_display_get_arg (dpyinfo, Qnil, Qtop, "top", "Top",
-                             RES_TYPE_NUMBER);
-  if (EQ (left, Qunbound))
-    coords[0] = CW_USEDEFAULT;
-  else
-    coords[0] = XFIXNUM (left);
-  if (EQ (top, Qunbound))
-    coords[1] = CW_USEDEFAULT;
-  else
-    coords[1] = XFIXNUM (top);
+  /* If f->size_hint_flags is set, it means gui_figure_window_size
+     already processed the 'top' and 'left' frame parameters and set
+     f->top_pos and f->left_pos accordingly.  w32_createwindow will
+     then use those value disregarding coords[].  So we don't need to
+     compute coords[] in that case.  */
+  if (!(f->size_hint_flags & USPosition || f->size_hint_flags & PPosition))
+    {
+      /* When called with RES_TYPE_NUMBER, and there's no 'top' or
+	 'left' parameters in the frame's parameter alist,
+	 gui_display_get_arg will return zero for anything that is
+	 neither a number nor Qunbound.  If frame parameter alist does
+	 have 'left' or 'top', they are interpreted by
+	 gui_figure_window_size, which was already called, and which
+	 sets f->size_hint_flags.  */
+      left = gui_display_get_arg (dpyinfo, Qnil, Qleft, "left", "Left",
+				  RES_TYPE_NUMBER);
+      top = gui_display_get_arg (dpyinfo, Qnil, Qtop, "top", "Top",
+				 RES_TYPE_NUMBER);
+      if (EQ (left, Qunbound))
+	coords[0] = CW_USEDEFAULT;
+      else
+	coords[0] = XFIXNUM (left);
+      if (EQ (top, Qunbound))
+	coords[1] = CW_USEDEFAULT;
+      else
+	coords[1] = XFIXNUM (top);
+    }
 
   if (!PostThreadMessage (dwWindowsThreadId, WM_EMACS_CREATEWINDOW,
 			  (WPARAM)f, (LPARAM)coords))
