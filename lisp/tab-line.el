@@ -260,7 +260,8 @@ using the `previous-buffer' command."
       (dotimes (_ (1+ (seq-position prev-buffers buffer)))
         (switch-to-prev-buffer window)))
      (t
-      (switch-to-buffer buffer)))))
+      (with-selected-window window
+        (switch-to-buffer buffer))))))
 
 (defun tab-line-switch-to-prev-tab (&optional e)
   "Switch to the previous tab."

@@ -2957,7 +2957,11 @@ init_iterator (struct it *it, struct window *w,
       else if (base_face_id == TAB_LINE_FACE_ID)
 	row = MATRIX_TAB_LINE_ROW (w->desired_matrix);
       else if (base_face_id == HEADER_LINE_FACE_ID)
-	row = MATRIX_HEADER_LINE_ROW (w->desired_matrix);
+	{
+	  /* Header line row depends on whether tab line is enabled.  */
+	  w->desired_matrix->tab_line_p = window_wants_tab_line (w);
+	  row = MATRIX_HEADER_LINE_ROW (w->desired_matrix);
+	}
     }
 
   /* Clear IT, and set it->object and other IT's Lisp objects to Qnil.
