@@ -74,60 +74,49 @@ If a list, it is a list of the types of messages to be logged."
 (defun url-parse-args (str &optional nodowncase)
   ;; Return an assoc list of attribute/value pairs from a string
   ;; that uses RFC 822 (or later) format.
-  (let (
-	name				; From name=
+  (let (name				; From name=
 	value				; its value
 	results				; Assoc list of results
 	name-pos			; Start of XXXX= position
-	val-pos				; Start of value position
-	st
-	nd
-	)
-    (save-excursion
-      (save-restriction
-	(set-buffer (get-buffer-create " *urlparse-temp*"))
-	(set-syntax-table url-parse-args-syntax-table)
-	(erase-buffer)
-	(insert str)
-	(setq st (point-min)
-	      nd (point-max))
-	(set-syntax-table url-parse-args-syntax-table)
-	(narrow-to-region st nd)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (skip-chars-forward "; \n\t")
-	  (setq name-pos (point))
-	  (skip-chars-forward "^ \n\t=;")
-	  (if (not nodowncase)
-	      (downcase-region name-pos (point)))
-	  (setq name (buffer-substring name-pos (point)))
-	  (skip-chars-forward " \t\n")
-	  (if (/= (or (char-after (point)) 0)  ?=) ; There is no value
-	      (setq value nil)
-	    (skip-chars-forward " \t\n=")
-	    (setq val-pos (point)
-		  value
-		  (cond
-		   ((or (= (or (char-after val-pos) 0) ?\")
-			(= (or (char-after val-pos) 0) ?'))
-		    (buffer-substring (1+ val-pos)
-				      (condition-case ()
-					  (prog2
-					      (forward-sexp 1)
-					      (1- (point))
-					    (skip-chars-forward "\""))
-					(error
-					 (skip-chars-forward "^ \t\n")
-					 (point)))))
-		   (t
-		    (buffer-substring val-pos
-				      (progn
-					(skip-chars-forward "^;")
-					(skip-chars-backward " \t")
-					(point)))))))
-	  (setq results (cons (cons name value) results))
-	  (skip-chars-forward "; \n\t"))
-	results))))
+	val-pos)                        ; Start of value position
+    (with-temp-buffer
+      (insert str)
+      (set-syntax-table url-parse-args-syntax-table)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(skip-chars-forward "; \n\t")
+	(setq name-pos (point))
+	(skip-chars-forward "^ \n\t=;")
+	(unless nodowncase
+	  (downcase-region name-pos (point)))
+	(setq name (buffer-substring name-pos (point)))
+	(skip-chars-forward " \t\n")
+	(if (/= (or (char-after (point)) 0)  ?=) ; There is no value
+	    (setq value nil)
+	  (skip-chars-forward " \t\n=")
+	  (setq val-pos (point)
+		value
+		(cond
+		 ((or (= (or (char-after val-pos) 0) ?\")
+		      (= (or (char-after val-pos) 0) ?'))
+		  (buffer-substring (1+ val-pos)
+				    (condition-case ()
+					(prog2
+					    (forward-sexp 1)
+					    (1- (point))
+					  (skip-chars-forward "\""))
+				      (error
+				       (skip-chars-forward "^ \t\n")
+				       (point)))))
+		 (t
+		  (buffer-substring val-pos
+				    (progn
+				      (skip-chars-forward "^;")
+				      (skip-chars-backward " \t")
+				      (point)))))))
+	(setq results (cons (cons name value) results))
+	(skip-chars-forward "; \n\t"))
+      results)))
 
 ;;;###autoload
 (defun url-insert-entities-in-string (string)
