@@ -551,8 +551,9 @@ work correctly."
       ;; display a file buffer even if the URL does not exist and
       ;; 'url-retrieve-synchronously' returns 404 or whatever.
       (unless (or visit
-                  (and (>= url-http-response-status 200)
-                       (< url-http-response-status 300)))
+                  (or (and (>= url-http-response-status 200)
+                           (< url-http-response-status 300))
+                      (= url-http-response-status 304))) ; "Not modified"
         (let ((desc (nth 2 (assq url-http-response-status url-http-codes))))
           (kill-buffer buffer)
           ;; Signal file-error per bug#16733.
