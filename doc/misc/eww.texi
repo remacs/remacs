@@ -217,9 +217,22 @@ in an external browser by customizing
 @findex url-cookie-list
 @kindex C
 @cindex Cookies
-  EWW handles cookies through the @ref{Top, url package, ,url}.
-You can list existing cookies with @kbd{C} (@code{url-cookie-list}).
-For details about the Cookie handling @xref{Cookies,,,url}.
+  EWW handles cookies through the @ref{Top, url package, ,url}
+package.  You can list existing cookies with @kbd{C}
+(@code{url-cookie-list}).  For details about the Cookie handling
+@xref{Cookies,,,url}.
+
+@vindex shr-cookie-policy
+  Many @acronym{HTML} pages have images embedded in them, and EWW will
+download most these by default.  When fetching images, cookies can be
+sent and received, and these can be used to track users.  To control
+when to send cookies when retrieving these images, the
+@code{shr-cookie-policy} variable can be used.  The default value,
+@code{same-origin}, means that EWW will only send cookies when
+fetching images that originate from the same source as the
+@acronym{HTML} page.  @code{nil} means ``never send cookies when
+retrieving these images'' and @code{t} means ``always send cookies
+when retrieving these images''.
 
 @vindex eww-header-line-format
 @cindex Header

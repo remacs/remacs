@@ -39,6 +39,7 @@
 (require 'svg)
 (require 'image)
 (require 'puny)
+(require 'url-cookie)
 (require 'text-property-search)
 
 (defgroup shr nil
@@ -110,6 +111,16 @@ Alternative suggestions are:
 - \"  \""
   :version "24.4"
   :type 'string)
+
+(defcustom shr-cookie-policy 'same-origin
+  "When to use cookies when fetching dependent data like images.
+If t, always use cookies.  If nil, never use cookies.  If
+`same-origin', use cookies if the dependent data comes from the
+same domain as the main data."
+  :type '(choice (const :tag "Always use cookies" t)
+                 (const :tag "Never use cookies" nil)
+                 (const :tag "Use cookies for same domain" same-origin))
+  :version "27.1")
 
 (define-obsolete-variable-alias 'shr-external-browser
   'browse-url-secondary-browser-function "27.1")
@@ -333,7 +344,7 @@ called."
             ;; Remove common tracking junk from the URL.
             (funcall cont (replace-regexp-in-string
                            ".utm_.*" "" destination)))))
-   nil t))
+   nil t t))
 
 (defun shr-probe-and-copy-url (url)
   "Copy the URL under point to the kill ring.
@@ -427,7 +438,7 @@ the URL of the image to the kill buffer instead."
       (message "Inserting %s..." url)
       (url-retrieve url 'shr-image-fetched
 		    (list (current-buffer) (1- (point)) (point-marker))
-		    t t))))
+		    t))))
 
 (defun shr-zoom-image ()
   "Toggle the image size.
@@ -985,8 +996,7 @@ the mouse click event."
     (if (not url)
 	(message "No link under point")
       (url-retrieve (shr-encode-url url)
-		    'shr-store-contents (list url directory)
-		    nil t))))
+		    'shr-store-contents (list url directory)))))
 
 (defun shr-store-contents (status url directory)
   (unless (plist-get status :error)
@@ -1658,7 +1668,8 @@ The preference is a float determined from `shr-prefer-media-type'."
 	   (shr-encode-url url) 'shr-image-fetched
 	   (list (current-buffer) start (set-marker (make-marker) (point))
                  (list :width width :height height))
-	   t t)))
+	   t
+           (not (shr--use-cookies-p url shr-base)))))
 	(when (zerop shr-table-depth) ;; We are not in a table.
 	  (put-text-property start (point) 'keymap shr-image-map)
 	  (put-text-property start (point) 'shr-alt alt)
@@ -1668,6 +1679,30 @@ The preference is a float determined from `shr-prefer-media-type'."
 	  (put-text-property start (point) 'help-echo
 			     (shr-fill-text
 			      (or (dom-attr dom 'title) alt))))))))
+
+(defun shr--use-cookies-p (url base)
+  "Say whether to use cookies when fetching URL (typically an image).
+BASE is the URL of the HTML being rendered."
+  (cond
+   ((null base)
+    ;; Disallow cookies if we don't know what the base is.
+    nil)
+   ((eq shr-cookie-policy 'same-origin)
+    (let ((url-host (url-host (url-generic-parse-url url)))
+          (base-host (split-string
+                      (url-host (url-generic-parse-url (car base)))
+                      "\\.")))
+      ;; We allow cookies if it's for any of the sibling domains (that
+      ;; we're allowed to set cookies for).  Determine that by going
+      ;; "upwards" in the base domain name.
+      (cl-loop while base-host
+               when (url-cookie-host-can-set-p
+                     url-host (mapconcat #'identity base-host "."))
+               return t
+               do (pop base-host)
+               finally (return nil))))
+   (t
+    shr-cookie-policy)))
 
 (defun shr--preferred-image (dom)
   (let ((srcset (dom-attr dom 'srcset))

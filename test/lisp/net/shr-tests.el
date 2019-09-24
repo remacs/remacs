@@ -53,6 +53,19 @@
       (unless (equal (car result) (cdr result))
         (should (not (list name (car result) (cdr result))))))))
 
+(ert-deftest use-cookies ()
+  (let ((shr-cookie-policy 'same-origin))
+    (should
+     (shr--use-cookies-p "http://images.fsf.org" '("http://www.fsf.org")))
+    (should
+     (shr--use-cookies-p "http://www.fsf.org" '("https://www.fsf.org")))
+    (should
+     (shr--use-cookies-p "http://www.fsf.org" '("https://www.fsf.org")))
+    (should
+     (shr--use-cookies-p "http://www.fsf.org" '("http://fsf.org")))
+    (should-not
+     (shr--use-cookies-p "http://www.gnu.org" '("http://www.fsf.org")))))
+
 (require 'shr)
 
 ;;; shr-stream-tests.el ends here

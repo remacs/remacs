@@ -1118,6 +1118,12 @@ The variable to use instead to alter text to be sent is now
 ** eww/shr
 
 +++
+*** The new variable 'shr-cookie-policy' can be used to control when
+to use cookies when fetching embedded images.  The default is to use
+them when the images are from the same domain as the main HTML
+document.
+
++++
 *** The 'eww' command can now create a new EWW buffer.
 Invoking the command with a prefix argument will cause it to create a
 new EWW buffer for the URL instead of reusing the default one.
