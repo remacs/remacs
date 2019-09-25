@@ -31,28 +31,26 @@
 
 (defun text-property-search-forward (property &optional value predicate
                                               not-current)
-  "Search for the next region that has text property PROPERTY set to VALUE.
-If not found, the return value is nil.  If found, point will be
-placed at the end of the region and an object describing the
-match is returned.
+  "Search for the next region of text whose PROPERTY matches VALUE.
 
-PREDICATE is called with two values.  The first is the VALUE
-parameter.  The second is the value of PROPERTY.  This predicate
-should return non-nil if there is a match.
+If not found, return nil.  If found, move point to end of the region and
+return a `prop-match' object describing the match.  To access the details
+of the match, use `prop-match-beginning' and `prop-match-end' for the
+buffer positions that limit the region, and `prop-match-value' for the
+value of PROPERTY in the region.
 
-Some convenience values for PREDICATE can also be used.  `t'
-means the same as `equal'.  `nil' means almost the same as \"not
-equal\", but will also end the match if the value of PROPERTY
-changes.  See the manual for extensive examples.
+PREDICATE is used to decide whether a value of PROPERTY should be
+considered as matching VALUE.
+If PREDICATE is t, that means a value must `equal' VALUE to be
+considered a match.
+If PREDICATE is nil, a value will match if it is NOT `equal' to
+VALUE, and will also end the match if the value of PROPERTY changes.
+If PREDICATE is a function, it will be called with two arguments:
+VALUE and the value of PROPERTY.  The function should return
+non-nil if these two values should be considered a match.
 
-If NOT-CURRENT, if the match is under point, it will not be
-returned, but instead the next instance is returned, if any.
-
-The return value (if a match is made) is a `prop-match'
-structure.  The accessors available are
-`prop-match-beginning'/`prop-match-end' (the region in the buffer
-that's matching), and `prop-match-value' (the value of PROPERTY
-at the start of the region)."
+If NOT-CURRENT is non-nil, the function will search for the first
+region with matching value of PROPERTY that doesn't include point."
   (interactive
    (list
     (let ((string (completing-read "Search for property: " obarray)))
@@ -122,8 +120,9 @@ at the start of the region)."
 
 (defun text-property-search-backward (property &optional value predicate
                                                not-current)
-  "Search for the previous region that has text property PROPERTY set to VALUE.
-See `text-property-search-forward' for further documentation."
+  "Search for the previous region of text whose PROPERTY matches VALUE.
+
+Like `text-property-search-forward', which see, but searches backward."
   (interactive
    (list
     (let ((string (completing-read "Search for property: " obarray)))
