@@ -588,12 +588,15 @@ The environment used is the one when entering the activation frame at point."
 (define-derived-mode debugger-mode backtrace-mode "Debugger"
   "Mode for debugging Emacs Lisp using a backtrace.
 \\<debugger-mode-map>
-A line starts with `*' if exiting that frame will call the debugger.
-Type \\[debugger-frame] or \\[debugger-frame-clear] to set or remove the `*'.
+A frame marked with `*' in the backtrace means that exiting that
+frame will enter the debugger.  You can flag frames to enter the
+debugger when frame is exited with \\[debugger-frame], and remove
+the flag with \\[debugger-frame-clear].
 
-When in debugger due to frame being exited,
-use the \\[debugger-return-value] command to override the value
-being returned from that frame.
+When in debugger invoked due to exiting a frame which was flagged
+with a `*', you can use the \\[debugger-return-value] command to
+override the value being returned from that frame when the debugger
+exits.
 
 Use \\[debug-on-entry] and \\[cancel-debug-on-entry] to control
 which functions will enter the debugger when called.
