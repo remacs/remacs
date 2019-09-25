@@ -412,6 +412,17 @@ the :notify function can't know the new value.")
     (overlay-put overlay 'evaporate t)
     (widget-put widget :doc-overlay overlay)))
 
+(defun widget--should-indent-p (&optional check-after)
+  "Non-nil if we should indent at the current position.
+With CHECK-AFTER non-nil, considers also the content after point, if needed."
+  (save-restriction
+    (widen)
+    (and (eq (preceding-char) ?\n)
+         (or (not check-after)
+             ;; If there is a space character, then we probably already
+             ;; indented it.
+             (not (eq (following-char) ?\s))))))
+
 (defmacro widget-specify-insert (&rest form)
   "Execute FORM without inheriting any text properties."
    (declare (debug body))
@@ -2254,7 +2265,7 @@ when he invoked the menu."
 (defun widget-checklist-add-item (widget type chosen)
   "Create checklist item in WIDGET of type TYPE.
 If the item is checked, CHOSEN is a cons whose cdr is the value."
-  (and (eq (preceding-char) ?\n)
+  (and (widget--should-indent-p)
        (widget-get widget :indent)
        (insert-char ?\s (widget-get widget :indent)))
   (widget-specify-insert
@@ -2435,7 +2446,7 @@ Return an alist of (TYPE MATCH)."
 (defun widget-radio-add-item (widget type)
   "Add to radio widget WIDGET a new radio button item of type TYPE."
   ;; (setq type (widget-convert type))
-  (and (eq (preceding-char) ?\n)
+  (and (widget--should-indent-p)
        (widget-get widget :indent)
        (insert-char ?\s (widget-get widget :indent)))
   (widget-specify-insert
@@ -2614,7 +2625,8 @@ Return an alist of (TYPE MATCH)."
   ;; We recognize the insert button.
     ;; (let ((widget-push-button-gui widget-editable-list-gui))
     (cond ((eq escape ?i)
-	   (and (widget-get widget :indent)
+	   (and (widget--should-indent-p)
+                (widget-get widget :indent)
 		(insert-char ?\s (widget-get widget :indent)))
 	   (apply 'widget-create-child-and-convert
 		  widget 'insert-button
@@ -2723,8 +2735,9 @@ Return an alist of (TYPE MATCH)."
 	child delete insert)
     (widget-specify-insert
      (save-excursion
-       (and (widget-get widget :indent)
-	    (insert-char ?\s (widget-get widget :indent)))
+       (and (widget--should-indent-p)
+            (widget-get widget :indent)
+            (insert-char ?\s (widget-get widget :indent)))
        (insert (widget-get widget :entry-format)))
      ;; Parse % escapes in format.
      (while (re-search-forward "%\\(.\\)" nil t)
@@ -2752,6 +2765,12 @@ Return an alist of (TYPE MATCH)."
        (if insert (push insert buttons))
        (if delete (push delete buttons))
        (widget-put widget :buttons buttons))
+     ;; After creating the entry, we must check if we should indent the
+     ;; following entry.  This is necessary, for example, to keep the correct
+     ;; indentation of editable lists inside group widgets.
+     (and (widget--should-indent-p t)
+          (widget-get widget :indent)
+          (insert-char ?\s (widget-get widget :indent)))
      (let ((entry-from (point-min-marker))
 	   (entry-to (point-max-marker)))
        (set-marker-insertion-type entry-from t)
@@ -2786,7 +2805,7 @@ Return an alist of (TYPE MATCH)."
 	    args (cdr args)
 	    answer (widget-match-inline arg value)
 	    value (cdr answer))
-      (and (eq (preceding-char) ?\n)
+      (and (widget--should-indent-p)
 	   (widget-get widget :indent)
 	   (insert-char ?\s (widget-get widget :indent)))
       (push (cond ((null answer)
