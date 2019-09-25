@@ -816,13 +816,12 @@ If SUBEXP is non-nil mark only the corresponding sub-expressions."
 
 (require 'rx)
 (defconst reb-rx-font-lock-keywords
-  (let ((constituents (mapcar (lambda (rec)
-                                (symbol-name (car rec)))
-                              rx-constituents))
-        (syntax (mapcar (lambda (rec) (symbol-name (car rec))) rx-syntax))
+  (let ((constituents (mapcar #'symbol-name rx--builtin-forms))
+        (syntax (mapcar (lambda (rec) (symbol-name (car rec)))
+                        rx--syntax-codes))
         (categories (mapcar (lambda (rec)
                               (symbol-name (car rec)))
-                            rx-categories)))
+                            rx--categories)))
     `(
       (,(concat "(" (regexp-opt (list "rx-to-string") t) "[[:space:]]")
        (1 font-lock-function-name-face))

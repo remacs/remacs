@@ -1044,11 +1044,9 @@ customisation.
 
 The various forms in @code{rx} regexps are described below.  The
 shorthand @var{rx} represents any @code{rx} form, and @var{rx}@dots{}
-means one or more @code{rx} forms.  Where the corresponding string
+means zero or more @code{rx} forms.  Where the corresponding string
 regexp syntax is given, @var{A}, @var{B}, @dots{} are string regexp
 subexpressions.
-@c With the new implementation of rx, this can be changed from
-@c 'one or more' to 'zero or more'.
 
 @subsubheading Literals
 
