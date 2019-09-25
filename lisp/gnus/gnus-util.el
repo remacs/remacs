@@ -1606,26 +1606,19 @@ empty directories from OLD-PATH."
   (ignore-errors
     (set-file-modes filename mode)))
 
-(declare-function image-size "image.c" (spec &optional pixels frame))
-
 (defun gnus-rescale-image (image size)
   "Rescale IMAGE to SIZE if possible.
 SIZE is in format (WIDTH . HEIGHT).  Return a new image.
 Sizes are in pixels."
-  (if (not (fboundp 'imagemagick-types))
-      image
-    (let ((new-width (car size))
-          (new-height (cdr size)))
-      (when (> (cdr (image-size image t)) new-height)
-        (setq image (or (create-image (plist-get (cdr image) :data) 'imagemagick t
-                                      :height new-height)
-                        image)))
-      (when (> (car (image-size image t)) new-width)
-        (setq image (or
-                   (create-image (plist-get (cdr image) :data) 'imagemagick t
-                                 :width new-width)
-                   image)))
-      image)))
+  (let ((new-width (car size))
+        (new-height (cdr size)))
+    (when (> (cdr (image-size image t)) new-height)
+      (setq image (create-image (plist-get (cdr image) :data) nil t
+                                :max-height new-height)))
+    (when (> (car (image-size image t)) new-width)
+      (setq image (create-image (plist-get (cdr image) :data) nil t
+                                :max-width new-width)))
+    image))
 
 (defun gnus-recursive-directory-files (dir)
   "Return all regular files below DIR.
