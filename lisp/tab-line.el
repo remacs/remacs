@@ -99,9 +99,9 @@
 
 (defvar tab-line-add-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [tab-line mouse-1] 'tab-line-add-tab)
-    (define-key map [tab-line mouse-2] 'tab-line-add-tab)
-    (define-key map "\C-m" 'tab-line-add-tab)
+    (define-key map [tab-line mouse-1] 'tab-line-new-tab)
+    (define-key map [tab-line mouse-2] 'tab-line-new-tab)
+    (define-key map "\C-m" 'tab-line-new-tab)
     map)
   "Local keymap to add `tab-line-mode' window tabs.")
 
@@ -113,12 +113,18 @@
   "Local keymap to close `tab-line-mode' window tabs.")
 
 
-(defvar tab-line-separator nil)
+(defcustom tab-line-new-tab-choice t
+  "Defines what to show in a new tab.
+If t, display a selection menu with all available buffers.
+If the value is a function, call it with no arguments.
+If nil, don't show the new tab button."
+  :type '(choice (const     :tag "Buffer menu" t)
+                 (function  :tag "Function")
+                 (const     :tag "No button" nil))
+  :group 'tab-line
+  :version "27.1")
 
-(defvar tab-line-tab-name-ellipsis
-  (if (char-displayable-p ?…) "…" "..."))
-
-(defvar tab-line-button-new
+(defvar tab-line-new-button
   (propertize " + "
               'display `(image :type xpm
                                :file ,(expand-file-name
@@ -131,7 +137,23 @@
               'help-echo "Click to add tab")
   "Button for creating a new tab.")
 
-(defvar tab-line-button-close
+(defcustom tab-line-close-button-show t
+  "Defines where to show the close tab button.
+If t, show the close tab button on all tabs.
+If `selected', show it only on the selected tab.
+If `non-selected', show it only on non-selected tab.
+If nil, don't show it at all."
+  :type '(choice (const :tag "On all tabs" t)
+                 (const :tag "On selected tab" selected)
+                 (const :tag "On non-selected tabs" non-selected)
+                 (const :tag "None" nil))
+  :set (lambda (sym val)
+         (set sym val)
+         (force-mode-line-update))
+  :group 'tab-line
+  :version "27.1")
+
+(defvar tab-line-close-button
   (propertize " x"
               'display `(image :type xpm
                                :file ,(expand-file-name
@@ -143,6 +165,11 @@
               'mouse-face 'tab-line-close-highlight
               'help-echo "Click to close tab")
   "Button for closing the clicked tab.")
+
+(defvar tab-line-separator nil)
+
+(defvar tab-line-tab-name-ellipsis
+  (if (char-displayable-p ?…) "…" "..."))
 
 
 (defvar tab-line-tab-name-function #'tab-line-tab-name
@@ -218,7 +245,12 @@ variable `tab-line-tabs-function'."
          (apply 'propertize (concat (propertize
                                      (funcall tab-line-tab-name-function tab tabs)
                                      'keymap tab-line-tab-map)
-                                    tab-line-button-close)
+                                    (or (and tab-line-close-button-show
+                                             (not (eq tab-line-close-button-show
+                                                      (if (eq tab selected-buffer)
+                                                          'non-selected
+                                                        'selected)))
+                                             tab-line-close-button) ""))
                 `(
                   tab ,tab
                   face ,(if (eq tab selected-buffer)
@@ -226,15 +258,19 @@ variable `tab-line-tabs-function'."
                           'tab-line-tab-inactive)
                   mouse-face tab-line-highlight))))
       tabs)
-     (list (concat separator tab-line-button-new)))))
+     (list (concat separator (when tab-line-new-tab-choice
+                               tab-line-new-button))))))
 
 
-(defun tab-line-add-tab (&optional e)
+(defun tab-line-new-tab (&optional e)
+  "Add a new tab."
   (interactive "e")
-  (if window-system ; (display-popup-menus-p)
-      (mouse-buffer-menu e) ; like (buffer-menu-open)
-    ;; tty menu doesn't support mouse clicks, so use tmm
-    (tmm-prompt (mouse-buffer-menu-keymap))))
+  (if (functionp tab-line-new-tab-choice)
+      (funcall tab-line-new-tab-choice)
+    (if window-system                   ; (display-popup-menus-p)
+        (mouse-buffer-menu e)           ; like (buffer-menu-open)
+      ;; tty menu doesn't support mouse clicks, so use tmm
+      (tmm-prompt (mouse-buffer-menu-keymap)))))
 
 (defun tab-line-select-tab (&optional e)
   "Switch to the selected tab.

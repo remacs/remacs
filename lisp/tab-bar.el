@@ -121,7 +121,7 @@ on a console which has no window system but does have a mouse."
                      (setq column (+ column (length (nth 1 binding))))))
                  keymap))
         ;; Clicking anywhere outside existing tabs will add a new tab
-        (tab-bar-add-tab)))))
+        (tab-bar-new-tab)))))
 
 ;; Used in the Show/Hide menu, to have the toggle reflect the current frame.
 (defun toggle-tab-bar-mode-from-frame (&optional arg)
@@ -152,9 +152,27 @@ Its main job is to show tabs in the tab bar."
           (puthash key tab-bar-map tab-bar-keymap-cache)))))
 
 
-(defvar tab-bar-separator nil)
+(defcustom tab-bar-new-tab-choice t
+  "Defines what to show in a new tab.
+If t, start a new tab with the current buffer, i.e. the buffer
+that was current before calling the command that adds a new tab
+(this is the same what `make-frame' does by default).
+If the value is a string, switch to a buffer if it exists, or switch
+to a buffer visiting the file or directory that the string specifies.
+If the value is a function, call it with no arguments and switch to
+the buffer that it returns.
+If nil, duplicate the contents of the tab that was active
+before calling the command that adds a new tab."
+  :type '(choice (const     :tag "Current buffer" t)
+                 (directory :tag "Directory" :value "~/")
+                 (file      :tag "File" :value "~/.emacs")
+                 (string    :tag "Buffer" "*scratch*")
+                 (function  :tag "Function")
+                 (const     :tag "Duplicate tab" nil))
+  :group 'tab-bar
+  :version "27.1")
 
-(defvar tab-bar-button-new
+(defvar tab-bar-new-button
   (propertize " + "
               'display `(image :type xpm
                                :file ,(expand-file-name
@@ -164,7 +182,23 @@ Its main job is to show tabs in the tab bar."
                                :ascent center))
   "Button for creating a new tab.")
 
-(defvar tab-bar-button-close
+(defcustom tab-bar-close-button-show t
+  "Defines where to show the close tab button.
+If t, show the close tab button on all tabs.
+If `selected', show it only on the selected tab.
+If `non-selected', show it only on non-selected tab.
+If nil, don't show it at all."
+  :type '(choice (const :tag "On all tabs" t)
+                 (const :tag "On selected tab" selected)
+                 (const :tag "On non-selected tabs" non-selected)
+                 (const :tag "None" nil))
+  :set (lambda (sym val)
+         (set sym val)
+         (force-mode-line-update))
+  :group 'tab-bar
+  :version "27.1")
+
+(defvar tab-bar-close-button
   (propertize " x"
               'display `(image :type xpm
                                :file ,(expand-file-name
@@ -176,12 +210,21 @@ Its main job is to show tabs in the tab bar."
               :help "Click to close tab")
   "Button for closing the clicked tab.")
 
+(defvar tab-bar-separator nil)
+
+
+(defvar tab-bar-tab-name-function #'tab-bar-tab-name
+  "Function to get a tab name.
+Function gets no arguments.
+By default, use function `tab-bar-tab-name'.")
+
 (defun tab-bar-tab-name ()
   "Generate tab name in the context of the selected frame."
-  (mapconcat
-   (lambda (w) (buffer-name (window-buffer w)))
-   (window-list-1 (frame-first-window) 'nomini)
-   ", "))
+  (mapconcat #'buffer-name
+             (delete-dups (mapcar #'window-buffer
+                                  (window-list-1 (frame-first-window)
+                                                 'nomini)))
+             ", "))
 
 (defvar tab-bar-tabs-function #'tab-bar-tabs
   "Function to get a list of tabs to display in the tab bar.
@@ -195,8 +238,12 @@ By default, use function `tab-bar-tabs'.")
 Ensure the frame parameter `tabs' is pre-populated.
 Return its existing value or a new value."
   (let ((tabs (frame-parameter nil 'tabs)))
-    (unless tabs
-      (setq tabs `((current-tab (name . ,(tab-bar-tab-name)))))
+    (if tabs
+        ;; Update current tab name
+        (let ((name (assq 'name (assq 'current-tab tabs))))
+          (when name (setcdr name (funcall tab-bar-tab-name-function))))
+      ;; Create default tabs
+      (setq tabs `((current-tab (name . ,(funcall tab-bar-tab-name-function)))))
       (set-frame-parameter nil 'tabs tabs))
     tabs))
 
@@ -216,7 +263,10 @@ Return its existing value or a new value."
            `((current-tab
               menu-item
               ,(propertize (concat (cdr (assq 'name tab))
-                                   (or tab-bar-button-close ""))
+                                   (or (and tab-bar-close-button-show
+                                            (not (eq tab-bar-close-button-show
+                                                     'non-selected))
+                                            tab-bar-close-button) ""))
                            'face 'tab-bar-tab)
               ignore
               :help "Current tab")))
@@ -224,21 +274,28 @@ Return its existing value or a new value."
            `((,(intern (format "tab-%i" i))
               menu-item
               ,(propertize (concat (cdr (assq 'name tab))
-                                   (or tab-bar-button-close ""))
+                                   (or (and tab-bar-close-button-show
+                                            (not (eq tab-bar-close-button-show
+                                                     'selected))
+                                            tab-bar-close-button) ""))
                            'face 'tab-bar-tab-inactive)
-              ,(lambda ()
-                 (interactive)
-                 (tab-bar-select-tab tab))
+              ,(or
+                (cdr (assq 'binding tab))
+                (lambda ()
+                  (interactive)
+                  (tab-bar-select-tab tab)))
               :help "Click to visit tab"))))
          `((,(if (eq (car tab) 'current-tab) 'C-current-tab (intern (format "C-tab-%i" i)))
             menu-item ""
-            ,(lambda ()
-               (interactive)
-               (tab-bar-close-tab tab))))))
+            ,(or
+              (cdr (assq 'close-binding tab))
+              (lambda ()
+                (interactive)
+                (tab-bar-close-tab tab)))))))
       (funcall tab-bar-tabs-function))
-     (when tab-bar-button-new
+     (when tab-bar-new-button
        `((sep-add-tab menu-item ,separator ignore)
-         (add-tab menu-item ,tab-bar-button-new tab-bar-add-tab
+         (add-tab menu-item ,tab-bar-new-button tab-bar-new-tab
                   :help "New tab"))))))
 
 
@@ -255,9 +312,9 @@ Return its existing value or a new value."
         (when (equal (cdr (assq 'name tab)) tab-name)
           (throw 'done tab))))))
 
-(defun tab-bar-new-tab ()
+(defun tab-bar-tab-default ()
   (let ((tab `(tab
-               (name . ,(tab-bar-tab-name))
+               (name . ,(funcall tab-bar-tab-name-function))
                (time . ,(time-convert nil 'integer))
                (wc . ,(current-window-configuration))
                (ws . ,(window-state-get
@@ -278,7 +335,7 @@ Return its existing value or a new value."
   (interactive (list (tab-bar-read-tab-name "Select tab by name: ")))
   (when (and tab (not (eq (car tab) 'current-tab)))
     (let* ((tabs (tab-bar-tabs))
-           (new-tab (tab-bar-new-tab))
+           (new-tab (tab-bar-tab-default))
            (wc (cdr (assq 'wc tab))))
       ;; During the same session, use window-configuration to switch
       ;; tabs, because window-configurations are more reliable
@@ -293,11 +350,11 @@ Return its existing value or a new value."
       (while tabs
         (cond
          ((eq (car tabs) tab)
-          (setcar tabs `(current-tab (name . ,(tab-bar-tab-name)))))
+          (setcar tabs `(current-tab (name . ,(funcall tab-bar-tab-name-function)))))
          ((eq (car (car tabs)) 'current-tab)
           (setcar tabs new-tab)))
         (setq tabs (cdr tabs)))
-      (force-window-update))))
+      (force-mode-line-update))))
 
 (defun tab-bar-switch-to-prev-tab (&optional _arg)
   "Switch to ARGth previous tab."
@@ -316,7 +373,7 @@ Return its existing value or a new value."
       (tab-bar-select-tab (car (cdr tabs))))))
 
 
-(defcustom tab-bar-add-tab-to 'right
+(defcustom tab-bar-new-tab-to 'right
   "Defines where to create a new tab.
 If `leftmost', create as the first tab.
 If `left', create to the left from the current tab.
@@ -326,35 +383,46 @@ If `rightmost', create as the last tab."
                  (const :tag "To the left" left)
                  (const :tag "To the right" right)
                  (const :tag "Last tab" rightmost))
+  :group 'tab-bar
   :version "27.1")
 
-(defun tab-bar-add-tab ()
-  "Clone the current tab to the position specified by `tab-bar-add-tab-to'."
+(defun tab-bar-new-tab ()
+  "Clone the current tab to the position specified by `tab-bar-new-tab-to'."
   (interactive)
   (unless tab-bar-mode
     (tab-bar-mode 1))
   (let* ((tabs (tab-bar-tabs))
          ;; (i-tab (- (length tabs) (length (memq tab tabs))))
-         (new-tab (tab-bar-new-tab)))
+         (new-tab (tab-bar-tab-default)))
     (cond
-     ((eq tab-bar-add-tab-to 'leftmost)
+     ((eq tab-bar-new-tab-to 'leftmost)
       (setq tabs (cons new-tab tabs)))
-     ((eq tab-bar-add-tab-to 'rightmost)
+     ((eq tab-bar-new-tab-to 'rightmost)
       (setq tabs (append tabs (list new-tab))))
      (t
       (let ((prev-tab (tab-bar-find-prev-tab tabs)))
         (cond
-         ((eq tab-bar-add-tab-to 'left)
+         ((eq tab-bar-new-tab-to 'left)
           (if prev-tab
               (setcdr prev-tab (cons new-tab (cdr prev-tab)))
             (setq tabs (cons new-tab tabs))))
-         ((eq tab-bar-add-tab-to 'right)
+         ((eq tab-bar-new-tab-to 'right)
           (if prev-tab
               (setq prev-tab (cdr prev-tab))
             (setq prev-tab tabs))
           (setcdr prev-tab (cons new-tab (cdr prev-tab))))))))
     (set-frame-parameter nil 'tabs tabs)
     (tab-bar-select-tab new-tab)
+    (when tab-bar-new-tab-choice
+      (delete-other-windows)
+      (let ((buffer
+             (if (functionp tab-bar-new-tab-choice)
+                 (funcall tab-bar-new-tab-choice)
+               (if (stringp tab-bar-new-tab-choice)
+                   (or (get-buffer tab-bar-new-tab-choice)
+                       (find-file-noselect tab-bar-new-tab-choice))))))
+        (when (buffer-live-p buffer)
+          (switch-to-buffer buffer))))
     (unless tab-bar-mode
       (message "Added new tab with the current window configuration"))))
 
@@ -365,6 +433,7 @@ If `left', select the adjacent left tab.
 If `right', select the adjacent right tab."
   :type '(choice (const :tag "Select left tab" left)
                  (const :tag "Select right tab" right))
+  :group 'tab-bar
   :version "27.1")
 
 (defun tab-bar-close-current-tab (&optional tab select-tab)
@@ -407,29 +476,30 @@ specified by `tab-bar-close-tab-select'."
         (tab-bar-close-current-tab tab)
       ;; Close non-current tab, no need to switch to another tab
       (set-frame-parameter nil 'tabs (delq tab (tab-bar-tabs)))
-      (force-window-update))))
+      (force-mode-line-update))))
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
 
-(defun make-tab ()
+(defun tab-make ()
   "Create a new named window configuration without having to click a tab."
   (interactive)
-  (tab-bar-add-tab)
+  (tab-bar-new-tab)
   (unless tab-bar-mode
     (message "Added new tab with the current window configuration")))
 
-(defun delete-tab ()
+(defun tab-delete ()
   "Delete the current window configuration without clicking a close button."
   (interactive)
   (tab-bar-close-current-tab)
   (unless tab-bar-mode
     (message "Deleted the current tab")))
 
-(defalias 'list-tabs 'tab-bar-list)
-(defalias 'switch-to-tab 'tab-bar-select-tab)
-(defalias 'previous-tab 'tab-bar-switch-to-prev-tab)
-(defalias 'next-tab 'tab-bar-switch-to-next-tab)
+;; Short aliases
+;; (defalias 'tab-switch 'tab-bar-switch-to-next-tab)
+(defalias 'tab-select 'tab-bar-select-tab)
+(defalias 'tab-previous 'tab-bar-switch-to-prev-tab)
+(defalias 'tab-next 'tab-bar-switch-to-next-tab)
 
 (defun tab-bar-list ()
   "Display a list of named window configurations.
@@ -445,7 +515,7 @@ marked for deletion."
   (let ((dir default-directory)
         (minibuf (minibuffer-selected-window)))
     (let ((tab-bar-mode t)) ; don't enable tab-bar-mode if it's disabled
-      (tab-bar-add-tab))
+      (tab-bar-new-tab))
     ;; Handle the case when it's called in the active minibuffer.
     (when minibuf (select-window (minibuffer-selected-window)))
     (delete-other-windows)
@@ -541,9 +611,9 @@ Letters do not insert themselves; instead, they are commands.
 (defun tab-bar-list-current-tab (error-if-non-existent-p)
   "Return window configuration described by this line of the list."
   (let* ((where (save-excursion
-		  (beginning-of-line)
-		  (+ 2 (point) tab-bar-list-column)))
-	 (tab (and (not (eobp)) (get-text-property where 'tab))))
+                  (beginning-of-line)
+                  (+ 2 (point) tab-bar-list-column)))
+         (tab (and (not (eobp)) (get-text-property where 'tab))))
     (or tab
         (if error-if-non-existent-p
             (user-error "No window configuration on this line")
@@ -621,16 +691,16 @@ Then move up one line.  Prefix arg means move that many lines."
       (while (re-search-forward
               (format "^%sD" (make-string tab-bar-list-column ?\040))
               nil t)
-	(forward-char -1)
-	(let ((tab (tab-bar-list-current-tab nil)))
-	  (when tab
+        (forward-char -1)
+        (let ((tab (tab-bar-list-current-tab nil)))
+          (when tab
             (tab-bar-list-delete-from-list tab)
             (beginning-of-line)
             (delete-region (point) (progn (forward-line 1) (point))))))))
   (beginning-of-line)
   (move-to-column tab-bar-list-column)
   (when tab-bar-mode
-    (force-window-update)))
+    (force-mode-line-update)))
 
 (defun tab-bar-list-select ()
   "Select this line's window configuration.
@@ -662,7 +732,7 @@ in the selected frame."
 Like \\[switch-to-buffer-other-frame] (which see), but creates a new tab."
   (interactive
    (list (read-buffer-to-switch "Switch to buffer in other tab: ")))
-  (tab-bar-add-tab)
+  (tab-bar-new-tab)
   (delete-other-windows)
   (switch-to-buffer buffer-or-name norecord))
 
@@ -674,14 +744,14 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
                         (confirm-nonexistent-file-or-buffer)))
   (let ((value (find-file-noselect filename nil nil wildcards)))
     (if (listp value)
-	(progn
-	  (setq value (nreverse value))
-	  (switch-to-buffer-other-tab (car value))
-	  (mapc 'switch-to-buffer (cdr value))
-	  value)
+        (progn
+          (setq value (nreverse value))
+          (switch-to-buffer-other-tab (car value))
+          (mapc 'switch-to-buffer (cdr value))
+          value)
       (switch-to-buffer-other-tab value))))
 
-(define-key ctl-x-6-map "2" 'tab-bar-add-tab)
+(define-key ctl-x-6-map "2" 'tab-bar-new-tab)
 (define-key ctl-x-6-map "0" 'tab-bar-close-current-tab)
 (define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
 (define-key ctl-x-6-map "f" 'find-file-other-tab)
