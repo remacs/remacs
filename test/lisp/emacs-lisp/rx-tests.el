@@ -303,6 +303,104 @@
   (should (equal (rx-to-string '(or nonl "\nx") t)
                  ".\\|\nx")))
 
+(ert-deftest rx-let ()
+  (rx-let ((beta gamma)
+           (gamma delta)
+           (delta (+ digit))
+           (epsilon (or gamma nonl)))
+    (should (equal (rx bol delta epsilon)
+                   "^[[:digit:]]+\\(?:[[:digit:]]+\\|.\\)")))
+  (rx-let ((p () point)
+           (separated (x sep) (seq x (* sep x)))
+           (comma-separated (x) (separated x ","))
+           (semi-separated (x) (separated x ";"))
+           (matrix (v) (semi-separated (comma-separated v))))
+    (should (equal (rx (p) (matrix (+ "a")) eos)
+                   "\\=a+\\(?:,a+\\)*\\(?:;a+\\(?:,a+\\)*\\)*\\'")))
+  (rx-let ((b bol)
+           (z "B")
+           (three (x) (= 3 x)))
+    (rx-let ((two (x) (seq x x))
+             (z "A")
+             (e eol))
+      (should (equal (rx b (two (three z)) e)
+                     "^A\\{3\\}A\\{3\\}$"))))
+  (rx-let ((f (a b &rest r) (seq "<" a ";" b ":" r ">")))
+    (should (equal (rx bol (f ?x ?y) ?! (f ?u ?v ?w) ?! (f ?k ?l ?m ?n) eol)
+                   "^<x;y:>!<u;v:w>!<k;l:mn>$")))
+
+  ;; Rest parameters are expanded by splicing.
+  (rx-let ((f (&rest r) (or bol r eol)))
+    (should (equal (rx (f "ab" nonl))
+                   "^\\|ab\\|.\\|$")))
+
+  ;; Substitution is done in number positions.
+  (rx-let ((stars (n) (= n ?*)))
+    (should (equal (rx (stars 4))
+                   "\\*\\{4\\}")))
+
+  ;; Substitution is done inside dotted pairs.
+  (rx-let ((f (x y z) (any x (y . z))))
+    (should (equal (rx (f ?* ?a ?t))
+                   "[*a-t]")))
+
+  ;; Substitution is done in the head position of forms.
+  (rx-let ((f (x) (x "a")))
+    (should (equal (rx (f +))
+                   "a+"))))
+
+(ert-deftest rx-define ()
+  (rx-define rx--a (seq "x" (opt "y")))
+  (should (equal (rx bol rx--a eol)
+                 "^xy?$"))
+  (rx-define rx--c (lb rb &rest stuff) (seq lb stuff rb))
+  (should (equal (rx bol (rx--c "<" ">" rx--a nonl) eol)
+                 "^<xy?.>$"))
+  (rx-define rx--b (* rx--a))
+  (should (equal (rx rx--b)
+                 "\\(?:xy?\\)*"))
+  (rx-define rx--a "z")
+  (should (equal (rx rx--b)
+                 "z*")))
+
+(defun rx--test-rx-to-string-define ()
+  ;; `rx-define' won't expand to code inside `ert-deftest' since we use
+  ;; `eval-and-compile'.  Put it into a defun as a workaround.
+  (rx-define rx--d "Q")
+  (rx-to-string '(seq bol rx--d) t))
+
+(ert-deftest rx-to-string-define ()
+  "Check that `rx-to-string' uses definitions made by `rx-define'."
+  (should (equal (rx--test-rx-to-string-define)
+                 "^Q")))
+
+(ert-deftest rx-let-define ()
+  "Test interaction between `rx-let' and `rx-define'."
+  (rx-define rx--e "one")
+  (rx-define rx--f "eins")
+  (rx-let ((rx--e "two"))
+    (should (equal (rx rx--e nonl rx--f) "two.eins"))
+    (rx-define rx--e "three")
+    (should (equal (rx rx--e) "two"))
+    (rx-define rx--f "zwei")
+    (should (equal (rx rx--f) "zwei")))
+  (should (equal (rx rx--e nonl rx--f) "three.zwei")))
+
+(ert-deftest rx-let-eval ()
+  (rx-let-eval '((a (* digit))
+                 (f (x &rest r) (seq x nonl r)))
+    (should (equal (rx-to-string '(seq a (f bow a ?b)) t)
+                   "[[:digit:]]*\\<.[[:digit:]]*b"))))
+
+(ert-deftest rx-redefine-builtin ()
+  (should-error (rx-define sequence () "x"))
+  (should-error (rx-define sequence "x"))
+  (should-error (rx-define nonl () "x"))
+  (should-error (rx-define nonl "x"))
+  (should-error (rx-let ((punctuation () "x")) nil))
+  (should-error (rx-let ((punctuation "x")) nil))
+  (should-error (rx-let-eval '((not-char () "x")) nil))
+  (should-error (rx-let-eval '((not-char "x")) nil)))
 
 (ert-deftest rx-constituents ()
   (let ((rx-constituents

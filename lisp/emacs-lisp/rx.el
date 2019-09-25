@@ -97,6 +97,7 @@ Most of the names are from SRE.")
 
 (defvar rx-constituents nil
   "Alist of old-style rx extensions, for compatibility.
+For new code, use `rx-define', `rx-let' or `rx-let-eval'.
 
 Each element is (SYMBOL . DEF).
 
@@ -112,6 +113,17 @@ If DEF is a list on the form (FUN MIN-ARGS MAX-ARGS PRED), then
    and returning the translated regexp string.
    If PRED is non-nil, it is a predicate that all actual arguments must
    satisfy.")
+
+(defvar rx--local-definitions nil
+  "Alist of dynamic local rx definitions.
+Each entry is:
+ (NAME DEF)      -- NAME is an rx symbol defined as the rx form DEF.
+ (NAME ARGS DEF) -- NAME is an rx form with arglist ARGS, defined
+                    as the rx form DEF (which can contain members of ARGS).")
+
+(defsubst rx--lookup-def (name)
+  (or (cdr (assq name rx--local-definitions))
+      (get name 'rx-definition)))
 
 ;; TODO: Additions to consider:
 ;; - A better name for `anything', like `any-char' or `anychar'.
@@ -143,6 +155,12 @@ If DEF is a list on the form (FUN MIN-ARGS MAX-ARGS PRED), then
      (cond
       ((let ((class (cdr (assq sym rx--char-classes))))
          (and class (cons (list (concat "[[:" (symbol-name class) ":]]")) t))))
+
+      ((let ((definition (rx--lookup-def sym)))
+         (and definition
+              (if (cdr definition)
+                  (error "Not an `rx' symbol definition: %s" sym)
+                (rx--translate (nth 0 definition))))))
 
       ;; For compatibility with old rx.
       ((let ((entry (assq sym rx-constituents)))
@@ -309,6 +327,19 @@ INTERVALS is a list of (START . END) with START ≤ END, sorted by START."
             (setcdr tail (cdr d)))
         (setq tail d)))
     intervals))
+
+;; FIXME: Consider expanding definitions inside (any ...) and (not ...),
+;; and perhaps allow (any ...) inside (any ...).
+;; It would be benefit composability (build a character alternative by pieces)
+;; and be handy for obtaining the complement of a defined set of
+;; characters.  (See, for example, python.el:421, `not-simple-operator'.)
+;; (Expansion in other non-rx positions is probably not a good idea:
+;; syntax, category, backref, and the integer parameters of group-n,
+;; =, >=, **, repeat)
+;; Similar effect could be attained by ensuring that
+;; (or (any X) (any Y)) -> (any X Y), and find a way to compose negative
+;; sets.  `and' is taken, but we could add
+;; (intersection (not (any X)) (not (any Y))) -> (not (any X Y)).
 
 (defun rx--translate-any (negated body)
   "Translate an (any ...) construct.  Return (REGEXP . PRECEDENCE).
@@ -712,6 +743,94 @@ DEF is the definition tuple.  Return (REGEXP . PRECEDENCE)."
         (error "The `%s' form did not expand to a string" (car form)))
       (cons (list regexp) nil))))
 
+(defun rx--substitute (bindings form)
+  "Substitute BINDINGS in FORM.  BINDINGS is an alist of (NAME . VALUES)
+where VALUES is a list to splice into FORM wherever NAME occurs.
+Return the substitution result wrapped in a list, since a single value
+can expand to any number of values."
+  (cond ((symbolp form)
+         (let ((binding (assq form bindings)))
+           (if binding
+               (cdr binding)
+             (list form))))
+        ((consp form)
+         (if (listp (cdr form))
+             ;; Proper list.  We substitute variables even in the head
+             ;; position -- who knows, might be handy one day.
+             (list (mapcan (lambda (x) (copy-sequence
+                                        (rx--substitute bindings x)))
+                           form))
+           ;; Cons pair (presumably an interval).
+           (let ((first (rx--substitute bindings (car form)))
+                 (second (rx--substitute bindings (cdr form))))
+             (if (and first (not (cdr first))
+                      second (not (cdr second)))
+                 (list (cons (car first) (car second)))
+               (error
+                "Cannot substitute a &rest parameter into a dotted pair")))))
+        (t (list form))))
+
+;; FIXME: Consider adding extensions in Lisp macro style, where
+;; arguments are passed unevaluated to code that returns the rx form
+;; to use.  Example:
+;;
+;;   (rx-let ((radix-digit (radix)
+;;             :lisp (list 'any (cons ?0 (+ ?0 (eval radix) -1)))))
+;;     (rx (radix-digit (+ 5 3))))
+;; =>
+;;   "[0-7]"
+;;
+;; While this would permit more powerful extensions, it's unclear just
+;; how often they would be used in practice.  Let's wait until there is
+;; demand for it.
+
+;; FIXME: An alternative binding syntax would be
+;;
+;;   (NAME RXs...)
+;; and
+;;   ((NAME ARGS...) RXs...)
+;;
+;; which would have two minor advantages: multiple RXs with implicit
+;; `seq' in the definition, and the arglist is no longer an optional
+;; element in the middle of the list.  On the other hand, it's less
+;; like traditional lisp arglist constructs (defun, defmacro).
+;; Since it's a Scheme-like syntax, &rest parameters could be done using
+;; dotted lists:
+;;  (rx-let (((name arg1 arg2 . rest) ...definition...)) ...)
+
+(defun rx--expand-template (op values arglist template)
+  "Return TEMPLATE with variables in ARGLIST replaced with VALUES."
+  (let ((bindings nil)
+        (value-tail values)
+        (formals arglist))
+    (while formals
+      (pcase (car formals)
+        ('&rest
+         (unless (cdr formals)
+           (error
+            "Expanding rx def `%s': missing &rest parameter name" op))
+         (push (cons (cadr formals) value-tail) bindings)
+         (setq formals nil)
+         (setq value-tail nil))
+        (name
+         (unless value-tail
+           (error
+            "Expanding rx def `%s': too few arguments (got %d, need %s%d)"
+            op (length values)
+            (if (memq '&rest arglist) "at least " "")
+            (- (length arglist) (length (memq '&rest arglist)))))
+         (push (cons name (list (car value-tail))) bindings)
+         (setq value-tail (cdr value-tail))))
+      (setq formals (cdr formals)))
+    (when value-tail
+      (error
+       "Expanding rx def `%s': too many arguments (got %d, need %d)"
+       op (length values) (length arglist)))
+    (let ((subst (rx--substitute bindings template)))
+      (if (and subst (not (cdr subst)))
+          (car subst)
+        (error "Expanding rx def `%s': must result in a single value" op)))))
+
 (defun rx--translate-form (form)
   "Translate an rx form (list structure).  Return (REGEXP . PRECEDENCE)."
   (let ((body (cdr form)))
@@ -757,24 +876,29 @@ DEF is the definition tuple.  Return (REGEXP . PRECEDENCE)."
       (op
        (unless (symbolp op)
          (error "Bad rx operator `%S'" op))
+       (let ((definition (rx--lookup-def op)))
+         (if definition
+             (if (cdr definition)
+                 (rx--translate
+                  (rx--expand-template
+                   op body (nth 0 definition) (nth 1 definition)))
+               (error "Not an `rx' form definition: %s" op))
 
-       ;; For compatibility with old rx.
-       (let ((entry (assq op rx-constituents)))
-         (if (progn
-               (while (and entry (not (consp (cdr entry))))
-                 (setq entry
-                       (if (symbolp (cdr entry))
-                           ;; Alias for another entry.
-                           (assq (cdr entry) rx-constituents)
-                         ;; Wrong type, try further down the list.
-                         (assq (car entry)
-                               (cdr (memq entry rx-constituents))))))
-               entry)
-             (rx--translate-compat-form (cdr entry) form)
-           (error "Unknown rx form `%s'" op)))))))
+           ;; For compatibility with old rx.
+           (let ((entry (assq op rx-constituents)))
+             (if (progn
+                   (while (and entry (not (consp (cdr entry))))
+                     (setq entry
+                           (if (symbolp (cdr entry))
+                               ;; Alias for another entry.
+                               (assq (cdr entry) rx-constituents)
+                             ;; Wrong type, try further down the list.
+                             (assq (car entry)
+                                   (cdr (memq entry rx-constituents))))))
+                   entry)
+                 (rx--translate-compat-form (cdr entry) form)
+               (error "Unknown rx form `%s'" op)))))))))
 
-;; Defined here rather than in re-builder to lower the odds that it
-;; will be kept in sync with changes.
 (defconst rx--builtin-forms
   '(seq sequence : and or | any in char not-char not
     repeat = >= **
@@ -786,7 +910,21 @@ DEF is the definition tuple.  Return (REGEXP . PRECEDENCE)."
     group submatch group-n submatch-n backref
     syntax not-syntax category
     literal eval regexp regex)
-  "List of built-in rx forms.  For use in re-builder only.")
+  "List of built-in rx function-like symbols.")
+
+(defconst rx--builtin-symbols
+  (append '(nonl not-newline any anything
+            bol eol line-start line-end
+            bos eos string-start string-end
+            bow eow word-start word-end
+            symbol-start symbol-end
+            point word-boundary not-word-boundary not-wordchar)
+          (mapcar #'car rx--char-classes))
+  "List of built-in rx variable-like symbols.")
+
+(defconst rx--builtin-names
+  (append rx--builtin-forms rx--builtin-symbols)
+  "List of built-in rx names.  These cannot be redefined by the user.")
 
 (defun rx--translate (item)
   "Translate the rx-expression ITEM.  Return (REGEXP . PRECEDENCE)."
@@ -810,7 +948,9 @@ DEF is the definition tuple.  Return (REGEXP . PRECEDENCE)."
 The arguments to `literal' and `regexp' forms inside FORM must be
 constant strings.
 If NO-GROUP is non-nil, don't bracket the result in a non-capturing
-group."
+group.
+
+For extending the `rx' notation in FORM, use `rx-define' or `rx-let-eval'."
   (let* ((item (rx--translate form))
          (exprs (if no-group
                     (car item)
@@ -939,13 +1079,132 @@ Zero-width assertions: these all match the empty string in specific places.
 (regexp EXPR)  Match the string regexp from evaluating EXPR at run time.
 (eval EXPR)    Match the rx sexp from evaluating EXPR at compile time.
 
-\(fn REGEXPS...)"
-  (rx--to-expr (cons 'seq regexps)))
+Additional constructs can be defined using `rx-define' and `rx-let',
+which see.
 
+\(fn REGEXPS...)"
+  ;; Retrieve local definitions from the macroexpansion environment.
+  ;; (It's unclear whether the previous value of `rx--local-definitions'
+  ;; should be included, and if so, in which order.)
+  (let ((rx--local-definitions
+         (cdr (assq :rx-locals macroexpand-all-environment))))
+    (rx--to-expr (cons 'seq regexps))))
+
+(defun rx--make-binding (name tail)
+  "Make a definitions entry out of TAIL.
+TAIL is on the form ([ARGLIST] DEFINITION)."
+  (unless (symbolp name)
+    (error "Bad `rx' definition name: %S" name))
+  ;; FIXME: Consider using a hash table or symbol property, for speed.
+  (when (memq name rx--builtin-names)
+    (error "Cannot redefine built-in rx name `%s'" name))
+  (pcase tail
+    (`(,def)
+     (list def))
+    (`(,args ,def)
+     (unless (and (listp args) (rx--every #'symbolp args))
+       (error "Bad argument list for `rx' definition %s: %S" name args))
+     (list args def))
+    (_ (error "Bad `rx' definition of %s: %S" name tail))))
+
+(defun rx--make-named-binding (bindspec)
+  "Make a definitions entry out of BINDSPEC.
+BINDSPEC is on the form (NAME [ARGLIST] DEFINITION)."
+  (unless (consp bindspec)
+    (error "Bad `rx-let' binding: %S" bindspec))
+  (cons (car bindspec)
+        (rx--make-binding (car bindspec) (cdr bindspec))))
+
+(defun rx--extend-local-defs (bindspecs)
+  (append (mapcar #'rx--make-named-binding bindspecs)
+          rx--local-definitions))
+
+;;;###autoload
+(defmacro rx-let-eval (bindings &rest body)
+  "Evaluate BODY with local BINDINGS for `rx-to-string'.
+BINDINGS, after evaluation, is a list of definitions each on the form
+(NAME [(ARGS...)] RX), in effect for calls to `rx-to-string'
+in BODY.
+
+For bindings without an ARGS list, NAME is defined as an alias
+for the `rx' expression RX.  Where ARGS is supplied, NAME is
+defined as an `rx' form with ARGS as argument list.  The
+parameters are bound from the values in the (NAME ...) form and
+are substituted in RX.  ARGS can contain `&rest' parameters,
+whose values are spliced into RX where the parameter name occurs.
+
+Any previous definitions with the same names are shadowed during
+the expansion of BODY only.
+For extensions when using the `rx' macro, use `rx-let'.
+To make global rx extensions, use `rx-define'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn BINDINGS BODY...)"
+  (declare (indent 1) (debug (form body)))
+  ;; FIXME: this way, `rx--extend-local-defs' may need to be autoloaded.
+  `(let ((rx--local-definitions (rx--extend-local-defs ,bindings)))
+     ,@body))
+
+;;;###autoload
+(defmacro rx-let (bindings &rest body)
+  "Evaluate BODY with local BINDINGS for `rx'.
+BINDINGS is an unevaluated list of bindings each on the form
+(NAME [(ARGS...)] RX).
+They are bound lexically and are available in `rx' expressions in
+BODY only.
+
+For bindings without an ARGS list, NAME is defined as an alias
+for the `rx' expression RX.  Where ARGS is supplied, NAME is
+defined as an `rx' form with ARGS as argument list.  The
+parameters are bound from the values in the (NAME ...) form and
+are substituted in RX.  ARGS can contain `&rest' parameters,
+whose values are spliced into RX where the parameter name occurs.
+
+Any previous definitions with the same names are shadowed during
+the expansion of BODY only.
+For local extensions to `rx-to-string', use `rx-let-eval'.
+To make global rx extensions, use `rx-define'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn BINDINGS BODY...)"
+  (declare (indent 1) (debug (sexp body)))
+  (let ((prev-locals (cdr (assq :rx-locals macroexpand-all-environment)))
+        (new-locals (mapcar #'rx--make-named-binding bindings)))
+    (macroexpand-all (cons 'progn body)
+                     (cons (cons :rx-locals (append new-locals prev-locals))
+                           macroexpand-all-environment))))
+
+;;;###autoload
+(defmacro rx-define (name &rest definition)
+  "Define NAME as a global `rx' definition.
+If the ARGS list is omitted, define NAME as an alias for the `rx'
+expression RX.
+
+If the ARGS list is supplied, define NAME as an `rx' form with
+ARGS as argument list.  The parameters are bound from the values
+in the (NAME ...) form and are substituted in RX.
+ARGS can contain `&rest' parameters, whose values are spliced
+into RX where the parameter name occurs.
+
+Any previous global definition of NAME is overwritten with the new one.
+To make local rx extensions, use `rx-let' for `rx',
+`rx-let-eval' for `rx-to-string'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn NAME [(ARGS...)] RX)"
+  (declare (indent 1))
+  `(eval-and-compile
+     (put ',name 'rx-definition ',(rx--make-binding name definition))
+     ',name))
 
 ;; During `rx--pcase-transform', list of defined variables in right-to-left
 ;; order.
 (defvar rx--pcase-vars)
+
+;; FIXME: The rewriting strategy for pcase works so-so with extensions;
+;; definitions cannot expand to `let' or named `backref'.  If this ever
+;; becomes a problem, we can handle those forms in the ordinary parser,
+;; using a dynamic variable for activating the augmented forms.
 
 (defun rx--pcase-transform (rx)
   "Transform RX, an rx-expression augmented with `let' and named `backref',

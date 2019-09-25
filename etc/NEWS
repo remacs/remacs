@@ -1725,6 +1725,10 @@ This also works for their aliases: '|' for 'or'; ':', 'and' and
 In this case, 'rx' will generate code which produces a regexp string
 at run time, instead of a constant string.
 
+---
+*** New rx extension mechanism: 'rx-define', 'rx-let', 'rx-let-eval'.
+These macros add new forms to the rx notation.
+
 ** Frames
 
 +++

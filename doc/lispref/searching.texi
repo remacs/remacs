@@ -1037,6 +1037,7 @@ customisation.
 @menu
 * Rx Constructs::       Constructs valid in rx forms.
 * Rx Functions::        Functions and macros that use rx forms.
+* Extending Rx::        How to define your own rx forms.
 @end menu
 
 @node Rx Constructs
@@ -1524,6 +1525,162 @@ must be string literals.
 
 The @code{pcase} macro can use @code{rx} expressions as patterns
 directly; @pxref{rx in pcase}.
+
+For mechanisms to add user-defined extensions to the @code{rx}
+notation, @pxref{Extending Rx}.
+
+@node Extending Rx
+@subsubsection Defining new @code{rx} forms
+
+The @code{rx} notation can be extended by defining new symbols and
+parametrised forms in terms of other @code{rx} expressions.  This is
+handy for sharing parts between several regexps, and for making
+complex ones easier to build and understand by putting them together
+from smaller pieces.
+
+For example, you could define @code{name} to mean
+@code{(one-or-more letter)}, and @code{(quoted @var{x})} to mean
+@code{(seq ?' @var{x} ?')} for any @var{x}.  These forms could then be
+used in @code{rx} expressions like any other: @code{(rx (quoted name))}
+would match a nonempty sequence of letters inside single quotes.
+
+The Lisp macros below provide different ways of binding names to
+definitions.  Common to all of them are the following rules:
+
+@itemize
+@item
+Built-in @code{rx} forms, like @code{digit} and @code{group}, cannot
+be redefined.
+
+@item
+The definitions live in a name space of their own, separate from that
+of Lisp variables.  There is thus no need to attach a suffix like
+@code{-regexp} to names; they cannot collide with anything else.
+
+@item
+Definitions cannot refer to themselves recursively, directly or
+indirectly.  If you find yourself needing this, you want a parser, not
+a regular expression.
+
+@item
+Definitions are only ever expanded in calls to @code{rx} or
+@code{rx-to-string}, not merely by their presence in definition
+macros.  This means that the order of definitions doesn't matter, even
+when they refer to each other, and that syntax errors only show up
+when they are used, not when they are defined.
+
+@item
+User-defined forms are allowed wherever arbitrary @code{rx}
+expressions are expected; for example, in the body of a
+@code{zero-or-one} form, but not inside @code{any} or @code{category}
+forms.
+@end itemize
+
+@defmac rx-define name [arglist] rx-form
+Define @var{name} globally in all subsequent calls to @code{rx} and
+@code{rx-to-string}.  If @var{arglist} is absent, then @var{name} is
+defined as a plain symbol to be replaced with @var{rx-form}.  Example:
+
+@example
+@group
+(rx-define haskell-comment (seq "--" (zero-or-more nonl)))
+(rx haskell-comment)
+     @result{} "--.*"
+@end group
+@end example
+
+If @var{arglist} is present, it must be a list of zero or more
+argument names, and @var{name} is then defined as a parametrised form.
+When used in an @code{rx} expression as @code{(@var{name} @var{arg}@dots{})},
+each @var{arg} will replace the corresponding argument name inside
+@var{rx-form}.
+
+@var{arglist} may end in @code{&rest} and one final argument name,
+denoting a rest parameter.  The rest parameter will expand to all
+extra actual argument values not matched by any other parameter in
+@var{arglist}, spliced into @var{rx-form} where it occurs.  Example:
+
+@example
+@group
+(rx-define moan (x y &rest r) (seq x (one-or-more y) r "!"))
+(rx (moan "MOO" "A" "MEE" "OW"))
+     @result{} "MOOA+MEEOW!"
+@end group
+@end example
+
+Since the definition is global, it is recommended to give @var{name} a
+package prefix to avoid name clashes with definitions elsewhere, as is
+usual when naming non-local variables and functions.
+@end defmac
+
+@defmac rx-let (bindings@dots{}) body@dots{}
+Make the @code{rx} definitions in @var{bindings} available locally for
+@code{rx} macro invocations in @var{body}, which is then evaluated.
+
+Each element of @var{bindings} is on the form
+@w{@code{(@var{name} [@var{arglist}] @var{rx-form})}}, where the parts
+have the same meaning as in @code{rx-define} above.  Example:
+
+@example
+@group
+(rx-let ((comma-separated (item) (seq item (0+ "," item)))
+         (number (1+ digit))
+         (numbers (comma-separated number)))
+  (re-search-forward (rx "(" numbers ")")))
+@end group
+@end example
+
+The definitions are only available during the macro-expansion of
+@var{body}, and are thus not present during execution of compiled
+code.
+
+@code{rx-let} can be used not only inside a function, but also at top
+level to include global variable and function definitions that need
+to share a common set of @code{rx} forms.  Since the names are local
+inside @var{body}, there is no need for any package prefixes.
+Example:
+
+@example
+@group
+(rx-let ((phone-number (seq (opt ?+) (1+ (any digit ?-)))))
+  (defun find-next-phone-number ()
+    (re-search-forward (rx phone-number)))
+  (defun phone-number-p (string)
+    (string-match-p (rx bos phone-number eos) string)))
+@end group
+@end example
+
+The scope of the @code{rx-let} bindings is lexical, which means that
+they are not visible outside @var{body} itself, even in functions
+called from @var{body}.
+@end defmac
+
+@defmac rx-let-eval bindings body@dots{}
+Evaluate @var{bindings} to a list of bindings as in @code{rx-let},
+and evaluate @var{body} with those bindings in effect for calls
+to @code{rx-to-string}.
+
+This macro is similar to @code{rx-let}, except that the @var{bindings}
+argument is evaluated (and thus needs to be quoted if it is a list
+literal), and the definitions are substituted at run time, which is
+required for @code{rx-to-string} to work.  Example:
+
+@example
+@group
+(rx-let-eval
+    '((ponder (x) (seq "Where have all the " x " gone?")))
+  (looking-at (rx-to-string
+               '(ponder (or "flowers" "young girls"
+                            "left socks")))))
+@end group
+@end example
+
+Another difference from @code{rx-let} is that the @var{bindings} are
+dynamically scoped, and thus also available in functions called from
+@var{body}. However, they are not visible inside functions defined in
+@var{body}.
+@end defmac
+
 @end ifnottex
 
 @node Regexp Functions
