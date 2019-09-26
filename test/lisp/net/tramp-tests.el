@@ -5086,6 +5086,15 @@ Several special characters do not work properly there."
       (file-truename tramp-test-temporary-file-directory) nil
     (string-match "^HP-UX" (tramp-get-connection-property v "uname" ""))))
 
+(defun tramp--test-ksh-p ()
+  "Check, whether the remote shell is ksh.
+ksh93 makes some strange conversions of non-latin characters into
+a $'' syntax."
+  ;; We must refill the cache.  `file-truename' does it.
+  (with-parsed-tramp-file-name
+      (file-truename tramp-test-temporary-file-directory) nil
+    (string-match "ksh$" (tramp-get-connection-property v "remote-shell" ""))))
+
 (defun tramp--test-mock-p ()
   "Check, whether the mock method is used.
 This does not support external Emacs calls."
@@ -5481,6 +5490,7 @@ Use the `ls' command."
   (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless (not (tramp--test-windows-nt-and-batch)))
   (skip-unless (not (tramp--test-windows-nt-and-pscp-psftp-p)))
+  (skip-unless (not (tramp--test-ksh-p)))
 
   (tramp--test-utf8))
 
@@ -5494,6 +5504,7 @@ Use the `stat' command."
   (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless (not (tramp--test-windows-nt-and-batch)))
   (skip-unless (not (tramp--test-windows-nt-and-pscp-psftp-p)))
+  (skip-unless (not (tramp--test-ksh-p)))
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-stat v)))
 
@@ -5514,6 +5525,7 @@ Use the `perl' command."
   (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless (not (tramp--test-windows-nt-and-batch)))
   (skip-unless (not (tramp--test-windows-nt-and-pscp-psftp-p)))
+  (skip-unless (not (tramp--test-ksh-p)))
   (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
     (skip-unless (tramp-get-remote-perl v)))
 
@@ -5537,6 +5549,7 @@ Use the `ls' command."
   (skip-unless (not (tramp--test-rsync-p)))
   (skip-unless (not (tramp--test-windows-nt-and-batch)))
   (skip-unless (not (tramp--test-windows-nt-and-pscp-psftp-p)))
+  (skip-unless (not (tramp--test-ksh-p)))
 
   (let ((tramp-connection-properties
 	 (append
