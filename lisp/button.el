@@ -513,6 +513,9 @@ Returns the button found."
             nil
 	  (user-error (if wrap "No buttons!" "No more buttons")))
       (let ((msg (and display-message (button-get button 'help-echo))))
+	(when (functionp msg)
+	  (setq msg (funcall msg (selected-window) (current-buffer)
+			     (button-start button))))
 	(when msg
 	  (message "%s" msg)))
       button)))
