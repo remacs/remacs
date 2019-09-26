@@ -1610,15 +1610,17 @@ empty directories from OLD-PATH."
   "Rescale IMAGE to SIZE if possible.
 SIZE is in format (WIDTH . HEIGHT).  Return a new image.
 Sizes are in pixels."
-  (let ((new-width (car size))
-        (new-height (cdr size)))
-    (when (> (cdr (image-size image t)) new-height)
-      (setq image (create-image (plist-get (cdr image) :data) nil t
-                                :max-height new-height)))
-    (when (> (car (image-size image t)) new-width)
-      (setq image (create-image (plist-get (cdr image) :data) nil t
-                                :max-width new-width)))
-    image))
+  (if (not (display-graphic-p))
+      image
+    (let ((new-width (car size))
+          (new-height (cdr size)))
+      (when (> (cdr (image-size image t)) new-height)
+	(setq image (create-image (plist-get (cdr image) :data) nil t
+                                  :max-height new-height)))
+      (when (> (car (image-size image t)) new-width)
+	(setq image (create-image (plist-get (cdr image) :data) nil t
+                                  :max-width new-width)))
+      image)))
 
 (defun gnus-recursive-directory-files (dir)
   "Return all regular files below DIR.
