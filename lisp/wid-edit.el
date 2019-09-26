@@ -3063,7 +3063,7 @@ as in (other DEFAULT) or (other :tag \"NAME\" DEFAULT).
 If the user selects this alternative, that specifies DEFAULT
 as the value."
   :tag "Other"
-  :format "%t%n"
+  :format "%t\n"
   :value 'other)
 
 (defvar widget-string-prompt-value-history nil
