@@ -63,6 +63,9 @@
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
+(message
+ "%s %s" temporary-file-directory shadow-test-remote-temporary-file-directory)
+
 (setq password-cache-expiry nil
       shadow-debug (getenv "EMACS_HYDRA_CI")
       tramp-verbose 0
@@ -72,6 +75,11 @@
       shadow-test-remote-temporary-file-directory
       (ignore-errors
         (file-truename shadow-test-remote-temporary-file-directory)))
+
+(when shadow-debug
+  (message
+   "%s %s"
+   temporary-file-directory shadow-test-remote-temporary-file-directory))
 
 ;; This should happen on hydra only.
 (when (getenv "EMACS_HYDRA_CI")
