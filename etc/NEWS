@@ -1006,6 +1006,16 @@ early init file.
 
 *** New function 'package-activate-all'.
 
++++
+*** New functions for filtering packages list.
+A new function has been added which allows users to filter the
+packages list by name: 'package-menu-filter-by-name'.  By default, it
+is bound to '/ n'.  Additionally, the function
+'package-menu-fiter-by-keyword' has been renamed from
+'package-menu-filter'.  Its keybinding has also been changed to '/ k'
+(from 'f').  To clear any of the two filters, the user can now call
+the 'package-menu-clear-filter' function, bound to '/ /' by default.
+
 ---
 *** Imenu support has been added to 'package-menu-mode'.
 

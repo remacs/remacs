@@ -136,11 +136,20 @@ Refresh the package list (@code{package-menu-refresh}).  This fetches
 the list of available packages from the package archive again, and
 recomputes the package list.
 
-@item f
-Filter the package list (@code{package-menu-filter}).  This prompts
-for a keyword (e.g., @samp{games}), then shows only the packages
-that relate to that keyword.  To restore the full package list,
-type @kbd{q}.
+@item / k
+Filter the package list by keyword
+(@code{package-menu-filter-by-keyword}).  This prompts for a keyword
+(e.g., @samp{games}), then shows only the packages that relate to that
+keyword.
+
+@item / n
+Filter the package list by name (@code{package-menu-filter-by-name}).
+This prompts for a string, then shows only the packages whose names
+match a regexp with that value.
+
+@item / /
+Clear filter currently applied to the package list
+(@code{package-menu-clear-filter}).
 
 @item H
 Permanently hide packages that match a regexp

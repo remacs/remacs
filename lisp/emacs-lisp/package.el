@@ -2685,7 +2685,9 @@ either a full name or nil, and EMAIL is a valid email address."
     (define-key map "i" 'package-menu-mark-install)
     (define-key map "U" 'package-menu-mark-upgrades)
     (define-key map "r" 'package-menu-refresh)
-    (define-key map "f" 'package-menu-filter)
+    (define-key map (kbd "/ k") 'package-menu-filter-by-keyword)
+    (define-key map (kbd "/ n") 'package-menu-filter-by-name)
+    (define-key map (kbd "/ /") 'package-menu-clear-filter)
     (define-key map "~" 'package-menu-mark-obsolete-for-deletion)
     (define-key map "x" 'package-menu-execute)
     (define-key map "h" 'package-menu-quick-help)
@@ -2717,7 +2719,11 @@ either a full name or nil, and EMAIL is a valid email address."
     ["Unmark" package-menu-mark-unmark :help "Clear any marks on a package and move to the next line"]
 
     "--"
-    ["Filter Package List" package-menu-filter :help "Filter package selection (q to go back)"]
+    ("Filter Packages"
+     ["Filter by Keyword" package-menu-filter-by-keyword :help "Filter packages by keyword"]
+     ["Filter by Name" package-menu-filter-by-name :help "Filter packages by name"]
+     ["Clear Filter" package-menu-clear-filter :help "Clear package list filter"])
+
     ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
     ["Display Older Versions" package-menu-toggle-hiding
      :style toggle :selected (not package-menu--hide-packages)
@@ -3028,9 +3034,6 @@ shown."
             (let ((filters (mapconcat #'identity keywords ",")))
               (concat "Package[" filters "]"))
           "Package"))
-  (if keywords
-      (define-key package-menu-mode-map "q" 'package-show-package-list)
-    (define-key package-menu-mode-map "q" 'quit-window))
   (tabulated-list-init-header)
   (tabulated-list-print remember-pos))
 
@@ -3660,10 +3663,8 @@ shown."
         (select-window win)
       (switch-to-buffer buf))))
 
-;; package-menu--generate rebinds "q" on the fly, so we have to
-;; hard-code the binding in the doc-string here.
-(defun package-menu-filter (keyword)
-  "Filter the *Packages* buffer.
+(defun package-menu-filter-by-keyword (keyword)
+  "Filter the \"*Packages*\" buffer by KEYWORD.
 Show only those items that relate to the specified KEYWORD.
 
 KEYWORD can be a string or a list of strings.  If it is a list, a
@@ -3673,15 +3674,37 @@ Interactively, it is a list of strings separated by commas.
 KEYWORD can also be used to filter by status or archive name by
 using keywords like \"arc:gnu\" and \"status:available\".
 Statuses available include \"incompat\", \"available\",
-\"built-in\" and \"installed\".
-
-To restore the full package list, type `q'."
+\"built-in\" and \"installed\"."
   (interactive
    (list (completing-read-multiple
           "Keywords (comma separated): " (package-all-keywords))))
   (package-show-package-list t (if (stringp keyword)
                                    (list keyword)
                                  keyword)))
+
+(defun package-menu-filter-by-name (name)
+  "Filter the \"*Packages*\" buffer by NAME.
+Show only those items whose name matches the regular expression
+NAME.  If NAME is nil or the empty string, show all packages."
+  (interactive (list (read-from-minibuffer "Filter by name (regexp): ")))
+  (if (or (not name) (string-empty-p name))
+      (package-show-package-list t nil)
+    ;; Update `tabulated-list-entries' so that it contains all
+    ;; packages before searching.
+    (package-menu--refresh t nil)
+    (let (matched)
+      (dolist (entry tabulated-list-entries)
+        (let* ((pkg-name (package-desc-name (car entry))))
+          (when (string-match name (symbol-name pkg-name))
+            (push pkg-name matched))))
+      (if matched
+          (package-show-package-list matched nil)
+        (user-error "No packages found")))))
+
+(defun package-menu-clear-filter ()
+  "Clear any filter currently applied to the \"*Packages*\" buffer."
+  (interactive)
+  (package-menu--generate t t))
 
 (defun package-list-packages-no-fetch ()
   "Display a list of packages.

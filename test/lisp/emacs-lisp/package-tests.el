@@ -365,6 +365,28 @@ Must called from within a `tar-mode' buffer."
       (should-not (re-search-forward "^\\s-+simple-single\\s-+1.3\\s-+\\(available\\|new\\)" nil t))
       (kill-buffer buf))))
 
+(ert-deftest package-test-list-filter-by-name ()
+  "Ensure package list is filtered correctly by package name."
+  (with-package-test ()
+    (let ((buf (package-list-packages)))
+      (package-menu-filter-by-name "tetris")
+      (goto-char (point-min))
+      (should (re-search-forward "^\\s-+tetris" nil t))
+      (should (= (count-lines (point-min) (point-max)) 1))
+      (kill-buffer buf))))
+
+(ert-deftest package-test-list-clear-filter ()
+  "Ensure package list filter is cleared correctly."
+  (with-package-test ()
+    (let ((buf (package-list-packages)))
+      (let ((num-packages (count-lines (point-min) (point-max))))
+        (should (> num-packages 1))
+        (package-menu-filter-by-name "tetris")
+        (should (= (count-lines (point-min) (point-max)) 1))
+        (package-menu-clear-filter)
+        (should (= (count-lines (point-min) (point-max)) num-packages)))
+      (kill-buffer buf))))
+
 (ert-deftest package-test-update-archives ()
   "Test updating package archives."
   (with-package-test ()
