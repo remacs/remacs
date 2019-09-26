@@ -8535,7 +8535,8 @@ On Windows 98 and ME, KEY must be a one element key definition in
 vector form that would be acceptable to `define-key' (e.g. [A-tab] for
 Alt-Tab).  The meta modifier is interpreted as Alt if
 `w32-alt-is-meta' is t, and hyper is always interpreted as the Windows
-modifier keys.  The return value is the hotkey-id if registered, otherwise nil.
+modifier keys.  The return value is the hotkey-id if registered,
+otherwise nil.
 
 On Windows versions since NT, KEY can also be specified as [M-], [s-] or
 [h-] to indicate that all combinations of that key should be processed
@@ -8543,7 +8544,7 @@ by Emacs instead of the operating system.  The super and hyper
 modifiers are interpreted according to the current values of
 `w32-lwindow-modifier' and `w32-rwindow-modifier'.  For instance,
 setting `w32-lwindow-modifier' to `super' and then calling
-`(register-hot-key [s-])' grabs all combinations of the left Windows
+`(w32-register-hot-key [s-])' grabs all combinations of the left Windows
 key to Emacs, but leaves the right Windows key free for the operating
 system keyboard shortcuts.  The return value is t if the call affected
 any key combinations, otherwise nil.  */)
