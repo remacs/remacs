@@ -108,6 +108,18 @@ A name is a symbol like `td'."
 	(cons dom matches)
       matches)))
 
+(defun dom-search (dom predicate)
+  "Return elements in DOM where PREDICATE is non-nil.
+PREDICATE is called with the node as its only parameter."
+  (let ((matches (cl-loop for child in (dom-children dom)
+			  for matches = (and (not (stringp child))
+					     (dom-search child predicate))
+			  when matches
+			  append matches)))
+    (if (funcall predicate dom)
+	(cons dom matches)
+      matches)))
+
 (defun dom-strings (dom)
   "Return elements in DOM that are strings."
   (cl-loop for child in (dom-children dom)

@@ -5162,6 +5162,11 @@ which is a regular expression.
 Return all nodes in @var{dom} that have IDs that match @var{match},
 which is a regular expression.
 
+@item dom-search @var{dom} @var{predicate}
+Return all nodes in @var{dom} where @var{predicate} returns a
+non-@code{nil} value.  @var{predicate} is called with the node to be
+tested as its parameter.
+
 @item dom-strings @var{dom}
 Return all strings in @var{dom}.
 

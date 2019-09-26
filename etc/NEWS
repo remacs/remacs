@@ -276,6 +276,12 @@ used to remove comments before calling the libxml functions to parse
 the data.
 
 +++
+** A new DOM (the XML/HTML document structure returned by functions
+such as 'libxml-parse-html-region') traversal function has been added:
+'dom-search', which takes a DOM and a predicate and returns all nodes
+that match.
+
++++
 ** The Network Security Manager now allows more fine-grained control
 of what checks to run via the 'network-security-protocol-checks'
 variable.
