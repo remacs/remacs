@@ -467,13 +467,22 @@ return t."
 	(button-activate button use-mouse-action)
 	t))))
 
+(defun button--help-echo (button)
+  "Evaluate BUTTON's `help-echo' property and return its value."
+  (let ((help (button-get button 'help-echo)))
+    (if (functionp help)
+        (let ((obj (if (overlayp button) button (current-buffer))))
+          (funcall help (selected-window) obj (button-start button)))
+      (eval help lexical-binding))))
+
 (defun forward-button (n &optional wrap display-message no-error)
   "Move to the Nth next button, or Nth previous button if N is negative.
 If N is 0, move to the start of any button at point.
 If WRAP is non-nil, moving past either end of the buffer continues from the
 other end.
-If DISPLAY-MESSAGE is non-nil, the button's help-echo string is displayed.
-Any button with a non-nil `skip' property is skipped over.
+If DISPLAY-MESSAGE is non-nil, the button's `help-echo' property
+is displayed.  Any button with a non-nil `skip' property is
+skipped over.
 
 If NO-ERROR, return nil if no further buttons could be found
 instead of erroring out.
@@ -506,13 +515,9 @@ Returns the button found."
 	    (unless (button-get button 'skip)
 	      (setq n (1- n)))))))
     (if (null button)
-        (if no-error
-            nil
+        (unless no-error
 	  (user-error (if wrap "No buttons!" "No more buttons")))
-      (let ((msg (and display-message (button-get button 'help-echo))))
-	(when (functionp msg)
-	  (setq msg (funcall msg (selected-window) (current-buffer)
-			     (button-start button))))
+      (let ((msg (and display-message (button--help-echo button))))
 	(when msg
 	  (message "%s" msg)))
       button)))
@@ -522,8 +527,9 @@ Returns the button found."
 If N is 0, move to the start of any button at point.
 If WRAP is non-nil, moving past either end of the buffer continues from the
 other end.
-If DISPLAY-MESSAGE is non-nil, the button's help-echo string is displayed.
-Any button with a non-nil `skip' property is skipped over.
+If DISPLAY-MESSAGE is non-nil, the button's `help-echo' property
+is displayed.  Any button with a non-nil `skip' property is
+skipped over.
 
 If NO-ERROR, return nil if no further buttons could be found
 instead of erroring out.

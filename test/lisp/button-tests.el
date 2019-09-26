@@ -37,4 +37,60 @@
     (widget-create 'link "link widget")
     (should-not (button-at (1- (point))))))
 
+(ert-deftest button--help-echo-string ()
+  "Test `button--help-echo' with strings."
+  (with-temp-buffer
+    ;; Text property buttons.
+    (let ((button (insert-text-button "text" 'help-echo "text help")))
+      (should (equal (button--help-echo button) "text help")))
+    ;; Overlay buttons.
+    (let ((button (insert-button "overlay" 'help-echo "overlay help")))
+      (should (equal (button--help-echo button) "overlay help")))))
+
+(ert-deftest button--help-echo-form ()
+  "Test `button--help-echo' with forms."
+  (with-temp-buffer
+    ;; Test text property buttons with dynamic scoping.
+    (let* ((help   (make-symbol "help"))
+           (form   `(funcall (let ((,help "lexical form"))
+                               (lambda () ,help))))
+           (button (insert-text-button "text" 'help-echo form)))
+      (set help "dynamic form")
+      (should (equal (button--help-echo button) "dynamic form")))
+    ;; Test overlay buttons with lexical scoping.
+    (setq lexical-binding t)
+    (let* ((help   (make-symbol "help"))
+           (form   `(funcall (let ((,help "lexical form"))
+                               (lambda () ,help))))
+           (button (insert-button "overlay" 'help-echo form)))
+      (set help "dynamic form")
+      (should (equal (button--help-echo button) "lexical form")))))
+
+(ert-deftest button--help-echo-function ()
+  "Test `button--help-echo' with functions."
+  (with-temp-buffer
+    ;; Text property buttons.
+    (let* ((owin   (selected-window))
+           (obuf   (current-buffer))
+           (opos   (point))
+           (help   (lambda (win obj pos)
+                     (should (eq win owin))
+                     (should (eq obj obuf))
+                     (should (=  pos opos))
+                     "text function"))
+           (button (insert-text-button "text" 'help-echo help)))
+      (should (equal (button--help-echo button) "text function"))
+      ;; Overlay buttons.
+      (setq help (lambda (win obj pos)
+                   (should (eq win owin))
+                   (should (overlayp obj))
+                   (should (eq obj button))
+                   (should (eq (overlay-buffer obj) obuf))
+                   (should (= (overlay-start obj) opos))
+                   (should (= pos opos))
+                   "overlay function"))
+      (setq opos (point))
+      (setq button (insert-button "overlay" 'help-echo help))
+      (should (equal (button--help-echo button) "overlay function")))))
+
 ;;; button-tests.el ends here
