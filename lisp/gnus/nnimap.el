@@ -1163,6 +1163,12 @@ If LIMIT, first try to limit the search to the N last articles."
 	;; response.  If they're successful, they're successful.
 	(dolist (action actions)
 	  (cl-destructuring-bind (range action marks) action
+	    ;; If we add/remove a tick mark, then do the same with the
+	    ;; readedness mark on the IMAP server.  Other IMAP clients
+	    ;; can have marked messages without having them read, but
+	    ;; Gnus can't.
+	    (when (memq 'tick marks)
+	      (push 'read marks))
 	    (let ((flags (nnimap-marks-to-flags marks)))
 	      (when flags
 		(setq sequence (nnimap-send-command
@@ -1492,8 +1498,9 @@ If LIMIT, first try to limit the search to the N last articles."
 
 (defun nnimap-update-info (info marks)
   (cl-destructuring-bind (existing flags high low uidnext start-article
-				permanent-flags uidvalidity
-				vanished highestmodseq) marks
+				   permanent-flags uidvalidity
+				   vanished highestmodseq)
+      marks
     (cond
      ;; Ignore groups with no UIDNEXT/marks.  This happens for
      ;; completely empty groups.
