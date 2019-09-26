@@ -85,13 +85,12 @@ the variable is set using \\[customize]."
 					 image-file-name-extensions)
 				  t)
 		      "\\'"))))
-    (if image-file-name-regexps
-	(mapconcat 'identity
-		   (if exts-regexp
-		       (cons exts-regexp image-file-name-regexps)
-		     image-file-name-regexps)
-		   "\\|")
-      exts-regexp)))
+    (mapconcat
+     'identity
+     (delq nil (list exts-regexp
+		     image-file-name-regexps
+		     (car (rassq 'imagemagick image-type-file-name-regexps))))
+     "\\|")))
 
 
 ;;;###autoload
