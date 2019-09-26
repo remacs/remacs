@@ -39,6 +39,7 @@
 (require 'iso8601)
 (require 'mml)
 (require 'xml)
+(require 'dom)
 
 (defgroup nnrss nil
   "RSS access for Gnus."
@@ -1008,7 +1009,11 @@ Simply ensures that the first element is rss or rdf."
   "Given EL (containing a parsed element) and URI (containing a string
 that gives the URI for which you want to retrieve the namespace
 prefix), return the prefix."
-  (let* ((prefix (car (rassoc uri (cadar el))))
+  (let* ((prefix (car (rassoc uri (dom-attributes
+				   (dom-search
+				    el
+				    (lambda (node)
+				      (rassoc uri (dom-attributes node))))))))
 	 (nslist (if prefix
 		     (split-string (symbol-name prefix) ":")))
 	 (ns (cond ((eq (length nslist) 1) ; no prefix given
