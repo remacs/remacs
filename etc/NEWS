@@ -1044,6 +1044,16 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 ** Gnus
 
 +++
+** The Gnus user variable 'nnimap-expunge' supports three new values:
+'never' for never expunging messages, 'immediately' for immediately
+expunging deleted messages, and 'on-exit' to expunge deleted articles
+when exiting the group's summary buffer. Setting 'nnimap-expunge' to
+'nil' or 't' is still supported but not recommended, since it may
+result in Gnus expunging all messages that have been flagged as
+deleted by any IMAP client (rather than just those that have been
+deleted by Gnus).
+
++++
 *** New option 'gnus-use-atomic-windows' makes Gnus window layouts
 atomic.  See the "Atomic Windows" section of the Elisp manual for
 details.

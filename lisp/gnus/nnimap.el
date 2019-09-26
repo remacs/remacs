@@ -102,10 +102,21 @@ Uses the same syntax as `nnmail-split-methods'.")
 Possible choices are nil (use default methods), `anonymous',
 `login', `plain' and `cram-md5'.")
 
-(defvoo nnimap-expunge t
-  "If non-nil, expunge articles after deleting them.
-This is always done if the server supports UID EXPUNGE, but it's
-not done by default on servers that doesn't support that command.")
+(defvoo nnimap-expunge 'on-exit
+  "When to expunge deleted messages.
+If 'never, deleted articles are marked with the IMAP \\Delete
+flag but not automatically expunged. If 'immediately, deleted
+articles are immediately expunged (this requires the server to
+support the UID EXPUNGE command). If 'on-exit, deleted articles
+are flagged, and all flagged articles are expunged when the
+group is closed.
+
+For backwards compatibility, this variable may also be set to t
+or nil. If the server supports UID EXPUNGE, both t and nil are
+equivalent to 'immediately. If the server does not support UID
+EXPUNGE nil is equivalent to 'never, while t will immediately
+expunge ALL articles that are currently flagged as deleted
+(i.e., potentially not only the article that was just deleted).")
 
 (defvoo nnimap-streaming t
   "If non-nil, try to use streaming commands with IMAP servers.
@@ -944,8 +955,11 @@ textual parts.")
 	      articles)))
     (nreverse articles)))
 
-(deffoo nnimap-close-group (_group &optional _server)
-  t)
+(deffoo nnimap-close-group (_group &optional server)
+  (when (eq nnimap-expunge 'on-exit)
+    (nnoo-change-server 'nnimap server nil)
+    (with-current-buffer (nnimap-buffer)
+      (nnimap-command "EXPUNGE"))))
 
 (deffoo nnimap-request-move-article (article group server accept-form
 					     &optional _last
@@ -990,8 +1004,7 @@ textual parts.")
     articles)
    ((and force
 	 (eq nnmail-expiry-target 'delete))
-    (unless (nnimap-delete-article (gnus-compress-sequence articles))
-      (nnheader-message 7 "Article marked for deletion, but not expunged."))
+    (nnimap-delete-article (gnus-compress-sequence articles))
     nil)
    (t
     (let ((deletable-articles
@@ -1111,20 +1124,33 @@ If LIMIT, first try to limit the search to the N last articles."
               (nnimap-find-article-by-message-id group server message-id))))))))
 
 (defun nnimap-delete-article (articles)
+  "Delete ARTICLES."
   (with-current-buffer (nnimap-buffer)
     (nnimap-command "UID STORE %s +FLAGS.SILENT (\\Deleted)"
 		    (nnimap-article-ranges articles))
     (cond
+     ((eq nnimap-expunge 'immediately)
+      (if (nnimap-capability "UIDPLUS")
+	  (nnimap-command "UID EXPUNGE %s"
+			  (nnimap-article-ranges articles))
+	(nnheader-message
+	 3 (concat "nnimap-expunge set to 'immediately, but "
+		   "server doesn't support UIDPLUS"))
+	nil))
+
+     ((memq nnimap-expunge '(on-exit never)) nil)
+
      ((nnimap-capability "UIDPLUS")
       (nnimap-command "UID EXPUNGE %s"
-		      (nnimap-article-ranges articles))
-      t)
+		      (nnimap-article-ranges articles)))
+
      (nnimap-expunge
-      (nnimap-command "EXPUNGE")
-      t)
-     (t (gnus-message 7 (concat "nnimap: nnimap-expunge is not set and the "
-                                "server doesn't support UIDPLUS, so we won't "
-                                "delete this article now"))))))
+      (nnimap-command "EXPUNGE"))
+
+     (t
+      (nnheader-message
+       7 "Article marked for deletion, but not expunged.")
+      nil))))
 
 (deffoo nnimap-request-scan (&optional group server)
   (when (and (nnimap-change-group nil server)
@@ -2149,27 +2175,9 @@ Return the server's response to the SELECT or EXAMINE command."
 	      (nnimap-wait-for-response (caar sequences))
 	      ;; And then mark the successful copy actions as deleted,
 	      ;; and possibly expunge them.
-	      (nnimap-mark-and-expunge-incoming
-	       (nnimap-parse-copied-articles sequences)))
-            (nnimap-mark-and-expunge-incoming junk-articles)))))))
-
-(defun nnimap-mark-and-expunge-incoming (range)
-  (when range
-    (setq range (nnimap-article-ranges range))
-    (erase-buffer)
-    (let ((sequence
-	   (nnimap-send-command
-	    "UID STORE %s +FLAGS.SILENT (\\Deleted)" range)))
-      (cond
-       ;; If the server supports it, we now delete the message we have
-       ;; just copied over.
-       ((nnimap-capability "UIDPLUS")
-	(setq sequence (nnimap-send-command "UID EXPUNGE %s" range)))
-       ;; If it doesn't support UID EXPUNGE, then we only expunge if the
-       ;; user has configured it.
-       (nnimap-expunge
-	(setq sequence (nnimap-send-command "EXPUNGE"))))
-      (nnimap-wait-for-response sequence))))
+              (nnimap-delete-article
+               (nnimap-parse-copied-articles sequences)))
+            (nnimap-delete-article junk-articles)))))))
 
 (defun nnimap-parse-copied-articles (sequences)
   (let (sequence copied range)
