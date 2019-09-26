@@ -371,16 +371,21 @@ Any details (stdout and stderr) are left in the buffer specified by
 			       (expand-file-name smime-CA-file)))
 		     (if smime-CA-directory
 			 (list "-CApath"
-			       (expand-file-name smime-CA-directory))))))
+			       (expand-file-name smime-CA-directory)))))
+	(input-buffer (current-buffer)))
     (unless CAs
       (error "No CA configured"))
     (if smime-crl-check
 	(cl-pushnew smime-crl-check CAs :test #'equal))
-    (if (apply 'smime-call-openssl-region b e (list smime-details-buffer t)
-	       "smime" "-verify" "-out" "/dev/null" CAs)
-	t
-      (insert-buffer-substring smime-details-buffer)
-      nil)))
+    (with-temp-buffer
+      (let ((result-buffer (current-buffer)))
+	(with-current-buffer input-buffer
+	  (if (apply 'smime-call-openssl-region b e (list result-buffer
+							  smime-details-buffer)
+		     "smime" "-verify" "-out" "-" CAs)
+	      (with-current-buffer result-buffer
+		(buffer-string))
+	    nil))))))
 
 (defun smime-noverify-region (b e)
   "Verify integrity of S/MIME message in region between B and E.

@@ -588,18 +588,9 @@ If MODE is not set, try to find mode automatically."
       (mm-insert-headers "application/pkcs7-mime" "base64" "smime.p7m")
       (insert-buffer-substring (mm-handle-buffer handle))
       (setq verified (smime-verify-region (point-min) (point-max))))
-    (goto-char (point-min))
-    (mm-insert-part handle)
-    (if (search-forward "Content-Type: " nil t)
-	(delete-region (point-min) (match-beginning 0)))
-    (goto-char (point-max))
-    (if (re-search-backward "--\r?\n?" nil t)
-	(delete-region (match-end 0) (point-max)))
-    (unless verified
+    (if verified
+	(insert verified)
       (insert-buffer-substring smime-details-buffer)))
-  (goto-char (point-min))
-  (while (search-forward "\r\n" nil t)
-    (replace-match "\n"))
   t)
 
 (autoload 'epg-decrypt-string "epg")

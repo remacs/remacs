@@ -1672,6 +1672,8 @@ If RECURSIVE, search recursively."
 		    (t (y-or-n-p
 			(format "Decrypt (S/MIME) part? "))))
 		   (mm-view-pkcs7 parts from))
+	  (goto-char (point-min))
+	  (insert "Content-type: text/plain\n\n")
 	  (setq parts (mm-dissect-buffer t)))))
      ((equal subtype "signed")
       (unless (and (setq protocol
@@ -1739,6 +1741,7 @@ If RECURSIVE, search recursively."
 	    (mm-set-handle-multipart-parameter
 	     mm-security-handle 'gnus-details
 	     (format "Unknown encrypt protocol (%s)" protocol)))))))
+    ;; Check the results (which are now in `parts').
     (let ((info (get-text-property 0 'gnus-info (car mm-security-handle))))
       (if (or (not info)
 	      (equal info "")
