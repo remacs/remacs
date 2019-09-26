@@ -1191,17 +1191,18 @@ being set (usually, by reading it from the desktop)."
 (defvar desktop-buffer-ok-count)
 (defvar desktop-buffer-fail-count)
 
-;; FIXME Interactively, this should have the option to prompt for dirname.
 ;;;###autoload
-(defun desktop-read (&optional dirname)
+(defun desktop-read (&optional dirname ask)
   "Read and process the desktop file in directory DIRNAME.
 Look for a desktop file in DIRNAME, or if DIRNAME is omitted, look in
 directories listed in `desktop-path'.  If a desktop file is found, it
 is processed and `desktop-after-read-hook' is run.  If no desktop file
 is found, clear the desktop and run `desktop-no-desktop-file-hook'.
+Interactively, with prefix arg \\[universal-argument], ask for DIRNAME.
 This function is a no-op when Emacs is running in batch mode.
-It returns t if a desktop file was loaded, nil otherwise."
-  (interactive)
+It returns t if a desktop file was loaded, nil otherwise.
+\n(fn DIRNAME)"
+  (interactive "i\nP")
   (unless noninteractive
     (setq desktop-dirname
           (file-name-as-directory
@@ -1209,6 +1210,8 @@ It returns t if a desktop file was loaded, nil otherwise."
             (or
              ;; If DIRNAME is specified, use it.
              (and (< 0 (length dirname)) dirname)
+             ;; Else, with a prefix arg, ask for a directory name.
+             (and ask (read-directory-name "Directory for desktop file: " nil nil t))
              ;; Otherwise search desktop file in desktop-path.
              (let ((dirs desktop-path))
                (while (and dirs

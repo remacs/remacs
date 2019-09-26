@@ -542,6 +542,11 @@ network connection information (in addition to the host name).
 
 ** The 'cl' package is now officially deprecated in favor of 'cl-lib'.
 
+---
+** desktop
+*** When called interactively with a prefix arg 'C-u', 'desktop-read'
+now prompts the user for the directory containing the desktop file.
+
 +++
 ** winner
 *** A new variable, 'winner-boring-buffers-regexp', has been added.
