@@ -593,6 +593,8 @@ Add an entry here when adding a new search engine.")
 ;; Gnus glue.
 
 (declare-function gnus-group-topic-name "gnus-topic" ())
+(declare-function gnus-topic-find-groups "gnus-topic"
+		  (topic &optional level all lowest recursive))
 
 (defun gnus-group-make-nnir-group (nnir-extra-parms &optional specs)
   "Create an nnir group.  Prompt for a search query and determine
@@ -613,7 +615,9 @@ skips all prompting."
 	       (or gnus-group-marked
 		   (if (gnus-group-group-name)
 		       (list (gnus-group-group-name))
-		     (cdr (assoc (gnus-group-topic-name) gnus-topic-alist))))
+		     (mapcar (lambda (entry)
+			       (gnus-info-group (cadr entry)))
+			     (gnus-topic-find-groups (gnus-group-topic-name)))))
 	       gnus-group-server))))
 	 (query-spec
 	  (or (cdr (assq 'nnir-query-spec specs))
