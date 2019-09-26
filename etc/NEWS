@@ -2141,6 +2141,15 @@ ending character were silently omitted.
 For example, '(rx (any "@z-a" (?9 . ?0)))' would match '@' only.
 Now, such 'rx' expressions generate an error.
 
+---
+** Internal 'rx' functions and variables have been removed.
+As a consequence of an improved implementation of the 'rx' package,
+internal functions and variables have been removed.  Packages using
+theses should use the public 'rx' and 'rx-to-string' instead.
+'rx-constituents' is still available for compatibility, but the new
+extension mechanism is preferred: 'rx-define', 'rx-let' and
+'rx-let-eval'.
+
 +++
 ** 'text-mode' no longer sets the value of 'indent-line-function'.
 The global value of 'indent-line-function', which defaults to
