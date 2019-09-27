@@ -4359,6 +4359,11 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 	      int n = (it->what == IT_COMPOSITION ? it->cmp_it.nchars : 1);
 
 	      it_copy = *it;
+	      /* If this is the first display element,
+		 bidi_move_to_visually_next will deliver character at
+		 current position without moving, so we need to enlarge N.  */
+	      if (it->bidi_it.first_elt)
+		n++;
 	      while (n--)
 		bidi_move_to_visually_next (&it_copy.bidi_it);
 
@@ -4461,6 +4466,11 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
 	      int n = (it->what == IT_COMPOSITION ? it->cmp_it.nchars : 1);
 
 	      it_copy = *it;
+	      /* If this is the first display element,
+		 bidi_move_to_visually_next will deliver character at
+		 current position without moving, so we need to enlarge N.  */
+	      if (it->bidi_it.first_elt)
+		n++;
 	      while (n--)
 		bidi_move_to_visually_next (&it_copy.bidi_it);
 
