@@ -1,4 +1,4 @@
-;;; nsm.el --- Network Security Manager
+;;; nsm.el --- Network Security Manager  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
@@ -269,7 +269,7 @@ See also: `network-security-protocol-checks' and `nsm-noninteractive'"
     (let* ((results
             (cl-loop
              for check in network-security-protocol-checks
-             for type = (intern (format ":%s" (car check)) obarray)
+             for type = (intern (format ":%s" (car check)))
              ;; Skip the check if the user has already said that this
              ;; host is OK for this type of "error".
              for result = (and (not (memq type
@@ -278,8 +278,7 @@ See also: `network-security-protocol-checks' and `nsm-noninteractive'"
                                    (nsm-level (cadr check)))
                                (funcall
                                 (intern (format "nsm-protocol-check--%s"
-                                                (car check))
-                                        obarray)
+                                                (car check)))
                                 host port status settings))
              when result
              collect (cons type result)))
@@ -321,7 +320,7 @@ See also: `network-security-protocol-checks' and `nsm-noninteractive'"
 (declare-function gnutls-peer-status-warning-describe "gnutls.c"
                   (status-symbol))
 
-(defun nsm-protocol-check--verify-cert (host port status settings)
+(defun nsm-protocol-check--verify-cert (_host _port status settings)
   "Check for warnings from the certificate verification status.
 
 This is the most basic security check for a TLS connection.  If
@@ -332,7 +331,7 @@ This is the most basic security check for a TLS connection.  If
          (not (nsm-warnings-ok-p status settings))
          (mapconcat #'gnutls-peer-status-warning-describe warnings "\n"))))
 
-(defun nsm-protocol-check--same-cert (host port status settings)
+(defun nsm-protocol-check--same-cert (_host _port status settings)
   "Check for certificate fingerprint mismatch.
 
 If the fingerprints saved do not match the fingerprint of the
@@ -344,7 +343,7 @@ man-in-the-middle attack."
 
 ;; Key exchange checks
 
-(defun nsm-protocol-check--rsa-kx (host port status &optional settings)
+(defun nsm-protocol-check--rsa-kx (_host _port status &optional _settings)
   "Check for static RSA key exchange.
 
 Static RSA key exchange methods do not offer perfect forward
@@ -374,7 +373,7 @@ Security (DTLS)\", \"(4.1.  General Guidelines)\"
           "RSA key exchange method (%s) does not offer perfect forward secrecy"
           kx))))
 
-(defun nsm-protocol-check--dhe-prime-kx (host port status &optional settings)
+(defun nsm-protocol-check--dhe-prime-kx (_host _port status &optional _settings)
   "Check for the key strength of DH key exchange based on integer factorization.
 
 This check is a response to Logjam[1].  Logjam is an attack that
@@ -405,7 +404,7 @@ Diffie-Hellman Fails in Practice\", `https://weakdh.org/'
          "Diffie-Hellman key strength (%s bits) too weak (%s bits)"
          prime-bits 1024))))
 
-(defun nsm-protocol-check--dhe-kx (host port status &optional settings)
+(defun nsm-protocol-check--dhe-kx (_host _port status &optional _settings)
   "Check for existence of DH key exchange based on integer factorization.
 
 In the years since the discovery of Logjam, it was discovered
@@ -429,7 +428,7 @@ Diffie-Hellman Backdoors in TLS.\",
        "unable to verify Diffie-Hellman key exchange method (%s) parameters"
        kx))))
 
-(defun nsm-protocol-check--export-kx (host port status &optional settings)
+(defun nsm-protocol-check--export-kx (_host _port status &optional _settings)
   "Check for RSA-EXPORT key exchange.
 
 EXPORT cipher suites are a family of 40-bit and 56-bit effective
@@ -454,7 +453,7 @@ of user-visible changes.\" Version 3.4.0,
             "EXPORT level key exchange (%s) is insecure"
             kx)))))
 
-(defun nsm-protocol-check--anon-kx (host port status &optional settings)
+(defun nsm-protocol-check--anon-kx (_host _port status &optional _settings)
   "Check for anonymous key exchange.
 
 Anonymous key exchange exposes the connection to
@@ -473,7 +472,7 @@ authentication\",
 
 ;; Cipher checks
 
-(defun nsm-protocol-check--cbc-cipher (host port status &optional settings)
+(defun nsm-protocol-check--cbc-cipher (_host _port status &optional _settings)
   "Check for CBC mode ciphers.
 
 CBC mode cipher in TLS versions earlier than 1.3 are problematic
@@ -502,7 +501,7 @@ Security (TLS) and Datagram Transport Layer Security (DTLS)\",
             "CBC mode cipher (%s) can be insecure"
             cipher)))))
 
-(defun nsm-protocol-check--ecdsa-cbc-cipher (host port status &optional settings)
+(defun nsm-protocol-check--ecdsa-cbc-cipher (_host _port status &optional _settings)
   "Check for CBC mode cipher usage under ECDSA key exchange.
 
 CBC mode cipher in TLS versions earlier than 1.3 are problematic
@@ -540,7 +539,7 @@ Security (TLS) and Datagram Transport Layer Security (DTLS)\",
             "CBC mode cipher (%s) can be insecure"
             cipher)))))
 
-(defun nsm-protocol-check--3des-cipher (host port status &optional settings)
+(defun nsm-protocol-check--3des-cipher (_host _port status &optional _settings)
   "Check for 3DES ciphers.
 
 Due to its use of 64-bit block size, it is known that a
@@ -561,7 +560,7 @@ Current Use and Deprecation of TDEA\",
           "3DES cipher (%s) is weak"
           cipher))))
 
-(defun nsm-protocol-check--rc4-cipher (host port status &optional settings)
+(defun nsm-protocol-check--rc4-cipher (_host _port status &optional _settings)
   "Check for RC4 ciphers.
 
 RC4 cipher has been prohibited by RFC 7465[1].
@@ -585,7 +584,7 @@ Reference:
 
 ;; Signature checks
 
-(defun nsm-protocol-check--sha1-sig (host port status &optional settings)
+(defun nsm-protocol-check--sha1-sig (_host _port status &optional _settings)
   "Check for SHA1 signatures on certificates.
 
 The first SHA1 collision was found in 2017[1], as a precaution
@@ -620,7 +619,7 @@ SHA-1 for SSL/TLS Certificates in Microsoft Edge and Internet Explorer
                    algo)
            end))
 
-(defun nsm-protocol-check--md5-sig (host port status &optional settings)
+(defun nsm-protocol-check--md5-sig (_host _port status &optional _settings)
   "Check for MD5 signatures on certificates.
 
 In 2008, a group of researchers were able to forge an
@@ -653,8 +652,8 @@ the MD5 Message-Digest and the HMAC-MD5 Algorithms\",
 
 ;; Extension checks
 
-(defun nsm-protocol-check--renegotiation-info-ext (host port status
-                                                  &optional settings)
+(defun nsm-protocol-check--renegotiation-info-ext (_host _port status
+                                                  &optional _settings)
   "Check for renegotiation_info TLS extension status.
 
 If this TLS extension is not used, the connection established is
@@ -676,7 +675,7 @@ Layer Security (TLS) Renegotiation Indication Extension\",
 
 ;; Compression checks
 
-(defun nsm-protocol-check--compression (host port status &optional settings)
+(defun nsm-protocol-check--compression (_host _port status &optional _settings)
   "Check for TLS compression.
 
 TLS compression attacks such as CRIME would allow an attacker to
@@ -697,7 +696,7 @@ Security (DTLS)\", `https://tools.ietf.org/html/rfc7525'"
 
 ;; Protocol version checks
 
-(defun nsm-protocol-check--version (host port status &optional settings)
+(defun nsm-protocol-check--version (_host _port status &optional _settings)
   "Check for SSL/TLS protocol version.
 
 This function guards against the usage of SSL3.0, which has been
@@ -722,7 +721,7 @@ Early TLS\"
 
 ;; Full suite checks
 
-(defun nsm-protocol-check--null-suite (host port status &optional settings)
+(defun nsm-protocol-check--null-suite (_host _port status &optional _settings)
   "Check for NULL cipher suites.
 
 This function checks for NULL key exchange, cipher and message
@@ -790,8 +789,7 @@ protocol."
     (let ((response
 	   (condition-case nil
                (intern
-                (car (split-string (nsm-query-user message status)))
-                obarray)
+                (car (split-string (nsm-query-user message status))))
 	     ;; Make sure we manage to close the process if the user hits
 	     ;; `C-g'.
 	     (quit 'no)
@@ -806,9 +804,6 @@ protocol."
                  host port)
         (nsm-save-host host port status what problems response)
         t))))
-
-(set-advertised-calling-convention
- 'nsm-query '(host port status what problems message) "27.1")
 
 (declare-function gnutls-format-certificate "gnutls.c" (cert))
 
@@ -923,8 +918,6 @@ protocol."
         (kill-buffer cert-buffer)
         (kill-buffer buffer)))))
 
-(set-advertised-calling-convention 'nsm-query-user '(message status) "27.1")
-
 (defun nsm-save-host (host port status what problems permanency)
   (let* ((id (nsm-id host port))
          (saved-fingerprints (plist-get (nsm-host-settings id) :fingerprints))
@@ -963,11 +956,6 @@ protocol."
 	  (nsm-write-settings))
       (nsm-remove-temporary-setting id)
       (push saved nsm-temporary-host-settings))))
-
-(set-advertised-calling-convention
- 'nsm-save-host
- '(host port status what problems permanency)
- "27.1")
 
 (defun nsm-write-settings ()
   (with-temp-file nsm-settings-file
