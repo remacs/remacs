@@ -1062,7 +1062,8 @@ command whose response triggered the error."
       (or (nntp-find-connection nntp-server-buffer)
 	  (nntp-open-connection nntp-server-buffer)))))
 
-(deffoo nntp-close-server (&optional server)
+(deffoo nntp-close-server (&optional server defs)
+  (nnoo-change-server 'nntp server defs)
   (nntp-possibly-change-group nil server t)
   (let ((process (nntp-find-connection nntp-server-buffer)))
     (while process

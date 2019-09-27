@@ -39,7 +39,7 @@
 (deffoo nnregistry-server-opened (server)
   gnus-registry-enabled)
 
-(deffoo nnregistry-close-server (server)
+(deffoo nnregistry-close-server (server &optional defs)
   t)
 
 (deffoo nnregistry-status-message (server)

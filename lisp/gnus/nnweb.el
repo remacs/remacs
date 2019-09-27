@@ -170,7 +170,7 @@ Valid types include `google', `dejanews', and `gmane'.")
 	(nnheader-report 'nnweb "Fetched article %s" article)
 	(cons group (and (numberp article) article))))))
 
-(deffoo nnweb-close-server (&optional server)
+(deffoo nnweb-close-server (&optional server _defs)
   (when (and (nnweb-server-opened server)
 	     (gnus-buffer-live-p nnweb-buffer))
     (with-current-buffer nnweb-buffer

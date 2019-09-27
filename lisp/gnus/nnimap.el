@@ -627,8 +627,8 @@ textual parts.")
 	(setq result (cdr (cadr elem))))))
     result))
 
-(deffoo nnimap-close-server (&optional server)
-  (when (nnoo-change-server 'nnimap server nil)
+(deffoo nnimap-close-server (&optional server defs)
+  (when (nnoo-change-server 'nnimap server defs)
     (ignore-errors
       (delete-process (get-buffer-process (nnimap-buffer))))
     (nnoo-close-server 'nnimap server)

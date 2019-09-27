@@ -130,7 +130,7 @@
 		     nnbabyl-mbox-file)
     t)))
 
-(deffoo nnbabyl-close-server (&optional server)
+(deffoo nnbabyl-close-server (&optional server _defs)
   ;; Restore buffer mode.
   (when (and (nnbabyl-server-opened)
 	     nnbabyl-previous-buffer-mode)

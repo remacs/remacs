@@ -352,7 +352,8 @@ If it is down, start it up (again)."
   (when (stringp gnus-command-method)
     (setq gnus-command-method (gnus-server-to-method gnus-command-method)))
   (funcall (gnus-get-function gnus-command-method 'close-server)
-	   (nth 1 gnus-command-method)))
+	   (nth 1 gnus-command-method)
+	   (nthcdr 2 gnus-command-method)))
 
 (defun gnus-request-list (gnus-command-method)
   "Request the active file from GNUS-COMMAND-METHOD."

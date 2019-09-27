@@ -130,7 +130,7 @@
 		     nnmbox-mbox-file)
     t)))
 
-(deffoo nnmbox-close-server (&optional server)
+(deffoo nnmbox-close-server (&optional server _defs)
   (when (buffer-live-p nnmbox-mbox-buffer)
     (kill-buffer nnmbox-mbox-buffer))
   (nnoo-close-server 'nnmbox server)
