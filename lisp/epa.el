@@ -285,7 +285,7 @@ You should bind this variable with `let', but do not set it globally.")
 	  (epg-sub-key-id (car (epg-key-sub-key-list
 				(widget-get widget :value))))))
 
-(define-derived-mode epa-key-list-mode special-mode "Keys"
+(define-derived-mode epa-key-list-mode special-mode "EPA Keys"
   "Major mode for `epa-list-keys'."
   (buffer-disable-undo)
   (setq truncate-lines t
@@ -294,7 +294,7 @@ You should bind this variable with `let', but do not set it globally.")
   (make-local-variable 'epa-exit-buffer-function)
   (setq-local revert-buffer-function #'epa--key-list-revert-buffer))
 
-(define-derived-mode epa-key-mode special-mode "Key"
+(define-derived-mode epa-key-mode special-mode "EPA Key"
   "Major mode for a key description."
   (buffer-disable-undo)
   (setq truncate-lines t
@@ -302,7 +302,7 @@ You should bind this variable with `let', but do not set it globally.")
   (setq-local font-lock-defaults '(epa-font-lock-keywords t))
   (make-local-variable 'epa-exit-buffer-function))
 
-(define-derived-mode epa-info-mode special-mode "Info"
+(define-derived-mode epa-info-mode special-mode "EPA Info"
   "Major mode for `epa-info-buffer'."
   (buffer-disable-undo)
   (setq truncate-lines t
