@@ -1044,10 +1044,10 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 ** Gnus
 
 +++
-** The Gnus user variable 'nnimap-expunge' supports three new values:
+*** The Gnus user variable 'nnimap-expunge' supports three new values:
 'never' for never expunging messages, 'immediately' for immediately
 expunging deleted messages, and 'on-exit' to expunge deleted articles
-when exiting the group's summary buffer. Setting 'nnimap-expunge' to
+when exiting the group's summary buffer.  Setting 'nnimap-expunge' to
 'nil' or 't' is still supported but not recommended, since it may
 result in Gnus expunging all messages that have been flagged as
 deleted by any IMAP client (rather than just those that have been
@@ -1114,7 +1114,7 @@ This option controls whether and how to use Gnus search groups as
 'path:' search terms to 'notmuch'.
 
 ---
-+++ The buttons in the Gnus article buffer were formerly widgets
+*** The buttons in the Gnus article buffer were formerly widgets
 (i.e., buttons from widget.el).  This has now changed, and they are
 now buttons (from button.el), and commands like 'TAB' now search for
 buttons instead of widgets.  There should be no user-visible changes,
