@@ -345,9 +345,15 @@ If threads are hidden, you have to run the command
   :type 'boolean)
 
 (defcustom gnus-thread-ignore-subject t
-  "If non-nil, which is the default, ignore subjects and do all threading based on the Reference header.
+  "If non-nil, ignore subjects when creating threads.
+
 If nil, articles that have different subjects from their parents will
-start separate threads."
+start separate threads.
+
+Threads that are split because the subject changes will still be
+sorted as if they were part of the same thread, and
+`gnus-thread-sort-functions' will not apply to these split
+threads."
   :group 'gnus-thread
   :type 'boolean)
 
