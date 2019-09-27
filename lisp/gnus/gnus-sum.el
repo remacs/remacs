@@ -7290,7 +7290,6 @@ If FORCE (the prefix), also save the .newsrc file(s)."
 	(gnus-score-adaptive))
       (when gnus-use-scoring
 	(gnus-score-save)))
-    (gnus-run-hooks 'gnus-summary-prepare-exit-hook)
     (when gnus-use-cache
       (gnus-cache-possibly-remove-articles)
       (gnus-cache-save-buffers))
@@ -7307,6 +7306,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
     (unless quit-config
       (gnus-run-hooks 'gnus-exit-group-hook)
       (gnus-summary-update-info))
+    (gnus-run-hooks 'gnus-summary-prepare-exit-hook)
     (gnus-close-group group)
     ;; Make sure where we were, and go to next newsgroup.
     (when (gnus-buffer-live-p gnus-group-buffer)
