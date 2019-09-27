@@ -2767,7 +2767,7 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|CBR\\|7Z\\)\\'" . archive-mo
      ;; https://en.wikipedia.org/wiki/.har
      ("\\.har\\'" . javascript-mode)
      ("\\.json\\'" . javascript-mode)
-     ("\\.[ds]?vh?\\'" . verilog-mode)
+     ("\\.[ds]?va?h?\\'" . verilog-mode)
      ("\\.by\\'" . bovine-grammar-mode)
      ("\\.wy\\'" . wisent-grammar-mode)
      ;; .emacs or .gnus or .viper following a directory delimiter in
