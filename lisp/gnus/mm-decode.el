@@ -1745,7 +1745,7 @@ If RECURSIVE, search recursively."
     (let ((info (get-text-property 0 'gnus-info (car mm-security-handle))))
       (if (or (not info)
 	      (equal info "")
-	      (equal subtype "encrypted")
+	      (not (equal subtype "encrypted"))
 	      (member "OK" (split-string info "\n")))
 	  parts
 	;; We had an error during decryption.  Report what it is.
