@@ -21,6 +21,10 @@
 
 (require 'ert)
 
+(require 'wid-edit)
+(require 'cus-edit)
+(require 'seq) ; For `seq-find'.
+
 (ert-deftest custom-theme--load-path ()
   "Test `custom-theme--load-path' behavior."
   (let ((tmpdir (file-name-as-directory (make-temp-file "custom-tests-" t))))
@@ -122,5 +126,29 @@
     ;; initial values `foo'.
     (should (equal custom--test-user-option 'baz))
     (should (equal custom--test-variable 'baz))))
+
+;; This tests Bug#5358.
+(ert-deftest custom-test-show-comment-preserves-changes ()
+  "Test that adding a comment doesn't discard modifications in progress."
+  (customize-option 'custom--test-user-option)
+  (let* ((field (seq-find (lambda (widget)
+                            (eq custom--test-user-option (widget-value widget)))
+                          widget-field-list))
+         (parent (widget-get field :parent))
+	 (origvalue (widget-value field)))
+    ;; Move to the end of the text of the widget, and modify it.  This
+    ;; modification should be preserved after showing the comment field.
+    (goto-char (widget-field-text-end field))
+    (insert "bar")
+    (custom-comment-show parent)
+    ;; From now on, must use `widget-at' to get the value of the widget.
+    (should-not (eq origvalue (widget-value (widget-at))))
+    (should (eq (widget-get parent :custom-state) 'modified))
+    (should (eq (widget-value (widget-at))
+                (widget-apply field
+                              :value-to-external
+                              (concat
+                               (widget-apply field :value-to-internal origvalue)
+                               "bar"))))))
 
 ;;; custom-tests.el ends here

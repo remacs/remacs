@@ -2416,9 +2416,21 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
 ;; Those functions are for the menu. WIDGET is NOT the comment widget. It's
 ;; the global custom one
 (defun custom-comment-show (widget)
-  (widget-put widget :comment-shown t)
-  (custom-redraw widget)
-  (widget-setup))
+  "Show the comment editable field that belongs to WIDGET."
+  (let ((child (car (widget-get widget :children)))
+        ;; Just to be safe, we will restore this value after redrawing.
+        (old-shown-value (widget-get widget :shown-value)))
+    (widget-put widget :comment-shown t)
+    ;; Save the changes made by the user before redrawing, to avoid
+    ;; losing customizations in progress.  (Bug#5358)
+    (if (eq (widget-type widget) 'custom-face)
+        (if (eq (widget-type child) 'custom-face-edit)
+            (widget-put widget :shown-value `((t ,(widget-value child))))
+          (widget-put widget :shown-value (widget-value child)))
+      (widget-put widget :shown-value (list (widget-value child))))
+    (custom-redraw widget)
+    (widget-put widget :shown-value old-shown-value)
+    (widget-setup)))
 
 (defun custom-comment-invisible-p (widget)
   (let ((val (widget-value (widget-get widget :comment-widget))))
@@ -2810,12 +2822,35 @@ Possible return values are `standard', `saved', `set', `themed',
 	     'changed))
 	  (t 'rogue))))
 
+(defun custom-variable-modified-p (widget)
+  "Non-nil if the variable value of WIDGET has been modified.
+WIDGET should be a custom-variable widget, whose first child is the widget
+that holds the value.
+Modified means that the widget that holds the value has been edited by the user
+in a customize buffer.
+To check for other states, call `custom-variable-state'."
+  (catch 'get-error
+    (let* ((symbol (widget-get widget :value))
+           (get (or (get symbol 'custom-get) 'default-value))
+           (value (if (default-boundp symbol)
+                      (condition-case nil
+                          (funcall get symbol)
+                        (error (throw 'get-error t)))
+                    (symbol-value symbol))))
+      (not (equal value (widget-value (car (widget-get widget :children))))))))
+
 (defun custom-variable-state-set (widget &optional state)
   "Set the state of WIDGET to STATE.
-If STATE is nil, the value is computed by `custom-variable-state'."
+If STATE is nil, the new state is computed by `custom-variable-modified-p' if
+WIDGET has been edited in the Custom buffer, or by `custom-variable-state'
+otherwise."
   (widget-put widget :custom-state
-	      (or state (custom-variable-state (widget-value widget)
-					       (widget-get widget :value)))))
+	      (or state
+                  (and (custom-variable-modified-p widget) 'modified)
+                  (custom-variable-state (widget-value widget)
+                                         (widget-value
+                                          (car
+                                           (widget-get widget :children)))))))
 
 (defun custom-variable-standard-value (widget)
   (get (widget-value widget) 'standard-value))
@@ -3635,9 +3670,9 @@ the present value is saved to its :shown-value property instead."
 		    (insert-char ?\s indent))
 		  (widget-create-child-and-convert
 		   widget 'sexp :value spec))))
-	  (custom-face-state-set widget)
-	  (push editor children)
-	  (widget-put widget :children children))))))
+          (push editor children)
+          (widget-put widget :children children)
+	  (custom-face-state-set widget))))))
 
 (defvar custom-face-menu
   `(("Set for Current Session" custom-face-set)
@@ -3723,9 +3758,14 @@ This is one of `set', `saved', `changed', `themed', or `rogue'."
       state)))
 
 (defun custom-face-state-set (widget)
-  "Set the state of WIDGET."
-  (widget-put widget :custom-state
-	      (custom-face-state (widget-value widget))))
+  "Set the state of WIDGET, a custom-face widget.
+If the user edited the widget, set the state to modified.  If not, the new
+state is one of the return values of `custom-face-state'."
+  (let ((face (widget-value widget)))
+    (widget-put widget :custom-state
+                (if (face-spec-match-p face (custom-face-widget-to-spec widget))
+                    (custom-face-state face)
+                  'modified))))
 
 (defun custom-face-action (widget &optional event)
   "Show the menu for `custom-face' WIDGET.
