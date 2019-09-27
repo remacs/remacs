@@ -723,7 +723,6 @@ Email Based Diary
 
 * The NNDiary Back End::        Basic setup and usage.
 * The Gnus Diary Library::      Utility toolkit on top of nndiary.
-* Sending or Not Sending::      A final note on sending diary messages.
 
 The NNDiary Back End
 
@@ -17854,7 +17853,6 @@ explained in the sections below.
 @menu
 * The NNDiary Back End::        Basic setup and usage.
 * The Gnus Diary Library::      Utility toolkit on top of nndiary.
-* Sending or Not Sending::      A final note on sending diary messages.
 @end menu
 
 
@@ -18167,24 +18165,10 @@ to send a diary message, because if you use @kbd{C-u a} or @kbd{C-u m}
 on a diary group to prepare a message, these headers will be inserted
 automatically (although not filled with proper values yet).
 
-@node Sending or Not Sending
-@subsection Sending or Not Sending
-
-Well, assuming you've read all of the above, here are two final notes on
-mail sending with @code{nndiary}:
-
-@itemize @bullet
-@item
 @code{nndiary} is a @emph{real} mail back end.  You really send real diary
 messages for real.  This means for instance that you can give
 appointments to anybody (provided they use Gnus and @code{nndiary}) by
 sending the diary message to them as well.
-@item
-However, since @code{nndiary} also has a @code{request-post} method, you
-can also use @kbd{C-u a} instead of @kbd{C-u m} on a diary group and the
-message won't actually be sent; just stored locally in the group.  This
-comes in very handy for private appointments.
-@end itemize
 
 @node Gnus Unplugged
 @section Gnus Unplugged
