@@ -481,7 +481,7 @@ specified by `tab-bar-close-tab-select'."
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
 
-(defun tab-make ()
+(defun tab-new ()
   "Create a new named window configuration without having to click a tab."
   (interactive)
   (tab-bar-new-tab)
@@ -500,6 +500,7 @@ specified by `tab-bar-close-tab-select'."
 (defalias 'tab-select 'tab-bar-select-tab)
 (defalias 'tab-previous 'tab-bar-switch-to-prev-tab)
 (defalias 'tab-next 'tab-bar-switch-to-next-tab)
+(defalias 'tab-list 'tab-bar-list)
 
 (defun tab-bar-list ()
   "Display a list of named window configurations.

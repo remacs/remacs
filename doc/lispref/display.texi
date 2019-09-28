@@ -2944,6 +2944,7 @@ If the text lies within the mode line of the selected window, Emacs
 applies the @code{mode-line} face.  For the mode line of a
 non-selected window, Emacs applies the @code{mode-line-inactive} face.
 For a header line, Emacs applies the @code{header-line} face.
+For a tab line, Emacs applies the @code{tab-line} face.
 
 @item
 If the text comes from an overlay string via @code{before-string} or

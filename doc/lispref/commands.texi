@@ -1348,7 +1348,7 @@ button.  @xref{Repeat Events}.
 @var{position} slot of a click event, you should typically use the
 functions documented in @ref{Accessing Mouse}.  The explicit format of
 the list depends on where the click occurred.  For clicks in the text
-area, mode line, header line, or in the fringe or marginal areas, the
+area, mode line, header line, tab line, or in the fringe or marginal areas, the
 mouse position list has the form
 
 @example
@@ -1368,7 +1368,7 @@ The window in which the click occurred.
 The buffer position of the character clicked on in the text area; or,
 if the click was outside the text area, the window area where it
 occurred.  It is one of the symbols @code{mode-line},
-@code{header-line}, @code{vertical-line}, @code{left-margin},
+@code{header-line}, @code{tab-line}, @code{vertical-line}, @code{left-margin},
 @code{right-margin}, @code{left-fringe}, or @code{right-fringe}.
 
 In one special case, @var{pos-or-area} is a list containing a symbol
@@ -1380,7 +1380,7 @@ by Emacs.  @xref{Key Sequence Input}.
 The relative pixel coordinates of the click.  For clicks in the text
 area of a window, the coordinate origin @code{(0 . 0)} is taken to be
 the top left corner of the text area.  @xref{Window Sizes}.  For
-clicks in a mode line or header line, the coordinate origin is the top
+clicks in a mode line, header line or tab line, the coordinate origin is the top
 left corner of the window itself.  For fringes, margins, and the
 vertical border, @var{x} does not have meaningful data.  For fringes
 and margins, @var{y} is relative to the bottom edge of the header
@@ -1407,7 +1407,7 @@ The position in the string where the click occurred.
 @item @var{text-pos}
 For clicks on a marginal area or on a fringe, this is the buffer
 position of the first visible character in the corresponding line in
-the window.  For clicks on the mode line or the header line, this is
+the window.  For clicks on the mode line, the header line or the tab line, this is
 @code{nil}.  For other events, it is the buffer position closest to
 the click.
 
@@ -1416,7 +1416,8 @@ These are the actual column and row coordinate numbers of the glyph
 under the @var{x}, @var{y} position.  If @var{x} lies beyond the last
 column of actual text on its line, @var{col} is reported by adding
 fictional extra columns that have the default character width.  Row 0
-is taken to be the header line if the window has one, or the topmost
+is taken to be the header line if the window has one, or Row 1
+if the window also has the tab line, or the topmost
 row of the text area otherwise.  Column 0 is taken to be the leftmost
 column of the text area for clicks on a window text area, or the
 leftmost mode line or header line column for clicks there.  For clicks
@@ -2094,7 +2095,7 @@ computed values.)
 
 Note that @var{row} is counted from the top of the text area.  If the
 window given by @var{position} possesses a header line (@pxref{Header
-Lines}), it is @emph{not} included in the @var{row} count.
+Lines}) or a tab line, they are @emph{not} included in the @var{row} count.
 @end defun
 
 @defun posn-actual-col-row position
@@ -2452,12 +2453,14 @@ button-down events entirely.  It also reshuffles focus events and
 miscellaneous window events so that they never appear in a key sequence
 with any other events.
 
+@cindex @code{tab-line} prefix key
 @cindex @code{header-line} prefix key
 @cindex @code{mode-line} prefix key
 @cindex @code{vertical-line} prefix key
 @cindex @code{horizontal-scroll-bar} prefix key
 @cindex @code{vertical-scroll-bar} prefix key
 @cindex @code{menu-bar} prefix key
+@cindex @code{tab-bar} prefix key
 @cindex mouse events, in special parts of frame
 When mouse events occur in special parts of a window, such as a mode
 line or a scroll bar, the event type shows nothing special---it is the
@@ -2465,8 +2468,8 @@ same symbol that would normally represent that combination of mouse
 button and modifier keys.  The information about the window part is kept
 elsewhere in the event---in the coordinates.  But
 @code{read-key-sequence} translates this information into imaginary
-prefix keys, all of which are symbols: @code{header-line},
-@code{horizontal-scroll-bar}, @code{menu-bar}, @code{mode-line},
+prefix keys, all of which are symbols: @code{tab-line}, @code{header-line},
+@code{horizontal-scroll-bar}, @code{menu-bar}, @code{tab-bar}, @code{mode-line},
 @code{vertical-line}, and @code{vertical-scroll-bar}.  You can define
 meanings for mouse clicks in special window parts by defining key
 sequences using these imaginary prefix keys.

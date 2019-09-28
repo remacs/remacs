@@ -296,6 +296,12 @@ but the tool bar is only displayed on graphical terminals.  @xref{Tool
 Bars}.
 
 @item
+Tab Bar mode gives each frame a tab bar.  @xref{Tab Bars}.
+
+@item
+Tab Line mode gives each window a tab line.
+
+@item
 Transient Mark mode highlights the region, and makes many Emacs
 commands operate on the region when the mark is active.  It is enabled
 by default.  @xref{Mark}.

@@ -5558,6 +5558,9 @@ The coordinates are in the mode line of @var{window}.
 @item header-line
 The coordinates are in the header line of @var{window}.
 
+@item tab-line
+The coordinates are in the tab line of @var{window}.
+
 @item right-divider
 The coordinates are in the divider separating @var{window} from a
 window on the right.
@@ -6113,6 +6116,15 @@ This parameter replaces the value of the buffer-local variable
 buffer whenever this window is displayed.  The symbol @code{none} means
 to suppress display of a header line for this window.  Display and
 contents of the header line on other windows showing this buffer are not
+affected.
+
+@item tab-line-format
+@vindex tab-line-format@r{, a window parameter}
+This parameter replaces the value of the buffer-local variable
+@code{tab-line-format} (@pxref{Mode Line Basics}) of this window's
+buffer whenever this window is displayed.  The symbol @code{none} means
+to suppress display of a tab line for this window.  Display and
+contents of the tab line on other windows showing this buffer are not
 affected.
 
 @item min-margins

@@ -58,6 +58,7 @@ for doing so on MS-DOS).  Menus are supported on all text terminals.
 * Drag and Drop::       Using drag and drop to open files and insert text.
 * Menu Bars::           Enabling and disabling the menu bar.
 * Tool Bars::           Enabling and disabling the tool bar.
+* Tab Bars::            Enabling and disabling the tab bar.
 * Dialog Boxes::        Controlling use of dialog boxes.
 * Tooltips::            Displaying information at the current mouse position.
 * Mouse Avoidance::     Preventing the mouse pointer from obscuring text.
@@ -1213,6 +1214,41 @@ therefore do not display it when a window is undecorated.  @xref{Frame
 Parameters,,, elisp, The Emacs Lisp Reference Manual}.  On macOS the
 tool bar is hidden when the frame is put into fullscreen, but can be
 displayed by moving the mouse pointer to the top of the screen.
+
+@node Tab Bars
+@section Tab Bars
+@cindex Tab Bar mode
+@cindex mode, Tab Bar
+@cindex tabs, tabbar
+
+  On graphical displays and on text terminals, Emacs puts a @dfn{tab bar}
+at the top of each frame, just below the menu bar.  This is a row of
+tabs which you can click on with the mouse to switch window configurations.
+
+  Each tab on the tab bar represents a named persistent window
+configuration.  Its name is composed from the names of buffers
+visible in windows of the window configuration.  Clicking on the
+tab name switches the current window configuration to the previously
+used configuration of windows and buffers.
+
+  If you are using the desktop library to save and restore your
+sessions, the tabs from the tab bar are recorded in the desktop file,
+together with their associated window configurations.
+
+@findex tab-bar-mode
+@vindex tab-bar-mode
+  To toggle the use of tab bars, type @kbd{M-x tab-bar-mode}.  This
+command applies to all frames, including frames yet to be created.  To
+control the use of tab bars at startup, customize the variable
+@code{tab-bar-mode}.
+
+@vindex tab-bar-new-tab-choice
+@cindex Tab Bar new tab
+  By default, Emacs follows the same behavior as when creating frames,
+to start a new tab with the current buffer, i.e. the buffer
+that was current before calling the command that adds a new tab.
+To start a new tab with other buffers, customize the variable
+@code{tab-bar-new-tab-choice}.
 
 @node Dialog Boxes
 @section Using Dialog Boxes
