@@ -104,17 +104,17 @@ Possible choices are nil (use default methods), `anonymous',
 
 (defvoo nnimap-expunge 'on-exit
   "When to expunge deleted messages.
-If 'never, deleted articles are marked with the IMAP \\Delete
-flag but not automatically expunged. If 'immediately, deleted
+If `never', deleted articles are marked with the IMAP \\Delete
+flag but not automatically expunged. If `immediately', deleted
 articles are immediately expunged (this requires the server to
-support the UID EXPUNGE command). If 'on-exit, deleted articles
-are flagged, and all flagged articles are expunged when the
-group is closed.
+support the UID EXPUNGE command). If `on-exit', deleted articles
+are flagged, and all flagged articles are expunged when the group
+is closed.
 
 For backwards compatibility, this variable may also be set to t
 or nil. If the server supports UID EXPUNGE, both t and nil are
-equivalent to 'immediately. If the server does not support UID
-EXPUNGE nil is equivalent to 'never, while t will immediately
+equivalent to `immediately'. If the server does not support UID
+EXPUNGE nil is equivalent to `never', while t will immediately
 expunge ALL articles that are currently flagged as deleted
 (i.e., potentially not only the article that was just deleted).")
 
