@@ -1125,7 +1125,6 @@ If LIMIT, first try to limit the search to the N last articles."
 
 (defun nnimap-delete-article (articles)
   "Delete ARTICLES."
-  (debug articles)
   (with-current-buffer (nnimap-buffer)
     (nnimap-command "UID STORE %s +FLAGS.SILENT (\\Deleted)"
 		    (nnimap-article-ranges articles))
@@ -2175,9 +2174,14 @@ Return the server's response to the SELECT or EXAMINE command."
 	    (when (and (not can-move) sequences)
 	      (nnimap-wait-for-response (caar sequences))
 	      ;; And then mark the successful copy actions as deleted,
-	      ;; and possibly expunge them.
-              (nnimap-delete-article
-               (nnimap-parse-copied-articles sequences)))
+	      ;; and possibly expunge them.  Almost any non-nil
+	      ;; setting of nnimap-expunge should lead to expunging
+	      ;; here.
+	      (let ((nnimap-expunge (and nnimap-expunge
+					 (not (equal nnimap-expunge 'never))
+					 'immediate)))
+		(nnimap-delete-article
+		 (nnimap-parse-copied-articles sequences))))
 	    (when junk-articles
               (nnimap-delete-article junk-articles))))))))
 
