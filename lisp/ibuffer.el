@@ -317,7 +317,7 @@ directory, like `default-directory'."
                  string))
 
 (defcustom ibuffer-help-buffer-modes
-  '(help-mode apropos-mode Info-mode Info-edit-mode)
+  '(help-mode apropos-mode Info-mode)
   "List of \"Help\" major modes."
   :type '(repeat function))
 
