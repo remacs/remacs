@@ -510,8 +510,9 @@ DIRS are relative."
 				 "/.emacs.d/"))))
       (if (or (file-exists-p emacs-d-dir)
 	      (if (eq system-type 'windows-nt)
-		  (directory-files (concat "~" user-name) nil
-				   "\\`[._]emacs\\(\\.elc?\\)?\\'")
+                  (if (file-directory-p (concat "~" user-name))
+                      (directory-files (concat "~" user-name) nil
+                                       "\\`[._]emacs\\(\\.elc?\\)?\\'"))
 		(file-exists-p (concat "~" init-file-user
 				       (if (eq system-type 'ms-dos)
 					   "/_emacs"
