@@ -2656,6 +2656,13 @@ data about creation times and orientation and the like.
 'exif-parse-file' and 'exif-parse-buffer' are the main interface
 functions.
 
+*** New library image-converter.
+To view exotic image formats that Emacs doesn't have native support
+for, the new 'convert-images-externally' variable can be set to t.  If
+the system has GraphicsMagick, ImageMagick or ffmpeg installed, it
+will be used to convert images automatically before displaying with
+'create-image'.
+
 *** 'image-mode' now uses this library to automatically rotate images
 according to the orientation in the Exif data, if any.
 

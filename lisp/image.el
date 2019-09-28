@@ -141,6 +141,17 @@ based on the font pixel size."
                  (const :tag "Automatically compute" auto))
   :version "26.1")
 
+(defcustom convert-images-externally nil
+  "If non-nil, `create-image' will use external converters for exotic formats.
+Emacs handles most of the common image formats (JPEG, PNG, GIF
+and so on) internally, but images that doesn't have native
+support in Emacs can still be displayed by Emacs if external
+conversion programs (like ImageMagick \"convert\", GraphicsMagick
+\"gm\" or \"ffmpeg\") are installed."
+  :group 'image
+  :type 'bool
+  :version "27.1")
+
 ;; Map put into text properties on images.
 (defvar image-map
   (let ((map (make-sparse-keymap)))
@@ -357,6 +368,9 @@ be determined."
 	    ;; If nothing seems to be supported, return first type that matched.
 	    (or first (setq first type))))))))
 
+(declare-function image-convert-p "image-converter.el" (file))
+(declare-function image-convert "image-converter.el" (image))
+
 ;;;###autoload
 (defun image-type (source &optional type data-p)
   "Determine and return image type.
@@ -372,10 +386,16 @@ Optional DATA-P non-nil means SOURCE is a string containing image data."
     (setq type (if data-p
 		   (image-type-from-data source)
 		 (or (image-type-from-file-header source)
-		     (image-type-from-file-name source))))
-    (or type (error "Cannot determine image type")))
-  (or (memq type (and (boundp 'image-types) image-types))
-      (error "Invalid image type `%s'" type))
+		     (image-type-from-file-name source)
+                     (and convert-images-externally
+                          (progn
+                            (require 'image-converter)
+                            (image-convert-p source))))))
+    (unless type
+      (error "Cannot determine image type")))
+  (when (and (not (eq type 'image-convert))
+             (not (memq type (and (boundp 'image-types) image-types))))
+    (error "Invalid image type `%s'" type))
   type)
 
 
@@ -438,6 +458,12 @@ Image file names that are not absolute are searched for in the
 `x-bitmap-file-path' (in that order)."
   ;; It is x_find_image_file in image.c that sets the search path.
   (setq type (image-type file-or-data type data-p))
+  ;; If we have external image conversion switched on (for exotic,
+  ;; non-native image formats), then we convert the file.
+  (when (eq type 'image-convert)
+    (setq file-or-data (image-convert file-or-data)
+          type 'png
+          data-p t))
   (when (image-type-available-p type)
     (append (list 'image :type type (if data-p :data :file) file-or-data)
             (and (not (plist-get props :scale))
