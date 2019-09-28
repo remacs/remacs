@@ -1125,6 +1125,7 @@ If LIMIT, first try to limit the search to the N last articles."
 
 (defun nnimap-delete-article (articles)
   "Delete ARTICLES."
+  (debug articles)
   (with-current-buffer (nnimap-buffer)
     (nnimap-command "UID STORE %s +FLAGS.SILENT (\\Deleted)"
 		    (nnimap-article-ranges articles))
@@ -2177,7 +2178,8 @@ Return the server's response to the SELECT or EXAMINE command."
 	      ;; and possibly expunge them.
               (nnimap-delete-article
                (nnimap-parse-copied-articles sequences)))
-            (nnimap-delete-article junk-articles)))))))
+	    (when junk-articles
+              (nnimap-delete-article junk-articles))))))))
 
 (defun nnimap-parse-copied-articles (sequences)
   (let (sequence copied range)
