@@ -33,24 +33,26 @@
                                               not-current)
   "Search for the next region of text whose PROPERTY matches VALUE.
 
-If not found, return nil.  If found, move point to end of the region and
-return a `prop-match' object describing the match.  To access the details
-of the match, use `prop-match-beginning' and `prop-match-end' for the
-buffer positions that limit the region, and `prop-match-value' for the
+If not found, return nil and don't move point.
+If found, move point to end of the region and return a `prop-match'
+object describing the match.  To access the details of the match,
+use `prop-match-beginning' and `prop-match-end' for the buffer
+positions that limit the region, and `prop-match-value' for the
 value of PROPERTY in the region.
 
 PREDICATE is used to decide whether a value of PROPERTY should be
 considered as matching VALUE.
 If PREDICATE is t, that means a value must `equal' VALUE to be
 considered a match.
-If PREDICATE is nil, a value will match if it is NOT `equal' to
-VALUE, and will also end the match if the value of PROPERTY changes.
+If PREDICATE is nil, a value will match if it is non-nil and
+is NOT `equal' to VALUE.
 If PREDICATE is a function, it will be called with two arguments:
 VALUE and the value of PROPERTY.  The function should return
-non-nil if these two values should be considered a match.
+non-nil if these two values are to be considered a match.
 
 If NOT-CURRENT is non-nil, the function will search for the first
-region with matching value of PROPERTY that doesn't include point."
+region that doesn't include point and has a value of PROPERTY
+that matches VALUE."
   (interactive
    (list
     (let ((string (completing-read "Search for property: " obarray)))
@@ -70,7 +72,7 @@ region with matching value of PROPERTY that doesn't include point."
     (let ((origin (point))
           (ended nil)
           pos)
-      ;; Fix the next candidate.
+      ;; Find the next candidate.
       (while (not ended)
         (setq pos (next-single-property-change (point) property))
         (if (not pos)
@@ -122,7 +124,8 @@ region with matching value of PROPERTY that doesn't include point."
                                                not-current)
   "Search for the previous region of text whose PROPERTY matches VALUE.
 
-Like `text-property-search-forward', which see, but searches backward."
+Like `text-property-search-forward', which see, but searches backward,
+and if a matching region is found, moves point to its beginning."
   (interactive
    (list
     (let ((string (completing-read "Search for property: " obarray)))
@@ -144,7 +147,7 @@ Like `text-property-search-forward', which see, but searches backward."
           (ended nil)
           pos)
       (forward-char -1)
-      ;; Fix the next candidate.
+      ;; Find the previous candidate.
       (while (not ended)
         (setq pos (previous-single-property-change (point) property))
         (if (not pos)
